@@ -1,14 +1,9 @@
 Exploratory Graph Analysis: An introduction using the EGA package.
-================
-Hudson F. Golino
-<<<<<<< HEAD
-Assistant Professor of Quantitative Methods, Department of Psychology, University of Virginia.
-Contact: <hfg9s@virginia.edu>
-=======
-Graduate School of Psychology, Universidade Salgado de Oliveira, Niterói, Rio de Janeiro, Brazil.
-Contact: <hfgolino@gmail.com>
->>>>>>> origin/master
-2016-09-25
+=============
+### Hudson F. Golino ###
+### Assistant Professor of Quantitative Methods, Department of Psychology, University of Virginia. ###
+### Contact: <hfg9s@virginia.edu> ###
+
 
 Introduction
 ============
