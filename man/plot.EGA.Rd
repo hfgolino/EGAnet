@@ -4,10 +4,16 @@
 \alias{plot.EGA}
 \title{Plot method for EGA objects.}
 \usage{
-\method{plot}{EGA}(object, layout = "spring", vsize = 6, ...)
+\method{plot}{EGA}(ega.obj, title = "", vsize = 30, opacity = 0.4)
 }
 \arguments{
-\item{object}{An EGA object}
+\item{ega.obj}{An EGA object}
+
+\item{title}{Character. Title of the plot}
+
+\item{vsize}{An integer indicating the size of the nodes. Default vsize = 30.}
+
+\item{opacity}{A numeric value indicating the opacity of the edges. Default opacity = 0.4}
 }
 \description{
 \code{plot} Plots the EGA result using \code{\link{qgraph}}
@@ -15,7 +21,7 @@
 \examples{
 ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = TRUE)
 summary(ega.wmt)
-plot(ega.wmt)
+plot(ega.wmt, title = "", vsize = 30, opacity = 0.4)
 
 \dontrun{
 plot(EGA)

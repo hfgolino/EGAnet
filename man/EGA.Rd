@@ -9,7 +9,7 @@ EGA(data, plot.EGA = TRUE, matrix = FALSE, n = NULL)
 \arguments{
 \item{data}{A dataframe with the variables to be used in the analysis, or a correlation matrix. If the data used is a correlation matrix, the arguments *matrix* and *n* will need to be specified.}
 
-\item{plot.EGA}{Logical. If TRUE, returns a plot of the network of partial correlations estimated via graphical lasso and its estimated dimensions.}
+\item{plot.EGA}{Logical. If TRUE, returns an interactive plot of the network of partial correlations estimated via graphical lasso and its estimated dimensions.}
 
 \item{matrix}{Logical. If TRUE, will treat the data as a correlation matrix, and a *n* (sample size) will need to be specified. Default to FALSE.}
 

@@ -7,7 +7,7 @@
 #' @param n An integer value representing the number of bootstraps
 #'
 #' @param medianStructure Logical. If true, returns the typical network of partial correlations (estimated via graphical lasso), which is the median of all pairwise correlations over the n bootstraps, and estimates its dimensions.
-#' @param plot.MedianStructure Logical. If true, returns a plot of the typical network (partial correlations), which is the median of all pairwise correlations over the n bootstraps, and its estimated dimensions.
+#' @param plot.MedianStructure Logical. If true, returns an interative plot of the typical network (partial correlations), which is the median of all pairwise correlations over the n bootstraps, and its estimated dimensions.
 #' @param ncores Number of cores to use in computing results. Set to 1 to not use parallel computing.
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
 #' @examples
@@ -35,6 +35,10 @@ bootEGA <- function(data, n, medianStructure = TRUE, plot.MedianStructure = TRUE
   }
 
   if(!require(igraph)) {
+    message("installing the 'igraph' package")
+    install.packages("igraph")
+  }
+  if(!require(plotly)) {
     message("installing the 'igraph' package")
     install.packages("igraph")
   }
@@ -70,8 +74,52 @@ bootEGA <- function(data, n, medianStructure = TRUE, plot.MedianStructure = TRUE
     dim.variables <- data.frame(items = colnames(data), dimension = median.wc$membership)
   }
   if (plot.MedianStructure == TRUE) {
-    plot.median.ega <- qgraph(median.Structure, layout = "spring",
-                              vsize = 6, groups = as.factor(median.wc$membership))
+    graph.glasso <- as.igraph(qgraph(median.Structure, DoNotPlot = TRUE))
+    vert <- V(graph.glasso)
+    es <- as.data.frame(get.edgelist(graph.glasso))
+    edge.width <- E(graph.glasso)$weight
+    L <- qgraph.layout.fruchtermanreingold(edgelist = as.matrix(es),
+                                           weights = edge.width, vcount = ncol(data))
+    Nv <- length(vert)
+    Ne <- length(es[1]$V1)
+    Xn <- L[,1]
+    Yn <- L[,2]
+    network <- plot_ly(x = ~Xn, y = ~Yn, mode = "markers", text = paste("Variable: ",vert$label), hoverinfo = "text",
+                       color = as.factor(median.wc$membership),
+                       marker = list(size = 30,
+                                     width = 2)) %>%
+      add_annotations(x = Xn,
+                      y = Yn,
+                      text = vert$label,
+                      xref = "x",
+                      yref = "y",
+                      showarrow = FALSE,
+                      ax = 20,
+                      ay = -40)
+    edge_shapes <- list()
+    for(i in 1:Ne) {
+      v0 <- es[i,]$V1
+      v1 <- es[i,]$V2
+      edge_shape = list(opacity = 0.4,
+                        type = "line",
+                        line = list(color = ifelse(edge.width[i]>=0, "green", "red"), width = abs(edge.width[i])*10),
+                        x0 = Xn[v0],
+                        y0 = Yn[v0],
+                        x1 = Xn[v1],
+                        y1 = Yn[v1]
+      )
+      edge_shapes[[i]] <- edge_shape
+    }
+    axis <- list(title = "", showgrid = FALSE, showticklabels = FALSE, zeroline = FALSE)
+    plot <- layout(
+      network,
+      title = "",
+      shapes = edge_shapes,
+      xaxis = axis,
+      yaxis = axis,
+      legend = list(x = 100, y = 0.5)
+    )
+    print(plot)
   }
   Median <- median(boot.ndim[, 2])
   sd.boot <- sd(boot.ndim[, 2])

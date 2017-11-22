@@ -14,7 +14,7 @@ bootEGA(data, n, medianStructure = TRUE, plot.MedianStructure = TRUE,
 
 \item{medianStructure}{Logical. If true, returns the typical network of partial correlations (estimated via graphical lasso), which is the median of all pairwise correlations over the n bootstraps, and estimates its dimensions.}
 
-\item{plot.MedianStructure}{Logical. If true, returns a plot of the typical network (partial correlations), which is the median of all pairwise correlations over the n bootstraps, and its estimated dimensions.}
+\item{plot.MedianStructure}{Logical. If true, returns an interative plot of the typical network (partial correlations), which is the median of all pairwise correlations over the n bootstraps, and its estimated dimensions.}
 
 \item{ncores}{Number of cores to use in computing results. Set to 1 to not use parallel computing.}
 }

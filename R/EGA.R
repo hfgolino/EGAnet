@@ -4,7 +4,7 @@
 #' is set via EBIC.
 #'
 #' @param data A dataframe with the variables to be used in the analysis, or a correlation matrix. If the data used is a correlation matrix, the arguments *matrix* and *n* will need to be specified.
-#' @param plot.EGA Logical. If TRUE, returns a plot of the network of partial correlations estimated via graphical lasso and its estimated dimensions.
+#' @param plot.EGA Logical. If TRUE, returns an interactive plot of the network of partial correlations estimated via graphical lasso and its estimated dimensions.
 #' @param matrix Logical. If TRUE, will treat the data as a correlation matrix, and a *n* (sample size) will need to be specified. Default to FALSE.
 #' @param n Integer. Sample size, if the data provided is a correlation matrix.
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
@@ -24,7 +24,7 @@
 #' verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 #' @export
 
-# EGA default function - 01/18/2017
+# EGA default function - 11/21/2017
 EGA <- function(data, plot.EGA = TRUE, matrix = FALSE, n = NULL) {
   if(!require(qgraph)) {
     message("installing the 'qgraph' package")
@@ -36,6 +36,11 @@ EGA <- function(data, plot.EGA = TRUE, matrix = FALSE, n = NULL) {
     install.packages("igraph")
   }
 
+  if(!require(plotly)) {
+    message("installing the 'plotly' package")
+    install.packages("plotly")
+  }
+
   if(matrix == FALSE){
     data <- as.data.frame(data)
     cor.data <- cor_auto(data)
@@ -43,11 +48,6 @@ EGA <- function(data, plot.EGA = TRUE, matrix = FALSE, n = NULL) {
     graph.glasso <- as.igraph(qgraph(abs(glasso.ebic), layout = "spring", vsize = 3, DoNotPlot = TRUE))
     wc <- walktrap.community(graph.glasso)
     n.dim <- max(wc$membership)
-
-    if (plot.EGA == TRUE) {
-      plot.ega <- qgraph(glasso.ebic, layout = "spring", vsize = 6, groups = as.factor(wc$membership))
-    }
-
     a <- list()
     a$n.dim <- n.dim
     a$correlation <- cor.data
@@ -57,18 +57,17 @@ EGA <- function(data, plot.EGA = TRUE, matrix = FALSE, n = NULL) {
     dim.variables <- dim.variables[order(dim.variables[, 2]), ]
     a$dim.variables <- dim.variables
     class(a) <- "EGA"
+    if(plot.EGA == TRUE){
+      plot(a, vsize = 30, opacity = 0.4)
+    }
     return(a)
+
   } else{
     cor.data <- data
     glasso.ebic <- EBICglasso(S = cor.data, n = n, lambda.min.ratio = 0.1)
     graph.glasso <- as.igraph(qgraph(abs(glasso.ebic), layout = "spring", vsize = 3, DoNotPlot = TRUE))
     wc <- walktrap.community(graph.glasso)
     n.dim <- max(wc$membership)
-
-    if (plot.EGA == TRUE) {
-      plot.ega <- qgraph(glasso.ebic, layout = "spring", vsize = 6, groups = as.factor(wc$membership))
-    }
-
     a <- list()
     a$n.dim <- n.dim
     a$correlation <- data
@@ -78,6 +77,9 @@ EGA <- function(data, plot.EGA = TRUE, matrix = FALSE, n = NULL) {
     dim.variables <- dim.variables[order(dim.variables[, 2]), ]
     a$dim.variables <- dim.variables
     class(a) <- "EGA"
+    if(plot.EGA == TRUE){
+      plot(a, vsize = 30, opacity = 0.4)
+    }
     return(a)
   }
 }
