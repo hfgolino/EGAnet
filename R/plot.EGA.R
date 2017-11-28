@@ -74,5 +74,5 @@ plot.EGA <- function(ega.obj, title = "", vsize = 30, opacity = 0.4){
     yaxis = axis,
     legend = list(x = 100, y = 0.5)
   )
-  print(plot)
+  plot
 }
