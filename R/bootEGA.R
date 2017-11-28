@@ -138,6 +138,7 @@ bootEGA <- function(data, n, medianStructure = TRUE, plot.MedianStructure = TRUE
   medianGraph$graph <- median.Structure
   medianGraph$median.dim.variables <- dim.variables[order(dim.variables[,2]), ]
   result$medianGraph <- medianGraph
+  result$plot <- plot
   class(result) <- "bootEGA"
   return(result)
 }
