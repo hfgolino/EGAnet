@@ -32,11 +32,10 @@ plot(ega.intel)
 EGA(a)
 }
 }
-\author{
-Hudson F. Golino <hfg9s at virginia.edu>
-}
 \seealso{
 \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap and \code{\link{CFA}} to
 verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
-
+\author{
+Hudson F. Golino <hfg9s at virginia.edu>
+}

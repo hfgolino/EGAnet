@@ -1,13 +1,26 @@
-# Methods:
+#'  Dynamic Plot method for EGA objects.
+#'
+#' \code{dynamic.plot} Plots the EGA result using \code{\link{plotly}}
+#'
+#' @param ega.obj An EGA object
+#' @param title Character. Title of the plot
+#' @param vsize An integer indicating the size of the nodes. Default vsize = 30.
+#' @param opacity A numeric value indicating the opacity of the edges. Default opacity = 0.4
+#' @author Hudson F. Golino <hfg9s at virginia.edu>
+#' @examples
+#' ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = TRUE)
+#' summary(ega.wmt)
+#' dynamic.plot(ega.wmt, title = "", vsize = 30, opacity = 0.4)
+#'
+#' \dontrun{
+#' dynamic.plot(EGA)
+#' }
+#' @seealso \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link{CFA}} to
+#' verify the fit of the structure suggested by EGA using confirmatory factor analysis.
+#' @export
 
-# Plot EGA:
+## S3 method for class 'EGA'
 
-plot.EGA <- function(ega.obj, title = "", vsize = 6,  ...){
-  require(qgraph)
-  plot.ega <- qgraph(ega.obj$glasso, layout = "spring", vsize = vsize, groups = as.factor(ega.obj$wc), ...)
-}
-
-# Dynamic Plot:
 dynamic.plot <- function(ega.obj, title = "", vsize = 30, opacity = 0.4){
   require(qgraph)
   require(igraph)
@@ -61,41 +74,5 @@ dynamic.plot <- function(ega.obj, title = "", vsize = 30, opacity = 0.4){
     yaxis = axis,
     legend = list(x = 100, y = 0.5)
   )
-  print(plot)
+  plot
 }
-
-
-
-#Summary EGA:
-summary.EGA <- function(object, ...) {
-  cat("EGA Results:\n")
-  cat("\nNumber of Dimensions:\n")
-  print(object$n.dim)
-  cat("\nItems per Dimension:\n")
-  print(object$dim.variables)
-}
-
-#Print EGA:
-print.EGA <- function(object, ...) {
-  cat("EGA Results:\n")
-  cat("\nNumber of Dimensions:\n")
-  print(object$n.dim)
-  cat("\nItems per Dimension:\n")
-  print(object$dim.variables)
-}
-
-#Plot CFA:
-plot.CFA <- function(object, layout = "spring", vsize = 6, ...) {
-  semPaths(object$fit, title = FALSE, label.cex = 0.8, sizeLat = 8, sizeMan = 5, edge.label.cex = 0.6, minimum = 0.1,
-           sizeInt = 0.8, mar = c(1, 1, 1, 1), residuals = FALSE, intercepts = FALSE, thresholds = FALSE, layout = "spring",
-           "std", cut = 0.5)
-}
-
-#Summary CFA:
-summary.CFA <- function(object, ...) {
-  cat("Summary: Confirmatory Factor Analysis:\n")
-  print(object$summary)
-  cat("\n FIt Measures:\n")
-  print(object$fit.measures)
-}
-

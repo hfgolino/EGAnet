@@ -31,10 +31,9 @@ cfa.intel <- CFA(ega.obj = ega.intel, estimator = 'WLSMV', plot.CFA = TRUE, data
 CFA(a, estimator = 'WLSMV', data = data, ...)
 }
 }
-\author{
-Hudson F. Golino <hfg9s at virginia.edu>
-}
 \seealso{
 \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap.
 }
-
+\author{
+Hudson F. Golino <hfg9s at virginia.edu>
+}

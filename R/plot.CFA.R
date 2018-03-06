@@ -2,7 +2,8 @@
 #'
 #' \code{plot} Plots the CFA structure using \code{\link{semPlot}}
 #'
-#' @param object An CFA object
+#' @param object An CFA object.
+#' @param ... Arguments passed to ’semPaths’ in semPlot.
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
 #' @examples
 #' ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = TRUE)
@@ -21,5 +22,5 @@
 plot.CFA <- function(object, layout = "spring", vsize = 6, ...) {
   semPaths(object$fit, title = FALSE, label.cex = 0.8, sizeLat = 8, sizeMan = 5, edge.label.cex = 0.6, minimum = 0.1,
            sizeInt = 0.8, mar = c(1, 1, 1, 1), residuals = FALSE, intercepts = FALSE, thresholds = FALSE, layout = "spring",
-           "std", cut = 0.5)
+           "std", cut = 0.5, ...)
 }

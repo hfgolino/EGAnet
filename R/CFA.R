@@ -13,7 +13,8 @@
 #' cfa.wmt <- CFA(ega.obj = ega.wmt, estimator = 'WLSMV', plot.CFA = TRUE, data = wmt2)
 #'
 #' ega.intel <- EGA(data = intelligenceBattery[,8:66])
-#' cfa.intel <- CFA(ega.obj = ega.intel, estimator = 'WLSMV', plot.CFA = TRUE, data = intelligenceBattery[,8:66])
+#' cfa.intel <- CFA(ega.obj = ega.intel, estimator = 'WLSMV', plot.CFA = TRUE,
+#' data = intelligenceBattery[,8:66])
 #'
 #' \dontrun{
 #' CFA(a, estimator = 'WLSMV', data = data, ...)

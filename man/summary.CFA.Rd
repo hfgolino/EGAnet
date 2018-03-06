@@ -21,10 +21,9 @@ summary(cfa.wmt)
 summary(CFA)
 }
 }
-\author{
-Hudson F. Golino <hfg9s at virginia.edu>
-}
 \seealso{
 \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap.
 }
-
+\author{
+Hudson F. Golino <hfg9s at virginia.edu>
+}

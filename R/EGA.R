@@ -57,11 +57,10 @@ EGA <- function(data, plot.EGA = TRUE, matrix = FALSE, n = NULL) {
     dim.variables <- dim.variables[order(dim.variables[, 2]), ]
     a$dim.variables <- dim.variables
     class(a) <- "EGA"
-    if(plot.EGA == TRUE){
-      plot(a, vsize = 30, opacity = 0.4)
-    }
+    if (plot.EGA == TRUE) {
+        plot.ega <- qgraph(glasso.ebic, layout = "spring", vsize = 6, groups = as.factor(wc$membership))
+      }
     return(a)
-
   } else{
     cor.data <- data
     glasso.ebic <- EBICglasso(S = cor.data, n = n, lambda.min.ratio = 0.1)
@@ -77,8 +76,8 @@ EGA <- function(data, plot.EGA = TRUE, matrix = FALSE, n = NULL) {
     dim.variables <- dim.variables[order(dim.variables[, 2]), ]
     a$dim.variables <- dim.variables
     class(a) <- "EGA"
-    if(plot.EGA == TRUE){
-      plot(a, vsize = 30, opacity = 0.4)
+    if (plot.EGA == TRUE) {
+      plot.ega <- qgraph(glasso.ebic, layout = "spring", vsize = 6, groups = as.factor(wc$membership))
     }
     return(a)
   }

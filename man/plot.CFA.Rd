@@ -7,7 +7,9 @@
 \method{plot}{CFA}(object, layout = "spring", vsize = 6, ...)
 }
 \arguments{
-\item{object}{An CFA object}
+\item{object}{An CFA object.}
+
+\item{...}{Arguments passed to ’semPaths’ in semPlot.}
 }
 \description{
 \code{plot} Plots the CFA structure using \code{\link{semPlot}}
@@ -21,10 +23,9 @@ plot(cfa.wmt)
 plot(CFA)
 }
 }
-\author{
-Hudson F. Golino <hfg9s at virginia.edu>
-}
 \seealso{
 \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap.
 }
-
+\author{
+Hudson F. Golino <hfg9s at virginia.edu>
+}

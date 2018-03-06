@@ -14,7 +14,7 @@ bootEGA(data, n, medianStructure = TRUE, plot.MedianStructure = TRUE,
 
 \item{medianStructure}{Logical. If true, returns the typical network of partial correlations (estimated via graphical lasso), which is the median of all pairwise correlations over the n bootstraps, and estimates its dimensions.}
 
-\item{plot.MedianStructure}{Logical. If true, returns an interative plot of the typical network (partial correlations), which is the median of all pairwise correlations over the n bootstraps, and its estimated dimensions.}
+\item{plot.MedianStructure}{Logical. If true, returns a plot of the typical network (partial correlations), which is the median of all pairwise correlations over the n bootstraps, and its estimated dimensions.}
 
 \item{ncores}{Number of cores to use in computing results. Set to 1 to not use parallel computing.}
 }
@@ -30,11 +30,10 @@ boot.intwl <- bootEGA(data = intelligenceBattery[,8:66], n = 500, medianStructur
 bootEGA(a)
 }
 }
-\author{
-Hudson F. Golino <hfg9s at virginia.edu>
-}
 \seealso{
 \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link{CFA}} to
 verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
-
+\author{
+Hudson F. Golino <hfg9s at virginia.edu>
+}

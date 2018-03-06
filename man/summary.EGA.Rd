@@ -20,11 +20,10 @@ summary(ega.wmt)
 summary(EGA)
 }
 }
-\author{
-Hudson F. Golino <hfg9s at virginia.edu>
-}
 \seealso{
 \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link{CFA}} to
 verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
-
+\author{
+Hudson F. Golino <hfg9s at virginia.edu>
+}
