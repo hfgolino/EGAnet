@@ -1,7 +1,7 @@
 #'  Investigates the stability of EGA's estimation via bootstrap.
 #'
 #' \code{bootEGA} Estimates the number of dimensions of n bootstraps from the empirical correlation matrix,
-#'  and returns a typical network (i.e. the network formed by the median or mean pairwise partial correlations over the n bootstraps) and its dimensionality.
+#'  and returns a typical network (i.e. the network formed by the median or mean pairwise correlations over the n bootstraps) and its dimensionality.
 #'
 #' @param data A dataframe with the variables to be used in the analysis
 #' @param n An integer value representing the number of bootstraps

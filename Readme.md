@@ -32,8 +32,9 @@ The EGA package
 
 The `EGA` was developed as a simple and easy way to implement the *Exploratory Graph Analysis* technique. The package has three main functions:
 
-- `EGA`: Estimates the number of dimensions of a given dataset/instrument using graphical lasso and a random walk algorithm. The glasso regularization parameter is set via EBIC. 
-- `bootEGA`: Estimates the number of dimensions of *n* **bootstraps** from the empirical correlation matrix, and returns a typical network (i.e. the network formed by the median pairwise partial correlations over the *n* **bootstraps**) and its dimensionality. 
+- `EGA`: Estimates the number of dimensions of a given dataset/instrument using graphical lasso or the TMFG method and a random walk algorithm. The glasso regularization parameter is set via EBIC. 
+- Estimates the number of dimensions of n bootstraps from the empirical correlation matrix, and returns a typical network (i.e. the network formed by the median or mean pairwise correlations over the n bootstraps) and its dimensionality.
+ork formed by the median pairwise partial correlations over the *n* **bootstraps**) and its dimensionality. 
 - `CFA`: Verifies the fit of the structure suggested by `EGA` using confirmatory factor analysis.
 
 
@@ -118,4 +119,3 @@ Van Der Maas, H. L., Dolan, C. V., Grasman, R. P., Wicherts, J. M., Huizenga, H.
 
 Velicer, W. F. (1976). Determining the number of components from the matrix of partial correlations. Psychometrika, 41(3), 321-327.
 
-Velicer, W. F., & Jackson, D. N. (1990). Component analysis versus common factor analysis: Some issues in selecting an appropriate procedure. Multivariate Behavioral Research, 25(1), 1-28.

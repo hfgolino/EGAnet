@@ -1,6 +1,6 @@
 #'  Apply the Exploratory Graph Analysis technique
 #'
-#' \code{EGA} Estimates the number of dimensions of a given dataset/instrument using graphical lasso and a random walk algorithm. The glasso regularization parameter
+#' \code{EGA} Estimates the number of dimensions of a given dataset/instrument using graphical lasso or the TMFG method and a random walk algorithm. The glasso regularization parameter
 #' is set via EBIC.
 #'
 #' @param data A dataframe with the variables to be used in the analysis, or a correlation matrix. If the data used is a correlation matrix, the arguments *matrix* and *n* will need to be specified.
