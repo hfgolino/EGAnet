@@ -32,8 +32,9 @@ The EGA package
 
 The `EGA` was developed as a simple and easy way to implement the *Exploratory Graph Analysis* technique. The package has three main functions:
 
-- `EGA`: Estimates the number of dimensions of a given dataset/instrument using graphical lasso and a random walk algorithm. The glasso regularization parameter is set via EBIC. 
-- `bootEGA`: Estimates the number of dimensions of *n* **bootstraps** from the empirical correlation matrix, and returns a typical network (i.e. the network formed by the median pairwise partial correlations over the *n* **bootstraps**) and its dimensionality. 
+- `EGA`: Estimates the number of dimensions of a given dataset/instrument using graphical lasso or the TMFG method and a random walk algorithm. The glasso regularization parameter is set via EBIC. 
+- Estimates the number of dimensions of n bootstraps from the empirical correlation matrix, and returns a typical network (i.e. the network formed by the median or mean pairwise correlations over the n bootstraps) and its dimensionality.
+ork formed by the median pairwise partial correlations over the *n* **bootstraps**) and its dimensionality. 
 - `CFA`: Verifies the fit of the structure suggested by `EGA` using confirmatory factor analysis.
 
 
