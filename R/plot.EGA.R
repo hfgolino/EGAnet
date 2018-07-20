@@ -23,5 +23,6 @@
 
 plot.EGA <- function(ega.obj, title = "", vsize = 6,  ...){
   require(qgraph)
-    plot.ega <- qgraph(ega.obj$glasso, layout = "spring", vsize = vsize, groups = as.factor(ega.obj$wc), ...)
+    plot.ega <- qgraph(ega.obj$network, layout = "spring", vsize = vsize, groups = as.factor(ega.obj$wc), ...)
+
 }

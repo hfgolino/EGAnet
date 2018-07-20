@@ -7,9 +7,9 @@
 #' @param plot.EGA Logical. If TRUE, returns a plot of the network and its estimated dimensions.
 #' @param model A string indicating the method to use. Current options are:
 #' -\code{GGM}:
-#' {Gaussian graphical model estimation using graphical LASSO with extended Bayesian information criterion to select optimal regularization parameter (default method). Using \code{\link[qgraph]{EBICglasso}} from the \link[qgraph] package.}
+#' {Gaussian graphical model estimation using graphical LASSO with extended Bayesian information criterion to select optimal regularization parameter (default method). Using \code{\link[qgraph]{EBICglasso}} from the \code{\link[qgraph]{qgraph}} package.}
 #' \code{TMFG}:
-#' {Estimates a Triangulated Maximally Filtered Graph, using the function \code{\link[NetworkToolbox]{TMFG}} of the \link[NetworkToolbox] package}
+#' {Estimates a Triangulated Maximally Filtered Graph, using the function \code{\link[NetworkToolbox]{TMFG}} of the \code{\link[NetworkToolbox]{NetworkToolbox}} package}
 #' @param n Integer. Sample size, if the data provided is a correlation matrix.
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
 #' @examples

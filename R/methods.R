@@ -4,7 +4,7 @@
 
 plot.EGA <- function(ega.obj, title = "", vsize = 6,  ...){
   require(qgraph)
-  plot.ega <- qgraph(ega.obj$glasso, layout = "spring", vsize = vsize, groups = as.factor(ega.obj$wc), ...)
+  plot.ega <- qgraph(ega.obj$network, layout = "spring", vsize = vsize, groups = as.factor(ega.obj$wc), ...)
 }
 
 # Dynamic Plot:
@@ -13,7 +13,7 @@ dynamic.plot <- function(ega.obj, title = "", vsize = 30, opacity = 0.4){
   require(igraph)
   require(plotly)
 
-  graph.glasso <- as.igraph(qgraph(ega.obj$glasso, DoNotPlot = TRUE))
+  graph.glasso <- as.igraph(qgraph(ega.obj$network, DoNotPlot = TRUE))
   vert <- V(graph.glasso)
   es <- as.data.frame(get.edgelist(graph.glasso))
   edge.width <- E(graph.glasso)$weight
@@ -99,3 +99,21 @@ summary.CFA <- function(object, ...) {
   print(object$fit.measures)
 }
 
+
+# #Summary bootEGA:
+# summary.bootEGA <- function(object, ...) {
+#   cat("bootEGA Results:\n")
+#   cat("\nNumber of Dimensions:\n")
+#   print(object$n.dim)
+#   cat("\nItems per Dimension:\n")
+#   print(object$dim.variables)
+# }
+#
+# #Print EGA:
+# print.EGA <- function(object, ...) {
+#   cat("EGA Results:\n")
+#   cat("\nNumber of Dimensions:\n")
+#   print(object$n.dim)
+#   cat("\nItems per Dimension:\n")
+#   print(object$dim.variables)
+# }
