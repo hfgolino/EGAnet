@@ -146,7 +146,7 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
       {
         for(i in 1:length(uniq))
           {
-            target.dim <- boot.wc[[m]]$membership[which(confirm==i)]
+            target.dim <- boot.wc[[m]]$membership[which(confirm==uniq[i])]
             uniq.dim <- unique(target.dim)
             if(length(uniq.dim)==1){confirm.dim[m,i] <- 1}else{confirm.dim[m,i] <- 0}
           }
