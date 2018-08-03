@@ -19,6 +19,9 @@
 #' -\code{resampling}:
 #' {Generates n random subsamples of the original data.}
 #' @param ncores Number of cores to use in computing results. Set to 1 to not use parallel computing.
+#' @param confirm A vector corresponding to the expected community structure.
+#' The number of times this structure appears will be counted.
+#' Defaults to NULL
 #' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander Christensen <apchrist at uncg.edu>
 #' @examples
 #' \dontrun{
@@ -33,7 +36,8 @@
 
 # Bootstrap EGA:
 bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TRUE, ncores = 4,
-                    model = c("GGM", "TMFG"), type = c("parametric", "resampling")) {
+                    model = c("GGM", "TMFG"), type = c("parametric", "resampling"),
+                    confirm = NULL) {
   if(!require(qgraph)) {
     message("installing the 'qgraph' package")
     install.packages("qgraph")
@@ -127,9 +131,35 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
     boot.wc[[m]] <- walktrap.community(boot.igraph[[m]])
   }
   boot.ndim <- matrix(NA, nrow = n, ncol = 2)
+  #Initiate confirm matrix
+  if(!is.null(confirm))
+    {
+      uniq <- unique(confirm)
+      confirm.dim <- matrix(NA, nrow = n, ncol = length(uniq))
+    }
+  
   for (m in 1:n) {
     boot.ndim[m, 2] <- max(boot.wc[[m]]$membership)
+    
+    #Check if dimension is confirmed
+    if(!is.null(confirm))
+      {
+        for(i in 1:length(uniq))
+          {
+            target.dim <- boot.wc[[m]]$membership[which(confirm==i)]
+            uniq.dim <- unique(target.dim)
+            if(length(uniq.dim)==1){confirm.dim[m,i] <- 1}else{confirm.dim[m,i] <- 0}
+          }
+      }
   }
+  
+  #Proportion of times dimension is confirmed
+  if(!is.null(confirm))
+    {
+      con.dim <- (colSums(confirm.dim))/n
+      names(con.dim) <- uniq
+    }
+  
   colnames(boot.ndim) <- c("Boot.Number", "N.Dim")
   boot.ndim[, 1] <- seq_len(n)
   if (typicalStructure == TRUE) {
@@ -174,6 +204,8 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
   result$bootGraphs <- bootGraphs
   result$summary.table <- summary.table
   result$likelihood <- lik
+  if(!is.null(confirm))
+  {result$dim.confirm <- con.dim}
   typicalGraph <- list()
   typicalGraph$graph <- typical.Structure
   typicalGraph$typical.dim.variables <- dim.variables[order(dim.variables[,2]), ]
