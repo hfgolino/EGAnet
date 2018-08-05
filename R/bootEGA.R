@@ -158,18 +158,17 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
             target.dim <- boot.wc[[m]]$membership[dim.items]
             uniq.dim <- unique(target.dim)
             if(length(uniq.dim)==1){confirm.dim[m,i] <- 1}else{confirm.dim[m,i] <- 0}
+            
+            #Check if item is confirmed within dimension
+            if(length(uniq.dim)>1)
+              {
+                target.mode <- mode(target.dim)
+                non.con <- dim.items[which(target.dim!=target.mode)]
+                con <- setdiff(dim.items,non.con)
+                item.confirm[m,non.con] <- 0
+                item.confirm[m,con] <- 1
+              } else {item.confirm[m,dim.items] <- 1}
           }
-      
-        #Check if item is confirmed within dimension
-        if(length(uniq.dim)>1)
-          {
-            target.mode <- mode(target.dim)
-            non.con <- dim.items[which(target.dim!=target.mode)]
-            con <- setdiff(dim.items,non.con)
-            item.confirm[m,non.con] <- 0
-            item.confirm[m,con] <- 1
-          } else {item.confirm[m,dim.items] <- 1}
-        
       }
   }
   
