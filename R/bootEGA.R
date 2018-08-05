@@ -68,6 +68,13 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
     message("installing the 'doSNOW' package")
     install.packages("doSNOW")
   }
+  
+  #mode function for item confirm
+  mode <- function(v)
+  {
+    uniqv <- unique(v)
+    uniqv[which.max(tabulate(match(v, uniqv)))]
+  }
 
   #Parallel processing
   cl <- parallel::makeCluster(ncores)
@@ -136,6 +143,7 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
     {
       uniq <- unique(confirm)
       confirm.dim <- matrix(NA, nrow = n, ncol = length(uniq))
+      confirm.item <- matrix(NA, nrow = n, ncol = ncol(data))
     }
   
   for (m in 1:n) {
@@ -150,14 +158,29 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
             uniq.dim <- unique(target.dim)
             if(length(uniq.dim)==1){confirm.dim[m,i] <- 1}else{confirm.dim[m,i] <- 0}
           }
+      
+        #Check if item is confirmed within dimension
+        if(length(uniq.dim)>1)
+          {
+            target.mode <- mode(target.dim)
+            non.con <- dim.items[which(target.dim!=target.mode)]
+            con <- setdiff(dim.items,non.con)
+            item.confirm[m,non.con] <- 0
+            item.confirm[m,con] <- 1
+          } else {item.confirm[m,dim.items] <- 1}
+        
       }
   }
   
-  #Proportion of times dimension is confirmed
   if(!is.null(confirm))
     {
+      #Proportion of times dimension is confirmed
       con.dim <- (colSums(confirm.dim))/n
       names(con.dim) <- uniq
+    
+      #Proportion of times item is confirmed
+      con.item <- (colSums(item.confirm)/n)
+      names(con.item) <- colnames(data)
     }
   
   colnames(boot.ndim) <- c("Boot.Number", "N.Dim")
@@ -205,7 +228,10 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
   result$summary.table <- summary.table
   result$likelihood <- lik
   if(!is.null(confirm))
-  {result$dim.confirm <- con.dim}
+  {
+    result$dim.confirm <- con.dim
+    result$item.confirm <- con.item
+  }
   typicalGraph <- list()
   typicalGraph$graph <- typical.Structure
   typicalGraph$typical.dim.variables <- dim.variables[order(dim.variables[,2]), ]
