@@ -143,7 +143,7 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
     {
       uniq <- unique(confirm)
       confirm.dim <- matrix(NA, nrow = n, ncol = length(uniq))
-      confirm.item <- matrix(NA, nrow = n, ncol = ncol(data))
+      item.confirm <- matrix(NA, nrow = n, ncol = ncol(data))
     }
   
   for (m in 1:n) {
