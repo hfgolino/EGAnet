@@ -11,6 +11,8 @@
 #' \code{TMFG}:
 #' {Estimates a Triangulated Maximally Filtered Graph, using the function \code{\link[NetworkToolbox]{TMFG}} of the \code{\link[NetworkToolbox]{NetworkToolbox}} package}
 #' @param n Integer. Sample size, if the data provided is a correlation matrix.
+#' @param steps Number of steps to be used in walktrap algorithm.
+#' Defaults to 4
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
 #' @examples
 #' ega.wmt <- EGA(data = wmt2[,7:24], model = "glasso", plot.EGA = TRUE)
@@ -29,7 +31,7 @@
 #' @export
 
 # EGA default function - 11/21/2017
-EGA <- function(data, model = c("glasso", "TMFG"), plot.EGA = TRUE, n = NULL) {
+EGA <- function(data, model = c("glasso", "TMFG"), plot.EGA = TRUE, n = NULL, steps = 4) {
   if(!require(qgraph)) {
     message("installing the 'qgraph' package")
     install.packages("qgraph")
@@ -69,7 +71,7 @@ EGA <- function(data, model = c("glasso", "TMFG"), plot.EGA = TRUE, n = NULL) {
   }
 
     graph <- as.igraph(qgraph(abs(estimated.network), layout = "spring", vsize = 3, DoNotPlot = TRUE))
-    wc <- walktrap.community(graph)
+    wc <- walktrap.community(graph, steps = steps)
     n.dim <- max(wc$membership)
     a <- list()
     a$n.dim <- n.dim
