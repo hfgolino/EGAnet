@@ -144,13 +144,14 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
       uniq <- unique(confirm)
       confirm.dim <- matrix(NA, nrow = n, ncol = length(uniq))
       item.confirm <- matrix(NA, nrow = n, ncol = ncol(data))
+      dim.nmi <- vector("numeric", length = n)
     }
   
   for (m in 1:n) {
     boot.ndim[m, 2] <- max(boot.wc[[m]]$membership)
     
     #normalized mutual information of community comparisons
-    dim.nmi[m] <- igraph::compare(boot.wc[[m]]$membership,confirm,method="nmi")
+    dim.nmi[m] <- igraph::compare(boot.wc[[m]]$membership, confirm, method="nmi")
         
     #Check if dimension is confirmed
     if(!is.null(confirm))
@@ -187,8 +188,8 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
     
       #Tables for nmi
       dim.nmi.table <- vector("numeric", length = 2)
-      dim.nmi.table[1] <- mean(dim.nmi)
-      dim.nmi.table[2] <- sd(dim.nmi)
+      dim.nmi.table[1] <- mean(dim.nmi, na.rm = TRUE)
+      dim.nmi.table[2] <- sd(dim.nmi, na.rm = TRUE)
       names(dim.nmi.table) <- c("mean","sd")
     }
   
