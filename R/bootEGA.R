@@ -149,6 +149,9 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
   for (m in 1:n) {
     boot.ndim[m, 2] <- max(boot.wc[[m]]$membership)
     
+    #normalized mutual information of community comparisons
+    dim.nmi[m] <- igraph::compare(boot.wc[[m]]$membership,confirm,method="nmi")
+        
     #Check if dimension is confirmed
     if(!is.null(confirm))
       {
@@ -181,6 +184,12 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
       #Proportion of times item is confirmed
       con.item <- (colSums(item.confirm)/n)
       names(con.item) <- colnames(data)
+    
+      #Tables for nmi
+      dim.nmi.table <- vector("numeric", length = 2)
+      dim.nmi.table[1] <- mean(dim.nmi)
+      dim.nmi.table[2] <- sd(dim.nmi)
+      names(dim.nmi.table) <- c("mean","sd")
     }
   
   colnames(boot.ndim) <- c("Boot.Number", "N.Dim")
@@ -231,6 +240,7 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
   {
     result$dim.confirm <- con.dim
     result$item.confirm <- con.item
+    result$dim.nmi <- dim.nmi.table
   }
   typicalGraph <- list()
   typicalGraph$graph <- typical.Structure
