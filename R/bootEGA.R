@@ -140,68 +140,73 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
   boot.ndim <- matrix(NA, nrow = n, ncol = 2)
   #Initiate confirm matrix
   if(!is.null(confirm))
+  {
+    uniq <- unique(confirm)
+    confirm.dim <- matrix(NA, nrow = n, ncol = length(uniq))
+    item.confirm <- matrix(NA, nrow = n, ncol = ncol(data))
+    dim.nmi <- vector("numeric", length = n)
+
+    #check if confirm is character
+    if(is.character(confirm))
     {
-      uniq <- unique(confirm)
-      confirm.dim <- matrix(NA, nrow = n, ncol = length(uniq))
-      item.confirm <- matrix(NA, nrow = n, ncol = ncol(data))
-      dim.nmi <- vector("numeric", length = n)
+      uni <- unique(confirm)
+      num.comm <- confirm
 
-      #check if confirm is character
-      if(is.character(confirm))
-        {
-            uni <- unique(confirm)
-            num.comm <- confirm
-
-            for(i in 1:length(uni))
-            {num.comm[which(num.comm==uniq[i])] <- i}
-        } else {num.comm <- confirm}
-    }
+      for(i in 1:length(uni))
+      {num.comm[which(num.comm==uniq[i])] <- i}
+    } else {num.comm <- confirm}
+  }
 
   for (m in 1:n) {
     boot.ndim[m, 2] <- max(boot.wc[[m]]$membership)
 
-    #normalized mutual information of community comparisons
-    dim.nmi[m] <- igraph::compare(boot.wc[[m]]$membership, num.comm, method="nmi")
-
     #Check if dimension is confirmed
     if(!is.null(confirm))
-      {
-        for(i in 1:length(uniq))
-          {
-            dim.items <- which(confirm==uniq[i])
-            target.dim <- boot.wc[[m]]$membership[dim.items]
-            uniq.dim <- unique(target.dim)
-            if(length(uniq.dim)==1){confirm.dim[m,i] <- 1}else{confirm.dim[m,i] <- 0}
+    {
+      #normalized mutual information of community comparisons
+      dim.nmi[m] <- igraph::compare(boot.wc[[m]]$membership, num.comm, method="nmi")
 
-            #Check if item is confirmed within dimension
-            if(length(uniq.dim)>1)
-              {
-                target.mode <- mode(target.dim)
-                non.con <- dim.items[which(target.dim!=target.mode)]
-                con <- setdiff(dim.items,non.con)
-                item.confirm[m,non.con] <- 0
-                item.confirm[m,con] <- 1
-              } else {item.confirm[m,dim.items] <- 1}
-          }
+      for(i in 1:length(uniq))
+      {
+        dim.items <- which(confirm==uniq[i])
+        target.dim <- boot.wc[[m]]$membership[dim.items]
+
+        #NMI code
+        #dim.confirm.nmi <- igraph::compare(target.dim, num.comm[dim.items], method="nmi")
+
+        #count code
+        uniq.dim <- unique(target.dim)
+        if(length(uniq.dim)==1){confirm.dim[m,i] <- 1}else{confirm.dim[m,i] <- 0}
+
+        #Check if item is confirmed within dimension
+        if(length(uniq.dim)>1)
+        {
+          target.mode <- mode(target.dim)
+          non.con <- dim.items[which(target.dim!=target.mode)]
+          con <- setdiff(dim.items,non.con)
+          item.confirm[m,non.con] <- 0
+          item.confirm[m,con] <- 1
+        } else {item.confirm[m,dim.items] <- 1}
       }
+    }
   }
 
   if(!is.null(confirm))
-    {
-      #Proportion of times dimension is confirmed
-      con.dim <- (colSums(confirm.dim))/n
-      names(con.dim) <- uniq
+  {
+    #Proportion of times dimension is confirmed
+    con.dim <- (colSums(confirm.dim))/n
+    names(con.dim) <- uniq
 
-      #Proportion of times item is confirmed
-      con.item <- (colSums(item.confirm)/n)
-      names(con.item) <- colnames(data)
+    #Proportion of times item is confirmed
+    con.item <- (colSums(item.confirm)/n)
+    names(con.item) <- colnames(data)
 
-      #Tables for nmi
-      dim.nmi.table <- vector("numeric", length = 2)
-      dim.nmi.table[1] <- mean(dim.nmi)
-      dim.nmi.table[2] <- sd(dim.nmi)
-      names(dim.nmi.table) <- c("mean","sd")
-    }
+    #Tables for nmi
+    dim.nmi.table <- vector("numeric", length = 2)
+    dim.nmi.table[1] <- mean(dim.nmi)
+    dim.nmi.table[2] <- sd(dim.nmi)
+    names(dim.nmi.table) <- c("mean","sd")
+  }
 
   colnames(boot.ndim) <- c("Boot.Number", "N.Dim")
   boot.ndim[, 1] <- seq_len(n)
