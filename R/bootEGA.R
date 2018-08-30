@@ -68,7 +68,7 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
     message("installing the 'doSNOW' package")
     install.packages("doSNOW")
   }
-  
+
   #mode function for item confirm
   mode <- function(v)
   {
@@ -145,24 +145,24 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
       confirm.dim <- matrix(NA, nrow = n, ncol = length(uniq))
       item.confirm <- matrix(NA, nrow = n, ncol = ncol(data))
       dim.nmi <- vector("numeric", length = n)
-    
+
       #check if confirm is character
       if(is.character(confirm))
         {
             uni <- unique(confirm)
             num.comm <- confirm
-            
+
             for(i in 1:length(uni))
             {num.comm[which(num.comm==uniq[i])] <- i}
-        } else {num.comm <- confirm} 
+        } else {num.comm <- confirm}
     }
-  
+
   for (m in 1:n) {
     boot.ndim[m, 2] <- max(boot.wc[[m]]$membership)
-    
+
     #normalized mutual information of community comparisons
     dim.nmi[m] <- igraph::compare(boot.wc[[m]]$membership, num.comm, method="nmi")
-        
+
     #Check if dimension is confirmed
     if(!is.null(confirm))
       {
@@ -172,7 +172,7 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
             target.dim <- boot.wc[[m]]$membership[dim.items]
             uniq.dim <- unique(target.dim)
             if(length(uniq.dim)==1){confirm.dim[m,i] <- 1}else{confirm.dim[m,i] <- 0}
-            
+
             #Check if item is confirmed within dimension
             if(length(uniq.dim)>1)
               {
@@ -185,24 +185,24 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
           }
       }
   }
-  
+
   if(!is.null(confirm))
     {
       #Proportion of times dimension is confirmed
       con.dim <- (colSums(confirm.dim))/n
       names(con.dim) <- uniq
-    
+
       #Proportion of times item is confirmed
       con.item <- (colSums(item.confirm)/n)
       names(con.item) <- colnames(data)
-    
+
       #Tables for nmi
       dim.nmi.table <- vector("numeric", length = 2)
       dim.nmi.table[1] <- mean(dim.nmi)
       dim.nmi.table[2] <- sd(dim.nmi)
       names(dim.nmi.table) <- c("mean","sd")
     }
-  
+
   colnames(boot.ndim) <- c("Boot.Number", "N.Dim")
   boot.ndim[, 1] <- seq_len(n)
   if (typicalStructure == TRUE) {
@@ -256,6 +256,7 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
   typicalGraph <- list()
   typicalGraph$graph <- typical.Structure
   typicalGraph$typical.dim.variables <- dim.variables[order(dim.variables[,2]), ]
+  typicalGraph$wc <- typical.wc$membership
   result$typicalGraph <- typicalGraph
   class(result) <- "bootEGA"
   return(result)
