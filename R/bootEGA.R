@@ -159,17 +159,22 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
 
   for (m in 1:n) {
     boot.ndim[m, 2] <- max(boot.wc[[m]]$membership)
-
-    #normalized mutual information of community comparisons
-    dim.nmi[m] <- igraph::compare(boot.wc[[m]]$membership, num.comm, method="nmi")
-
+    
     #Check if dimension is confirmed
     if(!is.null(confirm))
       {
+        #normalized mutual information of community comparisons
+        dim.nmi[m] <- igraph::compare(boot.wc[[m]]$membership, num.comm, method="nmi")
+
         for(i in 1:length(uniq))
           {
             dim.items <- which(confirm==uniq[i])
             target.dim <- boot.wc[[m]]$membership[dim.items]
+
+            #NMI code
+            #dim.confirm.nmi <- igraph::compare(target.dim, num.comm[dim.items], method="nmi")
+
+            #count code
             uniq.dim <- unique(target.dim)
             if(length(uniq.dim)==1){confirm.dim[m,i] <- 1}else{confirm.dim[m,i] <- 0}
 
