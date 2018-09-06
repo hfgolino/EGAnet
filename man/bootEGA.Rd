@@ -4,30 +4,48 @@
 \alias{bootEGA}
 \title{Investigates the stability of EGA's estimation via bootstrap.}
 \usage{
-bootEGA(data, n, medianStructure = TRUE, plot.MedianStructure = TRUE,
-  ncores = 4)
+bootEGA(data, n, typicalStructure = TRUE, plot.typicalStructure = TRUE,
+  ncores = 4, model = c("GGM", "TMFG"), type = c("parametric",
+  "resampling"), confirm = NULL)
 }
 \arguments{
 \item{data}{A dataframe with the variables to be used in the analysis}
 
 \item{n}{An integer value representing the number of bootstraps}
 
-\item{medianStructure}{Logical. If true, returns the typical network of partial correlations (estimated via graphical lasso), which is the median of all pairwise correlations over the n bootstraps, and estimates its dimensions.}
+\item{typicalStructure}{Logical. If true, returns the typical network of partial correlations (estimated via graphical lasso or via TMFG) and estimates its dimensions. The "typical network" is the median of all pairwise correlations over the n bootstraps.}
 
-\item{plot.MedianStructure}{Logical. If true, returns a plot of the typical network (partial correlations), which is the median of all pairwise correlations over the n bootstraps, and its estimated dimensions.}
+\item{plot.typicalStructure}{Logical. If true, returns a plot of the typical network (partial correlations), which is the median of all pairwise correlations over the n bootstraps, and its estimated dimensions.}
 
 \item{ncores}{Number of cores to use in computing results. Set to 1 to not use parallel computing.}
+
+\item{model}{A string indicating the method to use. Current options are:
+-\code{GGM}:
+{Gaussian Markov random field estimation using graphical LASSO with extended Bayesian information criterion to select optimal regularization parameter. Using \code{\link[qgraph]{EBICglasso}} from the qgraph package.}
+\code{TMFG}:
+{Estimates a Triangulated Maximally Filtered Graph, using the function \code{TMFG} of the NetworkToolbox package}}
+
+\item{type}{A string indicating the type of bootstrap to use. Current options are:
+-\code{parametric}:
+{Generates n new datasets (multivariate normal random distributions) based on the
+original dataset, via the \code{\link[mvtnorm]{rmvnorm}} function of the mvtnorm package}.
+-\code{resampling}:
+{Generates n random subsamples of the original data.}}
+
+\item{confirm}{A vector corresponding to the expected community structure.
+The number of times this structure appears will be counted.
+Defaults to NULL}
 }
 \description{
 \code{bootEGA} Estimates the number of dimensions of n bootstraps from the empirical correlation matrix,
- and returns a typical network (i.e. the network formed by the median pairwise partial correlations over the n bootstraps) and its dimensionality.
+ and returns a typical network (i.e. the network formed by the median or mean pairwise correlations over the n bootstraps) and its dimensionality.
 }
 \examples{
-boot.wmt <- bootEGA(data = wmt2[,7:24], n = 500, medianStructure = TRUE, plot.MedianStructure = TRUE)
-boot.intwl <- bootEGA(data = intelligenceBattery[,8:66], n = 500, medianStructure = TRUE, plot.MedianStructure = TRUE, ncores = 4)
-
 \dontrun{
-bootEGA(a)
+boot.wmt <- bootEGA(data = wmt2[,7:24], n = 500, typicalStructure = TRUE,
+plot.typicalStructure = TRUE, model = "GGM", type = "parametric", ncores = 4)
+boot.intwl <- bootEGA(data = intelligenceBattery[,8:66], n = 500, typicalStructure = TRUE,
+plot.typicalStructure = TRUE, model = "GGM", type = "parametric", ncores = 4)
 }
 }
 \seealso{
@@ -35,5 +53,5 @@ bootEGA(a)
 verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{
-Hudson F. Golino <hfg9s at virginia.edu>
+Hudson F. Golino <hfg9s at virginia.edu> and Alexander Christensen <apchrist at uncg.edu>
 }
