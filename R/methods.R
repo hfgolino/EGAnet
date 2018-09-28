@@ -7,6 +7,38 @@ plot.EGA <- function(ega.obj, title = "", vsize = 6,  ...){
   plot.ega <- qgraph(ega.obj$network, layout = "spring", vsize = vsize, groups = as.factor(ega.obj$wc), ...)
 }
 
+
+# Plot bootEGA:
+plot.bootEGA <- function(bootega.obj, title = "", vsize = 6,  ...){
+  require(qgraph)
+  qgraph(bootega.obj$typicalGraph$graph, layout = "spring",
+         groups = as.factor(bootega.obj$typicalGraph$wc),
+         vsize = vsize, ...)
+
+}
+
+# Plot the Item replicability (estimated via bootEGA):
+
+
+itemConfirm <- function(bootega.obj){
+  require(ggpubr)
+
+  item.rep <- data.frame(Item = names(bootega.obj$item.confirm),
+                         Rep = bootega.obj$item.confirm)
+
+  ggdotchart(item.rep, x = "Item", y = "Rep",
+             sorting = "descending",
+             add = "segments",
+             rotate = TRUE,
+             dot.size = 6,
+             label = round(item.rep$Rep, 2),
+             font.label = list(color = "white", size = 8,
+                               vjust = 0.5),
+             ggtheme = theme_pubr()
+  )
+}
+
+
 # Dynamic Plot:
 dynamic.plot <- function(ega.obj, title = "", vsize = 30, opacity = 0.4){
   require(qgraph)
