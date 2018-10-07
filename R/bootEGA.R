@@ -201,6 +201,30 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
         con.item <- (colSums(item.confirm)/n)
         names(con.item) <- colnames(data)
         
+        #Strength of within- and between-communities
+        net <- EGA(data,model=model,plot.EGA=FALSE)$network
+        
+        comcat <- NetworkToolbox::comcat(net,comm=confirm,metric="each")
+        stable <- NetworkToolbox::stable(net,comm=confirm)
+        
+        for(q in 1:nrow(comcat))
+        {comcat[q,which(is.na(comcat[q,]))] <- stable[q]}
+        
+        comm.str <- comcat[,order(colnames(comcat))]
+        comm.str <- round(comm.str,3)
+        
+        #less reliable items
+        prob.item <- which(con.item<=.80)
+        
+        prob.vec <- con.item
+        
+        prob.vec[prob.item] <- "X"
+        prob.vec[-prob.item] <- ""
+        
+        item.ident <- as.data.frame(cbind(confirm[order(confirm)],comm.str[order(confirm),],prob.vec))
+        
+        colnames(item.ident) <- c("Actual\nDim",colnames(comm.str),"Flagged")
+        
         #Tables for nmi
         dim.nmi.table <- vector("numeric", length = 3)
         dim.nmi.table[1] <- mean(dim.nmi)
@@ -260,8 +284,9 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
     if(!is.null(confirm))
     {
         result$orig.wc <- confirm
-        result$dim.confirm <- con.dim
         result$item.confirm <- con.item
+        result$item.ident <- item.ident
+        result$dim.confirm <- con.dim
         result$dim.nmi.table <- dim.nmi.table
     }
     typicalGraph <- list()
