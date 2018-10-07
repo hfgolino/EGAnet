@@ -22,19 +22,27 @@
 #' @export
 
 itemConfirm <- function(bootega.obj){
-  require(ggpubr)
-
-  item.rep <- data.frame(Item = names(bootega.obj$item.confirm),
-                         Rep = bootega.obj$item.confirm)
-
-  ggdotchart(item.rep, x = "Item", y = "Rep",
-             sorting = "descending",
-             add = "segments",
-             rotate = TRUE,
-             dot.size = 6,
-             label = round(item.rep$Rep, 2),
-             font.label = list(color = "white", size = 8,
-                               vjust = 0.5),
-             ggtheme = theme_pubr()
-             )
+    require(ggpubr)
+    
+    comm <- bootega.obj$orig.wc
+    rain <- grDevices::rainbow(max(comm))
+    
+    item.rep <- data.frame(Item = names(bootega.obj$item.confirm),
+                           Rep = bootega.obj$item.confirm,
+                           Comm = factor(comm))
+    
+    
+    ggdotchart(item.rep, x = "Item", y = "Rep",
+               group = "Comm", color = "Comm",
+               palette = rain,
+               legend.title = "EGA Communities",
+               sorting = NULL,
+               add = "segments",
+               rotate = TRUE,
+               dot.size = 6,
+               label = round(item.rep$Rep, 2),
+               font.label = list(color = "black", size = 8,
+                                 vjust = 0.5),
+               ggtheme = theme_pubr()
+    )
 }
