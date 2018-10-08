@@ -8,7 +8,7 @@
 #' @param typicalStructure Logical. If true, returns the typical network of partial correlations (estimated via graphical lasso or via TMFG) and estimates its dimensions. The "typical network" is the median of all pairwise correlations over the n bootstraps.
 #' @param plot.typicalStructure Logical. If true, returns a plot of the typical network (partial correlations), which is the median of all pairwise correlations over the n bootstraps, and its estimated dimensions.
 #' @param model A string indicating the method to use. Current options are:
-#' -\code{GGM}:
+#' -\code{glasso}:
 #' {Gaussian Markov random field estimation using graphical LASSO with extended Bayesian information criterion to select optimal regularization parameter. Using \code{\link[qgraph]{EBICglasso}} from the qgraph package.}
 #' \code{TMFG}:
 #' {Estimates a Triangulated Maximally Filtered Graph, using the function \code{TMFG} of the NetworkToolbox package}
@@ -19,16 +19,13 @@
 #' -\code{resampling}:
 #' {Generates n random subsamples of the original data.}
 #' @param ncores Number of cores to use in computing results. Set to 1 to not use parallel computing.
-#' @param confirm A vector corresponding to the expected community structure.
-#' The number of times this structure appears will be counted.
-#' Defaults to NULL
-#' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander Christensen <apchrist at uncg.edu>
+#' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander Christensen <alexpaulchristensen@gmail.com>
 #' @examples
 #' \dontrun{
 #' boot.wmt <- bootEGA(data = wmt2[,7:24], n = 500, typicalStructure = TRUE,
-#' plot.typicalStructure = TRUE, model = "GGM", type = "parametric", ncores = 4)
+#' plot.typicalStructure = TRUE, model = "glasso", type = "parametric", ncores = 4)
 #' boot.intwl <- bootEGA(data = intelligenceBattery[,8:66], n = 500, typicalStructure = TRUE,
-#' plot.typicalStructure = TRUE, model = "GGM", type = "parametric", ncores = 4)
+#' plot.typicalStructure = TRUE, model = "glasso", type = "parametric", ncores = 4)
 #'}
 #' @seealso \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link{CFA}} to
 #' verify the fit of the structure suggested by EGA using confirmatory factor analysis.
@@ -36,7 +33,7 @@
 
 # Bootstrap EGA:
 bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TRUE, ncores = 4,
-                    model = c("GGM", "TMFG"), type = c("parametric", "resampling"),
+                    model = c("glasso", "TMFG"), type = c("parametric", "resampling"),
                     confirm = NULL) {
     if(!require(qgraph)) {
         message("installing the 'qgraph' package")
@@ -92,7 +89,7 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
                              .packages = c("NetworkToolbox","psych","qgraph"),
                              .options.snow = opts) %dopar%
                              {
-                                 if(model=="GGM")
+                                 if(model=="glasso")
                                  {
                                      if(type=="parametric")  # Use a parametric approach:
                                      {
@@ -129,118 +126,24 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
         colnames(bootGraphs[[i]]) <- colnames(data)
         rownames(bootGraphs[[i]]) <- colnames(data)
     }
-    
     boot.igraph <- vector("list", n)
     for (l in 1:n) {
-        boot.igraph[[l]] <- NetworkToolbox::convert2igraph(abs(bootGraphs[[l]]))
+        boot.igraph[[l]] <- as.igraph(qgraph(abs(bootGraphs[[l]]), DoNotPlot = TRUE))
     }
-    
     boot.wc <- vector("list", n)
     for (m in 1:n) {
         boot.wc[[m]] <- walktrap.community(boot.igraph[[m]])
     }
-    
     boot.ndim <- matrix(NA, nrow = n, ncol = 2)
-    #Initiate confirm matrix
-    if(!is.null(confirm))
-    {
-        uniq <- unique(confirm)
-        confirm.dim <- matrix(NA, nrow = n, ncol = length(uniq))
-        item.confirm <- matrix(NA, nrow = n, ncol = ncol(data))
-        dim.nmi <- vector("numeric", length = n)
-        
-        #check if confirm is character
-        if(is.character(confirm))
-        {
-            uni <- unique(confirm)
-            num.comm <- confirm
-            
-            for(i in 1:length(uni))
-            {num.comm[which(num.comm==uniq[i])] <- i}
-        } else {num.comm <- confirm}
-    }
-    
     for (m in 1:n) {
         boot.ndim[m, 2] <- max(boot.wc[[m]]$membership)
-        
-        #Check if dimension is confirmed
-        if(!is.null(confirm))
-        {
-            #normalized mutual information of community comparisons
-            dim.nmi[m] <- igraph::compare(boot.wc[[m]]$membership, num.comm, method="nmi")
-            
-            for(i in 1:length(uniq))
-            {
-                dim.items <- which(confirm==uniq[i])
-                target.dim <- boot.wc[[m]]$membership[dim.items]
-                
-                #count code
-                uniq.dim <- unique(target.dim)
-                if(length(uniq.dim)==1){confirm.dim[m,i] <- 1}else{confirm.dim[m,i] <- 0}
-                
-                #Check if item is confirmed within dimension
-                if(length(uniq.dim)>1)
-                {
-                    target.mode <- mode(target.dim)
-                    non.con <- dim.items[which(target.dim!=target.mode)]
-                    con <- setdiff(dim.items,non.con)
-                    item.confirm[m,non.con] <- 0
-                    item.confirm[m,con] <- 1
-                } else {item.confirm[m,dim.items] <- 1}
-            }
-        }
-    }
-    
-    if(!is.null(confirm))
-    {
-        #Proportion of times dimension is confirmed
-        con.dim <- (colSums(confirm.dim))/n
-        names(con.dim) <- uniq
-        
-        #Proportion of times item is confirmed
-        con.item <- (colSums(item.confirm)/n)
-        names(con.item) <- colnames(data)
-        
-        #Strength of within- and between-communities
-        net <- EGA(data,model=model,plot.EGA=FALSE)$network
-        
-        comcat <- NetworkToolbox::comcat(net,comm=confirm,metric="each")
-        stable <- NetworkToolbox::stable(net,comm=confirm)
-        
-        for(q in 1:nrow(comcat))
-        {comcat[q,which(is.na(comcat[q,]))] <- stable[q]}
-        
-        comm.str <- comcat[,order(colnames(comcat))]
-        comm.str <- round(comm.str,3)
-        
-        #less reliable items
-        prob.item <- which(con.item<=.80)
-        
-        prob.vec <- con.item
-        
-        prob.vec[prob.item] <- "X"
-        prob.vec[-prob.item] <- ""
-        
-        item.ident <- as.data.frame(cbind(confirm[order(confirm)],comm.str[order(confirm),],prob.vec))
-        
-        colnames(item.ident) <- c("Actual\nDim",colnames(comm.str),"Flagged")
-        
-        #Tables for nmi
-        dim.nmi.table <- vector("numeric", length = 3)
-        dim.nmi.table[1] <- mean(dim.nmi)
-        dim.nmi.table[2] <- sd(dim.nmi)
-        dim.nmi.se <- (1.253 * sd(dim.nmi))/sqrt(nrow(boot.ndim))
-        dim.nmi.table[3] <- mean(dim.nmi) - dim.nmi.se
-        dim.nmi.table[4] <- mean(dim.nmi) + dim.nmi.se
-        
-        
-        names(dim.nmi.table) <- c("mean","sd","lower.ci","upper.ci")
     }
     
     colnames(boot.ndim) <- c("Boot.Number", "N.Dim")
+    
     boot.ndim[, 1] <- seq_len(n)
     if (typicalStructure == TRUE) {
-        if(model=="GGM")
+        if(model=="glasso")
         {typical.Structure <- apply(simplify2array(bootGraphs),1:2, median)
         }else if(model=="TMFG")
         {typical.Structure <- apply(simplify2array(bootGraphs),1:2, mean)}
@@ -278,17 +181,11 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
     result <- list()
     result$n <- n
     result$boot.ndim <- boot.ndim
+    result$boot.wc <- boot.wc
     result$bootGraphs <- bootGraphs
     result$summary.table <- summary.table
     result$likelihood <- lik
-    if(!is.null(confirm))
-    {
-        result$orig.wc <- confirm
-        result$item.confirm <- con.item
-        result$item.ident <- item.ident
-        result$dim.confirm <- con.dim
-        result$dim.nmi.table <- dim.nmi.table
-    }
+    result$EGA <- EGA(data = data, model = model, plot.EGA = FALSE)
     typicalGraph <- list()
     typicalGraph$graph <- typical.Structure
     typicalGraph$typical.dim.variables <- dim.variables[order(dim.variables[,2]), ]
