@@ -33,8 +33,7 @@
 
 # Bootstrap EGA:
 bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TRUE, ncores = 4,
-                    model = c("glasso", "TMFG"), type = c("parametric", "resampling"),
-                    confirm = NULL) {
+                    model = c("glasso", "TMFG"), type = c("parametric", "resampling")) {
     if(!require(qgraph)) {
         message("installing the 'qgraph' package")
         install.packages("qgraph")
@@ -185,7 +184,7 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
     result$bootGraphs <- bootGraphs
     result$summary.table <- summary.table
     result$likelihood <- lik
-    result$EGA <- EGA(data = data, model = model, plot.EGA = FALSE)
+    result$EGA <- suppressMessages(suppressWarnings(EGA(data = data, model = model, plot.EGA = FALSE)))
     typicalGraph <- list()
     typicalGraph$graph <- typical.Structure
     typicalGraph$typical.dim.variables <- dim.variables[order(dim.variables[,2]), ]

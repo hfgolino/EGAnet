@@ -6,7 +6,7 @@
 \usage{
 bootEGA(data, n, typicalStructure = TRUE, plot.typicalStructure = TRUE,
   ncores = 4, model = c("glasso", "TMFG"), type = c("parametric",
-  "resampling"), confirm = NULL)
+  "resampling"))
 }
 \arguments{
 \item{data}{A dataframe with the variables to be used in the analysis}

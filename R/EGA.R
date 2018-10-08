@@ -6,7 +6,7 @@
 #' @param data A dataframe with the variables to be used in the analysis, or a correlation matrix. If the data used is a correlation matrix, the arguments *matrix* and *n* will need to be specified.
 #' @param plot.EGA Logical. If TRUE, returns a plot of the network and its estimated dimensions.
 #' @param model A string indicating the method to use. Current options are:
-#' -\code{GGM}:
+#' -\code{glasso}:
 #' {Gaussian graphical model estimation using graphical LASSO with extended Bayesian information criterion to select optimal regularization parameter (default method). Using \code{\link[qgraph]{EBICglasso}} from the \code{\link[qgraph]{qgraph}} package.}
 #' \code{TMFG}:
 #' {Estimates a Triangulated Maximally Filtered Graph, using the function \code{\link[NetworkToolbox]{TMFG}} of the \code{\link[NetworkToolbox]{NetworkToolbox}} package}
@@ -72,6 +72,7 @@ EGA <- function(data, model = c("glasso", "TMFG"), plot.EGA = TRUE, n = NULL, st
 
     graph <- as.igraph(qgraph(abs(estimated.network), layout = "spring", vsize = 3, DoNotPlot = TRUE))
     wc <- walktrap.community(graph, steps = steps)
+    names(wc$membership) <- colnames(data)
     n.dim <- max(wc$membership)
     a <- list()
     a$n.dim <- n.dim
