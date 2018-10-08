@@ -81,6 +81,8 @@ item.ident <- function (bootega.obj, confirm, rep.val = .80)
         prob.vec[-prob.item] <- ""
         
         #Unstandardize
+        confirm <- confirm[order(confirm)]
+        
         unstd.item.id <- unstd.item.id[order(confirm),]
         unstd.item.ident <- as.data.frame(cbind(confirm,unstd.item.id,prob.vec))
         colnames(unstd.item.ident) <- c("Dimension",colnames(unstd.item.id),paste("Rep<=",rep.val,sep=""))
