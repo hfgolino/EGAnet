@@ -14,7 +14,7 @@ Description: An implementation of the Exploratory Graph Analysis (EGA). EGA is p
             verified using confirmatory factor analysis and a direct way to convert the EGA structure to CFA is also
             implemented. Documentation and examples are available.
 License: GPL-3
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.0
 Depends: R (>= 2.10)
 Imports: qgraph (>= 1.4.1), semPlot (>= 1.0.1), bootnet (>= 0.3),
         igraph (>= 1.0.1), lavaan (>= 0.5-22), doParallel (>= 1.0.10),
