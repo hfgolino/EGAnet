@@ -17,7 +17,7 @@
 
 ## S3 method for class 'CFA'
 
-summary.CFA <- function(object, ...) {
+summary.CFA <- function(object) {
   cat("Summary: Confirmatory Factor Analysis:\n")
   print(object$summary)
   cat("\n FIt Measures:\n")

@@ -22,7 +22,7 @@
 ## S3 method for class 'EGA'
 
 plot.EGA <- function(ega.obj, title = "", vsize = 6,  ...){
-  require(qgraph)
-    plot.ega <- qgraph(ega.obj$network, layout = "spring", vsize = vsize, groups = as.factor(ega.obj$wc), ...)
+    
+    plot.ega <- qgraph::qgraph(ega.obj$network, layout = "spring", vsize = vsize, groups = as.factor(ega.obj$wc), ...)
 
 }

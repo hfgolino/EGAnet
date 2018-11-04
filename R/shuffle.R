@@ -17,26 +17,24 @@
 
 ## Surrogate EGA:
 shuffle <- function(data, n, ncores){
-  require(compiler)
-  require(foreach)
-  require(doParallel)
+
   vars <- sqrt(ncol(data))
   N <- ncol(data)
   sample.vars <- vector("list", n)
   sample.data <- vector("list", n)
   ega.surrugate <- vector("list", n)
   sample.data <- vector("list", n)
-  cl <- makeCluster(ncores)
-  registerDoParallel(cl)
+  cl <- parallel::makeCluster(ncores)
+  doParallel::registerDoParallel(cl)
   vector
-  all.ega.surrugate <- foreach(i = 1:n, .combine=rbind) %dopar% {
+  all.ega.surrugate <- foreach::foreach(i = 1:n, .combine=rbind) %dopar% {
     sample.vars[[i]] <- sort(sample(seq_len(N), vars))
     sample.data[[i]] <- data[, sample.vars[[i]], drop = FALSE]
     sample.data[[i]] <- as.data.frame(apply(sample.data[[i]], 2, sample))
     sample.data[[i]] <- cbind(data[,-(sample.vars[[i]])], sample.data[[i]])
     ega.surrugate[[i]] <- ndim(sample.data[[i]])
   }
-  stopCluster(cl)
+  parallel::stopCluster(cl)
   rownames(all.ega.surrugate) <- NULL
   return(all.ega.surrugate)
 }

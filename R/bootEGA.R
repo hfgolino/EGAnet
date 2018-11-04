@@ -29,42 +29,16 @@
 #'}
 #' @seealso \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link{CFA}} to
 #' verify the fit of the structure suggested by EGA using confirmatory factor analysis.
+#' 
+#' @importFrom foreach %dopar%
+#' @importFrom stats cov median sd qt
+#' 
 #' @export
 
 # Bootstrap EGA:
 bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TRUE, ncores = 4,
                     model = c("glasso", "TMFG"), type = c("parametric", "resampling")) {
-    if(!require(qgraph)) {
-        message("installing the 'qgraph' package")
-        install.packages("qgraph")
-    }
-    
-    if(!require(bootnet)) {
-        message("installing the 'bootnet' package")
-        install.packages("bootnet")
-    }
-    
-    if(!require(igraph)) {
-        message("installing the 'igraph' package")
-        install.packages("igraph")
-    }
-    
-    if(!require(NetworkToolbox)) {
-        message("installing the 'NetworkToolbox' package")
-        install.packages("NetworkToolbox")
-    }
-    
-    if(!require(foreach)) {
-        message("installing the 'foreach' package")
-        install.packages("foreach")
-        library(foreach)
-    }
-    
-    if(!require(doSNOW)) {
-        message("installing the 'doSNOW' package")
-        install.packages("doSNOW")
-    }
-    
+
     #mode function for item confirm
     mode <- function(v)
     {
@@ -74,19 +48,20 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
     
     #Parallel processing
     cl <- parallel::makeCluster(ncores)
-    doSNOW::registerDoSNOW(cl)
+    doParallel::registerDoParallel(cl)
     
     #progress bar
-    pb <- txtProgressBar(max=n, style = 3)
-    progress <- function(num) setTxtProgressBar(pb, num)
-    opts <- list(progress = progress)
+    #pb <- txtProgressBar(max=n, style = 3)
+    #progress <- function(num) setTxtProgressBar(pb, num)
+    #opts <- list(progress = progress)
     
     boots <- list()
     
     #nets
     boots <-foreach::foreach(i=1:n,
-                             .packages = c("NetworkToolbox","psych","qgraph"),
-                             .options.snow = opts) %dopar%
+                             .packages = c("NetworkToolbox","psych","qgraph")
+                             )%dopar%
+                             #.options.snow = opts)
                              {
                                  if(model=="glasso")
                                  {
@@ -105,13 +80,13 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
                                  }else if(model=="TMFG")
                                  {
                                      if(type=="parametric"){
-                                         g <- -LoGo(data, partial=TRUE)
+                                         g <- -NetworkToolbox::LoGo(data, partial=TRUE)
                                          diag(g) <- 1
                                          bootData <- mvtnorm::rmvnorm(nrow(data), sigma = corpcor::pseudoinverse(g))
-                                         net <- TMFG(bootData)$A
+                                         net <- NetworkToolbox::TMFG(bootData)$A
                                      } else if(type=="resampling"){
                                          mat <- data[sample(1:nrow(data), replace=TRUE),]
-                                         net <- TMFG(mat)$A
+                                         net <- NetworkToolbox::TMFG(mat)$A
                                      }
                                      
                                  }
@@ -127,11 +102,11 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
     }
     boot.igraph <- vector("list", n)
     for (l in 1:n) {
-        boot.igraph[[l]] <- as.igraph(qgraph(abs(bootGraphs[[l]]), DoNotPlot = TRUE))
+        boot.igraph[[l]] <- NetworkToolbox::convert2igraph(abs(bootGraphs[[l]]))
     }
     boot.wc <- vector("list", n)
     for (m in 1:n) {
-        boot.wc[[m]] <- walktrap.community(boot.igraph[[m]])
+        boot.wc[[m]] <- igraph::walktrap.community(boot.igraph[[m]])
     }
     boot.ndim <- matrix(NA, nrow = n, ncol = 2)
     for (m in 1:n) {
@@ -146,13 +121,13 @@ bootEGA <- function(data, n, typicalStructure = TRUE, plot.typicalStructure = TR
         {typical.Structure <- apply(simplify2array(bootGraphs),1:2, median)
         }else if(model=="TMFG")
         {typical.Structure <- apply(simplify2array(bootGraphs),1:2, mean)}
-        typical.igraph <- as.igraph(qgraph(abs(typical.Structure), DoNotPlot = TRUE), attributes = FALSE)
-        typical.wc <- walktrap.community(typical.igraph)
+        typical.igraph <- NetworkToolbox::convert2igraph(abs(typical.Structure))
+        typical.wc <- igraph::walktrap.community(typical.igraph)
         typical.ndim <- max(typical.wc$membership)
         dim.variables <- data.frame(items = colnames(data), dimension = typical.wc$membership)
     }
     if (plot.typicalStructure == TRUE) {
-        plot.typical.ega <- qgraph(typical.Structure, layout = "spring",
+        plot.typical.ega <- qgraph::qgraph(typical.Structure, layout = "spring",
                                    vsize = 6, groups = as.factor(typical.wc$membership))
     }
     Median <- median(boot.ndim[, 2])

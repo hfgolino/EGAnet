@@ -20,20 +20,18 @@
 
 ## EGA in multiple subsamples:
 subsamples <- function(data, n, ncores){
-  require(compiler)
-  require(foreach)
-  require(doParallel)
+
   sample.data <- list(n)
   ega.subsamples <- list(n)
-  cl <- makeCluster(ncores)
-  registerDoParallel(cl)
+  cl <- parallel::makeCluster(ncores)
+  doParallel::registerDoParallel(cl)
   vector
   all.ega.subsamples <-
-    foreach(i = 1:n, .combine=rbind) %dopar% {
+    foreach::foreach(i = 1:n, .combine=rbind) %dopar% {
     sample.data[[i]] <- data[sample(1:nrow(data), nrow(data)/2, replace=FALSE),]
     ega.subsamples[[i]] <- ndim(sample.data[[i]])
     }
-  stopCluster(cl)
+  parallel::stopCluster(cl)
   rownames(all.ega.subsamples) <- NULL
   return(all.ega.subsamples)
 }

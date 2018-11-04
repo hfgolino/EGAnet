@@ -96,5 +96,4 @@ itemIdent <- function (bootega.obj, confirm, rep.val = .80)
         result$std <- std
         
         return(result)
-        
 }

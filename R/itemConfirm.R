@@ -49,8 +49,7 @@
 #' 
 #' @export
 itemConfirm <- function(bootega.obj, confirm, plot.ic = TRUE){
-    require(ggpubr)
-    
+
     #mode function for item confirm
     mode <- function(v)
     {
@@ -134,7 +133,7 @@ itemConfirm <- function(bootega.obj, confirm, plot.ic = TRUE){
                                Comm = factor(comm))
         
         
-        ic.plot <- ggdotchart(item.rep, x = "Item", y = "Rep",
+        ic.plot <- ggpubr::ggdotchart(item.rep, x = "Item", y = "Rep",
                               group = "Comm", color = "Comm",
                               palette = rain,
                               legend.title = "EGA Communities",
@@ -145,7 +144,7 @@ itemConfirm <- function(bootega.obj, confirm, plot.ic = TRUE){
                               label = round(item.rep$Rep, 2),
                               font.label = list(color = "black", size = 8,
                                                 vjust = 0.5),
-                              ggtheme = theme_pubr()
+                              ggtheme = ggpubr::theme_pubr()
         )
         
         result$ic.plot <- ic.plot
