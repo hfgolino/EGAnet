@@ -4,27 +4,35 @@
 \alias{EGA}
 \title{Apply the Exploratory Graph Analysis technique}
 \usage{
-EGA(data, plot.EGA = TRUE, matrix = FALSE, n = NULL)
+EGA(data, model = c("glasso", "TMFG"), plot.EGA = TRUE, n = NULL,
+  steps = 4)
 }
 \arguments{
 \item{data}{A dataframe with the variables to be used in the analysis, or a correlation matrix. If the data used is a correlation matrix, the arguments *matrix* and *n* will need to be specified.}
 
-\item{plot.EGA}{Logical. If TRUE, returns an interactive plot of the network of partial correlations estimated via graphical lasso and its estimated dimensions.}
+\item{model}{A string indicating the method to use. Current options are:
+-\code{glasso}:
+{Gaussian graphical model estimation using graphical LASSO with extended Bayesian information criterion to select optimal regularization parameter (default method). Using \code{\link[qgraph]{EBICglasso}} from the \code{\link[qgraph]{qgraph}} package.}
+\code{TMFG}:
+{Estimates a Triangulated Maximally Filtered Graph, using the function \code{\link[NetworkToolbox]{TMFG}} of the \code{\link[NetworkToolbox]{NetworkToolbox}} package}}
 
-\item{matrix}{Logical. If TRUE, will treat the data as a correlation matrix, and a *n* (sample size) will need to be specified. Default to FALSE.}
+\item{plot.EGA}{Logical. If TRUE, returns a plot of the network and its estimated dimensions.}
 
 \item{n}{Integer. Sample size, if the data provided is a correlation matrix.}
+
+\item{steps}{Number of steps to be used in walktrap algorithm.
+Defaults to 4}
 }
 \description{
-\code{EGA} Estimates the number of dimensions of a given dataset/instrument using graphical lasso and a random walk algorithm. The glasso regularization parameter
+\code{EGA} Estimates the number of dimensions of a given dataset/instrument using graphical lasso or the TMFG method and a random walk algorithm. The glasso regularization parameter
 is set via EBIC.
 }
 \examples{
-ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = TRUE)
+ega.wmt <- EGA(data = wmt2[,7:24], model = "glasso", plot.EGA = TRUE)
 summary(ega.wmt)
 plot(ega.wmt)
 
-ega.intel <- EGA(data = intelligenceBattery[,8:66])
+ega.intel <- EGA(data = intelligenceBattery[,8:66], model = "glasso", plot.EGA = TRUE)
 summary(ega.intel)
 plot(ega.intel)
 

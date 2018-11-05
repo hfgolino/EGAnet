@@ -4,10 +4,12 @@
 \alias{plot.EGA}
 \title{Plot method for EGA objects.}
 \usage{
-\method{plot}{EGA}(ega.obj, vsize = 6, ...)
+\method{plot}{EGA}(ega.obj, title = "", vsize = 6, ...)
 }
 \arguments{
 \item{ega.obj}{An EGA object}
+
+\item{title}{Character. Title of the plot}
 
 \item{vsize}{An integer indicating the size of the nodes. Default vsize = 6.}
 

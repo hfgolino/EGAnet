@@ -3,10 +3,10 @@ Type: Package
 Title: Exploratory Graph Analysis: Estimating the number of dimensions
         in psychological data
 Version: 0.4
-Date: 2018-07-05
+Date: 2018-10-08
 Author: Hudson F. Golino
 Maintainer: Hudson F. Golino <hfg9s@virginia.edu>
-Contributor: Alexander Christensen <apchrist at uncg.edu>
+Contributor: Alexander Christensen <alexpaulchristensen@gmail.com>
 Description: An implementation of the Exploratory Graph Analysis (EGA). EGA is part of a new area called network psychometrics,
             that focuses on the estimation of undirected network models to psychological datasets. EGA estimates the number of
             dimensions or factors using graphical lasso or TMFG and a weighted network community analysis. A bootstrap method for
@@ -14,7 +14,7 @@ Description: An implementation of the Exploratory Graph Analysis (EGA). EGA is p
             verified using confirmatory factor analysis and a direct way to convert the EGA structure to CFA is also
             implemented. Documentation and examples are available.
 License: GPL-3
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.0
 Depends: R (>= 2.10)
 Imports: qgraph (>= 1.4.1), semPlot (>= 1.0.1), bootnet (>= 0.3),
         igraph (>= 1.0.1), lavaan (>= 0.5-22), doParallel (>= 1.0.10),

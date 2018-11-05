@@ -17,7 +17,7 @@
 
 ## S3 method for class 'EGA'
 
-summary.EGA <- function(object, ...) {
+summary.EGA <- function(object) {
   cat("EGA Results:\n")
   cat("\nNumber of Dimensions:\n")
   print(object$n.dim)

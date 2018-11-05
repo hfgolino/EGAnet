@@ -25,8 +25,8 @@
 ## S3 method for class 'bootEGA'
 
 plot.bootEGA <- function(bootega.obj, vsize = 6,  ...){
-  require(qgraph)
-  qgraph(bootega.obj$typicalGraph$graph, layout = "spring",
+
+  qgraph::qgraph(bootega.obj$typicalGraph$graph, layout = "spring",
          groups = as.factor(bootega.obj$typicalGraph$wc),
          vsize = vsize, ...)
 

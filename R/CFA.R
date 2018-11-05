@@ -6,6 +6,7 @@
 #' @param estimator The estimator used in the confirmatory factor analysis. 'WLSMV' is the estimator of choice for ordinal variables. 'ML' or 'WLS' for interval variables.
 #' @param plot.CFA Logical. Should the CFA structure with its standardized loadings be plot?
 #' @param data A dataframe with the variables to be used in the analysis.
+#' @param layout Layout of plot (see \code{\link[semPlot]{semPaths}})
 #' @param ... Arguments passed to ’cfa’ in lavaan.
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
 #' @examples
@@ -24,26 +25,17 @@
 
 
 CFA <- function(ega.obj, estimator, plot.CFA = TRUE, data, layout = "spring", ...) {
-  if(!require(lavaan)) {
-    message("installing the 'lavaan' package")
-    install.packages("lavaan")
-  }
-
-  if(!require(semPlot)) {
-    message("installing the 'semPlot' package")
-    install.packages("semPlot")
-  }
 
     strct <- split(ega.obj$dim.variables[, 1], list(ega.obj$dim.variables[, 2]))
     names(strct) <- paste("Fat", labels(strct))
     model.ega <- paste(names(strct), " =~ ", lapply(strct, function(x) paste(print(x), collapse = " + ")), collapse = " \n ")
-    fit.mod.ega <- cfa(model = model.ega, estimator = estimator, orthogonal = FALSE, se = "standard", test = "satorra-bentler",
+    fit.mod.ega <- lavaan::cfa(model = model.ega, estimator = estimator, orthogonal = FALSE, se = "standard", test = "satorra-bentler",
         data = data, ...)
     summary.cfa <- summary(fit.mod.ega, fit.measures = TRUE)
-    fit.measures.cfa <- fitMeasures(fit.mod.ega, fit.measures = c("chisq", "df", "pvalue", "cfi", "rmsea", "gfi", "nfi"))
+    fit.measures.cfa <- lavaan::fitMeasures(fit.mod.ega, fit.measures = c("chisq", "df", "pvalue", "cfi", "rmsea", "gfi", "nfi"))
 
     if (plot.CFA == TRUE) {
-        plot.cfa <- semPaths(fit.mod.ega, title = FALSE, label.cex = 0.8, sizeLat = 8, sizeMan = 5, edge.label.cex = 0.6, minimum = 0.1,
+        plot.cfa <- semPlot::semPaths(fit.mod.ega, title = FALSE, label.cex = 0.8, sizeLat = 8, sizeMan = 5, edge.label.cex = 0.6, minimum = 0.1,
             sizeInt = 0.8, mar = c(1, 1, 1, 1), residuals = FALSE, intercepts = FALSE, thresholds = FALSE, layout = "spring",
             "std", cut = 0.5)
     }

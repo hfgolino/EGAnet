@@ -5,8 +5,8 @@
 \title{Investigates the stability of EGA's estimation via bootstrap.}
 \usage{
 bootEGA(data, n, typicalStructure = TRUE, plot.typicalStructure = TRUE,
-  ncores = 4, model = c("GGM", "TMFG"), type = c("parametric",
-  "resampling"), confirm = NULL)
+  ncores = 4, model = c("glasso", "TMFG"), type = c("parametric",
+  "resampling"))
 }
 \arguments{
 \item{data}{A dataframe with the variables to be used in the analysis}
@@ -20,7 +20,7 @@ bootEGA(data, n, typicalStructure = TRUE, plot.typicalStructure = TRUE,
 \item{ncores}{Number of cores to use in computing results. Set to 1 to not use parallel computing.}
 
 \item{model}{A string indicating the method to use. Current options are:
--\code{GGM}:
+-\code{glasso}:
 {Gaussian Markov random field estimation using graphical LASSO with extended Bayesian information criterion to select optimal regularization parameter. Using \code{\link[qgraph]{EBICglasso}} from the qgraph package.}
 \code{TMFG}:
 {Estimates a Triangulated Maximally Filtered Graph, using the function \code{TMFG} of the NetworkToolbox package}}
@@ -31,10 +31,6 @@ bootEGA(data, n, typicalStructure = TRUE, plot.typicalStructure = TRUE,
 original dataset, via the \code{\link[mvtnorm]{rmvnorm}} function of the mvtnorm package}.
 -\code{resampling}:
 {Generates n random subsamples of the original data.}}
-
-\item{confirm}{A vector corresponding to the expected community structure.
-The number of times this structure appears will be counted.
-Defaults to NULL}
 }
 \description{
 \code{bootEGA} Estimates the number of dimensions of n bootstraps from the empirical correlation matrix,
@@ -43,9 +39,9 @@ Defaults to NULL}
 \examples{
 \dontrun{
 boot.wmt <- bootEGA(data = wmt2[,7:24], n = 500, typicalStructure = TRUE,
-plot.typicalStructure = TRUE, model = "GGM", type = "parametric", ncores = 4)
+plot.typicalStructure = TRUE, model = "glasso", type = "parametric", ncores = 4)
 boot.intwl <- bootEGA(data = intelligenceBattery[,8:66], n = 500, typicalStructure = TRUE,
-plot.typicalStructure = TRUE, model = "GGM", type = "parametric", ncores = 4)
+plot.typicalStructure = TRUE, model = "glasso", type = "parametric", ncores = 4)
 }
 }
 \seealso{
@@ -53,5 +49,5 @@ plot.typicalStructure = TRUE, model = "GGM", type = "parametric", ncores = 4)
 verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{
-Hudson F. Golino <hfg9s at virginia.edu> and Alexander Christensen <apchrist at uncg.edu>
+Hudson F. Golino <hfg9s at virginia.edu> and Alexander Christensen <alexpaulchristensen@gmail.com>
 }

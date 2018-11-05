@@ -19,14 +19,12 @@
 ## Estimating the numnber of latent dimensions:
 
 ndim <- function (data) {
-  require(qgraph)
-  require(igraph)
   data <- as.data.frame(data)
-  cor.data <- cor_auto(data)
-  glasso.ebic <- EBICglasso(S = cor.data, n = nrow(data),
+  cor.data <- qgraph::cor_auto(data)
+  glasso.ebic <- qgraph::EBICglasso(S = cor.data, n = nrow(data),
                             lambda.min.ratio = 0.1)
-  graph.glasso <- as.igraph(qgraph(abs(glasso.ebic), DoNotPlot = TRUE), attributes = FALSE)
-  wc <- walktrap.community(graph.glasso)
+  graph.glasso <- NetworkToolbox::convert2igraph(abs(glasso.ebic))
+  wc <- igraph::walktrap.community(graph.glasso)
   n.dim <- max(wc$membership)
   return(n.dim)
 }
