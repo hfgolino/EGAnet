@@ -17,16 +17,16 @@
 #' }
 #' @seealso \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link{CFA}} to
 #' verify the fit of the structure suggested by EGA using confirmatory factor analysis.
-#' 
+#'
 #' @importFrom dplyr %>%
-#' 
+#'
 #' @export
 
 ## S3 method for class 'EGA'
 
 dynamic.plot <- function(ega.obj, title = "", vsize = 30, opacity = 0.4){
- 
-  graph.glasso <- NetworkToolbox::convert2igraph(ega.obj$glasso)
+
+  graph.glasso <- NetworkToolbox::convert2igraph(ega.obj$network)
   vert <- igraph::V(graph.glasso)
   es <- as.data.frame(igraph::get.edgelist(graph.glasso))
   edge.width <- igraph::E(graph.glasso)$weight
