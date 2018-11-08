@@ -91,7 +91,7 @@ EGA.fit <- function (data, model = c("glasso","TMFG"),
         ent.vec <- vector("numeric",length=len)
         
         for(i in 1:len)
-        {ent.vec[i] <- entropyFit(data, mods[[as.character(step[i])]]$wc)$full}
+        {ent.vec[i] <- entropyFit(data, mods[[as.character(step[i])]]$wc)$Adj.Entropy2}
         
         best.fit <- mods[[as.character(step[which(ent.vec==min(ent.vec))])]]
         best.fit$steps <- step[which(ent.vec==min(ent.vec))]
