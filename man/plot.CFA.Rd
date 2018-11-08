@@ -9,6 +9,12 @@
 \arguments{
 \item{object}{An CFA object.}
 
+\item{layout}{Layout of plot (see \code{\link[semPlot]{semPaths}}).
+Defaults to "spring"}
+
+\item{vsize}{Size of objects in plot.
+Defaults to 6}
+
 \item{...}{Arguments passed to ’semPaths’ in semPlot.}
 }
 \description{

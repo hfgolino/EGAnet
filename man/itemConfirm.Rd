@@ -4,7 +4,7 @@
 \alias{itemConfirm}
 \title{Replicability of items from EGA}
 \usage{
-itemConfirm(bootega.obj)
+itemConfirm(bootega.obj, confirm, plot.ic = TRUE)
 }
 \arguments{
 \item{bootega.obj}{A \code{\link{bootEGA}} object}

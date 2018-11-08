@@ -4,33 +4,29 @@
 \alias{entropyFit}
 \title{Fit of Factor Model using Empirical Entropy}
 \usage{
-entropyFit(data, structure, bins = 10)
+entropyFit(data, structure)
 }
 \arguments{
 \item{data}{A dataset}
 
 \item{structure}{A vector representing the structure (numbers or labels for each item).
 Can be theoretical factors or the structure detected by \code{\link{EGA}}}
-
-\item{bins}{An integer, indicating thhe number of bins to use.}
 }
 \value{
 Returns the values of entropy per factor, the mean empirical entropy (i.e., the average entropy across factors),
-the minimum joint entropy (i.e. joint entropy for all variables) and the adjusted entropy (ratio between joint entropy and
-the minumum joint entropy).
+the joint entropy (i.e. joint entropy for all factors), a modified empirical entropy per factor (that uses the frequencies of the sumscores),
+a mean modified empirical entropy. It also returns an adjusted entropy (ratio between the mean empirical entropy and
+the joint entropy) and an adjusted entropy varying from 0 to 1.
 }
 \description{
-Uses the \code{\link[entropy]{entropy.empirical}} function
-from the \code{\link{entropy}} package to compute the entropy of a
-factor model. Mutual information (\code{\link[entropy]{mi.plugin}})
-is used to derive associations between factors. The final \code{entropyFit}
-value is entropy + mutual information.
-Lower values suggest better fit with the data
+Compute compute the entropy fit of a given structure.
+Lower values of the adjusted entropy fit and the adjusted entropy fit
+ranging from 0 to 1 suggest better fit with the data
 }
 \examples{
 ega.wmt <- EGA(data = wmt2[,7:24], model = "glasso")
 
-entropyFit(data = wmt2[,7:24], structure = ega.wmt$wc, bins = 10)
+entropyFit(data = wmt2[,7:24], structure = ega.wmt$wc)
 
 }
 \seealso{

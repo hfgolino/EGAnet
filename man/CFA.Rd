@@ -15,6 +15,8 @@ CFA(ega.obj, estimator, plot.CFA = TRUE, data, layout = "spring", ...)
 
 \item{data}{A dataframe with the variables to be used in the analysis.}
 
+\item{layout}{Layout of plot (see \code{\link[semPlot]{semPaths}})}
+
 \item{...}{Arguments passed to ’cfa’ in lavaan.}
 }
 \description{

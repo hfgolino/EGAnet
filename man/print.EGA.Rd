@@ -4,7 +4,7 @@
 \alias{print.EGA}
 \title{Print method for EGA objects.}
 \usage{
-\method{print}{EGA}(object, ...)
+\method{print}{EGA}(object)
 }
 \arguments{
 \item{object}{An EGA object}

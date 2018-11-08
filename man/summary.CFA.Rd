@@ -4,7 +4,7 @@
 \alias{summary.CFA}
 \title{Summary method for CFA objects.}
 \usage{
-\method{summary}{CFA}(object, ...)
+\method{summary}{CFA}(object)
 }
 \arguments{
 \item{object}{An CFA object}

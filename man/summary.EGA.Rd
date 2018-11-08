@@ -4,7 +4,7 @@
 \alias{summary.EGA}
 \title{Summary method for EGA objects.}
 \usage{
-\method{summary}{EGA}(object, ...)
+\method{summary}{EGA}(object)
 }
 \arguments{
 \item{object}{An EGA object}
