@@ -31,9 +31,9 @@ algorithm is varied and unique community solutions are compared using
 \examples{
 tmfg <- EGA.fit(data = wmt2[,7:24], model = "TMFG")
 
-entropyFit(data = wmt2[,7:24], comm = tmfg$wc)
+entropyFit(data = wmt2[,7:24], structure = tmfg$wc)
 
-entropyFit(data = wmt2[,7:24], comm = EGA(data = wmt2[,7:24], model = "TMFG")$wc)
+entropyFit(data = wmt2[,7:24], structure = EGA(data = wmt2[,7:24], model = "TMFG")$wc)
 
 }
 \references{
