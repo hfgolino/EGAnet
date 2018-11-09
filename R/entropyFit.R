@@ -29,6 +29,7 @@
 entropyFit <- function (data, structure)
 {
   require(plyr)
+  require(infotheo)
 
   if(all(range(data)==c(0,1)))
   {data <- ifelse(data==1,2,1)}
@@ -110,8 +111,10 @@ entropyFit <- function (data, structure)
   result$Joint.Entropy <- joint.entropy
   result$Ind.Mod.Entropy <- Hmod
   result$Mean.Mod.Entropy <- mod.ent
-  result$Adj.Entropy <- ent/joint.entropy
+  result$Adj.Entropy <- ent-joint.entropy
   result$Adj.Entropy2 <- exp(ent/joint.entropy)/(1+exp(ent/joint.entropy))
+  result$Adj.Entropy3 <- mean(H-joint.entropy)
+  result$Adj.Entropy4 <- 1-(exp(mean(H-joint.entropy))/(1+exp(mean(H-joint.entropy))))
   return(result)
 }
 #----
