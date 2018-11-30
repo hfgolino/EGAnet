@@ -19,7 +19,7 @@ Depends: R (>= 2.10)
 Imports: qgraph (>= 1.4.1), semPlot (>= 1.0.1), bootnet (>= 0.3),
         igraph (>= 1.0.1), lavaan (>= 0.5-22), doParallel (>= 1.0.10),
         foreach (>= 1.4.3), compiler, foreach (>= 1.4.4), doSNOW (>= 1.0.16),
-        NetworkToolbox (>= 1.1.2), plyr (>= 1.8.4)
+        NetworkToolbox (>= 1.1.2), plyr (>= 1.8.4), glasso (>= 1.10)
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 Encoding: UTF-8
