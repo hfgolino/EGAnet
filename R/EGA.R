@@ -28,9 +28,9 @@
 #' }
 #' @seealso \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap and \code{\link{CFA}} to
 #' verify the fit of the structure suggested by EGA using confirmatory factor analysis.
-#' 
+#'
 #' @importFrom stats cor
-#' 
+#'
 #' @export
 
 # EGA default function - 11/21/2017
@@ -39,21 +39,21 @@ EGA <- function(data, model = c("glasso", "TMFG"), plot.EGA = TRUE, n = NULL, st
     if(missing(model)){
       model = "glasso"
     }else{model = match.arg(model)}
-      
+
   if(!is.matrix(data)){
     data <- as.data.frame(data)
     if(model == "glasso"){
       cor.data <- qgraph::cor_auto(data)
-      estimated.network <- qgraph::EBICglasso(S = cor.data, n = nrow(data), lambda.min.ratio = 0.1)
+      estimated.network <- EBICglasso.qgraph(S = cor.data, n = nrow(data), lambda.min.ratio = 0.1, returnAllResults = FALSE)
     } else if(model == "TMFG"){
         cor.data <- cor(data)
       estimated.network <- NetworkToolbox::TMFG(cor.data)$A
     }
-    
+
 } else if(is.matrix(data)){
     cor.data <- data
     if(model == "glasso"){
-      estimated.network <- qgraph::EBICglasso(S = data, n = n, lambda.min.ratio = 0.1)
+      estimated.network <- EBICglasso.qgraph(S = data, n = n, lambda.min.ratio = 0.1, returnAllResults = FALSE)
     } else if(model == "TMFG"){
       estimated.network <- NetworkToolbox::TMFG(data)$A
       }

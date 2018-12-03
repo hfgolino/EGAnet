@@ -10,10 +10,8 @@
 #'
 #'
 #' @return Returns the values of entropy per factor, the mean empirical entropy (i.e., the average entropy across factors),
-#' the joint entropy (i.e. joint entropy for all factors), a modified empirical entropy per factor (that uses the frequencies of the sumscores),
-#' a mean modified empirical entropy. It also returns an adjusted entropy (ratio between the mean empirical entropy and
-#' the joint entropy) and an adjusted entropy varying from 0 to 1.
-#'
+#' the joint entropy (i.e. joint entropy for all factors), the entropy fit index (EFI), total correlation and modified versions
+#' of all these indices using the Miller Madow correction.
 #'
 #' @examples
 #' ega.wmt <- EGA(data = wmt2[,7:24], model = "glasso")
@@ -29,7 +27,6 @@
 entropyFit <- function (data, structure)
 {
   require(plyr)
-  require(infotheo)
 
   if(all(range(data)==c(0,1)))
   {data <- ifelse(data==1,2,1)}
@@ -61,10 +58,14 @@ entropyFit <- function (data, structure)
   bin.sums2 <- matrix(NA, nrow=bins, ncol = n)
   Freq <- matrix(NA,nrow=bins,ncol=n)
 
-  #compute empirical entropy for each community
+  #compute empirical entropy for each community or item
   for(i in 1:n)
   {
-    sums[,i] <- rowSums(data[,which(num.comm==uniq[i])])
+    if(n != ncol(data)){
+      sums[,i] <- rowSums(data[,which(num.comm==uniq[i])])
+    } else{
+        sums[,i] <- data[,i]
+      }
     seque[,i] <- seq(from = range(sums[,i])[1], to = range(sums[,i])[2], length.out = bins+1)
     bin.sums[[i]] <- table(cut(sums[,i], breaks = seque[,i], include.lowest = TRUE))
     bin.sums2[,i] <- as.vector(unlist(bin.sums[[i]]))
@@ -75,7 +76,7 @@ entropyFit <- function (data, structure)
   # Joint Entropy:
 
   bin.sums3 <- data.frame(matrix(NA, nrow = nrow(data), ncol = n))
-  joint.table <- vector()
+  joint.table <- vector("numeric")
   for(i in 1:n){
     bin.sums3[,i] <- cut(sums[,i], breaks = seque[,i], include.lowest = TRUE)
     joint.table = plyr::count(bin.sums3)$freq
@@ -84,37 +85,69 @@ entropyFit <- function (data, structure)
   freq.joint <- joint.table/sum(joint.table)
   joint.entropy <- -sum(ifelse(freq.joint >0,freq.joint * log(freq.joint),0))
 
-# Modified Entropy:
-
-  #initialize entropy vector
-  Hmod <- vector("numeric",length=n)
-  sums.mod <- matrix(NA,nrow=nrow(data),ncol=n)
-  Freq.mod <- matrix(NA,nrow=nrow(data),ncol=n)
-
-  #compute empirical entropy for each community
-  for(i in 1:n)
-  {
-    sums.mod[,i] <- rowSums(data[,which(num.comm==uniq[i])])
-    Freq.mod[,i] <- sums.mod[,i]/sum(sums.mod[,i])
-    Hmod[i] <- -sum(ifelse(Freq.mod[,i]>0,Freq.mod[,i] * log(Freq.mod[,i]),0))
+  #minimum entropy
+  var <- ncol(data)
+  seque.min <- matrix(NA,nrow=bins+1,ncol=var)
+  bin.sums.min <- vector("list", var)
+  bin.sums.min2 <- matrix(NA, nrow=bins, ncol = var)
+  Freq.min <- matrix(NA,nrow=bins,ncol=var)
+  Hm <- vector("numeric",length=var)
+  Hmin <- vector("numeric",length=var)
+  for(i in 1:var){
+    seque.min[,i] <- seq(from = range(data[,i])[1], to = range(data[,i])[2], length.out = bins+1)
+    bin.sums.min[[i]] <- table(cut(data[,i], breaks = seque.min[,i], include.lowest = TRUE))
+    bin.sums.min2[,i] <- as.vector(unlist(bin.sums.min[[i]]))
+    Freq.min[,i] <- bin.sums.min2[,i]/sum(bin.sums.min2[,i])
+    Hm[[i]] <- -sum(ifelse(Freq.min[,i]>0, Freq.min[,i]*log(Freq.min[,i]),0))
+    Hmin <- mean(H)
   }
+
+    # Maximum Entropy:
+    sums.max <- vector("numeric")
+    sums.max <- rowSums(data)
+    joint.table.max <- vector("numeric")
+    seque.min <- seq(from = range(sums.max)[1], to = range(sums.max)[2], length.out = bins+1)
+    bin.sums.min <- cut(sums.max, breaks = seque.min, include.lowest = TRUE)
+    joint.table.max = plyr::count(bin.sums.min)$freq
+
+    freq.joint.max <- joint.table.max/sum(joint.table.max)
+    Hmax <- -sum(ifelse(freq.joint.max >0,freq.joint.max * log(freq.joint.max),0))
+
+  # # Miller-Madow Bias Correction:
+  # # Individual Factors:
+   non.zero.bins1 <- vector("numeric",length=n)
+   H.miller.madow <- vector("numeric",length=n)
+   for(i in 1:n){
+     non.zero.bins1[i] <- length(bin.sums2[bin.sums2[,i]!=0,i])
+     H.miller.madow[i] <- H[i]+((non.zero.bins1[i]-1)/(2*(nrow(data))))
+     }
+
+  # Joint Entropy with Miller-Madow Bias Correction:
+
+   non.zero.bins.joint <- length(joint.table[joint.table!=0])
+   joint.miller.madow <- joint.entropy+((non.zero.bins.joint-1)/(2*(nrow(data))))
 
 
   #compute mean emprirical entropy
   #(empirical entropy per dimension)
   ent <- mean(H)
-  mod.ent <- mean(Hmod)
 
   result <- list()
   result$Ind.Entropy <- H
   result$Mean.Entropy <- ent
   result$Joint.Entropy <- joint.entropy
-  result$Ind.Mod.Entropy <- Hmod
-  result$Mean.Mod.Entropy <- mod.ent
-  result$Adj.Entropy <- ent-joint.entropy
-  result$Adj.Entropy2 <- exp(ent/joint.entropy)/(1+exp(ent/joint.entropy))
-  result$Adj.Entropy3 <- mean(H-joint.entropy)
-  result$Adj.Entropy4 <- 1-(exp(mean(H-joint.entropy))/(1+exp(mean(H-joint.entropy))))
+  result$H.Miller.Madow <- H.miller.madow
+  result$Mean.Entropy.MM <- mean(H.miller.madow)
+  result$Joint.Miller.Madow <- joint.miller.madow
+  result$Total.Correlation <- sum(H)-joint.entropy
+  result$Total.Correlation.MM <- sum(H.miller.madow)-joint.miller.madow
+  result$Entropy.Fit <- (ent-joint.entropy)+((Hmax-Hmin)*(sqrt(n)))
+  result$Entropy.Fit.MM <- (mean(H.miller.madow)-joint.miller.madow)+((Hmax-Hmin)*(sqrt(n)))
   return(result)
 }
 #----
+
+
+EGA
+
+?EBICglasso

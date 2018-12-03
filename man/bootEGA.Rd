@@ -21,7 +21,7 @@ bootEGA(data, n, typicalStructure = TRUE, plot.typicalStructure = TRUE,
 
 \item{model}{A string indicating the method to use. Current options are:
 -\code{glasso}:
-{Gaussian Markov random field estimation using graphical LASSO with extended Bayesian information criterion to select optimal regularization parameter. Using \code{\link[qgraph]{EBICglasso}} from the qgraph package.}
+{Gaussian Markov random field estimation using graphical LASSO with extended Bayesian information criterion to select optimal regularization parameter. Using \code{\link[qgraph]{EBICglasso}} from the qgraph package version 1.4.4.}
 \code{TMFG}:
 {Estimates a Triangulated Maximally Filtered Graph, using the function \code{TMFG} of the NetworkToolbox package}}
 

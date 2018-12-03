@@ -14,12 +14,15 @@ Description: An implementation of the Exploratory Graph Analysis (EGA). EGA is p
             verified using confirmatory factor analysis and a direct way to convert the EGA structure to CFA is also
             implemented. Documentation and examples are available.
 License: GPL-3
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1
 Depends: R (>= 2.10)
 Imports: qgraph (>= 1.4.1), semPlot (>= 1.0.1), bootnet (>= 0.3),
         igraph (>= 1.0.1), lavaan (>= 0.5-22), doParallel (>= 1.0.10),
-        foreach (>= 1.4.3), compiler, foreach (>= 1.4.4), doSNOW (>= 1.0.16),
-        NetworkToolbox (>= 1.1.2), plyr (>= 1.8.4), glasso (>= 1.10)
+        foreach (>= 1.4.3), compiler, doSNOW (>= 1.0.16),
+        NetworkToolbox (>= 1.1.2), plyr (>= 1.8.4), glasso (>= 1.10), dplyr (>= 0.7.8),
+        rlang (>= 0.3.0.1), Matrix (>= 1.2.14), plotly (>= 4.7.1), mvtnorm (>= 1.0.8),
+        corpcor (>= 1.6.9), ggplot2 (>= 3.1.0), ggpubr (>= 0.2), ggthemes (>= 4.0.1),
+        tidyr (>= 0.8.2)
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 Encoding: UTF-8

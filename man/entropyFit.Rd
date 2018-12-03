@@ -14,9 +14,8 @@ Can be theoretical factors or the structure detected by \code{\link{EGA}}}
 }
 \value{
 Returns the values of entropy per factor, the mean empirical entropy (i.e., the average entropy across factors),
-the joint entropy (i.e. joint entropy for all factors), a modified empirical entropy per factor (that uses the frequencies of the sumscores),
-a mean modified empirical entropy. It also returns an adjusted entropy (ratio between the mean empirical entropy and
-the joint entropy) and an adjusted entropy varying from 0 to 1.
+the joint entropy (i.e. joint entropy for all factors), the entropy fit index (EFI), total correlation and modified versions
+of all these indices using the Miller Madow correction.
 }
 \description{
 Compute compute the entropy fit of a given structure.
