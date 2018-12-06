@@ -99,7 +99,7 @@ entropyFit <- function (data, structure)
     bin.sums.min2[,i] <- as.vector(unlist(bin.sums.min[[i]]))
     Freq.min[,i] <- bin.sums.min2[,i]/sum(bin.sums.min2[,i])
     Hm[[i]] <- -sum(ifelse(Freq.min[,i]>0, Freq.min[,i]*log(Freq.min[,i]),0))
-    Hmin <- mean(H)
+    Hmin <- mean(Hm)
   }
 
     # Maximum Entropy:
@@ -143,11 +143,7 @@ entropyFit <- function (data, structure)
   result$Total.Correlation.MM <- sum(H.miller.madow)-joint.miller.madow
   result$Entropy.Fit <- (ent-joint.entropy)+((Hmax-Hmin)*(sqrt(n)))
   result$Entropy.Fit.MM <- (mean(H.miller.madow)-joint.miller.madow)+((Hmax-Hmin)*(sqrt(n)))
+  result$Average.Entropy <- mean(H)-joint.entropy
   return(result)
 }
 #----
-
-
-EGA
-
-?EBICglasso
