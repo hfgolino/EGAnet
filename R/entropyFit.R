@@ -85,23 +85,6 @@ entropyFit <- function (data, structure)
   freq.joint <- joint.table/sum(joint.table)
   joint.entropy <- -sum(ifelse(freq.joint >0,freq.joint * log(freq.joint),0))
 
-  #minimum entropy
-  var <- ncol(data)
-  seque.min <- matrix(NA,nrow=bins+1,ncol=var)
-  bin.sums.min <- vector("list", var)
-  bin.sums.min2 <- matrix(NA, nrow=bins, ncol = var)
-  Freq.min <- matrix(NA,nrow=bins,ncol=var)
-  Hm <- vector("numeric",length=var)
-  Hmin <- vector("numeric",length=var)
-  for(i in 1:var){
-    seque.min[,i] <- seq(from = range(data[,i])[1], to = range(data[,i])[2], length.out = bins+1)
-    bin.sums.min[[i]] <- table(cut(data[,i], breaks = seque.min[,i], include.lowest = TRUE))
-    bin.sums.min2[,i] <- as.vector(unlist(bin.sums.min[[i]]))
-    Freq.min[,i] <- bin.sums.min2[,i]/sum(bin.sums.min2[,i])
-    Hm[[i]] <- -sum(ifelse(Freq.min[,i]>0, Freq.min[,i]*log(Freq.min[,i]),0))
-    Hmin <- mean(Hm)
-  }
-
     # Maximum Entropy:
     sums.max <- vector("numeric")
     sums.max <- rowSums(data)
@@ -141,8 +124,8 @@ entropyFit <- function (data, structure)
   result$Joint.Miller.Madow <- joint.miller.madow
   result$Total.Correlation <- sum(H)-joint.entropy
   result$Total.Correlation.MM <- sum(H.miller.madow)-joint.miller.madow
-  result$Entropy.Fit <- (ent-joint.entropy)+((Hmax-Hmin)*(sqrt(n)))
-  result$Entropy.Fit.MM <- (mean(H.miller.madow)-joint.miller.madow)+((Hmax-Hmin)*(sqrt(n)))
+  result$Entropy.Fit <- (ent-joint.entropy)+((Hmax-ent)*sqrt(n))
+  result$Entropy.Fit.MM <- (mean(H.miller.madow)-joint.miller.madow)+((Hmax-mean(H.miller.madow))*(sqrt(n)))
   result$Average.Entropy <- mean(H)-joint.entropy
   return(result)
 }
