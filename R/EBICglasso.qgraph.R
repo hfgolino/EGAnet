@@ -181,7 +181,7 @@ EBICglasso.qgraph <- function(
     )
 
     for (i in 1:nlambda){
-      res <- glasso(S, penalizeMatrix * lambda[i], trace = 0, penalize.diagonal=penalize.diagonal, ...)
+      res <- glasso::glasso(S, penalizeMatrix * lambda[i], trace = 0, penalize.diagonal=penalize.diagonal, ...)
       glas_path$w[,,i] <- res$w
       glas_path$wi[,,i] <- res$wi
     }
