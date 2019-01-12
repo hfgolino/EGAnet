@@ -4,10 +4,10 @@
 \alias{plot.EGA}
 \title{Plot method for EGA objects.}
 \usage{
-\method{plot}{EGA}(ega.obj, title = "", vsize = 6, ...)
+\method{plot}{EGA}(x, title = "", vsize = 6, ...)
 }
 \arguments{
-\item{ega.obj}{An EGA object}
+\item{x}{An EGA object}
 
 \item{title}{Character. Title of the plot}
 

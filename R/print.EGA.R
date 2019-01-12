@@ -2,7 +2,8 @@
 #'
 #' \code{print} Returns a summary of the EGA results
 #'
-#' @param object An EGA object
+#' @param x An EGA object
+#' @param ... potentially further arguments; unused currently.
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
 #' @examples
 #' ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = TRUE)
@@ -17,10 +18,10 @@
 
 ## S3 method for class 'EGA'
 
-print.EGA <- function(object) {
+print.EGA <- function(x, ...) {
   cat("EGA Results:\n")
   cat("\nNumber of Dimensions:\n")
-  print(object$n.dim)
+  print(x$n.dim)
   cat("\nItems per Dimension:\n")
-  print(object$dim.variables)
+  print(x$dim.variables)
 }

@@ -4,10 +4,12 @@
 \alias{print.EGA}
 \title{Print method for EGA objects.}
 \usage{
-\method{print}{EGA}(object)
+\method{print}{EGA}(x, ...)
 }
 \arguments{
-\item{object}{An EGA object}
+\item{x}{An EGA object}
+
+\item{...}{potentially further arguments; unused currently.}
 }
 \description{
 \code{print} Returns a summary of the EGA results

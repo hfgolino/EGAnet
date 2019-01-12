@@ -4,10 +4,10 @@
 \alias{plot.bootEGA}
 \title{Plot method for bootEGA objects.}
 \usage{
-\method{plot}{bootEGA}(bootega.obj, vsize = 6, ...)
+\method{plot}{bootEGA}(x, vsize = 6, ...)
 }
 \arguments{
-\item{bootega.obj}{A bootEGA object}
+\item{x}{A bootEGA object}
 
 \item{vsize}{An integer indicating the size of the nodes. Default vsize = 6.}
 

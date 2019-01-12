@@ -2,7 +2,7 @@
 #'
 #' \code{plot} Plots the EGA result using \code{\link{qgraph}}
 #'
-#' @param ega.obj An EGA object
+#' @param x An EGA object
 #' @param title Character. Title of the plot
 #' @param vsize An integer indicating the size of the nodes. Default vsize = 6.
 #' @param ... Arguments passed to 'qgraph'.
@@ -21,7 +21,7 @@
 
 ## S3 method for class 'EGA'
 
-plot.EGA <- function(ega.obj, title = "", vsize = 6,  ...) {
-    plot.ega <- qgraph::qgraph(ega.obj$network, layout = "spring", vsize = vsize, groups = as.factor(ega.obj$wc), ...)
+plot.EGA <- function(x, title = "", vsize = 6,  ...) {
+    plot.ega <- qgraph::qgraph(x$network, layout = "spring", vsize = vsize, groups = as.factor(x$wc), ...)
 
 }

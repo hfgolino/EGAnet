@@ -4,10 +4,12 @@
 \alias{summary.EGA}
 \title{Summary method for EGA objects.}
 \usage{
-\method{summary}{EGA}(object)
+\method{summary}{EGA}(object, ...)
 }
 \arguments{
 \item{object}{An EGA object}
+
+\item{...}{potentially further arguments; unused currently.}
 }
 \description{
 \code{summary} Returns a summary of the EGA results.

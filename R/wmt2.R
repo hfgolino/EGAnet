@@ -4,8 +4,6 @@
 #'
 #' @name wmt2
 #'
-#' @alias wmt2
-#'
 #' @docType data
 #'
 #' @usage data(wmt2)
@@ -15,5 +13,9 @@
 #' @keywords datasets
 #'
 #' @examples
+#' \dontrun{
 #' data("wmt2")
-
+#' }
+#'
+NULL
+#----

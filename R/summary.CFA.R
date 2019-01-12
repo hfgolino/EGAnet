@@ -3,6 +3,7 @@
 #' \code{summary} Returns a summary of the CFA results.
 #'
 #' @param object An CFA object
+#' @param ... potentially further arguments; unused currently.
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
 #' @examples
 #' ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = TRUE)
@@ -17,7 +18,7 @@
 
 ## S3 method for class 'CFA'
 
-summary.CFA <- function(object) {
+summary.CFA <- function(object, ...) {
   cat("Summary: Confirmatory Factor Analysis:\n")
   print(object$summary)
   cat("\n FIt Measures:\n")

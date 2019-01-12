@@ -16,5 +16,9 @@
 #' @keywords datasets
 #'
 #' @examples
+#' \dontrun{
 #' data("depression")
+#' }
 #'
+NULL
+#----

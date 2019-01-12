@@ -4,10 +4,10 @@
 \alias{plot.CFA}
 \title{Plot method for CFA objects.}
 \usage{
-\method{plot}{CFA}(object, layout = "spring", vsize = 6, ...)
+\method{plot}{CFA}(x, layout = "spring", vsize = 6, ...)
 }
 \arguments{
-\item{object}{An CFA object.}
+\item{x}{An CFA object.}
 
 \item{layout}{Layout of plot (see \code{\link[semPlot]{semPaths}}).
 Defaults to "spring"}
