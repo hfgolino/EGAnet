@@ -53,6 +53,9 @@
 #' @seealso \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap.
 #'
 #' @export
+#'
+## S3 method for class 'EGA'
+#'
 #CFA model for EGA
 CFA <- function(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ...) {
     
