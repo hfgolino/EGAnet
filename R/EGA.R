@@ -1,4 +1,4 @@
-#'  Apply the Exploratory Graph Analysis technique
+#' Apply the Exploratory Graph Analysis technique
 #'
 #' \code{EGA} Estimates the number of dimensions of a given dataset/instrument
 #' using graphical lasso (\code{\link[EGA]{EBICglasso.qgraph}})or the
