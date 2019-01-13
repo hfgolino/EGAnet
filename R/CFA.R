@@ -54,8 +54,6 @@
 #'
 #' @export
 #'
-## S3 method for class 'EGA'
-#'
 #CFA model for EGA
 CFA <- function(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ...) {
     
