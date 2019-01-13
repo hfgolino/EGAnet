@@ -1,38 +1,41 @@
 #' EGA Optimal Model Fit using Entropy
 #' 
 #' @description Estimates the best fitting model using \code{\link[EGA]{EGA}}.
-#' The number of steps in the \code{\link[igraph]{walktrap.community}} detection
+#' The number of steps in the \code{\link[igraph]{cluster_walktrap}} detection
 #' algorithm is varied and unique community solutions are compared using
 #' \code{\link[EGA]{entropyFit}}.
 #'
 #' @param data A dataset
 #'
+#' @param model A string indicating the method to use.
+#' Current options are:
+#' 
+#' \itemize{
+#' 
 #' \item{\code{glasso}}
-#' {Gaussian graphical model estimation using graphical LASSO with extended Bayesian information criterion
-#' to select optimal regularization parameter.
+#' {Estimates the Gaussian graphical model using graphical LASSO with
+#' extended Bayesian information criterion to select optimal regularization parameter.
 #' This is the default method}
 #' 
 #' \item{\code{TMFG}}
-#' {Estimates a Triangulated Maximally Filtered Graph, using the function \code{\link[NetworkToolbox]{TMFG}}}
+#' {Estimates a Triangulated Maximally Filtered Graph}
+#' 
+#' }
 #' 
 #' @param steps Range of steps to be used in the model selection.
 #' Defaults from 3 to 8 steps (based on Pons & Latapy, 2006)
 #'
 #' @return Returns a list containing:
 #' 
-#' \item{\code{\link[EGA]{EGA}}}
-#' {The \code{\link[EGA]{EGA}} output for the best fitting model}
+#' \item{EGA}{The \code{\link[EGA]{EGA}} output for the best fitting model}
 #' 
-#' \item{steps}
-#' {The number of steps used in the best fitting model from
-#' the \code{\link[igraph]{walktrap.community}} algorithm}
+#' \item{steps}{The number of steps used in the best fitting model from
+#' the \code{\link[igraph]{cluster_walktrap}} algorithm}
 #' 
-#' \item{EntropyFit}
-#' {The Entropy Fit Index for the unique solutions given the range of steps
+#' \item{EntropyFit}{The Entropy Fit Index for the unique solutions given the range of steps
 #' (vector names represent the number of steps)}
 #' 
-#' \item{Lowest.EntropyFit}
-#' {The lowest value for the Entropy Fit Index}
+#' \item{Lowest.EntropyFit}{The lowest value for the Entropy Fit Index}
 #'
 #' @examples
 #' #estimate normal EGAtmfg
