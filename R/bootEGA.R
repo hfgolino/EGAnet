@@ -14,12 +14,12 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{\strong{glasso}}}
+#' \item{\strong{\code{glasso}}}
 #' {Estimates the Gaussian graphical model using graphical LASSO with
 #' extended Bayesian information criterion to select optimal regularization parameter.
 #' This is the default method}
 #' 
-#' \item{\code{\strong{TMFG}}}
+#' \item{\strong{\code{TMFG}}}
 #' {Estimates a Triangulated Maximally Filtered Graph}
 #' 
 #' }
@@ -29,11 +29,11 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{\strong{parametric}}}
+#' \item{\strong{\code{parametric}}}
 #' {Generates n new datasets (multivariate normal random distributions) based on the
 #' original dataset, via the \code{\link[mvtnorm]{Mvnorm}} function of the mvtnorm package}
 #' 
-#' \item{\code{\strong{resampling}}}
+#' \item{\strong{\code{resampling}}}
 #' {Generates n random subsamples of the original data}
 #' 
 #' }
@@ -75,13 +75,13 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{\strong{graph}}}
+#' \item{\strong{\code{graph}}}
 #' {Network matrix of the median network structure}
 #' 
-#' \item{\code{\strong{typical.dim.variables}}}
+#' \item{\strong{\code{typical.dim.variables}}}
 #' {An ordered matrix of item allocation}
 #' 
-#' \item{\code{\strong{wc}}}
+#' \item{\strong{\code{wc}}}
 #' {Item allocation of the median network}
 #' 
 #' }}
