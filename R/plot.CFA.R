@@ -1,27 +1,36 @@
-#'  Plot method for CFA objects.
+#' Plot Method for CFA
 #'
-#' \code{plot} Plots the CFA structure using \code{\link{semPlot}}
+#' Plots the CFA structure using \code{\link{semPlot}}
 #'
-#' @param x An CFA object.
+#' @param x An \code{\link[EGA]{CFA}} object
+#' 
 #' @param layout Layout of plot (see \code{\link[semPlot]{semPaths}}).
 #' Defaults to "spring"
+#' 
 #' @param vsize Size of objects in plot.
 #' Defaults to 6
-#' @param ... Arguments passed to ’semPaths’ in semPlot.
+#' 
+#' @param ... Arguments passed to \code{\link[semPlot]{semPaths}} in semPlot
+#'
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
+#' 
 #' @examples
+#' #estimate EGA
 #' ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = TRUE)
+#'
+#' #estimate CFA
 #' cfa.wmt <- CFA(ega.obj = ega.wmt, estimator = 'WLSMV', plot.CFA = FALSE, data = wmt2)
+#'
+#' #plot CFA
 #' plot(cfa.wmt)
 #'
-#' \dontrun{
-#' plot(CFA)
-#' }
-#' @seealso \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap.
+#' @seealso \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA
+#' and \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap.
+#'
 #' @export
-
+#'
 ## S3 method for class 'CFA'
-
+#'
 #Plot CFA:
 plot.CFA <- function(x, layout = "spring", vsize = 6, ...) {
   semPlot::semPaths(x$fit, title = FALSE, label.cex = 0.8, sizeLat = 8, sizeMan = 5, edge.label.cex = 0.6, minimum = 0.1,
