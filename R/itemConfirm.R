@@ -45,7 +45,7 @@
 #' @seealso \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link{CFA}} to
 #' verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 #' 
-#' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander Christensen <alexpaulchristensen@gmail.com>
+#' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #' 
 #' @export
 #Item Confirm function
