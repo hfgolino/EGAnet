@@ -10,8 +10,8 @@
 #' wmt.dim <- ndim(data = wmt2[,7:24])
 #'
 #' @seealso \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA, \code{\link{CFA}} to
-#' verify the fit of the structure suggested by EGA using confirmatory factor analysis, \code{\link{shuffle}} to generate n
-#' estimations of the number of dimensions in shuffled versions of the original dataset and \code{\link{subsamples}} to
+#' verify the fit of the structure suggested by EGA using confirmatory factor analysis, \code{shuffle} to generate n
+#' estimations of the number of dimensions in shuffled versions of the original dataset and \code{subsamples} to
 #' apply EGA to n random subsamples of the original data.
 #'
 #' @export
