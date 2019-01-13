@@ -20,6 +20,17 @@
 #' 
 #' @param ... Arguments passed to \code{\link[lavaan]{cfa}}
 #' 
+#' @return Returns a list containing:
+#' 
+#' \item{fit}{Output from \code{\link[lavaan]{cfa}}}
+#' 
+#' \item{summary}{Summary output from \code{\link[lavaan]{lavaan-class}}}
+#' 
+#' \item{fit.measures}{Fit measures: chi-squared,
+#' degrees of freedom, p-value, CFI, RMSEA, GFI, and NFI.
+#' Additional fit measures can be applied using the
+#' \code{\link[lavaan]{fitMeasures}} function (see examples)} 
+#' 
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
 #' 
 #' @examples
@@ -28,6 +39,9 @@
 #' 
 #' #fit CFA model to EGA results
 #' cfa.wmt <- CFA(ega.obj = ega.wmt, estimator = 'WLSMV', plot.CFA = TRUE, data = wmt2)
+#'
+#' #additional fit measures
+#' lavaan::fitMeasures(cfa.wmt$fit, fit.measures = "all")
 #'
 #' #estimate EGA
 #' ega.intel <- EGA(data = intelligenceBattery[,8:66])
