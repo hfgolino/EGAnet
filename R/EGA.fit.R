@@ -12,12 +12,12 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{\strong{glasso}}}
+#' \item{\strong{\code{glasso}}}
 #' {Estimates the Gaussian graphical model using graphical LASSO with
 #' extended Bayesian information criterion to select optimal regularization parameter.
 #' This is the default method}
 #' 
-#' \item{\code{\strong{TMFG}}}
+#' \item{\strong{\code{TMFG}}}
 #' {Estimates a Triangulated Maximally Filtered Graph}
 #' 
 #' }
@@ -45,7 +45,7 @@
 #' tmfg.opt <- EGA.fit(data = wmt2[,7:24], model = "TMFG")
 #'
 #' #estimate Entropy Fit Index
-#' entropyFit(data = wmt2[,7:24], structure = tmfg.opt$wc)$Entropy.Fit
+#' entropyFit(data = wmt2[,7:24], structure = tmfg.opt$EGA$wc)$Entropy.Fit
 #' entropyFit(data = wmt2[,7:24], structure = tmfg$wc)$Entropy.Fit
 #'
 #'
