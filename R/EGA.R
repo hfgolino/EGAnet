@@ -37,8 +37,13 @@
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
 #' 
 #' @examples
+#' \dontrun{
 #' #estimate EGA
 #' ega.wmt <- EGA(data = wmt2[,7:24], model = "glasso", plot.EGA = TRUE)
+#' }
+#' 
+#' #estimate EGAtmfg
+#' ega.wmt <- EGA(data = wmt2[,7:24], model = "TMFG", plot.EGA = TRUE)
 #' 
 #' #summary statistics
 #' summary(ega.wmt)
