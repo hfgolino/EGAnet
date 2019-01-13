@@ -21,12 +21,12 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{\strong{glasso}}}
+#' \item{\strong{\code{glasso}}}
 #' {Estimates the Gaussian graphical model using graphical LASSO with
 #' extended Bayesian information criterion to select optimal regularization parameter.
 #' This is the default method}
 #' 
-#' \item{\code{\strong{TMFG}}}
+#' \item{\strong{\code{TMFG}}}
 #' {Estimates a Triangulated Maximally Filtered Graph}
 #' 
 #' }
