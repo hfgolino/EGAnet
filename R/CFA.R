@@ -34,6 +34,7 @@
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
 #' 
 #' @examples
+#' \dontrun{
 #' #estimate EGA
 #' ega.wmt <- EGA(data = wmt2[,7:24])
 #' 
@@ -49,6 +50,7 @@
 #' #fit CFA model to EGA results
 #' cfa.intel <- CFA(ega.obj = ega.intel, estimator = 'WLSMV', plot.CFA = TRUE,
 #' data = intelligenceBattery[,8:66])
+#' }
 #' 
 #' @seealso \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap.
 #'
