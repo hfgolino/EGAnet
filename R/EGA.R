@@ -1,7 +1,7 @@
 #' Apply the Exploratory Graph Analysis technique
 #'
-#' \code{EGA} Estimates the number of dimensions of a given dataset/instrument
-#' using graphical lasso (\code{\link[EGA]{EBICglasso.qgraph}})or the
+#' Estimates the number of dimensions of a given dataset/instrument
+#' using graphical lasso (\code{\link[EGA]{EBICglasso.qgraph}}) or the
 #' Triangulated Maximally Filtered Graph (\code{\link[NetworkToolbox]{TMFG}}) 
 #' method and the walktrap community detection algorithm (\code{\link[igraph]{cluster_walktrap}}).
 #' The glasso regularization parameter is set via EBIC.
