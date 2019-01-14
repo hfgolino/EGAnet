@@ -1,11 +1,11 @@
-#' Replicability of items from EGA
+#' Replicability of Items from EGA
+#'
 #' @description Based on the \code{\link{bootEGA}} results, this function 
 #' computes and plots the number of times an item (variable) is estimated
 #' in the same factor/dimension as originaly estimated by EGA. The output
 #' will also contain how often a dimension is replicated.
 #' 
-#' 
-#' @param bootega.obj A \code{\link{bootEGA}} object
+#' @param bootega.obj A \code{\link[EGA]{bootEGA}} object
 #' 
 #' @param confirm A vector with community numbers or labels for each item
 #' 
@@ -45,9 +45,10 @@
 #' @seealso \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link{CFA}} to
 #' verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 #' 
-#' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander Christensen <alexpaulchristensen@gmail.com>
+#' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #' 
 #' @export
+#Item Confirm function
 itemConfirm <- function(bootega.obj, confirm, plot.ic = TRUE){
 
     #mode function for item confirm

@@ -1,15 +1,16 @@
 #' Item Dimension Identification
+#' 
 #' @description Computes the within- and between-community strength of each item
-#' for each community. Based on \code{\link{itemConfirm}}, researchers can flag
+#' for each community. Based on \code{\link[EGA]{itemConfirm}}, researchers can flag
 #' items that are not replicating well to identify which communities they are
 #' falling between.
 #' 
-#' @param bootega.obj A \code{\link{bootEGA}} object
+#' @param bootega.obj A \code{\link[EGA]{bootEGA}} object
 #' 
 #' @param confirm A vector with community numbers or labels for each item
 #' 
 #' @param rep.val A replication value between 0 and 1. It's recommended
-#' to first run \code{\link{itemConfirm}} to determine appropriate cut-off
+#' to first run \code{\link[EGA]{itemConfirm}} to determine appropriate cut-off
 #' value.
 #' Defaults to .80
 #' 
@@ -34,9 +35,10 @@
 #' itemIdent(boot.wmt, confirm = ega.wmt$wc, rep.val = .80)
 #' }
 #' 
-#' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander Christensen <alexpaulchristensen@gmail.com>
+#' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #' 
 #' @export
+#Item Identification function
 itemIdent <- function (bootega.obj, confirm, rep.val = .80)
 {
     n <- length(bootega.obj$bootGraphs)

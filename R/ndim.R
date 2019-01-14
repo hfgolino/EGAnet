@@ -1,23 +1,22 @@
-#'  Estimates the number of dimensions (for simulation studies, resampling or surrogate analysis).
+#' Estimates the number of dimensions
 #'
-#' \code{ndim} Applies EGA to estimate the number of dimensions for simulation studies,
-#' resampling or surrogate analysis.
+#' A wrapper function that applies EGA to estimate the number
+#' of dimensions for simulation studies, resampling, or surrogate analysis.
 #'
-#' @param data A data.frame object.
+#' @param data A dataframe
+#'
 #' @examples
+#' #estimate number of dimensions in data
 #' wmt.dim <- ndim(data = wmt2[,7:24])
 #'
-#' \dontrun{
-#' ndim(data = wmt2[,7:24])
-#' }
 #' @seealso \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA, \code{\link{CFA}} to
-#' verify the fit of the structure suggested by EGA using confirmatory factor analysis, \code{\link{shuffle}} to generate n
-#' estimations of the number of dimensions in shuffled versions of the original dataset and \code{\link{subsamples}} to
+#' verify the fit of the structure suggested by EGA using confirmatory factor analysis, \code{shuffle} to generate n
+#' estimations of the number of dimensions in shuffled versions of the original dataset and \code{subsamples} to
 #' apply EGA to n random subsamples of the original data.
+#'
 #' @export
-
-## Estimating the numnber of latent dimensions:
-
+#'
+## Estimating the numnber of latent dimensions
 ndim <- function (data) {
   data <- as.data.frame(data)
   cor.data <- qgraph::cor_auto(data)
