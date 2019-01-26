@@ -99,7 +99,7 @@ EGA <- function(data, n = NULL, model = c("glasso", "TMFG"), plot.EGA = TRUE, st
                 cor.data <- qgraph::cor_auto(data)
                 estimated.network <- EBICglasso.qgraph(S = cor.data, n = nrow(data), lambda.min.ratio = 0.1, returnAllResults = FALSE, ...)
             } else if(model == "TMFG"){
-                estimated.network <- NetworkToolbox::TMFG(cor.data, normal = TRUE, na.data = "pairwise", ...)$A
+                estimated.network <- NetworkToolbox::TMFG(data, normal = TRUE, na.data = "pairwise", ...)$A
             }
             
         } else if(nrow(data)==ncol(data)){
