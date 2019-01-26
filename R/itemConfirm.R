@@ -232,13 +232,15 @@ itemConfirm <- function(bootega.obj, confirm, plot.ic = TRUE){
     #order items so they are are sorted as depicted in plot
     itemCon <- vector("numeric",length=0)
     
+    uniq.ord <- uniq[order(uniq,decreasing=TRUE)]
+    
     for(j in 1:max(uniq))
     {
-        target <- which(confirm==uniq[j])
+        target <- which(confirm==uniq.ord[j])
         
         item.var <- con.item[target]
         
-        item.ord <- item.var[order(item.var,decreasing=TRUE)]
+        item.ord <- item.var[order(item.var,names(item.var),decreasing=TRUE)]
         
         itemCon <- append(itemCon,item.ord)
     }
