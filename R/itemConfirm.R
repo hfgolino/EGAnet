@@ -263,6 +263,7 @@ itemConfirm <- function(bootega.obj, confirm, item.rep = .10, plot.ic = TRUE){
                                       group = "Comm", color = "Comm",
                                       palette = rain,
                                       legend.title = "EGA Communities",
+                                      sorting = "descending",
                                       add = "segments",
                                       rotate = TRUE,
                                       dot.size = 6,
