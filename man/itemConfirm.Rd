@@ -2,14 +2,18 @@
 % Please edit documentation in R/itemConfirm.R
 \name{itemConfirm}
 \alias{itemConfirm}
-\title{Replicability of items from EGA}
+\title{Replicability of Items from EGA}
 \usage{
-itemConfirm(bootega.obj, confirm, plot.ic = TRUE)
+itemConfirm(bootega.obj, confirm, item.rep = 0.1, plot.ic = TRUE)
 }
 \arguments{
-\item{bootega.obj}{A \code{\link{bootEGA}} object}
+\item{bootega.obj}{A \code{\link[EGA]{bootEGA}} object}
 
 \item{confirm}{A vector with community numbers or labels for each item}
+
+\item{item.rep}{A value for lowest likelihood allowed in \code{itemLik} output.
+Removes noise from table to allow for easier interpretation.
+Defaults to .10}
 
 \item{plot.ic}{Should the plot be produced?
 Defaults to TRUE}
@@ -17,22 +21,21 @@ Defaults to TRUE}
 \value{
 Returns a list containing:
 
-\item{dim.confirm}{The proportion of times each dimension replicated
-(i.e., all items were in the exact same dimension)}
-
 \item{item.confirm}{The proporton of times each item replicated
 within the defined dimension}
 
-\item{dim.nmi.table}{Computes the Normalized Mutual Informaiton
-for community replication. Larger numbers mean dimensions and
-items are replicating closer to the input (\code{confirm})
-dimensions (see Danon et al. 2005 for more details)}
+\item{item.likelihood}{The proportion of times each item replicated
+within each possible dimension. Dimensions greater than the maximum
+number used in the \code{confirm} argument are labeled based on the
+largest remaining components after the dimensions used to confirm.}
 }
 \description{
 Based on the \code{\link{bootEGA}} results, this function 
 computes and plots the number of times an item (variable) is estimated
 in the same factor/dimension as originaly estimated by EGA. The output
-will also contain how often a dimension is replicated.
+also each item's likelihood (i.e., proprotion of bootstraps that it
+appeared in) for every possible dimension (defined by the maximum number
+of dimensions across the bootstrap samples).
 }
 \examples{
 \dontrun{
@@ -57,5 +60,5 @@ doi:\href{https://doi.org/10.1088/1742-5468/2005/09/P09008}{10.1088/1742-5468/20
 verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{
-Hudson F. Golino <hfg9s at virginia.edu> and Alexander Christensen <alexpaulchristensen@gmail.com>
+Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 }
