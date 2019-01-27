@@ -120,7 +120,7 @@ bootEGA <- function(data, n,
     {
         if(model=="glasso")
         {
-            g <- -EBICglasso.qgraph(cor_auto(data), n = nrow(data), lambda.min.ratio = 0.1, returnAllResults = FALSE, ...)
+            g <- -EBICglasso.qgraph(qgraph::cor_auto(data), n = nrow(data), lambda.min.ratio = 0.1, returnAllResults = FALSE, ...)
             diag(g) <- 1
         }else if(model=="TMFG")
         {
@@ -160,7 +160,7 @@ bootEGA <- function(data, n,
                 mat <- data[sample(1:nrow(data), replace=TRUE),]
                 
                 if(model=="glasso")
-                {net <- EBICglasso.qgraph(cor_auto(mat), n=nrow(data), lambda.min.ratio = 0.1, returnAllResults = FALSE, ...)
+                {net <- EBICglasso.qgraph(qgraph::cor_auto(mat), n=nrow(data), lambda.min.ratio = 0.1, returnAllResults = FALSE, ...)
                 }else if(model=="TMFG")
                 {net <- NetworkToolbox::TMFG(mat, normal = TRUE, na.data = "pairwise", ...)$A}
             }
