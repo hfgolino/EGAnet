@@ -14,6 +14,10 @@
 #' @param plot.ic Should the plot be produced?
 #' Defaults to TRUE
 #' 
+#' @param item.rep A value for lowest likelihood allowed in \code{itemLik} output.
+#' Removes noise from table to allow for easier interpretation.
+#' Defaults to .10
+#' 
 #' @return Returns a list containing:
 #' 
 #' \item{item.confirm}{The proporton of times each item replicated
@@ -49,7 +53,7 @@
 #' 
 #' @export
 #Item Confirm function
-itemConfirm <- function(bootega.obj, confirm, plot.ic = TRUE){
+itemConfirm <- function(bootega.obj, confirm, item.rep = .10, plot.ic = TRUE){
     
     #mode function
     mode <- function(v)
@@ -179,24 +183,26 @@ itemConfirm <- function(bootega.obj, confirm, plot.ic = TRUE){
                     #insert next dimension number
                     let.vec[target.rem.vec] <- rep(u,length(target.rem.vec))
                 }
-            }else{
-                #identify missing numeric value
-                uniq.vals <- as.numeric(unique(let.vec[which(!is.na(suppressWarnings(as.numeric(let.vec))))]))
+            }else if(any(is.na(suppressWarnings(as.numeric(let.vec)))))
+                {
+                    #identify missing numeric value
+                    uniq.vals <- as.numeric(unique(let.vec[which(!is.na(suppressWarnings(as.numeric(let.vec))))]))
                 
-                #target value
-                target.val <- uniq[which(uniq!=uniq.vals)]
+                    #target value
+                    target.val <- setdiff(uniq,uniq.vals)
                 
-                #target remaming values
-                target.rem.vec <- which(let.vec==rem.dim)
+                    #target remaming values
+                    target.rem.vec <- which(let.vec==rem.dim)
                 
-                #insert missing dimension number
-                let.vec[target.rem.vec] <- rep(target.val,length(target.rem.vec))
-            }
+                    #insert missing dimension number
+                    let.vec[target.rem.vec] <- rep(target.val,length(target.rem.vec))
+                }
             
             #insert values into letter membership matrix
             let.wc.mat[,i] <- let.vec
-        }
+            }
     }
+    
     
     #get letter dimension matrix into numbers
     num.wc.mat <- apply(let.wc.mat,1:2,as.numeric)
@@ -229,54 +235,56 @@ itemConfirm <- function(bootega.obj, confirm, plot.ic = TRUE){
     #name item confirmation vector
     names(con.item) <- colnames(net)
     
-    #order items so they are are sorted as depicted in plot
-    itemCon <- vector("numeric",length=0)
-    
-    uniq.ord <- uniq[order(uniq,decreasing=TRUE)]
-    
-    for(j in 1:max(uniq))
-    {
-        target <- which(confirm==uniq.ord[j])
-        
-        item.var <- con.item[target]
-        
-        item.ord <- item.var[order(item.var,names(item.var),decreasing=TRUE)]
-        
-        itemCon <- append(itemCon,item.ord)
-    }
+    #Item Confirm
+    itemCon <- con.item
     
     #Item Likelihood
-    itemLik <- item.tab[match(names(itemCon),row.names(item.tab)),]
+    item.tab[which(item.tab<=item.rep)] <- 0
+    
+    if(any(apply(item.tab,2,sum)==0))
+    {item.tab <- item.tab[,-which(apply(item.tab,2,sum)==0)]}
+    
+    item.tab[which(item.tab<=item.rep)] <- ""
     
     result <- list()
     
     #Plot
-    if(plot.ic == TRUE)
+    if(plot.ic)
     {
         comm <- confirm
         rain <- grDevices::rainbow(max(comm))
         
-        item.rep <- data.frame(Item = names(itemCon),
+        item.repl <- data.frame(Item = names(itemCon),
                                Replication = itemCon,
                                Comm = factor(comm))
         
         
-        ic.plot <- ggpubr::ggdotchart(item.rep, x = "Item", y = "Replication",
+        ic.plot <- ggpubr::ggdotchart(item.repl, x = "Item", y = "Replication",
                                       group = "Comm", color = "Comm",
                                       palette = rain,
                                       legend.title = "EGA Communities",
-                                      sorting = "descending",
                                       add = "segments",
                                       rotate = TRUE,
                                       dot.size = 6,
-                                      label = round(item.rep$Rep, 2),
+                                      label = round(item.repl$Replication, 2),
                                       font.label = list(color = "black", size = 8,
                                                         vjust = 0.5),
                                       ggtheme = ggpubr::theme_pubr()
         )
         
         result$ic.plot <- ic.plot
+        
+        #match row names to plot output
+        itemCon <- itemCon[rev(match(ic.plot$data$Item,names(itemCon)))]
     }
+    
+    #match row names to itemCon output
+    itemLik <- as.data.frame(item.tab[match(names(itemCon),row.names(item.tab)),])
+    
+    #message for additional item likelihoods
+    if(ncol(itemLik)<max(num.wc.mat))
+    {message("Lower the item.rep argument to view item likelihoods for additional dimensions")}
+    
     
     result$item.confirm <- itemCon
     result$item.likelihood <- itemLik
