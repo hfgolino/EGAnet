@@ -279,16 +279,15 @@ itemConfirm <- function(bootega.obj, confirm, item.rep = .10, plot.ic = TRUE){
     }
     
     #match row names to itemCon output
-    itemLik <- as.data.frame(item.tab[match(names(itemCon),row.names(item.tab)),])
-    
-    #message for additional item likelihoods
-    if(ncol(itemLik)<max(num.wc.mat))
-    {message("Lower the item.rep argument to view item likelihoods for additional dimensions")}
-    
+    itemLik <- as.data.frame(item.tab[match(names(itemCon),row.names(item.tab)),])    
     
     result$item.confirm <- itemCon
     result$item.likelihood <- itemLik
     
     return(result)
+    
+    #message for additional item likelihoods
+    if(ncol(itemLik)<max(num.wc.mat))
+    {message("Lower the item.rep argument to view item likelihoods for additional dimensions")}
 }
 #----
