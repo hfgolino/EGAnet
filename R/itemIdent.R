@@ -14,6 +14,11 @@
 #' value.
 #' Defaults to .80
 #' 
+#' @param item.rep A value for lowest likelihood allowed in \code{\link[EGA]{itemConfirm}}'s \code{itemLik} output.
+#' Removes noise from table to allow for easier interpretation.
+#' Matches matrix to \code{\link[EGA]{itemConfirm}} output.
+#' Defaults to .10
+#' 
 #' @return Returns a matrix of the unstandardized within- and between-community
 #' strength values for each node
 #' 
@@ -34,7 +39,7 @@
 #' 
 #' @export
 #Item Identification function
-itemIdent <- function (bootega.obj, confirm, rep.val = .80)
+itemIdent <- function (bootega.obj, confirm, rep.val = .80, item.rep = .10)
 {
     n <- length(bootega.obj$bootGraphs)
     
@@ -57,15 +62,45 @@ itemIdent <- function (bootega.obj, confirm, rep.val = .80)
         
         item.con <- itemConfirm(bootega.obj,confirm,plot.ic=FALSE)
         
-        col <- ncol(item.con$item.likelihood)
+        item.lik <- item.con$item.likelihood
+        
+        col <- ncol(item.lik)
         
         item.id.samps <- list()
         
+        max.wc <- max(item.con$wc)
+        
         for(m in 1:n)
-        {item.id.samps[[m]] <- ident.item(bootega.obj$bootGraphs[[m]], confirm)}
+        {
+            item.id.samps[[m]] <- ident.item(bootega.obj$bootGraphs[[m]], item.con$wc[,m])
+            
+            if(max(item.con$wc[,m])!=max.wc)
+            {
+                diff <- max.wc - max(item.con$wc[,m])
+                
+                for(i in 1:diff)
+                {item.id.samps[[m]] <- cbind(item.id.samps[[m]],rep(NA,nrow(item.id.samps[[m]])))}
+            }
+        }
         
         #Unstandardized
-        unstd.item.id <- round(apply(simplify2array(item.id.samps),1:2, mean),3)
+        unstd.item.id <- round(apply(simplify2array(item.id.samps),1:2, mean, na.rm=TRUE),3)
+        colnames(unstd.item.id) <- paste(seq(1,max(item.con$wc),1))
+        
+        if(ncol(unstd.item.id)!=col)
+        {
+            rm.col <- setdiff(colnames(unstd.item.id),names(item.lik))
+            
+            target.col <- which(colnames(unstd.item.id)==rm.col)
+            
+            unstd.item.id <- unstd.item.id[,-target.col]
+        }
+        
+        item.lik.ord <- item.lik[match(row.names(unstd.item.id),row.names(item.lik)),]
+        
+        unstd.item.id[which(item.lik.ord=="")] <- ""
+        
+        unstd.item.id <- as.data.frame(unstd.item.id)
         
         #Standardized (proportion)
         #std.item.id <- round(unstd.item.id/rowSums(unstd.item.id),3)
