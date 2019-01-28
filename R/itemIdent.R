@@ -91,7 +91,7 @@ itemIdent <- function (bootega.obj, confirm, rep.val = .80, item.rep = .10)
         {
             rm.col <- setdiff(colnames(unstd.item.id),names(item.lik))
             
-            target.col <- which(colnames(unstd.item.id)==rm.col)
+            target.col <- match(rm.col,colnames(unstd.item.id))
             
             unstd.item.id <- unstd.item.id[,-target.col]
         }
