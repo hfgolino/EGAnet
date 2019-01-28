@@ -4,30 +4,30 @@
 \alias{itemIdent}
 \title{Item Dimension Identification}
 \usage{
-itemIdent(bootega.obj, confirm, rep.val = 0.8)
+itemIdent(bootega.obj, confirm, rep.val = 0.8, item.rep = 0.1)
 }
 \arguments{
-\item{bootega.obj}{A \code{\link{bootEGA}} object}
+\item{bootega.obj}{A \code{\link[EGA]{bootEGA}} object}
 
 \item{confirm}{A vector with community numbers or labels for each item}
 
 \item{rep.val}{A replication value between 0 and 1. It's recommended
-to first run \code{\link{itemConfirm}} to determine appropriate cut-off
+to first run \code{\link[EGA]{itemConfirm}} to determine appropriate cut-off
 value.
 Defaults to .80}
+
+\item{item.rep}{A value for lowest likelihood allowed in \code{\link[EGA]{itemConfirm}}'s \code{item.likelihood} output.
+Removes noise from table to allow for easier interpretation.
+Matches matrix to \code{\link[EGA]{itemConfirm}} output.
+Defaults to .10}
 }
 \value{
-Returns a list containing:
-
-\item{unstd}{The unstandardized within- and between-community
-strength values for each node}
-
-\item{std}{The standardized (proportion of strength)
-within- and between-community strength values for each node}
+Returns a matrix of the unstandardized within- and between-community
+strength values for each node
 }
 \description{
 Computes the within- and between-community strength of each item
-for each community. Based on \code{\link{itemConfirm}}, researchers can flag
+for each community. Based on \code{\link[EGA]{itemConfirm}}, researchers can flag
 items that are not replicating well to identify which communities they are
 falling between.
 }
@@ -46,5 +46,5 @@ itemIdent(boot.wmt, confirm = ega.wmt$wc, rep.val = .80)
 
 }
 \author{
-Hudson F. Golino <hfg9s at virginia.edu> and Alexander Christensen <alexpaulchristensen@gmail.com>
+Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 }

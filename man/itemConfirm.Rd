@@ -11,7 +11,7 @@ itemConfirm(bootega.obj, confirm, item.rep = 0.1, plot.ic = TRUE)
 
 \item{confirm}{A vector with community numbers or labels for each item}
 
-\item{item.rep}{A value for lowest likelihood allowed in \code{itemLik} output.
+\item{item.rep}{A value for lowest likelihood allowed in \code{item.likelihood} output.
 Removes noise from table to allow for easier interpretation.
 Defaults to .10}
 
@@ -28,6 +28,10 @@ within the defined dimension}
 within each possible dimension. Dimensions greater than the maximum
 number used in the \code{confirm} argument are labeled based on the
 largest remaining components after the dimensions used to confirm.}
+
+\item{wc}{A matrix containing the community membership values for
+each bootstrapped sample. The values correspond to the values input
+for the \code{confrim} argument.}
 }
 \description{
 Based on the \code{\link{bootEGA}} results, this function 
