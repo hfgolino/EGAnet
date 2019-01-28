@@ -249,8 +249,6 @@ itemConfirm <- function(bootega.obj, confirm, item.rep = .10, plot.ic = TRUE){
     result <- list()
     
     #Plot
-    if(plot.ic)
-    {
         comm <- confirm
         rain <- grDevices::rainbow(max(comm))
         
@@ -263,7 +261,6 @@ itemConfirm <- function(bootega.obj, confirm, item.rep = .10, plot.ic = TRUE){
                                       group = "Comm", color = "Comm",
                                       palette = rain,
                                       legend.title = "EGA Communities",
-                                      sorting = "descending",
                                       add = "segments",
                                       rotate = TRUE,
                                       dot.size = 6,
@@ -273,22 +270,23 @@ itemConfirm <- function(bootega.obj, confirm, item.rep = .10, plot.ic = TRUE){
                                       ggtheme = ggpubr::theme_pubr()
         )
         
-        result$ic.plot <- ic.plot
+        if(plot.ic)
+        {result$ic.plot <- ic.plot}
         
         #match row names to plot output
         itemCon <- itemCon[rev(match(ic.plot$data$Item,names(itemCon)))]
-    }
     
     #match row names to itemCon output
-    itemLik <- as.data.frame(item.tab[match(names(itemCon),row.names(item.tab)),])    
+    itemLik <- as.data.frame(item.tab[match(names(itemCon),row.names(item.tab)),])
+    
+    #message for additional item likelihoods
+    if(ncol(itemLik)<max(num.wc.mat))
+    {message("Lower the item.rep argument to view item likelihoods for additional dimensions")}
+    
     
     result$item.confirm <- itemCon
     result$item.likelihood <- itemLik
     
     return(result)
-    
-    #message for additional item likelihoods
-    if(ncol(itemLik)<max(num.wc.mat))
-    {message("Lower the item.rep argument to view item likelihoods for additional dimensions")}
 }
 #----
