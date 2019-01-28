@@ -14,7 +14,7 @@
 #' @param plot.ic Should the plot be produced?
 #' Defaults to TRUE
 #' 
-#' @param item.rep A value for lowest likelihood allowed in \code{itemLik} output.
+#' @param item.rep A value for lowest likelihood allowed in \code{item.likelihood} output.
 #' Removes noise from table to allow for easier interpretation.
 #' Defaults to .10
 #' 

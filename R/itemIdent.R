@@ -14,7 +14,7 @@
 #' value.
 #' Defaults to .80
 #' 
-#' @param item.rep A value for lowest likelihood allowed in \code{\link[EGA]{itemConfirm}}'s \code{itemLik} output.
+#' @param item.rep A value for lowest likelihood allowed in \code{\link[EGA]{itemConfirm}}'s \code{item.likelihood} output.
 #' Removes noise from table to allow for easier interpretation.
 #' Matches matrix to \code{\link[EGA]{itemConfirm}} output.
 #' Defaults to .10
