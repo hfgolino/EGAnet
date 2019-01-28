@@ -28,6 +28,10 @@
 #' number used in the \code{confirm} argument are labeled based on the
 #' largest remaining components after the dimensions used to confirm.}
 #' 
+#' \item{wc}{A matrix containing the community membership values for
+#' each bootstrapped sample. The values correspond to the values input
+#' for the \code{confrim} argument.}
+#' 
 #' 
 #' @examples
 #' \dontrun{
@@ -286,6 +290,7 @@ itemConfirm <- function(bootega.obj, confirm, item.rep = .10, plot.ic = TRUE){
     
     result$item.confirm <- itemCon
     result$item.likelihood <- itemLik
+    result$wc <- num.wc.mat
     
     return(result)
 }
