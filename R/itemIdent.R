@@ -83,7 +83,7 @@ itemIdent <- function (bootega.obj, confirm, rep.val = .80)
         #Unstandardize
         unstd.item.ident <- as.data.frame(cbind(confirm,unstd.item.id,prob.vec))
         colnames(unstd.item.ident) <- c("Dimension",colnames(unstd.item.id),paste("Rep<=",rep.val,sep=""))
-        unstd <- unstd.item.ident[order(unstd.item.ident$Dimension,decreasing=FALSE),]
+        unstd <- unstd.item.ident[match(names(item.con$item.confirm),row.names(unstd.item.ident)),]
         
         #Standaridize
         #std.item.ident <- as.data.frame(cbind(confirm,std.item.id,prob.vec))
