@@ -156,7 +156,9 @@ itemConfirm <- function(bootega.obj, confirm, item.rep = .10, plot.ic = TRUE){
             #if number of dimensions is less than confirmatory
             if(max(num.comm)!=max(num.vec))
             {
-                target <- intersect(num.comm,num.vec)
+                new.vec <- num.vec
+                
+                target <- intersect(num.comm,new.vec)
                 target.len <- length(target)
                 
                 rand.vec <- vector("numeric",length=target.len)
@@ -167,9 +169,9 @@ itemConfirm <- function(bootega.obj, confirm, item.rep = .10, plot.ic = TRUE){
                 {
                     count <- count + 1
                     
-                    target.val <- which(num.vec==target[o])
+                    target.val <- which(new.vec==target[o])
                     
-                    rand.vec[count] <- igraph::compare(num.vec[target.val],num.comm[target.val],method="rand")
+                    rand.vec[count] <- igraph::compare(new.vec[target.val],num.comm[target.val],method="rand")
                 }
                 
                 names(rand.vec) <- paste(target)
@@ -180,9 +182,9 @@ itemConfirm <- function(bootega.obj, confirm, item.rep = .10, plot.ic = TRUE){
                 
                 for(p in 1:rand.len)
                 {
-                    mode.val <- mode(num.comm[which(num.vec==target.rand[p])], numeric = TRUE)
+                    mode.val <- mode(num.comm[which(new.vec==target.rand[p])], numeric = TRUE)
                     
-                    num.vec[which(num.vec == target.rand[p])] <- mode.val
+                    num.vec[which(new.vec == target.rand[p])] <- mode.val
                 }
                 
                 let.wc.mat[,i] <- num.vec
