@@ -53,6 +53,9 @@
 #' @param ncores Number of cores to use in computing results.
 #' Set to 1 to not use parallel computing
 #' 
+#' @param ... Additional arguments to be passed to \code{\link[EGA]{EBICglasso.qgraph}}
+#' or \code{\link[NetworkToolbox]{TMFG}}
+#' 
 #' @return Returns a list containing:
 #' 
 #' \item{n}{Number of replica samples in bootstrap}
@@ -110,13 +113,20 @@
 # Bootstrap EGA
 bootEGA <- function(data, n,
                     model = c("glasso", "TMFG"), type = c("parametric", "resampling"),
-                    typicalStructure = TRUE, plot.typicalStructure = TRUE, ncores = 4) {
+                    typicalStructure = TRUE, plot.typicalStructure = TRUE, ncores = 4, ...) {
     
-    #mode function for item confirm
-    mode <- function(v)
+    #set inverse covariance matrix for parametric approach
+    if(type=="parametric")  # Use a parametric approach:
     {
-        uniqv <- unique(v)
-        uniqv[which.max(tabulate(match(v, uniqv)))]
+        if(model=="glasso")
+        {
+            g <- -EBICglasso.qgraph(qgraph::cor_auto(data), n = nrow(data), lambda.min.ratio = 0.1, returnAllResults = FALSE, ...)
+            diag(g) <- 1
+        }else if(model=="TMFG")
+        {
+            g <- -NetworkToolbox::LoGo(data, normal = TRUE, partial=TRUE, na.data = "pairwise", ...)
+            diag(g) <- 1
+        }
     }
     
     #Parallel processing
@@ -132,37 +142,28 @@ bootEGA <- function(data, n,
     
     #nets
     boots <-foreach::foreach(i=1:n,
-                             .packages = c("NetworkToolbox","psych","qgraph")
+                             .packages = c("NetworkToolbox","psych","qgraph","EGA")
     )%dopar%
         #.options.snow = opts)
     {
-        if(model=="glasso")
-        {
             if(type=="parametric")  # Use a parametric approach:
             {
-                g <- -EBICglasso.qgraph(cov(data), n = nrow(data), lambda.min.ratio = 0.1, returnAllResults = FALSE)
-                diag(g) <- 1
                 bootData <- mvtnorm::rmvnorm(nrow(data), sigma = corpcor::pseudoinverse(g))
-                net <- EBICglasso.qgraph(cov(bootData), n = nrow(data), lambda.min.ratio = 0.1, returnAllResults = FALSE)
+                
+                if(model=="glasso")
+                {net <- EBICglasso.qgraph(cov(bootData), n = nrow(data), lambda.min.ratio = 0.1, returnAllResults = FALSE, ...)
+                }else if(model=="TMFG")
+                {net <- NetworkToolbox::TMFG(bootData, normal = TRUE, na.data = "pairwise", ...)$A}
+                
             }else if(type=="resampling") # Random subsample with replace
             {
                 mat <- data[sample(1:nrow(data), replace=TRUE),]
-                net <- EBICglasso.qgraph(cov(mat), n=nrow(data), lambda.min.ratio = 0.1, returnAllResults = FALSE)
+                
+                if(model=="glasso")
+                {net <- EBICglasso.qgraph(qgraph::cor_auto(mat), n=nrow(data), lambda.min.ratio = 0.1, returnAllResults = FALSE, ...)
+                }else if(model=="TMFG")
+                {net <- NetworkToolbox::TMFG(mat, normal = TRUE, na.data = "pairwise", ...)$A}
             }
-            
-        }else if(model=="TMFG")
-        {
-            if(type=="parametric"){
-                g <- -NetworkToolbox::LoGo(data, partial=TRUE)
-                diag(g) <- 1
-                bootData <- mvtnorm::rmvnorm(nrow(data), sigma = corpcor::pseudoinverse(g))
-                net <- NetworkToolbox::TMFG(bootData)$A
-            } else if(type=="resampling"){
-                mat <- data[sample(1:nrow(data), replace=TRUE),]
-                net <- NetworkToolbox::TMFG(mat)$A
-            }
-            
-        }
     }
     
     parallel::stopCluster(cl)

@@ -2,29 +2,32 @@
 % Please edit documentation in R/summary.CFA.R
 \name{summary.CFA}
 \alias{summary.CFA}
-\title{Summary method for CFA objects.}
+\title{Summary for CFA objects}
 \usage{
 \method{summary}{CFA}(object, ...)
 }
 \arguments{
-\item{object}{An CFA object}
+\item{object}{An \code{\link[EGA]{CFA}} object}
 
-\item{...}{potentially further arguments; unused currently.}
+\item{...}{potentially further arguments (\strong{unused currently})}
 }
 \description{
-\code{summary} Returns a summary of the CFA results.
+Returns a summary of the CFA results
 }
 \examples{
+#estimate EGA
 ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = TRUE)
+
+#esimtate CFA
 cfa.wmt <- CFA(ega.obj = ega.wmt, estimator = 'WLSMV', plot.CFA = TRUE, data = wmt2)
+
+#summary of CFA results
 summary(cfa.wmt)
 
-\dontrun{
-summary(CFA)
-}
 }
 \seealso{
-\code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap.
+\code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA
+and \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap.
 }
 \author{
 Hudson F. Golino <hfg9s at virginia.edu>

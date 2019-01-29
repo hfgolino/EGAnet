@@ -3,7 +3,9 @@
 #' @description Based on the \code{\link{bootEGA}} results, this function 
 #' computes and plots the number of times an item (variable) is estimated
 #' in the same factor/dimension as originaly estimated by EGA. The output
-#' will also contain how often a dimension is replicated.
+#' also each item's likelihood (i.e., proprotion of bootstraps that it
+#' appeared in) for every possible dimension (defined by the maximum number
+#' of dimensions across the bootstrap samples).
 #' 
 #' @param bootega.obj A \code{\link[EGA]{bootEGA}} object
 #' 
@@ -12,18 +14,24 @@
 #' @param plot.ic Should the plot be produced?
 #' Defaults to TRUE
 #' 
-#' @return Returns a list containing:
+#' @param item.rep A value for lowest likelihood allowed in \code{item.likelihood} output.
+#' Removes noise from table to allow for easier interpretation.
+#' Defaults to .10
 #' 
-#' \item{dim.confirm}{The proportion of times each dimension replicated
-#' (i.e., all items were in the exact same dimension)}
+#' @return Returns a list containing:
 #' 
 #' \item{item.confirm}{The proporton of times each item replicated
 #' within the defined dimension}
 #' 
-#' \item{dim.nmi.table}{Computes the Normalized Mutual Informaiton
-#' for community replication. Larger numbers mean dimensions and
-#' items are replicating closer to the input (\code{confirm})
-#' dimensions (see Danon et al. 2005 for more details)}
+#' \item{item.likelihood}{The proportion of times each item replicated
+#' within each possible dimension. Dimensions greater than the maximum
+#' number used in the \code{confirm} argument are labeled based on the
+#' largest remaining components after the dimensions used to confirm.}
+#' 
+#' \item{wc}{A matrix containing the community membership values for
+#' each bootstrapped sample. The values correspond to the values input
+#' for the \code{confrim} argument.}
+#' 
 #' 
 #' @examples
 #' \dontrun{
@@ -49,24 +57,37 @@
 #' 
 #' @export
 #Item Confirm function
-itemConfirm <- function(bootega.obj, confirm, plot.ic = TRUE){
-
-    #mode function for item confirm
+itemConfirm <- function(bootega.obj, confirm, item.rep = .10, plot.ic = TRUE){
+    
+    #mode function
     mode <- function(v)
     {
+        #unique values
         uniqv <- unique(v)
-        uniqv[which.max(tabulate(match(v, uniqv)))]
+        
+        #identify letters in values
+        uniqv <- uniqv[which(is.na(suppressWarnings(as.numeric(uniqv))))]
+        
+        #find mode of letters
+        uniqv <- uniqv[which.max(tabulate(match(v, uniqv)))]
+        
+        return(uniqv)
     }
     
-    n <- length(bootega.obj$bootGraphs) 
+    #number of bootstrapped networks
+    n <- length(bootega.obj$bootGraphs)
     
-    #Initiate confirm matrix
-    uniq <- unique(confirm)
-    confirm.dim <- matrix(NA, nrow = n, ncol = length(uniq))
-    dim.nmi <- vector("numeric", length = n)
-    item.confirm <- matrix(NA, nrow = n, ncol = length(confirm))
-    if(!is.null(names(confirm)))
-    {colnames(item.confirm) <- names(confirm)}
+    #original EGA network
+    net <- bootega.obj$EGA$network
+    
+    #grab membership vectors
+    wc.mat <- matrix(NA, nrow = nrow(net), ncol = n)
+    
+    for(i in 1:n)
+    {wc.mat[,i] <- bootega.obj$boot.wc[[i]]$membership}
+    
+    #grab item names
+    row.names(wc.mat) <- row.names(net)
     
     #check if confirm is character
     if(is.character(confirm))
@@ -78,82 +99,199 @@ itemConfirm <- function(bootega.obj, confirm, plot.ic = TRUE){
         {num.comm[which(num.comm==uniq[i])] <- i}
     } else {num.comm <- confirm}
     
-    for (m in 1:n)
+    #unique confirm cimensions
+    uniq <- unique(num.comm)
+    
+    #number of confirm dimensions
+    uniq.len <- length(num.comm)
+    
+    #confirm dimensions list
+    confirm.list <- list()
+    
+    for(i in uniq)
+    {confirm.list[[i]] <- which(confirm==uniq[i])}
+    
+    #letter membership vectors
+    let.wc.mat <- matrix(NA, nrow = nrow(net), ncol = n)
+    
+    for(i in 1:n)
+    {let.wc.mat[,i] <- letters[wc.mat[,i]]}
+    
+    #identify confirm membership within bootstrapped memberships
+    for(i in 1:n)
     {
-        #normalized mutual information of community comparisons
-        dim.nmi[m] <- igraph::compare(bootega.obj$boot.wc[[m]]$membership, num.comm, method="nmi")
+        #iteration letter membership vector
+        let.vec <- let.wc.mat[,i]
+        #number membership vector
+        num.vec <- wc.mat[,i]
+        #unique int.let membership
+        num.uniq <- unique(num.vec)
+        #number of unique int.let membership
+        num.len <- length(num.uniq)
         
+        #initialize vector for closest dimension closest to original
+        close.vec <- vector("numeric",length=max(uniq))
+        names(close.vec) <- uniq
         
-        for(i in 1:length(uniq))
+        for(j in uniq)
         {
-            dim.items <- which(confirm==uniq[i])
-            target.dim <- bootega.obj$boot.wc[[m]]$membership[dim.items]
+            #confirm list names
+            conlist.names <- names(confirm.list[[j]])
             
-            #count code
-            uniq.dim <- unique(target.dim)
-            if(length(uniq.dim)==1){confirm.dim[m,i] <- 1}else{confirm.dim[m,i] <- 0}
+            #match to iteration membership vector and construct comparison vector
+            comp.vec <- num.vec[match(conlist.names,names(num.vec))]
             
-            #Check if item is confirmed within dimension
-            if(length(uniq.dim)>1)
-            {
-                target.mode <- mode(target.dim)
-                non.con <- dim.items[which(target.dim!=target.mode)]
-                con <- setdiff(dim.items,non.con)
-                item.confirm[m,non.con] <- 0
-                item.confirm[m,con] <- 1
-            } else {item.confirm[m,dim.items] <- 1}
+            #confirm vector
+            con.vec <- num.comm[match(conlist.names,names(num.comm))]
+            
+            #compare communities via the Rand method
+            close.vec[uniq[j]] <- igraph::compare(con.vec,comp.vec,method="rand")
         }
+        
+        if(all(close.vec==1)) #perfect match
+        {let.wc.mat[,i] <- num.comm
+        }else{
+            
+            while(length(close.vec)!=0)
+            {
+                #determine dimension closest to original
+                max.pos <- as.numeric(names(close.vec)[which.max(close.vec)])
+                
+                #positons of closest
+                close.pos <- which(num.comm==max.pos)
+                
+                #target letter
+                target.let <- mode(let.vec[close.pos])
+                #target vector
+                target.vec <- which(let.vec==target.let)
+                
+                #insert appropriate original EGA community number
+                let.vec[target.vec] <- rep(max.pos,length(target.vec))
+                
+                #remove value from closest dimension vector
+                close.vec <- close.vec[-which(names(close.vec)==max.pos)]
+            }
+            
+            #check for remaining dimensions
+            rem.dim <- intersect(let.vec,let.wc.mat[,i])
+            
+            if(max(num.uniq)>max(uniq))
+            {
+                for(u in (max(uniq)+1):max(num.uniq))
+                {
+                    #identify largest remaining dimension
+                    target.rem <- mode(let.vec)
+                    #target remaming values
+                    target.rem.vec <- which(let.vec==target.rem)
+                    
+                    #insert next dimension number
+                    let.vec[target.rem.vec] <- rep(u,length(target.rem.vec))
+                }
+            }else if(any(is.na(suppressWarnings(as.numeric(let.vec)))))
+                {
+                    #identify missing numeric value
+                    uniq.vals <- as.numeric(unique(let.vec[which(!is.na(suppressWarnings(as.numeric(let.vec))))]))
+                
+                    #target value
+                    target.val <- setdiff(uniq,uniq.vals)
+                
+                    #target remaming values
+                    target.rem.vec <- which(let.vec==rem.dim)
+                
+                    #insert missing dimension number
+                    let.vec[target.rem.vec] <- rep(target.val,length(target.rem.vec))
+                }
+            
+            #insert values into letter membership matrix
+            let.wc.mat[,i] <- let.vec
+            }
     }
     
-    #Proportion of times dimension is confirmed
-    con.dim <- (colSums(confirm.dim))/n
-    names(con.dim) <- uniq
     
-    #Proportion of times item is confirmed
-    con.item <- (colSums(item.confirm)/n)
+    #get letter dimension matrix into numbers
+    num.wc.mat <- apply(let.wc.mat,1:2,as.numeric)
     
-    #Tables for nmi
-    dim.nmi.table <- vector("numeric", length = 3)
-    dim.nmi.table[1] <- mean(dim.nmi)
-    dim.nmi.table[2] <- sd(dim.nmi)
-    dim.nmi.se <- (1.253 * sd(dim.nmi))/sqrt(n)
-    dim.nmi.table[3] <- mean(dim.nmi) - dim.nmi.se
-    dim.nmi.table[4] <- mean(dim.nmi) + dim.nmi.se
-    names(dim.nmi.table) <- c("mean","sd","lower.ci","upper.ci")
+    #get frequency tables
+    freq.list <- apply(num.wc.mat,1,table)
+    
+    #initialize item likelihood table
+    item.tab <- matrix(0,nrow=nrow(net),ncol=max(num.wc.mat))
+    
+    #name columns and rows
+    colnames(item.tab) <- paste(seq(1,max(num.wc.mat,1)))
+    row.names(item.tab) <- colnames(net)
+    
+    #insert proportion values into item likelihod table
+    for(i in 1:length(freq.list))
+    {
+        prop.int <- freq.list[[i]]/n
+        
+        item.tab[i,match(names(prop.int),colnames(item.tab))] <- prop.int
+    }
+    
+    #initialize item confirmation vector
+    con.item <- vector("numeric",length=nrow(item.tab))
+    
+    #grab confirmation value from proportion table
+    for(i in 1:nrow(item.tab))
+    {con.item[i] <- item.tab[i,confirm[i]]}
+    
+    #name item confirmation vector
+    names(con.item) <- colnames(net)
+    
+    #Item Confirm
+    itemCon <- con.item
+    
+    #Item Likelihood
+    item.tab[which(item.tab<=item.rep)] <- 0
+    
+    if(any(apply(item.tab,2,sum)==0))
+    {item.tab <- item.tab[,-which(apply(item.tab,2,sum)==0)]}
+    
+    item.tab[which(item.tab<=item.rep)] <- ""
     
     result <- list()
     
     #Plot
-    if(plot.ic == TRUE)
-    {
-        comm <- bootega.obj$EGA$wc
+        comm <- confirm
         rain <- grDevices::rainbow(max(comm))
         
-        item.rep <- data.frame(Item = names(con.item),
-                               Rep = con.item,
+        item.repl <- data.frame(Item = names(itemCon),
+                               Replication = itemCon,
                                Comm = factor(comm))
         
         
-        ic.plot <- ggpubr::ggdotchart(item.rep, x = "Item", y = "Rep",
-                              group = "Comm", color = "Comm",
-                              palette = rain,
-                              legend.title = "EGA Communities",
-                              sorting = "descending",
-                              add = "segments",
-                              rotate = TRUE,
-                              dot.size = 6,
-                              label = round(item.rep$Rep, 2),
-                              font.label = list(color = "black", size = 8,
-                                                vjust = 0.5),
-                              ggtheme = ggpubr::theme_pubr()
+        ic.plot <- ggpubr::ggdotchart(item.repl, x = "Item", y = "Replication",
+                                      group = "Comm", color = "Comm",
+                                      palette = rain,
+                                      legend.title = "EGA Communities",
+                                      add = "segments",
+                                      rotate = TRUE,
+                                      dot.size = 6,
+                                      label = round(item.repl$Replication, 2),
+                                      font.label = list(color = "black", size = 8,
+                                                        vjust = 0.5),
+                                      ggtheme = ggpubr::theme_pubr()
         )
         
-        result$ic.plot <- ic.plot
-    }
+        if(plot.ic)
+        {result$ic.plot <- ic.plot}
+        
+        #match row names to plot output
+        itemCon <- itemCon[rev(match(ic.plot$data$Item,names(itemCon)))]
     
-    result$dim.confirm <- con.dim
-    result$dim.nmi.table <- dim.nmi.table
-    result$item.confirm <- con.item
+    #match row names to itemCon output
+    itemLik <- as.data.frame(item.tab[match(names(itemCon),row.names(item.tab)),])
+    
+    #message for additional item likelihoods
+    if(ncol(itemLik)<max(num.wc.mat))
+    {message("Lower the item.rep argument to view item likelihoods for additional dimensions")}
+    
+    
+    result$item.confirm <- itemCon
+    result$item.likelihood <- itemLik
+    result$wc <- num.wc.mat
     
     return(result)
 }
+#----
