@@ -60,13 +60,16 @@
 itemConfirm <- function(bootega.obj, confirm, item.rep = .10, plot.ic = TRUE){
     
     #mode function
-    mode <- function(v)
+    mode <- function(v, numeric = FALSE)
     {
         #unique values
         uniqv <- unique(v)
         
-        #identify letters in values
-        uniqv <- uniqv[which(is.na(suppressWarnings(as.numeric(uniqv))))]
+        if(!numeric)
+        {
+            #identify letters in values
+            uniqv <- uniqv[which(is.na(suppressWarnings(as.numeric(uniqv))))]
+        }
         
         #find mode of letters
         uniqv <- uniqv[which.max(tabulate(match(v, uniqv)))]
@@ -149,7 +152,42 @@ itemConfirm <- function(bootega.obj, confirm, item.rep = .10, plot.ic = TRUE){
         }
         
         if(all(close.vec==1)) #perfect match
-        {let.wc.mat[,i] <- num.comm
+        {
+            #if number of dimensions is less than confirmatory
+            if(max(num.comm)!=max(num.vec))
+            {
+                target <- intersect(num.comm,num.vec)
+                target.len <- length(target)
+                
+                rand.vec <- vector("numeric",length=target.len)
+                
+                count <- 0
+                
+                for(o in 1:target.len)
+                {
+                    count <- count + 1
+                    
+                    target.val <- which(num.vec==target[o])
+                    
+                    rand.vec[count] <- igraph::compare(num.vec[target.val],num.comm[target.val],method="rand")
+                }
+                
+                names(rand.vec) <- paste(target)
+                
+                target.rand <- as.numeric(names(rand.vec)[which(rand.vec!=1)])
+                
+                rand.len <- length(target.rand)
+                
+                for(p in 1:rand.len)
+                {
+                    mode.val <- mode(num.comm[which(num.vec==target.rand[p])], numeric = TRUE)
+                    
+                    num.vec[which(num.vec == target.rand[p])] <- mode.val
+                }
+                
+                let.wc.mat[,i] <- num.vec
+                
+            }else{let.wc.mat[,i] <- num.comm}
         }else{
             
             while(length(close.vec)!=0)
