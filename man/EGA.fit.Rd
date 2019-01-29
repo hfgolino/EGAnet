@@ -2,38 +2,61 @@
 % Please edit documentation in R/EGA.fit.R
 \name{EGA.fit}
 \alias{EGA.fit}
-\title{EGA Optimal Model Fit}
+\title{EGA Optimal Model Fit using Entropy}
 \usage{
 EGA.fit(data, model = c("glasso", "TMFG"), steps = c(3, 4, 5, 6, 7, 8))
 }
 \arguments{
 \item{data}{A dataset}
 
-\item{model}{A string indicating the method to use. Current options are:
--\code{glasso}:
-{Gaussian graphical model estimation using graphical LASSO with extended Bayesian information criterion to select optimal regularization parameter (default method). Using \code{\link[qgraph]{EBICglasso}} from the \code{\link[qgraph]{qgraph}} package.}
-\code{TMFG}:
-{Estimates a Triangulated Maximally Filtered Graph, using the function \code{\link[NetworkToolbox]{TMFG}} of the \code{\link[NetworkToolbox]{NetworkToolbox}} package}}
+\item{model}{A string indicating the method to use.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{glasso}}}
+{Estimates the Gaussian graphical model using graphical LASSO with
+extended Bayesian information criterion to select optimal regularization parameter.
+This is the default method}
+
+\item{\strong{\code{TMFG}}}
+{Estimates a Triangulated Maximally Filtered Graph}
+
+}}
 
 \item{steps}{Range of steps to be used in the model selection.
 Defaults from 3 to 8 steps (based on Pons & Latapy, 2006)}
 }
 \value{
-Returns a list containing the \code{\link{EGA}} output
-and the number of steps found to provide the optimal solution
+Returns a list containing:
+
+\item{EGA}{The \code{\link[EGA]{EGA}} output for the best fitting model}
+
+\item{steps}{The number of steps used in the best fitting model from
+the \code{\link[igraph]{cluster_walktrap}} algorithm}
+
+\item{EntropyFit}{The Entropy Fit Index for the unique solutions given the range of steps
+(vector names represent the number of steps)}
+
+\item{Lowest.EntropyFit}{The lowest value for the Entropy Fit Index}
 }
 \description{
-Estimates the best fitting model using \code{\link{EGA}}.
-The number of steps in the \code{\link[igraph]{walktrap.community}} detection
+Estimates the best fitting model using \code{\link[EGA]{EGA}}.
+The number of steps in the \code{\link[igraph]{cluster_walktrap}} detection
 algorithm is varied and unique community solutions are compared using
-\code{\link{entropyFit}}.
+\code{\link[EGA]{entropyFit}}.
 }
 \examples{
-tmfg <- EGA.fit(data = wmt2[,7:24], model = "TMFG")
+#estimate normal EGAtmfg
+tmfg <- EGA(data = wmt2[,7:24], model = "TMFG")
 
-entropyFit(data = wmt2[,7:24], structure = tmfg$wc)
+#estimate optimal EGAtmfg
+tmfg.opt <- EGA.fit(data = wmt2[,7:24], model = "TMFG")
 
-entropyFit(data = wmt2[,7:24], structure = EGA(data = wmt2[,7:24], model = "TMFG")$wc)
+#estimate Entropy Fit Index
+entropyFit(data = wmt2[,7:24], structure = tmfg.opt$EGA$wc)$Entropy.Fit
+entropyFit(data = wmt2[,7:24], structure = tmfg$wc)$Entropy.Fit
+
 
 }
 \references{
@@ -43,9 +66,10 @@ Computing communities in large networks using random walks.
 doi:\href{https://doi.org/10.7155/jgaa.00185}{10.7155/jgaa.00185}
 }
 \seealso{
-\code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link{CFA}} to
-verify the fit of the structure suggested by EGA using confirmatory factor analysis.
+\code{\link[EGA]{bootEGA}} to investigate the stability of EGA's estimation via bootstrap,
+\code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA, 
+and \code{\link{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{
-Hudson F. Golino <hfg9s at virginia.edu> and Alexander Christensen <alexpaulchristensen@gmail.com>
+Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 }
