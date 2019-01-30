@@ -154,7 +154,7 @@ itemConfirm <- function(bootega.obj, confirm, item.rep = .10, plot.ic = TRUE){
         if(all(close.vec==1)) #perfect match
         {
             #if number of dimensions is less than confirmatory
-            if(max(num.comm)<max(num.vec))
+            if(max(num.comm)!=max(num.vec))
             {
                 #create new vector of iteration vector
                 new.vec <- num.vec
