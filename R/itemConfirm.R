@@ -154,37 +154,79 @@ itemConfirm <- function(bootega.obj, confirm, item.rep = .10, plot.ic = TRUE){
         if(all(close.vec==1)) #perfect match
         {
             #if number of dimensions is less than confirmatory
-            if(max(num.comm)!=max(num.vec))
+            if(max(num.comm)<max(num.vec))
             {
+                #create new vector of iteration vector
                 new.vec <- num.vec
                 
+                #identify overlapping dimensions
                 target <- intersect(num.comm,new.vec)
+                #number of overlapping dimensions
                 target.len <- length(target)
                 
+                #initialize Rand index vector
                 rand.vec <- vector("numeric",length=target.len)
                 
+                #initilize count
                 count <- 0
                 
+                #compute Rand index for each iteration dimension
                 for(o in 1:target.len)
                 {
+                    #increase count
                     count <- count + 1
                     
-                    target.val <- which(new.vec==target[o])
+                    #find iteration dimensions matching overlapping dimensions
+                    target.val <- which(num.vec==target[o])
                     
+                    #compute Rand index for overlapping dimensions
                     rand.vec[count] <- igraph::compare(new.vec[target.val],num.comm[target.val],method="rand")
                 }
                 
+                #name Rand index vector with iteration dimensions
                 names(rand.vec) <- paste(target)
                 
+                #identify Rand index less than 1
                 target.rand <- as.numeric(names(rand.vec)[which(rand.vec!=1)])
                 
+                #number of Rand index less than 1
                 rand.len <- length(target.rand)
                 
+                #identify confirmatory dimension that most represents the iteration dimension 
                 for(p in 1:rand.len)
                 {
+                    #compute mode for confirmatory dimension that matches iteration dimension's elements
                     mode.val <- mode(num.comm[which(new.vec==target.rand[p])], numeric = TRUE)
                     
+                    #apply confirmatory dimension to iteration dimension's elements
                     num.vec[which(new.vec == target.rand[p])] <- mode.val
+                }
+                
+                #if the above fails, then different strategy
+                if(all(num.vec==new.vec))
+                {
+                    #create new vector of iteration vector
+                    new.vec <- num.vec
+                    
+                    #identify dimensions that are different between iteration and confirmatory dimensions
+                    target <- setdiff(new.vec,num.comm)
+                    
+                    #number that are different
+                    target.len <- length(target)
+                    
+                    #for the different dimensions
+                    #identify confirmatory dimension that most represents the iteration dimension 
+                    for(o in 1:target.len)
+                    {   
+                        #find iteration dimensions matching different dimensions
+                        target.val <- which(new.vec==target[o])
+                        
+                        #compute mode for confirmatory dimension that matches iteration dimension's elements
+                        mode.val <- mode(num.comm[target.val], numeric = TRUE)
+                        
+                        #apply confirmatory dimension to iteration dimension's elements
+                        num.vec[which(new.vec == target[o])] <- mode.val
+                    }
                 }
                 
                 let.wc.mat[,i] <- num.vec
@@ -228,23 +270,23 @@ itemConfirm <- function(bootega.obj, confirm, item.rep = .10, plot.ic = TRUE){
                     let.vec[target.rem.vec] <- rep(u,length(target.rem.vec))
                 }
             }else if(any(is.na(suppressWarnings(as.numeric(let.vec)))))
-                {
-                    #identify missing numeric value
-                    uniq.vals <- as.numeric(unique(let.vec[which(!is.na(suppressWarnings(as.numeric(let.vec))))]))
+            {
+                #identify missing numeric value
+                uniq.vals <- as.numeric(unique(let.vec[which(!is.na(suppressWarnings(as.numeric(let.vec))))]))
                 
-                    #target value
-                    target.val <- setdiff(uniq,uniq.vals)
+                #target value
+                target.val <- setdiff(uniq,uniq.vals)
                 
-                    #target remaming values
-                    target.rem.vec <- which(let.vec==rem.dim)
+                #target remaming values
+                target.rem.vec <- which(let.vec==rem.dim)
                 
-                    #insert missing dimension number
-                    let.vec[target.rem.vec] <- rep(target.val,length(target.rem.vec))
-                }
+                #insert missing dimension number
+                let.vec[target.rem.vec] <- rep(target.val,length(target.rem.vec))
+            }
             
             #insert values into letter membership matrix
             let.wc.mat[,i] <- let.vec
-            }
+        }
     }
     
     
@@ -293,32 +335,32 @@ itemConfirm <- function(bootega.obj, confirm, item.rep = .10, plot.ic = TRUE){
     result <- list()
     
     #Plot
-        comm <- confirm
-        rain <- grDevices::rainbow(max(comm))
-        
-        item.repl <- data.frame(Item = names(itemCon),
-                               Replication = itemCon,
-                               Comm = factor(comm))
-        
-        
-        ic.plot <- ggpubr::ggdotchart(item.repl, x = "Item", y = "Replication",
-                                      group = "Comm", color = "Comm",
-                                      palette = rain,
-                                      legend.title = "EGA Communities",
-                                      add = "segments",
-                                      rotate = TRUE,
-                                      dot.size = 6,
-                                      label = round(item.repl$Replication, 2),
-                                      font.label = list(color = "black", size = 8,
-                                                        vjust = 0.5),
-                                      ggtheme = ggpubr::theme_pubr()
-        )
-        
-        if(plot.ic)
-        {result$ic.plot <- ic.plot}
-        
-        #match row names to plot output
-        itemCon <- itemCon[rev(match(ic.plot$data$Item,names(itemCon)))]
+    comm <- confirm
+    rain <- grDevices::rainbow(max(comm))
+    
+    item.repl <- data.frame(Item = names(itemCon),
+                            Replication = itemCon,
+                            Comm = factor(comm))
+    
+    
+    ic.plot <- ggpubr::ggdotchart(item.repl, x = "Item", y = "Replication",
+                                  group = "Comm", color = "Comm",
+                                  palette = rain,
+                                  legend.title = "EGA Communities",
+                                  add = "segments",
+                                  rotate = TRUE,
+                                  dot.size = 6,
+                                  label = round(item.repl$Replication, 2),
+                                  font.label = list(color = "black", size = 8,
+                                                    vjust = 0.5),
+                                  ggtheme = ggpubr::theme_pubr()
+    )
+    
+    if(plot.ic)
+    {result$ic.plot <- ic.plot}
+    
+    #match row names to plot output
+    itemCon <- itemCon[rev(match(ic.plot$data$Item,names(itemCon)))]
     
     #match row names to itemCon output
     itemLik <- as.data.frame(item.tab[match(names(itemCon),row.names(item.tab)),])
