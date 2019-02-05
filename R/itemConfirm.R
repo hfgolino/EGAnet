@@ -114,6 +114,8 @@ itemConfirm <- function(bootega.obj, confirm, item.rep = .10, plot.ic = TRUE){
     for(i in uniq)
     {confirm.list[[i]] <- which(confirm==uniq[i])}
     
+    names(confirm.list) <- uniq
+    
     #letter membership vectors
     let.wc.mat <- matrix(NA, nrow = nrow(net), ncol = n)
     
@@ -139,7 +141,7 @@ itemConfirm <- function(bootega.obj, confirm, item.rep = .10, plot.ic = TRUE){
         for(j in uniq)
         {
             #confirm list names
-            conlist.names <- names(confirm.list[[j]])
+            conlist.names <- names(confirm.list[[paste(j)]])
             
             #match to iteration membership vector and construct comparison vector
             comp.vec <- num.vec[match(conlist.names,names(num.vec))]
