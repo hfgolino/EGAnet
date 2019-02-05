@@ -7,28 +7,33 @@
 dynamic.plot(ega.obj, title = "", vsize = 30, opacity = 0.4)
 }
 \arguments{
-\item{ega.obj}{An EGA object}
+\item{ega.obj}{An \code{\link[EGA]{EGA}} object}
 
 \item{title}{Character. Title of the plot}
 
-\item{vsize}{An integer indicating the size of the nodes. Default vsize = 30.}
+\item{vsize}{An integer indicating the size of the nodes.
+Default vsize = 30}
 
-\item{opacity}{A numeric value indicating the opacity of the edges. Default opacity = 0.4}
+\item{opacity}{A numeric value indicating the opacity of the edges.
+Default opacity = 0.4}
 }
 \description{
-\code{dynamic.plot} Plots the EGA result using \code{\link{plotly}}
+Plots the EGA result using \code{\link{plotly}}
 }
 \examples{
+#estimate EGA
 ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = TRUE)
+
+#summary of EGA results
 summary(ega.wmt)
+
+#dynamic plot
 dynamic.plot(ega.wmt, title = "", vsize = 30, opacity = 0.4)
 
-\dontrun{
-dynamic.plot(EGA)
-}
 }
 \seealso{
-\code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link{CFA}} to
+\code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA
+and \code{\link{CFA}} to
 verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{

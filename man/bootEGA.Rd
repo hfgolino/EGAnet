@@ -2,52 +2,117 @@
 % Please edit documentation in R/bootEGA.R
 \name{bootEGA}
 \alias{bootEGA}
-\title{Investigates the stability of EGA's estimation via bootstrap.}
+\title{Stability Analysis of EGA}
 \usage{
-bootEGA(data, n, typicalStructure = TRUE, plot.typicalStructure = TRUE,
-  ncores = 4, model = c("glasso", "TMFG"), type = c("parametric",
-  "resampling"))
+bootEGA(data, n, model = c("glasso", "TMFG"), type = c("parametric",
+  "resampling"), typicalStructure = TRUE, plot.typicalStructure = TRUE,
+  ncores = 4)
 }
 \arguments{
 \item{data}{A dataframe with the variables to be used in the analysis}
 
 \item{n}{An integer value representing the number of bootstraps}
 
-\item{typicalStructure}{Logical. If true, returns the typical network of partial correlations (estimated via graphical lasso or via TMFG) and estimates its dimensions. The "typical network" is the median of all pairwise correlations over the n bootstraps.}
+\item{model}{A string indicating the method to use.
+Current options are:
 
-\item{plot.typicalStructure}{Logical. If true, returns a plot of the typical network (partial correlations), which is the median of all pairwise correlations over the n bootstraps, and its estimated dimensions.}
+\itemize{
 
-\item{ncores}{Number of cores to use in computing results. Set to 1 to not use parallel computing.}
+\item{\strong{\code{glasso}}}
+{Estimates the Gaussian graphical model using graphical LASSO with
+extended Bayesian information criterion to select optimal regularization parameter.
+This is the default method}
 
-\item{model}{A string indicating the method to use. Current options are:
--\code{glasso}:
-{Gaussian Markov random field estimation using graphical LASSO with extended Bayesian information criterion to select optimal regularization parameter. Using \code{\link[qgraph]{EBICglasso}} from the qgraph package version 1.4.4.}
-\code{TMFG}:
-{Estimates a Triangulated Maximally Filtered Graph, using the function \code{TMFG} of the NetworkToolbox package}}
+\item{\strong{\code{TMFG}}}
+{Estimates a Triangulated Maximally Filtered Graph}
 
-\item{type}{A string indicating the type of bootstrap to use. Current options are:
--\code{parametric}:
+}}
+
+\item{type}{A string indicating the type of bootstrap to use.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{parametric}}}
 {Generates n new datasets (multivariate normal random distributions) based on the
-original dataset, via the \code{\link[mvtnorm]{rmvnorm}} function of the mvtnorm package}.
--\code{resampling}:
-{Generates n random subsamples of the original data.}}
+original dataset, via the \code{\link[mvtnorm]{Mvnorm}} function of the mvtnorm package}
+
+\item{\strong{\code{resampling}}}
+{Generates n random subsamples of the original data}
+
+}}
+
+\item{typicalStructure}{Logical.
+If true, returns the typical network of partial correlations
+(estimated via graphical lasso or via TMFG) and estimates its dimensions.
+The "typical network" is the median of all pairwise correlations over the \emph{n} bootstraps.
+Defaults to TRUE}
+
+\item{plot.typicalStructure}{Logical.
+If true, returns a plot of the typical network (partial correlations),
+which is the median of all pairwise correlations over the \emph{n} bootstraps,
+and its estimated dimensions.
+Defaults to TRUE}
+
+\item{ncores}{Number of cores to use in computing results.
+Set to 1 to not use parallel computing}
+}
+\value{
+Returns a list containing:
+
+\item{n}{Number of replica samples in bootstrap}
+
+\item{boot.ndim}{Number of dimensions identified in each replica sample}
+
+\item{boot.wc}{Item allocation for each replica sample}
+
+\item{bootGraphs}{Networks of each replica sample}
+
+\item{summary.table}{Summary table containing number of replica samples, median,
+standard deviation, standard error, and 95\% confidence intervals}
+
+\item{likelihood}{Proportion of times the number of dimensions was identified
+(e.g., .85 of 1,000 = 850 times that specific number of dimensions was found)}
+
+\item{EGA}{Output of the original \code{\link[EGA]{EGA}} reults}
+
+\item{typicalGraph}{A list containing:
+
+\itemize{
+
+\item{\strong{\code{graph}}}
+{Network matrix of the median network structure}
+
+\item{\strong{\code{typical.dim.variables}}}
+{An ordered matrix of item allocation}
+
+\item{\strong{\code{wc}}}
+{Item allocation of the median network}
+
+}}
 }
 \description{
-\code{bootEGA} Estimates the number of dimensions of n bootstraps from the empirical correlation matrix,
- and returns a typical network (i.e. the network formed by the median or mean pairwise correlations over the n bootstraps) and its dimensionality.
+\code{bootEGA} Estimates the number of dimensions of n bootstraps
+from the empirical correlation matrix and returns a typical network
+(i.e. the network formed by the median or mean pairwise correlations
+over the \emph{n} bootstraps) and its dimensionality.
 }
 \examples{
 \dontrun{
+#bootEGA glasso example
 boot.wmt <- bootEGA(data = wmt2[,7:24], n = 500, typicalStructure = TRUE,
 plot.typicalStructure = TRUE, model = "glasso", type = "parametric", ncores = 4)
+
+#bootEGA TMFG example
 boot.intwl <- bootEGA(data = intelligenceBattery[,8:66], n = 500, typicalStructure = TRUE,
-plot.typicalStructure = TRUE, model = "glasso", type = "parametric", ncores = 4)
+plot.typicalStructure = TRUE, model = "TMFG", type = "parametric", ncores = 4)
 }
+
 }
 \seealso{
-\code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link{CFA}} to
-verify the fit of the structure suggested by EGA using confirmatory factor analysis.
+\code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA
+and \code{\link{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{
-Hudson F. Golino <hfg9s at virginia.edu> and Alexander Christensen <alexpaulchristensen@gmail.com>
+Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 }

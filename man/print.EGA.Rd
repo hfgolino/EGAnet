@@ -7,24 +7,24 @@
 \method{print}{EGA}(x, ...)
 }
 \arguments{
-\item{x}{An EGA object}
+\item{x}{An \code{\link[EGA]{EGA}} object}
 
-\item{...}{potentially further arguments; unused currently.}
+\item{...}{potentially further arguments (\strong{unused currently})}
 }
 \description{
-\code{print} Returns a summary of the EGA results
+Returns a summary of the EGA results
 }
 \examples{
+#estimtae EGA
 ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = TRUE)
+
+#print EGA results
 print(ega.wmt)
 
-\dontrun{
-print(EGA)
-}
 }
 \seealso{
-\code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link{CFA}} to
-verify the fit of the structure suggested by EGA using confirmatory factor analysis.
+\code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA
+and \code{\link{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{
 Hudson F. Golino <hfg9s at virginia.edu>

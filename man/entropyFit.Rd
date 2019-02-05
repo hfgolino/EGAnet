@@ -2,7 +2,7 @@
 % Please edit documentation in R/entropyFit.R
 \name{entropyFit}
 \alias{entropyFit}
-\title{Fit of Factor Model using Empirical Entropy}
+\title{Entropy Fit Indices}
 \usage{
 entropyFit(data, structure)
 }
@@ -10,21 +10,42 @@ entropyFit(data, structure)
 \item{data}{A dataset}
 
 \item{structure}{A vector representing the structure (numbers or labels for each item).
-Can be theoretical factors or the structure detected by \code{\link{EGA}}}
+Can be theoretical factors or the structure detected by \code{\link[EGA]{EGA}}}
 }
 \value{
-Returns the values of entropy per factor, the mean empirical entropy (i.e., the average entropy across factors),
-the joint entropy (i.e. joint entropy for all factors), the entropy fit index (EFI), total correlation and modified versions
-of all these indices using the Miller Madow correction.
+Returns a list containing:
+
+\item{Ind.Entropy}{The entropy of the dataset}
+
+\item{Mean.Entropy}{The average entropy across the factors}
+
+\item{Joint.Entropy}{The joint entropy across the factors}
+
+\item{H.Miller.Madow}{Miller-Madow correction for the entropy of the dataset}
+
+\item{Mean.Entropy.MM}{Miller-Madow correction for the average entropy across the factors}
+
+\item{Joint.Miller.Madow}{Miller-Madow correction for the joint entropy across the factors}
+
+\item{Total.Correlation}{The total correlation of the dataset}
+
+\item{Total.Correlation.MM}{Miller-Madow correction for the total correlation of the dataset}
+
+\item{Entropy.Fit}{The Entropy Fit Index}
+
+\item{Entropy.Fit.MM}{Miller-Madow correction for the Entropy Fit Index}
+
+\item{Average.Entropy}{The average entropy of the dataset}
 }
 \description{
-Compute compute the entropy fit of a given structure.
-Lower values of the adjusted entropy fit and the adjusted entropy fit
-ranging from 0 to 1 suggest better fit with the data
+Computes the fit of a factor model using empirical entropy
+Lower values of the entropy fit indices suggest better factor fit
 }
 \examples{
+#estimate EGA model
 ega.wmt <- EGA(data = wmt2[,7:24], model = "glasso")
 
+#compute entropy indices
 entropyFit(data = wmt2[,7:24], structure = ega.wmt$wc)
 
 }
@@ -33,5 +54,5 @@ entropyFit(data = wmt2[,7:24], structure = ega.wmt$wc)
 verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{
-Hudson F. Golino <hfg9s at virginia.edu> and Alexander Christensen <alexpaulchristensen@gmail.com>
+Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 }

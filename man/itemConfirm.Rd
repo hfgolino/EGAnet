@@ -2,12 +2,12 @@
 % Please edit documentation in R/itemConfirm.R
 \name{itemConfirm}
 \alias{itemConfirm}
-\title{Replicability of items from EGA}
+\title{Replicability of Items from EGA}
 \usage{
 itemConfirm(bootega.obj, confirm, plot.ic = TRUE)
 }
 \arguments{
-\item{bootega.obj}{A \code{\link{bootEGA}} object}
+\item{bootega.obj}{A \code{\link[EGA]{bootEGA}} object}
 
 \item{confirm}{A vector with community numbers or labels for each item}
 
@@ -57,5 +57,5 @@ doi:\href{https://doi.org/10.1088/1742-5468/2005/09/P09008}{10.1088/1742-5468/20
 verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{
-Hudson F. Golino <hfg9s at virginia.edu> and Alexander Christensen <alexpaulchristensen@gmail.com>
+Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 }

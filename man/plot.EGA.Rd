@@ -7,29 +7,32 @@
 \method{plot}{EGA}(x, title = "", vsize = 6, ...)
 }
 \arguments{
-\item{x}{An EGA object}
+\item{x}{An \code{\link[EGA]{EGA}} object}
 
 \item{title}{Character. Title of the plot}
 
-\item{vsize}{An integer indicating the size of the nodes. Default vsize = 6.}
+\item{vsize}{An integer indicating the size of the nodes.
+Default vsize = 6}
 
-\item{...}{Arguments passed to 'qgraph'.}
+\item{...}{Arguments passed to \code{\link[qgraph]{qgraph}}}
 }
 \description{
-\code{plot} Plots the EGA result using \code{\link{qgraph}}
+Plots the EGA result using \code{\link{qgraph}}
 }
 \examples{
+#estimate EGA
 ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = TRUE)
+
+#summary of EGA results
 summary(ega.wmt)
+
+#plot EGA network
 plot(ega.wmt, vsize = 6)
 
-\dontrun{
-plot(EGA)
-}
 }
 \seealso{
-\code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link{CFA}} to
-verify the fit of the structure suggested by EGA using confirmatory factor analysis.
+\code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA
+and \code{\link{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{
 Hudson F. Golino <hfg9s at virginia.edu>
