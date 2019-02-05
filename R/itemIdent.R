@@ -9,7 +9,8 @@
 #' 
 #' @param confirm A vector with community numbers or labels for each item
 #' 
-#' @param rep.val A replication value between 0 and 1. It's recommended
+#' @param rep.val A replication value between 0 and 1. Items below this
+#' value will be marked for their instability. It's recommended
 #' to first run \code{\link[EGA]{itemConfirm}} to determine appropriate cut-off
 #' value.
 #' Defaults to .80
@@ -54,8 +55,11 @@ itemIdent <- function (bootega.obj, confirm, rep.val = .80, item.rep = .10)
         for(q in 1:nrow(comc))
         {comc[q,which(is.na(comc[q,]))] <- stab[q]}
         
-        comm.str <- comc[,order(colnames(comc))]
-        comm.str <- round(comm.str,3)
+        if(ncol(comc)!=1)
+        {
+            comm.str <- comc[,order(colnames(comc))]
+            comm.str <- round(comm.str,3)
+        }else{comm.str <- comc}
         
         return(comm.str)
     }
@@ -87,7 +91,7 @@ itemIdent <- function (bootega.obj, confirm, rep.val = .80, item.rep = .10)
             
             colnames(item.id.samps[[m]]) <- col.names
             
-            item.id.samps[[m]] <- item.id.samps[[m]][,order(colnames(item.id.samps[[m]]))]
+            item.id.samps[[m]] <- item.id.samps[[m]][,order(as.numeric(colnames(item.id.samps[[m]])))]
         }
     }
     
