@@ -11,7 +11,8 @@ itemIdent(bootega.obj, confirm, rep.val = 0.8, item.rep = 0.1)
 
 \item{confirm}{A vector with community numbers or labels for each item}
 
-\item{rep.val}{A replication value between 0 and 1. It's recommended
+\item{rep.val}{A replication value between 0 and 1. Items below this
+value will be marked for their instability. It's recommended
 to first run \code{\link[EGA]{itemConfirm}} to determine appropriate cut-off
 value.
 Defaults to .80}
