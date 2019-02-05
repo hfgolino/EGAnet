@@ -9,7 +9,8 @@
 #' 
 #' @param confirm A vector with community numbers or labels for each item
 #' 
-#' @param rep.val A replication value between 0 and 1. It's recommended
+#' @param rep.val A replication value between 0 and 1. Items below this
+#' value will be marked for their instability. It's recommended
 #' to first run \code{\link[EGA]{itemConfirm}} to determine appropriate cut-off
 #' value.
 #' Defaults to .80
