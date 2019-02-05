@@ -33,6 +33,9 @@
 #' 
 #' @param steps Number of steps to be used in \code{\link[igraph]{cluster_walktrap}} algorithm.
 #' Defaults to 4
+#'
+#' @param ... Additional arguments to be passed to \code{\link[EGA]{EBICglasso.qgraph}}
+#' or \code{\link[NetworkToolbox]{TMFG}}
 #' 
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
 #' 
@@ -84,7 +87,7 @@
 #' @export
 #' 
 # EGA default function - 11/21/2017
-EGA <- function(data, n = NULL, model = c("glasso", "TMFG"), plot.EGA = TRUE, steps = 4) {
+EGA <- function(data, n = NULL, model = c("glasso", "TMFG"), plot.EGA = TRUE, steps = 4, ...) {
     
         if(missing(model)){
             model = "glasso"
@@ -94,18 +97,18 @@ EGA <- function(data, n = NULL, model = c("glasso", "TMFG"), plot.EGA = TRUE, st
             data <- as.data.frame(data)
             if(model == "glasso"){
                 cor.data <- qgraph::cor_auto(data)
-                estimated.network <- EBICglasso.qgraph(S = cor.data, n = nrow(data), lambda.min.ratio = 0.1, returnAllResults = FALSE)
+                estimated.network <- EBICglasso.qgraph(S = cor.data, n = nrow(data), lambda.min.ratio = 0.1, returnAllResults = FALSE, ...)
             } else if(model == "TMFG"){
-                cor.data <- cor(data)
-                estimated.network <- NetworkToolbox::TMFG(cor.data)$A
+                cor.data <- NULL
+                estimated.network <- NetworkToolbox::TMFG(data, normal = TRUE, na.data = "pairwise", ...)$A
             }
             
         } else if(nrow(data)==ncol(data)){
             cor.data <- data
             if(model == "glasso"){
-                estimated.network <- EBICglasso.qgraph(S = data, n = n, lambda.min.ratio = 0.1, returnAllResults = FALSE)
+                estimated.network <- EBICglasso.qgraph(S = data, n = n, lambda.min.ratio = 0.1, returnAllResults = FALSE, ...)
             } else if(model == "TMFG"){
-                estimated.network <- NetworkToolbox::TMFG(data)$A
+                estimated.network <- NetworkToolbox::TMFG(cor.data, ...)$A
             }
         }
     

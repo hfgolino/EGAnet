@@ -6,7 +6,7 @@
 \usage{
 bootEGA(data, n, model = c("glasso", "TMFG"), type = c("parametric",
   "resampling"), typicalStructure = TRUE, plot.typicalStructure = TRUE,
-  ncores = 4)
+  ncores = 4, ...)
 }
 \arguments{
 \item{data}{A dataframe with the variables to be used in the analysis}
@@ -56,6 +56,9 @@ Defaults to TRUE}
 
 \item{ncores}{Number of cores to use in computing results.
 Set to 1 to not use parallel computing}
+
+\item{...}{Additional arguments to be passed to \code{\link[EGA]{EBICglasso.qgraph}}
+or \code{\link[NetworkToolbox]{TMFG}}}
 }
 \value{
 Returns a list containing:

@@ -5,7 +5,7 @@
 \title{Apply the Exploratory Graph Analysis technique}
 \usage{
 EGA(data, n = NULL, model = c("glasso", "TMFG"), plot.EGA = TRUE,
-  steps = 4)
+  steps = 4, ...)
 }
 \arguments{
 \item{data}{A dataframe with the variables to be used in the analysis or a correlation matrix.
@@ -35,6 +35,9 @@ Defaults to TRUE}
 
 \item{steps}{Number of steps to be used in \code{\link[igraph]{cluster_walktrap}} algorithm.
 Defaults to 4}
+
+\item{...}{Additional arguments to be passed to \code{\link[EGA]{EBICglasso.qgraph}}
+or \code{\link[NetworkToolbox]{TMFG}}}
 }
 \description{
 Estimates the number of dimensions of a given dataset/instrument
