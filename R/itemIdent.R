@@ -78,7 +78,9 @@ itemIdent <- function (bootega.obj, confirm, rep.val = .80, item.rep = .10)
     {
         item.id.samps[[m]] <- ident.item(bootega.obj$bootGraphs[[m]], item.con$wc[,m])
         
-        if(max(item.con$wc[,m])!=max.wc)
+        dims <- length(unique(item.con$wc[,m]))
+        
+        if(dims!=max.wc)
         {
             diff <- max.wc - ncol(item.id.samps[[m]])
             
