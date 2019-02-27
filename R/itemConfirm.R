@@ -286,6 +286,21 @@ itemConfirm <- function(bootega.obj, confirm, item.rep = .10, plot.ic = TRUE){
                 let.vec[target.rem.vec] <- rep(target.val,length(target.rem.vec))
             }
             
+            #check for remaining dimensions
+            rem.dim <- intersect(let.vec,let.wc.mat[,i])
+            
+            if(length(rem.dim)!=0)
+            {
+                target.max <- max(as.numeric(let.vec[suppressWarnings(!is.na(as.numeric(let.vec)))]))
+                
+                for(r in 1:length(rem.dim))
+                {
+                    target.rem <- which(let.vec==rem.dim[r])
+                    
+                    let.vec[target.rem] <- rep(target.max + r, length(target.rem))
+                }
+            }
+            
             #insert values into letter membership matrix
             let.wc.mat[,i] <- let.vec
         }
