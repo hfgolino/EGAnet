@@ -104,6 +104,7 @@ itemConfirm <- function(bootega.obj, confirm, item.rep = .10, plot.ic = TRUE){
     
     #unique confirm cimensions
     uniq <- unique(num.comm)
+    uniq <- uniq[order(uniq)]
     
     #number of confirm dimensions
     uniq.len <- length(num.comm)
@@ -152,6 +153,26 @@ itemConfirm <- function(bootega.obj, confirm, item.rep = .10, plot.ic = TRUE){
             #compare communities via the Rand method
             close.vec[uniq[j]] <- igraph::compare(con.vec,comp.vec,method="rand")
         }
+        
+        #order close.vec by most items
+        ##identify rand with largest number of items
+        close.ord <- close.vec
+        close.clone <- close.vec
+        
+        for(y in 1:length(close.vec))
+        {
+            target.close <- mode(num.comm[which(!is.na(match(num.comm,names(close.clone)[which(close.clone==max(close.clone))])))],TRUE)
+            
+            target.dim <- which(names(close.clone)==target.close)
+            
+            dim <- names(close.clone)[target.dim]
+            
+            close.ord[y] <- dim
+            
+            close.clone <- close.clone[-target.dim]
+        }
+        
+        close.vec <- close.vec[order(close.ord)]
         
         if(all(close.vec==1)) #perfect match
         {
