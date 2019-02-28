@@ -104,6 +104,7 @@ itemConfirm <- function(bootega.obj, confirm, item.rep = .10, plot.ic = TRUE){
     
     #unique confirm cimensions
     uniq <- unique(num.comm)
+    uniq <- uniq[order(uniq)]
     
     #number of confirm dimensions
     uniq.len <- length(num.comm)
@@ -152,6 +153,26 @@ itemConfirm <- function(bootega.obj, confirm, item.rep = .10, plot.ic = TRUE){
             #compare communities via the Rand method
             close.vec[uniq[j]] <- igraph::compare(con.vec,comp.vec,method="rand")
         }
+        
+        #order close.vec by most items
+        ##identify rand with largest number of items
+        close.ord <- close.vec
+        close.clone <- close.vec
+        
+        for(y in 1:length(close.vec))
+        {
+            target.close <- mode(num.comm[which(!is.na(match(num.comm,names(close.clone)[which(close.clone==max(close.clone))])))],TRUE)
+            
+            target.dim <- which(names(close.clone)==target.close)
+            
+            dim <- names(close.clone)[target.dim]
+            
+            close.ord[y] <- dim
+            
+            close.clone <- close.clone[-target.dim]
+        }
+        
+        close.vec <- close.vec[order(close.ord)]
         
         if(all(close.vec==1)) #perfect match
         {
@@ -284,6 +305,21 @@ itemConfirm <- function(bootega.obj, confirm, item.rep = .10, plot.ic = TRUE){
                 
                 #insert missing dimension number
                 let.vec[target.rem.vec] <- rep(target.val,length(target.rem.vec))
+            }
+            
+            #check for remaining dimensions
+            rem.dim <- intersect(let.vec,let.wc.mat[,i])
+            
+            if(length(rem.dim)!=0)
+            {
+                target.max <- max(as.numeric(let.vec[suppressWarnings(!is.na(as.numeric(let.vec)))]))
+                
+                for(r in 1:length(rem.dim))
+                {
+                    target.rem <- which(let.vec==rem.dim[r])
+                    
+                    let.vec[target.rem] <- rep(target.max + r, length(target.rem))
+                }
             }
             
             #insert values into letter membership matrix
