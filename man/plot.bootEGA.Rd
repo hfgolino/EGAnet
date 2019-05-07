@@ -7,7 +7,7 @@
 \method{plot}{bootEGA}(x, vsize = 6, ...)
 }
 \arguments{
-\item{x}{A \code{\link[EGA]{bootEGA}} object}
+\item{x}{A \code{\link{bootEGA}} object}
 
 \item{vsize}{An integer indicating the size of the nodes.
 Default vsize = 6}
@@ -19,7 +19,7 @@ Plots bootEGA typical structure using \code{\link{qgraph}}
 }
 \examples{
 
-\dontrun{
+\donttest{
 #estimate EGA
 ega.wmt <- EGA(data = wmt2[,7:24], model = "glasso")
 

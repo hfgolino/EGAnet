@@ -7,7 +7,7 @@
 dynamic.plot(ega.obj, title = "", vsize = 30, opacity = 0.4)
 }
 \arguments{
-\item{ega.obj}{An \code{\link[EGA]{EGA}} object}
+\item{ega.obj}{An \code{\link{EGA}} object}
 
 \item{title}{Character. Title of the plot}
 
@@ -21,6 +21,7 @@ Default opacity = 0.4}
 Plots the EGA result using \code{\link{plotly}}
 }
 \examples{
+ \donttest{
 #estimate EGA
 ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = TRUE)
 
@@ -29,6 +30,7 @@ summary(ega.wmt)
 
 #dynamic plot
 dynamic.plot(ega.wmt, title = "", vsize = 30, opacity = 0.4)
+}
 
 }
 \seealso{

@@ -30,7 +30,7 @@ Defaults from 3 to 8 steps (based on Pons & Latapy, 2006)}
 \value{
 Returns a list containing:
 
-\item{EGA}{The \code{\link[EGA]{EGA}} output for the best fitting model}
+\item{EGA}{The \code{\link{EGA}} output for the best fitting model}
 
 \item{steps}{The number of steps used in the best fitting model from
 the \code{\link[igraph]{cluster_walktrap}} algorithm}
@@ -41,12 +41,13 @@ the \code{\link[igraph]{cluster_walktrap}} algorithm}
 \item{Lowest.EntropyFit}{The lowest value for the Entropy Fit Index}
 }
 \description{
-Estimates the best fitting model using \code{\link[EGA]{EGA}}.
+Estimates the best fitting model using \code{\link{EGA}}.
 The number of steps in the \code{\link[igraph]{cluster_walktrap}} detection
 algorithm is varied and unique community solutions are compared using
-\code{\link[EGA]{entropyFit}}.
+\code{\link{entropyFit}}.
 }
 \examples{
+\donttest{
 #estimate normal EGAtmfg
 tmfg <- EGA(data = wmt2[,7:24], model = "TMFG")
 
@@ -56,7 +57,7 @@ tmfg.opt <- EGA.fit(data = wmt2[,7:24], model = "TMFG")
 #estimate Entropy Fit Index
 entropyFit(data = wmt2[,7:24], structure = tmfg.opt$EGA$wc)$Entropy.Fit
 entropyFit(data = wmt2[,7:24], structure = tmfg$wc)$Entropy.Fit
-
+}
 
 }
 \references{
@@ -66,8 +67,8 @@ Computing communities in large networks using random walks.
 doi:\href{https://doi.org/10.7155/jgaa.00185}{10.7155/jgaa.00185}
 }
 \seealso{
-\code{\link[EGA]{bootEGA}} to investigate the stability of EGA's estimation via bootstrap,
-\code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA, 
+\code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap,
+\code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA,
 and \code{\link{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{

@@ -7,7 +7,7 @@
 \method{summary}{CFA}(object, ...)
 }
 \arguments{
-\item{object}{An \code{\link[EGA]{CFA}} object}
+\item{object}{An \code{\link{CFA}} object}
 
 \item{...}{potentially further arguments (\strong{unused currently})}
 }
@@ -15,6 +15,7 @@
 Returns a summary of the CFA results
 }
 \examples{
+\donttest{
 #estimate EGA
 ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = TRUE)
 
@@ -23,7 +24,7 @@ cfa.wmt <- CFA(ega.obj = ega.wmt, estimator = 'WLSMV', plot.CFA = TRUE, data = w
 
 #summary of CFA results
 summary(cfa.wmt)
-
+}
 }
 \seealso{
 \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA

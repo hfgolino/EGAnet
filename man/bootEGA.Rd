@@ -57,7 +57,7 @@ Defaults to TRUE}
 \item{ncores}{Number of cores to use in computing results.
 Set to 1 to not use parallel computing}
 
-\item{...}{Additional arguments to be passed to \code{\link[EGA]{EBICglasso.qgraph}}
+\item{...}{Additional arguments to be passed to \code{\link{EBICglasso.qgraph}}
 or \code{\link[NetworkToolbox]{TMFG}}}
 }
 \value{
@@ -77,7 +77,7 @@ standard deviation, standard error, and 95\% confidence intervals}
 \item{likelihood}{Proportion of times the number of dimensions was identified
 (e.g., .85 of 1,000 = 850 times that specific number of dimensions was found)}
 
-\item{EGA}{Output of the original \code{\link[EGA]{EGA}} reults}
+\item{EGA}{Output of the original \code{\link{EGA}} results}
 
 \item{typicalGraph}{A list containing:
 
@@ -101,7 +101,7 @@ from the empirical correlation matrix and returns a typical network
 over the \emph{n} bootstraps) and its dimensionality.
 }
 \examples{
-\dontrun{
+\donttest{
 #bootEGA glasso example
 boot.wmt <- bootEGA(data = wmt2[,7:24], n = 500, typicalStructure = TRUE,
 plot.typicalStructure = TRUE, model = "glasso", type = "parametric", ncores = 4)

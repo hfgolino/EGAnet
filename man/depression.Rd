@@ -13,7 +13,7 @@ A response matrix (n = 574) of the Beck Depression Inventory, Beck Anxiety Inven
 the Athens Insomnia Scale.
 }
 \examples{
-\dontrun{
+\donttest{
 data("depression")
 }
 

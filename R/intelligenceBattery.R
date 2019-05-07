@@ -16,7 +16,7 @@
 #' @keywords datasets
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' data("intelligenceBattery")
 #' }
 #'

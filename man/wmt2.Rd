@@ -12,7 +12,7 @@ data(wmt2)
 A response matrix (n = 1185) of the Wiener Matrizen-Test 2 (WMT-2).
 }
 \examples{
-\dontrun{
+\donttest{
 data("wmt2")
 }
 

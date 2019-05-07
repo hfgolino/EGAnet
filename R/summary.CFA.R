@@ -2,13 +2,14 @@
 #'
 #' Returns a summary of the CFA results
 #'
-#' @param object An \code{\link[EGA]{CFA}} object
+#' @param object An \code{\link{CFA}} object
 #'
 #' @param ... potentially further arguments (\strong{unused currently})
 #'
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
 #'
 #' @examples
+#'\donttest{
 #' #estimate EGA
 #' ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = TRUE)
 #'
@@ -17,7 +18,7 @@
 #'
 #' #summary of CFA results
 #' summary(cfa.wmt)
-#'
+#'}
 #' @seealso \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA
 #' and \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap.
 #' @export

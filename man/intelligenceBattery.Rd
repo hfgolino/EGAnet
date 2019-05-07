@@ -13,7 +13,7 @@ A response matrix (n = 1152) of the International Cognitive Ability Resource (IC
 intelligence battery developed by Condon and Revelle (2016).
 }
 \examples{
-\dontrun{
+\donttest{
 data("intelligenceBattery")
 }
 

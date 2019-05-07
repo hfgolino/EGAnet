@@ -2,19 +2,20 @@
 #'
 #' Plots the CFA structure using \code{\link{semPlot}}
 #'
-#' @param x An \code{\link[EGA]{CFA}} object
-#' 
+#' @param x An \code{\link{CFA}} object
+#'
 #' @param layout Layout of plot (see \code{\link[semPlot]{semPaths}}).
 #' Defaults to "spring"
-#' 
+#'
 #' @param vsize Size of objects in plot.
 #' Defaults to 6
-#' 
+#'
 #' @param ... Arguments passed to \code{\link[semPlot]{semPaths}} in semPlot
 #'
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
-#' 
+#'
 #' @examples
+#'\donttest{
 #' #estimate EGA
 #' ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = TRUE)
 #'
@@ -23,7 +24,7 @@
 #'
 #' #plot CFA
 #' plot(cfa.wmt)
-#'
+#'}
 #' @seealso \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA
 #' and \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap.
 #'

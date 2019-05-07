@@ -58,41 +58,40 @@
 #' Jerome Friedman, Trevor Hastie and Rob Tibshirani (2011).
 #' glasso: Graphical lasso-estimation of Gaussian graphical models.
 #' R package version 1.7.
-#' \url{http://CRAN.R-project.org/package=glasso}
+#' \url{https://CRAN.R-project.org/package=glasso}
 #'
 #' Foygel, R., & Drton, M. (2010).
 #' Extended Bayesian information criteria for Gaussian graphical models.
 #' In Advances in neural information processing systems (pp. 604-612).
-#' \url{http://papers.nips.cc/paper/4087-extended-bayesian-information-criteria-for-gaussian-graphical-models}
+#' \url{https://papers.nips.cc/paper/4087-extended-bayesian-information-criteria-for-gaussian-graphical-models}
 #'
 #' #psych package
 #' Revelle, W. (2014) psych: Procedures for Personality and Psychological Research,
 #' Northwestern University, Evanston, Illinois, USA.
 #' R package version 1.4.4.
-#' \url{http://CRAN.R-project.org/package=psych}
+#' \url{https://CRAN.R-project.org/package=psych}
 #'
 #' #Matrix package
 #' Douglas Bates and Martin Maechler (2014).
 #' Matrix: Sparse and Dense Matrix Classes and Methods.
 #' R package version 1.1-3.
-#' \url{http://CRAN.R-project.org/package=Matrix}
+#' \url{https://CRAN.R-project.org/package=Matrix}
 #'
 #' @author Sacha Epskamp <mail@sachaepskamp.com>
 #'
 #' @examples
-#' \dontrun{
-#' ### Using bfi dataset from psych ###
-#' library("psych")
-#' data(bfi)
+#' \donttest{
+#' ### Using wmt2 dataset from EGAnet ###
+#' data(wmt2)
 #'
 #' # Compute correlations:
-#' CorMat <- cor_auto(bfi[,1:25])
+#' CorMat <- cor_auto(wmt2[,7:24])
 #'
 #' # Compute graph with tuning = 0 (BIC):
-#' BICgraph <- EBICglasso.qgraph(CorMat, nrow(bfi), 0)
+#' BICgraph <- EBICglasso.qgraph(CorMat, nrow(wmt2), 0)
 #'
 #' # Compute graph with tuning = 0.5 (EBIC)
-#' EBICgraph <- EBICglasso.qgraph(CorMat, nrow(bfi), 0.5)
+#' EBICgraph <- EBICglasso.qgraph(CorMat, nrow(wmt2), 0.5)
 #' }
 #'
 #' @export
@@ -205,9 +204,9 @@ EBICglasso.qgraph <- function(
   opt <- which.min(EBICs)
 
   # Check if rho is smallest:
-  if (opt == 1){
-    warning("Network with lowest lambda selected as best network. Try setting 'lambda.min.ratio' lower.")
-  }
+  #if (opt == 1){
+  #  warning("Network with lowest lambda selected as best network. Try setting 'lambda.min.ratio' lower.")
+  #}
 
   # Return network:
   net <- as.matrix(Matrix::forceSymmetric(wi2net(glas_path$wi[,,opt])))

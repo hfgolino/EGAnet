@@ -53,7 +53,7 @@
 #' @param ncores Number of cores to use in computing results.
 #' Set to 1 to not use parallel computing
 #'
-#' @param ... Additional arguments to be passed to \code{\link[EGA]{EBICglasso.qgraph}}
+#' @param ... Additional arguments to be passed to \code{\link{EBICglasso.qgraph}}
 #' or \code{\link[NetworkToolbox]{TMFG}}
 #'
 #' @return Returns a list containing:
@@ -72,7 +72,7 @@
 #' \item{likelihood}{Proportion of times the number of dimensions was identified
 #' (e.g., .85 of 1,000 = 850 times that specific number of dimensions was found)}
 #'
-#' \item{EGA}{Output of the original \code{\link[EGA]{EGA}} reults}
+#' \item{EGA}{Output of the original \code{\link{EGA}} results}
 #'
 #' \item{typicalGraph}{A list containing:
 #'
@@ -92,7 +92,7 @@
 #' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' #bootEGA glasso example
 #' boot.wmt <- bootEGA(data = wmt2[,7:24], n = 500, typicalStructure = TRUE,
 #' plot.typicalStructure = TRUE, model = "glasso", type = "parametric", ncores = 4)

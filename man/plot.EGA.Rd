@@ -7,7 +7,7 @@
 \method{plot}{EGA}(x, title = "", vsize = 6, ...)
 }
 \arguments{
-\item{x}{An \code{\link[EGA]{EGA}} object}
+\item{x}{An \code{\link{EGA}} object}
 
 \item{title}{Character. Title of the plot}
 
@@ -20,6 +20,7 @@ Default vsize = 6}
 Plots the EGA result using \code{\link{qgraph}}
 }
 \examples{
+\donttest{
 #estimate EGA
 ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = TRUE)
 
@@ -28,7 +29,7 @@ summary(ega.wmt)
 
 #plot EGA network
 plot(ega.wmt, vsize = 6)
-
+}
 }
 \seealso{
 \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA

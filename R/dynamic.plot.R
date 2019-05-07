@@ -2,27 +2,29 @@
 #'
 #' Plots the EGA result using \code{\link{plotly}}
 #'
-#' @param ega.obj An \code{\link[EGA]{EGA}} object
-#' 
+#' @param ega.obj An \code{\link{EGA}} object
+#'
 #' @param title Character. Title of the plot
-#' 
+#'
 #' @param vsize An integer indicating the size of the nodes.
 #' Default vsize = 30
-#' 
+#'
 #' @param opacity A numeric value indicating the opacity of the edges.
 #' Default opacity = 0.4
-#' 
+#'
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
-#' 
+#'
 #' @examples
+#'  \donttest{
 #' #estimate EGA
 #' ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = TRUE)
-#' 
+#'
 #' #summary of EGA results
 #' summary(ega.wmt)
-#' 
+#'
 #' #dynamic plot
 #' dynamic.plot(ega.wmt, title = "", vsize = 30, opacity = 0.4)
+#'}
 #'
 #' @seealso \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA
 #' and \code{\link{CFA}} to
@@ -31,11 +33,11 @@
 #' @importFrom dplyr %>%
 #'
 #' @export
-#' 
+#'
 ## S3 method for class 'EGA'
 #Dynamic plot
 dynamic.plot <- function(ega.obj, title = "", vsize = 30, opacity = 0.4){
-    
+
     graph.glasso <- NetworkToolbox::convert2igraph(ega.obj$network)
     vert <- igraph::V(graph.glasso)
     es <- as.data.frame(igraph::get.edgelist(graph.glasso))

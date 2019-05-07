@@ -7,7 +7,7 @@
 \method{print}{EGA}(x, ...)
 }
 \arguments{
-\item{x}{An \code{\link[EGA]{EGA}} object}
+\item{x}{An \code{\link{EGA}} object}
 
 \item{...}{potentially further arguments (\strong{unused currently})}
 }
@@ -15,12 +15,13 @@
 Returns a summary of the EGA results
 }
 \examples{
+\donttest{
 #estimtae EGA
 ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = TRUE)
 
 #print EGA results
 print(ega.wmt)
-
+}
 }
 \seealso{
 \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA

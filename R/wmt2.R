@@ -13,7 +13,7 @@
 #' @keywords datasets
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' data("wmt2")
 #' }
 #'

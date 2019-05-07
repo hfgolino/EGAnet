@@ -7,7 +7,7 @@
 CFA(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ...)
 }
 \arguments{
-\item{ega.obj}{An \code{\link[EGA]{EGA}} object}
+\item{ega.obj}{An \code{\link{EGA}} object}
 
 \item{data}{A dataframe with the variables to be used in the analysis}
 
@@ -41,7 +41,7 @@ Additional fit measures can be applied using the
 Verifies the fit of the structure suggested by EGA using confirmatory factor analysis
 }
 \examples{
-\dontrun{
+\donttest{
 #estimate EGA
 ega.wmt <- EGA(data = wmt2[,7:24])
 

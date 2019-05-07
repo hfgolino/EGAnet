@@ -7,7 +7,7 @@
 \method{plot}{CFA}(x, layout = "spring", vsize = 6, ...)
 }
 \arguments{
-\item{x}{An \code{\link[EGA]{CFA}} object}
+\item{x}{An \code{\link{CFA}} object}
 
 \item{layout}{Layout of plot (see \code{\link[semPlot]{semPaths}}).
 Defaults to "spring"}
@@ -21,6 +21,7 @@ Defaults to 6}
 Plots the CFA structure using \code{\link{semPlot}}
 }
 \examples{
+\donttest{
 #estimate EGA
 ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = TRUE)
 
@@ -29,7 +30,7 @@ cfa.wmt <- CFA(ega.obj = ega.wmt, estimator = 'WLSMV', plot.CFA = FALSE, data = 
 
 #plot CFA
 plot(cfa.wmt)
-
+}
 }
 \seealso{
 \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA

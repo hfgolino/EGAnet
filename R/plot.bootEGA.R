@@ -2,18 +2,18 @@
 #'
 #' Plots bootEGA typical structure using \code{\link{qgraph}}
 #'
-#' @param x A \code{\link[EGA]{bootEGA}} object
+#' @param x A \code{\link{bootEGA}} object
 #'
 #' @param vsize An integer indicating the size of the nodes.
 #' Default vsize = 6
 #'
 #' @param ... Arguments passed to \code{\link[qgraph]{qgraph}}
-#' 
+#'
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
 #'
 #' @examples
 #'
-#' \dontrun{
+#' \donttest{
 #' #estimate EGA
 #' ega.wmt <- EGA(data = wmt2[,7:24], model = "glasso")
 #'

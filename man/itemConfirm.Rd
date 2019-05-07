@@ -7,7 +7,7 @@
 itemConfirm(bootega.obj, confirm, item.rep = 0.1, plot.ic = TRUE)
 }
 \arguments{
-\item{bootega.obj}{A \code{\link[EGA]{bootEGA}} object}
+\item{bootega.obj}{A \code{\link{bootEGA}} object}
 
 \item{confirm}{A vector with community numbers or labels for each item}
 
@@ -34,7 +34,7 @@ each bootstrapped sample. The values correspond to the values input
 for the \code{confrim} argument.}
 }
 \description{
-Based on the \code{\link{bootEGA}} results, this function 
+Based on the \code{\link{bootEGA}} results, this function
 computes and plots the number of times an item (variable) is estimated
 in the same factor/dimension as originaly estimated by EGA. The output
 also each item's likelihood (i.e., proprotion of bootstraps that it
@@ -42,7 +42,7 @@ appeared in) for every possible dimension (defined by the maximum number
 of dimensions across the bootstrap samples).
 }
 \examples{
-\dontrun{
+\donttest{
 ega.wmt <- EGA(data = wmt2[,7:24], model = "glasso")
 
 boot.wmt <- bootEGA(data = wmt2[,7:24], n = 100, typicalStructure = TRUE,
@@ -57,7 +57,7 @@ itemConfirm(boot.wmt, confirm = ega.wmt$wc)
 Danon, L., Diaz-Guilera, A., Duch, J., & Arenas, A. (2005).
 Comparing community structure identification.
 \emph{Journal of Statistical Mechanics: Theory and Experiment}, \emph{9}, P09008.
-doi:\href{https://doi.org/10.1088/1742-5468/2005/09/P09008}{10.1088/1742-5468/2005/09/P09008}
+<doi:10.1088/1742-5468/2005/09/P09008>
 }
 \seealso{
 \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link{CFA}} to
