@@ -1,8 +1,14 @@
-Exploratory Graph Analysis: An introduction using the EGA package.
+Exploratory Graph Analysis: An introduction using the EGAnet package.
 =============
 ### Hudson F. Golino ###
 ### Assistant Professor of Quantitative Methods, Department of Psychology, University of Virginia. ###
 ### Contact: <hfg9s@virginia.edu> ###
+
+
+News
+============
+
+The old EGA package is now EGAnet, and is now available in The Comprehensive R Archive Network (CRAN): https://cran.r-project.org/web/packages/EGAnet/index.html
 
 
 Introduction
