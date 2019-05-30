@@ -32,13 +32,13 @@
 #' @export
 #Entropy Fit Index
 # VN Entropy Function (for correlation matrices)
-vn.entropy2 <- function(data, structure){
+vn.entropy <- function(data, structure){
 
   uniq <- unique(structure)
   num.comm <- structure
 
   if(!is.matrix(data)){
-    cor1 <- cor_auto(data)/ncol(data)
+    cor1 <- qgraph::cor_auto(data)/ncol(data)
     eigen1 <- eigen(cor1)$values
     h.vn <- -sum(eigen1*log(eigen1))
 
@@ -48,7 +48,7 @@ vn.entropy2 <- function(data, structure){
     l.eigen.fact <- vector("list")
     h.vn.fact <- vector("list")
     for(i in 1:n){
-      cor.fact[[i]] <- cor_auto(data[,which(structure==unique(structure)[i])])
+      cor.fact[[i]] <- qgraph::cor_auto(data[,which(structure==unique(structure)[i])])
       cor.fact[[i]] <- cor.fact[[i]]/ncol(cor.fact[[i]])
       eigen.fact[[i]] <- eigen(cor.fact[[i]])$values
       l.eigen.fact[[i]] <- eigen.fact[[i]]*log(eigen.fact[[i]])

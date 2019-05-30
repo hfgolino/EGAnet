@@ -4,15 +4,12 @@
 \alias{EGA}
 \title{Apply the Exploratory Graph Analysis technique}
 \usage{
-EGA(data, n = NULL, model = c("glasso", "TMFG"), plot.EGA = TRUE,
-  steps = 4, ...)
+EGA(data, model = c("glasso", "TMFG"), plot.EGA = TRUE, n = NULL,
+  steps = 4, nvar = 4, nfact = 1, load = 0.7, ...)
 }
 \arguments{
 \item{data}{A dataframe with the variables to be used in the analysis or a correlation matrix.
 If the data used is a correlation matrix, the argument \code{n} will need to be specified.}
-
-\item{n}{Integer.
-Sample size, if the data provided is a correlation matrix}
 
 \item{model}{A string indicating the method to use.
 Current options are:
@@ -33,8 +30,17 @@ This is the default method}
 If TRUE, returns a plot of the network and its estimated dimensions.
 Defaults to TRUE}
 
+\item{n}{Integer.
+Sample size, if the data provided is a correlation matrix}
+
 \item{steps}{Number of steps to be used in \code{\link[igraph]{cluster_walktrap}} algorithm.
 Defaults to 4.}
+
+\item{nvar}{Number of variables to use in the simulation part of the unidimensionality check. Defaults to 4.}
+
+\item{nfact}{Number of factors to be simulated (part of the unidimensionality check algorithm). Defaults to 1.}
+
+\item{load}{Factor loadings (used in the unidimensionality check algorithm). Defaults to 0.70.}
 
 \item{...}{Additional arguments to be passed to \code{\link{EBICglasso.qgraph}}
 or \code{\link[NetworkToolbox]{TMFG}}}

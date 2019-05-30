@@ -89,23 +89,56 @@
 #' \emph{PsyArXiv}.
 #' doi: \href{https://psyarxiv.com/gzcre/}{10.31234/osf.io/gzcre}
 #'
-#' @importFrom stats cor
+#' @importFrom stats cor rnorm runif na.omit
 #'
 #' @export
 #'
 # EGA default function - 05/30/2019
 ## EGA Function to detect unidimensionality:
 
-uni.EGA <- function (data, model = c("glasso", "TMFG"), plot.EGA = TRUE,
+EGA <- function (data, model = c("glasso", "TMFG"), plot.EGA = TRUE, n = NULL,
                      steps = 4, nvar = 4, nfact = 1, load = 0.70, ...) {
 
-  require(iterators)
   #-------------------------------------------------------------------------
   ## CHECKING DATA STRUCTURE
   #-------------------------------------------------------------------------
   if(nrow(data)!=ncol(data)){
     data <- as.data.frame(data)
   }
+
+  if (nrow(data) == ncol(data)){
+    cor.data <- data
+    if (missing(model)) {
+      model = "glasso"
+    }
+    else {
+      model = match.arg(model)
+    }
+    if (model == "glasso") {
+      gamma.values <- c(0.50, 0.25, 0)
+      gvals <- iterators::iter(gamma.values)
+      repeat {
+        estimated.network <- EBICglasso.qgraph(S = cor.data,
+                                               n = n,
+                                               lambda.min.ratio = 0.1,
+                                               returnAllResults = FALSE,
+                                               gamma = iterators::nextElem(gvals), ...)
+        if (any(NetworkToolbox::strength(estimated.network)>0)) {
+          break
+        }
+      }
+    }
+    else if (model == "TMFG") {
+      estimated.network <- NetworkToolbox::TMFG(cor.data, normal = TRUE,
+                                                na.data = "pairwise", ...)$A
+    }
+    graph <- NetworkToolbox::convert2igraph(abs(estimated.network))
+    wc <- igraph::walktrap.community(graph, steps = steps)
+    names(wc$membership) <- colnames(data)
+    n.dim <- max(wc$membership)
+    wc <- wc$membership
+  } else{
+
 
   #-------------------------------------------------------------------------
   ## DATA GENERATION
@@ -173,7 +206,7 @@ uni.EGA <- function (data, model = c("glasso", "TMFG"), plot.EGA = TRUE,
                                                  n = nrow(data.sim),
                                                  lambda.min.ratio = 0.1,
                                                  returnAllResults = FALSE,
-                                                 gamma = nextElem(gvals), ...);
+                                                 gamma = iterators::nextElem(gvals), ...);
       if (any(NetworkToolbox::strength(estimated.network.sim)>0)) {
         break
       }
@@ -195,7 +228,6 @@ uni.EGA <- function (data, model = c("glasso", "TMFG"), plot.EGA = TRUE,
     estimated.network <- estimated.network.sim[-c(1:J),-c(1:J)]
     wc <- wc.sim$membership[-c(1:J)]
   }
-
   #-------------------------------------------------------------------------
   ## TRADITIONAL EGA (IF NUMBER OF FACTORS > 2)
   #-------------------------------------------------------------------------
@@ -216,7 +248,7 @@ uni.EGA <- function (data, model = c("glasso", "TMFG"), plot.EGA = TRUE,
                                                n = nrow(data),
                                                lambda.min.ratio = 0.1,
                                                returnAllResults = FALSE,
-                                               gamma = nextElem(gvals), ...)
+                                               gamma = iterators::nextElem(gvals), ...)
         if (any(NetworkToolbox::strength(estimated.network)>0)) {
           break
         }
@@ -232,6 +264,7 @@ uni.EGA <- function (data, model = c("glasso", "TMFG"), plot.EGA = TRUE,
     names(wc$membership) <- colnames(data)
     n.dim <- max(wc$membership)
     wc <- wc$membership
+    }
   }
   a <- list()
   # Returning only communities that have at least two items:
