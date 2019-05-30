@@ -37,6 +37,8 @@
 #Entropy Fit Index
 entropyFit <- function (data, structure)
 {
+  require(plyr)
+
   if(all(range(data)==c(0,1)))
   {data <- ifelse(data==1,2,1)}
 
