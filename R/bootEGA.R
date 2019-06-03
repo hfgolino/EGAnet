@@ -89,7 +89,7 @@
 #'
 #' }}
 #'
-#' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
+#' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen at gmail.com>
 #'
 #' @examples
 #' \donttest{

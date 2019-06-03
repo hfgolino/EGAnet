@@ -5,9 +5,11 @@ date: "5/07/2019"
 output: pdf_document
 ---
 
-## 05/07/2019
+## 06/03/2019
 # Updated version of the EGAnet package
-This is an updated version of the EGAnet package. A new function was added (vn.entropy) and another was modified (entropyFit). 
+- This is an updated version of the EGAnet package. A new function was added (vn.entropy) and another was modified (entropyFit). 
+
+- The EGA function was also updated to accomodate a new check for unidimensionality.
 
 ## 04/30/2019
 # Resubmission

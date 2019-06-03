@@ -1,23 +1,26 @@
 Package: EGAnet
 Title: Exploratory Graph Analysis - A Framework for Estimating the Number of Dimensions in Multivariate Data Using Network Psychometrics
 Version: 0.5
-Date: 2019-06-05
+Date: 2019-06-03
 Authors@R: c(person("Hudson", "Golino", email = "hfg9s@virginia.edu",
                   role = c("aut", "cre")), person("Alexander", "Christensen", 
-                  email = "alexpaulchristensen@gmail.com", role = "aut"))
+                  email = "alexpaulchristensen@gmail.com", role = "aut"),
+                  person("Maria", "Dolores Nieto", 
+                  email = "acinodam@gmail.com", role = "ctb"),
+                  person("Luis Eduardo", "Garrido", 
+                  email = "garrido.luiseduardo@gmail.com", role = "ctb"))
 Maintainer: Hudson Golino <hfg9s@virginia.edu>
 Description: An implementation of the Exploratory Graph Analysis (EGA) framework for dimensionality assessment. EGA is part of a new area called network psychometrics that focuses on the estimation of undirected network models in psychological datasets. EGA estimates the number of dimensions or factors using graphical lasso or Triangulated Maximally Filtered Graph (TMFG) and a weighted network community analysis. A bootstrap method for verifying the stability of the estimation is also available. The fit of the structure suggested by EGA can be verified using confirmatory factor analysis and a direct way to convert the EGA structure to a confirmatory factor model is also implemented. Documentation and examples are available. Golino, H. F., & Epskamp, S. (2017) <doi:10.1371/journal.pone.0174035>. Golino, H. F., & Demetriou, A. (2017) <doi:10.1016/j.intell.2017.02.007> Golino, H., Shi, D., Garrido, L. E., Christensen, A. P., Nieto, M. D., Sadana, R., & Thiyagarajan, J. A. (2018) <doi:10.31234/osf.io/gzcre>. Christensen, A. P. & Golino, H.F. (2019)  <doi:10.31234/osf.io/9deay>.
 Depends: R (>= 2.10)
 License: GPL (>= 3.0)
 Encoding: UTF-8
 LazyData: true
-Imports: qgraph (>= 1.4.1), semPlot (>= 1.0.1), bootnet (>= 0.3),
+Imports: qgraph (>= 1.4.1), semPlot (>= 1.0.1),
         igraph (>= 1.0.1), lavaan (>= 0.5-22), doParallel (>= 1.0.10),
-        foreach (>= 1.4.3), compiler,
+        foreach (>= 1.4.3),
         NetworkToolbox (>= 1.1.2), glasso (>= 1.10), dplyr (>= 0.7.8),
-        rlang (>= 0.3.0.1), Matrix (>= 1.2), plotly (>= 4.7.1), mvtnorm (>= 1.0.8),
-        corpcor (>= 1.6.9), ggplot2 (>= 3.1.0), ggpubr (>= 0.2), ggthemes (>= 4.0.1),
-        tidyr (>= 0.8.2), iterators (>= 1.0.10), stats, plyr (>= 1.8.4)
+        Matrix (>= 1.2), plotly (>= 4.7.1), mvtnorm (>= 1.0.8),
+        corpcor (>= 1.6.9), ggpubr (>= 0.2), iterators (>= 1.0.10), stats, plyr (>= 1.8.4)
 Suggests: knitr, rmarkdown
 RoxygenNote: 6.1.1
 

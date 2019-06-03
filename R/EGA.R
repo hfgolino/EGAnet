@@ -43,7 +43,7 @@
 #' @param ... Additional arguments to be passed to \code{\link{EBICglasso.qgraph}}
 #' or \code{\link[NetworkToolbox]{TMFG}}
 #'
-#' @author Hudson F. Golino <hfg9s at virginia.edu>
+#' @author Hudson F. Golino <hfg9s at virginia.edu>, Alexander P. Christensen <alexpaulchristensen at gmail.com>, Maria Dolores Nieto <acinodam at gmail.com> and Luis E. Garrido <garrido.luiseduardo at gmail.com>
 #'
 #' @examples
 #'
@@ -89,6 +89,7 @@
 #' \emph{PsyArXiv}.
 #' doi: \href{https://psyarxiv.com/gzcre/}{10.31234/osf.io/gzcre}
 #'
+#' @importFrom iterators iter nextElem
 #' @importFrom stats cor rnorm runif na.omit
 #'
 #' @export
