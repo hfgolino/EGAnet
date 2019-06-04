@@ -32,15 +32,13 @@
 #' @export
 #Entropy Fit Index
 # VN Entropy Function (for correlation matrices)
-vn.entropy <- function(data, structure){
 
-  uniq <- unique(structure)
-  num.comm <- structure
-
+vn.entropy2 <- function(data, structure){
+  library(qgraph)
+  library(matrixcalc)
   if(!is.matrix(data)){
-    cor1 <- qgraph::cor_auto(data)/ncol(data)
-    eigen1 <- eigen(cor1)$values
-    h.vn <- -sum(eigen1*log(eigen1))
+    cor1 <- cor_auto(data)/ncol(data)
+    h.vn <- -matrix.trace(cor1%*%log(cor1))
 
     n <- max(structure)
     cor.fact <- vector("list")
@@ -48,30 +46,14 @@ vn.entropy <- function(data, structure){
     l.eigen.fact <- vector("list")
     h.vn.fact <- vector("list")
     for(i in 1:n){
-      cor.fact[[i]] <- qgraph::cor_auto(data[,which(structure==unique(structure)[i])])
+      cor.fact[[i]] <- cor_auto(data[,which(structure==unique(structure)[i])])
       cor.fact[[i]] <- cor.fact[[i]]/ncol(cor.fact[[i]])
-      eigen.fact[[i]] <- eigen(cor.fact[[i]])$values
-      l.eigen.fact[[i]] <- eigen.fact[[i]]*log(eigen.fact[[i]])
-      h.vn.fact[[i]] <- -sum(l.eigen.fact[[i]])
+      h.vn.fact[[i]] <- -matrix.trace(cor.fact[[i]]%*%log(cor.fact[[i]]))
     }
-
-    # Joint entropy using the eigenvalues of a Kronecker product of a list of matrices
-    cor.joint <- vector("list", n)
-    for(i in 1:n){
-      cor.joint[[i]] <- cor1[which(num.comm==uniq[i]),which(num.comm==uniq[i])]/table(num.comm)[[i]]
-    }
-
-    eigen.val <- lapply(cor.joint, function(x) eigen(x)$values)
-    eigen.kronecker <- eigen.val[[1]]
-    for (i in 2:n){
-      eigen.kronecker <- eigen.kronecker %x% eigen.val[[i]]
-    }
-    h.vn.joint <- -sum(eigen.kronecker*log(eigen.kronecker))
 
   } else{
     cor1 <- data/ncol(data)
-    eigen1 <- eigen(cor1)$values
-    h.vn <- -sum(eigen1*log(eigen1))
+    h.vn <- -matrix.trace(cor1%*%(log(cor1)))
 
     n <- max(structure)
     cor.fact <- vector("list")
@@ -81,37 +63,22 @@ vn.entropy <- function(data, structure){
     for(i in 1:n){
       cor.fact[[i]] <- data[which(structure==unique(structure)[i]),which(structure==unique(structure)[i])]
       cor.fact[[i]] <- cor.fact[[i]]/ncol(cor.fact[[i]])
-      eigen.fact[[i]] <- eigen(cor.fact[[i]])$values
-      l.eigen.fact[[i]] <- eigen.fact[[i]]*log(eigen.fact[[i]])
-      h.vn.fact[[i]] <- -sum(l.eigen.fact[[i]])
+      h.vn.fact[[i]] <- -matrix.trace(cor.fact[[i]]%*%log(cor.fact[[i]]))
     }
-    # Joint entropy using the eigenvalues of a Kronecker product of a list of matrices
-    cor.joint <- vector("list", n)
-    for(i in 1:n){
-      cor.joint[[i]] <- cor1[which(num.comm==uniq[i]),which(num.comm==uniq[i])]/table(num.comm)[[i]]
-    }
-
-    eigen.val <- lapply(cor.joint, function(x) eigen(x)$values)
-    eigen.kronecker <- eigen.val[[1]]
-    for (i in 2:n){
-      eigen.kronecker <- eigen.kronecker %x% eigen.val[[i]]
-    }
-
-    h.vn.joint <- -sum(eigen.kronecker*log(eigen.kronecker))
-
-    h.vn.joint <- -sum(eigen.kronecker*log(eigen.kronecker))
   }
 
   h.vn.fact2 <- unlist(h.vn.fact)
 
+
   # Difference between Max the sum of the factor entropies:
-  Hdiff <- h.vn-mean(h.vn.fact2)
+  Hdiff <- h.vn-sum(h.vn.fact2)
 
   results <- data.frame(matrix(NA, nrow = 1, ncol = 3))
   colnames(results) <- c("Entropy.Fit", "Total.Correlation","Average.Entropy")
-  results$Entropy.Fit <- ((mean(h.vn.fact2)-h.vn.joint))-((Hdiff-(mean(h.vn.fact2))*sqrt(n)))
-  results$Total.Correlation <- sum(h.vn.fact2)-h.vn.joint
-  results$Average.Entropy <- mean(h.vn.fact2)-h.vn.joint
+  results$Entropy.Fit <- (mean(h.vn.fact2)-h.vn)+(Hdiff*(sqrt(n)))
+  results$Total.Correlation <- sum(h.vn.fact2)-h.vn
+  results$Average.Entropy <- mean(h.vn.fact2)-h.vn
   return(results)
 }
+
 #----
