@@ -33,7 +33,7 @@
 #Entropy Fit Index
 # VN Entropy Function (for correlation matrices)
 
-vn.entropy2 <- function(data, structure){
+vn.entropy <- function(data, structure){
   library(qgraph)
   library(matrixcalc)
   if(!is.matrix(data)){
