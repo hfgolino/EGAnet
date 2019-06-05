@@ -34,11 +34,9 @@
 # VN Entropy Function (for correlation matrices)
 
 vn.entropy <- function(data, structure){
-  library(qgraph)
-  library(matrixcalc)
   if(!is.matrix(data)){
-    cor1 <- cor_auto(data)/ncol(data)
-    h.vn <- -matrix.trace(cor1%*%log(cor1))
+    cor1 <- qgraph::cor_auto(data)/ncol(data)
+    h.vn <- -matrixcalc::matrix.trace(cor1%*%log(cor1))
 
     n <- max(structure)
     cor.fact <- vector("list")
@@ -46,14 +44,14 @@ vn.entropy <- function(data, structure){
     l.eigen.fact <- vector("list")
     h.vn.fact <- vector("list")
     for(i in 1:n){
-      cor.fact[[i]] <- cor_auto(data[,which(structure==unique(structure)[i])])
+      cor.fact[[i]] <- qgraph::cor_auto(data[,which(structure==unique(structure)[i])])
       cor.fact[[i]] <- cor.fact[[i]]/ncol(cor.fact[[i]])
-      h.vn.fact[[i]] <- -matrix.trace(cor.fact[[i]]%*%log(cor.fact[[i]]))
+      h.vn.fact[[i]] <- -matrixcalc::matrix.trace(cor.fact[[i]]%*%log(cor.fact[[i]]))
     }
 
   } else{
     cor1 <- data/ncol(data)
-    h.vn <- -matrix.trace(cor1%*%(log(cor1)))
+    h.vn <- -matrixcalc::matrix.trace(cor1%*%(log(cor1)))
 
     n <- max(structure)
     cor.fact <- vector("list")
@@ -63,7 +61,7 @@ vn.entropy <- function(data, structure){
     for(i in 1:n){
       cor.fact[[i]] <- data[which(structure==unique(structure)[i]),which(structure==unique(structure)[i])]
       cor.fact[[i]] <- cor.fact[[i]]/ncol(cor.fact[[i]])
-      h.vn.fact[[i]] <- -matrix.trace(cor.fact[[i]]%*%log(cor.fact[[i]]))
+      h.vn.fact[[i]] <- -matrixcalc::matrix.trace(cor.fact[[i]]%*%log(cor.fact[[i]]))
     }
   }
 
