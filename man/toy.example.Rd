@@ -12,9 +12,7 @@ data(toy.example)
 A simulated dataset with 2 factors, three items per factor and  n = 500.
 }
 \examples{
-\donttest{
 data("toy.example")
-}
 
 }
 \keyword{datasets}

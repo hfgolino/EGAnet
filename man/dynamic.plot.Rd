@@ -2,40 +2,51 @@
 % Please edit documentation in R/dynamic.plot.R
 \name{dynamic.plot}
 \alias{dynamic.plot}
-\title{Dynamic Plot method for EGA objects.}
+\title{Dynamic Plot method for \code{\link[EGAnet]{EGA}} objects}
 \usage{
 dynamic.plot(ega.obj, title = "", vsize = 30, opacity = 0.4)
 }
 \arguments{
-\item{ega.obj}{An \code{\link{EGA}} object}
+\item{ega.obj}{An \code{\link[EGAnet]{EGA}} object}
 
-\item{title}{Character. Title of the plot}
+\item{title}{Character.
+Title of the plot}
 
-\item{vsize}{An integer indicating the size of the nodes.
+\item{vsize}{Numeric.
+An integer indicating the size of the nodes.
 Default vsize = 30}
 
-\item{opacity}{A numeric value indicating the opacity of the edges.
+\item{opacity}{Numeric.
+A numeric value indicating the opacity of the edges.
 Default opacity = 0.4}
 }
 \description{
-Plots the EGA result using \code{\link{plotly}}
+Plots the \code{\link[EGAnet]{EGA}} result using \code{\link{plotly}}
 }
 \examples{
- \donttest{
-#estimate EGA
-ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = TRUE)
 
-#summary of EGA results
+# Load data
+wmt <- wmt2[,7:24]
+
+\dontrun{
+#estimate EGA
+ega.wmt <- EGA(data = wmt, plot.EGA = TRUE)
+
+}
+
+# Summary of EGA results
 summary(ega.wmt)
 
-#dynamic plot
+\dontrun{
+# Dynamic plot
 dynamic.plot(ega.wmt, title = "", vsize = 30, opacity = 0.4)
+
 }
 
 }
 \seealso{
-\code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA
-and \code{\link{CFA}} to
+\code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA
+and \code{\link[EGAnet]{CFA}} to
 verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{

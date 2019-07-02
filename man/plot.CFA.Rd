@@ -2,12 +2,12 @@
 % Please edit documentation in R/plot.CFA.R
 \name{plot.CFA}
 \alias{plot.CFA}
-\title{Plot Method for CFA}
+\title{Plot Method for \code{\link[EGAnet]{CFA}}}
 \usage{
 \method{plot}{CFA}(x, layout = "spring", vsize = 6, ...)
 }
 \arguments{
-\item{x}{An \code{\link{CFA}} object}
+\item{x}{An \code{\link[EGAnet]{CFA}} object}
 
 \item{layout}{Layout of plot (see \code{\link[semPlot]{semPaths}}).
 Defaults to "spring"}
@@ -18,23 +18,25 @@ Defaults to 6}
 \item{...}{Arguments passed to \code{\link[semPlot]{semPaths}} in semPlot}
 }
 \description{
-Plots the CFA structure using \code{\link{semPlot}}
+Plots the \code{\link[EGAnet]{CFA}} structure using \code{\link{semPlot}}
 }
 \examples{
-\donttest{
-#estimate EGA
+\dontrun{
+# Estimate EGA
 ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = TRUE)
 
-#estimate CFA
+}
+
+# Estimate CFA
 cfa.wmt <- CFA(ega.obj = ega.wmt, estimator = 'WLSMV', plot.CFA = FALSE, data = wmt2)
 
-#plot CFA
+# Plot CFA
 plot(cfa.wmt)
-}
+
 }
 \seealso{
-\code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA
-and \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap.
+\code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA
+and \code{\link[EGAnet]{bootEGA}} to investigate the stability of EGA's estimation via bootstrap.
 }
 \author{
 Hudson F. Golino <hfg9s at virginia.edu>

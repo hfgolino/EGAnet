@@ -2,12 +2,12 @@
 % Please edit documentation in R/plot.EGA.R
 \name{plot.EGA}
 \alias{plot.EGA}
-\title{Plot method for EGA objects.}
+\title{Plot method for \code{\link[EGAnet]{EGA}}objects}
 \usage{
 \method{plot}{EGA}(x, title = "", vsize = 6, ...)
 }
 \arguments{
-\item{x}{An \code{\link{EGA}} object}
+\item{x}{An \code{\link[EGAnet]{EGA}} object}
 
 \item{title}{Character. Title of the plot}
 
@@ -17,23 +17,25 @@ Default vsize = 6}
 \item{...}{Arguments passed to \code{\link[qgraph]{qgraph}}}
 }
 \description{
-Plots the EGA result using \code{\link{qgraph}}
+Plots the \code{\link[EGAnet]{EGA}} result using \code{\link[qgraph]{qgraph}}
 }
 \examples{
-\donttest{
-#estimate EGA
+\dontrun{
+# Estimate EGA
 ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = TRUE)
 
-#summary of EGA results
+}
+
+# Summary of EGA results
 summary(ega.wmt)
 
-#plot EGA network
-plot(ega.wmt, vsize = 6)
-}
+# Plot EGA network
+plot(ega.wmt, vsize = 6, label.prop = 1)
+
 }
 \seealso{
-\code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA
-and \code{\link{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
+\code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA
+and \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{
 Hudson F. Golino <hfg9s at virginia.edu>
