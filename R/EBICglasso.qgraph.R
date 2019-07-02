@@ -1,4 +1,4 @@
-#'  EBICglasso from qgraph 1.4.4
+#' \code{\link[qgraph]{EBICglasso}} from \code{\link{qgraph}} 1.4.4
 #'
 #' This function uses the \code{\link[glasso]{glasso}} package
 #' (Friedman, Hastie and Tibshirani, 2011) to compute a
@@ -43,7 +43,7 @@
 #' spaced between the maximal value of the tuning parameter at which all edges are zero,
 #' lambda_max, and lambda_max/100. For each of these graphs the EBIC is computed and
 #' the graph with the best EBIC is selected. The partial correlation matrix
-#' is computed using \code{\link{wi2net}} and returned.
+#' is computed using \code{\link[qgraph]{wi2net}} and returned.
 #'
 #' @return A partial correlation matrix
 #'
@@ -80,10 +80,10 @@
 #' @author Sacha Epskamp <mail@sachaepskamp.com>
 #'
 #' @examples
-#' \donttest{
 #' ### Using wmt2 dataset from EGAnet ###
 #' data(wmt2)
 #'
+#' \dontrun{
 #' # Compute correlations:
 #' CorMat <- cor_auto(wmt2[,7:24])
 #'
@@ -92,6 +92,7 @@
 #'
 #' # Compute graph with tuning = 0.5 (EBIC)
 #' EBICgraph <- EBICglasso.qgraph(CorMat, nrow(wmt2), 0.5)
+#' 
 #' }
 #'
 #' @export

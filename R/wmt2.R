@@ -13,9 +13,7 @@
 #' @keywords datasets
 #'
 #' @examples
-#' \donttest{
 #' data("wmt2")
-#' }
 #'
 NULL
 #----

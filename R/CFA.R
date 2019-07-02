@@ -1,8 +1,8 @@
-#' CFA Fit of EGA Structure
+#' CFA Fit of \code{\link[EGAnet]{EGA}} Structure
 #'
-#' Verifies the fit of the structure suggested by EGA using confirmatory factor analysis
+#' Verifies the fit of the structure suggested by \code{\link[EGAnet]{EGA}} using confirmatory factor analysis
 #'
-#' @param ega.obj An \code{\link{EGA}} object
+#' @param ega.obj An \code{\link[EGAnet]{EGA}} object
 #'
 #' @param data A dataframe with the variables to be used in the analysis
 #'
@@ -34,25 +34,37 @@
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
 #'
 #' @examples
-#' \donttest{
-#' #estimate EGA
-#' ega.wmt <- EGA(data = wmt2[,7:24])
-#'
-#' #fit CFA model to EGA results
-#' cfa.wmt <- CFA(ega.obj = ega.wmt, estimator = 'WLSMV', plot.CFA = TRUE, data = wmt2)
-#'
-#' #additional fit measures
-#' lavaan::fitMeasures(cfa.wmt$fit, fit.measures = "all")
-#'
-#' #estimate EGA
-#' ega.intel <- EGA(data = intelligenceBattery[,8:66])
-#'
-#' #fit CFA model to EGA results
-#' cfa.intel <- CFA(ega.obj = ega.intel, estimator = 'WLSMV', plot.CFA = TRUE,
-#' data = intelligenceBattery[,8:66])
+#' 
+#' # Load data
+#' wmt <- wmt2[,7:24]
+#' 
+#' \dontrun{
+#' # Estimate EGA
+#' ega.wmt <- EGA(data = wmt)
+#' 
 #' }
 #'
-#' @seealso \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap.
+#' # Fit CFA model to EGA results
+#' cfa.wmt <- CFA(ega.obj = ega.wmt, estimator = 'WLSMV', plot.CFA = TRUE, data = wmt)
+#'
+#' # Additional fit measures
+#' lavaan::fitMeasures(cfa.wmt$fit, fit.measures = "all")
+#' 
+#' # Load data
+#' intel <- intelligenceBattery[,8:66]
+#' 
+#' \dontrun{
+#' # Estimate EGA
+#' ega.intel <- EGA(data = intel)
+#'
+#' # Fit CFA model to EGA results
+#' cfa.intel <- CFA(ega.obj = ega.intel, estimator = 'WLSMV', plot.CFA = TRUE,
+#' data = intel)
+#' 
+#' }
+#'
+#' @seealso \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and
+#' \code{\link[EGAnet]{bootEGA}} to investigate the stability of EGA's estimation via bootstrap.
 #'
 #' @export
 #'

@@ -1,8 +1,8 @@
-#' Plot method for EGA objects.
+#' Plot method for \code{\link[EGAnet]{EGA}}objects
 #'
-#' Plots the EGA result using \code{\link{qgraph}}
+#' Plots the \code{\link[EGAnet]{EGA}} result using \code{\link[qgraph]{qgraph}}
 #'
-#' @param x An \code{\link{EGA}} object
+#' @param x An \code{\link[EGAnet]{EGA}} object
 #'
 #' @param title Character. Title of the plot
 #'
@@ -14,18 +14,20 @@
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
 #'
 #' @examples
-#'\donttest{
-#' #estimate EGA
+#' \dontrun{
+#' # Estimate EGA
 #' ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = TRUE)
+#' 
+#' }
 #'
-#' #summary of EGA results
+#' # Summary of EGA results
 #' summary(ega.wmt)
 #'
-#' #plot EGA network
-#' plot(ega.wmt, vsize = 6)
-#'}
-#' @seealso \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA
-#' and \code{\link{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
+#' # Plot EGA network
+#' plot(ega.wmt, vsize = 6, label.prop = 1)
+#' 
+#' @seealso \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA
+#' and \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 #'
 #' @export
 #'

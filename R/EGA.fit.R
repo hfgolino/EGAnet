@@ -1,53 +1,65 @@
-#' EGA Optimal Model Fit using Entropy
+#' \code{\link[EGAnet]{EGA}} Optimal Model Fit using \code{\link[EGAnet]{entropyFit}}
 #'
-#' @description Estimates the best fitting model using \code{\link{EGA}}.
+#' @description Estimates the best fitting model using \code{\link[EGAnet]{EGA}}.
 #' The number of steps in the \code{\link[igraph]{cluster_walktrap}} detection
 #' algorithm is varied and unique community solutions are compared using
-#' \code{\link{entropyFit}}.
+#' \code{\link[EGAnet]{entropyFit}}.
 #'
 #' @param data A dataset
 #'
-#' @param model A string indicating the method to use.
+#' @param model Character. 
+#' A string indicating the method to use.
+#' Defaults to \code{"glasso"}.
+#' 
 #' Current options are:
 #'
 #' \itemize{
 #'
-#' \item{\strong{\code{glasso}}}
+#' \item{\strong{\code{"glasso"}}}
 #' {Estimates the Gaussian graphical model using graphical LASSO with
 #' extended Bayesian information criterion to select optimal regularization parameter.
-#' This is the default method}
+#' See \code{\link[EGAnet]{EBICglasso.qgraph}}}
 #'
-#' \item{\strong{\code{TMFG}}}
-#' {Estimates a Triangulated Maximally Filtered Graph}
+#' \item{\strong{\code{"TMFG"}}}
+#' {Estimates a Triangulated Maximally Filtered Graph.
+#' See \code{\link[NetworkToolbox]{TMFG}}}
 #'
 #' }
 #'
-#' @param steps Range of steps to be used in the model selection.
+#' @param steps Numeric vector.
+#' Range of steps to be used in the model selection.
 #' Defaults from 3 to 8 steps (based on Pons & Latapy, 2006)
 #'
 #' @return Returns a list containing:
 #'
-#' \item{EGA}{The \code{\link{EGA}} output for the best fitting model}
+#' \item{EGA}{The \code{\link[EGAnet]{EGA}} output for the best fitting model}
 #'
 #' \item{steps}{The number of steps used in the best fitting model from
 #' the \code{\link[igraph]{cluster_walktrap}} algorithm}
 #'
-#' \item{EntropyFit}{The Entropy Fit Index for the unique solutions given the range of steps
+#' \item{EntropyFit}{The \code{\link[EGAnet]{entropyFit}} Index for the unique solutions given the range of steps
 #' (vector names represent the number of steps)}
 #'
-#' \item{Lowest.EntropyFit}{The lowest value for the Entropy Fit Index}
+#' \item{Lowest.EntropyFit}{The lowest value for the \code{\link[EGAnet]{entropyFit}} Index}
 #'
 #' @examples
-#' \donttest{
-#' #estimate normal EGAtmfg
-#' tmfg <- EGA(data = wmt2[,7:24], model = "TMFG")
+#' 
+#' # Load data
+#' wmt <- wmt2[,7:24]
+#' 
+#' \dontrun{
+#' # Estimate normal EGAtmfg
+#' tmfg <- EGA(data = wmt, model = "TMFG")
 #'
-#' #estimate optimal EGAtmfg
-#' tmfg.opt <- EGA.fit(data = wmt2[,7:24], model = "TMFG")
+#' # Estimate optimal EGAtmfg
+#' tmfg.opt <- EGA.fit(data = wmt, model = "TMFG")
 #'
-#' #estimate Entropy Fit Index
-#' entropyFit(data = wmt2[,7:24], structure = tmfg.opt$EGA$wc)$Entropy.Fit
-#' entropyFit(data = wmt2[,7:24], structure = tmfg$wc)$Entropy.Fit
+#' # Compare with CFA
+#' cfa.tmfg <- CFA(tmfg, estimator = "WLSMV", data = wmt)
+#' cfa.opt <- CFA(tmfg.opt$EGA, estimator = "WLSMV", data = wmt)
+#' 
+#' lavaan::lavTestLRT(cfa.tmfg$fit, cfa.opt$fit, method = "satorra.bentler.2001")
+#' 
 #'}
 #'
 #' @references
@@ -56,9 +68,9 @@
 #' \emph{Journal of Graph Algorithms and Applications}, \emph{10}, 191-218.
 #' doi:\href{https://doi.org/10.7155/jgaa.00185}{10.7155/jgaa.00185}
 #'
-#' @seealso \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap,
-#' \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA,
-#' and \code{\link{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
+#' @seealso \code{\link[EGAnet]{bootEGA}} to investigate the stability of EGA's estimation via bootstrap,
+#' \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA,
+#' and \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 #'
 #' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'

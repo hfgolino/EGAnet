@@ -5,8 +5,6 @@
 #'
 #' @name intelligenceBattery
 #'
-#' @alias intelligenceBattery
-#'
 #' @docType data
 #'
 #' @usage data(intelligenceBattery)
@@ -16,9 +14,7 @@
 #' @keywords datasets
 #'
 #' @examples
-#' \donttest{
 #' data("intelligenceBattery")
-#' }
 #'
 NULL
 #----

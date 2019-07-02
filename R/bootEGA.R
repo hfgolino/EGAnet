@@ -1,4 +1,4 @@
-#' Dimension Stability Analysis of EGA
+#' Dimension Stability Analysis of \code{\link[EGAnet]{EGA}}
 #'
 #' \code{bootEGA} Estimates the number of dimensions of \emph{n} bootstraps
 #' using the empirical (partial) correlation matrix (parametric) or resampling from
@@ -62,8 +62,9 @@
 #'
 #' @param ncores Numeric.
 #' Number of cores to use in computing results.
+#' Defaults to \code{4}.
 #' Set to \code{1} to not use parallel computing.
-#' Recommended to use maximum number of cores mins one.
+#' Recommended to use maximum number of cores minus one
 #' 
 #' If you're unsure how many cores your computer has,
 #' then use the following code: \code{parallel::detectCores()}
@@ -87,7 +88,7 @@
 #' \item{frequency}{Proportion of times the number of dimensions was identified
 #' (e.g., .85 of 1,000 = 850 times that specific number of dimensions was found)}
 #'
-#' \item{EGA}{Output of the original \code{\link{EGA}} results}
+#' \item{EGA}{Output of the original \code{\link[EGAnet]{EGA}} results}
 #'
 #' \item{typicalGraph}{A list containing:
 #'
@@ -128,9 +129,15 @@
 #' plot.typicalStructure = TRUE, model = "TMFG", type = "parametric", ncores = 4)
 #' 
 #' }
+#' 
+#' @references
+#' Christensen, A. P., & Golino, H. F. (2019).
+#' Estimating the stability of the number of factors via Bootstrap Exploratory Graph Analysis: A tutorial.
+#' \emph{PsyArXiv}. 
+#' doi:\href{https://doi.org/10.31234/osf.io/9deay}{10.31234/osf.io/9deay}
 #'
-#' @seealso \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA
-#' and \code{\link{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
+#' @seealso \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA
+#' and \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 #'
 #' @importFrom foreach %dopar%
 #' @importFrom stats cov median sd qt
