@@ -1,0 +1,15 @@
+Changes in version 0.6.0
+
+o fixed 'EGA' bug in 'bootEGA' function; updated 'bootEGA' documentation
+
+o migrated 'net.scores' and 'net.loads' from 'NetworkToolbox' to 'EGAnet' package
+
+o functions 'itemConfirm' and 'itemIdent' have been merged into a single function called, 'itemStability'
+
+o fixed item ordering in 'itemStability' output so dimensions are from least to greatest, the colors match the original community vector input, and updated average standardized network loadings to the 'net.loads' function
+
+o added datasets 'ega.wmt' and 'boot.wmt' for quick user-friendly examples (also removed all '\donttest')
+
+o added package help page
+
+o added package load message
