@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1543951470674.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1464949732",
+    "id" : "D338EEEE",
+    "lastKnownWriteTime" : 1543958907,
+    "last_content_update" : 1543958907054,
+    "path" : "~/Dropbox/Pacotes do R/Pacote EGA/New Functions to be Added/script_entropy_clusters_November.R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "17,38",
+        "scrollLine" : "8"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

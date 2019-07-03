@@ -5,8 +5,6 @@
 #'
 #' @name depression
 #'
-#' @alias depression
-#'
 #' @docType data
 #'
 #' @usage data(depression)
@@ -16,9 +14,7 @@
 #' @keywords datasets
 #'
 #' @examples
-#' \donttest{
 #' data("depression")
-#' }
 #'
 NULL
 #----

@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "totalCor <- function(data){\n  #number of dimensions\n  n <- ncol(data)\n\n  #initialize entropy vector\n  H <- vector(\"numeric\",length=n)\n  bins <- floor(sqrt(nrow(data)/5))\n  seque <- matrix(NA,nrow=bins+1,ncol=n)\n  sums <- matrix(NA,nrow=nrow(data),ncol=n)\n  bin.sums <- vector(\"list\", n)\n  bin.sums2 <- matrix(NA, nrow=bins, ncol = n)\n  Freq <- matrix(NA,nrow=bins,ncol=n)\n\n  #compute empirical entropy for each community or item\n  for(i in 1:n)\n  {\n    seque[,i] <- seq(from = range(data[,i])[1], to = range(data[,i])[2], length.out = bins+1)\n    bin.sums[[i]] <- table(cut(data[,i], breaks = seque[,i], include.lowest = TRUE))\n    bin.sums2[,i] <- as.vector(unlist(bin.sums[[i]]))\n    Freq[,i] <- bin.sums2[,i]/sum(bin.sums2[,i])\n    H[i] <- -sum(ifelse(Freq[,i]>0,Freq[,i] * log(Freq[,i]),0))\n  }\n\n  # Joint Entropy:\n\n  bin.sums3 <- data.frame(matrix(NA, nrow = nrow(data), ncol = n))\n  joint.table <- vector(\"numeric\")\n  for(i in 1:n){\n    bin.sums3[,i] <- cut(data[,i], breaks = seque[,i], include.lowest = TRUE)\n    joint.table = plyr::count(bin.sums3)$freq\n  }\n\n  freq.joint <- joint.table/sum(joint.table)\n  joint.entropy <- -sum(ifelse(freq.joint >0,freq.joint * log(freq.joint),0))\n\n  results <- vector(\"list\")\n  results$Ind.Entropies <- H\n  results$Joint.Entropy <- joint.entropy\n  results$Total.Cor <- sum(H)-joint.entropy\n  return(results)\n}\n",
+    "created" : 1543285947232.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "208407556",
+    "id" : "68D3076D",
+    "lastKnownWriteTime" : 1543267603,
+    "last_content_update" : 1543267603,
+    "path" : "~/Dropbox/Pacotes do R/Pacote EGA/New Functions to be Added/totalCor.R",
+    "project_path" : null,
+    "properties" : {
+        "tempName" : "Untitled2"
+    },
+    "relative_order" : 8,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

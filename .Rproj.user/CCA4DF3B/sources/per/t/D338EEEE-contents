@@ -1,0 +1,265 @@
+# Insteresting package:
+
+#https://www.rdocumentation.org/packages/WGCNA/versions/1.63/topics/mutualInfoAdjacency
+
+# Load the Packages:
+library(psych)
+library(Matrix)
+library(NetworkToolbox)
+library(EGA)
+
+# Simulate data:
+
+f <-as.matrix(bdiag(rep(0.7, 4), rep(0.7, 4)))
+Phi <- matrix(0.5,2,2, byrow = T)
+diag(Phi) <- 1
+Phi
+sim.1 <- sim.structure(fx = f, Phi = Phi, n = 5000, raw = TRUE, items = TRUE, cat = 1, low = -0.5, high = 0.5)
+sim.1 <- as.data.frame(sim.1$observed)
+
+
+totcor <- totalCorMat(sim.1)
+diag(totcor) <- 50
+
+library(qgraph)
+
+qgraph(totcor, layout = "spring", diag = FALSE)
+EGA(totcor, model = "TMFG", n = 5000)
+
+# Apply EGA:
+library(glasso)
+ega1 <- EGA(sim.1, model = "TMFG")
+ega1.1 <- EGA(sim.1, model = "glasso")
+cfa1 <- CFA(ega1, estimator = "WLSMV", data = sim.1)
+ega2 <- ega1
+ega2$dim.variables[,2] <- uniq.perm[61,]
+ega3 <- ega1
+ega3$dim.variables[,2] <- c(1,2,3,1,2,3,1,2)
+
+cfa2 <- CFA(ega2, estimator = "WLSMV", data = sim.1)
+cfa3 <- CFA(ega3, estimator = "WLSMV", data = sim.1)
+cfa2
+cfa1$fit.measures
+fitMeasures(cfa2$fit)
+
+
+# Generate the permutations of the item positions
+
+library("gtools")
+perm <- permutations(n = 8, r = 8, v = 1:8, repeats.allowed = FALSE)
+
+
+permutation.items2 <- matrix(0, nrow = nrow(perm), ncol = ncol(perm))
+for(i in 1:nrow(perm)){
+  permutation.items2[i,] <- ega1$wc[order(perm[i,])]
+}
+
+# Take the unique values of the permutations:
+
+uniq.perm <- unique(permutation.items2)
+uniq.perm[1:35,]
+
+# Calculate the empirical entropy of the sum scores, per different
+# cluster:
+
+joint <- vector()
+for(i in 1:nrow(uniq.perm)){
+  joint[i] <-  entropyFit(sim.1, uniq.perm[i,])$Entropy.Fit}
+
+plot(joint, type = "o")
+
+
+joint2 <- vector()
+for(i in 1:nrow(uniq.perm)){
+  joint2[i] <-  entropyFit(sim.1, uniq.perm[i,])$Entropy.Fit.MM}
+
+plot(joint2, type = "o")
+
+entropyFit(sim.1, uniq.perm[1,])
+fat2 <- entropyFit(sim.1, c(1,1,1,1,2,2,2,2))$Entropy.Fit
+fat4 <- entropyFit(sim.1, c(1,1,2,2,2,2,3,3))$Entropy.Fit
+
+fat2.1 <- entropyFit(sim.1, c(1,1,1,1,2,2,2,2,3,3,3,3))
+fat2.2 <- entropyFit(sim.1, c(1,1,1,1,1,1,1,1,2,2,2,2))
+
+
+library(psych)
+install.packages("GPArotation")
+
+fa1 <- fa(sim.1, nfactors = 2)
+
+
+?fa
+
+fat2.1 <- vn.entropy(cor(sim.1), c(1,1,1,1,2,2,2,2,3,3,3,3))
+fat4.1 <- vn.entropy(cor(sim.1), c(1,1,2,2,2,2,3,3))
+
+# Maximum Entropy:
+sums.max <- vector("numeric")
+sums.max <- rowSums(data)
+joint.table.max <- vector("numeric")
+seque.min <- seq(from = range(sums.max)[1], to = range(sums.max)[2], length.out = bins+1)
+bin.sums.min <- cut(sums.max, breaks = seque.min, include.lowest = TRUE)
+joint.table.max = plyr::count(bin.sums.min)$freq
+
+freq.joint.max <- joint.table.max/sum(joint.table.max)
+Hmax <- -sum(ifelse(freq.joint.max >0,freq.joint.max * log(freq.joint.max),0))
+
+
+vn <- vector()
+for(i in 1:nrow(uniq.perm)){
+  vn[i] <-  vn.entropy(cor_auto(sim.1), uniq.perm[i,])$H.modif}
+
+plot(vn, type = "o")
+
+uniq.perm[28,]
+
+# CFA INDEXES:
+
+ega1 <- EGA(sim.1, model = "TMFG")
+ega.all <- vector("list", length = nrow(uniq.perm))
+for(i in 1:length(ega.all)){
+  ega.all[[i]] <- ega1
+}
+
+for(i in 1:length(ega.all)){
+  ega.all[[i]]$dim.variables[,2] <- uniq.perm[i,]
+}
+
+cfa.all <- vector("list", length = nrow(uniq.perm))
+for(i in 1:length(ega.all)){
+  cfa.all[[i]] <- CFA(ega.all[[i]], estimator = "WLSMV", data = sim.1, plot = FALSE)$fit.measures[4:5]
+}
+
+cfa2 <- CFA(ega2, estimator = "WLSMV", data = sim.1)
+cfa3 <- CFA(ega3, estimator = "WLSMV", data = sim.1)
+
+
+cfa2$fit.measures[4:5]
+
+
+
+vn1 <- vn.entropy(cor(sim.1), c(1,2,3,4,5,6,7,8))
+
+vn1.0 <- vn.entropy(cor(sim.1[,1:2]), c(1,2))
+vn1.01 <- vn.entropy(cor(sim.1[,2:3]), c(1,2))
+vn1.0$Tot.Entropy.VN+vn1.01$Tot.Entropy.VN
+vn1.1 <- vn.entropy(cor(sim.1[,1:3]), c(1,2,3))
+
+vn1.1$Fact.Entropy[1]+vn1.1$Fact.Entropy[2]+vn1.1$Fact.Entropy[2]+vn1.1$Fact.Entropy[3]
+vn1.1$Tot.Entropy.VN+vn1.1$Fact.Entropy[2]
+vn2 <- vn.entropy(cor(sim.1), uniq.perm[1,])
+
+vn.entropy(cor(sim.1), c(1,2,2,2,2,2,1,1))
+
+cor(joint, vn)
+
+
+entropyFit(sim.1, c(1,2,2,2,2,2,1,1))
+entropyFit(sim.1, uniq.perm[1,])
+
+
+
+entropyFit(sim.1, c(1,1,1,1,2,2,2,2))
+entropyFit(sim.1, c(1,2,3,4,5,6,7,8))
+vn.entropy(cor(sim.1), c(1,1,1,1,2,2,2,2))
+vn.entropy(cor(sim.1), c(1,2,3,4,5,6,7,8))
+
+-1.949242/3
+-1.462773/2
+
+vn.entropy
+
+cor(joint, joint2)
+
+
+install.packages("infotheo")
+library(infotheo)
+
+a <- data.frame(X = rowSums(sim.1[,1:4]), Y = rowSums(sim.1[,5:8]))
+
+b <- entropyFit(sim.1, uniq.perm[1,])
+
+
+### Von Neumann Entropy:
+
+vn.entropy <- function(data, structure){
+  library(qgraph)
+  if(!is.matrix(data)){
+  cor1 <- cor_auto(data)
+  eigen.cor1 <- eigen(cor1)$values
+  l.eigen <- eigen.cor1*log(eigen.cor1)
+  h.vn <- -(sum(l.eigen))
+
+  n <- max(structure)
+  cor.fact <- vector("list")
+  eigen.fact <- vector("list")
+  l.eigen.fact <- vector("list")
+  h.vn.fact <- vector("list")
+  for(i in 1:n){
+    cor.fact[[i]] <- cor_auto(data[,which(structure==unique(structure)[i])])
+    eigen.fact[[i]] <- eigen(cor.fact[[i]])$values
+    l.eigen.fact[[i]] <- eigen.fact[[i]]*log(eigen.fact[[i]])
+    h.vn.fact[[i]] <- -(sum(l.eigen.fact[[i]]))
+  }
+  } else{
+    cor1 <- data
+    eigen.cor1 <- eigen(cor1)$values
+    l.eigen <- eigen.cor1*log(eigen.cor1)
+    h.vn <- -(sum(l.eigen))
+
+    n <- max(structure)
+    cor.fact <- vector("list")
+    eigen.fact <- vector("list")
+    l.eigen.fact <- vector("list")
+    h.vn.fact <- vector("list")
+    for(i in 1:n){
+      cor.fact[[i]] <- data[which(structure==unique(structure)[i]),which(structure==unique(structure)[i])]
+      eigen.fact[[i]] <- eigen(cor.fact[[i]])$values
+      l.eigen.fact[[i]] <- eigen.fact[[i]]*log(eigen.fact[[i]])
+      h.vn.fact[[i]] <- -(sum(l.eigen.fact[[i]]))
+    }
+}
+
+  h.vn.fact2 <- unlist(h.vn.fact)
+
+
+  results <- vector("list")
+  results$Tot.Entropy.VN <- h.vn
+  results$Fact.Entropy <- h.vn.fact2
+  results$Sum.Fact.Entropy <- sum(h.vn.fact2)
+  results$Entropy.Fit <- mean(h.vn.fact2)-h.vn
+  return(results)
+}
+
+
+vn.entropy.sim1 <- vn.entropy(cor(sim.1), structure = c(1,2,3,4,5,6,7,8))
+
+install.packages("affy")
+
+cor(sim.1)
+
+cor(joint2, vn)
+
+
+cor1 <- cov(sim.1)
+prec.matrix <- solve(cor1)
+library(Matrix)
+kappa <- cov2cor(prec.matrix)
+kappa <- -1*kappa
+diag(kappa) <- 1
+kappa <- forceSymmetric(kappa)
+eigen.cor1 <- eigen(kappa)$values
+l.eigen <- eigen.cor1*log(eigen.cor1)
+h.vn <- -(sum(l.eigen))
+
+vn <- vector()
+for(i in 1:nrow(uniq.perm)){
+  vn[i] <-  vn.entropy(cor(sim.1), uniq.perm[i,])$Mod.Entropy.Fit}
+
+plot(vn, type = "o")
+
+cor(vn, joint2)
+
+
+

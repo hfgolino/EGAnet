@@ -7,10 +7,11 @@
 entropyFit(data, structure)
 }
 \arguments{
-\item{data}{A dataset}
+\item{data}{Matrix or data frame.
+Contains variables to be used in the analysis}
 
 \item{structure}{A vector representing the structure (numbers or labels for each item).
-Can be theoretical factors or the structure detected by \code{\link{EGA}}}
+Can be theoretical factors or the structure detected by \code{\link[EGAnet]{EGA}}}
 }
 \value{
 Returns a list containing:
@@ -30,16 +31,27 @@ Computes the fit of a dimensionality structure using empirical entropy.
 Lower values suggest better fit of a structure to the data.
 }
 \examples{
-\donttest{
-#estimate EGA model
-ega.wmt <- EGA(data = wmt2[,7:24], model = "glasso")
 
-#compute entropy indices
-entropyFit(data = wmt2[,7:24], structure = ega.wmt$wc)
+# Load data
+wmt <- wmt2[,7:24]
+
+\dontrun{
+# Estimate EGA model
+ega.wmt <- EGA(data = wmt, model = "glasso")
+
 }
+
+# Compute entropy indices
+entropyFit(data = wmt, structure = ega.wmt$wc)
+
+}
+\references{
+Golino, H. F., Moulder, R., Shi, D., Christensen, A. P., Neito, M. D., Nesselroade, J. R., & Boker, S. M. (under review)
+Entropy Fit Index: A new fit measure for assessing the structure and dimensionality of multiple latent variables.
+Retrieved from: https://www.researchgate.net/profile/Hudson_Golino/publication/333753928_Entropy_Fit_Index_A_New_Fit_Measure_for_Assessing_the_Structure_and_Dimensionality_of_Multiple_Latent_Variables/
 }
 \seealso{
-\code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link{CFA}} to
+\code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link[EGAnet]{CFA}} to
 verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{

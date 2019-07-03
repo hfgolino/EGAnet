@@ -1,23 +1,25 @@
-#' Summary for EGA objects
+#' Summary for \code{\link[EGAnet]{EGA}} objects
 #'
-#' Returns a summary of the EGA results
+#' Returns a summary of the \code{\link[EGAnet]{EGA}} results
 #'
-#' @param object An \code{\link{EGA}} object
+#' @param object An \code{\link[EGAnet]{EGA}} object
 #'
 #' @param ... potentially further arguments (\strong{unused currently})
 #'
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
 #'
 #' @examples
-#' \donttest{
-#' #estimate EGA
+#' \dontrun{
+#' # Estimate EGA
 #' ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = TRUE)
+#' 
+#' }
 #'
-#' #summary of EGA reults
+#' #Summary of EGA reults
 #' summary(ega.wmt)
-#'}
-#' @seealso \code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA
-#' and \code{\link{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
+#' 
+#' @seealso \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA
+#' and \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 #'
 #' @export
 #'

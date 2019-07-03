@@ -2,60 +2,75 @@
 % Please edit documentation in R/bootEGA.R
 \name{bootEGA}
 \alias{bootEGA}
-\title{Stability Analysis of EGA}
+\title{Dimension Stability Analysis of \code{\link[EGAnet]{EGA}}}
 \usage{
 bootEGA(data, n, model = c("glasso", "TMFG"), type = c("parametric",
   "resampling"), typicalStructure = TRUE, plot.typicalStructure = TRUE,
   ncores = 4, ...)
 }
 \arguments{
-\item{data}{A dataframe with the variables to be used in the analysis}
+\item{data}{Matrix or data frame.
+Includes the variables to be used in the \code{bootEGA} analysis}
 
-\item{n}{An integer value representing the number of bootstraps}
+\item{n}{Numeric integer.
+Number of replica samples to generate from the bootstrap analysis.
+At least \code{500} is recommended}
 
-\item{model}{A string indicating the method to use.
+\item{model}{Character.
+A string indicating the method to use.
+Defaults to \code{"glasso"}.
+
 Current options are:
 
 \itemize{
 
-\item{\strong{\code{glasso}}}
+\item{\strong{\code{"glasso"}}}
 {Estimates the Gaussian graphical model using graphical LASSO with
 extended Bayesian information criterion to select optimal regularization parameter.
-This is the default method}
+See \code{\link[EGAnet]{EBICglasso.qgraph}}}
 
-\item{\strong{\code{TMFG}}}
-{Estimates a Triangulated Maximally Filtered Graph}
+\item{\strong{\code{"TMFG"}}}
+{Estimates a Triangulated Maximally Filtered Graph.
+See \code{\link[NetworkToolbox]{TMFG}}}
 
 }}
 
-\item{type}{A string indicating the type of bootstrap to use.
+\item{type}{Character.
+A string indicating the type of bootstrap to use.
+
 Current options are:
 
 \itemize{
 
-\item{\strong{\code{parametric}}}
-{Generates n new datasets (multivariate normal random distributions) based on the
+\item{\strong{\code{"parametric"}}}
+{Generates \code{n} new datasets (multivariate normal random distributions) based on the
 original dataset, via the \code{\link[mvtnorm]{Mvnorm}} function of the mvtnorm package}
 
-\item{\strong{\code{resampling}}}
+\item{\strong{\code{"resampling"}}}
 {Generates n random subsamples of the original data}
 
 }}
 
-\item{typicalStructure}{Logical.
-If true, returns the typical network of partial correlations
+\item{typicalStructure}{Boolean.
+If \code{TRUE}, returns the typical network of partial correlations
 (estimated via graphical lasso or via TMFG) and estimates its dimensions.
 The "typical network" is the median of all pairwise correlations over the \emph{n} bootstraps.
-Defaults to TRUE}
+Defaults to \code{TRUE}}
 
-\item{plot.typicalStructure}{Logical.
-If true, returns a plot of the typical network (partial correlations),
+\item{plot.typicalStructure}{Boolean.
+If \code{TRUE}, returns a plot of the typical network (partial correlations),
 which is the median of all pairwise correlations over the \emph{n} bootstraps,
 and its estimated dimensions.
-Defaults to TRUE}
+Defaults to \code{TRUE}}
 
-\item{ncores}{Number of cores to use in computing results.
-Set to 1 to not use parallel computing}
+\item{ncores}{Numeric.
+Number of cores to use in computing results.
+Defaults to \code{4}.
+Set to \code{1} to not use parallel computing.
+Recommended to use maximum number of cores minus one
+
+If you're unsure how many cores your computer has,
+then use the following code: \code{parallel::detectCores()}}
 
 \item{...}{Additional arguments to be passed to \code{\link{EBICglasso.qgraph}}
 or \code{\link[NetworkToolbox]{TMFG}}}
@@ -74,10 +89,10 @@ Returns a list containing:
 \item{summary.table}{Summary table containing number of replica samples, median,
 standard deviation, standard error, and 95\% confidence intervals}
 
-\item{likelihood}{Proportion of times the number of dimensions was identified
+\item{frequency}{Proportion of times the number of dimensions was identified
 (e.g., .85 of 1,000 = 850 times that specific number of dimensions was found)}
 
-\item{EGA}{Output of the original \code{\link{EGA}} results}
+\item{EGA}{Output of the original \code{\link[EGAnet]{EGA}} results}
 
 \item{typicalGraph}{A list containing:
 
@@ -92,30 +107,49 @@ standard deviation, standard error, and 95\% confidence intervals}
 \item{\strong{\code{wc}}}
 {Item allocation of the median network}
 
-}}
+    }
+}
 }
 \description{
-\code{bootEGA} Estimates the number of dimensions of n bootstraps
-from the empirical correlation matrix and returns a typical network
-(i.e. the network formed by the median or mean pairwise correlations
-over the \emph{n} bootstraps) and its dimensionality.
+\code{bootEGA} Estimates the number of dimensions of \emph{n} bootstraps
+using the empirical (partial) correlation matrix (parametric) or resampling from
+the empirical dataset (non-parametric). It also estimates a typical
+median network structure, which is formed by the median or mean pairwise (partial)
+correlations over the \emph{n} bootstraps.
 }
 \examples{
-\donttest{
-#bootEGA glasso example
-boot.wmt <- bootEGA(data = wmt2[,7:24], n = 500, typicalStructure = TRUE,
-plot.typicalStructure = TRUE, model = "glasso", type = "parametric", ncores = 4)
 
-#bootEGA TMFG example
+# Load data
+wmt <- wmt2[,7:24]
+
+\dontrun{
+
+# bootEGA glasso example
+boot.wmt <- bootEGA(data = wmt, n = 500, typicalStructure = TRUE,
+plot.typicalStructure = TRUE, model = "glasso", type = "parametric", ncores = 4)
+}
+
+# Load data
+intwl <- intelligenceBattery[,8:66]
+
+\dontrun{
+# bootEGA TMFG example
 boot.intwl <- bootEGA(data = intelligenceBattery[,8:66], n = 500, typicalStructure = TRUE,
 plot.typicalStructure = TRUE, model = "TMFG", type = "parametric", ncores = 4)
+
 }
 
 }
+\references{
+Christensen, A. P., & Golino, H. F. (2019).
+Estimating the stability of the number of factors via Bootstrap Exploratory Graph Analysis: A tutorial.
+\emph{PsyArXiv}.
+doi:\href{https://doi.org/10.31234/osf.io/9deay}{10.31234/osf.io/9deay}
+}
 \seealso{
-\code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA
-and \code{\link{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
+\code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA
+and \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{
-Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen at gmail.com>
+Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 }

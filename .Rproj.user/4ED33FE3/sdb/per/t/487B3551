@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "### Von Neumann Entropy:\n\nvn.entropy <- function(data, structure){\n  library(qgraph)\n  if(!is.matrix(data)){\n    cor1 <- cor_auto(data)/sqrt(ncol(data))\n    eigen.cor1 <- eigen(cor1)$values\n    l.eigen <- eigen.cor1*log(eigen.cor1)\n    h.vn <- -(sum(l.eigen))\n\n    n <- max(structure)\n    cor.fact <- vector(\"list\")\n    eigen.fact <- vector(\"list\")\n    l.eigen.fact <- vector(\"list\")\n    h.vn.fact <- vector(\"list\")\n    for(i in 1:n){\n      cor.fact[[i]] <- cor_auto(data[,which(structure==unique(structure)[i])])/sqrt(ncol(data))\n      eigen.fact[[i]] <- eigen(cor.fact[[i]])$values\n      l.eigen.fact[[i]] <- eigen.fact[[i]]*log(eigen.fact[[i]])\n      h.vn.fact[[i]] <- -(sum(l.eigen.fact[[i]]))\n    }\n  } else{\n    cor1 <- data/sqrt(ncol(data))\n    eigen.cor1 <- eigen(cor1)$values\n    l.eigen <- eigen.cor1*log(eigen.cor1)\n    h.vn <- -(sum(l.eigen))\n\n    n <- max(structure)\n    cor.fact <- vector(\"list\")\n    eigen.fact <- vector(\"list\")\n    l.eigen.fact <- vector(\"list\")\n    h.vn.fact <- vector(\"list\")\n    for(i in 1:n){\n      cor.fact[[i]] <- data[which(structure==unique(structure)[i]),which(structure==unique(structure)[i])]/sqrt(ncol(data))\n      eigen.fact[[i]] <- eigen(cor.fact[[i]])$values\n      l.eigen.fact[[i]] <- eigen.fact[[i]]*log(eigen.fact[[i]])\n      h.vn.fact[[i]] <- -(sum(l.eigen.fact[[i]]))\n    }\n  }\n\n\n  h.vn.fact2 <- unlist(h.vn.fact)\n\n  # Average Entropy:\n  items.com <- vector(\"numeric\")\n  for(i in 1:n){\n    items.com[[i]] <- sum(structure==unique(structure)[i])\n  }\n  factor.average.h <- (sum(items.com*h.vn.fact2)/length(structure))\n  h.watanabe <- factor.average.h-(ncol(data)*h.vn)\n  average.h <- factor.average.h-(h.vn)\n\n  results <- vector(\"list\")\n  results$Tot.Entropy.VN <- h.vn\n  results$Fact.Entropy <- h.vn.fact2\n  results$Sum.Fact.Entropy <- sum(h.vn.fact2)\n  results$Entropy.Fit <- mean(h.vn.fact2)-h.vn\n  results$Tot.Cor <- sum(h.vn.fact2)-h.vn\n  results$Average.Entropy <- average.h\n  results$H.Watanabe <- h.watanabe\n  return(results)\n}\n\n\n## VN entropy of a scaled correlation matrix!!!!!!\n\nmat1 <- matrix(c(1,2,3,4), ncol = 2, byrow = TRUE)\nnorm(mat1)\nmat1^2\n",
+    "created" : 1543330898194.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "475479517",
+    "id" : "487B3551",
+    "lastKnownWriteTime" : 1543506904,
+    "last_content_update" : 1543506904364,
+    "path" : "~/Dropbox/Pacotes do R/Pacote EGA/New Functions to be Added/VonNeumannEntropy.R",
+    "project_path" : null,
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 7,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

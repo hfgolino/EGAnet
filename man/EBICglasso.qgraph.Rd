@@ -2,7 +2,7 @@
 % Please edit documentation in R/EBICglasso.qgraph.R
 \name{EBICglasso.qgraph}
 \alias{EBICglasso.qgraph}
-\title{EBICglasso from qgraph 1.4.4}
+\title{\code{\link[qgraph]{EBICglasso}} from \code{\link{qgraph}} 1.4.4}
 \usage{
 EBICglasso.qgraph(S, n, gamma = 0.5, penalize.diagonal = FALSE,
   nlambda = 100, lambda.min.ratio = 0.01, returnAllResults = FALSE,
@@ -57,13 +57,13 @@ The glasso is run for 100 values of the tuning parameter logarithmically
 spaced between the maximal value of the tuning parameter at which all edges are zero,
 lambda_max, and lambda_max/100. For each of these graphs the EBIC is computed and
 the graph with the best EBIC is selected. The partial correlation matrix
-is computed using \code{\link{wi2net}} and returned.
+is computed using \code{\link[qgraph]{wi2net}} and returned.
 }
 \examples{
-\donttest{
 ### Using wmt2 dataset from EGAnet ###
 data(wmt2)
 
+\dontrun{
 # Compute correlations:
 CorMat <- cor_auto(wmt2[,7:24])
 
@@ -72,6 +72,7 @@ BICgraph <- EBICglasso.qgraph(CorMat, nrow(wmt2), 0)
 
 # Compute graph with tuning = 0.5 (EBIC)
 EBICgraph <- EBICglasso.qgraph(CorMat, nrow(wmt2), 0.5)
+
 }
 
 }

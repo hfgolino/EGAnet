@@ -4,8 +4,6 @@
 #'
 #' @name toy.example
 #'
-#' @alias toy.example
-#'
 #' @docType data
 #'
 #' @usage data(toy.example)
@@ -15,9 +13,7 @@
 #' @keywords datasets
 #'
 #' @examples
-#' \donttest{
 #' data("toy.example")
-#' }
 #'
 NULL
 #----

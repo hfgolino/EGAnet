@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1543951447270.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3692198977",
+    "id" : "994B7A8C",
+    "lastKnownWriteTime" : 1543953681,
+    "last_content_update" : 1543953681437,
+    "path" : "~/Dropbox/Pacotes do R/Pacote EGA/New Functions to be Added/VonNeumannEntropy.R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "2,0",
+        "scrollLine" : "0"
+    },
+    "relative_order" : 7,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

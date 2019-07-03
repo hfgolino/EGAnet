@@ -2,30 +2,32 @@
 % Please edit documentation in R/summary.EGA.R
 \name{summary.EGA}
 \alias{summary.EGA}
-\title{Summary for EGA objects}
+\title{Summary for \code{\link[EGAnet]{EGA}} objects}
 \usage{
 \method{summary}{EGA}(object, ...)
 }
 \arguments{
-\item{object}{An \code{\link{EGA}} object}
+\item{object}{An \code{\link[EGAnet]{EGA}} object}
 
 \item{...}{potentially further arguments (\strong{unused currently})}
 }
 \description{
-Returns a summary of the EGA results
+Returns a summary of the \code{\link[EGAnet]{EGA}} results
 }
 \examples{
-\donttest{
-#estimate EGA
+\dontrun{
+# Estimate EGA
 ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = TRUE)
 
-#summary of EGA reults
-summary(ega.wmt)
 }
+
+#Summary of EGA reults
+summary(ega.wmt)
+
 }
 \seealso{
-\code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA
-and \code{\link{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
+\code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA
+and \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{
 Hudson F. Golino <hfg9s at virginia.edu>

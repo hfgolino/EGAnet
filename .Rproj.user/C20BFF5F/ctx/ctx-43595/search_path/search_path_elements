@@ -1,0 +1,17 @@
+.GlobalEnv
+package:bootnet
+package:bindrcpp
+package:plotly
+package:ggplot2
+package:igraph
+package:qgraph
+package:EGA
+tools:rstudio
+package:stats
+package:graphics
+package:grDevices
+package:utils
+package:datasets
+package:methods
+Autoloads
+package:base

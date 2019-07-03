@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1543951590443.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1270190809",
+    "id" : "D849A660",
+    "lastKnownWriteTime" : 1543959912,
+    "last_content_update" : 1543959912180,
+    "path" : "~/Dropbox/Code_Entropy_Paper.R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "373,0",
+        "scrollLine" : "360",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

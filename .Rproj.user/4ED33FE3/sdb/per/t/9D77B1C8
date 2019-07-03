@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "totalCorMat <- function(data){\n  TotCorMat <- matrix(NA,nrow=ncol(data),ncol=ncol(data))\n  TotCorMat <- matrix(apply(expand.grid( x = 1:ncol(data), y = 1:ncol(data)), 1,\n                              function(x){ return(totalCor( data[ , c(x[1], x[2])])$Total.Cor)}),\n                       nc = ncol(data))\n  colnames(TotCorMat) <- colnames(data)\n  rownames(TotCorMat) <- colnames(data)\n  return(TotCorMat)\n}\n\n\n\n",
+    "created" : 1543285950724.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "543402309",
+    "id" : "9D77B1C8",
+    "lastKnownWriteTime" : 1543286133,
+    "last_content_update" : 1543286133211,
+    "path" : "~/Dropbox/Pacotes do R/Pacote EGA/New Functions to be Added/totalCorMat.R",
+    "project_path" : null,
+    "properties" : {
+        "tempName" : "Untitled2"
+    },
+    "relative_order" : 9,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

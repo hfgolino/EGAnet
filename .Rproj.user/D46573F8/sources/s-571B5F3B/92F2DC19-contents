@@ -1,0 +1,6 @@
+library(EGAnet)
+str(intelligenceBattery)
+colnames(intelligenceBattery[,1:66])
+
+summary(intelligenceBattery[,1:7])
+sd(intelligenceBattery[,5], na.rm = TRUE)

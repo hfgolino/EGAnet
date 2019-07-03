@@ -1,0 +1,7 @@
+library("ggplot2")
+library("dlstats")
+library(ope)
+x <- cran_stats(c("EGAnet", "qgraph", "NetworkToolbox", "OpenMx"))
+head(x)
+ggplot(x, aes(end, downloads, group=package, color=package)) +
+  geom_line() + geom_point(aes(shape=package))

@@ -1,0 +1,10 @@
+library(EGAnet)
+EGA
+cor1 <- wmt2[,8:21]
+
+ega1 <- EGA(wmt2[,8:21], n = 1000, model = "glasso")
+ega1$correlation
+library(NetworkToolbox)
+a1 <- TMFG(wmt2[,8:21])
+a1$A
+?TMFG

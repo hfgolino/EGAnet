@@ -1,0 +1,378 @@
+# Code for the Entropy Fit Paper:
+
+
+####################################################################################
+####################################################################################
+####################################################################################
+
+# Entropy Fit - calculated using the raw data: -----------------------------------------
+
+####################################################################################
+####################################################################################
+####################################################################################
+
+
+entropyFit <- function (data, structure)
+{
+  require(plyr)
+
+  if(all(range(data)==c(0,1)))
+  {data <- ifelse(data==1,2,1)}
+
+  #convert structure to number if necessary
+  if(is.character(structure))
+  {
+    uni <- unique(structure)
+    num.comm <- structure
+
+    for(i in 1:length(uni))
+    {num.comm[which(num.comm==uniq[i])] <- i}
+
+  } else {num.comm <- structure}
+
+  ## Traditional Entropy:
+
+  #number of dimensions
+  n <- max(num.comm)
+  #communities sorted low to high
+  uniq <- sort(unique(num.comm))
+
+  #initialize entropy vector
+  H <- vector("numeric",length=n)
+  bins <- floor(sqrt(nrow(data)/5))
+  seque <- matrix(NA,nrow=bins+1,ncol=n)
+  sums <- matrix(NA,nrow=nrow(data),ncol=n)
+  bin.sums <- vector("list", n)
+  bin.sums2 <- matrix(NA, nrow=bins, ncol = n)
+  Freq <- matrix(NA,nrow=bins,ncol=n)
+
+  #compute empirical entropy for each community or item
+  for(i in 1:n)
+  {
+    if(n != ncol(data)){
+      sums[,i] <- rowSums(data[,which(num.comm==uniq[i])])
+    } else{
+      sums[,i] <- data[,i]
+    }
+    seque[,i] <- seq(from = range(sums[,i])[1], to = range(sums[,i])[2], length.out = bins+1)
+    bin.sums[[i]] <- table(cut(sums[,i], breaks = seque[,i], include.lowest = TRUE))
+    bin.sums2[,i] <- as.vector(unlist(bin.sums[[i]]))
+    Freq[,i] <- bin.sums2[,i]/sum(bin.sums2[,i])
+    H[i] <- -sum(ifelse(Freq[,i]>0,Freq[,i] * log(Freq[,i]),0))
+  }
+
+  # Joint Entropy:
+
+  bin.sums3 <- data.frame(matrix(NA, nrow = nrow(data), ncol = n))
+  joint.table <- vector("numeric")
+  for(i in 1:n){
+    bin.sums3[,i] <- cut(sums[,i], breaks = seque[,i], include.lowest = TRUE)
+    joint.table = plyr::count(bin.sums3)$freq
+  }
+
+  freq.joint <- joint.table/sum(joint.table)
+  joint.entropy <- -sum(ifelse(freq.joint >0,freq.joint * log(freq.joint),0))
+
+  #minimum entropy
+  var <- ncol(data)
+  seque.min <- matrix(NA,nrow=bins+1,ncol=var)
+  bin.sums.min <- vector("list", var)
+  bin.sums.min2 <- matrix(NA, nrow=bins, ncol = var)
+  Freq.min <- matrix(NA,nrow=bins,ncol=var)
+  Hm <- vector("numeric",length=var)
+  Hmin <- vector("numeric",length=var)
+  for(i in 1:var){
+    seque.min[,i] <- seq(from = range(data[,i])[1], to = range(data[,i])[2], length.out = bins+1)
+    bin.sums.min[[i]] <- table(cut(data[,i], breaks = seque.min[,i], include.lowest = TRUE))
+    bin.sums.min2[,i] <- as.vector(unlist(bin.sums.min[[i]]))
+    Freq.min[,i] <- bin.sums.min2[,i]/sum(bin.sums.min2[,i])
+    Hm[[i]] <- -sum(ifelse(Freq.min[,i]>0, Freq.min[,i]*log(Freq.min[,i]),0))
+    Hmin <- mean(H)
+  }
+
+  # Maximum Entropy:
+  sums.max <- vector("numeric")
+  sums.max <- rowSums(data)
+  joint.table.max <- vector("numeric")
+  seque.min <- seq(from = range(sums.max)[1], to = range(sums.max)[2], length.out = bins+1)
+  bin.sums.min <- cut(sums.max, breaks = seque.min, include.lowest = TRUE)
+  joint.table.max = plyr::count(bin.sums.min)$freq
+
+  freq.joint.max <- joint.table.max/sum(joint.table.max)
+  Hmax <- -sum(ifelse(freq.joint.max >0,freq.joint.max * log(freq.joint.max),0))
+
+  # # Miller-Madow Bias Correction:
+  # # Individual Factors:
+  non.zero.bins1 <- vector("numeric",length=n)
+  H.miller.madow <- vector("numeric",length=n)
+  for(i in 1:n){
+    non.zero.bins1[i] <- length(bin.sums2[bin.sums2[,i]!=0,i])
+    H.miller.madow[i] <- H[i]+((non.zero.bins1[i]-1)/(2*(nrow(data))))
+  }
+
+  # Joint Entropy with Miller-Madow Bias Correction:
+
+  non.zero.bins.joint <- length(joint.table[joint.table!=0])
+  joint.miller.madow <- joint.entropy+((non.zero.bins.joint-1)/(2*(nrow(data))))
+
+
+  #compute mean emprirical entropy
+  #(empirical entropy per dimension)
+  ent <- mean(H)
+
+  result <- data.frame(matrix(NA, nrow = 1, ncol = 5))
+  colnames(result) <- c("Total.Correlation", "Total.Correlation.MM","Entropy.Fit",
+                         "Entropy.Fit.MM", "Average.Entropy")
+  result$Total.Correlation <- sum(H)-joint.entropy
+  result$Total.Correlation.MM <- sum(H.miller.madow)-joint.miller.madow
+  result$Entropy.Fit <- (ent-joint.entropy)+((Hmax-Hmin)*(sqrt(n)))
+  result$Entropy.Fit.MM <- (mean(H.miller.madow)-joint.miller.madow)+((Hmax-Hmin)*(sqrt(n)))
+  result$Average.Entropy <- mean(H)-joint.entropy
+  return(result)
+}
+
+
+
+####################################################################################
+####################################################################################
+####################################################################################
+
+# Entropy Fit - calculated using correlation matrices: ----------------------------
+
+####################################################################################
+####################################################################################
+####################################################################################
+
+vn.entropy <- function(data, structure){
+  library(qgraph)
+  if(!is.matrix(data)){
+    cor1 <- cor_auto(data)/sqrt(ncol(data))
+    eigen.cor1 <- eigen(cor1)$values
+    l.eigen <- eigen.cor1*log(eigen.cor1)
+    h.vn <- -(sum(l.eigen))
+
+    n <- max(structure)
+    cor.fact <- vector("list")
+    eigen.fact <- vector("list")
+    l.eigen.fact <- vector("list")
+    h.vn.fact <- vector("list")
+    for(i in 1:n){
+      cor.fact[[i]] <- cor_auto(data[,which(structure==unique(structure)[i])])/sqrt(ncol(data))
+      eigen.fact[[i]] <- eigen(cor.fact[[i]])$values
+      l.eigen.fact[[i]] <- eigen.fact[[i]]*log(eigen.fact[[i]])
+      h.vn.fact[[i]] <- -(sum(l.eigen.fact[[i]]))
+    }
+
+  } else{
+    cor1 <- data/sqrt(ncol(data))
+    eigen.cor1 <- eigen(cor1)$values
+    l.eigen <- eigen.cor1*log(eigen.cor1)
+    h.vn <- -(sum(l.eigen))
+
+    n <- max(structure)
+    cor.fact <- vector("list")
+    eigen.fact <- vector("list")
+    l.eigen.fact <- vector("list")
+    h.vn.fact <- vector("list")
+    for(i in 1:n){
+      cor.fact[[i]] <- data[which(structure==unique(structure)[i]),which(structure==unique(structure)[i])]/sqrt(ncol(data))
+      eigen.fact[[i]] <- eigen(cor.fact[[i]])$values
+      l.eigen.fact[[i]] <- eigen.fact[[i]]*log(eigen.fact[[i]])
+      h.vn.fact[[i]] <- -(sum(l.eigen.fact[[i]]))
+    }
+  }
+
+  h.vn.fact2 <- unlist(h.vn.fact)
+
+  #minimum entropy
+  Hmin <- h.vn/ncol(data)
+
+  # Difference between Max and Min:
+  Hdiff <- h.vn-Hmin
+
+  results <- data.frame(matrix(NA, nrow = 1, ncol = 3))
+  colnames(results) <- c("Entropy.Fit", "Total.Correlation","Average.Entropy")
+  results$Entropy.Fit <-(mean(h.vn.fact2)-h.vn)-(Hdiff*(sqrt(n)))
+  results$Total.Correlation <- sum(h.vn.fact2)-h.vn
+  results$Average.Entropy <- mean(h.vn.fact2)-h.vn
+  return(results)
+}
+
+####################################################################################
+####################################################################################
+####################################################################################
+
+# Permutation Test: ----------------------------
+
+####################################################################################
+####################################################################################
+####################################################################################
+
+# Generate the permutations of the item positions
+
+library("gtools")
+perm <- permutations(n = 8, r = 8, v = 1:8, repeats.allowed = FALSE)
+
+strct <- c(rep(1,4),rep(2,4))
+permutation.items <- matrix(0, nrow = nrow(perm), ncol = ncol(perm))
+for(i in 1:nrow(perm)){
+  permutation.items[i,] <- strct[order(perm[i,])]
+}
+
+# Take the unique values of the permutations:
+
+uniq.perm <- unique(permutation.items)
+
+# Simulate the following structures always with 2 factors (500 replications each):
+
+## 1) Correlation of 0, .5, .7
+## 2) Loadings of .4, .55 and .7
+## 3) Sample size of 500, 1000 and 5000.
+## 4) Skew: from -2 to 2; from -2 to -1; from 1 to 2;
+## 5) Number of items = 4
+## 6) Number of factors = 2
+
+# For each simulated dataset (40500 in total), apply the Entropy Fit and the VN Entropy:
+
+# Example: Suppose that sim.1 is one simulated data:
+
+# Entropy for the Raw Data:
+entropy.raw <- data.frame(matrix(NA, nrow = nrow(uniq.perm), ncol = 5))
+colnames(entropy.raw) <- c("Total.Correlation", "Total.Correlation.MM","Entropy.Fit",
+                           "Entropy.Fit.MM", "Average.Entropy")
+for(i in 1:nrow(uniq.perm)){
+  entropy.raw[i,] <-  entropyFit(sim.1, uniq.perm[i,])}
+
+
+# Entropy for Correlation Matrix:
+
+library(qgraph)
+entropy.cor <- data.frame(matrix(NA, nrow = nrow(uniq.perm), ncol = 3))
+colnames(entropy.cor) <- c("Entropy.Fit.VN", "Total.Correlation.VN","Average.Entropy.VN")
+for(i in 1:nrow(uniq.perm)){
+  entropy.cor[i,] <-  vn.entropy(cor_auto(sim.1), uniq.perm[i,])}
+
+
+# Compare with RMSEA, CFI, TLI and SRMR:
+
+
+cfa.indices <- function (data, estimator, structure)
+{
+  strct <- split(colnames(data), list(structure))
+  names(strct) <- paste("Fat", labels(strct))
+  model <- paste(names(strct), " =~ ", lapply(strct, function(x) paste(print(x),
+                                                                           collapse = " + ")), collapse = " \n ")
+  fit.mod <- lavaan::cfa(model = model, estimator = estimator,
+                             orthogonal = FALSE, se = "standard", test = "satorra-bentler",
+                             data = data)
+  fit.measures.cfa <- lavaan::fitMeasures(fit.mod, fit.measures = c("rmsea","cfi", "tli", "srmr"))
+
+  cfa <- data.frame(matrix(NA, nrow = 1, ncol = 4))
+  colnames(cfa) <- c("RMSEA", "CFI", "TLI", "SRMR")
+  cfa[1,] <- fit.measures.cfa
+  return(cfa)
+}
+
+cfa.results <- data.frame(matrix(NA, nrow = nrow(uniq.perm), ncol = 4))
+colnames(cfa.results) <- c("RMSEA", "CFI", "TLI", "SRMR")
+for(i in 1:nrow(uniq.perm)){
+  cfa.results[i,] <-  cfa.indices(data = sim.1, estimator = "WLSMV", structure = uniq.perm[i,])}
+
+
+# For each simulated dataset, return the followign results (70 X 12 dataframe or matrix)
+
+final.results <- cbind(entropy.raw, entropy.cor, cfa.results)
+
+
+####################################################################################
+####################################################################################
+####################################################################################
+
+# Data Already Simulated for the EGA Paper: ----------------------------
+
+####################################################################################
+####################################################################################
+####################################################################################
+
+
+# Correct Structure,  Shuffled Structure, Structure - 1 factor, Structure - 1 factor random, Structure + 1 Factor, Structure + 1 Factor random
+
+# Correct structure: rep seq from 1 to n factors, each = n of items
+correct.structure <- rep(seq(1:3), each = 4)
+
+# Shuffled structure: sample the correct structure
+
+### Dingjing: please, make sure that the sample of the factor numbers appears at least twice:
+## for example: 1,1,2,2,2,3,3,3,3,4,4 etc.
+
+
+shuffled.structure <- sample(correct.structure, length(correct.structure), replace = FALSE)
+
+# Structure minus 1 factor:
+
+structure.minus1 <- as.factor(correct.structure)
+unique.minus1 <- unique(structure.minus1)
+levels(structure.minus1)[length(unique.minus1)] <- levels(structure.minus1)[length(unique.minus1)-1]
+structure.minus1 <- as.numeric(as.character(structure.minus1))
+
+# Structure minus 1 Random:
+
+### Dingjing: please, make sure that the sample of the factor numbers appears at least twice:
+## for example: 1,1,2,2,2,3,3,3,3,4,4 etc.
+
+structure.minus1.random <- sample(1:(length(unique(correct.structure))-1), size = length(correct.structure), replace = TRUE)
+
+
+# Structure plus 1 factor:
+
+structure.plus1 <- correct.structure
+last.fact <- structure.plus1[which(structure.plus1==max(unique(structure.plus1)))]
+last.fact2 <- last.fact[1:(length(last.fact)/2)]+1
+structure.plus1[1:length(last.fact2)] <- last.fact2
+
+# Structure plus 1 Random:
+
+### Dingjing: please, make sure that the sample of the factor numbers appears at least twice:
+## for example: 1,1,2,2,2,3,3,3,3,4,4 etc.
+
+structure.plus1.random <- sample(1:(length(unique(correct.structure))+1), size = length(correct.structure), replace = TRUE)
+
+
+
+test.structures <- as.matrix(rbind(correct.structure,
+                                shuffled.structure,
+                                structure.minus1,
+                                structure.minus1.random,
+                                structure.plus1
+                                #,structure.plus1.random
+                                ))
+
+
+# Calculating Entropy for the Raw Data:
+
+entropy.raw.sim <- data.frame(matrix(NA, nrow = nrow(test.structures), ncol = 5))
+colnames(entropy.raw.sim) <- c("Total.Correlation", "Total.Correlation.MM","Entropy.Fit",
+                           "Entropy.Fit.MM", "Average.Entropy")
+for(i in 1:nrow(test.structures)){
+  entropy.raw.sim[i,] <-  entropyFit(sim.1, test.structures[i,])}
+
+# Entropy for the correlation matrix:
+
+library(qgraph)
+entropy.cor.sim <- data.frame(matrix(NA, nrow = nrow(test.structures), ncol = 3))
+colnames(entropy.cor.sim) <- c("Entropy.Fit.VN", "Total.Correlation.VN","Average.Entropy.VN")
+for(i in 1:nrow(test.structures)){
+  entropy.cor.sim[i,] <-  vn.entropy(cor_auto(sim.1), test.structures[i,])}
+
+
+# CFA results:
+
+cfa.results.sim <- data.frame(matrix(NA, nrow = nrow(test.structures), ncol = 4))
+colnames(cfa.results.sim) <- c("RMSEA", "CFI", "TLI", "SRMR")
+for(i in 1:nrow(test.structures)){
+  cfa.results.sim[i,] <-  cfa.indices(data = sim.1, estimator = "WLSMV", structure = test.structures[i,])}
+
+
+# Combine the results:
+
+final.results.sim <- cbind(entropy.raw.sim, entropy.cor.sim, cfa.results.sim)

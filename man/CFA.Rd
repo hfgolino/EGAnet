@@ -2,12 +2,12 @@
 % Please edit documentation in R/CFA.R
 \name{CFA}
 \alias{CFA}
-\title{CFA Fit of EGA Structure}
+\title{CFA Fit of \code{\link[EGAnet]{EGA}} Structure}
 \usage{
 CFA(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ...)
 }
 \arguments{
-\item{ega.obj}{An \code{\link{EGA}} object}
+\item{ega.obj}{An \code{\link[EGAnet]{EGA}} object}
 
 \item{data}{A dataframe with the variables to be used in the analysis}
 
@@ -38,30 +38,42 @@ Additional fit measures can be applied using the
 \code{\link[lavaan]{fitMeasures}} function (see examples)}
 }
 \description{
-Verifies the fit of the structure suggested by EGA using confirmatory factor analysis
+Verifies the fit of the structure suggested by \code{\link[EGAnet]{EGA}} using confirmatory factor analysis
 }
 \examples{
-\donttest{
-#estimate EGA
-ega.wmt <- EGA(data = wmt2[,7:24])
 
-#fit CFA model to EGA results
-cfa.wmt <- CFA(ega.obj = ega.wmt, estimator = 'WLSMV', plot.CFA = TRUE, data = wmt2)
+# Load data
+wmt <- wmt2[,7:24]
 
-#additional fit measures
+\dontrun{
+# Estimate EGA
+ega.wmt <- EGA(data = wmt)
+
+}
+
+# Fit CFA model to EGA results
+cfa.wmt <- CFA(ega.obj = ega.wmt, estimator = 'WLSMV', plot.CFA = TRUE, data = wmt)
+
+# Additional fit measures
 lavaan::fitMeasures(cfa.wmt$fit, fit.measures = "all")
 
-#estimate EGA
-ega.intel <- EGA(data = intelligenceBattery[,8:66])
+# Load data
+intel <- intelligenceBattery[,8:66]
 
-#fit CFA model to EGA results
+\dontrun{
+# Estimate EGA
+ega.intel <- EGA(data = intel)
+
+# Fit CFA model to EGA results
 cfa.intel <- CFA(ega.obj = ega.intel, estimator = 'WLSMV', plot.CFA = TRUE,
-data = intelligenceBattery[,8:66])
+data = intel)
+
 }
 
 }
 \seealso{
-\code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap.
+\code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and
+\code{\link[EGAnet]{bootEGA}} to investigate the stability of EGA's estimation via bootstrap.
 }
 \author{
 Hudson F. Golino <hfg9s at virginia.edu>
