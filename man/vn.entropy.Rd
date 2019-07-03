@@ -26,17 +26,22 @@ Computes the fit of a dimensionality structure using Von Neumman's entropy when 
 Lower values suggest better fit of a structure to the data.
 }
 \examples{
-\donttest{
-#estimate EGA model
-ega.wmt <- EGA(data = wmt2[,7:24], model = "glasso")
+# Load data
+wmt <- wmt2[,7:24]
 
-#compute entropy indices
-vn.entropy(data = wmt2[,7:24], structure = ega.wmt$wc)
+\dontrun{
+# Estimate EGA model
+ega.wmt <- EGA(data = wmt, model = "glasso")
+
 }
+
+# Compute entropy indices
+vn.entropy(data = wmt, structure = ega.wmt$wc)
+
 }
 \seealso{
-\code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link{CFA}} to
-verify the fit of the structure suggested by EGA using confirmatory factor analysis.
+\code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and
+\code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{
 Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>

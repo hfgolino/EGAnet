@@ -2,12 +2,12 @@
 % Please edit documentation in R/plot.bootEGA.R
 \name{plot.bootEGA}
 \alias{plot.bootEGA}
-\title{Plot method for bootEGA objects.}
+\title{Plot method for \code{\link[EGAnet]{bootEGA}} objects}
 \usage{
 \method{plot}{bootEGA}(x, vsize = 6, ...)
 }
 \arguments{
-\item{x}{A \code{\link{bootEGA}} object}
+\item{x}{A \code{\link[EGAnet]{bootEGA}} object}
 
 \item{vsize}{An integer indicating the size of the nodes.
 Default vsize = 6}
@@ -15,27 +15,27 @@ Default vsize = 6}
 \item{...}{Arguments passed to \code{\link[qgraph]{qgraph}}}
 }
 \description{
-Plots bootEGA typical structure using \code{\link{qgraph}}
+Plots \code{\link[EGAnet]{bootEGA}} typical structure using \code{\link[qgraph]{qgraph}}
 }
 \examples{
-
-\donttest{
-#estimate EGA
+\dontrun{
+# Estimate EGA
 ega.wmt <- EGA(data = wmt2[,7:24], model = "glasso")
 
-#estimtae bootEGA
+# Estimate bootEGA
 boot.wmt <- bootEGA(data = wmt2[,7:24], n = 10, typicalStructure = TRUE,
 plot.typicalStructure = TRUE, model = "GGM",
 type = "parametric", ncores = 4, confirm = ega.wmt$wc)
 
-#plot bootEGA
-plot.bootEGA(boot.wmt)
 }
+
+# Plot bootEGA
+plot(boot.wmt)
 
 }
 \seealso{
-\code{\link{EGA}} to estimate the number of dimensions of an instrument using EGA
-and \code{\link{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
+\code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA
+and \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{
 Hudson F. Golino <hfg9s at virginia.edu>

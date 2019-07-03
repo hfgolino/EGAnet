@@ -1,71 +1,87 @@
 #' Apply the Exploratory Graph Analysis technique
 #'
 #' Estimates the number of dimensions of a given dataset/instrument
-#' using graphical lasso (\code{\link{EBICglasso.qgraph}}) or the
+#' using graphical lasso (\code{\link[EGAnet]{EBICglasso.qgraph}}) or the
 #' Triangulated Maximally Filtered Graph (\code{\link[NetworkToolbox]{TMFG}})
 #' method and the walktrap community detection algorithm (\code{\link[igraph]{cluster_walktrap}}).
 #' The glasso regularization parameter is set via EBIC.
 #'
-#' @param data A dataframe with the variables to be used in the analysis or a correlation matrix.
-#' If the data used is a correlation matrix, the argument \code{n} will need to be specified.
+#' @param data Matrix or data frame.
+#' Contains variables to be used in the analysis or a correlation matrix.
+#' If the data used is a correlation matrix, the argument \code{n} will need to be specified
 #'
-#' @param n Integer.
+#' @param n Numeric.
 #' Sample size, if the data provided is a correlation matrix
 #'
-#' @param plot.EGA Logical.
-#' If TRUE, returns a plot of the network and its estimated dimensions.
-#' Defaults to TRUE
-#'
-#' @param model A string indicating the method to use.
+#' @param model Character. 
+#' A string indicating the method to use.
+#' Defaults to \code{"glasso"}.
+#' 
 #' Current options are:
 #'
 #' \itemize{
 #'
-#' \item{\strong{\code{glasso}}}
+#' \item{\strong{\code{"glasso"}}}
 #' {Estimates the Gaussian graphical model using graphical LASSO with
 #' extended Bayesian information criterion to select optimal regularization parameter.
-#' This is the default method}
+#' See \code{\link[EGAnet]{EBICglasso.qgraph}}}
 #'
-#' \item{\strong{\code{TMFG}}}
-#' {Estimates a Triangulated Maximally Filtered Graph}
+#' \item{\strong{\code{"TMFG"}}}
+#' {Estimates a Triangulated Maximally Filtered Graph.
+#' See \code{\link[NetworkToolbox]{TMFG}}}
 #'
 #' }
+#' 
+#' @param plot.EGA Boolean.
+#' If \code{TRUE}, returns a plot of the network and its estimated dimensions.
+#' Defaults to \code{TRUE}
 #'
 #' @param steps Number of steps to be used in \code{\link[igraph]{cluster_walktrap}} algorithm.
 #' Defaults to 4.
 #'
-#' @param ... Additional arguments to be passed to \code{\link{EBICglasso.qgraph}}
+#' @param ... Additional arguments to be passed to \code{\link[EGAnet]{EBICglasso.qgraph}}
 #' or \code{\link[NetworkToolbox]{TMFG}}
 #'
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
 #'
 #' @examples
+#' 
+#' # Load data
+#' wmt <- wmt2[,7:24]
 #'
-#' \donttest{
-#' #estimate EGA
-#' ega.wmt <- EGA(data = wmt2[,7:24], model = "glasso", plot.EGA = TRUE)
+#' \dontrun{
+#' # Estimate EGA
+#' ega.wmt <- EGA(data = wmt, model = "glasso", plot.EGA = TRUE)
 #'
 #'
-#' #estimate EGAtmfg
-#' ega.wmt <- EGA(data = wmt2[,7:24], model = "TMFG", plot.EGA = TRUE)
+#' # Estimate EGAtmfg
+#' ega.wmt <- EGA(data = wmt, model = "TMFG", plot.EGA = TRUE)
 #'
-#' #summary statistics
+#' # Summary statistics
 #' summary(ega.wmt)
 #'
-#' #plot
+#' # Plot
 #' plot(ega.wmt)
+#' 
+#' }
+#' 
+#' # Load data
+#' intel <- intelligenceBattery[,8:66]
+#' 
+#' \dontrun{
+#' # Estimate EGA
+#' ega.intel <- EGA(data = intel, model = "glasso", plot.EGA = TRUE)
 #'
-#' #estimate EGA
-#' ega.intel <- EGA(data = intelligenceBattery[,8:66], model = "glasso", plot.EGA = TRUE)
-#'
-#' #summary statistics
+#' # Summary statistics
 #' summary(ega.intel)
 #'
-#' #plot
+#' # Plot
 #' plot(ega.intel)
+#' 
 #' }
-#' @seealso \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap
-#' and \code{\link{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
+#' 
+#' @seealso \code{\link[EGAnet]{bootEGA}} to investigate the stability of EGA's estimation via bootstrap
+#' and \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 #'
 #' @references
 #' Golino, H. F., & Epskamp, S. (2017).
