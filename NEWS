@@ -1,4 +1,4 @@
-Changes in version 0.6.0
+Changes in version 0.7.0
 
 o fixed 'EGA' bug in 'bootEGA' function; updated 'bootEGA' documentation; added progress messages
 
