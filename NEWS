@@ -1,6 +1,6 @@
 Changes in version 0.6.0
 
-o fixed 'EGA' bug in 'bootEGA' function; updated 'bootEGA' documentation
+o fixed 'EGA' bug in 'bootEGA' function; updated 'bootEGA' documentation; added progress messages
 
 o migrated 'net.scores' and 'net.loads' from 'NetworkToolbox' to 'EGAnet' package
 
@@ -13,3 +13,5 @@ o added datasets 'ega.wmt' and 'boot.wmt' for quick user-friendly examples (also
 o added package help page
 
 o added package load message
+
+o updated 'itemStability' algorithm (now can accept any number of 'orig.wc') and enforced '0' to '1' bounds on plot

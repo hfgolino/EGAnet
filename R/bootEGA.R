@@ -172,7 +172,11 @@ bootEGA <- function(data, n,
     #progress <- function(num) setTxtProgressBar(pb, num)
     #opts <- list(progress = progress)
 
+    #initialize bootstrap list
     boots <- list()
+    
+    #let user know bootstrap has started
+    message("\nBootstrapping...", appendLF = FALSE)
 
     #nets
     boots <-foreach::foreach(i=1:n,
@@ -201,6 +205,12 @@ bootEGA <- function(data, n,
     }
 
     parallel::stopCluster(cl)
+  
+   #let user know bootstrap has ended
+    message("done", appendLF = TRUE)
+    
+    #let user know results are being computed
+    message("Computing results...", appendLF = FALSE)
 
     bootGraphs <- vector("list", n)
     for (i in 1:n) {
@@ -259,6 +269,9 @@ bootEGA <- function(data, n,
         lik[count,1] <- i
         lik[count,2] <- length(which(boot.ndim[,2]==i))/n
     }
+  
+   #let user know results have been computed
+    message("done", appendLF = TRUE)
 
     result <- list()
     result$n <- n

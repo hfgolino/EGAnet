@@ -76,18 +76,12 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
     {stop("Input for 'bootega.obj' is not a 'bootEGA' object")}
     
     #mode function
-    mode <- function(v, numeric = FALSE)
+    mode <- function(v)
     {
         #unique values
         uniqv <- unique(v)
         
-        if(!numeric)
-        {
-            #identify letters in values
-            uniqv <- uniqv[which(is.na(suppressWarnings(as.numeric(uniqv))))]
-        }
-        
-        #find mode of letters
+        #find mode
         uniqv <- uniqv[which.max(tabulate(match(v, uniqv)))]
         
         return(uniqv)
@@ -122,22 +116,8 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
     uniq <- unique(num.comm)
     uniq <- uniq[order(uniq)]
     
-    #number of original dimensions
-    uniq.len <- length(num.comm)
-    
-    #original dimensions list
-    orig.wc.list <- list()
-    
-    for(i in uniq)
-    {orig.wc.list[[i]] <- which(orig.wc==uniq[i])}
-    
-    names(orig.wc.list) <- uniq
-    
-    #letter membership vectors
-    let.wc.mat <- matrix(NA, nrow = nrow(net), ncol = n)
-    
-    for(i in 1:n)
-    {let.wc.mat[,i] <- letters[wc.mat[,i]]}
+    #initialize final matrix
+    final.mat <- matrix(0, nrow = length(num.comm), ncol = n)
     
     ##########################################################
     #### ITEM FREQUENCY AND DIMENSION REPLICATION RESULTS ####
@@ -146,225 +126,199 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
     #identify confirm membership within bootstrapped memberships
     for(i in 1:n)
     {
-        #iteration letter membership vector
-        let.vec <- let.wc.mat[,i]
-        #number membership vector
-        num.vec <- wc.mat[,i]
-        #unique int.let membership
-        num.uniq <- unique(num.vec)
-        #number of unique int.let membership
-        num.len <- length(num.uniq)
+        #new membership vector
+        new.vec <- wc.mat[,i]
         
-        #initialize vector for closest dimension closest to original
-        close.vec <- vector("numeric",length=max(uniq))
-        names(close.vec) <- uniq
+        #unique new membership
+        new.uniq <- unique(new.vec)
         
-        for(j in uniq)
+        #converge based on maximum number of dimensions
+        if(max(num.comm) > max(new.vec))
         {
-            #original dimension list names
-            orig.wc.names <- names(orig.wc.list[[paste(j)]])
+            #initialize rand and length vector
+            rand <- vector("numeric", length = max(new.vec))
+            names(rand) <- new.uniq
+            len <- rand
             
-            #match to iteration membership vector and construct comparison vector
-            comp.vec <- num.vec[match(orig.wc.names,names(num.vec))]
-            
-            #original dimension vector
-            con.vec <- num.comm[match(orig.wc.names,names(num.comm))]
-            
-            #compare communities via the Rand method
-            close.vec[uniq[j]] <- igraph::compare(con.vec,comp.vec,method="rand")
-        }
-        
-        #order close.vec by most items
-        ##identify rand with largest number of items
-        close.ord <- close.vec
-        close.clone <- close.vec
-        
-        for(y in 1:length(close.vec))
-        {
-            target.close <- mode(num.comm[which(!is.na(match(num.comm,names(close.clone)[which(close.clone==max(close.clone))])))],TRUE)
-            
-            target.dim <- which(names(close.clone)==target.close)
-            
-            dim <- names(close.clone)[target.dim]
-            
-            close.ord[y] <- dim
-            
-            close.clone <- close.clone[-target.dim]
-        }
-        
-        close.vec <- close.vec[order(close.ord)]
-        
-        if(all(close.vec==1)) #perfect match
-        {
-            #if number of dimensions is less than confirmatory
-            if(max(num.comm)!=max(num.vec))
+            for(j in new.uniq)
             {
-                #create new vector of iteration vector
-                new.vec <- num.vec
+                #target nodes
+                target <- which(new.vec==j)
                 
-                #identify overlapping dimensions
-                target <- intersect(num.comm,new.vec)
-                #number of overlapping dimensions
-                target.len <- length(target)
+                #lengths of target
+                len[paste(j)] <- length(target)
                 
-                #initialize Rand index vector
-                rand.vec <- vector("numeric",length=target.len)
+                #compute rand index
+                rand[paste(j)] <- igraph::compare(new.vec[target],num.comm[target],method="rand")
+            }
+            
+            #order rand by highest rand index and then number of items
+            rand.ord <- rand[order(rand, len, decreasing = TRUE)]
+            
+            #initialize final vector
+            final.vec <- vector("numeric", length = length(num.comm))
+            names(final.vec) <- names(num.comm)
+            
+            #insert new values into final vector
+            for(j in as.numeric(names(rand.ord)))
+            {
+                #identify target
+                new.target <- which(new.vec==j)
                 
-                #initilize count
-                count <- 0
+                #identify mode
+                target.mode <- mode(num.comm[new.target])
                 
-                #compute Rand index for each iteration dimension
-                for(o in 1:target.len)
-                {
-                    #increase count
-                    count <- count + 1
-                    
-                    #find iteration dimensions matching overlapping dimensions
-                    target.val <- which(num.vec==target[o])
-                    
-                    #compute Rand index for overlapping dimensions
-                    rand.vec[count] <- igraph::compare(new.vec[target.val],num.comm[target.val],method="rand")
-                }
+                #insert into final vector
+                final.vec[new.target] <- rep(target.mode)
+            }
+            
+        }else if(max(num.comm) < max(new.vec))
+        {
+            #initialize rand and length vector
+            rand <- vector("numeric", length = max(num.comm))
+            names(rand) <- uniq
+            len <- rand
+            
+            for(j in uniq)
+            {
+                #target nodes
+                target <- which(num.comm==j)
                 
-                #name Rand index vector with iteration dimensions
-                names(rand.vec) <- paste(target)
+                #lengths of target
+                len[paste(j)] <- length(target)
                 
-                #identify Rand index less than 1
-                target.rand <- as.numeric(names(rand.vec)[which(rand.vec!=1)])
+                #compute rand index
+                rand[paste(j)] <- igraph::compare(new.vec[target],num.comm[target],method="rand")
+            }
+            
+            #order rand by highest rand index and then number of items
+            rand.ord <- rand[order(rand, len, decreasing = TRUE)]
+            
+            #initialize final vector
+            final.vec <- vector("numeric", length = length(num.comm))
+            names(final.vec) <- names(num.comm)
+            
+            #insert new values into final vector
+            for(j in as.numeric(names(rand.ord)))
+            {
+                #identify target
+                new.target <- which(new.vec==j)
                 
-                #number of Rand index less than 1
-                rand.len <- length(target.rand)
+                #identify mode
+                target.mode <- mode(num.comm[new.target])
                 
-                #identify confirmatory dimension that most represents the iteration dimension
-                for(p in 1:rand.len)
-                {
-                    #compute mode for confirmatory dimension that matches iteration dimension's elements
-                    mode.val <- mode(num.comm[which(new.vec==target.rand[p])], numeric = TRUE)
-                    
-                    #apply confirmatory dimension to iteration dimension's elements
-                    num.vec[which(new.vec == target.rand[p])] <- mode.val
-                }
+                #insert into final vector
+                final.vec[new.target] <- rep(target.mode)
+            }
+            
+            #identify number of extra dimensions
+            extra.dim <- setdiff(new.vec,final.vec)
+            
+            #initialize extra dimension length vector
+            extra.len <- vector("numeric", length = length(extra.dim))
+            names(extra.len) <- extra.dim
+            
+            #order length of extra dimensions
+            for(j in 1:length(extra.dim))
+            {
+                #length of extra dimensions
+                extra.len[j] <- length(which(new.vec==j))
+            }
+            
+            el.ord <- extra.len[order(extra.len, decreasing = TRUE)]
+            
+            #initialize count
+            count <- 0
+            
+            #insert extra dimensions into final vector
+            for(j in 1:length(el.ord))
+            {
+                #increase count
+                count <- count + 1
                 
-                #if the above fails, then different strategy
-                if(all(num.vec==new.vec))
-                {
-                    #create new vector of iteration vector
-                    new.vec <- num.vec
-                    
-                    #identify dimensions that are different between iteration and confirmatory dimensions
-                    target <- setdiff(new.vec,num.comm)
-                    
-                    #number that are different
-                    target.len <- length(target)
-                    
-                    #for the different dimensions
-                    #identify confirmatory dimension that most represents the iteration dimension
-                    for(o in 1:target.len)
-                    {
-                        #find iteration dimensions matching different dimensions
-                        target.val <- which(new.vec==target[o])
-                        
-                        #compute mode for confirmatory dimension that matches iteration dimension's elements
-                        mode.val <- mode(num.comm[target.val], numeric = TRUE)
-                        
-                        #apply confirmatory dimension to iteration dimension's elements
-                        num.vec[which(new.vec == target[o])] <- mode.val
-                    }
-                }
+                #target extra dimension
+                target.ed <- as.numeric(names(el.ord)[j])
                 
-                let.wc.mat[,i] <- num.vec
-                
-            }else{let.wc.mat[,i] <- num.comm}
+                #insert dimensions into final vector
+                final.vec[which(new.vec==target.ed)] <- (max(num.comm) + count)
+            }
+            
         }else{
             
-            while(length(close.vec)!=0)
+            #initialize rand and length vector
+            rand <- vector("numeric", length = max(num.comm))
+            names(rand) <- uniq
+            len <- rand
+            
+            for(j in uniq)
             {
-                #determine dimension closest to original
-                max.pos <- as.numeric(names(close.vec)[which.max(close.vec)])
+                #target nodes
+                target <- which(num.comm==j)
                 
-                #positons of closest
-                close.pos <- which(num.comm==max.pos)
+                #lengths of target
+                len[paste(j)] <- length(target)
                 
-                #target letter
-                target.let <- mode(let.vec[close.pos])
-                #target vector
-                target.vec <- which(let.vec==target.let)
-                
-                #insert appropriate original EGA community number
-                let.vec[target.vec] <- rep(max.pos,length(target.vec))
-                
-                #remove value from closest dimension vector
-                close.vec <- close.vec[-which(names(close.vec)==max.pos)]
+                #compute rand index
+                rand[paste(j)] <- igraph::compare(new.vec[target],num.comm[target],method="rand")
             }
             
-            #check for remaining dimensions
-            rem.dim <- intersect(let.vec,let.wc.mat[,i])
+            #order rand by highest rand index and then number of items
+            rand.ord <- rand[order(rand, len, decreasing = TRUE)]
             
-            if(max(num.uniq)>max(uniq))
+            #initialize final vector
+            final.vec <- vector("numeric", length = length(num.comm))
+            names(final.vec) <- names(num.comm)
+            
+            #insert new values into final vector
+            for(j in as.numeric(names(rand.ord)))
             {
-                for(u in (max(uniq)+1):max(num.uniq))
-                {
-                    #identify largest remaining dimension
-                    target.rem <- mode(let.vec)
-                    #target remaming values
-                    target.rem.vec <- which(let.vec==target.rem)
-                    
-                    #insert next dimension number
-                    let.vec[target.rem.vec] <- rep(u,length(target.rem.vec))
-                }
-            }else if(any(is.na(suppressWarnings(as.numeric(let.vec)))))
-            {
-                #identify missing numeric value
-                uniq.vals <- as.numeric(unique(let.vec[which(!is.na(suppressWarnings(as.numeric(let.vec))))]))
+                #identify target
+                new.target <- which(new.vec==j)
                 
-                #target value
-                target.val <- setdiff(uniq,uniq.vals)
+                #identify mode
+                target.mode <- mode(num.comm[new.target])
                 
-                #target remaming values
-                target.rem.vec <- which(let.vec==rem.dim)
+                #insert into final vector
+                final.vec[new.target] <- rep(target.mode)
                 
-                #insert missing dimension number
-                let.vec[target.rem.vec] <- rep(target.val,length(target.rem.vec))
             }
-            
-            #check for remaining dimensions
-            rem.dim <- intersect(let.vec,let.wc.mat[,i])
-            
-            if(length(rem.dim)!=0)
-            {
-                target.max <- max(as.numeric(let.vec[suppressWarnings(!is.na(as.numeric(let.vec)))]))
-                
-                for(r in 1:length(rem.dim))
-                {
-                    target.rem <- which(let.vec==rem.dim[r])
-                    
-                    let.vec[target.rem] <- rep(target.max + r, length(target.rem))
-                }
-            }
-            
-            #insert values into letter membership matrix
-            let.wc.mat[,i] <- let.vec
         }
+        
+        #insert final vector into final matrix
+        final.mat[,i] <- final.vec
     }
     
-    
-    #get letter dimension matrix into numbers
-    num.wc.mat <- apply(let.wc.mat,1:2,as.numeric)
-    
     #get frequency tables
-    freq.list <- apply(num.wc.mat,1,table)
+    freq.list <- apply(final.mat,1,table)
+    
+    #change to matrix
+    if(is.list(freq.list))
+    {
+        #initialize new matrix
+        new.mat <- matrix(0, nrow = max(final.mat), ncol = length(freq.list))
+        
+        #name rows and columns
+        row.names(new.mat) <- paste(1:max(final.mat))
+        colnames(new.mat) <- colnames(net)
+        
+        #insert values
+        for(i in 1:ncol(new.mat))
+        {new.mat[names(freq.list[[i]]),i] <- freq.list[[i]]}
+        
+        freq.list <- new.mat
+    }
     
     #initialize item frequency table
-    item.tab <- matrix(0,nrow=nrow(net),ncol=max(num.wc.mat))
+    item.tab <- matrix(0,nrow=nrow(net),ncol=max(final.mat))
     
     #name columns and rows
-    colnames(item.tab) <- paste(seq(1,max(num.wc.mat,1)))
+    colnames(item.tab) <- paste(seq(1,max(final.mat,1)))
     row.names(item.tab) <- colnames(net)
     
     #insert proportion values into item likelihod table
-    for(i in 1:length(freq.list))
+    for(i in 1:ncol(freq.list))
     {
-        prop.int <- freq.list[[i]]/n
+        prop.int <- freq.list[,i]/n
         
         item.tab[i,match(names(prop.int),colnames(item.tab))] <- prop.int
     }
@@ -414,6 +368,8 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
                                   ggtheme = ggpubr::theme_pubr()
     )
     
+    ic.plot <- ic.plot + ggplot2::ylim(c(0,1))
+    
     if(plot.item.rep)
     {result$plot.itemStability <- ic.plot}
     
@@ -424,7 +380,7 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
     itemLik <- as.data.frame(item.tab[match(names(itemCon),row.names(item.tab)),])
     
     #message for additional item likelihoods
-    if(ncol(itemLik)<max(num.wc.mat))
+    if(ncol(itemLik)<max(final.mat))
     {message("Lower the item.freq argument to view item frequencies for additional dimensions")}
     
     ##########################################################
@@ -441,19 +397,19 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
     
     item.id.samps <- list()
     
-    max.wc <- max(num.wc.mat)
+    max.wc <- max(final.mat)
     
     for(m in 1:n)
     {
-        item.id.samps[[m]] <- net.loads(bootega.obj$bootGraphs[[m]], num.wc.mat[,m])$std
+        item.id.samps[[m]] <- net.loads(bootega.obj$bootGraphs[[m]], final.mat[,m])$std
         
-        dims <- length(unique(num.wc.mat[,m]))
+        dims <- length(unique(final.mat[,m]))
         
         if(dims!=max.wc)
         {
             diff <- max.wc - ncol(item.id.samps[[m]])
             
-            diff.wc <- setdiff(seq(1,max.wc,1),unique(num.wc.mat[,m]))
+            diff.wc <- setdiff(seq(1,max.wc,1),unique(final.mat[,m]))
             
             col.names <- c(colnames(item.id.samps[[m]]),paste(diff.wc))
             
@@ -468,7 +424,7 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
     
     #Unstandardized
     unstd.item.id <- round(apply(simplify2array(item.id.samps),1:2, mean, na.rm=TRUE),3)
-    colnames(unstd.item.id) <- paste(seq(1,max(num.wc.mat),1))
+    colnames(unstd.item.id) <- paste(seq(1,max(final.mat),1))
     
     if(ncol(unstd.item.id)!=col)
     {
@@ -498,7 +454,7 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
     result$item.replication <- itemCon
     result$item.dim.rep <- itemLik
     result$item.loadings <- itemLoads
-    result$wc <- num.wc.mat
+    result$wc <- final.mat
     
     return(result)
 }
