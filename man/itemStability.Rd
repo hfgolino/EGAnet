@@ -19,7 +19,7 @@ Removes noise from table to allow for easier interpretation.
 Defaults to \code{.10}}
 
 \item{plot.item.rep}{Should the plot be produced for \code{item.replication}?
-If \code{TRUE}, then a plot for the \code{item.replication} output will be produced.#' 
+If \code{TRUE}, then a plot for the \code{item.replication} output will be produced.#'
 Defaults to \code{TRUE}}
 }
 \value{
@@ -58,7 +58,7 @@ wmt <- wmt2[,7:24]
 ega.wmt <- EGA(data = wmt, model = "glasso")
 
 # Estimate dimension stability
-boot.wmt <- bootEGA(data = wmt2, n = 100, typicalStructure = TRUE,
+boot.wmt <- bootEGA(data = wmt, n = 100, typicalStructure = TRUE,
 plot.typicalStructure = TRUE, model = "glasso",
 type = "parametric", ncores = 4)
 
