@@ -1,3 +1,8 @@
+Changes in version 0.8.0
+
+o 'bootEGA' now computes time until bootstrap is finished
+
+
 Changes in version 0.7.0
 
 o fixed 'EGA' bug in 'bootEGA' function; updated 'bootEGA' documentation; added progress messages
