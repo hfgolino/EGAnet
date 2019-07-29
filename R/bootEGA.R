@@ -68,7 +68,7 @@
 #'
 #' If you're unsure how many cores your computer has,
 #' then use the following code: \code{parallel::detectCores()}
-#'
+#' 
 #' @param ... Additional arguments to be passed to \code{\link{EBICglasso.qgraph}}
 #' or \code{\link[NetworkToolbox]{TMFG}}
 #'
@@ -139,7 +139,6 @@
 #' @seealso \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA
 #' and \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 #'
-#' @importFrom foreach %dopar%
 #' @importFrom stats cov median sd qt
 #'
 #' @export
@@ -148,70 +147,81 @@
 bootEGA <- function(data, n,
                     model = c("glasso", "TMFG"), type = c("parametric", "resampling"),
                     typicalStructure = TRUE, plot.typicalStructure = TRUE, ncores = 4, ...) {
-
+    
     #set inverse covariance matrix for parametric approach
     if(type=="parametric")  # Use a parametric approach:
     {
         if(model=="glasso")
         {
-            g <- -EBICglasso.qgraph(qgraph::cor_auto(data), n = nrow(data), lambda.min.ratio = 0.1, returnAllResults = FALSE, ...)
+            g <- -EBICglasso.qgraph(data, lambda.min.ratio = 0.1, returnAllResults = FALSE, ...)
             diag(g) <- 1
         }else if(model=="TMFG")
         {
-            g <- -NetworkToolbox::LoGo(data, normal = TRUE, partial=TRUE, na.data = "pairwise", ...)
+            g <- -NetworkToolbox::LoGo(data, normal = TRUE, partial=TRUE, ...)
             diag(g) <- 1
         }
     }
-
+    
+    #initialize count
+    count <- 0
+    
+    #initialize data list
+    datalist <- list()
+    
+    #let user know data generation has started
+    message("\nGenerating data...", appendLF = FALSE)
+    
+    repeat{
+        
+        #increase count
+        count <- count + 1
+        
+        #generate data
+        if(type == "parametric")
+        {datalist[[count]] <- mvtnorm::rmvnorm(nrow(data), sigma = corpcor::pseudoinverse(g))
+        }else if(type == "resampling")
+        {datalist[[count]] <- data[sample(1:nrow(data), replace=TRUE),]}
+        
+        #break out of repeat
+        if(count == n)
+        {break}
+    }
+    
+    #let user know data generation has ended
+    message("done", appendLF = TRUE)
+    
     #Parallel processing
     cl <- parallel::makeCluster(ncores)
-    doParallel::registerDoParallel(cl)
-
-    #progress bar
-    #pb <- txtProgressBar(max=n, style = 3)
-    #progress <- function(num) setTxtProgressBar(pb, num)
-    #opts <- list(progress = progress)
-
-    #initialize bootstrap list
-    boots <- list()
     
-    #let user know bootstrap has started
-    message("\nBootstrapping...", appendLF = FALSE)
-
-    #nets
-    boots <-foreach::foreach(i=1:n,
-                             .packages = c("NetworkToolbox","psych","qgraph","EGAnet","mvtnorm","corpcor")
-    )%dopar%
-        #.options.snow = opts)
+    #Export variables
+    parallel::clusterExport(cl = cl,
+                            varlist = c("datalist", ...),
+                            envir=environment())
+    
+    #Compute networks
+    if(model == "glasso")
     {
-            if(type=="parametric")  # Use a parametric approach:
-            {
-                bootData <- mvtnorm::rmvnorm(nrow(data), sigma = corpcor::pseudoinverse(g))
-
-                if(model=="glasso")
-                {net <- EBICglasso.qgraph(cov(bootData), n = nrow(data), lambda.min.ratio = 0.1, returnAllResults = FALSE, ...)
-                }else if(model=="TMFG")
-                {net <- NetworkToolbox::TMFG(bootData, normal = TRUE, na.data = "pairwise", ...)$A}
-
-            }else if(type=="resampling") # Random subsample with replace
-            {
-                mat <- data[sample(1:nrow(data), replace=TRUE),]
-
-                if(model=="glasso")
-                {net <- EBICglasso.qgraph(qgraph::cor_auto(mat), n=nrow(data), lambda.min.ratio = 0.1, returnAllResults = FALSE, ...)
-                }else if(model=="TMFG")
-                {net <- NetworkToolbox::TMFG(mat, normal = TRUE, na.data = "pairwise", ...)$A}
-            }
+        boots <- pbapply::pblapply(X = datalist, cl = cl,
+                                   FUN = EBICglasso.qgraph,
+                                   lambda.min.ratio = 0.1,
+                                   returnAllResults = FALSE,
+                                   ...)
+    }else if(model == "TMFG")
+    {
+        boots <- pbapply::pblapply(X = datalist, cl = cl,
+                                   FUN = NetworkToolbox::TMFG,
+                                   normal = TRUE,
+                                   ...)
+        
+        for(i in 1:n)
+        {boots[[i]] <- boots[[i]]$A}
     }
-
+    
     parallel::stopCluster(cl)
-  
-   #let user know bootstrap has ended
-    message("done", appendLF = TRUE)
     
     #let user know results are being computed
     message("Computing results...", appendLF = FALSE)
-
+    
     bootGraphs <- vector("list", n)
     for (i in 1:n) {
         bootGraphs[[i]] <- boots[[i]]
@@ -230,9 +240,9 @@ bootEGA <- function(data, n,
     for (m in 1:n) {
         boot.ndim[m, 2] <- max(boot.wc[[m]]$membership)
     }
-
+    
     colnames(boot.ndim) <- c("Boot.Number", "N.Dim")
-
+    
     boot.ndim[, 1] <- seq_len(n)
     if (typicalStructure == TRUE) {
         if(model=="glasso")
@@ -256,23 +266,23 @@ bootEGA <- function(data, n,
     summary.table <- data.frame(n.Boots = n, median.dim = Median,
                                 SD.dim = sd.boot, SE.dim = se.boot, CI.dim = ci, Lower = Median -
                                     ci, Upper = Median + ci)
-
+    
     #compute frequency
     dim.range <- range(boot.ndim[,2])
     lik <- matrix(0, nrow = diff(dim.range)+1, ncol = 2)
     colnames(lik) <- c("# of Factors", "Frequency")
     count <- 0
-
+    
     for(i in seq(from=min(dim.range),to=max(dim.range),by=1))
     {
         count <- count + 1
         lik[count,1] <- i
         lik[count,2] <- length(which(boot.ndim[,2]==i))/n
     }
-  
-   #let user know results have been computed
+    
+    #let user know results have been computed
     message("done", appendLF = TRUE)
-
+    
     result <- list()
     result$n <- n
     result$boot.ndim <- boot.ndim
@@ -281,16 +291,17 @@ bootEGA <- function(data, n,
     result$summary.table <- summary.table
     result$frequency <- lik
     result$EGA <- suppressMessages(suppressWarnings(EGA(data = data, model = model, plot.EGA = FALSE)))
-
+    
     # Typical structure
     if (typicalStructure == TRUE) {
-    typicalGraph <- list()
-    typicalGraph$graph <- typical.Structure
-    typicalGraph$typical.dim.variables <- dim.variables[order(dim.variables[,2]), ]
-    typicalGraph$wc <- typical.wc$membership
-    result$typicalGraph <- typicalGraph
+        typicalGraph <- list()
+        typicalGraph$graph <- typical.Structure
+        typicalGraph$typical.dim.variables <- dim.variables[order(dim.variables[,2]), ]
+        typicalGraph$wc <- typical.wc$membership
+        result$typicalGraph <- typicalGraph
     }
-
+    
     class(result) <- "bootEGA"
     return(result)
 }
+#----
