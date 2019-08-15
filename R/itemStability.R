@@ -98,7 +98,7 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
                 uniq.val <- NA
                 break
             }
-
+            
             #find mode
             uniq.val <- uniqv[which.max(tabulate(match(v, uniqv)))]
         }
@@ -271,14 +271,14 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
         }else{
             
             #initialize rand and length vector
-            rand <- vector("numeric", length = max(num.comm))
-            names(rand) <- uniq
+            rand <- vector("numeric", length = max(new.vec))
+            names(rand) <- new.uniq
             len <- rand
             
-            for(j in uniq)
+            for(j in new.uniq)
             {
                 #target nodes
-                target <- which(num.comm==j)
+                target <- which(new.vec==j)
                 
                 #lengths of target
                 len[paste(j)] <- length(target)
@@ -305,7 +305,6 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
                 
                 #insert into final vector
                 final.vec[new.target] <- rep(target.mode)
-                
             }
         }
         
@@ -320,10 +319,10 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
     if(is.list(freq.list))
     {
         #initialize new matrix
-        new.mat <- matrix(0, nrow = max(final.mat), ncol = length(freq.list))
+        new.mat <- matrix(0, nrow = max(final.mat,na.rm=TRUE), ncol = length(freq.list))
         
         #name rows and columns
-        row.names(new.mat) <- paste(1:max(final.mat))
+        row.names(new.mat) <- paste(1:max(final.mat,na.rm=TRUE))
         colnames(new.mat) <- colnames(net)
         
         #insert values
@@ -334,10 +333,10 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
     }
     
     #initialize item frequency table
-    item.tab <- matrix(0,nrow=nrow(net),ncol=max(final.mat))
+    item.tab <- matrix(0,nrow=nrow(net),ncol=max(final.mat,na.rm=TRUE))
     
     #name columns and rows
-    colnames(item.tab) <- paste(seq(1,max(final.mat,1)))
+    colnames(item.tab) <- paste(seq(1,max(final.mat,na.rm=TRUE),1))
     row.names(item.tab) <- colnames(net)
     
     #insert proportion values into item likelihod table
@@ -405,7 +404,7 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
     itemLik <- as.data.frame(item.tab[match(names(itemCon),row.names(item.tab)),])
     
     #message for additional item likelihoods
-    if(ncol(itemLik)<max(final.mat))
+    if(ncol(itemLik)<max(final.mat,na.rm=TRUE))
     {message("Lower the item.freq argument to view item frequencies for additional dimensions")}
     
     ##########################################################
@@ -422,7 +421,7 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
     
     item.id.samps <- list()
     
-    max.wc <- max(final.mat)
+    max.wc <- max(final.mat, na.rm = TRUE)
     
     for(m in 1:n)
     {
@@ -449,7 +448,7 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
     
     #Unstandardized
     unstd.item.id <- round(apply(simplify2array(item.id.samps),1:2, mean, na.rm=TRUE),3)
-    colnames(unstd.item.id) <- paste(seq(1,max(final.mat),1))
+    colnames(unstd.item.id) <- paste(seq(1,max(final.mat, na.rm = TRUE),1))
     
     if(ncol(unstd.item.id)!=col)
     {
