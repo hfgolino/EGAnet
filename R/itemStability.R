@@ -431,6 +431,9 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
         
         if(dims!=max.wc)
         {
+            if(any(colnames(item.id.samps[[m]])=="NA"))
+            {item.id.samps[[m]] <- item.id.samps[[m]][,-which(colnames(item.id.samps[[m]])=="NA")]}
+            
             diff <- max.wc - ncol(item.id.samps[[m]])
             
             diff.wc <- setdiff(seq(1,max.wc,1),unique(final.mat[,m]))
@@ -440,7 +443,7 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
             for(i in 1:diff)
             {item.id.samps[[m]] <- cbind(item.id.samps[[m]],rep(NA,nrow(item.id.samps[[m]])))}
             
-            colnames(item.id.samps[[m]]) <- col.names
+            colnames(item.id.samps[[m]]) <- na.omit(col.names)
             
             item.id.samps[[m]] <- item.id.samps[[m]][,order(as.numeric(colnames(item.id.samps[[m]])))]
         }
