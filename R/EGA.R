@@ -292,7 +292,7 @@ EGA <- function (data, model = c("glasso", "TMFG"), plot.EGA = TRUE, n = NULL,
                                  vsize = 6, groups = as.factor(a$wc), label.prop = 1, legend = TRUE)
     }
   }
-  a$EGA.type <- ifelse(n.dim <= 2, "Unidimensional EGA", "Traditional EGA")
+  a$EGA.type <- ifelse(a$n.dim <= 2, "Unidimensional EGA", "Traditional EGA")
   class(a) <- "EGA"
   return(a)
 }
