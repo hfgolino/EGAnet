@@ -283,7 +283,7 @@ EGA <- function (data, model = c("glasso", "TMFG"), plot.EGA = TRUE, n = NULL,
     dim.variables <- dim.variables[order(dim.variables[, 2]),                                ]
     a$dim.variables <- dim.variables
     if (plot.EGA == TRUE) {
-        if(n.dim.sim <= 2){
+        if(a$n.dim <= 2){
             plot.ega <- qgraph::qgraph(a$network, layout = "spring",
                                        vsize = 6, groups = as.factor(a$wc), label.prop = 1, legend = FALSE)
         }else{

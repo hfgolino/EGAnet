@@ -8,7 +8,7 @@
 #' (EBIC) described by Foygel & Drton (2010).
 #'
 #' @param data Data matrix
-#' 
+#'
 #' @param n Number of participants
 #'
 #' @param gamma EBIC tuning parameter. 0.5 is generally a good choice.
@@ -86,7 +86,7 @@
 #'
 #' # Compute graph with tuning = 0.5 (EBIC)
 #' EBICgraph <- EBICglasso.qgraph(CorMat, nrow(wmt2), 0.5)
-#' 
+#'
 #' }
 #'
 #' @export
@@ -105,13 +105,13 @@ EBICglasso.qgraph <- function(
     refit = FALSE, # If TRUE, network structure is taken and non-penalized version is computed.
     ... # glasso arguments
 ) {
-    
+
     # Codes originally implemented by Sacha Epskamp in his qgraph package version 1.4.4.
     # Selects optimal lamba based on EBIC for given covariance matrix.
     # EBIC is computed as in Foygel, R., & Drton, M. (2010, November). Extended Bayesian Information Criteria for Gaussian Graphical Models. In NIPS (pp. 604-612). Chicago
-    
+
     # Simply computes the Gaussian log likelihood given sample covariance and estimate of precision:
-    
+
     # Original:
     # logGaus <- function(S,K,n)
     # {
@@ -119,7 +119,7 @@ EBICglasso.qgraph <- function(
     #   tr = function(A) sum(diag(A))
     #   n/2 * (log(det(K)) - tr(SK))
     # }
-    
+
     ## According to huge???
     logGaus <- function(S,K,n)
     {
@@ -127,7 +127,7 @@ EBICglasso.qgraph <- function(
         tr = function(A) sum(diag(A))
         return(n/2 * (log(det(K)) - tr(KS))  )
     }
-    
+
     # Computes the EBIC:
     EBIC <- function(S,K,n,gamma = 0.5,E,countDiagonal=FALSE)
     {
@@ -137,11 +137,11 @@ EBICglasso.qgraph <- function(
             E <- sum(K[lower.tri(K,diag=countDiagonal)] != 0)
         }
         p <- nrow(K)
-        
+
         # return EBIC:
         -2 * L + E * log(n) + 4 * E * gamma * log(p)
     }
-    
+
     # Computes partial correlation matrix given precision matrix:
     wi2net <- function(x)
     {
@@ -150,24 +150,26 @@ EBICglasso.qgraph <- function(
         x <- Matrix::forceSymmetric(x)
         return(x)
     }
-    
+
     if(is.null(n))
     {
         if(nrow(data)!=ncol(data))
         {n <- nrow(data)
         }else{stop("Number of participants 'n' need to be specified")}
     }
-    
-    # Compute correlations matrix
-    if(nrow(data)!=ncol(data))
-    {S <- qgraph::cor_auto(data)
-    }else{S <- data}
-    
+
+    # # Compute correlations matrix
+    # if(nrow(data)!=ncol(data))
+    # {S <- qgraph::cor_auto(data)
+    # }else{
+    S <- data
+    #}
+
     # Compute lambda sequence (code taken from huge package):
     lambda.max = max(max(S - diag(nrow(S))), -min(S - diag(nrow(S))))
     lambda.min = lambda.min.ratio*lambda.max
     lambda = exp(seq(log(lambda.min), log(lambda.max), length = nlambda))
-    
+
     # Run glasso path:
     if (missing(penalizeMatrix)){
         glas_path <- glasso::glassopath(S, lambda, trace = 0, penalize.diagonal=penalize.diagonal, ...)
@@ -177,45 +179,45 @@ EBICglasso.qgraph <- function(
             wi = array(0, c(ncol(S), ncol(S), length(lambda))),
             rholist = lambda
         )
-        
+
         for (i in 1:nlambda){
             res <- glasso::glasso(S, penalizeMatrix * lambda[i], trace = 0, penalize.diagonal=penalize.diagonal, ...)
             glas_path$w[,,i] <- res$w
             glas_path$wi[,,i] <- res$wi
         }
     }
-    
-    
+
+
     # Compute EBICs:
     #     EBICs <- apply(glas_path$wi,3,function(C){
     #       EBIC(S, C, n, gamma)
     #     })
-    
+
     lik <- sapply(seq_along(lambda),function(i){
         logGaus(S, glas_path$wi[,,i], n)
     })
-    
+
     EBICs <- sapply(seq_along(lambda),function(i){
         EBIC(S, glas_path$wi[,,i], n, gamma, countDiagonal=countDiagonal)
     })
-    
+
     # Smallest EBIC:
     opt <- which.min(EBICs)
-    
+
     # Check if rho is smallest:
     #if (opt == 1){
     #  warning("Network with lowest lambda selected as best network. Try setting 'lambda.min.ratio' lower.")
     #}
-    
+
     # Return network:
     net <- as.matrix(Matrix::forceSymmetric(wi2net(glas_path$wi[,,opt])))
     colnames(net) <- rownames(net) <- colnames(S)
-    
+
     # Check empty network:
     if (all(net == 0)){
         message("An empty network was selected to be the best fitting network. Possibly set 'lambda.min.ratio' higher to search more sparse networks. You can also change the 'gamma' parameter to improve sensitivity (at the cost of specificity).")
     }
-    
+
     # Refit network:
     # Refit:
     if (refit){
@@ -227,7 +229,7 @@ EBICglasso.qgraph <- function(
     } else {
         optwi <- glas_path$wi[,,opt]
     }
-    
+
     # Return
     if (returnAllResults){
         return(list(
