@@ -148,12 +148,15 @@ bootEGA <- function(data, n,
                     model = c("glasso", "TMFG"), type = c("parametric", "resampling"),
                     typicalStructure = TRUE, plot.typicalStructure = TRUE, ncores = 4, ...) {
     
+    #number of cases
+    cases <- nrow(data)
+    
     #set inverse covariance matrix for parametric approach
     if(type=="parametric")  # Use a parametric approach:
     {
         if(model=="glasso")
         {
-            g <- -EBICglasso.qgraph(data, lambda.min.ratio = 0.1, returnAllResults = FALSE, ...)
+            g <- -EBICglasso.qgraph(qgraph::cor_auto(data), n = cases, lambda.min.ratio = 0.1, returnAllResults = FALSE, ...)
             diag(g) <- 1
         }else if(model=="TMFG")
         {
@@ -162,11 +165,11 @@ bootEGA <- function(data, n,
         }
     }
     
-    #initialize count
-    count <- 0
-    
     #initialize data list
     datalist <- list()
+    
+    #initialize count
+    count <- 0
     
     #let user know data generation has started
     message("\nGenerating data...", appendLF = FALSE)
@@ -178,9 +181,9 @@ bootEGA <- function(data, n,
         
         #generate data
         if(type == "parametric")
-        {datalist[[count]] <- mvtnorm::rmvnorm(nrow(data), sigma = corpcor::pseudoinverse(g))
+        {datalist[[count]] <- mvtnorm::rmvnorm(cases, sigma = corpcor::pseudoinverse(g))
         }else if(type == "resampling")
-        {datalist[[count]] <- data[sample(1:nrow(data), replace=TRUE),]}
+        {datalist[[count]] <- data[sample(1:cases, replace=TRUE),]}
         
         #break out of repeat
         if(count == n)
@@ -190,25 +193,39 @@ bootEGA <- function(data, n,
     #let user know data generation has ended
     message("done", appendLF = TRUE)
     
+    #initialize correlation matrix list
+    corlist <- list()
+    
+    #let user know data generation has started
+    message("\nComputing correlation matrices...\n", appendLF = FALSE)
+    
     #Parallel processing
     cl <- parallel::makeCluster(ncores)
     
     #Export variables
     parallel::clusterExport(cl = cl,
-                            varlist = c("datalist", ...),
+                            varlist = c("datalist", "corlist", "cases", ...),
                             envir=environment())
     
-    #Compute networks
+    #Compute correlation matrices
+    corlist <- pbapply::pblapply(X = datalist, cl = cl,
+                                 FUN = qgraph::cor_auto)
+    
+    #let user know data generation has started
+    message("Estimating networks...\n", appendLF = FALSE)
+    
+    #Estimate networks
     if(model == "glasso")
     {
-        boots <- pbapply::pblapply(X = datalist, cl = cl,
+        boots <- pbapply::pblapply(X = corlist, cl = cl,
                                    FUN = EBICglasso.qgraph,
+                                   n = cases,
                                    lambda.min.ratio = 0.1,
                                    returnAllResults = FALSE,
                                    ...)
     }else if(model == "TMFG")
     {
-        boots <- pbapply::pblapply(X = datalist, cl = cl,
+        boots <- pbapply::pblapply(X = corlist, cl = cl,
                                    FUN = NetworkToolbox::TMFG,
                                    normal = TRUE,
                                    ...)
