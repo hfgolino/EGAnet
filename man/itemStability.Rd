@@ -39,6 +39,9 @@ largest remaining components after the dimensions used to \code{orig.wc}}
 \item{wc}{A matrix containing the community membership values for
 each bootstrapped sample. The values correspond to the values input
 for the \code{orig.wc} argument}
+
+\item{plot.itemStability}{A plot of the number of times each item
+replicates in its original community membership (\code{orig.wc})}
 }
 \description{
 Based on the \code{\link[EGAnet]{bootEGA}} results, this function

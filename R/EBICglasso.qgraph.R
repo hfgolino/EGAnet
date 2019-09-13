@@ -158,12 +158,12 @@ EBICglasso.qgraph <- function(
         }else{stop("Number of participants 'n' need to be specified")}
     }
 
-    # # Compute correlations matrix
-    # if(nrow(data)!=ncol(data))
-    # {S <- qgraph::cor_auto(data)
-    # }else{
-    S <- data
-    #}
+    # Compute correlations matrix
+    if(nrow(data)!=ncol(data))
+    {S <- qgraph::cor_auto(data)
+    }else{
+      S <- data
+    }
 
     # Compute lambda sequence (code taken from huge package):
     lambda.max = max(max(S - diag(nrow(S))), -min(S - diag(nrow(S))))

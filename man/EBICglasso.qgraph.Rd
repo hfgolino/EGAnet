@@ -4,15 +4,15 @@
 \alias{EBICglasso.qgraph}
 \title{\code{\link[qgraph]{EBICglasso}} from \code{\link{qgraph}} 1.4.4}
 \usage{
-EBICglasso.qgraph(S, n, gamma = 0.5, penalize.diagonal = FALSE,
-  nlambda = 100, lambda.min.ratio = 0.01, returnAllResults = FALSE,
-  checkPD = TRUE, penalizeMatrix, countDiagonal = FALSE,
+EBICglasso.qgraph(data, n = NULL, gamma = 0.5,
+  penalize.diagonal = FALSE, nlambda = 100, lambda.min.ratio = 0.01,
+  returnAllResults = FALSE, penalizeMatrix, countDiagonal = FALSE,
   refit = FALSE, ...)
 }
 \arguments{
-\item{S}{A covariance or correlation matrix}
+\item{data}{Data matrix}
 
-\item{n}{Sample size used in computing \code{S}}
+\item{n}{Number of participants}
 
 \item{gamma}{EBIC tuning parameter. 0.5 is generally a good choice.
 Setting to zero will cause regular BIC to be used.}
@@ -25,11 +25,6 @@ Setting to zero will cause regular BIC to be used.}
 
 \item{returnAllResults}{If \code{TRUE} this function does not
 return a network but the results of the entire glasso path.}
-
-\item{checkPD}{If \code{TRUE}, the function will check if \code{S} is positive definite
-and return an error if not. It is not advised to use a
-non-positive definite matrix as input as (a) that can not
-be a covariance matrix and (b) glasso can hang if the input is not positive definite.}
 
 \item{penalizeMatrix}{Optional logical matrix to indicate which elements are penalized}
 
