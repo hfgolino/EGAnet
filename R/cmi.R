@@ -5,7 +5,7 @@
 #'
 #' @param data A dataframe with the variables to be used in the analysis or a correlation matrix.
 #'
-#' @param plot.network Logical.
+#' @param network Logical.
 #' If TRUE, returns a plot of the conditional mutual information network.
 #' Defaults to FALSE.
 #'
@@ -18,14 +18,15 @@
 #' @author Hudson F. Golino <hfg9s at virginia.edu>#'
 #'
 #' @examples
-#'
+#' wmt <- wmt2[,7:24]
+#' 
 #' \donttest{
 #' #estimate EGA
-#' ega.wmt <- EGA(data = wmt2[,7:24], model = "glasso", plot.EGA = TRUE)
+#' ega.wmt <- EGA(data = wmt, model = "glasso", plot.EGA = TRUE)
 #'
 #'
 #' #estimate EGAtmfg
-#' ega.wmt <- EGA(data = wmt2[,7:24], model = "TMFG", plot.EGA = TRUE)
+#' ega.wmt <- EGA(data = wmt, model = "TMFG", plot.EGA = TRUE)
 #'
 #' #summary statistics
 #' summary(ega.wmt)
@@ -48,14 +49,14 @@
 #' @references
 #' Zhao, J., Zhou, Y., Zhang, X., & Chen, L. (2016).
 #' Part mutual information for quantifying direct associations in networks.
-#' \emph{Proceedings of the National Academy of Sciences}, \emph{113(18)}, 5130-5135.
+#' \emph{Proceedings of the National Academy of Sciences}, \emph{113}, 5130-5135.
+#' doi: \href{https://doi.org/10.1073/pnas.1522586113}{10.1073/pnas.1522586113}
 #'
 #' @importFrom Matrix nearPD
-#' @importFrom stats na.omit
+#' @importFrom stats na.omit cov2cor
 #' @importFrom qgraph cor_auto
 #'
 #' @export
-#'
 #'
 cmi <- function(data, network = FALSE, EGA = TRUE, steps = 4){
   if(nrow(data)!=ncol(data)){
