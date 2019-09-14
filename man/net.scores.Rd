@@ -59,13 +59,12 @@ For more details, type \code{vignette("Network_Scores")}
 wmt <- wmt2[,7:24]
 
 \dontrun{
-# Estimate EGA
-ega.wmt <- EGA(wmt)
-
+ # Estimate EGA
+ ega.wmt <- EGA(wmt)
 }
-
-# Network scores
-net.scores(data = wmt, A = ega.wmt)
+ 
+ # Network scores
+ net.scores(data = wmt, A = ega.wmt)
 
 }
 \references{
@@ -80,5 +79,5 @@ A psychometric network perspective on the measurement and assessment of personal
 doi: \href{https://doi.org/10.31234/osf.io/ktejp}{10.31234/osf.io/ktejp}
 }
 \author{
-Alexander Christensen <alexpaulchristensen@gmail.com>
+Alexander P. Christensen <alexpaulchristensen@gmail.com> and Hudson F. Golino <hfg9s at virginia.edu>
 }
