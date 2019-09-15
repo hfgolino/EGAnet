@@ -40,7 +40,7 @@ Returns a list containing:
 \item{steps}{The number of steps used in the best fitting model from
 the \code{\link[igraph]{cluster_walktrap}} algorithm}
 
-\item{EntropyFit}{The \code{\link[EGAnet]{entropyFit}} Index for the unique solutions given the range of steps
+\item{EntropyFit}{The \code{\link[EGAnet]{tefi}} Index for the unique solutions given the range of steps
 (vector names represent the number of steps)}
 
 \item{Lowest.EntropyFit}{The lowest value for the \code{\link[EGAnet]{entropyFit}} Index}

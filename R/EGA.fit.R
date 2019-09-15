@@ -37,7 +37,7 @@
 #' \item{steps}{The number of steps used in the best fitting model from
 #' the \code{\link[igraph]{cluster_walktrap}} algorithm}
 #'
-#' \item{EntropyFit}{The \code{\link[EGAnet]{entropyFit}} Index for the unique solutions given the range of steps
+#' \item{EntropyFit}{The \code{\link[EGAnet]{tefi}} Index for the unique solutions given the range of steps
 #' (vector names represent the number of steps)}
 #'
 #' \item{Lowest.EntropyFit}{The lowest value for the \code{\link[EGAnet]{entropyFit}} Index}
@@ -116,7 +116,7 @@ EGA.fit <- function (data, model = c("glasso","TMFG"),
 
     uniq <- unique(as.matrix(uniq.dim))
 
-    step <- steps[which(uniq!=1)]
+    step <- as.numeric(row.names(uniq)[which(uniq!=1)])
 
     len <- length(step)
 
@@ -133,11 +133,11 @@ EGA.fit <- function (data, model = c("glasso","TMFG"),
         ent.vec <- vector("numeric",length=len)
 
         for(i in 1:len)
-        {ent.vec[i] <- entropyFit(data, mods[[as.character(step[i])]]$wc)$Entropy.Fit}
+        {ent.vec[i] <- tefi(mods[[as.character(step[i])]]$correlation, mods[[as.character(step[i])]]$wc)$VN.Entropy.Fit}
 
         names(ent.vec) <- step
 
-        best.fit$EGA <- mods[[as.character(step[which(ent.vec==min(ent.vec))])]]
+        best.fit$EGA <- mods[as.character(step[which(ent.vec==min(ent.vec))])]
         best.fit$steps <- step[which(ent.vec==min(ent.vec))]
         best.fit$EntropyFit <- ent.vec
         best.fit$Lowest.EntropyFit <- ent.vec[which(ent.vec==min(ent.vec))]

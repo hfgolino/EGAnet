@@ -10,7 +10,7 @@
 #'
 #' @return Returns a list containing:
 #'
-#' \item{Entropy.Fit}{The Entropy Fit Index using Von Neumman's entropy}
+#' \item{VN.Entropy.Fit}{The Entropy Fit Index using Von Neumman's entropy}
 #'
 #' \item{Total.Correlation}{The total correlation of the dataset}
 #'

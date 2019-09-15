@@ -15,7 +15,7 @@ Vector indicating the names of the variables (items) to be used in the analysis.
 
 \item{lat}{Numeric integer.
 Number of latent factors to be estimated.
-Only one substantitve latent factor is recommended in the current version of the function.}
+Only one substantive latent factor is recommended in the current version of the function.}
 
 \item{negative.items}{Numeric vector
 A numeric vector indicating the column of the negative items.}
@@ -45,6 +45,20 @@ Returns a list containing:
 \description{
 \code{residualEGA} Estimates the number of dimensions after controlling for wording effects.
 EGA is applied in the residual of a random intercept item factor model (RIIFA) with one method factor and one substantive factor.
+}
+\examples{
+
+data <- optimism
+
+\dontrun{
+# resEGA example
+opt.res <- residualEGA(data = data, manifests = colnames(optimism),
+lat = 1, negative.items = c(3,7,9), plot = TRUE)
+
+# Fit:
+opt.res$Fit
+}
+
 }
 \seealso{
 \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA
