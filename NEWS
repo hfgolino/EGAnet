@@ -2,6 +2,11 @@ Changes in version 0.8.0
 
 o 'bootEGA' now computes time until bootstrap is finished
 
+o Function 'cmi' added to compute conditional mutual information
+
+o 'EGA' function had a bug when the input was a matrix. Bug fixed.
+
+
 
 Changes in version 0.7.0
 
