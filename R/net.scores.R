@@ -29,6 +29,26 @@
 #' Not necessary if an \code{\link[EGAnet]{EGA}} object
 #' is input for argument \code{A}
 #' 
+#' @param global Boolean.
+#' Should general network loadings be computed in scores?
+#' Defaults to \code{TRUE}.
+#' If there is more than one dimension and there is theoretically
+#' one global dimension, then general loadings of the dimensions
+#' onto the global dimension can be included in the weighted
+#' scores. For the type of weights (e.g., sum score or latent),
+#' see the \code{type} argument
+#' 
+#' @param type Character.
+#' Should network scores parallel sum scores or latent variable scores?
+#' Defaults to \code{"latent"}.
+#' Argument \code{type} sets the community centrality measure that is used
+#' when computing the network loadings for multiple factors.
+#' Simulations have shown that \code{\link[NetworkToolbox]{comm.eigen}} computes
+#' weights that are closer to sum scores while
+#' \code{\link[NetworkToolbox]{comm.close}} computes
+#' weights that are closer to latent variable scores.
+#' See Christensen, Golino, and Silvia (2019) for more details
+#' 
 #' @param ... Additional arguments for \code{\link[igraph]{cluster_walktrap}}
 #' and \code{\link[NetworkToolbox]{louvain}} community detection algorithms
 #' 
@@ -75,109 +95,127 @@
 #' @export
 #' 
 #Network Scores
-net.scores <- function (data, A, wc, ...)
+net.scores <- function (data, A, wc, global = TRUE,
+                        type = c("sumscore", "latent"), ...)
 {
-    ####Missing arguments checks####
-    if(missing(data))
-    {stop("Argument 'data' is required for analysis")}
+  ####Missing arguments checks####
+  if(missing(data))
+  {stop("Argument 'data' is required for analysis")}
+  
+  # Detect if input is an 'EGA' object
+  if(class(A) == "EGA")
+  {
+    #Compute network loadings
+    P <- net.loads(A)$std
     
-    # Detect if input is an 'EGA' object
-    if(class(A) == "EGA")
+    # Grab communities
+    wc <- A$wc
+    
+    # Replace 'A' with 'EGA' network
+    A <- A$network
+    
+  }else if(missing(A))
+  {stop("Adjacency matrix is required for analysis")
+  }else if(missing(wc)) #Default to single  variable
+  {wc <- rep(1,ncol(data))}
+  
+  if(missing(type))
+  {type <- "latent"
+  }else{type <- match.arg(type)}
+  ####Missing arguments checks####
+  
+  #Compute network loadings
+  P <- net.loads(A=A,wc=wc)$std
+  
+  #Number of factors
+  nfacts <- length(unique(wc))
+  
+  #Initialize factor result matrix
+  if(nfacts > 1)
+  {fact.res <- as.data.frame(matrix(0, nrow = nrow(data), ncol = (nfacts + 1)))
+  }else{fact.res <- as.data.frame(matrix(0, nrow = nrow(data), ncol = nfacts))}
+  
+  ####NETWORK SCORE FUNCTION####
+  net.score.fxn <- function(loads, data)
+  {
+    #Initialize participant  scores
+    net.sco <- matrix(0, nrow = nrow(data), ncol = ncol(loads))
+    
+    #Compute  factor scores (ML)
+    for(i in 1:ncol(loads))
     {
-        #Compute network loadings
-        P <- net.loads(A)$std
-        
-        # Grab communities
-        wc <- A$wc
-        
-        # Replace 'A' with 'EGA' network
-        A <- A$network
-        
-    }else if(missing(A))
-    {stop("Adjacency matrix is required for analysis")
-    }else if(missing(wc)) #Default to single  variable
-    {wc <- rep(1,ncol(data))
+      #Network loadings for each factor
+      f.load <- loads[which(loads[,i]!=0),i]
+      
+      #Grab items associated with factor
+      dat <- data[,names(f.load)]
+      
+      #Grab std dev of items associated with factor 
+      f.sds <- apply(dat,2,sd,na.rm = TRUE)
+      
+      #Obtain relative weights
+      rel <- f.load / f.sds
+      rel.wei <- rel / sum(rel)
+      
+      #Compute scores
+      net.sco[,i] <- as.vector(rowSums(t(t(dat) * rel.wei)))
+    }
+    
+    colnames(net.sco) <- colnames(loads)
+    
+    return(net.sco)
+  }
+  ####NETWORK SCORE FUNCTION####
+  
+  #Populate factor result matrix
+  net.sco <- net.score.fxn(P, data)
+  fact.res[,1:nfacts] <- net.sco
+  
+  if(nfacts > 1)
+  {colnames(fact.res)[1:nfacts] <- colnames(P)
+  }else{colnames(fact.res) <- "1"}
+  
+  #Initialize results list
+  res <- list()
+  
+  #Global network loadings
+  if(nfacts > 1)
+  {
+    if(global)
+    {
+      #Compute general network loadings
+      if(type == "latent")
+      {Pg <- NetworkToolbox::comm.close(A = A, comm = wc)
+      }else if(type == "sumscore")
+      {Pg <- NetworkToolbox::comm.eigen(A = A, comm = wc)}
+      
+      #Overall score
+      G <- rowSums(t(t(net.sco) * Pg))
+      fact.res[,(nfacts + 1)] <- G
+      colnames(fact.res)[nfacts + 1] <- "Overall"
+      
+      #Re-compute partial correlations between factors
+      invS <- -cov2cor(solve(cov(net.sco, use = "pairwise.complete.obs")))
+      diag(invS) <- 1
+      C <- invS
     }else{
-        #Compute network loadings
-        {P <- net.loads(A=A,wc=wc)$std}
-    }
-    ####Missing arguments checks####
-    
-    #Number of factors
-    nfacts <- length(unique(wc))
-    
-    #Initialize factor result matrix
-    if(nfacts > 1)
-    {fact.res <- as.data.frame(matrix(0, nrow = nrow(data), ncol = (nfacts + 1)))
-    }else{fact.res <- as.data.frame(matrix(0, nrow = nrow(data), ncol = nfacts))}
-    
-    ####NETWORK SCORE FUNCTION####
-    net.score.fxn <- function(loads, data)
-    {
-        #Initialize participant  scores
-        net.sco <- matrix(0, nrow = nrow(data), ncol = ncol(loads))
-        
-        #Compute  factor scores (ML)
-        for(i in 1:ncol(loads))
-        {
-            #Network loadings for each factor
-            f.load <- loads[which(loads[,i]!=0),i]
-            
-            #Grab items associated with factor
-            dat <- data[,names(f.load)]
-            
-            #Grab std dev of items associated with factor 
-            f.sds <- apply(dat,2,sd,na.rm = TRUE)
-            
-            #Obtain relative weights
-            rel <- f.load / f.sds
-            rel.wei <- rel / sum(rel)
-            
-            #Compute scores
-            net.sco[,i] <- as.vector(rowSums(t(t(dat) * rel.wei)))
-        }
-        
-        colnames(net.sco) <- colnames(loads)
-        
-        return(net.sco)
-    }
-    ####NETWORK SCORE FUNCTION####
-    
-    #Populate factor result matrix
-    net.sco <- net.score.fxn(P, data)
-    fact.res[,1:nfacts] <- net.sco
-    
-    if(nfacts > 1)
-    {colnames(fact.res)[1:nfacts] <- colnames(P)
-    }else{colnames(fact.res) <- "1"}
-    
-    #Compute partial correlations between factors
-    invS <- -cov2cor(solve(cov(net.sco, use = "pairwise.complete.obs")))
-    diag(invS) <- 1
-    C <- invS
-    
-    if(nfacts > 1)
-    {
-        #Compute general network loadings
-        Pg <- NetworkToolbox::comm.close(A = A, comm = wc)
-        
-        #Overall score
-        G <- rowSums(t(t(net.sco) * Pg))
-        fact.res[,(nfacts + 1)] <- G
-        colnames(fact.res)[nfacts + 1] <- "Overall"
-        
-        #Re-compute partial correlations between factors
-        invS <- -cov2cor(solve(cov(net.sco, use = "pairwise.complete.obs")))
-        diag(invS) <- 1
-        C <- invS
+      
+      #Compute partial correlations between factors
+      invS <- -cov2cor(solve(cov(net.sco, use = "pairwise.complete.obs")))
+      diag(invS) <- 1
+      C <- invS
+      
     }
     
-    #Results
-    res <- list()
-    res$unstd.scores <- round(fact.res,3)
-    res$std.scores <- round(apply(fact.res,2,scale),3)
+    #Return partial correlations between factors
     res$commCor <- C
-    res$loads <- P
     
-    return(res)
+  }
+  
+  res$unstd.scores <- round(fact.res,3)
+  res$std.scores <- round(apply(fact.res,2,scale),3)
+  res$loads <- P
+  
+  return(res)
 }
+#----
