@@ -1,4 +1,5 @@
 #' EGAnet--package
+#' 
 #' @description An implementation of the Exploratory Graph Analysis (EGA) framework for dimensionality assessment.
 #' EGA is part of a new area called network psychometrics that focuses on the estimation of undirected network models
 #' in psychological datasets. EGA estimates the number of dimensions or factors using graphical lasso or
@@ -24,6 +25,8 @@
 #' doi: \href{https://psyarxiv.com/gzcre/}{10.31234/osf.io/gzcre}
 #'
 #' @author Hudson Golino <hfg9s@virginia.edu>
+#' 
+#' @importFrom utils packageDescription
 #'
 "_PACKAGE"
 #> [1] "_PACKAGE"

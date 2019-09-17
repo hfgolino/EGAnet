@@ -11,7 +11,7 @@
 #'
 #' @param lat Numeric integer.
 #' Number of latent factors to be estimated.
-#' Only one substantitve latent factor is recommended in the current version of the function.
+#' Only one substantive latent factor is recommended in the current version of the function.
 #'
 #' @param negative.items Numeric vector
 #' A numeric vector indicating the column of the negative items.
@@ -19,7 +19,6 @@
 #' @param plot Boolean.
 #' If \code{TRUE}, returns a plot of the residualized network and its estimated dimensions.
 #' Defaults to \code{TRUE}
-#'
 #'
 #' @return Returns a list containing:
 #'
@@ -41,30 +40,27 @@
 #' @author Hudson F. Golino <hfg9s at virginia.edu> and Robert Moulder <rgm4fd@virginia.edu>
 #'
 #' @examples
-#'
-#'
-#'
+#' 
+#' data <- optimism
+#' 
 #' \dontrun{
-#'
 #' # resEGA example
-#' opt.res <- residualEGA(data = optmism, manifests = colnames(optmism),lat = 1, negative.items = c(3,7,9), plot = TRUE)
+#' opt.res <- residualEGA(data = data, manifests = colnames(optimism),
+#' lat = 1, negative.items = c(3,7,9), plot = TRUE)
 #'
 #' # Fit:
 #' opt.res$Fit
+#' }
 #'
 #' @seealso \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA
 #' and \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 #'
-#' @importFrom OpenMx mxTryHard mxModel mxPath mxData mxRefModels mxStandardizeRAMpaths
 #' @importFrom stats cov median sd qt
 #' @importFrom utils combn
 #'
 #' @export
-#'
-
-
-### Residualized EGA ###
-
+#' 
+# Residualized EGA
 residualEGA <- function(data, manifests,lat, negative.items, plot = TRUE){
   factors <- paste0("F", seq(lat))
   wording <- paste0("W", 1)

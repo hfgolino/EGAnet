@@ -37,7 +37,7 @@
 #' \emph{Proceedings of the National Academy of Sciences}, \emph{113(18)}, 5130-5135.
 #'
 #' @importFrom Matrix nearPD
-#' @importFrom stats na.omit
+#' @importFrom stats na.omit cov2cor
 #' @importFrom qgraph cor_auto
 #'
 #' @export
@@ -50,7 +50,7 @@ cmi <- function(data, network = FALSE, EGA = TRUE, steps = 4, scale = TRUE){
     cor.data <- data
   }
   pcor <- solve(cor.data)
-  pcor <- -cov2cor(pcor)
+  pcor <- -stats::cov2cor(pcor)
   cmi <- -(1/2)*log10(1-pcor)
 
   if(scale == TRUE){
@@ -100,3 +100,4 @@ cmi <- function(data, network = FALSE, EGA = TRUE, steps = 4, scale = TRUE){
   return(a)
 }
 #----
+
