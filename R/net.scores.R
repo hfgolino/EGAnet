@@ -32,10 +32,12 @@
 #' @param ... Additional arguments for \code{\link[igraph]{cluster_walktrap}}
 #' and \code{\link[NetworkToolbox]{louvain}} community detection algorithms
 #' 
-#' 
 #' @return Returns a list containing:
 #' 
-#' \item{scores}{The standardized network scores for each participant
+#' \item{unstd.scores}{The unstandardized network scores for each participant
+#' and community (including the overall score)}
+#' 
+#' \item{std.scores}{The standardized network scores for each participant
 #' and community (including the overall score)}
 #' 
 #' \item{commCor}{Partial correlations between the specified or identified communities}
@@ -172,7 +174,8 @@ net.scores <- function (data, A, wc, ...)
     
     #Results
     res <- list()
-    res$scores <- round(apply(fact.res,2,scale),3)
+    res$unstd.scores <- round(fact.res,3)
+    res$std.scores <- round(apply(fact.res,2,scale),3)
     res$commCor <- C
     res$loads <- P
     
