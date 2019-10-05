@@ -280,8 +280,8 @@ bootEGA <- function(data, n,
     ciMult <- qt(0.95/2 + 0.5, nrow(boot.ndim) - 1)
     ci <- se.boot * ciMult
     summary.table <- data.frame(n.Boots = n, median.dim = Median,
-                                SD.dim = sd.boot, SE.dim = se.boot, CI.dim = ci, Lower = Median -
-                                    ci, Upper = Median + ci)
+                                SE.dim = se.boot, CI.dim = ci,
+                                Lower = Median - ci, Upper = Median + ci)
     
     #compute frequency
     dim.range <- range(boot.ndim[,2])
