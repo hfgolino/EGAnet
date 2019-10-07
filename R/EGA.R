@@ -222,11 +222,11 @@ EGA <- function (data, model = c("glasso", "TMFG"), plot.EGA = TRUE, n = NULL,
         wc.sim <- igraph::walktrap.community(graph.sim, steps = steps)
         names(wc.sim$membership) <- colnames(data.sim)
         n.dim.sim <- max(wc.sim$membership)
-        if(n.dim.sim <= 2){
+        if(n.dim.sim <= (nfact+1)){
             n.dim <- n.dim.sim
-            cor.data <- cor.data.sim[-c(1:nvar),-c(1:nvar)]
-            estimated.network <- estimated.network.sim[-c(1:nvar),-c(1:nvar)]
-            wc <- wc.sim$membership[-c(1:nvar)]
+            cor.data <- cor.data.sim[-c(1:(nvar*nfact)),-c(1:(nvar*nfact))]
+            estimated.network <- estimated.network.sim[-c(1:(nvar*nfact)),-c(1:(nvar*nfact))]
+            wc <- wc.sim$membership[-c(1:(nvar*nfact))]
         }
         #-------------------------------------------------------------------------
         ## TRADITIONAL EGA (IF NUMBER OF FACTORS > 2)

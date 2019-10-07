@@ -276,13 +276,12 @@ bootEGA <- function(data, n,
                                            vsize = 6, groups = as.factor(typical.wc$membership))
     }
     Median <- median(boot.ndim[, 2])
-    sd.boot <- sd(boot.ndim[, 2])
-    se.boot <- (1.253 * sd.boot)/sqrt(nrow(boot.ndim))
+    se.boot <- sd(boot.ndim[, 2])
     ciMult <- qt(0.95/2 + 0.5, nrow(boot.ndim) - 1)
     ci <- se.boot * ciMult
     summary.table <- data.frame(n.Boots = n, median.dim = Median,
-                                SD.dim = sd.boot, SE.dim = se.boot, CI.dim = ci, Lower = Median -
-                                    ci, Upper = Median + ci)
+                                SE.dim = se.boot, CI.dim = ci,
+                                Lower = Median - ci, Upper = Median + ci)
     
     #compute frequency
     dim.range <- range(boot.ndim[,2])
