@@ -1,3 +1,12 @@
+Changes in version 0.9.0
+
+o added ORCiDs in Description file
+
+o corrected ordering of `net.loads` output
+
+o corrected standard error in `bootEGA`
+
+
 Changes in version 0.8.0
 
 o 'bootEGA' now computes time until bootstrap is finished
