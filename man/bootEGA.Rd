@@ -87,7 +87,7 @@ Returns a list containing:
 \item{bootGraphs}{Networks of each replica sample}
 
 \item{summary.table}{Summary table containing number of replica samples, median,
-standard deviation, standard error, and 95\% confidence intervals}
+standard deviation, standard error, 95\% confidence intervals, and quantiles (lower = 2.5\% and upper = 97.5\%)}
 
 \item{frequency}{Proportion of times the number of dimensions was identified
 (e.g., .85 of 1,000 = 850 times that specific number of dimensions was found)}
