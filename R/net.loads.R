@@ -108,6 +108,10 @@ net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
     unstd <- apply(as.matrix(comm.str),2,as.numeric)
     unstd <- ifelse(is.na(unstd),0,unstd)
     row.names(comm.str) <- colnames(A)
+    
+    if(is.null(colnames(comm.str)))
+    {colnames(comm.str) <- 1:ncol(comm.str)}
+    
     comm.str <- comm.str[,order(colnames(comm.str))]
     res$unstd <- comm.str
     
@@ -125,6 +129,10 @@ net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
   }else{
     unstd <- apply(as.matrix(comm.str),2,as.numeric)
     row.names(unstd) <- colnames(A)
+    
+    if(is.null(colnames(unstd)))
+    {colnames(unstd) <- 1:ncol(unstd)}
+    
     unstd <- unstd[,order(colnames(unstd))]
     res$unstd <- unstd
     
