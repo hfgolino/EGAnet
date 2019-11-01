@@ -104,18 +104,23 @@ net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
   #unstandardized loadings
   if(rm.zero)
   {
-    comm.str <- as.data.frame(ifelse(comm.str==0,"",comm.str))
+    comm.str <- as.data.frame(ifelse(comm.str==0,"",round(comm.str,3)))
     unstd <- apply(as.matrix(comm.str),2,as.numeric)
     unstd <- ifelse(is.na(unstd),0,unstd)
     row.names(comm.str) <- colnames(A)
+    
+    if(is.null(colnames(comm.str)))
+    {colnames(comm.str) <- 1:ncol(comm.str)}
+    
     comm.str <- comm.str[,order(colnames(comm.str))]
     res$unstd <- comm.str
     
     #stardardized loadings
     if(ncol(comc)!=1)
-    {std <- t(t(unstd) / sqrt(colSums(unstd)))
-    }else{std <- t(t(unstd) / sqrt(sum(unstd)))}
+    {std <- t(t(unstd) / sqrt(abs(colSums(unstd))))
+    }else{std <- t(t(unstd) / sqrt(abs(sum(unstd))))}
     
+    std <- round(std,3)
     std <- as.data.frame(ifelse(std==0,"",std))
     
     row.names(std) <- colnames(A)
@@ -125,17 +130,21 @@ net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
   }else{
     unstd <- apply(as.matrix(comm.str),2,as.numeric)
     row.names(unstd) <- colnames(A)
+    
+    if(is.null(colnames(unstd)))
+    {colnames(unstd) <- 1:ncol(unstd)}
+    
     unstd <- unstd[,order(colnames(unstd))]
-    res$unstd <- unstd
+    res$unstd <- round(unstd,3)
     
     #stardardized loadings
     if(ncol(comc)!=1)
-    {std <- t(t(unstd) / sqrt(colSums(unstd)))
-    }else{std <- t(t(unstd) / sqrt(sum(unstd)))}
+    {std <- t(t(unstd) / sqrt(colSums(abs(unstd))))
+    }else{std <- t(t(unstd) / sqrt(abs(sum(unstd))))}
     
     row.names(std) <- colnames(A)
     
-    res$std <- std
+    res$std <- round(std,3)
   }
   
   #Plot?
