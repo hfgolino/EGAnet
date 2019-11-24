@@ -8,6 +8,8 @@ o corrected standard error in `bootEGA`
 
 o citation update
 
+o added function `dimStability` to compute dimensional stability
+
 
 Changes in version 0.8.0
 
