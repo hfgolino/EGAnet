@@ -4,8 +4,17 @@
 \alias{EGA}
 \title{Apply the Exploratory Graph Analysis technique}
 \usage{
-EGA(data, model = c("glasso", "TMFG"), plot.EGA = TRUE, n = NULL,
-  steps = 4, nvar = 4, nfact = 1, load = 0.7, ...)
+EGA(
+  data,
+  model = c("glasso", "TMFG"),
+  plot.EGA = TRUE,
+  n = NULL,
+  steps = 4,
+  nvar = 4,
+  nfact = 1,
+  load = 0.7,
+  ...
+)
 }
 \arguments{
 \item{data}{A dataframe with the variables to be used in the analysis or a correlation matrix.

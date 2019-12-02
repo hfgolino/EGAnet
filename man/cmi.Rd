@@ -58,7 +58,7 @@ doi: \href{https://doi.org/10.1073/pnas.1522586113}{10.1073/pnas.1522586113}
 }
 \seealso{
 \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap
-and \code{\link{EGA}} to apply the exploratory graph analysis techinique.
+and \code{\link{EGA}} to apply the exploratory graph analysis technique.
 }
 \author{
 Hudson F. Golino <hfg9s at virginia.edu>#'

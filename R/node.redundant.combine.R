@@ -210,7 +210,7 @@ node.redundant.combine <- function (node.redundant.obj,
       }else{
         
         # Get cliques
-        cliq <- igraph::max_cliques(convert2igraph(mat))
+        cliq <- igraph::max_cliques(NetworkToolbox::convert2igraph(mat))
         
         # Initialize count 3
         count3 <- 0

@@ -154,7 +154,7 @@ node.redundant <- function (data, sig, type = c("wTO", "pcor", "thresh"),
             if(method == "bonferroni")
             {sig <- sig / length(pos.vals)
             }else if(method == "adapt")
-            {sig <- adapt.a("cor", alpha = sig, n = length(pos.vals), efxize = "medium")$adapt.a}
+            {sig <- NetworkToolbox::adapt.a("cor", alpha = sig, n = length(pos.vals), efxize = "medium")$adapt.a}
         }
         
         #identify q-values less than sigificance
