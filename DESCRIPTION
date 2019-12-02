@@ -18,7 +18,7 @@ Imports: qgraph (>= 1.4.1), semPlot (>= 1.0.1),
         Matrix (>= 1.2), plotly (>= 4.7.1), mvtnorm (>= 1.0.8),
         corpcor (>= 1.6.9), ggpubr (>= 0.2), iterators (>= 1.0.10), 
         stats, plyr (>= 1.8.4), matrixcalc (>= 1.0-3), ggplot2 (>= 3.1.0),
-        pbapply, OpenMx
+        pbapply, OpenMx, wTO
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 RoxygenNote: 6.1.1
