@@ -196,7 +196,7 @@ node.redundant.combine <- function (node.redundant.obj,
       {
         # Print target and potential options
         cat(paste("Target item: '", target.item, "'", sep = ""))
-        cat("\n\nPotential redundancies:\n")
+        cat("\n\nPotential redundancies:\n\n")
         cat("0. Do not combine with any")
         cat(paste("\n", 1:length(poss), ". ", "'", poss, "'", sep = ""),"\n")
         
