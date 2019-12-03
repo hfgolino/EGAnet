@@ -105,7 +105,9 @@ node.redundant.combine <- function (node.redundant.obj,
   count <- 0
   
   if("key" %in% names(node.redundant.obj))
-  {key <- node.redundant.obj$key
+  {
+    key <- node.redundant.obj$key
+    names(key) <- names(node.redundant.obj$key)
   }else{
     key <- colnames(node.redundant.obj$data)
     names(key) <- key
