@@ -2,17 +2,17 @@
 % Please edit documentation in R/node.redundant.names.R
 \name{node.redundant.names}
 \alias{node.redundant.names}
-\title{Changes Variable Names to Descriptions for \code{\link[NetworkToolbox]{node.redundant}} Objects}
+\title{Changes Variable Names to Descriptions for \code{\link[EGAnet]{node.redundant}} Objects}
 \usage{
 node.redundant.names(node.redundant.obj, key)
 }
 \arguments{
-\item{node.redundant.obj}{A \code{\link[NetworkToolbox]{node.redundant}} object}
+\item{node.redundant.obj}{A \code{\link[EGAnet]{node.redundant}} object}
 
 \item{key}{Character vector.
 A vector with variable descriptions that correspond
 to the order of variables from the data used as input into the
-\code{\link[NetworkToolbox]{node.redundant}} function}
+\code{\link[EGAnet]{node.redundant}} function}
 }
 \value{
 Returns a list:
@@ -29,7 +29,7 @@ or partial correlations}
 }
 \description{
 Using a key, this function changes the variable names in 
-the \code{\link[NetworkToolbox]{node.redundant}} output to descriptions
+the \code{\link[EGAnet]{node.redundant}} output to descriptions
 }
 \examples{
 # obtain SAPA items

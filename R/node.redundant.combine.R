@@ -3,7 +3,7 @@
 #' sum scores and latent variables to reduce the redundancy of
 #' variables in their data 
 #' 
-#' @param node.redundant.obj A \code{\link[NetworkToolbox]{node.redundant}} object
+#' @param node.redundant.obj A \code{\link[EGAnet]{node.redundant}} object
 #' 
 #' @param type Character.
 #' Method to use to combine redundant variables.

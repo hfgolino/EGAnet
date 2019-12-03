@@ -13,7 +13,7 @@ node.redundant.combine(
 )
 }
 \arguments{
-\item{node.redundant.obj}{A \code{\link[NetworkToolbox]{node.redundant}} object}
+\item{node.redundant.obj}{A \code{\link[EGAnet]{node.redundant}} object}
 
 \item{type}{Character.
 Method to use to combine redundant variables.
