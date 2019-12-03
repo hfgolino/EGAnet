@@ -209,6 +209,35 @@ node.redundant.combine <- function (node.redundant.obj,
         # Get input
         input <- readline(prompt = "Enter numbers of items redundant with the target item (separate by commas): ")
         
+        # Input check function
+        in.check <- function(input)
+        {
+          inp <- suppressWarnings(as.numeric(unlist(strsplit(unlist(strsplit(input, split = " ")), split = ","))))
+          
+          if(any(is.na(inp)))
+          {return(TRUE)}
+          
+          if(length(setdiff(inp, 0:length(poss))) != 0)
+          {return(TRUE)}
+          
+          return(FALSE)
+        }
+        
+        # Redo input check
+        re.input <- in.check(input)
+        
+        while(re.input)
+        {
+          # Print message to try again
+          message("Inappropriate input. Try again.")
+          
+          # Get input
+          input <- readline(prompt = "Enter numbers of items redundant with the target item (separate by commas): ")
+          
+          # Redo input check
+          re.input <- in.check(input)
+        }
+        
       }else{
         
         # Get cliques
