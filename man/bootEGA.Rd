@@ -4,9 +4,16 @@
 \alias{bootEGA}
 \title{Dimension Stability Analysis of \code{\link[EGAnet]{EGA}}}
 \usage{
-bootEGA(data, n, model = c("glasso", "TMFG"), type = c("parametric",
-  "resampling"), typicalStructure = TRUE, plot.typicalStructure = TRUE,
-  ncores = 4, ...)
+bootEGA(
+  data,
+  n,
+  model = c("glasso", "TMFG"),
+  type = c("parametric", "resampling"),
+  typicalStructure = TRUE,
+  plot.typicalStructure = TRUE,
+  ncores = 4,
+  ...
+)
 }
 \arguments{
 \item{data}{Matrix or data frame.

@@ -77,7 +77,7 @@
 net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
 {
   # Detect if input is an 'EGA' object
-  if(class(A) == "EGA")
+  if(any(class(A) == "EGA"))
   {
     # Grab communities
     wc <- A$wc

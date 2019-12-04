@@ -10,6 +10,8 @@ o citation update
 
 o added function `dimStability` to compute dimensional stability
 
+o added a series of functions for `node.redundant`, which facilitates detecting and combining redundant nodes in networks
+
 
 Changes in version 0.8.0
 

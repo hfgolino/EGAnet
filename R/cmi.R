@@ -44,7 +44,7 @@
 #' plot(ega.intel)
 #' }
 #' @seealso \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap
-#' and \code{\link{EGA}} to apply the exploratory graph analysis techinique.
+#' and \code{\link{EGA}} to apply the exploratory graph analysis technique.
 #'
 #' @references
 #' Zhao, J., Zhou, Y., Zhang, X., & Chen, L. (2016).

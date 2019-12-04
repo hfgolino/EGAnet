@@ -4,8 +4,7 @@
 \alias{net.scores}
 \title{Network Scores}
 \usage{
-net.scores(data, A, wc, global = TRUE, type = c("sumscore", "latent"),
-  ...)
+net.scores(data, A, wc, global = TRUE, type = c("sumscore", "latent"), ...)
 }
 \arguments{
 \item{data}{Matrix or data frame.
