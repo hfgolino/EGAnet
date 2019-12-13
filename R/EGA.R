@@ -210,7 +210,7 @@ EGA <- function (data, model = c("glasso", "TMFG"), plot.EGA = TRUE, n = NULL,
                                                            lambda.min.ratio = 0.1,
                                                            returnAllResults = FALSE,
                                                            gamma = iterators::nextElem(gvals), ...);
-                if (any(NetworkToolbox::strength(estimated.network.sim)>0)) {
+                if (all(NetworkToolbox::strength(estimated.network.sim)>0)) {
                     break
                 }
             }
@@ -251,7 +251,7 @@ EGA <- function (data, model = c("glasso", "TMFG"), plot.EGA = TRUE, n = NULL,
                                                            lambda.min.ratio = 0.1,
                                                            returnAllResults = FALSE,
                                                            gamma = iterators::nextElem(gvals), ...)
-                    if (any(NetworkToolbox::strength(estimated.network)>0)) {
+                    if (all(NetworkToolbox::strength(estimated.network)>0)) {
                         break
                     }
                 }
