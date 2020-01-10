@@ -132,7 +132,10 @@ net.scores <- function (data, A, wc, global = TRUE,
   
   #Initialize factor result matrix
   if(nfacts > 1)
-  {fact.res <- as.data.frame(matrix(0, nrow = nrow(data), ncol = (nfacts + 1)))
+  {
+    if(global)
+    {fact.res <- as.data.frame(matrix(0, nrow = nrow(data), ncol = (nfacts + 1)))
+    }else{fact.res <- as.data.frame(matrix(0, nrow = nrow(data), ncol = nfacts))}
   }else{fact.res <- as.data.frame(matrix(0, nrow = nrow(data), ncol = nfacts))}
   
   ####NETWORK SCORE FUNCTION####
