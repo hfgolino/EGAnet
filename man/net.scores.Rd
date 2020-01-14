@@ -4,7 +4,8 @@
 \alias{net.scores}
 \title{Network Scores}
 \usage{
-net.scores(data, A, wc, ...)
+net.scores(data, A, wc, global = TRUE, type = c("sumscore", "latent"),
+  ...)
 }
 \arguments{
 \item{data}{Matrix or data frame.
@@ -18,13 +19,36 @@ A vector of community assignments.
 Not necessary if an \code{\link[EGAnet]{EGA}} object
 is input for argument \code{A}}
 
+\item{global}{Boolean.
+Should general network loadings be computed in scores?
+Defaults to \code{TRUE}.
+If there is more than one dimension and there is theoretically
+one global dimension, then general loadings of the dimensions
+onto the global dimension can be included in the weighted
+scores. For the type of weights (e.g., sum score or latent),
+see the \code{type} argument}
+
+\item{type}{Character.
+Should network scores parallel sum scores or latent variable scores?
+Defaults to \code{"latent"}.
+Argument \code{type} sets the community centrality measure that is used
+when computing the network loadings for multiple factors.
+Simulations have shown that \code{\link[NetworkToolbox]{comm.eigen}} computes
+weights that are closer to sum scores while
+\code{\link[NetworkToolbox]{comm.close}} computes
+weights that are closer to latent variable scores.
+See Christensen, Golino, and Silvia (2019) for more details}
+
 \item{...}{Additional arguments for \code{\link[igraph]{cluster_walktrap}}
 and \code{\link[NetworkToolbox]{louvain}} community detection algorithms}
 }
 \value{
 Returns a list containing:
 
-\item{scores}{The standardized network scores for each participant
+\item{unstd.scores}{The unstandardized network scores for each participant
+and community (including the overall score)}
+
+\item{std.scores}{The standardized network scores for each participant
 and community (including the overall score)}
 
 \item{commCor}{Partial correlations between the specified or identified communities}

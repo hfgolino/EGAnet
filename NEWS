@@ -2,19 +2,11 @@ Changes in version 0.8.0
 
 o 'bootEGA' now computes time until bootstrap is finished
 
-<<<<<<< HEAD
-o Function 'cmi' added to compute conditional mutual information
-
-o 'EGA' function had a bug when the input was a matrix. Bug fixed.
-
-=======
-o new functions 'cmi' and 'residualEGA' added: 'cmi' computes conditional mutual information and residual EGA computes an EGA network controlling for wording effects
+o new functions 'cmi', 'pmi' and 'residualEGA' added: 'cmi' computes conditional mutual information, 'pmi' computes partial mutual information and residual EGA computes an EGA network controlling for wording effects
 
 o new dataset 'optimism' added
 
-o documentation and functionality for several functions updated 
->>>>>>> e3e861db2c80b00781a844e513439b91283d3c19
-
+o documentation and functionality for several functions updated
 
 Changes in version 0.7.0
 
