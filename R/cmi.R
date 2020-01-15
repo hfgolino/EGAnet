@@ -15,26 +15,42 @@
 #' @param steps Number of steps to be used in \code{\link[igraph]{cluster_walktrap}} algorithm (necessary only if the EGA argument is set to TRUE).
 #' Defaults to 4.
 #'
-#' @param scale Logical.
-#' If TRUE, the conditional mutual information will be scaled using the following formula: trace(X)/p, where X is the matrix with the conditional
-#' mutual information and p is the number of variables.
-#'
-#' @author Hudson F. Golino <hfg9s at virginia.edu>
+#' @author Hudson F. Golino <hfg9s at virginia.edu>#'
 #'
 #' @examples
+#' wmt <- wmt2[,7:24]
 #'
 #' \donttest{
-#' #estimate EGA using CMI:
+#' #estimate EGA
+#' ega.wmt <- EGA(data = wmt, model = "glasso", plot.EGA = TRUE)
 #'
-#' cmi1 <- cmi(data = depression[,48:68], network = FALSE, EGA = TRUE, steps = 4, scale = TRUE)
 #'
+#' #estimate EGAtmfg
+#' ega.wmt <- EGA(data = wmt, model = "TMFG", plot.EGA = TRUE)
+#'
+#' #summary statistics
+#' summary(ega.wmt)
+#'
+#' #plot
+#' plot(ega.wmt)
+#'
+#' #estimate EGA
+#' ega.intel <- EGA(data = intelligenceBattery[,8:66], model = "glasso", plot.EGA = TRUE)
+#'
+#' #summary statistics
+#' summary(ega.intel)
+#'
+#' #plot
+#' plot(ega.intel)
+#' }
 #' @seealso \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap
-#' and \code{\link{EGA}} to apply the exploratory graph analysis techinique.
+#' and \code{\link{EGA}} to apply the exploratory graph analysis technique.
 #'
 #' @references
 #' Zhao, J., Zhou, Y., Zhang, X., & Chen, L. (2016).
 #' Part mutual information for quantifying direct associations in networks.
-#' \emph{Proceedings of the National Academy of Sciences}, \emph{113(18)}, 5130-5135.
+#' \emph{Proceedings of the National Academy of Sciences}, \emph{113}, 5130-5135.
+#' doi: \href{https://doi.org/10.1073/pnas.1522586113}{10.1073/pnas.1522586113}
 #'
 #' @importFrom Matrix nearPD
 #' @importFrom stats na.omit cov2cor
@@ -42,23 +58,17 @@
 #'
 #' @export
 #'
-#'
-cmi <- function(data, network = FALSE, EGA = TRUE, steps = 4, scale = TRUE){
+cmi <- function(data, network = FALSE, EGA = TRUE, steps = 4){
   if(nrow(data)!=ncol(data)){
     cor.data <- qgraph::cor_auto(data)
   } else{
     cor.data <- data
   }
   pcor <- solve(cor.data)
-  pcor <- -stats::cov2cor(pcor)
+  pcor <- -cov2cor(pcor)
   cmi <- -(1/2)*log10(1-pcor)
 
-  if(scale == TRUE){
-    cmi <- cmi/(sum(diag(cmi))/ncol(cmi))
-    cmi <- -cmi
-    diag(cmi) <- -diag(cmi)
-  }
-
+  #diag(cmi) <- 1
   if(network==TRUE){
     qgraph::qgraph(cmi, layout = "spring", vsize = 6)
   }
@@ -89,15 +99,12 @@ cmi <- function(data, network = FALSE, EGA = TRUE, steps = 4, scale = TRUE){
 
     # Plot:
     plot.ega <- qgraph::qgraph(a$cmi, layout = "spring",
-                                   vsize = 6, groups = as.factor(a$wc), label.prop = 1, legend = TRUE)
-    } else{
+                               vsize = 6, groups = as.factor(a$wc), label.prop = 1, legend = TRUE)
+  } else{
 
     a <- list()
     a$cmi <- cmi
 
-    }
-  class(a) <- "CMI"
+  }
   return(a)
 }
-#----
-

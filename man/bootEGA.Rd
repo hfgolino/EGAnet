@@ -4,9 +4,16 @@
 \alias{bootEGA}
 \title{Dimension Stability Analysis of \code{\link[EGAnet]{EGA}}}
 \usage{
-bootEGA(data, n, model = c("glasso", "TMFG"), type = c("parametric",
-  "resampling"), typicalStructure = TRUE, plot.typicalStructure = TRUE,
-  ncores = 4, ...)
+bootEGA(
+  data,
+  n,
+  model = c("glasso", "TMFG"),
+  type = c("parametric", "resampling"),
+  typicalStructure = TRUE,
+  plot.typicalStructure = TRUE,
+  ncores = 4,
+  ...
+)
 }
 \arguments{
 \item{data}{Matrix or data frame.
@@ -87,7 +94,7 @@ Returns a list containing:
 \item{bootGraphs}{Networks of each replica sample}
 
 \item{summary.table}{Summary table containing number of replica samples, median,
-standard deviation, standard error, and 95\% confidence intervals}
+standard deviation, standard error, 95\% confidence intervals, and quantiles (lower = 2.5\% and upper = 97.5\%)}
 
 \item{frequency}{Proportion of times the number of dimensions was identified
 (e.g., .85 of 1,000 = 850 times that specific number of dimensions was found)}

@@ -83,7 +83,7 @@
 #' \item{bootGraphs}{Networks of each replica sample}
 #'
 #' \item{summary.table}{Summary table containing number of replica samples, median,
-#' standard deviation, standard error, and 95\% confidence intervals}
+#' standard deviation, standard error, 95\% confidence intervals, and quantiles (lower = 2.5\% and upper = 97.5\%)}
 #'
 #' \item{frequency}{Proportion of times the number of dimensions was identified
 #' (e.g., .85 of 1,000 = 850 times that specific number of dimensions was found)}
@@ -139,7 +139,7 @@
 #' @seealso \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA
 #' and \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 #'
-#' @importFrom stats cov median sd qt
+#' @importFrom stats cov median sd qt quantile
 #'
 #' @export
 #'
@@ -276,13 +276,14 @@ bootEGA <- function(data, n,
                                            vsize = 6, groups = as.factor(typical.wc$membership))
     }
     Median <- median(boot.ndim[, 2])
-    sd.boot <- sd(boot.ndim[, 2])
-    se.boot <- (1.253 * sd.boot)/sqrt(nrow(boot.ndim))
+    se.boot <- sd(boot.ndim[, 2])
     ciMult <- qt(0.95/2 + 0.5, nrow(boot.ndim) - 1)
     ci <- se.boot * ciMult
+    quant <- quantile(boot.ndim, c(.025, .975))
     summary.table <- data.frame(n.Boots = n, median.dim = Median,
-                                SD.dim = sd.boot, SE.dim = se.boot, CI.dim = ci, Lower = Median -
-                                    ci, Upper = Median + ci)
+                                SE.dim = se.boot, CI.dim = ci,
+                                Lower = Median - ci, Upper = Median + ci,
+                                Lower.Quantile = quant[1], Upper.Quantile = quant[2])
     
     #compute frequency
     dim.range <- range(boot.ndim[,2])

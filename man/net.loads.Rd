@@ -7,10 +7,10 @@
 net.loads(A, wc, rm.zero = FALSE, plot = FALSE)
 }
 \arguments{
-\item{A}{Matrix, data frame, or \code{\link[EGAnet]{EGA}} object. 
+\item{A}{Matrix, data frame, or \code{\link[EGAnet]{EGA}} object.
 An adjacency matrix of network data}
 
-\item{wc}{Numeric. 
+\item{wc}{Numeric.
 A vector of community assignments.
 Not necessary if an \code{\link[EGAnet]{EGA}} object
 is input for argument \code{A}}
@@ -73,7 +73,7 @@ net.loads(ega.wmt, rm.zero = TRUE)
 Christensen, A. P., Golino, H. F., & Silvia, P. (2019).
 A psychometric network perspective on the measurement and assessment of personality traits.
 \emph{PsyArXiv}.
-doi:\href{https://doi.org/10.31234/osf.io/ktejp}{10.31234/osf.io/ktejp} 
+doi:\href{https://doi.org/10.31234/osf.io/ktejp}{10.31234/osf.io/ktejp}
 
 Hallquist, M., Wright, A. C. G., & Molenaar, P. C. (in press).
 Problems with centrality measures in psychopathology symptom networks: Why network psychometrics cannot escape psychometric theory.

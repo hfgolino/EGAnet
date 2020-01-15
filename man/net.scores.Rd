@@ -4,17 +4,16 @@
 \alias{net.scores}
 \title{Network Scores}
 \usage{
-net.scores(data, A, wc, global = TRUE, type = c("sumscore", "latent"),
-  ...)
+net.scores(data, A, wc, global = TRUE, type = c("sumscore", "latent"), ...)
 }
 \arguments{
 \item{data}{Matrix or data frame.
 Must be a dataset}
 
-\item{A}{Matrix, data frame, or \code{\link[EGAnet]{EGA}} object. 
+\item{A}{Matrix, data frame, or \code{\link[EGAnet]{EGA}} object.
 An adjacency matrix of network data}
 
-\item{wc}{Numeric. 
+\item{wc}{Numeric.
 A vector of community assignments.
 Not necessary if an \code{\link[EGAnet]{EGA}} object
 is input for argument \code{A}}
@@ -58,7 +57,7 @@ and community (including the overall score)}
 }
 \description{
 This function computes network scores for
-factor analysis models. Network scores are computed based on 
+factor analysis models. Network scores are computed based on
 each node's \code{\link[NetworkToolbox]{strength}} within each
 community (i.e., factor) in the network. These values are used
 as network "factor loadings" for the weights of each item. Notably,
@@ -86,7 +85,7 @@ wmt <- wmt2[,7:24]
  # Estimate EGA
  ega.wmt <- EGA(wmt)
 }
- 
+
  # Network scores
  net.scores(data = wmt, A = ega.wmt)
 

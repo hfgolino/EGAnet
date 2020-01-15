@@ -4,10 +4,19 @@
 \alias{EBICglasso.qgraph}
 \title{\code{\link[qgraph]{EBICglasso}} from \code{\link{qgraph}} 1.4.4}
 \usage{
-EBICglasso.qgraph(data, n = NULL, gamma = 0.5,
-  penalize.diagonal = FALSE, nlambda = 100, lambda.min.ratio = 0.01,
-  returnAllResults = FALSE, penalizeMatrix, countDiagonal = FALSE,
-  refit = FALSE, ...)
+EBICglasso.qgraph(
+  data,
+  n = NULL,
+  gamma = 0.5,
+  penalize.diagonal = FALSE,
+  nlambda = 100,
+  lambda.min.ratio = 0.01,
+  returnAllResults = FALSE,
+  penalizeMatrix,
+  countDiagonal = FALSE,
+  refit = FALSE,
+  ...
+)
 }
 \arguments{
 \item{data}{Data matrix}

@@ -9,7 +9,7 @@
                "Created on: ",
                temp$Date,"\n", sep="")
     msg <- paste(msg,"Maintainer: Hudson Golino, University of Virginia\n",sep="")
-    msg <- paste(msg, "Authors: Alexander Christensen, University of North Carolina at Greensboro\n",sep="")
+    msg <- paste(msg, "Authors: Hudson Golino, University of Virginia & \n Alexander Christensen, University of North Carolina at Greensboro\n",sep="")
     msg <- paste(msg,"Contributors: Robert Moulder, University of Virginia\n",sep="")
     msg <- paste(msg,'For citation information, type citation("EGAnet")\n')
     msg <- paste(msg,'For vignettes, type browseVignettes("EGAnet")\n')
