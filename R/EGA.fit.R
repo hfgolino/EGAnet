@@ -5,12 +5,15 @@
 #' algorithm is varied and unique community solutions are compared using
 #' \code{\link[EGAnet]{entropyFit}}.
 #'
-#' @param data A dataset
+#' @param data A dataset (or a correlation matrix).
 #'
-#' @param model Character. 
+#' @param model Character.
 #' A string indicating the method to use.
 #' Defaults to \code{"glasso"}.
-#' 
+#'
+#' @param n Integer.
+#' Sample size, if the data provided is a correlation matrix
+#'
 #' Current options are:
 #'
 #' \itemize{
@@ -43,10 +46,10 @@
 #' \item{Lowest.EntropyFit}{The lowest value for the \code{\link[EGAnet]{entropyFit}} Index}
 #'
 #' @examples
-#' 
+#'
 #' # Load data
 #' wmt <- wmt2[,7:24]
-#' 
+#'
 #' \dontrun{
 #' # Estimate normal EGAtmfg
 #' tmfg <- EGA(data = wmt, model = "TMFG")
@@ -57,9 +60,9 @@
 #' # Compare with CFA
 #' cfa.tmfg <- CFA(tmfg, estimator = "WLSMV", data = wmt)
 #' cfa.opt <- CFA(tmfg.opt$EGA, estimator = "WLSMV", data = wmt)
-#' 
+#'
 #' lavaan::lavTestLRT(cfa.tmfg$fit, cfa.opt$fit, method = "satorra.bentler.2001")
-#' 
+#'
 #'}
 #'
 #' @references
@@ -76,7 +79,7 @@
 #'
 #' @export
 EGA.fit <- function (data, model = c("glasso","TMFG"),
-                     steps = c(3,4,5,6,7,8))
+                     steps = c(3,4,5,6,7,8), n = NULL)
 {
     if(missing(model))
     {model <- "glasso"
@@ -98,7 +101,8 @@ EGA.fit <- function (data, model = c("glasso","TMFG"),
         mods[[as.character(steps[i])]] <- EGA(data = data,
                                               model = model,
                                               steps = steps[i],
-                                              plot.EGA = FALSE)
+                                              plot.EGA = FALSE,
+                                              n = n)
 
         dims[,i] <- mods[[as.character(steps[i])]]$wc
     }
@@ -133,7 +137,7 @@ EGA.fit <- function (data, model = c("glasso","TMFG"),
         ent.vec <- vector("numeric",length=len)
 
         for(i in 1:len)
-        {ent.vec[i] <- tefi(mods[[as.character(step[i])]]$correlation, mods[[as.character(step[i])]]$wc)$VN.Entropy.Fit}
+        {ent.vec[i] <- tefi(abs(mods[[as.character(step[i])]]$correlation), mods[[as.character(step[i])]]$wc)$VN.Entropy.Fit}
 
         names(ent.vec) <- step
 

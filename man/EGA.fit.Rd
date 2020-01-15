@@ -4,14 +4,26 @@
 \alias{EGA.fit}
 \title{\code{\link[EGAnet]{EGA}} Optimal Model Fit using \code{\link[EGAnet]{entropyFit}}}
 \usage{
-EGA.fit(data, model = c("glasso", "TMFG"), steps = c(3, 4, 5, 6, 7, 8))
+EGA.fit(
+  data,
+  model = c("glasso", "TMFG"),
+  steps = c(3, 4, 5, 6, 7, 8),
+  n = NULL
+)
 }
 \arguments{
-\item{data}{A dataset}
+\item{data}{A dataset (or a correlation matrix).}
 
-\item{model}{Character. 
+\item{model}{Character.
 A string indicating the method to use.
-Defaults to \code{"glasso"}.
+Defaults to \code{"glasso"}.}
+
+\item{steps}{Numeric vector.
+Range of steps to be used in the model selection.
+Defaults from 3 to 8 steps (based on Pons & Latapy, 2006)}
+
+\item{n}{Integer.
+Sample size, if the data provided is a correlation matrix
 
 Current options are:
 
@@ -27,10 +39,6 @@ See \code{\link[EGAnet]{EBICglasso.qgraph}}}
 See \code{\link[NetworkToolbox]{TMFG}}}
 
 }}
-
-\item{steps}{Numeric vector.
-Range of steps to be used in the model selection.
-Defaults from 3 to 8 steps (based on Pons & Latapy, 2006)}
 }
 \value{
 Returns a list containing:
