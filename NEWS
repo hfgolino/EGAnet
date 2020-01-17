@@ -10,8 +10,10 @@ o citation update
 
 o added function `dimStability` to compute dimensional stability
 
-o added a series of functions for `node.redundant`, which facilitates detecting and combining redundant nodes in networks
+o added a series of functions for `node.redundant`, which facilitat
+es detecting and combining redundant nodes in networks
 
+o updated the EGA.fit function, so now a correlation matrix can be used as well.
 
 Changes in version 0.8.0
 

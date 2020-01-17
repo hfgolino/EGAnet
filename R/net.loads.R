@@ -115,7 +115,7 @@ net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
     comm.str <- comm.str[,order(colnames(comm.str))]
     res$unstd <- comm.str
 
-    #stardardized loadings
+    #standardized loadings
     if(ncol(comc)!=1)
     {std <- t(t(unstd) / sqrt(abs(colSums(unstd))))
     }else{std <- t(t(unstd) / sqrt(abs(sum(unstd))))}
@@ -137,7 +137,7 @@ net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
     unstd <- unstd[,order(colnames(unstd))]
     res$unstd <- round(unstd,3)
 
-    #stardardized loadings
+    #standardized loadings
     if(ncol(comc)!=1)
     {std <- t(t(unstd) / sqrt(colSums(abs(unstd))))
     }else{std <- t(t(unstd) / sqrt(abs(sum(unstd))))}

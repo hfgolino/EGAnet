@@ -1,0 +1,118 @@
+---
+title: "Redundant Nodes"
+author: "Alexander P. Christensen and Hudson Golino"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Redundant_Nodes}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+  \usepackage[utf8]{inputenc}
+---
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#"
+)
+```
+
+# Introduction
+This vignette shows you how to use the node.redundant functions in EGAnet. The contents of this vignette is taken from Christensen, Golino, and Silvia (under review).
+
+To begin our example of structural validation from the psychometric network perspecitve, the *psych* (Revelle, 2017) pacakge must be installed and loaded.
+
+```{r install, echo = TRUE, eval = FALSE, message = FALSE, warning = FALSE}
+# Install 'psych' package
+devtools::install_version("psych", version = 1.8.12)
+```
+```{r load, echo = TRUE, message = FALSE, warning = FALSE}
+# Load packages
+library(psych)
+```
+```{r background packages load, eval = TRUE, echo = FALSE, comment = NA, warning = FALSE, message = FALSE}
+# Load background packages
+library(kableExtra)
+library(EGAnet)
+```
+
+# Data Management
+The *psych* package contains that SAPA inventory data that will be used for the example. More details about the sample can be found using the code `?spi` or in Condon's (2018) SAPA inventory manual. Prior to any analyses, the items that correspond to the five-factor model (FFM; McCrae & Costa, 1987) should be obtain with the following code:
+
+```{r data, eval = TRUE, echo = TRUE, comment = NA, warning = FALSE, message = FALSE}
+# Select Five Factor Model personality items only
+idx <- na.omit(match(gsub("-", "", unlist(spi.keys[1:5])), colnames(spi)))
+items <- spi[,idx]
+```
+
+# Node Redundancy Functions
+These items can now be used in the `node.redundant` function available in the *EGAnet* pacakge. For the purposes of our example, we will use the weighted topological overlap approach---applied using the *wTO* package (Gysi, Voigt, de Miranda Fragoso, Almaas, & Nowick, 2018)---and adaptive alpha (Pérez & Pericchi, 2014) multiple comparisons correction to determine which items are redundant.
+
+```{r wto example, eval = TRUE, echo = TRUE, comment = NA, warning = FALSE, message = FALSE, cache = FALSE}
+# Identify redundant nodes
+redund <- node.redundant(items, type = "wTO", method = "adapt")
+
+# Change names in redundancy output to each item's description
+key.ind <- match(colnames(items), as.character(spi.dictionary$item_id))
+key <- as.character(spi.dictionary$item[key.ind])
+
+# Use key to rename variables
+named.nr <- node.redundant.names(redund, key)
+```
+
+The output of the `node.redundant` function will correspond to the column names of the items in our data. The SAPA data is labeled with ambiguous names (e.g., `q_565`), which will need to be converted to item descriptions (e.g., `Dislike being the center of attention.`) to be used in the next step. The `node.redundant.names` function will accept a key that maps the column names to the item descriptions. The input for the argument `key` should be a vector with item descriptions that correspond to the order of the column names.
+
+The output from both functions will be a list, `$redundant`, containing lists of redundant items. Each list nested in the `$redundant` list will be named after an item that is redundant with other items. The `$redundant` list is structured so that items with the greatest number of redundant items are placed at the top. An example of what one of these item lists look like is presented below (Table 1).
+
+```{r tab1, eval = TRUE, echo = FALSE, comment = NA, warning = FALSE, message = FALSE, cache = FALSE}
+# Example of first element in redundancy list
+knitr::kable(named.nr$redundant[1], booktabs = TRUE,
+             col.names = names(named.nr$redundant)[1],
+             align = 'c', caption = "Example of first element in redundancy list") %>% kable_styling(latex_options = "hold_position")
+```
+
+The name of this item list, `'Am full of ideas.'`, is the item that is redundant with the items listed below it. The `$redundant` list is structured this way for each item that is redundant with other items. This structure, however, is verbose and difficult to manage. In order to navigate the process of merging items, the function `node.redundant.combine` should be used.
+
+```{r combine NR example, eval = FALSE, echo = TRUE, comment = NA, warning = FALSE, message = FALSE, cache = FALSE}
+# Combining redundant responses
+combined.nr <- node.redundant.combine(named.nr, type = "optimal")
+```
+
+When entering this code, the R console will output each item list with a selection of possible redundant nodes (see Figure 1) and an associated "redundancy chain" plot will appear (see Figure 2). When examining the possible redundant nodes, the reader may notice that there were four items identified previously---that is, `'Am able to come up with new and different ideas.'`, `'Am an original thinker.'`, `'Love to think up new ways of doing things.'`, and `'Have a vivid imagination.'` (Table 1).
+
+```{r Fig1, fig.cap = "An example of the menu that appears for each redundant item",  fig.align = 'center', fig.pos = "H", warning=FALSE, message=FALSE, echo=FALSE}
+knitr::include_graphics(path = "./Figure_SI1_Code.png", dpi = 900)
+```
+
+The fifth option in Figure 1, `'Like to get lost in thought.'`, was not redundant with the target item. It was, however, redundant with another item in our potential responses (i.e., `'Have a vivid imagination.'`). Some items that are redundant with the original item may also be redundant with other items that are not redundant with the original item, forming a so-called "redunancy chain." The redundancy chain plot depicts this chain, which can be useful for deciding how redundant nodes should be combined by informing researchers about the overlap of near nodes. In these plots (see Figure 2), the connections between items represent redundancies that have been determined to be statistically significant and the thickness of the connections correspond to those items' connections in the network (i.e., regularized partial correlations).
+
+```{r Fig2, fig.cap = "An example of a redundancy chain plot. The red node indicates the target item and the white nodes with numbers correspond to the numbered options (Figure 1). A connection represents significant overlap determined by the redundancy analysis and the thickness of the connection represents the regularized partial correlation between the nodes in the network.",  fig.align = 'center', fig.pos = "H", warning=FALSE, message=FALSE, echo=FALSE}
+knitr::include_graphics(path = "./Figure_SI2_NR.png", dpi = 900)
+```
+
+From the redundancy chain plot (Figure 2), the fifth item is shown to be redundant with the fourth item but not the target item (shown in red; Figure 2). The target item should be the focus when considering which items are redundant. This can be determined by examining which items' content are redundant with the content of the target item. The redundancy chain plot can be consulted to determine whether multiple items are redundant with the target item. When consulting the redundancy chain plot, researchers should pay particular attention to cliques---a fully connected set of nodes. In Figure 2, there are two 3-cliques (or triangles) with the target item (i.e., Trg -- 1 -- 2 and Trg -- 1 -- 3).
+
+In a psychometric network, these triangles contribute to a measure known as the *clustering coefficient* or the extent to which a node's neighbors are connected to each other. Based on this statistical definition, the clustering coefficient has recently been considered as a measure of redundancy in networks (Costantini et al., 2019; Dinic, Wertag, Tomaševic, & Sokolovska, in press). In this same sense, these triangles suggest that these items are likely to have particularly high overlap. Therefore, triangles in these redundancy chain plots can be used as a heuristic for selecting items. Indeed, when inspecting these items, they appear to be relatively redundant with one another (Figure 1).
+
+In our example, we selected these items by inputing their numbers into the R console with commas separating them (i.e., `1, 2, 3`). If the researcher decides that all items are unique with respect to the target item, then they can type `0`, which will not combine any items and move to the next target item. If the user selects items, then they will be prompted to label the new composite item, which we labeled `Original Ideation` (Figure 1).
+
+The argument `type` will choose how to handle forming a composite of these items (i.e., latent variable or sum scores). We've chosen `"optimal"`, which will compute a unidimensional reflect latent variable and obtain factor scores when there are 2 or more items selected. When only one item is selected (two including the target item), the mean across the items are computed. The function will remove the selected items from the data and replace them with the new composite item. This completes the first target item and the function will proceed to the rest of the redundant items until all have been handled.
+
+Upon completing this process, the `node.redundant.combine` function will output a new data matrix (`$data`) and a matrix containing items that were selected to be redundant with one another (`$merged`). The new data will have the column names specified in the combination process with values representing either latent variable or sum scores for the combined items (i.e., components). Items that were not considered to be redundant with other items will be returned with their original values. The output of `$merged` is useful for documenting what was done, making the choices in the process transparent. We have included a .csv file containing our output `$merged` in our supplementary information for readers to review and assess.
+
+# References
+
+Christensen, A. P., Golino, H., & Silvia, P. J. (under review). A psychometric network perspective on the validity and validation of personliaty trait questionnaires. *PsyArXiv*. https://doi.org/10.31234/osf.io/ktejp
+
+Condon, D. M. (2018). The SAPA personality inventory: An empirically-derived, hierarchically-organized self-report personality assessment model. *PsyArXiv*. https://doi.org/10.31234/osf.io/sc4p9
+
+Costantini, G., Richetin, J., Preti, E., Casini, E., Epskamp, S., & Perugini, M. (2019). Stability and variability of personality networks. A tutorial on recent developments in network psychometrics. *Personality and Individual Differences*, *136*, 68–78. https://doi.org/10.1016/j.paid.2017.06.011
+
+Dinic, B. M., Wertag, A., Tomaševic, A., & Sokolovska, V. (in press). Centrality and redundancy of the Dark Tetrad traits. Personality and Individual Differences. https://doi.org/10.1016/j.paid.2019.109621
+
+Gysi, D. M., Voigt, A., de Miranda Fragoso, T., Almaas, E., & Nowick, K. (2018). wTO: An R package for computing weighted topological overlap and a consensus network with integrated visualization tool. *BMC Bioinformatics*, *19*, 392. https://doi.org/10.1186/s12859-018-2351-7
+
+McCrae, R. R., & Costa, P. T. (1987). Validation of the five-factor model of personality across instruments and observers. *Journal of Personality and Social Psychology*, *52*, 81–90. https://doi.org/10.1037/0022-3514.52.1.81
+
+Pérez, M. E., & Pericchi, L. R. (2014). Changing statistical significance with the amount of information: The adaptive $\alpha$ significance level. *Statistics & Probability Letters*, *85*, 20–24. https://doi.org/10.1016/j.spl.2013.10.018
+
+Revelle, W. (2017). psych: Procedures for psychological, psychometric, and personality research. Evanston, Illinois: Northwestern University. Retrieved from https://CRAN.R-project.org/package=psych

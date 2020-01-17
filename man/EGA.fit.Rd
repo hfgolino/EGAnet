@@ -51,13 +51,13 @@ the \code{\link[igraph]{cluster_walktrap}} algorithm}
 \item{EntropyFit}{The \code{\link[EGAnet]{tefi}} Index for the unique solutions given the range of steps
 (vector names represent the number of steps)}
 
-\item{Lowest.EntropyFit}{The lowest value for the \code{\link[EGAnet]{entropyFit}} Index}
+\item{Lowest.EntropyFit}{The lowest value for the \code{\link[EGAnet]{tefi}} Index}
 }
 \description{
 Estimates the best fitting model using \code{\link[EGAnet]{EGA}}.
 The number of steps in the \code{\link[igraph]{cluster_walktrap}} detection
 algorithm is varied and unique community solutions are compared using
-\code{\link[EGAnet]{entropyFit}}.
+\code{\link[EGAnet]{tefi}}.
 }
 \examples{
 
