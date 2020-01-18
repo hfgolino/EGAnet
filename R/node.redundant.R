@@ -41,7 +41,7 @@
 #'
 #' @examples
 #' # obtain SAPA items
-#' items <- psych::spi[,-c(1:10)]
+#' items <- psychTools::spi[,-c(1:10)]
 #'
 #' \donttest{
 #' # weighted topological overlap

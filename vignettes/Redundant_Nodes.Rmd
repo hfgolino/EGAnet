@@ -19,15 +19,15 @@ knitr::opts_chunk$set(
 # Introduction
 This vignette shows you how to use the node.redundant functions in EGAnet. The contents of this vignette is taken from Christensen, Golino, and Silvia (under review).
 
-To begin our example of structural validation from the psychometric network perspecitve, the *psych* (Revelle, 2017) pacakge must be installed and loaded.
+To begin our example of structural validation from the psychometric network perspecitve, the *psychTools* (Revelle, 2019) pacakge must be installed and loaded.
 
 ```{r install, echo = TRUE, eval = FALSE, message = FALSE, warning = FALSE}
-# Install 'psych' package
-devtools::install_version("psych", version = 1.8.12)
+# Install 'psychTools' package
+devtools::install_version("psychTools", version = 1.9.12)
 ```
 ```{r load, echo = TRUE, message = FALSE, warning = FALSE}
 # Load packages
-library(psych)
+library(psychTools)
 ```
 ```{r background packages load, eval = TRUE, echo = FALSE, comment = NA, warning = FALSE, message = FALSE}
 # Load background packages
@@ -115,4 +115,4 @@ McCrae, R. R., & Costa, P. T. (1987). Validation of the five-factor model of per
 
 Pérez, M. E., & Pericchi, L. R. (2014). Changing statistical significance with the amount of information: The adaptive $\alpha$ significance level. *Statistics & Probability Letters*, *85*, 20–24. https://doi.org/10.1016/j.spl.2013.10.018
 
-Revelle, W. (2017). psych: Procedures for psychological, psychometric, and personality research. Evanston, Illinois: Northwestern University. Retrieved from https://CRAN.R-project.org/package=psych
+Revelle, W. (2019). psychTools:Tools to Accompany the 'psych; Package for Psychological Research. Evanston, Illinois: Northwestern University. Retrieved from https://CRAN.R-project.org/package=psychTools
