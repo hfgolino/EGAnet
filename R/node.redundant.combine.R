@@ -124,11 +124,13 @@ node.redundant.combine <- function (node.redundant.obj,
 
     # Potential redundancies
     pot <- redund[[1]]
-    pot <- list(pot)
-    names(pot) <- target.item
 
     if(length(pot) != 0)
     {
+      # Configure into list
+      pot <- list(pot)
+      names(pot) <- target.item
+      
       # Initialize while escape
       escape <- FALSE
 
@@ -214,13 +216,18 @@ node.redundant.combine <- function (node.redundant.obj,
         {
           inp <- suppressWarnings(as.numeric(unlist(strsplit(unlist(strsplit(input, split = " ")), split = ","))))
 
+          ret.val <- FALSE
+          
           if(any(is.na(inp)))
-          {return(TRUE)}
-
+          {ret.val <- TRUE}
+          
           if(length(setdiff(inp, 0:length(poss))) != 0)
-          {return(TRUE)}
+          {ret.val <- TRUE}
+          
+          if(length(inp) == 0)
+          {ret.val <- TRUE}
 
-          return(FALSE)
+          return(ret.val)
         }
 
         # Redo input check
@@ -318,11 +325,27 @@ node.redundant.combine <- function (node.redundant.obj,
 
           if(length(merged[[count]]) > 2)
           {
+            # create model
             mod <- paste(paste("comb =~ ",sep=""), paste(colnames(new.data[,c(tar.idx, idx)]), collapse = " + "))
 
-            fit <- lavaan::cfa(mod, data = new.data, ...)
+            # fit model
+            fit <- lavaan::cfa(mod, data = new.data)#, ...)
+            
+            # identify cases
+            cases <- lavaan::inspect(fit, "case.idx")
+            
+            # compute latent variable
+            latent <- as.numeric(lavaan::lavPredict(fit))
+            
+            # check for missing cases and handle
+            if(length(cases) != nrow(new.data))
+            {
+              new.vec <- as.vector(matrix(NA, nrow = nrow(new.data), ncol = 1))
+              new.vec[cases] <- latent
+            }else{new.vec <- latent}
 
-            new.data[,tar.idx] <- as.numeric(lavaan::lavPredict(fit))
+            # input new vector
+            new.data[,tar.idx] <- new.vec
           }else{new.data[,tar.idx] <- rowMeans(new.data[,c(tar.idx, idx)], na.rm = TRUE)}
         }
 
@@ -414,6 +437,10 @@ node.redundant.combine <- function (node.redundant.obj,
     # Insert into new data
     colnames(new.data)[target.names] <- key[new.data.names]
   }
+  
+  # Check if 'm.mat' exists
+  if(!exists("m.mat"))
+  {m.mat <- NULL}
 
   # Initialize results list
   res <- list()

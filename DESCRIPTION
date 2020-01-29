@@ -1,6 +1,6 @@
 Package: EGAnet
 Title: Exploratory Graph Analysis - A Framework for Estimating the Number of Dimensions in Multivariate Data Using Network Psychometrics
-Version: 0.9.0
+Version: 0.9.1
 Date: 2020-1-28
 Authors@R: c(person("Hudson", "Golino", email = "hfg9s@virginia.edu", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-1601-1447")),
 	     person("Alexander", "Christensen", email = "alexpaulchristensen@gmail.com", role = "aut", comment = c(ORCID = "0000-0002-9798-7037")),
@@ -16,9 +16,8 @@ Imports: qgraph (>= 1.4.1), semPlot (>= 1.0.1),
         NetworkToolbox (>= 1.1.2), glasso (>= 1.10), stats, Matrix (>= 1.2),
         dplyr (>= 0.7.8), iterators (>= 1.0.10), plotly
 Suggests: knitr, rmarkdown, kableExtra, psych, psychTools, ggpubr, ggplot2, 
-        tidyselect (>= 0.2.5), mvtnorm (>= 1.0.8), corpcor (>= 1.6.9),  
+        tidyselect, mvtnorm (>= 1.0.8), corpcor (>= 1.6.9),  
         plyr (>= 1.8.4), matrixcalc (>= 1.0-3),
-        pbapply, OpenMx, wTO, MASS, fdrtool, fitdistrplus, 
-        foreach (>= 1.4.3), doParallel (>= 1.0.10)
+        pbapply, OpenMx, wTO, MASS, fdrtool, fitdistrplus
 VignetteBuilder: knitr
 RoxygenNote: 7.0.2
