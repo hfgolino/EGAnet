@@ -58,7 +58,7 @@
 #' redund <- node.redundant(items, type = "pcor", method = "adapt")
 #'
 #' # check redundancies
-#' key.ind <- match(colnames(items), as.character(psychTools::spi.dictionary$item_id))
+#' key.ind <- match(colnames(items), as.character(psych::spi.dictionary$item_id))
 #' key <- as.character(psychTools::spi.dictionary$item[key.ind])
 #'
 #' # change names in redundancy output to questionnaire item description

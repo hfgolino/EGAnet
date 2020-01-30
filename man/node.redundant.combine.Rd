@@ -64,7 +64,7 @@ variables in their data
 }
 \examples{
 # obtain SAPA items
-items <- psych::spi[,-c(1:10)]
+items <- psychTools::spi[,-c(1:10)]
 
 \donttest{
 # weighted topological overlap
@@ -75,7 +75,7 @@ redund <- node.redundant(items, type = "pcor", method = "adapt")
 
 # check redundancies
 key.ind <- match(colnames(items), as.character(psych::spi.dictionary$item_id))
-key <- as.character(psych::spi.dictionary$item[key.ind])
+key <- as.character(psychTools::spi.dictionary$item[key.ind])
 
 # change names in redundancy output to questionnaire item description
 named.nr <- node.redundant.names(redund, key)
