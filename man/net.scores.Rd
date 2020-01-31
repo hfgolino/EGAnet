@@ -4,7 +4,7 @@
 \alias{net.scores}
 \title{Network Scores}
 \usage{
-net.scores(data, A, wc, global = TRUE, type = c("sumscore", "latent"), ...)
+net.scores(data, A, wc, global = FALSE, type = c("sumscore", "latent"), ...)
 }
 \arguments{
 \item{data}{Matrix or data frame.
@@ -20,7 +20,7 @@ is input for argument \code{A}}
 
 \item{global}{Boolean.
 Should general network loadings be computed in scores?
-Defaults to \code{TRUE}.
+Defaults to \code{FALSE}.
 If there is more than one dimension and there is theoretically
 one global dimension, then general loadings of the dimensions
 onto the global dimension can be included in the weighted

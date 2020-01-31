@@ -56,7 +56,7 @@ and the function \link[wTO]{wTO} from the wTO package.
 }
 \examples{
 # obtain SAPA items
-items <- psych::spi[,-c(1:10)]
+items <- psychTools::spi[,-c(1:10)]
 
 \donttest{
 # weighted topological overlap
