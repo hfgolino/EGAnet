@@ -130,7 +130,7 @@ node.redundant.combine <- function (node.redundant.obj,
       # Configure into list
       pot <- list(pot)
       names(pot) <- target.item
-      
+
       # Initialize while escape
       escape <- FALSE
 
@@ -217,13 +217,13 @@ node.redundant.combine <- function (node.redundant.obj,
           inp <- suppressWarnings(as.numeric(unlist(strsplit(unlist(strsplit(input, split = " ")), split = ","))))
 
           ret.val <- FALSE
-          
+
           if(any(is.na(inp)))
           {ret.val <- TRUE}
-          
+
           if(length(setdiff(inp, 0:length(poss))) != 0)
           {ret.val <- TRUE}
-          
+
           if(length(inp) == 0)
           {ret.val <- TRUE}
 
@@ -329,14 +329,14 @@ node.redundant.combine <- function (node.redundant.obj,
             mod <- paste(paste("comb =~ ",sep=""), paste(colnames(new.data[,c(tar.idx, idx)]), collapse = " + "))
 
             # fit model
-            fit <- lavaan::cfa(mod, data = new.data)#, ...)
-            
+            fit <- lavaan::cfa(mod, data = new.data, ...)
+
             # identify cases
             cases <- lavaan::inspect(fit, "case.idx")
-            
+
             # compute latent variable
             latent <- as.numeric(lavaan::lavPredict(fit))
-            
+
             # check for missing cases and handle
             if(length(cases) != nrow(new.data))
             {
@@ -426,7 +426,7 @@ node.redundant.combine <- function (node.redundant.obj,
   }
 
   # Replace column names for item names not changed
-  if(any(colnames(new.data) %in% key))
+  if(any(colnames(new.data) %in% names(key)))
   {
     # Target names
     target.names <- which(colnames(new.data) %in% names(key))
@@ -437,7 +437,7 @@ node.redundant.combine <- function (node.redundant.obj,
     # Insert into new data
     colnames(new.data)[target.names] <- key[new.data.names]
   }
-  
+
   # Check if 'm.mat' exists
   if(!exists("m.mat"))
   {m.mat <- NULL}

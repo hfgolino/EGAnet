@@ -31,7 +31,7 @@
 #'
 #' @param global Boolean.
 #' Should general network loadings be computed in scores?
-#' Defaults to \code{TRUE}.
+#' Defaults to \code{FALSE}.
 #' If there is more than one dimension and there is theoretically
 #' one global dimension, then general loadings of the dimensions
 #' onto the global dimension can be included in the weighted
@@ -95,7 +95,7 @@
 #' @export
 #'
 #Network Scores
-net.scores <- function (data, A, wc, global = TRUE,
+net.scores <- function (data, A, wc, global = FALSE,
                         type = c("sumscore", "latent"), ...)
 {
   ####Missing arguments checks####

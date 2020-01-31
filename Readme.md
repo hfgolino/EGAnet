@@ -1,8 +1,14 @@
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+
 Exploratory Graph Analysis: An introduction using the EGAnet package.
 =============
 ### Hudson F. Golino ###
 ### Assistant Professor of Quantitative Methods, Department of Psychology, University of Virginia. ###
 ### Contact: <hfg9s@virginia.edu> ###
+
+### Alexander P. Christensen ###
+### Department of Psychology, University of North Carolina at Greensboro. ###
+### Contact: <apchrist@uncg.edu> ###
 
 
 News
