@@ -80,30 +80,30 @@ node.redundant.combine <- function (node.redundant.obj,
   # Check for node.redundant object class
   if(class(node.redundant.obj) != "node.redundant")
   {stop("A 'node.redundant' object must be used as input")}
-
+  
   # Missing type
   if(missing(type))
   {type <- "optimal"
   }else{type <- match.arg(type)}
-
+  
   # Redundant list
   redund <- node.redundant.obj$redundant
-
+  
   # New data
   new.data <- node.redundant.obj$data
-
+  
   # Weights
   net <- as.matrix(node.redundant.obj$network)
-
+  
   # Track merged items
   merged <- list()
-
+  
   # Track changed names
   name.chn <- vector("character")
-
+  
   # Initalize count
   count <- 0
-
+  
   if("key" %in% names(node.redundant.obj))
   {
     key <- node.redundant.obj$key
@@ -112,19 +112,19 @@ node.redundant.combine <- function (node.redundant.obj,
     key <- colnames(node.redundant.obj$data)
     names(key) <- key
   }
-
+  
   # Loop through named node redundant list
   while(length(redund) != 0)
   {
     # Tracking list
     track <- redund
-
+    
     # Targeting redundancy
     target.item <- names(redund)[1]
-
+    
     # Potential redundancies
     pot <- redund[[1]]
-
+    
     if(length(pot) != 0)
     {
       # Configure into list
@@ -133,15 +133,15 @@ node.redundant.combine <- function (node.redundant.obj,
       
       # Initialize while escape
       escape <- FALSE
-
+      
       # Initialize count
       count2 <- 1
-
+      
       while(!escape)
       {
         # Identify target redundancies
         target <- redund[na.omit(match(pot[[count2]], names(redund)))]
-
+        
         if(length(target) == 0)
         {
           # Escape while loop
@@ -149,53 +149,53 @@ node.redundant.combine <- function (node.redundant.obj,
         }else{
           # Increase count
           count2 <- count2 + 1
-
+          
           # Input extended redundancies
           pot[[count2]] <- target
         }
       }
-
+      
       # Possible options
       poss <- unique(unname(unlist(pot)))
-
+      
       # Organize plot of redundancy connections
       mat <- matrix(0, nrow = length(poss) + 1, ncol = length(poss) + 1)
       colnames(mat) <- c(paste("Target"), 1:length(poss))
       row.names(mat) <- colnames(mat)
-
+      
       mat["Target",paste(1:length(unlist(pot[[1]])))] <- net[names(key[match(target.item, key)]),names(key[match(unlist(pot[[1]]),key)])]
       mat[paste(1:length(unlist(pot[[1]]))),"Target"] <- net[names(key[match(target.item, key)]),names(key[match(unlist(pot[[1]]),key)])]
-
+      
       if(length(pot) != 1)
       {
         # Remove first element
         ext <- pot[-1]
-
+        
         # Loop through rest of extended
         for(i in 1:length(ext))
         {
           # Target extended
           target.ext <- ext[[i]]
-
+          
           # Loop through target
           for(j in 1:length(target.ext))
           {
             # Single out each element
             single <- target.ext[[j]]
-
+            
             # Get element in possible redundancies
             elem <- match(names(target.ext)[j], poss)
-
+            
             # Get elements redundant with element
             red.elem <- match(single, poss)
-
+            
             # Put into matrix
             mat[paste(elem),paste(red.elem)] <- net[names(key[match(poss[elem], key)]),names(key[match(poss[red.elem],key)])]
             mat[paste(red.elem),paste(elem)] <- net[names(key[match(poss[elem], key)]),names(key[match(poss[red.elem],key)])]
           }
         }
       }
-
+      
       if(!auto)
       {
         # Print target and potential options
@@ -203,19 +203,19 @@ node.redundant.combine <- function (node.redundant.obj,
         cat("\n\nPotential redundancies:\n\n")
         cat("0. Do not combine with any")
         cat(paste("\n", 1:length(poss), ". ", "'", poss, "'", sep = ""),"\n")
-
+        
         # Plot
         qgraph::qgraph(mat, color = c(paste("red"),rep("white",length(poss))), layout = "circle",
                        title = "Regularized partial correlations")
-
+        
         # Get input
         input <- readline(prompt = "Enter numbers of items redundant with the target item (separate by commas): ")
-
+        
         # Input check function
         in.check <- function(input)
         {
           inp <- suppressWarnings(as.numeric(unlist(strsplit(unlist(strsplit(input, split = " ")), split = ","))))
-
+          
           ret.val <- FALSE
           
           if(any(is.na(inp)))
@@ -226,95 +226,95 @@ node.redundant.combine <- function (node.redundant.obj,
           
           if(length(inp) == 0)
           {ret.val <- TRUE}
-
+          
           return(ret.val)
         }
-
+        
         # Redo input check
         re.input <- in.check(input)
-
+        
         while(re.input)
         {
           # Print message to try again
           message("Inappropriate input. Try again.")
-
+          
           # Get input
           input <- readline(prompt = "Enter numbers of items redundant with the target item (separate by commas): ")
-
+          
           # Redo input check
           re.input <- in.check(input)
         }
-
+        
       }else{
-
+        
         # Get cliques
         cliq <- igraph::max_cliques(NetworkToolbox::convert2igraph(mat))
-
+        
         # Initialize count 3
         count3 <- 0
-
+        
         # Remove cliques not containing one
         for(n in 1:length(cliq))
         {
           # Increase count 3
           count3 <- count3 + 1
-
+          
           if(!any(cliq[[count3]] == 1))
           {
             # Remove clique
             cliq[[count3]] <- NULL
-
+            
             # Decrease count 3
             count3 <- count3 - 1
           }else{
             cliq[[count3]] <- cliq[[count3]] - 1
           }
         }
-
+        
         # Clique lengths
         cliq.len <- unlist(lapply(cliq, length))
-
+        
         # Get maximum clique size
         max.cliq <- max(cliq.len)
-
+        
         # Heuristics
         if(max.cliq >= 3)
         {input <- paste(setdiff(unique(unlist(cliq[which(cliq.len == max.cliq)])),0), collapse = ", ")
         }else{
-
+          
           # Obtain cliques
           cliq <- cliq[which(cliq.len == max.cliq)]
-
+          
           # Weights vector
           wei <- numeric(length(cliq))
-
+          
           # Identify maximum weight
           for(n in 1:length(cliq))
           {wei[n] <- net[names(key[match(poss[cliq[[n]]], key)]),names(key[match(target.item,key)])]}
-
+          
           # Obtain node for input
           input <- paste(setdiff(cliq[[which.max(wei)]],0))
         }
       }
-
+      
       if(input != "0")
       {
         # Convert to numeric
         re.items <- as.numeric(unlist(strsplit(unlist(strsplit(input, split = " ")), split = ",")))
-
+        
         # Items to combine with target
         comb <- poss[re.items]
-
+        
         # Index items
         idx <- names(key)[match(comb, key)]
-
+        
         # Target index
         tar.idx <- names(key)[match(target.item, key)]
-
+        
         # Update merged list
         count <- count + 1
         merged[[count]] <- c(key[tar.idx], key[idx])
-
+        
         # Combine into target index
         if(type == "sum")
         {new.data[,tar.idx] <- rowMeans(new.data[,c(tar.idx, idx)], na.rm = TRUE)
@@ -322,14 +322,14 @@ node.redundant.combine <- function (node.redundant.obj,
         {
           # Latent variable if more than two variables
           # Otherwise, sumscore for two variables
-
+          
           if(length(merged[[count]]) > 2)
           {
             # create model
             mod <- paste(paste("comb =~ ",sep=""), paste(colnames(new.data[,c(tar.idx, idx)]), collapse = " + "))
-
+            
             # fit model
-            fit <- lavaan::cfa(mod, data = new.data)#, ...)
+            fit <- lavaan::cfa(mod, data = new.data, ...)
             
             # identify cases
             cases <- lavaan::inspect(fit, "case.idx")
@@ -343,12 +343,12 @@ node.redundant.combine <- function (node.redundant.obj,
               new.vec <- as.vector(matrix(NA, nrow = nrow(new.data), ncol = 1))
               new.vec[cases] <- latent
             }else{new.vec <- latent}
-
+            
             # input new vector
             new.data[,tar.idx] <- new.vec
           }else{new.data[,tar.idx] <- rowMeans(new.data[,c(tar.idx, idx)], na.rm = TRUE)}
         }
-
+        
         # Ask for new label
         if(!auto)
         {lab <- readline(prompt = "New label for item (no quotations): ")
@@ -356,37 +356,37 @@ node.redundant.combine <- function (node.redundant.obj,
         name.chn[count] <- lab
         col.idx <- match(tar.idx, colnames(new.data))
         colnames(new.data)[col.idx] <- lab
-
+        
         # Remove redundant variables from data
         rm.idx <- match(idx, colnames(new.data))
         new.data <- new.data[,-rm.idx]
-
+        
         # Remove variables from potential future options
         opts <- redund[na.omit(match(comb, names(redund)))]
-
+        
         if(length(opts) != 0)
         {redund[names(opts)] <- NULL}
-
+        
         # Remove target item
         redund[[1]] <- NULL
-
+        
         # Remove variables within future options
         rm.var <- which(lapply(lapply(redund, match, comb), function(x){any(!is.na(x))}) == TRUE)
-
+        
         if(length(rm.var) != 0)
         {
           for(j in 1:length(rm.var))
           {
             # Target option
             target.opt <- redund[rm.var][[j]]
-
+            
             # Remove target variable(s)
             target.var <- na.omit(match(comb, target.opt))
-
+            
             redund[rm.var][[j]] <- target.opt[-target.var]
           }
         }
-
+        
       }else{
         # Map target item to column names of new data
         item.name <- names(key)[match(target.item, key)]
@@ -394,7 +394,7 @@ node.redundant.combine <- function (node.redundant.obj,
         colnames(new.data)[target.col] <- target.item
         redund[[1]] <- NULL
       }
-
+      
     }else{
       # Map target item to column names of new data
       item.name <- names(key)[match(target.item, key)]
@@ -402,38 +402,38 @@ node.redundant.combine <- function (node.redundant.obj,
       colnames(new.data)[target.col] <- target.item
       redund[[1]] <- NULL
     }
-
+    
   }
-
+  
   # Transform merged list to matrix
   if(length(merged) != 0)
   {
     # Number of rows for matrix
     m.rows <- max(unlist(lapply(merged, length)))
-
+    
     # Initialize merged matrix
     m.mat <- matrix("", nrow = m.rows, ncol = length(merged))
-
+    
     # Input into merged matrix
     for(i in 1:length(merged))
     {
       diff <- m.rows - length(merged[[i]])
-
+      
       m.mat[,i] <- c(merged[[i]], rep("", diff))
     }
-
+    
     colnames(m.mat) <- name.chn
   }
-
+  
   # Replace column names for item names not changed
-  if(any(colnames(new.data) %in% key))
+  if(any(colnames(new.data) %in% names(key)))
   {
     # Target names
     target.names <- which(colnames(new.data) %in% names(key))
-
+    
     # new.data names
     new.data.names <- colnames(new.data)[target.names]
-
+    
     # Insert into new data
     colnames(new.data)[target.names] <- key[new.data.names]
   }
@@ -441,13 +441,13 @@ node.redundant.combine <- function (node.redundant.obj,
   # Check if 'm.mat' exists
   if(!exists("m.mat"))
   {m.mat <- NULL}
-
+  
   # Initialize results list
   res <- list()
   res$data <- new.data
   res$merged <- m.mat
-
+  
   return(res)
-
+  
 }
 #----
