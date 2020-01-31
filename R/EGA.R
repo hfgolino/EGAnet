@@ -259,7 +259,7 @@ EGA <- function (data, model = c("glasso", "TMFG"), plot.EGA = TRUE, n = NULL,
     }
   }else{plot.ega <- qgraph::qgraph(a$network, DoNotPlot = TRUE)}
   
-  row.names(a$dim.variables) <- plot.ega$graphAttributes$Nodes$labels
+  row.names(a$dim.variables) <- plot.ega$graphAttributes$Nodes$labels[match(row.names(a$dim.variables), names(plot.ega$graphAttributes$Nodes$labels))]
   
   a$EGA.type <- ifelse(a$n.dim <= 2, "Unidimensional EGA", "Traditional EGA")
   class(a) <- "EGA"
