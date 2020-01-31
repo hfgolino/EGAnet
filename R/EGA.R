@@ -196,19 +196,19 @@ EGA <- function (data, model = c("glasso", "TMFG"), plot.EGA = TRUE, n = NULL,
       estimated.network <- multi.cor.res$estimated.network
       wc <- multi.cor.res$wc
     }
-      
+    
   }else{
-  
+    
     #-------------------------------------------------------------------------
     ## EGA WITH SIMULATED DATA + ORIGINAL DATA (UNIDIMENSIONALITY CHECK)
     #-------------------------------------------------------------------------
-  
+    
     n <- nrow(data)
     
     data.sim <- sim.func(data = data, nvar = nvar, nfact = nfact, load = load)
     
     uni.res <- EGA.estimate(data.sim, model = model, steps = steps, n = n, ...)
-  
+    
     if(uni.res$n.dim <= nfact + 1)
     {
       n.dim <- uni.res$n.dim
@@ -216,15 +216,15 @@ EGA <- function (data, model = c("glasso", "TMFG"), plot.EGA = TRUE, n = NULL,
       estimated.network <- uni.res$estimated.network[-c(1:(nvar*nfact)),-c(1:(nvar*nfact))]
       wc <- uni.res$wc[-c(1:(nvar*nfact))]
     }else{
-    
+      
       #-------------------------------------------------------------------------
       ## TRADITIONAL EGA (IF NUMBER OF FACTORS > 2)
       #-------------------------------------------------------------------------
-    
+      
       cor.data <- uni.res$cor.data[-c(1:(nvar*nfact)),-c(1:(nvar*nfact))]
-    
+      
       multi.res <- suppressMessages(EGA.estimate(cor.data, model = model, steps = steps, n = n, ...))
-    
+      
       n.dim <- multi.res$n.dim
       cor.data <- multi.res$cor.data
       estimated.network <- multi.res$estimated.network
@@ -257,7 +257,9 @@ EGA <- function (data, model = c("glasso", "TMFG"), plot.EGA = TRUE, n = NULL,
       plot.ega <- qgraph::qgraph(a$network, layout = "spring",
                                  vsize = 6, groups = as.factor(a$wc), label.prop = 1, legend = TRUE)
     }
-  }
+  }else{plot.ega <- qgraph::qgraph(a$network, DoNotPlot = TRUE)}
+  
+  row.names(a$dim.variables) <- plot.ega$graphAttributes$Nodes$labels
   
   a$EGA.type <- ifelse(a$n.dim <= 2, "Unidimensional EGA", "Traditional EGA")
   class(a) <- "EGA"
