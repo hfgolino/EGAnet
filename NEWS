@@ -10,6 +10,8 @@ o updated `EGA` functionality: message for 'gamma' value used and `EGA.estimate`
 
 o removed *iterators* dependency
 
+o ordering and name fix in `net.loads`
+
 
 Changes in version 0.9.0
 

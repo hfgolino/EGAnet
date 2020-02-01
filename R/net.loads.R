@@ -79,11 +79,14 @@ net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
   # Detect if input is an 'EGA' object
   if(any(class(A) == "EGA"))
   {
+    # Order
+    ord <- match(A$dim.variables$items, names(A$wc))
+    
     # Grab communities
-    wc <- A$wc
+    wc <- A$wc[ord]
     
     # Replace 'A' with 'EGA' network
-    A <- A$network
+    A <- A$network[ord,ord]
   }
   
   comc <- NetworkToolbox::comcat(A,comm=wc,metric="each",absolute=TRUE,diagonal=1)
@@ -112,8 +115,11 @@ net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
     if(is.null(colnames(comm.str2)))
     {colnames(comm.str2) <- 1:ncol(comm.str2)}
     
-    comm.str2 <- comm.str2[,order(colnames(comm.str2))]
-    res$unstd <- comm.str2
+    unstd <- comm.str2[,order(colnames(comm.str2))]
+    
+    row.names(unstd) <- colnames(A)
+    
+    res$unstd <- unstd
     
     #standardized loadings
     if(ncol(comm.str)!=1)
@@ -135,6 +141,9 @@ net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
     {colnames(unstd) <- 1:ncol(unstd)}
     
     unstd <- unstd[,order(colnames(unstd))]
+    
+    row.names(unstd) <- colnames(A)
+    
     res$unstd <- round(unstd,3)
     
     #standardized loadings

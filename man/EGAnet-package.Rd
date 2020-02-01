@@ -31,5 +31,5 @@ Investigating the performance of Exploratory Graph Analysis and traditional tech
 doi: \href{https://psyarxiv.com/gzcre/}{10.31234/osf.io/gzcre}
 }
 \author{
-Hudson Golino <hfg9s@virginia.edu>
+Hudson Golino <hfg9s@virginia.edu> and Alexander Christensen <alexpaulchristensen@gmail.com>
 }

@@ -24,7 +24,7 @@
 #' \emph{PsyArXiv}.
 #' doi: \href{https://psyarxiv.com/gzcre/}{10.31234/osf.io/gzcre}
 #'
-#' @author Hudson Golino <hfg9s@virginia.edu>
+#' @author Hudson Golino <hfg9s@virginia.edu> and Alexander Christensen <alexpaulchristensen@gmail.com>
 #' 
 #' @importFrom utils packageDescription
 #'
