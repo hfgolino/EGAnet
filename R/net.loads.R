@@ -86,8 +86,8 @@ net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
     A <- A$network
   }
   
-  comc <- NetworkToolbox::comcat(A,comm=wc,metric="each",absolute=FALSE,diagonal=1)
-  stab <- NetworkToolbox::stable(A,comm=wc,absolute=FALSE,diagonal=1)
+  comc <- NetworkToolbox::comcat(A,comm=wc,metric="each",absolute=TRUE,diagonal=1)
+  stab <- NetworkToolbox::stable(A,comm=wc,absolute=TRUE,diagonal=1)
   
   for(q in 1:nrow(comc))
   {comc[q,which(is.na(comc[q,]))] <- stab[q]}
