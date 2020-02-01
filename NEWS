@@ -12,6 +12,8 @@ o removed *iterators* dependency
 
 o ordering and name fix in `net.loads`
 
+o auto-adjusts y-axis label size for `itemStability` plot based on number of nodes or length of node names
+
 
 Changes in version 0.9.0
 

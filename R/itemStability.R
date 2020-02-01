@@ -376,7 +376,7 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
     
     item.repl <- data.frame(Item = names(itemCon),
                             Replication = itemCon,
-                            Comm = factor(comm,7:1))
+                            Comm = factor(comm,max(comm):1))
     
     
     ic.plot <- ggpubr::ggdotchart(item.repl, x = "Item", y = "Replication",
@@ -393,6 +393,21 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
     )
     
     ic.plot <- ic.plot + ggplot2::ylim(c(0,1))
+    
+    # Adjust item label sizes based on
+    sizes <- seq(6,12,.25)
+    ## Number of nodes
+    nodes <- rev(seq(0, 200, length.out = length(sizes)))
+    n.size <- min(which(length(orig.wc) > nodes))
+    ## Number of characters in item name
+    chars <- rev(seq(0,100, length.out = length(sizes)))
+    ### Maximum characters in item name
+    max.chars <- max(unlist(lapply(row.names(item.repl),nchar)))
+    c.size <- min(which(max.chars > chars))
+    # Text size
+    text.size <- sizes[min(c(n.size,c.size))]
+    
+    ic.plot <- ic.plot + ggplot2::theme(axis.text.y = ggplot2::element_text(size=text.size))
     
     if(plot.item.rep)
     {result$plot.itemStability <- ic.plot}
