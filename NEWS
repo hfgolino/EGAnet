@@ -1,3 +1,14 @@
+Changes in version 0.9.2
+
+o updated `node.redundant.combine` (bug fixes, latent variable option)
+
+o major bug fix in `net.loads`: corrected loadings greater than 1 when there were many negative values
+
+o added `EGA.estimate` to clean up `EGA` code and allow for future implementations of different network estimation methods and community detection algorithms
+
+o updated `EGA` functionality: message for 'gamma' value used and `EGA.estimate` compatiability
+
+
 Changes in version 0.9.0
 
 o updated list of dependencies
@@ -12,10 +23,10 @@ o citation update
 
 o added function `dimStability` to compute dimensional stability
 
-o added a series of functions for `node.redundant`, which facilitat
-es detecting and combining redundant nodes in networks
+o added a series of functions for `node.redundant`, which facilitates detecting and combining redundant nodes in networks
 
 o updated the EGA.fit function, so now a correlation matrix can be used as well.
+
 
 Changes in version 0.8.0
 
@@ -26,6 +37,7 @@ o new functions 'cmi', 'pmi' and 'residualEGA' added: 'cmi' computes conditional
 o new dataset 'optimism' added
 
 o documentation and functionality for several functions updated
+
 
 Changes in version 0.7.0
 
