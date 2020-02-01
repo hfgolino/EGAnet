@@ -8,6 +8,8 @@ o added `EGA.estimate` to clean up `EGA` code and allow for future implementatio
 
 o updated `EGA` functionality: message for 'gamma' value used and `EGA.estimate` compatiability
 
+o removed *iterators* dependency
+
 
 Changes in version 0.9.0
 

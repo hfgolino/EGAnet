@@ -2,7 +2,7 @@
 % Please edit documentation in R/EGA.R
 \name{EGA}
 \alias{EGA}
-\title{Apply the Exploratory Graph Analysis technique}
+\title{Applies the Exploratory Graph Analysis technique}
 \usage{
 EGA(
   data,
@@ -54,12 +54,29 @@ Defaults to 4.}
 \item{...}{Additional arguments to be passed to \code{\link{EBICglasso.qgraph}}
 or \code{\link[NetworkToolbox]{TMFG}}}
 }
+\value{
+Returns a list containing:
+
+\item{estimated.network}{A symmetric network estimated using either the
+\code{\link{EBICglasso.qgraph}} or \code{\link[NetworkToolbox]{TMFG}}}
+
+\item{wc}{A vector representing the community (dimension) membership
+of each node in the network. \code{NA} values mean that the node
+was disconnected from the network}
+
+\item{n.dim}{A scalar of how many total dimensions were identified in the network}
+
+\item{cor.data}{The zero-order correlation matrix}
+}
 \description{
 Estimates the number of dimensions of a given dataset/instrument
 using graphical lasso (\code{\link{EBICglasso.qgraph}}) or the
 Triangulated Maximally Filtered Graph (\code{\link[NetworkToolbox]{TMFG}})
 method and the walktrap community detection algorithm (\code{\link[igraph]{cluster_walktrap}}).
 The glasso regularization parameter is set via EBIC.
+}
+\details{
+This algorithm includes checking for whether the data is unidimensional.
 }
 \examples{
 
@@ -86,6 +103,7 @@ summary(ega.intel)
 #plot
 plot(ega.intel)
 }
+
 }
 \references{
 Golino, H. F., & Epskamp, S. (2017).
@@ -98,9 +116,9 @@ Estimating the dimensionality of intelligence like data using Exploratory Graph 
 \emph{Intelligence}, \emph{62}, 54-70.
 doi: \href{https://doi.org/10.1016/j.intell.2017.02.007}{j.intell.2017.02.007}
 
-Golino, H., Shi, D., Garrido, L. E., Christensen, A. P., Nieto, M. D., Sadana, R., & Thiyagarajan, J. A. (2018).
+Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., & Thiyagarajan, J. A. (in press).
 Investigating the performance of Exploratory Graph Analysis and traditional techniques to identify the number of latent factors: A simulation and tutorial.
-\emph{PsyArXiv}.
+\emph{Psychological Methods}.
 doi: \href{https://psyarxiv.com/gzcre/}{10.31234/osf.io/gzcre}
 }
 \seealso{
