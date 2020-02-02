@@ -89,17 +89,32 @@ net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
     A <- A$network[ord,ord]
   }
   
-  comc <- NetworkToolbox::comcat(A,comm=wc,metric="each",absolute=TRUE,diagonal=1)
-  stab <- NetworkToolbox::stable(A,comm=wc,absolute=TRUE,diagonal=1)
+  # Dimensions
+  dims <- max(wc)
   
-  for(q in 1:nrow(comc))
-  {comc[q,which(is.na(comc[q,]))] <- stab[q]}
-  
-  if(ncol(comc)!=1)
+  mat.func <- function(A, wc, metric = "each", absolute, diagonal)
   {
-    comm.str <- comc[,order(colnames(comc))]
-    comm.str <- round(comm.str,3)
-  }else{comm.str <- stab}
+    comc <- NetworkToolbox::comcat(A = A, comm = wc, metric = metric,
+                                   absolute = absolute, diagonal = diagonal)
+    stab <- NetworkToolbox::stable(A = A, comm = wc, absolute = absolute, diagonal = diagonal)
+    
+    for(q in 1:nrow(comc))
+    {comc[q,which(is.na(comc[q,]))] <- stab[q]}
+    
+    if(ncol(comc)!=1)
+    {
+      comm.str <- comc[,order(colnames(comc))]
+      comm.str <- round(comm.str,3)
+    }else{comm.str <- stab}
+    
+    return(comm.str)
+  }
+  
+  # Obtain signs
+  abs.str <- mat.func(A = A, wc = wc, absolute = TRUE, diagonal = 0)
+  sign.str <- mat.func(A = A, wc = wc, absolute = FALSE, diagonal = 0)
+  
+  comm.str <- ifelse(sign(sign.str)==0,1,sign(sign.str)) * abs.str
   
   #result list
   res <- list()
@@ -107,24 +122,21 @@ net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
   #unstandardized loadings
   if(rm.zero)
   {
-    comm.str2 <- as.data.frame(ifelse(comm.str==0,"",round(comm.str,3)))
-    unstd <- apply(as.matrix(comm.str2),2,as.numeric)
+    comm.str <- as.data.frame(ifelse(comm.str==0,"",round(comm.str,3)))
+    unstd <- apply(as.matrix(comm.str),2,as.numeric)
     unstd <- ifelse(is.na(unstd),0,unstd)
-    row.names(comm.str2) <- colnames(A)
+    row.names(comm.str) <- colnames(A)
     
-    if(is.null(colnames(comm.str2)))
-    {colnames(comm.str2) <- 1:ncol(comm.str2)}
+    if(is.null(colnames(comm.str)))
+    {colnames(comm.str) <- 1:ncol(comm.str)}
     
-    unstd <- comm.str2[,order(colnames(comm.str2))]
-    
-    row.names(unstd) <- colnames(A)
-    
-    res$unstd <- unstd
+    comm.str <- comm.str[,order(colnames(comm.str))]
+    res$unstd <- comm.str
     
     #standardized loadings
-    if(ncol(comm.str)!=1)
-    {std <- t(t(comm.str) / sqrt(colSums(abs(comm.str))))
-    }else{std <- t(t(comm.str) / sqrt(sum(abs(comm.str))))}
+    if(dims!=1)
+    {std <- t(t(unstd) / sqrt(colSums(abs(unstd))))
+    }else{std <- t(t(unstd) / sqrt(sum(abs(unstd))))}
     
     std <- round(std,3)
     std <- as.data.frame(ifelse(std==0,"",std))
@@ -141,13 +153,10 @@ net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
     {colnames(unstd) <- 1:ncol(unstd)}
     
     unstd <- unstd[,order(colnames(unstd))]
-    
-    row.names(unstd) <- colnames(A)
-    
     res$unstd <- round(unstd,3)
     
     #standardized loadings
-    if(ncol(comc)!=1)
+    if(dims!=1)
     {std <- t(t(unstd) / sqrt(colSums(abs(unstd))))
     }else{std <- t(t(unstd) / sqrt(sum(abs(unstd))))}
     

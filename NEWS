@@ -14,6 +14,8 @@ o ordering and name fix in `net.loads`
 
 o auto-adjusts y-axis label size for `itemStability` plot based on number of nodes or length of node names
 
+o `net.loads` adjusted for larger values using absolute values and applying the sign afterwards
+
 
 Changes in version 0.9.0
 
