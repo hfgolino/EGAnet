@@ -8,11 +8,11 @@
 <meta name="generator" content="pandoc" />
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 
 <meta name="author" content="Alexander P. Christensen and Hudson Golino" />
 
-<meta name="date" content="2020-01-15" />
+<meta name="date" content="2020-02-02" />
 
 <title>Redundant Nodes</title>
 
@@ -128,9 +128,6 @@ padding-right: 2em;
 font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 font-size: 14px;
 line-height: 1.35;
-}
-#header {
-text-align: center;
 }
 #TOC {
 clear: both;
@@ -299,7 +296,8 @@ code > span.st { color: #d14; }
 code > span.co { color: #888888; font-style: italic; } 
 code > span.ot { color: #007020; } 
 code > span.al { color: #ff0000; font-weight: bold; } 
-code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61717; background-color: #e3d2d2; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
 </style>
 
 
@@ -314,18 +312,18 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 
 <h1 class="title toc-ignore">Redundant Nodes</h1>
 <h4 class="author">Alexander P. Christensen and Hudson Golino</h4>
-<h4 class="date">2020-01-15</h4>
+<h4 class="date">2020-02-02</h4>
 
 
 
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
 <p>This vignette shows you how to use the node.redundant functions in EGAnet. The contents of this vignette is taken from Christensen, Golino, and Silvia (under review).</p>
-<p>To begin our example of structural validation from the psychometric network perspecitve, the <em>psych</em> (Revelle, 2017) pacakge must be installed and loaded.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="co"># Install &#39;psych&#39; package</span></span>
-<span id="cb1-2"><a href="#cb1-2"></a>devtools<span class="op">::</span><span class="kw">install_version</span>(<span class="st">&quot;psych&quot;</span>, <span class="dt">version =</span> <span class="dv">1</span>.<span class="fl">8.12</span>)</span></code></pre></div>
+<p>To begin our example of structural validation from the psychometric network perspecitve, the <em>psychTools</em> (Revelle, 2019) pacakge must be installed and loaded.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="co"># Install &#39;psychTools&#39; package</span></span>
+<span id="cb1-2"><a href="#cb1-2"></a>devtools<span class="op">::</span><span class="kw">install_version</span>(<span class="st">&quot;psychTools&quot;</span>, <span class="dt">version =</span> <span class="dv">1</span>.<span class="fl">9.12</span>)</span></code></pre></div>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="co"># Load packages</span></span>
-<span id="cb2-2"><a href="#cb2-2"></a><span class="kw">library</span>(psych)</span></code></pre></div>
+<span id="cb2-2"><a href="#cb2-2"></a><span class="kw">library</span>(psychTools)</span></code></pre></div>
 </div>
 <div id="data-management" class="section level1">
 <h1>Data Management</h1>
@@ -422,7 +420,7 @@ An example of a redundancy chain plot. The red node indicates the target item an
 <p>Gysi, D. M., Voigt, A., de Miranda Fragoso, T., Almaas, E., &amp; Nowick, K. (2018). wTO: An R package for computing weighted topological overlap and a consensus network with integrated visualization tool. <em>BMC Bioinformatics</em>, <em>19</em>, 392. <a href="https://doi.org/10.1186/s12859-018-2351-7" class="uri">https://doi.org/10.1186/s12859-018-2351-7</a></p>
 <p>McCrae, R. R., &amp; Costa, P. T. (1987). Validation of the five-factor model of personality across instruments and observers. <em>Journal of Personality and Social Psychology</em>, <em>52</em>, 81–90. <a href="https://doi.org/10.1037/0022-3514.52.1.81" class="uri">https://doi.org/10.1037/0022-3514.52.1.81</a></p>
 <p>Pérez, M. E., &amp; Pericchi, L. R. (2014). Changing statistical significance with the amount of information: The adaptive <span class="math inline">\(\alpha\)</span> significance level. <em>Statistics &amp; Probability Letters</em>, <em>85</em>, 20–24. <a href="https://doi.org/10.1016/j.spl.2013.10.018" class="uri">https://doi.org/10.1016/j.spl.2013.10.018</a></p>
-<p>Revelle, W. (2017). psych: Procedures for psychological, psychometric, and personality research. Evanston, Illinois: Northwestern University. Retrieved from <a href="https://CRAN.R-project.org/package=psych" class="uri">https://CRAN.R-project.org/package=psych</a></p>
+<p>Revelle, W. (2019). psychTools:Tools to Accompany the ’psych; Package for Psychological Research. Evanston, Illinois: Northwestern University. Retrieved from <a href="https://CRAN.R-project.org/package=psychTools" class="uri">https://CRAN.R-project.org/package=psychTools</a></p>
 </div>
 
 
