@@ -141,7 +141,6 @@ net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
     std <- round(std,3)
     std <- as.data.frame(ifelse(std==0,"",std))
 
-
     row.names(std) <- colnames(A)
 
     res$std <- std
@@ -190,6 +189,9 @@ net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
                    vTrans = 200,
                    negDashed = TRUE)
   }
+
+  if(rm.zero)
+  {message("Argument 'rm.zero = TRUE': Output is provided in factors. Set argument 'rm.zero = FALSE' to provide numeric output for summarizing results")}
 
   return(res)
 }
