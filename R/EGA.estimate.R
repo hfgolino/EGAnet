@@ -115,20 +115,21 @@ EGA.estimate <- function(data, n = NULL,
   # Estimate network
   if(model == "glasso")
   {
+    
     gamma.values <- c(0.50, 0.25, 0)
-    gvals <- iterators::iter(gamma.values)
-
-    repeat
+    
+    for(j in 1:length(gamma.values))
     {
       estimated.network <- EBICglasso.qgraph(data = cor.data,
                                              n = n,
                                              lambda.min.ratio = 0.1,
                                              returnAllResults = FALSE,
-                                             gamma = iterators::nextElem(gvals)
-      )
+                                             gamma = gamma.values[j],
+                                             ...)
+      
       if(all(NetworkToolbox::strength(estimated.network)>0))
       {
-        message(paste("Network estimated with gamma = ",iterators::nextElem(gvals),sep=""))
+        message(paste("Network estimated with gamma = ",gamma.values[j],sep=""))
         break
       }
     }

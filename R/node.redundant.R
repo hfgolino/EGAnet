@@ -70,7 +70,7 @@ node.redundant <- function (data, sig, type = c("wTO", "pcor", "thresh"),
   A <- qgraph::cor_auto(data)
 
   # compute network
-  net <- qgraph::EBICglasso(A, n = nrow(data))
+  net <- EBICglasso.qgraph(A, n = nrow(data))
 
   # change arguments to lower
   type <- tolower(type)

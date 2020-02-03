@@ -160,10 +160,9 @@ EGA <- function (data, model = c("glasso", "TMFG"), plot.EGA = TRUE, n = NULL,
     U = chol(R)                                                                       ## Cholesky decomposition of Rp
     Z = mvtnorm::rmvnorm(n, sigma = diag(J))                                  ## Obtain sample matrix of continuous variables
     X = Z%*%U
-    X <-as.data.frame(X)
     colnames(X) <- paste0("V", 1:ncol(X))
 
-    data.sim <- data.frame(X, data)
+    data.sim <- cbind(X, data)
 
     return(data.sim)
   }
