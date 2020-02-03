@@ -190,6 +190,9 @@ net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
                    negDashed = TRUE)
   }
   
+  if(rm.zero)
+  {message("Argument 'rm.zero = TRUE': Output is provided in factors. Set argument 'rm.zero = FALSE' to provide numeric output for summarizing results")}
+  
   return(res)
 }
 #----
