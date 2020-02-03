@@ -113,9 +113,6 @@
 ## EGA Function to detect unidimensionality:
 EGA <- function (data, model = c("glasso", "TMFG"), plot.EGA = TRUE, n = NULL,
                  steps = 4, nvar = 4, nfact = 1, load = 0.70, ...) {
-  
-  # Convert to data frame
-  data <- as.data.frame(data)
 
   ##################################
   #### DATA SIMULATION FUNCTION ####
@@ -178,12 +175,12 @@ EGA <- function (data, model = c("glasso", "TMFG"), plot.EGA = TRUE, n = NULL,
   if(nrow(data) == ncol(data))
   {
     # Multidimensional correlation result
-    multi.cor.res <- EGA.estimate(data = data, model = model, steps = steps, n, ...)
+    multi.cor.res <- EGA.estimate(data = data, model = model, steps = steps, n = n, ...)
 
     # Unidimensional correlation result
     uni.data <- MASS::mvrnorm(n = n, mu = rep(0, ncol(data)), Sigma = multi.cor.res$cor.data)
     sim.data <- sim.func(data = uni.data, nvar = nvar, nfact = nfact, load = load)
-    uni.cor.res <- suppressMessages(EGA.estimate(data = sim.data, model = model, steps = steps, n, ...))
+    uni.cor.res <- suppressMessages(EGA.estimate(data = sim.data, model = model, steps = steps, n = n, ...))
 
     # Set up results
     if(uni.cor.res$n.dim <= nfact + 1)
@@ -200,6 +197,10 @@ EGA <- function (data, model = c("glasso", "TMFG"), plot.EGA = TRUE, n = NULL,
     }
 
   }else{
+
+    # Convert to data frame
+    data <- as.data.frame(data)
+
 
     #-------------------------------------------------------------------------
     ## EGA WITH SIMULATED DATA + ORIGINAL DATA (UNIDIMENSIONALITY CHECK)
