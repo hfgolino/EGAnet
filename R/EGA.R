@@ -113,6 +113,9 @@
 ## EGA Function to detect unidimensionality:
 EGA <- function (data, model = c("glasso", "TMFG"), plot.EGA = TRUE, n = NULL,
                  steps = 4, nvar = 4, nfact = 1, load = 0.70, ...) {
+  
+  # Convert to data frame
+  data <- as.data.frame(data)
 
   ##################################
   #### DATA SIMULATION FUNCTION ####
