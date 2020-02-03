@@ -81,44 +81,44 @@ net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
   {
     # Order
     ord <- match(A$dim.variables$items, names(A$wc))
-    
+
     # Grab communities
     wc <- A$wc[ord]
-    
+
     # Replace 'A' with 'EGA' network
     A <- A$network[ord,ord]
   }
-  
+
   # Dimensions
   dims <- max(wc)
-  
+
   mat.func <- function(A, wc, metric = "each", absolute, diagonal)
   {
     comc <- NetworkToolbox::comcat(A = A, comm = wc, metric = metric,
                                    absolute = absolute, diagonal = diagonal)
     stab <- NetworkToolbox::stable(A = A, comm = wc, absolute = absolute, diagonal = diagonal)
-    
+
     for(q in 1:nrow(comc))
     {comc[q,which(is.na(comc[q,]))] <- stab[q]}
-    
+
     if(ncol(comc)!=1)
     {
       comm.str <- comc[,order(colnames(comc))]
       comm.str <- round(comm.str,3)
     }else{comm.str <- stab}
-    
+
     return(comm.str)
   }
-  
+
   # Obtain signs
   abs.str <- mat.func(A = A, wc = wc, absolute = TRUE, diagonal = 0)
   sign.str <- mat.func(A = A, wc = wc, absolute = FALSE, diagonal = 0)
-  
+
   comm.str <- ifelse(sign(sign.str)==0,1,sign(sign.str)) * abs.str
-  
+
   #result list
   res <- list()
-  
+
   #unstandardized loadings
   if(rm.zero)
   {
@@ -126,61 +126,62 @@ net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
     unstd <- apply(as.matrix(comm.str),2,as.numeric)
     unstd <- ifelse(is.na(unstd),0,unstd)
     row.names(comm.str) <- colnames(A)
-    
+
     if(is.null(colnames(comm.str)))
     {colnames(comm.str) <- 1:ncol(comm.str)}
-    
+
     comm.str <- comm.str[,order(colnames(comm.str))]
     res$unstd <- comm.str
-    
+
     #standardized loadings
     if(dims!=1)
     {std <- t(t(unstd) / sqrt(colSums(abs(unstd))))
     }else{std <- t(t(unstd) / sqrt(sum(abs(unstd))))}
-    
+
     std <- round(std,3)
     std <- as.data.frame(ifelse(std==0,"",std))
-    
+
+
     row.names(std) <- colnames(A)
-    
+
     res$std <- std
-    
+
   }else{
     unstd <- apply(as.matrix(comm.str),2,as.numeric)
     row.names(unstd) <- colnames(A)
-    
+
     if(is.null(colnames(unstd)))
     {colnames(unstd) <- 1:ncol(unstd)}
-    
+
     unstd <- unstd[,order(colnames(unstd))]
     res$unstd <- round(unstd,3)
-    
+
     #standardized loadings
     if(dims!=1)
     {std <- t(t(unstd) / sqrt(colSums(abs(unstd))))
     }else{std <- t(t(unstd) / sqrt(sum(abs(unstd))))}
-    
+
     row.names(std) <- colnames(A)
-    
+
     res$std <- round(std,3)
   }
-  
+
   #Plot?
   if(plot)
   {
     #Set to absolute for multidimensional
     std.res <- abs(res$std)
-    
+
     #Standardize by maximum rspbc
     std.res <- std.res / rowSums(std.res)
-    
+
     #Ensure that pie value is not greater than 1
     std.res <- std.res - .001
     std.res <- ifelse(std.res==-.001,0,std.res)
-    
+
     #Split results to list for each node
     pies <- split(std.res, rep(1:nrow(std.res)))
-    
+
     #Plot
     qgraph::qgraph(A, layout = "spring",
                    groups = as.factor(wc),
@@ -189,7 +190,7 @@ net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
                    vTrans = 200,
                    negDashed = TRUE)
   }
-  
+
   return(res)
 }
 #----
