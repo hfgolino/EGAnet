@@ -69,7 +69,8 @@
 #' @author Alexander Christensen <alexpaulchristensen@gmail.com>
 #'
 #' @export
-#Redundant Nodes Function
+# Redundant Nodes Function
+# Updated 04.02.2020
 node.redundant.combine <- function (node.redundant.obj,
                                     type = c("sum", "latent"),
                                     estimator = "WLSMV",
@@ -323,21 +324,40 @@ node.redundant.combine <- function (node.redundant.obj,
           mod <- paste(paste("comb =~ ",sep=""), paste(colnames(new.data[,c(tar.idx, idx)]), collapse = " + "))
             
           ## fit model
-          fit <- suppressWarnings(lavaan::cfa(mod, data = new.data, ...))
+          fit <- suppressWarnings(lavaan::cfa(mod, data = new.data))#, ...))
             
           ## identify cases
           cases <- lavaan::inspect(fit, "case.idx")
             
           ## compute latent variable score
-            latent <- as.numeric(lavaan::lavPredict(fit))
-            
+          latent <- as.numeric(lavaan::lavPredict(fit))
+
           ## check for missing cases and handle
           if(length(cases) != nrow(new.data))
           {
             new.vec <- as.vector(matrix(NA, nrow = nrow(new.data), ncol = 1))
             new.vec[cases] <- latent
           }else{new.vec <- latent}
+          
+          ## check for reverse scoring/labelling
+          corrs <- as.matrix(cor(cbind(latent,new.data[,c(tar.idx, idx)]), use = "complete.obs")[1,-1])
+          row.names(corrs) <- c(key[tar.idx], key[idx])
+          colnames(corrs) <- "latent"
+          
+          if(any(sign(corrs)==-1))
+          {
+            message("Some items are reverse coded (negative correlations with latent variable were found). Correlations with latent variable:")
+            print(corrs)
             
+            input2 <- "o"
+            
+            while(input2 != "y" && input2 != "n")
+            {input2 <- readline("Reverse code for positive labelling (y/n): ")}
+            
+            if(input2 == "y")
+            {new.vec <- -new.vec}
+          }
+          
           # input new vector
           new.data[,tar.idx] <- new.vec
         }
