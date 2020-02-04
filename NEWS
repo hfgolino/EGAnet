@@ -16,6 +16,10 @@ o auto-adjusts y-axis label size for `itemStability` plot based on number of nod
 
 o `net.loads` adjusted for larger values using absolute values and applying the sign afterwards
 
+o reverse coding update in `net.loads`
+
+o `node.redundant.combine` bug fix for reverse coding latent variables
+
 
 Changes in version 0.9.0
 
