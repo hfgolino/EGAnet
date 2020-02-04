@@ -119,6 +119,30 @@ net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
       comm.str[which(wc==i),] <- comm.str[which(wc==i),] * signs
     }
     
+    # Flip dimensions (if necessary)
+    for(i in 1:max(wc))
+    {
+      wc.sign <- sign(sum(comm.str[which(wc==i),i]))
+      
+      if(wc.sign != 1)
+      {comm.str[which(wc==i),] <- -comm.str[which(wc==i),]}
+    }
+    
+    # Match signs across dimensions
+    for(i in 1:nrow(comm.str))
+      for(j in 1:ncol(comm.str))
+      {
+        if(wc[i] != j)
+        {
+          sign.check <- sign(sum(A[i,which(wc==j)]))
+          
+          sign(comm.str[i,j]) != sign.check
+          
+          if(sign(comm.str[i,j]) != sign.check)
+          {comm.str[i,j] <- -comm.str[i,j]}
+        }
+      }
+    
     res <- list()
     res$comm.str <- comm.str
     res$A <- A
@@ -149,7 +173,7 @@ net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
     stab <- NetworkToolbox::stable(A = A, comm = wc, absolute = absolute, diagonal = diagonal)
     
     sign.comc <- sign(NetworkToolbox::comcat(A = A, comm = wc, metric = metric,
-                                        absolute = FALSE, diagonal = diagonal))
+                                             absolute = FALSE, diagonal = diagonal))
     
     comc <- comc * sign.comc
     
