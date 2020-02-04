@@ -1,6 +1,4 @@
-[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
-
-[![Downloads per month](https://cranlogs.r-pkg.org/badges/EGAnet)](https://cran.r-project.org/package=EGAnet)
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active) [![Downloads per month](https://cranlogs.r-pkg.org/badges/EGAnet)](https://cran.r-project.org/package=EGAnet)
 
 Exploratory Graph Analysis: An introduction using the EGAnet package.
 =============
