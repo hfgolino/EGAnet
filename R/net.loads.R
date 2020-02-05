@@ -137,21 +137,6 @@ net.loads <- function(A, wc, pos.manifold = FALSE, rm.zero = FALSE, plot = FALSE
       } 
     }
     
-    # Match signs across dimensions
-    for(i in 1:nrow(comm.str))
-      for(j in 1:ncol(comm.str))
-      {
-        if(wc[i] != j)
-        {
-          sign.check <- sign(sum(A[i,which(wc==j)]))
-          
-          sign(comm.str[i,j]) != sign.check
-          
-          if(sign(comm.str[i,j]) != sign.check)
-          {comm.str[i,j] <- -comm.str[i,j]}
-        }
-      }
-    
     res <- list()
     res$comm.str <- comm.str
     res$A <- A
