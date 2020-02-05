@@ -31,6 +31,19 @@
 #' See \code{\link[NetworkToolbox]{TMFG}}}
 #'
 #' }
+#' 
+#' @param algorithm A string indicating the algorithm to use.
+#' Current options are:
+#' 
+#' \itemize{
+#' 
+#' \item{\strong{\code{walktrap}}}
+#' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
+#' 
+#' \item{\strong{\code{louvain}}}
+#' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_louvain}}}
+#' 
+#' }
 #'
 #' @param type Character.
 #' A string indicating the type of bootstrap to use.
@@ -62,7 +75,8 @@
 #'
 #' @param ncores Numeric.
 #' Number of cores to use in computing results.
-#' Defaults to \code{4}.
+#' Defaults to \code{parallel::detectCores() / 2} or half of your
+#' computer's processing power.
 #' Set to \code{1} to not use parallel computing.
 #' Recommended to use maximum number of cores minus one
 #'
@@ -144,182 +158,213 @@
 #' @export
 #'
 # Bootstrap EGA
+# Updated 04.02.2020
 bootEGA <- function(data, n,
-                    model = c("glasso", "TMFG"), type = c("parametric", "resampling"),
-                    typicalStructure = TRUE, plot.typicalStructure = TRUE, ncores = 4, ...) {
-    
-    #number of cases
-    cases <- nrow(data)
-    
-    #set inverse covariance matrix for parametric approach
-    if(type=="parametric")  # Use a parametric approach:
+                    model = c("glasso", "TMFG"), algorithm = c("walktrap", "louvain"),
+                    type = c("parametric", "resampling"),
+                    typicalStructure = TRUE, plot.typicalStructure = TRUE, ncores, ...) {
+  
+  #### MISSING ARGUMENTS HANDLING ####
+  
+  if(missing(model))
+  {model <- "glasso"
+  }else{model <- match.arg(model)}
+  
+  if(missing(algorithm))
+  {algorithm <- "walktrap"
+  }else{algorithm <- match.arg(algorithm)}
+  
+  if(missing(type))
+  {type <- "parametric"
+  }else{type <- match.arg(type)}
+  
+  if(missing(ncores))
+  {ncores <- ceiling(parallel::detectCores() / 2)
+  }else{ncores}
+  
+  #### MISSING ARGUMENTS HANDLING ####
+  
+  #number of cases
+  cases <- nrow(data)
+  
+  #set inverse covariance matrix for parametric approach
+  if(type=="parametric")  # Use a parametric approach:
+  {
+    if(model=="glasso")
     {
-        if(model=="glasso")
-        {
-            g <- -EBICglasso.qgraph(qgraph::cor_auto(data), n = cases, lambda.min.ratio = 0.1, returnAllResults = FALSE, ...)
-            diag(g) <- 1
-        }else if(model=="TMFG")
-        {
-            g <- -NetworkToolbox::LoGo(data, normal = TRUE, partial=TRUE, ...)
-            diag(g) <- 1
-        }
-    }
-    
-    #initialize data list
-    datalist <- list()
-    
-    #initialize count
-    count <- 0
-    
-    #let user know data generation has started
-    message("\nGenerating data...", appendLF = FALSE)
-    
-    repeat{
-        
-        #increase count
-        count <- count + 1
-        
-        #generate data
-        if(type == "parametric")
-        {datalist[[count]] <- mvtnorm::rmvnorm(cases, sigma = corpcor::pseudoinverse(g))
-        }else if(type == "resampling")
-        {datalist[[count]] <- data[sample(1:cases, replace=TRUE),]}
-        
-        #break out of repeat
-        if(count == n)
-        {break}
-    }
-    
-    #let user know data generation has ended
-    message("done", appendLF = TRUE)
-    
-    #initialize correlation matrix list
-    corlist <- list()
-    
-    #let user know data generation has started
-    message("\nComputing correlation matrices...\n", appendLF = FALSE)
-    
-    #Parallel processing
-    cl <- parallel::makeCluster(ncores)
-    
-    #Export variables
-    parallel::clusterExport(cl = cl,
-                            varlist = c("datalist", "corlist", "cases", ...),
-                            envir=environment())
-    
-    #Compute correlation matrices
-    corlist <- pbapply::pblapply(X = datalist, cl = cl,
-                                 FUN = qgraph::cor_auto)
-    
-    #let user know data generation has started
-    message("Estimating networks...\n", appendLF = FALSE)
-    
-    #Estimate networks
-    if(model == "glasso")
+      g <- -EBICglasso.qgraph(qgraph::cor_auto(data), n = cases, lambda.min.ratio = 0.1, returnAllResults = FALSE, ...)
+      diag(g) <- 1
+    }else if(model=="TMFG")
     {
-        boots <- pbapply::pblapply(X = corlist, cl = cl,
-                                   FUN = EBICglasso.qgraph,
-                                   n = cases,
-                                   lambda.min.ratio = 0.1,
-                                   returnAllResults = FALSE,
-                                   ...)
-    }else if(model == "TMFG")
-    {
-        boots <- pbapply::pblapply(X = corlist, cl = cl,
-                                   FUN = NetworkToolbox::TMFG,
-                                   normal = TRUE,
-                                   ...)
-        
-        for(i in 1:n)
-        {boots[[i]] <- boots[[i]]$A}
+      g <- -NetworkToolbox::LoGo(data, normal = TRUE, partial=TRUE, ...)
+      diag(g) <- 1
     }
+  }
+  
+  #initialize data list
+  datalist <- list()
+  
+  #initialize count
+  count <- 0
+  
+  #let user know data generation has started
+  message("\nGenerating data...", appendLF = FALSE)
+  
+  repeat{
     
-    parallel::stopCluster(cl)
+    #increase count
+    count <- count + 1
     
-    #let user know results are being computed
-    message("Computing results...", appendLF = FALSE)
+    #generate data
+    if(type == "parametric")
+    {datalist[[count]] <- mvtnorm::rmvnorm(cases, sigma = corpcor::pseudoinverse(g))
+    }else if(type == "resampling")
+    {datalist[[count]] <- data[sample(1:cases, replace=TRUE),]}
     
-    bootGraphs <- vector("list", n)
-    for (i in 1:n) {
-        bootGraphs[[i]] <- boots[[i]]
-        colnames(bootGraphs[[i]]) <- colnames(data)
-        rownames(bootGraphs[[i]]) <- colnames(data)
-    }
-    boot.igraph <- vector("list", n)
-    for (l in 1:n) {
-        boot.igraph[[l]] <- NetworkToolbox::convert2igraph(abs(bootGraphs[[l]]))
-    }
-    boot.wc <- vector("list", n)
-    for (m in 1:n) {
-        boot.wc[[m]] <- igraph::walktrap.community(boot.igraph[[m]])
-    }
-    boot.ndim <- matrix(NA, nrow = n, ncol = 2)
-    for (m in 1:n) {
-        boot.ndim[m, 2] <- max(boot.wc[[m]]$membership)
-    }
+    #break out of repeat
+    if(count == n)
+    {break}
+  }
+  
+  #let user know data generation has ended
+  message("done", appendLF = TRUE)
+  
+  #initialize correlation matrix list
+  corlist <- list()
+  
+  #let user know data generation has started
+  message("\nComputing correlation matrices...\n", appendLF = FALSE)
+  
+  #Parallel processing
+  cl <- parallel::makeCluster(ncores)
+  
+  #Export variables
+  parallel::clusterExport(cl = cl,
+                          varlist = c("datalist", "corlist", "cases", ...),
+                          envir=environment())
+  
+  #Compute correlation matrices
+  corlist <- pbapply::pblapply(X = datalist, cl = cl,
+                               FUN = qgraph::cor_auto)
+  
+  #let user know data generation has started
+  message("Estimating networks...\n", appendLF = FALSE)
+  
+  #Estimate networks
+  if(model == "glasso")
+  {
+    boots <- pbapply::pblapply(X = corlist, cl = cl,
+                               FUN = EBICglasso.qgraph,
+                               n = cases,
+                               lambda.min.ratio = 0.1,
+                               returnAllResults = FALSE,
+                               ...)
+  }else if(model == "TMFG")
+  {
+    boots <- pbapply::pblapply(X = corlist, cl = cl,
+                               FUN = NetworkToolbox::TMFG,
+                               normal = TRUE,
+                               ...)
     
-    colnames(boot.ndim) <- c("Boot.Number", "N.Dim")
+    for(i in 1:n)
+    {boots[[i]] <- boots[[i]]$A}
+  }
+  
+  parallel::stopCluster(cl)
+  
+  #let user know results are being computed
+  message("Computing results...", appendLF = FALSE)
+  
+  bootGraphs <- vector("list", n)
+  for (i in 1:n) {
+    bootGraphs[[i]] <- boots[[i]]
+    colnames(bootGraphs[[i]]) <- colnames(data)
+    rownames(bootGraphs[[i]]) <- colnames(data)
+  }
+  boot.igraph <- vector("list", n)
+  for (l in 1:n) {
+    boot.igraph[[l]] <- NetworkToolbox::convert2igraph(abs(bootGraphs[[l]]))
+  }
+  boot.wc <- vector("list", n)
+  for (m in 1:n) {
     
-    boot.ndim[, 1] <- seq_len(n)
-    if (typicalStructure == TRUE) {
-        if(model=="glasso")
-        {typical.Structure <- apply(simplify2array(bootGraphs),1:2, median)
-        }else if(model=="TMFG")
-        {typical.Structure <- apply(simplify2array(bootGraphs),1:2, mean)}
-        typical.igraph <- NetworkToolbox::convert2igraph(abs(typical.Structure))
-        typical.wc <- igraph::walktrap.community(typical.igraph)
-        typical.ndim <- max(typical.wc$membership)
-        dim.variables <- data.frame(items = colnames(data), dimension = typical.wc$membership)
-    }
-    if (plot.typicalStructure == TRUE) {
-        plot.typical.ega <- qgraph::qgraph(typical.Structure, layout = "spring",
-                                           vsize = 6, groups = as.factor(typical.wc$membership))
-    }
-    Median <- median(boot.ndim[, 2])
-    se.boot <- sd(boot.ndim[, 2])
-    ciMult <- qt(0.95/2 + 0.5, nrow(boot.ndim) - 1)
-    ci <- se.boot * ciMult
-    quant <- quantile(boot.ndim, c(.025, .975))
-    summary.table <- data.frame(n.Boots = n, median.dim = Median,
-                                SE.dim = se.boot, CI.dim = ci,
-                                Lower = Median - ci, Upper = Median + ci,
-                                Lower.Quantile = quant[1], Upper.Quantile = quant[2])
+    boot.wc[[m]] <- switch(algorithm,
+                           walktrap = igraph::cluster_walktrap(boot.igraph[[m]]),
+                           louvain = igraph::cluster_louvain(boot.igraph[[m]])
+                           )
+  }
+  boot.ndim <- matrix(NA, nrow = n, ncol = 2)
+  for (m in 1:n) {
+    boot.ndim[m, 2] <- max(boot.wc[[m]]$membership)
+  }
+  
+  colnames(boot.ndim) <- c("Boot.Number", "N.Dim")
+  
+  boot.ndim[, 1] <- seq_len(n)
+  if (typicalStructure == TRUE) {
+    if(model=="glasso")
+    {typical.Structure <- apply(simplify2array(bootGraphs),1:2, median)
+    }else if(model=="TMFG")
+    {typical.Structure <- apply(simplify2array(bootGraphs),1:2, mean)}
+    typical.igraph <- NetworkToolbox::convert2igraph(abs(typical.Structure))
     
-    #compute frequency
-    dim.range <- range(boot.ndim[,2])
-    lik <- matrix(0, nrow = diff(dim.range)+1, ncol = 2)
-    colnames(lik) <- c("# of Factors", "Frequency")
-    count <- 0
+    typical.wc <- switch(algorithm,
+                         walktrap = igraph::cluster_walktrap(typical.igraph),
+                         louvain = igraph::cluster_louvain(typical.igraph)
+                         )
     
-    for(i in seq(from=min(dim.range),to=max(dim.range),by=1))
-    {
-        count <- count + 1
-        lik[count,1] <- i
-        lik[count,2] <- length(which(boot.ndim[,2]==i))/n
-    }
-    
-    #let user know results have been computed
-    message("done", appendLF = TRUE)
-    
-    result <- list()
-    result$n <- n
-    result$boot.ndim <- boot.ndim
-    result$boot.wc <- boot.wc
-    result$bootGraphs <- bootGraphs
-    result$summary.table <- summary.table
-    result$frequency <- lik
-    result$EGA <- suppressMessages(suppressWarnings(EGA(data = data, model = model, plot.EGA = FALSE)))
-    
-    # Typical structure
-    if (typicalStructure == TRUE) {
-        typicalGraph <- list()
-        typicalGraph$graph <- typical.Structure
-        typicalGraph$typical.dim.variables <- dim.variables[order(dim.variables[,2]), ]
-        typicalGraph$wc <- typical.wc$membership
-        result$typicalGraph <- typicalGraph
-    }
-    
-    class(result) <- "bootEGA"
-    return(result)
+    typical.ndim <- max(typical.wc$membership)
+    dim.variables <- data.frame(items = colnames(data), dimension = typical.wc$membership)
+  }
+  if (plot.typicalStructure == TRUE) {
+    plot.typical.ega <- qgraph::qgraph(typical.Structure, layout = "spring",
+                                       vsize = 6, groups = as.factor(typical.wc$membership))
+  }
+  Median <- median(boot.ndim[, 2])
+  se.boot <- sd(boot.ndim[, 2])
+  ciMult <- qt(0.95/2 + 0.5, nrow(boot.ndim) - 1)
+  ci <- se.boot * ciMult
+  quant <- quantile(boot.ndim, c(.025, .975))
+  summary.table <- data.frame(n.Boots = n, median.dim = Median,
+                              SE.dim = se.boot, CI.dim = ci,
+                              Lower = Median - ci, Upper = Median + ci,
+                              Lower.Quantile = quant[1], Upper.Quantile = quant[2])
+  
+  #compute frequency
+  dim.range <- range(boot.ndim[,2])
+  lik <- matrix(0, nrow = diff(dim.range)+1, ncol = 2)
+  colnames(lik) <- c("# of Factors", "Frequency")
+  count <- 0
+  
+  for(i in seq(from=min(dim.range),to=max(dim.range),by=1))
+  {
+    count <- count + 1
+    lik[count,1] <- i
+    lik[count,2] <- length(which(boot.ndim[,2]==i))/n
+  }
+  
+  #let user know results have been computed
+  message("done", appendLF = TRUE)
+  
+  result <- list()
+  result$n <- n
+  result$boot.ndim <- boot.ndim
+  result$boot.wc <- boot.wc
+  result$bootGraphs <- bootGraphs
+  result$summary.table <- summary.table
+  result$frequency <- lik
+  result$EGA <- suppressMessages(suppressWarnings(EGA(data = data, model = model, plot.EGA = FALSE)))
+  
+  # Typical structure
+  if (typicalStructure == TRUE) {
+    typicalGraph <- list()
+    typicalGraph$graph <- typical.Structure
+    typicalGraph$typical.dim.variables <- dim.variables[order(dim.variables[,2]), ]
+    typicalGraph$wc <- typical.wc$membership
+    result$typicalGraph <- typicalGraph
+  }
+  
+  class(result) <- "bootEGA"
+  return(result)
 }
 #----
