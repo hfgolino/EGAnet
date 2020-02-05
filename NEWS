@@ -20,6 +20,8 @@ o reverse coding update in `net.loads`
 
 o `node.redundant.combine` bug fix for reverse coding latent variables
 
+o added Louvain community detection to all EGA functions in *EGAnet*
+
 
 Changes in version 0.9.0
 
