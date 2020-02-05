@@ -18,6 +18,12 @@
 #' @param rm.zero Should zeros be removed from the resulting matrix?
 #' Defaults to \code{FALSE}.
 #' Set to \code{TRUE} to reduce the noise in the results
+#' 
+#' @param pos.manifold Boolean.
+#' Should a positive manifold be applied (i.e., should
+#' all dimensions be positively correlated)?
+#' Defaults to \code{FALSE}.
+#' Set to \code{TRUE} for a positive manifold
 #'
 #' @param plot Boolean.
 #' Should proportional loadings be plotted?
@@ -74,11 +80,11 @@
 #' @export
 #'
 # Network Loadings
-# Updated 04.02.2020
-net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
+# Updated 05.02.2020
+net.loads <- function(A, wc, pos.manifold = FALSE, rm.zero = FALSE, plot = FALSE)
 {
   # reverse sign check function
-  rev.sign.check <- function(comm.str, A, wc, dims)
+  rev.sign.check <- function(comm.str, A, wc, dims, pos.manifold)
   {
     for(i in 1:dims)
     {
@@ -120,12 +126,15 @@ net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
     }
     
     # Flip dimensions (if necessary)
-    for(i in 1:dims)
+    if(!pos.manifold)
     {
-      wc.sign <- sign(sum(comm.str[which(wc==i),i]))
-      
-      if(wc.sign != 1)
-      {comm.str[which(wc==i),] <- -comm.str[which(wc==i),]}
+      for(i in 1:dims)
+      {
+        wc.sign <- sign(sum(comm.str[which(wc==i),i]))
+        
+        if(wc.sign != 1)
+        {comm.str[which(wc==i),] <- -comm.str[which(wc==i),]}
+      } 
     }
     
     # Match signs across dimensions
@@ -193,7 +202,7 @@ net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
   comm.str <- mat.func(A = A, wc = wc, absolute = TRUE, diagonal = 0)
   
   # Check for reverse signs
-  res.rev <- rev.sign.check(comm.str = comm.str, A = A, wc = wc, dims = dims)
+  res.rev <- rev.sign.check(comm.str = comm.str, A = A, wc = wc, dims = dims, pos.manifold = pos.manifold)
   comm.str <- res.rev$comm.str
   A <- res.rev$A
   
