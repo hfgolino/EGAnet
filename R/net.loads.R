@@ -78,9 +78,9 @@
 net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
 {
   # reverse sign check function
-  rev.sign.check <- function(comm.str, A, wc)
+  rev.sign.check <- function(comm.str, A, wc, dims)
   {
-    for(i in 1:max(wc))
+    for(i in 1:dims)
     {
       # Target dimension
       target <- which(wc==i)
@@ -100,14 +100,14 @@ net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
         orig.sign <- sign.mat
         
         # Check for max sums (current max)
-        curr.max <- sum(colSums(sign.mat))
+        curr.max <- sum(colSums(sign.mat,na.rm=TRUE),na.rm=TRUE)
         
         # New sign mat
         sign.mat[j,] <- -sign.mat[j,]
         sign.mat[,j] <- -sign.mat[,j]
         
         # Check for new max sums (new max)
-        new.max <- sum(colSums(sign.mat))
+        new.max <- sum(colSums(sign.mat,na.rm=TRUE),na.rm=TRUE)
         
         if(new.max <= curr.max)
         {
@@ -118,6 +118,30 @@ net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
       
       comm.str[which(wc==i),] <- comm.str[which(wc==i),] * signs
     }
+    
+    # Flip dimensions (if necessary)
+    for(i in 1:dims)
+    {
+      wc.sign <- sign(sum(comm.str[which(wc==i),i]))
+      
+      if(wc.sign != 1)
+      {comm.str[which(wc==i),] <- -comm.str[which(wc==i),]}
+    }
+    
+    # Match signs across dimensions
+    for(i in 1:nrow(comm.str))
+      for(j in 1:ncol(comm.str))
+      {
+        if(wc[i] != j)
+        {
+          sign.check <- sign(sum(A[i,which(wc==j)]))
+          
+          sign(comm.str[i,j]) != sign.check
+          
+          if(sign(comm.str[i,j]) != sign.check)
+          {comm.str[i,j] <- -comm.str[i,j]}
+        }
+      }
     
     res <- list()
     res$comm.str <- comm.str
@@ -140,7 +164,7 @@ net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
   }
   
   # Dimensions
-  dims <- max(wc)
+  dims <- max(wc,na.rm=TRUE)
   
   mat.func <- function(A, wc, metric = "each", absolute, diagonal)
   {
@@ -149,7 +173,7 @@ net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
     stab <- NetworkToolbox::stable(A = A, comm = wc, absolute = absolute, diagonal = diagonal)
     
     sign.comc <- sign(NetworkToolbox::comcat(A = A, comm = wc, metric = metric,
-                                        absolute = FALSE, diagonal = diagonal))
+                                             absolute = FALSE, diagonal = diagonal))
     
     comc <- comc * sign.comc
     
@@ -169,7 +193,7 @@ net.loads <- function(A, wc, rm.zero = FALSE, plot = FALSE)
   comm.str <- mat.func(A = A, wc = wc, absolute = TRUE, diagonal = 0)
   
   # Check for reverse signs
-  res.rev <- rev.sign.check(comm.str = comm.str, A = A, wc = wc)
+  res.rev <- rev.sign.check(comm.str = comm.str, A = A, wc = wc, dims = dims)
   comm.str <- res.rev$comm.str
   A <- res.rev$A
   
