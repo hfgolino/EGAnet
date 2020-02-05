@@ -3,7 +3,8 @@
 #' @description Estimates the best fitting model using \code{\link[EGAnet]{EGA}}.
 #' The number of steps in the \code{\link[igraph]{cluster_walktrap}} detection
 #' algorithm is varied and unique community solutions are compared using
-#' \code{\link[EGAnet]{tefi}}.
+#' \code{\link[EGAnet]{tefi}}. Also computes \code{\link[igraph]{cluster_louvain}}
+#' community detection algorithm.
 #'
 #' @param data A dataset (or a correlation matrix).
 #'
@@ -79,74 +80,178 @@
 #'
 #' @export
 EGA.fit <- function (data, model = c("glasso","TMFG"),
+                     algorithm = c("walktrap","louvain"),
                      steps = c(3,4,5,6,7,8), n = NULL)
 {
-    if(missing(model))
-    {model <- "glasso"
-    }else{model <- match.arg(model)}
-
-    if(missing(steps))
-    {steps <- c(3,4,5,6,7,8)
-    }else{steps <- steps}
-
-    num <- length(steps)
-
-    mods <- list()
-    dims <- matrix(NA, nrow = ncol(data), ncol = num)
-
-    #Generate walktrap models
-    for(i in 1:num)
+  if(missing(model))
+  {model <- "glasso"
+  }else{model <- match.arg(model)}
+  
+  if(missing(steps))
+  {steps <- c(3,4,5,6,7,8)
+  }else{steps <- steps}
+  
+  if(missing(algorithm))
+  {algorithm <- "walktrap"
+  }else{algorithm <- match.arg(algorithm, several.ok = TRUE)}
+  
+  best.fit <- list()
+  
+  if("walktrap" %in% algorithm)
+  {
+    if(!"louvain" %in% algorithm)
     {
-        message(paste("Estimating EGA model",i,"of",num,sep=" "))
+      num <- length(steps)
+      
+      mods <- list()
+      dims <- matrix(NA, nrow = ncol(data), ncol = num)
+      
+      #Generate walktrap models
+      for(i in 1:num)
+      {
+        message(paste("Estimating EGA -- Walktrap model",i,"of",num,sep=" "))
         mods[[as.character(steps[i])]] <- EGA(data = data,
                                               model = model,
                                               steps = steps[i],
                                               plot.EGA = FALSE,
                                               n = n)
-
+        
         dims[,i] <- mods[[as.character(steps[i])]]$wc
-    }
-
-    colnames(dims) <- as.character(steps)
-
-    #check for unique number of dimensions
-    uniq.dim <- vector("numeric",length=(ncol(dims)))
-
-    for(i in 2:(ncol(dims)))
-    {
+      }
+      
+      colnames(dims) <- as.character(steps)
+      
+      #check for unique number of dimensions
+      uniq.dim <- vector("numeric",length=(ncol(dims)))
+      
+      for(i in 2:(ncol(dims)))
+      {
         uniq.dim[i] <- igraph::compare(dims[,i-1],dims[,i],method = "nmi")
         names(uniq.dim) <- paste(steps,sep="")
-    }
-
-    uniq <- unique(as.matrix(uniq.dim))
-
-    step <- as.numeric(row.names(uniq)[which(uniq!=1)])
-
-    len <- length(step)
-
-    best.fit <- list()
-
-    #if all models are the same
-    if(len==1)
-    {
+      }
+      
+      uniq <- unique(as.matrix(uniq.dim))
+      
+      step <- as.numeric(row.names(uniq)[which(uniq!=1)])
+      
+      len <- length(step)
+      
+      #if all models are the same
+      if(len==1)
+      {
         best.fit$EGA <- mods[[1]]
         best.fit$steps <- 4
         message("All EGA models are identical.")
-    }else{
-
+      }else{
+        
         ent.vec <- vector("numeric",length=len)
-
+        
         for(i in 1:len)
         {ent.vec[i] <- tefi(abs(mods[[as.character(step[i])]]$correlation), mods[[as.character(step[i])]]$wc)$VN.Entropy.Fit}
-
+        
         names(ent.vec) <- step
-
+        
         best.fit$EGA <- mods[as.character(step[which(ent.vec==min(ent.vec))])]
         best.fit$steps <- step[which(ent.vec==min(ent.vec))]
         best.fit$EntropyFit <- ent.vec
         best.fit$Lowest.EntropyFit <- ent.vec[which(ent.vec==min(ent.vec))]
+      }
+    }else{
+      
+      num <- length(steps)
+      
+      mods <- list()
+      dims <- matrix(NA, nrow = ncol(data), ncol = num)
+      
+      #Generate walktrap models
+      for(i in 1:num)
+      {
+        message(paste("Estimating EGA -- Walktrap model",i,"of",num,sep=" "))
+        mods[[as.character(steps[i])]] <- EGA(data = data,
+                                              model = model,
+                                              steps = steps[i],
+                                              plot.EGA = FALSE,
+                                              n = n)
+        
+        dims[,i] <- mods[[as.character(steps[i])]]$wc
+      }
+      
+      colnames(dims) <- as.character(steps)
+      
+      #check for unique number of dimensions
+      uniq.dim <- vector("numeric",length=(ncol(dims)))
+      
+      for(i in 2:(ncol(dims)))
+      {
+        uniq.dim[i] <- igraph::compare(dims[,i-1],dims[,i],method = "nmi")
+        names(uniq.dim) <- paste(steps,sep="")
+      }
+      
+      uniq <- unique(as.matrix(uniq.dim))
+      
+      step <- as.numeric(row.names(uniq)[which(uniq!=1)])
+      
+      len <- length(step)
+      
+      # Compute Louvain
+      message("Estimating EGA -- Louvain model")
+      louv.mod <- EGA(data = data,
+                      model = model,
+                      algorithm = "louvain",
+                      plot.EGA = FALSE,
+                      n = n)
+      
+      louv <- tefi(abs(louv.mod$correlation), louv.mod$wc)$VN.Entropy.Fit
+      
+      #if all models are the same
+      if(len==1)
+      {
+        walk <- tefi(abs(mods[[1]]$correlation), mods[[1]]$wc)$VN.Entropy.Fit
+        
+        if(walk <= louv)
+        {
+          best.fit$EGA <- mods[[1]]
+          best.fit$steps <- 4
+          best.fit$algorithm <- "walktrap"
+        }else{
+          best.fit$EGA <- louv.mod
+          best.fit$algorithm <- "louvain"
+        }
+        
+      }else{
+        
+        ent.vec <- vector("numeric",length=len)
+        
+        for(i in 1:len)
+        {ent.vec[i] <- tefi(abs(mods[[as.character(step[i])]]$correlation), mods[[as.character(step[i])]]$wc)$VN.Entropy.Fit}
+        
+        names(ent.vec) <- step
+        
+        if(min(ent.vec) <= louv)
+        {
+          best.fit$EGA <- mods[as.character(step[which(ent.vec==min(ent.vec))])]
+          best.fit$steps <- step[which(ent.vec==min(ent.vec))]
+          best.fit$EntropyFit <- ent.vec
+          best.fit$Lowest.EntropyFit <- ent.vec[which(ent.vec==min(ent.vec))]
+          best.fit$algorithm <- "walktrap"
+        }else{
+          best.fit$EGA <- louv.mod
+          best.fit$Lowest.EntropyFit <- louv
+          best.fit$algorithm <- "louvain"
+        }
+      }
     }
-
-    return(best.fit)
-
+  }else{
+    message("Estimating EGA -- Louvain model. Only one model is produced.")
+    best.fit$EGA <- EGA(data = data,
+                        model = model,
+                        algorithm = "louvain",
+                        plot.EGA = FALSE,
+                        n = n)
+    best.fit$Lowest.EntropyFit <- tefi(abs(louv.mod$correlation), louv.mod$wc)$VN.Entropy.Fit
+    
+  }
+  
+  return(best.fit)
+  
 }
