@@ -7,7 +7,6 @@
 EGA.fit(
   data,
   model = c("glasso", "TMFG"),
-  algorithm = c("walktrap", "louvain"),
   steps = c(3, 4, 5, 6, 7, 8),
   n = NULL
 )
