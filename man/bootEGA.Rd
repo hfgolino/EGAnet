@@ -8,10 +8,11 @@ bootEGA(
   data,
   n,
   model = c("glasso", "TMFG"),
+  algorithm = c("walktrap", "louvain"),
   type = c("parametric", "resampling"),
   typicalStructure = TRUE,
   plot.typicalStructure = TRUE,
-  ncores = 4,
+  ncores,
   ...
 )
 }
@@ -39,6 +40,19 @@ See \code{\link[EGAnet]{EBICglasso.qgraph}}}
 \item{\strong{\code{"TMFG"}}}
 {Estimates a Triangulated Maximally Filtered Graph.
 See \code{\link[NetworkToolbox]{TMFG}}}
+
+}}
+
+\item{algorithm}{A string indicating the algorithm to use.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{walktrap}}}
+{Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
+
+\item{\strong{\code{louvain}}}
+{Computes the Walktrap algorithm using \code{\link[igraph]{cluster_louvain}}}
 
 }}
 
@@ -72,7 +86,8 @@ Defaults to \code{TRUE}}
 
 \item{ncores}{Numeric.
 Number of cores to use in computing results.
-Defaults to \code{4}.
+Defaults to \code{parallel::detectCores() / 2} or half of your
+computer's processing power.
 Set to \code{1} to not use parallel computing.
 Recommended to use maximum number of cores minus one
 

@@ -4,7 +4,14 @@
 \alias{EGA.estimate}
 \title{A Wrapper Function for \code{EGA}}
 \usage{
-EGA.estimate(data, n = NULL, model = c("glasso", "TMFG"), steps = 4, ...)
+EGA.estimate(
+  data,
+  n = NULL,
+  model = c("glasso", "TMFG"),
+  algorithm = c("walktrap", "louvain"),
+  steps = 4,
+  ...
+)
 }
 \arguments{
 \item{data}{A dataframe with the variables to be used in the analysis or a correlation matrix.
@@ -25,6 +32,19 @@ This is the default method}
 
 \item{\strong{\code{TMFG}}}
 {Estimates a Triangulated Maximally Filtered Graph}
+
+}}
+
+\item{algorithm}{A string indicating the algorithm to use.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{walktrap}}}
+{Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
+
+\item{\strong{\code{louvain}}}
+{Computes the Walktrap algorithm using \code{\link[igraph]{cluster_louvain}}}
 
 }}
 
