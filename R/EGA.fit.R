@@ -79,6 +79,8 @@
 #' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'
 #' @export
+# EGA fit
+# Updated 04.02.2020
 EGA.fit <- function (data, model = c("glasso","TMFG"),
                      algorithm = c("walktrap","louvain"),
                      steps = c(3,4,5,6,7,8), n = NULL)
