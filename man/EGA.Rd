@@ -7,6 +7,7 @@
 EGA(
   data,
   model = c("glasso", "TMFG"),
+  algorithm = c("walktrap", "louvain"),
   plot.EGA = TRUE,
   n = NULL,
   steps = 4,
@@ -32,6 +33,19 @@ This is the default method}
 
 \item{\strong{\code{TMFG}}}
 {Estimates a Triangulated Maximally Filtered Graph}
+
+}}
+
+\item{algorithm}{A string indicating the algorithm to use.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{walktrap}}}
+{Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
+
+\item{\strong{\code{louvain}}}
+{Computes the Walktrap algorithm using \code{\link[igraph]{cluster_louvain}}}
 
 }}
 
