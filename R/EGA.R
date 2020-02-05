@@ -125,7 +125,7 @@
 # Updated 04.02.2020
 ## EGA Function to detect unidimensionality:
 EGA <- function (data, model = c("glasso", "TMFG"),
-                 algorithm = c("walktrap", "louvain")
+                 algorithm = c("walktrap", "louvain"),
                  plot.EGA = TRUE, n = NULL,
                  steps = 4, nvar = 4, nfact = 1, load = 0.70, ...) {
   
