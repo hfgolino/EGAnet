@@ -80,7 +80,7 @@
 #' @export
 #'
 # Network Loadings
-# Updated 05.02.2020
+# Updated 06.02.2020
 net.loads <- function(A, wc, pos.manifold = FALSE, rm.zero = FALSE, plot = FALSE)
 {
   # Add signs to loadings function
