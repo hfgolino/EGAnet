@@ -80,82 +80,117 @@
 #' @export
 #'
 # Network Loadings
-# Updated 05.02.2020
+# Updated 06.02.2020
 net.loads <- function(A, wc, pos.manifold = FALSE, rm.zero = FALSE, plot = FALSE)
 {
-  # reverse sign check function
-  rev.sign.check <- function(comm.str, A, wc, dims, pos.manifold)
+  # Add signs to loadings function
+  add.signs <- function(comm.str, A, wc, dims, pos.manifold)
   {
-    for(i in 1:dims)
-    {
-      # Target dimension
-      target <- which(wc==i)
-      
-      # Initialize signs
-      signs <- numeric(length(target))
-      
-      # Target matrix
-      target.mat <- A[target,target]
-      
-      # Sign matrix
-      sign.mat <- sign(target.mat)
-      
-      for(j in 1:ncol(sign.mat))
+      # Signs within dimension
+      for(i in 1:dims)
       {
-        # Save original sign.mat
-        orig.sign <- sign.mat
-        
-        # Check for max sums (current max)
-        curr.max <- sum(colSums(sign.mat,na.rm=TRUE),na.rm=TRUE)
-        
-        # New sign mat
-        sign.mat[j,] <- -sign.mat[j,]
-        sign.mat[,j] <- -sign.mat[,j]
-        
-        # Check for new max sums (new max)
-        new.max <- sum(colSums(sign.mat,na.rm=TRUE),na.rm=TRUE)
-        
-        if(new.max <= curr.max)
-        {
-          sign.mat <- orig.sign
-          signs[j] <- 1
-        }else{signs[j] <- -1}
-      }
+        # Target dimension
+        target <- which(wc==i)
       
-      comm.str[which(wc==i),] <- comm.str[which(wc==i),] * signs
-    }
+        # Initialize signs
+        signs <- numeric(length(target))
+      
+        # Target matrix
+        target.mat <- A[target,target]
+      
+        # Sign matrix
+        sign.mat <- sign(target.mat)
+      
+        for(j in 1:nrow(sign.mat))
+        {
+          # Save original sign.mat
+          orig.sign <- sign.mat
+        
+          # Check for max sums (current max)
+          curr.max <- sum(colSums(sign.mat,na.rm=TRUE),na.rm=TRUE)
+        
+          # New sign mat
+          sign.mat[j,] <- -sign.mat[j,]
+        
+          # Check for new max sums (new max)
+          new.max <- sum(colSums(sign.mat,na.rm=TRUE),na.rm=TRUE)
+        
+          if(new.max <= curr.max)
+          {
+            sign.mat <- orig.sign
+            signs[j] <- 1
+          }else{
+            signs[j] <- -1
+          }
+        }
+      
+        comm.str[which(wc==i),i] <- comm.str[which(wc==i),i] * ifelse(signs==0,1,signs)
+        A[,which(wc==i)] <- sweep(A[,which(wc==i)],2,ifelse(signs==0,1,signs),`*`)
+      }
     
+      # Signs between dimensions
+      for(i in 1:dims)
+        for(j in 1:dims)
+        {
+          if(i!=j)
+          {
+            # Target dimension
+            target1 <- which(wc==i)
+            target2 <- which(wc==j)
+          
+            # Initialize signs
+            signs <- numeric(length(target1))
+          
+            # Target matrix
+            target.mat <- A[target1,target2]
+          
+            # Sign matrix
+            sign.mat <- sign(target.mat)
+          
+            for(k in 1:nrow(sign.mat))
+            {
+              # Save original sign.mat
+              orig.sign <- sign.mat
+            
+              # Check for max sums (current max)
+              curr.max <- sum(colSums(sign.mat,na.rm=TRUE),na.rm=TRUE)
+            
+              # New sign mat
+              sign.mat[k,] <- -sign.mat[k,]
+            
+              # Check for new max sums (new max)
+              new.max <- sum(colSums(sign.mat,na.rm=TRUE),na.rm=TRUE)
+            
+              if(new.max <= curr.max)
+              {
+                sign.mat <- orig.sign
+                signs[k] <- 1
+              }else{
+                signs[k] <- -1
+              }
+            }
+          
+            comm.str[which(wc==i),j] <- comm.str[which(wc==i),j] * ifelse(signs==0,1,signs)
+          }
+      }
+  
+  
     # Flip dimensions (if necessary)
     if(!pos.manifold)
     {
       for(i in 1:dims)
       {
         wc.sign <- sign(sum(comm.str[which(wc==i),i]))
-        
+      
         if(wc.sign != 1)
         {comm.str[which(wc==i),] <- -comm.str[which(wc==i),]}
       } 
     }
-    
-    # Match signs across dimensions
-    for(i in 1:nrow(comm.str))
-      for(j in 1:ncol(comm.str))
-      {
-        if(wc[i] != j)
-        {
-          sign.check <- sign(sum(A[i,which(wc==j)]))
-          
-          sign(comm.str[i,j]) != sign.check
-          
-          if(sign(comm.str[i,j]) != sign.check)
-          {comm.str[i,j] <- -comm.str[i,j]}
-        }
-      }
-    
+  
     res <- list()
     res$comm.str <- comm.str
     res$A <- A
-    
+  
     return(res)
   }
   
@@ -181,11 +216,6 @@ net.loads <- function(A, wc, pos.manifold = FALSE, rm.zero = FALSE, plot = FALSE
                                    absolute = absolute, diagonal = diagonal)
     stab <- NetworkToolbox::stable(A = A, comm = wc, absolute = absolute, diagonal = diagonal)
     
-    sign.comc <- sign(NetworkToolbox::comcat(A = A, comm = wc, metric = metric,
-                                             absolute = FALSE, diagonal = diagonal))
-    
-    comc <- comc * sign.comc
-    
     for(q in 1:nrow(comc))
     {comc[q,which(is.na(comc[q,]))] <- stab[q]}
     
@@ -202,7 +232,7 @@ net.loads <- function(A, wc, pos.manifold = FALSE, rm.zero = FALSE, plot = FALSE
   comm.str <- mat.func(A = A, wc = wc, absolute = TRUE, diagonal = 0)
   
   # Check for reverse signs
-  res.rev <- rev.sign.check(comm.str = comm.str, A = A, wc = wc, dims = dims, pos.manifold = pos.manifold)
+  res.rev <- add.signs(comm.str = comm.str, A = A, wc = wc, dims = dims, pos.manifold = pos.manifold)
   comm.str <- res.rev$comm.str
   A <- res.rev$A
   
