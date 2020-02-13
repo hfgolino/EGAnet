@@ -50,10 +50,10 @@
 #'
 #' \donttest{
 #' # weighted topological overlap
-#' redund <- node.redundant(items, type = "wTO", method = "adapt")
+#' redund <- node.redundant(items, method = "wTO", type = "adapt")
 #'
 #' # partial correlation
-#' redund <- node.redundant(items, type = "pcor", method = "adapt")
+#' redund <- node.redundant(items, method = "pcor", type = "adapt")
 #'
 #' # check redundancies
 #' key.ind <- match(colnames(items), as.character(psychTools::spi.dictionary$item_id))
@@ -69,8 +69,8 @@
 #' @author Alexander Christensen <alexpaulchristensen@gmail.com>
 #'
 #' @export
-# Redundant Nodes Function
-# Updated 04.02.2020
+# Redundant Nodes Combination Function
+# Updated 13.02.2020
 node.redundant.combine <- function (node.redundant.obj,
                                     type = c("sum", "latent"),
                                     estimator = "WLSMV",
