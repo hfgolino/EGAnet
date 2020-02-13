@@ -6,13 +6,20 @@
 \usage{
 node.redundant(
   data,
+  n = NULL,
   sig,
   method = c("wTO", "pcor", "thresh"),
   type = c("alpha", "bonferroni", "FDR", "adapt")
 )
 }
 \arguments{
-\item{data}{Matrix or data frame}
+\item{data}{Matrix or data frame.
+Input can either be data or a correlation matrix}
+  
+\item{n}{Numeric.
+If input in \code{data} is a correlation matrix and
+\code{method = "wTO"}, then sample size is required.
+Defaults to NULL}
 
 \item{sig}{Numeric.
 \emph{p}-value for significance of overlap (defaults to \code{.05}).
