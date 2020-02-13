@@ -1,22 +1,16 @@
 citHeader("To cite EGAnet in publications use:")
 
 bibentry(
-	bibtype	= "article",
-	key	= "golino2019eganet",
-	title	= "Investigating the performance of Exploratory Graph Analysis and traditional techniques to identify the number of latent factors: A simulation and tutorial",
+	bibtype	= "manual",
+	key	= "golino2020eganet",
+	title	= "EGAnet: Exploratory Graph Analysis -- A framework for estimating the number of dimensions in multivariate data using network psychometrics",
 	author	= c(person("Golino,", "Hudson"),
-		    person("Shi,", "Dingjing"),
-		    person("Christensen,", "P", "Alexander"),
-		    person("Garrido,", "E", "Luis"),
-		    person("Nieto,", "Dolores", "Maria"),
-		    person("Sadana,", "Ritu"),
-		    person("Thiyagarajan,", "Amuthavalli", "Jotheeswaran"),
-		    person("Martinez-Molina,", "Agustin")),
-	journal	= "Psychological Methods",
-	year	= "2019",
+		    person("Christensen,", "P", "Alexander")),
+	year	= "2020",
+	note    = "R package version 0.9.2",
 
   textVersion  =
-  paste0("Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., Thiyagarajan, J. A., & Martinez-Molina, A. (2019). ",
-        "Investigating the performance of Exploratory Graph Analysis and traditional techniques to identify the number of latent factors: A simulation and tutorial. ",
-	"Psychological Methods.")
+  paste0("Golino, H., & Christensen, A. P. (2020). ",
+        "EGAnet: Exploratory Graph Analysis -- A framework for estimating the number of dimensions in multivariate data using network psychometrics. ",
+	"R package version 0.9.2.")
 )
