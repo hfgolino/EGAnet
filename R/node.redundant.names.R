@@ -27,10 +27,10 @@
 #'
 #' \donttest{
 #' # weighted topological overlap
-#' redund <- node.redundant(items, type = "wTO", method = "adapt")
+#' redund <- node.redundant(items, method = "wTO", type = "adapt")
 #'
 #' # partial correlation
-#' redund <- node.redundant(items, type = "pcor", method = "adapt")
+#' redund <- node.redundant(items, method = "pcor", type = "adapt")
 #'
 #' # check redundancies
 #' key.ind <- match(colnames(items), as.character(psychTools::spi.dictionary$item_id))
