@@ -44,6 +44,7 @@
 #'
 #' @export
 # Node Redundant Naming Function
+# Updated 13.02.2020
 node.redundant.names <- function(node.redundant.obj, key)
 {
   # Check for node.redundant object class
