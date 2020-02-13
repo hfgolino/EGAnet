@@ -9,7 +9,8 @@
 #' Input can either be data or a correlation matrix
 #' 
 #' @param n Numeric.
-#' If input in \code{data}, then sample size is required.
+#' If input in \code{data} is a correlation matrix and
+#' \code{method = "wTO"}, then sample size is required.
 #' Defaults to NULL
 #'
 #' @param sig Numeric.
