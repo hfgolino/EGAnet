@@ -22,6 +22,12 @@ o `node.redundant.combine` bug fix for reverse coding latent variables
 
 o added Louvain community detection to all EGA functions in *EGAnet*
 
+o functionality updates to `node.redundant`
+
+o swapped arguments 'type' and 'method' in the `node.redundant` function (fixed examples in other node.redundant functions)
+
+o updated citation
+
 
 Changes in version 0.9.0
 
