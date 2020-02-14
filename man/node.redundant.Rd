@@ -6,13 +6,20 @@
 \usage{
 node.redundant(
   data,
+  n = NULL,
   sig,
-  type = c("wTO", "pcor", "thresh"),
-  method = c("alpha", "bonferroni", "FDR", "adapt")
+  method = c("wTO", "pcor", "thresh"),
+  type = c("alpha", "bonferroni", "FDR", "adapt")
 )
 }
 \arguments{
-\item{data}{Matrix or data frame}
+\item{data}{Matrix or data frame.
+Input can either be data or a correlation matrix}
+  
+\item{n}{Numeric.
+If input in \code{data} is a correlation matrix and
+\code{method = "wTO"}, then sample size is required.
+Defaults to NULL}
 
 \item{sig}{Numeric.
 \emph{p}-value for significance of overlap (defaults to \code{.05}).
@@ -20,14 +27,14 @@ If more than 200 connections, then \code{\link[fdrtool]{fdrtool}}
 is used to correct for false positives. In these instances, \code{sig}
 sets the \emph{q}-value for significance of overlap (defaults to \code{.10})}
 
-\item{type}{Character.
+\item{method}{Character.
 Computes weighted topological overlap (\code{"wTO"} using \code{\link[qgraph]{EBICglasso}}),
 partial correlations (\code{"pcor"}), or thresholding
 based on a certain level of partial correlations (\code{"thresh"}).
-\code{type = "thresh"} will use the argument \code{"sig"} to input
+\code{method = "thresh"} will use the argument \code{"sig"} to input
 the desired threshold (defaults to \code{sig = .20}).}
 
-\item{method}{Character.
+\item{type}{Character.
 Computes significance using the standard \emph{p}-value (\code{"alpha"}),
 bonferroni corrected \emph{p}-value (\code{"bonferroni"}),
 false-discovery rate corrected \emph{p}-value (\code{"FDR"}),
@@ -60,10 +67,10 @@ items <- psychTools::spi[,-c(1:10)]
 
 \donttest{
 # weighted topological overlap
-redund <- node.redundant(items, type = "wTO", method = "adapt")
+redund <- node.redundant(items, method = "wTO", type = "adapt")
 
 # partial correlation
-redund <- node.redundant(items, type = "pcor", method = "adapt")
+redund <- node.redundant(items, method = "pcor", type = "adapt")
 }
 
 }

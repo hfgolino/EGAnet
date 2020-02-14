@@ -5,7 +5,13 @@
 #' overlap is implemented using the method from Nowick et al. (2009; see references)
 #' and the function \link[wTO]{wTO} from the wTO package.
 #'
-#' @param data Matrix or data frame
+#' @param data Matrix or data frame.
+#' Input can either be data or a correlation matrix
+#' 
+#' @param n Numeric.
+#' If input in \code{data} is a correlation matrix and
+#' \code{method = "wTO"}, then sample size is required.
+#' Defaults to NULL
 #'
 #' @param sig Numeric.
 #' \emph{p}-value for significance of overlap (defaults to \code{.05}).
@@ -13,19 +19,19 @@
 #' is used to correct for false positives. In these instances, \code{sig}
 #' sets the \emph{q}-value for significance of overlap (defaults to \code{.10})
 #'
-#' @param type Character.
+#' @param method Character.
 #' Computes weighted topological overlap (\code{"wTO"} using \code{\link[qgraph]{EBICglasso}}),
 #' partial correlations (\code{"pcor"}), or thresholding
 #' based on a certain level of partial correlations (\code{"thresh"}).
-#' \code{type = "thresh"} will use the argument \code{"sig"} to input
+#' \code{method = "thresh"} will use the argument \code{"sig"} to input
 #' the desired threshold (defaults to \code{sig = .20}).
 #'
-#' @param method Character.
+#' @param type Character.
 #' Computes significance using the standard \emph{p}-value (\code{"alpha"}),
 #' bonferroni corrected \emph{p}-value (\code{"bonferroni"}),
 #' false-discovery rate corrected \emph{p}-value (\code{"FDR"}),
 #' or adaptive alpha \emph{p}-value (\code{\link[NetworkToolbox]{adapt.a}}).
-#' Defaults to \code{"alpha"}
+#' Defaults to \code{"adapt"}
 #'
 #' @return Returns a list:
 #'
@@ -45,10 +51,10 @@
 #'
 #' \donttest{
 #' # weighted topological overlap
-#' redund <- node.redundant(items, type = "wTO", method = "adapt")
+#' redund <- node.redundant(items, method = "wTO", type = "adapt")
 #'
 #' # partial correlation
-#' redund <- node.redundant(items, type = "pcor", method = "adapt")
+#' redund <- node.redundant(items, method = "pcor", type = "adapt")
 #' }
 #'
 #' @references
@@ -62,24 +68,49 @@
 #' @importFrom stats pgamma pnorm
 #'
 #' @export
-#Redundant Nodes Function
-node.redundant <- function (data, sig, type = c("wTO", "pcor", "thresh"),
-                            method = c("alpha", "bonferroni", "FDR", "adapt"))
+#
+# Redundant Nodes Function
+# Updated 13.02.2020
+node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "thresh"),
+                            type = c("alpha", "bonferroni", "FDR", "adapt"))
 {
-  # correlation data
-  A <- qgraph::cor_auto(data)
-
-  # compute network
-  net <- EBICglasso.qgraph(A, n = nrow(data))
+  #### missing arguments handling ####
+  
+  if(missing(type))
+  {type <- "adapt"
+  }else{type <- match.arg(type)}
+  
+  #### missing arguments handling ####
+  
+  # check for correlation matrix
+  if(ncol(data) == nrow(data))
+  {
+    A <- data
+    
+    # check for number of cases ("wTO" only)
+    if(method == "wTO")
+    {
+      if(is.null(n))
+      {stop('Argument \'n\' is NULL. Number of cases must be specified when a correlation matrix is input into the \'data\' argument and method = "wTO"')}
+    }
+  }else{
+    # correlate data
+    A <- qgraph::cor_auto(data)
+    # number of cases
+    n <- nrow(data)
+ }
 
   # change arguments to lower
   type <- tolower(type)
   method <- tolower(method)
 
-  #compute type of overlap method
-  if(type == "wto")
-  {tom <- wTO::wTO(net,sign="sign")
-  }else if(type == "pcor" || type == "thresh")
+  #compute redundant method
+  if(method == "wto")
+  {
+    # compute network
+    net <- EBICglasso.qgraph(A, n = n)
+    tom <- wTO::wTO(net,sign="sign")
+  }else if(method == "pcor" || method == "thresh")
   {tom <- -cov2cor(solve(A))}
 
   #number of nodes
