@@ -73,6 +73,7 @@
 #'
 #' @export
 #Item Stability function
+#Updated 17.02.2020
 itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep = TRUE){
     
     if(class(bootega.obj) != "bootEGA")
@@ -442,7 +443,7 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
     {
         item.id.samps[[m]] <- net.loads(bootega.obj$bootGraphs[[m]], final.mat[,m])$std
         
-        dims <- length(unique(final.mat[,m]))
+        dims <- ncol(item.id.samps[[m]])
         
         if(dims!=max.wc)
         {
@@ -451,7 +452,7 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
             
             diff <- max.wc - ncol(item.id.samps[[m]])
             
-            diff.wc <- setdiff(seq(1,max.wc,1),unique(final.mat[,m]))
+            diff.wc <- setdiff(seq(1,max.wc,1),unique(colnames(item.id.samps[[m]])))
             
             col.names <- c(colnames(item.id.samps[[m]]),paste(diff.wc))
             
