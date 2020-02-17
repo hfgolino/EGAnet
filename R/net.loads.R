@@ -80,17 +80,17 @@
 #' @export
 #'
 # Network Loadings
-# Updated 06.02.2020
+# Updated 17.02.2020
 net.loads <- function(A, wc, pos.manifold = FALSE, rm.zero = FALSE, plot = FALSE)
 {
   # Add signs to loadings function
   add.signs <- function(comm.str, A, wc, dims, pos.manifold)
   {
       # Signs within dimension
-      for(i in 1:dims)
+      for(i in 1:length(dims))
       {
         # Target dimension
-        target <- which(wc==i)
+        target <- which(wc==dims[i])
       
         # Initialize signs
         signs <- numeric(length(target))
@@ -124,19 +124,19 @@ net.loads <- function(A, wc, pos.manifold = FALSE, rm.zero = FALSE, plot = FALSE
           }
         }
       
-        comm.str[which(wc==i),i] <- comm.str[which(wc==i),i] * ifelse(signs==0,1,signs)
-        A[,which(wc==i)] <- sweep(A[,which(wc==i)],2,ifelse(signs==0,1,signs),`*`)
+        comm.str[which(wc==dims[i]),i] <- comm.str[which(wc==dims[i]),i] * ifelse(signs==0,1,signs)
+        A[,which(wc==dims[i])] <- sweep(A[,which(wc==dims[i])],2,ifelse(signs==0,1,signs),`*`)
       }
     
       # Signs between dimensions
-      for(i in 1:dims)
-        for(j in 1:dims)
+      for(i in 1:length(dims))
+        for(j in 1:length(dims))
         {
           if(i!=j)
           {
             # Target dimension
-            target1 <- which(wc==i)
-            target2 <- which(wc==j)
+            target1 <- which(wc==dims[i])
+            target2 <- which(wc==dims[j])
           
             # Initialize signs
             signs <- numeric(length(target1))
@@ -170,7 +170,7 @@ net.loads <- function(A, wc, pos.manifold = FALSE, rm.zero = FALSE, plot = FALSE
               }
             }
           
-            comm.str[which(wc==i),j] <- comm.str[which(wc==i),j] * ifelse(signs==0,1,signs)
+            comm.str[which(wc==dims[i]),j] <- comm.str[which(wc==dims[i]),j] * ifelse(signs==0,1,signs)
           }
       }
   
@@ -178,12 +178,12 @@ net.loads <- function(A, wc, pos.manifold = FALSE, rm.zero = FALSE, plot = FALSE
     # Flip dimensions (if necessary)
     if(!pos.manifold)
     {
-      for(i in 1:dims)
+      for(i in 1:length(dims))
       {
-        wc.sign <- sign(sum(comm.str[which(wc==i),i]))
+        wc.sign <- sign(sum(comm.str[which(wc==dims[i]),i]))
       
         if(wc.sign != 1)
-        {comm.str[which(wc==i),] <- -comm.str[which(wc==i),]}
+        {comm.str[which(wc==dims[i]),] <- -comm.str[which(wc==dims[i]),]}
       } 
     }
   
@@ -208,7 +208,19 @@ net.loads <- function(A, wc, pos.manifold = FALSE, rm.zero = FALSE, plot = FALSE
   }
   
   # Dimensions
-  dims <- max(wc,na.rm=TRUE)
+  ## Check for single item dimensions
+  dim.uniq <- na.omit(unique(wc))
+  
+  for(i in 1:length(dim.uniq))
+  {
+    len <- length(wc[which(wc==dim.uniq[i])])
+    
+    if(len == 1)
+    {wc[which(wc==dim.uniq[i])] <- NA}
+  }
+  
+  dims <- sort(na.omit(unique(wc)))
+  attr(dims, "na.action") <- NULL
   
   mat.func <- function(A, wc, metric = "each", absolute, diagonal)
   {
@@ -228,8 +240,11 @@ net.loads <- function(A, wc, pos.manifold = FALSE, rm.zero = FALSE, plot = FALSE
     return(comm.str)
   }
   
-  # Obtain signs
+  # Compute aboslute loadings
   comm.str <- mat.func(A = A, wc = wc, absolute = TRUE, diagonal = 0)
+  
+  if(any(colnames(comm.str)=="NA"))
+  {comm.str <- comm.str[,-which(colnames(comm.str) == "NA")]}
   
   # Check for reverse signs
   res.rev <- add.signs(comm.str = comm.str, A = A, wc = wc, dims = dims, pos.manifold = pos.manifold)
@@ -254,7 +269,7 @@ net.loads <- function(A, wc, pos.manifold = FALSE, rm.zero = FALSE, plot = FALSE
     res$unstd <- comm.str
     
     #standardized loadings
-    if(dims!=1)
+    if(length(dims)!=1)
     {std <- t(t(unstd) / sqrt(colSums(abs(unstd))))
     }else{std <- t(t(unstd) / sqrt(sum(abs(unstd))))}
     
@@ -276,7 +291,7 @@ net.loads <- function(A, wc, pos.manifold = FALSE, rm.zero = FALSE, plot = FALSE
     res$unstd <- round(unstd,3)
     
     #standardized loadings
-    if(dims!=1)
+    if(length(dims)!=1)
     {std <- t(t(unstd) / sqrt(colSums(abs(unstd))))
     }else{std <- t(t(unstd) / sqrt(sum(abs(unstd))))}
     
