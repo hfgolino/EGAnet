@@ -4,7 +4,7 @@
 \alias{net.loads}
 \title{Network Loadings}
 \usage{
-net.loads(A, wc, rm.zero = FALSE, plot = FALSE)
+net.loads(A, wc, pos.manifold = FALSE, rm.zero = FALSE, plot = FALSE)
 }
 \arguments{
 \item{A}{Matrix, data frame, or \code{\link[EGAnet]{EGA}} object.
@@ -14,6 +14,12 @@ An adjacency matrix of network data}
 A vector of community assignments.
 Not necessary if an \code{\link[EGAnet]{EGA}} object
 is input for argument \code{A}}
+
+\item{pos.manifold}{Boolean.
+Should a positive manifold be applied (i.e., should
+all dimensions be positively correlated)?
+Defaults to \code{FALSE}.
+Set to \code{TRUE} for a positive manifold}
 
 \item{rm.zero}{Should zeros be removed from the resulting matrix?
 Defaults to \code{FALSE}.

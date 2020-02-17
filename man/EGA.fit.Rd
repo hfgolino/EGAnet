@@ -2,7 +2,7 @@
 % Please edit documentation in R/EGA.fit.R
 \name{EGA.fit}
 \alias{EGA.fit}
-\title{\code{\link[EGAnet]{EGA}} Optimal Model Fit using \code{\link[EGAnet]{entropyFit}}}
+\title{\code{\link[EGAnet]{EGA}} Optimal Model Fit using the Total Entropy Fit Index  (\code{\link[EGAnet]{tefi}})}
 \usage{
 EGA.fit(
   data,

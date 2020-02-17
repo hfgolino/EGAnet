@@ -15,7 +15,7 @@ node.redundant(
 \arguments{
 \item{data}{Matrix or data frame.
 Input can either be data or a correlation matrix}
-  
+
 \item{n}{Numeric.
 If input in \code{data} is a correlation matrix and
 \code{method = "wTO"}, then sample size is required.
@@ -39,7 +39,7 @@ Computes significance using the standard \emph{p}-value (\code{"alpha"}),
 bonferroni corrected \emph{p}-value (\code{"bonferroni"}),
 false-discovery rate corrected \emph{p}-value (\code{"FDR"}),
 or adaptive alpha \emph{p}-value (\code{\link[NetworkToolbox]{adapt.a}}).
-Defaults to \code{"alpha"}}
+Defaults to \code{"adapt"}}
 }
 \value{
 Returns a list:

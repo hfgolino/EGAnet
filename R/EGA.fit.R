@@ -1,4 +1,4 @@
-#' \code{\link[EGAnet]{EGA}} Optimal Model Fit using \code{\link[EGAnet]{entropyFit}}
+#' \code{\link[EGAnet]{EGA}} Optimal Model Fit using the Total Entropy Fit Index  (\code{\link[EGAnet]{tefi}})
 #'
 #' @description Estimates the best fitting model using \code{\link[EGAnet]{EGA}}.
 #' The number of steps in the \code{\link[igraph]{cluster_walktrap}} detection
@@ -80,7 +80,7 @@
 #'
 #' @export
 # EGA fit
-# Updated 05.02.2020
+# Updated 02.05.2020
 EGA.fit <- function (data, model = c("glasso","TMFG"),
                      steps = c(3,4,5,6,7,8), n = NULL)
 {
@@ -151,3 +151,4 @@ EGA.fit <- function (data, model = c("glasso","TMFG"),
       }
   return(best.fit)
 }
+#----

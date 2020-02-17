@@ -49,7 +49,7 @@ These items can now be used in the `node.redundant` function available in the *E
 
 ```{r wto example, eval = TRUE, echo = TRUE, comment = NA, warning = FALSE, message = FALSE, cache = FALSE}
 # Identify redundant nodes
-redund <- node.redundant(items, type = "wTO", method = "adapt")
+redund <- node.redundant(items, method = "wTO", type = "adapt")
 
 # Change names in redundancy output to each item's description
 key.ind <- match(colnames(items), as.character(spi.dictionary$item_id))
