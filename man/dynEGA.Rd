@@ -116,9 +116,6 @@ Recommended to use maximum number of cores minus one
 If you're unsure how many cores your computer has,
 then use the following code: \code{parallel::detectCores()}}
 }
-\value{
-Returns...
-}
 \description{
 Estimates dynamic factors in multivariate time series (i.e. longitudinal data, panel data, intensive longitudinal data) at multiple
 time scales, for individuals (intraindividual model) or groups of people (mean effects or random effects model).
@@ -159,7 +156,10 @@ Using derivative estimates to describe intraindividual variability at multiple t
 \emph{Psychological Methods}, \emph{14(4)}, 367-386.
 doi:\href{https://doi.org/10.1037/a0016622}{10.1037/a0016622}
 
-
+Golino, H. F., & Epskamp, S. (2017).
+Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research.
+\emph{PloS one}, \emph{12(6)}, e0174035..
+doi: \href{https://doi.org/10.1371/journal.pone.0174035}{journal.pone.0174035}
 Savitzky, A., & Golay, M. J. (1964).
 Smoothing and differentiation of data by simplified least squares procedures.
 \emph{Analytical Chemistry}, \emph{36(8)}, 1627-1639.
