@@ -26,7 +26,7 @@
 ## S3 method for class 'dynEGA' (Random Effects)
 #'
 #Print dynEGA function
-print.dynEGA.Individuals <- function(x, ...) {
+print.dynEGA<- function(x, ...) {
   cat("dynEGA Results (Random Effects):\n")
   cat("\nNumber of Dimensions:\n")
   print(x$dynEGA$n.dim)

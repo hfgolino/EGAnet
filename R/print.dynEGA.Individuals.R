@@ -25,7 +25,7 @@
 #'
 ## S3 method for class 'dynEGA.Individuals' (Fixed Effects - Intraindividual Structure)
 #'
-#Print dynEGA function
+#Print dynEGA.Individuals function
 print.dynEGA.Individuals <- function(x, ...) {
   cat("Number of Cases (individuals): \n")
   number <- length(x$dynEGA)

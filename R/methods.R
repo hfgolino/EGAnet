@@ -1,5 +1,88 @@
 # Methods:
 
+#Summary function for dynEGA
+summary.dynEGA <- function(object, ...) {
+  cat("dynEGA Results (Random Effects):\n")
+  cat("\nNumber of Dimensions:\n")
+  print(object$dynEGA$n.dim)
+  cat("\nItems per Dimension:\n")
+  print(object$dynEGA$dim.variables)
+}
+
+#Summary function for dynEGA (Group Effects)
+summary.dynEGA.Groups <- function(object, ...) {
+  for(i in 1:length(object$dynEGA)){
+    cat("dynEGA Results (Group Effects):\n")
+    cat("Group:", names(object$dynEGA[i]))
+    cat("\nNumber of Dimensions:\n")
+    print(object$dynEGA[[i]]$n.dim)
+    cat("\nItems per Dimension:\n")
+    print(object$dynEGA[[i]]$dim.variables)
+  }
+}
+
+#Summary function for dynEGA (Fixed Effects - Intraindividual Structure)
+summary.dynEGA.Individuals <- function(object, ...) {
+  cat("Number of Cases (individuals): \n")
+  number <- length(object$dynEGA)
+  print(number)
+  cat("Summary statistics (number of factors/communities): \n")
+  dim <- sapply(object$dynEGA, "[[", 3)
+  cat("Mean:", mean(dim), "\n")
+  cat("Median:", median(dim), "\n")
+  cat("Min:", min(dim), "\n")
+  cat("Max:", max(dim), "\n")
+}
+
+#Print dynEGA.Groups function
+print.dynEGA.Groups <- function(x, ...) {
+  for(i in 1:length(x$dynEGA)){
+    cat("dynEGA Results (Group Effects):\n")
+    cat("Group:", names(x$dynEGA[i]))
+    cat("\nNumber of Dimensions:\n")
+    print(x$dynEGA[[i]]$n.dim)
+    cat("\nItems per Dimension:\n")
+    print(x$dynEGA[[i]]$dim.variables)
+  }
+}
+
+#Print dynEGA.Individuals function
+
+print.dynEGA.Individuals <- function(x, ...) {
+  cat("Number of Cases (individuals): \n")
+  number <- length(x$dynEGA)
+  print(number)
+  cat("Summary statistics (number of factors/communities): \n")
+  dim <- sapply(x$dynEGA, "[[", 3)
+  cat("Mean:", mean(dim), "\n")
+  cat("Median:", median(dim), "\n")
+  cat("Min:", min(dim), "\n")
+  cat("Max:", max(dim), "\n")
+}
+
+#Print dynEGA function
+print.dynEGA<- function(x, ...) {
+  cat("dynEGA Results (Random Effects):\n")
+  cat("\nNumber of Dimensions:\n")
+  print(x$dynEGA$n.dim)
+  cat("\nItems per Dimension:\n")
+  print(x$dynEGA$dim.variables)
+}
+
+#Plot dynEGA function (Group Effects)
+plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", vsize = 6,  ...) {
+  par(mfrow=c(nrow,ncol))
+  for(i in 1:length(x$dynEGA)){
+    qgraph::qgraph(x$dynEGA[[i]]$network, layout = "spring", vsize = vsize, groups = as.factor(x$dynEGA[[i]]$wc), ...)
+    title(names(x$dynEGA)[[i]], ...)}
+}
+
+#Plot dynEGA function (Random Effects)
+plot.dynEGA <- function(x, title = "", vsize = 6,  ...) {
+  plot.dynEGA <- qgraph::qgraph(x$dynEGA$network, layout = "spring", vsize = vsize, groups = as.factor(x$dynEGA$wc), ...)
+
+}
+
 # Plot EGA:
 
 plot.EGA <- function(ega.obj, title = "", vsize = 6,  ...){
