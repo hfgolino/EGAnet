@@ -71,7 +71,7 @@ or \code{\link[NetworkToolbox]{TMFG}}}
 \value{
 Returns a list containing:
 
-\item{estimated.network}{A symmetric network estimated using either the
+\item{network}{A symmetric network estimated using either the
 \code{\link{EBICglasso.qgraph}} or \code{\link[NetworkToolbox]{TMFG}}}
 
 \item{wc}{A vector representing the community (dimension) membership
