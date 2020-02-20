@@ -20,9 +20,9 @@ The old EGA package is now EGAnet, and is now available in The Comprehensive R A
 References
 ============
 
-Golino, H. F., & Epskamp, S. (2017). Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research. PloS one, 12(6), e0174035.. doi: journal.pone.0174035
+Golino, H. F., & Epskamp, S. (2017). Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research. PloS one, 12(6), e0174035. [doi: journal.pone.0174035](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0174035)
 
-Golino, H. F., & Demetriou, A. (2017). Estimating the dimensionality of intelligence like data using Exploratory Graph Analysis. Intelligence, 62, 54-70. doi: j.intell.2017.02.007
+Golino, H. F., & Demetriou, A. (2017). Estimating the dimensionality of intelligence like data using Exploratory Graph Analysis. Intelligence, 62, 54-70. [doi: j.intell.2017.02.007](https://www.sciencedirect.com/science/article/pii/S0160289616302240)
 
-Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., & Thiyagarajan, J. A. (in press). Investigating the performance of Exploratory Graph Analysis and traditional techniques to identify the number of latent factors: A simulation and tutorial. Psychological Methods. doi: 10.31234/osf.io/gzcre
+Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., & Thiyagarajan, J. A. (in press). Investigating the performance of Exploratory Graph Analysis and traditional techniques to identify the number of latent factors: A simulation and tutorial. Psychological Methods. [doi: 10.31234/osf.io/gzcre](https://psyarxiv.com/gzcre/)
 
