@@ -279,8 +279,8 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
                            model = model, algorithm = algorithm,
                            steps = steps, cor = cor)}
     if(use.derivatives==2){
-      init <- (ncol(data[,-c(id, group)])*order)+1
-      cols <- seq(from = init, to = init+order)
+      init <- (ncol(data[,-c(id, group)])*2)+1
+      cols <- seq(from = init, to = init+ncol(data[,-c(id, group)])-1)
       ega1 <- EGA.estimate(data = data.all[,cols], model = model, algorithm = algorithm,
                            steps = steps, cor = cor)}
   }
@@ -305,8 +305,8 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
     if(use.derivatives == 1){
       colstouse <- colnames(data.all[,(ncol(data[,-c(id, group)])+1):(ncol(data[,-c(id, group)])*2)])}
     if(use.derivatives==2){
-      init <- (ncol(data[,-c(id, group)])*order)+1
-      cols <- seq(from = init, to = init+order)
+      init <- (ncol(data[,-c(id, group)])*2)+1
+      cols <- seq(from = init, to = init+ncol(data[,-c(id, group)])-1)
       colstouse <- colnames(data.all[,cols])
     }
 
@@ -347,8 +347,8 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
     if(use.derivatives == 1){
       colstouse <- colnames(data.all[,(ncol(data[,-c(id, group)])+1):(ncol(data[,-c(id, group)])*2)])}
     if(use.derivatives==2){
-      init <- (ncol(data[,-c(id, group)])*order)+1
-      cols <- seq(from = init, to = init+order)
+      init <- (ncol(data[,-c(id, group)])*2)+1
+      cols <- seq(from = init, to = init+ncol(data[,-c(id, group)])-1)
       colstouse <- colnames(data.all[,cols])
     }
 
