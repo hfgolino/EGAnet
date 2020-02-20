@@ -70,7 +70,7 @@
 #' @export
 #
 # Redundant Nodes Function
-# Updated 13.02.2020
+# Updated 20.02.2020
 node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "thresh"),
                             type = c("alpha", "bonferroni", "FDR", "adapt"))
 {
@@ -82,13 +82,17 @@ node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "thre
   
   #### missing arguments handling ####
   
+  # change arguments to lower
+  type <- tolower(type)
+  method <- tolower(method)
+  
   # check for correlation matrix
   if(ncol(data) == nrow(data))
   {
     A <- data
     
     # check for number of cases ("wTO" only)
-    if(method == "wTO")
+    if(method == "wto")
     {
       if(is.null(n))
       {stop('Argument \'n\' is NULL. Number of cases must be specified when a correlation matrix is input into the \'data\' argument and method = "wTO"')}
@@ -98,11 +102,7 @@ node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "thre
     A <- qgraph::cor_auto(data)
     # number of cases
     n <- nrow(data)
- }
-
-  # change arguments to lower
-  type <- tolower(type)
-  method <- tolower(method)
+  }
 
   #compute redundant method
   if(method == "wto")
@@ -171,21 +171,28 @@ node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "thre
                                              rate = g.dist$estimate["rate"]) #rate of gamma
                    ),
     )
-
-    #compute false-discvoery rate
-    if(method == "fdr")
+    
+    #switch for missing arguments
+    if(missing(sig))
     {
-      sig <- ifelse(missing(sig),.10,sig)
-
+      sig <- switch(type,
+                    fdr = .10,
+                    bonferroni = .05,
+                    adapt = .05,
+                    alpha = .05
+      )
+    }else{sig <- sig}
+    
+    #switch to compute pvals
+    if(type == "fdr")
+    {
       pval <- suppressWarnings(fdrtool::fdrtool(pval, statistic = "pvalue", plot = FALSE, verbose = FALSE)$qval)
     }else{
-
-      sig <- ifelse(missing(sig),.05,sig)
-
-      if(method == "bonferroni")
-      {sig <- sig / length(pos.vals)
-      }else if(method == "adapt")
-      {sig <- NetworkToolbox::adapt.a("cor", alpha = sig, n = length(pos.vals), efxize = "medium")$adapt.a}
+      sig <- switch(type,
+                    bonferroni = sig / length(pos.vals),
+                    adapt = NetworkToolbox::adapt.a("cor", alpha = sig, n = length(pos.vals), efxize = "medium")$adapt.a,
+                    alpha = sig
+      )
     }
 
     #identify q-values less than sigificance

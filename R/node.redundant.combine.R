@@ -70,7 +70,7 @@
 #'
 #' @export
 # Redundant Nodes Combination Function
-# Updated 13.02.2020
+# Updated 20.02.2020
 node.redundant.combine <- function (node.redundant.obj,
                                     type = c("sum", "latent"),
                                     estimator = "WLSMV",
@@ -84,6 +84,13 @@ node.redundant.combine <- function (node.redundant.obj,
   if(missing(type))
   {type <- "latent"
   }else{type <- match.arg(type)}
+  
+  # Warning for sum scores
+  if(type == "sum")
+  {
+    warning('type = "sum" assumes all variables are reverse scored for a positive manifold',
+            immediate. = TRUE)
+  }
   
   # Redundant list
   redund <- node.redundant.obj$redundant
@@ -321,10 +328,12 @@ node.redundant.combine <- function (node.redundant.obj,
         {
           # Latent variable
           ## create model
-          mod <- paste(paste("comb =~ ",sep=""), paste(colnames(new.data[,c(tar.idx, idx)]), collapse = " + "))
-            
+          if(length(c(tar.idx, idx))==2)
+          {mod <- paste(paste("comb =~ ",sep=""), paste("1*",colnames(new.data[,c(tar.idx, idx)]), collapse = " + ", sep = ""))
+          }else{mod <- paste(paste("comb =~ ",sep=""), paste(colnames(new.data[,c(tar.idx, idx)]), collapse = " + "))}
+          
           ## fit model
-          fit <- suppressWarnings(lavaan::cfa(mod, data = new.data))#, ...))
+          fit <- suppressWarnings(lavaan::cfa(mod, data = new.data, ...))
             
           ## identify cases
           cases <- lavaan::inspect(fit, "case.idx")
