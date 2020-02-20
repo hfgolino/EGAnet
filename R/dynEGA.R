@@ -23,8 +23,7 @@
 #' A string indicating which effects should be computed. If the interest is
 #' in modeling the intraindividual structure only (one dimensionality structure per individual), then effects should be set to \code{"fixed"}.
 #' If the interest is in the common structure of a group of individuals, then effects should be set to \code{"group"}.
-#' If the interest is in the population structure, then effects should be set to \code{"random"}.
-#' Finally, if someone is interested in both the intraindividual structure and the population structure, then effects should be set to \code{"mixed"}.
+#' Finally, if the interest is in the population structure, then effects should be set to \code{"random"}.
 #'
 #' Current options are:
 #'
@@ -41,10 +40,6 @@
 #' \item{\strong{\code{random}}}
 #' {Estimates the dynamic factors of the population, ignoring individuals' id.}
 #'
-#' \item{\strong{\code{mixed}}}
-#' {Estimates the dynamic factors for both individuals and the full sample.
-#' An additional parameter (\code{"id"}) needs to be provided.}
-#'
 #'}
 #' @param id Numeric.
 #' Number of the column identifying each individual.
@@ -58,6 +53,24 @@
 #' @param plot.EGA Logical.
 #' If TRUE, returns a plot of the network and its estimated dimensions.
 #' Defaults to TRUE
+#'
+#' @param cor Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
+#' Current options are:
+#'
+#' \itemize{
+#'
+#' \item{\strong{\code{cor_auto}}}
+#' {Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
+#' \code{\link[qgraph]{qgraph}}}.
+#'
+#' \item{\strong{\code{pearson}}}
+#' {Computes Pearson's correlation coefficient using the pairwise complete observations via
+#' the \code{\link[stats]{cor}}} function.
+#'
+#' \item{\strong{\code{spearman}}}
+#' {Computes Spearman's correlation coefficient using the pairwise complete observations via
+#' the \code{\link[stats]{cor}}} function.
+#' }
 #'
 #' @param model A string indicating the network method to use (\code{\link{EGA.estimate}}).
 #' Current options are:
@@ -108,7 +121,7 @@
 #' # Population structure:
 #'dyn.random <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 #'delta = 1, id = 21, group = 22, use.derivatives = 1,
-#'effects = "group", model = "glasso")
+#'effects = "random", model = "glasso")
 #'}
 #'
 #'# Group structure:
@@ -159,6 +172,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
                    model = c("glasso", "TMFG"),
                    algorithm = c("walktrap", "louvain"),
                    plot.EGA = TRUE,
+                   cor = c("cor_auto", "pearson", "spearman"),
                    steps = 4,
                    ncores){
   #### MISSING ARGUMENTS HANDLING ####
@@ -177,6 +191,10 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
   if(missing(group))
   {group <- ncol(data)+1
   }else{group <- group}
+
+  if(missing(cor))
+  {cor <- "cor_auto"
+  }else{cor <- match.arg(cor)}
 
   if(missing(ncores))
   {ncores <- ceiling(parallel::detectCores() / 2)
@@ -255,16 +273,16 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
     if(use.derivatives == 0){
       ega1 <- EGA.estimate(data = data.all[,1:ncol(data[,-c(id, group)])],
                            model = model, algorithm = algorithm,
-                           steps = steps)}
+                           steps = steps, cor = cor)}
     if(use.derivatives == 1){
       ega1 <- EGA.estimate(data = data.all[,(ncol(data[,-c(id, group)])+1):(ncol(data[,-c(id, group)])*2)],
                            model = model, algorithm = algorithm,
-                           steps = steps)}
+                           steps = steps, cor = cor)}
     if(use.derivatives==2){
       init <- (ncol(data[,-c(id, group)])*order)+1
       cols <- seq(from = init, to = init+order)
       ega1 <- EGA.estimate(data = data.all[,cols], model = model, algorithm = algorithm,
-                           steps = steps)}
+                           steps = steps, cor = cor)}
   }
 
   parallel::stopCluster(cl)
@@ -313,7 +331,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
     ega.list.groups <- pbapply::pblapply(X = data.groups, cl = cl,
                                          FUN = EGA.estimate,
                                          model = model, algorithm = algorithm,
-                                         steps = steps)
+                                         steps = steps, cor = cor)
     parallel::stopCluster(cl)
   }
 
@@ -348,15 +366,13 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
                             varlist = c("data.individuals", "cases"),
                             envir=environment())
 
-    # EGA Part
-
+    # EGA estimates per individual:
     ega.list.individuals <- list()
 
-    #Compute derivatives per Group
     ega.list.individuals <- pbapply::pblapply(X = data.individuals, cl = cl,
                                               FUN = EGA.estimate,
                                               model = model, algorithm = algorithm,
-                                              steps = steps)
+                                              steps = steps, cor = cor)
     parallel::stopCluster(cl)
   }
 

@@ -83,6 +83,12 @@ plot.dynEGA <- function(x, title = "", vsize = 6,  ...) {
 
 }
 
+#Plot dynEGA function (Fixed Effects)
+plot.dynEGA.Individuals <- function(x, title = "", vsize = 6,  id, ...) {
+  plot.dynEGA.Individuals <- qgraph::qgraph(x$dynEGA[[id]]$network, layout = "spring", vsize = vsize, groups = as.factor(x$dynEGA[[id]]$wc), ...)
+
+}
+
 # Plot EGA:
 
 plot.EGA <- function(ega.obj, title = "", vsize = 6,  ...){

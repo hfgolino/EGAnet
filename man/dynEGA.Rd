@@ -16,6 +16,7 @@ dynEGA(
   model = c("glasso", "TMFG"),
   algorithm = c("walktrap", "louvain"),
   plot.EGA = TRUE,
+  cor = c("cor_auto", "pearson", "spearman"),
   steps = 4,
   ncores
 )
@@ -38,8 +39,7 @@ Default is \code{"delta = 1"}.}
 A string indicating which effects should be computed. If the interest is
 in modeling the intraindividual structure only (one dimensionality structure per individual), then effects should be set to \code{"fixed"}.
 If the interest is in the common structure of a group of individuals, then effects should be set to \code{"group"}.
-If the interest is in the population structure, then effects should be set to \code{"random"}.
-Finally, if someone is interested in both the intraindividual structure and the population structure, then effects should be set to \code{"mixed"}.
+Finally, if the interest is in the population structure, then effects should be set to \code{"random"}.
 
 Current options are:
 
@@ -55,10 +55,6 @@ An additional parameter (\code{"group"}) needs to be provided identifying the gr
 
 \item{\strong{\code{random}}}
 {Estimates the dynamic factors of the population, ignoring individuals' id.}
-
-\item{\strong{\code{mixed}}}
-{Estimates the dynamic factors for both individuals and the full sample.
-An additional parameter (\code{"id"}) needs to be provided.}
 
 }}
 
@@ -103,6 +99,24 @@ Current options are:
 If TRUE, returns a plot of the network and its estimated dimensions.
 Defaults to TRUE}
 
+\item{cor}{Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{cor_auto}}}
+{Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
+\code{\link[qgraph]{qgraph}}}.
+
+\item{\strong{\code{pearson}}}
+{Computes Pearson's correlation coefficient using the pairwise complete observations via
+the \code{\link[stats]{cor}}} function.
+
+\item{\strong{\code{spearman}}}
+{Computes Spearman's correlation coefficient using the pairwise complete observations via
+the \code{\link[stats]{cor}}} function.
+}}
+
 \item{steps}{Number of steps to be used in \code{\link[igraph]{cluster_walktrap}} algorithm.
 Defaults to 4.}
 
@@ -129,7 +143,7 @@ GLLA is a filtering method for estimating derivatives from data that uses time d
 # Population structure:
 dyn.random <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 delta = 1, id = 21, group = 22, use.derivatives = 1,
-effects = "group", model = "glasso")
+effects = "random", model = "glasso")
 }
 
 # Group structure:

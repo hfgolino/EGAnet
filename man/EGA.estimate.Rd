@@ -10,6 +10,7 @@ EGA.estimate(
   model = c("glasso", "TMFG"),
   algorithm = c("walktrap", "louvain"),
   steps = 4,
+  cor = c("cor_auto", "pearson", "spearman"),
   ...
 )
 }
@@ -50,6 +51,24 @@ Current options are:
 
 \item{steps}{Number of steps to be used in \code{\link[igraph]{cluster_walktrap}} algorithm.
 Defaults to 4.}
+
+\item{cor}{Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{cor_auto}}}
+{Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
+\code{\link[qgraph]{qgraph}}}.
+
+\item{\strong{\code{pearson}}}
+{Computes Pearson's correlation coefficient using the pairwise complete observations via
+the \code{\link[stats]{cor}}} function.
+
+\item{\strong{\code{spearman}}}
+{Computes Spearman's correlation coefficient using the pairwise complete observations via
+the \code{\link[stats]{cor}}} function.
+}}
 
 \item{...}{Additional arguments to be passed to \code{\link{EBICglasso.qgraph}}
 or \code{\link[NetworkToolbox]{TMFG}}}

@@ -43,6 +43,24 @@
 #' @param steps Number of steps to be used in \code{\link[igraph]{cluster_walktrap}} algorithm.
 #' Defaults to 4.
 #'
+#' @param cor Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
+#' Current options are:
+#'
+#' \itemize{
+#'
+#' \item{\strong{\code{cor_auto}}}
+#' {Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
+#' \code{\link[qgraph]{qgraph}}}.
+#'
+#' \item{\strong{\code{pearson}}}
+#' {Computes Pearson's correlation coefficient using the pairwise complete observations via
+#' the \code{\link[stats]{cor}}} function.
+#'
+#' \item{\strong{\code{spearman}}}
+#' {Computes Spearman's correlation coefficient using the pairwise complete observations via
+#' the \code{\link[stats]{cor}}} function.
+#' }
+#'
 #' @param ... Additional arguments to be passed to \code{\link{EBICglasso.qgraph}}
 #' or \code{\link[NetworkToolbox]{TMFG}}
 #'
@@ -99,7 +117,9 @@
 EGA.estimate <- function(data, n = NULL,
                          model = c("glasso", "TMFG"),
                          algorithm = c("walktrap", "louvain"),
-                         steps = 4, ...)
+                         steps = 4,
+                         cor = c("cor_auto", "pearson", "spearman"),
+                         ...)
 {
   #### MISSING ARGUMENTS HANDLING ####
 
@@ -111,6 +131,10 @@ EGA.estimate <- function(data, n = NULL,
   {algorithm <- "walktrap"
   }else{algorithm <- match.arg(algorithm)}
 
+  if(missing(cor))
+  {cor <- "cor_auto"
+  }else{cor <- match.arg(cor)}
+
   #### MISSING ARGUMENTS HANDLING ####
 
   # Check if data is correlation matrix and positive definite
@@ -120,7 +144,24 @@ EGA.estimate <- function(data, n = NULL,
     n <- nrow(data)
 
     # Compute correlation matrix
-    cor.data <- qgraph::cor_auto(data, forcePD = TRUE)
+
+    if(cor == "cor_auto"){
+      cor.data <- qgraph::cor_auto(data, forcePD = TRUE)
+    }else if(cor == "pearson"){
+      cor.data <- cor(data, use = "pairwise.complete.obs", method = "pearson")
+    }else if(cor == "spearman"){
+      cor.data <- cor(data, use = "pairwise.complete.obs", method = "spearman")
+    }
+
+    # Check if positive definite
+    if(any(eigen(cor.data)$values < 0))
+    {
+      # Let user know
+      warning("Correlation matrix is not positive definite.\nForcing positive definite matrix using Matrix::nearPD()\nResults may be unreliable")
+
+      # Force positive definite matrix
+      cor.data <- as.matrix(Matrix::nearPD(cor.data)$mat)
+    }
   }else{
 
     # Check if positive definite
