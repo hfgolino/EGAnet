@@ -18,8 +18,7 @@ dynEGA(
   plot.EGA = TRUE,
   cor = c("cor_auto", "pearson", "spearman"),
   steps = 4,
-  ncores,
-  order = 2
+  ncores
 )
 }
 \arguments{
@@ -130,9 +129,6 @@ Recommended to use maximum number of cores minus one
 
 If you're unsure how many cores your computer has,
 then use the following code: \code{parallel::detectCores()}}
-
-\item{order}{Numeric.
-Order of the derivative, up to the nth. derivative.}
 }
 \description{
 Estimates dynamic factors in multivariate time series (i.e. longitudinal data, panel data, intensive longitudinal data) at multiple

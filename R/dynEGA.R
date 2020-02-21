@@ -113,8 +113,6 @@
 #' If you're unsure how many cores your computer has,
 #' then use the following code: \code{parallel::detectCores()}
 #'
-#' @param order Numeric.
-#' Order of the derivative, up to the nth. derivative.
 #'
 #' @author Hudson Golino <hfg9s at virginia.edu>
 #'
@@ -177,8 +175,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
                    plot.EGA = TRUE,
                    cor = c("cor_auto", "pearson", "spearman"),
                    steps = 4,
-                   ncores,
-                   order = 2){
+                   ncores){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(id))
   {stop("The 'id' argument is missing! \n The number of the column identifying each individual must be provided!")
