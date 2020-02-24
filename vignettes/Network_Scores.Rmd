@@ -39,15 +39,16 @@ To estimate dimensions, we'll use exploratory graph analysis (EGA; Golino, 2019;
 
 ```{r Fig1, fig.align = 'center', fig.pos = "H", echo = TRUE, message = FALSE, warning = FALSE}
 # Run EGA
-ega <- EGA(neoOpen)
+ega <- EGA(neoOpen, model = "glasso", algorithm = "louvain")
 ```
 
 As depicted above, EGA estimates there to be 7 dimensions of openness to experience. Using these dimensions, we can now estimate network scores; but first, I'll go into details about how these are estimated.
 
 # Network Loadings
+## Christensen & Golino (under review)
 Network loadings are roughly equivalent to factor loadings and differ only in the association measures used to compute them. For networks, the centrality measure *node strength* is used to compute the sum of the connections to a node. Previous simulation studies have reported that node strength is generally redundant with CFA factor loadings (Hallquist, Wright, & Molenaar, 2019) and item-scale correlations (Christensen, Golino, & Silvia, 2019). Importantly, Hallquist and colleagues (2019) found that a node's strength represents a combination of dominant and cross-factor loadings. To mitigate this issue, I've developed a function called `net.loads`, which computes the node strength for each node in each dimension, parsing out the connections that represent dominant and cross-dimension loadings. Below is the code to compute standardized (`$std`; unstandardized, `$unstd`) network loadings.
 
-```{r loadings, echo = TRUE, message = FALSE, warning = FALSE, }
+```{r loadings, echo = TRUE, message = FALSE, warning = FALSE}
 # Standardized
 net.loads <- net.loads(A = ega)$std
 ```
@@ -69,7 +70,7 @@ These network loadings form the foundation for computing network scores. There a
 
 To compute network scores, the following code can be used:
 
-```{r scores, echo = TRUE, message = FALSE, warning = FALSE, }
+```{r scores, echo = TRUE, message = FALSE, warning = FALSE}
 # Network scores
 net.scores <- net.scores(data = neoOpen, A = ega)
 ```
@@ -92,13 +93,61 @@ $$\hat{\theta_C} = \sum\limits_{t} X_{tC} \times relWei_{tC},$$
 
 where $X$ is the data, $X_{tC}$ are items, $t$, that do not have loadings on the factor, $C$, equal to zero, and $\hat{\theta_C}$ is the predicted network score for that community.
 
+# Comparison to CFA Scores
+It's important to note that CFA scores are typically computed using a simple structure (items only load on one factor) and regression techniques. Network scores, however, are computed using a complex structure and are a weighted composite rather than a latent factor.
+
+```{r latent scores setup, echo = FALSE, eval = TRUE, message = FALSE, warning = FALSE}
+# Latent variable scores
+## Estimate CFA
+output <- capture.output(cfa.net <- CFA(ega, estimator = "WLSMV", data = neoOpen, plot.CFA = FALSE))
+
+## Compute latent variable scores
+lv.scores <- lavPredict(cfa.net$fit)
+
+## Initialize correlations vector
+cors <- numeric(ega$n.dim)
+
+## Compute correlations
+for(i in 1:ega$n.dim)
+{cors[i] <- cor(net.scores$std.scores[,i], lv.scores[,i], method = "spearman")}
+
+## Create matrix for table
+cors.mat <- as.matrix(round(cors,3))
+colnames(cors.mat) <- "Correlations"
+row.names(cors.mat) <- paste("Factor", 1:ega$n.dim)
+```
+
+```{r latent scores present, echo = TRUE, eval = FALSE, message = FALSE, warning = FALSE}
+# Latent variable scores
+## Estimate CFA
+cfa.net <- CFA(ega, estimator = "WLSMV", data = neoOpen)
+
+## Compute latent variable scores
+lv.scores <- lavPredict(cfa.net$fit)
+
+## Initialize correlations vector
+cors <- numeric(ega$n.dim)
+
+## Compute correlations
+for(i in 1:ega$n.dim)
+{cors[i] <- cor(net.scores$std.scores[,i], lv.scores[,i], method = "spearman")}
+```
+```{r latent scores table, echo = FALSE, eval = TRUE, message = FALSE, warning = FALSE}
+# Print table
+knitr::kable(cors.mat)
+```
+
+As shown in the table, the network scores strongly correlate with the latent variable scores. Because Spearman's correlation was used, the orderings of the values take precendence. These large correlations between the scores reflect considerable redundancy between these scores.
+
 # References
 
 Christensen, A. P. (2018). NetworkToolbox: Methods and measures for brain, cognitive, and psychometric network analysis in R. *The R Journal*, *10*, 422-439. https://doi.org/10.32614/RJ-2018-065
 
+Christensen, A. P., & Golino, H. (under review). Statistical equivalency of factor and network loadings. *PsyArXiv*. https://doi.org/10.31234/osf.io/xakez
+
 Christensen, A. P., Golino, H., & Silvia, P. (2019). A psychometric network perspective on the measurement and assessment of personality traits. *PsyArXiv*. https://doi.org/10.31234/osf.io/ktejp
 
-Csardi, G., & Nepusz, T. (2006). The igraph software package for complex network research. *InterJournal, Complex Systems*, *1695*, 1-9.
+Csardi, G., & Nepusz, T. (2006). The igraph software package for complex network research. *InterJournal Complex Systems*, *1695*, 1-9.
 
 Epskamp, S., & Fried, E. I. (2018). A tutorial on regularized partial correlation networks. *Psychological Methods*, *23*, 617-634. http://dx.doi.org/10.1037/met0000167
 

@@ -36,7 +36,7 @@ library(EGAnet)
 ```
 
 # Data Management
-The *psych* package contains that SAPA inventory data that will be used for the example. More details about the sample can be found using the code `?spi` or in Condon's (2018) SAPA inventory manual. Prior to any analyses, the items that correspond to the five-factor model (FFM; McCrae & Costa, 1987) should be obtain with the following code:
+The *psychTools* package contains that SAPA inventory data that will be used for the example. More details about the sample can be found using the code `?spi` or in Condon's (2018) SAPA inventory manual. Prior to any analyses, the items that correspond to the five-factor model (FFM; McCrae & Costa, 1987) should be obtain with the following code:
 
 ```{r data, eval = TRUE, echo = TRUE, comment = NA, warning = FALSE, message = FALSE}
 # Select Five Factor Model personality items only
@@ -74,7 +74,7 @@ The name of this item list, `'Am full of ideas.'`, is the item that is redundant
 
 ```{r combine NR example, eval = FALSE, echo = TRUE, comment = NA, warning = FALSE, message = FALSE, cache = FALSE}
 # Combining redundant responses
-combined.nr <- node.redundant.combine(named.nr, type = "optimal")
+combined.nr <- node.redundant.combine(named.nr, type = "latent")
 ```
 
 When entering this code, the R console will output each item list with a selection of possible redundant nodes (see Figure 1) and an associated "redundancy chain" plot will appear (see Figure 2). When examining the possible redundant nodes, the reader may notice that there were four items identified previously---that is, `'Am able to come up with new and different ideas.'`, `'Am an original thinker.'`, `'Love to think up new ways of doing things.'`, and `'Have a vivid imagination.'` (Table 1).
@@ -95,7 +95,7 @@ In a psychometric network, these triangles contribute to a measure known as the 
 
 In our example, we selected these items by inputing their numbers into the R console with commas separating them (i.e., `1, 2, 3`). If the researcher decides that all items are unique with respect to the target item, then they can type `0`, which will not combine any items and move to the next target item. If the user selects items, then they will be prompted to label the new composite item, which we labeled `Original Ideation` (Figure 1).
 
-The argument `type` will choose how to handle forming a composite of these items (i.e., latent variable or sum scores). We've chosen `"optimal"`, which will compute a unidimensional reflect latent variable and obtain factor scores when there are 2 or more items selected. When only one item is selected (two including the target item), the mean across the items are computed. The function will remove the selected items from the data and replace them with the new composite item. This completes the first target item and the function will proceed to the rest of the redundant items until all have been handled.
+The argument `type` will choose how to handle forming a composite of these items (i.e., latent variable or sum scores). We've chosen `"latent"`, which will compute a unidimensional reflective latent variable and obtain factor scores. The function will remove the selected items from the data and replace them with the new composite item. This completes the first target item and the function will proceed to the rest of the redundant items until all have been handled.
 
 Upon completing this process, the `node.redundant.combine` function will output a new data matrix (`$data`) and a matrix containing items that were selected to be redundant with one another (`$merged`). The new data will have the column names specified in the combination process with values representing either latent variable or sum scores for the combined items (i.e., components). Items that were not considered to be redundant with other items will be returned with their original values. The output of `$merged` is useful for documenting what was done, making the choices in the process transparent. We have included a .csv file containing our output `$merged` in our supplementary information for readers to review and assess.
 
@@ -115,4 +115,4 @@ McCrae, R. R., & Costa, P. T. (1987). Validation of the five-factor model of per
 
 Pérez, M. E., & Pericchi, L. R. (2014). Changing statistical significance with the amount of information: The adaptive $\alpha$ significance level. *Statistics & Probability Letters*, *85*, 20–24. https://doi.org/10.1016/j.spl.2013.10.018
 
-Revelle, W. (2019). psychTools:Tools to Accompany the 'psych; Package for Psychological Research. Evanston, Illinois: Northwestern University. Retrieved from https://CRAN.R-project.org/package=psychTools
+Revelle, W. (2019). psychTools: Tools to Accompany the 'psych; Package for Psychological Research. Evanston, Illinois: Northwestern University. Retrieved from https://CRAN.R-project.org/package=psychTools
