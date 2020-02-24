@@ -10,7 +10,8 @@
 #' An observed time series to be reorganized into a time-delayed embedded matrix.
 #'
 #' @param E Integer.
-#' Number of embedded dimensions (the number of observations to be used).
+#' Number of embedded dimensions or the number of observations to be used. For example,
+#' an \code{"E = 5"} will generate a matrix with five columns, meaning that five consecutive observations are used to create each row of the embedded matrix.
 #'
 #' @param tau Integer.
 #' Number of observations to offset successive embeddings. A tau of one uses adjacent observations.

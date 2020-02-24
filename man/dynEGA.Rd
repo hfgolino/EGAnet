@@ -25,7 +25,8 @@ dynEGA(
 \item{data}{A dataframe with the variables to be used in the analysis. The dataframe should be in a long format (i.e. observations for the same individual (for example, individual 1) are placed in order, from time 1 to time t, followed by the observations from individual 2, also ordered from time 1 to time t.)}
 
 \item{n.embed}{Integer.
-Number of embedded dimensions (the number of observations to be used in the \code{\link[EGAnet]{Embed}} function).}
+Number of embedded dimensions (the number of observations to be used in the \code{\link[EGAnet]{Embed}} function). For example,
+an \code{"n.embed = 5"} will use five consecutive observations to estimate a single derivative.}
 
 \item{tau}{Integer.
 Number of observations to offset successive embeddings in the \code{\link[EGAnet]{Embed}} function. A tau of one uses adjacent observations.
