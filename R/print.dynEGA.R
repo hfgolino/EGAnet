@@ -13,7 +13,7 @@
 #' # Estimate dynEGA
 #' dyn.random <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 #' delta = 1, id = 21, group = 22, use.derivatives = 1,
-#' effects = "random", model = "glasso")
+#' level = "population", model = "glasso")
 #'
 #' #Print dynEGA results
 #' print(dyn.random)
@@ -23,11 +23,11 @@
 #'
 #' @export
 #'
-## S3 method for class 'dynEGA' (Random Effects)
+## S3 method for class 'dynEGA' (Level: Population)
 #'
 #Print dynEGA function
 print.dynEGA<- function(x, ...) {
-  cat("dynEGA Results (Random Effects):\n")
+  cat("dynEGA Results (Level: Population):\n")
   cat("\nNumber of Dimensions:\n")
   print(x$dynEGA$n.dim)
   cat("\nItems per Dimension:\n")

@@ -2,12 +2,12 @@
 % Please edit documentation in R/plot.dynEGA.Individuals.R
 \name{plot.dynEGA.Individuals}
 \alias{plot.dynEGA.Individuals}
-\title{Plot method for \code{\link[EGAnet]{dynEGA}} objects (Fixed Effects)}
+\title{Plot method for \code{\link[EGAnet]{dynEGA}} objects (Level: Individual)}
 \usage{
 \method{plot}{dynEGA.Individuals}(x, title = "", vsize = 6, id = NULL, ...)
 }
 \arguments{
-\item{x}{An \code{\link[EGAnet]{dynEGA}} object (Fixed Effects)}
+\item{x}{An \code{\link[EGAnet]{dynEGA}} object (Level: Individual)}
 
 \item{title}{Character. Title of the plot}
 
@@ -26,7 +26,7 @@ Plots the \code{\link[EGAnet]{dynEGA}} result using \code{\link[qgraph]{qgraph}}
 # Estimate dynEGA
 dyn.intra <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 delta = 1, id = 21, group = 22, use.derivatives = 1,
-effects = "fixed", model = "glasso")
+level = "individual", model = "glasso")
 
 #Summary of dynEGA reults
 summary(dyn.intra)

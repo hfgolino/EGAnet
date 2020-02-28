@@ -2,24 +2,24 @@
 % Please edit documentation in R/summary.dynEGA.Individuals.R
 \name{summary.dynEGA.Individuals}
 \alias{summary.dynEGA.Individuals}
-\title{Summary for \code{\link[EGAnet]{dynEGA}} objects (Fixed Effects - Intraindividual Structure)}
+\title{Summary for \code{\link[EGAnet]{dynEGA}} objects (Level: Individual)}
 \usage{
 \method{summary}{dynEGA.Individuals}(object, ...)
 }
 \arguments{
-\item{object}{An \code{\link[EGAnet]{dynEGA}} object (Fixed Effects - Intraindividual Structure)}
+\item{object}{An \code{\link[EGAnet]{dynEGA}} object (Level: Individual)}
 
 \item{...}{potentially further arguments (\strong{unused currently})}
 }
 \description{
-Returns a summary of the \code{\link[EGAnet]{dynEGA}} results (Fixed Effects - Intraindividual Structure)
+Returns a summary of the \code{\link[EGAnet]{dynEGA}} results (Level: Individual)
 }
 \examples{
 \dontrun{
 # Estimate dynEGA
 dyn.individual <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 delta = 1, id = 21, group = 22, use.derivatives = 1,
-effects = "fixed", model = "glasso")
+level = "individual", model = "glasso")
 
 #Summary of dynEGA results
 summary(dyn.individual)

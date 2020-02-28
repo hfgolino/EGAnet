@@ -2,12 +2,12 @@
 % Please edit documentation in R/plot.dynEGA.R
 \name{plot.dynEGA}
 \alias{plot.dynEGA}
-\title{Plot method for \code{\link[EGAnet]{dynEGA}}objects (Random Effects)}
+\title{Plot method for \code{\link[EGAnet]{dynEGA}}objects (Level: Population)}
 \usage{
 \method{plot}{dynEGA}(x, title = "", vsize = 6, ...)
 }
 \arguments{
-\item{x}{An \code{\link[EGAnet]{dynEGA}} object (Random Effects)}
+\item{x}{An \code{\link[EGAnet]{dynEGA}} object (Level: Population)}
 
 \item{title}{Character. Title of the plot}
 
@@ -24,7 +24,7 @@ Plots the \code{\link[EGAnet]{dynEGA}} result using \code{\link[qgraph]{qgraph}}
 # Estimate dynEGA
 dyn.random <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 delta = 1, id = 21, group = 22, use.derivatives = 1,
-effects = "random", model = "glasso")
+level = "population", model = "glasso")
 
 #Summary of dynEGA reults
 summary(dyn.random)

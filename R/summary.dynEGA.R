@@ -13,7 +13,7 @@
 #' # Estimate dynEGA
 #' dyn.random <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 #' delta = 1, id = 21, group = 22, use.derivatives = 1,
-#' effects = "random", model = "glasso")
+#' level = "population", model = "glasso")
 #'
 #' #Summary of dynEGA reults
 #' summary(dyn.random)
@@ -27,7 +27,7 @@
 #'
 #Summary function for dynEGA
 summary.dynEGA <- function(object, ...) {
-  cat("dynEGA Results (Random Effects):\n")
+  cat("dynEGA Results (Level: Population):\n")
   cat("\nNumber of Dimensions:\n")
   print(object$dynEGA$n.dim)
   cat("\nItems per Dimension:\n")

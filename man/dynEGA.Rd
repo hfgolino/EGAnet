@@ -9,7 +9,7 @@ dynEGA(
   n.embed,
   tau = 1,
   delta = 1,
-  effects = c("fixed", "group", "random"),
+  level = c("individual", "group", "population"),
   id = NULL,
   group = NULL,
   use.derivatives = 1,
@@ -36,17 +36,17 @@ Default is \code{"tau = 1"}.}
 The time between successive observations in the time series.
 Default is \code{"delta = 1"}.}
 
-\item{effects}{Character.
-A string indicating which effects should be computed. If the interest is
-in modeling the intraindividual structure only (one dimensionality structure per individual), then effects should be set to \code{"fixed"}.
-If the interest is in the common structure of a group of individuals, then effects should be set to \code{"group"}.
-Finally, if the interest is in the population structure, then effects should be set to \code{"random"}.
+\item{level}{Character.
+A string indicating the level of analysis. If the interest is
+in modeling the intraindividual structure only (one dimensionality structure per individual), then \code{level} should be set to \code{"individual"}.
+If the interest is in the structure of a group of individuals, then \code{level} should be set to \code{"group"}.
+Finally, if the interest is in the population structure, then \code{level} should be set to \code{"population"}.
 
 Current options are:
 
 \itemize{
 
-\item{\strong{\code{fixed}}}
+\item{\strong{\code{individual}}}
 {Estimates the dynamic factors per individual. This should be the prefered method is one is interested in
 in the factor structure of individuals. An additional parameter (\code{"id"}) needs to be provided identifying each individual.}
 
@@ -54,8 +54,8 @@ in the factor structure of individuals. An additional parameter (\code{"id"}) ne
 {Estimates the dynamic factors for each group.
 An additional parameter (\code{"group"}) needs to be provided identifying the group membership.}
 
-\item{\strong{\code{random}}}
-{Estimates the dynamic factors of the population, ignoring individuals' id.}
+\item{\strong{\code{population}}}
+{Estimates the dynamic factors of the population}
 
 }}
 
@@ -63,7 +63,7 @@ An additional parameter (\code{"group"}) needs to be provided identifying the gr
 Number of the column identifying each individual.}
 
 \item{group}{Numeric or character.
-Number of the column identifying group membership. Must be specified only if \code{effects = "group"}.}
+Number of the column identifying group membership. Must be specified only if \code{level = "group"}.}
 
 \item{use.derivatives}{Integer.
 The order of the derivative to be used in the EGA procedure. Default to 1.}
@@ -133,7 +133,7 @@ then use the following code: \code{parallel::detectCores()}}
 }
 \description{
 Estimates dynamic factors in multivariate time series (i.e. longitudinal data, panel data, intensive longitudinal data) at multiple
-time scales, for individuals (intraindividual model) or groups of people (mean effects or random effects model).
+time scales, in different levels of analysis: individuals (intraindividual structure), groups or population (structure of the population).
 Exploratory graph analysis is applied in the derivatives estimated using generalized local linear approximation (\code{\link[EGAnet]{glla}}). Instead of estimating factors by modeling how variables are covarying, as in traditional
 EGA, dynEGA is a dynamic model that estimates the factor structure by modeling how variables are changing together.
 GLLA is a filtering method for estimating derivatives from data that uses time delay embedding and a variant of Savitzky-Golay filtering to accomplish the task.
@@ -144,19 +144,19 @@ GLLA is a filtering method for estimating derivatives from data that uses time d
 # Population structure:
 dyn.random <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 delta = 1, id = 21, group = 22, use.derivatives = 1,
-effects = "random", model = "glasso")
+level = "population", model = "glasso")
 }
 
 # Group structure:
 dyn.group <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 delta = 1, id = 21, group = 22, use.derivatives = 1,
-effects = "group", model = "glasso")
+level = "group", model = "glasso")
 
 # Intraindividual structure:
 
 dyn.individual <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 delta = 1, id = 21, group = 22, use.derivatives = 1,
-effects = "fixed", model = "glasso")
+level = "individual", model = "glasso")
 
 }
 \references{

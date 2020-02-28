@@ -1,8 +1,8 @@
-#' Summary for \code{\link[EGAnet]{dynEGA}} objects (Fixed Effects - Intraindividual Structure)
+#' Summary for \code{\link[EGAnet]{dynEGA}} objects (Level: Individual)
 #'
-#' Returns a summary of the \code{\link[EGAnet]{dynEGA}} results (Fixed Effects - Intraindividual Structure)
+#' Returns a summary of the \code{\link[EGAnet]{dynEGA}} results (Level: Individual)
 #'
-#' @param object An \code{\link[EGAnet]{dynEGA}} object (Fixed Effects - Intraindividual Structure)
+#' @param object An \code{\link[EGAnet]{dynEGA}} object (Level: Individual)
 #'
 #' @param ... potentially further arguments (\strong{unused currently})
 #'
@@ -13,7 +13,7 @@
 #' # Estimate dynEGA
 #' dyn.individual <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 #' delta = 1, id = 21, group = 22, use.derivatives = 1,
-#' effects = "fixed", model = "glasso")
+#' level = "individual", model = "glasso")
 #'
 #' #Summary of dynEGA results
 #' summary(dyn.individual)
@@ -22,9 +22,9 @@
 #'
 #' @export
 #'
-## S3 method for class 'dynEGA.Individuals' (Fixed Effects - Intraindividual Structure)
+## S3 method for class 'dynEGA.Individuals' (Level: Individual)
 #'
-#Summary function for dynEGA (Fixed Effects - Intraindividual Structure)
+#Summary function for dynEGA (Level: Individual)
 summary.dynEGA.Individuals <- function(object, ...) {
   cat("Number of Cases (individuals): \n")
   number <- length(object$dynEGA)

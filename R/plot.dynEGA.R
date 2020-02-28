@@ -1,8 +1,8 @@
-#' Plot method for \code{\link[EGAnet]{dynEGA}}objects (Random Effects)
+#' Plot method for \code{\link[EGAnet]{dynEGA}}objects (Level: Population)
 #'
 #' Plots the \code{\link[EGAnet]{dynEGA}} result using \code{\link[qgraph]{qgraph}}
 #'
-#' @param x An \code{\link[EGAnet]{dynEGA}} object (Random Effects)
+#' @param x An \code{\link[EGAnet]{dynEGA}} object (Level: Population)
 #'
 #' @param title Character. Title of the plot
 #'
@@ -18,7 +18,7 @@
 #' # Estimate dynEGA
 #' dyn.random <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 #' delta = 1, id = 21, group = 22, use.derivatives = 1,
-#' effects = "random", model = "glasso")
+#' level = "population", model = "glasso")
 #'
 #' #Summary of dynEGA reults
 #' summary(dyn.random)
@@ -33,7 +33,7 @@
 #'
 ## S3 method for class 'dynEGA'
 #'
-#Plot dynEGA function (Random Effects)
+#Plot dynEGA function (Level: Population)
 plot.dynEGA <- function(x, title = "", vsize = 6,  ...) {
   plot.dynEGA <- qgraph::qgraph(x$dynEGA$network, layout = "spring", vsize = vsize, groups = as.factor(x$dynEGA$wc), ...)
 

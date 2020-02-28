@@ -2,24 +2,24 @@
 % Please edit documentation in R/summary.dynEGA.Groups.R
 \name{summary.dynEGA.Groups}
 \alias{summary.dynEGA.Groups}
-\title{Summary for \code{\link[EGAnet]{dynEGA}} objects (Group Effects)}
+\title{Summary for \code{\link[EGAnet]{dynEGA}} objects (Level: Group)}
 \usage{
 \method{summary}{dynEGA.Groups}(object, ...)
 }
 \arguments{
-\item{object}{An \code{\link[EGAnet]{dynEGA}} object (Group Effects)}
+\item{object}{An \code{\link[EGAnet]{dynEGA}} object (Level: Group)}
 
 \item{...}{potentially further arguments (\strong{unused currently})}
 }
 \description{
-Returns a summary of the \code{\link[EGAnet]{dynEGA}} results (Group Effects)
+Returns a summary of the \code{\link[EGAnet]{dynEGA}} results (Level: Group)
 }
 \examples{
 \dontrun{
 # Estimate dynEGA
 dyn.group <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 delta = 1, id = 21, group = 22, use.derivatives = 1,
-effects = "group", model = "glasso")
+level = "group", model = "glasso")
 
 #Summary of dynEGA results
 summary(dyn.group)

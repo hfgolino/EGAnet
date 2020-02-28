@@ -1,7 +1,7 @@
 #' Dynamic Exploratory Graph Analysis
 #'
 #' @description Estimates dynamic factors in multivariate time series (i.e. longitudinal data, panel data, intensive longitudinal data) at multiple
-#' time scales, for individuals (intraindividual model) or groups of people (mean effects or random effects model).
+#' time scales, in different levels of analysis: individuals (intraindividual structure), groups or population (structure of the population).
 #' Exploratory graph analysis is applied in the derivatives estimated using generalized local linear approximation (\code{\link[EGAnet]{glla}}). Instead of estimating factors by modeling how variables are covarying, as in traditional
 #' EGA, dynEGA is a dynamic model that estimates the factor structure by modeling how variables are changing together.
 #' GLLA is a filtering method for estimating derivatives from data that uses time delay embedding and a variant of Savitzky-Golay filtering to accomplish the task.
@@ -20,17 +20,17 @@
 #' The time between successive observations in the time series.
 #' Default is \code{"delta = 1"}.
 #'
-#' @param effects Character.
-#' A string indicating which effects should be computed. If the interest is
-#' in modeling the intraindividual structure only (one dimensionality structure per individual), then effects should be set to \code{"fixed"}.
-#' If the interest is in the common structure of a group of individuals, then effects should be set to \code{"group"}.
-#' Finally, if the interest is in the population structure, then effects should be set to \code{"random"}.
+#' @param level Character.
+#' A string indicating the level of analysis. If the interest is
+#' in modeling the intraindividual structure only (one dimensionality structure per individual), then \code{level} should be set to \code{"individual"}.
+#' If the interest is in the structure of a group of individuals, then \code{level} should be set to \code{"group"}.
+#' Finally, if the interest is in the population structure, then \code{level} should be set to \code{"population"}.
 #'
 #' Current options are:
 #'
 #' \itemize{
 #'
-#' \item{\strong{\code{fixed}}}
+#' \item{\strong{\code{individual}}}
 #' {Estimates the dynamic factors per individual. This should be the prefered method is one is interested in
 #' in the factor structure of individuals. An additional parameter (\code{"id"}) needs to be provided identifying each individual.}
 #'
@@ -38,15 +38,15 @@
 #' {Estimates the dynamic factors for each group.
 #' An additional parameter (\code{"group"}) needs to be provided identifying the group membership.}
 #'
-#' \item{\strong{\code{random}}}
-#' {Estimates the dynamic factors of the population, ignoring individuals' id.}
+#' \item{\strong{\code{population}}}
+#' {Estimates the dynamic factors of the population}
 #'
 #'}
 #' @param id Numeric.
 #' Number of the column identifying each individual.
 #'
 #' @param group Numeric or character.
-#' Number of the column identifying group membership. Must be specified only if \code{effects = "group"}.
+#' Number of the column identifying group membership. Must be specified only if \code{level = "group"}.
 #'
 #' @param use.derivatives Integer.
 #' The order of the derivative to be used in the EGA procedure. Default to 1.
@@ -123,19 +123,19 @@
 #' # Population structure:
 #'dyn.random <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 #'delta = 1, id = 21, group = 22, use.derivatives = 1,
-#'effects = "random", model = "glasso")
+#'level = "population", model = "glasso")
 #'}
 #'
 #'# Group structure:
 #'dyn.group <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 #'delta = 1, id = 21, group = 22, use.derivatives = 1,
-#'effects = "group", model = "glasso")
+#'level = "group", model = "glasso")
 #'
 #'# Intraindividual structure:
 #'
 #'dyn.individual <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 #'delta = 1, id = 21, group = 22, use.derivatives = 1,
-#'effects = "fixed", model = "glasso")
+#'level = "individual", model = "glasso")
 #'
 #' @references
 #'
@@ -168,7 +168,7 @@
 # Updated 02.15.2020
 #'
 dynEGA <- function(data, n.embed, tau = 1, delta = 1,
-                   effects = c("fixed", "group", "random"),
+                   level = c("individual", "group", "population"),
                    id = NULL, group = NULL,
                    use.derivatives = 1,
                    model = c("glasso", "TMFG"),
@@ -182,13 +182,13 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
   {stop("The 'id' argument is missing! \n The number of the column identifying each individual must be provided!")
   }else{id <- id}
 
-  if(missing(effects))
-  {effects <- "random"
-  }else if(effects == "group"){
+  if(missing(level))
+  {level <- "population"
+  }else if(level == "group"){
     if(missing(group))
-    {stop("Effects set to 'group', but the 'group' argument is missing! \n The number of the column identifying each group must be provided!")
+    {stop("Level set to 'group', but the 'group' argument is missing! \n The number of the column identifying each group must be provided!")
     }else{group <- group}
-  }else{effects <- match.arg(effects)}
+  }else{level <- match.arg(level)}
 
   if(missing(group))
   {group <- ncol(data)+1
@@ -264,9 +264,9 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
   }
 
   names(derivlist) <- paste0("ID", cases)
-  # Random Effects:
-  if(effects == "random"){
-    message("Random Effects...\n", appendLF = FALSE)
+  # Population Level:
+  if(level == "population"){
+    message("Level: Population...\n", appendLF = FALSE)
 
     data.all <- data.frame(Reduce(rbind, derivlist))
 
@@ -289,9 +289,9 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
 
   parallel::stopCluster(cl)
 
-  # Group Effects:
-  if(effects == "group"){
-    message("Group Effects...\n", appendLF = FALSE)
+  # Level Group:
+  if(level == "group"){
+    message("Level: Group...\n", appendLF = FALSE)
 
     group.memb <- unique(data[,group])
 
@@ -337,9 +337,9 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
     parallel::stopCluster(cl)
   }
 
-  # Fixed Effects (intraindividual structure):
-  if(effects == "fixed"){
-    message("Fixed Effects (Intraindividual Structure)...\n", appendLF = FALSE)
+  # Level: Individual (intraindividual structure):
+  if(level == "individual"){
+    message("Level: Individual (Intraindividual Structure)...\n", appendLF = FALSE)
 
     data.all <- data.frame(Reduce(rbind, derivlist))
 
@@ -386,13 +386,13 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
   results$Derivatives <- vector("list")
   results$Derivatives$Estimates <- derivlist
   results$Derivatives$EstimatesDF <- data.all
-  if(effects == "random"){
+  if(level == "population"){
     results$dynEGA <- ega1
     dim.variables <- data.frame(items = colnames(data[-c(id, group)]), dimension = ega1$wc)
     dim.variables <- dim.variables[order(dim.variables[, 2]),]
     results$dynEGA$dim.variables <- dim.variables
     class(results) <- "dynEGA"
-  }else if(effects == "group"){
+  }else if(level == "group"){
     results$dynEGA <- ega.list.groups
     results$Derivatives$Estimates.Groups <- data.groups
     class(results) <- "dynEGA.Groups"
@@ -401,7 +401,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
     dim.variables[[i]] <- data.frame(items = colnames(data[-c(id, group)]), dimension = ega.list.groups[[i]]$wc)
     dim.variables[[i]] <- dim.variables[[i]][order(dim.variables[[i]][, 2]),]
     results$dynEGA[[i]]$dim.variables <- dim.variables[[i]]}
-    }else if(effects == "fixed"){
+    }else if(level == "individual"){
       results$dynEGA <- ega.list.individuals
       class(results) <- "dynEGA.Individuals"
       dim.variables <- list()

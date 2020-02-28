@@ -2,17 +2,17 @@
 
 #Summary function for dynEGA
 summary.dynEGA <- function(object, ...) {
-  cat("dynEGA Results (Random Effects):\n")
+  cat("dynEGA Results (Level: Population):\n")
   cat("\nNumber of Dimensions:\n")
   print(object$dynEGA$n.dim)
   cat("\nItems per Dimension:\n")
   print(object$dynEGA$dim.variables)
 }
 
-#Summary function for dynEGA (Group Effects)
+#Summary function for dynEGA (Level: Group)
 summary.dynEGA.Groups <- function(object, ...) {
   for(i in 1:length(object$dynEGA)){
-    cat("dynEGA Results (Group Effects):\n")
+    cat("dynEGA Results (Level: Group):\n")
     cat("Group:", names(object$dynEGA[i]))
     cat("\nNumber of Dimensions:\n")
     print(object$dynEGA[[i]]$n.dim)
@@ -21,7 +21,7 @@ summary.dynEGA.Groups <- function(object, ...) {
   }
 }
 
-#Summary function for dynEGA (Fixed Effects - Intraindividual Structure)
+#Summary function for dynEGA (Level: Individual - Intraindividual Structure)
 summary.dynEGA.Individuals <- function(object, ...) {
   cat("Number of Cases (individuals): \n")
   number <- length(object$dynEGA)
@@ -37,7 +37,7 @@ summary.dynEGA.Individuals <- function(object, ...) {
 #Print dynEGA.Groups function
 print.dynEGA.Groups <- function(x, ...) {
   for(i in 1:length(x$dynEGA)){
-    cat("dynEGA Results (Group Effects):\n")
+    cat("dynEGA Results (Level: Group):\n")
     cat("Group:", names(x$dynEGA[i]))
     cat("\nNumber of Dimensions:\n")
     print(x$dynEGA[[i]]$n.dim)
@@ -62,14 +62,14 @@ print.dynEGA.Individuals <- function(x, ...) {
 
 #Print dynEGA function
 print.dynEGA<- function(x, ...) {
-  cat("dynEGA Results (Random Effects):\n")
+  cat("dynEGA Results (Level: Population):\n")
   cat("\nNumber of Dimensions:\n")
   print(x$dynEGA$n.dim)
   cat("\nItems per Dimension:\n")
   print(x$dynEGA$dim.variables)
 }
 
-#Plot dynEGA function (Group Effects)
+#Plot dynEGA function (Level: Group)
 plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", vsize = 6,  ...) {
   par(mfrow=c(nrow,ncol))
   for(i in 1:length(x$dynEGA)){
@@ -77,13 +77,13 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", vsize = 6,  ...) {
     title(names(x$dynEGA)[[i]], ...)}
 }
 
-#Plot dynEGA function (Random Effects)
+#Plot dynEGA function (Level: Population)
 plot.dynEGA <- function(x, title = "", vsize = 6,  ...) {
   plot.dynEGA <- qgraph::qgraph(x$dynEGA$network, layout = "spring", vsize = vsize, groups = as.factor(x$dynEGA$wc), ...)
 
 }
 
-#Plot dynEGA function (Fixed Effects)
+#Plot dynEGA function (Level: Individual)
 plot.dynEGA.Individuals <- function(x, title = "", vsize = 6,  id, ...) {
   plot.dynEGA.Individuals <- qgraph::qgraph(x$dynEGA[[id]]$network, layout = "spring", vsize = vsize, groups = as.factor(x$dynEGA[[id]]$wc), ...)
 

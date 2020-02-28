@@ -19,7 +19,7 @@ Returns a summary of the \code{\link[EGAnet]{dynEGA}} objects
 # Estimate dynEGA
 dyn.random <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 delta = 1, id = 21, group = 22, use.derivatives = 1,
-effects = "random", model = "glasso")
+level = "population", model = "glasso")
 
 #Print dynEGA results
 print(dyn.random)

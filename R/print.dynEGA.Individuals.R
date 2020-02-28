@@ -23,7 +23,7 @@
 #'
 #' @export
 #'
-## S3 method for class 'dynEGA.Individuals' (Fixed Effects - Intraindividual Structure)
+## S3 method for class 'dynEGA.Individuals' (Level: Individual)
 #'
 #Print dynEGA.Individuals function
 print.dynEGA.Individuals <- function(x, ...) {

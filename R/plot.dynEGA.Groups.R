@@ -1,8 +1,8 @@
-#' Plot method for \code{\link[EGAnet]{dynEGA}}objects (Group Effects)
+#' Plot method for \code{\link[EGAnet]{dynEGA}}objects (Level: Group)
 #'
 #' Plots the \code{\link[EGAnet]{dynEGA}} result using \code{\link[qgraph]{qgraph}}
 #'
-#' @param x An \code{\link[EGAnet]{dynEGA}} object (Group Effects)
+#' @param x An \code{\link[EGAnet]{dynEGA}} object (Level: Group)
 #'
 #' @param ncol Number of columns
 #'
@@ -22,7 +22,7 @@
 #' # Estimate dynEGA
 #' dyn.group <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 #' delta = 1, id = 21, group = 22, use.derivatives = 1,
-#' effects = "group", model = "glasso")
+#' level = "group", model = "glasso")
 #'
 #' #Summary of dynEGA reults
 #' summary(dyn.group)
@@ -37,7 +37,7 @@
 #'
 ## S3 method for class 'dynEGA.Groups'
 #'
-#Plot dynEGA function (Group Effects)
+#Plot dynEGA function (Level: Group)
 plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", vsize = 6,  ...) {
   par(mfrow=c(nrow,ncol))
   for(i in 1:length(x$dynEGA)){

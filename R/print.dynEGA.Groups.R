@@ -1,8 +1,8 @@
-#' Print method for \code{\link[EGAnet]{dynEGA}} objects (Group Effects)
+#' Print method for \code{\link[EGAnet]{dynEGA}} objects (Level: Group)
 #'
-#' Returns a summary of the \code{\link[EGAnet]{dynEGA}} objects (Group Effects)
+#' Returns a summary of the \code{\link[EGAnet]{dynEGA}} objects (Level: Group)
 #'
-#' @param x An \code{\link[EGAnet]{dynEGA}} objects (Group Effects)
+#' @param x An \code{\link[EGAnet]{dynEGA}} objects (Level: Group)
 #'
 #' @param ... potentially further arguments (\strong{unused currently})
 #'
@@ -13,7 +13,7 @@
 #' # Estimate dynEGA
 #' dyn.group <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 #' delta = 1, id = 21, group = 22, use.derivatives = 1,
-#' effects = "group", model = "glasso")
+#' level = "group", model = "glasso")
 #'
 #' #Print dynEGA results
 #' print(dyn.group)
@@ -25,12 +25,12 @@
 #'
 #' @export
 #'
-## S3 method for class 'dynEGA.Groups' (Group Effects)
+## S3 method for class 'dynEGA.Groups' (Level: Group)
 #'
 #Print dynEGA function
 print.dynEGA.Groups <- function(x, ...) {
     for(i in 1:length(x$dynEGA)){
-      cat("dynEGA Results (Group Effects):\n")
+      cat("dynEGA Results (Level: Group):\n")
       cat("Group:", names(x$dynEGA[i]))
       cat("\nNumber of Dimensions:\n")
       print(x$dynEGA[[i]]$n.dim)

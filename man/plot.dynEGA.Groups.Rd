@@ -2,12 +2,12 @@
 % Please edit documentation in R/plot.dynEGA.Groups.R
 \name{plot.dynEGA.Groups}
 \alias{plot.dynEGA.Groups}
-\title{Plot method for \code{\link[EGAnet]{dynEGA}}objects (Group Effects)}
+\title{Plot method for \code{\link[EGAnet]{dynEGA}}objects (Level: Group)}
 \usage{
 \method{plot}{dynEGA.Groups}(x, ncol, nrow, title = "", vsize = 6, ...)
 }
 \arguments{
-\item{x}{An \code{\link[EGAnet]{dynEGA}} object (Group Effects)}
+\item{x}{An \code{\link[EGAnet]{dynEGA}} object (Level: Group)}
 
 \item{ncol}{Number of columns}
 
@@ -28,7 +28,7 @@ Plots the \code{\link[EGAnet]{dynEGA}} result using \code{\link[qgraph]{qgraph}}
 # Estimate dynEGA
 dyn.group <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 delta = 1, id = 21, group = 22, use.derivatives = 1,
-effects = "group", model = "glasso")
+level = "group", model = "glasso")
 
 #Summary of dynEGA reults
 summary(dyn.group)
