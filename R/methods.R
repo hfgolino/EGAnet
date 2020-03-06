@@ -80,13 +80,13 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", vsize = 6,  ...) {
 #Plot dynEGA function (Level: Population)
 plot.dynEGA <- function(x, title = "", vsize = 6,  ...) {
   plot.dynEGA <- qgraph::qgraph(x$dynEGA$network, layout = "spring", vsize = vsize, groups = as.factor(x$dynEGA$wc), ...)
-
+  
 }
 
 #Plot dynEGA function (Level: Individual)
 plot.dynEGA.Individuals <- function(x, title = "", vsize = 6,  id, ...) {
   plot.dynEGA.Individuals <- qgraph::qgraph(x$dynEGA[[id]]$network, layout = "spring", vsize = vsize, groups = as.factor(x$dynEGA[[id]]$wc), ...)
-
+  
 }
 
 # Plot EGA:
@@ -99,36 +99,36 @@ plot.EGA <- function(ega.obj, title = "", vsize = 6,  ...){
 # Plot bootEGA:
 plot.bootEGA <- function(bootega.obj, title = "", vsize = 6,  ...){
   qgraph::qgraph(bootega.obj$typicalGraph$graph, layout = "spring",
-         groups = as.factor(bootega.obj$typicalGraph$wc),
-         vsize = vsize, ...)
-
+                 groups = as.factor(bootega.obj$typicalGraph$wc),
+                 vsize = vsize, ...)
+  
 }
 
 # Dynamic Plot:
 dynamic.plot <- function(ega.obj, title = "", vsize = 30, opacity = 0.4){
-
+  
   graph.glasso <- NetworkToolbox::convert2igraph(ega.obj$network)
   vert <- igraph::V(graph.glasso)
   es <- as.data.frame(igraph::get.edgelist(graph.glasso))
   edge.width <- igraph::E(graph.glasso)$weight
   L <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = as.matrix(es),
-                                         weights = edge.width, vcount = length(ega.obj$wc))
+                                                 weights = edge.width, vcount = length(ega.obj$wc))
   Nv <- length(vert)
   Ne <- length(es[1]$V1)
   Xn <- L[,1]
   Yn <- L[,2]
   network <- plotly::plot_ly(x = ~Xn, y = ~Yn, mode = "markers", text = paste("Variable: ",vert$label), hoverinfo = "text",
-                     color = as.factor(ega.obj$wc),
-                     marker = list(size = vsize,
-                                   width = 2)) %>%
+                             color = as.factor(ega.obj$wc),
+                             marker = list(size = vsize,
+                                           width = 2)) %>%
     plotly::add_annotations(x = Xn,
-                    y = Yn,
-                    text = vert$label,
-                    xref = "x",
-                    yref = "y",
-                    showarrow = FALSE,
-                    ax = 20,
-                    ay = -40)
+                            y = Yn,
+                            text = vert$label,
+                            xref = "x",
+                            yref = "y",
+                            showarrow = FALSE,
+                            ax = 20,
+                            ay = -40)
   edge_shapes <- list()
   for(i in 1:Ne) {
     v0 <- es[i,]$V1
@@ -179,8 +179,8 @@ print.EGA <- function(object, ...) {
 #Plot CFA:
 plot.CFA <- function(object, layout = "spring", vsize = 6, ...) {
   semPlot::semPaths(object$fit, title = FALSE, label.cex = 0.8, sizeLat = 8, sizeMan = 5, edge.label.cex = 0.6, minimum = 0.1,
-           sizeInt = 0.8, mar = c(1, 1, 1, 1), residuals = FALSE, intercepts = FALSE, thresholds = FALSE, layout = "spring",
-           "std", cut = 0.5)
+                    sizeInt = 0.8, mar = c(1, 1, 1, 1), residuals = FALSE, intercepts = FALSE, thresholds = FALSE, layout = "spring",
+                    "std", cut = 0.5)
 }
 
 #Summary CFA:
@@ -189,6 +189,26 @@ summary.CFA <- function(object, ...) {
   print(object$summary)
   cat("\n FIt Measures:\n")
   print(object$fit.measures)
+}
+
+#Summary NetLoads
+#Updated 05.03.2020
+summary.NetLoads <- function(object, ...) {
+  object$std[which(abs(object$std) <= object$MinLoad, arr.ind = TRUE)] <- ""
+  print(object$std)
+}
+
+#Print NetLoads
+#Updated 05.03.2020
+print.NetLoads <- function(object, ...) {
+  object$std[which(abs(object$std) <= object$MinLoad, arr.ind = TRUE)] <- ""
+  print(object$std)
+}
+
+#Plot function for NetLoads
+#Updated 05.03.2020
+plot.NetLoads <- function(object, ...) {
+  plot(object$plot)
 }
 
 
