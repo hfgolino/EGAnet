@@ -1,3 +1,12 @@
+Changes in version 0.9.4
+
+o UPDATE: `net.loads` functionality (cleaned up code)
+
+o UPDATE: S3Methods for `net.loads`
+
+o FIX: `net.scores` negative loadings corrected
+
+
 Changes in version 0.9.3
 
 o New function and print, summary and plot methods: dynEGA
