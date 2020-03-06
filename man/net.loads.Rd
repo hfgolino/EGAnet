@@ -4,16 +4,16 @@
 \alias{net.loads}
 \title{Network Loadings}
 \usage{
-net.loads(A, wc, pos.manifold = FALSE, rm.zero = FALSE, plot = FALSE)
+net.loads(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
 }
 \arguments{
 \item{A}{Matrix, data frame, or \code{\link[EGAnet]{EGA}} object.
 An adjacency matrix of network data}
 
-\item{wc}{Numeric.
+\item{wc}{Numeric or character vector.
 A vector of community assignments.
-Not necessary if an \code{\link[EGAnet]{EGA}} object
-is input for argument \code{A}}
+If input into \code{A} is an \code{\link[EGAnet]{EGA}} object,
+then \code{wc} is automatically detected}
 
 \item{pos.manifold}{Boolean.
 Should a positive manifold be applied (i.e., should
@@ -21,9 +21,13 @@ all dimensions be positively correlated)?
 Defaults to \code{FALSE}.
 Set to \code{TRUE} for a positive manifold}
 
-\item{rm.zero}{Should zeros be removed from the resulting matrix?
-Defaults to \code{FALSE}.
-Set to \code{TRUE} to reduce the noise in the results}
+\item{min.load}{Numeric.
+Sets the minimum loading allowd in the standardized
+network loading matrix. Values equal or greater than
+the minimum loading are kept in the output. Values
+less than the minimum loading are removed. This matrix can
+be viewed using \code{print()} or \code{summary()}
+Defaults to \code{0}}
 
 \item{plot}{Boolean.
 Should proportional loadings be plotted?
@@ -40,6 +44,12 @@ strength values for each node}
 
 \item{std}{A matrix of the standardized within- and between-community
 strength values for each node}
+
+\item{minLoad}{The minimum loading to appear in summary of network loadings.
+Use \code{print()} or \code{summary()} to view}
+
+\item{plot}{A \code{\link[qgraph]{qgraph}} plot of the network loadings.
+Use \code{plot} to view}
 }
 \description{
 Computes the between- and within-community
@@ -72,16 +82,21 @@ ega.wmt <- EGA(wmt)
 }
 
 # Network loadings
-net.loads(ega.wmt, rm.zero = TRUE)
+net.loads(ega.wmt)
 
 }
 \references{
-Christensen, A. P., Golino, H. F., & Silvia, P. (2019).
+Christensen, A. P., & Golino, H. (2020).
+Statistical equivalency of factor and network loadings.
+\emph{PsyArXiv}.
+doi:\href{https://doi.org/10.31234/osf.io/xakez}{10.31234/osf.io/xakez}
+
+Christensen, A. P., Golino, H., & Silvia, P. (2019).
 A psychometric network perspective on the measurement and assessment of personality traits.
 \emph{PsyArXiv}.
 doi:\href{https://doi.org/10.31234/osf.io/ktejp}{10.31234/osf.io/ktejp}
 
-Hallquist, M., Wright, A. C. G., & Molenaar, P. C. (in press).
+Hallquist, M., Wright, A. C. G., & Molenaar, P. C. M. (in press).
 Problems with centrality measures in psychopathology symptom networks: Why network psychometrics cannot escape psychometric theory.
 \emph{Multivariate Behavioral Research}.
 doi:\href{https://doi.org/10.31234/osf.io/pg4mf}{10.31234/osf.io/pg4mf}
