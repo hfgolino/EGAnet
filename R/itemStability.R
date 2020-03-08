@@ -73,7 +73,7 @@
 #'
 #' @export
 #Item Stability function
-#Updated 02.17.2020
+#Updated 08.03.2020
 itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep = TRUE){
 
   if(class(bootega.obj) != "bootEGA")
@@ -466,8 +466,21 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   }
 
   #Unstandardized
-  unstd.item.id <- round(apply(simplify2array(item.id.samps),1:2, mean, na.rm=TRUE),3)
+  arr.func <- function(data)
+  {
+    arr <- array(NA, dim = c(nrow(data[[1]]), ncol(data[[1]]), length(data)))
+    
+    for(i in 1:length(data))
+    {arr[,,i] <- as.matrix(data[[i]])}
+    
+    return(arr)
+  }
+  
+  
+  arr <- arr.func(item.id.samps)
+  unstd.item.id <- round(apply(arr,1:2, mean, na.rm=TRUE),3)
   colnames(unstd.item.id) <- paste(seq(1,max(final.mat, na.rm = TRUE),1))
+  row.names(unstd.item.id) <- colnames(bootega.obj$EGA$network)
 
   if(ncol(unstd.item.id)!=col)
   {
