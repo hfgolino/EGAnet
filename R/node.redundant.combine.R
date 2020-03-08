@@ -70,7 +70,7 @@
 #'
 #' @export
 # Redundant Nodes Combination Function
-# Updated 20.02.2020
+# Updated 08.03.2020
 node.redundant.combine <- function (node.redundant.obj,
                                     type = c("sum", "latent"),
                                     estimator = "WLSMV",
@@ -328,9 +328,7 @@ node.redundant.combine <- function (node.redundant.obj,
         {
           # Latent variable
           ## create model
-          if(length(c(tar.idx, idx))==2)
-          {mod <- paste(paste("comb =~ ",sep=""), paste("1*",colnames(new.data[,c(tar.idx, idx)]), collapse = " + ", sep = ""))
-          }else{mod <- paste(paste("comb =~ ",sep=""), paste(colnames(new.data[,c(tar.idx, idx)]), collapse = " + "))}
+          mod <- paste(paste("comb =~ ",sep=""), paste(colnames(new.data[,c(tar.idx, idx)]), collapse = " + "))
           
           ## fit model
           fit <- suppressWarnings(lavaan::cfa(mod, data = new.data, ...))
