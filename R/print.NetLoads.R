@@ -2,7 +2,7 @@
 #'
 #' Returns a summary of the net.loads results of \code{\link[EGAnet]{net.loads}} results
 #'
-#' @param object An \code{\link[EGAnet]{net.loads}} object
+#' @param x An \code{\link[EGAnet]{net.loads}} object
 #'
 #' @param ... potentially further arguments (\strong{unused currently})
 #'
@@ -29,10 +29,10 @@
 ## S3 method for class 'NetLoads'
 #'
 #Print function for NetLoads
-#Updated 05.03.2020
-print.NetLoads <- function(object, ...) {
+#Updated 08.03.2020
+print.NetLoads <- function(x, ...) {
   
-  object$std[which(abs(object$std) <= object$MinLoad, arr.ind = TRUE)] <- ""
+  x$std[which(abs(x$std) <= x$MinLoad, arr.ind = TRUE)] <- ""
   
-  print(object$std)
+  print(x$std)
 }

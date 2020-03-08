@@ -2,7 +2,7 @@
 #'
 #' Returns a plot of the net.loads results of \code{\link[EGAnet]{net.loads}} results
 #'
-#' @param object An \code{\link[EGAnet]{net.loads}} object
+#' @param x An \code{\link[EGAnet]{net.loads}} object
 #'
 #' @param ... potentially further arguments (\strong{unused currently})
 #'
@@ -24,13 +24,15 @@
 #' # Plot
 #' plot(nloads)
 #' 
+#' @importFrom graphics plot
+#' 
 #' @export
 #'
 ## S3 method for class 'NetLoads'
 #'
 #Plot function for NetLoads
 #Updated 05.03.2020
-plot.NetLoads <- function(object, ...) {
+plot.NetLoads <- function(x, ...) {
   
-  plot(object$plot)
+  plot(x$plot)
 }
