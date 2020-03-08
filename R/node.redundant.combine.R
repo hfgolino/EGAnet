@@ -70,7 +70,7 @@
 #'
 #' @export
 # Redundant Nodes Combination Function
-# Updated 20.02.2020
+# Updated 08.03.2020
 node.redundant.combine <- function (node.redundant.obj,
                                     type = c("sum", "latent"),
                                     estimator = "WLSMV",
@@ -227,10 +227,10 @@ node.redundant.combine <- function (node.redundant.obj,
           if(any(is.na(inp)))
           {ret.val <- TRUE}
           
-          if(length(setdiff(inp, 0:length(poss))) != 0)
+          if(length(inp) == 0)
           {ret.val <- TRUE}
           
-          if(length(inp) == 0)
+          if(length(setdiff(inp, 0:length(poss))) != 0)
           {ret.val <- TRUE}
           
           return(ret.val)
@@ -328,19 +328,17 @@ node.redundant.combine <- function (node.redundant.obj,
         {
           # Latent variable
           ## create model
-          if(length(c(tar.idx, idx))==2)
-          {mod <- paste(paste("comb =~ ",sep=""), paste("1*",colnames(new.data[,c(tar.idx, idx)]), collapse = " + ", sep = ""))
-          }else{mod <- paste(paste("comb =~ ",sep=""), paste(colnames(new.data[,c(tar.idx, idx)]), collapse = " + "))}
+          mod <- paste(paste("comb =~ ",sep=""), paste(colnames(new.data[,c(tar.idx, idx)]), collapse = " + "))
           
           ## fit model
           fit <- suppressWarnings(lavaan::cfa(mod, data = new.data, ...))
-            
+          
           ## identify cases
           cases <- lavaan::inspect(fit, "case.idx")
-            
+          
           ## compute latent variable score
           latent <- as.numeric(lavaan::lavPredict(fit))
-
+          
           ## check for missing cases and handle
           if(length(cases) != nrow(new.data))
           {
