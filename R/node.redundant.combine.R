@@ -227,10 +227,10 @@ node.redundant.combine <- function (node.redundant.obj,
           if(any(is.na(inp)))
           {ret.val <- TRUE}
           
-          if(length(setdiff(inp, 0:length(poss))) != 0)
+          if(length(inp) == 0)
           {ret.val <- TRUE}
           
-          if(length(inp) == 0)
+          if(length(setdiff(inp, 0:length(poss))) != 0)
           {ret.val <- TRUE}
           
           return(ret.val)
@@ -332,13 +332,13 @@ node.redundant.combine <- function (node.redundant.obj,
           
           ## fit model
           fit <- suppressWarnings(lavaan::cfa(mod, data = new.data, ...))
-            
+          
           ## identify cases
           cases <- lavaan::inspect(fit, "case.idx")
-            
+          
           ## compute latent variable score
           latent <- as.numeric(lavaan::lavPredict(fit))
-
+          
           ## check for missing cases and handle
           if(length(cases) != nrow(new.data))
           {
