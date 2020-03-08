@@ -95,6 +95,7 @@
 #' @export
 #'
 #Network Scores
+#Updated: 04.03.2020
 net.scores <- function (data, A, wc, global = FALSE,
                         type = c("sumscore", "latent"), ...)
 {
@@ -125,7 +126,7 @@ net.scores <- function (data, A, wc, global = FALSE,
   ####Missing arguments checks####
 
   #Compute network loadings
-  P <- net.loads(A=A,wc=wc)$std
+  P <- net.loads(A = A, wc = wc, pos.manifold = TRUE)$std
 
   #Number of factors
   nfacts <- length(unique(wc))
@@ -149,6 +150,7 @@ net.scores <- function (data, A, wc, global = FALSE,
     {
       #Network loadings for each factor
       f.load <- loads[which(loads[,i]!=0),i]
+      names(f.load) <- row.names(loads)[which(loads[,i]!=0)]
 
       #Grab items associated with factor
       dat <- data[,names(f.load)]
