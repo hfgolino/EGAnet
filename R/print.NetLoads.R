@@ -29,10 +29,11 @@
 ## S3 method for class 'NetLoads'
 #'
 #Print function for NetLoads
-#Updated 08.03.2020
+#Updated 09.03.2020
 print.NetLoads <- function(x, ...) {
   
   x$std[which(abs(x$std) <= x$MinLoad, arr.ind = TRUE)] <- ""
   
   print(x$std)
+  message("Loadings <= ", x$MinLoad, " are blank")
 }

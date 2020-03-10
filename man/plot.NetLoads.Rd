@@ -4,10 +4,10 @@
 \alias{plot.NetLoads}
 \title{Plot for net.loads objects of \code{\link[EGAnet]{net.loads}} results}
 \usage{
-\method{plot}{NetLoads}(object, ...)
+\method{plot}{NetLoads}(x, ...)
 }
 \arguments{
-\item{object}{An \code{\link[EGAnet]{net.loads}} object}
+\item{x}{An \code{\link[EGAnet]{net.loads}} object}
 
 \item{...}{potentially further arguments (\strong{unused currently})}
 }
