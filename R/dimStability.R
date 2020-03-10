@@ -5,7 +5,7 @@
 #' of items that replicate within the defined factor/dimension (see argument \code{orig.wc})
 #' for each bootstrap. The mean of these proportions represent the dimensional stability
 #' for each dimension
-#' 
+#'
 #' @param bootega.obj A \code{\link[EGAnet]{bootEGA}} object
 #'
 #' @param orig.wc Numeric or character.
@@ -16,13 +16,13 @@
 #' Should the item stability statistics be computed
 #' using \code{[EGAnet]{itemStability}}?
 #' Defaults to \code{TRUE}
-#' 
+#'
 #' @return When argument \code{item.stability = TRUE}, returns a list containing:
-#' 
+#'
 #' \item{dimensions}{The dimensional stability of each dimension}
-#' 
+#'
 #' \item{items}{The output from \code{[EGAnet]{itemStability}}}
-#' 
+#'
 #' When argument \code{item.stability = FALSE}, returns a vector of the
 #' dimensional stability of each dimension
 #'
@@ -32,6 +32,7 @@
 #' wmt <- wmt2[,7:24]
 #'
 #' \dontrun{
+#' \donttest{
 #' # Estimate EGA network
 #' ega.wmt <- EGA(data = wmt, model = "glasso")
 #'
@@ -39,7 +40,7 @@
 #' boot.wmt <- bootEGA(data = wmt, n = 100, typicalStructure = TRUE,
 #' plot.typicalStructure = TRUE, model = "glasso",
 #' type = "parametric", ncores = 4)
-#'
+#'  }
 #' }
 #'
 #' # Estimate item stability statistics
@@ -56,10 +57,10 @@ dimStability <- function(bootega.obj, orig.wc, item.stability = TRUE)
 {
   if(class(bootega.obj) != "bootEGA")
   {stop("Input for 'bootega.obj' is not a 'bootEGA' object")}
-  
+
   # Compute item stability
   items <- EGAnet::itemStability(bootega.obj, orig.wc, item.freq = 0, plot.item.rep = item.stability)
-  
+
   # Compute dimension stability
   ## Grab dimensions from itemStability output
   dims <- items$wc
@@ -70,24 +71,24 @@ dimStability <- function(bootega.obj, orig.wc, item.stability = TRUE)
   ## Initialize dimension stability vector
   dim.stab <- numeric(dim.len)
   names(dim.stab) <- uniq.dim
-  
+
   # Loop through dims
   for(i in 1:dim.len)
   {
     # Target items
     target <- which(orig.wc == uniq.dim[i])
-    
+
     # Initialize count vector
     dim.count <- numeric(length = ncol(dims))
-    
+
     # Identify consistency across bootstraps
     for(j in 1:ncol(dims))
     {dim.count[j] <- length(which(dims[target,j] == uniq.dim[i])) / length(target)}
-    
+
     # Input mean into dimension stabiltiy vector
     dim.stab[i] <- mean(dim.count)
   }
-  
+
   # Results list
   if(item.stability)
   {
@@ -95,7 +96,7 @@ dimStability <- function(bootega.obj, orig.wc, item.stability = TRUE)
     res$dimensions <- round(dim.stab,3)
     res$items <- items
   }else{res <- round(dim.stab,3)}
-  
+
   return(res)
 }
 #----

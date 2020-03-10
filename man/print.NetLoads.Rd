@@ -4,10 +4,10 @@
 \alias{print.NetLoads}
 \title{Print for net.loads objects of \code{\link[EGAnet]{net.loads}} results}
 \usage{
-\method{print}{NetLoads}(object, ...)
+\method{print}{NetLoads}(x, ...)
 }
 \arguments{
-\item{object}{An \code{\link[EGAnet]{net.loads}} object}
+\item{x}{An \code{\link[EGAnet]{net.loads}} object}
 
 \item{...}{potentially further arguments (\strong{unused currently})}
 }
