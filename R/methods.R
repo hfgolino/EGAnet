@@ -192,17 +192,19 @@ summary.CFA <- function(object, ...) {
 }
 
 #Summary NetLoads
-#Updated 05.03.2020
+#Updated 09.03.2020
 summary.NetLoads <- function(object, ...) {
   object$std[which(abs(object$std) <= object$MinLoad, arr.ind = TRUE)] <- ""
   print(object$std)
+  message("Loadings <= ", object$MinLoad, " are blank")
 }
 
 #Print NetLoads
-#Updated 05.03.2020
+#Updated 09.03.2020
 print.NetLoads <- function(object, ...) {
   object$std[which(abs(object$std) <= object$MinLoad, arr.ind = TRUE)] <- ""
   print(object$std)
+  message("Loadings <= ", object$MinLoad, " are blank")
 }
 
 #Plot function for NetLoads
