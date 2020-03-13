@@ -30,10 +30,8 @@ dimensional stability of each dimension
 }
 \description{
 Based on the \code{\link[EGAnet]{bootEGA}} results, this function
-computes the stability of dimensions. This is computed by assessing the proportion
-of items that replicate within the defined factor/dimension (see argument \code{orig.wc})
-for each bootstrap. The mean of these proportions represent the dimensional stability
-for each dimension
+computes the stability of dimensions. This is computed by assessing the proportion of
+times the original dimension is exactly replicated in across bootstrap samples
 }
 \examples{
 

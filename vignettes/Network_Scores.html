@@ -12,7 +12,7 @@
 
 <meta name="author" content="Alexander P. Christensen" />
 
-<meta name="date" content="2020-03-05" />
+<meta name="date" content="2020-03-13" />
 
 <title>Network Scores</title>
 
@@ -303,7 +303,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Network Scores</h1>
 <h4 class="author">Alexander P. Christensen</h4>
-<h4 class="date">2020-03-05</h4>
+<h4 class="date">2020-03-13</h4>
 
 
 
@@ -330,32 +330,36 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 </div>
 <div id="network-loadings" class="section level1">
 <h1>Network Loadings</h1>
-<div id="christensen-golino-under-review" class="section level2">
-<h2>Christensen &amp; Golino (under review)</h2>
+<div id="christensen-golino-under-review-and-golino-moulder-christensen-kim-boker-in-prep" class="section level2">
+<h2>Christensen &amp; Golino (under review) and Golino, Moulder, Christensen, Kim, &amp; Boker (in prep)</h2>
 <p>Network loadings are roughly equivalent to factor loadings and differ only in the association measures used to compute them. For networks, the centrality measure <em>node strength</em> is used to compute the sum of the connections to a node. Previous simulation studies have reported that node strength is generally redundant with CFA factor loadings (Hallquist, Wright, &amp; Molenaar, 2019) and item-scale correlations (Christensen, Golino, &amp; Silvia, 2019). Importantly, Hallquist and colleagues (2019) found that a node’s strength represents a combination of dominant and cross-factor loadings. To mitigate this issue, I’ve developed a function called <code>net.loads</code>, which computes the node strength for each node in each dimension, parsing out the connections that represent dominant and cross-dimension loadings. Below is the code to compute standardized (<code>$std</code>; unstandardized, <code>$unstd</code>) network loadings.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="co"># Standardized</span></span>
 <span id="cb4-2"><a href="#cb4-2"></a>net.loads &lt;-<span class="st"> </span><span class="kw">net.loads</span>(<span class="dt">A =</span> ega)<span class="op">$</span>std</span></code></pre></div>
-<p>To provide mathematical notation, first node strength must be defined:</p>
-<p><span class="math display">\[NS_i = \sum_j w_{ij},\]</span> where <span class="math inline">\(w_{ij}\)</span> is the weight (e.g., partial correlation) between node <span class="math inline">\(i\)</span> and node <span class="math inline">\(j\)</span>, and <span class="math inline">\(NS_i\)</span> is the sum of the weights between node <span class="math inline">\(i\)</span> and all other nodes. Notably, node strength must be defined for each community, leading to the following equation:</p>
-<p><span class="math display">\[NL_{iC} = \sum_{j \: \in \: C} NS_{ij},\]</span></p>
-<p>where <span class="math inline">\(NS_{ij}\)</span> is the node strength of node <span class="math inline">\(i\)</span> with the subset of nodes <span class="math inline">\(j\)</span> that belong to community <span class="math inline">\(C\)</span> (i.e., <span class="math inline">\(j \in C\)</span>), and <span class="math inline">\(NL_{ik}\)</span> is the unstandardized network loading for node <span class="math inline">\(i\)</span> in community <span class="math inline">\(C\)</span>. Finally, the standardized network loadings can be defined as:</p>
-<p><span class="math display">\[z_{NL_{iC}} = \frac{NL_{iC}}{\sqrt{\sum\limits_C NL_C}},\]</span> where <span class="math inline">\(NL_C\)</span> is the sum of network loadings in community <span class="math inline">\(C\)</span>, <span class="math inline">\(NL_{iC}\)</span> is the unstandardized network loading for node <span class="math inline">\(i\)</span> in community <span class="math inline">\(C\)</span>, and <span class="math inline">\(z_{NL_{iC}}\)</span> is the standardized network loading of node <span class="math inline">\(i\)</span> in community <span class="math inline">\(C\)</span>. It’s important to emphasize that network loadings are in the unit of association—that is, if the network consists of partial correlations, then the standardized network loadings are the partial correlation of each node with each dimension.</p>
+<p>To provide mathematical notation, Let <span class="math inline">\(W\)</span> represent a symmetric <span class="math inline">\(m \times m\)</span> matrix where <span class="math inline">\(m\)</span> is the number of terms. Node strength is then defined as:</p>
+<p><span class="math display">\[NS_i = \sum^m_j w_{ij},\]</span></p>
+<p>where <span class="math inline">\(w_{ij}\)</span> is the weight (e.g., partial correlation) between node <span class="math inline">\(i\)</span> and node <span class="math inline">\(j\)</span>, and <span class="math inline">\(NS_i\)</span> is the sum of the weights between node <span class="math inline">\(i\)</span> and all other nodes. Using the definition of node strength (), we can define node strength split between the communities, <span class="math inline">\(C\)</span>, identified by EGA:</p>
+<p><span class="math display">\[NL_{ic} = \sum^C_{j \in c} w_{ij},\]</span></p>
+<p>where <span class="math inline">\(w_{ij}\)</span> is the weight of node <span class="math inline">\(i\)</span> with the subset of nodes <span class="math inline">\(j\)</span> that belong to community <span class="math inline">\(c\)</span> (i.e., <span class="math inline">\(j \in c\)</span>), and <span class="math inline">\(NL_{ic}\)</span> is the sum of the weights for node <span class="math inline">\(i\)</span> in community <span class="math inline">\(c\)</span> (or unstandardized network loading for node <span class="math inline">\(i\)</span> in community <span class="math inline">\(c\)</span>). From the unstandardized network loadings (), standardized network loadings follow with:</p>
+<p><span class="math display">\[z_{NL_{ic}} = \frac{NL_{ic}}{\sqrt{\sum\limits^C_c NL_c}},\]</span></p>
+<p>where <span class="math inline">\(NL_c\)</span> is the sum of network loadings in community <span class="math inline">\(c\)</span> and <span class="math inline">\(z_{NL_{ic}}\)</span> is the standardized network loading of node <span class="math inline">\(i\)</span> in community <span class="math inline">\(c\)</span>. It’s important to emphasize that network loadings are in the unit of association—that is, if the network consists of partial correlations, then the standardized network loadings are the partial correlation of each node within each dimension.</p>
 </div>
 </div>
 <div id="network-scores" class="section level1">
 <h1>Network Scores</h1>
-<p>These network loadings form the foundation for computing network scores. There are many, many ways for latent variable scores to be computed. In this formulation, these network scores correspond to the Maximum Likelihood estimation method of latent variable scores. Future development will expand network scores to include other estimation methods. Finally, it’s important to make clear that these scores are weighted composite scores, which means they are not <em>truly</em> a latent variable.</p>
+<p>These network loadings form the foundation for computing network scores .Because the network loadings represent the middle ground between a saturated (EFA) and simple (CFA) structure, the network scores accomodate the inclusion of only the most important cross-loadings in their computation. This capitalizes on information often lost in typical CFA structures but reduces the cross-loadings of EFA structures to only the most important loadings.</p>
 <p>To compute network scores, the following code can be used:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="co"># Network scores</span></span>
 <span id="cb5-2"><a href="#cb5-2"></a>net.scores &lt;-<span class="st"> </span><span class="kw">net.scores</span>(<span class="dt">data =</span> neoOpen, <span class="dt">A =</span> ega)</span></code></pre></div>
-<p>The <code>net.scores</code> function will return three objects: <code>scores</code>, <code>commCor</code>, and <code>loads</code>. <code>scores</code> contain the network scores for each dimension and an overall score. <code>commCor</code> contains the partial correlations between the dimensions in the network (and with the overall score). Finally, <code>loads</code> will return the standardized network loadings described above.</p>
-<p>The network scores are computed following a partial least squares method. This starts by taking each community and identify items that do not have loadings on that community equal to zero, which for simplicity I’ll call <span class="math inline">\(z_{tC}\)</span>:</p>
-<p><span class="math display">\[z_{tC} = z_{NL_{i \in C}} \neq 0,\]</span> where <span class="math inline">\(t\)</span> represents an item in the community that does not have a loading equal to zero. After, <span class="math inline">\(z_{tC}\)</span> is divided by its standard deviation to obtain relative loadings for each item:</p>
-<p><span class="math display">\[rel_{tC} = \frac{z_{tC}}{\sqrt{\frac{\sum_{t=1}^n (z_{tC} - \bar{z_{.C}})^2}{n - 1}}},\]</span> which can be further transformed into relative weights for each item:</p>
-<p><span class="math display">\[relWei_{tC} = \frac{rel_{tC}}{\sum_t rel_{tC}}\]</span></p>
-<p>Finally, these relative weights can be then be multiplied by the original data to obtain the community score:</p>
-<p><span class="math display">\[\hat{\theta_C} = \sum\limits_{t} X_{tC} \times relWei_{tC},\]</span></p>
-<p>where <span class="math inline">\(X\)</span> is the data, <span class="math inline">\(X_{tC}\)</span> are items, <span class="math inline">\(t\)</span>, that do not have loadings on the factor, <span class="math inline">\(C\)</span>, equal to zero, and <span class="math inline">\(\hat{\theta_C}\)</span> is the predicted network score for that community.</p>
+<p>The <code>net.scores</code> function will return three objects: <code>scores</code>, <code>commCor</code>, and <code>loads</code>. <code>scores</code> contain the network scores for each dimension and an overall score. <code>commCor</code> contains the partial correlations between the dimensions in the network (and with the overall score). Finally, <code>loads</code> will return the standardized network loadings described above. Below we detail the mathematical notation for computing network scores.</p>
+<p>First, we take each community and identify items that do not have loadings on that community equal to zero:</p>
+<p><span class="math display">\[z_{tc} = z_{NL_{i \in c}} \neq 0,\]</span></p>
+<p>where <span class="math inline">\(z_{NL_{c}}\)</span> is the standardized network loadings for community <span class="math inline">\(c\)</span>, and <span class="math inline">\(z_{tc}\)</span> is the network loadings in community <span class="math inline">\(c\)</span>,that are not equal to zero. Next, <span class="math inline">\(z_{tc}\)</span> is divided by the standard deviation of the corresponding items in the data, <span class="math inline">\(X\)</span>:</p>
+<p><span class="math display">\[wei_{tc} = \frac{z_{tc}}{\sqrt{\frac{\sum_{i=1}^{t \in c} (X_i - \bar{X_t})^2}{n - 1}}},\]</span></p>
+<p>where the denominator, <span class="math inline">\(\sqrt{\frac{\sum_{i=1}^{t \in c} (X_i - \bar{X_t})^2}{n - 1}}\)</span>, corresponds to the standard deviation of the items with non-zero network loadings in community <span class="math inline">\(c\)</span>, and <span class="math inline">\(wei_{tc}\)</span> is the weight for the non-zero loadings in community <span class="math inline">\(c\)</span>. These can be further transformed into relative weights for each non-zero loading:</p>
+<p><span class="math display">\[relWei_{tc} = \frac{wei_{t \in c}}{\sum^C_c wei_{t \in c}},\]</span></p>
+<p>where <span class="math inline">\(\sum^C_c wei_{t \in c}\)</span> is the sum of the weights in community <span class="math inline">\(c\)</span>, and <span class="math inline">\(relWei_{tc}\)</span> is the relative weights for non-zero loadings in community <span class="math inline">\(c\)</span>. We then take these relative weights and multiply them to the corresponding items in the data, <span class="math inline">\(X_{t \in c}\)</span>, to obtain the community (i.e., topic) score:</p>
+<p><span class="math display">\[\hat{\theta_c} = \sum\limits^C_{c} X_{t \in c} \times relWei_{t \in c},\]</span></p>
+<p>where <span class="math inline">\(\hat{\theta_c}\)</span> is the network score for community <span class="math inline">\(c\)</span>.</p>
 </div>
 <div id="comparison-to-cfa-scores" class="section level1">
 <h1>Comparison to CFA Scores</h1>
@@ -417,9 +421,10 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <p>Csardi, G., &amp; Nepusz, T. (2006). The igraph software package for complex network research. <em>InterJournal Complex Systems</em>, <em>1695</em>, 1-9.</p>
 <p>Epskamp, S., &amp; Fried, E. I. (2018). A tutorial on regularized partial correlation networks. <em>Psychological Methods</em>, <em>23</em>, 617-634. <a href="http://dx.doi.org/10.1037/met0000167" class="uri">http://dx.doi.org/10.1037/met0000167</a></p>
 <p>Friedman, J., Hastie, T., &amp; Tibshirani, R. (2008). Sparse inverse covariance estimation with the graphical lasso. <em>Biostatistics</em>, <em>9</em>, 432-441. <a href="https://doi.org/10.1093/biostatistics/kxm045" class="uri">https://doi.org/10.1093/biostatistics/kxm045</a></p>
-<p>Golino, H. F. (2019). EGAnet: Exploratory graph analysis: A framework for estimating the number of dimensions in multivariate data using network psychometrics. R package version 0.4. <a href="https://CRAN.R-project.org/package=EGAnet" class="uri">https://CRAN.R-project.org/package=EGAnet</a></p>
-<p>Golino, H. F., &amp; Epskamp, S. (2017). Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research. <em>PloS ONE</em>, 12, e0174035. <a href="https://doi.org/10.1371/journal.pone.0174035" class="uri">https://doi.org/10.1371/journal.pone.0174035</a></p>
-<p>Golino, H. F., Shi, D., Christensen, A. P., Nieto, M. D., Sadana, R., &amp; Thiyagarajan, J. A. (2018). Investigating the performance of exploratory graph analysis and traditional techniques to identify the number of latent factors: A simulation and tutorial. <em>PsyArXiv</em>. <a href="https://psyarxiv.com/gzcre/" class="uri">https://psyarxiv.com/gzcre/</a></p>
+<p>Golino, H., &amp; Christensen, A. P. (2020). EGAnet: Exploratory graph analysis – A framework for estimating the number of dimensions in multivariate data using network psychometrics. R package version 0.9.4. <a href="https://CRAN.R-project.org/package=EGAnet" class="uri">https://CRAN.R-project.org/package=EGAnet</a></p>
+<p>Golino, H., &amp; Epskamp, S. (2017). Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research. <em>PloS ONE</em>, 12, e0174035. <a href="https://doi.org/10.1371/journal.pone.0174035" class="uri">https://doi.org/10.1371/journal.pone.0174035</a></p>
+<p>Golino, H., Moulder, R., Christensen, A. P., Kim, S., &amp; Boker, S. M. (in prep). Modeling latent topics in social media using Dynamic Exploratory Graph Analysis: The case of the right-wing and left-wing trolls in the 2016 US elections.</p>
+<p>Golino, H., Shi, D., Christensen, A. P., Nieto, M. D., Sadana, R., &amp; Thiyagarajan, J. A. (2018). Investigating the performance of exploratory graph analysis and traditional techniques to identify the number of latent factors: A simulation and tutorial. <em>PsyArXiv</em>. <a href="https://psyarxiv.com/gzcre/" class="uri">https://psyarxiv.com/gzcre/</a></p>
 <p>Hallquist, M., Wright, A. C. G., &amp; Molenaar, P. C. (2019). Problems with centrality measures in psychopathology symptom networks: Why network psychometrics cannot escape psychometric theory. <em>Multivariate Behavioral Research</em>. <a href="https://psyarxiv.com/pg4mf" class="uri">https://psyarxiv.com/pg4mf</a></p>
 <p>Massara, G. P., Di Matteo, T., &amp; Aste, T. (2016). Network filtering for big data: Triangulated maximally filtered graph. <em>Journal of Complex Networks</em>, <em>5</em>, 161-178. <a href="https://doi.org/10.1093/comnet/cnw015" class="uri">https://doi.org/10.1093/comnet/cnw015</a></p>
 <p>Pons, P., &amp; Latapy, M. (2006). Computing communities in large networks using random walks. <em>Journal of Graph Algorithms and Applications</em>, <em>10</em>, 191-218. <a href="https://doi.org/10.7155/jgaa.00124" class="uri">https://doi.org/10.7155/jgaa.00124</a></p>

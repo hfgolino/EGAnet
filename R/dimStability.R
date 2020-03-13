@@ -1,10 +1,8 @@
 #' Dimension Stability Statistics from \code{\link[EGAnet]{bootEGA}}
 #'
 #' @description Based on the \code{\link[EGAnet]{bootEGA}} results, this function
-#' computes the stability of dimensions. This is computed by assessing the proportion
-#' of items that replicate within the defined factor/dimension (see argument \code{orig.wc})
-#' for each bootstrap. The mean of these proportions represent the dimensional stability
-#' for each dimension
+#' computes the stability of dimensions. This is computed by assessing the proportion of
+#' times the original dimension is exactly replicated in across bootstrap samples
 #' 
 #' @param bootega.obj A \code{\link[EGAnet]{bootEGA}} object
 #'
@@ -52,6 +50,7 @@
 #'
 #' @export
 #Dimension Stability function
+#Updated 13.03.2020
 dimStability <- function(bootega.obj, orig.wc, item.stability = TRUE)
 {
   if(class(bootega.obj) != "bootEGA")
@@ -82,9 +81,9 @@ dimStability <- function(bootega.obj, orig.wc, item.stability = TRUE)
     
     # Identify consistency across bootstraps
     for(j in 1:ncol(dims))
-    {dim.count[j] <- length(which(dims[target,j] == uniq.dim[i])) / length(target)}
+    {dim.count[j] <- all(dims[target,j] == uniq.dim[i])}
     
-    # Input mean into dimension stabiltiy vector
+    # Input mean of into vector
     dim.stab[i] <- mean(dim.count)
   }
   

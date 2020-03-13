@@ -45,7 +45,7 @@ ega <- EGA(neoOpen, model = "glasso", algorithm = "louvain")
 As depicted above, EGA estimates there to be 7 dimensions of openness to experience. Using these dimensions, we can now estimate network scores; but first, I'll go into details about how these are estimated.
 
 # Network Loadings
-## Christensen & Golino (under review)
+## Christensen & Golino (under review) and Golino, Moulder, Christensen, Kim, & Boker (in prep)
 Network loadings are roughly equivalent to factor loadings and differ only in the association measures used to compute them. For networks, the centrality measure *node strength* is used to compute the sum of the connections to a node. Previous simulation studies have reported that node strength is generally redundant with CFA factor loadings (Hallquist, Wright, & Molenaar, 2019) and item-scale correlations (Christensen, Golino, & Silvia, 2019). Importantly, Hallquist and colleagues (2019) found that a node's strength represents a combination of dominant and cross-factor loadings. To mitigate this issue, I've developed a function called `net.loads`, which computes the node strength for each node in each dimension, parsing out the connections that represent dominant and cross-dimension loadings. Below is the code to compute standardized (`$std`; unstandardized, `$unstd`) network loadings.
 
 ```{r loadings, echo = TRUE, message = FALSE, warning = FALSE}
@@ -53,20 +53,22 @@ Network loadings are roughly equivalent to factor loadings and differ only in th
 net.loads <- net.loads(A = ega)$std
 ```
 
-To provide mathematical notation, first node strength must be defined:
+To provide mathematical notation, Let $W$ represent a symmetric $m \times m$ matrix where $m$ is the number of terms. Node strength is then defined as:
 
-$$NS_i = \sum_j w_{ij},$$
-where $w_{ij}$ is the weight (e.g., partial correlation) between node $i$ and node $j$, and $NS_i$ is the sum of the weights between node $i$ and all other nodes. Notably, node strength must be defined for each community, leading to the following equation:
+$$NS_i = \sum^m_j w_{ij},$$
 
-$$NL_{iC} = \sum_{j \: \in \: C} NS_{ij},$$
+where $w_{ij}$ is the weight (e.g., partial correlation) between node $i$ and node $j$, and $NS_i$ is the sum of the weights between node $i$ and all other nodes. Using the definition of node strength (\ref{eq:ns}), we can define node strength split between the communities, $C$, identified by EGA:
 
-where $NS_{ij}$ is the node strength of node $i$ with the subset of nodes $j$ that belong to community $C$ (i.e., $j \in C$), and $NL_{ik}$ is the unstandardized network loading for node $i$ in community $C$. Finally, the standardized network loadings can be defined as:
+$$NL_{ic} = \sum^C_{j \in c} w_{ij},$$
 
-$$z_{NL_{iC}} = \frac{NL_{iC}}{\sqrt{\sum\limits_C NL_C}},$$
-where $NL_C$ is the sum of network loadings in community $C$, $NL_{iC}$ is the unstandardized network loading for node $i$ in community $C$, and $z_{NL_{iC}}$ is the standardized network loading of node $i$ in community $C$. It's important to emphasize that network loadings are in the unit of association---that is, if the network consists of partial correlations, then the standardized network loadings are the partial correlation of each node with each dimension.
+where $w_{ij}$ is the weight of node $i$ with the subset of nodes $j$ that belong to community $c$ (i.e., $j \in c$), and $NL_{ic}$ is the sum of the weights for node $i$ in community $c$ (or unstandardized network loading for node $i$ in community $c$). From the unstandardized network loadings (\ref{eq:unstd}), standardized network loadings follow with:
+
+$$z_{NL_{ic}} = \frac{NL_{ic}}{\sqrt{\sum\limits^C_c NL_c}},$$
+
+where $NL_c$ is the sum of network loadings in community $c$ and $z_{NL_{ic}}$ is the standardized network loading of node $i$ in community $c$. It's important to emphasize that network loadings are in the unit of association---that is, if the network consists of partial correlations, then the standardized network loadings are the partial correlation of each node within each dimension.
 
 # Network Scores
-These network loadings form the foundation for computing network scores. There are many, many ways for latent variable scores to be computed. In this formulation, these network scores correspond to the Maximum Likelihood estimation method of latent variable scores. Future development will expand network scores to include other estimation methods. Finally, it's important to make clear that these scores are weighted composite scores, which means they are not *truly* a latent variable.
+These network loadings form the foundation for computing network scores .Because the network loadings represent the middle ground between a saturated (EFA) and simple (CFA) structure, the network scores accomodate the inclusion of only the most important cross-loadings in their computation. This capitalizes on information often lost in typical CFA structures but reduces the cross-loadings of EFA structures to only the most important loadings. 
 
 To compute network scores, the following code can be used:
 
@@ -75,23 +77,25 @@ To compute network scores, the following code can be used:
 net.scores <- net.scores(data = neoOpen, A = ega)
 ```
 
-The `net.scores` function will return three objects: `scores`, `commCor`, and `loads`. `scores` contain the network scores for each dimension and an overall score. `commCor` contains the partial correlations between the dimensions in the network (and with the overall score). Finally, `loads` will return the standardized network loadings described above.
+The `net.scores` function will return three objects: `scores`, `commCor`, and `loads`. `scores` contain the network scores for each dimension and an overall score. `commCor` contains the partial correlations between the dimensions in the network (and with the overall score). Finally, `loads` will return the standardized network loadings described above. Below we detail the mathematical notation for computing network scores.
 
-The network scores are computed following a partial least squares method. This starts by taking each community and identify items that do not have loadings on that community equal to zero, which for simplicity I'll call $z_{tC}$:
+First, we take each community and identify items that do not have loadings on that community equal to zero:
 
-$$z_{tC} = z_{NL_{i \in C}} \neq 0,$$
-where $t$ represents an item in the community that does not have a loading equal to zero. After, $z_{tC}$ is divided by its standard deviation to obtain relative loadings for each item:
+$$z_{tc} = z_{NL_{i \in c}} \neq 0,$$
 
-$$rel_{tC} = \frac{z_{tC}}{\sqrt{\frac{\sum_{t=1}^n (z_{tC} - \bar{z_{.C}})^2}{n - 1}}},$$
-which can be further transformed into relative weights for each item:
+where $z_{NL_{c}}$ is the standardized network loadings for community $c$, and $z_{tc}$ is the network loadings in community $c$,that are not equal to zero. Next, $z_{tc}$ is divided by the standard deviation of the corresponding items in the data, $X$:
 
-$$relWei_{tC} = \frac{rel_{tC}}{\sum_t rel_{tC}}$$
+$$wei_{tc} = \frac{z_{tc}}{\sqrt{\frac{\sum_{i=1}^{t \in c} (X_i - \bar{X_t})^2}{n - 1}}},$$
 
-Finally, these relative weights can be then be multiplied by the original data to obtain the community score:
+where the denominator, $\sqrt{\frac{\sum_{i=1}^{t \in c} (X_i - \bar{X_t})^2}{n - 1}}$, corresponds to the standard deviation of the items with non-zero network loadings in community $c$, and $wei_{tc}$ is the weight for the non-zero loadings in community $c$. These can be further transformed into relative weights for each non-zero loading:
 
-$$\hat{\theta_C} = \sum\limits_{t} X_{tC} \times relWei_{tC},$$
+$$relWei_{tc} = \frac{wei_{t \in c}}{\sum^C_c wei_{t \in c}},$$
 
-where $X$ is the data, $X_{tC}$ are items, $t$, that do not have loadings on the factor, $C$, equal to zero, and $\hat{\theta_C}$ is the predicted network score for that community.
+where $\sum^C_c wei_{t \in c}$ is the sum of the weights in community $c$, and $relWei_{tc}$ is the relative weights for non-zero loadings in community $c$. We then take these relative weights and multiply them to the corresponding items in the data, $X_{t \in c}$, to obtain the community (i.e., topic) score:
+
+$$\hat{\theta_c} = \sum\limits^C_{c} X_{t \in c} \times relWei_{t \in c},$$
+
+where $\hat{\theta_c}$ is the network score for community $c$. 
 
 # Comparison to CFA Scores
 It's important to note that CFA scores are typically computed using a simple structure (items only load on one factor) and regression techniques. Network scores, however, are computed using a complex structure and are a weighted composite rather than a latent factor.
@@ -153,11 +157,13 @@ Epskamp, S., & Fried, E. I. (2018). A tutorial on regularized partial correlatio
 
 Friedman, J., Hastie, T., & Tibshirani, R. (2008). Sparse inverse covariance estimation with the graphical lasso. *Biostatistics*, *9*, 432-441. https://doi.org/10.1093/biostatistics/kxm045
 
-Golino, H. F. (2019). EGAnet: Exploratory graph analysis: A framework for estimating the number of dimensions in multivariate data using network psychometrics. R package version 0.4. https://CRAN.R-project.org/package=EGAnet
+Golino, H., & Christensen, A. P. (2020). EGAnet: Exploratory graph analysis -- A framework for estimating the number of dimensions in multivariate data using network psychometrics. R package version 0.9.4. https://CRAN.R-project.org/package=EGAnet
 
-Golino, H. F., & Epskamp, S. (2017). Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research. *PloS ONE*, 12, e0174035. https://doi.org/10.1371/journal.pone.0174035
+Golino, H., & Epskamp, S. (2017). Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research. *PloS ONE*, 12, e0174035. https://doi.org/10.1371/journal.pone.0174035
 
-Golino, H. F., Shi, D., Christensen, A. P., Nieto, M. D., Sadana, R., & Thiyagarajan, J. A. (2018). Investigating the performance of exploratory graph analysis and traditional techniques to identify the number of latent factors: A simulation and tutorial. *PsyArXiv*. https://psyarxiv.com/gzcre/
+Golino, H., Moulder, R., Christensen, A. P., Kim, S., & Boker, S. M. (in prep). Modeling latent topics in social media using Dynamic Exploratory Graph Analysis: The case of the right-wing and left-wing trolls in the 2016 US elections.
+
+Golino, H., Shi, D., Christensen, A. P., Nieto, M. D., Sadana, R., & Thiyagarajan, J. A. (2018). Investigating the performance of exploratory graph analysis and traditional techniques to identify the number of latent factors: A simulation and tutorial. *PsyArXiv*. https://psyarxiv.com/gzcre/
 
 Hallquist, M., Wright, A. C. G., & Molenaar, P. C. (2019). Problems with centrality measures in psychopathology symptom networks: Why network psychometrics cannot escape psychometric theory. *Multivariate Behavioral Research*. https://psyarxiv.com/pg4mf
 
