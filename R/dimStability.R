@@ -1,10 +1,8 @@
 #' Dimension Stability Statistics from \code{\link[EGAnet]{bootEGA}}
 #'
 #' @description Based on the \code{\link[EGAnet]{bootEGA}} results, this function
-#' computes the stability of dimensions. This is computed by assessing the proportion
-#' of items that replicate within the defined factor/dimension (see argument \code{orig.wc})
-#' for each bootstrap. The mean of these proportions represent the dimensional stability
-#' for each dimension
+#' computes the stability of dimensions. This is computed by assessing the proportion of
+#' times the original dimension is exactly replicated in across bootstrap samples
 #' 
 #' @param bootega.obj A \code{\link[EGAnet]{bootEGA}} object
 #'
@@ -78,13 +76,17 @@ dimStability <- function(bootega.obj, orig.wc, item.stability = TRUE)
     target <- which(orig.wc == uniq.dim[i])
     
     # Initialize count vector
-    dim.count <- numeric(length = ncol(dims))
+    dim.count.cons <- numeric(length = ncol(dims))
+    dim.count.stab <- dim.count.cons
     
     # Identify consistency across bootstraps
     for(j in 1:ncol(dims))
-    {dim.count[j] <- length(which(dims[target,j] == uniq.dim[i])) / length(target)}
+    {
+      # Dimension stability
+      dim.count[j] <- all(dims[target,j] == uniq.dim[i])
+    }
     
-    # Input mean into dimension stabiltiy vector
+    # Input means into vectors
     dim.stab[i] <- mean(dim.count)
   }
   
@@ -92,7 +94,7 @@ dimStability <- function(bootega.obj, orig.wc, item.stability = TRUE)
   if(item.stability)
   {
     res <- list()
-    res$dimensions <- round(dim.stab,3)
+    res$dimensions$stability <- round(dim.stab,3)
     res$items <- items
   }else{res <- round(dim.stab,3)}
   
