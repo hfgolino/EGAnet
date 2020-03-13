@@ -40,11 +40,11 @@
 #' boot.wmt <- bootEGA(data = wmt, n = 100, typicalStructure = TRUE,
 #' plot.typicalStructure = TRUE, model = "glasso",
 #' type = "parametric", ncores = 4)
-#'  }
-#' }
 #'
 #' # Estimate item stability statistics
 #' dimStability(boot.wmt, orig.wc = ega.wmt$wc, item.stability = FALSE)
+#'  }
+#' }
 #'
 #' @seealso \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and
 #' \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
