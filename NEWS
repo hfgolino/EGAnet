@@ -1,5 +1,7 @@
 Changes in version 0.9.4
 
+o UPDATE: Added output of the average replication of items in each dimension for `itemStability`
+
 o UPDATE: Revised 'Network Scores' vignette
 
 o UPDATE: `dimStability` now computes proportion of exact dimension replications rather than items that replicate within dimension
