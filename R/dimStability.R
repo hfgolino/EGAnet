@@ -50,6 +50,7 @@
 #'
 #' @export
 #Dimension Stability function
+#Updated 13.03.2020
 dimStability <- function(bootega.obj, orig.wc, item.stability = TRUE)
 {
   if(class(bootega.obj) != "bootEGA")
@@ -76,8 +77,7 @@ dimStability <- function(bootega.obj, orig.wc, item.stability = TRUE)
     target <- which(orig.wc == uniq.dim[i])
     
     # Initialize count vector
-    dim.count.cons <- numeric(length = ncol(dims))
-    dim.count.stab <- dim.count.cons
+    dim.count <- numeric(length = ncol(dims))
     
     # Identify consistency across bootstraps
     for(j in 1:ncol(dims))
