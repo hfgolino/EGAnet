@@ -81,12 +81,9 @@ dimStability <- function(bootega.obj, orig.wc, item.stability = TRUE)
     
     # Identify consistency across bootstraps
     for(j in 1:ncol(dims))
-    {
-      # Dimension stability
-      dim.count[j] <- all(dims[target,j] == uniq.dim[i])
-    }
+    {dim.count[j] <- all(dims[target,j] == uniq.dim[i])}
     
-    # Input means into vectors
+    # Input mean of into vector
     dim.stab[i] <- mean(dim.count)
   }
   
@@ -94,7 +91,7 @@ dimStability <- function(bootega.obj, orig.wc, item.stability = TRUE)
   if(item.stability)
   {
     res <- list()
-    res$dimensions$stability <- round(dim.stab,3)
+    res$dimensions <- round(dim.stab,3)
     res$items <- items
   }else{res <- round(dim.stab,3)}
   
