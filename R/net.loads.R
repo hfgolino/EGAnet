@@ -95,7 +95,7 @@
 #' @export
 #'
 # Network Loadings
-# Updated 05.03.2020
+# Updated 18.03.2020
 net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
 {
   ###########################
@@ -316,10 +316,19 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
   
   # Check for missing dimensions
   if(any(colnames(comm.str)=="NA"))
-  {comm.str <- comm.str[,-which(colnames(comm.str) == "NA")]}
+  {
+    # Target dimension
+    target <- which(colnames(comm.str) == "NA")
+    
+    # Remove from dims
+    dims <- dims[-target]
+    
+    # Remove from matrix
+    comm.str <- comm.str[,-target]
+  }
   
-  # Reorder dimensions
-  comm.str <- comm.str[,dims]
+  # Reorder loading matrix
+  comm.str <- comm.str[,paste(dims)]
   
   # Add signs to loadings
   res.rev <- add.signs(comm.str = comm.str, A = A, wc = wc, dims = dims, pos.manifold = pos.manifold)
