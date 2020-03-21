@@ -1,6 +1,10 @@
 Changes in version 0.9.4
 
-o UPDATE: Added a new function to simulate dynamic factor models `simDFM`.
+o UPDATE: Added a new function to simulate dynamic factor models `simDFM`
+o UPDATE: added internal functions for `net.loads` (see `utils-net.loads`)
+o FIX: ordering of names in `itemStability`
+
+o FIX: handling of NA communities in `net.loads`
 
 o UPDATE: Added output of the average replication of items in each dimension for `itemStability`
 

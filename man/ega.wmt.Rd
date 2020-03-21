@@ -4,7 +4,9 @@
 \name{ega.wmt}
 \alias{ega.wmt}
 \title{\code{\link[EGAnet]{EGA}} Network of \code{\link[EGAnet]{wmt2}}Data}
-\format{A 17 x 17 adjacency matrix}
+\format{
+A 17 x 17 adjacency matrix
+}
 \usage{
 data(ega.wmt)
 }
