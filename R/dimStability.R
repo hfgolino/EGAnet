@@ -26,11 +26,10 @@
 #'
 #' @examples
 #'
-#'
-#' \dontrun{
-#' #' # Load data
+#' # Load data
 #' wmt <- wmt2[,7:24]
 #'
+#' \dontrun{
 #' # Estimate EGA network
 #' ega.wmt <- EGA(data = wmt, model = "glasso")
 #'
@@ -39,11 +38,10 @@
 #' plot.typicalStructure = TRUE, model = "glasso",
 #' type = "parametric", ncores = 4)
 #'
-#'# Estimate item stability statistics
-#' dimStability(boot.wmt, orig.wc = ega.wmt$wc, item.stability = FALSE)
 #' }
 #'
-#'
+#' # Estimate item stability statistics
+#' dimStability(boot.wmt, orig.wc = ega.wmt$wc, item.stability = FALSE)
 #'
 #' @seealso \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and
 #' \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.

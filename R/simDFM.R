@@ -100,7 +100,7 @@ simDFM <- function(variab, timep, nfact, error, dfm = c("DAFS","RandomWalk"),
 
   LoadMat <- as.matrix(Matrix::bdiag(lapply(rep(loadings, nfact), rep, variab)))
 
-  ## Error: multivariate normal distribution with mean zeros and p 􏰂 p covariance matrix Q
+  ## Error: multivariate normal distribution with mean zeros and p x p covariance matrix Q
   var <- error^2
   Q <- diag(var,variab*nfact,variab*nfact)
   e <- t(MASS::mvrnorm(timep, matrix(0,variab*nfact,1),Q))

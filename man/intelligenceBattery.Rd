@@ -4,9 +4,7 @@
 \name{intelligenceBattery}
 \alias{intelligenceBattery}
 \title{Intelligence Data}
-\format{
-A 1185x125 response matrix
-}
+\format{A 1185x125 response matrix}
 \usage{
 data(intelligenceBattery)
 }

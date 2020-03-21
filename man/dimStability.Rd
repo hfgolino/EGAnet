@@ -39,7 +39,6 @@ times the original dimension is exactly replicated in across bootstrap samples
 wmt <- wmt2[,7:24]
 
 \dontrun{
-\donttest{
 # Estimate EGA network
 ega.wmt <- EGA(data = wmt, model = "glasso")
 
@@ -48,10 +47,10 @@ boot.wmt <- bootEGA(data = wmt, n = 100, typicalStructure = TRUE,
 plot.typicalStructure = TRUE, model = "glasso",
 type = "parametric", ncores = 4)
 
+}
+
 # Estimate item stability statistics
 dimStability(boot.wmt, orig.wc = ega.wmt$wc, item.stability = FALSE)
- }
-}
 
 }
 \seealso{
