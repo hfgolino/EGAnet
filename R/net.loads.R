@@ -95,162 +95,9 @@
 #' @export
 #'
 # Network Loadings
-# Updated 05.03.2020
+# Updated 18.03.2020
 net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
 {
-  ###########################
-  #### START SUBROUTINES ####
-  ###########################
-  
-  #-------------------------#
-  ## ADD SIGNS TO LOADINGS ##
-  #-------------------------#
-  
-  add.signs <- function(comm.str, A, wc, dims, pos.manifold)
-  {
-    # Signs within dimension
-    for(i in 1:length(dims))
-    {
-      # Target dimension
-      target <- which(wc==dims[i])
-      
-      # Initialize signs
-      signs <- numeric(length(target))
-      
-      # Target matrix
-      target.mat <- A[target,target]
-      
-      # Sign matrix
-      sign.mat <- sign(target.mat)
-      
-      for(j in 1:nrow(sign.mat))
-      {
-        # Save original sign.mat
-        orig.sign <- sign.mat
-        
-        # Check for max sums (current max)
-        curr.max <- sum(colSums(sign.mat,na.rm=TRUE),na.rm=TRUE)
-        
-        # New sign mat
-        sign.mat[j,] <- -sign.mat[j,]
-        
-        # Check for new max sums (new max)
-        new.max <- sum(colSums(sign.mat,na.rm=TRUE),na.rm=TRUE)
-        
-        if(new.max <= curr.max)
-        {
-          sign.mat <- orig.sign
-          signs[j] <- 1
-        }else{
-          signs[j] <- -1
-        }
-      }
-      
-      comm.str[which(wc==dims[i]),i] <- comm.str[which(wc==dims[i]),i] * ifelse(signs==0,1,signs)
-      A[,which(wc==dims[i])] <- sweep(A[,which(wc==dims[i])],2,ifelse(signs==0,1,signs),`*`)
-    }
-    
-    # Signs between dimensions
-    for(i in 1:length(dims))
-      for(j in 1:length(dims))
-      {
-        if(i!=j)
-        {
-          # Target dimension
-          target1 <- which(wc==dims[i])
-          target2 <- which(wc==dims[j])
-          
-          # Initialize signs
-          signs <- numeric(length(target1))
-          
-          # Target matrix
-          target.mat <- A[target1,target2]
-          
-          # Sign matrix
-          sign.mat <- sign(target.mat)
-          
-          for(k in 1:nrow(sign.mat))
-          {
-            # Save original sign.mat
-            orig.sign <- sign.mat
-            
-            # Check for max sums (current max)
-            curr.max <- sum(colSums(sign.mat,na.rm=TRUE),na.rm=TRUE)
-            
-            # New sign mat
-            sign.mat[k,] <- -sign.mat[k,]
-            
-            # Check for new max sums (new max)
-            new.max <- sum(colSums(sign.mat,na.rm=TRUE),na.rm=TRUE)
-            
-            if(new.max <= curr.max)
-            {
-              sign.mat <- orig.sign
-              signs[k] <- 1
-            }else{
-              signs[k] <- -1
-            }
-          }
-          
-          comm.str[which(wc==dims[i]),j] <- comm.str[which(wc==dims[i]),j] * ifelse(signs==0,1,signs)
-        }
-      }
-    
-    
-    # Flip dimensions (if necessary)
-    if(!pos.manifold)
-    {
-      for(i in 1:length(dims))
-      {
-        wc.sign <- sign(sum(comm.str[which(wc==dims[i]),i]))
-        
-        if(wc.sign != 1)
-        {comm.str[which(wc==dims[i]),] <- -comm.str[which(wc==dims[i]),]}
-      } 
-    }
-    
-    res <- list()
-    res$comm.str <- comm.str
-    res$A <- A
-    
-    return(res)
-  }
-  
-  #-----------------------------#
-  ## COMPUTE ABSOLUTE LOADINGS ##
-  #-----------------------------#
-  
-  mat.func <- function(A, wc, metric = "each", absolute, diagonal)
-  {
-    # Compute within-community node strength
-    stab <- NetworkToolbox::stable(A = A, comm = wc, absolute = absolute, diagonal = diagonal)
-    
-    if(length(unique(wc)) == 1)
-    {comm.str <- round(stab,3)
-    }else{
-      
-      # Compute between-community node strength
-      comc <- NetworkToolbox::comcat(A = A, comm = wc, metric = metric,
-                                     absolute = absolute, diagonal = diagonal)
-      
-      # Ensure variable ordering is correct
-      stab <- stab[row.names(comc)]
-      
-      # Combine between- and within-community node strength
-      comc[which(is.na(comc))] <- stab
-      
-      # Round to 3 decimal places
-      comm.str <- round(comc, 3)
-      
-    }
-    
-    return(comm.str)
-  }
-  
-  #########################
-  #### END SUBROUTINES ####
-  #########################
-  
   ###############################
   #### START DATA MANAGEMENT ####
   ###############################
@@ -316,10 +163,19 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
   
   # Check for missing dimensions
   if(any(colnames(comm.str)=="NA"))
-  {comm.str <- comm.str[,-which(colnames(comm.str) == "NA")]}
+  {
+    # Target dimension
+    target <- which(colnames(comm.str) == "NA")
+    
+    # Remove from dims
+    dims <- dims[-target]
+    
+    # Remove from matrix
+    comm.str <- comm.str[,-target]
+  }
   
-  # Reorder dimensions
-  comm.str <- comm.str[,dims]
+  # Reorder loading matrix
+  comm.str <- comm.str[,paste(dims)]
   
   # Add signs to loadings
   res.rev <- add.signs(comm.str = comm.str, A = A, wc = wc, dims = dims, pos.manifold = pos.manifold)

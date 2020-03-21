@@ -77,7 +77,7 @@
 #'
 #' @export
 #Item Stability function
-#Updated 13.03.2020
+#Updated 18.03.2020
 itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep = TRUE){
   
   if(class(bootega.obj) != "bootEGA")
@@ -317,6 +317,10 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
     final.mat[,i] <- final.vec
   }
   
+  
+  #let user know results are being computed has started
+  message("Computing results...", appendLF = FALSE)
+  
   #get frequency tables
   freq.list <- apply(final.mat,1,table)
   
@@ -423,10 +427,6 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   #match row names to itemCon output
   itemLik <- as.data.frame(item.tab[match(names(itemCon),row.names(item.tab)),])
   
-  #message for additional item likelihoods
-  if(ncol(itemLik)<max(final.mat,na.rm=TRUE))
-  {message("Lower the item.freq argument to view item frequencies for additional dimensions")}
-  
   ##########################################################
   #### ITEM FREQUENCY AND DIMENSION REPLICATION RESULTS ####
   ##########################################################
@@ -475,7 +475,16 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
     arr <- array(NA, dim = c(nrow(data[[1]]), ncol(data[[1]]), length(data)))
     
     for(i in 1:length(data))
-    {arr[,,i] <- as.matrix(data[[i]])}
+    {
+      # Target matrix
+      target.mat <- as.matrix(data[[i]])
+      
+      # Reorder based on bootega network
+      target.mat <- target.mat[match(colnames(bootega.obj$EGA$network), row.names(target.mat)),]
+      
+      # Insert into array
+      arr[,,i] <- target.mat
+    }
     
     return(arr)
   }
@@ -485,6 +494,12 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   unstd.item.id <- round(apply(arr,1:2, mean, na.rm=TRUE),3)
   colnames(unstd.item.id) <- paste(seq(1,max(final.mat, na.rm = TRUE),1))
   row.names(unstd.item.id) <- colnames(bootega.obj$EGA$network)
+  
+  #let user know results are computed has ended
+  message("done", appendLF = TRUE)
+  
+  # Reorder row names to align diagonal factor loading matrix
+  unstd.item.id <- unstd.item.id[order(orig.wc),]
   
   if(ncol(unstd.item.id)!=col)
   {
@@ -518,6 +533,10 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   
   # Name dimension replication vector
   names(dimRep) <- uniq
+  
+  #message for additional item likelihoods
+  if(ncol(itemLik)<max(final.mat,na.rm=TRUE))
+  {message("\nLower the item.freq argument to view item frequencies for additional dimensions")}
   
   ##################################
   #### NETWORK LOADINGS RESULTS ####
