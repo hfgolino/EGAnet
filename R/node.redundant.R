@@ -70,7 +70,7 @@
 #' @export
 #
 # Redundant Nodes Function
-# Updated 20.02.2020
+# Updated 24.03.2020
 node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "thresh"),
                             type = c("alpha", "bonferroni", "FDR", "adapt"))
 {
