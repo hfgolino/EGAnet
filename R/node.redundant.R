@@ -108,7 +108,7 @@ node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "thre
   if(method == "wto")
   {
     # compute network
-    net <- EBICglasso.qgraph(A, n = n)
+    net <- EGA(A, n = n, model = "glasso", algorithm = "louvain", plot.EGA = FALSE)$network
     tom <- wTO::wTO(net,sign="sign")
   }else if(method == "pcor" || method == "thresh")
   {tom <- -cov2cor(solve(A))}
