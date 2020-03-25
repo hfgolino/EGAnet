@@ -1,7 +1,17 @@
 Changes in version 0.9.4
 
+o UPDATE: moved all datasets into a single .R file to streamline packaging
+
+o UPDATE: moved S3Methods into single .R file to streamline packaging and homogenize documentation pages
+
+o UPDATE: moved `EBICglasso.qgraph` internal functions
+
+o FIX: handling of NAs in `dimStability`
+
+o FIX: weights of network in unidimensional structure of `EGA` are the same as multidimensional structure
+
 o UPDATE: Added a new function to simulate dynamic factor models `simDFM`
-o UPDATE: added internal functions for `net.loads` (see `utils-net.loads`)
+
 o FIX: ordering of names in `itemStability`
 
 o FIX: handling of NA communities in `net.loads`
@@ -21,7 +31,7 @@ o FIX: `net.scores` negative loadings corrected
 
 Changes in version 0.9.3
 
-o New function and print, summary and plot methods: dynEGA
+o New function and print, summary, and plot methods: dynEGA
 
 o New functions: Embed and glla
 

@@ -24,7 +24,7 @@
 #' \item{\strong{\code{"glasso"}}}
 #' {Estimates the Gaussian graphical model using graphical LASSO with
 #' extended Bayesian information criterion to select optimal regularization parameter.
-#' See \code{\link[EGAnet]{EBICglasso.qgraph}}}
+#' See \code{\link[qgraph]{EBICglasso}}}
 #'
 #' \item{\strong{\code{"TMFG"}}}
 #' {Estimates a Triangulated Maximally Filtered Graph.
@@ -83,7 +83,7 @@
 #' If you're unsure how many cores your computer has,
 #' then use the following code: \code{parallel::detectCores()}
 #' 
-#' @param ... Additional arguments to be passed to \code{\link{EBICglasso.qgraph}}
+#' @param ... Additional arguments to be passed to \code{\link[qgraph]{EBICglasso}}
 #' or \code{\link[NetworkToolbox]{TMFG}}
 #'
 #' @return Returns a list containing:
