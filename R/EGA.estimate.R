@@ -1,7 +1,7 @@
 #' A Wrapper Function for \code{EGA}
 #'
 #' Estimates the number of dimensions of a given dataset/instrument
-#' using graphical lasso (\code{\link{EBICglasso.qgraph}}) or the
+#' using graphical lasso or the
 #' Triangulated Maximally Filtered Graph (\code{\link[NetworkToolbox]{TMFG}})
 #' method and the walktrap community detection algorithm (\code{\link[igraph]{cluster_walktrap}}).
 #' The glasso regularization parameter is set via EBIC.
@@ -61,7 +61,7 @@
 #' the \code{\link[stats]{cor}}} function.
 #' }
 #'
-#' @param ... Additional arguments to be passed to \code{\link{EBICglasso.qgraph}}
+#' @param ... Additional arguments to be passed to EBICglasso.qgraph
 #' or \code{\link[NetworkToolbox]{TMFG}}
 #'
 #' @author Alexander P. Christensen <alexpaulchristensen at gmail.com> and Hudson F. Golino <hfg9s at virginia.edu>
@@ -69,7 +69,7 @@
 #' @return Returns a list containing:
 #'
 #' \item{estimated.network}{A symmetric network estimated using either the
-#' \code{\link{EBICglasso.qgraph}} or \code{\link[NetworkToolbox]{TMFG}}}
+#' EBICglasso.qgraph or \code{\link[NetworkToolbox]{TMFG}}}
 #'
 #' \item{wc}{A vector representing the community (dimension) membership
 #' of each node in the network. \code{NA} values mean that the node
@@ -122,29 +122,29 @@ EGA.estimate <- function(data, n = NULL,
                          ...)
 {
   #### MISSING ARGUMENTS HANDLING ####
-  
+
   if(missing(model))
   {model <- "glasso"
   }else{model <- match.arg(model)}
-  
+
   if(missing(algorithm))
   {algorithm <- "walktrap"
   }else{algorithm <- match.arg(algorithm)}
-  
+
   if(missing(cor))
   {cor <- "cor_auto"
   }else{cor <- match.arg(cor)}
-  
+
   #### MISSING ARGUMENTS HANDLING ####
-  
+
   # Check if data is correlation matrix and positive definite
   if(nrow(data) != ncol(data))
   {
     # Obtain n
     n <- nrow(data)
-    
+
     # Compute correlation matrix
-    
+
     if(cor == "cor_auto"){
       cor.data <- qgraph::cor_auto(data, forcePD = TRUE)
     }else if(cor == "pearson"){
@@ -152,35 +152,35 @@ EGA.estimate <- function(data, n = NULL,
     }else if(cor == "spearman"){
       cor.data <- cor(data, use = "pairwise.complete.obs", method = "spearman")
     }
-    
+
     # Check if positive definite
     if(any(eigen(cor.data)$values < 0))
     {
       # Let user know
       warning("Correlation matrix is not positive definite.\nForcing positive definite matrix using Matrix::nearPD()\nResults may be unreliable")
-      
+
       # Force positive definite matrix
       cor.data <- as.matrix(Matrix::nearPD(cor.data)$mat)
     }
   }else{
-    
+
     # Check if positive definite
     if(any(eigen(data)$values < 0))
     {
       # Let user know
       warning("Correlation matrix is not positive definite.\nForcing positive definite matrix using Matrix::nearPD()\nResults may be unreliable")
-      
+
       # Force positive definite matrix
       cor.data <- as.matrix(Matrix::nearPD(data)$mat)
     }else{cor.data <- data}
   }
-  
+
   # Estimate network
   if(model == "glasso")
   {
-    
+
     gamma.values <- c(0.50, 0.25, 0)
-    
+
     for(j in 1:length(gamma.values))
     {
       estimated.network <- EBICglasso.qgraph(data = cor.data,
@@ -189,7 +189,7 @@ EGA.estimate <- function(data, n = NULL,
                                              returnAllResults = FALSE,
                                              gamma = gamma.values[j],
                                              ...)
-      
+
       if(all(NetworkToolbox::strength(estimated.network)>0))
       {
         message(paste("Network estimated with gamma = ",gamma.values[j],sep=""))
@@ -198,45 +198,45 @@ EGA.estimate <- function(data, n = NULL,
     }
   }else if(model == "TMFG")
   {estimated.network <- NetworkToolbox::TMFG(cor.data, ...)$A}
-  
+
   # Convert to igraph
   graph <- suppressWarnings(NetworkToolbox::convert2igraph(abs(estimated.network)))
-  
+
   # Check for unconnected nodes
   if(igraph::vcount(graph)!=ncol(data))
   {
     warning("Estimated network contains unconnected nodes:\n",
             paste(names(which(NetworkToolbox::strength(estimated.network)==0)), collapse = ", "))
-    
+
     unconnected <- which(NetworkToolbox::strength(estimated.network)==0)
   }
-  
+
   # Run community detection algorithm
   wc <- switch(algorithm,
                walktrap = igraph::cluster_walktrap(graph, steps = steps),
                louvain = igraph::cluster_louvain(graph)
   )
-  
+
   # Obtain community memberships
   wc <- wc$membership
   init.wc <- as.vector(matrix(NA, nrow = 1, ncol = ncol(data)))
   init.wc[1:length(wc)] <- wc
   wc <- init.wc
-  
+
   # Replace unconnected nodes with NA communities
   if(exists("unconnected"))
   {wc[unconnected] <- NA}
-  
+
   names(wc) <- colnames(data)
   n.dim <- max(wc, na.rm = TRUE)
-  
+
   # Return results
   res <- list()
   res$network <- estimated.network
   res$wc <- wc
   res$n.dim <- n.dim
   res$cor.data <- cor.data
-  
+
   return(res)
 }
 #----
