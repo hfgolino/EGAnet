@@ -84,7 +84,7 @@ dimStability <- function(bootega.obj, orig.wc, item.stability = TRUE)
     {dim.count[j] <- all(dims[target,j] == uniq.dim[i])}
 
     # Input mean of into vector
-    dim.stab[i] <- mean(dim.count, na.rm = TRUE)
+    dim.stab[i] <- mean(dim.count)
   }
 
   # Results list

@@ -70,14 +70,14 @@ the \code{\link[stats]{cor}}} function.
 the \code{\link[stats]{cor}}} function.
 }}
 
-\item{...}{Additional arguments to be passed to EBICglasso.qgraph
+\item{...}{Additional arguments to be passed to \code{\link{EBICglasso.qgraph}}
 or \code{\link[NetworkToolbox]{TMFG}}}
 }
 \value{
 Returns a list containing:
 
 \item{estimated.network}{A symmetric network estimated using either the
-EBICglasso.qgraph or \code{\link[NetworkToolbox]{TMFG}}}
+\code{\link{EBICglasso.qgraph}} or \code{\link[NetworkToolbox]{TMFG}}}
 
 \item{wc}{A vector representing the community (dimension) membership
 of each node in the network. \code{NA} values mean that the node
@@ -89,7 +89,7 @@ was disconnected from the network}
 }
 \description{
 Estimates the number of dimensions of a given dataset/instrument
-using graphical lasso or the
+using graphical lasso (\code{\link{EBICglasso.qgraph}}) or the
 Triangulated Maximally Filtered Graph (\code{\link[NetworkToolbox]{TMFG}})
 method and the walktrap community detection algorithm (\code{\link[igraph]{cluster_walktrap}}).
 The glasso regularization parameter is set via EBIC.

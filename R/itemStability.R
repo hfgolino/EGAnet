@@ -83,6 +83,34 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   if(class(bootega.obj) != "bootEGA")
   {stop("Input for 'bootega.obj' is not a 'bootEGA' object")}
   
+  #mode function
+  mode <- function(v, fin.vec)
+  {
+    #unique values
+    uniqv <- unique(v)
+    
+    #find mode
+    uniq.val <- uniqv[which.max(tabulate(match(v, uniqv)))]
+    
+    #do not overwrite already identified dimension
+    while(uniq.val %in% fin.vec)
+    {
+      #remove unique value
+      uniqv <- uniqv[-which(uniq.val==uniqv)]
+      
+      if(length(uniqv)==0)
+      {
+        uniq.val <- NA
+        break
+      }
+      
+      #find mode
+      uniq.val <- uniqv[which.max(tabulate(match(v, uniqv)))]
+    }
+    
+    return(uniq.val)
+  }
+  
   #number of bootstrapped networks
   n <- length(bootega.obj$bootGraphs)
   

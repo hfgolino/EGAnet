@@ -1,7 +1,7 @@
 #' A Wrapper Function for \code{EGA}
 #'
 #' Estimates the number of dimensions of a given dataset/instrument
-#' using graphical lasso or the
+#' using graphical lasso (\code{\link{EBICglasso.qgraph}}) or the
 #' Triangulated Maximally Filtered Graph (\code{\link[NetworkToolbox]{TMFG}})
 #' method and the walktrap community detection algorithm (\code{\link[igraph]{cluster_walktrap}}).
 #' The glasso regularization parameter is set via EBIC.
@@ -61,7 +61,7 @@
 #' the \code{\link[stats]{cor}}} function.
 #' }
 #'
-#' @param ... Additional arguments to be passed to EBICglasso.qgraph
+#' @param ... Additional arguments to be passed to \code{\link{EBICglasso.qgraph}}
 #' or \code{\link[NetworkToolbox]{TMFG}}
 #'
 #' @author Alexander P. Christensen <alexpaulchristensen at gmail.com> and Hudson F. Golino <hfg9s at virginia.edu>
@@ -69,7 +69,7 @@
 #' @return Returns a list containing:
 #'
 #' \item{estimated.network}{A symmetric network estimated using either the
-#' EBICglasso.qgraph or \code{\link[NetworkToolbox]{TMFG}}}
+#' \code{\link{EBICglasso.qgraph}} or \code{\link[NetworkToolbox]{TMFG}}}
 #'
 #' \item{wc}{A vector representing the community (dimension) membership
 #' of each node in the network. \code{NA} values mean that the node
@@ -113,7 +113,7 @@
 #' @export
 #'
 # Estimates EGA
-# Updated 24.03.2020
+# Updated 04.02.2020
 EGA.estimate <- function(data, n = NULL,
                          model = c("glasso", "TMFG"),
                          algorithm = c("walktrap", "louvain"),
@@ -215,7 +215,7 @@ EGA.estimate <- function(data, n = NULL,
   wc <- switch(algorithm,
                walktrap = igraph::cluster_walktrap(graph, steps = steps),
                louvain = igraph::cluster_louvain(graph)
-  )
+               )
 
   # Obtain community memberships
   wc <- wc$membership
@@ -239,4 +239,3 @@ EGA.estimate <- function(data, n = NULL,
 
   return(res)
 }
-#----

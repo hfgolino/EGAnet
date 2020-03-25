@@ -1,7 +1,7 @@
 #' Applies the Exploratory Graph Analysis technique
 #'
 #' Estimates the number of dimensions of a given dataset/instrument
-#' using graphical lasso (\code{\link[qgraph]{EBICglasso}}) or the
+#' using graphical lasso (\code{\link{EBICglasso.qgraph}}) or the
 #' Triangulated Maximally Filtered Graph (\code{\link[NetworkToolbox]{TMFG}})
 #' method and the walktrap community detection algorithm (\code{\link[igraph]{cluster_walktrap}}).
 #' The glasso regularization parameter is set via EBIC.
@@ -55,7 +55,7 @@
 #'
 #' @param load Factor loadings (used in the unidimensionality check algorithm). Defaults to 0.70.
 #'
-#' @param ... Additional arguments to be passed to \code{\link[qgraph]{EBICglasso}}
+#' @param ... Additional arguments to be passed to \code{\link{EBICglasso.qgraph}}
 #' or \code{\link[NetworkToolbox]{TMFG}}
 #'
 #' @author Hudson F. Golino <hfg9s at virginia.edu>, Alexander P. Christensen <alexpaulchristensen at gmail.com>, Maria Dolores Nieto <acinodam at gmail.com> and Luis E. Garrido <garrido.luiseduardo at gmail.com>
@@ -63,7 +63,7 @@
 #' @return Returns a list containing:
 #'
 #' \item{network}{A symmetric network estimated using either the
-#' \code{\link[qgraph]{EBICglasso}} or \code{\link[NetworkToolbox]{TMFG}}}
+#' \code{\link{EBICglasso.qgraph}} or \code{\link[NetworkToolbox]{TMFG}}}
 #'
 #' \item{wc}{A vector representing the community (dimension) membership
 #' of each node in the network. \code{NA} values mean that the node
@@ -119,7 +119,6 @@
 #' doi: \href{https://psyarxiv.com/gzcre/}{10.31234/osf.io/gzcre}
 #'
 #' @importFrom stats cor rnorm runif na.omit
-#' @importFrom graphics plot
 #'
 #' @export
 #'
@@ -214,8 +213,8 @@ EGA <- function (data, model = c("glasso", "TMFG"),
     if(uni.cor.res$n.dim <= nfact + 1)
     {
       n.dim <- uni.cor.res$n.dim
-      cor.data <- multi.cor.res$cor.data
-      estimated.network <- multi.cor.res$network
+      cor.data <- uni.cor.res$cor.data[-c(1:(nvar*nfact)),-c(1:(nvar*nfact))]
+      estimated.network <- uni.cor.res$network[-c(1:(nvar*nfact)),-c(1:(nvar*nfact))]
       wc <- uni.cor.res$wc[-c(1:(nvar*nfact))]
     }else{
       n.dim <- multi.cor.res$n.dim
@@ -238,25 +237,25 @@ EGA <- function (data, model = c("glasso", "TMFG"),
     data.sim <- sim.func(data = data, nvar = nvar, nfact = nfact, load = load)
 
     uni.res <- EGA.estimate(data.sim, model = model, algorithm = algorithm, steps = steps, n = n, ...)
-    
-    cor.data <- uni.res$cor.data[-c(1:(nvar*nfact)),-c(1:(nvar*nfact))]
 
     if(uni.res$n.dim <= nfact + 1)
     {
       n.dim <- uni.res$n.dim
-      cor.data <- cor.data
-      estimated.network <- suppressMessages(EGA.estimate(cor.data, model = model, algorithm = algorithm, steps = steps, n = n, ...)$network)
+      cor.data <- uni.res$cor.data[-c(1:(nvar*nfact)),-c(1:(nvar*nfact))]
+      estimated.network <- uni.res$network[-c(1:(nvar*nfact)),-c(1:(nvar*nfact))]
       wc <- uni.res$wc[-c(1:(nvar*nfact))]
     }else{
 
       #-------------------------------------------------------------------------
       ## TRADITIONAL EGA (IF NUMBER OF FACTORS > 2)
       #-------------------------------------------------------------------------
-      
+
+      cor.data <- uni.res$cor.data[-c(1:(nvar*nfact)),-c(1:(nvar*nfact))]
+
       multi.res <- suppressMessages(EGA.estimate(cor.data, model = model, algorithm = algorithm, steps = steps, n = n, ...))
 
       n.dim <- multi.res$n.dim
-      cor.data <- cor.data
+      cor.data <- multi.res$cor.data
       estimated.network <- multi.res$network
       wc <- multi.res$wc
     }

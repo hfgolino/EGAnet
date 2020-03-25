@@ -68,7 +68,7 @@ Number of the column identifying group membership. Must be specified only if \co
 \item{use.derivatives}{Integer.
 The order of the derivative to be used in the EGA procedure. Default to 1.}
 
-\item{model}{A string indicating the network method to use (\code{\link[EGAnet]{EGA}}).
+\item{model}{A string indicating the network method to use (\code{\link{EGA.estimate}}).
 Current options are:
 
 \itemize{
