@@ -32,7 +32,7 @@ Current options are:
 \item{\strong{\code{"glasso"}}}
 {Estimates the Gaussian graphical model using graphical LASSO with
 extended Bayesian information criterion to select optimal regularization parameter.
-See \code{\link[EGAnet]{EBICglasso.qgraph}}}
+See \code{\link[qgraph]{EBICglasso}}}
 
 \item{\strong{\code{"TMFG"}}}
 {Estimates a Triangulated Maximally Filtered Graph.

@@ -73,7 +73,7 @@
 #' the \code{\link[stats]{cor}}} function.
 #' }
 #'
-#' @param model A string indicating the network method to use (\code{\link{EGA.estimate}}).
+#' @param model A string indicating the network method to use (\code{\link[EGAnet]{EGA}}).
 #' Current options are:
 #'
 #' \itemize{

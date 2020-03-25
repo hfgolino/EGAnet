@@ -1,7 +1,7 @@
 #' Applies the Exploratory Graph Analysis technique
 #'
 #' Estimates the number of dimensions of a given dataset/instrument
-#' using graphical lasso (\code{\link{EBICglasso.qgraph}}) or the
+#' using graphical lasso (\code{\link[qgraph]{EBICglasso}}) or the
 #' Triangulated Maximally Filtered Graph (\code{\link[NetworkToolbox]{TMFG}})
 #' method and the walktrap community detection algorithm (\code{\link[igraph]{cluster_walktrap}}).
 #' The glasso regularization parameter is set via EBIC.
@@ -55,7 +55,7 @@
 #'
 #' @param load Factor loadings (used in the unidimensionality check algorithm). Defaults to 0.70.
 #'
-#' @param ... Additional arguments to be passed to \code{\link{EBICglasso.qgraph}}
+#' @param ... Additional arguments to be passed to \code{\link[qgraph]{EBICglasso}}
 #' or \code{\link[NetworkToolbox]{TMFG}}
 #'
 #' @author Hudson F. Golino <hfg9s at virginia.edu>, Alexander P. Christensen <alexpaulchristensen at gmail.com>, Maria Dolores Nieto <acinodam at gmail.com> and Luis E. Garrido <garrido.luiseduardo at gmail.com>
@@ -63,7 +63,7 @@
 #' @return Returns a list containing:
 #'
 #' \item{network}{A symmetric network estimated using either the
-#' \code{\link{EBICglasso.qgraph}} or \code{\link[NetworkToolbox]{TMFG}}}
+#' \code{\link[qgraph]{EBICglasso}} or \code{\link[NetworkToolbox]{TMFG}}}
 #'
 #' \item{wc}{A vector representing the community (dimension) membership
 #' of each node in the network. \code{NA} values mean that the node
@@ -119,6 +119,7 @@
 #' doi: \href{https://psyarxiv.com/gzcre/}{10.31234/osf.io/gzcre}
 #'
 #' @importFrom stats cor rnorm runif na.omit
+#' @importFrom graphics plot
 #'
 #' @export
 #'
