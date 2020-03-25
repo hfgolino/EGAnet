@@ -4,9 +4,7 @@
 \name{ega.wmt}
 \alias{ega.wmt}
 \title{EGA WMT-2 Data}
-\format{
-A 17 x 17 adjacency matrix
-}
+\format{A 17 x 17 adjacency matrix}
 \usage{
 data(ega.wmt)
 }

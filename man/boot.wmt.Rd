@@ -4,9 +4,7 @@
 \name{boot.wmt}
 \alias{boot.wmt}
 \title{Bootstrap EGA WMT-2 Data}
-\format{
-A list with 8 objects (see \code{\link[EGAnet]{bootEGA}})
-}
+\format{A list with 8 objects (see \code{\link[EGAnet]{bootEGA}})}
 \usage{
 data(boot.wmt)
 }

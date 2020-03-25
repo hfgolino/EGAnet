@@ -1,5 +1,7 @@
 Changes in version 0.9.4
 
+o UPDATE: function simDFM now has a burnin argument.
+
 o UPDATE: moved all datasets into a single .R file to streamline packaging
 
 o UPDATE: moved S3Methods into single .R file to streamline packaging and homogenize documentation pages

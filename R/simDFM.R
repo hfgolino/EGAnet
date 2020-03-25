@@ -37,6 +37,8 @@
 #'
 #' @param cov.shock Magnitude of the random shock covariance
 #'
+#' @param burnin Number of n first samples to discard when computing the factor scores. Defaults to 1000.
+#'
 #' @examples
 #'
 #'
@@ -46,7 +48,7 @@
 #' data1 <- simDFM(variab = 5, timep = 50, nfact = 3, error = 0.05,
 #' dfm = "DAFS", loadings = 0.7, autoreg = 0.8,
 #' crossreg = 0.1, var.shock = 0.18,
-#' cov.shock = 0.36)
+#' cov.shock = 0.36, burnin = 1000)
 #'  }
 #'}
 #'
@@ -66,7 +68,7 @@
 #' @export
 #Dimension Stability function
 simDFM <- function(variab, timep, nfact, error, dfm = c("DAFS","RandomWalk"),
-                   loadings, autoreg, crossreg, var.shock, cov.shock){
+                   loadings, autoreg, crossreg, var.shock, cov.shock, burnin = 1000){
 
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(dfm))
@@ -83,16 +85,19 @@ simDFM <- function(variab, timep, nfact, error, dfm = c("DAFS","RandomWalk"),
     # Shock = Random shock vectors following a multivariate normal distribution with mean zeros and nfact x nfact q covariance matrix D
     D <- matrix(var.shock,nfact,nfact)
     diag(D) <- cov.shock
-    Shock <- MASS::mvrnorm(timep,matrix(0,nfact,1),D)
+    Shock <- MASS::mvrnorm(burnin+timep,matrix(0,nfact,1),D)
 
-    Fscores <- matrix(0,timep,nfact)
+    Fscores <- matrix(0,burnin+timep,nfact)
     Fscores[1,] <- Shock[1,]
 
-    for (t in 2: (timep)){
+    for (t in 2: (burnin+timep)){
       Fscores[t,] <- Fscores[t-1,] %*% B+ Shock[t,]
     }
+    Fscores <- Fscores[-c(1:burnin),]
+
   }else{
-    Fscores <- matrix(rnorm(nfact*timep, 0, 1), nfact, timep)
+    Fscores <- matrix(rnorm(nfact*(burnin+timep), 0, 1), nfact, burnin+timep)
+    Fscores <- Fscores[,-c(1:burnin)]
     ## nfact x timep matrix of scaled latent trends
     Fscores <- scale(apply(Fscores,1,cumsum))
   }
