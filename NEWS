@@ -4,7 +4,7 @@ o UPDATE: moved all datasets into a single .R file to streamline packaging
 
 o UPDATE: moved S3Methods into single .R file to streamline packaging and homogenize documentation pages
 
-o UPDATE: moved `EBICglasso.qgraph` and `EGA.estimate` to internal functions
+o UPDATE: moved `EBICglasso.qgraph` internal functions
 
 o FIX: handling of NAs in `dimStability`
 
