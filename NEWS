@@ -1,5 +1,7 @@
 Changes in version 0.9.4
 
+o FIX: NAs in `dimStability`
+
 o FIX: weights of network in unidimensional structure of `EGA` are the same as multidimensional structure
 
 o UPDATE: Added a new function to simulate dynamic factor models `simDFM`
