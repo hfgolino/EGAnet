@@ -95,7 +95,7 @@
 #' @export
 #'
 # Network Loadings
-# Updated 18.03.2020
+# Updated 03.04.2020
 net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
 {
   ###############################
@@ -145,7 +145,7 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
   }
   
   # Remove single item dimensions
-  dims <- na.omit(unique(dim.uniq))
+  dims <- na.omit(unique(wc))
   
   # Remove NA attribute
   attr(dims, "na.action") <- NULL
@@ -166,9 +166,6 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
   {
     # Target dimension
     target <- which(colnames(comm.str) == "NA")
-    
-    # Remove from dims
-    dims <- dims[-target]
     
     # Remove from matrix
     comm.str <- comm.str[,-target]
