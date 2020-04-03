@@ -122,7 +122,7 @@
 #'
 #' @export
 #'
-# Updated 04.02.2020
+# Updated 03.04.2020
 ## EGA Function to detect unidimensionality:
 EGA <- function (data, model = c("glasso", "TMFG"),
                  algorithm = c("walktrap", "louvain"),
