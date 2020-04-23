@@ -122,7 +122,7 @@
 #'
 #' @export
 #'
-# Updated 04.02.2020
+# Updated 03.04.2020
 ## EGA Function to detect unidimensionality:
 EGA <- function (data, model = c("glasso", "TMFG"),
                  algorithm = c("walktrap", "louvain"),
@@ -213,8 +213,8 @@ EGA <- function (data, model = c("glasso", "TMFG"),
     if(uni.cor.res$n.dim <= nfact + 1)
     {
       n.dim <- uni.cor.res$n.dim
-      cor.data <- uni.cor.res$cor.data[-c(1:(nvar*nfact)),-c(1:(nvar*nfact))]
-      estimated.network <- uni.cor.res$network[-c(1:(nvar*nfact)),-c(1:(nvar*nfact))]
+      cor.data <- multi.cor.res$cor.data
+      estimated.network <- multi.cor.res$network
       wc <- uni.cor.res$wc[-c(1:(nvar*nfact))]
     }else{
       n.dim <- multi.cor.res$n.dim
@@ -237,25 +237,25 @@ EGA <- function (data, model = c("glasso", "TMFG"),
     data.sim <- sim.func(data = data, nvar = nvar, nfact = nfact, load = load)
 
     uni.res <- EGA.estimate(data.sim, model = model, algorithm = algorithm, steps = steps, n = n, ...)
+    
+    cor.data <- uni.res$cor.data[-c(1:(nvar*nfact)),-c(1:(nvar*nfact))]
 
     if(uni.res$n.dim <= nfact + 1)
     {
       n.dim <- uni.res$n.dim
-      cor.data <- uni.res$cor.data[-c(1:(nvar*nfact)),-c(1:(nvar*nfact))]
-      estimated.network <- uni.res$network[-c(1:(nvar*nfact)),-c(1:(nvar*nfact))]
+      cor.data <- cor.data
+      estimated.network <- suppressMessages(EGA.estimate(cor.data, model = model, algorithm = algorithm, steps = steps, n = n, ...)$network)
       wc <- uni.res$wc[-c(1:(nvar*nfact))]
     }else{
 
       #-------------------------------------------------------------------------
       ## TRADITIONAL EGA (IF NUMBER OF FACTORS > 2)
       #-------------------------------------------------------------------------
-
-      cor.data <- uni.res$cor.data[-c(1:(nvar*nfact)),-c(1:(nvar*nfact))]
-
+      
       multi.res <- suppressMessages(EGA.estimate(cor.data, model = model, algorithm = algorithm, steps = steps, n = n, ...))
 
       n.dim <- multi.res$n.dim
-      cor.data <- multi.res$cor.data
+      cor.data <- cor.data
       estimated.network <- multi.res$network
       wc <- multi.res$wc
     }

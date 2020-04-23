@@ -50,7 +50,7 @@
 #'
 #' @export
 #Dimension Stability function
-#Updated 13.03.2020
+#Updated 03.04.2020
 dimStability <- function(bootega.obj, orig.wc, item.stability = TRUE)
 {
   if(class(bootega.obj) != "bootEGA")
@@ -84,7 +84,7 @@ dimStability <- function(bootega.obj, orig.wc, item.stability = TRUE)
     {dim.count[j] <- all(dims[target,j] == uniq.dim[i])}
 
     # Input mean of into vector
-    dim.stab[i] <- mean(dim.count)
+    dim.stab[i] <- mean(dim.count, na.rm = TRUE)
   }
 
   # Results list
