@@ -131,10 +131,12 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   {
     uni <- unique(orig.wc)
     num.comm <- orig.wc
-    
+  
     for(i in 1:length(uni))
-    {num.comm[which(num.comm==uniq[i])] <- i}
+    {num.comm[which(num.comm==uni[i])] <- i}
   } else {num.comm <- orig.wc}
+
+  num.comm <- as.numeric(num.comm)
   
   #unique original cimensions
   uniq <- unique(num.comm)
