@@ -77,7 +77,7 @@
 #'
 #' @export
 #Item Stability function
-#Updated 18.03.2020
+#Updated 23.04.2020
 itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep = TRUE){
   
   if(class(bootega.obj) != "bootEGA")
@@ -127,9 +127,10 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   row.names(wc.mat) <- row.names(net)
   
   #check if orig.wc is character
+  uni <- unique(orig.wc)
+  
   if(is.character(orig.wc))
   {
-    uni <- unique(orig.wc)
     num.comm <- orig.wc
   
     for(i in 1:length(uni))
@@ -363,7 +364,7 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   
   #grab confirmation value from proportion table
   for(i in 1:nrow(item.tab))
-  {con.item[i] <- item.tab[i,orig.wc[i]]}
+  {con.item[i] <- item.tab[i,num.comm[i]]}
   
   #name item confirmation vector
   names(con.item) <- colnames(net)
@@ -383,11 +384,11 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   
   #Plot
   comm <- orig.wc
-  rain <- rev(grDevices::rainbow(max(comm)))
+  rain <- rev(grDevices::rainbow(max(num.comm)))
   
   item.repl <- data.frame(Item = names(itemCon),
                           Replication = itemCon,
-                          Comm = factor(comm,max(comm):1))
+                          Comm = factor(comm, uni[max(num.comm):1]))
   
   
   ic.plot <- ggpubr::ggdotchart(item.repl, x = "Item", y = "Replication",
