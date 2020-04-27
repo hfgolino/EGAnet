@@ -1,5 +1,7 @@
 Changes in version 0.9.4
 
+o FIX: `net.loads` for when dimensions equal one or the number of nodes in the network
+
 o FIX: naming typo with characters in `itemStability`
 
 o FIX: NAs in `dimStability`
