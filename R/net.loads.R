@@ -95,7 +95,7 @@
 #' @export
 #'
 # Network Loadings
-# Updated 03.04.2020
+# Updated 27.04.2020
 net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
 {
   ###############################
@@ -154,80 +154,132 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
   #### END DATA MANAGEMENT ####
   #############################
   
-  ################################
-  #### START COMPUTE LOADINGS ####
-  ################################
-  
-  # Compute aboslute loadings
-  comm.str <- mat.func(A = A, wc = wc, absolute = TRUE, diagonal = 0)
-  
-  # Check for missing dimensions
-  if(any(colnames(comm.str)=="NA"))
+  # Make sure that there are actual dimensions
+  if(all(!is.na(wc)) && length(unique(wc)) != 1)
   {
-    # Target dimension
-    target <- which(colnames(comm.str) == "NA")
     
-    # Remove from matrix
-    comm.str <- comm.str[,-target]
+    ################################
+    #### START COMPUTE LOADINGS ####
+    ################################
+    
+    # Compute aboslute loadings
+    comm.str <- mat.func(A = A, wc = wc, absolute = TRUE, diagonal = 0)
+    
+    # Check for missing dimensions
+    if(any(colnames(comm.str)=="NA"))
+    {
+      # Target dimension
+      target <- which(colnames(comm.str) == "NA")
+      
+      # Remove from matrix
+      comm.str <- comm.str[,-target]
+    }
+    
+    # Reorder loading matrix
+    comm.str <- comm.str[,paste(dims)]
+    
+    # Add signs to loadings
+    res.rev <- add.signs(comm.str = comm.str, A = A, wc = wc, dims = dims, pos.manifold = pos.manifold)
+    comm.str <- res.rev$comm.str
+    A <- res.rev$A
+    
+    ##############################
+    #### END COMPUTE LOADINGS ####
+    ##############################
+    
+    #################################
+    #### START OUTPUT MANAGEMENT ####
+    #################################
+    
+    # Initialize result list
+    res <- list()
+    
+    # Unstandardized loadings
+    unstd <- as.data.frame(round(comm.str,3))
+    row.names(unstd) <- colnames(A)
+    res$unstd <- unstd
+    
+    # Standardized loadings
+    if(length(dims)!=1)
+    {std <- t(t(unstd) / sqrt(colSums(abs(unstd))))
+    }else{std <- t(t(unstd) / sqrt(sum(abs(unstd))))}
+    res$std <- as.data.frame(round(std,3))
+    
+    #####################
+    #### PLOT SET UP ####
+    #####################
+    
+    #Set to absolute for multidimensional
+    std.res <- as.matrix(abs(res$std))
+    
+    #Standardize by maximum rspbc
+    std.res <- std.res / rowSums(std.res)
+    
+    #Ensure that pie value is not greater than 1
+    std.res <- std.res - .001
+    std.res <- ifelse(std.res==-.001,0,std.res)
+    
+    #Split results to list for each node
+    pies <- split(std.res, rep(1:nrow(std.res)))
+    
+    # Plot (or not)
+    nl.plot <- qgraph::qgraph(A, layout = "spring", groups = as.factor(wc),
+                              label.prop = 1.5, pie = pies, vTrans = 200,
+                              negDashed = TRUE, DoNotPlot = ifelse(plot,FALSE,TRUE))
+    
+    # Remove loadings (added as attribute)
+    ## S3Methods summary and print
+    res$MinLoad <- min.load
+    ## S3Methods plot
+    res$plot <- nl.plot
+    
+  }else if(all(is.na(wc)))
+  {
+    # Create matrix of NAs
+    comm.str <- matrix(NA, nrow = ncol(A), ncol = ncol(A))
+    
+    # Set up dimensions for all 
+    dims <- 1:ncol(A)
+    
+    # Assign column names
+    colnames(comm.str) <- dims
+    
+    # Set up return
+    res <- list()
+    res$std <- comm.str
+    res$unstd <- comm.str
+    
+  }else{ # One dimension
+    
+    # Create matrix of NAs
+    comm.str <- matrix(NetworkToolbox::strength(A, absolute = TRUE), nrow = ncol(A), ncol = 1)
+    
+    # Set up dimensions for all 
+    dims <- 1
+    
+    # Assign column names
+    colnames(comm.str) <- dims
+    
+    # Add signs to loadings
+    res.rev <- add.signs(comm.str = comm.str, A = A, wc = wc, dims = dims, pos.manifold = pos.manifold)
+    comm.str <- res.rev$comm.str
+    A <- res.rev$A
+    
+    # Initialize result list
+    res <- list()
+    
+    # Unstandardized loadings
+    unstd <- as.data.frame(round(comm.str,3))
+    row.names(unstd) <- colnames(A)
+    res$unstd <- unstd
+    
+    # Standardized loadings
+    if(length(dims)!=1)
+    {std <- t(t(unstd) / sqrt(colSums(abs(unstd))))
+    }else{std <- t(t(unstd) / sqrt(sum(abs(unstd))))}
+    res$std <- as.data.frame(round(std,3))
+    
   }
-  
-  # Reorder loading matrix
-  comm.str <- comm.str[,paste(dims)]
-  
-  # Add signs to loadings
-  res.rev <- add.signs(comm.str = comm.str, A = A, wc = wc, dims = dims, pos.manifold = pos.manifold)
-  comm.str <- res.rev$comm.str
-  A <- res.rev$A
-  
-  ##############################
-  #### END COMPUTE LOADINGS ####
-  ##############################
-  
-  #################################
-  #### START OUTPUT MANAGEMENT ####
-  #################################
-  
-  # Initialize result list
-  res <- list()
-  
-  # Unstandardized loadings
-  unstd <- as.data.frame(round(comm.str,3))
-  row.names(unstd) <- colnames(A)
-  res$unstd <- unstd
-  
-  # Standardized loadings
-  if(length(dims)!=1)
-  {std <- t(t(unstd) / sqrt(colSums(abs(unstd))))
-  }else{std <- t(t(unstd) / sqrt(sum(abs(unstd))))}
-  res$std <- as.data.frame(round(std,3))
-  
-  #####################
-  #### PLOT SET UP ####
-  #####################
-  
-  #Set to absolute for multidimensional
-  std.res <- as.matrix(abs(res$std))
-  
-  #Standardize by maximum rspbc
-  std.res <- std.res / rowSums(std.res)
-  
-  #Ensure that pie value is not greater than 1
-  std.res <- std.res - .001
-  std.res <- ifelse(std.res==-.001,0,std.res)
-  
-  #Split results to list for each node
-  pies <- split(std.res, rep(1:nrow(std.res)))
-  
-  # Plot (or not)
-  nl.plot <- qgraph::qgraph(A, layout = "spring", groups = as.factor(wc),
-                            label.prop = 1.5, pie = pies, vTrans = 200,
-                            negDashed = TRUE, DoNotPlot = ifelse(plot,FALSE,TRUE))
-  
-  # Remove loadings (added as attribute)
-  ## S3Methods summary and print
-  res$MinLoad <- min.load
-  ## S3Methods plot
-  res$plot <- nl.plot
   
   class(res) <- "NetLoads"
   
