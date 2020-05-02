@@ -4,7 +4,7 @@
 \alias{net.scores}
 \title{Network Scores}
 \usage{
-net.scores(data, A, wc, global = FALSE, type = c("sumscore", "latent"), ...)
+net.scores(data, A, wc, global = FALSE, ...)
 }
 \arguments{
 \item{data}{Matrix or data frame.
@@ -24,22 +24,9 @@ Defaults to \code{FALSE}.
 If there is more than one dimension and there is theoretically
 one global dimension, then general loadings of the dimensions
 onto the global dimension can be included in the weighted
-scores. For the type of weights (e.g., sum score or latent),
-see the \code{type} argument}
+scores}
 
-\item{type}{Character.
-Should network scores parallel sum scores or latent variable scores?
-Defaults to \code{"latent"}.
-Argument \code{type} sets the community centrality measure that is used
-when computing the network loadings for multiple factors.
-Simulations have shown that \code{\link[NetworkToolbox]{comm.eigen}} computes
-weights that are closer to sum scores while
-\code{\link[NetworkToolbox]{comm.close}} computes
-weights that are closer to latent variable scores.
-See Christensen, Golino, and Silvia (2019) for more details}
-
-\item{...}{Additional arguments for \code{\link[igraph]{cluster_walktrap}}
-and \code{\link[NetworkToolbox]{louvain}} community detection algorithms}
+\item{...}{Additional arguments for \code{\link[EGAnet]{EGA}}}
 }
 \value{
 Returns a list containing:
@@ -56,23 +43,17 @@ and community (including the overall score)}
 (computed using \code{\link[EGAnet]{net.loads}})}
 }
 \description{
-This function computes network scores for
-factor analysis models. Network scores are computed based on
+This function computes network scores computed based on
 each node's \code{\link[NetworkToolbox]{strength}} within each
-community (i.e., factor) in the network. These values are used
-as network "factor loadings" for the weights of each item. Notably,
-network analysis allows nodes to load onto more than one factor.
-These loadings are considered in the factor scores. In addition,
+community (i.e., factor) in the network (see \code{\link[EGAnet]{net.loads}}).
+These values are used as network "factor loadings" for the weights of each item.
+Notably, network analysis allows nodes to contribution to more than one community.
+These loadings are considered in the network scores. In addition,
 if the construct is a hierarchy (e.g., personality questionnaire;
 items in facet scales in a trait domain), then an overall
-score can be computed (see argument \code{general}). These overall
-scores are computed using \code{\link[NetworkToolbox]{comm.close}}
-as weights, which are roughly similar to general factor loadings in a
-CFA model (see Christensen, Golino, & Silvia, 2019). The score
-estimates are roughly equivalent to the Maximum Likelihood method in
-\code{lavaan}'s \code{\link[lavaan]{cfa}} function. An important difference
+score can be computed (see argument \code{global}). An important difference
 is that the network scores account for cross-loadings in their
-estimation of scores.
+estimation of scores
 }
 \details{
 For more details, type \code{vignette("Network_Scores")}
@@ -86,20 +67,25 @@ wmt <- wmt2[,7:24]
  ega.wmt <- EGA(wmt)
 }
 
- # Network scores
- net.scores(data = wmt, A = ega.wmt)
+# Network scores
+net.scores(data = wmt, A = ega.wmt)
 
 }
 \references{
-Christensen, A. P. (2018).
-NetworkToolbox: Methods and measures for brain, cognitive, and psychometric network analysis in R.
-\emph{The R Journal}, \emph{10}, 422-439.
-doi: \href{https://doi.org/10.32614/RJ-2018-065}{10.32614/RJ-2018-065}
-
-Christensen, A. P., Golino, H. F., & Silvia, P. J. (2019).
-A psychometric network perspective on the measurement and assessment of personality traits.
+Christensen, A. P., & Golino, H. (under review).
+Statistical equivalency of factor and network loadings.
 \emph{PsyArXiv}.
-doi: \href{https://doi.org/10.31234/osf.io/ktejp}{10.31234/osf.io/ktejp}
+doi: \href{https://doi.org/10.31234/osf.io/xakez}{10.31234/osf.io/xakez}
+
+Christensen, A. P., Golino, H. F., & Silvia, P. J. (in press).
+A psychometric network perspective on the measurement and assessment of personality traits.
+\emph{European Journal of Personality}.
+doi: \href{https://doi.org/10.1002/per.2265}{10.1002/per.2265}
+
+Golino, H., Christensen, A. P., Moulder, R., Kim, S., & Boker, S. M. (under review).
+Modeling latent topics in social media using Dynamic Exploratory Graph Analysis: The case of the right-wing and left-wing trolls in the 2016 US elections.
+\emph{PsyArXiv}.
+doi: \href{https://doi.org/10.31234/osf.io/tfs7c}{10.31234/osf.io/tfs7c}
 }
 \author{
 Alexander P. Christensen <alexpaulchristensen@gmail.com> and Hudson F. Golino <hfg9s at virginia.edu>
