@@ -36,9 +36,9 @@
 #'
 #' @importFrom graphics par
 #' 
-#' @export
-#' 
 # Print dynEGA (Level: Population)----
+# Updated 02.05.2020
+#' @export
 print.dynEGA<- function(x, ...) {
   cat("dynEGA Results (Level: Population):\n")
   cat("\nNumber of Dimensions:\n")
@@ -48,6 +48,8 @@ print.dynEGA<- function(x, ...) {
 }
 
 # Print dynEGA (Level: Groups)----
+# Updated 02.05.2020
+#' @export
 print.dynEGA.Groups <- function(x, ...) {
   for(i in 1:length(x$dynEGA)){
     cat("dynEGA Results (Level: Group):\n")
@@ -60,6 +62,8 @@ print.dynEGA.Groups <- function(x, ...) {
 }
 
 # Print dynEGA (Level: Individuals)----
+# Updated 02.05.2020
+#' @export
 print.dynEGA.Individuals <- function(x, ...) {
   cat("Number of Cases (individuals): \n")
   number <- length(x$dynEGA)
@@ -73,6 +77,8 @@ print.dynEGA.Individuals <- function(x, ...) {
 }
 
 # Print EGA----
+# Updated 02.05.2020
+#' @export
 print.EGA <- function(x, ...) {
   cat("EGA Results:\n")
   cat("\nNumber of Dimensions:\n")
@@ -82,6 +88,8 @@ print.EGA <- function(x, ...) {
 }
 
 #Print Network Loadings----
+# Updated 02.05.2020
+#' @export
 print.NetLoads <- function(x, ...) {
   
   x$std[which(abs(x$std) <= x$MinLoad, arr.ind = TRUE)] <- ""

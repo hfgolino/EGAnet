@@ -37,9 +37,9 @@
 #' 
 #' @author Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #' 
-#' @export
-#' 
 # Summary CFA----
+# Updated 02.05.2020
+#' @export
 summary.CFA <- function(object, ...) {
   cat("Summary: Confirmatory Factor Analysis:\n")
   print(object$summary)
@@ -48,6 +48,8 @@ summary.CFA <- function(object, ...) {
 }
 
 # Summary dynEGA (Level: Population)----
+# Updated 02.05.2020
+#' @export
 summary.dynEGA <- function(object, ...) {
   cat("dynEGA Results (Level: Population):\n")
   cat("\nNumber of Dimensions:\n")
@@ -57,6 +59,8 @@ summary.dynEGA <- function(object, ...) {
 }
 
 # Summary dynEGA (Level: Group)----
+# Updated 02.05.2020
+#' @export
 summary.dynEGA.Groups <- function(object, ...) {
   for(i in 1:length(object$dynEGA)){
     cat("dynEGA Results (Level: Group):\n")
@@ -69,6 +73,8 @@ summary.dynEGA.Groups <- function(object, ...) {
 }
 
 # Summary dynEGA (Level: Individual)----
+# Updated 02.05.2020
+#' @export
 summary.dynEGA.Individuals <- function(object, ...) {
   cat("Number of Cases (individuals): \n")
   number <- length(object$dynEGA)
@@ -82,6 +88,8 @@ summary.dynEGA.Individuals <- function(object, ...) {
 }
 
 # Summary EGA----
+# Updated 02.05.2020
+#' @export
 summary.EGA <- function(object, ...) {
   cat("EGA Results:\n")
   cat("\nNumber of Dimensions:\n")
@@ -91,6 +99,8 @@ summary.EGA <- function(object, ...) {
 }
 
 # Summary Network Loadings----
+# Updated 02.05.2020
+#' @export
 summary.NetLoads <- function(object, ...) {
   
   object$std[which(abs(object$std) <= object$MinLoad, arr.ind = TRUE)] <- ""

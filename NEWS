@@ -1,6 +1,8 @@
 Changes in version 0.9.5
 
-o FIX: 
+o FIX: named community memberships in `itemStability` and `dimStability`
+
+o UPDATE: `plot`, `print`, and `summary` methods all moved into single .R files (no effect on user's end)
 
 
 Changes in version 0.9.4
