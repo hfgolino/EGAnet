@@ -95,7 +95,7 @@
 #' @export
 #'
 # Network Loadings
-# Updated 27.04.2020
+# Updated 02.05.2020
 net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
 {
   ###############################
@@ -155,7 +155,7 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
   #############################
   
   # Make sure that there are actual dimensions
-  if(all(!is.na(wc)) && length(unique(wc)) != 1)
+  if(length(dims) != 1)
   {
     
     ################################
@@ -253,9 +253,6 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
     
     # Create matrix of NAs
     comm.str <- matrix(NetworkToolbox::strength(A, absolute = TRUE), nrow = ncol(A), ncol = 1)
-    
-    # Set up dimensions for all 
-    dims <- 1
     
     # Assign column names
     colnames(comm.str) <- dims

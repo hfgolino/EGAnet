@@ -1,3 +1,8 @@
+Changes in version 0.9.5
+
+o FIX: 
+
+
 Changes in version 0.9.4
 
 o FIX: `net.loads` for when dimensions equal one or the number of nodes in the network
