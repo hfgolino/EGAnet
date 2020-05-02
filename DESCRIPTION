@@ -20,4 +20,4 @@ Suggests: knitr, rmarkdown, kableExtra, psych, psychTools, ggpubr, ggplot2,
         plyr (>= 1.8.4), matrixcalc (>= 1.0-3),
         pbapply, OpenMx, wTO, MASS, fdrtool, fitdistrplus
 VignetteBuilder: knitr
-RoxygenNote: 7.1.0
+RoxygenNote: 7.0.2
