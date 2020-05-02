@@ -258,7 +258,7 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
     colnames(comm.str) <- dims
     
     # Add signs to loadings
-    res.rev <- EGAnet:::add.signs(comm.str = comm.str, A = A, wc = wc, dims = dims, pos.manifold = pos.manifold)
+    res.rev <- add.signs(comm.str = comm.str, A = A, wc = wc, dims = dims, pos.manifold = pos.manifold)
     comm.str <- res.rev$comm.str
     A <- res.rev$A
     
