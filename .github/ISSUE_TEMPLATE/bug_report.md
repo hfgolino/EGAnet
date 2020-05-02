@@ -20,11 +20,11 @@ assignees: ''
 **To Reproduce:**
 - Function error occurred in: [e.g., bootEGA]
 
-*Optional (but extremely helpful): Attach data to issue or send data to hfg9s@virginia.edu (mention issue # in subject line)*
+*Optional (but extremely helpful): Attach data to issue or send data to hfg9s@virginia.edu or alexpaulchristensen@gmail.com (mention issue # in subject line)*
 
 **R and EGAnet versions:**
 - R [e.g., 3.6.3]
-- EGAnet: [e.g., 0.9.4]
+- EGAnet: [e.g., 0.9.5]
 
 **Operating System:**
  - OS: [e.g., Windows, Mac, Linux]
