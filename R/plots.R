@@ -73,9 +73,9 @@
 #'
 #' @importFrom graphics plot
 #' 
-#' @export
-#' 
 #Plot bootEGA----
+# Updated 02.05.2020
+#' @export
 plot.bootEGA <- function(x, vsize = 6,...){
   
   qgraph::qgraph(x$typicalGraph$graph, layout = "spring",
@@ -85,6 +85,8 @@ plot.bootEGA <- function(x, vsize = 6,...){
 }
 
 #Plot CFA----
+# Updated 02.05.2020
+#' @export
 plot.CFA <- function(x, layout = "spring", vsize = 6, ...) {
   semPlot::semPaths(x$fit, title = FALSE, label.cex = 0.8, sizeLat = 8, sizeMan = 5, edge.label.cex = 0.6, minimum = 0.1,
                     sizeInt = 0.8, mar = c(1, 1, 1, 1), residuals = FALSE, intercepts = FALSE, thresholds = FALSE, layout = "spring",
@@ -92,6 +94,8 @@ plot.CFA <- function(x, layout = "spring", vsize = 6, ...) {
 }
 
 #Plot dynEGA function (Level: Group)----
+# Updated 02.05.2020
+#' @export
 plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", vsize = 6,  ...) {
   par(mfrow=c(nrow,ncol))
   for(i in 1:length(x$dynEGA)){
@@ -100,6 +104,8 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", vsize = 6,  ...) {
 }
 
 #Plot dynEGA function (Level: Individual)----
+# Updated 02.05.2020
+#' @export
 plot.dynEGA.Individuals <- function(x, title = "", vsize = 6,  id = NULL, ...) {
   plot.dynEGA.Individuals <- qgraph::qgraph(x$dynEGA[[id]]$network, layout = "spring", vsize = vsize, groups = as.factor(x$dynEGA[[id]]$wc), ...)
   
@@ -112,12 +118,16 @@ plot.dynEGA <- function(x, title = "", vsize = 6,  ...) {
 }
 
 #Plot EGA----
+# Updated 02.05.2020
+#' @export
 plot.EGA <- function(x, title = "", vsize = 6,  ...) {
   plot.ega <- qgraph::qgraph(x$network, layout = "spring", vsize = vsize, groups = as.factor(x$wc), ...)
   
 }
 
 #Plot net.loads----
+# Updated 02.05.2020
+#' @export
 plot.NetLoads <- function(x, ...) {
   
   plot(x$plot)
