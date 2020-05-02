@@ -77,7 +77,7 @@
 #'
 #' @export
 #Item Stability function
-#Updated 28.04.2020
+#Updated 02.05.2020
 itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep = TRUE){
   
   if(class(bootega.obj) != "bootEGA")
@@ -139,9 +139,9 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
 
   num.comm <- as.numeric(num.comm)
   
-  #unique original cimensions
+  #unique original dimensions
   uniq <- unique(num.comm)
-  uniq <- uniq[order(uniq)]
+  #uniq <- uniq[order(uniq)]
   
   #initialize final matrix
   final.mat <- matrix(0, nrow = length(num.comm), ncol = n)
@@ -359,12 +359,15 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
     item.tab[i,match(names(prop.int),colnames(item.tab))] <- prop.int
   }
   
+  if(is.character(uni))
+  {colnames(item.tab)[1:length(uni)] <- uni}
+  
   #initialize item confirmation vector
   con.item <- vector("numeric",length=nrow(item.tab))
   
   #grab confirmation value from proportion table
   for(i in 1:nrow(item.tab))
-  {con.item[i] <- item.tab[i,num.comm[i]]}
+  {con.item[i] <- item.tab[i,paste(orig.wc[i])]}
   
   #name item confirmation vector
   names(con.item) <- colnames(net)
@@ -497,23 +500,17 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   unstd.item.id <- round(apply(arr,1:2, mean, na.rm=TRUE),3)
   colnames(unstd.item.id) <- paste(seq(1,max(final.mat, na.rm = TRUE),1))
   row.names(unstd.item.id) <- colnames(bootega.obj$EGA$network)
+  unstd.item.id[,1:length(uniq)] <- unstd.item.id[,uniq]
+  colnames(unstd.item.id)[1:length(uni)] <- uni
   
   #let user know results are computed has ended
   message("done", appendLF = TRUE)
   
-  # Reorder row names to align diagonal factor loading matrix
-  unstd.item.id <- unstd.item.id[order(orig.wc),]
+  lik.ord <- match(row.names(unstd.item.id),row.names(item.lik))
   
-  if(ncol(unstd.item.id)!=col)
-  {
-    rm.col <- setdiff(colnames(unstd.item.id),names(item.lik))
-    
-    target.col <- match(rm.col,colnames(unstd.item.id))
-    
-    unstd.item.id <- unstd.item.id[,-target.col]
-  }
+  item.lik.ord <- item.lik[lik.ord,]
   
-  item.lik.ord <- item.lik[match(row.names(unstd.item.id),row.names(item.lik)),]
+  unstd.item.id <- unstd.item.id[lik.ord,colnames(item.lik.ord)]
   
   unstd.item.id[which(item.lik.ord=="")] <- ""
   
@@ -532,10 +529,10 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   
   # Compute average replication in each dimension
   for(i in 1:length(uniq))
-  {dimRep[i] <- mean(itemCon[which(org == uniq[i])])}
+  {dimRep[i] <- mean(itemCon[which(org == uni[i])])}
   
   # Name dimension replication vector
-  names(dimRep) <- uniq
+  names(dimRep) <- uni
   
   #message for additional item likelihoods
   if(ncol(itemLik)<max(final.mat,na.rm=TRUE))
@@ -547,13 +544,19 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   
   # Remove NA from item loadings
   blank.itemLoads <- ifelse(as.matrix(itemLoads) == "NaN", "", as.matrix(itemLoads))
-  itemLoads <- itemLoads[,-which(apply(blank.itemLoads, 2, function(x){all(x == "")}))]
+  blank.cols <- which(apply(blank.itemLoads, 2, function(x){all(x == "")}))
+  if(length(blank.cols) != 0)
+  {itemLoads <- itemLoads[,-blank.cols]}
+  # Remove extra columns
+  itemLoads <- itemLoads[,colnames(itemLik)]
   
   result$item.replication <- itemCon
   result$mean.dim.rep <- dimRep
   result$item.dim.rep <- itemLik
   result$item.loadings <- itemLoads
   result$wc <- final.mat
+  result$uniq.name <- uni
+  result$uniq.num <- unique(num.comm)
   
   return(result)
 }

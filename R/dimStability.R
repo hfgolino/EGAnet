@@ -50,20 +50,22 @@
 #'
 #' @export
 #Dimension Stability function
-#Updated 03.04.2020
+#Updated 02.05.2020
 dimStability <- function(bootega.obj, orig.wc, item.stability = TRUE)
 {
   if(class(bootega.obj) != "bootEGA")
   {stop("Input for 'bootega.obj' is not a 'bootEGA' object")}
 
   # Compute item stability
-  items <- EGAnet::itemStability(bootega.obj, orig.wc, item.freq = 0, plot.item.rep = item.stability)
+  items <- itemStability(bootega.obj, orig.wc, item.freq = 0, plot.item.rep = item.stability)
 
   # Compute dimension stability
   ## Grab dimensions from itemStability output
   dims <- items$wc
   ## Identify unique dimensions
-  uniq.dim <- sort(unique(orig.wc))
+  uniq.dim <- items$uniq.name
+  ## Idetify unique dimension numbers
+  uniq.num <- items$uniq.num
   ## Number of dimensions
   dim.len <- length(uniq.dim)
   ## Initialize dimension stability vector
@@ -81,7 +83,7 @@ dimStability <- function(bootega.obj, orig.wc, item.stability = TRUE)
 
     # Identify consistency across bootstraps
     for(j in 1:ncol(dims))
-    {dim.count[j] <- all(dims[target,j] == uniq.dim[i])}
+    {dim.count[j] <- all(dims[target,j] == uniq.num[i])}
 
     # Input mean of into vector
     dim.stab[i] <- mean(dim.count, na.rm = TRUE)
