@@ -6,7 +6,7 @@
     temp <- packageDescription("EGAnet")
     msg <- paste("Package: ",temp$Package,": ",temp$Title,"\n",
                "Version: ",temp$Version,"\n",
-               "Created on: ",
+               "Updated on: ",
                temp$Date,"\n", sep="")
     msg <- paste(msg,"Maintainer: Hudson Golino, University of Virginia\n",sep="")
     msg <- paste(msg, "Authors: Hudson Golino, University of Virginia & \n Alexander Christensen, University of North Carolina at Greensboro\n",sep="")

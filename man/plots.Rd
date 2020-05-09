@@ -32,7 +32,7 @@
 Size of vertices in network plots.
 Defaults to \code{6}}
 
-\item{...}{Arguments passed on to 
+\item{...}{Arguments passed on to
 
 \itemize{
 

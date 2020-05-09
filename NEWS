@@ -6,6 +6,10 @@ o UPDATE: `plot`, `print`, and `summary` methods all moved into single .R files 
 
 o UPDATE: `net.scores` global score is improved and computes scores very close to CFA scores
 
+o FIX: additional argument calls for `EGA.estimate` (and `EGA` by extension)
+
+o UPDATE: message from `EGA.estimate` (and `EGA` by extension) reports both 'gamma' and 'lambda.min.ratio' arguments
+
 
 Changes in version 0.9.4
 
