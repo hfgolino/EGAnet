@@ -1,5 +1,7 @@
 Changes in version 0.9.5
 
+o MAJOR FIX: `bootEGA` estimates using the `EGA` approach instead of standard network modeling and community detection algorithm
+
 o FIX: named community memberships in `itemStability` and `dimStability`
 
 o UPDATE: `plot`, `print`, and `summary` methods all moved into single .R files (no effect on user's end)
@@ -10,8 +12,11 @@ o FIX: additional argument calls for `EGA.estimate` (and `EGA` by extension)
 
 o UPDATE: message from `EGA.estimate` (and `EGA` by extension) reports both 'gamma' and 'lambda.min.ratio' arguments
 
+o FIX: upper quantile output from `bootEGA`
 
 Changes in version 0.9.4
+
+o MAJOR UPDATE: `dimStability` now computes proportion of exact dimension replications rather than items that replicate within dimension (this latter information can still be found in the output of `itemStability` under $mean.dim.rep)
 
 o FIX: `net.loads` for when dimensions equal one or the number of nodes in the network
 
@@ -32,8 +37,6 @@ o FIX: handling of NA communities in `net.loads`
 o UPDATE: Added output of the average replication of items in each dimension for `itemStability`
 
 o UPDATE: Revised 'Network Scores' vignette
-
-o UPDATE: `dimStability` now computes proportion of exact dimension replications rather than items that replicate within dimension
 
 o UPDATE: `net.loads` functionality (cleaned up code)
 
