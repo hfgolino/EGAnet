@@ -297,6 +297,7 @@ bootEGA <- function(data, n,
                               SE.dim = se.boot, CI.dim = ci,
                               Lower = Median - ci, Upper = Median + ci,
                               Lower.Quantile = quant[1], Upper.Quantile = quant[2])
+  row.names(summary.table) <- NULL
   
   #compute frequency
   dim.range <- range(boot.ndim[,2])
