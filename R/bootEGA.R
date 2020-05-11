@@ -190,7 +190,7 @@ bootEGA <- function(data, n,
   #set inverse covariance matrix for parametric approach
   if(type=="parametric")  # Use a parametric approach:
   {
-    g <- -EGA.estimate(data, n = cases, model = model, algorithm = algorithm, ...)$network
+    g <- -EGA(data, n = cases, model = model, algorithm = algorithm, ...)$network
     diag(g) <- 1
   }
   
@@ -235,7 +235,7 @@ bootEGA <- function(data, n,
   
   #Estimate networks
   boots <- pbapply::pblapply(X = datalist, cl = cl,
-                             FUN = EGA.estimate,
+                             FUN = EGA,
                              model = model,
                              algorithm = algorithm,
                              n = cases,
