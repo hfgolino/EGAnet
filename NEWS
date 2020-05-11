@@ -1,7 +1,5 @@
 Changes in version 0.9.5
 
-o MAJOR FIX: `bootEGA` estimates using the `EGA` approach instead of standard network modeling and community detection algorithm
-
 o FIX: named community memberships in `itemStability` and `dimStability`
 
 o UPDATE: `plot`, `print`, and `summary` methods all moved into single .R files (no effect on user's end)
@@ -13,6 +11,7 @@ o FIX: additional argument calls for `EGA.estimate` (and `EGA` by extension)
 o UPDATE: message from `EGA.estimate` (and `EGA` by extension) reports both 'gamma' and 'lambda.min.ratio' arguments
 
 o FIX: upper quantile output from `bootEGA`
+
 
 Changes in version 0.9.4
 
