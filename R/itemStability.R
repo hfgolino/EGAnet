@@ -121,7 +121,7 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   wc.mat <- matrix(NA, nrow = nrow(net), ncol = n)
   
   for(i in 1:n)
-  {wc.mat[,i] <- bootega.obj$boot.wc[[i]]}
+  {wc.mat[,i] <- bootega.obj$boot.wc[[i]]$membership}
   
   #grab item names
   row.names(wc.mat) <- row.names(net)
