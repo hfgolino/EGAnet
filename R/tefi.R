@@ -3,7 +3,7 @@
 #' @description Computes the fit (TEFI) of a dimensionality structure using Von Neumman's entropy when the input is a correlation matrix.
 #' Lower values suggest better fit of a structure to the data.
 #'
-#' @param data A correlation matrix
+#' @param data A data? or correlation matrix
 #'
 #' @param structure A vector representing the structure (numbers or labels for each item).
 #' Can be theoretical factors or the structure detected by \code{\link{EGA}}
