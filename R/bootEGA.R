@@ -158,7 +158,7 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 04.02.2020
+# Updated 11.05.2020
 bootEGA <- function(data, n,
                     model = c("glasso", "TMFG"), algorithm = c("walktrap", "louvain"),
                     type = c("parametric", "resampling"),
@@ -324,11 +324,12 @@ bootEGA <- function(data, n,
   se.boot <- sd(boot.ndim[, 2])
   ciMult <- qt(0.95/2 + 0.5, nrow(boot.ndim) - 1)
   ci <- se.boot * ciMult
-  quant <- quantile(boot.ndim, c(.025, .975))
+  quant <- quantile(boot.ndim[,2], c(.025, .975), na.rm = TRUE)
   summary.table <- data.frame(n.Boots = n, median.dim = Median,
                               SE.dim = se.boot, CI.dim = ci,
-                              Lower = Median - ci, Upper = Median + ci,
+                              Lower.CI = Median - ci, Upper.CI = Median + ci,
                               Lower.Quantile = quant[1], Upper.Quantile = quant[2])
+  row.names(summary.table) <- NULL
   
   #compute frequency
   dim.range <- range(boot.ndim[,2])

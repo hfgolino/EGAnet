@@ -113,7 +113,7 @@
 #' @export
 #'
 # Estimates EGA
-# Updated 04.02.2020
+# Updated 09.05.2020
 EGA.estimate <- function(data, n = NULL,
                          model = c("glasso", "TMFG"),
                          algorithm = c("walktrap", "louvain"),
@@ -145,13 +145,11 @@ EGA.estimate <- function(data, n = NULL,
 
     # Compute correlation matrix
 
-    if(cor == "cor_auto"){
-      cor.data <- qgraph::cor_auto(data, forcePD = TRUE)
-    }else if(cor == "pearson"){
-      cor.data <- cor(data, use = "pairwise.complete.obs", method = "pearson")
-    }else if(cor == "spearman"){
-      cor.data <- cor(data, use = "pairwise.complete.obs", method = "spearman")
-    }
+    cor.data <- switch(cor,
+                       cor_auto = qgraph::cor_auto(data, forcePD = TRUE),
+                       pearson = cor(data, use = "pairwise.complete.obs", method = "pearson"),
+                       spearman = cor(data, use = "pairwise.complete.obs", method = "spearman")
+    )
 
     # Check if positive definite
     if(any(eigen(cor.data)$values < 0))
@@ -174,25 +172,48 @@ EGA.estimate <- function(data, n = NULL,
       cor.data <- as.matrix(Matrix::nearPD(data)$mat)
     }else{cor.data <- data}
   }
+  
+  #### ADDITIONAL ARGUMENTS HANDLING ####
+  
+  # Get additional arguments
+  ## Objects
+  args <- list(...)
+  
+  # Function assigned arguments
+  args$data <- cor.data
+  
+  #### ADDITIONAL ARGUMENTS HANDLING ####
 
   # Estimate network
   if(model == "glasso")
   {
-
-    gamma.values <- c(0.50, 0.25, 0)
-
+    # GLASSO additional arguments
+    ## Function assigned
+    args$n <- n
+    args$returnAllResults <- FALSE
+    
+    ## Optional arguments
+    if(!"lambda.min.ratio" %in% names(args))
+    {args$lambda.min.ratio <- 0.1}
+    
+    if(!"gamma" %in% names(args))
+    {gamma.values <- c(0.50, 0.25, 0)
+    }else{gamma.values <- args$gamma}
+    
     for(j in 1:length(gamma.values))
     {
-      estimated.network <- EBICglasso.qgraph(data = cor.data,
-                                             n = n,
-                                             lambda.min.ratio = 0.1,
-                                             returnAllResults = FALSE,
-                                             gamma = gamma.values[j],
-                                             ...)
+      # Re-instate gamma values
+      args$gamma <- gamma.values[j]
+      
+      # Estimate network
+      estimated.network <- do.call(EBICglasso.qgraph, args)
 
       if(all(NetworkToolbox::strength(estimated.network)>0))
       {
-        message(paste("Network estimated with gamma = ",gamma.values[j],sep=""))
+        message(paste("Network estimated with:\n",
+                      " \u2022 gamma = ", gamma.values[j], "\n",
+                      " \u2022 lambda.min.ratio = ", args$lambda.min.ratio,
+                      sep=""))
         break
       }
     }

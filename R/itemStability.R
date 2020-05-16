@@ -77,7 +77,7 @@
 #'
 #' @export
 #Item Stability function
-#Updated 02.05.2020
+#Updated 11.05.2020
 itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep = TRUE){
   
   if(class(bootega.obj) != "bootEGA")
@@ -121,7 +121,7 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   wc.mat <- matrix(NA, nrow = nrow(net), ncol = n)
   
   for(i in 1:n)
-  {wc.mat[,i] <- bootega.obj$boot.wc[[i]]$membership}
+  {wc.mat[,i] <- bootega.obj$boot.wc[[i]]}
   
   #grab item names
   row.names(wc.mat) <- row.names(net)

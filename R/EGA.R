@@ -128,11 +128,11 @@ EGA <- function (data, model = c("glasso", "TMFG"),
                  algorithm = c("walktrap", "louvain"),
                  plot.EGA = TRUE, n = NULL,
                  steps = 4, nvar = 4, nfact = 1, load = 0.70, ...) {
-
+  
   ##################################
   #### DATA SIMULATION FUNCTION ####
   ##################################
-
+  
   sim.func <- function(data, nvar, nfact, load)
   {
     # Check for unidimensional structure
@@ -141,29 +141,29 @@ EGA <- function (data, model = c("glasso", "TMFG"),
     corf <- 0
     J <- nvar*nfact
     sdcross = 0
-
+    
     ## GENERATE SAMPLE DATA MATRIX
     check.eig <- TRUE
     check.com <- TRUE
-
+    
     while(check.eig == TRUE|check.com == TRUE)
     {
       SATF = matrix(0, J, nfact)
-
+      
       for(j in 1:nfact)
       {
         SATF[(j*nvar-nvar+1):(j*nvar),j]<-runif(nvar, load-.10, load+.10)
-
+        
         if(nfact>1)
         {
           CROSS.L <- apply(as.matrix(SATF[(j*nvar-nvar+1+2):(j*nvar),-c(j)]), 2, function(x) rnorm((nvar-2), 0, sdcross))
-
+          
           SATF[(j*nvar-nvar+1+2):(j*nvar),-c(j)] <- CROSS.L
         }
       }
-
+      
       #SATF # Population factor loading matrix with cross-loadings and marker items
-
+      
       FCOR      = matrix(corf, nfact, nfact); diag(FCOR)<-1 ## Factor correlation matrix
       R         = SATF%*%FCOR%*%t(SATF)                          ## Rr
       check.com = any(diag(R) > .90)                                  ## Check communalities values
@@ -171,44 +171,44 @@ EGA <- function (data, model = c("glasso", "TMFG"),
       #R                                                                                       ## Rp
       check.eig = any(eigen(R)$values <= 0)                      ## Check eigenvalues
     }
-
+    
     U = chol(R)                                                                       ## Cholesky decomposition of Rp
     Z = mvtnorm::rmvnorm(n, sigma = diag(J))                                  ## Obtain sample matrix of continuous variables
     X = Z%*%U
     colnames(X) <- paste0("X", 1:ncol(X))
-
+    
     data.sim <- cbind(X, data)
-
+    
     return(data.sim)
   }
-
+  
   ##################################
   #### DATA SIMULATION FUNCTION ####
   ##################################
-
+  
   #### MISSING ARGUMENTS HANDLING ####
-
+  
   if(missing(model))
   {model <- "glasso"
   }else{model <- match.arg(model)}
-
+  
   if(missing(algorithm))
   {algorithm <- "walktrap"
   }else{algorithm <- match.arg(algorithm)}
-
+  
   #### MISSING ARGUMENTS HANDLING ####
-
+  
   # Check for data or correlation matrix
   if(nrow(data) == ncol(data))
   {
     # Multidimensional correlation result
     multi.cor.res <- EGA.estimate(data = data, model = model, algorithm = algorithm, steps = steps, n = n, ...)
-
+    
     # Unidimensional correlation result
     uni.data <- MASS::mvrnorm(n = n, mu = rep(0, ncol(data)), Sigma = multi.cor.res$cor.data)
     sim.data <- sim.func(data = uni.data, nvar = nvar, nfact = nfact, load = load)
     uni.cor.res <- suppressMessages(EGA.estimate(data = sim.data, model = model, algorithm = algorithm, steps = steps, n = n, ...))
-
+    
     # Set up results
     if(uni.cor.res$n.dim <= nfact + 1)
     {
@@ -222,24 +222,24 @@ EGA <- function (data, model = c("glasso", "TMFG"),
       estimated.network <- multi.cor.res$network
       wc <- multi.cor.res$wc
     }
-
+    
   }else{
-
+    
     # Convert to data frame
     data <- as.data.frame(data)
-
+    
     #-------------------------------------------------------------------------
     ## EGA WITH SIMULATED DATA + ORIGINAL DATA (UNIDIMENSIONALITY CHECK)
     #-------------------------------------------------------------------------
-
+    
     n <- nrow(data)
-
+    
     data.sim <- sim.func(data = data, nvar = nvar, nfact = nfact, load = load)
-
+    
     uni.res <- EGA.estimate(data.sim, model = model, algorithm = algorithm, steps = steps, n = n, ...)
     
     cor.data <- uni.res$cor.data[-c(1:(nvar*nfact)),-c(1:(nvar*nfact))]
-
+    
     if(uni.res$n.dim <= nfact + 1)
     {
       n.dim <- uni.res$n.dim
@@ -247,20 +247,20 @@ EGA <- function (data, model = c("glasso", "TMFG"),
       estimated.network <- suppressMessages(EGA.estimate(cor.data, model = model, algorithm = algorithm, steps = steps, n = n, ...)$network)
       wc <- uni.res$wc[-c(1:(nvar*nfact))]
     }else{
-
+      
       #-------------------------------------------------------------------------
       ## TRADITIONAL EGA (IF NUMBER OF FACTORS > 2)
       #-------------------------------------------------------------------------
       
       multi.res <- suppressMessages(EGA.estimate(cor.data, model = model, algorithm = algorithm, steps = steps, n = n, ...))
-
+      
       n.dim <- multi.res$n.dim
       cor.data <- cor.data
       estimated.network <- multi.res$network
       wc <- multi.res$wc
     }
   }
-
+  
   a <- list()
   # Returning only communities that have at least two items:
   if(length(unique(wc))>1){
@@ -271,12 +271,16 @@ EGA <- function (data, model = c("glasso", "TMFG"),
   }else{
     a$n.dim <- length(unique(wc))
   }
-
+  
   a$correlation <- cor.data
   a$network <- estimated.network
   a$wc <- wc
-  dim.variables <- data.frame(items = colnames(data), dimension = a$wc)
-  dim.variables <- dim.variables[order(dim.variables[, 2]),                                ]
+  # check if data has column names
+  if(is.null(colnames(data)))
+  {
+    dim.variables <- data.frame(items = paste("V", 1:ncol(data), sep = ""), dimension = a$wc)
+  }else{dim.variables <- data.frame(items = colnames(data), dimension = a$wc)}
+  dim.variables <- dim.variables[order(dim.variables[, 2]),]
   a$dim.variables <- dim.variables
   if (plot.EGA == TRUE) {
     if(a$n.dim <= 2){
@@ -287,9 +291,13 @@ EGA <- function (data, model = c("glasso", "TMFG"),
                                  vsize = 6, groups = as.factor(a$wc), label.prop = 1, legend = TRUE)
     }
   }else{plot.ega <- qgraph::qgraph(a$network, DoNotPlot = TRUE)}
-
+  
+  # check for variable labels in qgraph
+  if(is.null(names(plot.ega$graphAttributes$Nodes$labels)))
+  {names(plot.ega$graphAttributes$Nodes$labels) <- paste(1:ncol(data))}
+  
   row.names(a$dim.variables) <- plot.ega$graphAttributes$Nodes$labels[match(row.names(a$dim.variables), names(plot.ega$graphAttributes$Nodes$labels))]
-
+  
   a$EGA.type <- ifelse(a$n.dim <= 2, "Unidimensional EGA", "Traditional EGA")
   class(a) <- "EGA"
   return(a)
