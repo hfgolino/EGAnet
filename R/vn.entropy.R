@@ -3,7 +3,7 @@
 #' @description Computes the fit of a dimensionality structure using Von Neumman's entropy when the input is a correlation matrix.
 #' Lower values suggest better fit of a structure to the data.
 #'
-#' @param data A dataset or a correlation matrix
+#' @param data A correlation matrix
 #'
 #' @param structure A vector representing the structure (numbers or labels for each item).
 #' Can be theoretical factors or the structure detected by \code{\link{EGA}}
@@ -27,7 +27,7 @@
 #' }
 #'
 #' # Compute entropy indices
-#' vn.entropy(data = wmt, structure = ega.wmt$wc)
+#' vn.entropy(data = ega.wmt$correlation, structure = ega.wmt$wc)
 #'
 #' @seealso \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and
 #' \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
@@ -40,38 +40,7 @@
 vn.entropy <- function(data, structure){
   uniq <- unique(structure)
   num.comm <- structure
-  if(!is.matrix(data)){
-    cor1 <- qgraph::cor_auto(data)/ncol(data)
-    eigen1 <- eigen(cor1)$values
-    h.vn <- -sum(eigen1*log(eigen1))
-
-    n <- max(structure)
-    cor.fact <- vector("list")
-    eigen.fact <- vector("list")
-    l.eigen.fact <- vector("list")
-    h.vn.fact <- vector("list")
-    for(i in 1:n){
-      cor.fact[[i]] <- qgraph::cor_auto(data[,which(structure==unique(structure)[i])])
-      cor.fact[[i]] <- cor.fact[[i]]/ncol(cor.fact[[i]])
-      eigen.fact[[i]] <- eigen(cor.fact[[i]])$values
-      l.eigen.fact[[i]] <- eigen.fact[[i]]*log(eigen.fact[[i]])
-      h.vn.fact[[i]] <- -sum(l.eigen.fact[[i]])
-    }
-
-    # Joint entropy using the eigenvalues of a Kronecker product of a list of matrices
-    cor.joint <- vector("list", n)
-    for(i in 1:n){
-      cor.joint[[i]] <- cor1[which(num.comm==uniq[i]),which(num.comm==uniq[i])]/table(num.comm)[[i]]
-    }
-
-    eigen.val <- lapply(cor.joint, function(x) eigen(x)$values)
-    eigen.kronecker <- eigen.val[[1]]
-    for (i in 2:n){
-      eigen.kronecker <- eigen.kronecker %x% eigen.val[[i]]
-    }
-    h.vn.joint <- -sum(eigen.kronecker*log(eigen.kronecker))
-
-  } else{
+  data <- abs(data)
     cor1 <- data/ncol(data)
     eigen1 <- eigen(cor1)$values
     h.vn <- -sum(eigen1*log(eigen1))
@@ -101,7 +70,6 @@ vn.entropy <- function(data, structure){
     }
 
     h.vn.joint <- -sum(eigen.kronecker*log(eigen.kronecker))
-  }
 
   h.vn.fact2 <- unlist(h.vn.fact)
 
