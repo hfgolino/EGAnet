@@ -40,7 +40,7 @@
 #' @export
 #'
 # Loadings Comparison Test----
-# Updated 22.05.2020
+# Updated 29.05.2020
 LCT <- function (data, n, iter = 100)
 {
   # Convert data to matrix
@@ -80,6 +80,7 @@ LCT <- function (data, n, iter = 100)
       
       # Get correlation matrix
       cor.mat <- cor(dat)
+      colnames(cor.mat) <- paste("V", 1:ncol(cor.mat), sep = "")
       
       # Estimate network
       net <- suppressMessages(EGA.estimate(cor.mat, n = cases))
@@ -93,6 +94,9 @@ LCT <- function (data, n, iter = 100)
         if(class(n.loads) == "try-error")
         {good <- FALSE
         }else{
+          
+          # Reorder network loadings
+          n.loads <- n.loads[names(net$wc),]
           
           # Get network loading proportions
           n.below <- mean(n.loads < 0.15, na.rm = TRUE)
@@ -111,8 +115,8 @@ LCT <- function (data, n, iter = 100)
           }
           
           # Get dominant and cross-loading proportions
-          n.dom <- mean(n.dom >= 0.15, na.rm = TRUE)
-          n.cross <- mean(n.loads2 >= 0.15, na.rm = TRUE)
+          n.dom <- mean(n.dom >= 0.15)
+          n.cross <- mean(ifelse(n.loads2 == 0, NA, n.loads2) >= 0.15, na.rm = TRUE)
           
           nl[count,] <- c(n.below, n.low, n.mod, n.high, n.dom, n.cross)
           
@@ -140,8 +144,8 @@ LCT <- function (data, n, iter = 100)
           }
           
           # Get dominant and cross-loading proportions
-          f.dom <- mean(f.dom >= 0.40, na.rm = TRUE)
-          f.cross <- mean(f.loads2 >= 0.40, na.rm = TRUE)
+          f.dom <- mean(f.dom >= 0.40)
+          f.cross <- mean(ifelse(f.loads2 == 0, NA, f.loads2) >= 0.40, na.rm = TRUE)
           
           fl[count,] <- c(f.below, f.low, f.mod, f.high, f.dom, f.cross)
           
