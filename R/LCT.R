@@ -93,6 +93,8 @@ LCT <- function (data, n, iter = 100)
         
         if(class(n.loads) == "try-error")
         {good <- FALSE
+        }else if(ncol(n.loads) == 1)
+        {good <- FALSE
         }else{
           
           # Reorder network loadings
