@@ -91,7 +91,7 @@ LCT <- function (data, n, iter = 100)
         # Try to estimate network loadings
         n.loads <- try(abs(as.matrix(net.loads(net$network, net$wc)$std)), silent = TRUE)
         
-        if(class(n.loads) == "try-error")
+        if(any(class(n.loads) == "try-error"))
         {good <- FALSE
         }else if(ncol(n.loads) == 1)
         {good <- FALSE
