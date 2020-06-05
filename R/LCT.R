@@ -83,7 +83,7 @@ LCT <- function (data, n, iter = 100)
       colnames(cor.mat) <- paste("V", 1:ncol(cor.mat), sep = "")
       
       # Estimate network
-      net <- suppressMessages(EGA.estimate(cor.mat, n = cases))
+      net <- suppressWarnings(suppressMessages(EGA.estimate(cor.mat, n = cases)))
       
       if(length(unique(net$wc)) == 1)
       {good <- FALSE
