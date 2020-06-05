@@ -40,7 +40,7 @@
 #' @export
 #'
 # Loadings Comparison Test----
-# Updated 29.05.2020
+# Updated 05.06.2020
 LCT <- function (data, n, iter = 100)
 {
   # Convert data to matrix
