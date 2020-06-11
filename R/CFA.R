@@ -68,7 +68,8 @@
 #'
 #' @export
 #'
-#CFA model for EGA
+# CFA model for EGA
+# Updated 11.06.2020
 CFA <- function(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ...) {
 
     strct <- split(ega.obj$dim.variables[, 1], list(ega.obj$dim.variables[, 2]))
