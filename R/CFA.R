@@ -77,7 +77,12 @@ CFA <- function(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ..
     fit.mod.ega <- lavaan::cfa(model = model.ega, estimator = estimator, orthogonal = FALSE, se = "standard", test = "satorra-bentler",
                                data = data, ...)
     summary.cfa <- summary(fit.mod.ega, fit.measures = TRUE)
-    fit.measures.cfa <- lavaan::fitMeasures(fit.mod.ega, fit.measures = c("chisq", "df", "pvalue", "cfi", "rmsea", "gfi", "nfi"))
+
+    if (estimator == "WLSMV") {
+        fit.measures.cfa <- lavaan::fitMeasures(fit.mod.ega, fit.measures = c("chisq.scaled", "df", "pvalue", "cfi.scaled", "rmsea", "gfi", "nfi"))
+    } else {
+        fit.measures.cfa <- lavaan::fitMeasures(fit.mod.ega, fit.measures = c("chisq", "df", "pvalue", "cfi", "rmsea", "gfi", "nfi"))
+    }
 
     if (plot.CFA == TRUE) {
         plot.cfa <- semPlot::semPaths(fit.mod.ega, title = FALSE, label.cex = 0.8, sizeLat = 8, sizeMan = 5, edge.label.cex = 0.6, minimum = 0.1,
