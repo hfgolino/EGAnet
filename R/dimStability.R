@@ -38,10 +38,9 @@
 #' plot.typicalStructure = TRUE, model = "glasso",
 #' type = "parametric", ncores = 4)
 #'
-#' }
-#'
 #' # Estimate item stability statistics
 #' dimStability(boot.wmt, orig.wc = ega.wmt$wc, item.stability = FALSE)
+#' }
 #'
 #' @seealso \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and
 #' \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
@@ -49,8 +48,9 @@
 #' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'
 #' @export
-#Dimension Stability function
-#Updated 02.05.2020
+#' 
+# Dimension Stability function
+# Updated 22.05.2020
 dimStability <- function(bootega.obj, orig.wc, item.stability = TRUE)
 {
   if(class(bootega.obj) != "bootEGA")

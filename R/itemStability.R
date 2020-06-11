@@ -58,11 +58,10 @@
 #' boot.wmt <- bootEGA(data = wmt, n = 100, typicalStructure = TRUE,
 #' plot.typicalStructure = TRUE, model = "glasso",
 #' type = "parametric", ncores = 4)
-#'
-#' }
-#'
+#' 
 #' # Estimate item stability statistics
 #' itemStability(boot.wmt, orig.wc = ega.wmt$wc)
+#' }
 #'
 #' @references
 #' Danon, L., Diaz-Guilera, A., Duch, J., & Arenas, A. (2005).

@@ -47,10 +47,9 @@ boot.wmt <- bootEGA(data = wmt, n = 100, typicalStructure = TRUE,
 plot.typicalStructure = TRUE, model = "glasso",
 type = "parametric", ncores = 4)
 
-}
-
 # Estimate item stability statistics
 dimStability(boot.wmt, orig.wc = ega.wmt$wc, item.stability = FALSE)
+}
 
 }
 \seealso{

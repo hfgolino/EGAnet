@@ -331,7 +331,7 @@ node.redundant.combine <- function (node.redundant.obj,
           mod <- paste(paste("comb =~ ",sep=""), paste(colnames(new.data[,c(tar.idx, idx)]), collapse = " + "))
           
           ## fit model
-          fit <- suppressWarnings(lavaan::cfa(mod, data = new.data, ...))
+          fit <- suppressWarnings(lavaan::cfa(mod, data = new.data, std.lv = TRUE, ...))
           
           ## identify cases
           cases <- lavaan::inspect(fit, "case.idx")

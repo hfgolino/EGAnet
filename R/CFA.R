@@ -34,14 +34,14 @@
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
 #'
 #' @examples
-#' 
+#'
 #' # Load data
 #' wmt <- wmt2[,7:24]
-#' 
+#'
 #' \dontrun{
 #' # Estimate EGA
 #' ega.wmt <- EGA(data = wmt)
-#' 
+#'
 #' }
 #'
 #' # Fit CFA model to EGA results
@@ -49,10 +49,10 @@
 #'
 #' # Additional fit measures
 #' lavaan::fitMeasures(cfa.wmt$fit, fit.measures = "all")
-#' 
+#'
 #' # Load data
 #' intel <- intelligenceBattery[,8:66]
-#' 
+#'
 #' \dontrun{
 #' # Estimate EGA
 #' ega.intel <- EGA(data = intel)
@@ -60,7 +60,7 @@
 #' # Fit CFA model to EGA results
 #' cfa.intel <- CFA(ega.obj = ega.intel, estimator = 'WLSMV', plot.CFA = TRUE,
 #' data = intel)
-#' 
+#'
 #' }
 #'
 #' @seealso \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and
@@ -68,8 +68,9 @@
 #'
 #' @export
 #'
-#CFA model for EGA
-CFA <- function(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ...) {
+# CFA model for EGA
+# Updated 11.06.2020
+CFA<- function(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ...) {
 
     strct <- split(ega.obj$dim.variables[, 1], list(ega.obj$dim.variables[, 2]))
     names(strct) <- paste("Fat", labels(strct))
@@ -77,7 +78,12 @@ CFA <- function(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ..
     fit.mod.ega <- lavaan::cfa(model = model.ega, estimator = estimator, orthogonal = FALSE, se = "standard", test = "satorra-bentler",
                                data = data, ...)
     summary.cfa <- summary(fit.mod.ega, fit.measures = TRUE)
-    fit.measures.cfa <- lavaan::fitMeasures(fit.mod.ega, fit.measures = c("chisq", "df", "pvalue", "cfi", "rmsea", "gfi", "nfi"))
+
+    if (estimator == "WLSMV") {
+        fit.measures.cfa <- lavaan::fitMeasures(fit.mod.ega, fit.measures = c("chisq.scaled", "df", "pvalue", "cfi.scaled", "rmsea.scaled"))
+    } else {
+        fit.measures.cfa <- lavaan::fitMeasures(fit.mod.ega, fit.measures = c("chisq", "df", "pvalue", "cfi", "rmsea", "gfi", "nfi"))
+    }
 
     if (plot.CFA == TRUE) {
         plot.cfa <- semPlot::semPaths(fit.mod.ega, title = FALSE, label.cex = 0.8, sizeLat = 8, sizeMan = 5, edge.label.cex = 0.6, minimum = 0.1,
