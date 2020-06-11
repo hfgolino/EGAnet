@@ -7,7 +7,7 @@
 tefi(data, structure)
 }
 \arguments{
-\item{data}{A correlation matrix}
+\item{data}{A dataframe or correlation matrix}
 
 \item{structure}{A vector representing the structure (numbers or labels for each item).
 Can be theoretical factors or the structure detected by \code{\link{EGA}}}

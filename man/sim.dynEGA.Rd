@@ -4,9 +4,7 @@
 \name{sim.dynEGA}
 \alias{sim.dynEGA}
 \title{sim.dynEGA Data}
-\format{
-A 10000x22 multivariate time series
-}
+\format{A 10000x22 multivariate time series}
 \usage{
 data(sim.dynEGA)
 }

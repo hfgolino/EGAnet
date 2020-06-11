@@ -3,7 +3,7 @@
 #' @description Computes the fit (TEFI) of a dimensionality structure using Von Neumman's entropy when the input is a correlation matrix.
 #' Lower values suggest better fit of a structure to the data.
 #'
-#' @param data A data? or correlation matrix
+#' @param data A dataframe or correlation matrix
 #'
 #' @param structure A vector representing the structure (numbers or labels for each item).
 #' Can be theoretical factors or the structure detected by \code{\link{EGA}}
@@ -37,6 +37,9 @@
 #' @export
 # Total Entropy Fit Index Function (for correlation matrices)
 tefi <- function(data, structure){
+  if(!ncol(data)==nrow(data)){
+    data <- qgraph::cor_auto(data)
+  }
     data <- abs(data)
     cor1 <- data/ncol(data)
     h.vn <- -matrixcalc::matrix.trace(cor1%*%(log(cor1)))

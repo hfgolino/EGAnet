@@ -4,7 +4,7 @@
 \alias{net.scores}
 \title{Network Scores}
 \usage{
-net.scores(data, A, wc, global = FALSE, ...)
+net.scores(data, A, wc, global = FALSE, impute = "none", ...)
 }
 \arguments{
 \item{data}{Matrix or data frame.
@@ -25,6 +25,23 @@ If there is more than one dimension and there is theoretically
 one global dimension, then general loadings of the dimensions
 onto the global dimension can be included in the weighted
 scores}
+
+\item{impute}{Character.
+In the presence of missing data, imputation can be implemented. Currently,
+three options are available:
+
+\itemize{
+
+\item{\strong{\code{none}}}
+{No imputation is performed. This is the default.}
+
+\item{\strong{\code{mean}}}
+{The "mean" value of the columns are used to replace the missing data.}
+
+\item{\strong{\code{median}}}
+{The "median" value of the columns are used to replace the missing data.}
+
+}}
 
 \item{...}{Additional arguments for \code{\link[EGAnet]{EGA}}}
 }

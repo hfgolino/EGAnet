@@ -4,9 +4,7 @@
 \name{toy.example}
 \alias{toy.example}
 \title{Toy Example Data}
-\format{
-A 500x6 response matrix
-}
+\format{A 500x6 response matrix}
 \usage{
 data(toy.example)
 }
