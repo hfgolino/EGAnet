@@ -75,7 +75,7 @@ CFA<- function(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ...
     strct <- split(ega.obj$dim.variables[, 1], list(ega.obj$dim.variables[, 2]))
     names(strct) <- paste("Fat", labels(strct))
     model.ega <- paste(names(strct), " =~ ", lapply(strct, function(x) paste(print(x), collapse = " + ")), collapse = " \n ")
-    fit.mod.ega <- lavaan::cfa(model = model.ega, estimator = estimator, orthogonal = FALSE, se = "standard", test = "satorra-bentler",
+    fit.mod.ega <- lavaan::cfa(model = model.ega, estimator = estimator, orthogonal = FALSE,
                                data = data, ...)
     summary.cfa <- summary(fit.mod.ega, fit.measures = TRUE)
 
