@@ -14,6 +14,9 @@ Exploratory Graph Analysis
 News
 ============
 
+The EGAnet package is currently supported by two University of Virginia grants, one from the STAR - [Support Transformative Autism Research](https://curry.virginia.edu/faculty-research/centers-labs-projects/supporting-transformative-autism-research-star) initiative and one from the [Democracy Initiative](http://democracyinitiative.virginia.edu).
+
+
 The old EGA package is now EGAnet, and is now available in The Comprehensive R Archive Network (CRAN): https://cran.r-project.org/web/packages/EGAnet/index.html
 
 
