@@ -131,11 +131,11 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   if(is.character(orig.wc))
   {
     num.comm <- orig.wc
-  
+    
     for(i in 1:length(uni))
     {num.comm[which(num.comm==uni[i])] <- i}
   } else {num.comm <- orig.wc}
-
+  
   num.comm <- as.numeric(num.comm)
   
   #unique original dimensions
@@ -343,6 +343,9 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
     freq.list <- new.mat
   }
   
+  #make sure freq.list is a matrix
+  freq.mat <- as.matrix(freq.list)
+  
   #initialize item frequency table
   item.tab <- matrix(0,nrow=nrow(net),ncol=max(final.mat,na.rm=TRUE))
   
@@ -351,9 +354,9 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   row.names(item.tab) <- colnames(net)
   
   #insert proportion values into item likelihod table
-  for(i in 1:ncol(freq.list))
+  for(i in 1:ncol(freq.mat))
   {
-    prop.int <- freq.list[,i]/n
+    prop.int <- freq.mat[,i]/n
     
     item.tab[i,match(names(prop.int),colnames(item.tab))] <- prop.int
   }
