@@ -95,190 +95,204 @@
 #' @export
 #'
 # Network Loadings
-# Updated 02.05.2020
+# Updated 15.06.2020
 net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
 {
-  ###############################
-  #### START DATA MANAGEMENT ####
-  ###############################
-  
-  #------------------------------------------#
-  ## DETECT EGA INPUT AND VARIABLE ORDERING ##
-  #------------------------------------------#
-  
-  if(any(class(A) == "EGA"))
+  # Check if there are actual dimensions
+  if(length(wc) == length(unique(wc)))
   {
-    # Order
-    ord <- match(A$dim.variables$items, names(A$wc))
+    # Initialize result list
+    res <- list()
     
-    # Grab communities
-    wc <- A$wc
+    res$unstd <- matrix(NA, nrow = ncol(A), ncol = ncol(A))
     
-    # Replace 'A' with 'EGA' network
-    A <- A$network
-  }else{ord <- order(wc)} # Reorder by communities
-  
-  #----------------------#
-  ## REORDER FOR OUTPUT ##
-  #----------------------#
-  
-  # Reorder communities
-  wc <- wc[ord]
-  
-  # Reorder network
-  A <- A[ord,ord]
-  
-  #---------------------------#
-  ## DIMENSION QUALITY CHECK ##
-  #---------------------------#
-  
-  # Remove NA dimensions
-  dim.uniq <- na.omit(unique(wc))
-  
-  # Check for single item dimensions
-  for(i in 1:length(dim.uniq))
-  {
-    len <- length(wc[which(wc==dim.uniq[i])])
+    res$std <- matrix(NA, nrow = ncol(A), ncol = ncol(A))
     
-    if(len == 1)
-    {wc[which(wc==dim.uniq[i])] <- NA}
-  }
-  
-  # Remove single item dimensions
-  dims <- na.omit(unique(wc))
-  
-  # Remove NA attribute
-  attr(dims, "na.action") <- NULL
-  
-  #############################
-  #### END DATA MANAGEMENT ####
-  #############################
-  
-  # Make sure that there are actual dimensions
-  if(length(dims) != 1)
-  {
+  }else{
     
-    ################################
-    #### START COMPUTE LOADINGS ####
-    ################################
+    ###############################
+    #### START DATA MANAGEMENT ####
+    ###############################
     
-    # Compute aboslute loadings
-    comm.str <- mat.func(A = A, wc = wc, absolute = TRUE, diagonal = 0)
+    #------------------------------------------#
+    ## DETECT EGA INPUT AND VARIABLE ORDERING ##
+    #------------------------------------------#
     
-    # Check for missing dimensions
-    if(any(colnames(comm.str)=="NA"))
+    if(any(class(A) == "EGA"))
     {
-      # Target dimension
-      target <- which(colnames(comm.str) == "NA")
+      # Order
+      ord <- match(A$dim.variables$items, names(A$wc))
       
-      # Remove from matrix
-      comm.str <- comm.str[,-target]
+      # Grab communities
+      wc <- A$wc
+      
+      # Replace 'A' with 'EGA' network
+      A <- A$network
+    }else{ord <- order(wc)} # Reorder by communities
+    
+    #----------------------#
+    ## REORDER FOR OUTPUT ##
+    #----------------------#
+    
+    # Reorder communities
+    wc <- wc[ord]
+    
+    # Reorder network
+    A <- A[ord,ord]
+    
+    #---------------------------#
+    ## DIMENSION QUALITY CHECK ##
+    #---------------------------#
+    
+    # Remove NA dimensions
+    dim.uniq <- na.omit(unique(wc))
+    
+    # Check for single item dimensions
+    for(i in 1:length(dim.uniq))
+    {
+      len <- length(wc[which(wc==dim.uniq[i])])
+      
+      if(len == 1)
+      {wc[which(wc==dim.uniq[i])] <- NA}
     }
     
-    # Reorder loading matrix
-    comm.str <- comm.str[,paste(dims)]
+    # Remove single item dimensions
+    dims <- na.omit(unique(wc))
     
-    # Add signs to loadings
-    res.rev <- add.signs(comm.str = comm.str, A = A, wc = wc, dims = dims, pos.manifold = pos.manifold)
-    comm.str <- res.rev$comm.str
-    A <- res.rev$A
+    # Remove NA attribute
+    attr(dims, "na.action") <- NULL
     
-    ##############################
-    #### END COMPUTE LOADINGS ####
-    ##############################
+    #############################
+    #### END DATA MANAGEMENT ####
+    #############################
     
-    #################################
-    #### START OUTPUT MANAGEMENT ####
-    #################################
+    # Make sure that there are actual dimensions
+    if(length(dims) != 1)
+    {
+      
+      ################################
+      #### START COMPUTE LOADINGS ####
+      ################################
+      
+      # Compute aboslute loadings
+      comm.str <- mat.func(A = A, wc = wc, absolute = TRUE, diagonal = 0)
+      
+      # Check for missing dimensions
+      if(any(colnames(comm.str)=="NA"))
+      {
+        # Target dimension
+        target <- which(colnames(comm.str) == "NA")
+        
+        # Remove from matrix
+        comm.str <- comm.str[,-target]
+      }
+      
+      # Reorder loading matrix
+      comm.str <- comm.str[,paste(dims)]
+      
+      # Add signs to loadings
+      res.rev <- add.signs(comm.str = comm.str, A = A, wc = wc, dims = dims, pos.manifold = pos.manifold)
+      comm.str <- res.rev$comm.str
+      A <- res.rev$A
+      
+      ##############################
+      #### END COMPUTE LOADINGS ####
+      ##############################
+      
+      #################################
+      #### START OUTPUT MANAGEMENT ####
+      #################################
+      
+      # Initialize result list
+      res <- list()
+      
+      # Unstandardized loadings
+      unstd <- as.data.frame(round(comm.str,3))
+      row.names(unstd) <- colnames(A)
+      res$unstd <- unstd
+      
+      # Standardized loadings
+      if(length(dims)!=1)
+      {std <- t(t(unstd) / sqrt(colSums(abs(unstd))))
+      }else{std <- t(t(unstd) / sqrt(sum(abs(unstd))))}
+      res$std <- as.data.frame(round(std,3))
+      
+      #####################
+      #### PLOT SET UP ####
+      #####################
+      
+      #Set to absolute for multidimensional
+      std.res <- as.matrix(abs(res$std))
+      
+      #Standardize by maximum rspbc
+      std.res <- std.res / rowSums(std.res)
+      
+      #Ensure that pie value is not greater than 1
+      std.res <- std.res - .001
+      std.res <- ifelse(std.res==-.001,0,std.res)
+      
+      #Split results to list for each node
+      pies <- split(std.res, rep(1:nrow(std.res)))
+      
+      # Plot (or not)
+      nl.plot <- qgraph::qgraph(A, layout = "spring", groups = as.factor(wc),
+                                label.prop = 1.5, pie = pies, vTrans = 200,
+                                negDashed = TRUE, DoNotPlot = ifelse(plot,FALSE,TRUE))
+      
+      # Remove loadings (added as attribute)
+      ## S3Methods summary and print
+      res$MinLoad <- min.load
+      ## S3Methods plot
+      res$plot <- nl.plot
+      
+    }else if(all(is.na(wc)))
+    {
+      # Create matrix of NAs
+      comm.str <- matrix(NA, nrow = ncol(A), ncol = ncol(A))
+      
+      # Set up dimensions for all 
+      dims <- 1:ncol(A)
+      
+      # Assign column names
+      colnames(comm.str) <- dims
+      
+      # Set up return
+      res <- list()
+      res$std <- comm.str
+      res$unstd <- comm.str
+      
+    }else{ # One dimension
+      
+      # Create matrix of NAs
+      comm.str <- matrix(NetworkToolbox::strength(A, absolute = TRUE), nrow = ncol(A), ncol = 1)
+      
+      # Assign column names
+      colnames(comm.str) <- dims
+      
+      # Add signs to loadings
+      res.rev <- add.signs(comm.str = comm.str, A = A, wc = wc, dims = dims, pos.manifold = pos.manifold)
+      comm.str <- res.rev$comm.str
+      A <- res.rev$A
+      
+      # Initialize result list
+      res <- list()
+      
+      # Unstandardized loadings
+      unstd <- as.data.frame(round(comm.str,3))
+      row.names(unstd) <- colnames(A)
+      res$unstd <- unstd
+      
+      # Standardized loadings
+      if(length(dims)!=1)
+      {std <- t(t(unstd) / sqrt(colSums(abs(unstd))))
+      }else{std <- t(t(unstd) / sqrt(sum(abs(unstd))))}
+      res$std <- as.data.frame(round(std,3))
+      
+    }
     
-    # Initialize result list
-    res <- list()
-    
-    # Unstandardized loadings
-    unstd <- as.data.frame(round(comm.str,3))
-    row.names(unstd) <- colnames(A)
-    res$unstd <- unstd
-    
-    # Standardized loadings
-    if(length(dims)!=1)
-    {std <- t(t(unstd) / sqrt(colSums(abs(unstd))))
-    }else{std <- t(t(unstd) / sqrt(sum(abs(unstd))))}
-    res$std <- as.data.frame(round(std,3))
-    
-    #####################
-    #### PLOT SET UP ####
-    #####################
-    
-    #Set to absolute for multidimensional
-    std.res <- as.matrix(abs(res$std))
-    
-    #Standardize by maximum rspbc
-    std.res <- std.res / rowSums(std.res)
-    
-    #Ensure that pie value is not greater than 1
-    std.res <- std.res - .001
-    std.res <- ifelse(std.res==-.001,0,std.res)
-    
-    #Split results to list for each node
-    pies <- split(std.res, rep(1:nrow(std.res)))
-    
-    # Plot (or not)
-    nl.plot <- qgraph::qgraph(A, layout = "spring", groups = as.factor(wc),
-                              label.prop = 1.5, pie = pies, vTrans = 200,
-                              negDashed = TRUE, DoNotPlot = ifelse(plot,FALSE,TRUE))
-    
-    # Remove loadings (added as attribute)
-    ## S3Methods summary and print
-    res$MinLoad <- min.load
-    ## S3Methods plot
-    res$plot <- nl.plot
-    
-  }else if(all(is.na(wc)))
-  {
-    # Create matrix of NAs
-    comm.str <- matrix(NA, nrow = ncol(A), ncol = ncol(A))
-    
-    # Set up dimensions for all 
-    dims <- 1:ncol(A)
-    
-    # Assign column names
-    colnames(comm.str) <- dims
-    
-    # Set up return
-    res <- list()
-    res$std <- comm.str
-    res$unstd <- comm.str
-    
-  }else{ # One dimension
-    
-    # Create matrix of NAs
-    comm.str <- matrix(NetworkToolbox::strength(A, absolute = TRUE), nrow = ncol(A), ncol = 1)
-    
-    # Assign column names
-    colnames(comm.str) <- dims
-    
-    # Add signs to loadings
-    res.rev <- add.signs(comm.str = comm.str, A = A, wc = wc, dims = dims, pos.manifold = pos.manifold)
-    comm.str <- res.rev$comm.str
-    A <- res.rev$A
-    
-    # Initialize result list
-    res <- list()
-    
-    # Unstandardized loadings
-    unstd <- as.data.frame(round(comm.str,3))
-    row.names(unstd) <- colnames(A)
-    res$unstd <- unstd
-    
-    # Standardized loadings
-    if(length(dims)!=1)
-    {std <- t(t(unstd) / sqrt(colSums(abs(unstd))))
-    }else{std <- t(t(unstd) / sqrt(sum(abs(unstd))))}
-    res$std <- as.data.frame(round(std,3))
+    class(res) <- "NetLoads"
     
   }
-  
-  class(res) <- "NetLoads"
   
   return(res)
 }
