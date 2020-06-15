@@ -76,7 +76,7 @@
 #'
 #' @export
 #Item Stability function
-#Updated 11.05.2020
+#Updated 15.06.2020
 itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep = TRUE){
   
   if(class(bootega.obj) != "bootEGA")
