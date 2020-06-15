@@ -4,7 +4,7 @@ author: "Alexander P. Christensen and Hudson Golino"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Redundant_Nodes}
+  %\VignetteIndexEntry{Redundant Nodes}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
   \usepackage[utf8]{inputenc}

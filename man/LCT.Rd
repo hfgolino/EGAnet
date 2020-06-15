@@ -16,7 +16,7 @@ Sample size (if the data provided is a correlation matrix)}
 
 \item{iter}{Integer.
 Number of replicate samples to be drawn from a multivariate
-normal distribution (uses \code{\link[mvtnorm]{rmvnorm}}).
+normal distribution (uses \code{mvtnorm::mvrnorm}).
 Defaults to \code{100}}
 }
 \value{

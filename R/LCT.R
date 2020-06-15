@@ -13,7 +13,7 @@
 #' 
 #' @param iter Integer.
 #' Number of replicate samples to be drawn from a multivariate
-#' normal distribution (uses \code{\link[mvtnorm]{mvtnorm}}).
+#' normal distribution (uses \code{mvtnorm::mvrnorm}).
 #' Defaults to \code{100}
 #'
 #' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen at gmail.com>

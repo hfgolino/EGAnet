@@ -79,53 +79,26 @@
 #Updated 15.06.2020
 itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep = TRUE){
   
+  # Check for 'bootEGA' object
   if(class(bootega.obj) != "bootEGA")
   {stop("Input for 'bootega.obj' is not a 'bootEGA' object")}
   
-  #mode function
-  mode <- function(v, fin.vec)
-  {
-    #unique values
-    uniqv <- unique(v)
-    
-    #find mode
-    uniq.val <- uniqv[which.max(tabulate(match(v, uniqv)))]
-    
-    #do not overwrite already identified dimension
-    while(uniq.val %in% fin.vec)
-    {
-      #remove unique value
-      uniqv <- uniqv[-which(uniq.val==uniqv)]
-      
-      if(length(uniqv)==0)
-      {
-        uniq.val <- NA
-        break
-      }
-      
-      #find mode
-      uniq.val <- uniqv[which.max(tabulate(match(v, uniqv)))]
-    }
-    
-    return(uniq.val)
-  }
-  
-  #number of bootstrapped networks
+  # Number of bootstrapped networks
   n <- length(bootega.obj$bootGraphs)
   
-  #original EGA network
+  # Original EGA network
   net <- bootega.obj$EGA$network
   
-  #grab membership vectors
-  wc.mat <- matrix(NA, nrow = nrow(net), ncol = n)
+  # Grab membership vectors
+  wc.mat <- matrix(NA, nrow = length(orig.wc), ncol = n)
   
-  for(i in 1:n)
+  for(i in 1:length(bootega.obj$bootGraphs))
   {wc.mat[,i] <- bootega.obj$boot.wc[[i]]$membership}
   
-  #grab item names
+  # Grab item names
   row.names(wc.mat) <- row.names(net)
   
-  #check if orig.wc is character
+  # Check if 'orig.wc' is character
   uni <- unique(orig.wc)
   
   if(is.character(orig.wc))
@@ -136,230 +109,25 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
     {num.comm[which(num.comm==uni[i])] <- i}
   } else {num.comm <- orig.wc}
   
+  # Convert to numeric vector
   num.comm <- as.numeric(num.comm)
   
-  #unique original dimensions
+  # Unique original dimensions
   uniq <- unique(num.comm)
-  #uniq <- uniq[order(uniq)]
   
-  #initialize final matrix
-  final.mat <- matrix(0, nrow = length(num.comm), ncol = n)
+  # Convert membership to target membership
+  final.mat <- homogenize.membership(num.comm, wc.mat)
   
   ##########################################################
   #### ITEM FREQUENCY AND DIMENSION REPLICATION RESULTS ####
   ##########################################################
   
-  #identify confirm membership within bootstrapped memberships
-  for(i in 1:n)
-  {
-    #new membership vector
-    new.vec <- wc.mat[,i]
-    
-    #unique new membership
-    new.uniq <- unique(new.vec)
-    
-    #converge based on maximum number of dimensions
-    if(max(num.comm) > max(new.vec))
-    {
-      #initialize rand and length vector
-      rand <- vector("numeric", length = max(new.vec))
-      names(rand) <- new.uniq
-      len <- rand
-      
-      for(j in new.uniq)
-      {
-        #target nodes
-        target <- which(new.vec==j)
-        
-        #lengths of target
-        len[paste(j)] <- length(target)
-        
-        #compute rand index
-        rand[paste(j)] <- igraph::compare(new.vec[target],num.comm[target],method="rand")
-      }
-      
-      #order rand by highest rand index and then number of items
-      rand.ord <- rand[order(rand, len, decreasing = TRUE)]
-      
-      #initialize final vector
-      final.vec <- vector("numeric", length = length(num.comm))
-      names(final.vec) <- names(num.comm)
-      
-      #insert new values into final vector
-      for(j in as.numeric(names(rand.ord)))
-      {
-        #identify target
-        new.target <- which(new.vec==j)
-        
-        #identify mode
-        target.mode <- mode(num.comm[new.target], final.vec)
-        
-        #insert into final vector
-        final.vec[new.target] <- rep(target.mode)
-      }
-      
-    }else if(max(num.comm) < max(new.vec))
-    {
-      #initialize rand and length vector
-      rand <- vector("numeric", length = max(new.vec))
-      names(rand) <- new.uniq
-      len <- rand
-      
-      for(j in new.uniq)
-      {
-        #target nodes
-        target <- which(new.vec==j)
-        
-        #lengths of target
-        len[paste(j)] <- length(target)
-        
-        #compute rand index
-        rand[paste(j)] <- igraph::compare(new.vec[target],num.comm[target],method="rand")
-      }
-      
-      #order rand by highest rand index and then number of items
-      rand.ord <- rand[order(rand, len, decreasing = TRUE)]
-      
-      #initialize final vector
-      final.vec <- vector("numeric", length = length(num.comm))
-      names(final.vec) <- names(num.comm)
-      
-      #insert new values into final vector
-      for(j in as.numeric(names(rand.ord)))
-      {
-        #identify target
-        new.target <- which(new.vec==j)
-        
-        #identify mode
-        target.mode <- mode(num.comm[new.target], final.vec)
-        
-        #insert into final vector
-        final.vec[new.target] <- rep(target.mode)
-      }
-      
-      #identify number of extra dimensions
-      extra.dim <- unique(new.vec[which(is.na(final.vec))])
-      
-      #initialize extra dimension length vector
-      extra.len <- vector("numeric", length = length(extra.dim))
-      names(extra.len) <- extra.dim
-      
-      #initialize count
-      count <- 0
-      
-      #order length of extra dimensions
-      for(j in extra.dim)
-      {
-        #increase count
-        count <- count + 1
-        
-        #length of extra dimensions
-        extra.len[count] <- length(which(new.vec==j))
-      }
-      
-      el.ord <- extra.len[order(extra.len, decreasing = TRUE)]
-      
-      #reset count
-      count <- 0
-      
-      #insert extra dimensions into final vector
-      for(j in 1:length(el.ord))
-      {
-        #increase count
-        count <- count + 1
-        
-        #target extra dimension
-        target.ed <- as.numeric(names(el.ord)[j])
-        
-        #insert dimensions into final vector
-        final.vec[which(new.vec==target.ed)] <- (max(num.comm) + count)
-      }
-      
-    }else{
-      
-      #initialize rand and length vector
-      rand <- vector("numeric", length = max(new.vec))
-      names(rand) <- new.uniq
-      len <- rand
-      
-      for(j in new.uniq)
-      {
-        #target nodes
-        target <- which(new.vec==j)
-        
-        #lengths of target
-        len[paste(j)] <- length(target)
-        
-        #compute rand index
-        rand[paste(j)] <- igraph::compare(new.vec[target],num.comm[target],method="rand")
-      }
-      
-      #order rand by highest rand index and then number of items
-      rand.ord <- rand[order(rand, len, decreasing = TRUE)]
-      
-      #initialize final vector
-      final.vec <- vector("numeric", length = length(num.comm))
-      names(final.vec) <- names(num.comm)
-      
-      #insert new values into final vector
-      for(j in as.numeric(names(rand.ord)))
-      {
-        #identify target
-        new.target <- which(new.vec==j)
-        
-        #identify mode
-        target.mode <- mode(num.comm[new.target], final.vec)
-        
-        #insert into final vector
-        final.vec[new.target] <- rep(target.mode)
-      }
-    }
-    
-    #insert final vector into final matrix
-    final.mat[,i] <- final.vec
-  }
-  
-  
   #let user know results are being computed has started
   message("Computing results...", appendLF = FALSE)
   
-  #get frequency tables
-  freq.list <- apply(final.mat,1,table)
-  
-  #change to matrix
-  if(is.list(freq.list))
-  {
-    #initialize new matrix
-    new.mat <- matrix(0, nrow = max(final.mat,na.rm=TRUE), ncol = length(freq.list))
-    
-    #name rows and columns
-    row.names(new.mat) <- paste(1:max(final.mat,na.rm=TRUE))
-    colnames(new.mat) <- colnames(net)
-    
-    #insert values
-    for(i in 1:ncol(new.mat))
-    {new.mat[names(freq.list[[i]]),i] <- freq.list[[i]]}
-    
-    freq.list <- new.mat
-  }
-  
-  #make sure freq.list is a matrix
-  freq.mat <- as.matrix(freq.list)
-  
-  #initialize item frequency table
-  item.tab <- matrix(0,nrow=nrow(net),ncol=max(final.mat,na.rm=TRUE))
-  
-  #name columns and rows
-  colnames(item.tab) <- paste(seq(1,max(final.mat,na.rm=TRUE),1))
+  # Get proportion table
+  item.tab <- prop.table(final.mat)
   row.names(item.tab) <- colnames(net)
-  
-  #insert proportion values into item likelihod table
-  for(i in 1:ncol(freq.mat))
-  {
-    prop.int <- freq.mat[,i]/n
-    
-    item.tab[i,match(names(prop.int),colnames(item.tab))] <- prop.int
-  }
   
   if(is.character(uni))
   {colnames(item.tab)[1:length(uni)] <- uni}
@@ -550,7 +318,7 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   if(length(blank.cols) != 0)
   {itemLoads <- itemLoads[,-blank.cols]}
   # Remove extra columns
-  itemLoads <- itemLoads[,colnames(itemLik)]
+  itemLoads[,-1] <- itemLoads[,colnames(itemLik)]
   
   result$item.replication <- itemCon
   result$mean.dim.rep <- dimRep

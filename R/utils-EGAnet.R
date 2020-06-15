@@ -805,3 +805,328 @@ EBICglasso.qgraph <- function(
   } else return(net)
 }
 #----
+
+#' Computes the mode
+#' 
+#' @param v Numeric vector.
+#' Vector of values to find mode in
+#' 
+#' @param fin.vec Alphanumeric vector.
+#' Vector of current state of \code{v}
+#'
+#' @return The mode of a vector
+#'
+#' @noRd
+#'
+# Mode----
+# Updated 15.06.2020
+mode <- function(v, fin.vec)
+{
+  #unique values
+  uniqv <- unique(v)
+  
+  #find mode
+  uniq.val <- uniqv[which.max(tabulate(match(v, uniqv)))]
+  
+  #do not overwrite already identified dimension
+  while(uniq.val %in% fin.vec)
+  {
+    #remove unique value
+    uniqv <- uniqv[-which(uniq.val==uniqv)]
+    
+    if(length(uniqv)==0)
+    {
+      uniq.val <- NA
+      break
+    }
+    
+    #find mode
+    uniq.val <- uniqv[which.max(tabulate(match(v, uniqv)))]
+  }
+  
+  return(uniq.val)
+}
+
+#' Computes the mode
+#' 
+#' @param v Numeric vector.
+#' Vector of values to find mode in
+#' 
+#' @param fin.vec Alphanumeric vector.
+#' Vector of current state of \code{v}
+#'
+#' @return The mode of a vector
+#'
+#' @noRd
+#'
+# Mode----
+# Updated 15.06.2020
+mode <- function(v, fin.vec)
+{
+  #unique values
+  uniqv <- unique(v)
+  
+  #find mode
+  uniq.val <- uniqv[which.max(tabulate(match(v, uniqv)))]
+  
+  #do not overwrite already identified dimension
+  while(uniq.val %in% fin.vec)
+  {
+    #remove unique value
+    uniqv <- uniqv[-which(uniq.val==uniqv)]
+    
+    if(length(uniqv)==0)
+    {
+      uniq.val <- NA
+      break
+    }
+    
+    #find mode
+    uniq.val <- uniqv[which.max(tabulate(match(v, uniqv)))]
+  }
+  
+  return(uniq.val)
+}
+
+#' Converts membership vector into a target membership vector
+#' 
+#' @param target.wc Numeric vector.
+#' Target membership vector
+#' 
+#' @param convert.wc Numeric vector, matrix, or data frame.
+#' Memberships to be converted to the target membership vector
+#'
+#' @return Vector or matrix of homogenized memberships
+#'
+#' @noRd
+#'
+# Homogenize Membership----
+# Updated 15.06.2020
+homogenize.membership <- function (target.wc, convert.wc)
+{
+  # Obtain whether vector or matrix is input for 'convert.wc'
+  if(is.vector(convert.wc))
+  {
+    
+    # Error if not same length
+    if(length(convert.wc) != length(target.wc))
+    {stop("'convert.wc' must be same length as 'target.wc'")}
+    
+    # Number of comparisons
+    n <- 1
+    
+  }else{
+    
+    # Make sure 'convert.wc' is matrix
+    convert.wc <- as.matrix(convert.wc)
+    
+    # Number of comparisons
+    n <- ncol(convert.wc)
+    
+  }
+  
+  # Initalize conversion matrix
+  convert.mat <- matrix(NA, nrow = length(target.wc), ncol = n)
+  ## Get node names
+  if(!is.null(names(target.wc)))
+  {row.names(convert.mat) <- names(target.wc)}
+  
+  # Identify target membership within bootstrapped memberships
+  for(i in 1:n)
+  {
+    # New membership vector
+    new.vec <- convert.wc[,i]
+    
+    # Unique new membership
+    new.uniq <- unique(new.vec)
+    
+    # Converge based on maximum number of dimensions
+    if(max(target.wc) > max(new.vec))
+    {
+      # Initialize rand and length vector
+      rand <- vector("numeric", length = max(new.vec))
+      names(rand) <- new.uniq
+      len <- rand
+      
+      for(j in new.uniq)
+      {
+        # Target nodes
+        target <- which(new.vec==j)
+        
+        # Lengths of target
+        len[paste(j)] <- length(target)
+        
+        # Compute rand index
+        rand[paste(j)] <- igraph::compare(new.vec[target],target.wc[target],method="rand")
+      }
+      
+      # Order rand by highest rand index and then number of items
+      rand.ord <- rand[order(rand, len, decreasing = TRUE)]
+      
+      # Initialize final vector
+      final.vec <- vector("numeric", length = length(target.wc))
+      names(final.vec) <- names(target.wc)
+      
+      # Insert new values into final vector
+      for(j in as.numeric(names(rand.ord)))
+      {
+        # Identify target
+        new.target <- which(new.vec==j)
+        
+        # Identify mode
+        target.mode <- mode(target.wc[new.target], final.vec)
+        
+        # Insert into final vector
+        final.vec[new.target] <- rep(target.mode)
+      }
+      
+    }else if(max(target.wc) < max(new.vec))
+    {
+      # Initialize rand and length vector
+      rand <- vector("numeric", length = max(new.vec))
+      names(rand) <- new.uniq
+      len <- rand
+      
+      for(j in new.uniq)
+      {
+        # Target nodes
+        target <- which(new.vec==j)
+        
+        # Lengths of target
+        len[paste(j)] <- length(target)
+        
+        # Compute rand index
+        rand[paste(j)] <- igraph::compare(new.vec[target],target.wc[target],method="rand")
+      }
+      
+      # Order rand by highest rand index and then number of items
+      rand.ord <- rand[order(rand, len, decreasing = TRUE)]
+      
+      # Initialize final vector
+      final.vec <- vector("numeric", length = length(target.wc))
+      names(final.vec) <- names(target.wc)
+      
+      # Insert new values into final vector
+      for(j in as.numeric(names(rand.ord)))
+      {
+        # Identify target
+        new.target <- which(new.vec==j)
+        
+        # Identify mode
+        target.mode <- mode(target.wc[new.target], final.vec)
+        
+        # Insert into final vector
+        final.vec[new.target] <- rep(target.mode)
+      }
+      
+      # Identify number of extra dimensions
+      extra.dim <- unique(new.vec[which(is.na(final.vec))])
+      
+      # Initialize extra dimension length vector
+      extra.len <- vector("numeric", length = length(extra.dim))
+      names(extra.len) <- extra.dim
+      
+      # Initialize count
+      count <- 0
+      
+      # Order length of extra dimensions
+      for(j in extra.dim)
+      {
+        # Increase count
+        count <- count + 1
+        
+        # Length of extra dimensions
+        extra.len[count] <- length(which(new.vec==j))
+      }
+      
+      el.ord <- extra.len[order(extra.len, decreasing = TRUE)]
+      
+      # Reset count
+      count <- 0
+      
+      # Insert extra dimensions into final vector
+      for(j in 1:length(el.ord))
+      {
+        # Increase count
+        count <- count + 1
+        
+        # Target extra dimension
+        target.ed <- as.numeric(names(el.ord)[j])
+        
+        # Insert dimensions into final vector
+        final.vec[which(new.vec==target.ed)] <- (max(target.wc) + count)
+      }
+      
+    }else{
+      
+      # Initialize rand and length vector
+      rand <- vector("numeric", length = max(new.vec))
+      names(rand) <- new.uniq
+      len <- rand
+      
+      for(j in new.uniq)
+      {
+        # Target nodes
+        target <- which(new.vec==j)
+        
+        # Lengths of target
+        len[paste(j)] <- length(target)
+        
+        # Compute rand index
+        rand[paste(j)] <- igraph::compare(new.vec[target],target.wc[target],method="rand")
+      }
+      
+      # Order rand by highest rand index and then number of items
+      rand.ord <- rand[order(rand, len, decreasing = TRUE)]
+      
+      # Initialize final vector
+      final.vec <- vector("numeric", length = length(target.wc))
+      names(final.vec) <- names(target.wc)
+      
+      # Insert new values into final vector
+      for(j in as.numeric(names(rand.ord)))
+      {
+        # Identify target
+        new.target <- which(new.vec==j)
+        
+        # Identify mode
+        target.mode <- mode(target.wc[new.target], final.vec)
+        
+        # Insert into final vector
+        final.vec[new.target] <- rep(target.mode)
+      }
+    }
+    
+    # Insert final vector into final matrix
+    convert.mat[,i] <- final.vec
+  }
+  
+  return(convert.mat)
+}
+
+#' Proportion table
+#' 
+#' @param boot.mat Matrix.
+#' A matrix of bootstrapped memberships
+#'
+#' @return Matrix of proportions based on dimensions
+#'
+#' @noRd
+#'
+# Proportion Table----
+# Updated 15.06.2020
+prop.table <- function (boot.mat)
+{
+  # Get maximum number of dimensions
+  max.dim <- max(boot.mat, na.rm = TRUE)
+  
+  # Set up table
+  tab <- matrix(0, nrow = nrow(boot.mat), ncol = max.dim)
+  colnames(tab) <- 1:max.dim
+  
+  # Loop through maximum dimensions
+  for(i in 1:max.dim)
+  {tab[,i] <- apply(boot.mat, 1, function(x){mean(x == i, na.rm = TRUE)})}
+  
+  return(tab)
+}

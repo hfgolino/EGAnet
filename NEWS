@@ -14,6 +14,8 @@ o UPDATE: message from `EGA.estimate` (and `EGA` by extension) reports both 'gam
 
 o FIX: upper quantile output from `bootEGA`
 
+o FIX: minor bugs in `node.redundant`, `itemStability`, and `net.loads`
+
 
 Changes in version 0.9.4
 

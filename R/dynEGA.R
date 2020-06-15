@@ -123,26 +123,26 @@
 #' # Population structure:
 #'dyn.random <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 #'delta = 1, id = 21, group = 22, use.derivatives = 1,
-#'level = "population", model = "glasso")
+#'level = "population", model = "glasso", ncores = 2)
 #'
 #'
 #'# Group structure:
 #'dyn.group <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 #'delta = 1, id = 21, group = 22, use.derivatives = 1,
-#'level = "group", model = "glasso")
+#'level = "group", model = "glasso", ncores = 2)
 #'
 #'# Intraindividual structure:
 #'
 #'dyn.individual <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 #'delta = 1, id = 21, group = 22, use.derivatives = 1,
-#'level = "individual", model = "glasso")
+#'level = "individual", model = "glasso", ncores = 2)
 #'}
 #' @references
 #'
 #' Boker, S. M., Deboeck, P. R., Edler, C., & Keel, P. K. (2010)
 #' Generalized local linear approximation of derivatives from time series. In S.-M. Chow, E. Ferrer, & F. Hsieh (Eds.),
 #' \emph{The Notre Dame series on quantitative methodology. Statistical methods for modeling human dynamics: An interdisciplinary dialogue},
-#' (p. 161–178). \emph{Routledge/Taylor & Francis Group}.
+#' (p. 161-178). \emph{Routledge/Taylor & Francis Group}.
 #' doi:\href{https://doi.org/10.1037/a0016622}{10.1037/a0016622}
 #'
 #' Deboeck, P. R., Montpetit, M. A., Bergeman, C. S., & Boker, S. M. (2009)
@@ -165,7 +165,7 @@
 #'
 #' @export
 # dynEGA
-# Updated 02.15.2020
+# Updated 15.06.2020
 #'
 dynEGA <- function(data, n.embed, tau = 1, delta = 1,
                    level = c("individual", "group", "population"),

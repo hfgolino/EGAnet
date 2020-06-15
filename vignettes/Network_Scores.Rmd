@@ -4,7 +4,7 @@ author: "Alexander P. Christensen"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Network_Scores}
+  %\VignetteIndexEntry{Network Scores}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
   \usepackage[utf8]{inputenc}
@@ -50,7 +50,7 @@ Network loadings are roughly equivalent to factor loadings and differ only in th
 
 ```{r loadings, echo = TRUE, message = FALSE, warning = FALSE}
 # Standardized
-net.loads <- net.loads(A = ega)$std
+n.loads <- net.loads(A = ega)$std
 ```
 
 To provide mathematical notation, Let $W$ represent a symmetric $m \times m$ matrix where $m$ is the number of terms. Node strength is then defined as:

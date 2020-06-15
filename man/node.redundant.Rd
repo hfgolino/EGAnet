@@ -63,22 +63,30 @@ and the function \link[wTO]{wTO} from the wTO package.
 }
 \examples{
 # obtain SAPA items
-items <- psychTools::spi[,-c(1:10)]
+items <- psychTools::spi[,c(11:20)]
 
-\donttest{
 # weighted topological overlap
 redund <- node.redundant(items, method = "wTO", type = "adapt")
 
 # partial correlation
 redund <- node.redundant(items, method = "pcor", type = "adapt")
-}
+
+# threshold
+redund <- node.redundant(items, method = "thresh", sig = .20)
 
 }
 \references{
-#wTO
+# simulation using node.redundant
+Christensen, A. P. (2020).
+Towards a network psychometrics approach to assessment: Simulations for redundancy, dimensionality, and loadings
+(Unpublished doctoral dissertation). University of North Carolina at Greensboro, Greensboro, NC, USA.
+https://doi.org/10.31234/osf.io/84kgd
+
+# wTO
 Nowick, K., Gernat, T., Almaas, E., & Stubbs, L. (2009).
 Differences in human and chimpanzee gene expression patterns define an evolving network of transcription factors in brain.
 \emph{Proceedings of the National Academy of Sciences}, \emph{106}, 22358-22363.
+https://doi.org/10.1073/pnas.0911376106
 }
 \author{
 Alexander Christensen <alexpaulchristensen@gmail.com>

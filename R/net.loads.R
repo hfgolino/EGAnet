@@ -98,6 +98,22 @@
 # Updated 15.06.2020
 net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
 {
+  #------------------------------------------#
+  ## DETECT EGA INPUT AND VARIABLE ORDERING ##
+  #------------------------------------------#
+  
+  if(any(class(A) == "EGA"))
+  {
+    # Order
+    ord <- match(A$dim.variables$items, names(A$wc))
+    
+    # Grab communities
+    wc <- A$wc
+    
+    # Replace 'A' with 'EGA' network
+    A <- A$network
+  }else{ord <- order(wc)} # Reorder by communities
+  
   # Check if there are actual dimensions
   if(length(wc) == length(unique(wc)))
   {
@@ -113,22 +129,6 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
     ###############################
     #### START DATA MANAGEMENT ####
     ###############################
-    
-    #------------------------------------------#
-    ## DETECT EGA INPUT AND VARIABLE ORDERING ##
-    #------------------------------------------#
-    
-    if(any(class(A) == "EGA"))
-    {
-      # Order
-      ord <- match(A$dim.variables$items, names(A$wc))
-      
-      # Grab communities
-      wc <- A$wc
-      
-      # Replace 'A' with 'EGA' network
-      A <- A$network
-    }else{ord <- order(wc)} # Reorder by communities
     
     #----------------------#
     ## REORDER FOR OUTPUT ##
