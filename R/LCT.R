@@ -85,7 +85,7 @@ LCT <- function (data, n, iter = 100)
       # Estimate network
       net <- suppressWarnings(suppressMessages(EGA.estimate(cor.mat, n = cases)))
       
-      if(length(unique(net$wc)) == 1)
+      if(length(unique(net$wc)) == 1 | length(net$wc) == length(unique(net$wc)))
       {good <- FALSE
       }else{
         # Try to estimate network loadings
