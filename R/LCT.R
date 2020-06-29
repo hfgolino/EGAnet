@@ -148,6 +148,7 @@ LCT <- function (data, n, iter = 100)
             # Get dominant and cross-loading proportions
             n.dom <- mean(n.dom >= 0.15)
             n.cross <- mean(ifelse(n.loads2 == 0, NA, n.loads2) >= 0.15, na.rm = TRUE)
+            n.cross <- ifelse(is.na(n.cross), 0, n.cross)
             
             nl[count,] <- c(n.low, n.mod, n.high, n.dom, n.cross)
             
@@ -176,6 +177,7 @@ LCT <- function (data, n, iter = 100)
             # Get dominant and cross-loading proportions
             f.dom <- mean(f.dom >= 0.40)
             f.cross <- mean(ifelse(f.loads2 == 0, NA, f.loads2) >= 0.40, na.rm = TRUE)
+            f.cross <- ifelse(is.na(f.cross), 0, f.cross)
             
             fl[count,] <- c(f.low, f.mod, f.high, f.dom, f.cross)
             
@@ -204,6 +206,7 @@ LCT <- function (data, n, iter = 100)
   # Convert to data frames
   loads.mat <- as.matrix(cbind(nl, fl))
   dimnames(loads.mat) <- NULL
+  loads.mat <- ifelse(is.na(loads.mat), 0, loads.mat)
   
   # Predictions
   predictions <- list()
