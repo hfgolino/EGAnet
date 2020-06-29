@@ -35,7 +35,7 @@
 #' LCT(data = wmt2[,7:24])
 #' 
 #' ## Factor model
-#' LCT(data = depression[,48:68])}
+#' LCT(data = NetworkToolbox::neoOpen)}
 #' 
 #' @references
 #' Christensen, A. P., & Golino, H. (2020).
