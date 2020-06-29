@@ -22,7 +22,7 @@ Defaults to \code{100}}
 \value{
 Returns a list containing:
 
-\item{original}{Prediction of model based on empirical dataset only}
+\item{empirical}{Prediction of model based on empirical dataset only}
 
 \item{bootstrap}{Prediction of model based on means of the loadings across
 the bootstrap replicate samples}
