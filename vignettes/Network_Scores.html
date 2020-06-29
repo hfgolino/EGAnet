@@ -12,10 +12,26 @@
 
 <meta name="author" content="Alexander P. Christensen" />
 
-<meta name="date" content="2020-03-13" />
+<meta name="date" content="2020-06-28" />
 
 <title>Network Scores</title>
 
+<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
+// v0.0.1
+// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
+
+document.addEventListener('DOMContentLoaded', function() {
+  const codeList = document.getElementsByClassName("sourceCode");
+  for (var i = 0; i < codeList.length; i++) {
+    var linkList = codeList[i].getElementsByTagName('a');
+    for (var j = 0; j < linkList.length; j++) {
+      if (linkList[j].innerHTML === "") {
+        linkList[j].setAttribute('aria-hidden', 'true');
+      }
+    }
+  }
+});
+</script>
 
 
 <style type="text/css">code{white-space: pre;}</style>
@@ -303,7 +319,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Network Scores</h1>
 <h4 class="author">Alexander P. Christensen</h4>
-<h4 class="date">2020-03-13</h4>
+<h4 class="date">2020-06-28</h4>
 
 
 
@@ -334,7 +350,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h2>Christensen &amp; Golino (under review) and Golino, Moulder, Christensen, Kim, &amp; Boker (in prep)</h2>
 <p>Network loadings are roughly equivalent to factor loadings and differ only in the association measures used to compute them. For networks, the centrality measure <em>node strength</em> is used to compute the sum of the connections to a node. Previous simulation studies have reported that node strength is generally redundant with CFA factor loadings (Hallquist, Wright, &amp; Molenaar, 2019) and item-scale correlations (Christensen, Golino, &amp; Silvia, 2019). Importantly, Hallquist and colleagues (2019) found that a node’s strength represents a combination of dominant and cross-factor loadings. To mitigate this issue, I’ve developed a function called <code>net.loads</code>, which computes the node strength for each node in each dimension, parsing out the connections that represent dominant and cross-dimension loadings. Below is the code to compute standardized (<code>$std</code>; unstandardized, <code>$unstd</code>) network loadings.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="co"># Standardized</span></span>
-<span id="cb4-2"><a href="#cb4-2"></a>net.loads &lt;-<span class="st"> </span><span class="kw">net.loads</span>(<span class="dt">A =</span> ega)<span class="op">$</span>std</span></code></pre></div>
+<span id="cb4-2"><a href="#cb4-2"></a>n.loads &lt;-<span class="st"> </span><span class="kw">net.loads</span>(<span class="dt">A =</span> ega)<span class="op">$</span>std</span></code></pre></div>
 <p>To provide mathematical notation, Let <span class="math inline">\(W\)</span> represent a symmetric <span class="math inline">\(m \times m\)</span> matrix where <span class="math inline">\(m\)</span> is the number of terms. Node strength is then defined as:</p>
 <p><span class="math display">\[NS_i = \sum^m_j w_{ij},\]</span></p>
 <p>where <span class="math inline">\(w_{ij}\)</span> is the weight (e.g., partial correlation) between node <span class="math inline">\(i\)</span> and node <span class="math inline">\(j\)</span>, and <span class="math inline">\(NS_i\)</span> is the sum of the weights between node <span class="math inline">\(i\)</span> and all other nodes. Using the definition of node strength (), we can define node strength split between the communities, <span class="math inline">\(C\)</span>, identified by EGA:</p>
@@ -380,33 +396,33 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <table>
 <thead>
 <tr class="header">
-<th></th>
+<th align="left"></th>
 <th align="right">Correlations</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td>Factor 1</td>
+<td align="left">Factor 1</td>
 <td align="right">0.989</td>
 </tr>
 <tr class="even">
-<td>Factor 2</td>
+<td align="left">Factor 2</td>
 <td align="right">0.990</td>
 </tr>
 <tr class="odd">
-<td>Factor 3</td>
+<td align="left">Factor 3</td>
 <td align="right">0.987</td>
 </tr>
 <tr class="even">
-<td>Factor 4</td>
+<td align="left">Factor 4</td>
 <td align="right">0.983</td>
 </tr>
 <tr class="odd">
-<td>Factor 5</td>
+<td align="left">Factor 5</td>
 <td align="right">0.984</td>
 </tr>
 <tr class="even">
-<td>Factor 6</td>
+<td align="left">Factor 6</td>
 <td align="right">0.983</td>
 </tr>
 </tbody>

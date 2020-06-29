@@ -1,3 +1,9 @@
+Changes in version 0.9.6
+
+o UPDATE: `LCT` updated with deep learning neural network implementation
+
+
+
 Changes in version 0.9.5
 
 o ADD: loadings comparison test function added (see `LCT`)

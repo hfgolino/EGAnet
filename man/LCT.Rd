@@ -20,13 +20,21 @@ normal distribution (uses \code{mvtnorm::mvrnorm}).
 Defaults to \code{100}}
 }
 \value{
-Returns a character string with the model suggested
-from the three heuristics (see Details)
+Returns a list containing:
+
+\item{original}{Prediction of model based on empirical dataset only}
+
+\item{bootstrap}{Prediction of model based on means of the loadings across
+the bootstrap replicate samples}
+
+\item{bootstrapProportions}{Proportions of models suggested across bootstraps}
 }
 \description{
 An algorithm to identify whether data were generated from a
 random, factor, or network model using factor and network loadings.
-The algorithm uses heuristics based on theory and simulation.
+The algorithm uses heuristics based on theory and simulation. These
+heuristics were then submitted to several deep learning neural networks
+with 240,000 samples per model with varying parameters.
 }
 \examples{
 \donttest{# Compute LCT

@@ -2,7 +2,9 @@
 #'
 #' An algorithm to identify whether data were generated from a
 #' random, factor, or network model using factor and network loadings.
-#' The algorithm uses heuristics based on theory and simulation.
+#' The algorithm uses heuristics based on theory and simulation. These
+#' heuristics were then submitted to several deep learning neural networks
+#' with 240,000 samples per model with varying parameters.
 #'
 #' @param data Matrix or data frame.
 #' A dataframe with the variables to be used in the test or a correlation matrix.
@@ -18,8 +20,14 @@
 #'
 #' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen at gmail.com>
 #'
-#' @return Returns a character string with the model suggested
-#' from the three heuristics (see Details)
+#' @return Returns a list containing:
+#' 
+#' \item{original}{Prediction of model based on empirical dataset only}
+#' 
+#' \item{bootstrap}{Prediction of model based on means of the loadings across
+#' the bootstrap replicate samples}
+#' 
+#' \item{bootstrapProportions}{Proportions of models suggested across bootstraps}
 #'
 #' @examples
 #' \donttest{# Compute LCT
@@ -56,8 +64,8 @@ LCT <- function (data, n, iter = 100)
   }else{cases <- nrow(data)}
   
   # Initialize network loading matrix
-  nl <- matrix(0, nrow = iter, ncol = 6)
-  colnames(nl) <- c("Below", "Small", "Moderate", "Large", "Dominant", "Cross")
+  nl <- matrix(0, nrow = iter, ncol = 5)
+  colnames(nl) <- c("Small", "Moderate", "Large", "Dominant", "Cross")
   fl <- nl
   
   # Initialize count
@@ -74,12 +82,30 @@ LCT <- function (data, n, iter = 100)
     while(!good)
     {
       # Generate data
-      if(nrow(data) != ncol(data))
-      {dat <- mvtnorm::rmvnorm(cases, sigma = cov(data, use = "pairwise.complete.obs"))
-      }else{dat <- mvtnorm::rmvnorm(cases, sigma = data)}
+      if(nrow(data) != ncol(data)) {
+        
+        if(count == 1) {
+          dat <- data
+        } else {
+          dat <- mvtnorm::rmvnorm(cases, sigma = cov(data, use = "pairwise.complete.obs"))
+        }
       
-      # Get correlation matrix
-      cor.mat <- cor(dat)
+        cor.mat <- cor(dat, use = "pairwise.complete.obs")
+        
+      }else{
+        
+        if(count == 1) {
+          cor.mat <- data
+        } else {
+          
+          dat <- mvtnorm::rmvnorm(cases, sigma = data)
+          
+          cor.mat <- cor(dat, use = "pairwise.complete.obs")
+        }
+        
+      }
+      
+      # Make sure there are column names
       colnames(cor.mat) <- paste("V", 1:ncol(cor.mat), sep = "")
       
       # Estimate network
@@ -101,7 +127,6 @@ LCT <- function (data, n, iter = 100)
           n.loads <- n.loads[names(net$wc),]
           
           # Get network loading proportions
-          n.below <- mean(n.loads < 0.15, na.rm = TRUE)
           n.low <- mean(n.loads >= 0.15, na.rm = TRUE)
           n.mod <- mean(n.loads >= 0.25, na.rm = TRUE)
           n.high <- mean(n.loads >= 0.35, na.rm = TRUE)
@@ -120,11 +145,10 @@ LCT <- function (data, n, iter = 100)
           n.dom <- mean(n.dom >= 0.15)
           n.cross <- mean(ifelse(n.loads2 == 0, NA, n.loads2) >= 0.15, na.rm = TRUE)
           
-          nl[count,] <- c(n.below, n.low, n.mod, n.high, n.dom, n.cross)
+          nl[count,] <- c(n.low, n.mod, n.high, n.dom, n.cross)
           
           # Get factor loading proportions
           f.loads <- suppressWarnings(abs(as.matrix(psych::fa(cor.mat, nfactors = ncol(n.loads), n.obs = cases)$loadings[,1:ncol(n.loads)])))
-          f.below <- mean(f.loads < 0.40, na.rm = TRUE)
           f.low <- mean(f.loads >= 0.40, na.rm = TRUE)
           f.mod <- mean(f.loads >= 0.55, na.rm = TRUE)
           f.high <- mean(f.loads >= 0.70, na.rm = TRUE)
@@ -149,7 +173,7 @@ LCT <- function (data, n, iter = 100)
           f.dom <- mean(f.dom >= 0.40)
           f.cross <- mean(ifelse(f.loads2 == 0, NA, f.loads2) >= 0.40, na.rm = TRUE)
           
-          fl[count,] <- c(f.below, f.low, f.mod, f.high, f.dom, f.cross)
+          fl[count,] <- c(f.low, f.mod, f.high, f.dom, f.cross)
           
           # Increase count
           count <- count + 1
@@ -172,25 +196,47 @@ LCT <- function (data, n, iter = 100)
   close(pb)
   
   # Convert to data frames
-  nl <- as.data.frame(nl)
-  fl <- as.data.frame(fl)
+  loads.mat <- as.matrix(cbind(nl, fl))
+  dimnames(loads.mat) <- NULL
   
-  # Random vs. non-random model
-  if(mean(fl$Large == fl$Moderate, na.rm = TRUE) >= .20)
-  {return("Random")}
+  # Predictions
+  predictions <- list()
   
-  # Ratios
-  small.ratio <- mean(nl$Small / fl$Small, na.rm = TRUE)
-  fl.ratio <- log(mean(fl$Dominant, na.rm = TRUE) / mean(fl$Cross, na.rm = TRUE))
+  # Without bootstrap
+  wo.boot <- paste(dnn.predict(loads.mat[1,]))
   
-  # Network vs. factor model
-  if(small.ratio > 1.5)
-  {return("Network")
-  }else{
-    # For sparse network models
-    if(fl.ratio > 5 || is.infinite(fl.ratio))
-    {return("Factor")
-    }else{return("Network")}
-  }
+  wo.boot <- switch(wo.boot,
+                    "1" = "Random",
+                    "2" = "Factor",
+                    "3" = "Network"
+             )
+                      
+  predictions$original <- wo.boot
+  
+  # Bootstrap prediction
+  boot <- paste(dnn.predict(colMeans(loads.mat)))
+  
+  boot <- switch(boot,
+                 "1" = "Random",
+                 "2" = "Factor",
+                 "3" = "Network"
+  )
+  
+  predictions$bootstrap <- boot
+  
+  # Bootstrap proportions
+  boot.prop <- apply(loads.mat, 1, dnn.predict)
+  
+  boot.prop <- colMeans(prop.table(as.matrix(boot.prop)))
+  
+  prop <- vector("numeric", length = 3)
+  names(prop) <- c("Random", "Factor", "Network")
+  
+  prop[1:length(boot.prop)] <- boot.prop
+  
+  predictions$bootstrapProportions <- prop
+  
+  return(predictions)
+  
 }
 #----

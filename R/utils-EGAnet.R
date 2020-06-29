@@ -1130,3 +1130,113 @@ prop.table <- function (boot.mat)
   
   return(tab)
 }
+
+#' A sub-routine to compute the deep learning neural network model
+#' weights for \code{\link[EGAnet]{LCT}}
+#' 
+#' @param loads Matrix of loadings
+#' 
+#' @param weights Weights from specific model (see \code{\link[EGAnet]{dnn.weights}})
+#' 
+#' @param output_fn Activation function for output layer
+#'
+#' @return A prediction or probability of the specified model
+#'
+#' @noRd
+#'
+# DNN weights function----
+# Updated 28.06.2020
+dnn.model.weights <- function (loads, weights, output_fn = c("softmax", "sigmoid"))
+{
+  wb <- seq(1, length(weights), 2)
+  
+  for(i in wb[-length(wb)])
+  {
+    if(i == 1)
+    {
+      input <- as.vector(t(weights[[i]]) %*% as.matrix(loads)) + weights[[(i+1)]]
+      input <- ifelse(sign(input) == -1, 0, input)
+      layer <- input
+    }else{
+      layer <- as.vector(t(weights[[i]]) %*% as.matrix(layer)) + weights[[(i+1)]]
+      layer <- ifelse(sign(layer) == -1, 0, layer)
+    }
+  }
+  
+  # Output
+  output <- as.vector(t(weights[[wb[length(wb)]]]) %*% as.matrix(layer)) + weights[[length(weights)]]
+  
+  # Soft-max activation function
+  soft.max <- function(x)
+  {1 / (1 + exp(-((x - mean(x)) / (2 * (sd(x) / (2 * pi))))))}
+  
+  # Sigmoid activation function
+  sigmoid <- function(x)
+  {exp(x) / (exp(x) + 1)}
+  
+  # Prediction
+  prediction <- switch(output_fn,
+                       "softmax" = which.max(soft.max(output)),
+                       "sigmoid" = sigmoid(output)
+  )
+  
+  return(prediction)
+}
+
+#' A sub-routine to predict the model for \code{\link[EGAnet]{LCT}}
+#' 
+#' @param loads Matrix of loadings
+#'
+#' @return The model prediction
+#' 
+#' @importFrom utils data
+#'
+#' @noRd
+#'
+# DNN prediction function----
+# Updated 28.06.2020
+dnn.predict <- function (loads)
+{
+  # Load deep learning neural network weights
+  dnn.weights <- get(data("dnn.weights", envir = environment()))
+  
+  # Random versus non-random model
+  r_nr <- dnn.model.weights(loads, dnn.weights$r_nr_weights, output_fn = "softmax")
+  
+  # Check for random model
+  if(r_nr == 1) {return(1)}
+  
+  # Factor versus network model
+  f_n <- vector("numeric", length = 4)
+  
+  # Create composite of moderate and large loadings
+  loads <- c(loads, (loads[2] + loads[3]), (loads[6] + loads[7]))
+  
+  # Check for low correlation factor versus network model
+  f_n[1] <- dnn.model.weights(loads, dnn.weights$lf_n_weights, output_fn = "sigmoid")
+  
+  # Remove composite of moderate and large loadings
+  loads <- loads[-c((length(loads) - 1), length(loads))]
+  
+  # Create small and dominant ratio (network / factor)
+  loads <- c(loads, (loads[1] / loads[6]), (loads[4] / loads[9]))
+  
+  # Check for moderate correlation factor versus network model
+  f_n[2] <- dnn.model.weights(loads, dnn.weights$mf_n_weights, output_fn = "sigmoid")
+  
+  # Check for high correlation factor versus network model
+  f_n[3] <- dnn.model.weights(loads, dnn.weights$hf_n_weights, output_fn = "sigmoid")
+  
+  # Remove dominant ratio
+  loads <- loads[-length(loads)]
+  
+  # Create cross-loading ratio (network / factor)
+  loads <- c(loads, exp(loads[5]) / exp(loads[10]))
+  
+  # Check for high correlation factor and few variables versus network model
+  f_n[4] <- dnn.model.weights(loads, dnn.weights$hvf_n_weights, output_fn = "sigmoid")
+  
+  # Check for factor model
+  ifelse(any(f_n > .50), return(2), return(3))
+  
+}

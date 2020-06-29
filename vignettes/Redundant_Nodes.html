@@ -12,10 +12,26 @@
 
 <meta name="author" content="Alexander P. Christensen and Hudson Golino" />
 
-<meta name="date" content="2020-03-05" />
+<meta name="date" content="2020-06-28" />
 
 <title>Redundant Nodes</title>
 
+<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
+// v0.0.1
+// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
+
+document.addEventListener('DOMContentLoaded', function() {
+  const codeList = document.getElementsByClassName("sourceCode");
+  for (var i = 0; i < codeList.length; i++) {
+    var linkList = codeList[i].getElementsByTagName('a');
+    for (var j = 0; j < linkList.length; j++) {
+      if (linkList[j].innerHTML === "") {
+        linkList[j].setAttribute('aria-hidden', 'true');
+      }
+    }
+  }
+});
+</script>
 <script>$(document).ready(function(){
     if (typeof $('[data-toggle="tooltip"]').tooltip === 'function') {
         $('[data-toggle="tooltip"]').tooltip();
@@ -312,13 +328,13 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Redundant Nodes</h1>
 <h4 class="author">Alexander P. Christensen and Hudson Golino</h4>
-<h4 class="date">2020-03-05</h4>
+<h4 class="date">2020-06-28</h4>
 
 
 
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
-<p>This vignette shows you how to use the node.redundant functions in EGAnet. The contents of this vignette is taken from Christensen, Golino, and Silvia (under review).</p>
+<p>This vignette shows you how to use the node.redundant functions in EGAnet. The contents of this vignette is taken from Christensen, Golino, and Silvia (in press).</p>
 <p>To begin our example of structural validation from the psychometric network perspecitve, the <em>psychTools</em> (Revelle, 2019) pacakge must be installed and loaded.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="co"># Install &#39;psychTools&#39; package</span></span>
 <span id="cb1-2"><a href="#cb1-2"></a>devtools<span class="op">::</span><span class="kw">install_version</span>(<span class="st">&quot;psychTools&quot;</span>, <span class="dt">version =</span> <span class="dv">1</span>.<span class="fl">9.12</span>)</span></code></pre></div>
@@ -413,7 +429,7 @@ An example of a redundancy chain plot. The red node indicates the target item an
 </div>
 <div id="references" class="section level1">
 <h1>References</h1>
-<p>Christensen, A. P., Golino, H., &amp; Silvia, P. J. (under review). A psychometric network perspective on the validity and validation of personliaty trait questionnaires. <em>PsyArXiv</em>. <a href="https://doi.org/10.31234/osf.io/ktejp" class="uri">https://doi.org/10.31234/osf.io/ktejp</a></p>
+<p>Christensen, A. P., Golino, H., &amp; Silvia, P. J. (in press). A psychometric network perspective on the validity and validation of personality trait questionnaires. <em>European Journal of Personality</em>. <a href="https://doi.org/10.1002/per.2265" class="uri">https://doi.org/10.1002/per.2265</a></p>
 <p>Condon, D. M. (2018). The SAPA personality inventory: An empirically-derived, hierarchically-organized self-report personality assessment model. <em>PsyArXiv</em>. <a href="https://doi.org/10.31234/osf.io/sc4p9" class="uri">https://doi.org/10.31234/osf.io/sc4p9</a></p>
 <p>Costantini, G., Richetin, J., Preti, E., Casini, E., Epskamp, S., &amp; Perugini, M. (2019). Stability and variability of personality networks. A tutorial on recent developments in network psychometrics. <em>Personality and Individual Differences</em>, <em>136</em>, 68–78. <a href="https://doi.org/10.1016/j.paid.2017.06.011" class="uri">https://doi.org/10.1016/j.paid.2017.06.011</a></p>
 <p>Dinic, B. M., Wertag, A., Tomaševic, A., &amp; Sokolovska, V. (in press). Centrality and redundancy of the Dark Tetrad traits. Personality and Individual Differences. <a href="https://doi.org/10.1016/j.paid.2019.109621" class="uri">https://doi.org/10.1016/j.paid.2019.109621</a></p>
