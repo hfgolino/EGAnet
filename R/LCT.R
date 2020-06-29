@@ -220,7 +220,7 @@ LCT <- function (data, n, iter = 100)
   predictions$empirical <- wo.boot
   
   # Bootstrap prediction
-  boot <- paste(dnn.predict(colMeans(loads.mat)))
+  boot <- paste(dnn.predict(colMeans(loads.mat, na.rm = TRUE)))
   
   boot <- switch(boot,
                  "1" = "Random",
@@ -231,7 +231,7 @@ LCT <- function (data, n, iter = 100)
   predictions$bootstrap <- boot
   
   # Bootstrap proportions
-  boot.prop <- apply(loads.mat, 1, dnn.predict)
+  boot.prop <- apply(na.omit(loads.mat), 1, dnn.predict)
   
   boot.prop <- colMeans(prop.table(as.matrix(boot.prop)))
   
@@ -240,7 +240,7 @@ LCT <- function (data, n, iter = 100)
   
   prop[1:length(boot.prop)] <- boot.prop
   
-  predictions$bootstrapProportions <- prop
+  predictions$bootstrapProportions <- round(prop, 3)
   
   return(predictions)
   
