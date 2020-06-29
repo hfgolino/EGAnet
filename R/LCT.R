@@ -22,7 +22,7 @@
 #'
 #' @return Returns a list containing:
 #' 
-#' \item{original}{Prediction of model based on empirical dataset only}
+#' \item{empirical}{Prediction of model based on empirical dataset only}
 #' 
 #' \item{bootstrap}{Prediction of model based on means of the loadings across
 #' the bootstrap replicate samples}
@@ -48,7 +48,7 @@
 #' @export
 #'
 # Loadings Comparison Test----
-# Updated 05.06.2020
+# Updated 29.06.2020
 LCT <- function (data, n, iter = 100)
 {
   # Convert data to matrix
@@ -211,7 +211,7 @@ LCT <- function (data, n, iter = 100)
                     "3" = "Network"
              )
                       
-  predictions$original <- wo.boot
+  predictions$empirical <- wo.boot
   
   # Bootstrap prediction
   boot <- paste(dnn.predict(colMeans(loads.mat)))
