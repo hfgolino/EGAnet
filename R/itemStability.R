@@ -99,7 +99,7 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   row.names(wc.mat) <- row.names(net)
   
   # Check if 'orig.wc' is character
-  uni <- sort(unique(orig.wc))
+  uni <- unique(orig.wc)
   
   if(is.character(orig.wc))
   {
@@ -161,7 +161,7 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   
   item.repl <- data.frame(Item = names(itemCon),
                           Replication = itemCon,
-                          Comm = factor(comm, uni[max(num.comm):1]))
+                          Comm = factor(comm, uni[order(uni[max(num.comm):1])]))
   
   
   ic.plot <- ggpubr::ggdotchart(item.repl, x = "Item", y = "Replication",
@@ -276,18 +276,16 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   #let user know results are computed has ended
   message("done", appendLF = TRUE)
   
-  lik.ord <- match(row.names(unstd.item.id),row.names(item.lik))
+  unstd.item.id <- unstd.item.id[row.names(item.lik),]
   
-  item.lik.ord <- item.lik[lik.ord,]
+  unstd.item.id <- unstd.item.id[,colnames(item.lik)]
   
-  unstd.item.id <- unstd.item.id[lik.ord,colnames(item.lik.ord)]
-  
-  unstd.item.id[which(item.lik.ord=="")] <- ""
+  unstd.item.id[which(item.lik=="")] <- ""
   
   unstd.item.id <- as.data.frame(unstd.item.id)
   
   #Unstandardize
-  unstd.item.ident <- as.data.frame(cbind(orig.wc,unstd.item.id))
+  unstd.item.ident <- as.data.frame(cbind(orig.wc[row.names(unstd.item.id)], unstd.item.id))
   colnames(unstd.item.ident) <- c("Dimension",colnames(unstd.item.id))
   itemLoads <- unstd.item.ident[match(names(itemCon),row.names(unstd.item.ident)),]
   
@@ -321,8 +319,8 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   itemLoads[,-1] <- itemLoads[,colnames(itemLik)]
   
   result$item.replication <- itemCon
-  result$mean.dim.rep <- dimRep
-  result$item.dim.rep <- itemLik
+  result$mean.dim.rep <- dimRep[order(names(dimRep))]
+  result$item.dim.rep <- itemLik[,order(colnames(itemLik))]
   result$item.loadings <- itemLoads
   result$wc <- final.mat
   result$uniq.name <- uni
