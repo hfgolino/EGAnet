@@ -93,9 +93,9 @@ dimStability <- function(bootega.obj, orig.wc, item.stability = TRUE)
   if(item.stability)
   {
     res <- list()
-    res$dimensions <- round(dim.stab,3)
+    res$dimensions <- round(dim.stab[order(names(dim.stab))],3)
     res$items <- items
-  }else{res <- round(dim.stab,3)}
+  }else{res <- round(dim.stab[order(names(dim.stab))],3)}
 
   return(res)
 }
