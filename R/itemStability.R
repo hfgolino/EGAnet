@@ -76,7 +76,7 @@
 #'
 #' @export
 #Item Stability function
-#Updated 15.06.2020
+#Updated 01.07.2020
 itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep = TRUE){
   
   # Check for 'bootEGA' object
@@ -99,7 +99,7 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   row.names(wc.mat) <- row.names(net)
   
   # Check if 'orig.wc' is character
-  uni <- unique(orig.wc)
+  uni <- sort(unique(orig.wc))
   
   if(is.character(orig.wc))
   {
