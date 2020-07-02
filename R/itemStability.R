@@ -76,7 +76,7 @@
 #'
 #' @export
 #Item Stability function
-#Updated 01.07.2020
+#Updated 02.07.2020
 itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep = TRUE){
   
   # Check for 'bootEGA' object
@@ -310,13 +310,14 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   #### NETWORK LOADINGS RESULTS ####
   ##################################
   
+  # Remove extra columns
+  itemLoads[,-1] <- itemLoads[,colnames(itemLik)]
+  
   # Remove NA from item loadings
   blank.itemLoads <- ifelse(as.matrix(itemLoads) == "NaN", "", as.matrix(itemLoads))
   blank.cols <- which(apply(blank.itemLoads, 2, function(x){all(x == "")}))
   if(length(blank.cols) != 0)
   {itemLoads <- itemLoads[,-blank.cols]}
-  # Remove extra columns
-  itemLoads[,-1] <- itemLoads[,colnames(itemLik)]
   
   result$item.replication <- itemCon
   result$mean.dim.rep <- dimRep[order(names(dimRep))]
