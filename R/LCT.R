@@ -28,18 +28,22 @@
 #' the bootstrap replicate samples}
 #' 
 #' \item{bootstrapProportions}{Proportions of models suggested across bootstraps}
+#' 
+#' \item{omnibus}{An omnibus prediction based on a consensus of empirical,
+#' bootstrap, and bootstrap proportions prediction. A consensus corresponds to
+#' any combination of two predictions returning the same prediction}
 #'
 #' @examples
 #' \donttest{# Compute LCT
 #' ## Network model
-#' LCT(data = wmt2[,7:24])
+#' LCT(data = wmt2[,7:24])$omnibus
 #' 
 #' ## Factor model
-#' LCT(data = depression[,48:68])}
+#' LCT(data = depression[,48:68])$omnibus}
 #' 
 #' @references
 #' Christensen, A. P., & Golino, H. (2020).
-#' Statistical equivalency of factor and network loadings.
+#' On the equivalency of factor and network loadings.
 #' \emph{PsyArXiv}.
 #' doi:\href{https://doi.org/10.31234/osf.io/xakez}{10.31234/osf.io/xakez}
 #' 
@@ -48,7 +52,7 @@
 #' @export
 #'
 # Loadings Comparison Test----
-# Updated 29.06.2020
+# Updated 05.07.2020
 LCT <- function (data, n, iter = 100)
 {
   # Convert data to matrix
@@ -244,6 +248,16 @@ LCT <- function (data, n, iter = 100)
   prop[1:length(boot.prop)] <- boot.prop
   
   predictions$bootstrapProportions <- round(prop, 3)
+  
+  # Omnibus prediction
+  omni.prop <- c(wo.boot, boot, names(prop)[which.max(prop)])
+  omni.table <- table(omni.prop)
+  
+  if(any(omni.table > 1))
+  {omni.pred <- names(omni.table)[which.max(omni.table)]
+  }else{omni.pred <- "No consensus prediction. Check proportion and bootstrap predictions."}
+  
+  predictions$omnibus <- omni.pred
   
   return(predictions)
   

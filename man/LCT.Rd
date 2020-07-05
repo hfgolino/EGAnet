@@ -28,6 +28,10 @@ Returns a list containing:
 the bootstrap replicate samples}
 
 \item{bootstrapProportions}{Proportions of models suggested across bootstraps}
+
+\item{omnibus}{An omnibus prediction based on a consensus of empirical,
+bootstrap, and bootstrap proportions prediction. A consensus corresponds to
+any combination of two predictions returning the same prediction}
 }
 \description{
 An algorithm to identify whether data were generated from a
@@ -39,15 +43,15 @@ with 240,000 samples per model with varying parameters.
 \examples{
 \donttest{# Compute LCT
 ## Network model
-LCT(data = wmt2[,7:24])
+LCT(data = wmt2[,7:24])$omnibus
 
 ## Factor model
-LCT(data = depression[,48:68])}
+LCT(data = depression[,48:68])$omnibus}
 
 }
 \references{
 Christensen, A. P., & Golino, H. (2020).
-Statistical equivalency of factor and network loadings.
+On the equivalency of factor and network loadings.
 \emph{PsyArXiv}.
 doi:\href{https://doi.org/10.31234/osf.io/xakez}{10.31234/osf.io/xakez}
 }
