@@ -39,7 +39,7 @@
 #' LCT(data = wmt2[,7:24])$omnibus
 #' 
 #' ## Factor model
-#' LCT(data = depression[,48:68])$omnibus}
+#' LCT(data = NetworkToolbox::neoOpen)$omnibus}
 #' 
 #' @references
 #' Christensen, A. P., & Golino, H. (2020).
