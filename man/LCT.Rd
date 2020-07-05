@@ -46,7 +46,7 @@ with 240,000 samples per model with varying parameters.
 LCT(data = wmt2[,7:24])$omnibus
 
 ## Factor model
-LCT(data = depression[,48:68])$omnibus}
+LCT(data = NetworkToolbox::neoOpen)$omnibus}
 
 }
 \references{
