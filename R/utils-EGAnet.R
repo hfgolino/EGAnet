@@ -1146,7 +1146,7 @@ prop.table <- function (boot.mat)
 #'
 # DNN weights function----
 # Updated 28.06.2020
-dnn.model.weights <- function (loads, weights, output_fn = c("softmax", "sigmoid"))
+dnn.model.weights <- function (loads, weights)
 {
   wb <- seq(1, length(weights), 2)
   
@@ -1166,19 +1166,12 @@ dnn.model.weights <- function (loads, weights, output_fn = c("softmax", "sigmoid
   # Output
   output <- as.vector(t(weights[[wb[length(wb)]]]) %*% as.matrix(layer)) + weights[[length(weights)]]
   
-  # Soft-max activation function
-  soft.max <- function(x)
-  {1 / (1 + exp(-((x - mean(x)) / (2 * (sd(x) / (2 * pi))))))}
-  
   # Sigmoid activation function
   sigmoid <- function(x)
   {exp(x) / (exp(x) + 1)}
   
   # Prediction
-  prediction <- switch(output_fn,
-                       "softmax" = which.max(soft.max(output)),
-                       "sigmoid" = sigmoid(output)
-  )
+  prediction <- sigmoid(output)
   
   return(prediction)
 }
@@ -1194,7 +1187,7 @@ dnn.model.weights <- function (loads, weights, output_fn = c("softmax", "sigmoid
 #' @noRd
 #'
 # DNN prediction function----
-# Updated 28.06.2020
+# Updated 06.07.2020
 dnn.predict <- function (loads)
 {
   # Load deep learning neural network weights
@@ -1204,7 +1197,7 @@ dnn.predict <- function (loads)
   r_nr <- dnn.model.weights(loads, dnn.weights$r_nr_weights, output_fn = "softmax")
   
   # Check for random model
-  if(r_nr == 1) {return(1)}
+  if(r_nr >= .50) {return(1)}
   
   # Factor versus network model
   f_n <- vector("numeric", length = 4)
@@ -1237,6 +1230,6 @@ dnn.predict <- function (loads)
   f_n[4] <- dnn.model.weights(loads, dnn.weights$hvf_n_weights, output_fn = "sigmoid")
   
   # Check for factor model
-  ifelse(any(f_n > .50), return(2), return(3))
+  ifelse(any(f_n >= .50), return(2), return(3))
   
 }
