@@ -1145,7 +1145,7 @@ prop.table <- function (boot.mat)
 #' @noRd
 #'
 # DNN weights function----
-# Updated 28.06.2020
+# Updated 10.07.2020
 dnn.model.weights <- function (loads, weights)
 {
   wb <- seq(1, length(weights), 2)
@@ -1187,7 +1187,7 @@ dnn.model.weights <- function (loads, weights)
 #' @noRd
 #'
 # DNN prediction function----
-# Updated 06.07.2020
+# Updated 10.07.2020
 dnn.predict <- function (loads)
 {
   # Load deep learning neural network weights
