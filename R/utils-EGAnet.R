@@ -1194,7 +1194,7 @@ dnn.predict <- function (loads)
   dnn.weights <- get(data("dnn.weights", envir = environment()))
   
   # Random versus non-random model
-  r_nr <- dnn.model.weights(loads, dnn.weights$r_nr_weights, output_fn = "softmax")
+  r_nr <- dnn.model.weights(loads, dnn.weights$r_nr_weights)
   
   # Check for random model
   if(r_nr >= .50) {return(1)}
@@ -1206,7 +1206,7 @@ dnn.predict <- function (loads)
   loads <- c(loads, (loads[2] + loads[3]), (loads[6] + loads[7]))
   
   # Check for low correlation factor versus network model
-  f_n[1] <- dnn.model.weights(loads, dnn.weights$lf_n_weights, output_fn = "sigmoid")
+  f_n[1] <- dnn.model.weights(loads, dnn.weights$lf_n_weights)
   
   # Remove composite of moderate and large loadings
   loads <- loads[-c((length(loads) - 1), length(loads))]
@@ -1215,10 +1215,10 @@ dnn.predict <- function (loads)
   loads <- c(loads, (loads[1] / loads[6]), (loads[4] / loads[9]))
   
   # Check for moderate correlation factor versus network model
-  f_n[2] <- dnn.model.weights(loads, dnn.weights$mf_n_weights, output_fn = "sigmoid")
+  f_n[2] <- dnn.model.weights(loads, dnn.weights$mf_n_weights)
   
   # Check for high correlation factor versus network model
-  f_n[3] <- dnn.model.weights(loads, dnn.weights$hf_n_weights, output_fn = "sigmoid")
+  f_n[3] <- dnn.model.weights(loads, dnn.weights$hf_n_weights)
   
   # Remove dominant ratio
   loads <- loads[-length(loads)]
@@ -1227,7 +1227,7 @@ dnn.predict <- function (loads)
   loads <- c(loads, exp(loads[5]) / exp(loads[10]))
   
   # Check for high correlation factor and few variables versus network model
-  f_n[4] <- dnn.model.weights(loads, dnn.weights$hvf_n_weights, output_fn = "sigmoid")
+  f_n[4] <- dnn.model.weights(loads, dnn.weights$hvf_n_weights)
   
   # Check for factor model
   ifelse(any(f_n >= .50), return(2), return(3))
