@@ -4,9 +4,7 @@
 \name{dnn.weights}
 \alias{dnn.weights}
 \title{Loadings Comparison Test Deep Learning Neural Network Weights}
-\format{
-A list of with a length of 4
-}
+\format{A list of with a length of 4}
 \usage{
 data(dnn.weights)
 }

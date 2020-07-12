@@ -4,11 +4,7 @@
 \name{optimism}
 \alias{optimism}
 \title{Optimism Data}
-\format{
-A 282x10 response matrix
-
-A 282x10 response matrix
-}
+\format{A 282x10 response matrix}
 \usage{
 data(optimism)
 
