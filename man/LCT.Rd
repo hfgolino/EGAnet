@@ -27,7 +27,7 @@ Returns a list containing:
 \item{bootstrap}{Prediction of model based on means of the loadings across
 the bootstrap replicate samples}
 
-\item{bootstrapProportions}{Proportions of models suggested across bootstraps}
+\item{proportions}{Proportions of models suggested across bootstraps}
 
 \item{omnibus}{An omnibus prediction based on a consensus of empirical,
 bootstrap, and bootstrap proportions prediction. A consensus corresponds to

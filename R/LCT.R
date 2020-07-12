@@ -27,7 +27,7 @@
 #' \item{bootstrap}{Prediction of model based on means of the loadings across
 #' the bootstrap replicate samples}
 #' 
-#' \item{bootstrapProportions}{Proportions of models suggested across bootstraps}
+#' \item{proportions}{Proportions of models suggested across bootstraps}
 #' 
 #' \item{omnibus}{An omnibus prediction based on a consensus of empirical,
 #' bootstrap, and bootstrap proportions prediction. A consensus corresponds to
@@ -52,7 +52,7 @@
 #' @export
 #'
 # Loadings Comparison Test----
-# Updated 05.07.2020
+# Updated 12.07.2020
 LCT <- function (data, n, iter = 100)
 {
   # Convert data to matrix
@@ -247,7 +247,7 @@ LCT <- function (data, n, iter = 100)
   
   prop[1:length(boot.prop)] <- boot.prop
   
-  predictions$bootstrapProportions <- round(prop, 3)
+  predictions$proportions <- round(prop, 3)
   
   # Omnibus prediction
   omni.prop <- c(wo.boot, boot, names(prop)[which.max(prop)])

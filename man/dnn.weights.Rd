@@ -5,18 +5,17 @@
 \alias{dnn.weights}
 \title{Loadings Comparison Test Deep Learning Neural Network Weights}
 \format{
-A list of with a length of 5
+A list of with a length of 4
 }
 \usage{
 data(dnn.weights)
 }
 \description{
-A list of weights from five different neural network models:
+A list of weights from four different neural network models:
 random vs. non-random model (\code{r_nr_weights}),
 low correlation factor vs. network model (\code{lf_n_weights}),
-moderate correlation factor vs. network model (\code{mf_n_weights}),
-high correlation factor vs. network model (\code{hf_n_weights}), and
-high correlation and few variables factor vs. network model (\code{hvf_n_weights})
+high correlation with fewer variables than factors vs. network model (\code{hlf_n_weights}), and
+high correlation with greater variables than factors vs. network model (\code{hgf_n_weights})
 }
 \examples{
 data("dnn.weights")

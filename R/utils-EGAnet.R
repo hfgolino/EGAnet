@@ -1145,7 +1145,7 @@ prop.table <- function (boot.mat)
 #' @noRd
 #'
 # DNN weights function----
-# Updated 10.07.2020
+# Updated 12.07.2020
 dnn.model.weights <- function (loads, weights)
 {
   wb <- seq(1, length(weights), 2)
@@ -1187,7 +1187,7 @@ dnn.model.weights <- function (loads, weights)
 #' @noRd
 #'
 # DNN prediction function----
-# Updated 10.07.2020
+# Updated 12.07.2020
 dnn.predict <- function (loads)
 {
   # Load deep learning neural network weights
@@ -1200,7 +1200,7 @@ dnn.predict <- function (loads)
   if(r_nr >= .50) {return(1)}
   
   # Factor versus network model
-  f_n <- vector("numeric", length = 4)
+  f_n <- vector("numeric", length = 3)
   
   # Create composite of moderate and large loadings
   loads <- c(loads, (loads[2] + loads[3]), (loads[6] + loads[7]))
@@ -1212,22 +1212,17 @@ dnn.predict <- function (loads)
   loads <- loads[-c((length(loads) - 1), length(loads))]
   
   # Create small and dominant ratio (network / factor)
-  loads <- c(loads, (loads[1] / loads[6]), (loads[4] / loads[9]))
+  loads <- c(loads,
+             (exp(loads[1]) / exp(loads[6])), # Small ratio
+             (exp(loads[4]) / exp(loads[9])), # Dominant ratio
+             (exp(loads[5]) / exp(loads[10])) # Cross ratio
+             )
   
   # Check for moderate correlation factor versus network model
-  f_n[2] <- dnn.model.weights(loads, dnn.weights$mf_n_weights)
+  f_n[2] <- dnn.model.weights(loads, dnn.weights$hlf_n_weights)
   
   # Check for high correlation factor versus network model
-  f_n[3] <- dnn.model.weights(loads, dnn.weights$hf_n_weights)
-  
-  # Remove dominant ratio
-  loads <- loads[-length(loads)]
-  
-  # Create cross-loading ratio (network / factor)
-  loads <- c(loads, exp(loads[5]) / exp(loads[10]))
-  
-  # Check for high correlation factor and few variables versus network model
-  f_n[4] <- dnn.model.weights(loads, dnn.weights$hvf_n_weights)
+  f_n[3] <- dnn.model.weights(loads, dnn.weights$hgf_n_weights)
   
   # Check for factor model
   ifelse(any(f_n >= .50), return(2), return(3))
