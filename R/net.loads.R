@@ -76,7 +76,7 @@
 #'
 #' @references
 #' Christensen, A. P., & Golino, H. (2020).
-#' Statistical equivalency of factor and network loadings.
+#' On the equivalency of factor and network loadings.
 #' \emph{PsyArXiv}.
 #' doi:\href{https://doi.org/10.31234/osf.io/xakez}{10.31234/osf.io/xakez}
 #' 
@@ -95,7 +95,7 @@
 #' @export
 #'
 # Network Loadings
-# Updated 15.06.2020
+# Updated 05.07.2020
 net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
 {
   #------------------------------------------#

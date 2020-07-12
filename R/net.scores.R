@@ -79,7 +79,7 @@
 #'
 #' @references
 #' Christensen, A. P., & Golino, H. (under review).
-#' Statistical equivalency of factor and network loadings.
+#' On the equivalency of factor and network loadings.
 #' \emph{PsyArXiv}.
 #' doi: \href{https://doi.org/10.31234/osf.io/xakez}{10.31234/osf.io/xakez}
 #'

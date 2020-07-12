@@ -1,13 +1,13 @@
 Package: EGAnet
 Title: Exploratory Graph Analysis - A Framework for Estimating the Number of Dimensions in Multivariate Data Using Network Psychometrics
 Version: 0.9.6
-Date: 2020-06-28
+Date: 2020-07-12
 Authors@R: c(person("Hudson", "Golino", email = "hfg9s@virginia.edu", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-1601-1447")),
 	     person("Alexander", "Christensen", email = "alexpaulchristensen@gmail.com", role = "aut", comment = c(ORCID = "0000-0002-9798-7037")),
 	     person("Robert", "Moulder", email = "rgm4fd@virginia.edu", role = "ctb", comment = c(ORCID = "0000-0001-7504-9560")))
 Maintainer: Hudson Golino <hfg9s@virginia.edu>
 Description: An implementation of the Exploratory Graph Analysis (EGA) framework for dimensionality assessment. EGA is part of a new area called network psychometrics that focuses on the estimation of undirected network models in psychological datasets. EGA estimates the number of dimensions or factors using graphical lasso or Triangulated Maximally Filtered Graph (TMFG) and a weighted network community analysis. A bootstrap method for verifying the stability of the estimation is also available. The fit of the structure suggested by EGA can be verified using confirmatory factor analysis and a direct way to convert the EGA structure to a confirmatory factor model is also implemented. Documentation and examples are available. Golino, H. F., & Epskamp, S. (2017) <doi:10.1371/journal.pone.0174035>. Golino, H. F., & Demetriou, A. (2017) <doi:10.1016/j.intell.2017.02.007> Golino, H., Shi, D., Garrido, L. E., Christensen, A. P., Nieto, M. D., Sadana, R., & Thiyagarajan, J. A. (2018) <doi:10.31234/osf.io/gzcre>. Christensen, A. P. & Golino, H.F. (2019)  <doi:10.31234/osf.io/9deay>.
-Depends: R (>= 3.5.1)
+Depends: R (>= 3.5.0)
 License: GPL (>= 3.0)
 Encoding: UTF-8
 LazyData: true
@@ -20,4 +20,4 @@ Suggests: knitr, rmarkdown, kableExtra, psych, psychTools, ggpubr, ggplot2,
         plyr (>= 1.8.4), matrixcalc (>= 1.0-3),
         pbapply, OpenMx, wTO, MASS, fdrtool, fitdistrplus
 VignetteBuilder: knitr
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1

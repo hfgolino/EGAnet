@@ -1145,8 +1145,8 @@ prop.table <- function (boot.mat)
 #' @noRd
 #'
 # DNN weights function----
-# Updated 28.06.2020
-dnn.model.weights <- function (loads, weights, output_fn = c("softmax", "sigmoid"))
+# Updated 12.07.2020
+dnn.model.weights <- function (loads, weights)
 {
   wb <- seq(1, length(weights), 2)
   
@@ -1166,19 +1166,12 @@ dnn.model.weights <- function (loads, weights, output_fn = c("softmax", "sigmoid
   # Output
   output <- as.vector(t(weights[[wb[length(wb)]]]) %*% as.matrix(layer)) + weights[[length(weights)]]
   
-  # Soft-max activation function
-  soft.max <- function(x)
-  {1 / (1 + exp(-((x - mean(x)) / (2 * (sd(x) / (2 * pi))))))}
-  
   # Sigmoid activation function
   sigmoid <- function(x)
   {exp(x) / (exp(x) + 1)}
   
   # Prediction
-  prediction <- switch(output_fn,
-                       "softmax" = which.max(soft.max(output)),
-                       "sigmoid" = sigmoid(output)
-  )
+  prediction <- sigmoid(output)
   
   return(prediction)
 }
@@ -1194,49 +1187,44 @@ dnn.model.weights <- function (loads, weights, output_fn = c("softmax", "sigmoid
 #' @noRd
 #'
 # DNN prediction function----
-# Updated 28.06.2020
+# Updated 12.07.2020
 dnn.predict <- function (loads)
 {
   # Load deep learning neural network weights
   dnn.weights <- get(data("dnn.weights", envir = environment()))
   
   # Random versus non-random model
-  r_nr <- dnn.model.weights(loads, dnn.weights$r_nr_weights, output_fn = "softmax")
+  r_nr <- dnn.model.weights(loads, dnn.weights$r_nr_weights)
   
   # Check for random model
-  if(r_nr == 1) {return(1)}
+  if(r_nr >= .50) {return(1)}
   
   # Factor versus network model
-  f_n <- vector("numeric", length = 4)
+  f_n <- vector("numeric", length = 3)
   
   # Create composite of moderate and large loadings
   loads <- c(loads, (loads[2] + loads[3]), (loads[6] + loads[7]))
   
   # Check for low correlation factor versus network model
-  f_n[1] <- dnn.model.weights(loads, dnn.weights$lf_n_weights, output_fn = "sigmoid")
+  f_n[1] <- dnn.model.weights(loads, dnn.weights$lf_n_weights)
   
   # Remove composite of moderate and large loadings
   loads <- loads[-c((length(loads) - 1), length(loads))]
   
   # Create small and dominant ratio (network / factor)
-  loads <- c(loads, (loads[1] / loads[6]), (loads[4] / loads[9]))
+  loads <- c(loads,
+             (exp(loads[1]) / exp(loads[6])), # Small ratio
+             (exp(loads[4]) / exp(loads[9])), # Dominant ratio
+             (exp(loads[5]) / exp(loads[10])) # Cross ratio
+             )
   
   # Check for moderate correlation factor versus network model
-  f_n[2] <- dnn.model.weights(loads, dnn.weights$mf_n_weights, output_fn = "sigmoid")
+  f_n[2] <- dnn.model.weights(loads, dnn.weights$hlf_n_weights)
   
   # Check for high correlation factor versus network model
-  f_n[3] <- dnn.model.weights(loads, dnn.weights$hf_n_weights, output_fn = "sigmoid")
-  
-  # Remove dominant ratio
-  loads <- loads[-length(loads)]
-  
-  # Create cross-loading ratio (network / factor)
-  loads <- c(loads, exp(loads[5]) / exp(loads[10]))
-  
-  # Check for high correlation factor and few variables versus network model
-  f_n[4] <- dnn.model.weights(loads, dnn.weights$hvf_n_weights, output_fn = "sigmoid")
+  f_n[3] <- dnn.model.weights(loads, dnn.weights$hgf_n_weights)
   
   # Check for factor model
-  ifelse(any(f_n > .50), return(2), return(3))
+  ifelse(any(f_n >= .50), return(2), return(3))
   
 }
