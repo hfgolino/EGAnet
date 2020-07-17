@@ -1187,7 +1187,7 @@ dnn.model.weights <- function (loads, weights)
 #' @noRd
 #'
 # DNN prediction function----
-# Updated 12.07.2020
+# Updated 17.07.2020
 dnn.predict <- function (loads)
 {
   # Load deep learning neural network weights
@@ -1211,18 +1211,23 @@ dnn.predict <- function (loads)
   # Remove composite of moderate and large loadings
   loads <- loads[-c((length(loads) - 1), length(loads))]
   
-  # Create small and dominant ratio (network / factor)
+  # Create small, dominant, and cross ratio (network / factor)
   loads <- c(loads,
              (exp(loads[1]) / exp(loads[6])), # Small ratio
              (exp(loads[4]) / exp(loads[9])), # Dominant ratio
              (exp(loads[5]) / exp(loads[10])) # Cross ratio
-             )
+  )
   
   # Check for moderate correlation factor versus network model
-  f_n[2] <- dnn.model.weights(loads, dnn.weights$hlf_n_weights)
+  f_n[2] <- dnn.model.weights(loads, dnn.weights$hgf_n_weights)
+  
+  # Remove cross ratio and add network ratio
+  loads <- loads[-length(loads)]
+  loads <- c(loads,
+             exp(loads[2]) / exp(loads[3]))
   
   # Check for high correlation factor versus network model
-  f_n[3] <- dnn.model.weights(loads, dnn.weights$hgf_n_weights)
+  f_n[3] <- dnn.model.weights(loads, dnn.weights$hlf_n_weights)
   
   # Check for factor model
   ifelse(any(f_n >= .50), return(2), return(3))

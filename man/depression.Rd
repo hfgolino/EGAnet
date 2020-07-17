@@ -4,7 +4,11 @@
 \name{depression}
 \alias{depression}
 \title{Depression Data}
-\format{A 574x78 response matrix}
+\format{
+A 574x78 response matrix
+
+A 574x78 response matrix
+}
 \usage{
 data(depression)
 

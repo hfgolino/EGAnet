@@ -4,7 +4,11 @@
 \name{wmt2}
 \alias{wmt2}
 \title{WMT-2 Data}
-\format{A 1185x24 response matrix}
+\format{
+A 1185x24 response matrix
+
+A 1185x24 response matrix
+}
 \usage{
 data(wmt2)
 

@@ -3,8 +3,8 @@
 #' A list of weights from four different neural network models:
 #' random vs. non-random model (\code{r_nr_weights}),
 #' low correlation factor vs. network model (\code{lf_n_weights}),
-#' high correlation with fewer variables than factors vs. network model (\code{hlf_n_weights}), and
-#' high correlation with greater variables than factors vs. network model (\code{hgf_n_weights})
+#' high correlation with variables less than or equal to factors vs. network model (\code{hlf_n_weights}), and
+#' high correlation with variables greater than factors vs. network model (\code{hgf_n_weights})
 #'
 #' @name dnn.weights
 #'
@@ -19,6 +19,6 @@
 #' @examples
 #' data("dnn.weights")
 #'
-# Updated 12.07.2020
+# Updated 17.07.2020
 NULL
 #----
