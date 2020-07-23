@@ -28,10 +28,6 @@ Returns a list containing:
 the bootstrap replicate samples}
 
 \item{proportions}{Proportions of models suggested across bootstraps}
-
-\item{omnibus}{An omnibus prediction based on a consensus of empirical,
-bootstrap, and bootstrap proportions prediction. A consensus corresponds to
-any combination of two predictions returning the same prediction}
 }
 \description{
 An algorithm to identify whether data were generated from a
@@ -43,10 +39,10 @@ with 240,000 samples per model with varying parameters.
 \examples{
 \donttest{# Compute LCT
 ## Network model
-LCT(data = wmt2[,7:24])$omnibus
+LCT(data = wmt2[,7:24])
 
 ## Factor model
-LCT(data = NetworkToolbox::neoOpen)$omnibus}
+LCT(data = NetworkToolbox::neoOpen)}
 
 }
 \references{

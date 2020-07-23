@@ -28,18 +28,14 @@
 #' the bootstrap replicate samples}
 #' 
 #' \item{proportions}{Proportions of models suggested across bootstraps}
-#' 
-#' \item{omnibus}{An omnibus prediction based on a consensus of empirical,
-#' bootstrap, and bootstrap proportions prediction. A consensus corresponds to
-#' any combination of two predictions returning the same prediction}
 #'
 #' @examples
 #' \donttest{# Compute LCT
 #' ## Network model
-#' LCT(data = wmt2[,7:24])$omnibus
+#' LCT(data = wmt2[,7:24])
 #' 
 #' ## Factor model
-#' LCT(data = NetworkToolbox::neoOpen)$omnibus}
+#' LCT(data = NetworkToolbox::neoOpen)}
 #' 
 #' @references
 #' Christensen, A. P., & Golino, H. (2020).
@@ -52,7 +48,7 @@
 #' @export
 #'
 # Loadings Comparison Test----
-# Updated 12.07.2020
+# Updated 23.07.2020
 LCT <- function (data, n, iter = 100)
 {
   # Convert data to matrix
@@ -250,14 +246,17 @@ LCT <- function (data, n, iter = 100)
   predictions$proportions <- round(prop, 3)
   
   # Omnibus prediction
-  omni.prop <- c(wo.boot, boot, names(prop)[which.max(prop)])
-  omni.table <- table(omni.prop)
+  # item{omnibus}{An omnibus prediction based on a consensus of empirical,
+  # bootstrap, and bootstrap proportions prediction. A consensus corresponds to
+  # any combination of two predictions returning the same prediction}
+  #omni.prop <- c(wo.boot, boot, names(prop)[which.max(prop)])
+  #omni.table <- table(omni.prop)
   
-  if(any(omni.table > 1))
-  {omni.pred <- names(omni.table)[which.max(omni.table)]
-  }else{omni.pred <- "No consensus prediction. Check proportion and bootstrap predictions."}
+  #if(any(omni.table > 1))
+  #{omni.pred <- names(omni.table)[which.max(omni.table)]
+  #}else{omni.pred <- "No consensus prediction. Check proportion and bootstrap predictions."}
   
-  predictions$omnibus <- omni.pred
+  #predictions$omnibus <- omni.pred
   
   return(predictions)
   
