@@ -1,6 +1,10 @@
 Changes in version 0.9.7
 
-o UPDATE: `LCT` neural network weights were updated
+o UPDATE: `LCT` neural network weights were updated and can handle unidimensional structures
+
+o FIX: naming in `EGA`
+
+o FIX: output network matrix in `EGA` when data are input
 
 
 Changes in version 0.9.6

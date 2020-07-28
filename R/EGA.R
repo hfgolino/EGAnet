@@ -115,14 +115,14 @@
 #'
 #' Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., & Thiyagarajan, J. A. (in press).
 #' Investigating the performance of Exploratory Graph Analysis and traditional techniques to identify the number of latent factors: A simulation and tutorial.
-#' \emph{Psychological Methods}.
-#' doi: \href{https://psyarxiv.com/gzcre/}{10.31234/osf.io/gzcre}
+#' \emph{Psychological Methods}, \emph{25}, 292-320.
+#' doi: \href{https://doi.org/10.1037/met0000255}{10.1037/met0000255}
 #'
 #' @importFrom stats cor rnorm runif na.omit
 #'
 #' @export
 #'
-# Updated 03.04.2020
+# Updated 27.07.2020
 ## EGA Function to detect unidimensionality:
 EGA <- function (data, model = c("glasso", "TMFG"),
                  algorithm = c("walktrap", "louvain"),
@@ -234,11 +234,11 @@ EGA <- function (data, model = c("glasso", "TMFG"),
     
     n <- nrow(data)
     
+    cor.data <- qgraph::cor_auto(data)
+    
     data.sim <- sim.func(data = data, nvar = nvar, nfact = nfact, load = load)
     
     uni.res <- EGA.estimate(data.sim, model = model, algorithm = algorithm, steps = steps, n = n, ...)
-    
-    cor.data <- uni.res$cor.data[-c(1:(nvar*nfact)),-c(1:(nvar*nfact))]
     
     if(uni.res$n.dim <= nfact + 1)
     {
@@ -296,7 +296,7 @@ EGA <- function (data, model = c("glasso", "TMFG"),
   if(is.null(names(plot.ega$graphAttributes$Nodes$labels)))
   {names(plot.ega$graphAttributes$Nodes$labels) <- paste(1:ncol(data))}
   
-  row.names(a$dim.variables) <- plot.ega$graphAttributes$Nodes$labels[match(row.names(a$dim.variables), names(plot.ega$graphAttributes$Nodes$labels))]
+  row.names(a$dim.variables) <- plot.ega$graphAttributes$Nodes$labels[match(a$dim.variables$items, names(plot.ega$graphAttributes$Nodes$labels))]
   
   a$EGA.type <- ifelse(a$n.dim <= 2, "Unidimensional EGA", "Traditional EGA")
   class(a) <- "EGA"

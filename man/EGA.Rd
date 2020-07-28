@@ -132,8 +132,8 @@ doi: \href{https://doi.org/10.1016/j.intell.2017.02.007}{j.intell.2017.02.007}
 
 Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., & Thiyagarajan, J. A. (in press).
 Investigating the performance of Exploratory Graph Analysis and traditional techniques to identify the number of latent factors: A simulation and tutorial.
-\emph{Psychological Methods}.
-doi: \href{https://psyarxiv.com/gzcre/}{10.31234/osf.io/gzcre}
+\emph{Psychological Methods}, \emph{25}, 292-320.
+doi: \href{https://doi.org/10.1037/met0000255}{10.1037/met0000255}
 }
 \seealso{
 \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap

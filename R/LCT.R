@@ -48,7 +48,7 @@
 #' @export
 #'
 # Loadings Comparison Test----
-# Updated 23.07.2020
+# Updated 26.07.2020
 LCT <- function (data, n, iter = 100)
 {
   # Convert data to matrix
@@ -65,7 +65,6 @@ LCT <- function (data, n, iter = 100)
   
   # Initialize network loading matrix
   nl <- matrix(0, nrow = iter, ncol = 5)
-  colnames(nl) <- c("Small", "Moderate", "Large", "Dominant", "Cross")
   fl <- nl
   
   # Initialize count
@@ -109,13 +108,15 @@ LCT <- function (data, n, iter = 100)
       colnames(cor.mat) <- paste("V", 1:ncol(cor.mat), sep = "")
       
       # Estimate network
-      net <- try(suppressWarnings(suppressMessages(EGA.estimate(cor.mat, n = cases))), silent = TRUE)
+      if(count == 1)
+      {net <- try(suppressWarnings(suppressMessages(EGA(cor.mat, n = cases, plot.EGA = FALSE))), silent = TRUE)
+      }else{net <- try(suppressWarnings(suppressMessages(EGA.estimate(cor.mat, n = cases))), silent = TRUE)}
       
       if(any(class(net) == "try-error"))
       {good <- FALSE
       }else{
         
-        if(length(unique(net$wc)) == 1 | length(net$wc) == length(unique(net$wc)))
+        if(length(net$wc) == length(unique(net$wc)))
         {good <- FALSE
         }else{
           # Try to estimate network loadings
@@ -123,32 +124,38 @@ LCT <- function (data, n, iter = 100)
           
           if(any(class(n.loads) == "try-error"))
           {good <- FALSE
-          }else if(ncol(n.loads) == 1)
-          {good <- FALSE
           }else{
             
             # Reorder network loadings
-            n.loads <- n.loads[names(net$wc),]
+            n.loads <- as.matrix(n.loads[names(net$wc),])
             
             # Get network loading proportions
             n.low <- mean(n.loads >= 0.15, na.rm = TRUE)
             n.mod <- mean(n.loads >= 0.25, na.rm = TRUE)
             n.high <- mean(n.loads >= 0.35, na.rm = TRUE)
             
-            # Initialize dominate loadings
-            n.dom <- numeric(ncol(data))
-            n.loads2 <- n.loads
-            
-            for(i in 1:ncol(n.loads))
+            if(ncol(n.loads) != 1)
             {
-              n.dom[which(net$wc == i)] <- n.loads[which(net$wc == i), i]
-              n.loads2[which(net$wc == i), i] <- 0
+              # Initialize dominate loadings
+              n.dom <- numeric(ncol(data))
+              n.loads2 <- n.loads
+              
+              for(i in 1:ncol(n.loads))
+              {
+                n.dom[which(net$wc == i)] <- n.loads[which(net$wc == i), i]
+                n.loads2[which(net$wc == i), i] <- 0
+              }
+              
+              # Get dominant and cross-loading proportions
+              n.dom <- mean(n.dom >= 0.15)
+              n.cross <- mean(ifelse(n.loads2 == 0, NA, n.loads2) >= 0.15, na.rm = TRUE)
+              n.cross <- ifelse(is.na(n.cross), 0, n.cross)
+              
+              
+            }else{
+              n.dom <- NA
+              n.cross <- NA
             }
-            
-            # Get dominant and cross-loading proportions
-            n.dom <- mean(n.dom >= 0.15)
-            n.cross <- mean(ifelse(n.loads2 == 0, NA, n.loads2) >= 0.15, na.rm = TRUE)
-            n.cross <- ifelse(is.na(n.cross), 0, n.cross)
             
             nl[count,] <- c(n.low, n.mod, n.high, n.dom, n.cross)
             
@@ -164,20 +171,26 @@ LCT <- function (data, n, iter = 100)
             for(i in 1:ncol(data))
             {org[i] <- which.max(f.loads[i,])}
             
-            # Initialize dominate loadings
-            f.dom <- numeric(ncol(data))
-            f.loads2 <- f.loads
-            
-            for(i in 1:max(org))
+            if(ncol(f.loads) != 1)
             {
-              f.dom[which(org == i)] <- f.loads[which(org == i), i]
-              f.loads2[which(org == i), i] <- 0
+              # Initialize dominate loadings
+              f.dom <- numeric(ncol(data))
+              f.loads2 <- f.loads
+              
+              for(i in 1:max(org))
+              {
+                f.dom[which(org == i)] <- f.loads[which(org == i), i]
+                f.loads2[which(org == i), i] <- 0
+              }
+              
+              # Get dominant and cross-loading proportions
+              f.dom <- mean(f.dom >= 0.40)
+              f.cross <- mean(ifelse(f.loads2 == 0, NA, f.loads2) >= 0.40, na.rm = TRUE)
+              f.cross <- ifelse(is.na(f.cross), 0, f.cross)
+            }else{
+              f.dom <- NA
+              f.cross <- NA
             }
-            
-            # Get dominant and cross-loading proportions
-            f.dom <- mean(f.dom >= 0.40)
-            f.cross <- mean(ifelse(f.loads2 == 0, NA, f.loads2) >= 0.40, na.rm = TRUE)
-            f.cross <- ifelse(is.na(f.cross), 0, f.cross)
             
             fl[count,] <- c(f.low, f.mod, f.high, f.dom, f.cross)
             
