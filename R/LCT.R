@@ -88,7 +88,7 @@ LCT <- function (data, n, iter = 100)
         } else {
           dat <- mvtnorm::rmvnorm(cases, sigma = cov(data, use = "pairwise.complete.obs"))
         }
-      
+        
         cor.mat <- cor(dat, use = "pairwise.complete.obs")
         
       }else{
@@ -105,7 +105,8 @@ LCT <- function (data, n, iter = 100)
       }
       
       # Make sure there are column names
-      colnames(cor.mat) <- paste("V", 1:ncol(cor.mat), sep = "")
+      if(is.null(colnames(cor.mat)))
+      {colnames(cor.mat) <- paste("V", 1:ncol(cor.mat), sep = "")}
       
       # Estimate network
       if(count == 1)
@@ -231,8 +232,8 @@ LCT <- function (data, n, iter = 100)
                     "1" = "Random",
                     "2" = "Factor",
                     "3" = "Network"
-             )
-                      
+  )
+  
   predictions$empirical <- wo.boot
   
   # Bootstrap prediction
