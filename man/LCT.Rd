@@ -27,7 +27,7 @@ Returns a list containing:
 \item{bootstrap}{Prediction of model based on means of the loadings across
 the bootstrap replicate samples}
 
-\item{proportions}{Proportions of models suggested across bootstraps}
+\item{proportion}{Proportions of models suggested across bootstraps}
 }
 \description{
 An algorithm to identify whether data were generated from a
