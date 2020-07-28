@@ -48,7 +48,7 @@
 #' @export
 #'
 # Loadings Comparison Test----
-# Updated 26.07.2020
+# Updated 28.07.2020
 LCT <- function (data, n, iter = 100)
 {
   # Convert data to matrix
@@ -89,7 +89,7 @@ LCT <- function (data, n, iter = 100)
           dat <- mvtnorm::rmvnorm(cases, sigma = cov(data, use = "pairwise.complete.obs"))
         }
         
-        cor.mat <- cor(dat, use = "pairwise.complete.obs")
+        cor.mat <- qgraph::cor_auto(dat)
         
       }else{
         
@@ -99,7 +99,7 @@ LCT <- function (data, n, iter = 100)
           
           dat <- mvtnorm::rmvnorm(cases, sigma = data)
           
-          cor.mat <- cor(dat, use = "pairwise.complete.obs")
+          cor.mat <- qgraph::cor_auto(dat)
         }
         
       }
