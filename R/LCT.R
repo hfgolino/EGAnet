@@ -27,7 +27,7 @@
 #' \item{bootstrap}{Prediction of model based on means of the loadings across
 #' the bootstrap replicate samples}
 #' 
-#' \item{proportions}{Proportions of models suggested across bootstraps}
+#' \item{proportion}{Proportions of models suggested across bootstraps}
 #'
 #' @examples
 #' \donttest{# Compute LCT
@@ -256,7 +256,7 @@ LCT <- function (data, n, iter = 100)
   
   prop[1:length(boot.prop)] <- boot.prop
   
-  predictions$proportions <- round(prop, 3)
+  predictions$proportion <- round(prop, 3)
   
   # Omnibus prediction
   # item{omnibus}{An omnibus prediction based on a consensus of empirical,
