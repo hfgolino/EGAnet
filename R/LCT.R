@@ -43,6 +43,10 @@
 #' \emph{PsyArXiv}.
 #' doi:\href{https://doi.org/10.31234/osf.io/xakez}{10.31234/osf.io/xakez}
 #' 
+#' Christensen, A. P., & Golino, H. (2020).
+#' Random, factor, or network model? Predictions from neural networks.
+#' \emph{PsyArXiv}.
+#' 
 #' @importFrom utils setTxtProgressBar txtProgressBar
 #'
 #' @export

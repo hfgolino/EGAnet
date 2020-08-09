@@ -1,6 +1,6 @@
 Changes in version 0.9.7
 
-o UPDATE: `LCT` neural network weights were updated and can handle unidimensional structures
+o UPDATE: `LCT` neural network weights were updated (parametric relu activation function)
 
 o FIX: naming in `EGA`
 
