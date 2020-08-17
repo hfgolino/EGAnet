@@ -81,8 +81,8 @@
 #' doi:\href{https://doi.org/10.31234/osf.io/xakez}{10.31234/osf.io/xakez}
 #' 
 #' Christensen, A. P., Golino, H., & Silvia, P. (2019).
-#' A psychometric network perspective on the measurement and assessment of personality traits.
-#' \emph{PsyArXiv}.
+#' A psychometric network perspective on the validity and validation of personality trait questionnaires.
+#' \emph{European Journal of Personality}.
 #' doi:\href{https://doi.org/10.31234/osf.io/ktejp}{10.31234/osf.io/ktejp}
 #'
 #' Hallquist, M., Wright, A. C. G., & Molenaar, P. C. M. (in press).
@@ -95,7 +95,7 @@
 #' @export
 #'
 # Network Loadings
-# Updated 05.07.2020
+# Updated 17.08.2020
 net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
 {
   #------------------------------------------#
@@ -193,7 +193,6 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
       # Add signs to loadings
       res.rev <- add.signs(comm.str = comm.str, A = A, wc = wc, dims = dims, pos.manifold = pos.manifold)
       comm.str <- res.rev$comm.str
-      A <- res.rev$A
       
       ##############################
       #### END COMPUTE LOADINGS ####
@@ -231,12 +230,15 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
       std.res <- std.res - .001
       std.res <- ifelse(std.res==-.001,0,std.res)
       
+      # Reorder to match membership
+      std.res <- std.res[,levels(as.factor(wc))]
+      
       #Split results to list for each node
       pies <- split(std.res, rep(1:nrow(std.res)))
       
       # Plot (or not)
       nl.plot <- qgraph::qgraph(A, layout = "spring", groups = as.factor(wc),
-                                label.prop = 1.5, pie = pies, vTrans = 200,
+                                label.prop = 1, pie = pies, vTrans = 200,
                                 negDashed = TRUE, DoNotPlot = ifelse(plot,FALSE,TRUE))
       
       # Remove loadings (added as attribute)
@@ -272,7 +274,6 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
       # Add signs to loadings
       res.rev <- add.signs(comm.str = comm.str, A = A, wc = wc, dims = dims, pos.manifold = pos.manifold)
       comm.str <- res.rev$comm.str
-      A <- res.rev$A
       
       # Initialize result list
       res <- list()
