@@ -92,8 +92,8 @@ On the equivalency of factor and network loadings.
 doi:\href{https://doi.org/10.31234/osf.io/xakez}{10.31234/osf.io/xakez}
 
 Christensen, A. P., Golino, H., & Silvia, P. (2019).
-A psychometric network perspective on the measurement and assessment of personality traits.
-\emph{PsyArXiv}.
+A psychometric network perspective on the validity and validation of personality trait questionnaires.
+\emph{European Journal of Personality}.
 doi:\href{https://doi.org/10.31234/osf.io/ktejp}{10.31234/osf.io/ktejp}
 
 Hallquist, M., Wright, A. C. G., & Molenaar, P. C. M. (in press).

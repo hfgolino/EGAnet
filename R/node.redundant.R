@@ -32,6 +32,10 @@
 #' false-discovery rate corrected \emph{p}-value (\code{"FDR"}),
 #' or adaptive alpha \emph{p}-value (\code{\link[NetworkToolbox]{adapt.a}}).
 #' Defaults to \code{"adapt"}
+#' 
+#' @param plot Boolean.
+#' Should redundancies be plotted in a network plot?
+#' Defaults to \code{FALSE}
 #'
 #' @return Returns a list:
 #'
@@ -44,28 +48,34 @@
 #' or partial correlations}
 #'
 #' \item{network}{The network compute by \code{\link[qgraph]{EBICglasso}}}
+#' 
+#' \item{descriptives}{A vector containing the mean, standard deviation,
+#' median, minimum, maximum, and critical value for the overlap measure
+#' (i.e., weighted topological overlap, partial correlation, or threshold)}
+#' 
+#' \item{distribution}{Distribution that was used to determine significance}
 #'
 #' @examples
 #' # obtain SAPA items
 #' items <- psychTools::spi[,c(11:20)]
 #' 
 #' # weighted topological overlap
-#' redund <- node.redundant(items, method = "wTO", type = "adapt")
+#' redund <- node.redundant(items, method = "wTO", type = "adapt", plot = TRUE)
 #'
 #' # partial correlation
-#' redund <- node.redundant(items, method = "pcor", type = "adapt")
+#' redund <- node.redundant(items, method = "pcor", type = "adapt", plot = TRUE)
 #' 
 #' # threshold
-#' redund <- node.redundant(items, method = "thresh", sig = .20)
+#' redund <- node.redundant(items, method = "thresh", sig = .20, plot = TRUE)
 #'
 #' @references
-#' # simulation using node.redundant
+#' # Simulation using node.redundant \cr
 #' Christensen, A. P. (2020).
 #' Towards a network psychometrics approach to assessment: Simulations for redundancy, dimensionality, and loadings
 #' (Unpublished doctoral dissertation). University of North Carolina at Greensboro, Greensboro, NC, USA.
 #' https://doi.org/10.31234/osf.io/84kgd
 #' 
-#' # wTO
+#' # wTO measure \cr
 #' Nowick, K., Gernat, T., Almaas, E., & Stubbs, L. (2009).
 #' Differences in human and chimpanzee gene expression patterns define an evolving network of transcription factors in brain.
 #' \emph{Proceedings of the National Academy of Sciences}, \emph{106}, 22358-22363.
@@ -73,14 +83,15 @@
 #'
 #' @author Alexander Christensen <alexpaulchristensen@gmail.com>
 #'
-#' @importFrom stats pgamma pnorm
+#' @importFrom stats pgamma pnorm qgamma qnorm
 #'
 #' @export
 #
 # Redundant Nodes Function
-# Updated 15.06.2020
+# Updated 29.08.2020
 node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "thresh"),
-                            type = c("alpha", "bonferroni", "FDR", "adapt"))
+                            type = c("alpha", "bonferroni", "FDR", "adapt"),
+                            plot = FALSE)
 {
   #### missing arguments handling ####
   
@@ -150,7 +161,7 @@ node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "thre
   pos.vals <- na.omit(ifelse(lower==0,NA,lower))
   attr(pos.vals, "na.action") <- NULL
 
-  if(type != "thresh")
+  if(method != "thresh")
   {
     #determine distribution
     ##distributions
@@ -207,7 +218,7 @@ node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "thre
     res <- pos.vals[which(pval<=sig)]
 
   }else{
-    sig <- ifelse(missing(sig),.20,sig)
+    sig <- ifelse(missing(sig), .20, sig)
 
     res <- pos.vals[which(abs(lower) > sig)]
   }
@@ -264,14 +275,83 @@ node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "thre
       }
     }
   }
-
+  
+  # Revert tom to matrix
+  tom <- as.matrix(tom)
+  
+  # Plot
+  if(plot)
+  {
+    # Initialize plot matrix
+    plot.mat <- matrix(0, nrow = nrow(tom), ncol = ncol(tom))
+    colnames(plot.mat) <- colnames(tom)
+    row.names(plot.mat) <- colnames(tom)
+    
+    for(i in 1:length(res.list))
+    {
+      plot.mat[names(res.list)[i],res.list[[i]]] <- tom[names(res.list)[i],res.list[[i]]]
+      plot.mat[res.list[[i]],names(res.list)[i]] <- tom[res.list[[i]],names(res.list)[i]]
+    }
+    
+    rm.mat <- which(colSums(plot.mat) == 0)
+    
+    plot.mat <- plot.mat[-rm.mat, -rm.mat]
+    
+    if(method == "wto")
+    {title <- "Weighted Topological Overlaps"
+    }else{title <- "Partial Correlations"}
+    
+    qgraph::qgraph(plot.mat, layout = "spring", title = title,
+                   edge.labels = TRUE)
+  }
+  
+  # Initialize descriptives matrix
+  desc <- matrix(0, nrow = 1, ncol = 6)
+  
+  # Row name
+  if(method == "wto")
+  {row.names(desc) <- "wTO"
+  }else{row.names(desc) <- "pcor"}
+  
+  colnames(desc) <- c("Mean", "SD", "Median", "Minimum", "Maximum", "Critical Value")
+  
+  desc[,"Mean"] <- mean(tom, na.rm = TRUE)
+  desc[,"SD"] <- sd(tom, na.rm = TRUE)
+  desc[,"Median"] <- median(tom, na.rm = TRUE)
+  desc[,"Minimum"] <- range(tom, na.rm = TRUE)[1]
+  desc[,"Maximum"] <- range(tom, na.rm = TRUE)[2]
+  
+  # Critical value
+  if(method == "thresh")
+  {desc[,"Critical Value"] <- sig
+  }else{
+    
+    desc[,"Critical Value"] <- switch(names(aic)[which.min(aic)],
+                                      
+                                      normal = qnorm(sig, #significance
+                                                     mean = g.dist$estimate["mean"], #mean of normal
+                                                     sd = g.dist$estimate["sd"], #sd of normal
+                                                     lower.tail = FALSE),
+                                      
+                                      gamma = qgamma(sig, #significance
+                                                     shape = g.dist$estimate["shape"], #shape of gamma
+                                                     rate = g.dist$estimate["rate"], #rate of gamma
+                                                     lower.tail = FALSE),
+                                      
+    )
+    
+  }
+  
   full.res <- list()
   full.res$redundant <- res.list
   full.res$data <- data
   full.res$weights <- tom
   if(exists("net"))
   {full.res$network <- net}
-
+  full.res$descriptives <- round(desc, 3)
+  if(method != "thresh")
+  {full.res$distribution <- names(aic)[which.min(aic)]}
+  
   class(full.res) <- "node.redundant"
 
   return(full.res)

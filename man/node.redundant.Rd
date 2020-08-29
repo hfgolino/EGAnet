@@ -9,7 +9,8 @@ node.redundant(
   n = NULL,
   sig,
   method = c("wTO", "pcor", "thresh"),
-  type = c("alpha", "bonferroni", "FDR", "adapt")
+  type = c("alpha", "bonferroni", "FDR", "adapt"),
+  plot = FALSE
 )
 }
 \arguments{
@@ -40,6 +41,10 @@ bonferroni corrected \emph{p}-value (\code{"bonferroni"}),
 false-discovery rate corrected \emph{p}-value (\code{"FDR"}),
 or adaptive alpha \emph{p}-value (\code{\link[NetworkToolbox]{adapt.a}}).
 Defaults to \code{"adapt"}}
+
+\item{plot}{Boolean.
+Should redundancies be plotted in a network plot?
+Defaults to \code{FALSE}}
 }
 \value{
 Returns a list:
@@ -53,6 +58,12 @@ to redundant nodes with the name of object in the list}
 or partial correlations}
 
 \item{network}{The network compute by \code{\link[qgraph]{EBICglasso}}}
+
+\item{descriptives}{A vector containing the mean, standard deviation,
+median, minimum, maximum, and critical value for the overlap measure
+(i.e., weighted topological overlap, partial correlation, or threshold)}
+
+\item{distribution}{Distribution that was used to determine significance}
 }
 \description{
 Identifies redundant nodes in the network based on several
@@ -66,23 +77,23 @@ and the function \link[wTO]{wTO} from the wTO package.
 items <- psychTools::spi[,c(11:20)]
 
 # weighted topological overlap
-redund <- node.redundant(items, method = "wTO", type = "adapt")
+redund <- node.redundant(items, method = "wTO", type = "adapt", plot = TRUE)
 
 # partial correlation
-redund <- node.redundant(items, method = "pcor", type = "adapt")
+redund <- node.redundant(items, method = "pcor", type = "adapt", plot = TRUE)
 
 # threshold
-redund <- node.redundant(items, method = "thresh", sig = .20)
+redund <- node.redundant(items, method = "thresh", sig = .20, plot = TRUE)
 
 }
 \references{
-# simulation using node.redundant
+# Simulation using node.redundant \cr
 Christensen, A. P. (2020).
 Towards a network psychometrics approach to assessment: Simulations for redundancy, dimensionality, and loadings
 (Unpublished doctoral dissertation). University of North Carolina at Greensboro, Greensboro, NC, USA.
 https://doi.org/10.31234/osf.io/84kgd
 
-# wTO
+# wTO measure \cr
 Nowick, K., Gernat, T., Almaas, E., & Stubbs, L. (2009).
 Differences in human and chimpanzee gene expression patterns define an evolving network of transcription factors in brain.
 \emph{Proceedings of the National Academy of Sciences}, \emph{106}, 22358-22363.
