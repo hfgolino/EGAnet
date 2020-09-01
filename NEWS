@@ -8,7 +8,7 @@ o FIX: output network matrix in `EGA` when data are input
 
 o UPDATE: citation version
 
-o UPDATE: `node.redundant` now provides a full plot of redundancies detected, descriptive statistics including the critical value, and the distribution the significant values were determined from
+o UPDATE: `node.redundant` now provides a full plot of redundancies detected, descriptive statistics including the critical value, central tendency descriptive statistics, and the distribution the significant values were determined from (thanks to Luis Garrido for the suggestion!)
 
 
 Changes in version 0.9.6

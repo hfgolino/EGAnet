@@ -1,4 +1,5 @@
 #' Detects Redundant Nodes in a Network
+#' 
 #' @description Identifies redundant nodes in the network based on several
 #' measures. Computes the weighted topological overlap between
 #' each node and every other node in the network. The weighted topological
@@ -49,9 +50,21 @@
 #'
 #' \item{network}{The network compute by \code{\link[qgraph]{EBICglasso}}}
 #' 
-#' \item{descriptives}{A vector containing the mean, standard deviation,
-#' median, minimum, maximum, and critical value for the overlap measure
+#' \item{descriptives}{
+#' 
+#' \itemize{
+#' 
+#' \item{basic}{A vector containing the mean, standard deviation,
+#' median, median absolute deviation (MAD), 3 times the MAD, 6 times the MAD,
+#' minimum, maximum, and critical value for the overlap measure
 #' (i.e., weighted topological overlap, partial correlation, or threshold)}
+#' 
+#' \item{centralTendency}{A matrix for all (aboslute) non-zero values and their
+#' respective standard deviation from the mean and median absolute deviation
+#' from the median}
+#' 
+#' }
+#' }
 #' 
 #' \item{distribution}{Distribution that was used to determine significance}
 #'
@@ -88,7 +101,7 @@
 #' @export
 #
 # Redundant Nodes Function
-# Updated 29.08.2020
+# Updated 01.09.2020
 node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "thresh"),
                             type = c("alpha", "bonferroni", "FDR", "adapt"),
                             plot = FALSE)
@@ -306,20 +319,23 @@ node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "thre
   }
   
   # Initialize descriptives matrix
-  desc <- matrix(0, nrow = 1, ncol = 6)
+  desc <- matrix(0, nrow = 1, ncol = 9)
   
   # Row name
   if(method == "wto")
   {row.names(desc) <- "wTO"
   }else{row.names(desc) <- "pcor"}
   
-  colnames(desc) <- c("Mean", "SD", "Median", "Minimum", "Maximum", "Critical Value")
+  colnames(desc) <- c("Mean", "SD", "Median", "MAD", "3*MAD", "6*MAD", "Minimum", "Maximum", "Critical Value")
   
-  desc[,"Mean"] <- mean(tom, na.rm = TRUE)
-  desc[,"SD"] <- sd(tom, na.rm = TRUE)
-  desc[,"Median"] <- median(tom, na.rm = TRUE)
-  desc[,"Minimum"] <- range(tom, na.rm = TRUE)[1]
-  desc[,"Maximum"] <- range(tom, na.rm = TRUE)[2]
+  desc[,"Mean"] <- mean(pos.vals, na.rm = TRUE)
+  desc[,"SD"] <- sd(pos.vals, na.rm = TRUE)
+  desc[,"Median"] <- median(pos.vals, na.rm = TRUE)
+  desc[,"MAD"] <- mad(pos.vals, constant = 1, na.rm = TRUE)
+  desc[,"3*MAD"] <- mad(pos.vals, constant = 1, na.rm = TRUE) * 3
+  desc[,"6*MAD"] <- mad(pos.vals, constant = 1, na.rm = TRUE) * 6
+  desc[,"Minimum"] <- range(pos.vals, na.rm = TRUE)[1]
+  desc[,"Maximum"] <- range(pos.vals, na.rm = TRUE)[2]
   
   # Critical value
   if(method == "thresh")
@@ -342,13 +358,27 @@ node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "thre
     
   }
   
+  # Organize positive values output
+  ordered.pos <- sort(pos.vals, decreasing = TRUE)
+  sd.from.mean <- (ordered.pos - mean(pos.vals, na.rm = TRUE)) / sd(ordered.pos, na.rm = TRUE)
+  mad.from.median <- (ordered.pos - median(pos.vals, na.rm = TRUE)) / mad(ordered.pos, constant = 1, na.rm = TRUE)
+  pos.output <- round(cbind(ordered.pos, sd.from.mean, mad.from.median), 3)
+  
+  if(method == "wto")
+  {colnames(pos.output)[1] <- "wTO"
+  }else{colnames(pos.output)[1] <- "pcor"}
+  
+  colnames(pos.output)[2:3] <- c("SD from Mean", "MAD from Median")
+  
+  
   full.res <- list()
   full.res$redundant <- res.list
   full.res$data <- data
   full.res$weights <- tom
   if(exists("net"))
   {full.res$network <- net}
-  full.res$descriptives <- round(desc, 3)
+  full.res$descriptives$basic <- round(desc, 3)
+  full.res$descriptives$centralTendency <- pos.output
   if(method != "thresh")
   {full.res$distribution <- names(aic)[which.min(aic)]}
   

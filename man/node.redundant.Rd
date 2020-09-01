@@ -59,9 +59,21 @@ or partial correlations}
 
 \item{network}{The network compute by \code{\link[qgraph]{EBICglasso}}}
 
-\item{descriptives}{A vector containing the mean, standard deviation,
-median, minimum, maximum, and critical value for the overlap measure
+\item{descriptives}{
+
+\itemize{
+
+\item{basic}{A vector containing the mean, standard deviation,
+median, median absolute deviation (MAD), 3 times the MAD, 6 times the MAD,
+minimum, maximum, and critical value for the overlap measure
 (i.e., weighted topological overlap, partial correlation, or threshold)}
+
+\item{centralTendency}{A matrix for all (aboslute) non-zero values and their
+respective standard deviation from the mean and median absolute deviation
+from the median}
+
+}
+}
 
 \item{distribution}{Distribution that was used to determine significance}
 }
