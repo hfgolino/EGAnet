@@ -36,27 +36,39 @@
 #'
 #' @export
 # Total Entropy Fit Index Function (for correlation matrices)
+# Updated 09.09.2020
 tefi <- function(data, structure){
-  if(!ncol(data)==nrow(data)){
+  if(ncol(data)!=nrow(data)){
     data <- qgraph::cor_auto(data)
   }
-    data <- abs(data)
-    cor1 <- data/ncol(data)
-    h.vn <- -matrixcalc::matrix.trace(cor1%*%(log(cor1)))
-
-    n <- max(structure)
-    cor.fact <- vector("list")
-    eigen.fact <- vector("list")
-    l.eigen.fact <- vector("list")
-    h.vn.fact <- vector("list")
-    for(i in 1:n){
-      cor.fact[[i]] <- data[which(structure==unique(structure)[i]),which(structure==unique(structure)[i])]
-      cor.fact[[i]] <- cor.fact[[i]]/ncol(cor.fact[[i]])
-      h.vn.fact[[i]] <- -matrixcalc::matrix.trace(cor.fact[[i]]%*%log(cor.fact[[i]]))
-    }
-
+  
+  if(any(is.na(structure)))
+  {
+    rm.vars <- which(is.na(structure))
+    
+    warning(paste("Some variables did not belong to a dimension:", colnames(data)[rm.vars]))
+    message("Use caution: These variables have been removed from the TEFI calculation")
+    
+    data <- data[-rm.vars, -rm.vars]
+  }
+  
+  data <- abs(data)
+  cor1 <- data/ncol(data)
+  h.vn <- -matrixcalc::matrix.trace(cor1%*%(log(cor1)))
+  
+  n <- max(structure)
+  cor.fact <- vector("list")
+  eigen.fact <- vector("list")
+  l.eigen.fact <- vector("list")
+  h.vn.fact <- vector("list")
+  for(i in 1:n){
+    cor.fact[[i]] <- data[which(structure==unique(structure)[i]),which(structure==unique(structure)[i])]
+    cor.fact[[i]] <- cor.fact[[i]]/ncol(cor.fact[[i]])
+    h.vn.fact[[i]] <- -matrixcalc::matrix.trace(cor.fact[[i]]%*%log(cor.fact[[i]]))
+  }
+  
   h.vn.fact2 <- unlist(h.vn.fact)
-
+  
   # Difference between Max the sum of the factor entropies:
   Hdiff <- h.vn-sum(h.vn.fact2)
   results <- data.frame(matrix(NA, nrow = 1, ncol = 3))
