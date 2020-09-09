@@ -158,7 +158,7 @@ EGA.estimate <- function(data, n = NULL,
       warning("Correlation matrix is not positive definite.\nForcing positive definite matrix using Matrix::nearPD()\nResults may be unreliable")
 
       # Force positive definite matrix
-      cor.data <- as.matrix(Matrix::nearPD(cor.data, corr = TRUE, keepDiag = TRUE, doSym = TRUE)$mat)
+      cor.data <- as.matrix(Matrix::nearPD(cor.data, corr = TRUE, keepDiag = TRUE, ensureSymmetry = TRUE)$mat)
     }
   }else{
 
@@ -169,7 +169,7 @@ EGA.estimate <- function(data, n = NULL,
       warning("Correlation matrix is not positive definite.\nForcing positive definite matrix using Matrix::nearPD()\nResults may be unreliable")
 
       # Force positive definite matrix
-      cor.data <- as.matrix(Matrix::nearPD(data, corr = TRUE, keepDiag = TRUE, doSym = TRUE)$mat)
+      cor.data <- as.matrix(Matrix::nearPD(data, corr = TRUE, keepDiag = TRUE, ensureSymmetry = TRUE)$mat)
     }else{cor.data <- data}
   }
   
