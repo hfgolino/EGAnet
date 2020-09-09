@@ -80,7 +80,7 @@
 #'
 #' @export
 # EGA fit
-# Updated 02.05.2020
+# Updated 09.09.2020
 EGA.fit <- function (data, model = c("glasso","TMFG"),
                      steps = c(3,4,5,6,7,8), n = NULL)
 {
@@ -113,6 +113,15 @@ EGA.fit <- function (data, model = c("glasso","TMFG"),
       }
 
       colnames(dims) <- as.character(steps)
+      
+      #remove solutions with missing dimensions
+      rm.cols <- which(apply(apply(dims, 2, is.na), 2, any))
+      
+      if(length(rm.cols) != 0)
+      {
+        dims <- dims[,-rm.cols]
+        steps <- steps[-rm.cols]
+      }
 
       #check for unique number of dimensions
       uniq.dim <- vector("numeric",length=(ncol(dims)))
