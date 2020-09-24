@@ -33,7 +33,7 @@ Christensen, A. P., & Golino, H. (under review). Random, factor, or network mode
 + Related functions: `LCT`
 
 Christensen, A. P., Golino, H., & Silvia, P. J. (in press). A psychometric network perspective on the validity and validation of personality trait questionnaires. *European Journal of Personality*. doi:[10.1002/per.2265](https://doi.org/10.1002/per.2265)
-+ Related functions: `bootEGA`, `dimStability`, `itemStability`, `node.redundant`, `node.redundant.combine`, and `node.redundant.names`
++ Related functions: `bootEGA`, `dimStability`, `EGA`, `itemStability`, `node.redundant`, `node.redundant.combine`, and `node.redundant.names`
 
 Golino, H., Christensen, A. P., Moulder, R. G., Kim, S., & Boker, S. M. (under review). Modeling latent topics in social media using Dynamic Exploratory Graph Analysis: The case of the right-wing and left-wing trolls in the 2016 US elections. *PsyArXiv*. doi:[10.31234/osf.io/tfs7c](https://doi.org/10.31234/osf.io/tfs7c)
 + Related functions: `dynEGA` and `simDFM`
