@@ -26,7 +26,7 @@ References
 Christensen, A. P., & Golino, H. (under review). Estimating factors with psychometric networks: A Monte Carlo simulation comparing community detection algorithms. *PsyArXiv*. doi:[10.31234/osf.io/hz89e](https://doi.org/10.31234/osf.io/hz89e)
 + Related functions: `EGA`
 
-Christensen, A. P., & Golino, H. (under review). On the equivalency of factor and network loadings. *PsyArXiv*. doi:[10.31234/osf.io/xakez](https://doi.org/10.31234/osf.io/xakez)
+Christensen, A. P., & Golino, H. (in press). On the equivalency of factor and network loadings. *Behavior Research Methods*. doi:[10.31234/osf.io/xakez](https://doi.org/10.31234/osf.io/xakez)
 + Related functions: `net.loads`
 
 Christensen, A. P., & Golino, H. (under review). Random, factor, or network model? Predictions from neural networks. *PsyArXiv*. doi:[10.31234/osf.io/awkcb](https://doi.org/10.31234/osf.io/awkcb)
