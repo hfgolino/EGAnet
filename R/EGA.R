@@ -72,6 +72,8 @@
 #' \item{n.dim}{A scalar of how many total dimensions were identified in the network}
 #'
 #' \item{cor.data}{The zero-order correlation matrix}
+#' 
+#' \item{Methods}{Arguments for creating a Methods section (see \code{\link[EGAnet]{EGA.methods.section}})}
 #'
 #' @examples
 #'
@@ -122,7 +124,7 @@
 #'
 #' @export
 #'
-# Updated 27.07.2020
+# Updated 09.10.2020
 ## EGA Function to detect unidimensionality:
 EGA <- function (data, model = c("glasso", "TMFG"),
                  algorithm = c("walktrap", "louvain"),
@@ -216,11 +218,22 @@ EGA <- function (data, model = c("glasso", "TMFG"),
       cor.data <- multi.cor.res$cor.data
       estimated.network <- multi.cor.res$network
       wc <- uni.cor.res$wc[-c(1:(nvar*nfact))]
+      if(model == "glasso")
+      {
+        gamma <- uni.res$gamma
+        lambda <- uni.res$lambda
+      }
+      
     }else{
       n.dim <- multi.cor.res$n.dim
       cor.data <- multi.cor.res$cor.data
       estimated.network <- multi.cor.res$network
       wc <- multi.cor.res$wc
+      if(model == "glasso")
+      {
+        gamma <- multi.res$gamma
+        lambda <- multi.res$lambda
+      }
     }
     
   }else{
@@ -246,6 +259,12 @@ EGA <- function (data, model = c("glasso", "TMFG"),
       cor.data <- cor.data
       estimated.network <- suppressMessages(EGA.estimate(cor.data, model = model, algorithm = algorithm, steps = steps, n = n, ...)$network)
       wc <- uni.res$wc[-c(1:(nvar*nfact))]
+      if(model == "glasso")
+      {
+        gamma <- uni.res$gamma
+        lambda <- uni.res$lambda
+      }
+      
     }else{
       
       #-------------------------------------------------------------------------
@@ -258,6 +277,11 @@ EGA <- function (data, model = c("glasso", "TMFG"),
       cor.data <- cor.data
       estimated.network <- multi.res$network
       wc <- multi.res$wc
+      if(model == "glasso")
+      {
+        gamma <- multi.res$gamma
+        lambda <- multi.res$lambda
+      }
     }
   }
   
@@ -299,6 +323,27 @@ EGA <- function (data, model = c("glasso", "TMFG"),
   row.names(a$dim.variables) <- plot.ega$graphAttributes$Nodes$labels[match(a$dim.variables$items, names(plot.ega$graphAttributes$Nodes$labels))]
   
   a$EGA.type <- ifelse(a$n.dim <= 2, "Unidimensional EGA", "Traditional EGA")
+  
+  # Get arguments
+  args <- list()
+  
+  ## Get model and algorithm arguments
+  args$model <- model
+  args$algorithm <- algorithm
+  
+  ## Check if glasso was used
+  if(model == "glasso")
+  {
+    args$gamma <- gamma
+    args$lambda <- lambda
+  }
+  
+  ## Check if walktrap was used
+  if(algorithm == "walktrap")
+  {args$steps <- steps}
+  
+  a$Methods <- args
+  
   class(a) <- "EGA"
   return(a)
 }

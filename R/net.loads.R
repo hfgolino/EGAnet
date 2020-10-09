@@ -75,9 +75,9 @@
 #' net.loads(ega.wmt)
 #'
 #' @references
-#' Christensen, A. P., & Golino, H. (2020).
+#' Christensen, A. P., & Golino, H. (in press).
 #' On the equivalency of factor and network loadings.
-#' \emph{PsyArXiv}.
+#' \emph{Behavior Research Methods}.
 #' doi:\href{https://doi.org/10.31234/osf.io/xakez}{10.31234/osf.io/xakez}
 #' 
 #' Christensen, A. P., Golino, H., & Silvia, P. (2019).

@@ -80,7 +80,7 @@
 #'
 #' @export
 # EGA fit
-# Updated 09.09.2020
+# Updated 09.10.2020
 EGA.fit <- function (data, model = c("glasso","TMFG"),
                      steps = c(3,4,5,6,7,8), n = NULL)
 {
@@ -124,18 +124,8 @@ EGA.fit <- function (data, model = c("glasso","TMFG"),
       }
 
       #check for unique number of dimensions
-      uniq.dim <- vector("numeric",length=(ncol(dims)))
-
-      for(i in 2:(ncol(dims)))
-      {
-        uniq.dim[i] <- igraph::compare(dims[,i-1],dims[,i],method = "nmi")
-        names(uniq.dim) <- paste(steps,sep="")
-      }
-
-      uniq <- unique(as.matrix(uniq.dim))
-
-      step <- as.numeric(row.names(uniq)[which(uniq!=1)])
-
+      step <- as.numeric(colnames(dims)[which(!duplicated(homogenize.membership(dims[,1], dims), MARGIN = 2))])
+      
       len <- length(step)
 
       #if all models are the same
@@ -158,6 +148,20 @@ EGA.fit <- function (data, model = c("glasso","TMFG"),
         best.fit$EntropyFit <- ent.vec
         best.fit$Lowest.EntropyFit <- ent.vec[which(ent.vec==min(ent.vec))]
       }
+      
+  # Get information for EGA Methods section
+  args <- list()
+  
+  args$model <- model
+  args$algorithm <- "walktrap"
+  args$steps <- range(steps)
+  args$entropy <- best.fit$Lowest.EntropyFit
+  args$solutions <- best.fit$EntropyFit
+  
+  best.fit$Methods <- args
+      
+  class(best.fit) <- "EGA.fit"
+      
   return(best.fit)
 }
 #----

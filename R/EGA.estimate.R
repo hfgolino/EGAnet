@@ -257,6 +257,8 @@ EGA.estimate <- function(data, n = NULL,
   res$wc <- wc
   res$n.dim <- n.dim
   res$cor.data <- cor.data
+  res$gamma <- args$gamma
+  res$lambda <- args$lambda.min.ratio
 
   return(res)
 }
