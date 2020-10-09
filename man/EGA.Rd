@@ -81,6 +81,8 @@ was disconnected from the network}
 \item{n.dim}{A scalar of how many total dimensions were identified in the network}
 
 \item{cor.data}{The zero-order correlation matrix}
+
+\item{Methods}{Arguments for creating a Methods section (see \code{\link[EGAnet]{EGA.methods.section}})}
 }
 \description{
 Estimates the number of dimensions of a given dataset/instrument
