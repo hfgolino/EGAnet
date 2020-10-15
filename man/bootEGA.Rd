@@ -12,6 +12,7 @@ bootEGA(
   type = c("parametric", "resampling"),
   typicalStructure = TRUE,
   plot.typicalStructure = TRUE,
+  plot = c("GGally", "qgraph"),
   ncores,
   ...
 )
@@ -82,7 +83,12 @@ Defaults to \code{TRUE}}
 If \code{TRUE}, returns a plot of the typical network (partial correlations),
 which is the median of all pairwise correlations over the \emph{n} bootstraps,
 and its estimated dimensions.
-Defaults to \code{TRUE}}
+Defaults to \code{TRUE}
+
+#' @param plot Character.
+Plot system to use.
+Current options are \code{\link[qgraph]{qgraph}} and \code{\link[GGally]{GGally}}.
+Defaults to \code{"GGally"}.}
 
 \item{ncores}{Numeric.
 Number of cores to use in computing results.

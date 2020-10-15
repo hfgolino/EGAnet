@@ -31,18 +31,18 @@
 #' See \code{\link[NetworkToolbox]{TMFG}}}
 #'
 #' }
-#' 
+#'
 #' @param algorithm A string indicating the algorithm to use.
 #' Current options are:
-#' 
+#'
 #' \itemize{
-#' 
+#'
 #' \item{\strong{\code{walktrap}}}
 #' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
-#' 
+#'
 #' \item{\strong{\code{louvain}}}
 #' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_louvain}}}
-#' 
+#'
 #' }
 #'
 #' @param type Character.
@@ -73,6 +73,11 @@
 #' and its estimated dimensions.
 #' Defaults to \code{TRUE}
 #'
+#' #' @param plot Character.
+#' Plot system to use.
+#' Current options are \code{\link[qgraph]{qgraph}} and \code{\link[GGally]{GGally}}.
+#' Defaults to \code{"GGally"}.
+#'
 #' @param ncores Numeric.
 #' Number of cores to use in computing results.
 #' Defaults to \code{parallel::detectCores() / 2} or half of your
@@ -82,7 +87,7 @@
 #'
 #' If you're unsure how many cores your computer has,
 #' then use the following code: \code{parallel::detectCores()}
-#' 
+#'
 #' @param ... Additional arguments to be passed to \code{\link{EBICglasso.qgraph}}
 #' or \code{\link[NetworkToolbox]{TMFG}}
 #'
@@ -158,35 +163,40 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 11.05.2020
+# Updated 10.15.2020
 bootEGA <- function(data, n,
                     model = c("glasso", "TMFG"), algorithm = c("walktrap", "louvain"),
                     type = c("parametric", "resampling"),
-                    typicalStructure = TRUE, plot.typicalStructure = TRUE, ncores, ...) {
-  
+                    typicalStructure = TRUE, plot.typicalStructure = TRUE,
+                    plot = c("GGally", "qgraph"), ncores, ...) {
+
   #### MISSING ARGUMENTS HANDLING ####
-  
+
   if(missing(model))
   {model <- "glasso"
   }else{model <- match.arg(model)}
-  
+
   if(missing(algorithm))
   {algorithm <- "walktrap"
   }else{algorithm <- match.arg(algorithm)}
-  
+
   if(missing(type))
   {type <- "parametric"
   }else{type <- match.arg(type)}
-  
+
   if(missing(ncores))
   {ncores <- ceiling(parallel::detectCores() / 2)
   }else{ncores}
-  
+
+  if(missing(plot))
+  {plot <- "GGally"
+  }else{plot <- match.arg(plot)}
+
   #### MISSING ARGUMENTS HANDLING ####
-  
+
   #number of cases
   cases <- nrow(data)
-  
+
   #set inverse covariance matrix for parametric approach
   if(type=="parametric")  # Use a parametric approach:
   {
@@ -200,56 +210,56 @@ bootEGA <- function(data, n,
       diag(g) <- 1
     }
   }
-  
+
   #initialize data list
   datalist <- list()
-  
+
   #initialize count
   count <- 0
-  
+
   #let user know data generation has started
   message("\nGenerating data...", appendLF = FALSE)
-  
+
   repeat{
-    
+
     #increase count
     count <- count + 1
-    
+
     #generate data
     if(type == "parametric")
     {datalist[[count]] <- mvtnorm::rmvnorm(cases, sigma = corpcor::pseudoinverse(g))
     }else if(type == "resampling")
     {datalist[[count]] <- data[sample(1:cases, replace=TRUE),]}
-    
+
     #break out of repeat
     if(count == n)
     {break}
   }
-  
+
   #let user know data generation has ended
   message("done", appendLF = TRUE)
-  
+
   #initialize correlation matrix list
   corlist <- list()
-  
+
   #let user know data generation has started
   message("\nComputing correlation matrices...\n", appendLF = FALSE)
-  
+
   #Parallel processing
   cl <- parallel::makeCluster(ncores)
-  
+
   #Export variables
   parallel::clusterExport(cl = cl,
                           varlist = c("datalist", "corlist", "cases", ...),
                           envir=environment())
-  
+
   #Compute correlation matrices
   corlist <- pbapply::pblapply(X = datalist, cl = cl,
                                FUN = qgraph::cor_auto)
-  
+
   #let user know data generation has started
   message("Estimating networks...\n", appendLF = FALSE)
-  
+
   #Estimate networks
   if(model == "glasso")
   {
@@ -265,16 +275,16 @@ bootEGA <- function(data, n,
                                FUN = NetworkToolbox::TMFG,
                                normal = TRUE,
                                ...)
-    
+
     for(i in 1:n)
     {boots[[i]] <- boots[[i]]$A}
   }
-  
+
   parallel::stopCluster(cl)
-  
+
   #let user know results are being computed
   message("Computing results...", appendLF = FALSE)
-  
+
   bootGraphs <- vector("list", n)
   for (i in 1:n) {
     bootGraphs[[i]] <- boots[[i]]
@@ -287,7 +297,7 @@ bootEGA <- function(data, n,
   }
   boot.wc <- vector("list", n)
   for (m in 1:n) {
-    
+
     boot.wc[[m]] <- switch(algorithm,
                            walktrap = igraph::cluster_walktrap(boot.igraph[[m]]),
                            louvain = igraph::cluster_louvain(boot.igraph[[m]])
@@ -297,9 +307,9 @@ bootEGA <- function(data, n,
   for (m in 1:n) {
     boot.ndim[m, 2] <- max(boot.wc[[m]]$membership)
   }
-  
+
   colnames(boot.ndim) <- c("Boot.Number", "N.Dim")
-  
+
   boot.ndim[, 1] <- seq_len(n)
   if (typicalStructure == TRUE) {
     if(model=="glasso")
@@ -307,18 +317,54 @@ bootEGA <- function(data, n,
     }else if(model=="TMFG")
     {typical.Structure <- apply(simplify2array(bootGraphs),1:2, mean)}
     typical.igraph <- NetworkToolbox::convert2igraph(abs(typical.Structure))
-    
+
     typical.wc <- switch(algorithm,
                          walktrap = igraph::cluster_walktrap(typical.igraph),
                          louvain = igraph::cluster_louvain(typical.igraph)
                          )
-    
+
     typical.ndim <- max(typical.wc$membership)
     dim.variables <- data.frame(items = colnames(data), dimension = typical.wc$membership)
   }
   if (plot.typicalStructure == TRUE) {
-    plot.typical.ega <- qgraph::qgraph(typical.Structure, layout = "spring",
-                                       vsize = 6, groups = as.factor(typical.wc$membership))
+    if(plot == "qgraph"){
+      plot.typical.ega <- qgraph::qgraph(typical.Structure, layout = "spring",
+                                         vsize = 6, groups = as.factor(typical.wc$membership))
+    }else if(plot == "GGally"){
+        network1 <- network::network(typical.Structure,
+                                     ignore.eval = FALSE,
+                                     names.eval = "weights",
+                                     directed = FALSE)
+
+      network::set.vertex.attribute(network1, attrname= "Communities", value = typical.wc$membership)
+      network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
+      network::set.edge.attribute(network1, "color", ifelse(get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
+      network::set.edge.value(network1,attrname="AbsWeights",value=abs(typical.Structure))
+      network::set.edge.value(network1,attrname="ScaledWeights",
+                              value=matrix(scales::rescale(as.vector(typical.Structure),
+                                                           to = c(.001, 1.75)),
+                                           nrow = nrow(typical.Structure),
+                                           ncol = ncol(typical.Structure)))
+
+      # Layout "Spring"
+      graph1 <- igraph::as.igraph(qgraph::qgraph(typical.Structure, DoNotPlot = TRUE))
+      edge.list <- igraph::as_edgelist(graph1)
+      layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
+                                                                 weights =
+                                                                   abs(E(graph1)$weight/max(abs(E(graph1)$weight)))^2,
+                                                                 vcount = ncol(typical.Structure))
+
+
+      set.seed(1234)
+      plot.typical.ega <-GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
+                                color = "Communities", edge.color = c("color"),
+                                alpha = 0.5, size = 6, edge.alpha = 0.5,
+                                mode =  layout.spring,
+                                label.size = 2.4,
+                                label = colnames(typical.Structure))+theme(legend.title = element_blank())
+      }
+
+
   }
   Median <- median(boot.ndim[, 2])
   se.boot <- sd(boot.ndim[, 2])
@@ -330,23 +376,23 @@ bootEGA <- function(data, n,
                               Lower.CI = Median - ci, Upper.CI = Median + ci,
                               Lower.Quantile = quant[1], Upper.Quantile = quant[2])
   row.names(summary.table) <- NULL
-  
+
   #compute frequency
   dim.range <- range(boot.ndim[,2])
   lik <- matrix(0, nrow = diff(dim.range)+1, ncol = 2)
   colnames(lik) <- c("# of Factors", "Frequency")
   count <- 0
-  
+
   for(i in seq(from=min(dim.range),to=max(dim.range),by=1))
   {
     count <- count + 1
     lik[count,1] <- i
     lik[count,2] <- length(which(boot.ndim[,2]==i))/n
   }
-  
+
   #let user know results have been computed
   message("done", appendLF = TRUE)
-  
+
   result <- list()
   result$n <- n
   result$boot.ndim <- boot.ndim
@@ -355,7 +401,7 @@ bootEGA <- function(data, n,
   result$summary.table <- summary.table
   result$frequency <- lik
   result$EGA <- suppressMessages(suppressWarnings(EGA(data = data, model = model, plot.EGA = FALSE)))
-  
+
   # Typical structure
   if (typicalStructure == TRUE) {
     typicalGraph <- list()
@@ -363,8 +409,9 @@ bootEGA <- function(data, n,
     typicalGraph$typical.dim.variables <- dim.variables[order(dim.variables[,2]), ]
     typicalGraph$wc <- typical.wc$membership
     result$typicalGraph <- typicalGraph
+    result$plot.typical.ega <- plot.typical.ega
   }
-  
+
   class(result) <- "bootEGA"
   return(result)
 }
