@@ -12,7 +12,7 @@ bootEGA(
   type = c("parametric", "resampling"),
   typicalStructure = TRUE,
   plot.typicalStructure = TRUE,
-  plot = c("GGally", "qgraph"),
+  plot.type = c("GGally", "qgraph"),
   ncores,
   ...
 )
@@ -85,7 +85,7 @@ which is the median of all pairwise correlations over the \emph{n} bootstraps,
 and its estimated dimensions.
 Defaults to \code{TRUE}
 
-#' @param plot Character.
+#' @param plot.type Character.
 Plot system to use.
 Current options are \code{\link[qgraph]{qgraph}} and \code{\link[GGally]{GGally}}.
 Defaults to \code{"GGally"}.}
@@ -153,7 +153,7 @@ wmt <- wmt2[,7:24]
 \dontrun{
 
 # bootEGA glasso example
-boot.wmt <- bootEGA(data = wmt, n = 500, typicalStructure = TRUE,
+boot.wmt <- bootEGA(data = wmt, n = 100, typicalStructure = TRUE,
 plot.typicalStructure = TRUE, model = "glasso", type = "parametric", ncores = 4)
 }
 
@@ -162,9 +162,8 @@ intwl <- intelligenceBattery[,8:66]
 
 \dontrun{
 # bootEGA TMFG example
-boot.intwl <- bootEGA(data = intelligenceBattery[,8:66], n = 500, typicalStructure = TRUE,
+boot.intwl <- bootEGA(data = intelligenceBattery[,8:66], n = 100, typicalStructure = TRUE,
 plot.typicalStructure = TRUE, model = "TMFG", type = "parametric", ncores = 4)
-
 }
 
 }

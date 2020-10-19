@@ -73,7 +73,7 @@
 #' and its estimated dimensions.
 #' Defaults to \code{TRUE}
 #'
-#' #' @param plot Character.
+#' #' @param plot.type Character.
 #' Plot system to use.
 #' Current options are \code{\link[qgraph]{qgraph}} and \code{\link[GGally]{GGally}}.
 #' Defaults to \code{"GGally"}.
@@ -135,7 +135,7 @@
 #' \dontrun{
 #'
 #' # bootEGA glasso example
-#' boot.wmt <- bootEGA(data = wmt, n = 500, typicalStructure = TRUE,
+#' boot.wmt <- bootEGA(data = wmt, n = 100, typicalStructure = TRUE,
 #' plot.typicalStructure = TRUE, model = "glasso", type = "parametric", ncores = 4)
 #' }
 #'
@@ -144,10 +144,9 @@
 #'
 #' \dontrun{
 #' # bootEGA TMFG example
-#' boot.intwl <- bootEGA(data = intelligenceBattery[,8:66], n = 500, typicalStructure = TRUE,
+#' boot.intwl <- bootEGA(data = intelligenceBattery[,8:66], n = 100, typicalStructure = TRUE,
 #' plot.typicalStructure = TRUE, model = "TMFG", type = "parametric", ncores = 4)
-#'
-#' }
+#'}
 #'
 #' @references
 #' Christensen, A. P., & Golino, H. F. (2019).
@@ -168,7 +167,7 @@ bootEGA <- function(data, n,
                     model = c("glasso", "TMFG"), algorithm = c("walktrap", "louvain"),
                     type = c("parametric", "resampling"),
                     typicalStructure = TRUE, plot.typicalStructure = TRUE,
-                    plot = c("GGally", "qgraph"), ncores, ...) {
+                    plot.type = c("GGally", "qgraph"), ncores, ...) {
 
   #### MISSING ARGUMENTS HANDLING ####
 
@@ -188,9 +187,9 @@ bootEGA <- function(data, n,
   {ncores <- ceiling(parallel::detectCores() / 2)
   }else{ncores}
 
-  if(missing(plot))
-  {plot <- "GGally"
-  }else{plot <- match.arg(plot)}
+  if(missing(plot.type))
+  {plot.type <- "GGally"
+  }else{plot.type <- match.arg(plot.type)}
 
   #### MISSING ARGUMENTS HANDLING ####
 
@@ -327,10 +326,10 @@ bootEGA <- function(data, n,
     dim.variables <- data.frame(items = colnames(data), dimension = typical.wc$membership)
   }
   if (plot.typicalStructure == TRUE) {
-    if(plot == "qgraph"){
+    if(plot.type == "qgraph"){
       plot.typical.ega <- qgraph::qgraph(typical.Structure, layout = "spring",
                                          vsize = 6, groups = as.factor(typical.wc$membership))
-    }else if(plot == "GGally"){
+    }else if(plot.type == "GGally"){
         network1 <- network::network(typical.Structure,
                                      ignore.eval = FALSE,
                                      names.eval = "weights",
@@ -338,7 +337,7 @@ bootEGA <- function(data, n,
 
       network::set.vertex.attribute(network1, attrname= "Communities", value = typical.wc$membership)
       network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
-      network::set.edge.attribute(network1, "color", ifelse(get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
+      network::set.edge.attribute(network1, "color", ifelse( network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
       network::set.edge.value(network1,attrname="AbsWeights",value=abs(typical.Structure))
       network::set.edge.value(network1,attrname="ScaledWeights",
                               value=matrix(scales::rescale(as.vector(typical.Structure),
@@ -351,7 +350,7 @@ bootEGA <- function(data, n,
       edge.list <- igraph::as_edgelist(graph1)
       layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
                                                                  weights =
-                                                                   abs(E(graph1)$weight/max(abs(E(graph1)$weight)))^2,
+                                                                   abs(igraph::E(graph1)$weight/max(abs(igraph::E(graph1)$weight)))^2,
                                                                  vcount = ncol(typical.Structure))
 
 
@@ -361,7 +360,8 @@ bootEGA <- function(data, n,
                                 alpha = 0.5, size = 6, edge.alpha = 0.5,
                                 mode =  layout.spring,
                                 label.size = 2.4,
-                                label = colnames(typical.Structure))+theme(legend.title = element_blank())
+                                label = colnames(typical.Structure))+ggplot2::theme(legend.title = ggplot2::element_blank())
+      plot(plot.typical.ega)
       }
 
 

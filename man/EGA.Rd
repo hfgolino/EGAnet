@@ -9,7 +9,7 @@ EGA(
   model = c("glasso", "TMFG"),
   algorithm = c("walktrap", "louvain"),
   plot.EGA = TRUE,
-  plot = c("GGally", "qgraph"),
+  plot.type = c("GGally", "qgraph"),
   n = NULL,
   steps = 4,
   nvar = 4,
@@ -54,7 +54,7 @@ Current options are:
 If TRUE, returns a plot of the network and its estimated dimensions.
 Defaults to TRUE}
 
-\item{plot}{Character.
+\item{plot.type}{Character.
 Plot system to use.
 Current options are \code{\link[qgraph]{qgraph}} and \code{\link[GGally]{GGally}}.
 Defaults to \code{"GGally"}.}
@@ -106,11 +106,9 @@ This algorithm includes checking for whether the data is unidimensional.
 \dontrun{
 #estimate EGA
 ega.wmt <- EGA(data = wmt2[,7:24], model = "glasso", plot.EGA = TRUE)
-ega.wmt$Plot.EGA
 
 #estimate EGAtmfg
 ega.wmt <- EGA(data = wmt2[,7:24], model = "TMFG", plot.EGA = TRUE)
-ega.wmt$Plot.EGA
 
 #summary statistics
 summary(ega.wmt)
@@ -120,7 +118,6 @@ plot(ega.wmt)
 
 #estimate EGA
 ega.intel <- EGA(data = intelligenceBattery[,8:66], model = "glasso", plot.EGA = TRUE)
-ega.intel$Plot.EGA
 
 #summary statistics
 summary(ega.intel)

@@ -140,7 +140,7 @@ GLLA is a filtering method for estimating derivatives from data that uses time d
 }
 \examples{
 
-\donttest{
+\dontrun{
 # Population structure:
 dyn.random <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 delta = 1, id = 21, group = 22, use.derivatives = 1,
@@ -154,10 +154,11 @@ level = "group", model = "glasso", ncores = 2)
 
 # Intraindividual structure:
 
-dyn.individual <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
-delta = 1, id = 21, group = 22, use.derivatives = 1,
-level = "individual", model = "glasso", ncores = 2)
+# dyn.individual <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
+# delta = 1, id = 21, group = 22, use.derivatives = 1,
+# level = "individual", model = "glasso", ncores = 2)
 }
+
 }
 \references{
 Boker, S. M., Deboeck, P. R., Edler, C., & Keel, P. K. (2010)
