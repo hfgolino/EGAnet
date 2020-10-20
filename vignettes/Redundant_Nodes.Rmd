@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 ```
 
 # Introduction
-This vignette shows you how to use the node.redundant functions in EGAnet. The contents of this vignette is taken from Christensen, Golino, and Silvia (in press).
+This vignette shows you how to use the node.redundant functions in EGAnet. The contents of this vignette is taken from the supplementary information of Christensen, Golino, and Silvia (2020).
 
 To begin our example of structural validation from the psychometric network perspecitve, the *psychTools* (Revelle, 2019) pacakge must be installed and loaded.
 
@@ -101,13 +101,13 @@ Upon completing this process, the `node.redundant.combine` function will output 
 
 # References
 
-Christensen, A. P., Golino, H., & Silvia, P. J. (in press). A psychometric network perspective on the validity and validation of personality trait questionnaires. *European Journal of Personality*. https://doi.org/10.1002/per.2265
+Christensen, A. P., Golino, H., & Silvia, P. J. (2020). A psychometric network perspective on the validity and validation of personality trait questionnaires. *European Journal of Personality*. https://doi.org/10.1002/per.2265
 
 Condon, D. M. (2018). The SAPA personality inventory: An empirically-derived, hierarchically-organized self-report personality assessment model. *PsyArXiv*. https://doi.org/10.31234/osf.io/sc4p9
 
-Costantini, G., Richetin, J., Preti, E., Casini, E., Epskamp, S., & Perugini, M. (2019). Stability and variability of personality networks. A tutorial on recent developments in network psychometrics. *Personality and Individual Differences*, *136*, 68–78. https://doi.org/10.1016/j.paid.2017.06.011
+Costantini, G., Richetin, J., Preti, E., Casini, E., Epskamp, S., & Perugini, M. (2019). Stability and variability of personality networks. A tutorial on recent developments in network psychometrics. *Personality and Individual Differences*, *136*, 68--78. https://doi.org/10.1016/j.paid.2017.06.011
 
-Dinic, B. M., Wertag, A., Tomaševic, A., & Sokolovska, V. (in press). Centrality and redundancy of the Dark Tetrad traits. Personality and Individual Differences. https://doi.org/10.1016/j.paid.2019.109621
+Dinic, B. M., Wertag, A., Tomaševic, A., & Sokolovska, V. (in press). Centrality and redundancy of the Dark Tetrad traits. *Personality and Individual Differences*, *155*, 109621. https://doi.org/10.1016/j.paid.2019.109621
 
 Gysi, D. M., Voigt, A., de Miranda Fragoso, T., Almaas, E., & Nowick, K. (2018). wTO: An R package for computing weighted topological overlap and a consensus network with integrated visualization tool. *BMC Bioinformatics*, *19*, 392. https://doi.org/10.1186/s12859-018-2351-7
 

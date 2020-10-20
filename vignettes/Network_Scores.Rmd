@@ -1,6 +1,6 @@
 ---
 title: "Network Scores"
-author: "Alexander P. Christensen"
+author: "Alexander P. Christensen and Hudson Golino"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
@@ -35,18 +35,18 @@ library(lavaan)
 ```
 
 # Estimate Dimensions
-To estimate dimensions, we'll use exploratory graph analysis (EGA; Golino, 2019; Golino & Epskamp, 2017; Golino et al., 2018). EGA first computes a network using either the graphical least absolute selection and shrinkage operator (GLASSO; Friedman, Hastie, & Tibshirani, 2008) with extended Bayesian information criterion (EBIC) from the R package *qgraph* (GeLASSO; Epskamp & Fried, 2018) or the triangulated maximally filtered graph (TMFG; Massara et al., 2016) from the *NetworkToolbox* package (Christensen, 2018). EGA then applies the walktrap community detection algorithm (Pons & Latapy, 2006) from the *igraph* package (Csardi & Nepusz, 2006). Below is the code to estimate EGA using the GeLASSO method with the NEO PI-3 openness to experience data (*n* = 802) in the *NetworkToolbox* package.
+To estimate dimensions, we'll use exploratory graph analysis (EGA; Golino & Christensen, 2020; Golino & Epskamp, 2017; Golino et al., 2020). EGA first computes a network using either the graphical least absolute selection and shrinkage operator (GLASSO; Friedman, Hastie, & Tibshirani, 2008) with extended Bayesian information criterion (EBIC) from the R package *qgraph* (EBICglasso; Epskamp & Fried, 2018) or the triangulated maximally filtered graph (TMFG; Massara et al., 2016) from the *NetworkToolbox* package (Christensen, 2018). EGA then applies the Walktrap community detection algorithm (Pons & Latapy, 2006) from the *igraph* package (Csardi & Nepusz, 2006). Below is the code to estimate EGA using the EBICglasso method with the NEO PI-3 openness to experience data (*n* = 802) in the *NetworkToolbox* package.
 
 ```{r Fig1, fig.align = 'center', fig.pos = "H", echo = TRUE, message = FALSE, warning = FALSE}
 # Run EGA
 ega <- EGA(neoOpen, model = "glasso", algorithm = "louvain")
 ```
 
-As depicted above, EGA estimates there to be 7 dimensions of openness to experience. Using these dimensions, we can now estimate network scores; but first, I'll go into details about how these are estimated.
+As depicted above, EGA estimates there to be 7 dimensions of openness to experience. Using these dimensions, we can now estimate network scores; but first, we'll go into details about how these are estimated.
 
 # Network Loadings
-## Christensen & Golino (under review) and Golino, Moulder, Christensen, Kim, & Boker (in prep)
-Network loadings are roughly equivalent to factor loadings and differ only in the association measures used to compute them. For networks, the centrality measure *node strength* is used to compute the sum of the connections to a node. Previous simulation studies have reported that node strength is generally redundant with CFA factor loadings (Hallquist, Wright, & Molenaar, 2019) and item-scale correlations (Christensen, Golino, & Silvia, 2019). Importantly, Hallquist and colleagues (2019) found that a node's strength represents a combination of dominant and cross-factor loadings. To mitigate this issue, I've developed a function called `net.loads`, which computes the node strength for each node in each dimension, parsing out the connections that represent dominant and cross-dimension loadings. Below is the code to compute standardized (`$std`; unstandardized, `$unstd`) network loadings.
+## Christensen & Golino (in press) and Golino, Moulder, Christensen, Kim, & Boker (under review)
+Network loadings are roughly equivalent to factor loadings and differ only in the association measures used to compute them. For networks, the centrality measure *node strength* is used to compute the sum of the connections to a node. Previous simulation studies have reported that node strength is generally redundant with CFA factor loadings (Hallquist, Wright, & Molenaar, 2019) and item-scale correlations (Christensen, Golino, & Silvia, 2020). Importantly, Hallquist and colleagues (2019) found that a node's strength represents a combination of dominant and cross-factor loadings. To mitigate this issue, I've developed a function called `net.loads`, which computes the node strength for each node in each dimension, parsing out the connections that represent dominant and cross-dimension loadings. Below is the code to compute standardized (`$std`; unstandardized, `$unstd`) network loadings.
 
 ```{r loadings, echo = TRUE, message = FALSE, warning = FALSE}
 # Standardized
@@ -55,20 +55,20 @@ n.loads <- net.loads(A = ega)$std
 
 To provide mathematical notation, Let $W$ represent a symmetric $m \times m$ matrix where $m$ is the number of terms. Node strength is then defined as:
 
-$$NS_i = \sum^m_j w_{ij},$$
+$$S_i = \sum_{j = 1}^m |w_{ij}|,$$
 
-where $w_{ij}$ is the weight (e.g., partial correlation) between node $i$ and node $j$, and $NS_i$ is the sum of the weights between node $i$ and all other nodes. Using the definition of node strength (\ref{eq:ns}), we can define node strength split between the communities, $C$, identified by EGA:
+$$L_{if} = \sum_{j \in f}^F |w_{ij}|,$$
 
-$$NL_{ic} = \sum^C_{j \in c} w_{ij},$$
+where $|w_{ij}|$ is the absolute weight (e.g., partial correlation) between node $i$ and $j$, $S_i$ is the sum of the edge weights connected to node $i$ across all nodes ($n$; i.e., node strength for node $i$), $L_{if}$ is the sum of edge weights in factor $f$ that are connected to node $i$ (i.e., node $i$'s loading for factor $f$), and $F$ is the number of factors (in the network). This measure can be standardized using the following formula:
 
-where $w_{ij}$ is the weight of node $i$ with the subset of nodes $j$ that belong to community $c$ (i.e., $j \in c$), and $NL_{ic}$ is the sum of the weights for node $i$ in community $c$ (or unstandardized network loading for node $i$ in community $c$). From the unstandardized network loadings (\ref{eq:unstd}), standardized network loadings follow with:
+$$z_{L_{if}} = \frac{L_{if}}{\sqrt{\sum L_{.f}}},$$
 
-$$z_{NL_{ic}} = \frac{NL_{ic}}{\sqrt{\sum\limits^C_c NL_c}},$$
+where the denominator is equal to the square root of the sum of all the weights for nodes in factor $f$. Notably, the standardized loadings are absolute weights with the signs being added after the loadings have been computed [following the same procedure as factor loadings; @comrey2013first]. In contrast to factor loadings, the network loadings are computed after the number of factors have been extracted from the network's structure. Variables are deterministically assigned to specific factors via a community detection algorithm rather than the traditional factor analytic standard of their largest loading in the loading matrix. This means that some nodes may not have any connections to nodes in other factors in the network, leading some variables to have zeros for some factors in the network loading matrix.
 
-where $NL_c$ is the sum of network loadings in community $c$ and $z_{NL_{ic}}$ is the standardized network loading of node $i$ in community $c$. It's important to emphasize that network loadings are in the unit of association---that is, if the network consists of partial correlations, then the standardized network loadings are the partial correlation of each node within each dimension.
+These standardized network loadings summarize the information in the edge weights and so they depend on the type of association represented by the edge weight (e.g., partial correlations, zero-order correlations). Thus, the meaning of these network loadings will change based on the type of correlation used. Specifically, partial correlations represent the unique measurement of a factor whereas zero-order correlations represent the unique and shared contribution of a variable's measurement of a factor.
 
 # Network Scores
-These network loadings form the foundation for computing network scores .Because the network loadings represent the middle ground between a saturated (EFA) and simple (CFA) structure, the network scores accomodate the inclusion of only the most important cross-loadings in their computation. This capitalizes on information often lost in typical CFA structures but reduces the cross-loadings of EFA structures to only the most important loadings. 
+These network loadings form the foundation for computing network scores .Because the network loadings represent the middle ground between a saturated (EFA) and simple (CFA) structure, the network scores accommodate the inclusion of only the most important cross-loadings in their computation. This capitalizes on information often lost in typical CFA structures but reduces the cross-loadings of EFA structures to only the most important loadings. 
 
 To compute network scores, the following code can be used:
 
@@ -141,32 +141,32 @@ for(i in 1:ega$n.dim)
 knitr::kable(cors.mat)
 ```
 
-As shown in the table, the network scores strongly correlate with the latent variable scores. Because Spearman's correlation was used, the orderings of the values take precendence. These large correlations between the scores reflect considerable redundancy between these scores.
+As shown in the table, the network scores strongly correlate with the latent variable scores. Because Spearman's correlation was used, the orderings of the values take precedence. These large correlations between the scores reflect considerable redundancy between these scores.
 
 # References
 
-Christensen, A. P. (2018). NetworkToolbox: Methods and measures for brain, cognitive, and psychometric network analysis in R. *The R Journal*, *10*, 422-439. https://doi.org/10.32614/RJ-2018-065
+Christensen, A. P. (2018). NetworkToolbox: Methods and measures for brain, cognitive, and psychometric network analysis in R. *The R Journal*, *10*, 422--439. https://doi.org/10.32614/RJ-2018-065
 
-Christensen, A. P., & Golino, H. (under review). Statistical equivalency of factor and network loadings. *PsyArXiv*. https://doi.org/10.31234/osf.io/xakez
+Christensen, A. P., & Golino, H. (in press). On the equivalency of factor and network loadings. *Behavior Research Methods*. https://doi.org/10.31234/osf.io/xakez
 
-Christensen, A. P., Golino, H., & Silvia, P. (2019). A psychometric network perspective on the measurement and assessment of personality traits. *PsyArXiv*. https://doi.org/10.31234/osf.io/ktejp
+Christensen, A. P., Golino, H., & Silvia, P. (2020). A psychometric network perspective on the validity and validation of personality trait questionnaires. *European Journal of Personality*. https://doi.org/10.1002/per.2265
 
-Csardi, G., & Nepusz, T. (2006). The igraph software package for complex network research. *InterJournal Complex Systems*, *1695*, 1-9.
+Csardi, G., & Nepusz, T. (2006). The igraph software package for complex network research. *InterJournal Complex Systems*, *1695*, 1--9.
 
-Epskamp, S., & Fried, E. I. (2018). A tutorial on regularized partial correlation networks. *Psychological Methods*, *23*, 617-634. http://dx.doi.org/10.1037/met0000167
+Epskamp, S., & Fried, E. I. (2018). A tutorial on regularized partial correlation networks. *Psychological Methods*, *23*, 617--634. http://dx.doi.org/10.1037/met0000167
 
-Friedman, J., Hastie, T., & Tibshirani, R. (2008). Sparse inverse covariance estimation with the graphical lasso. *Biostatistics*, *9*, 432-441. https://doi.org/10.1093/biostatistics/kxm045
+Friedman, J., Hastie, T., & Tibshirani, R. (2008). Sparse inverse covariance estimation with the graphical lasso. *Biostatistics*, *9*, 432--441. https://doi.org/10.1093/biostatistics/kxm045
 
-Golino, H., & Christensen, A. P. (2020). EGAnet: Exploratory graph analysis -- A framework for estimating the number of dimensions in multivariate data using network psychometrics. R package version 0.9.4. https://CRAN.R-project.org/package=EGAnet
+Golino, H., & Christensen, A. P. (2020). EGAnet: Exploratory graph analysis -- A framework for estimating the number of dimensions in multivariate data using network psychometrics. https://CRAN.R-project.org/package=EGAnet
 
-Golino, H., & Epskamp, S. (2017). Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research. *PloS ONE*, 12, e0174035. https://doi.org/10.1371/journal.pone.0174035
+Golino, H., & Epskamp, S. (2017). Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research. *PLoS ONE*, 12, e0174035. https://doi.org/10.1371/journal.pone.0174035
 
-Golino, H., Moulder, R., Christensen, A. P., Kim, S., & Boker, S. M. (in prep). Modeling latent topics in social media using Dynamic Exploratory Graph Analysis: The case of the right-wing and left-wing trolls in the 2016 US elections.
+Golino, H., Moulder, R., Christensen, A. P., Kim, S., & Boker, S. M. (under review). Modeling latent topics in social media using Dynamic Exploratory Graph Analysis: The case of the right-wing and left-wing trolls in the 2016 US elections. *PsyArXiv*. 
 
-Golino, H., Shi, D., Christensen, A. P., Nieto, M. D., Sadana, R., & Thiyagarajan, J. A. (2018). Investigating the performance of exploratory graph analysis and traditional techniques to identify the number of latent factors: A simulation and tutorial. *PsyArXiv*. https://psyarxiv.com/gzcre/
+Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., Thiyagarajan, J. A., & Martinez-Molina, A. (2020). Investigating the performance of exploratory graph analysis and traditional techniques to identify the number of latent factors: A simulation and tutorial. *Psychological Methods*, 25 292--320. https://doi.org/10.1037/met0000255
 
-Hallquist, M., Wright, A. C. G., & Molenaar, P. C. (2019). Problems with centrality measures in psychopathology symptom networks: Why network psychometrics cannot escape psychometric theory. *Multivariate Behavioral Research*. https://psyarxiv.com/pg4mf
+Hallquist, M., Wright, A. C. G., & Molenaar, P. C. (2019). Problems with centrality measures in psychopathology symptom networks: Why network psychometrics cannot escape psychometric theory. *Multivariate Behavioral Research*. https://doi.org/10.1080/00273171.2019.1640103
 
-Massara, G. P., Di Matteo, T., & Aste, T. (2016). Network filtering for big data: Triangulated maximally filtered graph. *Journal of Complex Networks*, *5*, 161-178. https://doi.org/10.1093/comnet/cnw015
+Massara, G. P., Di Matteo, T., & Aste, T. (2016). Network filtering for big data: Triangulated maximally filtered graph. *Journal of Complex Networks*, *5*, 161--178. https://doi.org/10.1093/comnet/cnw015
 
-Pons, P., & Latapy, M. (2006). Computing communities in large networks using random walks. *Journal of Graph Algorithms and Applications*, *10*, 191-218. https://doi.org/10.7155/jgaa.00124
+Pons, P., & Latapy, M. (2006). Computing communities in large networks using random walks. *Journal of Graph Algorithms and Applications*, *10*, 191--218. https://doi.org/10.7155/jgaa.00124
