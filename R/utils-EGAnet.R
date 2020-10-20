@@ -1240,3 +1240,72 @@ dnn.predict <- function (loads)
   ifelse(any(f_n >= .50), return(2), return(3))
   
 }
+
+#' A sub-routine to simulate data for \code{\link[EGAnet]{EGA}}
+#' 
+#' @param data Data for number of cases
+#' 
+#' @param nvar Number of variables
+#' 
+#' @param nfact Number of factors
+#' 
+#' @param load Magnitude of loadings
+#'
+#' @return Simulated data
+#' 
+#' @importFrom utils data
+#' 
+#' @author Loli Nieto and Luis Garrido
+#'
+#' @noRd
+#'
+# Simulate data function----
+# Updated 19.10.2020
+sim.func <- function(data, nvar, nfact, load)
+{
+  # Check for unidimensional structure
+  ## Set up data simulation
+  n <- nrow(data)
+  corf <- 0
+  J <- nvar*nfact
+  sdcross = 0
+  
+  ## GENERATE SAMPLE DATA MATRIX
+  check.eig <- TRUE
+  check.com <- TRUE
+  
+  while(check.eig == TRUE|check.com == TRUE)
+  {
+    SATF = matrix(0, J, nfact)
+    
+    for(j in 1:nfact)
+    {
+      SATF[(j*nvar-nvar+1):(j*nvar),j]<-runif(nvar, load-.10, load+.10)
+      
+      if(nfact>1)
+      {
+        CROSS.L <- apply(as.matrix(SATF[(j*nvar-nvar+1+2):(j*nvar),-c(j)]), 2, function(x) rnorm((nvar-2), 0, sdcross))
+        
+        SATF[(j*nvar-nvar+1+2):(j*nvar),-c(j)] <- CROSS.L
+      }
+    }
+    
+    #SATF # Population factor loading matrix with cross-loadings and marker items
+    
+    FCOR      = matrix(corf, nfact, nfact); diag(FCOR)<-1 ## Factor correlation matrix
+    R         = SATF%*%FCOR%*%t(SATF)                          ## Rr
+    check.com = any(diag(R) > .90)                                  ## Check communalities values
+    diag(R)   = 1                                                                    ## Insert ones in the diagonal of Rr
+    #R                                                                                       ## Rp
+    check.eig = any(eigen(R)$values <= 0)                      ## Check eigenvalues
+  }
+  
+  U = chol(R)                                                                       ## Cholesky decomposition of Rp
+  Z = mvtnorm::rmvnorm(n, sigma = diag(J))                                  ## Obtain sample matrix of continuous variables
+  X = Z%*%U
+  colnames(X) <- paste0("X", 1:ncol(X))
+  
+  data.sim <- cbind(X, data)
+  
+  return(data.sim)
+}
