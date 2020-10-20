@@ -153,12 +153,13 @@ EGA.estimate <- function(data, n = NULL,
     # Give deprecation warning
     warning(
       paste(
-        "The 'steps' argument has been deprecated in all EGA functions.\n\nInstead use: algorithm.args = list(steps = ", add.args$steps, ")", sep = "")
+        "The 'steps' argument has been deprecated in all EGA functions.\n\nInstead use: algorithm.args = list(steps = ", add.args$steps, ")",
+        sep = ""
+      )
     )
-    )
-
-# Handle the number of steps appropriately
-algorithm.args$steps <- add.args$steps
+    
+    # Handle the number of steps appropriately
+    algorithm.args$steps <- add.args$steps
   }
   
   #### ARGUMENTS HANDLING ####
