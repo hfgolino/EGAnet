@@ -86,15 +86,15 @@
 #'
 #' \item{\strong{\code{TMFG}}}
 #' {Estimates a Triangulated Maximally Filtered Graph}
-#' 
+#'
 #' }
-#' 
+#'
 #' @param model.args List.
 #' A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
 #' or \code{\link[NetworkToolbox]{TMFG}}
 #'
 #' @param algorithm A string indicating the algorithm to use or a function from \code{\link{igraph}}
-#' 
+#'
 #' Current options are:
 #'
 #' \itemize{
@@ -106,7 +106,7 @@
 #' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_louvain}}}
 #'
 #' }
-#' 
+#'
 #' @param algorithm.args List.
 #' A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
 #' or some other community detection algorithm function (see examples)
@@ -120,7 +120,7 @@
 #'
 #' If you're unsure how many cores your computer has,
 #' then use the following code: \code{parallel::detectCores()}
-#' 
+#'
 #' @param ... Additional arguments.
 #' Used for deprecated arguments from previous versions of \code{\link{EGA}}
 #'
@@ -132,13 +132,13 @@
 #' delta = 1, id = 21, group = 22, use.derivatives = 1,
 #' level = "population", model = "glasso", ncores = 2,
 #' plot.EGA = FALSE)
-#' 
+#'
 #' # Group structure:
 #' dyn.group <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 #' delta = 1, id = 21, group = 22, use.derivatives = 1,
 #' level = "group", model = "glasso", ncores = 2,
 #' plot.EGA = FALSE)
-#' 
+#'
 #' # Intraindividual structure (commented out for CRAN tests):
 #' # dyn.individual <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 #' # delta = 1, id = 21, group = 22, use.derivatives = 1,
@@ -181,13 +181,13 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
                    plot.EGA = TRUE,
                    corr = c("cor_auto", "pearson", "spearman"),
                    ncores, ...){
-  
+
   # Get additional arguments
   add.args <- list(...)
-  
+
   # Check if steps has been input as an argument
   if("steps" %in% names(add.args)){
-    
+
     # Give deprecation warning
     warning(
       paste(
@@ -195,11 +195,26 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
         sep = ""
       )
     )
-    
+
     # Handle the number of steps appropriately
     algorithm.args$steps <- add.args$steps
   }
-  
+
+  # Check if cor has been input as an argument
+  if("cor" %in% names(add.args)){
+
+    # Give deprecation warning
+    warning(
+      paste(
+        "The 'cor' argument has been deprecated in dynEGA.\n\nInstead use: corr = ", add.args$cor, ")",
+        sep = ""
+      )
+    )
+
+    # Handle the number of steps appropriately
+    corr <- add.args$cor
+  }
+
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(id))
   {stop("The 'id' argument is missing! \n The number of the column identifying each individual must be provided!")
