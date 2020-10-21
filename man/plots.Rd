@@ -11,17 +11,17 @@
 \alias{plot.NetLoads}
 \title{S3Methods for Plotting}
 \usage{
-\method{plot}{bootEGA}(x, vsize = 6, plot.type = c("GGally", "qgraph"), ...)
+\method{plot}{bootEGA}(x, vsize = 6, plot = c("GGally", "qgraph"), ...)
 
 \method{plot}{CFA}(x, layout = "spring", vsize = 6, ...)
 
-\method{plot}{dynEGA}(x, title = "", vsize = 6, plot.type = c("GGally", "qgraph"), ...)
+\method{plot}{dynEGA}(x, title = "", vsize = 6, plot = c("GGally", "qgraph"), ...)
 
-\method{plot}{dynEGA.Groups}(x, ncol, nrow, title = "", vsize = 6, plot.type = c("GGally", "qgraph"),  ...)
+\method{plot}{dynEGA.Groups}(x, ncol, nrow, title = "", vsize = 6, plot = c("GGally", "qgraph"),  ...)
 
-\method{plot}{dynEGA.Individuals}(x, title = "", vsize = 6,  id = NULL, plot.type = c("GGally", "qgraph"), ...)
+\method{plot}{dynEGA.Individuals}(x, title = "", vsize = 6,  id = NULL, plot = c("GGally", "qgraph"), ...)
 
-\method{plot}{EGA}(x, title = "", vsize = 6, plot.type = c("GGally", "qgraph"), ...)
+\method{plot}{EGA}(x, title = "", vsize = 6, plot = c("GGally", "qgraph"), ...)
 
 \method{plot}{NetLoads}(x, ...)
 }
@@ -32,9 +32,9 @@
 Size of vertices in network plots.
 Defaults to \code{6}}
 
-\item{plot.type}{Character.
+\item{plot}{Character.
 Plot system to use.
-Current options are \code{\link[qgraph]{qgraph}} and \code{\link[GGally]{GGally}}.
+Current options are \code{\link[qgraph]{qgraph}} and \code{\link{GGally}}.
 Defaults to \code{"GGally"}.}
 
 \item{...}{Arguments passed on to

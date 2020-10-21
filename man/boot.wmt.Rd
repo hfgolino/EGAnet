@@ -5,7 +5,7 @@
 \alias{boot.wmt}
 \title{\code{\link[EGAnet]{bootEGA}} Results of \code{\link[EGAnet]{wmt2}}Data}
 \format{
-A list with 8 objects (see \code{\link[EGAnet]{bootEGA}})
+A list with 9 objects (see \code{\link[EGAnet]{bootEGA}})
 
 A list with 8 objects (see \code{\link[EGAnet]{bootEGA}})
 }

@@ -34,34 +34,49 @@
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
 #'
 #' @examples
-#'
 #' # Load data
 #' wmt <- wmt2[,7:24]
-#'
-#' \dontrun{
+#' 
+#' \dontshow{# Fast for CRAN
+#' cor.wmt <- cor(wmt)
+#' 
 #' # Estimate EGA
-#' ega.wmt <- EGA(data = wmt)
-#'
+#' ega.wmt <- EGA(data = wmt, uni = TRUE, n = nrow(wmt2), plot.EGA = FALSE)
 #' }
 #'
+#' \donttest{
+#' # Estimate EGA
+#' ega.wmt <- EGA(data = wmt, uni = TRUE, plot.EGA = FALSE)
+#' 
 #' # Fit CFA model to EGA results
 #' cfa.wmt <- CFA(ega.obj = ega.wmt, estimator = 'WLSMV', plot.CFA = TRUE, data = wmt)
 #'
 #' # Additional fit measures
 #' lavaan::fitMeasures(cfa.wmt$fit, fit.measures = "all")
+#' }
 #'
 #' # Load data
 #' intel <- intelligenceBattery[,8:66]
 #'
-#' \dontrun{
+#' \donttest{
 #' # Estimate EGA
-#' ega.intel <- EGA(data = intel)
+#' ega.intel <- EGA(data = intel, plot.EGA = FALSE)
 #'
 #' # Fit CFA model to EGA results
 #' cfa.intel <- CFA(ega.obj = ega.intel, estimator = 'WLSMV', plot.CFA = TRUE,
 #' data = intel)
-#'
 #' }
+#' 
+#' @references 
+#' Christensen, A. P., Gross, G. M., Golino, H., Silvia, P. J., & Kwapil, T. R. (2019).
+#' Exploratory graph analysis of the Multidimensional Schizotypy Scale.
+#' \emph{Schizophrenia Research}, \emph{206}, 43-51.
+#' doi: \href{https://doi.org/10.1016/j.schres.2018.12.018}{10.1016/j.schres.2018.12.018}
+#' 
+#' Golino, H., & Epskamp, S. (2017).
+#' Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research.
+#' \emph{PloS one}, \emph{12(6)}, e0174035.
+#' doi: \href{https://doi.org/10.1371/journal.pone.0174035}{10.1371/journal.pone.0174035}
 #'
 #' @seealso \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and
 #' \code{\link[EGAnet]{bootEGA}} to investigate the stability of EGA's estimation via bootstrap.
@@ -69,7 +84,7 @@
 #' @export
 #'
 # CFA model for EGA
-# Updated 11.06.2020
+# Updated 21.10.2020
 CFA<- function(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ...) {
 
     strct <- split(ega.obj$dim.variables[, 1], list(ega.obj$dim.variables[, 2]))

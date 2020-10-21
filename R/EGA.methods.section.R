@@ -1,67 +1,67 @@
 #' Automated Methods Section for \code{\link[EGAnet]{EGA}} Objects
-#'
+#' 
 #' @description This function accepts an \code{\link[EGAnet]{EGA}} object
 #' and generates a Methods section for your analysis. The output is
 #' an HTML containing the descriptions of the methods and parameters
 #' along with a Reference section for appropriate citation.
-#'
+#' 
 #' @param EGA.object An \code{\link[EGAnet]{EGA}} object
 #'
 #' @return Automated HTML Methods section in your default browser
-#'
+#' 
 #' @examples
 #' EGA.methods.section(ega.wmt)
+#' 
+#' @importFrom utils packageVersion browseURL
 #'
-#' @importFrom stats mad
-#' @importFrom utils browseURL packageVersion packageDescription
 #' @export
 #'
 # Methods Section----
 # Updated 09.10.2020
 EGA.methods.section <- function(EGA.object)
 {
-
+  
   # Check for EGA object
   if(!class(EGA.object) %in% c("EGA", "bootEGA", "EGA.fit", "dynEGA"))
   {stop("Object input into 'EGA.object' is not an EGA object.")}
-
+  
   #! Still need to work on bootEGA, EGA.fit, and dynEGA !#
-
+  
   # Get class
   METHOD <- class(EGA.object)
-
+  
   # Input arguments
   INPUT <- EGA.object$Methods
-
+  
   # Year
   year <- unlist(strsplit(as.character(Sys.Date()), split = "\\-"))[1]
-
+  
   # Version
-  version <- utils::packageVersion("EGAnet")
-
+  version <- packageVersion("EGAnet")
+  
   # Version Year
-  version.year <- utils::packageDescription("EGAnet")
+  version.year <- packageDescription("EGAnet")
   version.year <- unlist(strsplit(as.character(version.year$Date), split = "\\-"))[1]
-
+  
   # References
   refs <- list()
-
+  
   refs$golino1 <- paste("Golino, H., & Christensen, A. P. (", version.year, "). ",
                         "EGAnet: Exploratory Graph Analysis -- A framework for estimating the number of dimensions in multivariate data using network psychometrics. ",
                         "Retrieved from https://cran.r-project.org/package=EGAnet",
                         sep = "")
-
+  
   # Markdown YAML
   YAML <- c("---",
             "title: EGA Methods Section",
             "output: html_document",
             "---"
   )
-
+  
   # For EGA
   model <- INPUT$model
   algorithm <- INPUT$algorithm
-
+  
   # Set up text
   ## Introduction
   intro.header <- "# Exploratory Graph Analysis"
@@ -74,36 +74,36 @@ EGA.methods.section <- function(EGA.object)
                       "(Christensen & Golino, 2020; Golino et al., 2020). EGA was applied using the *EGAnet* package ",
                       "(version ", version, "; Golino & Christensen, ", version.year, ") in R (R Core Team, ", year, ").",
                       sep = "")
-
+  
   refs$christensenB2020 <- paste("Christensen, A. P., & Golino, H. (2020).",
                                  "Estimating factors with psychometric networks: A Monte Carlo simulation comparing community detection algorithms.",
                                  "<em>PsyArXiv</em>.",
                                  "https://doi.org/10.31234/osf.io/hz89e")
-
+  
   refs$golinoA2017 <- paste("Golino, H., & Epskamp, S. (2017).",
                             "Exploratory Graph Analysis: A new approach for estimating the number of dimensions in psychological research.",
                             "<em>PloS ONE</em>, <em>12</em>, e0174035.",
                             "https://doi.org/10.1371/journal.pone.0174035")
-
+  
   refs$golinoB2020 <- paste("Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., ... Martinez-Molina, A. (2020).",
                             "Investigating the performance of Exploratory Graph Analysis and traditional techniques to identify the number of latent factors: A simulation and tutorial.",
                             "<em>Psychological Methods</em>, <em>25</em>, 292--320.",
                             "https://doi.org/10.1037/met0000255")
-
+  
   refs$fortunato2009 <- paste("Fortunato, S. (2010).",
                               "Community detectionin graphs.",
                               "<em>Physics Reports</em>, <em>3--5</em>, 75--174.",
                               "https://doi.org/10.1037/met0000255")
-
+  
   ## Description of network estimation method
   model.header <- "## Network Estimation Method"
-
+  
   if(tolower(model) == "glasso")
   {
-
+    
     lambda <- INPUT$lambda
     gamma <- INPUT$gamma
-
+    
     model.text <- paste("This study applied the graphical least absolute shrinkage and selection operator ",
                         "(GLASSO; Friedman, Haste, & Tibshirani, 2008, 2014), which estimates a Gaussian ",
                         "Graphical Model (GGM; Lauritzen, 1996) where nodes (circles) represent variables ",
@@ -130,46 +130,46 @@ EGA.methods.section <- function(EGA.object)
                         "in R.",
                         sep = ""
     )
-
+    
     refs$friedman2008 <- paste("Friedman, J., Hastie, T., & Tibshirani, R. (2008).",
                                "Sparse inverse covariance estimation with the graphical lasso.",
                                "<em>Biostatistics</em>, <em>9</em>, 432--441.",
                                "https://doi.org/10.1093/biostatistics/kxm045")
-
+    
     refs$friedman2014 <- paste("Friedman, J., Hastie, T., & Tibshirani, R. (2014).",
                                "<em>glasso: Graphical lasso - estimation of Gaussian graphical models.</em>",
                                "Retrived from https://CRAN.R-project.org/package=glasso")
-
+    
     refs$lauritzen1996 <- paste("Lauritzen, S. L. (1996).",
                                 "<em>Graphical models.</em>",
                                 "Oxford, UK: Clarendon Press.")
-
+    
     refs$tibshirani1996 <- paste("Tibshirani, R. (1996).",
                                  "Regression shrinkage and selection via the lasso.",
                                  "<em>Journal of the Royal Statistical Society. Series B (Methodological)</em>, 267--288.",
                                  "https://doi.org/10.1111/j.2517-6161.1996.tb02080.x")
-
+    
     refs$chen2008 <- paste("Chen, J., & Chen, Z. (2008).",
                            "Extended bayesian information criteria for model selection with large model spaces.",
                            "<em>Biometrika</em>, <em>95</em>, 759--771.",
                            "https://doi.org/10.1093/biomet/asn034")
-
+    
     refs$epskampA2018 <- paste("Epskamp, S., & Fried, E. I. (2018).",
                                "A tutorial on regularized partial correlation networks.",
                                "<em>Psychological Methods</em>, <em>23</em>, 617--634.",
                                "https://doi.org/10.1037/met0000167")
-
+    
     refs$foygel2010 <- paste("Foygel, R., & Drton, M. (2010).",
                              "Extended Bayesian information criteria for Gaussian graphical models.",
                              "In J. D. Lafferty, C. K. I. Williams, J. Shawe-Taylor, R. S., Zemel, & A. Culotta (Eds.),",
                              "<em>Advances in neural information processing systems</em> (pp. 604--612).",
                              "Retrieved from http://papers.nips.cc/paper/4087-extended-bayesianinformation-criteria-for-gaussian-graphical-models")
-
+    
     refs$epskampB2012 <- paste("Epskamp, S., Cramer, A. O. J., Waldorp, L. J., Schmittmann, V. D., & Borsboom, D. (2012).",
                                "qgraph: Network visualizations of relationships in psychometric data.",
                                "<em>Journal of Statistical Software</em>, <em>48</em>, 1--18.",
                                "https://doi.org/10.18637/jss.v048.i04")
-
+    
   }else if(model == "TMFG")
   {
     model.text <- paste("This study applied the Triangulated Maximally Filtered Graph (TMFG; Christensen et al., 2018; Massara, Di Matteo, & Aste, 2016), ",
@@ -192,40 +192,40 @@ EGA.methods.section <- function(EGA.object)
                         "The TMFG method was applied using the *NetworkToolbox* package (Christensen, 2018) in R.",
                         sep = ""
     )
-
+    
     refs$christensenC2018 <- paste("Christensen, A. P., Kenett, Y. N., Aste, T., Silvia, P. J., & Kwapil, T. R. (2018).",
                                    "Network structure of the Wisconsin Schizotypy Scales-Short Forms: Examining psychometric network filtering approaches.",
                                    "<em>Behavior Research Methods</em>, <em>50</em>, 2531--2550.",
                                    "https://doi.org/10.3758/s13428-018-1032-9")
-
+    
     refs$massara2016 <- paste("Massara, G. P., Di Matteo, T., & Aste, T. (2016).",
                               "Network filtering for big data: Triangulated maximally filtered graph.",
                               "<em>Journal of Complex Networks</em>, <em>5</em>, 161--178.",
                               "https://doi.org/10.1093/comnet/cnw015")
-
+    
     refs$tumminello2005 <- paste("Tumminello, M., Aste, T., Di Matteo, T., & Mantegna, R. N. (2005).",
                                  "A tool for filtering information in complex systems.",
                                  "<em>Proceedings of the National Academy of Sciences</em>, <em>102</em>, 10421--10426.",
                                  "https://doi.org/10.1073/pnas.0500298102")
-
+    
     refs$song2012 <- paste("Song, W.-M., Di Matteo, T., & Aste, T. (2012).",
                            "Hierarchical information clustering by means of topologically embedded graphs.",
                            "<em>PLoS ONE</em>, <em>7</em>, e31929.",
                            "https://doi.org/10.1371/journal.pone.0031929")
-
+    
     refs$christensenA2018 <- paste("Christensen, A. P. (2018).",
                                    "NetworkToolbox: Methods and measures for brain, cognitive, and psychometric network analysis in R.",
                                    "<em>The R Journal</em>, <em>10</em>, 422--439.",
                                    "https://doi.org/10.32614/RJ-2018-065")
   }
-
+  
   ## Description of community detection algorithm
   algorithm.header <- "## Community Detection Algorithm"
-
+  
   if(tolower(algorithm) == "walktrap")
   {
     steps <- INPUT$steps
-
+    
     algorithm.text <- paste("The Walktrap algorithm (Pons & Latapy, 2006) is a commonly applied community detection algorithm in ",
                             "the psychometric network literature (Golino & Epskamp, 2017; Golino et al., 2020). The algorithm begins ",
                             "by computing a transition matrix where each element represents the probability of one node traversing to ",
@@ -238,35 +238,35 @@ EGA.methods.section <- function(EGA.object)
                             "package (Csardi & Nepusz, 2006) in R.",
                             sep = ""
     )
-
+    
     refs$pons2006 <- paste("Pons, P., & Latapy, M. (2006).",
                            "Computing communities in large networks using random walks.",
                            "<em>Journal of Graph Algorithms and Applications</em>, <em>10</em>, 191--218.",
                            "https://doi.org/10.7155/jgaa.00185")
-
+    
     refs$ward1963 <- paste("Ward, J. H. (1963).",
                            "Hierarchical clustering to optimise an objective function.",
                            "<em>Journal of the American Statistical Association</em>, <em>58</em>, 238--244.")
-
+    
     refs$newman2006 <- paste("Newman, M. E. J. (2006).",
                              "Modularity and community structure in networks.",
                              "<em>Proceedings of the National Academy of Sciences</em>, <em>103</em>, 8577--8582.",
                              "https://doi.org/10.1073/pnas.0601602103")
-
+    
     refs$csardi2006 <- paste("Csardi, G., & Nepusz, T. (2006).",
                              "The igraph software package for complex network research.",
                              "<em>InterJournal, Complex Systems</em>, <em>1695</em>, 1--9.",
                              "Retrieved from https://pdfs.semanticscholar.org/1d27/44b83519657f5f2610698a8ddd177ced4f5c.pdf")
-
+    
     # EGA fit description
     #if(METHOD == "EGA.fit")
     #{
     #  fit.header <- "## Optimizing Fit"
-    #
+    #  
     #  fit.text <- paste("",
     #                    sep = "")
     #}
-
+    
   }else if(algorithm == "louvain")
   {
     algorithm.text <- paste("The Louvain algorithm (also referred to as Multi-level; Blondel, Guillaume, Lambiotte, & Lefebvre, 2008)",
@@ -281,44 +281,44 @@ EGA.methods.section <- function(EGA.object)
                             "It's also important to note that the algorithm implemented in *igraph* is deterministic;",
                             "however, other implementations are not (Gates et al., 2016)."
     )
-
+    
     refs$blondel2008 <- paste("Blondel, V. D., Guillaume, J.-L., Lambiotte, R., & Lefebvre, E. (2008).",
                               "Fast unfolding of communities in large networks.",
                               "<em>Journal of Statistical Mechanics: Theory and Experiment</em>, <em>2008</em>, P10008.",
                               "https://doi.org/10.1088/1742-5468/2008/10/P10008")
-
+    
     refs$gates2016 <- paste("Gates, K. M., Henry, T., Steinley, D., & Fair, D. A. (2016).",
                             "A Monte Carlo evaluation of weighted community detection algorithms.",
                             "<em>Frontiers in Neuroinformatics</em>, <em>10</em>, 45.",
                             "https://doi.org/10.3389/fninf.2016.00045")
-
+    
     refs$newman2006 <- paste("Newman, M. E. J. (2006).",
                              "Modularity and community structure in networks.",
                              "<em>Proceedings of the National Academy of Sciences</em>, <em>103</em>, 8577--8582.",
                              "https://doi.org/10.1073/pnas.0601602103")
   }
-
-
+  
+  
   ## References
   references.header <- "## References"
-
+  
   ## Order alphabetically
   references.text <- refs[order(names(refs))]
-
+  
   references.text <- paste(references.text, collapse = "\n\n")
-
+  
   markobj <- paste(YAML,
                    intro.header, intro.text,
                    model.header, model.text,
                    algorithm.header, algorithm.text,
                    references.header, references.text,
                    sep = "\n")
-
+  
   tempHTML <- paste(tempdir(), "EGA_method.html", sep = "\\")
   tempHTML <- gsub("\\\\", "/", tempHTML)
-
+  
   markdown::markdownToHTML(text = knitr::knit(text = markobj), output = tempHTML)
-
+  
   browseURL(tempHTML)
-
+  
 }

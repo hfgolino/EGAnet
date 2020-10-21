@@ -65,12 +65,18 @@
 #'
 #' if(interactive())
 #' {combine <- node.redundant.combine(named.nr)}
+#' 
+#' @references 
+#' Christensen, A. P., Golino, H., & Silvia, P. J. (in press).
+#' A psychometric network perspective on the validity and validation of personality trait questionnaires.
+#' \emph{European Journal of Personality}.
+#' doi: \href{https://doi.org/10.1002/per.2265}{10.1002/per.2265}
 #'
 #' @author Alexander Christensen <alexpaulchristensen@gmail.com>
 #'
 #' @export
 # Redundant Nodes Combination Function
-# Updated 08.03.2020
+# Updated 21.10.2020
 node.redundant.combine <- function (node.redundant.obj,
                                     type = c("sum", "latent"),
                                     estimator = "WLSMV",
