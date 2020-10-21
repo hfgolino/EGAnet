@@ -89,18 +89,18 @@ net.loads(ega.wmt)
 Christensen, A. P., & Golino, H. (in press).
 On the equivalency of factor and network loadings.
 \emph{Behavior Research Methods}.
-doi:\href{https://doi.org/10.31234/osf.io/xakez}{10.31234/osf.io/xakez}
+doi: \href{https://doi.org/10.31234/osf.io/xakez}{10.31234/osf.io/xakez}
 
-Christensen, A. P., Golino, H., & Silvia, P. (2019).
+Christensen, A. P., Golino, H., & Silvia, P. J. (in press).
 A psychometric network perspective on the validity and validation of personality trait questionnaires.
 \emph{European Journal of Personality}.
-doi:\href{https://doi.org/10.31234/osf.io/ktejp}{10.31234/osf.io/ktejp}
+doi: \href{https://doi.org/10.1002/per.2265}{10.1002/per.2265}
 
-Hallquist, M., Wright, A. C. G., & Molenaar, P. C. M. (in press).
+Hallquist, M., Wright, A. C. G., & Molenaar, P. C. M. (2019).
 Problems with centrality measures in psychopathology symptom networks: Why network psychometrics cannot escape psychometric theory.
-\emph{Multivariate Behavioral Research}.
-doi:\href{https://doi.org/10.31234/osf.io/pg4mf}{10.31234/osf.io/pg4mf}
+\emph{Multivariate Behavioral Research}, 1-25.
+doi:\href{https://doi.org/10.1080/00273171.2019.1640103}{10.1080/00273171.2019.1640103}
 }
 \author{
-Alexander P. Christensen <alexpaulchristensen@gmail.com> and Hudson F. Golino <hfg9s at virginia.edu>
+Alexander P. Christensen <alexpaulchristensen@gmail.com> and Hudson Golino <hfg9s at virginia.edu>
 }

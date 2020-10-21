@@ -37,9 +37,9 @@ library(lavaan)
 # Estimate Dimensions
 To estimate dimensions, we'll use exploratory graph analysis (EGA; Golino & Christensen, 2020; Golino & Epskamp, 2017; Golino et al., 2020). EGA first computes a network using either the graphical least absolute selection and shrinkage operator (GLASSO; Friedman, Hastie, & Tibshirani, 2008) with extended Bayesian information criterion (EBIC) from the R package *qgraph* (EBICglasso; Epskamp & Fried, 2018) or the triangulated maximally filtered graph (TMFG; Massara et al., 2016) from the *NetworkToolbox* package (Christensen, 2018). EGA then applies the Walktrap community detection algorithm (Pons & Latapy, 2006) from the *igraph* package (Csardi & Nepusz, 2006). Below is the code to estimate EGA using the EBICglasso method with the NEO PI-3 openness to experience data (*n* = 802) in the *NetworkToolbox* package.
 
-```{r Fig1, fig.align = 'center', fig.pos = "H", echo = TRUE, message = FALSE, warning = FALSE}
+```{r Fig1, echo = TRUE, message = FALSE, warning = FALSE}
 # Run EGA
-ega <- EGA(neoOpen, model = "glasso", algorithm = "louvain")
+ega <- EGA(neoOpen, model = "glasso", algorithm = "louvain", plot.EGA = FALSE)
 ```
 
 As depicted above, EGA estimates there to be 7 dimensions of openness to experience. Using these dimensions, we can now estimate network scores; but first, we'll go into details about how these are estimated.

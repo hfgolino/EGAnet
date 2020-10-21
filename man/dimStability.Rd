@@ -23,7 +23,7 @@ When argument \code{item.stability = TRUE}, returns a list containing:
 
 \item{dimensions}{The dimensional stability of each dimension}
 
-\item{items}{The output from \code{[EGAnet]{itemStability}}}
+\item{items}{The output from \code{\link[EGAnet]{itemStability}}}
 
 When argument \code{item.stability = FALSE}, returns a vector of the
 dimensional stability of each dimension
@@ -39,17 +39,28 @@ wmt <- wmt2[,7:24]
 
 \donttest{
 # Estimate EGA network
-ega.wmt <- EGA(data = wmt, uni = TRUE, model = "glasso")
+ega.wmt <- EGA(data = wmt, uni = TRUE, model = "glasso", plot.EGA = FALSE)
 
 # Estimate dimension stability
 boot.wmt <- bootEGA(data = wmt, uni = TRUE, iter = 500, typicalStructure = TRUE,
-plot.typicalStructure = TRUE, model = "glasso",
-type = "parametric", ncores = 4)
+plot.typicalStructure = FALSE, model = "glasso",
+type = "parametric", ncores = 2)
 
 # Estimate item stability statistics
 dimStability(boot.wmt, orig.wc = boot.wmt$EGA$wc, item.stability = FALSE)
 }
 
+}
+\references{
+Christensen, A. P., & Golino, H. (2019).
+Estimating the stability of the number of factors via Bootstrap Exploratory Graph Analysis: A tutorial.
+\emph{PsyArXiv}.
+doi:\href{https://doi.org/10.31234/osf.io/9deay}{10.31234/osf.io/9deay}
+
+Christensen, A. P., Golino, H., & Silvia, P. J. (in press).
+A psychometric network perspective on the validity and validation of personality trait questionnaires.
+\emph{European Journal of Personality}.
+doi: \href{https://doi.org/10.1002/per.2265}{10.1002/per.2265}
 }
 \seealso{
 \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and

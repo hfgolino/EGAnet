@@ -91,7 +91,7 @@
 #' and its estimated dimensions.
 #' Defaults to \code{TRUE}
 #'
-#' #' @param plot.type Character.
+#' @param plot.type Character.
 #' Plot system to use.
 #' Current options are \code{\link[qgraph]{qgraph}} and \code{\link{GGally}}.
 #' Defaults to \code{"GGally"}.
@@ -151,12 +151,12 @@
 #' \donttest{
 #' # bootEGA glasso example
 #' boot.wmt <- bootEGA(data = wmt, uni = TRUE, iter = 500, typicalStructure = TRUE,
-#' plot.typicalStructure = TRUE, model = "glasso", type = "parametric", ncores = 4)
+#' plot.typicalStructure = FALSE, model = "glasso", type = "parametric", ncores = 2)
 #' 
 #' # bootEGA Spinglass example
 #' boot.wmt <- bootEGA(data = wmt, iter = 500, typicalStructure = TRUE,
-#' plot.typicalStructure = TRUE, model = "glasso", algorithm = igraph::cluster_spinglass,
-#' type = "parametric", ncores = 4)
+#' plot.typicalStructure = FALSE, model = "glasso", algorithm = igraph::cluster_spinglass,
+#' type = "parametric", ncores = 2)
 #' }
 #'
 #' # Load data
@@ -165,14 +165,20 @@
 #' \donttest{
 #' # bootEGA TMFG example
 #' boot.intwl <- bootEGA(data = intelligenceBattery[,8:66], iter = 500, typicalStructure = TRUE,
-#' plot.typicalStructure = TRUE, model = "TMFG", type = "parametric", ncores = 4)
+#' plot.typicalStructure = FALSE, model = "TMFG", type = "parametric", ncores = 2)
 #' }
 #'
 #' @references
+#' # Original implementation of bootEGA \cr
 #' Christensen, A. P., & Golino, H. (2019).
 #' Estimating the stability of the number of factors via Bootstrap Exploratory Graph Analysis: A tutorial.
 #' \emph{PsyArXiv}.
 #' doi:\href{https://doi.org/10.31234/osf.io/9deay}{10.31234/osf.io/9deay}
+#' 
+#' Christensen, A. P., Golino, H., & Silvia, P. J. (in press).
+#' A psychometric network perspective on the validity and validation of personality trait questionnaires.
+#' \emph{European Journal of Personality}.
+#' doi: \href{https://doi.org/10.1002/per.2265}{10.1002/per.2265}
 #'
 #' @seealso \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA
 #' and \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
@@ -364,7 +370,7 @@ bootEGA <- function(data, uni = FALSE, iter, type = c("parametric", "resampling"
     })
   )
 
-  if (typicalStructure == TRUE){
+  if (typicalStructure){
     
     typical.Structure <- switch(model,
                                 glasso = apply(simplify2array(bootGraphs),1:2, median),
@@ -380,7 +386,7 @@ bootEGA <- function(data, uni = FALSE, iter, type = c("parametric", "resampling"
     typical.ndim <- max(typical.wc, na.rm = TRUE)
     dim.variables <- data.frame(items = colnames(data), dimension = typical.wc)
   }
-  if (plot.typicalStructure == TRUE) {
+  if (plot.typicalStructure) {
     if(plot.type == "qgraph"){
       plot.typical.ega <- qgraph::qgraph(typical.Structure, layout = "spring",
                                          vsize = 6, groups = as.factor(typical.wc))
@@ -458,13 +464,15 @@ bootEGA <- function(data, uni = FALSE, iter, type = c("parametric", "resampling"
                                                       plot.EGA = FALSE)))
 
   # Typical structure
-  if (typicalStructure == TRUE) {
+  if (typicalStructure) {
     typicalGraph <- list()
     typicalGraph$graph <- typical.Structure
     typicalGraph$typical.dim.variables <- dim.variables[order(dim.variables[,2]), ]
     typicalGraph$wc <- typical.wc
     result$typicalGraph <- typicalGraph
-    result$plot.typical.ega <- plot.typical.ega
+    if(plot.typicalStructure){
+      result$plot.typical.ega <- plot.typical.ega
+    }
   }
 
   class(result) <- "bootEGA"

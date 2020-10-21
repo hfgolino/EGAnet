@@ -11,6 +11,8 @@
 #' 
 #' @examples
 #' EGA.methods.section(ega.wmt)
+#' 
+#' @importFrom utils packageVersion browseURL
 #'
 #' @export
 #'

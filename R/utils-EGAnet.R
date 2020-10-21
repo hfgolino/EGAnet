@@ -1327,9 +1327,9 @@ typicalStructure.network <- function (A, model, model.args, n = NULL, uni = FALS
   if(igraph::vcount(graph)!=ncol(A)){
     
     warning("Estimated network contains unconnected nodes:\n",
-            paste(names(which(NetworkToolbox::strength(estimated.network)==0)), collapse = ", "))
+            paste(names(which(NetworkToolbox::degree(A)==0)), collapse = ", "))
     
-    unconnected <- which(NetworkToolbox::degree(estimated.network)==0)
+    unconnected <- which(NetworkToolbox::degree(A)==0)
     
   }
   
@@ -1394,7 +1394,7 @@ typicalStructure.network <- function (A, model, model.args, n = NULL, uni = FALS
     }else if(model == "TMFG"){
       
       # Generate data
-      g.data <- MASS::rmvnorm(n, mu = rep(0, ncol(A)), Sigma = as.matrix(Matrix::nearPD(A, corr = TRUE, keepDiag = TRUE)$mat))
+      g.data <- MASS::mvrnorm(n, mu = rep(0, ncol(A)), Sigma = as.matrix(Matrix::nearPD(A, corr = TRUE, keepDiag = TRUE)$mat))
       g <- -suppressMessages(NetworkToolbox::LoGo(data, normal = TRUE, partial = TRUE))
       diag(g) <- 1
       

@@ -127,28 +127,25 @@
 #' @author Hudson Golino <hfg9s at virginia.edu>
 #'
 #' @examples
-#'
-#' \dontrun{
-#' # Population structure:
-#'dyn.random <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
-#'delta = 1, id = 21, group = 22, use.derivatives = 1,
-#'level = "population", model = "glasso", ncores = 2)
-#'
-#'
-#'# Group structure:
-#'dyn.group <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
-#'delta = 1, id = 21, group = 22, use.derivatives = 1,
-#'level = "group", model = "glasso", ncores = 2)
-#'
-#'# Intraindividual structure:
-#'
-#'# dyn.individual <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
-#'# delta = 1, id = 21, group = 22, use.derivatives = 1,
-#'# level = "individual", model = "glasso", ncores = 2)
+#' \donttest{# Population structure:
+#' dyn.random <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
+#' delta = 1, id = 21, group = 22, use.derivatives = 1,
+#' level = "population", model = "glasso", ncores = 2,
+#' plot.EGA = FALSE)
+#' 
+#' # Group structure:
+#' dyn.group <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
+#' delta = 1, id = 21, group = 22, use.derivatives = 1,
+#' level = "group", model = "glasso", ncores = 2,
+#' plot.EGA = FALSE)
+#' 
+#' # Intraindividual structure (commented out for CRAN tests):
+#' # dyn.individual <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
+#' # delta = 1, id = 21, group = 22, use.derivatives = 1,
+#' # level = "individual", model = "glasso", ncores = 2)
 #'}
 #'
 #' @references
-#'
 #' Boker, S. M., Deboeck, P. R., Edler, C., & Keel, P. K. (2010)
 #' Generalized local linear approximation of derivatives from time series. In S.-M. Chow, E. Ferrer, & F. Hsieh (Eds.),
 #' \emph{The Notre Dame series on quantitative methodology. Statistical methods for modeling human dynamics: An interdisciplinary dialogue},
@@ -160,23 +157,21 @@
 #' \emph{Psychological Methods}, \emph{14(4)}, 367-386.
 #' doi:\href{https://doi.org/10.1037/a0016622}{10.1037/a0016622}
 #'
-#' Golino, H. F., & Epskamp, S. (2017).
-#' Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research.
-#' \emph{PloS one}, \emph{12(6)}, e0174035..
-#' doi: \href{https://doi.org/10.1371/journal.pone.0174035}{journal.pone.0174035}
+#' Golino, H., Christensen, A. P., Moulder, R. G., Kim, S., & Boker, S. M. (under review).
+#' Modeling latent topics in social media using Dynamic Exploratory Graph Analysis: The case of the right-wing and left-wing trolls in the 2016 US elections.
+#' \emph{PsyArXiv}.
+#' doi: \href{https://doi.org/10.31234/osf.io/tfs7c}{10.31234/osf.io/tfs7c}
 
 #' Savitzky, A., & Golay, M. J. (1964).
 #' Smoothing and differentiation of data by simplified least squares procedures.
 #' \emph{Analytical Chemistry}, \emph{36(8)}, 1627-1639.
 #' doi:\href{https://doi.org/10.1021/ac60214a047}{10.1021/ac60214a047}
 #'
-#'
 #' @importFrom stats cor rnorm runif na.omit
 #'
 #' @export
 # dynEGA
-# Updated 20.10.2020
-#'
+# Updated 21.10.2020
 dynEGA <- function(data, n.embed, tau = 1, delta = 1,
                    level = c("individual", "group", "population"),
                    id = NULL, group = NULL,
@@ -222,9 +217,9 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
   {group <- ncol(data)+1
   }else{group <- group}
 
-  if(missing(cor))
-  {cor <- "cor_auto"
-  }else{cor <- match.arg(cor)}
+  if(missing(corr))
+  {corr <- "cor_auto"
+  }else{corr <- match.arg(corr)}
 
   if(missing(ncores))
   {ncores <- ceiling(parallel::detectCores() / 2)

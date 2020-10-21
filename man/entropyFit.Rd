@@ -35,9 +35,9 @@ Lower values suggest better fit of a structure to the data.
 # Load data
 wmt <- wmt2[,7:24]
 
-\dontrun{
+\donttest{
 # Estimate EGA model
-ega.wmt <- EGA(data = wmt, model = "glasso")
+ega.wmt <- EGA(data = wmt, model = "glasso", plot.EGA = FALSE)
 
 }
 
@@ -46,9 +46,10 @@ entropyFit(data = wmt, structure = ega.wmt$wc)
 
 }
 \references{
-Golino, H. F., Moulder, R., Shi, D., Christensen, A. P., Neito, M. D., Nesselroade, J. R., & Boker, S. M. (under review)
-Entropy Fit Index: A new fit measure for assessing the structure and dimensionality of multiple latent variables.
-Retrieved from: https://www.researchgate.net/profile/Hudson_Golino/publication/333753928_Entropy_Fit_Index_A_New_Fit_Measure_for_Assessing_the_Structure_and_Dimensionality_of_Multiple_Latent_Variables/
+Golino, H., Moulder, R. G., Shi, D., Christensen, A. P., Garrido, L. E., Neito, M. D., Nesselroade, J., Sadana, R., Thiyagarajan, J. A., & Boker, S. M. (2020).
+Entropy fit indices: New fit measures for assessing the structure and dimensionality of multiple latent variables.
+\emph{Multivariate Behavioral Research}.
+doi: \href{https://doi.org/10.31234/osf.io/mtka2}{10.31234/osf.io/mtka2}
 }
 \seealso{
 \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link[EGAnet]{CFA}} to

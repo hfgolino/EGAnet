@@ -31,12 +31,18 @@
 #'
 #' @seealso \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and
 #' \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
+#' 
+#' @references 
+#' Golino, H., Moulder, R. G., Shi, D., Christensen, A. P., Garrido, L. E., Neito, M. D., Nesselroade, J., Sadana, R., Thiyagarajan, J. A., & Boker, S. M. (2020).
+#' Entropy fit indices: New fit measures for assessing the structure and dimensionality of multiple latent variables.
+#' \emph{Multivariate Behavioral Research}.
+#' doi: \href{https://doi.org/10.31234/osf.io/mtka2}{10.31234/osf.io/mtka2}
 #'
-#' @author Hudson F. Golino <hfg9s at virginia.edu>, Alexander P. Christensen <alexpaulchristensen@gmail.com> and Robert Moulder <rgm4fd@virginia.edu>
+#' @author Hudson Golino <hfg9s at virginia.edu>, Alexander P. Christensen <alexpaulchristensen@gmail.com>, and Robert Moulder <rgm4fd@virginia.edu>
 #'
 #' @export
 # Total Entropy Fit Index Function (for correlation matrices)
-# Updated 09.09.2020
+# Updated 21.10.2020
 tefi <- function(data, structure){
   if(ncol(data)!=nrow(data)){
     data <- qgraph::cor_auto(data)

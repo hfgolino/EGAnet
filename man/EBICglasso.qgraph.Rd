@@ -67,15 +67,14 @@ is computed using \code{\link[qgraph]{wi2net}} and returned.
 ### Using wmt2 dataset from EGAnet ###
 data(wmt2)
 
-\dontrun{
-# Compute correlations:
-CorMat <- cor_auto(wmt2[,7:24])
+\donttest{# Compute correlations:
+CorMat <- qgraph::cor_auto(wmt2[,7:24])
 
 # Compute graph with tuning = 0 (BIC):
-BICgraph <- EBICglasso.qgraph(CorMat, nrow(wmt2), 0)
+BICgraph <- EBICglasso.qgraph(CorMat, n = nrow(wmt2), gamma = 0)
 
 # Compute graph with tuning = 0.5 (EBIC)
-EBICgraph <- EBICglasso.qgraph(CorMat, nrow(wmt2), 0.5)
+EBICgraph <- EBICglasso.qgraph(CorMat, n = nrow(wmt2), gamma = 0.5)
 
 }
 

@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
 # Introduction
 This vignette shows you how to use the node.redundant functions in EGAnet. The contents of this vignette is taken from the supplementary information of Christensen, Golino, and Silvia (2020).
 
-To begin our example of structural validation from the psychometric network perspecitve, the *psychTools* (Revelle, 2019) pacakge must be installed and loaded.
+To begin our example of structural validation from the psychometric network perspective, the *psychTools* (Revelle, 2019) pacakge must be installed and loaded.
 
 ```{r install, echo = TRUE, eval = FALSE, message = FALSE, warning = FALSE}
 # Install 'psychTools' package

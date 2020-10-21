@@ -104,9 +104,9 @@ Defaults to \code{TRUE}}
 If \code{TRUE}, returns a plot of the typical network (partial correlations),
 which is the median of all pairwise correlations over the \emph{n} bootstraps,
 and its estimated dimensions.
-Defaults to \code{TRUE}
+Defaults to \code{TRUE}}
 
-#' @param plot.type Character.
+\item{plot.type}{Character.
 Plot system to use.
 Current options are \code{\link[qgraph]{qgraph}} and \code{\link{GGally}}.
 Defaults to \code{"GGally"}.}
@@ -172,12 +172,12 @@ wmt <- wmt2[,7:24]
 \donttest{
 # bootEGA glasso example
 boot.wmt <- bootEGA(data = wmt, uni = TRUE, iter = 500, typicalStructure = TRUE,
-plot.typicalStructure = TRUE, model = "glasso", type = "parametric", ncores = 4)
+plot.typicalStructure = FALSE, model = "glasso", type = "parametric", ncores = 2)
 
 # bootEGA Spinglass example
 boot.wmt <- bootEGA(data = wmt, iter = 500, typicalStructure = TRUE,
-plot.typicalStructure = TRUE, model = "glasso", algorithm = igraph::cluster_spinglass,
-type = "parametric", ncores = 4)
+plot.typicalStructure = FALSE, model = "glasso", algorithm = igraph::cluster_spinglass,
+type = "parametric", ncores = 2)
 }
 
 # Load data
@@ -186,15 +186,21 @@ intwl <- intelligenceBattery[,8:66]
 \donttest{
 # bootEGA TMFG example
 boot.intwl <- bootEGA(data = intelligenceBattery[,8:66], iter = 500, typicalStructure = TRUE,
-plot.typicalStructure = TRUE, model = "TMFG", type = "parametric", ncores = 4)
+plot.typicalStructure = FALSE, model = "TMFG", type = "parametric", ncores = 2)
 }
 
 }
 \references{
+# Original implementation of bootEGA \cr
 Christensen, A. P., & Golino, H. (2019).
 Estimating the stability of the number of factors via Bootstrap Exploratory Graph Analysis: A tutorial.
 \emph{PsyArXiv}.
 doi:\href{https://doi.org/10.31234/osf.io/9deay}{10.31234/osf.io/9deay}
+
+Christensen, A. P., Golino, H., & Silvia, P. J. (in press).
+A psychometric network perspective on the validity and validation of personality trait questionnaires.
+\emph{European Journal of Personality}.
+doi: \href{https://doi.org/10.1002/per.2265}{10.1002/per.2265}
 }
 \seealso{
 \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA

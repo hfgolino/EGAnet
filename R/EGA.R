@@ -111,45 +111,42 @@
 #'
 #' \donttest{
 #' # Estimate EGA
-#' ega.wmt <- EGA(data = wmt2[,7:24], uni = TRUE, model = "glasso", plot.EGA = TRUE)
+#' ega.wmt <- EGA(data = wmt2[,7:24], uni = TRUE, model = "glasso", plot.EGA = FALSE)
 #'
 #' # Estimate EGAtmfg
-#' ega.wmt <- EGA(data = wmt2[,7:24], uni = TRUE, model = "TMFG", plot.EGA = TRUE)
+#' ega.wmt <- EGA(data = wmt2[,7:24], uni = TRUE, model = "TMFG", plot.EGA = FALSE)
 #' 
 #' # Estimate EGA with Spinglass
 #' ega.wmt <- EGA(data = wmt2[,7:24], uni = TRUE, model = "glasso",
-#' algorithm = igraph::cluster_spinglass, plot.EGA = TRUE)
+#' algorithm = igraph::cluster_spinglass, plot.EGA = FALSE)
 #'
 #' # Summary statistics
 #' summary(ega.wmt)
 #'
-#' # Plot
-#' plot(ega.wmt)
-#'
 #' # Estimate EGA
-#' ega.intel <- EGA(data = intelligenceBattery[,8:66], model = "glasso", plot.EGA = TRUE)
+#' ega.intel <- EGA(data = intelligenceBattery[,8:66], model = "glasso", plot.EGA = FALSE)
 #'
 #' # Summary statistics
 #' summary(ega.intel)
-#'
-#' # Plot
-#' plot(ega.intel)
 #' }
 #'
 #' @seealso \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap
 #' and \code{\link{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 #'
 #' @references
+#' # Louvain algorithm \cr
 #' Blondel, V. D., Guillaume, J.-L., Lambiotte, R., & Lefebvre, E. (2008).
 #' Fast unfolding of communities in large networks.
 #' \emph{Journal of Statistical Mechanics: Theory and Experiment}, \emph{2008}, P10008.
 #' doi: \href{https://doi.org/10.1088/1742-5468/2008/10/P10008}{10.1088/1742-5468/2008/10/P10008}
 #' 
+#' # Compared all \emph{igraph} community detections algorithms, introduced Louvain algorithm, simulation with continuous and polytomous data \cr
 #' Christensen, A. P., & Golino, H. (under review).
 #' Estimating factors with psychometric networks: A Monte Carlo simulation comparing community detection algorithms.
 #' \emph{PsyArXiv}.
 #' doi: \href{https://doi.org/10.31234/osf.io/hz89e}{10.31234/osf.io/hz89e}
 #' 
+#' # Original simulation and implementation of EGA \cr
 #' Golino, H. F., & Epskamp, S. (2017).
 #' Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research.
 #' \emph{PloS one}, \emph{12(6)}, e0174035..
@@ -160,11 +157,13 @@
 #' \emph{Intelligence}, \emph{62}, 54-70.
 #' doi: \href{https://doi.org/10.1016/j.intell.2017.02.007}{j.intell.2017.02.007}
 #'
-#' Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., & Thiyagarajan, J. A. (in press).
+#' # Current implementation of EGA, introduced unidimensional checks, continuous and dichotomous data \cr
+#' Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., & Thiyagarajan, J. A. (2020).
 #' Investigating the performance of Exploratory Graph Analysis and traditional techniques to identify the number of latent factors: A simulation and tutorial.
 #' \emph{Psychological Methods}, \emph{25}, 292-320.
 #' doi: \href{https://doi.org/10.1037/met0000255}{10.1037/met0000255}
 #' 
+#' # Walktrap algorithm \cr
 #' Pons, P., & Latapy, M. (2006).
 #' Computing communities in large networks using random walks.
 #' \emph{Journal of Graph Algorithms and Applications}, \emph{10}, 191-218.
@@ -174,7 +173,7 @@
 #'
 #' @export
 #'
-# Updated 20.10.2020
+# Updated 21.10.2020
 ## EGA Function to detect unidimensionality:
 EGA <- function (data, n = NULL, uni = FALSE,
                  model = c("glasso", "TMFG"), model.args = list(),
@@ -266,7 +265,7 @@ EGA <- function (data, n = NULL, uni = FALSE,
         
       }else{ ## If not
         
-        n.dim <- multi.cor.res$n.dim
+        n.dim <- multi.res$n.dim
         cor.data <- multi.res$cor.data
         estimated.network <- multi.res$network
         wc <- multi.res$wc

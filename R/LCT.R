@@ -38,21 +38,24 @@
 #' LCT(data = NetworkToolbox::neoOpen)}
 #' 
 #' @references
-#' Christensen, A. P., & Golino, H. (2020).
+#' # Original implementation of LCT \cr
+#' Christensen, A. P., & Golino, H. (in press).
 #' On the equivalency of factor and network loadings.
-#' \emph{PsyArXiv}.
-#' doi:\href{https://doi.org/10.31234/osf.io/xakez}{10.31234/osf.io/xakez}
+#' \emph{Behavior Research Methods}.
+#' doi: \href{https://doi.org/10.31234/osf.io/xakez}{10.31234/osf.io/xakez}
 #' 
-#' Christensen, A. P., & Golino, H. (2020).
+#' # Current implementation of LCT \cr
+#' Christensen, A. P., & Golino, H. (under review).
 #' Random, factor, or network model? Predictions from neural networks.
 #' \emph{PsyArXiv}.
+#' doi: \href{https://doi.org/10.31234/osf.io/awkcb}{10.31234/osf.io/awkcb}
 #' 
 #' @importFrom utils setTxtProgressBar txtProgressBar
 #'
 #' @export
 #'
 # Loadings Comparison Test----
-# Updated 28.07.2020
+# Updated 21.10.2020
 LCT <- function (data, n, iter = 100)
 {
   # Convert data to matrix

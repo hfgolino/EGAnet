@@ -46,14 +46,17 @@ LCT(data = NetworkToolbox::neoOpen)}
 
 }
 \references{
-Christensen, A. P., & Golino, H. (2020).
+# Original implementation of LCT \cr
+Christensen, A. P., & Golino, H. (in press).
 On the equivalency of factor and network loadings.
-\emph{PsyArXiv}.
-doi:\href{https://doi.org/10.31234/osf.io/xakez}{10.31234/osf.io/xakez}
+\emph{Behavior Research Methods}.
+doi: \href{https://doi.org/10.31234/osf.io/xakez}{10.31234/osf.io/xakez}
 
-Christensen, A. P., & Golino, H. (2020).
+# Current implementation of LCT \cr
+Christensen, A. P., & Golino, H. (under review).
 Random, factor, or network model? Predictions from neural networks.
 \emph{PsyArXiv}.
+doi: \href{https://doi.org/10.31234/osf.io/awkcb}{10.31234/osf.io/awkcb}
 }
 \author{
 Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen at gmail.com>
