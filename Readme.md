@@ -26,6 +26,11 @@ References
 Christensen, A. P., & Golino, H. (under review). Estimating factors with psychometric networks: A Monte Carlo simulation comparing community detection algorithms. *PsyArXiv*. doi:[10.31234/osf.io/hz89e](https://doi.org/10.31234/osf.io/hz89e)
 + Related functions: `EGA`
 
+Christensen, A. P., & Golino, H. (2019).
+Estimating the stability of the number of factors via Bootstrap Exploratory Graph Analysis: A tutorial. *PsyArXiv*.
+doi:[10.31234/osf.io/9deay](https://doi.org/10.31234/osf.io/9deay)
++ Related functions: `bootEGA`
+
 Christensen, A. P., & Golino, H. (in press). On the equivalency of factor and network loadings. *Behavior Research Methods*. doi:[10.31234/osf.io/xakez](https://doi.org/10.31234/osf.io/xakez)
 + Related functions: `net.loads`
 
