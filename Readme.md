@@ -7,7 +7,7 @@ Exploratory Graph Analysis
 ### Contact: <hfg9s@virginia.edu> ###
 
 ### Alexander P. Christensen ###
-### Department of Psychology, University of North Carolina at Greensboro. ###
+### Postdoctoral Researcher, Department of Neurology, University of Pennsylvania. ###
 ### Contact: <alexpaulchristensen@gmail.com> ###
 
 
@@ -26,8 +26,13 @@ References
 Christensen, A. P., & Golino, H. (under review). Estimating factors with psychometric networks: A Monte Carlo simulation comparing community detection algorithms. *PsyArXiv*. doi:[10.31234/osf.io/hz89e](https://doi.org/10.31234/osf.io/hz89e)
 + Related functions: `EGA`
 
+Christensen, A. P., & Golino, H. (2019).
+Estimating the stability of the number of factors via Bootstrap Exploratory Graph Analysis: A tutorial. *PsyArXiv*.
+doi:[10.31234/osf.io/9deay](https://doi.org/10.31234/osf.io/9deay)
++ Related functions: `bootEGA`
+
 Christensen, A. P., & Golino, H. (in press). On the equivalency of factor and network loadings. *Behavior Research Methods*. doi:[10.31234/osf.io/xakez](https://doi.org/10.31234/osf.io/xakez)
-+ Related functions: `net.loads`
++ Related functions: `LCT` and `net.loads`
 
 Christensen, A. P., & Golino, H. (under review). Random, factor, or network model? Predictions from neural networks. *PsyArXiv*. doi:[10.31234/osf.io/awkcb](https://doi.org/10.31234/osf.io/awkcb)
 + Related functions: `LCT`
@@ -49,3 +54,7 @@ Golino, H., Moulder, R. G., Shi, D., Christensen, A. P., Garrido, L. E., Neito, 
 
 Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., Thiyagarajan, J. A., & Martinez-Molina, A. (2020). Investigating the performance of exploratory graph analysis and traditional techniques to identify the number of latent factors: A simulation and tutorial. *Psychological Methods*, *25*, 292-320. doi:[10.1037/met0000255](https://psycnet.apa.org/doiLanding?doi=10.1037/met0000255)
 + Related functions: `EGA`
+
+Golino, H., Thiyagarajan, J. A., Sadana, M., Teles, M., Christensen, A. P., & Boker, S. M. (under review). Investigating the broad domains of intrinsic capacity, functional ability, and environment: An exploratory graph analysis approach for improving analytical methodologies for measuring healthy aging. *PsyArXiv*. doi:[10.31234/osf.io/hj5mc](https://doi.org/10.31234/osf.io/hj5mc)
++ Related functions `EGA.fit` and `tefi`
+
