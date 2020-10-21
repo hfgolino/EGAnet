@@ -72,11 +72,11 @@
 #' @seealso \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and
 #' \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 #'
-#' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
+#' @author Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'
 #' @export
 #Item Stability function
-#Updated 02.07.2020
+#Updated 21.10.2020
 itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep = TRUE){
   
   # Check for 'bootEGA' object
@@ -93,7 +93,7 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   wc.mat <- matrix(NA, nrow = length(orig.wc), ncol = n)
   
   for(i in 1:length(bootega.obj$bootGraphs))
-  {wc.mat[,i] <- bootega.obj$boot.wc[[i]]$membership}
+  {wc.mat[,i] <- bootega.obj$boot.wc[[i]]}
   
   # Grab item names
   row.names(wc.mat) <- row.names(net)
@@ -203,6 +203,11 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   #match row names to itemCon output
   itemLik <- as.data.frame(item.tab[match(names(itemCon),row.names(item.tab)),])
   
+  #catch unidimensional structures (ugly band-aid fix)
+  if(length(colnames(itemLik)) == 1){
+    colnames(itemLik) <- 1
+  }
+  
   ##########################################################
   #### ITEM FREQUENCY AND DIMENSION REPLICATION RESULTS ####
   ##########################################################
@@ -276,9 +281,12 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   #let user know results are computed has ended
   message("done", appendLF = TRUE)
   
-  unstd.item.id <- unstd.item.id[row.names(item.lik),]
-  
-  unstd.item.id <- unstd.item.id[,colnames(item.lik)]
+  if(ncol(unstd.item.id) > 1){
+    
+    unstd.item.id <- unstd.item.id[row.names(item.lik),]
+    
+    unstd.item.id <- unstd.item.id[,colnames(item.lik)]
+  }
   
   unstd.item.id[which(item.lik=="")] <- ""
   

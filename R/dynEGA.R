@@ -55,7 +55,7 @@
 #' If TRUE, returns a plot of the network and its estimated dimensions.
 #' Defaults to TRUE
 #'
-#' @param cor Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
+#' @param corr Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
 #' Current options are:
 #'
 #' \itemize{
@@ -73,7 +73,8 @@
 #' the \code{\link[stats]{cor}}} function.
 #' }
 #'
-#' @param model A string indicating the network method to use (\code{\link{EGA.estimate}}).
+#' @param model Character.
+#' A string indicating the method to use.
 #' Current options are:
 #'
 #' \itemize{
@@ -85,10 +86,15 @@
 #'
 #' \item{\strong{\code{TMFG}}}
 #' {Estimates a Triangulated Maximally Filtered Graph}
-#'
+#' 
 #' }
+#' 
+#' @param model.args List.
+#' A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
+#' or \code{\link[NetworkToolbox]{TMFG}}
 #'
-#' @param algorithm A string indicating the community detection algorithm to use.
+#' @param algorithm A string indicating the algorithm to use or a function from \code{\link{igraph}}
+#' 
 #' Current options are:
 #'
 #' \itemize{
@@ -100,9 +106,10 @@
 #' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_louvain}}}
 #'
 #' }
-#'
-#' @param steps Number of steps to be used in \code{\link[igraph]{cluster_walktrap}} algorithm.
-#' Defaults to 4.
+#' 
+#' @param algorithm.args List.
+#' A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
+#' or some other community detection algorithm function (see examples)
 #'
 #' @param ncores Numeric.
 #' Number of cores to use in computing results.
@@ -113,7 +120,9 @@
 #'
 #' If you're unsure how many cores your computer has,
 #' then use the following code: \code{parallel::detectCores()}
-#'
+#' 
+#' @param ... Additional arguments.
+#' Used for deprecated arguments from previous versions of \code{\link{EGA}}
 #'
 #' @author Hudson Golino <hfg9s at virginia.edu>
 #'
@@ -166,18 +175,36 @@
 #'
 #' @export
 # dynEGA
-# Updated 15.06.2020
+# Updated 20.10.2020
 #'
 dynEGA <- function(data, n.embed, tau = 1, delta = 1,
                    level = c("individual", "group", "population"),
                    id = NULL, group = NULL,
                    use.derivatives = 1,
-                   model = c("glasso", "TMFG"),
-                   algorithm = c("walktrap", "louvain"),
+                   model = c("glasso", "TMFG"), model.args = list(),
+                   algorithm = c("walktrap", "louvain"), algorithm.args = list(),
                    plot.EGA = TRUE,
-                   cor = c("cor_auto", "pearson", "spearman"),
-                   steps = 4,
-                   ncores){
+                   corr = c("cor_auto", "pearson", "spearman"),
+                   ncores, ...){
+  
+  # Get additional arguments
+  add.args <- list(...)
+  
+  # Check if steps has been input as an argument
+  if("steps" %in% names(add.args)){
+    
+    # Give deprecation warning
+    warning(
+      paste(
+        "The 'steps' argument has been deprecated in all EGA functions.\n\nInstead use: algorithm.args = list(steps = ", add.args$steps, ")",
+        sep = ""
+      )
+    )
+    
+    # Handle the number of steps appropriately
+    algorithm.args$steps <- add.args$steps
+  }
+  
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(id))
   {stop("The 'id' argument is missing! \n The number of the column identifying each individual must be provided!")
@@ -275,17 +302,21 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
 
     if(use.derivatives == 0){
       ega1 <- EGA.estimate(data = data.all[,1:ncol(data[,-c(id, group)])],
-                           model = model, algorithm = algorithm,
-                           steps = steps, cor = cor)}
+                           model = model, model.args = model.args,
+                           algorithm = algorithm, algorithm.args = algorithm.args,
+                           corr = corr)}
     if(use.derivatives == 1){
       ega1 <- EGA.estimate(data = data.all[,(ncol(data[,-c(id, group)])+1):(ncol(data[,-c(id, group)])*2)],
-                           model = model, algorithm = algorithm,
-                           steps = steps, cor = cor)}
+                           model = model, model.args = model.args,
+                           algorithm = algorithm, algorithm.args = algorithm.args,
+                           corr = corr)}
     if(use.derivatives==2){
       init <- (ncol(data[,-c(id, group)])*2)+1
       cols <- seq(from = init, to = init+ncol(data[,-c(id, group)])-1)
-      ega1 <- EGA.estimate(data = data.all[,cols], model = model, algorithm = algorithm,
-                           steps = steps, cor = cor)}
+      ega1 <- EGA.estimate(data = data.all[,cols],
+                           model = model, model.args = model.args,
+                           algorithm = algorithm, algorithm.args = algorithm.args,
+                           corr = corr)}
   }
 
   parallel::stopCluster(cl)
@@ -333,8 +364,9 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
     #Compute derivatives per Group
     ega.list.groups <- pbapply::pblapply(X = data.groups, cl = cl,
                                          FUN = EGA.estimate,
-                                         model = model, algorithm = algorithm,
-                                         steps = steps, cor = cor)
+                                         model = model, model.args = model.args,
+                                         algorithm = algorithm, algorithm.args = algorithm.args,
+                                         corr = corr)
     parallel::stopCluster(cl)
   }
 
@@ -374,8 +406,9 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
 
     ega.list.individuals <- pbapply::pblapply(X = data.individuals, cl = cl,
                                               FUN = EGA.estimate,
-                                              model = model, algorithm = algorithm,
-                                              steps = steps, cor = cor)
+                                              model = model, model.args = model.args,
+                                              algorithm = algorithm, algorithm.args = algorithm.args,
+                                              corr = corr)
     parallel::stopCluster(cl)
   }
 

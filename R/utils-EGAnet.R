@@ -1240,3 +1240,206 @@ dnn.predict <- function (loads)
   ifelse(any(f_n >= .50), return(2), return(3))
   
 }
+
+#' A sub-routine to simulate data for \code{\link[EGAnet]{EGA}}
+#' 
+#' @param data Data for number of cases
+#' 
+#' @param nvar Number of variables
+#' 
+#' @param nfact Number of factors
+#' 
+#' @param load Magnitude of loadings
+#'
+#' @return Simulated data
+#' 
+#' @importFrom utils data
+#' 
+#' @author Loli Nieto and Luis Garrido
+#'
+#' @noRd
+#'
+# Simulate data function----
+# Updated 19.10.2020
+sim.func <- function(data, nvar, nfact, load)
+{
+  # Check for unidimensional structure
+  ## Set up data simulation
+  n <- nrow(data)
+  corf <- 0
+  J <- nvar*nfact
+  sdcross = 0
+  
+  ## GENERATE SAMPLE DATA MATRIX
+  check.eig <- TRUE
+  check.com <- TRUE
+  
+  while(check.eig == TRUE|check.com == TRUE)
+  {
+    SATF = matrix(0, J, nfact)
+    
+    for(j in 1:nfact)
+    {
+      SATF[(j*nvar-nvar+1):(j*nvar),j]<-runif(nvar, load-.10, load+.10)
+      
+      if(nfact>1)
+      {
+        CROSS.L <- apply(as.matrix(SATF[(j*nvar-nvar+1+2):(j*nvar),-c(j)]), 2, function(x) rnorm((nvar-2), 0, sdcross))
+        
+        SATF[(j*nvar-nvar+1+2):(j*nvar),-c(j)] <- CROSS.L
+      }
+    }
+    
+    #SATF # Population factor loading matrix with cross-loadings and marker items
+    
+    FCOR      = matrix(corf, nfact, nfact); diag(FCOR)<-1 ## Factor correlation matrix
+    R         = SATF%*%FCOR%*%t(SATF)                          ## Rr
+    check.com = any(diag(R) > .90)                                  ## Check communalities values
+    diag(R)   = 1                                                                    ## Insert ones in the diagonal of Rr
+    #R                                                                                       ## Rp
+    check.eig = any(eigen(R)$values <= 0)                      ## Check eigenvalues
+  }
+  
+  U = chol(R)                                                                       ## Cholesky decomposition of Rp
+  Z = MASS::mvrnorm(n, mu = rep(0, J), Sigma = diag(J))                                  ## Obtain sample matrix of continuous variables
+  X = Z%*%U
+  colnames(X) <- paste0("X", 1:ncol(X))
+  
+  data.sim <- cbind(X, data)
+  
+  return(data.sim)
+}
+
+#' A sub-routine to generate typical network structure following \code{\link{EGAnet}{EGA}} approach
+#'
+#' @noRd
+#'
+# Simulate data function----
+# Updated 21.10.2020
+typicalStructure.network <- function (A, model, model.args, n = NULL, uni = FALSE,
+                                      algorithm, algorithm.args)
+{
+  
+  # Convert to igraph
+  graph <- suppressWarnings(NetworkToolbox::convert2igraph(abs(A)))
+  
+  # Check for unconnected nodes
+  if(igraph::vcount(graph)!=ncol(A)){
+    
+    warning("Estimated network contains unconnected nodes:\n",
+            paste(names(which(NetworkToolbox::strength(estimated.network)==0)), collapse = ", "))
+    
+    unconnected <- which(NetworkToolbox::degree(estimated.network)==0)
+    
+  }
+  
+  # Algorithm Arguments
+  ## Check for algorithm
+  if(!is.function(algorithm)){
+    
+    if(algorithm == "walktrap"){
+      algorithm.formals <- formals(igraph::cluster_walktrap)
+    }else if(algorithm == "louvain"){
+      algorithm.formals <- formals(igraph::cluster_louvain)
+    }
+    
+  }else{algorithm.formals <- formals(algorithm)}
+  
+  ## Check for input algorithm arguments
+  if(length(algorithm.args) != 0){
+    
+    ### Check for matching arguments
+    if(any(names(algorithm.args) %in% names(algorithm.formals))){
+      
+      algorithm.replace.args <- algorithm.args[na.omit(match(names(algorithm.formals), names(algorithm.args)))]
+      
+      algorithm.formals[names(algorithm.replace.args)] <- algorithm.replace.args
+    }
+    
+  }
+  
+  ## Remove ellipses
+  if("..." %in% names(algorithm.formals)){
+    algorithm.formals[which(names(algorithm.formals) == "...")] <- NULL
+  }
+  
+  ## Remove weights from igraph functions' arguments
+  if("weights" %in% names(algorithm.formals)){
+    algorithm.formals[which(names(algorithm.formals) == "weights")] <- NULL
+  }
+  
+  # Multidimensional result
+  ## Run community detection algorithm
+  algorithm.formals$graph <- graph
+  
+  if(!is.function(algorithm)){
+    
+    multi.wc <- switch(algorithm,
+                       walktrap = do.call(igraph::cluster_walktrap, as.list(algorithm.formals)),
+                       louvain = do.call(igraph::cluster_louvain, as.list(algorithm.formals))
+    )
+    
+  }else{multi.wc <- do.call(what = algorithm, args = as.list(algorithm.formals))}
+  
+  # Unidimensional result
+  if(uni){
+    
+    # Get new data
+    if(model == "glasso"){
+      
+      # Obtain inverse of network
+      g <- -A
+      diag(g) <- 1
+      
+    }else if(model == "TMFG"){
+      
+      # Generate data
+      g.data <- MASS::rmvnorm(n, mu = rep(0, ncol(A)), Sigma = as.matrix(Matrix::nearPD(A, corr = TRUE, keepDiag = TRUE)$mat))
+      g <- -suppressMessages(NetworkToolbox::LoGo(data, normal = TRUE, partial = TRUE))
+      diag(g) <- 1
+      
+    }
+    
+    # New data
+    data <- MASS::mvrnorm(n, mu = rep(0, ncol(g)), Sigma = corpcor::pseudoinverse(g))
+    
+    # Set one factor for simulated data
+    nfact <- 1
+    nvar <- ncol(data)
+    
+    # Simulate data from unidimensional factor model
+    sim.data <- sim.func(data = data, nvar = nvar, nfact = nfact, load = .70)
+    
+    # Estimate unidimensional EGA
+    uni.res <- suppressMessages(EGA.estimate(data = sim.data, n = n,
+                                             model = model, model.args = model.args,
+                                             algorithm = algorithm, algorithm.args = algorithm.args))
+    
+    # Get undimensional result
+    uni.wc <- uni.res$wc[-c(1:(nvar*nfact))]
+    
+    if(uni.res$n.dim <= nfact + 1){ ## If unidimensional
+      wc <- uni.wc
+    }else{ ## If not
+      wc <- multi.wc$membership
+    }
+    
+  }else{
+    wc <- multi.wc$membership
+  }
+  
+  # Obtain community memberships
+  init.wc <- as.vector(matrix(NA, nrow = 1, ncol = ncol(A)))
+  init.wc[1:length(wc)] <- wc
+  wc <- init.wc
+  
+  # Replace unconnected nodes with NA communities
+  if(exists("unconnected")){
+    wc[unconnected] <- NA
+  }
+  
+  names(wc) <- colnames(A)
+  
+  return(wc)
+  
+}

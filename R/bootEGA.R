@@ -8,31 +8,61 @@
 #'
 #' @param data Matrix or data frame.
 #' Includes the variables to be used in the \code{bootEGA} analysis
+#' 
+#' @param uni Boolean.
+#' Should unidimensionality be checked?
+#' Defaults to \code{FALSE}.
+#' Set to \code{TRUE} to check for whether the data is unidimensional.
+#' If \code{TRUE}, then the same number of variables as the original
+#' data (i.e., from argument \code{data}) are generated from a factor
+#' model with one factor and loadings of .70. These data are then
+#' appended to the original data and dimensionality is checked.
+#' If the number of dimensions is one or two, then the original
+#' data are unidimensional; otherwise, the data are multidimensional
+#' (see Golino, Shi, et al., 2020 for more details)
 #'
-#' @param n Numeric integer.
+#' @param iter Numeric integer.
 #' Number of replica samples to generate from the bootstrap analysis.
 #' At least \code{500} is recommended
-#'
-#' @param model Character.
-#' A string indicating the method to use.
-#' Defaults to \code{"glasso"}.
+#' 
+#' @param type Character.
+#' A string indicating the type of bootstrap to use.
 #'
 #' Current options are:
 #'
 #' \itemize{
 #'
-#' \item{\strong{\code{"glasso"}}}
-#' {Estimates the Gaussian graphical model using graphical LASSO with
-#' extended Bayesian information criterion to select optimal regularization parameter.
-#' See \code{\link[EGAnet]{EBICglasso.qgraph}}}
+#' \item{\strong{\code{"parametric"}}}
+#' {Generates \code{n} new datasets (multivariate normal random distributions) based on the
+#' original dataset, via the \code{\link[MASS]{mvrnorm}} function}
 #'
-#' \item{\strong{\code{"TMFG"}}}
-#' {Estimates a Triangulated Maximally Filtered Graph.
-#' See \code{\link[NetworkToolbox]{TMFG}}}
+#' \item{\strong{\code{"resampling"}}}
+#' {Generates n random subsamples of the original data}
 #'
 #' }
 #'
-#' @param algorithm A string indicating the algorithm to use.
+#' @param model Character.
+#' A string indicating the method to use.
+#' 
+#' Current options are:
+#'
+#' \itemize{
+#'
+#' \item{\strong{\code{glasso}}}
+#' {Estimates the Gaussian graphical model using graphical LASSO with
+#' extended Bayesian information criterion to select optimal regularization parameter.
+#' This is the default method}
+#'
+#' \item{\strong{\code{TMFG}}}
+#' {Estimates a Triangulated Maximally Filtered Graph}
+#' 
+#' }
+#' 
+#' @param model.args List.
+#' A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
+#' or \code{\link[NetworkToolbox]{TMFG}}
+#'
+#' @param algorithm A string indicating the algorithm to use or a function from \code{\link{igraph}}
 #' Current options are:
 #'
 #' \itemize{
@@ -44,22 +74,10 @@
 #' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_louvain}}}
 #'
 #' }
-#'
-#' @param type Character.
-#' A string indicating the type of bootstrap to use.
-#'
-#' Current options are:
-#'
-#' \itemize{
-#'
-#' \item{\strong{\code{"parametric"}}}
-#' {Generates \code{n} new datasets (multivariate normal random distributions) based on the
-#' original dataset, via the \code{\link[mvtnorm]{Mvnorm}} function of the mvtnorm package}
-#'
-#' \item{\strong{\code{"resampling"}}}
-#' {Generates n random subsamples of the original data}
-#'
-#' }
+#' 
+#' @param algorithm.args List.
+#' A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
+#' or some other community detection algorithm function (see examples)
 #'
 #' @param typicalStructure Boolean.
 #' If \code{TRUE}, returns the typical network of partial correlations
@@ -75,7 +93,7 @@
 #'
 #' #' @param plot.type Character.
 #' Plot system to use.
-#' Current options are \code{\link[qgraph]{qgraph}} and \code{\link[GGally]{GGally}}.
+#' Current options are \code{\link[qgraph]{qgraph}} and \code{\link{GGally}}.
 #' Defaults to \code{"GGally"}.
 #'
 #' @param ncores Numeric.
@@ -88,12 +106,12 @@
 #' If you're unsure how many cores your computer has,
 #' then use the following code: \code{parallel::detectCores()}
 #'
-#' @param ... Additional arguments to be passed to \code{\link{EBICglasso.qgraph}}
-#' or \code{\link[NetworkToolbox]{TMFG}}
+#' @param ... Additional arguments.
+#' Used for deprecated arguments from previous versions of \code{\link{EGA}}
 #'
 #' @return Returns a list containing:
 #'
-#' \item{n}{Number of replica samples in bootstrap}
+#' \item{iter}{Number of replica samples in bootstrap}
 #'
 #' \item{boot.ndim}{Number of dimensions identified in each replica sample}
 #'
@@ -121,35 +139,37 @@
 #'
 #' \item{\strong{\code{wc}}}
 #' {Item allocation of the median network}
-#'
-#'     }
+#'    }
 #' }
 #'
-#' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
+#' @author Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'
 #' @examples
-#'
 #' # Load data
 #' wmt <- wmt2[,7:24]
 #'
-#' \dontrun{
-#'
+#' \donttest{
 #' # bootEGA glasso example
-#' boot.wmt <- bootEGA(data = wmt, n = 100, typicalStructure = TRUE,
+#' boot.wmt <- bootEGA(data = wmt, uni = TRUE, iter = 500, typicalStructure = TRUE,
 #' plot.typicalStructure = TRUE, model = "glasso", type = "parametric", ncores = 4)
+#' 
+#' # bootEGA Spinglass example
+#' boot.wmt <- bootEGA(data = wmt, iter = 500, typicalStructure = TRUE,
+#' plot.typicalStructure = TRUE, model = "glasso", algorithm = igraph::cluster_spinglass,
+#' type = "parametric", ncores = 4)
 #' }
 #'
 #' # Load data
 #' intwl <- intelligenceBattery[,8:66]
 #'
-#' \dontrun{
+#' \donttest{
 #' # bootEGA TMFG example
-#' boot.intwl <- bootEGA(data = intelligenceBattery[,8:66], n = 100, typicalStructure = TRUE,
+#' boot.intwl <- bootEGA(data = intelligenceBattery[,8:66], iter = 500, typicalStructure = TRUE,
 #' plot.typicalStructure = TRUE, model = "TMFG", type = "parametric", ncores = 4)
-#'}
+#' }
 #'
 #' @references
-#' Christensen, A. P., & Golino, H. F. (2019).
+#' Christensen, A. P., & Golino, H. (2019).
 #' Estimating the stability of the number of factors via Bootstrap Exploratory Graph Analysis: A tutorial.
 #' \emph{PsyArXiv}.
 #' doi:\href{https://doi.org/10.31234/osf.io/9deay}{10.31234/osf.io/9deay}
@@ -162,34 +182,79 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 10.15.2020
-bootEGA <- function(data, n,
-                    model = c("glasso", "TMFG"), algorithm = c("walktrap", "louvain"),
-                    type = c("parametric", "resampling"),
+# Updated 21.10.2020
+bootEGA <- function(data, uni = FALSE, iter, type = c("parametric", "resampling"),
+                    model = c("glasso", "TMFG"), model.args = list(),
+                    algorithm = c("walktrap", "louvain"), algorithm.args = list(),
                     typicalStructure = TRUE, plot.typicalStructure = TRUE,
                     plot.type = c("GGally", "qgraph"), ncores, ...) {
 
+  #### DEPRECATED ARGUMENTS ####
+  
+  # Get additional arguments
+  add.args <- list(...)
+  
+  # Check if n has been input as an argument
+  if("n" %in% names(add.args)){
+    
+    # Give deprecation warning
+    warning(
+      paste(
+        "The 'n' argument has been deprecated in the bootEGA function.\n\nInstead use: iter = ", add.args$n,
+        sep = ""
+      )
+    )
+    
+    # Handle the number of iterations appropriately
+    iter <- add.args$n
+  }
+  
+  # Check if steps has been input as an argument
+  if("steps" %in% names(add.args)){
+    
+    # Give deprecation warning
+    warning(
+      paste(
+        "The 'steps' argument has been deprecated in all EGA functions.\n\nInstead use: algorithm.args = list(steps = ", add.args$steps, ")",
+        sep = ""
+      )
+    )
+    
+    # Handle the number of steps appropriately
+    algorithm.args$steps <- add.args$steps
+  }
+  
+  #### DEPRECATED ARGUMENTS ####
+  
   #### MISSING ARGUMENTS HANDLING ####
 
-  if(missing(model))
-  {model <- "glasso"
-  }else{model <- match.arg(model)}
+  if(missing(model)){
+    model <- "glasso"
+  }else{
+    model <- match.arg(model)
+  }
 
-  if(missing(algorithm))
-  {algorithm <- "walktrap"
-  }else{algorithm <- match.arg(algorithm)}
+  if(missing(algorithm)){
+    algorithm <- "walktrap"
+  }else if(!is.function(algorithm)){
+    algorithm <- match.arg(algorithm)
+  }
 
-  if(missing(type))
-  {type <- "parametric"
-  }else{type <- match.arg(type)}
+  if(missing(type)){
+    type <- "parametric"
+  }else{
+    type <- match.arg(type)
+  }
 
-  if(missing(ncores))
-  {ncores <- ceiling(parallel::detectCores() / 2)
-  }else{ncores}
+  if(missing(ncores)){
+    ncores <- ceiling(parallel::detectCores() / 2)
+  }
 
-  if(missing(plot.type))
-  {plot.type <- "GGally"
-  }else{plot.type <- match.arg(plot.type)}
+  if(missing(plot.type)){
+    plot.type <- "GGally"
+  }else{
+    plot.type <- match.arg(plot.type)
+  }
 
   #### MISSING ARGUMENTS HANDLING ####
 
@@ -197,16 +262,18 @@ bootEGA <- function(data, n,
   cases <- nrow(data)
 
   #set inverse covariance matrix for parametric approach
-  if(type=="parametric")  # Use a parametric approach:
-  {
-    if(model=="glasso")
-    {
-      g <- -EBICglasso.qgraph(qgraph::cor_auto(data), n = cases, lambda.min.ratio = 0.1, returnAllResults = FALSE, ...)
+  if(type=="parametric"){  # Use a parametric approach
+    
+    if(model=="glasso"){
+      
+      g <- -suppressMessages(EGA.estimate(data = data, n = cases, model = model, model.args = model.args)$network)
       diag(g) <- 1
-    }else if(model=="TMFG")
-    {
-      g <- -NetworkToolbox::LoGo(data, normal = TRUE, partial=TRUE, ...)
+      
+    }else if(model=="TMFG"){
+      
+      g <- -suppressMessages(NetworkToolbox::LoGo(data, normal = TRUE, partial = TRUE))
       diag(g) <- 1
+      
     }
   }
 
@@ -225,117 +292,105 @@ bootEGA <- function(data, n,
     count <- count + 1
 
     #generate data
-    if(type == "parametric")
-    {datalist[[count]] <- mvtnorm::rmvnorm(cases, sigma = corpcor::pseudoinverse(g))
-    }else if(type == "resampling")
-    {datalist[[count]] <- data[sample(1:cases, replace=TRUE),]}
+    if(type == "parametric"){
+      
+      datalist[[count]] <- MASS::mvrnorm(cases, mu = rep(0, ncol(g)), Sigma = corpcor::pseudoinverse(g))
+      
+    }else if(type == "resampling"){
+      
+      datalist[[count]] <- data[sample(1:cases, replace=TRUE),]
+      
+    }
 
     #break out of repeat
-    if(count == n)
+    if(count == iter)
     {break}
   }
 
   #let user know data generation has ended
   message("done", appendLF = TRUE)
 
-  #initialize correlation matrix list
-  corlist <- list()
-
-  #let user know data generation has started
-  message("\nComputing correlation matrices...\n", appendLF = FALSE)
-
   #Parallel processing
   cl <- parallel::makeCluster(ncores)
 
   #Export variables
   parallel::clusterExport(cl = cl,
-                          varlist = c("datalist", "corlist", "cases", ...),
+                          varlist = c("datalist", "uni", "cases",
+                                      "model", "model.args",
+                                      "algorithm", "algorithm.args"),
                           envir=environment())
 
-  #Compute correlation matrices
-  corlist <- pbapply::pblapply(X = datalist, cl = cl,
-                               FUN = qgraph::cor_auto)
-
   #let user know data generation has started
-  message("Estimating networks...\n", appendLF = FALSE)
+  message("Estimating EGA networks...\n", appendLF = FALSE)
 
   #Estimate networks
-  if(model == "glasso")
-  {
-    boots <- pbapply::pblapply(X = corlist, cl = cl,
-                               FUN = EBICglasso.qgraph,
-                               n = cases,
-                               lambda.min.ratio = 0.1,
-                               returnAllResults = FALSE,
-                               ...)
-  }else if(model == "TMFG")
-  {
-    boots <- pbapply::pblapply(X = corlist, cl = cl,
-                               FUN = NetworkToolbox::TMFG,
-                               normal = TRUE,
-                               ...)
-
-    for(i in 1:n)
-    {boots[[i]] <- boots[[i]]$A}
-  }
-
+  boots <- pbapply::pblapply(
+    X = datalist, cl = cl,
+    FUN = EGA,
+    uni = uni,
+    model = model, model.args = model.args,
+    algorithm = algorithm, algorith.args = algorithm.args,
+    plot.EGA = FALSE
+  )
+  
   parallel::stopCluster(cl)
 
   #let user know results are being computed
-  message("Computing results...", appendLF = FALSE)
+  message("Computing results...\n")
 
-  bootGraphs <- vector("list", n)
-  for (i in 1:n) {
-    bootGraphs[[i]] <- boots[[i]]
-    colnames(bootGraphs[[i]]) <- colnames(data)
-    rownames(bootGraphs[[i]]) <- colnames(data)
-  }
-  boot.igraph <- vector("list", n)
-  for (l in 1:n) {
-    boot.igraph[[l]] <- NetworkToolbox::convert2igraph(abs(bootGraphs[[l]]))
-  }
-  boot.wc <- vector("list", n)
-  for (m in 1:n) {
-
-    boot.wc[[m]] <- switch(algorithm,
-                           walktrap = igraph::cluster_walktrap(boot.igraph[[m]]),
-                           louvain = igraph::cluster_louvain(boot.igraph[[m]])
-                           )
-  }
-  boot.ndim <- matrix(NA, nrow = n, ncol = 2)
-  for (m in 1:n) {
-    boot.ndim[m, 2] <- max(boot.wc[[m]]$membership)
-  }
-
+  #get networks
+  bootGraphs <- lapply(boots, function(x, col.names){
+    net <- x$network
+    colnames(net) <- col.names
+    row.names(net) <- col.names
+    return(net)
+  }, col.names = colnames(data))
+  
+  #get community membership
+  boot.wc <- lapply(boots, function(x, col.names){
+    wc <- x$wc
+    names(wc) <- col.names
+    return(wc)
+  }, col.names = colnames(data))
+  
+  #get dimensions
+  boot.ndim <- matrix(NA, nrow = iter, ncol = 2)
   colnames(boot.ndim) <- c("Boot.Number", "N.Dim")
+  
+  boot.ndim[,1] <- seq_len(iter)
+  boot.ndim[,2] <- unlist(
+    lapply(boots, function(x){
+      x$n.dim
+    })
+  )
 
-  boot.ndim[, 1] <- seq_len(n)
-  if (typicalStructure == TRUE) {
-    if(model=="glasso")
-    {typical.Structure <- apply(simplify2array(bootGraphs),1:2, median)
-    }else if(model=="TMFG")
-    {typical.Structure <- apply(simplify2array(bootGraphs),1:2, mean)}
-    typical.igraph <- NetworkToolbox::convert2igraph(abs(typical.Structure))
-
-    typical.wc <- switch(algorithm,
-                         walktrap = igraph::cluster_walktrap(typical.igraph),
-                         louvain = igraph::cluster_louvain(typical.igraph)
+  if (typicalStructure == TRUE){
+    
+    typical.Structure <- switch(model,
+                                glasso = apply(simplify2array(bootGraphs),1:2, median),
+                                TMFG = apply(simplify2array(bootGraphs),1:2, mean)
                          )
+    
+    # Sub-routine to following EGA approach (handles undimensional structures)
+    typical.wc <- typicalStructure.network(A = typical.Structure,
+                                           model = model, model.args = model.args,
+                                           n = cases, uni = uni, algorithm = algorithm,
+                                           algorithm.args = algorithm.args)
 
-    typical.ndim <- max(typical.wc$membership)
-    dim.variables <- data.frame(items = colnames(data), dimension = typical.wc$membership)
+    typical.ndim <- max(typical.wc, na.rm = TRUE)
+    dim.variables <- data.frame(items = colnames(data), dimension = typical.wc)
   }
   if (plot.typicalStructure == TRUE) {
     if(plot.type == "qgraph"){
       plot.typical.ega <- qgraph::qgraph(typical.Structure, layout = "spring",
-                                         vsize = 6, groups = as.factor(typical.wc$membership))
+                                         vsize = 6, groups = as.factor(typical.wc))
     }else if(plot.type == "GGally"){
         network1 <- network::network(typical.Structure,
                                      ignore.eval = FALSE,
                                      names.eval = "weights",
                                      directed = FALSE)
 
-      network::set.vertex.attribute(network1, attrname= "Communities", value = typical.wc$membership)
+      network::set.vertex.attribute(network1, attrname= "Communities", value = typical.wc)
       network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
       network::set.edge.attribute(network1, "color", ifelse( network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
       network::set.edge.value(network1,attrname="AbsWeights",value=abs(typical.Structure))
@@ -371,7 +426,7 @@ bootEGA <- function(data, n,
   ciMult <- qt(0.95/2 + 0.5, nrow(boot.ndim) - 1)
   ci <- se.boot * ciMult
   quant <- quantile(boot.ndim[,2], c(.025, .975), na.rm = TRUE)
-  summary.table <- data.frame(n.Boots = n, median.dim = Median,
+  summary.table <- data.frame(n.Boots = iter, median.dim = Median,
                               SE.dim = se.boot, CI.dim = ci,
                               Lower.CI = Median - ci, Upper.CI = Median + ci,
                               Lower.Quantile = quant[1], Upper.Quantile = quant[2])
@@ -387,32 +442,38 @@ bootEGA <- function(data, n,
   {
     count <- count + 1
     lik[count,1] <- i
-    lik[count,2] <- length(which(boot.ndim[,2]==i))/n
+    lik[count,2] <- length(which(boot.ndim[,2]==i))/iter
   }
 
-  #let user know results have been computed
-  message("done", appendLF = TRUE)
-
   result <- list()
-  result$n <- n
+  result$iter <- iter
   result$boot.ndim <- boot.ndim
   result$boot.wc <- boot.wc
   result$bootGraphs <- bootGraphs
   result$summary.table <- summary.table
   result$frequency <- lik
-  result$EGA <- suppressMessages(suppressWarnings(EGA(data = data, model = model, plot.EGA = FALSE)))
+  result$EGA <- suppressMessages(suppressWarnings(EGA(data = data, uni = uni,
+                                                      model = model, model.args = model.args,
+                                                      algorithm = algorithm, algorith.args = algorithm.args,
+                                                      plot.EGA = FALSE)))
 
   # Typical structure
   if (typicalStructure == TRUE) {
     typicalGraph <- list()
     typicalGraph$graph <- typical.Structure
     typicalGraph$typical.dim.variables <- dim.variables[order(dim.variables[,2]), ]
-    typicalGraph$wc <- typical.wc$membership
+    typicalGraph$wc <- typical.wc
     result$typicalGraph <- typicalGraph
     result$plot.typical.ega <- plot.typical.ega
   }
 
   class(result) <- "bootEGA"
+  
+  # Message that unidimensional structures were not checked
+  if(!uni){
+    message("\nEGA did not check for unidimensionality. Set argument 'uni' to TRUE to check for unidimensionality")
+  }
+  
   return(result)
 }
 #----

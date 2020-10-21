@@ -34,14 +34,19 @@
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
 #'
 #' @examples
-#'
 #' # Load data
 #' wmt <- wmt2[,7:24]
-#'
-#' \dontrun{
+#' 
+#' \dontshow{# Fast for CRAN
+#' cor.wmt <- cor(wmt)
+#' 
 #' # Estimate EGA
-#' ega.wmt <- EGA(data = wmt)
+#' ega.wmt <- EGA(data = wmt, uni = TRUE, n = nrow(wmt2), plot.EGA = FALSE)
+#' }
 #'
+#' \donttest{
+#' # Estimate EGA
+#' ega.wmt <- EGA(data = wmt, uni = TRUE)
 #' }
 #'
 #' # Fit CFA model to EGA results
@@ -53,14 +58,13 @@
 #' # Load data
 #' intel <- intelligenceBattery[,8:66]
 #'
-#' \dontrun{
+#' \donttest{
 #' # Estimate EGA
 #' ega.intel <- EGA(data = intel)
 #'
 #' # Fit CFA model to EGA results
 #' cfa.intel <- CFA(ega.obj = ega.intel, estimator = 'WLSMV', plot.CFA = TRUE,
 #' data = intel)
-#'
 #' }
 #'
 #' @seealso \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and

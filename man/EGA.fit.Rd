@@ -12,18 +12,12 @@ EGA.fit(
 )
 }
 \arguments{
-\item{data}{A dataset (or a correlation matrix).}
+\item{data}{Matrix or data frame.
+Dataset or correlation matrix}
 
 \item{model}{Character.
 A string indicating the method to use.
-Defaults to \code{"glasso"}.}
-
-\item{steps}{Numeric vector.
-Range of steps to be used in the model selection.
-Defaults from 3 to 8 steps (based on Pons & Latapy, 2006)}
-
-\item{n}{Integer.
-Sample size, if the data provided is a correlation matrix
+Defaults to \code{"glasso"}
 
 Current options are:
 
@@ -39,6 +33,13 @@ See \code{\link[EGAnet]{EBICglasso.qgraph}}}
 See \code{\link[NetworkToolbox]{TMFG}}}
 
 }}
+
+\item{steps}{Numeric vector.
+Range of steps to be used in the model selection.
+Defaults from 3 to 8 steps (based on Pons & Latapy, 2006)}
+
+\item{n}{Integer.
+Sample size (if the data provided is a correlation matrix)}
 }
 \value{
 Returns a list containing:
@@ -57,8 +58,7 @@ the \code{\link[igraph]{cluster_walktrap}} algorithm}
 Estimates the best fitting model using \code{\link[EGAnet]{EGA}}.
 The number of steps in the \code{\link[igraph]{cluster_walktrap}} detection
 algorithm is varied and unique community solutions are compared using
-\code{\link[EGAnet]{tefi}}. Also computes \code{\link[igraph]{cluster_louvain}}
-community detection algorithm.
+\code{\link[EGAnet]{tefi}}.
 }
 \examples{
 
@@ -93,5 +93,5 @@ doi:\href{https://doi.org/10.7155/jgaa.00185}{10.7155/jgaa.00185}
 and \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{
-Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
+Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 }

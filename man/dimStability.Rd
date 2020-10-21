@@ -34,21 +34,20 @@ computes the stability of dimensions. This is computed by assessing the proporti
 times the original dimension is exactly replicated in across bootstrap samples
 }
 \examples{
-
 # Load data
 wmt <- wmt2[,7:24]
 
-\dontrun{
+\donttest{
 # Estimate EGA network
-ega.wmt <- EGA(data = wmt, model = "glasso")
+ega.wmt <- EGA(data = wmt, uni = TRUE, model = "glasso")
 
 # Estimate dimension stability
-boot.wmt <- bootEGA(data = wmt, n = 100, typicalStructure = TRUE,
+boot.wmt <- bootEGA(data = wmt, uni = TRUE, iter = 500, typicalStructure = TRUE,
 plot.typicalStructure = TRUE, model = "glasso",
 type = "parametric", ncores = 4)
 
 # Estimate item stability statistics
-dimStability(boot.wmt, orig.wc = ega.wmt$wc, item.stability = FALSE)
+dimStability(boot.wmt, orig.wc = boot.wmt$EGA$wc, item.stability = FALSE)
 }
 
 }
@@ -57,5 +56,5 @@ dimStability(boot.wmt, orig.wc = ega.wmt$wc, item.stability = FALSE)
 \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{
-Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
+Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 }

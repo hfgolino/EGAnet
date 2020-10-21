@@ -3,17 +3,17 @@
 #' @description Estimates the best fitting model using \code{\link[EGAnet]{EGA}}.
 #' The number of steps in the \code{\link[igraph]{cluster_walktrap}} detection
 #' algorithm is varied and unique community solutions are compared using
-#' \code{\link[EGAnet]{tefi}}. Also computes \code{\link[igraph]{cluster_louvain}}
-#' community detection algorithm.
+#' \code{\link[EGAnet]{tefi}}.
 #'
-#' @param data A dataset (or a correlation matrix).
+#' @param data Matrix or data frame.
+#' Dataset or correlation matrix
+#' 
+#' @param n Integer.
+#' Sample size (if the data provided is a correlation matrix)
 #'
 #' @param model Character.
 #' A string indicating the method to use.
-#' Defaults to \code{"glasso"}.
-#'
-#' @param n Integer.
-#' Sample size, if the data provided is a correlation matrix
+#' Defaults to \code{"glasso"}
 #'
 #' Current options are:
 #'
@@ -76,11 +76,11 @@
 #' \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA,
 #' and \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 #'
-#' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
+#' @author Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'
 #' @export
 # EGA fit
-# Updated 09.10.2020
+# Updated 20.10.2020
 EGA.fit <- function (data, model = c("glasso","TMFG"),
                      steps = c(3,4,5,6,7,8), n = NULL)
 {
@@ -104,10 +104,11 @@ EGA.fit <- function (data, model = c("glasso","TMFG"),
       {
         message(paste("Estimating EGA -- Walktrap model",i,"of",num,sep=" "))
         mods[[as.character(steps[i])]] <- EGA(data = data,
+                                              n = n,
                                               model = model,
-                                              steps = steps[i],
-                                              plot.EGA = FALSE,
-                                              n = n)
+                                              model.args = list(steps = steps[i]),
+                                              algorithm = "walktrap",
+                                              plot.EGA = FALSE)
 
         dims[,i] <- mods[[as.character(steps[i])]]$wc
       }

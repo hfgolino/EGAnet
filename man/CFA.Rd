@@ -41,14 +41,19 @@ Additional fit measures can be applied using the
 Verifies the fit of the structure suggested by \code{\link[EGAnet]{EGA}} using confirmatory factor analysis
 }
 \examples{
-
 # Load data
 wmt <- wmt2[,7:24]
 
-\dontrun{
-# Estimate EGA
-ega.wmt <- EGA(data = wmt)
+\dontshow{# Fast for CRAN
+cor.wmt <- cor(wmt)
 
+# Estimate EGA
+ega.wmt <- EGA(data = wmt, uni = TRUE, n = nrow(wmt2), plot.EGA = FALSE)
+}
+
+\donttest{
+# Estimate EGA
+ega.wmt <- EGA(data = wmt, uni = TRUE)
 }
 
 # Fit CFA model to EGA results
@@ -60,14 +65,13 @@ lavaan::fitMeasures(cfa.wmt$fit, fit.measures = "all")
 # Load data
 intel <- intelligenceBattery[,8:66]
 
-\dontrun{
+\donttest{
 # Estimate EGA
 ega.intel <- EGA(data = intel)
 
 # Fit CFA model to EGA results
 cfa.intel <- CFA(ega.obj = ega.intel, estimator = 'WLSMV', plot.CFA = TRUE,
 data = intel)
-
 }
 
 }

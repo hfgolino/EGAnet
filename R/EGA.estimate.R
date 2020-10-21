@@ -95,6 +95,15 @@
 #' \item{cor.data}{The zero-order correlation matrix}
 #'
 #' @examples
+#' \dontshow{# Fast for CRAN checks
+#' # Pearson's correlation matrix
+#' wmt <- cor(wmt2[,7:24])
+#' 
+#' # Estimate EGA
+#' ega.wmt <- EGA.estimate(data = wmt, n = nrow(wmt2), model = "glasso")
+#' 
+#' }
+#'
 #' \donttest{
 #' # Estimate EGA
 #' ega.wmt <- EGA.estimate(data = wmt2[,7:24], model = "glasso")
@@ -105,9 +114,6 @@
 #' # Estimate EGA with Spinglass
 #' ega.wmt <- EGA.estimate(data = wmt2[,7:24], model = "glasso",
 #' algorithm = igraph::cluster_spinglass)
-#'
-#' # Estimate EGA
-#' ega.intel <- EGA.estimate(data = intelligenceBattery[,8:66], model = "glasso")
 #' }
 #' 
 #' @seealso \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap
@@ -167,25 +173,25 @@ EGA.estimate <- function(data, n = NULL,
         sep = ""
       )
     )
-    
+
     # Handle the number of steps appropriately
     algorithm.args$steps <- add.args$steps
   }
   
   #### ARGUMENTS HANDLING ####
-  
+
   # Missing arguments
   
   if(missing(model)){
     model <- "glasso"
   }else{model <- match.arg(model)}
-  
+
   if(missing(algorithm)){
     algorithm <- "walktrap"
   }else if(!is.function(algorithm)){
     algorithm <- tolower(match.arg(algorithm))
   }
-  
+
   if(missing(corr)){
     corr <- "cor_auto"
   }else{corr <- match.arg(corr)}
@@ -203,7 +209,7 @@ EGA.estimate <- function(data, n = NULL,
     if(any(names(model.args) %in% names(model.formals))){
       
       model.replace.args <- model.args[na.omit(match(names(model.formals), names(model.args)))]
-      
+  
       model.formals[names(model.replace.args)] <- model.replace.args
     }
     
@@ -248,41 +254,41 @@ EGA.estimate <- function(data, n = NULL,
   if("weights" %in% names(algorithm.formals)){
     algorithm.formals[which(names(algorithm.formals) == "weights")] <- NULL
   }
-  
+
   #### ARGUMENTS HANDLING ####
-  
+
   # Check if data is correlation matrix and positive definite
   if(nrow(data) != ncol(data)){
     
     # Obtain n
     n <- nrow(data)
-    
+
     # Compute correlation matrix
-    
+
     cor.data <- switch(corr,
                        cor_auto = qgraph::cor_auto(data, forcePD = TRUE),
                        pearson = cor(data, use = "pairwise.complete.obs", method = "pearson"),
                        spearman = cor(data, use = "pairwise.complete.obs", method = "spearman")
     )
-    
+
     # Check if positive definite
     if(any(eigen(cor.data)$values < 0)){
       
       # Let user know
       warning("Correlation matrix is not positive definite.\nForcing positive definite matrix using Matrix::nearPD()\nResults may be unreliable")
-      
+
       # Force positive definite matrix
       cor.data <- as.matrix(Matrix::nearPD(cor.data, corr = TRUE, keepDiag = TRUE, ensureSymmetry = TRUE)$mat)
     }
     
   }else{
-    
+
     # Check if positive definite
     if(any(eigen(data)$values < 0)){
       
       # Let user know
       warning("Correlation matrix is not positive definite.\nForcing positive definite matrix using Matrix::nearPD()\nResults may be unreliable")
-      
+
       # Force positive definite matrix
       cor.data <- as.matrix(Matrix::nearPD(data, corr = TRUE, keepDiag = TRUE, ensureSymmetry = TRUE)$mat)
       
@@ -295,7 +301,7 @@ EGA.estimate <- function(data, n = NULL,
   model.formals$n <- n
   
   #### ADDITIONAL ARGUMENTS HANDLING ####
-  
+
   # Estimate network
   if(model == "glasso")
   {
@@ -316,7 +322,7 @@ EGA.estimate <- function(data, n = NULL,
       
       # Estimate network
       estimated.network <- do.call(EBICglasso.qgraph, model.formals)
-      
+
       if(all(abs(NetworkToolbox::strength(estimated.network))>0)){
         
         message(paste("Network estimated with:\n",
@@ -330,20 +336,20 @@ EGA.estimate <- function(data, n = NULL,
   }else if(model == "TMFG"){
     estimated.network <- NetworkToolbox::TMFG(cor.data)$A
   }
-  
+
   # Convert to igraph
   graph <- suppressWarnings(NetworkToolbox::convert2igraph(abs(estimated.network)))
-  
+
   # Check for unconnected nodes
   if(igraph::vcount(graph)!=ncol(data)){
     
     warning("Estimated network contains unconnected nodes:\n",
             paste(names(which(NetworkToolbox::strength(estimated.network)==0)), collapse = ", "))
-    
+
     unconnected <- which(NetworkToolbox::degree(estimated.network)==0)
     
   }
-  
+
   # Run community detection algorithm
   algorithm.formals$graph <- graph
   
@@ -355,21 +361,21 @@ EGA.estimate <- function(data, n = NULL,
     )
     
   }else{wc <- do.call(what = algorithm, args = as.list(algorithm.formals))}
-  
+
   # Obtain community memberships
   wc <- wc$membership
   init.wc <- as.vector(matrix(NA, nrow = 1, ncol = ncol(data)))
   init.wc[1:length(wc)] <- wc
   wc <- init.wc
-  
+
   # Replace unconnected nodes with NA communities
   if(exists("unconnected")){
     wc[unconnected] <- NA
   }
-  
+
   names(wc) <- colnames(data)
   n.dim <- max(wc, na.rm = TRUE)
-  
+
   # Return results
   res <- list()
   res$network <- estimated.network
@@ -381,6 +387,6 @@ EGA.estimate <- function(data, n = NULL,
     res$gamma <- model.formals$gamma
     res$lambda <- model.formals$lambda.min.ratio
   }
-  
+
   return(res)
 }

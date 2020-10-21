@@ -2,26 +2,31 @@
 % Please edit documentation in R/EGA.estimate.R
 \name{EGA.estimate}
 \alias{EGA.estimate}
-\title{A Wrapper Function for \code{EGA}}
+\title{A Sub-routine Function for \code{EGA}}
 \usage{
 EGA.estimate(
   data,
   n = NULL,
   model = c("glasso", "TMFG"),
+  model.args = list(),
   algorithm = c("walktrap", "louvain"),
-  steps = 4,
-  cor = c("cor_auto", "pearson", "spearman"),
+  algorithm.args = list(),
+  corr = c("cor_auto", "pearson", "spearman"),
   ...
 )
 }
 \arguments{
-\item{data}{A dataframe with the variables to be used in the analysis or a correlation matrix.
-If the data used is a correlation matrix, the argument \code{n} will need to be specified.}
+\item{data}{Matrix or data frame.
+Variables (down columns) or correlation matrix.
+If the input is a correlation matrix,
+then argument \code{n} (number of cases) is \strong{required}}
 
 \item{n}{Integer.
-Sample size, if the data provided is a correlation matrix}
+Sample size if \code{data} provided is a correlation matrix}
 
-\item{model}{A string indicating the method to use.
+\item{model}{Character.
+A string indicating the method to use.
+
 Current options are:
 
 \itemize{
@@ -36,7 +41,11 @@ This is the default method}
 
 }}
 
-\item{algorithm}{A string indicating the algorithm to use.
+\item{model.args}{List.
+A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
+or \code{\link[NetworkToolbox]{TMFG}}}
+
+\item{algorithm}{A string indicating the algorithm to use or a function from \code{\link{igraph}}
 Current options are:
 
 \itemize{
@@ -49,10 +58,11 @@ Current options are:
 
 }}
 
-\item{steps}{Number of steps to be used in \code{\link[igraph]{cluster_walktrap}} algorithm.
-Defaults to 4.}
+\item{algorithm.args}{List.
+A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
+or some other community detection algorithm function (see examples)}
 
-\item{cor}{Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
+\item{corr}{Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
 Current options are:
 
 \itemize{
@@ -70,8 +80,8 @@ the \code{\link[stats]{cor}}} function.
 the \code{\link[stats]{cor}}} function.
 }}
 
-\item{...}{Additional arguments to be passed to \code{\link{EBICglasso.qgraph}}
-or \code{\link[NetworkToolbox]{TMFG}}}
+\item{...}{Additional arguments.
+Used for deprecated arguments from previous versions of \code{\link{EGA}}}
 }
 \value{
 Returns a list containing:
@@ -88,26 +98,53 @@ was disconnected from the network}
 \item{cor.data}{The zero-order correlation matrix}
 }
 \description{
-Estimates the number of dimensions of a given dataset/instrument
-using graphical lasso (\code{\link{EBICglasso.qgraph}}) or the
+Estimates the number of dimensions of a given dataset or correlation matrix
+using the graphical lasso (\code{\link{EBICglasso.qgraph}}) or the
 Triangulated Maximally Filtered Graph (\code{\link[NetworkToolbox]{TMFG}})
-method and the walktrap community detection algorithm (\code{\link[igraph]{cluster_walktrap}}).
-The glasso regularization parameter is set via EBIC.
+network estimation methods.
+}
+\details{
+Two community detection algorithms, Walktrap (Pons & Latapy, 2006) and
+Louvain (Blondel et al., 2008), are pre-programmed because of their
+superior performance in simulation studies on psychological
+data generated from factor models (Christensen & Golino; 2020; Golino et al., 2020).
+Notably, any community detection algorithm from the \code{\link{igraph}}
+can be used to estimate the number of communities (see examples).
 }
 \examples{
+\dontshow{# Fast for CRAN checks
+# Pearson's correlation matrix
+wmt <- cor(wmt2[,7:24])
+
+# Estimate EGA
+ega.wmt <- EGA.estimate(data = wmt, n = nrow(wmt2), model = "glasso")
+
+}
 
 \donttest{
-#estimate EGA
+# Estimate EGA
 ega.wmt <- EGA.estimate(data = wmt2[,7:24], model = "glasso")
 
-#estimate EGAtmfg
+# Estimate EGAtmfg
 ega.wmt <- EGA.estimate(data = wmt2[,7:24], model = "TMFG")
 
-#estimate EGA
-ega.intel <- EGA.estimate(data = intelligenceBattery[,8:66], model = "glasso")
+# Estimate EGA with Spinglass
+ega.wmt <- EGA.estimate(data = wmt2[,7:24], model = "glasso",
+algorithm = igraph::cluster_spinglass)
 }
+
 }
 \references{
+Blondel, V. D., Guillaume, J.-L., Lambiotte, R., & Lefebvre, E. (2008).
+Fast unfolding of communities in large networks.
+\emph{Journal of Statistical Mechanics: Theory and Experiment}, \emph{2008}, P10008.
+doi: \href{https://doi.org/10.1088/1742-5468/2008/10/P10008}{10.1088/1742-5468/2008/10/P10008}
+
+Christensen, A. P., & Golino, H. (under review).
+Estimating factors with psychometric networks: A Monte Carlo simulation comparing community detection algorithms.
+\emph{PsyArXiv}.
+doi: \href{https://doi.org/10.31234/osf.io/hz89e}{10.31234/osf.io/hz89e}
+
 Golino, H. F., & Epskamp, S. (2017).
 Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research.
 \emph{PloS one}, \emph{12(6)}, e0174035..
@@ -120,13 +157,18 @@ doi: \href{https://doi.org/10.1016/j.intell.2017.02.007}{j.intell.2017.02.007}
 
 Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., & Thiyagarajan, J. A. (in press).
 Investigating the performance of Exploratory Graph Analysis and traditional techniques to identify the number of latent factors: A simulation and tutorial.
-\emph{Psychological Methods}.
-doi: \href{https://psyarxiv.com/gzcre/}{10.31234/osf.io/gzcre}
+\emph{Psychological Methods}, \emph{25}, 292-320.
+doi: \href{https://doi.org/10.1037/met0000255}{10.1037/met0000255}
+
+Pons, P., & Latapy, M. (2006).
+Computing communities in large networks using random walks.
+\emph{Journal of Graph Algorithms and Applications}, \emph{10}, 191-218.
+doi: \href{https://doi.org/10.7155/jgaa.00185}{10.7155/jgaa.00185}
 }
 \seealso{
 \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap
 and \code{\link{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{
-Alexander P. Christensen <alexpaulchristensen at gmail.com> and Hudson F. Golino <hfg9s at virginia.edu>
+Alexander P. Christensen <alexpaulchristensen at gmail.com> and Hudson Golino <hfg9s at virginia.edu>
 }

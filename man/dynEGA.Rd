@@ -14,11 +14,13 @@ dynEGA(
   group = NULL,
   use.derivatives = 1,
   model = c("glasso", "TMFG"),
+  model.args = list(),
   algorithm = c("walktrap", "louvain"),
+  algorithm.args = list(),
   plot.EGA = TRUE,
-  cor = c("cor_auto", "pearson", "spearman"),
-  steps = 4,
-  ncores
+  corr = c("cor_auto", "pearson", "spearman"),
+  ncores,
+  ...
 )
 }
 \arguments{
@@ -68,7 +70,8 @@ Number of the column identifying group membership. Must be specified only if \co
 \item{use.derivatives}{Integer.
 The order of the derivative to be used in the EGA procedure. Default to 1.}
 
-\item{model}{A string indicating the network method to use (\code{\link{EGA.estimate}}).
+\item{model}{Character.
+A string indicating the method to use.
 Current options are:
 
 \itemize{
@@ -83,7 +86,12 @@ This is the default method}
 
 }}
 
-\item{algorithm}{A string indicating the community detection algorithm to use.
+\item{model.args}{List.
+A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
+or \code{\link[NetworkToolbox]{TMFG}}}
+
+\item{algorithm}{A string indicating the algorithm to use or a function from \code{\link{igraph}}
+
 Current options are:
 
 \itemize{
@@ -96,11 +104,15 @@ Current options are:
 
 }}
 
+\item{algorithm.args}{List.
+A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
+or some other community detection algorithm function (see examples)}
+
 \item{plot.EGA}{Logical.
 If TRUE, returns a plot of the network and its estimated dimensions.
 Defaults to TRUE}
 
-\item{cor}{Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
+\item{corr}{Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
 Current options are:
 
 \itemize{
@@ -118,9 +130,6 @@ the \code{\link[stats]{cor}}} function.
 the \code{\link[stats]{cor}}} function.
 }}
 
-\item{steps}{Number of steps to be used in \code{\link[igraph]{cluster_walktrap}} algorithm.
-Defaults to 4.}
-
 \item{ncores}{Numeric.
 Number of cores to use in computing results.
 Defaults to \code{parallel::detectCores() / 2} or half of your
@@ -130,6 +139,9 @@ Recommended to use maximum number of cores minus one
 
 If you're unsure how many cores your computer has,
 then use the following code: \code{parallel::detectCores()}}
+
+\item{...}{Additional arguments.
+Used for deprecated arguments from previous versions of \code{\link{EGA}}}
 }
 \description{
 Estimates dynamic factors in multivariate time series (i.e. longitudinal data, panel data, intensive longitudinal data) at multiple
