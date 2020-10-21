@@ -51,5 +51,5 @@ Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R
 + Related functions: `EGA`
 
 Golino, H., Thiyagarajan, J. A., Sadana, M., Teles, M., Christensen, A. P., & Boker, S. M. (under review). Investigating the broad domains of intrinsic capacity, functional ability, and environment: An exploratory graph analysis approach for improving analytical methodologies for measuring healthy aging. *PsyArXiv*. doi:[10.31234/osf.io/hj5mc](https://doi.org/10.31234/osf.io/hj5mc)
-+ Related functions `EGA.fit`, `tefi`
++ Related functions `EGA.fit` and `tefi`
 
