@@ -12,31 +12,31 @@
 #' Christensen, A. P., & Golino, H. (under review).
 #' Estimating factors with psychometric networks: A Monte Carlo simulation comparing community detection algorithms.
 #' \emph{PsyArXiv}.
-#' doi: \href{https://doi.org/10.31234/osf.io/hz89e}{10.31234/osf.io/hz89e}
+#' doi: \href{https://doi.org/10.31234/osf.io/hz89e}{10.31234/osf.io/hz89e} \cr
 #' # Related functions: \code{\link[EGAnet]{EGA}}
 #' 
 #' Christensen, A. P., & Golino, H. (2019).
 #' Estimating the stability of the number of factors via Bootstrap Exploratory Graph Analysis: A tutorial.
 #' \emph{PsyArXiv}.
-#' doi:\href{https://doi.org/10.31234/osf.io/9deay}{10.31234/osf.io/9deay}
+#' doi:\href{https://doi.org/10.31234/osf.io/9deay}{10.31234/osf.io/9deay} \cr
 #' # Related functions: \code{\link[EGAnet]{bootEGA}}
 #' 
 #' Christensen, A. P., & Golino, H. (in press).
 #' On the equivalency of factor and network loadings.
 #' \emph{Behavior Research Methods}.
-#' doi: \href{https://doi.org/10.31234/osf.io/xakez}{10.31234/osf.io/xakez}
+#' doi: \href{https://doi.org/10.31234/osf.io/xakez}{10.31234/osf.io/xakez} \cr
 #' # Related functions: \code{\link[EGAnet]{LCT}} and \code{\link[EGAnet]{net.loads}}
 #' 
 #' Christensen, A. P., & Golino, H. (under review).
 #' Random, factor, or network model? Predictions from neural networks.
 #' \emph{PsyArXiv}.
-#' doi: \href{https://doi.org/10.31234/osf.io/awkcb}{10.31234/osf.io/awkcb}
+#' doi: \href{https://doi.org/10.31234/osf.io/awkcb}{10.31234/osf.io/awkcb} \cr
 #' # Related functions: \code{\link[EGAnet]{LCT}}
 #' 
 #' Christensen, A. P., Golino, H., & Silvia, P. J. (in press).
 #' A psychometric network perspective on the validity and validation of personality trait questionnaires.
 #' \emph{European Journal of Personality}.
-#' doi: \href{https://doi.org/10.1002/per.2265}{10.1002/per.2265}
+#' doi: \href{https://doi.org/10.1002/per.2265}{10.1002/per.2265} \cr
 #' # Related functions: \code{\link[EGAnet]{bootEGA}}, \code{\link[EGAnet]{dimStability}},
 #' # \code{\link[EGAnet]{EGA}}, \code{\link[EGAnet]{itemStability}}, \code{\link[EGAnet]{node.redundant}},
 #' # \code{\link[EGAnet]{node.redundant.combine}}, and \code{\link[EGAnet]{node.redundant.names}}
@@ -44,39 +44,39 @@
 #' Golino, H., Christensen, A. P., Moulder, R. G., Kim, S., & Boker, S. M. (under review).
 #' Modeling latent topics in social media using Dynamic Exploratory Graph Analysis: The case of the right-wing and left-wing trolls in the 2016 US elections.
 #' \emph{PsyArXiv}.
-#' doi: \href{https://doi.org/10.31234/osf.io/tfs7c}{10.31234/osf.io/tfs7c}
+#' doi: \href{https://doi.org/10.31234/osf.io/tfs7c}{10.31234/osf.io/tfs7c} \cr
 #' # Related functions: \code{\link[EGAnet]{dynEGA}} and \code{\link[EGAnet]{simDFM}}
 #' 
 #' Golino, H., & Demetriou, A. (2017).
 #' Estimating the dimensionality of intelligence like data using Exploratory Graph Analysis.
 #' \emph{Intelligence}, \emph{62}, 54-70.
-#' doi: \href{https://doi.org/10.1016/j.intell.2017.02.007}{10.1016/j.intell.2017.02.007}
+#' doi: \href{https://doi.org/10.1016/j.intell.2017.02.007}{10.1016/j.intell.2017.02.007} \cr
 #' # Related functions: \code{\link[EGAnet]{EGA}}
 #' 
 #' Golino, H., & Epskamp, S. (2017).
 #' Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research.
 #' \emph{PloS one}, \emph{12(6)}, e0174035.
-#' doi: \href{https://doi.org/10.1371/journal.pone.0174035}{10.1371/journal.pone.0174035}
+#' doi: \href{https://doi.org/10.1371/journal.pone.0174035}{10.1371/journal.pone.0174035} \cr
 #' # Related functions: \code{\link[EGAnet]{EGA}}
 #' 
 #' Golino, H., Moulder, R. G., Shi, D., Christensen, A. P., Garrido, L. E., Neito, M. D., Nesselroade, J., Sadana, R., Thiyagarajan, J. A., & Boker, S. M. (2020).
 #' Entropy fit indices: New fit measures for assessing the structure and dimensionality of multiple latent variables.
 #' \emph{Multivariate Behavioral Research}.
-#' doi: \href{https://doi.org/10.31234/osf.io/mtka2}{10.31234/osf.io/mtka2}
+#' doi: \href{https://doi.org/10.31234/osf.io/mtka2}{10.31234/osf.io/mtka2} \cr
 #' # Related functions: \code{\link[EGAnet]{entropyFit}}, \code{\link[EGAnet]{tefi}}, and \code{\link[EGAnet]{vn.entropy}} 
 #'
 #' Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., Thiyagarajan, J. A., & Martinez-Molina, A. (2020).
 #' Investigating the performance of exploratory graph analysis and traditional techniques to identify the number of latent factors:
 #' A simulation and tutorial.
 #' \emph{Psychological Methods}, \emph{25}, 292-320. 
-#' doi: \href{https://doi.org/10.1037/met0000255}{10.1037/met0000255}
+#' doi: \href{https://doi.org/10.1037/met0000255}{10.1037/met0000255} \cr
 #' # Related functions: \code{\link[EGAnet]{EGA}}
 #' 
 #' Golino, H., Thiyagarajan, J. A., Sadana, M., Teles, M., Christensen, A. P., & Boker, S. M. (under review).
 #' Investigating the broad domains of intrinsic capacity, functional ability, and environment:
 #' An exploratory graph analysis approach for improving analytical methodologies for measuring healthy aging.
 #' \emph{PsyArXiv}.
-#' doi: \href{https://doi.org/10.31234/osf.io/hj5mc}{10.31234/osf.io/hj5mc}
+#' doi: \href{https://doi.org/10.31234/osf.io/hj5mc}{10.31234/osf.io/hj5mc} \cr
 #' # Related functions: \code{\link[EGAnet]{EGA.fit}} and \code{\link[EGAnet]{tefi}}
 #'
 #' @author Hudson Golino <hfg9s@virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
