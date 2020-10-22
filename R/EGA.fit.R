@@ -3,17 +3,17 @@
 #' @description Estimates the best fitting model using \code{\link[EGAnet]{EGA}}.
 #' The number of steps in the \code{\link[igraph]{cluster_walktrap}} detection
 #' algorithm is varied and unique community solutions are compared using
-#' \code{\link[EGAnet]{tefi}}. Also computes \code{\link[igraph]{cluster_louvain}}
-#' community detection algorithm.
+#' \code{\link[EGAnet]{tefi}}.
 #'
-#' @param data A dataset (or a correlation matrix).
+#' @param data Matrix or data frame.
+#' Dataset or correlation matrix
+#' 
+#' @param n Integer.
+#' Sample size (if the data provided is a correlation matrix)
 #'
 #' @param model Character.
 #' A string indicating the method to use.
-#' Defaults to \code{"glasso"}.
-#'
-#' @param n Integer.
-#' Sample size, if the data provided is a correlation matrix
+#' Defaults to \code{"glasso"}
 #'
 #' Current options are:
 #'
@@ -51,9 +51,9 @@
 #' # Load data
 #' wmt <- wmt2[,7:24]
 #'
-#' \dontrun{
+#' \donttest{
 #' # Estimate normal EGAtmfg
-#' tmfg <- EGA(data = wmt, model = "TMFG")
+#' tmfg <- EGA(data = wmt, model = "TMFG", plot.EGA = FALSE)
 #'
 #' # Estimate optimal EGAtmfg
 #' tmfg.opt <- EGA.fit(data = wmt, model = "TMFG")
@@ -63,10 +63,23 @@
 #' cfa.opt <- CFA(tmfg.opt$EGA, estimator = "WLSMV", data = wmt)
 #'
 #' lavaan::lavTestLRT(cfa.tmfg$fit, cfa.opt$fit, method = "satorra.bentler.2001")
-#'
-#'}
+#' }
 #'
 #' @references
+#' # Entropy fit measures \cr
+#' Golino, H., Moulder, R. G., Shi, D., Christensen, A. P., Garrido, L. E., Neito, M. D., Nesselroade, J., Sadana, R., Thiyagarajan, J. A., & Boker, S. M. (in press).
+#' Entropy fit indices: New fit measures for assessing the structure and dimensionality of multiple latent variables.
+#' \emph{Multivariate Behavioral Research}.
+#' doi: \href{https://doi.org/10.31234/osf.io/mtka2}{10.31234/osf.io/mtka2}
+#' 
+#' # Original implementation of EGA.fit \cr
+#' Golino, H., Thiyagarajan, J. A., Sadana, M., Teles, M., Christensen, A. P., & Boker, S. M. (under review).
+#' Investigating the broad domains of intrinsic capacity, functional ability, and environment:
+#' An exploratory graph analysis approach for improving analytical methodologies for measuring healthy aging.
+#' \emph{PsyArXiv}.
+#' doi: \href{https://doi.org/10.31234/osf.io/hj5mc}{10.31234/osf.io/hj5mc}
+#' 
+#' # Walktrap algorithm \cr
 #' Pons, P., & Latapy, M. (2006).
 #' Computing communities in large networks using random walks.
 #' \emph{Journal of Graph Algorithms and Applications}, \emph{10}, 191-218.
@@ -76,11 +89,11 @@
 #' \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA,
 #' and \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 #'
-#' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
+#' @author Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'
 #' @export
 # EGA fit
-# Updated 09.10.2020
+# Updated 20.10.2020
 EGA.fit <- function (data, model = c("glasso","TMFG"),
                      steps = c(3,4,5,6,7,8), n = NULL)
 {
@@ -104,10 +117,11 @@ EGA.fit <- function (data, model = c("glasso","TMFG"),
       {
         message(paste("Estimating EGA -- Walktrap model",i,"of",num,sep=" "))
         mods[[as.character(steps[i])]] <- EGA(data = data,
+                                              n = n,
                                               model = model,
-                                              steps = steps[i],
-                                              plot.EGA = FALSE,
-                                              n = n)
+                                              model.args = list(steps = steps[i]),
+                                              algorithm = "walktrap",
+                                              plot.EGA = FALSE)
 
         dims[,i] <- mods[[as.character(steps[i])]]$wc
       }

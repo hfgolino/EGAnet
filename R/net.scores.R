@@ -83,7 +83,7 @@
 #' \emph{Behavior Research Methods}.
 #' doi: \href{https://doi.org/10.31234/osf.io/xakez}{10.31234/osf.io/xakez}
 #'
-#' Christensen, A. P., Golino, H. F., & Silvia, P. J. (in press).
+#' Christensen, A. P., Golino, H., & Silvia, P. J. (in press).
 #' A psychometric network perspective on the measurement and assessment of personality traits.
 #' \emph{European Journal of Personality}.
 #' doi: \href{https://doi.org/10.1002/per.2265}{10.1002/per.2265}
@@ -98,7 +98,7 @@
 #' @export
 #'
 #Network Scores
-#Updated: 06.12.2020
+#Updated: 21.10.2020
 net.scores <- function (data, A, wc, global = FALSE, impute = "none", ...)
 {
   if (missing(data)) {

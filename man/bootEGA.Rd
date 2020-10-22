@@ -6,10 +6,13 @@
 \usage{
 bootEGA(
   data,
-  n,
-  model = c("glasso", "TMFG"),
-  algorithm = c("walktrap", "louvain"),
+  uni = FALSE,
+  iter,
   type = c("parametric", "resampling"),
+  model = c("glasso", "TMFG"),
+  model.args = list(),
+  algorithm = c("walktrap", "louvain"),
+  algorithm.args = list(),
   typicalStructure = TRUE,
   plot.typicalStructure = TRUE,
   plot.type = c("GGally", "qgraph"),
@@ -21,30 +24,60 @@ bootEGA(
 \item{data}{Matrix or data frame.
 Includes the variables to be used in the \code{bootEGA} analysis}
 
-\item{n}{Numeric integer.
+\item{uni}{Boolean.
+Should unidimensionality be checked?
+Defaults to \code{FALSE}.
+Set to \code{TRUE} to check for whether the data is unidimensional.
+If \code{TRUE}, then the same number of variables as the original
+data (i.e., from argument \code{data}) are generated from a factor
+model with one factor and loadings of .70. These data are then
+appended to the original data and dimensionality is checked.
+If the number of dimensions is one or two, then the original
+data are unidimensional; otherwise, the data are multidimensional
+(see Golino, Shi, et al., 2020 for more details)}
+
+\item{iter}{Numeric integer.
 Number of replica samples to generate from the bootstrap analysis.
 At least \code{500} is recommended}
 
-\item{model}{Character.
-A string indicating the method to use.
-Defaults to \code{"glasso"}.
+\item{type}{Character.
+A string indicating the type of bootstrap to use.
 
 Current options are:
 
 \itemize{
 
-\item{\strong{\code{"glasso"}}}
-{Estimates the Gaussian graphical model using graphical LASSO with
-extended Bayesian information criterion to select optimal regularization parameter.
-See \code{\link[EGAnet]{EBICglasso.qgraph}}}
+\item{\strong{\code{"parametric"}}}
+{Generates \code{n} new datasets (multivariate normal random distributions) based on the
+original dataset, via the \code{\link[MASS]{mvrnorm}} function}
 
-\item{\strong{\code{"TMFG"}}}
-{Estimates a Triangulated Maximally Filtered Graph.
-See \code{\link[NetworkToolbox]{TMFG}}}
+\item{\strong{\code{"resampling"}}}
+{Generates n random subsamples of the original data}
 
 }}
 
-\item{algorithm}{A string indicating the algorithm to use.
+\item{model}{Character.
+A string indicating the method to use.
+
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{glasso}}}
+{Estimates the Gaussian graphical model using graphical LASSO with
+extended Bayesian information criterion to select optimal regularization parameter.
+This is the default method}
+
+\item{\strong{\code{TMFG}}}
+{Estimates a Triangulated Maximally Filtered Graph}
+
+}}
+
+\item{model.args}{List.
+A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
+or \code{\link[NetworkToolbox]{TMFG}}}
+
+\item{algorithm}{A string indicating the algorithm to use or a function from \code{\link{igraph}}
 Current options are:
 
 \itemize{
@@ -57,21 +90,9 @@ Current options are:
 
 }}
 
-\item{type}{Character.
-A string indicating the type of bootstrap to use.
-
-Current options are:
-
-\itemize{
-
-\item{\strong{\code{"parametric"}}}
-{Generates \code{n} new datasets (multivariate normal random distributions) based on the
-original dataset, via the \code{\link[mvtnorm]{Mvnorm}} function of the mvtnorm package}
-
-\item{\strong{\code{"resampling"}}}
-{Generates n random subsamples of the original data}
-
-}}
+\item{algorithm.args}{List.
+A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
+or some other community detection algorithm function (see examples)}
 
 \item{typicalStructure}{Boolean.
 If \code{TRUE}, returns the typical network of partial correlations
@@ -83,11 +104,11 @@ Defaults to \code{TRUE}}
 If \code{TRUE}, returns a plot of the typical network (partial correlations),
 which is the median of all pairwise correlations over the \emph{n} bootstraps,
 and its estimated dimensions.
-Defaults to \code{TRUE}
+Defaults to \code{TRUE}}
 
-#' @param plot.type Character.
+\item{plot.type}{Character.
 Plot system to use.
-Current options are \code{\link[qgraph]{qgraph}} and \code{\link[GGally]{GGally}}.
+Current options are \code{\link[qgraph]{qgraph}} and \code{\link{GGally}}.
 Defaults to \code{"GGally"}.}
 
 \item{ncores}{Numeric.
@@ -100,13 +121,13 @@ Recommended to use maximum number of cores minus one
 If you're unsure how many cores your computer has,
 then use the following code: \code{parallel::detectCores()}}
 
-\item{...}{Additional arguments to be passed to \code{\link{EBICglasso.qgraph}}
-or \code{\link[NetworkToolbox]{TMFG}}}
+\item{...}{Additional arguments.
+Used for deprecated arguments from previous versions of \code{\link{EGA}}}
 }
 \value{
 Returns a list containing:
 
-\item{n}{Number of replica samples in bootstrap}
+\item{iter}{Number of replica samples in bootstrap}
 
 \item{boot.ndim}{Number of dimensions identified in each replica sample}
 
@@ -134,8 +155,7 @@ standard deviation, standard error, 95\% confidence intervals, and quantiles (lo
 
 \item{\strong{\code{wc}}}
 {Item allocation of the median network}
-
-    }
+   }
 }
 }
 \description{
@@ -146,37 +166,46 @@ median network structure, which is formed by the median or mean pairwise (partia
 correlations over the \emph{n} bootstraps.
 }
 \examples{
-
 # Load data
 wmt <- wmt2[,7:24]
 
-\dontrun{
-
+\donttest{
 # bootEGA glasso example
-boot.wmt <- bootEGA(data = wmt, n = 100, typicalStructure = TRUE,
-plot.typicalStructure = TRUE, model = "glasso", type = "parametric", ncores = 4)
+boot.wmt <- bootEGA(data = wmt, uni = TRUE, iter = 500, typicalStructure = TRUE,
+plot.typicalStructure = FALSE, model = "glasso", type = "parametric", ncores = 2)
+
+# bootEGA Spinglass example
+boot.wmt <- bootEGA(data = wmt, iter = 500, typicalStructure = TRUE,
+plot.typicalStructure = FALSE, model = "glasso", algorithm = igraph::cluster_spinglass,
+type = "parametric", ncores = 2)
 }
 
 # Load data
 intwl <- intelligenceBattery[,8:66]
 
-\dontrun{
+\donttest{
 # bootEGA TMFG example
-boot.intwl <- bootEGA(data = intelligenceBattery[,8:66], n = 100, typicalStructure = TRUE,
-plot.typicalStructure = TRUE, model = "TMFG", type = "parametric", ncores = 4)
+boot.intwl <- bootEGA(data = intelligenceBattery[,8:66], iter = 500, typicalStructure = TRUE,
+plot.typicalStructure = FALSE, model = "TMFG", type = "parametric", ncores = 2)
 }
 
 }
 \references{
-Christensen, A. P., & Golino, H. F. (2019).
+# Original implementation of bootEGA \cr
+Christensen, A. P., & Golino, H. (2019).
 Estimating the stability of the number of factors via Bootstrap Exploratory Graph Analysis: A tutorial.
 \emph{PsyArXiv}.
 doi:\href{https://doi.org/10.31234/osf.io/9deay}{10.31234/osf.io/9deay}
+
+Christensen, A. P., Golino, H., & Silvia, P. J. (in press).
+A psychometric network perspective on the validity and validation of personality trait questionnaires.
+\emph{European Journal of Personality}.
+doi: \href{https://doi.org/10.1002/per.2265}{10.1002/per.2265}
 }
 \seealso{
 \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA
 and \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{
-Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
+Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 }

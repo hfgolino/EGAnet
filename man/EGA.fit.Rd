@@ -12,18 +12,12 @@ EGA.fit(
 )
 }
 \arguments{
-\item{data}{A dataset (or a correlation matrix).}
+\item{data}{Matrix or data frame.
+Dataset or correlation matrix}
 
 \item{model}{Character.
 A string indicating the method to use.
-Defaults to \code{"glasso"}.}
-
-\item{steps}{Numeric vector.
-Range of steps to be used in the model selection.
-Defaults from 3 to 8 steps (based on Pons & Latapy, 2006)}
-
-\item{n}{Integer.
-Sample size, if the data provided is a correlation matrix
+Defaults to \code{"glasso"}
 
 Current options are:
 
@@ -39,6 +33,13 @@ See \code{\link[EGAnet]{EBICglasso.qgraph}}}
 See \code{\link[NetworkToolbox]{TMFG}}}
 
 }}
+
+\item{steps}{Numeric vector.
+Range of steps to be used in the model selection.
+Defaults from 3 to 8 steps (based on Pons & Latapy, 2006)}
+
+\item{n}{Integer.
+Sample size (if the data provided is a correlation matrix)}
 }
 \value{
 Returns a list containing:
@@ -57,17 +58,16 @@ the \code{\link[igraph]{cluster_walktrap}} algorithm}
 Estimates the best fitting model using \code{\link[EGAnet]{EGA}}.
 The number of steps in the \code{\link[igraph]{cluster_walktrap}} detection
 algorithm is varied and unique community solutions are compared using
-\code{\link[EGAnet]{tefi}}. Also computes \code{\link[igraph]{cluster_louvain}}
-community detection algorithm.
+\code{\link[EGAnet]{tefi}}.
 }
 \examples{
 
 # Load data
 wmt <- wmt2[,7:24]
 
-\dontrun{
+\donttest{
 # Estimate normal EGAtmfg
-tmfg <- EGA(data = wmt, model = "TMFG")
+tmfg <- EGA(data = wmt, model = "TMFG", plot.EGA = FALSE)
 
 # Estimate optimal EGAtmfg
 tmfg.opt <- EGA.fit(data = wmt, model = "TMFG")
@@ -77,11 +77,24 @@ cfa.tmfg <- CFA(tmfg, estimator = "WLSMV", data = wmt)
 cfa.opt <- CFA(tmfg.opt$EGA, estimator = "WLSMV", data = wmt)
 
 lavaan::lavTestLRT(cfa.tmfg$fit, cfa.opt$fit, method = "satorra.bentler.2001")
-
 }
 
 }
 \references{
+# Entropy fit measures \cr
+Golino, H., Moulder, R. G., Shi, D., Christensen, A. P., Garrido, L. E., Neito, M. D., Nesselroade, J., Sadana, R., Thiyagarajan, J. A., & Boker, S. M. (in press).
+Entropy fit indices: New fit measures for assessing the structure and dimensionality of multiple latent variables.
+\emph{Multivariate Behavioral Research}.
+doi: \href{https://doi.org/10.31234/osf.io/mtka2}{10.31234/osf.io/mtka2}
+
+# Original implementation of EGA.fit \cr
+Golino, H., Thiyagarajan, J. A., Sadana, M., Teles, M., Christensen, A. P., & Boker, S. M. (under review).
+Investigating the broad domains of intrinsic capacity, functional ability, and environment:
+An exploratory graph analysis approach for improving analytical methodologies for measuring healthy aging.
+\emph{PsyArXiv}.
+doi: \href{https://doi.org/10.31234/osf.io/hj5mc}{10.31234/osf.io/hj5mc}
+
+# Walktrap algorithm \cr
 Pons, P., & Latapy, M. (2006).
 Computing communities in large networks using random walks.
 \emph{Journal of Graph Algorithms and Applications}, \emph{10}, 191-218.
@@ -93,5 +106,5 @@ doi:\href{https://doi.org/10.7155/jgaa.00185}{10.7155/jgaa.00185}
 and \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{
-Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
+Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 }

@@ -9,7 +9,7 @@
 #'
 #' @usage data(boot.wmt)
 #'
-#' @format A list with 8 objects (see \code{\link[EGAnet]{bootEGA}})
+#' @format A list with 9 objects (see \code{\link[EGAnet]{bootEGA}})
 #'
 #' @keywords datasets
 #'

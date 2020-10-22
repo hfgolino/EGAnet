@@ -65,7 +65,7 @@ ega.wmt <- EGA(data = wmt, model = "glasso")
 
 # Estimate dimension stability
 boot.wmt <- bootEGA(data = wmt, n = 100, typicalStructure = TRUE,
-plot.typicalStructure = TRUE, model = "glasso",
+plot.typicalStructure = FALSE, model = "glasso",
 type = "parametric", ncores = 4)
 
 # Estimate item stability statistics
@@ -74,15 +74,20 @@ itemStability(boot.wmt, orig.wc = ega.wmt$wc)
 
 }
 \references{
-Danon, L., Diaz-Guilera, A., Duch, J., & Arenas, A. (2005).
-Comparing community structure identification.
-\emph{Journal of Statistical Mechanics: Theory and Experiment}, \emph{9}, P09008.
-<doi:10.1088/1742-5468/2005/09/P09008>
+Christensen, A. P., & Golino, H. (2019).
+Estimating the stability of the number of factors via Bootstrap Exploratory Graph Analysis: A tutorial.
+\emph{PsyArXiv}.
+doi:\href{https://doi.org/10.31234/osf.io/9deay}{10.31234/osf.io/9deay}
+
+Christensen, A. P., Golino, H., & Silvia, P. J. (in press).
+A psychometric network perspective on the validity and validation of personality trait questionnaires.
+\emph{European Journal of Personality}.
+doi: \href{https://doi.org/10.1002/per.2265}{10.1002/per.2265}
 }
 \seealso{
 \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and
 \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{
-Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
+Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 }

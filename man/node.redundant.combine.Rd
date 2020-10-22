@@ -83,6 +83,12 @@ if(interactive())
 {combine <- node.redundant.combine(named.nr)}
 
 }
+\references{
+Christensen, A. P., Golino, H., & Silvia, P. J. (in press).
+A psychometric network perspective on the validity and validation of personality trait questionnaires.
+\emph{European Journal of Personality}.
+doi: \href{https://doi.org/10.1002/per.2265}{10.1002/per.2265}
+}
 \author{
 Alexander Christensen <alexpaulchristensen@gmail.com>
 }

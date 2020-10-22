@@ -6,23 +6,40 @@
 \usage{
 EGA(
   data,
+  n = NULL,
+  uni = FALSE,
   model = c("glasso", "TMFG"),
+  model.args = list(),
   algorithm = c("walktrap", "louvain"),
+  algorithm.args = list(),
   plot.EGA = TRUE,
   plot.type = c("GGally", "qgraph"),
-  n = NULL,
-  steps = 4,
-  nvar = 4,
-  nfact = 1,
-  load = 0.7,
   ...
 )
 }
 \arguments{
-\item{data}{A dataframe with the variables to be used in the analysis or a correlation matrix.
-If the data used is a correlation matrix, the argument \code{n} will need to be specified.}
+\item{data}{Matrix or data frame.
+Variables (down columns) or correlation matrix.
+If the input is a correlation matrix,
+then argument \code{n} (number of cases) is \strong{required}}
 
-\item{model}{A string indicating the method to use.
+\item{n}{Integer.
+Sample size if \code{data} provided is a correlation matrix}
+
+\item{uni}{Boolean.
+Should unidimensionality be checked?
+Defaults to \code{FALSE}.
+Set to \code{TRUE} to check for whether the data is unidimensional.
+If \code{TRUE}, then the same number of variables as the original
+data (i.e., from argument \code{data}) are generated from a factor
+model with one factor and loadings of .70. These data are then
+appended to the original data and dimensionality is checked.
+If the number of dimensions is one or two, then the original
+data are unidimensional; otherwise, the data are multidimensional
+(see Golino, Shi, et al., 2020 for more details)}
+
+\item{model}{Character.
+A string indicating the method to use.
 Current options are:
 
 \itemize{
@@ -37,7 +54,12 @@ This is the default method}
 
 }}
 
-\item{algorithm}{A string indicating the algorithm to use.
+\item{model.args}{List.
+A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
+or \code{\link[NetworkToolbox]{TMFG}}}
+
+\item{algorithm}{A string indicating the algorithm to use or a function from \code{\link{igraph}}
+
 Current options are:
 
 \itemize{
@@ -50,29 +72,21 @@ Current options are:
 
 }}
 
-\item{plot.EGA}{Logical.
-If TRUE, returns a plot of the network and its estimated dimensions.
-Defaults to TRUE}
+\item{algorithm.args}{List.
+A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
+or some other community detection algorithm function (see examples)}
+
+\item{plot.EGA}{Boolean.
+If \code{TRUE}, returns a plot of the network and its estimated dimensions.
+Defaults to \code{TRUE}}
 
 \item{plot.type}{Character.
 Plot system to use.
-Current options are \code{\link[qgraph]{qgraph}} and \code{\link[GGally]{GGally}}.
-Defaults to \code{"GGally"}.}
+Current options are \code{\link[qgraph]{qgraph}} and \code{\link{GGally}}.
+Defaults to \code{"GGally"}}
 
-\item{n}{Integer.
-Sample size, if the data provided is a correlation matrix}
-
-\item{steps}{Number of steps to be used in \code{\link[igraph]{cluster_walktrap}} algorithm.
-Defaults to 4.}
-
-\item{nvar}{Number of variables to use in the simulation part of the unidimensionality check. Defaults to 4.}
-
-\item{nfact}{Number of factors to be simulated (part of the unidimensionality check algorithm). Defaults to 1.}
-
-\item{load}{Factor loadings (used in the unidimensionality check algorithm). Defaults to 0.70.}
-
-\item{...}{Additional arguments to be passed to \code{\link{EBICglasso.qgraph}}
-or \code{\link[NetworkToolbox]{TMFG}}}
+\item{...}{Additional arguments.
+Used for deprecated arguments from previous versions of \code{\link{EGA}}}
 }
 \value{
 Returns a list containing:
@@ -91,44 +105,65 @@ was disconnected from the network}
 \item{Methods}{Arguments for creating a Methods section (see \code{\link[EGAnet]{EGA.methods.section}})}
 }
 \description{
-Estimates the number of dimensions of a given dataset/instrument
-using graphical lasso (\code{\link{EBICglasso.qgraph}}) or the
+Estimates the number of dimensions of a given dataset or correlation matrix
+using the graphical lasso (\code{\link{EBICglasso.qgraph}}) or the
 Triangulated Maximally Filtered Graph (\code{\link[NetworkToolbox]{TMFG}})
-method and the walktrap community detection algorithm (\code{\link[igraph]{cluster_walktrap}}).
-The glasso regularization parameter is set via EBIC.
+network estimation methods.
 }
 \details{
-This algorithm includes checking for whether the data is unidimensional.
+Two community detection algorithms, Walktrap (Pons & Latapy, 2006) and
+Louvain (Blondel et al., 2008), are pre-programmed because of their
+superior performance in simulation studies on psychological
+data generated from factor models (Christensen & Golino; 2020; Golino et al., 2020).
+Notably, any community detection algorithm from the \code{\link{igraph}}
+can be used to estimate the number of communities (see examples).
 }
 \examples{
+\dontshow{# Fast for CRAN checks
+# Pearson's correlation matrix
+wmt <- cor(wmt2[,7:24])
+
+# Estimate EGA
+ega.wmt <- EGA(data = wmt, n = nrow(wmt2), uni = FALSE, model = "glasso", plot.EGA = FALSE)
+
+}
 
 \donttest{
-\dontrun{
-#estimate EGA
-ega.wmt <- EGA(data = wmt2[,7:24], model = "glasso", plot.EGA = TRUE)
+# Estimate EGA
+ega.wmt <- EGA(data = wmt2[,7:24], uni = TRUE, model = "glasso", plot.EGA = FALSE)
 
-#estimate EGAtmfg
-ega.wmt <- EGA(data = wmt2[,7:24], model = "TMFG", plot.EGA = TRUE)
+# Estimate EGAtmfg
+ega.wmt <- EGA(data = wmt2[,7:24], uni = TRUE, model = "TMFG", plot.EGA = FALSE)
 
-#summary statistics
+# Estimate EGA with Spinglass
+ega.wmt <- EGA(data = wmt2[,7:24], uni = TRUE, model = "glasso",
+algorithm = igraph::cluster_spinglass, plot.EGA = FALSE)
+
+# Summary statistics
 summary(ega.wmt)
 
-#plot
-plot(ega.wmt)
+# Estimate EGA
+ega.intel <- EGA(data = intelligenceBattery[,8:66], model = "glasso", plot.EGA = FALSE)
 
-#estimate EGA
-ega.intel <- EGA(data = intelligenceBattery[,8:66], model = "glasso", plot.EGA = TRUE)
-
-#summary statistics
+# Summary statistics
 summary(ega.intel)
-
-#plot
-plot(ega.intel)
-}
 }
 
 }
 \references{
+# Louvain algorithm \cr
+Blondel, V. D., Guillaume, J.-L., Lambiotte, R., & Lefebvre, E. (2008).
+Fast unfolding of communities in large networks.
+\emph{Journal of Statistical Mechanics: Theory and Experiment}, \emph{2008}, P10008.
+doi: \href{https://doi.org/10.1088/1742-5468/2008/10/P10008}{10.1088/1742-5468/2008/10/P10008}
+
+# Compared all \emph{igraph} community detections algorithms, introduced Louvain algorithm, simulation with continuous and polytomous data \cr
+Christensen, A. P., & Golino, H. (under review).
+Estimating factors with psychometric networks: A Monte Carlo simulation comparing community detection algorithms.
+\emph{PsyArXiv}.
+doi: \href{https://doi.org/10.31234/osf.io/hz89e}{10.31234/osf.io/hz89e}
+
+# Original simulation and implementation of EGA \cr
 Golino, H. F., & Epskamp, S. (2017).
 Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research.
 \emph{PloS one}, \emph{12(6)}, e0174035..
@@ -139,15 +174,22 @@ Estimating the dimensionality of intelligence like data using Exploratory Graph 
 \emph{Intelligence}, \emph{62}, 54-70.
 doi: \href{https://doi.org/10.1016/j.intell.2017.02.007}{j.intell.2017.02.007}
 
-Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., & Thiyagarajan, J. A. (in press).
+# Current implementation of EGA, introduced unidimensional checks, continuous and dichotomous data \cr
+Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., & Thiyagarajan, J. A. (2020).
 Investigating the performance of Exploratory Graph Analysis and traditional techniques to identify the number of latent factors: A simulation and tutorial.
 \emph{Psychological Methods}, \emph{25}, 292-320.
 doi: \href{https://doi.org/10.1037/met0000255}{10.1037/met0000255}
+
+# Walktrap algorithm \cr
+Pons, P., & Latapy, M. (2006).
+Computing communities in large networks using random walks.
+\emph{Journal of Graph Algorithms and Applications}, \emph{10}, 191-218.
+doi: \href{https://doi.org/10.7155/jgaa.00185}{10.7155/jgaa.00185}
 }
 \seealso{
 \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap
 and \code{\link{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{
-Hudson F. Golino <hfg9s at virginia.edu>, Alexander P. Christensen <alexpaulchristensen at gmail.com>, Maria Dolores Nieto <acinodam at gmail.com> and Luis E. Garrido <garrido.luiseduardo at gmail.com>
+Hudson Golino <hfg9s at virginia.edu>, Alexander P. Christensen <alexpaulchristensen at gmail.com>, Maria Dolores Nieto <acinodam at gmail.com> and Luis E. Garrido <garrido.luiseduardo at gmail.com>
 }
