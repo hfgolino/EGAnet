@@ -18,6 +18,6 @@ Imports: qgraph (>= 1.4.1), semPlot (>= 1.0.1),
 Suggests: knitr, rmarkdown, markdown, kableExtra, psych, psychTools, ggpubr, ggplot2, 
         tidyselect, corpcor (>= 1.6.9), scales,
         plyr (>= 1.8.4), matrixcalc (>= 1.0-3),
-        pbapply, OpenMx, wTO, MASS, fdrtool, fitdistrplus
+        pbapply, OpenMx, wTO, MASS, fdrtool, fitdistrplus, primes, purrr
 VignetteBuilder: knitr
 RoxygenNote: 7.1.1

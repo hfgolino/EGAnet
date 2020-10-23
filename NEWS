@@ -1,5 +1,9 @@
 Changes in version 0.9.8
 
+o ADD: a new function to compute a Monte-Carlo Test for the Ergodicity Information Index (see `mctest.ergoInfo`)
+
+o ADD: a new function to compute the Ergodicity Information Index (see `ergoInfo`)
+
 o UPDATE: new plotting scheme using *network* and *GGally* packages
 
 o ADD: a function to produce an automated Methods section for EGA functions (see `EGA.methods.section`)
