@@ -18,6 +18,21 @@
 #' @param EII Numeric.
 #' Empirical Ergodicity Information Index obtained via the \code{\link[EGAnet]{ergoInfo}} function.
 #'
+#' @param use Character.
+#' A string indicating what network element will be used to compute the algorithm complexity in the \code{\link[EGAnet]{ergoInfo}} function,
+#' the list of edges or the weights of the network.
+#' Defaults to \code{use = "edge.list"}.
+#' Current options are:
+#'
+#' \itemize{
+#'
+#' \item{\strong{\code{edge.list}}}
+#' {Calculates the algorithm complexity using the list of edges.}
+#'
+#' \item{\strong{\code{weights}}}
+#' {Calculates the algorithm complexity using the weights of the network.}
+#' }
+#'
 #' @param variab Number of variables per factor.
 #'
 #' @param timep Number of time points.
@@ -183,6 +198,7 @@
 
 mctest.ergoInfo <- function(iter, N,
                           EII,
+                          use,
                           variab,
                           timep,
                           nfact,
@@ -206,6 +222,10 @@ mctest.ergoInfo <- function(iter, N,
   if(missing(dfm))
   {dfm <- "DAFS"
   }else{dfm}
+
+  if(missing(use))
+  {use <- "edge.list"
+  }else{use}
 
   if(missing(autoreg))
   {autoreg <- 0.8
@@ -313,7 +333,7 @@ mctest.ergoInfo <- function(iter, N,
 
 
   complexity.estimates <- pbapply::pblapply(X = sim.dynEGA, cl = cl,
-                                            FUN = EGAnet::ergoInfo)
+                                            FUN = EGAnet::ergoInfo, use = use)
   parallel::stopCluster(cl)
 
 

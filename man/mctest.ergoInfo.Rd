@@ -8,6 +8,7 @@ mctest.ergoInfo(
   iter,
   N,
   EII,
+  use,
   variab,
   timep,
   nfact,
@@ -41,6 +42,21 @@ Number of individuals to simulate data from, using the \code{\link[EGAnet]{simDF
 
 \item{EII}{Numeric.
 Empirical Ergodicity Information Index obtained via the \code{\link[EGAnet]{ergoInfo}} function.}
+
+\item{use}{Character.
+A string indicating what network element will be used to compute the algorithm complexity in the \code{\link[EGAnet]{ergoInfo}} function,
+the list of edges or the weights of the network.
+Defaults to \code{use = "edge.list"}.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{edge.list}}}
+{Calculates the algorithm complexity using the list of edges.}
+
+\item{\strong{\code{weights}}}
+{Calculates the algorithm complexity using the weights of the network.}
+}}
 
 \item{variab}{Number of variables per factor.}
 

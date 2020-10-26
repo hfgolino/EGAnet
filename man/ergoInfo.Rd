@@ -4,10 +4,24 @@
 \alias{ergoInfo}
 \title{Ergodicity Information Index}
 \usage{
-ergoInfo(data)
+ergoInfo(data, use = c("edge.list", "weights"))
 }
 \arguments{
 \item{data}{A dynEGA.ind.pop object}
+
+\item{use}{Character.
+A string indicating what network element will be used to compute the algorithm complexity, the list of edges or the weights of the network.
+Defaults to \code{use = "edge.list"}.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{edge.list}}}
+{Calculates the algorithm complexity using the list of edges.}
+
+\item{\strong{\code{weights}}}
+{Calculates the algorithm complexity using the weights of the network.}
+}}
 }
 \value{
 Returns a list containing:

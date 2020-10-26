@@ -3,6 +3,20 @@
 #'
 #' @param data A dynEGA.ind.pop object
 #'
+#' @param use Character.
+#' A string indicating what network element will be used to compute the algorithm complexity, the list of edges or the weights of the network.
+#' Defaults to \code{use = "edge.list"}.
+#' Current options are:
+#'
+#' \itemize{
+#'
+#' \item{\strong{\code{edge.list}}}
+#' {Calculates the algorithm complexity using the list of edges.}
+#'
+#' \item{\strong{\code{weights}}}
+#' {Calculates the algorithm complexity using the weights of the network.}
+#' }
+#'
 #' @return Returns a list containing:
 #'
 #' \item{PrimeWeight}{The prime-weight encoding of the individual networks}
@@ -21,7 +35,14 @@
 #' @export
 # Ergodicity Information Index
 # Updated 21.10.2020
-ergoInfo <- function(data){
+ergoInfo <- function(data, use = c("edge.list", "weights")){
+
+  #### MISSING ARGUMENTS HANDLING ####
+  if(missing(use))
+  {use <- "edge.list"
+  }else{use}
+
+
   # dynEGA (Individual)
   ids <- unique(dplyr::last(data$Derivatives$EstimatesDF))
 
@@ -111,16 +132,33 @@ ergoInfo <- function(data){
   mat.encode.igraph <- igraph::as.igraph(qgraph::qgraph(mat.encode, layout = "spring", DoNotPlot = TRUE))
   edge.list.mat.encode <- igraph::get.edgelist(mat.encode.igraph)
 
-
+  if(use == "edge.list"){
   bits <- vector("list")
   compression <- vector("list")
   kcomp <- vector("list")
-
 
   for(i in 1:1000){
     bits[[i]] <- toString(edge.list.mat.encode[sample(1:nrow(edge.list.mat.encode), size = nrow(edge.list.mat.encode), replace = TRUE)])
     compression[[i]] <- memCompress(bits[[i]], "gzip")
     kcomp[[i]] <- length(compression[[i]])
+  }
+  }else{
+    edge.list.mat.encode2 <- edge.list.mat.encode
+    edge.list.mat.encode2 <- cbind(edge.list.mat.encode2, NA)
+    for(i in 1:nrow(edge.list.mat.encode2)){
+      edge.list.mat.encode2[i,3] <- mat.encode[edge.list.mat.encode2[i,1],edge.list.mat.encode2[i,2]]
+    }
+
+    bits <- vector("list")
+    compression <- vector("list")
+    kcomp <- vector("list")
+
+
+    for(i in 1:1000){
+      bits[[i]] <- toString(edge.list.mat.encode2[sample(1:nrow(edge.list.mat.encode2), size = nrow(edge.list.mat.encode2), replace = TRUE),3])
+      compression[[i]] <- memCompress(bits[[i]], "gzip")
+      kcomp[[i]] <- length(compression[[i]])
+    }
   }
 
 
@@ -179,6 +217,12 @@ ergoInfo <- function(data){
   mat.encode.igraph.pop <- igraph::as.igraph(qgraph::qgraph(mat.encode.pop, layout = "spring", DoNotPlot = TRUE))
   edge.list.mat.encode.pop <- igraph::get.edgelist(mat.encode.igraph.pop)
 
+  if(use == "edge.list"){
+    edge.list.mat.encode.pop2 <- edge.list.mat.encode.pop
+    edge.list.mat.encode.pop2 <- cbind(edge.list.mat.encode.pop2, NA)
+    for(i in 1:nrow(edge.list.mat.encode.pop2)){
+      edge.list.mat.encode.pop2[i,3] <- mat.encode[edge.list.mat.encode.pop2[i,1],edge.list.mat.encode.pop2[i,2]]
+    }
 
   bits.pop <- vector("list")
   compression.pop <- vector("list")
@@ -186,12 +230,23 @@ ergoInfo <- function(data){
 
 
   for(i in 1:1000){
-    bits.pop[[i]] <- toString(edge.list.mat.encode.pop[sample(1:nrow(edge.list.mat.encode.pop), size = nrow(edge.list.mat.encode.pop), replace = TRUE)])
+    bits.pop[[i]] <- toString(edge.list.mat.encode.pop2[sample(1:nrow(edge.list.mat.encode.pop2), size = nrow(edge.list.mat.encode.pop2), replace = TRUE),3])
     compression.pop[[i]] <- memCompress(bits.pop[[i]], "gzip")
     kcomp.pop[[i]] <- length(compression.pop[[i]])
   }
+  }else{
+
+    bits.pop <- vector("list")
+    compression.pop <- vector("list")
+    kcomp.pop <- vector("list")
 
 
+    for(i in 1:1000){
+      bits.pop[[i]] <- toString(edge.list.mat.encode.pop[sample(1:nrow(edge.list.mat.encode.pop), size = nrow(edge.list.mat.encode.pop), replace = TRUE)])
+      compression.pop[[i]] <- memCompress(bits.pop[[i]], "gzip")
+      kcomp.pop[[i]] <- length(compression.pop[[i]])
+    }
+}
   # Kolmogorov Complexity:
   results <- list()
   results$PrimeWeight <- mat.encode
