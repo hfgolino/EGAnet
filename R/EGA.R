@@ -22,8 +22,8 @@
 #' 
 #' @param uni Boolean.
 #' Should unidimensionality be checked?
-#' Defaults to \code{FALSE}.
-#' Set to \code{TRUE} to check for whether the data is unidimensional.
+#' Defaults to \code{TRUE}.
+#' Set to \code{FALSE} to check for multidimensionality only.
 #' If \code{TRUE}, then the same number of variables as the original
 #' data (i.e., from argument \code{data}) are generated from a factor
 #' model with one factor and loadings of .70. These data are then
@@ -173,9 +173,9 @@
 #'
 #' @export
 #'
-# Updated 21.10.2020
+# Updated 29.10.2020
 ## EGA Function to detect unidimensionality:
-EGA <- function (data, n = NULL, uni = FALSE,
+EGA <- function (data, n = NULL, uni = TRUE,
                  model = c("glasso", "TMFG"), model.args = list(),
                  algorithm = c("walktrap", "louvain"), algorithm.args = list(),
                  plot.EGA = TRUE, plot.type = c("GGally", "qgraph"), ...) {
@@ -239,6 +239,9 @@ EGA <- function (data, n = NULL, uni = FALSE,
       # Set one factor for simulated data
       nfact <- 1
       nvar <- ncol(cor.data)
+      if(nvar > 12){
+        nvar <- 12
+      }
       
       # Generate data
       uni.data <- MASS::mvrnorm(n = n, mu = rep(0, nvar), Sigma = cor.data)
@@ -303,6 +306,9 @@ EGA <- function (data, n = NULL, uni = FALSE,
       # Set one factor for simulated data
       nfact <- 1
       nvar <- ncol(data)
+      if(nvar > 12){
+        nvar <- 12
+      }
       
       ## Simulate data from unidimensional factor model
       data.sim <- sim.func(data = data, nvar = nvar, nfact = nfact, load = .70)

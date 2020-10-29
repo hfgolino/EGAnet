@@ -6,7 +6,7 @@
 \usage{
 bootEGA(
   data,
-  uni = FALSE,
+  uni = TRUE,
   iter,
   type = c("parametric", "resampling"),
   model = c("glasso", "TMFG"),
@@ -26,8 +26,8 @@ Includes the variables to be used in the \code{bootEGA} analysis}
 
 \item{uni}{Boolean.
 Should unidimensionality be checked?
-Defaults to \code{FALSE}.
-Set to \code{TRUE} to check for whether the data is unidimensional.
+Defaults to \code{TRUE}.
+Set to \code{FALSE} to check for multidimensionality only.
 If \code{TRUE}, then the same number of variables as the original
 data (i.e., from argument \code{data}) are generated from a factor
 model with one factor and loadings of .70. These data are then
