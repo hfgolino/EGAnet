@@ -109,7 +109,7 @@ plot.bootEGA <- function(x, vsize = 6, plot = c("GGally","qgraph"),...){
                                          ncol = ncol(x$typicalGraph$graph)))
 
     # Layout "Spring"
-    graph1 <- igraph::as.igraph(qgraph::qgraph(x$typicalGraph$graph, DoNotPlot = TRUE))
+    graph1 <- NetworkToolbox::convert2igraph(x$typicalGraph$graph)
     edge.list <- igraph::as_edgelist(graph1)
     layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
                                                                weights =
@@ -120,9 +120,9 @@ plot.bootEGA <- function(x, vsize = 6, plot = c("GGally","qgraph"),...){
     set.seed(1234)
     GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
                            color = "Communities", edge.color = c("color"),
-                           alpha = 0.5, size = vsize, edge.alpha = 0.5,
+                           alpha = 0.7, size = 12, edge.alpha = 0.4,
                            mode =  layout.spring,
-                           label.size = 2.4,
+                           label.size = 5,
                            label = colnames(x$typicalGraph$graph)) + ggplot2::theme(legend.title = ggplot2::element_blank())
 
   }
@@ -172,7 +172,7 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", vsize = 6, plot = c("G
                                          ncol = ncol(x$dynEGA[[i]]$network)))
 
     # Layout "Spring"
-    graph1[[i]] <- igraph::as.igraph(qgraph::qgraph(x$dynEGA[[i]]$network, DoNotPlot = TRUE))
+    graph1[[i]] <- NetworkToolbox::convert2igraph(x$dynEGA[[i]]$network)
     edge.list[[i]] <- igraph::as_edgelist(graph1[[i]])
     layout.spring[[i]] <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list[[i]],
                                                                weights =
@@ -183,9 +183,9 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", vsize = 6, plot = c("G
     set.seed(1234)
     GGally::ggnet2(network1[[i]], edge.size = "ScaledWeights", palette = "Set1",
                    color = "Communities", edge.color = c("color"),
-                   alpha = 0.5, size = vsize, edge.alpha = 0.5,
+                   alpha = 0.7, size = 12, edge.alpha = 0.4,
                    mode =  layout.spring[[i]],
-                   label.size = 2.4,
+                   label.size = 5,
                    label = colnames(x$dynEGA[[i]]$network))+ggplot2::theme(legend.title = ggplot2::element_blank())
     }
   }
@@ -221,7 +221,7 @@ plot.dynEGA.Individuals <- function(x, title = "", vsize = 6,  id = NULL, plot =
                                         ncol = ncol(x$dynEGA[[id]]$network)))
 
    # Layout "Spring"
-   graph1 <- igraph::as.igraph(qgraph::qgraph(x$dynEGA[[id]]$network, DoNotPlot = TRUE))
+   graph1 <- NetworkToolbox::convert2igraph(x$dynEGA[[id]]$network)
    edge.list <- igraph::as_edgelist(graph1)
    layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
                                                               weights =
@@ -232,9 +232,9 @@ plot.dynEGA.Individuals <- function(x, title = "", vsize = 6,  id = NULL, plot =
    set.seed(1234)
    GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
                   color = "Communities", edge.color = c("color"),
-                  alpha = 0.5, size = vsize, edge.alpha = 0.5,
+                  alpha = 0.7, size = 12, edge.alpha = 0.4,
                   mode =  layout.spring,
-                  label.size = 2.4,
+                  label.size = 12,
                   label = colnames(x$dynEGA[[id]]$network))+ggplot2::theme(legend.title = ggplot2::element_blank())
  }
 }
@@ -269,7 +269,7 @@ plot.dynEGA <- function(x, title = "", vsize = 6,  plot = c("GGally","qgraph"),.
                                        ncol = ncol(x$dynEGA$network)))
 
   # Layout "Spring"
-  graph1 <- igraph::as.igraph(qgraph::qgraph(x$dynEGA$network, DoNotPlot = TRUE))
+  graph1 <- NetworkToolbox::convert2igraph(x$dynEGA$network)
   edge.list <- igraph::as_edgelist(graph1)
   layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
                                                              weights =
@@ -280,9 +280,9 @@ plot.dynEGA <- function(x, title = "", vsize = 6,  plot = c("GGally","qgraph"),.
   set.seed(1234)
   GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
                  color = "Communities", edge.color = c("color"),
-                 alpha = 0.5, size = vsize, edge.alpha = 0.5,
+                 alpha = 0.7, size = 12, edge.alpha = 0.4,
                  mode =  layout.spring,
-                 label.size = 2.4,
+                 label.size = 5,
                  label = colnames(x$dynEGA$network))+ggplot2::theme(legend.title = ggplot2::element_blank())
   }
 }
@@ -317,7 +317,7 @@ plot.EGA <- function(x, title = "", vsize = 6,  plot = c("GGally","qgraph"),...)
                                          ncol = ncol(x$network)))
 
     # Layout "Spring"
-    graph1 <- igraph::as.igraph(qgraph::qgraph(x$network, DoNotPlot = TRUE))
+    graph1 <- NetworkToolbox::convert2igraph(x$network)
     edge.list <- igraph::as_edgelist(graph1)
     layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
                                                                weights =
@@ -328,9 +328,9 @@ plot.EGA <- function(x, title = "", vsize = 6,  plot = c("GGally","qgraph"),...)
     set.seed(1234)
     GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
                    color = "Communities", edge.color = c("color"),
-                   alpha = 0.5, size = vsize, edge.alpha = 0.5,
+                   alpha = 0.7, size = 12, edge.alpha = 0.4,
                    mode =  layout.spring,
-                   label.size = 2.4,
+                   label.size = 5,
                    label = colnames(x$network))+ggplot2::theme(legend.title = ggplot2::element_blank())
   }
 }

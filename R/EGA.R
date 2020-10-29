@@ -322,7 +322,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
                               algorithm = algorithm, algorithm.args = algorithm.args)
       
       ## Remove simulated data for multidimensional result
-      cor.data <- cor.data[-c(1:ncol(data)),-c(1:ncol(data))]
+      cor.data <- cor.data[-c(1:nvar),-c(1:nvar)]
       
       # Multidimensional result
       multi.res <- suppressMessages(EGA.estimate(cor.data, n = n,
@@ -427,7 +427,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
                                              ncol = ncol(a$network)))
         
         # Layout "Spring"
-        graph1 <- igraph::as.igraph(qgraph::qgraph(a$network, DoNotPlot = TRUE))
+        graph1 <- NetworkToolbox::convert2igraph(a$network)
         edge.list <- igraph::as_edgelist(graph1)
         layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
                                                                    weights =
@@ -437,10 +437,11 @@ EGA <- function (data, n = NULL, uni = TRUE,
         set.seed(1234)
         plot.ega <- GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
                                    color = "Communities", edge.color = c("color"),
-                                   alpha = 0.5, size = 6, edge.alpha = 0.5,
+                                   alpha = 0.7, size = 12, edge.alpha = 0.4,
                                    mode =  layout.spring,
-                                   label.size = 2.4,
-                                   label = colnames(a$network)) + ggplot2::theme(legend.title = ggplot2::element_blank())
+                                   label.size = 5,
+                                   label = colnames(a$network)) +
+          ggplot2::theme(legend.title = ggplot2::element_blank())
         
         plot(plot.ega)
         
@@ -461,22 +462,23 @@ EGA <- function (data, n = NULL, uni = TRUE,
                                              nrow = nrow(a$network),
                                              ncol = ncol(a$network)))
         
+        set.seed(1234)
+        
         # Layout "Spring"
-        graph1 <- igraph::as.igraph(qgraph::qgraph(a$network, DoNotPlot = TRUE))
+        graph1 <- NetworkToolbox::convert2igraph(a$network)
         edge.list <- igraph::as_edgelist(graph1)
         layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
                                                                    weights =
                                                                      abs(igraph::E(graph1)$weight/max(abs(igraph::E(graph1)$weight)))^2,
                                                                    vcount = ncol(a$network))
         
-        
-        set.seed(1234)
         plot.ega <- GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
                                   color = "Communities", edge.color = c("color"),
-                                  alpha = 0.5, size = 6, edge.alpha = 0.5,
+                                  alpha = 0.7, size = 12, edge.alpha = 0.4,
                                   mode =  layout.spring,
-                                  label.size = 2.4,
-                                  label = colnames(a$network)) + ggplot2::theme(legend.title = ggplot2::element_blank(), legend.position = "none")
+                                  label.size = 5,
+                                  label = colnames(a$network)) +
+          ggplot2::theme(legend.title = ggplot2::element_blank(), legend.position = "none")
         
         plot(plot.ega)
       }
