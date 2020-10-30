@@ -44,7 +44,7 @@ ergoInfo <- function(data, use = c("edge.list", "weights")){
 
 
   # dynEGA (Individual)
-  ids <- unique(dplyr::last(data$Derivatives$EstimatesDF))
+  ids <- 1:length(unique(dplyr::last(data$Derivatives$EstimatesDF)))
 
   data.ind <- data$dynEGA.ind
 

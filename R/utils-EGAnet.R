@@ -1741,3 +1741,6 @@ dynEGA.ind.pop <- function(data, n.embed, tau = 1, delta = 1,
   class(results) <- "dynEGA.ind.pop"
   return(results)
 }
+
+
+

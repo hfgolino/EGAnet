@@ -1,4 +1,5 @@
 #' Monte-Carlo Test for the Ergodicity Information Index
+#'
 #' @description Computes a Monte-Carlo Test for the Ergodicity Information Index, comparing the
 #' empirical Ergodicity Information index to values obtained in a Monte-Carlo simulation in which all individuals
 #' have a similar latent structure. The p-values in the Monte-Carlo test can be calculated as \code{(sum(EII>=MC.EII)+1)/(iter+1)} and as
@@ -192,7 +193,7 @@
 #'
 #'
 #' @export
-# Bootstrap Test for the Ergodicity Information Index
+# Monte-Carlo Test for the Ergodicity Information Index
 # Updated 21.10.2020
 
 
@@ -248,7 +249,7 @@ mctest.ergoInfo <- function(iter, N,
   }else{embed}
 
   if(missing(tau))
-  {tau <- 5
+  {tau <- 1
   }else{tau}
 
 
@@ -336,6 +337,8 @@ mctest.ergoInfo <- function(iter, N,
                                             FUN = EGAnet::ergoInfo, use = use)
   parallel::stopCluster(cl)
 
+  #let user know results are being computed
+  message("Computing results...\n")
 
   complexity.estimates2 <- vector("list")
   for(i in 1:length(complexity.estimates)){
