@@ -9,13 +9,16 @@ boot.ergoInfo(
   iter,
   EII,
   use,
+  embed,
+  tau,
+  delta,
+  derivatives,
   model,
   model.args = list(),
   algorithm = c("walktrap", "louvain"),
   algorithm.args = list(),
   corr,
   ncores,
-  comparison,
   ...
 )
 }
@@ -43,6 +46,22 @@ Current options are:
 \item{\strong{\code{weights}}}
 {Calculates the algorithm complexity using the weights of the network.}
 }}
+
+\item{embed}{Integer.
+Number of embedded dimensions (the number of observations to be used in the \code{\link[EGAnet]{Embed}} function). For example,
+an \code{"embed = 5"} will use five consecutive observations to estimate a single derivative.
+Default is \code{"embed = 5"}.}
+
+\item{tau}{Integer.
+Number of observations to offset successive embeddings in the \code{\link[EGAnet]{Embed}} function. A tau of one uses adjacent observations.
+Default is \code{"tau = 1"}.}
+
+\item{delta}{Integer.
+The time between successive observations in the time series.
+Default is \code{"delta = 1"}.}
+
+\item{derivatives}{Integer.
+The order of the derivative to be used in the EGA procedure. Default to 1.}
 
 \item{model}{Character.
 A string indicating the method to use. Defaults to \code{glasso}.
@@ -110,23 +129,6 @@ Recommended to use maximum number of cores minus one
 If you're unsure how many cores your computer has,
 then use the following code: \code{parallel::detectCores()}}
 
-\item{comparison}{String.
-The population structure to be used as a reference in the Ergodicity Information Index should reflect the simulated data for all individuals (population),
-or just a single individual (random.individual)?
-
-#' Current options are:
-
-\itemize{
-
-\item{\strong{\code{population.structure}}}
-{Computes the ergodicity information index using the "population network" of the dynEGA object as
-the reference (population) network.}
-
-\item{\strong{\code{boot.pop.structure}}}
-{Computes the ergodicity information index having the population network estimated as the network structure of
-the collection of bootstrap samples as the reference (population) network.}
-}}
-
 \item{...}{Additional arguments.
 Used for deprecated arguments from previous versions of \code{\link{EGA}}}
 }
@@ -139,8 +141,7 @@ Returns a list containing:
 The null hypothesis is that the empirical Ergodicity Information index is equal to the expected value of the EII if the all individuals
 had similar latent structures.}
 
-\item{effect}{Indicates whether the empirical EII is greater or less then the bootstraped values EII, under the condition
-that all individuals have a structure that is similar to the population structure.}
+\item{effect}{Indicates wheter the empirical EII is greater or less then the Monte-Carlo obtained EII.}
 
 \item{plot.dist}{Histogram of the bootstrapped ergodicity information index}
 }
@@ -166,6 +167,7 @@ dyn1 <- dynEGA.ind.pop(data = sim.dynEGA[,-c(22)], n.embed = 5, tau = 1,
 eii1 <- ergoInfo(data = dyn1)$EII
 
 testing.ergoinfo <- boot.ergoInfo(dynEGA.pop = dyn1, iter = 10,EII = eii1,
+embed = 5, tau = 1, delta = 1, derivatives = 1,
 model = "glasso", ncores = 2, corr = "pearson")
 }}
 

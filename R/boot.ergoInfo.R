@@ -34,6 +34,22 @@
 #' {Calculates the algorithm complexity using the weights of the network.}
 #' }
 #'
+#' @param embed Integer.
+#' Number of embedded dimensions (the number of observations to be used in the \code{\link[EGAnet]{Embed}} function). For example,
+#' an \code{"embed = 5"} will use five consecutive observations to estimate a single derivative.
+#' Default is \code{"embed = 5"}.
+#'
+#' @param tau Integer.
+#' Number of observations to offset successive embeddings in the \code{\link[EGAnet]{Embed}} function. A tau of one uses adjacent observations.
+#' Default is \code{"tau = 1"}.
+#'
+#' @param delta Integer.
+#' The time between successive observations in the time series.
+#' Default is \code{"delta = 1"}.
+#'
+#' @param derivatives Integer.
+#' The order of the derivative to be used in the EGA procedure. Default to 1.
+
 #' @param corr Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
 #' Current options are:
 #'
@@ -100,22 +116,6 @@
 #' If you're unsure how many cores your computer has,
 #' then use the following code: \code{parallel::detectCores()}
 #'
-#' @param comparison String.
-#' The population structure to be used as a reference in the Ergodicity Information Index should reflect the simulated data for all individuals (population),
-#' or just a single individual (random.individual)?
-#'
-#'#' Current options are:
-#'
-#' \itemize{
-#'
-#' \item{\strong{\code{population.structure}}}
-#' {Computes the ergodicity information index using the "population network" of the dynEGA object as
-#' the reference (population) network.}
-#'
-#' \item{\strong{\code{boot.pop.structure}}}
-#' {Computes the ergodicity information index having the population network estimated as the network structure of
-#' the collection of bootstrap samples as the reference (population) network.}
-#' }
 #'
 #' @param ... Additional arguments.
 #' Used for deprecated arguments from previous versions of \code{\link{EGA}}
@@ -131,6 +131,7 @@
 #' eii1 <- ergoInfo(data = dyn1)$EII
 #'
 #' testing.ergoinfo <- boot.ergoInfo(dynEGA.pop = dyn1, iter = 10,EII = eii1,
+#' embed = 5, tau = 1, delta = 1, derivatives = 1,
 #' model = "glasso", ncores = 2, corr = "pearson")
 #' }}
 #'
@@ -142,27 +143,31 @@
 #' The null hypothesis is that the empirical Ergodicity Information index is equal to the expected value of the EII if the all individuals
 #' had similar latent structures.}
 #'
-#' \item{effect}{Indicates whether the empirical EII is greater or less then the bootstraped values EII, under the condition
-#' that all individuals have a structure that is similar to the population structure.}
+#' \item{effect}{Indicates wheter the empirical EII is greater or less then the Monte-Carlo obtained EII.}
 #'
 #' \item{plot.dist}{Histogram of the bootstrapped ergodicity information index}
 #'
+#'
 #' @author Hudson Golino <hfg9s at virginia.edu>
+#'
 #'
 #' @export
 # Bootstrap Test for the Ergodicity Information Index
-# Updated 30.10.2020
+# Updated 31.10.2020
 
 
 boot.ergoInfo <- function(dynEGA.pop,
-                            iter,
-                            EII,
-                            use,
-                            model, model.args = list(),
-                            algorithm = c("walktrap", "louvain"),
-                            algorithm.args = list(),
-                            corr, ncores,
-                            comparison, ...
+                          iter,
+                          EII,
+                          use,
+                          embed,
+                          tau,
+                          delta,
+                          derivatives,
+                          model, model.args = list(),
+                          algorithm = c("walktrap", "louvain"),
+                          algorithm.args = list(),
+                          corr, ncores, ...
 ){
 
 
@@ -171,7 +176,7 @@ boot.ergoInfo <- function(dynEGA.pop,
   if(missing(dynEGA.pop))
   {  # Warning
     warning(
-        "The 'dynEGA.pop' argument is missing. Please, provide the name of the object
+      "The 'dynEGA.pop' argument is missing. Please, provide the name of the object
         created using the 'dynEGA' or the 'dynEGA.pop.ind' functions."
     )
   }
@@ -181,6 +186,21 @@ boot.ergoInfo <- function(dynEGA.pop,
   {use <- "edge.list"
   }else{use}
 
+  if(missing(embed))
+  {embed <- 5
+  }else{embed}
+
+  if(missing(tau))
+  {tau <- 1
+  }else{tau}
+
+  if(missing(delta))
+  {delta <- 1
+  }else{delta}
+
+  if(missing(derivatives))
+  {derivatives <- 1
+  }else{derivatives}
 
   if(missing(model))
   {model <- "glasso"
@@ -198,9 +218,6 @@ boot.ergoInfo <- function(dynEGA.pop,
   {ncores <- ceiling(parallel::detectCores() / 2)
   }else{ncores}
 
-  if(missing(comparison))
-  {comparison <- "population.structure"
-  }else{comparison}
 
 
   # Initialize Data list
@@ -213,217 +230,67 @@ boot.ergoInfo <- function(dynEGA.pop,
   unique.ids <- unique(dplyr::last(dynEGA.pop$Derivatives$EstimatesDF))
   time.points <- floor(N/length(unique.ids))
 
+  # Initialize Data list
+  data.sim <- vector("list", length = iter)
+  for(i in 1:iter){
+    data.sim[[i]] <- vector("list", length = length(unique.ids))
+  }
 
- if(class(dynEGA.pop)=="dynEGA"){
-   for(i in 1:iter){
-     for(j in 1:time.points){
-       data.sim[[i]][[j]] <- MASS::mvrnorm(n = time.points, mu = rep(0, ncol(dynEGA.pop$dynEGA$cor.dat)), Sigma = dynEGA.pop$dynEGA$cor.dat)
-     }
-   }
- } else if(class(dynEGA.pop)=="dynEGA.ind.pop"){
-   for(i in 1:iter){
-     for(j in 1:time.points){
-     data.sim[[i]][[j]] <- MASS::mvrnorm(n = time.points, mu = rep(0, ncol(dynEGA.pop$dynEGA.pop$cor.data)), Sigma = as.matrix(Matrix::nearPD(dynEGA.pop$dynEGA.pop$cor.data)$mat))
-
-   }
-   }
- }
+  if(class(dynEGA.pop)=="dynEGA"){
+    for(i in 1:iter){
+      for(j in 1:length(unique.ids)){
+        data.sim[[i]][[j]] <- MASS::mvrnorm(n = time.points, mu = rep(0, ncol(dynEGA.pop$dynEGA$cor.dat)), Sigma = as.matrix(Matrix::nearPD(corpcor::pseudoinverse(dynEGA.pop$network))$mat))
+      }
+    }
+  } else if(class(dynEGA.pop)=="dynEGA.ind.pop"){
+    for(i in 1:iter){
+      for(j in 1:length(unique.ids)){
+        data.sim[[i]][[j]] <- MASS::mvrnorm(n = time.points, mu = rep(0, ncol(dynEGA.pop$dynEGA.pop$cor.data)), Sigma = as.matrix(Matrix::nearPD(corpcor::pseudoinverse(dynEGA.pop$dynEGA.ind[[j]]$network))$mat))
+      }
+    }
+  }
 
   data.sim.df <- vector("list", length = iter)
   for(i in 1:iter){
     data.sim.df[[i]] <- purrr::map_df(data.sim[[i]], ~as.data.frame(.))
-    #data.sim.df[[i]]$ID <- rep(1:length(unique.ids), each = time.points)
+    data.sim.df[[i]]$ID <- rep(1:length(unique.ids), each = time.points)
   }
 
-  #let user know data generation has ended
-  message("done", appendLF = TRUE)
+  variab <- ncol(data.sim.df[[1]])-1
 
   #initialize correlation matrix list
-  boots <- vector("list", length = iter)
-
-  #Parallel processing
-  cl <- parallel::makeCluster(ncores)
-
-  #Export variables
-  parallel::clusterExport(cl = cl,
-                          varlist = c("data.sim.df", "N",
-                                      "model", "model.args",
-                                      "algorithm", "algorithm.args"),
-                          envir=environment())
+  boot.data <- vector("list", length = iter)
+  boot.data.ids <- vector("list", length = iter)
+  list.results.sim <- vector("list", length = iter)
+  complexity.estimates <- vector("list", length = iter)
 
   #let user know data generation has started
-  message("Estimating the Network Structures...\n", appendLF = FALSE)
-
-  #Estimate networks
-  boots <- pbapply::pblapply(
-    X = data.sim.df, cl = cl,
-    FUN = EGA,
-    uni = FALSE,
-    model = model, model.args = model.args,
-    algorithm = algorithm, algorith.args = algorithm.args,
-    plot.EGA = FALSE
-  )
-
-  parallel::stopCluster(cl)
-
-   data.pop1 <- vector("list")
-  if(class(dynEGA.pop)=="dynEGA"){
-    data.pop1 <- dynEGA.pop$dynEGA}
-  else{data.pop1 <- dynEGA.pop$dynEGA.pop}
-
-   if(comparison == "population.structure"){
-     data.pop1 <- data.pop1
-   } else if(comparison == "boot.pop.structure"){
-     data.pop1 <- data.pop1
-     data <- purrr::map_df(data.sim.df, ~as.data.frame(.))
-     ega.pop <- suppressMessages(suppressWarnings(EGAnet::EGA(data, plot.EGA = FALSE)))
-     data.pop1$network <- ega.pop$network
-     data.pop1$n.dim <- ega.pop$n.dim
-   }
-
-
-
-  ergoInfo2 <- function(data.ind, use = use, data.pop){
-
-
-    ## Complexity - Individual Networks:
-    # Number of edges:
-
-    igraph.Network <- igraph::as.igraph(qgraph::qgraph(data.ind$network, DoNotPlot=TRUE))
-
-    # Get the adjacency matrix:
-    adj.net <- as.matrix(igraph::get.adjacency(igraph.Network,type="both"))
-
-    # Transforming the matrices into a grid (ncol and nrow = ID 1)
-
-    grid <- expand.grid(x = 1:ncol(data.ind$network), y = 1:ncol(data.ind$network))
-
-
-    # Computing the Prime-Weight Transformation
-
-    encode<- apply(grid, 1,
-                                    function(x){return(
-                                      ifelse(data.ind$network[x[1], x[2]]==0,1,(adj.net[x[1], x[2]]*2)^(data.ind$network[x[1], x[2]]))
-                                    )})
-
-    mat.encode <- matrix(encode, ncol = ncol(data.ind$network), nrow = nrow(data.ind$network))
-    mat.encode <- ifelse(mat.encode==1, 0, mat.encode)
-    mat.encode.igraph <- igraph::as.igraph(qgraph::qgraph(mat.encode, layout = "spring", DoNotPlot = TRUE))
-    edge.list.mat.encode <- igraph::get.edgelist(mat.encode.igraph)
-
-    if(use == "edge.list"){
-      bits <- vector("list")
-      compression <- vector("list")
-      kcomp <- vector("list")
-
-      for(i in 1:1000){
-        bits[[i]] <- toString(edge.list.mat.encode[sample(1:nrow(edge.list.mat.encode), size = nrow(edge.list.mat.encode), replace = TRUE)])
-        compression[[i]] <- memCompress(bits[[i]], "gzip")
-        kcomp[[i]] <- length(compression[[i]])
-      }
-    }else{
-      edge.list.mat.encode2 <- edge.list.mat.encode
-      edge.list.mat.encode2 <- cbind(edge.list.mat.encode2, NA)
-      for(i in 1:nrow(edge.list.mat.encode2)){
-        edge.list.mat.encode2[i,3] <- mat.encode[edge.list.mat.encode2[i,1],edge.list.mat.encode2[i,2]]
-      }
-
-      bits <- vector("list")
-      compression <- vector("list")
-      kcomp <- vector("list")
-
-      for(i in 1:1000){
-        bits[[i]] <- toString(edge.list.mat.encode2[sample(1:nrow(edge.list.mat.encode2), size = nrow(edge.list.mat.encode2), replace = TRUE),3])
-        compression[[i]] <- memCompress(bits[[i]], "gzip")
-        kcomp[[i]] <- length(compression[[i]])
-      }
-    }
-
-
-    ## Complexity - Population Network (reference):
-    # Number of edges:
-
-    igraph.Network.pop <- igraph::as.igraph(qgraph::qgraph(data.pop$network, DoNotPlot=TRUE))
-
-    # Get the adjacency matrix:
-    adj.net.pop <- as.matrix(igraph::get.adjacency(igraph.Network.pop,type="both"))
-
-    # Transforming the matrices into a grid (ncol and nrow = ID 1)
-
-    grid.pop <- expand.grid(x = 1:ncol(data.pop$network), y = 1:ncol(data.pop$network))
-
-
-    # Computing the Prime-Weight Transformation
-
-    encode.pop<- apply(grid, 1,
-                   function(x){return(
-                     ifelse(data.pop$network[x[1], x[2]]==0,1,(adj.net.pop[x[1], x[2]]*2)^(data.pop$network[x[1], x[2]]))
-                   )})
-
-
-    mat.encode.pop <- matrix(encode.pop, ncol = ncol(data.pop$network), nrow = nrow(data.pop$network))
-    mat.encode.pop <- ifelse(mat.encode.pop==1, 0, mat.encode.pop)
-    mat.encode.igraph.pop <- igraph::as.igraph(qgraph::qgraph(mat.encode.pop, layout = "spring", DoNotPlot = TRUE))
-    edge.list.mat.encode.pop <- igraph::get.edgelist(mat.encode.igraph.pop)
-
-    if(use == "edge.list"){
-      edge.list.mat.encode.pop2 <- edge.list.mat.encode.pop
-      edge.list.mat.encode.pop2 <- cbind(edge.list.mat.encode.pop2, NA)
-      for(i in 1:nrow(edge.list.mat.encode.pop2)){
-        edge.list.mat.encode.pop2[i,3] <- mat.encode[edge.list.mat.encode.pop2[i,1],edge.list.mat.encode.pop2[i,2]]
-      }
-
-      bits.pop <- vector("list")
-      compression.pop <- vector("list")
-      kcomp.pop <- vector("list")
-
-      for(i in 1:1000){
-        bits.pop[[i]] <- toString(edge.list.mat.encode.pop2[sample(1:nrow(edge.list.mat.encode.pop2), size = nrow(edge.list.mat.encode.pop2), replace = TRUE),3])
-        compression.pop[[i]] <- memCompress(bits.pop[[i]], "gzip")
-        kcomp.pop[[i]] <- length(compression.pop[[i]])
-      }
-    }else{
-
-      bits.pop <- vector("list")
-      compression.pop <- vector("list")
-      kcomp.pop <- vector("list")
-
-
-      for(i in 1:1000){
-        bits.pop[[i]] <- toString(edge.list.mat.encode.pop[sample(1:nrow(edge.list.mat.encode.pop), size = nrow(edge.list.mat.encode.pop), replace = TRUE)])
-        compression.pop[[i]] <- memCompress(bits.pop[[i]], "gzip")
-        kcomp.pop[[i]] <- length(compression.pop[[i]])
-      }
-    }
-    # Kolmogorov Complexity:
-    results <- list()
-    results$PrimeWeight.pop <- encode.pop
-    results$KComp <- mean(unlist(kcomp))
-    results$KComp.pop <- mean(unlist(kcomp.pop))
-    ergo.info.index<- sqrt(data.pop$n.dim)^((results$KComp.pop/results$KComp)/log(sum(!results$PrimeWeight.pop==0)))
-    results$EII <- ergo.info.index
-    return(results)
-  }
-
-
+  message("\nEstimating the Population and Individual Structures...\n", appendLF = FALSE)
 
   #Parallel processing
   cl <- parallel::makeCluster(ncores)
 
   #Export variables
   parallel::clusterExport(cl = cl,
-                          varlist = c("boots", "use",
-                                      "data.pop1"),
+                          varlist = c("boot.data", "list.results.sim",
+                                      "complexity.estimates"),
                           envir=environment())
+
+  #Compute DynEGA in the population and in the individuals
+  boot.data <- pbapply::pblapply(X = data.sim.df, cl = cl,
+                                 FUN = EGAnet::dynEGA.ind.pop,
+                                 n.embed = embed, tau = tau,
+                                 delta = delta, id = variab+1, use.derivatives = derivatives,
+                                 algorithm = algorithm, algorithm.args = algorithm.args,
+                                 model = model, model.args = model.args, corr = corr)
+
 
   #let user know data generation has started
   message("Estimating the Ergodicity Information Index\n", appendLF = FALSE)
 
-
-  complexity.estimates <- pbapply::pblapply(X = boots, cl = cl,
-                                            FUN = ergoInfo2, use = use, data.pop = data.pop1)
+  complexity.estimates <- pbapply::pblapply(X = boot.data, cl = cl,
+                                            FUN = EGAnet::ergoInfo, use = use)
   parallel::stopCluster(cl)
-
 
   #let user know results are being computed
   message("Computing results...\n")
@@ -454,7 +321,7 @@ boot.ergoInfo <- function(dynEGA.pop,
   results <- vector("list")
   results$boot.ergoInfo <- complexity.estimates2
   results$p.value.twosided <- two.sided
-  results$effect <- ifelse(p.greater<p.lower, "Greater", "Less")
+  results$effect <- ifelse(p.greater<p.greater, "Greater", "Less")
   results$plot.dist <- plot.bootErgoInfo
   return(results)
 }

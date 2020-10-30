@@ -32,6 +32,11 @@
 Size of vertices in network plots.
 Defaults to \code{6}}
 
+\item{plot.type}{Character.
+Plot system to use.
+Current options are \code{\link[qgraph]{qgraph}} and \code{\link{GGally}}.
+Defaults to \code{"GGally"}.}
+
 \item{...}{Arguments passed on to
 
 \itemize{
@@ -60,11 +65,6 @@ Defaults to \code{""}}
 
 \item{id}{Numeric.
 An integer or character indicating the ID of the individual to plot}
-
-\item{plot}{Character.
-Plot system to use.
-Current options are \code{\link[qgraph]{qgraph}} and \code{\link{GGally}}.
-Defaults to \code{"GGally"}.}
 }
 \value{
 Plots of \code{EGAnet} object

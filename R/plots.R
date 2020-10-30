@@ -55,7 +55,7 @@
 #' @param id Numeric.
 #' An integer or character indicating the ID of the individual to plot
 #'
-#' @param plot Character.
+#' @param plot.type Character.
 #' Plot system to use.
 #' Current options are \code{\link[qgraph]{qgraph}} and \code{\link{GGally}}.
 #' Defaults to \code{"GGally"}.
