@@ -70,19 +70,19 @@ print.dynEGA<- function(x, ...) {
 }
 
 #Plot dynEGA function (Level: Group)
-plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", vsize = 6, plot = c("GGally","qgraph"),...){
+plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", vsize = 6, plot.type = c("GGally","qgraph"),...){
   #### MISSING ARGUMENTS HANDLING ####
-  if(missing(plot))
-  {plot <- "GGally"
-  }else{plot <- match.arg(plot)}
+  if(missing(plot.type))
+  {plot.type <- "GGally"
+  }else{plot.type <- match.arg(plot.type)}
 
   ### Plot ###
-  if(plot == "qgraph"){
+  if(plot.type == "qgraph"){
     par(mfrow=c(nrow,ncol))
     for(i in 1:length(x$dynEGA)){
       qgraph::qgraph(x$dynEGA[[i]]$network, layout = "spring", vsize = vsize, groups = as.factor(x$dynEGA[[i]]$wc), ...)
       title(names(x$dynEGA)[[i]], ...)}
-  } else if(plot == "GGally"){
+  } else if(plot.type == "GGally"){
     par(mfrow=c(nrow,ncol))
     for(i in 1:length(x$dynEGA)){
       # weighted  network
@@ -121,16 +121,16 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", vsize = 6, plot = c("G
   }
 }
 #Plot dynEGA function (Level: Population)
-plot.dynEGA <- function(x, title = "", vsize = 6,  plot = c("GGally","qgraph"),...){
+plot.dynEGA <- function(x, title = "", vsize = 6,  plot.type = c("GGally","qgraph"),...){
   #### MISSING ARGUMENTS HANDLING ####
-  if(missing(plot))
-  {plot <- "GGally"
-  }else{plot <- match.arg(plot)}
+  if(missing(plot.type))
+  {plot.type <- "GGally"
+  }else{plot.type <- match.arg(plot.type)}
 
   ### Plot ###
-  if(plot == "qgraph"){
+  if(plot.type == "qgraph"){
     qgraph::qgraph(x$dynEGA$network, layout = "spring", vsize = vsize, groups = as.factor(x$dynEGA$wc), ...)
-  }else if(plot == "GGally"){
+  }else if(plot.type == "GGally"){
     # weighted  network
     network1 <- network::network(x$dynEGA$network,
                                  ignore.eval = FALSE,
@@ -169,16 +169,16 @@ plot.dynEGA <- function(x, title = "", vsize = 6,  plot = c("GGally","qgraph"),.
 
 
 #Plot dynEGA function (Level: Individual)
-plot.dynEGA.Individuals <- function(x, title = "", vsize = 6,  id = NULL, plot = c("GGally","qgraph"),...){
+plot.dynEGA.Individuals <- function(x, title = "", vsize = 6,  id = NULL, plot.type = c("GGally","qgraph"),...){
   #### MISSING ARGUMENTS HANDLING ####
-  if(missing(plot))
-  {plot <- "GGally"
-  }else{plot <- match.arg(plot)}
+  if(missing(plot.type))
+  {plot.type <- "GGally"
+  }else{plot.type <- match.arg(plot.type)}
 
   ### Plot ###
-  if(plot == "qgraph"){
+  if(plot.type == "qgraph"){
     plot.dynEGA.Individuals <- qgraph::qgraph(x$dynEGA[[id]]$network, layout = "spring", vsize = vsize, groups = as.factor(x$dynEGA[[id]]$wc), ...)
-  }else if(plot == "GGally"){
+  }else if(plot.type == "GGally"){
     # weighted  network
     network1 <- network::network(x$dynEGA[[id]]$network,
                                  ignore.eval = FALSE,
@@ -217,16 +217,16 @@ plot.dynEGA.Individuals <- function(x, title = "", vsize = 6,  id = NULL, plot =
 
 
 # Plot EGA:
-plot.EGA <- function(x, title = "", vsize = 6,  plot = c("GGally","qgraph"),...){
+plot.EGA <- function(x, title = "", vsize = 6,  plot.type = c("GGally","qgraph"),...){
   #### MISSING ARGUMENTS HANDLING ####
-  if(missing(plot))
-  {plot <- "GGally"
-  }else{plot <- match.arg(plot)}
+  if(missing(plot.type))
+  {plot.type <- "GGally"
+  }else{plot.type <- match.arg(plot.type)}
 
   ### Plot ###
-  if(plot == "qgraph"){
+  if(plot.type == "qgraph"){
     plot.ega <- qgraph::qgraph(x$network, layout = "spring", vsize = vsize, groups = as.factor(x$wc), ...)
-  }else if(plot == "GGally"){
+  }else if(plot.type == "GGally"){
     # weighted  network
     network1 <- network::network(x$network,
                                  ignore.eval = FALSE,
@@ -264,18 +264,18 @@ plot.EGA <- function(x, title = "", vsize = 6,  plot = c("GGally","qgraph"),...)
 
 
 # Plot bootEGA:
-plot.bootEGA <- function(x, vsize = 6, plot = c("GGally","qgraph"),...){
+plot.bootEGA <- function(x, vsize = 6, plot.type = c("GGally","qgraph"),...){
   #### MISSING ARGUMENTS HANDLING ####
-  if(missing(plot))
-  {plot <- "GGally"
-  }else{plot <- match.arg(plot)}
+  if(missing(plot.type))
+  {plot.type <- "GGally"
+  }else{plot.type <- match.arg(plot.type)}
 
   ### Plot ###
-  if(plot == "qgraph"){
+  if(plot.type == "qgraph"){
     qgraph::qgraph(x$typicalGraph$graph, layout = "spring",
                    groups = as.factor(x$typicalGraph$wc),
                    vsize = vsize, ...)
-  }else if(plot == "GGally"){
+  }else if(plot.type == "GGally"){
     # weighted  network
     network1 <- network::network(x$typicalGraph$graph,
                                  ignore.eval = FALSE,

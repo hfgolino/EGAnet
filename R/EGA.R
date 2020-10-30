@@ -100,34 +100,38 @@
 #' \item{Methods}{Arguments for creating a Methods section (see \code{\link[EGAnet]{EGA.methods.section}})}
 #'
 #' @examples
-#' \dontshow{# Fast for CRAN checks
-#' # Pearson's correlation matrix
-#' wmt <- cor(wmt2[,7:24])
+#' \donttest{# Estimate EGA
+#' ## plot.type = "qqraph" used for CRAN checks
+#' ## plot.type = "GGally" is the default
+#' ega.wmt <- EGA(data = wmt2[,7:24], plot.type = "qgraph")
 #' 
-#' # Estimate EGA
-#' ega.wmt <- EGA(data = wmt, n = nrow(wmt2), uni = FALSE, model = "glasso", plot.EGA = FALSE)
-#' 
-#' }
-#'
-#' \donttest{
-#' # Estimate EGA
-#' ega.wmt <- EGA(data = wmt2[,7:24], uni = TRUE, model = "glasso", plot.EGA = FALSE)
-#'
-#' # Estimate EGAtmfg
-#' ega.wmt <- EGA(data = wmt2[,7:24], uni = TRUE, model = "TMFG", plot.EGA = FALSE)
-#' 
-#' # Estimate EGA with Spinglass
-#' ega.wmt <- EGA(data = wmt2[,7:24], uni = TRUE, model = "glasso",
-#' algorithm = igraph::cluster_spinglass, plot.EGA = FALSE)
-#'
 #' # Summary statistics
 #' summary(ega.wmt)
+#'
+#' # Estimate EGAtmfg
+#' ega.wmt <- EGA(data = wmt2[,7:24], model = "TMFG", plot.type = "qgraph")
+#' 
+#' # Estimate EGA with Louvain algorithm
+#' ega.wmt <- EGA(data = wmt2[,7:24], algorithm = "louvain", plot.type = "qgraph")
+#' 
+#' # Estimate EGA with Spinglass algorithm
+#' ega.wmt <- EGA(data = wmt2[,7:24],
+#' algorithm = igraph::cluster_spinglass, plot.type = "qgraph")
 #'
 #' # Estimate EGA
 #' ega.intel <- EGA(data = intelligenceBattery[,8:66], model = "glasso", plot.EGA = FALSE)
 #'
 #' # Summary statistics
 #' summary(ega.intel)
+#' }
+#' 
+#'  \dontshow{# Fast for CRAN checks
+#' # Pearson's correlation matrix
+#' wmt <- cor(wmt2[,7:24])
+#' 
+#' # Estimate EGA
+#' ega.wmt <- EGA(data = wmt, n = nrow(wmt2), uni = FALSE, model = "glasso", plot.EGA = FALSE)
+#' 
 #' }
 #'
 #' @seealso \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap
@@ -173,7 +177,7 @@
 #'
 #' @export
 #'
-# Updated 29.10.2020
+# Updated 30.10.2020
 ## EGA Function to detect unidimensionality:
 EGA <- function (data, n = NULL, uni = TRUE,
                  model = c("glasso", "TMFG"), model.args = list(),
