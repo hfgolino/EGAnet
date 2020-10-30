@@ -22,8 +22,8 @@
 #' 
 #' @param uni Boolean.
 #' Should unidimensionality be checked?
-#' Defaults to \code{FALSE}.
-#' Set to \code{TRUE} to check for whether the data is unidimensional.
+#' Defaults to \code{TRUE}.
+#' Set to \code{FALSE} to check for multidimensionality only.
 #' If \code{TRUE}, then the same number of variables as the original
 #' data (i.e., from argument \code{data}) are generated from a factor
 #' model with one factor and loadings of .70. These data are then
@@ -100,34 +100,38 @@
 #' \item{Methods}{Arguments for creating a Methods section (see \code{\link[EGAnet]{EGA.methods.section}})}
 #'
 #' @examples
-#' \dontshow{# Fast for CRAN checks
-#' # Pearson's correlation matrix
-#' wmt <- cor(wmt2[,7:24])
+#' \donttest{# Estimate EGA
+#' ## plot.type = "qqraph" used for CRAN checks
+#' ## plot.type = "GGally" is the default
+#' ega.wmt <- EGA(data = wmt2[,7:24], plot.type = "qgraph")
 #' 
-#' # Estimate EGA
-#' ega.wmt <- EGA(data = wmt, n = nrow(wmt2), uni = FALSE, model = "glasso", plot.EGA = FALSE)
-#' 
-#' }
-#'
-#' \donttest{
-#' # Estimate EGA
-#' ega.wmt <- EGA(data = wmt2[,7:24], uni = TRUE, model = "glasso", plot.EGA = FALSE)
-#'
-#' # Estimate EGAtmfg
-#' ega.wmt <- EGA(data = wmt2[,7:24], uni = TRUE, model = "TMFG", plot.EGA = FALSE)
-#' 
-#' # Estimate EGA with Spinglass
-#' ega.wmt <- EGA(data = wmt2[,7:24], uni = TRUE, model = "glasso",
-#' algorithm = igraph::cluster_spinglass, plot.EGA = FALSE)
-#'
 #' # Summary statistics
 #' summary(ega.wmt)
+#'
+#' # Estimate EGAtmfg
+#' ega.wmt <- EGA(data = wmt2[,7:24], model = "TMFG", plot.type = "qgraph")
+#' 
+#' # Estimate EGA with Louvain algorithm
+#' ega.wmt <- EGA(data = wmt2[,7:24], algorithm = "louvain", plot.type = "qgraph")
+#' 
+#' # Estimate EGA with Spinglass algorithm
+#' ega.wmt <- EGA(data = wmt2[,7:24],
+#' algorithm = igraph::cluster_spinglass, plot.type = "qgraph")
 #'
 #' # Estimate EGA
 #' ega.intel <- EGA(data = intelligenceBattery[,8:66], model = "glasso", plot.EGA = FALSE)
 #'
 #' # Summary statistics
 #' summary(ega.intel)
+#' }
+#' 
+#'  \dontshow{# Fast for CRAN checks
+#' # Pearson's correlation matrix
+#' wmt <- cor(wmt2[,7:24])
+#' 
+#' # Estimate EGA
+#' ega.wmt <- EGA(data = wmt, n = nrow(wmt2), uni = FALSE, model = "glasso", plot.EGA = FALSE)
+#' 
 #' }
 #'
 #' @seealso \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap
@@ -173,9 +177,9 @@
 #'
 #' @export
 #'
-# Updated 21.10.2020
+# Updated 30.10.2020
 ## EGA Function to detect unidimensionality:
-EGA <- function (data, n = NULL, uni = FALSE,
+EGA <- function (data, n = NULL, uni = TRUE,
                  model = c("glasso", "TMFG"), model.args = list(),
                  algorithm = c("walktrap", "louvain"), algorithm.args = list(),
                  plot.EGA = TRUE, plot.type = c("GGally", "qgraph"), ...) {
@@ -239,6 +243,9 @@ EGA <- function (data, n = NULL, uni = FALSE,
       # Set one factor for simulated data
       nfact <- 1
       nvar <- ncol(cor.data)
+      if(nvar > 12){
+        nvar <- 12
+      }
       
       # Generate data
       uni.data <- MASS::mvrnorm(n = n, mu = rep(0, nvar), Sigma = cor.data)
@@ -303,6 +310,9 @@ EGA <- function (data, n = NULL, uni = FALSE,
       # Set one factor for simulated data
       nfact <- 1
       nvar <- ncol(data)
+      if(nvar > 12){
+        nvar <- 12
+      }
       
       ## Simulate data from unidimensional factor model
       data.sim <- sim.func(data = data, nvar = nvar, nfact = nfact, load = .70)
@@ -316,7 +326,7 @@ EGA <- function (data, n = NULL, uni = FALSE,
                               algorithm = algorithm, algorithm.args = algorithm.args)
       
       ## Remove simulated data for multidimensional result
-      cor.data <- cor.data[-c(1:ncol(data)),-c(1:ncol(data))]
+      cor.data <- cor.data[-c(1:nvar),-c(1:nvar)]
       
       # Multidimensional result
       multi.res <- suppressMessages(EGA.estimate(cor.data, n = n,
@@ -421,7 +431,7 @@ EGA <- function (data, n = NULL, uni = FALSE,
                                              ncol = ncol(a$network)))
         
         # Layout "Spring"
-        graph1 <- igraph::as.igraph(qgraph::qgraph(a$network, DoNotPlot = TRUE))
+        graph1 <- NetworkToolbox::convert2igraph(a$network)
         edge.list <- igraph::as_edgelist(graph1)
         layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
                                                                    weights =
@@ -431,10 +441,11 @@ EGA <- function (data, n = NULL, uni = FALSE,
         set.seed(1234)
         plot.ega <- GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
                                    color = "Communities", edge.color = c("color"),
-                                   alpha = 0.5, size = 6, edge.alpha = 0.5,
+                                   alpha = 0.7, size = 12, edge.alpha = 0.4,
                                    mode =  layout.spring,
-                                   label.size = 2.4,
-                                   label = colnames(a$network)) + ggplot2::theme(legend.title = ggplot2::element_blank())
+                                   label.size = 5,
+                                   label = colnames(a$network)) +
+          ggplot2::theme(legend.title = ggplot2::element_blank())
         
         plot(plot.ega)
         
@@ -455,22 +466,23 @@ EGA <- function (data, n = NULL, uni = FALSE,
                                              nrow = nrow(a$network),
                                              ncol = ncol(a$network)))
         
+        set.seed(1234)
+        
         # Layout "Spring"
-        graph1 <- igraph::as.igraph(qgraph::qgraph(a$network, DoNotPlot = TRUE))
+        graph1 <- NetworkToolbox::convert2igraph(a$network)
         edge.list <- igraph::as_edgelist(graph1)
         layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
                                                                    weights =
                                                                      abs(igraph::E(graph1)$weight/max(abs(igraph::E(graph1)$weight)))^2,
                                                                    vcount = ncol(a$network))
         
-        
-        set.seed(1234)
         plot.ega <- GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
                                   color = "Communities", edge.color = c("color"),
-                                  alpha = 0.5, size = 6, edge.alpha = 0.5,
+                                  alpha = 0.7, size = 12, edge.alpha = 0.4,
                                   mode =  layout.spring,
-                                  label.size = 2.4,
-                                  label = colnames(a$network)) + ggplot2::theme(legend.title = ggplot2::element_blank(), legend.position = "none")
+                                  label.size = 5,
+                                  label = colnames(a$network)) +
+          ggplot2::theme(legend.title = ggplot2::element_blank(), legend.position = "none")
         
         plot(plot.ega)
       }

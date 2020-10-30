@@ -11,8 +11,8 @@
 #' 
 #' @param uni Boolean.
 #' Should unidimensionality be checked?
-#' Defaults to \code{FALSE}.
-#' Set to \code{TRUE} to check for whether the data is unidimensional.
+#' Defaults to \code{TRUE}.
+#' Set to \code{FALSE} to check for multidimensionality only.
 #' If \code{TRUE}, then the same number of variables as the original
 #' data (i.e., from argument \code{data}) are generated from a factor
 #' model with one factor and loadings of .70. These data are then
@@ -148,24 +148,31 @@
 #' # Load data
 #' wmt <- wmt2[,7:24]
 #'
-#' \donttest{
-#' # bootEGA glasso example
-#' boot.wmt <- bootEGA(data = wmt, uni = TRUE, iter = 500, typicalStructure = TRUE,
-#' plot.typicalStructure = FALSE, model = "glasso", type = "parametric", ncores = 2)
+#' \donttest{# bootEGA glasso example
+#' ## plot.type = "qqraph" used for CRAN checks
+#' ## plot.type = "GGally" is the default
+#' boot.wmt <- bootEGA(data = wmt, iter = 500, plot.type = "qgraph",
+#' type = "parametric", ncores = 2)
+#' 
+#' # bootEGA TMFG example
+#' boot.wmt <- bootEGA(data = wmt, iter = 500, model = "TMFG",
+#' plot.type = "qgraph", type = "parametric", ncores = 2)
+#' 
+#' # bootEGA Louvain example
+#' boot.wmt <- bootEGA(data = wmt, iter = 500, algorithm = "louvain",
+#' plot.type = "qgraph", type = "parametric", ncores = 2)
 #' 
 #' # bootEGA Spinglass example
-#' boot.wmt <- bootEGA(data = wmt, iter = 500, typicalStructure = TRUE,
-#' plot.typicalStructure = FALSE, model = "glasso", algorithm = igraph::cluster_spinglass,
-#' type = "parametric", ncores = 2)
+#' boot.wmt <- bootEGA(data = wmt, iter = 500, plot.type = "qgraph",
+#' algorithm = igraph::cluster_spinglass, type = "parametric", ncores = 2)
 #' }
 #'
 #' # Load data
 #' intwl <- intelligenceBattery[,8:66]
 #'
-#' \donttest{
-#' # bootEGA TMFG example
-#' boot.intwl <- bootEGA(data = intelligenceBattery[,8:66], iter = 500, typicalStructure = TRUE,
-#' plot.typicalStructure = FALSE, model = "TMFG", type = "parametric", ncores = 2)
+#' \donttest{# Another bootEGA example
+#' boot.intwl <- bootEGA(data = intwl, iter = 500,
+#' plot.type = "qgraph", type = "parametric", ncores = 2)
 #' }
 #'
 #' @references
@@ -175,6 +182,7 @@
 #' \emph{PsyArXiv}.
 #' doi:\href{https://doi.org/10.31234/osf.io/9deay}{10.31234/osf.io/9deay}
 #' 
+#' # Structural consistency (see \code{\link[EGAnet]{dimStability}}) \cr
 #' Christensen, A. P., Golino, H., & Silvia, P. J. (in press).
 #' A psychometric network perspective on the validity and validation of personality trait questionnaires.
 #' \emph{European Journal of Personality}.
@@ -188,8 +196,8 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 21.10.2020
-bootEGA <- function(data, uni = FALSE, iter, type = c("parametric", "resampling"),
+# Updated 30.10.2020
+bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling"),
                     model = c("glasso", "TMFG"), model.args = list(),
                     algorithm = c("walktrap", "louvain"), algorithm.args = list(),
                     typicalStructure = TRUE, plot.typicalStructure = TRUE,

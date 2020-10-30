@@ -2,6 +2,9 @@ Changes in version 0.9.8
 
 o ADD: a new function to compute a parametric Bootstrap Test for the Ergodicity Information Index (see `boot.ergoInfo`)
 
+o ADD: basic Shiny functionality (`EGA` only)
+
+
 o ADD: a new function to compute a Monte-Carlo Test for the Ergodicity Information Index (see `mctest.ergoInfo`)
 
 o ADD: a new function to compute the Ergodicity Information Index (see `ergoInfo`)

@@ -7,7 +7,7 @@
 EGA(
   data,
   n = NULL,
-  uni = FALSE,
+  uni = TRUE,
   model = c("glasso", "TMFG"),
   model.args = list(),
   algorithm = c("walktrap", "louvain"),
@@ -28,8 +28,8 @@ Sample size if \code{data} provided is a correlation matrix}
 
 \item{uni}{Boolean.
 Should unidimensionality be checked?
-Defaults to \code{FALSE}.
-Set to \code{TRUE} to check for whether the data is unidimensional.
+Defaults to \code{TRUE}.
+Set to \code{FALSE} to check for multidimensionality only.
 If \code{TRUE}, then the same number of variables as the original
 data (i.e., from argument \code{data}) are generated from a factor
 model with one factor and loadings of .70. These data are then
@@ -119,34 +119,38 @@ Notably, any community detection algorithm from the \code{\link{igraph}}
 can be used to estimate the number of communities (see examples).
 }
 \examples{
-\dontshow{# Fast for CRAN checks
-# Pearson's correlation matrix
-wmt <- cor(wmt2[,7:24])
-
-# Estimate EGA
-ega.wmt <- EGA(data = wmt, n = nrow(wmt2), uni = FALSE, model = "glasso", plot.EGA = FALSE)
-
-}
-
-\donttest{
-# Estimate EGA
-ega.wmt <- EGA(data = wmt2[,7:24], uni = TRUE, model = "glasso", plot.EGA = FALSE)
-
-# Estimate EGAtmfg
-ega.wmt <- EGA(data = wmt2[,7:24], uni = TRUE, model = "TMFG", plot.EGA = FALSE)
-
-# Estimate EGA with Spinglass
-ega.wmt <- EGA(data = wmt2[,7:24], uni = TRUE, model = "glasso",
-algorithm = igraph::cluster_spinglass, plot.EGA = FALSE)
+\donttest{# Estimate EGA
+## plot.type = "qqraph" used for CRAN checks
+## plot.type = "GGally" is the default
+ega.wmt <- EGA(data = wmt2[,7:24], plot.type = "qgraph")
 
 # Summary statistics
 summary(ega.wmt)
+
+# Estimate EGAtmfg
+ega.wmt <- EGA(data = wmt2[,7:24], model = "TMFG", plot.type = "qgraph")
+
+# Estimate EGA with Louvain algorithm
+ega.wmt <- EGA(data = wmt2[,7:24], algorithm = "louvain", plot.type = "qgraph")
+
+# Estimate EGA with Spinglass algorithm
+ega.wmt <- EGA(data = wmt2[,7:24],
+algorithm = igraph::cluster_spinglass, plot.type = "qgraph")
 
 # Estimate EGA
 ega.intel <- EGA(data = intelligenceBattery[,8:66], model = "glasso", plot.EGA = FALSE)
 
 # Summary statistics
 summary(ega.intel)
+}
+
+ \dontshow{# Fast for CRAN checks
+# Pearson's correlation matrix
+wmt <- cor(wmt2[,7:24])
+
+# Estimate EGA
+ega.wmt <- EGA(data = wmt, n = nrow(wmt2), uni = FALSE, model = "glasso", plot.EGA = FALSE)
+
 }
 
 }

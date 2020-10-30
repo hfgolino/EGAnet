@@ -65,18 +65,22 @@ algorithm is varied and unique community solutions are compared using
 # Load data
 wmt <- wmt2[,7:24]
 
-\donttest{
-# Estimate normal EGAtmfg
-tmfg <- EGA(data = wmt, model = "TMFG", plot.EGA = FALSE)
+\donttest{# Estimate EGA
+## plot.type = "qqraph" used for CRAN checks
+## plot.type = "GGally" is the default
+ega.wmt <- EGA(data = wmt, plot.type = "qgraph")
 
-# Estimate optimal EGAtmfg
-tmfg.opt <- EGA.fit(data = wmt, model = "TMFG")
+# Estimate optimal EGA
+fit.wmt <- EGA.fit(data = wmt)
+
+# Plot optimal fit
+plot(fit.wmt$EGA, plot.type = "qgraph")
 
 # Compare with CFA
-cfa.tmfg <- CFA(tmfg, estimator = "WLSMV", data = wmt)
-cfa.opt <- CFA(tmfg.opt$EGA, estimator = "WLSMV", data = wmt)
+cfa.ega <- CFA(ega.wmt, estimator = "WLSMV", data = wmt)
+cfa.fit <- CFA(fit.wmt.opt$EGA, estimator = "WLSMV", data = wmt)
 
-lavaan::lavTestLRT(cfa.tmfg$fit, cfa.opt$fit, method = "satorra.bentler.2001")
+lavaan::lavTestLRT(cfa.ega$fit, cfa.fit$fit, method = "satorra.bentler.2001")
 }
 
 }
