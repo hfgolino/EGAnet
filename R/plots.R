@@ -234,7 +234,7 @@ plot.dynEGA.Individuals <- function(x, title = "", vsize = 6,  id = NULL, plot.t
                   color = "Communities", edge.color = c("color"),
                   alpha = 0.7, size = vsize, edge.alpha = 0.4,
                   mode =  layout.spring,
-                  label.size = 12,
+                  label.size = 5,
                   label = colnames(x$dynEGA[[id]]$network))+ggplot2::theme(legend.title = ggplot2::element_blank())
  }
 }
