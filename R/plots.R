@@ -120,7 +120,7 @@ plot.bootEGA <- function(x, vsize = 6, plot.type = c("GGally","qgraph"),...){
     set.seed(1234)
     GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
                            color = "Communities", edge.color = c("color"),
-                           alpha = 0.7, size = 12, edge.alpha = 0.4,
+                           alpha = 0.7, size = vsize, edge.alpha = 0.4,
                            mode =  layout.spring,
                            label.size = 5,
                            label = colnames(x$typicalGraph$graph)) + ggplot2::theme(legend.title = ggplot2::element_blank())
@@ -183,7 +183,7 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", vsize = 6, plot.type =
     set.seed(1234)
     GGally::ggnet2(network1[[i]], edge.size = "ScaledWeights", palette = "Set1",
                    color = "Communities", edge.color = c("color"),
-                   alpha = 0.7, size = 12, edge.alpha = 0.4,
+                   alpha = 0.7, size = vsize, edge.alpha = 0.4,
                    mode =  layout.spring[[i]],
                    label.size = 5,
                    label = colnames(x$dynEGA[[i]]$network))+ggplot2::theme(legend.title = ggplot2::element_blank())
@@ -232,7 +232,7 @@ plot.dynEGA.Individuals <- function(x, title = "", vsize = 6,  id = NULL, plot.t
    set.seed(1234)
    GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
                   color = "Communities", edge.color = c("color"),
-                  alpha = 0.7, size = 12, edge.alpha = 0.4,
+                  alpha = 0.7, size = vsize, edge.alpha = 0.4,
                   mode =  layout.spring,
                   label.size = 12,
                   label = colnames(x$dynEGA[[id]]$network))+ggplot2::theme(legend.title = ggplot2::element_blank())
@@ -280,7 +280,7 @@ plot.dynEGA <- function(x, title = "", vsize = 6,  plot.type = c("GGally","qgrap
   set.seed(1234)
   GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
                  color = "Communities", edge.color = c("color"),
-                 alpha = 0.7, size = 12, edge.alpha = 0.4,
+                 alpha = 0.7, size = vsize, edge.alpha = 0.4,
                  mode =  layout.spring,
                  label.size = 5,
                  label = colnames(x$dynEGA$network))+ggplot2::theme(legend.title = ggplot2::element_blank())
@@ -328,7 +328,7 @@ plot.EGA <- function(x, title = "", vsize = 6,  plot.type = c("GGally","qgraph")
     set.seed(1234)
     GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
                    color = "Communities", edge.color = c("color"),
-                   alpha = 0.7, size = 12, edge.alpha = 0.4,
+                   alpha = 0.7, size = vsize, edge.alpha = 0.4,
                    mode =  layout.spring,
                    label.size = 5,
                    label = colnames(x$network))+ggplot2::theme(legend.title = ggplot2::element_blank())
