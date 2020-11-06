@@ -60,6 +60,33 @@
 #' Current options are \code{\link[qgraph]{qgraph}} and \code{\link{GGally}}.
 #' Defaults to \code{"GGally"}.
 #'
+#' @param plot.args List.
+#' A list of additional arguments for the network plot.
+#' For \code{plot.type = "qgraph"}:
+#'
+#' \itemize{
+#'
+#' \item{\strong{\code{vsize}}}
+#' {Size of the nodes. Defaults to 6.}
+#'
+#'}
+#' For \code{plot.type = "GGally"}:
+#'
+#' \itemize{
+#'
+#' \item{\strong{\code{vsize}}}
+#' {Size of the nodes. Defaults to 6.}
+#'
+#' \item{\strong{\code{label.size}}}
+#' {Size of the labels. Defaults to 5.}
+#'
+#' \item{\strong{\code{alpha}}}
+#' {The level of transparency of the nodes, which might be a single value or a vector of values. Defaults to 0.4.}
+#'
+#' \item{\strong{\code{edge.alpha}}}
+#' {The level of transparency of the edges, which might be a single value or a vector of values. Defaults to 0.7.}
+#' }
+#'
 #' @param ... Arguments passed on to
 #'
 #' \itemize{
@@ -81,17 +108,34 @@
 #Plot bootEGA----
 # Updated 02.05.2020
 #' @export
-plot.bootEGA <- function(x, vsize = 6, plot.type = c("GGally","qgraph"),...){
+plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
+                         plot.args = list(), ...){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
   {plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
 
+  ## Check for input plot arguments
+  if(missing(plot.args)){
+    plot.args <-list(vsize = 6, alpha = 0.4, label.size = 5, edge.alpha = 0.7)}
+
+  else{
+    plot.args <- plot.args
+    plots.arg1 <- list(vsize = 6, label.size = 5, alpha = 0.4, edge.alpha = 0.7)
+    plot.args.use <- plot.args
+
+    if(any(names(plots.arg1) %in% names(plot.args.use))){
+
+      plot.replace.args <- plots.arg1[na.omit(match(names(plot.args.use), names(plots.arg1)))]
+
+      plot.args <- c(plot.args.use,plots.arg1[names(plots.arg1) %in% names(plot.args.use)==FALSE])}
+  }
+
   ### Plot ###
   if(plot.type == "qgraph"){
     qgraph::qgraph(x$typicalGraph$graph, layout = "spring",
                    groups = as.factor(x$typicalGraph$wc),
-                   vsize = vsize, ...)
+                   vsize = plot.args$vsize, ...)
   }else if(plot.type == "GGally"){
     # weighted  network
     network1 <- network::network(x$typicalGraph$graph,
@@ -120,9 +164,10 @@ plot.bootEGA <- function(x, vsize = 6, plot.type = c("GGally","qgraph"),...){
     set.seed(1234)
     GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
                            color = "Communities", edge.color = c("color"),
-                           alpha = 0.7, size = vsize, edge.alpha = 0.4,
+                           alpha = plot.args$alpha, size = plot.args$vsize,
+                           edge.alpha = plot.args$edge.alpha,
                            mode =  layout.spring,
-                           label.size = 5,
+                           label.size = plot.args$label.size,
                            label = colnames(x$typicalGraph$graph)) + ggplot2::theme(legend.title = ggplot2::element_blank())
 
   }
@@ -140,20 +185,45 @@ plot.CFA <- function(x, layout = "spring", vsize = 6, ...) {
 #Plot dynEGA function (Level: Group)----
 # Updated 15.10.2020
 #' @export
-plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", vsize = 6, plot.type = c("GGally","qgraph"),...){
+plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally","qgraph"),
+                               plot.args = list(), ...){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
   {plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
 
+  ## Check for input plot arguments
+  if(missing(plot.args)){
+    plot.args <-list(vsize = 6, alpha = 0.4, label.size = 5, edge.alpha = 0.7)}
+
+  else{
+    plot.args <- plot.args
+    plots.arg1 <- list(vsize = 6, label.size = 5, alpha = 0.4, edge.alpha = 0.7)
+    plot.args.use <- plot.args
+
+    if(any(names(plots.arg1) %in% names(plot.args.use))){
+
+      plot.replace.args <- plots.arg1[na.omit(match(names(plot.args.use), names(plots.arg1)))]
+
+      plot.args <- c(plot.args.use,plots.arg1[names(plots.arg1) %in% names(plot.args.use)==FALSE])}
+  }
+
+
   ### Plot ###
   if(plot.type == "qgraph"){
   par(mfrow=c(nrow,ncol))
   for(i in 1:length(x$dynEGA)){
-    qgraph::qgraph(x$dynEGA[[i]]$network, layout = "spring", vsize = vsize, groups = as.factor(x$dynEGA[[i]]$wc), ...)
+    qgraph::qgraph(x$dynEGA[[i]]$network, layout = "spring", vsize = plot.args$vsize, groups = as.factor(x$dynEGA[[i]]$wc), ...)
     title(names(x$dynEGA)[[i]], ...)}
   } else if(plot.type == "GGally"){
-    par(mfrow=c(nrow,ncol))
+
+    plots.net <- vector("list", length = length(x$dynEGA))
+    network1 <- vector("list", length = length(x$dynEGA))
+    graph1 <- vector("list", length = length(x$dynEGA))
+    edge.list <- vector("list", length = length(x$dynEGA))
+    layout.spring <- vector("list", length = length(x$dynEGA))
+
+
     for(i in 1:length(x$dynEGA)){
     # weighted  network
     network1[[i]] <- network::network(x$dynEGA[[i]]$network,
@@ -161,10 +231,10 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", vsize = 6, plot.type =
                                  names.eval = "weights",
                                  directed = FALSE)
 
-    network::set.vertex.attribute( network1[[i]] , attrname= "Communities", value = x$dynEGA[[i]]$wc)
-    network::set.vertex.attribute( network1[[i]] , attrname= "Names", value = network::network.vertex.names(network1[[i]]))
-    network::set.edge.attribute( network1[[i]] , "color", ifelse(network::get.edge.value(network1[[i]], "weights") > 0, "darkgreen", "red"))
-    network::set.edge.value( network1[[i]] ,attrname="AbsWeights",value=abs(x$dynEGA[[i]]$network))
+    network::set.vertex.attribute(network1[[i]], attrname= "Communities", value = x$dynEGA[[i]]$wc)
+    network::set.vertex.attribute(network1[[i]], attrname= "Names", value = network::network.vertex.names(network1[[i]]))
+    network::set.edge.attribute(network1[[i]], "color", ifelse(network::get.edge.value(network1[[i]], "weights") > 0, "darkgreen", "red"))
+    network::set.edge.value(network1[[i]], attrname="AbsWeights",value=abs(x$dynEGA[[i]]$network))
     network::set.edge.value(network1[[i]],attrname="ScaledWeights",
                             value=matrix(scales::rescale(as.vector(x$dynEGA[[i]]$network),
                                                          to = c(.001, 1.75)),
@@ -181,28 +251,49 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", vsize = 6, plot.type =
 
 
     set.seed(1234)
-    GGally::ggnet2(network1[[i]], edge.size = "ScaledWeights", palette = "Set1",
+    plots.net[[i]] <- GGally::ggnet2(network1[[i]], edge.size = "ScaledWeights", palette = "Set1",
                    color = "Communities", edge.color = c("color"),
-                   alpha = 0.7, size = vsize, edge.alpha = 0.4,
+                   alpha = plot.args$alpha, size = plot.args$vsize,
+                   edge.alpha = plot.args$edge.alpha,
                    mode =  layout.spring[[i]],
-                   label.size = 5,
+                   label.size = plot.args$label.size,
                    label = colnames(x$dynEGA[[i]]$network))+ggplot2::theme(legend.title = ggplot2::element_blank())
+
     }
+    group.labels <- names(x$dynEGA)
+    ggpubr::ggarrange(plotlist=plots.net, ncol = ncol, nrow = nrow, labels = group.labels, label.x = 0.3)
   }
 }
 
 #Plot dynEGA function (Level: Individual)----
 # Updated 10.15.2020
 #' @export
-plot.dynEGA.Individuals <- function(x, title = "", vsize = 6,  id = NULL, plot.type = c("GGally","qgraph"),...){
+plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GGally","qgraph"),
+                                    plot.args = list(), ...){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
   {plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
 
+  ## Check for input plot arguments
+  if(missing(plot.args)){
+    plot.args <-list(vsize = 6, alpha = 0.4, label.size = 5, edge.alpha = 0.7)}
+
+  else{
+    plot.args <- plot.args
+    plots.arg1 <- list(vsize = 6, label.size = 5, alpha = 0.4, edge.alpha = 0.7)
+    plot.args.use <- plot.args
+
+    if(any(names(plots.arg1) %in% names(plot.args.use))){
+
+      plot.replace.args <- plots.arg1[na.omit(match(names(plot.args.use), names(plots.arg1)))]
+
+      plot.args <- c(plot.args.use,plots.arg1[names(plots.arg1) %in% names(plot.args.use)==FALSE])}
+  }
+
   ### Plot ###
   if(plot.type == "qgraph"){
-    plot.dynEGA.Individuals <- qgraph::qgraph(x$dynEGA[[id]]$network, layout = "spring", vsize = vsize, groups = as.factor(x$dynEGA[[id]]$wc), ...)
+    plot.dynEGA.Individuals <- qgraph::qgraph(x$dynEGA[[id]]$network, layout = "spring", vsize = plot.args$vsize, groups = as.factor(x$dynEGA[[id]]$wc), ...)
    }else if(plot.type == "GGally"){
    # weighted  network
    network1 <- network::network(x$dynEGA[[id]]$network,
@@ -232,9 +323,10 @@ plot.dynEGA.Individuals <- function(x, title = "", vsize = 6,  id = NULL, plot.t
    set.seed(1234)
    GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
                   color = "Communities", edge.color = c("color"),
-                  alpha = 0.7, size = vsize, edge.alpha = 0.4,
+                  alpha = plot.args$alpha, size = plot.args$vsize,
+                  edge.alpha = plot.args$edge.alpha,
+                  label.size = plot.args$label.size,
                   mode =  layout.spring,
-                  label.size = 5,
                   label = colnames(x$dynEGA[[id]]$network))+ggplot2::theme(legend.title = ggplot2::element_blank())
  }
 }
@@ -242,15 +334,33 @@ plot.dynEGA.Individuals <- function(x, title = "", vsize = 6,  id = NULL, plot.t
 #Plot dynEGA function (Level: Population)----
 # Updated 10.15.2020
 #' @export
-plot.dynEGA <- function(x, title = "", vsize = 6,  plot.type = c("GGally","qgraph"),...){
+plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
+                        plot.args = list(), ...){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
   {plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
 
+  ## Check for input plot arguments
+  if(missing(plot.args)){
+    plot.args <-list(vsize = 6, alpha = 0.4, label.size = 5, edge.alpha = 0.7)}
+
+  else{
+    plot.args <- plot.args
+    plots.arg1 <- list(vsize = 6, label.size = 5, alpha = 0.4, edge.alpha = 0.7)
+    plot.args.use <- plot.args
+
+    if(any(names(plots.arg1) %in% names(plot.args.use))){
+
+      plot.replace.args <- plots.arg1[na.omit(match(names(plot.args.use), names(plots.arg1)))]
+
+      plot.args <- c(plot.args.use,plots.arg1[names(plots.arg1) %in% names(plot.args.use)==FALSE])}
+  }
+
+
   ### Plot ###
   if(plot.type == "qgraph"){
-    qgraph::qgraph(x$dynEGA$network, layout = "spring", vsize = vsize, groups = as.factor(x$dynEGA$wc), ...)
+    qgraph::qgraph(x$dynEGA$network, layout = "spring", vsize = plot.args$vsize, groups = as.factor(x$dynEGA$wc), ...)
     }else if(plot.type == "GGally"){
   # weighted  network
   network1 <- network::network(x$dynEGA$network,
@@ -280,9 +390,10 @@ plot.dynEGA <- function(x, title = "", vsize = 6,  plot.type = c("GGally","qgrap
   set.seed(1234)
   GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
                  color = "Communities", edge.color = c("color"),
-                 alpha = 0.7, size = vsize, edge.alpha = 0.4,
+                 alpha = plot.args$alpha, size = plot.args$vsize,
+                 edge.alpha = plot.args$edge.alpha,
+                 label.size = plot.args$label.size,
                  mode =  layout.spring,
-                 label.size = 5,
                  label = colnames(x$dynEGA$network))+ggplot2::theme(legend.title = ggplot2::element_blank())
   }
 }
@@ -290,15 +401,33 @@ plot.dynEGA <- function(x, title = "", vsize = 6,  plot.type = c("GGally","qgrap
 #Plot EGA----
 # Updated 02.05.2020
 #' @export
-plot.EGA <- function(x, title = "", vsize = 6,  plot.type = c("GGally","qgraph"),...){
+plot.EGA <- function(x, title = "",  plot.type = c("GGally","qgraph"),
+                     plot.args = list(), ...){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
   {plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
 
+  ## Check for input plot arguments
+  if(missing(plot.args)){
+    plot.args <-list(vsize = 6, alpha = 0.4, label.size = 5, edge.alpha = 0.7)}
+
+  else{
+    plot.args <- plot.args
+    plots.arg1 <- list(vsize = 6, label.size = 5, alpha = 0.4, edge.alpha = 0.7)
+    plot.args.use <- plot.args
+
+    if(any(names(plots.arg1) %in% names(plot.args.use))){
+
+      plot.replace.args <- plots.arg1[na.omit(match(names(plot.args.use), names(plots.arg1)))]
+
+      plot.args <- c(plot.args.use,plots.arg1[names(plots.arg1) %in% names(plot.args.use)==FALSE])}
+  }
+
+
   ### Plot ###
   if(plot.type == "qgraph"){
-  plot.ega <- qgraph::qgraph(x$network, layout = "spring", vsize = vsize, groups = as.factor(x$wc), ...)
+  plot.ega <- qgraph::qgraph(x$network, layout = "spring", vsize = plot.args$vsize, groups = as.factor(x$wc), ...)
   }else if(plot.type == "GGally"){
     # weighted  network
     network1 <- network::network(x$network,
@@ -328,9 +457,10 @@ plot.EGA <- function(x, title = "", vsize = 6,  plot.type = c("GGally","qgraph")
     set.seed(1234)
     GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
                    color = "Communities", edge.color = c("color"),
-                   alpha = 0.7, size = vsize, edge.alpha = 0.4,
+                   alpha = plot.args$alpha, size = plot.args$vsize,
+                   edge.alpha = plot.args$edge.alpha,
+                   label.size = plot.args$label.size,
                    mode =  layout.spring,
-                   label.size = 5,
                    label = colnames(x$network))+ggplot2::theme(legend.title = ggplot2::element_blank())
   }
 }

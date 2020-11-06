@@ -28,14 +28,37 @@
 \arguments{
 \item{x}{Object from \code{EGAnet} package}
 
-\item{vsize}{Numeric.
-Size of vertices in network plots.
-Defaults to \code{6}}
-
 \item{plot.type}{Character.
 Plot system to use.
 Current options are \code{\link[qgraph]{qgraph}} and \code{\link{GGally}}.
 Defaults to \code{"GGally"}.}
+
+\item{plot.args}{List.
+A list of additional arguments for the network plot.
+For \code{plot.type = "qgraph"}:
+
+\itemize{
+
+\item{\strong{\code{vsize}}}
+{Size of the nodes. Defaults to 6.}
+
+}
+For \code{plot.type = "GGally"}:
+
+\itemize{
+
+\item{\strong{\code{vsize}}}
+{Size of the nodes. Defaults to 6.}
+
+\item{\strong{\code{label.size}}}
+{Size of the labels. Defaults to 5.}
+
+\item{\strong{\code{alpha}}}
+{The level of transparency of the nodes, which might be a single value or a vector of values. Defaults to 0.4.}
+
+\item{\strong{\code{edge.alpha}}}
+{The level of transparency of the edges, which might be a single value or a vector of values. Defaults to 0.7.}
+}}
 
 \item{...}{Arguments passed on to
 
@@ -48,6 +71,10 @@ Defaults to \code{"GGally"}.}
 {Functions: CFA}
 
 }}
+
+\item{vsize}{Numeric.
+Size of vertices in network plots.
+Defaults to \code{6}}
 
 \item{layout}{Character.
 Layout of plot (see \code{\link[semPlot]{semPaths}}).

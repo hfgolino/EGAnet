@@ -1738,6 +1738,14 @@ dynEGA.ind.pop <- function(data, n.embed, tau = 1, delta = 1,
   results$Derivatives$EstimatesDF <- data.all
   results$dynEGA.pop <- ega1
   results$dynEGA.ind <- ega.list.individuals
+  if(use.derivatives == 0){
+    results$data.all <- data.all[,1:ncol(data[,-c(id)])]}
+  if(use.derivatives == 1){
+    results$data.all <- data.all[,(ncol(data[,-c(id)])+1):(ncol(data[,-c(id)])*2)]}
+  if(use.derivatives == 2){
+    results$data.all <- data.all[,cols]}
+  results$data.individuals <- data.individuals
+  results$model <- model
   class(results) <- "dynEGA.ind.pop"
   return(results)
 }

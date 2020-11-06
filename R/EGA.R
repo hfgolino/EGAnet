@@ -4,7 +4,7 @@
 #' using the graphical lasso (\code{\link{EBICglasso.qgraph}}) or the
 #' Triangulated Maximally Filtered Graph (\code{\link[NetworkToolbox]{TMFG}})
 #' network estimation methods.
-#' 
+#'
 #' Two community detection algorithms, Walktrap (Pons & Latapy, 2006) and
 #' Louvain (Blondel et al., 2008), are pre-programmed because of their
 #' superior performance in simulation studies on psychological
@@ -19,7 +19,7 @@
 #'
 #' @param n Integer.
 #' Sample size if \code{data} provided is a correlation matrix
-#' 
+#'
 #' @param uni Boolean.
 #' Should unidimensionality be checked?
 #' Defaults to \code{TRUE}.
@@ -31,7 +31,7 @@
 #' If the number of dimensions is one or two, then the original
 #' data are unidimensional; otherwise, the data are multidimensional
 #' (see Golino, Shi, et al., 2020 for more details)
-#' 
+#'
 #' @param model Character.
 #' A string indicating the method to use.
 #' Current options are:
@@ -45,15 +45,15 @@
 #'
 #' \item{\strong{\code{TMFG}}}
 #' {Estimates a Triangulated Maximally Filtered Graph}
-#' 
+#'
 #' }
-#' 
+#'
 #' @param model.args List.
 #' A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
 #' or \code{\link[NetworkToolbox]{TMFG}}
 #'
 #' @param algorithm A string indicating the algorithm to use or a function from \code{\link{igraph}}
-#' 
+#'
 #' Current options are:
 #'
 #' \itemize{
@@ -65,7 +65,7 @@
 #' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_louvain}}}
 #'
 #' }
-#' 
+#'
 #' @param algorithm.args List.
 #' A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
 #' or some other community detection algorithm function (see examples)
@@ -78,10 +78,37 @@
 #' Plot system to use.
 #' Current options are \code{\link[qgraph]{qgraph}} and \code{\link{GGally}}.
 #' Defaults to \code{"GGally"}
-#' 
+#'
+#' @param plot.args List.
+#' A list of additional arguments for the network plot.
+#' For \code{plot.type = "qgraph"}:
+#'
+#' \itemize{
+#'
+#' \item{\strong{\code{vsize}}}
+#' {Size of the nodes. Defaults to 6.}
+#'
+#'}
+#' For \code{plot.type = "GGally"}:
+#'
+#' \itemize{
+#'
+#' \item{\strong{\code{vsize}}}
+#' {Size of the nodes. Defaults to 6.}
+#'
+#' \item{\strong{\code{label.size}}}
+#' {Size of the labels. Defaults to 5.}
+#'
+#' \item{\strong{\code{alpha}}}
+#' {The level of transparency of the nodes, which might be a single value or a vector of values. Defaults to 0.4.}
+#'
+#' \item{\strong{\code{edge.alpha}}}
+#' {The level of transparency of the edges, which might be a single value or a vector of values. Defaults to 0.7.}
+#' }
+#'
 #' @param ... Additional arguments.
 #' Used for deprecated arguments from previous versions of \code{\link{EGA}}
-#' 
+#'
 #' @author Hudson Golino <hfg9s at virginia.edu>, Alexander P. Christensen <alexpaulchristensen at gmail.com>, Maria Dolores Nieto <acinodam at gmail.com> and Luis E. Garrido <garrido.luiseduardo at gmail.com>
 #'
 #' @return Returns a list containing:
@@ -104,16 +131,16 @@
 #' ## plot.type = "qqraph" used for CRAN checks
 #' ## plot.type = "GGally" is the default
 #' ega.wmt <- EGA(data = wmt2[,7:24], plot.type = "qgraph")
-#' 
+#'
 #' # Summary statistics
 #' summary(ega.wmt)
 #'
 #' # Estimate EGAtmfg
 #' ega.wmt <- EGA(data = wmt2[,7:24], model = "TMFG", plot.type = "qgraph")
-#' 
+#'
 #' # Estimate EGA with Louvain algorithm
 #' ega.wmt <- EGA(data = wmt2[,7:24], algorithm = "louvain", plot.type = "qgraph")
-#' 
+#'
 #' # Estimate EGA with Spinglass algorithm
 #' ega.wmt <- EGA(data = wmt2[,7:24],
 #' algorithm = igraph::cluster_spinglass, plot.type = "qgraph")
@@ -124,14 +151,14 @@
 #' # Summary statistics
 #' summary(ega.intel)
 #' }
-#' 
+#'
 #'  \dontshow{# Fast for CRAN checks
 #' # Pearson's correlation matrix
 #' wmt <- cor(wmt2[,7:24])
-#' 
+#'
 #' # Estimate EGA
 #' ega.wmt <- EGA(data = wmt, n = nrow(wmt2), uni = FALSE, model = "glasso", plot.EGA = FALSE)
-#' 
+#'
 #' }
 #'
 #' @seealso \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap
@@ -143,13 +170,13 @@
 #' Fast unfolding of communities in large networks.
 #' \emph{Journal of Statistical Mechanics: Theory and Experiment}, \emph{2008}, P10008.
 #' doi: \href{https://doi.org/10.1088/1742-5468/2008/10/P10008}{10.1088/1742-5468/2008/10/P10008}
-#' 
+#'
 #' # Compared all \emph{igraph} community detections algorithms, introduced Louvain algorithm, simulation with continuous and polytomous data \cr
 #' Christensen, A. P., & Golino, H. (under review).
 #' Estimating factors with psychometric networks: A Monte Carlo simulation comparing community detection algorithms.
 #' \emph{PsyArXiv}.
 #' doi: \href{https://doi.org/10.31234/osf.io/hz89e}{10.31234/osf.io/hz89e}
-#' 
+#'
 #' # Original simulation and implementation of EGA \cr
 #' Golino, H. F., & Epskamp, S. (2017).
 #' Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research.
@@ -166,7 +193,7 @@
 #' Investigating the performance of Exploratory Graph Analysis and traditional techniques to identify the number of latent factors: A simulation and tutorial.
 #' \emph{Psychological Methods}, \emph{25}, 292-320.
 #' doi: \href{https://doi.org/10.1037/met0000255}{10.1037/met0000255}
-#' 
+#'
 #' # Walktrap algorithm \cr
 #' Pons, P., & Latapy, M. (2006).
 #' Computing communities in large networks using random walks.
@@ -182,14 +209,14 @@
 EGA <- function (data, n = NULL, uni = TRUE,
                  model = c("glasso", "TMFG"), model.args = list(),
                  algorithm = c("walktrap", "louvain"), algorithm.args = list(),
-                 plot.EGA = TRUE, plot.type = c("GGally", "qgraph"), ...) {
-  
+                 plot.EGA = TRUE, plot.type = c("GGally", "qgraph"), plot.args = list(),...) {
+
   # Get additional arguments
   add.args <- list(...)
-  
+
   # Check if steps has been input as an argument
   if("steps" %in% names(add.args)){
-    
+
     # Give deprecation warning
     warning(
       paste(
@@ -197,70 +224,87 @@ EGA <- function (data, n = NULL, uni = TRUE,
         sep = ""
       )
     )
-    
+
     # Handle the number of steps appropriately
     algorithm.args$steps <- add.args$steps
   }
-  
+
+  ## Check for input plot arguments
+  if(missing(plot.args)){
+    plot.args <-list(vsize = 6, alpha = 0.4, label.size = 5, edge.alpha = 0.7)}
+
+  else{
+    plot.args <- plot.args
+    plots.arg1 <- list(vsize = 6, label.size = 5, alpha = 0.4, edge.alpha = 0.7)
+    plot.args.use <- plot.args
+
+    if(any(names(plots.arg1) %in% names(plot.args.use))){
+
+      plot.replace.args <- plots.arg1[na.omit(match(names(plot.args.use), names(plots.arg1)))]
+
+      plot.args <- c(plot.args.use,plots.arg1[names(plots.arg1) %in% names(plot.args.use)==FALSE])}
+    }
+
+
   #### ARGUMENTS HANDLING ####
-  
+
   if(missing(model)){
     model <- "glasso"
   }else{model <- match.arg(model)}
-  
+
   if(missing(algorithm)){
     algorithm <- "walktrap"
   }else if(!is.function(algorithm)){
     algorithm <- tolower(match.arg(algorithm))
   }
-  
+
   if(missing(plot.type)){
     plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
-  
+
   #### ARGUMENTS HANDLING ####
-  
+
   # Check for correlation matrix or data
   if(nrow(data) == ncol(data)){ ## Correlation matrix
-    
+
     # Check for number of cases
     if(missing(n)){
       stop("There is no input for argument 'n'. Number of cases must be input when the matrix is square.")
     }
-    
+
     # Make cor.data == data
     cor.data <- as.data.frame(data)
-    
+
     # Multidimensional result
     ## Ensures proper partial correlations
     multi.res <- EGA.estimate(data = data, n = n,
                               model = model, model.args = model.args,
                               algorithm = algorithm, algorithm.args = algorithm.args)
-    
+
     # Unidimensional result
     if(uni){
-      
+
       # Set one factor for simulated data
       nfact <- 1
       nvar <- ncol(cor.data)
       if(nvar > 12){
         nvar <- 12
       }
-      
+
       # Generate data
       uni.data <- MASS::mvrnorm(n = n, mu = rep(0, nvar), Sigma = cor.data)
-      
+
       # Simulate data from unidimensional factor model
       sim.data <- sim.func(data = uni.data, nvar = nvar, nfact = nfact, load = .70)
-      
+
       # Estimate unidimensional EGA
       uni.res <- suppressMessages(EGA.estimate(data = sim.data, n = n,
                                                model = model, model.args = model.args,
                                                algorithm = algorithm, algorithm.args = algorithm.args))
-      
+
       # Set up results
       if(uni.res$n.dim <= nfact + 1){ ## If unidimensional
-        
+
         n.dim <- uni.res$n.dim
         cor.data <- cor.data
         estimated.network <- multi.res$network
@@ -269,9 +313,9 @@ EGA <- function (data, n = NULL, uni = TRUE,
           gamma <- uni.res$gamma
           lambda <- uni.res$lambda
         }
-        
+
       }else{ ## If not
-        
+
         n.dim <- multi.res$n.dim
         cor.data <- multi.res$cor.data
         estimated.network <- multi.res$network
@@ -280,11 +324,11 @@ EGA <- function (data, n = NULL, uni = TRUE,
           gamma <- multi.res$gamma
           lambda <- multi.res$lambda
         }
-        
+
       }
-      
+
     }else{ ## Multidimensional check only
-      
+
       n.dim <- multi.res$n.dim
       cor.data <- multi.res$cor.data
       estimated.network <- multi.res$network
@@ -293,48 +337,48 @@ EGA <- function (data, n = NULL, uni = TRUE,
         gamma <- multi.res$gamma
         lambda <- multi.res$lambda
       }
-      
+
     }
-    
+
   }else{ ## Data
-    
+
     # Convert to data frame
     data <- as.data.frame(data)
-    
+
     # Get number of cases
     n <- nrow(data)
-    
+
     # Check for unidimensional structure
     if(uni){
-      
+
       # Set one factor for simulated data
       nfact <- 1
       nvar <- ncol(data)
       if(nvar > 12){
         nvar <- 12
       }
-      
+
       ## Simulate data from unidimensional factor model
       data.sim <- sim.func(data = data, nvar = nvar, nfact = nfact, load = .70)
-      
+
       ## Compute correlation matrix
       cor.data <- qgraph::cor_auto(data.sim)
-      
+
       # Unidimensional result
       uni.res <- EGA.estimate(data = cor.data, n = n,
                               model = model, model.args = model.args,
                               algorithm = algorithm, algorithm.args = algorithm.args)
-      
+
       ## Remove simulated data for multidimensional result
       cor.data <- cor.data[-c(1:nvar),-c(1:nvar)]
-      
+
       # Multidimensional result
       multi.res <- suppressMessages(EGA.estimate(cor.data, n = n,
                                                  model = model, model.args = model.args,
                                                  algorithm = algorithm, algorithm.args = algorithm.args))
-      
+
       if(uni.res$n.dim <= nfact + 1){
-        
+
         n.dim <- uni.res$n.dim
         cor.data <- cor.data
         estimated.network <- multi.res$network
@@ -343,46 +387,46 @@ EGA <- function (data, n = NULL, uni = TRUE,
           gamma <- uni.res$gamma
           lambda <- uni.res$lambda
         }
-        
+
       }else{
-        
+
         n.dim <- multi.res$n.dim
         cor.data <- cor.data
         estimated.network <- multi.res$network
         wc <- multi.res$wc
-        
+
         if(model == "glasso"){
           gamma <- multi.res$gamma
           lambda <- multi.res$lambda
         }
-        
+
       }
-    
-    
+
+
     }else{ ## Multidimensional check only
-      
+
       ## Compute correlation matrix
       cor.data <- qgraph::cor_auto(data)
-      
+
       # Multidimensional result
       multi.res <- suppressMessages(EGA.estimate(cor.data, n = n,
                                                  model = model, model.args = model.args,
                                                  algorithm = algorithm, algorithm.args = algorithm.args))
-      
+
       n.dim <- multi.res$n.dim
       cor.data <- cor.data
       estimated.network <- multi.res$network
       wc <- multi.res$wc
-      
+
       if(model == "glasso"){
         gamma <- multi.res$gamma
         lambda <- multi.res$lambda
       }
-      
+
     }
-    
+
   }
-  
+
   a <- list()
   # Returning only communities that have at least two items:
   if(length(unique(wc))>1){
@@ -393,7 +437,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
   }else{
     a$n.dim <- length(unique(wc))
   }
-  
+
   a$correlation <- cor.data
   a$network <- estimated.network
   a$wc <- wc
@@ -408,10 +452,10 @@ EGA <- function (data, n = NULL, uni = TRUE,
     if (plot.type == "qgraph"){
       if(a$n.dim < 2){
         plot.ega <- qgraph::qgraph(a$network, layout = "spring",
-                                   vsize = 6, groups = as.factor(a$wc), label.prop = 1, legend = FALSE)
+                                   vsize = plot.args$vsize, groups = as.factor(a$wc), label.prop = 1, legend = FALSE)
       }else{
         plot.ega <- qgraph::qgraph(a$network, layout = "spring",
-                                   vsize = 6, groups = as.factor(a$wc), label.prop = 1, legend = TRUE)
+                                   vsize = plot.args$vsize, groups = as.factor(a$wc), label.prop = 1, legend = TRUE)
       }
     }else if(plot.type == "GGally"){
       if(a$n.dim <= 2){
@@ -429,7 +473,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
                                                              to = c(.001, 1.75)),
                                              nrow = nrow(a$network),
                                              ncol = ncol(a$network)))
-        
+
         # Layout "Spring"
         graph1 <- NetworkToolbox::convert2igraph(a$network)
         edge.list <- igraph::as_edgelist(graph1)
@@ -437,25 +481,27 @@ EGA <- function (data, n = NULL, uni = TRUE,
                                                                    weights =
                                                                      abs(igraph::E(graph1)$weight/max(abs(igraph::E(graph1)$weight)))^2,
                                                                    vcount = ncol(a$network))
-        
+
         set.seed(1234)
         plot.ega <- GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
                                    color = "Communities", edge.color = c("color"),
-                                   alpha = 0.7, size = 12, edge.alpha = 0.4,
+                                   alpha = plot.args$alpha, #0.7,
+                                   size = plot.args$vsize, #12,
+                                   edge.alpha = plot.args$edge.alpha, #0.4,
                                    mode =  layout.spring,
-                                   label.size = 5,
+                                   label.size = plot.args$label.size, #5
                                    label = colnames(a$network)) +
           ggplot2::theme(legend.title = ggplot2::element_blank())
-        
+
         plot(plot.ega)
-        
+
       }else{
         # weighted  network
         network1 <- network::network(a$network,
                                      ignore.eval = FALSE,
                                      names.eval = "weights",
                                      directed = FALSE)
-        
+
         network::set.vertex.attribute(network1, attrname= "Communities", value = a$wc)
         network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
         network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
@@ -465,77 +511,79 @@ EGA <- function (data, n = NULL, uni = TRUE,
                                                              to = c(.001, 1.75)),
                                              nrow = nrow(a$network),
                                              ncol = ncol(a$network)))
-        
-        set.seed(1234)
-        
+
         # Layout "Spring"
+
         graph1 <- NetworkToolbox::convert2igraph(a$network)
         edge.list <- igraph::as_edgelist(graph1)
         layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
                                                                    weights =
                                                                      abs(igraph::E(graph1)$weight/max(abs(igraph::E(graph1)$weight)))^2,
                                                                    vcount = ncol(a$network))
-        
+
+        set.seed(1234)
         plot.ega <- GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
                                   color = "Communities", edge.color = c("color"),
-                                  alpha = 0.7, size = 12, edge.alpha = 0.4,
+                                  alpha = plot.args$alpha, #0.7,
+                                  size = plot.args$vsize, #12,
+                                  edge.alpha = plot.args$edge.alpha, #0.4,
                                   mode =  layout.spring,
-                                  label.size = 5,
+                                  label.size = plot.args$label.size, #5
                                   label = colnames(a$network)) +
           ggplot2::theme(legend.title = ggplot2::element_blank(), legend.position = "none")
-        
+
         plot(plot.ega)
       }
     }
   }else{plot.ega <- qgraph::qgraph(a$network, DoNotPlot = TRUE)}
-  
+
   # check for variable labels in qgraph
   if(plot.type == "qgraph"){
     if(is.null(names(plot.ega$graphAttributes$Nodes$labels)))
     {names(plot.ega$graphAttributes$Nodes$labels) <- paste(1:ncol(data))}
-    
+
     row.names(a$dim.variables) <- plot.ega$graphAttributes$Nodes$labels[match(a$dim.variables$items, names(plot.ega$graphAttributes$Nodes$labels))]
   }
-  
+
   a$EGA.type <- ifelse(a$n.dim <= 2, "Unidimensional EGA", "Traditional EGA")
   a$Plot.EGA <- plot.ega
-  
+
   # Get arguments
   args <- list()
-  
+
   ## Get model and algorithm arguments
   args$model <- model
   args$algorithm <- algorithm
-  
+
   ## Check if glasso was used
   if(model == "glasso")
   {
     args$gamma <- gamma
     args$lambda <- lambda
   }
-  
+
   ## Check if walktrap was used
   if(!is.function(algorithm)){
-    
+
     if(algorithm == "walktrap"){
-      
+
       if("steps" %in% names(algorithm.args)){
         args$steps <- algorithm.args$steps
       }else{args$steps <- 4}
-      
+
     }
-    
+
   }
-  
+
   a$Methods <- args
-  
+
   class(a) <- "EGA"
-  
+
   # Message that unidimensional structures were not checked
   if(!uni){
     message("\nEGA did not check for unidimensionality. Set argument 'uni' to TRUE to check for unidimensionality")
   }
-  
+
   # Return estimates:
   return(a)
 }

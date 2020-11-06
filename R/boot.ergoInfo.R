@@ -228,8 +228,8 @@ boot.ergoInfo <- function(dynEGA.pop,
 
   N <- nrow(dynEGA.pop$Derivatives$EstimatesDF)
   unique.ids <- unique(dplyr::last(dynEGA.pop$Derivatives$EstimatesDF))
-  time.points <- floor(N/length(unique.ids))
-
+  time.points <- table(dplyr::last(dynEGA.pop$Derivatives$EstimatesDF))
+  time.points <- time.points+(embed-1)
   # Initialize Data list
   data.sim <- vector("list", length = iter)
   for(i in 1:iter){
@@ -239,13 +239,14 @@ boot.ergoInfo <- function(dynEGA.pop,
   if(class(dynEGA.pop)=="dynEGA"){
     for(i in 1:iter){
       for(j in 1:length(unique.ids)){
-        data.sim[[i]][[j]] <- MASS::mvrnorm(n = time.points, mu = rep(0, ncol(dynEGA.pop$dynEGA$cor.dat)), Sigma = as.matrix(Matrix::nearPD(corpcor::pseudoinverse(dynEGA.pop$network))$mat))
+        data.sim[[i]][[j]] <- MASS::mvrnorm(n = time.points[[j]], mu = rep(0, ncol(dynEGA.pop$dynEGA$cor.dat)), Sigma = as.matrix(Matrix::nearPD(corpcor::pseudoinverse(dynEGA.pop$network))$mat))
       }
     }
   } else if(class(dynEGA.pop)=="dynEGA.ind.pop"){
     for(i in 1:iter){
       for(j in 1:length(unique.ids)){
-        data.sim[[i]][[j]] <- MASS::mvrnorm(n = time.points, mu = rep(0, ncol(dynEGA.pop$dynEGA.pop$cor.data)), Sigma = as.matrix(Matrix::nearPD(corpcor::pseudoinverse(dynEGA.pop$dynEGA.ind[[j]]$network))$mat))
+        data.sim[[i]][[j]] <- as.data.frame(MASS::mvrnorm(n = time.points[[j]], mu = rep(0, ncol(dynEGA.pop$dynEGA.pop$cor.data)), Sigma = as.matrix(Matrix::nearPD(corpcor::pseudoinverse(dynEGA.pop$dynEGA.pop$network))$mat)))
+        data.sim[[i]][[j]]$ID <- rep(i, each = time.points[[j]])
       }
     }
   }
@@ -253,7 +254,7 @@ boot.ergoInfo <- function(dynEGA.pop,
   data.sim.df <- vector("list", length = iter)
   for(i in 1:iter){
     data.sim.df[[i]] <- purrr::map_df(data.sim[[i]], ~as.data.frame(.))
-    data.sim.df[[i]]$ID <- rep(1:length(unique.ids), each = time.points)
+    #data.sim.df[[i]]$ID <- rep(1:length(unique.ids), each = time.points)
   }
 
   variab <- ncol(data.sim.df[[1]])-1
