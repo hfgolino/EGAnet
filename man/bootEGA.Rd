@@ -16,6 +16,7 @@ bootEGA(
   typicalStructure = TRUE,
   plot.typicalStructure = TRUE,
   plot.type = c("GGally", "qgraph"),
+  plot.args = list(),
   ncores,
   ...
 )
@@ -110,6 +111,33 @@ Defaults to \code{TRUE}}
 Plot system to use.
 Current options are \code{\link[qgraph]{qgraph}} and \code{\link{GGally}}.
 Defaults to \code{"GGally"}.}
+
+\item{plot.args}{List.
+A list of additional arguments for the network plot.
+For \code{plot.type = "qgraph"}:
+
+\itemize{
+
+\item{\strong{\code{vsize}}}
+{Size of the nodes. Defaults to 6.}
+
+}
+For \code{plot.type = "GGally"}:
+
+\itemize{
+
+\item{\strong{\code{vsize}}}
+{Size of the nodes. Defaults to 6.}
+
+\item{\strong{\code{label.size}}}
+{Size of the labels. Defaults to 5.}
+
+\item{\strong{\code{alpha}}}
+{The level of transparency of the nodes, which might be a single value or a vector of values. Defaults to 0.4.}
+
+\item{\strong{\code{edge.alpha}}}
+{The level of transparency of the edges, which might be a single value or a vector of values. Defaults to 0.7.}
+}}
 
 \item{ncores}{Numeric.
 Number of cores to use in computing results.
