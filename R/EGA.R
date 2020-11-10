@@ -287,8 +287,8 @@ EGA <- function (data, n = NULL, uni = TRUE,
       # Set one factor for simulated data
       nfact <- 1
       nvar <- ncol(cor.data)
-      if(nvar > 12){
-        nvar <- 12
+      if(nvar > 25){
+        nvar <- 25
       }
 
       # Generate data
@@ -354,8 +354,8 @@ EGA <- function (data, n = NULL, uni = TRUE,
       # Set one factor for simulated data
       nfact <- 1
       nvar <- ncol(data)
-      if(nvar > 12){
-        nvar <- 12
+      if(nvar > 25){
+        nvar <- 25
       }
 
       ## Simulate data from unidimensional factor model
