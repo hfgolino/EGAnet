@@ -95,9 +95,29 @@
 #' @export
 #'
 # Network Loadings
-# Updated 21.10.2020
+# Updated 11.11.2020
 net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
 {
+  
+  # Function to order loadings largest to smallest
+  # within their respective factors
+  descend.ord <- function(loads){
+    # Initialize ordering vector
+    ord.names <- vector("character")
+    
+    # Names
+    name <- colnames(loads)
+    
+    # Loop through dimensions
+    for(i in 1:ncol(loads)){
+      ord <- order(loads[names(which(name == i)),i], decreasing = TRUE)
+      ord.names <- c(ord.names, names(which(name == i))[ord])
+    }
+    
+    return(loads[ord.names,])
+  }
+  
+  
   #------------------------------------------#
   ## DETECT EGA INPUT AND VARIABLE ORDERING ##
   #------------------------------------------#
@@ -208,13 +228,13 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
       # Unstandardized loadings
       unstd <- as.data.frame(round(comm.str,3))
       row.names(unstd) <- colnames(A)
-      res$unstd <- unstd
+      res$unstd <- descend.ord(unstd)
       
       # Standardized loadings
       if(length(dims)!=1)
       {std <- t(t(unstd) / sqrt(colSums(abs(unstd))))
       }else{std <- t(t(unstd) / sqrt(sum(abs(unstd))))}
-      res$std <- as.data.frame(round(std,3))
+      res$std <- as.data.frame(round(descend.ord(std),3))
       
       #####################
       #### PLOT SET UP ####
@@ -281,13 +301,13 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
       # Unstandardized loadings
       unstd <- as.data.frame(round(comm.str,3))
       row.names(unstd) <- colnames(A)
-      res$unstd <- unstd
+      res$unstd <- descend.ord(unstd)
       
       # Standardized loadings
       if(length(dims)!=1)
       {std <- t(t(unstd) / sqrt(colSums(abs(unstd))))
       }else{std <- t(t(unstd) / sqrt(sum(abs(unstd))))}
-      res$std <- as.data.frame(round(std,3))
+      res$std <- as.data.frame(round(descend.ord(std),3))
       
     }
     
