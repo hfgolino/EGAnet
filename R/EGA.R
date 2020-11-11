@@ -353,7 +353,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
 
       # Set one factor for simulated data
       nfact <- 1
-      vars <- ncol(cor.data)
+      vars <- ncol(data)
       if(vars > 25){
         nvar <- 25
       }else{nvar <- vars}
