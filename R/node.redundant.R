@@ -22,10 +22,28 @@
 #'
 #' @param method Character.
 #' Computes weighted topological overlap (\code{"wTO"} using \code{\link[qgraph]{EBICglasso}}),
-#' partial correlations (\code{"pcor"}), or thresholding
-#' based on a certain level of partial correlations (\code{"thresh"}).
-#' \code{method = "thresh"} will use the argument \code{"sig"} to input
-#' the desired threshold (defaults to \code{sig = .20}).
+#' partial correlations (\code{"pcor"}), and correlations (\code{"cor})
+#' 
+#' @param thresh Boolean.
+#' Should a threshold be applied?
+#' Defaults to \code{FALSE}.
+#' If \code{TRUE}, then based on a certain threshold only redundancies
+#' above that value will be returned.
+#' Uses argument \code{"sig"} to input the desired threshold.
+#' Defaults for each method:
+#' 
+#' \itemize{
+#' 
+#' \item{\code{"wTO"}}
+#' {.20}
+#' 
+#' \item{\code{"pcor"}}
+#' {.20}
+#' 
+#' \item{\code{"cor"}}
+#' {.70}
+#' 
+#' } 
 #'
 #' @param type Character.
 #' Computes significance using the standard \emph{p}-value (\code{"alpha"}),
@@ -107,15 +125,15 @@
 #' @export
 #
 # Redundant Nodes Function
-# Updated 01.09.2020
-node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "thresh"),
-                            type = c("alpha", "bonferroni", "FDR", "adapt"),
+# Updated 11.11.2020
+node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "cor"),
+                            thresh = FALSE, type = c("alpha", "bonferroni", "FDR", "adapt"),
                             plot = FALSE)
 {
   #### missing arguments handling ####
   
-  if(missing(type))
-  {type <- "adapt"
+  if(missing(type)){
+    type <- "adapt"
   }else{type <- match.arg(type)}
   
   #### missing arguments handling ####
@@ -125,37 +143,35 @@ node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "thre
   method <- tolower(method)
   
   # check for correlation matrix
-  if(ncol(data) == nrow(data))
-  {
+  if(ncol(data) == nrow(data)){
+    
     A <- data
     
-    # check for number of cases ("wTO" only)
-    if(method == "wto")
-    {
+    if(method == "wto"){# check for number of cases ("wTO" only)
+      
       if(is.null(n))
       {stop('Argument \'n\' is NULL. Number of cases must be specified when a correlation matrix is input into the \'data\' argument and method = "wTO"')}
     }
-  }else{
-    # correlate data
+    
+  }else{# correlate data
     A <- qgraph::cor_auto(data)
     # number of cases
     n <- nrow(data)
   }
 
   #compute redundant method
-  if(method == "wto")
-  {
-    # compute network
+  if(method == "wto"){# compute network
     net <- EBICglasso.qgraph(A, n = n)
-    tom <- wTO::wTO(net,sign="sign")
-  }else if(method == "pcor" || method == "thresh")
-  {tom <- -cov2cor(solve(A))}
+    tom <- wTO::wTO(net, sign = "sign")
+  }else if(method == "pcor"){# compute precision matrix
+    tom <- -cov2cor(solve(A))
+  }else{tom <- A}
 
   #number of nodes
   nodes <- ncol(tom)
-
+  #make diagonal zero
   diag(tom) <- 0
-
+  #absolute values
   tom <- abs(tom)
 
   #lower triangle of TOM
@@ -179,30 +195,44 @@ node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "thre
   #obtain only positive values
   pos.vals <- na.omit(ifelse(lower==0,NA,lower))
   attr(pos.vals, "na.action") <- NULL
-
-  if(method != "thresh")
-  {
+  
+  if(thresh){
+    
+    #get defaults
+    if(missing(sig)){
+      sig <- switch(method,
+                    "wto" = .20,
+                    "pcor" = .20,
+                    "cor" = .70
+                    )
+    }
+    
+    #threshold values
+    res <- pos.vals[which(abs(lower) > sig)]
+    
+  }else{
+    
     #determine distribution
     ##distributions
     distr <- c("norm","gamma")
     aic <- vector("numeric", length = length(distr))
     names(aic) <- c("normal","gamma")
-
+    
     for(i in 1:length(distr))
     {aic[i] <- fitdistrplus::fitdist(pos.vals,distr[i],method="mle")$aic}
-
+    
     #obtain distribution parameters
     g.dist <- suppressWarnings(MASS::fitdistr(pos.vals, names(aic)[which.min(aic)]))
-
+    
     #compute significance values
     pval <- switch(names(aic)[which.min(aic)],
-
+                   
                    normal = 1 - unlist(lapply(pos.vals, #positive wTo
                                               pnorm, #probability in normal distribution
                                               mean = g.dist$estimate["mean"], #mean of normal
                                               sd = g.dist$estimate["sd"]) #sd of normal
                    ),
-
+                   
                    gamma = 1 - unlist(lapply(pos.vals, #positive wTo
                                              pgamma, #probability in gamma distribution
                                              shape = g.dist$estimate["shape"], #shape of gamma
@@ -232,14 +262,10 @@ node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "thre
                     alpha = sig
       )
     }
-
-    #identify q-values less than sigificance
+    
+    #identify q-values less than significance
     res <- pos.vals[which(pval<=sig)]
-
-  }else{
-    sig <- ifelse(missing(sig), .20, sig)
-
-    res <- pos.vals[which(abs(lower) > sig)]
+    
   }
 
   #if no redundant, then print no redundant nodes
