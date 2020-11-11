@@ -286,13 +286,13 @@ EGA <- function (data, n = NULL, uni = TRUE,
 
       # Set one factor for simulated data
       nfact <- 1
-      nvar <- ncol(cor.data)
-      if(nvar > 25){
+      vars <- ncol(cor.data)
+      if(vars > 25){
         nvar <- 25
-      }
+      }else{nvar <- vars}
 
       # Generate data
-      uni.data <- MASS::mvrnorm(n = n, mu = rep(0, nvar), Sigma = cor.data)
+      uni.data <- MASS::mvrnorm(n = n, mu = rep(0, vars), Sigma = cor.data)
 
       # Simulate data from unidimensional factor model
       sim.data <- sim.func(data = uni.data, nvar = nvar, nfact = nfact, load = .70)
@@ -353,10 +353,10 @@ EGA <- function (data, n = NULL, uni = TRUE,
 
       # Set one factor for simulated data
       nfact <- 1
-      nvar <- ncol(data)
-      if(nvar > 25){
+      vars <- ncol(cor.data)
+      if(vars > 25){
         nvar <- 25
-      }
+      }else{nvar <- vars}
 
       ## Simulate data from unidimensional factor model
       data.sim <- sim.func(data = data, nvar = nvar, nfact = nfact, load = .70)
@@ -409,7 +409,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
       cor.data <- qgraph::cor_auto(data)
 
       # Multidimensional result
-      multi.res <- suppressMessages(EGA.estimate(cor.data, n = n,
+      multi.res <- suppressMessages(EGAnet:::EGA.estimate(cor.data, n = n,
                                                  model = model, model.args = model.args,
                                                  algorithm = algorithm, algorithm.args = algorithm.args))
 

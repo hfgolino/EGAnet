@@ -8,7 +8,8 @@ node.redundant(
   data,
   n = NULL,
   sig,
-  method = c("wTO", "pcor", "thresh"),
+  method = c("wTO", "pcor", "cor"),
+  thresh = FALSE,
   type = c("alpha", "bonferroni", "FDR", "adapt"),
   plot = FALSE
 )
@@ -30,10 +31,28 @@ sets the \emph{q}-value for significance of overlap (defaults to \code{.10})}
 
 \item{method}{Character.
 Computes weighted topological overlap (\code{"wTO"} using \code{\link[qgraph]{EBICglasso}}),
-partial correlations (\code{"pcor"}), or thresholding
-based on a certain level of partial correlations (\code{"thresh"}).
-\code{method = "thresh"} will use the argument \code{"sig"} to input
-the desired threshold (defaults to \code{sig = .20}).}
+partial correlations (\code{"pcor"}), and correlations (\code{"cor"})}
+
+\item{thresh}{Boolean.
+Should a threshold be applied?
+Defaults to \code{FALSE}.
+If \code{TRUE}, then based on a certain threshold only redundancies
+above that value will be returned.
+Uses argument \code{"sig"} to input the desired threshold.
+Defaults for each method:
+
+\itemize{
+
+\item{\code{"wTO"}}
+{.20}
+
+\item{\code{"pcor"}}
+{.20}
+
+\item{\code{"cor"}}
+{.70}
+
+}}
 
 \item{type}{Character.
 Computes significance using the standard \emph{p}-value (\code{"alpha"}),
@@ -95,7 +114,7 @@ redund <- node.redundant(items, method = "wTO", type = "adapt", plot = TRUE)
 redund <- node.redundant(items, method = "pcor", type = "adapt", plot = TRUE)
 
 # threshold
-redund <- node.redundant(items, method = "thresh", sig = .20, plot = TRUE)
+redund <- node.redundant(items, method = "pcor", thresh = TRUE, sig = .20, plot = TRUE)
 
 }
 \references{

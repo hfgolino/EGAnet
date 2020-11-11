@@ -22,7 +22,7 @@
 #'
 #' @param method Character.
 #' Computes weighted topological overlap (\code{"wTO"} using \code{\link[qgraph]{EBICglasso}}),
-#' partial correlations (\code{"pcor"}), and correlations (\code{"cor})
+#' partial correlations (\code{"pcor"}), and correlations (\code{"cor"})
 #' 
 #' @param thresh Boolean.
 #' Should a threshold be applied?
@@ -97,7 +97,7 @@
 #' redund <- node.redundant(items, method = "pcor", type = "adapt", plot = TRUE)
 #' 
 #' # threshold
-#' redund <- node.redundant(items, method = "thresh", sig = .20, plot = TRUE)
+#' redund <- node.redundant(items, method = "pcor", thresh = TRUE, sig = .20, plot = TRUE)
 #'
 #' @references
 #' # Simulation using node.redundant \cr
@@ -407,12 +407,10 @@ node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "cor"
   full.res$redundant <- res.list
   full.res$data <- data
   full.res$weights <- tom
-  if(exists("net"))
-  {full.res$network <- net}
+  if(exists("net")){full.res$network <- net}
   full.res$descriptives$basic <- round(desc, 3)
   full.res$descriptives$centralTendency <- pos.output
-  if(method != "thresh")
-  {full.res$distribution <- names(aic)[which.min(aic)]}
+  if(!thresh){full.res$distribution <- names(aic)[which.min(aic)]}
   
   class(full.res) <- "node.redundant"
 
