@@ -101,20 +101,29 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
   
   # Function to order loadings largest to smallest
   # within their respective factors
-  descend.ord <- function(loads){
+  descend.ord <- function(loads, wc){
     # Initialize ordering vector
     ord.names <- vector("character")
     
-    # Names
-    name <- colnames(loads)
-    
     # Loop through dimensions
     for(i in 1:ncol(loads)){
-      ord <- order(loads[names(which(name == i)),i], decreasing = TRUE)
-      ord.names <- c(ord.names, names(which(name == i))[ord])
+      ord <- order(loads[names(which(wc == i)),i], decreasing = TRUE)
+      ord.names <- c(ord.names, names(which(wc == i))[ord])
     }
     
-    return(loads[ord.names,])
+    # Reorder
+    reord <- loads[ord.names,]
+    
+    # Check for matrix
+    if(!is.matrix(reord)){
+      reord <- as.matrix(reord)
+    }
+    
+    # Make sure names
+    row.names(reord) <- ord.names
+    colnames(reord) <- colnames(loads)
+    
+    return(reord)
   }
   
   
@@ -228,13 +237,13 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
       # Unstandardized loadings
       unstd <- as.data.frame(round(comm.str,3))
       row.names(unstd) <- colnames(A)
-      res$unstd <- descend.ord(unstd)
+      res$unstd <- descend.ord(unstd, wc)
       
       # Standardized loadings
       if(length(dims)!=1)
       {std <- t(t(unstd) / sqrt(colSums(abs(unstd))))
       }else{std <- t(t(unstd) / sqrt(sum(abs(unstd))))}
-      res$std <- as.data.frame(round(descend.ord(std),3))
+      res$std <- as.data.frame(round(descend.ord(std, wc),3))
       
       #####################
       #### PLOT SET UP ####
@@ -243,7 +252,7 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
       #Set to absolute for multidimensional
       std.res <- as.matrix(abs(res$std))
       
-      #Standardize by maximum rspbc
+      #Standardize
       std.res <- std.res / rowSums(std.res)
       
       #Ensure that pie value is not greater than 1
@@ -301,13 +310,13 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
       # Unstandardized loadings
       unstd <- as.data.frame(round(comm.str,3))
       row.names(unstd) <- colnames(A)
-      res$unstd <- descend.ord(unstd)
+      res$unstd <- descend.ord(as.matrix(unstd, wc))
       
       # Standardized loadings
       if(length(dims)!=1)
       {std <- t(t(unstd) / sqrt(colSums(abs(unstd))))
       }else{std <- t(t(unstd) / sqrt(sum(abs(unstd))))}
-      res$std <- as.data.frame(round(descend.ord(std),3))
+      res$std <- as.data.frame(round(descend.ord(std, wc),3))
       
     }
     
