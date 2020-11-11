@@ -126,7 +126,6 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
     return(reord)
   }
   
-  
   #------------------------------------------#
   ## DETECT EGA INPUT AND VARIABLE ORDERING ##
   #------------------------------------------#
@@ -142,6 +141,9 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
     # Replace 'A' with 'EGA' network
     A <- A$network
   }else{ord <- order(wc)} # Reorder by communities
+  
+  # Make sure membership is named
+  names(wc) <- colnames(A)
   
   # Check if there are actual dimensions
   if(length(wc) == length(unique(wc)))
@@ -203,7 +205,7 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
       #### START COMPUTE LOADINGS ####
       ################################
       
-      # Compute aboslute loadings
+      # Compute absolute loadings
       comm.str <- mat.func(A = A, wc = wc, absolute = TRUE, diagonal = 0)
       
       # Check for missing dimensions
