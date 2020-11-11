@@ -310,7 +310,7 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
       # Unstandardized loadings
       unstd <- as.data.frame(round(comm.str,3))
       row.names(unstd) <- colnames(A)
-      res$unstd <- descend.ord(as.matrix(unstd, wc))
+      res$unstd <- descend.ord(unstd, wc)
       
       # Standardized loadings
       if(length(dims)!=1)
