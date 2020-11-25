@@ -75,7 +75,7 @@
 #'     
 #' ## Changing Legend (ignore warnings)
 #' res$plot.itemStability + 
-#'     scale_color_discrete(labels = "Intelligence")
+#'     ggplot2::scale_color_discrete(labels = "Intelligence")
 #'
 #' @references
 #' Christensen, A. P., & Golino, H. (2019).
@@ -204,8 +204,8 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   
   # Bold legend title
   ic.plot <- ic.plot + ggplot2::theme(
-    legend.title = element_text(face = "bold"),
-    axis.title = element_text(face = "bold")
+    legend.title = ggplot2::element_text(face = "bold"),
+    axis.title = ggplot2::element_text(face = "bold")
   )
   
   # Adjust item label sizes based on

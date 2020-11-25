@@ -54,7 +54,7 @@
 #'     
 #' ## Changing Legend (ignore warnings)
 #' res$items$plot.itemStability + 
-#'     scale_color_discrete(labels = "Intelligence")
+#'     ggplot2::scale_color_discrete(labels = "Intelligence")
 #' 
 #' @references 
 #' Christensen, A. P., & Golino, H. (2019).
