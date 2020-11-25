@@ -125,7 +125,7 @@
 #' @export
 #
 # Redundant Nodes Function
-# Updated 11.11.2020
+# Updated 25.11.2020
 node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "cor"),
                             thresh = FALSE, type = c("alpha", "bonferroni", "FDR", "adapt"),
                             plot = FALSE)
@@ -370,7 +370,7 @@ node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "cor"
   desc[,"Maximum"] <- range(pos.vals, na.rm = TRUE)[2]
   
   # Critical value
-  if(method == "thresh")
+  if(thresh)
   {desc[,"Critical Value"] <- sig
   }else{
     

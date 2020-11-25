@@ -1315,7 +1315,7 @@ sim.func <- function(data, nvar, nfact, load)
 #' @noRd
 #'
 # Simulate data function----
-# Updated 21.10.2020
+# Updated 25.11.2020
 typicalStructure.network <- function (A, model, model.args, n = NULL, uni = FALSE,
                                       algorithm, algorithm.args)
 {
@@ -1395,7 +1395,7 @@ typicalStructure.network <- function (A, model, model.args, n = NULL, uni = FALS
 
       # Generate data
       g.data <- MASS::mvrnorm(n, mu = rep(0, ncol(A)), Sigma = as.matrix(Matrix::nearPD(A, corr = TRUE, keepDiag = TRUE)$mat))
-      g <- -suppressMessages(NetworkToolbox::LoGo(data, normal = TRUE, partial = TRUE))
+      g <- -suppressMessages(NetworkToolbox::LoGo(g.data, normal = TRUE, partial = TRUE))
       diag(g) <- 1
 
     }

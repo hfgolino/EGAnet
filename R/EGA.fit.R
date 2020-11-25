@@ -64,7 +64,7 @@
 #'
 #' # Compare with CFA
 #' cfa.ega <- CFA(ega.wmt, estimator = "WLSMV", data = wmt)
-#' cfa.fit <- CFA(fit.wmt.opt$EGA, estimator = "WLSMV", data = wmt)
+#' cfa.fit <- CFA(fit.wmt$EGA, estimator = "WLSMV", data = wmt)
 #'
 #' lavaan::lavTestLRT(cfa.ega$fit, cfa.fit$fit, method = "satorra.bentler.2001")
 #' }

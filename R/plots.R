@@ -16,26 +16,28 @@
 #' plot.NetLoads
 #'
 #' @usage
-#' \method{plot}{bootEGA}(x, vsize = 6, plot.type = c("GGally", "qgraph"), ...)
+#' \method{plot}{bootEGA}(x, plot.type = c("GGally", "qgraph"), plot.args = list(), ...)
 #'
 #' \method{plot}{CFA}(x, layout = "spring", vsize = 6, ...)
 #'
-#' \method{plot}{dynEGA}(x, title = "", vsize = 6, plot.type = c("GGally", "qgraph"), ...)
+#' \method{plot}{dynEGA}(x, title = "", plot.type = c("GGally", "qgraph"), plot.args = list(), ...)
 #'
-#' \method{plot}{dynEGA.Groups}(x, ncol, nrow, title = "", vsize = 6, plot.type = c("GGally", "qgraph"),  ...)
+#' \method{plot}{dynEGA.Groups}(x, ncol, nrow, title = "",
+#' plot.type = c("GGally", "qgraph"), plot.args = list(),  ...)
 #'
-#' \method{plot}{dynEGA.Individuals}(x, title = "", vsize = 6,  id = NULL, plot.type = c("GGally", "qgraph"), ...)
+#' \method{plot}{dynEGA.Individuals}(x, title = "",  id = NULL,
+#' plot.type = c("GGally", "qgraph"), plot.args = list(), ...)
 #'
-#' \method{plot}{EGA}(x, title = "", vsize = 6, plot.type = c("GGally", "qgraph"), ...)
+#' \method{plot}{EGA}(x, title = "", plot.type = c("GGally", "qgraph"), plot.args = list(), ...)
 #'
 #' \method{plot}{NetLoads}(x, ...)
 #'
 #' @description Plots for \code{EGAnet} objects
 #'
 #' @param x Object from \code{EGAnet} package
-#'
+#' 
 #' @param vsize Numeric.
-#' Size of vertices in network plots.
+#' Size of vertices in \code{\link[EGAnet]{CFA}} plots.
 #' Defaults to \code{6}
 #'
 #' @param layout Character.
@@ -105,9 +107,11 @@
 #'
 #' @importFrom graphics plot
 #'
-#Plot bootEGA----
-# Updated 02.05.2020
+# PLOTS----
+# Updated 25.11.2020
 #' @export
+# Plot bootEGA----
+# Updated 25.11.2020
 plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
                          plot.args = list(), ...){
   #### MISSING ARGUMENTS HANDLING ####
@@ -182,8 +186,8 @@ plot.CFA <- function(x, layout = "spring", vsize = 6, ...) {
                     "std", cut = 0.5, ...)
 }
 
-#Plot dynEGA function (Level: Group)----
-# Updated 15.10.2020
+# Plot dynEGA function (Level: Group)----
+# Updated 25.11.2020
 #' @export
 plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally","qgraph"),
                                plot.args = list(), ...){
@@ -265,8 +269,8 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
   }
 }
 
-#Plot dynEGA function (Level: Individual)----
-# Updated 10.15.2020
+# Plot dynEGA function (Level: Individual)----
+# Updated 25.11.2020
 #' @export
 plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GGally","qgraph"),
                                     plot.args = list(), ...){
@@ -331,8 +335,8 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
  }
 }
 
-#Plot dynEGA function (Level: Population)----
-# Updated 10.15.2020
+# Plot dynEGA function (Level: Population)----
+# Updated 25.11.2020
 #' @export
 plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
                         plot.args = list(), ...){
@@ -398,8 +402,8 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
   }
 }
 
-#Plot EGA----
-# Updated 02.05.2020
+# Plot EGA----
+# Updated 25.11.2020
 #' @export
 plot.EGA <- function(x, title = "",  plot.type = c("GGally","qgraph"),
                      plot.args = list(), ...){

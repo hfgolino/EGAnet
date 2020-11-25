@@ -409,7 +409,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
       cor.data <- qgraph::cor_auto(data)
 
       # Multidimensional result
-      multi.res <- suppressMessages(EGAnet:::EGA.estimate(cor.data, n = n,
+      multi.res <- suppressMessages(EGA.estimate(cor.data, n = n,
                                                  model = model, model.args = model.args,
                                                  algorithm = algorithm, algorithm.args = algorithm.args))
 

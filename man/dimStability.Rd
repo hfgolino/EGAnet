@@ -37,13 +37,14 @@ times the original dimension is exactly replicated in across bootstrap samples
 # Load data
 wmt <- wmt2[,7:24]
 
-\donttest{
-# Estimate EGA network
-ega.wmt <- EGA(data = wmt, uni = TRUE, model = "glasso", plot.EGA = FALSE)
+\donttest{# Estimate EGA network
+## plot.type = "qqraph" used for CRAN checks
+## plot.type = "GGally" is the default
+ega.wmt <- EGA(data = wmt, model = "glasso", plot.type = "qgraph")
 
 # Estimate dimension stability
 boot.wmt <- bootEGA(data = wmt, uni = TRUE, iter = 500, typicalStructure = TRUE,
-plot.typicalStructure = FALSE, model = "glasso",
+plot.typicalStructure = TRUE, model = "glasso", plot.type = "qgraph",
 type = "parametric", ncores = 2)
 }
 
@@ -63,7 +64,7 @@ res$items$plot.itemStability +
     
 ## Changing Legend (ignore warnings)
 res$items$plot.itemStability + 
-    scale_color_discrete(labels = "Intelligence")
+    ggplot2::scale_color_discrete(labels = "Intelligence")
 
 }
 \references{

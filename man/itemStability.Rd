@@ -59,14 +59,15 @@ network loading for each item in each dimension (\code{item.loadings}).
 # Load data
 wmt <- wmt2[,7:24]
 
-\donttest{
-# Estimate EGA network
-ega.wmt <- EGA(data = wmt, model = "glasso")
+\donttest{# Estimate EGA network
+## plot.type = "qqraph" used for CRAN checks
+## plot.type = "GGally" is the default
+ega.wmt <- EGA(data = wmt, model = "glasso", plot.type = "qgraph")
 
 # Estimate dimension stability
-boot.wmt <- bootEGA(data = wmt, n = 100, typicalStructure = TRUE,
-plot.typicalStructure = FALSE, model = "glasso",
-type = "parametric", ncores = 4)
+boot.wmt <- bootEGA(data = wmt, iter = 100, typicalStructure = TRUE,
+plot.typicalStructure = TRUE, model = "glasso", plot.type = "qgraph",
+type = "parametric", ncores = 2)
 }
 
 # Estimate item stability statistics
@@ -84,7 +85,7 @@ res$plot.itemStability +
     
 ## Changing Legend (ignore warnings)
 res$plot.itemStability + 
-    scale_color_discrete(labels = "Intelligence")
+    ggplot2::scale_color_discrete(labels = "Intelligence")
 
 }
 \references{
