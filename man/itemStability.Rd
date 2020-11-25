@@ -18,7 +18,7 @@ Removes noise from table to allow for easier interpretation.
 Defaults to \code{.10}}
 
 \item{plot.item.rep}{Should the plot be produced for \code{item.replication}?
-If \code{TRUE}, then a plot for the \code{item.replication} output will be produced.#'
+If \code{TRUE}, then a plot for the \code{item.replication} output will be produced.
 Defaults to \code{TRUE}}
 }
 \value{
@@ -59,7 +59,7 @@ network loading for each item in each dimension (\code{item.loadings}).
 # Load data
 wmt <- wmt2[,7:24]
 
-\dontrun{
+\donttest{
 # Estimate EGA network
 ega.wmt <- EGA(data = wmt, model = "glasso")
 
@@ -67,10 +67,24 @@ ega.wmt <- EGA(data = wmt, model = "glasso")
 boot.wmt <- bootEGA(data = wmt, n = 100, typicalStructure = TRUE,
 plot.typicalStructure = FALSE, model = "glasso",
 type = "parametric", ncores = 4)
+}
 
 # Estimate item stability statistics
-itemStability(boot.wmt, orig.wc = ega.wmt$wc)
-}
+res <- itemStability(boot.wmt, orig.wc = ega.wmt$wc)
+
+# Changing plot features (ggplot2)
+## Changing colors (ignore warnings)
+### qgraph Defaults
+res$plot.itemStability + 
+    ggplot2::scale_color_manual(values = rainbow(max(res$uniq.num)))
+
+### Pastel
+res$plot.itemStability + 
+    ggplot2::scale_color_brewer(palette = "Pastel1")
+    
+## Changing Legend (ignore warnings)
+res$plot.itemStability + 
+    scale_color_discrete(labels = "Intelligence")
 
 }
 \references{

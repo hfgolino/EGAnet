@@ -45,10 +45,25 @@ ega.wmt <- EGA(data = wmt, uni = TRUE, model = "glasso", plot.EGA = FALSE)
 boot.wmt <- bootEGA(data = wmt, uni = TRUE, iter = 500, typicalStructure = TRUE,
 plot.typicalStructure = FALSE, model = "glasso",
 type = "parametric", ncores = 2)
+}
 
 # Estimate item stability statistics
-dimStability(boot.wmt, orig.wc = boot.wmt$EGA$wc, item.stability = FALSE)
-}
+res <- dimStability(boot.wmt, orig.wc = ega.wmt$wc, item.stability = TRUE)
+res
+
+# Changing plot features (ggplot2)
+## Changing colors (ignore warnings)
+### qgraph Defaults
+res$items$plot.itemStability + 
+    ggplot2::scale_color_manual(values = rainbow(max(res$items$uniq.num)))
+
+### Pastel
+res$items$plot.itemStability + 
+    ggplot2::scale_color_brewer(palette = "Pastel1")
+    
+## Changing Legend (ignore warnings)
+res$items$plot.itemStability + 
+    scale_color_discrete(labels = "Intelligence")
 
 }
 \references{
