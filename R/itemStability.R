@@ -18,7 +18,7 @@
 #' Defaults to \code{.10}
 #'
 #' @param plot.item.rep Should the plot be produced for \code{item.replication}?
-#' If \code{TRUE}, then a plot for the \code{item.replication} output will be produced.#'
+#' If \code{TRUE}, then a plot for the \code{item.replication} output will be produced.
 #' Defaults to \code{TRUE}
 #'
 #' @return Returns a list containing:
@@ -50,7 +50,7 @@
 #' # Load data
 #' wmt <- wmt2[,7:24]
 #'
-#' \dontrun{
+#' \donttest{
 #' # Estimate EGA network
 #' ega.wmt <- EGA(data = wmt, model = "glasso")
 #'
@@ -58,10 +58,24 @@
 #' boot.wmt <- bootEGA(data = wmt, n = 100, typicalStructure = TRUE,
 #' plot.typicalStructure = FALSE, model = "glasso",
 #' type = "parametric", ncores = 4)
+#' }
 #' 
 #' # Estimate item stability statistics
-#' itemStability(boot.wmt, orig.wc = ega.wmt$wc)
-#' }
+#' res <- itemStability(boot.wmt, orig.wc = ega.wmt$wc)
+#' 
+#' # Changing plot features (ggplot2)
+#' ## Changing colors (ignore warnings)
+#' ### qgraph Defaults
+#' res$plot.itemStability + 
+#'     ggplot2::scale_color_manual(values = rainbow(max(res$uniq.num)))
+#' 
+#' ### Pastel
+#' res$plot.itemStability + 
+#'     ggplot2::scale_color_brewer(palette = "Pastel1")
+#'     
+#' ## Changing Legend (ignore warnings)
+#' res$plot.itemStability + 
+#'     scale_color_discrete(labels = "Intelligence")
 #'
 #' @references
 #' Christensen, A. P., & Golino, H. (2019).
@@ -81,7 +95,7 @@
 #'
 #' @export
 #Item Stability function
-#Updated 21.10.2020
+#Updated 25.11.2020
 itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep = TRUE){
   
   # Check for 'bootEGA' object
@@ -162,16 +176,16 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   
   #Plot
   comm <- orig.wc
-  rain <- rev(grDevices::rainbow(max(num.comm)))
+  #rain <- rev(RColorBrewer::brewer.pal(max(num.comm), "Set1"))
   
   item.repl <- data.frame(Item = names(itemCon),
                           Replication = itemCon,
-                          Comm = factor(comm, uni[order(uni[max(num.comm):1])]))
+                          Comm = factor(comm, uni[order(uni)]))
   
   
   ic.plot <- ggpubr::ggdotchart(item.repl, x = "Item", y = "Replication",
                                 group = "Comm", color = "Comm",
-                                palette = rain,
+                                palette = "Set1",
                                 legend.title = "EGA Communities",
                                 add = "segments",
                                 rotate = TRUE,
@@ -182,7 +196,17 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
                                 ggtheme = ggpubr::theme_pubr()
   )
   
+  # Adjust y-axis
   ic.plot <- ic.plot + ggplot2::ylim(c(0,1))
+  
+  # Manually change alpha
+  ic.plot$layers[[2]]$aes_params$alpha <- 0.7
+  
+  # Bold legend title
+  ic.plot <- ic.plot + ggplot2::theme(
+    legend.title = element_text(face = "bold"),
+    axis.title = element_text(face = "bold")
+  )
   
   # Adjust item label sizes based on
   sizes <- seq(6,12,.25)
