@@ -208,7 +208,7 @@ node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "cor"
     }
     
     #threshold values
-    res <- pos.vals[which(abs(lower) > sig)]
+    res <- pos.vals[which(abs(pos.vals) > sig)]
     
   }else{
     
