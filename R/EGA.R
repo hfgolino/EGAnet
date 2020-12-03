@@ -602,6 +602,11 @@ EGA <- function (data, n = NULL, uni = TRUE,
   if(!uni){
     message("\nEGA did not check for unidimensionality. Set argument 'uni' to TRUE to check for unidimensionality")
   }
+  
+  # Change zero dimensions
+  if(a$n.dim == 0){
+    a$n.dim <- NA
+  }
 
   # Return estimates:
   return(a)
