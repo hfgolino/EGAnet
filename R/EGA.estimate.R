@@ -355,30 +355,40 @@ EGA.estimate <- function(data, n = NULL,
     estimated.network <- NetworkToolbox::TMFG(cor.data)$A
   }
 
-  # Convert to igraph
-  graph <- suppressWarnings(NetworkToolbox::convert2igraph(abs(estimated.network)))
-
   # Check for unconnected nodes
-  if(any(NetworkToolbox::degree(estimated.network)==0)){
+  if(all(NetworkToolbox::degree(estimated.network)==0)){
     
-    warning("Estimated network contains unconnected nodes:\n",
-            paste(names(which(NetworkToolbox::strength(estimated.network)==0)), collapse = ", "))
-
-    unconnected <- which(NetworkToolbox::degree(estimated.network)==0)
+    # Initialize community membership list
+    wc <- list()
+    wc$membership <- rep(NA, ncol(estimated.network))
+    
+  }else{
+    
+    if(any(NetworkToolbox::degree(estimated.network)==0)){
+      
+      warning("Estimated network contains unconnected nodes:\n",
+              paste(names(which(NetworkToolbox::strength(estimated.network)==0)), collapse = ", "))
+      
+      unconnected <- which(NetworkToolbox::degree(estimated.network)==0)
+      
+    }
+    
+    # Convert to igraph
+    graph <- suppressWarnings(NetworkToolbox::convert2igraph(abs(estimated.network)))
+    
+    # Run community detection algorithm
+    algorithm.formals$graph <- graph
+    
+    if(!is.function(algorithm)){
+      
+      wc <- switch(algorithm,
+                   walktrap = do.call(igraph::cluster_walktrap, as.list(algorithm.formals)),
+                   louvain = do.call(igraph::cluster_louvain, as.list(algorithm.formals))
+      )
+      
+    }else{wc <- do.call(what = algorithm, args = as.list(algorithm.formals))}
     
   }
-
-  # Run community detection algorithm
-  algorithm.formals$graph <- graph
-  
-  if(!is.function(algorithm)){
-    
-    wc <- switch(algorithm,
-                 walktrap = do.call(igraph::cluster_walktrap, as.list(algorithm.formals)),
-                 louvain = do.call(igraph::cluster_louvain, as.list(algorithm.formals))
-    )
-    
-  }else{wc <- do.call(what = algorithm, args = as.list(algorithm.formals))}
 
   # Obtain community memberships
   wc <- wc$membership
@@ -392,7 +402,7 @@ EGA.estimate <- function(data, n = NULL,
   }
 
   names(wc) <- colnames(data)
-  n.dim <- max(wc, na.rm = TRUE)
+  n.dim <- suppressWarnings(max(wc, na.rm = TRUE))
 
   # Return results
   res <- list()
