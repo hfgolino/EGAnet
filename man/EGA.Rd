@@ -15,6 +15,7 @@ EGA(
   plot.EGA = TRUE,
   plot.type = c("GGally", "qgraph"),
   plot.args = list(),
+  verbose = TRUE,
   ...
 )
 }
@@ -112,6 +113,11 @@ For \code{plot.type = "GGally"}:
 \item{\strong{\code{edge.alpha}}}
 {The level of transparency of the edges, which might be a single value or a vector of values. Defaults to 0.7.}
 }}
+
+\item{verbose}{Boolean.
+Should network estimation parameters be printed?
+Defaults to \code{TRUE}.
+Set to \code{FALSE} for no print out}
 
 \item{...}{Additional arguments.
 Used for deprecated arguments from previous versions of \code{\link{EGA}}}

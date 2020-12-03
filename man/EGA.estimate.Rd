@@ -12,6 +12,7 @@ EGA.estimate(
   algorithm = c("walktrap", "louvain"),
   algorithm.args = list(),
   corr = c("cor_auto", "pearson", "spearman"),
+  verbose = TRUE,
   ...
 )
 }
@@ -79,6 +80,11 @@ the \code{\link[stats]{cor}}} function.
 {Computes Spearman's correlation coefficient using the pairwise complete observations via
 the \code{\link[stats]{cor}}} function.
 }}
+
+\item{verbose}{Boolean.
+Should network estimation parameters be printed?
+Defaults to \code{TRUE}.
+Set to \code{FALSE} for no print out}
 
 \item{...}{Additional arguments.
 Used for deprecated arguments from previous versions of \code{\link{EGA}}}

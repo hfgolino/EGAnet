@@ -29,7 +29,9 @@ Lower values suggest better fit of a structure to the data.
 # Load data
 dep <- depression[,24:44]
 
-\donttest{# Estimate EGA model
+\donttest{# Estimate EGA
+## plot.type = "qqraph" used for CRAN checks
+## plot.type = "GGally" is the default
 ega.dep <- EGA(data = dep, model = "glasso", plot.type = "qgraph")
 
 # Compute entropy indices

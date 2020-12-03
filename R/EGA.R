@@ -105,6 +105,11 @@
 #' \item{\strong{\code{edge.alpha}}}
 #' {The level of transparency of the edges, which might be a single value or a vector of values. Defaults to 0.7.}
 #' }
+#' 
+#' @param verbose Boolean.
+#' Should network estimation parameters be printed?
+#' Defaults to \code{TRUE}.
+#' Set to \code{FALSE} for no print out
 #'
 #' @param ... Additional arguments.
 #' Used for deprecated arguments from previous versions of \code{\link{EGA}}
@@ -204,12 +209,14 @@
 #'
 #' @export
 #'
-# Updated 30.10.2020
+# Updated 03.12.2020
 ## EGA Function to detect unidimensionality:
 EGA <- function (data, n = NULL, uni = TRUE,
                  model = c("glasso", "TMFG"), model.args = list(),
                  algorithm = c("walktrap", "louvain"), algorithm.args = list(),
-                 plot.EGA = TRUE, plot.type = c("GGally", "qgraph"), plot.args = list(),...) {
+                 plot.EGA = TRUE, plot.type = c("GGally", "qgraph"), plot.args = list(),
+                 verbose = TRUE,
+                 ...) {
 
   # Get additional arguments
   add.args <- list(...)
@@ -279,7 +286,8 @@ EGA <- function (data, n = NULL, uni = TRUE,
     ## Ensures proper partial correlations
     multi.res <- EGA.estimate(data = data, n = n,
                               model = model, model.args = model.args,
-                              algorithm = algorithm, algorithm.args = algorithm.args)
+                              algorithm = algorithm, algorithm.args = algorithm.args,
+                              verbose = verbose)
 
     # Unidimensional result
     if(uni){
@@ -298,9 +306,10 @@ EGA <- function (data, n = NULL, uni = TRUE,
       sim.data <- sim.func(data = uni.data, nvar = nvar, nfact = nfact, load = .70)
 
       # Estimate unidimensional EGA
-      uni.res <- suppressMessages(EGA.estimate(data = sim.data, n = n,
-                                               model = model, model.args = model.args,
-                                               algorithm = algorithm, algorithm.args = algorithm.args))
+      uni.res <- EGA.estimate(data = sim.data, n = n,
+                              model = model, model.args = model.args,
+                              algorithm = algorithm, algorithm.args = algorithm.args,
+                              verbose = FALSE)
 
       # Set up results
       if(uni.res$n.dim <= nfact + 1){ ## If unidimensional
@@ -367,15 +376,17 @@ EGA <- function (data, n = NULL, uni = TRUE,
       # Unidimensional result
       uni.res <- EGA.estimate(data = cor.data, n = n,
                               model = model, model.args = model.args,
-                              algorithm = algorithm, algorithm.args = algorithm.args)
+                              algorithm = algorithm, algorithm.args = algorithm.args,
+                              verbose = verbose)
 
       ## Remove simulated data for multidimensional result
       cor.data <- cor.data[-c(1:nvar),-c(1:nvar)]
 
       # Multidimensional result
-      multi.res <- suppressMessages(EGA.estimate(cor.data, n = n,
-                                                 model = model, model.args = model.args,
-                                                 algorithm = algorithm, algorithm.args = algorithm.args))
+      multi.res <- EGA.estimate(cor.data, n = n,
+                                model = model, model.args = model.args,
+                                algorithm = algorithm, algorithm.args = algorithm.args,
+                                verbose = FALSE)
 
       if(uni.res$n.dim <= nfact + 1){
 
@@ -409,9 +420,10 @@ EGA <- function (data, n = NULL, uni = TRUE,
       cor.data <- qgraph::cor_auto(data)
 
       # Multidimensional result
-      multi.res <- suppressMessages(EGA.estimate(cor.data, n = n,
-                                                 model = model, model.args = model.args,
-                                                 algorithm = algorithm, algorithm.args = algorithm.args))
+      multi.res <- EGA.estimate(cor.data, n = n,
+                                model = model, model.args = model.args,
+                                algorithm = algorithm, algorithm.args = algorithm.args,
+                                verbose = FALSE)
 
       n.dim <- multi.res$n.dim
       cor.data <- cor.data
