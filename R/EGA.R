@@ -388,7 +388,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
                                 algorithm = algorithm, algorithm.args = algorithm.args,
                                 verbose = FALSE)
 
-      if(uni.res$n.dim <= nfact + 1){
+      if(uni.res$n.dim <= nfact + 1 & !is.infinite(multi.res$n.dim)){
 
         n.dim <- uni.res$n.dim
         cor.data <- cor.data
@@ -460,53 +460,58 @@ EGA <- function (data, n = NULL, uni = TRUE,
   }else{dim.variables <- data.frame(items = colnames(data), dimension = a$wc)}
   dim.variables <- dim.variables[order(dim.variables[, 2]),]
   a$dim.variables <- dim.variables
+  
   if (plot.EGA == TRUE) {
     if (plot.type == "qgraph"){
       if(a$n.dim < 2){
-        plot.ega <- qgraph::qgraph(a$network, layout = "spring",
-                                   vsize = plot.args$vsize, groups = as.factor(a$wc), label.prop = 1, legend = FALSE)
+        
+        if(a$n.dim != 0){
+          plot.ega <- qgraph::qgraph(a$network, layout = "spring",
+                                     vsize = plot.args$vsize, groups = as.factor(a$wc), label.prop = 1, legend = FALSE)
+        }
       }else{
         plot.ega <- qgraph::qgraph(a$network, layout = "spring",
                                    vsize = plot.args$vsize, groups = as.factor(a$wc), label.prop = 1, legend = TRUE)
       }
     }else if(plot.type == "GGally"){
       if(a$n.dim <= 2){
-        # weighted  network
-        network1 <- network::network(a$network,
-                                     ignore.eval = FALSE,
-                                     names.eval = "weights",
-                                     directed = FALSE)
-        network::set.vertex.attribute(network1, attrname= "Communities", value = a$wc)
-        network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
-        network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
-        network::set.edge.value(network1,attrname="AbsWeights",value=abs(a$network))
-        network::set.edge.value(network1,attrname="ScaledWeights",
-                                value=matrix(scales::rescale(as.vector(a$network),
-                                                             to = c(.001, 1.75)),
-                                             nrow = nrow(a$network),
-                                             ncol = ncol(a$network)))
-
-        # Layout "Spring"
-        graph1 <- NetworkToolbox::convert2igraph(a$network)
-        edge.list <- igraph::as_edgelist(graph1)
-        layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
-                                                                   weights =
-                                                                     abs(igraph::E(graph1)$weight/max(abs(igraph::E(graph1)$weight)))^2,
-                                                                   vcount = ncol(a$network))
-
-        set.seed(1234)
-        plot.ega <- GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
-                                   color = "Communities", edge.color = c("color"),
-                                   alpha = plot.args$alpha, #0.7,
-                                   size = plot.args$vsize, #12,
-                                   edge.alpha = plot.args$edge.alpha, #0.4,
-                                   mode =  layout.spring,
-                                   label.size = plot.args$label.size, #5
-                                   label = colnames(a$network)) +
-          ggplot2::theme(legend.title = ggplot2::element_blank())
-
-        plot(plot.ega)
-
+        if(a$n.dim != 0){
+          # weighted  network
+          network1 <- network::network(a$network,
+                                       ignore.eval = FALSE,
+                                       names.eval = "weights",
+                                       directed = FALSE)
+          network::set.vertex.attribute(network1, attrname= "Communities", value = a$wc)
+          network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
+          network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
+          network::set.edge.value(network1,attrname="AbsWeights",value=abs(a$network))
+          network::set.edge.value(network1,attrname="ScaledWeights",
+                                  value=matrix(scales::rescale(as.vector(a$network),
+                                                               to = c(.001, 1.75)),
+                                               nrow = nrow(a$network),
+                                               ncol = ncol(a$network)))
+          
+          # Layout "Spring"
+          graph1 <- NetworkToolbox::convert2igraph(a$network)
+          edge.list <- igraph::as_edgelist(graph1)
+          layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
+                                                                     weights =
+                                                                       abs(igraph::E(graph1)$weight/max(abs(igraph::E(graph1)$weight)))^2,
+                                                                     vcount = ncol(a$network))
+          
+          set.seed(1234)
+          plot.ega <- GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
+                                     color = "Communities", edge.color = c("color"),
+                                     alpha = plot.args$alpha, #0.7,
+                                     size = plot.args$vsize, #12,
+                                     edge.alpha = plot.args$edge.alpha, #0.4,
+                                     mode =  layout.spring,
+                                     label.size = plot.args$label.size, #5
+                                     label = colnames(a$network)) +
+            ggplot2::theme(legend.title = ggplot2::element_blank())
+          
+          plot(plot.ega)
+        }
       }else{
         # weighted  network
         network1 <- network::network(a$network,
@@ -558,7 +563,9 @@ EGA <- function (data, n = NULL, uni = TRUE,
   }
 
   a$EGA.type <- ifelse(a$n.dim <= 2, "Unidimensional EGA", "Traditional EGA")
-  a$Plot.EGA <- plot.ega
+  if(exists("plot.ega")){
+    a$Plot.EGA <- plot.ega
+  }
 
   # Get arguments
   args <- list()

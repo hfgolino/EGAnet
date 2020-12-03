@@ -361,6 +361,10 @@ EGA.estimate <- function(data, n = NULL,
     # Initialize community membership list
     wc <- list()
     wc$membership <- rep(NA, ncol(estimated.network))
+    warning("Estimated network contains unconnected nodes:\n",
+            paste(names(which(NetworkToolbox::strength(estimated.network)==0)), collapse = ", "))
+    
+    unconnected <- which(NetworkToolbox::degree(estimated.network)==0)
     
   }else{
     
