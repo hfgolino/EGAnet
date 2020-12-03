@@ -441,13 +441,13 @@ EGA <- function (data, n = NULL, uni = TRUE,
 
   a <- list()
   # Returning only communities that have at least two items:
-  if(length(unique(wc))>1){
+  if(length(unique(na.omit(wc)))>1){
     indices <- seq_along(wc)
     indices2 <- indices[wc %in% wc[duplicated(wc)]]
     wc[indices[-indices2]] <- NA
     a$n.dim <- length(unique(na.omit(wc)))
   }else{
-    a$n.dim <- length(unique(wc))
+    a$n.dim <- length(unique(na.omit(wc)))
   }
 
   a$correlation <- cor.data
