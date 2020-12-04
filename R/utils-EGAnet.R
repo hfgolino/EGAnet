@@ -1360,7 +1360,7 @@ categorize<-function(data, ncat, skew.values){
       data.cat[,j][data[,j] < thres[1,COLUMN]]<-1
       data.cat[,j][data[,j] >=thres[1,COLUMN]]<-2
       SIM.SKEW[j]  = SKEW   
-      TRUE.SKEW[j] = describe(data.cat[,j])$skew 
+      TRUE.SKEW[j] = psych::describe(data.cat[,j])$skew 
     }
   }
   if(ncat==3){ 
@@ -1383,7 +1383,7 @@ categorize<-function(data, ncat, skew.values){
       data.cat[,j][(data[,j]>=thres[1,COLUMN])&(data[,j]<thres[2,COLUMN])]<-2
       data.cat[,j][ data[,j]>=thres[2,COLUMN]]<-3
       SIM.SKEW[j]  = SKEW   
-      TRUE.SKEW[j] = describe(data.cat[,j])$skew
+      TRUE.SKEW[j] = psych::describe(data.cat[,j])$skew
     }
   }
   if(ncat==4){ 
@@ -1407,7 +1407,7 @@ categorize<-function(data, ncat, skew.values){
       data.cat[,j][(data[,j]>=thres[2,COLUMN])&(data[,j]<thres[3,COLUMN])]<-3
       data.cat[,j][ data[,j]>=thres[3,COLUMN]]<-4
       SIM.SKEW[j]  = SKEW   
-      TRUE.SKEW[j] = describe(data.cat[,j])$skew
+      TRUE.SKEW[j] = psych::describe(data.cat[,j])$skew
     }    
   }
   if(ncat==5){ 
@@ -1432,7 +1432,7 @@ categorize<-function(data, ncat, skew.values){
       data.cat[,j][(data[,j]>=thres[3,COLUMN])&(data[,j]<thres[4,COLUMN])]<-4
       data.cat[,j][ data[,j]>=thres[4,COLUMN]]<-5
       SIM.SKEW[j]  = SKEW   
-      TRUE.SKEW[j] = describe(data.cat[,j])$skew
+      TRUE.SKEW[j] = psych::describe(data.cat[,j])$skew
     }   
   }
   
