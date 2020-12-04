@@ -1260,12 +1260,17 @@ dnn.predict <- function (loads)
 #' @noRd
 #'
 # Simulate data function----
-# Updated 19.10.2020
-sim.func <- function(data, nvar, nfact, load)
+# Updated 04.12.2020
+sim.func <- function(data, nvar, nfact, load, n = 500)
 {
+  
   # Check for unidimensional structure
   ## Set up data simulation
-  n <- nrow(data)
+  if(missing(data)){
+    data <- matrix(nrow = n, ncol = 0)
+  }else{
+    n <- nrow(data)
+  }
   corf <- 0
   J <- nvar*nfact
   sdcross = 0
