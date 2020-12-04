@@ -1255,7 +1255,7 @@ dnn.predict <- function (loads)
 #'
 #' @importFrom utils data
 #'
-#' @author Loli Nieto and Luis Garrido
+#' @author Loli Dolores Nieto and Luis Eduardo Garrido
 #'
 #' @noRd
 #'
@@ -1308,6 +1308,134 @@ sim.func <- function(data, nvar, nfact, load)
   data.sim <- cbind(X, data)
 
   return(data.sim)
+}
+
+#-------------------------------------------------------------------------
+## DATA CATEGORIZATION FUNCTION
+#-------------------------------------------------------------------------
+
+## Script: Function to categorize continuous data
+## -- DESCRIPTION ------------------------------------------------------
+## First, likely values for the skewness of the variables must be specified 
+## according to a set of values ranging from -2 to 2 in increments of 0.5. 
+## This is done with the skew.values argument. Second, for the selected 
+## number of response categories to simulate, an object with the thresholds 
+## to produce different skewness is generated. Then, the skewness for each 
+## variable is randomly assigned and each variable is categorized according 
+## to the thresholds previously defined. The thresholds used to categorize 
+## the data set are those defined by Garrido, Abad, & Ponsoda (2011, 2013).
+## -- ARGUMENTS --------------------------------------------------------
+## data:        data set of continuous variables
+## ncat:        number of response categories
+## skew.values: a vector with several of the following values: -2, -1.5, 
+##              -1, -0.5, 0, 0.5, 1, 1.5, or 2. It can also be a positive
+##              integer with a single value.
+##-- OUTPUT ------------------------------------------------------------
+## data.cat:  categorized data
+## SIM.SKEW:  simulated skewness for each variable
+## TRUE.SKEW: real generated skewness for each variable
+##----------------------------------------------------------------------
+# Updated 04.12.2020
+# Authors: Maria Dolores Nieto and Luis Eduardo Garrido
+categorize<-function(data, ncat, skew.values){
+  
+  data.cat<-matrix(0, nrow = nrow(data), ncol = ncol(data))
+  SIM.SKEW  = rep(0, ncol(data))
+  TRUE.SKEW = rep(0, ncol(data))
+  
+  if(ncat==2){# SKEW = -2     -1.5     -1     -0.5  0   0.5     1     1.5     2  
+    thres<-matrix(c(-1.0518,-0.8416,-0.5936,-0.3088,0,0.3088,0.5936,0.8416,1.0518), ncol = 9)
+    colnames(thres)<-seq(-2,2,0.5)
+    SKEW.TABLE<-skew.values
+    
+    for(j in 1:ncol(data)){
+      
+      SKEW<-sample(SKEW.TABLE, 1)
+      COLUMN<-which(colnames(thres)==SKEW)
+      data.cat[,j][data[,j] < thres[1,COLUMN]]<-1
+      data.cat[,j][data[,j] >=thres[1,COLUMN]]<-2
+      SIM.SKEW[j]  = SKEW   
+      TRUE.SKEW[j] = describe(data.cat[,j])$skew 
+    }
+  }
+  if(ncat==3){ 
+    thres.2  <-c(0.8518,  1.3754)  ## SKEW = 2
+    thres.1.5<-c(0.6131,  1.1969)  ## SKEW = 1.5
+    thres.1  <-c(0.3195,  0.9921)  ## SKEW = 1.0
+    thres.0.5<-c(-0.0236, 0.7256)  ## SKEW = 0.5
+    thres.0  <-c(-1.0000, 1.0000)  ## SKEW = 0
+    thres    <-matrix(c(sort(-thres.2), sort(-thres.1.5), sort(-thres.1), sort(-thres.0.5), 
+                        (thres.0),
+                        thres.0.5, thres.1, thres.1.5, thres.2),
+                      ncol = 9)
+    colnames(thres)<-seq(-2,2,0.5)
+    SKEW.TABLE<-skew.values
+    
+    for(j in 1:ncol(data)){
+      SKEW<-sample(SKEW.TABLE, 1)
+      COLUMN<-which(colnames(thres)==SKEW)
+      data.cat[,j][ data[,j]< thres[1,COLUMN]]<-1
+      data.cat[,j][(data[,j]>=thres[1,COLUMN])&(data[,j]<thres[2,COLUMN])]<-2
+      data.cat[,j][ data[,j]>=thres[2,COLUMN]]<-3
+      SIM.SKEW[j]  = SKEW   
+      TRUE.SKEW[j] = describe(data.cat[,j])$skew
+    }
+  }
+  if(ncat==4){ 
+    thres.2  <-c(0.7515,  1.1341, 1.5980) ## SKEW = 2
+    thres.1.5<-c(0.4945,  0.9299, 1.4359) ## SKEW = 1.5
+    thres.1  <-c(0.1678,  0.6873, 1.2513) ## SKEW = 1.0
+    thres.0.5<-c(-0.2057, 0.3706, 0.9809) ## SKEW = 0.5
+    thres.0  <-c(-1.5000, 0.0000, 1.5000) ## SKEW = 0
+    thres    <-matrix(c(sort(-thres.2), sort(-thres.1.5), sort(-thres.1), sort(-thres.0.5), 
+                        (thres.0),
+                        thres.0.5, thres.1, thres.1.5, thres.2),
+                      ncol = 9)
+    colnames(thres)<-seq(-2,2,0.5)
+    SKEW.TABLE<-skew.values
+    
+    for(j in 1:ncol(data)){
+      SKEW<-sample(SKEW.TABLE, 1)
+      COLUMN<-which(colnames(thres)==SKEW)
+      data.cat[,j][ data[,j]< thres[1,COLUMN]]<-1
+      data.cat[,j][(data[,j]>=thres[1,COLUMN])&(data[,j]<thres[2,COLUMN])]<-2
+      data.cat[,j][(data[,j]>=thres[2,COLUMN])&(data[,j]<thres[3,COLUMN])]<-3
+      data.cat[,j][ data[,j]>=thres[3,COLUMN]]<-4
+      SIM.SKEW[j]  = SKEW   
+      TRUE.SKEW[j] = describe(data.cat[,j])$skew
+    }    
+  }
+  if(ncat==5){ 
+    thres.2  <-c(0.6792,  1.0043,  1.3441, 1.7703) ## SKEW = 2
+    thres.1.5<-c(0.4071,  0.7827,  1.1596, 1.6186) ## SKEW = 1.5
+    thres.1  <-c(0.0502,  0.5117,  0.9432, 1.4462) ## SKEW = 1.0
+    thres.0.5<-c(-0.3414, 0.1642,  0.6257, 1.1645) ## SKEW = 0.5
+    thres.0  <-c(-1.8000, -0.6000, 0.6000, 1.8000) ## SKEW = 0
+    thres    <-matrix(c(sort(-thres.2), sort(-thres.1.5), sort(-thres.1), sort(-thres.0.5), 
+                        (thres.0),
+                        thres.0.5, thres.1, thres.1.5, thres.2),
+                      ncol = 9)
+    colnames(thres)<-seq(-2,2,0.5)
+    SKEW.TABLE<-skew.values
+    
+    for(j in 1:ncol(data)){
+      SKEW<-sample(SKEW.TABLE, 1)
+      COLUMN<-which(colnames(thres)==SKEW)
+      data.cat[,j][ data[,j]< thres[1,COLUMN]]<-1
+      data.cat[,j][(data[,j]>=thres[1,COLUMN])&(data[,j]<thres[2,COLUMN])]<-2
+      data.cat[,j][(data[,j]>=thres[2,COLUMN])&(data[,j]<thres[3,COLUMN])]<-3
+      data.cat[,j][(data[,j]>=thres[3,COLUMN])&(data[,j]<thres[4,COLUMN])]<-4
+      data.cat[,j][ data[,j]>=thres[4,COLUMN]]<-5
+      SIM.SKEW[j]  = SKEW   
+      TRUE.SKEW[j] = describe(data.cat[,j])$skew
+    }   
+  }
+  
+  RESULTS<-list(data.cat  = data.cat,
+                SIM.SKEW  = SIM.SKEW,
+                TRUE.SKEW = TRUE.SKEW)
+  
+  return(RESULTS)
 }
 
 #' A sub-routine to generate typical network structure following \code{\link{EGAnet}{EGA}} approach
