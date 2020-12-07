@@ -143,7 +143,12 @@ mlnEGA <- function (behav.data, behav.time = FALSE,
   # Check for time series brain data
   if(brain.time){## Compute distance correlation
     brain.list <- NetworkToolbox::dCor.parallel(brain.list, ncores = ncores)
+    
+    # REPLACE WITH GLLA?
   }
+  
+  # APPLY EBICGLASSO?
+  # COMPUTE PARTIAL CORRELATIONS?
   
   # Check if number of rows of behavioral data matches
   # the number of participants in brain data
