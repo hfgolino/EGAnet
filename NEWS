@@ -18,6 +18,8 @@ o UPDATE: ega.wmt data (unidimensional)
 
 o UPDATE: `itemStability` plot defaults ("GGally" color scheme) and examples (manipulating plot)
 
+o ADD: multilayer networks for behavioral and brain data (see `?mlnEGA`)
+
 
 Changes in version 0.9.7
 
