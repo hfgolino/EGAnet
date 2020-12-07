@@ -81,6 +81,35 @@ A list of additional arguments for the network plot:
 }
 \value{
 Returns a list containing:
+
+\item{behavioral.scores}{Either scores input as \code{data} or network scores estimated from
+\code{\link[EGAnet]{EGA}}}
+
+\item{brain.networks}{A list containing:
+
+\itemize{
+
+\item{\code{individuals}}
+{A list containing the correlation matrix of each individual participant}
+
+\item{\code{group}}
+{A matrix of the group correlation matrix (mean of each ROI--ROI connection across participants)}
+
+\item{\code{group.threshold}}
+{The threshold group brain matrix. The threshold is the critical correlation value
+based on the \code{alpha} that was input}
+
+}
+
+}
+
+\item{behavioral.network}{A network estimation using the \code{behavioral.scores} and \code{\link[qgraph]{EBICglasso}}}
+
+\item{interlayer.links}{Correlations between the \code{behavioral.scores} and node \code{\link[NetworkToolbox]{strength}}
+of each node in the \code{brain.networks$individuals} network}
+
+\item{multilayer.network}{The adjacency matrix of the multilayer network that combines the \code{behavioral.network},
+\code{interlayer.links}, and \code{brain.networks$group.threshold} networks}
 }
 \description{
 Computes a multilayered network between behavioral and brain networks
