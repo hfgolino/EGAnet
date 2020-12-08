@@ -108,7 +108,7 @@
 #' 
 #' @export
 # Multilayer behavioral and brain networks ----
-# Updated 07.12.2020
+# Updated 08.12.2020
 mlnEGA <- function (behav.data, behav.time = FALSE,
                     brain.data, brain.time = FALSE,
                     alpha = .05, ncores,
@@ -181,6 +181,16 @@ mlnEGA <- function (behav.data, behav.time = FALSE,
   # Convert to matrix
   str.mat <- t(simplify2array(str.list))
   
+  # Compute EGA of behavioral data
+  ## Get default arguments
+  ega.defaults <- formals(EGA)[-which(names(formals(EGA)) == "...")]
+  ## Set defaults
+  ega.defaults$model <- "glasso"
+  ega.defaults$algorithm <- "walktrap"
+  ega.defaults$plot.EGA <- FALSE # Set to FALSE to speed up computation
+  ega.defaults$plot.type <- "GGally"
+  ega.defaults$verbose <- FALSE # Ignore messages for now
+  
   # Use EGA scores?
   if(EGA.scores){
     
@@ -190,16 +200,8 @@ mlnEGA <- function (behav.data, behav.time = FALSE,
       
     }else{
       
-      # Compute EGA of behavioral data
-      ## Get default arguments
-      ega.defaults <- formals(EGA)[-which(names(formals(EGA)) == "...")]
-      ## Set defaults
+      ## Set behavioral data
       ega.defaults$data <- behav.data
-      ega.defaults$model <- "glasso"
-      ega.defaults$algorithm <- "walktrap"
-      ega.defaults$plot.EGA <- FALSE # Set to FALSE to speed up computation
-      ega.defaults$plot.type <- "GGally"
-      ega.defaults$verbose <- FALSE # Ignore messages for now
       
       ## Input arguments
       if(any(names(EGA.args) == names(ega.defaults))){
@@ -216,9 +218,9 @@ mlnEGA <- function (behav.data, behav.time = FALSE,
     }
     
     # Compute network scores
-    network.scores <- net.scores(data = behav.data, A = ega, impute = "none")$std.scores
+    network.scores <- net.scores(data = behav.data, A = ega, impute = "mean")$std.scores
     
-  }else{network.scores <- data}
+  }else{network.scores <- behav.data}
   
   ## Get network of behavioral scores
   ega.defaults$data <- network.scores
@@ -248,6 +250,9 @@ mlnEGA <- function (behav.data, behav.time = FALSE,
   
   # Return results
   res <- list()
+  if(EGA.scores){
+    res$EGA <- ega
+  }
   res$behavioral.scores <- network.scores
   res$brain.networks$individuals <- brain.list
   res$brain.networks$group <- brain.network
@@ -312,7 +317,7 @@ mlnEGA <- function (behav.data, behav.time = FALSE,
       ggplot2::theme(
         legend.title = ggplot2::element_text(face = "bold", size = 14, hjust = 0.5)
       )
-    
+  
     plot(res$mln.plot)
   }
   

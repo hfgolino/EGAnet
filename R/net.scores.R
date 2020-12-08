@@ -98,13 +98,13 @@
 #' @export
 #'
 #Network Scores
-#Updated: 21.10.2020
-net.scores <- function (data, A, wc, global = FALSE, impute = "none", ...)
+#Updated: 08.12.2020
+net.scores <- function (data, A, wc, global = FALSE, impute, ...)
 {
   if (missing(data)) {
     stop("Argument 'data' is required for analysis")
   }
-  if (class(A) == "EGA") {
+  if (any(class(A) == "EGA")) {
     wc <- A$wc
     A <- A$network
   }
