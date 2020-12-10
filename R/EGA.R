@@ -608,7 +608,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
     a$n.dim <- NA
   }
 
-  rm(.Random.seed)
+  set.seed(NULL)
   
   # Return estimates:
   return(a)

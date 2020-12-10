@@ -478,7 +478,7 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
       plot(plot.typical.ega)
     }
     
-    rm(.Random.seed)
+    set.seed(NULL)
 
 
   }
