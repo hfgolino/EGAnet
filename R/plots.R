@@ -173,8 +173,9 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
                            mode =  layout.spring,
                            label.size = plot.args$label.size,
                            label = colnames(x$typicalGraph$graph)) + ggplot2::theme(legend.title = ggplot2::element_blank())
-
-  }
+    }
+  
+  rm(.Random.seed)
 }
 
 #Plot CFA----
@@ -262,11 +263,12 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
                    mode =  layout.spring[[i]],
                    label.size = plot.args$label.size,
                    label = colnames(x$dynEGA[[i]]$network))+ggplot2::theme(legend.title = ggplot2::element_blank())
-
     }
     group.labels <- names(x$dynEGA)
     ggpubr::ggarrange(plotlist=plots.net, ncol = ncol, nrow = nrow, labels = group.labels, label.x = 0.3)
   }
+  
+  rm(.Random.seed)
 }
 
 # Plot dynEGA function (Level: Individual)----
@@ -332,7 +334,8 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
                   label.size = plot.args$label.size,
                   mode =  layout.spring,
                   label = colnames(x$dynEGA[[id]]$network))+ggplot2::theme(legend.title = ggplot2::element_blank())
- }
+   }
+  rm(.Random.seed)
 }
 
 # Plot dynEGA function (Level: Population)----
@@ -399,7 +402,8 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
                  label.size = plot.args$label.size,
                  mode =  layout.spring,
                  label = colnames(x$dynEGA$network))+ggplot2::theme(legend.title = ggplot2::element_blank())
-  }
+    }
+  rm(.Random.seed)
 }
 
 # Plot EGA----
@@ -467,6 +471,7 @@ plot.EGA <- function(x, title = "",  plot.type = c("GGally","qgraph"),
                    mode =  layout.spring,
                    label = colnames(x$network))+ggplot2::theme(legend.title = ggplot2::element_blank())
   }
+  rm(.Random.seed)
 }
 
 #Plot net.loads----

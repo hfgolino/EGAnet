@@ -476,7 +476,9 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
                                 mode =  layout.spring,
                                 label = colnames(typical.Structure))+ggplot2::theme(legend.title = ggplot2::element_blank())
       plot(plot.typical.ega)
-      }
+    }
+    
+    rm(.Random.seed)
 
 
   }

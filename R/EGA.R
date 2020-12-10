@@ -608,6 +608,8 @@ EGA <- function (data, n = NULL, uni = TRUE,
     a$n.dim <- NA
   }
 
+  rm(.Random.seed)
+  
   # Return estimates:
   return(a)
 }
