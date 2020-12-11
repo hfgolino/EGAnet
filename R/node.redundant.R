@@ -15,10 +15,7 @@
 #' Defaults to NULL
 #'
 #' @param sig Numeric.
-#' \emph{p}-value for significance of overlap (defaults to \code{.05}).
-#' If more than 200 connections, then \code{\link[fdrtool]{fdrtool}}
-#' is used to correct for false positives. In these instances, \code{sig}
-#' sets the \emph{q}-value for significance of overlap (defaults to \code{.10})
+#' \emph{p}-value for significance of overlap (defaults to \code{.05})
 #'
 #' @param method Character.
 #' Computes weighted topological overlap (\code{"wTO"} using \code{\link[qgraph]{EBICglasso}}),
@@ -45,10 +42,8 @@
 #' 
 #' } 
 #'
-#' @param type Character.
+#' @param type Character. Type of significance.
 #' Computes significance using the standard \emph{p}-value (\code{"alpha"}),
-#' bonferroni corrected \emph{p}-value (\code{"bonferroni"}),
-#' false-discovery rate corrected \emph{p}-value (\code{"FDR"}),
 #' or adaptive alpha \emph{p}-value (\code{\link[NetworkToolbox]{adapt.a}}).
 #' Defaults to \code{"adapt"}
 #' 
@@ -127,7 +122,7 @@
 # Redundant Nodes Function
 # Updated 25.11.2020
 node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "cor"),
-                            thresh = FALSE, type = c("alpha", "bonferroni", "FDR", "adapt"),
+                            thresh = FALSE, type = c("alpha", "adapt"),
                             plot = FALSE)
 {
   #### missing arguments handling ####
@@ -241,26 +236,13 @@ node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "cor"
     )
     
     #switch for missing arguments
-    if(missing(sig))
-    {
-      sig <- switch(type,
-                    fdr = .10,
-                    bonferroni = .05,
-                    adapt = .05,
-                    alpha = .05
-      )
+    if(missing(sig)){
+      sig <- .05
     }else{sig <- sig}
     
     #switch to compute pvals
-    if(type == "fdr")
-    {
-      pval <- suppressWarnings(fdrtool::fdrtool(pval, statistic = "pvalue", plot = FALSE, verbose = FALSE)$qval)
-    }else{
-      sig <- switch(type,
-                    bonferroni = sig / length(pos.vals),
-                    adapt = NetworkToolbox::adapt.a("cor", alpha = sig, n = length(pos.vals), efxize = "medium")$adapt.a,
-                    alpha = sig
-      )
+    if(type == "adapt"){
+      sig <- NetworkToolbox::adapt.a("cor", alpha = sig, n = length(pos.vals), efxize = "medium")$adapt.a
     }
     
     #identify q-values less than significance
