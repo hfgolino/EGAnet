@@ -19,11 +19,12 @@
 #'
 #' @param method Character.
 #' Computes weighted topological overlap (\code{"wTO"} using \code{\link[qgraph]{EBICglasso}}),
-#' partial correlations (\code{"pcor"}), and correlations (\code{"cor"})
+#' partial correlations (\code{"pcor"}), and correlations (\code{"cor"}).
+#' Defaults to \code{"wTO"}
 #' 
 #' @param thresh Boolean.
 #' Should a threshold be applied?
-#' Defaults to \code{FALSE}.
+#' Defaults to \code{TRUE}.
 #' If \code{TRUE}, then based on a certain threshold only redundancies
 #' above that value will be returned.
 #' Uses argument \code{"sig"} to input the desired threshold.
@@ -120,12 +121,16 @@
 #' @export
 #
 # Redundant Nodes Function
-# Updated 25.11.2020
+# Updated 11.12.2020
 node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "cor"),
-                            thresh = FALSE, type = c("alpha", "adapt"),
+                            thresh = TRUE, type = c("alpha", "adapt"),
                             plot = FALSE)
 {
   #### missing arguments handling ####
+  
+  if(missing(method)){
+    method <- "wTO"
+  }else{method <- match.arg(method)}
   
   if(missing(type)){
     type <- "adapt"
