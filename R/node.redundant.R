@@ -121,11 +121,14 @@
 #' @export
 #
 # Redundant Nodes Function
-# Updated 11.12.2020
+# Updated 12.12.2020
 node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "cor"),
                             thresh = TRUE, type = c("alpha", "adapt"),
                             plot = FALSE)
 {
+  # Deprecation warning
+  warning("`node.redundant` has been deprecated and replaced with `redundancy.analysis` (see `?redundancy.analysis`")
+  
   #### missing arguments handling ####
   
   if(missing(method)){

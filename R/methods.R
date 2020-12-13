@@ -70,7 +70,7 @@ print.dynEGA<- function(x, ...) {
 }
 
 # Plot dynEGA function (Level: Group)----
-# Updated 25.11.2020
+# Updated 12.12.2020
 #' @export
 plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally","qgraph"),
                                plot.args = list(), ...){
@@ -148,13 +148,13 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       
     }
     group.labels <- names(x$dynEGA)
+    set.seed(NULL)
     ggpubr::ggarrange(plotlist=plots.net, ncol = ncol, nrow = nrow, labels = group.labels, label.x = 0.3)
   }
-  set.seed(NULL)
 }
 
 # Plot dynEGA function (Level: Population)----
-# Updated 25.11.2020
+# Updated 12.12.2020
 #' @export
 plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
                         plot.args = list(), ...){
@@ -182,7 +182,7 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
   
   ### Plot ###
   if(plot.type == "qgraph"){
-    qgraph::qgraph(x$dynEGA$network, layout = "spring", vsize = plot.args$vsize, groups = as.factor(x$dynEGA$wc), ...)
+    ega.plot <- qgraph::qgraph(x$dynEGA$network, layout = "spring", vsize = plot.args$vsize, groups = as.factor(x$dynEGA$wc), ...)
   }else if(plot.type == "GGally"){
     # weighted  network
     network1 <- network::network(x$dynEGA$network,
@@ -210,7 +210,7 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     
     
     set.seed(1234)
-    GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
+    ega.plot <- GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
                    color = "Communities", edge.color = c("color"),
                    alpha = plot.args$alpha, size = plot.args$vsize,
                    edge.alpha = plot.args$edge.alpha,
@@ -219,10 +219,11 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
                    label = colnames(x$dynEGA$network))+ggplot2::theme(legend.title = ggplot2::element_blank())
   }
   set.seed(NULL)
+  plot(ega.plot)
 }
 
 # Plot dynEGA function (Level: Individual)----
-# Updated 25.11.2020
+# Updated 12.12.2020
 #' @export
 plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GGally","qgraph"),
                                     plot.args = list(), ...){
@@ -277,19 +278,20 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     
     
     set.seed(1234)
-    GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
+    ega.plot <- GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
                    color = "Communities", edge.color = c("color"),
                    alpha = plot.args$alpha, size = plot.args$vsize,
                    edge.alpha = plot.args$edge.alpha,
                    label.size = plot.args$label.size,
                    mode =  layout.spring,
                    label = colnames(x$dynEGA[[id]]$network))+ggplot2::theme(legend.title = ggplot2::element_blank())
+    set.seed(NULL)
+    plot(ega.plot)
   }
-  set.seed(NULL)
 }
 
 # Plot EGA----
-# Updated 25.11.2020
+# Updated 12.12.2020
 #' @export
 plot.EGA <- function(x, title = "",  plot.type = c("GGally","qgraph"),
                      plot.args = list(), ...){
@@ -317,7 +319,7 @@ plot.EGA <- function(x, title = "",  plot.type = c("GGally","qgraph"),
   
   ### Plot ###
   if(plot.type == "qgraph"){
-    plot.ega <- qgraph::qgraph(x$network, layout = "spring", vsize = plot.args$vsize, groups = as.factor(x$wc), ...)
+    ega.plot <- qgraph::qgraph(x$network, layout = "spring", vsize = plot.args$vsize, groups = as.factor(x$wc), ...)
   }else if(plot.type == "GGally"){
     # weighted  network
     network1 <- network::network(x$network,
@@ -345,7 +347,7 @@ plot.EGA <- function(x, title = "",  plot.type = c("GGally","qgraph"),
     
     
     set.seed(1234)
-    GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
+    ega.plot <- GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
                    color = "Communities", edge.color = c("color"),
                    alpha = plot.args$alpha, size = plot.args$vsize,
                    edge.alpha = plot.args$edge.alpha,
@@ -354,10 +356,12 @@ plot.EGA <- function(x, title = "",  plot.type = c("GGally","qgraph"),
                    label = colnames(x$network))+ggplot2::theme(legend.title = ggplot2::element_blank())
   }
   set.seed(NULL)
+  
+  plot(ega.plot)
 }
 
 # Plot bootEGA----
-# Updated 25.11.2020
+# Updated 12.12.2020
 plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
                          plot.args = list(), ...){
   #### MISSING ARGUMENTS HANDLING ####
@@ -383,7 +387,7 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
   
   ### Plot ###
   if(plot.type == "qgraph"){
-    qgraph::qgraph(x$typicalGraph$graph, layout = "spring",
+    ega.plot <- qgraph::qgraph(x$typicalGraph$graph, layout = "spring",
                    groups = as.factor(x$typicalGraph$wc),
                    vsize = plot.args$vsize, ...)
   }else if(plot.type == "GGally"){
@@ -412,7 +416,7 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     
     
     set.seed(1234)
-    GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
+    ega.plot <- GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
                    color = "Communities", edge.color = c("color"),
                    alpha = plot.args$alpha, size = plot.args$vsize,
                    edge.alpha = plot.args$edge.alpha,
@@ -422,6 +426,7 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     
   }
   set.seed(NULL)
+  plot(ega.plot)
 }
 
 # Dynamic Plot:

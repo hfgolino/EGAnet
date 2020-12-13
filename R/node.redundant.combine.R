@@ -76,12 +76,15 @@
 #'
 #' @export
 # Redundant Nodes Combination Function
-# Updated 21.10.2020
+# Updated 12.12.2020
 node.redundant.combine <- function (node.redundant.obj,
                                     type = c("sum", "latent"),
                                     estimator = "WLSMV",
                                     auto = FALSE, ...)
 {
+  # Deprecation warning
+  warning("`node.redundant` has been deprecated and replaced with `redundancy.analysis` (see `?redundancy.analysis`")
+  
   # Check for node.redundant object class
   if(class(node.redundant.obj) != "node.redundant")
   {stop("A 'node.redundant' object must be used as input")}
