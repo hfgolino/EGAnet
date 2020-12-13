@@ -112,11 +112,9 @@ of each node in the \code{brain.networks$individuals} network}
 \code{interlayer.links}, and \code{brain.networks$group.threshold} networks}
 }
 \description{
+EXPERIMENTAL -- USE WITH CAUTION.
 Computes a multilayered network between behavioral and brain networks
 following Brooks et al. (2020; see references)
-}
-\examples{
-
 }
 \references{
 Brooks, D., Hulst, H. E., de Bruin, L., Glas, G., Geurts, J. J. G., & Douw, L. (2020).

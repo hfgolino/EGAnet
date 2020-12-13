@@ -436,7 +436,7 @@ plot.EGA <- function(x, title = "",  plot.type = c("GGally","qgraph"),
 
   ### Plot ###
   if(plot.type == "qgraph"){
-  plot.ega <- qgraph::qgraph(x$network, layout = "spring", vsize = plot.args$vsize, groups = as.factor(x$wc), ...)
+  ega.plot <- qgraph::qgraph(x$network, layout = "spring", vsize = plot.args$vsize, groups = as.factor(x$wc), ...)
   }else if(plot.type == "GGally"){
     # weighted  network
     network1 <- network::network(x$network,

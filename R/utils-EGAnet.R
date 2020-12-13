@@ -2252,6 +2252,8 @@ redundancy.process <- function(data, cormat, n, method, type, sig, plot.redundan
   # Get redundant pairings
   if(type == "threshold"){## Threshold values
     redund <- pos.vals[which(pos.vals >= sig)]
+    aic <- NULL
+    g.dist <- NULL
   }else{## Determine distribution
     
     # Distributions, initialize AIC vector
@@ -2372,7 +2374,8 @@ redundancy.process <- function(data, cormat, n, method, type, sig, plot.redundan
   }
   
   # Get redundancy descriptives
-  desc <- redund.desc(pos.vals = pos.vals, method = method, type = type, sig = sig)
+  desc <- redund.desc(pos.vals = pos.vals, method = method, type = type, sig = sig,
+                      aic = aic, g.dist = g.dist)
   
   # Results list
   res <- list()
@@ -2394,9 +2397,56 @@ redundancy.process <- function(data, cormat, n, method, type, sig, plot.redundan
 }
 
 #' @noRd
+# Redundancy Naming----
+# Updated 13.12.2020
+redund.names <- function(node.redundant.obj, key)
+{
+  # Check for node.redundant object class
+  if(class(node.redundant.obj) != "node.redundant")
+  {stop("A 'node.redundant' object must be used as input")}
+  
+  # Obtain and remove data from node redundant object
+  data <- node.redundant.obj$data
+  
+  # Check that columns match key
+  if(ncol(data) != length(as.vector(key)))
+  {stop("Number of columns in data does not match the length of 'key'")}
+  
+  # Names of node.redundant object
+  nr.names <- names(node.redundant.obj$redundant)
+  
+  # Key names
+  key.names <- colnames(data)
+  
+  # Key change
+  key.chn <- key
+  
+  for(i in 1:length(nr.names))
+  {
+    # Target redundant node
+    target.r <- match(names(node.redundant.obj$redundant)[i],key.names)
+    
+    # Replace item name with description
+    names(node.redundant.obj$redundant)[i] <- as.character(key.chn[target.r])
+    
+    # Target other nodes
+    target.o <- match(node.redundant.obj$redundant[[i]],key.names)
+    
+    # Replace item names with description
+    node.redundant.obj$redundant[[i]] <- as.character(key.chn[target.o])
+  }
+  
+  # Create key code
+  names(key) <- colnames(data)
+  node.redundant.obj$key <- key
+  
+  return(node.redundant.obj)
+}
+
+#' @noRd
 # Redundancy Descriptives----
 # Updated 13.12.2020
-redund.desc <- function(pos.vals, method, type, sig)
+redund.desc <- function(pos.vals, method, type, sig, aic, g.dist)
 {
   # Initialize descriptives matrix
   desc <- matrix(0, nrow = 1, ncol = 9)
@@ -2420,7 +2470,7 @@ redund.desc <- function(pos.vals, method, type, sig)
   desc[,"Maximum"] <- range(pos.vals, na.rm = TRUE)[2]
   
   # Critical value
-  if(type == "thresh"){
+  if(type == "threshold"){
     desc[,"Critical Value"] <- sig
   }else{
     
@@ -2526,10 +2576,11 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
   return(redund.net)
 }
 
+#' @importFrom graphics text
 #' @noRd
 # Redundancy Reduction----
 # Updated 13.12.2020
-redund.reduce <- function(node.redundant.obj, reduce, plot.args, lavaan.args)
+redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.args)
 {
   # Check for node.redundant object class
   if(class(node.redundant.obj) != "node.redundant")
@@ -2654,9 +2705,9 @@ redund.reduce <- function(node.redundant.obj, reduce, plot.args, lavaan.args)
       # Print target and potential options
       cat(paste("Target variable: '", target.item, "'", sep = ""))
       cat("\n\nPotential redundancies:\n\n")
-      if(reduce == "latent"){
+      if(reduce.method == "latent"){
         cat("0. Do not combine with any")
-      }else if(reduce == "remove"){
+      }else if(reduce.method == "remove"){
         cat("0. None")
       }
       
@@ -2746,15 +2797,30 @@ redund.reduce <- function(node.redundant.obj, reduce, plot.args, lavaan.args)
         merged[[count]] <- c(key[tar.idx], key[idx])
         
         # Combine into target index
-        if(reduce == "latent")
+        if(reduce.method == "latent")
         {
           # Latent variable
           ## create model
           mod <- paste(paste("comb =~ ",sep=""), paste(colnames(new.data[,c(tar.idx, idx)]), collapse = " + "))
           
-          ## fit model
-          fit <- suppressWarnings(lavaan::cfa(mod, data = new.data, std.lv = TRUE, ...))
+          # Replace arguments
+          lavaan.args$model <- mod
+          lavaan.args$data <- new.data
+          ## Get default estimator
+          categories <- apply(new.data[,c(tar.idx, idx)], 2, function(x){
+            length(unique(x))
+          })
           
+          ## Check categories
+          if(any(categories < 6)){# Not all continuous
+            lavaan.args$estimator <- "WLSMV"
+          }else{# All can be considered continuous
+            lavaan.args$estimator <- "MLR"
+          }
+          
+          ## fit model
+          fit <- suppressWarnings(do.call(lavaan::cfa, lavaan.args))
+            
           ## identify cases
           cases <- lavaan::inspect(fit, "case.idx")
           
@@ -2796,7 +2862,7 @@ redund.reduce <- function(node.redundant.obj, reduce, plot.args, lavaan.args)
           col.idx <- match(tar.idx, colnames(new.data))
           colnames(new.data)[col.idx] <- lab
           
-        }else if(reduce == "remove"){
+        }else if(reduce.method == "remove"){
           
           target.key <- c(tar.idx, idx)
           target.data <- new.data[,target.key]

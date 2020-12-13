@@ -42,11 +42,15 @@
 #' 
 #' @param key Character vector.
 #' A vector with variable descriptions that correspond
-#' to the order of variables input into \code{data}
+#' to the order of variables input into \code{data}.
+#' Defaults to \code{NULL} or the column names of \code{data}
 #' 
+#' @param reduce Boolean.
+#' Should redundancy reduction be performed?
+#' Defaults to \code{TRUE}.
+#' Set to \code{FALSE} for redundancy analysis only
 #' 
-#' 
-#' @param reduce Character.
+#' @param reduce.method Character.
 #' How should data be reduced?
 #' Defaults to \code{"latent"}
 #' 
@@ -61,7 +65,7 @@
 #' }
 #' 
 #' @param lavaan.args List.
-#' If \code{reduce = "latent"}, then \code{\link{lavaan}}'s \code{\link[lavaan]{cfa}}
+#' If \code{reduce.method = "latent"}, then \code{\link{lavaan}}'s \code{\link[lavaan]{cfa}}
 #' function will be used to create latent variables to reduce variables.
 #' Arguments should be input as a list. Some example arguments 
 #' (see \code{\link[lavaan]{lavOptions} for full details}:
@@ -70,7 +74,8 @@
 #' 
 #' \item{\code{estimator}}
 #' {Estimator to use for latent variables (see \href{https://lavaan.ugent.be/tutorial/est.html}{Estimators})
-#' for more details}
+#' for more details. Defaults to \code{"MLR"} for continuous data and \code{"WLSMV"} for mixed and categorical data.
+#' Data are considered continuous data if they have 6 or more categories (see Rhemtulla, Brosseau-Liard, & Savalei, 2012)}
 #' 
 #' \item{\code{missing}}
 #' {How missing data should be handled}
@@ -80,7 +85,8 @@
 #' If \code{FALSE}, the metric of each latent variable is determined by fixing the factor loading of the first
 #' indicator to 1.0. If there are multiple groups, \code{std.lv = TRUE} and \code{"loadings"} is included in the
 #' \code{group.label} argument, then only the latent variances i of the first group will be fixed to 1.0, while
-#' the latent variances of other groups are set free.}
+#' the latent variances of other groups are set free.
+#' Defaults to \code{TRUE}}
 #' 
 #' }
 #' 
@@ -176,7 +182,7 @@
 #' 
 #' }
 #' 
-#' \item{reduced}{A list containing:
+#' \item{reduced}{If \code{reduce = TRUE}, then a list containing:
 #' 
 #' \itemize{
 #' 
@@ -185,6 +191,8 @@
 #'
 #' \item{\code{merged}}{A matrix containing the variables that were
 #' decided to be redundant with one another}
+#' 
+#' \item{\code{method}}{Method used to perform redundancy reduction}
 #' 
 #' }
 #' 
@@ -226,6 +234,12 @@
 #' Differences in human and chimpanzee gene expression patterns define an evolving network of transcription factors in brain.
 #' \emph{Proceedings of the National Academy of Sciences}, \emph{106}, 22358-22363.
 #' doi: \href{https://doi.org/10.1073/pnas.0911376106}{10.1073/pnas.0911376106}
+#' 
+#' # Selection of CFA Estimator \cr
+#' Rhemtulla, M., Brosseau-Liard, P. E., & Savalei, V. (2012).
+#' When can categorical variables be treated as continuous? A comparison of robust continuous and categorical SEM estimation methods under suboptimal conditions.
+#' \emph{Psychological Methods}, \emph{17}, 354-373.
+#' doi: \href{http://dx.doi.org/10.1037/a0029315}{10.1037/a0029315}
 #'
 #' @author Alexander Christensen <alexpaulchristensen@gmail.com>
 #'
@@ -238,7 +252,8 @@
 redundancy.analysis <- function(data, n = NULL,
                                 method = c("cor", "pcor", "wTO"),
                                 type = c("adapt", "alpha", "threshold"), sig,
-                                key = NULL, reduce = c("latent", "remove"),
+                                key = NULL, reduce = TRUE,
+                                reduce.method = c("latent", "remove"),
                                 lavaan.args = list(), adhoc = TRUE,
                                 plot.redundancy = FALSE, plot.args = list()
                                 )
@@ -286,9 +301,9 @@ redundancy.analysis <- function(data, n = NULL,
   }
   
   ## reduce
-  if(missing(reduce)){
-    reduce <- "latent"
-  }else{reduce <- match.arg(reduce)}
+  if(missing(reduce.method)){
+    reduce.method <- "latent"
+  }else{reduce.method <- match.arg(reduce.method)}
   
   ## plot.args
   if(length(plot.args) == 0){
@@ -318,10 +333,12 @@ redundancy.analysis <- function(data, n = NULL,
   }
   
   # Run through redundancy reduction
-  reduced <- redund.reduce(node.redundant.obj = process,
-                           reduce = reduce,
-                           plot.args = plot.args,
-                           lavaan.args = lavaan.args)
+  if(reduce){
+    reduced <- redund.reduce(node.redundant.obj = process,
+                             reduce.method = reduce.method,
+                             plot.args = plot.args,
+                             lavaan.args = lavaan.args)
+  }else{reduced <- process}
   
   # Check for any remaining redundancies
   if(adhoc){
@@ -347,7 +364,7 @@ redundancy.analysis <- function(data, n = NULL,
   # Full results
   res <- list()
   res$redundancy <- process
-  res$reduced <- reduced
+  if(reduce){res$reduced <- reduced}
   if(adhoc){res$adhoc <- adhoc.check}
   
   return(res)
