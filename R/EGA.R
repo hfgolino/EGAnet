@@ -530,7 +530,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
                                   mode =  layout.spring,
                                   label.size = plot.args$label.size, #5
                                   label = colnames(a$network)) +
-          ggplot2::theme(legend.title = ggplot2::element_blank(), legend.position = "none")
+          ggplot2::theme(legend.title = ggplot2::element_blank())
 
         plot(plot.ega)
       }
