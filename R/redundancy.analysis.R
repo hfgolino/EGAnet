@@ -248,7 +248,7 @@
 #' @export
 #
 # Redundant Nodes Function
-# Updated 12.12.2020
+# Updated 14.12.2020
 redundancy.analysis <- function(data, n = NULL,
                                 method = c("cor", "pcor", "wTO"),
                                 type = c("adapt", "alpha", "threshold"), sig,
@@ -318,6 +318,25 @@ redundancy.analysis <- function(data, n = NULL,
       plot.replace.args <- plots.arg1[na.omit(match(names(plot.args.use), names(plots.arg1)))]
       
       plot.args <- c(plot.args.use,plots.arg1[names(plots.arg1) %in% names(plot.args.use)==FALSE])}
+  }
+  
+  ## lavaan.args
+  if(length(lavaan.args) == 0){
+    lavaan.args <- formals(lavaan::cfa)
+    lavaan.args[length(lavaan.args)] <- NULL
+    lavaan.args$std.lv <- TRUE
+    lavaan.args$missing <- "fiml"
+  }else{
+    lavaan.default <- formals(lavaan::cfa)
+    lavaan.default[length(lavaan.default)] <- NULL
+    lavaan.default$std.lv <- TRUE
+    lavaan.args$missing <- "fiml"
+    
+    if(any(names(lavaan.args) %in% names(lavaan.default))){
+      lavaan.default[names(lavaan.args)] <- lavaan.args
+    }
+    
+    lavaan.args <- lavaan.default
   }
   
   # Perform redundancy analysis

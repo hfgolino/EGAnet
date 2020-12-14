@@ -2789,8 +2789,11 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
             lavaan.args$estimator <- "MLR"
           }
           
+          ## get CFA function from lavaan
+          FUN <- lavaan::cfa
+          
           ## fit model
-          fit <- suppressWarnings(do.call(lavaan::cfa, lavaan.args))
+          fit <- do.call(what = "FUN", args = as.list(lavaan.args))
             
           ## identify cases
           cases <- lavaan::inspect(fit, "case.idx")
