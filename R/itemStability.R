@@ -146,7 +146,7 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   message("Computing results...", appendLF = FALSE)
   
   # Get proportion table
-  item.tab <- prop.table(final.mat)
+  item.tab <- proportion.table(final.mat)
   row.names(item.tab) <- colnames(net)
   
   if(is.character(uni))

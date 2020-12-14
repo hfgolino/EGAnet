@@ -847,47 +847,6 @@ mode <- function(v, fin.vec)
   return(uniq.val)
 }
 
-#' Computes the mode
-#'
-#' @param v Numeric vector.
-#' Vector of values to find mode in
-#'
-#' @param fin.vec Alphanumeric vector.
-#' Vector of current state of \code{v}
-#'
-#' @return The mode of a vector
-#'
-#' @noRd
-#'
-# Mode----
-# Updated 15.06.2020
-mode <- function(v, fin.vec)
-{
-  #unique values
-  uniqv <- unique(v)
-
-  #find mode
-  uniq.val <- uniqv[which.max(tabulate(match(v, uniqv)))]
-
-  #do not overwrite already identified dimension
-  while(uniq.val %in% fin.vec)
-  {
-    #remove unique value
-    uniqv <- uniqv[-which(uniq.val==uniqv)]
-
-    if(length(uniqv)==0)
-    {
-      uniq.val <- NA
-      break
-    }
-
-    #find mode
-    uniq.val <- uniqv[which.max(tabulate(match(v, uniqv)))]
-  }
-
-  return(uniq.val)
-}
-
 #' Converts membership vector into a target membership vector
 #'
 #' @param target.wc Numeric vector.
@@ -901,7 +860,7 @@ mode <- function(v, fin.vec)
 #' @noRd
 #'
 # Homogenize Membership----
-# Updated 15.06.2020
+# Updated 14.12.2020
 homogenize.membership <- function (target.wc, convert.wc)
 {
   # Obtain whether vector or matrix is input for 'convert.wc'
@@ -944,8 +903,8 @@ homogenize.membership <- function (target.wc, convert.wc)
     if(max(target.wc, na.rm = TRUE) > max(new.vec, na.rm = TRUE))
     {
       # Initialize rand and length vector
-      rand <- vector("numeric", length = max(new.vec))
-      names(rand) <- new.uniq
+      rand <- vector("numeric", length = max(new.vec, na.rm = TRUE))
+      names(rand) <- na.omit(new.uniq)
       len <- rand
 
       for(j in new.uniq)
@@ -959,12 +918,16 @@ homogenize.membership <- function (target.wc, convert.wc)
         # Compute rand index
         rand[paste(j)] <- igraph::compare(new.vec[target],target.wc[target],method="rand")
       }
+      
+      # Remove NAs
+      rand <- na.omit(rand)
+      len <- na.omit(ifelse(len == 0, NA, len))
 
       # Order rand by highest rand index and then number of items
       rand.ord <- rand[order(rand, len, decreasing = TRUE)]
 
       # Initialize final vector
-      final.vec <- vector("numeric", length = length(target.wc))
+      final.vec <- rep(NA, length = length(target.wc))
       names(final.vec) <- names(target.wc)
 
       # Insert new values into final vector
@@ -983,8 +946,8 @@ homogenize.membership <- function (target.wc, convert.wc)
     }else if(max(target.wc, na.rm = TRUE) < max(new.vec, na.rm = TRUE))
     {
       # Initialize rand and length vector
-      rand <- vector("numeric", length = max(new.vec))
-      names(rand) <- new.uniq
+      rand <- vector("numeric", length = max(new.vec, na.rm = TRUE))
+      names(rand) <- na.omit(new.uniq)
       len <- rand
 
       for(j in new.uniq)
@@ -998,12 +961,16 @@ homogenize.membership <- function (target.wc, convert.wc)
         # Compute rand index
         rand[paste(j)] <- igraph::compare(new.vec[target],target.wc[target],method="rand")
       }
+      
+      # Remove NAs
+      rand <- na.omit(rand)
+      len <- na.omit(ifelse(len == 0, NA, len))
 
       # Order rand by highest rand index and then number of items
       rand.ord <- rand[order(rand, len, decreasing = TRUE)]
 
       # Initialize final vector
-      final.vec <- vector("numeric", length = length(target.wc))
+      final.vec <- rep(NA, length = length(target.wc))
       names(final.vec) <- names(target.wc)
 
       # Insert new values into final vector
@@ -1023,7 +990,7 @@ homogenize.membership <- function (target.wc, convert.wc)
       extra.dim <- unique(new.vec[which(is.na(final.vec))])
 
       # Initialize extra dimension length vector
-      extra.len <- vector("numeric", length = length(extra.dim))
+      extra.len <- rep(NA, length = length(extra.dim))
       names(extra.len) <- extra.dim
 
       # Initialize count
@@ -1060,8 +1027,8 @@ homogenize.membership <- function (target.wc, convert.wc)
     }else{
 
       # Initialize rand and length vector
-      rand <- vector("numeric", length = max(new.vec))
-      names(rand) <- new.uniq
+      rand <- vector("numeric", length = max(new.vec, na.rm = TRUE))
+      names(rand) <- na.omit(new.uniq)
       len <- rand
 
       for(j in new.uniq)
@@ -1075,12 +1042,16 @@ homogenize.membership <- function (target.wc, convert.wc)
         # Compute rand index
         rand[paste(j)] <- igraph::compare(new.vec[target],target.wc[target],method="rand")
       }
+      
+      # Remove NAs
+      rand <- na.omit(rand)
+      len <- na.omit(ifelse(len == 0, NA, len))
 
       # Order rand by highest rand index and then number of items
       rand.ord <- rand[order(rand, len, decreasing = TRUE)]
 
       # Initialize final vector
-      final.vec <- vector("numeric", length = length(target.wc))
+      final.vec <- rep(NA, length = length(target.wc))
       names(final.vec) <- names(target.wc)
 
       # Insert new values into final vector
@@ -1114,8 +1085,8 @@ homogenize.membership <- function (target.wc, convert.wc)
 #' @noRd
 #'
 # Proportion Table----
-# Updated 15.06.2020
-prop.table <- function (boot.mat)
+# Updated 14.12.2020
+proportion.table <- function (boot.mat)
 {
   # Get maximum number of dimensions
   max.dim <- max(boot.mat, na.rm = TRUE)

@@ -29,7 +29,7 @@
 #' Defaults to \code{FALSE}.
 #' Set to \code{TRUE} for a positive manifold
 #'
-#' @param plot Boolean.
+#' @param plot.NL Boolean.
 #' Should proportional loadings be plotted?
 #' Defaults to \code{FALSE}.
 #' Set to \code{TRUE} for plot with pie charts
@@ -95,8 +95,8 @@
 #' @export
 #'
 # Network Loadings
-# Updated 11.11.2020
-net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
+# Updated 14.12.2020
+net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot.NL = FALSE)
 {
   
   # Function to order loadings largest to smallest
@@ -106,7 +106,7 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
     ord.names <- vector("character")
     
     # Loop through dimensions
-    for(i in 1:ncol(loads)){
+    for(i in colnames(loads)){
       ord <- order(loads[names(which(wc == i)),i], decreasing = TRUE)
       ord.names <- c(ord.names, names(which(wc == i))[ord])
     }
@@ -251,32 +251,36 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
       #### PLOT SET UP ####
       #####################
       
-      #Set to absolute for multidimensional
-      std.res <- as.matrix(abs(res$std))
-      
-      #Standardize
-      std.res <- std.res / rowSums(std.res)
-      
-      #Ensure that pie value is not greater than 1
-      std.res <- std.res - .001
-      std.res <- ifelse(std.res==-.001,0,std.res)
-      
-      # Reorder to match membership
-      std.res <- std.res[,levels(as.factor(wc))]
-      
-      #Split results to list for each node
-      pies <- split(std.res, rep(1:nrow(std.res)))
-      
-      # Plot (or not)
-      nl.plot <- qgraph::qgraph(A, layout = "spring", groups = as.factor(wc),
-                                label.prop = 1, pie = pies, vTrans = 200,
-                                negDashed = TRUE, DoNotPlot = ifelse(plot,FALSE,TRUE))
-      
-      # Remove loadings (added as attribute)
-      ## S3Methods summary and print
-      res$MinLoad <- min.load
-      ## S3Methods plot
-      res$plot <- nl.plot
+      if(plot.NL){
+        
+        #Set to absolute for multidimensional
+        std.res <- as.matrix(abs(res$std))
+        
+        #Standardize
+        std.res <- std.res / rowSums(std.res)
+        
+        #Ensure that pie value is not greater than 1
+        std.res <- std.res - .001
+        std.res <- ifelse(std.res==-.001,0,std.res)
+        
+        # Reorder to match membership
+        std.res <- std.res[,levels(as.factor(wc))]
+        
+        #Split results to list for each node
+        pies <- split(std.res, rep(1:nrow(std.res)))
+        
+        # Plot (or not)
+        nl.plot <- qgraph::qgraph(A, layout = "spring", groups = as.factor(wc),
+                                  label.prop = 1, pie = pies, vTrans = 200,
+                                  negDashed = TRUE, DoNotPlot = ifelse(plot,FALSE,TRUE))
+        
+        # Remove loadings (added as attribute)
+        ## S3Methods summary and print
+        res$MinLoad <- min.load
+        ## S3Methods plot
+        res$plot <- nl.plot
+        
+      }
       
     }else if(all(is.na(wc)))
     {
