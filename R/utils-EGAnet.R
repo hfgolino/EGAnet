@@ -2836,6 +2836,8 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
           col.idx <- match(tar.idx, colnames(new.data))
           colnames(new.data)[col.idx] <- lab
           
+          message(paste("\nNew LATENT variable called '", lab,"' was created. Redundant variables were REMOVED", sep = ""))
+          
         }else if(reduce.method == "remove"){
           
           target.key <- c(tar.idx, idx)
