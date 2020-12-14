@@ -941,7 +941,7 @@ homogenize.membership <- function (target.wc, convert.wc)
     new.uniq <- unique(new.vec)
 
     # Converge based on maximum number of dimensions
-    if(max(target.wc) > max(new.vec))
+    if(max(target.wc, na.rm = TRUE) > max(new.vec, na.rm = TRUE))
     {
       # Initialize rand and length vector
       rand <- vector("numeric", length = max(new.vec))
@@ -980,7 +980,7 @@ homogenize.membership <- function (target.wc, convert.wc)
         final.vec[new.target] <- rep(target.mode)
       }
 
-    }else if(max(target.wc) < max(new.vec))
+    }else if(max(target.wc, na.rm = TRUE) < max(new.vec, na.rm = TRUE))
     {
       # Initialize rand and length vector
       rand <- vector("numeric", length = max(new.vec))
