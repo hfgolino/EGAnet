@@ -1,19 +1,28 @@
 Changes in version 0.9.8
 
-o ADD: a new function to compute a parametric Bootstrap Test for the Ergodicity Information Index (see `boot.ergoInfo`)
+o ADD: `redundancy.analysis` operates as a comprehensive handling of variable redundancy in multivariate data (see `?redundancy.analysis`)
+
+o DEFUNCT: `node.redundant`, `node.redundant.names`, and `node.redundant.combine` will be defunct in next version. Please use `redundancy.analysis`
+
+o ADD: a new function to compute a parametric Bootstrap Test for the Ergodicity Information Index (see `?boot.ergoInfo`)
 
 o ADD: basic Shiny functionality (`EGA` only)
 
+o ADD: a new function to compute a Monte-Carlo Test for the Ergodicity Information Index (see `?mctest.ergoInfo`)
 
-o ADD: a new function to compute a Monte-Carlo Test for the Ergodicity Information Index (see `mctest.ergoInfo`)
-
-o ADD: a new function to compute the Ergodicity Information Index (see `ergoInfo`)
+o ADD: a new function to compute the Ergodicity Information Index (see `?ergoInfo`)
 
 o UPDATE: new plotting scheme using *network* and *GGally* packages
 
-o ADD: a function to produce an automated Methods section for EGA functions (see `EGA.methods.section`)
+o ADD: a function to produce an automated Methods section for EGA functions (see `?EGA.methods.section`)
 
 o UPDATE: `bootEGA` now implements the updated `EGA` algorithm
+
+o UPDATE: ega.wmt data (unidimensional)
+
+o UPDATE: `itemStability` plot defaults ("GGally" color scheme) and examples (manipulating plot)
+
+o ADD: multilayer networks for behavioral and brain data (see `?mlnEGA`)
 
 
 Changes in version 0.9.7

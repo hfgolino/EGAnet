@@ -105,6 +105,11 @@
 #' \item{\strong{\code{edge.alpha}}}
 #' {The level of transparency of the edges, which might be a single value or a vector of values. Defaults to 0.7.}
 #' }
+#' 
+#' @param verbose Boolean.
+#' Should network estimation parameters be printed?
+#' Defaults to \code{TRUE}.
+#' Set to \code{FALSE} for no print out
 #'
 #' @param ... Additional arguments.
 #' Used for deprecated arguments from previous versions of \code{\link{EGA}}
@@ -204,12 +209,14 @@
 #'
 #' @export
 #'
-# Updated 30.10.2020
+# Updated 03.12.2020
 ## EGA Function to detect unidimensionality:
 EGA <- function (data, n = NULL, uni = TRUE,
                  model = c("glasso", "TMFG"), model.args = list(),
                  algorithm = c("walktrap", "louvain"), algorithm.args = list(),
-                 plot.EGA = TRUE, plot.type = c("GGally", "qgraph"), plot.args = list(),...) {
+                 plot.EGA = TRUE, plot.type = c("GGally", "qgraph"), plot.args = list(),
+                 verbose = TRUE,
+                 ...) {
 
   # Get additional arguments
   add.args <- list(...)
@@ -279,28 +286,30 @@ EGA <- function (data, n = NULL, uni = TRUE,
     ## Ensures proper partial correlations
     multi.res <- EGA.estimate(data = data, n = n,
                               model = model, model.args = model.args,
-                              algorithm = algorithm, algorithm.args = algorithm.args)
+                              algorithm = algorithm, algorithm.args = algorithm.args,
+                              verbose = verbose)
 
     # Unidimensional result
     if(uni){
 
       # Set one factor for simulated data
       nfact <- 1
-      nvar <- ncol(cor.data)
-      if(nvar > 12){
-        nvar <- 12
-      }
+      vars <- ncol(cor.data)
+      if(vars > 25){
+        nvar <- 25
+      }else{nvar <- vars}
 
       # Generate data
-      uni.data <- MASS::mvrnorm(n = n, mu = rep(0, nvar), Sigma = cor.data)
+      uni.data <- MASS::mvrnorm(n = n, mu = rep(0, vars), Sigma = cor.data)
 
       # Simulate data from unidimensional factor model
       sim.data <- sim.func(data = uni.data, nvar = nvar, nfact = nfact, load = .70)
 
       # Estimate unidimensional EGA
-      uni.res <- suppressMessages(EGA.estimate(data = sim.data, n = n,
-                                               model = model, model.args = model.args,
-                                               algorithm = algorithm, algorithm.args = algorithm.args))
+      uni.res <- EGA.estimate(data = sim.data, n = n,
+                              model = model, model.args = model.args,
+                              algorithm = algorithm, algorithm.args = algorithm.args,
+                              verbose = FALSE)
 
       # Set up results
       if(uni.res$n.dim <= nfact + 1){ ## If unidimensional
@@ -353,10 +362,10 @@ EGA <- function (data, n = NULL, uni = TRUE,
 
       # Set one factor for simulated data
       nfact <- 1
-      nvar <- ncol(data)
-      if(nvar > 12){
-        nvar <- 12
-      }
+      vars <- ncol(data)
+      if(vars > 25){
+        nvar <- 25
+      }else{nvar <- vars}
 
       ## Simulate data from unidimensional factor model
       data.sim <- sim.func(data = data, nvar = nvar, nfact = nfact, load = .70)
@@ -367,17 +376,19 @@ EGA <- function (data, n = NULL, uni = TRUE,
       # Unidimensional result
       uni.res <- EGA.estimate(data = cor.data, n = n,
                               model = model, model.args = model.args,
-                              algorithm = algorithm, algorithm.args = algorithm.args)
+                              algorithm = algorithm, algorithm.args = algorithm.args,
+                              verbose = verbose)
 
       ## Remove simulated data for multidimensional result
       cor.data <- cor.data[-c(1:nvar),-c(1:nvar)]
 
       # Multidimensional result
-      multi.res <- suppressMessages(EGA.estimate(cor.data, n = n,
-                                                 model = model, model.args = model.args,
-                                                 algorithm = algorithm, algorithm.args = algorithm.args))
+      multi.res <- EGA.estimate(cor.data, n = n,
+                                model = model, model.args = model.args,
+                                algorithm = algorithm, algorithm.args = algorithm.args,
+                                verbose = FALSE)
 
-      if(uni.res$n.dim <= nfact + 1){
+      if(uni.res$n.dim <= nfact + 1 & !is.infinite(multi.res$n.dim)){
 
         n.dim <- uni.res$n.dim
         cor.data <- cor.data
@@ -409,9 +420,10 @@ EGA <- function (data, n = NULL, uni = TRUE,
       cor.data <- qgraph::cor_auto(data)
 
       # Multidimensional result
-      multi.res <- suppressMessages(EGA.estimate(cor.data, n = n,
-                                                 model = model, model.args = model.args,
-                                                 algorithm = algorithm, algorithm.args = algorithm.args))
+      multi.res <- EGA.estimate(cor.data, n = n,
+                                model = model, model.args = model.args,
+                                algorithm = algorithm, algorithm.args = algorithm.args,
+                                verbose = FALSE)
 
       n.dim <- multi.res$n.dim
       cor.data <- cor.data
@@ -429,13 +441,13 @@ EGA <- function (data, n = NULL, uni = TRUE,
 
   a <- list()
   # Returning only communities that have at least two items:
-  if(length(unique(wc))>1){
+  if(length(unique(na.omit(wc)))>1){
     indices <- seq_along(wc)
     indices2 <- indices[wc %in% wc[duplicated(wc)]]
     wc[indices[-indices2]] <- NA
     a$n.dim <- length(unique(na.omit(wc)))
   }else{
-    a$n.dim <- length(unique(wc))
+    a$n.dim <- length(unique(na.omit(wc)))
   }
 
   a$correlation <- cor.data
@@ -448,53 +460,58 @@ EGA <- function (data, n = NULL, uni = TRUE,
   }else{dim.variables <- data.frame(items = colnames(data), dimension = a$wc)}
   dim.variables <- dim.variables[order(dim.variables[, 2]),]
   a$dim.variables <- dim.variables
+  
   if (plot.EGA == TRUE) {
     if (plot.type == "qgraph"){
       if(a$n.dim < 2){
-        plot.ega <- qgraph::qgraph(a$network, layout = "spring",
-                                   vsize = plot.args$vsize, groups = as.factor(a$wc), label.prop = 1, legend = FALSE)
+        
+        if(a$n.dim != 0){
+          plot.ega <- qgraph::qgraph(a$network, layout = "spring",
+                                     vsize = plot.args$vsize, groups = as.factor(a$wc), label.prop = 1, legend = FALSE)
+        }
       }else{
         plot.ega <- qgraph::qgraph(a$network, layout = "spring",
                                    vsize = plot.args$vsize, groups = as.factor(a$wc), label.prop = 1, legend = TRUE)
       }
     }else if(plot.type == "GGally"){
       if(a$n.dim <= 2){
-        # weighted  network
-        network1 <- network::network(a$network,
-                                     ignore.eval = FALSE,
-                                     names.eval = "weights",
-                                     directed = FALSE)
-        network::set.vertex.attribute(network1, attrname= "Communities", value = a$wc)
-        network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
-        network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
-        network::set.edge.value(network1,attrname="AbsWeights",value=abs(a$network))
-        network::set.edge.value(network1,attrname="ScaledWeights",
-                                value=matrix(scales::rescale(as.vector(a$network),
-                                                             to = c(.001, 1.75)),
-                                             nrow = nrow(a$network),
-                                             ncol = ncol(a$network)))
-
-        # Layout "Spring"
-        graph1 <- NetworkToolbox::convert2igraph(a$network)
-        edge.list <- igraph::as_edgelist(graph1)
-        layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
-                                                                   weights =
-                                                                     abs(igraph::E(graph1)$weight/max(abs(igraph::E(graph1)$weight)))^2,
-                                                                   vcount = ncol(a$network))
-
-        set.seed(1234)
-        plot.ega <- GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
-                                   color = "Communities", edge.color = c("color"),
-                                   alpha = plot.args$alpha, #0.7,
-                                   size = plot.args$vsize, #12,
-                                   edge.alpha = plot.args$edge.alpha, #0.4,
-                                   mode =  layout.spring,
-                                   label.size = plot.args$label.size, #5
-                                   label = colnames(a$network)) +
-          ggplot2::theme(legend.title = ggplot2::element_blank())
-
-        plot(plot.ega)
-
+        if(a$n.dim != 0){
+          # weighted  network
+          network1 <- network::network(a$network,
+                                       ignore.eval = FALSE,
+                                       names.eval = "weights",
+                                       directed = FALSE)
+          network::set.vertex.attribute(network1, attrname= "Communities", value = a$wc)
+          network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
+          network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
+          network::set.edge.value(network1,attrname="AbsWeights",value=abs(a$network))
+          network::set.edge.value(network1,attrname="ScaledWeights",
+                                  value=matrix(scales::rescale(as.vector(a$network),
+                                                               to = c(.001, 1.75)),
+                                               nrow = nrow(a$network),
+                                               ncol = ncol(a$network)))
+          
+          # Layout "Spring"
+          graph1 <- NetworkToolbox::convert2igraph(a$network)
+          edge.list <- igraph::as_edgelist(graph1)
+          layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
+                                                                     weights =
+                                                                       abs(igraph::E(graph1)$weight/max(abs(igraph::E(graph1)$weight)))^2,
+                                                                     vcount = ncol(a$network))
+          
+          set.seed(1234)
+          plot.ega <- GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
+                                     color = "Communities", edge.color = c("color"),
+                                     alpha = plot.args$alpha, #0.7,
+                                     size = plot.args$vsize, #12,
+                                     edge.alpha = plot.args$edge.alpha, #0.4,
+                                     mode =  layout.spring,
+                                     label.size = plot.args$label.size, #5
+                                     label = colnames(a$network)) +
+            ggplot2::theme(legend.title = ggplot2::element_blank())
+          
+          plot(plot.ega)
+        }
       }else{
         # weighted  network
         network1 <- network::network(a$network,
@@ -546,7 +563,9 @@ EGA <- function (data, n = NULL, uni = TRUE,
   }
 
   a$EGA.type <- ifelse(a$n.dim <= 2, "Unidimensional EGA", "Traditional EGA")
-  a$Plot.EGA <- plot.ega
+  if(exists("plot.ega")){
+    a$Plot.EGA <- plot.ega
+  }
 
   # Get arguments
   args <- list()
@@ -583,7 +602,14 @@ EGA <- function (data, n = NULL, uni = TRUE,
   if(!uni){
     message("\nEGA did not check for unidimensionality. Set argument 'uni' to TRUE to check for unidimensionality")
   }
+  
+  # Change zero dimensions
+  if(a$n.dim == 0){
+    a$n.dim <- NA
+  }
 
+  set.seed(NULL)
+  
   # Return estimates:
   return(a)
 }

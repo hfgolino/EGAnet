@@ -95,9 +95,37 @@
 #' @export
 #'
 # Network Loadings
-# Updated 21.10.2020
+# Updated 11.11.2020
 net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
 {
+  
+  # Function to order loadings largest to smallest
+  # within their respective factors
+  descend.ord <- function(loads, wc){
+    # Initialize ordering vector
+    ord.names <- vector("character")
+    
+    # Loop through dimensions
+    for(i in 1:ncol(loads)){
+      ord <- order(loads[names(which(wc == i)),i], decreasing = TRUE)
+      ord.names <- c(ord.names, names(which(wc == i))[ord])
+    }
+    
+    # Reorder
+    reord <- loads[ord.names,]
+    
+    # Check for matrix
+    if(!is.matrix(reord)){
+      reord <- as.matrix(reord)
+    }
+    
+    # Make sure names
+    row.names(reord) <- ord.names
+    colnames(reord) <- colnames(loads)
+    
+    return(reord)
+  }
+  
   #------------------------------------------#
   ## DETECT EGA INPUT AND VARIABLE ORDERING ##
   #------------------------------------------#
@@ -113,6 +141,9 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
     # Replace 'A' with 'EGA' network
     A <- A$network
   }else{ord <- order(wc)} # Reorder by communities
+  
+  # Make sure membership is named
+  names(wc) <- colnames(A)
   
   # Check if there are actual dimensions
   if(length(wc) == length(unique(wc)))
@@ -174,7 +205,7 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
       #### START COMPUTE LOADINGS ####
       ################################
       
-      # Compute aboslute loadings
+      # Compute absolute loadings
       comm.str <- mat.func(A = A, wc = wc, absolute = TRUE, diagonal = 0)
       
       # Check for missing dimensions
@@ -208,13 +239,13 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
       # Unstandardized loadings
       unstd <- as.data.frame(round(comm.str,3))
       row.names(unstd) <- colnames(A)
-      res$unstd <- unstd
+      res$unstd <- descend.ord(unstd, wc)
       
       # Standardized loadings
       if(length(dims)!=1)
       {std <- t(t(unstd) / sqrt(colSums(abs(unstd))))
       }else{std <- t(t(unstd) / sqrt(sum(abs(unstd))))}
-      res$std <- as.data.frame(round(std,3))
+      res$std <- as.data.frame(round(descend.ord(std, wc),3))
       
       #####################
       #### PLOT SET UP ####
@@ -223,7 +254,7 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
       #Set to absolute for multidimensional
       std.res <- as.matrix(abs(res$std))
       
-      #Standardize by maximum rspbc
+      #Standardize
       std.res <- std.res / rowSums(std.res)
       
       #Ensure that pie value is not greater than 1
@@ -281,13 +312,13 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
       # Unstandardized loadings
       unstd <- as.data.frame(round(comm.str,3))
       row.names(unstd) <- colnames(A)
-      res$unstd <- unstd
+      res$unstd <- descend.ord(unstd, wc)
       
       # Standardized loadings
       if(length(dims)!=1)
       {std <- t(t(unstd) / sqrt(colSums(abs(unstd))))
       }else{std <- t(t(unstd) / sqrt(sum(abs(unstd))))}
-      res$std <- as.data.frame(round(std,3))
+      res$std <- as.data.frame(round(descend.ord(std, wc),3))
       
     }
     

@@ -11,17 +11,19 @@
 \alias{plot.NetLoads}
 \title{S3Methods for Plotting}
 \usage{
-\method{plot}{bootEGA}(x, vsize = 6, plot.type = c("GGally", "qgraph"), ...)
+\method{plot}{bootEGA}(x, plot.type = c("GGally", "qgraph"), plot.args = list(), ...)
 
 \method{plot}{CFA}(x, layout = "spring", vsize = 6, ...)
 
-\method{plot}{dynEGA}(x, title = "", vsize = 6, plot.type = c("GGally", "qgraph"), ...)
+\method{plot}{dynEGA}(x, title = "", plot.type = c("GGally", "qgraph"), plot.args = list(), ...)
 
-\method{plot}{dynEGA.Groups}(x, ncol, nrow, title = "", vsize = 6, plot.type = c("GGally", "qgraph"),  ...)
+\method{plot}{dynEGA.Groups}(x, ncol, nrow, title = "",
+plot.type = c("GGally", "qgraph"), plot.args = list(),  ...)
 
-\method{plot}{dynEGA.Individuals}(x, title = "", vsize = 6,  id = NULL, plot.type = c("GGally", "qgraph"), ...)
+\method{plot}{dynEGA.Individuals}(x, title = "",  id = NULL,
+plot.type = c("GGally", "qgraph"), plot.args = list(), ...)
 
-\method{plot}{EGA}(x, title = "", vsize = 6, plot.type = c("GGally", "qgraph"), ...)
+\method{plot}{EGA}(x, title = "", plot.type = c("GGally", "qgraph"), plot.args = list(), ...)
 
 \method{plot}{NetLoads}(x, ...)
 }
@@ -73,7 +75,7 @@ For \code{plot.type = "GGally"}:
 }}
 
 \item{vsize}{Numeric.
-Size of vertices in network plots.
+Size of vertices in \code{\link[EGAnet]{CFA}} plots.
 Defaults to \code{6}}
 
 \item{layout}{Character.

@@ -8,8 +8,9 @@ node.redundant(
   data,
   n = NULL,
   sig,
-  method = c("wTO", "pcor", "thresh"),
-  type = c("alpha", "bonferroni", "FDR", "adapt"),
+  method = c("wTO", "pcor", "cor"),
+  thresh = TRUE,
+  type = c("alpha", "adapt"),
   plot = FALSE
 )
 }
@@ -23,22 +24,36 @@ If input in \code{data} is a correlation matrix and
 Defaults to NULL}
 
 \item{sig}{Numeric.
-\emph{p}-value for significance of overlap (defaults to \code{.05}).
-If more than 200 connections, then \code{\link[fdrtool]{fdrtool}}
-is used to correct for false positives. In these instances, \code{sig}
-sets the \emph{q}-value for significance of overlap (defaults to \code{.10})}
+\emph{p}-value for significance of overlap (defaults to \code{.05})}
 
 \item{method}{Character.
 Computes weighted topological overlap (\code{"wTO"} using \code{\link[qgraph]{EBICglasso}}),
-partial correlations (\code{"pcor"}), or thresholding
-based on a certain level of partial correlations (\code{"thresh"}).
-\code{method = "thresh"} will use the argument \code{"sig"} to input
-the desired threshold (defaults to \code{sig = .20}).}
+partial correlations (\code{"pcor"}), and correlations (\code{"cor"}).
+Defaults to \code{"wTO"}}
 
-\item{type}{Character.
+\item{thresh}{Boolean.
+Should a threshold be applied?
+Defaults to \code{TRUE}.
+If \code{TRUE}, then based on a certain threshold only redundancies
+above that value will be returned.
+Uses argument \code{"sig"} to input the desired threshold.
+Defaults for each method:
+
+\itemize{
+
+\item{\code{"wTO"}}
+{.20}
+
+\item{\code{"pcor"}}
+{.20}
+
+\item{\code{"cor"}}
+{.70}
+
+}}
+
+\item{type}{Character. Type of significance.
 Computes significance using the standard \emph{p}-value (\code{"alpha"}),
-bonferroni corrected \emph{p}-value (\code{"bonferroni"}),
-false-discovery rate corrected \emph{p}-value (\code{"FDR"}),
 or adaptive alpha \emph{p}-value (\code{\link[NetworkToolbox]{adapt.a}}).
 Defaults to \code{"adapt"}}
 
@@ -95,7 +110,7 @@ redund <- node.redundant(items, method = "wTO", type = "adapt", plot = TRUE)
 redund <- node.redundant(items, method = "pcor", type = "adapt", plot = TRUE)
 
 # threshold
-redund <- node.redundant(items, method = "thresh", sig = .20, plot = TRUE)
+redund <- node.redundant(items, method = "pcor", thresh = TRUE, sig = .20, plot = TRUE)
 
 }
 \references{

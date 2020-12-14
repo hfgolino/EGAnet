@@ -50,9 +50,12 @@
 #'
 #' @export
 # Node Redundant Naming Function
-# Updated 21.10.2020
+# Updated 12.12.2020
 node.redundant.names <- function(node.redundant.obj, key)
 {
+  # Deprecation warning
+  warning("`node.redundant.names` has been deprecated and replaced with `redundancy.analysis` (see `?redundancy.analysis`")
+  
   # Check for node.redundant object class
   if(class(node.redundant.obj) != "node.redundant")
   {stop("A 'node.redundant' object must be used as input")}
@@ -87,7 +90,8 @@ node.redundant.names <- function(node.redundant.obj, key)
     # Replace item names with description
     node.redundant.obj$redundant[[i]] <- as.character(key.chn[target.o])
   }
-
+  
+  # Create key code
   names(key) <- colnames(data)
   node.redundant.obj$key <- key
 

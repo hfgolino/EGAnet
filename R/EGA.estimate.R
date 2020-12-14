@@ -76,6 +76,11 @@
 #' the \code{\link[stats]{cor}}} function.
 #' }
 #' 
+#' @param verbose Boolean.
+#' Should network estimation parameters be printed?
+#' Defaults to \code{TRUE}.
+#' Set to \code{FALSE} for no print out
+#' 
 #' @param ... Additional arguments.
 #' Used for deprecated arguments from previous versions of \code{\link{EGA}}
 #'
@@ -158,11 +163,13 @@
 #' @export
 #'
 # Estimates EGA
-# Updated 21.10.2020
+# Updated 03.12.2020
 EGA.estimate <- function(data, n = NULL,
                          model = c("glasso", "TMFG"), model.args = list(),
                          algorithm = c("walktrap", "louvain"), algorithm.args = list(),
-                         corr = c("cor_auto", "pearson", "spearman"), ...)
+                         corr = c("cor_auto", "pearson", "spearman"),
+                         verbose = TRUE,
+                         ...)
 {
   
   # Get additional arguments
@@ -330,11 +337,17 @@ EGA.estimate <- function(data, n = NULL,
 
       if(all(abs(NetworkToolbox::strength(estimated.network))>0)){
         
-        message(paste("Network estimated with:\n",
-                      " \u2022 gamma = ", gamma.values[j], "\n",
-                      " \u2022 lambda.min.ratio = ", model.formals$lambda.min.ratio,
-                      sep=""))
+        if(verbose){
+          
+          message(paste("Network estimated with:\n",
+                        " \u2022 gamma = ", gamma.values[j], "\n",
+                        " \u2022 lambda.min.ratio = ", model.formals$lambda.min.ratio,
+                        sep=""))
+          
+        }
+        
         break
+        
       }
     }
     
@@ -342,30 +355,44 @@ EGA.estimate <- function(data, n = NULL,
     estimated.network <- NetworkToolbox::TMFG(cor.data)$A
   }
 
-  # Convert to igraph
-  graph <- suppressWarnings(NetworkToolbox::convert2igraph(abs(estimated.network)))
-
   # Check for unconnected nodes
-  if(igraph::vcount(graph)!=ncol(data)){
+  if(all(NetworkToolbox::degree(estimated.network)==0)){
     
+    # Initialize community membership list
+    wc <- list()
+    wc$membership <- rep(NA, ncol(estimated.network))
     warning("Estimated network contains unconnected nodes:\n",
             paste(names(which(NetworkToolbox::strength(estimated.network)==0)), collapse = ", "))
-
+    
     unconnected <- which(NetworkToolbox::degree(estimated.network)==0)
     
+  }else{
+    
+    if(any(NetworkToolbox::degree(estimated.network)==0)){
+      
+      warning("Estimated network contains unconnected nodes:\n",
+              paste(names(which(NetworkToolbox::strength(estimated.network)==0)), collapse = ", "))
+      
+      unconnected <- which(NetworkToolbox::degree(estimated.network)==0)
+      
+    }
+    
+    # Convert to igraph
+    graph <- suppressWarnings(NetworkToolbox::convert2igraph(abs(estimated.network)))
+    
+    # Run community detection algorithm
+    algorithm.formals$graph <- graph
+    
+    if(!is.function(algorithm)){
+      
+      wc <- switch(algorithm,
+                   walktrap = do.call(igraph::cluster_walktrap, as.list(algorithm.formals)),
+                   louvain = do.call(igraph::cluster_louvain, as.list(algorithm.formals))
+      )
+      
+    }else{wc <- do.call(what = algorithm, args = as.list(algorithm.formals))}
+    
   }
-
-  # Run community detection algorithm
-  algorithm.formals$graph <- graph
-  
-  if(!is.function(algorithm)){
-    
-    wc <- switch(algorithm,
-                 walktrap = do.call(igraph::cluster_walktrap, as.list(algorithm.formals)),
-                 louvain = do.call(igraph::cluster_louvain, as.list(algorithm.formals))
-    )
-    
-  }else{wc <- do.call(what = algorithm, args = as.list(algorithm.formals))}
 
   # Obtain community memberships
   wc <- wc$membership
@@ -379,7 +406,7 @@ EGA.estimate <- function(data, n = NULL,
   }
 
   names(wc) <- colnames(data)
-  n.dim <- max(wc, na.rm = TRUE)
+  n.dim <- suppressWarnings(max(wc, na.rm = TRUE))
 
   # Return results
   res <- list()

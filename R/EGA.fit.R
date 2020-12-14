@@ -64,7 +64,7 @@
 #'
 #' # Compare with CFA
 #' cfa.ega <- CFA(ega.wmt, estimator = "WLSMV", data = wmt)
-#' cfa.fit <- CFA(fit.wmt.opt$EGA, estimator = "WLSMV", data = wmt)
+#' cfa.fit <- CFA(fit.wmt$EGA, estimator = "WLSMV", data = wmt)
 #'
 #' lavaan::lavTestLRT(cfa.ega$fit, cfa.fit$fit, method = "satorra.bentler.2001")
 #' }
@@ -97,7 +97,7 @@
 #'
 #' @export
 # EGA fit
-# Updated 20.10.2020
+# Updated 11.11.2020
 EGA.fit <- function (data, model = c("glasso","TMFG"),
                      steps = c(3,4,5,6,7,8), n = NULL)
 {
@@ -108,6 +108,12 @@ EGA.fit <- function (data, model = c("glasso","TMFG"),
   if(missing(steps))
   {steps <- c(3,4,5,6,7,8)
   }else{steps <- steps}
+  
+  #Speed up process with data
+  if(nrow(data) != ncol(data)){
+    n <- nrow(data)
+    data <- qgraph::cor_auto(data)
+  }
 
   best.fit <- list()
 

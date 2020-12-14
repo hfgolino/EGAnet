@@ -69,212 +69,327 @@ print.dynEGA<- function(x, ...) {
   print(x$dynEGA$dim.variables)
 }
 
-#Plot dynEGA function (Level: Group)
-plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", vsize = 6, plot.type = c("GGally","qgraph"),...){
+# Plot dynEGA function (Level: Group)----
+# Updated 12.12.2020
+#' @export
+plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally","qgraph"),
+                               plot.args = list(), ...){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
   {plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
-
+  
+  ## Check for input plot arguments
+  if(missing(plot.args)){
+    plot.args <-list(vsize = 6, alpha = 0.4, label.size = 5, edge.alpha = 0.7)}
+  
+  else{
+    plot.args <- plot.args
+    plots.arg1 <- list(vsize = 6, label.size = 5, alpha = 0.4, edge.alpha = 0.7)
+    plot.args.use <- plot.args
+    
+    if(any(names(plots.arg1) %in% names(plot.args.use))){
+      
+      plot.replace.args <- plots.arg1[na.omit(match(names(plot.args.use), names(plots.arg1)))]
+      
+      plot.args <- c(plot.args.use,plots.arg1[names(plots.arg1) %in% names(plot.args.use)==FALSE])}
+  }
+  
+  
   ### Plot ###
   if(plot.type == "qgraph"){
     par(mfrow=c(nrow,ncol))
     for(i in 1:length(x$dynEGA)){
-      qgraph::qgraph(x$dynEGA[[i]]$network, layout = "spring", vsize = vsize, groups = as.factor(x$dynEGA[[i]]$wc), ...)
+      qgraph::qgraph(x$dynEGA[[i]]$network, layout = "spring", vsize = plot.args$vsize, groups = as.factor(x$dynEGA[[i]]$wc), ...)
       title(names(x$dynEGA)[[i]], ...)}
   } else if(plot.type == "GGally"){
-    par(mfrow=c(nrow,ncol))
+    
+    plots.net <- vector("list", length = length(x$dynEGA))
+    network1 <- vector("list", length = length(x$dynEGA))
+    graph1 <- vector("list", length = length(x$dynEGA))
+    edge.list <- vector("list", length = length(x$dynEGA))
+    layout.spring <- vector("list", length = length(x$dynEGA))
+    
+    
     for(i in 1:length(x$dynEGA)){
       # weighted  network
       network1[[i]] <- network::network(x$dynEGA[[i]]$network,
                                         ignore.eval = FALSE,
                                         names.eval = "weights",
                                         directed = FALSE)
-
-      network::set.vertex.attribute( network1[[i]] , attrname= "Communities", value = x$dynEGA[[i]]$wc)
-      network::set.vertex.attribute( network1[[i]] , attrname= "Names", value = network::network.vertex.names(network1[[i]]))
-      network::set.edge.attribute( network1[[i]] , "color", ifelse(get.edge.value(network1[[i]], "weights") > 0, "darkgreen", "red"))
-      network::set.edge.value( network1[[i]] ,attrname="AbsWeights",value=abs(x$dynEGA[[i]]$network))
+      
+      network::set.vertex.attribute(network1[[i]], attrname= "Communities", value = x$dynEGA[[i]]$wc)
+      network::set.vertex.attribute(network1[[i]], attrname= "Names", value = network::network.vertex.names(network1[[i]]))
+      network::set.edge.attribute(network1[[i]], "color", ifelse(network::get.edge.value(network1[[i]], "weights") > 0, "darkgreen", "red"))
+      network::set.edge.value(network1[[i]], attrname="AbsWeights",value=abs(x$dynEGA[[i]]$network))
       network::set.edge.value(network1[[i]],attrname="ScaledWeights",
                               value=matrix(scales::rescale(as.vector(x$dynEGA[[i]]$network),
                                                            to = c(.001, 1.75)),
                                            nrow = nrow(x$dynEGA[[i]]$network),
                                            ncol = ncol(x$dynEGA[[i]]$network)))
-
+      
       # Layout "Spring"
       graph1[[i]] <- NetworkToolbox::convert2igraph(x$dynEGA[[i]]$network)
       edge.list[[i]] <- igraph::as_edgelist(graph1[[i]])
       layout.spring[[i]] <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list[[i]],
                                                                       weights =
-                                                                        abs(E(graph1[[i]])$weight/max(abs(E(graph1[[i]])$weight)))^2,
+                                                                        abs(igraph::E(graph1[[i]])$weight/max(abs(igraph::E(graph1[[i]])$weight)))^2,
                                                                       vcount = ncol(x$dynEGA[[i]]$network))
-
-
+      
+      
       set.seed(1234)
-      GGally::ggnet2(network1[[i]], edge.size = "ScaledWeights", palette = "Set1",
-                     color = "Communities", edge.color = c("color"),
-                     alpha = 0.7, size = 12, edge.alpha = 0.4,
-                     mode =  layout.spring[[i]],
-                     label.size = 5,
-                     label = colnames(x$dynEGA[[i]]$network))+theme(legend.title = element_blank())
+      plots.net[[i]] <- GGally::ggnet2(network1[[i]], edge.size = "ScaledWeights", palette = "Set1",
+                                       color = "Communities", edge.color = c("color"),
+                                       alpha = plot.args$alpha, size = plot.args$vsize,
+                                       edge.alpha = plot.args$edge.alpha,
+                                       mode =  layout.spring[[i]],
+                                       label.size = plot.args$label.size,
+                                       label = colnames(x$dynEGA[[i]]$network))+ggplot2::theme(legend.title = ggplot2::element_blank())
+      
     }
+    group.labels <- names(x$dynEGA)
+    set.seed(NULL)
+    ggpubr::ggarrange(plotlist=plots.net, ncol = ncol, nrow = nrow, labels = group.labels, label.x = 0.3)
   }
 }
-#Plot dynEGA function (Level: Population)
-plot.dynEGA <- function(x, title = "", vsize = 6,  plot.type = c("GGally","qgraph"),...){
+
+# Plot dynEGA function (Level: Population)----
+# Updated 12.12.2020
+#' @export
+plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
+                        plot.args = list(), ...){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
   {plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
-
+  
+  ## Check for input plot arguments
+  if(missing(plot.args)){
+    plot.args <-list(vsize = 6, alpha = 0.4, label.size = 5, edge.alpha = 0.7)}
+  
+  else{
+    plot.args <- plot.args
+    plots.arg1 <- list(vsize = 6, label.size = 5, alpha = 0.4, edge.alpha = 0.7)
+    plot.args.use <- plot.args
+    
+    if(any(names(plots.arg1) %in% names(plot.args.use))){
+      
+      plot.replace.args <- plots.arg1[na.omit(match(names(plot.args.use), names(plots.arg1)))]
+      
+      plot.args <- c(plot.args.use,plots.arg1[names(plots.arg1) %in% names(plot.args.use)==FALSE])}
+  }
+  
+  
   ### Plot ###
   if(plot.type == "qgraph"){
-    qgraph::qgraph(x$dynEGA$network, layout = "spring", vsize = vsize, groups = as.factor(x$dynEGA$wc), ...)
+    ega.plot <- qgraph::qgraph(x$dynEGA$network, layout = "spring", vsize = plot.args$vsize, groups = as.factor(x$dynEGA$wc), ...)
   }else if(plot.type == "GGally"){
     # weighted  network
     network1 <- network::network(x$dynEGA$network,
                                  ignore.eval = FALSE,
                                  names.eval = "weights",
                                  directed = FALSE)
-
+    
     network::set.vertex.attribute(network1, attrname= "Communities", value = x$dynEGA$wc)
     network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
-    network::set.edge.attribute(network1, "color", ifelse(get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
+    network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
     network::set.edge.value(network1,attrname="AbsWeights",value=abs(x$dynEGA$network))
     network::set.edge.value(network1,attrname="ScaledWeights",
                             value=matrix(scales::rescale(as.vector(x$dynEGA$network),
                                                          to = c(.001, 1.75)),
                                          nrow = nrow(x$dynEGA$network),
                                          ncol = ncol(x$dynEGA$network)))
-
+    
     # Layout "Spring"
     graph1 <- NetworkToolbox::convert2igraph(x$dynEGA$network)
     edge.list <- igraph::as_edgelist(graph1)
     layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
                                                                weights =
-                                                                 abs(E(graph1)$weight/max(abs(E(graph1)$weight)))^2,
+                                                                 abs(igraph::E(graph1)$weight/max(abs(igraph::E(graph1)$weight)))^2,
                                                                vcount = ncol(x$dynEGA$network))
-
-
+    
+    
     set.seed(1234)
-    GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
+    ega.plot <- GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
                    color = "Communities", edge.color = c("color"),
-                   alpha = 0.7, size = 12, edge.alpha = 0.4,
+                   alpha = plot.args$alpha, size = plot.args$vsize,
+                   edge.alpha = plot.args$edge.alpha,
+                   label.size = plot.args$label.size,
                    mode =  layout.spring,
-                   label.size = 5,
-                   label = colnames(x$dynEGA$network))+theme(legend.title = element_blank())
+                   label = colnames(x$dynEGA$network))+ggplot2::theme(legend.title = ggplot2::element_blank())
   }
+  set.seed(NULL)
+  plot(ega.plot)
 }
 
-
-
-#Plot dynEGA function (Level: Individual)
-plot.dynEGA.Individuals <- function(x, title = "", vsize = 6,  id = NULL, plot.type = c("GGally","qgraph"),...){
+# Plot dynEGA function (Level: Individual)----
+# Updated 12.12.2020
+#' @export
+plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GGally","qgraph"),
+                                    plot.args = list(), ...){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
   {plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
-
+  
+  ## Check for input plot arguments
+  if(missing(plot.args)){
+    plot.args <-list(vsize = 6, alpha = 0.4, label.size = 5, edge.alpha = 0.7)}
+  
+  else{
+    plot.args <- plot.args
+    plots.arg1 <- list(vsize = 6, label.size = 5, alpha = 0.4, edge.alpha = 0.7)
+    plot.args.use <- plot.args
+    
+    if(any(names(plots.arg1) %in% names(plot.args.use))){
+      
+      plot.replace.args <- plots.arg1[na.omit(match(names(plot.args.use), names(plots.arg1)))]
+      
+      plot.args <- c(plot.args.use,plots.arg1[names(plots.arg1) %in% names(plot.args.use)==FALSE])}
+  }
+  
   ### Plot ###
   if(plot.type == "qgraph"){
-    plot.dynEGA.Individuals <- qgraph::qgraph(x$dynEGA[[id]]$network, layout = "spring", vsize = vsize, groups = as.factor(x$dynEGA[[id]]$wc), ...)
+    plot.dynEGA.Individuals <- qgraph::qgraph(x$dynEGA[[id]]$network, layout = "spring", vsize = plot.args$vsize, groups = as.factor(x$dynEGA[[id]]$wc), ...)
   }else if(plot.type == "GGally"){
     # weighted  network
     network1 <- network::network(x$dynEGA[[id]]$network,
                                  ignore.eval = FALSE,
                                  names.eval = "weights",
                                  directed = FALSE)
-
+    
     network::set.vertex.attribute(network1, attrname= "Communities", value = x$dynEGA[[id]]$wc)
     network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
-    network::set.edge.attribute(network1, "color", ifelse(get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
+    network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
     network::set.edge.value(network1,attrname="AbsWeights",value=abs(x$dynEGA[[id]]$network))
     network::set.edge.value(network1,attrname="ScaledWeights",
                             value=matrix(scales::rescale(as.vector(x$dynEGA[[id]]$network),
                                                          to = c(.001, 1.75)),
                                          nrow = nrow(x$dynEGA[[id]]$network),
                                          ncol = ncol(x$dynEGA[[id]]$network)))
-
+    
     # Layout "Spring"
     graph1 <- NetworkToolbox::convert2igraph(x$dynEGA[[id]]$network)
     edge.list <- igraph::as_edgelist(graph1)
     layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
                                                                weights =
-                                                                 abs(E(graph1)$weight/max(abs(E(graph1)$weight)))^2,
+                                                                 abs(igraph::E(graph1)$weight/max(abs(igraph::E(graph1)$weight)))^2,
                                                                vcount = ncol(x$dynEGA[[id]]$network))
-
-
+    
+    
     set.seed(1234)
-    GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
+    ega.plot <- GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
                    color = "Communities", edge.color = c("color"),
-                   alpha = 0.7, size = 12, edge.alpha = 0.4,
+                   alpha = plot.args$alpha, size = plot.args$vsize,
+                   edge.alpha = plot.args$edge.alpha,
+                   label.size = plot.args$label.size,
                    mode =  layout.spring,
-                   label.size = 5,
-                   label = colnames(x$dynEGA[[id]]$network))+theme(legend.title = element_blank())
+                   label = colnames(x$dynEGA[[id]]$network))+ggplot2::theme(legend.title = ggplot2::element_blank())
+    set.seed(NULL)
+    plot(ega.plot)
   }
 }
 
-
-
-# Plot EGA:
-plot.EGA <- function(x, title = "", vsize = 6,  plot.type = c("GGally","qgraph"),...){
+# Plot EGA----
+# Updated 12.12.2020
+#' @export
+plot.EGA <- function(x, title = "",  plot.type = c("GGally","qgraph"),
+                     plot.args = list(), ...){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
   {plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
-
+  
+  ## Check for input plot arguments
+  if(missing(plot.args)){
+    plot.args <-list(vsize = 6, alpha = 0.4, label.size = 5, edge.alpha = 0.7)}
+  
+  else{
+    plot.args <- plot.args
+    plots.arg1 <- list(vsize = 6, label.size = 5, alpha = 0.4, edge.alpha = 0.7)
+    plot.args.use <- plot.args
+    
+    if(any(names(plots.arg1) %in% names(plot.args.use))){
+      
+      plot.replace.args <- plots.arg1[na.omit(match(names(plot.args.use), names(plots.arg1)))]
+      
+      plot.args <- c(plot.args.use,plots.arg1[names(plots.arg1) %in% names(plot.args.use)==FALSE])}
+  }
+  
+  
   ### Plot ###
   if(plot.type == "qgraph"){
-    plot.ega <- qgraph::qgraph(x$network, layout = "spring", vsize = vsize, groups = as.factor(x$wc), ...)
+    ega.plot <- qgraph::qgraph(x$network, layout = "spring", vsize = plot.args$vsize, groups = as.factor(x$wc), ...)
   }else if(plot.type == "GGally"){
     # weighted  network
     network1 <- network::network(x$network,
                                  ignore.eval = FALSE,
                                  names.eval = "weights",
                                  directed = FALSE)
-
+    
     network::set.vertex.attribute(network1, attrname= "Communities", value = x$wc)
     network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
-    network::set.edge.attribute(network1, "color", ifelse(get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
+    network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
     network::set.edge.value(network1,attrname="AbsWeights",value=abs(x$network))
     network::set.edge.value(network1,attrname="ScaledWeights",
                             value=matrix(scales::rescale(as.vector(x$network),
                                                          to = c(.001, 1.75)),
                                          nrow = nrow(x$network),
                                          ncol = ncol(x$network)))
-
+    
     # Layout "Spring"
     graph1 <- NetworkToolbox::convert2igraph(x$network)
     edge.list <- igraph::as_edgelist(graph1)
     layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
                                                                weights =
-                                                                 abs(E(graph1)$weight/max(abs(E(graph1)$weight)))^2,
+                                                                 abs(igraph::E(graph1)$weight/max(abs(igraph::E(graph1)$weight)))^2,
                                                                vcount = ncol(x$network))
-
-
+    
+    
     set.seed(1234)
-    GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
+    ega.plot <- GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
                    color = "Communities", edge.color = c("color"),
-                   alpha = 0.7, size = 12, edge.alpha = 0.4,
+                   alpha = plot.args$alpha, size = plot.args$vsize,
+                   edge.alpha = plot.args$edge.alpha,
+                   label.size = plot.args$label.size,
                    mode =  layout.spring,
-                   label.size = 5,
-                   label = colnames(x$network))+theme(legend.title = element_blank())
+                   label = colnames(x$network))+ggplot2::theme(legend.title = ggplot2::element_blank())
   }
+  set.seed(NULL)
+  
+  plot(ega.plot)
 }
 
-
-# Plot bootEGA:
-plot.bootEGA <- function(x, vsize = 6, plot.type = c("GGally","qgraph"),...){
+# Plot bootEGA----
+# Updated 12.12.2020
+plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
+                         plot.args = list(), ...){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
   {plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
-
+  
+  ## Check for input plot arguments
+  if(missing(plot.args)){
+    plot.args <-list(vsize = 6, alpha = 0.4, label.size = 5, edge.alpha = 0.7)}
+  
+  else{
+    plot.args <- plot.args
+    plots.arg1 <- list(vsize = 6, label.size = 5, alpha = 0.4, edge.alpha = 0.7)
+    plot.args.use <- plot.args
+    
+    if(any(names(plots.arg1) %in% names(plot.args.use))){
+      
+      plot.replace.args <- plots.arg1[na.omit(match(names(plot.args.use), names(plots.arg1)))]
+      
+      plot.args <- c(plot.args.use,plots.arg1[names(plots.arg1) %in% names(plot.args.use)==FALSE])}
+  }
+  
   ### Plot ###
   if(plot.type == "qgraph"){
-    qgraph::qgraph(x$typicalGraph$graph, layout = "spring",
+    ega.plot <- qgraph::qgraph(x$typicalGraph$graph, layout = "spring",
                    groups = as.factor(x$typicalGraph$wc),
-                   vsize = vsize, ...)
+                   vsize = plot.args$vsize, ...)
   }else if(plot.type == "GGally"){
     # weighted  network
     network1 <- network::network(x$typicalGraph$graph,
@@ -283,35 +398,36 @@ plot.bootEGA <- function(x, vsize = 6, plot.type = c("GGally","qgraph"),...){
                                  directed = FALSE)
     network::set.vertex.attribute(network1, attrname= "Communities", value = x$typicalGraph$wc)
     network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
-    network::set.edge.attribute(network1, "color", ifelse(get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
+    network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
     network::set.edge.value(network1,attrname="AbsWeights",value=abs(x$typicalGraph$graph))
     network::set.edge.value(network1,attrname="ScaledWeights",
                             value=matrix(scales::rescale(as.vector(x$typicalGraph$graph),
                                                          to = c(.001, 1.75)),
                                          nrow = nrow(x$typicalGraph$graph),
                                          ncol = ncol(x$typicalGraph$graph)))
-
+    
     # Layout "Spring"
     graph1 <- NetworkToolbox::convert2igraph(x$typicalGraph$graph)
     edge.list <- igraph::as_edgelist(graph1)
     layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
                                                                weights =
-                                                                 abs(E(graph1)$weight/max(abs(E(graph1)$weight)))^2,
+                                                                 abs(igraph::E(graph1)$weight/max(abs(igraph::E(graph1)$weight)))^2,
                                                                vcount = ncol(x$typicalGraph$graph))
-
-
+    
+    
     set.seed(1234)
-    GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
+    ega.plot <- GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
                    color = "Communities", edge.color = c("color"),
-                   alpha = 0.7, size = 12, edge.alpha = 0.4,
+                   alpha = plot.args$alpha, size = plot.args$vsize,
+                   edge.alpha = plot.args$edge.alpha,
                    mode =  layout.spring,
-                   label.size = 5,
-                   label = colnames(x$typicalGraph$graph))+theme(legend.title = element_blank())
-
+                   label.size = plot.args$label.size,
+                   label = colnames(x$typicalGraph$graph)) + ggplot2::theme(legend.title = ggplot2::element_blank())
+    
   }
+  set.seed(NULL)
+  plot(ega.plot)
 }
-
-
 
 # Dynamic Plot:
 dynamic.plot <- function(ega.obj, title = "", vsize = 30, opacity = 0.4){

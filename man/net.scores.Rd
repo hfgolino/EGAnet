@@ -4,7 +4,7 @@
 \alias{net.scores}
 \title{Network Scores}
 \usage{
-net.scores(data, A, wc, global = FALSE, impute = "none", ...)
+net.scores(data, A, wc, global = FALSE, impute, ...)
 }
 \arguments{
 \item{data}{Matrix or data frame.

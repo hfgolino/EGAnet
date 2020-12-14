@@ -27,16 +27,16 @@ Lower values suggest better fit of a structure to the data.
 }
 \examples{
 # Load data
-wmt <- wmt2[,7:24]
+dep <- depression[,24:44]
 
-\dontrun{
-# Estimate EGA model
-ega.wmt <- EGA(data = wmt, model = "glasso")
-
-}
+\donttest{# Estimate EGA
+## plot.type = "qqraph" used for CRAN checks
+## plot.type = "GGally" is the default
+ega.dep <- EGA(data = dep, model = "glasso", plot.type = "qgraph")
 
 # Compute entropy indices
-vn.entropy(data = ega.wmt$correlation, structure = ega.wmt$wc)
+vn.entropy(data = ega.dep$correlation, structure = ega.dep$wc)
+}
 
 }
 \references{

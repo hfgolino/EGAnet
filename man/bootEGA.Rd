@@ -143,8 +143,7 @@ For \code{plot.type = "GGally"}:
 Number of cores to use in computing results.
 Defaults to \code{parallel::detectCores() / 2} or half of your
 computer's processing power.
-Set to \code{1} to not use parallel computing.
-Recommended to use maximum number of cores minus one
+Set to \code{1} to not use parallel computing
 
 If you're unsure how many cores your computer has,
 then use the following code: \code{parallel::detectCores()}}
@@ -212,7 +211,7 @@ boot.wmt <- bootEGA(data = wmt, iter = 500, algorithm = "louvain",
 plot.type = "qgraph", type = "parametric", ncores = 2)
 
 # bootEGA Spinglass example
-boot.wmt <- bootEGA(data = wmt, iter = 500, plot.type = "qgraph",
+boot.wmt <- bootEGA(data = wmt, iter = 500, model = "TMFG", plot.type = "qgraph",
 algorithm = igraph::cluster_spinglass, type = "parametric", ncores = 2)
 }
 

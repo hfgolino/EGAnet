@@ -15,22 +15,36 @@
 #' Defaults to NULL
 #'
 #' @param sig Numeric.
-#' \emph{p}-value for significance of overlap (defaults to \code{.05}).
-#' If more than 200 connections, then \code{\link[fdrtool]{fdrtool}}
-#' is used to correct for false positives. In these instances, \code{sig}
-#' sets the \emph{q}-value for significance of overlap (defaults to \code{.10})
+#' \emph{p}-value for significance of overlap (defaults to \code{.05})
 #'
 #' @param method Character.
 #' Computes weighted topological overlap (\code{"wTO"} using \code{\link[qgraph]{EBICglasso}}),
-#' partial correlations (\code{"pcor"}), or thresholding
-#' based on a certain level of partial correlations (\code{"thresh"}).
-#' \code{method = "thresh"} will use the argument \code{"sig"} to input
-#' the desired threshold (defaults to \code{sig = .20}).
+#' partial correlations (\code{"pcor"}), and correlations (\code{"cor"}).
+#' Defaults to \code{"wTO"}
+#' 
+#' @param thresh Boolean.
+#' Should a threshold be applied?
+#' Defaults to \code{TRUE}.
+#' If \code{TRUE}, then based on a certain threshold only redundancies
+#' above that value will be returned.
+#' Uses argument \code{"sig"} to input the desired threshold.
+#' Defaults for each method:
+#' 
+#' \itemize{
+#' 
+#' \item{\code{"wTO"}}
+#' {.20}
+#' 
+#' \item{\code{"pcor"}}
+#' {.20}
+#' 
+#' \item{\code{"cor"}}
+#' {.70}
+#' 
+#' } 
 #'
-#' @param type Character.
+#' @param type Character. Type of significance.
 #' Computes significance using the standard \emph{p}-value (\code{"alpha"}),
-#' bonferroni corrected \emph{p}-value (\code{"bonferroni"}),
-#' false-discovery rate corrected \emph{p}-value (\code{"FDR"}),
 #' or adaptive alpha \emph{p}-value (\code{\link[NetworkToolbox]{adapt.a}}).
 #' Defaults to \code{"adapt"}
 #' 
@@ -79,7 +93,7 @@
 #' redund <- node.redundant(items, method = "pcor", type = "adapt", plot = TRUE)
 #' 
 #' # threshold
-#' redund <- node.redundant(items, method = "thresh", sig = .20, plot = TRUE)
+#' redund <- node.redundant(items, method = "pcor", thresh = TRUE, sig = .20, plot = TRUE)
 #'
 #' @references
 #' # Simulation using node.redundant \cr
@@ -107,15 +121,22 @@
 #' @export
 #
 # Redundant Nodes Function
-# Updated 01.09.2020
-node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "thresh"),
-                            type = c("alpha", "bonferroni", "FDR", "adapt"),
+# Updated 12.12.2020
+node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "cor"),
+                            thresh = TRUE, type = c("alpha", "adapt"),
                             plot = FALSE)
 {
+  # Deprecation warning
+  warning("`node.redundant` has been deprecated and replaced with `redundancy.analysis` (see `?redundancy.analysis`")
+  
   #### missing arguments handling ####
   
-  if(missing(type))
-  {type <- "adapt"
+  if(missing(method)){
+    method <- "wTO"
+  }else{method <- match.arg(method)}
+  
+  if(missing(type)){
+    type <- "adapt"
   }else{type <- match.arg(type)}
   
   #### missing arguments handling ####
@@ -125,37 +146,35 @@ node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "thre
   method <- tolower(method)
   
   # check for correlation matrix
-  if(ncol(data) == nrow(data))
-  {
+  if(ncol(data) == nrow(data)){
+    
     A <- data
     
-    # check for number of cases ("wTO" only)
-    if(method == "wto")
-    {
+    if(method == "wto"){# check for number of cases ("wTO" only)
+      
       if(is.null(n))
       {stop('Argument \'n\' is NULL. Number of cases must be specified when a correlation matrix is input into the \'data\' argument and method = "wTO"')}
     }
-  }else{
-    # correlate data
+    
+  }else{# correlate data
     A <- qgraph::cor_auto(data)
     # number of cases
     n <- nrow(data)
   }
 
   #compute redundant method
-  if(method == "wto")
-  {
-    # compute network
+  if(method == "wto"){# compute network
     net <- EBICglasso.qgraph(A, n = n)
-    tom <- wTO::wTO(net,sign="sign")
-  }else if(method == "pcor" || method == "thresh")
-  {tom <- -cov2cor(solve(A))}
+    tom <- wTO::wTO(net, sign = "sign")
+  }else if(method == "pcor"){# compute precision matrix
+    tom <- -cov2cor(solve(A))
+  }else{tom <- A}
 
   #number of nodes
   nodes <- ncol(tom)
-
+  #make diagonal zero
   diag(tom) <- 0
-
+  #absolute values
   tom <- abs(tom)
 
   #lower triangle of TOM
@@ -179,30 +198,44 @@ node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "thre
   #obtain only positive values
   pos.vals <- na.omit(ifelse(lower==0,NA,lower))
   attr(pos.vals, "na.action") <- NULL
-
-  if(method != "thresh")
-  {
+  
+  if(thresh){
+    
+    #get defaults
+    if(missing(sig)){
+      sig <- switch(method,
+                    "wto" = .20,
+                    "pcor" = .20,
+                    "cor" = .70
+                    )
+    }
+    
+    #threshold values
+    res <- pos.vals[which(abs(pos.vals) > sig)]
+    
+  }else{
+    
     #determine distribution
     ##distributions
     distr <- c("norm","gamma")
     aic <- vector("numeric", length = length(distr))
     names(aic) <- c("normal","gamma")
-
+    
     for(i in 1:length(distr))
     {aic[i] <- fitdistrplus::fitdist(pos.vals,distr[i],method="mle")$aic}
-
+    
     #obtain distribution parameters
     g.dist <- suppressWarnings(MASS::fitdistr(pos.vals, names(aic)[which.min(aic)]))
-
+    
     #compute significance values
     pval <- switch(names(aic)[which.min(aic)],
-
+                   
                    normal = 1 - unlist(lapply(pos.vals, #positive wTo
                                               pnorm, #probability in normal distribution
                                               mean = g.dist$estimate["mean"], #mean of normal
                                               sd = g.dist$estimate["sd"]) #sd of normal
                    ),
-
+                   
                    gamma = 1 - unlist(lapply(pos.vals, #positive wTo
                                              pgamma, #probability in gamma distribution
                                              shape = g.dist$estimate["shape"], #shape of gamma
@@ -211,35 +244,18 @@ node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "thre
     )
     
     #switch for missing arguments
-    if(missing(sig))
-    {
-      sig <- switch(type,
-                    fdr = .10,
-                    bonferroni = .05,
-                    adapt = .05,
-                    alpha = .05
-      )
+    if(missing(sig)){
+      sig <- .05
     }else{sig <- sig}
     
     #switch to compute pvals
-    if(type == "fdr")
-    {
-      pval <- suppressWarnings(fdrtool::fdrtool(pval, statistic = "pvalue", plot = FALSE, verbose = FALSE)$qval)
-    }else{
-      sig <- switch(type,
-                    bonferroni = sig / length(pos.vals),
-                    adapt = NetworkToolbox::adapt.a("cor", alpha = sig, n = length(pos.vals), efxize = "medium")$adapt.a,
-                    alpha = sig
-      )
+    if(type == "adapt"){
+      sig <- NetworkToolbox::adapt.a("cor", alpha = sig, n = length(pos.vals), efxize = "medium")$adapt.a
     }
-
-    #identify q-values less than sigificance
+    
+    #identify q-values less than significance
     res <- pos.vals[which(pval<=sig)]
-
-  }else{
-    sig <- ifelse(missing(sig), .20, sig)
-
-    res <- pos.vals[which(abs(lower) > sig)]
+    
   }
 
   #if no redundant, then print no redundant nodes
@@ -344,7 +360,7 @@ node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "thre
   desc[,"Maximum"] <- range(pos.vals, na.rm = TRUE)[2]
   
   # Critical value
-  if(method == "thresh")
+  if(thresh)
   {desc[,"Critical Value"] <- sig
   }else{
     
@@ -381,12 +397,10 @@ node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "thre
   full.res$redundant <- res.list
   full.res$data <- data
   full.res$weights <- tom
-  if(exists("net"))
-  {full.res$network <- net}
+  if(exists("net")){full.res$network <- net}
   full.res$descriptives$basic <- round(desc, 3)
   full.res$descriptives$centralTendency <- pos.output
-  if(method != "thresh")
-  {full.res$distribution <- names(aic)[which.min(aic)]}
+  if(!thresh){full.res$distribution <- names(aic)[which.min(aic)]}
   
   class(full.res) <- "node.redundant"
 
