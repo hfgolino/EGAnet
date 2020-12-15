@@ -2793,7 +2793,11 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
           FUN <- lavaan::cfa
           
           ## fit model
-          fit <- do.call(what = "FUN", args = as.list(lavaan.args))
+          fit <- suppressWarnings(
+            suppressMessages(
+              do.call(what = "FUN", args = as.list(lavaan.args))
+            )
+          )
             
           ## identify cases
           cases <- lavaan::inspect(fit, "case.idx")
