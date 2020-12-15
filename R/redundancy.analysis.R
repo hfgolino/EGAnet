@@ -362,7 +362,7 @@ redundancy.analysis <- function(data, n = NULL,
   # Check for any remaining redundancies
   if(adhoc){
     ## Message user
-    message("Running adhoc check for any potential redundancies remaining")
+    message("Running adhoc check for any potential redundancies remaining...")
     
     ## Run check
     adhoc.check <- suppressMessages(
@@ -372,6 +372,12 @@ redundancy.analysis <- function(data, n = NULL,
                          plot.redundancy = FALSE, plot.args = plot.args)
     )
     
+    ## Let user know the check is done
+    message("done", appendLF = TRUE)
+    
+    # Artificial pause for feel
+    Sys.sleep(1)
+    
     if(all(is.na(adhoc.check$redundant))){
       
       message("Some redundancies may still exist. See `OUTPUT$adhoc`")
@@ -379,6 +385,8 @@ redundancy.analysis <- function(data, n = NULL,
     }else{message("No redundancies reamin.")}
   }
   
+  # Artificial pause for feel
+  Sys.sleep(1)
   
   # Full results
   res <- list()
