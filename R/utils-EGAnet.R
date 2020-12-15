@@ -2980,7 +2980,7 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
     m.mat <- NULL
   }else{
     m.mat <- t(m.mat)
-    colnames(m.mat) <- c("Target", paste("Redundancy_", 2:ncol(m.mat), sep = ""))
+    colnames(m.mat) <- c("Target", paste("Redundancy_", 1:(ncol(m.mat)-1), sep = ""))
   }
   
   # Initialize results list
