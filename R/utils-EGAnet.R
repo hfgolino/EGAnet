@@ -2976,8 +2976,12 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
   }
   
   # Check if 'm.mat' exists
-  if(!exists("m.mat"))
-  {m.mat <- NULL}
+  if(!exists("m.mat")){
+    m.mat <- NULL
+  }else{
+    m.mat <- t(m.mat)
+    colnames(m.mat) <- c("Target", paste("Redundancy_", 2:ncol(m.mat), sep = ""))
+  }
   
   # Initialize results list
   res <- list()
