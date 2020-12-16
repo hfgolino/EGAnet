@@ -243,7 +243,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
 
   if(plot.type == "GGally"){
 
-    if(length(plot.args) == 0){
+    if(is.null(plot.args) == TRUE){
 
       default.args <- formals(GGally::ggnet2)
       default.args[names(plot.args)] <- list(size = 6, alpha = 0.4, label.size = 5,
@@ -497,7 +497,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
                                    vsize = plot.args$vsize, groups = as.factor(a$wc), label.prop = 1, legend = TRUE)
       }
     }else if(plot.type == "GGally"){
-      if(a$n.dim <= 2){
+      if(a$n.dim < 2){
         if(a$n.dim != 0){
           # weighted  network
           network1 <- network::network(a$network,
@@ -523,15 +523,19 @@ EGA <- function (data, n = NULL, uni = TRUE,
                                                                      vcount = ncol(a$network))
 
           set.seed(1234)
-          plot.ega <- GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
-                                     color = "Communities", edge.color = c("color"),
-                                     alpha = plot.args$alpha, #0.7,
-                                     size = plot.args$vsize, #12,
-                                     edge.alpha = plot.args$edge.alpha, #0.4,
-                                     mode =  layout.spring,
-                                     label.size = plot.args$label.size, #5
-                                     label = colnames(a$network)) +
-            ggplot2::theme(legend.title = ggplot2::element_blank())
+          plot.args$net <- network1
+          plot.args$node.color <- "Communities"
+          plot.args$node.alpha <- plot.args$alpha
+          plot.args$node.shape <- plot.args$shape
+          plot.args$node.size <- plot.args$size
+          plot.args$edge.color <- "color"
+          plot.args$edge.size <- "ScaledWeights"
+          plot.args$color.palette <- "Set1"
+          plot.args$mode <- layout.spring
+          plot.args$label <- colnames(a$network)
+          plot.args$node.label <- plot.args$label
+
+          plot.ega <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank(), legend.position = "none")
 
           plot(plot.ega)
         }
@@ -563,12 +567,16 @@ EGA <- function (data, n = NULL, uni = TRUE,
 
         set.seed(1234)
         plot.args$net <- network1
-        plot.args$color <- "Communities"
+        plot.args$node.color <- "Communities"
+        plot.args$node.alpha <- plot.args$alpha
+        plot.args$node.shape <- plot.args$shape
+        plot.args$node.size <- plot.args$size
         plot.args$edge.color <- "color"
         plot.args$edge.size <- "ScaledWeights"
-        plot.args$palette <- "Set1"
+        plot.args$color.palette <- "Set1"
         plot.args$mode <- layout.spring
-        plot.args$label <- colnames(x$network)
+        plot.args$label <- colnames(a$network)
+        plot.args$node.label <- plot.args$label
 
         plot.ega <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
 
