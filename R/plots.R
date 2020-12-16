@@ -196,7 +196,6 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     plot.args$mode <- layout.spring
     plot.args$label <- colnames(x$typicalGraph$graph)
     plot.args$node.label <- plot.args$label
-
     ega.plot <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
 
   }
@@ -313,8 +312,6 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       plot.args$mode <- layout.spring[[i]]
       plot.args$label <- colnames(x$dynEGA[[i]]$network)
       plot.args$node.label <- plot.args$label
-
-
       plots.net[[i]] <-  do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
 
     }
@@ -411,7 +408,6 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     plot.args$mode <- layout.spring
     plot.args$label <- colnames(x$dynEGA[[id]]$network)
     plot.args$node.label <- plot.args$label
-
     ega.plot <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
 
     set.seed(NULL)
@@ -507,7 +503,6 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     plot.args$mode <- layout.spring
     plot.args$label <- colnames(x$dynEGA$network)
     plot.args$node.label <- plot.args$label
-
     ega.plot <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
 
   }

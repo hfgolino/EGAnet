@@ -499,7 +499,6 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
       plot.args$mode <- layout.spring
       plot.args$label <- colnames(typical.Structure)
       plot.args$node.label <- plot.args$label
-
       plot.typical.ega <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
 
       plot(plot.typical.ega)
