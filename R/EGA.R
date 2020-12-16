@@ -105,7 +105,7 @@
 #' \item{\strong{\code{edge.alpha}}}
 #' {The level of transparency of the edges, which might be a single value or a vector of values. Defaults to 0.7.}
 #' }
-#'
+#' 
 #' @param verbose Boolean.
 #' Should network estimation parameters be printed?
 #' Defaults to \code{TRUE}.
@@ -236,46 +236,6 @@ EGA <- function (data, n = NULL, uni = TRUE,
     algorithm.args$steps <- add.args$steps
   }
 
-  ## Check for input plot arguments
-  if(missing(plot.type))
-  {plot.type <- "GGally"
-  }else{plot.type <- match.arg(plot.type)}
-
-  if(plot.type == "GGally"){
-
-    if(is.null(plot.args) == TRUE){
-
-      default.args <- formals(GGally::ggnet2)
-      default.args[names(plot.args)] <- list(size = 6, alpha = 0.4, label.size = 5,
-                                             edge.alpha = 0.7, layout.exp = 0.2)
-      default.args <- default.args[-length(default.args)]
-
-    }else{
-
-      default.args <- formals(GGally::ggnet2)
-      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
-                               edge.alpha = 0.7, layout.exp = 0.2)
-      default.args[names(ega.default.args)]  <- ega.default.args
-
-
-      if("vsize" %in% names(plot.args)){
-        plot.args$size <- plot.args$vsize
-        plot.args$vsize <- NULL
-      }
-
-      default.args <- default.args[-length(default.args)]
-
-      if(any(names(plot.args) %in% names(default.args))){
-        target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
-        default.args[names(target.args)] <- target.args
-      }
-
-    }
-
-    plot.args <- default.args
-
-  }
-
   #### ARGUMENTS HANDLING ####
 
   if(missing(model)){
@@ -291,6 +251,42 @@ EGA <- function (data, n = NULL, uni = TRUE,
   if(missing(plot.type)){
     plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
+  
+  if(plot.type == "GGally"){
+    
+    if(length(plot.args) == 0){
+      
+      default.args <- formals(GGally::ggnet2)
+      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
+                               edge.alpha = 0.7, layout.exp = 0.2)
+      default.args[names(ega.default.args)]  <- ega.default.args
+      default.args <- default.args[-length(default.args)]
+      
+    }else{
+      
+      default.args <- formals(GGally::ggnet2)
+      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
+                               edge.alpha = 0.7, layout.exp = 0.2)
+      default.args[names(ega.default.args)]  <- ega.default.args
+      
+      
+      if("vsize" %in% names(plot.args)){
+        plot.args$size <- plot.args$vsize
+        plot.args$vsize <- NULL
+      }
+      
+      default.args <- default.args[-length(default.args)]
+      
+      if(any(names(plot.args) %in% names(default.args))){
+        target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
+        default.args[names(target.args)] <- target.args
+      }
+      
+    }
+    
+    plot.args <- default.args
+    
+  }
 
   #### ARGUMENTS HANDLING ####
 
@@ -483,11 +479,11 @@ EGA <- function (data, n = NULL, uni = TRUE,
   }else{dim.variables <- data.frame(items = colnames(data), dimension = a$wc)}
   dim.variables <- dim.variables[order(dim.variables[, 2]),]
   a$dim.variables <- dim.variables
-
+  
   if (plot.EGA == TRUE) {
     if (plot.type == "qgraph"){
       if(a$n.dim < 2){
-
+        
         if(a$n.dim != 0){
           plot.ega <- qgraph::qgraph(a$network, layout = "spring",
                                      vsize = plot.args$vsize, groups = as.factor(a$wc), label.prop = 1, legend = FALSE)
@@ -497,7 +493,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
                                    vsize = plot.args$vsize, groups = as.factor(a$wc), label.prop = 1, legend = TRUE)
       }
     }else if(plot.type == "GGally"){
-      if(a$n.dim < 2){
+      if(a$n.dim <= 2){
         if(a$n.dim != 0){
           # weighted  network
           network1 <- network::network(a$network,
@@ -513,7 +509,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
                                                                to = c(.001, 1.75)),
                                                nrow = nrow(a$network),
                                                ncol = ncol(a$network)))
-
+          
           # Layout "Spring"
           graph1 <- NetworkToolbox::convert2igraph(a$network)
           edge.list <- igraph::as_edgelist(graph1)
@@ -521,7 +517,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
                                                                      weights =
                                                                        abs(igraph::E(graph1)$weight/max(abs(igraph::E(graph1)$weight)))^2,
                                                                      vcount = ncol(a$network))
-
+          
           set.seed(1234)
           plot.args$net <- network1
           plot.args$node.color <- "Communities"
@@ -534,9 +530,11 @@ EGA <- function (data, n = NULL, uni = TRUE,
           plot.args$mode <- layout.spring
           plot.args$label <- colnames(a$network)
           plot.args$node.label <- plot.args$label
-
-          plot.ega <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank(), legend.position = "none")
-
+          if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
+          if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
+          
+          plot.ega <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
+          
           plot(plot.ega)
         }
       }else{
@@ -577,6 +575,9 @@ EGA <- function (data, n = NULL, uni = TRUE,
         plot.args$mode <- layout.spring
         plot.args$label <- colnames(a$network)
         plot.args$node.label <- plot.args$label
+        if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
+        if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
+        
         plot.ega <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
 
         plot(plot.ega)
@@ -632,14 +633,14 @@ EGA <- function (data, n = NULL, uni = TRUE,
   if(!uni){
     message("\nEGA did not check for unidimensionality. Set argument 'uni' to TRUE to check for unidimensionality")
   }
-
+  
   # Change zero dimensions
   if(a$n.dim == 0){
     a$n.dim <- NA
   }
 
   set.seed(NULL)
-
+  
   # Return estimates:
   return(a)
 }

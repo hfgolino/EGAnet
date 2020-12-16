@@ -4,7 +4,7 @@
 \alias{net.loads}
 \title{Network Loadings}
 \usage{
-net.loads(A, wc, pos.manifold = FALSE, min.load = 0, plot = FALSE)
+net.loads(A, wc, pos.manifold = FALSE, min.load = 0, plot.NL = FALSE)
 }
 \arguments{
 \item{A}{Matrix, data frame, or \code{\link[EGAnet]{EGA}} object.
@@ -29,7 +29,7 @@ less than the minimum loading are removed. This matrix can
 be viewed using \code{print()} or \code{summary()}
 Defaults to \code{0}}
 
-\item{plot}{Boolean.
+\item{plot.NL}{Boolean.
 Should proportional loadings be plotted?
 Defaults to \code{FALSE}.
 Set to \code{TRUE} for plot with pie charts

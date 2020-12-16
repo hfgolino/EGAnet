@@ -300,38 +300,39 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
 
   ## Check for input plot arguments
   if(plot.type == "GGally"){
-
-    if(is.null(plot.args) == TRUE){
-
-      default.args <- formals(GGally::ggnet2)
-      default.args[names(plot.args)] <- list(size = 6, alpha = 0.4, label.size = 5,
-                                             edge.alpha = 0.7, layout.exp = 0.2)
-      default.args <- default.args[-length(default.args)]
-
-    }else{
-
+    
+    if(length(plot.args) == 0){
+      
       default.args <- formals(GGally::ggnet2)
       ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
                                edge.alpha = 0.7, layout.exp = 0.2)
       default.args[names(ega.default.args)]  <- ega.default.args
-
-
+      default.args <- default.args[-length(default.args)]
+      
+    }else{
+      
+      default.args <- formals(GGally::ggnet2)
+      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
+                               edge.alpha = 0.7, layout.exp = 0.2)
+      default.args[names(ega.default.args)]  <- ega.default.args
+      
+      
       if("vsize" %in% names(plot.args)){
         plot.args$size <- plot.args$vsize
         plot.args$vsize <- NULL
       }
-
+      
       default.args <- default.args[-length(default.args)]
-
+      
       if(any(names(plot.args) %in% names(default.args))){
         target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
         default.args[names(target.args)] <- target.args
       }
-
+      
     }
-
+    
     plot.args <- default.args
-
+    
   }
 
   #### MISSING ARGUMENTS HANDLING ####
@@ -499,11 +500,14 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
       plot.args$mode <- layout.spring
       plot.args$label <- colnames(typical.Structure)
       plot.args$node.label <- plot.args$label
+      if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
+      if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
+      
       plot.typical.ega <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
-
+      
       plot(plot.typical.ega)
     }
-
+    
     set.seed(NULL)
 
 

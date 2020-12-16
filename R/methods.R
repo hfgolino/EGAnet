@@ -85,8 +85,9 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
     if(length(plot.args) == 0){
       
       default.args <- formals(GGally::ggnet2)
-      default.args[names(plot.args)] <- list(size = 6, alpha = 0.4, label.size = 5,
-                                             edge.alpha = 0.7, layout.exp = 0.2)
+      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
+                               edge.alpha = 0.7, layout.exp = 0.2)
+      default.args[names(ega.default.args)]  <- ega.default.args
       default.args <- default.args[-length(default.args)]
       
     }else{
@@ -169,6 +170,8 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       plot.args$mode <- layout.spring
       plot.args$label <- colnames(x$dynEGA[[i]]$network)
       plot.args$node.label <- plot.args$label
+      if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
+      if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
       
       
       plots.net[[i]] <-  do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
@@ -196,8 +199,9 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     if(length(plot.args) == 0){
       
       default.args <- formals(GGally::ggnet2)
-      default.args[names(plot.args)] <- list(size = 6, alpha = 0.4, label.size = 5,
-                                             edge.alpha = 0.7, layout.exp = 0.2)
+      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
+                               edge.alpha = 0.7, layout.exp = 0.2)
+      default.args[names(ega.default.args)]  <- ega.default.args
       default.args <- default.args[-length(default.args)]
       
     }else{
@@ -268,6 +272,8 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     plot.args$mode <- layout.spring
     plot.args$label <- colnames(x$dynEGA$network)
     plot.args$node.label <- plot.args$label
+    if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
+    if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
     
     ega.plot <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
     
@@ -292,8 +298,9 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     if(length(plot.args) == 0){
       
       default.args <- formals(GGally::ggnet2)
-      default.args[names(plot.args)] <- list(size = 6, alpha = 0.4, label.size = 5,
-                                             edge.alpha = 0.7, layout.exp = 0.2)
+      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
+                               edge.alpha = 0.7, layout.exp = 0.2)
+      default.args[names(ega.default.args)]  <- ega.default.args
       default.args <- default.args[-length(default.args)]
       
     }else{
@@ -363,6 +370,8 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     plot.args$mode <- layout.spring
     plot.args$label <- colnames(x$dynEGA[[id]]$network)
     plot.args$node.label <- plot.args$label
+    if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
+    if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
     
     ega.plot <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
     
@@ -387,8 +396,9 @@ plot.EGA <- function(x, title = "",  plot.type = c("GGally","qgraph"),
     if(length(plot.args) == 0){
       
       default.args <- formals(GGally::ggnet2)
-      default.args[names(plot.args)] <- list(size = 6, alpha = 0.4, label.size = 5,
-                                             edge.alpha = 0.7, layout.exp = 0.2)
+      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
+                               edge.alpha = 0.7, layout.exp = 0.2)
+      default.args[names(ega.default.args)]  <- ega.default.args
       default.args <- default.args[-length(default.args)]
       
     }else{
@@ -459,6 +469,8 @@ plot.EGA <- function(x, title = "",  plot.type = c("GGally","qgraph"),
     plot.args$mode <- layout.spring
     plot.args$label <- colnames(x$network)
     plot.args$node.label <- plot.args$label
+    if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
+    if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
     
     ega.plot <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
     
@@ -483,8 +495,9 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     if(length(plot.args) == 0){
       
       default.args <- formals(GGally::ggnet2)
-      default.args[names(plot.args)] <- list(size = 6, alpha = 0.4, label.size = 5,
-                                             edge.alpha = 0.7, layout.exp = 0.2)
+      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
+                               edge.alpha = 0.7, layout.exp = 0.2)
+      default.args[names(ega.default.args)]  <- ega.default.args
       default.args <- default.args[-length(default.args)]
       
     }else{
@@ -554,6 +567,9 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     plot.args$mode <- layout.spring
     plot.args$label <- colnames(x$typicalGraph$graph)
     plot.args$node.label <- plot.args$label
+    if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
+    if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
+    
     
     ega.plot <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
     
