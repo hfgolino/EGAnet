@@ -91,10 +91,12 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       
     }else{
       
-      
       default.args <- formals(GGally::ggnet2)
-      default.args[names(plot.args)] <- list(size = 6, alpha = 0.4, label.size = 5,
-                                             edge.alpha = 0.7, layout.exp = 0.2)
+      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
+                               edge.alpha = 0.7, layout.exp = 0.2)
+      default.args[names(ega.default.args)]  <- ega.default.args
+      
+      
       if("vsize" %in% names(plot.args)){
         plot.args$size <- plot.args$vsize
         plot.args$vsize <- NULL
@@ -195,10 +197,12 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
       
     }else{
       
-      
       default.args <- formals(GGally::ggnet2)
-      default.args[names(plot.args)] <- list(size = 6, alpha = 0.4, label.size = 5,
-                                             edge.alpha = 0.7, layout.exp = 0.2)
+      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
+                               edge.alpha = 0.7, layout.exp = 0.2)
+      default.args[names(ega.default.args)]  <- ega.default.args
+      
+      
       if("vsize" %in% names(plot.args)){
         plot.args$size <- plot.args$vsize
         plot.args$vsize <- NULL
@@ -285,10 +289,12 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
       
     }else{
       
-      
       default.args <- formals(GGally::ggnet2)
-      default.args[names(plot.args)] <- list(size = 6, alpha = 0.4, label.size = 5,
-                                             edge.alpha = 0.7, layout.exp = 0.2)
+      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
+                               edge.alpha = 0.7, layout.exp = 0.2)
+      default.args[names(ega.default.args)]  <- ega.default.args
+      
+      
       if("vsize" %in% names(plot.args)){
         plot.args$size <- plot.args$vsize
         plot.args$vsize <- NULL
@@ -374,10 +380,12 @@ plot.EGA <- function(x, title = "",  plot.type = c("GGally","qgraph"),
       
     }else{
       
-      
       default.args <- formals(GGally::ggnet2)
-      default.args[names(plot.args)] <- list(size = 6, alpha = 0.4, label.size = 5,
-                                             edge.alpha = 0.7, layout.exp = 0.2)
+      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
+                               edge.alpha = 0.7, layout.exp = 0.2)
+      default.args[names(ega.default.args)]  <- ega.default.args
+      
+      
       if("vsize" %in% names(plot.args)){
         plot.args$size <- plot.args$vsize
         plot.args$vsize <- NULL
@@ -464,10 +472,12 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
       
     }else{
       
-      
       default.args <- formals(GGally::ggnet2)
-      default.args[names(plot.args)] <- list(size = 6, alpha = 0.4, label.size = 5,
-                                             edge.alpha = 0.7, layout.exp = 0.2)
+      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
+                               edge.alpha = 0.7, layout.exp = 0.2)
+      default.args[names(ega.default.args)]  <- ega.default.args
+      
+      
       if("vsize" %in% names(plot.args)){
         plot.args$size <- plot.args$vsize
         plot.args$vsize <- NULL

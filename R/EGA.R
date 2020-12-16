@@ -237,6 +237,10 @@ EGA <- function (data, n = NULL, uni = TRUE,
   }
 
   ## Check for input plot arguments
+  if(missing(plot.type))
+  {plot.type <- "GGally"
+  }else{plot.type <- match.arg(plot.type)}
+
   if(plot.type == "GGally"){
     
     if(length(plot.args) == 0){
@@ -248,10 +252,12 @@ EGA <- function (data, n = NULL, uni = TRUE,
       
     }else{
       
-      
       default.args <- formals(GGally::ggnet2)
-      default.args[names(plot.args)] <- list(size = 6, alpha = 0.4, label.size = 5,
-                                             edge.alpha = 0.7, layout.exp = 0.2)
+      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
+                               edge.alpha = 0.7, layout.exp = 0.2)
+      default.args[names(ega.default.args)]  <- ega.default.args
+      
+      
       if("vsize" %in% names(plot.args)){
         plot.args$size <- plot.args$vsize
         plot.args$vsize <- NULL
@@ -269,7 +275,6 @@ EGA <- function (data, n = NULL, uni = TRUE,
     plot.args <- default.args
     
   }
-
 
   #### ARGUMENTS HANDLING ####
 
