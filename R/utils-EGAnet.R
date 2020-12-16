@@ -2789,8 +2789,15 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
             lavaan.args$estimator <- "MLR"
           }
           
+          ## get CFA function from lavaan
+          FUN <- lavaan::cfa
+          
           ## fit model
-          fit <- suppressWarnings(do.call(lavaan::cfa, lavaan.args))
+          fit <- suppressWarnings(
+            suppressMessages(
+              do.call(what = "FUN", args = as.list(lavaan.args))
+            )
+          )
             
           ## identify cases
           cases <- lavaan::inspect(fit, "case.idx")
@@ -2832,6 +2839,8 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
           name.chn[count] <- lab
           col.idx <- match(tar.idx, colnames(new.data))
           colnames(new.data)[col.idx] <- lab
+          
+          message(paste("\nNew LATENT variable called '", lab,"' was created. Redundant variables were REMOVED", sep = ""))
           
         }else if(reduce.method == "remove"){
           
@@ -2967,8 +2976,12 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
   }
   
   # Check if 'm.mat' exists
-  if(!exists("m.mat"))
-  {m.mat <- NULL}
+  if(!exists("m.mat")){
+    m.mat <- NULL
+  }else{
+    m.mat <- t(m.mat)
+    colnames(m.mat) <- c("Target", paste("Redundancy_", 1:(ncol(m.mat)-1), sep = ""))
+  }
   
   # Initialize results list
   res <- list()

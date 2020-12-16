@@ -248,7 +248,7 @@
 #' @export
 #
 # Redundant Nodes Function
-# Updated 12.12.2020
+# Updated 14.12.2020
 redundancy.analysis <- function(data, n = NULL,
                                 method = c("cor", "pcor", "wTO"),
                                 type = c("adapt", "alpha", "threshold"), sig,
@@ -320,6 +320,25 @@ redundancy.analysis <- function(data, n = NULL,
       plot.args <- c(plot.args.use,plots.arg1[names(plots.arg1) %in% names(plot.args.use)==FALSE])}
   }
   
+  ## lavaan.args
+  if(length(lavaan.args) == 0){
+    lavaan.args <- formals(lavaan::cfa)
+    lavaan.args[length(lavaan.args)] <- NULL
+    lavaan.args$std.lv <- TRUE
+    lavaan.args$missing <- "fiml"
+  }else{
+    lavaan.default <- formals(lavaan::cfa)
+    lavaan.default[length(lavaan.default)] <- NULL
+    lavaan.default$std.lv <- TRUE
+    lavaan.args$missing <- "fiml"
+    
+    if(any(names(lavaan.args) %in% names(lavaan.default))){
+      lavaan.default[names(lavaan.args)] <- lavaan.args
+    }
+    
+    lavaan.args <- lavaan.default
+  }
+  
   # Perform redundancy analysis
   process <- redundancy.process(data = data, cormat = cormat,
                                 n = n, method = method,
@@ -343,7 +362,7 @@ redundancy.analysis <- function(data, n = NULL,
   # Check for any remaining redundancies
   if(adhoc){
     ## Message user
-    message("Running adhoc check for any potential redundancies remaining")
+    message("Running adhoc check for any potential redundancies remaining...")
     
     ## Run check
     adhoc.check <- suppressMessages(
@@ -353,6 +372,12 @@ redundancy.analysis <- function(data, n = NULL,
                          plot.redundancy = FALSE, plot.args = plot.args)
     )
     
+    ## Let user know the check is done
+    message("done", appendLF = TRUE)
+    
+    # Artificial pause for feel
+    Sys.sleep(1)
+    
     if(all(is.na(adhoc.check$redundant))){
       
       message("Some redundancies may still exist. See `OUTPUT$adhoc`")
@@ -360,6 +385,8 @@ redundancy.analysis <- function(data, n = NULL,
     }else{message("No redundancies reamin.")}
   }
   
+  # Artificial pause for feel
+  Sys.sleep(1)
   
   # Full results
   res <- list()
