@@ -158,12 +158,16 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       
       
       set.seed(1234)
-      plot.args$net <- network1[[i]]
-      plot.args$color <- "Communities"
+      plot.args$net <- network1
+      plot.args$node.color <- "Communities"
+      plot.args$node.shape <- plot.args$shape
+      plot.args$node.size <- plot.args$size
+      plot.args$edge.color <- "color"
       plot.args$edge.size <- "ScaledWeights"
-      plot.args$palette <- "Set1"
-      plot.args$mode <- layout.spring[[i]]
+      plot.args$color.palette <- "Set1"
+      plot.args$mode <- layout.spring
       plot.args$label <- colnames(x$dynEGA[[i]]$network)
+      plot.args$node.label <- plot.args$label
       
       
       plots.net[[i]] <-  do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
@@ -253,12 +257,15 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     
     set.seed(1234)
     plot.args$net <- network1
-    plot.args$color <- "Communities"
+    plot.args$node.color <- "Communities"
+    plot.args$node.shape <- plot.args$shape
+    plot.args$node.size <- plot.args$size
     plot.args$edge.color <- "color"
     plot.args$edge.size <- "ScaledWeights"
-    plot.args$palette <- "Set1"
+    plot.args$color.palette <- "Set1"
     plot.args$mode <- layout.spring
     plot.args$label <- colnames(x$dynEGA$network)
+    plot.args$node.label <- plot.args$label
     
     ega.plot <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
     
@@ -344,12 +351,15 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     
     set.seed(1234)
     plot.args$net <- network1
-    plot.args$color <- "Communities"
+    plot.args$node.color <- "Communities"
+    plot.args$node.shape <- plot.args$shape
+    plot.args$node.size <- plot.args$size
     plot.args$edge.color <- "color"
     plot.args$edge.size <- "ScaledWeights"
-    plot.args$palette <- "Set1"
+    plot.args$color.palette <- "Set1"
     plot.args$mode <- layout.spring
     plot.args$label <- colnames(x$dynEGA[[id]]$network)
+    plot.args$node.label <- plot.args$label
     
     ega.plot <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
     
@@ -436,12 +446,15 @@ plot.EGA <- function(x, title = "",  plot.type = c("GGally","qgraph"),
     
     set.seed(1234)
     plot.args$net <- network1
-    plot.args$color <- "Communities"
+    plot.args$node.color <- "Communities"
+    plot.args$node.shape <- plot.args$shape
+    plot.args$node.size <- plot.args$size
     plot.args$edge.color <- "color"
     plot.args$edge.size <- "ScaledWeights"
-    plot.args$palette <- "Set1"
+    plot.args$color.palette <- "Set1"
     plot.args$mode <- layout.spring
     plot.args$label <- colnames(x$network)
+    plot.args$node.label <- plot.args$label
     
     ega.plot <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
     
@@ -527,12 +540,15 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     
     set.seed(1234)
     plot.args$net <- network1
-    plot.args$color <- "Communities"
+    plot.args$node.color <- "Communities"
+    plot.args$node.shape <- plot.args$shape
+    plot.args$node.size <- plot.args$size
     plot.args$edge.color <- "color"
     plot.args$edge.size <- "ScaledWeights"
-    plot.args$palette <- "Set1"
+    plot.args$color.palette <- "Set1"
     plot.args$mode <- layout.spring
     plot.args$label <- colnames(x$typicalGraph$graph)
+    plot.args$node.label <- plot.args$label
     
     ega.plot <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
     

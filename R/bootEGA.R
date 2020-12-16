@@ -489,12 +489,15 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
 
       set.seed(1234)
       plot.args$net <- network1
-      plot.args$color <- "Communities"
+      plot.args$node.color <- "Communities"
+      plot.args$node.shape <- plot.args$shape
+      plot.args$node.size <- plot.args$size
       plot.args$edge.color <- "color"
       plot.args$edge.size <- "ScaledWeights"
-      plot.args$palette <- "Set1"
+      plot.args$color.palette <- "Set1"
       plot.args$mode <- layout.spring
-      plot.args$label <- colnames(x$typicalGraph$graph)
+      plot.args$label <- colnames(typical.Structure)
+      plot.args$node.label <- plot.args$label
       
       plot.typical.ega <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
       
