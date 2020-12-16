@@ -187,6 +187,7 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     set.seed(1234)
     plot.args$net <- network1
     plot.args$node.color <- "Communities"
+    plot.args$node.alpha <- plot.args$alpha
     plot.args$node.shape <- plot.args$shape
     plot.args$node.size <- plot.args$size
     plot.args$edge.color <- "color"
@@ -303,6 +304,7 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       set.seed(1234)
       plot.args$net <- network1
       plot.args$node.color <- "Communities"
+      plot.args$node.alpha <- plot.args$alpha
       plot.args$node.shape <- plot.args$shape
       plot.args$node.size <- plot.args$size
       plot.args$edge.color <- "color"
@@ -400,6 +402,7 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     set.seed(1234)
     plot.args$net <- network1
     plot.args$node.color <- "Communities"
+    plot.args$node.alpha <- plot.args$alpha
     plot.args$node.shape <- plot.args$shape
     plot.args$node.size <- plot.args$size
     plot.args$edge.color <- "color"
@@ -495,6 +498,7 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     set.seed(1234)
     plot.args$net <- network1
     plot.args$node.color <- "Communities"
+    plot.args$node.alpha <- plot.args$alpha
     plot.args$node.shape <- plot.args$shape
     plot.args$node.size <- plot.args$size
     plot.args$edge.color <- "color"
@@ -594,6 +598,7 @@ plot.EGA <- function(x, title = "",  plot.type = c("GGally","qgraph"),
     set.seed(1234)
     plot.args$net <- network1
     plot.args$node.color <- "Communities"
+    plot.args$node.alpha <- plot.args$alpha
     plot.args$node.shape <- plot.args$shape
     plot.args$node.size <- plot.args$size
     plot.args$edge.color <- "color"

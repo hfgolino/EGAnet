@@ -564,6 +564,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
         set.seed(1234)
         plot.args$net <- network1
         plot.args$node.color <- "Communities"
+        plot.args$node.alpha <- plot.args$alpha
         plot.args$node.shape <- plot.args$shape
         plot.args$node.size <- plot.args$size
         plot.args$edge.color <- "color"
