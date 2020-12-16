@@ -96,6 +96,7 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
                                edge.alpha = 0.7, layout.exp = 0.2)
       default.args[names(ega.default.args)]  <- ega.default.args
+      default.args <- default.args[-length(default.args)]
       
       
       if("vsize" %in% names(plot.args)){
@@ -103,7 +104,10 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
         plot.args$vsize <- NULL
       }
       
-      default.args <- default.args[-length(default.args)]
+      if("legend.names" %in% names(plot.args)){
+        legend.names <- plot.args$legend.names
+        plot.args[which(names(plot.args) == "legend.names")] <- NULL
+      }
       
       if(any(names(plot.args) %in% names(default.args))){
         target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
@@ -210,6 +214,7 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
       ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
                                edge.alpha = 0.7, layout.exp = 0.2)
       default.args[names(ega.default.args)]  <- ega.default.args
+      default.args <- default.args[-length(default.args)]
       
       
       if("vsize" %in% names(plot.args)){
@@ -217,7 +222,10 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
         plot.args$vsize <- NULL
       }
       
-      default.args <- default.args[-length(default.args)]
+      if("legend.names" %in% names(plot.args)){
+        legend.names <- plot.args$legend.names
+        plot.args[which(names(plot.args) == "legend.names")] <- NULL
+      }
       
       if(any(names(plot.args) %in% names(default.args))){
         target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
@@ -240,6 +248,12 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
                                  ignore.eval = FALSE,
                                  names.eval = "weights",
                                  directed = FALSE)
+    
+    if(exists("legend.names")){
+      for(l in 1:x$dynEGA$n.dim){
+        x$dynEGA$wc[x$dynEGA$wc == l] <- legend.names[l]
+      }
+    }
     
     network::set.vertex.attribute(network1, attrname= "Communities", value = x$dynEGA$wc)
     network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
@@ -309,6 +323,7 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
       ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
                                edge.alpha = 0.7, layout.exp = 0.2)
       default.args[names(ega.default.args)]  <- ega.default.args
+      default.args <- default.args[-length(default.args)]
       
       
       if("vsize" %in% names(plot.args)){
@@ -316,7 +331,10 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
         plot.args$vsize <- NULL
       }
       
-      default.args <- default.args[-length(default.args)]
+      if("legend.names" %in% names(plot.args)){
+        legend.names <- plot.args$legend.names
+        plot.args[which(names(plot.args) == "legend.names")] <- NULL
+      }
       
       if(any(names(plot.args) %in% names(default.args))){
         target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
@@ -407,6 +425,7 @@ plot.EGA <- function(x, title = "",  plot.type = c("GGally","qgraph"),
       ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
                                edge.alpha = 0.7, layout.exp = 0.2)
       default.args[names(ega.default.args)]  <- ega.default.args
+      default.args <- default.args[-length(default.args)]
       
       
       if("vsize" %in% names(plot.args)){
@@ -414,7 +433,10 @@ plot.EGA <- function(x, title = "",  plot.type = c("GGally","qgraph"),
         plot.args$vsize <- NULL
       }
       
-      default.args <- default.args[-length(default.args)]
+      if("legend.names" %in% names(plot.args)){
+        legend.names <- plot.args$legend.names
+        plot.args[which(names(plot.args) == "legend.names")] <- NULL
+      }
       
       if(any(names(plot.args) %in% names(default.args))){
         target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
@@ -437,6 +459,12 @@ plot.EGA <- function(x, title = "",  plot.type = c("GGally","qgraph"),
                                  ignore.eval = FALSE,
                                  names.eval = "weights",
                                  directed = FALSE)
+    
+    if(exists("legend.names")){
+      for(l in 1:x$n.dim){
+        x$wc[x$wc == l] <- legend.names[l]
+      }
+    }
     
     network::set.vertex.attribute(network1, attrname= "Communities", value = x$wc)
     network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
@@ -506,6 +534,7 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
       ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
                                edge.alpha = 0.7, layout.exp = 0.2)
       default.args[names(ega.default.args)]  <- ega.default.args
+      default.args <- default.args[-length(default.args)]
       
       
       if("vsize" %in% names(plot.args)){
@@ -513,7 +542,10 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
         plot.args$vsize <- NULL
       }
       
-      default.args <- default.args[-length(default.args)]
+      if("legend.names" %in% names(plot.args)){
+        legend.names <- plot.args$legend.names
+        plot.args[which(names(plot.args) == "legend.names")] <- NULL
+      }
       
       if(any(names(plot.args) %in% names(default.args))){
         target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
@@ -537,6 +569,13 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
                                  ignore.eval = FALSE,
                                  names.eval = "weights",
                                  directed = FALSE)
+    
+    if(exists("legend.names")){
+      for(l in 1:max(x$typicalGraph$wc, na.rm = TRUE)){
+        x$typicalGraph$wc[x$typicalGraph$wc == l] <- legend.names[l]
+      }
+    }
+    
     network::set.vertex.attribute(network1, attrname= "Communities", value = x$typicalGraph$wc)
     network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
     network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
