@@ -560,7 +560,7 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
 # Plot EGA----
 # Updated 16.12.2020
 #' @export
-plot.EGA <- function(x,  title "", plot.type = c("GGally","qgraph"),
+plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
                      plot.args = list(), ...){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
