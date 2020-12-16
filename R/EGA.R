@@ -209,7 +209,7 @@
 #'
 #' @export
 #'
-# Updated 03.12.2020
+# Updated 16.12.2020
 ## EGA Function to detect unidimensionality:
 EGA <- function (data, n = NULL, uni = TRUE,
                  model = c("glasso", "TMFG"), model.args = list(),
@@ -237,20 +237,38 @@ EGA <- function (data, n = NULL, uni = TRUE,
   }
 
   ## Check for input plot arguments
-  if(missing(plot.args)){
-    plot.args <-list(vsize = 6, alpha = 0.4, label.size = 5, edge.alpha = 0.7)}
-
-  else{
-    plot.args <- plot.args
-    plots.arg1 <- list(vsize = 6, label.size = 5, alpha = 0.4, edge.alpha = 0.7)
-    plot.args.use <- plot.args
-
-    if(any(names(plots.arg1) %in% names(plot.args.use))){
-
-      plot.replace.args <- plots.arg1[na.omit(match(names(plot.args.use), names(plots.arg1)))]
-
-      plot.args <- c(plot.args.use,plots.arg1[names(plots.arg1) %in% names(plot.args.use)==FALSE])}
+  if(plot.type == "GGally"){
+    
+    if(length(plot.args) == 0){
+      
+      default.args <- formals(GGally::ggnet2)
+      default.args[names(plot.args)] <- list(size = 6, alpha = 0.4, label.size = 5,
+                                             edge.alpha = 0.7, layout.exp = 0.2)
+      default.args <- default.args[-length(default.args)]
+      
+    }else{
+      
+      
+      default.args <- formals(GGally::ggnet2)
+      default.args[names(plot.args)] <- list(size = 6, alpha = 0.4, label.size = 5,
+                                             edge.alpha = 0.7, layout.exp = 0.2)
+      if("vsize" %in% names(plot.args)){
+        plot.args$size <- plot.args$vsize
+        plot.args$vsize <- NULL
+      }
+      
+      default.args <- default.args[-length(default.args)]
+      
+      if(any(names(plot.args) %in% names(default.args))){
+        target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
+        default.args[names(target.args)] <- target.args
+      }
+      
     }
+    
+    plot.args <- default.args
+    
+  }
 
 
   #### ARGUMENTS HANDLING ####
@@ -539,15 +557,15 @@ EGA <- function (data, n = NULL, uni = TRUE,
                                                                    vcount = ncol(a$network))
 
         set.seed(1234)
-        plot.ega <- GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
-                                  color = "Communities", edge.color = c("color"),
-                                  alpha = plot.args$alpha, #0.7,
-                                  size = plot.args$vsize, #12,
-                                  edge.alpha = plot.args$edge.alpha, #0.4,
-                                  mode =  layout.spring,
-                                  label.size = plot.args$label.size, #5
-                                  label = colnames(a$network)) +
-          ggplot2::theme(legend.title = ggplot2::element_blank(), legend.position = "none")
+        plot.args$net <- network1
+        plot.args$color <- "Communities"
+        plot.args$edge.color <- "color"
+        plot.args$edge.size <- "ScaledWeights"
+        plot.args$palette <- "Set1"
+        plot.args$mode <- layout.spring
+        plot.args$label <- colnames(x$network)
+        
+        plot.ega <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
 
         plot(plot.ega)
       }
