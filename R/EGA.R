@@ -89,7 +89,8 @@
 #' {Size of the nodes. Defaults to 6.}
 #'
 #'}
-#' For \code{plot.type = "GGally"}:
+#' For \code{plot.type = "GGally"} (see \code{\link[GGally]{ggnet2}} for
+#' full list of arguments):
 #'
 #' \itemize{
 #'
@@ -100,10 +101,20 @@
 #' {Size of the labels. Defaults to 5.}
 #'
 #' \item{\strong{\code{alpha}}}
-#' {The level of transparency of the nodes, which might be a single value or a vector of values. Defaults to 0.4.}
+#' {The level of transparency of the nodes, which might be a single value or a vector of values. Defaults to 0.7.}
 #'
 #' \item{\strong{\code{edge.alpha}}}
-#' {The level of transparency of the edges, which might be a single value or a vector of values. Defaults to 0.7.}
+#' {The level of transparency of the edges, which might be a single value or a vector of values. Defaults to 0.4.}
+#' 
+#'  \item{\strong{\code{legend.names}}}
+#' {A vector with names for each dimension}
+#' 
+#' \item{\strong{\code{color.palette}}}
+#' {The color palette for the nodes. For custom colors,
+#' enter HEX codes for each dimension in a vector.
+#' See \code{\link[EGAnet]{color_palette_EGA}} for 
+#' more details and examples}
+#' 
 #' }
 #' 
 #' @param verbose Boolean.
@@ -254,34 +265,25 @@ EGA <- function (data, n = NULL, uni = TRUE,
   
   if(plot.type == "GGally"){
     
-    if(length(plot.args) == 0){
-      
-      default.args <- formals(GGally::ggnet2)
-      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
-                               edge.alpha = 0.7, layout.exp = 0.2)
-      default.args[names(ega.default.args)]  <- ega.default.args
-      default.args <- default.args[-length(default.args)]
-      
-    }else{
-      
-      default.args <- formals(GGally::ggnet2)
-      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
-                               edge.alpha = 0.7, layout.exp = 0.2)
-      default.args[names(ega.default.args)]  <- ega.default.args
-      
-      
-      if("vsize" %in% names(plot.args)){
-        plot.args$size <- plot.args$vsize
-        plot.args$vsize <- NULL
-      }
-      
-      default.args <- default.args[-length(default.args)]
-      
-      if(any(names(plot.args) %in% names(default.args))){
-        target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
-        default.args[names(target.args)] <- target.args
-      }
-      
+    default.args <- formals(GGally::ggnet2)
+    ega.default.args <- list(size = 6, alpha = 0.7, label.size = 5,
+                             edge.alpha = 0.4, layout.exp = 0.2)
+    default.args[names(ega.default.args)]  <- ega.default.args
+    default.args <- default.args[-length(default.args)]
+    
+    
+    if("vsize" %in% names(plot.args)){
+      plot.args$size <- plot.args$vsize
+      plot.args$vsize <- NULL
+    }
+    
+    if("color.palette" %in% names(plot.args)){
+      color.palette <- plot.args$color.palette
+    }else{color.palette <- "polychrome"}
+    
+    if(any(names(plot.args) %in% names(default.args))){
+      target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
+      default.args[names(target.args)] <- target.args
     }
     
     plot.args <- default.args
@@ -485,11 +487,11 @@ EGA <- function (data, n = NULL, uni = TRUE,
       if(a$n.dim < 2){
         
         if(a$n.dim != 0){
-          plot.ega <- qgraph::qgraph(a$network, layout = "spring",
+          ega.plot <- qgraph::qgraph(a$network, layout = "spring",
                                      vsize = plot.args$vsize, groups = as.factor(a$wc), label.prop = 1, legend = FALSE)
         }
       }else{
-        plot.ega <- qgraph::qgraph(a$network, layout = "spring",
+        ega.plot <- qgraph::qgraph(a$network, layout = "spring",
                                    vsize = plot.args$vsize, groups = as.factor(a$wc), label.prop = 1, legend = TRUE)
       }
     }else if(plot.type == "GGally"){
@@ -533,9 +535,20 @@ EGA <- function (data, n = NULL, uni = TRUE,
           if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
           if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
           
-          plot.ega <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
+          ega.plot <- suppressMessages(
+            do.call(GGally::ggnet2, plot.args) + 
+              ggplot2::theme(legend.title = ggplot2::element_blank()) +
+              ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, a$wc),
+                                          breaks = sort(a$wc)) +
+              ggplot2::guides(
+                color = ggplot2::guide_legend(override.aes = list(
+                  size = plot.args$size,
+                  alpha = plot.args$alpha
+                ))
+              )
+          )
           
-          plot(plot.ega)
+          plot(ega.plot)
         }
       }else{
         # weighted  network
@@ -578,24 +591,35 @@ EGA <- function (data, n = NULL, uni = TRUE,
         if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
         if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
         
-        plot.ega <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
+        ega.plot <- suppressMessages(
+          do.call(GGally::ggnet2, plot.args) + 
+            ggplot2::theme(legend.title = ggplot2::element_blank()) +
+            ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, a$wc),
+                                        breaks = sort(a$wc)) +
+            ggplot2::guides(
+              color = ggplot2::guide_legend(override.aes = list(
+                size = plot.args$size,
+                alpha = plot.args$alpha
+              ))
+            )
+        )
 
-        plot(plot.ega)
+        plot(ega.plot)
       }
     }
-  }else{plot.ega <- qgraph::qgraph(a$network, DoNotPlot = TRUE)}
+  }else{ega.plot <- qgraph::qgraph(a$network, DoNotPlot = TRUE)}
 
   # check for variable labels in qgraph
   if(plot.type == "qgraph"){
-    if(is.null(names(plot.ega$graphAttributes$Nodes$labels)))
-    {names(plot.ega$graphAttributes$Nodes$labels) <- paste(1:ncol(data))}
+    if(is.null(names(ega.plot$graphAttributes$Nodes$labels)))
+    {names(ega.plot$graphAttributes$Nodes$labels) <- paste(1:ncol(data))}
 
-    row.names(a$dim.variables) <- plot.ega$graphAttributes$Nodes$labels[match(a$dim.variables$items, names(plot.ega$graphAttributes$Nodes$labels))]
+    row.names(a$dim.variables) <- ega.plot$graphAttributes$Nodes$labels[match(a$dim.variables$items, names(ega.plot$graphAttributes$Nodes$labels))]
   }
 
   a$EGA.type <- ifelse(a$n.dim <= 2, "Unidimensional EGA", "Traditional EGA")
-  if(exists("plot.ega")){
-    a$Plot.EGA <- plot.ega
+  if(exists("ega.plot")){
+    a$Plot.EGA <- ega.plot
   }
 
   # Get arguments

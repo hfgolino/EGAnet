@@ -17,7 +17,6 @@ dynEGA(
   model.args = list(),
   algorithm = c("walktrap", "louvain"),
   algorithm.args = list(),
-  plot.EGA = TRUE,
   corr = c("cor_auto", "pearson", "spearman"),
   ncores,
   ...
@@ -108,10 +107,6 @@ Current options are:
 A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
 or some other community detection algorithm function (see examples)}
 
-\item{plot.EGA}{Logical.
-If TRUE, returns a plot of the network and its estimated dimensions.
-Defaults to TRUE}
-
 \item{corr}{Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
 Current options are:
 
@@ -156,14 +151,16 @@ GLLA is a filtering method for estimating derivatives from data that uses time d
 ## plot.type = "GGally" is the default
 dyn.random <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 delta = 1, id = 21, group = 22, use.derivatives = 1,
-level = "population", model = "glasso", ncores = 2,
-plot.type = "qgraph")
+level = "population", model = "glasso", ncores = 2)
+
+plot(dyn.random, plot.type = "qgraph")
 
 # Group structure:
 dyn.group <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 delta = 1, id = 21, group = 22, use.derivatives = 1,
-level = "group", model = "glasso", ncores = 2,
-plot.type = "qgraph")
+level = "group", model = "glasso", ncores = 2)
+
+plot(dyn.group, ncol = 2, nrow = 1, plot.type = "qgraph")
 
 # Intraindividual structure (commented out for CRAN tests):
 # dyn.individual <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,

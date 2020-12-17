@@ -72,7 +72,8 @@
 #' {Size of the nodes. Defaults to 6.}
 #'
 #'}
-#' For \code{plot.type = "GGally"}:
+#' For \code{plot.type = "GGally"} (see \code{\link[GGally]{ggnet2}} for
+#' full list of arguments):
 #'
 #' \itemize{
 #'
@@ -83,10 +84,20 @@
 #' {Size of the labels. Defaults to 5.}
 #'
 #' \item{\strong{\code{alpha}}}
-#' {The level of transparency of the nodes, which might be a single value or a vector of values. Defaults to 0.4.}
+#' {The level of transparency of the nodes, which might be a single value or a vector of values. Defaults to 0.7.}
 #'
 #' \item{\strong{\code{edge.alpha}}}
-#' {The level of transparency of the edges, which might be a single value or a vector of values. Defaults to 0.7.}
+#' {The level of transparency of the edges, which might be a single value or a vector of values. Defaults to 0.4.}
+#' 
+#' \item{\strong{\code{legend.names}}}
+#' {A vector with names for each dimension}
+#' 
+#' \item{\strong{\code{color.palette}}}
+#' {The color palette for the nodes. For custom colors,
+#' enter HEX codes for each dimension in a vector.
+#' See \code{\link[EGAnet]{color_palette_EGA}} for 
+#' more details and examples}
+#' 
 #' }
 #'
 #' @param ... Arguments passed on to
@@ -122,38 +133,30 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
   ## Check for input plot arguments
   if(plot.type == "GGally"){
     
-    if(length(plot.args) == 0){
-      
-      default.args <- formals(GGally::ggnet2)
-      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
-                               edge.alpha = 0.7, layout.exp = 0.2)
-      default.args[names(ega.default.args)]  <- ega.default.args
-      default.args <- default.args[-length(default.args)]
-      
-    }else{
-      
-      default.args <- formals(GGally::ggnet2)
-      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
-                               edge.alpha = 0.7, layout.exp = 0.2)
-      default.args[names(ega.default.args)]  <- ega.default.args
-      default.args <- default.args[-length(default.args)]
-      
-      
-      if("vsize" %in% names(plot.args)){
-        plot.args$size <- plot.args$vsize
-        plot.args$vsize <- NULL
-      }
-      
-      if("legend.names" %in% names(plot.args)){
-        legend.names <- plot.args$legend.names
-        plot.args[which(names(plot.args) == "legend.names")] <- NULL
-      }
-      
-      if(any(names(plot.args) %in% names(default.args))){
-        target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
-        default.args[names(target.args)] <- target.args
-      }
-      
+    default.args <- formals(GGally::ggnet2)
+    ega.default.args <- list(size = 6, alpha = 0.7, label.size = 5,
+                             edge.alpha = 0.4, layout.exp = 0.2)
+    default.args[names(ega.default.args)]  <- ega.default.args
+    default.args <- default.args[-length(default.args)]
+    
+    
+    if("vsize" %in% names(plot.args)){
+      plot.args$size <- plot.args$vsize
+      plot.args$vsize <- NULL
+    }
+    
+    if("legend.names" %in% names(plot.args)){
+      legend.names <- plot.args$legend.names
+      plot.args$legend.names <- NULL
+    }
+    
+    if("color.palette" %in% names(plot.args)){
+      color.palette <- plot.args$color.palette
+    }else{color.palette <- "polychrome"}
+    
+    if(any(names(plot.args) %in% names(default.args))){
+      target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
+      default.args[names(target.args)] <- target.args
     }
     
     plot.args <- default.args
@@ -212,20 +215,22 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
     if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
     
-    ega.plot <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
+    ega.plot <- ega.plot <- suppressMessages(
+      do.call(GGally::ggnet2, plot.args) + 
+        ggplot2::theme(legend.title = ggplot2::element_blank()) +
+        ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, x$typicalGraph$wc),
+                                    breaks = sort(x$typicalGraph$wc)) +
+        ggplot2::guides(
+          color = ggplot2::guide_legend(override.aes = list(
+            size = plot.args$size,
+            alpha = plot.args$alpha
+          ))
+        )
+    )
     
   }
   set.seed(NULL)
   plot(ega.plot)
-}
-
-#Plot CFA----
-# Updated 02.05.2020
-#' @export
-plot.CFA <- function(x, layout = "spring", vsize = 6, ...) {
-  semPlot::semPaths(x$fit, title = FALSE, label.cex = 0.8, sizeLat = 8, sizeMan = 5, edge.label.cex = 0.6, minimum = 0.1,
-                    sizeInt = 0.8, mar = c(1, 1, 1, 1), residuals = FALSE, intercepts = FALSE, thresholds = FALSE, layout = "spring",
-                    "std", cut = 0.5, ...)
 }
 
 # Plot dynEGA function (Level: Group)----
@@ -241,38 +246,25 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
   ## Check for input plot arguments
   if(plot.type == "GGally"){
     
-    if(length(plot.args) == 0){
-      
-      default.args <- formals(GGally::ggnet2)
-      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
-                               edge.alpha = 0.7, layout.exp = 0.2)
-      default.args[names(ega.default.args)]  <- ega.default.args
-      default.args <- default.args[-length(default.args)]
-      
-    }else{
-      
-      default.args <- formals(GGally::ggnet2)
-      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
-                               edge.alpha = 0.7, layout.exp = 0.2)
-      default.args[names(ega.default.args)]  <- ega.default.args
-      default.args <- default.args[-length(default.args)]
-      
-      
-      if("vsize" %in% names(plot.args)){
-        plot.args$size <- plot.args$vsize
-        plot.args$vsize <- NULL
-      }
-      
-      if("legend.names" %in% names(plot.args)){
-        legend.names <- plot.args$legend.names
-        plot.args[which(names(plot.args) == "legend.names")] <- NULL
-      }
-      
-      if(any(names(plot.args) %in% names(default.args))){
-        target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
-        default.args[names(target.args)] <- target.args
-      }
-      
+    default.args <- formals(GGally::ggnet2)
+    ega.default.args <- list(size = 6, alpha = 0.7, label.size = 5,
+                             edge.alpha = 0.4, layout.exp = 0.2)
+    default.args[names(ega.default.args)]  <- ega.default.args
+    default.args <- default.args[-length(default.args)]
+    
+    
+    if("vsize" %in% names(plot.args)){
+      plot.args$size <- plot.args$vsize
+      plot.args$vsize <- NULL
+    }
+    
+    if("color.palette" %in% names(plot.args)){
+      color.palette <- plot.args$color.palette
+    }else{color.palette <- "polychrome"}
+    
+    if(any(names(plot.args) %in% names(default.args))){
+      target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
+      default.args[names(target.args)] <- target.args
     }
     
     plot.args <- default.args
@@ -337,7 +329,18 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
       
       
-      plots.net[[i]] <-  do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
+      plots.net[[i]] <-  ega.plot <- suppressMessages(
+        do.call(GGally::ggnet2, plot.args) + 
+          ggplot2::theme(legend.title = ggplot2::element_blank()) +
+          ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, x$dynEGA[[i]]$wc),
+                                      breaks = sort(x$dynEGA[[i]]$wc)) +
+          ggplot2::guides(
+            color = ggplot2::guide_legend(override.aes = list(
+              size = plot.args$size,
+              alpha = plot.args$alpha
+            ))
+          )
+      )
       
     }
     group.labels <- names(x$dynEGA)
@@ -359,38 +362,25 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
   ## Check for input plot arguments
   if(plot.type == "GGally"){
     
-    if(length(plot.args) == 0){
-      
-      default.args <- formals(GGally::ggnet2)
-      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
-                               edge.alpha = 0.7, layout.exp = 0.2)
-      default.args[names(ega.default.args)]  <- ega.default.args
-      default.args <- default.args[-length(default.args)]
-      
-    }else{
-      
-      default.args <- formals(GGally::ggnet2)
-      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
-                               edge.alpha = 0.7, layout.exp = 0.2)
-      default.args[names(ega.default.args)]  <- ega.default.args
-      default.args <- default.args[-length(default.args)]
-      
-      
-      if("vsize" %in% names(plot.args)){
-        plot.args$size <- plot.args$vsize
-        plot.args$vsize <- NULL
-      }
-      
-      if("legend.names" %in% names(plot.args)){
-        legend.names <- plot.args$legend.names
-        plot.args[which(names(plot.args) == "legend.names")] <- NULL
-      }
-      
-      if(any(names(plot.args) %in% names(default.args))){
-        target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
-        default.args[names(target.args)] <- target.args
-      }
-      
+    default.args <- formals(GGally::ggnet2)
+    ega.default.args <- list(size = 6, alpha = 0.7, label.size = 5,
+                             edge.alpha = 0.4, layout.exp = 0.2)
+    default.args[names(ega.default.args)]  <- ega.default.args
+    default.args <- default.args[-length(default.args)]
+    
+    
+    if("vsize" %in% names(plot.args)){
+      plot.args$size <- plot.args$vsize
+      plot.args$vsize <- NULL
+    }
+    
+    if("color.palette" %in% names(plot.args)){
+      color.palette <- plot.args$color.palette
+    }else{color.palette <- "polychrome"}
+    
+    if(any(names(plot.args) %in% names(default.args))){
+      target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
+      default.args[names(target.args)] <- target.args
     }
     
     plot.args <- default.args
@@ -441,7 +431,18 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
     if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
     
-    ega.plot <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
+    ega.plot <- ega.plot <- suppressMessages(
+      do.call(GGally::ggnet2, plot.args) + 
+        ggplot2::theme(legend.title = ggplot2::element_blank()) +
+        ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, x$dynEGA[[id]]$wc),
+                                    breaks = sort(x$dynEGA[[id]]$wc)) +
+        ggplot2::guides(
+          color = ggplot2::guide_legend(override.aes = list(
+            size = plot.args$size,
+            alpha = plot.args$alpha
+          ))
+        )
+    )
     
     set.seed(NULL)
     plot(ega.plot)
@@ -461,38 +462,30 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
   ## Check for input plot arguments
   if(plot.type == "GGally"){
     
-    if(length(plot.args) == 0){
-      
-      default.args <- formals(GGally::ggnet2)
-      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
-                               edge.alpha = 0.7, layout.exp = 0.2)
-      default.args[names(ega.default.args)]  <- ega.default.args
-      default.args <- default.args[-length(default.args)]
-      
-    }else{
-      
-      default.args <- formals(GGally::ggnet2)
-      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
-                               edge.alpha = 0.7, layout.exp = 0.2)
-      default.args[names(ega.default.args)]  <- ega.default.args
-      default.args <- default.args[-length(default.args)]
-      
-      
-      if("vsize" %in% names(plot.args)){
-        plot.args$size <- plot.args$vsize
-        plot.args$vsize <- NULL
-      }
-      
-      if("legend.names" %in% names(plot.args)){
-        legend.names <- plot.args$legend.names
-        plot.args[which(names(plot.args) == "legend.names")] <- NULL
-      }
-      
-      if(any(names(plot.args) %in% names(default.args))){
-        target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
-        default.args[names(target.args)] <- target.args
-      }
-      
+    default.args <- formals(GGally::ggnet2)
+    ega.default.args <- list(size = 6, alpha = 0.7, label.size = 5,
+                             edge.alpha = 0.4, layout.exp = 0.2)
+    default.args[names(ega.default.args)]  <- ega.default.args
+    default.args <- default.args[-length(default.args)]
+    
+    
+    if("vsize" %in% names(plot.args)){
+      plot.args$size <- plot.args$vsize
+      plot.args$vsize <- NULL
+    }
+    
+    if("legend.names" %in% names(plot.args)){
+      legend.names <- plot.args$legend.names
+      plot.args$legend.names <- NULL
+    }
+    
+    if("color.palette" %in% names(plot.args)){
+      color.palette <- plot.args$color.palette
+    }else{color.palette <- "polychrome"}
+    
+    if(any(names(plot.args) %in% names(default.args))){
+      target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
+      default.args[names(target.args)] <- target.args
     }
     
     plot.args <- default.args
@@ -550,7 +543,18 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
     if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
     
-    ega.plot <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
+    ega.plot <- ega.plot <- suppressMessages(
+      do.call(GGally::ggnet2, plot.args) + 
+        ggplot2::theme(legend.title = ggplot2::element_blank()) +
+        ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, x$dynEGA$wc),
+                                    breaks = sort(x$dynEGA$wc)) +
+        ggplot2::guides(
+          color = ggplot2::guide_legend(override.aes = list(
+            size = plot.args$size,
+            alpha = plot.args$alpha
+          ))
+        )
+    )
     
   }
   set.seed(NULL)
@@ -570,38 +574,30 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
   ## Check for input plot arguments
   if(plot.type == "GGally"){
     
-    if(length(plot.args) == 0){
-      
-      default.args <- formals(GGally::ggnet2)
-      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
-                               edge.alpha = 0.7, layout.exp = 0.2)
-      default.args[names(ega.default.args)]  <- ega.default.args
-      default.args <- default.args[-length(default.args)]
-      
-    }else{
-      
-      default.args <- formals(GGally::ggnet2)
-      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
-                               edge.alpha = 0.7, layout.exp = 0.2)
-      default.args[names(ega.default.args)]  <- ega.default.args
-      default.args <- default.args[-length(default.args)]
-      
-      
-      if("vsize" %in% names(plot.args)){
-        plot.args$size <- plot.args$vsize
-        plot.args$vsize <- NULL
-      }
-      
-      if("legend.names" %in% names(plot.args)){
-        legend.names <- plot.args$legend.names
-        plot.args[which(names(plot.args) == "legend.names")] <- NULL
-      }
-      
-      if(any(names(plot.args) %in% names(default.args))){
-        target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
-        default.args[names(target.args)] <- target.args
-      }
-      
+    default.args <- formals(GGally::ggnet2)
+    ega.default.args <- list(size = 6, alpha = 0.7, label.size = 5,
+                             edge.alpha = 0.4, layout.exp = 0.2)
+    default.args[names(ega.default.args)]  <- ega.default.args
+    default.args <- default.args[-length(default.args)]
+    
+    
+    if("vsize" %in% names(plot.args)){
+      plot.args$size <- plot.args$vsize
+      plot.args$vsize <- NULL
+    }
+    
+    if("legend.names" %in% names(plot.args)){
+      legend.names <- plot.args$legend.names
+      plot.args$legend.names <- NULL
+    }
+    
+    if("color.palette" %in% names(plot.args)){
+      color.palette <- plot.args$color.palette
+    }else{color.palette <- "polychrome"}
+    
+    if(any(names(plot.args) %in% names(default.args))){
+      target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
+      default.args[names(target.args)] <- target.args
     }
     
     plot.args <- default.args
@@ -613,6 +609,7 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
   if(plot.type == "qgraph"){
     ega.plot <- qgraph::qgraph(x$network, layout = "spring", vsize = plot.args$vsize, groups = as.factor(x$wc), ...)
   }else if(plot.type == "GGally"){
+    
     # weighted  network
     network1 <- network::network(x$network,
                                  ignore.eval = FALSE,
@@ -643,24 +640,37 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
                                                                  abs(igraph::E(graph1)$weight/max(abs(igraph::E(graph1)$weight)))^2,
                                                                vcount = ncol(x$network))
     
+    
     set.seed(1234)
     plot.args$net <- network1
     plot.args$node.color <- "Communities"
     plot.args$node.alpha <- plot.args$alpha
     plot.args$node.shape <- plot.args$shape
     plot.args$node.size <- plot.args$size
+    plot.args$color.palette <- "Set1"
     plot.args$edge.color <- "color"
     plot.args$edge.size <- "ScaledWeights"
-    plot.args$color.palette <- "Set1"
     plot.args$mode <- layout.spring
     plot.args$label <- colnames(x$network)
     plot.args$node.label <- plot.args$label
     if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
     if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
     
-    ega.plot <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
+    ega.plot <- suppressMessages(
+      do.call(GGally::ggnet2, plot.args) + 
+        ggplot2::theme(legend.title = ggplot2::element_blank()) +
+        ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, x$wc),
+                                    breaks = sort(x$wc)) +
+        ggplot2::guides(
+          color = ggplot2::guide_legend(override.aes = list(
+            size = plot.args$size,
+            alpha = plot.args$alpha
+          ))
+        )
+    )
     
   }
+  
   set.seed(NULL)
   
   plot(ega.plot)
@@ -672,4 +682,13 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
 plot.NetLoads <- function(x, ...) {
 
   plot(x$plot)
+}
+
+#Plot CFA----
+# Updated 02.05.2020
+#' @export
+plot.CFA <- function(x, layout = "spring", vsize = 6, ...) {
+  semPlot::semPaths(x$fit, title = FALSE, label.cex = 0.8, sizeLat = 8, sizeMan = 5, edge.label.cex = 0.6, minimum = 0.1,
+                    sizeInt = 0.8, mar = c(1, 1, 1, 1), residuals = FALSE, intercepts = FALSE, thresholds = FALSE, layout = "spring",
+                    "std", cut = 0.5, ...)
 }

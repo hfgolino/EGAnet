@@ -106,7 +106,8 @@
 #' {Size of the nodes. Defaults to 6.}
 #'
 #'}
-#' For \code{plot.type = "GGally"}:
+#' For \code{plot.type = "GGally"} (see \code{\link[GGally]{ggnet2}} for
+#' full list of arguments):
 #'
 #' \itemize{
 #'
@@ -117,10 +118,20 @@
 #' {Size of the labels. Defaults to 5.}
 #'
 #' \item{\strong{\code{alpha}}}
-#' {The level of transparency of the nodes, which might be a single value or a vector of values. Defaults to 0.4.}
+#' {The level of transparency of the nodes, which might be a single value or a vector of values. Defaults to 0.7.}
 #'
 #' \item{\strong{\code{edge.alpha}}}
-#' {The level of transparency of the edges, which might be a single value or a vector of values. Defaults to 0.7.}
+#' {The level of transparency of the edges, which might be a single value or a vector of values. Defaults to 0.4.}
+#' 
+#'  \item{\strong{\code{legend.names}}}
+#' {A vector with names for each dimension}
+#' 
+#' \item{\strong{\code{color.palette}}}
+#' {The color palette for the nodes. For custom colors,
+#' enter HEX codes for each dimension in a vector.
+#' See \code{\link[EGAnet]{color_palette_EGA}} for 
+#' more details and examples}
+#' 
 #' }
 #'
 #'
@@ -315,6 +326,7 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
       ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
                                edge.alpha = 0.7, layout.exp = 0.2)
       default.args[names(ega.default.args)]  <- ega.default.args
+      default.args <- default.args[-length(default.args)]
       
       
       if("vsize" %in% names(plot.args)){
@@ -322,7 +334,9 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
         plot.args$vsize <- NULL
       }
       
-      default.args <- default.args[-length(default.args)]
+      if("color.palette" %in% names(plot.args)){
+        color.palette <- plot.args$color.palette
+      }else{color.palette <- "polychrome"}
       
       if(any(names(plot.args) %in% names(default.args))){
         target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
