@@ -29,8 +29,9 @@ Defaults to \code{"polychrome"}.
  \item{\code{"itacare"}}
 {Palette inspired by Itacare, Brazil}
 
+}
 
-}}
+For custom colors, enter HEX codes for each dimension in a vector}
 
 \item{wc}{Vector.
 A vector representing the community (dimension) membership
