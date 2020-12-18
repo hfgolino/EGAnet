@@ -2991,3 +2991,20 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
   return(res)
   
 }
+
+#' @importFrom graphics text
+#' @noRd
+# Color sorting for EGA palettes----
+# Updated 17.12.2020
+color.sort <- function (wc)
+{
+  unlist(lapply(sort(wc, na.last = TRUE), function(x, uniq){
+    
+    if(is.na(x)){
+      NA
+    }else{
+      which(x == uniq)
+    }
+  }, uniq = sort(unique(wc), na.last = TRUE)))
+}
+

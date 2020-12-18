@@ -122,7 +122,8 @@ For \code{plot.type = "qgraph"}:
 {Size of the nodes. Defaults to 6.}
 
 }
-For \code{plot.type = "GGally"}:
+For \code{plot.type = "GGally"} (see \code{\link[GGally]{ggnet2}} for
+full list of arguments):
 
 \itemize{
 
@@ -133,10 +134,20 @@ For \code{plot.type = "GGally"}:
 {Size of the labels. Defaults to 5.}
 
 \item{\strong{\code{alpha}}}
-{The level of transparency of the nodes, which might be a single value or a vector of values. Defaults to 0.4.}
+{The level of transparency of the nodes, which might be a single value or a vector of values. Defaults to 0.7.}
 
 \item{\strong{\code{edge.alpha}}}
-{The level of transparency of the edges, which might be a single value or a vector of values. Defaults to 0.7.}
+{The level of transparency of the edges, which might be a single value or a vector of values. Defaults to 0.4.}
+
+ \item{\strong{\code{legend.names}}}
+{A vector with names for each dimension}
+
+\item{\strong{\code{color.palette}}}
+{The color palette for the nodes. For custom colors,
+enter HEX codes for each dimension in a vector.
+See \code{\link[EGAnet]{color_palette_EGA}} for 
+more details and examples}
+
 }}
 
 \item{ncores}{Numeric.

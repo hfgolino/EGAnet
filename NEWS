@@ -24,6 +24,8 @@ o UPDATE: `itemStability` plot defaults ("GGally" color scheme) and examples (ma
 
 o ADD: multilayer networks for behavioral and brain data (see `?mlnEGA`)
 
+o ADD: EGA color palettes (see `?color_palette_EGA`)
+
 
 Changes in version 0.9.7
 

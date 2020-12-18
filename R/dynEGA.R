@@ -51,10 +51,6 @@
 #' @param use.derivatives Integer.
 #' The order of the derivative to be used in the EGA procedure. Default to 1.
 #'
-#' @param plot.EGA Logical.
-#' If TRUE, returns a plot of the network and its estimated dimensions.
-#' Defaults to TRUE
-#'
 #' @param corr Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
 #' Current options are:
 #'
@@ -132,14 +128,16 @@
 #' ## plot.type = "GGally" is the default
 #' dyn.random <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 #' delta = 1, id = 21, group = 22, use.derivatives = 1,
-#' level = "population", model = "glasso", ncores = 2,
-#' plot.type = "qgraph")
+#' level = "population", model = "glasso", ncores = 2)
+#' 
+#' plot(dyn.random, plot.type = "qgraph")
 #'
 #' # Group structure:
 #' dyn.group <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 #' delta = 1, id = 21, group = 22, use.derivatives = 1,
-#' level = "group", model = "glasso", ncores = 2,
-#' plot.type = "qgraph")
+#' level = "group", model = "glasso", ncores = 2)
+#' 
+#' plot(dyn.group, ncol = 2, nrow = 1, plot.type = "qgraph")
 #'
 #' # Intraindividual structure (commented out for CRAN tests):
 #' # dyn.individual <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
@@ -173,14 +171,13 @@
 #'
 #' @export
 # dynEGA
-# Updated 21.10.2020
+# Updated 17.12.2020
 dynEGA <- function(data, n.embed, tau = 1, delta = 1,
                    level = c("individual", "group", "population"),
                    id = NULL, group = NULL,
                    use.derivatives = 1,
                    model = c("glasso", "TMFG"), model.args = list(),
                    algorithm = c("walktrap", "louvain"), algorithm.args = list(),
-                   plot.EGA = TRUE,
                    corr = c("cor_auto", "pearson", "spearman"),
                    ncores, ...){
 
