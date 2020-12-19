@@ -127,7 +127,7 @@ node.redundant <- function (data, n = NULL, sig, method = c("wTO", "pcor", "cor"
                             plot = FALSE)
 {
   # Deprecation warning
-  warning("`node.redundant` has been deprecated and replaced with `UCA` (see `?UCA`). Future versions will not have this function")
+  warning("`node.redundant` has been deprecated and replaced with `UVA` (see `?UVA`). Future versions will not have this function")
   
   #### missing arguments handling ####
   

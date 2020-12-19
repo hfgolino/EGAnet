@@ -1,4 +1,4 @@
-#' Unique Component Analysis
+#' Unique Variable Analysis
 #' 
 #' @description Identifies redundant variables in a multivariate dataset
 #' using a number of different association methods and types of significance values
@@ -213,14 +213,14 @@
 #' key <- as.character(psychTools::spi.dictionary$item[key.ind])
 #' 
 #' if(interactive()){
-#' UCA(data = items, method = "wTO", type = "adapt",
+#' UVA(data = items, method = "wTO", type = "adapt",
 #'     key = key, reduce = "latent")
 #' }
 #'
 #' @references
 #' # Simulation using \code{UCA} \cr
 #' Christensen, A. P., Garrido, L. E., & Golino, H. (2020).
-#' A novel approach for detecting redundant variables in multivariate data.
+#' Unique Variable Analysis: A novel approach for detecting redundant variables in multivariate data.
 #' \emph{PsyArXiv}.
 #' 
 #' # Implementation of \code{UCA} (formally \code{node.redundant}) \cr
@@ -247,9 +247,9 @@
 #'
 #' @export
 #
-# Unique Component Analysis
+# Unique Variable Analysis
 # Updated 19.12.2020
-UCA <- function(data, n = NULL,
+UVA <- function(data, n = NULL,
                 method = c("cor", "pcor", "wTO"),
                 type = c("adapt", "alpha", "threshold"), sig,
                 key = NULL, reduce = TRUE,

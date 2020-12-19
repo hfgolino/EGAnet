@@ -1,8 +1,8 @@
 Changes in version 0.9.8
 
-o ADD: `redundancy.analysis` operates as a comprehensive handling of variable redundancy in multivariate data (see `?redundancy.analysis`)
+o ADD: `UVA` or Unique Variable Analysis operates as a comprehensive handling of variable redundancy in multivariate data (see `?UVA`)
 
-o DEFUNCT: `node.redundant`, `node.redundant.names`, and `node.redundant.combine` will be defunct in next version. Please use `redundancy.analysis`
+o DEFUNCT: `node.redundant`, `node.redundant.names`, and `node.redundant.combine` will be defunct in next version. Please use `UVA`
 
 o ADD: a new function to compute a parametric Bootstrap Test for the Ergodicity Information Index (see `?boot.ergoInfo`)
 
