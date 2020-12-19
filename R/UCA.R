@@ -1,4 +1,4 @@
-#' Detects Redundant Variables in a Multivariate Dataset
+#' Unique Component Analysis
 #' 
 #' @description Identifies redundant variables in a multivariate dataset
 #' using a number of different association methods and types of significance values
@@ -213,20 +213,20 @@
 #' key <- as.character(psychTools::spi.dictionary$item[key.ind])
 #' 
 #' if(interactive()){
-#' redundancy.analysis(data = items, method = "wTO", type = "adapt",
-#'                     key = key, reduce = "latent")
+#' UCA(data = items, method = "wTO", type = "adapt",
+#'     key = key, reduce = "latent")
 #' }
 #'
 #' @references
-#' # Simulation using \code{redundancy.analysis} \cr
+#' # Simulation using \code{UCA} \cr
 #' Christensen, A. P., Garrido, L. E., & Golino, H. (2020).
 #' A novel approach for detecting redundant variables in multivariate data.
 #' \emph{PsyArXiv}.
 #' 
-#' # Implementation of \code{redundancy.analysis} (formally \code{node.redundant}) \cr
-#' Christensen, A. P., Golino, H., & Silvia, P. J. (in press).
+#' # Implementation of \code{UCA} (formally \code{node.redundant}) \cr
+#' Christensen, A. P., Golino, H., & Silvia, P. J. (2020).
 #' A psychometric network perspective on the validity and validation of personality trait questionnaires.
-#' \emph{European Journal of Personality}.
+#' \emph{European Journal of Personality}, \emph{34}, 1095-1108.
 #' doi: \href{https://doi.org/10.1002/per.2265}{10.1002/per.2265}
 #' 
 #' # wTO measure \cr
@@ -247,16 +247,16 @@
 #'
 #' @export
 #
-# Redundant Nodes Function
-# Updated 14.12.2020
-redundancy.analysis <- function(data, n = NULL,
-                                method = c("cor", "pcor", "wTO"),
-                                type = c("adapt", "alpha", "threshold"), sig,
-                                key = NULL, reduce = TRUE,
-                                reduce.method = c("latent", "remove"),
-                                lavaan.args = list(), adhoc = TRUE,
-                                plot.redundancy = FALSE, plot.args = list()
-                                )
+# Unique Component Analysis
+# Updated 19.12.2020
+UCA <- function(data, n = NULL,
+                method = c("cor", "pcor", "wTO"),
+                type = c("adapt", "alpha", "threshold"), sig,
+                key = NULL, reduce = TRUE,
+                reduce.method = c("latent", "remove"),
+                lavaan.args = list(), adhoc = TRUE,
+                plot.redundancy = FALSE, plot.args = list()
+                )
 {
   # Missing and NULL arguments
   ## n

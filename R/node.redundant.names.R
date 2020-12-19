@@ -54,7 +54,7 @@
 node.redundant.names <- function(node.redundant.obj, key)
 {
   # Deprecation warning
-  warning("`node.redundant.names` has been deprecated and replaced with `redundancy.analysis` (see `?redundancy.analysis`")
+  warning("`node.redundant.names` has been deprecated and replaced with `UCA` (see `?UCA`). Future versions will not have this function")
   
   # Check for node.redundant object class
   if(class(node.redundant.obj) != "node.redundant")
