@@ -2846,12 +2846,13 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
           
           target.key <- c(tar.idx, idx)
           target.data <- new.data[,target.key]
+          cor.corr <- round(item.total(target.data), 2)
           means <- round(colMeans(target.data, na.rm = TRUE), 2)
           sds <- round(apply(target.data, 2, sd, na.rm = TRUE), 2)
           ranges <- round(apply(target.data, 2, range, na.rm = TRUE), 2)
-          tab <- cbind(means, sds, t(ranges))
+          tab <- cbind(cor.corr, means, sds, t(ranges))
           row.names(tab) <- c("0 (Target)", 1:length(comb))
-          colnames(tab) <- c("Mean", "SD", "Low", "High")
+          colnames(tab) <- c("Item-Total r", "Mean", "SD", "Low", "High")
           table.plot <- gridExtra::tableGrob(tab)
           gridExtra::grid.arrange(table.plot)
           
@@ -2989,6 +2990,46 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
   res$merged <- m.mat
   
   return(res)
+  
+}
+
+#' @noRd
+# Item-total correlations----
+# Updated 21.12.2020
+item.total <- function (data.sub)
+{
+  # Get correlations
+  corrs <- suppressMessages(qgraph::cor_auto(data.sub))
+  
+  # Check for negatives (reverse if so)
+  for(i in 1:nrow(corrs)){
+    
+    if(any(sign(corrs[i,]) == -1)){
+      data.sub[,i] <- (max(data.sub[,i]) + min(data.sub[,i])) - data.sub[,i]
+      
+      if(any(sign(corrs[i,]) == 1)){
+        target <- colnames(corrs)[(sign(corrs[i,]) == 1)[-i]]
+        
+        for(j in 1:length(target)){
+          data.sub[,target[j]] <- (max(data.sub[,target[j]]) + min(data.sub[,target[j]])) - data.sub[,target[j]]
+        }
+        
+      }
+      
+      corrs <- suppressMessages(qgraph::cor_auto(data.sub))
+    }
+    
+  }
+  
+  # Compute corrected item-total correlations
+  cor.corr <- numeric(ncol(data.sub))
+  
+  # Loop through
+  for(i in 1:ncol(data.sub)){
+    cor.corr[i] <- suppressMessages(qgraph::cor_auto(cbind(data.sub[,i], rowSums(data.sub[,-i]))))[1,2]
+  }
+  
+  return(cor.corr)
   
 }
 
