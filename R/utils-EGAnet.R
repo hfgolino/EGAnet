@@ -2531,6 +2531,7 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
                                alpha = plot.args$alpha, size = plot.args$vsize,
                                edge.alpha = plot.args$edge.alpha,
                                label.size = plot.args$label.size,
+                               layout.exp = 0.2,
                                mode =  layout.spring,
                                label = colnames(plot.mat)) +
     ggplot2::theme(legend.title = ggplot2::element_blank(),
@@ -2590,6 +2591,9 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
     names(key) <- key
   }
   
+  # Line break
+  linebreak()
+  
   # Loop through named node redundant list
   while(length(redund) != 0)
   {
@@ -2607,33 +2611,35 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
       # Configure into list
       pot <- list(pot)
       names(pot) <- target.item
+      possible <- unname(unlist(pot))
       
-      # Initialize while escape
-      escape <- FALSE
-      
-      # Initialize count
+      # Loop through potential redundancies
       count2 <- 1
       
-      while(!escape)
-      {
-        # Identify target redundancies
-        target <- redund[na.omit(match(pot[[count2]], names(redund)))]
+      # Check names
+      for(i in 1:length(possible)){
         
-        if(length(target) == 0)
-        {
-          # Escape while loop
-          escape <- TRUE
-        }else{
-          # Increase count
+        if(possible[i] %in% names(redund)){
           count2 <- count2 + 1
-          
-          # Input extended redundancies
-          pot[[count2]] <- target
+          pot[count2] <- redund[possible[i]]
+          names(pot)[count2] <- possible[i]
         }
+      
       }
       
+      # Check elements
+      for(i in 1:length(possible)){
+        elements <- redund[sapply(redund, function(x){possible[i] %in% x})]
+        pot[(count2 + 1):(count2 + length(elements))] <- elements
+        names(pot)[(count2 + 1):(count2 + length(elements))] <- names(elements)
+        count2 <- count2 + length(elements)
+      }
+      
+      # Get unique lists
+      pot <- redund[unique(names(pot))]
+      
       # Possible options
-      poss <- unique(unname(unlist(pot)))
+      poss <- unique(c(unname(unlist(pot)), names(pot)[-1]))
       
       # Organize plot of redundancy connections
       mat <- matrix(0, nrow = length(poss) + 1, ncol = length(poss) + 1)
@@ -2661,7 +2667,7 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
             single <- target.ext[[j]]
             
             # Get element in possible redundancies
-            elem <- match(names(target.ext)[j], poss)
+            elem <- match(names(ext)[i], poss)
             
             # Get elements redundant with element
             red.elem <- match(single, poss)
@@ -3004,10 +3010,10 @@ item.total <- function (data.sub)
   # Check for negatives (reverse if so)
   for(i in 1:nrow(corrs)){
     
-    if(any(sign(corrs[i,]) == -1)){
+    if(any(sign(corrs[i,-i]) == -1)){
       data.sub[,i] <- (max(data.sub[,i]) + min(data.sub[,i])) - data.sub[,i]
       
-      if(any(sign(corrs[i,]) == 1)){
+      if(any(sign(corrs[i,-i]) == 1)){
         target <- colnames(corrs)[(sign(corrs[i,]) == 1)[-i]]
         
         for(j in 1:length(target)){
