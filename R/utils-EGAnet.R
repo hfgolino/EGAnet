@@ -2852,13 +2852,18 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
           
           target.key <- c(tar.idx, idx)
           target.data <- new.data[,target.key]
-          cor.corr <- round(item.total(target.data), 2)
+          if(ncol(target.data) > 2){cor.corr <- round(item.total(target.data), 2)}
           means <- round(colMeans(target.data, na.rm = TRUE), 2)
           sds <- round(apply(target.data, 2, sd, na.rm = TRUE), 2)
           ranges <- round(apply(target.data, 2, range, na.rm = TRUE), 2)
-          tab <- cbind(cor.corr, means, sds, t(ranges))
+          if(ncol(target.data) > 2){
+            tab <- cbind(cor.corr, means, sds, t(ranges))
+            colnames(tab) <- c("Item-Total r", "Mean", "SD", "Low", "High")
+          }else{
+            tab <- cbind(means, sds, t(ranges))
+            colnames(tab) <- c("Mean", "SD", "Low", "High")
+          }
           row.names(tab) <- c("0 (Target)", 1:length(comb))
-          colnames(tab) <- c("Item-Total r", "Mean", "SD", "Low", "High")
           table.plot <- gridExtra::tableGrob(tab)
           gridExtra::grid.arrange(table.plot)
           
