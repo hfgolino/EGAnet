@@ -68,7 +68,7 @@
 #' If \code{reduce.method = "latent"}, then \code{\link{lavaan}}'s \code{\link[lavaan]{cfa}}
 #' function will be used to create latent variables to reduce variables.
 #' Arguments should be input as a list. Some example arguments 
-#' (see \code{\link[lavaan]{lavOptions} for full details}:
+#' (see \code{\link[lavaan]{lavOptions} for full details}):
 #' 
 #' \itemize{
 #' 
@@ -78,7 +78,7 @@
 #' Data are considered continuous data if they have 6 or more categories (see Rhemtulla, Brosseau-Liard, & Savalei, 2012)}
 #' 
 #' \item{\code{missing}}
-#' {How missing data should be handled}
+#' {How missing data should be handled. Defaults to \code{"fiml"}}
 #' 
 #' \item{\code{std.lv}}
 #' {If \code{TRUE}, the metric of each latent variable is determined by fixing their (residual) variances to 1.0.
