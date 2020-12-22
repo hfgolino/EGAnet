@@ -2784,7 +2784,7 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
       redund[[1]] <- NULL
       
       # Make ind
-      if(reduce.method == "latent"){ind <- c(tar.idx, idx)}
+      if(reduce.method == "latent"){ind <- idx}
       
       # Remove variables within future options
       for(i in 1:length(ind)){
