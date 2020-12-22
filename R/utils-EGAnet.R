@@ -2554,8 +2554,6 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
 # Updated 21.12.2020
 redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.args)
 {
-  node.redundant.obj <- process
-  
   # Check for node.redundant object class
   if(class(node.redundant.obj) != "node.redundant")
   {stop("A 'node.redundant' object must be used as input")}
