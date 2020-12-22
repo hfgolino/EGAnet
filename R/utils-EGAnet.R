@@ -2636,6 +2636,9 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
         # Remove previous state data
         prev.state.data <- prev.state.data[-length(prev.state.data)]
         
+        # Reduce count
+        count <- count - 1
+        
         # Remove merge
         merged <- merged[-length(merged)]
         
