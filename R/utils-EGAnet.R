@@ -2551,9 +2551,11 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
 #' @importFrom graphics text
 #' @noRd
 # Redundancy Reduction----
-# Updated 13.12.2020
+# Updated 21.12.2020
 redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.args)
 {
+  node.redundant.obj <- process
+  
   # Check for node.redundant object class
   if(class(node.redundant.obj) != "node.redundant")
   {stop("A 'node.redundant' object must be used as input")}
@@ -2594,354 +2596,270 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
   # Line break
   linebreak()
   
+  # Previous state
+  prev.state <- list(redund)
+  prev.state.data <- list(new.data)
+  
   # Loop through named node redundant list
   while(length(redund) != 0)
   {
-    # Tracking list
-    track <- redund
-    
     # Targeting redundancy
     target.item <- names(redund)[1]
-    
+
     # Potential redundancies
     pot <- redund[[1]]
     
-    if(length(pot) != 0)
-    {
-      # Configure into list
-      pot <- list(pot)
-      names(pot) <- target.item
-      possible <- unname(unlist(pot))
+    # Construct potential redundancies and menu
+    poss <- redundancy.menu(redund = redund, reduce.method = reduce.method,
+                            pot = pot, target.item = target.item,
+                            weights = weights, plot.args = plot.args,
+                            key = key, node.redundant.obj = node.redundant.obj)
+    
+    # Get input
+    input <- input.check(poss, type = "redund")
+    
+    # Check if going back is necessary
+    if(any(input == "b")){
       
-      # Loop through potential redundancies
-      count2 <- 1
-      
-      # Check names
-      for(i in 1:length(possible)){
-        
-        if(possible[i] %in% names(redund)){
-          count2 <- count2 + 1
-          pot[count2] <- redund[possible[i]]
-          names(pot)[count2] <- possible[i]
-        }
-      
-      }
-      
-      # Check elements
-      for(i in 1:length(possible)){
-        elements <- redund[sapply(redund, function(x){possible[i] %in% x})]
-        pot[(count2 + 1):(count2 + length(elements))] <- elements
-        names(pot)[(count2 + 1):(count2 + length(elements))] <- names(elements)
-        count2 <- count2 + length(elements)
-      }
-      
-      # Get unique lists
-      pot <- redund[unique(names(pot))]
-      
-      # Possible options
-      poss <- unique(c(unname(unlist(pot)), names(pot)[-1]))
-      
-      # Organize plot of redundancy connections
-      mat <- matrix(0, nrow = length(poss) + 1, ncol = length(poss) + 1)
-      colnames(mat) <- c(paste("Target"), 1:length(poss))
-      row.names(mat) <- colnames(mat)
-      
-      mat["Target",paste(1:length(unlist(pot[[1]])))] <- weights[names(key[match(target.item, key)]),names(key[match(unlist(pot[[1]]),key)])]
-      mat[paste(1:length(unlist(pot[[1]]))),"Target"] <- weights[names(key[match(target.item, key)]),names(key[match(unlist(pot[[1]]),key)])]
-      
-      if(length(pot) != 1)
-      {
-        # Remove first element
-        ext <- pot[-1]
-        
-        # Loop through rest of extended
-        for(i in 1:length(ext))
-        {
-          # Target extended
-          target.ext <- ext[[i]]
-          
-          # Loop through target
-          for(j in 1:length(target.ext))
-          {
-            # Single out each element
-            single <- target.ext[[j]]
-            
-            # Get element in possible redundancies
-            elem <- match(names(ext)[i], poss)
-            
-            # Get elements redundant with element
-            red.elem <- match(single, poss)
-            
-            # Put into matrix
-            mat[paste(elem),paste(red.elem)] <- weights[names(key[match(poss[elem], key)]),names(key[match(poss[red.elem],key)])]
-            mat[paste(red.elem),paste(elem)] <- weights[names(key[match(poss[elem], key)]),names(key[match(poss[red.elem],key)])]
-          }
-        }
-      }
-      
-      # Print target and potential options
-      cat(paste("Target variable: '", target.item, "'", sep = ""))
-      cat("\n\nPotential redundancies:\n\n")
-      if(reduce.method == "latent"){
-        cat("0. Do not combine with any")
-      }else if(reduce.method == "remove"){
-        cat("0. None")
-      }
-      
-      cat(paste("\n", 1:length(poss), ". ", "'", poss, "'", sep = ""),"\n")
-      
-      # Plot
-      plot.args$title <- switch(node.redundant.obj$method,
-                                "wto" = "Regularized Partial Correlations",
-                                "pcor" = "Partial Correlations",
-                                "cor" = "Zero-order Correlations",
-      )
-      
-      if(length(poss) > 1){
-        plot(redund.plot(plot.matrix = mat, plot.args = plot.args, plot.reduce = TRUE))
+      # Let user know they can't go back
+      if(is.null(unlist(prev.state[length(prev.state) - 1], recursive = FALSE))){
+        message("\nCannot go back. This is the start of the redundancy list")
       }else{
-        plot.args$title <- switch(node.redundant.obj$method,
-                                  "wto" = "Regularized Partial Correlation",
-                                  "pcor" = "Partial Correlation",
-                                  "cor" = "Zero-order Correlation",
+        
+        # Renew redund list
+        redund <- unlist(prev.state[length(prev.state) - 1], recursive = FALSE)
+        
+        # Remove previous state
+        prev.state <- prev.state[-length(prev.state)]
+        
+        # Renew new data
+        new.data <- as.data.frame(prev.state.data[length(prev.state.data) - 1])
+        
+        # Remove previous state data
+        prev.state.data <- prev.state.data[-length(prev.state.data)]
+        
+        # Remove merge
+        merged <- merged[-length(merged)]
+        
+      }
+      
+    }else if(all(input != "0")){
+      
+      # Convert to numeric
+      re.items <- as.numeric(unlist(strsplit(unlist(strsplit(input, split = " ")), split = ",")))
+      
+      # Items to combine with target
+      comb <- poss[re.items]
+      
+      # Index items
+      idx <- names(key)[match(comb, key)]
+      
+      # Target index
+      tar.idx <- names(key)[match(target.item, key)]
+      
+      # Update merged list
+      count <- count + 1
+      merged[[count]] <- c(key[tar.idx], key[idx])
+      
+      # Combine into target index
+      if(reduce.method == "latent")
+      {
+        # Latent variable
+        ## create model
+        mod <- paste(paste("comb =~ ",sep=""), paste(colnames(new.data[,c(tar.idx, idx)]), collapse = " + "))
+        
+        # Replace arguments
+        lavaan.args$model <- mod
+        lavaan.args$data <- new.data
+        ## Get default estimator
+        categories <- apply(new.data[,c(tar.idx, idx)], 2, function(x){
+          length(unique(x))
+        })
+        
+        ## Check categories
+        if(any(categories < 6)){# Not all continuous
+          lavaan.args$estimator <- "WLSMV"
+        }else{# All can be considered continuous
+          lavaan.args$estimator <- "MLR"
+        }
+        
+        ## get CFA function from lavaan
+        FUN <- lavaan::cfa
+        
+        ## fit model
+        fit <- suppressWarnings(
+          suppressMessages(
+            do.call(what = "FUN", args = as.list(lavaan.args))
+          )
         )
         
-        par(mar = c(0,0,0,0))
-        plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
-        text(x = 0.5, y = 0.5, paste("There is only one redundant variable with the target variable.\nTheir ",
-                                     tolower(plot.args$title), " = ", round(mat[1,2], 3),
-                                     sep = ""), 
-             cex = 1.6, col = "black")
-        par(mar = c(5, 4, 4, 2) + 0.1)
+        ## identify cases
+        cases <- lavaan::inspect(fit, "case.idx")
         
-      }
-      
-      # Get input
-      message("\nEnter numbers of variables redundant with the target variable (separate by commas)")
-      input <- readline(prompt = "Selection: ")
-      
-      # Input check function
-      in.check <- function(input, poss)
-      {
-        inp <- suppressWarnings(as.numeric(unlist(strsplit(unlist(strsplit(input, split = " ")), split = ","))))
+        ## compute latent variable score
+        latent <- as.numeric(lavaan::lavPredict(fit))
         
-        ret.val <- FALSE
-        
-        if(any(is.na(inp)))
-        {ret.val <- TRUE}
-        
-        if(length(inp) == 0)
-        {ret.val <- TRUE}
-        
-        if(length(setdiff(inp, 0:length(poss))) != 0)
-        {ret.val <- TRUE}
-        
-        return(ret.val)
-      }
-      
-      # Redo input check
-      re.input <- in.check(input, poss = poss)
-      
-      while(re.input)
-      {
-        # Print message to try again
-        message("Inappropriate input. Try again.")
-        
-        # Get input
-        message("Enter numbers of variables redundant with the target variable (separate by commas)")
-        input <- readline(prompt = "Selection: ")
-        
-        # Redo input check
-        re.input <- in.check(input, poss)
-      }
-      
-      if(all(input != "0"))
-      {
-        # Convert to numeric
-        re.items <- as.numeric(unlist(strsplit(unlist(strsplit(input, split = " ")), split = ",")))
-        
-        # Items to combine with target
-        comb <- poss[re.items]
-        
-        # Index items
-        idx <- names(key)[match(comb, key)]
-        
-        # Target index
-        tar.idx <- names(key)[match(target.item, key)]
-        
-        # Update merged list
-        count <- count + 1
-        merged[[count]] <- c(key[tar.idx], key[idx])
-        
-        # Combine into target index
-        if(reduce.method == "latent")
+        ## check for missing cases and handle
+        if(length(cases) != nrow(new.data))
         {
-          # Latent variable
-          ## create model
-          mod <- paste(paste("comb =~ ",sep=""), paste(colnames(new.data[,c(tar.idx, idx)]), collapse = " + "))
+          new.vec <- as.vector(matrix(NA, nrow = nrow(new.data), ncol = 1))
+          new.vec[cases] <- latent
+        }else{new.vec <- latent}
+        
+        ## check for reverse scoring/labelling
+        corrs <- as.matrix(cor(cbind(latent,new.data[,c(tar.idx, idx)]), use = "complete.obs")[1,-1])
+        row.names(corrs) <- c(key[tar.idx], key[idx])
+        colnames(corrs) <- "latent"
+        
+        if(any(sign(corrs)==-1))
+        {
+          message("Some variables are reverse coded (negative correlations with latent variable were found). Correlations with latent variable:")
+          print(corrs)
           
-          # Replace arguments
-          lavaan.args$model <- mod
-          lavaan.args$data <- new.data
-          ## Get default estimator
-          categories <- apply(new.data[,c(tar.idx, idx)], 2, function(x){
-            length(unique(x))
-          })
+          input2 <- "o"
           
-          ## Check categories
-          if(any(categories < 6)){# Not all continuous
-            lavaan.args$estimator <- "WLSMV"
-          }else{# All can be considered continuous
-            lavaan.args$estimator <- "MLR"
+          while(input2 != "y" && input2 != "n")
+          {input2 <- readline("Reverse code for positive labelling (y/n): ")}
+          
+          if(input2 == "y")
+          {new.vec <- -new.vec}
+        }
+        
+        # input new vector
+        new.data[,tar.idx] <- new.vec
+        
+        # Ask for new label
+        lab <- readline(prompt = "New label for latent variable (no quotations): ")
+        name.chn[count] <- lab
+        col.idx <- match(tar.idx, colnames(new.data))
+        colnames(new.data)[col.idx] <- lab
+        
+        message(paste("\nNew LATENT variable called '", lab,"' was created. Redundant variables were REMOVED", sep = ""))
+        
+      }else if(reduce.method == "remove"){
+        
+        target.key <- c(tar.idx, idx)
+        target.data <- new.data[,target.key]
+        if(ncol(target.data) > 2){cor.corr <- round(item.total(target.data), 2)}
+        means <- round(colMeans(target.data, na.rm = TRUE), 2)
+        sds <- round(apply(target.data, 2, sd, na.rm = TRUE), 2)
+        ranges <- round(apply(target.data, 2, range, na.rm = TRUE), 2)
+        if(ncol(target.data) > 2){
+          tab <- cbind(cor.corr, means, sds, t(ranges))
+          colnames(tab) <- c("Item-Total r", "Mean", "SD", "Low", "High")
+        }else{
+          tab <- cbind(means, sds, t(ranges))
+          colnames(tab) <- c("Mean", "SD", "Low", "High")
+        }
+        row.names(tab) <- c("0 (Target)", 1:length(comb))
+        table.plot <- gridExtra::tableGrob(tab)
+        gridExtra::grid.arrange(table.plot)
+        
+        # Input check
+        new.input <- input.check(poss = c(target.item, comb), type = "remove")
+        
+        # All variables
+        ind <- names(key[match(c(target.item, comb), key)])
+        
+        # All except selected variable
+        idx <- ind[-(as.numeric(new.input)+1)]
+        
+        # Input selected  
+        merged[[count]] <- key[idx]
+        
+        # Name merged input
+        names(merged)[count] <- key[setdiff(ind, idx)]
+        
+        # Message user
+        message(paste("\nKEPT '", key[ind[as.numeric(new.input) + 1]],"' and REMOVED all others", sep = ""))
+        
+      }
+      
+      # Remove redundant variables from data
+      rm.idx <- match(idx, colnames(new.data))
+      new.data <- new.data[,-rm.idx]
+      
+      # Update previous state data
+      prev.state.data[length(prev.state.data) + 1] <- list(new.data)
+      
+      # Remove target item
+      redund[[1]] <- NULL
+      
+      # Make ind
+      if(reduce.method == "latent"){ind <- c(tar.idx, idx)}
+      
+      # Remove variables within future options
+      for(i in 1:length(ind)){
+        
+        ## Get elements from other redundancy lists
+        elements <- sapply(redund, function(x){key[ind[i]] %in% x})
+        
+        ## If there are any
+        if(any(elements)){
+          
+          ### Target elements
+          target.elem <- which(elements)
+          
+          for(j in 1:length(target.elem)){
+            
+            #### Target list
+            list.target <- redund[[target.elem[j]]]
+            
+            #### Remove from target list
+            redund[[target.elem[j]]] <- redund[[target.elem[j]]][-which(key[ind[i]] == list.target)]
+            
           }
-          
-          ## get CFA function from lavaan
-          FUN <- lavaan::cfa
-          
-          ## fit model
-          fit <- suppressWarnings(
-            suppressMessages(
-              do.call(what = "FUN", args = as.list(lavaan.args))
-            )
-          )
-            
-          ## identify cases
-          cases <- lavaan::inspect(fit, "case.idx")
-          
-          ## compute latent variable score
-          latent <- as.numeric(lavaan::lavPredict(fit))
-          
-          ## check for missing cases and handle
-          if(length(cases) != nrow(new.data))
-          {
-            new.vec <- as.vector(matrix(NA, nrow = nrow(new.data), ncol = 1))
-            new.vec[cases] <- latent
-          }else{new.vec <- latent}
-          
-          ## check for reverse scoring/labelling
-          corrs <- as.matrix(cor(cbind(latent,new.data[,c(tar.idx, idx)]), use = "complete.obs")[1,-1])
-          row.names(corrs) <- c(key[tar.idx], key[idx])
-          colnames(corrs) <- "latent"
-          
-          if(any(sign(corrs)==-1))
-          {
-            message("Some variables are reverse coded (negative correlations with latent variable were found). Correlations with latent variable:")
-            print(corrs)
-            
-            input2 <- "o"
-            
-            while(input2 != "y" && input2 != "n")
-            {input2 <- readline("Reverse code for positive labelling (y/n): ")}
-            
-            if(input2 == "y")
-            {new.vec <- -new.vec}
-          }
-          
-          # input new vector
-          new.data[,tar.idx] <- new.vec
-          
-          # Ask for new label
-          lab <- readline(prompt = "New label for latent variable (no quotations): ")
-          name.chn[count] <- lab
-          col.idx <- match(tar.idx, colnames(new.data))
-          colnames(new.data)[col.idx] <- lab
-          
-          message(paste("\nNew LATENT variable called '", lab,"' was created. Redundant variables were REMOVED", sep = ""))
-          
-        }else if(reduce.method == "remove"){
-          
-          target.key <- c(tar.idx, idx)
-          target.data <- new.data[,target.key]
-          if(ncol(target.data) > 2){cor.corr <- round(item.total(target.data), 2)}
-          means <- round(colMeans(target.data, na.rm = TRUE), 2)
-          sds <- round(apply(target.data, 2, sd, na.rm = TRUE), 2)
-          ranges <- round(apply(target.data, 2, range, na.rm = TRUE), 2)
-          if(ncol(target.data) > 2){
-            tab <- cbind(cor.corr, means, sds, t(ranges))
-            colnames(tab) <- c("Item-Total r", "Mean", "SD", "Low", "High")
-          }else{
-            tab <- cbind(means, sds, t(ranges))
-            colnames(tab) <- c("Mean", "SD", "Low", "High")
-          }
-          row.names(tab) <- c("0 (Target)", 1:length(comb))
-          table.plot <- gridExtra::tableGrob(tab)
-          gridExtra::grid.arrange(table.plot)
-          
-          cat(paste("\n"), 0, ". ", "'", target.item, "'", sep = "")
-          cat(paste("\n", 1:length(comb), ". ", "'", comb, "'", sep = ""),"\n\n")
-          
-          new.input <- readline(prompt = "Select variable to KEEP: ")
-          
-          # Redo input check
-          re.input <- in.check(new.input, poss = comb)
-          
-          while(re.input)
-          {
-            # Print message to try again
-            message("Inappropriate input. Try again.")
-            
-            # Get input
-            message("Enter numbers of variables redundant with the target variable (separate by commas)")
-            new.input <- readline(prompt = "Select variable to KEEP: ")
-            
-            # Redo input check
-            re.input <- in.check(new.input, poss = comb)
-          }
-          
-          ind <- names(key[match(c(target.item, comb), key)])
-          
-          idx <- ind[-(as.numeric(new.input)+1)]
-          
-          comb <- comb[na.omit(match(key[idx], comb))]
-          
-          message(paste("\nKEPT '", key[ind[as.numeric(new.input) + 1]],"' and REMOVED all others", sep = ""))
           
         }
         
-        # Remove redundant variables from data
-        rm.idx <- match(idx, colnames(new.data))
-        new.data <- new.data[,-rm.idx]
+      }
+      
+      # Remove empty list objects
+      rm.list <- which(
+        unlist(lapply(redund, function(x){
+          length(x)
+        })) == 0
+      )
+      
+      if(length(rm.list) != 0){
+        redund <- redund[-rm.list]
+      }
+      
+      # Remove object names
+      if(any(key[ind] %in% names(redund))){
         
-        # Remove variables from potential future options
-        opts <- redund[na.omit(match(comb, names(redund)))]
+        ## Get target names
+        name.targets <- which(key[ind] %in% names(redund))
         
-        if(length(opts) != 0)
-        {redund[names(opts)] <- NULL}
-        
-        # Remove target item
-        redund[[1]] <- NULL
-        
-        # Remove variables within future options
-        rm.var <- which(lapply(lapply(redund, match, comb), function(x){any(!is.na(x))}) == TRUE)
-        
-        if(length(rm.var) != 0)
-        {
-          for(j in 1:length(rm.var))
-          {
-            # Target option
-            target.opt <- redund[rm.var][[j]]
-            
-            # Remove target variable(s)
-            target.var <- na.omit(match(comb, target.opt))
-            
-            redund[rm.var][[j]] <- target.opt[-target.var]
+        ## Loop through
+        for(i in 1:length(name.targets)){
+          
+          # If there is only one item left, then remove from list
+          if(length(redund[[key[ind][name.targets[i]]]]) == 1){
+            redund[key[ind][name.targets[i]]] <- NULL
+          }else{# Otherwise, replace name with first element and remove first element from list
+            names(redund[key[ind]][name.targets[i]]) <- redund[[key[ind][name.targets[i]]]][1]
+            redund[[key[ind][name.targets[i]]]][1] <- NA
+            redund[[key[ind][name.targets[i]]]] <- na.omit(redund[[key[ind][name.targets[i]]]])
           }
+
         }
         
-      }else{
-        # Map target item to column names of new data
-        item.name <- names(key)[match(target.item, key)]
-        target.col <- match(item.name, colnames(new.data))
-        colnames(new.data)[target.col] <- target.item
-        redund[[1]] <- NULL
       }
+      
+      # Update previous state
+      prev.state[length(prev.state) + 1] <- list(redund)
       
     }else{
-      # Map target item to column names of new data
-      item.name <- names(key)[match(target.item, key)]
-      target.col <- match(item.name, colnames(new.data))
-      colnames(new.data)[target.col] <- target.item
+      
+      # Update previous state data
+      prev.state.data[length(prev.state.data) + 1] <- list(new.data)
+      
       redund[[1]] <- NULL
+      
+      # Update previous state
+      prev.state[length(prev.state) + 1] <- list(redund)
+      
     }
     
     if(!is.null(input)){
@@ -3060,3 +2978,195 @@ color.sort <- function (wc)
   }, uniq = sort(unique(wc), na.last = TRUE)))
 }
 
+#' @noRd
+# Menu for redundancy----
+# Updated 21.12.2020
+redundancy.menu <- function (redund, reduce.method, pot, target.item, weights,
+                             plot.args, key, node.redundant.obj)
+{
+  # Configure into list
+  pot <- list(pot)
+  names(pot) <- target.item
+  possible <- unname(unlist(pot))
+  
+  # Loop through potential redundancies
+  count2 <- 1
+  
+  # Check names
+  for(i in 1:length(possible)){
+    
+    if(possible[i] %in% names(redund)){
+      count2 <- count2 + 1
+      pot[count2] <- redund[possible[i]]
+      names(pot)[count2] <- possible[i]
+    }
+    
+  }
+  
+  # Check elements
+  for(i in 1:length(possible)){
+    elements <- redund[sapply(redund, function(x){possible[i] %in% x})]
+    pot[(count2 + 1):(count2 + length(elements))] <- elements
+    names(pot)[(count2 + 1):(count2 + length(elements))] <- names(elements)
+    count2 <- count2 + length(elements)
+  }
+  
+  # Get unique lists
+  pot <- redund[unique(names(pot))]
+  
+  # Possible options
+  poss <- unique(c(unname(unlist(pot)), names(pot)[-1]))
+  
+  # Organize plot of redundancy connections
+  mat <- matrix(0, nrow = length(poss) + 1, ncol = length(poss) + 1)
+  colnames(mat) <- c(paste("Target"), 1:length(poss))
+  row.names(mat) <- colnames(mat)
+  
+  mat["Target",paste(1:length(unlist(pot[[1]])))] <- weights[names(key[match(target.item, key)]),names(key[match(unlist(pot[[1]]),key)])]
+  mat[paste(1:length(unlist(pot[[1]]))),"Target"] <- weights[names(key[match(target.item, key)]),names(key[match(unlist(pot[[1]]),key)])]
+  
+  if(length(pot) != 1)
+  {
+    # Remove first element
+    ext <- pot[-1]
+    
+    # Loop through rest of extended
+    for(i in 1:length(ext))
+    {
+      # Target extended
+      target.ext <- ext[[i]]
+      
+      # Loop through target
+      for(j in 1:length(target.ext))
+      {
+        # Single out each element
+        single <- target.ext[[j]]
+        
+        # Get element in possible redundancies
+        elem <- match(names(ext)[i], poss)
+        
+        # Get elements redundant with element
+        red.elem <- match(single, poss)
+        
+        # Put into matrix
+        mat[paste(elem),paste(red.elem)] <- weights[names(key[match(poss[elem], key)]),names(key[match(poss[red.elem],key)])]
+        mat[paste(red.elem),paste(elem)] <- weights[names(key[match(poss[elem], key)]),names(key[match(poss[red.elem],key)])]
+      }
+    }
+  }
+  
+  # Print target and potential options
+  cat(paste("Target variable: '", target.item, "'", sep = ""))
+  cat("\n\nPotential redundancies:\n\n")
+  if(reduce.method == "latent"){
+    cat("0. Do not combine with any")
+  }else if(reduce.method == "remove"){
+    cat("0. None")
+  }
+  
+  cat(paste("\n", 1:length(poss), ". ", "'", poss, "'", sep = ""),"\n")
+  
+  # Plot
+  plot.args$title <- switch(node.redundant.obj$method,
+                            "wto" = "Regularized Partial Correlations",
+                            "pcor" = "Partial Correlations",
+                            "cor" = "Zero-order Correlations",
+  )
+  
+  if(length(poss) > 1){
+    plot(redund.plot(plot.matrix = mat, plot.args = plot.args, plot.reduce = TRUE))
+  }else{
+    plot.args$title <- switch(node.redundant.obj$method,
+                              "wto" = "Regularized Partial Correlation",
+                              "pcor" = "Partial Correlation",
+                              "cor" = "Zero-order Correlation",
+    )
+    
+    par(mar = c(0,0,0,0))
+    plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
+    text(x = 0.5, y = 0.5, paste("There is only one redundant variable with the target variable.\nTheir ",
+                                 tolower(plot.args$title), " = ", round(mat[1,2], 3),
+                                 sep = ""), 
+         cex = 1.6, col = "black")
+    par(mar = c(5, 4, 4, 2) + 0.1)
+    
+  }
+  
+  message("\nPress 'B' to go back")
+  
+  return(poss)
+}
+
+#' @noRd
+# Input check for redundancy----
+# Updated 21.12.2020
+input.check <- function (poss, type = c("redund", "remove"))
+{
+  # Input check function
+  in.check <- function(input, poss)
+  {
+    if(tolower(input) == "b"){
+      ret.val <- FALSE
+    }else{
+      inp <- suppressWarnings(as.numeric(unlist(strsplit(unlist(strsplit(input, split = " ")), split = ","))))
+      
+      ret.val <- FALSE
+      
+      if(any(is.na(inp)))
+      {ret.val <- TRUE}
+      
+      if(length(inp) == 0)
+      {ret.val <- TRUE}
+      
+      if(length(setdiff(inp, 0:length(poss))) != 0)
+      {ret.val <- TRUE}
+    }
+    
+    return(ret.val)
+  }
+  
+  if(type == "redund"){
+    
+    message("\nEnter numbers of variables redundant with the target variable (separate by commas)")
+    input <- readline(prompt = "Selection: ")
+    
+    # Redo input check
+    re.input <- in.check(input, poss = poss)
+    
+    while(re.input){
+      # Print message to try again
+      message("Inappropriate input. Try again. 'B' can be used to go back.\n")
+      
+      # Get input
+      message("Enter numbers of variables redundant with the target variable (separate by commas)")
+      input <- readline(prompt = "Selection: ")
+      
+      # Redo input check
+      re.input <- in.check(input, poss)
+    }
+    
+  }else if (type == "remove"){
+    
+    cat(paste("\n", 0:(length(poss) - 1), ". ", "'", poss, "'", sep = ""),"\n\n")
+    
+    input <- readline(prompt = "Select variable to KEEP: ")
+    
+    # Redo input check
+    re.input <- in.check(input, poss = poss)
+    
+    while(re.input)
+    {
+      # Print message to try again
+      message("Inappropriate input. Try again.\n")
+      
+      # Get input
+      input <- readline(prompt = "Select variable to KEEP: ")
+      
+      # Redo input check
+      re.input <- in.check(input, poss)
+    }
+    
+  }
+  
+  return(input)
+}
