@@ -362,7 +362,7 @@ UVA <- function(data, n = NULL,
   # Check for any remaining redundancies
   if(adhoc){
     ## Message user
-    message("Running adhoc check for any potential redundancies remaining...", appendLF = TRUE)
+    message("Running adhoc check for any potential redundancies remaining...\n")
     
     ## Run check
     adhoc.check <- suppressMessages(
@@ -371,9 +371,6 @@ UVA <- function(data, n = NULL,
                          type = "threshold", sig = .20,
                          plot.redundancy = FALSE, plot.args = plot.args)
     )
-    
-    ## Let user know the check is done
-    message("done")
     
     # Artificial pause for feel
     Sys.sleep(1)
