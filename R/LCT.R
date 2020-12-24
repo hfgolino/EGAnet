@@ -263,7 +263,7 @@ LCT <- function (data, n, iter = 100)
   # Bootstrap proportions
   boot.prop <- apply(na.omit(loads.mat), 1, dnn.predict)
   
-  boot.prop <- colMeans(prop.table(as.matrix(boot.prop)))
+  boot.prop <- colMeans(proportion.table(as.matrix(boot.prop)))
   
   prop <- vector("numeric", length = 3)
   names(prop) <- c("Random", "Factor", "Network")
