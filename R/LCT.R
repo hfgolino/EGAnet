@@ -55,7 +55,7 @@
 #' @export
 #'
 # Loadings Comparison Test----
-# Updated 21.10.2020
+# Updated 24.12.2020
 LCT <- function (data, n, iter = 100)
 {
   # Convert data to matrix
@@ -134,8 +134,13 @@ LCT <- function (data, n, iter = 100)
           {good <- FALSE
           }else{
             
+            # Check for single variable dimensions
+            if(nrow(n.loads) != length(net$wc)){
+              warning("One or more dimensions were identified as a single variable. These variables were removed from the comparison for both network and factor models.")
+            }
+            
             # Reorder network loadings
-            n.loads <- as.matrix(n.loads[names(net$wc),])
+            n.loads <- as.matrix(n.loads[match(names(net$wc), row.names(n.loads)),])
             
             # Get network loading proportions
             n.low <- mean(n.loads >= 0.15, na.rm = TRUE)
@@ -169,6 +174,7 @@ LCT <- function (data, n, iter = 100)
             
             # Get factor loading proportions
             f.loads <- suppressWarnings(abs(as.matrix(psych::fa(cor.mat, nfactors = ncol(n.loads), n.obs = cases)$loadings[,1:ncol(n.loads)])))
+            f.loads <- as.matrix(f.loads[match(names(net$wc), row.names(f.loads)),])
             f.low <- mean(f.loads >= 0.40, na.rm = TRUE)
             f.mod <- mean(f.loads >= 0.55, na.rm = TRUE)
             f.high <- mean(f.loads >= 0.70, na.rm = TRUE)
