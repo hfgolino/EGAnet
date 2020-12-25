@@ -23,7 +23,7 @@ The old EGA package is now EGAnet, and is now available in The Comprehensive R A
 References
 ============
 
-Chrisensen, A. P., Garrido, L. E., & Golino, H. (under review). Unique Variable Analysis: A novel approach to detect redundancy in multivariate data. *PsyArXiv*. doi:[10.31234/osf.io/4kra2](https://doi.org/10.31234/osf.io/4kra2)
+Chrisensen, A. P., Garrido, L. E., & Golino, H. (under review). Unique Variable Analysis: A novel approach to detect redundant variables in multivariate data. *PsyArXiv*. doi:[10.31234/osf.io/4kra2](https://doi.org/10.31234/osf.io/4kra2)
 + Related functions: `UVA`
 
 Christensen, A. P., & Golino, H. (under review). Estimating factors with psychometric networks: A Monte Carlo simulation comparing community detection algorithms. *PsyArXiv*. doi:[10.31234/osf.io/hz89e](https://doi.org/10.31234/osf.io/hz89e)
