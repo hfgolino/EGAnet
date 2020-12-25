@@ -34,7 +34,7 @@ Estimating the stability of the number of factors via Bootstrap Exploratory Grap
 doi:[10.31234/osf.io/9deay](https://doi.org/10.31234/osf.io/9deay)
 + Related functions: `bootEGA`
 
-Christensen, A. P., & Golino, H. (in press). On the equivalency of factor and network loadings. *Behavior Research Methods*. doi:[10.31234/osf.io/xakez](https://doi.org/10.31234/osf.io/xakez)
+Christensen, A. P., & Golino, H. (in press). On the equivalency of factor and network loadings. *Behavior Research Methods*. doi:[10.3758/s13428-020-01500-6](https://doi.org/10.3758/s13428-020-01500-6)
 + Related functions: `LCT` and `net.loads`
 
 Christensen, A. P., & Golino, H. (under review). Random, factor, or network model? Predictions from neural networks. *PsyArXiv*. doi:[10.31234/osf.io/awkcb](https://doi.org/10.31234/osf.io/awkcb)
