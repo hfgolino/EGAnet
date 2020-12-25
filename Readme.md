@@ -23,6 +23,9 @@ The old EGA package is now EGAnet, and is now available in The Comprehensive R A
 References
 ============
 
+Chrisensen, A. P., Garrido, L. E., & Golino, H. (under review). Unique Variable Analysis: A novel approach to detect redundancy in multivariate data. *PsyArXiv*. doi:[10.31234/osf.io/4kra2](https://doi.org/10.31234/osf.io/4kra2)
++ Related functions: `UVA`
+
 Christensen, A. P., & Golino, H. (under review). Estimating factors with psychometric networks: A Monte Carlo simulation comparing community detection algorithms. *PsyArXiv*. doi:[10.31234/osf.io/hz89e](https://doi.org/10.31234/osf.io/hz89e)
 + Related functions: `EGA`
 
@@ -37,8 +40,8 @@ Christensen, A. P., & Golino, H. (in press). On the equivalency of factor and ne
 Christensen, A. P., & Golino, H. (under review). Random, factor, or network model? Predictions from neural networks. *PsyArXiv*. doi:[10.31234/osf.io/awkcb](https://doi.org/10.31234/osf.io/awkcb)
 + Related functions: `LCT`
 
-Christensen, A. P., Golino, H., & Silvia, P. J. (in press). A psychometric network perspective on the validity and validation of personality trait questionnaires. *European Journal of Personality*. doi:[10.1002/per.2265](https://doi.org/10.1002/per.2265)
-+ Related functions: `bootEGA`, `dimStability`, `EGA`, `itemStability`, `node.redundant`, `node.redundant.combine`, and `node.redundant.names`
+Christensen, A. P., Golino, H., & Silvia, P. J. (2020). A psychometric network perspective on the validity and validation of personality trait questionnaires. *European Journal of Personality*, *34*, 1095-1108. doi:[10.1002/per.2265](https://doi.org/10.1002/per.2265)
++ Related functions: `bootEGA`, `dimStability`, `EGA`, `itemStability`, and `UVA`
 
 Golino, H., Christensen, A. P., Moulder, R. G., Kim, S., & Boker, S. M. (under review). Modeling latent topics in social media using Dynamic Exploratory Graph Analysis: The case of the right-wing and left-wing trolls in the 2016 US elections. *PsyArXiv*. doi:[10.31234/osf.io/tfs7c](https://doi.org/10.31234/osf.io/tfs7c)
 + Related functions: `dynEGA` and `simDFM`
