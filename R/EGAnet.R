@@ -10,7 +10,7 @@
 #'
 #' @references
 #' Christensen, A. P., Garrido, L. E., & Golino, H. (under review).
-#' Unique Variable Analysis: A novel approach to detect redundancy in multivariate data.
+#' Unique Variable Analysis: A novel approach to detect redundant variables in multivariate data.
 #' \emph{PsyArXiv}.
 #' doi: \href{https://doi.org/10.31234/osf.io/4kra2}{10.31234/osf.io/4kra2} \cr
 #' # Related functions: \code{\link[EGAnet]{UVA}}
