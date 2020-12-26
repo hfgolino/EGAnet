@@ -4,7 +4,7 @@
 #' network plots
 #'
 #' @param name Character.
-#' Name of color scheme (see \code{\link[RColorBrewer]{RColorBrewer}}).
+#' Name of color scheme (see \code{\link{RColorBrewer}}).
 #' Defaults to \code{"polychrome"}.
 #' \code{\link[EGAnet]{EGA}} palettes:
 #'

@@ -1,4 +1,4 @@
-#' Detects Redundant Variables in a Multivariate Dataset
+#' Unique Variable Analysis
 #' 
 #' @description Identifies redundant variables in a multivariate dataset
 #' using a number of different association methods and types of significance values
@@ -68,7 +68,7 @@
 #' If \code{reduce.method = "latent"}, then \code{\link{lavaan}}'s \code{\link[lavaan]{cfa}}
 #' function will be used to create latent variables to reduce variables.
 #' Arguments should be input as a list. Some example arguments 
-#' (see \code{\link[lavaan]{lavOptions} for full details}:
+#' (see \code{\link[lavaan]{lavOptions} for full details}):
 #' 
 #' \itemize{
 #' 
@@ -78,7 +78,7 @@
 #' Data are considered continuous data if they have 6 or more categories (see Rhemtulla, Brosseau-Liard, & Savalei, 2012)}
 #' 
 #' \item{\code{missing}}
-#' {How missing data should be handled}
+#' {How missing data should be handled. Defaults to \code{"fiml"}}
 #' 
 #' \item{\code{std.lv}}
 #' {If \code{TRUE}, the metric of each latent variable is determined by fixing their (residual) variances to 1.0.
@@ -213,20 +213,20 @@
 #' key <- as.character(psychTools::spi.dictionary$item[key.ind])
 #' 
 #' if(interactive()){
-#' redundancy.analysis(data = items, method = "wTO", type = "adapt",
-#'                     key = key, reduce = "latent")
+#' UVA(data = items, method = "wTO", type = "adapt",
+#'     key = key, reduce = "latent")
 #' }
 #'
 #' @references
-#' # Simulation using \code{redundancy.analysis} \cr
+#' # Simulation using \code{UCA} \cr
 #' Christensen, A. P., Garrido, L. E., & Golino, H. (2020).
-#' A novel approach for detecting redundant variables in multivariate data.
+#' Unique Variable Analysis: A novel approach for detecting redundant variables in multivariate data.
 #' \emph{PsyArXiv}.
 #' 
-#' # Implementation of \code{redundancy.analysis} (formally \code{node.redundant}) \cr
-#' Christensen, A. P., Golino, H., & Silvia, P. J. (in press).
+#' # Implementation of \code{UCA} (formally \code{node.redundant}) \cr
+#' Christensen, A. P., Golino, H., & Silvia, P. J. (2020).
 #' A psychometric network perspective on the validity and validation of personality trait questionnaires.
-#' \emph{European Journal of Personality}.
+#' \emph{European Journal of Personality}, \emph{34}, 1095-1108.
 #' doi: \href{https://doi.org/10.1002/per.2265}{10.1002/per.2265}
 #' 
 #' # wTO measure \cr
@@ -247,16 +247,16 @@
 #'
 #' @export
 #
-# Redundant Nodes Function
-# Updated 14.12.2020
-redundancy.analysis <- function(data, n = NULL,
-                                method = c("cor", "pcor", "wTO"),
-                                type = c("adapt", "alpha", "threshold"), sig,
-                                key = NULL, reduce = TRUE,
-                                reduce.method = c("latent", "remove"),
-                                lavaan.args = list(), adhoc = TRUE,
-                                plot.redundancy = FALSE, plot.args = list()
-                                )
+# Unique Variable Analysis
+# Updated 19.12.2020
+UVA <- function(data, n = NULL,
+                method = c("cor", "pcor", "wTO"),
+                type = c("adapt", "alpha", "threshold"), sig,
+                key = NULL, reduce = TRUE,
+                reduce.method = c("latent", "remove"),
+                lavaan.args = list(), adhoc = TRUE,
+                plot.redundancy = FALSE, plot.args = list()
+                )
 {
   # Missing and NULL arguments
   ## n
@@ -362,7 +362,7 @@ redundancy.analysis <- function(data, n = NULL,
   # Check for any remaining redundancies
   if(adhoc){
     ## Message user
-    message("Running adhoc check for any potential redundancies remaining...")
+    message("Running adhoc check for any potential redundancies remaining...\n")
     
     ## Run check
     adhoc.check <- suppressMessages(
@@ -371,9 +371,6 @@ redundancy.analysis <- function(data, n = NULL,
                          type = "threshold", sig = .20,
                          plot.redundancy = FALSE, plot.args = plot.args)
     )
-    
-    ## Let user know the check is done
-    message("done", appendLF = TRUE)
     
     # Artificial pause for feel
     Sys.sleep(1)

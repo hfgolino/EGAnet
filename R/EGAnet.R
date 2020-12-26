@@ -9,6 +9,12 @@
 #' implemented. Documentation and examples are available.
 #'
 #' @references
+#' Christensen, A. P., Garrido, L. E., & Golino, H. (under review).
+#' Unique Variable Analysis: A novel approach to detect redundant variables in multivariate data.
+#' \emph{PsyArXiv}.
+#' doi: \href{https://doi.org/10.31234/osf.io/4kra2}{10.31234/osf.io/4kra2} \cr
+#' # Related functions: \code{\link[EGAnet]{UVA}}
+#' 
 #' Christensen, A. P., & Golino, H. (under review).
 #' Estimating factors with psychometric networks: A Monte Carlo simulation comparing community detection algorithms.
 #' \emph{PsyArXiv}.
@@ -24,7 +30,7 @@
 #' Christensen, A. P., & Golino, H. (in press).
 #' On the equivalency of factor and network loadings.
 #' \emph{Behavior Research Methods}.
-#' doi: \href{https://doi.org/10.31234/osf.io/xakez}{10.31234/osf.io/xakez} \cr
+#' doi: \href{https://doi.org/10.3758/s13428-020-01500-6}{10.3758/s13428-020-01500-6} \cr
 #' # Related functions: \code{\link[EGAnet]{LCT}} and \code{\link[EGAnet]{net.loads}}
 #' 
 #' Christensen, A. P., & Golino, H. (under review).
@@ -33,13 +39,12 @@
 #' doi: \href{https://doi.org/10.31234/osf.io/awkcb}{10.31234/osf.io/awkcb} \cr
 #' # Related functions: \code{\link[EGAnet]{LCT}}
 #' 
-#' Christensen, A. P., Golino, H., & Silvia, P. J. (in press).
+#' Christensen, A. P., Golino, H., & Silvia, P. J. (2020).
 #' A psychometric network perspective on the validity and validation of personality trait questionnaires.
-#' \emph{European Journal of Personality}.
+#' \emph{European Journal of Personality}, \emph{34}, 1095-1108.
 #' doi: \href{https://doi.org/10.1002/per.2265}{10.1002/per.2265} \cr
 #' # Related functions: \code{\link[EGAnet]{bootEGA}}, \code{\link[EGAnet]{dimStability}},
-#' # \code{\link[EGAnet]{EGA}}, \code{\link[EGAnet]{itemStability}}, \code{\link[EGAnet]{node.redundant}},
-#' # \code{\link[EGAnet]{node.redundant.combine}}, and \code{\link[EGAnet]{node.redundant.names}}
+#' # \code{\link[EGAnet]{EGA}}, \code{\link[EGAnet]{itemStability}}, and \code{\link[EGAnet]{UVA}}
 #' 
 #' Golino, H., Christensen, A. P., Moulder, R. G., Kim, S., & Boker, S. M. (under review).
 #' Modeling latent topics in social media using Dynamic Exploratory Graph Analysis: The case of the right-wing and left-wing trolls in the 2016 US elections.
@@ -59,7 +64,7 @@
 #' doi: \href{https://doi.org/10.1371/journal.pone.0174035}{10.1371/journal.pone.0174035} \cr
 #' # Related functions: \code{\link[EGAnet]{EGA}}
 #' 
-#' Golino, H., Moulder, R. G., Shi, D., Christensen, A. P., Garrido, L. E., Neito, M. D., Nesselroade, J., Sadana, R., Thiyagarajan, J. A., & Boker, S. M. (2020).
+#' Golino, H., Moulder, R. G., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Nesselroade, J., Sadana, R., Thiyagarajan, J. A., & Boker, S. M. (2020).
 #' Entropy fit indices: New fit measures for assessing the structure and dimensionality of multiple latent variables.
 #' \emph{Multivariate Behavioral Research}.
 #' doi: \href{https://doi.org/10.31234/osf.io/mtka2}{10.31234/osf.io/mtka2} \cr

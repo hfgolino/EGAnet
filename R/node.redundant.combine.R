@@ -83,7 +83,7 @@ node.redundant.combine <- function (node.redundant.obj,
                                     auto = FALSE, ...)
 {
   # Deprecation warning
-  warning("`node.redundant` has been deprecated and replaced with `redundancy.analysis` (see `?redundancy.analysis`")
+  warning("`node.redundant.combine` has been deprecated and replaced with `UVA` (see `?UVA`). Future versions will not have this function")
   
   # Check for node.redundant object class
   if(class(node.redundant.obj) != "node.redundant")

@@ -234,7 +234,7 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 16.12.2020
+# Updated 24.12.2020
 bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling"),
                     model = c("glasso", "TMFG"), model.args = list(),
                     algorithm = c("walktrap", "louvain"), algorithm.args = list(),
@@ -319,6 +319,8 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
                                edge.alpha = 0.7, layout.exp = 0.2)
       default.args[names(ega.default.args)]  <- ega.default.args
       default.args <- default.args[-length(default.args)]
+      
+      color.palette <- "polychrome"
       
     }else{
       
@@ -519,6 +521,19 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
       
       plot.typical.ega <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
       
+      plot.typical.ega <- suppressMessages(
+        do.call(GGally::ggnet2, plot.args) + 
+          ggplot2::theme(legend.title = ggplot2::element_blank()) +
+          ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, typical.wc),
+                                      breaks = sort(typical.wc)) +
+          ggplot2::guides(
+            color = ggplot2::guide_legend(override.aes = list(
+              size = plot.args$size,
+              alpha = plot.args$alpha
+            ))
+          )
+      )
+      
       plot(plot.typical.ega)
     }
     
@@ -573,6 +588,9 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
       result$plot.typical.ega <- plot.typical.ega
     }
   }
+  
+  # Add plot arguments (for itemStability)
+  result$color.palette <- color.palette
 
   class(result) <- "bootEGA"
 

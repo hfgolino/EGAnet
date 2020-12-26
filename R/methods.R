@@ -163,7 +163,7 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
     if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
     
-    ega.plot <- ega.plot <- suppressMessages(
+    ega.plot <- suppressMessages(
       do.call(GGally::ggnet2, plot.args) + 
         ggplot2::theme(legend.title = ggplot2::element_blank()) +
         ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, x$typicalGraph$wc),
@@ -277,7 +277,7 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
       
       
-      plots.net[[i]] <-  ega.plot <- suppressMessages(
+      plots.net[[i]] <- suppressMessages(
         do.call(GGally::ggnet2, plot.args) + 
           ggplot2::theme(legend.title = ggplot2::element_blank()) +
           ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, x$dynEGA[[i]]$wc),
@@ -379,7 +379,7 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
     if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
     
-    ega.plot <- ega.plot <- suppressMessages(
+    ega.plot <- suppressMessages(
       do.call(GGally::ggnet2, plot.args) + 
         ggplot2::theme(legend.title = ggplot2::element_blank()) +
         ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, x$dynEGA[[id]]$wc),
@@ -491,7 +491,7 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
     if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
     
-    ega.plot <- ega.plot <- suppressMessages(
+    ega.plot <- suppressMessages(
       do.call(GGally::ggnet2, plot.args) + 
         ggplot2::theme(legend.title = ggplot2::element_blank()) +
         ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, x$dynEGA$wc),

@@ -365,7 +365,7 @@ mctest.ergoInfo <- function(iter, N,
   results <- vector("list")
   results$mc.ergoInfo <- complexity.estimates2
   results$p.value.twosided <- two.sided
-  results$effect <- ifelse(p.greater<p.greater, "Greater", "Less")
+  results$effect <- ifelse(p.greater<p.lower, "Greater", "Less")
   results$plot.dist <- plot.bootErgoInfo
   return(results)
 }
