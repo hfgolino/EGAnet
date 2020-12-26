@@ -57,5 +57,5 @@ color_palette_EGA(name = "#7FD1B9", wc = ega.wmt$wc)
 
 }
 \author{
-Hudson Golino <hfg9s at virginia.edu>, Alexander P. Christensen <alexpaulchristensen at gmail.com>, Maria Dolores Nieto <acinodam at gmail.com> and Luis E. Garrido <garrido.luiseduardo at gmail.com>
+Hudson Golino <hfg9s at virginia.edu>, Alexander P. Christensen <alexpaulchristensen at gmail.com>
 }
