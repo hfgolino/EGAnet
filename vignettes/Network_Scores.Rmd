@@ -3,6 +3,8 @@ title: "Network Scores"
 author: "Alexander P. Christensen and Hudson Golino"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
+bibliography: Christensen_General_Library.bib
+csl: apa.csl
 vignette: >
   %\VignetteIndexEntry{Network Scores}
   %\VignetteEngine{knitr::rmarkdown}
@@ -16,8 +18,9 @@ knitr::opts_chunk$set(
 )
 ```
 
-# Introduction
-This vignette shows you how to compute network scores using the state-of-the-art psychometric network algorithms in R. Building on the example proposed by Christensen (2018), this algorithm is now more efficient and precise given recent findings in the psychometric network literature. The vignette will walkthrough an example that compares latent network scores to latent variable scores computed by confirmatory factor analysis (CFA) and will explain the similarities and differences between the two.
+## Introduction
+
+This vignette shows you how to compute network scores using the state-of-the-art psychometric network algorithms in R. The vignette will walk through an example that compares latent network scores to latent variable scores computed by confirmatory factor analysis (CFA) and will explain the similarities and differences between the two.
 
 To get started, a few packages need to be installed (if you don't have them already) and loaded.
 
@@ -34,8 +37,9 @@ library(NetworkToolbox)
 library(lavaan)
 ```
 
-# Estimate Dimensions
-To estimate dimensions, we'll use exploratory graph analysis (EGA; Golino & Christensen, 2020; Golino & Epskamp, 2017; Golino et al., 2020). EGA first computes a network using either the graphical least absolute selection and shrinkage operator (GLASSO; Friedman, Hastie, & Tibshirani, 2008) with extended Bayesian information criterion (EBIC) from the R package *qgraph* (EBICglasso; Epskamp & Fried, 2018) or the triangulated maximally filtered graph (TMFG; Massara et al., 2016) from the *NetworkToolbox* package (Christensen, 2018). EGA then applies the Walktrap community detection algorithm (Pons & Latapy, 2006) from the *igraph* package (Csardi & Nepusz, 2006). Below is the code to estimate EGA using the EBICglasso method with the NEO PI-3 openness to experience data (*n* = 802) in the *NetworkToolbox* package.
+## Estimate Dimensions
+
+To estimate dimensions, we'll use exploratory graph analysis [@golino2017ega1; @golino2017ega2; @golino2019ega3]. EGA first computes a network using either the graphical least absolute selection and shrinkage operator [GLASSO; @friedman2008sparse; @friedman2014glasso) with extended Bayesian information criterion (EBIC) from the R package *qgraph* [EBICglasso; @epskamp2018tutorial] or the triangulated maximally filtered graph [TMFG; @massara2016network] from the *NetworkToolbox* package [@NetworkToolbox]. EGA then applies the Walktrap community detection algorithm [@walktrap] from the *igraph* package [@igraph]. Below is the code to estimate EGA using the EBICglasso method with the NEO PI-3 openness to experience data (*n* = 802) in the *NetworkToolbox* package.
 
 ```{r Fig1, echo = TRUE, message = FALSE, warning = FALSE}
 # Run EGA
@@ -44,9 +48,9 @@ ega <- EGA(neoOpen, model = "glasso", algorithm = "louvain", plot.EGA = FALSE)
 
 As depicted above, EGA estimates there to be 7 dimensions of openness to experience. Using these dimensions, we can now estimate network scores; but first, we'll go into details about how these are estimated.
 
-# Network Loadings
-## Christensen & Golino (in press) and Golino, Moulder, Christensen, Kim, & Boker (under review)
-Network loadings are roughly equivalent to factor loadings and differ only in the association measures used to compute them. For networks, the centrality measure *node strength* is used to compute the sum of the connections to a node. Previous simulation studies have reported that node strength is generally redundant with CFA factor loadings (Hallquist, Wright, & Molenaar, 2019) and item-scale correlations (Christensen, Golino, & Silvia, 2020). Importantly, Hallquist and colleagues (2019) found that a node's strength represents a combination of dominant and cross-factor loadings. To mitigate this issue, I've developed a function called `net.loads`, which computes the node strength for each node in each dimension, parsing out the connections that represent dominant and cross-dimension loadings. Below is the code to compute standardized (`$std`; unstandardized, `$unstd`) network loadings.
+## Network Loadings [@christensen2020equivalency]
+
+Network loadings are roughly equivalent to factor loadings and differ only in the association measures used to compute them. For networks, the centrality measure *node strength* is used to compute the sum of the connections to a node. Previous simulation studies have reported that node strength is generally redundant with CFA factor loadings [@hallquist2019problems]. Importantly, Hallquist and colleagues [-@hallquist2019problems] found that a node's strength represents a combination of dominant and cross-factor loadings. To mitigate this issue, I've developed a function called `net.loads`, which computes the node strength for each node in each dimension, parsing out the connections that represent dominant and cross-dimension loadings. Below is the code to compute standardized (`$std`; unstandardized, `$unstd`) network loadings.
 
 ```{r loadings, echo = TRUE, message = FALSE, warning = FALSE}
 # Standardized
@@ -67,7 +71,7 @@ where the denominator is equal to the square root of the sum of all the weights 
 
 These standardized network loadings summarize the information in the edge weights and so they depend on the type of association represented by the edge weight (e.g., partial correlations, zero-order correlations). Thus, the meaning of these network loadings will change based on the type of correlation used. Specifically, partial correlations represent the unique measurement of a factor whereas zero-order correlations represent the unique and shared contribution of a variable's measurement of a factor.
 
-# Network Scores
+## Network Scores [@golino2020dynega]
 These network loadings form the foundation for computing network scores .Because the network loadings represent the middle ground between a saturated (EFA) and simple (CFA) structure, the network scores accommodate the inclusion of only the most important cross-loadings in their computation. This capitalizes on information often lost in typical CFA structures but reduces the cross-loadings of EFA structures to only the most important loadings. 
 
 To compute network scores, the following code can be used:
@@ -81,41 +85,42 @@ The `net.scores` function will return three objects: `scores`, `commCor`, and `l
 
 First, we take each community and identify items that do not have loadings on that community equal to zero:
 
-$$z_{tc} = z_{NL_{i \in c}} \neq 0,$$
+$$z_{tf} = z_{NL_{i \in f}} \neq 0,$$
 
-where $z_{NL_{c}}$ is the standardized network loadings for community $c$, and $z_{tc}$ is the network loadings in community $c$,that are not equal to zero. Next, $z_{tc}$ is divided by the standard deviation of the corresponding items in the data, $X$:
+where $z_{NL_{f}}$ is the standardized network loadings for community $f$, and $z_{tf}$ is the network loadings in community $f$,that are not equal to zero. Next, $z_{tf}$ is divided by the standard deviation of the corresponding items in the data, $X$:
 
-$$wei_{tc} = \frac{z_{tc}}{\sqrt{\frac{\sum_{i=1}^{t \in c} (X_i - \bar{X_t})^2}{n - 1}}},$$
+$$wei_{tc} = \frac{z_{tf}}{\sqrt{\frac{\sum_{i=1}^{t \in f} (X_i - \bar{X_t})^2}{n - 1}}},$$
 
-where the denominator, $\sqrt{\frac{\sum_{i=1}^{t \in c} (X_i - \bar{X_t})^2}{n - 1}}$, corresponds to the standard deviation of the items with non-zero network loadings in community $c$, and $wei_{tc}$ is the weight for the non-zero loadings in community $c$. These can be further transformed into relative weights for each non-zero loading:
+where the denominator, $\sqrt{\frac{\sum_{i=1}^{t \in f} (X_i - \bar{X_t})^2}{n - 1}}$, corresponds to the standard deviation of the items with non-zero network loadings in community $f$, and $wei_{tf}$ is the weight for the non-zero loadings in community $f$. These can be further transformed into relative weights for each non-zero loading:
 
-$$relWei_{tc} = \frac{wei_{t \in c}}{\sum^C_c wei_{t \in c}},$$
+$$relWei_{tf} = \frac{wei_{t \in f}}{\sum^F_f wei_{t \in f}},$$
 
-where $\sum^C_c wei_{t \in c}$ is the sum of the weights in community $c$, and $relWei_{tc}$ is the relative weights for non-zero loadings in community $c$. We then take these relative weights and multiply them to the corresponding items in the data, $X_{t \in c}$, to obtain the community (i.e., topic) score:
+where $\sum^F_f wei_{t \in f}$ is the sum of the weights in community $f$, and $relWei_{tf}$ is the relative weights for non-zero loadings in community $f$. We then take these relative weights and multiply them to the corresponding items in the data, $X_{t \in f}$, to obtain the community (e.g., factor) score:
 
-$$\hat{\theta_c} = \sum\limits^C_{c} X_{t \in c} \times relWei_{t \in c},$$
+$$\hat{\theta_f} = \sum\limits^F_{f} X_{t \in f} \times relWei_{t \in f},$$
 
-where $\hat{\theta_c}$ is the network score for community $c$. 
+where $\hat{\theta_f}$ is the network score for community $f$. 
 
-# Comparison to CFA Scores
+## Comparison to CFA Scores
+
 It's important to note that CFA scores are typically computed using a simple structure (items only load on one factor) and regression techniques. Network scores, however, are computed using a complex structure and are a weighted composite rather than a latent factor.
 
 ```{r latent scores setup, echo = FALSE, eval = TRUE, message = FALSE, warning = FALSE}
 # Latent variable scores
-## Estimate CFA
+# Estimate CFA
 output <- capture.output(cfa.net <- CFA(ega, estimator = "WLSMV", data = neoOpen, plot.CFA = FALSE))
 
-## Compute latent variable scores
+# Compute latent variable scores
 lv.scores <- lavPredict(cfa.net$fit)
 
-## Initialize correlations vector
+# Initialize correlations vector
 cors <- numeric(ega$n.dim)
 
-## Compute correlations
+# Compute correlations
 for(i in 1:ega$n.dim)
 {cors[i] <- cor(net.scores$std.scores[,i], lv.scores[,i], method = "spearman")}
 
-## Create matrix for table
+# Create matrix for table
 cors.mat <- as.matrix(round(cors,3))
 colnames(cors.mat) <- "Correlations"
 row.names(cors.mat) <- paste("Factor", 1:ega$n.dim)
@@ -123,16 +128,16 @@ row.names(cors.mat) <- paste("Factor", 1:ega$n.dim)
 
 ```{r latent scores present, echo = TRUE, eval = FALSE, message = FALSE, warning = FALSE}
 # Latent variable scores
-## Estimate CFA
+# Estimate CFA
 cfa.net <- CFA(ega, estimator = "WLSMV", data = neoOpen)
 
-## Compute latent variable scores
+# Compute latent variable scores
 lv.scores <- lavPredict(cfa.net$fit)
 
-## Initialize correlations vector
+# Initialize correlations vector
 cors <- numeric(ega$n.dim)
 
-## Compute correlations
+# Compute correlations
 for(i in 1:ega$n.dim)
 {cors[i] <- cor(net.scores$std.scores[,i], lv.scores[,i], method = "spearman")}
 ```
@@ -143,30 +148,12 @@ knitr::kable(cors.mat)
 
 As shown in the table, the network scores strongly correlate with the latent variable scores. Because Spearman's correlation was used, the orderings of the values take precedence. These large correlations between the scores reflect considerable redundancy between these scores.
 
-# References
+\newpage
 
-Christensen, A. P. (2018). NetworkToolbox: Methods and measures for brain, cognitive, and psychometric network analysis in R. *The R Journal*, *10*, 422--439. https://doi.org/10.32614/RJ-2018-065
+## References
+\begingroup
+\setlength{\parindent}{-0.5in}
+\setlength{\leftskip}{0.5in}
 
-Christensen, A. P., & Golino, H. (in press). On the equivalency of factor and network loadings. *Behavior Research Methods*. https://doi.org/10.31234/osf.io/xakez
-
-Christensen, A. P., Golino, H., & Silvia, P. (2020). A psychometric network perspective on the validity and validation of personality trait questionnaires. *European Journal of Personality*. https://doi.org/10.1002/per.2265
-
-Csardi, G., & Nepusz, T. (2006). The igraph software package for complex network research. *InterJournal Complex Systems*, *1695*, 1--9.
-
-Epskamp, S., & Fried, E. I. (2018). A tutorial on regularized partial correlation networks. *Psychological Methods*, *23*, 617--634. http://dx.doi.org/10.1037/met0000167
-
-Friedman, J., Hastie, T., & Tibshirani, R. (2008). Sparse inverse covariance estimation with the graphical lasso. *Biostatistics*, *9*, 432--441. https://doi.org/10.1093/biostatistics/kxm045
-
-Golino, H., & Christensen, A. P. (2020). EGAnet: Exploratory graph analysis -- A framework for estimating the number of dimensions in multivariate data using network psychometrics. https://CRAN.R-project.org/package=EGAnet
-
-Golino, H., & Epskamp, S. (2017). Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research. *PLoS ONE*, 12, e0174035. https://doi.org/10.1371/journal.pone.0174035
-
-Golino, H., Moulder, R., Christensen, A. P., Kim, S., & Boker, S. M. (under review). Modeling latent topics in social media using Dynamic Exploratory Graph Analysis: The case of the right-wing and left-wing trolls in the 2016 US elections. *PsyArXiv*. 
-
-Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., Thiyagarajan, J. A., & Martinez-Molina, A. (2020). Investigating the performance of exploratory graph analysis and traditional techniques to identify the number of latent factors: A simulation and tutorial. *Psychological Methods*, 25 292--320. https://doi.org/10.1037/met0000255
-
-Hallquist, M., Wright, A. C. G., & Molenaar, P. C. (2019). Problems with centrality measures in psychopathology symptom networks: Why network psychometrics cannot escape psychometric theory. *Multivariate Behavioral Research*. https://doi.org/10.1080/00273171.2019.1640103
-
-Massara, G. P., Di Matteo, T., & Aste, T. (2016). Network filtering for big data: Triangulated maximally filtered graph. *Journal of Complex Networks*, *5*, 161--178. https://doi.org/10.1093/comnet/cnw015
-
-Pons, P., & Latapy, M. (2006). Computing communities in large networks using random walks. *Journal of Graph Algorithms and Applications*, *10*, 191--218. https://doi.org/10.7155/jgaa.00124
+<div id = "refs"></div>
+\endgroup
