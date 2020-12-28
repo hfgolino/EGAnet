@@ -6,13 +6,12 @@
 \usage{
 methods.section(
   ...,
-  stats = c("net.loads", "net.scores", "dimStability", "itemStability", "entropyFit",
-    "tefi", "vn.entropy", "ergoInfo", "mctest.ergoInfo")
+  stats = c("net.loads", "net.scores", "dimStability", "itemStability")
 )
 }
 \arguments{
 \item{...}{\code{\link{EGAnet}} objects.
-Available methods:
+Available methods (more methods will be added soon!):
 
 \itemize{
 
@@ -31,16 +30,16 @@ Available statistics:
 \itemize{
 
 \item{\code{\link[EGAnet]{net.loads}}}
-{Network loadings. Requires \link[EGAnet]{EGA} object to be input}
+{Network loadings. Requires \code{\link[EGAnet]{EGA}} object to be input}
 
 \item{\code{\link[EGAnet]{net.scores}}}
-{Network scores. Requires \link[EGAnet]{EGA} object to be input}
+{Network scores. Requires \code{\link[EGAnet]{EGA}} object to be input}
 
 \item{\code{\link[EGAnet]{dimStability}}}
-{Structural consistency. Requires \link[EGAnet]{bootEGA} object to be input}
+{Structural consistency. Requires \code{\link[EGAnet]{bootEGA}} object to be input}
 
 \item{\code{\link[EGAnet]{itemStability}}}
-{Item stability. Requires \link[EGAnet]{bootEGA} object to be input}
+{Item stability. Requires \code{\link[EGAnet]{bootEGA}} object to be input}
 
 }}
 }
@@ -50,10 +49,41 @@ Automated HTML Methods section in your default browser
 \description{
 This function accepts \code{\link[EGAnet]{EGA}} objects
 and generates a Methods section for your analysis. The output is
-an HTML containing the descriptions of the methods and parameters
-along with a Reference section for appropriate citation.
+an HTML page containing the descriptions of the methods and parameters
+as well as a Reference section for appropriate citation.
 }
 \examples{
+\donttest{# Estimate EGA
+## plot.type = "qqraph" used for CRAN checks
+## plot.type = "GGally" is the default
+ega.wmt <- EGA(data = wmt2[,7:24], plot.type = "qgraph")
+}
+# EGA Methods section
 methods.section(ega.wmt)
+
+\donttest{# Estimate standardized network loadings
+wmt.loads <- net.loads(ega.wmt)$std
+}
+# EGA Methods section with network loadings
+methods.section(ega.wmt, stats = "net.loads")
+
+\donttest{# bootEGA example
+## plot.type = "qqraph" used for CRAN checks
+## plot.type = "GGally" is the default
+boot.wmt <- bootEGA(data = wmt, iter = 500, plot.type = "qgraph",
+type = "parametric", ncores = 2)
+}
+# EGA and bootEGA Methods section
+methods.section(ega.wmt, boot.wmt)
+
+\donttest{# Estimate structural consistency
+sc.wmt <- dimStability(boot.wmt, item.stability = TRUE)
+}
+# EGA and bootEGA Methods section with structural consistency and item stability
+methods.section(boot.wmt, stats = c("dimStability", "itemStability"))
+
+# EGA with network loadings and
+# bootEGA Methods section with structural consistency and item stability
+methods.section(ega.wmt, boot.wmt, stats = c("net.loads", "dimStability", "itemStability"))
 
 }

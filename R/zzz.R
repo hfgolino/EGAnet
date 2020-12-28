@@ -3,16 +3,13 @@
 
 .onAttach <- function(libname, pkgname)
 {
-    temp <- packageDescription("EGAnet")
-    msg <- paste("Package: ",temp$Package,": ",temp$Title,"\n",
-               "Version: ",temp$Version,"\n",
-               "Updated on: ",
-               temp$Date,"\n", sep="")
-    msg <- paste(msg,"Maintainer: Hudson Golino, University of Virginia\n",sep="")
-    msg <- paste(msg, "Authors: Hudson Golino, University of Virginia & \n Alexander Christensen, University of Pennsylvania\n",sep="")
-    msg <- paste(msg,"Contributors: Robert Moulder, University of Virginia\n",sep="")
-    msg <- paste(msg,'For citation information, type citation("EGAnet")\n')
-    msg <- paste(msg,'For vignettes, type browseVignettes("EGAnet")\n')
+    msg <- styletext(styletext(paste("\nEGAnet (version ", packageVersion("EGAnet"), ")", sep = ""), defaults = "underline"), defaults = "bold")
+    
+    msg <- paste(msg,'\nFor help getting started, type browseVignettes("EGAnet")\n')
     msg <- paste(msg,"For bugs and errors, submit an issue to <https://github.com/hfgolino/EGAnet/issues>")
+    
+    msg <- paste(msg, paste(styletext("\n\nNEW", defaults = "bold"),
+                            ": EGAnet will write your Methods section for you. Type ?methods.section for more details",
+                            sep = ""))
     packageStartupMessage(msg)
 }
