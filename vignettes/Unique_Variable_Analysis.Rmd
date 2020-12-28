@@ -1,6 +1,6 @@
 ---
 title: "Unique Variable Analysis"
-author: "Alexander P. Christensen and Hudson Golino"
+author: "Alexander P. Christensen, Luis Eduardo Garrido, and Hudson Golino"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 bibliography: Christensen_General_Library.bib
@@ -109,7 +109,7 @@ In our example, we selected these variables as redundant by inputting their numb
 knitr::include_graphics("./Figures/Figure9.png", dpi = 900)
 ```
 
-For the second target variable (Figure 4), "Trust what people say," we combined it with all the other possible redundant items (i.e., `1, 2, 3, 4`). Notably, there was one item that was reverse keyed, "Feel that most people cant be trusted," which was negatively correlated with the latent variable. Because there was an item negatively correlated with the latent variable, a secondary prompt appears asking to reverse code the latent variable so that the label can go in the desired direction. In review of the correlations of the variables with the latent variable, we can see that the latent variable is positively keyed already; therefore, we entered `n` and labeled the component. If, however, the signs of the correlations were the inverse, then `y` could be entered, which would reverse the meaning of the latent variable towards a positively keyed orientation. The function will proceed through the rest of the redundant variables until all have been handled (see SI [9](#SI_nine) for our handling).
+For the second target variable (Figure 4), "Trust what people say," we combined it with all the other possible redundant items (i.e., `1, 2, 3, 4`). Notably, there was one item that was reverse keyed, "Feel that most people cant be trusted," which was negatively correlated with the latent variable. Because there was an item negatively correlated with the latent variable, a secondary prompt appears asking to reverse code the latent variable so that the label can go in the desired direction. In review of the correlations of the variables with the latent variable, we can see that the latent variable is positively keyed already; therefore, we entered `n` and labeled the component. If, however, the signs of the correlations were the inverse, then `y` could be entered, which would reverse the meaning of the latent variable towards a positively keyed orientation. The function will proceed through the rest of the redundant variables until all have been handled (see [Appendix](#appendix) for our handling).
 
 ### Re-estimation of Dimensionality
 
@@ -137,7 +137,7 @@ With these components, we then re-estimated the dimensionality of the SAPA inven
 
 ### Remove All but One Variable {#remove}
 
-In going through UVA with the remove all but one variable option (see code below), we selected the same variables as redundant as shown in SI [9](#SI_nine) but rather than creating a latent variable we removed all but one variable.
+In going through UVA with the remove all but one variable option (see code below), we selected the same variables as redundant as shown in [Appendix](#appendix) but rather than creating a latent variable we removed all but one variable.
 
 ```{r remove, eval = FALSE, echo = TRUE, comment = NA, warning = FALSE, message = FALSE}
 # Perform unique variable analysis (removing all but one variable)
@@ -191,3 +191,16 @@ Consistent with results presented in the manuscript, five factors roughly resemb
 
 <div id = "refs"></div>
 \endgroup
+
+\newpage
+
+## Appendix {#appendix}
+
+```{r table, eval = TRUE, echo = FALSE, comment = NA, warning = FALSE, message = FALSE}
+# Read in .csv
+merged <- read.csv("./merged.items.csv")
+colnames(merged)[1] <- "Latent Variable"
+
+# Make table
+knitr::kable(merged)
+```

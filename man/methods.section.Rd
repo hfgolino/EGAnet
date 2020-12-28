@@ -70,14 +70,14 @@ methods.section(ega.wmt, stats = "net.loads")
 \donttest{# bootEGA example
 ## plot.type = "qqraph" used for CRAN checks
 ## plot.type = "GGally" is the default
-boot.wmt <- bootEGA(data = wmt, iter = 500, plot.type = "qgraph",
+boot.wmt <- bootEGA(data = wmt2[,7:24], iter = 500, plot.type = "qgraph",
 type = "parametric", ncores = 2)
 }
 # EGA and bootEGA Methods section
 methods.section(ega.wmt, boot.wmt)
 
 \donttest{# Estimate structural consistency
-sc.wmt <- dimStability(boot.wmt, item.stability = TRUE)
+sc.wmt <- dimStability(boot.wmt, orig.wc = ega.wmt$wc, item.stability = TRUE)
 }
 # EGA and bootEGA Methods section with structural consistency and item stability
 methods.section(boot.wmt, stats = c("dimStability", "itemStability"))
