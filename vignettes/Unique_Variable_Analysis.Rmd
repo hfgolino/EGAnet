@@ -62,7 +62,7 @@ plot(ega.wr, plot.args = list(node.size = 8,
 ```
 ```{r Fig6, fig.cap = "Figure 1. Exploratory Graph Analaysis of SAPA Inventory Before Unique Variable Analysis", fig.align = 'center', fig.pos = "H", eval = TRUE, echo = FALSE, comment = NA, warning = FALSE, message = FALSE}
 # Initial EGA
-knitr::include_graphics("./Figures/Fig6-1.png", dpi = 300)
+knitr::include_graphics("./Figures/Fig6-1.png", dpi = 75)
 ```
 
 
@@ -128,7 +128,7 @@ plot(ega, plot.args =
 ```
 ```{r Fig10, fig.cap = "Figure 5. Exploratory Graph Analaysis of SAPA Inventory After Unique Variable Analysis", fig.align = 'center', fig.pos = "H", eval = TRUE, echo = FALSE, comment = NA, warning = FALSE, message = FALSE}
 # Re-estimate EGA
-knitr::include_graphics("./Figures/Fig10-1.png", dpi = 450)
+knitr::include_graphics("./Figures/Fig10-1.png", dpi = 75)
 ```
 
 With these components, we then re-estimated the dimensionality of the SAPA inventory using EGA. This time, five components resembling the five-factor model were estimated (Figure 5). These five factors also align and correspond to the expected factor structure of the SAPA inventory, corroborating the effectiveness of the UVA. In sum, our example demonstrates that redundancy can lead to minor factors, which may bias dimensionality estimates towards overfactoring (as shown in Figure 1). When this redundancy is handled, then the dimensionality estimates can be expected to be more accurate and in line with theoretical expectations (as shown in Figure 5).[^4] Similar results were achieved by using the remove all but one variable approach (see [next section](#remove)).
@@ -177,7 +177,7 @@ plot(ega.rm, plot.args = list(vsize = 8,
 ```
 ```{r Fig13, fig.cap = "Figure 8. Exploratory Graph Analaysis of SAPA Inventory After Unique Variable Analysis (removed)", fig.align = 'center', fig.pos = "H", eval = TRUE, echo = FALSE, comment = NA, warning = FALSE, message = FALSE}
 # Removed dimensionality
-knitr::include_graphics("./Figures/Fig13-1.png", dpi = 450)
+knitr::include_graphics("./Figures/Fig13-1.png", dpi = 75)
 ```
 
 Consistent with results presented in the manuscript, five factors roughly resembling the five-factor model were found. The item placement for all items are appropriate for their dimensions as well. Similarly, parallel analysis identified five and six dimensions for principal component analysis and principal axis factoring, respectively. In all, the results largely align with one another, demonstrating that removing variables can be an effective approach to reducing redundancy in data.

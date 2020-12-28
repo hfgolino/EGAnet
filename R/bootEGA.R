@@ -234,7 +234,7 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 24.12.2020
+# Updated 28.12.2020
 bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling"),
                     model = c("glasso", "TMFG"), model.args = list(),
                     algorithm = c("walktrap", "louvain"), algorithm.args = list(),
@@ -310,6 +310,7 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
   }
 
   ## Check for input plot arguments
+  color.palette <- "polychrome"
   if(plot.type == "GGally"){
     
     if(length(plot.args) == 0){
@@ -319,8 +320,6 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
                                edge.alpha = 0.7, layout.exp = 0.2)
       default.args[names(ega.default.args)]  <- ega.default.args
       default.args <- default.args[-length(default.args)]
-      
-      color.palette <- "polychrome"
       
     }else{
       
@@ -338,7 +337,7 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
       
       if("color.palette" %in% names(plot.args)){
         color.palette <- plot.args$color.palette
-      }else{color.palette <- "polychrome"}
+      }
       
       if(any(names(plot.args) %in% names(default.args))){
         target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
@@ -567,6 +566,7 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
 
   result <- list()
   result$iter <- iter
+  result$type <- type
   result$boot.ndim <- boot.ndim
   result$boot.wc <- boot.wc
   result$bootGraphs <- bootGraphs

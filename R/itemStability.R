@@ -225,11 +225,18 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   ic.plot <- ic.plot + ggplot2::theme(axis.text.y = ggplot2::element_text(size=text.size))
   
   # Change color.palette (if necessary)
-  if(bootega.obj$color.palette != "Set1"){
+  if(!ggplot2::is.ggplot(bootega.obj$plot.typical.ega)){
     ic.plot <- suppressMessages(
-      ic.plot + ggplot2::scale_color_manual(values = color_palette_EGA(bootega.obj$color.palette, bootega.obj$typicalGraph$wc),
+      ic.plot + ggplot2::scale_color_manual(values = color_palette_EGA("rainbow", bootega.obj$typicalGraph$wc),
                                             breaks = sort(bootega.obj$typicalGraph$wc))
     )
+  }else{
+    if(bootega.obj$color.palette != "Set1"){
+      ic.plot <- suppressMessages(
+        ic.plot + ggplot2::scale_color_manual(values = color_palette_EGA(bootega.obj$color.palette, bootega.obj$typicalGraph$wc),
+                                              breaks = sort(bootega.obj$typicalGraph$wc))
+      )
+    }
   }
   
   

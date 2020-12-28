@@ -4,7 +4,7 @@
 #' network plots
 #'
 #' @param name Character.
-#' Name of color scheme (see \code{\link{RColorBrewer}}).
+#' Name of color scheme (see \code{\link[RColorBrewer]{RColorBrewer}}).
 #' Defaults to \code{"polychrome"}.
 #' \code{\link[EGAnet]{EGA}} palettes:
 #'
@@ -18,6 +18,9 @@
 #'
 #' \item{\code{"blue.ridge2"}}
 #' {Second palette inspired by the Blue Ridge Mountains}
+#' 
+#' \item{\code{"rainbow"}}
+#' {Rainbow colors. Default for \code{\link[qgraph]{qgraph}}}
 #'
 #' \item{\code{"rio"}}
 #' {Palette inspired by Rio de Janiero, Brazil}
@@ -58,7 +61,7 @@ color_palette_EGA <- function (name, wc)
   # All palettes
   all_palettes <- c(row.names(RColorBrewer::brewer.pal.info),
                     "polychrome", "blue.ridge1", "blue.ridge2",
-                    "rio", "itacare"
+                    "rainbow", "rio", "itacare"
                     )
 
   # Default palette
@@ -146,7 +149,10 @@ color_palette_EGA <- function (name, wc)
                 "e2a187", "e3ccb5", "c48480", "fcac6c"
               ), sep = "")
       )
-
+      
+      # Rainbow
+      rainbow <- grDevices::rainbow(max(wc, na.rm = TRUE))
+      
       ## Rio (10 colors)
       rio <- toupper(
         paste("#",

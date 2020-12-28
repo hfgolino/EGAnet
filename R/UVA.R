@@ -248,7 +248,7 @@
 #' @export
 #
 # Unique Variable Analysis
-# Updated 19.12.2020
+# Updated 27.12.2020
 UVA <- function(data, n = NULL,
                 method = c("cor", "pcor", "wTO"),
                 type = c("adapt", "alpha", "threshold"), sig,
@@ -390,6 +390,24 @@ UVA <- function(data, n = NULL,
   res$redundancy <- process
   if(reduce){res$reduced <- reduced}
   if(adhoc){res$adhoc <- adhoc.check}
+  
+  # Set up methods
+  res$Methods <- list()
+  res$Methods$method <- method
+  res$Methods$type <- type
+  res$Methods$sig <- sig
+  if(reduce){
+    
+    res$Methods$reduce.method <- reduce.method
+    
+    if(reduce.method == "latent"){
+      res$Methods$lavaan.args <- lavaan.args
+    }
+    
+  }
+    
+  # Set class
+  class(res) <- "UVA"
   
   return(res)
   

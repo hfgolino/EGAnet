@@ -140,8 +140,6 @@
 #'
 #' \item{cor.data}{The zero-order correlation matrix}
 #'
-#' \item{Methods}{Arguments for creating a Methods section (see \code{\link[EGAnet]{EGA.methods.section}})}
-#'
 #' @examples
 #' \donttest{# Estimate EGA
 #' ## plot.type = "qqraph" used for CRAN checks
@@ -220,7 +218,7 @@
 #'
 #' @export
 #'
-# Updated 16.12.2020
+# Updated 28.12.2020
 ## EGA Function to detect unidimensionality:
 EGA <- function (data, n = NULL, uni = TRUE,
                  model = c("glasso", "TMFG"), model.args = list(),
