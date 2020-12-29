@@ -2769,7 +2769,7 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
         merged[[count]] <- key[idx]
         
         # Name merged input
-        names(merged)[count] <- key[setdiff(ind, idx)]
+        name.chn[count] <- key[setdiff(ind, idx)]
         
         # Message user
         message(paste("\nKEPT '", key[ind[as.numeric(new.input) + 1]],"' and REMOVED all others", sep = ""))
@@ -2911,7 +2911,12 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
     m.mat <- NULL
   }else{
     m.mat <- t(m.mat)
-    colnames(m.mat) <- c("Target", paste("Redundancy_", 1:(ncol(m.mat)-1), sep = ""))
+    
+    if(reduce.method == "latent"){
+      colnames(m.mat) <- c("Target", paste("Redundancy_", 1:(ncol(m.mat)-1), sep = ""))
+    }else if(reduce.method == "remove"){
+      colnames(m.mat) <- c(paste("Redundancy_", 1:ncol(m.mat), sep = ""))
+    }
   }
   
   # Initialize results list
