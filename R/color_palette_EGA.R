@@ -151,7 +151,7 @@ color_palette_EGA <- function (name, wc)
       )
       
       # Rainbow
-      rainbow <- grDevices::rainbow(max(wc, na.rm = TRUE))
+      rainbow <- grDevices::rainbow(max(as.numeric(factor(wc)), na.rm = TRUE))
       
       ## Rio (10 colors)
       rio <- toupper(
