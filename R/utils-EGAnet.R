@@ -2680,6 +2680,7 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
         ## Check categories
         if(any(categories < 6)){# Not all continuous
           lavaan.args$estimator <- "WLSMV"
+          lavaan.args$missing <- NULL
         }else{# All can be considered continuous
           lavaan.args$estimator <- "MLR"
         }
