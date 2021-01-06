@@ -2741,14 +2741,38 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
         
         target.key <- c(tar.idx, idx)
         target.data <- new.data[,target.key]
-        if(ncol(target.data) > 2){util <- round(info.util(target.data), 2)}
-        if(ncol(target.data) > 2){cor.corr <- round(item.total(target.data), 2)}
+    
         means <- round(colMeans(target.data, na.rm = TRUE), 2)
         sds <- round(apply(target.data, 2, sd, na.rm = TRUE), 2)
         ranges <- round(apply(target.data, 2, range, na.rm = TRUE), 2)
+        
         if(ncol(target.data) > 2){
-          tab <- cbind(util, cor.corr, means, sds, t(ranges))
-          colnames(tab) <- c("Utility Gain", "Item-Total r", "Mean", "SD", "Low", "High")
+          
+          # Corrected item-total correlations
+          cor.corr <- round(item.total(target.data), 2)
+          
+          ## Use information utility?
+          categories <- apply(target.data, 2, function(x){
+            length(unique(x))
+          })
+          
+          ## Check categories
+          if(all(categories <= 7)){
+            
+            ## Use
+            #util <- round(info.util(target.data), 2)
+            
+            tab <- cbind(#util,
+              cor.corr, means, sds, t(ranges))
+            colnames(tab) <- c(#"Utility Gain", 
+              "Item-Total r", "Mean", "SD", "Low", "High")
+          }else{
+            
+            tab <- cbind(cor.corr, means, sds, t(ranges))
+            colnames(tab) <- c("Item-Total r", "Mean", "SD", "Low", "High")
+            
+          }
+          
         }else{
           tab <- cbind(means, sds, t(ranges))
           colnames(tab) <- c("Mean", "SD", "Low", "High")

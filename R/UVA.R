@@ -357,33 +357,34 @@ UVA <- function(data, n = NULL,
                              reduce.method = reduce.method,
                              plot.args = plot.args,
                              lavaan.args = lavaan.args)
-  }else{reduced <- process}
-  
-  # Check for any remaining redundancies
-  if(adhoc){
-    ## Message user
-    message("Running adhoc check for any potential redundancies remaining...\n")
     
-    ## Run check
-    adhoc.check <- suppressMessages(
-      redundancy.process(data = reduced$data, cormat = qgraph::cor_auto(reduced$data),
-                         n = nrow(reduced$data), method = "wto",
-                         type = "threshold", sig = .20,
-                         plot.redundancy = FALSE, plot.args = plot.args)
-    )
+    # Check for any remaining redundancies
+    if(adhoc){
+      ## Message user
+      message("Running adhoc check for any potential redundancies remaining...\n")
+      
+      ## Run check
+      adhoc.check <- suppressMessages(
+        redundancy.process(data = reduced$data, cormat = qgraph::cor_auto(reduced$data),
+                           n = nrow(reduced$data), method = "wto",
+                           type = "threshold", sig = .20,
+                           plot.redundancy = FALSE, plot.args = plot.args)
+      )
+      
+      # Artificial pause for feel
+      Sys.sleep(1)
+      
+      if(all(is.na(adhoc.check$redundant))){
+        
+        message("Some redundancies may still exist. See `OUTPUT$adhoc`")
+        
+      }else{message("No redundancies reamin.")}
+    }
     
     # Artificial pause for feel
     Sys.sleep(1)
     
-    if(all(is.na(adhoc.check$redundant))){
-      
-      message("Some redundancies may still exist. See `OUTPUT$adhoc`")
-      
-    }else{message("No redundancies reamin.")}
-  }
-  
-  # Artificial pause for feel
-  Sys.sleep(1)
+  }else{reduced <- process}
   
   # Full results
   res <- list()
@@ -396,6 +397,7 @@ UVA <- function(data, n = NULL,
   res$Methods$method <- method
   res$Methods$type <- type
   res$Methods$sig <- sig
+  res$Methods$adhoc <- adhoc
   if(reduce){
     
     res$Methods$reduce.method <- reduce.method
