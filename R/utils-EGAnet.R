@@ -2748,7 +2748,7 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
         ranges <- round(apply(target.data, 2, range, na.rm = TRUE), 2)
         if(ncol(target.data) > 2){
           tab <- cbind(util, cor.corr, means, sds, t(ranges))
-          colnames(tab) <- c("Utility Loss", "Item-Total r", "Mean", "SD", "Low", "High")
+          colnames(tab) <- c("Utility Gain", "Item-Total r", "Mean", "SD", "Low", "High")
         }else{
           tab <- cbind(means, sds, t(ranges))
           colnames(tab) <- c("Mean", "SD", "Low", "High")
