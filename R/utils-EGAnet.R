@@ -2551,7 +2551,7 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
 #' @importFrom graphics text
 #' @noRd
 # Redundancy Reduction----
-# Updated 21.12.2020
+# Updated 06.01.2020
 redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.args)
 {
   # Check for node.redundant object class
@@ -2598,7 +2598,7 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
   prev.state <- list(redund)
   prev.state.data <- list(new.data)
   
-  # Loop through named node redundant list
+  # Loop through named node redundant list----
   while(length(redund) != 0)
   {
     # Targeting redundancy
@@ -2680,7 +2680,6 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
         ## Check categories
         if(any(categories < 6)){# Not all continuous
           lavaan.args$estimator <- "WLSMV"
-          lavaan.args$missing <- NULL
         }else{# All can be considered continuous
           lavaan.args$estimator <- "MLR"
         }
@@ -2742,18 +2741,22 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
         
         target.key <- c(tar.idx, idx)
         target.data <- new.data[,target.key]
+        if(ncol(target.data) > 2){util <- round(info.util(target.data), 2)}
         if(ncol(target.data) > 2){cor.corr <- round(item.total(target.data), 2)}
         means <- round(colMeans(target.data, na.rm = TRUE), 2)
         sds <- round(apply(target.data, 2, sd, na.rm = TRUE), 2)
         ranges <- round(apply(target.data, 2, range, na.rm = TRUE), 2)
         if(ncol(target.data) > 2){
-          tab <- cbind(cor.corr, means, sds, t(ranges))
-          colnames(tab) <- c("Item-Total r", "Mean", "SD", "Low", "High")
+          tab <- cbind(util, cor.corr, means, sds, t(ranges))
+          colnames(tab) <- c("Utility Loss", "Item-Total r", "Mean", "SD", "Low", "High")
         }else{
           tab <- cbind(means, sds, t(ranges))
           colnames(tab) <- c("Mean", "SD", "Low", "High")
         }
         row.names(tab) <- c("0 (Target)", 1:length(comb))
+    
+        tab[,1:(ncol(tab) - 2)] <- matrix(sprintf("%.2f", tab[,1:(ncol(tab) - 2)]), nrow = nrow(tab), ncol = ncol(tab) - 2)
+       
         table.plot <- gridExtra::tableGrob(tab)
         gridExtra::grid.arrange(table.plot)
         
@@ -2966,6 +2969,36 @@ item.total <- function (data.sub)
   }
   
   return(cor.corr)
+  
+}
+
+#' @noRd
+# Information utility----
+# Updated 06.01.2020
+info.util <- function (data){
+  
+  # Initialize information utility vector
+  info.vec <- numeric(ncol(data))
+  
+  # Maximum information utility
+  ## Graded response model
+  irt <- ltm::grm(data = target.data)
+  ## Normalized Minimum Reduction in Uncertainty
+  max.info <- infutil::nmru(irt, range.int = c(-20, 20))$val
+  
+  # Loop through data
+  for(i in 1:ncol(data)){
+    
+    ## Graded response model
+    irt <- ltm::grm(data = target.data[,-i])
+    ## Normalized Minimum Reduction in Uncertainty
+    info <- infutil::nmru(irt, range.int = c(-20, 20))$val
+    ## Difference in information utility
+    info.vec[i] <- max.info - info
+    
+  }
+  
+  return(info.vec)
   
 }
 
