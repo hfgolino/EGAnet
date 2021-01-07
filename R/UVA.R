@@ -325,12 +325,10 @@ UVA <- function(data, n = NULL,
     lavaan.args <- formals(lavaan::cfa)
     lavaan.args[length(lavaan.args)] <- NULL
     lavaan.args$std.lv <- TRUE
-    lavaan.args$missing <- "fiml"
   }else{
     lavaan.default <- formals(lavaan::cfa)
     lavaan.default[length(lavaan.default)] <- NULL
     lavaan.default$std.lv <- TRUE
-    lavaan.args$missing <- "fiml"
     
     if(any(names(lavaan.args) %in% names(lavaan.default))){
       lavaan.default[names(lavaan.args)] <- lavaan.args

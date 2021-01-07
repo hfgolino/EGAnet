@@ -2683,6 +2683,7 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
           lavaan.args$missing <- "pairwise"
         }else{# All can be considered continuous
           lavaan.args$estimator <- "MLR"
+          lavaan.args$missing <- "fiml"
         }
         
         ## get CFA function from lavaan
