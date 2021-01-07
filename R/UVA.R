@@ -214,7 +214,7 @@
 #' 
 #' if(interactive()){
 #' UVA(data = items, method = "wTO", type = "adapt",
-#'     key = key, reduce = "latent")
+#'     key = key, reduce.method = "latent")
 #' }
 #'
 #' @references
@@ -248,7 +248,7 @@
 #' @export
 #
 # Unique Variable Analysis
-# Updated 27.12.2020
+# Updated 07.01.2020
 UVA <- function(data, n = NULL,
                 method = c("cor", "pcor", "wTO"),
                 type = c("adapt", "alpha", "threshold"), sig,
