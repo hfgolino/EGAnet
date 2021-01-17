@@ -218,7 +218,7 @@
 #'
 #' @export
 #'
-# Updated 28.12.2020
+# Updated 17.01.2021
 ## EGA Function to detect unidimensionality:
 EGA <- function (data, n = NULL, uni = TRUE,
                  model = c("glasso", "TMFG"), model.args = list(),
@@ -505,8 +505,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
           network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
           network::set.edge.value(network1,attrname="AbsWeights",value=abs(a$network))
           network::set.edge.value(network1,attrname="ScaledWeights",
-                                  value=matrix(scales::rescale(as.vector(a$network),
-                                                               to = c(.001, 1.75)),
+                                  value=matrix(rescale.edges(a$network, plot.args$size),
                                                nrow = nrow(a$network),
                                                ncol = ncol(a$network)))
           
@@ -527,6 +526,11 @@ EGA <- function (data, n = NULL, uni = TRUE,
           plot.args$edge.color <- "color"
           plot.args$edge.size <- "ScaledWeights"
           plot.args$color.palette <- "Set1"
+          
+          lower <- abs(x$network[lower.tri(a$network)])
+          non.zero <- sqrt(lower[lower != 0])
+          
+          plot.args$edge.alpha <- non.zero
           plot.args$mode <- layout.spring
           plot.args$label <- colnames(a$network)
           plot.args$node.label <- plot.args$label
@@ -560,8 +564,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
         network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
         network::set.edge.value(network1,attrname="AbsWeights",value = abs(a$network))
         network::set.edge.value(network1,attrname="ScaledWeights",
-                                value=matrix(scales::rescale(as.vector(a$network),
-                                                             to = c(.001, 1.75)),
+                                value=matrix(rescale.edges(a$network, plot.args$size),
                                              nrow = nrow(a$network),
                                              ncol = ncol(a$network)))
 
@@ -583,6 +586,11 @@ EGA <- function (data, n = NULL, uni = TRUE,
         plot.args$edge.color <- "color"
         plot.args$edge.size <- "ScaledWeights"
         plot.args$color.palette <- "Set1"
+        
+        lower <- abs(x$network[lower.tri(a$network)])
+        non.zero <- sqrt(lower[lower != 0])
+        
+        plot.args$edge.alpha <- non.zero
         plot.args$mode <- layout.spring
         plot.args$label <- colnames(a$network)
         plot.args$node.label <- plot.args$label

@@ -236,7 +236,7 @@ key <- as.character(psychTools::spi.dictionary$item[key.ind])
 
 if(interactive()){
 UVA(data = items, method = "wTO", type = "adapt",
-    key = key, reduce = "latent")
+    key = key, reduce.method = "latent")
 }
 
 }

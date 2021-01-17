@@ -48,7 +48,7 @@ ega <- EGA(neoOpen, model = "glasso", algorithm = "louvain", plot.EGA = FALSE)
 
 As depicted above, EGA estimates there to be 7 dimensions of openness to experience. Using these dimensions, we can now estimate network scores; but first, we'll go into details about how these are estimated.
 
-## Network Loadings [@christensen2020equivalency]
+## Network Loadings [@christensen2021equivalency]
 
 Network loadings are roughly equivalent to factor loadings and differ only in the association measures used to compute them. For networks, the centrality measure *node strength* is used to compute the sum of the connections to a node. Previous simulation studies have reported that node strength is generally redundant with CFA factor loadings [@hallquist2019problems]. Importantly, Hallquist and colleagues [-@hallquist2019problems] found that a node's strength represents a combination of dominant and cross-factor loadings. To mitigate this issue, I've developed a function called `net.loads`, which computes the node strength for each node in each dimension, parsing out the connections that represent dominant and cross-dimension loadings. Below is the code to compute standardized (`$std`; unstandardized, `$unstd`) network loadings.
 

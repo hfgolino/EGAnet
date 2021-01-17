@@ -291,10 +291,14 @@ mlnEGA <- function (behav.data, behav.time = FALSE,
     network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
     network::set.edge.value(network1,attrname="AbsWeights",value=abs(res$multilayer.network))
     network::set.edge.value(network1,attrname="ScaledWeights",
-                            value=matrix(scales::rescale(as.vector(res$multilayer.network),
-                                                         to = c(.001, 1.75)),
+                            value=matrix(rescale.edges(res$multilayer.network),
                                          nrow = nrow(res$multilayer.network),
                                          ncol = ncol(res$multilayer.network)))
+    
+    lower <- abs(x$network[lower.tri(res$multilayer.network)])
+    non.zero <- sqrt(lower[lower != 0])
+    
+    plot.args$edge.alpha <- non.zero
     
     # Layout "Spring"
     graph1 <- NetworkToolbox::convert2igraph(res$multilayer.network)

@@ -357,7 +357,7 @@ EGA.methods.section <- function (object, net.loads, net.scores)
 EGA.fit.methods.section <- function (object)
 {
   # Not ready yet
-  stop("EGA.fit Methods section is still being developed yet")
+  stop("EGA.fit Methods section is still being developed")
   
 }
 
@@ -502,7 +502,7 @@ bootEGA.methods.section <- function (object, dim.stability, item.stability)
 dynEGA.methods.section <- function (object)
 {
   # Not ready yet
-  stop("dynEGA Methods section is still being developed yet")
+  stop("dynEGA Methods section is still being developed")
 
 }
 
@@ -510,11 +510,11 @@ dynEGA.methods.section <- function (object)
 #'
 #' @noRd
 # UVA Methods Section----
-# Updated 28.12.2020
+# Updated 14.01.2021
 UVA.methods.section <- function (object)
 {
   # Not ready yet
-  stop("UVA Methods section is still being developed yet")
+  stop("UVA Methods section is still being developed")
   
   # Input arguments
   INPUT <- object$Methods
@@ -564,118 +564,8 @@ UVA.methods.section <- function (object)
                                  "https://doi.org/10.31234/osf.io/4kra2")
   
   
-  ## Description of network estimation method
-  model.header <- "## Association Method"
-  
-  if(tolower(model) == "glasso")
-  {
-    
-    lambda <- INPUT$lambda
-    gamma <- INPUT$gamma
-    
-    model.text <- paste("&emsp;This study applied the graphical least absolute shrinkage and selection operator ",
-                        "(GLASSO; Friedman, Haste, & Tibshirani, 2008, 2014), which estimates a Gaussian ",
-                        "Graphical Model (GGM; Lauritzen, 1996) where nodes (circles) represent variables ",
-                        "and edges (lines) represent the conditional dependence (or partial correlations) ",
-                        "between nodes given all other nodes in the network. The least absolute shrinkage ",
-                        "and selection operator (LASSO; Tibshirani, 1996) of the GLASSO is a regularization ",
-                        "technique that reduces parameter estimates with some estimates becoming exactly zero. ",
-                        "\n\n",
-                        "&emsp;The LASSO uses a parameter called lambda ($\\lambda$), which controls the sparsity of the network. ",
-                        "Lower values of $\\lambda$ remove fewer edges, increasing the possibility of including ",
-                        "spurious correlations, while larger values of $\\lambda$ remove more edges, increasing ",
-                        "the possibility of removing relevant edges. When $\\lambda$ = 0, then the estimates are ",
-                        "equal to the ordinary least squares solution for the partial correlation matrix. ",
-                        "In this study, the ratio of the minimum and maximum $\\lambda$ was set to ", lambda, ".",
-                        "\n\n",
-                        "&emsp;The popular approach in the network psychometrics literature is to compute models ",
-                        "across several values of $\\lambda$ (usually 100) and to select the model that minimizes ",
-                        "the extended Bayesian information criterion (EBIC; Chen & Chen, 2008; Epskamp & Fried, 2018). ",
-                        "The EBIC model selection uses a hyperparameter gamma ($\\gamma$) to control how much it prefers simpler models ",
-                        "(i.e., models with fewer edges; Foygel & Drton, 2010). Larger $\\gamma$ values lead to simpler models, ",
-                        "while smaller $\\gamma$ values lead to denser models. When $\\gamma$ = 0, the EBIC is equal to the Bayesian ",
-                        "information criterion. In this study, $\\gamma$ was set to ", gamma, ". In network psychometrics literature, ",
-                        "this approach has been termed *EBICglasso* and is applied using the *qgraph* package (Epskamp et al., 2012) ",
-                        "in R.",
-                        sep = ""
-    )
-    
-    
-    
-  }else if(model == "TMFG")
-  {
-    model.text <- paste("&emsp;This study applied the Triangulated Maximally Filtered Graph (TMFG; Christensen et al., 2018; Massara, Di Matteo, & Aste, 2016), ",
-                        "which applies a structural constraint on the zero-order correlation matrix. This constraint ",
-                        "restrains the network to retain a certain number of edges (3*n*--6, where *n* is the number ",
-                        "of nodes). This network is comprised of three- and four-node cliques (i.e., sets of connected ",
-                        "nodes; a triangle and tetrahedron, respectively).",
-                        "\n\n",
-                        "&emsp;Network estimation starts with a tetrahedron that is comprised of the four nodes ",
-                        "that have the high sum of correlations that are greater than the average correlation in ",
-                        "the correlation matrix. Next, the algorithm identifies a node that is not connected in the ",
-                        "network and maximizes its sum of correlations to three nodes already in the network. This ",
-                        "node is then connected to those three nodes. This process continues iteratively until ",
-                        "every node is connected in the network.",
-                        "\n\n",
-                        "&emsp;The resulting network is a *planar* network or a network that *could* be drawn ",
-                        "such that no edges are crossing (Tumminello, Aste, Di Matteo, & Mantegna, 2005). One ",
-                        'property of these networks is that they form a "nested hierarchy" such that its constituent ',
-                        "elements (3-node cliques) form sub-networks in the overall network (Song, Di Matteo, & Aste, 2012). ",
-                        "The TMFG method was applied using the *NetworkToolbox* package (Christensen, 2018) in R.",
-                        sep = ""
-    )
-    
-    
-  }
-  
-  ## Description of community detection algorithm
-  algorithm.header <- "## Community Detection Algorithm"
-  
-  if(tolower(algorithm) == "walktrap")
-  {
-    steps <- INPUT$steps
-    
-    algorithm.text <- paste("&emsp;The Walktrap algorithm (Pons & Latapy, 2006) is a commonly applied community detection algorithm in ",
-                            "the psychometric network literature (Golino & Epskamp, 2017; Golino et al., 2020). The algorithm begins ",
-                            "by computing a transition matrix where each element represents the probability of one node traversing to ",
-                            "another (based on node strength or the sum of the connections to each node). Random walks are then initiated ",
-                            "for a certain number of steps (e.g., ", steps, ") using the transition matrix for probable destinations. Using ",
-                            "Ward's agglomerative clustering approach (Ward, 1963), each node starts as its own cluster and merges ",
-                            "with adjacent clusters (based on squared distances between each cluster) in a way that minimizes the sum of ",
-                            "squared distances between other clusters. Modularity (Newman, 2006) is then used to determine the optimal ",
-                            "partition of clusters (i.e., communities). The Walktrap algorithm was implemented using the *igraph* ",
-                            "package (Csardi & Nepusz, 2006) in R.",
-                            sep = ""
-    )
-    
-    
-    
-  }else if(algorithm == "louvain")
-  {
-    algorithm.text <- paste("&emsp;The Louvain algorithm (also referred to as Multi-level; Blondel, Guillaume, Lambiotte, & Lefebvre, 2008)",
-                            "is one of the most commonly applied in network science (Gates, Henry, Steinley, & Fair, 2016). The algorithm",
-                            "begins by randomly sorting nodes into communities with their neighbors and then uses",
-                            "modularity (Newman, 2006) to iteratively optimize its community partitions by exchanging nodes between communities",
-                            "and evaluating the change in modularity until it no longer improves.",
-                            "Then, the algorithm collapses the communities into latent nodes and identifies edge weights with other observed and latent",
-                            "nodes, which provides a multi-level structure (Gates et al., 2016). In this study, the",
-                            "algorithm was not used to identify hierarchical community structures in the network.",
-                            "The Louvain algorithm was implemented using the *igraph* package (Csardi & Nepusz, 2006) in R.",
-                            "It's also important to note that the algorithm implemented in *igraph* is deterministic;",
-                            "however, other implementations are not (Gates et al., 2016)."
-    )
-    
-    
-  }else{
-    
-    algorithm.text <- paste("&emsp;A default algorithm was not used in EGA. Write your own damn community detection algorithm section &#128540;")
-    
-  }
-  
   # Organize text output
   markobj <- paste(intro.header, intro.text,
-                   model.header, model.text,
-                   algorithm.header, algorithm.text,
                    sep = "\n")
   
   # Return list

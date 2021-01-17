@@ -2506,8 +2506,7 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
   network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
   network::set.edge.value(network1,attrname="AbsWeights",value=abs(plot.mat))
   network::set.edge.value(network1,attrname="ScaledWeights",
-                          value=matrix(scales::rescale(as.vector(plot.mat),
-                                                       to = c(.001, 3)),
+                          value=matrix(rescale.edges(plot.mat),
                                        nrow = nrow(plot.mat),
                                        ncol = ncol(plot.mat)))
   
@@ -2524,6 +2523,11 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
     plot.args$label.size <- 8
   }
   
+  
+  lower <- abs(x$network[lower.tri(plot.mat)])
+  non.zero <- sqrt(lower[lower != 0])
+  
+  plot.args$edge.alpha <- non.zero
   
   set.seed(1234)
   redund.net <- GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1", 
@@ -3000,7 +3004,7 @@ item.total <- function (data.sub)
 
 #' @noRd
 # Information utility----
-# Updated 06.01.2020
+# Updated 14.01.2021
 info.util <- function (data){
   
   # Initialize information utility vector
@@ -3008,7 +3012,7 @@ info.util <- function (data){
   
   # Maximum information utility
   ## Graded response model
-  irt <- ltm::grm(data = target.data)
+  irt <- ltm::grm(data = data)
   ## Normalized Minimum Reduction in Uncertainty
   max.info <- infutil::nmru(irt, range.int = c(-20, 20))$val
   
@@ -3016,7 +3020,7 @@ info.util <- function (data){
   for(i in 1:ncol(data)){
     
     ## Graded response model
-    irt <- ltm::grm(data = target.data[,-i])
+    irt <- ltm::grm(data = data[,-i])
     ## Normalized Minimum Reduction in Uncertainty
     info <- infutil::nmru(irt, range.int = c(-20, 20))$val
     ## Difference in information utility
@@ -3235,4 +3239,28 @@ input.check <- function (poss, type = c("redund", "remove"))
   }
   
   return(input)
+}
+
+#' @noRd
+# Rescale edges for GGally----
+# Updated 17.01.2021
+rescale.edges <- function (network, size)
+{
+  # Set rescaling
+  scaling <- seq(0, 1, .001) * size
+  names(scaling) <- seq(0, 1, .001)
+  
+  # Vectorize edges
+  edges <- round(as.vector(as.matrix(network)), 3)
+  
+  # Get absolute edges
+  abs.edges <- abs(edges)
+  
+  # Get edge signs
+  signs.edges <- sign(edges)
+  
+  # Rescale edges
+  rescaled.edges <- unname(scaling[as.character(abs.edges)])
+  
+  return(rescaled.edges)
 }

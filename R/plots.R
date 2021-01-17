@@ -119,7 +119,7 @@
 #' @importFrom graphics plot
 #'
 # PLOTS----
-# Updated 12.12.2020
+# Updated 17.01.2021
 #' @export
 # Plot bootEGA----
 # Updated 16.12.2020
@@ -187,8 +187,7 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
     network::set.edge.value(network1,attrname="AbsWeights",value=abs(x$typicalGraph$graph))
     network::set.edge.value(network1,attrname="ScaledWeights",
-                            value=matrix(scales::rescale(as.vector(x$typicalGraph$graph),
-                                                         to = c(.001, 1.75)),
+                            value=matrix(rescale.edges(x$typicalGraph$graph, plot.args$size),
                                          nrow = nrow(x$typicalGraph$graph),
                                          ncol = ncol(x$typicalGraph$graph)))
     
@@ -209,6 +208,11 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     plot.args$edge.color <- "color"
     plot.args$edge.size <- "ScaledWeights"
     plot.args$color.palette <- "Set1"
+    
+    lower <- abs(x$network[lower.tri(x$typicalGraph$graph)])
+    non.zero <- sqrt(lower[lower != 0])
+    
+    plot.args$edge.alpha <- non.zero
     plot.args$mode <- layout.spring
     plot.args$label <- colnames(x$typicalGraph$graph)
     plot.args$node.label <- plot.args$label
@@ -299,8 +303,7 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       network::set.edge.attribute(network1[[i]], "color", ifelse(network::get.edge.value(network1[[i]], "weights") > 0, "darkgreen", "red"))
       network::set.edge.value(network1[[i]], attrname="AbsWeights",value=abs(x$dynEGA[[i]]$network))
       network::set.edge.value(network1[[i]],attrname="ScaledWeights",
-                              value=matrix(scales::rescale(as.vector(x$dynEGA[[i]]$network),
-                                                           to = c(.001, 1.75)),
+                              value=matrix(rescale.edges(x$dynEGA[[i]]$network, plot.args$size),
                                            nrow = nrow(x$dynEGA[[i]]$network),
                                            ncol = ncol(x$dynEGA[[i]]$network)))
       
@@ -322,6 +325,11 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       plot.args$edge.color <- "color"
       plot.args$edge.size <- "ScaledWeights"
       plot.args$color.palette <- "Set1"
+      
+      lower <- abs(x$network[lower.tri(x$dynEGA[[i]]$network)])
+      non.zero <- sqrt(lower[lower != 0])
+      
+      plot.args$edge.alpha <- non.zero
       plot.args$mode <- layout.spring[[i]]
       plot.args$label <- colnames(x$dynEGA[[i]]$network)
       plot.args$node.label <- plot.args$label
@@ -402,8 +410,7 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
     network::set.edge.value(network1,attrname="AbsWeights",value=abs(x$dynEGA[[id]]$network))
     network::set.edge.value(network1,attrname="ScaledWeights",
-                            value=matrix(scales::rescale(as.vector(x$dynEGA[[id]]$network),
-                                                         to = c(.001, 1.75)),
+                            value=matrix(rescale.edges(x$dynEGA[[id]]$network, plot.args$size),
                                          nrow = nrow(x$dynEGA[[id]]$network),
                                          ncol = ncol(x$dynEGA[[id]]$network)))
     
@@ -425,6 +432,11 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     plot.args$edge.color <- "color"
     plot.args$edge.size <- "ScaledWeights"
     plot.args$color.palette <- "Set1"
+    
+    lower <- abs(x$network[lower.tri(x$dynEGA[[id]]$network)])
+    non.zero <- sqrt(lower[lower != 0])
+    
+    plot.args$edge.alpha <- non.zero
     plot.args$mode <- layout.spring
     plot.args$label <- colnames(x$dynEGA[[id]]$network)
     plot.args$node.label <- plot.args$label
@@ -514,8 +526,7 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
     network::set.edge.value(network1,attrname="AbsWeights",value=abs(x$dynEGA$network))
     network::set.edge.value(network1,attrname="ScaledWeights",
-                            value=matrix(scales::rescale(as.vector(x$dynEGA$network),
-                                                         to = c(.001, 1.75)),
+                            value=matrix(rescale.edges(x$dynEGA$network, plot.args$size),
                                          nrow = nrow(x$dynEGA$network),
                                          ncol = ncol(x$dynEGA$network)))
     
@@ -537,6 +548,11 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     plot.args$edge.color <- "color"
     plot.args$edge.size <- "ScaledWeights"
     plot.args$color.palette <- "Set1"
+    
+    lower <- abs(x$network[lower.tri(x$dynEGA$network)])
+    non.zero <- sqrt(lower[lower != 0])
+    
+    plot.args$edge.alpha <- non.zero
     plot.args$mode <- layout.spring
     plot.args$label <- colnames(x$dynEGA$network)
     plot.args$node.label <- plot.args$label
@@ -627,8 +643,7 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
     network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
     network::set.edge.value(network1,attrname="AbsWeights",value=abs(x$network))
     network::set.edge.value(network1,attrname="ScaledWeights",
-                            value=matrix(scales::rescale(as.vector(x$network),
-                                                         to = c(.001, 1.75)),
+                            value=matrix(rescale.edges(x$network, plot.args$size),
                                          nrow = nrow(x$network),
                                          ncol = ncol(x$network)))
     
@@ -650,6 +665,11 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
     plot.args$color.palette <- "Set1"
     plot.args$edge.color <- "color"
     plot.args$edge.size <- "ScaledWeights"
+    
+    lower <- abs(x$network[lower.tri(x$network)])
+    non.zero <- sqrt(lower[lower != 0])
+    
+    plot.args$edge.alpha <- non.zero
     plot.args$mode <- layout.spring
     plot.args$label <- colnames(x$network)
     plot.args$node.label <- plot.args$label
