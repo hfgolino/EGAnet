@@ -326,7 +326,7 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       plot.args$edge.size <- "ScaledWeights"
       plot.args$color.palette <- "Set1"
       
-      lower <- abs(x$network[lower.tri(x$dynEGA[[i]]$network)])
+      lower <- abs(x$dynEGA[[i]]$network[lower.tri(x$dynEGA[[i]]$network)])
       non.zero <- sqrt(lower[lower != 0])
       
       plot.args$edge.alpha <- non.zero
@@ -433,7 +433,7 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     plot.args$edge.size <- "ScaledWeights"
     plot.args$color.palette <- "Set1"
     
-    lower <- abs(x$network[lower.tri(x$dynEGA[[id]]$network)])
+    lower <- abs(x$dynEGA[[id]]$network[lower.tri(x$dynEGA[[id]]$network)])
     non.zero <- sqrt(lower[lower != 0])
     
     plot.args$edge.alpha <- non.zero
@@ -549,7 +549,7 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     plot.args$edge.size <- "ScaledWeights"
     plot.args$color.palette <- "Set1"
     
-    lower <- abs(x$network[lower.tri(x$dynEGA$network)])
+    lower <- abs(x$dynEGA$network[lower.tri(x$dynEGA$network)])
     non.zero <- sqrt(lower[lower != 0])
     
     plot.args$edge.alpha <- non.zero
