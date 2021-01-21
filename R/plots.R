@@ -187,7 +187,8 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
     network::set.edge.value(network1,attrname="AbsWeights",value=abs(x$typicalGraph$graph))
     network::set.edge.value(network1,attrname="ScaledWeights",
-                            value=matrix(rescale.edges(x$typicalGraph$graph, plot.args$size),
+                            value=matrix(#scales::rescale(x$typicalGraph$graph) * 2,
+                              rescale.edges(x$typicalGraph$graph, plot.args$size),
                                          nrow = nrow(x$typicalGraph$graph),
                                          ncol = ncol(x$typicalGraph$graph)))
     
