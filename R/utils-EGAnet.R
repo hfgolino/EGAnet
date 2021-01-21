@@ -2506,7 +2506,7 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
   network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
   network::set.edge.value(network1,attrname="AbsWeights",value=abs(plot.mat))
   network::set.edge.value(network1,attrname="ScaledWeights",
-                          value=matrix(rescale.edges(plot.mat),
+                          value=matrix(rescale.edges(plot.mat, 5),
                                        nrow = nrow(plot.mat),
                                        ncol = ncol(plot.mat)))
   

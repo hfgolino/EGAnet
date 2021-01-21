@@ -209,7 +209,7 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     plot.args$edge.size <- "ScaledWeights"
     plot.args$color.palette <- "Set1"
     
-    lower <- abs(x$network[lower.tri(x$typicalGraph$graph)])
+    lower <- abs(x$typicalGraph$graph[lower.tri(x$typicalGraph$graph)])
     non.zero <- sqrt(lower[lower != 0])
     
     plot.args$edge.alpha <- non.zero

@@ -489,7 +489,8 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
       network::set.edge.attribute(network1, "color", ifelse( network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
       network::set.edge.value(network1,attrname="AbsWeights",value=abs(typical.Structure))
       network::set.edge.value(network1,attrname="ScaledWeights",
-                              value=matrix(rescale.edges(typical.Structure, plot.args$size),
+                              value=matrix(#scales::rescale(typical.Structure),
+                                rescale.edges(typical.Structure, plot.args$size),
                                            nrow = nrow(typical.Structure),
                                            ncol = ncol(typical.Structure)))
 
