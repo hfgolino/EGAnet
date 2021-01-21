@@ -234,7 +234,7 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 17.01.2021
+# Updated 20.01.2021
 bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling"),
                     model = c("glasso", "TMFG"), model.args = list(),
                     algorithm = c("walktrap", "louvain"), algorithm.args = list(),
@@ -512,7 +512,7 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
       plot.args$edge.size <- "ScaledWeights"
       plot.args$color.palette <- "Set1"
       
-      lower <- abs(x$network[lower.tri(typical.Structure)])
+      lower <- abs(typical.Structure[lower.tri(typical.Structure)])
       non.zero <- sqrt(lower[lower != 0])
       
       plot.args$edge.alpha <- non.zero

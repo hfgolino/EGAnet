@@ -218,7 +218,7 @@
 #'
 #' @export
 #'
-# Updated 17.01.2021
+# Updated 20.01.2021
 ## EGA Function to detect unidimensionality:
 EGA <- function (data, n = NULL, uni = TRUE,
                  model = c("glasso", "TMFG"), model.args = list(),
@@ -527,7 +527,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
           plot.args$edge.size <- "ScaledWeights"
           plot.args$color.palette <- "Set1"
           
-          lower <- abs(x$network[lower.tri(a$network)])
+          lower <- abs(a$network[lower.tri(a$network)])
           non.zero <- sqrt(lower[lower != 0])
           
           plot.args$edge.alpha <- non.zero
@@ -587,7 +587,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
         plot.args$edge.size <- "ScaledWeights"
         plot.args$color.palette <- "Set1"
         
-        lower <- abs(x$network[lower.tri(a$network)])
+        lower <- abs(a$network[lower.tri(a$network)])
         non.zero <- sqrt(lower[lower != 0])
         
         plot.args$edge.alpha <- non.zero
