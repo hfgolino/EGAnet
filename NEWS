@@ -1,5 +1,7 @@
 Changes in version 0.9.8
 
+o UPDATE: Unidimensional check in `EGA` generates up to 12 variables
+
 o ADD: `color_palette_EGA` New EGA palettes for plotting `ggnet2` EGA network plots (see `?color_palette_EGA`)
 
 o ADD: `UVA` or Unique Variable Analysis operates as a comprehensive handling of variable redundancy in multivariate data (see `?UVA`)

@@ -25,7 +25,7 @@
 #' Defaults to \code{TRUE}.
 #' Set to \code{FALSE} to check for multidimensionality only.
 #' If \code{TRUE}, then the same number of variables as the original
-#' data (i.e., from argument \code{data}) are generated from a factor
+#' data (i.e., from argument \code{data}) up to 12 are generated from a factor
 #' model with one factor and loadings of .70. These data are then
 #' appended to the original data and dimensionality is checked.
 #' If the number of dimensions is one or two, then the original
@@ -218,7 +218,7 @@
 #'
 #' @export
 #'
-# Updated 20.01.2021
+# Updated 22.01.2021
 ## EGA Function to detect unidimensionality:
 EGA <- function (data, n = NULL, uni = TRUE,
                  model = c("glasso", "TMFG"), model.args = list(),
@@ -382,8 +382,8 @@ EGA <- function (data, n = NULL, uni = TRUE,
       # Set one factor for simulated data
       nfact <- 1
       vars <- ncol(data)
-      if(vars > 25){
-        nvar <- 25
+      if(vars > 12){
+        nvar <- 12
       }else{nvar <- vars}
 
       ## Simulate data from unidimensional factor model

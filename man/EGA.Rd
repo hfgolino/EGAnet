@@ -33,7 +33,7 @@ Should unidimensionality be checked?
 Defaults to \code{TRUE}.
 Set to \code{FALSE} to check for multidimensionality only.
 If \code{TRUE}, then the same number of variables as the original
-data (i.e., from argument \code{data}) are generated from a factor
+data (i.e., from argument \code{data}) up to 12 are generated from a factor
 model with one factor and loadings of .70. These data are then
 appended to the original data and dimensionality is checked.
 If the number of dimensions is one or two, then the original
