@@ -2506,7 +2506,7 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
   network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
   network::set.edge.value(network1,attrname="AbsWeights",value=abs(plot.mat))
   network::set.edge.value(network1,attrname="ScaledWeights",
-                          value=matrix(rescale.edges(plot.mat),
+                          value=matrix(rescale.edges(plot.mat, 5),
                                        nrow = nrow(plot.mat),
                                        ncol = ncol(plot.mat)))
   
@@ -2524,7 +2524,7 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
   }
   
   
-  lower <- abs(x$network[lower.tri(plot.mat)])
+  lower <- abs(plot.mat[lower.tri(plot.mat)])
   non.zero <- sqrt(lower[lower != 0])
   
   plot.args$edge.alpha <- non.zero
@@ -3247,11 +3247,11 @@ input.check <- function (poss, type = c("redund", "remove"))
 rescale.edges <- function (network, size)
 {
   # Set rescaling
-  scaling <- seq(0, 1, .001) * size
-  names(scaling) <- seq(0, 1, .001)
+  scaling <- seq(0, 1, .00001) * size
+  names(scaling) <- seq(0, 1, .00001)
   
   # Vectorize edges
-  edges <- round(as.vector(as.matrix(network)), 3)
+  edges <- round(as.vector(as.matrix(network)), 5)
   
   # Get absolute edges
   abs.edges <- abs(edges)

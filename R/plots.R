@@ -187,7 +187,8 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
     network::set.edge.value(network1,attrname="AbsWeights",value=abs(x$typicalGraph$graph))
     network::set.edge.value(network1,attrname="ScaledWeights",
-                            value=matrix(rescale.edges(x$typicalGraph$graph, plot.args$size),
+                            value=matrix(#scales::rescale(x$typicalGraph$graph) * 2,
+                              rescale.edges(x$typicalGraph$graph, plot.args$size),
                                          nrow = nrow(x$typicalGraph$graph),
                                          ncol = ncol(x$typicalGraph$graph)))
     
@@ -209,7 +210,7 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     plot.args$edge.size <- "ScaledWeights"
     plot.args$color.palette <- "Set1"
     
-    lower <- abs(x$network[lower.tri(x$typicalGraph$graph)])
+    lower <- abs(x$typicalGraph$graph[lower.tri(x$typicalGraph$graph)])
     non.zero <- sqrt(lower[lower != 0])
     
     plot.args$edge.alpha <- non.zero
@@ -326,7 +327,7 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       plot.args$edge.size <- "ScaledWeights"
       plot.args$color.palette <- "Set1"
       
-      lower <- abs(x$network[lower.tri(x$dynEGA[[i]]$network)])
+      lower <- abs(x$dynEGA[[i]]$network[lower.tri(x$dynEGA[[i]]$network)])
       non.zero <- sqrt(lower[lower != 0])
       
       plot.args$edge.alpha <- non.zero
@@ -433,7 +434,7 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     plot.args$edge.size <- "ScaledWeights"
     plot.args$color.palette <- "Set1"
     
-    lower <- abs(x$network[lower.tri(x$dynEGA[[id]]$network)])
+    lower <- abs(x$dynEGA[[id]]$network[lower.tri(x$dynEGA[[id]]$network)])
     non.zero <- sqrt(lower[lower != 0])
     
     plot.args$edge.alpha <- non.zero
@@ -549,7 +550,7 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     plot.args$edge.size <- "ScaledWeights"
     plot.args$color.palette <- "Set1"
     
-    lower <- abs(x$network[lower.tri(x$dynEGA$network)])
+    lower <- abs(x$dynEGA$network[lower.tri(x$dynEGA$network)])
     non.zero <- sqrt(lower[lower != 0])
     
     plot.args$edge.alpha <- non.zero
