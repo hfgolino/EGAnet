@@ -214,7 +214,7 @@
 #' 
 #' if(interactive()){
 #' UVA(data = items, method = "wTO", type = "adapt",
-#'     key = key, reduce = "latent")
+#'     key = key, reduce.method = "latent")
 #' }
 #'
 #' @references
@@ -248,7 +248,7 @@
 #' @export
 #
 # Unique Variable Analysis
-# Updated 19.12.2020
+# Updated 07.01.2020
 UVA <- function(data, n = NULL,
                 method = c("cor", "pcor", "wTO"),
                 type = c("adapt", "alpha", "threshold"), sig,
@@ -325,12 +325,10 @@ UVA <- function(data, n = NULL,
     lavaan.args <- formals(lavaan::cfa)
     lavaan.args[length(lavaan.args)] <- NULL
     lavaan.args$std.lv <- TRUE
-    lavaan.args$missing <- "fiml"
   }else{
     lavaan.default <- formals(lavaan::cfa)
     lavaan.default[length(lavaan.default)] <- NULL
     lavaan.default$std.lv <- TRUE
-    lavaan.args$missing <- "fiml"
     
     if(any(names(lavaan.args) %in% names(lavaan.default))){
       lavaan.default[names(lavaan.args)] <- lavaan.args
@@ -357,39 +355,59 @@ UVA <- function(data, n = NULL,
                              reduce.method = reduce.method,
                              plot.args = plot.args,
                              lavaan.args = lavaan.args)
-  }else{reduced <- process}
-  
-  # Check for any remaining redundancies
-  if(adhoc){
-    ## Message user
-    message("Running adhoc check for any potential redundancies remaining...\n")
     
-    ## Run check
-    adhoc.check <- suppressMessages(
-      redundancy.process(data = reduced$data, cormat = qgraph::cor_auto(reduced$data),
-                         n = nrow(reduced$data), method = "wto",
-                         type = "threshold", sig = .20,
-                         plot.redundancy = FALSE, plot.args = plot.args)
-    )
+    # Check for any remaining redundancies
+    if(adhoc){
+      ## Message user
+      message("Running adhoc check for any potential redundancies remaining...\n")
+      
+      ## Run check
+      adhoc.check <- suppressMessages(
+        redundancy.process(data = reduced$data, cormat = qgraph::cor_auto(reduced$data),
+                           n = nrow(reduced$data), method = "wto",
+                           type = "threshold", sig = .20,
+                           plot.redundancy = FALSE, plot.args = plot.args)
+      )
+      
+      # Artificial pause for feel
+      Sys.sleep(1)
+      
+      if(all(is.na(adhoc.check$redundant))){
+        
+        message("Some redundancies may still exist. See `OUTPUT$adhoc`")
+        
+      }else{message("No redundancies reamin.")}
+    }
     
     # Artificial pause for feel
     Sys.sleep(1)
     
-    if(all(is.na(adhoc.check$redundant))){
-      
-      message("Some redundancies may still exist. See `OUTPUT$adhoc`")
-      
-    }else{message("No redundancies reamin.")}
-  }
-  
-  # Artificial pause for feel
-  Sys.sleep(1)
+  }else{reduced <- process}
   
   # Full results
   res <- list()
   res$redundancy <- process
   if(reduce){res$reduced <- reduced}
   if(adhoc){res$adhoc <- adhoc.check}
+  
+  # Set up methods
+  res$Methods <- list()
+  res$Methods$method <- method
+  res$Methods$type <- type
+  res$Methods$sig <- sig
+  res$Methods$adhoc <- adhoc
+  if(reduce){
+    
+    res$Methods$reduce.method <- reduce.method
+    
+    if(reduce.method == "latent"){
+      res$Methods$lavaan.args <- lavaan.args
+    }
+    
+  }
+    
+  # Set class
+  class(res) <- "UVA"
   
   return(res)
   

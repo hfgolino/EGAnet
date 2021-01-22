@@ -1,6 +1,6 @@
 Changes in version 0.9.8
 
-o ADD: `color_palette_EGA` New EGA palettes for plotting ggnet2 EGA network plots.
+o ADD: `color_palette_EGA` New EGA palettes for plotting `ggnet2` EGA network plots (see `?color_palette_EGA`)
 
 o ADD: `UVA` or Unique Variable Analysis operates as a comprehensive handling of variable redundancy in multivariate data (see `?UVA`)
 
@@ -16,7 +16,7 @@ o ADD: a new function to compute the Ergodicity Information Index (see `?ergoInf
 
 o UPDATE: new plotting scheme using *network* and *GGally* packages
 
-o ADD: a function to produce an automated Methods section for EGA functions (see `?EGA.methods.section`)
+o ADD: a function to produce an automated Methods section for several functions (see `?methods.section`)
 
 o UPDATE: `bootEGA` now implements the updated `EGA` algorithm
 
@@ -25,8 +25,6 @@ o UPDATE: ega.wmt data (unidimensional)
 o UPDATE: `itemStability` plot defaults ("GGally" color scheme) and examples (manipulating plot)
 
 o ADD: multilayer networks for behavioral and brain data (see `?mlnEGA`)
-
-o ADD: EGA color palettes (see `?color_palette_EGA`)
 
 
 Changes in version 0.9.7

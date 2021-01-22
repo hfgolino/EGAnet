@@ -2506,8 +2506,7 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
   network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
   network::set.edge.value(network1,attrname="AbsWeights",value=abs(plot.mat))
   network::set.edge.value(network1,attrname="ScaledWeights",
-                          value=matrix(scales::rescale(as.vector(plot.mat),
-                                                       to = c(.001, 3)),
+                          value=matrix(rescale.edges(plot.mat),
                                        nrow = nrow(plot.mat),
                                        ncol = ncol(plot.mat)))
   
@@ -2524,6 +2523,11 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
     plot.args$label.size <- 8
   }
   
+  
+  lower <- abs(x$network[lower.tri(plot.mat)])
+  non.zero <- sqrt(lower[lower != 0])
+  
+  plot.args$edge.alpha <- non.zero
   
   set.seed(1234)
   redund.net <- GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1", 
@@ -2551,7 +2555,7 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
 #' @importFrom graphics text
 #' @noRd
 # Redundancy Reduction----
-# Updated 21.12.2020
+# Updated 06.01.2020
 redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.args)
 {
   # Check for node.redundant object class
@@ -2598,7 +2602,7 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
   prev.state <- list(redund)
   prev.state.data <- list(new.data)
   
-  # Loop through named node redundant list
+  # Loop through named node redundant list----
   while(length(redund) != 0)
   {
     # Targeting redundancy
@@ -2680,8 +2684,10 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
         ## Check categories
         if(any(categories < 6)){# Not all continuous
           lavaan.args$estimator <- "WLSMV"
+          lavaan.args$missing <- "pairwise"
         }else{# All can be considered continuous
           lavaan.args$estimator <- "MLR"
+          lavaan.args$missing <- "fiml"
         }
         
         ## get CFA function from lavaan
@@ -2741,18 +2747,46 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
         
         target.key <- c(tar.idx, idx)
         target.data <- new.data[,target.key]
-        if(ncol(target.data) > 2){cor.corr <- round(item.total(target.data), 2)}
+    
         means <- round(colMeans(target.data, na.rm = TRUE), 2)
         sds <- round(apply(target.data, 2, sd, na.rm = TRUE), 2)
         ranges <- round(apply(target.data, 2, range, na.rm = TRUE), 2)
+        
         if(ncol(target.data) > 2){
-          tab <- cbind(cor.corr, means, sds, t(ranges))
-          colnames(tab) <- c("Item-Total r", "Mean", "SD", "Low", "High")
+          
+          # Corrected item-total correlations
+          cor.corr <- round(item.total(target.data), 2)
+          
+          ## Use information utility?
+          categories <- apply(target.data, 2, function(x){
+            length(unique(x))
+          })
+          
+          ## Check categories
+          if(all(categories <= 7)){
+            
+            ## Use
+            #util <- round(info.util(target.data), 2)
+            
+            tab <- cbind(#util,
+              cor.corr, means, sds, t(ranges))
+            colnames(tab) <- c(#"Utility Gain", 
+              "Item-Total r", "Mean", "SD", "Low", "High")
+          }else{
+            
+            tab <- cbind(cor.corr, means, sds, t(ranges))
+            colnames(tab) <- c("Item-Total r", "Mean", "SD", "Low", "High")
+            
+          }
+          
         }else{
           tab <- cbind(means, sds, t(ranges))
           colnames(tab) <- c("Mean", "SD", "Low", "High")
         }
         row.names(tab) <- c("0 (Target)", 1:length(comb))
+    
+        tab[,1:(ncol(tab) - 2)] <- matrix(sprintf("%.2f", tab[,1:(ncol(tab) - 2)]), nrow = nrow(tab), ncol = ncol(tab) - 2)
+       
         table.plot <- gridExtra::tableGrob(tab)
         gridExtra::grid.arrange(table.plot)
         
@@ -2769,7 +2803,7 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
         merged[[count]] <- key[idx]
         
         # Name merged input
-        names(merged)[count] <- key[setdiff(ind, idx)]
+        name.chn[count] <- key[setdiff(ind, idx)]
         
         # Message user
         message(paste("\nKEPT '", key[ind[as.numeric(new.input) + 1]],"' and REMOVED all others", sep = ""))
@@ -2911,7 +2945,12 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
     m.mat <- NULL
   }else{
     m.mat <- t(m.mat)
-    colnames(m.mat) <- c("Target", paste("Redundancy_", 1:(ncol(m.mat)-1), sep = ""))
+    
+    if(reduce.method == "latent"){
+      colnames(m.mat) <- c("Target", paste("Redundancy_", 1:(ncol(m.mat)-1), sep = ""))
+    }else if(reduce.method == "remove"){
+      colnames(m.mat) <- c(paste("Redundancy_", 1:ncol(m.mat), sep = ""))
+    }
   }
   
   # Initialize results list
@@ -2960,6 +2999,36 @@ item.total <- function (data.sub)
   }
   
   return(cor.corr)
+  
+}
+
+#' @noRd
+# Information utility----
+# Updated 14.01.2021
+info.util <- function (data){
+  
+  # Initialize information utility vector
+  info.vec <- numeric(ncol(data))
+  
+  # Maximum information utility
+  ## Graded response model
+  irt <- ltm::grm(data = data)
+  ## Normalized Minimum Reduction in Uncertainty
+  max.info <- infutil::nmru(irt, range.int = c(-20, 20))$val
+  
+  # Loop through data
+  for(i in 1:ncol(data)){
+    
+    ## Graded response model
+    irt <- ltm::grm(data = data[,-i])
+    ## Normalized Minimum Reduction in Uncertainty
+    info <- infutil::nmru(irt, range.int = c(-20, 20))$val
+    ## Difference in information utility
+    info.vec[i] <- max.info - info
+    
+  }
+  
+  return(info.vec)
   
 }
 
@@ -3170,4 +3239,28 @@ input.check <- function (poss, type = c("redund", "remove"))
   }
   
   return(input)
+}
+
+#' @noRd
+# Rescale edges for GGally----
+# Updated 17.01.2021
+rescale.edges <- function (network, size)
+{
+  # Set rescaling
+  scaling <- seq(0, 1, .001) * size
+  names(scaling) <- seq(0, 1, .001)
+  
+  # Vectorize edges
+  edges <- round(as.vector(as.matrix(network)), 3)
+  
+  # Get absolute edges
+  abs.edges <- abs(edges)
+  
+  # Get edge signs
+  signs.edges <- sign(edges)
+  
+  # Rescale edges
+  rescaled.edges <- unname(scaling[as.character(abs.edges)])
+  
+  return(rescaled.edges)
 }

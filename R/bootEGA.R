@@ -234,7 +234,7 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 24.12.2020
+# Updated 17.01.2021
 bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling"),
                     model = c("glasso", "TMFG"), model.args = list(),
                     algorithm = c("walktrap", "louvain"), algorithm.args = list(),
@@ -310,6 +310,7 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
   }
 
   ## Check for input plot arguments
+  color.palette <- "polychrome"
   if(plot.type == "GGally"){
     
     if(length(plot.args) == 0){
@@ -319,8 +320,6 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
                                edge.alpha = 0.7, layout.exp = 0.2)
       default.args[names(ega.default.args)]  <- ega.default.args
       default.args <- default.args[-length(default.args)]
-      
-      color.palette <- "polychrome"
       
     }else{
       
@@ -338,7 +337,7 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
       
       if("color.palette" %in% names(plot.args)){
         color.palette <- plot.args$color.palette
-      }else{color.palette <- "polychrome"}
+      }
       
       if(any(names(plot.args) %in% names(default.args))){
         target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
@@ -490,8 +489,7 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
       network::set.edge.attribute(network1, "color", ifelse( network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
       network::set.edge.value(network1,attrname="AbsWeights",value=abs(typical.Structure))
       network::set.edge.value(network1,attrname="ScaledWeights",
-                              value=matrix(scales::rescale(as.vector(typical.Structure),
-                                                           to = c(.001, 1.75)),
+                              value=matrix(rescale.edges(typical.Structure, plot.args$size),
                                            nrow = nrow(typical.Structure),
                                            ncol = ncol(typical.Structure)))
 
@@ -513,6 +511,11 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
       plot.args$edge.color <- "color"
       plot.args$edge.size <- "ScaledWeights"
       plot.args$color.palette <- "Set1"
+      
+      lower <- abs(x$network[lower.tri(typical.Structure)])
+      non.zero <- sqrt(lower[lower != 0])
+      
+      plot.args$edge.alpha <- non.zero
       plot.args$mode <- layout.spring
       plot.args$label <- colnames(typical.Structure)
       plot.args$node.label <- plot.args$label
@@ -567,6 +570,7 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
 
   result <- list()
   result$iter <- iter
+  result$type <- type
   result$boot.ndim <- boot.ndim
   result$boot.wc <- boot.wc
   result$bootGraphs <- bootGraphs

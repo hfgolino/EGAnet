@@ -8,7 +8,7 @@ color_palette_EGA(name, wc)
 }
 \arguments{
 \item{name}{Character.
-Name of color scheme (see \code{\link{RColorBrewer}}).
+Name of color scheme (see \code{\link[RColorBrewer]{RColorBrewer}}).
 Defaults to \code{"polychrome"}.
 \code{\link[EGAnet]{EGA}} palettes:
 
@@ -22,6 +22,9 @@ Defaults to \code{"polychrome"}.
 
 \item{\code{"blue.ridge2"}}
 {Second palette inspired by the Blue Ridge Mountains}
+
+\item{\code{"rainbow"}}
+{Rainbow colors. Default for \code{\link[qgraph]{qgraph}}}
 
 \item{\code{"rio"}}
 {Palette inspired by Rio de Janiero, Brazil}

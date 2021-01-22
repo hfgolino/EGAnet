@@ -1,0 +1,206 @@
+---
+title: "Unique Variable Analysis"
+author: "Alexander P. Christensen, Luis Eduardo Garrido, and Hudson Golino"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+bibliography: Christensen_General_Library.bib
+csl: apa.csl
+vignette: >
+  %\VignetteIndexEntry{Unique Variable Analysis}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+  \usepackage[utf8]{inputenc}
+---
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#"
+)
+```
+
+## Introduction
+
+This vignette shows you how to use the `UVA` in the EGAnet package [@EGAnet]. The contents of this vignette are taken directly from @christensen2020unique. Following @christensen2019psychometric, `UVA` provides two approaches for reducing redundancy in data: removing all but one redundant variable or creating latent variables from redundant variables. For the former approach, researchers select one variable from variables that are determined to be redundant and remove the other variables from the dataset. As a general heuristic, researchers can compute corrected item-test correlations for the variables in the redundant response set. The variable that has the largest correlation is likely to be the one that best captures the overall essence of the redundant variables [@devellis2017scale; @mcdonald1999test]. Other rules of thumb for this approach are to select variables that have the most variance [@devellis2017scale] and variables that are more general (e.g., "I often express my opinions" is better than "I often express my opinions in meetings" because it does not imply a specific context). For the latter approach, redundant variables can be combined in to a reflective latent variable and latent scores can be estimated, replacing the redundant variables. Following recent suggestions, for ordinal data with categories fewer than six, the Weighted Least Squares Mean- and Variance-adjusted (WLSMV) estimator is used; otherwise, if all categories are greater than or equal to six then Maximum Likelihood with Robust standard errors (MLR) is used [@rhemtulla2012can]. We strongly recommend the latent variable approach because it minimizes measurement error and retains all possible information available in the data.
+
+## Load data
+
+Before digging into UVA, the data should be loaded from the *psychTools* package [@psychTools] in R.
+
+```{r packages load, eval = FALSE, echo = TRUE, comment = NA, warning = FALSE, message = FALSE}
+# Download latest EGAnet package
+devtools::install_github("hfgolino/EGAnet",
+                         dependencies = c("Imports", "Suggests"))
+
+# Load packages
+library(psychTools)
+library(EGAnet)
+
+# Set seed for reproducibility
+set.seed(6724)
+
+# Load SAPA data
+# Select Five Factor Model personality items only
+idx <- na.omit(match(gsub("-", "", unlist(spi.keys[1:5])), colnames(spi)))
+items <- spi[,idx]
+
+# Obtain item descriptions for UVA
+key.ind <- match(colnames(items), as.character(spi.dictionary$item_id))
+key <- as.character(spi.dictionary$item[key.ind])
+```
+
+The code above installs the latest *EGAnet* package, loads *EGAnet* and *psychTools*, sets a seed for random number generation, and obtains the 70 SAPA items that correspond to the five-factor model of personality as well as their respective item descriptions. The item descriptions are optional but provide convenient processing when deciding which items are redundant (see Figure 2).
+
+### Initial Dimensionality Estimation
+
+Moving forward with the application of the `UVA`, we start by evaluating the dimensional structure of the SAPA inventory *without* reducing redundancy. The following code can be run:
+
+```{r Fig6 code, eval = FALSE, echo = TRUE, comment = NA, warning = FALSE, message = FALSE}
+# EGA (with redundancy)
+ega.wr <- EGA(items, algorithm = "louvain", plot.EGA = FALSE)
+plot(ega.wr, plot.args = list(node.size = 8,
+                              edge.alpha = 0.2))
+```
+```{r Fig6, fig.cap = "Figure 1. Exploratory Graph Analaysis of SAPA Inventory Before Unique Variable Analysis", fig.align = 'center', fig.pos = "H", eval = TRUE, echo = FALSE, comment = NA, warning = FALSE, message = FALSE}
+# Initial EGA
+knitr::include_graphics("./Figures/Fig6-1.png", dpi = 75)
+```
+
+
+Without performing UVA, EGA estimates that there are seven factors. Notably, there were a couple small factors identified by EGA: Factor 2 and Factor 7 (see Figure 1). Investigating the items' descriptions of these two factors, it seems likely that these represent minor factors of redundant variables: Factor 2 ("Believe that people are basically moral," "Believe that others have good intentions," "Trust people to mainly tell the truth," "Trust what people say," and "Feel that most people can't be trusted") and Factor 7 ("Enjoy being thought of as a normal mainstream person," "Rebel against authority," "Believe that laws should be strictly enforced," and "Try to follow the rules"). The divergence from the traditional five factor structure is likely due to these (and other) redundancies.[^3]
+
+[^3]: For a comparison, we estimated dimensions using parallel analysis with polychoric correlations and principal component analysis (PCA) and principal axis factoring (PAF). These methods identified 13 and 14 dimensions, respectively.
+
+### UVA Tutorial
+
+To handle the redundancy in the scale, we can now use the `UVA` function:
+
+```{r analysis, eval = FALSE, echo = TRUE, comment = NA, warning = FALSE, message = FALSE}
+# Perform unique variable analysis (latent variable)
+sapa.ra <- UVA(data = items, method = "wTO",
+               type = "adapt", key = key,
+               reduce = TRUE, reduce.method = "latent",
+               adhoc = TRUE)
+```
+
+There are a few arguments worth noting. First, `method` will change the association method being used. By default, the weighted topological overlap method (`"wTO"`) is applied. Second, `type` will change the significance type being used. By default, adaptive alpha is used (`"adapt"`). The `key` argument will accept item descriptions that map to the variables in the `data` argument. The `reduce` argument, which defaults to `TRUE`, is for whether the reduction process should occur. The `reduce.method` is whether the reduction process should be to create latent variables of redundant items (`"latent"`) or remove all but one of the redundant items (`"remove"`). `reduce.method` defaults to `"latent"` (to continue with the `"remove"` tutorial, skip to [next section](#remove)). Finally, `adhoc` will perform an adhoc redundancy check using the weighted topological overlap method with threshold. This check is to determine whether redundancies still might exist in the data.
+
+Next, we'll walk through the reduction process. After running the code above, the R console will output a target variable with a list of potential redundant variables (Figure 2) and an associated "redundancy chain" plot (see Figure 3).
+
+```{r Fig7, fig.cap = "Figure 2. R Console Interface for Selecting Redundant Variables", fig.align = 'center', fig.pos = "H", eval = TRUE, echo = FALSE, comment = NA, warning = FALSE, message = FALSE}
+# R console example
+knitr::include_graphics("./Figures/Figure7.png", dpi = 700)
+```
+
+In Figure 2, the potential redundant variables are listed below the target variable. Some of the potential redundant variables were *directly* identified as redundant with the target variable while other potential redundant variables were *indirectly* redundant meaning that they were redundant with one (or more) of the variables that were directly identified as redundant with the target variable but they themselves not actually identified as redundant with the target variable. In this way, there is a so-called "redundancy chain." Figure 3 provides a more intuitive depiction of this notion.
+
+```{r Fig8, fig.cap = "Figure 3. Example of a Redundancy Chain Plot", fig.align = 'center', fig.pos = "H", eval = TRUE, echo = FALSE, comment = NA, warning = FALSE, message = FALSE}
+# Redundancy chain example
+knitr::include_graphics("./Figures/Figure8.png", dpi = 1300)
+```
+
+In the redundancy chain plot, each node represents a variable with label and color denoting the target variable ("Target" and blue, respectively) and potential redundancies (corresponding numbers and red, respectively). The connections between the nodes represent a regularized partial correlation with the thickness of an edge denoting its magnitude. The presence of an edge suggests that variables were identified as redundant rather than an actual network of associations. The interpretation of this plot would be that the target variable was identified with potential redundancy variables 1, 2, 3, and 4. Potential redundancy variable 5 was not redundant with the target variable but it was redundant with potential redundancy variable 4 (hence the "chain" of redundancy). When consulting the redundancy chain plot, researchers should pay particular attention to *cliques* or a fully connected set of nodes. In Figure 3, there are two 3-cliques (or triangles) with the target variable (i.e., Target -- 1 -- 2 and Target -- 1 -- 3).
+
+In a typical psychometric network, these triangles contribute to a measure known as the *clustering coefficient* or the extent to which a node's neighbors are connected to each other. Based on this statistical definition, the clustering coefficient has recently been considered as a measure of redundancy in psychological networks [@costantini2019stability; @dinic2019centrality]. In this same sense, these triangles suggest that these variables are likely redundant. Therefore, triangles in these redundancy chain plots can be used as a heuristic to identify redundancies.
+
+In our example, we selected these variables as redundant by inputting their numbers into the R console with commas separating them (i.e., `1, 2, 3`). After pressing `ENTER`, a new latent variable is created from these variables and a prompt appears to label it with a new name (e.g., `'Original ideation'`). Finally, a message will appear confirming the creation of a latent variable and removal of the redundant variables from the dataset.
+
+```{r Fig9, fig.cap = "Figure 4. Second Target Variable Demonstrating Latent Variable Keying", fig.align = 'center', fig.pos = "H", eval = TRUE, echo = FALSE, comment = NA, warning = FALSE, message = FALSE}
+# Latent keying example
+knitr::include_graphics("./Figures/Figure9.png", dpi = 900)
+```
+
+For the second target variable (Figure 4), "Trust what people say," we combined it with all the other possible redundant items (i.e., `1, 2, 3, 4`). Notably, there was one item that was reverse keyed, "Feel that most people cant be trusted," which was negatively correlated with the latent variable. Because there was an item negatively correlated with the latent variable, a secondary prompt appears asking to reverse code the latent variable so that the label can go in the desired direction. In review of the correlations of the variables with the latent variable, we can see that the latent variable is positively keyed already; therefore, we entered `n` and labeled the component. If, however, the signs of the correlations were the inverse, then `y` could be entered, which would reverse the meaning of the latent variable towards a positively keyed orientation. The function will proceed through the rest of the redundant variables until all have been handled (see [Appendix](#appendix) for our handling).
+
+### Re-estimation of Dimensionality
+
+After completing the UVA, an optional adhoc check of redundant variables can be performed using `adhoc = TRUE`. `UVA` performs this by default and will check if any redundancies remain using the weighted topological overlap method (`method = "wTO"`) and threshold (`type = "threshold"`). For our example, there were no longer any redundant variables. Our UVA reduced the dataset from 70 items down to 25 *personality components* or items or sets of items that share a common cause [@christensen2019psychometric]. These components largely correspond to the 27 identified components by Condon [-@condon2018sapa] suggesting that our approach was effective. 
+
+```{r Fig10 code, eval = FALSE, echo = TRUE, comment = NA, warning = FALSE, message = FALSE}
+# EGA (with redundant variables combined)
+ega <- EGA(sapa.ra$reduced$data, algorithm = "louvain", plot.EGA = FALSE)
+plot(ega, plot.args = 
+       list(vsize = 8,
+            edge.alpha = 0.2,
+            label.size = 4,
+            legend.names = c("Conscientiousness", "Neuroticism",
+                             "Extraversion", "Openness to Experience",
+                             "Agreeableness")))
+```
+```{r Fig10, fig.cap = "Figure 5. Exploratory Graph Analaysis of SAPA Inventory After Unique Variable Analysis", fig.align = 'center', fig.pos = "H", eval = TRUE, echo = FALSE, comment = NA, warning = FALSE, message = FALSE}
+# Re-estimate EGA
+knitr::include_graphics("./Figures/Fig10-1.png", dpi = 75)
+```
+
+With these components, we then re-estimated the dimensionality of the SAPA inventory using EGA. This time, five components resembling the five-factor model were estimated (Figure 5). These five factors also align and correspond to the expected factor structure of the SAPA inventory, corroborating the effectiveness of the UVA. In sum, our example demonstrates that redundancy can lead to minor factors, which may bias dimensionality estimates towards overfactoring (as shown in Figure 1). When this redundancy is handled, then the dimensionality estimates can be expected to be more accurate and in line with theoretical expectations (as shown in Figure 5).[^4] Similar results were achieved by using the remove all but one variable approach (see [next section](#remove)).
+
+[^4]: For a comparison, we estimated dimensions using parallel analysis with polychoric correlations and principal component analysis (PCA) and principal axis factoring (PAF). These methods identified 5 and 6 dimensions, respectively.
+
+### Remove All but One Variable {#remove}
+
+In going through UVA with the remove all but one variable option (see code below), we selected the same variables as redundant as shown in [Appendix](#appendix) but rather than creating a latent variable we removed all but one variable.
+
+```{r remove, eval = FALSE, echo = TRUE, comment = NA, warning = FALSE, message = FALSE}
+# Perform unique variable analysis (removing all but one variable)
+sapa.rm <- UVA(data = items, method = "wTO",
+               type = "adapt", key = key,
+               reduce = TRUE, reduce.method = "remove",
+               adhoc = TRUE)
+```
+
+The presentation of UVA interface is mostly the same with one minor detail changed (Figure 6).
+
+```{r Fig11, fig.cap = "Figure 6. R Console Interface for Selecting Redundant Variables", fig.align = 'center', fig.pos = "H", eval = TRUE, echo = FALSE, comment = NA, warning = FALSE, message = FALSE}
+# R console example
+knitr::include_graphics("./Figures/Figure11.png", dpi = 600)
+```
+
+After selecting which variables are redundant, a variable is selected to be *kept*. To make this decision, the corrected item-test (or redundant set) correlations, means, standard deviations, and ranges of the variables are provided in R's plot window (Figure 7).
+
+```{r Fig12, fig.cap = "Figure 7. Example of Reundancy Descriptives Table", fig.align = 'center', fig.pos = "H", eval = TRUE, echo = FALSE, comment = NA, warning = FALSE, message = FALSE}
+# R console example
+knitr::include_graphics("./Figures/Figure12.png", dpi = 600)
+```
+
+The row names of the table denote the redundancy options which are reprinted. For the entire analysis, we selected the variables which had the largest item-test correlations (i.e., "Item-Total r" in Figure 7) and when equivalent the largest standard deviation. After UVA was finished and the adhoc check confirmed there were no more redundancies, we re-estimated the dimensionality of the dataset (Figure 8).
+
+```{r Fig13 code, eval = FALSE, echo = TRUE, comment = NA, warning = FALSE, message = FALSE}
+# EGA (with redundant variables removed)
+ega.rm <- EGA(sapa.rm$reduced$data, algorithm = "louvain", plot.EGA = FALSE)
+plot(ega.rm, plot.args = list(vsize = 8,
+                           edge.alpha = 0.2,
+                           label.size = 4,
+                           layout.exp = 0.5,
+                           legend.names = c("Conscientiousness",
+                                            "Neuroticism", "Extraversion",
+                                            "Openness to Experience",
+                                            "Agreeableness")))
+```
+```{r Fig13, fig.cap = "Figure 8. Exploratory Graph Analaysis of SAPA Inventory After Unique Variable Analysis (removed)", fig.align = 'center', fig.pos = "H", eval = TRUE, echo = FALSE, comment = NA, warning = FALSE, message = FALSE}
+# Removed dimensionality
+knitr::include_graphics("./Figures/Fig13-1.png", dpi = 75)
+```
+
+Consistent with results presented in the manuscript, five factors roughly resembling the five-factor model were found. The item placement for all items are appropriate for their dimensions as well. Similarly, parallel analysis identified five and six dimensions for principal component analysis and principal axis factoring, respectively. In all, the results largely align with one another, demonstrating that removing variables can be an effective approach to reducing redundancy in data.
+
+\newpage
+
+## References
+\begingroup
+\setlength{\parindent}{-0.5in}
+\setlength{\leftskip}{0.5in}
+
+<div id = "refs"></div>
+\endgroup
+
+\newpage
+
+## Appendix {#appendix}
+
+```{r table, eval = TRUE, echo = FALSE, comment = NA, warning = FALSE, message = FALSE}
+# Read in .csv
+merged <- read.csv("./merged.items.csv")
+colnames(merged)[1] <- "Latent Variable"
+
+# Make table
+knitr::kable(merged)
+```

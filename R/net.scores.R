@@ -98,7 +98,7 @@
 #' @export
 #'
 #Network Scores
-#Updated: 08.12.2020
+#Updated: 27.12.2020
 net.scores <- function (data, A, wc, global = FALSE, impute, ...)
 {
   if (missing(data)) {
@@ -194,6 +194,10 @@ net.scores <- function (data, A, wc, global = FALSE, impute, ...)
   res$std.scores <- as.data.frame(round(apply(fact.res, 2,
                                               scale), 3))
   res$loads <- P
+  
+  # Class
+  class(res) <- "NetScores"
+  
   return(res)
 }
 #----
