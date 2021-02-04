@@ -3264,3 +3264,29 @@ rescale.edges <- function (network, size)
   
   return(rescaled.edges)
 }
+
+#' @noRd
+# Expand correlation matrix (unidimensional EGA)----
+# Updated 04.02.2021
+expand.corr <- function(corr)
+{
+  # Number of variables
+  nvar <- 4
+  
+  # Create additional correlations
+  add.corr <- matrix(.50, nrow = nvar, ncol = nvar)
+  diag(add.corr) <- 1
+  
+  # Initialize new correlation matrix
+  new.corr <- matrix(0, nrow = nvar + nrow(corr), ncol = nvar + ncol(corr))
+  
+  # Input correlations into new correlation matrix
+  new.corr[1:nvar, 1:nvar] <- add.corr
+  new.corr[(nvar+1):nrow(new.corr), (nvar+1):ncol(new.corr)] <- corr
+  
+  # Add names
+  colnames(new.corr) <- c(paste("SIM",1:nvar, sep = ""), colnames(corr))
+  row.names(new.corr) <- colnames(new.corr)
+  
+  return(new.corr)
+}
