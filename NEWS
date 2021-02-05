@@ -1,6 +1,6 @@
 Changes in version 0.9.8
 
-o UPDATE: Unidimensional check in `EGA` generates up to 12 variables
+o UPDATE: Unidimensional check in `EGA` expands a correlation matrix (rather than generating variables; much more efficient)
 
 o ADD: `color_palette_EGA` New EGA palettes for plotting `ggnet2` EGA network plots (see `?color_palette_EGA`)
 

@@ -293,13 +293,15 @@ EGA <- function (data, n = NULL, uni = TRUE,
   # Check for correlation matrix or data
   if(nrow(data) == ncol(data)){ ## Correlation matrix
 
+    # Check for column names
+    if(is.null(colnames(data))){
+      colnames(data) <- paste("V", 1:ncol(data), sep = "")
+    }
+    
     # Check for number of cases
     if(missing(n)){
       stop("There is no input for argument 'n'. Number of cases must be input when the matrix is square.")
     }
-
-    # Make cor.data == data
-    cor.data <- as.data.frame(data)
 
     # Multidimensional result
     ## Ensures proper partial correlations
@@ -311,18 +313,31 @@ EGA <- function (data, n = NULL, uni = TRUE,
     # Unidimensional result
     if(uni){
 
-      # Set one factor for simulated data
-      nfact <- 1
-      vars <- ncol(cor.data)
-      if(vars > 25){
-        nvar <- 25
-      }else{nvar <- vars}
-
-      # Generate data
-      uni.data <- MASS::mvrnorm(n = n, mu = rep(0, vars), Sigma = cor.data)
-
-      # Simulate data from unidimensional factor model
-      sim.data <- sim.func(data = uni.data, nvar = nvar, nfact = nfact, load = .70)
+      # Check for Spinglass algorithm
+      if(is.function(algorithm)){
+        
+        # spins argument is used to identify Spinglass algorithm
+        if("spins" %in% formalArgs(algorithm)){
+          
+          # Generate data
+          uni.data <- MASS::mvrnorm(n = n, mu = rep(0, ncol(data)), Sigma = data)
+          
+          # Simulate data from unidimensional factor model
+          sim.data <- sim.func(data = uni.data, nvar = 4, nfact = 1, load = .70)
+          
+        }else{
+          
+          # Expand correlation matrix
+          sim.data <- expand.corr(data)
+          
+        }
+        
+      }else{# Do regular adjustment
+        
+        # Expand correlation matrix
+        sim.data <- expand.corr(data)
+        
+      }
 
       # Estimate unidimensional EGA
       uni.res <- EGA.estimate(data = sim.data, n = n,
@@ -331,12 +346,12 @@ EGA <- function (data, n = NULL, uni = TRUE,
                               verbose = FALSE)
 
       # Set up results
-      if(uni.res$n.dim <= nfact + 1){ ## If unidimensional
+      if(uni.res$n.dim <= 2){ ## If unidimensional
 
         n.dim <- uni.res$n.dim
-        cor.data <- cor.data
+        cor.data <- data
         estimated.network <- multi.res$network
-        wc <- uni.res$wc[-c(1:(nvar*nfact))]
+        wc <- uni.res$wc[-c(1:4)]
         if(model == "glasso"){
           gamma <- uni.res$gamma
           lambda <- uni.res$lambda
@@ -370,27 +385,48 @@ EGA <- function (data, n = NULL, uni = TRUE,
 
   }else{ ## Data
 
-    # Convert to data frame
-    data <- as.data.frame(data)
-
+    # Check for column names
+    if(is.null(colnames(data))){
+      colnames(data) <- paste("V", 1:ncol(data), sep = "")
+    }
+    
     # Get number of cases
     n <- nrow(data)
 
     # Check for unidimensional structure
     if(uni){
 
-      # Set one factor for simulated data
-      nfact <- 1
-      vars <- ncol(data)
-      if(vars > 12){
-        nvar <- 12
-      }else{nvar <- vars}
-
-      ## Simulate data from unidimensional factor model
-      data.sim <- sim.func(data = data, nvar = nvar, nfact = nfact, load = .70)
-
-      ## Compute correlation matrix
-      cor.data <- qgraph::cor_auto(data.sim)
+      # Check for Spinglass algorithm
+      if(is.function(algorithm)){
+        
+        # spins argument is used to identify Spinglass algorithm
+        if("spins" %in% formalArgs(algorithm)){
+          
+          # Simulate data from unidimensional factor model
+          sim.data <- sim.func(data = data, nvar = 4, nfact = 1, load = .70)
+          
+          ## Compute correlation matrix
+          cor.data <- qgraph::cor_auto(sim.data)
+          
+        }else{
+          
+          ## Compute correlation matrix
+          cor.data <- qgraph::cor_auto(data)
+          
+          ## Expand correlation matrix
+          cor.data <- expand.corr(cor.data)
+          
+        }
+        
+      }else{# Do regular adjustment
+        
+        ## Compute correlation matrix
+        cor.data <- qgraph::cor_auto(data)
+        
+        ## Expand correlation matrix
+        cor.data <- expand.corr(cor.data)
+        
+      }
 
       # Unidimensional result
       uni.res <- EGA.estimate(data = cor.data, n = n,
@@ -399,7 +435,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
                               verbose = verbose)
 
       ## Remove simulated data for multidimensional result
-      cor.data <- cor.data[-c(1:nvar),-c(1:nvar)]
+      cor.data <- cor.data[-c(1:4),-c(1:4)]
 
       # Multidimensional result
       multi.res <- EGA.estimate(cor.data, n = n,
@@ -407,12 +443,12 @@ EGA <- function (data, n = NULL, uni = TRUE,
                                 algorithm = algorithm, algorithm.args = algorithm.args,
                                 verbose = FALSE)
 
-      if(uni.res$n.dim <= nfact + 1 & !is.infinite(multi.res$n.dim)){
+      if(uni.res$n.dim <= 2 & !is.infinite(multi.res$n.dim)){
 
         n.dim <- uni.res$n.dim
         cor.data <- cor.data
         estimated.network <- multi.res$network
-        wc <- uni.res$wc[-c(1:(nvar*nfact))]
+        wc <- uni.res$wc[-c(1:4)]
         if(model == "glasso"){
           gamma <- uni.res$gamma
           lambda <- uni.res$lambda
