@@ -918,7 +918,7 @@ homogenize.membership <- function (target.wc, convert.wc)
         # Compute rand index
         rand[paste(j)] <- igraph::compare(new.vec[target],target.wc[target],method="rand")
       }
-      
+
       # Remove NAs
       rand <- na.omit(rand)
       len <- na.omit(ifelse(len == 0, NA, len))
@@ -961,7 +961,7 @@ homogenize.membership <- function (target.wc, convert.wc)
         # Compute rand index
         rand[paste(j)] <- igraph::compare(new.vec[target],target.wc[target],method="rand")
       }
-      
+
       # Remove NAs
       rand <- na.omit(rand)
       len <- na.omit(ifelse(len == 0, NA, len))
@@ -1042,7 +1042,7 @@ homogenize.membership <- function (target.wc, convert.wc)
         # Compute rand index
         rand[paste(j)] <- igraph::compare(new.vec[target],target.wc[target],method="rand")
       }
-      
+
       # Remove NAs
       rand <- na.omit(rand)
       len <- na.omit(ifelse(len == 0, NA, len))
@@ -1234,7 +1234,7 @@ dnn.predict <- function (loads)
 # Updated 04.12.2020
 sim.func <- function(data, nvar, nfact, load, n = 500)
 {
-  
+
   # Check for unidimensional structure
   ## Set up data simulation
   if(missing(data)){
@@ -1292,18 +1292,18 @@ sim.func <- function(data, nvar, nfact, load, n = 500)
 
 ## Script: Function to categorize continuous data
 ## -- DESCRIPTION ------------------------------------------------------
-## First, likely values for the skewness of the variables must be specified 
-## according to a set of values ranging from -2 to 2 in increments of 0.5. 
-## This is done with the skew.values argument. Second, for the selected 
-## number of response categories to simulate, an object with the thresholds 
-## to produce different skewness is generated. Then, the skewness for each 
-## variable is randomly assigned and each variable is categorized according 
-## to the thresholds previously defined. The thresholds used to categorize 
+## First, likely values for the skewness of the variables must be specified
+## according to a set of values ranging from -2 to 2 in increments of 0.5.
+## This is done with the skew.values argument. Second, for the selected
+## number of response categories to simulate, an object with the thresholds
+## to produce different skewness is generated. Then, the skewness for each
+## variable is randomly assigned and each variable is categorized according
+## to the thresholds previously defined. The thresholds used to categorize
 ## the data set are those defined by Garrido, Abad, & Ponsoda (2011, 2013).
 ## -- ARGUMENTS --------------------------------------------------------
 ## data:        data set of continuous variables
 ## ncat:        number of response categories
-## skew.values: a vector with several of the following values: -2, -1.5, 
+## skew.values: a vector with several of the following values: -2, -1.5,
 ##              -1, -0.5, 0, 0.5, 1, 1.5, or 2. It can also be a positive
 ##              integer with a single value.
 ##-- OUTPUT ------------------------------------------------------------
@@ -1314,62 +1314,62 @@ sim.func <- function(data, nvar, nfact, load, n = 500)
 # Updated 04.12.2020
 # Authors: Maria Dolores Nieto and Luis Eduardo Garrido
 categorize<-function(data, ncat, skew.values){
-  
+
   data.cat<-matrix(0, nrow = nrow(data), ncol = ncol(data))
   SIM.SKEW  = rep(0, ncol(data))
   TRUE.SKEW = rep(0, ncol(data))
-  
-  if(ncat==2){# SKEW = -2     -1.5     -1     -0.5  0   0.5     1     1.5     2  
+
+  if(ncat==2){# SKEW = -2     -1.5     -1     -0.5  0   0.5     1     1.5     2
     thres<-matrix(c(-1.0518,-0.8416,-0.5936,-0.3088,0,0.3088,0.5936,0.8416,1.0518), ncol = 9)
     colnames(thres)<-seq(-2,2,0.5)
     SKEW.TABLE<-skew.values
-    
+
     for(j in 1:ncol(data)){
-      
+
       SKEW<-sample(SKEW.TABLE, 1)
       COLUMN<-which(colnames(thres)==SKEW)
       data.cat[,j][data[,j] < thres[1,COLUMN]]<-1
       data.cat[,j][data[,j] >=thres[1,COLUMN]]<-2
-      SIM.SKEW[j]  = SKEW   
-      TRUE.SKEW[j] = psych::describe(data.cat[,j])$skew 
+      SIM.SKEW[j]  = SKEW
+      TRUE.SKEW[j] = psych::describe(data.cat[,j])$skew
     }
   }
-  if(ncat==3){ 
+  if(ncat==3){
     thres.2  <-c(0.8518,  1.3754)  ## SKEW = 2
     thres.1.5<-c(0.6131,  1.1969)  ## SKEW = 1.5
     thres.1  <-c(0.3195,  0.9921)  ## SKEW = 1.0
     thres.0.5<-c(-0.0236, 0.7256)  ## SKEW = 0.5
     thres.0  <-c(-1.0000, 1.0000)  ## SKEW = 0
-    thres    <-matrix(c(sort(-thres.2), sort(-thres.1.5), sort(-thres.1), sort(-thres.0.5), 
+    thres    <-matrix(c(sort(-thres.2), sort(-thres.1.5), sort(-thres.1), sort(-thres.0.5),
                         (thres.0),
                         thres.0.5, thres.1, thres.1.5, thres.2),
                       ncol = 9)
     colnames(thres)<-seq(-2,2,0.5)
     SKEW.TABLE<-skew.values
-    
+
     for(j in 1:ncol(data)){
       SKEW<-sample(SKEW.TABLE, 1)
       COLUMN<-which(colnames(thres)==SKEW)
       data.cat[,j][ data[,j]< thres[1,COLUMN]]<-1
       data.cat[,j][(data[,j]>=thres[1,COLUMN])&(data[,j]<thres[2,COLUMN])]<-2
       data.cat[,j][ data[,j]>=thres[2,COLUMN]]<-3
-      SIM.SKEW[j]  = SKEW   
+      SIM.SKEW[j]  = SKEW
       TRUE.SKEW[j] = psych::describe(data.cat[,j])$skew
     }
   }
-  if(ncat==4){ 
+  if(ncat==4){
     thres.2  <-c(0.7515,  1.1341, 1.5980) ## SKEW = 2
     thres.1.5<-c(0.4945,  0.9299, 1.4359) ## SKEW = 1.5
     thres.1  <-c(0.1678,  0.6873, 1.2513) ## SKEW = 1.0
     thres.0.5<-c(-0.2057, 0.3706, 0.9809) ## SKEW = 0.5
     thres.0  <-c(-1.5000, 0.0000, 1.5000) ## SKEW = 0
-    thres    <-matrix(c(sort(-thres.2), sort(-thres.1.5), sort(-thres.1), sort(-thres.0.5), 
+    thres    <-matrix(c(sort(-thres.2), sort(-thres.1.5), sort(-thres.1), sort(-thres.0.5),
                         (thres.0),
                         thres.0.5, thres.1, thres.1.5, thres.2),
                       ncol = 9)
     colnames(thres)<-seq(-2,2,0.5)
     SKEW.TABLE<-skew.values
-    
+
     for(j in 1:ncol(data)){
       SKEW<-sample(SKEW.TABLE, 1)
       COLUMN<-which(colnames(thres)==SKEW)
@@ -1377,23 +1377,23 @@ categorize<-function(data, ncat, skew.values){
       data.cat[,j][(data[,j]>=thres[1,COLUMN])&(data[,j]<thres[2,COLUMN])]<-2
       data.cat[,j][(data[,j]>=thres[2,COLUMN])&(data[,j]<thres[3,COLUMN])]<-3
       data.cat[,j][ data[,j]>=thres[3,COLUMN]]<-4
-      SIM.SKEW[j]  = SKEW   
+      SIM.SKEW[j]  = SKEW
       TRUE.SKEW[j] = psych::describe(data.cat[,j])$skew
-    }    
+    }
   }
-  if(ncat==5){ 
+  if(ncat==5){
     thres.2  <-c(0.6792,  1.0043,  1.3441, 1.7703) ## SKEW = 2
     thres.1.5<-c(0.4071,  0.7827,  1.1596, 1.6186) ## SKEW = 1.5
     thres.1  <-c(0.0502,  0.5117,  0.9432, 1.4462) ## SKEW = 1.0
     thres.0.5<-c(-0.3414, 0.1642,  0.6257, 1.1645) ## SKEW = 0.5
     thres.0  <-c(-1.8000, -0.6000, 0.6000, 1.8000) ## SKEW = 0
-    thres    <-matrix(c(sort(-thres.2), sort(-thres.1.5), sort(-thres.1), sort(-thres.0.5), 
+    thres    <-matrix(c(sort(-thres.2), sort(-thres.1.5), sort(-thres.1), sort(-thres.0.5),
                         (thres.0),
                         thres.0.5, thres.1, thres.1.5, thres.2),
                       ncol = 9)
     colnames(thres)<-seq(-2,2,0.5)
     SKEW.TABLE<-skew.values
-    
+
     for(j in 1:ncol(data)){
       SKEW<-sample(SKEW.TABLE, 1)
       COLUMN<-which(colnames(thres)==SKEW)
@@ -1402,15 +1402,15 @@ categorize<-function(data, ncat, skew.values){
       data.cat[,j][(data[,j]>=thres[2,COLUMN])&(data[,j]<thres[3,COLUMN])]<-3
       data.cat[,j][(data[,j]>=thres[3,COLUMN])&(data[,j]<thres[4,COLUMN])]<-4
       data.cat[,j][ data[,j]>=thres[4,COLUMN]]<-5
-      SIM.SKEW[j]  = SKEW   
+      SIM.SKEW[j]  = SKEW
       TRUE.SKEW[j] = psych::describe(data.cat[,j])$skew
-    }   
+    }
   }
-  
+
   RESULTS<-list(data.cat  = data.cat,
                 SIM.SKEW  = SIM.SKEW,
                 TRUE.SKEW = TRUE.SKEW)
-  
+
   return(RESULTS)
 }
 
@@ -1986,63 +1986,63 @@ read.data <- function (file = file.choose(), header = TRUE, sep = ",", ...)
 }
 
 #' System check for OS and RSTUDIO
-#' 
+#'
 #' @description Checks for whether text options are available
-#' 
+#'
 #' @param ... Additional arguments
-#' 
+#'
 #' @return \code{TRUE} if text options are available and \code{FALSE} if not
-#' 
+#'
 #' @author Alexander Christensen <alexpaulchristensen@gmail.com>
-#' 
+#'
 #' @noRd
 # System Check----
 # Updated 08.09.2020
 system.check <- function (...)
 {
   OS <- unname(tolower(Sys.info()["sysname"]))
-  
+
   RSTUDIO <- ifelse(Sys.getenv("RSTUDIO") == "1", TRUE, FALSE)
-  
+
   TEXT <- TRUE
-  
+
   if(!RSTUDIO){if(OS != "linux"){TEXT <- FALSE}}
-  
+
   res <- list()
-  
+
   res$OS <- OS
   res$RSTUDIO <- RSTUDIO
   res$TEXT <- TEXT
-  
+
   return(res)
 }
 
 #' Colorfies Text
-#' 
+#'
 #' Makes text a wide range of colors (8-bit color codes)
-#' 
+#'
 #' @param text Character.
 #' Text to color
-#' 
+#'
 #' @return Colorfied text
-#' 
+#'
 #' @author Alexander Christensen <alexpaulchristensen@gmail.com>
-#' 
+#'
 #' @noRd
-#' 
+#'
 # Color text----
 # Updated 08.09.2020
 colortext <- function(text, number = NULL, defaults = NULL)
 {
   # Check system
   sys.check <- system.check()
-  
+
   if(sys.check$TEXT)
   {
     # Defaults for number (white text)
     if(is.null(number) || number < 0 || number > 231)
     {number <- 15}
-    
+
     # Check for default color
     if(!is.null(defaults))
     {
@@ -2051,14 +2051,14 @@ colortext <- function(text, number = NULL, defaults = NULL)
       {
         if(sys.check$RSTUDIO)
         {
-          
+
           if(rstudioapi::getThemeInfo()$dark)
           {number <- 226
           }else{number <- 208}
-          
+
         }else{number <- 208}
       }else{
-        
+
         number <- switch(defaults,
                          message = 204,
                          red = 9,
@@ -2071,27 +2071,27 @@ colortext <- function(text, number = NULL, defaults = NULL)
                          magenta = 13,
                          pink = 211,
         )
-        
+
       }
-      
+
     }
-    
+
     return(paste("\033[38;5;", number, "m", text, "\033[0m", sep = ""))
-    
+
   }else{return(text)}
 }
 
 #' Stylizes Text
-#' 
+#'
 #' Makes text bold, italics, underlined, and strikethrough
-#' 
+#'
 #' @param text Character.
 #' Text to stylized
-#' 
+#'
 #' @return Sytlized text
-#' 
+#'
 #' @author Alexander Christensen <alexpaulchristensen@gmail.com>
-#' 
+#'
 #' @noRd
 # Style text----
 # Updated 08.09.2020
@@ -2100,13 +2100,13 @@ styletext <- function(text, defaults = c("bold", "italics", "highlight",
 {
   # Check system
   sys.check <- system.check()
-  
+
   if(sys.check$TEXT)
   {
     if(missing(defaults))
     {number <- 0
     }else{
-      
+
       # Get number code
       number <- switch(defaults,
                        bold = 1,
@@ -2115,23 +2115,23 @@ styletext <- function(text, defaults = c("bold", "italics", "highlight",
                        highlight = 7,
                        strikethrough = 9
       )
-      
+
     }
-    
+
     return(paste("\033[", number, ";m", text, "\033[0m", sep = ""))
   }else{return(text)}
 }
 
 #' Text Symbols
-#' 
+#'
 #' Makes text symbols (star, checkmark, square root)
-#' 
+#'
 #' @param symbol Character.
-#' 
+#'
 #' @return Outputs symbol
-#' 
+#'
 #' @author Alexander Christensen <alexpaulchristensen@gmail.com>
-#' 
+#'
 #' @noRd
 # Symbols----
 # Updated 24.04.2020
@@ -2164,7 +2164,7 @@ textsymbol <- function(symbol = c("alpha", "beta", "chi", "delta",
                 x = "\u2717",
                 bullet = "\u2022"
   )
-  
+
   return(sym)
 }
 
@@ -2179,175 +2179,175 @@ redundancy.process <- function(data, cormat, n, method, type, sig, plot.redundan
 {
   # Compute redundancy method
   if(method == "wto"){
-    
+
     for(i in c(0.50, 0.25, 0))
     {
       net <- EBICglasso.qgraph(data = cormat, n = n, gamma = i)
-      
+
       if(all(colSums(net)!=0))
       {break}
     }
-    
+
     tom <- wTO::wTO(net, sign = "sign")
-    
+
   }else if(method == "pcor"){
-    
+
     tom <- -cov2cor(solve(cormat))
-    
+
   }else{tom <- cormat}
-  
+
   # Number of variables; diagonal zero; absolute values
   vars <- ncol(tom); diag(tom) <- 0; tom <- abs(tom)
-  
+
   # Lower triangle
   lower <- tom[lower.tri(tom, diag = FALSE)]
-  
+
   # Names lower triangle
   name1 <- colnames(tom); name2 <- name1
-  
+
   # Initialize name matrix
   name.matrix <- tom
-  
+
   # Generate name matrix
   for(i in 1:vars)
     for(j in 1:vars){
       name.matrix[i,j] <- paste(name1[j], name2[i], sep = "--")
     }
-  
+
   # Get lower triangle of names
   names(lower) <- name.matrix[lower.tri(name.matrix, diag = FALSE)]
-  
+
   # Obtain positive values only
   pos.vals <- na.omit(ifelse(lower == 0, NA, lower)); attr(pos.vals, "na.action") <- NULL
-  
+
   # Get redundant pairings
   if(type == "threshold"){## Threshold values
     redund <- pos.vals[which(pos.vals >= sig)]
     aic <- NULL
     g.dist <- NULL
   }else{## Determine distribution
-    
+
     # Distributions, initialize AIC vector
     distr <- c("norm", "gamma"); aic <- numeric(length(distr)); names(aic) <- c("normal", "gamma")
-    
+
     ## Obtain distribution
     for(i in 1:length(distr)){
       aic[i] <- fitdistrplus::fitdist(pos.vals, distr[i], method="mle")$aic
     }
-    
+
     ## Obtain parameters
     g.dist <- suppressWarnings(MASS::fitdistr(pos.vals, names(aic)[which.min(aic)]))
-    
+
     # Estimate p-values
     pval <- switch(names(aic)[which.min(aic)],
-                   
+
                    normal = 1 - unlist(lapply(pos.vals, # positive values
                                               pnorm, # probability in normal distribution
                                               mean = g.dist$estimate["mean"], #mean of normal
                                               sd = g.dist$estimate["sd"]) #standard deviation of normal
                    ),
-                   
+
                    gamma = 1 - unlist(lapply(pos.vals, # positive values
                                              pgamma, # probability in gamma distribution
                                              shape = g.dist$estimate["shape"], # shape of gamma
                                              rate = g.dist$estimate["rate"]) # rate of gamma
                    ),
     )
-    
+
     # Check if using adaptive alpha
     if(type == "adapt"){
       sig <- NetworkToolbox::adapt.a("cor", alpha = sig, n = length(pos.vals), efxize = "medium")$adapt.a
     }
-    
+
     # Get redundant pairings
     redund <- pos.vals[which(pval <= sig)]
-    
+
   }
-  
+
   # Check for redundant pairings
   if(length(redund) == 0){
     message("No redundant variables identified.")
     res.list <- NA
   }else{
-    
+
     # Create result matrix
     split.res <- unlist(strsplit(names(redund), split = "--"))
     res.mat <- t(simplify2array(sapply(names(redund), strsplit, split = "--")))
-    
+
     # Initialize result list
     res.list <- list()
-    
+
     # Initialize count
     count <- 0
-    
+
     while(nrow(res.mat)!=0){
       # Increase count
       count <- count + 1
-      
+
       # Get variable counts
       var.counts <- sort(table(split.res), decreasing = TRUE)
-      
+
       if(!all(var.counts==1)){
         # Identify targets
         target <- which(res.mat == names(var.counts[1]), arr.ind = TRUE)[,"row"]
-        
+
         # Insert values into list
         res.list[[names(var.counts[1])]] <- setdiff(unlist(strsplit(names(target),split="--")),names(var.counts[1]))
-        
+
         # Remove rows from result matrix
         res.mat <- res.mat[-target,]
-        
+
         # Remove variables from split result
         split.res <- as.vector(res.mat)
-        
+
         # Force matrix
         if(is.vector(res.mat))
         {res.mat <- t(as.matrix(res.mat))}
-        
+
       }else{
         for(i in 1:nrow(res.mat))
         {res.list[[res.mat[i,1]]] <- unname(res.mat[i,2])}
-        
+
         res.mat <- res.mat[-c(1:nrow(res.mat)),]
       }
     }
-    
+
   }
-  
+
   # Revert tom to matrix
   tom <- as.matrix(tom)
-  
+
   # Check for plot
   if(plot.redundancy){
-    
+
     # Initialize plot matrix
     plot.mat <- matrix(0, nrow = nrow(tom), ncol = ncol(tom))
     colnames(plot.mat) <- colnames(tom)
     row.names(plot.mat) <- colnames(tom)
-    
+
     for(i in 1:length(res.list)){
       plot.mat[names(res.list)[i],res.list[[i]]] <- tom[names(res.list)[i],res.list[[i]]]
       plot.mat[res.list[[i]],names(res.list)[i]] <- tom[res.list[[i]],names(res.list)[i]]
     }
-    
+
     rm.mat <- which(colSums(plot.mat) == 0)
-    
+
     plot.mat <- plot.mat[-rm.mat, -rm.mat]
-    
+
     plot.args$title <- switch(method,
                               "wto" = "Weighted\nTopological\nOverlap",
                               "pcor" = "Partial\nCorrelation",
                               "cor" = "Zero-order\nCorrelation"
     )
-    
+
     net.plot <- redund.plot(plot.mat, plot.args)
-    
+
   }
-  
+
   # Get redundancy descriptives
   desc <- redund.desc(pos.vals = pos.vals, method = method, type = type, sig = sig,
                       aic = aic, g.dist = g.dist)
-  
+
   # Results list
   res <- list()
   res$redundant <- res.list
@@ -2360,11 +2360,11 @@ redundancy.process <- function(data, cormat, n, method, type, sig, plot.redundan
   res$method <- method
   res$type <- type
   if(type != "threshold"){res$distribution <- names(aic)[which.min(aic)]}
-  
+
   class(res) <- "node.redundant"
-  
+
   return(res)
-  
+
 }
 
 #' @noRd
@@ -2375,42 +2375,42 @@ redund.names <- function(node.redundant.obj, key)
   # Check for node.redundant object class
   if(class(node.redundant.obj) != "node.redundant")
   {stop("A 'node.redundant' object must be used as input")}
-  
+
   # Obtain and remove data from node redundant object
   data <- node.redundant.obj$data
-  
+
   # Check that columns match key
   if(ncol(data) != length(as.vector(key)))
   {stop("Number of columns in data does not match the length of 'key'")}
-  
+
   # Names of node.redundant object
   nr.names <- names(node.redundant.obj$redundant)
-  
+
   # Key names
   key.names <- colnames(data)
-  
+
   # Key change
   key.chn <- key
-  
+
   for(i in 1:length(nr.names))
   {
     # Target redundant node
     target.r <- match(names(node.redundant.obj$redundant)[i],key.names)
-    
+
     # Replace item name with description
     names(node.redundant.obj$redundant)[i] <- as.character(key.chn[target.r])
-    
+
     # Target other nodes
     target.o <- match(node.redundant.obj$redundant[[i]],key.names)
-    
+
     # Replace item names with description
     node.redundant.obj$redundant[[i]] <- as.character(key.chn[target.o])
   }
-  
+
   # Create key code
   names(key) <- colnames(data)
   node.redundant.obj$key <- key
-  
+
   return(node.redundant.obj)
 }
 
@@ -2421,16 +2421,16 @@ redund.desc <- function(pos.vals, method, type, sig, aic, g.dist)
 {
   # Initialize descriptives matrix
   desc <- matrix(0, nrow = 1, ncol = 9)
-  
+
   # Row name
   row.names(desc) <- switch(method,
                             "wto" = "wTO",
                             "pcor"= "pcor",
                             "cor" = "cor"
   )
-  
+
   colnames(desc) <- c("Mean", "SD", "Median", "MAD", "3*MAD", "6*MAD", "Minimum", "Maximum", "Critical Value")
-  
+
   desc[,"Mean"] <- mean(pos.vals, na.rm = TRUE)
   desc[,"SD"] <- sd(pos.vals, na.rm = TRUE)
   desc[,"Median"] <- median(pos.vals, na.rm = TRUE)
@@ -2439,48 +2439,48 @@ redund.desc <- function(pos.vals, method, type, sig, aic, g.dist)
   desc[,"6*MAD"] <- mad(pos.vals, constant = 1, na.rm = TRUE) * 6
   desc[,"Minimum"] <- range(pos.vals, na.rm = TRUE)[1]
   desc[,"Maximum"] <- range(pos.vals, na.rm = TRUE)[2]
-  
+
   # Critical value
   if(type == "threshold"){
     desc[,"Critical Value"] <- sig
   }else{
-    
+
     desc[,"Critical Value"] <- switch(names(aic)[which.min(aic)],
-                                      
+
                                       normal = qnorm(sig, #significance
                                                      mean = g.dist$estimate["mean"], #mean of normal
                                                      sd = g.dist$estimate["sd"], #sd of normal
                                                      lower.tail = FALSE),
-                                      
+
                                       gamma = qgamma(sig, #significance
                                                      shape = g.dist$estimate["shape"], #shape of gamma
                                                      rate = g.dist$estimate["rate"], #rate of gamma
                                                      lower.tail = FALSE),
-                                      
+
     )
-    
+
   }
-  
+
   # Organize positive values output
   ordered.pos <- sort(pos.vals, decreasing = TRUE)
   sd.from.mean <- (ordered.pos - mean(pos.vals, na.rm = TRUE)) / sd(ordered.pos, na.rm = TRUE)
   mad.from.median <- (ordered.pos - median(pos.vals, na.rm = TRUE)) / mad(ordered.pos, constant = 1, na.rm = TRUE)
   pos.output <- round(cbind(ordered.pos, sd.from.mean, mad.from.median), 3)
-  
+
   colnames(pos.output)[1] <- switch(method,
                                     "wto" = "wTO",
                                     "pcor"= "pcor",
                                     "cor" = "cor"
   )
-  
+
   colnames(pos.output)[2:3] <- c("SD from Mean", "MAD from Median")
-  
+
   res.desc <- list()
   res.desc$basic <- round(desc, 3)
   res.desc$centralTendency <- pos.output
-  
+
   return(res.desc)
-  
+
 }
 
 #' @noRd
@@ -2490,7 +2490,7 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
 {
   # Convert to plot.mat
   plot.mat <- plot.matrix
-  
+
   # weighted  network
   network1 <- network::network(plot.mat,
                                ignore.eval = FALSE,
@@ -2501,7 +2501,7 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
   }else{
     network::set.vertex.attribute(network1, attrname= "Communities", value = rep(plot.args$title, ncol(plot.mat)))
   }
-  
+
   network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
   network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
   network::set.edge.value(network1,attrname="AbsWeights",value=abs(plot.mat))
@@ -2509,7 +2509,7 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
                           value=matrix(rescale.edges(plot.mat, 5),
                                        nrow = nrow(plot.mat),
                                        ncol = ncol(plot.mat)))
-  
+
   # Layout "Spring"
   graph1 <- NetworkToolbox::convert2igraph(plot.mat)
   edge.list <- igraph::as_edgelist(graph1)
@@ -2517,20 +2517,20 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
                                                              weights =
                                                                abs(igraph::E(graph1)$weight/max(abs(igraph::E(graph1)$weight)))^2,
                                                              vcount = ncol(plot.mat))
-  
+
   if(plot.reduce){
     plot.args$vsize <- 12
     plot.args$label.size <- 8
   }
-  
-  
+
+
   lower <- abs(plot.mat[lower.tri(plot.mat)])
   non.zero <- sqrt(lower[lower != 0])
-  
+
   plot.args$edge.alpha <- non.zero
-  
+
   set.seed(1234)
-  redund.net <- GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1", 
+  redund.net <- GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
                                edge.color = "color", color = "Communities",
                                alpha = plot.args$alpha, size = plot.args$vsize,
                                edge.alpha = plot.args$edge.alpha,
@@ -2540,15 +2540,15 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
                                label = colnames(plot.mat)) +
     ggplot2::theme(legend.title = ggplot2::element_blank(),
                    legend.text = ggplot2::element_text(face = "bold", size = 12))
-  
+
   if(plot.reduce){
     redund.net <- redund.net + ggplot2::annotate("text", x = -Inf, y = Inf,
                                                  hjust = 0, vjust = 1,
                                                  label = plot.args$title, size = 5.5)
   }
-  
+
   set.seed(NULL)
-  
+
   return(redund.net)
 }
 
@@ -2561,30 +2561,30 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
   # Check for node.redundant object class
   if(class(node.redundant.obj) != "node.redundant")
   {stop("A 'node.redundant' object must be used as input")}
-  
+
   # Line break function
   linebreak <- function(){cat("\n", colortext(paste(rep("-", getOption("width")), collapse = ""), defaults = "message"), "\n\n")}
-  
+
   # Redundant list
   redund <- node.redundant.obj$redundant
-  
+
   # Copied data
   new.data <- node.redundant.obj$data
-  
+
   # Weights
   if("network" %in% names(node.redundant.obj)){
     weights <- as.matrix(node.redundant.obj$network)
   }else{weights <- as.matrix(node.redundant.obj$correlation)}
-  
+
   # Track merged items
   merged <- list()
-  
+
   # Track changed names
   name.chn <- vector("character")
-  
+
   # Initialize count
   count <- 0
-  
+
   # Get key
   if("key" %in% names(node.redundant.obj))
   {
@@ -2594,14 +2594,14 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
     key <- colnames(node.redundant.obj$data)
     names(key) <- key
   }
-  
+
   # Line break
   linebreak()
-  
+
   # Previous state
   prev.state <- list(redund)
   prev.state.data <- list(new.data)
-  
+
   # Loop through named node redundant list----
   while(length(redund) != 0)
   {
@@ -2610,69 +2610,69 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
 
     # Potential redundancies
     pot <- redund[[1]]
-    
+
     # Construct potential redundancies and menu
     poss <- redundancy.menu(redund = redund, reduce.method = reduce.method,
                             pot = pot, target.item = target.item,
                             weights = weights, plot.args = plot.args,
                             key = key, node.redundant.obj = node.redundant.obj)
-    
+
     # Get input
     input <- input.check(poss, type = "redund")
-    
+
     # Check if going back is necessary
     if(any(input == "b")){
-      
+
       # Let user know they can't go back
       if(is.null(unlist(prev.state[length(prev.state) - 1], recursive = FALSE))){
         message("\nCannot go back. This is the start of the redundancy list")
       }else{
-        
+
         # Renew redund list
         redund <- unlist(prev.state[length(prev.state) - 1], recursive = FALSE)
-        
+
         # Remove previous state
         prev.state <- prev.state[-length(prev.state)]
-        
+
         # Renew new data
         new.data <- as.data.frame(prev.state.data[length(prev.state.data) - 1])
-        
+
         # Remove previous state data
         prev.state.data <- prev.state.data[-length(prev.state.data)]
-        
+
         # Reduce count
         count <- count - 1
-        
+
         # Remove merge
         merged <- merged[-length(merged)]
-        
+
       }
-      
+
     }else if(all(input != "0")){
-      
+
       # Convert to numeric
       re.items <- as.numeric(unlist(strsplit(unlist(strsplit(input, split = " ")), split = ",")))
-      
+
       # Items to combine with target
       comb <- poss[re.items]
-      
+
       # Index items
       idx <- names(key)[match(comb, key)]
-      
+
       # Target index
       tar.idx <- names(key)[match(target.item, key)]
-      
+
       # Update merged list
       count <- count + 1
       merged[[count]] <- c(key[tar.idx], key[idx])
-      
+
       # Combine into target index
       if(reduce.method == "latent")
       {
         # Latent variable
         ## create model
         mod <- paste(paste("comb =~ ",sep=""), paste(colnames(new.data[,c(tar.idx, idx)]), collapse = " + "))
-        
+
         # Replace arguments
         lavaan.args$model <- mod
         lavaan.args$data <- new.data
@@ -2680,7 +2680,7 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
         categories <- apply(new.data[,c(tar.idx, idx)], 2, function(x){
           length(unique(x))
         })
-        
+
         ## Check categories
         if(any(categories < 6)){# Not all continuous
           lavaan.args$estimator <- "WLSMV"
@@ -2689,186 +2689,186 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
           lavaan.args$estimator <- "MLR"
           lavaan.args$missing <- "fiml"
         }
-        
+
         ## get CFA function from lavaan
         FUN <- lavaan::cfa
-        
+
         ## fit model
         fit <- suppressWarnings(
           suppressMessages(
             do.call(what = "FUN", args = as.list(lavaan.args))
           )
         )
-        
+
         ## identify cases
         cases <- lavaan::inspect(fit, "case.idx")
-        
+
         ## compute latent variable score
         latent <- as.numeric(lavaan::lavPredict(fit))
-        
+
         ## check for missing cases and handle
         if(length(cases) != nrow(new.data))
         {
           new.vec <- as.vector(matrix(NA, nrow = nrow(new.data), ncol = 1))
           new.vec[cases] <- latent
         }else{new.vec <- latent}
-        
+
         ## check for reverse scoring/labelling
         corrs <- as.matrix(cor(cbind(latent,new.data[,c(tar.idx, idx)]), use = "complete.obs")[1,-1])
         row.names(corrs) <- c(key[tar.idx], key[idx])
         colnames(corrs) <- "latent"
-        
+
         if(any(sign(corrs)==-1))
         {
           message("Some variables are reverse coded (negative correlations with latent variable were found). Correlations with latent variable:")
           print(corrs)
-          
+
           input2 <- "o"
-          
+
           while(input2 != "y" && input2 != "n")
           {input2 <- readline("Reverse code for positive labelling (y/n): ")}
-          
+
           if(input2 == "y")
           {new.vec <- -new.vec}
         }
-        
+
         # input new vector
         new.data[,tar.idx] <- new.vec
-        
+
         # Ask for new label
         lab <- readline(prompt = "New label for latent variable (no quotations): ")
         name.chn[count] <- lab
         col.idx <- match(tar.idx, colnames(new.data))
         colnames(new.data)[col.idx] <- lab
-        
+
         message(paste("\nNew LATENT variable called '", lab,"' was created. Redundant variables were REMOVED", sep = ""))
-        
+
       }else if(reduce.method == "remove"){
-        
+
         target.key <- c(tar.idx, idx)
         target.data <- new.data[,target.key]
-    
+
         means <- round(colMeans(target.data, na.rm = TRUE), 2)
         sds <- round(apply(target.data, 2, sd, na.rm = TRUE), 2)
         ranges <- round(apply(target.data, 2, range, na.rm = TRUE), 2)
-        
+
         if(ncol(target.data) > 2){
-          
+
           # Corrected item-total correlations
           cor.corr <- round(item.total(target.data), 2)
-          
+
           ## Use information utility?
           categories <- apply(target.data, 2, function(x){
             length(unique(x))
           })
-          
+
           ## Check categories
           if(all(categories <= 7)){
-            
+
             ## Use
             #util <- round(info.util(target.data), 2)
-            
+
             tab <- cbind(#util,
               cor.corr, means, sds, t(ranges))
-            colnames(tab) <- c(#"Utility Gain", 
+            colnames(tab) <- c(#"Utility Gain",
               "Item-Total r", "Mean", "SD", "Low", "High")
           }else{
-            
+
             tab <- cbind(cor.corr, means, sds, t(ranges))
             colnames(tab) <- c("Item-Total r", "Mean", "SD", "Low", "High")
-            
+
           }
-          
+
         }else{
           tab <- cbind(means, sds, t(ranges))
           colnames(tab) <- c("Mean", "SD", "Low", "High")
         }
         row.names(tab) <- c("0 (Target)", 1:length(comb))
-    
+
         tab[,1:(ncol(tab) - 2)] <- matrix(sprintf("%.2f", tab[,1:(ncol(tab) - 2)]), nrow = nrow(tab), ncol = ncol(tab) - 2)
-       
+
         table.plot <- gridExtra::tableGrob(tab)
         gridExtra::grid.arrange(table.plot)
-        
+
         # Input check
         new.input <- input.check(poss = c(target.item, comb), type = "remove")
-        
+
         # All variables
         ind <- names(key[match(c(target.item, comb), key)])
-        
+
         # All except selected variable
         idx <- ind[-(as.numeric(new.input)+1)]
-        
-        # Input selected  
+
+        # Input selected
         merged[[count]] <- key[idx]
-        
+
         # Name merged input
         name.chn[count] <- key[setdiff(ind, idx)]
-        
+
         # Message user
         message(paste("\nKEPT '", key[ind[as.numeric(new.input) + 1]],"' and REMOVED all others", sep = ""))
-        
+
       }
-      
+
       # Remove redundant variables from data
       rm.idx <- match(idx, colnames(new.data))
       new.data <- new.data[,-rm.idx]
-      
+
       # Update previous state data
       prev.state.data[length(prev.state.data) + 1] <- list(new.data)
-      
+
       # Remove target item
       redund[[1]] <- NULL
-      
+
       # Make ind
       if(reduce.method == "latent"){ind <- idx}
-      
+
       # Remove variables within future options
       for(i in 1:length(ind)){
-        
+
         ## Get elements from other redundancy lists
         elements <- sapply(redund, function(x){key[ind[i]] %in% x})
-        
+
         ## If there are any
         if(any(elements)){
-          
+
           ### Target elements
           target.elem <- which(elements)
-          
+
           for(j in 1:length(target.elem)){
-            
+
             #### Target list
             list.target <- redund[[target.elem[j]]]
-            
+
             #### Remove from target list
             redund[[target.elem[j]]] <- redund[[target.elem[j]]][-which(key[ind[i]] == list.target)]
-            
+
           }
-          
+
         }
-        
+
       }
-      
+
       # Remove empty list objects
       rm.list <- which(
         unlist(lapply(redund, function(x){
           length(x)
         })) == 0
       )
-      
+
       if(length(rm.list) != 0){
         redund <- redund[-rm.list]
       }
-      
+
       # Remove object names
       if(any(key[ind] %in% names(redund))){
-        
+
         ## Get target names
         name.targets <- which(key[ind] %in% names(redund))
-        
+
         ## Loop through
         for(i in 1:length(name.targets)){
-          
+
           # If there is only one item left, then remove from list
           if(length(redund[[key[ind][name.targets[i]]]]) == 1){
             redund[key[ind][name.targets[i]]] <- NULL
@@ -2879,87 +2879,87 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
           }
 
         }
-        
+
       }
-      
+
       # Update previous state
       prev.state[length(prev.state) + 1] <- list(redund)
-      
+
     }else{
-      
+
       # Update previous state data
       prev.state.data[length(prev.state.data) + 1] <- list(new.data)
-      
+
       redund[[1]] <- NULL
-      
+
       # Update previous state
       prev.state[length(prev.state) + 1] <- list(redund)
-      
+
     }
-    
+
     if(!is.null(input)){
       linebreak()
       input <- NULL
     }
-    
+
     # Artificial pause for smoothness of experience
     Sys.sleep(1)
-    
+
   }
-  
+
   # Transform merged list to matrix
   if(length(merged) != 0)
   {
     # Number of rows for matrix
     m.rows <- max(unlist(lapply(merged, length)))
-    
+
     # Initialize merged matrix
     m.mat <- matrix("", nrow = m.rows, ncol = length(merged))
-    
+
     # Input into merged matrix
     for(i in 1:length(merged))
     {
       diff <- m.rows - length(merged[[i]])
-      
+
       m.mat[,i] <- c(merged[[i]], rep("", diff))
     }
-    
+
     colnames(m.mat) <- name.chn
   }
-  
+
   # Replace column names for item names not changed
   if(any(colnames(new.data) %in% names(key)))
   {
     # Target names
     target.names <- which(colnames(new.data) %in% names(key))
-    
+
     # new.data names
     new.data.names <- colnames(new.data)[target.names]
-    
+
     # Insert into new data
     colnames(new.data)[target.names] <- key[new.data.names]
   }
-  
+
   # Check if 'm.mat' exists
   if(!exists("m.mat")){
     m.mat <- NULL
   }else{
     m.mat <- t(m.mat)
-    
+
     if(reduce.method == "latent"){
       colnames(m.mat) <- c("Target", paste("Redundancy_", 1:(ncol(m.mat)-1), sep = ""))
     }else if(reduce.method == "remove"){
       colnames(m.mat) <- c(paste("Redundancy_", 1:ncol(m.mat), sep = ""))
     }
   }
-  
+
   # Initialize results list
   res <- list()
   res$data <- new.data
   res$merged <- m.mat
-  
+
   return(res)
-  
+
 }
 
 #' @noRd
@@ -2969,67 +2969,37 @@ item.total <- function (data.sub)
 {
   # Get correlations
   corrs <- suppressMessages(qgraph::cor_auto(data.sub))
-  
+
   # Check for negatives (reverse if so)
   for(i in 1:nrow(corrs)){
-    
+
     if(any(sign(corrs[i,-i]) == -1)){
       data.sub[,i] <- (max(data.sub[,i]) + min(data.sub[,i])) - data.sub[,i]
-      
+
       if(any(sign(corrs[i,-i]) == 1)){
         target <- colnames(corrs)[(sign(corrs[i,]) == 1)[-i]]
-        
+
         for(j in 1:length(target)){
           data.sub[,target[j]] <- (max(data.sub[,target[j]]) + min(data.sub[,target[j]])) - data.sub[,target[j]]
         }
-        
+
       }
-      
+
       corrs <- suppressMessages(qgraph::cor_auto(data.sub))
     }
-    
+
   }
-  
+
   # Compute corrected item-total correlations
   cor.corr <- numeric(ncol(data.sub))
-  
+
   # Loop through
   for(i in 1:ncol(data.sub)){
     cor.corr[i] <- suppressMessages(qgraph::cor_auto(cbind(data.sub[,i], rowSums(data.sub[,-i]))))[1,2]
   }
-  
-  return(cor.corr)
-  
-}
 
-#' @noRd
-# Information utility----
-# Updated 14.01.2021
-info.util <- function (data){
-  
-  # Initialize information utility vector
-  info.vec <- numeric(ncol(data))
-  
-  # Maximum information utility
-  ## Graded response model
-  irt <- ltm::grm(data = data)
-  ## Normalized Minimum Reduction in Uncertainty
-  max.info <- infutil::nmru(irt, range.int = c(-20, 20))$val
-  
-  # Loop through data
-  for(i in 1:ncol(data)){
-    
-    ## Graded response model
-    irt <- ltm::grm(data = data[,-i])
-    ## Normalized Minimum Reduction in Uncertainty
-    info <- infutil::nmru(irt, range.int = c(-20, 20))$val
-    ## Difference in information utility
-    info.vec[i] <- max.info - info
-    
-  }
-  
-  return(info.vec)
-  
+  return(cor.corr)
+
 }
 
 #' @importFrom graphics text
@@ -3039,7 +3009,7 @@ info.util <- function (data){
 color.sort <- function (wc)
 {
   unlist(lapply(sort(wc, na.last = TRUE), function(x, uniq){
-    
+
     if(is.na(x)){
       NA
     }else{
@@ -3058,21 +3028,21 @@ redundancy.menu <- function (redund, reduce.method, pot, target.item, weights,
   pot <- list(pot)
   names(pot) <- target.item
   possible <- unname(unlist(pot))
-  
+
   # Loop through potential redundancies
   count2 <- 1
-  
+
   # Check names
   for(i in 1:length(possible)){
-    
+
     if(possible[i] %in% names(redund)){
       count2 <- count2 + 1
       pot[count2] <- redund[possible[i]]
       names(pot)[count2] <- possible[i]
     }
-    
+
   }
-  
+
   # Check elements
   for(i in 1:length(possible)){
     elements <- redund[sapply(redund, function(x){possible[i] %in% x})]
@@ -3080,51 +3050,51 @@ redundancy.menu <- function (redund, reduce.method, pot, target.item, weights,
     names(pot)[(count2 + 1):(count2 + length(elements))] <- names(elements)
     count2 <- count2 + length(elements)
   }
-  
+
   # Get unique lists
   pot <- redund[unique(names(pot))]
-  
+
   # Possible options
   poss <- unique(c(unname(unlist(pot)), names(pot)[-1]))
-  
+
   # Organize plot of redundancy connections
   mat <- matrix(0, nrow = length(poss) + 1, ncol = length(poss) + 1)
   colnames(mat) <- c(paste("Target"), 1:length(poss))
   row.names(mat) <- colnames(mat)
-  
+
   mat["Target",paste(1:length(unlist(pot[[1]])))] <- weights[names(key[match(target.item, key)]),names(key[match(unlist(pot[[1]]),key)])]
   mat[paste(1:length(unlist(pot[[1]]))),"Target"] <- weights[names(key[match(target.item, key)]),names(key[match(unlist(pot[[1]]),key)])]
-  
+
   if(length(pot) != 1)
   {
     # Remove first element
     ext <- pot[-1]
-    
+
     # Loop through rest of extended
     for(i in 1:length(ext))
     {
       # Target extended
       target.ext <- ext[[i]]
-      
+
       # Loop through target
       for(j in 1:length(target.ext))
       {
         # Single out each element
         single <- target.ext[[j]]
-        
+
         # Get element in possible redundancies
         elem <- match(names(ext)[i], poss)
-        
+
         # Get elements redundant with element
         red.elem <- match(single, poss)
-        
+
         # Put into matrix
         mat[paste(elem),paste(red.elem)] <- weights[names(key[match(poss[elem], key)]),names(key[match(poss[red.elem],key)])]
         mat[paste(red.elem),paste(elem)] <- weights[names(key[match(poss[elem], key)]),names(key[match(poss[red.elem],key)])]
       }
     }
   }
-  
+
   # Print target and potential options
   cat(paste("Target variable: '", target.item, "'", sep = ""))
   cat("\n\nPotential redundancies:\n\n")
@@ -3133,16 +3103,16 @@ redundancy.menu <- function (redund, reduce.method, pot, target.item, weights,
   }else if(reduce.method == "remove"){
     cat("0. None")
   }
-  
+
   cat(paste("\n", 1:length(poss), ". ", "'", poss, "'", sep = ""),"\n")
-  
+
   # Plot
   plot.args$title <- switch(node.redundant.obj$method,
                             "wto" = "Regularized Partial Correlations",
                             "pcor" = "Partial Correlations",
                             "cor" = "Zero-order Correlations",
   )
-  
+
   if(length(poss) > 1){
     plot(redund.plot(plot.matrix = mat, plot.args = plot.args, plot.reduce = TRUE))
   }else{
@@ -3151,19 +3121,19 @@ redundancy.menu <- function (redund, reduce.method, pot, target.item, weights,
                               "pcor" = "Partial Correlation",
                               "cor" = "Zero-order Correlation",
     )
-    
+
     par(mar = c(0,0,0,0))
     plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
     text(x = 0.5, y = 0.5, paste("There is only one redundant variable with the target variable.\nTheir ",
                                  tolower(plot.args$title), " = ", round(mat[1,2], 3),
-                                 sep = ""), 
+                                 sep = ""),
          cex = 1.6, col = "black")
     par(mar = c(5, 4, 4, 2) + 0.1)
-    
+
   }
-  
+
   message("\nPress 'B' to go back")
-  
+
   return(poss)
 }
 
@@ -3179,65 +3149,65 @@ input.check <- function (poss, type = c("redund", "remove"))
       ret.val <- FALSE
     }else{
       inp <- suppressWarnings(as.numeric(unlist(strsplit(unlist(strsplit(input, split = " ")), split = ","))))
-      
+
       ret.val <- FALSE
-      
+
       if(any(is.na(inp)))
       {ret.val <- TRUE}
-      
+
       if(length(inp) == 0)
       {ret.val <- TRUE}
-      
+
       if(length(setdiff(inp, 0:length(poss))) != 0)
       {ret.val <- TRUE}
     }
-    
+
     return(ret.val)
   }
-  
+
   if(type == "redund"){
-    
+
     message("\nEnter numbers of variables redundant with the target variable (separate by commas)")
     input <- readline(prompt = "Selection: ")
-    
+
     # Redo input check
     re.input <- in.check(input, poss = poss)
-    
+
     while(re.input){
       # Print message to try again
       message("Inappropriate input. Try again. 'B' can be used to go back.\n")
-      
+
       # Get input
       message("Enter numbers of variables redundant with the target variable (separate by commas)")
       input <- readline(prompt = "Selection: ")
-      
+
       # Redo input check
       re.input <- in.check(input, poss)
     }
-    
+
   }else if (type == "remove"){
-    
+
     cat(paste("\n", 0:(length(poss) - 1), ". ", "'", poss, "'", sep = ""),"\n\n")
-    
+
     input <- readline(prompt = "Select variable to KEEP: ")
-    
+
     # Redo input check
     re.input <- in.check(input, poss = poss)
-    
+
     while(re.input)
     {
       # Print message to try again
       message("Inappropriate input. Try again.\n")
-      
+
       # Get input
       input <- readline(prompt = "Select variable to KEEP: ")
-      
+
       # Redo input check
       re.input <- in.check(input, poss)
     }
-    
+
   }
-  
+
   return(input)
 }
 
@@ -3249,19 +3219,19 @@ rescale.edges <- function (network, size)
   # Set rescaling
   scaling <- seq(0, 1, .00001) * size
   names(scaling) <- seq(0, 1, .00001)
-  
+
   # Vectorize edges
   edges <- round(as.vector(as.matrix(network)), 5)
-  
+
   # Get absolute edges
   abs.edges <- abs(edges)
-  
+
   # Get edge signs
   signs.edges <- sign(edges)
-  
+
   # Rescale edges
   rescaled.edges <- unname(scaling[as.character(abs.edges)])
-  
+
   return(rescaled.edges)
 }
 
@@ -3272,21 +3242,21 @@ expand.corr <- function(corr)
 {
   # Number of variables
   nvar <- 4
-  
+
   # Create additional correlations
   add.corr <- matrix(.50, nrow = nvar, ncol = nvar)
   diag(add.corr) <- 1
-  
+
   # Initialize new correlation matrix
   new.corr <- matrix(0, nrow = nvar + nrow(corr), ncol = nvar + ncol(corr))
-  
+
   # Input correlations into new correlation matrix
   new.corr[1:nvar, 1:nvar] <- add.corr
   new.corr[(nvar+1):nrow(new.corr), (nvar+1):ncol(new.corr)] <- corr
-  
+
   # Add names
   colnames(new.corr) <- c(paste("SIM",1:nvar, sep = ""), colnames(corr))
   row.names(new.corr) <- colnames(new.corr)
-  
+
   return(new.corr)
 }

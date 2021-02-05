@@ -120,7 +120,7 @@ full list of arguments):
 \item{\strong{\code{color.palette}}}
 {The color palette for the nodes. For custom colors,
 enter HEX codes for each dimension in a vector.
-See \code{\link[EGAnet]{color_palette_EGA}} for 
+See \code{\link[EGAnet]{color_palette_EGA}} for
 more details and examples}
 
 }}

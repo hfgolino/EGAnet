@@ -105,18 +105,18 @@
 #'
 #' \item{\strong{\code{edge.alpha}}}
 #' {The level of transparency of the edges, which might be a single value or a vector of values. Defaults to 0.4.}
-#' 
+#'
 #'  \item{\strong{\code{legend.names}}}
 #' {A vector with names for each dimension}
-#' 
+#'
 #' \item{\strong{\code{color.palette}}}
 #' {The color palette for the nodes. For custom colors,
 #' enter HEX codes for each dimension in a vector.
-#' See \code{\link[EGAnet]{color_palette_EGA}} for 
+#' See \code{\link[EGAnet]{color_palette_EGA}} for
 #' more details and examples}
-#' 
+#'
 #' }
-#' 
+#'
 #' @param verbose Boolean.
 #' Should network estimation parameters be printed?
 #' Defaults to \code{TRUE}.
@@ -260,32 +260,32 @@ EGA <- function (data, n = NULL, uni = TRUE,
   if(missing(plot.type)){
     plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
-  
+
   if(plot.type == "GGally"){
-    
+
     default.args <- formals(GGally::ggnet2)
     ega.default.args <- list(size = 6, alpha = 0.7, label.size = 5,
                              edge.alpha = 0.4, layout.exp = 0.2)
     default.args[names(ega.default.args)]  <- ega.default.args
     default.args <- default.args[-length(default.args)]
-    
-    
+
+
     if("vsize" %in% names(plot.args)){
       plot.args$size <- plot.args$vsize
       plot.args$vsize <- NULL
     }
-    
+
     if("color.palette" %in% names(plot.args)){
       color.palette <- plot.args$color.palette
     }else{color.palette <- "polychrome"}
-    
+
     if(any(names(plot.args) %in% names(default.args))){
       target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
       default.args[names(target.args)] <- target.args
     }
-    
+
     plot.args <- default.args
-    
+
   }
 
   #### ARGUMENTS HANDLING ####
@@ -297,7 +297,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
     if(is.null(colnames(data))){
       colnames(data) <- paste("V", 1:ncol(data), sep = "")
     }
-    
+
     # Check for number of cases
     if(missing(n)){
       stop("There is no input for argument 'n'. Number of cases must be input when the matrix is square.")
@@ -315,28 +315,28 @@ EGA <- function (data, n = NULL, uni = TRUE,
 
       # Check for Spinglass algorithm
       if(is.function(algorithm)){
-        
+
         # spins argument is used to identify Spinglass algorithm
         if("spins" %in% formalArgs(algorithm)){
-          
+
           # Generate data
           uni.data <- MASS::mvrnorm(n = n, mu = rep(0, ncol(data)), Sigma = data)
-          
+
           # Simulate data from unidimensional factor model
           sim.data <- sim.func(data = uni.data, nvar = 4, nfact = 1, load = .70)
-          
+
         }else{
-          
+
           # Expand correlation matrix
           sim.data <- expand.corr(data)
-          
+
         }
-        
+
       }else{# Do regular adjustment
-        
+
         # Expand correlation matrix
         sim.data <- expand.corr(data)
-        
+
       }
 
       # Estimate unidimensional EGA
@@ -389,7 +389,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
     if(is.null(colnames(data))){
       colnames(data) <- paste("V", 1:ncol(data), sep = "")
     }
-    
+
     # Get number of cases
     n <- nrow(data)
 
@@ -398,34 +398,34 @@ EGA <- function (data, n = NULL, uni = TRUE,
 
       # Check for Spinglass algorithm
       if(is.function(algorithm)){
-        
+
         # spins argument is used to identify Spinglass algorithm
         if("spins" %in% formalArgs(algorithm)){
-          
+
           # Simulate data from unidimensional factor model
           sim.data <- sim.func(data = data, nvar = 4, nfact = 1, load = .70)
-          
+
           ## Compute correlation matrix
           cor.data <- qgraph::cor_auto(sim.data)
-          
+
         }else{
-          
+
           ## Compute correlation matrix
           cor.data <- qgraph::cor_auto(data)
-          
+
           ## Expand correlation matrix
           cor.data <- expand.corr(cor.data)
-          
+
         }
-        
+
       }else{# Do regular adjustment
-        
+
         ## Compute correlation matrix
         cor.data <- qgraph::cor_auto(data)
-        
+
         ## Expand correlation matrix
         cor.data <- expand.corr(cor.data)
-        
+
       }
 
       # Unidimensional result
@@ -515,11 +515,11 @@ EGA <- function (data, n = NULL, uni = TRUE,
   }else{dim.variables <- data.frame(items = colnames(data), dimension = a$wc)}
   dim.variables <- dim.variables[order(dim.variables[, 2]),]
   a$dim.variables <- dim.variables
-  
+
   if (plot.EGA == TRUE) {
     if (plot.type == "qgraph"){
       if(a$n.dim < 2){
-        
+
         if(a$n.dim != 0){
           ega.plot <- qgraph::qgraph(a$network, layout = "spring",
                                      vsize = plot.args$vsize, groups = as.factor(a$wc), label.prop = 1, legend = FALSE)
@@ -544,7 +544,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
                                   value=matrix(rescale.edges(a$network, plot.args$size),
                                                nrow = nrow(a$network),
                                                ncol = ncol(a$network)))
-          
+
           # Layout "Spring"
           graph1 <- NetworkToolbox::convert2igraph(a$network)
           edge.list <- igraph::as_edgelist(graph1)
@@ -552,7 +552,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
                                                                      weights =
                                                                        abs(igraph::E(graph1)$weight/max(abs(igraph::E(graph1)$weight)))^2,
                                                                      vcount = ncol(a$network))
-          
+
           set.seed(1234)
           plot.args$net <- network1
           plot.args$node.color <- "Communities"
@@ -562,19 +562,19 @@ EGA <- function (data, n = NULL, uni = TRUE,
           plot.args$edge.color <- "color"
           plot.args$edge.size <- "ScaledWeights"
           plot.args$color.palette <- "Set1"
-          
+
           lower <- abs(a$network[lower.tri(a$network)])
           non.zero <- sqrt(lower[lower != 0])
-          
+
           plot.args$edge.alpha <- non.zero
           plot.args$mode <- layout.spring
           plot.args$label <- colnames(a$network)
           plot.args$node.label <- plot.args$label
           if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
           if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
-          
+
           ega.plot <- suppressMessages(
-            do.call(GGally::ggnet2, plot.args) + 
+            do.call(GGally::ggnet2, plot.args) +
               ggplot2::theme(legend.title = ggplot2::element_blank()) +
               ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, a$wc),
                                           breaks = sort(a$wc)) +
@@ -585,7 +585,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
                 ))
               )
           )
-          
+
           plot(ega.plot)
         }
       }else{
@@ -622,19 +622,19 @@ EGA <- function (data, n = NULL, uni = TRUE,
         plot.args$edge.color <- "color"
         plot.args$edge.size <- "ScaledWeights"
         plot.args$color.palette <- "Set1"
-        
+
         lower <- abs(a$network[lower.tri(a$network)])
         non.zero <- sqrt(lower[lower != 0])
-        
+
         plot.args$edge.alpha <- non.zero
         plot.args$mode <- layout.spring
         plot.args$label <- colnames(a$network)
         plot.args$node.label <- plot.args$label
         if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
         if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
-        
+
         ega.plot <- suppressMessages(
-          do.call(GGally::ggnet2, plot.args) + 
+          do.call(GGally::ggnet2, plot.args) +
             ggplot2::theme(legend.title = ggplot2::element_blank()) +
             ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, a$wc),
                                         breaks = sort(a$wc)) +
@@ -699,14 +699,14 @@ EGA <- function (data, n = NULL, uni = TRUE,
   if(!uni){
     message("\nEGA did not check for unidimensionality. Set argument 'uni' to TRUE to check for unidimensionality")
   }
-  
+
   # Change zero dimensions
   if(a$n.dim == 0){
     a$n.dim <- NA
   }
 
   set.seed(NULL)
-  
+
   # Return estimates:
   return(a)
 }
