@@ -216,6 +216,7 @@
 #'
 #' @importFrom stats cor rnorm runif na.omit
 #'
+#'
 #' @export
 #'
 # Updated 22.01.2021
@@ -317,7 +318,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
       if(is.function(algorithm)){
 
         # spins argument is used to identify Spinglass algorithm
-        if("spins" %in% formalArgs(algorithm)){
+        if("spins" %in% methods::formalArgs(algorithm)){
 
           # Generate data
           uni.data <- MASS::mvrnorm(n = n, mu = rep(0, ncol(data)), Sigma = data)
@@ -400,7 +401,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
       if(is.function(algorithm)){
 
         # spins argument is used to identify Spinglass algorithm
-        if("spins" %in% formalArgs(algorithm)){
+        if("spins" %in% methods::formalArgs(algorithm)){
 
           # Simulate data from unidimensional factor model
           sim.data <- sim.func(data = data, nvar = 4, nfact = 1, load = .70)
