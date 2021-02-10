@@ -29,8 +29,8 @@
 #' @references
 #' Deboeck, P. R., Montpetit, M. A., Bergeman, C. S., & Boker, S. M. (2009)
 #' Using derivative estimates to describe intraindividual variability at multiple time scales.
-#' \emph{Psychological Methods}, \emph{14(4)}, 367-386.
-#' doi:\href{https://doi.org/10.1037/a0016622}{10.1037/a0016622}
+#' \emph{Psychological Methods}, \emph{14}, 367-386.
+#' \doi{10.1037/a0016622}
 #'
 #' @author Pascal Deboeck <pascal.deboeck at psych.utah.edu>
 #'

@@ -71,12 +71,12 @@
 #' Christensen, A. P., Gross, G. M., Golino, H., Silvia, P. J., & Kwapil, T. R. (2019).
 #' Exploratory graph analysis of the Multidimensional Schizotypy Scale.
 #' \emph{Schizophrenia Research}, \emph{206}, 43-51.
-#' doi: \href{https://doi.org/10.1016/j.schres.2018.12.018}{10.1016/j.schres.2018.12.018}
+#' \doi{10.1016/j.schres.2018.12.018}
 #' 
 #' Golino, H., & Epskamp, S. (2017).
 #' Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research.
-#' \emph{PloS one}, \emph{12(6)}, e0174035.
-#' doi: \href{https://doi.org/10.1371/journal.pone.0174035}{10.1371/journal.pone.0174035}
+#' \emph{PLoS ONE}, \emph{12}, e0174035.
+#' \doi{10.1371/journal.pone.0174035}
 #'
 #' @seealso \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and
 #' \code{\link[EGAnet]{bootEGA}} to investigate the stability of EGA's estimation via bootstrap.
@@ -84,7 +84,7 @@
 #' @export
 #'
 # CFA model for EGA
-# Updated 21.10.2020
+# Updated 10.02.2021
 CFA<- function(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ...) {
 
     strct <- split(ega.obj$dim.variables[, 1], list(ega.obj$dim.variables[, 2]))

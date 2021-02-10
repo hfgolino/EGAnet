@@ -240,13 +240,13 @@ plot.type = "qgraph", type = "parametric", ncores = 2)
 Christensen, A. P., & Golino, H. (2019).
 Estimating the stability of the number of factors via Bootstrap Exploratory Graph Analysis: A tutorial.
 \emph{PsyArXiv}.
-doi:\href{https://doi.org/10.31234/osf.io/9deay}{10.31234/osf.io/9deay}
+\doi{10.31234/osf.io/9deay}
 
 # Structural consistency (see \code{\link[EGAnet]{dimStability}}) \cr
 Christensen, A. P., Golino, H., & Silvia, P. J. (in press).
 A psychometric network perspective on the validity and validation of personality trait questionnaires.
 \emph{European Journal of Personality}.
-doi: \href{https://doi.org/10.1002/per.2265}{10.1002/per.2265}
+\doi{10.1002/per.2265}
 }
 \seealso{
 \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA

@@ -12,7 +12,7 @@
 
 <meta name="author" content="Alexander P. Christensen and Hudson Golino" />
 
-<meta name="date" content="2021-02-04" />
+<meta name="date" content="2021-02-10" />
 
 <title>Network Scores</title>
 
@@ -347,7 +347,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Network Scores</h1>
 <h4 class="author">Alexander P. Christensen and Hudson Golino</h4>
-<h4 class="date">2021-02-04</h4>
+<h4 class="date">2021-02-10</h4>
 
 
 
@@ -366,7 +366,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 </div>
 <div id="estimate-dimensions" class="section level2">
 <h2>Estimate Dimensions</h2>
-<p>To estimate dimensions, we’ll use exploratory graph analysis <span class="citation">(Golino &amp; Demetriou, 2017; Golino &amp; Epskamp, 2017; Golino et al., 2020)</span>. EGA first computes a network using either the graphical least absolute selection and shrinkage operator [GLASSO; <span class="citation">Friedman, Hastie, &amp; Tibshirani (2008)</span>; <span class="citation">Friedman, Hastie, &amp; Tibshirani (2014)</span>) with extended Bayesian information criterion (EBIC) from the R package <em>qgraph</em> <span class="citation">(EBICglasso; Epskamp &amp; Fried, 2018)</span> or the triangulated maximally filtered graph <span class="citation">(TMFG; Massara, Di Matteo, &amp; Aste, 2016)</span> from the <em>NetworkToolbox</em> package <span class="citation">(<strong>NetworkToolbox?</strong>)</span>. EGA then applies the Walktrap community detection algorithm <span class="citation">(Pons &amp; Latapy, 2006)</span> from the <em>igraph</em> package <span class="citation">(Csardi &amp; Nepusz, 2006)</span>. Below is the code to estimate EGA using the EBICglasso method with the NEO PI-3 openness to experience data (<em>n</em> = 802) in the <em>NetworkToolbox</em> package.</p>
+<p>To estimate dimensions, we’ll use exploratory graph analysis <span class="citation">(Golino &amp; Demetriou, 2017; Golino &amp; Epskamp, 2017; Golino et al., 2020)</span>. EGA first computes a network using either the graphical least absolute selection and shrinkage operator <span class="citation">(GLASSO; Friedman, Hastie, &amp; Tibshirani, 2008; Friedman, Hastie, &amp; Tibshirani, 2014)</span> with extended Bayesian information criterion (EBIC) from the R package <em>qgraph</em> <span class="citation">(EBICglasso; Epskamp &amp; Fried, 2018)</span> or the triangulated maximally filtered graph <span class="citation">(TMFG; Massara, Di Matteo, &amp; Aste, 2016)</span> from the <em>NetworkToolbox</em> package <span class="citation">(Christensen, 2018)</span>. EGA then applies the Walktrap community detection algorithm <span class="citation">(Pons &amp; Latapy, 2006)</span> from the <em>igraph</em> package <span class="citation">(Csardi &amp; Nepusz, 2006)</span>. Below is the code to estimate EGA using the EBICglasso method with the NEO PI-3 openness to experience data (<em>n</em> = 802) in the <em>NetworkToolbox</em> package.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run EGA</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>ega <span class="ot">&lt;-</span> <span class="fu">EGA</span>(neoOpen, <span class="at">model =</span> <span class="st">&quot;glasso&quot;</span>, <span class="at">algorithm =</span> <span class="st">&quot;louvain&quot;</span>, <span class="at">plot.EGA =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
 <p>As depicted above, EGA estimates there to be 7 dimensions of openness to experience. Using these dimensions, we can now estimate network scores; but first, we’ll go into details about how these are estimated.</p>
@@ -457,6 +457,9 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <div id="references" class="section level2">
 <h2>References</h2>
 <div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-NetworkToolbox" class="csl-entry">
+Christensen, A. P. (2018). <span>NetworkToolbox</span>: Methods and measures for brain, cognitive, and psychometric network analysis in <span>R</span>. <em>The R Journal</em>, <em>10</em>, 422–439. <a href="https://doi.org/10.32614/RJ-2018-065">https://doi.org/10.32614/RJ-2018-065</a>
+</div>
 <div id="ref-christensen2021equivalency" class="csl-entry">
 Christensen, A. P., &amp; Golino, H. (2021). On the equivalency of factor and network loadings. <em>Behavior Research Methods</em>. <a href="https://doi.org/10.3758/s13428-020-01500-6">https://doi.org/10.3758/s13428-020-01500-6</a>
 </div>
@@ -464,7 +467,7 @@ Christensen, A. P., &amp; Golino, H. (2021). On the equivalency of factor and ne
 Comrey, A. L., &amp; Lee, H. B. (2013). <em>A first course in factor analysis</em> (2nd ed.). New York, NY: Psychology Press.
 </div>
 <div id="ref-igraph" class="csl-entry">
-Csardi, G., &amp; Nepusz, T. (2006). The igraph software package for complex network research. <em>InterJournal, Complex Systems</em>, <em>1695</em>, 1–9. Retrieved from <a href="https://pdfs.semanticscholar.org/1d27/44b83519657f5f2610698a8ddd177ced4f5c.pdf">https://pdfs.semanticscholar.org/1d27/44b83519657f5f2610698a8ddd177ced4f5c.pdf</a>
+Csardi, G., &amp; Nepusz, T. (2006). The igraph software package for complex network research. <em>InterJournal, Complex Systems</em>, <em>1695</em>, 1–9. Retrieved from <a href="https://www.semanticscholar.org/paper/The-igraph-software-package-for-complex-network-Cs%C3%A1rdi-Nepusz/1d2744b83519657f5f2610698a8ddd177ced4f5c?p2df">https://www.semanticscholar.org/paper/The-igraph-software-package-for-complex-network-Cs%C3%A1rdi-Nepusz/1d2744b83519657f5f2610698a8ddd177ced4f5c?p2df</a>
 </div>
 <div id="ref-epskamp2018tutorial" class="csl-entry">
 Epskamp, S., &amp; Fried, E. I. (2018). A tutorial on regularized partial correlation networks. <em>Psychological Methods</em>, <em>23</em>, 617–634. <a href="https://doi.org/10.1037/met0000167">https://doi.org/10.1037/met0000167</a>

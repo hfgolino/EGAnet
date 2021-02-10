@@ -46,7 +46,7 @@
 #' Friedman, J., Hastie, T., & Tibshirani, R. (2008).
 #' Sparse inverse covariance estimation with the graphical lasso.
 #' \emph{Biostatistics}, \emph{9}, 432-441.
-#' doi: \href{https://doi.org/10.1093/biostatistics/kxm045}{10.1093/biostatistics/kxm045}
+#' \doi{10.1093/biostatistics/kxm045}
 #'
 #' #glasso package
 #' Jerome Friedman, Trevor Hastie and Rob Tibshirani (2011).
@@ -91,7 +91,7 @@
 #' @export
 #'
 # Computes optimal glasso network based on EBIC:
-# Updated 21.10.2020
+# Updated 10.02.2021
 EBICglasso.qgraph <- function(
     data, # Sample covariance matrix
     n = NULL,

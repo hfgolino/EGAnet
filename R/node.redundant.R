@@ -100,19 +100,19 @@
 #' Christensen, A. P. (2020).
 #' Towards a network psychometrics approach to assessment: Simulations for redundancy, dimensionality, and loadings
 #' (Unpublished doctoral dissertation). University of North Carolina at Greensboro, Greensboro, NC, USA.
-#' doi: \href{https://doi.org/10.31234/osf.io/84kgd}{10.31234/osf.io/84kgd}
+#' \doi{10.31234/osf.io/84kgd}
 #' 
 #' # Implementation of node.redundant \cr
 #' Christensen, A. P., Golino, H., & Silvia, P. J. (in press).
 #' A psychometric network perspective on the validity and validation of personality trait questionnaires.
 #' \emph{European Journal of Personality}.
-#' doi: \href{https://doi.org/10.1002/per.2265}{10.1002/per.2265}
+#' \doi{10.1002/per.2265}
 #' 
 #' # wTO measure \cr
 #' Nowick, K., Gernat, T., Almaas, E., & Stubbs, L. (2009).
 #' Differences in human and chimpanzee gene expression patterns define an evolving network of transcription factors in brain.
 #' \emph{Proceedings of the National Academy of Sciences}, \emph{106}, 22358-22363.
-#' doi: \href{https://doi.org/10.1073/pnas.0911376106}{10.1073/pnas.0911376106}
+#' \doi{10.1073/pnas.0911376106}
 #'
 #' @author Alexander Christensen <alexpaulchristensen@gmail.com>
 #'

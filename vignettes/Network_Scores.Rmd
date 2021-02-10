@@ -39,7 +39,7 @@ library(lavaan)
 
 ## Estimate Dimensions
 
-To estimate dimensions, we'll use exploratory graph analysis [@golino2017ega1; @golino2017ega2; @golino2019ega3]. EGA first computes a network using either the graphical least absolute selection and shrinkage operator [GLASSO; @friedman2008sparse; @friedman2014glasso) with extended Bayesian information criterion (EBIC) from the R package *qgraph* [EBICglasso; @epskamp2018tutorial] or the triangulated maximally filtered graph [TMFG; @massara2016network] from the *NetworkToolbox* package [@NetworkToolbox]. EGA then applies the Walktrap community detection algorithm [@walktrap] from the *igraph* package [@igraph]. Below is the code to estimate EGA using the EBICglasso method with the NEO PI-3 openness to experience data (*n* = 802) in the *NetworkToolbox* package.
+To estimate dimensions, we'll use exploratory graph analysis [@golino2017ega1; @golino2017ega2; @golino2019ega3]. EGA first computes a network using either the graphical least absolute selection and shrinkage operator [GLASSO; @friedman2008sparse; @friedman2014glasso] with extended Bayesian information criterion (EBIC) from the R package *qgraph* [EBICglasso; @epskamp2018tutorial] or the triangulated maximally filtered graph [TMFG; @massara2016network] from the *NetworkToolbox* package [@NetworkToolbox]. EGA then applies the Walktrap community detection algorithm [@walktrap] from the *igraph* package [@igraph]. Below is the code to estimate EGA using the EBICglasso method with the NEO PI-3 openness to experience data (*n* = 802) in the *NetworkToolbox* package.
 
 ```{r Fig1, echo = TRUE, message = FALSE, warning = FALSE}
 # Run EGA

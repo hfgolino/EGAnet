@@ -6,88 +6,90 @@
 \alias{EGAnet-package}
 \title{EGAnet--package}
 \description{
-An implementation of the Exploratory Graph Analysis (EGA) framework for dimensionality assessment.
-EGA is part of a new area called network psychometrics that focuses on the estimation of undirected network models
-in psychological datasets. EGA estimates the number of dimensions or factors using graphical lasso or
-Triangulated Maximally Filtered Graph (TMFG) and a weighted network community analysis. A bootstrap method for
-verifying the stability of the estimation is also available. The fit of the structure suggested by EGA can be verified
-using confirmatory factor analysis and a direct way to convert the EGA structure to a confirmatory factor model is also
-implemented. Documentation and examples are available.
+Implements the Exploratory Graph Analysis (\code{\link[EGAnet]{EGA}}; Golino & Epskamp, 2017; Golino, Shi, et al., 2020) framework for dimensionality and psychometric assessment.
+EGA is part of a new area called \emph{network psychometrics} that uses undirected network models for the assessment
+of psychometric properties. EGA estimates the number of dimensions (or factors) using graphical lasso \code{\link[qgraph]{EBICglasso}} or
+Triangulated Maximally Filtered Graph (\code{\link[NetworkToolbox]{TMFG}}) and a weighted network community detection algorithm (Christensen & Golino, under review). A bootstrap method for
+verifying the stability of the dimensions and items in those dimensions is available (\code{\link[EGAnet]{bootEGA}}; Christensen & Golino, 2019). The fit of the structure suggested by EGA
+can be verified using Entropy Fit Indices (\code{\link[EGAnet]{entropyFit}}, \code{\link[EGAnet]{tefi}}; Golino, Moulder, et al., 2020). A novel approach called Unique Variable Analysis (\code{\link[EGAnet]{UVA}}) can be used to
+identify and reduce redundant variables in multivariate data (Christensen, Garrido, & Golino, under review). Network loadings (\code{\link[EGAnet]{net.loads}}),
+which are roughly equivalent to factor loadings when the data generating model is a factor model, are available (Christensen & Golino, 2021).
+Network scores (\code{\link[EGAnet]{net.scores}}) can also be computed using the network loadings. Finally, dynamic EGA (\code{\link[EGAnet]{dynEGA}}) will estimate dimensions from time series data for individual, group, and sample levels (Golino, Christensen, et al., under review).
 }
 \references{
 Christensen, A. P., Garrido, L. E., & Golino, H. (under review).
 Unique Variable Analysis: A novel approach to detect redundant variables in multivariate data.
 \emph{PsyArXiv}.
-doi: \href{https://doi.org/10.31234/osf.io/4kra2}{10.31234/osf.io/4kra2} \cr
+\doi{10.31234/osf.io/4kra2} \cr
 # Related functions: \code{\link[EGAnet]{UVA}}
 
 Christensen, A. P., & Golino, H. (under review).
 Estimating factors with psychometric networks: A Monte Carlo simulation comparing community detection algorithms.
 \emph{PsyArXiv}.
-doi: \href{https://doi.org/10.31234/osf.io/hz89e}{10.31234/osf.io/hz89e} \cr
+\doi{10.31234/osf.io/hz89e} \cr
 # Related functions: \code{\link[EGAnet]{EGA}}
 
 Christensen, A. P., & Golino, H. (2019).
 Estimating the stability of the number of factors via Bootstrap Exploratory Graph Analysis: A tutorial.
 \emph{PsyArXiv}.
-doi:\href{https://doi.org/10.31234/osf.io/9deay}{10.31234/osf.io/9deay} \cr
+\doi{10.31234/osf.io/9deay} \cr
 # Related functions: \code{\link[EGAnet]{bootEGA}}
 
-Christensen, A. P., & Golino, H. (in press).
+Christensen, A. P., & Golino, H. (2021).
 On the equivalency of factor and network loadings.
 \emph{Behavior Research Methods}.
-doi: \href{https://doi.org/10.3758/s13428-020-01500-6}{10.3758/s13428-020-01500-6} \cr
+\doi{10.3758/s13428-020-01500-6} \cr
 # Related functions: \code{\link[EGAnet]{LCT}} and \code{\link[EGAnet]{net.loads}}
 
 Christensen, A. P., & Golino, H. (under review).
 Random, factor, or network model? Predictions from neural networks.
 \emph{PsyArXiv}.
-doi: \href{https://doi.org/10.31234/osf.io/awkcb}{10.31234/osf.io/awkcb} \cr
+\doi{10.31234/osf.io/awkcb} \cr
 # Related functions: \code{\link[EGAnet]{LCT}}
 
 Christensen, A. P., Golino, H., & Silvia, P. J. (2020).
 A psychometric network perspective on the validity and validation of personality trait questionnaires.
 \emph{European Journal of Personality}, \emph{34}, 1095-1108.
-doi: \href{https://doi.org/10.1002/per.2265}{10.1002/per.2265} \cr
+\doi{10.1002/per.2265} \cr
 # Related functions: \code{\link[EGAnet]{bootEGA}}, \code{\link[EGAnet]{dimStability}},
 # \code{\link[EGAnet]{EGA}}, \code{\link[EGAnet]{itemStability}}, and \code{\link[EGAnet]{UVA}}
 
 Golino, H., Christensen, A. P., Moulder, R. G., Kim, S., & Boker, S. M. (under review).
 Modeling latent topics in social media using Dynamic Exploratory Graph Analysis: The case of the right-wing and left-wing trolls in the 2016 US elections.
 \emph{PsyArXiv}.
-doi: \href{https://doi.org/10.31234/osf.io/tfs7c}{10.31234/osf.io/tfs7c} \cr
+\doi{10.31234/osf.io/tfs7c} \cr
 # Related functions: \code{\link[EGAnet]{dynEGA}} and \code{\link[EGAnet]{simDFM}}
 
 Golino, H., & Demetriou, A. (2017).
 Estimating the dimensionality of intelligence like data using Exploratory Graph Analysis.
 \emph{Intelligence}, \emph{62}, 54-70.
-doi: \href{https://doi.org/10.1016/j.intell.2017.02.007}{10.1016/j.intell.2017.02.007} \cr
+\doi{10.1016/j.intell.2017.02.007} \cr
 # Related functions: \code{\link[EGAnet]{EGA}}
 
 Golino, H., & Epskamp, S. (2017).
 Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research.
-\emph{PloS one}, \emph{12(6)}, e0174035.
-doi: \href{https://doi.org/10.1371/journal.pone.0174035}{10.1371/journal.pone.0174035} \cr
+\emph{PLoS ONE}, \emph{12}, e0174035.
+\doi{10.1371/journal.pone.0174035} \cr
 # Related functions: \code{\link[EGAnet]{EGA}}
 
 Golino, H., Moulder, R. G., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Nesselroade, J., Sadana, R., Thiyagarajan, J. A., & Boker, S. M. (2020).
 Entropy fit indices: New fit measures for assessing the structure and dimensionality of multiple latent variables.
 \emph{Multivariate Behavioral Research}.
-doi: \href{https://doi.org/10.31234/osf.io/mtka2}{10.31234/osf.io/mtka2} \cr
+\doi{10.31234/osf.io/mtka2} \cr
 # Related functions: \code{\link[EGAnet]{entropyFit}}, \code{\link[EGAnet]{tefi}}, and \code{\link[EGAnet]{vn.entropy}} 
 
 Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., Thiyagarajan, J. A., & Martinez-Molina, A. (2020).
 Investigating the performance of exploratory graph analysis and traditional techniques to identify the number of latent factors:
 A simulation and tutorial.
 \emph{Psychological Methods}, \emph{25}, 292-320. 
-doi: \href{https://doi.org/10.1037/met0000255}{10.1037/met0000255} \cr
+\doi{10.1037/met0000255} \cr
 # Related functions: \code{\link[EGAnet]{EGA}}
 
 Golino, H., Thiyagarajan, J. A., Sadana, M., Teles, M., Christensen, A. P., & Boker, S. M. (under review).
 Investigating the broad domains of intrinsic capacity, functional ability, and environment:
 An exploratory graph analysis approach for improving analytical methodologies for measuring healthy aging.
 \emph{PsyArXiv}.
-doi: \href{https://doi.org/10.31234/osf.io/hj5mc}{10.31234/osf.io/hj5mc} \cr
+\doi{10.31234/osf.io/hj5mc} \cr
 # Related functions: \code{\link[EGAnet]{EGA.fit}} and \code{\link[EGAnet]{tefi}}
 }
 \author{

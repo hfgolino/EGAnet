@@ -83,7 +83,7 @@ EBICgraph <- EBICglasso.qgraph(CorMat, n = nrow(wmt2), gamma = 0.5)
 Friedman, J., Hastie, T., & Tibshirani, R. (2008).
 Sparse inverse covariance estimation with the graphical lasso.
 \emph{Biostatistics}, \emph{9}, 432-441.
-doi: \href{https://doi.org/10.1093/biostatistics/kxm045}{10.1093/biostatistics/kxm045}
+\doi{10.1093/biostatistics/kxm045}
 
 #glasso package
 Jerome Friedman, Trevor Hastie and Rob Tibshirani (2011).

@@ -1,13 +1,13 @@
 Package: EGAnet
 Title: Exploratory Graph Analysis - A Framework for Estimating the Number of Dimensions in Multivariate Data Using Network Psychometrics
 Version: 0.9.8
-Date: 2021-02-09
+Date: 2021-02-10
 Authors@R: c(person("Hudson", "Golino", email = "hfg9s@virginia.edu", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-1601-1447")),
 	     person("Alexander", "Christensen", email = "alexpaulchristensen@gmail.com", role = "aut", comment = c(ORCID = "0000-0002-9798-7037")),
 	     person("Robert", "Moulder", email = "rgm4fd@virginia.edu", role = "ctb", comment = c(ORCID = "0000-0001-7504-9560")),
 	     person("Luis", "E. Garrido", email = "garrido.luiseduardo@gmail.com", role = "ctb", comment = c(ORCID = "0000-0001-8932-6063")))
 Maintainer: Hudson Golino <hfg9s@virginia.edu>
-Description: An implementation of the Exploratory Graph Analysis (EGA) framework for dimensionality assessment. EGA is part of a new area called network psychometrics that focuses on the estimation of undirected network models in psychological datasets. EGA estimates the number of dimensions or factors using graphical lasso or Triangulated Maximally Filtered Graph (TMFG) and a weighted network community analysis. A bootstrap method for verifying the stability of the estimation is also available. The fit of the structure suggested by EGA can be verified using confirmatory factor analysis and a direct way to convert the EGA structure to a confirmatory factor model is also implemented. Documentation and examples are available. Golino, H., & Epskamp, S. (2017) <doi:10.1371/journal.pone.0174035>. Golino, H., & Demetriou, A. (2017) <doi:10.1016/j.intell.2017.02.007> Golino, H., Shi, D., Garrido, L. E., Christensen, A. P., Nieto, M. D., Sadana, R., & Thiyagarajan, J. A. (2018) <doi:10.31234/osf.io/gzcre>. Christensen, A. P. & Golino, H. (2019)  <doi:10.31234/osf.io/9deay>.
+Description: Implements the Exploratory Graph Analysis (EGA) framework for dimensionality and psychometric assessment. EGA is part of a new area called network psychometrics that uses undirected network models for the assessment of psychometric properties. EGA estimates the number of dimensions (or factors) using graphical lasso or Triangulated Maximally Filtered Graph (TMFG) and a weighted network community detection algorithm. A bootstrap method for verifying the stability of the dimensions and items in those dimensions is available. The fit of the structure suggested by EGA can be verified using Entropy Fit Indices. A novel approach called Unique Variable Analysis (UVA) can be used to identify and reduce redundant variables in multivariate data. Network loadings, which are roughly equivalent to factor loadings when the data generating model is a factor model, are available. Network scores can also be computed using the network loadings. Dynamic EGA (dynEGA) will estimate dimensions from time series data for individual, group, and sample levels. Golino, H., & Epskamp, S. (2017) <doi:10.1371/journal.pone.0174035>. Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., & Thiyagarajan, J. A. (2020) <doi:10.1037/met0000255>. Christensen, A. P., & Golino, H. (under review) <doi:10.31234/osf.io/hz89e>. Golino, H., Moulder, R. G., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Nesselroade, J., Sadana, R., Thiyagarajan, J. A., & Boker, S. M. (2020) <doi:10.31234/osf.io/mtka2>. Christensen, A. P. & Golino, H. (2019)  <doi:10.31234/osf.io/9deay>. Christensen, A. P., Garrido, L. E., & Golino, H. (under review) <doi:10.31234/osf.io/4kra2>. Golino, H., Christensen, A. P., Moulder, R. G., Kim, S., & Boker, S. M. (under review) <doi:10.31234/osf.io/tfs7c>.
 Depends: R (>= 3.5.0)
 License: GPL (>= 3.0)
 Encoding: UTF-8
@@ -15,7 +15,7 @@ LazyData: true
 Imports: qgraph (>= 1.4.1), semPlot (>= 1.0.1),
         igraph (>= 1.0.1), lavaan (>= 0.5-22),
         NetworkToolbox (>= 1.4.0), glasso (>= 1.10), stats, Matrix (>= 1.2),
-        dplyr (>= 0.7.8), network (>= 1.16.0), GGally (>= 2.0.0), methods
+        dplyr (>= 0.7.8), network (>= 1.16.0), GGally (>= 2.0.0), methods,
 Suggests: knitr, rmarkdown, markdown, kableExtra, psych, psychTools, ggpubr, ggplot2, 
         tidyselect, corpcor (>= 1.6.9),
         plyr (>= 1.8.4), matrixcalc (>= 1.0-3),
