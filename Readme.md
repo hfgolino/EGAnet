@@ -34,7 +34,7 @@ Estimating the stability of the number of factors via Bootstrap Exploratory Grap
 doi:[10.31234/osf.io/9deay](https://doi.org/10.31234/osf.io/9deay)
 + Related functions: `bootEGA`
 
-Christensen, A. P., & Golino, H. (in press). On the equivalency of factor and network loadings. *Behavior Research Methods*. doi:[10.3758/s13428-020-01500-6](https://doi.org/10.3758/s13428-020-01500-6)
+Christensen, A. P., & Golino, H. (2021). On the equivalency of factor and network loadings. *Behavior Research Methods*. doi:[10.3758/s13428-020-01500-6](https://doi.org/10.3758/s13428-020-01500-6)
 + Related functions: `LCT` and `net.loads`
 
 Christensen, A. P., & Golino, H. (under review). Random, factor, or network model? Predictions from neural networks. *PsyArXiv*. doi:[10.31234/osf.io/awkcb](https://doi.org/10.31234/osf.io/awkcb)
@@ -52,7 +52,7 @@ Golino, H., & Demetriou, A. (2017). Estimating the dimensionality of intelligenc
 Golino, H., & Epskamp, S. (2017). Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research. *PLoS ONE*, *12*, e0174035. doi:[10.1371/journal.pone.0174035](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0174035)
 + Related functions: `EGA`
 
-Golino, H., Moulder, R. G., Shi, D., Christensen, A. P., Garrido, L. E., Neito, M. D., Nesselroade, J., Sadana, R., Thiyagarajan, J. A., & Boker, S. M. (in press). Entropy fit indices: New fit measures for assessing the structure and dimensionality of multiple latent variables. *Multivariate Behavioral Research*. doi:[10.31234/osf.io/mtka2](https://doi.org/10.31234/osf.io/mtka2)
+Golino, H., Moulder, R. G., Shi, D., Christensen, A. P., Garrido, L. E., Neito, M. D., Nesselroade, J., Sadana, R., Thiyagarajan, J. A., & Boker, S. M. (2020). Entropy fit indices: New fit measures for assessing the structure and dimensionality of multiple latent variables. *Multivariate Behavioral Research*. doi:[10.31234/osf.io/mtka2](https://doi.org/10.31234/osf.io/mtka2)
 + Related functions: `entropyFit`, `tefi`, and `vn.entropy`
 
 Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., Thiyagarajan, J. A., & Martinez-Molina, A. (2020). Investigating the performance of exploratory graph analysis and traditional techniques to identify the number of latent factors: A simulation and tutorial. *Psychological Methods*, *25*, 292-320. doi:[10.1037/met0000255](https://psycnet.apa.org/doiLanding?doi=10.1037/met0000255)
