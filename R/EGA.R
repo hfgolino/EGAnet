@@ -218,7 +218,7 @@
 #'
 #' @export
 #'
-# Updated 10.02.2021
+# Updated 11.02.2021
 ## EGA Function to detect unidimensionality:
 EGA <- function (data, n = NULL, uni = TRUE,
                  model = c("glasso", "TMFG"), model.args = list(),
@@ -507,6 +507,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
 
   a$correlation <- cor.data
   a$network <- estimated.network
+  if(a$n.dim == 1){wc[1:length(wc)] <- 1}
   a$wc <- wc
   # check if data has column names
   if(is.null(colnames(data)))

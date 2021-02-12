@@ -3217,8 +3217,8 @@ input.check <- function (poss, type = c("redund", "remove"))
 rescale.edges <- function (network, size)
 {
   # Set rescaling
-  scaling <- seq(0, 1, .00001) * size
-  names(scaling) <- seq(0, 1, .00001)
+  scaling <- seq(0, 1, .000001) * size
+  names(scaling) <- seq(0, 1, .000001)
 
   # Vectorize edges
   edges <- round(as.vector(as.matrix(network)), 5)

@@ -96,7 +96,7 @@
 #'
 #' @export
 #Item Stability function
-#Updated 24.12.2020
+#Updated 11.02.2021
 itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep = TRUE){
   
   # Check for 'bootEGA' object
@@ -227,14 +227,14 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   # Change color.palette (if necessary)
   if(!ggplot2::is.ggplot(bootega.obj$plot.typical.ega)){
     ic.plot <- suppressMessages(
-      ic.plot + ggplot2::scale_color_manual(values = color_palette_EGA("rainbow", bootega.obj$typicalGraph$wc),
-                                            breaks = sort(bootega.obj$typicalGraph$wc))
+      ic.plot + ggplot2::scale_color_manual(values = color_palette_EGA("rainbow", orig.wc),
+                                            breaks = sort(orig.wc))
     )
   }else{
     if(bootega.obj$color.palette != "Set1"){
       ic.plot <- suppressMessages(
-        ic.plot + ggplot2::scale_color_manual(values = color_palette_EGA(bootega.obj$color.palette, bootega.obj$typicalGraph$wc),
-                                              breaks = sort(bootega.obj$typicalGraph$wc))
+        ic.plot + ggplot2::scale_color_manual(values = color_palette_EGA(bootega.obj$color.palette, orig.wc),
+                                              breaks = sort(orig.wc))
       )
     }
   }
@@ -299,7 +299,11 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   #Unstandardized
   arr.func <- function(data)
   {
-    arr <- array(NA, dim = c(nrow(data[[1]]), ncol(data[[1]]), length(data)))
+    # Get maximum dimensions
+    r.dims <- max(sapply(data, dim)[1,])
+    n.dims <- max(sapply(data, dim)[2,])
+    
+    arr <- array(NA, dim = c(r.dims, n.dims, length(data)))
     
     for(i in 1:length(data))
     {
@@ -308,6 +312,14 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
       
       # Reorder based on bootega network
       target.mat <- target.mat[match(colnames(bootega.obj$EGA$network), row.names(target.mat)),]
+      
+      # Check for NAs
+      if(any(is.na(target.mat))){
+        NAs <- which(is.na(target.mat))
+        
+        names(target.mat)[NAs] <- colnames(bootega.obj$EGA$network)[NAs]
+        
+      }
       
       # Insert into array
       arr[,,i] <- target.mat

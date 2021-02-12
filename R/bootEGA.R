@@ -234,7 +234,7 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 20.01.2021
+# Updated 11.02.2021
 bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling"),
                     model = c("glasso", "TMFG"), model.args = list(),
                     algorithm = c("walktrap", "louvain"), algorithm.args = list(),
@@ -479,7 +479,12 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
       plot.typical.ega <- qgraph::qgraph(typical.Structure, layout = "spring",
                                          vsize = plot.args$vsize, groups = as.factor(typical.wc))
     }else if(plot.type == "GGally"){
-        network1 <- network::network(typical.Structure,
+      
+      # Insignificant values (keeps ggnet2 from erroring out)
+      typical.Structure <- ifelse(typical.Structure <= .000001, 0, typical.Structure)  
+      
+      
+      network1 <- network::network(typical.Structure,
                                      ignore.eval = FALSE,
                                      names.eval = "weights",
                                      directed = FALSE)
@@ -495,7 +500,7 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
                                            ncol = ncol(typical.Structure)))
 
       # Layout "Spring"
-      graph1 <- igraph::as.igraph(qgraph::qgraph(typical.Structure, DoNotPlot = TRUE))
+      graph1 <- NetworkToolbox::convert2igraph(typical.Structure)
       edge.list <- igraph::as_edgelist(graph1)
       layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
                                                                  weights =
