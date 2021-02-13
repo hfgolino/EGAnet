@@ -473,7 +473,10 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
                                            n = cases, uni = uni, algorithm = algorithm,
                                            algorithm.args = algorithm.args)
 
-    typical.ndim <- max(typical.wc, na.rm = TRUE)
+    typical.ndim <- length(na.omit(unique(typical.wc)))
+    
+    if(typical.ndim == 1){typical.wc[1:length(typical.wc)] <- 1}
+    
     dim.variables <- data.frame(items = colnames(data), dimension = typical.wc)
   }
   if (plot.typicalStructure) {
