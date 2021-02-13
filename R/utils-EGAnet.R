@@ -2174,18 +2174,30 @@ textsymbol <- function(symbol = c("alpha", "beta", "chi", "delta",
 
 #' @noRd
 # Redundancy Processing----
-# Updated 13.12.2020
-redundancy.process <- function(data, cormat, n, method, type, sig, plot.redundancy, plot.args)
+# Updated 12.02.2021
+redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.redundancy, plot.args)
 {
   # Compute redundancy method
   if(method == "wto"){
 
-    for(i in c(0.50, 0.25, 0))
-    {
-      net <- EBICglasso.qgraph(data = cormat, n = n, gamma = i)
-
-      if(all(colSums(net)!=0))
-      {break}
+    if(model == "glasso"){
+      
+      for(i in c(0.50, 0.25, 0))
+      {
+        net <- EBICglasso.qgraph(data = cormat, n = n, gamma = i)
+        
+        if(all(colSums(net)!=0))
+        {break}
+      }
+      
+    }else if(model == "tmfg"){
+      
+      net <- NetworkToolbox::TMFG(cormat)$A
+      
+    }else{
+      
+      stop(paste(model, "does not exist as an option for the argument 'model'"))
+      
     }
 
     tom <- wTO::wTO(net, sign = "sign")
@@ -2555,7 +2567,7 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
 #' @importFrom graphics text
 #' @noRd
 # Redundancy Reduction----
-# Updated 06.01.2020
+# Updated 12.02.2021
 redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.args)
 {
   # Check for node.redundant object class
@@ -2876,6 +2888,7 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
             names(redund[key[ind]][name.targets[i]]) <- redund[[key[ind][name.targets[i]]]][1]
             redund[[key[ind][name.targets[i]]]][1] <- NA
             redund[[key[ind][name.targets[i]]]] <- na.omit(redund[[key[ind][name.targets[i]]]])
+            redund[key[ind][name.targets[i]]] <- NULL
           }
 
         }

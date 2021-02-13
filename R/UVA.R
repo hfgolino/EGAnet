@@ -12,6 +12,22 @@
 #' then sample size is required.
 #' Defaults to \code{NULL}
 #' 
+#' @param model Character.
+#' A string indicating the method to use.
+#' Current options are:
+#'
+#' \itemize{
+#'
+#' \item{\strong{\code{glasso}}}
+#' {Estimates the Gaussian graphical model using graphical LASSO with
+#' extended Bayesian information criterion to select optimal regularization parameter.
+#' This is the default method}
+#'
+#' \item{\strong{\code{TMFG}}}
+#' {Estimates a Triangulated Maximally Filtered Graph}
+#'
+#' }
+#' 
 #' @param method Character.
 #' Computes weighted topological overlap (\code{"wTO"} using \code{\link[qgraph]{EBICglasso}}),
 #' partial correlations (\code{"pcor"}), and correlations (\code{"cor"}).
@@ -249,8 +265,9 @@
 #' @export
 #
 # Unique Variable Analysis
-# Updated 07.01.2020
+# Updated 12.02.2021
 UVA <- function(data, n = NULL,
+                model = c("glasso", "TMFG"),
                 method = c("cor", "pcor", "wTO"),
                 type = c("adapt", "alpha", "threshold"), sig,
                 key = NULL, reduce = TRUE,
@@ -274,6 +291,11 @@ UVA <- function(data, n = NULL,
       cormat <- as.matrix(Matrix::nearPD(cormat, keepDiag = TRUE)$mat)
     }
   }
+  
+  ## model
+  if(missing(model)){
+    model <- tolower("glasso")
+  }else{model <- tolower(match.arg(model))}
   
   ## method
   if(missing(method)){
@@ -340,7 +362,7 @@ UVA <- function(data, n = NULL,
   
   # Perform redundancy analysis
   process <- redundancy.process(data = data, cormat = cormat,
-                                n = n, method = method,
+                                n = n, model = model, method = method,
                                 type = type, sig = sig,
                                 plot.redundancy = plot.redundancy, plot.args = plot.args)
   
@@ -365,7 +387,9 @@ UVA <- function(data, n = NULL,
       ## Run check
       adhoc.check <- suppressMessages(
         redundancy.process(data = reduced$data, cormat = qgraph::cor_auto(reduced$data),
-                           n = nrow(reduced$data), method = "wto",
+                           n = nrow(reduced$data),
+                           model = model,
+                           method = "wto",
                            type = "threshold", sig = .20,
                            plot.redundancy = FALSE, plot.args = plot.args)
       )

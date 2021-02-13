@@ -195,12 +195,12 @@
 #' Golino, H. F., & Epskamp, S. (2017).
 #' Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research.
 #' \emph{PLoS ONE}, \emph{12}, e0174035..
-#' \doi{journal.pone.0174035}
+#' \doi{10.1371/journal.pone.0174035}
 #'
 #' Golino, H. F., & Demetriou, A. (2017).
 #' Estimating the dimensionality of intelligence like data using Exploratory Graph Analysis.
 #' \emph{Intelligence}, \emph{62}, 54-70.
-#' \doi{j.intell.2017.02.007}
+#' \doi{10.1016/j.intell.2017.02.007}
 #'
 #' # Current implementation of EGA, introduced unidimensional checks, continuous and dichotomous data \cr
 #' Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., & Thiyagarajan, J. A. (2020).
@@ -264,7 +264,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
   if(plot.type == "GGally"){
 
     default.args <- formals(GGally::ggnet2)
-    ega.default.args <- list(size = 6, alpha = 0.7, label.size = 5,
+    ega.default.args <- list(node.size = 6, edge.size = 6, alpha = 0.7, label.size = 5,
                              edge.alpha = 0.4, layout.exp = 0.2)
     default.args[names(ega.default.args)]  <- ega.default.args
     default.args <- default.args[-length(default.args)]
@@ -542,7 +542,7 @@ EGA <- function (data, n = NULL, uni = TRUE,
           network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
           network::set.edge.value(network1,attrname="AbsWeights",value=abs(a$network))
           network::set.edge.value(network1,attrname="ScaledWeights",
-                                  value=matrix(rescale.edges(a$network, plot.args$size),
+                                  value=matrix(rescale.edges(a$network, plot.args$edge.size),
                                                nrow = nrow(a$network),
                                                ncol = ncol(a$network)))
 
@@ -559,7 +559,6 @@ EGA <- function (data, n = NULL, uni = TRUE,
           plot.args$node.color <- "Communities"
           plot.args$node.alpha <- plot.args$alpha
           plot.args$node.shape <- plot.args$shape
-          plot.args$node.size <- plot.args$size
           plot.args$edge.color <- "color"
           plot.args$edge.size <- "ScaledWeights"
           plot.args$color.palette <- "Set1"
@@ -571,8 +570,8 @@ EGA <- function (data, n = NULL, uni = TRUE,
           plot.args$mode <- layout.spring
           plot.args$label <- colnames(a$network)
           plot.args$node.label <- plot.args$label
-          if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
-          if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
+          if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$node.size/2}
+          if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$node.size/2}
 
           ega.plot <- suppressMessages(
             do.call(GGally::ggnet2, plot.args) +

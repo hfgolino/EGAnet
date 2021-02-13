@@ -316,7 +316,8 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
     if(length(plot.args) == 0){
       
       default.args <- formals(GGally::ggnet2)
-      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
+      ega.default.args <- list(node.size = 6, edge.size = 6,
+                               alpha = 0.4, label.size = 5,
                                edge.alpha = 0.7, layout.exp = 0.2)
       default.args[names(ega.default.args)]  <- ega.default.args
       default.args <- default.args[-length(default.args)]
@@ -324,7 +325,8 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
     }else{
       
       default.args <- formals(GGally::ggnet2)
-      ega.default.args <- list(size = 6, alpha = 0.4, label.size = 5,
+      ega.default.args <- list(node.size = 6, edge.size = 6,
+                               alpha = 0.4, label.size = 5,
                                edge.alpha = 0.7, layout.exp = 0.2)
       default.args[names(ega.default.args)]  <- ega.default.args
       default.args <- default.args[-length(default.args)]
@@ -481,7 +483,7 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
     }else if(plot.type == "GGally"){
       
       # Insignificant values (keeps ggnet2 from erroring out)
-      typical.Structure <- ifelse(typical.Structure <= .000001, 0, typical.Structure)  
+      typical.Structure <- ifelse(typical.Structure <= .00001, 0, typical.Structure)  
       
       
       network1 <- network::network(typical.Structure,
@@ -495,7 +497,7 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
       network::set.edge.value(network1,attrname="AbsWeights",value=abs(typical.Structure))
       network::set.edge.value(network1,attrname="ScaledWeights",
                               value=matrix(#scales::rescale(typical.Structure),
-                                rescale.edges(typical.Structure, plot.args$size),
+                                rescale.edges(typical.Structure, plot.args$edge.size),
                                            nrow = nrow(typical.Structure),
                                            ncol = ncol(typical.Structure)))
 
@@ -513,7 +515,6 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
       plot.args$node.color <- "Communities"
       plot.args$node.alpha <- plot.args$alpha
       plot.args$node.shape <- plot.args$shape
-      plot.args$node.size <- plot.args$size
       plot.args$edge.color <- "color"
       plot.args$edge.size <- "ScaledWeights"
       plot.args$color.palette <- "Set1"
@@ -525,8 +526,8 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
       plot.args$mode <- layout.spring
       plot.args$label <- colnames(typical.Structure)
       plot.args$node.label <- plot.args$label
-      if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
-      if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
+      if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$node.size/2}
+      if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$node.size/2}
       
       plot.typical.ega <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
       

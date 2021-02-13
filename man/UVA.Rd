@@ -7,6 +7,7 @@
 UVA(
   data,
   n = NULL,
+  model = c("glasso", "TMFG"),
   method = c("cor", "pcor", "wTO"),
   type = c("adapt", "alpha", "threshold"),
   sig,
@@ -27,6 +28,22 @@ Input can either be data or a correlation matrix}
 If input in \code{data} is a correlation matrix, 
 then sample size is required.
 Defaults to \code{NULL}}
+
+\item{model}{Character.
+A string indicating the method to use.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{glasso}}}
+{Estimates the Gaussian graphical model using graphical LASSO with
+extended Bayesian information criterion to select optimal regularization parameter.
+This is the default method}
+
+\item{\strong{\code{TMFG}}}
+{Estimates a Triangulated Maximally Filtered Graph}
+
+}}
 
 \item{method}{Character.
 Computes weighted topological overlap (\code{"wTO"} using \code{\link[qgraph]{EBICglasso}}),

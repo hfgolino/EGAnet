@@ -70,7 +70,7 @@ print.dynEGA<- function(x, ...) {
 }
 
 # Plot bootEGA----
-# Updated 16.12.2020
+# Updated 12.02.2021
 plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
                          plot.args = list(), ...){
   #### MISSING ARGUMENTS HANDLING ####
@@ -82,14 +82,15 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
   if(plot.type == "GGally"){
     
     default.args <- formals(GGally::ggnet2)
-    ega.default.args <- list(size = 6, alpha = 0.7, label.size = 5,
+    ega.default.args <- list(node.size = 6, edge.size = 6,
+                             alpha = 0.7, label.size = 5,
                              edge.alpha = 0.4, layout.exp = 0.2)
     default.args[names(ega.default.args)]  <- ega.default.args
     default.args <- default.args[-length(default.args)]
     
     
     if("vsize" %in% names(plot.args)){
-      plot.args$size <- plot.args$vsize
+      plot.args$node.size <- plot.args$vsize
       plot.args$vsize <- NULL
     }
     
@@ -119,7 +120,7 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
   }else if(plot.type == "GGally"){
     
     # Insignificant values (keeps ggnet2 from erroring out)
-    x$typicalGraph$graph <- ifelse(as.matrix(x$typicalGraph$graph) <= .000001, 0, as.matrix(x$typicalGraph$graph))  
+    x$typicalGraph$graph <- ifelse(as.matrix(x$typicalGraph$graph) <= .00001, 0, as.matrix(x$typicalGraph$graph))  
     
     # weighted  network
     network1 <- network::network(x$typicalGraph$graph,
@@ -139,7 +140,7 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
     network::set.edge.value(network1,attrname="AbsWeights",value=abs(x$typicalGraph$graph))
     network::set.edge.value(network1,attrname="ScaledWeights",
-                            value=matrix(rescale.edges(x$typicalGraph$graph, plot.args$size),
+                            value=matrix(rescale.edges(x$typicalGraph$graph, plot.args$edge.size),
                                          nrow = nrow(x$typicalGraph$graph),
                                          ncol = ncol(x$typicalGraph$graph)))
     
@@ -156,7 +157,6 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     plot.args$node.color <- "Communities"
     plot.args$node.alpha <- plot.args$alpha
     plot.args$node.shape <- plot.args$shape
-    plot.args$node.size <- plot.args$size
     plot.args$edge.color <- "color"
     plot.args$edge.size <- "ScaledWeights"
     plot.args$color.palette <- "Set1"
@@ -168,8 +168,8 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     plot.args$mode <- layout.spring
     plot.args$label <- colnames(x$typicalGraph$graph)
     plot.args$node.label <- plot.args$label
-    if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
-    if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
+    if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$node.size/2}
+    if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$node.size/2}
     
     ega.plot <- suppressMessages(
       do.call(GGally::ggnet2, plot.args) + 
@@ -178,7 +178,7 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
                                     breaks = sort(x$typicalGraph$wc)) +
         ggplot2::guides(
           color = ggplot2::guide_legend(override.aes = list(
-            size = plot.args$size,
+            size = plot.args$node.size,
             alpha = plot.args$alpha
           ))
         )
@@ -190,7 +190,7 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
 }
 
 # Plot dynEGA function (Level: Group)----
-# Updated 16.12.2020
+# Updated 12.02.2021
 #' @export
 plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally","qgraph"),
                                plot.args = list(), ...){
@@ -203,14 +203,15 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
   if(plot.type == "GGally"){
     
     default.args <- formals(GGally::ggnet2)
-    ega.default.args <- list(size = 6, alpha = 0.7, label.size = 5,
+    ega.default.args <- list(node.size = 6, edge.size = 6,
+                             alpha = 0.7, label.size = 5,
                              edge.alpha = 0.4, layout.exp = 0.2)
     default.args[names(ega.default.args)]  <- ega.default.args
     default.args <- default.args[-length(default.args)]
     
     
     if("vsize" %in% names(plot.args)){
-      plot.args$size <- plot.args$vsize
+      plot.args$node.size <- plot.args$vsize
       plot.args$vsize <- NULL
     }
     
@@ -255,7 +256,7 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       network::set.edge.attribute(network1[[i]], "color", ifelse(network::get.edge.value(network1[[i]], "weights") > 0, "darkgreen", "red"))
       network::set.edge.value(network1[[i]], attrname="AbsWeights",value=abs(x$dynEGA[[i]]$network))
       network::set.edge.value(network1[[i]],attrname="ScaledWeights",
-                              value=matrix(rescale.edges(x$dynEGA[[i]]$network, plot.args$size),
+                              value=matrix(rescale.edges(x$dynEGA[[i]]$network, plot.args$edge.size),
                                            nrow = nrow(x$dynEGA[[i]]$network),
                                            ncol = ncol(x$dynEGA[[i]]$network)))
       
@@ -273,7 +274,6 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       plot.args$node.color <- "Communities"
       plot.args$node.alpha <- plot.args$alpha
       plot.args$node.shape <- plot.args$shape
-      plot.args$node.size <- plot.args$size
       plot.args$edge.color <- "color"
       plot.args$edge.size <- "ScaledWeights"
       plot.args$color.palette <- "Set1"
@@ -285,8 +285,8 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       plot.args$mode <- layout.spring[[i]]
       plot.args$label <- colnames(x$dynEGA[[i]]$network)
       plot.args$node.label <- plot.args$label
-      if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
-      if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
+      if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$node.size/2}
+      if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$node.size/2}
       
       
       plots.net[[i]] <- suppressMessages(
@@ -296,7 +296,7 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
                                       breaks = sort(x$dynEGA[[i]]$wc)) +
           ggplot2::guides(
             color = ggplot2::guide_legend(override.aes = list(
-              size = plot.args$size,
+              size = plot.args$node.size,
               alpha = plot.args$alpha
             ))
           )
@@ -310,7 +310,7 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
 }
 
 # Plot dynEGA function (Level: Individual)----
-# Updated 16.12.2020
+# Updated 12.02.2021
 #' @export
 plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GGally","qgraph"),
                                     plot.args = list(), ...){
@@ -323,14 +323,15 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
   if(plot.type == "GGally"){
     
     default.args <- formals(GGally::ggnet2)
-    ega.default.args <- list(size = 6, alpha = 0.7, label.size = 5,
+    ega.default.args <- list(node.size = 6, edge.size = 6,
+                             alpha = 0.7, label.size = 5,
                              edge.alpha = 0.4, layout.exp = 0.2)
     default.args[names(ega.default.args)]  <- ega.default.args
     default.args <- default.args[-length(default.args)]
     
     
     if("vsize" %in% names(plot.args)){
-      plot.args$size <- plot.args$vsize
+      plot.args$node.size <- plot.args$vsize
       plot.args$vsize <- NULL
     }
     
@@ -362,7 +363,7 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
     network::set.edge.value(network1,attrname="AbsWeights",value=abs(x$dynEGA[[id]]$network))
     network::set.edge.value(network1,attrname="ScaledWeights",
-                            value=matrix(rescale.edges(x$dynEGA[[id]]$network, plot.args$size),
+                            value=matrix(rescale.edges(x$dynEGA[[id]]$network, plot.args$edge.size),
                                          nrow = nrow(x$dynEGA[[id]]$network),
                                          ncol = ncol(x$dynEGA[[id]]$network)))
     
@@ -380,7 +381,6 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     plot.args$node.color <- "Communities"
     plot.args$node.alpha <- plot.args$alpha
     plot.args$node.shape <- plot.args$shape
-    plot.args$node.size <- plot.args$size
     plot.args$edge.color <- "color"
     plot.args$edge.size <- "ScaledWeights"
     plot.args$color.palette <- "Set1"
@@ -392,8 +392,8 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     plot.args$mode <- layout.spring
     plot.args$label <- colnames(x$dynEGA[[id]]$network)
     plot.args$node.label <- plot.args$label
-    if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
-    if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
+    if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$node.size/2}
+    if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$node.size/2}
     
     ega.plot <- suppressMessages(
       do.call(GGally::ggnet2, plot.args) + 
@@ -402,7 +402,7 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
                                     breaks = sort(x$dynEGA[[id]]$wc)) +
         ggplot2::guides(
           color = ggplot2::guide_legend(override.aes = list(
-            size = plot.args$size,
+            size = plot.args$node.size,
             alpha = plot.args$alpha
           ))
         )
@@ -427,7 +427,8 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
   if(plot.type == "GGally"){
     
     default.args <- formals(GGally::ggnet2)
-    ega.default.args <- list(size = 6, alpha = 0.7, label.size = 5,
+    ega.default.args <- list(node.size = 6, edge.size = 6,
+                             alpha = 0.7, label.size = 5,
                              edge.alpha = 0.4, layout.exp = 0.2)
     default.args[names(ega.default.args)]  <- ega.default.args
     default.args <- default.args[-length(default.args)]
@@ -543,7 +544,8 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
   if(plot.type == "GGally"){
     
     default.args <- formals(GGally::ggnet2)
-    ega.default.args <- list(size = 6, alpha = 0.7, label.size = 5,
+    ega.default.args <- list(node.size = 6, edge.size = 6,
+                             alpha = 0.7, label.size = 5,
                              edge.alpha = 0.4, layout.exp = 0.2)
     default.args[names(ega.default.args)]  <- ega.default.args
     default.args <- default.args[-length(default.args)]

@@ -214,12 +214,12 @@ Estimating factors with psychometric networks: A Monte Carlo simulation comparin
 Golino, H. F., & Epskamp, S. (2017).
 Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research.
 \emph{PLoS ONE}, \emph{12}, e0174035..
-\doi{journal.pone.0174035}
+\doi{10.1371/journal.pone.0174035}
 
 Golino, H. F., & Demetriou, A. (2017).
 Estimating the dimensionality of intelligence like data using Exploratory Graph Analysis.
 \emph{Intelligence}, \emph{62}, 54-70.
-\doi{j.intell.2017.02.007}
+\doi{10.1016/j.intell.2017.02.007}
 
 # Current implementation of EGA, introduced unidimensional checks, continuous and dichotomous data \cr
 Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., & Thiyagarajan, J. A. (2020).
