@@ -2174,7 +2174,7 @@ textsymbol <- function(symbol = c("alpha", "beta", "chi", "delta",
 
 #' @noRd
 # Redundancy Processing----
-# Updated 12.02.2021
+# Updated 15.02.2021
 redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.redundancy, plot.args)
 {
   # Compute redundancy method
@@ -2352,7 +2352,11 @@ redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.r
                               "cor" = "Zero-order\nCorrelation"
     )
 
-    net.plot <- redund.plot(plot.mat, plot.args)
+    if(ncol(plot.mat) <= 2){
+      warning("No plot was produced because there are only two redundant variables")
+    }else{
+      net.plot <- redund.plot(plot.mat, plot.args)
+    }
 
   }
 
@@ -2370,6 +2374,7 @@ redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.r
   if(exists("net.plot")){res$plot <- net.plot}
   res$descriptives <- desc
   res$method <- method
+  res$model <- model
   res$type <- type
   if(type != "threshold"){res$distribution <- names(aic)[which.min(aic)]}
 
@@ -2567,8 +2572,8 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
 #' @importFrom graphics text
 #' @noRd
 # Redundancy Reduction----
-# Updated 12.02.2021
-redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.args)
+# Updated 15.02.2021
+redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.args, corr)
 {
   # Check for node.redundant object class
   if(class(node.redundant.obj) != "node.redundant")
@@ -2755,7 +2760,7 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
 
         message(paste("\nNew LATENT variable called '", lab,"' was created. Redundant variables were REMOVED", sep = ""))
 
-      }else if(reduce.method == "remove"){
+      }else if(reduce.method == "remove" | reduce.method == "sum"){
 
         target.key <- c(tar.idx, idx)
         target.data <- new.data[,target.key]
@@ -2767,7 +2772,7 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
         if(ncol(target.data) > 2){
 
           # Corrected item-total correlations
-          cor.corr <- round(item.total(target.data), 2)
+          cor.corr <- round(item.total(target.data, corr), 2)
 
           ## Use information utility?
           categories <- apply(target.data, 2, function(x){
@@ -2961,10 +2966,37 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
 
     if(reduce.method == "latent"){
       colnames(m.mat) <- c("Target", paste("Redundancy_", 1:(ncol(m.mat)-1), sep = ""))
-    }else if(reduce.method == "remove"){
+    }else if(reduce.method == "remove" | reduce.method == "sum"){
       colnames(m.mat) <- c(paste("Redundancy_", 1:ncol(m.mat), sep = ""))
     }
   }
+  
+  # Check for "sum"
+  if(reduce.method == "sum"){
+    
+    # Reinstate new.data
+    new.data <- node.redundant.obj$data
+    
+    # Collapse across rows
+    for(i in 1:nrow(m.mat)){
+      
+      # Collapse
+      collapse <- row.names(m.mat)[i]
+      
+      # Redundant
+      redunds <- m.mat[i,]
+      redunds <- redunds[redunds != ""]
+      
+      # Collapse and insert into matrix
+      new.data[,collapse] <- rowSums(new.data[,c(collapse, redunds)])
+      
+      # Remove redundant terms
+      new.data <- new.data[,-match(redunds, colnames(new.data))]
+    }
+    
+  }
+  
+  
 
   # Initialize results list
   res <- list()
@@ -2977,11 +3009,15 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
 
 #' @noRd
 # Item-total correlations----
-# Updated 21.12.2020
-item.total <- function (data.sub)
+# Updated 15.02.2021
+item.total <- function (data.sub, corr)
 {
   # Get correlations
-  corrs <- suppressMessages(qgraph::cor_auto(data.sub))
+  corrs <- switch(corr,
+                   "cor_auto" = suppressMessages(qgraph::cor_auto(data.sub)),
+                   "pearson" = suppressMessages(cor(data.sub, use = "pairwise.complete.obs")),
+                   "spearman" = suppressMessages(cor(data.sub, method = "spearman", use = "pairwise.complete.obs"))
+  )
 
   # Check for negatives (reverse if so)
   for(i in 1:nrow(corrs)){
@@ -2998,7 +3034,11 @@ item.total <- function (data.sub)
 
       }
 
-      corrs <- suppressMessages(qgraph::cor_auto(data.sub))
+      corrs <- switch(corr,
+                      "cor_auto" = suppressMessages(qgraph::cor_auto(data.sub)),
+                      "pearson" = suppressMessages(cor(data.sub, use = "pairwise.complete.obs")),
+                      "spearman" = suppressMessages(cor(data.sub, method = "spearman", use = "pairwise.complete.obs"))
+      )
     }
 
   }
@@ -3008,7 +3048,19 @@ item.total <- function (data.sub)
 
   # Loop through
   for(i in 1:ncol(data.sub)){
-    cor.corr[i] <- suppressMessages(qgraph::cor_auto(cbind(data.sub[,i], rowSums(data.sub[,-i]))))[1,2]
+    
+    cor.corr[i] <- switch(corr,
+                          "cor_auto" = suppressMessages(qgraph::cor_auto(cbind(data.sub[,i], rowSums(data.sub[,-i]))))[1,2],
+                          "pearson" = suppressMessages(cor(cbind(data.sub[,i],
+                                                                 rowSums(data.sub[,-i])),
+                                                           method = "pearson",
+                                                           use = "pairwise.complete.obs"))[1,2],
+                          "spearman" = suppressMessages(cor(cbind(data.sub[,i],
+                                                                  rowSums(data.sub[,-i])),
+                                                            method = "spearman",
+                                                            use = "pairwise.complete.obs"))[1,2]
+    )
+    
   }
 
   return(cor.corr)
@@ -3033,7 +3085,7 @@ color.sort <- function (wc)
 
 #' @noRd
 # Menu for redundancy----
-# Updated 21.12.2020
+# Updated 15.02.2021
 redundancy.menu <- function (redund, reduce.method, pot, target.item, weights,
                              plot.args, key, node.redundant.obj)
 {
@@ -3113,30 +3165,47 @@ redundancy.menu <- function (redund, reduce.method, pot, target.item, weights,
   cat("\n\nPotential redundancies:\n\n")
   if(reduce.method == "latent"){
     cat("0. Do not combine with any")
-  }else if(reduce.method == "remove"){
+  }else if(reduce.method == "remove" | reduce.method == "sum"){
     cat("0. None")
   }
 
   cat(paste("\n", 1:length(poss), ". ", "'", poss, "'", sep = ""),"\n")
 
   # Plot
-  plot.args$title <- switch(node.redundant.obj$method,
-                            "wto" = "Regularized Partial Correlations",
-                            "pcor" = "Partial Correlations",
-                            "cor" = "Zero-order Correlations",
-  )
+  if(node.redundant.obj$model == "tmfg"){
+    
+    plot.args$title <- "Zero-order Correlations"
+    
+  }else{
+    
+    plot.args$title <- switch(node.redundant.obj$method,
+                              "wto" = "Regularized Partial Correlations",
+                              "pcor" = "Partial Correlations",
+                              "cor" = "Zero-order Correlations",
+    )
+    
+  }
 
   if(length(poss) > 1){
     plot(redund.plot(plot.matrix = mat, plot.args = plot.args, plot.reduce = TRUE))
   }else{
-    plot.args$title <- switch(node.redundant.obj$method,
-                              "wto" = "Regularized Partial Correlation",
-                              "pcor" = "Partial Correlation",
-                              "cor" = "Zero-order Correlation",
-    )
+    
+    if(node.redundant.obj$model == "tmfg"){
+      
+      plot.args$title <- "Zero-order Correlation"
+      
+    }else{
+      
+      plot.args$title <- switch(node.redundant.obj$method,
+                                "wto" = "Regularized Partial Correlation",
+                                "pcor" = "Partial Correlation",
+                                "cor" = "Zero-order Correlation",
+      )
+      
+    }
 
     par(mar = c(0,0,0,0))
-    plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
+    plot(c(0, 1), c(0, 1), ann = FALSE, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
     text(x = 0.5, y = 0.5, paste("There is only one redundant variable with the target variable.\nTheir ",
                                  tolower(plot.args$title), " = ", round(mat[1,2], 3),
                                  sep = ""),

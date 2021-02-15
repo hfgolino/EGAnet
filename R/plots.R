@@ -211,7 +211,8 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     plot.args$node.shape <- plot.args$shape
     plot.args$edge.color <- "color"
     plot.args$edge.size <- "ScaledWeights"
-    plot.args$color.palette <- "Set1"
+    plot.args$color.palette <- NULL
+    plot.args$palette <- NULL
     
     lower <- abs(x$typicalGraph$graph[lower.tri(x$typicalGraph$graph)])
     non.zero <- sqrt(lower[lower != 0])
@@ -328,7 +329,8 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       plot.args$node.shape <- plot.args$shape
       plot.args$edge.color <- "color"
       plot.args$edge.size <- "ScaledWeights"
-      plot.args$color.palette <- "Set1"
+      plot.args$color.palette <- NULL
+      plot.args$palette <- NULL
       
       lower <- abs(x$dynEGA[[i]]$network[lower.tri(x$dynEGA[[i]]$network)])
       non.zero <- sqrt(lower[lower != 0])
@@ -435,7 +437,8 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     plot.args$node.shape <- plot.args$shape
     plot.args$edge.color <- "color"
     plot.args$edge.size <- "ScaledWeights"
-    plot.args$color.palette <- "Set1"
+    plot.args$color.palette <- NULL
+    plot.args$palette <- NULL
     
     lower <- abs(x$dynEGA[[id]]$network[lower.tri(x$dynEGA[[id]]$network)])
     non.zero <- sqrt(lower[lower != 0])
@@ -552,7 +555,8 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     plot.args$node.size <- plot.args$size
     plot.args$edge.color <- "color"
     plot.args$edge.size <- "ScaledWeights"
-    plot.args$color.palette <- "Set1"
+    plot.args$color.palette <- NULL
+    plot.args$palette <- NULL
     
     lower <- abs(x$dynEGA$network[lower.tri(x$dynEGA$network)])
     non.zero <- sqrt(lower[lower != 0])
@@ -668,7 +672,8 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
     plot.args$node.alpha <- plot.args$alpha
     plot.args$node.shape <- plot.args$shape
     plot.args$node.size <- plot.args$size
-    plot.args$color.palette <- "Set1"
+    plot.args$color.palette <- NULL
+    plot.args$palette <- NULL
     plot.args$edge.color <- "color"
     plot.args$edge.size <- "ScaledWeights"
     

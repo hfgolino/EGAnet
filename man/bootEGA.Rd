@@ -9,6 +9,7 @@ bootEGA(
   uni = TRUE,
   iter,
   type = c("parametric", "resampling"),
+  corr = c("cor_auto", "pearson", "spearman"),
   model = c("glasso", "TMFG"),
   model.args = list(),
   algorithm = c("walktrap", "louvain"),
@@ -55,6 +56,24 @@ original dataset, via the \code{\link[MASS]{mvrnorm}} function}
 \item{\strong{\code{"resampling"}}}
 {Generates n random subsamples of the original data}
 
+}}
+
+\item{corr}{Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{cor_auto}}}
+{Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
+\code{\link[qgraph]{qgraph}}}.
+
+\item{\strong{\code{pearson}}}
+{Computes Pearson's correlation coefficient using the pairwise complete observations via
+the \code{\link[stats]{cor}}} function.
+
+\item{\strong{\code{spearman}}}
+{Computes Spearman's correlation coefficient using the pairwise complete observations via
+the \code{\link[stats]{cor}}} function.
 }}
 
 \item{model}{Character.

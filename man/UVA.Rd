@@ -8,12 +8,13 @@ UVA(
   data,
   n = NULL,
   model = c("glasso", "TMFG"),
+  corr = c("cor_auto", "pearson", "spearman"),
   method = c("cor", "pcor", "wTO"),
   type = c("adapt", "alpha", "threshold"),
   sig,
   key = NULL,
   reduce = TRUE,
-  reduce.method = c("latent", "remove"),
+  reduce.method = c("latent", "remove", "sum"),
   lavaan.args = list(),
   adhoc = TRUE,
   plot.redundancy = FALSE,
@@ -43,6 +44,24 @@ This is the default method}
 \item{\strong{\code{TMFG}}}
 {Estimates a Triangulated Maximally Filtered Graph}
 
+}}
+
+\item{corr}{Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{cor_auto}}}
+{Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
+\code{\link[qgraph]{qgraph}}}.
+
+\item{\strong{\code{pearson}}}
+{Computes Pearson's correlation coefficient using the pairwise complete observations via
+the \code{\link[stats]{cor}}} function.
+
+\item{\strong{\code{spearman}}}
+{Computes Spearman's correlation coefficient using the pairwise complete observations via
+the \code{\link[stats]{cor}}} function.
 }}
 
 \item{method}{Character.
@@ -94,6 +113,9 @@ Defaults to \code{"latent"}
 
 \item{\code{"remove"}}
 {All but one redundant variable will be removed}
+
+\item{\code{"sum"}}
+{Redundant variables are combined by summing across cases (rows)}
 
 }}
 

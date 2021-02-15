@@ -28,6 +28,24 @@
 #'
 #' }
 #' 
+#' @param corr Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
+#' Current options are:
+#'
+#' \itemize{
+#'
+#' \item{\strong{\code{cor_auto}}}
+#' {Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
+#' \code{\link[qgraph]{qgraph}}}.
+#'
+#' \item{\strong{\code{pearson}}}
+#' {Computes Pearson's correlation coefficient using the pairwise complete observations via
+#' the \code{\link[stats]{cor}}} function.
+#'
+#' \item{\strong{\code{spearman}}}
+#' {Computes Spearman's correlation coefficient using the pairwise complete observations via
+#' the \code{\link[stats]{cor}}} function.
+#' }
+#' 
 #' @param method Character.
 #' Computes weighted topological overlap (\code{"wTO"} using \code{\link[qgraph]{EBICglasso}}),
 #' partial correlations (\code{"pcor"}), and correlations (\code{"cor"}).
@@ -77,6 +95,9 @@
 #' 
 #' \item{\code{"remove"}}
 #' {All but one redundant variable will be removed}
+#' 
+#' \item{\code{"sum"}}
+#' {Redundant variables are combined by summing across cases (rows)}
 #' 
 #' }
 #' 
@@ -265,13 +286,14 @@
 #' @export
 #
 # Unique Variable Analysis
-# Updated 12.02.2021
+# Updated 15.02.2021
 UVA <- function(data, n = NULL,
                 model = c("glasso", "TMFG"),
+                corr = c("cor_auto", "pearson", "spearman"),
                 method = c("cor", "pcor", "wTO"),
                 type = c("adapt", "alpha", "threshold"), sig,
                 key = NULL, reduce = TRUE,
-                reduce.method = c("latent", "remove"),
+                reduce.method = c("latent", "remove", "sum"),
                 lavaan.args = list(), adhoc = TRUE,
                 plot.redundancy = FALSE, plot.args = list()
                 )
@@ -284,8 +306,12 @@ UVA <- function(data, n = NULL,
     }
   }else{### Get n
     n <- nrow(data)
-    ### Compute correlation matrix
-    cormat <- qgraph::cor_auto(data)
+    ## Compute correlation matrix
+    cormat <- switch(corr,
+                       "cor_auto" = qgraph::cor_auto(data),
+                       "pearson" = cor(data, use = "pairwise.complete.obs"),
+                       "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
+    )
     ### Make sure it's positive definite
     if(any(eigen(cormat)$values < 0)){
       cormat <- as.matrix(Matrix::nearPD(cormat, keepDiag = TRUE)$mat)
@@ -377,7 +403,8 @@ UVA <- function(data, n = NULL,
     reduced <- redund.reduce(node.redundant.obj = process,
                              reduce.method = reduce.method,
                              plot.args = plot.args,
-                             lavaan.args = lavaan.args)
+                             lavaan.args = lavaan.args,
+                             corr = corr)
     
     # Check for any remaining redundancies
     if(adhoc){
@@ -385,8 +412,16 @@ UVA <- function(data, n = NULL,
       message("Running adhoc check for any potential redundancies remaining...\n")
       
       ## Run check
+      ## Compute correlation matrix
+      cor.data <- switch(corr,
+                         "cor_auto" = qgraph::cor_auto(reduced$data),
+                         "pearson" = cor(reduced$data, use = "pairwise.complete.obs"),
+                         "spearman" = cor(reduced$data, method = "spearman", use = "pairwise.complete.obs")
+      )
+      
+      
       adhoc.check <- suppressMessages(
-        redundancy.process(data = reduced$data, cormat = qgraph::cor_auto(reduced$data),
+        redundancy.process(data = reduced$data, cormat = cor.data,
                            n = nrow(reduced$data),
                            model = model,
                            method = "wto",

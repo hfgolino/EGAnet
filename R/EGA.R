@@ -31,6 +31,24 @@
 #' If the number of dimensions is one or two, then the original
 #' data are unidimensional; otherwise, the data are multidimensional
 #' (see Golino, Shi, et al., 2020 for more details)
+#' 
+#' @param corr Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
+#' Current options are:
+#'
+#' \itemize{
+#'
+#' \item{\strong{\code{cor_auto}}}
+#' {Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
+#' \code{\link[qgraph]{qgraph}}}.
+#'
+#' \item{\strong{\code{pearson}}}
+#' {Computes Pearson's correlation coefficient using the pairwise complete observations via
+#' the \code{\link[stats]{cor}}} function.
+#'
+#' \item{\strong{\code{spearman}}}
+#' {Computes Spearman's correlation coefficient using the pairwise complete observations via
+#' the \code{\link[stats]{cor}}} function.
+#' }
 #'
 #' @param model Character.
 #' A string indicating the method to use.
@@ -217,9 +235,9 @@
 #'
 #' @export
 #'
-# Updated 11.02.2021
+# Updated 15.02.2021
 ## EGA Function to detect unidimensionality:
-EGA <- function (data, n = NULL, uni = TRUE,
+EGA <- function (data, n = NULL, uni = TRUE, corr = c("cor_auto", "pearson", "spearman"),
                  model = c("glasso", "TMFG"), model.args = list(),
                  algorithm = c("walktrap", "louvain"), algorithm.args = list(),
                  plot.EGA = TRUE, plot.type = c("GGally", "qgraph"), plot.args = list(),
@@ -245,6 +263,10 @@ EGA <- function (data, n = NULL, uni = TRUE,
   }
 
   #### ARGUMENTS HANDLING ####
+  
+  if(missing(corr)){
+    corr <- "cor_auto"
+  }else{corr <- match.arg(corr)}
 
   if(missing(model)){
     model <- "glasso"
@@ -405,12 +427,20 @@ EGA <- function (data, n = NULL, uni = TRUE,
           sim.data <- sim.func(data = data, nvar = 4, nfact = 1, load = .70)
 
           ## Compute correlation matrix
-          cor.data <- qgraph::cor_auto(sim.data)
+          cor.data <- switch(corr,
+                             "cor_auto" = qgraph::cor_auto(sim.data),
+                             "pearson" = cor(sim.data, use = "pairwise.complete.obs"),
+                             "spearman" = cor(sim.data, method = "spearman", use = "pairwise.complete.obs")
+                             )
 
         }else{
 
           ## Compute correlation matrix
-          cor.data <- qgraph::cor_auto(data)
+          cor.data <- switch(corr,
+                             "cor_auto" = qgraph::cor_auto(data),
+                             "pearson" = cor(data, use = "pairwise.complete.obs"),
+                             "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
+          )
 
           ## Expand correlation matrix
           cor.data <- expand.corr(cor.data)
@@ -420,7 +450,11 @@ EGA <- function (data, n = NULL, uni = TRUE,
       }else{# Do regular adjustment
 
         ## Compute correlation matrix
-        cor.data <- qgraph::cor_auto(data)
+        cor.data <- switch(corr,
+                           "cor_auto" = qgraph::cor_auto(data),
+                           "pearson" = cor(data, use = "pairwise.complete.obs"),
+                           "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
+        )
 
         ## Expand correlation matrix
         cor.data <- expand.corr(cor.data)
@@ -471,7 +505,11 @@ EGA <- function (data, n = NULL, uni = TRUE,
     }else{ ## Multidimensional check only
 
       ## Compute correlation matrix
-      cor.data <- qgraph::cor_auto(data)
+      cor.data <- switch(corr,
+                         "cor_auto" = qgraph::cor_auto(data),
+                         "pearson" = cor(data, use = "pairwise.complete.obs"),
+                         "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
+      )
 
       # Multidimensional result
       multi.res <- EGA.estimate(cor.data, n = n,
@@ -560,7 +598,8 @@ EGA <- function (data, n = NULL, uni = TRUE,
           plot.args$node.shape <- plot.args$shape
           plot.args$edge.color <- "color"
           plot.args$edge.size <- "ScaledWeights"
-          plot.args$color.palette <- "Set1"
+          plot.args$color.palette <- NULL
+          plot.args$palette <- NULL
 
           lower <- abs(a$network[lower.tri(a$network)])
           non.zero <- sqrt(lower[lower != 0])
@@ -599,7 +638,8 @@ EGA <- function (data, n = NULL, uni = TRUE,
         network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
         network::set.edge.value(network1,attrname="AbsWeights",value = abs(a$network))
         network::set.edge.value(network1,attrname="ScaledWeights",
-                                value=matrix(rescale.edges(a$network, plot.args$size),
+                                value=matrix(#scales::rescale(typical.Structure),
+                                  rescale.edges(a$network, plot.args$size),
                                              nrow = nrow(a$network),
                                              ncol = ncol(a$network)))
 
@@ -617,10 +657,11 @@ EGA <- function (data, n = NULL, uni = TRUE,
         plot.args$node.color <- "Communities"
         plot.args$node.alpha <- plot.args$alpha
         plot.args$node.shape <- plot.args$shape
-        plot.args$node.size <- plot.args$size
+        plot.args$node.size <- plot.args$node.size
         plot.args$edge.color <- "color"
         plot.args$edge.size <- "ScaledWeights"
-        plot.args$color.palette <- "Set1"
+        plot.args$color.palette <- NULL
+        plot.args$palette <- NULL
 
         lower <- abs(a$network[lower.tri(a$network)])
         non.zero <- sqrt(lower[lower != 0])
