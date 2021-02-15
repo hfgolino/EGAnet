@@ -26,7 +26,11 @@ o UPDATE: ega.wmt data (unidimensional)
 
 o UPDATE: `itemStability` plot defaults ("GGally" color scheme) and examples (manipulating plot)
 
-o ADD: multilayer networks for behavioral and brain data (see `?mlnEGA`)
+o ADD: total correlation (see `?totalCor` and `totalCorMat`)
+
+o ADD: correlation argument (corr) for `EGA`, `bootEGA`, and `UVA`
+
+o FIX: *GGally* color palette when more than 9 dimensions
 
 
 Changes in version 0.9.7

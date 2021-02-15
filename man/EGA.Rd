@@ -8,6 +8,7 @@ EGA(
   data,
   n = NULL,
   uni = TRUE,
+  corr = c("cor_auto", "pearson", "spearman"),
   model = c("glasso", "TMFG"),
   model.args = list(),
   algorithm = c("walktrap", "louvain"),
@@ -39,6 +40,24 @@ appended to the original data and dimensionality is checked.
 If the number of dimensions is one or two, then the original
 data are unidimensional; otherwise, the data are multidimensional
 (see Golino, Shi, et al., 2020 for more details)}
+
+\item{corr}{Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{cor_auto}}}
+{Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
+\code{\link[qgraph]{qgraph}}}.
+
+\item{\strong{\code{pearson}}}
+{Computes Pearson's correlation coefficient using the pairwise complete observations via
+the \code{\link[stats]{cor}}} function.
+
+\item{\strong{\code{spearman}}}
+{Computes Spearman's correlation coefficient using the pairwise complete observations via
+the \code{\link[stats]{cor}}} function.
+}}
 
 \item{model}{Character.
 A string indicating the method to use.

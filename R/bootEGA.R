@@ -40,6 +40,24 @@
 #' {Generates n random subsamples of the original data}
 #'
 #' }
+#' 
+#' @param corr Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
+#' Current options are:
+#'
+#' \itemize{
+#'
+#' \item{\strong{\code{cor_auto}}}
+#' {Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
+#' \code{\link[qgraph]{qgraph}}}.
+#'
+#' \item{\strong{\code{pearson}}}
+#' {Computes Pearson's correlation coefficient using the pairwise complete observations via
+#' the \code{\link[stats]{cor}}} function.
+#'
+#' \item{\strong{\code{spearman}}}
+#' {Computes Spearman's correlation coefficient using the pairwise complete observations via
+#' the \code{\link[stats]{cor}}} function.
+#' }
 #'
 #' @param model Character.
 #' A string indicating the method to use.
@@ -236,6 +254,7 @@
 # Bootstrap EGA
 # Updated 11.02.2021
 bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling"),
+                    corr = c("cor_auto", "pearson", "spearman"),
                     model = c("glasso", "TMFG"), model.args = list(),
                     algorithm = c("walktrap", "louvain"), algorithm.args = list(),
                     typicalStructure = TRUE, plot.typicalStructure = TRUE,
@@ -280,6 +299,10 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
   #### DEPRECATED ARGUMENTS ####
 
   #### MISSING ARGUMENTS HANDLING ####
+  
+  if(missing(corr)){
+    corr <- "cor_auto"
+  }else{corr <- match.arg(corr)}
 
   if(missing(model)){
     model <- "glasso"
@@ -359,15 +382,23 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
 
   #set inverse covariance matrix for parametric approach
   if(type=="parametric"){  # Use a parametric approach
+    
+    ## Compute correlation matrix
+    cor.data <- switch(corr,
+                       "cor_auto" = qgraph::cor_auto(data),
+                       "pearson" = cor(data, use = "pairwise.complete.obs"),
+                       "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
+    )
+    
 
     if(model=="glasso"){
 
-      g <- -suppressMessages(EGA.estimate(data = data, n = cases, model = model, model.args = model.args)$network)
+      g <- -suppressMessages(EGA.estimate(data = cor.data, n = cases, model = model, model.args = model.args)$network)
       diag(g) <- 1
 
     }else if(model=="TMFG"){
 
-      g <- -suppressMessages(NetworkToolbox::LoGo(data, normal = TRUE, partial = TRUE))
+      g <- -suppressMessages(NetworkToolbox::LoGo(cor.data, partial = TRUE))
       diag(g) <- 1
 
     }
@@ -411,7 +442,7 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
 
   #Export variables
   parallel::clusterExport(cl = cl,
-                          varlist = c("datalist", "uni", "cases",
+                          varlist = c("datalist", "uni", "cases", "corr",
                                       "model", "model.args",
                                       "algorithm", "algorithm.args"),
                           envir=environment())
@@ -423,7 +454,7 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
   boots <- pbapply::pblapply(
     X = datalist, cl = cl,
     FUN = EGA,
-    uni = uni,
+    uni = uni, corr = corr,
     model = model, model.args = model.args,
     algorithm = algorithm, algorith.args = algorithm.args,
     plot.EGA = FALSE
@@ -520,7 +551,8 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
       plot.args$node.shape <- plot.args$shape
       plot.args$edge.color <- "color"
       plot.args$edge.size <- "ScaledWeights"
-      plot.args$color.palette <- "Set1"
+      plot.args$color.palette <- NULL
+      plot.args$palette <- NULL
       
       lower <- abs(typical.Structure[lower.tri(typical.Structure)])
       non.zero <- sqrt(lower[lower != 0])
