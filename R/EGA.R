@@ -678,7 +678,7 @@ EGA <- function (data, n = NULL, uni = TRUE, corr = c("cor_auto", "pearson", "sp
           do.call(GGally::ggnet2, plot.args) +
             ggplot2::theme(legend.title = ggplot2::element_blank()) +
             ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, a$wc),
-                                        breaks = sort(a$wc)) +
+                                        breaks = sort(a$wc, na.last = TRUE)) +
             ggplot2::guides(
               color = ggplot2::guide_legend(override.aes = list(
                 size = plot.args$size,
