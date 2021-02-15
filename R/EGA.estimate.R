@@ -4,7 +4,7 @@
 #' using the graphical lasso (\code{\link{EBICglasso.qgraph}}) or the
 #' Triangulated Maximally Filtered Graph (\code{\link[NetworkToolbox]{TMFG}})
 #' network estimation methods.
-#' 
+#'
 #' Two community detection algorithms, Walktrap (Pons & Latapy, 2006) and
 #' Louvain (Blondel et al., 2008), are pre-programmed because of their
 #' superior performance in simulation studies on psychological
@@ -22,7 +22,7 @@
 #'
 #' @param model Character.
 #' A string indicating the method to use.
-#' 
+#'
 #' Current options are:
 #'
 #' \itemize{
@@ -34,9 +34,9 @@
 #'
 #' \item{\strong{\code{TMFG}}}
 #' {Estimates a Triangulated Maximally Filtered Graph}
-#' 
+#'
 #' }
-#' 
+#'
 #' @param model.args List.
 #' A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
 #' or \code{\link[NetworkToolbox]{TMFG}}
@@ -53,7 +53,7 @@
 #' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_louvain}}}
 #'
 #' }
-#' 
+#'
 #' @param algorithm.args List.
 #' A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
 #' or some other community detection algorithm function (see examples)
@@ -75,12 +75,12 @@
 #' {Computes Spearman's correlation coefficient using the pairwise complete observations via
 #' the \code{\link[stats]{cor}}} function.
 #' }
-#' 
+#'
 #' @param verbose Boolean.
 #' Should network estimation parameters be printed?
 #' Defaults to \code{TRUE}.
 #' Set to \code{FALSE} for no print out
-#' 
+#'
 #' @param ... Additional arguments.
 #' Used for deprecated arguments from previous versions of \code{\link{EGA}}
 #'
@@ -103,10 +103,10 @@
 #' \dontshow{# Fast for CRAN checks
 #' # Pearson's correlation matrix
 #' wmt <- cor(wmt2[,7:24])
-#' 
+#'
 #' # Estimate EGA
 #' ega.wmt <- EGA.estimate(data = wmt, n = nrow(wmt2), model = "glasso")
-#' 
+#'
 #' }
 #'
 #' \donttest{
@@ -115,12 +115,12 @@
 #'
 #' # Estimate EGAtmfg
 #' ega.wmt <- EGA.estimate(data = wmt2[,7:24], model = "TMFG")
-#' 
+#'
 #' # Estimate EGA with Spinglass
 #' ega.wmt <- EGA.estimate(data = wmt2[,7:24], model = "glasso",
 #' algorithm = igraph::cluster_spinglass)
 #' }
-#' 
+#'
 #' @seealso \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap
 #' and \code{\link{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 #'
@@ -129,14 +129,13 @@
 #' Blondel, V. D., Guillaume, J.-L., Lambiotte, R., & Lefebvre, E. (2008).
 #' Fast unfolding of communities in large networks.
 #' \emph{Journal of Statistical Mechanics: Theory and Experiment}, \emph{2008}, P10008.
-#' \doi{10.1088/1742-5468/2008/10/P10008}
-#' 
+#'
 #' # Compared all \emph{igraph} community detections algorithms, introduced Louvain algorithm, simulation with continuous and polytomous data \cr
 #' Christensen, A. P., & Golino, H. (under review).
 #' Estimating factors with psychometric networks: A Monte Carlo simulation comparing community detection algorithms.
 #' \emph{PsyArXiv}.
 #' \doi{10.31234/osf.io/hz89e}
-#' 
+#'
 #' # Original simulation and implementation of EGA \cr
 #' Golino, H. F., & Epskamp, S. (2017).
 #' Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research.
@@ -153,7 +152,7 @@
 #' Investigating the performance of Exploratory Graph Analysis and traditional techniques to identify the number of latent factors: A simulation and tutorial.
 #' \emph{Psychological Methods}, \emph{25}, 292-320.
 #' \doi{10.1037/met0000255}
-#' 
+#'
 #' # Walktrap algorithm \cr
 #' Pons, P., & Latapy, M. (2006).
 #' Computing communities in large networks using random walks.
@@ -171,13 +170,13 @@ EGA.estimate <- function(data, n = NULL,
                          verbose = TRUE,
                          ...)
 {
-  
+
   # Get additional arguments
   add.args <- list(...)
-  
+
   # Check if steps has been input as an argument
   if("steps" %in% names(add.args)){
-    
+
     # Give deprecation warning
     warning(
       paste(
@@ -189,11 +188,11 @@ EGA.estimate <- function(data, n = NULL,
     # Handle the number of steps appropriately
     algorithm.args$steps <- add.args$steps
   }
-  
+
   #### ARGUMENTS HANDLING ####
 
   # Missing arguments
-  
+
   if(missing(model)){
     model <- "glasso"
   }else{model <- match.arg(model)}
@@ -207,61 +206,61 @@ EGA.estimate <- function(data, n = NULL,
   if(missing(corr)){
     corr <- "cor_auto"
   }else{corr <- match.arg(corr)}
-  
+
   # Model Arguments
   ## Check for model
   if(model == "glasso"){
     model.formals <- formals(EBICglasso.qgraph)
   }else{model.formals <- formals(NetworkToolbox::TMFG)}
-  
+
   ## Check for input model arguments
   if(length(model.args) != 0){
-    
+
     ### Check for matching arguments
     if(any(names(model.args) %in% names(model.formals))){
-      
+
       model.replace.args <- model.args[na.omit(match(names(model.formals), names(model.args)))]
-  
+
       model.formals[names(model.replace.args)] <- model.replace.args
     }
-    
+
   }
-  
+
   ## Remove ellipses
   if("..." %in% names(model.formals)){
     model.formals[which(names(model.formals) == "...")] <- NULL
   }
-  
+
   # Algorithm Arguments
   ## Check for algorithm
   if(!is.function(algorithm)){
-    
+
     if(algorithm == "walktrap"){
       algorithm.formals <- formals(igraph::cluster_walktrap)
     }else if(algorithm == "louvain"){
       algorithm.formals <- formals(igraph::cluster_louvain)
     }
-    
+
   }else{algorithm.formals <- formals(algorithm)}
-  
+
   ## Check for input algorithm arguments
   if(length(algorithm.args) != 0){
-    
+
     ### Check for matching arguments
     if(any(names(algorithm.args) %in% names(algorithm.formals))){
-      
+
       algorithm.replace.args <- algorithm.args[na.omit(match(names(algorithm.formals), names(algorithm.args)))]
-      
+
       algorithm.formals[names(algorithm.replace.args)] <- algorithm.replace.args
     }
-    
+
   }
-  
+
   ## Remove ellipses
   if("..." %in% names(algorithm.formals)){
     algorithm.formals[which(names(algorithm.formals) == "...")] <- NULL
   }
-  
+
   ## Remove weights from igraph functions' arguments
   if("weights" %in% names(algorithm.formals)){
     algorithm.formals[which(names(algorithm.formals) == "weights")] <- NULL
@@ -271,7 +270,7 @@ EGA.estimate <- function(data, n = NULL,
 
   # Check if data is correlation matrix and positive definite
   if(nrow(data) != ncol(data)){
-    
+
     # Obtain n
     n <- nrow(data)
 
@@ -285,33 +284,33 @@ EGA.estimate <- function(data, n = NULL,
 
     # Check if positive definite
     if(any(eigen(cor.data)$values < 0)){
-      
+
       # Let user know
       warning("Correlation matrix is not positive definite.\nForcing positive definite matrix using Matrix::nearPD()\nResults may be unreliable")
 
       # Force positive definite matrix
       cor.data <- as.matrix(Matrix::nearPD(cor.data, corr = TRUE, keepDiag = TRUE, ensureSymmetry = TRUE)$mat)
     }
-    
+
   }else{
 
     # Check if positive definite
     if(any(eigen(data)$values < 0)){
-      
+
       # Let user know
       warning("Correlation matrix is not positive definite.\nForcing positive definite matrix using Matrix::nearPD()\nResults may be unreliable")
 
       # Force positive definite matrix
       cor.data <- as.matrix(Matrix::nearPD(data, corr = TRUE, keepDiag = TRUE, ensureSymmetry = TRUE)$mat)
-      
+
     }else{cor.data <- data}
   }
-  
+
   #### ADDITIONAL ARGUMENTS HANDLING ####
-  
+
   model.formals$data <- cor.data
   model.formals$n <- n
-  
+
   #### ADDITIONAL ARGUMENTS HANDLING ####
 
   # Estimate network
@@ -322,76 +321,76 @@ EGA.estimate <- function(data, n = NULL,
     if(!"lambda.min.ratio" %in% names(model.args)){
       model.formals$lambda.min.ratio <- 0.1
     }
-    
+
     if(!"gamma" %in% names(model.args)){
       gamma.values <- seq(from = 0.50, to = 0, length.out = 3)
     }else{gamma.values <- model.formals$gamma}
-    
+
     for(j in 1:length(gamma.values)){
-      
+
       # Re-instate gamma values
       model.formals$gamma <- gamma.values[j]
-      
+
       # Estimate network
       estimated.network <- do.call(EBICglasso.qgraph, model.formals)
 
       if(all(abs(NetworkToolbox::strength(estimated.network))>0)){
-        
+
         if(verbose){
-          
+
           message(paste("Network estimated with:\n",
                         " \u2022 gamma = ", gamma.values[j], "\n",
                         " \u2022 lambda.min.ratio = ", model.formals$lambda.min.ratio,
                         sep=""))
-          
+
         }
-        
+
         break
-        
+
       }
     }
-    
+
   }else if(model == "TMFG"){
     estimated.network <- NetworkToolbox::TMFG(cor.data)$A
   }
 
   # Check for unconnected nodes
   if(all(NetworkToolbox::degree(estimated.network)==0)){
-    
+
     # Initialize community membership list
     wc <- list()
     wc$membership <- rep(NA, ncol(estimated.network))
     warning("Estimated network contains unconnected nodes:\n",
             paste(names(which(NetworkToolbox::strength(estimated.network)==0)), collapse = ", "))
-    
+
     unconnected <- which(NetworkToolbox::degree(estimated.network)==0)
-    
+
   }else{
-    
+
     if(any(NetworkToolbox::degree(estimated.network)==0)){
-      
+
       warning("Estimated network contains unconnected nodes:\n",
               paste(names(which(NetworkToolbox::strength(estimated.network)==0)), collapse = ", "))
-      
+
       unconnected <- which(NetworkToolbox::degree(estimated.network)==0)
-      
+
     }
-    
+
     # Convert to igraph
     graph <- suppressWarnings(NetworkToolbox::convert2igraph(abs(estimated.network)))
-    
+
     # Run community detection algorithm
     algorithm.formals$graph <- graph
-    
+
     if(!is.function(algorithm)){
-      
+
       wc <- switch(algorithm,
                    walktrap = do.call(igraph::cluster_walktrap, as.list(algorithm.formals)),
                    louvain = do.call(igraph::cluster_louvain, as.list(algorithm.formals))
       )
-      
+
     }else{wc <- do.call(what = algorithm, args = as.list(algorithm.formals))}
-    
+
   }
 
   # Obtain community memberships
@@ -414,7 +413,7 @@ EGA.estimate <- function(data, n = NULL,
   res$wc <- wc
   res$n.dim <- n.dim
   res$cor.data <- cor.data
-  
+
   if(model == "glasso"){
     res$gamma <- model.formals$gamma
     res$lambda <- model.formals$lambda.min.ratio
