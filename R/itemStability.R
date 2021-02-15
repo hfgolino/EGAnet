@@ -96,7 +96,7 @@
 #'
 #' @export
 #Item Stability function
-#Updated 11.02.2021
+#Updated 15.02.2021
 itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep = TRUE){
   
   # Check for 'bootEGA' object
@@ -186,7 +186,6 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   
   ic.plot <- ggpubr::ggdotchart(item.repl, x = "Item", y = "Replication",
                                 group = "Comm", color = "Comm",
-                                palette = "Set1",
                                 legend.title = "EGA Communities",
                                 add = "segments",
                                 rotate = TRUE,
@@ -238,6 +237,9 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
       )
     }
   }
+  
+  # Reverse ordering
+  ic.plot <- ic.plot + ggplot2::scale_x_discrete(limits = rev(ic.plot$data$Item))
   
   
   if(plot.item.rep)
