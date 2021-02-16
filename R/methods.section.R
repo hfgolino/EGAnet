@@ -47,13 +47,17 @@
 #' ega.wmt <- EGA(data = wmt2[,7:24], plot.type = "qgraph")
 #' }
 #' # EGA Methods section
+#' if(interactive()){
 #' methods.section(ega.wmt)
+#' }
 #' 
 #' \donttest{# Estimate standardized network loadings
 #' wmt.loads <- net.loads(ega.wmt)$std
 #' }
 #' # EGA Methods section with network loadings
+#' if(interactive()){
 #' methods.section(ega.wmt, stats = "net.loads")
+#' }
 #' 
 #' \donttest{# bootEGA example
 #' ## plot.type = "qqraph" used for CRAN checks
@@ -62,24 +66,30 @@
 #' type = "parametric", ncores = 2)
 #' }
 #' # EGA and bootEGA Methods section
+#' if(interactive()){
 #' methods.section(ega.wmt, boot.wmt)
+#' }
 #' 
 #' \donttest{# Estimate structural consistency
 #' sc.wmt <- dimStability(boot.wmt, orig.wc = ega.wmt$wc, item.stability = TRUE)
 #' }
 #' # EGA and bootEGA Methods section with structural consistency and item stability
+#' if(interactive()){
 #' methods.section(boot.wmt, stats = c("dimStability", "itemStability"))
+#' }
 #' 
 #' # EGA with network loadings and
 #' # bootEGA Methods section with structural consistency and item stability
+#' if(interactive()){
 #' methods.section(ega.wmt, boot.wmt, stats = c("net.loads", "dimStability", "itemStability"))
+#' }
 #' 
 #' @importFrom utils packageVersion browseURL
 #'
 #' @export
 #'
 # Methods Section----
-# Updated 28.12.2020
+# Updated 15.02.2021
 methods.section <- function(..., stats = c("net.loads", "net.scores",
                                            "dimStability", "itemStability"))
 {
