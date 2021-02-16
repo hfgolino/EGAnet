@@ -860,7 +860,7 @@ mode <- function(v, fin.vec)
 #' @noRd
 #'
 # Homogenize Membership----
-# Updated 14.12.2020
+# Updated 16.02.2021
 homogenize.membership <- function (target.wc, convert.wc)
 {
   # Obtain whether vector or matrix is input for 'convert.wc'
@@ -921,6 +921,7 @@ homogenize.membership <- function (target.wc, convert.wc)
 
       # Remove NAs
       rand <- na.omit(rand)
+      rand <- rand[!is.na(names(rand))]
       len <- na.omit(ifelse(len == 0, NA, len))
 
       # Order rand by highest rand index and then number of items
@@ -964,6 +965,7 @@ homogenize.membership <- function (target.wc, convert.wc)
 
       # Remove NAs
       rand <- na.omit(rand)
+      rand <- rand[!is.na(names(rand))]
       len <- na.omit(ifelse(len == 0, NA, len))
 
       # Order rand by highest rand index and then number of items
@@ -1045,10 +1047,11 @@ homogenize.membership <- function (target.wc, convert.wc)
 
       # Remove NAs
       rand <- na.omit(rand)
+      rand <- rand[!is.na(names(rand))]
       len <- na.omit(ifelse(len == 0, NA, len))
 
       # Order rand by highest rand index and then number of items
-      rand.ord <- rand[order(rand, len, decreasing = TRUE)]
+      rand.ord <- rand[order(rand, len, decreasing = TRUE, na.last = FALSE)]
 
       # Initialize final vector
       final.vec <- rep(NA, length = length(target.wc))

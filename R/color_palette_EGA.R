@@ -125,21 +125,12 @@ color_palette_EGA <- function (name, wc)
       )
 
       ## Blue Ridge Mountains 1 (7 colors)
-      blue.ridge1 <- toupper(
+      blue.ridge1 <- rev(toupper(
         paste("#",
               c("fdcd9b", "fde8a9", "fdb184",
                 "7f616e", "4c6e98", "24547e", "272a39"
               ), sep = "")
-      )
-
-      ## Blue Ridge Mountains 2 (10 colors)
-      blue.ridge2 <- toupper(
-        paste("#",
-              c("26405b", "facf92", "497397",
-                "8c7f8e", "a5a9a9", "68788b",
-                "e2a187", "e3ccb5", "c48480", "fcac6c"
-              ), sep = "")
-      )
+      ))
 
       ## Blue Ridge Mountains 2 (10 colors)
       blue.ridge2 <- toupper(

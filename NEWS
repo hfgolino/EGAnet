@@ -1,3 +1,8 @@
+Changes in version 0.9.9
+
+o FIX: bug when NAs in `itemStability`
+
+
 Changes in version 0.9.8
 
 o UPDATE: Unidimensional check in `EGA` expands a correlation matrix (rather than generating variables; much more efficient)
