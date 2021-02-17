@@ -286,7 +286,7 @@
 #' @export
 #
 # Unique Variable Analysis
-# Updated 15.02.2021
+# Updated 17.02.2021
 UVA <- function(data, n = NULL,
                 model = c("glasso", "TMFG"),
                 corr = c("cor_auto", "pearson", "spearman"),
@@ -299,6 +299,11 @@ UVA <- function(data, n = NULL,
                 )
 {
   # Missing and NULL arguments
+  ## corr
+  if(missing(corr)){
+    corr <- "cor_auto"
+  }else{corr <- match.arg(corr)}
+  
   ## n
   if(nrow(data) == ncol(data)){
     if(is.null(n)){
