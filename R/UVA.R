@@ -452,17 +452,19 @@ UVA <- function(data, n = NULL,
   # Full results
   res <- list()
   res$redundancy <- process
-  if(reduce){res$reduced <- reduced}
-  if(adhoc){res$adhoc <- adhoc.check}
+  if(reduce){
+    res$reduced <- reduced
+    if(adhoc){res$adhoc <- adhoc.check}
+  }
   
   # Set up methods
   res$Methods <- list()
   res$Methods$method <- method
   res$Methods$type <- type
   res$Methods$sig <- sig
-  res$Methods$adhoc <- adhoc
   if(reduce){
     
+    res$Methods$adhoc <- adhoc
     res$Methods$reduce.method <- reduce.method
     
     if(reduce.method == "latent"){
