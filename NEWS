@@ -2,6 +2,8 @@ Changes in version 0.9.9
 
 o FIX: bug when NAs in `itemStability`
 
+o FIX: bug for plotting NA communities
+
 
 Changes in version 0.9.8
 
