@@ -175,8 +175,8 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     ega.plot <- suppressMessages(
       do.call(GGally::ggnet2, plot.args) + 
         ggplot2::theme(legend.title = ggplot2::element_blank()) +
-        ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, formatC(x$typicalGraph$wc)),
-                                    breaks = sort(formatC(x$typicalGraph$wc))) +
+        ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, x$typicalGraph$wc),
+                                    breaks = sort(x$typicalGraph$wc)) +
         ggplot2::guides(
           color = ggplot2::guide_legend(override.aes = list(
             size = plot.args$node.size,
@@ -294,8 +294,8 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       plots.net[[i]] <- suppressMessages(
         do.call(GGally::ggnet2, plot.args) + 
           ggplot2::theme(legend.title = ggplot2::element_blank()) +
-          ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, formatC(x$dynEGA[[i]]$wc)),
-                                      breaks = sort(formatC(x$dynEGA[[i]]$wc))) +
+          ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, x$dynEGA[[i]]$wc),
+                                      breaks = sort(x$dynEGA[[i]]$wc)) +
           ggplot2::guides(
             color = ggplot2::guide_legend(override.aes = list(
               size = plot.args$node.size,
@@ -401,8 +401,8 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     ega.plot <- suppressMessages(
       do.call(GGally::ggnet2, plot.args) + 
         ggplot2::theme(legend.title = ggplot2::element_blank()) +
-        ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, formatC(x$dynEGA[[id]]$wc)),
-                                    breaks = sort(formatC(x$dynEGA[[id]]$wc))) +
+        ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, x$dynEGA[[id]]$wc),
+                                    breaks = sort(x$dynEGA[[id]]$wc)) +
         ggplot2::guides(
           color = ggplot2::guide_legend(override.aes = list(
             size = plot.args$node.size,
@@ -519,8 +519,8 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     ega.plot <- suppressMessages(
       do.call(GGally::ggnet2, plot.args) + 
         ggplot2::theme(legend.title = ggplot2::element_blank()) +
-        ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, formatC(x$dynEGA$wc)),
-                                    breaks = sort(formatC(x$dynEGA$wc))) +
+        ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, x$dynEGA$wc),
+                                    breaks = sort(x$dynEGA$wc)) +
         ggplot2::guides(
           color = ggplot2::guide_legend(override.aes = list(
             size = plot.args$size,
@@ -638,8 +638,8 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
     ega.plot <- suppressMessages(
       do.call(GGally::ggnet2, plot.args) + 
         ggplot2::theme(legend.title = ggplot2::element_blank()) +
-        ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, formatC(x$wc)),
-                                    breaks = sort(formatC(x$wc))) +
+        ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, x$wc),
+                                    breaks = sort(x$wc)) +
         ggplot2::guides(
           color = ggplot2::guide_legend(override.aes = list(
             size = plot.args$size,

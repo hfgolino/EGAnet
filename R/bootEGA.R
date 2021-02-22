@@ -569,8 +569,8 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
       plot.typical.ega <- suppressMessages(
         do.call(GGally::ggnet2, plot.args) + 
           ggplot2::theme(legend.title = ggplot2::element_blank()) +
-          ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, formatC(typical.wc)),
-                                      breaks = sort(formatC(typical.wc))) +
+          ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, typical.wc),
+                                      breaks = sort(typical.wc)) +
           ggplot2::guides(
             color = ggplot2::guide_legend(override.aes = list(
               size = plot.args$size,

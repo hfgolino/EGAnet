@@ -237,12 +237,11 @@
 #'
 # Updated 15.02.2021
 ## EGA Function to detect unidimensionality:
-EGA <- function (data, n = NULL, uni = TRUE,
-                 corr = c("cor_auto", "pearson", "spearman"),
+EGA <- function (data, n = NULL, uni = TRUE, corr = c("cor_auto", "pearson", "spearman"),
                  model = c("glasso", "TMFG"), model.args = list(),
                  algorithm = c("walktrap", "louvain"), algorithm.args = list(),
-                 plot.EGA = TRUE, plot.type = c("GGally", "qgraph"),
-                 plot.args = list(), verbose = TRUE,
+                 plot.EGA = TRUE, plot.type = c("GGally", "qgraph"), plot.args = list(),
+                 verbose = TRUE,
                  ...) {
 
   # Get additional arguments
@@ -570,7 +569,6 @@ EGA <- function (data, n = NULL, uni = TRUE,
     }else if(plot.type == "GGally"){
       if(a$n.dim <= 2){
         if(a$n.dim != 0){
-          
           # weighted  network
           network1 <- network::network(a$network,
                                        ignore.eval = FALSE,
@@ -616,8 +614,8 @@ EGA <- function (data, n = NULL, uni = TRUE,
           ega.plot <- suppressMessages(
             do.call(GGally::ggnet2, plot.args) +
               ggplot2::theme(legend.title = ggplot2::element_blank()) +
-              ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, formatC(a$wc)),
-                                          breaks = sort(formatC(a$wc))) +
+              ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, a$wc),
+                                          breaks = sort(a$wc)) +
               ggplot2::guides(
                 color = ggplot2::guide_legend(override.aes = list(
                   size = plot.args$size,

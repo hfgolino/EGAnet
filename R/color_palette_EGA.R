@@ -53,10 +53,11 @@
 #'
 #' @export
 #'
-# Updated 22.02.2021
+# Updated 17.12.2020
 ## Function to produce color palettes for EGA
 color_palette_EGA <- function (name, wc)
 {
+
   # All palettes
   all_palettes <- c(row.names(RColorBrewer::brewer.pal.info),
                     "polychrome", "blue.ridge1", "blue.ridge2",
