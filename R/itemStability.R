@@ -96,7 +96,7 @@
 #'
 #' @export
 #Item Stability function
-#Updated 15.02.2021
+#Updated 23.02.2021
 itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep = TRUE){
   
   # Check for 'bootEGA' object
@@ -149,6 +149,21 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   item.tab <- proportion.table(final.mat)
   row.names(item.tab) <- colnames(net)
   
+  # Check for missing dimensions
+  miss.dim <- setdiff(num.comm, colnames(item.tab))
+  
+  if(length(miss.dim) != 0){
+    
+    for(i in 1:length(miss.dim)){
+      
+      item.tab <- cbind(item.tab, rep(0, nrow(item.tab)))
+      colnames(item.tab)[ncol(item.tab)] <- paste(miss.dim[i])
+      
+    }
+    
+  }
+
+  # Apply names
   if(is.character(uni))
   {colnames(item.tab)[1:length(uni)] <- uni}
   
@@ -170,6 +185,10 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   
   if(any(apply(item.tab,2,sum)==0))
   {item.tab <- item.tab[,-which(apply(item.tab,2,sum)==0)]}
+  
+  # Update uniques
+  uniq <- as.numeric(intersect(uniq, colnames(item.tab)))
+  uni <- uni[match(uniq, unique(num.comm))]
   
   item.tab[which(item.tab<=item.freq)] <- ""
   
@@ -232,8 +251,8 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   }else{
     if(bootega.obj$color.palette != "Set1"){
       ic.plot <- suppressMessages(
-        ic.plot + ggplot2::scale_color_manual(values = color_palette_EGA(bootega.obj$color.palette, orig.wc),
-                                              breaks = sort(orig.wc))
+        ic.plot + ggplot2::scale_color_manual(values = color_palette_EGA(bootega.obj$color.palette, formatC(orig.wc)),
+                                              breaks = sort(formatC(orig.wc), na.last = TRUE))
       )
     }
   }
@@ -335,7 +354,7 @@ itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep =
   unstd.item.id <- round(apply(arr,1:2, mean, na.rm=TRUE),3)
   colnames(unstd.item.id) <- paste(seq(1,max(final.mat, na.rm = TRUE),1))
   row.names(unstd.item.id) <- colnames(bootega.obj$EGA$network)
-  unstd.item.id[,1:length(uniq)] <- unstd.item.id[,uniq]
+  unstd.item.id[,1:length(uniq)] <- unstd.item.id[,paste(uniq)]
   colnames(unstd.item.id)[1:length(uni)] <- uni
   
   #let user know results are computed has ended
