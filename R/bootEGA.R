@@ -252,7 +252,7 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 11.02.2021
+# Updated 24.02.2021
 bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling"),
                     corr = c("cor_auto", "pearson", "spearman"),
                     model = c("glasso", "TMFG"), model.args = list(),
@@ -402,6 +402,10 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
       diag(g) <- 1
 
     }
+    
+    # Generating data will be continuous
+    corr <- "pearson"
+    
   }
 
   #initialize data list
