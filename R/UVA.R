@@ -286,7 +286,7 @@
 #' @export
 #
 # Unique Variable Analysis
-# Updated 15.02.2021
+# Updated 17.02.2021
 UVA <- function(data, n = NULL,
                 model = c("glasso", "TMFG"),
                 corr = c("cor_auto", "pearson", "spearman"),
@@ -299,6 +299,11 @@ UVA <- function(data, n = NULL,
                 )
 {
   # Missing and NULL arguments
+  ## corr
+  if(missing(corr)){
+    corr <- "cor_auto"
+  }else{corr <- match.arg(corr)}
+  
   ## n
   if(nrow(data) == ncol(data)){
     if(is.null(n)){
@@ -447,17 +452,19 @@ UVA <- function(data, n = NULL,
   # Full results
   res <- list()
   res$redundancy <- process
-  if(reduce){res$reduced <- reduced}
-  if(adhoc){res$adhoc <- adhoc.check}
+  if(reduce){
+    res$reduced <- reduced
+    if(adhoc){res$adhoc <- adhoc.check}
+  }
   
   # Set up methods
   res$Methods <- list()
   res$Methods$method <- method
   res$Methods$type <- type
   res$Methods$sig <- sig
-  res$Methods$adhoc <- adhoc
   if(reduce){
     
+    res$Methods$adhoc <- adhoc
     res$Methods$reduce.method <- reduce.method
     
     if(reduce.method == "latent"){

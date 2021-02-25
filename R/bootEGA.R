@@ -252,7 +252,7 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 11.02.2021
+# Updated 24.02.2021
 bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling"),
                     corr = c("cor_auto", "pearson", "spearman"),
                     model = c("glasso", "TMFG"), model.args = list(),
@@ -402,6 +402,10 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
       diag(g) <- 1
 
     }
+    
+    # Generating data will be continuous
+    corr <- "pearson"
+    
   }
 
   #initialize data list
@@ -569,7 +573,7 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
       plot.typical.ega <- suppressMessages(
         do.call(GGally::ggnet2, plot.args) + 
           ggplot2::theme(legend.title = ggplot2::element_blank()) +
-          ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, typical.wc),
+          ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, na.omit(typical.wc)),
                                       breaks = sort(typical.wc)) +
           ggplot2::guides(
             color = ggplot2::guide_legend(override.aes = list(
