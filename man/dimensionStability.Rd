@@ -58,7 +58,8 @@ res$dimension.stability
 ## Changing colors (ignore warnings)
 ### qgraph Defaults
 res$item.stability$plot + 
-    ggplot2::scale_color_manual(values = rainbow(max(res$items$uniq.num)))
+    ggplot2::scale_color_manual(values = rainbow(length(
+    res$dimension.stability$structural.consistency)))
 
 ### Pastel
 res$item.stability$plot + 

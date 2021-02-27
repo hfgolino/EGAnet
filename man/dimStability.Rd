@@ -48,22 +48,23 @@ plot.typicalStructure = TRUE, model = "glasso", plot.type = "qgraph",
 type = "parametric", ncores = 2)
 }
 
-# Estimate item stability statistics
-res <- dimStability(boot.wmt, orig.wc = ega.wmt$wc, item.stability = TRUE)
-res
+# Estimate stability statistics
+res <- dimensionStability(boot.wmt)
+res$dimension.stability
 
 # Changing plot features (ggplot2)
 ## Changing colors (ignore warnings)
 ### qgraph Defaults
-res$items$plot.itemStability + 
-    ggplot2::scale_color_manual(values = rainbow(max(res$items$uniq.num)))
+res$item.stability$plot + 
+    ggplot2::scale_color_manual(values = rainbow(length(
+    res$dimension.stability$structural.consistency)))
 
 ### Pastel
-res$items$plot.itemStability + 
+res$item.stability$plot + 
     ggplot2::scale_color_brewer(palette = "Pastel1")
     
 ## Changing Legend (ignore warnings)
-res$items$plot.itemStability + 
+res$item.stability$plot + 
     ggplot2::scale_color_discrete(labels = "Intelligence")
 
 }

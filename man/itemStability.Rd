@@ -91,7 +91,7 @@ res <- itemStability(boot.wmt)
 ## Changing colors (ignore warnings)
 ### qgraph Defaults
 res$plot + 
-    ggplot2::scale_color_manual(values = rainbow(max(res$uniq.num)))
+    ggplot2::scale_color_manual(values = rainbow(max(res$membership$unique)))
 
 ### Pastel
 res$plot + 
