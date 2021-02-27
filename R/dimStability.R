@@ -90,46 +90,80 @@ dimStability <- function(bootega.obj, orig.wc, item.stability = TRUE)
   )
 
   # Compute item stability
-  items <- itemStability(bootega.obj, orig.wc, item.freq = 0, plot.item.rep = item.stability)
-
-  # Compute dimension stability
-  ## Grab dimensions from itemStability output
-  dims <- items$wc
-  ## Identify unique dimensions
-  uniq.dim <- items$uniq.name
-  ## Idetify unique dimension numbers
-  uniq.num <- items$uniq.num
+  stability.items <- itemStability(bootega.obj)
+  
+  # Compute dimension stability ----
+  ## Grab empirical membership from itemStability output
+  empirical.membership <- stability.items$membership$empirical
+  
+  ## Grab unique membership from itemStability output
+  unique.membership <- stability.items$membership$unique
+  
+  ## Grab bootstrap membership from itemStability output
+  bootstrap.membership <- stability.items$membership$bootstrap
+  
   ## Number of dimensions
-  dim.len <- length(uniq.dim)
+  total.dimensions <- length(unique.membership)
+  
   ## Initialize dimension stability vector
-  dim.stab <- numeric(dim.len)
-  names(dim.stab) <- uniq.dim
-
-  # Loop through dims
-  for(i in 1:dim.len)
-  {
+  stability.dimensions <- numeric(total.dimensions)
+  
+  ## Name dimensions
+  names(stability.dimensions) <- unique.membership
+  
+  ## Order dimensions
+  stability.dimensions <- stability.dimensions[order(names(stability.dimensions))]
+  
+  # Loop through dimensions
+  for(i in 1:total.dimensions){
+    
     # Target items
-    target <- which(orig.wc == uniq.dim[i])
-
-    # Initialize count vector
-    dim.count <- numeric(length = ncol(dims))
-
-    # Identify consistency across bootstraps
-    for(j in 1:ncol(dims))
-    {dim.count[j] <- all(dims[target,j] == uniq.num[i])}
-
-    # Input mean of into vector
-    dim.stab[i] <- mean(dim.count, na.rm = TRUE)
+    target.items <- which(paste(empirical.membership) == paste(unique.membership[i]))
+    
+    # Get dimension stability
+    target.dimension.stability <- apply(bootstrap.membership, # bootstrap membership
+                                        2, # across columns
+                                        function(x, target.dimension){
+                                          
+                                          # all items equal empirical dimension
+                                          all(paste(x[target.items]) == target.dimension)
+                                          
+                                        }, target.dimension = paste(unique.membership[i]))
+    
+    # Input mean of dimension stability (round to 3 decimal places)
+    stability.dimensions[paste(unique.membership[i])] <- round(mean(target.dimension.stability, na.rm = TRUE), 3)
+    
   }
+  
+  # Compute average item stability ---- 
+  average.item.stability <- stability.dimensions
+  
+  # Obtain item stabilities in empirical dimensions
+  empirical.dimensions <- stability.items$item.stability$empirical.dimensions
+  
+  # Loop through dimensions
+  for(i in 1:total.dimensions){
+    
+    # Target items
+    target.items <- which(paste(empirical.membership) == paste(unique.membership[i]))
+    
+    # Input mean of item stability (round to 3 decimal places)
+    average.item.stability[paste(unique.membership[i])] <- round(mean(empirical.dimensions[target.items], na.rm = TRUE), 3)
+    
+  }
+  
+  # Initialize and output results
+  results <- list()
+  results$dimension.stability <- list()
+  results$dimension.stability$structural.consistency <- stability.dimensions
+  results$dimension.stability$average.item.stability <- average.item.stability
+  
+  if(item.stability){
+    results$item.stability <- stability.items
+  }
+  
+  results$item.stability <- stability.items
 
-  # Results list
-  if(item.stability)
-  {
-    res <- list()
-    res$dimensions <- round(dim.stab[order(names(dim.stab))],3)
-    res$items <- items
-  }else{res <- round(dim.stab[order(names(dim.stab))],3)}
-
-  return(res)
+  return(results)
 }
 #----
