@@ -12,6 +12,9 @@
 #' @param IS.plot Should the plot be produced for \code{item.replication}?
 #' If \code{TRUE}, then a plot for the \code{item.replication} output will be produced.
 #' Defaults to \code{TRUE}
+#' 
+#' @param ... Additional arguments.
+#' Used for deprecated arguments from previous versions of \code{\link[EGAnet]{itemStability}}
 #'
 #' @return Returns a list containing:
 #' 
@@ -78,15 +81,15 @@
 #' # Changing plot features (ggplot2)
 #' ## Changing colors (ignore warnings)
 #' ### qgraph Defaults
-#' res$plot.itemStability + 
+#' res$plot + 
 #'     ggplot2::scale_color_manual(values = rainbow(max(res$uniq.num)))
 #' 
 #' ### Pastel
-#' res$plot.itemStability + 
+#' res$plot + 
 #'     ggplot2::scale_color_brewer(palette = "Pastel1")
 #'     
 #' ## Changing Legend (ignore warnings)
-#' res$plot.itemStability + 
+#' res$plot + 
 #'     ggplot2::scale_color_discrete(labels = "Intelligence")
 #'
 #' @references
@@ -107,13 +110,50 @@
 #'
 #' @export
 #Item Stability function
-# Updated 26.02.2021
-# Major revamp 26.02.2021 
-itemStability <- function (bootega.obj, IS.plot = TRUE){
+# Updated 27.02.2021
+# Major revamp 27.02.2021 
+itemStability <- function (bootega.obj, IS.plot = TRUE, ...){
   
   # Check for 'bootEGA' object
   if(class(bootega.obj) != "bootEGA")
   {stop("Input for 'bootega.obj' is not a 'bootEGA' object")}
+  
+  # Get additional arguments
+  add.args <- list(...)
+  
+  # Check if 'orig.wc' has been input as an argument
+  if("orig.wc" %in% names(add.args)){
+    
+    # Give deprecation warning
+    warning(
+        "The 'orig.wc' argument has been deprecated in itemStability.\n\nInstead, the empirical EGA estimated in bootEGA's results is used"
+    )
+  }
+  
+  # Check if 'item.freq' has been input as an argument
+  if("item.freq" %in% names(add.args)){
+    
+    # Give deprecation warning
+    warning(
+      "The 'item.freq' argument has been deprecated in itemStability"
+    )
+  }
+  
+  # Check if 'plot.item.rep' has been input as an argument
+  if("plot.item.rep" %in% names(add.args)){
+    
+    # Give deprecation warning
+    warning(
+      
+      paste(
+        "The 'plot.item.rep' argument has been deprecated in itemStability.\n\nInstead use: IS.plot =", add.args$plot.item.rep, sep = " "
+      )
+      
+    )
+    
+    # Handle the plot appropriately
+    IS.plot <- add.args$plot.item.rep
+  }
   
   # Message function
   message(styletext(styletext("\nItem Stability Analysis", defaults = "underline"), defaults = "bold"))
@@ -196,7 +236,7 @@ itemStability <- function (bootega.obj, IS.plot = TRUE){
   results$membership <- list()
   results$membership$empirical <- empirical.EGA.membership
   results$membership$unique <- unique.membership
-  results$membership$bootstrap <- bootstrap.membership
+  results$membership$bootstrap <- final.membership
   
   # Add item stability to the results
   ## Item stability for empirical dimension

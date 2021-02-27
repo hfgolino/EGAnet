@@ -1,6 +1,8 @@
 Changes in version 0.9.9
 
-o FIX: bug when NAs in `itemStability`
+o DEFUNCT: `dimStability` will no longer be supported. Instead, use `dimensionStability`
+
+o REVAMP: `itemStability` has been recoded. Now includes error checking and more readable code 
 
 o FIX: bug for plotting NA communities
 

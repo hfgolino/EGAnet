@@ -3493,7 +3493,7 @@ missing.dimension.check <- function (proportion, membership, bootstrap)
 #' @noRd
 # Plot configuration for itemStability----
 # For itemStability
-# Updated 26.02.2021
+# Updated 27.02.2021
 itemStability.plot <- function (res, bootega.obj)
 {
   # Obtain empirical membership
@@ -3514,13 +3514,13 @@ itemStability.plot <- function (res, bootega.obj)
                                                  )]))
   
   # Item stability plot
-  IS.plot <- ggpubr::ggdotchart(item.repl, x = "Item", y = "Replication",
-                                group = "Comm", color = "Comm",
+  IS.plot <- ggpubr::ggdotchart(organize.plot, x = "Item", y = "Replication",
+                                group = "Community", color = "Community",
                                 legend.title = "Empirical EGA Communities",
                                 add = "segments",
                                 rotate = TRUE,
                                 dot.size = 6,
-                                label = round(item.repl$Replication, 2),
+                                label = round(organize.plot$Replication, 2),
                                 font.label = list(color = "black", size = 8,
                                                   vjust = 0.5),
                                 ggtheme = ggpubr::theme_pubr()
@@ -3533,17 +3533,17 @@ itemStability.plot <- function (res, bootega.obj)
   )
   
   # Manually change alpha
-  ic.plot$layers[[2]]$aes_params$alpha <- 0.7
+  IS.plot$layers[[2]]$aes_params$alpha <- 0.7
   
   # Adjust item label sizes based on
   sizes <- seq(6,12,.25)
   ## Number of nodes
   nodes <- rev(seq(0, 200, length.out = length(sizes)))
-  n.size <- min(which(length(orig.wc) > nodes))
+  n.size <- min(which(length(empirical.membership) > nodes))
   ## Number of characters in item name
   chars <- rev(seq(0,100, length.out = length(sizes)))
   ### Maximum characters in item name
-  max.chars <- max(unlist(lapply(row.names(item.repl),nchar)))
+  max.chars <- max(unlist(lapply(row.names(organize.plot),nchar)))
   c.size <- min(which(max.chars > chars))
   # Text size
   text.size <- sizes[min(c(n.size,c.size))]
@@ -3555,14 +3555,14 @@ itemStability.plot <- function (res, bootega.obj)
   # Change color.palette (if necessary)
   if(!ggplot2::is.ggplot(bootega.obj$plot.typical.ega)){
     IS.plot <- suppressMessages(
-      IS.plot + ggplot2::scale_color_manual(values = color_palette_EGA("rainbow", orig.wc),
-                                            breaks = sort(orig.wc))
+      IS.plot + ggplot2::scale_color_manual(values = color_palette_EGA("rainbow", empirical.membership),
+                                            breaks = sort(empirical.membership))
     )
   }else{
     if(bootega.obj$color.palette != "Set1"){
       IS.plot <- suppressMessages(
-        IS.plot + ggplot2::scale_color_manual(values = color_palette_EGA(bootega.obj$color.palette, formatC(orig.wc)),
-                                              breaks = sort(formatC(orig.wc), na.last = TRUE))
+        IS.plot + ggplot2::scale_color_manual(values = color_palette_EGA(bootega.obj$color.palette, formatC(empirical.membership)),
+                                              breaks = sort(formatC(empirical.membership), na.last = TRUE))
       )
     }
   }

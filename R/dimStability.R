@@ -76,11 +76,18 @@
 #' @export
 #' 
 # Dimension Stability function
-# Updated 25.11.2020
+# Updated 27.02.2021
+# Deprecated 27.02.2021
 dimStability <- function(bootega.obj, orig.wc, item.stability = TRUE)
 {
+  # Check for 'bootEGA' object
   if(class(bootega.obj) != "bootEGA")
   {stop("Input for 'bootega.obj' is not a 'bootEGA' object")}
+  
+  # Give deprecation warning
+  warning(
+    "The `dimStability` function has been deprecated.\n\nInstead use: `dimensionStability`"
+  )
 
   # Compute item stability
   items <- itemStability(bootega.obj, orig.wc, item.freq = 0, plot.item.rep = item.stability)
