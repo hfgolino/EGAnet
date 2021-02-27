@@ -860,7 +860,7 @@ mode <- function(v, fin.vec)
 #' @noRd
 #'
 # Homogenize Membership----
-# Updated 16.02.2021
+# Updated 26.02.2021
 homogenize.membership <- function (target.wc, convert.wc)
 {
   # Obtain whether vector or matrix is input for 'convert.wc'
@@ -1074,6 +1074,9 @@ homogenize.membership <- function (target.wc, convert.wc)
     # Insert final vector into final matrix
     convert.mat[,i] <- final.vec
   }
+  
+  # Add row names
+  row.names(convert.mat) <- names(target.wc)
 
   return(convert.mat)
 }
@@ -1088,7 +1091,7 @@ homogenize.membership <- function (target.wc, convert.wc)
 #' @noRd
 #'
 # Proportion Table----
-# Updated 14.12.2020
+# Updated 26.02.2021
 proportion.table <- function (boot.mat)
 {
   # Get maximum number of dimensions
@@ -1096,7 +1099,12 @@ proportion.table <- function (boot.mat)
 
   # Set up table
   tab <- matrix(0, nrow = nrow(boot.mat), ncol = max.dim)
-  colnames(tab) <- 1:max.dim
+  colnames(tab) <- 1:max.dim # assign column names
+  
+  # Check if there are row names
+  if(!is.null(row.names(boot.mat))){
+    row.names(tab) <- row.names(boot.mat)
+  }
 
   # Loop through maximum dimensions
   for(i in 1:max.dim)
@@ -3012,6 +3020,7 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
 
 #' @noRd
 # Item-total correlations----
+# For UVA
 # Updated 15.02.2021
 item.total <- function (data.sub, corr)
 {
@@ -3073,6 +3082,7 @@ item.total <- function (data.sub, corr)
 #' @importFrom graphics text
 #' @noRd
 # Color sorting for EGA palettes----
+# For EGA_color_palette
 # Updated 17.12.2020
 color.sort <- function (wc)
 {
@@ -3088,6 +3098,7 @@ color.sort <- function (wc)
 
 #' @noRd
 # Menu for redundancy----
+# For UVA
 # Updated 15.02.2021
 redundancy.menu <- function (redund, reduce.method, pot, target.item, weights,
                              plot.args, key, node.redundant.obj)
@@ -3224,6 +3235,7 @@ redundancy.menu <- function (redund, reduce.method, pot, target.item, weights,
 
 #' @noRd
 # Input check for redundancy----
+# For UVA
 # Updated 21.12.2020
 input.check <- function (poss, type = c("redund", "remove"))
 {
@@ -3298,6 +3310,7 @@ input.check <- function (poss, type = c("redund", "remove"))
 
 #' @noRd
 # Rescale edges for GGally----
+# For plots
 # Updated 17.01.2021
 rescale.edges <- function (network, size)
 {
@@ -3322,6 +3335,7 @@ rescale.edges <- function (network, size)
 
 #' @noRd
 # Expand correlation matrix (unidimensional EGA)----
+# For EGA
 # Updated 04.02.2021
 expand.corr <- function(corr)
 {
@@ -3344,4 +3358,273 @@ expand.corr <- function(corr)
   row.names(new.corr) <- colnames(new.corr)
 
   return(new.corr)
+}
+
+#' Error report
+#' 
+#' @description Gives necessary information for user reporting error
+#' 
+#' @param result Character.
+#' The error from the result
+#' 
+#' @param SUB_FUN Character.
+#' Sub-routine the error occurred in
+#' 
+#' @param FUN Character.
+#' Main function the error occurred in
+#' 
+#' @return Error and message to send to GitHub
+#' 
+#' @author Alexander Christensen <alexpaulchristensen@gmail.com>
+#' 
+#' @noRd
+#' 
+#' @importFrom utils packageVersion
+#' 
+# Error Report----
+# Updated 26.02.2021
+error.report <- function(result, SUB_FUN, FUN)
+{
+  # Let user know that an error has occurred
+  message(paste("\nAn error has occurred in the '", SUB_FUN, "' function of '", FUN, "':\n", sep =""))
+  
+  # Give them the error to send to you
+  cat(paste(result))
+  
+  # Tell them where to send it
+  message("\nPlease open a new issue on GitHub (bug report): https://github.com/hfgolino/EGAnet/issues/new/choose")
+  
+  # Give them information to fill out the issue
+  OS <- as.character(Sys.info()["sysname"])
+  OSversion <- paste(as.character(Sys.info()[c("release", "version")]), collapse = " ")
+  Rversion <- paste(R.version$major, R.version$minor, sep = ".")
+  EGAversion <- paste(unlist(packageVersion("EGAnet")), collapse = ".")
+  
+  # Let them know to provide this information
+  message(paste("\nBe sure to provide the following information:\n"))
+  
+  # To reproduce
+  message(styletext("To Reproduce:", defaults = "bold"))
+  message(paste(" ", textsymbol("bullet"), " Function error occurred in: ", SUB_FUN, " function of ", FUN, sep = ""))
+  
+  # R, SemNetCleaner, and SemNetDictionaries
+  message(styletext("\nR and EGAnet versions:", defaults = "bold"))
+  message(paste(" ", textsymbol("bullet"), " R version: ", Rversion, sep = ""))
+  message(paste(" ", textsymbol("bullet"), " EGAnet version: ", EGAversion, sep = ""))
+  
+  # Desktop
+  message(styletext("\nOperating System:", defaults = "bold"))
+  message(paste(" ", textsymbol("bullet"), " OS: ", OS, sep = ""))
+  message(paste(" ", textsymbol("bullet"), " Version: ", OSversion, sep = ""))
+}
+
+#' @noRd
+# Converts memberships to numeric----
+# For itemStability
+# Updated 26.02.2021
+numeric.membership <- function(membership){
+  
+  # Get unique membership
+  unique.membership <- unique(membership)
+  
+  # Check for named memberships
+  if(all(is.character(unique.membership))){
+    
+    # Assign numeric values to memberships
+    membership.numbers <- membership
+    
+    for(i in 1:length(unique.membership)){
+      membership.numbers[which(membership.numbers == unique.membership[i])] <- i
+    }
+    
+  }else{membership.numbers <- membership}
+  
+  # Make sure the memberships are numeric
+  membership.numbers <- as.numeric(membership.numbers)
+  
+  # Name elements
+  names(membership.numbers) <- names(membership)
+  
+  return(membership.numbers)
+  
+}
+
+#' @noRd
+# Converts memberships to numeric----
+# For itemStability
+# Updated 26.02.2021
+missing.dimension.check <- function (proportion, membership, bootstrap)
+{
+  # Get names of proportion
+  proportion.names <- as.numeric(colnames(proportion))
+  
+  # Check for missing dimensions
+  missing.dimensions <- setdiff(membership, proportion.names)
+  
+  # If there are missing dimensions, then add them (all zeroes)
+  if(length(missing.dimensions) != 0){
+    
+    for(i in 1:length(missing.dimensions)){
+      
+      # Append missing dimension
+      proportion <- cbind(proportion, rep(0, nrow(proportion)))
+      colnames(proportion)[ncol(proportion)] <- paste(missing.dimensions[i])
+      
+    }
+    
+  }
+  
+  # Check for NA in bootstrap membership
+  if(any(is.na(bootstrap))){
+    
+    # Get NA proportions
+    NA.proportions <- colMeans(apply(bootstrap, 1, is.na))
+    
+    # Append proportion
+    proportion <- cbind(proportion, NA.proportions)
+    colnames(proportion)[ncol(proportion)] <- "NA"
+    
+  }
+  
+  return(proportion)
+  
+}
+
+#' @noRd
+# Plot configuration for itemStability----
+# For itemStability
+# Updated 26.02.2021
+itemStability.plot <- function (res, bootega.obj)
+{
+  # Obtain empirical membership
+  empirical.membership <- res$membership$empirical
+  
+  # Obtain unique membership
+  unique.membership <- res$membership$unique
+  
+  # Obtain empirical stability
+  empirical.stability <- res$item.stability$empirical.dimensions
+  
+  # Organize plot
+  organize.plot <- data.frame(Item = names(empirical.membership),
+                              Replication = empirical.stability,
+                              Community = factor(empirical.membership, 
+                                                 unique.membership[order(
+                                                   unique.membership
+                                                 )]))
+  
+  # Item stability plot
+  IS.plot <- ggpubr::ggdotchart(item.repl, x = "Item", y = "Replication",
+                                group = "Comm", color = "Comm",
+                                legend.title = "Empirical EGA Communities",
+                                add = "segments",
+                                rotate = TRUE,
+                                dot.size = 6,
+                                label = round(item.repl$Replication, 2),
+                                font.label = list(color = "black", size = 8,
+                                                  vjust = 0.5),
+                                ggtheme = ggpubr::theme_pubr()
+  )
+  
+  # Adjust y-axis and legend title
+  IS.plot <- IS.plot + ggplot2::ylim(c(0,1)) + ggplot2::theme(
+    legend.title = ggplot2::element_text(face = "bold"),
+    axis.title = ggplot2::element_text(face = "bold")
+  )
+  
+  # Manually change alpha
+  ic.plot$layers[[2]]$aes_params$alpha <- 0.7
+  
+  # Adjust item label sizes based on
+  sizes <- seq(6,12,.25)
+  ## Number of nodes
+  nodes <- rev(seq(0, 200, length.out = length(sizes)))
+  n.size <- min(which(length(orig.wc) > nodes))
+  ## Number of characters in item name
+  chars <- rev(seq(0,100, length.out = length(sizes)))
+  ### Maximum characters in item name
+  max.chars <- max(unlist(lapply(row.names(item.repl),nchar)))
+  c.size <- min(which(max.chars > chars))
+  # Text size
+  text.size <- sizes[min(c(n.size,c.size))]
+  
+  # Change text size
+  IS.plot <- IS.plot + 
+    ggplot2::theme(axis.text.y = ggplot2::element_text(size=text.size))
+  
+  # Change color.palette (if necessary)
+  if(!ggplot2::is.ggplot(bootega.obj$plot.typical.ega)){
+    IS.plot <- suppressMessages(
+      IS.plot + ggplot2::scale_color_manual(values = color_palette_EGA("rainbow", orig.wc),
+                                            breaks = sort(orig.wc))
+    )
+  }else{
+    if(bootega.obj$color.palette != "Set1"){
+      IS.plot <- suppressMessages(
+        IS.plot + ggplot2::scale_color_manual(values = color_palette_EGA(bootega.obj$color.palette, formatC(orig.wc)),
+                                              breaks = sort(formatC(orig.wc), na.last = TRUE))
+      )
+    }
+  }
+  
+  # Reverse ordering
+  IS.plot <- IS.plot + ggplot2::scale_x_discrete(limits = rev(IS.plot$data$Item))
+  
+  # Insert plot into results
+  res$plot <- IS.plot
+  
+  return(res)
+}
+
+#' @noRd
+# Average network loadings for itemStability----
+# For itemStability
+# Updated 26.02.2021
+itemStability.loadings <- function(res, bootega.obj)
+{
+  # Get graphs
+  graphs <- bootega.obj$bootGraphs
+  
+  # Get memberships
+  memberships <- res$membership$bootstrap
+  
+  # Maximum number of dimensions
+  max.dimensions <- max(memberships, na.rm = TRUE)
+  
+  # Get number of iterations
+  iterations <- ncol(memberships)
+  
+  # Make list of indices
+  index.list <- as.list(1:iterations)
+  
+  # Loop through (for loop is slightly faster than lapply)
+  loadings <- list()
+  
+  for(i in 1:iterations){
+    loadings[[i]] <- net.loads(A = graphs[[i]],
+                               wc = memberships[,i])$std
+  }
+  
+  # Initialize final loadings array
+  loadings.array <- array(NA,
+                          dim = c(nrow(memberships), # number of items
+                                  max(memberships, na.rm = TRUE), # number of dimensions
+                                  iterations), # number of bootstrap replicates
+                          dimnames = list(row.names(memberships),
+                                          1:max.dimensions,
+                                          NULL))
+  
+  # Loop through
+  for(i in 1:length(loadings)){
+    
+    loadings.array[row.names(loadings[[i]]), # get available loadings
+                   1:ncol(loadings[[i]]), # for the number of dimensions
+                   i] <- as.matrix(loadings[[i]]) # insert loadings into array
+    
+  }
+  
+  # Obtain average loadings
+  mean.loadings <- apply(loadings.array, 1:2, mean, na.rm = TRUE)
+  
+  return(mean.loadings)
 }

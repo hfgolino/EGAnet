@@ -9,41 +9,52 @@
 #'
 #' @param bootega.obj A \code{\link[EGAnet]{bootEGA}} object
 #'
-#' @param orig.wc Numeric or character.
-#' A vector with community numbers or labels for each item.
-#' Typically uses community results (\code{wc}) from \code{\link[EGAnet]{EGA}}
-#'
-#' @param item.freq A value for lowest frequency allowed in \code{item.dim.rep} output.
-#' Removes noise from table to allow for easier interpretation.
-#' Defaults to \code{.10}
-#'
-#' @param plot.item.rep Should the plot be produced for \code{item.replication}?
+#' @param IS.plot Should the plot be produced for \code{item.replication}?
 #' If \code{TRUE}, then a plot for the \code{item.replication} output will be produced.
 #' Defaults to \code{TRUE}
 #'
 #' @return Returns a list containing:
-#'
-#' \item{item.replication}{The proportion of times each item replicated
-#' within the defined dimension}
 #' 
-#' \item{mean.dim.rep}{The average replication proportion of items replicating
-#' in each dimension. More simply, the average of the \code{item.replication}
-#' output for each dimension}
+#' \item{membership}{A list containing:
 #'
-#' \item{item.dim.rep}{The proportion of times each item replicated
-#' within each possible dimension. Dimensions greater than the maximum
-#' number used in the \code{orig.wc} argument are labeled based on the
-#' largest remaining components after the dimensions used to \code{orig.wc}}
+#' \itemize{
 #'
-#' \item{item.loadings}{Matrix of the average standardized network loading
+#' \item{\strong{\code{empirical}}}
+#' {The empirical memberships from the empirical \code{\link[EGAnet]{EGA}} result}
+#'
+#' \item{\strong{\code{unique}}}
+#' {The unique dimensions from the empirical \code{\link[EGAnet]{EGA}} result}
+#'
+#' \item{\strong{\code{bootstrap}}}
+#' {The memberships from the replicate samples in the \code{\link[EGAnet]{bootEGA}} results}
+#'    }
+#' }
+#' 
+#' \item{item.stability}{A list containing:
+#'
+#' \itemize{
+#'
+#' \item{\strong{\code{empirical.dimensions}}}
+#' {The proportion of times each item replicated
+#' within the empirical \code{\link[EGAnet]{EGA}} defined dimension.
+#' This EGA result is defined using the input from
+#' \code{\link[EGAnet]{bootEGA}}}
+#'
+#' \item{\strong{\code{all.dimensions}}}
+#' {The proportion of times each item replicated
+#' in each of the empirical \code{\link[EGAnet]{EGA}} defined dimensions.
+#' This EGA result is defined using the input from
+#' \code{\link[EGAnet]{bootEGA}}}
+#'
+#'
+#'    }
+#' }
+#'
+#' \item{plot}{A plot of the number of times each item
+#' replicated within the empirical \code{\link[EGAnet]{EGA}} defined dimension.}
+#'
+#' \item{mean.loadings}{Matrix of the average standardized network loading
 #' (computed using \code{\link[EGAnet]{net.loads}}) for each item in each dimension}
-#'
-#' \item{wc}{A matrix containing the community membership values for
-#' each bootstrapped sample. The values correspond to the values input
-#' for the \code{orig.wc} argument}
-#'
-#' \item{plot.itemStability}{A plot of the number of times each item
-#' replicates in its original community membership (\code{orig.wc})}
 #'
 #' @examples
 #'
@@ -62,7 +73,7 @@
 #' }
 #' 
 #' # Estimate item stability statistics
-#' res <- itemStability(boot.wmt, orig.wc = ega.wmt$wc)
+#' res <- itemStability(boot.wmt)
 #' 
 #' # Changing plot features (ggplot2)
 #' ## Changing colors (ignore warnings)
@@ -96,324 +107,161 @@
 #'
 #' @export
 #Item Stability function
-#Updated 23.02.2021
-itemStability <- function(bootega.obj, orig.wc, item.freq = .10, plot.item.rep = TRUE){
+# Updated 26.02.2021
+# Major revamp 26.02.2021 
+itemStability <- function (bootega.obj, IS.plot = TRUE){
   
   # Check for 'bootEGA' object
   if(class(bootega.obj) != "bootEGA")
   {stop("Input for 'bootega.obj' is not a 'bootEGA' object")}
   
-  # Number of bootstrapped networks
-  n <- length(bootega.obj$bootGraphs)
+  # Message function
+  message(styletext(styletext("\nItem Stability Analysis", defaults = "underline"), defaults = "bold"))
   
-  # Original EGA network
-  net <- bootega.obj$EGA$network
+  # Let user know results are being organized
+  message("\nOrganizing data...", appendLF = FALSE)
   
-  # Grab membership vectors
-  wc.mat <- matrix(NA, nrow = length(orig.wc), ncol = n)
+  # Original EGA result
+  ## Network
+  empirical.EGA.network <- bootega.obj$EGA$network
+  ## Community membership
+  empirical.EGA.membership <- bootega.obj$EGA$wc
   
-  for(i in 1:length(bootega.obj$bootGraphs))
-  {wc.mat[,i] <- bootega.obj$boot.wc[[i]]}
+  # Get numeric memberships
+  membership.numeric <- numeric.membership(empirical.EGA.membership)
   
-  # Grab item names
-  row.names(wc.mat) <- row.names(net)
+  # Get unique memberships
+  unique.membership <- unique(membership.numeric)
   
-  # Check if 'orig.wc' is character
-  uni <- unique(orig.wc)
+  # Obtain bootstrap membership matrix
+  bootstrap.membership <- simplify2array(bootega.obj$boot.wc)
   
-  if(is.character(orig.wc))
-  {
-    num.comm <- orig.wc
-    
-    for(i in 1:length(uni))
-    {num.comm[which(num.comm==uni[i])] <- i}
-  } else {num.comm <- orig.wc}
+  # Homogenize memberships
+  final.membership <- try(
+    homogenize.membership(membership.numeric, bootstrap.membership),
+    silent = TRUE
+  )
   
-  # Convert to numeric vector
-  num.comm <- as.numeric(num.comm)
+  # Error check
+  if(any(class(final.membership) == "try-error")){
+    return(
+      error.report(final.membership,
+                   "homogenize.membership",
+                   "itemStability")
+    )
+  }
   
-  # Unique original dimensions
-  uniq <- unique(num.comm)
+  # Let user know results are done being organized
+  message("done\n")
   
-  # Convert membership to target membership
-  final.mat <- homogenize.membership(num.comm, wc.mat)
-  
-  ##########################################################
-  #### ITEM FREQUENCY AND DIMENSION REPLICATION RESULTS ####
-  ##########################################################
-  
-  #let user know results are being computed has started
+  # Let user know results are being computed
   message("Computing results...", appendLF = FALSE)
   
   # Get proportion table
-  item.tab <- proportion.table(final.mat)
-  row.names(item.tab) <- colnames(net)
-  
-  # Check for missing dimensions
-  miss.dim <- setdiff(num.comm, colnames(item.tab))
-  
-  if(length(miss.dim) != 0){
-    
-    for(i in 1:length(miss.dim)){
-      
-      item.tab <- cbind(item.tab, rep(0, nrow(item.tab)))
-      colnames(item.tab)[ncol(item.tab)] <- paste(miss.dim[i])
-      
-    }
-    
-  }
-
-  # Apply names
-  if(is.character(uni))
-  {colnames(item.tab)[1:length(uni)] <- uni}
-  
-  #initialize item confirmation vector
-  con.item <- vector("numeric",length=nrow(item.tab))
-  
-  #grab confirmation value from proportion table
-  for(i in 1:nrow(item.tab))
-  {con.item[i] <- item.tab[i,paste(orig.wc[i])]}
-  
-  #name item confirmation vector
-  names(con.item) <- colnames(net)
-  
-  #Item Confirm
-  itemCon <- con.item
-  
-  #Item Frequency
-  item.tab[which(item.tab<=item.freq)] <- 0
-  
-  if(any(apply(item.tab,2,sum)==0))
-  {item.tab <- item.tab[,-which(apply(item.tab,2,sum)==0)]}
-  
-  # Update uniques
-  uniq <- as.numeric(intersect(uniq, colnames(item.tab)))
-  uni <- uni[match(uniq, unique(num.comm))]
-  
-  item.tab[which(item.tab<=item.freq)] <- ""
-  
-  result <- list()
-  
-  #Plot
-  comm <- orig.wc
-  #rain <- rev(RColorBrewer::brewer.pal(max(num.comm), "Set1"))
-  
-  item.repl <- data.frame(Item = names(itemCon),
-                          Replication = itemCon,
-                          Comm = factor(comm, uni[order(uni)]))
-  
-  
-  ic.plot <- ggpubr::ggdotchart(item.repl, x = "Item", y = "Replication",
-                                group = "Comm", color = "Comm",
-                                legend.title = "EGA Communities",
-                                add = "segments",
-                                rotate = TRUE,
-                                dot.size = 6,
-                                label = round(item.repl$Replication, 2),
-                                font.label = list(color = "black", size = 8,
-                                                  vjust = 0.5),
-                                ggtheme = ggpubr::theme_pubr()
+  replication.proportion <- try(
+    proportion.table(final.membership),
+    silent = TRUE
   )
   
-  # Adjust y-axis
-  ic.plot <- ic.plot + ggplot2::ylim(c(0,1))
-  
-  # Manually change alpha
-  ic.plot$layers[[2]]$aes_params$alpha <- 0.7
-  
-  # Bold legend title
-  ic.plot <- ic.plot + ggplot2::theme(
-    legend.title = ggplot2::element_text(face = "bold"),
-    axis.title = ggplot2::element_text(face = "bold")
-  )
-  
-  # Adjust item label sizes based on
-  sizes <- seq(6,12,.25)
-  ## Number of nodes
-  nodes <- rev(seq(0, 200, length.out = length(sizes)))
-  n.size <- min(which(length(orig.wc) > nodes))
-  ## Number of characters in item name
-  chars <- rev(seq(0,100, length.out = length(sizes)))
-  ### Maximum characters in item name
-  max.chars <- max(unlist(lapply(row.names(item.repl),nchar)))
-  c.size <- min(which(max.chars > chars))
-  # Text size
-  text.size <- sizes[min(c(n.size,c.size))]
-  
-  ic.plot <- ic.plot + ggplot2::theme(axis.text.y = ggplot2::element_text(size=text.size))
-  
-  # Change color.palette (if necessary)
-  if(!ggplot2::is.ggplot(bootega.obj$plot.typical.ega)){
-    ic.plot <- suppressMessages(
-      ic.plot + ggplot2::scale_color_manual(values = color_palette_EGA("rainbow", orig.wc),
-                                            breaks = sort(orig.wc))
+  # Error check
+  if(any(class(replication.proportion) == "try-error")){
+    return(
+      error.report(replication.proportion,
+                   "proportion.table",
+                   "itemStability")
     )
-  }else{
-    if(bootega.obj$color.palette != "Set1"){
-      ic.plot <- suppressMessages(
-        ic.plot + ggplot2::scale_color_manual(values = color_palette_EGA(bootega.obj$color.palette, formatC(orig.wc)),
-                                              breaks = sort(formatC(orig.wc), na.last = TRUE))
-      )
-    }
   }
   
-  # Reverse ordering
-  ic.plot <- ic.plot + ggplot2::scale_x_discrete(limits = rev(ic.plot$data$Item))
+  # Adjust for missing and NA dimensions
+  final.proportion <- try(
+    missing.dimension.check(replication.proportion,
+                            membership.numeric,
+                            bootstrap.membership),
+    silent = TRUE
+  )
   
-  
-  if(plot.item.rep)
-  {result$plot.itemStability <- ic.plot}
-  
-  #match row names to plot output
-  itemCon <- itemCon[rev(match(ic.plot$data$Item,names(itemCon)))]
-  
-  #match row names to itemCon output
-  itemLik <- as.data.frame(item.tab[match(names(itemCon),row.names(item.tab)),])
-  
-  #catch unidimensional structures (ugly band-aid fix)
-  if(length(colnames(itemLik)) == 1){
-    colnames(itemLik) <- 1
+  # Error check
+  if(any(class(final.proportion) == "try-error")){
+    return(
+      error.report(final.proportion,
+                   "missing.dimension.check",
+                   "itemStability")
+    )
   }
   
-  ##########################################################
-  #### ITEM FREQUENCY AND DIMENSION REPLICATION RESULTS ####
-  ##########################################################
+  # Initialize results
+  results <- list()
   
-  ##################################
-  #### NETWORK LOADINGS RESULTS ####
-  ##################################
+  # Add empirical results
+  results$membership <- list()
+  results$membership$empirical <- empirical.EGA.membership
+  results$membership$unique <- unique.membership
+  results$membership$bootstrap <- bootstrap.membership
   
-  item.lik <- itemLik
+  # Add item stability to the results
+  ## Item stability for empirical dimension
+  empirical.stability <- membership.numeric
   
-  col <- ncol(item.lik)
-  
-  item.id.samps <- list()
-  
-  max.wc <- max(final.mat, na.rm = TRUE)
-  
-  for(m in 1:n)
-  {
-    item.id.samps[[m]] <- net.loads(bootega.obj$bootGraphs[[m]], final.mat[,m])$std
-    
-    dims <- ncol(item.id.samps[[m]])
-    
-    if(dims!=max.wc)
-    {
-      if(any(colnames(item.id.samps[[m]])=="NA"))
-      {item.id.samps[[m]] <- item.id.samps[[m]][,-which(colnames(item.id.samps[[m]])=="NA")]}
-      
-      diff <- max.wc - ncol(item.id.samps[[m]])
-      
-      diff.wc <- setdiff(seq(1,max.wc,1),unique(colnames(item.id.samps[[m]])))
-      
-      col.names <- c(colnames(item.id.samps[[m]]),paste(diff.wc))
-      
-      for(i in 1:diff)
-      {item.id.samps[[m]] <- cbind(item.id.samps[[m]],rep(NA,nrow(item.id.samps[[m]])))}
-      
-      colnames(item.id.samps[[m]]) <- na.omit(col.names)
-      
-      item.id.samps[[m]] <- item.id.samps[[m]][,order(as.numeric(colnames(item.id.samps[[m]])))]
-    }
+  for(i in 1:nrow(final.proportion)){
+    empirical.stability[i] <- final.proportion[i,paste(empirical.EGA.membership[i])]
   }
   
-  #Unstandardized
-  arr.func <- function(data)
-  {
-    # Get maximum dimensions
-    r.dims <- max(sapply(data, dim)[1,])
-    n.dims <- max(sapply(data, dim)[2,])
-    
-    arr <- array(NA, dim = c(r.dims, n.dims, length(data)))
-    
-    for(i in 1:length(data))
-    {
-      # Target matrix
-      target.mat <- as.matrix(data[[i]])
-      
-      # Reorder based on bootega network
-      target.mat <- target.mat[match(colnames(bootega.obj$EGA$network), row.names(target.mat)),]
-      
-      # Check for NAs
-      if(any(is.na(target.mat))){
-        NAs <- which(is.na(target.mat))
-        
-        names(target.mat)[NAs] <- colnames(bootega.obj$EGA$network)[NAs]
-        
-      }
-      
-      # Insert into array
-      arr[,,i] <- target.mat
-    }
-    
-    return(arr)
+  results$item.stability <- list()
+  results$item.stability$empirical.dimensions <- empirical.stability
+  
+  # Add full proportion matrix to the results
+  results$item.stability$all.dimensions <- as.matrix(final.proportion)
+  # as.matrix() resolves unidimensional structures
+  
+  # Plot
+  results <- try(
+    itemStability.plot(results, bootega.obj),
+    silent = TRUE
+  )
+  
+  # Error check
+  if(any(class(results) == "try-error")){
+    return(
+      error.report(results,
+                   "itemStability.plot",
+                   "itemStability")
+    )
   }
   
-  
-  arr <- arr.func(item.id.samps)
-  unstd.item.id <- round(apply(arr,1:2, mean, na.rm=TRUE),3)
-  colnames(unstd.item.id) <- paste(seq(1,max(final.mat, na.rm = TRUE),1))
-  row.names(unstd.item.id) <- colnames(bootega.obj$EGA$network)
-  unstd.item.id[,1:length(uniq)] <- unstd.item.id[,paste(uniq)]
-  colnames(unstd.item.id)[1:length(uni)] <- uni
-  
-  #let user know results are computed has ended
-  message("done", appendLF = TRUE)
-  
-  if(ncol(unstd.item.id) > 1){
-    
-    unstd.item.id <- unstd.item.id[row.names(item.lik),]
-    
-    unstd.item.id <- unstd.item.id[,colnames(item.lik)]
+  # Plot to user?
+  if(IS.plot){
+    plot(results$plot)
   }
   
-  unstd.item.id[which(item.lik=="")] <- ""
+  # Reorder empirical and all dimensions stability
+  results$item.stability$empirical.dimensions <- results$item.stability$empirical.dimensions[as.character(results$plot$data$Item)]
+  results$item.stability$all.dimensions <- results$item.stability$all.dimensions[as.character(results$plot$data$Item),]
   
-  unstd.item.id <- as.data.frame(unstd.item.id)
+  # Compute network loadings
+  loadings <- try(
+    itemStability.loadings(results, bootega.obj),
+    silent = TRUE
+  )
   
-  #Unstandardize
-  unstd.item.ident <- as.data.frame(cbind(orig.wc[row.names(unstd.item.id)], unstd.item.id))
-  colnames(unstd.item.ident) <- c("Dimension",colnames(unstd.item.id))
-  itemLoads <- unstd.item.ident[match(names(itemCon),row.names(unstd.item.ident)),]
+  # Error check
+  if(any(class(loadings) == "try-error")){
+    return(
+      error.report(loadings,
+                   "itemStability.plot",
+                   "itemStability")
+    )
+  }
   
-  # Average replication in each dimension
-  org <- orig.wc[match(names(itemCon),names(orig.wc))]
+  # Let user know results are done being organized
+  message("done\n")
   
-  # Initialize dimension replication vector
-  dimRep <- numeric(length(uniq))
+  # Insert loadings into results
+  results$mean.loadings <- loadings
   
-  # Compute average replication in each dimension
-  for(i in 1:length(uniq))
-  {dimRep[i] <- mean(itemCon[which(org == uni[i])])}
+  # Set class
+  class(results) <- "itemStability"
   
-  # Name dimension replication vector
-  names(dimRep) <- uni
+  return(results)
   
-  #message for additional item likelihoods
-  if(ncol(itemLik)<max(final.mat,na.rm=TRUE))
-  {message("\nLower the item.freq argument to view item frequencies for additional dimensions")}
-  
-  ##################################
-  #### NETWORK LOADINGS RESULTS ####
-  ##################################
-  
-  # Remove extra columns
-  itemLoads[,-1] <- itemLoads[,colnames(itemLik)]
-  
-  # Remove NA from item loadings
-  blank.itemLoads <- ifelse(as.matrix(itemLoads) == "NaN", "", as.matrix(itemLoads))
-  blank.cols <- which(apply(blank.itemLoads, 2, function(x){all(x == "")}))
-  if(length(blank.cols) != 0)
-  {itemLoads <- itemLoads[,-blank.cols]}
-  
-  result$item.replication <- itemCon
-  result$mean.dim.rep <- dimRep[order(names(dimRep))]
-  result$item.dim.rep <- itemLik[,order(colnames(itemLik))]
-  result$item.loadings <- itemLoads
-  result$wc <- final.mat
-  result$uniq.name <- uni
-  result$uniq.num <- unique(num.comm)
-  
-  return(result)
 }
 #----
