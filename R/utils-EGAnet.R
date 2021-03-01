@@ -3618,7 +3618,7 @@ itemStability.loadings <- function(res, bootega.obj)
   for(i in 1:length(loadings)){
     
     loadings.array[row.names(loadings[[i]]), # get available loadings
-                   1:ncol(loadings[[i]]), # for the number of dimensions
+                   colnames(loadings[[i]]), # get available dimensions
                    i] <- as.matrix(loadings[[i]]) # insert loadings into array
     
   }

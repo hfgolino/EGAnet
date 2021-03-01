@@ -268,11 +268,6 @@ itemStability <- function (bootega.obj, IS.plot = TRUE, ...){
     )
   }
   
-  # Plot to user?
-  if(IS.plot){
-    plot(results$plot)
-  }
-  
   # Reorder empirical and all dimensions stability
   results$item.stability$empirical.dimensions <- results$item.stability$empirical.dimensions[as.character(results$plot$data$Item)]
   results$item.stability$all.dimensions <- results$item.stability$all.dimensions[as.character(results$plot$data$Item),]
@@ -292,14 +287,22 @@ itemStability <- function (bootega.obj, IS.plot = TRUE, ...){
     )
   }
   
-  # Let user know results are done being organized
-  message("done\n")
-  
   # Insert loadings into results
   results$mean.loadings <- loadings
   
+  # Reorder mean loadings
+  results$mean.loadings <- results$mean.loadings[as.character(results$plot$data$Item),]
+  
+  # Let user know results are done being organized
+  message("done\n")
+  
   # Set class
   class(results) <- "itemStability"
+  
+  # Plot to user?
+  if(IS.plot){
+    plot(results$plot)
+  }
   
   return(results)
   
