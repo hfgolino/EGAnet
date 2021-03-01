@@ -379,6 +379,12 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
 
   #number of cases
   cases <- nrow(data)
+  
+  #empirical EGA
+  empirical.EGA <- suppressMessages(suppressWarnings(EGA(data = data, uni = uni, corr = corr,
+                                                         model = model, model.args = model.args,
+                                                         algorithm = algorithm, algorith.args = algorithm.args,
+                                                         plot.EGA = FALSE)))
 
   #set inverse covariance matrix for parametric approach
   if(type=="parametric"){  # Use a parametric approach
@@ -622,10 +628,7 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
   result$bootGraphs <- bootGraphs
   result$summary.table <- summary.table
   result$frequency <- lik
-  result$EGA <- suppressMessages(suppressWarnings(EGA(data = data, uni = uni, corr = corr,
-                                                      model = model, model.args = model.args,
-                                                      algorithm = algorithm, algorith.args = algorithm.args,
-                                                      plot.EGA = FALSE)))
+  result$EGA <- empirical.EGA
 
   # Typical structure
   if (typicalStructure) {
