@@ -252,7 +252,7 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 24.02.2021
+# Updated 01.03.2021
 bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling"),
                     corr = c("cor_auto", "pearson", "spearman"),
                     model = c("glasso", "TMFG"), model.args = list(),
@@ -622,7 +622,7 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
   result$bootGraphs <- bootGraphs
   result$summary.table <- summary.table
   result$frequency <- lik
-  result$EGA <- suppressMessages(suppressWarnings(EGA(data = data, uni = uni,
+  result$EGA <- suppressMessages(suppressWarnings(EGA(data = data, uni = uni, corr = corr,
                                                       model = model, model.args = model.args,
                                                       algorithm = algorithm, algorith.args = algorithm.args,
                                                       plot.EGA = FALSE)))
