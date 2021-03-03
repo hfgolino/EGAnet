@@ -7,7 +7,7 @@
 EGA(
   data,
   n = NULL,
-  uni = TRUE,
+  uni.method = c("expand", "LE"),
   corr = c("cor_auto", "pearson", "spearman"),
   model = c("glasso", "TMFG"),
   model.args = list(),
@@ -29,17 +29,28 @@ then argument \code{n} (number of cases) is \strong{required}}
 \item{n}{Integer.
 Sample size if \code{data} provided is a correlation matrix}
 
-\item{uni}{Boolean.
-Should unidimensionality be checked?
-Defaults to \code{TRUE}.
-Set to \code{FALSE} to check for multidimensionality only.
-If \code{TRUE}, then the same number of variables as the original
-data (i.e., from argument \code{data}) up to 12 are generated from a factor
-model with one factor and loadings of .70. These data are then
-appended to the original data and dimensionality is checked.
-If the number of dimensions is one or two, then the original
-data are unidimensional; otherwise, the data are multidimensional
-(see Golino, Shi, et al., 2020 for more details)}
+\item{uni.method}{Character.
+What unidimensionality method should be used? 
+Defaults to \code{"LE"}.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{expand}}}
+{Expands the correlation matrix with four variables correlated .50.
+If number of dimension returns 2 or less in check, then the data 
+are unidimensional; otherwise, regular EGA with no matrix
+expansion is used. This is the method used in the Golino et al. (2020)
+\emph{Psychological Methods} simulation.}
+
+\item{\strong{\code{LE}}}
+{Applies the leading eigenvalue algorithm (\code{\link[igraph]{cluster_leading_eigen}})
+on the empirical correlation matrix. If the number of dimensions is 1 or 2,
+then the leading eigenvalue solution is used; otherwise, regular EGA
+is used. This is the method used in the Christensen, Garrido,
+and Golino (2021) simulation.}
+
+}}
 
 \item{corr}{Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
 Current options are:
@@ -61,14 +72,14 @@ the \code{\link[stats]{cor}}} function.
 
 \item{model}{Character.
 A string indicating the method to use.
+Defaults to \code{"glasso"}.
 Current options are:
 
 \itemize{
 
 \item{\strong{\code{glasso}}}
 {Estimates the Gaussian graphical model using graphical LASSO with
-extended Bayesian information criterion to select optimal regularization parameter.
-This is the default method}
+extended Bayesian information criterion to select optimal regularization parameter}
 
 \item{\strong{\code{TMFG}}}
 {Estimates a Triangulated Maximally Filtered Graph}
@@ -80,7 +91,7 @@ A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
 or \code{\link[NetworkToolbox]{TMFG}}}
 
 \item{algorithm}{A string indicating the algorithm to use or a function from \code{\link{igraph}}
-
+Defaults to \code{"walktrap"}.
 Current options are:
 
 \itemize{
@@ -211,7 +222,7 @@ summary(ega.intel)
 wmt <- cor(wmt2[,7:24])
 
 # Estimate EGA
-ega.wmt <- EGA(data = wmt, n = nrow(wmt2), uni = FALSE, model = "glasso", plot.EGA = FALSE)
+ega.wmt <- EGA(data = wmt, n = nrow(wmt2), model = "glasso", plot.EGA = FALSE)
 
 }
 
@@ -223,7 +234,8 @@ Fast unfolding of communities in large networks.
 \emph{Journal of Statistical Mechanics: Theory and Experiment}, \emph{2008}, P10008.
 
 # Compared all \emph{igraph} community detections algorithms, introduced Louvain algorithm, simulation with continuous and polytomous data \cr
-Christensen, A. P., & Golino, H. (under review).
+# Also implements the Leading Eigenvalue unidimensional method \cr
+Christensen, A. P., Garrido, L. E., & Golino, H. (2021).
 Estimating factors with psychometric networks: A Monte Carlo simulation comparing community detection algorithms.
 \emph{PsyArXiv}.
 \doi{10.31234/osf.io/hz89e}

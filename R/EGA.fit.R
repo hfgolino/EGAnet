@@ -10,6 +10,24 @@
 #' 
 #' @param n Integer.
 #' Sample size (if the data provided is a correlation matrix)
+#' 
+#' @param corr Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
+#' Current options are:
+#'
+#' \itemize{
+#'
+#' \item{\strong{\code{cor_auto}}}
+#' {Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
+#' \code{\link[qgraph]{qgraph}}}.
+#'
+#' \item{\strong{\code{pearson}}}
+#' {Computes Pearson's correlation coefficient using the pairwise complete observations via
+#' the \code{\link[stats]{cor}}} function.
+#'
+#' \item{\strong{\code{spearman}}}
+#' {Computes Spearman's correlation coefficient using the pairwise complete observations via
+#' the \code{\link[stats]{cor}}} function.
+#' }
 #'
 #' @param model Character.
 #' A string indicating the method to use.
@@ -97,13 +115,19 @@
 #'
 #' @export
 # EGA fit
-# Updated 11.11.2020
-EGA.fit <- function (data, model = c("glasso","TMFG"),
-                     steps = c(3,4,5,6,7,8), n = NULL)
+# Updated 03.03.2021
+EGA.fit <- function (data, n = NULL,
+                     corr = c("cor_auto", "pearson", "spearman"),
+                     model = c("glasso","TMFG"),
+                     steps = c(3,4,5,6,7,8))
 {
   if(missing(model))
   {model <- "glasso"
   }else{model <- match.arg(model)}
+  
+  if(missing(corr))
+  {corr <- "cor_auto"
+  }else{corr <- match.arg(corr)}
 
   if(missing(steps))
   {steps <- c(3,4,5,6,7,8)
@@ -112,7 +136,11 @@ EGA.fit <- function (data, model = c("glasso","TMFG"),
   #Speed up process with data
   if(nrow(data) != ncol(data)){
     n <- nrow(data)
-    data <- qgraph::cor_auto(data)
+    data <- switch(corr,
+                   "cor_auto" = qgraph::cor_auto(data),
+                   "pearson" = cor(data, use = "pairwise.complete.obs"),
+                   "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
+    )
   }
 
   best.fit <- list()

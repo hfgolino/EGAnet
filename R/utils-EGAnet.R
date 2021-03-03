@@ -1431,7 +1431,7 @@ categorize<-function(data, ncat, skew.values){
 #'
 # Simulate data function----
 # Updated 25.11.2020
-typicalStructure.network <- function (A, model, model.args, n = NULL, uni = FALSE,
+typicalStructure.network <- function (A, corr, model, model.args, n = NULL, uni.method,
                                       algorithm, algorithm.args)
 {
 
@@ -1490,61 +1490,137 @@ typicalStructure.network <- function (A, model, model.args, n = NULL, uni = FALS
   if(!is.function(algorithm)){
 
     multi.wc <- switch(algorithm,
-                       walktrap = do.call(igraph::cluster_walktrap, as.list(algorithm.formals)),
-                       louvain = do.call(igraph::cluster_louvain, as.list(algorithm.formals))
+                       "walktrap" = do.call(igraph::cluster_walktrap, as.list(algorithm.formals))$membership,
+                       "louvain" = do.call(igraph::cluster_louvain, as.list(algorithm.formals))$membership
     )
 
-  }else{multi.wc <- do.call(what = algorithm, args = as.list(algorithm.formals))}
-
-  # Unidimensional result
-  if(uni){
-
-    # Get new data
-    if(model == "glasso"){
-
-      # Obtain inverse of network
-      g <- -A
-      diag(g) <- 1
-
-    }else if(model == "TMFG"){
-
-      # Generate data
-      g.data <- MASS::mvrnorm(n, mu = rep(0, ncol(A)), Sigma = as.matrix(Matrix::nearPD(A, corr = TRUE, keepDiag = TRUE)$mat))
-      g <- -suppressMessages(NetworkToolbox::LoGo(g.data, normal = TRUE, partial = TRUE))
-      diag(g) <- 1
-
+  }else{multi.wc <- do.call(what = algorithm, args = as.list(algorithm.formals))$membership}
+  
+  # Get new data
+  if(model == "glasso"){
+    
+    # Obtain inverse of network
+    g <- -A
+    diag(g) <- 1
+    
+  }else if(model == "TMFG"){
+    
+    # Generate data
+    g.data <- MASS::mvrnorm(n, mu = rep(0, ncol(A)), Sigma = as.matrix(Matrix::nearPD(A, corr = TRUE, keepDiag = TRUE)$mat))
+    g <- -suppressMessages(NetworkToolbox::LoGo(g.data, normal = TRUE, partial = TRUE))
+    diag(g) <- 1
+    
+  }
+  
+  # New data
+  data <- MASS::mvrnorm(n, mu = rep(0, ncol(g)), Sigma = corpcor::pseudoinverse(g))
+  
+  # Check for unidimensional structure
+  if(uni.method == "expand"){
+    
+    # Check for Spinglass algorithm
+    if(is.function(algorithm)){
+      
+      # spins argument is used to identify Spinglass algorithm
+      if("spins" %in% methods::formalArgs(algorithm)){
+        
+        # Simulate data from unidimensional factor model
+        sim.data <- sim.func(data = data, nvar = 4, nfact = 1, load = .70)
+        
+        ## Compute correlation matrix
+        cor.data <- switch(corr,
+                           "cor_auto" = qgraph::cor_auto(sim.data),
+                           "pearson" = cor(sim.data, use = "pairwise.complete.obs"),
+                           "spearman" = cor(sim.data, method = "spearman", use = "pairwise.complete.obs")
+        )
+        
+      }else{
+        
+        ## Compute correlation matrix
+        cor.data <- switch(corr,
+                           "cor_auto" = qgraph::cor_auto(data),
+                           "pearson" = cor(data, use = "pairwise.complete.obs"),
+                           "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
+        )
+        
+        ## Expand correlation matrix
+        cor.data <- expand.corr(cor.data)
+        
+      }
+      
+    }else{# Do regular adjustment
+      
+      ## Compute correlation matrix
+      cor.data <- switch(corr,
+                         "cor_auto" = qgraph::cor_auto(data),
+                         "pearson" = cor(data, use = "pairwise.complete.obs"),
+                         "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
+      )
+      
+      ## Expand correlation matrix
+      cor.data <- expand.corr(cor.data)
+      
     }
-
-    # New data
-    data <- MASS::mvrnorm(n, mu = rep(0, ncol(g)), Sigma = corpcor::pseudoinverse(g))
-
-    # Set one factor for simulated data
-    nfact <- 1
-    nvar <- ncol(data)
-
-    # Simulate data from unidimensional factor model
-    sim.data <- sim.func(data = data, nvar = nvar, nfact = nfact, load = .70)
-
-    # Estimate unidimensional EGA
-    uni.res <- suppressMessages(EGA.estimate(data = sim.data, n = n,
-                                             model = model, model.args = model.args,
-                                             algorithm = algorithm, algorithm.args = algorithm.args))
-
-    # Get undimensional result
-    uni.wc <- uni.res$wc[-c(1:(nvar*nfact))]
-
-    if(uni.res$n.dim <= nfact + 1){ ## If unidimensional
-      wc <- uni.wc
-    }else{ ## If not
-      wc <- multi.wc$membership
+    
+    # Unidimensional result
+    uni.res <- EGA.estimate(data = cor.data, n = n,
+                            model = model, model.args = model.args,
+                            algorithm = algorithm, algorithm.args = algorithm.args)
+    
+    ## Remove simulated data for multidimensional result
+    cor.data <- cor.data[-c(1:4),-c(1:4)]
+    
+    if(uni.res$n.dim <= 2){
+      wc <- uni.res$wc[-c(1:4)]
+    }else{
+      wc <- multi.wc
     }
-
-  }else{
-    wc <- multi.wc$membership
+    
+  }else if(uni.method == "LE"){
+    
+    ## Compute correlation matrix
+    cor.data <- switch(corr,
+                       "cor_auto" = qgraph::cor_auto(data),
+                       "pearson" = cor(data, use = "pairwise.complete.obs"),
+                       "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
+    )
+    
+    # Leading eigenvalue approach for one and two dimensions
+    wc <- igraph::cluster_leading_eigen(NetworkToolbox::convert2igraph(abs(cor.data)))$membership
+    names(wc) <- colnames(cor.data)
+    n.dim <- length(na.omit(unique(wc)))
+  
+    # Set up results
+    if(n.dim <= 2){ ## If leading eigenvalue
+      
+      # Check for fit
+      if(n.dim == length(na.omit(unique(multi.wc)))){
+        
+        # Check if there are differences
+        if(!all(wc == multi.wc)){
+          
+          # Multidimensional fit
+          multi.fit <- tefi(abs(cor.data), multi.wc)$VN.Entropy.Fit
+          
+          # Leading eigenvalue fit
+          le.fit <- tefi(abs(cor.data), wc)$VN.Entropy.Fit
+          
+          # Check for better fit
+          if(multi.fit < le.fit){
+            wc <- multi.wc
+          }
+          
+        }
+        
+      }
+      
+    }else{wc <- multi.wc}
+    
   }
 
   # Obtain community memberships
   init.wc <- as.vector(matrix(NA, nrow = 1, ncol = ncol(A)))
+  names(init.wc) <- colnames(A)
   init.wc[1:length(wc)] <- wc
   wc <- init.wc
 

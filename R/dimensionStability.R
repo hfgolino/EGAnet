@@ -37,7 +37,7 @@
 #' ega.wmt <- EGA(data = wmt, model = "glasso", plot.type = "qgraph")
 #'
 #' # Estimate bootstrap EGA
-#' boot.wmt <- bootEGA(data = wmt, uni = TRUE, iter = 500, typicalStructure = TRUE,
+#' boot.wmt <- bootEGA(data = wmt, iter = 500, typicalStructure = TRUE,
 #' plot.typicalStructure = TRUE, model = "glasso", plot.type = "qgraph",
 #' type = "parametric", ncores = 2)
 #' }

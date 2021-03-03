@@ -6,14 +6,36 @@
 \usage{
 EGA.fit(
   data,
+  n = NULL,
+  corr = c("cor_auto", "pearson", "spearman"),
   model = c("glasso", "TMFG"),
-  steps = c(3, 4, 5, 6, 7, 8),
-  n = NULL
+  steps = c(3, 4, 5, 6, 7, 8)
 )
 }
 \arguments{
 \item{data}{Matrix or data frame.
 Dataset or correlation matrix}
+
+\item{n}{Integer.
+Sample size (if the data provided is a correlation matrix)}
+
+\item{corr}{Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{cor_auto}}}
+{Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
+\code{\link[qgraph]{qgraph}}}.
+
+\item{\strong{\code{pearson}}}
+{Computes Pearson's correlation coefficient using the pairwise complete observations via
+the \code{\link[stats]{cor}}} function.
+
+\item{\strong{\code{spearman}}}
+{Computes Spearman's correlation coefficient using the pairwise complete observations via
+the \code{\link[stats]{cor}}} function.
+}}
 
 \item{model}{Character.
 A string indicating the method to use.
@@ -37,9 +59,6 @@ See \code{\link[NetworkToolbox]{TMFG}}}
 \item{steps}{Numeric vector.
 Range of steps to be used in the model selection.
 Defaults from 3 to 8 steps (based on Pons & Latapy, 2006)}
-
-\item{n}{Integer.
-Sample size (if the data provided is a correlation matrix)}
 }
 \value{
 Returns a list containing:
