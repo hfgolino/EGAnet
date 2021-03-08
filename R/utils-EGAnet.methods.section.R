@@ -243,7 +243,7 @@ EGA.methods.section <- function (object, net.loads, net.scores)
                             "nodes, which provides a multi-level structure (Gates et al., 2016). In this study, the",
                             "algorithm was not used to identify hierarchical community structures in the network.",
                             "The Louvain algorithm was implemented using the *igraph* package (Csardi & Nepusz, 2006) in R.",
-                            "It's also important to note that the algorithm implemented in *igraph* is deterministic;",
+                            "It's important to note that the algorithm implemented in *igraph* is deterministic;",
                             "however, other implementations are not (Gates et al., 2016)."
     )
     
@@ -381,11 +381,10 @@ bootEGA.methods.section <- function (object, dim.stability, item.stability)
   # Set up text
   ## Introduction
   intro.header <- "# Bootstrap Exploratory Graph Analysis"
-  intro.text <- paste("&emsp;Bootstrap exploratory graph nalysis (bootEGA) is a recently developed method to estimate ",
+  intro.text <- paste("&emsp;Bootstrap exploratory graph analysis (bootEGA) is a recently developed method to estimate ",
                       "and evaluate the dimensional structure estimated using EGA (Christensen & Golino, 2019). ",
-                      "(Golino & Epskamp, 2017; Golino et al., 2020). The general approach of bootEGA is generate ",
-                      "*X* number of bootstrap samples and apply EGA to each replicate sample, forming ",
-                      "a sampling distribution of EGA results.",
+                      "The general approach of bootEGA is generate *X* number of bootstrap samples and apply EGA to each ",
+                      "replicate sample, forming a sampling distribution of EGA results.",
                       sep = "")
   
   refs$christensenC2019 <- paste("Christensen, A. P., & Golino, H. (2019).",
@@ -453,7 +452,11 @@ bootEGA.methods.section <- function (object, dim.stability, item.stability)
                                    "<em>European Journal of Personality</em>, <em>34</em>, 1095--1108.",
                                    "https://doi.org/10.1002/per.2265")
     
-    message("Make sure to REPLACE text in [brackets]!")
+    message(
+      paste("Make sure to REPLACE text in",
+            styletext("[brackets]", defaults = "bold"),
+            "(see Structural Consistency section)!")
+      )
   }
   
   if(item.stability){
