@@ -36,9 +36,9 @@
 #'
 #' \item{\strong{\code{LE}}}
 #' {Applies the leading eigenvalue algorithm (\code{\link[igraph]{cluster_leading_eigen}})
-#' on the empirical correlation matrix. If the number of dimensions is 1 or 2,
+#' on the empirical correlation matrix. If the number of dimensions is 1,
 #' then the leading eigenvalue solution is used; otherwise, regular EGA
-#' is used. This is the method used in the Christensen, Garrido,
+#' is used. This is the final method used in the Christensen, Garrido,
 #' and Golino (2021) simulation.}
 #' 
 #' }
@@ -247,8 +247,8 @@
 #'
 #' @export
 #'
-# Updated 03.03.2021
-# LE adjustment 03.03.2021
+# Updated 08.03.2021
+# LE adjustment 08.03.2021
 ## EGA Function to detect unidimensionality:
 EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
                  corr = c("cor_auto", "pearson", "spearman"),
@@ -448,29 +448,7 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
       n.dim <- length(na.omit(unique(wc)))
       
       # Set up results
-      if(n.dim <= 2){ ## If leading eigenvalue
-        
-        # Check for fit
-        if(n.dim == length(na.omit(unique(multi.res$wc)))){
-          
-          # Check if there are differences
-          if(!all(wc == multi.res$wc)){
-            
-            # Multidimensional fit
-            multi.fit <- tefi(abs(data), multi.res$wc)$VN.Entropy.Fit
-            
-            # Leading eigenvalue fit
-            le.fit <- tefi(abs(data), wc)$VN.Entropy.Fit
-            
-            # Check for better fit
-            if(multi.fit < le.fit){
-              wc <- multi.res$wc
-            }
-            
-          }
-          
-        }
-        
+      if(n.dim == 1){ ## Leading eigenvalue
         
         cor.data <- data
         estimated.network <- multi.res$network
@@ -569,7 +547,6 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
       if(uni.res$n.dim <= 2 & !is.infinite(multi.res$n.dim)){
         
         n.dim <- uni.res$n.dim
-        cor.data <- cor.data
         estimated.network <- multi.res$network
         wc <- uni.res$wc[-c(1:4)]
         if(model == "glasso"){
@@ -580,7 +557,6 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
       }else{
         
         n.dim <- multi.res$n.dim
-        cor.data <- cor.data
         estimated.network <- multi.res$network
         wc <- multi.res$wc
         
@@ -614,36 +590,15 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
       
       
       # Set up results
-      if(n.dim <= 2){ ## If leading eigenvalue
-        
-        # Check for fit
-        if(n.dim == length(na.omit(unique(multi.res$wc)))){
-          
-          # Check if there are differences
-          if(!all(wc == multi.res$wc)){
-            
-            # Multidimensional fit
-            multi.fit <- tefi(abs(cor.data), multi.res$wc)$VN.Entropy.Fit
-            
-            # Leading eigenvalue fit
-            le.fit <- tefi(abs(cor.data), wc)$VN.Entropy.Fit
-            
-            # Check for better fit
-            if(multi.fit < le.fit){
-              wc <- multi.res$wc
-            }
-            
-          }
-          
-        }
-        
+      if(n.dim == 1){ ## Leading eigenvalue
+
         estimated.network <- multi.res$network
         if(model == "glasso"){
           gamma <- multi.res$gamma
           lambda <- multi.res$lambda
         }
         
-      }else{
+      }else{ ## If not
         
         n.dim <- multi.res$n.dim
         estimated.network <- multi.res$network

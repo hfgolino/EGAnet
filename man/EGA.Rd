@@ -45,9 +45,9 @@ expansion is used. This is the method used in the Golino et al. (2020)
 
 \item{\strong{\code{LE}}}
 {Applies the leading eigenvalue algorithm (\code{\link[igraph]{cluster_leading_eigen}})
-on the empirical correlation matrix. If the number of dimensions is 1 or 2,
+on the empirical correlation matrix. If the number of dimensions is 1,
 then the leading eigenvalue solution is used; otherwise, regular EGA
-is used. This is the method used in the Christensen, Garrido,
+is used. This is the final method used in the Christensen, Garrido,
 and Golino (2021) simulation.}
 
 }}
