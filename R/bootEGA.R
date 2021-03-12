@@ -263,7 +263,7 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 08.03.2021
+# Updated 12.03.2021
 bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
                     type = c("parametric", "resampling"),
                     corr = c("cor_auto", "pearson", "spearman"),
@@ -318,34 +318,15 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
   }
 
   #### DEPRECATED ARGUMENTS ####
+  
+  # Message function
+  message(styletext(styletext("\nBootstrap Exploratory Graph Analysis", defaults = "underline"), defaults = "bold"))
 
   #### MISSING ARGUMENTS HANDLING ####
   
   if(missing(uni.method)){
     uni.method <- "LE"
   }else{uni.method <- match.arg(uni.method)}
-  
-  # Check if uni.method = "LE" has been used
-  if(uni.method == "LE"){
-    # Give change warning
-    warning(
-      paste(
-        "Previous versions of EGAnet (<= 0.9.8) checked unidimensionality using",
-        styletext('uni.method = "expand"', defaults = "underline"),
-        "as the default"
-      )
-    )
-  }else if(uni.method == "expand"){
-    # Give change warning
-    warning(
-      paste(
-        "Newer evidence suggests that",
-        styletext('uni.method = "LE"', defaults = "underline"),
-        'is more accurate than uni.method = "expand" (see Christensen, Garrido, & Golino, 2021 in references).',
-        '\n\nIt\'s recommended to use uni.method = "LE"'
-      )
-    )
-  }
   
   if(missing(corr)){
     corr <- "cor_auto"
@@ -423,6 +404,11 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
   }
 
   #### MISSING ARGUMENTS HANDLING ####
+  
+  # Let user know setting
+  message(paste(" \u2022 type = ", type, "\n",
+                " \u2022 iterations = ", iter,
+                sep=""))
 
   #number of cases
   cases <- nrow(data)
@@ -446,6 +432,11 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
 
     if(model=="glasso"){
 
+      
+      if(!"gamma" %in% names(model.args)){
+        model.args$gamma <- empirical.EGA$Methods$gamma
+      }
+      
       g <- -suppressMessages(EGA.estimate(data = cor.data, n = cases, model = model, model.args = model.args)$network)
       diag(g) <- 1
 
@@ -556,10 +547,16 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
                          )
 
     # Sub-routine to following EGA approach (handles undimensional structures)
-    typical.wc <- typicalStructure.network(A = typical.Structure, corr = corr,
-                                           model = model, model.args = model.args,
-                                           n = cases, uni.method = uni.method, algorithm = algorithm,
-                                           algorithm.args = algorithm.args)
+    typical.wc <- suppressWarnings(
+      suppressMessages(
+        
+        typicalStructure.network(A = typical.Structure, corr = corr,
+                                 model = model, model.args = model.args,
+                                 n = cases, uni.method = uni.method, algorithm = algorithm,
+                                 algorithm.args = algorithm.args)
+        
+      )
+    )
 
     typical.ndim <- length(na.omit(unique(typical.wc)))
     
@@ -693,6 +690,29 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
   result$color.palette <- color.palette
 
   class(result) <- "bootEGA"
+  
+  
+  # Check if uni.method = "LE" has been used
+  if(uni.method == "LE"){
+    # Give change warning
+    warning(
+      paste(
+        "Previous versions of EGAnet (<= 0.9.8) checked unidimensionality using",
+        styletext('uni.method = "expand"', defaults = "underline"),
+        "as the default"
+      )
+    )
+  }else if(uni.method == "expand"){
+    # Give change warning
+    warning(
+      paste(
+        "Newer evidence suggests that",
+        styletext('uni.method = "LE"', defaults = "underline"),
+        'is more accurate than uni.method = "expand" (see Christensen, Garrido, & Golino, 2021 in references).',
+        '\n\nIt\'s recommended to use uni.method = "LE"'
+      )
+    )
+  }
 
   return(result)
 }
