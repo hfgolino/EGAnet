@@ -1429,8 +1429,8 @@ categorize<-function(data, ncat, skew.values){
 #'
 #' @noRd
 #'
-# Simulate data function----
-# Updated 25.11.2020
+# Typical network (bootEGA) function----
+# Updated 12.03.2020
 typicalStructure.network <- function (A, corr, model, model.args, n = NULL, uni.method,
                                       algorithm, algorithm.args)
 {
@@ -1589,32 +1589,12 @@ typicalStructure.network <- function (A, corr, model, model.args, n = NULL, uni.
     wc <- igraph::cluster_leading_eigen(NetworkToolbox::convert2igraph(abs(cor.data)))$membership
     names(wc) <- colnames(cor.data)
     n.dim <- length(na.omit(unique(wc)))
-  
+    
+    
     # Set up results
-    if(n.dim <= 2){ ## If leading eigenvalue
-      
-      # Check for fit
-      if(n.dim == length(na.omit(unique(multi.wc)))){
-        
-        # Check if there are differences
-        if(!all(wc == multi.wc)){
-          
-          # Multidimensional fit
-          multi.fit <- tefi(abs(cor.data), multi.wc)$VN.Entropy.Fit
-          
-          # Leading eigenvalue fit
-          le.fit <- tefi(abs(cor.data), wc)$VN.Entropy.Fit
-          
-          # Check for better fit
-          if(multi.fit < le.fit){
-            wc <- multi.wc
-          }
-          
-        }
-        
-      }
-      
-    }else{wc <- multi.wc}
+    if(n.dim != 1){
+      wc <- multi.wc
+    }
     
   }
 
