@@ -2,6 +2,7 @@
 
 S3method(plot,CFA)
 S3method(plot,EGA)
+S3method(plot,EGA.fit)
 S3method(plot,NetLoads)
 S3method(plot,bootEGA)
 S3method(plot,dynEGA)

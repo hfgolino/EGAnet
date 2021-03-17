@@ -318,6 +318,9 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
   }
 
   #### DEPRECATED ARGUMENTS ####
+  
+  # Message function
+  message(styletext(styletext("\nBootstrap Exploratory Graph Analysis", defaults = "underline"), defaults = "bold"))
 
   #### MISSING ARGUMENTS HANDLING ####
   
@@ -402,12 +405,9 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
 
   #### MISSING ARGUMENTS HANDLING ####
   
-  # Message function
-  message(styletext(styletext("\nBootstrap Exploratory Graph Analysis", defaults = "underline"), defaults = "bold"))
-  
   # Let user know setting
   message(paste(" \u2022 type = ", type, "\n",
-                " \u2022 iterations = ", iter, "\n",
+                " \u2022 iterations = ", iter,
                 sep=""))
 
   #number of cases

@@ -8,6 +8,10 @@ o REVAMP: `itemStability` has been recoded. Now includes error checking and more
 
 o FIX: bug for plotting NA communities
 
+o FIX: bug for changing edge size in 'GGally' plotting
+
+o UPDATE: S3Methods for `EGA.fit` plotting
+
 
 Changes in version 0.9.8
 
