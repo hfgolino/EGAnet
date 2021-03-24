@@ -286,7 +286,7 @@
 #' @export
 #
 # Unique Variable Analysis
-# Updated 17.02.2021
+# Updated 24.03.2021
 UVA <- function(data, n = NULL,
                 model = c("glasso", "TMFG"),
                 corr = c("cor_auto", "pearson", "spearman"),
@@ -303,25 +303,6 @@ UVA <- function(data, n = NULL,
   if(missing(corr)){
     corr <- "cor_auto"
   }else{corr <- match.arg(corr)}
-  
-  ## n
-  if(nrow(data) == ncol(data)){
-    if(is.null(n)){
-      stop("Argument 'n' must be set for square matrices")
-    }
-  }else{### Get n
-    n <- nrow(data)
-    ## Compute correlation matrix
-    cormat <- switch(corr,
-                       "cor_auto" = qgraph::cor_auto(data),
-                       "pearson" = cor(data, use = "pairwise.complete.obs"),
-                       "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
-    )
-    ### Make sure it's positive definite
-    if(any(eigen(cormat)$values < 0)){
-      cormat <- as.matrix(Matrix::nearPD(cormat, keepDiag = TRUE)$mat)
-    }
-  }
   
   ## model
   if(missing(model)){
@@ -349,15 +330,56 @@ UVA <- function(data, n = NULL,
     }else{sig <- .05}
   }
   
-  ## key
-  if(is.null(key)){
-    key <- colnames(data)
-  }
-  
   ## reduce
   if(missing(reduce.method)){
     reduce.method <- "latent"
   }else{reduce.method <- match.arg(reduce.method)}
+  
+  ## prepare arguments for lavaan
+  if(reduce.method == "latent"){
+    
+    ## lavaan.args
+    if(length(lavaan.args) == 0){
+      lavaan.args <- formals(lavaan::cfa)
+      lavaan.args[length(lavaan.args)] <- NULL
+      lavaan.args$std.lv <- TRUE
+    }else{
+      lavaan.default <- formals(lavaan::cfa)
+      lavaan.default[length(lavaan.default)] <- NULL
+      lavaan.default$std.lv <- TRUE
+      
+      if(any(names(lavaan.args) %in% names(lavaan.default))){
+        lavaan.default[names(lavaan.args)] <- lavaan.args
+      }
+      
+      lavaan.args <- lavaan.default
+    }
+    
+    ## change key if NULL
+    if(is.null(key)){
+      data <- lavaan.formula.names(data)
+    }
+    
+  }
+  
+  ## n
+  if(nrow(data) == ncol(data)){
+    if(is.null(n)){
+      stop("Argument 'n' must be set for square matrices")
+    }
+  }else{### Get n
+    n <- nrow(data)
+    ## Compute correlation matrix
+    cormat <- switch(corr,
+                     "cor_auto" = qgraph::cor_auto(data),
+                     "pearson" = cor(data, use = "pairwise.complete.obs"),
+                     "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
+    )
+    ### Make sure it's positive definite
+    if(any(eigen(cormat)$values < 0)){
+      cormat <- as.matrix(Matrix::nearPD(cormat, keepDiag = TRUE)$mat)
+    }
+  }
   
   ## plot.args
   if(length(plot.args) == 0){
@@ -374,34 +396,19 @@ UVA <- function(data, n = NULL,
       plot.args <- c(plot.args.use,plots.arg1[names(plots.arg1) %in% names(plot.args.use)==FALSE])}
   }
   
-  ## lavaan.args
-  if(length(lavaan.args) == 0){
-    lavaan.args <- formals(lavaan::cfa)
-    lavaan.args[length(lavaan.args)] <- NULL
-    lavaan.args$std.lv <- TRUE
-  }else{
-    lavaan.default <- formals(lavaan::cfa)
-    lavaan.default[length(lavaan.default)] <- NULL
-    lavaan.default$std.lv <- TRUE
-    
-    if(any(names(lavaan.args) %in% names(lavaan.default))){
-      lavaan.default[names(lavaan.args)] <- lavaan.args
-    }
-    
-    lavaan.args <- lavaan.default
-  }
-  
   # Perform redundancy analysis
   process <- redundancy.process(data = data, cormat = cormat,
                                 n = n, model = model, method = method,
                                 type = type, sig = sig,
                                 plot.redundancy = plot.redundancy, plot.args = plot.args)
   
+  ## key
+  if(is.null(key)){
+    key <- colnames(data)
+  }
   
   # Get names
-  if(!is.null(key)){
-    process <- redund.names(node.redundant.obj = process, key = key)
-  }
+  process <- redund.names(node.redundant.obj = process, key = key)
   
   # Run through redundancy reduction
   if(reduce){

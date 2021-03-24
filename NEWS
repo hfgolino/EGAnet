@@ -12,6 +12,12 @@ o FIX: bug for changing edge size in 'GGally' plotting
 
 o UPDATE: S3Methods for `EGA.fit` plotting
 
+o FIX: plotting parameters for `bootEGA`
+
+o FIX: redundancy output for adhoc check in `UVA`
+
+o FIX: latent variable with non-space separated entries in `UVA` (`reduce.method = "latent"`)
+
 
 Changes in version 0.9.8
 
