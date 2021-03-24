@@ -410,7 +410,12 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
                 " \u2022 iterations = ", iter, "\n",
                 " \u2022 model = ", model, "\n",
                 " \u2022 algorithm = ", algorithm, "\n",
-                " \u2022 correlation = ", corr,
+                " \u2022 correlation = ", corr, "\n",
+                " \u2022 unidimensional check = ", ifelse(
+                  uni.method == "LE",
+                  "leading eigenvalue",
+                  "correlation matrix expansion"
+                ), "\n",
                 sep=""))
 
   #number of cases

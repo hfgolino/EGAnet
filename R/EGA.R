@@ -366,7 +366,12 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
   # Let user know setting
   message(paste(" \u2022 model = ", model, "\n",
                 " \u2022 algorithm = ", algorithm, "\n",
-                " \u2022 correlation = ", corr,
+                " \u2022 correlation = ", corr, "\n",
+                " \u2022 unidimensional check = ", ifelse(
+                  uni.method == "LE",
+                  "leading eigenvalue",
+                  "correlation matrix expansion"
+                ), "\n",
                 sep=""))
   
   # Check for correlation matrix or data
