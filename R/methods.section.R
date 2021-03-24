@@ -158,8 +158,7 @@ methods.section <- function(..., stats = c("net.loads", "net.scores",
   }
   
   # Unlist ordering
-  ordering <- unlist(ordering)
-  ordering <- order(ordering)
+  ordering <- order(unlist(ordering))
   
   # Order objects and sections
   all.objects <- all.objects[ordering]

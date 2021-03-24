@@ -354,7 +354,7 @@ EGA.methods.section <- function (object, net.loads, net.scores)
                      "dimensions via a community detection algorithm. Importantly, some variables in the network may not be ",
                      "connected to other variables in other communities. This means that some variables may have a loading of ",
                      "zero in some dimensions. This represents a loading structure that is between a confirmatory (CFA) and exploratory (EFA) ",
-                     "factor analysis loading matrix (Christensen & Golino, 2020b).",
+                     "factor analysis loading matrix (Christensen & Golino, 2021).",
                      sep = "")
     
     refs$christensenE2020 <- paste("Christensen, A. P., & Golino, H. (2021).",
@@ -510,7 +510,10 @@ bootEGA.methods.section <- function (object, dim.stability, item.stability)
                       "In our case, the goal [was to hae separate but related constructs that were interrelated.] This means ",
                       "that we expected that some dimensions may be less stable than others due to some of their interrelations. ",
                       "Because of this, we set a value of **[.75]** or higher (i.e., a dimension replicating exactly across **[75%]** ",
-                      "of the bootstrap samples) as our benchmark for acceptable.",
+                      "of the bootstrap samples) as our benchmark for acceptable.", "\n\n",
+                      paste("Make sure to REPLACE text in",
+                            styletext("[brackets]", defaults = "bold"),
+                            "(see Structural Consistency section)!"),
                       sep = "")
     
     refs$christensenF2020 <- paste("Christensen, A. P., Golino, H., & Silvia, P. J. (2020).",
