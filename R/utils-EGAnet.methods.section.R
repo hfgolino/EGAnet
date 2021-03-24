@@ -292,7 +292,7 @@ EGA.methods.section <- function (object, net.loads, net.scores)
   
   if(uni.method == "LE"){
     
-    unidimensional.text <- paste("&emsp;To check for unidimensionality, we used the Leading Eigenvalue algorithm (Newman, 2006) approach, which",
+    unidimensional.text <- paste("\n&emsp;To check for unidimensionality, we used the Leading Eigenvalue algorithm (Newman, 2006) approach, which",
                                  "was applied to the zero-order correlation matrix (Christensen et al., 2021). The algorithm is based", 
                                  "on spectral properties of the network using the eigenvector of the first eigenvalue of the modularity matrix to",
                                  "determine optimal community structures. The algorithm begins by computing the first eigenvector of the modularity",
@@ -307,7 +307,7 @@ EGA.methods.section <- function (object, net.loads, net.scores)
     # Golino et al. (2020) ==> Golino, Shi et al. (2020)
     if(isTRUE(net.loads) || isTRUE(net.scores)){
       
-      unidimensional.text <- paste("&emsp;To check for unidimensionality, used Golino, Shi et al.'s (2020) unidimensionality adjustment, which",
+      unidimensional.text <- paste("\n&emsp;To check for unidimensionality, used Golino, Shi et al.'s (2020) unidimensionality adjustment, which",
                                    "generates four variables that load strongly (.70) on a single factor and adds them to the empirical data.",
                                    "EGA is then applied to the combined dataset. For computational efficiency and statistical precision, this",
                                    "approached was adapted to \"expand\" the empirical correlation matrix to add four variables that are", 
@@ -318,7 +318,7 @@ EGA.methods.section <- function (object, net.loads, net.scores)
       
     }else{
       
-      unidimensional.text <- paste("&emsp;To check for unidimensionality, used Golino et al.'s (2020) unidimensionality adjustment, which",
+      unidimensional.text <- paste("\n&emsp;To check for unidimensionality, used Golino et al.'s (2020) unidimensionality adjustment, which",
                                    "generates four variables that load strongly (.70) on a single factor and adds them to the empirical data.",
                                    "EGA is then applied to the combined dataset. For computational efficiency and statistical precision, this",
                                    "approached was adapted to \"expand\" the empirical correlation matrix to add four variables that are", 
