@@ -467,7 +467,7 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
   count <- 0
 
   #let user know data generation has started
-  message("\nGenerating data...", appendLF = FALSE)
+  message("Generating data...", appendLF = FALSE)
 
   repeat{
 
