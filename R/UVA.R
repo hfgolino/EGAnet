@@ -439,9 +439,9 @@ UVA <- function(data, n = NULL,
       
       if(all(is.na(adhoc.check$redundant))){
         
-        message("Some redundancies may still exist. See `OUTPUT$adhoc`")
+        message("No redundancies reamin.")
         
-      }else{message("No redundancies reamin.")}
+      }else{message("Some redundancies may still exist. See `OUTPUT$adhoc`")}
     }
     
     # Artificial pause for feel
