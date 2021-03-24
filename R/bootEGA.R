@@ -320,7 +320,7 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
   #### DEPRECATED ARGUMENTS ####
   
   # Message function
-  message(styletext(styletext("\nBootstrap Exploratory Graph Analysis", defaults = "underline"), defaults = "bold"))
+  message(styletext(styletext("\nBootstrap Exploratory Graph Analysis\n", defaults = "underline"), defaults = "bold"))
 
   #### MISSING ARGUMENTS HANDLING ####
   
