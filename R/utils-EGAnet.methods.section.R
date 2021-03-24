@@ -2,7 +2,7 @@
 #'
 #' @noRd
 # EGA Methods Section----
-# Updated 27.12.2020
+# Updated 24.03.2021
 EGA.methods.section <- function (object, net.loads, net.scores)
 {
   # Input arguments
@@ -19,20 +19,20 @@ EGA.methods.section <- function (object, net.loads, net.scores)
   ## Introduction
   intro.header <- "# Exploratory Graph Analysis"
   
-  # Golino et al. (2020) ==> Golino, Shi, et al. (2020)
-  if(net.loads || net.scores){
+  # Golino et al. (2020) ==> Golino, Shi et al. (2020)
+  if(isTRUE(net.loads) || isTRUE(net.scores)){
     
     intro.text <- paste("&emsp;Exploratory graph analysis (EGA) is a recently developed method to estimate ",
                         "the number of dimensions in multivariate data using undirected network models ",
-                        "(Golino & Epskamp, 2017; Golino, Shi, et al., 2020). EGA first applies a network ",
+                        "(Golino & Epskamp, 2017; Golino, Shi et al., 2020). EGA first applies a network ",
                         "estimation method followed by a community detection algorithm for weighted ",
                         "networks (Fortunato, 2010). EGA has been shown to be as accurate or more accurate ",
                         "than more traditional factor analytic methods such as parallel analysis ",
-                        "(Christensen & Golino, 2020a; Golino, Shi, et al., 2020).",
+                        "(Christensen, Garrido, & Golino, 2021; Golino, Shi, et al., 2020).",
                         sep = "")
     
-    refs$christensenD2020 <- paste("Christensen, A. P., & Golino, H. (2020a).",
-                                   "Estimating factors with psychometric networks: A Monte Carlo simulation comparing community detection algorithms.",
+    refs$christensenC2020 <- paste("Christensen, A. P., Garrido, L. E., & Golino, H. (2021).",
+                                   "Comparing community detection algorithms in psychological data: A Monte Carlo simulation.",
                                    "<em>PsyArXiv</em>.",
                                    "https://doi.org/10.31234/osf.io/hz89e")
     
@@ -44,11 +44,11 @@ EGA.methods.section <- function (object, net.loads, net.scores)
                         "estimation method followed by a community detection algorithm for weighted ",
                         "networks (Fortunato, 2010). EGA has been shown to be as accurate or more accurate ",
                         "than more traditional factor analytic methods such as parallel analysis ",
-                        "(Christensen & Golino, 2020; Golino et al., 2020).",
+                        "(Christensen, Garrido, & Golino, 2021; Golino et al., 2020).",
                         sep = "")
     
-    refs$christensenD2020 <- paste("Christensen, A. P., & Golino, H. (2020).",
-                                   "Estimating factors with psychometric networks: A Monte Carlo simulation comparing community detection algorithms.",
+    refs$christensenC2020 <- paste("Christensen, A. P., Garrido, L. E., & Golino, H. (2021).",
+                                   "Comparing community detection algorithms in psychological data: A Monte Carlo simulation.",
                                    "<em>PsyArXiv</em>.",
                                    "https://doi.org/10.31234/osf.io/hz89e")
     
@@ -89,7 +89,7 @@ EGA.methods.section <- function (object, net.loads, net.scores)
                         "&emsp;The LASSO uses a parameter called lambda ($\\lambda$), which controls the sparsity of the network. ",
                         "Lower values of $\\lambda$ remove fewer edges, increasing the possibility of including ",
                         "spurious correlations, while larger values of $\\lambda$ remove more edges, increasing ",
-                        "the possibility of removing relevant edges. When $\\lambda$ = 0, then the estimates are ",
+                        "the possibility of removing relevant edges. When $\\lambda$ = 0, the estimates are ",
                         "equal to the ordinary least squares solution for the partial correlation matrix. ",
                         "In this study, the ratio of the minimum and maximum $\\lambda$ was set to ", lambda, ".",
                         "\n\n",
@@ -200,18 +200,38 @@ EGA.methods.section <- function (object, net.loads, net.scores)
   {
     steps <- INPUT$steps
     
-    algorithm.text <- paste("&emsp;The Walktrap algorithm (Pons & Latapy, 2006) is a commonly applied community detection algorithm in ",
-                            "the psychometric network literature (Golino & Epskamp, 2017; Golino, Shi, et al., 2020). The algorithm begins ",
-                            "by computing a transition matrix where each element represents the probability of one node traversing to ",
-                            "another (based on node strength or the sum of the connections to each node). Random walks are then initiated ",
-                            "for a certain number of steps (e.g., ", steps, ") using the transition matrix for probable destinations. Using ",
-                            "Ward's agglomerative clustering approach (Ward, 1963), each node starts as its own cluster and merges ",
-                            "with adjacent clusters (based on squared distances between each cluster) in a way that minimizes the sum of ",
-                            "squared distances between other clusters. Modularity (Newman, 2006) is then used to determine the optimal ",
-                            "partition of clusters (i.e., communities). The Walktrap algorithm was implemented using the *igraph* ",
-                            "package (Csardi & Nepusz, 2006) in R.",
-                            sep = ""
-    )
+    # Golino et al. (2020) ==> Golino, Shi et al. (2020)
+    if(isTRUE(net.loads) || isTRUE(net.scores)){
+      
+      algorithm.text <- paste("&emsp;The Walktrap algorithm (Pons & Latapy, 2006) is a commonly applied community detection algorithm in ",
+                              "the psychometric network literature (Golino & Epskamp, 2017; Golino, Shi et al., 2020). The algorithm begins ",
+                              "by computing a transition matrix where each element represents the probability of one node traversing to ",
+                              "another (based on node strength or the sum of the connections to each node). Random walks are then initiated ",
+                              "for a certain number of steps (e.g., ", steps, ") using the transition matrix for probable destinations. Using ",
+                              "Ward's agglomerative clustering approach (Ward, 1963), each node starts as its own cluster and merges ",
+                              "with adjacent clusters (based on squared distances between each cluster) in a way that minimizes the sum of ",
+                              "squared distances between other clusters. Modularity (Newman, 2006) is then used to determine the optimal ",
+                              "partition of clusters (i.e., communities). The Walktrap algorithm was implemented using the *igraph* ",
+                              "package (Csardi & Nepusz, 2006) in R.",
+                              sep = ""
+      )
+      
+    }else{
+      
+      algorithm.text <- paste("&emsp;The Walktrap algorithm (Pons & Latapy, 2006) is a commonly applied community detection algorithm in ",
+                              "the psychometric network literature (Golino & Epskamp, 2017; Golino et al., 2020). The algorithm begins ",
+                              "by computing a transition matrix where each element represents the probability of one node traversing to ",
+                              "another (based on node strength or the sum of the connections to each node). Random walks are then initiated ",
+                              "for a certain number of steps (e.g., ", steps, ") using the transition matrix for probable destinations. Using ",
+                              "Ward's agglomerative clustering approach (Ward, 1963), each node starts as its own cluster and merges ",
+                              "with adjacent clusters (based on squared distances between each cluster) in a way that minimizes the sum of ",
+                              "squared distances between other clusters. Modularity (Newman, 2006) is then used to determine the optimal ",
+                              "partition of clusters (i.e., communities). The Walktrap algorithm was implemented using the *igraph* ",
+                              "package (Csardi & Nepusz, 2006) in R.",
+                              sep = ""
+      )
+      
+    }
     
     refs$pons2006 <- paste("Pons, P., & Latapy, M. (2006).",
                            "Computing communities in large networks using random walks.",
@@ -263,9 +283,54 @@ EGA.methods.section <- function (object, net.loads, net.scores)
                              "https://doi.org/10.1073/pnas.0601602103")
   }else{
     
-    algorithm.text <- paste("&emsp;A default algorithm was not used in EGA. Write your own damn community detection algorithm section &#128540;")
+    algorithm.text <- paste("&emsp;A default algorithm was not used in EGA. I suppose you'll have to write your own community detection algorithm section")
     
   }
+  
+  ## Unidimensionality
+  uni.method <- INPUT$uni.method
+  
+  if(uni.method == "LE"){
+    
+    unidimensional.text <- paste("&emsp;To check for unidimensionality, we used the Leading Eigenvalue algorithm (Newman, 2006) approach, which",
+                                 "was applied to the zero-order correlation matrix (Christensen et al., 2021). The algorithm is based", 
+                                 "on spectral properties of the network using the eigenvector of the first eigenvalue of the modularity matrix to",
+                                 "determine optimal community structures. The algorithm begins by computing the first eigenvector of the modularity",
+                                 "matrix and then splits the network into two communities with the aim of improving modularity. This process iteratively",
+                                 "unfolds until there is no longer improvement in modularity. If the algorithm returns one dimension, then the result",
+                                 "unidimensional; otherwise, the standard EGA procedure is followed (Christensen et al., 2021). The Leading Eigenvalue",
+                                 "algorithm was implemented using the *igraph* package in R."
+    )
+    
+  }else if (uni.method == "expand"){
+    
+    # Golino et al. (2020) ==> Golino, Shi et al. (2020)
+    if(isTRUE(net.loads) || isTRUE(net.scores)){
+      
+      unidimensional.text <- paste("&emsp;To check for unidimensionality, used Golino, Shi et al.'s (2020) unidimensionality adjustment, which",
+                                   "generates four variables that load strongly (.70) on a single factor and adds them to the empirical data.",
+                                   "EGA is then applied to the combined dataset. For computational efficiency and statistical precision, this",
+                                   "approached was adapted to "expand" the empirical correlation matrix to add four variables that are", 
+                                   "correlated .50 with each other (roughly equivalent to factor loadings of .70) and .00 with all other",
+                                   "variables (i.e., empirical variables; Christensen et al., 2021). This approach avoids adding noise in the form of",
+                                   "spurious correlations between generated and empirical variables (i.e., they are exactly orthogonal)."
+      )
+      
+    }else{
+      
+      unidimensional.text <- paste("&emsp;To check for unidimensionality, used Golino et al.'s (2020) unidimensionality adjustment, which",
+                                   "generates four variables that load strongly (.70) on a single factor and adds them to the empirical data.",
+                                   "EGA is then applied to the combined dataset. For computational efficiency and statistical precision, this",
+                                   "approached was adapted to "expand" the empirical correlation matrix to add four variables that are", 
+                                   "correlated .50 with each other (roughly equivalent to factor loadings of .70) and .00 with all other",
+                                   "variables (i.e., empirical variables; Christensen et al., 2021). This approach avoids adding noise in the form of",
+                                   "spurious correlations between generated and empirical variables (i.e., they are exactly orthogonal)."
+      )
+      
+    }
+
+  }
+  
   
   if(net.loads || net.scores){
     
@@ -275,24 +340,24 @@ EGA.methods.section <- function (object, net.loads, net.scores)
     nl.text <- paste("&emsp;A recent simulation study by Hallquist, Wright, and Molenaar (2019) demonstrated that ",
                      "the network measure *node strength* or the absolute sum of a node's edge weights is related to ",
                      "confirmatory factor analysis loadings. In their simulation, they found that node strength represented ",
-                     "a combination of dominant and cross-factor loadings. Christensen and Golino (2020b) recently proposed ",
+                     "a combination of dominant and cross-factor loadings. Christensen and Golino (2021) recently proposed ",
                      'an adapted node strength measure that splits a node\'s "strength" between the dimensions between ',
                      "dimensions (e.g., ones found by EGA). They called this measure *network loadings* because it was ",
-                     "demonstrated to be relatively equivalent to factor loadings when data were generated from a ",
+                     "demonstrated to be roughly equivalent to factor loadings when data were generated from a ",
                      "factor model.",
                      "\n\n",
-                     "&emsp;Conceptually, network loadings are the standardized node's strength split between dimensions (see ",
-                     "Christensen & Golino, 2020b for mathematical notation). As with factor loadings, the signs of the loadings ",
+                     "&emsp;Conceptually, network loadings are the standardized node's strength split between communities (see ",
+                     "Christensen & Golino, 2021 for mathematical notation). As with factor loadings, the signs of the loadings ",
                      "are added after the loadings have been estimated (following the same procedure as factor loadings; ",
                      "Comrey & Lee, 2013). In contrast to factor loadings, the network loadings are computed after the ",
                      "number of dimensions have been estimated. In EGA, variables are deterministically assigned to ",
                      "dimensions via a community detection algorithm. Importantly, some variables in the network may not be ",
-                     "connected to other variables in other dimensions. This means that some variables may have a loading of ",
+                     "connected to other variables in other communities. This means that some variables may have a loading of ",
                      "zero in some dimensions. This represents a loading structure that is between a confirmatory (CFA) and exploratory (EFA) ",
                      "factor analysis loading matrix (Christensen & Golino, 2020b).",
                      sep = "")
     
-    refs$christensenE2020 <- paste("Christensen, A. P., & Golino, H. (2020b).",
+    refs$christensenE2020 <- paste("Christensen, A. P., & Golino, H. (2021).",
                                    "On the equivalency of factor and network loadings.",
                                    "<em>Behavior Research Methods</em>.",
                                    "https://doi.org/10.3758/s13428-020-01500-6")
@@ -313,7 +378,7 @@ EGA.methods.section <- function (object, net.loads, net.scores)
                      "computed by first dividing the standardized network loadings of a dimension by the corresponding variable's standard deviations, ",
                      "forming weights. Relative weights are then obtained by dividing the weights by the sum of the weights in the dimension. ",
                      "These relative weights are then multiplied by their corresponding variables and summed to form a dimension score ",
-                     "(see Golino, Christensen, et al., 2020 for mathematical notation). By means of simulation, Golino, Christensen, and colleagues (2020) demonstrate ",
+                     "(see Golino, Christensen et al., 2020 for mathematical notation). By means of simulation, Golino, Christensen, and colleagues (2020) demonstrated ",
                      "that these network scores are strongly correlated (&GreaterEqual;.90) with factor scores. ",
                      sep = "")
     
@@ -328,6 +393,7 @@ EGA.methods.section <- function (object, net.loads, net.scores)
   markobj <- paste(intro.header, intro.text,
                    model.header, model.text,
                    algorithm.header, algorithm.text,
+                   unidimensional.text,
                    sep = "\n")
   
   # Other statistics
@@ -387,7 +453,7 @@ bootEGA.methods.section <- function (object, dim.stability, item.stability)
                       "replicate sample, forming a sampling distribution of EGA results.",
                       sep = "")
   
-  refs$christensenC2019 <- paste("Christensen, A. P., & Golino, H. (2019).",
+  refs$christensenD2019 <- paste("Christensen, A. P., & Golino, H. (2019).",
                                  "Estimating the stability of the number of factors via Bootstrap Exploratory Graph Analysis: A tutorial.",
                                  "<em>PsyArXiv</em>.",
                                  "https://doi.org/10.31234/osf.io/9deay")

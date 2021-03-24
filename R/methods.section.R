@@ -30,7 +30,7 @@
 #' \item{\code{\link[EGAnet]{net.scores}}}
 #' {Network scores. Requires \code{\link[EGAnet]{EGA}} object to be input}
 #' 
-#' \item{\code{\link[EGAnet]{dimStability}}}
+#' \item{\code{\link[EGAnet]{dimensionStability}}}
 #' {Structural consistency. Requires \code{\link[EGAnet]{bootEGA}} object to be input}
 #' 
 #' \item{\code{\link[EGAnet]{itemStability}}}
@@ -71,17 +71,17 @@
 #' }
 #' 
 #' \donttest{# Estimate structural consistency
-#' sc.wmt <- dimStability(boot.wmt, orig.wc = ega.wmt$wc, item.stability = TRUE)
+#' sc.wmt <- dimensionStability(boot.wmt)
 #' }
 #' # EGA and bootEGA Methods section with structural consistency and item stability
 #' if(interactive()){
-#' methods.section(boot.wmt, stats = c("dimStability", "itemStability"))
+#' methods.section(boot.wmt, stats = c("dimensionStability", "itemStability"))
 #' }
 #' 
 #' # EGA with network loadings and
 #' # bootEGA Methods section with structural consistency and item stability
 #' if(interactive()){
-#' methods.section(ega.wmt, boot.wmt, stats = c("net.loads", "dimStability", "itemStability"))
+#' methods.section(ega.wmt, boot.wmt, stats = c("net.loads", "dimensionStability", "itemStability"))
 #' }
 #' 
 #' @importFrom utils packageVersion browseURL
@@ -89,13 +89,13 @@
 #' @export
 #'
 # Methods Section----
-# Updated 15.02.2021
+# Updated 24.03.2021
 methods.section <- function(..., stats = c("net.loads", "net.scores",
-                                           "dimStability", "itemStability"))
+                                           "dimensionStability", "itemStability"))
 {
   # All statistics
   all.stats <- c("net.loads", "net.scores",
-                 "dimStability", "itemStability",
+                 "dimensionStability", "itemStability",
                  "entropyFit", "tefi", "vn.entropy",
                  "ergoInfo", "mctest.ergoInfo")
   
@@ -136,7 +136,7 @@ methods.section <- function(..., stats = c("net.loads", "net.scores",
                                                          ifelse("net.scores" %in% stats, TRUE, FALSE)),
                              "EGA.fit" = EGA.fit.methods.section(all.objects[[i]]),
                              "bootEGA" = bootEGA.methods.section(all.objects[[i]],
-                                                                 ifelse("dimStability" %in% stats, TRUE, FALSE),
+                                                                 ifelse("dimensionStability" %in% stats, TRUE, FALSE),
                                                                  ifelse("itemStability" %in% stats, TRUE, FALSE)),
                              "dynEGA" = dynEGA.methods.section(all.objects[[i]]),
                              "UVA" = UVA.methods.section(all.objects[[i]])
