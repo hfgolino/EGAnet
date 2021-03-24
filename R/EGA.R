@@ -361,7 +361,7 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
   #### ARGUMENTS HANDLING ####
   
   # Message function
-  message(styletext(styletext("\nBootstrap Exploratory Graph Analysis", defaults = "underline"), defaults = "bold"))
+  message(styletext(styletext("\nExploratory Graph Analysis\n", defaults = "underline"), defaults = "bold"))
 
   # Let user know setting
   message(paste(" \u2022 model = ", model, "\n",
