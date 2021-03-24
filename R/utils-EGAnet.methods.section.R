@@ -310,7 +310,7 @@ EGA.methods.section <- function (object, net.loads, net.scores)
       unidimensional.text <- paste("&emsp;To check for unidimensionality, used Golino, Shi et al.'s (2020) unidimensionality adjustment, which",
                                    "generates four variables that load strongly (.70) on a single factor and adds them to the empirical data.",
                                    "EGA is then applied to the combined dataset. For computational efficiency and statistical precision, this",
-                                   "approached was adapted to "expand" the empirical correlation matrix to add four variables that are", 
+                                   "approached was adapted to \"expand\" the empirical correlation matrix to add four variables that are", 
                                    "correlated .50 with each other (roughly equivalent to factor loadings of .70) and .00 with all other",
                                    "variables (i.e., empirical variables; Christensen et al., 2021). This approach avoids adding noise in the form of",
                                    "spurious correlations between generated and empirical variables (i.e., they are exactly orthogonal)."
@@ -321,7 +321,7 @@ EGA.methods.section <- function (object, net.loads, net.scores)
       unidimensional.text <- paste("&emsp;To check for unidimensionality, used Golino et al.'s (2020) unidimensionality adjustment, which",
                                    "generates four variables that load strongly (.70) on a single factor and adds them to the empirical data.",
                                    "EGA is then applied to the combined dataset. For computational efficiency and statistical precision, this",
-                                   "approached was adapted to "expand" the empirical correlation matrix to add four variables that are", 
+                                   "approached was adapted to \"expand\" the empirical correlation matrix to add four variables that are", 
                                    "correlated .50 with each other (roughly equivalent to factor loadings of .70) and .00 with all other",
                                    "variables (i.e., empirical variables; Christensen et al., 2021). This approach avoids adding noise in the form of",
                                    "spurious correlations between generated and empirical variables (i.e., they are exactly orthogonal)."
