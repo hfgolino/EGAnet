@@ -172,7 +172,7 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
   }else if(plot.type == "GGally"){
     
     # Insignificant values (keeps ggnet2 from erroring out)
-    x$typicalGraph$graph <- ifelse(as.matrix(x$typicalGraph$graph) <= .00001, 0, as.matrix(x$typicalGraph$graph))  
+    x$typicalGraph$graph <- ifelse(abs(as.matrix(x$typicalGraph$graph)) <= .00001, 0, as.matrix(x$typicalGraph$graph))  
     
     # weighted  network
     network1 <- network::network(x$typicalGraph$graph,

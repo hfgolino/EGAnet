@@ -359,7 +359,16 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
   }
 
   #### ARGUMENTS HANDLING ####
+  
+  # Message function
+  message(styletext(styletext("\nBootstrap Exploratory Graph Analysis", defaults = "underline"), defaults = "bold"))
 
+  # Let user know setting
+  message(paste(" \u2022 model = ", model, "\n",
+                " \u2022 algorithm = ", algorithm, "\n",
+                " \u2022 correlation = ", corr,
+                sep=""))
+  
   # Check for correlation matrix or data
   if(nrow(data) == ncol(data)){ ## Correlation matrix
 

@@ -407,7 +407,10 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
   
   # Let user know setting
   message(paste(" \u2022 type = ", type, "\n",
-                " \u2022 iterations = ", iter,
+                " \u2022 iterations = ", iter, "\n",
+                " \u2022 model = ", model, "\n",
+                " \u2022 algorithm = ", algorithm, "\n",
+                " \u2022 correlation = ", corr,
                 sep=""))
 
   #number of cases
@@ -542,8 +545,8 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
   if (typicalStructure){
 
     typical.Structure <- switch(model,
-                                glasso = apply(simplify2array(bootGraphs),1:2, median),
-                                TMFG = apply(simplify2array(bootGraphs),1:2, mean)
+                                "glasso" = apply(simplify2array(bootGraphs),1:2, median),
+                                "TMFG" = apply(simplify2array(bootGraphs),1:2, mean)
                          )
 
     # Sub-routine to following EGA approach (handles undimensional structures)
@@ -571,7 +574,7 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
     }else if(plot.type == "GGally"){
       
       # Insignificant values (keeps ggnet2 from erroring out)
-      typical.Structure <- ifelse(typical.Structure <= .00001, 0, typical.Structure)  
+      typical.Structure <- ifelse(abs(typical.Structure) <= .00001, 0, typical.Structure)  
       
       
       network1 <- network::network(typical.Structure,
