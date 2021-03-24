@@ -216,7 +216,7 @@
 #' # Compared all \emph{igraph} community detections algorithms, introduced Louvain algorithm, simulation with continuous and polytomous data \cr
 #' # Also implements the Leading Eigenvalue unidimensional method \cr
 #' Christensen, A. P., Garrido, L. E., & Golino, H. (2021).
-#' Estimating factors with psychometric networks: A Monte Carlo simulation comparing community detection algorithms.
+#' Comparing community detection algorithms in psychological data: A Monte Carlo simulation.
 #' \emph{PsyArXiv}.
 #' \doi{10.31234/osf.io/hz89e}
 #'

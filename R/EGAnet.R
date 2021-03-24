@@ -17,8 +17,8 @@
 #' \doi{10.31234/osf.io/4kra2} \cr
 #' # Related functions: \code{\link[EGAnet]{UVA}}
 #' 
-#' Christensen, A. P., & Golino, H. (under review).
-#' Estimating factors with psychometric networks: A Monte Carlo simulation comparing community detection algorithms.
+#' Christensen, A. P., Garrido, L. E., & Golino, H. (2021).
+#' Comparing community detection algorithms in psychological data: A Monte Carlo simulation.
 #' \emph{PsyArXiv}.
 #' \doi{10.31234/osf.io/hz89e} \cr
 #' # Related functions: \code{\link[EGAnet]{EGA}}
