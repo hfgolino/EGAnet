@@ -368,8 +368,8 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
       
       default.args <- formals(GGally::ggnet2)
       ega.default.args <- list(node.size = 6, edge.size = 6,
-                               alpha = 0.4, label.size = 5,
-                               edge.alpha = 0.7, layout.exp = 0.2)
+                               alpha = 0.7, label.size = 5,
+                               edge.alpha = 0.4, layout.exp = 0.2)
       default.args[names(ega.default.args)]  <- ega.default.args
       default.args <- default.args[-length(default.args)]
       
@@ -377,8 +377,8 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
       
       default.args <- formals(GGally::ggnet2)
       ega.default.args <- list(node.size = 6, edge.size = 6,
-                               alpha = 0.4, label.size = 5,
-                               edge.alpha = 0.7, layout.exp = 0.2)
+                               alpha = 0.7, label.size = 5,
+                               edge.alpha = 0.4, layout.exp = 0.2)
       default.args[names(ega.default.args)]  <- ega.default.args
       default.args <- default.args[-length(default.args)]
       
