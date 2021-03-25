@@ -471,7 +471,6 @@ UVA <- function(data, n = NULL,
   res$Methods$sig <- sig
   if(reduce){
     
-    res$Methods$adhoc <- adhoc
     res$Methods$reduce.method <- reduce.method
     
     if(reduce.method == "latent"){

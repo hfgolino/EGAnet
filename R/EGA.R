@@ -247,7 +247,7 @@
 #'
 #' @export
 #'
-# Updated 08.03.2021
+# Updated 24.03.2021
 # LE adjustment 08.03.2021
 ## EGA Function to detect unidimensionality:
 EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
@@ -759,9 +759,10 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
   args <- list()
 
   ## Get model and algorithm arguments
-  args$uni.method <- uni.method
   args$model <- model
   args$algorithm <- algorithm
+  args$uni.method <- uni.method
+  args$corr <- corr
 
   ## Check if glasso was used
   if(model == "glasso")

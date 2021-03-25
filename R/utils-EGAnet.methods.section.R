@@ -11,6 +11,7 @@ EGA.methods.section <- function (object, net.loads, net.scores)
   # For EGA
   model <- INPUT$model
   algorithm <- INPUT$algorithm
+  corr <- INPUT$corr
   
   # References
   refs <- list()
@@ -69,6 +70,27 @@ EGA.methods.section <- function (object, net.loads, net.scores)
                               "<em>Physics Reports</em>, <em>3--5</em>, 75--174.",
                               "https://doi.org/10.1037/met0000255")
   
+  ## Correlations
+  corr.method <- switch(
+    corr,
+    "cor_auto" = "The `cor_auto()` function in the *qgraph* package (Epskamp et al., 2012) in R",
+    "pearson" = "Pearson's correlation",
+    "spearman" = "Spearman's rho correlation"
+    
+  )
+  
+  corr.text <- paste("", corr.method, "was used to compute the correlation matrix for the network estimation method.")
+  
+  
+  if(corr == "cor_auto"){
+    
+    refs$epskampA2012 <- paste("Epskamp, S., Cramer, A. O. J., Waldorp, L. J., Schmittmann, V. D., & Borsboom, D. (2012).",
+                               "qgraph: Network visualizations of relationships in psychometric data.",
+                               "<em>Journal of Statistical Software</em>, <em>48</em>, 1--18.",
+                               "https://doi.org/10.18637/jss.v048.i04")
+    
+  }
+  
   ## Description of network estimation method
   model.header <- "## Network Estimation Method"
   
@@ -78,32 +100,70 @@ EGA.methods.section <- function (object, net.loads, net.scores)
     lambda <- INPUT$lambda
     gamma <- INPUT$gamma
     
-    model.text <- paste("&emsp;This study applied the graphical least absolute shrinkage and selection operator ",
-                        "(GLASSO; Friedman, Haste, & Tibshirani, 2008, 2014), which estimates a Gaussian ",
-                        "Graphical Model (GGM; Lauritzen, 1996) where nodes (circles) represent variables ",
-                        "and edges (lines) represent the conditional dependence (or partial correlations) ",
-                        "between nodes given all other nodes in the network. The least absolute shrinkage ",
-                        "and selection operator (LASSO; Tibshirani, 1996) of the GLASSO is a regularization ",
-                        "technique that reduces parameter estimates with some estimates becoming exactly zero. ",
-                        "\n\n",
-                        "&emsp;The LASSO uses a parameter called lambda ($\\lambda$), which controls the sparsity of the network. ",
-                        "Lower values of $\\lambda$ remove fewer edges, increasing the possibility of including ",
-                        "spurious correlations, while larger values of $\\lambda$ remove more edges, increasing ",
-                        "the possibility of removing relevant edges. When $\\lambda$ = 0, the estimates are ",
-                        "equal to the ordinary least squares solution for the partial correlation matrix. ",
-                        "In this study, the ratio of the minimum and maximum $\\lambda$ was set to ", lambda, ".",
-                        "\n\n",
-                        "&emsp;The popular approach in the network psychometrics literature is to compute models ",
-                        "across several values of $\\lambda$ (usually 100) and to select the model that minimizes ",
-                        "the extended Bayesian information criterion (EBIC; Chen & Chen, 2008; Epskamp & Fried, 2018). ",
-                        "The EBIC model selection uses a hyperparameter gamma ($\\gamma$) to control how much it prefers simpler models ",
-                        "(i.e., models with fewer edges; Foygel & Drton, 2010). Larger $\\gamma$ values lead to simpler models, ",
-                        "while smaller $\\gamma$ values lead to denser models. When $\\gamma$ = 0, the EBIC is equal to the Bayesian ",
-                        "information criterion. In this study, $\\gamma$ was set to ", gamma, ". In network psychometrics literature, ",
-                        "this approach has been termed *EBICglasso* and is applied using the *qgraph* package (Epskamp et al., 2012) ",
-                        "in R.",
-                        sep = ""
-    )
+    if(corr == "cor_auto"){
+      
+      model.text <- paste("&emsp;This study applied the graphical least absolute shrinkage and selection operator ",
+                          "(GLASSO; Friedman, Haste, & Tibshirani, 2008, 2014), which estimates a Gaussian ",
+                          "Graphical Model (GGM; Lauritzen, 1996) where nodes (circles) represent variables ",
+                          "and edges (lines) represent the conditional dependence (or partial correlations) ",
+                          "between nodes given all other nodes in the network. The least absolute shrinkage ",
+                          "and selection operator (LASSO; Tibshirani, 1996) of the GLASSO is a regularization ",
+                          "technique that reduces parameter estimates with some estimates becoming exactly zero. ",
+                          "\n\n",
+                          "&emsp;The LASSO uses a parameter called lambda ($\\lambda$), which controls the sparsity of the network. ",
+                          "Lower values of $\\lambda$ remove fewer edges, increasing the possibility of including ",
+                          "spurious correlations, while larger values of $\\lambda$ remove more edges, increasing ",
+                          "the possibility of removing relevant edges. When $\\lambda$ = 0, the estimates are ",
+                          "equal to the ordinary least squares solution for the partial correlation matrix. ",
+                          "In this study, the ratio of the minimum and maximum $\\lambda$ was set to ", lambda, ".",
+                          "\n\n",
+                          "&emsp;The popular approach in the network psychometrics literature is to compute models ",
+                          "across several values of $\\lambda$ (usually 100) and to select the model that minimizes ",
+                          "the extended Bayesian information criterion (EBIC; Chen & Chen, 2008; Epskamp & Fried, 2018). ",
+                          "The EBIC model selection uses a hyperparameter gamma ($\\gamma$) to control how much it prefers simpler models ",
+                          "(i.e., models with fewer edges; Foygel & Drton, 2010). Larger $\\gamma$ values lead to simpler models, ",
+                          "while smaller $\\gamma$ values lead to denser models. When $\\gamma$ = 0, the EBIC is equal to the Bayesian ",
+                          "information criterion. In this study, $\\gamma$ was set to ", gamma, ". In network psychometrics literature, ",
+                          "this approach has been termed *EBICglasso* and is applied using the *qgraph* package.",
+                          sep = ""
+      )
+      
+    }else{
+      
+      model.text <- paste("&emsp;This study applied the graphical least absolute shrinkage and selection operator ",
+                          "(GLASSO; Friedman, Haste, & Tibshirani, 2008, 2014), which estimates a Gaussian ",
+                          "Graphical Model (GGM; Lauritzen, 1996) where nodes (circles) represent variables ",
+                          "and edges (lines) represent the conditional dependence (or partial correlations) ",
+                          "between nodes given all other nodes in the network. The least absolute shrinkage ",
+                          "and selection operator (LASSO; Tibshirani, 1996) of the GLASSO is a regularization ",
+                          "technique that reduces parameter estimates with some estimates becoming exactly zero. ",
+                          "\n\n",
+                          "&emsp;The LASSO uses a parameter called lambda ($\\lambda$), which controls the sparsity of the network. ",
+                          "Lower values of $\\lambda$ remove fewer edges, increasing the possibility of including ",
+                          "spurious correlations, while larger values of $\\lambda$ remove more edges, increasing ",
+                          "the possibility of removing relevant edges. When $\\lambda$ = 0, the estimates are ",
+                          "equal to the ordinary least squares solution for the partial correlation matrix. ",
+                          "In this study, the ratio of the minimum and maximum $\\lambda$ was set to ", lambda, ".",
+                          "\n\n",
+                          "&emsp;The popular approach in the network psychometrics literature is to compute models ",
+                          "across several values of $\\lambda$ (usually 100) and to select the model that minimizes ",
+                          "the extended Bayesian information criterion (EBIC; Chen & Chen, 2008; Epskamp & Fried, 2018). ",
+                          "The EBIC model selection uses a hyperparameter gamma ($\\gamma$) to control how much it prefers simpler models ",
+                          "(i.e., models with fewer edges; Foygel & Drton, 2010). Larger $\\gamma$ values lead to simpler models, ",
+                          "while smaller $\\gamma$ values lead to denser models. When $\\gamma$ = 0, the EBIC is equal to the Bayesian ",
+                          "information criterion. In this study, $\\gamma$ was set to ", gamma, ". In network psychometrics literature, ",
+                          "this approach has been termed *EBICglasso* and is applied using the *qgraph* package (Epskamp et al., 2012) ",
+                          "in R.",
+                          sep = ""
+      )
+      
+      
+      refs$epskampA2012 <- paste("Epskamp, S., Cramer, A. O. J., Waldorp, L. J., Schmittmann, V. D., & Borsboom, D. (2012).",
+                                 "qgraph: Network visualizations of relationships in psychometric data.",
+                                 "<em>Journal of Statistical Software</em>, <em>48</em>, 1--18.",
+                                 "https://doi.org/10.18637/jss.v048.i04")
+      
+    }
     
     refs$friedman2008 <- paste("Friedman, J., Hastie, T., & Tibshirani, R. (2008).",
                                "Sparse inverse covariance estimation with the graphical lasso.",
@@ -138,11 +198,6 @@ EGA.methods.section <- function (object, net.loads, net.scores)
                              "In J. D. Lafferty, C. K. I. Williams, J. Shawe-Taylor, R. S., Zemel, & A. Culotta (Eds.),",
                              "<em>Advances in neural information processing systems</em> (pp. 604--612).",
                              "Retrieved from http://papers.nips.cc/paper/4087-extended-bayesianinformation-criteria-for-gaussian-graphical-models")
-    
-    refs$epskampA2012 <- paste("Epskamp, S., Cramer, A. O. J., Waldorp, L. J., Schmittmann, V. D., & Borsboom, D. (2012).",
-                               "qgraph: Network visualizations of relationships in psychometric data.",
-                               "<em>Journal of Statistical Software</em>, <em>48</em>, 1--18.",
-                               "https://doi.org/10.18637/jss.v048.i04")
     
   }else if(model == "TMFG")
   {
@@ -299,7 +354,7 @@ EGA.methods.section <- function (object, net.loads, net.scores)
                                  "matrix and then splits the network into two communities with the aim of improving modularity. This process iteratively",
                                  "unfolds until there is no longer improvement in modularity. If the algorithm returns one dimension, then the result",
                                  "unidimensional; otherwise, the standard EGA procedure is followed (Christensen et al., 2021). The Leading Eigenvalue",
-                                 "algorithm was implemented using the *igraph* package in R."
+                                 "algorithm was implemented using the *igraph* package."
     )
     
   }else if (uni.method == "expand"){
@@ -365,6 +420,11 @@ EGA.methods.section <- function (object, net.loads, net.scores)
     refs$comrey2013 <- paste("Comrey, A. L., & Lee, H. B. (2013).",
                              "<em>A first course in factor analysis</em> (2nd ed.).",
                              "New York, NY: Psychology Press.")
+    
+    refs$hallquist2019 <- paste("Hallquist, M., Wright, A. C. G., & Molenaar, P. C. M. (2019).",
+                                "Problems with centrality measures in psychopathology symptom networks: Why network psychometrics cannot escape psychometric theory.",
+                                "<em>Multivariate Behavioral Research</em>.",
+                                "https://doi.org/10.1080/00273171.2019.1640103")
   }
   
   if(net.scores){
@@ -390,7 +450,7 @@ EGA.methods.section <- function (object, net.loads, net.scores)
   }
   
   # Organize text output
-  markobj <- paste(intro.header, intro.text,
+  markobj <- paste(intro.header, intro.text, corr.text,
                    model.header, model.text,
                    algorithm.header, algorithm.text,
                    unidimensional.text,
@@ -585,8 +645,6 @@ dynEGA.methods.section <- function (object)
 # Updated 14.01.2021
 UVA.methods.section <- function (object)
 {
-  # Not ready yet
-  stop("UVA Methods section is still being developed")
   
   # Input arguments
   INPUT <- object$Methods
@@ -596,20 +654,13 @@ UVA.methods.section <- function (object)
   type <- INPUT$type
   sig <- INPUT$sig
   reduce <- INPUT$reduce
-  if(reduce){
-    
-    reduce.method <- INPUT$reduce.method
-    
-    if(reduce.method == "latent"){lavaan.args <- lavaan.args}
-    
-  }
-  adhoc <- INPUT$adhoc
+  if(isTRUE(reduce)){reduce.method <- INPUT$reduce.method}
   
   # Association description
   assoc <- switch(method,
                   "cor" = "zero-order correlations between all variables were computed. ",
                   "pcor" = "partial correlations between two variables given all others were computed. ",
-                  "wto" = "weighted topological overlap (Nowick, Gernat, Almaas, & Stubbs, 2009; Zhang & Horvath, 2005) was computed. Weighted topological overlap is a network measure that determines the extent to which items in a network \"overlap\" by quantifying the similarity between a pair of variables' shared connections (e.g., weights, signs, quantity; see Christensen, Garrido, & Golino, 2020 for more details). "
+                  "wto" = "weighted topological overlap (Nowick, Gernat, Almaas, & Stubbs, 2009; Zhang & Horvath, 2005) was computed. Weighted topological overlap is a network measure that determines the extent to which nodes in a network \"overlap\" by quantifying the similarity between a pair of variables' shared connections (e.g., weights, signs, quantity; see Christensen et al., 2020 for more details). "
   )
   
   # References
@@ -618,26 +669,101 @@ UVA.methods.section <- function (object)
   # Set up text
   ## Introduction
   intro.header <- "# Unique Variable Analysis"
-  intro.text <- paste("&emsp;Unique Variable Analysis (UVA) is a recently developed technique ",
-                      "to determine whether redundant variables exist in a dataset ",
-                      "(Christensen, Garrido, & Golino, 2020). UVA follows one of two approaches that ",
-                      "are based on a pairwise association measure. In this study, ", assoc,
-                      "The first approach is to estimate an empirical distribution from the absolute ",
-                      "non-zero association values; the second approach is to simply apply a threshold. ",
-                      "In this study, ", ifelse(type == "threshold",
-                                                "a thresold was used.",
-                                                "an empirical distribution was estimated. "),
-                      sep = "")
   
+  intro.text <- paste("&emsp;Unique Variable Analysis (UVA) is a recently developed technique ",
+                      "to detect whether there are redundant variables in multivariate data ",
+                      "(Christensen, Garrido, & Golino, 2020). There are couple reasons to reduce redundancy ",
+                      "in data. First, as Christensen and colleagues (2020) demonstrate, redundant variables ",
+                      "can create minor factors (or correlated residuals; Montoya & Edwards, 2020), which lead ",
+                      "to *over factoring* or the overestimation of the number of factors in the data. Second, ",
+                      "redundant variables can influence the accurate and valid estimation of network measures ",
+                      "(Hallquist, Wright, & Molenaar, 2019). Specifically, redundant nodes in a network are ",
+                      "likely to have higher node strength values (absolute sum of a node's connections) ",
+                      "due to redundancy rather than actual increased connectivity to other nodes. ",
+                      sep = "")
   
   refs$christensenB2020 <- paste("Christensen, A. P., Garrido, L. E., & Golino, H. (2020).",
                                  "Unique Variable Analysis: A novel approach for detecting redundant variables in multivariate data.",
                                  "<em>PsyArXiv</em>.",
                                  "https://doi.org/10.31234/osf.io/4kra2")
   
+  refs$hallquist2019 <- paste("Hallquist, M., Wright, A. C. G., & Molenaar, P. C. M. (2019).",
+                              "Problems with centrality measures in psychopathology symptom networks: Why network psychometrics cannot escape psychometric theory.",
+                              "<em>Multivariate Behavioral Research</em>.",
+                              "https://doi.org/10.1080/00273171.2019.1640103")
+  
+  refs$montoya2020 <- paste("Montoya, A. K., & Edwards, M. C. (2020).",
+                            "The poor fit of model fit for selecting number of factors in exploratory factor analysis for scale evaluation.",
+                            "<em>Educational and Psychological Measurement</em>.",
+                            "https://doi.org/10.1177/0013164420942899")
+  
+  ## Text based on type
+  if(method == "wto"){
+    
+    type.text <- paste("\n&emsp;UVA begins by first computing a pairwise association measure. In this study, ",
+                       assoc,
+                       "Next, using only the non-zero (absolute) weighted toplogical overlap values, ",
+                       sep = "")
+    
+    refs$nowick2009 <- paste("Nowick, K., Gernat, T., Almaas, E., & Stubbs, L. (2009).",
+                            "Differences in human and chimpanzee gene expression patterns define an evolving network of transcription factors in brain.",
+                            "<em>Proceedings of the National Academy of Sciences</em>, <em>106</em>, 22358-22363.",
+                            "https://doi.org/10.1073/pnas.0911376106")
+    
+    refs$zhang2005 <- paste("Zhang, Z., & Horvath, S. (2005).",
+                              "A general framework for weighted gene co-expression network analysis.",
+                              "<em>Statistical Applications in Genetics and Molecular Biology</em>, <em>4</em>, 17.",
+                              "https://doi.org/10.2202/1544-6115.1128")
+    
+  }else{
+    
+    type.text <- paste("\n&emsp;UVA begins by first computing a pairwise association measure. In this study, ",
+                       assoc,
+                       "Next, using only the non-zero (absolute) correlation values, ",
+                       sep = "")
+    
+  }
+  
+  if(type == "threshold"){
+    
+    type.text <- paste(type.text,
+                       "a threshold was applied, with values $\\ge$ ", sig, "suggesting that a pair of variables are redundant. ",
+                        "After, UVA passes the redundancies onto us and we made the definitive decisions on whether variables were redundant ",
+                        "based on our theoretical knowledge about the relations between the variables.",
+                        sep = "")
+    
+    
+  }else if(type == "adapt"){
+    
+    type.text <- paste(type.text,
+                       "an empirical distribution is estimated to obtain $p$-values (with significance $p$ ",
+                       "$\\le$ ", sig,". Significant values suggest that a pair of variables are redundant. ",
+                       "Because there are many non-zero values (leading to multiple comparisons), an adjustment ",
+                       'to the $p$-value is necessary. We applied the default method that uses an "adaptive" alpha ',
+                       "(P&eacute;rez & Pericchi, 2014), which adjusts alpha based on sample size (here, the number of non-zero values; Christensen et al., 2020). ",
+                       "After, UVA passes the redundancies onto us and we made the definitive decisions on whether variables were redundant ",
+                       "based on our theoretical knowledge about the relations between the variables.",
+                       sep = "")
+    
+    refs$perez2014 <- paste("P&eacute;rez, M.-E., & Pericchi, L. R. (2014).",
+                            "Changing statistical significance with the amount of information: The adaptive $\\alpha$ significance level.",
+                            "<em>Statistics & Probability Letters</em>, <em>85</em>, 20-24.",
+                            "https://doi.org/10.1016/j.spl.2013.10.018")
+    
+  }else if(type == "alpha"){
+    
+    type.text <- paste(type.text,
+                       "an empirical distribution is estimated to obtain $p$-values (with significance $p$ ",
+                       "$\\le$ ", sig,". Significant values suggest that a pair of variables are redundant. ",
+                       "After, UVA passes the redundancies onto us and we made the definitive decisions on whether variables were redundant ",
+                       "based on our theoretical knowledge about the relations between the variables.",
+                       sep = "")
+    
+  }
   
   # Organize text output
   markobj <- paste(intro.header, intro.text,
+                   type.text,
                    sep = "\n")
   
   # Return list

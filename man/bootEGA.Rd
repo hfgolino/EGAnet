@@ -272,7 +272,7 @@ Estimating the stability of the number of factors via Bootstrap Exploratory Grap
 \emph{PsyArXiv}.
 \doi{10.31234/osf.io/9deay}
 
-# Structural consistency (see \code{\link[EGAnet]{dimStability}}) \cr
+# Structural consistency (see \code{\link[EGAnet]{dimensionStability}}) \cr
 Christensen, A. P., Golino, H., & Silvia, P. J. (in press).
 A psychometric network perspective on the validity and validation of personality trait questionnaires.
 \emph{European Journal of Personality}.

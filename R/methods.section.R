@@ -16,6 +16,9 @@
 #' \item{\code{\link[EGAnet]{bootEGA}}}
 #' {Bootstrap exploratory graph analysis}
 #' 
+#' \item{\code{\link[EGAnet]{UVA}}}
+#' {Unique variable analysis}
+#' 
 #' }
 #' 
 #' @param stats Methods section for statistics in \code{\link{EGAnet}}.
@@ -231,114 +234,118 @@ methods.section <- function(..., stats = c("net.loads", "net.scores",
   ### Plots
   plots <- numeric(length(all.objects))
   
-  for(i in 1:length(all.objects)){
+  if(plots != 0){
     
-    # Names of objects (lowercase)
-    name <- tolower(names(all.objects[[i]]))
-    
-    # Check for plot
-    idx <- grep("plot", name)
-    
-    if(length(idx) != 0){
-      plots[i] <- as.numeric(ggplot2::is.ggplot(all.objects[[i]][[idx]])) + 1
-      # Add one for:
-      # 0 = no plot
-      # 1 = qgraph
-      # 2 = ggplot2/GGally
+    for(i in 1:length(all.objects)){
+      
+      # Names of objects (lowercase)
+      name <- tolower(names(all.objects[[i]]))
+      
+      # Check for plot
+      idx <- grep("plot", name)
+      
+      if(length(idx) != 0){
+        plots[i] <- as.numeric(ggplot2::is.ggplot(all.objects[[i]][[idx]])) + 1
+        # Add one for:
+        # 0 = no plot
+        # 1 = qgraph
+        # 2 = ggplot2/GGally
+      }
+      
     }
     
-  }
-  
-  ## Check for plot names
-  plot.names <- names(section[plots != 0])
-  
-  ## Plot references
-  plot.refs <- list()
-  
-  ### Years
-  GGally.version <- packageVersion("GGally")
-  GGally.year <- unlist(strsplit(as.character(packageDescription("GGally")$Date), split = "\\-"))[1]
-  ggplot2.version <- packageVersion("ggplot2")
-  ggplot2.year <- unlist(strsplit(as.character(packageDescription("ggplot2")$Date), split = "\\-"))[1]
-  qgraph.version <- packageVersion("qgraph")
-  qgraph.year <- unlist(strsplit(as.character(packageDescription("qgraph")$Date), split = "\\-"))[1]
-  
-  ## Check for all ggplot2
-  if(all(plots[plots != 0] != 2)){
+    ## Check for plot names
+    plot.names <- names(section[plots != 0])
     
-    ### Plots
-    if(length(plot.names) == 1){
+    ## Plot references
+    plot.refs <- list()
+    
+    ### Years
+    GGally.version <- packageVersion("GGally")
+    GGally.year <- unlist(strsplit(as.character(packageDescription("GGally")$Date), split = "\\-"))[1]
+    ggplot2.version <- packageVersion("ggplot2")
+    ggplot2.year <- unlist(strsplit(as.character(packageDescription("ggplot2")$Date), split = "\\-"))[1]
+    qgraph.version <- packageVersion("qgraph")
+    qgraph.year <- unlist(strsplit(as.character(packageDescription("qgraph")$Date), split = "\\-"))[1]
+    
+    ## Check for all ggplot2
+    if(all(plots[plots != 0] != 2)){
       
-      plot.text <- paste(plot.names,
-                         " and associated results were visualized using the *GGally* ",
-                         "(version ", GGally.version, "; Schloerke et al., ", GGally.year, "), ",
-                         "*ggplot2* ", "(version ", ggplot2.version, "; Wickham, ", ggplot2.year, "), ",
-                         "and *qgraph* ", "(version ", qgraph.version, "; Epskamp et al., 2012) ",
-                         "packages in R.",
-                         sep = "")
+      ### Plots
+      if(length(plot.names) == 1){
+        
+        plot.text <- paste(plot.names,
+                           " and associated results were visualized using the *GGally* ",
+                           "(version ", GGally.version, "; Schloerke et al., ", GGally.year, "), ",
+                           "*ggplot2* ", "(version ", ggplot2.version, "; Wickham, ", ggplot2.year, "), ",
+                           "and *qgraph* ", "(version ", qgraph.version, "; Epskamp et al., 2012) ",
+                           "packages in R.",
+                           sep = "")
+        
+        
+      }else{
+        
+        plot.text <- paste(paste(plot.names, collapse = ", "),
+                           ", and associated results were visualized using the *GGally* ",
+                           "(version ", GGally.version, "; Schloerke et al., ", GGally.year, "), ",
+                           "*ggplot2* ", "(version ", ggplot2.version, "; Wickham, ", ggplot2.year, "), ",
+                           "and *qgraph* ", "(version ", qgraph.version, "; Epskamp et al., 2012) ",
+                           "packages in R.",
+                           sep = "")
+        
+      }
       
+      plot.refs$schloerke <- paste("Schloerke, Cook, Larmarange, Briatte, & Marbach (", GGally.year, "). ",
+                                   "GGally: Extention to 'ggplot2'. ",
+                                   "Retrieved from https://cran.r-project.org/package=GGally",
+                                   sep = "")
+      
+      plot.refs$wickham <- paste("Wickham, H. (", ggplot2.year, "). ",
+                                 "*ggplot2: Elegant graphics for data analysis.* ",
+                                 "New York, NY: Springer. ",
+                                 "Retrieved from https://ggplot2-book.org",
+                                 sep = "")
+      
+      data.analysis.text <- paste(data.analysis.text, plot.text, sep = " ")
       
     }else{
       
-      plot.text <- paste(paste(plot.names, collapse = ", "),
-                         ", and associated results were visualized using the *GGally* ",
-                         "(version ", GGally.version, "; Schloerke et al., ", GGally.year, "), ",
-                         "*ggplot2* ", "(version ", ggplot2.version, "; Wickham, ", ggplot2.year, "), ",
-                         "and *qgraph* ", "(version ", qgraph.version, "; Epskamp et al., 2012) ",
-                         "packages in R.",
-                         sep = "")
+      ### Plots
+      if(length(plot.names) == 1){
+        
+        plot.text <- paste(plot.names,
+                           " and associated results were visualized using the *GGally* ",
+                           "(version ", GGally.version, "; Schloerke et al., ", GGally.year, ") and ",
+                           "*ggplot2* ", "(version ", ggplot2.version, "; Wickham, ", ggplot2.year, ") ",
+                           "packages in R.",
+                           sep = "")
+        
+        
+      }else{
+        
+        plot.text <- paste(paste(plot.names, collapse = ", "),
+                           ", and associated results were visualized using the *GGally* ",
+                           "(version ", GGally.version, "; Schloerke et al., ", GGally.year, ") and ",
+                           "*ggplot2* ", "(version ", ggplot2.version, "; Wickham, ", ggplot2.year, ") ",
+                           "packages in R.",
+                           sep = "")
+        
+      }
+      
+      plot.refs$schloerke <- paste("Schloerke, B., Cook, D., Larmarange, J., Briatte, F., & Marbach, M. (", GGally.year, "). ",
+                                   "GGally: Extention to 'ggplot2'. ",
+                                   "Retrieved from https://cran.r-project.org/package=GGally",
+                                   sep = "")
+      
+      plot.refs$wickham <- paste("Wickham, H. (", ggplot2.year, "). ",
+                                 "*ggplot2: Elegant graphics for data analysis.* ",
+                                 "New York, NY: Springer. ",
+                                 "Retrieved from https://ggplot2-book.org",
+                                 sep = "")
+      
+      data.analysis.text <- paste(data.analysis.text, plot.text, sep = " ")
       
     }
-    
-    plot.refs$schloerke <- paste("Schloerke, Cook, Larmarange, Briatte, & Marbach (", GGally.year, "). ",
-                                 "GGally: Extention to 'ggplot2'. ",
-                                 "Retrieved from https://cran.r-project.org/package=GGally",
-                                 sep = "")
-    
-    plot.refs$wickham <- paste("Wickham, H. (", ggplot2.year, "). ",
-                               "*ggplot2: Elegant graphics for data analysis.* ",
-                               "New York, NY: Springer. ",
-                               "Retrieved from https://ggplot2-book.org",
-                               sep = "")
-    
-    data.analysis.text <- paste(data.analysis.text, plot.text, sep = " ")
-    
-  }else{
-    
-    ### Plots
-    if(length(plot.names) == 1){
-      
-      plot.text <- paste(plot.names,
-                         " and associated results were visualized using the *GGally* ",
-                         "(version ", GGally.version, "; Schloerke et al., ", GGally.year, ") and ",
-                         "*ggplot2* ", "(version ", ggplot2.version, "; Wickham, ", ggplot2.year, ") ",
-                         "packages in R.",
-                         sep = "")
-      
-      
-    }else{
-      
-      plot.text <- paste(paste(plot.names, collapse = ", "),
-                         ", and associated results were visualized using the *GGally* ",
-                         "(version ", GGally.version, "; Schloerke et al., ", GGally.year, ") and ",
-                         "*ggplot2* ", "(version ", ggplot2.version, "; Wickham, ", ggplot2.year, ") ",
-                         "packages in R.",
-                         sep = "")
-      
-    }
-    
-    plot.refs$schloerke <- paste("Schloerke, B., Cook, D., Larmarange, J., Briatte, F., & Marbach, M. (", GGally.year, "). ",
-                                 "GGally: Extention to 'ggplot2'. ",
-                                 "Retrieved from https://cran.r-project.org/package=GGally",
-                                 sep = "")
-    
-    plot.refs$wickham <- paste("Wickham, H. (", ggplot2.year, "). ",
-                               "*ggplot2: Elegant graphics for data analysis.* ",
-                               "New York, NY: Springer. ",
-                               "Retrieved from https://ggplot2-book.org",
-                               sep = "")
-    
-    data.analysis.text <- paste(data.analysis.text, plot.text, sep = " ")
     
   }
   
@@ -351,7 +358,7 @@ methods.section <- function(..., stats = c("net.loads", "net.scores",
   }
   
   ## Add in plotting references
-  refs <- c(refs, plot.refs)
+  if(plots != 0){refs <- c(refs, plot.refs)}
   
   ## Order alphabetically
   references.text <- refs[order(names(refs))]

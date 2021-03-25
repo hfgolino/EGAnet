@@ -18,6 +18,8 @@ o FIX: redundancy output for adhoc check in `UVA`
 
 o FIX: latent variable with non-space separated entries in `UVA` (`reduce.method = "latent"`)
 
+o UPDATE: `UVA` was added to `methods.section`
+
 
 Changes in version 0.9.8
 
