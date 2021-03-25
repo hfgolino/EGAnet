@@ -6,7 +6,7 @@
 \usage{
 methods.section(
   ...,
-  stats = c("net.loads", "net.scores", "dimStability", "itemStability")
+  stats = c("net.loads", "net.scores", "dimensionStability", "itemStability")
 )
 }
 \arguments{
@@ -20,6 +20,9 @@ Available methods (more methods will be added soon!):
 
 \item{\code{\link[EGAnet]{bootEGA}}}
 {Bootstrap exploratory graph analysis}
+
+\item{\code{\link[EGAnet]{UVA}}}
+{Unique variable analysis}
 
 }}
 
@@ -35,7 +38,7 @@ Available statistics:
 \item{\code{\link[EGAnet]{net.scores}}}
 {Network scores. Requires \code{\link[EGAnet]{EGA}} object to be input}
 
-\item{\code{\link[EGAnet]{dimStability}}}
+\item{\code{\link[EGAnet]{dimensionStability}}}
 {Structural consistency. Requires \code{\link[EGAnet]{bootEGA}} object to be input}
 
 \item{\code{\link[EGAnet]{itemStability}}}
@@ -83,17 +86,17 @@ methods.section(ega.wmt, boot.wmt)
 }
 
 \donttest{# Estimate structural consistency
-sc.wmt <- dimStability(boot.wmt, orig.wc = ega.wmt$wc, item.stability = TRUE)
+sc.wmt <- dimensionStability(boot.wmt)
 }
 # EGA and bootEGA Methods section with structural consistency and item stability
 if(interactive()){
-methods.section(boot.wmt, stats = c("dimStability", "itemStability"))
+methods.section(boot.wmt, stats = c("dimensionStability", "itemStability"))
 }
 
 # EGA with network loadings and
 # bootEGA Methods section with structural consistency and item stability
 if(interactive()){
-methods.section(ega.wmt, boot.wmt, stats = c("net.loads", "dimStability", "itemStability"))
+methods.section(ega.wmt, boot.wmt, stats = c("net.loads", "dimensionStability", "itemStability"))
 }
 
 }

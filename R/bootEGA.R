@@ -9,17 +9,28 @@
 #' @param data Matrix or data frame.
 #' Includes the variables to be used in the \code{bootEGA} analysis
 #'
-#' @param uni Boolean.
-#' Should unidimensionality be checked?
-#' Defaults to \code{TRUE}.
-#' Set to \code{FALSE} to check for multidimensionality only.
-#' If \code{TRUE}, then the same number of variables as the original
-#' data (i.e., from argument \code{data}) are generated from a factor
-#' model with one factor and loadings of .70. These data are then
-#' appended to the original data and dimensionality is checked.
-#' If the number of dimensions is one or two, then the original
-#' data are unidimensional; otherwise, the data are multidimensional
-#' (see Golino, Shi, et al., 2020 for more details)
+#' @param uni.method Character.
+#' What unidimensionality method should be used? 
+#' Defaults to \code{"LE"}.
+#' Current options are:
+#' 
+#' \itemize{
+#'
+#' \item{\strong{\code{expand}}}
+#' {Expands the correlation matrix with four variables correlated .50.
+#' If number of dimension returns 2 or less in check, then the data 
+#' are unidimensional; otherwise, regular EGA with no matrix
+#' expansion is used. This is the method used in the Golino et al. (2020)
+#' \emph{Psychological Methods} simulation.}
+#'
+#' \item{\strong{\code{LE}}}
+#' {Applies the leading eigenvalue algorithm (\code{\link[igraph]{cluster_leading_eigen}})
+#' on the empirical correlation matrix. If the number of dimensions is 1,
+#' then the leading eigenvalue solution is used; otherwise, regular EGA
+#' is used. This is the final method used in the Christensen, Garrido,
+#' and Golino (2021) simulation.}
+#' 
+#' }
 #'
 #' @param iter Numeric integer.
 #' Number of replica samples to generate from the bootstrap analysis.
@@ -238,7 +249,7 @@
 #' \emph{PsyArXiv}.
 #' \doi{10.31234/osf.io/9deay}
 #'
-#' # Structural consistency (see \code{\link[EGAnet]{dimStability}}) \cr
+#' # Structural consistency (see \code{\link[EGAnet]{dimensionStability}}) \cr
 #' Christensen, A. P., Golino, H., & Silvia, P. J. (in press).
 #' A psychometric network perspective on the validity and validation of personality trait questionnaires.
 #' \emph{European Journal of Personality}.
@@ -252,8 +263,9 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 24.02.2021
-bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling"),
+# Updated 12.03.2021
+bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
+                    type = c("parametric", "resampling"),
                     corr = c("cor_auto", "pearson", "spearman"),
                     model = c("glasso", "TMFG"), model.args = list(),
                     algorithm = c("walktrap", "louvain"), algorithm.args = list(),
@@ -295,10 +307,26 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
     # Handle the number of steps appropriately
     algorithm.args$steps <- add.args$steps
   }
+  
+  # Check if uni has been input as an argument
+  if("uni" %in% names(add.args)){
+    
+    # Give deprecation warning
+    warning(
+      "The 'uni' argument has been deprecated in all EGA functions."
+    )
+  }
 
   #### DEPRECATED ARGUMENTS ####
+  
+  # Message function
+  message(styletext(styletext("\nBootstrap Exploratory Graph Analysis\n", defaults = "underline"), defaults = "bold"))
 
   #### MISSING ARGUMENTS HANDLING ####
+  
+  if(missing(uni.method)){
+    uni.method <- "LE"
+  }else{uni.method <- match.arg(uni.method)}
   
   if(missing(corr)){
     corr <- "cor_auto"
@@ -340,8 +368,8 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
       
       default.args <- formals(GGally::ggnet2)
       ega.default.args <- list(node.size = 6, edge.size = 6,
-                               alpha = 0.4, label.size = 5,
-                               edge.alpha = 0.7, layout.exp = 0.2)
+                               alpha = 0.7, label.size = 5,
+                               edge.alpha = 0.4, layout.exp = 0.2)
       default.args[names(ega.default.args)]  <- ega.default.args
       default.args <- default.args[-length(default.args)]
       
@@ -349,8 +377,8 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
       
       default.args <- formals(GGally::ggnet2)
       ega.default.args <- list(node.size = 6, edge.size = 6,
-                               alpha = 0.4, label.size = 5,
-                               edge.alpha = 0.7, layout.exp = 0.2)
+                               alpha = 0.7, label.size = 5,
+                               edge.alpha = 0.4, layout.exp = 0.2)
       default.args[names(ega.default.args)]  <- ega.default.args
       default.args <- default.args[-length(default.args)]
       
@@ -376,9 +404,28 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
   }
 
   #### MISSING ARGUMENTS HANDLING ####
+  
+  # Let user know setting
+  message(paste(" \u2022 type = ", type, "\n",
+                " \u2022 iterations = ", iter, "\n",
+                " \u2022 model = ", model, "\n",
+                " \u2022 algorithm = ", algorithm, "\n",
+                " \u2022 correlation = ", corr, "\n",
+                " \u2022 unidimensional check = ", ifelse(
+                  uni.method == "LE",
+                  "leading eigenvalue",
+                  "correlation matrix expansion"
+                ), "\n",
+                sep=""))
 
   #number of cases
   cases <- nrow(data)
+  
+  #empirical EGA
+  empirical.EGA <- suppressMessages(suppressWarnings(EGA(data = data, uni.method = uni.method, corr = corr,
+                                                         model = model, model.args = model.args,
+                                                         algorithm = algorithm, algorith.args = algorithm.args,
+                                                         plot.EGA = FALSE)))
 
   #set inverse covariance matrix for parametric approach
   if(type=="parametric"){  # Use a parametric approach
@@ -393,6 +440,11 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
 
     if(model=="glasso"){
 
+      
+      if(!"gamma" %in% names(model.args)){
+        model.args$gamma <- empirical.EGA$Methods$gamma
+      }
+      
       g <- -suppressMessages(EGA.estimate(data = cor.data, n = cases, model = model, model.args = model.args)$network)
       diag(g) <- 1
 
@@ -404,9 +456,9 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
     }
     
     # Generating data will be continuous
-    corr <- "pearson"
+    corr.method <- "pearson"
     
-  }
+  }else{corr.method <- corr}
 
   #initialize data list
   datalist <- list()
@@ -415,7 +467,7 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
   count <- 0
 
   #let user know data generation has started
-  message("\nGenerating data...", appendLF = FALSE)
+  message("Generating data...", appendLF = FALSE)
 
   repeat{
 
@@ -446,7 +498,7 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
 
   #Export variables
   parallel::clusterExport(cl = cl,
-                          varlist = c("datalist", "uni", "cases", "corr",
+                          varlist = c("datalist", "uni.method", "cases", "corr",
                                       "model", "model.args",
                                       "algorithm", "algorithm.args"),
                           envir=environment())
@@ -458,7 +510,7 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
   boots <- pbapply::pblapply(
     X = datalist, cl = cl,
     FUN = EGA,
-    uni = uni, corr = corr,
+    uni.method = uni.method, corr = corr.method,
     model = model, model.args = model.args,
     algorithm = algorithm, algorith.args = algorithm.args,
     plot.EGA = FALSE
@@ -498,15 +550,21 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
   if (typicalStructure){
 
     typical.Structure <- switch(model,
-                                glasso = apply(simplify2array(bootGraphs),1:2, median),
-                                TMFG = apply(simplify2array(bootGraphs),1:2, mean)
+                                "glasso" = apply(simplify2array(bootGraphs),1:2, median),
+                                "TMFG" = apply(simplify2array(bootGraphs),1:2, mean)
                          )
 
     # Sub-routine to following EGA approach (handles undimensional structures)
-    typical.wc <- typicalStructure.network(A = typical.Structure,
-                                           model = model, model.args = model.args,
-                                           n = cases, uni = uni, algorithm = algorithm,
-                                           algorithm.args = algorithm.args)
+    typical.wc <- suppressWarnings(
+      suppressMessages(
+        
+        typicalStructure.network(A = typical.Structure, corr = corr,
+                                 model = model, model.args = model.args,
+                                 n = cases, uni.method = uni.method, algorithm = algorithm,
+                                 algorithm.args = algorithm.args)
+        
+      )
+    )
 
     typical.ndim <- length(na.omit(unique(typical.wc)))
     
@@ -521,7 +579,7 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
     }else if(plot.type == "GGally"){
       
       # Insignificant values (keeps ggnet2 from erroring out)
-      typical.Structure <- ifelse(typical.Structure <= .00001, 0, typical.Structure)  
+      typical.Structure <- ifelse(abs(typical.Structure) <= .00001, 0, typical.Structure)  
       
       
       network1 <- network::network(typical.Structure,
@@ -622,10 +680,7 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
   result$bootGraphs <- bootGraphs
   result$summary.table <- summary.table
   result$frequency <- lik
-  result$EGA <- suppressMessages(suppressWarnings(EGA(data = data, uni = uni,
-                                                      model = model, model.args = model.args,
-                                                      algorithm = algorithm, algorith.args = algorithm.args,
-                                                      plot.EGA = FALSE)))
+  result$EGA <- empirical.EGA
 
   # Typical structure
   if (typicalStructure) {
@@ -643,10 +698,28 @@ bootEGA <- function(data, uni = TRUE, iter, type = c("parametric", "resampling")
   result$color.palette <- color.palette
 
   class(result) <- "bootEGA"
-
-  # Message that unidimensional structures were not checked
-  if(!uni){
-    message("\nEGA did not check for unidimensionality. Set argument 'uni' to TRUE to check for unidimensionality")
+  
+  
+  # Check if uni.method = "LE" has been used
+  if(uni.method == "LE"){
+    # Give change warning
+    warning(
+      paste(
+        "Previous versions of EGAnet (<= 0.9.8) checked unidimensionality using",
+        styletext('uni.method = "expand"', defaults = "underline"),
+        "as the default"
+      )
+    )
+  }else if(uni.method == "expand"){
+    # Give change warning
+    warning(
+      paste(
+        "Newer evidence suggests that",
+        styletext('uni.method = "LE"', defaults = "underline"),
+        'is more accurate than uni.method = "expand" (see Christensen, Garrido, & Golino, 2021 in references).',
+        '\n\nIt\'s recommended to use uni.method = "LE"'
+      )
+    )
   }
 
   return(result)

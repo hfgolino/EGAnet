@@ -48,12 +48,12 @@ wmt <- wmt2[,7:24]
 cor.wmt <- cor(wmt)
 
 # Estimate EGA
-ega.wmt <- EGA(data = wmt, uni = TRUE, n = nrow(wmt2), plot.EGA = FALSE)
+ega.wmt <- EGA(data = wmt, n = nrow(wmt2), plot.EGA = FALSE)
 }
 
 \donttest{
 # Estimate EGA
-ega.wmt <- EGA(data = wmt, uni = TRUE, plot.EGA = FALSE)
+ega.wmt <- EGA(data = wmt, plot.EGA = FALSE)
 
 # Fit CFA model to EGA results
 cfa.wmt <- CFA(ega.obj = ega.wmt, estimator = 'WLSMV', plot.CFA = TRUE, data = wmt)

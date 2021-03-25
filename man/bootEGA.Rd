@@ -6,7 +6,7 @@
 \usage{
 bootEGA(
   data,
-  uni = TRUE,
+  uni.method = c("expand", "LE"),
   iter,
   type = c("parametric", "resampling"),
   corr = c("cor_auto", "pearson", "spearman"),
@@ -26,17 +26,28 @@ bootEGA(
 \item{data}{Matrix or data frame.
 Includes the variables to be used in the \code{bootEGA} analysis}
 
-\item{uni}{Boolean.
-Should unidimensionality be checked?
-Defaults to \code{TRUE}.
-Set to \code{FALSE} to check for multidimensionality only.
-If \code{TRUE}, then the same number of variables as the original
-data (i.e., from argument \code{data}) are generated from a factor
-model with one factor and loadings of .70. These data are then
-appended to the original data and dimensionality is checked.
-If the number of dimensions is one or two, then the original
-data are unidimensional; otherwise, the data are multidimensional
-(see Golino, Shi, et al., 2020 for more details)}
+\item{uni.method}{Character.
+What unidimensionality method should be used? 
+Defaults to \code{"LE"}.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{expand}}}
+{Expands the correlation matrix with four variables correlated .50.
+If number of dimension returns 2 or less in check, then the data 
+are unidimensional; otherwise, regular EGA with no matrix
+expansion is used. This is the method used in the Golino et al. (2020)
+\emph{Psychological Methods} simulation.}
+
+\item{\strong{\code{LE}}}
+{Applies the leading eigenvalue algorithm (\code{\link[igraph]{cluster_leading_eigen}})
+on the empirical correlation matrix. If the number of dimensions is 1,
+then the leading eigenvalue solution is used; otherwise, regular EGA
+is used. This is the final method used in the Christensen, Garrido,
+and Golino (2021) simulation.}
+
+}}
 
 \item{iter}{Numeric integer.
 Number of replica samples to generate from the bootstrap analysis.
@@ -261,7 +272,7 @@ Estimating the stability of the number of factors via Bootstrap Exploratory Grap
 \emph{PsyArXiv}.
 \doi{10.31234/osf.io/9deay}
 
-# Structural consistency (see \code{\link[EGAnet]{dimStability}}) \cr
+# Structural consistency (see \code{\link[EGAnet]{dimensionStability}}) \cr
 Christensen, A. P., Golino, H., & Silvia, P. J. (in press).
 A psychometric network perspective on the validity and validation of personality trait questionnaires.
 \emph{European Journal of Personality}.

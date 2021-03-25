@@ -11,5 +11,9 @@
     msg <- paste(msg, paste(styletext("\n\nNEW", defaults = "bold"),
                             ": EGAnet will write your Methods section for you. Type ?methods.section for more details",
                             sep = ""))
+    
+    msg <- paste(msg, paste(styletext("\n\nMAJOR CHANGE", defaults = "bold"),
+                            ": Unidimensionality adjustment in EGA functions has changed to the leading eigenvalue adjustment (see Christensen, Garrido, & Golino, 2021)",
+                            sep = ""))
     packageStartupMessage(msg)
 }

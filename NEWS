@@ -1,8 +1,24 @@
 Changes in version 0.9.9
 
-o FIX: bug when NAs in `itemStability`
+o **UPDATE**: default undimensionality adjustment has changed to leading eigenvalue (see Christensen, Garrido, & Golino, 2021). Previous unidimensionality adjustment in versions <= 0.9.8 can be applied using `uni.method = "expand"`
+
+o DEFUNCT: `dimStability` will no longer be supported. Instead, use `dimensionStability`
+
+o REVAMP: `itemStability` has been recoded. Now includes error checking and more readable code 
 
 o FIX: bug for plotting NA communities
+
+o FIX: bug for changing edge size in 'GGally' plotting
+
+o UPDATE: S3Methods for `EGA.fit` plotting
+
+o FIX: plotting parameters for `bootEGA`
+
+o FIX: redundancy output for adhoc check in `UVA`
+
+o FIX: latent variable with non-space separated entries in `UVA` (`reduce.method = "latent"`)
+
+o UPDATE: `UVA` was added to `methods.section`
 
 
 Changes in version 0.9.8

@@ -55,7 +55,7 @@
 #' @export
 #'
 # Loadings Comparison Test----
-# Updated 24.12.2020
+# Updated 03.03.2021
 LCT <- function (data, n, iter = 100)
 {
   # Convert data to matrix
@@ -117,7 +117,7 @@ LCT <- function (data, n, iter = 100)
       
       # Estimate network
       if(count == 1)
-      {net <- try(suppressWarnings(suppressMessages(EGA(cor.mat, n = cases, uni = FALSE, plot.EGA = FALSE))), silent = TRUE)
+      {net <- try(suppressWarnings(suppressMessages(EGA(cor.mat, n = cases, plot.EGA = FALSE))), silent = TRUE)
       }else{net <- try(suppressWarnings(suppressMessages(EGA.estimate(cor.mat, n = cases))), silent = TRUE)}
       
       if(any(class(net) == "try-error"))

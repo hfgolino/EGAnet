@@ -172,7 +172,7 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
   }else if(plot.type == "GGally"){
     
     # Insignificant values (keeps ggnet2 from erroring out)
-    x$typicalGraph$graph <- ifelse(as.matrix(x$typicalGraph$graph) <= .00001, 0, as.matrix(x$typicalGraph$graph))  
+    x$typicalGraph$graph <- ifelse(abs(as.matrix(x$typicalGraph$graph)) <= .00001, 0, as.matrix(x$typicalGraph$graph))  
     
     # weighted  network
     network1 <- network::network(x$typicalGraph$graph,
@@ -534,7 +534,7 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
     network::set.edge.value(network1,attrname="AbsWeights",value=abs(x$dynEGA$network))
     network::set.edge.value(network1,attrname="ScaledWeights",
-                            value=matrix(rescale.edges(x$dynEGA$network, plot.args$size),
+                            value=matrix(rescale.edges(x$dynEGA$network, plot.args$edge.size),
                                          nrow = nrow(x$dynEGA$network),
                                          ncol = ncol(x$dynEGA$network)))
     
@@ -653,7 +653,7 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
     network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
     network::set.edge.value(network1,attrname="AbsWeights",value=abs(x$network))
     network::set.edge.value(network1,attrname="ScaledWeights",
-                            value=matrix(rescale.edges(x$network, plot.args$size),
+                            value=matrix(rescale.edges(x$network, plot.args$edge.size),
                                          nrow = nrow(x$network),
                                          ncol = ncol(x$network)))
     
@@ -705,6 +705,19 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
   set.seed(NULL)
   
   plot(ega.plot)
+}
+
+# Plot EGA.fit----
+# Updated 17.03.2021
+#' @export
+plot.EGA.fit <- function(x,  title = "", plot.type = c("GGally","qgraph"),
+                     plot.args = list(), ...){
+  #### MISSING ARGUMENTS HANDLING ####
+  if(missing(plot.type))
+  {plot.type <- "GGally"
+  }else{plot.type <- match.arg(plot.type)}
+  
+  plot.EGA(x$EGA, plot.type = plot.type, plot.args = plot.args)
 }
 
 #Plot net.loads----
