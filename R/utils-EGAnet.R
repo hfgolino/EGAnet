@@ -2859,15 +2859,18 @@ lavaan.formula.names <- function (data){
   # Original column names
   original.names <- colnames(data)
   
-  
   # Move leading numeric values to the end of the variable name
   colnames(data) <- unlist(
     lapply(strsplit(colnames(data),
                     split = ""), function(x){
                       
                       ind <- grepl("[[:digit:]]", x)
-                      rm.ind <- x[-which(ind)]
-                      paste(c(rm.ind, x[which(ind)]), collapse = "")
+                      
+                      if(any(ind)){
+                        rm.ind <- x[-which(ind)]
+                        new.name <- paste(c(rm.ind, x[which(ind)]), collapse = "")
+                        return(new.name)
+                      }else{return(paste(x, collapse = ""))}
                       
                     })
   )
