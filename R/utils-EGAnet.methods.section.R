@@ -675,7 +675,9 @@ UVA.methods.section <- function (object)
                       "(Christensen, Garrido, & Golino, 2020). There are couple reasons to reduce redundancy ",
                       "in data. First, as Christensen and colleagues (2020) demonstrate, redundant variables ",
                       "can create minor factors (or correlated residuals; Montoya & Edwards, 2020), which lead ",
-                      "to *over factoring* or the overestimation of the number of factors in the data. Second, ",
+                      "to *over factoring* or the overestimation of the number of factors in the data. Further, ",
+                      "in latent variable models (e.g., item response theory), redundant variables can lead to ",
+                      "violations of the local independence assumption (Embretson & Reise, 2000). Second, ",
                       "redundant variables can influence the accurate and valid estimation of network measures ",
                       "(Hallquist, Wright, & Molenaar, 2019). Specifically, redundant nodes in a network are ",
                       "likely to have higher node strength values (absolute sum of a node's connections) ",
@@ -686,6 +688,10 @@ UVA.methods.section <- function (object)
                                  "Unique Variable Analysis: A novel approach for detecting redundant variables in multivariate data.",
                                  "<em>PsyArXiv</em>.",
                                  "https://doi.org/10.31234/osf.io/4kra2")
+  
+  refs$embretson2013 <- paste("Embretson, S. E., & Reise, S. P. (2000).",
+                              "<em>Item response theory for psychologists</em>.",
+                              "Mahwah, NJ: Lawrence Erlbaum.")
   
   refs$hallquist2019 <- paste("Hallquist, M., Wright, A. C. G., & Molenaar, P. C. M. (2019).",
                               "Problems with centrality measures in psychopathology symptom networks: Why network psychometrics cannot escape psychometric theory.",
@@ -737,7 +743,7 @@ UVA.methods.section <- function (object)
     
     type.text <- paste(type.text,
                        "an empirical distribution is estimated to obtain $p$-values (with significance $p$ ",
-                       "$\\le$ ", sig,". Significant values suggest that a pair of variables are redundant. ",
+                       "$\\le$ ", sig,"). Significant values suggest that a pair of variables are redundant. ",
                        "Because there are many non-zero values (leading to multiple comparisons), an adjustment ",
                        'to the $p$-value is necessary. We applied the default method that uses an "adaptive" alpha ',
                        "(P&eacute;rez & Pericchi, 2014), which adjusts alpha based on sample size (here, the number of non-zero values; Christensen et al., 2020). ",
