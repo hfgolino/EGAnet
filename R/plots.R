@@ -312,7 +312,7 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       network::set.edge.attribute(network1[[i]], "color", ifelse(network::get.edge.value(network1[[i]], "weights") > 0, "darkgreen", "red"))
       network::set.edge.value(network1[[i]], attrname="AbsWeights",value=abs(x$dynEGA[[i]]$network))
       network::set.edge.value(network1[[i]],attrname="ScaledWeights",
-                              value=matrix(rescale.edges(x$dynEGA[[i]]$network, plot.args$edge.size),
+                              value=matrix(rescale.edges(x$dynEGA[[i]]$network, default.args$edge.size),
                                            nrow = nrow(x$dynEGA[[i]]$network),
                                            ncol = ncol(x$dynEGA[[i]]$network)))
       
