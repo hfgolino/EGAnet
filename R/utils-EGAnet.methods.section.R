@@ -743,7 +743,7 @@ UVA.methods.section <- function (object)
     
     type.text <- paste(type.text,
                        "an empirical distribution is estimated to obtain $p$-values (with significance $p$ ",
-                       "$\\le$ ", sig,". Significant values suggest that a pair of variables are redundant. ",
+                       "$\\le$ ", sig,"). Significant values suggest that a pair of variables are redundant. ",
                        "Because there are many non-zero values (leading to multiple comparisons), an adjustment ",
                        'to the $p$-value is necessary. We applied the default method that uses an "adaptive" alpha ',
                        "(P&eacute;rez & Pericchi, 2014), which adjusts alpha based on sample size (here, the number of non-zero values; Christensen et al., 2020). ",
