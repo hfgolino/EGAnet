@@ -296,8 +296,11 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
     edge.list <- vector("list", length = length(x$dynEGA))
     layout.spring <- vector("list", length = length(x$dynEGA))
     
-    
     for(i in 1:length(x$dynEGA)){
+      
+      # Insignificant values (keeps ggnet2 from erroring out)
+      x$dynEGA[[i]]$network <- ifelse(abs(as.matrix(x$dynEGA[[i]]$network)) <= .00001, 0, as.matrix(x$dynEGA[[i]]$network))
+      
       # weighted  network
       network1[[i]] <- network::network(x$dynEGA[[i]]$network,
                                         ignore.eval = FALSE,
@@ -406,6 +409,10 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
   if(plot.type == "qgraph"){
     plot.dynEGA.Individuals <- qgraph::qgraph(x$dynEGA[[id]]$network, layout = "spring", vsize = plot.args$vsize, groups = as.factor(x$dynEGA[[id]]$wc), ...)
   }else if(plot.type == "GGally"){
+    
+    # Insignificant values (keeps ggnet2 from erroring out)
+    x$dynEGA[[id]]$network <- ifelse(abs(as.matrix(x$dynEGA[[id]]$network)) <= .00001, 0, as.matrix(x$dynEGA[[id]]$network))
+    
     # weighted  network
     network1 <- network::network(x$dynEGA[[id]]$network,
                                  ignore.eval = FALSE,
@@ -517,6 +524,10 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
   if(plot.type == "qgraph"){
     ega.plot <- qgraph::qgraph(x$dynEGA$network, layout = "spring", vsize = plot.args$vsize, groups = as.factor(x$dynEGA$wc), ...)
   }else if(plot.type == "GGally"){
+    
+    # Insignificant values (keeps ggnet2 from erroring out)
+    x$dynEGA$network <- ifelse(abs(as.matrix(x$dynEGA$network)) <= .00001, 0, as.matrix(x$dynEGA$network))
+    
     # weighted  network
     network1 <- network::network(x$dynEGA$network,
                                  ignore.eval = FALSE,
