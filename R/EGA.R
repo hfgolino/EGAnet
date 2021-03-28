@@ -682,27 +682,30 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
       }
     }else if(plot.type == "GGally"){
       
+      # Insignificant values (keeps ggnet2 from erroring out)
+      net <- ifelse(abs(as.matrix(a$network)) <= .00001, 0, as.matrix(a$network))
+      
       # weighted  network
-      network1 <- network::network(a$network,
+      network1 <- network::network(net,
                                    ignore.eval = FALSE,
                                    names.eval = "weights",
                                    directed = FALSE)
       network::set.vertex.attribute(network1, attrname= "Communities", value = a$wc)
       network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
       network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
-      network::set.edge.value(network1,attrname="AbsWeights",value=abs(a$network))
+      network::set.edge.value(network1,attrname="AbsWeights",value=abs(net))
       network::set.edge.value(network1,attrname="ScaledWeights",
-                              value=matrix(rescale.edges(a$network, plot.args$edge.size),
-                                           nrow = nrow(a$network),
-                                           ncol = ncol(a$network)))
+                              value=matrix(rescale.edges(net, plot.args$edge.size),
+                                           nrow = nrow(net),
+                                           ncol = ncol(net)))
       
       # Layout "Spring"
-      graph1 <- NetworkToolbox::convert2igraph(a$network)
+      graph1 <- NetworkToolbox::convert2igraph(net)
       edge.list <- igraph::as_edgelist(graph1)
       layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
                                                                  weights =
                                                                    abs(igraph::E(graph1)$weight/max(abs(igraph::E(graph1)$weight)))^2,
-                                                                 vcount = ncol(a$network))
+                                                                 vcount = ncol(net))
       
       set.seed(1234)
       plot.args$net <- network1
@@ -714,12 +717,12 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
       plot.args$color.palette <- NULL
       plot.args$palette <- NULL
       
-      lower <- abs(a$network[lower.tri(a$network)])
+      lower <- abs(net[lower.tri(net)])
       non.zero <- sqrt(lower[lower != 0])
       
       plot.args$edge.alpha <- non.zero
       plot.args$mode <- layout.spring
-      plot.args$label <- colnames(a$network)
+      plot.args$label <- colnames(net)
       plot.args$node.label <- plot.args$label
       if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$node.size/2}
       if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$node.size/2}

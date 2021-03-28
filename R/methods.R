@@ -595,6 +595,9 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
     ega.plot <- qgraph::qgraph(x$network, layout = "spring", vsize = plot.args$vsize, groups = as.factor(x$wc), ...)
   }else if(plot.type == "GGally"){
     
+    # Insignificant values (keeps ggnet2 from erroring out)
+    x$network <- ifelse(abs(as.matrix(x$network)) <= .00001, 0, as.matrix(x$network))
+    
     # weighted  network
     network1 <- network::network(x$network,
                                  ignore.eval = FALSE,
