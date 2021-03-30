@@ -1179,50 +1179,58 @@ dnn.model.weights <- function (loads, weights)
 #' @noRd
 #'
 # DNN prediction function
-# Updated 09.08.2020
+# Updated 30.03.2021
 dnn.predict <- function (loads)
 {
   # Load deep learning neural network weights
   dnn.weights <- get(data("dnn.weights", envir = environment()))
+  #dnn.weights <- weights
   
   # Compute ratios
   ## Small ratio
-  small.ratio <- exp(loads[1]) / exp(loads[6])
+  #small.ratio <- exp(loads[1]) / exp(loads[6])
   ## Moderate ratio
-  moderate.ratio <- exp(loads[2]) / exp(loads[7])
+  #moderate.ratio <- exp(loads[2]) / exp(loads[7])
   ## Large ratio
-  large.ratio <- exp(loads[3]) / exp(loads[8])
+  #large.ratio <- exp(loads[3]) / exp(loads[8])
   ## Dominant ratio
-  dominant.ratio <- exp(loads[4]) / exp(loads[9])
+  #dominant.ratio <- exp(loads[4]) / exp(loads[9])
   ## Cross ratio
-  cross.ratio <- exp(loads[5]) / exp(loads[10])
+  #cross.ratio <- exp(loads[5]) / exp(loads[10])
   
-  small.ratio <- min.max(small.ratio)
-  moderate.ratio <- min.max(moderate.ratio)
-  large.ratio <- min.max(large.ratio)
-  dominant.ratio <- min.max(dominant.ratio)
-  cross.ratio <- min.max(cross.ratio)
+  #small.ratio <- min.max(small.ratio)
+  #moderate.ratio <- min.max(moderate.ratio)
+  #large.ratio <- min.max(large.ratio)
+  #dominant.ratio <- min.max(dominant.ratio)
+  #cross.ratio <- min.max(cross.ratio)
   
   # Random versus non-random model
-  r_nr <- dnn.model.weights(c(loads, small.ratio, dominant.ratio), dnn.weights$r_nr_weights)
+  #r_nr <- dnn.model.weights(c(loads, small.ratio, dominant.ratio), dnn.weights$r_nr_weights)
   
   # Check for random model
-  if(r_nr >= .50) {return(1)}
+  #if(r_nr >= .50) {return(1)}
   
   # Factor versus network model
-  f_n <- vector("numeric", length = 3)
+  #f_n <- vector("numeric", length = 3)
   
   # Check for low correlation factor versus network model
-  f_n[1] <- dnn.model.weights(c(loads, dominant.ratio), dnn.weights$lf_n_weights)
+  #f_n[1] <- dnn.model.weights(c(loads, dominant.ratio), dnn.weights$lf_n_weights)
   
   # Check for high correlation with variables greater than factors versus network model
-  f_n[2] <- dnn.model.weights(c(loads, dominant.ratio), dnn.weights$hvgf_n_weights)
+  #f_n[2] <- dnn.model.weights(c(loads, dominant.ratio), dnn.weights$hvgf_n_weights)
   
   # Check for high correlation factor versus network model
-  f_n[3] <- dnn.model.weights(c(loads, dominant.ratio), dnn.weights$hvlf_n_weights)
+  #f_n[3] <- dnn.model.weights(c(loads, dominant.ratio), dnn.weights$hvlf_n_weights)
+  
+  f_n <- dnn.model.weights(#c(
+    as.matrix(loads), #small.ratio,
+                             #moderate.ratio, large.ratio,
+                             #dominant.ratio, cross.ratio
+                             #),
+                           dnn.weights)
   
   # Check for factor model
-  ifelse(any(f_n >= .50), return(2), return(3))
+  ifelse(any(f_n >= .50), return(2), return(1))
   
 }
 

@@ -1,10 +1,11 @@
 #' Loadings Comparison Test
 #'
 #' An algorithm to identify whether data were generated from a
-#' random, factor, or network model using factor and network loadings.
+#' factor or network model using factor and network loadings.
 #' The algorithm uses heuristics based on theory and simulation. These
 #' heuristics were then submitted to several deep learning neural networks
-#' with 240,000 samples per model with varying parameters.
+#' with 75,000 samples per model with randomly varying parameters
+#' (Christensen & Golino, 2021).
 #'
 #' @param data Matrix or data frame.
 #' A dataframe with the variables to be used in the test or a correlation matrix.
@@ -46,7 +47,7 @@
 #' 
 #' # Current implementation of LCT \cr
 #' Christensen, A. P., & Golino, H. (under review).
-#' Random, factor, or network model? Predictions from neural networks.
+#' Factor model or small-world network? Predictions from neural networks.
 #' \emph{PsyArXiv}.
 #' \doi{10.31234/osf.io/awkcb}
 #' 
@@ -55,7 +56,7 @@
 #' @export
 #'
 # Loadings Comparison Test----
-# Updated 03.03.2021
+# Updated 30.03.2021
 LCT <- function (data, n, iter = 100)
 {
   # Convert data to matrix
@@ -116,9 +117,7 @@ LCT <- function (data, n, iter = 100)
       {colnames(cor.mat) <- paste("V", 1:ncol(cor.mat), sep = "")}
       
       # Estimate network
-      if(count == 1)
-      {net <- try(suppressWarnings(suppressMessages(EGA(cor.mat, n = cases, plot.EGA = FALSE))), silent = TRUE)
-      }else{net <- try(suppressWarnings(suppressMessages(EGA.estimate(cor.mat, n = cases))), silent = TRUE)}
+      net <- try(suppressWarnings(suppressMessages(EGA(cor.mat, n = cases, plot.EGA = FALSE))), silent = TRUE)
       
       if(any(class(net) == "try-error"))
       {good <- FALSE
@@ -242,9 +241,8 @@ LCT <- function (data, n, iter = 100)
   wo.boot <- paste(dnn.predict(loads.mat[1,]))
   
   wo.boot <- switch(wo.boot,
-                    "1" = "Random",
-                    "2" = "Factor",
-                    "3" = "Network"
+                    "1" = "Factor",
+                    "2" = "Network"
   )
   
   predictions$empirical <- wo.boot
@@ -253,9 +251,8 @@ LCT <- function (data, n, iter = 100)
   boot <- paste(dnn.predict(colMeans(loads.mat, na.rm = TRUE)))
   
   boot <- switch(boot,
-                 "1" = "Random",
-                 "2" = "Factor",
-                 "3" = "Network"
+                 "1" = "Factor",
+                 "2" = "Network"
   )
   
   predictions$bootstrap <- boot
@@ -265,8 +262,8 @@ LCT <- function (data, n, iter = 100)
   
   boot.prop <- colMeans(proportion.table(as.matrix(boot.prop)))
   
-  prop <- vector("numeric", length = 3)
-  names(prop) <- c("Random", "Factor", "Network")
+  prop <- vector("numeric", length = 2)
+  names(prop) <- c("Factor", "Network")
   
   prop[1:length(boot.prop)] <- boot.prop
   
