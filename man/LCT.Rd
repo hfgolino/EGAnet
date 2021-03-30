@@ -31,10 +31,11 @@ the bootstrap replicate samples}
 }
 \description{
 An algorithm to identify whether data were generated from a
-random, factor, or network model using factor and network loadings.
+factor or network model using factor and network loadings.
 The algorithm uses heuristics based on theory and simulation. These
 heuristics were then submitted to several deep learning neural networks
-with 240,000 samples per model with varying parameters.
+with 75,000 samples per model with randomly varying parameters
+(Christensen & Golino, 2021).
 }
 \examples{
 \donttest{# Compute LCT
@@ -54,7 +55,7 @@ On the equivalency of factor and network loadings.
 
 # Current implementation of LCT \cr
 Christensen, A. P., & Golino, H. (under review).
-Random, factor, or network model? Predictions from neural networks.
+Factor model or small-world network? Predictions from neural networks.
 \emph{PsyArXiv}.
 \doi{10.31234/osf.io/awkcb}
 }

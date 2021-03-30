@@ -20,6 +20,8 @@ o FIX: latent variable with non-space separated entries in `UVA` (`reduce.method
 
 o UPDATE: `UVA` was added to `methods.section`
 
+o UPDATE: neural network weights in `LCT` (now only tests for factor or small-world network models)
+
 
 Changes in version 0.9.8
 
