@@ -138,6 +138,9 @@ LCT <- function (data, n, iter = 100)
               warning("One or more dimensions were identified as a single variable. These variables were removed from the comparison for both network and factor models.")
             }
             
+            # Remove loadings with no names
+            net$wc <- na.omit(net$wc)
+            
             # Reorder network loadings
             n.loads <- as.matrix(n.loads[match(names(net$wc), row.names(n.loads)),])
             

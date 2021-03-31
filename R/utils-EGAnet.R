@@ -1182,8 +1182,38 @@ dnn.model.weights <- function (loads, weights)
 # Updated 30.03.2021
 dnn.predict <- function (loads)
 {
+  
+    dnn.weights <- get(data("dnn.weights", envir = environment()))
+    small.ratio <- exp(loads[1])/exp(loads[6])
+    moderate.ratio <- exp(loads[2])/exp(loads[7])
+    large.ratio <- exp(loads[3])/exp(loads[8])
+    dominant.ratio <- exp(loads[4])/exp(loads[9])
+    cross.ratio <- exp(loads[5])/exp(loads[10])
+    min.max <- function(vec) {
+      exp.min <- exp(0)/exp(1)
+      exp.max <- exp(1)/exp(0)
+      return((vec - exp.min)/(exp.max - exp.min))
+    }
+    small.ratio <- min.max(small.ratio)
+    moderate.ratio <- min.max(moderate.ratio)
+    large.ratio <- min.max(large.ratio)
+    dominant.ratio <- min.max(dominant.ratio)
+    cross.ratio <- min.max(cross.ratio)
+    r_nr <- dnn.model.weights(c(loads, small.ratio, dominant.ratio), 
+                              dnn.weights$r_nr_weights)
+    if (r_nr >= 0.5) {
+      return(1)
+    }
+    f_n <- vector("numeric", length = 3)
+    f_n[1] <- dnn.model.weights(c(loads, dominant.ratio), dnn.weights$lf_n_weights)
+    f_n[2] <- dnn.model.weights(c(loads, dominant.ratio), dnn.weights$hvgf_n_weights)
+    f_n[3] <- dnn.model.weights(c(loads, dominant.ratio), dnn.weights$hvlf_n_weights)
+    ifelse(any(f_n >= 0.5), return(2), return(3))
+  
+  
+  
   # Load deep learning neural network weights
-  dnn.weights <- get(data("dnn.weights", envir = environment()))
+  #dnn.weights <- get(data("dnn.weights", envir = environment()))
   #dnn.weights <- weights
   
   # Compute ratios
@@ -1222,15 +1252,15 @@ dnn.predict <- function (loads)
   # Check for high correlation factor versus network model
   #f_n[3] <- dnn.model.weights(c(loads, dominant.ratio), dnn.weights$hvlf_n_weights)
   
-  f_n <- dnn.model.weights(#c(
-    as.matrix(loads), #small.ratio,
+  #f_n <- dnn.model.weights(#c(
+  #  as.matrix(loads), #small.ratio,
                              #moderate.ratio, large.ratio,
                              #dominant.ratio, cross.ratio
                              #),
-                           dnn.weights)
+  #                         dnn.weights)
   
   # Check for factor model
-  ifelse(any(f_n >= .50), return(2), return(1))
+  #ifelse(any(f_n >= .50), return(2), return(1))
   
 }
 
