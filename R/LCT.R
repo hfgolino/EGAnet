@@ -244,8 +244,9 @@ LCT <- function (data, n, iter = 100)
   wo.boot <- paste(dnn.predict(loads.mat[1,]))
   
   wo.boot <- switch(wo.boot,
-                    "1" = "Factor",
-                    "2" = "Network"
+                "1" = "Random",
+                 "2" = "Factor",
+                 "3" = "Network"
   )
   
   predictions$empirical <- wo.boot
@@ -254,8 +255,9 @@ LCT <- function (data, n, iter = 100)
   boot <- paste(dnn.predict(colMeans(loads.mat, na.rm = TRUE)))
   
   boot <- switch(boot,
-                 "1" = "Factor",
-                 "2" = "Network"
+                 "1" = "Random",
+                 "2" = "Factor",
+                 "3" = "Network"
   )
   
   predictions$bootstrap <- boot
@@ -265,8 +267,8 @@ LCT <- function (data, n, iter = 100)
   
   boot.prop <- colMeans(proportion.table(as.matrix(boot.prop)))
   
-  prop <- vector("numeric", length = 2)
-  names(prop) <- c("Factor", "Network")
+  prop <- vector("numeric", length = 3)
+  names(prop) <- c("Random", "Factor", "Network")
   
   prop[1:length(boot.prop)] <- boot.prop
   
