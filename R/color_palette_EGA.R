@@ -68,7 +68,7 @@ color_palette_EGA <- function (name, wc)
   ## Polychrome (20 colors)
   polychrome <- toupper(
     paste("#",
-          c("EF2C1A", "90DDF0", "C8D96F", "ef8a17", "f5c900",
+          c("F03D2D", "90DDF0", "C8D96F", "ef8a17", "f5c900",
             "ba42c0", "17BEBB", "9bafd9", "f27a7d", "f9c58d",
             "f7f779", "c5f9d7", "a18dce", "f492f0", "919bff",
             "C792DF", "60b6f1", "f9a470", "bc556f", "f7a2a1"
@@ -117,7 +117,7 @@ color_palette_EGA <- function (name, wc)
       ## Polychrome (20 colors)
       polychrome <- toupper(
         paste("#",
-              c("EF2C1A", "90DDF0", "C8D96F", "ef8a17", "f5c900",
+              c("F03D2D", "90DDF0", "C8D96F", "ef8a17", "f5c900",
                 "ba42c0", "17BEBB", "9bafd9", "f27a7d", "f9c58d",
                 "f7f779", "c5f9d7", "a18dce", "f492f0", "919bff",
                 "C792DF", "60b6f1", "f9a470", "bc556f", "f7a2a1"
