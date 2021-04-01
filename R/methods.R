@@ -445,7 +445,7 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     
     
     if("vsize" %in% names(plot.args)){
-      plot.args$size <- plot.args$vsize
+      plot.args$node.size <- plot.args$vsize
       plot.args$vsize <- NULL
     }
     
@@ -511,7 +511,7 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     plot.args$node.color <- "Communities"
     plot.args$node.alpha <- plot.args$alpha
     plot.args$node.shape <- plot.args$shape
-    plot.args$node.size <- plot.args$size
+    plot.args$node.size <- plot.args$node.size
     plot.args$edge.color <- "color"
     plot.args$edge.size <- "ScaledWeights"
     plot.args$color.palette <- NULL
@@ -567,7 +567,7 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
     
     
     if("vsize" %in% names(plot.args)){
-      plot.args$size <- plot.args$vsize
+      plot.args$node.size <- plot.args$vsize
       plot.args$vsize <- NULL
     }
     
@@ -633,7 +633,7 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
     plot.args$node.color <- "Communities"
     plot.args$node.alpha <- plot.args$alpha
     plot.args$node.shape <- plot.args$shape
-    plot.args$node.size <- plot.args$size
+    plot.args$node.size <- plot.args$node.size
     plot.args$color.palette <- NULL
     plot.args$palette <- NULL
     plot.args$edge.color <- "color"
