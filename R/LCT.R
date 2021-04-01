@@ -126,6 +126,10 @@ LCT <- function (data, n, iter = 100)
         if(length(net$wc) == length(unique(net$wc)))
         {good <- FALSE
         }else{
+    
+          # Remove variables missing dimensions
+          net$wc <- na.omit(net$wc)
+    
           # Try to estimate network loadings
           n.loads <- try(abs(as.matrix(net.loads(net$network, net$wc)$std)), silent = TRUE)
           
