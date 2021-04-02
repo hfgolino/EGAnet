@@ -431,12 +431,7 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
   if(type=="parametric"){  # Use a parametric approach
     
     ## Compute correlation matrix
-    cor.data <- switch(corr,
-                       "cor_auto" = qgraph::cor_auto(data),
-                       "pearson" = cor(data, use = "pairwise.complete.obs"),
-                       "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
-    )
-    
+    cor.data <- empirical.EGA$correlation    
 
     if(model=="glasso"){
 
@@ -445,7 +440,7 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
         model.args$gamma <- empirical.EGA$Methods$gamma
       }
       
-      g <- -suppressMessages(EGA.estimate(data = cor.data, n = cases, model = model, model.args = model.args)$network)
+      g <- -suppressMessages(EGA(data = cor.data, n = cases, model = model, model.args = model.args)$network)
       diag(g) <- 1
 
     }else if(model=="TMFG"){
