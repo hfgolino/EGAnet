@@ -558,47 +558,6 @@ rescale.edges <- function (network, size)
 # MULTI-FUNCTION SUB-ROUTINES ----
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-#' Computes the mode
-#'
-#' @param v Numeric vector.
-#' Vector of values to find mode in
-#'
-#' @param fin.vec Alphanumeric vector.
-#' Vector of current state of \code{v}
-#'
-#' @return The mode of a vector
-#'
-#' @noRd
-#'
-# Mode
-# Updated 15.06.2020
-mode <- function(v, fin.vec)
-{
-  #unique values
-  uniqv <- unique(v)
-  
-  #find mode
-  uniq.val <- uniqv[which.max(tabulate(match(v, uniqv)))]
-  
-  #do not overwrite already identified dimension
-  while(uniq.val %in% fin.vec)
-  {
-    #remove unique value
-    uniqv <- uniqv[-which(uniq.val==uniqv)]
-    
-    if(length(uniqv)==0)
-    {
-      uniq.val <- NA
-      break
-    }
-    
-    #find mode
-    uniq.val <- uniqv[which.max(tabulate(match(v, uniqv)))]
-  }
-  
-  return(uniq.val)
-}
-
 #' \code{\link[qgraph]{EBICglasso}} from \code{\link{qgraph}} 1.4.4
 #'
 #' This function uses the \code{\link[glasso]{glasso}} package
@@ -2961,6 +2920,47 @@ numeric.membership <- function(membership){
   
   return(membership.numbers)
   
+}
+
+#' Computes the mode
+#'
+#' @param v Numeric vector.
+#' Vector of values to find mode in
+#'
+#' @param fin.vec Alphanumeric vector.
+#' Vector of current state of \code{v}
+#'
+#' @return The mode of a vector
+#'
+#' @noRd
+#'
+# Mode
+# Updated 15.06.2020
+mode <- function(v, fin.vec)
+{
+  #unique values
+  uniqv <- unique(v)
+  
+  #find mode
+  uniq.val <- uniqv[which.max(tabulate(match(v, uniqv)))]
+  
+  #do not overwrite already identified dimension
+  while(uniq.val %in% fin.vec)
+  {
+    #remove unique value
+    uniqv <- uniqv[-which(uniq.val==uniqv)]
+    
+    if(length(uniqv)==0)
+    {
+      uniq.val <- NA
+      break
+    }
+    
+    #find mode
+    uniq.val <- uniqv[which.max(tabulate(match(v, uniqv)))]
+  }
+  
+  return(uniq.val)
 }
 
 #' Converts membership vector into a target membership vector
