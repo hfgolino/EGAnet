@@ -1924,8 +1924,11 @@ redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.r
   
   # Add p-values
   if(type != "threshold"){
-    desc <- cbind(pval, desc)
-    colnames(desc)[1] <- "p-value"
+    desc$basic <- cbind(round(sig, 5), desc$basic)
+    colnames(desc$basic)[1] <- "Sig"
+    desc$centralTendency <- cbind(round(pval[row.names(desc$centralTendency)], 5),
+          desc$centralTendency)
+    colnames(desc$centralTendency)[1] <- "p-value"
   }
   
   # Results list
