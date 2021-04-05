@@ -298,6 +298,9 @@ UVA <- function(data, n = NULL,
                 plot.redundancy = FALSE, plot.args = list()
                 )
 {
+  # Make sure data is a matrix
+  data <- as.matrix(data)
+  
   # Missing and NULL arguments
   ## corr
   if(missing(corr)){
