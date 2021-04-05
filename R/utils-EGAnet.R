@@ -1922,6 +1922,12 @@ redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.r
   desc <- redund.desc(pos.vals = pos.vals, method = method, type = type, sig = sig,
                       aic = aic, g.dist = g.dist)
   
+  # Add p-values
+  if(type != "threshold"){
+    desc <- cbind(pval, desc)
+    colnames(desc)[1] <- "p-value"
+  }
+  
   # Results list
   res <- list()
   res$redundant <- res.list
