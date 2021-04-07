@@ -336,6 +336,12 @@ EGA.methods.section <- function (object, net.loads, net.scores)
                              "Modularity and community structure in networks.",
                              "<em>Proceedings of the National Academy of Sciences</em>, <em>103</em>, 8577--8582.",
                              "https://doi.org/10.1073/pnas.0601602103")
+    
+    refs$csardi2006 <- paste("Csardi, G., & Nepusz, T. (2006).",
+                             "The igraph software package for complex network research.",
+                             "<em>InterJournal, Complex Systems</em>, <em>1695</em>, 1--9.",
+                             "Retrieved from https://pdfs.semanticscholar.org/1d27/44b83519657f5f2610698a8ddd177ced4f5c.pdf")
+    
   }else{
     
     algorithm.text <- paste("&emsp;A default algorithm was not used in EGA. I suppose you'll have to write your own community detection algorithm section")
