@@ -1916,7 +1916,8 @@ redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.r
     plot.args$title <- switch(method,
                               "wto" = "Weighted\nTopological\nOverlap",
                               "pcor" = "Partial\nCorrelation",
-                              "cor" = "Zero-order\nCorrelation"
+                              "cor" = "Zero-order\nCorrelation",
+                              "irt" = "IRT\nCorrelated\nResiudals"
     )
     
     if(ncol(plot.mat) <= 2){
@@ -2019,7 +2020,8 @@ redund.desc <- function(pos.vals, method, type, sig, aic, g.dist)
   row.names(desc) <- switch(method,
                             "wto" = "wTO",
                             "pcor"= "pcor",
-                            "cor" = "cor"
+                            "cor" = "cor",
+                            "irt" = "IRT"
   )
   
   colnames(desc) <- c("Mean", "SD", "Median", "MAD", "3*MAD", "6*MAD", "Minimum", "Maximum", "Critical Value")
@@ -2063,7 +2065,8 @@ redund.desc <- function(pos.vals, method, type, sig, aic, g.dist)
   colnames(pos.output)[1] <- switch(method,
                                     "wto" = "wTO",
                                     "pcor"= "pcor",
-                                    "cor" = "cor"
+                                    "cor" = "cor",
+                                    "irt" = "IRT"
   )
   
   colnames(pos.output)[2:3] <- c("SD from Mean", "MAD from Median")
@@ -2741,6 +2744,7 @@ redundancy.menu <- function (redund, reduce.method, pot, target.item, weights,
                               "wto" = "Regularized Partial Correlations",
                               "pcor" = "Partial Correlations",
                               "cor" = "Zero-order Correlations",
+                              "irt" = "Correlated Residuals"
     )
     
   }
@@ -2759,6 +2763,7 @@ redundancy.menu <- function (redund, reduce.method, pot, target.item, weights,
                                 "wto" = "Regularized Partial Correlation",
                                 "pcor" = "Partial Correlation",
                                 "cor" = "Zero-order Correlation",
+                                "irt" = "Correlated Residuals"
       )
       
     }

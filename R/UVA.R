@@ -48,8 +48,8 @@
 #' 
 #' @param method Character.
 #' Computes weighted topological overlap (\code{"wTO"} using \code{\link[qgraph]{EBICglasso}}),
-#' partial correlations (\code{"pcor"}), correlations (\code{"cor"}) or a unidimensional
-#' iterm response theory model (\code{"IRT"}) using \code{\link[mirt]{mirt}}.
+#' partial correlations (\code{"pcor"}), correlations (\code{"cor"}) or the correlated residuals
+#' from a unidimensional item response theory model (\code{"IRT"}) using \code{\link[mirt]{mirt}}.
 #' Defaults to \code{"wTO"}
 #' 
 #' @param type Character. Type of significance.
