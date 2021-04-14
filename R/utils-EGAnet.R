@@ -2986,7 +2986,7 @@ mode <- function(v, fin.vec)
 #'
 # Homogenize Membership
 # For itemStability
-# Updated 26.02.2021
+# Updated 14.04.2021
 homogenize.membership <- function (target.wc, convert.wc)
 {
   # Obtain whether vector or matrix is input for 'convert.wc'
@@ -3025,9 +3025,16 @@ homogenize.membership <- function (target.wc, convert.wc)
     # Unique new membership
     new.uniq <- unique(new.vec)
     
-    # Converge based on maximum number of dimensions
-    if(max(target.wc, na.rm = TRUE) > max(new.vec, na.rm = TRUE))
-    {
+    # Check if dimensionality solution was reached
+    if(max(new.vec, na.rm = TRUE) == length(new.vec)){
+      
+      # Submit NAs
+      final.vec <- rep(NA, length = length(target.wc))
+      names(final.vec) <- names(target.wc)
+      
+    }else if(max(target.wc, na.rm = TRUE) > max(new.vec, na.rm = TRUE)){
+      # Converge based on maximum number of dimensions
+      
       # Initialize rand and length vector
       rand <- vector("numeric", length = max(new.vec, na.rm = TRUE))
       names(rand) <- na.omit(new.uniq)
@@ -3337,7 +3344,7 @@ itemStability.plot <- function (res, bootega.obj)
 #' @noRd
 # Average network loadings for itemStability
 # For itemStability
-# Updated 26.02.2021
+# Updated 14.04.2021
 itemStability.loadings <- function(res, bootega.obj)
 {
   # Get graphs
@@ -3359,8 +3366,19 @@ itemStability.loadings <- function(res, bootega.obj)
   loadings <- list()
   
   for(i in 1:iterations){
-    loadings[[i]] <- net.loads(A = graphs[[i]],
-                               wc = memberships[,i])$std
+    
+    if(all(is.na(memberships[,i]))){
+      loadings[[i]] <- NULL
+    }else{
+      loadings[[i]] <- net.loads(A = graphs[[i]],
+                                 wc = memberships[,i])$std
+    }
+    
+  }
+  
+  # Remove NULL loadings
+  if(any(unlist(lapply(loadings, is.null)))){
+    loadings <- loadings[-which(unlist(lapply(loadings, is.null)))]
   }
   
   # Initialize final loadings array
