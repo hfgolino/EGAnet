@@ -48,7 +48,8 @@
 #' 
 #' @param method Character.
 #' Computes weighted topological overlap (\code{"wTO"} using \code{\link[qgraph]{EBICglasso}}),
-#' partial correlations (\code{"pcor"}), and correlations (\code{"cor"}).
+#' partial correlations (\code{"pcor"}), correlations (\code{"cor"}) or a unidimensional
+#' iterm response theory model (\code{"IRT"}) using \code{\link[mirt]{mirt}}.
 #' Defaults to \code{"wTO"}
 #' 
 #' @param type Character. Type of significance.
@@ -71,6 +72,9 @@
 #' 
 #' \item{\code{"cor"}}
 #' {.70}
+#' 
+#' \item{\code{"IRT}}
+#' {.20}
 #' 
 #' } 
 #' 
@@ -286,11 +290,11 @@
 #' @export
 #
 # Unique Variable Analysis
-# Updated 24.03.2021
+# Updated 14.04.2021
 UVA <- function(data, n = NULL,
                 model = c("glasso", "TMFG"),
                 corr = c("cor_auto", "pearson", "spearman"),
-                method = c("cor", "pcor", "wTO"),
+                method = c("cor", "pcor", "wTO", "IRT"),
                 type = c("adapt", "alpha", "threshold"), sig,
                 key = NULL, reduce = TRUE,
                 reduce.method = c("latent", "remove", "sum"),
@@ -328,7 +332,8 @@ UVA <- function(data, n = NULL,
       sig <- switch(method,
                     "cor" = .70,
                     "pcor" = .20,
-                    "wto" = .20
+                    "wto" = .20,
+                    "irt" = .20,
       )
     }else{sig <- .05}
   }
@@ -367,20 +372,29 @@ UVA <- function(data, n = NULL,
   
   ## n
   if(nrow(data) == ncol(data)){
+    
+    if(method == "irt"){
+      stop('method = "IRT" requires a dataset to be input')
+    }
+    
     if(is.null(n)){
       stop("Argument 'n' must be set for square matrices")
     }
+    
   }else{### Get n
     n <- nrow(data)
-    ## Compute correlation matrix
-    cormat <- switch(corr,
-                     "cor_auto" = qgraph::cor_auto(data),
-                     "pearson" = cor(data, use = "pairwise.complete.obs"),
-                     "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
-    )
-    ### Make sure it's positive definite
-    if(any(eigen(cormat)$values < 0)){
-      cormat <- as.matrix(Matrix::nearPD(cormat, keepDiag = TRUE)$mat)
+    
+    if(method != "irt"){
+      ## Compute correlation matrix
+      cormat <- switch(corr,
+                       "cor_auto" = qgraph::cor_auto(data),
+                       "pearson" = cor(data, use = "pairwise.complete.obs"),
+                       "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
+      )
+      ### Make sure it's positive definite
+      if(any(eigen(cormat)$values < 0)){
+        cormat <- as.matrix(Matrix::nearPD(cormat, keepDiag = TRUE)$mat)
+      }
     }
   }
   

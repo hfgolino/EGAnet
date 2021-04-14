@@ -1732,39 +1732,48 @@ dynEGA.ind.pop <- function(data, n.embed, tau = 1, delta = 1,
 
 #' @noRd
 # Redundancy Processing
-# Updated 15.02.2021
+# Updated 14.04.2021
 redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.redundancy, plot.args)
 {
   # Compute redundancy method
-  if(method == "wto"){
+  if(method == "irt"){
     
-    if(model == "glasso"){
+    mod <- mirt::mirt(items,1)
+    sink <- capture.output(tom <- mirt::residuals(mod,type="Q3"))
+    
+  }else{
+    
+    if(method == "wto"){
       
-      for(i in c(0.50, 0.25, 0))
-      {
-        net <- EBICglasso.qgraph(data = cormat, n = n, gamma = i)
+      if(model == "glasso"){
         
-        if(all(colSums(net)!=0))
-        {break}
+        for(i in c(0.50, 0.25, 0))
+        {
+          net <- EBICglasso.qgraph(data = cormat, n = n, gamma = i)
+          
+          if(all(colSums(net)!=0))
+          {break}
+        }
+        
+      }else if(model == "tmfg"){
+        
+        net <- NetworkToolbox::TMFG(cormat)$A
+        
+      }else{
+        
+        stop(paste(model, "does not exist as an option for the argument 'model'"))
+        
       }
       
-    }else if(model == "tmfg"){
+      tom <- wTO::wTO(net, sign = "sign")
       
-      net <- NetworkToolbox::TMFG(cormat)$A
+    }else if(method == "pcor"){
       
-    }else{
+      tom <- -cov2cor(solve(cormat))
       
-      stop(paste(model, "does not exist as an option for the argument 'model'"))
-      
-    }
+    }else{tom <- cormat}
     
-    tom <- wTO::wTO(net, sign = "sign")
-    
-  }else if(method == "pcor"){
-    
-    tom <- -cov2cor(solve(cormat))
-    
-  }else{tom <- cormat}
+  }
   
   # Number of variables; diagonal zero; absolute values
   vars <- ncol(tom); diag(tom) <- 0; tom <- abs(tom)
@@ -1935,7 +1944,7 @@ redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.r
   res <- list()
   res$redundant <- res.list
   res$data <- data
-  res$correlation <- cormat
+  if(method != "irt"){res$correlation <- cormat}
   res$weights <- tom
   if(exists("net")){res$network <- net}
   if(exists("net.plot")){res$plot <- net.plot}
