@@ -1738,7 +1738,7 @@ redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.r
   # Compute redundancy method
   if(method == "irt"){
     
-    mod <- mirt::mirt(items,1)
+    mod <- mirt::mirt(data,1)
     sink <- capture.output(tom <- mirt::residuals(mod,type="Q3"))
     
   }else{
