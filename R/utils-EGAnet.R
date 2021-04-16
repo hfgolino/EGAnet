@@ -2167,7 +2167,9 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
   # Weights
   if("network" %in% names(node.redundant.obj)){
     weights <- as.matrix(node.redundant.obj$network)
-  }else{weights <- as.matrix(node.redundant.obj$correlation)}
+  }else if("correlation" %in% names(node.redundant.obj)){
+    weights <- as.matrix(node.redundant.obj$correlation)
+  }else{weights <- as.matrix(node.redundant.obj$weights)}
   
   # Track merged items
   merged <- list()
