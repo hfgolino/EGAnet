@@ -1909,9 +1909,12 @@ redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.r
       plot.mat[res.list[[i]],names(res.list)[i]] <- tom[res.list[[i]],names(res.list)[i]]
     }
     
-    rm.mat <- which(colSums(plot.mat) == 0)
-    
-    plot.mat <- plot.mat[-rm.mat, -rm.mat]
+    if(any(colSums(plot.mat) == 0)){
+      
+      rm.mat <- which(colSums(plot.mat) == 0)
+      plot.mat <- plot.mat[-rm.mat, -rm.mat]
+      
+    }
     
     plot.args$title <- switch(method,
                               "wto" = "Weighted\nTopological\nOverlap",
