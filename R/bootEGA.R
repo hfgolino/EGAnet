@@ -440,7 +440,7 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
         model.args$gamma <- empirical.EGA$Methods$gamma
       }
       
-      g <- -suppressMessages(EGA(data = cor.data, n = cases, model = model, model.args = model.args)$network)
+      g <- -empirical.EGA$network
       diag(g) <- 1
 
     }else if(model=="TMFG"){
