@@ -73,7 +73,7 @@
 #' \item{\code{"cor"}}
 #' {.70}
 #' 
-#' \item{\code{"IRT}}
+#' \item{\code{"IRT"}}
 #' {.20}
 #' 
 #' } 

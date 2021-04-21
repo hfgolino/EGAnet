@@ -9,7 +9,7 @@ UVA(
   n = NULL,
   model = c("glasso", "TMFG"),
   corr = c("cor_auto", "pearson", "spearman"),
-  method = c("cor", "pcor", "wTO"),
+  method = c("cor", "pcor", "wTO", "IRT"),
   type = c("adapt", "alpha", "threshold"),
   sig,
   key = NULL,
@@ -66,7 +66,8 @@ the \code{\link[stats]{cor}}} function.
 
 \item{method}{Character.
 Computes weighted topological overlap (\code{"wTO"} using \code{\link[qgraph]{EBICglasso}}),
-partial correlations (\code{"pcor"}), and correlations (\code{"cor"}).
+partial correlations (\code{"pcor"}), correlations (\code{"cor"}) or the correlated residuals
+from a unidimensional item response theory model (\code{"IRT"}) using \code{\link[mirt]{mirt}}.
 Defaults to \code{"wTO"}}
 
 \item{type}{Character. Type of significance.
@@ -89,6 +90,9 @@ Defaults for \code{"threshold"} for each \code{method}:
 
 \item{\code{"cor"}}
 {.70}
+
+\item{\code{"IRT"}}
+{.20}
 
 }}
 
@@ -274,7 +278,7 @@ key.ind <- match(colnames(items), as.character(psychTools::spi.dictionary$item_i
 key <- as.character(psychTools::spi.dictionary$item[key.ind])
 
 if(interactive()){
-UVA(data = items, method = "wTO", type = "adapt",
+uva.results <- UVA(data = items, method = "wTO", type = "adapt",
     key = key, reduce.method = "latent")
 }
 
