@@ -4,8 +4,7 @@
 #' factor or network model using factor and network loadings.
 #' The algorithm uses heuristics based on theory and simulation. These
 #' heuristics were then submitted to several deep learning neural networks
-#' with 75,000 samples per model with randomly varying parameters
-#' (Christensen & Golino, 2021).
+#' with 240,000 samples per model with varying parameters.
 #'
 #' @param data Matrix or data frame.
 #' A dataframe with the variables to be used in the test or a correlation matrix.
@@ -56,7 +55,7 @@
 #' @export
 #'
 # Loadings Comparison Test----
-# Updated 30.03.2021
+# Updated 29.04.2021
 LCT <- function (data, n, iter = 100)
 {
   # Convert data to matrix
@@ -248,9 +247,8 @@ LCT <- function (data, n, iter = 100)
   wo.boot <- paste(dnn.predict(loads.mat[1,]))
   
   wo.boot <- switch(wo.boot,
-                "1" = "Random",
-                 "2" = "Factor",
-                 "3" = "Network"
+                 "1" = "Factor",
+                 "2" = "Network"
   )
   
   predictions$empirical <- wo.boot
@@ -259,9 +257,8 @@ LCT <- function (data, n, iter = 100)
   boot <- paste(dnn.predict(colMeans(loads.mat, na.rm = TRUE)))
   
   boot <- switch(boot,
-                 "1" = "Random",
-                 "2" = "Factor",
-                 "3" = "Network"
+                 "1" = "Factor",
+                 "2" = "Network"
   )
   
   predictions$bootstrap <- boot
@@ -271,27 +268,13 @@ LCT <- function (data, n, iter = 100)
   
   boot.prop <- colMeans(proportion.table(as.matrix(boot.prop)))
   
-  prop <- vector("numeric", length = 3)
-  names(prop) <- c("Random", "Factor", "Network")
+  prop <- vector("numeric", length = 2)
+  names(prop) <- c("Factor", "Network")
   
   prop[1:length(boot.prop)] <- boot.prop
   
   predictions$proportion <- round(prop, 3)
   
-  # Omnibus prediction
-  # item{omnibus}{An omnibus prediction based on a consensus of empirical,
-  # bootstrap, and bootstrap proportions prediction. A consensus corresponds to
-  # any combination of two predictions returning the same prediction}
-  #omni.prop <- c(wo.boot, boot, names(prop)[which.max(prop)])
-  #omni.table <- table(omni.prop)
-  
-  #if(any(omni.table > 1))
-  #{omni.pred <- names(omni.table)[which.max(omni.table)]
-  #}else{omni.pred <- "No consensus prediction. Check proportion and bootstrap predictions."}
-  
-  #predictions$omnibus <- omni.pred
-  
   return(predictions)
   
 }
-#----
