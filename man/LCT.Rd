@@ -34,8 +34,7 @@ An algorithm to identify whether data were generated from a
 factor or network model using factor and network loadings.
 The algorithm uses heuristics based on theory and simulation. These
 heuristics were then submitted to several deep learning neural networks
-with 75,000 samples per model with randomly varying parameters
-(Christensen & Golino, 2021).
+with 240,000 samples per model with varying parameters.
 }
 \examples{
 \donttest{# Compute LCT
