@@ -1143,7 +1143,6 @@ dnn.predict <- function (loads)
 {
   # Load deep learning neural network weights
   dnn.weights <- get(data("dnn.weights", envir = environment()))
-  dnn.weights <- weights
   
   # Compute ratios
   ## Small ratio
