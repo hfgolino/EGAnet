@@ -657,7 +657,7 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
                                  directed = FALSE)
     
     if(exists("legend.names")){
-      for(l in 1:x$n.dim){
+      for(l in 1:length(unique(legend.names))){
         x$wc[x$wc == l] <- legend.names[l]
       }
     }
