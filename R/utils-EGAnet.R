@@ -1,3 +1,39 @@
+#%%%%%%%%%%%%%%%%%%%%%%%%%%
+# network.descriptives ----
+#%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+# From WGCNA version 1.70-3
+#' @noRd
+#'
+#Scale-free fit index
+#Updated 12.05.2021
+scaleFreeFitIndex=function(k,nBreaks=10, removeFirst = FALSE)
+{
+  discretized.k = cut(k, nBreaks)
+  dk = tapply(k, discretized.k, mean)
+  p.dk = as.vector(tapply(k, discretized.k, length)/length(k))
+  breaks1 = seq(from = min(k), to = max(k), 
+                length = nBreaks + 1)
+  hist1 = hist(k, breaks = breaks1, plot = FALSE, right = TRUE)
+  dk2 = hist1$mids
+  dk = ifelse(is.na(dk), dk2, dk)
+  dk = ifelse(dk == 0, dk2, dk)
+  p.dk = ifelse(is.na(p.dk), 0, p.dk)
+  log.dk = as.vector(log10(dk))
+  if (removeFirst) {
+    p.dk = p.dk[-1]
+    log.dk = log.dk[-1]
+  }
+  log.p.dk= as.numeric(log10(p.dk + 1e-09))
+  lm1 = try(lm(log.p.dk ~ log.dk));
+  if (inherits(lm1, "try-error")) browser();
+  lm2 = lm(log.p.dk ~ log.dk + I(10^log.dk))
+  datout=data.frame(Rsquared.SFT=summary(lm1)$r.squared,
+                    slope.SFT=summary(lm1)$coefficients[2, 1], 
+                    truncatedExponentialAdjRsquared= summary(lm2)$adj.r.squared)
+  datout
+}
+
 #%%%%%%%%%%%%%%%
 # net.loads ----
 #%%%%%%%%%%%%%%%
