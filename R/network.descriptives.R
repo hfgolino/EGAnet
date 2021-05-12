@@ -109,7 +109,7 @@ network.descriptives <- function(network)
   desc["swn.rand"] <- NetworkToolbox::smallworldness(network, method = "rand")$swm
   desc["swn.HG"] <- NetworkToolbox::smallworldness(network, method = "HG")$swm
   desc["swn.TJHBL"] <- NetworkToolbox::smallworldness(network, method = "TJHBL")$swm
-  desc["scale-free_R-sq"] <- scaleFreeFitIndex(degree, nBreaks = 10)["Rsquared.SFT"]
+  desc["scale-free_R-sq"] <- as.matrix(EGAnet:::scaleFreeFitIndex(degree, nBreaks = 10)["Rsquared.SFT"])
   
   return(round(desc, 3))
     
