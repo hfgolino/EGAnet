@@ -106,9 +106,9 @@ network.descriptives <- function(network)
   desc["Density"] <- connectivity$density
   desc["ASPL"] <- NetworkToolbox::pathlengths(network)$ASPL
   desc["CC"] <- NetworkToolbox::clustcoeff(network)$CC
-  desc["swn.rand"] <- NetworkToolbox::smallworldness(network, method = "rand")$swm
-  desc["swn.HG"] <- NetworkToolbox::smallworldness(network, method = "HG")$swm
-  desc["swn.TJHBL"] <- NetworkToolbox::smallworldness(network, method = "TJHBL")$swm
+  desc["swn.rand"] <- NetworkToolbox::smallworldness(network[degree != 0,degree != 0], method = "rand")$swm
+  desc["swn.HG"] <- NetworkToolbox::smallworldness(network[degree != 0,degree != 0], method = "HG")$swm
+  desc["swn.TJHBL"] <- NetworkToolbox::smallworldness(network[degree != 0,degree != 0], method = "TJHBL")$swm
   desc["scale-free_R-sq"] <- as.matrix(EGAnet:::scaleFreeFitIndex(degree, nBreaks = 10)["Rsquared.SFT"])
   
   return(round(desc, 3))
