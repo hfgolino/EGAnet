@@ -11,7 +11,44 @@ network.descriptives(network)
 \code{\link[qgraph]{qgraph}}, or \code{\link[EGAnet]{EGA}} object}
 }
 \value{
+Numeric vector including:
 
+\item{Mean_weight}{The average of the edge weights in the network}
+
+\item{SD_weight}{The standard deviation of the edge weights in the network}
+
+\item{Min_weight}{The minimum of the edge weights in the network}
+
+\item{Max_weight}{The minimum of the edge weights in the network}
+
+\item{Density}{The density of the network}
+
+\item{ASPL}{The average shortest path length (ASPL) of the network (computed as unweighted)}
+
+\item{CC}{The clustering coefficent (CC) of the network (computed as unweighted)}
+
+\item{swn.rand}{Small-worldness measure based on random networks:
+
+\deqn{swn.rand = (ASPL / ASPL_random) / (CC / CC_random)}
+
+\code{swn.rand} > 1 suggests the network is small-world}
+
+\item{swn.HG}{Small-worldness measure based on Humphries & Gurney (2008):
+
+\deqn{swn.HG = (transitivity / transitivity_random) / (ASPL / ASPL_random)}
+
+\code{swn.HG} > 1 suggests the network is small-world}
+
+\item{swn.TJHBL}{Small-worldness measure based on Telesford, Joyce, Hayasaka, Burdette, & Laurienti (2011):
+
+\deqn{swn.TJHBL = (ASPL_random / ASPL) - (CC / CC_lattice)}
+
+\code{swn.TJHBL} near 0 suggests the network is small-world,
+positive values suggest more random network characteristics,
+negative values suggest more lattice network characteristics}
+
+\item{scale-free_R-sq}{The R-squared fit of whether the degree distribution
+follows the power-law (many small degrees, few large degrees)}
 }
 \description{
 Computes descriptive statistics for network models

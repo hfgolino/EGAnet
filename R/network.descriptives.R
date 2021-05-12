@@ -5,7 +5,44 @@
 #' @param network Matrix, data frame,
 #' \code{\link[qgraph]{qgraph}}, or \code{\link[EGAnet]{EGA}} object
 #'
-#' @return 
+#' @return Numeric vector including:
+#' 
+#' \item{Mean_weight}{The average of the edge weights in the network}
+#' 
+#' \item{SD_weight}{The standard deviation of the edge weights in the network}
+#' 
+#' \item{Min_weight}{The minimum of the edge weights in the network}
+#' 
+#' \item{Max_weight}{The minimum of the edge weights in the network}
+#' 
+#' \item{Density}{The density of the network}
+#' 
+#' \item{ASPL}{The average shortest path length (ASPL) of the network (computed as unweighted)}
+#' 
+#' \item{CC}{The clustering coefficent (CC) of the network (computed as unweighted)}
+#' 
+#' \item{swn.rand}{Small-worldness measure based on random networks:
+#' 
+#' \deqn{swn.rand = (ASPL / ASPL_random) / (CC / CC_random)}
+#' 
+#' \code{swn.rand} > 1 suggests the network is small-world}
+#' 
+#' \item{swn.HG}{Small-worldness measure based on Humphries & Gurney (2008):
+#' 
+#' \deqn{swn.HG = (transitivity / transitivity_random) / (ASPL / ASPL_random)}
+#' 
+#' \code{swn.HG} > 1 suggests the network is small-world}
+#' 
+#' \item{swn.TJHBL}{Small-worldness measure based on Telesford, Joyce, Hayasaka, Burdette, & Laurienti (2011):
+#' 
+#' \deqn{swn.TJHBL = (ASPL_random / ASPL) - (CC / CC_lattice)}
+#' 
+#' \code{swn.TJHBL} near 0 suggests the network is small-world,
+#' positive values suggest more random network characteristics,
+#' negative values suggest more lattice network characteristics}
+#' 
+#' \item{scale-free_R-sq}{The R-squared fit of whether the degree distribution
+#' follows the power-law (many small degrees, few large degrees)}
 #' 
 #' @author Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'
@@ -55,24 +92,24 @@ network.descriptives <- function(network)
   
   # Initialize descriptives matrix
   desc <- numeric(11)
-  names(desc) <- c("Mean_pcor", "SD_pcor", "Min_pcor", "Max_pcor",
+  names(desc) <- c("Mean_weight", "SD_weight", "Min_weight", "Max_weight",
                    "Density", "ASPL", "CC",
                    "swn.rand", "swn.HG", "swn.TJHBL", "scale-free_R-sq")
   
   # Collect descriptives
   connectivity <- NetworkToolbox::conn(network)
   degree <- NetworkToolbox::degree(network)
-  desc["Mean_pcor"] <- connectivity$mean
-  desc["SD_pcor"] <- connectivity$sd
-  desc["Min_pcor"] <- min(connectivity$weights)
-  desc["Max_pcor"] <- max(connectivity$weights)
+  desc["Mean_weight"] <- connectivity$mean
+  desc["SD_weight"] <- connectivity$sd
+  desc["Min_weight"] <- min(connectivity$weights)
+  desc["Max_weight"] <- max(connectivity$weights)
   desc["Density"] <- connectivity$density
   desc["ASPL"] <- NetworkToolbox::pathlengths(network)$ASPL
   desc["CC"] <- NetworkToolbox::clustcoeff(network)$CC
   desc["swn.rand"] <- NetworkToolbox::smallworldness(network, method = "rand")$swm
   desc["swn.HG"] <- NetworkToolbox::smallworldness(network, method = "HG")$swm
   desc["swn.TJHBL"] <- NetworkToolbox::smallworldness(network, method = "TJHBL")$swm
-  desc["scale-free_R-sq"] <- scaleFreeFitIndex(degree, nBreaks = 10)
+  desc["scale-free_R-sq"] <- scaleFreeFitIndex(degree, nBreaks = 10)["Rsquared.SFT"]
   
   return(round(desc, 3))
     
