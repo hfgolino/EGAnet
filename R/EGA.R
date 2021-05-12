@@ -247,7 +247,7 @@
 #'
 #' @export
 #'
-# Updated 24.03.2021
+# Updated 12.05.2021
 # LE adjustment 08.03.2021
 ## EGA Function to detect unidimensionality:
 EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
