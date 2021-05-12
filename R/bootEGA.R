@@ -643,8 +643,8 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
 
 
   }
-  Median <- median(boot.ndim[, 2])
-  se.boot <- sd(boot.ndim[, 2])
+  Median <- median(boot.ndim[, 2], na.rm = TRUE)
+  se.boot <- sd(boot.ndim[, 2], na.rm = TRUE)
   ciMult <- qt(0.95/2 + 0.5, nrow(boot.ndim) - 1)
   ci <- se.boot * ciMult
   quant <- quantile(boot.ndim[,2], c(.025, .975), na.rm = TRUE)
@@ -655,7 +655,7 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
   row.names(summary.table) <- NULL
 
   #compute frequency
-  dim.range <- range(boot.ndim[,2])
+  dim.range <- range(boot.ndim[,2], na.rm = TRUE)
   lik <- matrix(0, nrow = diff(dim.range)+1, ncol = 2)
   colnames(lik) <- c("# of Factors", "Frequency")
   count <- 0
