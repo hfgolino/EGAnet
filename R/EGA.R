@@ -647,13 +647,17 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
   # Check for reordering
   if(any(is.na(wc))){
     
-    # Get names
-    reord <- sort(na.omit(unique(wc)))
-    names(reord) <- 1:a$n.dim
-    
-    # Reorder
-    for(i in 1:length(reord)){
-      wc[wc == reord[i]] <- as.numeric(names(reord)[i])
+    if(all(!is.na(wc))){
+      
+      # Get names
+      reord <- sort(na.omit(unique(wc)))
+      names(reord) <- 1:a$n.dim
+      
+      # Reorder
+      for(i in 1:length(reord)){
+        wc[wc == reord[i]] <- as.numeric(names(reord)[i])
+      }
+      
     }
     
   }
