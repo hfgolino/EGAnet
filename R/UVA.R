@@ -421,6 +421,11 @@ UVA <- function(data, n = NULL,
   
   ## key
   if(is.null(key)){
+    
+    if(is.null(colnames(data))){
+      colnames(data) <- paste("V", 1:ncol(data), sep = "")
+    }
+    
     key <- colnames(data)
   }
   
