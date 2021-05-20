@@ -455,7 +455,7 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
     #generate data
     if(type == "parametric"){
 
-      datalist[[count]] <- MASS::mvrnorm(cases, mu = rep(0, ncol(g)), Sigma = cor.data)
+      datalist[[count]] <- MASS::mvrnorm(cases, mu = rep(0, ncol(cor.data)), Sigma = cor.data)
 
     }else if(type == "resampling"){
 
