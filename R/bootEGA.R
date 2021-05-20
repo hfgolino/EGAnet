@@ -433,23 +433,6 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
     ## Compute correlation matrix
     cor.data <- empirical.EGA$correlation    
 
-    if(model=="glasso"){
-
-      
-      if(!"gamma" %in% names(model.args)){
-        model.args$gamma <- empirical.EGA$Methods$gamma
-      }
-      
-      g <- -empirical.EGA$network
-      diag(g) <- 1
-
-    }else if(model=="TMFG"){
-
-      g <- -suppressMessages(NetworkToolbox::LoGo(cor.data, partial = TRUE))
-      diag(g) <- 1
-
-    }
-    
     # Generating data will be continuous
     corr.method <- "pearson"
     
@@ -472,7 +455,7 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
     #generate data
     if(type == "parametric"){
 
-      datalist[[count]] <- MASS::mvrnorm(cases, mu = rep(0, ncol(g)), Sigma = corpcor::pseudoinverse(g))
+      datalist[[count]] <- MASS::mvrnorm(cases, mu = rep(0, ncol(g)), Sigma = cor.data)
 
     }else if(type == "resampling"){
 
