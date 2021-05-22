@@ -64,7 +64,7 @@ glla <- function(x, n.embed, tau, delta, order){
 
   # Weights:
   v <- 1:n.embed
-  mv <- mean(v, na.rm = TRUE)
+  mv <- mean(v)
   order.der <- seq(from = 0, to = order)
   L <- matrix(NA, nrow = n.embed, ncol = length(order.der))
   for(i in 1:length(order.der)){
