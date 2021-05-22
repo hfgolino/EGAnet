@@ -35,7 +35,7 @@
 #' LCT(data = wmt2[,7:24])
 #' 
 #' ## Factor model
-#' LCT(data = NetworkToolbox::neoOpen)}
+#' LCT(data = psychTools::bfi[,1:25])}
 #' 
 #' @references
 #' # Original implementation of LCT \cr
@@ -45,17 +45,17 @@
 #' \doi{10.31234/osf.io/xakez}
 #' 
 #' # Current implementation of LCT \cr
-#' Christensen, A. P., & Golino, H. (under review).
+#' Christensen, A. P., & Golino, H. (2021).
 #' Factor model or small-world network? Predictions from neural networks.
-#' \emph{PsyArXiv}.
-#' \doi{10.31234/osf.io/awkcb}
+#' \emph{Journal of Behavioral Data Science}, \emph{1}(1), 85-126.
+#' \doi{10.35566/jbds/v1n1/p5}
 #' 
 #' @importFrom utils setTxtProgressBar txtProgressBar
 #'
 #' @export
 #'
 # Loadings Comparison Test----
-# Updated 29.04.2021
+# Updated 22.05.2021
 LCT <- function (data, n, iter = 100)
 {
   # Convert data to matrix
