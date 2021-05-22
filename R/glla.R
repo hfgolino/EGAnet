@@ -57,14 +57,14 @@
 #'
 #' @export
 # glla
-# Updated 02.15.2020
+# Updated 22.05.2021
 #'
 glla <- function(x, n.embed, tau, delta, order){
   X <- Embed(x, E = n.embed, tau = tau)
 
   # Weights:
   v <- 1:n.embed
-  mv <- mean(v)
+  mv <- mean(v, na.rm = TRUE)
   order.der <- seq(from = 0, to = order)
   L <- matrix(NA, nrow = n.embed, ncol = length(order.der))
   for(i in 1:length(order.der)){

@@ -266,7 +266,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
 
   #Export variables
   parallel::clusterExport(cl = cl,
-                          varlist = c("datalist", "derivlist", "cases"),
+                          varlist = c("datalist", "derivlist", "cases", "glla"),
                           envir=environment())
 
   # GLLA Estimation:
