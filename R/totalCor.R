@@ -27,8 +27,8 @@
 #' 
 #' @export
 #'
-# Total COrrelation
-# Updated 14.02.2021
+# Total Correlation
+# Updated 22.05.2021
 totalCor <- function(data){
   #number of dimensions
   n <- ncol(data)
@@ -45,7 +45,7 @@ totalCor <- function(data){
   #compute empirical entropy for each community or item
   for(i in 1:n)
   {
-    seque[,i] <- seq(from = range(data[,i])[1], to = range(data[,i])[2], length.out = bins + 1)
+    seque[,i] <- seq(from = range(data[,i], na.rm = TRUE)[1], to = range(data[,i], na.rm = TRUE)[2], length.out = bins + 1)
     bin.sums[[i]] <- table(cut(data[,i], breaks = seque[,i], include.lowest = TRUE))
     bin.sums2[,i] <- as.vector(unlist(bin.sums[[i]]))
     Freq[,i] <- bin.sums2[,i]/sum(bin.sums2[,i])
