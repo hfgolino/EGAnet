@@ -193,6 +193,8 @@ LCT <- function (data, n, iter = 100,
                  corr = "pearson", ncores = 2)
         )), silent = TRUE)$dynEGA
         
+        cor.mat <- net$cor.data
+        
       }else{
         net <- try(suppressWarnings(suppressMessages(EGA(cor.mat, n = cases, plot.EGA = FALSE))), silent = TRUE)
       }
@@ -257,7 +259,7 @@ LCT <- function (data, n, iter = 100,
             nl[count,] <- c(n.low, n.mod, n.high, n.dom, n.cross)
             
             # Get factor loading proportions
-            f.loads <- suppressWarnings(abs(as.matrix(psych::fa(net$cor.data, nfactors = ncol(n.loads), n.obs = cases)$loadings[,1:ncol(n.loads)])))
+            f.loads <- suppressWarnings(abs(as.matrix(psych::fa(cor.mat, nfactors = ncol(n.loads), n.obs = cases)$loadings[,1:ncol(n.loads)])))
             f.loads <- as.matrix(f.loads[match(names(net$wc), row.names(f.loads)),])
             f.low <- mean(f.loads >= 0.40, na.rm = TRUE)
             f.mod <- mean(f.loads >= 0.55, na.rm = TRUE)
