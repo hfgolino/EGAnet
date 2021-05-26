@@ -884,6 +884,17 @@ min.max <- function(vec)
   return((vec - exp.min) / (exp.max - exp.min))
 }
 
+#' @noRd
+# Custom range min-max
+# Updated 26.05.2021
+custom.min.max <- function(vec, ran)
+{
+  a <- ran[1]
+  b <- ran[2]
+  
+  return((b - a) * ((vec - min(vec)) / (max(vec) - min (vec))) + a)
+}
+
 #%%%%%%%%%%%%%%%%%%%%%%%%
 # DATA GENERATION ----
 #%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1119,6 +1130,23 @@ categorize<-function(data, ncat, skew.values){
 #%%%%%%%%%
 # LCT ----
 #%%%%%%%%%
+
+#' @noRd
+# Dynamic organization
+# Updated 26.05.2021
+dyn.org <- function(data, gen)
+{
+  for(i in 1:ncol(data)){
+    
+    gen[,i] <- custom.min.max(
+      sort(gen[,i])[rank(data[,i], ties.method = "first")],
+      range(data[,i])
+    )
+    
+  }
+  
+  return(gen)
+}
 
 #' A sub-routine to compute the deep learning neural network model
 #' weights for \code{\link[EGAnet]{LCT}}
