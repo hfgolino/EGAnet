@@ -114,7 +114,7 @@ LCT <- function (data, n, iter = 100,
   count <- 1
   
   # Initialize progress bar
-  #pb <- txtProgressBar(max = iter, style = 3)
+  pb <- txtProgressBar(max = iter, style = 3)
   
   repeat{
     
@@ -147,6 +147,7 @@ LCT <- function (data, n, iter = 100,
           dat <- as.data.frame(dat)
           
           # Estimate network
+          pbapply::pboptions(type = "none")
           net <- try(suppressWarnings(suppressMessages(
             dynEGA(dat, n.embed = dynamic.args$n.embed,
                    tau = dynamic.args$tau, delta = dynamic.args$delta,
@@ -257,8 +258,7 @@ LCT <- function (data, n, iter = 100,
                 count <- count + 1
                 
                 # Update progress
-                #setTxtProgressBar(pb, count)
-                message(paste(count, "of", iter, "done."))
+                setTxtProgressBar(pb, count)
                 
                 # Good data!
                 good <- TRUE
@@ -428,9 +428,7 @@ LCT <- function (data, n, iter = 100,
   }
   
   # Close progress bar
-  if(!isTRUE(dynamic)){
-    close(pb) 
-  }
+  close(pb)
   
   # Convert to data frames
   loads.mat <- as.matrix(cbind(nl, fl))
