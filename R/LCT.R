@@ -61,7 +61,11 @@
 #' LCT(data = wmt2[,7:24])
 #' 
 #' ## Factor model
-#' LCT(data = psychTools::bfi[,1:25])}
+#' LCT(data = psychTools::bfi[,1:25])
+#' 
+#' # Dynamic LCT
+#' LCT(sim.dynEGA[sim.dynEGA$ID == 1,1:20], dynamic = TRUE)}
+#' 
 #' 
 #' @references
 #' # Original implementation of LCT \cr
@@ -110,7 +114,7 @@ LCT <- function (data, n, iter = 100,
   count <- 1
   
   # Initialize progress bar
-  pb <- txtProgressBar(max = iter, style = 3)
+  #pb <- txtProgressBar(max = iter, style = 3)
   
   repeat{
     
@@ -253,7 +257,8 @@ LCT <- function (data, n, iter = 100,
                 count <- count + 1
                 
                 # Update progress
-                setTxtProgressBar(pb, count)
+                #setTxtProgressBar(pb, count)
+                message(paste(count, "of", iter, "done."))
                 
                 # Good data!
                 good <- TRUE
@@ -423,7 +428,9 @@ LCT <- function (data, n, iter = 100,
   }
   
   # Close progress bar
-  close(pb)
+  if(!isTRUE(dynamic)){
+    close(pb) 
+  }
   
   # Convert to data frames
   loads.mat <- as.matrix(cbind(nl, fl))
