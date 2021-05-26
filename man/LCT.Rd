@@ -73,7 +73,11 @@ with 240,000 samples per model with varying parameters.
 LCT(data = wmt2[,7:24])
 
 ## Factor model
-LCT(data = psychTools::bfi[,1:25])}
+LCT(data = psychTools::bfi[,1:25])
+
+# Dynamic LCT
+LCT(sim.dynEGA[sim.dynEGA$ID == 1,1:20], dynamic = TRUE)}
+
 
 }
 \references{
