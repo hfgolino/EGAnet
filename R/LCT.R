@@ -121,174 +121,46 @@ LCT <- function (data, n, iter = 100,
     # Good sample?
     good <- FALSE
     
-    while(!good)
-    {
+    while(!good){
       
-      # Dynamic
+      # Turn off pblapply progress bar
       if(isTRUE(dynamic)){
+        opb <- pbapply::pboptions(type = "none")
+      }
+      
+      # Generate data
+      if(nrow(data) != ncol(data)) {
         
-        # Generate data
-        if(nrow(data) != ncol(data)) {
+        if(count == 1) {
+          dat <- data
+        } else {
+          dat <- MASS::mvrnorm(cases, mu = rep(0, ncol(data)), Sigma = cov(data, use = "pairwise.complete.obs"))
           
-          if(count == 1) {
-            dat <- data
-          } else {
-            
-            dat <- MASS::mvrnorm(cases, mu = rep(0, ncol(data)), Sigma = cov(data, use = "pairwise.complete.obs"))
-            
-            # Organize time series
-            dat <- dyn.org(data, dat)
-            
-          }
+        }
+        
+        # Static or dynamic
+        if(isTRUE(dynamic)){
+          
+          # Organize time series
+          dat <- dyn.org(data, dat)
           
           # Organize for dynamic EGA
           dat <- cbind(dat, rep(1, nrow(dat)), rep(1, nrow(dat)))
           colnames(dat)[(ncol(dat)-1):ncol(dat)] <- c("ID", "Group")
           dat <- as.data.frame(dat)
           
-          # Estimate network
-          pbapply::pboptions(type = "none")
-          net <- try(suppressWarnings(suppressMessages(
-            dynEGA(dat, n.embed = dynamic.args$n.embed,
-                   tau = dynamic.args$tau, delta = dynamic.args$delta,
-                   use.derivatives = dynamic.args$use.derivatives,
-                   id = ncol(dat) - 1, group = ncol(dat),
-                   model = "glasso", algorithm = "walktrap",
-                   corr = "pearson", ncores = 2)
-          )), silent = TRUE)$dynEGA
-          
-          if(any(class(net) == "try-error"))
-          {good <- FALSE
-          }else{
-            
-            if(length(net$wc) == length(unique(net$wc)))
-            {good <- FALSE
-            }else{
-              
-              # Remove variables missing dimensions
-              net$wc <- na.omit(net$wc)
-              
-              # Try to estimate network loadings
-              n.loads <- try(abs(as.matrix(net.loads(net$network, net$wc)$std)), silent = TRUE)
-              
-              if(any(class(n.loads) == "try-error"))
-              {good <- FALSE
-              }else{
-                
-                # Check for single variable dimensions
-                if(nrow(n.loads) != length(net$wc)){
-                  warning("One or more dimensions were identified as a single variable. These variables were removed from the comparison for both network and factor models.")
-                }
-                
-                # Remove loadings with no names
-                net$wc <- na.omit(net$wc)
-                
-                # Reorder network loadings
-                n.loads <- as.matrix(n.loads[match(names(net$wc), row.names(n.loads)),])
-                
-                # Get network loading proportions
-                n.low <- mean(n.loads >= 0.15, na.rm = TRUE)
-                n.mod <- mean(n.loads >= 0.25, na.rm = TRUE)
-                n.high <- mean(n.loads >= 0.35, na.rm = TRUE)
-                
-                if(ncol(n.loads) != 1)
-                {
-                  # Initialize dominate loadings
-                  n.dom <- numeric(ncol(data))
-                  n.loads2 <- n.loads
-                  
-                  for(i in 1:ncol(n.loads))
-                  {
-                    n.dom[which(net$wc == i)] <- n.loads[which(net$wc == i), i]
-                    n.loads2[which(net$wc == i), i] <- 0
-                  }
-                  
-                  # Get dominant and cross-loading proportions
-                  n.dom <- mean(n.dom >= 0.15)
-                  n.cross <- mean(ifelse(n.loads2 == 0, NA, n.loads2) >= 0.15, na.rm = TRUE)
-                  n.cross <- ifelse(is.na(n.cross), 0, n.cross)
-                  
-                  
-                }else{
-                  n.dom <- NA
-                  n.cross <- NA
-                }
-                
-                nl[count,] <- c(n.low, n.mod, n.high, n.dom, n.cross)
-                
-                # Get factor loading proportions
-                f.loads <- suppressMessages(
-                  suppressWarnings(abs(as.matrix(psych::fa(net$cor.data, nfactors = ncol(n.loads), n.obs = cases)$loadings[,1:ncol(n.loads)])))
-                )
-                f.loads <- as.matrix(f.loads[match(names(net$wc), row.names(f.loads)),])
-                f.low <- mean(f.loads >= 0.40, na.rm = TRUE)
-                f.mod <- mean(f.loads >= 0.55, na.rm = TRUE)
-                f.high <- mean(f.loads >= 0.70, na.rm = TRUE)
-                
-                # Organize loadings
-                org <- numeric(ncol(data))
-                
-                for(i in 1:ncol(data))
-                {org[i] <- which.max(f.loads[i,])}
-                
-                if(ncol(f.loads) != 1)
-                {
-                  # Initialize dominate loadings
-                  f.dom <- numeric(ncol(data))
-                  f.loads2 <- f.loads
-                  
-                  for(i in 1:max(org))
-                  {
-                    f.dom[which(org == i)] <- f.loads[which(org == i), i]
-                    f.loads2[which(org == i), i] <- 0
-                  }
-                  
-                  # Get dominant and cross-loading proportions
-                  f.dom <- mean(f.dom >= 0.40)
-                  f.cross <- mean(ifelse(f.loads2 == 0, NA, f.loads2) >= 0.40, na.rm = TRUE)
-                  f.cross <- ifelse(is.na(f.cross), 0, f.cross)
-                }else{
-                  f.dom <- NA
-                  f.cross <- NA
-                }
-                
-                fl[count,] <- c(f.low, f.mod, f.high, f.dom, f.cross)
-                
-                # Increase count
-                count <- count + 1
-                
-                # Update progress
-                setTxtProgressBar(pb, count)
-                
-                # Good data!
-                good <- TRUE
-              }
-            }
-            
-          }
-          
         }else{
           
-          stop("Dynamic LCT requires data. A correlation matrix cannot be used as input")
+          # Compute correlation
+          cor.mat <- qgraph::cor_auto(dat)
           
         }
         
-        
-      
-        
       }else{
         
-        # Generate data
-        if(nrow(data) != ncol(data)) {
+        if(isTRUE(dynamic)){
           
-          if(count == 1) {
-            dat <- data
-          } else {
-            dat <- MASS::mvrnorm(cases, mu = rep(0, ncol(data)), Sigma = cov(data, use = "pairwise.complete.obs"))
-            
-          }
-          
-          cor.mat <- qgraph::cor_auto(dat)
+          stop("Dynamic LCT requires the raw data. A correlation matrix cannot be used as input")
           
         }else{
           
@@ -303,119 +175,132 @@ LCT <- function (data, n, iter = 100,
           
         }
         
-        # Make sure there are column names
-        if(is.null(colnames(cor.mat)))
-        {colnames(cor.mat) <- paste("V", 1:ncol(cor.mat), sep = "")}
+      }
+      
+      # Make sure there are column names
+      if(is.null(colnames(cor.mat)))
+      {colnames(cor.mat) <- paste("V", 1:ncol(cor.mat), sep = "")}
+      
+      # Estimate network
+      if(isTRUE(dynamic)){
         
-        # Estimate network
+        net <- try(suppressWarnings(suppressMessages(
+          dynEGA(dat, n.embed = dynamic.args$n.embed,
+                 tau = dynamic.args$tau, delta = dynamic.args$delta,
+                 use.derivatives = dynamic.args$use.derivatives,
+                 id = ncol(dat) - 1, group = ncol(dat),
+                 model = "glasso", algorithm = "walktrap",
+                 corr = "pearson", ncores = 2)
+        )), silent = TRUE)$dynEGA
+        
+      }else{
         net <- try(suppressWarnings(suppressMessages(EGA(cor.mat, n = cases, plot.EGA = FALSE))), silent = TRUE)
+      }
+      
+      if(any(class(net) == "try-error"))
+      {good <- FALSE
+      }else{
         
-        if(any(class(net) == "try-error"))
+        if(length(net$wc) == length(unique(net$wc)))
         {good <- FALSE
         }else{
           
-          if(length(net$wc) == length(unique(net$wc)))
+          # Remove variables missing dimensions
+          net$wc <- na.omit(net$wc)
+          
+          # Try to estimate network loadings
+          n.loads <- try(abs(as.matrix(net.loads(net$network, net$wc)$std)), silent = TRUE)
+          
+          if(any(class(n.loads) == "try-error"))
           {good <- FALSE
           }else{
             
-            # Remove variables missing dimensions
+            # Check for single variable dimensions
+            if(nrow(n.loads) != length(net$wc)){
+              warning("One or more dimensions were identified as a single variable. These variables were removed from the comparison for both network and factor models.")
+            }
+            
+            # Remove loadings with no names
             net$wc <- na.omit(net$wc)
             
-            # Try to estimate network loadings
-            n.loads <- try(abs(as.matrix(net.loads(net$network, net$wc)$std)), silent = TRUE)
+            # Reorder network loadings
+            n.loads <- as.matrix(n.loads[match(names(net$wc), row.names(n.loads)),])
             
-            if(any(class(n.loads) == "try-error"))
-            {good <- FALSE
+            # Get network loading proportions
+            n.low <- mean(n.loads >= 0.15, na.rm = TRUE)
+            n.mod <- mean(n.loads >= 0.25, na.rm = TRUE)
+            n.high <- mean(n.loads >= 0.35, na.rm = TRUE)
+            
+            if(ncol(n.loads) != 1)
+            {
+              # Initialize dominate loadings
+              n.dom <- numeric(ncol(data))
+              n.loads2 <- n.loads
+              
+              for(i in 1:ncol(n.loads))
+              {
+                n.dom[which(net$wc == i)] <- n.loads[which(net$wc == i), i]
+                n.loads2[which(net$wc == i), i] <- 0
+              }
+              
+              # Get dominant and cross-loading proportions
+              n.dom <- mean(n.dom >= 0.15)
+              n.cross <- mean(ifelse(n.loads2 == 0, NA, n.loads2) >= 0.15, na.rm = TRUE)
+              n.cross <- ifelse(is.na(n.cross), 0, n.cross)
+              
+              
             }else{
-              
-              # Check for single variable dimensions
-              if(nrow(n.loads) != length(net$wc)){
-                warning("One or more dimensions were identified as a single variable. These variables were removed from the comparison for both network and factor models.")
-              }
-              
-              # Remove loadings with no names
-              net$wc <- na.omit(net$wc)
-              
-              # Reorder network loadings
-              n.loads <- as.matrix(n.loads[match(names(net$wc), row.names(n.loads)),])
-              
-              # Get network loading proportions
-              n.low <- mean(n.loads >= 0.15, na.rm = TRUE)
-              n.mod <- mean(n.loads >= 0.25, na.rm = TRUE)
-              n.high <- mean(n.loads >= 0.35, na.rm = TRUE)
-              
-              if(ncol(n.loads) != 1)
-              {
-                # Initialize dominate loadings
-                n.dom <- numeric(ncol(data))
-                n.loads2 <- n.loads
-                
-                for(i in 1:ncol(n.loads))
-                {
-                  n.dom[which(net$wc == i)] <- n.loads[which(net$wc == i), i]
-                  n.loads2[which(net$wc == i), i] <- 0
-                }
-                
-                # Get dominant and cross-loading proportions
-                n.dom <- mean(n.dom >= 0.15)
-                n.cross <- mean(ifelse(n.loads2 == 0, NA, n.loads2) >= 0.15, na.rm = TRUE)
-                n.cross <- ifelse(is.na(n.cross), 0, n.cross)
-                
-                
-              }else{
-                n.dom <- NA
-                n.cross <- NA
-              }
-              
-              nl[count,] <- c(n.low, n.mod, n.high, n.dom, n.cross)
-              
-              # Get factor loading proportions
-              f.loads <- suppressWarnings(abs(as.matrix(psych::fa(cor.mat, nfactors = ncol(n.loads), n.obs = cases)$loadings[,1:ncol(n.loads)])))
-              f.loads <- as.matrix(f.loads[match(names(net$wc), row.names(f.loads)),])
-              f.low <- mean(f.loads >= 0.40, na.rm = TRUE)
-              f.mod <- mean(f.loads >= 0.55, na.rm = TRUE)
-              f.high <- mean(f.loads >= 0.70, na.rm = TRUE)
-              
-              # Organize loadings
-              org <- numeric(ncol(data))
-              
-              for(i in 1:ncol(data))
-              {org[i] <- which.max(f.loads[i,])}
-              
-              if(ncol(f.loads) != 1)
-              {
-                # Initialize dominate loadings
-                f.dom <- numeric(ncol(data))
-                f.loads2 <- f.loads
-                
-                for(i in 1:max(org))
-                {
-                  f.dom[which(org == i)] <- f.loads[which(org == i), i]
-                  f.loads2[which(org == i), i] <- 0
-                }
-                
-                # Get dominant and cross-loading proportions
-                f.dom <- mean(f.dom >= 0.40)
-                f.cross <- mean(ifelse(f.loads2 == 0, NA, f.loads2) >= 0.40, na.rm = TRUE)
-                f.cross <- ifelse(is.na(f.cross), 0, f.cross)
-              }else{
-                f.dom <- NA
-                f.cross <- NA
-              }
-              
-              fl[count,] <- c(f.low, f.mod, f.high, f.dom, f.cross)
-              
-              # Increase count
-              count <- count + 1
-              
-              # Update progress
-              setTxtProgressBar(pb, count)
-              
-              # Good data!
-              good <- TRUE
+              n.dom <- NA
+              n.cross <- NA
             }
+            
+            nl[count,] <- c(n.low, n.mod, n.high, n.dom, n.cross)
+            
+            # Get factor loading proportions
+            f.loads <- suppressWarnings(abs(as.matrix(psych::fa(net$cor.data, nfactors = ncol(n.loads), n.obs = cases)$loadings[,1:ncol(n.loads)])))
+            f.loads <- as.matrix(f.loads[match(names(net$wc), row.names(f.loads)),])
+            f.low <- mean(f.loads >= 0.40, na.rm = TRUE)
+            f.mod <- mean(f.loads >= 0.55, na.rm = TRUE)
+            f.high <- mean(f.loads >= 0.70, na.rm = TRUE)
+            
+            # Organize loadings
+            org <- numeric(ncol(data))
+            
+            for(i in 1:ncol(data))
+            {org[i] <- which.max(f.loads[i,])}
+            
+            if(ncol(f.loads) != 1)
+            {
+              # Initialize dominate loadings
+              f.dom <- numeric(ncol(data))
+              f.loads2 <- f.loads
+              
+              for(i in 1:max(org))
+              {
+                f.dom[which(org == i)] <- f.loads[which(org == i), i]
+                f.loads2[which(org == i), i] <- 0
+              }
+              
+              # Get dominant and cross-loading proportions
+              f.dom <- mean(f.dom >= 0.40)
+              f.cross <- mean(ifelse(f.loads2 == 0, NA, f.loads2) >= 0.40, na.rm = TRUE)
+              f.cross <- ifelse(is.na(f.cross), 0, f.cross)
+            }else{
+              f.dom <- NA
+              f.cross <- NA
+            }
+            
+            fl[count,] <- c(f.low, f.mod, f.high, f.dom, f.cross)
+            
+            # Increase count
+            count <- count + 1
+            
+            # Update progress
+            setTxtProgressBar(pb, count)
+            
+            # Good data!
+            good <- TRUE
           }
-          
         }
         
       }
@@ -469,6 +354,9 @@ LCT <- function (data, n, iter = 100,
   prop[1:length(boot.prop)] <- boot.prop
   
   predictions$proportion <- round(prop, 3)
+  
+  # Reset pboptions
+  on.exit(pbapply::pboptions(opb))
   
   return(predictions)
   
