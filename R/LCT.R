@@ -178,8 +178,10 @@ LCT <- function (data, n, iter = 100,
       }
       
       # Make sure there are column names
-      if(is.null(colnames(cor.mat)))
-      {colnames(cor.mat) <- paste("V", 1:ncol(cor.mat), sep = "")}
+      if(!isTRUE(dynamic)){
+        if(is.null(colnames(cor.mat)))
+        {colnames(cor.mat) <- paste("V", 1:ncol(cor.mat), sep = "")}
+      }
       
       # Estimate network
       if(isTRUE(dynamic)){
@@ -358,7 +360,9 @@ LCT <- function (data, n, iter = 100,
   predictions$proportion <- round(prop, 3)
   
   # Reset pboptions
-  on.exit(pbapply::pboptions(opb))
+  if(isTRUE(dynamic)){
+    on.exit(pbapply::pboptions(opb))
+  }
   
   return(predictions)
   
