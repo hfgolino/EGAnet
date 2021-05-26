@@ -66,7 +66,8 @@
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
 #'
 #' @export
-#Dimension Stability function
+# Simulate dynamic factor model
+# Updated 26.05.2021
 simDFM <- function(variab, timep, nfact, error, dfm = c("DAFS","RandomWalk"),
                    loadings, autoreg, crossreg, var.shock, cov.shock, burnin = 1000){
 
@@ -77,7 +78,7 @@ simDFM <- function(variab, timep, nfact, error, dfm = c("DAFS","RandomWalk"),
 
   # Factor Scores:
 
-  if(dfm == "VAR1"){
+  if(dfm == "DAFS"){
     # B = Matrix of Bl is a nfact x nfact matrix containing the autoregressive and cross-regressive coefficients
     B <- matrix(autoreg, ncol = nfact, nrow = nfact)
     diag(B) <- crossreg

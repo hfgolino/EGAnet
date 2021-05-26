@@ -4,11 +4,17 @@
 \alias{LCT}
 \title{Loadings Comparison Test}
 \usage{
-LCT(data, n, iter = 100)
+LCT(
+  data,
+  n,
+  iter = 100,
+  dynamic = FALSE,
+  dynamic.args = list(n.embed = 4, tau = 1, delta = 1, use.derivatives = 1)
+)
 }
 \arguments{
 \item{data}{Matrix or data frame.
-A dataframe with the variables to be used in the test or a correlation matrix.
+A data frame with the variables to be used in the test or a correlation matrix.
 If the data used is a correlation matrix, the argument \code{n} will need to be specified}
 
 \item{n}{Integer.
@@ -18,6 +24,31 @@ Sample size (if the data provided is a correlation matrix)}
 Number of replicate samples to be drawn from a multivariate
 normal distribution (uses \code{mvtnorm::mvrnorm}).
 Defaults to \code{100}}
+
+\item{dynamic}{Boolean.
+Is the dataset a time series where rows are time points and
+columns are variables?
+Defaults to \code{FASLE}.}
+
+\item{dynamic.args}{List.
+Arguments to be used in \code{\link[EGAnet]{dynEGA}}.
+Defaults:
+
+\itemize{
+
+\item{\code{n.embed}}
+{Number of embeddings: 4}
+
+\item{\code{tau}}
+{Lag: 1}
+
+\item{\code{delta}}
+{Delta: 1}
+
+\item{\code{use.derivatives}}
+{Derivatives: 1}
+
+}}
 }
 \value{
 Returns a list containing:
@@ -42,7 +73,7 @@ with 240,000 samples per model with varying parameters.
 LCT(data = wmt2[,7:24])
 
 ## Factor model
-LCT(data = NetworkToolbox::neoOpen)}
+LCT(data = psychTools::bfi[,1:25])}
 
 }
 \references{
@@ -53,10 +84,10 @@ On the equivalency of factor and network loadings.
 \doi{10.31234/osf.io/xakez}
 
 # Current implementation of LCT \cr
-Christensen, A. P., & Golino, H. (under review).
+Christensen, A. P., & Golino, H. (2021).
 Factor model or small-world network? Predictions from neural networks.
-\emph{PsyArXiv}.
-\doi{10.31234/osf.io/awkcb}
+\emph{Journal of Behavioral Data Science}, \emph{1}(1), 85-126.
+\doi{10.35566/jbds/v1n1/p5}
 }
 \author{
 Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen at gmail.com>
