@@ -4,7 +4,7 @@
 \alias{color_palette_EGA}
 \title{\code{\link[EGAnet]{EGA}} Color Palettes}
 \usage{
-color_palette_EGA(name, wc)
+color_palette_EGA(name, wc, sorted = TRUE)
 }
 \arguments{
 \item{name}{Character.
@@ -40,6 +40,10 @@ For custom colors, enter HEX codes for each dimension in a vector}
 A vector representing the community (dimension) membership
 of each node in the network. \code{NA} values mean that the node
 was disconnected from the network}
+
+\item{sorted}{Boolean.
+Should colors be sorted by wc?
+Defaults to \code{TRUE}}
 }
 \value{
 Vector of colors for community memberships

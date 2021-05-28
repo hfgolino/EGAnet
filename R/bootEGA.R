@@ -263,7 +263,7 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 12.03.2021
+# Updated 28.05.2021
 bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
                     type = c("parametric", "resampling"),
                     corr = c("cor_auto", "pearson", "spearman"),
@@ -362,46 +362,6 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
 
   ## Check for input plot arguments
   color.palette <- "polychrome"
-  if(plot.type == "GGally"){
-    
-    if(length(plot.args) == 0){
-      
-      default.args <- formals(GGally::ggnet2)
-      ega.default.args <- list(node.size = 6, edge.size = 6,
-                               alpha = 0.7, label.size = 5,
-                               edge.alpha = 0.4, layout.exp = 0.2)
-      default.args[names(ega.default.args)]  <- ega.default.args
-      default.args <- default.args[-length(default.args)]
-      
-    }else{
-      
-      default.args <- formals(GGally::ggnet2)
-      ega.default.args <- list(node.size = 6, edge.size = 6,
-                               alpha = 0.7, label.size = 5,
-                               edge.alpha = 0.4, layout.exp = 0.2)
-      default.args[names(ega.default.args)]  <- ega.default.args
-      default.args <- default.args[-length(default.args)]
-      
-      
-      if("vsize" %in% names(plot.args)){
-        plot.args$size <- plot.args$vsize
-        plot.args$vsize <- NULL
-      }
-      
-      if("color.palette" %in% names(plot.args)){
-        color.palette <- plot.args$color.palette
-      }
-      
-      if(any(names(plot.args) %in% names(default.args))){
-        target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
-        default.args[names(target.args)] <- target.args
-      }
-      
-    }
-    
-    plot.args <- default.args
-    
-  }
 
   #### MISSING ARGUMENTS HANDLING ####
   
@@ -550,82 +510,7 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
     
     dim.variables <- data.frame(items = colnames(data), dimension = typical.wc)
   }
-  if (plot.typicalStructure) {
-    if(plot.type == "qgraph"){
-      plot.typical.ega <- qgraph::qgraph(typical.Structure, layout = "spring",
-                                         vsize = plot.args$vsize, groups = as.factor(typical.wc))
-    }else if(plot.type == "GGally"){
-      
-      # Insignificant values (keeps ggnet2 from erroring out)
-      typical.Structure <- ifelse(abs(typical.Structure) <= .00001, 0, typical.Structure)  
-      
-      
-      network1 <- network::network(typical.Structure,
-                                     ignore.eval = FALSE,
-                                     names.eval = "weights",
-                                     directed = FALSE)
-
-      network::set.vertex.attribute(network1, attrname= "Communities", value = typical.wc)
-      network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
-      network::set.edge.attribute(network1, "color", ifelse( network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
-      network::set.edge.value(network1,attrname="AbsWeights",value=abs(typical.Structure))
-      network::set.edge.value(network1,attrname="ScaledWeights",
-                              value=matrix(#scales::rescale(typical.Structure),
-                                rescale.edges(typical.Structure, plot.args$edge.size),
-                                           nrow = nrow(typical.Structure),
-                                           ncol = ncol(typical.Structure)))
-
-      # Layout "Spring"
-      graph1 <- NetworkToolbox::convert2igraph(typical.Structure)
-      edge.list <- igraph::as_edgelist(graph1)
-      layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
-                                                                 weights =
-                                                                   abs(igraph::E(graph1)$weight/max(abs(igraph::E(graph1)$weight)))^2,
-                                                                 vcount = ncol(typical.Structure))
-
-
-      set.seed(1234)
-      plot.args$net <- network1
-      plot.args$node.color <- "Communities"
-      plot.args$node.alpha <- plot.args$alpha
-      plot.args$node.shape <- plot.args$shape
-      plot.args$edge.color <- "color"
-      plot.args$edge.size <- "ScaledWeights"
-      plot.args$color.palette <- NULL
-      plot.args$palette <- NULL
-      
-      lower <- abs(typical.Structure[lower.tri(typical.Structure)])
-      non.zero <- sqrt(lower[lower != 0])
-      
-      plot.args$edge.alpha <- non.zero
-      plot.args$mode <- layout.spring
-      plot.args$label <- colnames(typical.Structure)
-      plot.args$node.label <- plot.args$label
-      if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$node.size/2}
-      if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$node.size/2}
-      
-      plot.typical.ega <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
-      
-      plot.typical.ega <- suppressMessages(
-        do.call(GGally::ggnet2, plot.args) + 
-          ggplot2::theme(legend.title = ggplot2::element_blank()) +
-          ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, na.omit(typical.wc)),
-                                      breaks = sort(typical.wc)) +
-          ggplot2::guides(
-            color = ggplot2::guide_legend(override.aes = list(
-              size = plot.args$size,
-              alpha = plot.args$alpha
-            ))
-          )
-      )
-      
-      plot(plot.typical.ega)
-    }
-    
-    set.seed(NULL)
-
-
-  }
+  
   Median <- median(boot.ndim[, 2], na.rm = TRUE)
   se.boot <- sd(boot.ndim[, 2], na.rm = TRUE)
   ciMult <- qt(0.95/2 + 0.5, nrow(boot.ndim) - 1)
@@ -662,14 +547,13 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
 
   # Typical structure
   if (typicalStructure) {
+    
     typicalGraph <- list()
     typicalGraph$graph <- typical.Structure
     typicalGraph$typical.dim.variables <- dim.variables[order(dim.variables[,2]), ]
     typicalGraph$wc <- typical.wc
     result$typicalGraph <- typicalGraph
-    if(plot.typicalStructure){
-      result$plot.typical.ega <- plot.typical.ega
-    }
+    
   }
   
   # Add plot arguments (for itemStability)
@@ -677,7 +561,10 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
 
   class(result) <- "bootEGA"
   
-  
+  if(typicalStructure & plot.typicalStructure){
+    result$plot.typical.ega <- plot(result)
+  }
+
   # Check if uni.method = "LE" has been used
   if(uni.method == "LE"){
     # Give change warning

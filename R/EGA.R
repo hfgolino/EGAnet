@@ -331,33 +331,6 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
     plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
 
-  if(plot.type == "GGally"){
-
-    default.args <- formals(GGally::ggnet2)
-    ega.default.args <- list(node.size = 6, edge.size = 6, alpha = 0.7, label.size = 5,
-                             edge.alpha = 0.4, layout.exp = 0.2)
-    default.args[names(ega.default.args)]  <- ega.default.args
-    default.args <- default.args[-length(default.args)]
-
-
-    if("vsize" %in% names(plot.args)){
-      plot.args$size <- plot.args$vsize
-      plot.args$vsize <- NULL
-    }
-
-    if("color.palette" %in% names(plot.args)){
-      color.palette <- plot.args$color.palette
-    }else{color.palette <- "polychrome"}
-
-    if(any(names(plot.args) %in% names(default.args))){
-      target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
-      default.args[names(target.args)] <- target.args
-    }
-
-    plot.args <- default.args
-
-  }
-
   #### ARGUMENTS HANDLING ####
   
   # Message function
@@ -672,95 +645,7 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
   dim.variables <- dim.variables[order(dim.variables[, 2]),]
   a$dim.variables <- dim.variables
 
-  if (plot.EGA == TRUE) {
-    if (plot.type == "qgraph"){
-      if(a$n.dim < 2){
-
-        if(a$n.dim != 0){
-          ega.plot <- qgraph::qgraph(a$network, layout = "spring",
-                                     vsize = plot.args$vsize, groups = as.factor(a$wc), label.prop = 1, legend = FALSE)
-        }
-      }else{
-        ega.plot <- qgraph::qgraph(a$network, layout = "spring",
-                                   vsize = plot.args$vsize, groups = as.factor(a$wc), label.prop = 1, legend = TRUE)
-      }
-    }else if(plot.type == "GGally"){
-      
-      # Insignificant values (keeps ggnet2 from erroring out)
-      net <- ifelse(abs(as.matrix(a$network)) <= .00001, 0, as.matrix(a$network))
-      
-      # weighted  network
-      network1 <- network::network(net,
-                                   ignore.eval = FALSE,
-                                   names.eval = "weights",
-                                   directed = FALSE)
-      network::set.vertex.attribute(network1, attrname= "Communities", value = a$wc)
-      network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
-      network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
-      network::set.edge.value(network1,attrname="AbsWeights",value=abs(net))
-      network::set.edge.value(network1,attrname="ScaledWeights",
-                              value=matrix(rescale.edges(net, plot.args$edge.size),
-                                           nrow = nrow(net),
-                                           ncol = ncol(net)))
-      
-      # Layout "Spring"
-      graph1 <- NetworkToolbox::convert2igraph(net)
-      edge.list <- igraph::as_edgelist(graph1)
-      layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
-                                                                 weights =
-                                                                   abs(igraph::E(graph1)$weight/max(abs(igraph::E(graph1)$weight)))^2,
-                                                                 vcount = ncol(net))
-      
-      set.seed(1234)
-      plot.args$net <- network1
-      plot.args$node.color <- "Communities"
-      plot.args$node.alpha <- plot.args$alpha
-      plot.args$node.shape <- plot.args$shape
-      plot.args$edge.color <- "color"
-      plot.args$edge.size <- "ScaledWeights"
-      plot.args$color.palette <- NULL
-      plot.args$palette <- NULL
-      
-      lower <- abs(net[lower.tri(net)])
-      non.zero <- sqrt(lower[lower != 0])
-      
-      plot.args$edge.alpha <- non.zero
-      plot.args$mode <- layout.spring
-      plot.args$label <- colnames(net)
-      plot.args$node.label <- plot.args$label
-      if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$node.size/2}
-      if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$node.size/2}
-      
-      ega.plot <- suppressMessages(
-        do.call(GGally::ggnet2, plot.args) +
-          ggplot2::theme(legend.title = ggplot2::element_blank()) +
-          ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, na.omit(a$wc)),
-                                      breaks = sort(a$wc)) +
-          ggplot2::guides(
-            color = ggplot2::guide_legend(override.aes = list(
-              size = plot.args$size,
-              alpha = plot.args$alpha
-            ))
-          )
-      )
-      
-      plot(ega.plot)
-    }
-    
-  }else{ega.plot <- qgraph::qgraph(a$network, DoNotPlot = TRUE)}
-
-  # check for variable labels in qgraph
-  if(plot.type == "qgraph"){
-    if(is.null(names(ega.plot$graphAttributes$Nodes$labels)))
-    {names(ega.plot$graphAttributes$Nodes$labels) <- paste(1:ncol(data))}
-
-    row.names(a$dim.variables) <- ega.plot$graphAttributes$Nodes$labels[match(a$dim.variables$items, names(ega.plot$graphAttributes$Nodes$labels))]
-  }
-
   a$EGA.type <- ifelse(a$n.dim <= 2, "Unidimensional EGA", "Traditional EGA")
-  if(exists("ega.plot")){
-    a$Plot.EGA <- ega.plot
-  }
 
   # Get arguments
   args <- list()
@@ -800,7 +685,23 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
     a$n.dim <- NA
   }
 
-  set.seed(NULL)
+  if(isTRUE(plot.EGA)){
+    a$Plot.EGA <- plot(a, plot.type = plot.type, plot.args = plot.args)
+    
+    # check for variable labels in qgraph
+    if(plot.type == "qgraph"){
+      
+      if(is.null(names(a$Plot.EGA$graphAttributes$Nodes$labels))){
+        names(a$Plot.EGA$graphAttributes$Nodes$labels) <- paste(1:ncol(data))
+      }
+      
+      row.names(a$dim.variables) <- a$Plot.EGA$graphAttributes$Nodes$labels[match(a$dim.variables$items, names(a$Plot.EGA$graphAttributes$Nodes$labels))]
+      
+    }
+    
+  }else{
+    a$Plot.EGA <- qgraph::qgraph(a$network, DoNotPlot = TRUE)
+  }
 
   # Return estimates:
   return(a)

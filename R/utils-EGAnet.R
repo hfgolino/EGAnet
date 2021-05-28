@@ -548,6 +548,49 @@ mat.func <- function(A, wc, metric = "each", absolute, diagonal)
 # PLOTTING ----
 #%%%%%%%%%%%%%%
 
+#' @noRd
+# Defaults for GGally plotting
+# For plots and methods
+# Updated 28.05.2021
+GGally.args <- function(plot.args)
+{
+  default.args <- formals(GGally::ggnet2)
+  ega.default.args <- list(node.size = 12, edge.size = 8,
+                           alpha = 0.5, label.size = 5,
+                           edge.alpha = 0.5, layout.exp = 0.2)
+  default.args[names(ega.default.args)]  <- ega.default.args
+  default.args <- default.args[-length(default.args)]
+  
+  
+  if("node.alpha" %in% names(plot.args)){
+    plot.args$alpha <- plot.args$node.alpha
+    plot.args$node.alpha <- NULL
+  }
+  
+  if("vsize" %in% names(plot.args)){
+    plot.args$node.size <- plot.args$vsize
+    plot.args$vsize <- NULL
+  }
+  
+  if("legend.names" %in% names(plot.args)){
+    legend.names <- plot.args$legend.names
+    plot.args$legend.names <- NULL
+  }
+  
+  if(!"color.palette" %in% names(plot.args)){
+    default.args$color.palette <- "polychrome"
+  }
+  
+  if(any(names(plot.args) %in% names(default.args))){
+    target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
+    default.args[names(target.args)] <- target.args
+  }
+  
+  plot.args <- default.args
+  
+  return(plot.args)
+}
+
 #' @importFrom graphics text
 #' @noRd
 # Color sorting for EGA palettes

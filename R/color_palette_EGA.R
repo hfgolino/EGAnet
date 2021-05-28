@@ -36,6 +36,10 @@
 #' A vector representing the community (dimension) membership
 #' of each node in the network. \code{NA} values mean that the node
 #' was disconnected from the network
+#' 
+#' @param sorted Boolean.
+#' Should colors be sorted by wc?
+#' Defaults to \code{TRUE}
 #'
 #' @author Hudson Golino <hfg9s at virginia.edu>, Alexander P. Christensen <alexpaulchristensen at gmail.com>
 #'
@@ -53,9 +57,9 @@
 #'
 #' @export
 #'
-# Updated 17.12.2020
+# Updated 28.05.2021
 ## Function to produce color palettes for EGA
-color_palette_EGA <- function (name, wc)
+color_palette_EGA <- function (name, wc, sorted = TRUE)
 {
 
   # All palettes
@@ -80,7 +84,13 @@ color_palette_EGA <- function (name, wc)
   if(!all(name %in% all_palettes)){
 
     if(length(name) != max(wc, na.rm = TRUE)){
-      return(get("polychrome")[color.sort(wc)])
+      
+      if(isTRUE(sorted)){
+        return(get("polychrome")[color.sort(wc)])
+      }else{
+        return(get("polychrome")[wc])
+      }
+  
       warning(
         paste(
           "Length of 'color.palette' does not equal the number of dimensions (",
@@ -100,14 +110,24 @@ color_palette_EGA <- function (name, wc)
 
     }
 
-    return(name[color.sort(wc)])
+    if(isTRUE(sorted)){
+      return(name[color.sort(wc)])
+    }else{
+      return(name[wc])
+    }
 
   }else{
 
     # Check for RColorBrewer palette
     if(name %in% row.names(RColorBrewer::brewer.pal.info)){
 
-      return(RColorBrewer::brewer.pal(max(color.sort(wc), na.rm = TRUE), name)[color.sort(wc)])
+      if(isTRUE(sorted)){
+        return(RColorBrewer::brewer.pal(max(color.sort(wc), na.rm = TRUE), name)[color.sort(wc)])
+      }else{
+        return(RColorBrewer::brewer.pal(max(wc, na.rm = TRUE), name)[wc])
+      }
+      
+      
 
     }else{# EGA palettes
 
@@ -163,9 +183,21 @@ color_palette_EGA <- function (name, wc)
       )
 
       if(exists(name)){
-        return(get(name)[color.sort(wc)])
+        
+        if(isTRUE(sorted)){
+          return(get(name)[color.sort(wc)])
+        }else{
+          return(get(name)[wc])
+        }
+      
       }else{
-        return(get("polychrome")[color.sort(wc)])
+        
+        if(isTRUE(sorted)){
+          return(get("polychrome")[color.sort(wc)])
+        }else{
+          return(get("polychrome")[wc])
+        }
+        
       }
 
     }
