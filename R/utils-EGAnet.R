@@ -1992,11 +1992,13 @@ redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.r
       warning("No plot was produced because there are only two redundant variables")
     }else{
       
-      suppressWarnings(
+      # Global suppress warnings (need a better workaround)
+      warn <- options("warn")[[1]]
+      options(warn = -1)
         suppressMessages(
           net.plot <- redund.plot(plot.mat, plot.args)
         )
-      )
+      options(warn = warn)
     }
     
   }
@@ -2166,7 +2168,7 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
                                names.eval = "weights",
                                directed = FALSE)
   
-  if(plot.reduce){
+  if(isTRUE(plot.reduce)){
     wc <- c("Target", rep("Possible", ncol(plot.mat)-1))
     network::set.vertex.attribute(network1, attrname= "Communities", value = wc)
   }else{
@@ -2229,8 +2231,7 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
           stroke = 1.5
         ))
       )
-  ) + ggplot2::theme(legend.title = ggplot2::element_blank(),
-                   legend.text = ggplot2::element_text(face = "bold", size = 12))
+  )
   
   redund.net <- redund.net + ggplot2::annotate("text", x = -Inf, y = Inf,
                                                hjust = 0, vjust = 1,
@@ -2863,7 +2864,11 @@ redundancy.menu <- function (redund, reduce.method, pot, target.item, weights,
   }
   
   if(length(poss) > 1){
+    # Global suppress warnings (need a better work around)
+    warn <- options("warn")[[1]]
+    options(warn = -1)
     plot(redund.plot(plot.matrix = mat, plot.args = plot.args, plot.reduce = TRUE))
+    options(warn = warn)
   }else{
     
     if(node.redundant.obj$model == "tmfg"){

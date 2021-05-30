@@ -454,16 +454,21 @@ UVA <- function(data, n = NULL,
       
       ## Run check
       ## Compute correlation matrix
-      cor.data <- switch(corr,
-                         "cor_auto" = qgraph::cor_auto(reduced$data),
-                         "pearson" = cor(reduced$data, use = "pairwise.complete.obs"),
-                         "spearman" = cor(reduced$data, method = "spearman", use = "pairwise.complete.obs")
-      )
-      
+      if(isSymmetric(reduced$data)){
+        cor.data <- reduced$data
+      }else{
+        
+        cor.data <- switch(corr,
+                           "cor_auto" = qgraph::cor_auto(reduced$data),
+                           "pearson" = cor(reduced$data, use = "pairwise.complete.obs"),
+                           "spearman" = cor(reduced$data, method = "spearman", use = "pairwise.complete.obs")
+        )
+        
+      }
       
       adhoc.check <- suppressMessages(
         redundancy.process(data = reduced$data, cormat = cor.data,
-                           n = nrow(reduced$data),
+                           n = n,
                            model = model,
                            method = "wto",
                            type = "threshold", sig = .20,
