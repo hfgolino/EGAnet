@@ -1874,7 +1874,9 @@ redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.r
     
     ## Obtain distribution
     for(i in 1:length(distr)){
-      aic[i] <- fitdistrplus::fitdist(pos.vals, distr[i], method="mle")$aic
+      capture.output(
+        aic[i] <- fitdistrplus::fitdist(pos.vals, distr[i], method="mle")$aic
+      )
     }
     
     ## Obtain parameters
@@ -1989,7 +1991,12 @@ redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.r
     if(ncol(plot.mat) <= 2){
       warning("No plot was produced because there are only two redundant variables")
     }else{
-      net.plot <- redund.plot(plot.mat, plot.args)
+      
+      suppressWarnings(
+        suppressMessages(
+          net.plot <- redund.plot(plot.mat, plot.args)
+        )
+      )
     }
     
   }
@@ -2158,10 +2165,13 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
                                ignore.eval = FALSE,
                                names.eval = "weights",
                                directed = FALSE)
+  
   if(plot.reduce){
-    network::set.vertex.attribute(network1, attrname= "Communities", value = c("Target", rep("Possible", ncol(plot.mat)-1)))
+    wc <- c("Target", rep("Possible", ncol(plot.mat)-1))
+    network::set.vertex.attribute(network1, attrname= "Communities", value = wc)
   }else{
-    network::set.vertex.attribute(network1, attrname= "Communities", value = rep(plot.args$title, ncol(plot.mat)))
+    wc <- rep(plot.args$title, ncol(plot.mat))
+    network::set.vertex.attribute(network1, attrname= "Communities", value = wc)
   }
   
   network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
@@ -2180,36 +2190,65 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
                                                                abs(igraph::E(graph1)$weight/max(abs(igraph::E(graph1)$weight)))^2,
                                                              vcount = ncol(plot.mat))
   
-  if(plot.reduce){
-    plot.args$vsize <- 12
-    plot.args$label.size <- 8
-  }
   
+  lower <- abs(plot.mat[lower.tri(plot.mat)])
+  non.zero <- sqrt(lower[lower != 0])
+  
+  set.seed(1234)
+  plot.args$net <- network1
+  plot.args$node.color <- "Communities"
+  plot.args$node.alpha <- plot.args$alpha
+  plot.args$node.shape <- plot.args$shape
+  node.size <- plot.args$node.size
+  plot.args$node.size <- 0
+  color.palette <- plot.args$color.palette
+  plot.args$color.palette <- NULL
+  plot.args$palette <- NULL
+  plot.args$edge.color <- "color"
+  plot.args$edge.size <- "ScaledWeights"
   
   lower <- abs(plot.mat[lower.tri(plot.mat)])
   non.zero <- sqrt(lower[lower != 0])
   
   plot.args$edge.alpha <- non.zero
+  plot.args$mode <- layout.spring
+  plot.args$label <- colnames(plot.mat)
+  plot.args$node.label <- rep("", ncol(plot.mat))
+  if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
+  if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
   
-  set.seed(1234)
-  redund.net <- GGally::ggnet2(network1, edge.size = "ScaledWeights", palette = "Set1",
-                               edge.color = "color", color = "Communities",
-                               alpha = plot.args$alpha, size = plot.args$vsize,
-                               edge.alpha = plot.args$edge.alpha,
-                               label.size = plot.args$label.size,
-                               layout.exp = 0.2,
-                               mode =  layout.spring,
-                               label = colnames(plot.mat)) +
-    ggplot2::theme(legend.title = ggplot2::element_blank(),
+  redund.net <- suppressMessages(
+    do.call(GGally::ggnet2, plot.args) + 
+      ggplot2::theme(legend.title = ggplot2::element_blank()) +
+      ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, na.omit(as.numeric(factor(wc)))),
+                                  breaks = sort(as.numeric(factor(wc)))) +
+      ggplot2::guides(
+        color = ggplot2::guide_legend(override.aes = list(
+          size = node.size,
+          alpha = plot.args$alpha,
+          stroke = 1.5
+        ))
+      )
+  ) + ggplot2::theme(legend.title = ggplot2::element_blank(),
                    legend.text = ggplot2::element_text(face = "bold", size = 12))
   
-  if(plot.reduce){
-    redund.net <- redund.net + ggplot2::annotate("text", x = -Inf, y = Inf,
-                                                 hjust = 0, vjust = 1,
-                                                 label = plot.args$title, size = 5.5)
-  }
+  redund.net <- redund.net + ggplot2::annotate("text", x = -Inf, y = Inf,
+                                               hjust = 0, vjust = 1,
+                                               label = plot.args$title, size = 5.5)
   
   set.seed(NULL)
+  
+  name <- colnames(plot.mat)
+  
+  # Custom nodes: transparent insides and dark borders
+  redund.net <- redund.net + 
+    ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
+                        color = color_palette_EGA(color.palette, na.omit(as.numeric(factor(wc))), sorted = FALSE),
+                        shape = 1, stroke = 1.5, alpha = .8) +
+    ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
+                        color = color_palette_EGA(color.palette, na.omit(as.numeric(factor(wc))), sorted = FALSE),
+                        shape = 19, alpha = plot.args$alpha) +
+    ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size)
   
   return(redund.net)
 }
@@ -2328,8 +2367,8 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
       merged[[count]] <- c(key[tar.idx], key[idx])
       
       # Combine into target index
-      if(reduce.method == "latent")
-      {
+      if(reduce.method == "latent"){
+        
         # Latent variable
         ## create model
         mod <- paste(paste("comb =~ ",sep=""), paste(colnames(new.data[,c(tar.idx, idx)]), collapse = " + "))
@@ -2448,8 +2487,9 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
         
         tab[,1:(ncol(tab) - 2)] <- matrix(sprintf("%.2f", tab[,1:(ncol(tab) - 2)]), nrow = nrow(tab), ncol = ncol(tab) - 2)
         
-        table.plot <- gridExtra::tableGrob(tab)
-        gridExtra::grid.arrange(table.plot)
+        if(!isSymmetric(new.data)){
+          gridExtra::grid.arrange(gridExtra::tableGrob(tab))
+        }
         
         # Input check
         new.input <- input.check(poss = c(target.item, comb), type = "remove")
@@ -2473,7 +2513,12 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
       
       # Remove redundant variables from data
       rm.idx <- match(idx, colnames(new.data))
-      new.data <- new.data[,-rm.idx]
+      
+      if(isSymmetric(new.data)){
+        new.data <- new.data[-rm.idx, -rm.idx]
+      }else{
+        new.data <- new.data[,-rm.idx]
+      }
       
       # Update previous state data
       prev.state.data[length(prev.state.data) + 1] <- list(new.data)
@@ -2880,7 +2925,11 @@ input.check <- function (poss, type = c("redund", "remove"))
     
   }else if (type == "remove"){
     
-    cat(paste("\n", 0:(length(poss) - 1), ". ", "'", poss, "'", sep = ""),"\n\n")
+    cat(
+      paste("\n0. ", "'", poss[1], "'", " (Target)", sep = ""),
+      paste("\n", 1:(length(poss) - 1), ". ", "'", poss[-1], "'", sep = ""),
+      "\n\n"
+    )
     
     input <- readline(prompt = "Select variable to KEEP: ")
     
@@ -2954,9 +3003,13 @@ lavaan.formula.names <- function (data){
                       
                       ind <- grepl("[[:digit:]]", x)
                       
-                      if(any(ind)){
-                        rm.ind <- x[-which(ind)]
-                        new.name <- paste(c(rm.ind, x[which(ind)]), collapse = "")
+                      if(isTRUE(rle(ind)$values[1])){
+                        rm.ind <- x[1:rle(ind)$lengths[1]]
+                        new.name <- paste(
+                          paste(x[-c(1:rle(ind)$lengths[1])], collapse = ""),
+                          paste(rm.ind, collapse = ""),
+                          sep = "_"
+                        )
                         return(new.name)
                       }else{return(paste(x, collapse = ""))}
                       

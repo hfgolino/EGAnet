@@ -290,7 +290,7 @@
 #' @export
 #
 # Unique Variable Analysis
-# Updated 14.04.2021
+# Updated 30.05.2021
 UVA <- function(data, n = NULL,
                 model = c("glasso", "TMFG"),
                 corr = c("cor_auto", "pearson", "spearman"),
@@ -343,6 +343,47 @@ UVA <- function(data, n = NULL,
     reduce.method <- "latent"
   }else{reduce.method <- match.arg(reduce.method)}
   
+  ## n
+  if(nrow(data) == ncol(data)){
+    
+    cormat <- data
+    
+    if(method == "irt"){
+      stop('method = "IRT" requires a dataset to be input')
+    }
+    
+    if(is.null(n)){
+      stop("Argument 'n' must be set for square matrices")
+    }
+    
+    ### Let user know that variables can't be combined
+    if(isTRUE(reduce)){
+      
+      if(reduce.method != "remove"){
+        reduce.method <- "remove"
+        message("Input is a square matrix. Changing 'reduce.method' to \"remove\"")
+      }
+      
+      
+    }
+    
+  }else{### Get n
+    n <- nrow(data)
+    
+    if(method != "irt"){
+      ## Compute correlation matrix
+      cormat <- switch(corr,
+                       "cor_auto" = qgraph::cor_auto(data),
+                       "pearson" = cor(data, use = "pairwise.complete.obs"),
+                       "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
+      )
+      ### Make sure it's positive definite
+      if(any(eigen(cormat)$values < 0)){
+        cormat <- as.matrix(Matrix::nearPD(cormat, keepDiag = TRUE)$mat)
+      }
+    }
+  }
+  
   ## prepare arguments for lavaan
   if(reduce.method == "latent"){
     
@@ -370,54 +411,18 @@ UVA <- function(data, n = NULL,
     
   }
   
-  ## n
-  if(nrow(data) == ncol(data)){
-    
-    if(method == "irt"){
-      stop('method = "IRT" requires a dataset to be input')
-    }
-    
-    if(is.null(n)){
-      stop("Argument 'n' must be set for square matrices")
-    }
-    
-  }else{### Get n
-    n <- nrow(data)
-    
-    if(method != "irt"){
-      ## Compute correlation matrix
-      cormat <- switch(corr,
-                       "cor_auto" = qgraph::cor_auto(data),
-                       "pearson" = cor(data, use = "pairwise.complete.obs"),
-                       "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
-      )
-      ### Make sure it's positive definite
-      if(any(eigen(cormat)$values < 0)){
-        cormat <- as.matrix(Matrix::nearPD(cormat, keepDiag = TRUE)$mat)
-      }
-    }
-  }
-  
   ## plot.args
-  if(length(plot.args) == 0){
-    plot.args <-list(vsize = 6, alpha = 0.4, label.size = 5, edge.alpha = 0.7)
-  }else{
-    plot.args <- plot.args
-    plots.arg1 <- list(vsize = 6, label.size = 5, alpha = 0.4, edge.alpha = 0.7)
-    plot.args.use <- plot.args
-    
-    if(any(names(plots.arg1) %in% names(plot.args.use))){
-      
-      plot.replace.args <- plots.arg1[na.omit(match(names(plot.args.use), names(plots.arg1)))]
-      
-      plot.args <- c(plot.args.use,plots.arg1[names(plots.arg1) %in% names(plot.args.use)==FALSE])}
-  }
+  plot.args <- GGally.args(plot.args)
   
   # Perform redundancy analysis
-  process <- redundancy.process(data = data, cormat = cormat,
-                                n = n, model = model, method = method,
-                                type = type, sig = sig,
-                                plot.redundancy = plot.redundancy, plot.args = plot.args)
+  process <- suppressWarnings(
+    suppressMessages(
+      redundancy.process(data = data, cormat = cormat,
+                         n = n, model = model, method = method,
+                         type = type, sig = sig,
+                         plot.redundancy = plot.redundancy, plot.args = plot.args)
+    )
+  )
   
   ## key
   if(is.null(key)){
@@ -430,7 +435,9 @@ UVA <- function(data, n = NULL,
   }
   
   # Get names
-  process <- redund.names(node.redundant.obj = process, key = key)
+  if(any(!is.na(process$redundant))){
+    process <- redund.names(node.redundant.obj = process, key = key)
+  }
   
   # Run through redundancy reduction
   if(reduce){
