@@ -51,7 +51,7 @@
 #' @param use.derivatives Integer.
 #' The order of the derivative to be used in the EGA procedure. Default to 1.
 #'
-#' @param corr Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
+#' @param corr Type of correlation matrix to compute. The default uses \code{"pearson"}.
 #' Current options are:
 #'
 #' \itemize{
@@ -232,8 +232,8 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
   }else{group <- group}
 
   if(missing(corr))
-  {corr <- "cor_auto"
-  }else{corr <- match.arg(corr)}
+  {corr <- "pearson"
+  }else{corr <- mathc.arg(corr)}
 
   if(missing(ncores))
   {ncores <- ceiling(parallel::detectCores() / 2)
@@ -478,7 +478,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
       class(results) <- "dynEGA.Individuals"
       dim.variables <- list()
       for(i in 1:length(cases)){
-        dim.variables[[i]] <- data.frame(items = colnames(data[-c(id, group)]), dimension = ega.list.individuals[[i]]$wc)
+        dim.variables[[i]] <- data.frame(items = colnames(data.individuals[[i]]), dimension = ega.list.individuals[[i]]$wc)
         dim.variables[[i]] <- dim.variables[[i]][order(dim.variables[[i]][, 2]),]
         results$dynEGA[[i]]$dim.variables <- dim.variables[[i]]}
     }
