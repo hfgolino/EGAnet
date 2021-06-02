@@ -297,6 +297,10 @@ EGA.estimate <- function(data, n = NULL,
 
     # Check if symmetric (time series data)
     if(!isSymmetric(data)){
+      
+      # Obtain n
+      n <- nrow(data)
+      
       # Compute correlation matrix
       cor.data <- switch(corr,
                          cor_auto = qgraph::cor_auto(data, forcePD = TRUE),
