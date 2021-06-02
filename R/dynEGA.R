@@ -171,7 +171,7 @@
 #'
 #' @export
 # dynEGA
-# Updated 17.12.2020
+# Updated 02.06.2021
 dynEGA <- function(data, n.embed, tau = 1, delta = 1,
                    level = c("individual", "group", "population"),
                    id = NULL, group = NULL,
@@ -400,8 +400,37 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
     data.individuals <- vector("list", length = length(cases))
     data.individuals <- split(data.all[,colstouse],data.all$ID)
     names(data.individuals) <- paste0("ID", cases)
-
-
+    
+    # Get number of variables
+    initial.nvar <- unlist(lapply(data.individuals, ncol))
+    
+    # Remove variables from participants with no variance
+    # in their derivatives
+    data.individuals <- lapply(data.individuals, function(x){
+      indices <- which(apply(x, 2, sd) == 0)
+      if(length(indices) != 0){
+        x[,-indices]
+      }else{x}
+    })
+    
+    # Get number of variables
+    final.nvar <- unlist(lapply(data.individuals, ncol))
+    
+    # Get warnings
+    warning.idx <- which(initial.nvar != final.nvar)
+    if(length(warning.idx) != 0){
+      
+      for(i in 1:length(warning.idx)){
+        warning(
+          paste(
+            gsub("ID", "", names(data.individuals)[i]),
+            "had variables with no variance. Some variables were dropped"
+          )
+        )
+      }
+      
+    }
+    
     #Parallel processing
     cl <- parallel::makeCluster(ncores)
 

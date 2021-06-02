@@ -162,7 +162,7 @@
 #' @export
 #'
 # Estimates EGA
-# Updated 03.12.2020
+# Updated 02.06.2021
 EGA.estimate <- function(data, n = NULL,
                          model = c("glasso", "TMFG"), model.args = list(),
                          algorithm = c("walktrap", "louvain"), algorithm.args = list(),
@@ -170,7 +170,9 @@ EGA.estimate <- function(data, n = NULL,
                          verbose = TRUE,
                          ...)
 {
-
+  # Make the data a matrix
+  data <- as.matrix(data)
+  
   # Get additional arguments
   add.args <- list(...)
 
@@ -275,7 +277,6 @@ EGA.estimate <- function(data, n = NULL,
     n <- nrow(data)
 
     # Compute correlation matrix
-
     cor.data <- switch(corr,
                        cor_auto = qgraph::cor_auto(data, forcePD = TRUE),
                        pearson = cor(data, use = "pairwise.complete.obs", method = "pearson"),
@@ -294,6 +295,27 @@ EGA.estimate <- function(data, n = NULL,
 
   }else{
 
+    # Check if symmetric (time series data)
+    if(!isSymmetric(data)){
+      # Compute correlation matrix
+      cor.data <- switch(corr,
+                         cor_auto = qgraph::cor_auto(data, forcePD = TRUE),
+                         pearson = cor(data, use = "pairwise.complete.obs", method = "pearson"),
+                         spearman = cor(data, use = "pairwise.complete.obs", method = "spearman")
+      )
+      
+      # Check if positive definite
+      if(any(eigen(cor.data)$values < 0)){
+        
+        # Let user know
+        warning("Correlation matrix is not positive definite.\nForcing positive definite matrix using Matrix::nearPD()\nResults may be unreliable")
+        
+        # Force positive definite matrix
+        cor.data <- as.matrix(Matrix::nearPD(cor.data, corr = TRUE, keepDiag = TRUE, ensureSymmetry = TRUE)$mat)
+      }
+    }
+    
+    
     # Check if positive definite
     if(any(eigen(data)$values < 0)){
 
