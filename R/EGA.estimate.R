@@ -434,7 +434,7 @@ EGA.estimate <- function(data, n = NULL,
   }
 
   names(wc) <- colnames(data)
-  n.dim <- suppressWarnings(length(na.omit(wc)))
+  n.dim <- suppressWarnings(length(unique(na.omit(wc))))
 
   # Return results
   res <- list()
