@@ -69,6 +69,9 @@ print.dynEGA<- function(x, ...) {
   print(x$dynEGA$dim.variables)
 }
 
+# PLOTS----
+# Updated 28.05.2021
+#' @export
 # Plot bootEGA----
 # Updated 28.05.2021
 plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
@@ -261,38 +264,39 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$node.size/2}
       
       
+      palette <- color_palette_EGA(color.palette, x$dynEGA[[i]]$wc, sorted = FALSE)
+      palette <- ifelse(is.na(palette), "white", palette)
+      
       plots.net[[i]] <- suppressMessages(
         do.call(GGally::ggnet2, plot.args) + 
-          ggplot2::theme(legend.title = ggplot2::element_blank()) +
-          ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, na.omit(x$dynEGA[[i]]$wc)),
-                                      breaks = sort(x$dynEGA[[i]]$wc)) +
+          ggplot2::theme(legend.title = ggplot2::element_blank())
+        
+        name <- colnames(x$dynEGA[[i]]$network)
+        
+        # Custom nodes: transparent insides and dark borders
+        plots.net[[i]] <- plots.net[[i]] + 
+          ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
+                              color = palette,
+                              shape = 1, stroke = 1.5, alpha = .8) +
+          ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
+                              color = palette,
+                              shape = 19, alpha = plot.args$alpha) +
+          ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
           ggplot2::guides(
             color = ggplot2::guide_legend(override.aes = list(
+              color = unique(palette),
               size = node.size,
               alpha = plot.args$alpha,
               stroke = 1.5
             ))
           )
-      )
-      
-      name <- colnames(x$dynEGA[[i]]$network)
-      
-      # Custom nodes: transparent insides and dark borders
-      plots.net[[i]] <- plots.net[[i]] + 
-        ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
-                            color = color_palette_EGA(color.palette, na.omit(x$dynEGA[[i]]$wc), sorted = FALSE),
-                            shape = 1, stroke = 1.5, alpha = .8) +
-        ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
-                            color = color_palette_EGA(color.palette, na.omit(x$dynEGA[[i]]$wc), sorted = FALSE),
-                            shape = 19, alpha = plot.args$alpha) +
-        ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size)
-      
-    }
+        
+        }
     group.labels <- names(x$dynEGA)
     set.seed(NULL)
     ggpubr::ggarrange(plotlist=plots.net, ncol = ncol, nrow = nrow, labels = group.labels, label.x = 0.3)
+    }
   }
-}
 
 # Plot dynEGA function (Level: Individual)----
 # Updated 28.05.2021
@@ -364,33 +368,35 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$node.size/2}
     if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$node.size/2}
     
+    palette <- color_palette_EGA(color.palette, x$dynEGA[[id]]$wc, sorted = FALSE)
+    palette <- ifelse(is.na(palette), "white", palette)
+    
     ega.plot <- suppressMessages(
       do.call(GGally::ggnet2, plot.args) + 
-        ggplot2::theme(legend.title = ggplot2::element_blank()) +
-        ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, na.omit(x$dynEGA[[id]]$wc)),
-                                    breaks = sort(x$dynEGA[[id]]$wc)) +
-        ggplot2::guides(
-          color = ggplot2::guide_legend(override.aes = list(
-            size = node.size,
-            alpha = plot.args$alpha,
-            stroke = 1.5
-          ))
-        )
+        ggplot2::theme(legend.title = ggplot2::element_blank())
     )
-    
-    set.seed(NULL)
     
     name <- colnames(x$dynEGA[[id]]$network)
     
     # Custom nodes: transparent insides and dark borders
     ega.plot <- ega.plot + 
       ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
-                          color = color_palette_EGA(color.palette, na.omit(x$dynEGA[[id]]$wc), sorted = FALSE),
+                          color = palette,
                           shape = 1, stroke = 1.5, alpha = .8) +
       ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
-                          color = color_palette_EGA(color.palette, na.omit(x$dynEGA[[id]]$wc), sorted = FALSE),
+                          color = palette,
                           shape = 19, alpha = plot.args$alpha) +
-      ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size)
+      ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
+      ggplot2::guides(
+        color = ggplot2::guide_legend(override.aes = list(
+          color = unique(palette),
+          size = node.size,
+          alpha = plot.args$alpha,
+          stroke = 1.5
+        ))
+      )
+    
+    set.seed(NULL)
     
     plot(ega.plot)
   }
@@ -473,34 +479,36 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
     if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
     
+    palette <- color_palette_EGA(color.palette, x$dynEGA$wc, sorted = FALSE)
+    palette <- ifelse(is.na(palette), "white", palette)
+    
     ega.plot <- suppressMessages(
       do.call(GGally::ggnet2, plot.args) + 
-        ggplot2::theme(legend.title = ggplot2::element_blank()) +
-        ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, na.omit(x$dynEGA$wc)),
-                                    breaks = sort(x$dynEGA$wc)) +
-        ggplot2::guides(
-          color = ggplot2::guide_legend(override.aes = list(
-            size = node.size,
-            alpha = plot.args$alpha,
-            stroke = 1.5
-          ))
-        )
+        ggplot2::theme(legend.title = ggplot2::element_blank())
     )
+    
+    name <- colnames(x$dynEGA$network)
+    
+    # Custom nodes: transparent insides and dark borders
+    ega.plot <- ega.plot + 
+      ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
+                          color = palette,
+                          shape = 1, stroke = 1.5, alpha = .8) +
+      ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
+                          color = palette,
+                          shape = 19, alpha = plot.args$alpha) +
+      ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
+      ggplot2::guides(
+        color = ggplot2::guide_legend(override.aes = list(
+          color = unique(palette),
+          size = node.size,
+          alpha = plot.args$alpha,
+          stroke = 1.5
+        ))
+      )
     
   }
   set.seed(NULL)
-  
-  name <- colnames(x$dynEGA$network)
-  
-  # Custom nodes: transparent insides and dark borders
-  ega.plot <- ega.plot + 
-    ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
-                        color = color_palette_EGA(color.palette, na.omit(x$dynEGA$wc), sorted = FALSE),
-                        shape = 1, stroke = 1.5, alpha = .8) +
-    ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
-                        color = color_palette_EGA(color.palette, na.omit(x$dynEGA$wc), sorted = FALSE),
-                        shape = 19, alpha = plot.args$alpha) +
-    ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size)
   
   plot(ega.plot)
 }
