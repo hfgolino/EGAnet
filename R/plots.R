@@ -319,6 +319,7 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       plots.net[[i]] <- suppressMessages(
         do.call(GGally::ggnet2, plot.args) + 
           ggplot2::theme(legend.title = ggplot2::element_blank())
+      )
       
       name <- colnames(x$dynEGA[[i]]$network)
       
