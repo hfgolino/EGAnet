@@ -554,8 +554,8 @@ mat.func <- function(A, wc, metric = "each", absolute, diagonal)
 compare.EGA <- function(ega.object1, ega.object2)
 {
   # Obtain plots
-  plot1 <- plot(ega.object1)
-  plot2 <- plot(ega.object2)
+  plot1 <- plot(ega.object1, produce = FALSE)
+  plot2 <- plot(ega.object2, produce = FALSE)
   
   # Reorder node coordinates for plot2
   plot2$data <- plot2$data[row.names(plot1$data),]
