@@ -124,7 +124,7 @@
 # Plot bootEGA----
 # Updated 28.05.2021
 plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
-                         plot.args = list(), ...){
+                         plot.args = list(), produce = TRUE, ...){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
   {plot.type <- "GGally"
@@ -227,14 +227,16 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
                shape = 19, alpha = plot.args$alpha) +
     ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size)
   
-  plot(ega.plot)
+  if(isTRUE(produce)){
+    plot(ega.plot)
+  }else{return(ega.plot)}
 }
 
 # Plot dynEGA function (Level: Group)----
 # Updated 28.05.2021
 #' @export
 plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally","qgraph"),
-                               plot.args = list(), ...){
+                               plot.args = list(), produce = TRUE, ...){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
   {plot.type <- "GGally"
@@ -334,7 +336,7 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
         ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
         ggplot2::guides(
           color = ggplot2::guide_legend(override.aes = list(
-            color = unique(palette),
+            color = unique(palette[order(x$dynEGA[[i]]$wc)]),
             size = node.size,
             alpha = plot.args$alpha,
             stroke = 1.5
@@ -344,7 +346,9 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
     }
     group.labels <- names(x$dynEGA)
     set.seed(NULL)
-    ggpubr::ggarrange(plotlist=plots.net, ncol = ncol, nrow = nrow, labels = group.labels, label.x = 0.3)
+    if(isTRUE(produce)){
+      ggpubr::ggarrange(plotlist=plots.net, ncol = ncol, nrow = nrow, labels = group.labels, label.x = 0.3)
+    }else{return(plots.net)}
   }
 }
 
@@ -352,7 +356,7 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
 # Updated 28.05.2021
 #' @export
 plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GGally","qgraph"),
-                                    plot.args = list(), ...){
+                                    plot.args = list(), produce = TRUE, ...){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
   {plot.type <- "GGally"
@@ -439,7 +443,7 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
       ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
       ggplot2::guides(
         color = ggplot2::guide_legend(override.aes = list(
-          color = unique(palette),
+          color = unique(palette[order(x$dynEGA[[id]]$wc)]),
           size = node.size,
           alpha = plot.args$alpha,
           stroke = 1.5
@@ -448,7 +452,9 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     
     set.seed(NULL)
     
-    plot(ega.plot)
+    if(isTRUE(produce)){
+      plot(ega.plot)
+    }else{return(ega.plot)}
   }
 }
 
@@ -456,7 +462,7 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
 # Updated 28.05.2021
 #' @export
 plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
-                        plot.args = list(), ...){
+                        plot.args = list(), produce = TRUE, ...){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
   {plot.type <- "GGally"
@@ -550,7 +556,7 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
       ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
       ggplot2::guides(
         color = ggplot2::guide_legend(override.aes = list(
-          color = unique(palette),
+          color = unique(palette[order(x$dynEGA$wc)]),
           size = node.size,
           alpha = plot.args$alpha,
           stroke = 1.5
@@ -560,14 +566,16 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
   }
   set.seed(NULL)
   
-  plot(ega.plot)
+  if(isTRUE(produce)){
+    plot(ega.plot)
+  }else{return(ega.plot)}
 }
 
 # Plot EGA----
 # Updated 28.05.2021
 #' @export
 plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
-                     plot.args = list(), ...){
+                     plot.args = list(), produce = TRUE, ...){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
   {plot.type <- "GGally"
@@ -640,37 +648,41 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
     if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
     if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
     
+    palette <- color_palette_EGA(color.palette, x$wc, sorted = FALSE)
+    palette <- ifelse(is.na(palette), "white", palette)
+    
     ega.plot <- suppressMessages(
       do.call(GGally::ggnet2, plot.args) + 
-        ggplot2::theme(legend.title = ggplot2::element_blank()) +
-        ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, na.omit(x$wc)),
-                                    breaks = sort(x$wc)) +
-        ggplot2::guides(
-          color = ggplot2::guide_legend(override.aes = list(
-            size = node.size,
-            alpha = plot.args$alpha,
-            stroke = 1.5
-          ))
-        )
+        ggplot2::theme(legend.title = ggplot2::element_blank())
     )
+    
+    name <- colnames(x$network)
+    
+    # Custom nodes: transparent insides and dark borders
+    ega.plot <- ega.plot + 
+      ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
+                          color = palette,
+                          shape = 1, stroke = 1.5, alpha = .8) +
+      ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
+                          color = palette,
+                          shape = 19, alpha = plot.args$alpha) +
+      ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
+      ggplot2::guides(
+        color = ggplot2::guide_legend(override.aes = list(
+          color = unique(palette[order(x$wc)]),
+          size = node.size,
+          alpha = plot.args$alpha,
+          stroke = 1.5
+        ))
+      )
     
   }
   
   set.seed(NULL)
   
-  name <- colnames(x$network)
-  
-  # Custom nodes: transparent insides and dark borders
-  ega.plot <- ega.plot + 
-    ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
-               color = color_palette_EGA(color.palette, na.omit(x$wc), sorted = FALSE),
-               shape = 1, stroke = 1.5, alpha = .8) +
-    ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
-               color = color_palette_EGA(color.palette, na.omit(x$wc), sorted = FALSE),
-               shape = 19, alpha = plot.args$alpha) +
-    ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size)
-  
-  plot(ega.plot)
+  if(isTRUE(produce)){
+    plot(ega.plot)
+  }else{return(ega.plot)}
 }
 
 # Plot EGA.fit----

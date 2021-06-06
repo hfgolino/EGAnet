@@ -549,6 +549,48 @@ mat.func <- function(A, wc, metric = "each", absolute, diagonal)
 #%%%%%%%%%%%%%%
 
 #' @noRd
+# Sub-routine for compare.EGA.plots
+# Updated 05.06.2021
+compare.EGA <- function(ega.object1, ega.object2)
+{
+  # Obtain plots
+  plot1 <- plot(ega.object1)
+  plot2 <- plot(ega.object2)
+  
+  # Reorder node coordinates for plot2
+  plot2$data <- plot2$data[row.names(plot1$data),]
+  
+  # Reorder edge coordinates for plot2
+  for(i in 1:nrow(plot2$layers[[1]]$data)){
+    
+    plot2$layers[[1]]$data$X1[i] <- which(plot2$layers[[1]]$data$X1[i] == plot2$data$x)
+    plot2$layers[[1]]$data$X2[i] <- which(plot2$layers[[1]]$data$X2[i] == plot2$data$x)
+    plot2$layers[[1]]$data$Y1[i] <- which(plot2$layers[[1]]$data$Y1[i] == plot2$data$y)
+    plot2$layers[[1]]$data$Y2[i] <- which(plot2$layers[[1]]$data$Y2[i] == plot2$data$y)
+    
+  }
+  
+  # Reassign edge coordinates based on plot1
+  plot2$layers[[1]]$data$X1 <- plot1$data$x[plot2$layers[[1]]$data$X1] # X1
+  plot2$layers[[1]]$data$X2 <- plot1$data$x[plot2$layers[[1]]$data$X2] # X2
+  plot2$layers[[1]]$data$Y1 <- plot1$data$y[plot2$layers[[1]]$data$Y1] # Y1
+  plot2$layers[[1]]$data$Y2 <- plot1$data$y[plot2$layers[[1]]$data$Y2] # Y2
+  
+  # Assign coordinates of plot1 to plot2
+  plot2$data$x <- plot1$data$x
+  plot2$data$y <- plot1$data$y
+  
+  # Make plot list
+  plots.net <- list()
+  plots.net[[1]] <- plot1
+  plots.net[[2]] <- plot2
+  
+  # Return plot list
+  return(plots.net)
+  
+}
+
+#' @noRd
 # Defaults for GGally plotting
 # For plots and methods
 # Updated 28.05.2021
