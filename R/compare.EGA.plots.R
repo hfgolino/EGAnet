@@ -1,3 +1,31 @@
+#' Visual Compares \code{\link{EGAnet}} plots
+#' 
+#' @description Identifies redundant nodes in the network based on several
+#' measures. Computes the weighted topological overlap between
+#' each node and every other node in the network. The weighted topological
+#' overlap is implemented using the method from Nowick et al. (2009; see references)
+#' and the function \link[wTO]{wTO} from the wTO package.
+#'
+#' @param ... \code{\link{EGAnet}} objects
+#' 
+#' @param rows Numeric.
+#' Number of rows to spread plots across
+#' 
+#' @param columns Numeric.
+#' Number of columns to spread plots down
+#'
+#' @return Visual comparison of \code{\link{EGAnet}} objects
+#' 
+#' @examples
+#' # obtain SAPA items
+#' items <- psychTools::spi[,c(11:20)]
+#' 
+#' @author Alexander Christensen <alexpaulchristensen@gmail.com>
+#'
+#' @export
+#
+# Compare EGA plots function
+# Updated 05.06.2021
 compare.EGA.plots <- function(..., rows, columns)
 {
   # Obtain object list
@@ -8,6 +36,15 @@ compare.EGA.plots <- function(..., rows, columns)
   
   # Obtain EGA objects only
   object.list <- object.list[EGA.idx]
+  
+  # Missing argumens
+  if(missing(rows)){
+    rows <- 1
+  }
+  
+  if(missing(columns)){
+    columns <- length(object.list)
+  }
   
   # Check for at least two objects
   if(length(object.list) < 2){
