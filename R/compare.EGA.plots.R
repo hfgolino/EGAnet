@@ -26,7 +26,7 @@
 #
 # Compare EGA plots function
 # Updated 05.06.2021
-compare.EGA.plots <- function(..., rows, columns)
+compare.EGA.plots <- function(..., labels, rows, columns)
 {
   # Obtain object list
   object.list <- list(...)
@@ -61,6 +61,6 @@ compare.EGA.plots <- function(..., rows, columns)
   }
   
   # Set up grid return
-  ggpubr::ggarrange(plotlist = plots.ega, ncol = columns, nrow = rows)
+  ggpubr::ggarrange(plotlist = plots.ega, ncol = columns, nrow = rows, labels = labels, label.x = 0.3)
   
 }
