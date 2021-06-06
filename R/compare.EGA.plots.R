@@ -53,7 +53,7 @@ compare.EGA.plots <- function(..., rows, columns)
   
   # Initialize plot list
   plots.ega <- list()
-  plots.ega[[1]] <- plot(object.list[[1]])
+  plots.ega[[1]] <- plot(object.list[[1]], produce = FALSE)
   
   # Loop through matching 
   for(i in 2:length(object.list)){
