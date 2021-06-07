@@ -25,7 +25,7 @@
 #' @export
 #
 # Compare EGA plots function
-# Updated 05.06.2021
+# Updated 07.06.2021
 compare.EGA.plots <- function(..., labels, rows, columns)
 {
   # Obtain object list
@@ -37,13 +37,20 @@ compare.EGA.plots <- function(..., labels, rows, columns)
   # Obtain EGA objects only
   object.list <- object.list[EGA.idx]
   
-  # Missing argumens
+  # Obtain names
+  name <- names(object.list)
+  
+  # Missing arguments
   if(missing(rows)){
     rows <- 1
   }
   
   if(missing(columns)){
     columns <- length(object.list)
+  }
+  
+  if(missing(labels)){
+    labels <- name
   }
   
   # Check for at least two objects
