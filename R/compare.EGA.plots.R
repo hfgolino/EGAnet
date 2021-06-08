@@ -70,4 +70,9 @@ compare.EGA.plots <- function(..., labels, rows, columns)
   # Set up grid return
   ggpubr::ggarrange(plotlist = plots.ega, ncol = columns, nrow = rows, labels = labels, label.x = 0.3)
   
+  # Name plots
+  name(plots.ega) <- labels
+  
+  return(plots.ega)
+  
 }
