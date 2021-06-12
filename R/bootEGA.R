@@ -369,7 +369,7 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
   message(paste(" \u2022 type = ", type, "\n",
                 " \u2022 iterations = ", iter, "\n",
                 " \u2022 model = ", model, "\n",
-                " \u2022 algorithm = ", algorithm, "\n",
+                " \u2022 algorithm = ", substitute(algorithm), "\n",
                 " \u2022 correlation = ", corr, "\n",
                 " \u2022 unidimensional check = ", ifelse(
                   uni.method == "LE",
