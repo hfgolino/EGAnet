@@ -371,13 +371,13 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
                 " \u2022 model = ", model, "\n",
                 " \u2022 algorithm = ",
                 gsub(
-                  "_", "",
+                  "_", " ",
                   gsub(
                     "igraph", "",
                     gsub(
                       "::", "",
                       gsub(
-                        "cluster", "",
+                        "cluster_", "",
                         paste(substitute(algorithm), collapse = "")
                       )
                     )
