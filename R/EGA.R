@@ -340,15 +340,12 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
   message(paste(" \u2022 model = ", model, "\n",
                 " \u2022 algorithm = ",
                 gsub(
-                  "_", " ",
+                  "igraph", "",
                   gsub(
-                    "igraph", "",
+                    "::", "",
                     gsub(
-                      "::", "",
-                      gsub(
-                        "cluster_", "",
-                        paste(substitute(algorithm), collapse = "")
-                      )
+                      "cluster_", "",
+                      paste(substitute(algorithm), collapse = "")
                     )
                   )
                 ),
