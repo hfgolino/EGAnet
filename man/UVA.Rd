@@ -74,7 +74,7 @@ Defaults to \code{"wTO"}}
 Computes significance using the standard \emph{p}-value (\code{"alpha"}),
 adaptive alpha \emph{p}-value (\code{\link[NetworkToolbox]{adapt.a}}), 
 or some threshold \code{"threshold"}.
-Defaults to \code{"adapt"}}
+Defaults to \code{"threshold"}}
 
 \item{sig}{Numeric.
 \emph{p}-value for significance of overlap (defaults to \code{.05}).

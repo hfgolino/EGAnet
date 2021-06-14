@@ -4,7 +4,7 @@
 \alias{compare.EGA.plots}
 \title{Visual Compares \code{\link{EGAnet}} plots}
 \usage{
-compare.EGA.plots(..., rows, columns)
+compare.EGA.plots(..., labels, rows, columns)
 }
 \arguments{
 \item{...}{\code{\link{EGAnet}} objects}
