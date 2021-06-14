@@ -56,7 +56,7 @@
 #' Computes significance using the standard \emph{p}-value (\code{"alpha"}),
 #' adaptive alpha \emph{p}-value (\code{\link[NetworkToolbox]{adapt.a}}), 
 #' or some threshold \code{"threshold"}.
-#' Defaults to \code{"adapt"} 
+#' Defaults to \code{"threshold"} 
 #'
 #' @param sig Numeric.
 #' \emph{p}-value for significance of overlap (defaults to \code{.05}).
@@ -290,7 +290,7 @@
 #' @export
 #
 # Unique Variable Analysis
-# Updated 30.05.2021
+# Updated 14.06.2021
 UVA <- function(data, n = NULL,
                 model = c("glasso", "TMFG"),
                 corr = c("cor_auto", "pearson", "spearman"),
@@ -323,7 +323,11 @@ UVA <- function(data, n = NULL,
   
   ## type
   if(missing(type)){
-    type <- "adapt"
+    
+    type <- "threshold"
+    
+    warning('The default for the `type` argument has changed to "threshold"')
+    
   }else{type <- tolower(match.arg(type))}
   
   ## sig
