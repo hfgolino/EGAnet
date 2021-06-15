@@ -62,6 +62,33 @@
 color_palette_EGA <- function (name, wc, sorted = TRUE)
 {
 
+  # Check for missing
+  if(missing(wc)){
+    wc <- 1:length(name)
+  }
+  
+  # Unique wc
+  uniq.wc <- unique(wc)
+  
+  # Convert wc to numeric
+  if(!all(is.numeric(wc))){
+    
+    # Assign numbers to names
+    for(i in 1:length(uniq.wc)){
+      wc[wc == uniq.wc[i]] <- i
+    }
+    
+  }
+  
+  # Convert numbers to be consecutive
+  if(all(sort(uniq.wc) != 1:length(unique(na.omit(wc))))){
+    
+    #### ALEX ####
+    
+    sdfg <- 1:length(unique(na.omit(wc)))
+    
+  }
+  
   # All palettes
   all_palettes <- c(row.names(RColorBrewer::brewer.pal.info),
                     "polychrome", "blue.ridge1", "blue.ridge2",
@@ -78,12 +105,52 @@ color_palette_EGA <- function (name, wc, sorted = TRUE)
             "C792DF", "60b6f1", "f9a470", "bc556f", "f7a2a1"
           ), sep = "")
   )
+  
+  ## Other palettes
+  
+  ## Blue Ridge Mountains 1 (7 colors)
+  blue.ridge1 <- rev(toupper(
+    paste("#",
+          c("fdcd9b", "fde8a9", "fdb184",
+            "7f616e", "4c6e98", "24547e", "272a39"
+          ), sep = "")
+  ))
+  
+  ## Blue Ridge Mountains 2 (10 colors)
+  blue.ridge2 <- toupper(
+    paste("#",
+          c("26405b", "facf92", "497397",
+            "8c7f8e", "a5a9a9", "68788b",
+            "e2a187", "e3ccb5", "c48480", "fcac6c"
+          ), sep = "")
+  )
+  
+  # Rainbow
+  rainbow <- grDevices::rainbow(max(as.numeric(factor(wc)), na.rm = TRUE))
+  
+  ## Rio (10 colors)
+  rio <- toupper(
+    paste("#",
+          c("fac9af", "a95c5b", "322a30",
+            "654145", "f09b5f", "985e36",
+            "ea897c", "9c8062", "524954", "54544c"
+          ), sep = "")
+  )
+  
+  ## Itacare (10 colors)
+  itacare <- toupper(
+    paste("#",
+          c("232b17", "cbbda4", "2888ab",
+            "0581c9", "7e8056", "d9e7e6",
+            "8ec0c5", "a58a60", "ad9342", "a96c2e"
+          ), sep = "")
+  )
 
 
   # Check for custom
   if(!all(name %in% all_palettes)){
 
-    if(length(name) != max(wc, na.rm = TRUE)){
+    if(length(name) != length(unique(na.omit(wc)))){
       
       if(isTRUE(sorted)){
         return(get("polychrome")[color.sort(wc)])
@@ -133,54 +200,6 @@ color_palette_EGA <- function (name, wc, sorted = TRUE)
 
       # Make name lowercase
       name <- tolower(name)
-
-      ## Polychrome (20 colors)
-      polychrome <- toupper(
-        paste("#",
-              c("F03D2D", "90DDF0", "C8D96F", "ef8a17", "f5c900",
-                "ba42c0", "17BEBB", "9bafd9", "f27a7d", "f9c58d",
-                "f7f779", "c5f9d7", "a18dce", "f492f0", "919bff",
-                "C792DF", "60b6f1", "f9a470", "bc556f", "f7a2a1"
-              ), sep = "")
-      )
-
-      ## Blue Ridge Mountains 1 (7 colors)
-      blue.ridge1 <- rev(toupper(
-        paste("#",
-              c("fdcd9b", "fde8a9", "fdb184",
-                "7f616e", "4c6e98", "24547e", "272a39"
-              ), sep = "")
-      ))
-
-      ## Blue Ridge Mountains 2 (10 colors)
-      blue.ridge2 <- toupper(
-        paste("#",
-              c("26405b", "facf92", "497397",
-                "8c7f8e", "a5a9a9", "68788b",
-                "e2a187", "e3ccb5", "c48480", "fcac6c"
-              ), sep = "")
-      )
-      
-      # Rainbow
-      rainbow <- grDevices::rainbow(max(as.numeric(factor(wc)), na.rm = TRUE))
-      
-      ## Rio (10 colors)
-      rio <- toupper(
-        paste("#",
-              c("fac9af", "a95c5b", "322a30",
-                "654145", "f09b5f", "985e36",
-                "ea897c", "9c8062", "524954", "54544c"
-              ), sep = "")
-      )
-
-      ## Itacare (10 colors)
-      itacare <- toupper(
-        paste("#",
-              c("232b17", "cbbda4", "2888ab",
-                "0581c9", "7e8056", "d9e7e6",
-                "8ec0c5", "a58a60", "ad9342", "a96c2e"
-              ), sep = "")
-      )
 
       if(exists(name)){
         

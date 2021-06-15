@@ -233,7 +233,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
 
   if(missing(corr))
   {corr <- "pearson"
-  }else{corr <- mathc.arg(corr)}
+  }else{corr <- match.arg(corr)}
 
   if(missing(ncores))
   {ncores <- ceiling(parallel::detectCores() / 2)
