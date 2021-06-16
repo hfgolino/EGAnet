@@ -432,6 +432,32 @@ EGA.estimate <- function(data, n = NULL,
   if(exists("unconnected")){
     wc[unconnected] <- NA
   }
+  
+  # Convert numbers to be consecutive
+  uniq.wc <- unique(na.omit(wc))
+  wc.ord <- sort(uniq.wc)
+  proper.ord <- 1:length(uniq.wc)
+
+  # Check changes needed for consecutive ordering
+  if(any(wc.ord != proper.ord)){
+
+    # Initialize new wc
+    new.wc <- numeric(length = length(wc))
+
+    # Target wcs to change
+    targets <- which(wc.ord != proper.ord)
+
+    if(length(targets) != 0){
+
+      for(i in targets){
+        new.wc[which(wc == wc.ord[i])] <- proper.ord[i]
+      }
+
+      wc <- ifelse(new.wc == 0, wc, new.wc)
+
+    }
+
+  }
 
   names(wc) <- colnames(data)
   n.dim <- suppressWarnings(length(unique(na.omit(wc))))

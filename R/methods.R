@@ -168,10 +168,10 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
   # Custom nodes: transparent insides and dark borders
   ega.plot <- ega.plot + 
     ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
-                        color = color_palette_EGA(color.palette, na.omit(x$typicalGraph$wc), sorted = FALSE),
+                        color = color_palette_EGA(color.palette, na.omit(x$typicalGraph$wc)),
                         shape = 1, stroke = 1.5, alpha = .8) +
     ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
-                        color = color_palette_EGA(color.palette, na.omit(x$typicalGraph$wc), sorted = FALSE),
+                        color = color_palette_EGA(color.palette, na.omit(x$typicalGraph$wc)),
                         shape = 19, alpha = plot.args$alpha) +
     ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size)
   
@@ -267,7 +267,7 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$node.size/2}
       
       
-      palette <- color_palette_EGA(color.palette, x$dynEGA[[i]]$wc, sorted = FALSE)
+      palette <- color_palette_EGA(color.palette, x$dynEGA[[i]]$wc)
       palette <- ifelse(is.na(palette), "white", palette)
       
       plots.net[[i]] <- suppressWarnings(
@@ -380,7 +380,7 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$node.size/2}
     if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$node.size/2}
     
-    palette <- color_palette_EGA(color.palette, x$dynEGA[[id]]$wc, sorted = FALSE)
+    palette <- color_palette_EGA(color.palette, x$dynEGA[[id]]$wc)
     palette <- ifelse(is.na(palette), "white", palette)
     
     ega.plot <- suppressWarnings(
@@ -499,7 +499,7 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
     if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
     
-    palette <- color_palette_EGA(color.palette, x$dynEGA$wc, sorted = FALSE)
+    palette <- color_palette_EGA(color.palette, x$dynEGA$wc)
     palette <- ifelse(is.na(palette), "white", palette)
     
     ega.plot <- suppressWarnings(
@@ -618,7 +618,7 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
     if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
     if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
     
-    palette <- color_palette_EGA(color.palette, x$wc, sorted = FALSE)
+    palette <- color_palette_EGA(color.palette, x$wc)
     palette <- ifelse(is.na(palette), "white", palette)
     
     ega.plot <- suppressWarnings(
