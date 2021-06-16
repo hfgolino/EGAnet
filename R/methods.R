@@ -70,12 +70,12 @@ print.dynEGA<- function(x, ...) {
 }
 
 # PLOTS----
-# Updated 28.05.2021
+# Updated 16.06.2021
 #' @export
 # Plot bootEGA----
-# Updated 28.05.2021
+# Updated 16.06.2021
 plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
-                         plot.args = list(), ...){
+                         plot.args = list(), produce = TRUE, ...){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
   {plot.type <- "GGally"
@@ -96,6 +96,10 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     
     # Insignificant values (keeps ggnet2 from erroring out)
     x$typicalGraph$graph <- ifelse(abs(as.matrix(x$typicalGraph$graph)) <= .00001, 0, as.matrix(x$typicalGraph$graph))  
+    
+    # Reorder network and communities
+    x$typicalGraph$graph <- x$typicalGraph$graph[order(x$typicalGraph$wc), order(x$typicalGraph$wc)]
+    x$typicalGraph$wc <- x$typicalGraph$wc[order(x$typicalGraph$wc)]
     
     # weighted  network
     network1 <- network::network(x$typicalGraph$graph,
@@ -149,18 +153,11 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$node.size/2}
     if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$node.size/2}
     
-    ega.plot <- suppressMessages(
-      do.call(GGally::ggnet2, plot.args) + 
-        ggplot2::theme(legend.title = ggplot2::element_blank()) +
-        ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, na.omit(x$typicalGraph$wc)),
-                                    breaks = sort(x$typicalGraph$wc)) +
-        ggplot2::guides(
-          color = ggplot2::guide_legend(override.aes = list(
-            size = node.size,
-            alpha = plot.args$alpha,
-            stroke = 1.5
-          ))
-        )
+    ega.plot <- suppressWarnings(
+      suppressMessages(
+        do.call(GGally::ggnet2, plot.args) + 
+          ggplot2::theme(legend.title = ggplot2::element_blank())
+      )
     )
     
   }
@@ -178,14 +175,16 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
                         shape = 19, alpha = plot.args$alpha) +
     ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size)
   
-  plot(ega.plot)
+  if(isTRUE(produce)){
+    plot(ega.plot)
+  }else{return(ega.plot)}
 }
 
 # Plot dynEGA function (Level: Group)----
-# Updated 28.05.2021
+# Updated 16.06.2021
 #' @export
 plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally","qgraph"),
-                               plot.args = list(), ...){
+                               plot.args = list(), produce = TRUE, ...){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
   {plot.type <- "GGally"
@@ -216,6 +215,10 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       
       # Insignificant values (keeps ggnet2 from erroring out)
       x$dynEGA[[i]]$network <- ifelse(abs(as.matrix(x$dynEGA[[i]]$network)) <= .00001, 0, as.matrix(x$dynEGA[[i]]$network))
+      
+      # Reorder network and communities
+      x$dynEGA[[i]]$network <- x$dynEGA[[i]]$network[order(x$dynEGA[[i]]$wc), order(x$dynEGA[[i]]$wc)]
+      x$dynEGA[[i]]$wc <- x$dynEGA[[i]]$wc[order(x$dynEGA[[i]]$wc)]
       
       # weighted  network
       network1[[i]] <- network::network(x$dynEGA[[i]]$network,
@@ -267,43 +270,47 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       palette <- color_palette_EGA(color.palette, x$dynEGA[[i]]$wc, sorted = FALSE)
       palette <- ifelse(is.na(palette), "white", palette)
       
-      plots.net[[i]] <- suppressMessages(
-        do.call(GGally::ggnet2, plot.args) + 
-          ggplot2::theme(legend.title = ggplot2::element_blank())
+      plots.net[[i]] <- suppressWarnings(
+        suppressMessages(
+          do.call(GGally::ggnet2, plot.args) + 
+            ggplot2::theme(legend.title = ggplot2::element_blank())
+        )
       )
-        
-        name <- colnames(x$dynEGA[[i]]$network)
-        
-        # Custom nodes: transparent insides and dark borders
-        plots.net[[i]] <- plots.net[[i]] + 
-          ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
-                              color = palette,
-                              shape = 1, stroke = 1.5, alpha = .8) +
-          ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
-                              color = palette,
-                              shape = 19, alpha = plot.args$alpha) +
-          ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
-          ggplot2::guides(
-            color = ggplot2::guide_legend(override.aes = list(
-              color = unique(palette),
-              size = node.size,
-              alpha = plot.args$alpha,
-              stroke = 1.5
-            ))
-          )
-        
-        }
+      
+      name <- colnames(x$dynEGA[[i]]$network)
+      
+      # Custom nodes: transparent insides and dark borders
+      plots.net[[i]] <- plots.net[[i]] + 
+        ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
+                            color = palette,
+                            shape = 1, stroke = 1.5, alpha = .8) +
+        ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
+                            color = palette,
+                            shape = 19, alpha = plot.args$alpha) +
+        ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
+        ggplot2::guides(
+          color = ggplot2::guide_legend(override.aes = list(
+            color = unique(palette[order(x$dynEGA[[i]]$wc)]),
+            size = node.size,
+            alpha = plot.args$alpha,
+            stroke = 1.5
+          ))
+        )
+      
+    }
     group.labels <- names(x$dynEGA)
     set.seed(NULL)
-    ggpubr::ggarrange(plotlist=plots.net, ncol = ncol, nrow = nrow, labels = group.labels, label.x = 0.3)
-    }
+    if(isTRUE(produce)){
+      ggpubr::ggarrange(plotlist=plots.net, ncol = ncol, nrow = nrow, labels = group.labels, label.x = 0.3)
+    }else{return(plots.net)}
   }
+}
 
 # Plot dynEGA function (Level: Individual)----
-# Updated 28.05.2021
+# Updated 16.06.2021
 #' @export
 plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GGally","qgraph"),
-                                    plot.args = list(), ...){
+                                    plot.args = list(), produce = TRUE, ...){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
   {plot.type <- "GGally"
@@ -322,6 +329,10 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     
     # Insignificant values (keeps ggnet2 from erroring out)
     x$dynEGA[[id]]$network <- ifelse(abs(as.matrix(x$dynEGA[[id]]$network)) <= .00001, 0, as.matrix(x$dynEGA[[id]]$network))
+    
+    # Reorder network and communities
+    x$dynEGA[[id]]$network <- x$dynEGA[[id]]$network[order(x$dynEGA[[id]]$wc), order(x$dynEGA[[id]]$wc)]
+    x$dynEGA[[id]]$wc <- x$dynEGA[[id]]$wc[order(x$dynEGA[[id]]$wc)]
     
     # weighted  network
     network1 <- network::network(x$dynEGA[[id]]$network,
@@ -372,9 +383,11 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     palette <- color_palette_EGA(color.palette, x$dynEGA[[id]]$wc, sorted = FALSE)
     palette <- ifelse(is.na(palette), "white", palette)
     
-    ega.plot <- suppressMessages(
-      do.call(GGally::ggnet2, plot.args) + 
-        ggplot2::theme(legend.title = ggplot2::element_blank())
+    ega.plot <- suppressWarnings(
+      suppressMessages(
+        do.call(GGally::ggnet2, plot.args) + 
+          ggplot2::theme(legend.title = ggplot2::element_blank())
+      )
     )
     
     name <- colnames(x$dynEGA[[id]]$network)
@@ -390,7 +403,7 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
       ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
       ggplot2::guides(
         color = ggplot2::guide_legend(override.aes = list(
-          color = unique(palette),
+          color = unique(palette[order(x$dynEGA[[id]]$wc)]),
           size = node.size,
           alpha = plot.args$alpha,
           stroke = 1.5
@@ -399,15 +412,17 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     
     set.seed(NULL)
     
-    plot(ega.plot)
+    if(isTRUE(produce)){
+      plot(ega.plot)
+    }else{return(ega.plot)}
   }
 }
 
 # Plot dynEGA function (Level: Population)----
-# Updated 28.05.2021
+# Updated 16.06.2021
 #' @export
 plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
-                        plot.args = list(), ...){
+                        plot.args = list(), produce = TRUE, ...){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
   {plot.type <- "GGally"
@@ -427,6 +442,10 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     
     # Insignificant values (keeps ggnet2 from erroring out)
     x$dynEGA$network <- ifelse(abs(as.matrix(x$dynEGA$network)) <= .00001, 0, as.matrix(x$dynEGA$network))
+    
+    # Reorder network and communities
+    x$dynEGA$network <- x$dynEGA$network[order(x$dynEGA$wc), order(x$dynEGA$wc)]
+    x$dynEGA$wc <- x$dynEGA$wc[order(x$dynEGA$wc)]
     
     # weighted  network
     network1 <- network::network(x$dynEGA$network,
@@ -483,9 +502,11 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     palette <- color_palette_EGA(color.palette, x$dynEGA$wc, sorted = FALSE)
     palette <- ifelse(is.na(palette), "white", palette)
     
-    ega.plot <- suppressMessages(
-      do.call(GGally::ggnet2, plot.args) + 
-        ggplot2::theme(legend.title = ggplot2::element_blank())
+    ega.plot <- suppressWarnings(
+      suppressMessages(
+        do.call(GGally::ggnet2, plot.args) + 
+          ggplot2::theme(legend.title = ggplot2::element_blank())
+      )
     )
     
     name <- colnames(x$dynEGA$network)
@@ -501,7 +522,7 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
       ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
       ggplot2::guides(
         color = ggplot2::guide_legend(override.aes = list(
-          color = unique(palette),
+          color = unique(palette[order(x$dynEGA$wc)]),
           size = node.size,
           alpha = plot.args$alpha,
           stroke = 1.5
@@ -511,14 +532,16 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
   }
   set.seed(NULL)
   
-  plot(ega.plot)
+  if(isTRUE(produce)){
+    plot(ega.plot)
+  }else{return(ega.plot)}
 }
 
 # Plot EGA----
-# Updated 28.05.2021
+# Updated 16.06.2021
 #' @export
 plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
-                     plot.args = list(), ...){
+                     plot.args = list(), produce = TRUE, ...){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
   {plot.type <- "GGally"
@@ -539,17 +562,21 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
     # Insignificant values (keeps ggnet2 from erroring out)
     x$network <- ifelse(abs(as.matrix(x$network)) <= .00001, 0, as.matrix(x$network))
     
-    # weighted  network
-    network1 <- network::network(x$network,
-                                 ignore.eval = FALSE,
-                                 names.eval = "weights",
-                                 directed = FALSE)
-    
     if(exists("legend.names")){
       for(l in 1:length(unique(legend.names))){
         x$wc[x$wc == l] <- legend.names[l]
       }
     }
+    
+    # Reorder network and communities
+    x$network <- x$network[order(x$wc), order(x$wc)]
+    x$wc <- x$wc[order(x$wc)]
+    
+    # weighted  network
+    network1 <- network::network(x$network,
+                                 ignore.eval = FALSE,
+                                 names.eval = "weights",
+                                 directed = FALSE)
     
     network::set.vertex.attribute(network1, attrname= "Communities", value = x$wc)
     network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
@@ -591,37 +618,43 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
     if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
     if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
     
-    ega.plot <- suppressMessages(
-      do.call(GGally::ggnet2, plot.args) + 
-        ggplot2::theme(legend.title = ggplot2::element_blank()) +
-        ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, na.omit(x$wc)),
-                                    breaks = sort(x$wc)) +
-        ggplot2::guides(
-          color = ggplot2::guide_legend(override.aes = list(
-            size = node.size,
-            alpha = plot.args$alpha,
-            stroke = 1.5
-          ))
-        )
+    palette <- color_palette_EGA(color.palette, x$wc, sorted = FALSE)
+    palette <- ifelse(is.na(palette), "white", palette)
+    
+    ega.plot <- suppressWarnings(
+      suppressMessages(
+        do.call(GGally::ggnet2, plot.args) + 
+          ggplot2::theme(legend.title = ggplot2::element_blank())
+      )
     )
+    
+    name <- colnames(x$network)
+    
+    # Custom nodes: transparent insides and dark borders
+    ega.plot <- ega.plot + 
+      ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
+                          color = palette,
+                          shape = 1, stroke = 1.5, alpha = .8) +
+      ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
+                          color = palette,
+                          shape = 19, alpha = plot.args$alpha) +
+      ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
+      ggplot2::guides(
+        color = ggplot2::guide_legend(override.aes = list(
+          color = unique(palette),
+          size = node.size,
+          alpha = plot.args$alpha,
+          stroke = 1.5
+        ))
+      )
     
   }
   
   set.seed(NULL)
   
-  name <- colnames(x$network)
-  
-  # Custom nodes: transparent insides and dark borders
-  ega.plot <- ega.plot + 
-    ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
-                        color = color_palette_EGA(color.palette, na.omit(x$wc), sorted = FALSE),
-                        shape = 1, stroke = 1.5, alpha = .8) +
-    ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
-                        color = color_palette_EGA(color.palette, na.omit(x$wc), sorted = FALSE),
-                        shape = 19, alpha = plot.args$alpha) +
-    ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size)
-  
-  plot(ega.plot)
+  if(isTRUE(produce)){
+    plot(ega.plot)
+  }else{return(ega.plot)}
 }
 
 # Plot EGA.fit----
