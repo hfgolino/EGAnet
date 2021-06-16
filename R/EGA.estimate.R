@@ -162,7 +162,7 @@
 #' @export
 #'
 # Estimates EGA
-# Updated 02.06.2021
+# Updated 16.06.2021
 EGA.estimate <- function(data, n = NULL,
                          model = c("glasso", "TMFG"), model.args = list(),
                          algorithm = c("walktrap", "louvain"), algorithm.args = list(),

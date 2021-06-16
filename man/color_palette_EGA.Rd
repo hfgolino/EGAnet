@@ -4,7 +4,7 @@
 \alias{color_palette_EGA}
 \title{\code{\link[EGAnet]{EGA}} Color Palettes}
 \usage{
-color_palette_EGA(name, wc, sorted = TRUE)
+color_palette_EGA(name, wc, sorted = FALSE)
 }
 \arguments{
 \item{name}{Character.

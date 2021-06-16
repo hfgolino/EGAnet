@@ -57,7 +57,7 @@
 #'
 #' @export
 #'
-# Updated 28.05.2021
+# Updated 16.06.2021
 ## Function to produce color palettes for EGA
 color_palette_EGA <- function (name, wc, sorted = FALSE)
 {
