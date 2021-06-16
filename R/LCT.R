@@ -85,7 +85,7 @@
 #' @export
 #'
 # Loadings Comparison Test----
-# Updated 26.05.2021
+# Updated 16.06.2021
 LCT <- function (data, n, iter = 100,
                  dynamic = FALSE,
                  dynamic.args = list(
@@ -209,8 +209,12 @@ LCT <- function (data, n, iter = 100,
         {good <- FALSE
         }else{
           
-          # Remove variables missing dimensions
-          net$wc <- na.omit(net$wc)
+          # Remove variables missing dimension
+          rm.NA <- which(is.na(net$wc))
+          if(length(rm.NA) != 0){
+            net$wc <- net$wc[-rm.NA]
+            net$network <- net$network[-rm.NA, -rm.NA]
+          }
           
           # Try to estimate network loadings
           n.loads <- try(abs(as.matrix(net.loads(net$network, net$wc)$std)), silent = TRUE)
@@ -218,14 +222,6 @@ LCT <- function (data, n, iter = 100,
           if(any(class(n.loads) == "try-error"))
           {good <- FALSE
           }else{
-            
-            # Check for single variable dimensions
-            if(nrow(n.loads) != length(net$wc)){
-              warning("One or more dimensions were identified as a single variable. These variables were removed from the comparison for both network and factor models.")
-            }
-            
-            # Remove loadings with no names
-            net$wc <- na.omit(net$wc)
             
             # Reorder network loadings
             n.loads <- as.matrix(n.loads[match(names(net$wc), row.names(n.loads)),])
@@ -261,6 +257,10 @@ LCT <- function (data, n, iter = 100,
             nl[count,] <- c(n.low, n.mod, n.high, n.dom, n.cross)
             
             # Get factor loading proportions
+            if(length(rm.NA) != 0){
+              cor.mat <- cor.mat[-rm.NA, -rm.NA]
+            }
+            
             f.loads <- suppressWarnings(abs(as.matrix(psych::fa(cor.mat, nfactors = ncol(n.loads), n.obs = cases)$loadings[,1:ncol(n.loads)])))
             f.loads <- as.matrix(f.loads[match(names(net$wc), row.names(f.loads)),])
             f.low <- mean(f.loads >= 0.40, na.rm = TRUE)
@@ -268,15 +268,15 @@ LCT <- function (data, n, iter = 100,
             f.high <- mean(f.loads >= 0.70, na.rm = TRUE)
             
             # Organize loadings
-            org <- numeric(ncol(data))
+            org <- numeric(ncol(cor.mat))
             
-            for(i in 1:ncol(data))
+            for(i in 1:ncol(cor.mat))
             {org[i] <- which.max(f.loads[i,])}
             
             if(ncol(f.loads) != 1)
             {
               # Initialize dominate loadings
-              f.dom <- numeric(ncol(data))
+              f.dom <- numeric(ncol(cor.mat))
               f.loads2 <- f.loads
               
               for(i in 1:max(org))

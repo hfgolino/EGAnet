@@ -72,7 +72,7 @@ compare.EGA.plots <- function(..., labels, rows, columns)
                     nrow = rows, labels = labels, label.x = 0.3)
   
   # Name plots
-  name(plots.ega) <- labels
+  names(plots.ega) <- labels
   
   return(plots.ega)
   
