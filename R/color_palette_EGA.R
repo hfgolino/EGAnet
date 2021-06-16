@@ -80,30 +80,30 @@ color_palette_EGA <- function (name, wc, sorted = TRUE)
     
   }
   
-  # Convert numbers to be consecutive
-  wc.ord <- sort(uniq.wc)
-  proper.ord <- 1:length(unique(na.omit(wc)))
-  
-  # Check changes needed for consecutive ordering
-  if(any(wc.ord != proper.ord)){
-    
-    # Initialize new wc
-    new.wc <- numeric(length(wc))
-    
-    # Target wcs to change
-    targets <- which(wc.ord != proper.ord)
-    
-    if(length(targets) != 0){
-      
-      for(i in targets){
-        new.wc[which(wc == wc.ord[i])] <- proper.ord[i]
-      }
-      
-      wc <- ifelse(new.wc == 0, wc, new.wc)
-      
-    }
-    
-  }
+  # # Convert numbers to be consecutive
+  # wc.ord <- sort(uniq.wc)
+  # proper.ord <- 1:length(unique(na.omit(wc)))
+  # 
+  # # Check changes needed for consecutive ordering
+  # if(any(wc.ord != proper.ord)){
+  #   
+  #   # Initialize new wc
+  #   new.wc <- numeric(length(wc))
+  #   
+  #   # Target wcs to change
+  #   targets <- which(wc.ord != proper.ord)
+  #   
+  #   if(length(targets) != 0){
+  #     
+  #     for(i in targets){
+  #       new.wc[which(wc == wc.ord[i])] <- proper.ord[i]
+  #     }
+  #     
+  #     wc <- ifelse(new.wc == 0, wc, new.wc)
+  #     
+  #   }
+  #   
+  # }
   
   # All palettes
   all_palettes <- c(row.names(RColorBrewer::brewer.pal.info),
