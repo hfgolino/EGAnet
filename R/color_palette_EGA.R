@@ -81,11 +81,27 @@ color_palette_EGA <- function (name, wc, sorted = TRUE)
   }
   
   # Convert numbers to be consecutive
-  if(all(sort(uniq.wc) != 1:length(unique(na.omit(wc))))){
+  wc.ord <- sort(uniq.wc)
+  proper.ord <- 1:length(unique(na.omit(wc)))
+  
+  # Check changes needed for consecutive ordering
+  if(any(wc.ord != proper.ord)){
     
-    #### ALEX ####
+    # Initialize new wc
+    new.wc <- numeric(length(wc))
     
-    sdfg <- 1:length(unique(na.omit(wc)))
+    # Target wcs to change
+    targets <- which(wc.ord != proper.ord)
+    
+    if(length(targets) != 0){
+      
+      for(i in targets){
+        new.wc[which(wc == wc.ord[i])] <- proper.ord[i]
+      }
+      
+      wc <- ifelse(new.wc == 0, wc, new.wc)
+      
+    }
     
   }
   
@@ -150,7 +166,7 @@ color_palette_EGA <- function (name, wc, sorted = TRUE)
   # Check for custom
   if(!all(name %in% all_palettes)){
 
-    if(length(name) != length(unique(na.omit(wc)))){
+    if(length(name) != length(uniq.wc)){
       
       if(isTRUE(sorted)){
         return(get("polychrome")[color.sort(wc)])
