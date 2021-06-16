@@ -25,7 +25,7 @@
 #' @export
 #
 # Compare EGA plots function
-# Updated 07.06.2021
+# Updated 16.06.2021
 compare.EGA.plots <- function(..., labels, rows, columns)
 {
   # Obtain object list
@@ -68,12 +68,20 @@ compare.EGA.plots <- function(..., labels, rows, columns)
   }
   
   # Set up grid return
-  ggpubr::ggarrange(plotlist = plots.ega, ncol = columns,
+  compare.plot <- ggpubr::ggarrange(plotlist = plots.ega, ncol = columns,
                     nrow = rows, labels = labels, label.x = 0.3)
   
   # Name plots
   names(plots.ega) <- labels
   
-  return(plots.ega)
+  # Results
+  result <- list()
+  result$comparison.plot <- compare.plot
+  result$individual.plots <- plots.ega
+  
+  # Plot
+  plot(compare.plot)
+  
+  return(result)
   
 }
