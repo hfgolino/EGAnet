@@ -496,7 +496,7 @@ UVA <- function(data, n = NULL,
   }else if(isTRUE(reduce) & isTRUE(auto)){## Automated
     
     # Message user
-    message("Combining variables...", appendLF = FALSE)
+    message("\nCombining variables...", appendLF = FALSE)
     
     # Initial reduction
     reduced <- redund.reduce.auto(node.redundant.obj = process,
