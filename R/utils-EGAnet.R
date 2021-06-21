@@ -2740,6 +2740,574 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
 }
 
 #' @noRd
+# Redundancy Reduction (Automated)
+# Updated 20.06.2021
+redund.reduce.auto <- function(node.redundant.obj,
+                               reduce.method, lavaan.args, corr)
+{
+  # Check for node.redundant object class
+  if(class(node.redundant.obj) != "node.redundant")
+  {stop("A 'node.redundant' object must be used as input")}
+  
+  # Redundant list
+  redund <- node.redundant.obj$redundant
+  
+  # Copied data
+  new.data <- node.redundant.obj$data
+  
+  # Track merged items
+  merged <- list()
+  
+  # Track changed names
+  name.chn <- vector("character")
+  
+  # Initialize count
+  count <- 0
+  
+  # Get key
+  if("key" %in% names(node.redundant.obj))
+  {
+    key <- node.redundant.obj$key
+    names(key) <- names(node.redundant.obj$key)
+  }else{
+    key <- colnames(node.redundant.obj$data)
+    names(key) <- key
+  }
+  
+  # Line break
+  #linebreak()
+  
+  # Previous state
+  prev.state <- list(redund)
+  prev.state.data <- list(new.data)
+  
+  # Loop through named node redundant list
+  while(length(redund) != 0)
+  {
+    # Targeting redundancy
+    target.item <- names(redund)[1]
+    
+    # Potential redundancies
+    pot <- redund[[1]]
+    
+    # Get input
+    input <- as.character(1:length(pot))
+    
+    # Auto
+    if(all(input != "0")){
+      
+      # Convert to numeric
+      re.items <- as.numeric(unlist(strsplit(unlist(strsplit(input, split = " ")), split = ",")))
+      
+      # Items to combine with target
+      comb <- pot
+      
+      # Index items
+      idx <- names(key)[match(comb, key)]
+      
+      # Target index
+      tar.idx <- names(key)[match(target.item, key)]
+      
+      # Update merged list
+      count <- count + 1
+      merged[[count]] <- c(key[tar.idx], key[idx])
+      
+      # Combine into target index
+      if(reduce.method == "latent"){
+        
+        # Latent variable
+        ## create model
+        mod <- paste(paste("comb =~ ",sep=""), paste(colnames(new.data[,c(tar.idx, idx)]), collapse = " + "))
+        
+        # Replace arguments
+        lavaan.args$model <- mod
+        lavaan.args$data <- new.data
+        ## Get default estimator
+        categories <- apply(new.data[,c(tar.idx, idx)], 2, function(x){
+          length(unique(x))
+        })
+        
+        ## Check categories
+        if(any(categories < 6)){# Not all continuous
+          lavaan.args$estimator <- "WLSMV"
+          lavaan.args$missing <- "pairwise"
+        }else{# All can be considered continuous
+          lavaan.args$estimator <- "MLR"
+          lavaan.args$missing <- "fiml"
+        }
+        
+        ## get CFA function from lavaan
+        FUN <- lavaan::cfa
+        
+        ## fit model
+        fit <- suppressWarnings(
+          suppressMessages(
+            do.call(what = "FUN", args = as.list(lavaan.args))
+          )
+        )
+        
+        ## identify cases
+        cases <- lavaan::inspect(fit, "case.idx")
+        
+        ## compute latent variable score
+        latent <- as.numeric(lavaan::lavPredict(fit))
+        
+        ## check for missing cases and handle
+        if(length(cases) != nrow(new.data))
+        {
+          new.vec <- as.vector(matrix(NA, nrow = nrow(new.data), ncol = 1))
+          new.vec[cases] <- latent
+        }else{new.vec <- latent}
+        
+        ## check for reverse scoring/labelling
+        corrs <- as.matrix(cor(cbind(latent,new.data[,c(tar.idx, idx)]), use = "complete.obs")[1,-1])
+        row.names(corrs) <- c(key[tar.idx], key[idx])
+        colnames(corrs) <- "latent"
+        
+        # input new vector
+        new.data[,tar.idx] <- new.vec
+        
+        # Ask for new label
+        lab <- paste("LV_", count, sep = "")
+        name.chn[count] <- lab
+        col.idx <- match(tar.idx, colnames(new.data))
+        colnames(new.data)[col.idx] <- lab
+        
+      }
+      
+      # Remove redundant variables from data
+      rm.idx <- match(idx, colnames(new.data))
+      
+      if(isSymmetric(new.data)){
+        new.data <- new.data[-rm.idx, -rm.idx]
+      }else{
+        new.data <- new.data[,-rm.idx]
+      }
+      
+      # Update previous state data
+      prev.state.data[length(prev.state.data) + 1] <- list(new.data)
+      
+      # Remove target item
+      redund[[1]] <- NULL
+      
+      # Make ind
+      if(reduce.method == "latent"){ind <- idx}
+      
+      # Remove variables within future options
+      for(i in 1:length(ind)){
+        
+        ## Get elements from other redundancy lists
+        elements <- sapply(redund, function(x){key[ind[i]] %in% x})
+        
+        ## If there are any
+        if(any(elements)){
+          
+          ### Target elements
+          target.elem <- which(elements)
+          
+          for(j in 1:length(target.elem)){
+            
+            #### Target list
+            list.target <- redund[[target.elem[j]]]
+            
+            #### Remove from target list
+            redund[[target.elem[j]]] <- redund[[target.elem[j]]][-which(key[ind[i]] == list.target)]
+            
+          }
+          
+        }
+        
+      }
+      
+      # Remove empty list objects
+      rm.list <- which(
+        unlist(lapply(redund, function(x){
+          length(x)
+        })) == 0
+      )
+      
+      if(length(rm.list) != 0){
+        redund <- redund[-rm.list]
+      }
+      
+      # Remove object names
+      if(any(key[ind] %in% names(redund))){
+        
+        ## Get target names
+        name.targets <- which(key[ind] %in% names(redund))
+        
+        ## Loop through
+        for(i in 1:length(name.targets)){
+          
+          # If there is only one item left, then remove from list
+          if(length(redund[[key[ind][name.targets[i]]]]) == 1){
+            redund[key[ind][name.targets[i]]] <- NULL
+          }else{# Otherwise, replace name with first element and remove first element from list
+            names(redund[key[ind]][name.targets[i]]) <- redund[[key[ind][name.targets[i]]]][1]
+            redund[[key[ind][name.targets[i]]]][1] <- NA
+            redund[[key[ind][name.targets[i]]]] <- na.omit(redund[[key[ind][name.targets[i]]]])
+            redund[key[ind][name.targets[i]]] <- NULL
+          }
+          
+        }
+        
+      }
+      
+      # Update previous state
+      prev.state[length(prev.state) + 1] <- list(redund)
+      
+    }else{
+      
+      # Update previous state data
+      prev.state.data[length(prev.state.data) + 1] <- list(new.data)
+      
+      redund[[1]] <- NULL
+      
+      # Update previous state
+      prev.state[length(prev.state) + 1] <- list(redund)
+      
+    }
+    
+    if(!is.null(input)){
+      #linebreak()
+      input <- NULL
+    }
+    
+    # Artificial pause for smoothness of experience
+    #Sys.sleep(1)
+    
+  }
+  
+  # Transform merged list to matrix
+  if(length(merged) != 0)
+  {
+    # Number of rows for matrix
+    m.rows <- max(unlist(lapply(merged, length)))
+    
+    # Initialize merged matrix
+    m.mat <- matrix("", nrow = m.rows, ncol = length(merged))
+    
+    # Input into merged matrix
+    for(i in 1:length(merged))
+    {
+      diff <- m.rows - length(merged[[i]])
+      
+      m.mat[,i] <- c(merged[[i]], rep("", diff))
+    }
+    
+    colnames(m.mat) <- name.chn
+  }
+  
+  # Replace column names for item names not changed
+  if(any(colnames(new.data) %in% names(key)))
+  {
+    # Target names
+    target.names <- which(colnames(new.data) %in% names(key))
+    
+    # new.data names
+    new.data.names <- colnames(new.data)[target.names]
+    
+    # Insert into new data
+    colnames(new.data)[target.names] <- key[new.data.names]
+  }
+  
+  # Check if 'm.mat' exists
+  if(!exists("m.mat")){
+    m.mat <- NULL
+  }else{
+    m.mat <- t(m.mat)
+    
+    if(reduce.method == "latent"){
+      colnames(m.mat) <- c("Target", paste("Redundancy_", 1:(ncol(m.mat)-1), sep = ""))
+    }else if(reduce.method == "remove" | reduce.method == "sum"){
+      colnames(m.mat) <- c(paste("Redundancy_", 1:ncol(m.mat), sep = ""))
+    }
+  }
+  
+  # Check for "sum"
+  if(reduce.method == "sum"){
+    
+    # Reinstate new.data
+    new.data <- node.redundant.obj$data
+    
+    # Collapse across rows
+    for(i in 1:nrow(m.mat)){
+      
+      # Collapse
+      collapse <- row.names(m.mat)[i]
+      
+      # Redundant
+      redunds <- m.mat[i,]
+      redunds <- redunds[redunds != ""]
+      
+      # Collapse and insert into matrix
+      new.data[,collapse] <- rowSums(new.data[,c(collapse, redunds)])
+      
+      # Remove redundant terms
+      new.data <- new.data[,-match(redunds, colnames(new.data))]
+    }
+    
+  }
+  
+  
+  
+  # Initialize results list
+  res <- list()
+  res$data <- new.data
+  res$merged <- m.mat
+  
+  return(res)
+  
+}
+
+#' @noRd
+# Redundancy Adhoc Reduction (Automated)
+# Updated 21.06.2021
+redund.adhoc.auto <- function(node.redundant.obj,
+                              node.redundant.reduced,
+                              node.redundant.original,
+                              reduce.method, lavaan.args, corr)
+{
+  
+  # Redundant list
+  redund <- node.redundant.obj$redundant
+  
+  # Check for overlaps
+  overlap <- unlist(
+    lapply(redund, function(x, name){
+      any(name %in% x)
+    }, name = names(redund))
+  )
+  
+  # Merge overlaps
+  if(length(which(overlap)) != 0){
+    
+    for(i in which(overlap)){
+      redund[[i]] <- unique(unlist(c(redund[[i]], redund[names(redund) %in% redund[[i]]])))
+      
+      redund <- redund[-which(names(redund) %in% redund[[i]])]
+    }
+    
+  }
+
+  # Copied data
+  new.data <- node.redundant.original$data
+  
+  # Get reduced
+  reduced.merged <- node.redundant.reduced$merged
+  
+  # Make merged
+  merged <- lapply(apply(reduced.merged, 1, as.list), function(x){unname(unlist(x))})
+  
+  # Set counter
+  count <- max(as.numeric(gsub("LV_", "", names(merged))))
+  
+  # Update merged
+  for(i in 1:length(redund)){
+    
+    # Target variables
+    target <- c(names(redund)[i], redund[[i]])
+    
+    # Expand latent variables
+    lv <- target[grep("LV_", target)]
+    
+    # If any latent variables
+    if(length(lv) != 0){
+      
+      # Create new latent variable
+      new_LV <- unname(c(unlist(merged[lv]), target[-grep("LV_", target)]))
+      
+      # Insert into merged
+      count <- count + 1
+      merged[[paste("LV_", count, sep = "")]] <- new_LV
+      
+      # Remove old latent variables
+      merged[lv] <- NULL
+      
+    }else{
+      
+      # Create new latent variable
+      new_LV <- target
+      
+      # Insert into merged
+      count <- count + 1
+      merged[[paste("LV_", count, sep = "")]] <- new_LV
+      
+      # Remove old variables
+      merged[names(redund)[i]] <- NULL
+      
+    }
+  }
+  
+  # Remove all ""
+  merged <- lapply(merged, function(x){
+    x <- na.omit(ifelse(x == "", NA, x))
+    attr(x, which = "na.action") <- NULL
+    return(x)
+  })
+  
+  # Reorder longest to shortest
+  merged <- merged[order(unlist(lapply(merged, length)), decreasing = TRUE)]
+  
+  # Get key
+  if("key" %in% names(node.redundant.original))
+  {
+    key <- node.redundant.original$key
+    names(key) <- names(node.redundant.original$key)
+  }else{
+    key <- colnames(node.redundant.original$data)
+    names(key) <- key
+  }
+  
+  # Loop through to make new variables
+  for(i in 1:length(merged)){
+    
+    # Combine into target index
+    if(reduce.method == "latent"){
+      
+      # Get indices from key
+      idx <- names(key[match(merged[[i]], key)])
+  
+      # Create model
+      mod <- paste(paste("comb =~ ",sep=""), paste(colnames(new.data[,idx]), collapse = " + "))
+      
+      # Replace arguments
+      lavaan.args$model <- mod
+      lavaan.args$data <- new.data
+      ## Get default estimator
+      categories <- apply(new.data[,idx], 2, function(x){
+        length(unique(x))
+      })
+      
+      ## Check categories
+      if(any(categories < 6)){# Not all continuous
+        lavaan.args$estimator <- "WLSMV"
+        lavaan.args$missing <- "pairwise"
+      }else{# All can be considered continuous
+        lavaan.args$estimator <- "MLR"
+        lavaan.args$missing <- "fiml"
+      }
+      
+      ## get CFA function from lavaan
+      FUN <- lavaan::cfa
+      
+      ## fit model
+      fit <- suppressWarnings(
+        suppressMessages(
+          do.call(what = "FUN", args = as.list(lavaan.args))
+        )
+      )
+      
+      ## identify cases
+      cases <- lavaan::inspect(fit, "case.idx")
+      
+      ## compute latent variable score
+      latent <- as.numeric(lavaan::lavPredict(fit))
+      
+      ## check for missing cases and handle
+      if(length(cases) != nrow(new.data)){
+        new.vec <- as.vector(matrix(NA, nrow = nrow(new.data), ncol = 1))
+        new.vec[cases] <- latent
+      }else{new.vec <- latent}
+      
+      # Remove variables
+      new.data <- new.data[,-match(idx, colnames(new.data))]
+      
+      # Tack on latent variable
+      new.data <- cbind(new.data, new.vec)
+      
+      # Rename latent variable
+      colnames(new.data)[ncol(new.data)] <- names(merged)[i]
+      
+    }
+    
+  }
+  
+  # Transform merged list to matrix
+  if(length(merged) != 0){
+    
+    # Number of rows for matrix
+    m.rows <- max(unlist(lapply(merged, length)))
+    
+    # Initialize merged matrix
+    m.mat <- matrix("", nrow = m.rows, ncol = length(merged))
+    
+    # Input into merged matrix
+    for(i in 1:length(merged)){
+      
+      diff <- m.rows - length(merged[[i]])
+      
+      m.mat[,i] <- c(merged[[i]], rep("", diff))
+      
+    }
+    
+    colnames(m.mat) <- names(merged)
+    
+  }
+  
+  # Replace column names for item names not changed
+  if(any(colnames(new.data) %in% names(key))){
+    
+    # Target names
+    target.names <- which(colnames(new.data) %in% names(key))
+    
+    # new.data names
+    new.data.names <- colnames(new.data)[target.names]
+    
+    # Insert into new data
+    colnames(new.data)[target.names] <- key[new.data.names]
+  }
+  
+  # Check if 'm.mat' exists
+  if(!exists("m.mat")){
+    m.mat <- NULL
+  }else{
+    m.mat <- t(m.mat)
+    
+    if(reduce.method == "latent"){
+      colnames(m.mat) <- c("Target", paste("Redundancy_", 1:(ncol(m.mat)-1), sep = ""))
+    }else if(reduce.method == "remove" | reduce.method == "sum"){
+      colnames(m.mat) <- c(paste("Redundancy_", 1:ncol(m.mat), sep = ""))
+    }
+  }
+  
+  # Check for "sum"
+  if(reduce.method == "sum"){
+    
+    # Reinstate new.data
+    new.data <- node.redundant.original$data
+    
+    # Collapse across rows
+    for(i in 1:nrow(m.mat)){
+      
+      # Collapse
+      collapse <- row.names(m.mat)[i]
+      
+      # Redundant
+      redunds <- m.mat[i,]
+      redunds <- redunds[redunds != ""]
+      
+      # Collapse and insert into matrix
+      new.data[,collapse] <- rowSums(new.data[,c(collapse, redunds)], na.rm = TRUE)
+      
+      # Remove redundant terms
+      new.data <- new.data[,-match(redunds, colnames(new.data))]
+    }
+    
+  }
+  
+  
+  
+  # Initialize results list
+  res <- list()
+  res$data <- new.data
+  res$merged <- m.mat
+  
+  return(res)
+  
+}
+
+#' @noRd
 # Item-total correlations
 # For UVA
 # Updated 15.02.2021

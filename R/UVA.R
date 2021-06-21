@@ -88,6 +88,11 @@
 #' Defaults to \code{TRUE}.
 #' Set to \code{FALSE} for redundancy analysis only
 #' 
+#' @param auto Boolean.
+#' Should redundancy reduction be automated?
+#' Defaults to \code{TRUE}.
+#' Set to \code{FALSE} for manual selection
+#' 
 #' @param reduce.method Character.
 #' How should data be reduced?
 #' Defaults to \code{"latent"}
@@ -152,13 +157,13 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{vsize = 6}}{}
+#' \item{\code{vsize = 6}}{Changes node size}
 #' 
-#' \item{\code{alpha = 0.4}}{}
+#' \item{\code{alpha = 0.4}}{Changes transparency}
 #' 
-#' \item{\code{label.size = 5}}{}
+#' \item{\code{label.size = 5}}{Changes label size}
 #' 
-#' \item{\code{edge.alpha = 0.7}}{}
+#' \item{\code{edge.alpha = 0.7}}{Changes edge transparency}
 #' 
 #' }
 #'
@@ -290,13 +295,13 @@
 #' @export
 #
 # Unique Variable Analysis
-# Updated 14.06.2021
+# Updated 20.06.2021
 UVA <- function(data, n = NULL,
                 model = c("glasso", "TMFG"),
                 corr = c("cor_auto", "pearson", "spearman"),
                 method = c("cor", "pcor", "wTO", "IRT"),
                 type = c("adapt", "alpha", "threshold"), sig,
-                key = NULL, reduce = TRUE,
+                key = NULL, reduce = TRUE, auto = TRUE,
                 reduce.method = c("latent", "remove", "sum"),
                 lavaan.args = list(), adhoc = TRUE,
                 plot.redundancy = FALSE, plot.args = list()
@@ -444,7 +449,9 @@ UVA <- function(data, n = NULL,
   }
   
   # Run through redundancy reduction
-  if(reduce){
+  ## Manual
+  if(isTRUE(reduce) & !isTRUE(auto)){
+    
     reduced <- redund.reduce(node.redundant.obj = process,
                              reduce.method = reduce.method,
                              plot.args = plot.args,
@@ -491,6 +498,56 @@ UVA <- function(data, n = NULL,
     
     # Artificial pause for feel
     Sys.sleep(1)
+    
+  }else if(isTRUE(reduce) & isTRUE(auto)){## Automated
+    
+    # Message user
+    message("Combining variables...", appendLF = FALSE)
+    
+    # Initial reduction
+    reduced <- redund.reduce.auto(node.redundant.obj = process,
+                             reduce.method = reduce.method,
+                             lavaan.args = lavaan.args,
+                             corr = corr)
+    ## Run check
+    ## Compute correlation matrix
+    if(isSymmetric(reduced$data)){
+      cor.data <- reduced$data
+    }else{
+      
+      sink <- capture.output(
+        cor.data <- suppressMessages(
+          suppressWarnings(
+            switch(corr,
+                   "cor_auto" = qgraph::cor_auto(reduced$data),
+                   "pearson" = cor(reduced$data, use = "pairwise.complete.obs"),
+                   "spearman" = cor(reduced$data, method = "spearman", use = "pairwise.complete.obs")
+            )
+          )
+        )
+      )
+      
+    }
+    
+    adhoc.check <- suppressMessages(
+      redundancy.process(data = reduced$data, cormat = cor.data,
+                         n = n,
+                         model = model,
+                         method = "wto",
+                         type = "threshold", sig = .20,
+                         plot.redundancy = FALSE, plot.args = plot.args)
+    )
+    
+    # Adhoc reductions
+    reduced <- redund.adhoc.auto(node.redundant.obj = adhoc.check,
+                                 node.redundant.reduced = reduced,
+                                 node.redundant.original = process,
+                                 reduce.method = reduce.method,
+                                 lavaan.args = lavaan.args,
+                                 corr = corr)
+    
+    # Message user
+    message("done")
     
   }else{reduced <- process}
   
