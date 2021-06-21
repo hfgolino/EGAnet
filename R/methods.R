@@ -73,7 +73,7 @@ print.dynEGA<- function(x, ...) {
 # Updated 16.06.2021
 #' @export
 # Plot bootEGA----
-# Updated 16.06.2021
+# Updated 21.06.2021
 plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
                          plot.args = list(), produce = TRUE, ...){
   #### MISSING ARGUMENTS HANDLING ####
@@ -153,6 +153,9 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$node.size/2}
     if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$node.size/2}
     
+    palette <- color_palette_EGA(color.palette, as.numeric(factor(x$typicalGraph$wc)))
+    palette <- ifelse(is.na(palette), "white", palette)
+    
     ega.plot <- suppressWarnings(
       suppressMessages(
         do.call(GGally::ggnet2, plot.args) + 
@@ -181,7 +184,7 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
 }
 
 # Plot dynEGA function (Level: Group)----
-# Updated 16.06.2021
+# Updated 21.06.2021
 #' @export
 plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally","qgraph"),
                                plot.args = list(), produce = TRUE, ...){
@@ -266,8 +269,7 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$node.size/2}
       if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$node.size/2}
       
-      
-      palette <- color_palette_EGA(color.palette, x$dynEGA[[i]]$wc)
+      palette <- color_palette_EGA(color.palette, as.numeric(factor(x$dynEGA[[i]]$wc)))
       palette <- ifelse(is.na(palette), "white", palette)
       
       plots.net[[i]] <- suppressWarnings(
@@ -307,7 +309,7 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
 }
 
 # Plot dynEGA function (Level: Individual)----
-# Updated 16.06.2021
+# Updated 21.06.2021
 #' @export
 plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GGally","qgraph"),
                                     plot.args = list(), produce = TRUE, ...){
@@ -380,7 +382,7 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$node.size/2}
     if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$node.size/2}
     
-    palette <- color_palette_EGA(color.palette, x$dynEGA[[id]]$wc)
+    palette <- color_palette_EGA(color.palette, as.numeric(factor(x$dynEGA[[id]]$wc)))
     palette <- ifelse(is.na(palette), "white", palette)
     
     ega.plot <- suppressWarnings(
@@ -419,7 +421,7 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
 }
 
 # Plot dynEGA function (Level: Population)----
-# Updated 16.06.2021
+# Updated 21.06.2021
 #' @export
 plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
                         plot.args = list(), produce = TRUE, ...){
@@ -499,7 +501,7 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
     if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
     
-    palette <- color_palette_EGA(color.palette, x$dynEGA$wc)
+    palette <- color_palette_EGA(color.palette, as.numeric(factor(x$dynEGA$wc)))
     palette <- ifelse(is.na(palette), "white", palette)
     
     ega.plot <- suppressWarnings(
@@ -538,7 +540,7 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
 }
 
 # Plot EGA----
-# Updated 16.06.2021
+# Updated 21.06.2021
 #' @export
 plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
                      plot.args = list(), produce = TRUE, ...){
@@ -549,6 +551,9 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
   
   ## Check for input plot arguments
   if(plot.type == "GGally"){
+    if("legend.names" %in% names(plot.args)){
+      legend.names <- plot.args$legend.names
+    }
     plot.args <- GGally.args(plot.args)
     color.palette <- plot.args$color.palette
   }
@@ -618,7 +623,7 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
     if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
     if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
     
-    palette <- color_palette_EGA(color.palette, x$wc)
+    palette <- color_palette_EGA(color.palette, as.numeric(factor(x$wc)))
     palette <- ifelse(is.na(palette), "white", palette)
     
     ega.plot <- suppressWarnings(
