@@ -4,6 +4,8 @@ o **UPDATE**: default undimensionality adjustment has changed to leading eigenva
 
 O **UPDATE**: default `UVA` was changed `type = "threshold"`
 
+o UPDATE: `UVA` is now automated using `auto = TRUE`
+
 o DEFUNCT: `dimStability` will no longer be supported. Instead, use `dimensionStability`
 
 o REVAMP: `itemStability` has been recoded. Now includes error checking and more readable code 
