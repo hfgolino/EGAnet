@@ -489,11 +489,6 @@ UVA <- function(data, n = NULL,
       # Artificial pause for feel
       Sys.sleep(1)
       
-      if(all(is.na(adhoc.check$redundant))){
-        
-        message("No redundancies reamin.")
-        
-      }else{message("Some redundancies may still exist. See `OUTPUT$adhoc`")}
     }
     
     # Artificial pause for feel
@@ -538,13 +533,15 @@ UVA <- function(data, n = NULL,
                          plot.redundancy = FALSE, plot.args = plot.args)
     )
     
-    # Adhoc reductions
-    reduced <- redund.adhoc.auto(node.redundant.obj = adhoc.check,
-                                 node.redundant.reduced = reduced,
-                                 node.redundant.original = process,
-                                 reduce.method = reduce.method,
-                                 lavaan.args = lavaan.args,
-                                 corr = corr)
+    if(all(!is.na(adhoc.check$redundant))){
+      # Adhoc reductions
+      reduced <- redund.adhoc.auto(node.redundant.obj = adhoc.check,
+                                   node.redundant.reduced = reduced,
+                                   node.redundant.original = process,
+                                   reduce.method = reduce.method,
+                                   lavaan.args = lavaan.args,
+                                   corr = corr)
+    }
     
     # Message user
     message("done")
