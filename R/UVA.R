@@ -259,8 +259,7 @@
 #' key <- as.character(psychTools::spi.dictionary$item[key.ind])
 #' 
 #' if(interactive()){
-#' uva.results <- UVA(data = items, method = "wTO", type = "adapt",
-#'     key = key, reduce.method = "latent")
+#' uva.results <- UVA(data = items, key = key)
 #' }
 #'
 #' @references

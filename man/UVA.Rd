@@ -14,6 +14,7 @@ UVA(
   sig,
   key = NULL,
   reduce = TRUE,
+  auto = TRUE,
   reduce.method = c("latent", "remove", "sum"),
   lavaan.args = list(),
   adhoc = TRUE,
@@ -106,6 +107,11 @@ Should redundancy reduction be performed?
 Defaults to \code{TRUE}.
 Set to \code{FALSE} for redundancy analysis only}
 
+\item{auto}{Boolean.
+Should redundancy reduction be automated?
+Defaults to \code{TRUE}.
+Set to \code{FALSE} for manual selection}
+
 \item{reduce.method}{Character.
 How should data be reduced?
 Defaults to \code{"latent"}
@@ -170,13 +176,13 @@ Defaults:
 
 \itemize{
 
-\item{\code{vsize = 6}}{}
+\item{\code{vsize = 6}}{Changes node size}
 
-\item{\code{alpha = 0.4}}{}
+\item{\code{alpha = 0.4}}{Changes transparency}
 
-\item{\code{label.size = 5}}{}
+\item{\code{label.size = 5}}{Changes label size}
 
-\item{\code{edge.alpha = 0.7}}{}
+\item{\code{edge.alpha = 0.7}}{Changes edge transparency}
 
 }}
 }
@@ -278,8 +284,7 @@ key.ind <- match(colnames(items), as.character(psychTools::spi.dictionary$item_i
 key <- as.character(psychTools::spi.dictionary$item[key.ind])
 
 if(interactive()){
-uva.results <- UVA(data = items, method = "wTO", type = "adapt",
-    key = key, reduce.method = "latent")
+uva.results <- UVA(data = items, key = key)
 }
 
 }
