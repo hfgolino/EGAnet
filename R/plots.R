@@ -132,6 +132,9 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
   
   ## Check for input plot arguments
   if(plot.type == "GGally"){
+    if("legend.names" %in% names(plot.args)){
+      legend.names <- plot.args$legend.names
+    }
     plot.args <- GGally.args(plot.args)
     color.palette <- plot.args$color.palette
   }
@@ -244,6 +247,9 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
   
   ## Check for input plot arguments
   if(plot.type == "GGally"){
+    if("legend.names" %in% names(plot.args)){
+      legend.names <- plot.args$legend.names
+    }
     plot.args <- GGally.args(plot.args)
     color.palette <- plot.args$color.palette
   }
@@ -369,6 +375,9 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
   
   ## Check for input plot arguments
   if(plot.type == "GGally"){
+    if("legend.names" %in% names(plot.args)){
+      legend.names <- plot.args$legend.names
+    }
     plot.args <- GGally.args(plot.args)
     color.palette <- plot.args$color.palette
   }
@@ -481,6 +490,9 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
   
   ## Check for input plot arguments
   if(plot.type == "GGally"){
+    if("legend.names" %in% names(plot.args)){
+      legend.names <- plot.args$legend.names
+    }
     plot.args <- GGally.args(plot.args)
     color.palette <- plot.args$color.palette
   }
