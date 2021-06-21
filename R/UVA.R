@@ -545,6 +545,73 @@ UVA <- function(data, n = NULL,
     # Message user
     message("done")
     
+    # Name latent variables
+    name_question <- readline(prompt = "Name latent variables? [Y/n]: ")
+    
+    # Check for appropriate response
+    name_question <- tolower(name_question)
+    
+    while(name_question != "y" & name_question != "n"){
+      
+      # Name latent variables
+      name_question <- readline(prompt = "Inappropriate response. Try again. [Y/n]: ")
+      
+      # Check for appropriate response
+      name_question <- tolower(name_question)
+      
+    }
+    
+    if(name_question == "y"){
+      
+      # Copy of reduced merged
+      lats <- reduced$merged
+      
+      # Make it a list
+      lats <- lapply(apply(lats, 1, as.list), unlist)
+      lats <- lapply(lats, unname) # unname
+      lats <- lapply(lats, function(x){ # make them homogeneous with spaces
+        x <- na.omit(ifelse(x == "", NA, x))
+        x <- c(x, "", "")
+        return(x)
+      })
+      
+      # Line break
+      linebreak()
+      
+      # Loop through latent variables
+      for(i in 1:length(lats)){
+        
+        # Variables in latent variable
+        cat(
+          paste(
+            lats[[i]],
+            collapse = "\n"
+          )
+        )
+        
+        # Ask for label
+        lab <- readline(prompt = "New label for latent variable (no quotations): ")
+        
+        # Assign new label
+        colnames(reduced$data)[
+          which(colnames(reduced$data) == row.names(reduced$merged)[i])
+        ] <- lab
+        row.names(reduced$merged)[i] <- lab
+        
+        # Message user for progress
+        message(
+          paste(
+            "\n", i, "of", nrow(reduced$merged), "latent variables named."
+          )
+        )
+        
+        # Line break
+        linebreak()
+
+      }
+      
+    }
+    
   }else{reduced <- process}
   
   # Full results
