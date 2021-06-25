@@ -1,5 +1,4 @@
 ### CRAN 0.9.8 | GitHub 0.9.9
-### 145 commits since last CRAN update
 
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active) [![Downloads Total](https://cranlogs.r-pkg.org/badges/grand-total/EGAnet?color=brightgreen)](https://cran.r-project.org/package=EGAnet) [![Downloads per month](http://cranlogs.r-pkg.org/badges/EGAnet?color=brightgreen)](https://cran.r-project.org/package=EGAnet) 
 
