@@ -1,3 +1,65 @@
+#%%%%%%%%%%%%%%%%%
+# DEVELOPMENT ----
+#%%%%%%%%%%%%%%%%%
+
+#' @noRd
+#' 
+# Polytomous IRT parameters
+# Updated 30.06.2021
+poly.irt <- function(loadings, data)
+{
+  # Check for standardized loadings
+  if(any(class(loadings) == "NetLoads")){
+    loadings <- loadings$std
+  }
+  
+  # Convert loadings to matrix
+  loadings <- as.matrix(loadings)
+  
+  # Unique variance
+  s <- sqrt(1 - rowSums(loadings^2))
+  
+  # Estimated discrimination parameters
+  est_a <- sweep(loadings, 1, s, "/")
+  
+  # Estimated threshold parameters
+  thresholds <- lavaan::lavCor(
+    data,
+    ordered = colnames(data),
+    output = "thresholds"
+  )
+  
+  # Separate thresholds
+  threshs <- list()
+  
+  for(i in colnames(neoOpen)){
+    threshs[[i]] <- thresholds[grep(i, names(thresholds))]
+  }
+  
+  # Estimate location parameters
+  ## All variables have the same number of categories
+  if(all(unlist(lapply(threshs, length)))){
+    
+    threshs <- t(simplify2array(threshs))
+    
+    est_d <- sweep(-threshs, 1, s, "/")
+  }else{## Some variables have different numbers of categories
+    
+    est_d <- lapply(threshs, function(x, s){
+      -x/s
+    }, s = s)
+    
+  }
+  
+  # Results list
+  results <- list()
+  results$discrimination <- est_a
+  results$location <- est_d
+  
+  return(results)
+  
+}
+
 #%%%%%%%%%%%%%%%%%%%%%%%%%%
 # network.descriptives ----
 #%%%%%%%%%%%%%%%%%%%%%%%%%%
