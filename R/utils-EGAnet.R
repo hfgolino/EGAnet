@@ -579,7 +579,7 @@ add.signs <- function(comm.str, A, wc, dims, pos.manifold)
 #' @noRd
 #'
 # Unstandardized Network Loadings
-# Updated 18.03.2020
+# Updated 02.07.2020
 mat.func <- function(A, wc, metric = "each", absolute, diagonal)
 {
   # Compute within-community node strength
@@ -596,7 +596,12 @@ mat.func <- function(A, wc, metric = "each", absolute, diagonal)
     stab <- stab[row.names(comc)]
     
     # Combine between- and within-community node strength
-    comc[which(is.na(comc))] <- stab
+    indices <- which(is.na(comc), arr.ind = TRUE)
+    indices <- indices[names(stab),]
+    
+    for(i in 1:nrow(indices)){
+      comc[indices[i,1], indices[i,2]] <- stab[i]
+    }
     
     # Round to 3 decimal places
     comm.str <- round(comc, 3)
