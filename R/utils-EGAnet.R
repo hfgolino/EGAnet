@@ -606,6 +606,34 @@ mat.func <- function(A, wc, metric = "each", absolute, diagonal)
   return(comm.str)
 }
 
+#' @noRd
+# Function to order loadings largest to smallest
+# within their respective factors
+descend.ord <- function(loads, wc){
+  # Initialize ordering vector
+  ord.names <- vector("character")
+  
+  # Loop through dimensions
+  for(i in colnames(loads)){
+    ord <- order(loads[names(which(wc == i)),i], decreasing = TRUE)
+    ord.names <- c(ord.names, names(which(wc == i))[ord])
+  }
+  
+  # Reorder
+  reord <- loads[ord.names,]
+  
+  # Check for matrix
+  if(!is.matrix(reord)){
+    reord <- as.matrix(reord)
+  }
+  
+  # Make sure names
+  row.names(reord) <- ord.names
+  colnames(reord) <- colnames(loads)
+  
+  return(reord)
+}
+
 #%%%%%%%%%%%%%%
 # PLOTTING ----
 #%%%%%%%%%%%%%%
