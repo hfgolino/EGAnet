@@ -25,7 +25,7 @@
 #' @export
 #
 # Compare EGA plots function
-# Updated 16.06.2021
+# Updated 09.07.2021
 compare.EGA.plots <- function(..., labels, rows, columns)
 {
   # Obtain object list
@@ -56,6 +56,41 @@ compare.EGA.plots <- function(..., labels, rows, columns)
   # Check for at least two objects
   if(length(object.list) < 2){
     stop("EGA plot comparisons require two or more EGA objects")
+  }
+  
+  # Organize memberships
+  for(i in 2:length(object.list)){
+    
+    # Target membership
+    target.wc <- switch(
+      class(object.list[[1]]),
+      "EGA" = object.list[[1]]$wc,
+      "bootEGA" = object.list[[1]]$typicalGraph$wc,
+      "dynEGA" = object.list[[1]]$dynEGA$wc
+    )
+    
+    # Covert membership
+    convert.wc <- as.matrix(
+      switch(
+        class(object.list[[i]]),
+        "EGA" = object.list[[i]]$wc,
+        "bootEGA" = object.list[[i]]$typicalGraph$wc,
+        "dynEGA" = object.list[[i]]$dynEGA$wc
+      )
+    )
+    
+    # Homogenize membership
+    homogenized.wc <- as.vector(EGAnet:::homogenize.membership(target.wc, convert.wc))
+    
+    # Replace membership
+    if(class(object.list[[i]]) == "EGA"){
+      object.list[[i]]$wc <- homogenized.wc
+    }else if(class(object.list[[i]]) == "bootEGA"){
+      object.list[[i]]$typicalGraph$wc <- homogenized.wc
+    }else if(class(object.list[[i]]$dynEGA$wc)){
+      object.list[[i]]$typicalGraph$wc <- homogenized.wc
+    }
+    
   }
   
   # Initialize plot list
