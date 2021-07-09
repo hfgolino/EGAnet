@@ -57,7 +57,7 @@
 #'
 #' @export
 #'
-# Updated 16.06.2021
+# Updated 09.07.2021
 ## Function to produce color palettes for EGA
 color_palette_EGA <- function (name, wc, sorted = FALSE)
 {
@@ -73,10 +73,16 @@ color_palette_EGA <- function (name, wc, sorted = FALSE)
   # Convert wc to numeric
   if(!all(is.numeric(wc))){
     
+    # Initialize numeric vector
+    wc2 <- numeric(length(wc))
+    
     # Assign numbers to names
     for(i in 1:length(uniq.wc)){
-      wc[wc == uniq.wc[i]] <- i
+      wc2[wc == uniq.wc[i]] <- i
     }
+    
+    # Replace wc with numeric vector
+    wc <- wc2
     
   }
   

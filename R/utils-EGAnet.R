@@ -4165,13 +4165,17 @@ itemStability.plot <- function (res, bootega.obj)
   # Change color.palette (if necessary)
   if(!ggplot2::is.ggplot(bootega.obj$plot.typical.ega)){
     IS.plot <- suppressMessages(
-      IS.plot + ggplot2::scale_color_manual(values = color_palette_EGA("rainbow", empirical.membership),
+      IS.plot + ggplot2::scale_color_manual(values = color_palette_EGA("rainbow",
+                                                                       empirical.membership,
+                                                                       sorted = TRUE),
                                             breaks = sort(empirical.membership))
     )
   }else{
     if(bootega.obj$color.palette != "Set1"){
       IS.plot <- suppressMessages(
-        IS.plot + ggplot2::scale_color_manual(values = color_palette_EGA(bootega.obj$color.palette, formatC(empirical.membership)),
+        IS.plot + ggplot2::scale_color_manual(values = color_palette_EGA(bootega.obj$color.palette,
+                                                                         formatC(empirical.membership),
+                                                                         sorted = TRUE),
                                               breaks = sort(formatC(empirical.membership), na.last = TRUE))
       )
     }
