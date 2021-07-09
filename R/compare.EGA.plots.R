@@ -80,7 +80,7 @@ compare.EGA.plots <- function(..., labels, rows, columns)
     )
     
     # Homogenize membership
-    homogenized.wc <- as.vector(EGAnet:::homogenize.membership(target.wc, convert.wc))
+    homogenized.wc <- as.vector(homogenize.membership(target.wc, convert.wc))
     
     # Replace membership
     if(class(object.list[[i]]) == "EGA"){
