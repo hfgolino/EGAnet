@@ -294,7 +294,7 @@
 #' @export
 #
 # Unique Variable Analysis
-# Updated 20.06.2021
+# Updated 09.07.2021
 UVA <- function(data, n = NULL,
                 model = c("glasso", "TMFG"),
                 corr = c("cor_auto", "pearson", "spearman"),
@@ -393,28 +393,32 @@ UVA <- function(data, n = NULL,
   }
   
   ## prepare arguments for lavaan
-  if(reduce.method == "latent"){
+  if(isTRUE(reduce)){
     
-    ## lavaan.args
-    if(length(lavaan.args) == 0){
-      lavaan.args <- formals(lavaan::cfa)
-      lavaan.args[length(lavaan.args)] <- NULL
-      lavaan.args$std.lv <- TRUE
-    }else{
-      lavaan.default <- formals(lavaan::cfa)
-      lavaan.default[length(lavaan.default)] <- NULL
-      lavaan.default$std.lv <- TRUE
+    if(reduce.method == "latent"){
       
-      if(any(names(lavaan.args) %in% names(lavaan.default))){
-        lavaan.default[names(lavaan.args)] <- lavaan.args
+      ## lavaan.args
+      if(length(lavaan.args) == 0){
+        lavaan.args <- formals(lavaan::cfa)
+        lavaan.args[length(lavaan.args)] <- NULL
+        lavaan.args$std.lv <- TRUE
+      }else{
+        lavaan.default <- formals(lavaan::cfa)
+        lavaan.default[length(lavaan.default)] <- NULL
+        lavaan.default$std.lv <- TRUE
+        
+        if(any(names(lavaan.args) %in% names(lavaan.default))){
+          lavaan.default[names(lavaan.args)] <- lavaan.args
+        }
+        
+        lavaan.args <- lavaan.default
       }
       
-      lavaan.args <- lavaan.default
-    }
-    
-    ## change key if NULL
-    if(is.null(key)){
-      data <- lavaan.formula.names(data)
+      ## change key if NULL
+      if(is.null(key)){
+        data <- lavaan.formula.names(data)
+      }
+      
     }
     
   }
