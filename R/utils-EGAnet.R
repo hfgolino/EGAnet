@@ -4103,7 +4103,7 @@ missing.dimension.check <- function (proportion, membership, bootstrap)
 #' @noRd
 # Plot configuration for itemStability
 # For itemStability
-# Updated 27.02.2021
+# Updated 16.07.2021
 itemStability.plot <- function (res, bootega.obj)
 {
   # Obtain empirical membership
@@ -4174,9 +4174,10 @@ itemStability.plot <- function (res, bootega.obj)
     if(bootega.obj$color.palette != "Set1"){
       IS.plot <- suppressMessages(
         IS.plot + ggplot2::scale_color_manual(values = color_palette_EGA(bootega.obj$color.palette,
-                                                                         formatC(empirical.membership),
+                                                                         empirical.membership,
                                                                          sorted = TRUE),
-                                              breaks = sort(formatC(empirical.membership), na.last = TRUE))
+                                              breaks = sort(empirical.membership, na.last = TRUE)
+                                              )
       )
     }
   }
