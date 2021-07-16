@@ -267,7 +267,7 @@
 #'
 # Bootstrap EGA
 # Updated 16.07.2021
-bootEGA <- function(data, m = NULL, uni.method = c("expand", "LE"), iter,
+bootEGA <- function(data, n = NULL, uni.method = c("expand", "LE"), iter,
                     type = c("parametric", "resampling"),
                     corr = c("cor_auto", "pearson", "spearman"),
                     model = c("glasso", "TMFG"), model.args = list(),
