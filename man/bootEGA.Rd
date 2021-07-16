@@ -6,6 +6,7 @@
 \usage{
 bootEGA(
   data,
+  m = NULL,
   uni.method = c("expand", "LE"),
   iter,
   type = c("parametric", "resampling"),
@@ -191,6 +192,9 @@ then use the following code: \code{parallel::detectCores()}}
 
 \item{...}{Additional arguments.
 Used for deprecated arguments from previous versions of \code{\link{EGA}}}
+
+\item{n}{Integer.
+Sample size if \code{data} provided is a correlation matrix}
 }
 \value{
 Returns a list containing:

@@ -8,6 +8,9 @@
 #'
 #' @param data Matrix or data frame.
 #' Includes the variables to be used in the \code{bootEGA} analysis
+#' 
+#' @param n Integer.
+#' Sample size if \code{data} provided is a correlation matrix
 #'
 #' @param uni.method Character.
 #' What unidimensionality method should be used? 
@@ -263,8 +266,8 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 28.05.2021
-bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
+# Updated 16.07.2021
+bootEGA <- function(data, m = NULL, uni.method = c("expand", "LE"), iter,
                     type = c("parametric", "resampling"),
                     corr = c("cor_auto", "pearson", "spearman"),
                     model = c("glasso", "TMFG"), model.args = list(),
@@ -277,21 +280,6 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
 
   # Get additional arguments
   add.args <- list(...)
-
-  # Check if n has been input as an argument
-  if("n" %in% names(add.args)){
-
-    # Give deprecation warning
-    warning(
-      paste(
-        "The 'n' argument has been deprecated in the bootEGA function.\n\nInstead use: iter = ", add.args$n,
-        sep = ""
-      )
-    )
-
-    # Handle the number of iterations appropriately
-    iter <- add.args$n
-  }
 
   # Check if steps has been input as an argument
   if("steps" %in% names(add.args)){
@@ -390,16 +378,26 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
                 sep=""))
 
   #number of cases
-  cases <- nrow(data)
+  if(is.null(n)){
+    
+    if(isSymmetric(data)){
+      stop("The argument 'n' is missing for a symmetric matrix")
+    }else{
+      cases <- nrow(data)
+    }
+    
+  }else{
+    cases <- n
+  }
   
   #empirical EGA
-  empirical.EGA <- suppressMessages(suppressWarnings(EGA(data = data, uni.method = uni.method, corr = corr,
+  empirical.EGA <- suppressMessages(suppressWarnings(EGA(data = data, n = cases, uni.method = uni.method, corr = corr,
                                                          model = model, model.args = model.args,
                                                          algorithm = algorithm, algorith.args = algorithm.args,
                                                          plot.EGA = FALSE)))
 
   #set inverse covariance matrix for parametric approach
-  if(type=="parametric"){  # Use a parametric approach
+  if(type == "parametric"){  # Use a parametric approach
     
     ## Compute correlation matrix
     cor.data <- empirical.EGA$correlation    
@@ -407,7 +405,18 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
     # Generating data will be continuous
     corr.method <- "pearson"
     
-  }else{corr.method <- corr}
+  }else if(type == "resampling"){
+    
+    # Check if matrix is symmetric
+    if(isSymmetric(data)){
+      warning("The argument 'data' is symmetric and therefore treated as a correlation matrix. Parametric bootstrap will be used instead")
+      type <- "parametric"
+      corr.method <- "pearson"
+    }else{
+      corr.method <- corr
+    }
+    
+  }
 
   #initialize data list
   datalist <- list()
