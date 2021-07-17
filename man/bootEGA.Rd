@@ -6,7 +6,7 @@
 \usage{
 bootEGA(
   data,
-  m = NULL,
+  n = NULL,
   uni.method = c("expand", "LE"),
   iter,
   type = c("parametric", "resampling"),
@@ -26,6 +26,9 @@ bootEGA(
 \arguments{
 \item{data}{Matrix or data frame.
 Includes the variables to be used in the \code{bootEGA} analysis}
+
+\item{n}{Integer.
+Sample size if \code{data} provided is a correlation matrix}
 
 \item{uni.method}{Character.
 What unidimensionality method should be used? 
@@ -192,9 +195,6 @@ then use the following code: \code{parallel::detectCores()}}
 
 \item{...}{Additional arguments.
 Used for deprecated arguments from previous versions of \code{\link{EGA}}}
-
-\item{n}{Integer.
-Sample size if \code{data} provided is a correlation matrix}
 }
 \value{
 Returns a list containing:
