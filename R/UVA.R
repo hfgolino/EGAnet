@@ -65,16 +65,16 @@
 #' \itemize{
 #' 
 #' \item{\code{"wTO"}}
-#' {.20}
+#' {.25}
 #' 
 #' \item{\code{"pcor"}}
-#' {.20}
+#' {.35}
 #' 
 #' \item{\code{"cor"}}
-#' {.70}
+#' {.50}
 #' 
 #' \item{\code{"IRT"}}
-#' {.20}
+#' {.35}
 #' 
 #' } 
 #' 
@@ -294,7 +294,7 @@
 #' @export
 #
 # Unique Variable Analysis
-# Updated 09.07.2021
+# Updated 20.07.2021
 UVA <- function(data, n = NULL,
                 model = c("glasso", "TMFG"),
                 corr = c("cor_auto", "pearson", "spearman"),
@@ -338,10 +338,10 @@ UVA <- function(data, n = NULL,
   if(missing(sig)){
     if(type == "threshold"){
       sig <- switch(method,
-                    "cor" = .70,
-                    "pcor" = .20,
-                    "wto" = .20,
-                    "irt" = .20,
+                    "cor" = .50,
+                    "pcor" = .35,
+                    "wto" = .25,
+                    "irt" = .35,
       )
     }else{sig <- .05}
   }
