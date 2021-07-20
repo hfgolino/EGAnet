@@ -485,7 +485,7 @@ UVA <- function(data, n = NULL,
                            n = n,
                            model = model,
                            method = "wto",
-                           type = "threshold", sig = .20,
+                           type = "threshold", sig = .25,
                            plot.redundancy = FALSE, plot.args = plot.args)
       )
       
@@ -532,7 +532,7 @@ UVA <- function(data, n = NULL,
                          n = n,
                          model = model,
                          method = "wto",
-                         type = "threshold", sig = .20,
+                         type = "threshold", sig = .25,
                          plot.redundancy = FALSE, plot.args = plot.args)
     )
     
