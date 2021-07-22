@@ -3157,7 +3157,7 @@ redund.reduce.auto <- function(node.redundant.obj,
 
 #' @noRd
 # Redundancy Adhoc Reduction (Automated)
-# Updated 21.06.2021
+# Updated 22.07.2021
 redund.adhoc.auto <- function(node.redundant.obj,
                               node.redundant.reduced,
                               node.redundant.original,
@@ -3252,6 +3252,19 @@ redund.adhoc.auto <- function(node.redundant.obj,
   }else{
     key <- colnames(node.redundant.original$data)
     names(key) <- key
+  }
+  
+  # Remove missing reundancies
+  merged <- lapply(merged, function(x){
+    if(length(x) == 0){
+      NULL
+    }else{x}
+  })
+  
+  nulls <- unlist(lapply(merged, is.null))
+  
+  if(any(nulls)){
+    merged <- merged[!nulls]
   }
   
   # Loop through to make new variables

@@ -294,7 +294,7 @@
 #' @export
 #
 # Unique Variable Analysis
-# Updated 20.07.2021
+# Updated 22.07.2021
 UVA <- function(data, n = NULL,
                 model = c("glasso", "TMFG"),
                 corr = c("cor_auto", "pearson", "spearman"),
@@ -536,7 +536,7 @@ UVA <- function(data, n = NULL,
                          plot.redundancy = FALSE, plot.args = plot.args)
     )
     
-    if(all(!is.na(adhoc.check$redundant))){
+    while(all(!is.na(adhoc.check$redundant))){
       # Adhoc reductions
       reduced <- redund.adhoc.auto(node.redundant.obj = adhoc.check,
                                    node.redundant.reduced = reduced,
@@ -544,6 +544,36 @@ UVA <- function(data, n = NULL,
                                    reduce.method = reduce.method,
                                    lavaan.args = lavaan.args,
                                    corr = corr)
+      
+      ## Run check
+      ## Compute correlation matrix
+      if(isSymmetric(reduced$data)){
+        cor.data <- reduced$data
+      }else{
+        
+        sink <- capture.output(
+          cor.data <- suppressMessages(
+            suppressWarnings(
+              switch(corr,
+                     "cor_auto" = qgraph::cor_auto(reduced$data),
+                     "pearson" = cor(reduced$data, use = "pairwise.complete.obs"),
+                     "spearman" = cor(reduced$data, method = "spearman", use = "pairwise.complete.obs")
+              )
+            )
+          )
+        )
+        
+      }
+      
+      adhoc.check <- suppressMessages(
+        redundancy.process(data = reduced$data, cormat = cor.data,
+                           n = n,
+                           model = model,
+                           method = "wto",
+                           type = "threshold", sig = .25,
+                           plot.redundancy = FALSE, plot.args = plot.args)
+      )
+      
     }
     
     # Message user
