@@ -452,99 +452,69 @@ UVA <- function(data, n = NULL,
   }
   
   # Run through redundancy reduction
-  ## Manual
-  if(isTRUE(reduce) & !isTRUE(auto)){
+  if(all(is.na(process$redundant))){
     
-    reduced <- redund.reduce(node.redundant.obj = process,
-                             reduce.method = reduce.method,
-                             plot.args = plot.args,
-                             lavaan.args = lavaan.args,
-                             corr = corr)
+    reduced <- process
     
-    # Check for any remaining redundancies
-    if(adhoc){
-      ## Message user
-      message("Running adhoc check for any potential redundancies remaining...\n")
+    message("No redundant variables were identified.")
+    
+  }else{
+    
+    ## Manual
+    if(isTRUE(reduce) & !isTRUE(auto)){
       
-      ## Run check
-      ## Compute correlation matrix
-      if(isSymmetric(reduced$data)){
-        cor.data <- reduced$data
-      }else{
+      reduced <- redund.reduce(node.redundant.obj = process,
+                               reduce.method = reduce.method,
+                               plot.args = plot.args,
+                               lavaan.args = lavaan.args,
+                               corr = corr)
+      
+      # Check for any remaining redundancies
+      if(adhoc){
+        ## Message user
+        message("Running adhoc check for any potential redundancies remaining...\n")
         
-        cor.data <- switch(corr,
-                           "cor_auto" = qgraph::cor_auto(reduced$data),
-                           "pearson" = cor(reduced$data, use = "pairwise.complete.obs"),
-                           "spearman" = cor(reduced$data, method = "spearman", use = "pairwise.complete.obs")
+        ## Run check
+        ## Compute correlation matrix
+        if(isSymmetric(reduced$data)){
+          cor.data <- reduced$data
+        }else{
+          
+          cor.data <- switch(corr,
+                             "cor_auto" = qgraph::cor_auto(reduced$data),
+                             "pearson" = cor(reduced$data, use = "pairwise.complete.obs"),
+                             "spearman" = cor(reduced$data, method = "spearman", use = "pairwise.complete.obs")
+          )
+          
+        }
+        
+        adhoc.check <- suppressMessages(
+          redundancy.process(data = reduced$data, cormat = cor.data,
+                             n = n,
+                             model = model,
+                             method = "wto",
+                             type = "threshold", sig = .25,
+                             plot.redundancy = FALSE, plot.args = plot.args)
         )
         
+        # Artificial pause for feel
+        Sys.sleep(1)
+        
       }
-      
-      adhoc.check <- suppressMessages(
-        redundancy.process(data = reduced$data, cormat = cor.data,
-                           n = n,
-                           model = model,
-                           method = "wto",
-                           type = "threshold", sig = .25,
-                           plot.redundancy = FALSE, plot.args = plot.args)
-      )
       
       # Artificial pause for feel
       Sys.sleep(1)
       
-    }
-    
-    # Artificial pause for feel
-    Sys.sleep(1)
-    
-  }else if(isTRUE(reduce) & isTRUE(auto)){## Automated
-    
-    # Message user
-    message("\nCombining variables...", appendLF = FALSE)
-    
-    # Initial reduction
-    reduced <- redund.reduce.auto(node.redundant.obj = process,
-                             reduce.method = reduce.method,
-                             lavaan.args = lavaan.args,
-                             corr = corr)
-    ## Run check
-    ## Compute correlation matrix
-    if(isSymmetric(reduced$data)){
-      cor.data <- reduced$data
-    }else{
+    }else if(isTRUE(reduce) & isTRUE(auto)){## Automated
       
-      sink <- capture.output(
-        cor.data <- suppressMessages(
-          suppressWarnings(
-            switch(corr,
-                   "cor_auto" = qgraph::cor_auto(reduced$data),
-                   "pearson" = cor(reduced$data, use = "pairwise.complete.obs"),
-                   "spearman" = cor(reduced$data, method = "spearman", use = "pairwise.complete.obs")
-            )
-          )
-        )
-      )
+      # Message user
+      message("\nCombining variables...", appendLF = FALSE)
       
-    }
-    
-    adhoc.check <- suppressMessages(
-      redundancy.process(data = reduced$data, cormat = cor.data,
-                         n = n,
-                         model = model,
-                         method = "wto",
-                         type = "threshold", sig = .25,
-                         plot.redundancy = FALSE, plot.args = plot.args)
-    )
-    
-    while(all(!is.na(adhoc.check$redundant))){
-      # Adhoc reductions
-      reduced <- redund.adhoc.auto(node.redundant.obj = adhoc.check,
-                                   node.redundant.reduced = reduced,
-                                   node.redundant.original = process,
-                                   reduce.method = reduce.method,
-                                   lavaan.args = lavaan.args,
-                                   corr = corr)
-      
+      # Initial reduction
+      reduced <- redund.reduce.auto(node.redundant.obj = process,
+                                    reduce.method = reduce.method,
+                                    lavaan.args = lavaan.args,
+                                    corr = corr)
       ## Run check
       ## Compute correlation matrix
       if(isSymmetric(reduced$data)){
@@ -574,79 +544,119 @@ UVA <- function(data, n = NULL,
                            plot.redundancy = FALSE, plot.args = plot.args)
       )
       
-    }
-    
-    # Message user
-    message("done")
-    
-    # Name latent variables
-    name_question <- readline(prompt = "Name latent variables? [Y/n]: ")
-    
-    # Check for appropriate response
-    name_question <- tolower(name_question)
-    
-    while(name_question != "y" & name_question != "n"){
+      while(all(!is.na(adhoc.check$redundant))){
+        # Adhoc reductions
+        reduced <- redund.adhoc.auto(node.redundant.obj = adhoc.check,
+                                     node.redundant.reduced = reduced,
+                                     node.redundant.original = process,
+                                     reduce.method = reduce.method,
+                                     lavaan.args = lavaan.args,
+                                     corr = corr)
+        
+        ## Run check
+        ## Compute correlation matrix
+        if(isSymmetric(reduced$data)){
+          cor.data <- reduced$data
+        }else{
+          
+          sink <- capture.output(
+            cor.data <- suppressMessages(
+              suppressWarnings(
+                switch(corr,
+                       "cor_auto" = qgraph::cor_auto(reduced$data),
+                       "pearson" = cor(reduced$data, use = "pairwise.complete.obs"),
+                       "spearman" = cor(reduced$data, method = "spearman", use = "pairwise.complete.obs")
+                )
+              )
+            )
+          )
+          
+        }
+        
+        adhoc.check <- suppressMessages(
+          redundancy.process(data = reduced$data, cormat = cor.data,
+                             n = n,
+                             model = model,
+                             method = "wto",
+                             type = "threshold", sig = .25,
+                             plot.redundancy = FALSE, plot.args = plot.args)
+        )
+        
+      }
+      
+      # Message user
+      message("done")
       
       # Name latent variables
-      name_question <- readline(prompt = "Inappropriate response. Try again. [Y/n]: ")
+      name_question <- readline(prompt = "Name latent variables? [Y/n]: ")
       
       # Check for appropriate response
       name_question <- tolower(name_question)
       
-    }
-    
-    if(name_question == "y"){
-      
-      # Copy of reduced merged
-      lats <- reduced$merged
-      
-      # Make it a list
-      lats <- lapply(apply(lats, 1, as.list), unlist)
-      lats <- lapply(lats, unname) # unname
-      lats <- lapply(lats, function(x){ # make them homogeneous with spaces
-        x <- na.omit(ifelse(x == "", NA, x))
-        x <- c(x, "", "")
-        return(x)
-      })
-      
-      # Line break
-      linebreak()
-      
-      # Loop through latent variables
-      for(i in 1:length(lats)){
+      while(name_question != "y" & name_question != "n"){
         
-        # Variables in latent variable
-        cat(
-          paste(
-            lats[[i]],
-            collapse = "\n"
-          )
-        )
+        # Name latent variables
+        name_question <- readline(prompt = "Inappropriate response. Try again. [Y/n]: ")
         
-        # Ask for label
-        lab <- readline(prompt = "New label for latent variable (no quotations): ")
+        # Check for appropriate response
+        name_question <- tolower(name_question)
         
-        # Assign new label
-        colnames(reduced$data)[
-          which(colnames(reduced$data) == row.names(reduced$merged)[i])
-        ] <- lab
-        row.names(reduced$merged)[i] <- lab
+      }
+      
+      if(name_question == "y"){
         
-        # Message user for progress
-        message(
-          paste(
-            "\n", i, "of", nrow(reduced$merged), "latent variables named."
-          )
-        )
+        # Copy of reduced merged
+        lats <- reduced$merged
+        
+        # Make it a list
+        lats <- lapply(apply(lats, 1, as.list), unlist)
+        lats <- lapply(lats, unname) # unname
+        lats <- lapply(lats, function(x){ # make them homogeneous with spaces
+          x <- na.omit(ifelse(x == "", NA, x))
+          x <- c(x, "", "")
+          return(x)
+        })
         
         # Line break
         linebreak()
-
+        
+        # Loop through latent variables
+        for(i in 1:length(lats)){
+          
+          # Variables in latent variable
+          cat(
+            paste(
+              lats[[i]],
+              collapse = "\n"
+            )
+          )
+          
+          # Ask for label
+          lab <- readline(prompt = "New label for latent variable (no quotations): ")
+          
+          # Assign new label
+          colnames(reduced$data)[
+            which(colnames(reduced$data) == row.names(reduced$merged)[i])
+          ] <- lab
+          row.names(reduced$merged)[i] <- lab
+          
+          # Message user for progress
+          message(
+            paste(
+              "\n", i, "of", nrow(reduced$merged), "latent variables named."
+            )
+          )
+          
+          # Line break
+          linebreak()
+          
+        }
+        
       }
       
-    }
+    }else{reduced <- process}
     
-  }else{reduced <- process}
+  }
   
   # Full results
   res <- list()
