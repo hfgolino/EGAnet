@@ -73,7 +73,7 @@ print.dynEGA<- function(x, ...) {
 # Updated 16.06.2021
 #' @export
 # Plot bootEGA----
-# Updated 21.06.2021
+# Updated 23.07.2021
 plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
                          plot.args = list(), produce = TRUE, ...){
   #### MISSING ARGUMENTS HANDLING ####
@@ -171,6 +171,30 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
   
   name <- colnames(x$typicalGraph$graph)
   
+  name.split <- lapply(name, function(x){
+    unlist(strsplit(x, split = " "))
+  })
+  
+  name <- unlist(
+    lapply(name.split, function(x){
+      
+      len <- length(x)
+      
+      if(len > 1){
+        
+        add.line <- round(len / 2)
+        
+        paste(
+          paste(x[1:add.line], collapse = " "),
+          paste(x[(add.line+1):length(x)], collapse = " "),
+          sep = "\n"
+        )
+        
+      }else{x}
+      
+    })
+  )
+  
   # Custom nodes: transparent insides and dark borders
   ega.plot <- ega.plot + 
     ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
@@ -187,7 +211,7 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
 }
 
 # Plot dynEGA function (Level: Group)----
-# Updated 21.06.2021
+# Updated 23.07.2021
 #' @export
 plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally","qgraph"),
                                plot.args = list(), produce = TRUE, ...){
@@ -287,6 +311,30 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       
       name <- colnames(x$dynEGA[[i]]$network)
       
+      name.split <- lapply(name, function(x){
+        unlist(strsplit(x, split = " "))
+      })
+      
+      name <- unlist(
+        lapply(name.split, function(x){
+          
+          len <- length(x)
+          
+          if(len > 1){
+            
+            add.line <- round(len / 2)
+            
+            paste(
+              paste(x[1:add.line], collapse = " "),
+              paste(x[(add.line+1):length(x)], collapse = " "),
+              sep = "\n"
+            )
+            
+          }else{x}
+          
+        })
+      )
+      
       # Custom nodes: transparent insides and dark borders
       plots.net[[i]] <- plots.net[[i]] + 
         ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
@@ -315,7 +363,7 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
 }
 
 # Plot dynEGA function (Level: Individual)----
-# Updated 21.06.2021
+# Updated 23.07.2021
 #' @export
 plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GGally","qgraph"),
                                     plot.args = list(), produce = TRUE, ...){
@@ -403,6 +451,30 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     
     name <- colnames(x$dynEGA[[id]]$network)
     
+    name.split <- lapply(name, function(x){
+      unlist(strsplit(x, split = " "))
+    })
+    
+    name <- unlist(
+      lapply(name.split, function(x){
+        
+        len <- length(x)
+        
+        if(len > 1){
+          
+          add.line <- round(len / 2)
+          
+          paste(
+            paste(x[1:add.line], collapse = " "),
+            paste(x[(add.line+1):length(x)], collapse = " "),
+            sep = "\n"
+          )
+          
+        }else{x}
+        
+      })
+    )
+    
     # Custom nodes: transparent insides and dark borders
     ega.plot <- ega.plot + 
       ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
@@ -430,7 +502,7 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
 }
 
 # Plot dynEGA function (Level: Population)----
-# Updated 21.06.2021
+# Updated 23.07.2021
 #' @export
 plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
                         plot.args = list(), produce = TRUE, ...){
@@ -525,6 +597,30 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     
     name <- colnames(x$dynEGA$network)
     
+    name.split <- lapply(name, function(x){
+      unlist(strsplit(x, split = " "))
+    })
+    
+    name <- unlist(
+      lapply(name.split, function(x){
+        
+        len <- length(x)
+        
+        if(len > 1){
+          
+          add.line <- round(len / 2)
+          
+          paste(
+            paste(x[1:add.line], collapse = " "),
+            paste(x[(add.line+1):length(x)], collapse = " "),
+            sep = "\n"
+          )
+          
+        }else{x}
+        
+      })
+    )
+    
     # Custom nodes: transparent insides and dark borders
     ega.plot <- ega.plot + 
       ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
@@ -552,7 +648,7 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
 }
 
 # Plot EGA----
-# Updated 21.06.2021
+# Updated 23.07.2021
 #' @export
 plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
                      plot.args = list(), produce = TRUE, ...){
@@ -646,6 +742,30 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
     )
     
     name <- colnames(x$network)
+    
+    name.split <- lapply(name, function(x){
+      unlist(strsplit(x, split = " "))
+    })
+    
+    name <- unlist(
+      lapply(name.split, function(x){
+        
+        len <- length(x)
+        
+        if(len > 1){
+          
+          add.line <- round(len / 2)
+          
+          paste(
+            paste(x[1:add.line], collapse = " "),
+            paste(x[(add.line+1):length(x)], collapse = " "),
+            sep = "\n"
+          )
+          
+        }else{x}
+        
+      })
+    )
     
     # Custom nodes: transparent insides and dark borders
     ega.plot <- ega.plot + 
