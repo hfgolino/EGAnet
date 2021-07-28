@@ -57,7 +57,7 @@
 #'
 #' @export
 #'
-# Updated 09.07.2021
+# Updated 28.07.2021
 ## Function to produce color palettes for EGA
 color_palette_EGA <- function (name, wc, sorted = FALSE)
 {
@@ -86,10 +86,15 @@ color_palette_EGA <- function (name, wc, sorted = FALSE)
     
   }
   
+  # Greyscale palette
+  if(all(name == "greyscale") | all(name == "grayscale") | all(name == "colorblind")){
+    name = "grayscale"
+  }
+  
   # All palettes
   all_palettes <- c(row.names(RColorBrewer::brewer.pal.info),
                     "polychrome", "blue.ridge1", "blue.ridge2",
-                    "rainbow", "rio", "itacare"
+                    "rainbow", "rio", "itacare", "grayscale"
                     )
 
   # Default palette
@@ -140,6 +145,16 @@ color_palette_EGA <- function (name, wc, sorted = FALSE)
           c("232b17", "cbbda4", "2888ab",
             "0581c9", "7e8056", "d9e7e6",
             "8ec0c5", "a58a60", "ad9342", "a96c2e"
+          ), sep = "")
+  )
+  
+  ## Grayscale (16 colors)
+  grayscale <- toupper(
+    paste("#",
+          c("F0F0F0", "E9E9E9", "E1E1E1", "C2C2C2",
+            "A4A4A4", "959595", "8D8D8D", "858585",
+            "767676", "6F6F6F", "606060", "565656",
+            "505050", "484848", "454545", "333333"
           ), sep = "")
   )
 

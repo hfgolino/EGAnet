@@ -688,7 +688,7 @@ compare.EGA <- function(ega.object1, ega.object2)
 #' @noRd
 # Defaults for GGally plotting
 # For plots and methods
-# Updated 28.05.2021
+# Updated 28.07.2021
 GGally.args <- function(plot.args)
 {
   default.args <- formals(GGally::ggnet2)
@@ -717,6 +717,28 @@ GGally.args <- function(plot.args)
   if(!"color.palette" %in% names(plot.args)){
     default.args$color.palette <- "polychrome"
   }
+  
+  if("color.palette" %in% names(plot.args)){
+    
+    if(tolower(plot.args$color.palette) == "greyscale" | tolower(plot.args$color.palette) == "grayscale" | tolower(plot.args$color.palette) == "colorblind"){
+      plot.args$edge.color <- c("#293132", "grey25")
+      plot.args$edge.lty <- c("solid", "dashed")
+    }
+    
+  }
+  
+  if(!"edge.color" %in% names(plot.args)){
+    plot.args$edge.color <- c("darkgreen", "red")
+  }else if(length(plot.args$edge.color) != 2){
+    stop("Two colors needed for 'edge.color'")
+  }
+  
+  if(!"edge.lty" %in% names(plot.args)){
+    plot.args$edge.lty <- c("solid", "solid")
+  }else if(length(plot.args$edge.lty) != 2){
+    stop("Two line types needed for 'edge.lty'")
+  }
+  
   
   if(any(names(plot.args) %in% names(default.args))){
     target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
