@@ -157,6 +157,21 @@ color_palette_EGA <- function (name, wc, sorted = FALSE)
             "505050", "484848", "454545", "333333"
           ), sep = "")
   )
+  
+  if(all(name == "grayscale")){
+    
+    distance <- round(length(grayscale) / length(uniq.wc), 0)
+    
+    if(distance == 0){
+      distance <- 1
+    }
+    
+    grayscale <- grayscale[seq(
+      1, length(grayscale),
+      distance
+    )][1:length(uniq.wc)]
+    
+  }
 
 
   # Check for custom
