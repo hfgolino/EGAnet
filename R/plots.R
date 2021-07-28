@@ -1,5 +1,5 @@
 #------------------------------------------
-## S3Methods plot() // Updated 23.07.2021
+## S3Methods plot() // Updated 28.07.2021
 #------------------------------------------
 
 #' S3Methods for Plotting
@@ -119,10 +119,10 @@
 #' @importFrom graphics plot
 #'
 # PLOTS----
-# Updated 23.07.2021
+# Updated 28.07.2021
 #' @export
 # Plot bootEGA----
-# Updated 23.07.2021
+# Updated 28.07.2021
 plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
                          plot.args = list(), produce = TRUE, ...){
   #### MISSING ARGUMENTS HANDLING ####
@@ -168,7 +168,8 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     
     network::set.vertex.attribute(network1, attrname= "Communities", value = x$typicalGraph$wc)
     network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
-    network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
+    network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, plot.args$edge.color[1], plot.args$edge.color[2]))
+    network::set.edge.attribute(network1, "line", ifelse(network::get.edge.value(network1, "weights") > 0, plot.args$edge.lty[1], plot.args$edge.lty[2]))
     network::set.edge.value(network1,attrname="AbsWeights",value=abs(x$typicalGraph$graph))
     network::set.edge.value(network1,attrname="ScaledWeights",
                             value=matrix(rescale.edges(x$typicalGraph$graph, plot.args$edge.size),
@@ -247,12 +248,27 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
   # Custom nodes: transparent insides and dark borders
   ega.plot <- ega.plot + 
     ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
-               color = color_palette_EGA(color.palette, na.omit(x$typicalGraph$wc)),
-               shape = 1, stroke = 1.5, alpha = .8) +
+                        color = 
+                          ifelse(
+                            all(color.palette == "grayscale" |
+                                  color.palette == "greyscale" |
+                                  color.palette == "colorblind"),
+                            ifelse(palette == "white", "white", "black"),
+                            palette
+                          ),
+                        shape = 1, stroke = 1.5, alpha = .8) +
     ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
-               color = color_palette_EGA(color.palette, na.omit(x$typicalGraph$wc)),
-               shape = 19, alpha = plot.args$alpha) +
-    ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size)
+                        color = palette,
+                        shape = 19, alpha = plot.args$alpha) +
+    ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
+    ggplot2::guides(
+      color = ggplot2::guide_legend(override.aes = list(
+        color = unique(palette),
+        size = node.size,
+        alpha = plot.args$alpha,
+        stroke = 1.5
+      ))
+    )
   
   if(isTRUE(produce)){
     plot(ega.plot)
@@ -260,7 +276,7 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
 }
 
 # Plot dynEGA function (Level: Group)----
-# Updated 23.07.2021
+# Updated 28.07.2021
 #' @export
 plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally","qgraph"),
                                plot.args = list(), produce = TRUE, ...){
@@ -310,7 +326,8 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       
       network::set.vertex.attribute(network1[[i]], attrname= "Communities", value = x$dynEGA[[i]]$wc)
       network::set.vertex.attribute(network1[[i]], attrname= "Names", value = network::network.vertex.names(network1[[i]]))
-      network::set.edge.attribute(network1[[i]], "color", ifelse(network::get.edge.value(network1[[i]], "weights") > 0, "darkgreen", "red"))
+      network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, plot.args$edge.color[1], plot.args$edge.color[2]))
+      network::set.edge.attribute(network1, "line", ifelse(network::get.edge.value(network1, "weights") > 0, plot.args$edge.lty[1], plot.args$edge.lty[2]))
       network::set.edge.value(network1[[i]], attrname="AbsWeights",value=abs(x$dynEGA[[i]]$network))
       network::set.edge.value(network1[[i]],attrname="ScaledWeights",
                               value=matrix(rescale.edges(x$dynEGA[[i]]$network, default.args$edge.size),
@@ -387,7 +404,14 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       # Custom nodes: transparent insides and dark borders
       plots.net[[i]] <- plots.net[[i]] + 
         ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
-                            color = palette,
+                            color = 
+                              ifelse(
+                                all(color.palette == "grayscale" |
+                                      color.palette == "greyscale" |
+                                      color.palette == "colorblind"),
+                                ifelse(palette == "white", "white", "black"),
+                                palette
+                              ),
                             shape = 1, stroke = 1.5, alpha = .8) +
         ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
                             color = palette,
@@ -395,7 +419,7 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
         ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
         ggplot2::guides(
           color = ggplot2::guide_legend(override.aes = list(
-            color = unique(palette[order(x$dynEGA[[i]]$wc)]),
+            color = unique(palette),
             size = node.size,
             alpha = plot.args$alpha,
             stroke = 1.5
@@ -412,7 +436,7 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
 }
 
 # Plot dynEGA function (Level: Individual)----
-# Updated 23.07.2021
+# Updated 28.07.2021
 #' @export
 plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GGally","qgraph"),
                                     plot.args = list(), produce = TRUE, ...){
@@ -450,7 +474,8 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     
     network::set.vertex.attribute(network1, attrname= "Communities", value = x$dynEGA[[id]]$wc)
     network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
-    network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
+    network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, plot.args$edge.color[1], plot.args$edge.color[2]))
+    network::set.edge.attribute(network1, "line", ifelse(network::get.edge.value(network1, "weights") > 0, plot.args$edge.lty[1], plot.args$edge.lty[2]))
     network::set.edge.value(network1,attrname="AbsWeights",value=abs(x$dynEGA[[id]]$network))
     network::set.edge.value(network1,attrname="ScaledWeights",
                             value=matrix(rescale.edges(x$dynEGA[[id]]$network, plot.args$edge.size),
@@ -527,7 +552,14 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     # Custom nodes: transparent insides and dark borders
     ega.plot <- ega.plot + 
       ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
-                          color = palette,
+                          color = 
+                            ifelse(
+                              all(color.palette == "grayscale" |
+                                    color.palette == "greyscale" |
+                                    color.palette == "colorblind"),
+                              ifelse(palette == "white", "white", "black"),
+                              palette
+                            ),
                           shape = 1, stroke = 1.5, alpha = .8) +
       ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
                           color = palette,
@@ -535,7 +567,7 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
       ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
       ggplot2::guides(
         color = ggplot2::guide_legend(override.aes = list(
-          color = unique(palette[order(x$dynEGA[[id]]$wc)]),
+          color = unique(palette),
           size = node.size,
           alpha = plot.args$alpha,
           stroke = 1.5
@@ -551,7 +583,7 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
 }
 
 # Plot dynEGA function (Level: Population)----
-# Updated 23.07.2021
+# Updated 28.07.2021
 #' @export
 plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
                         plot.args = list(), produce = TRUE, ...){
@@ -596,7 +628,8 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     
     network::set.vertex.attribute(network1, attrname= "Communities", value = x$dynEGA$wc)
     network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
-    network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
+    network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, plot.args$edge.color[1], plot.args$edge.color[2]))
+    network::set.edge.attribute(network1, "line", ifelse(network::get.edge.value(network1, "weights") > 0, plot.args$edge.lty[1], plot.args$edge.lty[2]))
     network::set.edge.value(network1,attrname="AbsWeights",value=abs(x$dynEGA$network))
     network::set.edge.value(network1,attrname="ScaledWeights",
                             value=matrix(rescale.edges(x$dynEGA$network, plot.args$edge.size),
@@ -673,7 +706,14 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     # Custom nodes: transparent insides and dark borders
     ega.plot <- ega.plot + 
       ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
-                          color = palette,
+                          color = 
+                            ifelse(
+                              all(color.palette == "grayscale" |
+                                    color.palette == "greyscale" |
+                                    color.palette == "colorblind"),
+                              ifelse(palette == "white", "white", "black"),
+                              palette
+                            ),
                           shape = 1, stroke = 1.5, alpha = .8) +
       ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
                           color = palette,
@@ -681,7 +721,7 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
       ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
       ggplot2::guides(
         color = ggplot2::guide_legend(override.aes = list(
-          color = unique(palette[order(x$dynEGA$wc)]),
+          color = unique(palette),
           size = node.size,
           alpha = plot.args$alpha,
           stroke = 1.5
@@ -697,7 +737,7 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
 }
 
 # Plot EGA----
-# Updated 23.07.2021
+# Updated 28.07.2021
 #' @export
 plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
                      plot.args = list(), produce = TRUE, ...){
@@ -821,7 +861,14 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
     # Custom nodes: transparent insides and dark borders
     ega.plot <- ega.plot + 
       ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
-                          color = palette,
+                          color = 
+                            ifelse(
+                              all(color.palette == "grayscale" |
+                                  color.palette == "greyscale" |
+                                  color.palette == "colorblind"),
+                              ifelse(palette == "white", "white", "black"),
+                              palette
+                            ),
                           shape = 1, stroke = 1.5, alpha = .8) +
       ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
                           color = palette,
