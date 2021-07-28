@@ -17,6 +17,10 @@ Defaults to \code{"polychrome"}.
 \item{\code{"polychrome"}}
 {Default 20 color palette}
 
+\item{\code{"grayscale"}}
+{"grayscale", "greyscale", or "colorblind" will produce
+plots suitable for publication purposes}
+
 \item{\code{"blue.ridge1"}}
 {Palette inspired by the Blue Ridge Mountains}
 

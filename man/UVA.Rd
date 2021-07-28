@@ -84,16 +84,16 @@ Defaults for \code{"threshold"} for each \code{method}:
 \itemize{
 
 \item{\code{"wTO"}}
-{.20}
+{.25}
 
 \item{\code{"pcor"}}
-{.20}
+{.35}
 
 \item{\code{"cor"}}
-{.70}
+{.50}
 
 \item{\code{"IRT"}}
-{.20}
+{.35}
 
 }}
 
