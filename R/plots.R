@@ -245,17 +245,17 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     })
   )
   
+  # Border color
+  if(all(color.palette == "grayscale" |
+         color.palette == "greyscale" |
+         color.palette == "colorblind")){
+    border.color <- ifelse(palette == "white", "white", "black")
+  }else{border.color <- palette}
+  
   # Custom nodes: transparent insides and dark borders
   ega.plot <- ega.plot + 
     ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
-                        color = 
-                          ifelse(
-                            all(color.palette == "grayscale" |
-                                  color.palette == "greyscale" |
-                                  color.palette == "colorblind"),
-                            ifelse(palette == "white", "white", "black"),
-                            palette
-                          ),
+                        color = border.color,
                         shape = 1, stroke = 1.5, alpha = .8) +
     ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
                         color = palette,
@@ -401,17 +401,17 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
         })
       )
       
+      # Border color
+      if(all(color.palette == "grayscale" |
+             color.palette == "greyscale" |
+             color.palette == "colorblind")){
+        border.color <- ifelse(palette == "white", "white", "black")
+      }else{border.color <- palette}
+      
       # Custom nodes: transparent insides and dark borders
       plots.net[[i]] <- plots.net[[i]] + 
         ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
-                            color = 
-                              ifelse(
-                                all(color.palette == "grayscale" |
-                                      color.palette == "greyscale" |
-                                      color.palette == "colorblind"),
-                                ifelse(palette == "white", "white", "black"),
-                                palette
-                              ),
+                            color = border.color,
                             shape = 1, stroke = 1.5, alpha = .8) +
         ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
                             color = palette,
@@ -549,17 +549,17 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
       })
     )
     
+    # Border color
+    if(all(color.palette == "grayscale" |
+           color.palette == "greyscale" |
+           color.palette == "colorblind")){
+      border.color <- ifelse(palette == "white", "white", "black")
+    }else{border.color <- palette}
+    
     # Custom nodes: transparent insides and dark borders
     ega.plot <- ega.plot + 
       ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
-                          color = 
-                            ifelse(
-                              all(color.palette == "grayscale" |
-                                    color.palette == "greyscale" |
-                                    color.palette == "colorblind"),
-                              ifelse(palette == "white", "white", "black"),
-                              palette
-                            ),
+                          color = border.color,
                           shape = 1, stroke = 1.5, alpha = .8) +
       ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
                           color = palette,
@@ -703,17 +703,17 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
       })
     )
     
+    # Border color
+    if(all(color.palette == "grayscale" |
+           color.palette == "greyscale" |
+           color.palette == "colorblind")){
+      border.color <- ifelse(palette == "white", "white", "black")
+    }else{border.color <- palette}
+    
     # Custom nodes: transparent insides and dark borders
     ega.plot <- ega.plot + 
       ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
-                          color = 
-                            ifelse(
-                              all(color.palette == "grayscale" |
-                                    color.palette == "greyscale" |
-                                    color.palette == "colorblind"),
-                              ifelse(palette == "white", "white", "black"),
-                              palette
-                            ),
+                          color = border.color,
                           shape = 1, stroke = 1.5, alpha = .8) +
       ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
                           color = palette,
@@ -858,17 +858,17 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
       })
     )
     
+    # Border color
+    if(all(color.palette == "grayscale" |
+           color.palette == "greyscale" |
+           color.palette == "colorblind")){
+      border.color <- ifelse(palette == "white", "white", "black")
+    }else{border.color <- palette}
+    
     # Custom nodes: transparent insides and dark borders
     ega.plot <- ega.plot + 
       ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
-                          color = 
-                            ifelse(
-                              all(color.palette == "grayscale" |
-                                  color.palette == "greyscale" |
-                                  color.palette == "colorblind"),
-                              ifelse(palette == "white", "white", "black"),
-                              palette
-                            ),
+                          color = border.color,
                           shape = 1, stroke = 1.5, alpha = .8) +
       ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
                           color = palette,
