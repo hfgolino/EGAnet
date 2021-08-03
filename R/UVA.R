@@ -294,7 +294,7 @@
 #' @export
 #
 # Unique Variable Analysis
-# Updated 22.07.2021
+# Updated 03.08.2021
 UVA <- function(data, n = NULL,
                 model = c("glasso", "TMFG"),
                 corr = c("cor_auto", "pearson", "spearman"),
@@ -540,7 +540,7 @@ UVA <- function(data, n = NULL,
                            n = n,
                            model = model,
                            method = "wto",
-                           type = "threshold", sig = .25,
+                           type = "threshold", sig = sig,
                            plot.redundancy = FALSE, plot.args = plot.args)
       )
       
@@ -578,7 +578,7 @@ UVA <- function(data, n = NULL,
                              n = n,
                              model = model,
                              method = "wto",
-                             type = "threshold", sig = .25,
+                             type = "threshold", sig = sig,
                              plot.redundancy = FALSE, plot.args = plot.args)
         )
         
