@@ -458,6 +458,8 @@ UVA <- function(data, n = NULL,
     
     message("No redundant variables were identified.")
     
+    adhoc.check <- NULL
+    
   }else{
     
     ## Manual
