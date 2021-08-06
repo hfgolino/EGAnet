@@ -266,7 +266,7 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 16.07.2021
+# Updated 05.08.2021
 bootEGA <- function(data, n = NULL, uni.method = c("expand", "LE"), iter,
                     type = c("parametric", "resampling"),
                     corr = c("cor_auto", "pearson", "spearman"),
@@ -380,7 +380,7 @@ bootEGA <- function(data, n = NULL, uni.method = c("expand", "LE"), iter,
   #number of cases
   if(is.null(n)){
     
-    if(isSymmetric(data)){
+    if(isSymmetric(as.matrix(data))){
       stop("The argument 'n' is missing for a symmetric matrix")
     }else{
       cases <- nrow(data)

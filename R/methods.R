@@ -142,6 +142,7 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     node.size <- plot.args$node.size
     plot.args$node.size <- 0
     plot.args$node.shape <- plot.args$shape
+    plot.args$edge.lty <- "line"
     plot.args$edge.color <- "color"
     plot.args$edge.size <- "ScaledWeights"
     plot.args$color.palette <- NULL
@@ -301,6 +302,7 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       node.size <- plot.args$node.size
       plot.args$node.size <- 0
       plot.args$node.shape <- plot.args$shape
+      plot.args$edge.lty <- "line"
       plot.args$edge.color <- "color"
       plot.args$edge.size <- "ScaledWeights"
       plot.args$color.palette <- NULL
@@ -449,6 +451,7 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     node.size <- plot.args$node.size
     plot.args$node.size <- 0
     plot.args$node.shape <- plot.args$shape
+    plot.args$edge.lty <- "line"
     plot.args$edge.color <- "color"
     plot.args$edge.size <- "ScaledWeights"
     plot.args$color.palette <- NULL
@@ -603,6 +606,7 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     plot.args$node.shape <- plot.args$shape
     node.size <- plot.args$node.size
     plot.args$node.size <- 0
+    plot.args$edge.lty <- "line"
     plot.args$edge.color <- "color"
     plot.args$edge.size <- "ScaledWeights"
     plot.args$color.palette <- NULL
