@@ -1,13 +1,13 @@
 #' Loadings Comparison Test
 #'
 #' An algorithm to identify whether data were generated from a
-#' random, factor, or network model using factor and network loadings.
+#' factor or network model using factor and network loadings.
 #' The algorithm uses heuristics based on theory and simulation. These
 #' heuristics were then submitted to several deep learning neural networks
 #' with 240,000 samples per model with varying parameters.
 #'
 #' @param data Matrix or data frame.
-#' A dataframe with the variables to be used in the test or a correlation matrix.
+#' A data frame with the variables to be used in the test or a correlation matrix.
 #' If the data used is a correlation matrix, the argument \code{n} will need to be specified
 #'
 #' @param n Integer.
@@ -17,6 +17,32 @@
 #' Number of replicate samples to be drawn from a multivariate
 #' normal distribution (uses \code{mvtnorm::mvrnorm}).
 #' Defaults to \code{100}
+#' 
+#' @param dynamic Boolean.
+#' Is the dataset a time series where rows are time points and
+#' columns are variables?
+#' Defaults to \code{FASLE}.
+#' 
+#' @param dynamic.args List.
+#' Arguments to be used in \code{\link[EGAnet]{dynEGA}}.
+#' Defaults:
+#' 
+#' \itemize{
+#' 
+#' \item{\code{n.embed}}
+#' {Number of embeddings: 4}
+#' 
+#' \item{\code{tau}}
+#' {Lag: 1}
+#' 
+#' \item{\code{delta}}
+#' {Delta: 1}
+#' 
+#' \item{\code{use.derivatives}}
+#' {Derivatives: 1}
+#' 
+#' }
+#' 
 #'
 #' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen at gmail.com>
 #'
@@ -35,7 +61,11 @@
 #' LCT(data = wmt2[,7:24])
 #' 
 #' ## Factor model
-#' LCT(data = NetworkToolbox::neoOpen)}
+#' LCT(data = psychTools::bfi[,1:25])
+#' 
+#' # Dynamic LCT
+#' LCT(sim.dynEGA[sim.dynEGA$ID == 1,1:20], dynamic = TRUE)}
+#' 
 #' 
 #' @references
 #' # Original implementation of LCT \cr
@@ -45,18 +75,24 @@
 #' \doi{10.31234/osf.io/xakez}
 #' 
 #' # Current implementation of LCT \cr
-#' Christensen, A. P., & Golino, H. (under review).
-#' Random, factor, or network model? Predictions from neural networks.
-#' \emph{PsyArXiv}.
-#' \doi{10.31234/osf.io/awkcb}
+#' Christensen, A. P., & Golino, H. (2021).
+#' Factor model or small-world network? Predictions from neural networks.
+#' \emph{Journal of Behavioral Data Science}, \emph{1}(1), 85-126.
+#' \doi{10.35566/jbds/v1n1/p5}
 #' 
 #' @importFrom utils setTxtProgressBar txtProgressBar
 #'
 #' @export
 #'
 # Loadings Comparison Test----
-# Updated 03.03.2021
-LCT <- function (data, n, iter = 100)
+# Updated 16.06.2021
+LCT <- function (data, n, iter = 100,
+                 dynamic = FALSE,
+                 dynamic.args = list(
+                   n.embed = 4, tau = 1, delta = 1,
+                   use.derivatives = 1
+                   )
+                 )
 {
   # Convert data to matrix
   data <- as.matrix(data)
@@ -85,8 +121,13 @@ LCT <- function (data, n, iter = 100)
     # Good sample?
     good <- FALSE
     
-    while(!good)
-    {
+    while(!good){
+      
+      # Turn off pblapply progress bar
+      if(isTRUE(dynamic)){
+        opb <- pbapply::pboptions(type = "none")
+      }
+      
       # Generate data
       if(nrow(data) != ncol(data)) {
         
@@ -94,31 +135,71 @@ LCT <- function (data, n, iter = 100)
           dat <- data
         } else {
           dat <- MASS::mvrnorm(cases, mu = rep(0, ncol(data)), Sigma = cov(data, use = "pairwise.complete.obs"))
+          
         }
         
-        cor.mat <- qgraph::cor_auto(dat)
+        # Static or dynamic
+        if(isTRUE(dynamic)){
+          
+          # Organize time series
+          dat <- dyn.org(data, dat)
+          
+          # Organize for dynamic EGA
+          dat <- cbind(dat, rep(1, nrow(dat)), rep(1, nrow(dat)))
+          colnames(dat)[(ncol(dat)-1):ncol(dat)] <- c("ID", "Group")
+          dat <- as.data.frame(dat)
+          
+        }else{
+          
+          # Compute correlation
+          cor.mat <- qgraph::cor_auto(dat)
+          
+        }
         
       }else{
         
-        if(count == 1) {
-          cor.mat <- data
-        } else {
+        if(isTRUE(dynamic)){
           
-          dat <- MASS::mvrnorm(cases, mu = rep(0, ncol(data)), Sigma = data)
+          stop("Dynamic LCT requires the raw data. A correlation matrix cannot be used as input")
           
-          cor.mat <- qgraph::cor_auto(dat)
+        }else{
+          
+          if(count == 1) {
+            cor.mat <- data
+          } else {
+            
+            dat <- MASS::mvrnorm(cases, mu = rep(0, ncol(data)), Sigma = data)
+            
+            cor.mat <- qgraph::cor_auto(dat)
+          }
+          
         }
         
       }
       
       # Make sure there are column names
-      if(is.null(colnames(cor.mat)))
-      {colnames(cor.mat) <- paste("V", 1:ncol(cor.mat), sep = "")}
+      if(!isTRUE(dynamic)){
+        if(is.null(colnames(cor.mat)))
+        {colnames(cor.mat) <- paste("V", 1:ncol(cor.mat), sep = "")}
+      }
       
       # Estimate network
-      if(count == 1)
-      {net <- try(suppressWarnings(suppressMessages(EGA(cor.mat, n = cases, plot.EGA = FALSE))), silent = TRUE)
-      }else{net <- try(suppressWarnings(suppressMessages(EGA.estimate(cor.mat, n = cases))), silent = TRUE)}
+      if(isTRUE(dynamic)){
+        
+        net <- try(suppressWarnings(suppressMessages(
+          dynEGA(dat, n.embed = dynamic.args$n.embed,
+                 tau = dynamic.args$tau, delta = dynamic.args$delta,
+                 use.derivatives = dynamic.args$use.derivatives,
+                 id = ncol(dat) - 1, group = ncol(dat),
+                 model = "glasso", algorithm = "walktrap",
+                 corr = "pearson", ncores = 2)
+        )), silent = TRUE)$dynEGA
+        
+        cor.mat <- net$cor.data
+        
+      }else{
+        net <- try(suppressWarnings(suppressMessages(EGA(cor.mat, n = cases, plot.EGA = FALSE))), silent = TRUE)
+      }
       
       if(any(class(net) == "try-error"))
       {good <- FALSE
@@ -127,17 +208,20 @@ LCT <- function (data, n, iter = 100)
         if(length(net$wc) == length(unique(net$wc)))
         {good <- FALSE
         }else{
+          
+          # Remove variables missing dimension
+          rm.NA <- which(is.na(net$wc))
+          if(length(rm.NA) != 0){
+            net$wc <- net$wc[-rm.NA]
+            net$network <- net$network[-rm.NA, -rm.NA]
+          }
+          
           # Try to estimate network loadings
           n.loads <- try(abs(as.matrix(net.loads(net$network, net$wc)$std)), silent = TRUE)
           
           if(any(class(n.loads) == "try-error"))
           {good <- FALSE
           }else{
-            
-            # Check for single variable dimensions
-            if(nrow(n.loads) != length(net$wc)){
-              warning("One or more dimensions were identified as a single variable. These variables were removed from the comparison for both network and factor models.")
-            }
             
             # Reorder network loadings
             n.loads <- as.matrix(n.loads[match(names(net$wc), row.names(n.loads)),])
@@ -173,6 +257,10 @@ LCT <- function (data, n, iter = 100)
             nl[count,] <- c(n.low, n.mod, n.high, n.dom, n.cross)
             
             # Get factor loading proportions
+            if(length(rm.NA) != 0){
+              cor.mat <- cor.mat[-rm.NA, -rm.NA]
+            }
+            
             f.loads <- suppressWarnings(abs(as.matrix(psych::fa(cor.mat, nfactors = ncol(n.loads), n.obs = cases)$loadings[,1:ncol(n.loads)])))
             f.loads <- as.matrix(f.loads[match(names(net$wc), row.names(f.loads)),])
             f.low <- mean(f.loads >= 0.40, na.rm = TRUE)
@@ -180,15 +268,15 @@ LCT <- function (data, n, iter = 100)
             f.high <- mean(f.loads >= 0.70, na.rm = TRUE)
             
             # Organize loadings
-            org <- numeric(ncol(data))
+            org <- numeric(ncol(cor.mat))
             
-            for(i in 1:ncol(data))
+            for(i in 1:ncol(cor.mat))
             {org[i] <- which.max(f.loads[i,])}
             
             if(ncol(f.loads) != 1)
             {
               # Initialize dominate loadings
-              f.dom <- numeric(ncol(data))
+              f.dom <- numeric(ncol(cor.mat))
               f.loads2 <- f.loads
               
               for(i in 1:max(org))
@@ -220,6 +308,7 @@ LCT <- function (data, n, iter = 100)
         }
         
       }
+      
     }
     
     # Break out of repeat
@@ -242,9 +331,8 @@ LCT <- function (data, n, iter = 100)
   wo.boot <- paste(dnn.predict(loads.mat[1,]))
   
   wo.boot <- switch(wo.boot,
-                    "1" = "Random",
-                    "2" = "Factor",
-                    "3" = "Network"
+                 "1" = "Factor",
+                 "2" = "Network"
   )
   
   predictions$empirical <- wo.boot
@@ -253,9 +341,8 @@ LCT <- function (data, n, iter = 100)
   boot <- paste(dnn.predict(colMeans(loads.mat, na.rm = TRUE)))
   
   boot <- switch(boot,
-                 "1" = "Random",
-                 "2" = "Factor",
-                 "3" = "Network"
+                 "1" = "Factor",
+                 "2" = "Network"
   )
   
   predictions$bootstrap <- boot
@@ -265,27 +352,18 @@ LCT <- function (data, n, iter = 100)
   
   boot.prop <- colMeans(proportion.table(as.matrix(boot.prop)))
   
-  prop <- vector("numeric", length = 3)
-  names(prop) <- c("Random", "Factor", "Network")
+  prop <- vector("numeric", length = 2)
+  names(prop) <- c("Factor", "Network")
   
   prop[1:length(boot.prop)] <- boot.prop
   
   predictions$proportion <- round(prop, 3)
   
-  # Omnibus prediction
-  # item{omnibus}{An omnibus prediction based on a consensus of empirical,
-  # bootstrap, and bootstrap proportions prediction. A consensus corresponds to
-  # any combination of two predictions returning the same prediction}
-  #omni.prop <- c(wo.boot, boot, names(prop)[which.max(prop)])
-  #omni.table <- table(omni.prop)
-  
-  #if(any(omni.table > 1))
-  #{omni.pred <- names(omni.table)[which.max(omni.table)]
-  #}else{omni.pred <- "No consensus prediction. Check proportion and bootstrap predictions."}
-  
-  #predictions$omnibus <- omni.pred
+  # Reset pboptions
+  if(isTRUE(dynamic)){
+    on.exit(pbapply::pboptions(opb))
+  }
   
   return(predictions)
   
 }
-#----

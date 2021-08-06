@@ -107,7 +107,7 @@ Current options are:
 A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
 or some other community detection algorithm function (see examples)}
 
-\item{corr}{Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
+\item{corr}{Type of correlation matrix to compute. The default uses \code{"pearson"}.
 Current options are:
 
 \itemize{

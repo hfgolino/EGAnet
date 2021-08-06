@@ -95,36 +95,9 @@
 #' @export
 #'
 # Network Loadings
-# Updated 14.12.2020
+# Updated 02.07.2021
 net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot.NL = FALSE)
 {
-  
-  # Function to order loadings largest to smallest
-  # within their respective factors
-  descend.ord <- function(loads, wc){
-    # Initialize ordering vector
-    ord.names <- vector("character")
-    
-    # Loop through dimensions
-    for(i in colnames(loads)){
-      ord <- order(loads[names(which(wc == i)),i], decreasing = TRUE)
-      ord.names <- c(ord.names, names(which(wc == i))[ord])
-    }
-    
-    # Reorder
-    reord <- loads[ord.names,]
-    
-    # Check for matrix
-    if(!is.matrix(reord)){
-      reord <- as.matrix(reord)
-    }
-    
-    # Make sure names
-    row.names(reord) <- ord.names
-    colnames(reord) <- colnames(loads)
-    
-    return(reord)
-  }
   
   #------------------------------------------#
   ## DETECT EGA INPUT AND VARIABLE ORDERING ##
@@ -133,7 +106,7 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot.NL = FALSE
   if(any(class(A) == "EGA"))
   {
     # Order
-    ord <- match(A$dim.variables$items, names(A$wc))
+    ord <- match(colnames(A$network), names(A$wc))
     
     # Grab communities
     wc <- A$wc

@@ -234,7 +234,7 @@ methods.section <- function(..., stats = c("net.loads", "net.scores",
   ### Plots
   plots <- numeric(length(all.objects))
   
-  if(plots != 0){
+  if(length(plots) != 0){
     
     for(i in 1:length(all.objects)){
       

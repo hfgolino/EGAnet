@@ -51,7 +51,7 @@
 #' @param use.derivatives Integer.
 #' The order of the derivative to be used in the EGA procedure. Default to 1.
 #'
-#' @param corr Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
+#' @param corr Type of correlation matrix to compute. The default uses \code{"pearson"}.
 #' Current options are:
 #'
 #' \itemize{
@@ -171,7 +171,7 @@
 #'
 #' @export
 # dynEGA
-# Updated 17.12.2020
+# Updated 02.06.2021
 dynEGA <- function(data, n.embed, tau = 1, delta = 1,
                    level = c("individual", "group", "population"),
                    id = NULL, group = NULL,
@@ -232,7 +232,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
   }else{group <- group}
 
   if(missing(corr))
-  {corr <- "cor_auto"
+  {corr <- "pearson"
   }else{corr <- match.arg(corr)}
 
   if(missing(ncores))
@@ -400,8 +400,37 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
     data.individuals <- vector("list", length = length(cases))
     data.individuals <- split(data.all[,colstouse],data.all$ID)
     names(data.individuals) <- paste0("ID", cases)
-
-
+    
+    # Get number of variables
+    initial.nvar <- unlist(lapply(data.individuals, ncol))
+    
+    # Remove variables from participants with no variance
+    # in their derivatives
+    data.individuals <- lapply(data.individuals, function(x){
+      indices <- which(apply(x, 2, sd) == 0)
+      if(length(indices) != 0){
+        x[,-indices]
+      }else{x}
+    })
+    
+    # Get number of variables
+    final.nvar <- unlist(lapply(data.individuals, ncol))
+    
+    # Get warnings
+    warning.idx <- which(initial.nvar != final.nvar)
+    if(length(warning.idx) != 0){
+      
+      for(i in 1:length(warning.idx)){
+        warning(
+          paste(
+            gsub("ID", "", names(data.individuals)[i]),
+            "had variables with no variance. Some variables were dropped"
+          )
+        )
+      }
+      
+    }
+    
     #Parallel processing
     cl <- parallel::makeCluster(ncores)
 
@@ -449,7 +478,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
       class(results) <- "dynEGA.Individuals"
       dim.variables <- list()
       for(i in 1:length(cases)){
-        dim.variables[[i]] <- data.frame(items = colnames(data[-c(id, group)]), dimension = ega.list.individuals[[i]]$wc)
+        dim.variables[[i]] <- data.frame(items = colnames(data.individuals[[i]]), dimension = ega.list.individuals[[i]]$wc)
         dim.variables[[i]] <- dim.variables[[i]][order(dim.variables[[i]][, 2]),]
         results$dynEGA[[i]]$dim.variables <- dim.variables[[i]]}
     }

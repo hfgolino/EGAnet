@@ -8,6 +8,9 @@
 #'
 #' @param data Matrix or data frame.
 #' Includes the variables to be used in the \code{bootEGA} analysis
+#' 
+#' @param n Integer.
+#' Sample size if \code{data} provided is a correlation matrix
 #'
 #' @param uni.method Character.
 #' What unidimensionality method should be used? 
@@ -263,8 +266,8 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 12.03.2021
-bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
+# Updated 05.08.2021
+bootEGA <- function(data, n = NULL, uni.method = c("expand", "LE"), iter,
                     type = c("parametric", "resampling"),
                     corr = c("cor_auto", "pearson", "spearman"),
                     model = c("glasso", "TMFG"), model.args = list(),
@@ -277,21 +280,6 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
 
   # Get additional arguments
   add.args <- list(...)
-
-  # Check if n has been input as an argument
-  if("n" %in% names(add.args)){
-
-    # Give deprecation warning
-    warning(
-      paste(
-        "The 'n' argument has been deprecated in the bootEGA function.\n\nInstead use: iter = ", add.args$n,
-        sep = ""
-      )
-    )
-
-    # Handle the number of iterations appropriately
-    iter <- add.args$n
-  }
 
   # Check if steps has been input as an argument
   if("steps" %in% names(add.args)){
@@ -362,46 +350,6 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
 
   ## Check for input plot arguments
   color.palette <- "polychrome"
-  if(plot.type == "GGally"){
-    
-    if(length(plot.args) == 0){
-      
-      default.args <- formals(GGally::ggnet2)
-      ega.default.args <- list(node.size = 6, edge.size = 6,
-                               alpha = 0.7, label.size = 5,
-                               edge.alpha = 0.4, layout.exp = 0.2)
-      default.args[names(ega.default.args)]  <- ega.default.args
-      default.args <- default.args[-length(default.args)]
-      
-    }else{
-      
-      default.args <- formals(GGally::ggnet2)
-      ega.default.args <- list(node.size = 6, edge.size = 6,
-                               alpha = 0.7, label.size = 5,
-                               edge.alpha = 0.4, layout.exp = 0.2)
-      default.args[names(ega.default.args)]  <- ega.default.args
-      default.args <- default.args[-length(default.args)]
-      
-      
-      if("vsize" %in% names(plot.args)){
-        plot.args$size <- plot.args$vsize
-        plot.args$vsize <- NULL
-      }
-      
-      if("color.palette" %in% names(plot.args)){
-        color.palette <- plot.args$color.palette
-      }
-      
-      if(any(names(plot.args) %in% names(default.args))){
-        target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
-        default.args[names(target.args)] <- target.args
-      }
-      
-    }
-    
-    plot.args <- default.args
-    
-  }
 
   #### MISSING ARGUMENTS HANDLING ####
   
@@ -409,7 +357,18 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
   message(paste(" \u2022 type = ", type, "\n",
                 " \u2022 iterations = ", iter, "\n",
                 " \u2022 model = ", model, "\n",
-                " \u2022 algorithm = ", algorithm, "\n",
+                " \u2022 algorithm = ",
+                gsub(
+                  "igraph", "",
+                  gsub(
+                    "::", "",
+                    gsub(
+                      "cluster_", "",
+                      paste(substitute(algorithm), collapse = "")
+                    )
+                  )
+                ),
+                "\n",
                 " \u2022 correlation = ", corr, "\n",
                 " \u2022 unidimensional check = ", ifelse(
                   uni.method == "LE",
@@ -419,46 +378,45 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
                 sep=""))
 
   #number of cases
-  cases <- nrow(data)
+  if(is.null(n)){
+    
+    if(isSymmetric(as.matrix(data))){
+      stop("The argument 'n' is missing for a symmetric matrix")
+    }else{
+      cases <- nrow(data)
+    }
+    
+  }else{
+    cases <- n
+  }
   
   #empirical EGA
-  empirical.EGA <- suppressMessages(suppressWarnings(EGA(data = data, uni.method = uni.method, corr = corr,
+  empirical.EGA <- suppressMessages(suppressWarnings(EGA(data = data, n = cases, uni.method = uni.method, corr = corr,
                                                          model = model, model.args = model.args,
                                                          algorithm = algorithm, algorith.args = algorithm.args,
                                                          plot.EGA = FALSE)))
 
   #set inverse covariance matrix for parametric approach
-  if(type=="parametric"){  # Use a parametric approach
+  if(type == "parametric"){  # Use a parametric approach
     
     ## Compute correlation matrix
-    cor.data <- switch(corr,
-                       "cor_auto" = qgraph::cor_auto(data),
-                       "pearson" = cor(data, use = "pairwise.complete.obs"),
-                       "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
-    )
-    
+    cor.data <- empirical.EGA$correlation    
 
-    if(model=="glasso"){
-
-      
-      if(!"gamma" %in% names(model.args)){
-        model.args$gamma <- empirical.EGA$Methods$gamma
-      }
-      
-      g <- -suppressMessages(EGA.estimate(data = cor.data, n = cases, model = model, model.args = model.args)$network)
-      diag(g) <- 1
-
-    }else if(model=="TMFG"){
-
-      g <- -suppressMessages(NetworkToolbox::LoGo(cor.data, partial = TRUE))
-      diag(g) <- 1
-
-    }
-    
     # Generating data will be continuous
     corr.method <- "pearson"
     
-  }else{corr.method <- corr}
+  }else if(type == "resampling"){
+    
+    # Check if matrix is symmetric
+    if(isSymmetric(data)){
+      warning("The argument 'data' is symmetric and therefore treated as a correlation matrix. Parametric bootstrap will be used instead")
+      type <- "parametric"
+      corr.method <- "pearson"
+    }else{
+      corr.method <- corr
+    }
+    
+  }
 
   #initialize data list
   datalist <- list()
@@ -477,7 +435,7 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
     #generate data
     if(type == "parametric"){
 
-      datalist[[count]] <- MASS::mvrnorm(cases, mu = rep(0, ncol(g)), Sigma = corpcor::pseudoinverse(g))
+      datalist[[count]] <- MASS::mvrnorm(cases, mu = rep(0, ncol(cor.data)), Sigma = cor.data)
 
     }else if(type == "resampling"){
 
@@ -572,84 +530,9 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
     
     dim.variables <- data.frame(items = colnames(data), dimension = typical.wc)
   }
-  if (plot.typicalStructure) {
-    if(plot.type == "qgraph"){
-      plot.typical.ega <- qgraph::qgraph(typical.Structure, layout = "spring",
-                                         vsize = plot.args$vsize, groups = as.factor(typical.wc))
-    }else if(plot.type == "GGally"){
-      
-      # Insignificant values (keeps ggnet2 from erroring out)
-      typical.Structure <- ifelse(abs(typical.Structure) <= .00001, 0, typical.Structure)  
-      
-      
-      network1 <- network::network(typical.Structure,
-                                     ignore.eval = FALSE,
-                                     names.eval = "weights",
-                                     directed = FALSE)
-
-      network::set.vertex.attribute(network1, attrname= "Communities", value = typical.wc)
-      network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
-      network::set.edge.attribute(network1, "color", ifelse( network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
-      network::set.edge.value(network1,attrname="AbsWeights",value=abs(typical.Structure))
-      network::set.edge.value(network1,attrname="ScaledWeights",
-                              value=matrix(#scales::rescale(typical.Structure),
-                                rescale.edges(typical.Structure, plot.args$edge.size),
-                                           nrow = nrow(typical.Structure),
-                                           ncol = ncol(typical.Structure)))
-
-      # Layout "Spring"
-      graph1 <- NetworkToolbox::convert2igraph(typical.Structure)
-      edge.list <- igraph::as_edgelist(graph1)
-      layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
-                                                                 weights =
-                                                                   abs(igraph::E(graph1)$weight/max(abs(igraph::E(graph1)$weight)))^2,
-                                                                 vcount = ncol(typical.Structure))
-
-
-      set.seed(1234)
-      plot.args$net <- network1
-      plot.args$node.color <- "Communities"
-      plot.args$node.alpha <- plot.args$alpha
-      plot.args$node.shape <- plot.args$shape
-      plot.args$edge.color <- "color"
-      plot.args$edge.size <- "ScaledWeights"
-      plot.args$color.palette <- NULL
-      plot.args$palette <- NULL
-      
-      lower <- abs(typical.Structure[lower.tri(typical.Structure)])
-      non.zero <- sqrt(lower[lower != 0])
-      
-      plot.args$edge.alpha <- non.zero
-      plot.args$mode <- layout.spring
-      plot.args$label <- colnames(typical.Structure)
-      plot.args$node.label <- plot.args$label
-      if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$node.size/2}
-      if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$node.size/2}
-      
-      plot.typical.ega <- do.call(GGally::ggnet2, plot.args) + ggplot2::theme(legend.title = ggplot2::element_blank())
-      
-      plot.typical.ega <- suppressMessages(
-        do.call(GGally::ggnet2, plot.args) + 
-          ggplot2::theme(legend.title = ggplot2::element_blank()) +
-          ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, na.omit(typical.wc)),
-                                      breaks = sort(typical.wc)) +
-          ggplot2::guides(
-            color = ggplot2::guide_legend(override.aes = list(
-              size = plot.args$size,
-              alpha = plot.args$alpha
-            ))
-          )
-      )
-      
-      plot(plot.typical.ega)
-    }
-    
-    set.seed(NULL)
-
-
-  }
-  Median <- median(boot.ndim[, 2])
-  se.boot <- sd(boot.ndim[, 2])
+  
+  Median <- median(boot.ndim[, 2], na.rm = TRUE)
+  se.boot <- sd(boot.ndim[, 2], na.rm = TRUE)
   ciMult <- qt(0.95/2 + 0.5, nrow(boot.ndim) - 1)
   ci <- se.boot * ciMult
   quant <- quantile(boot.ndim[,2], c(.025, .975), na.rm = TRUE)
@@ -660,7 +543,7 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
   row.names(summary.table) <- NULL
 
   #compute frequency
-  dim.range <- range(boot.ndim[,2])
+  dim.range <- range(boot.ndim[,2], na.rm = TRUE)
   lik <- matrix(0, nrow = diff(dim.range)+1, ncol = 2)
   colnames(lik) <- c("# of Factors", "Frequency")
   count <- 0
@@ -684,14 +567,13 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
 
   # Typical structure
   if (typicalStructure) {
+    
     typicalGraph <- list()
     typicalGraph$graph <- typical.Structure
     typicalGraph$typical.dim.variables <- dim.variables[order(dim.variables[,2]), ]
     typicalGraph$wc <- typical.wc
     result$typicalGraph <- typicalGraph
-    if(plot.typicalStructure){
-      result$plot.typical.ega <- plot.typical.ega
-    }
+    
   }
   
   # Add plot arguments (for itemStability)
@@ -699,7 +581,10 @@ bootEGA <- function(data, uni.method = c("expand", "LE"), iter,
 
   class(result) <- "bootEGA"
   
-  
+  if(typicalStructure & plot.typicalStructure){
+    result$plot.typical.ega <- plot(result)
+  }
+
   # Check if uni.method = "LE" has been used
   if(uni.method == "LE"){
     # Give change warning

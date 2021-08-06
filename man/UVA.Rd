@@ -9,11 +9,12 @@ UVA(
   n = NULL,
   model = c("glasso", "TMFG"),
   corr = c("cor_auto", "pearson", "spearman"),
-  method = c("cor", "pcor", "wTO"),
+  method = c("cor", "pcor", "wTO", "IRT"),
   type = c("adapt", "alpha", "threshold"),
   sig,
   key = NULL,
   reduce = TRUE,
+  auto = TRUE,
   reduce.method = c("latent", "remove", "sum"),
   lavaan.args = list(),
   adhoc = TRUE,
@@ -66,14 +67,15 @@ the \code{\link[stats]{cor}}} function.
 
 \item{method}{Character.
 Computes weighted topological overlap (\code{"wTO"} using \code{\link[qgraph]{EBICglasso}}),
-partial correlations (\code{"pcor"}), and correlations (\code{"cor"}).
+partial correlations (\code{"pcor"}), correlations (\code{"cor"}) or the correlated residuals
+from a unidimensional item response theory model (\code{"IRT"}) using \code{\link[mirt]{mirt}}.
 Defaults to \code{"wTO"}}
 
 \item{type}{Character. Type of significance.
 Computes significance using the standard \emph{p}-value (\code{"alpha"}),
 adaptive alpha \emph{p}-value (\code{\link[NetworkToolbox]{adapt.a}}), 
 or some threshold \code{"threshold"}.
-Defaults to \code{"adapt"}}
+Defaults to \code{"threshold"}}
 
 \item{sig}{Numeric.
 \emph{p}-value for significance of overlap (defaults to \code{.05}).
@@ -82,13 +84,16 @@ Defaults for \code{"threshold"} for each \code{method}:
 \itemize{
 
 \item{\code{"wTO"}}
-{.20}
+{.25}
 
 \item{\code{"pcor"}}
-{.20}
+{.35}
 
 \item{\code{"cor"}}
-{.70}
+{.50}
+
+\item{\code{"IRT"}}
+{.35}
 
 }}
 
@@ -101,6 +106,11 @@ Defaults to \code{NULL} or the column names of \code{data}}
 Should redundancy reduction be performed?
 Defaults to \code{TRUE}.
 Set to \code{FALSE} for redundancy analysis only}
+
+\item{auto}{Boolean.
+Should redundancy reduction be automated?
+Defaults to \code{TRUE}.
+Set to \code{FALSE} for manual selection}
 
 \item{reduce.method}{Character.
 How should data be reduced?
@@ -166,13 +176,13 @@ Defaults:
 
 \itemize{
 
-\item{\code{vsize = 6}}{}
+\item{\code{vsize = 6}}{Changes node size}
 
-\item{\code{alpha = 0.4}}{}
+\item{\code{alpha = 0.4}}{Changes transparency}
 
-\item{\code{label.size = 5}}{}
+\item{\code{label.size = 5}}{Changes label size}
 
-\item{\code{edge.alpha = 0.7}}{}
+\item{\code{edge.alpha = 0.7}}{Changes edge transparency}
 
 }}
 }
@@ -274,8 +284,7 @@ key.ind <- match(colnames(items), as.character(psychTools::spi.dictionary$item_i
 key <- as.character(psychTools::spi.dictionary$item[key.ind])
 
 if(interactive()){
-UVA(data = items, method = "wTO", type = "adapt",
-    key = key, reduce.method = "latent")
+uva.results <- UVA(data = items, key = key)
 }
 
 }

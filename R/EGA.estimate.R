@@ -162,7 +162,7 @@
 #' @export
 #'
 # Estimates EGA
-# Updated 03.12.2020
+# Updated 16.06.2021
 EGA.estimate <- function(data, n = NULL,
                          model = c("glasso", "TMFG"), model.args = list(),
                          algorithm = c("walktrap", "louvain"), algorithm.args = list(),
@@ -170,7 +170,9 @@ EGA.estimate <- function(data, n = NULL,
                          verbose = TRUE,
                          ...)
 {
-
+  # Make the data a matrix
+  data <- as.matrix(data)
+  
   # Get additional arguments
   add.args <- list(...)
 
@@ -275,7 +277,6 @@ EGA.estimate <- function(data, n = NULL,
     n <- nrow(data)
 
     # Compute correlation matrix
-
     cor.data <- switch(corr,
                        cor_auto = qgraph::cor_auto(data, forcePD = TRUE),
                        pearson = cor(data, use = "pairwise.complete.obs", method = "pearson"),
@@ -294,16 +295,44 @@ EGA.estimate <- function(data, n = NULL,
 
   }else{
 
-    # Check if positive definite
-    if(any(eigen(data)$values < 0)){
-
-      # Let user know
-      warning("Correlation matrix is not positive definite.\nForcing positive definite matrix using Matrix::nearPD()\nResults may be unreliable")
-
-      # Force positive definite matrix
-      cor.data <- as.matrix(Matrix::nearPD(data, corr = TRUE, keepDiag = TRUE, ensureSymmetry = TRUE)$mat)
-
-    }else{cor.data <- data}
+    # Check if symmetric (time series data)
+    if(!isSymmetric(data)){
+      
+      # Obtain n
+      n <- nrow(data)
+      
+      # Compute correlation matrix
+      cor.data <- switch(corr,
+                         cor_auto = qgraph::cor_auto(data, forcePD = TRUE),
+                         pearson = cor(data, use = "pairwise.complete.obs", method = "pearson"),
+                         spearman = cor(data, use = "pairwise.complete.obs", method = "spearman")
+      )
+      
+      # Check if positive definite
+      if(any(eigen(cor.data)$values < 0)){
+        
+        # Let user know
+        warning("Correlation matrix is not positive definite.\nForcing positive definite matrix using Matrix::nearPD()\nResults may be unreliable")
+        
+        # Force positive definite matrix
+        cor.data <- as.matrix(Matrix::nearPD(cor.data, corr = TRUE, keepDiag = TRUE, ensureSymmetry = TRUE)$mat)
+        
+      }
+    }else{
+      
+      # Check if positive definite
+      if(any(eigen(data)$values < 0)){
+        
+        # Let user know
+        warning("Correlation matrix is not positive definite.\nForcing positive definite matrix using Matrix::nearPD()\nResults may be unreliable")
+        
+        # Force positive definite matrix
+        cor.data <- as.matrix(Matrix::nearPD(data, corr = TRUE, keepDiag = TRUE, ensureSymmetry = TRUE)$mat)
+        
+      }else{cor.data <- data}
+      
+    }
+    
   }
 
   #### ADDITIONAL ARGUMENTS HANDLING ####
@@ -403,9 +432,35 @@ EGA.estimate <- function(data, n = NULL,
   if(exists("unconnected")){
     wc[unconnected] <- NA
   }
+  
+  # Convert numbers to be consecutive
+  uniq.wc <- unique(na.omit(wc))
+  wc.ord <- sort(uniq.wc)
+  proper.ord <- 1:length(uniq.wc)
+
+  # Check changes needed for consecutive ordering
+  if(any(wc.ord != proper.ord)){
+
+    # Initialize new wc
+    new.wc <- numeric(length = length(wc))
+
+    # Target wcs to change
+    targets <- which(wc.ord != proper.ord)
+
+    if(length(targets) != 0){
+
+      for(i in targets){
+        new.wc[which(wc == wc.ord[i])] <- proper.ord[i]
+      }
+
+      wc <- ifelse(new.wc == 0, wc, new.wc)
+
+    }
+
+  }
 
   names(wc) <- colnames(data)
-  n.dim <- suppressWarnings(max(wc, na.rm = TRUE))
+  n.dim <- suppressWarnings(length(unique(na.omit(wc))))
 
   # Return results
   res <- list()
@@ -421,3 +476,4 @@ EGA.estimate <- function(data, n = NULL,
 
   return(res)
 }
+

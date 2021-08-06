@@ -4,7 +4,7 @@
 \alias{color_palette_EGA}
 \title{\code{\link[EGAnet]{EGA}} Color Palettes}
 \usage{
-color_palette_EGA(name, wc)
+color_palette_EGA(name, wc, sorted = FALSE)
 }
 \arguments{
 \item{name}{Character.
@@ -16,6 +16,10 @@ Defaults to \code{"polychrome"}.
 
 \item{\code{"polychrome"}}
 {Default 20 color palette}
+
+\item{\code{"grayscale"}}
+{"grayscale", "greyscale", or "colorblind" will produce
+plots suitable for publication purposes}
 
 \item{\code{"blue.ridge1"}}
 {Palette inspired by the Blue Ridge Mountains}
@@ -40,6 +44,10 @@ For custom colors, enter HEX codes for each dimension in a vector}
 A vector representing the community (dimension) membership
 of each node in the network. \code{NA} values mean that the node
 was disconnected from the network}
+
+\item{sorted}{Boolean.
+Should colors be sorted by wc?
+Defaults to \code{TRUE}}
 }
 \value{
 Vector of colors for community memberships

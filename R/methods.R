@@ -69,10 +69,13 @@ print.dynEGA<- function(x, ...) {
   print(x$dynEGA$dim.variables)
 }
 
+# PLOTS----
+# Updated 16.06.2021
+#' @export
 # Plot bootEGA----
-# Updated 12.02.2021
+# Updated 28.07.2021
 plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
-                         plot.args = list(), ...){
+                         plot.args = list(), produce = TRUE, ...){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
   {plot.type <- "GGally"
@@ -80,36 +83,11 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
   
   ## Check for input plot arguments
   if(plot.type == "GGally"){
-    
-    default.args <- formals(GGally::ggnet2)
-    ega.default.args <- list(node.size = 6, edge.size = 6,
-                             alpha = 0.7, label.size = 5,
-                             edge.alpha = 0.4, layout.exp = 0.2)
-    default.args[names(ega.default.args)]  <- ega.default.args
-    default.args <- default.args[-length(default.args)]
-    
-    
-    if("vsize" %in% names(plot.args)){
-      plot.args$node.size <- plot.args$vsize
-      plot.args$vsize <- NULL
-    }
-    
     if("legend.names" %in% names(plot.args)){
       legend.names <- plot.args$legend.names
-      plot.args$legend.names <- NULL
     }
-    
-    if("color.palette" %in% names(plot.args)){
-      color.palette <- plot.args$color.palette
-    }else{color.palette <- "polychrome"}
-    
-    if(any(names(plot.args) %in% names(default.args))){
-      target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
-      default.args[names(target.args)] <- target.args
-    }
-    
-    plot.args <- default.args
-    
+    plot.args <- GGally.args(plot.args)
+    color.palette <- plot.args$color.palette
   }
   
   ### Plot ###
@@ -121,6 +99,10 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     
     # Insignificant values (keeps ggnet2 from erroring out)
     x$typicalGraph$graph <- ifelse(abs(as.matrix(x$typicalGraph$graph)) <= .00001, 0, as.matrix(x$typicalGraph$graph))  
+    
+    # Reorder network and communities
+    x$typicalGraph$graph <- x$typicalGraph$graph[order(x$typicalGraph$wc), order(x$typicalGraph$wc)]
+    x$typicalGraph$wc <- x$typicalGraph$wc[order(x$typicalGraph$wc)]
     
     # weighted  network
     network1 <- network::network(x$typicalGraph$graph,
@@ -137,7 +119,8 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     
     network::set.vertex.attribute(network1, attrname= "Communities", value = x$typicalGraph$wc)
     network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
-    network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
+    network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, plot.args$edge.color[1], plot.args$edge.color[2]))
+    network::set.edge.attribute(network1, "line", ifelse(network::get.edge.value(network1, "weights") > 0, plot.args$edge.lty[1], plot.args$edge.lty[2]))
     network::set.edge.value(network1,attrname="AbsWeights",value=abs(x$typicalGraph$graph))
     network::set.edge.value(network1,attrname="ScaledWeights",
                             value=matrix(rescale.edges(x$typicalGraph$graph, plot.args$edge.size),
@@ -156,7 +139,10 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     plot.args$net <- network1
     plot.args$node.color <- "Communities"
     plot.args$node.alpha <- plot.args$alpha
+    node.size <- plot.args$node.size
+    plot.args$node.size <- 0
     plot.args$node.shape <- plot.args$shape
+    plot.args$edge.lty <- "line"
     plot.args$edge.color <- "color"
     plot.args$edge.size <- "ScaledWeights"
     plot.args$color.palette <- NULL
@@ -172,29 +158,80 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
     if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$node.size/2}
     if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$node.size/2}
     
-    ega.plot <- suppressMessages(
-      do.call(GGally::ggnet2, plot.args) + 
-        ggplot2::theme(legend.title = ggplot2::element_blank()) +
-        ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, na.omit(x$typicalGraph$wc)),
-                                    breaks = sort(x$typicalGraph$wc)) +
-        ggplot2::guides(
-          color = ggplot2::guide_legend(override.aes = list(
-            size = plot.args$node.size,
-            alpha = plot.args$alpha
-          ))
-        )
+    palette <- color_palette_EGA(color.palette, as.numeric(factor(x$typicalGraph$wc)))
+    palette <- ifelse(is.na(palette), "white", palette)
+    
+    ega.plot <- suppressWarnings(
+      suppressMessages(
+        do.call(GGally::ggnet2, plot.args) + 
+          ggplot2::theme(legend.title = ggplot2::element_blank())
+      )
     )
     
   }
   set.seed(NULL)
-  plot(ega.plot)
+  
+  name <- colnames(x$typicalGraph$graph)
+  
+  name.split <- lapply(name, function(x){
+    unlist(strsplit(x, split = " "))
+  })
+  
+  name <- unlist(
+    lapply(name.split, function(x){
+      
+      len <- length(x)
+      
+      if(len > 1){
+        
+        add.line <- round(len / 2)
+        
+        paste(
+          paste(x[1:add.line], collapse = " "),
+          paste(x[(add.line+1):length(x)], collapse = " "),
+          sep = "\n"
+        )
+        
+      }else{x}
+      
+    })
+  )
+  
+  # Border color
+  if(all(color.palette == "grayscale" |
+         color.palette == "greyscale" |
+         color.palette == "colorblind")){
+    border.color <- ifelse(palette == "white", "white", "black")
+  }else{border.color <- palette}
+  
+  # Custom nodes: transparent insides and dark borders
+  ega.plot <- ega.plot + 
+    ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
+                        color = border.color,
+                        shape = 1, stroke = 1.5, alpha = .8) +
+    ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
+                        color = palette,
+                        shape = 19, alpha = plot.args$alpha) +
+    ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
+    ggplot2::guides(
+      color = ggplot2::guide_legend(override.aes = list(
+        color = unique(palette),
+        size = node.size,
+        alpha = plot.args$alpha,
+        stroke = 1.5
+      ))
+    )
+  
+  if(isTRUE(produce)){
+    plot(ega.plot)
+  }else{return(ega.plot)}
 }
 
 # Plot dynEGA function (Level: Group)----
-# Updated 12.02.2021
+# Updated 28.07.2021
 #' @export
 plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally","qgraph"),
-                               plot.args = list(), ...){
+                               plot.args = list(), produce = TRUE, ...){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
   {plot.type <- "GGally"
@@ -202,31 +239,11 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
   
   ## Check for input plot arguments
   if(plot.type == "GGally"){
-    
-    default.args <- formals(GGally::ggnet2)
-    ega.default.args <- list(node.size = 6, edge.size = 6,
-                             alpha = 0.7, label.size = 5,
-                             edge.alpha = 0.4, layout.exp = 0.2)
-    default.args[names(ega.default.args)]  <- ega.default.args
-    default.args <- default.args[-length(default.args)]
-    
-    
-    if("vsize" %in% names(plot.args)){
-      plot.args$node.size <- plot.args$vsize
-      plot.args$vsize <- NULL
+    if("legend.names" %in% names(plot.args)){
+      legend.names <- plot.args$legend.names
     }
-    
-    if("color.palette" %in% names(plot.args)){
-      color.palette <- plot.args$color.palette
-    }else{color.palette <- "polychrome"}
-    
-    if(any(names(plot.args) %in% names(default.args))){
-      target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
-      default.args[names(target.args)] <- target.args
-    }
-    
-    plot.args <- default.args
-    
+    plot.args <- GGally.args(plot.args)
+    color.palette <- plot.args$color.palette
   }
   
   
@@ -249,6 +266,10 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       # Insignificant values (keeps ggnet2 from erroring out)
       x$dynEGA[[i]]$network <- ifelse(abs(as.matrix(x$dynEGA[[i]]$network)) <= .00001, 0, as.matrix(x$dynEGA[[i]]$network))
       
+      # Reorder network and communities
+      x$dynEGA[[i]]$network <- x$dynEGA[[i]]$network[order(x$dynEGA[[i]]$wc), order(x$dynEGA[[i]]$wc)]
+      x$dynEGA[[i]]$wc <- x$dynEGA[[i]]$wc[order(x$dynEGA[[i]]$wc)]
+      
       # weighted  network
       network1[[i]] <- network::network(x$dynEGA[[i]]$network,
                                         ignore.eval = FALSE,
@@ -257,7 +278,8 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       
       network::set.vertex.attribute(network1[[i]], attrname= "Communities", value = x$dynEGA[[i]]$wc)
       network::set.vertex.attribute(network1[[i]], attrname= "Names", value = network::network.vertex.names(network1[[i]]))
-      network::set.edge.attribute(network1[[i]], "color", ifelse(network::get.edge.value(network1[[i]], "weights") > 0, "darkgreen", "red"))
+      network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, plot.args$edge.color[1], plot.args$edge.color[2]))
+      network::set.edge.attribute(network1, "line", ifelse(network::get.edge.value(network1, "weights") > 0, plot.args$edge.lty[1], plot.args$edge.lty[2]))
       network::set.edge.value(network1[[i]], attrname="AbsWeights",value=abs(x$dynEGA[[i]]$network))
       network::set.edge.value(network1[[i]],attrname="ScaledWeights",
                               value=matrix(rescale.edges(x$dynEGA[[i]]$network, default.args$edge.size),
@@ -277,7 +299,10 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       plot.args$net <- network1[[i]]
       plot.args$node.color <- "Communities"
       plot.args$node.alpha <- plot.args$alpha
+      node.size <- plot.args$node.size
+      plot.args$node.size <- 0
       plot.args$node.shape <- plot.args$shape
+      plot.args$edge.lty <- "line"
       plot.args$edge.color <- "color"
       plot.args$edge.size <- "ScaledWeights"
       plot.args$color.palette <- NULL
@@ -293,32 +318,81 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$node.size/2}
       if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$node.size/2}
       
+      palette <- color_palette_EGA(color.palette, as.numeric(factor(x$dynEGA[[i]]$wc)))
+      palette <- ifelse(is.na(palette), "white", palette)
       
-      plots.net[[i]] <- suppressMessages(
-        do.call(GGally::ggnet2, plot.args) + 
-          ggplot2::theme(legend.title = ggplot2::element_blank()) +
-          ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, na.omit(x$dynEGA[[i]]$wc)),
-                                      breaks = sort(x$dynEGA[[i]]$wc)) +
-          ggplot2::guides(
-            color = ggplot2::guide_legend(override.aes = list(
-              size = plot.args$node.size,
-              alpha = plot.args$alpha
-            ))
-          )
+      plots.net[[i]] <- suppressWarnings(
+        suppressMessages(
+          do.call(GGally::ggnet2, plot.args) + 
+            ggplot2::theme(legend.title = ggplot2::element_blank())
+        )
       )
+      
+      name <- colnames(x$dynEGA[[i]]$network)
+      
+      name.split <- lapply(name, function(x){
+        unlist(strsplit(x, split = " "))
+      })
+      
+      name <- unlist(
+        lapply(name.split, function(x){
+          
+          len <- length(x)
+          
+          if(len > 1){
+            
+            add.line <- round(len / 2)
+            
+            paste(
+              paste(x[1:add.line], collapse = " "),
+              paste(x[(add.line+1):length(x)], collapse = " "),
+              sep = "\n"
+            )
+            
+          }else{x}
+          
+        })
+      )
+      
+      # Border color
+      if(all(color.palette == "grayscale" |
+             color.palette == "greyscale" |
+             color.palette == "colorblind")){
+        border.color <- ifelse(palette == "white", "white", "black")
+      }else{border.color <- palette}
+      
+      # Custom nodes: transparent insides and dark borders
+      plots.net[[i]] <- plots.net[[i]] + 
+        ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
+                            color = border.color,
+                            shape = 1, stroke = 1.5, alpha = .8) +
+        ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
+                            color = palette,
+                            shape = 19, alpha = plot.args$alpha) +
+        ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
+        ggplot2::guides(
+          color = ggplot2::guide_legend(override.aes = list(
+            color = unique(palette),
+            size = node.size,
+            alpha = plot.args$alpha,
+            stroke = 1.5
+          ))
+        )
       
     }
     group.labels <- names(x$dynEGA)
     set.seed(NULL)
-    ggpubr::ggarrange(plotlist=plots.net, ncol = ncol, nrow = nrow, labels = group.labels, label.x = 0.3)
+    if(isTRUE(produce)){
+      ggpubr::ggarrange(plotlist=plots.net, ncol = ncol, nrow = nrow, labels = group.labels, label.x = 0.3)
+    }else{return(plots.net)}
   }
 }
 
 # Plot dynEGA function (Level: Individual)----
-# Updated 12.02.2021
+# Updated 28.07.2021
 #' @export
 plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GGally","qgraph"),
-                                    plot.args = list(), ...){
+                                    plot.args = list(), produce = TRUE, ...){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
   {plot.type <- "GGally"
@@ -326,31 +400,11 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
   
   ## Check for input plot arguments
   if(plot.type == "GGally"){
-    
-    default.args <- formals(GGally::ggnet2)
-    ega.default.args <- list(node.size = 6, edge.size = 6,
-                             alpha = 0.7, label.size = 5,
-                             edge.alpha = 0.4, layout.exp = 0.2)
-    default.args[names(ega.default.args)]  <- ega.default.args
-    default.args <- default.args[-length(default.args)]
-    
-    
-    if("vsize" %in% names(plot.args)){
-      plot.args$node.size <- plot.args$vsize
-      plot.args$vsize <- NULL
+    if("legend.names" %in% names(plot.args)){
+      legend.names <- plot.args$legend.names
     }
-    
-    if("color.palette" %in% names(plot.args)){
-      color.palette <- plot.args$color.palette
-    }else{color.palette <- "polychrome"}
-    
-    if(any(names(plot.args) %in% names(default.args))){
-      target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
-      default.args[names(target.args)] <- target.args
-    }
-    
-    plot.args <- default.args
-    
+    plot.args <- GGally.args(plot.args)
+    color.palette <- plot.args$color.palette
   }
   
   ### Plot ###
@@ -361,6 +415,10 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     # Insignificant values (keeps ggnet2 from erroring out)
     x$dynEGA[[id]]$network <- ifelse(abs(as.matrix(x$dynEGA[[id]]$network)) <= .00001, 0, as.matrix(x$dynEGA[[id]]$network))
     
+    # Reorder network and communities
+    x$dynEGA[[id]]$network <- x$dynEGA[[id]]$network[order(x$dynEGA[[id]]$wc), order(x$dynEGA[[id]]$wc)]
+    x$dynEGA[[id]]$wc <- x$dynEGA[[id]]$wc[order(x$dynEGA[[id]]$wc)]
+    
     # weighted  network
     network1 <- network::network(x$dynEGA[[id]]$network,
                                  ignore.eval = FALSE,
@@ -369,7 +427,8 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     
     network::set.vertex.attribute(network1, attrname= "Communities", value = x$dynEGA[[id]]$wc)
     network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
-    network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
+    network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, plot.args$edge.color[1], plot.args$edge.color[2]))
+    network::set.edge.attribute(network1, "line", ifelse(network::get.edge.value(network1, "weights") > 0, plot.args$edge.lty[1], plot.args$edge.lty[2]))
     network::set.edge.value(network1,attrname="AbsWeights",value=abs(x$dynEGA[[id]]$network))
     network::set.edge.value(network1,attrname="ScaledWeights",
                             value=matrix(rescale.edges(x$dynEGA[[id]]$network, plot.args$edge.size),
@@ -389,7 +448,10 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     plot.args$net <- network1
     plot.args$node.color <- "Communities"
     plot.args$node.alpha <- plot.args$alpha
+    node.size <- plot.args$node.size
+    plot.args$node.size <- 0
     plot.args$node.shape <- plot.args$shape
+    plot.args$edge.lty <- "line"
     plot.args$edge.color <- "color"
     plot.args$edge.size <- "ScaledWeights"
     plot.args$color.palette <- NULL
@@ -405,29 +467,80 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$node.size/2}
     if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$node.size/2}
     
-    ega.plot <- suppressMessages(
-      do.call(GGally::ggnet2, plot.args) + 
-        ggplot2::theme(legend.title = ggplot2::element_blank()) +
-        ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, na.omit(x$dynEGA[[id]]$wc)),
-                                    breaks = sort(x$dynEGA[[id]]$wc)) +
-        ggplot2::guides(
-          color = ggplot2::guide_legend(override.aes = list(
-            size = plot.args$node.size,
-            alpha = plot.args$alpha
-          ))
-        )
+    palette <- color_palette_EGA(color.palette, as.numeric(factor(x$dynEGA[[id]]$wc)))
+    palette <- ifelse(is.na(palette), "white", palette)
+    
+    ega.plot <- suppressWarnings(
+      suppressMessages(
+        do.call(GGally::ggnet2, plot.args) + 
+          ggplot2::theme(legend.title = ggplot2::element_blank())
+      )
     )
     
+    name <- colnames(x$dynEGA[[id]]$network)
+    
+    name.split <- lapply(name, function(x){
+      unlist(strsplit(x, split = " "))
+    })
+    
+    name <- unlist(
+      lapply(name.split, function(x){
+        
+        len <- length(x)
+        
+        if(len > 1){
+          
+          add.line <- round(len / 2)
+          
+          paste(
+            paste(x[1:add.line], collapse = " "),
+            paste(x[(add.line+1):length(x)], collapse = " "),
+            sep = "\n"
+          )
+          
+        }else{x}
+        
+      })
+    )
+    
+    # Border color
+    if(all(color.palette == "grayscale" |
+           color.palette == "greyscale" |
+           color.palette == "colorblind")){
+      border.color <- ifelse(palette == "white", "white", "black")
+    }else{border.color <- palette}
+    
+    # Custom nodes: transparent insides and dark borders
+    ega.plot <- ega.plot + 
+      ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
+                          color = border.color,
+                          shape = 1, stroke = 1.5, alpha = .8) +
+      ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
+                          color = palette,
+                          shape = 19, alpha = plot.args$alpha) +
+      ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
+      ggplot2::guides(
+        color = ggplot2::guide_legend(override.aes = list(
+          color = unique(palette),
+          size = node.size,
+          alpha = plot.args$alpha,
+          stroke = 1.5
+        ))
+      )
+    
     set.seed(NULL)
-    plot(ega.plot)
+    
+    if(isTRUE(produce)){
+      plot(ega.plot)
+    }else{return(ega.plot)}
   }
 }
 
 # Plot dynEGA function (Level: Population)----
-# Updated 16.12.2020
+# Updated 28.07.2021
 #' @export
 plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
-                        plot.args = list(), ...){
+                        plot.args = list(), produce = TRUE, ...){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
   {plot.type <- "GGally"
@@ -435,36 +548,11 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
   
   ## Check for input plot arguments
   if(plot.type == "GGally"){
-    
-    default.args <- formals(GGally::ggnet2)
-    ega.default.args <- list(node.size = 6, edge.size = 6,
-                             alpha = 0.7, label.size = 5,
-                             edge.alpha = 0.4, layout.exp = 0.2)
-    default.args[names(ega.default.args)]  <- ega.default.args
-    default.args <- default.args[-length(default.args)]
-    
-    
-    if("vsize" %in% names(plot.args)){
-      plot.args$size <- plot.args$vsize
-      plot.args$vsize <- NULL
-    }
-    
     if("legend.names" %in% names(plot.args)){
       legend.names <- plot.args$legend.names
-      plot.args$legend.names <- NULL
     }
-    
-    if("color.palette" %in% names(plot.args)){
-      color.palette <- plot.args$color.palette
-    }else{color.palette <- "polychrome"}
-    
-    if(any(names(plot.args) %in% names(default.args))){
-      target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
-      default.args[names(target.args)] <- target.args
-    }
-    
-    plot.args <- default.args
-    
+    plot.args <- GGally.args(plot.args)
+    color.palette <- plot.args$color.palette
   }
   
   
@@ -475,6 +563,10 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     
     # Insignificant values (keeps ggnet2 from erroring out)
     x$dynEGA$network <- ifelse(abs(as.matrix(x$dynEGA$network)) <= .00001, 0, as.matrix(x$dynEGA$network))
+    
+    # Reorder network and communities
+    x$dynEGA$network <- x$dynEGA$network[order(x$dynEGA$wc), order(x$dynEGA$wc)]
+    x$dynEGA$wc <- x$dynEGA$wc[order(x$dynEGA$wc)]
     
     # weighted  network
     network1 <- network::network(x$dynEGA$network,
@@ -490,7 +582,8 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     
     network::set.vertex.attribute(network1, attrname= "Communities", value = x$dynEGA$wc)
     network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
-    network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
+    network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, plot.args$edge.color[1], plot.args$edge.color[2]))
+    network::set.edge.attribute(network1, "line", ifelse(network::get.edge.value(network1, "weights") > 0, plot.args$edge.lty[1], plot.args$edge.lty[2]))
     network::set.edge.value(network1,attrname="AbsWeights",value=abs(x$dynEGA$network))
     network::set.edge.value(network1,attrname="ScaledWeights",
                             value=matrix(rescale.edges(x$dynEGA$network, plot.args$edge.size),
@@ -511,7 +604,9 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     plot.args$node.color <- "Communities"
     plot.args$node.alpha <- plot.args$alpha
     plot.args$node.shape <- plot.args$shape
-    plot.args$node.size <- plot.args$size
+    node.size <- plot.args$node.size
+    plot.args$node.size <- 0
+    plot.args$edge.lty <- "line"
     plot.args$edge.color <- "color"
     plot.args$edge.size <- "ScaledWeights"
     plot.args$color.palette <- NULL
@@ -527,29 +622,80 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
     if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
     
-    ega.plot <- suppressMessages(
-      do.call(GGally::ggnet2, plot.args) + 
-        ggplot2::theme(legend.title = ggplot2::element_blank()) +
-        ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, na.omit(x$dynEGA$wc)),
-                                    breaks = sort(x$dynEGA$wc)) +
-        ggplot2::guides(
-          color = ggplot2::guide_legend(override.aes = list(
-            size = plot.args$size,
-            alpha = plot.args$alpha
-          ))
-        )
+    palette <- color_palette_EGA(color.palette, as.numeric(factor(x$dynEGA$wc)))
+    palette <- ifelse(is.na(palette), "white", palette)
+    
+    ega.plot <- suppressWarnings(
+      suppressMessages(
+        do.call(GGally::ggnet2, plot.args) + 
+          ggplot2::theme(legend.title = ggplot2::element_blank())
+      )
     )
+    
+    name <- colnames(x$dynEGA$network)
+    
+    name.split <- lapply(name, function(x){
+      unlist(strsplit(x, split = " "))
+    })
+    
+    name <- unlist(
+      lapply(name.split, function(x){
+        
+        len <- length(x)
+        
+        if(len > 1){
+          
+          add.line <- round(len / 2)
+          
+          paste(
+            paste(x[1:add.line], collapse = " "),
+            paste(x[(add.line+1):length(x)], collapse = " "),
+            sep = "\n"
+          )
+          
+        }else{x}
+        
+      })
+    )
+    
+    # Border color
+    if(all(color.palette == "grayscale" |
+           color.palette == "greyscale" |
+           color.palette == "colorblind")){
+      border.color <- ifelse(palette == "white", "white", "black")
+    }else{border.color <- palette}
+    
+    # Custom nodes: transparent insides and dark borders
+    ega.plot <- ega.plot + 
+      ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
+                          color = border.color,
+                          shape = 1, stroke = 1.5, alpha = .8) +
+      ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
+                          color = palette,
+                          shape = 19, alpha = plot.args$alpha) +
+      ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
+      ggplot2::guides(
+        color = ggplot2::guide_legend(override.aes = list(
+          color = unique(palette),
+          size = node.size,
+          alpha = plot.args$alpha,
+          stroke = 1.5
+        ))
+      )
     
   }
   set.seed(NULL)
-  plot(ega.plot)
+  
+  if(isTRUE(produce)){
+    plot(ega.plot)
+  }else{return(ega.plot)}
 }
 
 # Plot EGA----
-# Updated 16.12.2020
+# Updated 28.07.2021
 #' @export
 plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
-                     plot.args = list(), ...){
+                     plot.args = list(), produce = TRUE, ...){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
   {plot.type <- "GGally"
@@ -557,36 +703,11 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
   
   ## Check for input plot arguments
   if(plot.type == "GGally"){
-    
-    default.args <- formals(GGally::ggnet2)
-    ega.default.args <- list(node.size = 6, edge.size = 6,
-                             alpha = 0.7, label.size = 5,
-                             edge.alpha = 0.4, layout.exp = 0.2)
-    default.args[names(ega.default.args)]  <- ega.default.args
-    default.args <- default.args[-length(default.args)]
-    
-    
-    if("vsize" %in% names(plot.args)){
-      plot.args$size <- plot.args$vsize
-      plot.args$vsize <- NULL
-    }
-    
     if("legend.names" %in% names(plot.args)){
       legend.names <- plot.args$legend.names
-      plot.args$legend.names <- NULL
     }
-    
-    if("color.palette" %in% names(plot.args)){
-      color.palette <- plot.args$color.palette
-    }else{color.palette <- "polychrome"}
-    
-    if(any(names(plot.args) %in% names(default.args))){
-      target.args <- plot.args[which(names(plot.args) %in% names(default.args))]
-      default.args[names(target.args)] <- target.args
-    }
-    
-    plot.args <- default.args
-    
+    plot.args <- GGally.args(plot.args)
+    color.palette <- plot.args$color.palette
   }
   
   
@@ -595,21 +716,29 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
     ega.plot <- qgraph::qgraph(x$network, layout = "spring", vsize = plot.args$vsize, groups = as.factor(x$wc), ...)
   }else if(plot.type == "GGally"){
     
+    # Insignificant values (keeps ggnet2 from erroring out)
+    x$network <- ifelse(abs(as.matrix(x$network)) <= .00001, 0, as.matrix(x$network))
+    
+    if(exists("legend.names")){
+      for(l in 1:length(unique(legend.names))){
+        x$wc[x$wc == l] <- legend.names[l]
+      }
+    }
+    
+    # Reorder network and communities
+    x$network <- x$network[order(x$wc), order(x$wc)]
+    x$wc <- x$wc[order(x$wc)]
+    
     # weighted  network
     network1 <- network::network(x$network,
                                  ignore.eval = FALSE,
                                  names.eval = "weights",
                                  directed = FALSE)
     
-    if(exists("legend.names")){
-      for(l in 1:x$n.dim){
-        x$wc[x$wc == l] <- legend.names[l]
-      }
-    }
-    
     network::set.vertex.attribute(network1, attrname= "Communities", value = x$wc)
     network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
-    network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
+    network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, plot.args$edge.color[1], plot.args$edge.color[2]))
+    network::set.edge.attribute(network1, "line", ifelse(network::get.edge.value(network1, "weights") > 0, plot.args$edge.lty[1], plot.args$edge.lty[2]))
     network::set.edge.value(network1,attrname="AbsWeights",value=abs(x$network))
     network::set.edge.value(network1,attrname="ScaledWeights",
                             value=matrix(rescale.edges(x$network, plot.args$edge.size),
@@ -630,10 +759,12 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
     plot.args$node.color <- "Communities"
     plot.args$node.alpha <- plot.args$alpha
     plot.args$node.shape <- plot.args$shape
-    plot.args$node.size <- plot.args$size
+    node.size <- plot.args$node.size
+    plot.args$node.size <- 0
     plot.args$color.palette <- NULL
     plot.args$palette <- NULL
     plot.args$edge.color <- "color"
+    plot.args$edge.lty <- "line"
     plot.args$edge.size <- "ScaledWeights"
     
     lower <- abs(x$network[lower.tri(x$network)])
@@ -642,28 +773,78 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
     plot.args$edge.alpha <- non.zero
     plot.args$mode <- layout.spring
     plot.args$label <- colnames(x$network)
-    plot.args$node.label <- plot.args$label
+    plot.args$node.label <- rep("", ncol(x$network))
     if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
     if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
     
-    ega.plot <- suppressMessages(
-      do.call(GGally::ggnet2, plot.args) + 
-        ggplot2::theme(legend.title = ggplot2::element_blank()) +
-        ggplot2::scale_color_manual(values = color_palette_EGA(color.palette, na.omit(x$wc)),
-                                    breaks = sort(x$wc)) +
-        ggplot2::guides(
-          color = ggplot2::guide_legend(override.aes = list(
-            size = plot.args$size,
-            alpha = plot.args$alpha
-          ))
-        )
+    palette <- color_palette_EGA(color.palette, as.numeric(factor(x$wc)))
+    palette <- ifelse(is.na(palette), "white", palette)
+    
+    ega.plot <- suppressWarnings(
+      suppressMessages(
+        do.call(GGally::ggnet2, plot.args) + 
+          ggplot2::theme(legend.title = ggplot2::element_blank())
+      )
     )
+    
+    name <- colnames(x$network)
+    
+    name.split <- lapply(name, function(x){
+      unlist(strsplit(x, split = " "))
+    })
+    
+    name <- unlist(
+      lapply(name.split, function(x){
+        
+        len <- length(x)
+        
+        if(len > 1){
+          
+          add.line <- round(len / 2)
+          
+          paste(
+            paste(x[1:add.line], collapse = " "),
+            paste(x[(add.line+1):length(x)], collapse = " "),
+            sep = "\n"
+          )
+          
+        }else{x}
+        
+      })
+    )
+    
+    # Border color
+    if(all(color.palette == "grayscale" |
+           color.palette == "greyscale" |
+           color.palette == "colorblind")){
+      border.color <- ifelse(palette == "white", "white", "black")
+    }else{border.color <- palette}
+    
+    # Custom nodes: transparent insides and dark borders
+    ega.plot <- ega.plot + 
+      ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
+                          color = border.color,
+                          shape = 1, stroke = 1.5, alpha = .8) +
+      ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
+                          color = palette,
+                          shape = 19, alpha = plot.args$alpha) +
+      ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
+      ggplot2::guides(
+        color = ggplot2::guide_legend(override.aes = list(
+          color = unique(palette),
+          size = node.size,
+          alpha = plot.args$alpha,
+          stroke = 1.5
+        ))
+      )
     
   }
   
   set.seed(NULL)
   
-  plot(ega.plot)
+  if(isTRUE(produce)){
+    plot(ega.plot)
+  }else{return(ega.plot)}
 }
 
 # Plot EGA.fit----

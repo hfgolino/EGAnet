@@ -57,10 +57,10 @@
 #'
 #' @export
 # glla
-# Updated 02.15.2020
+# Updated 22.05.2021
 #'
 glla <- function(x, n.embed, tau, delta, order){
-  X <- Embed(x, E = n.embed, tau = tau)
+  X <- EGAnet:::Embed(x, E = n.embed, tau = tau)
 
   # Weights:
   v <- 1:n.embed

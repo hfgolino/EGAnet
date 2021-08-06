@@ -250,7 +250,14 @@ itemStability <- function (bootega.obj, IS.plot = TRUE, ...){
   results$item.stability$empirical.dimensions <- empirical.stability
   
   # Add full proportion matrix to the results
-  results$item.stability$all.dimensions <- as.matrix(final.proportion)
+  final.proportion <- as.matrix(final.proportion)
+  if(any(is.na(colnames(final.proportion))) | any(colnames(final.proportion) == "NA")){
+    
+    final.proportion <- final.proportion[,-which(is.na(colnames(final.proportion)) | colnames(final.proportion) == "NA")]
+    
+  }
+  
+  results$item.stability$all.dimensions <- final.proportion
   # as.matrix() resolves unidimensional structures
   
   # Plot
@@ -282,7 +289,7 @@ itemStability <- function (bootega.obj, IS.plot = TRUE, ...){
   if(any(class(loadings) == "try-error")){
     return(
       error.report(loadings,
-                   "itemStability.plot",
+                   "itemStability.loadings",
                    "itemStability")
     )
   }
