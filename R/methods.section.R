@@ -7,6 +7,7 @@
 #' 
 #' @param ... \code{\link{EGAnet}} objects.
 #' Available methods (more methods will be added soon!):
+#' @param output Can be "html" or "md" for markdown.
 #' 
 #' \itemize{
 #' 
@@ -93,7 +94,7 @@
 #'
 # Methods Section----
 # Updated 24.03.2021
-methods.section <- function(..., stats = c("net.loads", "net.scores",
+methods.section <- function(..., output = "html", stats = c("net.loads", "net.scores",
                                            "dimensionStability", "itemStability"))
 {
   # All statistics
@@ -377,8 +378,11 @@ methods.section <- function(..., stats = c("net.loads", "net.scores",
   tempHTML <- paste(tempdir(), "EGAnet_method.html", sep = "\\")
   tempHTML <- gsub("\\\\", "/", tempHTML)
   
-  markdown::markdownToHTML(text = knitr::knit(text = markobj), output = tempHTML)
+  if(output == "html") {
+    markdown::markdownToHTML(text = knitr::knit(text = markobj), output = tempHTML)
   
-  browseURL(tempHTML)
-  
+    browseURL(tempHTML)
+  } else {
+    markobj
+  }
 }
