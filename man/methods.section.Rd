@@ -6,12 +6,15 @@
 \usage{
 methods.section(
   ...,
+  output = "html",
   stats = c("net.loads", "net.scores", "dimensionStability", "itemStability")
 )
 }
 \arguments{
 \item{...}{\code{\link{EGAnet}} objects.
-Available methods (more methods will be added soon!):
+Available methods (more methods will be added soon!):}
+
+\item{output}{Can be "html" or "md" for markdown.
 
 \itemize{
 
