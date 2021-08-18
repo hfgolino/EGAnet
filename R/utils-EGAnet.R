@@ -2336,7 +2336,8 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
   }
   
   network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
-  network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
+  network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, plot.args$edge.color[1], plot.args$edge.color[2]))
+  network::set.edge.attribute(network1, "line", ifelse(network::get.edge.value(network1, "weights") > 0, plot.args$edge.lty[1], plot.args$edge.lty[2]))
   network::set.edge.value(network1,attrname="AbsWeights",value=abs(plot.mat))
   network::set.edge.value(network1,attrname="ScaledWeights",
                           value=matrix(rescale.edges(plot.mat, 5),
@@ -2365,6 +2366,7 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
   color.palette <- plot.args$color.palette
   plot.args$color.palette <- NULL
   plot.args$palette <- NULL
+  plot.args$edge.lty <- "line"
   plot.args$edge.color <- "color"
   plot.args$edge.size <- "ScaledWeights"
   

@@ -423,6 +423,23 @@ UVA <- function(data, n = NULL,
     
   }
   
+  ## check for "remove"
+  if(isTRUE(reduce)){
+    
+    if(isTRUE(auto)){
+      
+      if(reduce.method == "remove"){
+        
+        message("Warning: Automated UVA is not available for 'reduce.method = \"remove\"'\n'auto' set to 'FALSE'")
+        
+        auto <- FALSE
+        
+      }
+      
+    }
+    
+  }
+  
   ## plot.args
   plot.args <- GGally.args(plot.args)
   
@@ -690,3 +707,4 @@ UVA <- function(data, n = NULL,
   
 }
   
+      
