@@ -110,7 +110,7 @@ NULL
 #' Scheier, M. F., Carver, C. S., & Bridges, M. W. (1994).
 #' Distinguishing optimism from neuroticism (and trait anxiety, self-mastery, and self-esteem): a reevaluation of the Life Orientation Test.
 #' \emph{Journal of Personality and Social Psychology}, \emph{67}, 1063-1078.
-#' doi: \href{https://doi.org/10.1037//0022-3514.67.6.1063}{10.1037//0022-3514.67.6.1063}
+#' \doi{10.1037//0022-3514.67.6.1063}
 #'
 #' @examples
 #' data("optimism")
