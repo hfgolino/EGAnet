@@ -11,11 +11,13 @@
 \alias{plot.NetLoads}
 \title{S3Methods for Plotting}
 \usage{
-\method{plot}{bootEGA}(x, plot.type = c("GGally", "qgraph"), plot.args = list(), produce = TRUE, ...)
+\method{plot}{bootEGA}(x, plot.type = c("GGally", "qgraph"),
+plot.args = list(), produce = TRUE, ...)
 
 \method{plot}{CFA}(x, layout = "spring", vsize = 6, ...)
 
-\method{plot}{dynEGA}(x, title = "", plot.type = c("GGally", "qgraph"), plot.args = list(), produce = TRUE, ...)
+\method{plot}{dynEGA}(x, title = "", plot.type = c("GGally", "qgraph"),
+plot.args = list(), produce = TRUE, ...)
 
 \method{plot}{dynEGA.Groups}(x, ncol, nrow, title = "",
 plot.type = c("GGally", "qgraph"), plot.args = list(), produce = TRUE, ...)
@@ -23,7 +25,8 @@ plot.type = c("GGally", "qgraph"), plot.args = list(), produce = TRUE, ...)
 \method{plot}{dynEGA.Individuals}(x, title = "",  id = NULL,
 plot.type = c("GGally", "qgraph"), plot.args = list(), produce = TRUE, ...)
 
-\method{plot}{EGA}(x, title = "", plot.type = c("GGally", "qgraph"), plot.args = list(), produce = TRUE,  ...)
+\method{plot}{EGA}(x, title = "", plot.type = c("GGally", "qgraph"),
+plot.args = list(), produce = TRUE,  ...)
 
 \method{plot}{NetLoads}(x, ...)
 }

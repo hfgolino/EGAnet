@@ -32,7 +32,7 @@ poly.irt <- function(loadings, data)
   # Separate thresholds
   threshs <- list()
   
-  for(i in colnames(neoOpen)){
+  for(i in colnames(data)){
     threshs[[i]] <- thresholds[grep(i, names(thresholds))]
   }
   
@@ -2406,10 +2406,10 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
   
   # Custom nodes: transparent insides and dark borders
   redund.net <- redund.net + 
-    ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
+    ggplot2::geom_point(ggplot2::aes(color = "color"), size = node.size,
                         color = color_palette_EGA(color.palette, na.omit(as.numeric(factor(wc))), sorted = FALSE),
                         shape = 1, stroke = 1.5, alpha = .8) +
-    ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
+    ggplot2::geom_point(ggplot2::aes(color = "color"), size = node.size + .5,
                         color = color_palette_EGA(color.palette, na.omit(as.numeric(factor(wc))), sorted = FALSE),
                         shape = 19, alpha = plot.args$alpha) +
     ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size)

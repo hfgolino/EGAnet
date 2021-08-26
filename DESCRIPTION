@@ -21,6 +21,6 @@ Suggests: knitr, rmarkdown, markdown, kableExtra, psych, psychTools, ggpubr, ggp
         plyr, matrixcalc,
         pbapply, OpenMx, wTO, MASS, fitdistrplus, primes, purrr,
         shiny, shinyjs, shinyalert, shinyBS, R.matlab, foreign, readxl,
-        gridExtra, rstudioapi, RColorBrewer, infutil
+        gridExtra, rstudioapi, RColorBrewer, infutil, mirt
 VignetteBuilder: knitr
 RoxygenNote: 7.1.1

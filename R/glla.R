@@ -60,7 +60,7 @@
 # Updated 22.05.2021
 #'
 glla <- function(x, n.embed, tau, delta, order){
-  X <- EGAnet:::Embed(x, E = n.embed, tau = tau)
+  X <- Embed(x, E = n.embed, tau = tau)
 
   # Weights:
   v <- 1:n.embed

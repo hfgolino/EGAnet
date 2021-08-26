@@ -260,14 +260,6 @@ boot.wmt <- bootEGA(data = wmt, iter = 500, model = "TMFG", plot.type = "qgraph"
 algorithm = igraph::cluster_spinglass, type = "parametric", ncores = 2)
 }
 
-# Load data
-intwl <- intelligenceBattery[,8:66]
-
-\donttest{# Another bootEGA example
-boot.intwl <- bootEGA(data = intwl, iter = 500,
-plot.type = "qgraph", type = "parametric", ncores = 2)
-}
-
 }
 \references{
 # Original implementation of bootEGA \cr
