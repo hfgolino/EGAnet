@@ -494,7 +494,7 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
           
           ## Compute correlation matrix
           cor.data <- switch(corr,
-                             "cor_auto" = qgraph::cor_auto(sim.data),
+                             "cor_auto" = qgraph::cor_auto(sim.data, forcePD = TRUE),
                              "pearson" = cor(sim.data, use = "pairwise.complete.obs"),
                              "spearman" = cor(sim.data, method = "spearman", use = "pairwise.complete.obs")
           )
@@ -503,7 +503,7 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
           
           ## Compute correlation matrix
           cor.data <- switch(corr,
-                             "cor_auto" = qgraph::cor_auto(data),
+                             "cor_auto" = qgraph::cor_auto(data, forcePD = TRUE),
                              "pearson" = cor(data, use = "pairwise.complete.obs"),
                              "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
           )
@@ -517,7 +517,7 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
         
         ## Compute correlation matrix
         cor.data <- switch(corr,
-                           "cor_auto" = qgraph::cor_auto(data),
+                           "cor_auto" = qgraph::cor_auto(data, forcePD = TRUE),
                            "pearson" = cor(data, use = "pairwise.complete.obs"),
                            "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
         )
@@ -569,7 +569,7 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
       
       ## Compute correlation matrix
       cor.data <- switch(corr,
-                         "cor_auto" = qgraph::cor_auto(data),
+                         "cor_auto" = qgraph::cor_auto(data, forcePD = TRUE),
                          "pearson" = cor(data, use = "pairwise.complete.obs"),
                          "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
       )
@@ -699,16 +699,19 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
   if(isTRUE(plot.EGA)){
     a$Plot.EGA <- plot(a, plot.type = plot.type, plot.args = plot.args)
     
-    # check for variable labels in qgraph
-    if(plot.type == "qgraph"){
-      
-      if(is.null(names(a$Plot.EGA$graphAttributes$Nodes$labels))){
-        names(a$Plot.EGA$graphAttributes$Nodes$labels) <- paste(1:ncol(data))
-      }
-      
-      row.names(a$dim.variables) <- a$Plot.EGA$graphAttributes$Nodes$labels[match(a$dim.variables$items, names(a$Plot.EGA$graphAttributes$Nodes$labels))]
-      
-    }
+    
+    # CREATES ERROR IN EXAMPLES -- not sure what this code is for
+    
+    # # check for variable labels in qgraph
+    # if(plot.type == "qgraph"){
+    #   
+    #   if(is.null(names(a$Plot.EGA$graphAttributes$Nodes$labels))){
+    #     names(a$Plot.EGA$graphAttributes$Nodes$labels) <- paste(1:ncol(data))
+    #   }
+    #   
+    #   row.names(a$dim.variables) <- a$Plot.EGA$graphAttributes$Nodes$labels[match(a$dim.variables$items, names(a$Plot.EGA$graphAttributes$Nodes$labels))]
+    #   
+    # }
     
   }else{
     a$Plot.EGA <- qgraph::qgraph(a$network, DoNotPlot = TRUE)

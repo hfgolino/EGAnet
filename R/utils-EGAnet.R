@@ -32,7 +32,7 @@ poly.irt <- function(loadings, data)
   # Separate thresholds
   threshs <- list()
   
-  for(i in colnames(neoOpen)){
+  for(i in colnames(data)){
     threshs[[i]] <- thresholds[grep(i, names(thresholds))]
   }
   
@@ -66,6 +66,8 @@ poly.irt <- function(loadings, data)
 
 # From WGCNA version 1.70-3
 #' @noRd
+#' @importFrom graphics hist
+#' @importFrom stats lm
 #'
 #Scale-free fit index
 #Updated 12.05.2021
@@ -2336,7 +2338,8 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
   }
   
   network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
-  network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, "darkgreen", "red"))
+  network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, plot.args$edge.color[1], plot.args$edge.color[2]))
+  network::set.edge.attribute(network1, "line", ifelse(network::get.edge.value(network1, "weights") > 0, plot.args$edge.lty[1], plot.args$edge.lty[2]))
   network::set.edge.value(network1,attrname="AbsWeights",value=abs(plot.mat))
   network::set.edge.value(network1,attrname="ScaledWeights",
                           value=matrix(rescale.edges(plot.mat, 5),
@@ -2365,6 +2368,7 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
   color.palette <- plot.args$color.palette
   plot.args$color.palette <- NULL
   plot.args$palette <- NULL
+  plot.args$edge.lty <- "line"
   plot.args$edge.color <- "color"
   plot.args$edge.size <- "ScaledWeights"
   
@@ -2402,10 +2406,10 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
   
   # Custom nodes: transparent insides and dark borders
   redund.net <- redund.net + 
-    ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
+    ggplot2::geom_point(ggplot2::aes(color = "color"), size = node.size,
                         color = color_palette_EGA(color.palette, na.omit(as.numeric(factor(wc))), sorted = FALSE),
                         shape = 1, stroke = 1.5, alpha = .8) +
-    ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
+    ggplot2::geom_point(ggplot2::aes(color = "color"), size = node.size + .5,
                         color = color_palette_EGA(color.palette, na.omit(as.numeric(factor(wc))), sorted = FALSE),
                         shape = 19, alpha = plot.args$alpha) +
     ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size)

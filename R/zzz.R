@@ -13,7 +13,7 @@
                             sep = ""))
     
     msg <- paste(msg, paste(styletext("\n\nMAJOR CHANGE", defaults = "bold"),
-                            ": Unidimensionality adjustment in EGA functions has changed to the leading eigenvalue adjustment (see Christensen, Garrido, & Golino, 2021)",
+                            ": Unidimensionality adjustment in EGA functions has changed to the leading eigenvalue adjustment (see <https://doi.org/10.31234/osf.io/hz89e>)",
                             sep = ""))
     packageStartupMessage(msg)
 }

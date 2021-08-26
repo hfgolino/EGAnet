@@ -8,6 +8,9 @@
 #'
 #' @param ... \code{\link{EGAnet}} objects
 #' 
+#' @param labels Character vector.
+#' Labels for each \code{\link{EGAnet}} object
+#' 
 #' @param rows Numeric.
 #' Number of rows to spread plots across
 #' 

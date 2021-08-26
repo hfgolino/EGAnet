@@ -84,9 +84,9 @@
 network.descriptives <- function(network)
 {
   # Check for input
-  if(isTRUE(methods::is(network, "qgraph"))){
+  if(isTRUE(is(network, "qgraph"))){
     network <- qgraph::getWmat(network)
-  }else if(isTRUE(methods::is(network, "EGA"))){
+  }else if(isTRUE(is(network, "EGA"))){
     network <- network$network
   }
   
@@ -109,7 +109,7 @@ network.descriptives <- function(network)
   desc["swn.rand"] <- NetworkToolbox::smallworldness(network[degree != 0,degree != 0], method = "rand")$swm
   desc["swn.HG"] <- NetworkToolbox::smallworldness(network[degree != 0,degree != 0], method = "HG")$swm
   desc["swn.TJHBL"] <- NetworkToolbox::smallworldness(network[degree != 0,degree != 0], method = "TJHBL")$swm
-  desc["scale-free_R-sq"] <- as.matrix(EGAnet:::scaleFreeFitIndex(degree, nBreaks = 10)["Rsquared.SFT"])
+  desc["scale-free_R-sq"] <- as.matrix(scaleFreeFitIndex(degree, nBreaks = 10)["Rsquared.SFT"])
   
   return(round(desc, 3))
     

@@ -68,15 +68,8 @@
 #' 
 #' 
 #' @references
-#' # Original implementation of LCT \cr
-#' Christensen, A. P., & Golino, H. (in press).
-#' On the equivalency of factor and network loadings.
-#' \emph{Behavior Research Methods}.
-#' \doi{10.31234/osf.io/xakez}
-#' 
-#' # Current implementation of LCT \cr
 #' Christensen, A. P., & Golino, H. (2021).
-#' Factor model or small-world network? Predictions from neural networks.
+#' Factor or network model? Predictions from neural networks.
 #' \emph{Journal of Behavioral Data Science}, \emph{1}(1), 85-126.
 #' \doi{10.35566/jbds/v1n1/p5}
 #' 

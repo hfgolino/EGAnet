@@ -290,6 +290,7 @@
 #' @author Alexander Christensen <alexpaulchristensen@gmail.com>
 #'
 #' @importFrom stats pgamma pnorm qgamma qnorm cov2cor mad
+#' @importFrom utils capture.output
 #'
 #' @export
 #
@@ -417,6 +418,23 @@ UVA <- function(data, n = NULL,
       ## change key if NULL
       if(is.null(key)){
         data <- lavaan.formula.names(data)
+      }
+      
+    }
+    
+  }
+  
+  ## check for "remove"
+  if(isTRUE(reduce)){
+    
+    if(isTRUE(auto)){
+      
+      if(reduce.method == "remove"){
+        
+        message("Warning: Automated UVA is not available for 'reduce.method = \"remove\"'\n'auto' set to 'FALSE'")
+        
+        auto <- FALSE
+        
       }
       
     }
@@ -690,3 +708,4 @@ UVA <- function(data, n = NULL,
   
 }
   
+      

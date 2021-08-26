@@ -260,26 +260,18 @@ boot.wmt <- bootEGA(data = wmt, iter = 500, model = "TMFG", plot.type = "qgraph"
 algorithm = igraph::cluster_spinglass, type = "parametric", ncores = 2)
 }
 
-# Load data
-intwl <- intelligenceBattery[,8:66]
-
-\donttest{# Another bootEGA example
-boot.intwl <- bootEGA(data = intwl, iter = 500,
-plot.type = "qgraph", type = "parametric", ncores = 2)
-}
-
 }
 \references{
 # Original implementation of bootEGA \cr
-Christensen, A. P., & Golino, H. (2019).
+Christensen, A. P., & Golino, H. (2021).
 Estimating the stability of the number of factors via Bootstrap Exploratory Graph Analysis: A tutorial.
-\emph{PsyArXiv}.
+\emph{Psych}.
 \doi{10.31234/osf.io/9deay}
 
 # Structural consistency (see \code{\link[EGAnet]{dimensionStability}}) \cr
-Christensen, A. P., Golino, H., & Silvia, P. J. (in press).
+Christensen, A. P., Golino, H., & Silvia, P. J. (2020).
 A psychometric network perspective on the validity and validation of personality trait questionnaires.
-\emph{European Journal of Personality}.
+\emph{European Journal of Personality}, \emph{34}(6), 1095-1108.
 \doi{10.1002/per.2265}
 }
 \seealso{

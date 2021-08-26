@@ -11,19 +11,22 @@
 \alias{plot.NetLoads}
 \title{S3Methods for Plotting}
 \usage{
-\method{plot}{bootEGA}(x, plot.type = c("GGally", "qgraph"), plot.args = list(), ...)
+\method{plot}{bootEGA}(x, plot.type = c("GGally", "qgraph"),
+plot.args = list(), produce = TRUE, ...)
 
 \method{plot}{CFA}(x, layout = "spring", vsize = 6, ...)
 
-\method{plot}{dynEGA}(x, title = "", plot.type = c("GGally", "qgraph"), plot.args = list(), ...)
+\method{plot}{dynEGA}(x, title = "", plot.type = c("GGally", "qgraph"),
+plot.args = list(), produce = TRUE, ...)
 
 \method{plot}{dynEGA.Groups}(x, ncol, nrow, title = "",
-plot.type = c("GGally", "qgraph"), plot.args = list(),  ...)
+plot.type = c("GGally", "qgraph"), plot.args = list(), produce = TRUE, ...)
 
 \method{plot}{dynEGA.Individuals}(x, title = "",  id = NULL,
-plot.type = c("GGally", "qgraph"), plot.args = list(), ...)
+plot.type = c("GGally", "qgraph"), plot.args = list(), produce = TRUE, ...)
 
-\method{plot}{EGA}(x, title = "", plot.type = c("GGally", "qgraph"), plot.args = list(), ...)
+\method{plot}{EGA}(x, title = "", plot.type = c("GGally", "qgraph"),
+plot.args = list(), produce = TRUE,  ...)
 
 \method{plot}{NetLoads}(x, ...)
 }
@@ -72,6 +75,11 @@ See \code{\link[EGAnet]{color_palette_EGA}} for
 more details and examples}
 
 }}
+
+\item{produce}{Boolean.
+This argument is used internally.
+Should plot be produced?
+Defaults to \code{TRUE}}
 
 \item{...}{Arguments passed on to
 

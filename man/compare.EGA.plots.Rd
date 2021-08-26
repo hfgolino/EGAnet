@@ -9,6 +9,9 @@ compare.EGA.plots(..., labels, rows, columns)
 \arguments{
 \item{...}{\code{\link{EGAnet}} objects}
 
+\item{labels}{Character vector.
+Labels for each \code{\link{EGAnet}} object}
+
 \item{rows}{Numeric.
 Number of rows to spread plots across}
 
