@@ -1,8 +1,8 @@
 Changes in version 0.9.9
 
-o **UPDATE**: default undimensionality adjustment has changed to leading eigenvalue (see Christensen, Garrido, & Golino, 2021). Previous unidimensionality adjustment in versions <= 0.9.8 can be applied using `uni.method = "expand"`
+o **UPDATE**: default undimensionality adjustment has changed to leading eigenvalue (see <https://doi.org/10.31234/osf.io/hz89e>). Previous unidimensionality adjustment in versions <= 0.9.8 can be applied using `uni.method = "expand"`
 
-O **UPDATE**: default `UVA` was changed `type = "threshold"`
+O **UPDATE**: default `UVA` was changed `type = "threshold"` (default)
 
 o UPDATE: `UVA` is now automated using `auto = TRUE`
 

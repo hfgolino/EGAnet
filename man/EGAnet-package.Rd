@@ -29,22 +29,22 @@ Comparing community detection algorithms in psychological data: A Monte Carlo si
 \doi{10.31234/osf.io/hz89e} \cr
 # Related functions: \code{\link[EGAnet]{EGA}}
 
-Christensen, A. P., & Golino, H. (2019).
+Christensen, A. P., & Golino, H. (2021).
 Estimating the stability of the number of factors via Bootstrap Exploratory Graph Analysis: A tutorial.
-\emph{PsyArXiv}.
+\emph{Psych}.
 \doi{10.31234/osf.io/9deay} \cr
 # Related functions: \code{\link[EGAnet]{bootEGA}}
 
 Christensen, A. P., & Golino, H. (2021).
 On the equivalency of factor and network loadings.
-\emph{Behavior Research Methods}.
+\emph{Behavior Research Methods}, \emph{53}, 1563-1580.
 \doi{10.3758/s13428-020-01500-6} \cr
 # Related functions: \code{\link[EGAnet]{LCT}} and \code{\link[EGAnet]{net.loads}}
 
-Christensen, A. P., & Golino, H. (under review).
-Random, factor, or network model? Predictions from neural networks.
-\emph{PsyArXiv}.
-\doi{10.31234/osf.io/awkcb} \cr
+Christensen, A. P., & Golino, H. (2021).
+Factor or network model? Predictions from neural networks.
+\emph{Journal of Behavioral Data Science}, \emph{1}(1), 85-126.
+\doi{10.35566/jbds/v1n1/p5} \cr
 # Related functions: \code{\link[EGAnet]{LCT}}
 
 Christensen, A. P., Golino, H., & Silvia, P. J. (2020).
@@ -75,7 +75,7 @@ Exploratory graph analysis: A new approach for estimating the number of dimensio
 Golino, H., Moulder, R. G., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Nesselroade, J., Sadana, R., Thiyagarajan, J. A., & Boker, S. M. (2020).
 Entropy fit indices: New fit measures for assessing the structure and dimensionality of multiple latent variables.
 \emph{Multivariate Behavioral Research}.
-\doi{10.31234/osf.io/mtka2} \cr
+\doi{10.1080/00273171.2020.1779642} \cr
 # Related functions: \code{\link[EGAnet]{entropyFit}}, \code{\link[EGAnet]{tefi}}, and \code{\link[EGAnet]{vn.entropy}} 
 
 Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., Thiyagarajan, J. A., & Martinez-Molina, A. (2020).

@@ -91,12 +91,12 @@ net.scores(data = wmt, A = ega.wmt)
 \references{
 Christensen, A. P., & Golino, H. (2021).
 On the equivalency of factor and network loadings.
-\emph{Behavior Research Methods}.
+\emph{Behavior Research Methods}, \emph{53}, 1563-1580.
 \doi{10.3758/s13428-020-01500-6}
 
-Christensen, A. P., Golino, H., & Silvia, P. J. (in press).
-A psychometric network perspective on the measurement and assessment of personality traits.
-\emph{European Journal of Personality}.
+Christensen, A. P., Golino, H., & Silvia, P. J. (2020).
+A psychometric network perspective on the validity and validation of personality trait questionnaires.
+\emph{European Journal of Personality}, \emph{34}, 1095-1108.
 \doi{10.1002/per.2265}
 
 Golino, H., Christensen, A. P., Moulder, R., Kim, S., & Boker, S. M. (under review).
