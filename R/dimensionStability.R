@@ -7,7 +7,7 @@
 #' @param bootega.obj A \code{\link[EGAnet]{bootEGA}} object
 #' 
 #' @param ... Additional arguments.
-#' Used for deprecated arguments from previous versions of \code{\link[EGAnet]{dimStability}}
+#' Used for deprecated arguments from previous versions of dimStability
 #'
 #' @return Returns a list containing:
 #' 

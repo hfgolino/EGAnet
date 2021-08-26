@@ -16,19 +16,19 @@
 #' plot.NetLoads
 #'
 #' @usage
-#' \method{plot}{bootEGA}(x, plot.type = c("GGally", "qgraph"), plot.args = list(), ...)
+#' \method{plot}{bootEGA}(x, plot.type = c("GGally", "qgraph"), plot.args = list(), produce = TRUE, ...)
 #'
 #' \method{plot}{CFA}(x, layout = "spring", vsize = 6, ...)
 #'
-#' \method{plot}{dynEGA}(x, title = "", plot.type = c("GGally", "qgraph"), plot.args = list(), ...)
+#' \method{plot}{dynEGA}(x, title = "", plot.type = c("GGally", "qgraph"), plot.args = list(), produce = TRUE, ...)
 #'
 #' \method{plot}{dynEGA.Groups}(x, ncol, nrow, title = "",
-#' plot.type = c("GGally", "qgraph"), plot.args = list(),  ...)
+#' plot.type = c("GGally", "qgraph"), plot.args = list(), produce = TRUE, ...)
 #'
 #' \method{plot}{dynEGA.Individuals}(x, title = "",  id = NULL,
-#' plot.type = c("GGally", "qgraph"), plot.args = list(), ...)
+#' plot.type = c("GGally", "qgraph"), plot.args = list(), produce = TRUE, ...)
 #'
-#' \method{plot}{EGA}(x, title = "", plot.type = c("GGally", "qgraph"), plot.args = list(), ...)
+#' \method{plot}{EGA}(x, title = "", plot.type = c("GGally", "qgraph"), plot.args = list(), produce = TRUE,  ...)
 #'
 #' \method{plot}{NetLoads}(x, ...)
 #'
@@ -99,6 +99,12 @@
 #' more details and examples}
 #' 
 #' }
+#' 
+#' @param produce Boolean.
+#' This argument is used internally.
+#' Should plot be produced?
+#' Defaults to \code{TRUE}
+#' 
 #'
 #' @param ... Arguments passed on to
 #'
@@ -255,10 +261,10 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
   
   # Custom nodes: transparent insides and dark borders
   ega.plot <- ega.plot + 
-    ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
+    ggplot2::geom_point(ggplot2::aes(color = "color"), size = node.size,
                         color = border.color,
                         shape = 1, stroke = 1.5, alpha = .8) +
-    ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
+    ggplot2::geom_point(ggplot2::aes(color = "color"), size = node.size + .5,
                         color = palette,
                         shape = 19, alpha = plot.args$alpha) +
     ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
@@ -412,10 +418,10 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
       
       # Custom nodes: transparent insides and dark borders
       plots.net[[i]] <- plots.net[[i]] + 
-        ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
+        ggplot2::geom_point(ggplot2::aes(color = "color"), size = node.size,
                             color = border.color,
                             shape = 1, stroke = 1.5, alpha = .8) +
-        ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
+        ggplot2::geom_point(ggplot2::aes(color = "color"), size = node.size + .5,
                             color = palette,
                             shape = 19, alpha = plot.args$alpha) +
         ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
@@ -561,10 +567,10 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
     
     # Custom nodes: transparent insides and dark borders
     ega.plot <- ega.plot + 
-      ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
+      ggplot2::geom_point(ggplot2::aes(color = "color"), size = node.size,
                           color = border.color,
                           shape = 1, stroke = 1.5, alpha = .8) +
-      ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
+      ggplot2::geom_point(ggplot2::aes(color = "color"), size = node.size + .5,
                           color = palette,
                           shape = 19, alpha = plot.args$alpha) +
       ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
@@ -716,10 +722,10 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
     
     # Custom nodes: transparent insides and dark borders
     ega.plot <- ega.plot + 
-      ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
+      ggplot2::geom_point(ggplot2::aes(color = "color"), size = node.size,
                           color = border.color,
                           shape = 1, stroke = 1.5, alpha = .8) +
-      ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
+      ggplot2::geom_point(ggplot2::aes(color = "color"), size = node.size + .5,
                           color = palette,
                           shape = 19, alpha = plot.args$alpha) +
       ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
@@ -871,10 +877,10 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
     
     # Custom nodes: transparent insides and dark borders
     ega.plot <- ega.plot + 
-      ggplot2::geom_point(ggplot2::aes(color = color), size = node.size,
+      ggplot2::geom_point(ggplot2::aes(color = "color"), size = node.size,
                           color = border.color,
                           shape = 1, stroke = 1.5, alpha = .8) +
-      ggplot2::geom_point(ggplot2::aes(color = color), size = node.size + .5,
+      ggplot2::geom_point(ggplot2::aes(color = "color"), size = node.size + .5,
                           color = palette,
                           shape = 19, alpha = plot.args$alpha) +
       ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +

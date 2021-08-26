@@ -10,7 +10,7 @@ dimensionStability(bootega.obj, ...)
 \item{bootega.obj}{A \code{\link[EGAnet]{bootEGA}} object}
 
 \item{...}{Additional arguments.
-Used for deprecated arguments from previous versions of \code{\link[EGAnet]{dimStability}}}
+Used for deprecated arguments from previous versions of dimStability}
 }
 \value{
 Returns a list containing:

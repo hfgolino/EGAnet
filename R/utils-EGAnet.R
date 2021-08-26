@@ -66,6 +66,8 @@ poly.irt <- function(loadings, data)
 
 # From WGCNA version 1.70-3
 #' @noRd
+#' @importFrom graphics hist
+#' @importFrom stats lm
 #'
 #Scale-free fit index
 #Updated 12.05.2021

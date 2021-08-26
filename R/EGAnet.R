@@ -27,7 +27,8 @@
 #' Estimating the stability of the number of factors via Bootstrap Exploratory Graph Analysis: A tutorial.
 #' \emph{Psych}.
 #' \doi{10.31234/osf.io/9deay} \cr
-#' # Related functions: \code{\link[EGAnet]{bootEGA}}
+#' # Related functions: \code{\link[EGAnet]{bootEGA}}, \code{\link[EGAnet]{dimensionStability}},
+#' # and \code{\link[EGAnet]{itemStability}}
 #' 
 #' Christensen, A. P., & Golino, H. (2021).
 #' On the equivalency of factor and network loadings.
@@ -45,7 +46,7 @@
 #' A psychometric network perspective on the validity and validation of personality trait questionnaires.
 #' \emph{European Journal of Personality}, \emph{34}, 1095-1108.
 #' \doi{10.1002/per.2265} \cr
-#' # Related functions: \code{\link[EGAnet]{bootEGA}}, \code{\link[EGAnet]{dimStability}},
+#' # Related functions: \code{\link[EGAnet]{bootEGA}}, \code{\link[EGAnet]{dimensionStability}},
 #' # \code{\link[EGAnet]{EGA}}, \code{\link[EGAnet]{itemStability}}, and \code{\link[EGAnet]{UVA}}
 #' 
 #' Golino, H., Christensen, A. P., Moulder, R. G., Kim, S., & Boker, S. M. (under review).

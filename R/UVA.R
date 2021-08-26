@@ -290,6 +290,7 @@
 #' @author Alexander Christensen <alexpaulchristensen@gmail.com>
 #'
 #' @importFrom stats pgamma pnorm qgamma qnorm cov2cor mad
+#' @importFrom utils capture.output
 #'
 #' @export
 #
