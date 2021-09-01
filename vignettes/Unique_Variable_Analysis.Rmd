@@ -28,8 +28,11 @@ Before digging into UVA, the data should be loaded from the *psychTools* package
 
 ```{r packages load, eval = FALSE, echo = TRUE, comment = NA, warning = FALSE, message = FALSE}
 # Download latest EGAnet package
-devtools::install_github("hfgolino/EGAnet",
-                         dependencies = c("Imports", "Suggests"))
+devtools::install_github(
+  "hfgolino/EGAnet",
+  dependencies = c("Imports", "Suggests"),
+  build_vignettes = TRUE
+)
 
 # Load packages
 library(psychTools)
@@ -79,7 +82,7 @@ To handle the redundancy in the scale, we can now use the `UVA` function:
 sapa.ra <- UVA(data = items, method = "wTO",
                type = "adapt", key = key,
                reduce = TRUE, reduce.method = "latent",
-               adhoc = TRUE)
+               adhoc = TRUE, auto = FALSE)
 ```
 
 There are a few arguments worth noting. First, `method` will change the association method being used. By default, the weighted topological overlap method (`"wTO"`) is applied. Second, `type` will change the significance type being used. By default, adaptive alpha is used (`"adapt"`). The `key` argument will accept item descriptions that map to the variables in the `data` argument. The `reduce` argument, which defaults to `TRUE`, is for whether the reduction process should occur. The `reduce.method` is whether the reduction process should be to create latent variables of redundant items (`"latent"`) or remove all but one of the redundant items (`"remove"`). `reduce.method` defaults to `"latent"` (to continue with the `"remove"` tutorial, skip to [next section](#remove)). Finally, `adhoc` will perform an adhoc redundancy check using the weighted topological overlap method with threshold. This check is to determine whether redundancies still might exist in the data.
