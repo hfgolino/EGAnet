@@ -1,5 +1,7 @@
 Changes in version 0.9.9
 
+o FIX: Bug within the bootEGA function for `type = "resampling"`.
+
 o **UPDATE**: default undimensionality adjustment has changed to leading eigenvalue (see Christensen, Garrido, & Golino, 2021). Previous unidimensionality adjustment in versions <= 0.9.8 can be applied using `uni.method = "expand"`
 
 O **UPDATE**: default `UVA` was changed `type = "threshold"`
@@ -8,7 +10,7 @@ o UPDATE: `UVA` is now automated using `auto = TRUE`
 
 o DEFUNCT: `dimStability` will no longer be supported. Instead, use `dimensionStability`
 
-o REVAMP: `itemStability` has been recoded. Now includes error checking and more readable code 
+o REVAMP: `itemStability` has been recoded. Now includes error checking and more readable code
 
 o FIX: bug for plotting NA communities
 

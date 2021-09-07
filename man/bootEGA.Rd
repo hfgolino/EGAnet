@@ -31,7 +31,7 @@ Includes the variables to be used in the \code{bootEGA} analysis}
 Sample size if \code{data} provided is a correlation matrix}
 
 \item{uni.method}{Character.
-What unidimensionality method should be used? 
+What unidimensionality method should be used?
 Defaults to \code{"LE"}.
 Current options are:
 
@@ -39,7 +39,7 @@ Current options are:
 
 \item{\strong{\code{expand}}}
 {Expands the correlation matrix with four variables correlated .50.
-If number of dimension returns 2 or less in check, then the data 
+If number of dimension returns 2 or less in check, then the data
 are unidimensional; otherwise, regular EGA with no matrix
 expansion is used. This is the method used in the Golino et al. (2020)
 \emph{Psychological Methods} simulation.}
@@ -179,7 +179,7 @@ full list of arguments):
 \item{\strong{\code{color.palette}}}
 {The color palette for the nodes. For custom colors,
 enter HEX codes for each dimension in a vector.
-See \code{\link[EGAnet]{color_palette_EGA}} for 
+See \code{\link[EGAnet]{color_palette_EGA}} for
 more details and examples}
 
 }}
