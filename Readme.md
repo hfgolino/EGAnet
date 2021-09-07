@@ -31,10 +31,10 @@ Chrisensen, A. P., Garrido, L. E., & Golino, H. (under review). Unique Variable 
 Christensen, A. P., Garrido, L. E., & Golino, H. (under review). Comparing community detection algorithms in psychological data: A Monte Carlo simulation. *PsyArXiv*. doi:[10.31234/osf.io/hz89e](https://doi.org/10.31234/osf.io/hz89e)
 + Related functions: `EGA`
 
-Christensen, A. P., & Golino, H. (under review).
-Estimating the stability of psychological dimensions via Bootstrap Exploratory Graph Analysis: A Monte Carlo simulation and tutorial. *PsyArXiv*.
-doi:[10.31234/osf.io/9deay](https://doi.org/10.31234/osf.io/9deay)
-+ Related functions: `bootEGA`
+Christensen, A. P., & Golino, H. (2021).
+Estimating the stability of psychological dimensions via Bootstrap Exploratory Graph Analysis: A Monte Carlo simulation and tutorial. *Psych*, *3*(3), 479-500.
+doi:[10.3390/psych3030032](https://doi.org/10.3390/psych3030032)
++ Related functions: `bootEGA`, `dimensionStability`, and `itemStability`
 
 Christensen, A. P., & Golino, H. (2021). Factor or network model? Predictions from neural networks. *Journal of Behavioral Data Science*, *1*(1), 85-126. doi:[10.35566/jbds/v1n1/p5](https://doi.org/10.35566/jbds/v1n1/p5)
 + Related functions: `LCT`
@@ -43,7 +43,7 @@ Christensen, A. P., & Golino, H. (2021). On the equivalency of factor and networ
 + Related functions: `LCT` and `net.loads`
 
 Christensen, A. P., Golino, H., & Silvia, P. J. (2020). A psychometric network perspective on the validity and validation of personality trait questionnaires. *European Journal of Personality*, *34*, 1095-1108. doi:[10.1002/per.2265](https://doi.org/10.1002/per.2265)
-+ Related functions: `bootEGA`, `dimStability`, `EGA`, `itemStability`, and `UVA`
++ Related functions: `bootEGA`, `dimensionStability`, `EGA`, `itemStability`, and `UVA`
 
 Golino, H., Christensen, A. P., Moulder, R. G., Kim, S., & Boker, S. M. (under review). Modeling latent topics in social media using Dynamic Exploratory Graph Analysis: The case of the right-wing and left-wing trolls in the 2016 US elections. *PsyArXiv*. doi:[10.31234/osf.io/tfs7c](https://doi.org/10.31234/osf.io/tfs7c)
 + Related functions: `dynEGA` and `simDFM`
