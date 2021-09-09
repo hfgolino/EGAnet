@@ -105,9 +105,12 @@ net.scores <- function (data, A, wc, global = FALSE, impute, ...)
     stop("Argument 'data' is required for analysis")
   }
   
-  if (any(class(A) == "EGA") | any(class(A) == "dynEGA")) {
+  if (any(class(A) == "EGA")) {
     wc <- A$wc
     A <- A$network
+  }else if any(class(A) == "dynEGA"){
+    wc <- A$dynEGA$wc
+    A <- A$dynEGA$network
   }else if (missing(A)) {
     stop("Adjacency matrix is required for analysis")
   }else if (missing(wc)) {
