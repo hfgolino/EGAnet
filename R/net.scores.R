@@ -108,7 +108,7 @@ net.scores <- function (data, A, wc, global = FALSE, impute, ...)
   if (any(class(A) == "EGA")) {
     wc <- A$wc
     A <- A$network
-  }else if any(class(A) == "dynEGA"){
+  }else if (any(class(A) == "dynEGA")) {
     wc <- A$dynEGA$wc
     A <- A$dynEGA$network
   }else if (missing(A)) {
