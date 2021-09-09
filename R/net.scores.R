@@ -104,20 +104,21 @@ net.scores <- function (data, A, wc, global = FALSE, impute, ...)
   if (missing(data)) {
     stop("Argument 'data' is required for analysis")
   }
+  
   if (any(class(A) == "EGA") | any(class(A) == "dynEGA")) {
     wc <- A$wc
     A <- A$network
-  }
-  else if (missing(A)) {
+  }else if (missing(A)) {
     stop("Adjacency matrix is required for analysis")
+  }else if (missing(wc)) {
+    wc <- rep(1, ncol(data))
   }
+  
   if (missing(impute)) {
     impute <- "none"
     warning("Argument 'impute' is missing. No imputation will be used.")
   }
-  else if (missing(wc)) {
-    wc <- rep(1, ncol(data))
-  }
+  
   P <- net.loads(A = A, wc = wc, pos.manifold = TRUE)$std
   nfacts <- length(unique(wc))
   if (nfacts > 1) {
