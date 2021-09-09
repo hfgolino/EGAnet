@@ -22,4 +22,4 @@ Suggests: knitr, rmarkdown, markdown, kableExtra, psych, psychTools, ggpubr, ggp
         shiny, shinyjs, shinyalert, shinyBS, R.matlab, foreign, readxl,
         gridExtra, rstudioapi, RColorBrewer, infutil
 VignetteBuilder: knitr
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2

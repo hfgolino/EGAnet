@@ -57,16 +57,16 @@ res$dimension.stability
 # Changing plot features (ggplot2)
 ## Changing colors (ignore warnings)
 ### qgraph Defaults
-res$item.stability$plot + 
+res$item.stability$plot +
     ggplot2::scale_color_manual(values = rainbow(length(
     res$dimension.stability$structural.consistency)))
 
 ### Pastel
-res$item.stability$plot + 
+res$item.stability$plot +
     ggplot2::scale_color_brewer(palette = "Pastel1")
-    
+
 ## Changing Legend (ignore warnings)
-res$item.stability$plot + 
+res$item.stability$plot +
     ggplot2::scale_color_discrete(labels = "Intelligence")
 
 }
