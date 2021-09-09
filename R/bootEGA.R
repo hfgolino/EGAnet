@@ -8,20 +8,20 @@
 #'
 #' @param data Matrix or data frame.
 #' Includes the variables to be used in the \code{bootEGA} analysis
-#' 
+#'
 #' @param n Integer.
 #' Sample size if \code{data} provided is a correlation matrix
 #'
 #' @param uni.method Character.
-#' What unidimensionality method should be used? 
+#' What unidimensionality method should be used?
 #' Defaults to \code{"LE"}.
 #' Current options are:
-#' 
+#'
 #' \itemize{
 #'
 #' \item{\strong{\code{expand}}}
 #' {Expands the correlation matrix with four variables correlated .50.
-#' If number of dimension returns 2 or less in check, then the data 
+#' If number of dimension returns 2 or less in check, then the data
 #' are unidimensional; otherwise, regular EGA with no matrix
 #' expansion is used. This is the method used in the Golino et al. (2020)
 #' \emph{Psychological Methods} simulation.}
@@ -32,7 +32,7 @@
 #' then the leading eigenvalue solution is used; otherwise, regular EGA
 #' is used. This is the final method used in the Christensen, Garrido,
 #' and Golino (2021) simulation.}
-#' 
+#'
 #' }
 #'
 #' @param iter Numeric integer.
@@ -54,7 +54,7 @@
 #' {Generates n random subsamples of the original data}
 #'
 #' }
-#' 
+#'
 #' @param corr Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
 #' Current options are:
 #'
@@ -154,16 +154,16 @@
 #'
 #' \item{\strong{\code{edge.alpha}}}
 #' {The level of transparency of the edges, which might be a single value or a vector of values. Defaults to 0.4.}
-#' 
+#'
 #'  \item{\strong{\code{legend.names}}}
 #' {A vector with names for each dimension}
-#' 
+#'
 #' \item{\strong{\code{color.palette}}}
 #' {The color palette for the nodes. For custom colors,
 #' enter HEX codes for each dimension in a vector.
-#' See \code{\link[EGAnet]{color_palette_EGA}} for 
+#' See \code{\link[EGAnet]{color_palette_EGA}} for
 #' more details and examples}
-#' 
+#'
 #' }
 #'
 #'
@@ -287,10 +287,10 @@ bootEGA <- function(data, n = NULL, uni.method = c("expand", "LE"), iter,
     # Handle the number of steps appropriately
     algorithm.args$steps <- add.args$steps
   }
-  
+
   # Check if uni has been input as an argument
   if("uni" %in% names(add.args)){
-    
+
     # Give deprecation warning
     warning(
       "The 'uni' argument has been deprecated in all EGA functions."
@@ -298,16 +298,16 @@ bootEGA <- function(data, n = NULL, uni.method = c("expand", "LE"), iter,
   }
 
   #### DEPRECATED ARGUMENTS ####
-  
+
   # Message function
   message(styletext(styletext("\nBootstrap Exploratory Graph Analysis\n", defaults = "underline"), defaults = "bold"))
 
   #### MISSING ARGUMENTS HANDLING ####
-  
+
   if(missing(uni.method)){
     uni.method <- "LE"
   }else{uni.method <- match.arg(uni.method)}
-  
+
   if(missing(corr)){
     corr <- "cor_auto"
   }else{corr <- match.arg(corr)}
@@ -344,7 +344,7 @@ bootEGA <- function(data, n = NULL, uni.method = c("expand", "LE"), iter,
   color.palette <- "polychrome"
 
   #### MISSING ARGUMENTS HANDLING ####
-  
+
   # Let user know setting
   message(paste(" \u2022 type = ", type, "\n",
                 " \u2022 iterations = ", iter, "\n",
@@ -371,17 +371,17 @@ bootEGA <- function(data, n = NULL, uni.method = c("expand", "LE"), iter,
 
   #number of cases
   if(is.null(n)){
-    
+
     if(isSymmetric(as.matrix(data))){
       stop("The argument 'n' is missing for a symmetric matrix")
     }else{
       cases <- nrow(data)
     }
-    
+
   }else{
     cases <- n
   }
-  
+
   #empirical EGA
   empirical.EGA <- suppressMessages(suppressWarnings(EGA(data = data, n = cases, uni.method = uni.method, corr = corr,
                                                          model = model, model.args = model.args,
@@ -390,24 +390,24 @@ bootEGA <- function(data, n = NULL, uni.method = c("expand", "LE"), iter,
 
   #set inverse covariance matrix for parametric approach
   if(type == "parametric"){  # Use a parametric approach
-    
+
     ## Compute correlation matrix
-    cor.data <- empirical.EGA$correlation  
+    cor.data <- empirical.EGA$correlation
 
     # Generating data will be continuous
     corr.method <- "pearson"
-    
+
   }else if(type == "resampling"){
-    
+
     # Check if matrix is symmetric
-    if(isSymmetric(data)){
+    if(isSymmetric(as.matrix(data))){
       warning("The argument 'data' is symmetric and therefore treated as a correlation matrix. Parametric bootstrap will be used instead")
       type <- "parametric"
       corr.method <- "pearson"
     }else{
       corr.method <- corr
     }
-    
+
   }
 
   #initialize data list
@@ -507,22 +507,22 @@ bootEGA <- function(data, n = NULL, uni.method = c("expand", "LE"), iter,
     # Sub-routine to following EGA approach (handles undimensional structures)
     typical.wc <- suppressWarnings(
       suppressMessages(
-        
+
         typicalStructure.network(A = typical.Structure, corr = corr,
                                  model = model, model.args = model.args,
                                  n = cases, uni.method = uni.method, algorithm = algorithm,
                                  algorithm.args = algorithm.args)
-        
+
       )
     )
 
     typical.ndim <- length(na.omit(unique(typical.wc)))
-    
+
     if(typical.ndim == 1){typical.wc[1:length(typical.wc)] <- 1}
-    
+
     dim.variables <- data.frame(items = colnames(data), dimension = typical.wc)
   }
-  
+
   Median <- median(boot.ndim[, 2], na.rm = TRUE)
   se.boot <- sd(boot.ndim[, 2], na.rm = TRUE)
   ciMult <- qt(0.95/2 + 0.5, nrow(boot.ndim) - 1)
@@ -559,20 +559,20 @@ bootEGA <- function(data, n = NULL, uni.method = c("expand", "LE"), iter,
 
   # Typical structure
   if (typicalStructure) {
-    
+
     typicalGraph <- list()
     typicalGraph$graph <- typical.Structure
     typicalGraph$typical.dim.variables <- dim.variables[order(dim.variables[,2]), ]
     typicalGraph$wc <- typical.wc
     result$typicalGraph <- typicalGraph
-    
+
   }
-  
+
   # Add plot arguments (for itemStability)
   result$color.palette <- color.palette
 
   class(result) <- "bootEGA"
-  
+
   if(typicalStructure & plot.typicalStructure){
     result$plot.typical.ega <- plot(result)
   }

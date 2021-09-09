@@ -4,7 +4,7 @@
 
 #Bootstrap EGA WMT-2 Data----
 #' Bootstrap EGA WMT-2 Data
-#' 
+#'
 #' \code{\link[EGAnet]{bootEGA}} Results of \code{\link[EGAnet]{wmt2}}Data
 #'
 #' \code{\link[EGAnet]{bootEGA}} results using the \code{"glasso"} model and 500 iterations
@@ -48,7 +48,7 @@ NULL
 
 #EGA WMT-2 Data----
 #' EGA WMT-2 Data
-#' 
+#'
 #' \code{\link[EGAnet]{EGA}} Network of \code{\link[EGAnet]{wmt2}}Data
 #'
 #' An \code{\link[EGAnet]{EGA}} using the \code{"glasso"} model of the
@@ -156,3 +156,4 @@ NULL
 #' data("wmt2")
 #'
 NULL
+#--------------------------------
