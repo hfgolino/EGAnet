@@ -258,8 +258,14 @@
 #' key.ind <- match(colnames(items), as.character(psychTools::spi.dictionary$item_id))
 #' key <- as.character(psychTools::spi.dictionary$item[key.ind])
 #' 
-#' if(interactive()){
+#' # Automated selection of redundant variables (default)
+#' \donttest{
 #' uva.results <- UVA(data = items, key = key)
+#' }
+#' 
+#' # Manual selection of redundant variables
+#' if(interactive()){
+#' uva.results <- UVA(data = items, key = key, type = "adapt")
 #' }
 #'
 #' @references
