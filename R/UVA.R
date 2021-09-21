@@ -428,7 +428,7 @@ UVA <- function(data, n = NULL,
   ### check for type first
   if(isTRUE(auto) & type != "threshold"){
     
-    message("Warning: Automated UVA is not recommended for types other than 'reduce.method = \"threshold\"'\n'auto' set to 'FALSE'")
+    message("\nWarning: Automated UVA is not recommended for types other than 'reduce.method = \"threshold\"'\n'auto' set to 'FALSE'")
     auto <- FALSE
     
   }
@@ -436,7 +436,7 @@ UVA <- function(data, n = NULL,
   ### check for reduce method second
   if(isTRUE(auto) & isTRUE(reduce) & reduce.method == "remove"){
     
-    message("Warning: Automated UVA is not available for 'reduce.method = \"remove\"'\n'auto' set to 'FALSE'")
+    message("\nWarning: Automated UVA is not available for 'reduce.method = \"remove\"'\n'auto' set to 'FALSE'")
     auto <- FALSE
     
   }
