@@ -295,7 +295,7 @@
 #' @export
 #
 # Unique Variable Analysis
-# Updated 03.08.2021
+# Updated 21.09.2021
 UVA <- function(data, n = NULL,
                 model = c("glasso", "TMFG"),
                 corr = c("cor_auto", "pearson", "spearman"),
@@ -424,22 +424,24 @@ UVA <- function(data, n = NULL,
     
   }
   
-  ## check for "remove"
-  if(isTRUE(reduce)){
+  ## check for automated procedure
+  ### check for type first
+  if(isTRUE(auto) & type != "threshold"){
     
-    if(isTRUE(auto)){
-      
-      if(reduce.method == "remove"){
-        
-        message("Warning: Automated UVA is not available for 'reduce.method = \"remove\"'\n'auto' set to 'FALSE'")
-        
-        auto <- FALSE
-        
-      }
-      
-    }
+    message("Warning: Automated UVA is not recommended for types other than 'reduce.method = \"threshold\"'\n'auto' set to 'FALSE'")
+    auto <- FALSE
     
   }
+  
+  ### check for reduce method second
+  if(isTRUE(auto) & isTRUE(reduce) & reduce.method == "remove"){
+    
+    message("Warning: Automated UVA is not available for 'reduce.method = \"remove\"'\n'auto' set to 'FALSE'")
+    auto <- FALSE
+    
+  }
+  
+  ## 
   
   ## plot.args
   plot.args <- GGally.args(plot.args)
