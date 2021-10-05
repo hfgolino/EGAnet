@@ -638,9 +638,9 @@ UVA <- function(data, n = NULL,
       
       # Name latent variables
       if(isTRUE(label_latent)){
-        name_question == "y"
+        name_question <- "y"
       }else{
-        name_question == "n"
+        name_question <- "n"
       }
       
       if(name_question == "y"){
