@@ -93,6 +93,11 @@
 #' Defaults to \code{TRUE}.
 #' Set to \code{FALSE} for manual selection
 #' 
+#' @param label_latent Boolean.
+#' Should latent variables be labelled?
+#' Defaults to \code{TRUE}.
+#' Set to \code{FALSE} for arbitrary labelling (i.e., "LV_")
+#' 
 #' @param reduce.method Character.
 #' How should data be reduced?
 #' Defaults to \code{"latent"}
@@ -301,13 +306,13 @@
 #' @export
 #
 # Unique Variable Analysis
-# Updated 21.09.2021
+# Updated 05.10.2021
 UVA <- function(data, n = NULL,
                 model = c("glasso", "TMFG"),
                 corr = c("cor_auto", "pearson", "spearman"),
                 method = c("cor", "pcor", "wTO", "IRT"),
                 type = c("adapt", "alpha", "threshold"), sig,
-                key = NULL, reduce = TRUE, auto = TRUE,
+                key = NULL, reduce = TRUE, auto = TRUE, label_latent = TRUE,
                 reduce.method = c("latent", "remove", "sum"),
                 lavaan.args = list(), adhoc = TRUE,
                 plot.redundancy = FALSE, plot.args = list()
@@ -614,21 +619,28 @@ UVA <- function(data, n = NULL,
       
       # Message user
       message("done")
+    
+      # # Name latent variables
+      # name_question <- readline(prompt = "Name latent variables? [Y/n]: ")
+      # 
+      # # Check for appropriate response
+      # name_question <- tolower(name_question)
+      # 
+      # while(name_question != "y" & name_question != "n"){
+      #   
+      #   # Name latent variables
+      #   name_question <- readline(prompt = "Inappropriate response. Try again. [Y/n]: ")
+      #   
+      #   # Check for appropriate response
+      #   name_question <- tolower(name_question)
+      #   
+      # }
       
       # Name latent variables
-      name_question <- readline(prompt = "Name latent variables? [Y/n]: ")
-      
-      # Check for appropriate response
-      name_question <- tolower(name_question)
-      
-      while(name_question != "y" & name_question != "n"){
-        
-        # Name latent variables
-        name_question <- readline(prompt = "Inappropriate response. Try again. [Y/n]: ")
-        
-        # Check for appropriate response
-        name_question <- tolower(name_question)
-        
+      if(isTRUE(label_latent)){
+        name_question == "y"
+      }else{
+        name_question == "n"
       }
       
       if(name_question == "y"){
