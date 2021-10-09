@@ -88,6 +88,7 @@ compare.EGA.plots <- function(..., labels, rows, columns)
     # Replace membership
     if(class(object.list[[i]]) == "EGA"){
       object.list[[i]]$wc <- homogenized.wc
+      names(object.list[[i]]$wc) <- colnames(object.list[[i]]$network)
     }else if(class(object.list[[i]]) == "bootEGA"){
       object.list[[i]]$typicalGraph$wc <- homogenized.wc
     }else if(class(object.list[[i]]$dynEGA$wc)){
@@ -98,11 +99,11 @@ compare.EGA.plots <- function(..., labels, rows, columns)
   
   # Initialize plot list
   plots.ega <- list()
-  plots.ega[[1]] <- plot(object.list[[1]], produce = FALSE)
+  plots.ega <- compare.plot.fix.EGA(object.list)
   
   # Loop through matching 
   for(i in 2:length(object.list)){
-    plots.ega[[i]] <- compare.EGA(object.list[[1]], object.list[[i]])[[2]]
+    plots.ega[[i]] <- compare.EGA(plots.ega[[1]], plots.ega[[i]])[[2]]
   }
   
   # Set up grid return

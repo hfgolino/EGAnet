@@ -650,9 +650,9 @@ descend.ord <- function(loads, wc){
 # Updated 05.06.2021
 compare.EGA <- function(ega.object1, ega.object2)
 {
-  # Obtain plots
-  plot1 <- plot(ega.object1, produce = FALSE)
-  plot2 <- plot(ega.object2, produce = FALSE)
+  # Plots
+  plot1 <- ega.object1
+  plot2 <- ega.object2
   
   # Reorder node coordinates for plot2
   plot2$data <- plot2$data[row.names(plot1$data),]
@@ -792,6 +792,192 @@ rescale.edges <- function (network, size)
   rescaled.edges <- unname(scaling[as.character(abs.edges)])
   
   return(rescaled.edges)
+}
+
+#' @noRd
+# Compare plots fix
+# Updated 09.10.2021
+compare.plot.fix.EGA <- function(object.list,  plot.type = c("GGally","qgraph"),
+                                 plot.args = list()){
+  #### MISSING ARGUMENTS HANDLING
+  if(missing(plot.type))
+  {plot.type <- "GGally"
+  }else{plot.type <- match.arg(plot.type)}
+  
+  ## Check for input plot arguments
+  if(plot.type == "GGally"){
+    if("legend.names" %in% names(plot.args)){
+      legend.names <- plot.args$legend.names
+    }
+    plot.args <- GGally.args(plot.args)
+    color.palette <- plot.args$color.palette
+  }
+  
+  ## Original plot arguments
+  original.plot.args <- plot.args
+  
+  ## Initialize plot list
+  ega.plots <- list()
+  
+  # Loop through object list
+  for(i in 1:length(object.list)){
+    
+    if(class(object.list[[i]]) == "EGA"){
+      x <- object.list[[i]]
+    }else if(class(object.list[[i]]) == "bootEGA"){
+      x <- list(
+        network = object.list[[i]]$typicalGraph$graph,
+        wc = object.list[[i]]$typicalGraph$wc
+      )
+    }else if(class(object.list[[i]]) == "dynEGA"){
+      x <- object.list[[i]]$dynEGA
+    }
+    
+    ### Plot ###
+    if(plot.type == "qgraph"){
+      ega.plot <- qgraph::qgraph(x$network, layout = "spring", vsize = plot.args$vsize, groups = as.factor(x$wc), ...)
+    }else if(plot.type == "GGally"){
+      
+      # Insignificant values (keeps ggnet2 from erroring out)
+      x$network <- ifelse(abs(as.matrix(x$network)) <= .00001, 0, as.matrix(x$network))
+      
+      if(exists("legend.names")){
+        for(l in 1:length(unique(legend.names))){
+          x$wc[x$wc == l] <- legend.names[l]
+        }
+      }
+      
+      # Reorder network and communities
+      if(i == 1){
+        x$network <- x$network[order(x$wc), order(x$wc)]
+        x$wc <- x$wc[order(x$wc)]
+        fix.order.wc <- names(x$wc)
+      }else{
+        x$network <- x$network[fix.order.wc, fix.order.wc]
+        x$wc <- x$wc[fix.order.wc]
+      }
+      
+      # weighted  network
+      network1 <- network::network(x$network,
+                                   ignore.eval = FALSE,
+                                   names.eval = "weights",
+                                   directed = FALSE)
+      
+      network::set.vertex.attribute(network1, attrname= "Communities", value = x$wc)
+      network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
+      network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, plot.args$edge.color[1], plot.args$edge.color[2]))
+      network::set.edge.attribute(network1, "line", ifelse(network::get.edge.value(network1, "weights") > 0, plot.args$edge.lty[1], plot.args$edge.lty[2]))
+      network::set.edge.value(network1,attrname="AbsWeights",value=abs(x$network))
+      network::set.edge.value(network1,attrname="ScaledWeights",
+                              value=matrix(rescale.edges(x$network, plot.args$edge.size),
+                                           nrow = nrow(x$network),
+                                           ncol = ncol(x$network)))
+      
+      # Layout "Spring"
+      graph1 <- NetworkToolbox::convert2igraph(x$network)
+      edge.list <- igraph::as_edgelist(graph1)
+      layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
+                                                                 weights =
+                                                                   abs(igraph::E(graph1)$weight/max(abs(igraph::E(graph1)$weight)))^2,
+                                                                 vcount = ncol(x$network))
+      
+      
+      set.seed(1234)
+      plot.args$net <- network1
+      plot.args$node.color <- "Communities"
+      plot.args$node.alpha <- plot.args$alpha
+      plot.args$node.shape <- plot.args$shape
+      node.size <- plot.args$node.size
+      plot.args$node.size <- 0
+      plot.args$color.palette <- NULL
+      plot.args$palette <- NULL
+      plot.args$edge.color <- "color"
+      plot.args$edge.lty <- "line"
+      plot.args$edge.size <- "ScaledWeights"
+      
+      lower <- abs(x$network[lower.tri(x$network)])
+      non.zero <- sqrt(lower[lower != 0])
+      
+      plot.args$edge.alpha <- non.zero
+      plot.args$mode <- layout.spring
+      plot.args$label <- colnames(x$network)
+      plot.args$node.label <- rep("", ncol(x$network))
+      if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
+      if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
+      
+      palette <- color_palette_EGA(color.palette, as.numeric(factor(x$wc)))
+      palette <- ifelse(is.na(palette), "white", palette)
+      
+      ega.plot <- suppressWarnings(
+        suppressMessages(
+          do.call(GGally::ggnet2, plot.args) + 
+            ggplot2::theme(legend.title = ggplot2::element_blank())
+        )
+      )
+      
+      name <- colnames(x$network)
+      
+      name.split <- lapply(name, function(x){
+        unlist(strsplit(x, split = " "))
+      })
+      
+      name <- unlist(
+        lapply(name.split, function(x){
+          
+          len <- length(x)
+          
+          if(len > 1){
+            
+            add.line <- round(len / 2)
+            
+            paste(
+              paste(x[1:add.line], collapse = " "),
+              paste(x[(add.line+1):length(x)], collapse = " "),
+              sep = "\n"
+            )
+            
+          }else{x}
+          
+        })
+      )
+      
+      # Border color
+      if(all(color.palette == "grayscale" |
+             color.palette == "greyscale" |
+             color.palette == "colorblind")){
+        border.color <- ifelse(palette == "white", "white", "black")
+      }else{border.color <- palette}
+      
+      # Custom nodes: transparent insides and dark borders
+      ega.plot <- ega.plot + 
+        ggplot2::geom_point(ggplot2::aes(color = "color"), size = node.size,
+                            color = border.color,
+                            shape = 1, stroke = 1.5, alpha = .8) +
+        ggplot2::geom_point(ggplot2::aes(color = "color"), size = node.size + .5,
+                            color = palette,
+                            shape = 19, alpha = plot.args$alpha) +
+        ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
+        ggplot2::guides(
+          color = ggplot2::guide_legend(override.aes = list(
+            color = unique(palette),
+            size = node.size,
+            alpha = plot.args$alpha,
+            stroke = 1.5
+          ))
+        )
+    }
+    
+    set.seed(NULL)
+    
+    # Return to object.list
+    ega.plots[[i]] <- ega.plot
+    
+    # Reset plot.args
+    plot.args <- original.plot.args
+    
+  }
+  
+  return(ega.plots)
 }
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
