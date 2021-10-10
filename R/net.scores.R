@@ -128,13 +128,11 @@ net.scores <- function (data, A, wc, global = FALSE, impute, ...)
     if (global) {
       fact.res <- as.data.frame(matrix(0, nrow = nrow(data),
                                        ncol = (nfacts + 1)))
-    }
-    else {
+    }else {
       fact.res <- as.data.frame(matrix(0, nrow = nrow(data),
                                        ncol = nfacts))
     }
-  }
-  else {
+  }else {
     fact.res <- as.data.frame(matrix(0, nrow = nrow(data),
                                      ncol = nfacts))
   }
@@ -146,8 +144,7 @@ net.scores <- function (data, A, wc, global = FALSE, impute, ...)
     if (impute == "mean") {
       item.means <- colMeans(data, na.rm = TRUE)
       data[miss] <- item.means[miss[, 2]]
-    }
-    else {
+    }else {
       item.med <- apply(data, 2, median, na.rm = TRUE)
       data[miss] <- item.med[miss[, 2]]
     }
