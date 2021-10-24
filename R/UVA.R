@@ -302,7 +302,7 @@
 #' @export
 #
 # Unique Variable Analysis
-# Updated 05.10.2021
+# Updated 24.10.2021
 UVA <- function(data, n = NULL,
                 model = c("glasso", "TMFG"),
                 corr = c("cor_auto", "pearson", "spearman"),
@@ -716,6 +716,7 @@ UVA <- function(data, n = NULL,
     }
     
   }
+  res$Methods$auto <- auto
     
   # Set class
   class(res) <- "UVA"
