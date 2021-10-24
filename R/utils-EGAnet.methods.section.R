@@ -406,7 +406,7 @@ EGA.methods.section <- function (object, net.loads, net.scores)
                      "(e.g., ones found by EGA). They called this measure *network loadings* because it was ",
                      "demonstrated to be roughly equivalent to factor loadings when data were generated from a ",
                      "factor model. Effect sizes were determined to be small (0.15), moderate (0.25), and large (0.35) ",
-                     "based on the seminal simulation study (Christensen & Golino, 2021)."
+                     "based on the seminal simulation study (Christensen & Golino, 2021).",
                      "\n\n",
                      "&emsp;Conceptually, network loadings are the standardized node's strength split between communities (see ",
                      "Christensen & Golino, 2021 for mathematical notation). As with factor loadings, the signs of the loadings ",
@@ -572,7 +572,7 @@ bootEGA.methods.section <- function (object, dim.stability, item.stability)
                      "yet complementary approach to internal consistency measures in the factor analysic framework. ",
                      "Based on Christensen and Golino's (2021) simulation, values of item stability &GreaterEqual;.75 ",
                      "are considered acceptable. By extension, structural consistency values of &GreaterEqual;.75 are ",
-                     "considered acceptable."
+                     "considered acceptable.",
                      sep = "")
     
     refs$christensenF2020 <- paste("Christensen, A. P., Golino, H., & Silvia, P. J. (2020).",
@@ -723,7 +723,7 @@ UVA.methods.section <- function (object)
     type.text <- paste(type.text,
                        "a threshold was applied, with values $\\ge$ ", sig, "suggesting that a pair of variables are redundant. ",
                        "The automated procedure was followed where redundant variables were merged using a reflective latent variable model. ",
-                       "The procedure proceeded iteratively until no redundant variables remained (see Christensen, Garrido, & Golino, 2021 for more details)."
+                       "The procedure proceeded iteratively until no redundant variables remained (see Christensen, Garrido, & Golino, 2021 for more details). ",
                        sep = "")
     
   }else{
@@ -733,7 +733,7 @@ UVA.methods.section <- function (object)
       type.text <- paste(type.text,
                          "a threshold was applied, with values $\\ge$ ", sig, "suggesting that a pair of variables are redundant. ",
                          "After, UVA passes the redundancies onto us and we made the definitive decisions on whether variables were redundant ",
-                         "based on our theoretical knowledge about the relations between the variables.",
+                         "based on our theoretical knowledge about the relations between the variables. ",
                          sep = "")
       
       

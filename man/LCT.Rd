@@ -84,7 +84,6 @@ LCT(sim.dynEGA[sim.dynEGA$ID == 1,1:20], dynamic = TRUE)}
 Christensen, A. P., & Golino, H. (2021).
 Factor or network model? Predictions from neural networks.
 \emph{Journal of Behavioral Data Science}, \emph{1}(1), 85-126.
-\doi{10.35566/jbds/v1n1/p5}
 }
 \author{
 Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen at gmail.com>

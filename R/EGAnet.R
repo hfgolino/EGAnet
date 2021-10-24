@@ -11,7 +11,7 @@
 #' Network scores (\code{\link[EGAnet]{net.scores}}) can also be computed using the network loadings. Finally, dynamic EGA (\code{\link[EGAnet]{dynEGA}}) will estimate dimensions from time series data for individual, group, and sample levels (Golino, Christensen et al., 2021).
 #'
 #' @references
-#' #' Christensen, A. P., Garrido, L. E., & Golino, H. (under review A).
+#' Christensen, A. P., Garrido, L. E., & Golino, H. (under review A).
 #' Comparing community detection algorithms in psychological data: A Monte Carlo simulation.
 #' \emph{PsyArXiv}. \cr
 #' # Related functions: \code{\link[EGAnet]{EGA}}
@@ -78,7 +78,7 @@
 #' Jamison, L., Christensen, A. P., & Golino, H. (under review).
 #' Optimizing Walktrap's community detection in networks using the Total Entropy Fit Index.
 #' \emph{PsyArXiv}. \cr
-#' # Related functions: \code{\link[EGAnet]{EGA.fit}} and \code{\link[EGAnet]{tefi}
+#' # Related functions: \code{\link[EGAnet]{EGA.fit}} and \code{\link[EGAnet]{tefi}}
 #'
 #' @author Hudson Golino <hfg9s@virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #' 

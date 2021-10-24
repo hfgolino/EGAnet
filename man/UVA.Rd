@@ -301,29 +301,25 @@ uva.results <- UVA(data = items, key = key, type = "adapt")
 
 }
 \references{
-# Simulation using \code{UCA} \cr
-Christensen, A. P., Garrido, L. E., & Golino, H. (2020).
+# Simulation using \code{UVA} \cr
+Christensen, A. P., Garrido, L. E., & Golino, H. (under review).
 Unique Variable Analysis: A novel approach for detecting redundant variables in multivariate data.
 \emph{PsyArXiv}.
-\doi{10.31234/osf.io/4kra2}
 
-# Implementation of \code{UCA} (formally \code{node.redundant}) \cr
+# Implementation of \code{UVA} (formally \code{node.redundant}) \cr
 Christensen, A. P., Golino, H., & Silvia, P. J. (2020).
 A psychometric network perspective on the validity and validation of personality trait questionnaires.
 \emph{European Journal of Personality}, \emph{34}, 1095-1108.
-\doi{10.1002/per.2265}
 
 # wTO measure \cr
 Nowick, K., Gernat, T., Almaas, E., & Stubbs, L. (2009).
 Differences in human and chimpanzee gene expression patterns define an evolving network of transcription factors in brain.
 \emph{Proceedings of the National Academy of Sciences}, \emph{106}, 22358-22363.
-\doi{10.1073/pnas.0911376106}
 
 # Selection of CFA Estimator \cr
 Rhemtulla, M., Brosseau-Liard, P. E., & Savalei, V. (2012).
 When can categorical variables be treated as continuous? A comparison of robust continuous and categorical SEM estimation methods under suboptimal conditions.
 \emph{Psychological Methods}, \emph{17}, 354-373.
-\doi{10.1037/a0029315}
 }
 \author{
 Alexander Christensen <alexpaulchristensen@gmail.com>
