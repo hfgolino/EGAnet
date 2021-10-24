@@ -3,7 +3,7 @@ title: "Unique Variable Analysis"
 author: "Alexander P. Christensen, Luis Eduardo Garrido, and Hudson Golino"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
-bibliography: Christensen_General_Library.bib
+bibliography: Christensen_Citations.bib
 csl: apa.csl
 vignette: >
   %\VignetteIndexEntry{Unique Variable Analysis}

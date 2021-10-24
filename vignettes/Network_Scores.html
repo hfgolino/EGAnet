@@ -12,23 +12,11 @@
 
 <meta name="author" content="Alexander P. Christensen and Hudson Golino" />
 
-<meta name="date" content="2021-02-13" />
+<meta name="date" content="2021-10-24" />
 
 <title>Network Scores</title>
 
-<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
-// be compatible with the behavior of Pandoc < 2.8).
-document.addEventListener('DOMContentLoaded', function(e) {
-  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
-  var i, h, a;
-  for (i = 0; i < hs.length; i++) {
-    h = hs[i];
-    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
-    a = h.attributes;
-    while (a.length > 0) h.removeAttribute(a[0].name);
-  }
-});
-</script>
+<script src="data:application/javascript;base64,Ly8gUGFuZG9jIDIuOSBhZGRzIGF0dHJpYnV0ZXMgb24gYm90aCBoZWFkZXIgYW5kIGRpdi4gV2UgcmVtb3ZlIHRoZSBmb3JtZXIgKHRvCi8vIGJlIGNvbXBhdGlibGUgd2l0aCB0aGUgYmVoYXZpb3Igb2YgUGFuZG9jIDwgMi44KS4KZG9jdW1lbnQuYWRkRXZlbnRMaXN0ZW5lcignRE9NQ29udGVudExvYWRlZCcsIGZ1bmN0aW9uKGUpIHsKICB2YXIgaHMgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yQWxsKCJkaXYuc2VjdGlvbltjbGFzcyo9J2xldmVsJ10gPiA6Zmlyc3QtY2hpbGQiKTsKICB2YXIgaSwgaCwgYTsKICBmb3IgKGkgPSAwOyBpIDwgaHMubGVuZ3RoOyBpKyspIHsKICAgIGggPSBoc1tpXTsKICAgIGlmICghL15oWzEtNl0kL2kudGVzdChoLnRhZ05hbWUpKSBjb250aW51ZTsgIC8vIGl0IHNob3VsZCBiZSBhIGhlYWRlciBoMS1oNgogICAgYSA9IGguYXR0cmlidXRlczsKICAgIHdoaWxlIChhLmxlbmd0aCA+IDApIGgucmVtb3ZlQXR0cmlidXRlKGFbMF0ubmFtZSk7CiAgfQp9KTsK"></script>
 
 <style type="text/css">
   code{white-space: pre-wrap;}
@@ -40,11 +28,19 @@ document.addEventListener('DOMContentLoaded', function(e) {
     </style>
 
 
-<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
 <style type="text/css" data-origin="pandoc">
 pre > code.sourceCode { white-space: pre; position: relative; }
 pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
 div.sourceCode { margin: 1em 0; }
 pre.sourceCode { margin: 0; }
@@ -153,187 +149,7 @@ div.csl-indent {
 }
 </style>
 
-<style type="text/css">body {
-background-color: #fff;
-margin: 1em auto;
-max-width: 700px;
-overflow: visible;
-padding-left: 2em;
-padding-right: 2em;
-font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-font-size: 14px;
-line-height: 1.35;
-}
-#TOC {
-clear: both;
-margin: 0 0 10px 10px;
-padding: 4px;
-width: 400px;
-border: 1px solid #CCCCCC;
-border-radius: 5px;
-background-color: #f6f6f6;
-font-size: 13px;
-line-height: 1.3;
-}
-#TOC .toctitle {
-font-weight: bold;
-font-size: 15px;
-margin-left: 5px;
-}
-#TOC ul {
-padding-left: 40px;
-margin-left: -1.5em;
-margin-top: 5px;
-margin-bottom: 5px;
-}
-#TOC ul ul {
-margin-left: -2em;
-}
-#TOC li {
-line-height: 16px;
-}
-table {
-margin: 1em auto;
-border-width: 1px;
-border-color: #DDDDDD;
-border-style: outset;
-border-collapse: collapse;
-}
-table th {
-border-width: 2px;
-padding: 5px;
-border-style: inset;
-}
-table td {
-border-width: 1px;
-border-style: inset;
-line-height: 18px;
-padding: 5px 5px;
-}
-table, table th, table td {
-border-left-style: none;
-border-right-style: none;
-}
-table thead, table tr.even {
-background-color: #f7f7f7;
-}
-p {
-margin: 0.5em 0;
-}
-blockquote {
-background-color: #f6f6f6;
-padding: 0.25em 0.75em;
-}
-hr {
-border-style: solid;
-border: none;
-border-top: 1px solid #777;
-margin: 28px 0;
-}
-dl {
-margin-left: 0;
-}
-dl dd {
-margin-bottom: 13px;
-margin-left: 13px;
-}
-dl dt {
-font-weight: bold;
-}
-ul {
-margin-top: 0;
-}
-ul li {
-list-style: circle outside;
-}
-ul ul {
-margin-bottom: 0;
-}
-pre, code {
-background-color: #f7f7f7;
-border-radius: 3px;
-color: #333;
-white-space: pre-wrap; 
-}
-pre {
-border-radius: 3px;
-margin: 5px 0px 10px 0px;
-padding: 10px;
-}
-pre:not([class]) {
-background-color: #f7f7f7;
-}
-code {
-font-family: Consolas, Monaco, 'Courier New', monospace;
-font-size: 85%;
-}
-p > code, li > code {
-padding: 2px 0px;
-}
-div.figure {
-text-align: center;
-}
-img {
-background-color: #FFFFFF;
-padding: 2px;
-border: 1px solid #DDDDDD;
-border-radius: 3px;
-border: 1px solid #CCCCCC;
-margin: 0 5px;
-}
-h1 {
-margin-top: 0;
-font-size: 35px;
-line-height: 40px;
-}
-h2 {
-border-bottom: 4px solid #f7f7f7;
-padding-top: 10px;
-padding-bottom: 2px;
-font-size: 145%;
-}
-h3 {
-border-bottom: 2px solid #f7f7f7;
-padding-top: 10px;
-font-size: 120%;
-}
-h4 {
-border-bottom: 1px solid #f7f7f7;
-margin-left: 8px;
-font-size: 105%;
-}
-h5, h6 {
-border-bottom: 1px solid #ccc;
-font-size: 105%;
-}
-a {
-color: #0033dd;
-text-decoration: none;
-}
-a:hover {
-color: #6666ff; }
-a:visited {
-color: #800080; }
-a:visited:hover {
-color: #BB00BB; }
-a[href^="http:"] {
-text-decoration: underline; }
-a[href^="https:"] {
-text-decoration: underline; }
-
-code > span.kw { color: #555; font-weight: bold; } 
-code > span.dt { color: #902000; } 
-code > span.dv { color: #40a070; } 
-code > span.bn { color: #d14; } 
-code > span.fl { color: #d14; } 
-code > span.ch { color: #d14; } 
-code > span.st { color: #d14; } 
-code > span.co { color: #888888; font-style: italic; } 
-code > span.ot { color: #007020; } 
-code > span.al { color: #ff0000; font-weight: bold; } 
-code > span.fu { color: #900; font-weight: bold; } 
-code > span.er { color: #a61717; background-color: #e3d2d2; } 
-</style>
+<link rel="stylesheet" href="data:text/css,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" type="text/css" />
 
 
 
@@ -347,7 +163,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Network Scores</h1>
 <h4 class="author">Alexander P. Christensen and Hudson Golino</h4>
-<h4 class="date">2021-02-13</h4>
+<h4 class="date">2021-10-24</h4>
 
 
 
@@ -381,11 +197,11 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <p><span class="math display">\[L_{if} = \sum_{j \in f}^F |w_{ij}|,\]</span></p>
 <p>where <span class="math inline">\(|w_{ij}|\)</span> is the absolute weight (e.g., partial correlation) between node <span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span>, <span class="math inline">\(S_i\)</span> is the sum of the edge weights connected to node <span class="math inline">\(i\)</span> across all nodes (<span class="math inline">\(n\)</span>; i.e., node strength for node <span class="math inline">\(i\)</span>), <span class="math inline">\(L_{if}\)</span> is the sum of edge weights in factor <span class="math inline">\(f\)</span> that are connected to node <span class="math inline">\(i\)</span> (i.e., node <span class="math inline">\(i\)</span>’s loading for factor <span class="math inline">\(f\)</span>), and <span class="math inline">\(F\)</span> is the number of factors (in the network). This measure can be standardized using the following formula:</p>
 <p><span class="math display">\[z_{L_{if}} = \frac{L_{if}}{\sqrt{\sum L_{.f}}},\]</span></p>
-<p>where the denominator is equal to the square root of the sum of all the weights for nodes in factor <span class="math inline">\(f\)</span>. Notably, the standardized loadings are absolute weights with the signs being added after the loadings have been computed <span class="citation">(following the same procedure as factor loadings; Comrey &amp; Lee, 2013)</span>. In contrast to factor loadings, the network loadings are computed after the number of factors have been extracted from the network’s structure. Variables are deterministically assigned to specific factors via a community detection algorithm rather than the traditional factor analytic standard of their largest loading in the loading matrix. This means that some nodes may not have any connections to nodes in other factors in the network, leading some variables to have zeros for some factors in the network loading matrix.</p>
+<p>where the denominator is equal to the square root of the sum of all the weights for nodes in factor <span class="math inline">\(f\)</span>. Notably, the standardized loadings are absolute weights with the signs being added after the loadings have been computed [following the same procedure as factor loadings; <span class="citation">Comrey &amp; Lee (2013)</span>]. In contrast to factor loadings, the network loadings are computed after the number of factors have been extracted from the network’s structure. Variables are deterministically assigned to specific factors via a community detection algorithm rather than the traditional factor analytic standard of their largest loading in the loading matrix. This means that some nodes may not have any connections to nodes in other factors in the network, leading some variables to have zeros for some factors in the network loading matrix.</p>
 <p>These standardized network loadings summarize the information in the edge weights and so they depend on the type of association represented by the edge weight (e.g., partial correlations, zero-order correlations). Thus, the meaning of these network loadings will change based on the type of correlation used. Specifically, partial correlations represent the unique measurement of a factor whereas zero-order correlations represent the unique and shared contribution of a variable’s measurement of a factor.</p>
 </div>
 <div id="network-scores-golino2020dynega" class="section level2">
-<h2>Network Scores <span class="citation">(Golino, Christensen, Moulder, Kim, &amp; Boker, 2020)</span></h2>
+<h2>Network Scores <span class="citation">(Golino, Christensen, Moulder, Kim, &amp; Boker, 2021)</span></h2>
 <p>These network loadings form the foundation for computing network scores .Because the network loadings represent the middle ground between a saturated (EFA) and simple (CFA) structure, the network scores accommodate the inclusion of only the most important cross-loadings in their computation. This capitalizes on information often lost in typical CFA structures but reduces the cross-loadings of EFA structures to only the most important loadings.</p>
 <p>To compute network scores, the following code can be used:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Network scores</span></span>
@@ -427,23 +243,23 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <tbody>
 <tr class="odd">
 <td align="left">Factor 1</td>
-<td align="right">0.989</td>
+<td align="right">0.984</td>
 </tr>
 <tr class="even">
 <td align="left">Factor 2</td>
-<td align="right">0.990</td>
-</tr>
-<tr class="odd">
-<td align="left">Factor 3</td>
-<td align="right">0.987</td>
-</tr>
-<tr class="even">
-<td align="left">Factor 4</td>
 <td align="right">0.983</td>
 </tr>
 <tr class="odd">
+<td align="left">Factor 3</td>
+<td align="right">0.989</td>
+</tr>
+<tr class="even">
+<td align="left">Factor 4</td>
+<td align="right">0.987</td>
+</tr>
+<tr class="odd">
 <td align="left">Factor 5</td>
-<td align="right">0.984</td>
+<td align="right">0.990</td>
 </tr>
 <tr class="even">
 <td align="left">Factor 6</td>
@@ -458,46 +274,46 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h2>References</h2>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-NetworkToolbox" class="csl-entry">
-Christensen, A. P. (2018). <span>NetworkToolbox</span>: Methods and measures for brain, cognitive, and psychometric network analysis in <span>R</span>. <em>The R Journal</em>, <em>10</em>, 422–439. <a href="https://doi.org/10.32614/RJ-2018-065">https://doi.org/10.32614/RJ-2018-065</a>
+Christensen, A. P. (2018). <span>NetworkToolbox</span>: Methods and measures for brain, cognitive, and psychometric network analysis in <span>R</span>. <em>The R Journal</em>, <em>10</em>, 422–439.
 </div>
 <div id="ref-christensen2021equivalency" class="csl-entry">
-Christensen, A. P., &amp; Golino, H. (2021). On the equivalency of factor and network loadings. <em>Behavior Research Methods</em>. <a href="https://doi.org/10.3758/s13428-020-01500-6">https://doi.org/10.3758/s13428-020-01500-6</a>
+Christensen, A. P., &amp; Golino, H. (2021). On the equivalency of factor and network loadings. <em>Behavior Research Methods</em>, <em>53</em>, 1563–1580.
 </div>
 <div id="ref-comrey2013first" class="csl-entry">
 Comrey, A. L., &amp; Lee, H. B. (2013). <em>A first course in factor analysis</em> (2nd ed.). New York, NY: Psychology Press.
 </div>
 <div id="ref-igraph" class="csl-entry">
-Csardi, G., &amp; Nepusz, T. (2006). The igraph software package for complex network research. <em>InterJournal, Complex Systems</em>, <em>1695</em>, 1–9.
+Csardi, G., &amp; Nepusz, T. (2006). The igraph software package for complex network research. <em>InterJournal, Complex Systems</em>, <em>1695</em>, 1–9. Retrieved from <a href="https://www.semanticscholar.org/paper/The-igraph-software-package-for-complex-network-Cs\%C3\%A1rdi-Nepusz/1d2744b83519657f5f2610698a8ddd177ced4f5c?p2df">https://www.semanticscholar.org/paper/The-igraph-software-package-for-complex-network-Cs\%C3\%A1rdi-Nepusz/1d2744b83519657f5f2610698a8ddd177ced4f5c?p2df</a>
 </div>
 <div id="ref-epskamp2018tutorial" class="csl-entry">
-Epskamp, S., &amp; Fried, E. I. (2018). A tutorial on regularized partial correlation networks. <em>Psychological Methods</em>, <em>23</em>, 617–634. <a href="https://doi.org/10.1037/met0000167">https://doi.org/10.1037/met0000167</a>
+Epskamp, S., &amp; Fried, E. I. (2018). A tutorial on regularized partial correlation networks. <em>Psychological Methods</em>, <em>23</em>, 617–634.
 </div>
 <div id="ref-friedman2008sparse" class="csl-entry">
-Friedman, J., Hastie, T., &amp; Tibshirani, R. (2008). Sparse inverse covariance estimation with the graphical lasso. <em>Biostatistics</em>, <em>9</em>, 432–441. <a href="https://doi.org/10.1093/biostatistics/kxm045">https://doi.org/10.1093/biostatistics/kxm045</a>
+Friedman, J., Hastie, T., &amp; Tibshirani, R. (2008). Sparse inverse covariance estimation with the graphical lasso. <em>Biostatistics</em>, <em>9</em>, 432–441.
 </div>
 <div id="ref-friedman2014glasso" class="csl-entry">
 Friedman, J., Hastie, T., &amp; Tibshirani, R. (2014). <em><span class="nocase">glasso</span>: Graphical lasso – estimation of <span>Gaussian</span> graphical models</em>. Retrieved from <a href="https://CRAN.R-project.org/package=glasso">https://CRAN.R-project.org/package=glasso</a>
 </div>
 <div id="ref-golino2020dynega" class="csl-entry">
-Golino, H., Christensen, A. P., Moulder, R., Kim, S., &amp; Boker, S. M. (2020). Modeling latent topics in social media using <span>Dynamic Exploratory Graph Analysis</span>: The case of the right-wing and left-wing trolls in the 2016 <span>US</span> elections. <em>PsyArXiv</em>. <a href="https://doi.org/10.31234/osf.io/tfs7c">https://doi.org/10.31234/osf.io/tfs7c</a>
+Golino, H., Christensen, A. P., Moulder, R., Kim, S., &amp; Boker, S. M. (2021). Modeling latent topics in social media using <span>Dynamic Exploratory Graph Analysis</span>: The case of the right-wing and left-wing trolls in the 2016 <span>US</span> elections. <em>Psychometrika</em>.
 </div>
 <div id="ref-golino2017ega2" class="csl-entry">
-Golino, H., &amp; Demetriou, A. (2017). Estimating the dimensionality of intelligence like data using <span>Exploratory Graph Analysis</span>. <em>Intelligence</em>, <em>62</em>, 54–70. <a href="https://doi.org/10.1016/j.intell.2017.02.007">https://doi.org/10.1016/j.intell.2017.02.007</a>
+Golino, H., &amp; Demetriou, A. (2017). Estimating the dimensionality of intelligence like data using <span>Exploratory Graph Analysis</span>. <em>Intelligence</em>, <em>62</em>, 54–70.
 </div>
 <div id="ref-golino2017ega1" class="csl-entry">
-Golino, H., &amp; Epskamp, S. (2017). <span>Exploratory Graph Analysis</span>: A new approach for estimating the number of dimensions in psychological research. <em>PloS ONE</em>, <em>12</em>, e0174035. <a href="https://doi.org/10.1371/journal.pone.0174035">https://doi.org/10.1371/journal.pone.0174035</a>
+Golino, H., &amp; Epskamp, S. (2017). <span>Exploratory Graph Analysis</span>: A new approach for estimating the number of dimensions in psychological research. <em>PLoS ONE</em>, <em>12</em>, e0174035.
 </div>
 <div id="ref-golino2019ega3" class="csl-entry">
-Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., … Martinez-Molina, A. (2020). Investigating the performance of <span>Exploratory Graph Analysis</span> and traditional techniques to identify the number of latent factors: A simulation and tutorial. <em>Psychological Methods</em>, <em>25</em>, 292–320. <a href="https://doi.org/10.1037/met0000255">https://doi.org/10.1037/met0000255</a>
+Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., … Martinez-Molina, A. (2020). Investigating the performance of <span>Exploratory Graph Analysis</span> and traditional techniques to identify the number of latent factors: A simulation and tutorial. <em>Psychological Methods</em>, <em>25</em>, 292–320.
 </div>
 <div id="ref-hallquist2019problems" class="csl-entry">
-Hallquist, M., Wright, A. C. G., &amp; Molenaar, P. C. M. (2019). Problems with centrality measures in psychopathology symptom networks: Why network psychometrics cannot escape psychometric theory. <em>Multivariate Behavioral Research</em>. <a href="https://doi.org/10.1080/00273171.2019.1640103">https://doi.org/10.1080/00273171.2019.1640103</a>
+Hallquist, M., Wright, A. C. G., &amp; Molenaar, P. C. M. (2019). Problems with centrality measures in psychopathology symptom networks: Why network psychometrics cannot escape psychometric theory. <em>Multivariate Behavioral Research</em>.
 </div>
 <div id="ref-massara2016network" class="csl-entry">
-Massara, G. P., Di Matteo, T., &amp; Aste, T. (2016). Network filtering for big data: <span>Triangulated Maximally Filtered Graph</span>. <em>Journal of Complex Networks</em>, <em>5</em>, 161–178. <a href="https://doi.org/10.1093/comnet/cnw015">https://doi.org/10.1093/comnet/cnw015</a>
+Massara, G. P., Di Matteo, T., &amp; Aste, T. (2016). Network filtering for big data: <span>Triangulated Maximally Filtered Graph</span>. <em>Journal of Complex Networks</em>, <em>5</em>, 161–178.
 </div>
 <div id="ref-walktrap" class="csl-entry">
-Pons, P., &amp; Latapy, M. (2006). Computing communities in large networks using random walks. <em>Journal of Graph Algorithms and Applications</em>, <em>10</em>, 191–218. <a href="https://doi.org/10.7155/jgaa.00185">https://doi.org/10.7155/jgaa.00185</a>
+Pons, P., &amp; Latapy, M. (2006). Computing communities in large networks using random walks. <em>Journal of Graph Algorithms and Applications</em>, <em>10</em>, 191–218.
 </div>
 </div>
 </div>

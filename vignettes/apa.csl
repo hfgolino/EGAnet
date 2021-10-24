@@ -318,18 +318,6 @@
       </else-if>
       <else-if type="personal_communication">
         <choose>
-          <if variable="archive DOI publisher URL" match="none">
-            <group delimiter=", ">
-              <names variable="author">
-                <name and="symbol" delimiter=", " initialize-with=". "/>
-                <substitute>
-                  <text variable="title" form="short" quotes="true"/>
-                </substitute>
-              </names>
-              <!-- This should be localized -->
-              <text value="personal communication"/>
-            </group>
-          </if>
           <else>
             <names variable="author" delimiter=", ">
               <name form="short" and="symbol" delimiter=", " initialize-with=". "/>
@@ -439,9 +427,6 @@
   <macro name="access">
     <choose>
       <if type="bill legal_case legislation" match="any"/>
-      <else-if variable="DOI" match="any">
-        <text variable="DOI" prefix="https://doi.org/"/>
-      </else-if>
       <else-if variable="URL">
         <group delimiter=" ">
           <text term="retrieved" text-case="capitalize-first"/>
@@ -570,9 +555,6 @@
               <text variable="genre" text-case="capitalize-first"/>
               <choose>
                 <!-- In APA journals, the university of a thesis is always cited, even if another locator is given -->
-                <if variable="DOI URL archive" match="any">
-                  <text variable="publisher"/>
-                </if>
               </choose>
             </group>
             <text macro="locators"/>
@@ -961,10 +943,6 @@
       <choose>
         <if type="personal_communication">
           <choose>
-            <if variable="archive DOI publisher URL" match="none">
-              <!-- These variables indicate that the letter is retrievable by the reader. If not, then use the APA in-text-only personal communication format -->
-              <date variable="issued" form="text"/>
-            </if>
             <else>
               <date variable="issued">
                 <date-part name="year"/>

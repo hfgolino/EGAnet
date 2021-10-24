@@ -12,7 +12,7 @@
 
 <meta name="author" content="Alexander P. Christensen, Luis Eduardo Garrido, and Hudson Golino" />
 
-<meta name="date" content="2021-09-01" />
+<meta name="date" content="2021-10-24" />
 
 <title>Unique Variable Analysis</title>
 
@@ -163,13 +163,13 @@ div.csl-indent {
 
 <h1 class="title toc-ignore">Unique Variable Analysis</h1>
 <h4 class="author">Alexander P. Christensen, Luis Eduardo Garrido, and Hudson Golino</h4>
-<h4 class="date">2021-09-01</h4>
+<h4 class="date">2021-10-24</h4>
 
 
 
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
-<p>This vignette shows you how to use the <code>UVA</code> in the EGAnet package <span class="citation">(Golino &amp; Christensen, 2020)</span>. The contents of this vignette are taken directly from <span class="citation">Christensen, Garrido, &amp; Golino (2020)</span>. Following <span class="citation">Christensen, Golino, &amp; Silvia (2020)</span>, <code>UVA</code> provides two approaches for reducing redundancy in data: removing all but one redundant variable or creating latent variables from redundant variables. For the former approach, researchers select one variable from variables that are determined to be redundant and remove the other variables from the dataset. As a general heuristic, researchers can compute corrected item-test correlations for the variables in the redundant response set. The variable that has the largest correlation is likely to be the one that best captures the overall essence of the redundant variables <span class="citation">(DeVellis, 2017; McDonald, 1999)</span>. Other rules of thumb for this approach are to select variables that have the most variance <span class="citation">(DeVellis, 2017)</span> and variables that are more general (e.g., “I often express my opinions” is better than “I often express my opinions in meetings” because it does not imply a specific context). For the latter approach, redundant variables can be combined in to a reflective latent variable and latent scores can be estimated, replacing the redundant variables. Following recent suggestions, for ordinal data with categories fewer than six, the Weighted Least Squares Mean- and Variance-adjusted (WLSMV) estimator is used; otherwise, if all categories are greater than or equal to six then Maximum Likelihood with Robust standard errors (MLR) is used <span class="citation">(Rhemtulla, Brosseau-Liard, &amp; Savalei, 2012)</span>. We strongly recommend the latent variable approach because it minimizes measurement error and retains all possible information available in the data.</p>
+<p>This vignette shows you how to use the <code>UVA</code> in the EGAnet package <span class="citation">(Golino &amp; Christensen, 2020)</span>. The contents of this vignette are taken directly from <span class="citation">Christensen, Garrido, &amp; Golino (2021)</span>. Following <span class="citation">Christensen, Golino, &amp; Silvia (2020)</span>, <code>UVA</code> provides two approaches for reducing redundancy in data: removing all but one redundant variable or creating latent variables from redundant variables. For the former approach, researchers select one variable from variables that are determined to be redundant and remove the other variables from the dataset. As a general heuristic, researchers can compute corrected item-test correlations for the variables in the redundant response set. The variable that has the largest correlation is likely to be the one that best captures the overall essence of the redundant variables <span class="citation">(DeVellis, 2017; McDonald, 1999)</span>. Other rules of thumb for this approach are to select variables that have the most variance <span class="citation">(DeVellis, 2017)</span> and variables that are more general (e.g., “I often express my opinions” is better than “I often express my opinions in meetings” because it does not imply a specific context). For the latter approach, redundant variables can be combined in to a reflective latent variable and latent scores can be estimated, replacing the redundant variables. Following recent suggestions, for ordinal data with categories fewer than six, the Weighted Least Squares Mean- and Variance-adjusted (WLSMV) estimator is used; otherwise, if all categories are greater than or equal to six then Maximum Likelihood with Robust standard errors (MLR) is used <span class="citation">(Rhemtulla, Brosseau-Liard, &amp; Savalei, 2012)</span>. We strongly recommend the latent variable approach because it minimizes measurement error and retains all possible information available in the data.</p>
 </div>
 <div id="load-data" class="section level2">
 <h2>Load data</h2>
@@ -313,34 +313,34 @@ Figure 8. Exploratory Graph Analaysis of SAPA Inventory After Unique Variable An
 <h2>References</h2>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-christensen2020unique" class="csl-entry">
-Christensen, A. P., Garrido, L. E., &amp; Golino, H. (2020). Unique variable analysis: A novel approach for detecting redundant variables in multivariate data. <em>PsyArXiv</em>. <a href="https://doi.org/10.31234/osf.io/4kra2">https://doi.org/10.31234/osf.io/4kra2</a>
+Christensen, A. P., Garrido, L. E., &amp; Golino, H. (2021). Unique variable analysis: A novel approach for detecting redundant variables in multivariate data. <em>PsyArXiv</em>.
 </div>
 <div id="ref-christensen2019psychometric" class="csl-entry">
-Christensen, A. P., Golino, H., &amp; Silvia, P. J. (2020). A psychometric network perspective on the validity and validation of personality trait questionnaires. <em>European Journal of Personality</em>, <em>34</em>, 1095–1108. <a href="https://doi.org/10.1002/per.2265">https://doi.org/10.1002/per.2265</a>
+Christensen, A. P., Golino, H., &amp; Silvia, P. J. (2020). A psychometric network perspective on the validity and validation of personality trait questionnaires. <em>European Journal of Personality</em>, <em>34</em>, 1095–1108.
 </div>
 <div id="ref-condon2018sapa" class="csl-entry">
-Condon, D. M. (2018). The <span>SAPA</span> personality inventory: An empirically-derived, hierarchically-organized self-report personality assessment model. <em>PsyArXiv</em>. <a href="https://doi.org/10.31234/osf.io/sc4p9">https://doi.org/10.31234/osf.io/sc4p9</a>
+Condon, D. M. (2018). The <span>SAPA</span> personality inventory: An empirically-derived, hierarchically-organized self-report personality assessment model. <em>PsyArXiv</em>.
 </div>
 <div id="ref-costantini2019stability" class="csl-entry">
-Costantini, G., Richetin, J., Preti, E., Casini, E., Epskamp, S., &amp; Perugini, M. (2019). Stability and variability of personality networks. <span>A</span> tutorial on recent developments in network psychometrics. <em>Personality and Individual Differences</em>, <em>136</em>, 68–78. <a href="https://doi.org/10.1016/j.paid.2017.06.011">https://doi.org/10.1016/j.paid.2017.06.011</a>
+Costantini, G., Richetin, J., Preti, E., Casini, E., Epskamp, S., &amp; Perugini, M. (2019). Stability and variability of personality networks. <span>A</span> tutorial on recent developments in network psychometrics. <em>Personality and Individual Differences</em>, <em>136</em>, 68–78.
 </div>
 <div id="ref-devellis2017scale" class="csl-entry">
 DeVellis, R. F. (2017). <em>Scale development: Theory and applications</em> (4th ed.). Thousand Oaks, CA: <span>SAGE</span> Publications.
 </div>
 <div id="ref-dinic2019centrality" class="csl-entry">
-Dinić, B. M., Wertag, A., Tomašević, A., &amp; Sokolovska, V. (2020). Centrality and redundancy of the <span>Dark Tetrad</span> traits. <em>Personality and Individual Differences</em>, <em>155</em>, 109621. <a href="https://doi.org/10.1016/j.paid.2019.109621">https://doi.org/10.1016/j.paid.2019.109621</a>
+Dinić, B. M., Wertag, A., Tomašević, A., &amp; Sokolovska, V. (2020). Centrality and redundancy of the <span>Dark Tetrad</span> traits. <em>Personality and Individual Differences</em>, <em>155</em>, 109621.
 </div>
 <div id="ref-EGAnet" class="csl-entry">
 Golino, H., &amp; Christensen, A. P. (2020). <em>EGAnet: <span>Exploratory Graph Analysis</span>– a framework for estimating the number of dimensions in multivariate data using network psychometrics</em>. Retrieved from <a href="https://CRAN.R-project.org/package=EGAnet">https://CRAN.R-project.org/package=EGAnet</a>
 </div>
 <div id="ref-mcdonald1999test" class="csl-entry">
-McDonald, R. P. (1999). <em>Test theory: A unified treatment</em>. <a href="https://doi.org/10.4324/9781410601087">https://doi.org/10.4324/9781410601087</a>
+McDonald, R. P. (1999). <em>Test theory: A unified treatment</em>. New York, NY: Taylor &amp; Francis.
 </div>
 <div id="ref-psychTools" class="csl-entry">
 Revelle, W. (2019). <em><span class="nocase">psychTools</span>: Tools to accompany the ’psych’ package for psychological research</em>. Retrieved from <a href="https://CRAN.R-project.org/package=psychTools">https://CRAN.R-project.org/package=psychTools</a>
 </div>
 <div id="ref-rhemtulla2012can" class="csl-entry">
-Rhemtulla, M., Brosseau-Liard, P. É., &amp; Savalei, V. (2012). When can categorical variables be treated as continuous? A comparison of robust continuous and categorical <span>SEM</span> estimation methods under suboptimal conditions. <em>Psychological Methods</em>, <em>17</em>, 354–373. <a href="https://doi.org/10.1037/a0029315">https://doi.org/10.1037/a0029315</a>
+Rhemtulla, M., Brosseau-Liard, P. É., &amp; Savalei, V. (2012). When can categorical variables be treated as continuous? A comparison of robust continuous and categorical <span>SEM</span> estimation methods under suboptimal conditions. <em>Psychological Methods</em>, <em>17</em>, 354–373.
 </div>
 </div>
 <div style="page-break-after: always;"></div>
