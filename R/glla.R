@@ -40,18 +40,15 @@
 #' Generalized local linear approximation of derivatives from time series. In S.-M. Chow, E. Ferrer, & F. Hsieh (Eds.),
 #' \emph{The Notre Dame series on quantitative methodology. Statistical methods for modeling human dynamics: An interdisciplinary dialogue},
 #' (p. 161-178). \emph{Routledge/Taylor & Francis Group}.
-#' \doi{10.1037/a0016622}
 #'
 #' Deboeck, P. R., Montpetit, M. A., Bergeman, C. S., & Boker, S. M. (2009)
 #' Using derivative estimates to describe intraindividual variability at multiple time scales.
 #' \emph{Psychological Methods}, \emph{14(4)}, 367-386.
-#' \doi{10.1037/a0016622}
 #'
 #'
 #' Savitzky, A., & Golay, M. J. (1964).
 #' Smoothing and differentiation of data by simplified least squares procedures.
 #' \emph{Analytical Chemistry}, \emph{36(8)}, 1627-1639.
-#' \doi{10.1021/ac60214a047}
 #'
 #' @author Hudson Golino <hfg9s at virginia.edu>
 #'

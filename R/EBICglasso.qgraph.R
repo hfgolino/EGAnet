@@ -46,30 +46,25 @@
 #' Friedman, J., Hastie, T., & Tibshirani, R. (2008).
 #' Sparse inverse covariance estimation with the graphical lasso.
 #' \emph{Biostatistics}, \emph{9}, 432-441.
-#' \doi{10.1093/biostatistics/kxm045}
 #'
 #' #glasso package
 #' Jerome Friedman, Trevor Hastie and Rob Tibshirani (2011).
 #' glasso: Graphical lasso-estimation of Gaussian graphical models.
 #' R package version 1.7.
-#' \url{https://CRAN.R-project.org/package=glasso}
 #'
 #' Foygel, R., & Drton, M. (2010).
 #' Extended Bayesian information criteria for Gaussian graphical models.
 #' In Advances in neural information processing systems (pp. 604-612).
-#' \url{https://papers.nips.cc/paper/4087-extended-bayesian-information-criteria-for-gaussian-graphical-models}
-#'
+#' 
 #' #psych package
 #' Revelle, W. (2014) psych: Procedures for Personality and Psychological Research,
 #' Northwestern University, Evanston, Illinois, USA.
 #' R package version 1.4.4.
-#' \url{https://CRAN.R-project.org/package=psych}
 #'
 #' #Matrix package
 #' Douglas Bates and Martin Maechler (2014).
 #' Matrix: Sparse and Dense Matrix Classes and Methods.
 #' R package version 1.1-3.
-#' \url{https://CRAN.R-project.org/package=Matrix}
 #'
 #' @author Sacha Epskamp <mail@sachaepskamp.com>
 #'
