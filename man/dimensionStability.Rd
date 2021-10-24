@@ -39,7 +39,7 @@ times the original dimension is exactly replicated in across bootstrap samples
 # Load data
 wmt <- wmt2[,7:24]
 
-\donttest{# Estimate EGA network
+\dontrun{# Estimate EGA network
 ## plot.type = "qqraph" used for CRAN checks
 ## plot.type = "GGally" is the default
 ega.wmt <- EGA(data = wmt, model = "glasso", plot.type = "qgraph")

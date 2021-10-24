@@ -835,7 +835,7 @@ compare.plot.fix.EGA <- function(object.list,  plot.type = c("GGally","qgraph"),
     
     ### Plot ###
     if(plot.type == "qgraph"){
-      ega.plot <- qgraph::qgraph(x$network, layout = "spring", vsize = plot.args$vsize, groups = as.factor(x$wc), ...)
+      ega.plot <- qgraph::qgraph(x$network, layout = "spring", vsize = plot.args$vsize, groups = as.factor(x$wc))
     }else if(plot.type == "GGally"){
       
       # Insignificant values (keeps ggnet2 from erroring out)

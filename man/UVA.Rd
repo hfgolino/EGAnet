@@ -15,6 +15,7 @@ UVA(
   key = NULL,
   reduce = TRUE,
   auto = TRUE,
+  label_latent = TRUE,
   reduce.method = c("latent", "remove", "sum"),
   lavaan.args = list(),
   adhoc = TRUE,
@@ -111,6 +112,11 @@ Set to \code{FALSE} for redundancy analysis only}
 Should redundancy reduction be automated?
 Defaults to \code{TRUE}.
 Set to \code{FALSE} for manual selection}
+
+\item{label_latent}{Boolean.
+Should latent variables be labelled?
+Defaults to \code{TRUE}.
+Set to \code{FALSE} for arbitrary labelling (i.e., "LV_")}
 
 \item{reduce.method}{Character.
 How should data be reduced?
@@ -283,8 +289,14 @@ items <- psychTools::spi[,idx]
 key.ind <- match(colnames(items), as.character(psychTools::spi.dictionary$item_id))
 key <- as.character(psychTools::spi.dictionary$item[key.ind])
 
-if(interactive()){
+# Automated selection of redundant variables (default)
+\donttest{
 uva.results <- UVA(data = items, key = key)
+}
+
+# Manual selection of redundant variables
+if(interactive()){
+uva.results <- UVA(data = items, key = key, type = "adapt")
 }
 
 }
