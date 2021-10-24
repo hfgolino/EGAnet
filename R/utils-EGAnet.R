@@ -1285,6 +1285,22 @@ custom.min.max <- function(vec, ran)
   return((b - a) * ((vec - min(vec)) / (max(vec) - min (vec))) + a)
 }
 
+#' @noRd
+#' New NA function
+#' Updated 24.10.2021
+is.NA <- function(x){
+  
+  # Regular check
+  reg.na <- is.na(x)
+  
+  # Character check
+  char.na <- x == "NA"
+  
+  # Get any NA
+  return(as.logical(reg.na + char.na))
+  
+}
+
 #%%%%%%%%%%%%%%%%%%%%%%%%
 # DATA GENERATION ----
 #%%%%%%%%%%%%%%%%%%%%%%%%
@@ -4132,7 +4148,7 @@ homogenize.membership <- function (target.wc, convert.wc)
       
       # Remove NAs
       rand <- na.omit(rand)
-      rand <- rand[!is.na(names(rand))]
+      rand <- rand[!is.NA(names(rand))]
       len <- na.omit(ifelse(len == 0, NA, len))
       
       # Order rand by highest rand index and then number of items
@@ -4184,7 +4200,7 @@ homogenize.membership <- function (target.wc, convert.wc)
       
       # Remove NAs
       rand <- na.omit(rand)
-      rand <- rand[!is.na(names(rand))]
+      rand <- rand[!is.NA(names(rand))]
       len <- na.omit(ifelse(len == 0, NA, len))
       
       # Order rand by highest rand index and then number of items
@@ -4274,7 +4290,7 @@ homogenize.membership <- function (target.wc, convert.wc)
       
       # Remove NAs
       rand <- na.omit(rand)
-      rand <- rand[!is.na(names(rand))]
+      rand <- rand[!is.NA(names(rand))]
       len <- na.omit(ifelse(len == 0, NA, len))
       
       # Order rand by highest rand index and then number of items
