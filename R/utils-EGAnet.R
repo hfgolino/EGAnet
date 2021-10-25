@@ -1286,7 +1286,7 @@ custom.min.max <- function(vec, ran)
 }
 
 #' @noRd
-#' New NA function
+# New NA function
 # Updated 24.10.2021
 is.NA <- function(x){
   
