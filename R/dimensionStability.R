@@ -31,7 +31,7 @@
 #' # Load data
 #' wmt <- wmt2[,7:24]
 #'
-#' \donttest{# Estimate EGA network
+#' \dontrun{# Estimate EGA network
 #' ## plot.type = "qqraph" used for CRAN checks
 #' ## plot.type = "GGally" is the default
 #' ega.wmt <- EGA(data = wmt, model = "glasso", plot.type = "qgraph")
@@ -64,13 +64,11 @@
 #' @references
 #' Christensen, A. P., & Golino, H. (2021).
 #' Estimating the stability of the number of factors via Bootstrap Exploratory Graph Analysis: A tutorial.
-#' \emph{Psych}.
-#' \doi{10.31234/osf.io/9deay}
+#' \emph{Psych}, \emph{3}(3), 479-500.
 #'
 #' Christensen, A. P., Golino, H., & Silvia, P. J. (2020).
 #' A psychometric network perspective on the validity and validation of personality trait questionnaires.
 #' \emph{European Journal of Personality}, \emph{34}(6), 1095-1108.
-#' \doi{10.1002/per.2265}
 #'
 #' @seealso \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and
 #' \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
