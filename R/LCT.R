@@ -71,7 +71,6 @@
 #' Christensen, A. P., & Golino, H. (2021).
 #' Factor or network model? Predictions from neural networks.
 #' \emph{Journal of Behavioral Data Science}, \emph{1}(1), 85-126.
-#' \doi{10.35566/jbds/v1n1/p5}
 #' 
 #' @importFrom utils setTxtProgressBar txtProgressBar
 #'

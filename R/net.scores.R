@@ -81,56 +81,55 @@
 #' Christensen, A. P., & Golino, H. (2021).
 #' On the equivalency of factor and network loadings.
 #' \emph{Behavior Research Methods}, \emph{53}, 1563-1580.
-#' \doi{10.3758/s13428-020-01500-6}
 #' 
 #' Christensen, A. P., Golino, H., & Silvia, P. J. (2020).
 #' A psychometric network perspective on the validity and validation of personality trait questionnaires.
 #' \emph{European Journal of Personality}, \emph{34}, 1095-1108.
-#' \doi{10.1002/per.2265}
 #'
-#' Golino, H., Christensen, A. P., Moulder, R., Kim, S., & Boker, S. M. (under review).
+#' Golino, H., Christensen, A. P., Moulder, R., Kim, S., & Boker, S. M. (2021).
 #' Modeling latent topics in social media using Dynamic Exploratory Graph Analysis: The case of the right-wing and left-wing trolls in the 2016 US elections.
-#' \emph{PsyArXiv}.
-#' \doi{10.31234/osf.io/tfs7c}
+#' \emph{Psychometrika}.
 #'
 #' @author Alexander P. Christensen <alexpaulchristensen@gmail.com> and Hudson F. Golino <hfg9s at virginia.edu>
 #'
 #' @export
 #'
 #Network Scores
-#Updated: 27.12.2020
+#Updated: 09.09.2021
 net.scores <- function (data, A, wc, global = FALSE, impute, ...)
 {
   if (missing(data)) {
     stop("Argument 'data' is required for analysis")
   }
+  
   if (any(class(A) == "EGA")) {
     wc <- A$wc
     A <- A$network
-  }
-  else if (missing(A)) {
+  }else if (any(class(A) == "dynEGA")) {
+    wc <- A$dynEGA$wc
+    A <- A$dynEGA$network
+  }else if (missing(A)) {
     stop("Adjacency matrix is required for analysis")
+  }else if (missing(wc)) {
+    wc <- rep(1, ncol(data))
   }
+  
   if (missing(impute)) {
     impute <- "none"
     warning("Argument 'impute' is missing. No imputation will be used.")
   }
-  else if (missing(wc)) {
-    wc <- rep(1, ncol(data))
-  }
+  
   P <- net.loads(A = A, wc = wc, pos.manifold = TRUE)$std
   nfacts <- length(unique(wc))
   if (nfacts > 1) {
     if (global) {
       fact.res <- as.data.frame(matrix(0, nrow = nrow(data),
                                        ncol = (nfacts + 1)))
-    }
-    else {
+    }else {
       fact.res <- as.data.frame(matrix(0, nrow = nrow(data),
                                        ncol = nfacts))
     }
-  }
-  else {
+  }else {
     fact.res <- as.data.frame(matrix(0, nrow = nrow(data),
                                      ncol = nfacts))
   }
@@ -142,8 +141,7 @@ net.scores <- function (data, A, wc, global = FALSE, impute, ...)
     if (impute == "mean") {
       item.means <- colMeans(data, na.rm = TRUE)
       data[miss] <- item.means[miss[, 2]]
-    }
-    else {
+    }else {
       item.med <- apply(data, 2, median, na.rm = TRUE)
       data[miss] <- item.med[miss[, 2]]
     }

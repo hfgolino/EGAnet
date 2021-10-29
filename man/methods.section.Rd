@@ -74,7 +74,7 @@ if(interactive()){
 methods.section(ega.wmt, stats = "net.loads")
 }
 
-\donttest{# bootEGA example
+\dontrun{# bootEGA example
 ## plot.type = "qqraph" used for CRAN checks
 ## plot.type = "GGally" is the default
 boot.wmt <- bootEGA(data = wmt2[,7:24], iter = 500, plot.type = "qgraph",

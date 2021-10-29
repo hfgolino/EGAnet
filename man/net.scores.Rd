@@ -92,17 +92,14 @@ net.scores(data = wmt, A = ega.wmt)
 Christensen, A. P., & Golino, H. (2021).
 On the equivalency of factor and network loadings.
 \emph{Behavior Research Methods}, \emph{53}, 1563-1580.
-\doi{10.3758/s13428-020-01500-6}
 
 Christensen, A. P., Golino, H., & Silvia, P. J. (2020).
 A psychometric network perspective on the validity and validation of personality trait questionnaires.
 \emph{European Journal of Personality}, \emph{34}, 1095-1108.
-\doi{10.1002/per.2265}
 
-Golino, H., Christensen, A. P., Moulder, R., Kim, S., & Boker, S. M. (under review).
+Golino, H., Christensen, A. P., Moulder, R., Kim, S., & Boker, S. M. (2021).
 Modeling latent topics in social media using Dynamic Exploratory Graph Analysis: The case of the right-wing and left-wing trolls in the 2016 US elections.
-\emph{PsyArXiv}.
-\doi{10.31234/osf.io/tfs7c}
+\emph{Psychometrika}.
 }
 \author{
 Alexander P. Christensen <alexpaulchristensen@gmail.com> and Hudson F. Golino <hfg9s at virginia.edu>

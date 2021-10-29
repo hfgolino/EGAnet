@@ -78,17 +78,14 @@
 #' Christensen, A. P., & Golino, H. (2021).
 #' On the equivalency of factor and network loadings.
 #' \emph{Behavior Research Methods}, \emph{53}, 1563-1580.
-#' \doi{10.3758/s13428-020-01500-6}
 #' 
 #' Christensen, A. P., Golino, H., & Silvia, P. J. (2020).
 #' A psychometric network perspective on the validity and validation of personality trait questionnaires.
 #' \emph{European Journal of Personality}, \emph{34}, 1095-1108.
-#' \doi{10.1002/per.2265}
 #'
 #' Hallquist, M., Wright, A. C. G., & Molenaar, P. C. M. (2019).
 #' Problems with centrality measures in psychopathology symptom networks: Why network psychometrics cannot escape psychometric theory.
 #' \emph{Multivariate Behavioral Research}, 1-25.
-#' \doi{10.1080/00273171.2019.1640103}
 #'
 #' @author Alexander P. Christensen <alexpaulchristensen@gmail.com> and Hudson Golino <hfg9s at virginia.edu>
 #'

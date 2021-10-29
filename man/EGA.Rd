@@ -238,30 +238,25 @@ Fast unfolding of communities in large networks.
 Christensen, A. P., Garrido, L. E., & Golino, H. (2021).
 Comparing community detection algorithms in psychological data: A Monte Carlo simulation.
 \emph{PsyArXiv}.
-\doi{10.31234/osf.io/hz89e}
 
 # Original simulation and implementation of EGA \cr
 Golino, H. F., & Epskamp, S. (2017).
 Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research.
-\emph{PLoS ONE}, \emph{12}, e0174035..
-\doi{10.1371/journal.pone.0174035}
+\emph{PLoS ONE}, \emph{12}, e0174035.
 
 Golino, H. F., & Demetriou, A. (2017).
 Estimating the dimensionality of intelligence like data using Exploratory Graph Analysis.
 \emph{Intelligence}, \emph{62}, 54-70.
-\doi{10.1016/j.intell.2017.02.007}
 
 # Current implementation of EGA, introduced unidimensional checks, continuous and dichotomous data \cr
 Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., & Thiyagarajan, J. A. (2020).
 Investigating the performance of Exploratory Graph Analysis and traditional techniques to identify the number of latent factors: A simulation and tutorial.
 \emph{Psychological Methods}, \emph{25}, 292-320.
-\doi{10.1037/met0000255}
 
 # Walktrap algorithm \cr
 Pons, P., & Latapy, M. (2006).
 Computing communities in large networks using random walks.
 \emph{Journal of Graph Algorithms and Applications}, \emph{10}, 191-218.
-\doi{10.7155/jgaa.00185}
 }
 \seealso{
 \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap

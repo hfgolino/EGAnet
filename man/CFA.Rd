@@ -79,12 +79,10 @@ data = intel)
 Christensen, A. P., Gross, G. M., Golino, H., Silvia, P. J., & Kwapil, T. R. (2019).
 Exploratory graph analysis of the Multidimensional Schizotypy Scale.
 \emph{Schizophrenia Research}, \emph{206}, 43-51.
-\doi{10.1016/j.schres.2018.12.018}
 
 Golino, H., & Epskamp, S. (2017).
 Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research.
 \emph{PLoS ONE}, \emph{12}, e0174035.
-\doi{10.1371/journal.pone.0174035}
 }
 \seealso{
 \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and

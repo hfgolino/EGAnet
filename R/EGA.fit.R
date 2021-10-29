@@ -115,20 +115,16 @@
 #' Golino, H., Moulder, R. G., Shi, D., Christensen, A. P., Garrido, L. E., Neito, M. D., Nesselroade, J., Sadana, R., Thiyagarajan, J. A., & Boker, S. M. (in press).
 #' Entropy fit indices: New fit measures for assessing the structure and dimensionality of multiple latent variables.
 #' \emph{Multivariate Behavioral Research}.
-#' \doi{10.31234/osf.io/mtka2}
 #' 
-#' # Original implementation of EGA.fit \cr
-#' Golino, H., Thiyagarajan, J. A., Sadana, M., Teles, M., Christensen, A. P., & Boker, S. M. (under review).
-#' Investigating the broad domains of intrinsic capacity, functional ability, and environment:
-#' An exploratory graph analysis approach for improving analytical methodologies for measuring healthy aging.
+#' # Simulation for EGA.fit \cr
+#' Jamison, L., Christensen, A. P., & Golino, H. (under review).
+#' Optimizing Walktrap's community detection in networks using the Total Entropy Fit Index.
 #' \emph{PsyArXiv}.
-#' \doi{10.31234/osf.io/hj5mc}
 #' 
 #' # Walktrap algorithm \cr
 #' Pons, P., & Latapy, M. (2006).
 #' Computing communities in large networks using random walks.
 #' \emph{Journal of Graph Algorithms and Applications}, \emph{10}, 191-218.
-#' \doi{10.7155/jgaa.00185}
 #'
 #' @seealso \code{\link[EGAnet]{bootEGA}} to investigate the stability of EGA's estimation via bootstrap,
 #' \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA,
