@@ -5,7 +5,7 @@
 {
     msg <- styletext(styletext(paste("\nEGAnet (version ", packageVersion("EGAnet"), ")", sep = ""), defaults = "underline"), defaults = "bold")
 
-    msg <- paste(msg,'\nFor help getting started, type browseVignettes("EGAnet")\n')
+    #msg <- paste(msg,'\nFor help getting started, type browseVignettes("EGAnet")\n')
     msg <- paste(msg,"For bugs and errors, submit an issue to <https://github.com/hfgolino/EGAnet/issues>")
 
     msg <- paste(msg, paste(styletext("\n\nNEW", defaults = "bold"),
