@@ -10,6 +10,7 @@ bootEGA(
   uni.method = c("expand", "LE"),
   iter,
   type = c("parametric", "resampling"),
+  seed = NULL,
   corr = c("cor_auto", "pearson", "spearman"),
   model = c("glasso", "TMFG"),
   model.args = list(),
@@ -72,6 +73,9 @@ original dataset, via the \code{\link[MASS]{mvrnorm}} function}
 {Generates n random subsamples of the original data}
 
 }}
+
+\item{seed}{Numeric.
+Seed to reproduce results. Defaults to \code{NULL} (random)}
 
 \item{corr}{Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
 Current options are:
