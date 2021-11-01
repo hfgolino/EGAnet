@@ -229,11 +229,11 @@
 #'
 #' # bootEGA TMFG example
 #' boot.wmt <- bootEGA(data = wmt, iter = 500, model = "TMFG",
-#' plot.type = "qgraph", type = "parametric", ncores = 2)
+#' plot.type = "qgraph", type = "parametric", ncores = 2, seed = 1234)
 #'
 #' # bootEGA Louvain example
 #' boot.wmt <- bootEGA(data = wmt, iter = 500, algorithm = "louvain",
-#' plot.type = "qgraph", type = "parametric", ncores = 2)
+#' plot.type = "qgraph", type = "parametric", ncores = 2, seed = 1234)
 #'
 #' # bootEGA Spinglass example
 #' boot.wmt <- bootEGA(data = wmt, iter = 500, model = "TMFG", plot.type = "qgraph",
