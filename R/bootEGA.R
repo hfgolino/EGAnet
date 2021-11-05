@@ -56,7 +56,7 @@
 #' }
 #' 
 #' @param seed Numeric.
-#' Seed to reproduce results. Defaults to \code{NULL} (random)
+#' Seed to reproduce results. Defaults to \code{1234}. For random results, set to \code{NULL}
 #'
 #' @param corr Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
 #' Current options are:
@@ -259,9 +259,9 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 31.10.2021
+# Updated 05.11.2021
 bootEGA <- function(data, n = NULL, uni.method = c("expand", "LE"), iter,
-                    type = c("parametric", "resampling"), seed = NULL,
+                    type = c("parametric", "resampling"), seed = 1234,
                     corr = c("cor_auto", "pearson", "spearman"),
                     model = c("glasso", "TMFG"), model.args = list(),
                     algorithm = c("walktrap", "louvain"), algorithm.args = list(),
