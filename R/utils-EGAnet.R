@@ -4072,7 +4072,7 @@ mode <- function(v, fin.vec)
 #'
 # Homogenize Membership
 # For itemStability
-# Updated 14.04.2021
+# Updated 07.11.2021
 homogenize.membership <- function (target.wc, convert.wc)
 {
   # Obtain whether vector or matrix is input for 'convert.wc'
@@ -4126,8 +4126,8 @@ homogenize.membership <- function (target.wc, convert.wc)
       names(rand) <- na.omit(new.uniq)
       len <- rand
       
-      for(j in new.uniq)
-      {
+      for(j in new.uniq){
+        
         # Target nodes
         target <- which(new.vec==j)
         
@@ -4135,15 +4135,18 @@ homogenize.membership <- function (target.wc, convert.wc)
         len[paste(j)] <- length(target)
         
         # Compute rand index
-        if(length(target) >= 3){
-          rand[paste(j)] <- igraph::compare(new.vec[target],target.wc[target],method="rand")
-        }else{
-          # Comparisons give error when variables are less than three
+        if(length(target.wc[target]) == length(unique(target.wc[target]))){
           rand[paste(j)] <- ifelse(
             length(unique(target.wc[target])) == 1, 1, 0
           )
+        }else if(length(new.vec[target]) == length(unique(new.vec[target]))){
+          rand[paste(j)] <- ifelse(
+            length(unique(new.vec[target])) == 1, 1, 0
+          )
+        }else{
+          rand[paste(j)] <- igraph::compare(new.vec[target],target.wc[target],method="rand")
         }
-    
+        
       }
       
       # Remove NAs
@@ -4187,13 +4190,16 @@ homogenize.membership <- function (target.wc, convert.wc)
         len[paste(j)] <- length(target)
         
         # Compute rand index
-        if(length(target) >= 3){
-          rand[paste(j)] <- igraph::compare(new.vec[target],target.wc[target],method="rand")
-        }else{
-          # Comparisons give error when variables are less than three
+        if(length(target.wc[target]) == length(unique(target.wc[target]))){
           rand[paste(j)] <- ifelse(
             length(unique(target.wc[target])) == 1, 1, 0
           )
+        }else if(length(new.vec[target]) == length(unique(new.vec[target]))){
+          rand[paste(j)] <- ifelse(
+            length(unique(new.vec[target])) == 1, 1, 0
+          )
+        }else{
+          rand[paste(j)] <- igraph::compare(new.vec[target],target.wc[target],method="rand")
         }
       
       }
@@ -4268,8 +4274,8 @@ homogenize.membership <- function (target.wc, convert.wc)
       names(rand) <- na.omit(new.uniq)
       len <- rand
       
-      for(j in new.uniq)
-      {
+      for(j in new.uniq){
+        
         # Target nodes
         target <- which(new.vec==j)
         
@@ -4277,13 +4283,16 @@ homogenize.membership <- function (target.wc, convert.wc)
         len[paste(j)] <- length(target)
         
         # Compute rand index
-        if(length(target) >= 3){
-          rand[paste(j)] <- igraph::compare(new.vec[target],target.wc[target],method="rand")
-        }else{
-          # Comparisons give error when variables are less than three
+        if(length(target.wc[target]) == length(unique(target.wc[target]))){
           rand[paste(j)] <- ifelse(
             length(unique(target.wc[target])) == 1, 1, 0
           )
+        }else if(length(new.vec[target]) == length(unique(new.vec[target]))){
+          rand[paste(j)] <- ifelse(
+            length(unique(new.vec[target])) == 1, 1, 0
+          )
+        }else{
+          rand[paste(j)] <- igraph::compare(new.vec[target],target.wc[target],method="rand")
         }
         
       }
