@@ -10,6 +10,7 @@ bootEGA(
   uni.method = c("expand", "LE"),
   iter,
   type = c("parametric", "resampling"),
+  seed = 1234,
   corr = c("cor_auto", "pearson", "spearman"),
   model = c("glasso", "TMFG"),
   model.args = list(),
@@ -72,6 +73,9 @@ original dataset, via the \code{\link[MASS]{mvrnorm}} function}
 {Generates n random subsamples of the original data}
 
 }}
+
+\item{seed}{Numeric.
+Seed to reproduce results. Defaults to \code{1234}. For random results, set to \code{NULL}}
 
 \item{corr}{Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
 Current options are:
@@ -249,11 +253,11 @@ type = "parametric", ncores = 2)
 
 # bootEGA TMFG example
 boot.wmt <- bootEGA(data = wmt, iter = 500, model = "TMFG",
-plot.type = "qgraph", type = "parametric", ncores = 2)
+plot.type = "qgraph", type = "parametric", ncores = 2, seed = 1234)
 
 # bootEGA Louvain example
 boot.wmt <- bootEGA(data = wmt, iter = 500, algorithm = "louvain",
-plot.type = "qgraph", type = "parametric", ncores = 2)
+plot.type = "qgraph", type = "parametric", ncores = 2, seed = 1234)
 
 # bootEGA Spinglass example
 boot.wmt <- bootEGA(data = wmt, iter = 500, model = "TMFG", plot.type = "qgraph",
