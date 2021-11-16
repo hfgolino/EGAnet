@@ -359,6 +359,7 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
     # Check for column names
     if(is.null(colnames(data))){
       colnames(data) <- paste("V", 1:ncol(data), sep = "")
+      row.names(data) <- colnames(data)
     }
 
     # Check for number of cases
