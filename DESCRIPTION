@@ -23,4 +23,4 @@ Suggests: knitr, rmarkdown, markdown, kableExtra, psych, psychTools,
         pbapply, OpenMx, MASS, primes, purrr,
         shiny, shinyjs, shinyalert, shinyBS, R.matlab, foreign, readxl,
         gridExtra, rstudioapi, RColorBrewer, infutil, mirt
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2

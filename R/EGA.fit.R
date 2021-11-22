@@ -70,10 +70,35 @@
 #' See \code{\link[NetworkToolbox]{TMFG}}}
 #'
 #' }
+#' 
+#' @param algorithm A string indicating the algorithm to use or a function from \code{\link{igraph}}
+#' Defaults to \code{"walktrap"}.
+#' Current options are:
 #'
-#' @param steps Numeric vector.
-#' Range of steps to be used in the model selection.
-#' Defaults from 3 to 8 steps (based on Pons & Latapy, 2006)
+#' \itemize{
+#'
+#' \item{\strong{\code{walktrap}}}
+#' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
+#'
+#' \item{\strong{\code{leiden}}}
+#' {Computes the Leiden algorithm using \code{\link[igraph]{cluster_louvain}}}
+#'
+#' }
+#'
+#' @param algorithm.args List.
+#' A list of additional arguments for \code{\link[igraph]{cluster_walktrap}} or \code{\link[igraph]{cluster_leiden}}.
+#' Options are:
+#'
+#' \itemize{
+#'
+#' \item{\strong{\code{steps}}}
+#' {Number of steps used in the Walktrap algorithm. Defaults to \code{c(3:8)}}
+#'
+#' \item{\strong{\code{leiden}}}
+#' {Resolution parameter used in the Leiden algorithm. Defaults to \code{seq(0, 2, .001)}.
+#' Higher values lead to smaller communities, lower values lead to larger communities}
+#'
+#' }
 #'
 #' @return Returns a list containing:
 #'
@@ -81,6 +106,9 @@
 #'
 #' \item{steps}{The number of steps used in the best fitting model from
 #' the \code{\link[igraph]{cluster_walktrap}} algorithm}
+#' 
+#' \item{resolution_parameter}{The resolution parameter used in the best fitting model from
+#' the \code{\link[igraph]{cluster_leiden}} algorithm}
 #'
 #' \item{EntropyFit}{The \code{\link[EGAnet]{tefi}} Index for the unique solutions given the range of steps
 #' (vector names represent the number of steps)}
@@ -121,6 +149,11 @@
 #' Optimizing Walktrap's community detection in networks using the Total Entropy Fit Index.
 #' \emph{PsyArXiv}.
 #' 
+#' # Leiden algorithm \cr
+#' Traag, V. A., Waltman, L., & Van Eck, N. J. (2019).
+#' From Louvain to Leiden: guaranteeing well-connected communities.
+#' \emph{Scientific Reports}, \emph{9}(1), 1-12.
+#' 
 #' # Walktrap algorithm \cr
 #' Pons, P., & Latapy, M. (2006).
 #' Computing communities in large networks using random walks.
@@ -134,11 +167,17 @@
 #'
 #' @export
 # EGA fit
-# Updated 08.03.2021
-EGA.fit <- function (data, n = NULL, uni.method = c("expand", "LE"),
-                     corr = c("cor_auto", "pearson", "spearman"),
-                     model = c("glasso","TMFG"),
-                     steps = c(3,4,5,6,7,8))
+# Updated 11.22.2021
+EGA.fit <- function (
+  data, n = NULL, uni.method = c("expand", "LE"),
+  corr = c("cor_auto", "pearson", "spearman"),
+  model = c("glasso","TMFG"),
+  algorithm = c("leiden", "walktrap"),
+  algorithm.args = list(
+    steps = c(3:8),
+    resolution_parameter = seq(0, 2, .001)
+  )
+)
 {
   if(missing(uni.method)){
     uni.method <- "LE"
@@ -166,17 +205,30 @@ EGA.fit <- function (data, n = NULL, uni.method = c("expand", "LE"),
     )
   }
   
-  if(missing(model))
-  {model <- "glasso"
+  if(missing(model)){
+    model <- "glasso"
   }else{model <- match.arg(model)}
   
-  if(missing(corr))
-  {corr <- "cor_auto"
+  if(missing(corr)){
+    corr <- "cor_auto"
   }else{corr <- match.arg(corr)}
-
-  if(missing(steps))
-  {steps <- c(3,4,5,6,7,8)
-  }else{steps <- steps}
+  
+  if(missing(algorithm)){
+    algorithm <- "walktrap"
+  }else{algorithm <- tolower(match.arg(algorithm))}
+  
+  # Check for algorithm arguments
+  if(algorithm == "walktrap"){
+    if(!"steps" %in% names(algorithm.args)){
+      algorithm.args <- list()
+      algorithm.args$steps <- c(3:8)
+    }
+  }else if(algorithm == "leiden"){
+    if(!"resolution_parameter" %in% names(algorithm.args)){
+      algorithm.args <- list()
+      algorithm.args$resolution_parameter <- seq(0, 2, .001)
+    }
+  }
   
   #Speed up process with data
   if(nrow(data) != ncol(data)){
@@ -187,77 +239,188 @@ EGA.fit <- function (data, n = NULL, uni.method = c("expand", "LE"),
                    "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
     )
   }
-
-  best.fit <- list()
-
-      num <- length(steps)
-
-      mods <- list()
-      dims <- matrix(NA, nrow = ncol(data), ncol = num)
-
-      #Generate walktrap models
-      for(i in 1:num)
-      {
-        message(paste("Estimating EGA -- Walktrap model",i,"of",num,sep=" "))
-        mods[[as.character(steps[i])]] <- EGA(data = data,
-                                              n = n,
-                                              model = model,
-                                              model.args = list(steps = steps[i]),
-                                              algorithm = "walktrap",
-                                              plot.EGA = FALSE)
-
-        dims[,i] <- mods[[as.character(steps[i])]]$wc
-      }
-
-      colnames(dims) <- as.character(steps)
-      
-      #remove solutions with missing dimensions
-      rm.cols <- which(apply(apply(dims, 2, is.na), 2, any))
-      
-      if(length(rm.cols) != 0)
-      {
-        dims <- dims[,-rm.cols]
-        steps <- steps[-rm.cols]
-      }
-
-      #check for unique number of dimensions
-      step <- as.numeric(colnames(dims)[which(!duplicated(homogenize.membership(dims[,1], dims), MARGIN = 2))])
-      
-      len <- length(step)
-
-      #if all models are the same
-      if(len==1)
-      {
-        best.fit$EGA <- mods[[1]]
-        best.fit$steps <- 4
-        Sys.sleep(1)
-        message("\nAll EGA models are identical.")
-        Sys.sleep(1)
-      }else{
-
-        ent.vec <- vector("numeric",length=len)
-
-        for(i in 1:len)
-        {ent.vec[i] <- tefi(abs(mods[[as.character(step[i])]]$correlation), mods[[as.character(step[i])]]$wc)$VN.Entropy.Fit}
-
-        names(ent.vec) <- step
-
-        best.fit$EGA <- mods[as.character(step[which(ent.vec==min(ent.vec))])]
-        best.fit$steps <- step[which(ent.vec==min(ent.vec))]
-        best.fit$EntropyFit <- ent.vec
-        best.fit$Lowest.EntropyFit <- ent.vec[which(ent.vec==min(ent.vec))]
-      }
-      
-  # Get information for EGA Methods section
-  args <- list()
   
-  args$model <- model
-  args$algorithm <- "walktrap"
-  args$steps <- range(steps)
-  args$entropy <- best.fit$Lowest.EntropyFit
-  args$solutions <- best.fit$EntropyFit
-  
-  best.fit$Methods <- args
+  # Check algorithm
+  if(algorithm == "walktrap"){
+    
+    best.fit <- list()
+    
+    steps <- algorithm.args$steps
+    
+    num <- length(steps)
+    
+    mods <- list()
+    dims <- matrix(NA, nrow = ncol(data), ncol = num)
+    
+    #Generate walktrap models
+    for(i in 1:num)
+    {
+      message(paste("Estimating EGA -- Walktrap model",i,"of",num,sep=" "))
+      mods[[as.character(steps[i])]] <- EGA(data = data,
+                                            n = n,
+                                            model = model,
+                                            model.args = list(steps = steps[i]),
+                                            algorithm = "walktrap",
+                                            plot.EGA = FALSE)
+      
+      dims[,i] <- mods[[as.character(steps[i])]]$wc
+    }
+    
+    colnames(dims) <- as.character(steps)
+    
+    #remove solutions with missing dimensions
+    rm.cols <- which(apply(apply(dims, 2, is.na), 2, any))
+    
+    if(length(rm.cols) != 0)
+    {
+      dims <- dims[,-rm.cols]
+      steps <- steps[-rm.cols]
+    }
+    
+    #check for unique number of dimensions
+    step <- as.numeric(colnames(dims)[which(!duplicated(homogenize.membership(dims[,1], dims), MARGIN = 2))])
+    
+    len <- length(step)
+    
+    #if all models are the same
+    if(len==1)
+    {
+      best.fit$EGA <- mods[[1]]
+      best.fit$steps <- 4
+      Sys.sleep(1)
+      message("\nAll EGA models are identical.")
+      Sys.sleep(1)
+    }else{
+      
+      ent.vec <- vector("numeric",length=len)
+      
+      for(i in 1:len)
+      {ent.vec[i] <- tefi(abs(mods[[as.character(step[i])]]$correlation), mods[[as.character(step[i])]]$wc)$VN.Entropy.Fit}
+      
+      names(ent.vec) <- step
+      
+      best.fit$EGA <- mods[as.character(step[which(ent.vec==min(ent.vec))])]
+      best.fit$steps <- step[which(ent.vec==min(ent.vec))]
+      best.fit$EntropyFit <- ent.vec
+      best.fit$Lowest.EntropyFit <- ent.vec[which(ent.vec==min(ent.vec))]
+    }
+    
+    # Get information for EGA Methods section
+    args <- list()
+    
+    args$model <- model
+    args$algorithm <- "walktrap"
+    args$steps <- range(steps)
+    args$entropy <- best.fit$Lowest.EntropyFit
+    args$solutions <- best.fit$EntropyFit
+    
+    best.fit$Methods <- args
+    
+  }else if(algorithm == "leiden"){
+    
+    best.fit <- list()
+    
+    resolution_parameter <- algorithm.args$resolution_parameter
+    
+    num <- length(resolution_parameter)
+    
+    mods <- list()
+    dims <- matrix(NA, nrow = ncol(data), ncol = num)
+    
+    #Generate Leiden models
+    ## Estimate EGA
+    ega <- suppressMessages(
+      suppressWarnings(
+        EGA(data = data,
+            n = n,
+            model = model,
+            plot.EGA = FALSE)
+      )
+    )
+    
+    ## Obtain network
+    net <- ega$network
+    
+    ## Convert to igraph
+    g <- NetworkToolbox::convert2igraph(abs(net))
+    
+    ## Estimate Leiden results
+    results <- list()
+    
+    for(i in 1:length(resolution_parameter)){
+      
+      mods[[as.character(resolution_parameter[i])]] <- igraph::cluster_leiden(
+        g,
+        resolution_parameter = resolution_parameter[i]
+        
+      )
+      
+      dims[,i] <- mods[[as.character(resolution_parameter[i])]]$membership
+      
+    }
+    
+    colnames(dims) <- as.character(resolution_parameter)
+    
+    #remove solutions with missing dimensions
+    rm.cols <- which(apply(apply(dims, 2, is.na), 2, any))
+    
+    if(length(rm.cols) != 0)
+    {
+      dims <- dims[,-rm.cols]
+      resolution_parameter <- resolution_parameter[-rm.cols]
+    }
+    
+    #check for unique number of dimensions
+    resolution <- as.numeric(colnames(dims)[which(!duplicated(homogenize.membership(dims[,1], dims), MARGIN = 2))])
+    
+    len <- length(resolution)
+    
+    #if all models are the same
+    if(len==1)
+    {
+      best.fit$EGA <- mods[[1]]
+      best.fit$resolution <- resolution_parameter[[1]]
+      Sys.sleep(1)
+      message("\nAll EGA models are identical.")
+      Sys.sleep(1)
+    }else{
+      
+      ent.vec <- vector("numeric",length=len)
+      
+      for(i in 1:len)
+      {ent.vec[i] <- tefi(abs(ega$correlation), mods[[as.character(resolution[i])]]$membership)$VN.Entropy.Fit}
+      
+      names(ent.vec) <- resolution
+      
+      best.fit$EGA <- suppressMessages(
+        suppressWarnings(
+          EGA(data = data,
+              n = n,
+              model = model,
+              algorithm = igraph::cluster_leiden,
+              algorithm.args = list(
+                resolution_parameter = resolution[which(ent.vec==min(ent.vec))]
+              ),
+              plot.EGA = FALSE)
+        )
+      )
+      best.fit$resolution_parameter <- resolution[which(ent.vec==min(ent.vec))]
+      best.fit$EntropyFit <- ent.vec
+      best.fit$Lowest.EntropyFit <- ent.vec[which(ent.vec==min(ent.vec))]
+    }
+    
+    # Get information for EGA Methods section
+    args <- list()
+    
+    args$model <- model
+    args$algorithm <- "leiden"
+    args$steps <- range(resolution)
+    args$entropy <- best.fit$Lowest.EntropyFit
+    args$solutions <- best.fit$EntropyFit
+    
+    best.fit$Methods <- args
+    
+  }
       
   class(best.fit) <- "EGA.fit"
       

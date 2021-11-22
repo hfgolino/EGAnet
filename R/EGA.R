@@ -91,7 +91,7 @@
 #' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
 #'
 #' \item{\strong{\code{louvain}}}
-#' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_louvain}}}
+#' {Computes the Louvain algorithm using \code{\link[igraph]{cluster_louvain}}}
 #'
 #' }
 #'

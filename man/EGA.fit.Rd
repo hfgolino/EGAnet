@@ -10,7 +10,8 @@ EGA.fit(
   uni.method = c("expand", "LE"),
   corr = c("cor_auto", "pearson", "spearman"),
   model = c("glasso", "TMFG"),
-  steps = c(3, 4, 5, 6, 7, 8)
+  algorithm = c("leiden", "walktrap"),
+  algorithm.args = list(steps = c(3:8), resolution_parameter = seq(0, 2, 0.001))
 )
 }
 \arguments{
@@ -80,9 +81,34 @@ See \code{\link[NetworkToolbox]{TMFG}}}
 
 }}
 
-\item{steps}{Numeric vector.
-Range of steps to be used in the model selection.
-Defaults from 3 to 8 steps (based on Pons & Latapy, 2006)}
+\item{algorithm}{A string indicating the algorithm to use or a function from \code{\link{igraph}}
+Defaults to \code{"walktrap"}.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{walktrap}}}
+{Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
+
+\item{\strong{\code{leiden}}}
+{Computes the Leiden algorithm using \code{\link[igraph]{cluster_louvain}}}
+
+}}
+
+\item{algorithm.args}{List.
+A list of additional arguments for \code{\link[igraph]{cluster_walktrap}} or \code{\link[igraph]{cluster_leiden}}.
+Options are:
+
+\itemize{
+
+\item{\strong{\code{steps}}}
+{Number of steps used in the Walktrap algorithm. Defaults to \code{c(3:8)}}
+
+\item{\strong{\code{leiden}}}
+{Resolution parameter used in the Leiden algorithm. Defaults to \code{seq(0, 2, .001)}.
+Higher values lead to smaller communities, lower values lead to larger communities}
+
+}}
 }
 \value{
 Returns a list containing:
@@ -91,6 +117,9 @@ Returns a list containing:
 
 \item{steps}{The number of steps used in the best fitting model from
 the \code{\link[igraph]{cluster_walktrap}} algorithm}
+
+\item{resolution_parameter}{The resolution parameter used in the best fitting model from
+the \code{\link[igraph]{cluster_leiden}} algorithm}
 
 \item{EntropyFit}{The \code{\link[EGAnet]{tefi}} Index for the unique solutions given the range of steps
 (vector names represent the number of steps)}
@@ -137,6 +166,11 @@ Entropy fit indices: New fit measures for assessing the structure and dimensiona
 Jamison, L., Christensen, A. P., & Golino, H. (under review).
 Optimizing Walktrap's community detection in networks using the Total Entropy Fit Index.
 \emph{PsyArXiv}.
+
+# Leiden algorithm \cr
+Traag, V. A., Waltman, L., & Van Eck, N. J. (2019).
+From Louvain to Leiden: guaranteeing well-connected communities.
+\emph{Scientific Reports}, \emph{9}(1), 1-12.
 
 # Walktrap algorithm \cr
 Pons, P., & Latapy, M. (2006).
