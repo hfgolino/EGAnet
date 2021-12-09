@@ -268,6 +268,9 @@ bootEGA <- function(data, n = NULL, uni.method = c("expand", "LE"), iter,
                     typicalStructure = TRUE, plot.typicalStructure = TRUE,
                     plot.type = c("GGally", "qgraph"),
                     plot.args = list(), ncores, ...) {
+  
+  # Make data a matrix
+  data <- as.matrix(data)
 
   #### DEPRECATED ARGUMENTS ####
 
