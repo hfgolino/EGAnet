@@ -457,12 +457,12 @@ bootEGA <- function(data, n = NULL, uni.method = c("expand", "LE"), iter,
   #Parallel processing
   cl <- parallel::makeCluster(ncores)
 
-  #Export variables
-  parallel::clusterExport(cl = cl,
-                          varlist = c("datalist", "uni.method", "cases", "corr",
-                                      "model", "model.args",
-                                      "algorithm", "algorithm.args"),
-                          envir=environment())
+  # #Export variables
+  # parallel::clusterExport(cl = cl,
+  #                         varlist = c("datalist", "uni.method", "cases", "corr",
+  #                                     "model", "model.args",
+  #                                     "algorithm", "algorithm.args"),
+  #                         envir=environment())
 
   #let user know data generation has started
   message("Estimating EGA networks...\n", appendLF = FALSE)
