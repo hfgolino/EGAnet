@@ -1301,6 +1301,70 @@ is.NA <- function(x){
   
 }
 
+#' @noRd
+# Function to create long results from list
+# Updated 23.12.2021
+long_results <- function(results_list){
+  
+  # Create long results
+  rows <- unlist(lapply(results_list, nrow))
+  end <- cumsum(rows)
+  start <- (end + 1) - rows
+  
+  # Initialize matrix
+  res_long <- matrix(
+    ncol = ncol(results_list[[1]]),
+    nrow = max(end)
+  )
+  colnames(res_long) <- colnames(results_list[[1]])
+  
+  # Loop through to populate
+  for(i in seq_along(results_list)){
+    res_long[start[i]:end[i],] <- as.matrix(results_list[[i]])
+  }
+  
+  return(res_long)
+  
+}
+
+#' @noRd
+# Removes MASS package dependency (from version 7.3.54)
+# Updated 23.12.2021
+MASS_mvrnorm <- function (n = 1, mu, Sigma, tol = 1e-06, empirical = FALSE, EISPACK = FALSE) 
+{
+  p <- length(mu)
+  if (!all(dim(Sigma) == c(p, p))) 
+    stop("incompatible arguments")
+  if (EISPACK) 
+    stop("'EISPACK' is no longer supported by R", domain = NA)
+  eS <- eigen(Sigma, symmetric = TRUE)
+  ev <- eS$values
+  if (!all(ev >= -tol * abs(ev[1L]))) 
+    stop("'Sigma' is not positive definite")
+  X <- matrix(rnorm(p * n), n)
+  if (empirical) {
+    X <- scale(X, TRUE, FALSE)
+    X <- X %*% svd(X, nu = 0)$v
+    X <- scale(X, FALSE, TRUE)
+  }
+  X <- drop(mu) + eS$vectors %*% diag(sqrt(pmax(ev, 0)), p) %*% 
+    t(X)
+  nm <- names(mu)
+  if (is.null(nm) && !is.null(dn <- dimnames(Sigma))) 
+    nm <- dn[[1L]]
+  dimnames(X) <- list(nm, NULL)
+  if (n == 1) 
+    drop(X)
+  else t(X)
+}
+
+#' @noRd
+# Converts networks to igraph
+convert2igraph <- function (A, neural = FALSE)
+{
+  return(igraph::as.igraph(qgraph::qgraph(A,DoNotPlot=TRUE)))
+}
+
 #%%%%%%%%%%%%%%%%%%%%%%%%
 # DATA GENERATION ----
 #%%%%%%%%%%%%%%%%%%%%%%%%

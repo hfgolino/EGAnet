@@ -386,7 +386,7 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
         if("spins" %in% methods::formalArgs(algorithm)){
           
           # Generate data
-          uni.data <- MASS::mvrnorm(n = n, mu = rep(0, ncol(data)), Sigma = data)
+          uni.data <- MASS_mvrnorm(n = n, mu = rep(0, ncol(data)), Sigma = data)
           
           # Simulate data from unidimensional factor model
           sim.data <- sim.func(data = uni.data, nvar = 4, nfact = 1, load = .70)
