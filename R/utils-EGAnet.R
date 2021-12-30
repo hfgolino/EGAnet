@@ -4072,12 +4072,11 @@ mode <- function(v, fin.vec)
 #'
 # Homogenize Membership
 # For itemStability
-# Updated 07.11.2021
+# Updated 30.12.2021
 homogenize.membership <- function (target.wc, convert.wc)
 {
   # Obtain whether vector or matrix is input for 'convert.wc'
-  if(is.vector(convert.wc))
-  {
+  if(is.vector(convert.wc)){
     
     # Error if not same length
     if(length(convert.wc) != length(target.wc))
@@ -4099,30 +4098,42 @@ homogenize.membership <- function (target.wc, convert.wc)
   # Initialize conversion matrix
   convert.mat <- matrix(NA, nrow = length(target.wc), ncol = n)
   ## Get node names
-  if(!is.null(names(target.wc)))
-  {row.names(convert.mat) <- names(target.wc)}
+  if(!is.null(names(target.wc))){
+    row.names(convert.mat) <- names(target.wc)
+  }
+  
+  # Check target wc for NAs
+  if(any(is.na(target.wc))){
+    na.wc <- which(is.na(target.wc))
+    target.wc <- target.wc[-na.wc]
+  }
   
   # Identify target membership within bootstrapped memberships
-  for(i in 1:n)
-  {
+  for(i in 1:n){
+  
     # New membership vector
     new.vec <- convert.wc[,i]
+    
+    # Remove NAs from new membership vector
+    if(exists("na.wc")){
+      new.vec <- new.vec[-na.wc]
+    }
     
     # Unique new membership
     new.uniq <- unique(new.vec)
     
     # Check if dimensionality solution was reached
-    if(max(new.vec, na.rm = TRUE) == length(new.vec)){
+    if(length(unique(na.omit(new.vec))) == length(new.vec)){
       
       # Submit NAs
       final.vec <- rep(NA, length = length(target.wc))
       names(final.vec) <- names(target.wc)
       
-    }else if(max(target.wc, na.rm = TRUE) > max(new.vec, na.rm = TRUE)){
+    }else if(length(na.omit(unique(target.wc))) > length(unique(na.omit(new.vec)))){
       # Converge based on maximum number of dimensions
       
       # Initialize rand and length vector
-      rand <- vector("numeric", length = max(new.vec, na.rm = TRUE))
+      rand <- vector("numeric", length = length(unique(na.omit(new.vec))))
       names(rand) <- na.omit(new.uniq)
       len <- rand
       
@@ -4162,8 +4173,8 @@ homogenize.membership <- function (target.wc, convert.wc)
       names(final.vec) <- names(target.wc)
       
       # Insert new values into final vector
-      for(j in as.numeric(names(rand.ord)))
-      {
+      for(j in as.numeric(names(rand.ord))){
+        
         # Identify target
         new.target <- which(new.vec==j)
         
@@ -4174,10 +4185,10 @@ homogenize.membership <- function (target.wc, convert.wc)
         final.vec[new.target] <- rep(target.mode)
       }
       
-    }else if(max(target.wc, na.rm = TRUE) < max(new.vec, na.rm = TRUE)){
+    }else if(length(na.omit(unique(target.wc))) < length(unique(na.omit(new.vec)))){
       
       # Initialize rand and length vector
-      rand <- vector("numeric", length = max(new.vec, na.rm = TRUE))
+      rand <- vector("numeric", length = length(unique(na.omit(new.vec))))
       names(rand) <- na.omit(new.uniq)
       len <- rand
       
@@ -4270,7 +4281,7 @@ homogenize.membership <- function (target.wc, convert.wc)
     }else{
       
       # Initialize rand and length vector
-      rand <- vector("numeric", length = max(new.vec, na.rm = TRUE))
+      rand <- vector("numeric", length = length(unique(na.omit(new.vec))))
       names(rand) <- na.omit(new.uniq)
       len <- rand
       
@@ -4292,7 +4303,7 @@ homogenize.membership <- function (target.wc, convert.wc)
             length(unique(new.vec[target])) == 1, 1, 0
           )
         }else{
-          rand[paste(j)] <- igraph::compare(new.vec[target],target.wc[target],method="rand")
+          rand[paste(j)] <- igraph::compare(new.vec[target], target.wc[target], method="rand")
         }
         
       }
@@ -4324,11 +4335,12 @@ homogenize.membership <- function (target.wc, convert.wc)
     }
     
     # Insert final vector into final matrix
-    convert.mat[,i] <- final.vec
+    if(exists("na.wc")){
+      convert.mat[-na.wc,i] <- final.vec
+    }else{
+      convert.mat[,i] <- final.vec
+    }
   }
-  
-  # Add row names
-  row.names(convert.mat) <- names(target.wc)
   
   return(convert.mat)
 }
@@ -4348,7 +4360,7 @@ missing.dimension.check <- function (proportion, membership, bootstrap)
   # If there are missing dimensions, then add them (all zeroes)
   if(length(missing.dimensions) != 0){
     
-    for(i in 1:length(missing.dimensions)){
+    for(i in seq_along(missing.dimensions)){
       
       # Append missing dimension
       proportion <- cbind(proportion, rep(0, nrow(proportion)))
@@ -4361,12 +4373,18 @@ missing.dimension.check <- function (proportion, membership, bootstrap)
   # Check for NA in bootstrap membership
   if(any(is.na(bootstrap))){
     
-    # Get NA proportions
-    NA.proportions <- colMeans(apply(bootstrap, 1, is.na))
-    
-    # Append proportion
-    proportion <- cbind(proportion, NA.proportions)
-    colnames(proportion)[ncol(proportion)] <- "NA"
+    if(any(colnames(proportion) == "NA")){
+      proportion[,"NA"] <- colMeans(apply(bootstrap, 1, is.na))
+    }else{
+      
+      # Get NA proportions
+      NA.proportions <- colMeans(apply(bootstrap, 1, is.na))
+      
+      # Append proportion
+      proportion <- cbind(proportion, NA.proportions)
+      colnames(proportion)[ncol(proportion)] <- "NA"
+      
+    }
     
   }
   
