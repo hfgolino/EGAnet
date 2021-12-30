@@ -153,8 +153,7 @@
 #'
 #' @export
 # Bootstrap Test for the Ergodicity Information Index
-# Updated 31.10.2020
-
+# Updated 29.12.2021
 
 boot.ergoInfo <- function(dynEGA.pop,
                           iter,
@@ -226,9 +225,12 @@ boot.ergoInfo <- function(dynEGA.pop,
   #let user know data generation has started
   message("\nGenerating the Data...\n", appendLF = FALSE)
 
-  N <- nrow(dynEGA.pop$Derivatives$EstimatesDF)
-  unique.ids <- unique(dplyr::last(dynEGA.pop$Derivatives$EstimatesDF))
-  time.points <- table(dplyr::last(dynEGA.pop$Derivatives$EstimatesDF))
+  # Get derivative estimates (and associated information)
+  derivative_estimates <- dynEGA.pop$Derivatives$EstimatesDF
+  N <- nrow(derivative_estimates)
+  IDs <- derivative_estimates[,ncol(derivative_estimates)]
+  unique.ids <- unique(IDs)
+  time.points <- table(IDs)
   time.points <- time.points+(embed-1)
   # Initialize Data list
   data.sim <- vector("list", length = iter)
@@ -239,43 +241,43 @@ boot.ergoInfo <- function(dynEGA.pop,
   if(class(dynEGA.pop)=="dynEGA"){
     for(i in 1:iter){
       for(j in 1:length(unique.ids)){
-        data.sim[[i]][[j]] <- MASS::mvrnorm(n = time.points[[j]], mu = rep(0, ncol(dynEGA.pop$dynEGA$cor.dat)), Sigma = as.matrix(Matrix::nearPD(corpcor::pseudoinverse(dynEGA.pop$network))$mat))
+        data.sim[[i]][[j]] <- MASS_mvrnorm(n = time.points[[j]], mu = rep(0, ncol(dynEGA.pop$dynEGA$cor.dat)), Sigma = as.matrix(Matrix::nearPD(solve(dynEGA.pop$network))$mat))
       }
     }
   } else if(class(dynEGA.pop)=="dynEGA.ind.pop"){
     for(i in 1:iter){
       for(j in 1:length(unique.ids)){
-        data.sim[[i]][[j]] <- as.data.frame(MASS::mvrnorm(n = time.points[[j]], mu = rep(0, ncol(dynEGA.pop$dynEGA.pop$cor.data)), Sigma = as.matrix(Matrix::nearPD(corpcor::pseudoinverse(dynEGA.pop$dynEGA.pop$network))$mat)))
+        data.sim[[i]][[j]] <- as.data.frame(MASS_mvrnorm(n = time.points[[j]], mu = rep(0, ncol(dynEGA.pop$dynEGA.pop$cor.data)), Sigma = as.matrix(Matrix::nearPD(solve(dynEGA.pop$dynEGA.pop$network))$mat)))
         data.sim[[i]][[j]]$ID <- rep(i, each = time.points[[j]])
       }
     }
   }
 
-  data.sim.df <- vector("list", length = iter)
-  for(i in 1:iter){
-    data.sim.df[[i]] <- purrr::map_df(data.sim[[i]], ~as.data.frame(.))
-    #data.sim.df[[i]]$ID <- rep(1:length(unique.ids), each = time.points)
-  }
+  data.sim.df <- lapply(
+    seq_along(data.sim), function(i){
+      as.data.frame(long_results(data.sim[[i]]))
+    }
+  )
 
   variab <- ncol(data.sim.df[[1]])-1
 
   #initialize correlation matrix list
-  boot.data <- vector("list", length = iter)
   boot.data.ids <- vector("list", length = iter)
-  list.results.sim <- vector("list", length = iter)
-  complexity.estimates <- vector("list", length = iter)
+  list.results.sim <- boot.data.ids
 
   #let user know data generation has started
   message("\nEstimating the Population and Individual Structures...\n", appendLF = FALSE)
-
+  
   #Parallel processing
   cl <- parallel::makeCluster(ncores)
 
   #Export variables
-  parallel::clusterExport(cl = cl,
-                          varlist = c("boot.data", "list.results.sim",
-                                      "complexity.estimates"),
-                          envir=environment())
+  # parallel::clusterExport(cl = cl,
+  #                         varlist = c("list.results.sim",
+  #                                     "complexity.estimates"),
+  #                         envir=environment())
+  #
+  # ^^^ Only necessary when testing outside of package ^^^
 
   #Compute DynEGA in the population and in the individuals
   boot.data <- pbapply::pblapply(X = data.sim.df, cl = cl,
@@ -290,19 +292,19 @@ boot.ergoInfo <- function(dynEGA.pop,
   message("Estimating the Ergodicity Information Index\n", appendLF = FALSE)
 
   complexity.estimates <- pbapply::pblapply(X = boot.data, cl = cl,
-                                            FUN = EGAnet::ergoInfo, use = use)
+                                            FUN = ergoInfo, use = use)
   parallel::stopCluster(cl)
 
   #let user know results are being computed
   message("Computing results...\n")
 
-
-  complexity.estimates2 <- vector("list")
-  for(i in 1:length(complexity.estimates)){
-    complexity.estimates2[[i]] <- complexity.estimates[[i]]$EII
-  }
-
-  complexity.estimates2 <- unlist(complexity.estimates2)
+  complexity.estimates2 <- unlist(
+    lapply(
+      complexity.estimates, function(x){
+        x$EII
+      }
+    )
+  )
 
   ## Compute the P-value of the bootstrap test:
   p.greater <- (sum(EII>=complexity.estimates2)+1)/(iter+1)

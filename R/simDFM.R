@@ -84,7 +84,7 @@ simDFM <- function(variab, timep, nfact, error, dfm = c("DAFS","RandomWalk"),
     # Shock = Random shock vectors following a multivariate normal distribution with mean zeros and nfact x nfact q covariance matrix D
     D <- matrix(var.shock,nfact,nfact)
     diag(D) <- cov.shock
-    Shock <- MASS::mvrnorm(burnin+timep,matrix(0,nfact,1),D)
+    Shock <- MASS_mvrnorm(burnin+timep,matrix(0,nfact,1),D)
 
     Fscores <- matrix(0,burnin+timep,nfact)
     Fscores[1,] <- Shock[1,]
@@ -107,7 +107,7 @@ simDFM <- function(variab, timep, nfact, error, dfm = c("DAFS","RandomWalk"),
   ## Error: multivariate normal distribution with mean zeros and p x p covariance matrix Q
   var <- error^2
   Q <- diag(var,variab*nfact,variab*nfact)
-  e <- t(MASS::mvrnorm(timep, matrix(0,variab*nfact,1),Q))
+  e <- t(MASS_mvrnorm(timep, matrix(0,variab*nfact,1),Q))
 
 
   ## Simulated obs data

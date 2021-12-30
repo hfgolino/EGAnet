@@ -208,7 +208,7 @@ EGA.estimate <- function(data, n = NULL,
   ## Check for model
   if(model == "glasso"){
     model.formals <- formals(EBICglasso.qgraph)
-  }else{model.formals <- formals(NetworkToolbox::TMFG)}
+  }else{model.formals <- formals(TMFG)}
 
   ## Check for input model arguments
   if(length(model.args) != 0){
@@ -358,7 +358,7 @@ EGA.estimate <- function(data, n = NULL,
       # Estimate network
       estimated.network <- do.call(EBICglasso.qgraph, model.formals)
 
-      if(all(abs(NetworkToolbox::strength(estimated.network))>0)){
+      if(all(abs(strength(estimated.network))>0)){
 
         if(verbose){
 
@@ -375,33 +375,33 @@ EGA.estimate <- function(data, n = NULL,
     }
 
   }else if(model == "TMFG"){
-    estimated.network <- NetworkToolbox::TMFG(cor.data)$A
+    estimated.network <- TMFG(cor.data)$A
   }
 
   # Check for unconnected nodes
-  if(all(NetworkToolbox::degree(estimated.network)==0)){
+  if(all(degree(estimated.network)==0)){
 
     # Initialize community membership list
     wc <- list()
     wc$membership <- rep(NA, ncol(estimated.network))
     warning("Estimated network contains unconnected nodes:\n",
-            paste(names(which(NetworkToolbox::strength(estimated.network)==0)), collapse = ", "))
+            paste(names(which(strength(estimated.network)==0)), collapse = ", "))
 
-    unconnected <- which(NetworkToolbox::degree(estimated.network)==0)
+    unconnected <- which(degree(estimated.network)==0)
 
   }else{
 
-    if(any(NetworkToolbox::degree(estimated.network)==0)){
+    if(any(degree(estimated.network)==0)){
 
       warning("Estimated network contains unconnected nodes:\n",
-              paste(names(which(NetworkToolbox::strength(estimated.network)==0)), collapse = ", "))
+              paste(names(which(strength(estimated.network)==0)), collapse = ", "))
 
-      unconnected <- which(NetworkToolbox::degree(estimated.network)==0)
+      unconnected <- which(degree(estimated.network)==0)
 
     }
 
     # Convert to igraph
-    graph <- suppressWarnings(NetworkToolbox::convert2igraph(abs(estimated.network)))
+    graph <- suppressWarnings(convert2igraph(abs(estimated.network)))
 
     # Run community detection algorithm
     algorithm.formals$graph <- graph

@@ -60,8 +60,924 @@ poly.irt <- function(loadings, data)
   
 }
 
+#%%%%%%%%%%%%%%%%%%%%
+# NETWORKTOOLBOX ----
+#%%%%%%%%%%%%%%%%%%%%
+
+# adapt.a
+#' @noRd
+# Adaptive Alpha
+# Updated 30.12.2021
+adapt.a <- function (test = "cor",
+                     ref.n = NULL, n = NULL, alpha = .05, power = .80,
+                     efxize = c("small","medium","large"))
+{
+  if(missing(test))
+  {stop("test must be selected")
+  }else{test <- match.arg(test)}
+  
+  if(missing(efxize))
+  {
+    efxize <- "medium"
+    message("No effect size selected. Medium effect size computed.")
+  }else{efxize <- efxize}
+  
+  if(test=="cor")
+  {
+    if(efxize=="small")
+    {efxize <- .10
+    }else if(efxize=="medium")
+    {efxize <- .30
+    }else if(efxize=="large")
+    {efxize <- .50}
+    
+    if(!is.numeric(efxize))
+    {stop("Effect size must be numeric")}
+    
+    if(is.null(ref.n))
+    {ref.n <- pwr.r.test(r=efxize,power=power,sig.level=alpha)$n}
+    
+    num <- sqrt(ref.n*(log(ref.n)+qchisq((1-alpha),1)))
+  }
+  
+  #denominator
+  denom <- (sqrt(n*(log(n)+qchisq((1-alpha),1))))
+  #adjusted alpha calculation
+  adj.a <- alpha*num/denom
+  
+  #critical values
+  if(test=="cor")
+  {
+    critical.r <- function (n, a)
+    {
+      df <- n - 2
+      critical.t <- qt( a/2, df, lower.tail = FALSE )
+      cvr <- sqrt( (critical.t^2) / ( (critical.t^2) + df ) )
+      return(cvr)
+    }
+    
+    cv <- critical.r(n, adj.a)
+  }
+  
+  #output
+  output <- list()
+  output$adapt.a <- adj.a
+  output$crit.value <- cv
+  output$orig.a <- alpha
+  output$ref.n <- ref.n
+  output$exp.n <- n
+  output$power <- power
+  output$efxize <- efxize
+  output$test <- test
+  
+  return(output)
+}
+
+# binarize
+#' @noRd
+# Make adjacency matrix unweighted
+# Updated 30.12.2021
+binarize <- function (A)
+{
+  A <- as.matrix(A)
+  bin <- ifelse(A!=0,1,0)
+  row.names(bin) <- row.names(A)
+  colnames(bin) <- colnames(A)
+  
+  return(bin)
+}
+
+# conn
+#' @noRd
+# Network Connectivity
+# Updated 30.12.2021
+conn <- function (A)
+{
+  diag(A)<-0
+  
+  weights<-0
+  wc<-0
+  B<-A[lower.tri(A)]
+  for(i in 1:length(B))
+    if (B[i]!=0)
+    {
+      wc <- wc+1
+      weights[wc] <- B[i]
+    }
+  tot<-sum(weights)
+  mea<-mean(weights)
+  s<-sd(weights)
+  
+  possible<-sum(ifelse(A!=0,1,0)/2)
+  den<-possible/((ncol(A)^2-ncol(A))/2)
+  
+  return(list(weights=weights,mean=mea,sd=s,total=tot,density=den))
+}
+
+# clustcoeff
+#' @noRd
+# Clustering Coefficient
+# Updated 30.12.2021
+clustcoeff <- function (A, weighted = FALSE)
+{
+  diag(A) <- 0
+  
+  if(nrow(A)!=ncol(A))
+  {stop("Input not an adjacency matrix")}
+  if(!weighted)
+  {n<-ncol(A)
+  A<-ifelse(A!=0,1,0)
+  C<-matrix(0,nrow=n,ncol=1)
+  
+  for(i in 1:n)
+  {
+    v<-which(A[i,]!=0)
+    k<-length(v)
+    if(k >= 2)
+    {
+      S<-A[v,v]
+      C[i]<-sum(S)/(k^2-k)
+    }}
+  
+  C <- round(as.vector(C),3)
+  names(C)<-colnames(A)
+  
+  CCi<-C
+  CC <- mean(C)
+  
+  }else{
+    K<-colSums(A!=0)
+    m<-A^(1/3)
+    cyc<-diag(m%*%m%*%m)
+    K[cyc==0]<-Inf
+    C <- as.vector(round(cyc/(K*(K-1)),3))
+    names(C)<-colnames(A)
+    CCi<-C
+    CC<-mean(C)
+  }
+  
+  return(list(CC=CC,CCi=CCi))
+}
+
+# degree
+#' @noRd
+# Degree
+# Updated 30.12.2021
+degree <- function (A)
+{
+  if(nrow(A)!=ncol(A))
+  {stop("Input not an adjacency matrix")}
+  
+  A <- as.matrix(A)
+  
+  A <- binarize(A)
+  
+  if(isSymmetric(A, check.attributes = FALSE))
+  {
+    Deg <- as.vector(colSums(A))
+    names(Deg) <- colnames(A)
+    return(Deg)
+  }else
+  {
+    #In-degree
+    inDeg <- as.vector(colSums(A, na.rm = TRUE))
+    names(inDeg) <- colnames(A)
+    
+    #Out-degree
+    outDeg <- as.vector(rowSums(A, na.rm = TRUE))
+    names(outDeg) <- colnames(A)
+    
+    #Relative influence
+    relinf <- as.vector((outDeg-inDeg)/(outDeg+inDeg))
+    names(relinf) <- colnames(A)
+    
+    #Reciprocal degree
+    for(i in 1:nrow(A))
+      for(j in 1:ncol(A))
+      {
+        A[i,j] <- ifelse(A[i,j] == 1 & A[j,i] == 1, 1, 0)
+        A[j,i] <- ifelse(A[i,j] == 1 & A[j,i] == 1, 1, 0)
+      }
+    
+    recipDeg <- colSums(A, na.rm = TRUE)
+    names(recipDeg) <- colnames(A)
+    
+    if(all(relinf<.001))
+    {Deg <- as.vector(inDeg)
+    names(Deg) <- colnames(A)
+    return(Deg)
+    }else{return(list(inDegree=inDeg,
+                      outDegree=outDeg,
+                      recipDegree=recipDeg,
+                      relInf=relinf))}
+  }
+}
+
+# distance
+#' @noRd
+# Distance between nodes
+# Updated 30.12.2021
+distance<-function (A, weighted = FALSE)
+{
+  if(nrow(A)!=ncol(A))
+  {stop("Input not an adjacency matrix")}
+  if(!weighted)
+  {B<-ifelse(A!=0,1,0)
+  l<-1
+  Lpath<-B
+  D<-B
+  Idx<-matrix(TRUE,nrow=nrow(B),ncol=ncol(B))
+  while(any(Idx))
+  {
+    l<-l+1
+    Lpath<-(as.matrix(Lpath))%*%(as.matrix(B))
+    for(e in 1:nrow(Lpath))
+      for(w in 1:ncol(Lpath))
+        Idx[e,w]<-(Lpath[e,w]!=0&&(D[e,w]==0))
+    D[Idx]<-l
+  }
+  
+  D[!D]<-Inf
+  diag(D)<-0
+  }else if(weighted){
+    G<-ifelse(1/A==Inf,0,1/A)
+    
+    if(any(G==-Inf))
+    {G<-ifelse(G==-Inf,0,G)}
+    
+    if(any(!G==t(G)))
+    {if(max(abs(G-t(G)))<1e-10)
+    {G<-(G+G)/2}}
+    
+    n<-ncol(G)
+    D<-matrix(Inf,nrow=n,ncol=n)
+    diag(D)<-0
+    B<-matrix(0,nrow=n,ncol=n)
+    
+    for(u in 1:n)
+    {
+      S<-matrix(TRUE,nrow=n,ncol=1)
+      L1<-G
+      V<-u
+      while(TRUE)
+      {
+        S[V]<-0
+        L1[,V]<-0
+        for(v in V)
+        {
+          W<-which(L1[v,]!=0)
+          d<-apply(rbind(D[u,W],(D[u,v]+L1[v,W])),2,min)    
+          wi<-apply(rbind(D[u,W],(D[u,v]+L1[v,W])),2,which.min)
+          D[u,W]<-d
+          ind<-W[wi==2]
+          B[u,ind]<-B[u,v]+1
+        }
+        
+        minD<-suppressWarnings(min(D[u,S==TRUE]))
+        if(length(minD)==0||is.infinite(minD)){break}
+        
+        V<-which(D[u,]==minD)
+      }
+    }
+  }
+  
+  D<-ifelse(D==Inf,0,D)
+  
+  colnames(D)<-colnames(A)
+  row.names(D)<-colnames(A)
+  return(D)
+}
+
+# lattnet
+#' @noRd
+# Generate lattice network
+# Updated 30.12.2021
+lattnet <- function (nodes, edges)
+{
+  dlat<-matrix(0,nrow=nodes,ncol=nodes)
+  lat<-matrix(0,nrow=nodes,ncol=nodes)
+  
+  balance <- sum(lat) - edges
+  
+  count <- 0
+  
+  while(sign(balance) == -1){
+    
+    if(count == 0){
+      
+      for(i in 1:nodes){
+        
+        if(i != nodes){
+          dlat[i, (i + 1)] <- 1
+        }
+      }
+      
+    }else{
+      
+      for(i in 1:nodes){
+        
+        if(i < (nodes - count)){
+          dlat[i, (i + (count + 1))] <- 1
+        }
+        
+      }
+      
+    }
+    
+    count <- count + 1
+    
+    balance <- sum(dlat) - edges
+    
+  }
+  
+  over <- sum(dlat) - edges
+  
+  if(over != 0){
+    
+    rp <- sample(which(dlat==1), over, replace = FALSE)
+    
+    dlat[rp] <- 0
+    
+  }
+  
+  lat <- dlat + t(dlat)
+  
+  return(lat)   
+}
+
+# LoGo
+#' @noRd
+# Local-Global Sparse Inverse Covariance Matrix
+# Updated 30.12.2021
+LoGo <- function (cormat, cliques, separators,
+                  partial = TRUE, ...)
+{
+  #covariance matrix
+  standardize <- TRUE
+  
+  
+  S <- cormat
+  
+  if(missing(separators))
+  {separators<-NULL}
+  
+  if(missing(cliques))
+  {cliques<-NULL}
+  
+  
+  if(is.null(separators)&is.null(cliques))
+  {
+    tmfg<-TMFG(cormat)
+    separators<-tmfg$separators
+    cliques<-tmfg$cliques
+  }
+  
+  n<-ncol(S)
+  Jlogo<-matrix(0,nrow=n,ncol=n)
+  
+  if(!is.list(cliques)&!is.list(separators))
+  {
+    for(i in 1:nrow(cliques))
+    {
+      v<-cliques[i,]
+      Jlogo[v,v]<-Jlogo[v,v]+solve(S[v,v])
+    }
+    
+    for(i in 1:nrow(separators))
+    {
+      v<-separators[i,]
+      Jlogo[v,v]<-Jlogo[v,v]-solve(S[v,v])
+    }
+  }else{
+    for(i in 1:length(cliques))
+    {
+      v<-cliques[[i]]
+      Jlogo[v,v]<-Jlogo[v,v]+solve(S[v,v])
+    }
+    
+    for(i in 1:length(separators))
+    {
+      v<-separators[[i]]
+      Jlogo[v,v]<-Jlogo[v,v]-solve(S[v,v])
+    }
+  }
+  
+  if(partial)
+  {
+    Jlogo<-(-cov2cor(Jlogo))
+    if(any(is.na(Jlogo)))
+    {Jlogo <- ifelse(is.na(Jlogo),0,Jlogo)}
+    diag(Jlogo)<-0
+  }
+  
+  colnames(Jlogo)<-colnames(data)
+  row.names(Jlogo)<-colnames(data)
+  
+  if(!isSymmetric(Jlogo))
+  {Jlogo[lower.tri(Jlogo)] <- Jlogo[upper.tri(Jlogo)]}
+  
+  return(logo=Jlogo)
+}
+
+# pathlengths
+#' @noRd
+# Path Lengths
+# Updated 30.12.2021
+pathlengths <- function (A, weighted = FALSE)
+{
+  if(nrow(A)!=ncol(A))
+  {stop("Input not an adjacency matrix")}
+  if(!weighted)
+  {D<-distance(A,weighted=FALSE)}else if(weighted){D<-distance(A,weighted=TRUE)}
+  n<-nrow(D)
+  for(i in 1:ncol(D))
+    for(j in 1:nrow(D))
+      if(is.infinite(D[j,i]))
+      {D[j,i]<-0}
+  if(any(colSums(D)==0))
+  {
+    newD <- D
+    newD[,(which(colSums(D)==0))] <- rep(NA,length(which(colSums(D)==0)))
+  }else{newD <- D}
+  
+  aspli<-colSums(newD*(newD!=0))/(ncol(newD)-1)
+  aspl<-mean(aspli,na.rm=TRUE)
+  
+  Emat<-(D*(D!=0))
+  
+  ecc<-matrix(nrow=nrow(Emat),ncol=1)
+  
+  for(i in 1:nrow(Emat))
+  {ecc[i,]<-max(Emat[i,])}
+  
+  d<-max(ecc)
+  
+  ecc <- as.vector(ecc)
+  names(ecc) <- colnames(A)
+  
+  aspli <- as.vector(aspli)
+  names(aspli) <- colnames(A)
+  
+  return(list(ASPL=aspl,ASPLi=aspli,ecc=ecc,diameter=d))
+}
+
+# pwr.r.test
+#' @noRd
+# Power for correlations from pwr 1.3.0
+# Updated 30.12.2021
+pwr.r.test <- function (n = NULL, r = NULL, sig.level = 0.05, power = NULL, 
+          alternative = c("two.sided", "less", "greater")) 
+{
+  if (sum(sapply(list(n, r, power, sig.level), is.null)) != 
+      1) 
+    stop("exactly one of n, r, power, and sig.level must be NULL")
+  if (!is.null(r) && is.character(r)) 
+    r <- cohen.ES(test = "r", size = r)$effect.size
+  if (!is.null(sig.level) && !is.numeric(sig.level) || any(0 > 
+                                                           sig.level | sig.level > 1)) 
+    stop(sQuote("sig.level"), " must be numeric in [0, 1]")
+  if (!is.null(power) && !is.numeric(power) || any(0 > power | 
+                                                   power > 1)) 
+    stop(sQuote("power"), " must be numeric in [0, 1]")
+  if (!is.null(n) && any(n < 4)) 
+    stop("number of observations must be at least 4")
+  alternative <- match.arg(alternative)
+  tside <- switch(alternative, less = 1, two.sided = 2, greater = 3)
+  if (tside == 2 && !is.null(r)) 
+    r <- abs(r)
+  if (tside == 3) {
+    p.body <- quote({
+      ttt <- qt(sig.level, df = n - 2, lower = FALSE)
+      rc <- sqrt(ttt^2/(ttt^2 + n - 2))
+      zr <- atanh(r) + r/(2 * (n - 1))
+      zrc <- atanh(rc)
+      pnorm((zr - zrc) * sqrt(n - 3))
+    })
+  }
+  if (tside == 1) {
+    p.body <- quote({
+      r <- -r
+      ttt <- qt(sig.level, df = n - 2, lower = FALSE)
+      rc <- sqrt(ttt^2/(ttt^2 + n - 2))
+      zr <- atanh(r) + r/(2 * (n - 1))
+      zrc <- atanh(rc)
+      pnorm((zr - zrc) * sqrt(n - 3))
+    })
+  }
+  if (tside == 2) {
+    p.body <- quote({
+      ttt <- qt(sig.level/2, df = n - 2, lower = FALSE)
+      rc <- sqrt(ttt^2/(ttt^2 + n - 2))
+      zr <- atanh(r) + r/(2 * (n - 1))
+      zrc <- atanh(rc)
+      pnorm((zr - zrc) * sqrt(n - 3)) + pnorm((-zr - zrc) * 
+                                                sqrt(n - 3))
+    })
+  }
+  if (is.null(power)) 
+    power <- eval(p.body)
+  else if (is.null(n)) 
+    n <- uniroot(function(n) eval(p.body) - power, c(4 + 
+                                                       1e-10, 1e+09))$root
+  else if (is.null(r)) {
+    if (tside == 2) 
+      r <- uniroot(function(r) eval(p.body) - power, c(1e-10, 
+                                                       1 - 1e-10))$root
+    else r <- uniroot(function(r) eval(p.body) - power, c(-1 + 
+                                                            1e-10, 1 - 1e-10))$root
+  }
+  else if (is.null(sig.level)) 
+    sig.level <- uniroot(function(sig.level) eval(p.body) - 
+                           power, c(1e-10, 1 - 1e-10))$root
+  else stop("internal error")
+  METHOD <- "approximate correlation power calculation (arctangh transformation)"
+  structure(list(n = n, r = r, sig.level = sig.level, power = power, 
+                 alternative = alternative, method = METHOD), class = "power.htest")
+}
+
+# randnet
+#' @noRd
+# Generate random network
+# Updated 30.12.2021
+randnet <- function (nodes = NULL, edges = NULL, A = NULL)
+{
+  if(is.null(A))
+  {
+    # Initialize matrix
+    mat <- matrix(1, nrow = nodes, ncol = nodes)
+    
+    # Set diagonal to zero
+    diag(mat) <- 0
+    
+    # Indices of upper diagonal
+    ind <- ifelse(upper.tri(mat) == TRUE, 1, 0)
+    i <- which(ind == 1)
+    
+    # Sample zeros and ones
+    rp <- sample(length(i))
+    # Get indices
+    irp <- i[rp]
+    
+    # Initialize random matrix
+    rand <- matrix(0, nrow = nodes, ncol = nodes)
+    
+    # Insert edges
+    rand[irp[1:edges]] <- 1
+    
+    # Make symmetric
+    rand <- rand + t(rand)
+    
+  }else{
+    
+    # Make diagonal of network zero
+    diag(A) <- 0
+    
+    # Compute degree
+    degrees <- degree(A)
+    
+    # Get degrees based on directed or undirected
+    # Use igraph
+    if(is.list(degrees))
+    {rand <- as.matrix(igraph::as_adj(igraph::sample_degseq(out.deg = degrees$outDegree, in.deg = degrees$inDegree, method = "vl")))
+    }else{rand <- as.matrix(igraph::as_adj(igraph::sample_degseq(out.deg = degrees, method = "vl")))}
+  }
+  
+  return(rand)
+}
+
+# strength
+#' @noRd
+# Node Strength
+# Updated 30.12.2021
+strength <- function (A, absolute = TRUE)
+{
+  if(is.vector(A))
+  {return(0)
+  }else if(nrow(A)!=ncol(A))
+  {stop("Input not an adjacency matrix")}
+  
+  if(absolute)
+  {A <- abs(A)}
+  A <- as.matrix(A)
+  
+  if(isSymmetric(A, check.attributes = FALSE))
+  {
+    Str <- round(as.vector(colSums(A)),2)
+    names(Str) <- colnames(A)
+    return(Str)
+  }else{
+    #In-strength
+    inStr <- as.vector(colSums(A))
+    names(inStr) <- colnames(A)
+    #Out-strength
+    outStr <- as.vector(rowSums(A))
+    names(outStr) <- colnames(A)
+    #Relative influence
+    relinf <- as.vector((outStr-inStr)/(outStr+inStr))
+    names(relinf) <- colnames(A)
+    
+    if(all(relinf<.001))
+    {Str <- round(as.vector(colSums(A)),2)
+    names(Str) <- colnames(A)
+    return(Str)
+    }else{return(list(inStrength=inStr,outStrength=outStr,relInf=relinf))}
+  }
+}
+
+# smallworldness
+#' @noRd
+# Small-worldness measures
+# Updated 30.12.2021
+smallworldness <- function (A, iter = 100, progBar = FALSE, method = c("HG","rand","TJHBL"))
+{
+  if(missing(method))
+  {method<-"TJHBL"
+  }else{method<-match.arg(method)}
+  
+  mat<-matrix(0,nrow=nrow(A),ncol=ncol(A)) #Initialize bootstrap matrix
+  asamps<-matrix(0,nrow=iter) #Initialize sample matrix
+  csamps<-matrix(0,nrow=iter) #Initialize sample matrix
+  if(progBar)
+  {pb <- txtProgressBar(max=iter, style = 3)}
+  for(i in 1:iter) #Generate array of bootstrapped samples
+  {
+    rand<-randnet(A = A)
+    if(method=="TJHBL")
+    {latt<-lattnet(ncol(A),sum(ifelse(A!=0,1,0))/2)}
+    asamps[i,]<-pathlengths(rand)$ASPL
+    if(method=="rand")
+    {csamps[i,]<-clustcoeff(rand)$CC
+    }else if(method=="HG"){csamps[i,]<-transitivity(rand)
+    }else if(method=="TJHBL"){csamps[i,]<-clustcoeff(latt)$CC}else{stop("Method not available")}
+    if(progBar)
+    {setTxtProgressBar(pb, i)}
+  }
+  if(progBar)
+  {close(pb)}
+  
+  nodes<-ncol(A)
+  ASPL<-pathlengths(A)$ASPL
+  CC<-clustcoeff(A)$CC
+  trans<-transitivity(A)
+  rASPL<-mean(asamps)
+  
+  if(method=="rand")
+  {rCC<-mean(csamps)
+  swm<-(CC/rCC)/(ASPL/rASPL)
+  lrCCt<-rCC
+  }else if(method=="HG")
+  {rtrans<-mean(csamps)
+  swm<-(trans/rtrans)/(ASPL/rASPL)
+  lrCCt<-rtrans
+  }else if(method=="TJHBL")
+  {lCC<-mean(csamps)
+  swm<-(rASPL/ASPL)-(CC/lCC)
+  lrCCt<-lCC
+  }
+  
+  return(list(swm=swm, rASPL=rASPL, lrCCt=lrCCt))
+}
+
+# TMFG
+#' @noRd
+# Triangulated Maximally Filtered Graph
+# Updated 30.12.2021
+TMFG <-function (cormat)
+{
+  # Number of nodes
+  n <- ncol(cormat)
+  
+  # Signed correlations
+  tcormat <- cormat
+  cormat <- abs(cormat)
+  
+  # Let user know matrix is too small for TMFG estimation
+  # It is still okay to proceed
+  if(n < 9)
+  {print("Matrix is too small")}
+  
+  # Initialize sparse edge matrix
+  nodeTO <- sort(c(rep(1:n,n)))
+  nodeFROM <- c(rep(1:n,n))
+  nodeWEIGHT <- as.vector(cormat)
+  
+  # Initialize matrices
+  M <- cbind(nodeTO, nodeFROM, nodeWEIGHT) # sparse node-weight matrix
+  in_v <- matrix(nrow=nrow(cormat), ncol=1) # inserted vertices matrix
+  ou_v <- matrix(nrow=nrow(cormat), ncol=1) # not yet inserted vertices matrix
+  tri <- matrix(nrow=((2*n)-4), ncol=3) # triangles matrix
+  separators <- matrix(nrow=n-4, ncol=3) # matrix of 3-cliques (non-face triangles)
+  
+  # Find 3 vertices with largest strength
+  s <- rowSums(cormat*(cormat > mean(matrix(unlist(cormat), nrow=1)))*1)
+  
+  # Order vertices with largest strength
+  # and grab the top 4
+  in_v[1:4] <- order(s,decreasing=TRUE)[1:4]
+  
+  # Set aside nodes that are not in the top 4
+  ou_v <- setdiff(1:nrow(in_v),in_v)
+  
+  # Build tetrahedron with the largest strength
+  ## Insert triangles
+  tri[1,]<-in_v[1:3,]
+  tri[2,]<-in_v[2:4,]
+  tri[3,]<-in_v[c(1,2,4),]
+  tri[4,]<-in_v[c(1,3,4),]
+  
+  # Initialize sparse TMFG matrix
+  S <- matrix(nrow=(3*nrow(cormat)-6),ncol=3)
+  
+  # Algorithm for traditional or dependency network
+  if(!depend)
+  {
+    S[1,] <- c(in_v[1],in_v[2],1)
+    S[2,] <- c(in_v[1],in_v[3],1)
+    S[3,] <- c(in_v[1],in_v[4],1)
+    S[4,] <- c(in_v[2],in_v[3],1)
+    S[5,] <- c(in_v[2],in_v[4],1)
+    S[6,] <- c(in_v[3],in_v[4],1)
+  }else{
+    
+    # Determine appropriate order for directionality in dependency network
+    ## Node 1 and 2
+    if(cormat[in_v[1],in_v[2]]>cormat[in_v[2],in_v[1]])
+    {S[1,]<-c(in_v[1],in_v[2],1)
+    }else{S[1,]<-c(in_v[2],in_v[1],1)}
+    
+    ## Node 1 and 3
+    if(cormat[in_v[1],in_v[3]]>cormat[in_v[3],in_v[1]])
+    {S[2,]<-c(in_v[1],in_v[3],1)
+    }else{S[2,]<-c(in_v[3],in_v[1],1)}
+    
+    ## Node 1 and 4
+    if(cormat[in_v[1],in_v[4]]>cormat[in_v[4],in_v[1]])
+    {S[3,]<-c(in_v[1],in_v[4],1)
+    }else{S[3,]<-c(in_v[4],in_v[1],1)}
+    
+    ## Node 2 and 3
+    if(cormat[in_v[2],in_v[3]]>cormat[in_v[3],in_v[2]])
+    {S[4,]<-c(in_v[2],in_v[3],1)
+    }else{S[4,]<-c(in_v[3],in_v[2],1)}
+    
+    ## Node 2 and 4
+    if(cormat[in_v[2],in_v[4]]>cormat[in_v[4],in_v[2]])
+    {S[5,]<-c(in_v[2],in_v[4],1)
+    }else{S[5,]<-c(in_v[4],in_v[2],1)}
+    
+    ## Node 3 and 4
+    if(cormat[in_v[3],in_v[4]]>cormat[in_v[4],in_v[3]])
+    {S[6,]<-c(in_v[3],in_v[4],1)
+    }else{S[6,]<-c(in_v[4],in_v[3],1)}
+  }
+  
+  #build initial gain table
+  gain <- matrix(-Inf,nrow=n,ncol=(2*(n-2)))
+  gain[ou_v,1] <- rowSums(cormat[ou_v,(tri[1,])])
+  gain[ou_v,2] <- rowSums(cormat[ou_v,(tri[2,])])
+  gain[ou_v,3] <- rowSums(cormat[ou_v,(tri[3,])])
+  gain[ou_v,4] <- rowSums(cormat[ou_v,(tri[4,])])
+  
+  ntri <- 4 #number of triangles
+  gij <- matrix(nrow=1,ncol=ncol(gain))
+  v <- matrix(nrow=1,ncol=ncol(gain))
+  ve <- array()
+  tr <- 0
+  for(e in 5:n)
+  {
+    if(length(ou_v)==1){
+      ve<-ou_v
+      v<-1
+      w<-1
+      tr<-which.max(gain[ou_v,])
+    }else{
+      for(q in 1:ncol(gain))
+      {
+        gij[,q] <- max(gain[ou_v,q])
+        v[,q] <- which.max(gain[ou_v,q])
+        tr <- which.max(gij)
+      }
+      
+      ve <- ou_v[v[tr]]
+      w <- v[tr]
+    }
+    
+    #update vertex lists
+    ou_v<-ou_v[-w]
+    in_v[e]<-ve
+    
+    #update adjacency matrix
+    for(u in 1:length(tri[tr,]))
+    {
+      cou<-6+((3*(e-5))+u)
+      if(depend){
+        if(cormat[ve,tri[tr,u]]>cormat[tri[tr,u],ve]){
+          S[cou,]<-cbind(ve,tri[tr,u],1)   
+        }else{S[cou,]<-cbind(tri[tr,u],ve,1)}}else
+          S[cou,]<-cbind(ve,tri[tr,u],1)
+    }
+    
+    #update 3-clique list
+    separators[e-4,]<-tri[tr,]
+    #update triangle list replacing 1 and adding 2 triangles
+    tri[ntri+1,]<-cbind(rbind(tri[tr,c(1,3)]),ve)
+    tri[ntri+2,]<-cbind(rbind(tri[tr,c(2,3)]),ve)
+    tri[tr,]<-cbind(rbind(tri[tr,c(1,2)]),ve)
+    #update gain table
+    gain[ve,]<-0
+    gain[ou_v,tr]<-rowSums(cormat[ou_v,tri[tr,],drop=FALSE])
+    gain[ou_v,ntri+1]<-rowSums(cormat[ou_v,tri[ntri+1,],drop=FALSE])
+    gain[ou_v,ntri+2]<-rowSums(cormat[ou_v,tri[ntri+2,],drop=FALSE])
+    
+    #update triangles
+    ntri<-ntri+2
+  }
+  cliques<-rbind(in_v[1:4],(cbind(separators,in_v[5:ncol(cormat)])))
+  
+  L<-S
+  if(depend)
+  {W<-matrix(1:nrow(cormat),nrow=nrow(cormat),ncol=1)
+  X<-matrix(1:nrow(cormat),nrow=nrow(cormat),ncol=1)
+  Y<-matrix(0,nrow=nrow(cormat),ncol=1)
+  Z<-cbind(W,X,Y)
+  K<-rbind(L,Z)
+  }else{
+    L[,1]<-S[,2]
+    L[,2]<-S[,1]
+    K<-rbind(S,L)
+  }
+  
+  x <- matrix(0, nrow = ncol(cormat), ncol = ncol(cormat))
+  
+  for(i in 1:nrow(K))
+  {
+    x[K[i,1], K[i,2]] <- 1
+    x[K[i,2], K[i,1]] <- 1
+  }
+  
+  diag(x)<-1
+  
+  for(r in 1:nrow(x))
+    for(z in 1:ncol(x))
+    {if(x[r,z]==1){x[r,z]<-tcormat[r,z]}}
+  
+  colnames(x)<-colnames(data)
+  x <- as.data.frame(x)
+  row.names(x)<-colnames(x)
+  x <- as.matrix(x)
+  
+  return(list(A=x, separators=separators, cliques=cliques))
+}
+
+# transitivity
+#' @noRd
+# Transitivity
+# Updated 30.12.2021
+transitivity <- function (A, weighted = FALSE)
+{
+  if(!weighted)
+  {
+    A<-ifelse(A!=0,1,0)
+    trans<-sum(diag(A%*%A%*%A))/((sum(A%*%A))-sum(diag(A%*%A)))
+  }else if(weighted){
+    K<-colSums(ifelse(A!=0,1,0))
+    W<-A^(1/3)
+    cyc<-diag(W%*%W%*%W)
+    trans<-sum(cyc)/sum(K*(K-1))
+  }
+  
+  return(trans)
+}
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# WEIGHTED TOPOLOGICAL OVERLAP ----
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+# From wTO 1.6.3
+#' @noRd
+#' 
+# Weighted topological overlap
+wTO <- function (A, sign = c("abs", "sign")) 
+{
+  if (sign %in% c("abs", "absolute")) {
+    A = abs(A)
+  }
+  A_TF = as.data.frame(subset(A, select = row.names(A)))
+  C = as.matrix(A) %*% t(A)
+  W = C + A_TF
+  K = matrix(NA, nrow(A_TF), ncol(A_TF))
+  KI = rowSums(abs(A), na.rm = T)
+  for (ii in 1:nrow(A_TF)) {
+    for (jj in 1:ncol(A_TF)) {
+      K[ii, jj] = min(KI[ii], KI[jj])
+    }
+  }
+  WTO = round(W/(K + 1 - abs(A_TF)), 3)
+  return(WTO)
+}
+
 #%%%%%%%%%%%%%%%%%%%%%%%%%%
-# network.descriptives ----
+# NETWORK DESCRIPTIVES ----
 #%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 # From WGCNA version 1.70-3
@@ -98,9 +1014,23 @@ scaleFreeFitIndex=function(k,nBreaks=10, removeFirst = FALSE)
   datout
 }
 
-#%%%%%%%%%%%%%%%
-# net.loads ----
-#%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%
+# ENTROPY FIT ----
+#%%%%%%%%%%%%%%%%%
+
+#' @noRd
+# Mimics count from plyr::count
+# Updated 30.12.2021
+count <- function(data)
+{
+  freq_bins <- matrix(apply(table(data), 1, rbind), byrow = FALSE)
+  counted <- as.vector(na.omit(ifelse(freq_bins == 0, NA, freq_bins)))
+  return(counted)
+}
+
+#%%%%%%%%%%%%%%%%%%%%%%
+# NETWORK LOADINGS ----
+#%%%%%%%%%%%%%%%%%%%%%%
 
 #' Communicating Nodes
 #' @description Computes the between-community strength for each node in the network
@@ -178,11 +1108,11 @@ comcat <- function (A, comm = c("walktrap","louvain"),
   {A <- abs(A)}
   
   # Convert to communities
-  if(any(eval(formals(NetworkToolbox::stable)$comm) %in% comm))
+  if(any(eval(formals(stable)$comm) %in% comm))
   {
     facts <- switch(comm,
-                    walktrap = igraph::cluster_walktrap(NetworkToolbox::convert2igraph(A), ...)$membership,
-                    louvain = igraph::cluster_louvain(NetworkToolbox::convert2igraph(A), ...)$membership
+                    walktrap = igraph::cluster_walktrap(convert2igraph(A), ...)$membership,
+                    louvain = igraph::cluster_louvain(convert2igraph(A), ...)$membership
     )
   }else{facts <- comm}
   
@@ -215,7 +1145,7 @@ comcat <- function (A, comm = c("walktrap","louvain"),
         
         # Centrality
         com <- switch(cent,
-                      degree = colSums(NetworkToolbox::binarize(Ah)),
+                      degree = colSums(binarize(Ah)),
                       strength = colSums(Ah)
         )
         
@@ -321,8 +1251,7 @@ comcat <- function (A, comm = c("walktrap","louvain"),
 # Stabilizing
 #Updated 18.03.2020
 stable <- function (A, comm = c("walktrap","louvain"),
-                    cent = c("betweenness","rspbc","closeness",
-                             "strength","degree","hybrid"),
+                    cent = c("strength","degree"),
                     absolute = TRUE, diagonal = 0, ...)
 {
   # MISSING ARGUMENTS
@@ -349,11 +1278,11 @@ stable <- function (A, comm = c("walktrap","louvain"),
   {A <- abs(A)}
   
   # Convert to communities
-  if(any(eval(formals(NetworkToolbox::stable)$comm) %in% comm))
+  if(any(eval(formals(stable)$comm) %in% comm))
   {
     facts <- switch(comm,
-                    walktrap = igraph::cluster_walktrap(NetworkToolbox::convert2igraph(A), ...)$membership,
-                    louvain = igraph::cluster_louvain(NetworkToolbox::convert2igraph(A), ...)$membership
+                    walktrap = igraph::cluster_walktrap(convert2igraph(A), ...)$membership,
+                    louvain = igraph::cluster_louvain(convert2igraph(A), ...)$membership
     )
   }else{facts <- comm}
   
@@ -383,11 +1312,11 @@ stable <- function (A, comm = c("walktrap","louvain"),
     {
       # Centrality measure
       stab <- switch(cent,
-                     betweenness = NetworkToolbox::betweenness(Ah),
-                     rspbc = NetworkToolbox::rspbc(Ah),
-                     closeness = NetworkToolbox::closeness(Ah),
+                     #betweenness = betweenness(Ah),
+                     #rspbc = rspbc(Ah),
+                     #closeness = closeness(Ah),
                      strength = colSums(Ah),
-                     degree = colSums(NetworkToolbox::binarize(Ah))
+                     degree = colSums(binarize(Ah))
       )
     }else{
       # Input zero
@@ -874,7 +1803,7 @@ compare.plot.fix.EGA <- function(object.list,  plot.type = c("GGally","qgraph"),
                                            ncol = ncol(x$network)))
       
       # Layout "Spring"
-      graph1 <- NetworkToolbox::convert2igraph(x$network)
+      graph1 <- convert2igraph(x$network)
       edge.list <- igraph::as_edgelist(graph1)
       layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
                                                                  weights =
@@ -1301,6 +2230,70 @@ is.NA <- function(x){
   
 }
 
+#' @noRd
+# Function to create long results from list
+# Updated 23.12.2021
+long_results <- function(results_list){
+  
+  # Create long results
+  rows <- unlist(lapply(results_list, nrow))
+  end <- cumsum(rows)
+  start <- (end + 1) - rows
+  
+  # Initialize matrix
+  res_long <- matrix(
+    ncol = ncol(results_list[[1]]),
+    nrow = max(end)
+  )
+  colnames(res_long) <- colnames(results_list[[1]])
+  
+  # Loop through to populate
+  for(i in seq_along(results_list)){
+    res_long[start[i]:end[i],] <- as.matrix(results_list[[i]])
+  }
+  
+  return(res_long)
+  
+}
+
+#' @noRd
+# Removes MASS package dependency (from version 7.3.54)
+# Updated 23.12.2021
+MASS_mvrnorm <- function (n = 1, mu, Sigma, tol = 1e-06, empirical = FALSE, EISPACK = FALSE) 
+{
+  p <- length(mu)
+  if (!all(dim(Sigma) == c(p, p))) 
+    stop("incompatible arguments")
+  if (EISPACK) 
+    stop("'EISPACK' is no longer supported by R", domain = NA)
+  eS <- eigen(Sigma, symmetric = TRUE)
+  ev <- eS$values
+  if (!all(ev >= -tol * abs(ev[1L]))) 
+    stop("'Sigma' is not positive definite")
+  X <- matrix(rnorm(p * n), n)
+  if (empirical) {
+    X <- scale(X, TRUE, FALSE)
+    X <- X %*% svd(X, nu = 0)$v
+    X <- scale(X, FALSE, TRUE)
+  }
+  X <- drop(mu) + eS$vectors %*% diag(sqrt(pmax(ev, 0)), p) %*% 
+    t(X)
+  nm <- names(mu)
+  if (is.null(nm) && !is.null(dn <- dimnames(Sigma))) 
+    nm <- dn[[1L]]
+  dimnames(X) <- list(nm, NULL)
+  if (n == 1) 
+    drop(X)
+  else t(X)
+}
+
+#' @noRd
+# Converts networks to igraph
+convert2igraph <- function (A, neural = FALSE)
+{
+  return(igraph::as.igraph(qgraph::qgraph(A,DoNotPlot=TRUE)))
+}
+
 #%%%%%%%%%%%%%%%%%%%%%%%%
 # DATA GENERATION ----
 #%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1397,7 +2390,7 @@ sim.func <- function(data, nvar, nfact, load, n = 500)
   }
   
   U = chol(R)                                                                       ## Cholesky decomposition of Rp
-  Z = MASS::mvrnorm(n, mu = rep(0, J), Sigma = diag(J))                                  ## Obtain sample matrix of continuous variables
+  Z = MASS_mvrnorm(n, mu = rep(0, J), Sigma = diag(J))                                  ## Obtain sample matrix of continuous variables
   X = Z%*%U
   colnames(X) <- paste0("X", 1:ncol(X))
   
@@ -1664,15 +2657,15 @@ typicalStructure.network <- function (A, corr, model, model.args, n = NULL, uni.
 {
   
   # Convert to igraph
-  graph <- suppressWarnings(NetworkToolbox::convert2igraph(abs(A)))
+  graph <- suppressWarnings(convert2igraph(abs(A)))
   
   # Check for unconnected nodes
   if(igraph::vcount(graph)!=ncol(A)){
     
     warning("Estimated network contains unconnected nodes:\n",
-            paste(names(which(NetworkToolbox::degree(A)==0)), collapse = ", "))
+            paste(names(which(degree(A)==0)), collapse = ", "))
     
-    unconnected <- which(NetworkToolbox::degree(A)==0)
+    unconnected <- which(degree(A)==0)
     
   }
   
@@ -1734,14 +2727,14 @@ typicalStructure.network <- function (A, corr, model, model.args, n = NULL, uni.
   }else if(model == "TMFG"){
     
     # Generate data
-    g.data <- MASS::mvrnorm(n, mu = rep(0, ncol(A)), Sigma = as.matrix(Matrix::nearPD(A, corr = TRUE, keepDiag = TRUE)$mat))
-    g <- -suppressMessages(NetworkToolbox::LoGo(g.data, normal = TRUE, partial = TRUE))
+    g.data <- MASS_mvrnorm(n, mu = rep(0, ncol(A)), Sigma = as.matrix(Matrix::nearPD(A, corr = TRUE, keepDiag = TRUE)$mat))
+    g <- -suppressMessages(LoGo(qgraph::cor_auto(g.data), partial = TRUE))
     diag(g) <- 1
     
   }
   
   # New data
-  data <- MASS::mvrnorm(n, mu = rep(0, ncol(g)), Sigma = corpcor::pseudoinverse(g))
+  data <- MASS_mvrnorm(n, mu = rep(0, ncol(g)), Sigma = solve(g))
   
   # Check for unidimensional structure
   if(uni.method == "expand"){
@@ -1814,7 +2807,7 @@ typicalStructure.network <- function (A, corr, model, model.args, n = NULL, uni.
     )
     
     # Leading eigenvalue approach for one and two dimensions
-    wc <- igraph::cluster_leading_eigen(NetworkToolbox::convert2igraph(abs(cor.data)))$membership
+    wc <- igraph::cluster_leading_eigen(convert2igraph(abs(cor.data)))$membership
     names(wc) <- colnames(cor.data)
     n.dim <- length(na.omit(unique(wc)))
     
@@ -2162,12 +3155,12 @@ dynEGA.ind.pop <- function(data, n.embed, tau = 1, delta = 1,
 redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.redundancy, plot.args)
 {
   # Compute redundancy method
-  if(method == "irt"){
-    
-    mod <- mirt::mirt(data,1)
-    sink <- capture.output(tom <- mirt::residuals(mod,type="Q3"))
-    
-  }else{
+  # if(method == "irt"){
+  #   
+  #   mod <- mirt::mirt(data,1)
+  #   sink <- capture.output(tom <- mirt::residuals(mod,type="Q3"))
+  #   
+  # }else{
     
     if(method == "wto"){
       
@@ -2183,7 +3176,7 @@ redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.r
         
       }else if(model == "tmfg"){
         
-        net <- NetworkToolbox::TMFG(cormat)$A
+        net <- TMFG(cormat)$A
         
       }else{
         
@@ -2191,7 +3184,7 @@ redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.r
         
       }
       
-      tom <- wTO::wTO(net, sign = "sign")
+      tom <- wTO(net, sign = "sign")
       
     }else if(method == "pcor"){
       
@@ -2199,7 +3192,7 @@ redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.r
       
     }else{tom <- cormat}
     
-  }
+  #}
   
   # Number of variables; diagonal zero; absolute values
   vars <- ncol(tom); diag(tom) <- 0; tom <- abs(tom)
@@ -2233,7 +3226,9 @@ redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.r
   }else{## Determine distribution
     
     # Distributions, initialize AIC vector
-    distr <- c("norm", "gamma"); aic <- numeric(length(distr)); names(aic) <- c("normal", "gamma")
+    distr <- c("norm", "gamma")
+    aic <- numeric(length(distr))
+    names(aic) <- c("normal", "gamma")
     
     ## Obtain distribution
     for(i in 1:length(distr)){
@@ -2243,7 +3238,11 @@ redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.r
     }
     
     ## Obtain parameters
-    g.dist <- suppressWarnings(MASS::fitdistr(pos.vals, names(aic)[which.min(aic)]))
+    g.dist <- suppressWarnings(
+      fitdistrplus::fitdist(
+        pos.vals, distr[which.min(aic)]
+      )$estimate
+    )
     
     # Estimate p-values
     pval <- switch(names(aic)[which.min(aic)],
@@ -2263,7 +3262,7 @@ redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.r
     
     # Check if using adaptive alpha
     if(type == "adapt"){
-      sig <- NetworkToolbox::adapt.a("cor", alpha = sig, n = length(pos.vals), efxize = "medium")$adapt.a
+      sig <- adapt.a("cor", alpha = sig, n = length(pos.vals), efxize = "medium")$adapt.a
     }
     
     # Get redundant pairings
@@ -2549,7 +3548,7 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
                                        ncol = ncol(plot.mat)))
   
   # Layout "Spring"
-  graph1 <- NetworkToolbox::convert2igraph(plot.mat)
+  graph1 <- convert2igraph(plot.mat)
   edge.list <- igraph::as_edgelist(graph1)
   layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
                                                              weights =
@@ -4624,136 +5623,6 @@ error.report <- function(result, SUB_FUN, FUN)
   message(styletext("\nOperating System:", defaults = "bold"))
   message(paste(" ", textsymbol("bullet"), " OS: ", OS, sep = ""))
   message(paste(" ", textsymbol("bullet"), " Version: ", OSversion, sep = ""))
-}
-
-#' Read in Common Data File Extensions (from \code{\link{SemNetCleaner}})
-#'
-#' @description A single function to read in common data file extensions.
-#' Note that this function is specialized for reading in text data in the
-#' format necessary for functions in SemNetCleaner
-#'
-#' File extensions supported:
-#' \itemize{
-#' \item{.Rdata} \item{.rds} \item{.csv} \item{.xlsx}
-#' \item{.xls} \item{.sav} \item{.txt} \item{.mat}
-#' }
-#'
-#' @param file Character.
-#' A path to the file to load.
-#' Defaults to interactive file selection using \code{\link{file.choose}}
-#'
-#' @param header Boolean.
-#' A logical value indicating whether the file contains the
-#' names of the variables as its first line.
-#' If missing, the value is determined from the file format:
-#' header is set to \code{TRUE} if and only if the first row
-#' contains one fewer field than the number of columns
-#'
-#' @param sep Character.
-#' The field separator character.
-#' Values on each line of the file are separated by this character.
-#' If sep = "" (the default for \code{\link{read.table}}) the separator
-#' is a 'white space', that is one or more spaces, tabs, newlines or
-#' carriage returns
-#'
-#' @param ... Additional arguments.
-#' Allows for additional arguments to be passed onto
-#' the respective read functions. See documentation in the list below:
-#'
-#' \itemize{
-#' \item{.Rdata}
-#' {\code{\link{load}}}
-#' \item{.rds}
-#' {\code{\link{readRDS}}}
-#' \item{.csv}
-#' {\code{\link[utils]{read.table}}}
-#' \item{.xlsx}
-#' {\code{\link[readxl]{read_excel}}}
-#' \item{.xls}
-#' {\code{\link[readxl]{read_excel}}}
-#' \item{.sav}
-#' {\code{\link[foreign]{read.spss}}}
-#' \item{.txt}
-#' {\code{\link[utils]{read.table}}}
-#' \item{.mat}
-#' {\code{\link[R.matlab]{readMat}}}
-#' }
-#'
-#' @return A data frame containing a representation of the data in the file.
-#' If file extension is ".Rdata", then data will be read to the global environment
-#'
-#' @examples
-#' # Use this example for your data
-#' if(interactive())
-#' {read.data()}
-#'
-#' # Example for CRAN tests
-#' ## Create test data
-#' test1 <- c(1:5, "6,7", "8,9,10")
-#'
-#' ## Path to temporary file
-#' tf <- tempfile()
-#'
-#' ## Create test file
-#' writeLines(test1, tf)
-#'
-#' ## Read in data
-#' read.data(tf)
-#'
-#' # See documentation of respective R functions for specific examples
-#'
-#' @references
-#' # R Core Team
-#'
-#' R Core Team (2019). R: A language and environment for
-#' statistical computing. R Foundation for Statistical Computing,
-#' Vienna, Austria. URL https://www.R-project.org/.
-#'
-#' # readxl
-#'
-#' Hadley Wickham and Jennifer Bryan (2019). readxl: Read Excel
-#' Files. R package version 1.3.1.
-#' https://CRAN.R-project.org/package=readxl
-#'
-#' # R.matlab
-#'
-#' Henrik Bengtsson (2018). R.matlab: Read and Write MAT Files
-#' and Call MATLAB from Within R. R package version 3.6.2.
-#' https://CRAN.R-project.org/package=R.matlab
-#'
-#' @author Alexander P. Christensen <alexpaulchristensen@gmail.com>
-#'
-#' @importFrom utils read.table read.csv
-#' @importFrom tools file_ext
-#'
-#' @noRd
-# Read data
-# Updated 15.04.2020
-## FROM SemNeT package (utils-SemNeT.R)
-read.data <- function (file = file.choose(), header = TRUE, sep = ",", ...)
-{
-  # Grab extension
-  ext <- tolower(file_ext(file))
-  
-  # Report error
-  if(!ext %in% c("rdata", "rds", "csv", "xlsx",
-                 "xls", "sav", "txt", "mat", ""))
-  {stop("File extension not supported")}
-  
-  # Determine data load
-  if(ext != "")
-  {
-    switch(ext,
-           rdata = load(file, envir = .GlobalEnv),
-           rds = readRDS(file),
-           csv = read.csv(file, header = header, sep = sep, as.is = TRUE, ...),
-           xlsx = as.data.frame(readxl::read_xlsx(file, col_names = header, ...)),
-           xls = as.data.frame(readxl::read_xls(file, col_names = header, ...)),
-           sav = foreign::read.spss(file, to.data.frame = TRUE, stringAsFactors = FALSE, ...),
-           txt = read.table(file, header = header, sep = sep, ...),
-           mat = as.data.frame(R.matlab::readMat(file, ...))
-    )
-  }else{read.table(file, header = header, sep = sep, ...)}
 }
 
 #' System check for OS and RSTUDIO

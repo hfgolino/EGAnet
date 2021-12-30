@@ -126,7 +126,7 @@ LCT <- function (data, n, iter = 100,
         if(count == 1) {
           dat <- data
         } else {
-          dat <- MASS::mvrnorm(cases, mu = rep(0, ncol(data)), Sigma = cov(data, use = "pairwise.complete.obs"))
+          dat <- MASS_mvrnorm(cases, mu = rep(0, ncol(data)), Sigma = cov(data, use = "pairwise.complete.obs"))
           
         }
         
@@ -160,7 +160,7 @@ LCT <- function (data, n, iter = 100,
             cor.mat <- data
           } else {
             
-            dat <- MASS::mvrnorm(cases, mu = rep(0, ncol(data)), Sigma = data)
+            dat <- MASS_mvrnorm(cases, mu = rep(0, ncol(data)), Sigma = data)
             
             cor.mat <- qgraph::cor_auto(dat)
           }

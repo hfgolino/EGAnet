@@ -342,7 +342,7 @@ EGA.fit <- function (
     net <- ega$network
     
     ## Convert to igraph
-    g <- NetworkToolbox::convert2igraph(abs(net))
+    g <- convert2igraph(abs(net))
     
     ## Estimate Leiden results
     results <- list()

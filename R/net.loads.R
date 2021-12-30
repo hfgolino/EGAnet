@@ -271,7 +271,7 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot.NL = FALSE
     }else{ # One dimension
       
       # Create matrix of NAs
-      comm.str <- matrix(NetworkToolbox::strength(A, absolute = TRUE), nrow = ncol(A), ncol = 1)
+      comm.str <- matrix(strength(A, absolute = TRUE), nrow = ncol(A), ncol = 1)
       
       # Assign column names
       colnames(comm.str) <- dims
