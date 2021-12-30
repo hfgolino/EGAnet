@@ -9,7 +9,7 @@ UVA(
   n = NULL,
   model = c("glasso", "TMFG"),
   corr = c("cor_auto", "pearson", "spearman"),
-  method = c("cor", "pcor", "wTO", "IRT"),
+  method = c("cor", "pcor", "wTO"),
   type = c("adapt", "alpha", "threshold"),
   sig,
   key = NULL,
@@ -68,8 +68,7 @@ the \code{\link[stats]{cor}}} function.
 
 \item{method}{Character.
 Computes weighted topological overlap (\code{"wTO"} using \code{\link[qgraph]{EBICglasso}}),
-partial correlations (\code{"pcor"}), correlations (\code{"cor"}) or the correlated residuals
-from a unidimensional item response theory model (\code{"IRT"}) using \code{\link[mirt]{mirt}}.
+partial correlations (\code{"pcor"}), or correlations (\code{"cor"})
 Defaults to \code{"wTO"}}
 
 \item{type}{Character. Type of significance.
@@ -92,9 +91,6 @@ Defaults for \code{"threshold"} for each \code{method}:
 
 \item{\code{"cor"}}
 {.50}
-
-\item{\code{"IRT"}}
-{.35}
 
 }}
 

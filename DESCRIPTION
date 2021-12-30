@@ -14,12 +14,11 @@ Encoding: UTF-8
 LazyData: true
 Imports: qgraph (>= 1.4.1), semPlot (>= 1.0.1),
         igraph (>= 1.0.1), lavaan (>= 0.5-22),
-        NetworkToolbox (>= 1.4.0), glasso (>= 1.10), stats, Matrix (>= 1.2),
-        network (>= 1.16.0), GGally (>= 2.0.0), methods, wTO,
-	fitdistrplus, ggpubr, ggplot2
-Suggests: markdown, psych, psychTools, 
-        plyr (>= 1.8.4), matrixcalc (>= 1.0-3),
-        pbapply, OpenMx, shiny, shinyjs, shinyalert, shinyBS,
-	R.matlab, foreign, readxl, gridExtra, rstudioapi,
-	RColorBrewer, mirt, corpcor, knitr
+        glasso (>= 1.10), stats, Matrix (>= 1.2),
+        network (>= 1.16.0), GGally (>= 2.0.0), methods,
+	fitdistrplus, ggpubr, ggplot2, pbapply,
+	matrixcalc (>= 1.0-3), OpenMx
+Suggests: psych, psychTools, markdown, knitr, 
+	gridExtra, rstudioapi,
+	RColorBrewer
 RoxygenNote: 7.1.2

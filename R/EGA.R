@@ -242,7 +242,7 @@
 #'
 #' @export
 #'
-# Updated 24.12.2021
+# Updated 30.12.2021
 # LE adjustment 08.03.2021
 ## EGA Function to detect unidimensionality:
 EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
@@ -440,12 +440,12 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
       
       # Leading eigenvalue approach for one and two dimensions
       wc <- try(
-        igraph::cluster_leading_eigen(NetworkToolbox::convert2igraph(abs(data)))$membership,
+        igraph::cluster_leading_eigen(convert2igraph(abs(data)))$membership,
         silent = TRUE
       )
       
       if(any(class(wc) == "try-error")){
-        wc <- igraph::cluster_louvain(NetworkToolbox::convert2igraph(abs(data)))$membership
+        wc <- igraph::cluster_louvain(convert2igraph(abs(data)))$membership
         warning("Error occurred in Leading Eigenvalue algorithm. Using Louvain for unidimensional check")
       }
       
@@ -583,12 +583,12 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
       
       # Leading eigenvalue approach for one and two dimensions
       wc <- try(
-        igraph::cluster_leading_eigen(NetworkToolbox::convert2igraph(abs(cor.data)))$membership,
+        igraph::cluster_leading_eigen(convert2igraph(abs(cor.data)))$membership,
         silent = TRUE
       )
       
       if(any(class(wc) == "try-error")){
-        wc <- igraph::cluster_louvain(NetworkToolbox::convert2igraph(abs(cor.data)))$membership
+        wc <- igraph::cluster_louvain(convert2igraph(abs(cor.data)))$membership
         warning("Error occurred in Leading Eigenvalue algorithm. Using Louvain for unidimensional check")
       }
   

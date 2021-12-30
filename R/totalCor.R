@@ -61,7 +61,7 @@ totalCor <- function(data){
   for(i in 1:n){
     bin.sums3[,i] <- cut(data[,i], breaks = seque[,i], include.lowest = TRUE)
   }
-  joint.table <- plyr::count(bin.sums3)$freq
+  joint.table <- count(bin.sums3)
 
   freq.joint <- joint.table / sum(joint.table)
   joint.entropy <- -sum(ifelse(freq.joint >0,freq.joint * log(freq.joint),0))

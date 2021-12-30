@@ -47,22 +47,19 @@
 #'
 #' @export
 #Entropy Fit Index
-# Updated 21.10.2020
+# Updated 30.12.2021
 entropyFit <- function (data, structure)
 {
-  if(all(range(data)==c(0,1)))
-  {data <- ifelse(data==1,2,1)}
+  if(all(range(data)==c(0,1))){
+    data <- ifelse(data == 1, 2, 1)
+  }
 
   #convert structure to number if necessary
-  if(is.character(structure))
-  {
-    uni <- unique(structure)
+  if(is.character(structure)){
+    num.comm <- match(structure, unique(structure))
+  }else{
     num.comm <- structure
-
-    for(i in 1:length(uni))
-    {num.comm[which(num.comm==uniq[i])] <- i}
-
-  } else {num.comm <- structure}
+  }
 
   ## Traditional Entropy:
 
@@ -81,8 +78,8 @@ entropyFit <- function (data, structure)
   Freq <- matrix(NA,nrow=bins,ncol=n)
 
   #compute empirical entropy for each community or item
-  for(i in 1:n)
-  {
+  for(i in 1:n){
+    
     if(n != ncol(data)){
       sums[,i] <- rowSums(data[,which(num.comm==uniq[i])])
     } else{
@@ -96,12 +93,10 @@ entropyFit <- function (data, structure)
   }
 
   # Joint Entropy:
-
   bin.sums3 <- data.frame(matrix(NA, nrow = nrow(data), ncol = n))
-  joint.table <- vector("numeric")
   for(i in 1:n){
     bin.sums3[,i] <- cut(sums[,i], breaks = seque[,i], include.lowest = TRUE)
-    joint.table = plyr::count(bin.sums3)$freq
+    joint.table <- count(bin.sums3)
   }
 
   freq.joint <- joint.table/sum(joint.table)
@@ -113,7 +108,7 @@ entropyFit <- function (data, structure)
   joint.table.max <- vector("numeric")
   seque.min <- seq(from = range(sums.max)[1], to = range(sums.max)[2], length.out = bins+1)
   bin.sums.min <- cut(sums.max, breaks = seque.min, include.lowest = TRUE)
-  joint.table.max = plyr::count(bin.sums.min)$freq
+  joint.table.max <- count(bin.sums.min)
 
   freq.joint.max <- joint.table.max/sum(joint.table.max)
   Hmax <- -sum(ifelse(freq.joint.max >0,freq.joint.max * log(freq.joint.max),0))
@@ -128,7 +123,6 @@ entropyFit <- function (data, structure)
   }
 
   # Joint Entropy with Miller-Madow Bias Correction:
-
   non.zero.bins.joint <- length(joint.table[joint.table!=0])
   joint.miller.madow <- joint.entropy+((non.zero.bins.joint-1)/(2*(nrow(data))))
 

@@ -97,18 +97,18 @@ network.descriptives <- function(network)
                    "swn.rand", "swn.HG", "swn.TJHBL", "scale-free_R-sq")
   
   # Collect descriptives
-  connectivity <- NetworkToolbox::conn(network)
-  degree <- NetworkToolbox::degree(network)
+  connectivity <- conn(network)
+  degree <- degree(network)
   desc["Mean_weight"] <- connectivity$mean
   desc["SD_weight"] <- connectivity$sd
   desc["Min_weight"] <- min(connectivity$weights)
   desc["Max_weight"] <- max(connectivity$weights)
   desc["Density"] <- connectivity$density
-  desc["ASPL"] <- NetworkToolbox::pathlengths(network)$ASPL
-  desc["CC"] <- NetworkToolbox::clustcoeff(network)$CC
-  desc["swn.rand"] <- NetworkToolbox::smallworldness(network[degree != 0,degree != 0], method = "rand")$swm
-  desc["swn.HG"] <- NetworkToolbox::smallworldness(network[degree != 0,degree != 0], method = "HG")$swm
-  desc["swn.TJHBL"] <- NetworkToolbox::smallworldness(network[degree != 0,degree != 0], method = "TJHBL")$swm
+  desc["ASPL"] <- pathlengths(network)$ASPL
+  desc["CC"] <- clustcoeff(network)$CC
+  desc["swn.rand"] <- smallworldness(network[degree != 0,degree != 0], method = "rand")$swm
+  desc["swn.HG"] <- smallworldness(network[degree != 0,degree != 0], method = "HG")$swm
+  desc["swn.TJHBL"] <- smallworldness(network[degree != 0,degree != 0], method = "TJHBL")$swm
   desc["scale-free_R-sq"] <- as.matrix(scaleFreeFitIndex(degree, nBreaks = 10)["Rsquared.SFT"])
   
   return(round(desc, 3))
