@@ -2526,6 +2526,118 @@ categorize<-function(data, ncat, skew.values){
   return(RESULTS)
 }
 
+
+#%%%%%%%%%%%%%
+# GNN LCT ----
+#%%%%%%%%%%%%%
+
+#' @noRd
+# Put data into pytorch format
+# Updated 31.12.2021
+torch_format <- function(data)
+{
+  
+  # Estimate graph
+  graph <- try(
+    suppressWarnings(
+      suppressMessages(
+        EGA(data, plot.EGA = FALSE)$network
+      )
+    ),
+    silent = TRUE
+  )
+  
+  # Check that graph could be estimated
+  if(any(class(graph) == "try-error")){
+    error.report(graph, "EGA", "torch_format")
+  }
+  
+  # Obtain node and graph attributes
+  ## Node attributes
+  node_strength <- strength(graph)
+  means <- colMeans(
+    apply(data, 2, normalize, 0, 1), # normalize data
+    na.rm = TRUE
+  )
+  node_attributes <- cbind(node_strength, means)
+  
+  ## Graph attributes
+  aspl <- pathlengths(graph)$ASPL
+  cc <- clustcoeff(graph)$CC
+  graph_attributes <- c(aspl, cc)
+  names(graph_attributes) <- c("aspl", "cc")
+  
+  # Make graph sparse
+  graph <- sparsify(graph)
+  
+  # Remove zero weights
+  graph[,"weight"] <- ifelse(graph[,"weight"] == 0, NA, graph[,"weight"])
+  graph <- na.omit(graph)
+  attr(graph, "na.action") <- NULL
+  
+  # Obtain remaining nodes
+  node_label <- sort(unique(as.vector(graph[,c("from", "to")])))
+  
+  # Set up re-numbering for nodes
+  node_num <- seq_along(node_label) - 1 # set to zero for Python
+  names(node_num) <- node_label
+  
+  # Replace node numbers to be sequential
+  graph[,"from"] <- node_num[as.character(graph[,"from"])]
+  graph[,"to"] <- node_num[as.character(graph[,"to"])]
+  
+  # Remove node_attributes for disconnected nodes
+  node_attributes <- node_attributes[node_label,]
+  
+  # Set graph indicator
+  graph_indicator <- rep(0, length(node_label))
+  
+  # Return results
+  results <- list()
+  results$A <- graph[,c("from", "to")]
+  results$edge_weight <- graph[,"weight"]
+  results$node_attributes <- node_attributes
+  results$graph_attributes <- graph_attributes
+  results$graph_indicator <- graph_indicator
+  
+  return(results)
+}
+
+#' @noRd
+# Sparse matrix
+# Updated 31.12.2021
+sparsify <- function(network){
+  
+  # Number of nodes
+  nodes <- ncol(network)
+  
+  # Sparse matrix (with graph label)
+  from <- rep(1:nodes, each = nodes)
+  to <- rep(1:nodes, times = nodes)
+  weight <- as.vector(network)
+  sparse_matrix <- cbind(
+    from, to, weight
+  )
+  
+  return(sparse_matrix)
+  
+}
+
+#' @noRd
+# Normalize function
+# Updated 31.12.2021
+normalize <- function(values, min_desired, max_desired){
+  
+  min_actual <- min(values, na.rm = TRUE)
+  num <- values - min_actual
+  denom <- max(values, na.rm = TRUE) - min_actual
+  mult  <- max_desired - min_desired
+  add <- min_desired
+  
+  return((num / denom) * mult + add)
+  
+}
+
 #%%%%%%%%%
 # LCT ----
 #%%%%%%%%%
