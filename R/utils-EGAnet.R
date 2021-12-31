@@ -2552,6 +2552,9 @@ torch_format <- function(data)
     error.report(graph, "EGA", "torch_format")
   }
   
+  # Round values to 5 decimal places
+  graph <- round(graph, 5)
+  
   # Obtain node and graph attributes
   ## Node attributes
   node_strength <- strength(graph)
@@ -2559,13 +2562,14 @@ torch_format <- function(data)
     apply(data, 2, normalize, 0, 1), # normalize data
     na.rm = TRUE
   )
-  node_attributes <- cbind(node_strength, means)
+  node_attributes <- round(cbind(node_strength, means), 5)
   
   ## Graph attributes
   aspl <- pathlengths(graph)$ASPL
   cc <- clustcoeff(graph)$CC
-  graph_attributes <- c(aspl, cc)
-  names(graph_attributes) <- c("aspl", "cc")
+  q <- max(igraph::cluster_louvain(convert2igraph(abs(graph)))$modularity)
+  graph_attributes <- round(c(aspl, cc, q), 5)
+  names(graph_attributes) <- c("aspl", "cc", "q")
   
   # Make graph sparse
   graph <- sparsify(graph)
