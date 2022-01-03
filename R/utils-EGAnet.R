@@ -2534,14 +2534,19 @@ categorize<-function(data, ncat, skew.values){
 #' @noRd
 # Put data into pytorch format
 # Updated 31.12.2021
-torch_format <- function(data)
+torch_format <- function(data, ...)
 {
+  
+  # Get arguments for EGAnet
+  args <- list(...)
+  args$data <- data
+  args$plot.EGA <- FALSE
   
   # Estimate graph
   graph <- try(
     suppressWarnings(
       suppressMessages(
-        EGA(data, plot.EGA = FALSE)$network
+        do.call(EGA, args = args)$network
       )
     ),
     silent = TRUE
