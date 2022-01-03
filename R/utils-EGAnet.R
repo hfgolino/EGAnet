@@ -2573,11 +2573,15 @@ torch_format <- function(data, ...)
     network_cross <- rep(0, length(network_dom))
     
     ## Factor
-    factor_loads <- psych::fa(
-      ega$correlation,
-      nfactors = 1,
-      n.obs = nrow(data)
-    )$loadings[,1]
+    factor_loads <- suppressMessages(
+      suppressWarnings(
+        psych::fa(
+          ega$correlation,
+          nfactors = 1,
+          n.obs = nrow(data)
+        )$loadings[,1]
+      )
+    )
     factor_dom <- as.vector(factor_loads)
     factor_cross <- rep(0, length(factor_dom))
     
@@ -2596,11 +2600,15 @@ torch_format <- function(data, ...)
     }))
     
     ## Factor
-    factor_loads <- psych::fa(
-      ega$correlation,
-      nfactors = ncol(network_loads),
-      n.obs = nrow(data)
-    )$loadings[,1:ncol(network_loads)]
+    factor_loads <- suppressMessages(
+      suppressWarnings(
+        psych::fa(
+          ega$correlation,
+          nfactors = ncol(network_loads),
+          n.obs = nrow(data)
+        )$loadings[,1:ncol(network_loads)]
+      )
+    )
     factor_loads <- factor_loads[names(ega$wc),]
     factor_dom <- unlist(lapply(1:nrow(factor_loads), function(i){
       factor_loads[i,which.max(factor_loads[i,])]
