@@ -2542,17 +2542,17 @@ torch_format <- function(data, ...)
   args$plot.EGA <- FALSE
   
   # Check for n
-  if("n" %in% names(args)){
-    
-    # Generate data
-    args$data <- MASS_mvrnorm(
-      args$n, mu = rep(0, ncol(data)), Sigma = as.matrix(Matrix::nearPD(data, corr = TRUE, keepDiag = TRUE)$mat)
-    )
-    
-    # Make n NULL
-    args$n <- NULL
-    
-  }
+  # if("n" %in% names(args)){
+  #   
+  #   # Generate data
+  #   args$data <- MASS_mvrnorm(
+  #     args$n, mu = rep(0, ncol(data)), Sigma = as.matrix(Matrix::nearPD(data, corr = TRUE, keepDiag = TRUE)$mat)
+  #   )
+  #   
+  #   # Make n NULL
+  #   args$n <- NULL
+  #   
+  # }
   
   # Estimate graph
   graph <- try(
@@ -2575,11 +2575,13 @@ torch_format <- function(data, ...)
   # Obtain node and graph attributes
   ## Node attributes
   node_strength <- strength(graph)
-  means <- colMeans(
-    apply(data, 2, normalize, 0, 1), # normalize data
-    na.rm = TRUE
-  )
-  node_attributes <- round(cbind(node_strength, means), 5)
+  aspl_i <- pathlengths(graph)$ASPLi
+  cc_i <- clustcoeff(graph)$CCi
+  # means <- colMeans(
+  #   apply(data, 2, normalize, 0, 1), # normalize data
+  #   na.rm = TRUE
+  # )
+  node_attributes <- round(cbind(node_strength, aspl_i, cc_i), 5)
   
   ## Graph attributes
   # aspl <- pathlengths(graph)$ASPL
