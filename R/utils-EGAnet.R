@@ -2536,11 +2536,25 @@ categorize<-function(data, ncat, skew.values){
 # Updated 31.12.2021
 torch_format <- function(data, ...)
 {
-  
   # Get arguments for EGAnet
   args <- list(...)
   args$data <- data
   args$plot.EGA <- FALSE
+  
+  # Check for n
+  if("n" %in% names(args)){
+    
+    # Generate data
+    args$data <- MASS_mvrnorm(
+      MASS_mvrnorm(
+        args$n, mu = rep(0, ncol(data)), Sigma = as.matrix(Matrix::nearPD(data, corr = TRUE, keepDiag = TRUE)$mat)
+      )
+    )
+    
+    # Make n NULL
+    args$n <- NULL
+    
+  }
   
   # Estimate graph
   graph <- try(
