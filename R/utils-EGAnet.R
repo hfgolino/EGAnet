@@ -2565,11 +2565,11 @@ torch_format <- function(data)
   node_attributes <- round(cbind(node_strength, means), 5)
   
   ## Graph attributes
-  aspl <- pathlengths(graph)$ASPL
-  cc <- clustcoeff(graph)$CC
-  q <- max(igraph::cluster_louvain(convert2igraph(abs(graph)))$modularity)
-  graph_attributes <- round(c(aspl, cc, q), 5)
-  names(graph_attributes) <- c("aspl", "cc", "q")
+  # aspl <- pathlengths(graph)$ASPL
+  # cc <- clustcoeff(graph)$CC
+  # q <- max(igraph::cluster_louvain(convert2igraph(abs(graph)))$modularity)
+  # graph_attributes <- round(c(aspl, cc, q), 5)
+  # names(graph_attributes) <- c("aspl", "cc", "q")
   
   # Make graph sparse
   graph <- sparsify(graph)
@@ -2583,7 +2583,7 @@ torch_format <- function(data)
   node_label <- sort(unique(as.vector(graph[,c("from", "to")])))
   
   # Set up re-numbering for nodes
-  node_num <- seq_along(node_label) - 1 # set to zero for Python
+  node_num <- seq_along(node_label) # set to zero for Python
   names(node_num) <- node_label
   
   # Replace node numbers to be sequential
@@ -2594,14 +2594,14 @@ torch_format <- function(data)
   node_attributes <- node_attributes[node_label,]
   
   # Set graph indicator
-  graph_indicator <- rep(0, length(node_label))
+  graph_indicator <- rep(1, length(node_label))
   
   # Return results
   results <- list()
   results$A <- graph[,c("from", "to")]
   results$edge_weight <- graph[,"weight"]
   results$node_attributes <- node_attributes
-  results$graph_attributes <- graph_attributes
+  # results$graph_attributes <- graph_attributes
   results$graph_indicator <- graph_indicator
   
   return(results)
