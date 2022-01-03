@@ -2558,7 +2558,7 @@ torch_format <- function(data, ...)
   graph <- try(
     suppressWarnings(
       suppressMessages(
-        do.call(EGA, args = args)$network
+        abs(do.call(EGA, args = args)$network)
       )
     ),
     silent = TRUE
@@ -2574,14 +2574,16 @@ torch_format <- function(data, ...)
   
   # Obtain node and graph attributes
   ## Node attributes
-  node_strength <- strength(graph)
+  eigenvector <- igraph::eigen_centrality(
+    convert2igraph(graph)
+  )$vector
   aspl_i <- pathlengths(graph)$ASPLi
   cc_i <- clustcoeff(graph)$CCi
   # means <- colMeans(
   #   apply(data, 2, normalize, 0, 1), # normalize data
   #   na.rm = TRUE
   # )
-  node_attributes <- round(cbind(node_strength, aspl_i, cc_i), 5)
+  node_attributes <- round(cbind(eigenvector, aspl_i, cc_i), 5)
   
   ## Graph attributes
   # aspl <- pathlengths(graph)$ASPL
