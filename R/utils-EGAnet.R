@@ -2540,34 +2540,18 @@ torch_format <- function(data, ...)
   args <- list(...)
   args$data <- data
   args$plot.EGA <- FALSE
-  
-  # Check for n
-  # if("n" %in% names(args)){
-  #   
-  #   # Generate data
-  #   args$data <- MASS_mvrnorm(
-  #     args$n, mu = rep(0, ncol(data)), Sigma = as.matrix(Matrix::nearPD(data, corr = TRUE, keepDiag = TRUE)$mat)
-  #   )
-  #   
-  #   # Make n NULL
-  #   args$n <- NULL
-  #   
-  # }
-  
-  # Estimate graph
-  graph <- try(
-    suppressWarnings(
-      suppressMessages(
-        abs(do.call(EGA, args = args)$network)
+
+  # Estimate EGA
+  ega <- suppressWarnings(
+    suppressMessages(
+      do.call(
+        EGA, args
       )
-    ),
-    silent = TRUE
+    )
   )
   
-  # Check that graph could be estimated
-  if(any(class(graph) == "try-error")){
-    error.report(graph, "EGA", "torch_format")
-  }
+  # Estimate graph
+  graph <- abs(ega$network)
   
   # Round values to 5 decimal places
   graph <- round(graph, 5)
