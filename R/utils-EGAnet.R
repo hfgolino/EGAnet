@@ -2564,31 +2564,52 @@ torch_format <- function(data, ...)
   aspl_i <- pathlengths(graph)$ASPLi
   cc_i <- clustcoeff(graph)$CCi
   
-  # Loadings
-  ## Network
-  network_loads <- net.loads(ega)$std
-  network_loads <- network_loads[names(ega$wc),]
-  network_loads <- network_loads[,order(colnames(network_loads))]
-  network_dom <- unlist(lapply(1:nrow(network_loads), function(i){
-    network_loads[i, ega$wc[i]]
-  }))
-  network_cross <- unlist(lapply(1:nrow(network_loads), function(i){
-    sum(network_loads[i, -ega$wc[i]])
-  }))
-  
-  ## Factor
-  factor_loads <- psych::fa(
-    ega$correlation,
-    nfactors = ncol(network_loads),
-    n.obs = nrow(data)
-  )$loadings[,1:ncol(network_loads)]
-  factor_loads <- factor_loads[names(ega$wc),]
-  factor_dom <- unlist(lapply(1:nrow(factor_loads), function(i){
-    factor_loads[i,which.max(factor_loads[i,])]
-  }))
-  factor_cross <- unlist(lapply(1:nrow(factor_loads), function(i){
-    sum(factor_loads[i,-which.max(factor_loads[i,])])
-  }))
+  # Check if dimensions = 1
+  if(ega$n.dim == 1){
+    
+    # Loadings
+    ## Network
+    network_dom <- as.vector(as.matrix(net.loads(ega)$std))
+    network_cross <- rep(0, length(network_dom))
+    
+    ## Factor
+    factor_loads <- psych::fa(
+      ega$correlation,
+      nfactors = 1,
+      n.obs = nrow(data)
+    )$loadings[,1]
+    factor_dom <- as.vector(factor_loads)
+    factor_cross <- rep(0, length(factor_dom))
+    
+  }else{
+    
+    # Loadings
+    ## Network
+    network_loads <- net.loads(ega)$std
+    network_loads <- network_loads[names(ega$wc),]
+    network_loads <- network_loads[,order(colnames(network_loads))]
+    network_dom <- unlist(lapply(1:nrow(network_loads), function(i){
+      network_loads[i, ega$wc[i]]
+    }))
+    network_cross <- unlist(lapply(1:nrow(network_loads), function(i){
+      sum(network_loads[i, -ega$wc[i]])
+    }))
+    
+    ## Factor
+    factor_loads <- psych::fa(
+      ega$correlation,
+      nfactors = ncol(network_loads),
+      n.obs = nrow(data)
+    )$loadings[,1:ncol(network_loads)]
+    factor_loads <- factor_loads[names(ega$wc),]
+    factor_dom <- unlist(lapply(1:nrow(factor_loads), function(i){
+      factor_loads[i,which.max(factor_loads[i,])]
+    }))
+    factor_cross <- unlist(lapply(1:nrow(factor_loads), function(i){
+      sum(factor_loads[i,-which.max(factor_loads[i,])])
+    }))
+    
+  }
   
   node_attributes <- round(cbind(
     eigenvector, aspl_i, cc_i,
