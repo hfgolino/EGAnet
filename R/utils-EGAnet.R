@@ -2556,13 +2556,14 @@ torch_format <- function(data, ...)
   # Round values to 5 decimal places
   graph <- round(graph, 5)
   
-  # Obtain node and graph attributes
-  ## Node attributes
-  eigenvector <- igraph::eigen_centrality(
-    convert2igraph(graph)
-  )$vector
-  aspl_i <- pathlengths(graph)$ASPLi
-  cc_i <- clustcoeff(graph)$CCi
+  # Obtain node attributes
+  
+  # Check for missing network dimensions
+  if(any(is.na(ega$wc))){
+    wc <- ega$wc[!is.na(ega$wc)]
+  }else{
+    wc <- ega$wc
+  }
   
   # Check if dimensions = 1
   if(ega$n.dim == 1){
@@ -2590,13 +2591,13 @@ torch_format <- function(data, ...)
     # Loadings
     ## Network
     network_loads <- net.loads(ega)$std
-    network_loads <- network_loads[names(ega$wc),]
+    network_loads <- network_loads[names(wc),]
     network_loads <- network_loads[,order(colnames(network_loads))]
     network_dom <- unlist(lapply(1:nrow(network_loads), function(i){
-      network_loads[i, ega$wc[i]]
+      network_loads[i, wc[i]]
     }))
     network_cross <- unlist(lapply(1:nrow(network_loads), function(i){
-      sum(network_loads[i, -ega$wc[i]])
+      sum(network_loads[i, -wc[i]])
     }))
     
     ## Factor
@@ -2609,7 +2610,7 @@ torch_format <- function(data, ...)
         )$loadings[,1:ncol(network_loads)]
       )
     )
-    factor_loads <- factor_loads[names(ega$wc),]
+    factor_loads <- factor_loads[names(wc),]
     factor_dom <- unlist(lapply(1:nrow(factor_loads), function(i){
       factor_loads[i,which.max(factor_loads[i,])]
     }))
@@ -2618,6 +2619,12 @@ torch_format <- function(data, ...)
     }))
     
   }
+  
+  eigenvector <- igraph::eigen_centrality(
+    convert2igraph(graph)
+  )$vector[!is.na(ega$wc)]
+  aspl_i <- pathlengths(graph)$ASPLi[!is.na(ega$wc)]
+  cc_i <- clustcoeff(graph)$CCi[!is.na(ega$wc)]
   
   node_attributes <- round(cbind(
     eigenvector, aspl_i, cc_i,
