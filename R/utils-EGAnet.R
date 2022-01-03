@@ -2570,7 +2570,7 @@ torch_format <- function(data, ...)
     
     # Loadings
     ## Network
-    network_dom <- as.vector(as.matrix(net.loads(ega)$std))
+    network_dom <- as.vector(as.matrix(net.loads(ega)$std))[!is.na(ega$wc)]
     network_cross <- rep(0, length(network_dom))
     
     ## Factor
@@ -2583,7 +2583,7 @@ torch_format <- function(data, ...)
         )$loadings[,1]
       )
     )
-    factor_dom <- as.vector(factor_loads)
+    factor_dom <- as.vector(factor_loads)[!is.na(ega$wc)]
     factor_cross <- rep(0, length(factor_dom))
     
   }else{
