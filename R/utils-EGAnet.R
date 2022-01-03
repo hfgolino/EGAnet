@@ -2544,8 +2544,6 @@ torch_format <- function(data, ...)
   # Check for n
   if("n" %in% names(args)){
     
-    MASS_mvrnorm <- function (n = 1, mu, Sigma, tol = 1e-06, empirical = FALSE, EISPACK = FALSE) 
-    
     # Generate data
     args$data <- MASS_mvrnorm(
       args$n, mu = rep(0, ncol(data)), Sigma = as.matrix(Matrix::nearPD(data, corr = TRUE, keepDiag = TRUE)$mat)
