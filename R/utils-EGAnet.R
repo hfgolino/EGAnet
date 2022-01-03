@@ -2620,11 +2620,12 @@ torch_format <- function(data, ...)
     
   }
   
+  # Network measures
   eigenvector <- igraph::eigen_centrality(
-    convert2igraph(graph)
+    EGAnet:::convert2igraph(graph)
   )$vector[!is.na(ega$wc)]
-  aspl_i <- pathlengths(graph)$ASPLi[!is.na(ega$wc)]
-  cc_i <- clustcoeff(graph)$CCi[!is.na(ega$wc)]
+  aspl_i <- EGAnet:::pathlengths(graph)$ASPLi[!is.na(ega$wc)]
+  cc_i <- EGAnet:::clustcoeff(graph)$CCi[!is.na(ega$wc)]
   
   node_attributes <- round(cbind(
     eigenvector, aspl_i, cc_i,
@@ -2638,6 +2639,9 @@ torch_format <- function(data, ...)
   # q <- max(igraph::cluster_louvain(convert2igraph(abs(graph)))$modularity)
   # graph_attributes <- round(c(aspl, cc, q), 5)
   # names(graph_attributes) <- c("aspl", "cc", "q")
+  
+  # Remove non-dimensional nodes
+  graph <- graph[!is.na(ega$wc),!is.na(ega$wc)]
   
   # Make graph sparse
   graph <- sparsify(graph)
