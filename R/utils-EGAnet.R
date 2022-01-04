@@ -2620,15 +2620,16 @@ torch_format <- function(data, ...)
     
   }
   
+  # Convert to igraph
+  g <- EGAnet:::convert2igraph(graph)
+  
   # Network measures
-  eigenvector <- igraph::eigen_centrality(
-    EGAnet:::convert2igraph(graph)
-  )$vector[!is.na(ega$wc)]
-  aspl_i <- EGAnet:::pathlengths(graph)$ASPLi[!is.na(ega$wc)]
-  cc_i <- EGAnet:::clustcoeff(graph)$CCi[!is.na(ega$wc)]
+  comm <- brainGraph::communicability(g)[!is.na(ega$wc)]
+  aspl_i <- brainGraph::mean_distance_wt(g, level = "vertex")[!is.na(ega$wc)]
+  cc_i <- igraph::transitivity(g, type = "local", isolates = "zero")[!is.na(ega$wc)]
   
   node_attributes <- round(cbind(
-    eigenvector, aspl_i, cc_i,
+    comm, aspl_i, cc_i,
     factor_dom, factor_cross,
     network_dom, network_cross
   ), 5)
