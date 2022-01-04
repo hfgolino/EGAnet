@@ -2624,7 +2624,7 @@ torch_format <- function(data, ...)
   g <- EGAnet:::convert2igraph(graph)
   
   # Network measures
-  comm <- brainGraph::communicability(g)[!is.na(ega$wc)]
+  comm <- colMeans(brainGraph::communicability(g))[!is.na(ega$wc)]
   aspl_i <- brainGraph::mean_distance_wt(g, level = "vertex")[!is.na(ega$wc)]
   cc_i <- igraph::transitivity(g, type = "local", isolates = "zero")[!is.na(ega$wc)]
   
