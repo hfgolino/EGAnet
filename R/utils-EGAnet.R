@@ -2558,19 +2558,22 @@ torch_format <- function(data, ...)
   
   # Obtain node attributes
   
-  # Check for missing network dimensions
-  if(any(is.na(ega$wc))){
-    wc <- ega$wc[!is.na(ega$wc)]
-  }else{
-    wc <- ega$wc
-  }
+  # Convert to igraph
+  g <- convert2igraph(graph)
+  
+  # Obtain largest component
+  components <- igraph::components(g)$membership == 1
+  include <- components & !is.na(ega$wc)
+  
+  # Re-obtain igraph
+  g <- convert2igraph(graph[include, include])
   
   # Check if dimensions = 1
   if(ega$n.dim == 1){
     
     # Loadings
     ## Network
-    network_dom <- as.vector(as.matrix(net.loads(ega)$std))[!is.na(ega$wc)]
+    network_dom <- as.vector(as.matrix(net.loads(ega)$std))[include]
     network_cross <- rep(0, length(network_dom))
     
     ## Factor
@@ -2583,7 +2586,7 @@ torch_format <- function(data, ...)
         )$loadings[,1]
       )
     )
-    factor_dom <- as.vector(factor_loads)[!is.na(ega$wc)]
+    factor_dom <- as.vector(factor_loads)[include]
     factor_cross <- rep(0, length(factor_dom))
     
   }else{
@@ -2591,13 +2594,13 @@ torch_format <- function(data, ...)
     # Loadings
     ## Network
     network_loads <- net.loads(ega)$std
-    network_loads <- network_loads[names(wc),]
+    network_loads <- network_loads[names(ega$wc[include]),]
     network_loads <- network_loads[,order(colnames(network_loads))]
     network_dom <- unlist(lapply(1:nrow(network_loads), function(i){
-      network_loads[i, wc[i]]
+      network_loads[i, ega$wc[include][i]]
     }))
     network_cross <- unlist(lapply(1:nrow(network_loads), function(i){
-      sum(network_loads[i, -wc[i]])
+      sum(network_loads[i, -ega$wc[include][i]])
     }))
     
     ## Factor
@@ -2610,7 +2613,7 @@ torch_format <- function(data, ...)
         )$loadings[,1:ncol(network_loads)]
       )
     )
-    factor_loads <- factor_loads[names(wc),]
+    factor_loads <- factor_loads[names(ega$wc[include]),]
     factor_dom <- unlist(lapply(1:nrow(factor_loads), function(i){
       factor_loads[i,which.max(factor_loads[i,])]
     }))
@@ -2620,13 +2623,10 @@ torch_format <- function(data, ...)
     
   }
   
-  # Convert to igraph
-  g <- EGAnet:::convert2igraph(graph)
-  
   # Network measures
-  comm <- colMeans(brainGraph::communicability(g))[!is.na(ega$wc)]
-  aspl_i <- brainGraph::mean_distance_wt(g, level = "vertex")[!is.na(ega$wc)]
-  cc_i <- igraph::transitivity(g, type = "local", isolates = "zero")[!is.na(ega$wc)]
+  comm <- colMeans(brainGraph::communicability(g))
+  aspl_i <- brainGraph::mean_distance_wt(g, level = "vertex")
+  cc_i <- igraph::transitivity(g, type = "local", isolates = "zero")
   
   node_attributes <- round(cbind(
     comm, aspl_i, cc_i,
@@ -2642,7 +2642,7 @@ torch_format <- function(data, ...)
   # names(graph_attributes) <- c("aspl", "cc", "q")
   
   # Remove non-dimensional nodes
-  graph <- graph[!is.na(ega$wc),!is.na(ega$wc)]
+  graph <- graph[include, include]
   
   # Make graph sparse
   graph <- sparsify(graph)
