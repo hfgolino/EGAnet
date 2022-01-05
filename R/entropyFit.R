@@ -39,7 +39,7 @@
 #' Golino, H., Moulder, R. G., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Nesselroade, J., Sadana, R., Thiyagarajan, J. A., & Boker, S. M. (2020).
 #' Entropy fit indices: New fit measures for assessing the structure and dimensionality of multiple latent variables.
 #' \emph{Multivariate Behavioral Research}.
-#' 
+#'
 #' @seealso \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link[EGAnet]{CFA}} to
 #' verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 #'
@@ -47,7 +47,7 @@
 #'
 #' @export
 #Entropy Fit Index
-# Updated 30.12.2021
+# Updated 05.01.2022
 entropyFit <- function (data, structure)
 {
   if(all(range(data)==c(0,1))){
@@ -64,7 +64,10 @@ entropyFit <- function (data, structure)
   ## Traditional Entropy:
 
   #number of dimensions
-  n <- max(num.comm)
+  #n <- max(num.comm)
+  # getting the number of unique values in the structure:
+  n <- length(unique(structure))
+
   #communities sorted low to high
   uniq <- sort(unique(num.comm))
 
@@ -79,7 +82,7 @@ entropyFit <- function (data, structure)
 
   #compute empirical entropy for each community or item
   for(i in 1:n){
-    
+
     if(n != ncol(data)){
       sums[,i] <- rowSums(data[,which(num.comm==uniq[i])])
     } else{

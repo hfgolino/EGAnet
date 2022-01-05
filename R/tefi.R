@@ -31,8 +31,8 @@
 #'
 #' @seealso \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and
 #' \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
-#' 
-#' @references 
+#'
+#' @references
 #' Golino, H., Moulder, R. G., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Nesselroade, J., Sadana, R., Thiyagarajan, J. A., & Boker, S. M. (2020).
 #' Entropy fit indices: New fit measures for assessing the structure and dimensionality of multiple latent variables.
 #' \emph{Multivariate Behavioral Research}.
@@ -41,27 +41,31 @@
 #'
 #' @export
 # Total Entropy Fit Index Function (for correlation matrices)
-# Updated 21.10.2020
+# Updated 5.01.2022
 tefi <- function(data, structure){
   if(ncol(data)!=nrow(data)){
     data <- qgraph::cor_auto(data)
   }
-  
+
   if(any(is.na(structure)))
   {
     rm.vars <- which(is.na(structure))
-    
+
     warning(paste("Some variables did not belong to a dimension:", colnames(data)[rm.vars]))
     message("Use caution: These variables have been removed from the TEFI calculation")
-    
+
     data <- data[-rm.vars, -rm.vars]
   }
-  
+
   data <- abs(data)
   cor1 <- data/ncol(data)
   h.vn <- -matrixcalc::matrix.trace(cor1%*%(log(cor1)))
-  
-  n <- max(structure)
+
+  #n <- max(structure)
+
+  # getting the number of unique values in the structure:
+  n <- length(unique(structure))
+
   cor.fact <- vector("list")
   eigen.fact <- vector("list")
   l.eigen.fact <- vector("list")
@@ -71,9 +75,9 @@ tefi <- function(data, structure){
     cor.fact[[i]] <- cor.fact[[i]]/ncol(cor.fact[[i]])
     h.vn.fact[[i]] <- -matrixcalc::matrix.trace(cor.fact[[i]]%*%log(cor.fact[[i]]))
   }
-  
+
   h.vn.fact2 <- unlist(h.vn.fact)
-  
+
   # Difference between Max the sum of the factor entropies:
   Hdiff <- h.vn-sum(h.vn.fact2)
   results <- data.frame(matrix(NA, nrow = 1, ncol = 3))
