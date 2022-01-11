@@ -3438,14 +3438,14 @@ redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.r
                    
                    normal = 1 - unlist(lapply(pos.vals, # positive values
                                               pnorm, # probability in normal distribution
-                                              mean = g.dist$estimate["mean"], #mean of normal
-                                              sd = g.dist$estimate["sd"]) #standard deviation of normal
+                                              mean = g.dist["mean"], #mean of normal
+                                              sd = g.dist["sd"]) #standard deviation of normal
                    ),
                    
                    gamma = 1 - unlist(lapply(pos.vals, # positive values
                                              pgamma, # probability in gamma distribution
-                                             shape = g.dist$estimate["shape"], # shape of gamma
-                                             rate = g.dist$estimate["rate"]) # rate of gamma
+                                             shape = g.dist["shape"], # shape of gamma
+                                             rate = g.dist["rate"]) # rate of gamma
                    ),
     )
     
@@ -3646,8 +3646,7 @@ redund.desc <- function(pos.vals, method, type, sig, aic, g.dist)
   row.names(desc) <- switch(method,
                             "wto" = "wTO",
                             "pcor"= "pcor",
-                            "cor" = "cor",
-                            "irt" = "IRT"
+                            "cor" = "cor"
   )
   
   colnames(desc) <- c("Mean", "SD", "Median", "MAD", "3*MAD", "6*MAD", "Minimum", "Maximum", "Critical Value")
@@ -3669,13 +3668,13 @@ redund.desc <- function(pos.vals, method, type, sig, aic, g.dist)
     desc[,"Critical Value"] <- switch(names(aic)[which.min(aic)],
                                       
                                       normal = qnorm(sig, #significance
-                                                     mean = g.dist$estimate["mean"], #mean of normal
-                                                     sd = g.dist$estimate["sd"], #sd of normal
+                                                     mean = g.dist["mean"], #mean of normal
+                                                     sd = g.dist["sd"], #sd of normal
                                                      lower.tail = FALSE),
                                       
                                       gamma = qgamma(sig, #significance
-                                                     shape = g.dist$estimate["shape"], #shape of gamma
-                                                     rate = g.dist$estimate["rate"], #rate of gamma
+                                                     shape = g.dist["shape"], #shape of gamma
+                                                     rate = g.dist["rate"], #rate of gamma
                                                      lower.tail = FALSE),
                                       
     )

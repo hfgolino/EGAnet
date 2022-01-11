@@ -437,9 +437,7 @@ UVA <- function(data, n = NULL,
     auto <- FALSE
     
   }
-  
-  ## 
-  
+
   ## plot.args
   plot.args <- GGally.args(plot.args)
   
