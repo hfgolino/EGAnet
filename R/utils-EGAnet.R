@@ -2566,7 +2566,7 @@ torch_format <- function(data, ...)
   include <- components & !is.na(ega$wc)
   
   # Re-obtain igraph
-  g <- convert2igraph(graph[include, include])
+  g <- convert2igraph(abs(graph[include, include]))
   
   # Check if dimensions = 1
   if(ega$n.dim == 1){
@@ -2624,14 +2624,12 @@ torch_format <- function(data, ...)
   }
   
   # Network measures
-  comm <- colMeans(brainGraph::communicability(g))
-  aspl_i <- brainGraph::mean_distance_wt(g, level = "vertex")
-  cc_i <- igraph::transitivity(g, type = "local", isolates = "zero")
+  q <- max(igraph::cluster_louvain(g)$modularity, na.rm = TRUE)
   
   node_attributes <- round(cbind(
-    comm, aspl_i, cc_i,
-    factor_dom, factor_cross,
-    network_dom, network_cross
+    q,
+    factor_cross,
+    network_cross
   ), 5)
   
   ## Graph attributes
