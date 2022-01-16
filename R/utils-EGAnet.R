@@ -2573,7 +2573,7 @@ torch_format <- function(data, ...)
     
     # Loadings
     ## Network
-    network_dom <- as.vector(as.matrix(net.loads(ega)$std))[include]
+    network_dom <- abs(as.vector(as.matrix(net.loads(ega)$std))[include]) # Absolute loadings
     network_cross <- rep(0, length(network_dom))
     
     ## Factor
@@ -2586,14 +2586,14 @@ torch_format <- function(data, ...)
         )$loadings[,1]
       )
     )
-    factor_dom <- as.vector(factor_loads)[include]
+    factor_dom <- abs(as.vector(factor_loads)[include]) # Absolute loadings
     factor_cross <- rep(0, length(factor_dom))
     
   }else{
     
     # Loadings
     ## Network
-    network_loads <- net.loads(ega)$std
+    network_loads <- abs(net.loads(ega)$std) # Absolute loadings
     network_loads <- network_loads[names(ega$wc[include]),]
     network_loads <- network_loads[,order(colnames(network_loads))]
     network_dom <- unlist(lapply(1:nrow(network_loads), function(i){
@@ -2613,7 +2613,7 @@ torch_format <- function(data, ...)
         )$loadings[,1:ncol(network_loads)]
       )
     )
-    factor_loads <- factor_loads[names(ega$wc[include]),]
+    factor_loads <- abs(factor_loads[names(ega$wc[include]),]) # Absolute loadings
     factor_dom <- unlist(lapply(1:nrow(factor_loads), function(i){
       factor_loads[i,which.max(factor_loads[i,])]
     }))
