@@ -1,6 +1,11 @@
+Changes in version 1.0.1
+
+o FIX: bug in `UVA` when trying to use sum score (`reduce.method = "sum"`) in automated procedure
+
+
 Changes in version 1.0.0
 
-o FIX: Bug within the bootEGA function for `type = "resampling"`.
+o FIX: bug within the bootEGA function for `type = "resampling"`.
 
 o **UPDATE**: default undimensionality adjustment has changed to leading eigenvalue (see Christensen, Garrido, & Golino, 2021 <https://doi.org/10.31234/osf.io/hz89e>). Previous unidimensionality adjustment in versions <= 0.9.8 can be applied using `uni.method = "expand"`
 

@@ -440,7 +440,9 @@ UVA <- function(
   }
 
   ## plot.args
-  plot.args <- GGally.args(plot.args)
+  plot.args <- suppressPackageStartupMessages(
+    GGally.args(plot.args)
+  )
   
   # Perform redundancy analysis
   process <- suppressWarnings(
@@ -748,6 +750,15 @@ UVA <- function(
     
   }
   res$Methods$auto <- auto
+  
+  # Change reduced names for sum scores
+  if(reduce.method == "sum"){
+    
+    colnames(res$reduced$data) <- gsub("LV_", "SUM_", colnames(res$reduced$data))
+    row.names(res$reduced$merged) <- gsub("LV_", "SUM_", row.names(res$reduced$merged))
+    
+  }
+  
     
   # Set class
   class(res) <- "UVA"
