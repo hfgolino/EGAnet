@@ -298,17 +298,18 @@
 #' @export
 #
 # Unique Variable Analysis
-# Updated 24.10.2021
-UVA <- function(data, n = NULL,
-                model = c("glasso", "TMFG"),
-                corr = c("cor_auto", "pearson", "spearman"),
-                method = c("cor", "pcor", "wTO"),
-                type = c("adapt", "alpha", "threshold"), sig,
-                key = NULL, reduce = TRUE, auto = TRUE, label_latent = TRUE,
-                reduce.method = c("latent", "remove", "sum"),
-                lavaan.args = list(), adhoc = TRUE,
-                plot.redundancy = FALSE, plot.args = list()
-                )
+# Updated 23.01.2022
+UVA <- function(
+  data, n = NULL,
+  model = c("glasso", "TMFG"),
+  corr = c("cor_auto", "pearson", "spearman"),
+  method = c("cor", "pcor", "wTO"),
+  type = c("adapt", "alpha", "threshold"), sig,
+  key = NULL, reduce = TRUE, auto = TRUE, label_latent = TRUE,
+  reduce.method = c("latent", "remove", "sum"),
+  lavaan.args = list(), adhoc = TRUE,
+  plot.redundancy = FALSE, plot.args = list()
+)
 {
   # Make sure data is a matrix
   data <- as.matrix(data)
@@ -532,6 +533,7 @@ UVA <- function(data, n = NULL,
                                     reduce.method = reduce.method,
                                     lavaan.args = lavaan.args,
                                     corr = corr)
+      
       ## Run check
       ## Compute correlation matrix
       if(isSymmetric(reduced$data)){
@@ -561,7 +563,28 @@ UVA <- function(data, n = NULL,
                            plot.redundancy = FALSE, plot.args = plot.args)
       )
       
+      # Check for names in key
+      rename_check <- adhoc.check$redundant
+      target_names <- names(rename_check) %in% names(key)
+      if(any(target_names)){
+        names(rename_check)[target_names] <- key[names(rename_check)[target_names]]
+      }
+      
+      # Insert into adhoc.check
+      adhoc.check$redundant <- lapply(rename_check, function(x){
+        
+        target_names <- x %in% names(key) 
+        
+        if(any(target_names)){
+          x[target_names] <- key[x[target_names]]
+        }
+        
+        return(x)
+        
+      })
+      
       while(all(!is.na(adhoc.check$redundant))){
+        
         # Adhoc reductions
         reduced <- redund.adhoc.auto(node.redundant.obj = adhoc.check,
                                      node.redundant.reduced = reduced,
@@ -598,6 +621,26 @@ UVA <- function(data, n = NULL,
                              type = "threshold", sig = sig,
                              plot.redundancy = FALSE, plot.args = plot.args)
         )
+        
+        # Check for names in key
+        rename_check <- adhoc.check$redundant
+        target_names <- names(rename_check) %in% names(key)
+        if(any(target_names)){
+          names(rename_check)[target_names] <- key[names(rename_check)[target_names]]
+        }
+        
+        # Insert into adhoc.check
+        adhoc.check$redundant <- lapply(rename_check, function(x){
+          
+          target_names <- x %in% names(key) 
+          
+          if(any(target_names)){
+            x[target_names] <- key[x[target_names]]
+          }
+          
+          return(x)
+          
+        })
         
       }
       

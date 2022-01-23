@@ -3807,7 +3807,7 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
 #' @importFrom graphics text
 #' @noRd
 # Redundancy Reduction
-# Updated 15.02.2021
+# Updated 23.01.2022
 redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.args, corr)
 {
   # Check for node.redundant object class
@@ -4078,7 +4078,7 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
       redund[[1]] <- NULL
       
       # Make ind
-      if(reduce.method == "latent"){ind <- idx}
+      if(reduce.method == "latent" | reduce.method == "sum"){ind <- idx}
       
       # Remove variables within future options
       for(i in 1:length(ind)){
@@ -4166,8 +4166,8 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
   }
   
   # Transform merged list to matrix
-  if(length(merged) != 0)
-  {
+  if(length(merged) != 0){
+    
     # Number of rows for matrix
     m.rows <- max(unlist(lapply(merged, length)))
     
@@ -4183,11 +4183,12 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
     }
     
     colnames(m.mat) <- name.chn
+    
   }
   
   # Replace column names for item names not changed
-  if(any(colnames(new.data) %in% names(key)))
-  {
+  if(any(colnames(new.data) %in% names(key))){
+    
     # Target names
     target.names <- which(colnames(new.data) %in% names(key))
     
@@ -4196,6 +4197,7 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
     
     # Insert into new data
     colnames(new.data)[target.names] <- key[new.data.names]
+    
   }
   
   # Check if 'm.mat' exists
@@ -4206,8 +4208,11 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
     
     if(reduce.method == "latent"){
       colnames(m.mat) <- c("Target", paste("Redundancy_", 1:(ncol(m.mat)-1), sep = ""))
-    }else if(reduce.method == "remove" | reduce.method == "sum"){
+    }else if(reduce.method == "remove"){
       colnames(m.mat) <- c(paste("Redundancy_", 1:ncol(m.mat), sep = ""))
+    }else if(reduce.method == "sum"){
+      colnames(m.mat) <- c(paste("Redundancy_", 1:ncol(m.mat), sep = ""))
+      row.names(m.mat) <- c(paste("LV_", 1:nrow(m.mat), sep = ""))
     }
   }
   
@@ -4215,7 +4220,7 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
   if(reduce.method == "sum"){
     
     # Reinstate new.data
-    new.data <- node.redundant.obj$data
+    new.data <- as.data.frame(node.redundant.obj$data)
     
     # Collapse across rows
     for(i in 1:nrow(m.mat)){
@@ -4227,12 +4232,20 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
       redunds <- m.mat[i,]
       redunds <- redunds[redunds != ""]
       
+      # Obtain columns that exist in data
+      extant_cols <- c(collapse, redunds)
+      extant_cols <- extant_cols[extant_cols %in% key]
+      extant_cols <- names(key)[match(extant_cols, key)]
+      
       # Collapse and insert into matrix
-      new.data[,collapse] <- rowSums(new.data[,c(collapse, redunds)])
+      new.data[[collapse]] <- rowSums(new.data[,extant_cols], na.rm = TRUE)
       
       # Remove redundant terms
-      new.data <- new.data[,-match(redunds, colnames(new.data))]
+      new.data <- new.data[,-match(extant_cols, colnames(new.data))]
     }
+    
+    # Convert new.data back to matrix (for symmetric check)
+    new.data <- as.matrix(new.data)
     
   }
   
@@ -4249,13 +4262,14 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
 
 #' @noRd
 # Redundancy Reduction (Automated)
-# Updated 20.06.2021
+# Updated 23.01.2022
 redund.reduce.auto <- function(node.redundant.obj,
                                reduce.method, lavaan.args, corr)
 {
   # Check for node.redundant object class
-  if(class(node.redundant.obj) != "node.redundant")
-  {stop("A 'node.redundant' object must be used as input")}
+  if(class(node.redundant.obj) != "node.redundant"){
+    stop("A 'node.redundant' object must be used as input")
+  }
   
   # Redundant list
   redund <- node.redundant.obj$redundant
@@ -4273,13 +4287,16 @@ redund.reduce.auto <- function(node.redundant.obj,
   count <- 0
   
   # Get key
-  if("key" %in% names(node.redundant.obj))
-  {
+  if("key" %in% names(node.redundant.obj)){
+    
     key <- node.redundant.obj$key
     names(key) <- names(node.redundant.obj$key)
+    
   }else{
+    
     key <- colnames(node.redundant.obj$data)
     names(key) <- key
+    
   }
   
   # Line break
@@ -4290,8 +4307,8 @@ redund.reduce.auto <- function(node.redundant.obj,
   prev.state.data <- list(new.data)
   
   # Loop through named node redundant list
-  while(length(redund) != 0)
-  {
+  while(length(redund) != 0){
+    
     # Targeting redundancy
     target.item <- names(redund)[1]
     
@@ -4399,7 +4416,7 @@ redund.reduce.auto <- function(node.redundant.obj,
       redund[[1]] <- NULL
       
       # Make ind
-      if(reduce.method == "latent"){ind <- idx}
+      if(reduce.method == "latent" | reduce.method == "sum"){ind <- idx}
       
       # Remove variables within future options
       for(i in 1:length(ind)){
@@ -4487,8 +4504,8 @@ redund.reduce.auto <- function(node.redundant.obj,
   }
   
   # Transform merged list to matrix
-  if(length(merged) != 0)
-  {
+  if(length(merged) != 0){
+    
     # Number of rows for matrix
     m.rows <- max(unlist(lapply(merged, length)))
     
@@ -4504,11 +4521,12 @@ redund.reduce.auto <- function(node.redundant.obj,
     }
     
     colnames(m.mat) <- name.chn
+    
   }
   
   # Replace column names for item names not changed
-  if(any(colnames(new.data) %in% names(key)))
-  {
+  if(any(colnames(new.data) %in% names(key))){
+    
     # Target names
     target.names <- which(colnames(new.data) %in% names(key))
     
@@ -4517,6 +4535,7 @@ redund.reduce.auto <- function(node.redundant.obj,
     
     # Insert into new data
     colnames(new.data)[target.names] <- key[new.data.names]
+    
   }
   
   # Check if 'm.mat' exists
@@ -4527,8 +4546,12 @@ redund.reduce.auto <- function(node.redundant.obj,
     
     if(reduce.method == "latent"){
       colnames(m.mat) <- c("Target", paste("Redundancy_", 1:(ncol(m.mat)-1), sep = ""))
-    }else if(reduce.method == "remove" | reduce.method == "sum"){
+    }else if(reduce.method == "remove"){
       colnames(m.mat) <- c(paste("Redundancy_", 1:ncol(m.mat), sep = ""))
+    }else if(reduce.method == "sum"){
+      colnames(m.mat) <- c(paste("Redundancy_", 1:ncol(m.mat), sep = ""))
+      row.names(m.mat) <- c(paste("LV_", 1:nrow(m.mat), sep = ""))
+      name.chn <- c(paste("LV_", 1:nrow(m.mat), sep = ""))
     }
   }
   
@@ -4536,7 +4559,7 @@ redund.reduce.auto <- function(node.redundant.obj,
   if(reduce.method == "sum"){
     
     # Reinstate new.data
-    new.data <- node.redundant.obj$data
+    # new.data <- as.data.frame(node.redundant.obj$data)
     
     # Collapse across rows
     for(i in 1:nrow(m.mat)){
@@ -4548,16 +4571,21 @@ redund.reduce.auto <- function(node.redundant.obj,
       redunds <- m.mat[i,]
       redunds <- redunds[redunds != ""]
       
+      # Obtain columns that exist in data
+      extant_cols <- c(collapse, redunds)
+      extant_cols[extant_cols %in% key] <- names(key)[match(extant_cols[extant_cols %in% key], key)]
+      
       # Collapse and insert into matrix
-      new.data[,collapse] <- rowSums(new.data[,c(collapse, redunds)])
+      new.data[[collapse]] <- rowSums(new.data[,extant_cols], na.rm = TRUE)
       
       # Remove redundant terms
-      new.data <- new.data[,-match(redunds, colnames(new.data))]
+      new.data <- new.data[,-match(extant_cols, colnames(new.data))]
     }
     
+    # Convert new.data back to matrix (for symmetric check)
+    # new.data <- as.matrix(new.data)
+    
   }
-  
-  
   
   # Initialize results list
   res <- list()
@@ -4570,7 +4598,7 @@ redund.reduce.auto <- function(node.redundant.obj,
 
 #' @noRd
 # Redundancy Adhoc Reduction (Automated)
-# Updated 22.07.2021
+# Updated 23.01.2022
 redund.adhoc.auto <- function(node.redundant.obj,
                               node.redundant.reduced,
                               node.redundant.original,
@@ -4609,6 +4637,7 @@ redund.adhoc.auto <- function(node.redundant.obj,
   
   # Set counter
   count <- max(as.numeric(gsub("LV_", "", names(merged))))
+  original_count <- count
   
   # Update merged
   for(i in 1:length(redund)){
@@ -4754,14 +4783,14 @@ redund.adhoc.auto <- function(node.redundant.obj,
     m.mat <- matrix("", nrow = m.rows, ncol = length(merged))
     
     # Input into merged matrix
-    for(i in 1:length(merged)){
-      
+    for(i in 1:length(merged))
+    {
       diff <- m.rows - length(merged[[i]])
       
       m.mat[,i] <- c(merged[[i]], rep("", diff))
-      
     }
     
+    # Set names for redundancy matrix
     colnames(m.mat) <- names(merged)
     
   }
@@ -4777,6 +4806,7 @@ redund.adhoc.auto <- function(node.redundant.obj,
     
     # Insert into new data
     colnames(new.data)[target.names] <- key[new.data.names]
+    
   }
   
   # Check if 'm.mat' exists
@@ -4785,9 +4815,9 @@ redund.adhoc.auto <- function(node.redundant.obj,
   }else{
     m.mat <- t(m.mat)
     
-    if(reduce.method == "latent"){
+    if(reduce.method == "latent" | reduce.method == "sum"){
       colnames(m.mat) <- c("Target", paste("Redundancy_", 1:(ncol(m.mat)-1), sep = ""))
-    }else if(reduce.method == "remove" | reduce.method == "sum"){
+    }else if(reduce.method == "remove"){
       colnames(m.mat) <- c(paste("Redundancy_", 1:ncol(m.mat), sep = ""))
     }
   }
@@ -4796,7 +4826,7 @@ redund.adhoc.auto <- function(node.redundant.obj,
   if(reduce.method == "sum"){
     
     # Reinstate new.data
-    new.data <- node.redundant.original$data
+    new.data <- as.data.frame(new.data)
     
     # Collapse across rows
     for(i in 1:nrow(m.mat)){
@@ -4808,16 +4838,21 @@ redund.adhoc.auto <- function(node.redundant.obj,
       redunds <- m.mat[i,]
       redunds <- redunds[redunds != ""]
       
+      # Obtain columns that exist in data
+      # extant_cols <- c(collapse, redunds)
+      # extant_cols[extant_cols %in% key] <- names(key)[match(extant_cols[extant_cols %in% key], key)]
+      
       # Collapse and insert into matrix
-      new.data[,collapse] <- rowSums(new.data[,c(collapse, redunds)], na.rm = TRUE)
+      new.data[[collapse]] <- rowSums(new.data[,redunds], na.rm = TRUE)
       
       # Remove redundant terms
       new.data <- new.data[,-match(redunds, colnames(new.data))]
     }
     
+    # Convert new.data back to matrix (for symmetric check)
+    new.data <- as.matrix(new.data)
+    
   }
-  
-  
   
   # Initialize results list
   res <- list()
