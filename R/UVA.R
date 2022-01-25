@@ -512,7 +512,7 @@ UVA <- function(
           redundancy.process(data = reduced$data, cormat = cor.data,
                              n = n,
                              model = model,
-                             method = "wto",
+                             method = method,
                              type = "threshold", sig = .25,
                              plot.redundancy = FALSE, plot.args = plot.args)
         )
@@ -560,7 +560,7 @@ UVA <- function(
         redundancy.process(data = reduced$data, cormat = cor.data,
                            n = n,
                            model = model,
-                           method = "wto",
+                           method = method,
                            type = "threshold", sig = sig,
                            plot.redundancy = FALSE, plot.args = plot.args)
       )
