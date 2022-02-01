@@ -8,7 +8,7 @@
 #' the between- and within-community strength of each item, respectively.
 #'
 #' @param A Matrix, data frame, or \code{\link[EGAnet]{EGA}} object.
-#' An adjacency matrix of network data
+#' A network adjacency matrix
 #'
 #' @param wc Numeric or character vector.
 #' A vector of community assignments.
@@ -92,10 +92,9 @@
 #' @export
 #'
 # Network Loadings
-# Updated 02.07.2021
+# Updated 01.02.2022
 net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot.NL = FALSE)
 {
-  
   #------------------------------------------#
   ## DETECT EGA INPUT AND VARIABLE ORDERING ##
   #------------------------------------------#
@@ -114,6 +113,21 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot.NL = FALSE
   
   # Make sure membership is named
   names(wc) <- colnames(A)
+  
+  # Ensure matrix object
+  A <- as.matrix(A)
+  
+  # Ensure data is matrix
+  if(nrow(A) == ncol(A)){
+    stop("Input for 'A' must be an n x n matrix.")
+  }
+  
+  # Ensure data is symmetric
+  row.names(A) <- colnames(A)
+  
+  if(!isSymmetric(A)){
+    stop("'A' is not a symmetric matrix. Network loadings can only be computed with undirected networks.")
+  }
   
   # Check if there are actual dimensions
   if(length(wc) == length(unique(wc)))
