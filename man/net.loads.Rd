@@ -8,7 +8,7 @@ net.loads(A, wc, pos.manifold = FALSE, min.load = 0, plot.NL = FALSE)
 }
 \arguments{
 \item{A}{Matrix, data frame, or \code{\link[EGAnet]{EGA}} object.
-An adjacency matrix of network data}
+A network adjacency matrix}
 
 \item{wc}{Numeric or character vector.
 A vector of community assignments.

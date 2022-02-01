@@ -99,8 +99,8 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot.NL = FALSE
   ## DETECT EGA INPUT AND VARIABLE ORDERING ##
   #------------------------------------------#
   
-  if(any(class(A) == "EGA"))
-  {
+  if(any(class(A) == "EGA")){
+    
     # Order
     ord <- match(colnames(A$network), names(A$wc))
     
@@ -109,6 +109,7 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot.NL = FALSE
     
     # Replace 'A' with 'EGA' network
     A <- A$network
+    
   }else{ord <- order(wc)} # Reorder by communities
   
   # Make sure membership is named
@@ -118,7 +119,7 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot.NL = FALSE
   A <- as.matrix(A)
   
   # Ensure data is matrix
-  if(nrow(A) == ncol(A)){
+  if(nrow(A) != ncol(A)){
     stop("Input for 'A' must be an n x n matrix.")
   }
   
