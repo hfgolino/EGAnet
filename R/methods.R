@@ -69,6 +69,13 @@ print.dynEGA<- function(x, ...) {
   print(x$dynEGA$dim.variables)
 }
 
+#Print Measurement Invariance----
+# Updated 01.02.2022
+#' @export
+print.invariance <- function(x, ...) {
+  print(x$permutation$results)
+}
+
 # PLOTS----
 # Updated 16.06.2021
 #' @export
