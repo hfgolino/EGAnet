@@ -684,8 +684,8 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
   args$corr <- corr
 
   ## Check if glasso was used
-  if(model == "glasso")
-  {
+  if(model == "glasso"){
+    
     args$gamma <- gamma
     args$lambda <- lambda
   }
