@@ -2,15 +2,15 @@ citHeader("To cite EGAnet in publications use:")
 
 bibentry(
 	bibtype	= "manual",
-	key	= "golino2021eganet",
+	key	= "EGAnet",
 	title	= "EGAnet: Exploratory Graph Analysis – A framework for estimating the number of dimensions in multivariate data using network psychometrics",
 	author	= c(person("Golino,", "Hudson"),
-		    person("Christensen,", "P", "Alexander")),
+		    person("Christensen,", "Alexander P")),
 	year	= "2021",
-	note    = "R package version 0.9.9",
+	note    = "R package version 1.0.1",
 
   textVersion  =
-  paste0("Golino, H., & Christensen, A. P. (2021). ",
+  paste0("Golino, H., & Christensen, A. P. (2022). ",
         "EGAnet: Exploratory Graph Analysis – A framework for estimating the number of dimensions in multivariate data using network psychometrics. ",
-	"R package version 0.9.9.")
+	"R package version 1.0.1.")
 )
