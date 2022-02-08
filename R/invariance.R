@@ -42,13 +42,10 @@
 #'
 #' @examples
 #' # Load data
-#' wmt <- wmt2[,7:24]
+#' wmt <- wmt2[-1,7:24]
 #' 
 #' # Groups
-#' groups <- c(
-#' rep(1, nrow(wmt) / 2),
-#' rep(2, nrow(wmt) / 2)
-#' )
+#' groups <- rep(1:2, each = nrow(wmt) / 2)
 #' 
 #' \dontshow{# Fast for CRAN
 #' # Measurement invariance
@@ -98,6 +95,11 @@ invariance <- function(
     # Input arguments
     ega_args[arg_names] <- add_args[arg_names]
     
+  }
+  
+  # Make sure data and groups match
+  if(nrow(data) != length(groups)){
+    stop("Number of cases in 'data' do not match the length of 'groups'. Please check that these numbers match: `nrow(data) == length(groups)`")
   }
   
   # Add data to EGA arguments
@@ -161,13 +163,18 @@ invariance <- function(
     
   })
   
+  ## Reorder order loadings to match group 1
+  group_loadings <- lapply(group_loadings, function(x){
+    x[,colnames(group_loadings[[1]])]
+  })
+  
   # Original difference
   original_difference <- group_loadings[[1]] - group_loadings[[2]]
 
   # Obtain original dominant difference
   original_dominant_difference <- unlist(
     lapply(seq_along(memberships), function(i){
-      original_difference[i,memberships[i]]
+      original_difference[i,as.character(memberships[i])]
     })
   )
   names(original_dominant_difference) <- colnames(data)
@@ -183,13 +190,15 @@ invariance <- function(
   # Set up parallelization
   cl <- parallel::makeCluster(ncores)
   
-  # Export variables (only necessary for testing)
-  # Comment out for package
+  # # Export variables (only necessary for testing)
+  # # Comment out for package
   # parallel::clusterExport(
   #   cl = cl,
   #   varlist = c(
   #     "EGA.estimate",
-  #     "net.loads"
+  #     "net.loads",
+  #     "unique_groups",
+  #     "perm_groups"
   #   )
   # )
   
