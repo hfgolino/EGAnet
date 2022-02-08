@@ -2,6 +2,8 @@ Changes in version 1.0.1
 
 o FIX: bug in `UVA` when trying to use sum score (`reduce.method = "sum"`) in automated procedure
 
+o ADD: measurement `invariance` function for testing differences in network loadings between groups
+
 
 Changes in version 1.0.0
 
