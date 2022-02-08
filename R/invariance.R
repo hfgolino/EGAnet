@@ -60,7 +60,7 @@
 #' @export
 #'
 # Measurement Invariance
-# Updated 01.02.2022
+# Updated 08.02.2022
 invariance <- function(
   data, groups, 
   memberships = NULL,
@@ -246,6 +246,9 @@ invariance <- function(
   # Compute differences
   difference_list <- lapply(loadings_list, function(x){
     
+    # Ensure same ordering of communities
+    x[[2]] <- x[[2]][,colnames(x[[1]])]
+    
     # Obtain difference between groups
     difference_loadings <- x[[1]] - x[[2]]
     
@@ -260,7 +263,7 @@ invariance <- function(
     # Obtain differences for dominant loadings
     dominant_difference <- unlist(
       lapply(seq_along(memberships), function(i){
-        x[i,memberships[i]]
+        x[i,as.character(memberships[i])]
       })
     )
     
@@ -273,18 +276,18 @@ invariance <- function(
   })
   
   # Create results
-  ## Greater than or equal to
-  greater <- lapply(dominant_list, function(x){
-    x >= abs(original_dominant_difference)
+  permutation_counts <- lapply(dominant_list, function(x){
+    abs(x) >= abs(original_dominant_difference)
   })
-  greater_means <- rowMeans(simplify2array(greater), na.rm = TRUE)
-  ## Less than or equal to
-  less <- lapply(dominant_list, function(x){
-    x <= -abs(original_dominant_difference)
-  })
-  less_means <- rowMeans(simplify2array(less), na.rm = TRUE)
+  
+  ## Simplify to matrix
+  permutation_counts <- simplify2array(permutation_counts)
+  
+  ## Add a column of TRUE (original difference)
+  permutation_counts[,1] <- rep(TRUE, nrow(permutation_counts))
+  
   ## p-value
-  p_value <- greater_means + less_means
+  p_value <- rowMeans(permutation_counts, na.rm = TRUE)
   
   # Results data frame
   results_df <- data.frame(
