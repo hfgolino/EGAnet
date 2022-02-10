@@ -1733,15 +1733,15 @@ compare.plot.fix.EGA <- function(object.list,  plot.type = c("GGally","qgraph"),
   {plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
   
+  ## Original plot arguments
+  original.plot.args <- plot.args
+  
   ## Check for input plot arguments
   if("legend.names" %in% names(plot.args)){
     legend.names <- plot.args$legend.names
   }
   plot.args <- GGally.args(plot.args)
   color.palette <- plot.args$color.palette
-  
-  ## Original plot arguments
-  original.plot.args <- plot.args
   
   ## Initialize plot list
   ega.plots <- list()
@@ -1766,15 +1766,15 @@ compare.plot.fix.EGA <- function(object.list,  plot.type = c("GGally","qgraph"),
     }else if(plot.type == "GGally"){
       
       if(i != 1){
+        ## Reset plot arguments
+        plot.args <- original.plot.args
+        
         ## Check for input plot arguments
         if("legend.names" %in% names(plot.args)){
           legend.names <- plot.args$legend.names
         }
         plot.args <- GGally.args(plot.args)
         color.palette <- plot.args$color.palette
-        
-        ## Original plot arguments
-        original.plot.args <- plot.args
       }
       
       # Insignificant values (keeps ggnet2 from erroring out)

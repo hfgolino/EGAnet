@@ -99,7 +99,9 @@ compare.EGA.plots <- function(..., labels, rows, columns)
   
   # Initialize plot list
   plots.ega <- list()
-  plots.ega <- compare.plot.fix.EGA(object.list)
+  plots.ega <- suppressPackageStartupMessages(
+    compare.plot.fix.EGA(object.list)
+  )
   
   # Loop through matching 
   for(i in 2:length(object.list)){
