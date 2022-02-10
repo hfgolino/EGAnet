@@ -102,8 +102,10 @@ print.NetLoads <- function(x, ...) {
 }
 
 #Print Measurement Invariance----
-# Updated 01.02.2022
+# Updated 10.02.2022
 #' @export
 print.invariance <- function(x, ...) {
-  print(x$results)
+  print(x$results, row.names = FALSE)
+  cat("---\n")
+  cat("Signif. code: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 'n.s.' 1")
 }

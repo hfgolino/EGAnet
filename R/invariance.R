@@ -336,6 +336,13 @@ invariance <- function(
   # Order by dimension
   results_df <- results_df[order(results_df$Membership),]
   
+  # Add significance
+  sig <- ifelse(results_df$p <= .10, ".", "n.s.")
+  sig <- ifelse(results_df$p <= .05, "*", sig)
+  sig <- ifelse(results_df$p<= .01, "**", sig)
+  sig <- ifelse(results_df$p <= .001, "***", sig)
+  results_df$sig <- sig
+  
   # Results list
   results <- list()
   results$EGA <- original_EGA
