@@ -28,7 +28,7 @@
 #' @export
 #
 # Compare EGA plots function
-# Updated 09.07.2021
+# Updated 10.02.2022
 compare.EGA.plots <- function(..., labels, rows, columns)
 {
   # Obtain object list

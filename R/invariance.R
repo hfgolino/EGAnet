@@ -66,12 +66,11 @@
 #' \item{\code{loadingsDifference}}
 #' {Difference between the dominant loadings of each group for each permutation}
 #' 
-#' \item{\code{results}}
-#' {Data frame of the results (which are printed)}
-#' 
 #' }
 #' 
 #' }
+#' 
+#' \item{results}{Data frame of the results (which are printed)}
 #'
 #' @author Laura Jamison <lj5yn@virginia.edu>,
 #' Alexander P. Christensen <alexpaulchristensen@gmail.com>, and 
@@ -333,7 +332,9 @@ invariance <- function(
     Difference = original_dominant_difference,
     p = p_value
   )
-  row.names(results_df) <- NULL
+  
+  # Order by dimension
+  results_df <- results_df[order(results_df$Membership),]
   
   # Results list
   results <- list()
@@ -344,7 +345,7 @@ invariance <- function(
   results$permutation$groups <- perm_groups
   results$permutation$loadings <- loadings_list
   results$permutation$loadingsDifference <- dominant_list
-  results$permutation$results <- results_df
+  results$results <- results_df
 
   # Add class
   class(results) <- "invariance"

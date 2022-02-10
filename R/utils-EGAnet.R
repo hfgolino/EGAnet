@@ -1733,18 +1733,6 @@ compare.plot.fix.EGA <- function(object.list,  plot.type = c("GGally","qgraph"),
   {plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
   
-  ## Check for input plot arguments
-  if(plot.type == "GGally"){
-    if("legend.names" %in% names(plot.args)){
-      legend.names <- plot.args$legend.names
-    }
-    plot.args <- GGally.args(plot.args)
-    color.palette <- plot.args$color.palette
-  }
-  
-  ## Original plot arguments
-  original.plot.args <- plot.args
-  
   ## Initialize plot list
   ega.plots <- list()
   
@@ -1766,6 +1754,16 @@ compare.plot.fix.EGA <- function(object.list,  plot.type = c("GGally","qgraph"),
     if(plot.type == "qgraph"){
       ega.plot <- qgraph::qgraph(x$network, layout = "spring", vsize = plot.args$vsize, groups = as.factor(x$wc))
     }else if(plot.type == "GGally"){
+      
+      ## Check for input plot arguments
+      if("legend.names" %in% names(plot.args)){
+        legend.names <- plot.args$legend.names
+      }
+      plot.args <- GGally.args(plot.args)
+      color.palette <- plot.args$color.palette
+      
+      ## Original plot arguments
+      original.plot.args <- plot.args
       
       # Insignificant values (keeps ggnet2 from erroring out)
       x$network <- ifelse(abs(as.matrix(x$network)) <= .00001, 0, as.matrix(x$network))
@@ -5380,6 +5378,10 @@ homogenize.membership <- function (target.wc, convert.wc)
       final.vec <- rep(NA, length = length(target.wc))
       names(final.vec) <- names(target.wc)
       
+    }else if(all(target.wc == new.vec)){
+      # Check if all dimensions are the same
+      final.vec <- new.vec
+      names(final.vec) <- names(target.wc)
     }else if(length(na.omit(unique(target.wc))) > length(unique(na.omit(new.vec)))){
       # Converge based on maximum number of dimensions
       
