@@ -54,11 +54,14 @@ Returns a list containing:
 
 \itemize{
 
-\item{EGA}{\code{\link[EGAnet]{EGA}} results for each group}
+\item{EGA}
+{\code{\link[EGAnet]{EGA}} results for each group}
 
-\item{loadings}{Network loadings for each group}
+\item{loadings}
+{Network loadings for each group}
 
-\item{loadingsDifference}{Difference between the dominant loadings of each group}
+\item{loadingsDifference}
+{Difference between the dominant loadings of each group}
 
 }
 
@@ -68,13 +71,17 @@ Returns a list containing:
 
 \itemize{
 
-\item{groups}{Permutated groups acorss iterations}
+\item{groups}
+{Permutated groups acorss iterations}
 
-\item{loadings}{Loadings for each group for each permutation}
+\item{loadings}
+{Loadings for each group for each permutation}
 
-\item{loadingsDifference}{Difference between the dominant loadings of each group for each permutation}
+\item{loadingsDifference}
+{Difference between the dominant loadings of each group for each permutation}
 
-\item{results}{Data frame of the results (which are printed)}
+\item{results}
+{Data frame of the results (which are printed)}
 
 }
 
