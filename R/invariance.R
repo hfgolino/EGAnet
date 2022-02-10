@@ -329,8 +329,8 @@ invariance <- function(
   # Results data frame
   results_df <- data.frame(
     Node = colnames(data),
-    Difference = original_dominant_difference,
     Membership = memberships,
+    Difference = original_dominant_difference,
     p = p_value
   )
   row.names(results_df) <- NULL
