@@ -80,12 +80,11 @@ Returns a list containing:
 \item{\code{loadingsDifference}}
 {Difference between the dominant loadings of each group for each permutation}
 
-\item{\code{results}}
-{Data frame of the results (which are printed)}
-
 }
 
 }
+
+\item{results}{Data frame of the results (which are printed)}
 }
 \description{
 Estimates metric invariance of \code{\link[EGAnet]{EGA}} or specified structure
