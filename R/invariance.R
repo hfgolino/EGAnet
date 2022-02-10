@@ -40,13 +40,13 @@
 #' 
 #' \itemize{
 #' 
-#' \item{EGA}
-#' {\code{\link[EGAnet]{EGA}} results for each group}
+#' \item{\code{\link[EGAnet]{EGA}}}
+#' {EGA results for each group}
 #' 
-#' \item{loadings}
+#' \item{\code{loadings}}
 #' {Network loadings for each group}
 #' 
-#' \item{loadingsDifference}
+#' \item{\code{loadingsDifference}}
 #' {Difference between the dominant loadings of each group}
 #' 
 #' }
@@ -57,16 +57,16 @@
 #' 
 #' \itemize{
 #' 
-#' \item{groups}
+#' \item{\code{groups}}
 #' {Permutated groups acorss iterations}
 #' 
-#' \item{loadings}
+#' \item{\code{loadings}}
 #' {Loadings for each group for each permutation}
 #' 
-#' \item{loadingsDifference}
+#' \item{\code{loadingsDifference}}
 #' {Difference between the dominant loadings of each group for each permutation}
 #' 
-#' \item{results}
+#' \item{\code{results}}
 #' {Data frame of the results (which are printed)}
 #' 
 #' }
