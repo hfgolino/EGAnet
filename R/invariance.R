@@ -40,11 +40,14 @@
 #' 
 #' \itemize{
 #' 
-#' \item{EGA}{\code{\link[EGAnet]{EGA}} results for each group}
+#' \item{EGA}
+#' {\code{\link[EGAnet]{EGA}} results for each group}
 #' 
-#' \item{loadings}{Network loadings for each group}
+#' \item{loadings}
+#' {Network loadings for each group}
 #' 
-#' \item{loadingsDifference}{Difference between the dominant loadings of each group}
+#' \item{loadingsDifference}
+#' {Difference between the dominant loadings of each group}
 #' 
 #' }
 #' 
@@ -54,13 +57,17 @@
 #' 
 #' \itemize{
 #' 
-#' \item{groups}{Permutated groups acorss iterations}
+#' \item{groups}
+#' {Permutated groups acorss iterations}
 #' 
-#' \item{loadings}{Loadings for each group for each permutation}
+#' \item{loadings}
+#' {Loadings for each group for each permutation}
 #' 
-#' \item{loadingsDifference}{Difference between the dominant loadings of each group for each permutation}
+#' \item{loadingsDifference}
+#' {Difference between the dominant loadings of each group for each permutation}
 #' 
-#' \item{results}{Data frame of the results (which are printed)}
+#' \item{results}
+#' {Data frame of the results (which are printed)}
 #' 
 #' }
 #' 
@@ -90,7 +97,7 @@
 #' @export
 #'
 # Measurement Invariance
-# Updated 08.02.2022
+# Updated 10.02.2022
 invariance <- function(
   data, groups, 
   memberships = NULL,
