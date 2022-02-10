@@ -1,6 +1,6 @@
 #' Measurement Invariance of \code{\link[EGAnet]{EGA}} Structure
 #'
-#' Estimates metric invariance of \code{\link[EGAnet]{EGA}} or specified structure
+#' @description Estimates metric invariance of \code{\link[EGAnet]{EGA}} or specified structure
 #' 
 #' @param data Matrix or data frame.
 #' Variables to be used in the analysis
@@ -34,7 +34,37 @@
 #'
 #' @return Returns a list containing:
 #'
-#' Things
+#' \item{EGA}{Original \code{\link[EGAnet]{EGA}} results for the sample}
+#' 
+#' \item{groups}{
+#' 
+#' \itemize{
+#' 
+#' \item{EGA}{\code{\link[EGAnet]{EGA}} results for each group}
+#' 
+#' \item{loadings}{Network loadings for each group}
+#' 
+#' \item{loadingsDifference}{Difference between the dominant loadings of each group}
+#' 
+#' }
+#' 
+#' }
+#' 
+#' \item{permutation}{
+#' 
+#' \itemize{
+#' 
+#' \item{groups}{Permutated groups acorss iterations}
+#' 
+#' \item{loadings}{Loadings for each group for each permutation}
+#' 
+#' \item{loadingsDifference}{Difference between the dominant loadings of each group for each permutation}
+#' 
+#' \item{results}{Data frame of the results (which are printed)}
+#' 
+#' }
+#' 
+#' }
 #'
 #' @author Laura Jamison <lj5yn@virginia.edu>,
 #' Alexander P. Christensen <alexpaulchristensen@gmail.com>, and 
@@ -292,6 +322,7 @@ invariance <- function(
   # Results data frame
   results_df <- data.frame(
     Node = colnames(data),
+    Difference = original_dominant_difference,
     Membership = memberships,
     p = p_value
   )

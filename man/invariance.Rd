@@ -48,20 +48,47 @@ then use the following code: \code{parallel::detectCores()}}
 \value{
 Returns a list containing:
 
-Things
+\item{EGA}{Original \code{\link[EGAnet]{EGA}} results for the sample}
+
+\item{groups}{
+
+\itemize{
+
+\item{EGA}{\code{\link[EGAnet]{EGA}} results for each group}
+
+\item{loadings}{Network loadings for each group}
+
+\item{loadingsDifference}{Difference between the dominant loadings of each group}
+
+}
+
+}
+
+\item{permutation}{
+
+\itemize{
+
+\item{groups}{Permutated groups acorss iterations}
+
+\item{loadings}{Loadings for each group for each permutation}
+
+\item{loadingsDifference}{Difference between the dominant loadings of each group for each permutation}
+
+\item{results}{Data frame of the results (which are printed)}
+
+}
+
+}
 }
 \description{
 Estimates metric invariance of \code{\link[EGAnet]{EGA}} or specified structure
 }
 \examples{
 # Load data
-wmt <- wmt2[,7:24]
+wmt <- wmt2[-1,7:24]
 
 # Groups
-groups <- c(
-rep(1, nrow(wmt) / 2),
-rep(2, nrow(wmt) / 2)
-)
+groups <- rep(1:2, each = nrow(wmt) / 2)
 
 \dontshow{# Fast for CRAN
 # Measurement invariance
