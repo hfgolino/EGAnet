@@ -1900,7 +1900,7 @@ compare.plot.fix.EGA <- function(object.list,  plot.type = c("GGally","qgraph"),
           color = ggplot2::guide_legend(override.aes = list(
             color = unique(palette),
             size = node.size,
-            alpha = plot.args$alpha,
+            alpha = as.numeric(names(which.max(table(plot.args$alpha)))),
             stroke = 1.5
           ))
         )

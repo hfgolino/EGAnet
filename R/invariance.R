@@ -33,6 +33,9 @@
 #' @param ... Arguments passed to \code{\link[EGAnet]{EGA}}
 #'
 #' @return Returns a list containing:
+#' 
+#' \item{memberships}{Original memberships provided in \code{memberships}
+#' or from \code{\link[EGAnet]{EGA} if \code{NULL}}}
 #'
 #' \item{EGA}{Original \code{\link[EGAnet]{EGA}} results for the sample}
 #' 
@@ -345,6 +348,7 @@ invariance <- function(
   
   # Results list
   results <- list()
+  results$memberships <- memberships
   results$EGA <- original_EGA
   results$groups$EGA <- group_ega
   results$groups$loadings <- group_loadings

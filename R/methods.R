@@ -887,6 +887,84 @@ plot.NetLoads <- function(x, ...) {
   plot(x$plot)
 }
 
+# Plot invariance----
+# Updated 10.02.2022
+#' @export
+plot.invariance <- function(
+  x, title = "", labels = NULL,
+  rows, columns, plot.type = c("GGally","qgraph"),
+  plot.args = list(), ...
+)
+{
+  # Obtain structure
+  structure <- x$memberships
+  
+  # Prepare EGA results for plots
+  input_EGA <- lapply(x$groups$EGA, function(x){
+    
+    # Make class 'EGA'
+    class(x) <- "EGA"
+    
+    # Return list
+    return(x)
+    
+  })
+  
+  # Set structure
+  input_EGA <- lapply(input_EGA, function(x){
+    
+    # Set structure
+    x$wc <- structure
+    
+    # Return list
+    return(x)
+    
+  })
+  
+  # Check for labels
+  if(is.null(labels)){
+    labels <- names(input_EGA)
+  }
+  
+  # Check for rows
+  if(missing(rows)){
+    rows <- 1
+  }
+  
+  # Check for columns
+  if(missing(columns)){
+    columns <- length(input_EGA)
+  }
+  
+  # Check for plot type
+  if(missing(plot.type)){
+    plot.type <- "GGally"
+  }else{
+    plot.type <- match.arg(plot.type)
+  }
+  
+  # Set up plot arguments
+  if(any(x$results$p <= .05)){
+    
+    # Check for "alpha" in plot.args
+    if(!"alpha" %in% names(plot.args)){
+      plot.args$alpha <- ifelse(
+        x$results$p <= .05, .8, .2
+      )
+    }
+    
+  }
+  
+  # Obtain plots
+  plots <- compare.EGA.plots(
+    input_list = input_EGA,
+    labels = labels, rows = rows,
+    columns = columns, plot.type = plot.type,
+    plot.args = plot.args
+  )
+  
+}
+
 #Plot CFA----
 # Updated 02.05.2020
 #' @export

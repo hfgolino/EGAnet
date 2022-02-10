@@ -8,6 +8,10 @@
 #'
 #' @param ... \code{\link{EGAnet}} objects
 #' 
+#' @param input_list List.
+#' Bypasses \code{...} argument in favor of using a list
+#' as an input
+#' 
 #' @param labels Character vector.
 #' Labels for each \code{\link{EGAnet}} object
 #' 
@@ -16,6 +20,49 @@
 #' 
 #' @param columns Numeric.
 #' Number of columns to spread plots down
+#' 
+#' @param plot.type Character.
+#' Plot system to use.
+#' Current options are \code{\link[qgraph]{qgraph}} and \code{\link{GGally}}.
+#' Defaults to \code{"GGally"}
+#' 
+#' @param plot.args List.
+#' A list of additional arguments for the network plot.
+#' For \code{plot.type = "qgraph"}:
+#'
+#' \itemize{
+#'
+#' \item{\strong{\code{vsize}}}
+#' {Size of the nodes. Defaults to 6.}
+#'
+#'}
+#' For \code{plot.type = "GGally"} (see \code{\link[GGally]{ggnet2}} for
+#' full list of arguments):
+#'
+#' \itemize{
+#'
+#' \item{\strong{\code{vsize}}}
+#' {Size of the nodes. Defaults to 6.}
+#'
+#' \item{\strong{\code{label.size}}}
+#' {Size of the labels. Defaults to 5.}
+#'
+#' \item{\strong{\code{alpha}}}
+#' {The level of transparency of the nodes, which might be a single value or a vector of values. Defaults to 0.7.}
+#'
+#' \item{\strong{\code{edge.alpha}}}
+#' {The level of transparency of the edges, which might be a single value or a vector of values. Defaults to 0.4.}
+#'
+#'  \item{\strong{\code{legend.names}}}
+#' {A vector with names for each dimension}
+#'
+#' \item{\strong{\code{color.palette}}}
+#' {The color palette for the nodes. For custom colors,
+#' enter HEX codes for each dimension in a vector.
+#' See \code{\link[EGAnet]{color_palette_EGA}} for
+#' more details and examples}
+#'
+#' }
 #'
 #' @return Visual comparison of \code{\link{EGAnet}} objects
 #' 
@@ -29,10 +76,17 @@
 #
 # Compare EGA plots function
 # Updated 10.02.2022
-compare.EGA.plots <- function(..., labels, rows, columns)
+compare.EGA.plots <- function(
+  ..., input_list = NULL, labels, rows, columns,
+  plot.type = c("GGally", "qgraph"), plot.args = list()
+)
 {
-  # Obtain object list
-  object.list <- list(...)
+  # Check for input list
+  if(is.null(input_list)){
+    object.list <- list(...)
+  }else{
+    object.list <- input_list
+  }
   
   # Identify EGA objects
   EGA.idx <- grep("EGA", unlist(lapply(object.list, class)))
@@ -54,6 +108,12 @@ compare.EGA.plots <- function(..., labels, rows, columns)
   
   if(missing(labels)){
     labels <- name
+  }
+  
+  if(missing(plot.type)){
+    plot.type <- "GGally"
+  }else{
+    plot.type <- match.arg(plot.type)
   }
   
   # Check for at least two objects
@@ -100,7 +160,11 @@ compare.EGA.plots <- function(..., labels, rows, columns)
   # Initialize plot list
   plots.ega <- list()
   plots.ega <- suppressPackageStartupMessages(
-    compare.plot.fix.EGA(object.list)
+    compare.plot.fix.EGA(
+      object.list,
+      plot.type = plot.type,
+      plot.args = plot.args
+    )
   )
   
   # Loop through matching 

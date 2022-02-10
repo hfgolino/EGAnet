@@ -48,6 +48,9 @@ then use the following code: \code{parallel::detectCores()}}
 \value{
 Returns a list containing:
 
+\item{memberships}{Original memberships provided in \code{memberships}
+or from \code{\link[EGAnet]{EGA} if \code{NULL}}}
+
 \item{EGA}{Original \code{\link[EGAnet]{EGA}} results for the sample}
 
 \item{groups}{
