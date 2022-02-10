@@ -73,7 +73,7 @@ print.dynEGA<- function(x, ...) {
 # Updated 01.02.2022
 #' @export
 print.invariance <- function(x, ...) {
-  print(x$permutation$results)
+  print(x$results)
 }
 
 # PLOTS----

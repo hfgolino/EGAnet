@@ -1733,6 +1733,16 @@ compare.plot.fix.EGA <- function(object.list,  plot.type = c("GGally","qgraph"),
   {plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
   
+  ## Check for input plot arguments
+  if("legend.names" %in% names(plot.args)){
+    legend.names <- plot.args$legend.names
+  }
+  plot.args <- GGally.args(plot.args)
+  color.palette <- plot.args$color.palette
+  
+  ## Original plot arguments
+  original.plot.args <- plot.args
+  
   ## Initialize plot list
   ega.plots <- list()
   
@@ -1755,15 +1765,17 @@ compare.plot.fix.EGA <- function(object.list,  plot.type = c("GGally","qgraph"),
       ega.plot <- qgraph::qgraph(x$network, layout = "spring", vsize = plot.args$vsize, groups = as.factor(x$wc))
     }else if(plot.type == "GGally"){
       
-      ## Check for input plot arguments
-      if("legend.names" %in% names(plot.args)){
-        legend.names <- plot.args$legend.names
+      if(i != 1){
+        ## Check for input plot arguments
+        if("legend.names" %in% names(plot.args)){
+          legend.names <- plot.args$legend.names
+        }
+        plot.args <- GGally.args(plot.args)
+        color.palette <- plot.args$color.palette
+        
+        ## Original plot arguments
+        original.plot.args <- plot.args
       }
-      plot.args <- GGally.args(plot.args)
-      color.palette <- plot.args$color.palette
-      
-      ## Original plot arguments
-      original.plot.args <- plot.args
       
       # Insignificant values (keeps ggnet2 from erroring out)
       x$network <- ifelse(abs(as.matrix(x$network)) <= .00001, 0, as.matrix(x$network))
