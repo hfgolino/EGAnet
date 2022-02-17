@@ -788,48 +788,13 @@ TMFG <-function (cormat)
   # Initialize sparse TMFG matrix
   S <- matrix(nrow=(3*nrow(cormat)-6),ncol=3)
   
-  # Algorithm for traditional or dependency network
-  if(!depend)
-  {
-    S[1,] <- c(in_v[1],in_v[2],1)
-    S[2,] <- c(in_v[1],in_v[3],1)
-    S[3,] <- c(in_v[1],in_v[4],1)
-    S[4,] <- c(in_v[2],in_v[3],1)
-    S[5,] <- c(in_v[2],in_v[4],1)
-    S[6,] <- c(in_v[3],in_v[4],1)
-  }else{
-    
-    # Determine appropriate order for directionality in dependency network
-    ## Node 1 and 2
-    if(cormat[in_v[1],in_v[2]]>cormat[in_v[2],in_v[1]])
-    {S[1,]<-c(in_v[1],in_v[2],1)
-    }else{S[1,]<-c(in_v[2],in_v[1],1)}
-    
-    ## Node 1 and 3
-    if(cormat[in_v[1],in_v[3]]>cormat[in_v[3],in_v[1]])
-    {S[2,]<-c(in_v[1],in_v[3],1)
-    }else{S[2,]<-c(in_v[3],in_v[1],1)}
-    
-    ## Node 1 and 4
-    if(cormat[in_v[1],in_v[4]]>cormat[in_v[4],in_v[1]])
-    {S[3,]<-c(in_v[1],in_v[4],1)
-    }else{S[3,]<-c(in_v[4],in_v[1],1)}
-    
-    ## Node 2 and 3
-    if(cormat[in_v[2],in_v[3]]>cormat[in_v[3],in_v[2]])
-    {S[4,]<-c(in_v[2],in_v[3],1)
-    }else{S[4,]<-c(in_v[3],in_v[2],1)}
-    
-    ## Node 2 and 4
-    if(cormat[in_v[2],in_v[4]]>cormat[in_v[4],in_v[2]])
-    {S[5,]<-c(in_v[2],in_v[4],1)
-    }else{S[5,]<-c(in_v[4],in_v[2],1)}
-    
-    ## Node 3 and 4
-    if(cormat[in_v[3],in_v[4]]>cormat[in_v[4],in_v[3]])
-    {S[6,]<-c(in_v[3],in_v[4],1)
-    }else{S[6,]<-c(in_v[4],in_v[3],1)}
-  }
+  # Algorithm for traditional network
+  S[1,] <- c(in_v[1],in_v[2],1)
+  S[2,] <- c(in_v[1],in_v[3],1)
+  S[3,] <- c(in_v[1],in_v[4],1)
+  S[4,] <- c(in_v[2],in_v[3],1)
+  S[5,] <- c(in_v[2],in_v[4],1)
+  S[6,] <- c(in_v[3],in_v[4],1)
   
   #build initial gain table
   gain <- matrix(-Inf,nrow=n,ncol=(2*(n-2)))
@@ -870,11 +835,7 @@ TMFG <-function (cormat)
     for(u in 1:length(tri[tr,]))
     {
       cou<-6+((3*(e-5))+u)
-      if(depend){
-        if(cormat[ve,tri[tr,u]]>cormat[tri[tr,u],ve]){
-          S[cou,]<-cbind(ve,tri[tr,u],1)   
-        }else{S[cou,]<-cbind(tri[tr,u],ve,1)}}else
-          S[cou,]<-cbind(ve,tri[tr,u],1)
+      S[cou,]<-cbind(ve,tri[tr,u],1)
     }
     
     #update 3-clique list
@@ -895,17 +856,9 @@ TMFG <-function (cormat)
   cliques<-rbind(in_v[1:4],(cbind(separators,in_v[5:ncol(cormat)])))
   
   L<-S
-  if(depend)
-  {W<-matrix(1:nrow(cormat),nrow=nrow(cormat),ncol=1)
-  X<-matrix(1:nrow(cormat),nrow=nrow(cormat),ncol=1)
-  Y<-matrix(0,nrow=nrow(cormat),ncol=1)
-  Z<-cbind(W,X,Y)
-  K<-rbind(L,Z)
-  }else{
-    L[,1]<-S[,2]
-    L[,2]<-S[,1]
-    K<-rbind(S,L)
-  }
+  L[,1]<-S[,2]
+  L[,2]<-S[,1]
+  K<-rbind(S,L)
   
   x <- matrix(0, nrow = ncol(cormat), ncol = ncol(cormat))
   
