@@ -137,7 +137,7 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
                                          ncol = ncol(x$typicalGraph$graph)))
     
     # Layout "Spring"
-    graph1 <- NetworkToolbox::convert2igraph(x$typicalGraph$graph)
+    graph1 <- convert2igraph(x$typicalGraph$graph)
     edge.list <- igraph::as_edgelist(graph1)
     layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
                                                                weights =
@@ -296,7 +296,7 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
                                            ncol = ncol(x$dynEGA[[i]]$network)))
       
       # Layout "Spring"
-      graph1[[i]] <- NetworkToolbox::convert2igraph(x$dynEGA[[i]]$network)
+      graph1[[i]] <- convert2igraph(x$dynEGA[[i]]$network)
       edge.list[[i]] <- igraph::as_edgelist(graph1[[i]])
       layout.spring[[i]] <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list[[i]],
                                                                       weights =
@@ -445,7 +445,7 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
                                          ncol = ncol(x$dynEGA[[id]]$network)))
     
     # Layout "Spring"
-    graph1 <- NetworkToolbox::convert2igraph(x$dynEGA[[id]]$network)
+    graph1 <- convert2igraph(x$dynEGA[[id]]$network)
     edge.list <- igraph::as_edgelist(graph1)
     layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
                                                                weights =
@@ -600,7 +600,7 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
                                          ncol = ncol(x$dynEGA$network)))
     
     # Layout "Spring"
-    graph1 <- NetworkToolbox::convert2igraph(x$dynEGA$network)
+    graph1 <- convert2igraph(x$dynEGA$network)
     edge.list <- igraph::as_edgelist(graph1)
     layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
                                                                weights =
@@ -759,7 +759,7 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
                                            ncol = ncol(x$network)))
       
       # Layout "Spring"
-      graph1 <- NetworkToolbox::convert2igraph(x$network)
+      graph1 <- convert2igraph(x$network)
       edge.list <- igraph::as_edgelist(graph1)
       layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
                                                                  weights =

@@ -49,7 +49,7 @@ then use the following code: \code{parallel::detectCores()}}
 Returns a list containing:
 
 \item{memberships}{Original memberships provided in \code{memberships}
-or from \code{\link[EGAnet]{EGA} if \code{NULL}}}
+or from \code{\link[EGAnet]{EGA}} if \code{NULL}}
 
 \item{EGA}{Original \code{\link[EGAnet]{EGA}} results for the sample}
 
@@ -58,7 +58,7 @@ or from \code{\link[EGAnet]{EGA} if \code{NULL}}}
 \itemize{
 
 \item{\code{\link[EGAnet]{EGA}}}
-{EGA results for each group}
+{Results for each group}
 
 \item{\code{loadings}}
 {Network loadings for each group}

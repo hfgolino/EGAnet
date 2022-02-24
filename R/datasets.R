@@ -1,6 +1,6 @@
-#----------------------------------------------
-## Datasets for EGAnet // Updated 25.03.2020
-#----------------------------------------------
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+## Datasets for EGAnet // Updated 24.02.2022
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #Bootstrap EGA WMT-2 Data----
 #' Bootstrap EGA WMT-2 Data
@@ -43,6 +43,29 @@ NULL
 #'
 #' @examples
 #' data("depression")
+#'
+NULL
+
+#' Loadings Comparison Test Deep Learning Neural Network Weights
+#'
+#' A list of weights from four different neural network models:
+#' random vs. non-random model (\code{r_nr_weights}),
+#' low correlation factor vs. network model (\code{lf_n_weights}),
+#' high correlation with variables less than or equal to factors vs. network model (\code{hlf_n_weights}), and
+#' high correlation with variables greater than factors vs. network model (\code{hgf_n_weights})
+#'
+#' @name dnn.weights
+#'
+#' @docType data
+#'
+#' @usage data(dnn.weights)
+#'
+#' @format A list of with a length of 4
+#'
+#' @keywords datasets
+#'
+#' @examples
+#' data("dnn.weights")
 #'
 NULL
 
@@ -116,6 +139,48 @@ NULL
 #'
 NULL
 
+#Prime Numbers ----
+#' Prime Numbers through 100,000
+#'
+#' Numeric vector of primes generated from the primes package. Used in
+#' the function \code{[EGAnet]{ergoInfo}}. Not for general use
+#'
+#' @name prime.num
+#'
+#' @docType data
+#'
+#' @usage data(prime.num)
+#'
+#' @format A 1185x24 response matrix
+#'
+#' @keywords datasets
+#'
+#' @examples
+#' data("prime.num")
+#'
+NULL
+
+#sim.dynEGA Data ----
+#' sim.dynEGA Data
+#'
+#' A simulated (multivariate time series) data with 20 variables, 200 individual observations,
+#' 50 time points per individual and 2 groups of individuals.
+#'
+#' @name sim.dynEGA
+#'
+#' @docType data
+#'
+#' @usage data(sim.dynEGA)
+#'
+#' @format A 10000x22 multivariate time series
+#'
+#' @keywords datasets
+#'
+#' @examples
+#' data("sim.dynEGA")
+#'
+NULL
+
 #Toy Example Data----
 #' Toy Example Data
 #'
@@ -155,4 +220,3 @@ NULL
 #' data("wmt2")
 #'
 NULL
-#--------------------------------

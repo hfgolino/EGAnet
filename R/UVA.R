@@ -53,7 +53,7 @@
 #' 
 #' @param type Character. Type of significance.
 #' Computes significance using the standard \emph{p}-value (\code{"alpha"}),
-#' adaptive alpha \emph{p}-value (\code{\link[NetworkToolbox]{adapt.a}}), 
+#' adaptive alpha \emph{p}-value (\code{adapt.a}), 
 #' or some threshold \code{"threshold"}.
 #' Defaults to \code{"threshold"} 
 #'

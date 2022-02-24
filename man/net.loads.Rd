@@ -22,7 +22,7 @@ Defaults to \code{FALSE}.
 Set to \code{TRUE} for a positive manifold}
 
 \item{min.load}{Numeric.
-Sets the minimum loading allowd in the standardized
+Sets the minimum loading allowed in the standardized
 network loading matrix. Values equal or greater than
 the minimum loading are kept in the output. Values
 less than the minimum loading are removed. This matrix can
@@ -53,10 +53,10 @@ Use \code{plot} to view}
 }
 \description{
 Computes the between- and within-community
-\code{\link[NetworkToolbox]{strength}} of each item
+\code{strength} of each item
 for each community. This function uses the
-\code{\link[NetworkToolbox]{comcat}} and
-\code{\link[NetworkToolbox]{stable}} functions to calculate
+\code{comcat} and
+\code{stable} functions to calculate
 the between- and within-community strength of each item, respectively.
 }
 \details{
