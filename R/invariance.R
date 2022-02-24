@@ -88,12 +88,12 @@
 #' 
 #' \dontshow{# Fast for CRAN
 #' # Measurement invariance
-#' results <- invariance(wmt, groups, iter = 1, memberships = ega.wmt$wc)
+#' results <- invariance(wmt, groups, iter = 1, memberships = ega.wmt$wc, ncores = 2)
 #' }
 #'
 #' \donttest{
 #' # Measurement invariance
-#' results <- invariance(wmt, groups)
+#' results <- invariance(wmt, groups, ncores = 2)
 #' }
 #' 
 #' @export

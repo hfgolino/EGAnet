@@ -47,8 +47,7 @@ totalCor <- function(data){
   Freq <- matrix(NA, nrow = bins, ncol = n)
 
   #compute empirical entropy for each community or item
-  for(i in 1:n)
-  {
+  for(i in 1:n){
     seque[,i] <- seq(from = range(data[,i], na.rm = TRUE)[1], to = range(data[,i], na.rm = TRUE)[2], length.out = bins + 1)
     bin.sums[[i]] <- table(cut(data[,i], breaks = seque[,i], include.lowest = TRUE))
     bin.sums2[,i] <- as.vector(unlist(bin.sums[[i]]))
@@ -61,6 +60,8 @@ totalCor <- function(data){
   for(i in 1:n){
     bin.sums3[,i] <- cut(data[,i], breaks = seque[,i], include.lowest = TRUE)
   }
+  
+  # count function is in utils-EGAnet.R
   joint.table <- count(bin.sums3)
 
   freq.joint <- joint.table / sum(joint.table)

@@ -66,6 +66,7 @@ poly.irt <- function(loadings, data)
 
 # adapt.a
 #' @noRd
+#' @importFrom stats qchisq
 # Adaptive Alpha
 # Updated 30.12.2021
 adapt.a <- function (test = "cor",
@@ -523,6 +524,7 @@ pathlengths <- function (A, weighted = FALSE)
 
 # pwr.r.test
 #' @noRd
+#' @importFrom stats uniroot
 # Power for correlations from pwr 1.3.0
 # Updated 30.12.2021
 pwr.r.test <- function (n = NULL, r = NULL, sig.level = 0.05, power = NULL, 
@@ -594,6 +596,38 @@ pwr.r.test <- function (n = NULL, r = NULL, sig.level = 0.05, power = NULL,
   structure(list(n = n, r = r, sig.level = sig.level, power = power, 
                  alternative = alternative, method = METHOD), class = "power.htest")
 }
+
+# cohen.ES
+#' @noRd
+# Effect sizes for correlations from pwr 1.3.0
+# Updated 30.12.2021
+cohen.ES <- function(test=c("p","t","r","anov","chisq","f2"),size=c("small","medium","large")){
+    test <- match.arg(test)
+    size <- match.arg(size)
+    ntest <- switch(test, p = 1, t = 2,r=3,anov=4,chisq=5,f2=6)
+    if(ntest==1){
+      ES<-switch(size,small=0.2,medium=0.5,large=0.8)
+    }
+    if(ntest==2){
+      ES<-switch(size,small=0.2,medium=0.5,large=0.8)
+    }
+    if(ntest==3){
+      ES<-switch(size,small=0.1,medium=0.3,large=0.5)
+    }
+    if(ntest==4){
+      ES<-switch(size,small=0.1,medium=0.25,large=0.4)
+    }
+    if(ntest==5){
+      ES<-switch(size,small=0.1,medium=0.3,large=0.5)
+    }
+    if(ntest==6){
+      ES<-switch(size,small=0.02,medium=0.15,large=0.35)
+    }
+    
+    METHOD <- "Conventional effect size from Cohen (1982)"
+    structure(list(test = test,size=size,effect.size=ES,
+                   method = METHOD), class = "power.htest")
+  }
 
 # randnet
 #' @noRd
@@ -738,150 +772,6 @@ smallworldness <- function (A, iter = 100, progBar = FALSE, method = c("HG","ran
   return(list(swm=swm, rASPL=rASPL, lrCCt=lrCCt))
 }
 
-# TMFG
-#' @noRd
-# Triangulated Maximally Filtered Graph
-# Updated 30.12.2021
-TMFG <-function (cormat)
-{
-  # Number of nodes
-  n <- ncol(cormat)
-  
-  # Signed correlations
-  tcormat <- cormat
-  cormat <- abs(cormat)
-  
-  # Let user know matrix is too small for TMFG estimation
-  # It is still okay to proceed
-  if(n < 9)
-  {print("Matrix is too small")}
-  
-  # Initialize sparse edge matrix
-  nodeTO <- sort(c(rep(1:n,n)))
-  nodeFROM <- c(rep(1:n,n))
-  nodeWEIGHT <- as.vector(cormat)
-  
-  # Initialize matrices
-  M <- cbind(nodeTO, nodeFROM, nodeWEIGHT) # sparse node-weight matrix
-  in_v <- matrix(nrow=nrow(cormat), ncol=1) # inserted vertices matrix
-  ou_v <- matrix(nrow=nrow(cormat), ncol=1) # not yet inserted vertices matrix
-  tri <- matrix(nrow=((2*n)-4), ncol=3) # triangles matrix
-  separators <- matrix(nrow=n-4, ncol=3) # matrix of 3-cliques (non-face triangles)
-  
-  # Find 3 vertices with largest strength
-  s <- rowSums(cormat*(cormat > mean(matrix(unlist(cormat), nrow=1)))*1)
-  
-  # Order vertices with largest strength
-  # and grab the top 4
-  in_v[1:4] <- order(s,decreasing=TRUE)[1:4]
-  
-  # Set aside nodes that are not in the top 4
-  ou_v <- setdiff(1:nrow(in_v),in_v)
-  
-  # Build tetrahedron with the largest strength
-  ## Insert triangles
-  tri[1,]<-in_v[1:3,]
-  tri[2,]<-in_v[2:4,]
-  tri[3,]<-in_v[c(1,2,4),]
-  tri[4,]<-in_v[c(1,3,4),]
-  
-  # Initialize sparse TMFG matrix
-  S <- matrix(nrow=(3*nrow(cormat)-6),ncol=3)
-  
-  # Algorithm for traditional network
-  S[1,] <- c(in_v[1],in_v[2],1)
-  S[2,] <- c(in_v[1],in_v[3],1)
-  S[3,] <- c(in_v[1],in_v[4],1)
-  S[4,] <- c(in_v[2],in_v[3],1)
-  S[5,] <- c(in_v[2],in_v[4],1)
-  S[6,] <- c(in_v[3],in_v[4],1)
-  
-  #build initial gain table
-  gain <- matrix(-Inf,nrow=n,ncol=(2*(n-2)))
-  gain[ou_v,1] <- rowSums(cormat[ou_v,(tri[1,])])
-  gain[ou_v,2] <- rowSums(cormat[ou_v,(tri[2,])])
-  gain[ou_v,3] <- rowSums(cormat[ou_v,(tri[3,])])
-  gain[ou_v,4] <- rowSums(cormat[ou_v,(tri[4,])])
-  
-  ntri <- 4 #number of triangles
-  gij <- matrix(nrow=1,ncol=ncol(gain))
-  v <- matrix(nrow=1,ncol=ncol(gain))
-  ve <- array()
-  tr <- 0
-  for(e in 5:n)
-  {
-    if(length(ou_v)==1){
-      ve<-ou_v
-      v<-1
-      w<-1
-      tr<-which.max(gain[ou_v,])
-    }else{
-      for(q in 1:ncol(gain))
-      {
-        gij[,q] <- max(gain[ou_v,q])
-        v[,q] <- which.max(gain[ou_v,q])
-        tr <- which.max(gij)
-      }
-      
-      ve <- ou_v[v[tr]]
-      w <- v[tr]
-    }
-    
-    #update vertex lists
-    ou_v<-ou_v[-w]
-    in_v[e]<-ve
-    
-    #update adjacency matrix
-    for(u in 1:length(tri[tr,]))
-    {
-      cou<-6+((3*(e-5))+u)
-      S[cou,]<-cbind(ve,tri[tr,u],1)
-    }
-    
-    #update 3-clique list
-    separators[e-4,]<-tri[tr,]
-    #update triangle list replacing 1 and adding 2 triangles
-    tri[ntri+1,]<-cbind(rbind(tri[tr,c(1,3)]),ve)
-    tri[ntri+2,]<-cbind(rbind(tri[tr,c(2,3)]),ve)
-    tri[tr,]<-cbind(rbind(tri[tr,c(1,2)]),ve)
-    #update gain table
-    gain[ve,]<-0
-    gain[ou_v,tr]<-rowSums(cormat[ou_v,tri[tr,],drop=FALSE])
-    gain[ou_v,ntri+1]<-rowSums(cormat[ou_v,tri[ntri+1,],drop=FALSE])
-    gain[ou_v,ntri+2]<-rowSums(cormat[ou_v,tri[ntri+2,],drop=FALSE])
-    
-    #update triangles
-    ntri<-ntri+2
-  }
-  cliques<-rbind(in_v[1:4],(cbind(separators,in_v[5:ncol(cormat)])))
-  
-  L<-S
-  L[,1]<-S[,2]
-  L[,2]<-S[,1]
-  K<-rbind(S,L)
-  
-  x <- matrix(0, nrow = ncol(cormat), ncol = ncol(cormat))
-  
-  for(i in 1:nrow(K))
-  {
-    x[K[i,1], K[i,2]] <- 1
-    x[K[i,2], K[i,1]] <- 1
-  }
-  
-  diag(x)<-1
-  
-  for(r in 1:nrow(x))
-    for(z in 1:ncol(x))
-    {if(x[r,z]==1){x[r,z]<-tcormat[r,z]}}
-  
-  colnames(x)<-colnames(data)
-  x <- as.data.frame(x)
-  row.names(x)<-colnames(x)
-  x <- as.matrix(x)
-  
-  return(list(A=x, separators=separators, cliques=cliques))
-}
-
 # transitivity
 #' @noRd
 # Transitivity
@@ -973,12 +863,32 @@ scaleFreeFitIndex=function(k,nBreaks=10, removeFirst = FALSE)
 
 #' @noRd
 # Mimics count from plyr::count
-# Updated 30.12.2021
+# Updated 24.02.2022
 count <- function(data)
 {
-  freq_bins <- matrix(apply(table(data), 1, rbind), byrow = FALSE)
-  counted <- as.vector(na.omit(ifelse(freq_bins == 0, NA, freq_bins)))
-  return(counted)
+  # Make data frame
+  df <- as.data.frame(data)
+  
+  # Obtain duplicate indices
+  dupe_ind <- duplicated(df)
+  
+  # Rows for non-duplicates
+  non_dupes <- data.frame(df[!dupe_ind,])
+  
+  # Rows for duplicates
+  dupes <- data.frame(df[dupe_ind,])
+  
+  # Match duplicates with non-duplicates
+  dupe_count <- table(
+    match(
+    data.frame(t(dupes)), data.frame(t(non_dupes))
+  ))
+  
+  # Obtain counts
+  counts <- rep(1, nrow(non_dupes))
+  counts[as.numeric(names(dupe_count))] <- counts[as.numeric(names(dupe_count))] + dupe_count
+  
+  return(counts)
 }
 
 #%%%%%%%%%%%%%%%%%%%%%%
@@ -993,7 +903,7 @@ count <- function(data)
 #' @param comm Can be a vector of community assignments or community detection algorithms
 #' (\code{"walktrap"} or \code{"louvain"}) can be used to determine the number of factors.
 #' Defaults to \code{"walktrap"}.
-#' Set to \code{"louvain"} for \code{\link[NetworkToolbox]{louvain}} community detection
+#' Set to \code{"louvain"} for \code{\link[igraph]{cluster_louvain}} community detection
 #'
 #' @param cent Centrality measure to be used.
 #' Defaults to \code{"strength"}.
@@ -1011,7 +921,7 @@ count <- function(data)
 #' Defaults to \code{0}
 #'
 #' @param ... Additional arguments for \code{\link[igraph]{cluster_walktrap}}
-#' and \code{\link[NetworkToolbox]{louvain}} community detection algorithms
+#' and \code{\link[igraph]{cluster_louvain}} community detection algorithms
 #'
 #' @return A vector containing the between-community strength value for each node
 #'
@@ -1175,7 +1085,7 @@ comcat <- function (A, comm = c("walktrap","louvain"),
 #' @param comm Can be a vector of community assignments or community detection algorithms
 #' (\code{"walktrap"} or \code{"louvain"}) can be used to determine the number of factors.
 #' Defaults to \code{"walktrap"}.
-#' Set to \code{"louvain"} for \code{\link[NetworkToolbox]{louvain}} community detection
+#' Set to \code{"louvain"} for \code{\link[igraph]{cluster_louvain}} community detection
 #'
 #' @param cent Centrality measure to be used.
 #' Defaults to \code{"strength"}.
@@ -1185,7 +1095,7 @@ comcat <- function (A, comm = c("walktrap","louvain"),
 #' Set to \code{FALSE} for signed weights
 #'
 #' @param ... Additional arguments for \code{\link[igraph]{cluster_walktrap}}
-#' and \code{\link[NetworkToolbox]{louvain}} community detection algorithms
+#' and \code{\link[igraph]{cluster_louvain}} community detection algorithms
 #'
 #' @param diagonal Sets the diagonal values of the \code{A} input.
 #' Defaults to \code{0}
@@ -3057,7 +2967,7 @@ typicalStructure.network <- function (A, corr, model, model.args, n = NULL, uni.
 #'
 #' @param model.args List.
 #' A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
-#' or \code{\link[NetworkToolbox]{TMFG}}
+#' or \code{\link[EGAnet]{TMFG}}
 #'
 #' @param algorithm A string indicating the algorithm to use or a function from \code{\link{igraph}}
 #'
