@@ -108,7 +108,7 @@
 #'
 #' @export
 #Item Stability function
-# Updated 27.02.2021
+# Updated 01.03.2022
 # Major revamp 27.02.2021 
 itemStability <- function (bootega.obj, IS.plot = TRUE, ...){
   
@@ -177,7 +177,10 @@ itemStability <- function (bootega.obj, IS.plot = TRUE, ...){
   
   # Homogenize memberships
   final.membership <- try(
-    homogenize.membership(membership.numeric, bootstrap.membership),
+    homogenize.membership(
+      target.wc = membership.numeric,
+      convert.wc = bootstrap.membership
+    ),
     silent = TRUE
   )
   

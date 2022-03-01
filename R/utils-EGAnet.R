@@ -5196,7 +5196,7 @@ mode <- function(v, fin.vec)
 #'
 # Homogenize Membership
 # For itemStability
-# Updated 30.12.2021
+# Updated 01.03.2022
 homogenize.membership <- function (target.wc, convert.wc)
 {
   # Obtain whether vector or matrix is input for 'convert.wc'
@@ -5253,7 +5253,7 @@ homogenize.membership <- function (target.wc, convert.wc)
       final.vec <- rep(NA, length = length(target.wc))
       names(final.vec) <- names(target.wc)
       
-    }else if(all(target.wc == new.vec)){
+    }else if(all(target.wc == new.vec, na.rm = TRUE)){
       # Check if all dimensions are the same
       final.vec <- new.vec
       names(final.vec) <- names(target.wc)
