@@ -35,7 +35,7 @@
 #' @return Returns a list containing:
 #' 
 #' \item{memberships}{Original memberships provided in \code{memberships}
-#' or from \code{\link[EGAnet]{EGA}} if \code{NULL}}
+#' or from \code{\link[EGAnet]{EGA} if \code{NULL}}}
 #'
 #' \item{EGA}{Original \code{\link[EGAnet]{EGA}} results for the sample}
 #' 
@@ -44,7 +44,7 @@
 #' \itemize{
 #' 
 #' \item{\code{\link[EGAnet]{EGA}}}
-#' {Results for each group}
+#' {EGA results for each group}
 #' 
 #' \item{\code{loadings}}
 #' {Network loadings for each group}
@@ -88,18 +88,18 @@
 #' 
 #' \dontshow{# Fast for CRAN
 #' # Measurement invariance
-#' results <- invariance(wmt, groups, iter = 1, memberships = ega.wmt$wc, ncores = 2)
+#' results <- invariance(wmt, groups, iter = 1, memberships = ega.wmt$wc)
 #' }
 #'
 #' \donttest{
 #' # Measurement invariance
-#' results <- invariance(wmt, groups, ncores = 2)
+#' results <- invariance(wmt, groups)
 #' }
 #' 
 #' @export
 #'
 # Measurement Invariance
-# Updated 10.02.2022
+# Updated 02.03.2022
 invariance <- function(
   data, groups, 
   memberships = NULL,
@@ -123,6 +123,7 @@ invariance <- function(
   ega_args$algorithm <- "walktrap" # community detection
   ega_args$corr <- "cor_auto" # correlation estimation
   ega_args$verbose <- FALSE # leave out verbose
+  ega_args$model.args <- list(gamma = 0) # Set gamma to zero to maximize similarities
   ega_args$... <- NULL
   
   # Check for additional arguments for EGA
@@ -168,18 +169,18 @@ invariance <- function(
   # Obtain original group EGAs
   group_ega <- lapply(seq_along(unique_groups), function(i){
     
-      # Obtain group data
-      ega_args$data <- data[groups == unique_groups[i],]
-      
-      # Obtain network
-      suppressWarnings(
-        suppressMessages(
-          do.call(
-            what = EGA.estimate,
-            args = ega_args
-          )
+    # Obtain group data
+    ega_args$data <- data[groups == unique_groups[i],]
+    
+    # Obtain network
+    suppressWarnings(
+      suppressMessages(
+        do.call(
+          what = EGA.estimate,
+          args = ega_args
         )
       )
+    )
     
   })
   
@@ -209,7 +210,7 @@ invariance <- function(
   
   # Original difference
   original_difference <- group_loadings[[1]] - group_loadings[[2]]
-
+  
   # Obtain original dominant difference
   original_dominant_difference <- unlist(
     lapply(seq_along(memberships), function(i){
@@ -311,7 +312,7 @@ invariance <- function(
     
     # Return dominant differences
     return(dominant_difference)
-  
+    
   })
   
   # Create results
@@ -357,7 +358,7 @@ invariance <- function(
   results$permutation$loadings <- loadings_list
   results$permutation$loadingsDifference <- dominant_list
   results$results <- results_df
-
+  
   # Add class
   class(results) <- "invariance"
   
