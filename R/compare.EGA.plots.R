@@ -75,7 +75,7 @@
 #' @export
 #
 # Compare EGA plots function
-# Updated 10.02.2022
+# Updated 03.03.2022
 compare.EGA.plots <- function(
   ..., input_list = NULL, labels, rows, columns,
   plot.type = c("GGally", "qgraph"), plot.args = list()
@@ -144,6 +144,9 @@ compare.EGA.plots <- function(
     
     # Homogenize membership
     homogenized.wc <- as.vector(homogenize.membership(target.wc, convert.wc))
+    
+    # Ensure names
+    names(homogenized.wc) <- names(target.wc)
     
     # Replace membership
     if(class(object.list[[i]]) == "EGA"){
