@@ -4,7 +4,7 @@
 \alias{itemStability}
 \title{Item Stability Statistics from \code{\link[EGAnet]{bootEGA}}}
 \usage{
-itemStability(bootega.obj, IS.plot = TRUE, ...)
+itemStability(bootega.obj, IS.plot = TRUE, structure, ...)
 }
 \arguments{
 \item{bootega.obj}{A \code{\link[EGAnet]{bootEGA}} object}
@@ -12,6 +12,8 @@ itemStability(bootega.obj, IS.plot = TRUE, ...)
 \item{IS.plot}{Should the plot be produced for \code{item.replication}?
 If \code{TRUE}, then a plot for the \code{item.replication} output will be produced.
 Defaults to \code{TRUE}}
+
+\item{structure}{User specified dimensionality structure.}
 
 \item{...}{Additional arguments.
 Used for deprecated arguments from previous versions of \code{\link[EGAnet]{itemStability}}}
@@ -90,15 +92,15 @@ res <- itemStability(boot.wmt)
 # Changing plot features (ggplot2)
 ## Changing colors (ignore warnings)
 ### qgraph Defaults
-res$plot + 
+res$plot +
     ggplot2::scale_color_manual(values = rainbow(max(res$membership$unique)))
 
 ### Pastel
-res$plot + 
+res$plot +
     ggplot2::scale_color_brewer(palette = "Pastel1")
-    
+
 ## Changing Legend (ignore warnings)
-res$plot + 
+res$plot +
     ggplot2::scale_color_discrete(labels = "Intelligence")
 
 }
