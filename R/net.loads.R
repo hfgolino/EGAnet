@@ -1,14 +1,14 @@
 #' Network Loadings
 #'
 #' @description Computes the between- and within-community
-#' \code{\link[NetworkToolbox]{strength}} of each item
+#' \code{strength} of each item
 #' for each community. This function uses the
-#' \code{\link[NetworkToolbox]{comcat}} and
-#' \code{\link[NetworkToolbox]{stable}} functions to calculate
+#' \code{comcat} and
+#' \code{stable} functions to calculate
 #' the between- and within-community strength of each item, respectively.
 #'
 #' @param A Matrix, data frame, or \code{\link[EGAnet]{EGA}} object.
-#' An adjacency matrix of network data
+#' A network adjacency matrix
 #'
 #' @param wc Numeric or character vector.
 #' A vector of community assignments.
@@ -16,7 +16,7 @@
 #' then \code{wc} is automatically detected
 #'
 #' @param min.load Numeric.
-#' Sets the minimum loading allowd in the standardized
+#' Sets the minimum loading allowed in the standardized
 #' network loading matrix. Values equal or greater than
 #' the minimum loading are kept in the output. Values
 #' less than the minimum loading are removed. This matrix can
@@ -92,16 +92,15 @@
 #' @export
 #'
 # Network Loadings
-# Updated 02.07.2021
+# Updated 01.02.2022
 net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot.NL = FALSE)
 {
-  
   #------------------------------------------#
   ## DETECT EGA INPUT AND VARIABLE ORDERING ##
   #------------------------------------------#
   
-  if(any(class(A) == "EGA"))
-  {
+  if(any(class(A) == "EGA")){
+    
     # Order
     ord <- match(colnames(A$network), names(A$wc))
     
@@ -110,10 +109,26 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot.NL = FALSE
     
     # Replace 'A' with 'EGA' network
     A <- A$network
+    
   }else{ord <- order(wc)} # Reorder by communities
   
   # Make sure membership is named
   names(wc) <- colnames(A)
+  
+  # Ensure matrix object
+  A <- as.matrix(A)
+  
+  # Ensure data is matrix
+  if(nrow(A) != ncol(A)){
+    stop("Input for 'A' must be an n x n matrix.")
+  }
+  
+  # Ensure data is symmetric
+  row.names(A) <- colnames(A)
+  
+  if(!isSymmetric(A)){
+    stop("'A' is not a symmetric matrix. Network loadings can only be computed with undirected networks.")
+  }
   
   # Check if there are actual dimensions
   if(length(wc) == length(unique(wc)))

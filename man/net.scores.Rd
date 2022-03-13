@@ -61,7 +61,7 @@ and community (including the overall score)}
 }
 \description{
 This function computes network scores computed based on
-each node's \code{\link[NetworkToolbox]{strength}} within each
+each node's \code{strength} within each
 community (i.e., factor) in the network (see \code{\link[EGAnet]{net.loads}}).
 These values are used as network "factor loadings" for the weights of each item.
 Notably, network analysis allows nodes to contribution to more than one community.

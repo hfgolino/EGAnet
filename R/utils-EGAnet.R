@@ -66,6 +66,7 @@ poly.irt <- function(loadings, data)
 
 # adapt.a
 #' @noRd
+#' @importFrom stats qchisq
 # Adaptive Alpha
 # Updated 30.12.2021
 adapt.a <- function (test = "cor",
@@ -523,6 +524,7 @@ pathlengths <- function (A, weighted = FALSE)
 
 # pwr.r.test
 #' @noRd
+#' @importFrom stats uniroot
 # Power for correlations from pwr 1.3.0
 # Updated 30.12.2021
 pwr.r.test <- function (n = NULL, r = NULL, sig.level = 0.05, power = NULL, 
@@ -594,6 +596,38 @@ pwr.r.test <- function (n = NULL, r = NULL, sig.level = 0.05, power = NULL,
   structure(list(n = n, r = r, sig.level = sig.level, power = power, 
                  alternative = alternative, method = METHOD), class = "power.htest")
 }
+
+# cohen.ES
+#' @noRd
+# Effect sizes for correlations from pwr 1.3.0
+# Updated 30.12.2021
+cohen.ES <- function(test=c("p","t","r","anov","chisq","f2"),size=c("small","medium","large")){
+    test <- match.arg(test)
+    size <- match.arg(size)
+    ntest <- switch(test, p = 1, t = 2,r=3,anov=4,chisq=5,f2=6)
+    if(ntest==1){
+      ES<-switch(size,small=0.2,medium=0.5,large=0.8)
+    }
+    if(ntest==2){
+      ES<-switch(size,small=0.2,medium=0.5,large=0.8)
+    }
+    if(ntest==3){
+      ES<-switch(size,small=0.1,medium=0.3,large=0.5)
+    }
+    if(ntest==4){
+      ES<-switch(size,small=0.1,medium=0.25,large=0.4)
+    }
+    if(ntest==5){
+      ES<-switch(size,small=0.1,medium=0.3,large=0.5)
+    }
+    if(ntest==6){
+      ES<-switch(size,small=0.02,medium=0.15,large=0.35)
+    }
+    
+    METHOD <- "Conventional effect size from Cohen (1982)"
+    structure(list(test = test,size=size,effect.size=ES,
+                   method = METHOD), class = "power.htest")
+  }
 
 # randnet
 #' @noRd
@@ -738,197 +772,6 @@ smallworldness <- function (A, iter = 100, progBar = FALSE, method = c("HG","ran
   return(list(swm=swm, rASPL=rASPL, lrCCt=lrCCt))
 }
 
-# TMFG
-#' @noRd
-# Triangulated Maximally Filtered Graph
-# Updated 30.12.2021
-TMFG <-function (cormat)
-{
-  # Number of nodes
-  n <- ncol(cormat)
-  
-  # Signed correlations
-  tcormat <- cormat
-  cormat <- abs(cormat)
-  
-  # Let user know matrix is too small for TMFG estimation
-  # It is still okay to proceed
-  if(n < 9)
-  {print("Matrix is too small")}
-  
-  # Initialize sparse edge matrix
-  nodeTO <- sort(c(rep(1:n,n)))
-  nodeFROM <- c(rep(1:n,n))
-  nodeWEIGHT <- as.vector(cormat)
-  
-  # Initialize matrices
-  M <- cbind(nodeTO, nodeFROM, nodeWEIGHT) # sparse node-weight matrix
-  in_v <- matrix(nrow=nrow(cormat), ncol=1) # inserted vertices matrix
-  ou_v <- matrix(nrow=nrow(cormat), ncol=1) # not yet inserted vertices matrix
-  tri <- matrix(nrow=((2*n)-4), ncol=3) # triangles matrix
-  separators <- matrix(nrow=n-4, ncol=3) # matrix of 3-cliques (non-face triangles)
-  
-  # Find 3 vertices with largest strength
-  s <- rowSums(cormat*(cormat > mean(matrix(unlist(cormat), nrow=1)))*1)
-  
-  # Order vertices with largest strength
-  # and grab the top 4
-  in_v[1:4] <- order(s,decreasing=TRUE)[1:4]
-  
-  # Set aside nodes that are not in the top 4
-  ou_v <- setdiff(1:nrow(in_v),in_v)
-  
-  # Build tetrahedron with the largest strength
-  ## Insert triangles
-  tri[1,]<-in_v[1:3,]
-  tri[2,]<-in_v[2:4,]
-  tri[3,]<-in_v[c(1,2,4),]
-  tri[4,]<-in_v[c(1,3,4),]
-  
-  # Initialize sparse TMFG matrix
-  S <- matrix(nrow=(3*nrow(cormat)-6),ncol=3)
-  
-  # Algorithm for traditional or dependency network
-  if(!depend)
-  {
-    S[1,] <- c(in_v[1],in_v[2],1)
-    S[2,] <- c(in_v[1],in_v[3],1)
-    S[3,] <- c(in_v[1],in_v[4],1)
-    S[4,] <- c(in_v[2],in_v[3],1)
-    S[5,] <- c(in_v[2],in_v[4],1)
-    S[6,] <- c(in_v[3],in_v[4],1)
-  }else{
-    
-    # Determine appropriate order for directionality in dependency network
-    ## Node 1 and 2
-    if(cormat[in_v[1],in_v[2]]>cormat[in_v[2],in_v[1]])
-    {S[1,]<-c(in_v[1],in_v[2],1)
-    }else{S[1,]<-c(in_v[2],in_v[1],1)}
-    
-    ## Node 1 and 3
-    if(cormat[in_v[1],in_v[3]]>cormat[in_v[3],in_v[1]])
-    {S[2,]<-c(in_v[1],in_v[3],1)
-    }else{S[2,]<-c(in_v[3],in_v[1],1)}
-    
-    ## Node 1 and 4
-    if(cormat[in_v[1],in_v[4]]>cormat[in_v[4],in_v[1]])
-    {S[3,]<-c(in_v[1],in_v[4],1)
-    }else{S[3,]<-c(in_v[4],in_v[1],1)}
-    
-    ## Node 2 and 3
-    if(cormat[in_v[2],in_v[3]]>cormat[in_v[3],in_v[2]])
-    {S[4,]<-c(in_v[2],in_v[3],1)
-    }else{S[4,]<-c(in_v[3],in_v[2],1)}
-    
-    ## Node 2 and 4
-    if(cormat[in_v[2],in_v[4]]>cormat[in_v[4],in_v[2]])
-    {S[5,]<-c(in_v[2],in_v[4],1)
-    }else{S[5,]<-c(in_v[4],in_v[2],1)}
-    
-    ## Node 3 and 4
-    if(cormat[in_v[3],in_v[4]]>cormat[in_v[4],in_v[3]])
-    {S[6,]<-c(in_v[3],in_v[4],1)
-    }else{S[6,]<-c(in_v[4],in_v[3],1)}
-  }
-  
-  #build initial gain table
-  gain <- matrix(-Inf,nrow=n,ncol=(2*(n-2)))
-  gain[ou_v,1] <- rowSums(cormat[ou_v,(tri[1,])])
-  gain[ou_v,2] <- rowSums(cormat[ou_v,(tri[2,])])
-  gain[ou_v,3] <- rowSums(cormat[ou_v,(tri[3,])])
-  gain[ou_v,4] <- rowSums(cormat[ou_v,(tri[4,])])
-  
-  ntri <- 4 #number of triangles
-  gij <- matrix(nrow=1,ncol=ncol(gain))
-  v <- matrix(nrow=1,ncol=ncol(gain))
-  ve <- array()
-  tr <- 0
-  for(e in 5:n)
-  {
-    if(length(ou_v)==1){
-      ve<-ou_v
-      v<-1
-      w<-1
-      tr<-which.max(gain[ou_v,])
-    }else{
-      for(q in 1:ncol(gain))
-      {
-        gij[,q] <- max(gain[ou_v,q])
-        v[,q] <- which.max(gain[ou_v,q])
-        tr <- which.max(gij)
-      }
-      
-      ve <- ou_v[v[tr]]
-      w <- v[tr]
-    }
-    
-    #update vertex lists
-    ou_v<-ou_v[-w]
-    in_v[e]<-ve
-    
-    #update adjacency matrix
-    for(u in 1:length(tri[tr,]))
-    {
-      cou<-6+((3*(e-5))+u)
-      if(depend){
-        if(cormat[ve,tri[tr,u]]>cormat[tri[tr,u],ve]){
-          S[cou,]<-cbind(ve,tri[tr,u],1)   
-        }else{S[cou,]<-cbind(tri[tr,u],ve,1)}}else
-          S[cou,]<-cbind(ve,tri[tr,u],1)
-    }
-    
-    #update 3-clique list
-    separators[e-4,]<-tri[tr,]
-    #update triangle list replacing 1 and adding 2 triangles
-    tri[ntri+1,]<-cbind(rbind(tri[tr,c(1,3)]),ve)
-    tri[ntri+2,]<-cbind(rbind(tri[tr,c(2,3)]),ve)
-    tri[tr,]<-cbind(rbind(tri[tr,c(1,2)]),ve)
-    #update gain table
-    gain[ve,]<-0
-    gain[ou_v,tr]<-rowSums(cormat[ou_v,tri[tr,],drop=FALSE])
-    gain[ou_v,ntri+1]<-rowSums(cormat[ou_v,tri[ntri+1,],drop=FALSE])
-    gain[ou_v,ntri+2]<-rowSums(cormat[ou_v,tri[ntri+2,],drop=FALSE])
-    
-    #update triangles
-    ntri<-ntri+2
-  }
-  cliques<-rbind(in_v[1:4],(cbind(separators,in_v[5:ncol(cormat)])))
-  
-  L<-S
-  if(depend)
-  {W<-matrix(1:nrow(cormat),nrow=nrow(cormat),ncol=1)
-  X<-matrix(1:nrow(cormat),nrow=nrow(cormat),ncol=1)
-  Y<-matrix(0,nrow=nrow(cormat),ncol=1)
-  Z<-cbind(W,X,Y)
-  K<-rbind(L,Z)
-  }else{
-    L[,1]<-S[,2]
-    L[,2]<-S[,1]
-    K<-rbind(S,L)
-  }
-  
-  x <- matrix(0, nrow = ncol(cormat), ncol = ncol(cormat))
-  
-  for(i in 1:nrow(K))
-  {
-    x[K[i,1], K[i,2]] <- 1
-    x[K[i,2], K[i,1]] <- 1
-  }
-  
-  diag(x)<-1
-  
-  for(r in 1:nrow(x))
-    for(z in 1:ncol(x))
-    {if(x[r,z]==1){x[r,z]<-tcormat[r,z]}}
-  
-  colnames(x)<-colnames(data)
-  x <- as.data.frame(x)
-  row.names(x)<-colnames(x)
-  x <- as.matrix(x)
-  
-  return(list(A=x, separators=separators, cliques=cliques))
-}
-
 # transitivity
 #' @noRd
 # Transitivity
@@ -1020,12 +863,32 @@ scaleFreeFitIndex=function(k,nBreaks=10, removeFirst = FALSE)
 
 #' @noRd
 # Mimics count from plyr::count
-# Updated 30.12.2021
+# Updated 24.02.2022
 count <- function(data)
 {
-  freq_bins <- matrix(apply(table(data), 1, rbind), byrow = FALSE)
-  counted <- as.vector(na.omit(ifelse(freq_bins == 0, NA, freq_bins)))
-  return(counted)
+  # Make data frame
+  df <- as.data.frame(data)
+  
+  # Obtain duplicate indices
+  dupe_ind <- duplicated(df)
+  
+  # Rows for non-duplicates
+  non_dupes <- data.frame(df[!dupe_ind,])
+  
+  # Rows for duplicates
+  dupes <- data.frame(df[dupe_ind,])
+  
+  # Match duplicates with non-duplicates
+  dupe_count <- table(
+    match(
+    data.frame(t(dupes)), data.frame(t(non_dupes))
+  ))
+  
+  # Obtain counts
+  counts <- rep(1, nrow(non_dupes))
+  counts[as.numeric(names(dupe_count))] <- counts[as.numeric(names(dupe_count))] + dupe_count
+  
+  return(counts)
 }
 
 #%%%%%%%%%%%%%%%%%%%%%%
@@ -1040,7 +903,7 @@ count <- function(data)
 #' @param comm Can be a vector of community assignments or community detection algorithms
 #' (\code{"walktrap"} or \code{"louvain"}) can be used to determine the number of factors.
 #' Defaults to \code{"walktrap"}.
-#' Set to \code{"louvain"} for \code{\link[NetworkToolbox]{louvain}} community detection
+#' Set to \code{"louvain"} for \code{\link[igraph]{cluster_louvain}} community detection
 #'
 #' @param cent Centrality measure to be used.
 #' Defaults to \code{"strength"}.
@@ -1058,7 +921,7 @@ count <- function(data)
 #' Defaults to \code{0}
 #'
 #' @param ... Additional arguments for \code{\link[igraph]{cluster_walktrap}}
-#' and \code{\link[NetworkToolbox]{louvain}} community detection algorithms
+#' and \code{\link[igraph]{cluster_louvain}} community detection algorithms
 #'
 #' @return A vector containing the between-community strength value for each node
 #'
@@ -1222,7 +1085,7 @@ comcat <- function (A, comm = c("walktrap","louvain"),
 #' @param comm Can be a vector of community assignments or community detection algorithms
 #' (\code{"walktrap"} or \code{"louvain"}) can be used to determine the number of factors.
 #' Defaults to \code{"walktrap"}.
-#' Set to \code{"louvain"} for \code{\link[NetworkToolbox]{louvain}} community detection
+#' Set to \code{"louvain"} for \code{\link[igraph]{cluster_louvain}} community detection
 #'
 #' @param cent Centrality measure to be used.
 #' Defaults to \code{"strength"}.
@@ -1232,7 +1095,7 @@ comcat <- function (A, comm = c("walktrap","louvain"),
 #' Set to \code{FALSE} for signed weights
 #'
 #' @param ... Additional arguments for \code{\link[igraph]{cluster_walktrap}}
-#' and \code{\link[NetworkToolbox]{louvain}} community detection algorithms
+#' and \code{\link[igraph]{cluster_louvain}} community detection algorithms
 #'
 #' @param diagonal Sets the diagonal values of the \code{A} input.
 #' Defaults to \code{0}
@@ -1733,17 +1596,15 @@ compare.plot.fix.EGA <- function(object.list,  plot.type = c("GGally","qgraph"),
   {plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
   
-  ## Check for input plot arguments
-  if(plot.type == "GGally"){
-    if("legend.names" %in% names(plot.args)){
-      legend.names <- plot.args$legend.names
-    }
-    plot.args <- GGally.args(plot.args)
-    color.palette <- plot.args$color.palette
-  }
-  
   ## Original plot arguments
   original.plot.args <- plot.args
+  
+  ## Check for input plot arguments
+  if("legend.names" %in% names(plot.args)){
+    legend.names <- plot.args$legend.names
+  }
+  plot.args <- GGally.args(plot.args)
+  color.palette <- plot.args$color.palette
   
   ## Initialize plot list
   ega.plots <- list()
@@ -1766,6 +1627,18 @@ compare.plot.fix.EGA <- function(object.list,  plot.type = c("GGally","qgraph"),
     if(plot.type == "qgraph"){
       ega.plot <- qgraph::qgraph(x$network, layout = "spring", vsize = plot.args$vsize, groups = as.factor(x$wc))
     }else if(plot.type == "GGally"){
+      
+      if(i != 1){
+        ## Reset plot arguments
+        plot.args <- original.plot.args
+        
+        ## Check for input plot arguments
+        if("legend.names" %in% names(plot.args)){
+          legend.names <- plot.args$legend.names
+        }
+        plot.args <- GGally.args(plot.args)
+        color.palette <- plot.args$color.palette
+      }
       
       # Insignificant values (keeps ggnet2 from erroring out)
       x$network <- ifelse(abs(as.matrix(x$network)) <= .00001, 0, as.matrix(x$network))
@@ -1890,7 +1763,7 @@ compare.plot.fix.EGA <- function(object.list,  plot.type = c("GGally","qgraph"),
           color = ggplot2::guide_legend(override.aes = list(
             color = unique(palette),
             size = node.size,
-            alpha = plot.args$alpha,
+            alpha = as.numeric(names(which.max(table(plot.args$alpha)))),
             stroke = 1.5
           ))
         )
@@ -2566,14 +2439,14 @@ torch_format <- function(data, ...)
   include <- components & !is.na(ega$wc)
   
   # Re-obtain igraph
-  g <- convert2igraph(graph[include, include])
+  g <- convert2igraph(abs(graph[include, include]))
   
   # Check if dimensions = 1
   if(ega$n.dim == 1){
     
     # Loadings
     ## Network
-    network_dom <- as.vector(as.matrix(net.loads(ega)$std))[include]
+    network_dom <- abs(as.vector(as.matrix(net.loads(ega)$std))[include]) # Absolute loadings
     network_cross <- rep(0, length(network_dom))
     
     ## Factor
@@ -2586,14 +2459,14 @@ torch_format <- function(data, ...)
         )$loadings[,1]
       )
     )
-    factor_dom <- as.vector(factor_loads)[include]
+    factor_dom <- abs(as.vector(factor_loads)[include]) # Absolute loadings
     factor_cross <- rep(0, length(factor_dom))
     
   }else{
     
     # Loadings
     ## Network
-    network_loads <- net.loads(ega)$std
+    network_loads <- abs(net.loads(ega)$std) # Absolute loadings
     network_loads <- network_loads[names(ega$wc[include]),]
     network_loads <- network_loads[,order(colnames(network_loads))]
     network_dom <- unlist(lapply(1:nrow(network_loads), function(i){
@@ -2613,7 +2486,7 @@ torch_format <- function(data, ...)
         )$loadings[,1:ncol(network_loads)]
       )
     )
-    factor_loads <- factor_loads[names(ega$wc[include]),]
+    factor_loads <- abs(factor_loads[names(ega$wc[include]),]) # Absolute loadings
     factor_dom <- unlist(lapply(1:nrow(factor_loads), function(i){
       factor_loads[i,which.max(factor_loads[i,])]
     }))
@@ -2624,14 +2497,12 @@ torch_format <- function(data, ...)
   }
   
   # Network measures
-  comm <- colMeans(brainGraph::communicability(g))
-  aspl_i <- brainGraph::mean_distance_wt(g, level = "vertex")
-  cc_i <- igraph::transitivity(g, type = "local", isolates = "zero")
+  q <- max(igraph::cluster_louvain(g)$modularity, na.rm = TRUE)
   
   node_attributes <- round(cbind(
-    comm, aspl_i, cc_i,
-    factor_dom, factor_cross,
-    network_dom, network_cross
+    q,
+    factor_cross,
+    network_cross
   ), 5)
   
   ## Graph attributes
@@ -3096,7 +2967,7 @@ typicalStructure.network <- function (A, corr, model, model.args, n = NULL, uni.
 #'
 #' @param model.args List.
 #' A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
-#' or \code{\link[NetworkToolbox]{TMFG}}
+#' or \code{\link[EGAnet]{TMFG}}
 #'
 #' @param algorithm A string indicating the algorithm to use or a function from \code{\link{igraph}}
 #'
@@ -3438,14 +3309,14 @@ redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.r
                    
                    normal = 1 - unlist(lapply(pos.vals, # positive values
                                               pnorm, # probability in normal distribution
-                                              mean = g.dist$estimate["mean"], #mean of normal
-                                              sd = g.dist$estimate["sd"]) #standard deviation of normal
+                                              mean = g.dist["mean"], #mean of normal
+                                              sd = g.dist["sd"]) #standard deviation of normal
                    ),
                    
                    gamma = 1 - unlist(lapply(pos.vals, # positive values
                                              pgamma, # probability in gamma distribution
-                                             shape = g.dist$estimate["shape"], # shape of gamma
-                                             rate = g.dist$estimate["rate"]) # rate of gamma
+                                             shape = g.dist["shape"], # shape of gamma
+                                             rate = g.dist["rate"]) # rate of gamma
                    ),
     )
     
@@ -3646,8 +3517,7 @@ redund.desc <- function(pos.vals, method, type, sig, aic, g.dist)
   row.names(desc) <- switch(method,
                             "wto" = "wTO",
                             "pcor"= "pcor",
-                            "cor" = "cor",
-                            "irt" = "IRT"
+                            "cor" = "cor"
   )
   
   colnames(desc) <- c("Mean", "SD", "Median", "MAD", "3*MAD", "6*MAD", "Minimum", "Maximum", "Critical Value")
@@ -3669,13 +3539,13 @@ redund.desc <- function(pos.vals, method, type, sig, aic, g.dist)
     desc[,"Critical Value"] <- switch(names(aic)[which.min(aic)],
                                       
                                       normal = qnorm(sig, #significance
-                                                     mean = g.dist$estimate["mean"], #mean of normal
-                                                     sd = g.dist$estimate["sd"], #sd of normal
+                                                     mean = g.dist["mean"], #mean of normal
+                                                     sd = g.dist["sd"], #sd of normal
                                                      lower.tail = FALSE),
                                       
                                       gamma = qgamma(sig, #significance
-                                                     shape = g.dist$estimate["shape"], #shape of gamma
-                                                     rate = g.dist$estimate["rate"], #rate of gamma
+                                                     shape = g.dist["shape"], #shape of gamma
+                                                     rate = g.dist["rate"], #rate of gamma
                                                      lower.tail = FALSE),
                                       
     )
@@ -3810,7 +3680,7 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
 #' @importFrom graphics text
 #' @noRd
 # Redundancy Reduction
-# Updated 15.02.2021
+# Updated 23.01.2022
 redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.args, corr)
 {
   # Check for node.redundant object class
@@ -4081,7 +3951,7 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
       redund[[1]] <- NULL
       
       # Make ind
-      if(reduce.method == "latent"){ind <- idx}
+      if(reduce.method == "latent" | reduce.method == "sum"){ind <- idx}
       
       # Remove variables within future options
       for(i in 1:length(ind)){
@@ -4169,8 +4039,8 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
   }
   
   # Transform merged list to matrix
-  if(length(merged) != 0)
-  {
+  if(length(merged) != 0){
+    
     # Number of rows for matrix
     m.rows <- max(unlist(lapply(merged, length)))
     
@@ -4186,11 +4056,12 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
     }
     
     colnames(m.mat) <- name.chn
+    
   }
   
   # Replace column names for item names not changed
-  if(any(colnames(new.data) %in% names(key)))
-  {
+  if(any(colnames(new.data) %in% names(key))){
+    
     # Target names
     target.names <- which(colnames(new.data) %in% names(key))
     
@@ -4199,6 +4070,7 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
     
     # Insert into new data
     colnames(new.data)[target.names] <- key[new.data.names]
+    
   }
   
   # Check if 'm.mat' exists
@@ -4209,8 +4081,11 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
     
     if(reduce.method == "latent"){
       colnames(m.mat) <- c("Target", paste("Redundancy_", 1:(ncol(m.mat)-1), sep = ""))
-    }else if(reduce.method == "remove" | reduce.method == "sum"){
+    }else if(reduce.method == "remove"){
       colnames(m.mat) <- c(paste("Redundancy_", 1:ncol(m.mat), sep = ""))
+    }else if(reduce.method == "sum"){
+      colnames(m.mat) <- c(paste("Redundancy_", 1:ncol(m.mat), sep = ""))
+      row.names(m.mat) <- c(paste("LV_", 1:nrow(m.mat), sep = ""))
     }
   }
   
@@ -4218,7 +4093,7 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
   if(reduce.method == "sum"){
     
     # Reinstate new.data
-    new.data <- node.redundant.obj$data
+    new.data <- as.data.frame(node.redundant.obj$data)
     
     # Collapse across rows
     for(i in 1:nrow(m.mat)){
@@ -4230,12 +4105,20 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
       redunds <- m.mat[i,]
       redunds <- redunds[redunds != ""]
       
+      # Obtain columns that exist in data
+      extant_cols <- c(collapse, redunds)
+      extant_cols <- extant_cols[extant_cols %in% key]
+      extant_cols <- names(key)[match(extant_cols, key)]
+      
       # Collapse and insert into matrix
-      new.data[,collapse] <- rowSums(new.data[,c(collapse, redunds)])
+      new.data[[collapse]] <- rowSums(new.data[,extant_cols], na.rm = TRUE)
       
       # Remove redundant terms
-      new.data <- new.data[,-match(redunds, colnames(new.data))]
+      new.data <- new.data[,-match(extant_cols, colnames(new.data))]
     }
+    
+    # Convert new.data back to matrix (for symmetric check)
+    new.data <- as.matrix(new.data)
     
   }
   
@@ -4252,13 +4135,14 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
 
 #' @noRd
 # Redundancy Reduction (Automated)
-# Updated 20.06.2021
+# Updated 23.01.2022
 redund.reduce.auto <- function(node.redundant.obj,
                                reduce.method, lavaan.args, corr)
 {
   # Check for node.redundant object class
-  if(class(node.redundant.obj) != "node.redundant")
-  {stop("A 'node.redundant' object must be used as input")}
+  if(class(node.redundant.obj) != "node.redundant"){
+    stop("A 'node.redundant' object must be used as input")
+  }
   
   # Redundant list
   redund <- node.redundant.obj$redundant
@@ -4276,13 +4160,16 @@ redund.reduce.auto <- function(node.redundant.obj,
   count <- 0
   
   # Get key
-  if("key" %in% names(node.redundant.obj))
-  {
+  if("key" %in% names(node.redundant.obj)){
+    
     key <- node.redundant.obj$key
     names(key) <- names(node.redundant.obj$key)
+    
   }else{
+    
     key <- colnames(node.redundant.obj$data)
     names(key) <- key
+    
   }
   
   # Line break
@@ -4293,8 +4180,8 @@ redund.reduce.auto <- function(node.redundant.obj,
   prev.state.data <- list(new.data)
   
   # Loop through named node redundant list
-  while(length(redund) != 0)
-  {
+  while(length(redund) != 0){
+    
     # Targeting redundancy
     target.item <- names(redund)[1]
     
@@ -4402,7 +4289,7 @@ redund.reduce.auto <- function(node.redundant.obj,
       redund[[1]] <- NULL
       
       # Make ind
-      if(reduce.method == "latent"){ind <- idx}
+      if(reduce.method == "latent" | reduce.method == "sum"){ind <- idx}
       
       # Remove variables within future options
       for(i in 1:length(ind)){
@@ -4490,8 +4377,8 @@ redund.reduce.auto <- function(node.redundant.obj,
   }
   
   # Transform merged list to matrix
-  if(length(merged) != 0)
-  {
+  if(length(merged) != 0){
+    
     # Number of rows for matrix
     m.rows <- max(unlist(lapply(merged, length)))
     
@@ -4506,12 +4393,18 @@ redund.reduce.auto <- function(node.redundant.obj,
       m.mat[,i] <- c(merged[[i]], rep("", diff))
     }
     
-    colnames(m.mat) <- name.chn
+    # Set names for redundancy matrix
+    if(length(name.chn) != 0){
+      colnames(m.mat) <- name.chn
+    }else{
+      colnames(m.mat) <- paste("LV", 1:length(merged), sep = "_")
+    }
+    
   }
   
   # Replace column names for item names not changed
-  if(any(colnames(new.data) %in% names(key)))
-  {
+  if(any(colnames(new.data) %in% names(key))){
+    
     # Target names
     target.names <- which(colnames(new.data) %in% names(key))
     
@@ -4520,6 +4413,7 @@ redund.reduce.auto <- function(node.redundant.obj,
     
     # Insert into new data
     colnames(new.data)[target.names] <- key[new.data.names]
+    
   }
   
   # Check if 'm.mat' exists
@@ -4528,9 +4422,9 @@ redund.reduce.auto <- function(node.redundant.obj,
   }else{
     m.mat <- t(m.mat)
     
-    if(reduce.method == "latent"){
+    if(reduce.method == "latent" | reduce.method == "sum"){
       colnames(m.mat) <- c("Target", paste("Redundancy_", 1:(ncol(m.mat)-1), sep = ""))
-    }else if(reduce.method == "remove" | reduce.method == "sum"){
+    }else if(reduce.method == "remove"){
       colnames(m.mat) <- c(paste("Redundancy_", 1:ncol(m.mat), sep = ""))
     }
   }
@@ -4540,6 +4434,36 @@ redund.reduce.auto <- function(node.redundant.obj,
     
     # Reinstate new.data
     new.data <- node.redundant.obj$data
+    
+    # Get key
+    if("key" %in% names(node.redundant.obj)){
+      
+      key <- node.redundant.obj$key
+      names(key) <- names(node.redundant.obj$key)
+      
+    }else{
+      
+      key <- colnames(node.redundant.obj$data)
+      names(key) <- key
+      
+    }
+    
+    # Replace column names for item names not changed
+    if(any(colnames(new.data) %in% names(key))){
+      
+      # Target names
+      target.names <- which(colnames(new.data) %in% names(key))
+      
+      # new.data names
+      new.data.names <- colnames(new.data)[target.names]
+      
+      # Insert into new data
+      colnames(new.data)[target.names] <- key[new.data.names]
+      
+    }
+    
+    # Convert to data frame
+    new.data <- as.data.frame(new.data)
     
     # Collapse across rows
     for(i in 1:nrow(m.mat)){
@@ -4551,16 +4475,21 @@ redund.reduce.auto <- function(node.redundant.obj,
       redunds <- m.mat[i,]
       redunds <- redunds[redunds != ""]
       
+      # Obtain columns that exist in data
+      # extant_cols <- c(collapse, redunds)
+      # extant_cols[extant_cols %in% key] <- names(key)[match(extant_cols[extant_cols %in% key], key)]
+      
       # Collapse and insert into matrix
-      new.data[,collapse] <- rowSums(new.data[,c(collapse, redunds)])
+      new.data[[collapse]] <- rowSums(new.data[,redunds], na.rm = TRUE)
       
       # Remove redundant terms
       new.data <- new.data[,-match(redunds, colnames(new.data))]
     }
     
+    # Convert new.data back to matrix (for symmetric check)
+    new.data <- as.matrix(new.data)
+    
   }
-  
-  
   
   # Initialize results list
   res <- list()
@@ -4573,7 +4502,7 @@ redund.reduce.auto <- function(node.redundant.obj,
 
 #' @noRd
 # Redundancy Adhoc Reduction (Automated)
-# Updated 22.07.2021
+# Updated 23.01.2022
 redund.adhoc.auto <- function(node.redundant.obj,
                               node.redundant.reduced,
                               node.redundant.original,
@@ -4612,6 +4541,7 @@ redund.adhoc.auto <- function(node.redundant.obj,
   
   # Set counter
   count <- max(as.numeric(gsub("LV_", "", names(merged))))
+  original_count <- count
   
   # Update merged
   for(i in 1:length(redund)){
@@ -4757,14 +4687,14 @@ redund.adhoc.auto <- function(node.redundant.obj,
     m.mat <- matrix("", nrow = m.rows, ncol = length(merged))
     
     # Input into merged matrix
-    for(i in 1:length(merged)){
-      
+    for(i in 1:length(merged))
+    {
       diff <- m.rows - length(merged[[i]])
       
       m.mat[,i] <- c(merged[[i]], rep("", diff))
-      
     }
     
+    # Set names for redundancy matrix
     colnames(m.mat) <- names(merged)
     
   }
@@ -4780,6 +4710,7 @@ redund.adhoc.auto <- function(node.redundant.obj,
     
     # Insert into new data
     colnames(new.data)[target.names] <- key[new.data.names]
+    
   }
   
   # Check if 'm.mat' exists
@@ -4788,9 +4719,9 @@ redund.adhoc.auto <- function(node.redundant.obj,
   }else{
     m.mat <- t(m.mat)
     
-    if(reduce.method == "latent"){
+    if(reduce.method == "latent" | reduce.method == "sum"){
       colnames(m.mat) <- c("Target", paste("Redundancy_", 1:(ncol(m.mat)-1), sep = ""))
-    }else if(reduce.method == "remove" | reduce.method == "sum"){
+    }else if(reduce.method == "remove"){
       colnames(m.mat) <- c(paste("Redundancy_", 1:ncol(m.mat), sep = ""))
     }
   }
@@ -4799,7 +4730,7 @@ redund.adhoc.auto <- function(node.redundant.obj,
   if(reduce.method == "sum"){
     
     # Reinstate new.data
-    new.data <- node.redundant.original$data
+    new.data <- as.data.frame(new.data)
     
     # Collapse across rows
     for(i in 1:nrow(m.mat)){
@@ -4811,16 +4742,21 @@ redund.adhoc.auto <- function(node.redundant.obj,
       redunds <- m.mat[i,]
       redunds <- redunds[redunds != ""]
       
+      # Obtain columns that exist in data
+      # extant_cols <- c(collapse, redunds)
+      # extant_cols[extant_cols %in% key] <- names(key)[match(extant_cols[extant_cols %in% key], key)]
+      
       # Collapse and insert into matrix
-      new.data[,collapse] <- rowSums(new.data[,c(collapse, redunds)], na.rm = TRUE)
+      new.data[[collapse]] <- rowSums(new.data[,redunds], na.rm = TRUE)
       
       # Remove redundant terms
       new.data <- new.data[,-match(redunds, colnames(new.data))]
     }
     
+    # Convert new.data back to matrix (for symmetric check)
+    new.data <- as.matrix(new.data)
+    
   }
-  
-  
   
   # Initialize results list
   res <- list()
@@ -5260,7 +5196,7 @@ mode <- function(v, fin.vec)
 #'
 # Homogenize Membership
 # For itemStability
-# Updated 30.12.2021
+# Updated 01.03.2022
 homogenize.membership <- function (target.wc, convert.wc)
 {
   # Obtain whether vector or matrix is input for 'convert.wc'
@@ -5317,6 +5253,10 @@ homogenize.membership <- function (target.wc, convert.wc)
       final.vec <- rep(NA, length = length(target.wc))
       names(final.vec) <- names(target.wc)
       
+    }else if(all(target.wc == new.vec, na.rm = TRUE)){
+      # Check if all dimensions are the same
+      final.vec <- new.vec
+      names(final.vec) <- names(target.wc)
     }else if(length(na.omit(unique(target.wc))) > length(unique(na.omit(new.vec)))){
       # Converge based on maximum number of dimensions
       

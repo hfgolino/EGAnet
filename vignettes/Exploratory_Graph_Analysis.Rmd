@@ -1,0 +1,16 @@
+---
+title: "Exploratory Graph Analysis"
+author: "Alexander P. Christensen and Hudson Golino"
+date: Sys.Date()
+output: html_document
+vignette: >
+  %\VignetteIndexEntry{Exploratory Graph Analysis}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+

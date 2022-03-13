@@ -77,7 +77,7 @@ See \code{\link[EGAnet]{EBICglasso.qgraph}}}
 
 \item{\strong{\code{"TMFG"}}}
 {Estimates a Triangulated Maximally Filtered Graph.
-See \code{\link[NetworkToolbox]{TMFG}}}
+See \code{\link[EGAnet]{TMFG}}}
 
 }}
 

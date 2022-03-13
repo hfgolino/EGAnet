@@ -9,7 +9,7 @@
 Implements the Exploratory Graph Analysis (\code{\link[EGAnet]{EGA}}; Golino & Epskamp, 2017; Golino, Shi et al., 2020) framework for dimensionality and psychometric assessment.
 EGA is part of a new area called \emph{network psychometrics} that uses undirected network models for the assessment
 of psychometric properties. EGA estimates the number of dimensions (or factors) using graphical lasso \code{\link[qgraph]{EBICglasso}} or
-Triangulated Maximally Filtered Graph (\code{\link[NetworkToolbox]{TMFG}}) and a weighted network community detection algorithm (Christensen, Garrido, Golino, under review A). A bootstrap method for
+Triangulated Maximally Filtered Graph (\code{\link[EGAnet]{TMFG}}) and a weighted network community detection algorithm (Christensen, Garrido, Golino, under review A). A bootstrap method for
 verifying the stability of the dimensions and items in those dimensions is available (\code{\link[EGAnet]{bootEGA}}; Christensen & Golino, 2021a). The fit of the structure suggested by EGA
 can be verified using Entropy Fit Indices (\code{\link[EGAnet]{entropyFit}}, \code{\link[EGAnet]{tefi}}; Golino, Moulder et al., 2020). A novel approach called Unique Variable Analysis (\code{\link[EGAnet]{UVA}}) can be used to
 identify and reduce redundant variables in multivariate data (Christensen, Garrido, & Golino, under review B). Network loadings (\code{\link[EGAnet]{net.loads}}),

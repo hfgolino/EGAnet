@@ -12,6 +12,7 @@
 #' print.dynEGA.Individuals
 #' print.EGA
 #' print.NetLoads
+#' print.invariance
 #' 
 #' @usage
 #' \method{print}{dynEGA}(x,  ...)
@@ -23,6 +24,8 @@
 #' \method{print}{EGA}(x,  ...)
 #' 
 #' \method{print}{NetLoads}(x, ...)
+#' 
+#' \method{print}{invariance}(x, ...)
 #' 
 #' @description Prints for \code{EGAnet} objects
 #' 
@@ -96,4 +99,13 @@ print.NetLoads <- function(x, ...) {
   
   print(x$std)
   message("Loadings <= ", x$MinLoad, " are blank")
+}
+
+#Print Measurement Invariance----
+# Updated 10.02.2022
+#' @export
+print.invariance <- function(x, ...) {
+  print(x$results, row.names = FALSE)
+  cat("---\n")
+  cat("Signif. code: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 'n.s.' 1")
 }

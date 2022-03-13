@@ -88,7 +88,7 @@ extended Bayesian information criterion to select optimal regularization paramet
 
 \item{model.args}{List.
 A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
-or \code{\link[NetworkToolbox]{TMFG}}}
+or \code{\link[EGAnet]{TMFG}}}
 
 \item{algorithm}{A string indicating the algorithm to use or a function from \code{\link{igraph}}
 Defaults to \code{"walktrap"}.
@@ -167,7 +167,7 @@ Used for deprecated arguments from previous versions of \code{\link{EGA}}}
 Returns a list containing:
 
 \item{network}{A symmetric network estimated using either the
-\code{\link{EBICglasso.qgraph}} or \code{\link[NetworkToolbox]{TMFG}}}
+\code{\link{EBICglasso.qgraph}} or \code{\link[EGAnet]{TMFG}}}
 
 \item{wc}{A vector representing the community (dimension) membership
 of each node in the network. \code{NA} values mean that the node
@@ -180,7 +180,7 @@ was disconnected from the network}
 \description{
 Estimates the number of dimensions of a given dataset or correlation matrix
 using the graphical lasso (\code{\link{EBICglasso.qgraph}}) or the
-Triangulated Maximally Filtered Graph (\code{\link[NetworkToolbox]{TMFG}})
+Triangulated Maximally Filtered Graph (\code{\link[EGAnet]{TMFG}})
 network estimation methods.
 }
 \details{
