@@ -4,7 +4,7 @@
 \alias{itemStability}
 \title{Item Stability Statistics from \code{\link[EGAnet]{bootEGA}}}
 \usage{
-itemStability(bootega.obj, IS.plot = TRUE, structure, ...)
+itemStability(bootega.obj, IS.plot = TRUE, structure = NULL, ...)
 }
 \arguments{
 \item{bootega.obj}{A \code{\link[EGAnet]{bootEGA}} object}

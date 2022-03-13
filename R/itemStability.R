@@ -112,7 +112,7 @@
 #Item Stability function
 # Updated 27.02.2021
 # Major revamp 27.02.2021
-itemStability <- function (bootega.obj, IS.plot = TRUE, structure, ...){
+itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
 
   # Check for 'bootEGA' object
   if(class(bootega.obj) != "bootEGA"){
