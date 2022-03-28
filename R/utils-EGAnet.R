@@ -1672,16 +1672,14 @@ compare.plot.fix.EGA <- function(object.list,  plot.type = c("GGally","qgraph"),
       }
       
       # Reorder network and communities
-      x$network <- x$network[order(x$wc), order(x$wc)]
-      x$wc <- x$wc[order(x$wc)]
-      # if(i == 1){
-      #   x$network <- x$network[order(x$wc), order(x$wc)]
-      #   x$wc <- x$wc[order(x$wc)]
-      #   fix.order.wc <- names(x$wc)
-      # }else{
-      #   x$network <- x$network[fix.order.wc, fix.order.wc]
-      #   x$wc <- x$wc[fix.order.wc]
-      # }
+      if(i == 1){
+        x$network <- x$network[order(x$wc), order(x$wc)]
+        x$wc <- x$wc[order(x$wc)]
+        fix.order.wc <- names(x$wc)
+      }else{
+        x$network <- x$network[fix.order.wc, fix.order.wc]
+        x$wc <- x$wc[fix.order.wc]
+      }
       
       # weighted  network
       network1 <- network::network(x$network,

@@ -193,6 +193,10 @@ compare.EGA.plots <- function(
     
   }
   
+  # Re-organize plot list with reference to maximum communities
+  wc_ord <- order(num_wc, decreasing = TRUE)
+  object.list <- object.list[wc_ord]
+  
   # Initialize plot list
   plots_ega <- list()
   plots_ega <- suppressPackageStartupMessages(
@@ -202,7 +206,13 @@ compare.EGA.plots <- function(
       plot.args = plot.args
     )
   )
-
+  
+  # Get legend
+  shared_legend <- ggpubr::get_legend(plots_ega[[1]])
+  
+  # Reorder to original configuration
+  plots_ega <- plots_ega[order(wc_ord)]
+  
   # Loop through matching 
   for(i in 2:length(plots_ega)){
     plots_ega[[i]] <- compare.EGA(plots_ega[[1]], plots_ega[[i]])[[2]]
@@ -214,21 +224,11 @@ compare.EGA.plots <- function(
   set_org <- c(base_plot, set_diff) # get set organization
   plots_ega <- plots_ega[set_org] # organize to original inputs
   
-  # Re-organize number of communities for legend
-  num_wc <- num_wc[set_org]
-  
-  # Obtain maximum number of communities
-  if(!all(num_wc == max(num_wc, na.rm = TRUE))){
-    max_wc <- which.max(num_wc)
-  }else{
-    max_wc <- base_plot
-  }
-  
   # Set up grid return
   compare.plot <- ggpubr::ggarrange(
     plotlist = plots_ega, ncol = columns,
     nrow = rows, labels = labels, label.x = 0.3,
-    legend.grob = ggpubr::get_legend(plots_ega[[max_wc]]),
+    legend.grob = shared_legend,
     common.legend = TRUE, legend = "right"
   )
   
