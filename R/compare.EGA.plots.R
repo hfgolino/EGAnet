@@ -1,16 +1,19 @@
-#' Visual Compares \code{\link{EGAnet}} plots
+#' Visually Compares \code{\link{EGAnet}} plots
 #' 
-#' @description Identifies redundant nodes in the network based on several
-#' measures. Computes the weighted topological overlap between
-#' each node and every other node in the network. The weighted topological
-#' overlap is implemented using the method from Nowick et al. (2009; see references)
-#' and the function \link[wTO]{wTO} from the wTO package.
+#' @description Organizes EGA plots for comparison. Ensures that nodes are
+#' placed in the same layout to maximize comparison. Community memberships
+#' are also homogenized across EGA outputs to enhance interpretation
 #'
 #' @param ... \code{\link{EGAnet}} objects
 #' 
 #' @param input_list List.
 #' Bypasses \code{...} argument in favor of using a list
 #' as an input
+#' 
+#' @param base_plot Numeric.
+#' Plot to be used as the base for the configuration of the networks.
+#' Uses the number of the order in which the plots are input.
+#' Defaults to \code{1} or the first plot
 #' 
 #' @param labels Character vector.
 #' Labels for each \code{\link{EGAnet}} object
@@ -75,9 +78,11 @@
 #' @export
 #
 # Compare EGA plots function
-# Updated 03.03.2022
+# Updated 28.03.2022
 compare.EGA.plots <- function(
-  ..., input_list = NULL, labels, rows, columns,
+  ..., input_list = NULL,
+  base_plot = 1,
+  labels, rows, columns,
   plot.type = c("GGally", "qgraph"), plot.args = list()
 )
 {
@@ -121,24 +126,39 @@ compare.EGA.plots <- function(
     stop("EGA plot comparisons require two or more EGA objects")
   }
   
+  # Obtain base EGA
+  base_EGA <- object.list[[base_plot]]
+  
+  # Comparison EGAs
+  comparison_EGA <- object.list[-base_plot]
+  
+  # Set up number of communities (for legend later)
+  num_wc <- numeric(length(object.list))
+  num_wc[1] <- switch(
+    class(base_EGA),
+    "EGA" = length(na.omit(unique(base_EGA$wc))),
+    "bootEGA" = length(na.omit(unique(base_EGA$typicalGraph$wc))),
+    "dynEGA" = length(na.omit(unique(base_EGA$dynEGA$wc)))
+  )
+  
   # Organize memberships
-  for(i in 2:length(object.list)){
+  for(i in 1:length(comparison_EGA)){
     
     # Target membership
     target.wc <- switch(
-      class(object.list[[1]]),
-      "EGA" = object.list[[1]]$wc,
-      "bootEGA" = object.list[[1]]$typicalGraph$wc,
-      "dynEGA" = object.list[[1]]$dynEGA$wc
+      class(base_EGA),
+      "EGA" = base_EGA$wc,
+      "bootEGA" = base_EGA$typicalGraph$wc,
+      "dynEGA" = base_EGA$dynEGA$wc
     )
     
     # Covert membership
     convert.wc <- as.matrix(
       switch(
-        class(object.list[[i]]),
-        "EGA" = object.list[[i]]$wc,
-        "bootEGA" = object.list[[i]]$typicalGraph$wc,
-        "dynEGA" = object.list[[i]]$dynEGA$wc
+        class(comparison_EGA[[i]]),
+        "EGA" = comparison_EGA[[i]]$wc,
+        "bootEGA" = comparison_EGA[[i]]$typicalGraph$wc,
+        "dynEGA" = comparison_EGA[[i]]$dynEGA$wc
       )
     )
     
@@ -149,43 +169,76 @@ compare.EGA.plots <- function(
     names(homogenized.wc) <- names(target.wc)
     
     # Replace membership
-    if(class(object.list[[i]]) == "EGA"){
-      object.list[[i]]$wc <- homogenized.wc
-      names(object.list[[i]]$wc) <- colnames(object.list[[i]]$network)
-    }else if(class(object.list[[i]]) == "bootEGA"){
-      object.list[[i]]$typicalGraph$wc <- homogenized.wc
-    }else if(class(object.list[[i]]$dynEGA$wc)){
-      object.list[[i]]$typicalGraph$wc <- homogenized.wc
+    if(class(comparison_EGA[[i]]) == "EGA"){
+      comparison_EGA[[i]]$wc <- homogenized.wc
+      names(comparison_EGA[[i]]$wc) <- colnames(comparison_EGA[[i]]$network)
+    }else if(class(comparison_EGA[[i]]) == "bootEGA"){
+      comparison_EGA[[i]]$typicalGraph$wc <- homogenized.wc
+    }else if(class(comparison_EGA[[i]]$dynEGA$wc)){
+      comparison_EGA[[i]]$typicalGraph$wc <- homogenized.wc
+    }
+    
+    # Obtain number of communities
+    num_wc[i + 1] <- length(na.omit(unique(homogenized.wc)))
+  }
+  
+  # Reset object list
+  for(i in 1:length(object.list)){
+    
+    if(i == 1){
+      object.list[[1]] <- base_EGA
+    }else{
+      object.list[[i]] <- comparison_EGA[[i-1]]
     }
     
   }
   
   # Initialize plot list
-  plots.ega <- list()
-  plots.ega <- suppressPackageStartupMessages(
+  plots_ega <- list()
+  plots_ega <- suppressPackageStartupMessages(
     compare.plot.fix.EGA(
       object.list,
       plot.type = plot.type,
       plot.args = plot.args
     )
   )
-  
+
   # Loop through matching 
-  for(i in 2:length(object.list)){
-    plots.ega[[i]] <- compare.EGA(plots.ega[[1]], plots.ega[[i]])[[2]]
+  for(i in 2:length(plots_ega)){
+    plots_ega[[i]] <- compare.EGA(plots_ega[[1]], plots_ega[[i]])[[2]]
+  }
+  
+  # Re-organize plot list with reference to base plot
+  set_number <- 1:length(plots_ega) # obtain number of plots
+  set_diff <- setdiff(set_number, base_plot) # remove base plot
+  set_org <- c(base_plot, set_diff) # get set organization
+  plots_ega <- plots_ega[set_org] # organize to original inputs
+  
+  # Re-organize number of communities for legend
+  num_wc <- num_wc[set_org]
+  
+  # Obtain maximum number of communities
+  if(!all(num_wc == max(num_wc, na.rm = TRUE))){
+    max_wc <- which.max(num_wc)
+  }else{
+    max_wc <- base_plot
   }
   
   # Set up grid return
-  compare.plot <- ggpubr::ggarrange(plotlist = plots.ega, ncol = columns,
-                    nrow = rows, labels = labels, label.x = 0.3)
+  compare.plot <- ggpubr::ggarrange(
+    plotlist = plots_ega, ncol = columns,
+    nrow = rows, labels = labels, label.x = 0.3,
+    legend.grob = ggpubr::get_legend(plots_ega[[max_wc]]),
+    common.legend = TRUE, legend = "right"
+  )
   
   # Name plots
-  names(plots.ega) <- labels
+  names(plots_ega) <- labels
   
   # Results
   result <- list()
   result$comparison.plot <- compare.plot
-  result$individual.plots <- plots.ega
+  result$individual.plots <- plots_ega
   
   # Plot
   plot(compare.plot)

@@ -1610,7 +1610,7 @@ rescale.edges <- function (network, size)
 
 #' @noRd
 # Compare plots fix
-# Updated 09.10.2021
+# Updated 28.03.2022
 compare.plot.fix.EGA <- function(object.list,  plot.type = c("GGally","qgraph"),
                                  plot.args = list()){
   #### MISSING ARGUMENTS HANDLING
@@ -1672,14 +1672,16 @@ compare.plot.fix.EGA <- function(object.list,  plot.type = c("GGally","qgraph"),
       }
       
       # Reorder network and communities
-      if(i == 1){
-        x$network <- x$network[order(x$wc), order(x$wc)]
-        x$wc <- x$wc[order(x$wc)]
-        fix.order.wc <- names(x$wc)
-      }else{
-        x$network <- x$network[fix.order.wc, fix.order.wc]
-        x$wc <- x$wc[fix.order.wc]
-      }
+      x$network <- x$network[order(x$wc), order(x$wc)]
+      x$wc <- x$wc[order(x$wc)]
+      # if(i == 1){
+      #   x$network <- x$network[order(x$wc), order(x$wc)]
+      #   x$wc <- x$wc[order(x$wc)]
+      #   fix.order.wc <- names(x$wc)
+      # }else{
+      #   x$network <- x$network[fix.order.wc, fix.order.wc]
+      #   x$wc <- x$wc[fix.order.wc]
+      # }
       
       # weighted  network
       network1 <- network::network(x$network,
