@@ -5,7 +5,7 @@
 #' @noRd
 #' 
 # Polytomous IRT parameters
-# Updated 30.06.2021
+# Updated 20.03.2022
 poly.irt <- function(loadings, data)
 {
   # Check for standardized loadings
@@ -24,16 +24,38 @@ poly.irt <- function(loadings, data)
   
   # Estimated threshold parameters
   thresholds <- lavaan::lavCor(
-    data,
+    as.data.frame(data), # must be data frame
     ordered = colnames(data),
     output = "thresholds"
   )
   
   # Separate thresholds
-  threshs <- list()
+  threshs <- vector("list", length = ncol(data))
+  names(threshs) <- colnames(data)
   
-  for(i in colnames(data)){
-    threshs[[i]] <- thresholds[grep(i, names(thresholds))]
+  # Get thresholds for data
+  for(i in 1:ncol(data)){
+    
+    # Number of categories
+    cats <- length(unique(na.omit(data[,i]))) - 1
+    
+    # Initialize vector
+    thresh <- numeric(cats)
+    
+    # Loop through thresholds
+    for(j in 1:cats){
+      thresh[j] <- thresholds[
+        grep(
+          paste(colnames(data)[i], "|t", j, sep = ""), # set exact match
+          names(thresholds),
+          fixed = TRUE
+        )
+      ]
+    }
+    
+    # Insert into thresholds
+    threshs[[i]] <- thresh
+    
   }
   
   # Estimate location parameters
@@ -53,7 +75,7 @@ poly.irt <- function(loadings, data)
   
   # Results list
   results <- list()
-  results$discrimination <- est_a
+  results$discrimination <- est_a * 1.702
   results$location <- est_d
   
   return(results)
