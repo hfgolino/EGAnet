@@ -19,8 +19,8 @@ Exploratory Graph Analysis
 ### Contact: <hfg9s@virginia.edu> ###
 
 ### Alexander P. Christensen ###
-### Postdoctoral Researcher, Department of Neurology, University of Pennsylvania. ###
-### Contact: <alexpaulchristensen@gmail.com> ###
+### Assistant Professor of Quantitative Methods, Department of Psychology and Human Development, Vanderbilt University ###
+### Contact: <alexander.christensen@vanderbilt.edu> ###
 
 
 News
