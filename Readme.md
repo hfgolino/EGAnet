@@ -15,7 +15,7 @@ devtools::install_github("hfgolino/EGAnet")
 Exploratory Graph Analysis
 =============
 ### Hudson F. Golino ###
-### Assistant Professor of Quantitative Methods, Department of Psychology, University of Virginia. ###
+### Associate Professor of Quantitative Methods, Department of Psychology, University of Virginia. ###
 ### Contact: <hfg9s@virginia.edu> ###
 
 ### Alexander P. Christensen ###

@@ -2,11 +2,12 @@
 % Please edit documentation in R/compare.EGA.plots.R
 \name{compare.EGA.plots}
 \alias{compare.EGA.plots}
-\title{Visual Compares \code{\link{EGAnet}} plots}
+\title{Visually Compares \code{\link{EGAnet}} plots}
 \usage{
 compare.EGA.plots(
   ...,
   input_list = NULL,
+  base_plot = 1,
   labels,
   rows,
   columns,
@@ -20,6 +21,11 @@ compare.EGA.plots(
 \item{input_list}{List.
 Bypasses \code{...} argument in favor of using a list
 as an input}
+
+\item{base_plot}{Numeric.
+Plot to be used as the base for the configuration of the networks.
+Uses the number of the order in which the plots are input.
+Defaults to \code{1} or the first plot}
 
 \item{labels}{Character vector.
 Labels for each \code{\link{EGAnet}} object}
@@ -77,11 +83,9 @@ more details and examples}
 Visual comparison of \code{\link{EGAnet}} objects
 }
 \description{
-Identifies redundant nodes in the network based on several
-measures. Computes the weighted topological overlap between
-each node and every other node in the network. The weighted topological
-overlap is implemented using the method from Nowick et al. (2009; see references)
-and the function \link[wTO]{wTO} from the wTO package.
+Organizes EGA plots for comparison. Ensures that nodes are
+placed in the same layout to maximize comparison. Community memberships
+are also homogenized across EGA outputs to enhance interpretation
 }
 \examples{
 # obtain SAPA items
