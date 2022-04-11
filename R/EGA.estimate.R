@@ -167,7 +167,7 @@ EGA.estimate <- function(data, n = NULL,
 {
   # Make the data a matrix
   data <- as.matrix(data)
-  
+
   # Get additional arguments
   add.args <- list(...)
 
@@ -292,42 +292,42 @@ EGA.estimate <- function(data, n = NULL,
 
     # Check if symmetric (time series data)
     if(!isSymmetric(data)){
-      
+
       # Obtain n
       n <- nrow(data)
-      
+
       # Compute correlation matrix
       cor.data <- switch(corr,
                          cor_auto = qgraph::cor_auto(data, forcePD = TRUE),
                          pearson = cor(data, use = "pairwise.complete.obs", method = "pearson"),
                          spearman = cor(data, use = "pairwise.complete.obs", method = "spearman")
       )
-      
+
       # Check if positive definite
       if(any(eigen(cor.data)$values < 0)){
-        
+
         # Let user know
         warning("Correlation matrix is not positive definite.\nForcing positive definite matrix using Matrix::nearPD()\nResults may be unreliable")
-        
+
         # Force positive definite matrix
         cor.data <- as.matrix(Matrix::nearPD(cor.data, corr = TRUE, keepDiag = TRUE, ensureSymmetry = TRUE)$mat)
-        
+
       }
     }else{
-      
+
       # Check if positive definite
       if(any(eigen(data)$values < 0)){
-        
+
         # Let user know
         warning("Correlation matrix is not positive definite.\nForcing positive definite matrix using Matrix::nearPD()\nResults may be unreliable")
-        
+
         # Force positive definite matrix
         cor.data <- as.matrix(Matrix::nearPD(data, corr = TRUE, keepDiag = TRUE, ensureSymmetry = TRUE)$mat)
-        
+
       }else{cor.data <- data}
-      
+
     }
-    
+
   }
 
   #### ADDITIONAL ARGUMENTS HANDLING ####
@@ -376,6 +376,8 @@ EGA.estimate <- function(data, n = NULL,
 
   }else if(model == "TMFG"){
     estimated.network <- TMFG(cor.data)$A
+    colnames(estimated.network) <- colnames(cor.data)
+    rownames(estimated.network) <- rownames(cor.data)
   }
 
   # Check for unconnected nodes
@@ -427,7 +429,7 @@ EGA.estimate <- function(data, n = NULL,
   if(exists("unconnected")){
     wc[unconnected] <- NA
   }
-  
+
   # Convert numbers to be consecutive
   uniq.wc <- unique(na.omit(wc))
   wc.ord <- sort(uniq.wc)
