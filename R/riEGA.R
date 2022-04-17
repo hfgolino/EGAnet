@@ -193,6 +193,33 @@ riEGA <- function(
   )
 {
   
+  #### ARGUMENTS HANDLING ####
+  
+  if(missing(uni.method)){
+    uni.method <- "LE"
+  }else{uni.method <- match.arg(uni.method)}
+  
+  if(missing(corr)){
+    corr <- "cor_auto"
+  }else{corr <- match.arg(corr)}
+  
+  if(missing(model)){
+    model <- "glasso"
+  }else{model <- match.arg(model)}
+  
+  if(missing(algorithm)){
+    algorithm <- "walktrap"
+  }else if(!is.function(algorithm)){
+    algorithm <- tolower(match.arg(algorithm))
+  }
+  
+  if(missing(plot.type)){
+    plot.type <- "GGally"
+  }else{plot.type <- match.arg(plot.type)}
+  
+  #### ARGUMENTS HANDLING ####
+  
+  
   # Ensure data is a matrix
   data <- as.matrix(data)
   
