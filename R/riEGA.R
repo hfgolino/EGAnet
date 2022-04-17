@@ -427,7 +427,7 @@ riEGA <- function(
       "\nRandom-intercept model converged. Wording effects likely. Results are only valid if data are ",
       styletext(
         "unrecoded", defaults = "underline"
-      ), ".",
+      ), ".\n",
       sep = ""
     )
     
