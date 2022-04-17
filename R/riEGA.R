@@ -174,7 +174,7 @@
 #' \item{loadings}
 #' {Standardized loadings from the random-intercept model}
 #' 
-#' \item{correlations}
+#' \item{correlation}
 #' {Residual correlations after accounting for the random-intercept model}
 #' 
 #' }
@@ -420,7 +420,7 @@ riEGA <- function(
     
     # Report loadings and correlations
     results$RI$loadings <- ri_loadings
-    results$RI$correlatons <- ri_correlations
+    results$RI$correlation <- ri_correlations
     
     # Message user about recoding
     recoding_message <- paste(
