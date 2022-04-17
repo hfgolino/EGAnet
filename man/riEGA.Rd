@@ -177,6 +177,31 @@ Set to \code{FALSE} for no print out}
 }
 \value{
 Returns a list containing:
+
+\item{EGA}{Results from \code{\link[EGAnet]{EGA}}}
+
+\item{RI}{A list containing information about the random-intercept
+model (if the model converged):
+
+\itemize{
+
+\item{fit}
+{The fit object for the random-intercept model using \code{\link[lavaan]{cfa}}}
+
+\item{lavaan.args}
+{The arguments used in \code{\link[lavaan]{cfa}}}
+
+\item{loadings}
+{Standardized loadings from the random-intercept model}
+
+\item{correlations}
+{Residual correlations after accounting for the random-intercept model}
+
+}
+
+
+
+}
 }
 \description{
 Estimates the number of dimensions after controlling for wording effects.

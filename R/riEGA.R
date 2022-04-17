@@ -157,7 +157,31 @@
 #' Set to \code{FALSE} for no print out
 #' 
 #' @return Returns a list containing:
-#'
+#' 
+#' \item{EGA}{Results from \code{\link[EGAnet]{EGA}}}
+#' 
+#' \item{RI}{A list containing information about the random-intercept
+#' model (if the model converged):
+#' 
+#' \itemize{
+#' 
+#' \item{fit}
+#' {The fit object for the random-intercept model using \code{\link[lavaan]{cfa}}}
+#' 
+#' \item{lavaan.args}
+#' {The arguments used in \code{\link[lavaan]{cfa}}}
+#' 
+#' \item{loadings}
+#' {Standardized loadings from the random-intercept model}
+#' 
+#' \item{correlations}
+#' {Residual correlations after accounting for the random-intercept model}
+#' 
+#' }
+#' 
+#' 
+#' 
+#' }
 #'
 #' @author Hudson F. Golino <hfg9s at virginia.edu>, Robert Moulder <rgm4fd@virginia.edu>, and
 #' Alexander P. Christensen <alexpaulchristensen@gmail.com>

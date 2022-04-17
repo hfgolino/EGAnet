@@ -1,6 +1,5 @@
 Changes in version 1.0.1
 
-
 o FIX: bug in `EGA.estimate` when using the TMFG network method. The resulting EGA plot did not have the correct node names.
 
 o FIX: bug in `UVA` when trying to use sum score (`reduce.method = "sum"`) in automated procedure
@@ -9,6 +8,7 @@ o ADD: measurement `invariance` function for testing differences in network load
 
 o UPDATE:  `itemStability` now has a parameter `structure` in which the user can specify a given structure to test its stability.
 
+o ADD: `riEGA` implementing random-intercept EGA for wording effects
 
 
 Changes in version 1.0.0
