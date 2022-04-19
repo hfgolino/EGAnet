@@ -349,7 +349,7 @@ hierEGA <- function(
   ega_defaults$model.args <- model.args
   ega_defaults$algorithm <- algorithm
   ega_defaults$algorithm.args <- algorithm.args
-  ega_defaults$plot.EGA <- plot.EGA
+  ega_defaults$plot.EGA <- FALSE
   ega_defaults$plot.type <- plot.type
   ega_defaults$plot.args <- plot.args
   ega_defaults$verbose <- verbose
@@ -362,14 +362,16 @@ hierEGA <- function(
   # Set up plots
   if(isTRUE(plot.EGA)){
     
+    # Set up plots
+    lower_plot <- plot(lower_order_result, produce = FALSE)
+    higher_plot <- plot(ega_result, produce = FALSE)
+    
     # Set up output
     ggpubr::ggarrange(
-      plot(lower_order_result, produce = FALSE), # plot lower-order
-      plot(ega_result, produce = FALSE), # plot higher-order
+      lower_plot, # plot lower-order
+      higher_plot, # plot higher-order
       labels = c("Lower-order", "Higher-order")
     )
-    
-    
     
   }
   
