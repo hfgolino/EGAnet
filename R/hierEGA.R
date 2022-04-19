@@ -159,6 +159,13 @@
 #' 
 #' \item{higher}{Higher-order results from \code{\link[EGAnet]{EGA}}}
 #'
+#' \item{lower_plot}{Plot for the lower-order dimensions}
+#' 
+#' \item{higher_plot}{Plot for the higher-order dimensions}
+#' 
+#' \item{hier_plot}{Plot showing the lower-order and higher-order dimensions}
+#'
+#'
 #' @author Luis E. Garrido <garrido.luiseduardo@gmail.com>,
 #' Alexander P. Christensen <alexpaulchristensen@gmail.com>, and
 #' Hudson F. Golino <hfg9s at virginia.edu>
@@ -359,6 +366,14 @@ hierEGA <- function(
     EGA, ega_defaults
   )
   
+  # Return results
+  results <- list()
+  results$lower <- lower_order_result
+  results$lower_scores <- score_est
+  results$lower_loadings <- lower_loads
+  results$score_type <- scores
+  results$higher <- ega_result
+  
   # Set up plots
   if(isTRUE(plot.EGA)){
     
@@ -367,21 +382,21 @@ hierEGA <- function(
     higher_plot <- plot(ega_result, produce = FALSE)
     
     # Set up output
-    ggpubr::ggarrange(
+    hier_plot <- ggpubr::ggarrange(
       lower_plot, # plot lower-order
       higher_plot, # plot higher-order
       labels = c("Lower-order", "Higher-order")
     )
     
+    # Output plots
+    plot(hier_plot)
+    
+    # Add to results
+    results$lower_plot <- lower_plot
+    results$higher_plot <- higher_plot
+    results$hier_plot <- hier_plot
+    
   }
-  
-  # Return results
-  results <- list()
-  results$lower <- lower_order_result
-  results$lower_scores <- score_est
-  results$lower_loadings <- lower_loads
-  results$score_type <- scores
-  results$higher <- ega_result
   
   # Make class "hierEGA"
   class(results) <- "hierEGA"
