@@ -290,37 +290,19 @@ hierEGA <- function(
   # Estimate scores
   if(scores == "factor"){
     
-    # Determine appropriate correlations
-    ## Categories
-    categories <- apply(data, 2, function(x){
-      length(na.omit(unique(x)))
-    })
-    
-    ## Check categories
-    if(any(categories > 2)){
-      
-      if(any(categories <= 2) & any(categories >= 3)){ # Mixed
-        psych_cor <- "mixed"
-      }else if(any(categories < 6)){ # Polychoric
-        psych_cor <- "poly"
-      }else{
-        psych_cor <- "cor"
-      }
-      
-    }else{# Tetrachoric
-      psych_cor <- "tet"
-    }
-    
     # Estimate factor model
     fm <- psych::fa(
-      r = data, # needs data for scores
+      r = lower_order_result$correlation, # correlation matrix
       nfactors = length(na.omit(unique(lower_order_result$wc))), # number of factors
       rotate = "oblimin",
       cor = psych_cor
     )
     
     # Score estimates
-    score_est <- fm$scores
+    score_est <- psych::factor.scores(
+      x = data,
+      f = fm
+    )
     
     # Lower-order loadings
     lower_loads <- fm$loadings[,1:length(na.omit(unique(lower_order_result$wc)))]
