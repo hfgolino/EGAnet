@@ -294,8 +294,7 @@ hierEGA <- function(
     fm <- psych::fa(
       r = lower_order_result$correlation, # correlation matrix
       nfactors = length(na.omit(unique(lower_order_result$wc))), # number of factors
-      rotate = "oblimin",
-      cor = psych_cor
+      rotate = "oblimin"
     )
     
     # Score estimates
