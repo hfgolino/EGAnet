@@ -291,17 +291,20 @@ hierEGA <- function(
   if(scores == "factor"){
     
     # Estimate factor model
-    fm <- psych::fa(
-      r = lower_order_result$correlation, # correlation matrix
-      nfactors = length(na.omit(unique(lower_order_result$wc))), # number of factors
-      rotate = "oblimin"
+    fm <- suppressWarnings(
+      psych::fa(
+        r = lower_order_result$cor.data, # correlation matrix
+        n.obs = nrow(data),
+        nfactors = length(na.omit(unique(lower_order_result$wc))), # number of factors
+        rotate = "oblimin"
+      )
     )
     
     # Score estimates
     score_est <- psych::factor.scores(
       x = data,
       f = fm
-    )
+    )$scores
     
     # Lower-order loadings
     lower_loads <- fm$loadings[,1:length(na.omit(unique(lower_order_result$wc)))]
