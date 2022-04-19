@@ -349,7 +349,7 @@ hierEGA <- function(
   ega_defaults$model.args <- model.args
   ega_defaults$algorithm <- algorithm
   ega_defaults$algorithm.args <- algorithm.args
-  ega_defaults$plot.EGA <- FALSE
+  ega_defaults$plot.EGA <- plot.EGA
   ega_defaults$plot.type <- plot.type
   ega_defaults$plot.args <- plot.args
   ega_defaults$verbose <- verbose
