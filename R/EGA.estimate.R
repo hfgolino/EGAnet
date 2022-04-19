@@ -157,7 +157,7 @@
 #' @export
 #'
 # Estimates EGA
-# Updated 16.06.2021
+# Updated 19.04.2022
 EGA.estimate <- function(data, n = NULL,
                          model = c("glasso", "TMFG"), model.args = list(),
                          algorithm = c("walktrap", "louvain"), algorithm.args = list(),
@@ -338,8 +338,8 @@ EGA.estimate <- function(data, n = NULL,
   #### ADDITIONAL ARGUMENTS HANDLING ####
 
   # Estimate network
-  if(model == "glasso")
-  {
+  if(model == "glasso"){
+    
     # GLASSO additional arguments
     ## Lambda
     if(!"lambda.min.ratio" %in% names(model.args)){
@@ -418,9 +418,23 @@ EGA.estimate <- function(data, n = NULL,
     }else{wc <- do.call(what = algorithm, args = as.list(algorithm.formals))}
 
   }
+  
+  # Check for lower-order Louvain argument
+  if("lower.louvain" %in% names(add.args)){
+    
+    # Check for TRUE
+    if(isTRUE(add.args$lower.louvain)){
+      wc <- wc$memberships[1,] # lowest level of communities
+    }
+    
+  }else{
+    
+    # Obtain community memberships
+    wc <- wc$membership
+    
+  }
 
-  # Obtain community memberships
-  wc <- wc$membership
+  # Set up missing memberships
   init.wc <- as.vector(matrix(NA, nrow = 1, ncol = ncol(data)))
   init.wc[1:length(wc)] <- wc
   wc <- init.wc

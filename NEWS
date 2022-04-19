@@ -10,6 +10,8 @@ o UPDATE:  `itemStability` now has a parameter `structure` in which the user can
 
 o ADD: `riEGA` implementing random-intercept EGA for wording effects
 
+o ADD: `hierEGA` implementing hierarchical EGA
+
 
 Changes in version 1.0.0
 
