@@ -175,6 +175,12 @@ Returns a list containing:
 \item{score_type}{Type of scores estimated and used in the higher-order \code{\link[EGAnet]{EGA}}}
 
 \item{higher}{Higher-order results from \code{\link[EGAnet]{EGA}}}
+
+\item{lower_plot}{Plot for the lower-order dimensions}
+
+\item{higher_plot}{Plot for the higher-order dimensions}
+
+\item{hier_plot}{Plot showing the lower-order and higher-order dimensions}
 }
 \description{
 Estimates EGA using the lower-order solution of \code{\link[igraph]{cluster_louvain}}

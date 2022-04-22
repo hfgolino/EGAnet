@@ -49,7 +49,7 @@ then use the following code: \code{parallel::detectCores()}}
 Returns a list containing:
 
 \item{memberships}{Original memberships provided in \code{memberships}
-or from \code{\link[EGAnet]{EGA} if \code{NULL}}}
+or from \code{\link[EGAnet]{EGA}} if \code{NULL}}
 
 \item{EGA}{Original \code{\link[EGAnet]{EGA}} results for the sample}
 
@@ -101,12 +101,12 @@ groups <- rep(1:2, each = nrow(wmt) / 2)
 
 \dontshow{# Fast for CRAN
 # Measurement invariance
-results <- invariance(wmt, groups, iter = 1, memberships = ega.wmt$wc)
+results <- invariance(wmt, groups, iter = 1, memberships = ega.wmt$wc, ncores = 2)
 }
 
 \donttest{
 # Measurement invariance
-results <- invariance(wmt, groups)
+results <- invariance(wmt, groups, ncores = 2)
 }
 
 }
