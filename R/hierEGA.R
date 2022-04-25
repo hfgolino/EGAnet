@@ -183,7 +183,7 @@
 #' @export
 #' 
 # Hierarchical EGA
-# Updated 19.04.2022
+# Updated 25.04.2022
 hierEGA <- function(
     data, scores = c("factor", "network"),
     uni.method = c("expand", "LE"),
@@ -269,6 +269,12 @@ hierEGA <- function(
     )
   )
   
+  # Perform consensus clustering
+  lower_order_result$wc <- consensus_clustering(
+    lower_order_result$network,
+    order = "lower"
+  )
+  
   # Get S3 print information
   if(is.null(colnames(data))){
     dim.variables <- data.frame(
@@ -349,6 +355,14 @@ hierEGA <- function(
   ega_result <- do.call(
     EGA, ega_defaults
   )
+  
+  # Make consensus
+  if(algorithm == "louvain"){
+    ega_result$wc <- consensus_clustering(
+      ega_result$network,
+      order = "higher"
+    )
+  }
   
   # Return results
   results <- list()

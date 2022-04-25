@@ -12,6 +12,8 @@ o ADD: `riEGA` implementing random-intercept EGA for wording effects
 
 o ADD: `hierEGA` implementing hierarchical EGA
 
+o FIX: consensus clustering for the Louvain algorithm
+
 
 Changes in version 1.0.0
 

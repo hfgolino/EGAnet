@@ -82,6 +82,93 @@ poly.irt <- function(loadings, data)
   
 }
 
+#%%%%%%%%%%%%%
+# LOUVAIN ----
+#%%%%%%%%%%%%%
+# Lancichinetti & Fortunato (2012)
+#' @noRd
+# Consensus Clustering
+# Updated 25.04.2022
+consensus_clustering <- function(network, order = c("lower", "higher"))
+{
+  
+  # Obtain network names
+  network_names <- colnames(network)
+  
+  # Initialize D matrix
+  d_matrix <- matrix(0, nrow = ncol(network), ncol = ncol(network))
+  
+  # Binary check function
+  binary <- function(b_matrix){
+    all(b_matrix == 0 | b_matrix == 1)
+  }
+  
+  # Set up while loop
+  while(!binary(network)){
+    
+    # Convert network to igraph
+    igraph_network <- convert2igraph(abs(network))
+    
+    # Apply Louvain
+    communities <- lapply(1:1000, function(i){
+      
+      # Obtain memberships
+      wc <- igraph::cluster_louvain(igraph_network)$memberships
+      
+      # Obtain order
+      if(order == "lower"){
+        wc <- wc[1,]
+      }else if(order == "higher"){
+        wc <- wc[nrow(wc),]
+      }
+      
+      # Return
+      return(wc)
+      
+    })
+    
+    # Simplify to a matrix
+    wc_matrix <- t(simplify2array(communities, higher = FALSE))
+    
+    # Get indices for matrix
+    d_matrix <- matrix(0, nrow = ncol(wc_matrix), ncol = ncol(wc_matrix))
+    
+    # Obtain combinations for lower
+    combinations <- cbind(
+      rep(1:ncol(wc_matrix), times = ncol(wc_matrix)),
+      rep(1:ncol(wc_matrix), each = ncol(wc_matrix))
+    )
+    
+    # Fill lower order matrix
+    for(i in 1:nrow(combinations)){
+      
+      # Get indices
+      index1 <- combinations[i,1]
+      index2 <- combinations[i,2]
+      
+      d_matrix[index1, index2] <- mean(wc_matrix[,index1] == wc_matrix[,index2], na.rm = TRUE)
+      
+    }
+    
+    # Set values less than threshold to zero
+    d_matrix <- ifelse(d_matrix <= 0.30, 0, d_matrix)
+    
+    # Start over
+    network <- d_matrix
+    
+  }
+  
+  # Obtain final communities
+  igraph_network <- convert2igraph(abs(network))
+  wc <- igraph::cluster_louvain(igraph_network)$membership
+  
+  # Assign names
+  names(wc) <- network_names
+  
+  # Return consensus
+  return(wc)
+}
+
 #%%%%%%%%%%%%%%%%%%%%
 # NETWORKTOOLBOX ----
 #%%%%%%%%%%%%%%%%%%%%
