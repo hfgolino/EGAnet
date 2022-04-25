@@ -110,7 +110,7 @@ consensus_clustering <- function(network, order = c("lower", "higher"))
     igraph_network <- convert2igraph(abs(network))
     
     # Apply Louvain
-    communities <- lapply(1:1000, function(i){
+    communities <- lapply(1:10000, function(i){
       
       # Obtain memberships
       wc <- igraph::cluster_louvain(igraph_network)$memberships
