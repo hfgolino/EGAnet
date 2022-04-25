@@ -160,7 +160,17 @@ consensus_clustering <- function(network, order = c("lower", "higher"))
   
   # Obtain final communities
   igraph_network <- convert2igraph(abs(network))
-  wc <- igraph::cluster_louvain(igraph_network)$membership
+  wc <- igraph::cluster_louvain(igraph_network)$memberships
+  
+  # Obtain order
+  if(order == "lower"){
+    wc <- wc[1,]
+  }else if(order == "higher"){
+    wc <- wc[nrow(wc),]
+  }
+  
+  # Ensure vector
+  wc <- as.vector(wc)
   
   # Assign names
   names(wc) <- network_names
