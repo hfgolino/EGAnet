@@ -183,7 +183,7 @@
 #' @export
 #' 
 # Hierarchical EGA
-# Updated 25.04.2022
+# Updated 27.04.2022
 hierEGA <- function(
     data, scores = c("factor", "network"),
     uni.method = c("expand", "LE"),
@@ -262,17 +262,17 @@ hierEGA <- function(
   lower_order_defaults$verbose <- FALSE # quiet
   lower_order_defaults$lower.louvain <- TRUE # provides lower order Louvain
   
+  # Send message
+  message(
+    "Obtaining lower-order dimensions...",
+    appendLF = FALSE
+  )
+  
   # Get EGA
   lower_order_result <- suppressMessages(
     do.call(
       EGA.estimate, lower_order_defaults
     )
-  )
-  
-  # Send message
-  message(
-    "Obtaining lower-order dimensions...",
-    appendLF = FALSE
   )
   
   # Perform consensus clustering
@@ -305,13 +305,16 @@ hierEGA <- function(
   # Estimate scores
   if(scores == "factor"){
     
+    # Obtain memberships
+    memberships <- lower_order_result$wc
+    unique_memberships <- unique(memberships)
+    
     # Estimate factor model
     fm <- suppressWarnings(
       psych::fa(
         r = lower_order_result$cor.data, # correlation matrix
         n.obs = nrow(data),
-        nfactors = length(na.omit(unique(lower_order_result$wc))), # number of factors
-        rotate = "oblimin"
+        nfactors = length(na.omit(unique_memberships)) # number of factors
       )
     )
     
@@ -322,7 +325,39 @@ hierEGA <- function(
     )$scores
     
     # Lower-order loadings
-    lower_loads <- fm$loadings[,1:length(na.omit(unique(lower_order_result$wc)))]
+    lower_loads <- fm$loadings[,1:length(na.omit(unique_memberships))]
+    
+    # Estimate network loadings
+    net_loads <- net.loads(
+      A = lower_order_result$network,
+      wc = lower_order_result$wc
+    )$std
+    
+    # Congruence with network loadings
+    congruence <- cor(
+      lower_loads,
+      net_loads
+    )
+    
+    # Map dimensions
+    mapped_dims <- apply(congruence, 1, which.max)
+    
+    # Check for mismatch
+    if(length(na.omit(unique(mapped_dims))) != length(na.omit(unique_memberships))){
+      mismatch <- TRUE
+    }else{
+      
+      mismatch <- FALSE
+      
+      # If there is not a mismatch, then replace
+      mapped_memberships <- mapped_dims[memberships]
+     
+      # Change names
+      colnames(lower_loads) <- mapped_memberships[colnames(lower_loads)]
+      colnames(score_est) <- colnames(lower_loads)
+      
+    }
+    
     
   }else if(scores == "network"){
     
@@ -407,6 +442,17 @@ hierEGA <- function(
   
   # Make class "hierEGA"
   class(results) <- "hierEGA"
+  
+  # Send factor warning
+  if(scores == "factor"){
+    
+    if(isTRUE(mismatch)){
+      
+      warning("Lower order factor loadings did not map to lower order network dimensions.\nPlease see `$lower_loadings` to map lower order dimensions to higher order dimensions")
+      
+    }
+    
+  }
   
   return(results)
 }
