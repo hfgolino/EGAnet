@@ -1,4 +1,4 @@
-#' Ergodicity Infor`````````````mation Index
+#' Ergodicity Information Index
 #' @description Computes the Ergodicity Information Index
 #'
 #' @param data A dynEGA.ind.pop object
@@ -34,7 +34,7 @@
 #'
 #' @export
 # Ergodicity Information Index
-# Updated 30.12.2021
+# Updated 04.27.2022
 ergoInfo <- function(data, use = c("edge.list", "weights")){
 
   #### MISSING ARGUMENTS HANDLING ####
@@ -55,7 +55,7 @@ ergoInfo <- function(data, use = c("edge.list", "weights")){
     res_list$adj.net <- as.matrix(igraph::get.adjacency(res_list$igraph.Network, type="both"))
     return(res_list)
   })
-  
+
   gsize.net.vec <- unlist(
     lapply(net.list, function(x){
       x$gsize.net
@@ -65,7 +65,7 @@ ergoInfo <- function(data, use = c("edge.list", "weights")){
   # order by size:
   mat.size <- data.frame(Ind = seq_along(ids), Size = gsize.net.vec)
   mat.size <- mat.size[order(mat.size$Size, decreasing = FALSE),]
-  
+
   # Load deep learning neural network weights
   prime.num <- get(data("prime.num", envir = environment()))
 
@@ -80,7 +80,7 @@ ergoInfo <- function(data, use = c("edge.list", "weights")){
 
   # Computing the Prime-Weight Transformation
   mat.encode.list <- lapply(seq_along(ids), function(i){
-    
+
     apply(grid, 1,function(x){
       return(
         ifelse(
@@ -90,55 +90,55 @@ ergoInfo <- function(data, use = c("edge.list", "weights")){
         )
       )
     })
-    
+
   })
-  
+
   encode <- Reduce("*", mat.encode.list)
   mat.encode <- matrix(encode, ncol = ncol(net.list.ordered[[1]]$Network), nrow = nrow(net.list.ordered[[1]]$Network))
   mat.encode <- ifelse(mat.encode==1, 0, mat.encode)
-  mat.encode.igraph <- convert2igraph(mat.encode)
+  mat.encode.igraph <- SemNeT::convert2igraph(mat.encode)
   edge.list.mat.encode <- igraph::get.edgelist(mat.encode.igraph)
 
   if(use == "edge.list"){
-    
+
     iter <- 1:1000
-  
+
     bits <- lapply(iter, function(i){
       toString(edge.list.mat.encode[sample(1:nrow(edge.list.mat.encode), size = nrow(edge.list.mat.encode), replace = TRUE)])
     })
-    
+
     compression <- lapply(iter, function(i){
       memCompress(bits[[i]], "gzip")
     })
-    
+
     kcomp <- lapply(iter, function(i){
       length(compression[[i]])
     })
-  
+
   }else{
-    
+
     edge.list.mat.encode2 <- edge.list.mat.encode
-    
+
     edge.list.mat.encode2 <- cbind(edge.list.mat.encode2, NA)
-    
+
     for(i in 1:nrow(edge.list.mat.encode2)){
       edge.list.mat.encode2[i,3] <- mat.encode[edge.list.mat.encode2[i,1],edge.list.mat.encode2[i,2]]
     }
-    
+
     iter <- 1:1000
-    
+
     bits <- lapply(iter, function(i){
       toString(edge.list.mat.encode2[sample(1:nrow(edge.list.mat.encode2), size = nrow(edge.list.mat.encode2), replace = TRUE),3])
     })
-    
+
     compression <- lapply(iter, function(i){
       memCompress(bits[[i]], "gzip")
     })
-    
+
     kcomp <- lapply(iter, function(i){
       length(compression[[i]])
     })
-    
+
   }
 
   # List of Population Networks ----
@@ -187,45 +187,45 @@ ergoInfo <- function(data, use = c("edge.list", "weights")){
   edge.list.mat.encode.pop <- igraph::get.edgelist(mat.encode.igraph.pop)
 
   if(use == "edge.list"){
-    
+
     iter <- 1:1000
-    
+
     bits.pop <- lapply(iter, function(i){
       toString(edge.list.mat.encode.pop[sample(1:nrow(edge.list.mat.encode.pop), size = nrow(edge.list.mat.encode.pop), replace = TRUE)])
     })
-    
+
     compression.pop <- lapply(iter, function(i){
       memCompress(bits.pop[[i]], "gzip")
     })
-    
+
     kcomp.pop <- lapply(iter, function(i){
       length(compression.pop[[i]])
     })
-    
+
   }else{
-    
+
     edge.list.mat.encode.pop2 <- edge.list.mat.encode.pop
-    
+
     edge.list.mat.encode.pop2 <- cbind(edge.list.mat.encode.pop2, NA)
-    
+
     for(i in 1:nrow(edge.list.mat.encode.pop2)){
       edge.list.mat.encode.pop2[i,3] <- mat.encode.pop[edge.list.mat.encode.pop2[i,1],edge.list.mat.encode.pop2[i,2]]
     }
-    
+
     iter <- 1:1000
-    
+
     bits.pop <- lapply(iter, function(i){
       toString(edge.list.mat.encode.pop2[sample(1:nrow(edge.list.mat.encode.pop2), size = nrow(edge.list.mat.encode.pop2), replace = TRUE),3])
     })
-    
+
     compression.pop <- lapply(iter, function(i){
       memCompress(bits.pop[[i]], "gzip")
     })
-    
+
     kcomp.pop <- lapply(iter, function(i){
       length(compression.pop[[i]])
     })
-    
+
   }
 
   # Kolmogorov Complexity:

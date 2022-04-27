@@ -2,7 +2,7 @@
 % Please edit documentation in R/ergoInfo.R
 \name{ergoInfo}
 \alias{ergoInfo}
-\title{Ergodicity Infor`````````````mation Index}
+\title{Ergodicity Information Index}
 \usage{
 ergoInfo(data, use = c("edge.list", "weights"))
 }
