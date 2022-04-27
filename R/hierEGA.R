@@ -269,11 +269,20 @@ hierEGA <- function(
     )
   )
   
+  # Send message
+  message(
+    "Obtaining lower-order dimensions...",
+    appendLF = FALSE
+  )
+  
   # Perform consensus clustering
   lower_order_result$wc <- consensus_clustering(
     lower_order_result$network,
     order = "lower"
   )
+  
+  # End message
+  message("done.")
   
   # Get S3 print information
   if(is.null(colnames(data))){

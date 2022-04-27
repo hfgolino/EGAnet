@@ -61,7 +61,7 @@
 #'
 #' @export
 #'
-# Updated 28.07.2021
+# Updated 27.04.2022
 ## Function to produce color palettes for EGA
 color_palette_EGA <- function (name, wc, sorted = FALSE)
 {
@@ -108,9 +108,19 @@ color_palette_EGA <- function (name, wc, sorted = FALSE)
           c("F03D2D", "90DDF0", "C8D96F", "ef8a17", "f5c900",
             "ba42c0", "17BEBB", "9bafd9", "f27a7d", "f9c58d",
             "f7f779", "c5f9d7", "a18dce", "f492f0", "919bff",
-            "C792DF", "60b6f1", "f9a470", "bc556f", "f7a2a1"
+            "c792df", "60b6f1", "f9a470", "bc556f", "f7a2a1",
+            "3a445d", "5e5768", "928779", "d4d2a5", "fcdebe",
+            "6d1a36", "bce7fd", "53917e", "dd99bb", "fcd0a1"
+            
           ), sep = "")
   )
+  
+  # Check colors
+  #barplot(
+  #  1:20,
+  #  col = polychrome
+  #)
+  
   
   ## Other palettes
   
