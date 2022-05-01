@@ -599,6 +599,9 @@ UVA <- function(
         if(ncol(reduced$data) == 1){
           
           # Message user
+          message("done")
+          
+          # Message user
           message(
             "\nAfter combining local dependencies, data are determined to be unidimensional."
           )
@@ -660,10 +663,10 @@ UVA <- function(
           
         }
         
+        # Message user
+        message("done")
+        
       }
-      
-      # Message user
-      message("done")
     
       # # Name latent variables
       # name_question <- readline(prompt = "Name latent variables? [Y/n]: ")
