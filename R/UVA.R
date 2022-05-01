@@ -332,11 +332,7 @@ UVA <- function(
   
   ## type
   if(missing(type)){
-    
     type <- "threshold"
-    
-    warning('The default for the `type` argument has changed to "threshold"')
-    
   }else{type <- tolower(match.arg(type))}
   
   ## sig
