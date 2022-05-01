@@ -593,18 +593,7 @@ UVA <- function(
         
         # Check for undimensionality
         if(ncol(reduced$data) == 1){
-          
-          # Message user
-          message("done")
-          
-          # Message user
-          message(
-            "\nAfter combining local dependencies, data are determined to be unidimensional."
-          )
-          
           break
-          
-          
         }else{
           
           ## Run check
@@ -659,9 +648,16 @@ UVA <- function(
           
         }
         
-        # Message user
-        message("done")
-        
+      }
+      
+      # Message user
+      message("done")
+      
+      # Message user
+      if(ncol(reduced$data) == 1){
+        message(
+          "\nAfter combining local dependencies, data are determined to be unidimensional."
+        )
       }
     
       # # Name latent variables
