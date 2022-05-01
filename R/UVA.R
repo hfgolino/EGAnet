@@ -298,7 +298,7 @@
 #' @export
 #
 # Unique Variable Analysis
-# Updated 23.01.2022
+# Updated 01.05.2022
 UVA <- function(
   data, n = NULL,
   model = c("glasso", "TMFG"),
@@ -595,54 +595,70 @@ UVA <- function(
                                      lavaan.args = lavaan.args,
                                      corr = corr)
         
-        ## Run check
-        ## Compute correlation matrix
-        if(isSymmetric(reduced$data)){
-          cor.data <- reduced$data
+        # Check for undimensionality
+        if(ncol(reduced$data) == 1){
+          
+          # Message user
+          message(
+            "\nAfter combining local dependencies, data are determined to be unidimensional."
+          )
+          
+          break
+          
+          
         }else{
           
-          sink <- capture.output(
-            cor.data <- suppressMessages(
-              suppressWarnings(
-                switch(corr,
-                       "cor_auto" = qgraph::cor_auto(reduced$data),
-                       "pearson" = cor(reduced$data, use = "pairwise.complete.obs"),
-                       "spearman" = cor(reduced$data, method = "spearman", use = "pairwise.complete.obs")
+          ## Run check
+          ## Compute correlation matrix
+          if(isSymmetric(reduced$data)){
+            cor.data <- reduced$data
+          }else{
+            
+            sink <- capture.output(
+              cor.data <- suppressMessages(
+                suppressWarnings(
+                  switch(corr,
+                         "cor_auto" = qgraph::cor_auto(reduced$data),
+                         "pearson" = cor(reduced$data, use = "pairwise.complete.obs"),
+                         "spearman" = cor(reduced$data, method = "spearman", use = "pairwise.complete.obs")
+                  )
                 )
               )
             )
-          )
-          
-        }
-        
-        adhoc.check <- suppressMessages(
-          redundancy.process(data = reduced$data, cormat = cor.data,
-                             n = n,
-                             model = model,
-                             method = "wto",
-                             type = "threshold", sig = sig,
-                             plot.redundancy = FALSE, plot.args = plot.args)
-        )
-        
-        # Check for names in key
-        rename_check <- adhoc.check$redundant
-        target_names <- names(rename_check) %in% names(key)
-        if(any(target_names)){
-          names(rename_check)[target_names] <- key[names(rename_check)[target_names]]
-        }
-        
-        # Insert into adhoc.check
-        adhoc.check$redundant <- lapply(rename_check, function(x){
-          
-          target_names <- x %in% names(key) 
-          
-          if(any(target_names)){
-            x[target_names] <- key[x[target_names]]
+            
           }
           
-          return(x)
+          adhoc.check <- suppressMessages(
+            redundancy.process(data = reduced$data, cormat = cor.data,
+                               n = n,
+                               model = model,
+                               method = "wto",
+                               type = "threshold", sig = sig,
+                               plot.redundancy = FALSE, plot.args = plot.args)
+          )
           
-        })
+          # Check for names in key
+          rename_check <- adhoc.check$redundant
+          target_names <- names(rename_check) %in% names(key)
+          if(any(target_names)){
+            names(rename_check)[target_names] <- key[names(rename_check)[target_names]]
+          }
+          
+          # Insert into adhoc.check
+          adhoc.check$redundant <- lapply(rename_check, function(x){
+            
+            target_names <- x %in% names(key) 
+            
+            if(any(target_names)){
+              x[target_names] <- key[x[target_names]]
+            }
+            
+            return(x)
+            
+          })
+          
+          
+        }
         
       }
       

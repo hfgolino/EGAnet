@@ -4370,8 +4370,7 @@ redund.reduce.auto <- function(node.redundant.obj,
         latent <- as.numeric(lavaan::lavPredict(fit))
         
         ## check for missing cases and handle
-        if(length(cases) != nrow(new.data))
-        {
+        if(length(cases) != nrow(new.data)){
           new.vec <- as.vector(matrix(NA, nrow = nrow(new.data), ncol = 1))
           new.vec[cases] <- latent
         }else{new.vec <- latent}
@@ -4621,7 +4620,7 @@ redund.reduce.auto <- function(node.redundant.obj,
 
 #' @noRd
 # Redundancy Adhoc Reduction (Automated)
-# Updated 23.01.2022
+# Updated 01.05.2022
 redund.adhoc.auto <- function(node.redundant.obj,
                               node.redundant.reduced,
                               node.redundant.original,
@@ -4710,8 +4709,7 @@ redund.adhoc.auto <- function(node.redundant.obj,
   merged <- merged[order(unlist(lapply(merged, length)), decreasing = TRUE)]
   
   # Get key
-  if("key" %in% names(node.redundant.original))
-  {
+  if("key" %in% names(node.redundant.original)){
     key <- node.redundant.original$key
     names(key) <- names(node.redundant.original$key)
   }else{
@@ -4719,7 +4717,7 @@ redund.adhoc.auto <- function(node.redundant.obj,
     names(key) <- key
   }
   
-  # Remove missing reundancies
+  # Remove missing redundancies
   merged <- lapply(merged, function(x){
     if(length(x) == 0){
       NULL
@@ -4783,11 +4781,12 @@ redund.adhoc.auto <- function(node.redundant.obj,
         new.vec[cases] <- latent
       }else{new.vec <- latent}
       
-      # Remove variables
-      new.data <- new.data[,-match(idx, colnames(new.data))]
-      
       # Tack on latent variable
+      ## Must come first!
       new.data <- cbind(new.data, new.vec)
+      
+      # Remove variables (ensure matrix)
+      new.data <- as.matrix(new.data[,-match(idx, colnames(new.data))])
       
       # Rename latent variable
       colnames(new.data)[ncol(new.data)] <- names(merged)[i]
