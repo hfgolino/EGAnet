@@ -88,8 +88,11 @@ poly.irt <- function(loadings, data)
 # Lancichinetti & Fortunato (2012)
 #' @noRd
 # Consensus Clustering
-# Updated 25.04.2022
-consensus_clustering <- function(network, order = c("lower", "higher"))
+# Updated 01.05.2022
+consensus_clustering <- function(
+    network, order = c("lower", "higher"),
+    consensus_iter
+)
 {
   
   # Obtain network names
@@ -103,14 +106,20 @@ consensus_clustering <- function(network, order = c("lower", "higher"))
     all(b_matrix == 0 | b_matrix == 1)
   }
   
+  # Initialize count for homogenizing membership
+  count <- 0
+  
   # Set up while loop
   while(!binary(network)){
+    
+    # Increase count
+    count <- count + 1
     
     # Convert network to igraph
     igraph_network <- convert2igraph(abs(network))
     
     # Apply Louvain
-    communities <- lapply(1:10000, function(i){
+    communities <- lapply(1:consensus_iter, function(j){
       
       # Obtain memberships
       wc <- igraph::cluster_louvain(igraph_network)$memberships
@@ -122,6 +131,9 @@ consensus_clustering <- function(network, order = c("lower", "higher"))
         wc <- wc[nrow(wc),]
       }
       
+      # Return order
+      wc <- wc[order(ordering)]
+      
       # Return
       return(wc)
       
@@ -129,6 +141,38 @@ consensus_clustering <- function(network, order = c("lower", "higher"))
     
     # Simplify to a matrix
     wc_matrix <- t(simplify2array(communities, higher = FALSE))
+    
+    # Check for count
+    if(count == 1){
+      
+      # Make data frame
+      df <- as.data.frame(wc_matrix)
+      
+      # Obtain duplicate indices
+      dupe_ind <- duplicated(df)
+      
+      # Rows for non-duplicates
+      non_dupes <- data.frame(df[!dupe_ind,])
+      
+      # Rows for duplicates
+      dupes <- data.frame(df[dupe_ind,])
+      
+      # Match duplicates with non-duplicates
+      dupe_count <- table(
+        match(
+          data.frame(t(dupes)), data.frame(t(non_dupes))
+        ))
+      
+      # Identify count with most
+      target_wc <- unlist(non_dupes[which.max(dupe_count),])
+      
+      # Homogenize memberships
+      wc_matrix <- t(homogenize.membership(
+        target.wc = target_wc,
+        convert.wc = t(wc_matrix)
+      ))
+      
+    }
     
     # Get indices for matrix
     d_matrix <- matrix(0, nrow = ncol(wc_matrix), ncol = ncol(wc_matrix))
