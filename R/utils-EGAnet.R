@@ -131,9 +131,6 @@ consensus_clustering <- function(
         wc <- wc[nrow(wc),]
       }
       
-      # Return order
-      wc <- wc[order(ordering)]
-      
       # Return
       return(wc)
       
