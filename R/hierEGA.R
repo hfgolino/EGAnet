@@ -415,7 +415,8 @@ hierEGA <- function(
   if(algorithm == "louvain"){
     ega_result$wc <- consensus_clustering(
       ega_result$network,
-      order = "higher"
+      order = "higher",
+      consensus_iter = consensus_iter
     )
   }
   

@@ -79,7 +79,7 @@
 #' 
 #' @importFrom methods is
 #'
-# Network Descriptives
+# Network Descriptive
 # Updated 12.05.2021
 network.descriptives <- function(network)
 {
