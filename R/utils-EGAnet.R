@@ -3371,7 +3371,7 @@ dynEGA.ind.pop <- function(data, n.embed, tau = 1, delta = 1,
 
 #' @noRd
 # Redundancy Processing
-# Updated 14.04.2021
+# Updated 04.05.2022
 redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.redundancy, plot.args)
 {
   # Compute redundancy method
@@ -3413,6 +3413,12 @@ redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.r
     }else{tom <- cormat}
     
   #}
+  
+  # Ensure column names
+  if(is.null(colnames(tom))){
+    colnames(tom) <- paste("V", 1:ncol(tom), sep = "")
+    row.names(tom) <- colnames(tom)
+  }
   
   # Number of variables; diagonal zero; absolute values
   vars <- ncol(tom); diag(tom) <- 0; tom <- abs(tom)
@@ -3624,15 +3630,17 @@ redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.r
 redund.names <- function(node.redundant.obj, key)
 {
   # Check for node.redundant object class
-  if(class(node.redundant.obj) != "node.redundant")
-  {stop("A 'node.redundant' object must be used as input")}
+  if(class(node.redundant.obj) != "node.redundant"){
+    stop("A 'node.redundant' object must be used as input")
+  }
   
   # Obtain and remove data from node redundant object
   data <- node.redundant.obj$data
   
   # Check that columns match key
-  if(ncol(data) != length(as.vector(key)))
-  {stop("Number of columns in data does not match the length of 'key'")}
+  if(ncol(data) != length(as.vector(key))){
+    stop("Number of columns in data does not match the length of 'key'")
+  }
   
   # Names of node.redundant object
   nr.names <- names(node.redundant.obj$redundant)
@@ -3643,8 +3651,8 @@ redund.names <- function(node.redundant.obj, key)
   # Key change
   key.chn <- key
   
-  for(i in 1:length(nr.names))
-  {
+  for(i in 1:length(nr.names)){
+    
     # Target redundant node
     target.r <- match(names(node.redundant.obj$redundant)[i],key.names)
     
@@ -3656,6 +3664,7 @@ redund.names <- function(node.redundant.obj, key)
     
     # Replace item names with description
     node.redundant.obj$redundant[[i]] <- as.character(key.chn[target.o])
+    
   }
   
   # Create key code
@@ -3844,8 +3853,9 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
 redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.args, corr)
 {
   # Check for node.redundant object class
-  if(class(node.redundant.obj) != "node.redundant")
-  {stop("A 'node.redundant' object must be used as input")}
+  if(class(node.redundant.obj) != "node.redundant"){
+    stop("A 'node.redundant' object must be used as input")
+  }
   
   # Redundant list
   redund <- node.redundant.obj$redundant
@@ -3870,8 +3880,7 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
   count <- 0
   
   # Get key
-  if("key" %in% names(node.redundant.obj))
-  {
+  if("key" %in% names(node.redundant.obj)){
     key <- node.redundant.obj$key
     names(key) <- names(node.redundant.obj$key)
   }else{
@@ -3887,8 +3896,8 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
   prev.state.data <- list(new.data)
   
   # Loop through named node redundant list
-  while(length(redund) != 0)
-  {
+  while(length(redund) != 0){
+    
     # Targeting redundancy
     target.item <- names(redund)[1]
     

@@ -1,4 +1,4 @@
-#' Ergodicity Infor`````````````mation Index
+#' Ergodicity Information Index
 #' @description Computes the Ergodicity Information Index
 #'
 #' @param data A dynEGA.ind.pop object
