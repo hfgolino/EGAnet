@@ -4104,13 +4104,17 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
         
       }
       
-      # Remove redundant variables from data
-      rm.idx <- match(idx, colnames(new.data))
-      
-      if(isSymmetric(new.data)){
-        new.data <- new.data[-rm.idx, -rm.idx]
-      }else{
-        new.data <- new.data[,-rm.idx]
+      if(reduce.method != "sum"){
+        
+        # Remove redundant variables from data
+        rm.idx <- match(idx, colnames(new.data))
+        
+        if(isSymmetric(new.data)){
+          new.data <- new.data[-rm.idx, -rm.idx]
+        }else{
+          new.data <- new.data[,-rm.idx]
+        }
+        
       }
       
       # Update previous state data
@@ -4201,9 +4205,6 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
       linebreak()
       input <- NULL
     }
-    
-    # Artificial pause for smoothness of experience
-    Sys.sleep(1)
     
   }
   
