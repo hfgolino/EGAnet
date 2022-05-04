@@ -3849,7 +3849,7 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
 #' @importFrom graphics text
 #' @noRd
 # Redundancy Reduction
-# Updated 23.01.2022
+# Updated 04.05.2022
 redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.args, corr)
 {
   # Check for node.redundant object class
@@ -4250,11 +4250,8 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
     
     if(reduce.method == "latent"){
       colnames(m.mat) <- c("Target", paste("Redundancy_", 1:(ncol(m.mat)-1), sep = ""))
-    }else if(reduce.method == "remove"){
+    }else{
       colnames(m.mat) <- c(paste("Redundancy_", 1:ncol(m.mat), sep = ""))
-    }else if(reduce.method == "sum"){
-      colnames(m.mat) <- c(paste("Redundancy_", 1:ncol(m.mat), sep = ""))
-      row.names(m.mat) <- c(paste("LV_", 1:nrow(m.mat), sep = ""))
     }
   }
   
