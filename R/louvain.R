@@ -4,12 +4,20 @@
 #'
 #' @param A Matrix or data frame.
 #' A network adjacency matrix
+#' 
+#' @param method Character.
+#' Whether modularity or \code{\link[EGAnet]{tefi}} should
+#' be used to optimize communities.
+#' Defaults to \code{"modularity"}
 #'
 #' @param resolution Numeric.
 #' Resolution parameter for computing modularity.
 #' Defaults to \code{1}.
 #' Values smaller than 1 favor larger communities;
 #' values larger than 1 favor smaller communities
+#' 
+#' @param corr Matrix or data frame.
+#' Correlation matrix to be used when \code{method = "tefi"}
 #' 
 #' @details This version was adapted from the Matlab code available here:
 #' https://perso.uclouvain.be/vincent.blondel/research/louvain.html. The code
@@ -44,14 +52,47 @@
 #' Fast unfolding of communities in large networks.
 #' \emph{Journal of Statistical Mechanics: Theory and Experiment}, \emph{2008}, P10008.
 #'
-#' @author Alexander P. Christensen <alexpaulchristensen@gmail.com>
+#' @author Alexander P. Christensen <alexpaulchristensen@gmail.com> and Hudson Golino <hfg9s@virginia.edu>
 #' 
 #' @export
 #'
 # Louvain
 # Updated 06.05.2022
-louvain <- function(A, resolution = 1)
+louvain <- function(
+    A,
+    method = c("modularity", "tefi"),
+    resolution = 1,
+    corr = NULL
+)
 {
+  
+  # Check for missing arguments
+  if(missing(method)){
+    method <- "modularity"
+  }else{
+    method <- tolower(match.arg(method))
+  }
+  
+  # Check for correlation matrix
+  if(method == "tefi"){
+    
+    # Ensure matrix
+    corr <- as.matrix(corr)
+    
+    # Ensure absolute
+    corr <- abs(corr)
+    
+    # Missing correlation matrix
+    if(missing(corr)){
+      stop("Correlation matrix is necessary to compute TEFI")
+    }
+    
+    # Symmetric matrix
+    if(nrow(corr) != ncol(corr)){
+      stop("Matrix input as correlation matrix does not have the same number of rows and columns")
+    }
+    
+  }
   
   # Ensure matrix
   A <- as.matrix(A)
@@ -66,7 +107,12 @@ louvain <- function(A, resolution = 1)
   count <- 1
   
   # Lower order ----
-  results <- louvain_communities(A, resolution)
+  results <- louvain_communities(
+    newA = A,
+    method = method,
+    resolution = resolution,
+    corr = corr
+  )
   community_results[count,] <- results$communities
   q_results[count] <- results$modularity
   
@@ -83,7 +129,10 @@ louvain <- function(A, resolution = 1)
     
     # Obtain communities and modularity
     results <- louvain_communities(
-      newA = newA, resolution = resolution,
+      newA = newA,
+      method = method,
+      resolution = resolution,
+      corr = corr,
       original_A = A,
       previous_communities = community_results[count - 1,],
       previous_modularity = q_results[count - 1]
@@ -138,7 +187,11 @@ louvain <- function(A, resolution = 1)
   # Set up results to return
   results <- list()
   results$wc <- community_results
-  results$modularity <- round(q_results, 5)
+  if(method == "modularity"){
+    results$modularity <- round(q_results, 5)
+  }else if(method == "tefi"){
+    results$tefi <- round(q_results, 5)
+  }
   
   # Return results
   return(results)

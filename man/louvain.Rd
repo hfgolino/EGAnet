@@ -4,17 +4,25 @@
 \alias{louvain}
 \title{Louvain Community Detection Algorithm}
 \usage{
-louvain(A, resolution = 1)
+louvain(A, method = c("modularity", "tefi"), resolution = 1, corr = NULL)
 }
 \arguments{
 \item{A}{Matrix or data frame.
 A network adjacency matrix}
+
+\item{method}{Character.
+Whether modularity or \code{\link[EGAnet]{tefi}} should
+be used to optimize communities.
+Defaults to \code{"modularity"}}
 
 \item{resolution}{Numeric.
 Resolution parameter for computing modularity.
 Defaults to \code{1}.
 Values smaller than 1 favor larger communities;
 values larger than 1 favor smaller communities}
+
+\item{corr}{Matrix or data frame.
+Correlation matrix to be used when \code{method = "tefi"}}
 }
 \value{
 Returns a list containing:
@@ -56,5 +64,5 @@ Fast unfolding of communities in large networks.
 \emph{Journal of Statistical Mechanics: Theory and Experiment}, \emph{2008}, P10008.
 }
 \author{
-Alexander P. Christensen <alexpaulchristensen@gmail.com>
+Alexander P. Christensen <alexpaulchristensen@gmail.com> and Hudson Golino <hfg9s@virginia.edu>
 }

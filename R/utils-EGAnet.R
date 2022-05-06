@@ -91,7 +91,10 @@ poly.irt <- function(loadings, data)
 # Louvain Communities
 # Updated 06.05.2022
 louvain_communities <- function(
-    newA, resolution,
+    newA, 
+    method,
+    resolution,
+    corr,
     original_A = NULL,
     previous_communities = NULL,
     previous_modularity = NULL
@@ -204,14 +207,23 @@ louvain_communities <- function(
           if(any(communities != new_communities)){
             
             # Compute gain
-            gain_vector[neighbor_community] <- modularity( # new modularity
-              new_communities,
-              newA, resolution = resolution
-            ) -
-              modularity( # old modularity
-                communities,
+            if(method == "modularity"){
+              gain_vector[neighbor_community] <- modularity( # new modularity
+                new_communities,
                 newA, resolution = resolution
-              )
+              ) -
+                modularity( # old modularity
+                  communities,
+                  newA, resolution = resolution
+                )
+            }else if(method == "tefi"){
+              
+              # Reverse order (lower is better)
+              gain_vector[neighbor_community] <- tefi(corr, communities)$VN.Entropy.Fit -
+                tefi(corr, new_communities)$VN.Entropy.Fit
+              
+            }
+            
             # Matlab implementation of gain
             #(strength_within / total) -
             #(2 * strength[i] * strength2[neighbor_community]) /
@@ -263,20 +275,42 @@ louvain_communities <- function(
         ## Update communities
         improve_communities <- previous_communities
         improve_communities[improve_communities == target_community] <- new_community
-        ## Update modularity
-        improve_modularity <- modularity(
-          communities = improve_communities,
-          A = original_A,
-          resolution = resolution
-        )
         
-        # Check for update
-        if(improve_modularity > previous_modularity){
+        ## Update modularity
+        if(method == "modularity"){
           
-          # Update communities
-          communities[i] <- new_community
-          update_communities <- improve_communities
-          update_modularity <- improve_modularity
+          # Higher values are better
+          improve_modularity <- modularity(
+            communities = improve_communities,
+            A = original_A,
+            resolution = resolution
+          )
+          
+          # Check for update
+          if(improve_modularity > previous_modularity){
+            
+            # Update communities
+            communities[i] <- new_community
+            update_communities <- improve_communities
+            update_modularity <- improve_modularity
+            
+          }
+          
+          
+        }else if(method == "tefi"){
+          
+          # Lower values are better
+          improve_modularity <- tefi(corr, improve_communities)$VN.Entropy.Fit
+          
+          # Check for update
+          if(improve_modularity < previous_modularity){
+            
+            # Update communities
+            communities[i] <- new_community
+            update_communities <- improve_communities
+            update_modularity <- improve_modularity
+            
+          }
           
         }
         
@@ -346,7 +380,13 @@ louvain_communities <- function(
       }
       
     }else{
-      Q <- modularity(communities, newA, resolution) 
+      
+      if(method == "modularity"){
+        Q <- modularity(communities, newA, resolution) 
+      }else if(method == "tefi"){
+        Q <- tefi(corr, communities)$VN.Entropy.Fit
+      }
+      
     }
     
     # Increase iterations
@@ -360,7 +400,7 @@ louvain_communities <- function(
   # Return results
   results <- list()
   results$communities <- communities
-  results$modularity <- Q
+  results$modularity <- Q # OR tefi 
   
   return(results)
   
