@@ -44,13 +44,13 @@ ergoInfo <- function(data, use = c("edge.list", "weights")){
 
   # dynEGA (Individual)
   ids <- unique(data$Derivatives$EstimatesDF[,ncol(data$Derivatives$EstimatesDF)])
-
+  ids <- paste0("ID", ids)
   # List of Individual Networks ----
   net.list <- lapply(seq_along(ids), function(i){
     res_list <- list()
     res_list$IDs <- ids[i] # IDs
     res_list$Network <- data$dynEGA.ind[[ids[i]]]$network # Networks
-    res_list$igraph.Network <- convert2igraph(res_list$Network) # igraph Network
+    res_list$igraph.Network <- SemNeT::convert2igraph(res_list$Network) # igraph Network
     res_list$gsize.net <- igraph::gsize(res_list$igraph.Network) # igraph Size
     res_list$adj.net <- as.matrix(igraph::get.adjacency(res_list$igraph.Network, type="both"))
     return(res_list)
@@ -146,7 +146,7 @@ ergoInfo <- function(data, use = c("edge.list", "weights")){
     res_list <- list()
     res_list$IDs <- i # ID
     res_list$Network <- data$dynEGA.pop$network # Network
-    res_list$igraph.Network <- convert2igraph(res_list$Network) # igraph Network
+    res_list$igraph.Network <- SemNeT::convert2igraph(res_list$Network) # igraph Network
     res_list$gsize.net <- igraph::gsize(res_list$igraph.Network) # igraph Size
     res_list$adj.net <- as.matrix(igraph::get.adjacency(res_list$igraph.Network,type="both"))
     return(res_list)
@@ -183,7 +183,7 @@ ergoInfo <- function(data, use = c("edge.list", "weights")){
   encode.pop <- Reduce("*", mat.encode.list.pop)
   mat.encode.pop <- matrix(encode.pop, ncol = ncol(net.list.ordered.pop[[1]]$Network), nrow = nrow(net.list.ordered.pop[[1]]$Network))
   mat.encode.pop <- ifelse(mat.encode.pop==1, 0, mat.encode.pop)
-  mat.encode.igraph.pop <- convert2igraph(mat.encode.pop)
+  mat.encode.igraph.pop <- SemNeT::convert2igraph(mat.encode.pop)
   edge.list.mat.encode.pop <- igraph::get.edgelist(mat.encode.igraph.pop)
 
   if(use == "edge.list"){

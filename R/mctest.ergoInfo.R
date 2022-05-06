@@ -286,17 +286,17 @@ mctest.ergoInfo <- function(iter, N,
       )$data
     })
   })
-  
+
   # Long results
   data.sim.df <- lapply(seq_along(data.sim), function(i){
-    res_df <- as.data.frame(long_results(data.sim[[i]]))
+    res_df <- as.data.frame(data.sim[[i]])
     res_df$ID <- rep(1:N, each = timep)
     return(res_df)
   })
 
   # Get prime numbers
   prime.num <- get(data("prime.num", envir = environment()))
-  
+
   #let user know data generation has started
   message("\nEstimating the Population and Individual Structures...\n", appendLF = FALSE)
 
@@ -317,7 +317,7 @@ mctest.ergoInfo <- function(iter, N,
     algorithm = algorithm, algorithm.args = algorithm.args,
     model = model, model.args = model.args, corr = corr
   )
-  
+
   #let user know data generation has started
   message("Estimating the Ergodicity Information Index\n", appendLF = FALSE)
 
@@ -325,18 +325,18 @@ mctest.ergoInfo <- function(iter, N,
     X = sim.dynEGA, cl = cl,
     FUN = ergoInfo, use = use
   )
-  
+
   parallel::stopCluster(cl)
 
   #let user know results are being computed
   message("Computing results...\n")
-  
+
   complexity.estimates2 <- unlist(
     lapply(complexity.estimates, function(x){
       x$EII
     })
   )
-  
+
 
   ## Compute the P-value of the bootstrap test:
   p.greater <- (sum(EII>=complexity.estimates2)+1)/(iter+1)
