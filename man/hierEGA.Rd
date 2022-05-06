@@ -100,7 +100,7 @@ A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
 or \code{\link[NetworkToolbox]{TMFG}}}
 
 \item{algorithm}{A string indicating the algorithm to use or a function from \code{\link{igraph}}
-Defaults to \code{"walktrap"}.
+Defaults to \code{"louvain"}.
 Current options are:
 
 \itemize{

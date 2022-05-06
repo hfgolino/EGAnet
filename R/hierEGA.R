@@ -83,7 +83,7 @@
 #' or \code{\link[NetworkToolbox]{TMFG}}
 #'
 #' @param algorithm A string indicating the algorithm to use or a function from \code{\link{igraph}}
-#' Defaults to \code{"walktrap"}.
+#' Defaults to \code{"louvain"}.
 #' Current options are:
 #'
 #' \itemize{
@@ -192,7 +192,7 @@
 #' @export
 #' 
 # Hierarchical EGA
-# Updated 01.05.2022
+# Updated 06.05.2022
 hierEGA <- function(
     data, scores = c("factor", "network"),
     consensus_iter = 1000,
@@ -224,7 +224,7 @@ hierEGA <- function(
   }else{model <- match.arg(model)}
   
   if(missing(algorithm)){
-    algorithm <- "walktrap"
+    algorithm <- "louvain"
   }else if(!is.function(algorithm)){
     algorithm <- tolower(match.arg(algorithm))
   }
