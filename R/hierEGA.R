@@ -232,6 +232,12 @@ hierEGA <- function(
     scores <- "network"
   }else{scores <- match.arg(scores)}
   
+  if(missing(consensus_method)){
+    consensus_method <- "modularity"
+  }else{
+    consensus_method <- match.arg(consensus_method)
+  }
+  
   if(missing(uni.method)){
     uni.method <- "LE"
   }else{uni.method <- match.arg(uni.method)}
