@@ -4302,7 +4302,7 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
 
 #' @noRd
 # Redundancy Reduction (Automated)
-# Updated 23.01.2022
+# Updated 06.05.2022
 redund.reduce.auto <- function(node.redundant.obj,
                                reduce.method, lavaan.args, corr)
 {
@@ -4396,6 +4396,7 @@ redund.reduce.auto <- function(node.redundant.obj,
         if(any(categories < 6)){# Not all continuous
           lavaan.args$estimator <- "WLSMV"
           lavaan.args$missing <- "pairwise"
+          lavaan.args$ordered <- TRUE
         }else{# All can be considered continuous
           lavaan.args$estimator <- "MLR"
           lavaan.args$missing <- "fiml"
