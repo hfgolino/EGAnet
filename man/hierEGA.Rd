@@ -8,6 +8,7 @@ hierEGA(
   data,
   scores = c("factor", "network"),
   consensus_iter = 1000,
+  consensus_method = c("modularity", "iterative"),
   uni.method = c("expand", "LE"),
   corr = c("cor_auto", "pearson", "spearman"),
   model = c("glasso", "TMFG"),
@@ -37,6 +38,27 @@ using the \code{"oblimin"} rotation}
 Number of iterations to perform in consensus clustering
 (see Lancichinetti & Fortunato, 2012).
 Defaults to \code{1000}}
+
+\item{consensus_method}{Character.
+What consensus clustering method should be used?
+Defaults to \code{"modularity"}.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{modularity}}}
+{Uses the community solution that achieves the highest modularity
+across iterations}
+
+\item{\strong{\code{iterative}}}
+{Identifies the most common community solutions across iterations
+and determines how often nodes appear in the same community together.
+A threshold of 0.30 is used to set low proportions to zero.
+This process repeats iteratively until all nodes have a proportion of
+1 in the community solution.
+}
+
+}}
 
 \item{uni.method}{Character.
 What unidimensionality method should be used? 
