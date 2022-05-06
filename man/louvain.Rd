@@ -49,13 +49,19 @@ is based all in R and therefore is slower than the version in \code{\link{igraph
 }
 \examples{
 # Load data
-wmt <- wmt2[,7:24]
+dep <- depression[,24:44]
+
+# Estimate correlations
+corr <- qgraph::cor_auto(dep)
 
 # Estimate network
-net <- EBICglasso.qgraph(wmt)
+net <- EBICglasso.qgraph(corr, n = nrow(dep))
 
-# Estimate communities
-louvain(net)
+# Estimate communities using modularity
+louvain(net, method = "modularity")
+
+# Estimate communities using tefi
+louvain(net, method = "tefi", corr = corr)
 
 }
 \references{
