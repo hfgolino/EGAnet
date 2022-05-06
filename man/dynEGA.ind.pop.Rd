@@ -10,7 +10,6 @@ dynEGA.ind.pop(
   tau = 1,
   delta = 1,
   id = NULL,
-  group = NULL,
   use.derivatives = 1,
   model = c("glasso", "TMFG"),
   model.args = list(),
