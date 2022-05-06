@@ -39,13 +39,19 @@
 #'
 #' @examples
 #' # Load data
-#' wmt <- wmt2[,7:24]
+#' dep <- depression[,24:44]
+#' 
+#' # Estimate correlations
+#' corr <- qgraph::cor_auto(dep)
 #' 
 #' # Estimate network
-#' net <- EBICglasso.qgraph(wmt)
+#' net <- EBICglasso.qgraph(corr, n = nrow(dep))
 #'
-#' # Estimate communities
-#' louvain(net)
+#' # Estimate communities using modularity
+#' louvain(net, method = "modularity")
+#' 
+#' # Estimate communities using tefi
+#' louvain(net, method = "tefi", corr = corr)
 #'
 #' @references
 #' Blondel, V. D., Guillaume, J.-L., Lambiotte, R., & Lefebvre, E. (2008).
@@ -170,7 +176,7 @@ louvain <- function(
   # Ensure matrix for community results
   if(!is.matrix(community_results)){
     
-    community_results <- as.matrix(
+    community_results <- matrix(
       community_results, nrow = 1
     )
     
