@@ -62,7 +62,7 @@
 #'
 #' @export
 # TMFG Filtering Method----
-# Updated 24.02.2022
+# Updated 04.05.2022
 TMFG <-function (cormat)
 {
     # Number of nodes
@@ -195,7 +195,7 @@ TMFG <-function (cormat)
         for(z in 1:ncol(x))
         {if(x[r,z]==1){x[r,z]<-tcormat[r,z]}}
 
-    colnames(x)<-colnames(data)
+    colnames(x)<-colnames(cormat)
     x <- as.data.frame(x)
     row.names(x)<-colnames(x)
     x <- as.matrix(x)

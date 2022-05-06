@@ -16,6 +16,11 @@
 #' \code{\link[psych]{fa}}. Factors are assumed to be correlated
 #' using the \code{"oblimin"} rotation
 #' 
+#' @param consensus_iter Numeric.
+#' Number of iterations to perform in consensus clustering
+#' (see Lancichinetti & Fortunato, 2012).
+#' Defaults to \code{1000}
+#' 
 #' @param uni.method Character.
 #' What unidimensionality method should be used? 
 #' Defaults to \code{"LE"}.
@@ -165,6 +170,10 @@
 #' 
 #' \item{hier_plot}{Plot showing the lower-order and higher-order dimensions}
 #'
+#' @references 
+#' Lancichinetti, A., & Fortunato, S. (2012).
+#' Consensus clustering in complex networks.
+#' \emph{Scientific Reports}, \emph{2}(1), 1-7.
 #'
 #' @author Luis E. Garrido <garrido.luiseduardo@gmail.com>,
 #' Alexander P. Christensen <alexpaulchristensen@gmail.com>, and
@@ -183,9 +192,10 @@
 #' @export
 #' 
 # Hierarchical EGA
-# Updated 27.04.2022
+# Updated 01.05.2022
 hierEGA <- function(
     data, scores = c("factor", "network"),
+    consensus_iter = 1000,
     uni.method = c("expand", "LE"),
     corr = c("cor_auto", "pearson", "spearman"),
     model = c("glasso", "TMFG"), model.args = list(),
@@ -277,8 +287,9 @@ hierEGA <- function(
   
   # Perform consensus clustering
   lower_order_result$wc <- consensus_clustering(
-    lower_order_result$network,
-    order = "lower"
+    network = lower_order_result$network,
+    order = "lower",
+    consensus_iter = consensus_iter
   )
   
   # End message
@@ -404,7 +415,8 @@ hierEGA <- function(
   if(algorithm == "louvain"){
     ega_result$wc <- consensus_clustering(
       ega_result$network,
-      order = "higher"
+      order = "higher",
+      consensus_iter = consensus_iter
     )
   }
   

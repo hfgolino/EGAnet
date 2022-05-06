@@ -205,7 +205,7 @@
 #' 
 # Random-Intercept EGA
 # Changed from 'residualEGA.R' on 17.04.2022
-# Updated 17.04.2022
+# Updated 06.05.2022
 riEGA <- function(
     data, n = NULL, uni.method = c("expand", "LE"),
     corr = c("cor_auto", "pearson", "spearman"),
@@ -319,6 +319,7 @@ riEGA <- function(
     if(any(categories < 6)){# Not all continuous
       lavaan.args$estimator <- "WLSMV"
       lavaan.args$missing <- "pairwise"
+      lavaan.args$ordered <- TRUE
     }else{# All can be considered continuous
       lavaan.args$estimator <- "MLR"
       lavaan.args$missing <- "fiml"

@@ -85,11 +85,503 @@ poly.irt <- function(loadings, data)
 #%%%%%%%%%%%%%
 # LOUVAIN ----
 #%%%%%%%%%%%%%
+
+# Main Louvain step-wise function
+#' @noRd
+# Louvain Communities
+# Updated 06.05.2022
+louvain_communities <- function(
+    newA, 
+    method,
+    resolution,
+    corr,
+    original_A = NULL,
+    previous_communities = NULL,
+    previous_modularity = NULL
+)
+{
+  # Initialize update for communities and modularity
+  if(!is.null(previous_communities)){
+    update_communities <- previous_communities
+    update_modularity <- previous_modularity
+  }
+  
+  # Ensure absolute weights
+  newA <- abs(newA)
+  
+  # Set diagonal to zero
+  diag(newA) <- 0
+  
+  # Number of nodes
+  n <- ncol(newA)
+  
+  # Strength
+  # strength <- colSums(A)
+  # strength2 <- strength
+  
+  # Total
+  # total <- sum(A)
+  
+  # Diagonal
+  # SumIn <- diag(A)
+  
+  # Initialize communities
+  communities <- 1:n
+  
+  # Initialize neighbors
+  neighbors <- lapply(1:n, function(i){
+    
+    # Obtain target node
+    target_node <-  newA[i,]
+    
+    # Return neighbors
+    which(target_node != 0)
+    
+  })
+  
+  # Initialize sum cost and gain
+  # sum_cost <- 10;
+  gain <- 1
+  
+  # Iterations
+  iter <- 0
+  
+  # While loop through
+  while(gain == 1){
+    
+    # Initialize cost and gain
+    cost <- numeric(n); gain <- 0
+    
+    # Loop through nodes
+    for(i in 1:n){
+      
+      # Community of target node
+      target_community <- communities[i]
+      
+      # Neighbors of target node
+      target_neighbors <- neighbors[[i]]
+      
+      # Initialize gain vector
+      gain_vector <- numeric(n)
+      
+      # Initialize best increase
+      best_increase <- 0
+      
+      # Initialize new community
+      new_community <- target_community
+      
+      # Change target community to -1
+      # communities[i] <- -1
+      
+      # Subtract strength from strength2
+      # strength2[target_community] <- strength2[target_community] - strength[i]
+      
+      # Get nodes with same community
+      same_community <- which(communities == target_community)
+      
+      # Diagonal
+      # SumIn[target_community] <- SumIn[target_community] -
+      #   2 * sum(A[i, same_community]) -
+      #   A[i, i]
+      
+      # Loop through neighbors
+      for(j in 1:length(target_neighbors)){
+        
+        # Community of neighbor node
+        neighbor_community <- communities[target_neighbors[j]]
+        
+        # Check if gain is zero
+        if(gain_vector[neighbor_community] == 0){
+          
+          # Get nodes with same community
+          same_neighbor_community <- which(communities == neighbor_community)
+          
+          # Compute strength within
+          # strength_within <- 2 * sum(A[i, same_neighbor_community])
+          
+          # Set new communities
+          new_communities <- communities
+          new_communities[i] <- neighbor_community
+          
+          # Check if communities match
+          if(any(communities != new_communities)){
+            
+            # Compute gain
+            if(method == "modularity"){
+              gain_vector[neighbor_community] <- modularity( # new modularity
+                new_communities,
+                newA, resolution = resolution
+              ) -
+                modularity( # old modularity
+                  communities,
+                  newA, resolution = resolution
+                )
+            }else if(method == "tefi"){
+              
+              # Reverse order (lower is better)
+              gain_vector[neighbor_community] <- tefi(corr, communities)$VN.Entropy.Fit -
+                tefi(corr, new_communities)$VN.Entropy.Fit
+              
+            }
+            
+            # Matlab implementation of gain
+            #(strength_within / total) -
+            #(2 * strength[i] * strength2[neighbor_community]) /
+            #(total * total)
+            
+            # Check for better increase
+            if(gain_vector[neighbor_community] > best_increase){
+              
+              # Update best increase
+              best_increase <- gain_vector[neighbor_community]
+              
+              # Assign new community
+              new_community_t <- neighbor_community
+              
+            }
+            
+          }
+          
+        }
+        
+      }
+      
+      # Check if best increase is greater than zero
+      if(best_increase > 0){
+        
+        # Update new community
+        new_community <- new_community_t
+        
+        # Update cost
+        cost[i] <- best_increase
+        
+      }
+      
+      # Get new community for best increase
+      # community_k <- which(communities == new_community)
+      
+      # Diagonal
+      # SumIn[new_community] <- SumIn[new_community] +
+      #   2 * sum(A[i, community_k])
+      
+      # Update strength2
+      # strength2[new_community] <- strength2[new_community] +
+      #   strength[i]
+      
+      # Check for previous communities
+      if(!is.null(previous_communities)){
+        
+        # Check for improvement
+        ## Update communities
+        improve_communities <- previous_communities
+        improve_communities[improve_communities == target_community] <- new_community
+        
+        ## Update modularity
+        if(method == "modularity"){
+          
+          # Higher values are better
+          improve_modularity <- modularity(
+            communities = improve_communities,
+            A = original_A,
+            resolution = resolution
+          )
+          
+          # Check for update
+          if(improve_modularity > previous_modularity){
+            
+            # Update communities
+            communities[i] <- new_community
+            update_communities <- improve_communities
+            update_modularity <- improve_modularity
+            
+          }
+          
+          
+        }else if(method == "tefi"){
+          
+          # Lower values are better
+          improve_modularity <- tefi(corr, improve_communities)$VN.Entropy.Fit
+          
+          # Check for update
+          if(improve_modularity < previous_modularity){
+            
+            # Update communities
+            communities[i] <- new_community
+            update_communities <- improve_communities
+            update_modularity <- improve_modularity
+            
+          }
+          
+        }
+        
+      }else{
+        
+        # Update communities
+        communities[i] <- new_community
+        
+      }
+      
+      # Reset gain
+      if(new_community != target_community){
+        gain <- 1
+      }
+      
+    }
+    
+    # Update sum cost
+    # sum_cost <- sum(cost)
+    
+    # Compute modularity
+    if(!is.null(original_A)){
+      
+      # Reindex communities
+      previous_communities <- reindex_comm(previous_communities)
+      update_communities <- reindex_comm(update_communities)
+      
+      # Check if previous modularity equals update modularity
+      if(previous_modularity == update_modularity){
+        gain <- 0
+      }
+      
+      # Obtain modularity
+      Q <- modularity(update_communities, original_A, resolution)
+      
+      # Obtain new higher order
+      newA <- make_higher_order(original_A, update_communities)
+      
+      # Make diagonal zero
+      diag(newA) <- 0
+      
+      # Update number of communities
+      n <- ncol(newA)
+      
+      # Update unique communities
+      communities <- 1:n
+      
+      # Update neighbors
+      neighbors <- lapply(1:n, function(i){
+        
+        # Obtain target node
+        target_node <-  newA[i,]
+        
+        # Return neighbors
+        which(target_node != 0)
+        
+      })
+      
+      # Reset previous communities and modularity
+      previous_communities <- update_communities
+      previous_modularity <- update_modularity
+      
+      # Check if gain equals zero
+      if(gain == 0){
+        communities <- update_communities
+        Q <- update_modularity
+      }
+      
+    }else{
+      
+      if(method == "modularity"){
+        Q <- modularity(communities, newA, resolution) 
+      }else if(method == "tefi"){
+        Q <- tefi(corr, communities)$VN.Entropy.Fit
+      }
+      
+    }
+    
+    # Increase iterations
+    iter <- iter + 1
+    
+  }
+  
+  # Reindex communities
+  communities <- reindex_comm(communities)
+  
+  # Return results
+  results <- list()
+  results$communities <- communities
+  results$modularity <- Q # OR tefi 
+  
+  return(results)
+  
+}
+
+# Modularity function
+#' @noRd
+# Modularity
+# Updated 06.05.2022
+modularity <- function(communities, A, resolution)
+{
+  
+  # Obtain total sum
+  total <- sum(A)
+  
+  # Initialize modularity
+  Q <- 0
+  
+  # Obtain unique communities
+  unique_comm <- sort(unique(communities))
+  
+  # Obtain strength
+  strength <- colSums(A)
+  
+  # Obtain modularity matrix
+  Q_matrix <- A - resolution * (strength %*% t(strength)) / total
+  
+  # Keep values within communities
+  ## Initialize within matrix
+  init_within <- matrix(
+    rep(communities, times = ncol(A)),
+    byrow = TRUE, nrow = nrow(A),
+    ncol = ncol(A)
+  )
+  
+  ## Create within matrix
+  within_matrix <- !sweep(
+    init_within,
+    MARGIN = 1,
+    STATS = communities,
+    FUN = "-"
+  )
+  
+  ## Obtain Q matrix
+  Q_within <- apply(within_matrix, 2, as.numeric)
+  
+  # Compute modularity
+  Q <- sum(Q_within * Q_matrix / total)
+  
+  
+  # # Loop through communities
+  # for(i in 1:length(unique_comm)){
+  #   
+  #   # Find target nodes
+  #   target_nodes <- which(communities == unique_comm[i])
+  #   
+  #   # Get strength within
+  #   within_strength <- sum(A[target_nodes, target_nodes])
+  #   
+  #   # Get total strength
+  #   total_strength <- sum(A[target_nodes,])
+  #   
+  #   # Ensure there are connections
+  #   if(total_strength > 0){
+  #     
+  #     Q <- Q +
+  #       (within_strength / total) -
+  #       (total_strength / total)^2
+  #     
+  #   }
+  #   
+  #   
+  # }
+  
+  return(Q)
+  
+}
+
+# Collapses Louvain nodes into "latent" nodes
+#' @noRd
+# Higher order Louvain
+# Updated 06.05.2022
+make_higher_order <- function(A, current_communities)
+{  
+  
+  # Get number of nodes
+  n_higher <- ncol(A)
+  
+  # Reindex communities
+  current_communities <- reindex_comm(current_communities)
+  
+  # Obtain unique communities and number
+  unique_communities <- sort(unique(current_communities))
+  number_communities <- length(unique_communities)
+  full_communities <- current_communities
+  
+  # Initialize index matrices
+  community_current <- matrix(
+    0, nrow = number_communities,
+    ncol = n_higher
+  )
+  community_full <- matrix(
+    0, nrow = number_communities,
+    ncol = n_higher
+  )
+  
+  # Index communities
+  for(p in 1:number_communities){
+    
+    # Index current
+    ind_current <- which(current_communities == p)
+    community_current[p, 1:length(ind_current)] <- ind_current
+    
+    # Index full
+    ind_full <- which(full_communities == p)
+    community_full[p, 1:length(ind_full)] <- ind_full
+    
+  }
+  
+  # Initialize new adjacency matrix
+  newA <- matrix(
+    0, nrow = number_communities,
+    ncol = number_communities
+  )
+  
+  # Create "latent" nodes
+  for(i in 1:number_communities){
+    
+    for(j in i:number_communities){
+      
+      # Obtain indices
+      ind1 <- community_current[i,]
+      ind2 <- community_current[j,]
+      
+      # Update adjacency matrix
+      newA[i,j] <- sum(
+        A[ind1[ind1 > 0], ind2[ind2 > 0]]
+      )
+      newA[j,i] <- newA[i,j]
+      
+    }
+    
+  }
+  
+  return(newA)
+  
+}
+
+#  Ensures indices have descending orderings
+#' @noRd
+# Reindexing
+# Updated 06.05.2022
+reindex_comm <- function(communities)
+{
+  
+  # Get frequencies of communities
+  comm_freq <- t(as.matrix(table(communities)))
+  
+  # Get descending order
+  freq_order <- comm_freq[,order(comm_freq, decreasing = TRUE)]
+  
+  # Set communities
+  freq_order[1:length(freq_order)] <- 1:length(freq_order) 
+  
+  # Reindex
+  reindexed <- unname(freq_order[as.character(communities)])
+  
+  return(reindexed)
+  
+}
+
+
+
 # Lancichinetti & Fortunato (2012)
 #' @noRd
 # Consensus Clustering
-# Updated 25.04.2022
-consensus_clustering <- function(network, order = c("lower", "higher"))
+# Updated 01.05.2022
+consensus_clustering <- function(
+    network, order = c("lower", "higher"),
+    consensus_iter
+)
 {
 
   # Obtain network names
@@ -102,16 +594,34 @@ consensus_clustering <- function(network, order = c("lower", "higher"))
   binary <- function(b_matrix){
     all(b_matrix == 0 | b_matrix == 1)
   }
+<<<<<<< HEAD
 
   # Set up while loop
   while(!binary(network)){
 
+=======
+  
+  # Initialize count for homogenizing membership
+  count <- 0
+  
+  # Set up while loop
+  while(!binary(network)){
+    
+    # Increase count
+    count <- count + 1
+    
+>>>>>>> cbf85cfce97dc8cbb580a3c7b60cb40772303295
     # Convert network to igraph
     igraph_network <- convert2igraph(abs(network))
 
     # Apply Louvain
+<<<<<<< HEAD
     communities <- lapply(1:10000, function(i){
 
+=======
+    communities <- lapply(1:consensus_iter, function(j){
+      
+>>>>>>> cbf85cfce97dc8cbb580a3c7b60cb40772303295
       # Obtain memberships
       wc <- igraph::cluster_louvain(igraph_network)$memberships
 
@@ -129,7 +639,43 @@ consensus_clustering <- function(network, order = c("lower", "higher"))
 
     # Simplify to a matrix
     wc_matrix <- t(simplify2array(communities, higher = FALSE))
+<<<<<<< HEAD
 
+=======
+    
+    # Check for count
+    if(count == 1){
+      
+      # Make data frame
+      df <- as.data.frame(wc_matrix)
+      
+      # Obtain duplicate indices
+      dupe_ind <- duplicated(df)
+      
+      # Rows for non-duplicates
+      non_dupes <- data.frame(df[!dupe_ind,])
+      
+      # Rows for duplicates
+      dupes <- data.frame(df[dupe_ind,])
+      
+      # Match duplicates with non-duplicates
+      dupe_count <- table(
+        match(
+          data.frame(t(dupes)), data.frame(t(non_dupes))
+        ))
+      
+      # Identify count with most
+      target_wc <- unlist(non_dupes[which.max(dupe_count),])
+      
+      # Homogenize memberships
+      wc_matrix <- t(homogenize.membership(
+        target.wc = target_wc,
+        convert.wc = t(wc_matrix)
+      ))
+      
+    }
+    
+>>>>>>> cbf85cfce97dc8cbb580a3c7b60cb40772303295
     # Get indices for matrix
     d_matrix <- matrix(0, nrow = ncol(wc_matrix), ncol = ncol(wc_matrix))
 
@@ -3334,7 +3880,7 @@ dynEGA.ind.pop <- function(data, n.embed, tau = 1, delta = 1,
 
 #' @noRd
 # Redundancy Processing
-# Updated 14.04.2021
+# Updated 04.05.2022
 redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.redundancy, plot.args)
 {
   # Compute redundancy method
@@ -3376,7 +3922,17 @@ redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.r
     }else{tom <- cormat}
 
   #}
+<<<<<<< HEAD
 
+=======
+  
+  # Ensure column names
+  if(is.null(colnames(tom))){
+    colnames(tom) <- paste("V", 1:ncol(tom), sep = "")
+    row.names(tom) <- colnames(tom)
+  }
+  
+>>>>>>> cbf85cfce97dc8cbb580a3c7b60cb40772303295
   # Number of variables; diagonal zero; absolute values
   vars <- ncol(tom); diag(tom) <- 0; tom <- abs(tom)
 
@@ -3587,16 +4143,30 @@ redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.r
 redund.names <- function(node.redundant.obj, key)
 {
   # Check for node.redundant object class
+<<<<<<< HEAD
   if(class(node.redundant.obj) != "node.redundant")
   {stop("A 'node.redundant' object must be used as input")}
 
+=======
+  if(class(node.redundant.obj) != "node.redundant"){
+    stop("A 'node.redundant' object must be used as input")
+  }
+  
+>>>>>>> cbf85cfce97dc8cbb580a3c7b60cb40772303295
   # Obtain and remove data from node redundant object
   data <- node.redundant.obj$data
 
   # Check that columns match key
+<<<<<<< HEAD
   if(ncol(data) != length(as.vector(key)))
   {stop("Number of columns in data does not match the length of 'key'")}
 
+=======
+  if(ncol(data) != length(as.vector(key))){
+    stop("Number of columns in data does not match the length of 'key'")
+  }
+  
+>>>>>>> cbf85cfce97dc8cbb580a3c7b60cb40772303295
   # Names of node.redundant object
   nr.names <- names(node.redundant.obj$redundant)
 
@@ -3605,9 +4175,15 @@ redund.names <- function(node.redundant.obj, key)
 
   # Key change
   key.chn <- key
+<<<<<<< HEAD
 
   for(i in 1:length(nr.names))
   {
+=======
+  
+  for(i in 1:length(nr.names)){
+    
+>>>>>>> cbf85cfce97dc8cbb580a3c7b60cb40772303295
     # Target redundant node
     target.r <- match(names(node.redundant.obj$redundant)[i],key.names)
 
@@ -3619,6 +4195,7 @@ redund.names <- function(node.redundant.obj, key)
 
     # Replace item names with description
     node.redundant.obj$redundant[[i]] <- as.character(key.chn[target.o])
+    
   }
 
   # Create key code
@@ -3803,13 +4380,20 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
 #' @importFrom graphics text
 #' @noRd
 # Redundancy Reduction
-# Updated 23.01.2022
+# Updated 04.05.2022
 redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.args, corr)
 {
   # Check for node.redundant object class
+<<<<<<< HEAD
   if(class(node.redundant.obj) != "node.redundant")
   {stop("A 'node.redundant' object must be used as input")}
 
+=======
+  if(class(node.redundant.obj) != "node.redundant"){
+    stop("A 'node.redundant' object must be used as input")
+  }
+  
+>>>>>>> cbf85cfce97dc8cbb580a3c7b60cb40772303295
   # Redundant list
   redund <- node.redundant.obj$redundant
 
@@ -3833,8 +4417,7 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
   count <- 0
 
   # Get key
-  if("key" %in% names(node.redundant.obj))
-  {
+  if("key" %in% names(node.redundant.obj)){
     key <- node.redundant.obj$key
     names(key) <- names(node.redundant.obj$key)
   }else{
@@ -3850,8 +4433,8 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
   prev.state.data <- list(new.data)
 
   # Loop through named node redundant list
-  while(length(redund) != 0)
-  {
+  while(length(redund) != 0){
+    
     # Targeting redundancy
     target.item <- names(redund)[1]
 
@@ -4057,6 +4640,7 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
         message(paste("\nKEPT '", key[ind[as.numeric(new.input) + 1]],"' and REMOVED all others", sep = ""))
 
       }
+<<<<<<< HEAD
 
       # Remove redundant variables from data
       rm.idx <- match(idx, colnames(new.data))
@@ -4065,6 +4649,20 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
         new.data <- new.data[-rm.idx, -rm.idx]
       }else{
         new.data <- new.data[,-rm.idx]
+=======
+      
+      if(reduce.method != "sum"){
+        
+        # Remove redundant variables from data
+        rm.idx <- match(idx, colnames(new.data))
+        
+        if(isSymmetric(new.data)){
+          new.data <- new.data[-rm.idx, -rm.idx]
+        }else{
+          new.data <- new.data[,-rm.idx]
+        }
+        
+>>>>>>> cbf85cfce97dc8cbb580a3c7b60cb40772303295
       }
 
       # Update previous state data
@@ -4155,10 +4753,14 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
       linebreak()
       input <- NULL
     }
+<<<<<<< HEAD
 
     # Artificial pause for smoothness of experience
     Sys.sleep(1)
 
+=======
+    
+>>>>>>> cbf85cfce97dc8cbb580a3c7b60cb40772303295
   }
 
   # Transform merged list to matrix
@@ -4204,11 +4806,8 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
 
     if(reduce.method == "latent"){
       colnames(m.mat) <- c("Target", paste("Redundancy_", 1:(ncol(m.mat)-1), sep = ""))
-    }else if(reduce.method == "remove"){
+    }else{
       colnames(m.mat) <- c(paste("Redundancy_", 1:ncol(m.mat), sep = ""))
-    }else if(reduce.method == "sum"){
-      colnames(m.mat) <- c(paste("Redundancy_", 1:ncol(m.mat), sep = ""))
-      row.names(m.mat) <- c(paste("LV_", 1:nrow(m.mat), sep = ""))
     }
   }
 
@@ -4258,7 +4857,7 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
 
 #' @noRd
 # Redundancy Reduction (Automated)
-# Updated 23.01.2022
+# Updated 06.05.2022
 redund.reduce.auto <- function(node.redundant.obj,
                                reduce.method, lavaan.args, corr)
 {
@@ -4352,6 +4951,7 @@ redund.reduce.auto <- function(node.redundant.obj,
         if(any(categories < 6)){# Not all continuous
           lavaan.args$estimator <- "WLSMV"
           lavaan.args$missing <- "pairwise"
+          lavaan.args$ordered <- TRUE
         }else{# All can be considered continuous
           lavaan.args$estimator <- "MLR"
           lavaan.args$missing <- "fiml"
@@ -4374,8 +4974,7 @@ redund.reduce.auto <- function(node.redundant.obj,
         latent <- as.numeric(lavaan::lavPredict(fit))
 
         ## check for missing cases and handle
-        if(length(cases) != nrow(new.data))
-        {
+        if(length(cases) != nrow(new.data)){
           new.vec <- as.vector(matrix(NA, nrow = nrow(new.data), ncol = 1))
           new.vec[cases] <- latent
         }else{new.vec <- latent}
@@ -4625,7 +5224,7 @@ redund.reduce.auto <- function(node.redundant.obj,
 
 #' @noRd
 # Redundancy Adhoc Reduction (Automated)
-# Updated 23.01.2022
+# Updated 01.05.2022
 redund.adhoc.auto <- function(node.redundant.obj,
                               node.redundant.reduced,
                               node.redundant.original,
@@ -4714,16 +5313,20 @@ redund.adhoc.auto <- function(node.redundant.obj,
   merged <- merged[order(unlist(lapply(merged, length)), decreasing = TRUE)]
 
   # Get key
-  if("key" %in% names(node.redundant.original))
-  {
+  if("key" %in% names(node.redundant.original)){
     key <- node.redundant.original$key
     names(key) <- names(node.redundant.original$key)
   }else{
     key <- colnames(node.redundant.original$data)
     names(key) <- key
   }
+<<<<<<< HEAD
 
   # Remove missing reundancies
+=======
+  
+  # Remove missing redundancies
+>>>>>>> cbf85cfce97dc8cbb580a3c7b60cb40772303295
   merged <- lapply(merged, function(x){
     if(length(x) == 0){
       NULL
@@ -4786,13 +5389,25 @@ redund.adhoc.auto <- function(node.redundant.obj,
         new.vec <- as.vector(matrix(NA, nrow = nrow(new.data), ncol = 1))
         new.vec[cases] <- latent
       }else{new.vec <- latent}
+<<<<<<< HEAD
 
       # Remove variables
       new.data <- new.data[,-match(idx, colnames(new.data))]
 
+=======
+      
+>>>>>>> cbf85cfce97dc8cbb580a3c7b60cb40772303295
       # Tack on latent variable
+      ## Must come first!
       new.data <- cbind(new.data, new.vec)
+<<<<<<< HEAD
 
+=======
+      
+      # Remove variables (ensure matrix)
+      new.data <- as.matrix(new.data[,-match(idx, colnames(new.data))])
+      
+>>>>>>> cbf85cfce97dc8cbb580a3c7b60cb40772303295
       # Rename latent variable
       colnames(new.data)[ncol(new.data)] <- names(merged)[i]
 

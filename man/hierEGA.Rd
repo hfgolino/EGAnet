@@ -7,6 +7,7 @@
 hierEGA(
   data,
   scores = c("factor", "network"),
+  consensus_iter = 1000,
   uni.method = c("expand", "LE"),
   corr = c("cor_auto", "pearson", "spearman"),
   model = c("glasso", "TMFG"),
@@ -31,6 +32,11 @@ the \code{\link[EGAnet]{net.scores}} function.
 Set to \code{"factor"} for factor scores computed using
 \code{\link[psych]{fa}}. Factors are assumed to be correlated
 using the \code{"oblimin"} rotation}
+
+\item{consensus_iter}{Numeric.
+Number of iterations to perform in consensus clustering
+(see Lancichinetti & Fortunato, 2012).
+Defaults to \code{1000}}
 
 \item{uni.method}{Character.
 What unidimensionality method should be used? 
@@ -197,6 +203,11 @@ opt.res <- hierEGA(data = optimism, algorithm = "louvain")
 }
 
 
+}
+\references{
+Lancichinetti, A., & Fortunato, S. (2012).
+Consensus clustering in complex networks.
+\emph{Scientific Reports}, \emph{2}(1), 1-7.
 }
 \author{
 Luis E. Garrido <garrido.luiseduardo@gmail.com>,
