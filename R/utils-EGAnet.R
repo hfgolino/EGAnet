@@ -577,77 +577,111 @@ reindex_comm <- function(communities)
 # Lancichinetti & Fortunato (2012)
 #' @noRd
 # Consensus Clustering
-# Updated 06.05.2022
+# Updated 07.05.2022
 consensus_clustering <- function(
     network, order = c("lower", "higher"),
-    consensus_iter, consensus_method = c("modularity", "iterative")
+    consensus_iter
 )
 {
 
   # Obtain network names
   network_names <- colnames(network)
   
-  # Method
-  if(consensus_method == "modularity"){
+  # Convert network to igraph
+  igraph_network <- convert2igraph(abs(network))
+  
+  # Apply Louvain
+  communities <- lapply(1:consensus_iter, function(j){
     
-    # Convert network to igraph
-    igraph_network <- convert2igraph(abs(network))
+    # Obtain memberships
+    wc <- igraph::cluster_louvain(igraph_network)$memberships
     
-    # Apply Louvain
-    communities <- lapply(1:consensus_iter, function(j){
-      
-      # Obtain memberships
-      wc <- igraph::cluster_louvain(igraph_network)$memberships
-      
-      # Obtain order
-      if(order == "lower"){
-        wc <- wc[1,]
-      }else if(order == "higher"){
-        wc <- wc[nrow(wc),]
-      }
-      
-      # Return
-      return(wc)
-      
-    })
-    
-    # Simplify to a matrix
-    wc_matrix <- t(simplify2array(communities, higher = FALSE))
-    
-    # Make data frame
-    df <- as.data.frame(wc_matrix)
-    
-    # Obtain duplicate indices
-    dupe_ind <- duplicated(df)
-    
-    # Rows for non-duplicates
-    non_dupes <- data.frame(df[!dupe_ind,])
-    
-    # Compute modularity
-    modularities <- apply(non_dupes, 1, modularity, network, 1)
-    
-    # Obtain max
-    wc <- as.matrix(non_dupes[which.max(modularities),])
-    
-  }else if(consensus_method == "iterative"){
-    
-    
-    # Initialize D matrix
-    d_matrix <- matrix(0, nrow = ncol(network), ncol = ncol(network))
-    
-    # Binary check function
-    binary <- function(b_matrix){
-      all(b_matrix == 0 | b_matrix == 1)
+    # Obtain order
+    if(order == "lower"){
+      wc <- wc[1,]
+    }else if(order == "higher"){
+      wc <- wc[nrow(wc),]
     }
     
-    # Initialize count for homogenizing membership
-    count <- 0
+    # Return
+    return(wc)
     
-    # Set up while loop
-    while(!binary(network)){
-      
-      # Increase count
-      count <- count + 1
+  })
+  
+  # Simplify to a matrix
+  wc_matrix <- t(simplify2array(communities, higher = FALSE))
+  
+  # Make data frame
+  df <- as.data.frame(wc_matrix)
+  
+  # Obtain duplicate indices
+  dupe_ind <- duplicated(df)
+  
+  # Rows for non-duplicates
+  non_dupes <- data.frame(df[!dupe_ind,])
+  
+  # Rows for duplicates
+  dupes <- data.frame(df[dupe_ind,])
+  
+  # Match duplicates with non-duplicates
+  dupe_count <- table(
+    match(
+      data.frame(t(dupes)), data.frame(t(non_dupes))
+    ))
+  
+  # Change column names of non_dupes
+  if(!is.null(colnames(network))){
+    colnames(non_dupes) <- colnames(network)
+  }
+  
+  # Compute modularity
+  modularities <- apply(non_dupes, 1, modularity, network, 1)
+  
+  # Set up summary table
+  summary_table <- data.frame(
+    N_Dimensions = apply(non_dupes, 1, function(x){
+      length(na.omit(unique(x)))
+    }),
+    Proportion = as.matrix(count(wc_matrix) / nrow(wc_matrix)),
+    Modularity = modularities
+  )
+  
+  # Attach non-duplicate solutions
+  summary_table <- cbind(summary_table, non_dupes)
+  
+  # Ensure descending order
+  summary_table <- summary_table[order(summary_table[,"Modularity"], decreasing = TRUE),]
+  row.names(summary_table) <- NULL
+  
+  # Obtain max modularity
+  wc_modularity <- unlist(summary_table[
+    which.max(summary_table[,"Modularity"]),
+    -c(1:3)
+  ])
+  
+  # Obtain max proportion
+  wc_proportion <- unlist(summary_table[
+    which.max(summary_table[,"Proportion"]),
+    -c(1:3)
+  ])
+  
+  # Traditional consensus clustering
+  
+  # Initialize D matrix
+  d_matrix <- matrix(0, nrow = ncol(network), ncol = ncol(network))
+  
+  # Binary check function
+  binary <- function(b_matrix){
+    all(b_matrix == 0 | b_matrix == 1)
+  }
+  
+  # Initialize count for homogenizing membership
+  count <- 1
+  
+  # Set up while loop
+  while(!binary(network)){
+    
+    if(count != 1){
       
       # Convert network to igraph
       igraph_network <- convert2igraph(abs(network))
@@ -673,78 +707,56 @@ consensus_clustering <- function(
       # Simplify to a matrix
       wc_matrix <- t(simplify2array(communities, higher = FALSE))
       
-      # Check for count
-      if(count == 1){
-        
-        # Make data frame
-        df <- as.data.frame(wc_matrix)
-        
-        # Obtain duplicate indices
-        dupe_ind <- duplicated(df)
-        
-        # Rows for non-duplicates
-        non_dupes <- data.frame(df[!dupe_ind,])
-        
-        # Rows for duplicates
-        dupes <- data.frame(df[dupe_ind,])
-        
-        # Match duplicates with non-duplicates
-        dupe_count <- table(
-          match(
-            data.frame(t(dupes)), data.frame(t(non_dupes))
-          ))
-        
-        # Identify count with most
-        target_wc <- unlist(non_dupes[which.max(dupe_count),])
-        
-        # Homogenize memberships
-        wc_matrix <- t(homogenize.membership(
-          target.wc = target_wc,
-          convert.wc = t(wc_matrix)
-        ))
-        
-      }
+    }else{
       
-      # Get indices for matrix
-      d_matrix <- matrix(0, nrow = ncol(wc_matrix), ncol = ncol(wc_matrix))
-      
-      # Obtain combinations for lower
-      combinations <- cbind(
-        rep(1:ncol(wc_matrix), times = ncol(wc_matrix)),
-        rep(1:ncol(wc_matrix), each = ncol(wc_matrix))
-      )
-      
-      # Fill lower order matrix
-      for(i in 1:nrow(combinations)){
-        
-        # Get indices
-        index1 <- combinations[i,1]
-        index2 <- combinations[i,2]
-        
-        d_matrix[index1, index2] <- mean(wc_matrix[,index1] == wc_matrix[,index2], na.rm = TRUE)
-        
-      }
-      
-      # Set values less than threshold to zero
-      d_matrix <- ifelse(d_matrix <= 0.30, 0, d_matrix)
-      
-      # Start over
-      network <- d_matrix
+      # Homogenize memberships
+      wc_matrix <- t(homogenize.membership(
+        target.wc = wc_proportion,
+        convert.wc = t(wc_matrix)
+      ))
       
     }
     
-    # Obtain final communities
-    igraph_network <- convert2igraph(abs(network))
-    wc <- igraph::cluster_louvain(igraph_network)$memberships
+    # Get indices for matrix
+    d_matrix <- matrix(0, nrow = ncol(wc_matrix), ncol = ncol(wc_matrix))
     
-    # Obtain order
-    if(order == "lower"){
-      wc <- wc[1,]
-    }else if(order == "higher"){
-      wc <- wc[nrow(wc),]
+    # Obtain combinations for lower
+    combinations <- cbind(
+      rep(1:ncol(wc_matrix), times = ncol(wc_matrix)),
+      rep(1:ncol(wc_matrix), each = ncol(wc_matrix))
+    )
+    
+    # Fill lower order matrix
+    for(i in 1:nrow(combinations)){
+      
+      # Get indices
+      index1 <- combinations[i,1]
+      index2 <- combinations[i,2]
+      
+      d_matrix[index1, index2] <- mean(wc_matrix[,index1] == wc_matrix[,index2], na.rm = TRUE)
+      
     }
     
+    # Set values less than threshold to zero
+    d_matrix <- ifelse(d_matrix <= 0.30, 0, d_matrix)
     
+    # Start over
+    network <- d_matrix
+    
+    # Increase count
+    count <- count + 1
+    
+  }
+  
+  # Obtain final communities
+  igraph_network <- convert2igraph(abs(network))
+  wc <- igraph::cluster_louvain(igraph_network)$memberships
+  
+  # Obtain order
+  if(order == "lower"){
+    wc <- wc[1,]
+  }else if(order == "higher"){
+    wc <- wc[nrow(wc),]
   }
 
   # Ensure vector
@@ -752,9 +764,19 @@ consensus_clustering <- function(
 
   # Assign names
   names(wc) <- network_names
+  
+  # Assign to traditional
+  wc_traditional <- wc
+  
+  # Set up results
+  results <- list()
+  results$highest_modularity <- wc_modularity
+  results$most_common <- wc_proportion
+  results$iterative <- wc_traditional
+  results$summary_table <- summary_table
 
   # Return consensus
-  return(wc)
+  return(results)
 }
 
 #%%%%%%%%%%%%%%%%%%%%

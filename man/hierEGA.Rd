@@ -8,7 +8,7 @@ hierEGA(
   data,
   scores = c("factor", "network"),
   consensus_iter = 1000,
-  consensus_method = c("modularity", "iterative"),
+  consensus_method = c("highest_modularity", "most_common", "iterative"),
   uni.method = c("expand", "LE"),
   corr = c("cor_auto", "pearson", "spearman"),
   model = c("glasso", "TMFG"),
@@ -46,8 +46,12 @@ Current options are:
 
 \itemize{
 
-\item{\strong{\code{modularity}}}
+\item{\strong{\code{highest_modularity}}}
 {Uses the community solution that achieves the highest modularity
+across iterations}
+
+\item{\strong{\code{most_common}}}
+{Uses the community solution that is found the most
 across iterations}
 
 \item{\strong{\code{iterative}}}
