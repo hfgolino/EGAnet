@@ -27,12 +27,21 @@ Variables (down columns) only.
 Does not accept correlation matrices}
 
 \item{scores}{Character.
-How should scores for the lower-order structure be estimated?
+How should scores for the higher-order structure be estimated?
 Defaults to \code{"network"} for network scores computed using
 the \code{\link[EGAnet]{net.scores}} function.
 Set to \code{"factor"} for factor scores computed using
 \code{\link[psych]{fa}}. Factors are assumed to be correlated
-using the \code{"oblimin"} rotation}
+using the \code{"oblimin"} rotation. \emph{NOTE}: Factor scores
+use the number of communities from \code{\link[EGAnet]{EGA}}.
+Estimated factor may not align with these communities. The plots
+using factor scores with have higher order factors that may not
+completely map onto the lower order communities. Look at the
+\code{$hierarchical$higher_order$lower_loadings} to determine
+the composition of the lower order factors.
+
+By default, both factor and network scores are computed and stored
+in the output. The selected option only appears in the main output (\code{$hierarchical})}
 
 \item{consensus_iter}{Numeric.
 Number of iterations to perform in consensus clustering
@@ -40,7 +49,7 @@ Number of iterations to perform in consensus clustering
 Defaults to \code{1000}}
 
 \item{consensus_method}{Character.
-What consensus clustering method should be used?
+What consensus clustering method should be used? 
 Defaults to \code{"modularity"}.
 Current options are:
 
@@ -62,7 +71,11 @@ This process repeats iteratively until all nodes have a proportion of
 1 in the community solution.
 }
 
-}}
+}
+
+By default, all \code{consensus_method} options are computed and
+stored in the output. The selected method will be used to
+plot and appear in the main output (\code{$hierarchical})}
 
 \item{uni.method}{Character.
 What unidimensionality method should be used? 
@@ -196,28 +209,80 @@ Defaults to \code{TRUE}.
 Set to \code{FALSE} for no print out}
 }
 \value{
-Returns a list containing:
+Returns a list of lists containing: \cr
+\cr
+\strong{Main Results} \cr
 
-\item{lower}{Lower-order results from \code{\link[EGAnet]{EGA}}}
+\item{hierarhical}{The main results list containing:
 
-\item{lower_scores}{Estimated scores for the lower dimensions}
+\itemize{
 
-\item{lower_loadings}{Estaimted loadings for the lower dimensions}
+\item{\code{lower_order}}
+{Lower order \code{\link[EGAnet]{EGA}} results for the selected methods}
 
-\item{score_type}{Type of scores estimated and used in the higher-order \code{\link[EGAnet]{EGA}}}
+\item{\code{higher_order}}
+{Higher order \code{\link[EGAnet]{EGA} results for the selected methods}}
 
-\item{higher}{Higher-order results from \code{\link[EGAnet]{EGA}}}
+If \code{plot.EGA = TRUE}, then:
 
-\item{lower_plot}{Plot for the lower-order dimensions}
+\item{\code{lower_plot}}
+{Plot of the lower order results}
 
-\item{higher_plot}{Plot for the higher-order dimensions}
+\item{\code{higher_plot}}
+{Plot of the higher order results}
 
-\item{hier_plot}{Plot showing the lower-order and higher-order dimensions}
+\item{\code{hier_plot}}
+{Plot of the lower and higher order results together, side-by-side}
+
+}
+
+}
+
+\strong{Secondary Results} \cr
+
+\item{lower_ega}{A list containing the lower order \code{\link[EGAnet]{EGA}}
+results. The \code{$wc} does not contain valid results. Do not use its output.
+}
+
+\item{lower_wc}{A list containing consensus clustering results:
+
+\itemize{
+
+\item{\code{highest_modularity}}
+{Community memberships based on the highest modularity across the
+\code{\link[igraph]{cluster_louvain}} applications}
+
+\item{\code{most_common}}
+{Community memberships based on the most commonly found memberships across the
+\code{\link[igraph]{cluster_louvain}} applications}
+
+\item{\code{iterative}}
+{Community memberships based on consensus clustering described by
+Lancichinetti & Fortunato (2012)}
+
+\item{\code{summary_table}}
+{A data frame summarizing the unique community solutions across the iterations. Down the
+columns indicate: number of dimensions (\code{N_Dimensions}),
+proportion of times each community solution was identified (\code{Proportion}),
+modularity of each community solution (\code{Modularity}), and
+the memberships for each item. Across the rows indicate each
+unique community solution
+}
+
+}
+
+}
+
+\item{factor_results}{A list containing higher order results based on factor scores.
+A list for each \code{consensus_method} is provided with their \code{\link[EGAnet]{EGA}} results}
+
+\item{network_results}{A list containing higher order results based on network scores.
+A list for each \code{consensus_method} is provided with their \code{\link[EGAnet]{EGA}} results}
 }
 \description{
 Estimates EGA using the lower-order solution of \code{\link[igraph]{cluster_louvain}}
-to identify the lower-order dimensions and then uses factor or network loadings to estimate factor or
-network scores to estimate the higher-order dimensions
+to identify the lower-order dimensions and then uses factor or network loadings to
+estimate factor or network scores, which are used to estimate the higher-order dimensions
 }
 \examples{
 # Obtain example data
@@ -228,7 +293,6 @@ data <- optimism
 opt.res <- hierEGA(data = optimism, algorithm = "louvain")
 }
 
-
 }
 \references{
 Lancichinetti, A., & Fortunato, S. (2012).
@@ -236,7 +300,10 @@ Consensus clustering in complex networks.
 \emph{Scientific Reports}, \emph{2}(1), 1-7.
 }
 \author{
-Luis E. Garrido <garrido.luiseduardo@gmail.com>,
+Marcos Jimenez <marcosjnezhquez@gmailcom>,
+Francisco J. Abad <fjose.abad@uam.es>,
+Eduardo Garcia-Garzon <egarcia@ucjc.edu>,
+Luis Eduardo Garrido <luisgarrido@pucmm.edu.do>,
 Alexander P. Christensen <alexpaulchristensen@gmail.com>, and
-Hudson F. Golino <hfg9s at virginia.edu>
+Hudson Golino <hfg9s at virginia.edu>
 }

@@ -25,7 +25,9 @@ riEGA(
 \item{data}{Matrix or data frame.
 Variables (down columns) or correlation matrix.
 If the input is a correlation matrix,
-then argument \code{n} (number of cases) is \strong{required}}
+then argument \code{n} (number of cases) is \strong{required}.
+Variables \strong{MUST} be unrecoded -- reversed items should
+\strong{remain} reversed}
 
 \item{n}{Integer.
 Sample size if \code{data} provided is a correlation matrix}
@@ -204,8 +206,10 @@ model (if the model converged):
 }
 }
 \description{
-Estimates the number of dimensions after controlling for wording effects.
-EGA is applied in the residual of a random intercept item factor model (RIIFA) with one method factor and one substantive factor.
+Estimates the number of substantive dimensions after controlling for wording effects. 
+EGA is applied to a residual correlation matrix after subtracting and random intercept
+factor with equal unstandardized loadings from all the regular and unrecoded
+reversed items in the database
 }
 \examples{
 # Obtain example data
@@ -224,6 +228,10 @@ When can categorical variables be treated as continuous? A comparison of robust 
 \emph{Psychological Methods}, \emph{17}, 354-373.
 }
 \author{
-Hudson F. Golino <hfg9s at virginia.edu>, Robert Moulder <rgm4fd@virginia.edu>, and
-Alexander P. Christensen <alexpaulchristensen@gmail.com>
+Alejandro Garcia-Pardina <alejandrogp97@gmail.com>,
+Francisco J. Abad <fjose.abad@uam.es>,
+Alexander P. Christensen <alexpaulchristensen@gmail.com>,
+Hudson Golino <hfg9s at virginia.edu>,
+Luis Eduardo Garrido <luisgarrido@pucmm.edu.do>, and
+Robert Moulder <rgm4fd@virginia.edu>
 }

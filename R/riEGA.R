@@ -1,12 +1,16 @@
 #' Random-Intercept \code{\link[EGAnet]{EGA}}
 #'
-#' Estimates the number of dimensions after controlling for wording effects.
-#' EGA is applied in the residual of a random intercept item factor model (RIIFA) with one method factor and one substantive factor.
+#' Estimates the number of substantive dimensions after controlling for wording effects. 
+#' EGA is applied to a residual correlation matrix after subtracting and random intercept
+#' factor with equal unstandardized loadings from all the regular and unrecoded
+#' reversed items in the database
 #'
 #' @param data Matrix or data frame.
 #' Variables (down columns) or correlation matrix.
 #' If the input is a correlation matrix,
-#' then argument \code{n} (number of cases) is \strong{required}
+#' then argument \code{n} (number of cases) is \strong{required}.
+#' Variables \strong{MUST} be unrecoded -- reversed items should
+#' \strong{remain} reversed
 #'
 #' @param n Integer.
 #' Sample size if \code{data} provided is a correlation matrix
@@ -183,8 +187,13 @@
 #' 
 #' }
 #'
-#' @author Hudson F. Golino <hfg9s at virginia.edu>, Robert Moulder <rgm4fd@virginia.edu>, and
-#' Alexander P. Christensen <alexpaulchristensen@gmail.com>
+#' @author  
+#' Alejandro Garcia-Pardina <alejandrogp97@gmail.com>,
+#' Francisco J. Abad <fjose.abad@uam.es>,
+#' Alexander P. Christensen <alexpaulchristensen@gmail.com>,
+#' Hudson Golino <hfg9s at virginia.edu>,
+#' Luis Eduardo Garrido <luisgarrido@pucmm.edu.do>, and
+#' Robert Moulder <rgm4fd@virginia.edu>
 #'
 #' @examples
 #' # Obtain example data
@@ -205,7 +214,7 @@
 #' 
 # Random-Intercept EGA
 # Changed from 'residualEGA.R' on 17.04.2022
-# Updated 06.05.2022
+# Updated 07.05.2022
 riEGA <- function(
     data, n = NULL, uni.method = c("expand", "LE"),
     corr = c("cor_auto", "pearson", "spearman"),

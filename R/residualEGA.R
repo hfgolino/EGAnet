@@ -61,7 +61,15 @@
 #' @export
 #' 
 # Residualized EGA
+# Updated 07.05.2022
 residualEGA <- function(data, manifests,lat, negative.items, plot = TRUE){
+  
+  # Deprecated
+  warning(
+    "This function is deprecated. Please use `riEGA` instead."
+  )
+  
+  
   factors <- paste0("F", seq(lat))
   wording <- paste0("W", 1)
   latents.2 <- c(factors, wording)
