@@ -53,6 +53,10 @@
 #' 1 in the community solution.
 #' }
 #' 
+#' \item{\code{lowest_tefi}}
+#' {Uses the community solution that achieves the lowest \code{\link[EGAnet]{tefi}}
+#' across iterations}
+#' 
 #' }
 #' 
 #' By default, all \code{consensus_method} options are computed and

@@ -71,6 +71,10 @@ This process repeats iteratively until all nodes have a proportion of
 1 in the community solution.
 }
 
+\item{\code{lowest_tefi}}
+{Uses the community solution that achieves the lowest \code{\link[EGAnet]{tefi}}
+across iterations}
+
 }
 
 By default, all \code{consensus_method} options are computed and
