@@ -466,7 +466,7 @@ hierEGA <- function(
     # Make consensus
     higher_order_wc <- consensus_clustering(
       network = higher_order_result$network,
-      corr = corr,
+      corr = higher_order_result$correlation,
       order = "higher",
       consensus_iter = consensus_iter
     )[[names(factor_results)[i]]]
@@ -544,6 +544,7 @@ hierEGA <- function(
     # Make consensus
     higher_order_wc <- consensus_clustering(
       network = higher_order_result$network,
+      corr = higher_order_result$correlation,
       order = "higher",
       consensus_iter = consensus_iter
     )[[names(network_results)[i]]]
