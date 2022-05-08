@@ -285,7 +285,7 @@
 #' @export
 #' 
 # Hierarchical EGA
-# Updated 07.05.2022
+# Updated 08.05.2022
 hierEGA <- function(
     data, scores = c("factor", "network"),
     consensus_iter = 1000,
@@ -388,6 +388,7 @@ hierEGA <- function(
   # Perform consensus clustering
   lower_order_wc <- consensus_clustering(
     network = lower_order_result$network,
+    corr = lower_order_result$cor.data,
     order = "lower",
     consensus_iter = consensus_iter
   )
@@ -455,13 +456,12 @@ hierEGA <- function(
     )
     
     # Make consensus
-    if(algorithm == "louvain"){
-      higher_order_wc <- consensus_clustering(
-        network = higher_order_result$network,
-        order = "higher",
-        consensus_iter = consensus_iter
-      )[[names(factor_results)[i]]]
-    }
+    higher_order_wc <- consensus_clustering(
+      network = higher_order_result$network,
+      corr = corr,
+      order = "higher",
+      consensus_iter = consensus_iter
+    )[[names(factor_results)[i]]]
     
     # Set up result
     factor_results[[names(factor_results)[i]]]$lower_scores <- round(score_est, 3)
@@ -536,13 +536,11 @@ hierEGA <- function(
     )
     
     # Make consensus
-    if(algorithm == "louvain"){
-      higher_order_wc <- consensus_clustering(
-        network = higher_order_result$network,
-        order = "higher",
-        consensus_iter = consensus_iter
-      )[[names(network_results)[i]]]
-    }
+    higher_order_wc <- consensus_clustering(
+      network = higher_order_result$network,
+      order = "higher",
+      consensus_iter = consensus_iter
+    )[[names(network_results)[i]]]
     
     # Set up result
     network_results[[names(network_results)[i]]]$lower_scores <- round(score_est, 3)

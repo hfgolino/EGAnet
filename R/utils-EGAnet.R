@@ -577,9 +577,10 @@ reindex_comm <- function(communities)
 # Lancichinetti & Fortunato (2012)
 #' @noRd
 # Consensus Clustering
-# Updated 07.05.2022
+# Updated 08.05.2022
 consensus_clustering <- function(
-    network, order = c("lower", "higher"),
+    network, corr,
+    order = c("lower", "higher"),
     consensus_iter
 )
 {
@@ -637,13 +638,19 @@ consensus_clustering <- function(
   # Compute modularity
   modularities <- apply(non_dupes, 1, modularity, network, 1)
   
+  # Compute TEFI
+  TEFI <- apply(non_dupes, 1, function(x){
+    tefi(abs(corr), x)$VN.Entropy.Fit
+  })
+  
   # Set up summary table
   summary_table <- data.frame(
     N_Dimensions = apply(non_dupes, 1, function(x){
       length(na.omit(unique(x)))
     }),
     Proportion = as.matrix(count(wc_matrix) / nrow(wc_matrix)),
-    Modularity = modularities
+    Modularity = modularities,
+    TEFI = TEFI
   )
   
   # Attach non-duplicate solutions
@@ -676,12 +683,12 @@ consensus_clustering <- function(
   }
   
   # Initialize count for homogenizing membership
-  count <- 1
+  iter <- 1
   
   # Set up while loop
   while(!binary(network)){
     
-    if(count != 1){
+    if(iter != 1){
       
       # Convert network to igraph
       igraph_network <- convert2igraph(abs(network))
