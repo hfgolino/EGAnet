@@ -241,12 +241,17 @@
 #' {Community memberships based on consensus clustering described by
 #' Lancichinetti & Fortunato (2012)}
 #' 
+#' \item{\code{lowest_tefi}}
+#' {Community memberships based on the lowest \code{\link[EGAnet]{tefi}}
+#' across the \code{\link[igraph]{cluster_louvain}} applications}
+#' 
 #' \item{\code{summary_table}}
 #' {A data frame summarizing the unique community solutions across the iterations. Down the
 #' columns indicate: number of dimensions (\code{N_Dimensions}),
 #' proportion of times each community solution was identified (\code{Proportion}),
-#' modularity of each community solution (\code{Modularity}), and
-#' the memberships for each item. Across the rows indicate each
+#' modularity of each community solution (\code{Modularity}),
+#' total entropy fit index of each community solution (\code{\link[EGAnet]{tefi}}), 
+#' and the memberships for each item. Across the rows indicate each
 #' unique community solution
 #' }
 #' 
@@ -292,7 +297,8 @@ hierEGA <- function(
     consensus_method = c(
       "highest_modularity",
       "most_common",
-      "iterative"
+      "iterative",
+      "lowest_tefi"
     ),
     uni.method = c("expand", "LE"),
     corr = c("cor_auto", "pearson", "spearman"),
@@ -399,12 +405,10 @@ hierEGA <- function(
   # Estimate scores
   ## Factor ----
   # Set up for all three results
-  factor_results <- vector("list", length = 3)
-  names(factor_results) <- c(
-    "highest_modularity",
-    "most_common",
-    "iterative"
-  )
+  factor_results <- vector("list", length = length(lower_order_wc) - 1)
+  names(factor_results) <- names(lower_order_wc)[
+    -length(lower_order_wc)
+  ]
   
   # Loop through
   for(i in 1:length(factor_results)){
@@ -483,12 +487,10 @@ hierEGA <- function(
   
   ## Network ----
   # Set up for all three results
-  network_results <- vector("list", length = 3)
-  names(network_results) <- c(
-    "highest_modularity",
-    "most_common",
-    "iterative"
-  )
+  network_results <- vector("list", length = length(lower_order_wc) - 1)
+  names(network_results) <- names(lower_order_wc)[
+    -length(lower_order_wc)
+  ]
   
   # Loop through
   for(i in 1:length(network_results)){

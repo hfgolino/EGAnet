@@ -663,13 +663,19 @@ consensus_clustering <- function(
   # Obtain max modularity
   wc_modularity <- unlist(summary_table[
     which.max(summary_table[,"Modularity"]),
-    -c(1:3)
+    -c(1:4)
   ])
   
   # Obtain max proportion
   wc_proportion <- unlist(summary_table[
     which.max(summary_table[,"Proportion"]),
-    -c(1:3)
+    -c(1:4)
+  ])
+  
+  # Obtain minimum TEFI
+  wc_tefi <- unlist(summary_table[
+    which.min(summary_table[,"TEFI"]),
+    -c(1:4)
   ])
   
   # Traditional consensus clustering
@@ -751,7 +757,7 @@ consensus_clustering <- function(
     network <- d_matrix
     
     # Increase count
-    count <- count + 1
+    iter <- iter + 1
     
   }
   
@@ -780,6 +786,7 @@ consensus_clustering <- function(
   results$highest_modularity <- wc_modularity
   results$most_common <- wc_proportion
   results$iterative <- wc_traditional
+  results$lowest_tefi <- wc_tefi
   results$summary_table <- summary_table
 
   # Return consensus
