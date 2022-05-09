@@ -581,7 +581,7 @@ reindex_comm <- function(communities)
 consensus_clustering <- function(
     network, corr,
     order = c("lower", "higher"),
-    consensus_iter
+    consensus.iter
 )
 {
 
@@ -592,7 +592,7 @@ consensus_clustering <- function(
   igraph_network <- convert2igraph(abs(network))
   
   # Apply Louvain
-  communities <- lapply(1:consensus_iter, function(j){
+  communities <- lapply(1:consensus.iter, function(j){
     
     # Obtain memberships
     wc <- igraph::cluster_louvain(igraph_network)$memberships
@@ -700,7 +700,7 @@ consensus_clustering <- function(
       igraph_network <- convert2igraph(abs(network))
       
       # Apply Louvain
-      communities <- lapply(1:consensus_iter, function(j){
+      communities <- lapply(1:consensus.iter, function(j){
         
         # Obtain memberships
         wc <- igraph::cluster_louvain(igraph_network)$memberships
@@ -2345,14 +2345,14 @@ compare.plot.fix.EGA <- function(object.list,  plot.type = c("GGally","qgraph"),
   # Loop through object list
   for(i in 1:length(object.list)){
 
-    if(class(object.list[[i]]) == "EGA"){
+    if(is(object.list[[i]], "EGA")){
       x <- object.list[[i]]
-    }else if(class(object.list[[i]]) == "bootEGA"){
+    }else if(is(object.list[[i]], "bootEGA")){
       x <- list(
         network = object.list[[i]]$typicalGraph$graph,
         wc = object.list[[i]]$typicalGraph$wc
       )
-    }else if(class(object.list[[i]]) == "dynEGA"){
+    }else if(is(object.list[[i]], "dynEGA")){
       x <- object.list[[i]]$dynEGA
     }
 

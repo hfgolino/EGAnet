@@ -78,6 +78,59 @@ print.invariance <- function(x, ...) {
   cat("Signif. code: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 'n.s.' 1")
 }
 
+#Print Hierarchical EGA----
+# Updated 09.05.2022
+#' @export
+print.hierEGA <- function(x, ...) {
+  
+  # Print lower order communities
+  cat("Lower order communities:\n\n")
+  print(x$hierarchical$lower_order$wc)
+  
+  # Print higher order communities
+  cat("\nHigher order communities:\n\n")
+  print(x$hierarchical$higher_order$EGA$wc)
+  
+  # Print methods
+  cat("\nMethods:\n")
+  
+  ## Set up methods
+  methods.matrix <- matrix(
+    nrow = 7, ncol = 1
+  )
+  row.names(methods.matrix) <- c(
+    "Correlations =",
+    "Model =",
+    "Algorithm =",
+    "Unidimensional Method =",
+    "Scores =",
+    "Consensus Method =",
+    "Consensus Iterations ="
+  )
+  colnames(methods.matrix) <- ""
+  
+  methods.matrix["Correlations =",] <- ifelse(
+    x$hierarchical$Methods$corr == "cor_auto",
+    "auto (from qgraph)",
+    x$hierarchical$Methods$corr
+  )
+  methods.matrix["Model =",] <- x$hierarchical$Methods$model
+  methods.matrix["Algorithm =",] <- x$hierarchical$Methods$algorithm
+  methods.matrix["Unidimensional Method =",] <- ifelse(
+    x$hierarchical$Methods$uni.method == "LE",
+    "leading eigenvalue",
+    "expand correlation matrix"
+  )
+  methods.matrix["Scores =",] <- x$hierarchical$Methods$scores
+  methods.matrix["Consensus Method =",] <- gsub(
+    "_", " ", x$hierarchical$Methods$consensus.method
+  )
+  methods.matrix["Consensus Iterations =",] <- x$hierarchical$Methods$consensus.iter
+  
+  print(methods.matrix, quote = FALSE)
+  
+}
+
 # PLOTS----
 # Updated 16.06.2021
 #' @export

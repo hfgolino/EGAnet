@@ -238,13 +238,13 @@ boot.ergoInfo <- function(dynEGA.pop,
     data.sim[[i]] <- vector("list", length = length(unique.ids))
   }
 
-  if(class(dynEGA.pop)=="dynEGA"){
+  if(is(dynEGA.pop, "dynEGA")){
     for(i in 1:iter){
       for(j in 1:length(unique.ids)){
         data.sim[[i]][[j]] <- MASS_mvrnorm(n = time.points[[j]], mu = rep(0, ncol(dynEGA.pop$dynEGA$cor.dat)), Sigma = as.matrix(Matrix::nearPD(solve(dynEGA.pop$network))$mat))
       }
     }
-  } else if(class(dynEGA.pop)=="dynEGA.ind.pop"){
+  } else if(is(dynEGA.pop, "dynEGA.ind.pop")){
     for(i in 1:iter){
       for(j in 1:length(unique.ids)){
         data.sim[[i]][[j]] <- as.data.frame(MASS_mvrnorm(n = time.points[[j]], mu = rep(0, ncol(dynEGA.pop$dynEGA.pop$cor.data)), Sigma = as.matrix(Matrix::nearPD(solve(dynEGA.pop$dynEGA.pop$network))$mat)))

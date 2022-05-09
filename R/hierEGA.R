@@ -25,12 +25,12 @@
 #' By default, both factor and network scores are computed and stored
 #' in the output. The selected option only appears in the main output (\code{$hierarchical})
 #' 
-#' @param consensus_iter Numeric.
+#' @param consensus.iter Numeric.
 #' Number of iterations to perform in consensus clustering
 #' (see Lancichinetti & Fortunato, 2012).
 #' Defaults to \code{1000}
 #' 
-#' @param consensus_method Character.
+#' @param consensus.method Character.
 #' What consensus clustering method should be used? 
 #' Defaults to \code{"highest_modularity"}.
 #' Current options are:
@@ -59,7 +59,7 @@
 #' 
 #' }
 #' 
-#' By default, all \code{consensus_method} options are computed and
+#' By default, all \code{consensus.method} options are computed and
 #' stored in the output. The selected method will be used to
 #' plot and appear in the main output (\code{$hierarchical})
 #' 
@@ -264,10 +264,10 @@
 #' }
 #' 
 #' \item{factor_results}{A list containing higher order results based on factor scores.
-#' A list for each \code{consensus_method} is provided with their \code{\link[EGAnet]{EGA}} results}
+#' A list for each \code{consensus.method} is provided with their \code{\link[EGAnet]{EGA}} results}
 #' 
 #' \item{network_results}{A list containing higher order results based on network scores.
-#' A list for each \code{consensus_method} is provided with their \code{\link[EGAnet]{EGA}} results}
+#' A list for each \code{consensus.method} is provided with their \code{\link[EGAnet]{EGA}} results}
 #' 
 #' @references 
 #' Lancichinetti, A., & Fortunato, S. (2012).
@@ -286,10 +286,12 @@
 #' # Obtain example data
 #' data <- optimism
 #' 
-#' \dontrun{
 #' # hierEGA example
-#' opt.res <- hierEGA(data = optimism, algorithm = "louvain")
-#' }
+#' opt.res <- hierEGA(
+#'   data = optimism,
+#'   algorithm = "louvain",
+#'   plot.EGA = FALSE # no plots for CRAN check
+#' )
 #'
 #' @export
 #' 
@@ -297,8 +299,8 @@
 # Updated 09.05.2022
 hierEGA <- function(
     data, scores = c("factor", "network"),
-    consensus_iter = 1000,
-    consensus_method = c(
+    consensus.iter = 1000,
+    consensus.method = c(
       "highest_modularity",
       "most_common",
       "iterative",
@@ -319,9 +321,9 @@ hierEGA <- function(
     scores <- "network"
   }else{scores <- match.arg(scores)}
   
-  if(missing(consensus_method)){
-    consensus_method <- "highest_modularity"
-  }else{consensus_method <- match.arg(consensus_method)}
+  if(missing(consensus.method)){
+    consensus.method <- "highest_modularity"
+  }else{consensus.method <- match.arg(consensus.method)}
   
   if(missing(uni.method)){
     uni.method <- "LE"
@@ -400,7 +402,7 @@ hierEGA <- function(
     network = lower_order_result$network,
     corr = lower_order_result$cor.data,
     order = "lower",
-    consensus_iter = consensus_iter
+    consensus.iter = consensus.iter
   )
   
   # End message
@@ -468,7 +470,7 @@ hierEGA <- function(
       network = higher_order_result$network,
       corr = higher_order_result$correlation,
       order = "higher",
-      consensus_iter = consensus_iter
+      consensus.iter = consensus.iter
     )[[names(factor_results)[i]]]
     
     # Set up result
@@ -546,7 +548,7 @@ hierEGA <- function(
       network = higher_order_result$network,
       corr = higher_order_result$correlation,
       order = "higher",
-      consensus_iter = consensus_iter
+      consensus.iter = consensus.iter
     )[[names(network_results)[i]]]
     
     # Set up result
@@ -578,7 +580,7 @@ hierEGA <- function(
   hierarchical <- list()
   
   # Obtain lower order results
-  lower_order_result$wc <- lower_order_wc[[consensus_method]]
+  lower_order_result$wc <- lower_order_wc[[consensus.method]]
   lower_order_result$n.dim <- length(na.omit(unique(lower_order_result$wc)))
   
   # Get S3 print information for lower order
@@ -605,7 +607,7 @@ hierEGA <- function(
   # Obtain higher order result
   if(scores == "factor"){
     
-    hierarchical$higher_order <- factor_results[[consensus_method]][
+    hierarchical$higher_order <- factor_results[[consensus.method]][
       c("lower_scores", "lower_loadings", algorithm)
     ]
     
@@ -615,7 +617,7 @@ hierEGA <- function(
     
   }else if(scores == "network"){
     
-    hierarchical$higher_order <- network_results[[consensus_method]][
+    hierarchical$higher_order <- network_results[[consensus.method]][
       c("lower_scores", "lower_loadings", algorithm)
     ]
     
@@ -667,6 +669,17 @@ hierEGA <- function(
     c("hierarchical", "lower_ega", "lower_wc",
       "factor_results", "network_results")
   ]
+  
+  # Set up Methods
+  methods <- list(
+    corr = corr, model = model, model.args = model.args,
+    algorithm = algorithm, algorithm.args = algorithm.args,
+    uni.method = uni.method, scores = scores,
+    consensus.method = consensus.method, consensus.iter = consensus.iter
+  )
+  
+  # Insert methods into hierarhical
+  results$hierarchical$Methods <- methods
   
   # Make class "hierEGA"
   class(results) <- "hierEGA"

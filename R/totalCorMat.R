@@ -25,7 +25,7 @@
 #'
 #' @export
 #'
-# Total COrrelation
+# Total Correlation
 # Updated 14.02.2021
 totalCorMat <- function(data){
   TotCorMat <- matrix(NA,nrow=ncol(data),ncol=ncol(data))

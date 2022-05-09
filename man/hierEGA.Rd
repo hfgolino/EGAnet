@@ -7,8 +7,8 @@
 hierEGA(
   data,
   scores = c("factor", "network"),
-  consensus_iter = 1000,
-  consensus_method = c("highest_modularity", "most_common", "iterative", "lowest_tefi"),
+  consensus.iter = 1000,
+  consensus.method = c("highest_modularity", "most_common", "iterative", "lowest_tefi"),
   uni.method = c("expand", "LE"),
   corr = c("cor_auto", "pearson", "spearman"),
   model = c("glasso", "TMFG"),
@@ -43,12 +43,12 @@ the composition of the lower order factors.
 By default, both factor and network scores are computed and stored
 in the output. The selected option only appears in the main output (\code{$hierarchical})}
 
-\item{consensus_iter}{Numeric.
+\item{consensus.iter}{Numeric.
 Number of iterations to perform in consensus clustering
 (see Lancichinetti & Fortunato, 2012).
 Defaults to \code{1000}}
 
-\item{consensus_method}{Character.
+\item{consensus.method}{Character.
 What consensus clustering method should be used? 
 Defaults to \code{"highest_modularity"}.
 Current options are:
@@ -77,7 +77,7 @@ across iterations}
 
 }
 
-By default, all \code{consensus_method} options are computed and
+By default, all \code{consensus.method} options are computed and
 stored in the output. The selected method will be used to
 plot and appear in the main output (\code{$hierarchical})}
 
@@ -283,10 +283,10 @@ unique community solution
 }
 
 \item{factor_results}{A list containing higher order results based on factor scores.
-A list for each \code{consensus_method} is provided with their \code{\link[EGAnet]{EGA}} results}
+A list for each \code{consensus.method} is provided with their \code{\link[EGAnet]{EGA}} results}
 
 \item{network_results}{A list containing higher order results based on network scores.
-A list for each \code{consensus_method} is provided with their \code{\link[EGAnet]{EGA}} results}
+A list for each \code{consensus.method} is provided with their \code{\link[EGAnet]{EGA}} results}
 }
 \description{
 Estimates EGA using the lower-order solution of \code{\link[igraph]{cluster_louvain}}
@@ -297,10 +297,12 @@ estimate factor or network scores, which are used to estimate the higher-order d
 # Obtain example data
 data <- optimism
 
-\dontrun{
 # hierEGA example
-opt.res <- hierEGA(data = optimism, algorithm = "louvain")
-}
+opt.res <- hierEGA(
+  data = optimism,
+  algorithm = "louvain",
+  plot.EGA = FALSE # no plots for CRAN check
+)
 
 }
 \references{

@@ -169,12 +169,12 @@ compare.EGA.plots <- function(
     names(homogenized.wc) <- names(target.wc)
     
     # Replace membership
-    if(class(comparison_EGA[[i]]) == "EGA"){
+    if(is(comparison_EGA[[i]], "EGA")){
       comparison_EGA[[i]]$wc <- homogenized.wc
       names(comparison_EGA[[i]]$wc) <- colnames(comparison_EGA[[i]]$network)
-    }else if(class(comparison_EGA[[i]]) == "bootEGA"){
+    }else if(is(comparison_EGA[[i]], "bootEGA")){
       comparison_EGA[[i]]$typicalGraph$wc <- homogenized.wc
-    }else if(class(comparison_EGA[[i]]$dynEGA$wc)){
+    }else if(is(comparison_EGA[[i]], "dynEGA")){
       comparison_EGA[[i]]$typicalGraph$wc <- homogenized.wc
     }
     
