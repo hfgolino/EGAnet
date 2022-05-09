@@ -50,7 +50,7 @@ Defaults to \code{1000}}
 
 \item{consensus_method}{Character.
 What consensus clustering method should be used? 
-Defaults to \code{"modularity"}.
+Defaults to \code{"highest_modularity"}.
 Current options are:
 
 \itemize{
