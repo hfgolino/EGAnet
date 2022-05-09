@@ -115,7 +115,7 @@
 itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
 
   # Check for 'bootEGA' object
-  if(class(bootega.obj) != "bootEGA"){
+  if(is(bootega.obj) != "bootEGA"){
     stop("Input for 'bootega.obj' is not a 'bootEGA' object")
   }
 
