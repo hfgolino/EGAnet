@@ -1,5 +1,7 @@
 ### CRAN 1.0.0 | GitHub 1.1.0
 
+<img src="inst/EGAnet_hex.png" width = 250 />
+
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active) [![Downloads Total](https://cranlogs.r-pkg.org/badges/grand-total/EGAnet?color=brightgreen)](https://cran.r-project.org/package=EGAnet) [![Downloads per month](http://cranlogs.r-pkg.org/badges/EGAnet?color=brightgreen)](https://cran.r-project.org/package=EGAnet) 
 
 How to Install
