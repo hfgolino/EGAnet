@@ -294,7 +294,7 @@
 #' @export
 #' 
 # Hierarchical EGA
-# Updated 08.05.2022
+# Updated 09.05.2022
 hierEGA <- function(
     data, scores = c("factor", "network"),
     consensus_iter = 1000,
@@ -320,7 +320,7 @@ hierEGA <- function(
   }else{scores <- match.arg(scores)}
   
   if(missing(consensus_method)){
-    consensus_method <- "most_common"
+    consensus_method <- "highest_modularity"
   }else{consensus_method <- match.arg(consensus_method)}
   
   if(missing(uni.method)){
