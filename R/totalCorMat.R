@@ -10,14 +10,17 @@
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
 #'
 #' @examples
+#' \dontrun{
+#' \donttest{
 #' # Compute total correlation
 #' totalCorMat(wmt2[,7:24])
+#'}}
 #'
 #' @references
 #' Watanabe, S. (1960).
 #' Information theoretical analysis of multivariate correlation.
 #' \emph{IBM Journal of Research and Development} \emph{4}, 66-82.
-#' 
+#'
 #' # Implementation
 #' Felix, L. M., Mansur-Alves, M., Teles, M., Jamison, L., & Golino, H. (2021).
 #' Longitudinal impact and effects of booster sessions in a cognitive training program for healthy older adults.
