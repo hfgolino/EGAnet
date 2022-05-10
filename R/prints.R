@@ -119,11 +119,21 @@ print.invariance <- function(x, ...) {
 print.hierEGA <- function(x, ...) {
   
   # Print lower order communities
-  cat("Lower order communities:\n\n")
+  cat(paste(
+    "Lower order communities:",
+    x$hierarchical$lower_order$n.dim,
+    "\n\n"
+  ))
   print(x$hierarchical$lower_order$wc)
   
   # Print higher order communities
-  cat("\nHigher order communities:\n\n")
+  cat(
+    paste(
+      "\nHigher order communities:",
+      x$hierarchical$higher_order$EGA$n.dim,
+      "\n\n"
+    )
+  )
   print(x$hierarchical$higher_order$EGA$wc)
 
   # Print methods
