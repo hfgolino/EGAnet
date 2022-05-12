@@ -153,7 +153,7 @@
 #'
 #' @export
 # Bootstrap Test for the Ergodicity Information Index
-# Updated 29.12.2021
+# Updated 12.05.2022
 
 boot.ergoInfo <- function(dynEGA.pop,
                           iter,
@@ -248,7 +248,7 @@ boot.ergoInfo <- function(dynEGA.pop,
     for(i in 1:iter){
       for(j in 1:length(unique.ids)){
         data.sim[[i]][[j]] <- as.data.frame(MASS_mvrnorm(n = time.points[[j]], mu = rep(0, ncol(dynEGA.pop$dynEGA.pop$cor.data)), Sigma = as.matrix(Matrix::nearPD(solve(dynEGA.pop$dynEGA.pop$network))$mat)))
-        data.sim[[i]][[j]]$ID <- rep(i, each = time.points[[j]])
+        data.sim[[i]][[j]]$ID <- rep(j, each = time.points[[j]])
       }
     }
   }
@@ -267,7 +267,7 @@ boot.ergoInfo <- function(dynEGA.pop,
 
   #let user know data generation has started
   message("\nEstimating the Population and Individual Structures...\n", appendLF = FALSE)
-  
+
   #Parallel processing
   cl <- parallel::makeCluster(ncores)
 
@@ -318,7 +318,10 @@ boot.ergoInfo <- function(dynEGA.pop,
                                                                              add = "mean",
                                                                              fill = "#00AFBB",
                                                                              color = "black",
-                                                                             rug = TRUE)))
+                                                                             rug = TRUE,
+                                                                             ylab = "Frequency",
+                                                                             xlab = "Ergodicity Information Index")+
+                                                           ggplot2::geom_vline(xintercept = EII, color = "#00AFBB", linetype = "dotted")))
 
   ## Return Results:
   results <- vector("list")
