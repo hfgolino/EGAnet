@@ -189,11 +189,6 @@
 #'
 #' }
 #'
-#' @param verbose Boolean.
-#' Should network estimation parameters be printed?
-#' Defaults to \code{TRUE}.
-#' Set to \code{FALSE} for no print out
-#'
 #' @return Returns a list of lists containing: \cr
 #' \cr
 #' \strong{Main Results} \cr
@@ -331,7 +326,7 @@ hierEGA <- function(
     model = c("glasso", "TMFG"), model.args = list(),
     algorithm = c("walktrap", "louvain"), algorithm.args = list(),
     plot.EGA = TRUE, plot.type = c("GGally", "qgraph"),
-    plot.args = list(), verbose
+    plot.args = list()
 )
 {
 
@@ -364,10 +359,6 @@ hierEGA <- function(
   if(missing(plot.type)){
     plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
-
-  if(missing(verbose)){
-    verbose <- TRUE
-  }else{verbose <- match.arg(FALSE)}
 
   #### ARGUMENTS HANDLING ####
 
@@ -558,7 +549,6 @@ hierEGA <- function(
     ega_defaults$plot.EGA <- FALSE
     ega_defaults$plot.type <- plot.type
     ega_defaults$plot.args <- plot.args
-    ega_defaults$verbose <- verbose
 
     # Get EGA
     higher_order_result <- suppressWarnings(

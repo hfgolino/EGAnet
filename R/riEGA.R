@@ -189,11 +189,6 @@
 #' Arguments should be input as a list. Some example arguments 
 #' (see \code{\link[lavaan]{lavOptions} for full details})
 #' 
-#' @param verbose Boolean.
-#' Should network estimation parameters be printed?
-#' Defaults to \code{TRUE}.
-#' Set to \code{FALSE} for no print out
-#' 
 #' @return Returns a list containing:
 #' 
 #' \item{EGA}{Results from \code{\link[EGAnet]{EGA}}}
