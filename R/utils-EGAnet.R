@@ -2247,9 +2247,15 @@ GGally.args <- function(plot.args)
 
   if("color.palette" %in% names(plot.args)){
 
-    if(tolower(plot.args$color.palette) == "greyscale" | tolower(plot.args$color.palette) == "grayscale" | tolower(plot.args$color.palette) == "colorblind"){
-      plot.args$edge.color <- c("#293132", "grey25")
-      plot.args$edge.lty <- c("solid", "dashed")
+    if(length(plot.args$color.palette) == 1){
+      
+      if(tolower(plot.args$color.palette) == "greyscale" |
+         tolower(plot.args$color.palette) == "grayscale" | 
+         tolower(plot.args$color.palette) == "colorblind"){
+        plot.args$edge.color <- c("#293132", "grey25")
+        plot.args$edge.lty <- c("solid", "dashed")
+      }
+      
     }
 
   }
