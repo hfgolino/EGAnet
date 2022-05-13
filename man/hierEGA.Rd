@@ -48,7 +48,7 @@ Number of iterations to perform in consensus clustering
 Defaults to \code{1000}}
 
 \item{consensus.method}{Character.
-What consensus clustering method should be used? 
+What consensus clustering method should be used?
 Defaults to \code{"highest_modularity"}.
 Current options are:
 
@@ -81,7 +81,7 @@ stored in the output. The selected method will be used to
 plot and appear in the main output (\code{$hierarchical})}
 
 \item{uni.method}{Character.
-What unidimensionality method should be used? 
+What unidimensionality method should be used?
 Defaults to \code{"LE"}.
 Current options are:
 
@@ -89,7 +89,7 @@ Current options are:
 
 \item{\strong{\code{expand}}}
 {Expands the correlation matrix with four variables correlated .50.
-If number of dimension returns 2 or less in check, then the data 
+If number of dimension returns 2 or less in check, then the data
 are unidimensional; otherwise, regular EGA with no matrix
 expansion is used. This is the method used in the Golino et al. (2020)
 \emph{Psychological Methods} simulation.}
@@ -272,7 +272,7 @@ across the \code{\link[igraph]{cluster_louvain}} applications}
 columns indicate: number of dimensions (\code{N_Dimensions}),
 proportion of times each community solution was identified (\code{Proportion}),
 modularity of each community solution (\code{Modularity}),
-total entropy fit index of each community solution (\code{\link[EGAnet]{tefi}}), 
+total entropy fit index of each community solution (\code{\link[EGAnet]{tefi}}),
 and the memberships for each item. Across the rows indicate each
 unique community solution
 }
