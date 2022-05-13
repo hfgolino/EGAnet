@@ -252,7 +252,6 @@ riEGA <- function(
   
   #### ARGUMENTS HANDLING ####
   
-  
   # Ensure data is a matrix
   data <- as.matrix(data)
   
@@ -325,7 +324,7 @@ riEGA <- function(
     })
     
     # Check categories
-    if(any(categories < 6)){# Not all continuous
+    if(sum(categories < 6) > 1){# Not all continuous
       lavaan.args$estimator <- "WLSMV"
       lavaan.args$missing <- "pairwise"
       lavaan.args$ordered <- TRUE

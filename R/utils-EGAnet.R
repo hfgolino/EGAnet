@@ -4548,15 +4548,17 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
         # Replace arguments
         lavaan.args$model <- mod
         lavaan.args$data <- new.data
+        
         ## Get default estimator
         categories <- apply(new.data[,c(tar.idx, idx)], 2, function(x){
           length(unique(x))
         })
 
-        ## Check categories
-        if(any(categories < 6)){# Not all continuous
+        # Check categories
+        if(sum(categories < 6) > 1){# Not all continuous
           lavaan.args$estimator <- "WLSMV"
           lavaan.args$missing <- "pairwise"
+          lavaan.args$ordered <- TRUE
         }else{# All can be considered continuous
           lavaan.args$estimator <- "MLR"
           lavaan.args$missing <- "fiml"
@@ -4966,13 +4968,14 @@ redund.reduce.auto <- function(node.redundant.obj,
         # Replace arguments
         lavaan.args$model <- mod
         lavaan.args$data <- new.data
+        
         ## Get default estimator
         categories <- apply(new.data[,c(tar.idx, idx)], 2, function(x){
           length(unique(x))
         })
 
-        ## Check categories
-        if(any(categories < 6)){# Not all continuous
+        # Check categories
+        if(sum(categories < 6) > 1){# Not all continuous
           lavaan.args$estimator <- "WLSMV"
           lavaan.args$missing <- "pairwise"
           lavaan.args$ordered <- TRUE
@@ -5378,10 +5381,11 @@ redund.adhoc.auto <- function(node.redundant.obj,
         length(unique(x))
       })
 
-      ## Check categories
-      if(any(categories < 6)){# Not all continuous
+      # Check categories
+      if(sum(categories < 6) > 1){# Not all continuous
         lavaan.args$estimator <- "WLSMV"
         lavaan.args$missing <- "pairwise"
+        lavaan.args$ordered <- TRUE
       }else{# All can be considered continuous
         lavaan.args$estimator <- "MLR"
         lavaan.args$missing <- "fiml"
