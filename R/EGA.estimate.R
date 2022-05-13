@@ -76,11 +76,6 @@
 #' the \code{\link[stats]{cor}}} function.
 #' }
 #'
-#' @param verbose Boolean.
-#' Should network estimation parameters be printed?
-#' Defaults to \code{TRUE}.
-#' Set to \code{FALSE} for no print out
-#'
 #' @param ... Additional arguments.
 #' Used for deprecated arguments from previous versions of \code{\link{EGA}}
 #'
@@ -157,12 +152,11 @@
 #' @export
 #'
 # Estimates EGA
-# Updated 19.04.2022
+# Updated 13.05.2022
 EGA.estimate <- function(data, n = NULL,
                          model = c("glasso", "TMFG"), model.args = list(),
                          algorithm = c("walktrap", "louvain"), algorithm.args = list(),
                          corr = c("cor_auto", "pearson", "spearman"),
-                         verbose = TRUE,
                          ...)
 {
   # Make the data a matrix
@@ -359,18 +353,7 @@ EGA.estimate <- function(data, n = NULL,
       estimated.network <- do.call(EBICglasso.qgraph, model.formals)
 
       if(all(abs(strength(estimated.network))>0)){
-
-        if(verbose){
-
-          message(paste("Network estimated with:\n",
-                        " \u2022 gamma = ", gamma.values[j], "\n",
-                        " \u2022 lambda.min.ratio = ", model.formals$lambda.min.ratio,
-                        sep=""))
-
-        }
-
         break
-
       }
     }
 

@@ -99,6 +99,40 @@
 #' A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
 #' or some other community detection algorithm function (see examples)
 #'
+#' @param consensus.iter Numeric.
+#' Number of iterations to perform in consensus clustering for the Louvain algorithm
+#' (see Lancichinetti & Fortunato, 2012).
+#' Defaults to \code{100}
+#' 
+#' @param consensus.method Character.
+#' What consensus clustering method should be used? 
+#' Defaults to \code{"highest_modularity"}.
+#' Current options are:
+#' 
+#' \itemize{
+#' 
+#' \item{\strong{\code{highest_modularity}}}
+#' {Uses the community solution that achieves the highest modularity
+#' across iterations}
+#' 
+#' \item{\strong{\code{most_common}}}
+#' {Uses the community solution that is found the most
+#' across iterations}
+#' 
+#' \item{\strong{\code{iterative}}}
+#' {Identifies the most common community solutions across iterations
+#' and determines how often nodes appear in the same community together.
+#' A threshold of 0.30 is used to set low proportions to zero.
+#' This process repeats iteratively until all nodes have a proportion of
+#' 1 in the community solution.
+#' }
+#' 
+#' \item{\code{lowest_tefi}}
+#' {Uses the community solution that achieves the lowest \code{\link[EGAnet]{tefi}}
+#' across iterations}
+#' 
+#' }
+#'
 #' @param plot.EGA Boolean.
 #' If \code{TRUE}, returns a plot of the network and its estimated dimensions.
 #' Defaults to \code{TRUE}
@@ -145,11 +179,6 @@
 #' more details and examples}
 #'
 #' }
-#'
-#' @param verbose Boolean.
-#' Should network estimation parameters be printed?
-#' Defaults to \code{TRUE}.
-#' Set to \code{FALSE} for no print out
 #'
 #' @param ... Additional arguments.
 #' Used for deprecated arguments from previous versions of \code{\link{EGA}}
@@ -242,15 +271,23 @@
 #'
 #' @export
 #'
-# Updated 30.12.2021
+# Updated 13.05.2022
+# Consensus clustering 13.05.2022
 # LE adjustment 08.03.2021
 ## EGA Function to detect unidimensionality:
 EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
                  corr = c("cor_auto", "pearson", "spearman"),
                  model = c("glasso", "TMFG"), model.args = list(),
                  algorithm = c("walktrap", "louvain"), algorithm.args = list(),
+                 consensus.iter = 100,
+                 consensus.method = c(
+                   "highest_modularity",
+                   "most_common",
+                   "iterative",
+                   "lowest_tefi"
+                 ),
                  plot.EGA = TRUE, plot.type = c("GGally", "qgraph"),
-                 plot.args = list(), verbose = TRUE,
+                 plot.args = list(),
                  ...) {
 
   # Get additional arguments
@@ -262,7 +299,7 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
     # Give deprecation warning
     warning(
       paste(
-        "The 'steps' argument has been deprecated in all EGA functions.\n\nInstead use: algorithm.args = list(steps = ", add.args$steps, ")",
+        "\nThe 'steps' argument has been deprecated in all EGA functions.\n\nInstead use: algorithm.args = list(steps = ", add.args$steps, ")\n",
         sep = ""
       )
     )
@@ -276,7 +313,7 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
     
     # Give deprecation warning
     warning(
-      "The 'uni' argument has been deprecated in all EGA functions."
+      "\nThe 'uni' argument has been deprecated in all EGA functions.\n"
     )
   }
 
@@ -290,6 +327,7 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
   if(uni.method == "LE"){
     # Give change warning
     warning(
+      call. = FALSE,
       paste(
         "Previous versions of EGAnet (<= 0.9.8) checked unidimensionality using",
         styletext('uni.method = "expand"', defaults = "underline"),
@@ -299,6 +337,7 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
   }else if(uni.method == "expand"){
     # Give change warning
     warning(
+      call. = FALSE,
       paste(
         "Newer evidence suggests that",
         styletext('uni.method = "LE"', defaults = "underline"),
@@ -321,37 +360,16 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
   }else if(!is.function(algorithm)){
     algorithm <- tolower(match.arg(algorithm))
   }
+  
+  if(missing(consensus.method)){
+    consensus.method <- "highest_modularity"
+  }else{consensus.method <- match.arg(consensus.method)}
 
   if(missing(plot.type)){
     plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
 
   #### ARGUMENTS HANDLING ####
-  
-  # Message function
-  message(styletext(styletext("\nExploratory Graph Analysis\n", defaults = "underline"), defaults = "bold"))
-
-  # Let user know setting
-  message(paste(" \u2022 model = ", model, "\n",
-                " \u2022 algorithm = ",
-                gsub(
-                  "igraph", "",
-                  gsub(
-                    "::", "",
-                    gsub(
-                      "cluster_", "",
-                      paste(substitute(algorithm), collapse = "")
-                    )
-                  )
-                ),
-                "\n",
-                " \u2022 correlation = ", corr, "\n",
-                " \u2022 unidimensional check = ", ifelse(
-                  uni.method == "LE",
-                  "leading eigenvalue",
-                  "correlation matrix expansion"
-                ), "\n",
-                sep=""))
   
   # Check for correlation matrix or data
   if(nrow(data) == ncol(data)){ ## Correlation matrix
@@ -373,8 +391,17 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
     ## Ensures proper partial correlations
     multi.res <- EGA.estimate(data = data, n = n,
                               model = model, model.args = model.args,
-                              algorithm = algorithm, algorithm.args = algorithm.args,
-                              verbose = verbose)
+                              algorithm = algorithm, algorithm.args = algorithm.args)
+    
+    # Perform consensus clustering
+    if(algorithm == "louvain"){
+      multi.res$wc <- consensus_clustering(
+        multi.res$network,
+        corr = data,
+        order = "higher",
+        consensus.iter = consensus.iter
+      )[[consensus.method]]
+    }
 
     # Unidimensional result
     if(uni.method == "expand"){
@@ -408,8 +435,7 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
       # Estimate unidimensional EGA
       uni.res <- EGA.estimate(data = sim.data, n = n,
                               model = model, model.args = model.args,
-                              algorithm = algorithm, algorithm.args = algorithm.args,
-                              verbose = FALSE)
+                              algorithm = algorithm, algorithm.args = algorithm.args)
       
       # Set up results
       if(uni.res$n.dim <= 2){ ## If unidimensional
@@ -500,19 +526,23 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
           sim.data <- sim.func(data = data, nvar = 4, nfact = 1, load = .70)
           
           ## Compute correlation matrix
-          cor.data <- switch(corr,
-                             "cor_auto" = qgraph::cor_auto(sim.data, forcePD = TRUE),
-                             "pearson" = cor(sim.data, use = "pairwise.complete.obs"),
-                             "spearman" = cor(sim.data, method = "spearman", use = "pairwise.complete.obs")
+          cor.data <- suppressMessages(
+            switch(corr,
+                   "cor_auto" = qgraph::cor_auto(sim.data, forcePD = TRUE),
+                   "pearson" = cor(sim.data, use = "pairwise.complete.obs"),
+                   "spearman" = cor(sim.data, method = "spearman", use = "pairwise.complete.obs")
+            )
           )
           
         }else{
           
           ## Compute correlation matrix
-          cor.data <- switch(corr,
-                             "cor_auto" = qgraph::cor_auto(data, forcePD = TRUE),
-                             "pearson" = cor(data, use = "pairwise.complete.obs"),
-                             "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
+          cor.data <- suppressMessages(
+            switch(corr,
+                   "cor_auto" = qgraph::cor_auto(data, forcePD = TRUE),
+                   "pearson" = cor(data, use = "pairwise.complete.obs"),
+                   "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
+            )
           )
           
           ## Expand correlation matrix
@@ -523,10 +553,12 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
       }else{# Do regular adjustment
         
         ## Compute correlation matrix
-        cor.data <- switch(corr,
-                           "cor_auto" = qgraph::cor_auto(data, forcePD = TRUE),
-                           "pearson" = cor(data, use = "pairwise.complete.obs"),
-                           "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
+        cor.data <- suppressMessages(
+          switch(corr,
+                 "cor_auto" = qgraph::cor_auto(data, forcePD = TRUE),
+                 "pearson" = cor(data, use = "pairwise.complete.obs"),
+                 "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
+          )
         )
         
         ## Expand correlation matrix
@@ -537,8 +569,7 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
       # Unidimensional result
       uni.res <- EGA.estimate(data = cor.data, n = n,
                               model = model, model.args = model.args,
-                              algorithm = algorithm, algorithm.args = algorithm.args,
-                              verbose = verbose)
+                              algorithm = algorithm, algorithm.args = algorithm.args)
       
       ## Remove simulated data for multidimensional result
       cor.data <- cor.data[-c(1:4),-c(1:4)]
@@ -546,8 +577,17 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
       # Multidimensional result
       multi.res <- EGA.estimate(cor.data, n = n,
                                 model = model, model.args = model.args,
-                                algorithm = algorithm, algorithm.args = algorithm.args,
-                                verbose = FALSE)
+                                algorithm = algorithm, algorithm.args = algorithm.args)
+      
+      # Perform consensus clustering
+      if(algorithm == "louvain"){
+        multi.res$wc <- consensus_clustering(
+          multi.res$network,
+          corr = cor.data,
+          order = "higher",
+          consensus.iter = consensus.iter
+        )[[consensus.method]]
+      }
       
       if(uni.res$n.dim <= 2 & !is.infinite(multi.res$n.dim)){
         
@@ -575,10 +615,12 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
     }else if(uni.method == "LE"){
       
       ## Compute correlation matrix
-      cor.data <- switch(corr,
-                         "cor_auto" = qgraph::cor_auto(data, forcePD = TRUE),
-                         "pearson" = cor(data, use = "pairwise.complete.obs"),
-                         "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
+      cor.data <- suppressMessages(
+        switch(corr,
+               "cor_auto" = qgraph::cor_auto(data, forcePD = TRUE),
+               "pearson" = cor(data, use = "pairwise.complete.obs"),
+               "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
+        )
       )
       
       # Leading eigenvalue approach for one and two dimensions
@@ -598,10 +640,17 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
       # Multidimensional result
       multi.res <- EGA.estimate(cor.data, n = n,
                                 model = model, model.args = model.args,
-                                algorithm = algorithm, algorithm.args = algorithm.args,
-                                verbose = FALSE)
+                                algorithm = algorithm, algorithm.args = algorithm.args)
       
-      
+      # Perform consensus clustering
+      if(algorithm == "louvain"){
+        multi.res$wc <- consensus_clustering(
+          multi.res$network,
+          corr = cor.data,
+          order = "higher",
+          consensus.iter = consensus.iter
+        )[[consensus.method]]
+      }
       
       # Set up results
       if(n.dim == 1){ ## Leading eigenvalue
@@ -682,6 +731,8 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
   args$algorithm <- algorithm
   args$uni.method <- uni.method
   args$corr <- corr
+  args$consensus.method <- consensus.method
+  args$consensus.iter <- consensus.iter
 
   ## Check if glasso was used
   if(model == "glasso"){
@@ -713,7 +764,10 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
   }
 
   if(isTRUE(plot.EGA)){
-    a$Plot.EGA <- plot(a, plot.type = plot.type, plot.args = plot.args)
+    
+    a$Plot.EGA <- suppressPackageStartupMessages(
+      plot(a, plot.type = plot.type, plot.args = plot.args)
+    )
     
     
     # CREATES ERROR IN EXAMPLES -- not sure what this code is for

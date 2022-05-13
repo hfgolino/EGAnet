@@ -278,9 +278,9 @@
 #' Marcos Jimenez <marcosjnezhquez@gmailcom>,
 #' Francisco J. Abad <fjose.abad@uam.es>,
 #' Eduardo Garcia-Garzon <egarcia@ucjc.edu>,
-#' Luis Eduardo Garrido <luisgarrido@pucmm.edu.do>,
+#' Hudson Golino <hfg9s@virginia.edu>,
 #' Alexander P. Christensen <alexpaulchristensen@gmail.com>, and
-#' Hudson Golino <hfg9s at virginia.edu>
+#' Luis Eduardo Garrido <luisgarrido@pucmm.edu.do>
 #'
 #' @examples
 #' # Obtain example data
@@ -316,7 +316,7 @@
 #' @export
 #' 
 # Hierarchical EGA
-# Updated 09.05.2022
+# Updated 13.05.2022
 hierEGA <- function(
     data, scores = c("factor", "network"),
     consensus.iter = 1000,
@@ -331,7 +331,7 @@ hierEGA <- function(
     model = c("glasso", "TMFG"), model.args = list(),
     algorithm = c("walktrap", "louvain"), algorithm.args = list(),
     plot.EGA = TRUE, plot.type = c("GGally", "qgraph"),
-    plot.args = list(), verbose = TRUE
+    plot.args = list()
 )
 {
  
@@ -401,7 +401,6 @@ hierEGA <- function(
   lower_order_defaults$plot.lower_order <- FALSE # do not plot
   lower_order_defaults$plot.type <- plot.type
   lower_order_defaults$plot.args <- plot.args
-  lower_order_defaults$verbose <- FALSE # quiet
   lower_order_defaults$lower.louvain <- TRUE # provides lower order Louvain
   
   # Send message
@@ -461,6 +460,10 @@ hierEGA <- function(
     # Lower-order loadings
     lower_loads <- fm$loadings[,1:length(na.omit(unique_memberships))]
     
+    # Reorder lower loadings and scores
+    lower_loads <- lower_loads[,order(colnames(lower_loads))]
+    score_est <- score_est[,order(colnames(score_est))]
+    
     # Start higher-order with factor ----
     
     # Set the rest of the arguments
@@ -474,7 +477,6 @@ hierEGA <- function(
     ega_defaults$plot.EGA <- FALSE
     ega_defaults$plot.type <- plot.type
     ega_defaults$plot.args <- plot.args
-    ega_defaults$verbose <- verbose
     
     # Get EGA
     higher_order_result <- suppressWarnings(
@@ -657,18 +659,26 @@ hierEGA <- function(
   if(isTRUE(plot.EGA)){
     
     # Set up plots
-    lower_plot <- plot(lower_order_result, produce = FALSE)
-    higher_plot <- plot(higher_order_result, produce = FALSE)
+    lower_plot <- suppressPackageStartupMessages(
+      plot(lower_order_result, produce = FALSE)
+    )
+    higher_plot <- suppressPackageStartupMessages(
+      plot(higher_order_result, produce = FALSE)
+    )
     
     # Set up output
-    hier_plot <- ggpubr::ggarrange(
-      lower_plot, # plot lower-order
-      higher_plot, # plot higher-order
-      labels = c("Lower-order", "Higher-order")
+    hier_plot <- suppressPackageStartupMessages(
+      ggpubr::ggarrange(
+        lower_plot, # plot lower-order
+        higher_plot, # plot higher-order
+        labels = c("Lower-order", "Higher-order")
+      )
     )
     
     # Output plots
-    plot(hier_plot)
+    suppressPackageStartupMessages(
+      plot(hier_plot)
+    )
     
     # Add to main results
     results$hierarchical$lower_plot <- lower_plot

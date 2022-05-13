@@ -13,12 +13,13 @@ riEGA(
   model.args = list(),
   algorithm = c("walktrap", "louvain"),
   algorithm.args = list(),
+  consensus.iter = 100,
+  consensus.method = c("highest_modularity", "most_common", "iterative", "lowest_tefi"),
   plot.EGA = TRUE,
   plot.type = c("GGally", "qgraph"),
   plot.args = list(),
   estimator = c("auto", "WLSMV", "MLR"),
-  lavaan.args = list(),
-  verbose = TRUE
+  lavaan.args = list()
 )
 }
 \arguments{
@@ -110,6 +111,40 @@ Current options are:
 \item{algorithm.args}{List.
 A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
 or some other community detection algorithm function (see examples)}
+
+\item{consensus.iter}{Numeric.
+Number of iterations to perform in consensus clustering for the Louvain algorithm
+(see Lancichinetti & Fortunato, 2012).
+Defaults to \code{100}}
+
+\item{consensus.method}{Character.
+What consensus clustering method should be used? 
+Defaults to \code{"highest_modularity"}.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{highest_modularity}}}
+{Uses the community solution that achieves the highest modularity
+across iterations}
+
+\item{\strong{\code{most_common}}}
+{Uses the community solution that is found the most
+across iterations}
+
+\item{\strong{\code{iterative}}}
+{Identifies the most common community solutions across iterations
+and determines how often nodes appear in the same community together.
+A threshold of 0.30 is used to set low proportions to zero.
+This process repeats iteratively until all nodes have a proportion of
+1 in the community solution.
+}
+
+\item{\code{lowest_tefi}}
+{Uses the community solution that achieves the lowest \code{\link[EGAnet]{tefi}}
+across iterations}
+
+}}
 
 \item{plot.EGA}{Boolean.
 If \code{TRUE}, returns a plot of the network and its estimated dimensions.

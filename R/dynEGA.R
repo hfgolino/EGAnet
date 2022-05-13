@@ -167,7 +167,7 @@
 #'
 #' @export
 # dynEGA
-# Updated 02.06.2021
+# Updated 13.05.2022
 dynEGA <- function(data, n.embed, tau = 1, delta = 1,
                    level = c("individual", "group", "population"),
                    id = NULL, group = NULL,
@@ -226,6 +226,18 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
   if(missing(group))
   {group <- ncol(data)+1
   }else{group <- group}
+  
+  if(missing(model)){
+    model <- "glasso"
+  }else{
+    model <- match.arg(model)
+  }
+  
+  if(missing(algorithm)){
+    algorithm <- "walktrap"
+  }else{
+    algorithm <- match.arg(algorithm)
+  }
 
   if(missing(corr))
   {corr <- "pearson"
@@ -454,6 +466,23 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
   results$Derivatives <- vector("list")
   results$Derivatives$Estimates <- derivlist
   results$Derivatives$EstimatesDF <- data.all
+  
+  
+  # Set up methods
+  methods <- list(); methods$glla <- list(); methods$EGA <- list()
+  
+  # GLLA methods
+  methods$glla$n.embed <- n.embed
+  methods$glla$tau <- tau
+  methods$glla$delta <- delta
+  
+  # EGA methods
+  methods$EGA$model <- model
+  methods$EGA$model.args <- model.args
+  methods$EGA$algorithm <- algorithm
+  methods$EGA$algorithm.args <- algorithm.args
+  methods$EGA$corr <- corr
+  
   if(level == "population"){
     results$dynEGA <- ega1
     dim.variables <- data.frame(items = colnames(data[-c(id, group)]), dimension = ega1$wc)
@@ -478,6 +507,10 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
         dim.variables[[i]] <- dim.variables[[i]][order(dim.variables[[i]][, 2]),]
         results$dynEGA[[i]]$dim.variables <- dim.variables[[i]]}
     }
-    return(results)
+  
+  # Attach methods to dynEGA output
+  results$dynEGA$Methods <- methods
+  
+  return(results)
 }
 #----

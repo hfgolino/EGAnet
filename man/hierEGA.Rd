@@ -17,8 +17,7 @@ hierEGA(
   algorithm.args = list(),
   plot.EGA = TRUE,
   plot.type = c("GGally", "qgraph"),
-  plot.args = list(),
-  verbose = TRUE
+  plot.args = list()
 )
 }
 \arguments{
@@ -334,7 +333,7 @@ Consensus clustering in complex networks.
 Marcos Jimenez <marcosjnezhquez@gmailcom>,
 Francisco J. Abad <fjose.abad@uam.es>,
 Eduardo Garcia-Garzon <egarcia@ucjc.edu>,
-Luis Eduardo Garrido <luisgarrido@pucmm.edu.do>,
+Hudson Golino <hfg9s@virginia.edu>,
 Alexander P. Christensen <alexpaulchristensen@gmail.com>, and
-Hudson Golino <hfg9s at virginia.edu>
+Luis Eduardo Garrido <luisgarrido@pucmm.edu.do>
 }

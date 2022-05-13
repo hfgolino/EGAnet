@@ -92,7 +92,7 @@
 #' @export
 #'
 # Network Loadings
-# Updated 01.02.2022
+# Updated 13.05.2022
 net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot.NL = FALSE)
 {
   #------------------------------------------#
@@ -314,6 +314,9 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot.NL = FALSE
     class(res) <- "NetLoads"
     
   }
+  
+  # Add minimum loading
+  res$minLoad <- min.load
   
   return(res)
 }
