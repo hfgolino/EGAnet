@@ -1324,15 +1324,6 @@ plot.CFA <- function(x, layout = "spring", vsize = 6, ...) {
                     "std", cut = 0.5, ...)
 }
 
-#Print EGA:
-print.EGA <- function(object, ...) {
-  cat("EGA Results:\n")
-  cat("\nNumber of Dimensions:\n")
-  print(object$n.dim)
-  cat("\nItems per Dimension:\n")
-  print(object$dim.variables)
-}
-
 #Summary CFA:
 summary.CFA <- function(object, ...) {
   cat("Summary: Confirmatory Factor Analysis:\n")
