@@ -331,7 +331,7 @@ hierEGA <- function(
     model = c("glasso", "TMFG"), model.args = list(),
     algorithm = c("walktrap", "louvain"), algorithm.args = list(),
     plot.EGA = TRUE, plot.type = c("GGally", "qgraph"),
-    plot.args = list()
+    plot.args = list(), verbose
 )
 {
 

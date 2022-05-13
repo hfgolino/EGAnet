@@ -17,7 +17,8 @@ hierEGA(
   algorithm.args = list(),
   plot.EGA = TRUE,
   plot.type = c("GGally", "qgraph"),
-  plot.args = list()
+  plot.args = list(),
+  verbose
 )
 }
 \arguments{
