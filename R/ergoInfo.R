@@ -43,7 +43,7 @@ ergoInfo <- function(data, use = c("edge.list", "weights")){
   }else{use}
 
   # dynEGA (Individual)
-  ids <- unique(data$Derivatives$EstimatesDF[,ncol(data$Derivatives$EstimatesDF)])
+  ids <- 1:length(unique(data$Derivatives$EstimatesDF[,ncol(data$Derivatives$EstimatesDF)]))
   ids <- paste0("ID", ids)
   # List of Individual Networks ----
   net.list <- lapply(seq_along(ids), function(i){
@@ -66,7 +66,7 @@ ergoInfo <- function(data, use = c("edge.list", "weights")){
   mat.size <- data.frame(Ind = seq_along(ids), Size = gsize.net.vec)
   mat.size <- mat.size[order(mat.size$Size, decreasing = FALSE),]
 
-  # Load deep learning neural network weights
+  # Get Prime Numbers
   prime.num <- get(data("prime.num", envir = environment()))
 
   # Associate prime number:
@@ -235,7 +235,7 @@ ergoInfo <- function(data, use = c("edge.list", "weights")){
   results$KComp <- mean(unlist(kcomp))
   results$KComp.pop <- mean(unlist(kcomp.pop))
 
-  ergo.info.index<- sqrt(data$dynEGA.pop$n.dim)^((results$KComp.pop/results$KComp)/log(sum(!results$PrimeWeight.pop==0)))
+  ergo.info.index<- sqrt(data$dynEGA.pop$n.dim)^((results$KComp/results$KComp.pop)/log(sum(!results$PrimeWeight.pop==0)))
   results$EII <- ergo.info.index
   return(results)
 }
