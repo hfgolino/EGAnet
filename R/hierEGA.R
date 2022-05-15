@@ -459,6 +459,11 @@ hierEGA <- function(
     # Reorder lower loadings and scores
     lower_loads <- lower_loads[,order(colnames(lower_loads))]
     score_est <- score_est[,order(colnames(score_est))]
+    
+    # Obtain highest loading to reorder rows
+    highest_loads <- apply(abs(lower_loads), 1, which.max)
+    highest_loads[1:length(highest_loads)] <- paste("MR", highest_loads, sep = "")
+    lower_loads <- descend.ord(lower_loads, highest_loads)
 
     # Start higher-order with factor ----
 
