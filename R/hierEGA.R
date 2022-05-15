@@ -311,7 +311,7 @@
 #' @export
 #'
 # Hierarchical EGA
-# Updated 13.05.2022
+# Updated 15.05.2022
 hierEGA <- function(
     data, scores = c("factor", "network"),
     consensus.iter = 1000,
@@ -449,7 +449,8 @@ hierEGA <- function(
     # Score estimates
     score_est <- psych::factor.scores(
       x = data,
-      f = fm
+      f = fm,
+      method = "tenBerge"
     )$scores
 
     # Lower-order loadings

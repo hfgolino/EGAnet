@@ -206,11 +206,6 @@ If \code{reduce.method = "latent"}, then \code{\link{lavaan}}'s \code{\link[lava
 function will be used to create latent variables to reduce variables.
 Arguments should be input as a list. Some example arguments 
 (see \code{\link[lavaan]{lavOptions} for full details})}
-
-\item{verbose}{Boolean.
-Should network estimation parameters be printed?
-Defaults to \code{TRUE}.
-Set to \code{FALSE} for no print out}
 }
 \value{
 Returns a list containing:
