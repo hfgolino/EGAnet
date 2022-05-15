@@ -290,6 +290,12 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
 #' @export
 plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally","qgraph"),
                                plot.args = list(), produce = TRUE, ...){
+  
+  # Remove methods from input list
+  if("Methods" %in% names(x$dynEGA)){
+    x$dynEGA <- x$dynEGA[-which(names(x$dynEGA) == "Methods")]
+  }
+
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
   {plot.type <- "GGally"
