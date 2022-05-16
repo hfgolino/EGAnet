@@ -566,7 +566,7 @@ hierEGA <- function(
     lower_order_wc <- lower_order_wc[-match(one_node_names, names(lower_order_wc))]
     
     # Check if method was what user wanted
-    if(one_node_names %in% consensus.method){
+    if(consensus.method %in% one_node_names){
       stop(
         paste(
           "Cannot use consensus method due to at least one single node community. Please use one of the following methods:\n",
