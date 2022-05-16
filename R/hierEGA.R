@@ -311,7 +311,7 @@
 #' @export
 #'
 # Hierarchical EGA
-# Updated 15.05.2022
+# Updated 16.05.2022
 hierEGA <- function(
     data, scores = c("factor", "network"),
     consensus.iter = 1000,
@@ -514,81 +514,157 @@ hierEGA <- function(
 
   }
 
-  ## Network ----
-  # Set up for all three results
-  network_results <- vector("list", length = length(lower_order_wc) - 1)
-  names(network_results) <- names(lower_order_wc)[
-    -length(lower_order_wc)
-  ]
-
-  # Loop through
-  for(i in 1:length(network_results)){
-
-    # Obtain memberships
-    memberships <- lower_order_wc[[names(network_results)[i]]]
-
-    # Compute network scores
-    nt <- suppressWarnings(
-      net.scores(
-        data = data,
-        A = lower_order_result$network,
-        wc = memberships
+  # Skip network scores?
+  ## Identify memberships with only one node
+  one_node <- unlist(lapply(lower_order_wc[-length(lower_order_wc)], function(x){
+    
+    ### Obtain frequencies
+    wc_freq <- table(x)
+    
+    ### Check for one node memberships
+    if(any(wc_freq <= 1)){
+      one <- TRUE
+    }else{
+      one <- FALSE
+    }
+    
+    ### Return
+    return(one)
+    
+  }))
+  
+  # Perform network scores
+  perform_network <- TRUE
+  
+  ## Check for all
+  if(all(one_node)){
+    
+    ### Warn that network scores cannot be used
+    warning("All consensus methods detected a single node community. Network scores cannot be computed.")
+    
+    ### Check if scores was what user wanted
+    if(scores == "network"){
+      stop("Network scores could not be computed. Please use factor scores.")
+    }else{
+      perform_network <- FALSE
+    }
+    
+  }else if(any(one_node)){
+    
+    # One node consensus methods
+    one_node_names <- names(lower_order_wc[-length(lower_order_wc)])[one_node]
+    
+    warning(
+      paste(
+        "Some consensus methods detected a single node community. Network scores could not be computed for:\n",
+        paste(one_node_names, collapse = "\n"),
+        sep = ""
       )
     )
-
-    # Score estimates
-    score_est <- nt$std.scores
-
-    # Lower-order loadings
-    lower_loads <- nt$loads
-
-    # Start higher-order with network ----
-
-    # Set the rest of the arguments
-    ega_defaults$data <- score_est # set data as score estimates
-    ega_defaults$uni.method <- uni.method
-    ega_defaults$corr <- corr
-    ega_defaults$model <- model
-    ega_defaults$model.args <- model.args
-    ega_defaults$algorithm <- "walktrap"
-    ega_defaults$algorithm.args <- algorithm.args
-    ega_defaults$plot.EGA <- FALSE
-    ega_defaults$plot.type <- plot.type
-    ega_defaults$plot.args <- plot.args
-
-    # Get EGA
-    higher_order_result <- suppressWarnings(
-      suppressMessages(
-        do.call(
-          EGA, ega_defaults
+    
+    # Remove from list
+    lower_order_wc <- lower_order_wc[-match(one_node_names, names(lower_order_wc))]
+    
+    # Check if method was what user wanted
+    if(one_node_names %in% consensus.method){
+      stop(
+        paste(
+          "Cannot use consensus method due to at least one single node community. Please use one of the following methods:\n",
+          paste(
+            setdiff(c(
+              "highest_modularity", "most_common",
+              "iterative", "lowest_tefi"
+            ), one_node_names),
+            collapse = "\n"
+          ),
+          sep = ""
         )
       )
-    )
-
-    # Make consensus
-    higher_order_wc <- consensus_clustering(
-      network = higher_order_result$network,
-      corr = higher_order_result$correlation,
-      order = "higher",
-      consensus.iter = consensus.iter
-    )[[names(network_results)[i]]]
-
-    # Set up result
-    network_results[[names(network_results)[i]]]$lower_scores <- round(score_est, 3)
-    network_results[[names(network_results)[i]]]$lower_loadings <- round(lower_loads, 3)
-
-    ## Walktrap
-    network_results[[names(network_results)[i]]]$walktrap <- higher_order_result
-
-    ## Louvain
-    ## Adjust memberships in higher order
-    higher_order_result$wc <- higher_order_wc
-    higher_order_result$n.dim <- length(na.omit(unique(higher_order_wc)))
-    higher_order_result$dim.variables[,"dimension"] <- higher_order_wc[
-      higher_order_result$dim.variables[,"items"]
+    }
+    
+  }
+  
+  if(isTRUE(perform_network)){
+    
+    ## Network ----
+    # Set up for all three results
+    network_results <- vector("list", length = length(lower_order_wc) - 1)
+    names(network_results) <- names(lower_order_wc)[
+      -length(lower_order_wc)
     ]
-    network_results[[names(network_results)[i]]]$louvain <- higher_order_result
-
+    
+    # Loop through
+    for(i in 1:length(network_results)){
+      
+      # Obtain memberships
+      memberships <- lower_order_wc[[names(network_results)[i]]]
+      
+      # Compute network scores
+      nt <- suppressWarnings(
+        net.scores(
+          data = data,
+          A = lower_order_result$network,
+          wc = memberships
+        )
+      )
+      
+      # Score estimates
+      score_est <- nt$std.scores
+      
+      # Lower-order loadings
+      lower_loads <- nt$loads
+      
+      # Start higher-order with network ----
+      
+      # Set the rest of the arguments
+      ega_defaults$data <- score_est # set data as score estimates
+      ega_defaults$uni.method <- uni.method
+      ega_defaults$corr <- corr
+      ega_defaults$model <- model
+      ega_defaults$model.args <- model.args
+      ega_defaults$algorithm <- "walktrap"
+      ega_defaults$algorithm.args <- algorithm.args
+      ega_defaults$plot.EGA <- FALSE
+      ega_defaults$plot.type <- plot.type
+      ega_defaults$plot.args <- plot.args
+      
+      # Get EGA
+      higher_order_result <- suppressWarnings(
+        suppressMessages(
+          do.call(
+            EGA, ega_defaults
+          )
+        )
+      )
+      
+      # Make consensus
+      higher_order_wc <- consensus_clustering(
+        network = higher_order_result$network,
+        corr = higher_order_result$correlation,
+        order = "higher",
+        consensus.iter = consensus.iter
+      )[[names(network_results)[i]]]
+      
+      # Set up result
+      network_results[[names(network_results)[i]]]$lower_scores <- round(score_est, 3)
+      network_results[[names(network_results)[i]]]$lower_loadings <- round(lower_loads, 3)
+      
+      ## Walktrap
+      network_results[[names(network_results)[i]]]$walktrap <- higher_order_result
+      
+      ## Louvain
+      ## Adjust memberships in higher order
+      higher_order_result$wc <- higher_order_wc
+      higher_order_result$n.dim <- length(na.omit(unique(higher_order_wc)))
+      higher_order_result$dim.variables[,"dimension"] <- higher_order_wc[
+        higher_order_result$dim.variables[,"items"]
+      ]
+      network_results[[names(network_results)[i]]]$louvain <- higher_order_result
+      
+    }
+    
+  }else{
+    network_results <- "Did not perform network scores due to at least one single node community in all consensus methods"
   }
 
   # Return results
