@@ -259,7 +259,7 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 05.11.2021
+# Updated 18.05.2022
 bootEGA <- function(data, n = NULL, uni.method = c("expand", "LE"), iter,
                     type = c("parametric", "resampling"), seed = 1234,
                     corr = c("cor_auto", "pearson", "spearman"),
@@ -588,7 +588,11 @@ bootEGA <- function(data, n = NULL, uni.method = c("expand", "LE"), iter,
   class(result) <- "bootEGA"
 
   if(typicalStructure & plot.typicalStructure){
-    result$plot.typical.ega <- plot(result)
+    result$plot.typical.ega <- plot(
+      result,
+      plot.type = plot.type,
+      plot.args = plot.args
+    )
   }
 
   # Check if uni.method = "LE" has been used
