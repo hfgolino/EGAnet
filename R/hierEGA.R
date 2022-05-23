@@ -732,6 +732,15 @@ hierEGA <- function(
 
   # Obtain higher order result for plot
   higher_order_result <- hierarchical$higher_order$EGA
+  
+  # Message about matching higher and lower order
+  if(
+    length(hierarchical$higher_order$EGA$wc) ==
+    length(na.omit(unique(hierarchical$higher_order$EGA$wc)))
+  ){
+    message("No general dimensions were identified. Lower order solution represents major dimensions.")
+    hierarchical$higher_order$EGA$n.dim <- 0
+  }
 
   # Set up plots
   if(isTRUE(plot.EGA)){
@@ -783,7 +792,12 @@ hierEGA <- function(
     # Send factor warning
     if(scores == "factor"){
 
-      warning("Lower order factor loadings may not map to lower order network dimensions.\nPlease see `$lower_loadings` to map lower order dimensions to higher order dimensions in the plot")
+      if(
+        length(hierarchical$higher_order$EGA$wc) !=
+        length(na.omit(unique(hierarchical$higher_order$EGA$wc)))
+      ){
+        warning("Lower order factor loadings may not map to lower order network dimensions.\nPlease see `$lower_loadings` to map lower order dimensions to higher order dimensions in the plot")
+      }
 
     }
 
@@ -808,15 +822,6 @@ hierEGA <- function(
 
   # Make class "hierEGA"
   class(results) <- "hierEGA"
-  
-  # Message about matching higher and lower order
-  if(
-    length(hierarchical$higher_order$EGA$wc) ==
-    length(na.omit(unique(hierarchical$higher_order$EGA$wc)))
-  ){
-    message("No general dimensions were identified. Lower order solution represents major dimensions.")
-    hierarchical$higher_order$EGA$n.dim <- 0
-  }
 
   return(results)
 }
