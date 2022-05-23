@@ -438,11 +438,13 @@ hierEGA <- function(
     unique_memberships <- unique(memberships)
 
     # Estimate factor model
-    fm <- suppressWarnings(
-      psych::fa(
-        r = lower_order_result$cor.data, # correlation matrix
-        n.obs = nrow(data),
-        nfactors = length(na.omit(unique_memberships)) # number of factors
+    fm <- suppressPackageStartupMessages(
+      suppressWarnings(
+        psych::fa(
+          r = lower_order_result$cor.data, # correlation matrix
+          n.obs = nrow(data),
+          nfactors = length(na.omit(unique_memberships)) # number of factors
+        )
       )
     )
 
@@ -735,25 +737,42 @@ hierEGA <- function(
   if(isTRUE(plot.EGA)){
 
     # Set up plots
-    lower_plot <- suppressPackageStartupMessages(
-      plot(lower_order_result, produce = FALSE)
+    lower_plot <- suppressMessages(
+      suppressWarnings(
+        suppressPackageStartupMessages(
+          plot(lower_order_result, produce = FALSE)
+        )
+      )
     )
-    higher_plot <- suppressPackageStartupMessages(
-      plot(higher_order_result, produce = FALSE)
+      
+    higher_plot <- suppressMessages(
+      suppressWarnings(
+        suppressPackageStartupMessages(
+          plot(higher_order_result, produce = FALSE)
+        )
+      )
     )
 
     # Set up output
-    hier_plot <- suppressPackageStartupMessages(
-      ggpubr::ggarrange(
-        lower_plot, # plot lower-order
-        higher_plot, # plot higher-order
-        labels = c("Lower-order", "Higher-order")
+    hier_plot <- suppressMessages(
+      suppressWarnings(
+        suppressPackageStartupMessages(
+          ggpubr::ggarrange(
+            lower_plot, # plot lower-order
+            higher_plot, # plot higher-order
+            labels = c("Lower-order", "Higher-order")
+          )
+        )
       )
     )
 
     # Output plots
-    suppressPackageStartupMessages(
-      plot(hier_plot)
+    suppressMessages(
+      suppressWarnings(
+        suppressPackageStartupMessages(
+          plot(hier_plot)
+        )
+      )
     )
 
     # Add to main results
