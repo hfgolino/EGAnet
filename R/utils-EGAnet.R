@@ -577,16 +577,39 @@ reindex_comm <- function(communities)
 # Lancichinetti & Fortunato (2012)
 #' @noRd
 # Consensus Clustering
-# Updated 08.05.2022
+# Updated 23.05.2022
 consensus_clustering <- function(
     network, corr,
     order = c("lower", "higher"),
     consensus.iter
 )
 {
-
+  
   # Obtain network names
   network_names <- colnames(network)
+  
+  # Check for empty network
+  if(sum(network) == 0){
+    
+    # Return individual communities
+    wc <- 1:ncol(network)
+    
+    # Assign names
+    names(wc) <- network_names
+    
+    # Set up results
+    results <- list()
+    results$highest_modularity <- wc
+    results$most_common <- wc
+    results$iterative <- wc
+    results$lowest_tefi <- wc
+    results$summary_table <- "Empty network. No general factors found."
+    
+    # Return consensus
+    return(results)
+    
+    
+  }
 
   # Convert network to igraph
   igraph_network <- convert2igraph(abs(network))
@@ -594,14 +617,24 @@ consensus_clustering <- function(
   # Apply Louvain
   communities <- lapply(1:consensus.iter, function(j){
 
+    # igraph output
+    output <- igraph::cluster_louvain(igraph_network)
+    
     # Obtain memberships
-    wc <- igraph::cluster_louvain(igraph_network)$memberships
-
-    # Obtain order
-    if(order == "lower"){
-      wc <- wc[1,]
-    }else if(order == "higher"){
-      wc <- wc[nrow(wc),]
+    wc <- output$memberships
+    
+    # Check for no rows
+    if(nrow(wc) == 0){
+      wc <- output$membership
+    }else{
+      
+      # Obtain order
+      if(order == "lower"){
+        wc <- wc[1,]
+      }else if(order == "higher"){
+        wc <- wc[nrow(wc),]
+      }
+      
     }
 
     # Return
@@ -680,9 +713,6 @@ consensus_clustering <- function(
 
   # Traditional consensus clustering
 
-  # Initialize D matrix
-  d_matrix <- matrix(0, nrow = ncol(network), ncol = ncol(network))
-
   # Binary check function
   binary <- function(b_matrix){
     all(b_matrix == 0 | b_matrix == 1)
@@ -702,16 +732,26 @@ consensus_clustering <- function(
       # Apply Louvain
       communities <- lapply(1:consensus.iter, function(j){
 
+        # igraph output
+        output <- igraph::cluster_louvain(igraph_network)
+        
         # Obtain memberships
-        wc <- igraph::cluster_louvain(igraph_network)$memberships
-
-        # Obtain order
-        if(order == "lower"){
-          wc <- wc[1,]
-        }else if(order == "higher"){
-          wc <- wc[nrow(wc),]
+        wc <- output$memberships
+        
+        # Check for no rows
+        if(nrow(wc) == 0){
+          wc <- output$membership
+        }else{
+          
+          # Obtain order
+          if(order == "lower"){
+            wc <- wc[1,]
+          }else if(order == "higher"){
+            wc <- wc[nrow(wc),]
+          }
+          
         }
-
+        
         # Return
         return(wc)
 
@@ -721,12 +761,23 @@ consensus_clustering <- function(
       wc_matrix <- t(simplify2array(communities, higher = FALSE))
 
     }else{
-
-      # Homogenize memberships
-      wc_matrix <- t(homogenize.membership(
-        target.wc = wc_proportion,
-        convert.wc = t(wc_matrix)
-      ))
+      
+      # Check for non-unique memberships
+      if(length(wc_proportion) != length(na.omit(unique(wc_proportion)))){
+        
+        # Homogenize memberships
+        wc_matrix <- t(homogenize.membership(
+          target.wc = wc_proportion,
+          convert.wc = t(wc_matrix)
+        ))
+        
+      }
+      
+      # ^^^ checks for whether all variables are in individual
+      # communities
+      #
+      # current workaround for higher order dimensions with
+      # singleton dimensions
 
     }
 
@@ -760,20 +811,30 @@ consensus_clustering <- function(
     iter <- iter + 1
 
   }
-
-  # Obtain final communities
-  igraph_network <- convert2igraph(abs(network))
-  wc <- igraph::cluster_louvain(igraph_network)$memberships
-
-  # Obtain order
-  if(order == "lower"){
-    wc <- wc[1,]
-  }else if(order == "higher"){
-    wc <- wc[nrow(wc),]
+  
+  # Check for same dimensions
+  if(sum(network) == ncol(network)){
+    
+    # Set to all unique
+    wc <- 1:ncol(network)
+    
+  }else{
+    
+    # Obtain final communities
+    igraph_network <- convert2igraph(abs(network))
+    wc <- igraph::cluster_louvain(igraph_network)$memberships
+    
+    # Obtain order
+    if(order == "lower"){
+      wc <- wc[1,]
+    }else if(order == "higher"){
+      wc <- wc[nrow(wc),]
+    }
+    
+    # Ensure vector
+    wc <- as.vector(wc)
+    
   }
-
-  # Ensure vector
-  wc <- as.vector(wc)
 
   # Assign names
   names(wc) <- network_names

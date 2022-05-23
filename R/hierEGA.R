@@ -311,7 +311,7 @@
 #' @export
 #'
 # Hierarchical EGA
-# Updated 16.05.2022
+# Updated 23.05.2022
 hierEGA <- function(
     data, scores = c("factor", "network"),
     consensus.iter = 1000,
@@ -784,11 +784,20 @@ hierEGA <- function(
     consensus.method = consensus.method, consensus.iter = consensus.iter
   )
 
-  # Insert methods into hierarhical
+  # Insert methods into hierarchical
   results$hierarchical$Methods <- methods
 
   # Make class "hierEGA"
   class(results) <- "hierEGA"
+  
+  # Message about matching higher and lower order
+  if(
+    length(hierarchical$higher_order$EGA$wc) ==
+    length(na.omit(unique(hierarchical$higher_order$EGA$wc)))
+  ){
+    message("No general dimensions were identified.")
+    hierarchical$higher_order$EGA$n.dim <- 0
+  }
 
   return(results)
 }
