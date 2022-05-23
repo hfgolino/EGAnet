@@ -795,7 +795,7 @@ hierEGA <- function(
     length(hierarchical$higher_order$EGA$wc) ==
     length(na.omit(unique(hierarchical$higher_order$EGA$wc)))
   ){
-    message("No general dimensions were identified. Lower order solution represents major factors.")
+    message("No general dimensions were identified. Lower order solution represents major dimensions.")
     hierarchical$higher_order$EGA$n.dim <- 0
   }
 
