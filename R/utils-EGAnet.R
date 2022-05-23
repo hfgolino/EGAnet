@@ -612,7 +612,20 @@ consensus_clustering <- function(
   }
 
   # Convert network to igraph
-  igraph_network <- convert2igraph(abs(network))
+  igraph_network <- suppressWarnings(
+    convert2igraph(abs(network))
+  )
+  
+  # Ensure all nodes are included in igraph
+  if(igraph::vcount(igraph_network) != ncol(network)){
+    
+    igraph_network <- igraph::add.vertices(
+      igraph_network,
+      nv = ncol(network) -
+        igraph::vcount(igraph_network)
+    )
+    
+  }
 
   # Apply Louvain
   communities <- lapply(1:consensus.iter, function(j){
@@ -821,7 +834,21 @@ consensus_clustering <- function(
   }else{
     
     # Obtain final communities
-    igraph_network <- convert2igraph(abs(network))
+    igraph_network <- suppressWarnings(
+      convert2igraph(abs(network))
+    )
+    
+    # Ensure all nodes are included in igraph
+    if(igraph::vcount(igraph_network) != ncol(network)){
+      
+      igraph_network <- igraph::add.vertices(
+        igraph_network,
+        nv = ncol(network) -
+          igraph::vcount(igraph_network)
+      )
+      
+    }
+    
     wc <- igraph::cluster_louvain(igraph_network)$memberships
     
     # Obtain order
