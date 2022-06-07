@@ -345,7 +345,11 @@ bootEGA <- function(data, n = NULL, uni.method = c("expand", "LE"), iter,
   }
 
   ## Check for input plot arguments
-  color.palette <- "polychrome"
+  if("color.palette" %in% names(plot.args)){
+    color.palette <- plot.args$color.palette
+  }else{
+    color.palette <- "polychrome"
+  }
 
   #### MISSING ARGUMENTS HANDLING ####
 

@@ -1,6 +1,6 @@
-#------------------------------------------
-## S3Methods plot() // Updated 28.07.2021
-#------------------------------------------
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+## S3Methods plot() // Updated 07.06.2022
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #' S3Methods for Plotting
 #'
@@ -226,59 +226,60 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
       )
     )
     
-  }
-  set.seed(NULL)
-  
-  name <- colnames(x$typicalGraph$graph)
-  
-  name.split <- lapply(name, function(x){
-    unlist(strsplit(x, split = " "))
-  })
-  
-  name <- unlist(
-    lapply(name.split, function(x){
-      
-      len <- length(x)
-      
-      if(len > 1){
-        
-        add.line <- round(len / 2)
-        
-        paste(
-          paste(x[1:add.line], collapse = " "),
-          paste(x[(add.line+1):length(x)], collapse = " "),
-          sep = "\n"
-        )
-        
-      }else{x}
-      
+    name <- colnames(x$typicalGraph$graph)
+    
+    name.split <- lapply(name, function(x){
+      unlist(strsplit(x, split = " "))
     })
-  )
-  
-  # Border color
-  if(all(color.palette == "grayscale" |
-         color.palette == "greyscale" |
-         color.palette == "colorblind")){
-    border.color <- ifelse(palette == "white", "white", "black")
-  }else{border.color <- palette}
-  
-  # Custom nodes: transparent insides and dark borders
-  ega.plot <- ega.plot + 
-    ggplot2::geom_point(ggplot2::aes(color = "color"), size = node.size,
-                        color = border.color,
-                        shape = 1, stroke = 1.5, alpha = .8) +
-    ggplot2::geom_point(ggplot2::aes(color = "color"), size = node.size + .5,
-                        color = palette,
-                        shape = 19, alpha = plot.args$alpha) +
-    ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
-    ggplot2::guides(
-      color = ggplot2::guide_legend(override.aes = list(
-        color = unique(palette),
-        size = node.size,
-        alpha = plot.args$alpha,
-        stroke = 1.5
-      ))
+    
+    name <- unlist(
+      lapply(name.split, function(x){
+        
+        len <- length(x)
+        
+        if(len > 1){
+          
+          add.line <- round(len / 2)
+          
+          paste(
+            paste(x[1:add.line], collapse = " "),
+            paste(x[(add.line+1):length(x)], collapse = " "),
+            sep = "\n"
+          )
+          
+        }else{x}
+        
+      })
     )
+    
+    # Border color
+    if(all(color.palette == "grayscale" |
+           color.palette == "greyscale" |
+           color.palette == "colorblind")){
+      border.color <- ifelse(palette == "white", "white", "black")
+    }else{border.color <- palette}
+    
+    # Custom nodes: transparent insides and dark borders
+    ega.plot <- ega.plot + 
+      ggplot2::geom_point(ggplot2::aes(color = "color"), size = node.size,
+                          color = border.color,
+                          shape = 1, stroke = 1.5, alpha = .8) +
+      ggplot2::geom_point(ggplot2::aes(color = "color"), size = node.size + .5,
+                          color = palette,
+                          shape = 19, alpha = plot.args$alpha) +
+      ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
+      ggplot2::guides(
+        color = ggplot2::guide_legend(override.aes = list(
+          color = unique(palette),
+          size = node.size,
+          alpha = plot.args$alpha,
+          stroke = 1.5
+        ))
+      )
+    
+  }
+  
+  set.seed(NULL)
   
   if(isTRUE(produce)){
     plot(ega.plot)
