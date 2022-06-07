@@ -434,17 +434,17 @@ print.riEGA <- function(x, ...) {
 # summary dynEGA (Level: Population)
 # Updated 13.05.2022
 #' @export
-summary.dynEGA<- function(x, ...) {
+summary.dynEGA<- function(object, ...) {
   
   # summary communities
   cat(paste(
     "Number of communities (population-level):",
-    x$dynEGA$n.dim,
+    object$dynEGA$n.dim,
     "\n\n"
   ))
   
   # Set up item placements
-  item_placement <- x$dynEGA$wc
+  item_placement <- object$dynEGA$wc
   names(item_placement) <- gsub(
     ".Ord*.", "", names(item_placement)
   )
@@ -467,9 +467,9 @@ summary.dynEGA<- function(x, ...) {
   colnames(glla.methods) <- ""
   
   ## Insert values
-  glla.methods["Embedding Dimensions =",] <- x$dynEGA$Methods$glla$n.embed
-  glla.methods["Embedding Offset (tau) =",] <- x$dynEGA$Methods$glla$tau
-  glla.methods["Lag (delta) =",] <- x$dynEGA$Methods$glla$delta
+  glla.methods["Embedding Dimensions =",] <- object$dynEGA$Methods$glla$n.embed
+  glla.methods["Embedding Offset (tau) =",] <- object$dynEGA$Methods$glla$tau
+  glla.methods["Lag (delta) =",] <- object$dynEGA$Methods$glla$delta
   
   ## summary GLLA
   summary(glla.methods, quote = FALSE)
@@ -490,12 +490,12 @@ summary.dynEGA<- function(x, ...) {
   
   ## Insert values
   ega.methods["Correlations =",] <- ifelse(
-    x$dynEGA$Methods$EGA$corr == "cor_auto",
+    object$dynEGA$Methods$EGA$corr == "cor_auto",
     "auto (from qgraph)",
-    x$dynEGA$Methods$EGA$corr
+    object$dynEGA$Methods$EGA$corr
   )
-  ega.methods["Model =",] <- x$dynEGA$Methods$EGA$model
-  ega.methods["Algorithm =",] <- x$dynEGA$Methods$EGA$algorithm
+  ega.methods["Model =",] <- object$dynEGA$Methods$EGA$model
+  ega.methods["Algorithm =",] <- object$dynEGA$Methods$EGA$algorithm
   
   ## summary EGA
   summary(ega.methods, quote = FALSE)
@@ -505,20 +505,20 @@ summary.dynEGA<- function(x, ...) {
 # summary dynEGA (Level: Groups)
 # Updated 13.05.2022
 #' @export
-summary.dynEGA.Groups <- function(x, ...) {
+summary.dynEGA.Groups <- function(object, ...) {
   
-  for(i in 1:(length(x$dynEGA) - 1)){
+  for(i in 1:(length(object$dynEGA) - 1)){
     
     # summary communities
     cat(paste(
       "Number of communities (group-level):",
-      x$dynEGA[[i]]$n.dim, "\n",
-      paste("Group:", names(x$dynEGA[i])),
+      object$dynEGA[[i]]$n.dim, "\n",
+      paste("Group:", names(object$dynEGA[i])),
       "\n\n"
     ))
     
     # Set up item placements
-    item_placement <- x$dynEGA[[i]]$wc
+    item_placement <- object$dynEGA[[i]]$wc
     names(item_placement) <- gsub(
       ".Ord*.", "", names(item_placement)
     )
@@ -548,9 +548,9 @@ summary.dynEGA.Groups <- function(x, ...) {
   colnames(glla.methods) <- ""
   
   ## Insert values
-  glla.methods["Embedding Dimensions =",] <- x$dynEGA$Methods$glla$n.embed
-  glla.methods["Embedding Offset (tau) =",] <- x$dynEGA$Methods$glla$tau
-  glla.methods["Lag (delta) =",] <- x$dynEGA$Methods$glla$delta
+  glla.methods["Embedding Dimensions =",] <- object$dynEGA$Methods$glla$n.embed
+  glla.methods["Embedding Offset (tau) =",] <- object$dynEGA$Methods$glla$tau
+  glla.methods["Lag (delta) =",] <- object$dynEGA$Methods$glla$delta
   
   ## summary GLLA
   summary(glla.methods, quote = FALSE)
@@ -571,12 +571,12 @@ summary.dynEGA.Groups <- function(x, ...) {
   
   ## Insert values
   ega.methods["Correlations =",] <- ifelse(
-    x$dynEGA$Methods$EGA$corr == "cor_auto",
+    object$dynEGA$Methods$EGA$corr == "cor_auto",
     "auto (from qgraph)",
-    x$dynEGA$Methods$EGA$corr
+    object$dynEGA$Methods$EGA$corr
   )
-  ega.methods["Model =",] <- x$dynEGA$Methods$EGA$model
-  ega.methods["Algorithm =",] <- x$dynEGA$Methods$EGA$algorithm
+  ega.methods["Model =",] <- object$dynEGA$Methods$EGA$model
+  ega.methods["Algorithm =",] <- object$dynEGA$Methods$EGA$algorithm
   
   ## summary EGA
   summary(ega.methods, quote = FALSE)
@@ -586,16 +586,16 @@ summary.dynEGA.Groups <- function(x, ...) {
 # summary dynEGA (Level: Individuals)
 # Updated 13.05.2022
 #' @export
-summary.dynEGA.Individuals <- function(x, ...) {
+summary.dynEGA.Individuals <- function(object, ...) {
   
   # Number of people
   cat("Number of Cases (individuals): ")
-  number <- length(x$dynEGA) - 1
+  number <- length(object$dynEGA) - 1
   cat(number, "\n")
   
   # Summary statistics
   cat("\nSummary statistics (number of communities): \n")
-  dim <- sapply(x$dynEGA[-length(x$dynEGA)], "[[", 3)
+  dim <- sapply(object$dynEGA[-length(object$dynEGA)], "[[", 3)
   
   ## Set up summary
   summary.methods <- matrix(
@@ -633,9 +633,9 @@ summary.dynEGA.Individuals <- function(x, ...) {
   colnames(glla.methods) <- ""
   
   ## Insert values
-  glla.methods["Embedding Dimensions =",] <- x$dynEGA$Methods$glla$n.embed
-  glla.methods["Embedding Offset (tau) =",] <- x$dynEGA$Methods$glla$tau
-  glla.methods["Lag (delta) =",] <- x$dynEGA$Methods$glla$delta
+  glla.methods["Embedding Dimensions =",] <- object$dynEGA$Methods$glla$n.embed
+  glla.methods["Embedding Offset (tau) =",] <- object$dynEGA$Methods$glla$tau
+  glla.methods["Lag (delta) =",] <- object$dynEGA$Methods$glla$delta
   
   ## summary GLLA
   summary(glla.methods, quote = FALSE)
@@ -656,12 +656,12 @@ summary.dynEGA.Individuals <- function(x, ...) {
   
   ## Insert values
   ega.methods["Correlations =",] <- ifelse(
-    x$dynEGA$Methods$EGA$corr == "cor_auto",
+    object$dynEGA$Methods$EGA$corr == "cor_auto",
     "auto (from qgraph)",
-    x$dynEGA$Methods$EGA$corr
+    object$dynEGA$Methods$EGA$corr
   )
-  ega.methods["Model =",] <- x$dynEGA$Methods$EGA$model
-  ega.methods["Algorithm =",] <- x$dynEGA$Methods$EGA$algorithm
+  ega.methods["Model =",] <- object$dynEGA$Methods$EGA$model
+  ega.methods["Algorithm =",] <- object$dynEGA$Methods$EGA$algorithm
   
   ## summary EGA
   summary(ega.methods, quote = FALSE)
@@ -671,15 +671,15 @@ summary.dynEGA.Individuals <- function(x, ...) {
 # summary EGA
 # Updated 13.05.2022
 #' @export
-summary.EGA <- function(x, ...) {
+summary.EGA <- function(object, ...) {
   
   # summary lower order communities
   cat(paste(
     "Number of communities:",
-    x$n.dim,
+    object$n.dim,
     "\n\n"
   ))
-  summary(x$wc)
+  summary(object$wc)
   
   # summary methods
   cat("\nMethods:\n")
@@ -697,14 +697,14 @@ summary.EGA <- function(x, ...) {
   colnames(methods.matrix) <- ""
   
   methods.matrix["Correlations =",] <- ifelse(
-    x$Methods$corr == "cor_auto",
+    object$Methods$corr == "cor_auto",
     "auto (from qgraph)",
-    x$Methods$corr
+    object$Methods$corr
   )
-  methods.matrix["Model =",] <- x$Methods$model
-  methods.matrix["Algorithm =",] <- x$Methods$algorithm
+  methods.matrix["Model =",] <- object$Methods$model
+  methods.matrix["Algorithm =",] <- object$Methods$algorithm
   methods.matrix["Unidimensional Method =",] <- ifelse(
-    x$Methods$uni.method == "LE",
+    object$Methods$uni.method == "LE",
     "leading eigenvalue",
     "expand correlation matrix"
   )
@@ -716,19 +716,19 @@ summary.EGA <- function(x, ...) {
 #summary Network Loadings
 # Updated 13.05.2022
 #' @export
-summary.NetLoads <- function(x, ...) {
+summary.NetLoads <- function(object, ...) {
   
-  x$std[which(abs(x$std) <= x$minLoad, arr.ind = TRUE)] <- ""
+  object$std[which(abs(object$std) <= object$minLoad, arr.ind = TRUE)] <- ""
   
-  summary(x$std)
-  message("Loadings <= |", x$minLoad, "| are blank")
+  summary(object$std)
+  message("Loadings <= |", object$minLoad, "| are blank")
 }
 
 #summary Measurement Invariance
 # Updated 10.02.2022
 #' @export
-summary.invariance <- function(x, ...) {
-  summary(x$results, row.names = FALSE)
+summary.invariance <- function(object, ...) {
+  summary(object$results, row.names = FALSE)
   cat("---\n")
   cat("Signif. code: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 'n.s.' 1")
 }
@@ -736,25 +736,25 @@ summary.invariance <- function(x, ...) {
 #summary Hierarchical EGA
 # Updated 09.05.2022
 #' @export
-summary.hierEGA <- function(x, ...) {
+summary.hierEGA <- function(object, ...) {
   
   # summary lower order communities
   cat(paste(
     "Lower order communities:",
-    x$hierarchical$lower_order$n.dim,
+    object$hierarchical$lower_order$n.dim,
     "\n\n"
   ))
-  summary(x$hierarchical$lower_order$wc)
+  summary(object$hierarchical$lower_order$wc)
   
   # summary higher order communities
   cat(
     paste(
       "\nHigher order communities:",
-      x$hierarchical$higher_order$EGA$n.dim,
+      object$hierarchical$higher_order$EGA$n.dim,
       "\n\n"
     )
   )
-  summary(x$hierarchical$higher_order$EGA$wc)
+  summary(object$hierarchical$higher_order$EGA$wc)
   
   # summary methods
   cat("\nMethods:\n")
@@ -775,22 +775,22 @@ summary.hierEGA <- function(x, ...) {
   colnames(methods.matrix) <- ""
   
   methods.matrix["Correlations =",] <- ifelse(
-    x$hierarchical$Methods$corr == "cor_auto",
+    object$hierarchical$Methods$corr == "cor_auto",
     "auto (from qgraph)",
-    x$hierarchical$Methods$corr
+    object$hierarchical$Methods$corr
   )
-  methods.matrix["Model =",] <- x$hierarchical$Methods$model
-  methods.matrix["Algorithm =",] <- x$hierarchical$Methods$algorithm
+  methods.matrix["Model =",] <- object$hierarchical$Methods$model
+  methods.matrix["Algorithm =",] <- object$hierarchical$Methods$algorithm
   methods.matrix["Unidimensional Method =",] <- ifelse(
-    x$hierarchical$Methods$uni.method == "LE",
+    object$hierarchical$Methods$uni.method == "LE",
     "leading eigenvalue",
     "expand correlation matrix"
   )
-  methods.matrix["Scores =",] <- x$hierarchical$Methods$scores
+  methods.matrix["Scores =",] <- object$hierarchical$Methods$scores
   methods.matrix["Consensus Method =",] <- gsub(
-    "_", " ", x$hierarchical$Methods$consensus.method
+    "_", " ", object$hierarchical$Methods$consensus.method
   )
-  methods.matrix["Consensus Iterations =",] <- x$hierarchical$Methods$consensus.iter
+  methods.matrix["Consensus Iterations =",] <- object$hierarchical$Methods$consensus.iter
   
   summary(methods.matrix, quote = FALSE)
   
@@ -799,22 +799,22 @@ summary.hierEGA <- function(x, ...) {
 #summary Residual EGA
 # Updated 13.05.2022
 #' @export
-summary.riEGA <- function(x, ...) {
+summary.riEGA <- function(object, ...) {
   
   # summary lower order communities
   cat(paste(
     "Number of communities:",
-    x$EGA$n.dim,
+    object$EGA$n.dim,
     "\n\n"
   ))
-  summary(x$EGA$wc)
+  summary(object$EGA$wc)
   
   # summary loadings if RI was necessary
-  if("RI" %in% names(x)){
+  if("RI" %in% names(object)){
     
     ## Loadings
-    ri_loadings <- round(as.vector(x$RI$loadings), 3)
-    names(ri_loadings) <- row.names(x$RI$loadings)
+    ri_loadings <- round(as.vector(object$RI$loadings), 3)
+    names(ri_loadings) <- row.names(object$RI$loadings)
     
     ## summary loadings
     cat("\nRandom-intercept loadings:\n\n")
@@ -838,14 +838,14 @@ summary.riEGA <- function(x, ...) {
   colnames(methods.matrix) <- ""
   
   methods.matrix["Correlations =",] <- ifelse(
-    x$Methods$corr == "cor_auto",
+    object$Methods$corr == "cor_auto",
     "auto (from qgraph)",
-    x$Methods$corr
+    object$Methods$corr
   )
-  methods.matrix["Model =",] <- x$Methods$model
-  methods.matrix["Algorithm =",] <- x$Methods$algorithm
+  methods.matrix["Model =",] <- object$Methods$model
+  methods.matrix["Algorithm =",] <- object$Methods$algorithm
   methods.matrix["Unidimensional Method =",] <- ifelse(
-    x$Methods$uni.method == "LE",
+    object$Methods$uni.method == "LE",
     "leading eigenvalue",
     "expand correlation matrix"
   )

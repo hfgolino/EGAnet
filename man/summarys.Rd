@@ -12,24 +12,24 @@
 \alias{summary.riEGA}
 \title{S3Methods for summarying}
 \usage{
-\method{summary}{dynEGA}(x,  ...)
+\method{summary}{dynEGA}(object,  ...)
 
-\method{summary}{dynEGA.Groups}(x, ...)
+\method{summary}{dynEGA.Groups}(object, ...)
 
-\method{summary}{dynEGA.Individuals}(x, ...)
+\method{summary}{dynEGA.Individuals}(object, ...)
 
-\method{summary}{EGA}(x,  ...)
+\method{summary}{EGA}(object,  ...)
 
-\method{summary}{NetLoads}(x, ...)
+\method{summary}{NetLoads}(object, ...)
 
-\method{summary}{invariance}(x, ...)
+\method{summary}{invariance}(object, ...)
 
-\method{summary}{hierEGA}(x, ...)
+\method{summary}{hierEGA}(object, ...)
 
-\method{summary}{riEGA}(x, ...)
+\method{summary}{riEGA}(object, ...)
 }
 \arguments{
-\item{x}{Object from \code{EGAnet} package}
+\item{object}{Object from \code{EGAnet} package}
 
 \item{...}{Additional arguments}
 }
