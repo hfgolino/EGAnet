@@ -64,7 +64,7 @@ summary.dynEGA<- function(object, ...) {
   )
   
   # summary item placements
-  summary(item_placement)
+  print(item_placement)
   
   # summary GLLA methods
   cat("\nGLLA Methods:\n")
@@ -86,7 +86,7 @@ summary.dynEGA<- function(object, ...) {
   glla.methods["Lag (delta) =",] <- object$dynEGA$Methods$glla$delta
   
   ## summary GLLA
-  summary(glla.methods, quote = FALSE)
+  print(glla.methods, quote = FALSE)
   
   # summary EGA methods
   cat("\nEGA Methods:\n")
@@ -112,7 +112,7 @@ summary.dynEGA<- function(object, ...) {
   ega.methods["Algorithm =",] <- object$dynEGA$Methods$EGA$algorithm
   
   ## summary EGA
-  summary(ega.methods, quote = FALSE)
+  print(ega.methods, quote = FALSE)
   
 }
 
@@ -138,7 +138,7 @@ summary.dynEGA.Groups <- function(object, ...) {
     )
     
     # summary item placements
-    summary(
+    print(
       item_placement
     )
     
@@ -167,7 +167,7 @@ summary.dynEGA.Groups <- function(object, ...) {
   glla.methods["Lag (delta) =",] <- object$dynEGA$Methods$glla$delta
   
   ## summary GLLA
-  summary(glla.methods, quote = FALSE)
+  print(glla.methods, quote = FALSE)
   
   # summary EGA methods
   cat("\nEGA Methods:\n")
@@ -193,7 +193,7 @@ summary.dynEGA.Groups <- function(object, ...) {
   ega.methods["Algorithm =",] <- object$dynEGA$Methods$EGA$algorithm
   
   ## summary EGA
-  summary(ega.methods, quote = FALSE)
+  print(ega.methods, quote = FALSE)
   
 }
 
@@ -230,7 +230,7 @@ summary.dynEGA.Individuals <- function(object, ...) {
   summary.methods["Max =",] <- max(dim)
   
   ## summary summary
-  summary(summary.methods, quote = FALSE)
+  print(summary.methods, quote = FALSE)
   
   # summary GLLA methods
   cat("\nGLLA Methods:\n")
@@ -252,7 +252,7 @@ summary.dynEGA.Individuals <- function(object, ...) {
   glla.methods["Lag (delta) =",] <- object$dynEGA$Methods$glla$delta
   
   ## summary GLLA
-  summary(glla.methods, quote = FALSE)
+  print(glla.methods, quote = FALSE)
   
   # summary EGA methods
   cat("\nEGA Methods:\n")
@@ -278,7 +278,7 @@ summary.dynEGA.Individuals <- function(object, ...) {
   ega.methods["Algorithm =",] <- object$dynEGA$Methods$EGA$algorithm
   
   ## summary EGA
-  summary(ega.methods, quote = FALSE)
+  print(ega.methods, quote = FALSE)
   
 }
 
@@ -293,7 +293,7 @@ summary.EGA <- function(object, ...) {
     object$n.dim,
     "\n\n"
   ))
-  summary(object$wc)
+  print(object$wc)
   
   # summary methods
   cat("\nMethods:\n")
@@ -323,7 +323,7 @@ summary.EGA <- function(object, ...) {
     "expand correlation matrix"
   )
   
-  summary(methods.matrix, quote = FALSE)
+  print(methods.matrix, quote = FALSE)
   
 }
 
@@ -334,7 +334,7 @@ summary.NetLoads <- function(object, ...) {
   
   object$std[which(abs(object$std) <= object$minLoad, arr.ind = TRUE)] <- ""
   
-  summary(object$std)
+  print(object$std)
   message("Loadings <= |", object$minLoad, "| are blank")
 }
 
@@ -342,7 +342,7 @@ summary.NetLoads <- function(object, ...) {
 # Updated 10.02.2022
 #' @export
 summary.invariance <- function(object, ...) {
-  summary(object$results, row.names = FALSE)
+  print(object$results, row.names = FALSE)
   cat("---\n")
   cat("Signif. code: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 'n.s.' 1")
 }
@@ -358,7 +358,7 @@ summary.hierEGA <- function(object, ...) {
     object$hierarchical$lower_order$n.dim,
     "\n\n"
   ))
-  summary(object$hierarchical$lower_order$wc)
+  print(object$hierarchical$lower_order$wc)
   
   # summary higher order communities
   cat(
@@ -368,7 +368,7 @@ summary.hierEGA <- function(object, ...) {
       "\n\n"
     )
   )
-  summary(object$hierarchical$higher_order$EGA$wc)
+  print(object$hierarchical$higher_order$EGA$wc)
   
   # summary methods
   cat("\nMethods:\n")
@@ -406,7 +406,7 @@ summary.hierEGA <- function(object, ...) {
   )
   methods.matrix["Consensus Iterations =",] <- object$hierarchical$Methods$consensus.iter
   
-  summary(methods.matrix, quote = FALSE)
+  print(methods.matrix, quote = FALSE)
   
 }
 
@@ -421,7 +421,7 @@ summary.riEGA <- function(object, ...) {
     object$EGA$n.dim,
     "\n\n"
   ))
-  summary(object$EGA$wc)
+  print(object$EGA$wc)
   
   # summary loadings if RI was necessary
   if("RI" %in% names(object)){
@@ -432,7 +432,7 @@ summary.riEGA <- function(object, ...) {
     
     ## summary loadings
     cat("\nRandom-intercept loadings:\n\n")
-    summary(ri_loadings)
+    print(ri_loadings)
     
   }
   
@@ -464,6 +464,6 @@ summary.riEGA <- function(object, ...) {
     "expand correlation matrix"
   )
   
-  summary(methods.matrix, quote = FALSE)
+  print(methods.matrix, quote = FALSE)
   
 }
