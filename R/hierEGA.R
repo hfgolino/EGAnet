@@ -311,7 +311,7 @@
 #' @export
 #'
 # Hierarchical EGA
-# Updated 23.05.2022
+# Updated 08.06.2022
 hierEGA <- function(
     data, scores = c("factor", "network"),
     consensus.iter = 1000,
@@ -726,21 +726,27 @@ hierEGA <- function(
     ] <- "EGA"
 
   }
+  
+  # Check for disconnected nodes
+  # If any nodes are disconnected,
+  # then a general factor cannot underlie the data
+  if(any(colSums(hierarchical$higher_order$EGA$network) == 0)){
+    message("No general dimensions were identified. Lower order solution represents major dimensions.")
+    hierarchical$higher_order$EGA$n.dim <- 0
+    new_wc <- rep(
+      0,
+      length(hierarchical$higher_order$EGA$wc)
+    )
+    names(new_wc) <- names(hierarchical$higher_order$EGA$wc)
+    hierarchical$higher_order$EGA$wc <- new_wc
+    hierarchical$higher_order$EGA$dim.variables$dimension <- 0
+  }
 
   # Insert hierarchical result into results
   results$hierarchical <- hierarchical
 
   # Obtain higher order result for plot
   higher_order_result <- hierarchical$higher_order$EGA
-  
-  # Message about matching higher and lower order
-  if(
-    length(hierarchical$higher_order$EGA$wc) ==
-    length(na.omit(unique(hierarchical$higher_order$EGA$wc)))
-  ){
-    message("No general dimensions were identified. Lower order solution represents major dimensions.")
-    hierarchical$higher_order$EGA$n.dim <- 0
-  }
 
   # Set up plots
   if(isTRUE(plot.EGA)){
@@ -754,40 +760,59 @@ hierEGA <- function(
       )
     )
       
-    higher_plot <- suppressMessages(
-      suppressWarnings(
-        suppressPackageStartupMessages(
-          plot(higher_order_result, produce = FALSE)
-        )
-      )
-    )
-
-    # Set up output
-    hier_plot <- suppressMessages(
-      suppressWarnings(
-        suppressPackageStartupMessages(
-          ggpubr::ggarrange(
-            lower_plot, # plot lower-order
-            higher_plot, # plot higher-order
-            labels = c("Lower-order", "Higher-order")
+    # Check for higher order dimensions
+    if(hierarchical$higher_order$EGA$n.dim > 0){
+      
+      higher_plot <- suppressMessages(
+        suppressWarnings(
+          suppressPackageStartupMessages(
+            plot(higher_order_result, produce = FALSE)
           )
         )
       )
-    )
-
-    # Output plots
-    suppressMessages(
-      suppressWarnings(
-        suppressPackageStartupMessages(
-          plot(hier_plot)
+      
+      # Set up output
+      hier_plot <- suppressMessages(
+        suppressWarnings(
+          suppressPackageStartupMessages(
+            ggpubr::ggarrange(
+              lower_plot, # plot lower-order
+              higher_plot, # plot higher-order
+              labels = c("Lower-order", "Higher-order")
+            )
+          )
         )
       )
-    )
-
-    # Add to main results
-    results$hierarchical$lower_plot <- lower_plot
-    results$hierarchical$higher_plot <- higher_plot
-    results$hierarchical$hier_plot <- hier_plot
+      
+      # Output plots
+      suppressMessages(
+        suppressWarnings(
+          suppressPackageStartupMessages(
+            plot(hier_plot)
+          )
+        )
+      )
+      
+      # Add to main results
+      results$hierarchical$lower_plot <- lower_plot
+      results$hierarchical$higher_plot <- higher_plot
+      results$hierarchical$hier_plot <- hier_plot
+      
+    }else{
+      
+      # Output plots
+      suppressMessages(
+        suppressWarnings(
+          suppressPackageStartupMessages(
+            plot(lower_plot)
+          )
+        )
+      )
+      
+      # Add to main results
+      results$hierarchical$lower_plot <- lower_plot
+      
+    }
 
     # Send factor warning
     if(scores == "factor"){
