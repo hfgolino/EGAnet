@@ -274,19 +274,23 @@ boot.ergoInfo <- function(
   # Obtain sigma
   pop_sigma <- as.matrix(Matrix::nearPD(solve(dynEGA.pop$dynEGA$network))$mat)
   
+  # Remove everything after ".Ord"
+  colnames(pop_sigma) <- gsub(".Ord*.", "", colnames(pop_sigma))
+  row.names(pop_sigma) <- colnames(pop_sigma)
+  
   # Set up parallelization
   cl <- parallel::makeCluster(ncores)
   
-  # # Export to cluster
-  # parallel::clusterExport(
-  #   cl = cl,
-  #   varlist = c(
-  #     "unique.ids", "MASS_mvrnorm",
-  #     "pop_sigma", "time.points",
-  #     "long_results"
-  #   ),
-  #   envir = as.environment(asNamespace("EGAnet"))
-  # )
+  # Export to cluster
+  parallel::clusterExport(
+    cl = cl,
+    varlist = c(
+      "unique.ids", "MASS_mvrnorm",
+      "pop_sigma", "time.points",
+      "long_results"
+    ),
+    envir = as.environment(asNamespace("EGAnet"))
+  )
   
   # Perform lapply
   data.sim <- pbapply::pblapply(
@@ -358,7 +362,7 @@ boot.ergoInfo <- function(
   # }
 
   # Convert lists to long format data frames
-  data.sim.df <- as.data.frame(long_results(data.sim))
+  # data.sim.df <- as.data.frame(long_results(data.sim))
 
   # variab <- ncol(data.sim.df[[1]]) - 1
 
@@ -372,9 +376,9 @@ boot.ergoInfo <- function(
   # Initialize boot data list
   boot.data <- list()
   
-  #Parallel processing
-  cl <- parallel::makeCluster(ncores)
-
+  # #Parallel processing
+  # cl <- parallel::makeCluster(ncores)
+  # 
   # #Export variables
   # parallel::clusterExport(
   #   cl = cl,
@@ -390,6 +394,12 @@ boot.ergoInfo <- function(
 
   # ^^^ Only necessary when testing outside of package ^^^
 
+  # Set up progress bar
+  pb <- txtProgressBar(
+    min = 0, max = iter,
+    style = 3
+  )
+  
   # Compute DynEGA in the population and in the individuals
   for(i in 1:length(data.sim)){
     
@@ -402,18 +412,30 @@ boot.ergoInfo <- function(
       2, as.numeric
     )
     
-    boot.data[[i]] <- dynEGA.ind.pop(
-      data = target,
-      n.embed = n.embed, tau = tau,
-      delta = delta, id = ncol(target),
-      use.derivatives = use.derivatives,
-      model = model, model.args = model.args,
-      algorithm = algorithm,
-      algorithm.args = algorithm.args,
-      corr = corr, ncores = ncores
+    sink <- capture.output(
+      boot.data[[i]] <- suppressMessages(
+        suppressWarnings(
+          dynEGA.ind.pop(
+            data = target,
+            n.embed = n.embed, tau = tau,
+            delta = delta, id = ncol(target),
+            use.derivatives = use.derivatives,
+            model = model, model.args = model.args,
+            algorithm = algorithm,
+            algorithm.args = algorithm.args,
+            corr = corr, ncores = ncores
+          )
+        )
+      )
     )
     
+    # Update progress bar
+    setTxtProgressBar(pb, i)
+    
   }
+  
+  # Close progress bar
+  close(pb)
   
   
   # boot.data <- pbapply::pblapply(
