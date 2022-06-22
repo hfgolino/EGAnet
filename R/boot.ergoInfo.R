@@ -282,15 +282,15 @@ boot.ergoInfo <- function(
   cl <- parallel::makeCluster(ncores)
   
   # Export to cluster
-  parallel::clusterExport(
-    cl = cl,
-    varlist = c(
-      "unique.ids", "MASS_mvrnorm",
-      "pop_sigma", "time.points",
-      "long_results"
-    ),
-    envir = as.environment(asNamespace("EGAnet"))
-  )
+  # parallel::clusterExport(
+  #   cl = cl,
+  #   varlist = c(
+  #     "unique.ids", "MASS_mvrnorm",
+  #     "pop_sigma", "time.points",
+  #     "long_results"
+  #   ),
+  #   envir = as.environment(asNamespace("EGAnet"))
+  # )
   
   # Perform lapply
   data.sim <- pbapply::pblapply(

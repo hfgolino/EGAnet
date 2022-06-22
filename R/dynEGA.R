@@ -269,9 +269,9 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
   cl <- parallel::makeCluster(ncores)
 
   #Export variables
-  parallel::clusterExport(cl = cl,
-                          varlist = c("datalist"),
-                          envir=environment())
+  # parallel::clusterExport(cl = cl,
+  #                         varlist = c("datalist"),
+  #                         envir=environment())
 
   # GLLA Estimation:
   glla.multi <- function(data, n.embed = n.embed, tau = tau, delta = delta, order = order){
@@ -446,9 +446,9 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
     cl <- parallel::makeCluster(ncores)
 
     #Export variables
-    parallel::clusterExport(cl = cl,
-                            varlist = c("data.individuals_var"),
-                            envir=environment())
+    # parallel::clusterExport(cl = cl,
+    #                         varlist = c("data.individuals_var"),
+    #                         envir=environment())
 
     # EGA estimates per individual:
     ega.list.individuals <- pbapply::pblapply(
