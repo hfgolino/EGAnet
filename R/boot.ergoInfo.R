@@ -156,7 +156,7 @@
 #'
 #' @export
 # Bootstrap Test for the Ergodicity Information Index
-# Updated 15.06.2022
+# Updated 22.06.2022
 boot.ergoInfo <- function(
     dynEGA.object, iter = 500,
     EII, use = c("edge.list", "weights"),
@@ -277,16 +277,16 @@ boot.ergoInfo <- function(
   # Set up parallelization
   cl <- parallel::makeCluster(ncores)
   
-  # Export to cluster
-  parallel::clusterExport(
-    cl = cl,
-    varlist = c(
-      "unique.ids", "MASS_mvrnorm",
-      "pop_sigma", "time.points",
-      "long_results"
-    ),
-    envir = as.environment(asNamespace("EGAnet"))
-  )
+  # # Export to cluster
+  # parallel::clusterExport(
+  #   cl = cl,
+  #   varlist = c(
+  #     "unique.ids", "MASS_mvrnorm",
+  #     "pop_sigma", "time.points",
+  #     "long_results"
+  #   ),
+  #   envir = as.environment(asNamespace("EGAnet"))
+  # )
   
   # Perform lapply
   data.sim <- pbapply::pblapply(
@@ -375,18 +375,18 @@ boot.ergoInfo <- function(
   #Parallel processing
   cl <- parallel::makeCluster(ncores)
 
-  #Export variables
-  parallel::clusterExport(
-    cl = cl,
-    varlist = c(
-      "dynEGA.ind.pop", "data.sim",
-      "n.embed", "tau", "delta",
-      "use.deriatives", "model",
-      "model.args", "algorithm",
-      "algorithm.args", "corr"
-    ),
-    envir=environment()
-  )
+  # #Export variables
+  # parallel::clusterExport(
+  #   cl = cl,
+  #   varlist = c(
+  #     "dynEGA.ind.pop", "data.sim",
+  #     "n.embed", "tau", "delta",
+  #     "use.deriatives", "model",
+  #     "model.args", "algorithm",
+  #     "algorithm.args", "corr"
+  #   ),
+  #   envir=environment()
+  # )
 
   # ^^^ Only necessary when testing outside of package ^^^
 

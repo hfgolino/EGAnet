@@ -18,6 +18,7 @@ boot.ergoInfo(
   algorithm = c("walktrap", "louvain"),
   algorithm.args = list(),
   corr = c("cor_auto", "pearson", "spearman"),
+  match.args = TRUE,
   ncores,
   ...
 )
@@ -118,6 +119,12 @@ the \code{\link[stats]{cor}}} function.
 {Computes Spearman's correlation coefficient using the pairwise complete observations via
 the \code{\link[stats]{cor}}} function.
 }}
+
+\item{match.args}{Boolean.
+Should arguments from \code{dynEGA.object} and
+\code{EII} be matched?
+Defaults to \code{TRUE}.
+Set to \code{FALSE} to set different parameters}
 
 \item{ncores}{Numeric.
 Number of cores to use in computing results.
