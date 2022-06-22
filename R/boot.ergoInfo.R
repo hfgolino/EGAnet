@@ -10,14 +10,15 @@
 #' Small values of p indicate that is very unlikely to obtain an EII as large as the one obtained in the empirical sample if the null hypothesis is true (i.e. all individuals have the same structure as the population structure), thus there is convincing evidence that the empirical Ergodicity Information Index is
 #' different than it could be expected if all individuals had a similar latent structure.
 #'
-#' @param dynEGA.pop A dynEGA or a dynEGA.pop.ind object.
+#' @param dynEGA.object A \code{\link[EGAnet]{dynEGA}} or a 
+#' \code{\link[EGAnet]{dynEGA.pop.ind}} object
 #'
 #' @param iter Numeric integer.
 #' Number of random samples to generate in the Monte-Carlo simulation.
 #' At least \code{500} is recommended
 #'
 #' @param EII Numeric.
-#' Empirical Ergodicity Information Index obtained via the \code{\link[EGAnet]{ergoInfo}} function.
+#' Empirical Ergodicity Information Index obtained via the \code{\link[EGAnet]{ergoInfo}} function
 #'
 #' @param use Character.
 #' A string indicating what network element will be used to compute the algorithm complexity in the \code{\link[EGAnet]{ergoInfo}} function,
@@ -34,10 +35,9 @@
 #' {Calculates the algorithm complexity using the weights of the network.}
 #' }
 #'
-#' @param embed Integer.
+#' @param n.embed Integer.
 #' Number of embedded dimensions (the number of observations to be used in the \code{\link[EGAnet]{Embed}} function). For example,
-#' an \code{"embed = 5"} will use five consecutive observations to estimate a single derivative.
-#' Default is \code{"embed = 5"}.
+#' an \code{"n.embed = 5"} will use five consecutive observations to estimate a single derivative
 #'
 #' @param tau Integer.
 #' Number of observations to offset successive embeddings in the \code{\link[EGAnet]{Embed}} function. A tau of one uses adjacent observations.
@@ -47,7 +47,7 @@
 #' The time between successive observations in the time series.
 #' Default is \code{"delta = 1"}.
 #'
-#' @param derivatives Integer.
+#' @param use.derivatives Integer.
 #' The order of the derivative to be used in the EGA procedure. Default to 1.
 
 #' @param corr Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
@@ -106,6 +106,12 @@
 #' A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
 #' or some other community detection algorithm function (see examples)
 #'
+#' @param match.args Boolean.
+#' Should arguments from \code{dynEGA.object} and
+#' \code{EII} be matched?
+#' Defaults to \code{TRUE}.
+#' Set to \code{FALSE} to set different parameters
+#'
 #' @param ncores Numeric.
 #' Number of cores to use in computing results.
 #' Defaults to \code{parallel::detectCores() / 2} or half of your
@@ -131,8 +137,7 @@
 #' eii1 <- ergoInfo(data = dyn1)$EII
 #'
 #' testing.ergoinfo <- boot.ergoInfo(dynEGA.pop = dyn1, iter = 10,EII = eii1,
-#' embed = 5, tau = 1, delta = 1, derivatives = 1,
-#' model = "glasso", ncores = 2, corr = "pearson")
+#' n.embed = 5, ncores = 2)
 #' }}
 #'
 #' @return Returns a list containing:
@@ -147,83 +152,109 @@
 #'
 #' \item{plot.dist}{Histogram of the bootstrapped ergodicity information index}
 #'
-#'
 #' @author Hudson Golino <hfg9s at virginia.edu>
-#'
 #'
 #' @export
 # Bootstrap Test for the Ergodicity Information Index
-# Updated 12.05.2022
-
-boot.ergoInfo <- function(dynEGA.pop,
-                          iter,
-                          EII,
-                          use,
-                          embed,
-                          tau,
-                          delta,
-                          derivatives,
-                          model, model.args = list(),
-                          algorithm = c("walktrap", "louvain"),
-                          algorithm.args = list(),
-                          corr, ncores, ...
+# Updated 15.06.2022
+boot.ergoInfo <- function(
+    dynEGA.object, iter = 500,
+    EII, use = c("edge.list", "weights"),
+    n.embed, tau = 1, delta = 1,
+    use.derivatives = 1,
+    model, model.args = list(),
+    algorithm = c("walktrap", "louvain"),
+    algorithm.args = list(),
+    corr = c("cor_auto", "pearson", "spearman"),
+    match.args = TRUE,
+    ncores, ...
 ){
 
-
-  #### MISSING ARGUMENTS HANDLING ####
-
-  if(missing(dynEGA.pop))
-  {  # Warning
-    warning(
-      "The 'dynEGA.pop' argument is missing. Please, provide the name of the object
-        created using the 'dynEGA' or the 'dynEGA.pop.ind' functions."
+  # Check for class
+  if(!is(dynEGA.object, "dynEGA") & !is(dynEGA.object, "dynEGA.ind.pop")){
+    stop(
+      paste(
+        "Input into the `dynEGA.object` argument's class is not `dynEGA` or `dynEGA.ind.pop`.\n\n",
+        "Class of dynEGA.object = ", paste(
+          class(dynEGA.object), sep = "", collapse = ", "
+        ),
+        sep = ""
+      )
     )
+  }else if(is(dynEGA.object, "dynEGA.ind.pop")){
+    dynEGA.pop <- dynEGA.object$dynEGA.pop
+  }else if(is(dynEGA.object, "dynEGA")){
+    dynEGA.pop <- dynEGA.object
   }
 
+  # Obtain methods
+  methods <- dynEGA.pop$dynEGA$Methods
+  
+  # Check for whether arguments should be matched
+  if(isTRUE(match.args)){
 
-  if(missing(use))
-  {use <- "edge.list"
-  }else{use}
-
-  if(missing(embed))
-  {embed <- 5
-  }else{embed}
-
-  if(missing(tau))
-  {tau <- 1
-  }else{tau}
-
-  if(missing(delta))
-  {delta <- 1
-  }else{delta}
-
-  if(missing(derivatives))
-  {derivatives <- 1
-  }else{derivatives}
-
-  if(missing(model))
-  {model <- "glasso"
-  }else{model}
-
-  if(missing(corr))
-  {corr <- "cor_auto"
-  }else{corr}
-
-  if(missing(algorithm))
-  {algorithm <- "walktrap"
-  }else{algorithm}
-
-  if(missing(ncores))
-  {ncores <- ceiling(parallel::detectCores() / 2)
-  }else{ncores}
-
-
+    ## GLLA
+    n.embed <- methods$glla$n.embed
+    tau <- methods$glla$tau
+    delta <- methods$glla$delta
+    use.derivatives <- methods$glla$derivatives
+    ## Model
+    model <- methods$EGA$model
+    model.args <- methods$EGA$model.args
+    algorithm <- methods$EGA$algorithm
+    algorithm.args <- methods$EGA$algorithm.args
+    corr <- methods$EGA$corr
+    
+  }
+  
+  # Check for EII
+  if(missing(EII)){
+    
+    # Check for dynEGA.ind.pop object
+    if(is(dynEGA.object, "dynEGA.ind.pop")){
+      
+      # Let user know that EII will be computed
+      message("`EII` argument is missing. Computing EII...", appendLF = FALSE)
+      
+      # Compute EII
+      EII <- ergoInfo(
+        dynEGA.object = dynEGA.object,
+        use = use
+      )
+      
+      # Let user know EII is complete
+      message("done", appendLF = TRUE)
+      
+    }else{
+      
+      # Let user know that EII cannot be computed
+      stop("`EII` argument is missing. EII cannot be computed without a `dynEGA.ind.pop` object class as input to `dynEGA.object`", appendLF = FALSE)
+      
+    }
+    
+  }
+  
+  # Check for class of EII
+  if(is(EII, "EII")){
+    
+    # Check for whether arguments should be matched
+    if(isTRUE(match.args)){
+      use <- EII$use
+    }
+    
+  }else if(!is(EII, "EII")){
+    stop("Object input into `EII` argument does not have class of EII.")
+  }
+  
+  if(missing(ncores)){
+    ncores <- ceiling(parallel::detectCores() / 2)
+  }
 
   # Initialize Data list
   data.sim <- vector("list", length = iter)
 
   #let user know data generation has started
-  message("\nGenerating the Data...\n", appendLF = FALSE)
+  message("\nGenerating the data...\n", appendLF = FALSE)
 
   # Get derivative estimates (and associated information)
   derivative_estimates <- dynEGA.pop$Derivatives$EstimatesDF
@@ -231,61 +262,179 @@ boot.ergoInfo <- function(dynEGA.pop,
   IDs <- derivative_estimates[,ncol(derivative_estimates)]
   unique.ids <- unique(IDs)
   time.points <- table(IDs)
-  time.points <- time.points+(embed-1)
+  time.points <- time.points+(n.embed-1)
   # Initialize Data list
   data.sim <- vector("list", length = iter)
   for(i in 1:iter){
     data.sim[[i]] <- vector("list", length = length(unique.ids))
   }
 
-  if(is(dynEGA.pop, "dynEGA")){
-    for(i in 1:iter){
-      for(j in 1:length(unique.ids)){
-        data.sim[[i]][[j]] <- MASS_mvrnorm(n = time.points[[j]], mu = rep(0, ncol(dynEGA.pop$dynEGA$cor.dat)), Sigma = as.matrix(Matrix::nearPD(solve(dynEGA.pop$network))$mat))
-      }
-    }
-  } else if(is(dynEGA.pop, "dynEGA.ind.pop")){
-    for(i in 1:iter){
-      for(j in 1:length(unique.ids)){
-        data.sim[[i]][[j]] <- as.data.frame(MASS_mvrnorm(n = time.points[[j]], mu = rep(0, ncol(dynEGA.pop$dynEGA.pop$cor.data)), Sigma = as.matrix(Matrix::nearPD(solve(dynEGA.pop$dynEGA.pop$network))$mat)))
-        data.sim[[i]][[j]]$ID <- rep(j, each = time.points[[j]])
-      }
-    }
-  }
-
-  data.sim.df <- lapply(
-    seq_along(data.sim), function(i){
-      as.data.frame(long_results(data.sim[[i]]))
+  #if(is(dynEGA.pop, "dynEGA")){
+  
+  # Obtain sigma
+  pop_sigma <- as.matrix(Matrix::nearPD(solve(dynEGA.pop$dynEGA$network))$mat)
+  
+  # Set up parallelization
+  cl <- parallel::makeCluster(ncores)
+  
+  # Export to cluster
+  parallel::clusterExport(
+    cl = cl,
+    varlist = c(
+      "unique.ids", "MASS_mvrnorm",
+      "pop_sigma", "time.points",
+      "long_results"
+    ),
+    envir = as.environment(asNamespace("EGAnet"))
+  )
+  
+  # Perform lapply
+  data.sim <- pbapply::pblapply(
+    cl = cl,
+    X = 1:iter,
+    FUN = function(i){
+      
+      # Obtain simulated participants
+      full_participants <- lapply(
+        X = 1:length(unique.ids),
+        FUN = function(j){
+          
+          # Generated data
+          data <- as.data.frame(MASS_mvrnorm(
+            n = time.points[[j]],
+            mu = rep(0, ncol(pop_sigma)),
+            Sigma = pop_sigma
+          ))
+          
+          # Add ID
+          data$ID <- rep(
+            unique.ids[j], time.points[[j]]
+          )
+          
+          # Return data
+          return(data)
+          
+        }
+      )
+      
+      # Convert to long results
+      as.data.frame(long_results(full_participants))
+      
     }
   )
+  
+  # Stop cluster
+  parallel::stopCluster(cl)
+  
+  # # Progress bar
+  # pb <- txtProgressBar(
+  #   min = 0, max = iter, style = 3
+  # )
+  # 
+  #   for(i in 1:iter){
+  #     for(j in 1:length(unique.ids)){
+  #       data.sim[[i]][[j]] <- MASS_mvrnorm(
+  #         n = time.points[[j]],
+  #         mu = rep(0, ncol(dynEGA.pop$dynEGA$correlation)),
+  #         Sigma = as.matrix(Matrix::nearPD(solve(dynEGA.pop$dynEGA$network))$mat)
+  #       )
+  #     }
+  #     
+  #     # Update progress bar
+  #     setTxtProgressBar(pb, i)
+  #     
+  #   }
+  # 
+  # # Close progress bar
+  # close(pb)
+  
+  # } else if(is(dynEGA.pop, "dynEGA.ind.pop")){
+  #   for(i in 1:iter){
+  #     for(j in 1:length(unique.ids)){
+  #       data.sim[[i]][[j]] <- as.data.frame(MASS_mvrnorm(n = time.points[[j]], mu = rep(0, ncol(dynEGA.pop$dynEGA.pop$cor.data)), Sigma = as.matrix(Matrix::nearPD(solve(dynEGA.pop$dynEGA.pop$network))$mat)))
+  #       data.sim[[i]][[j]]$ID <- rep(j, each = time.points[[j]])
+  #     }
+  #   }
+  # }
 
-  variab <- ncol(data.sim.df[[1]])-1
+  # Convert lists to long format data frames
+  data.sim.df <- as.data.frame(long_results(data.sim))
 
-  #initialize correlation matrix list
-  boot.data.ids <- vector("list", length = iter)
-  list.results.sim <- boot.data.ids
+  # variab <- ncol(data.sim.df[[1]]) - 1
+
+  # initialize correlation matrix list
+  # boot.data.ids <- vector("list", length = iter)
+  # list.results.sim <- boot.data.ids
 
   #let user know data generation has started
   message("\nEstimating the Population and Individual Structures...\n", appendLF = FALSE)
 
+  # Initialize boot data list
+  boot.data <- list()
+  
   #Parallel processing
   cl <- parallel::makeCluster(ncores)
 
   #Export variables
-  # parallel::clusterExport(cl = cl,
-  #                         varlist = c("list.results.sim",
-  #                                     "complexity.estimates"),
-  #                         envir=environment())
-  #
+  parallel::clusterExport(
+    cl = cl,
+    varlist = c(
+      "dynEGA.ind.pop", "data.sim",
+      "n.embed", "tau", "delta",
+      "use.deriatives", "model",
+      "model.args", "algorithm",
+      "algorithm.args", "corr"
+    ),
+    envir=environment()
+  )
+
   # ^^^ Only necessary when testing outside of package ^^^
 
-  #Compute DynEGA in the population and in the individuals
-  boot.data <- pbapply::pblapply(X = data.sim.df, cl = cl,
-                                 FUN = EGAnet::dynEGA.ind.pop,
-                                 n.embed = embed, tau = tau,
-                                 delta = delta, id = variab+1, use.derivatives = derivatives,
-                                 algorithm = algorithm, algorithm.args = algorithm.args,
-                                 model = model, model.args = model.args, corr = corr)
+  # Compute DynEGA in the population and in the individuals
+  for(i in 1:length(data.sim)){
+    
+    # Target data
+    target <- data.sim[[i]]
+    
+    # Ensure numeric values
+    target[,-ncol(target)] <- apply(
+      target[,-ncol(target)],
+      2, as.numeric
+    )
+    
+    boot.data[[i]] <- dynEGA.ind.pop(
+      data = target,
+      n.embed = n.embed, tau = tau,
+      delta = delta, id = ncol(target),
+      use.derivatives = use.derivatives,
+      model = model, model.args = model.args,
+      algorithm = algorithm,
+      algorithm.args = algorithm.args,
+      corr = corr, ncores = ncores
+    )
+    
+  }
+  
+  
+  # boot.data <- pbapply::pblapply(
+  #   cl = cl,
+  #   X = 1:length(data.sim),
+  #   FUN = function(i){
+  #     
+  #     dynEGA.ind.pop(
+  #       data = data.sim[[i]],
+  #       n.embed = n.embed, tau = tau,
+  #       delta = delta, id = ncol(data.sim[[i]]),
+  #       use.derivatives = use.derivatives,
+  #       model = model, model.args = model.args,
+  #       algorithm = algorithm,
+  #       algorithm.args = algorithm.args,
+  #       corr = corr
+  #     )
+  #     
+  #   }
+  #   
+  # )
 
 
   #let user know data generation has started

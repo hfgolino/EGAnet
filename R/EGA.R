@@ -271,7 +271,7 @@
 #'
 #' @export
 #'
-# Updated 15.05.2022
+# Updated 15.06.2022
 # Consensus clustering 13.05.2022
 # LE adjustment 08.03.2021
 ## EGA Function to detect unidimensionality:
@@ -362,7 +362,7 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
   }
   
   if(missing(consensus.method)){
-    consensus.method <- "highest_modularity"
+    consensus.method <- "most_common"
   }else{consensus.method <- match.arg(consensus.method)}
 
   if(missing(plot.type)){
@@ -372,7 +372,7 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
   #### ARGUMENTS HANDLING ####
   
   # Check for correlation matrix or data
-  if(nrow(data) == ncol(data)){ ## Correlation matrix
+  if(isSymmetric(unname(as.matrix(data)))){ ## Correlation matrix
 
     # Check for column names
     if(is.null(colnames(data))){
@@ -661,7 +661,7 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
         if(algorithm == "louvain"){
           
           multi.res$wc <- consensus_clustering(
-            multi.res$network,
+            network = multi.res$network,
             corr = cor.data,
             order = "higher",
             consensus.iter = consensus.iter

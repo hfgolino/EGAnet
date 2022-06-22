@@ -167,7 +167,7 @@
 #'
 #' @export
 # dynEGA
-# Updated 13.05.2022
+# Updated 15.06.2022
 dynEGA <- function(data, n.embed, tau = 1, delta = 1,
                    level = c("individual", "group", "population"),
                    id = NULL, group = NULL,
@@ -262,20 +262,16 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
 
   ### Estimating the derivatives using GLLA:
 
-  #let user know derivatives estimation has started
+  # Let user know derivatives estimation has started
   message("\nComputing derivatives using GLLA...\n", appendLF = FALSE)
-
-
-  #initialize derivatives list
-  derivlist <- list()
 
   #Parallel processing
   cl <- parallel::makeCluster(ncores)
 
   #Export variables
-  parallel::clusterExport(cl = cl,
-                          varlist = c("datalist", "derivlist", "cases"),
-                          envir=environment())
+  # parallel::clusterExport(cl = cl,
+  #                         varlist = c("datalist"),
+  #                         envir=environment())
 
   # GLLA Estimation:
   glla.multi <- function(data, n.embed = n.embed, tau = tau, delta = delta, order = order){
@@ -295,11 +291,14 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
     return(data.estimates)
   }
 
-  #Compute derivatives per ID
+  # Compute derivatives per ID
   derivlist <- pbapply::pblapply(X = datalist, cl = cl,
                                  FUN = glla.multi,
                                  n.embed = n.embed, tau = tau, delta = delta, order = order)
 
+  # Stop cluster
+  parallel::stopCluster(cl)
+  
   ### Estimating the dimensionality structure using EGA:
 
   message("Estimating the dimensionality structure using EGA...\n", appendLF = FALSE)
@@ -309,104 +308,106 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
   }
 
   names(derivlist) <- paste0("ID", cases)
+  
   # Population Level:
   if(level == "population"){
-    message("Level: Population...\n", appendLF = FALSE)
+    
+    # Message user about level
+    message("Level: Population...", appendLF = FALSE)
 
+    # Stack derivatives
     data.all <- data.frame(Reduce(rbind, derivlist))
 
-    # EGA Part
+    # Obtain derivative indices
+    derivative_index <- switch(
+      as.character(use.derivatives),
+      "0" = grep("Ord0", colnames(data.all)),
+      "1" = grep("Ord1", colnames(data.all)),
+      "2" = grep("Ord2", colnames(data.all))
+    )
+    
+    # Estimate using EGA
+    ega1 <- suppressWarnings(
+      EGA(data = data.all[, derivative_index],
+          model = model, model.args = model.args,
+          algorithm = algorithm, algorithm.args = algorithm.args,
+          corr = corr, plot.EGA = FALSE)
+    )
 
-    if(use.derivatives == 0){
-      ega1 <- EGA.estimate(data = data.all[,1:ncol(data[,-c(id, group)])],
-                           model = model, model.args = model.args,
-                           algorithm = algorithm, algorithm.args = algorithm.args,
-                           corr = corr)}
-    if(use.derivatives == 1){
-      ega1 <- EGA.estimate(data = data.all[,(ncol(data[,-c(id, group)])+1):(ncol(data[,-c(id, group)])*2)],
-                           model = model, model.args = model.args,
-                           algorithm = algorithm, algorithm.args = algorithm.args,
-                           corr = corr)}
-    if(use.derivatives==2){
-      init <- (ncol(data[,-c(id, group)])*2)+1
-      cols <- seq(from = init, to = init+ncol(data[,-c(id, group)])-1)
-      ega1 <- EGA.estimate(data = data.all[,cols],
-                           model = model, model.args = model.args,
-                           algorithm = algorithm, algorithm.args = algorithm.args,
-                           corr = corr)}
+    # Message user that results are done
+    message("done", appendLF = TRUE)
   }
-
-  parallel::stopCluster(cl)
 
   # Level Group:
   if(level == "group"){
-    message("Level: Group...\n", appendLF = FALSE)
 
+    # Message user about level
+    message("Level: Group...", appendLF = FALSE)
+
+    # Obtain group memberships
     group.memb <- unique(data[,group])
 
+    # Assign derivatives to groups
     for(i in 1:length(cases)){
       derivlist[[i]]$Group <- data[which(data[,id]==cases[i]),group][-c(1:(n.embed-1))]
     }
 
+    # Stack group memberships
     data.all <- data.frame(Reduce(rbind, derivlist))
+    
+    # Obtain derivative indices
+    derivative_index <- switch(
+      as.character(use.derivatives),
+      "0" = grep("Ord0", colnames(data.all)),
+      "1" = grep("Ord1", colnames(data.all)),
+      "2" = grep("Ord2", colnames(data.all))
+    )
 
-    # Which derivatives to use:
-    if(use.derivatives == 0){
-      colstouse <- colnames(data.all[,1:ncol(data[,-c(id, group)])])}
-    if(use.derivatives == 1){
-      colstouse <- colnames(data.all[,(ncol(data[,-c(id, group)])+1):(ncol(data[,-c(id, group)])*2)])}
-    if(use.derivatives==2){
-      init <- (ncol(data[,-c(id, group)])*2)+1
-      cols <- seq(from = init, to = init+ncol(data[,-c(id, group)])-1)
-      colstouse <- colnames(data.all[,cols])
-    }
-
-    #initialize data list
+    # Initialize data list
     data.groups <- vector("list", length = length(group.memb))
-    data.groups <- split(data.all[,colstouse],data.all$Group)
+    data.groups <- split(data.all[,derivative_index], data.all$Group)
     names(data.groups) <- paste0("Group", group.memb)
 
-    #Parallel processing
+    # Parallel processing
     cl <- parallel::makeCluster(ncores)
 
-    #Export variables
-    parallel::clusterExport(cl = cl,
-                            varlist = c("data.groups", "group.memb"),
-                            envir=environment())
-
-    # EGA Part
-
-    ega.list.groups <- list()
-
-    #Compute derivatives per Group
+    # Export variables
+    # parallel::clusterExport(cl = cl,
+    #                         varlist = c("data.groups", "group.memb"),
+    #                         envir=environment())
+    
+    # Compute derivatives per Group
     ega.list.groups <- pbapply::pblapply(X = data.groups, cl = cl,
-                                         FUN = EGA.estimate,
+                                         FUN = EGA,
                                          model = model, model.args = model.args,
                                          algorithm = algorithm, algorithm.args = algorithm.args,
-                                         corr = corr)
+                                         corr = corr, plot.EGA = FALSE)
+    
+    # Stop cluster
     parallel::stopCluster(cl)
+    
   }
 
   # Level: Individual (intraindividual structure):
   if(level == "individual"){
+    
+    # Message user about level
     message("Level: Individual (Intraindividual Structure)...\n", appendLF = FALSE)
 
+    # Stack group memberships
     data.all <- data.frame(Reduce(rbind, derivlist))
 
-    # Which derivatives to use:
-    if(use.derivatives == 0){
-      colstouse <- colnames(data.all[,1:ncol(data[,-c(id, group)])])}
-    if(use.derivatives == 1){
-      colstouse <- colnames(data.all[,(ncol(data[,-c(id, group)])+1):(ncol(data[,-c(id, group)])*2)])}
-    if(use.derivatives==2){
-      init <- (ncol(data[,-c(id, group)])*2)+1
-      cols <- seq(from = init, to = init+ncol(data[,-c(id, group)])-1)
-      colstouse <- colnames(data.all[,cols])
-    }
+    # Obtain derivative indices
+    derivative_index <- switch(
+      as.character(use.derivatives),
+      "0" = grep("Ord0", colnames(data.all)),
+      "1" = grep("Ord1", colnames(data.all)),
+      "2" = grep("Ord2", colnames(data.all))
+    )
 
-    #initialize data list
+    # Initialize data list
     data.individuals <- vector("list", length = length(cases))
-    data.individuals <- split(data.all[,colstouse],data.all$ID)
+    data.individuals <- split(data.all[,derivative_index], data.all$ID)
     names(data.individuals) <- paste0("ID", cases)
     
     # Get number of variables
@@ -414,15 +415,17 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
     
     # Remove variables from participants with no variance
     # in their derivatives
-    data.individuals <- lapply(data.individuals, function(x){
+    data.individuals_var <- lapply(data.individuals, function(x){
       indices <- which(apply(x, 2, sd) == 0)
       if(length(indices) != 0){
         x[,-indices]
       }else{x}
     })
+    # ^^ creates new object to keep reduced columns
+    # separate to avoid errors when creating `dim.variables` later
     
     # Get number of variables
-    final.nvar <- unlist(lapply(data.individuals, ncol))
+    final.nvar <- unlist(lapply(data.individuals_var, ncol))
     
     # Get warnings
     warning.idx <- which(initial.nvar != final.nvar)
@@ -431,8 +434,8 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
       for(i in 1:length(warning.idx)){
         warning(
           paste(
-            gsub("ID", "", names(data.individuals)[i]),
-            "had variables with no variance. Some variables were dropped"
+            names(warning.idx)[i],
+            "had variables with no variance. Some variables will be disconnected in their network."
           )
         )
       }
@@ -443,23 +446,86 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
     cl <- parallel::makeCluster(ncores)
 
     #Export variables
-    parallel::clusterExport(cl = cl,
-                            varlist = c("data.individuals", "cases"),
-                            envir=environment())
+    # parallel::clusterExport(cl = cl,
+    #                         varlist = c("data.individuals_var"),
+    #                         envir=environment())
 
     # EGA estimates per individual:
-    ega.list.individuals <- list()
-
-    ega.list.individuals <- pbapply::pblapply(X = data.individuals, cl = cl,
-                                              FUN = EGA.estimate,
-                                              model = model, model.args = model.args,
-                                              algorithm = algorithm, algorithm.args = algorithm.args,
-                                              corr = corr)
+    ega.list.individuals <- pbapply::pblapply(
+      X = data.individuals_var, cl = cl,
+      FUN = EGA,
+      model = model, model.args = model.args,
+      algorithm = algorithm, algorithm.args = algorithm.args,
+      corr = corr, plot.EGA = FALSE
+    )
+    
+    # Stop cluster
     parallel::stopCluster(cl)
+    
+    # Add back disconnected variables
+    if(length(warning.idx) != 0){
+      for(i in 1:length(warning.idx)){
+        
+        # Obtain target individual
+        target_individual <- ega.list.individuals[[names(warning.idx)[i]]]
+        
+        # Obtain network
+        network <- target_individual$network
+        
+        # Obtain columns to use
+        colstouse <- colnames(data.all)[derivative_index]
+        
+        # Identify zero variance variables
+        zero_var <- setdiff(colstouse, colnames(network))
+        
+        # Add zero variance variables to network
+        new_network <- matrix(
+          0,
+          ncol = length(colstouse),
+          nrow = length(colstouse)
+        )
+        colnames(new_network) <- c(colnames(network), zero_var)
+        row.names(new_network) <- colnames(new_network)
+        
+        # Insert existing variables into network
+        new_network[1:nrow(network), 1:ncol(network)] <- network
+        
+        # Update wc
+        wc <- target_individual$wc
+        add_wc <- rep(NA, length(zero_var))
+        names(add_wc) <- zero_var
+        new_wc <- c(wc, add_wc)
+        
+        # Update correlation matrix
+        correlation <- target_individual$correlation
+        
+        # Add zero variance variables to correlation
+        new_correlation <- matrix(
+          NA,
+          ncol = length(colstouse),
+          nrow = length(colstouse)
+        )
+        colnames(new_correlation) <- c(colnames(correlation), zero_var)
+        row.names(new_correlation) <- colnames(new_correlation)
+        
+        # Insert existing variables into correlation
+        new_correlation[1:nrow(correlation), 1:ncol(correlation)] <- correlation
+        
+        # Update order
+        new_network <- new_network[colstouse, colstouse]
+        new_wc <- new_wc[colstouse]
+        new_correlation <- new_correlation[colstouse, colstouse]
+        
+        # Put back into object
+        target_individual$network <- new_network
+        target_individual$wc <- new_wc
+        target_individual$correlation <- new_correlation
+        ega.list.individuals[[names(warning.idx)[i]]] <- target_individual
+        
+      }
+    }
+    
   }
-
-  #let user know results have been computed
-  message("done", appendLF = TRUE)
 
   # Results:
   results <- vector("list")
@@ -475,6 +541,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
   methods$glla$n.embed <- n.embed
   methods$glla$tau <- tau
   methods$glla$delta <- delta
+  methods$glla$derivatives <- use.derivatives
   
   # EGA methods
   methods$EGA$model <- model
@@ -498,15 +565,16 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
     dim.variables[[i]] <- data.frame(items = colnames(data[-c(id, group)]), dimension = ega.list.groups[[i]]$wc)
     dim.variables[[i]] <- dim.variables[[i]][order(dim.variables[[i]][, 2]),]
     results$dynEGA[[i]]$dim.variables <- dim.variables[[i]]}
-    }else if(level == "individual"){
+  }else if(level == "individual"){
       results$dynEGA <- ega.list.individuals
       class(results) <- "dynEGA.Individuals"
       dim.variables <- list()
       for(i in 1:length(cases)){
         dim.variables[[i]] <- data.frame(items = colnames(data.individuals[[i]]), dimension = ega.list.individuals[[i]]$wc)
         dim.variables[[i]] <- dim.variables[[i]][order(dim.variables[[i]][, 2]),]
-        results$dynEGA[[i]]$dim.variables <- dim.variables[[i]]}
-    }
+        results$dynEGA[[i]]$dim.variables <- dim.variables[[i]]
+      }
+  }
   
   # Attach methods to dynEGA output
   results$dynEGA$Methods <- methods
