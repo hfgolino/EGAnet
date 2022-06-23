@@ -17,8 +17,7 @@ hierEGA(
   algorithm.args = list(),
   plot.EGA = TRUE,
   plot.type = c("GGally", "qgraph"),
-  plot.args = list(),
-  verbose
+  plot.args = list()
 )
 }
 \arguments{
@@ -206,11 +205,6 @@ See \code{\link[EGAnet]{color_palette_EGA}} for
 more details and examples}
 
 }}
-
-\item{verbose}{Boolean.
-Should network estimation parameters be printed?
-Defaults to \code{TRUE}.
-Set to \code{FALSE} for no print out}
 }
 \value{
 Returns a list of lists containing: \cr
