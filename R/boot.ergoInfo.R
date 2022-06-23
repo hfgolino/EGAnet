@@ -10,7 +10,7 @@
 #' Small values of p indicate that is very unlikely to obtain an EII as large as the one obtained in the empirical sample if the null hypothesis is true (i.e. all individuals have the same structure as the population structure), thus there is convincing evidence that the empirical Ergodicity Information Index is
 #' different than it could be expected if all individuals had a similar latent structure.
 #'
-#' @param dynEGA.object A \code{\link[EGAnet]{dynEGA}} or a 
+#' @param dynEGA.object A \code{\link[EGAnet]{dynEGA}} or a
 #' \code{\link[EGAnet]{dynEGA.pop.ind}} object
 #'
 #' @param iter Numeric integer.
@@ -122,6 +122,16 @@
 #' If you're unsure how many cores your computer has,
 #' then use the following code: \code{parallel::detectCores()}
 #'
+#' ' @param ncores2 Numeric.
+#' Number of cores to use in computing results of the \code{\link[EGAnet]{dyn.pop.ind} function.
+#' Defaults to \code{parallel::detectCores() / 2} or half of your
+#' computer's processing power.
+#' Set to \code{1} to not use parallel computing.
+#' Recommended to use maximum number of cores minus one
+#'
+#' If you're unsure how many cores your computer has,
+#' then use the following code: \code{parallel::detectCores()}
+#'
 #'
 #' @param ... Additional arguments.
 #' Used for deprecated arguments from previous versions of \code{\link{EGA}}
@@ -167,7 +177,7 @@ boot.ergoInfo <- function(
     algorithm.args = list(),
     corr = c("cor_auto", "pearson", "spearman"),
     match.args = TRUE,
-    ncores, ...
+    ncores, ncores2, ...
 ){
 
   # Check for class
@@ -189,7 +199,7 @@ boot.ergoInfo <- function(
 
   # Obtain methods
   methods <- dynEGA.pop$dynEGA$Methods
-  
+
   # Check for whether arguments should be matched
   if(isTRUE(match.args)){
 
@@ -204,50 +214,54 @@ boot.ergoInfo <- function(
     algorithm <- methods$EGA$algorithm
     algorithm.args <- methods$EGA$algorithm.args
     corr <- methods$EGA$corr
-    
+
   }
-  
+
   # Check for EII
   if(missing(EII)){
-    
+
     # Check for dynEGA.ind.pop object
     if(is(dynEGA.object, "dynEGA.ind.pop")){
-      
+
       # Let user know that EII will be computed
       message("`EII` argument is missing. Computing EII...", appendLF = FALSE)
-      
+
       # Compute EII
       EII <- ergoInfo(
         dynEGA.object = dynEGA.object,
         use = use
       )
-      
+
       # Let user know EII is complete
       message("done", appendLF = TRUE)
-      
+
     }else{
-      
+
       # Let user know that EII cannot be computed
       stop("`EII` argument is missing. EII cannot be computed without a `dynEGA.ind.pop` object class as input to `dynEGA.object`", appendLF = FALSE)
-      
+
     }
-    
+
   }
-  
+
   # Check for class of EII
   if(is(EII, "EII")){
-    
+
     # Check for whether arguments should be matched
     if(isTRUE(match.args)){
       use <- EII$use
     }
-    
+
   }else if(!is(EII, "EII")){
     stop("Object input into `EII` argument does not have class of EII.")
   }
-  
+
   if(missing(ncores)){
     ncores <- ceiling(parallel::detectCores() / 2)
+  }
+
+  if(missing(ncores2)){
+    ncores2 <- ceiling(parallel::detectCores() / 2)
   }
 
   # Initialize Data list
@@ -263,6 +277,10 @@ boot.ergoInfo <- function(
   unique.ids <- unique(IDs)
   time.points <- table(IDs)
   time.points <- time.points+(n.embed-1)
+
+
+
+
   # Initialize Data list
   data.sim <- vector("list", length = iter)
   for(i in 1:iter){
@@ -270,17 +288,17 @@ boot.ergoInfo <- function(
   }
 
   #if(is(dynEGA.pop, "dynEGA")){
-  
+
   # Obtain sigma
   pop_sigma <- as.matrix(Matrix::nearPD(solve(dynEGA.pop$dynEGA$network))$mat)
-  
+
   # Remove everything after ".Ord"
   colnames(pop_sigma) <- gsub(".Ord*.", "", colnames(pop_sigma))
   row.names(pop_sigma) <- colnames(pop_sigma)
-  
+
   # Set up parallelization
   cl <- parallel::makeCluster(ncores)
-  
+
   # Export to cluster
   # parallel::clusterExport(
   #   cl = cl,
@@ -291,50 +309,50 @@ boot.ergoInfo <- function(
   #   ),
   #   envir = as.environment(asNamespace("EGAnet"))
   # )
-  
+
   # Perform lapply
   data.sim <- pbapply::pblapply(
     cl = cl,
     X = 1:iter,
     FUN = function(i){
-      
+
       # Obtain simulated participants
       full_participants <- lapply(
         X = 1:length(unique.ids),
         FUN = function(j){
-          
+
           # Generated data
-          data <- as.data.frame(MASS_mvrnorm(
+          data <- as.data.frame(EGAnet:::MASS_mvrnorm(
             n = time.points[[j]],
             mu = rep(0, ncol(pop_sigma)),
             Sigma = pop_sigma
           ))
-          
+
           # Add ID
           data$ID <- rep(
             unique.ids[j], time.points[[j]]
           )
-          
+
           # Return data
           return(data)
-          
+
         }
       )
-      
+
       # Convert to long results
-      as.data.frame(long_results(full_participants))
-      
+      as.data.frame(EGAnet:::long_results(full_participants))
+
     }
   )
-  
+
   # Stop cluster
   parallel::stopCluster(cl)
-  
+
   # # Progress bar
   # pb <- txtProgressBar(
   #   min = 0, max = iter, style = 3
   # )
-  # 
+  #
   #   for(i in 1:iter){
   #     for(j in 1:length(unique.ids)){
   #       data.sim[[i]][[j]] <- MASS_mvrnorm(
@@ -343,15 +361,15 @@ boot.ergoInfo <- function(
   #         Sigma = as.matrix(Matrix::nearPD(solve(dynEGA.pop$dynEGA$network))$mat)
   #       )
   #     }
-  #     
+  #
   #     # Update progress bar
   #     setTxtProgressBar(pb, i)
-  #     
+  #
   #   }
-  # 
+  #
   # # Close progress bar
   # close(pb)
-  
+
   # } else if(is(dynEGA.pop, "dynEGA.ind.pop")){
   #   for(i in 1:iter){
   #     for(j in 1:length(unique.ids)){
@@ -375,10 +393,10 @@ boot.ergoInfo <- function(
 
   # Initialize boot data list
   boot.data <- list()
-  
+
   # #Parallel processing
   # cl <- parallel::makeCluster(ncores)
-  # 
+  #
   # #Export variables
   # parallel::clusterExport(
   #   cl = cl,
@@ -394,76 +412,64 @@ boot.ergoInfo <- function(
 
   # ^^^ Only necessary when testing outside of package ^^^
 
-  # Set up progress bar
-  pb <- txtProgressBar(
-    min = 0, max = iter,
-    style = 3
-  )
-  
+
+
+  target <- vector("list", length = length(data.sim))
   # Compute DynEGA in the population and in the individuals
   for(i in 1:length(data.sim)){
-    
+
     # Target data
-    target <- data.sim[[i]]
-    
+    target[[i]] <- data.sim[[i]]
+
     # Ensure numeric values
-    target[,-ncol(target)] <- apply(
-      target[,-ncol(target)],
+    target[[i]][,-ncol(target[[i]])] <- apply(
+      target[[i]][,-ncol(target[[i]])],
       2, as.numeric
-    )
-    
-    sink <- capture.output(
-      boot.data[[i]] <- suppressMessages(
-        suppressWarnings(
-          dynEGA.ind.pop(
-            data = target,
-            n.embed = n.embed, tau = tau,
-            delta = delta, id = ncol(target),
-            use.derivatives = use.derivatives,
-            model = model, model.args = model.args,
-            algorithm = algorithm,
-            algorithm.args = algorithm.args,
-            corr = corr, ncores = ncores
-          )
-        )
-      )
-    )
-    
-    # Update progress bar
-    setTxtProgressBar(pb, i)
-    
-  }
-  
+    )}
+
+
+  #cl <- parallel::makeCluster(ncores2)
+  #
+  # boot.data <- pbapply::pblapply(X = target, cl = cl, function(x){
+  #                            EGAnet::dynEGA.ind.pop(x,
+  #                            n.embed = n.embed, tau = tau,
+  #                            delta = delta, id = ncol(x),
+  #                            use.derivatives = use.derivatives,
+  #                            model = model, model.args = model.args,
+  #                            algorithm = algorithm,
+  #                            algorithm.args = algorithm.args,
+  #                            corr = corr, ncores = ncores)})
+
   # Close progress bar
-  close(pb)
-  
-  
-  # boot.data <- pbapply::pblapply(
-  #   cl = cl,
-  #   X = 1:length(data.sim),
-  #   FUN = function(i){
-  #     
-  #     dynEGA.ind.pop(
-  #       data = data.sim[[i]],
-  #       n.embed = n.embed, tau = tau,
-  #       delta = delta, id = ncol(data.sim[[i]]),
-  #       use.derivatives = use.derivatives,
-  #       model = model, model.args = model.args,
-  #       algorithm = algorithm,
-  #       algorithm.args = algorithm.args,
-  #       corr = corr
-  #     )
-  #     
-  #   }
-  #   
-  # )
+
+  cl <- parallel::makeCluster(ncores2)
+
+  boot.data <- pbapply::pblapply(
+    cl = cl,
+    X = target,
+    FUN = function(i){
+
+      EGAnet::dynEGA.ind.pop(
+        data = i,
+        n.embed = n.embed, tau = tau,
+        delta = delta, id = ncol(i),
+        use.derivatives = use.derivatives,
+        model = model, model.args = model.args,
+        algorithm = algorithm,
+        algorithm.args = algorithm.args,
+        corr = corr, ncores = ncores
+      )
+
+    }
+
+  )
 
 
   #let user know data generation has started
-  message("Estimating the Ergodicity Information Index\n", appendLF = FALSE)
+  message("Estimating the Ergodicity Information Index (be patient, it takes time)\n", appendLF = FALSE)
 
   complexity.estimates <- pbapply::pblapply(X = boot.data, cl = cl,
-                                            FUN = ergoInfo, use = use)
+                                            FUN = EGAnet::ergoInfo, use = use)
   parallel::stopCluster(cl)
 
   #let user know results are being computed
