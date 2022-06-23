@@ -122,8 +122,8 @@
 #' If you're unsure how many cores your computer has,
 #' then use the following code: \code{parallel::detectCores()}
 #'
-#' ' @param ncores2 Numeric.
-#' Number of cores to use in computing results of the \code{\link[EGAnet]{dyn.pop.ind} function.
+#' @param ncores2 Numeric.
+#' Number of cores to use in computing results of the \code{dyn.pop.ind} function.
 #' Defaults to \code{parallel::detectCores() / 2} or half of your
 #' computer's processing power.
 #' Set to \code{1} to not use parallel computing.
@@ -322,7 +322,7 @@ boot.ergoInfo <- function(
         FUN = function(j){
 
           # Generated data
-          data <- as.data.frame(EGAnet:::MASS_mvrnorm(
+          data <- as.data.frame(MASS_mvrnorm(
             n = time.points[[j]],
             mu = rep(0, ncol(pop_sigma)),
             Sigma = pop_sigma
@@ -340,7 +340,7 @@ boot.ergoInfo <- function(
       )
 
       # Convert to long results
-      as.data.frame(EGAnet:::long_results(full_participants))
+      as.data.frame(long_results(full_participants))
 
     }
   )
@@ -449,7 +449,7 @@ boot.ergoInfo <- function(
     X = target,
     FUN = function(i){
 
-      EGAnet::dynEGA.ind.pop(
+      dynEGA.ind.pop(
         data = i,
         n.embed = n.embed, tau = tau,
         delta = delta, id = ncol(i),
@@ -469,7 +469,7 @@ boot.ergoInfo <- function(
   message("Estimating the Ergodicity Information Index (be patient, it takes time)\n", appendLF = FALSE)
 
   complexity.estimates <- pbapply::pblapply(X = boot.data, cl = cl,
-                                            FUN = EGAnet::ergoInfo, use = use)
+                                            FUN = ergoInfo, use = use)
   parallel::stopCluster(cl)
 
   #let user know results are being computed

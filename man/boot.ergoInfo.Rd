@@ -127,6 +127,26 @@ Should arguments from \code{dynEGA.object} and
 Defaults to \code{TRUE}.
 Set to \code{FALSE} to set different parameters}
 
+\item{ncores}{Numeric.
+Number of cores to use in computing results.
+Defaults to \code{parallel::detectCores() / 2} or half of your
+computer's processing power.
+Set to \code{1} to not use parallel computing.
+Recommended to use maximum number of cores minus one
+
+If you're unsure how many cores your computer has,
+then use the following code: \code{parallel::detectCores()}}
+
+\item{ncores2}{Numeric.
+Number of cores to use in computing results of the \code{dyn.pop.ind} function.
+Defaults to \code{parallel::detectCores() / 2} or half of your
+computer's processing power.
+Set to \code{1} to not use parallel computing.
+Recommended to use maximum number of cores minus one
+
+If you're unsure how many cores your computer has,
+then use the following code: \code{parallel::detectCores()}}
+
 \item{...}{Additional arguments.
 Used for deprecated arguments from previous versions of \code{\link{EGA}}}
 }
