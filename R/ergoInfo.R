@@ -1,10 +1,12 @@
 #' Ergodicity Information Index
+#' 
 #' @description Computes the Ergodicity Information Index
 #'
-#' @param data A dynEGA.ind.pop object
+#' @param dynEGA.object A \code{\link[EGAnet]{dynEGA.ind.pop}} object
 #'
 #' @param use Character.
-#' A string indicating what network element will be used to compute the algorithm complexity, the list of edges or the weights of the network.
+#' A string indicating what network element will be used
+#' to compute the algorithm complexity, the list of edges or the weights of the network.
 #' Defaults to \code{use = "edge.list"}.
 #' Current options are:
 #'
@@ -33,24 +35,53 @@
 #'
 #'
 #' @export
+#' 
 # Ergodicity Information Index
-# Updated 04.27.2022
-ergoInfo <- function(data, use = c("edge.list", "weights")){
+# Updated 15.06.2022
+ergoInfo <- function(
+    dynEGA.object,
+    use = c("edge.list", "weights")
+)
+{
 
   #### MISSING ARGUMENTS HANDLING ####
-  if(missing(use))
-  {use <- "edge.list"
-  }else{use}
+  if(missing(use)){use <- "edge.list"}
+  
+  # Check for class
+  if(!is(dynEGA.object, "dynEGA.ind.pop")){
+    stop(
+      paste(
+        "Input into the `dynEGA.object` argument's class is not `dynEGA.ind.pop`.\n\n",
+        "Class of dynEGA.object = ", paste(
+          class(dynEGA.object), sep = "", collapse = ", "
+        ),
+        sep = ""
+      )
+    )
+  }
+  
+  # Sort population- and individual-level outputs
+  dynEGA.pop <- dynEGA.object$dynEGA.pop
+  dynEGA.ind <- dynEGA.object$dynEGA.ind
+  
+  # Remove Methods
+  if("Methods" %in% names(dynEGA.ind$dynEGA)){
+    dynEGA.ind$dynEGA <- dynEGA.ind$dynEGA[-which(names(dynEGA.ind$dynEGA) == "Methods")]
+  }
 
   # dynEGA (Individual)
-  ids <- 1:length(unique(data$Derivatives$EstimatesDF[,ncol(data$Derivatives$EstimatesDF)]))
-  ids <- paste0("ID", ids)
+  ids <- names(dynEGA.ind$dynEGA)
+  # ids <- 1:length(unique(dynEGA.objectDerivatives$EstimatesDF[,ncol(dynEGA.objectDerivatives$EstimatesDF)]))
   # List of Individual Networks ----
   net.list <- lapply(seq_along(ids), function(i){
     res_list <- list()
     res_list$IDs <- ids[i] # IDs
-    res_list$Network <- data$dynEGA.ind[[ids[i]]]$network # Networks
-    res_list$igraph.Network <- convert2igraph(res_list$Network) # igraph Network
+    res_list$Network <- dynEGA.ind$dynEGA[[ids[i]]]$network # Networks
+    res_list$igraph.Network <- suppressWarnings(
+      suppressMessages(
+        convert2igraph(res_list$Network) # igraph Network
+      )
+    )
     res_list$gsize.net <- igraph::gsize(res_list$igraph.Network) # igraph Size
     res_list$adj.net <- as.matrix(igraph::get.adjacency(res_list$igraph.Network, type="both"))
     return(res_list)
@@ -145,7 +176,7 @@ ergoInfo <- function(data, use = c("edge.list", "weights")){
   net.list.pop <- lapply(1, function(i){
     res_list <- list()
     res_list$IDs <- i # ID
-    res_list$Network <- data$dynEGA.pop$network # Network
+    res_list$Network <- dynEGA.pop$dynEGA$network # Network
     res_list$igraph.Network <- convert2igraph(res_list$Network) # igraph Network
     res_list$gsize.net <- igraph::gsize(res_list$igraph.Network) # igraph Size
     res_list$adj.net <- as.matrix(igraph::get.adjacency(res_list$igraph.Network,type="both"))
@@ -235,8 +266,11 @@ ergoInfo <- function(data, use = c("edge.list", "weights")){
   results$KComp <- mean(unlist(kcomp))
   results$KComp.pop <- mean(unlist(kcomp.pop))
 
-  ergo.info.index<- sqrt(data$dynEGA.pop$n.dim)^((results$KComp/results$KComp.pop)/log(sum(!results$PrimeWeight.pop==0)))
+  ergo.info.index<- sqrt(dynEGA.pop$dynEGA$n.dim)^((results$KComp/results$KComp.pop)/log(sum(!results$PrimeWeight.pop==0)))
   results$EII <- ergo.info.index
+  results$use <- use
+  class(results) <- "EII"
+  
   return(results)
 }
 #----

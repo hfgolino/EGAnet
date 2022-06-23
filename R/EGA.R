@@ -271,7 +271,7 @@
 #'
 #' @export
 #'
-# Updated 13.05.2022
+# Updated 15.06.2022
 # Consensus clustering 13.05.2022
 # LE adjustment 08.03.2021
 ## EGA Function to detect unidimensionality:
@@ -362,7 +362,7 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
   }
   
   if(missing(consensus.method)){
-    consensus.method <- "highest_modularity"
+    consensus.method <- "most_common"
   }else{consensus.method <- match.arg(consensus.method)}
 
   if(missing(plot.type)){
@@ -372,7 +372,7 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
   #### ARGUMENTS HANDLING ####
   
   # Check for correlation matrix or data
-  if(nrow(data) == ncol(data)){ ## Correlation matrix
+  if(isSymmetric(unname(as.matrix(data)))){ ## Correlation matrix
 
     # Check for column names
     if(is.null(colnames(data))){
@@ -394,13 +394,19 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
                               algorithm = algorithm, algorithm.args = algorithm.args)
     
     # Perform consensus clustering
-    if(algorithm == "louvain"){
-      multi.res$wc <- consensus_clustering(
-        multi.res$network,
-        corr = data,
-        order = "higher",
-        consensus.iter = consensus.iter
-      )[[consensus.method]]
+    if(!is.function(algorithm)){
+      
+      if(algorithm == "louvain"){
+        
+        multi.res$wc <- consensus_clustering(
+          multi.res$network,
+          corr = data,
+          order = "higher",
+          consensus.iter = consensus.iter
+        )[[consensus.method]]
+        
+      }
+      
     }
 
     # Unidimensional result
@@ -579,14 +585,21 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
                                 model = model, model.args = model.args,
                                 algorithm = algorithm, algorithm.args = algorithm.args)
       
+      
       # Perform consensus clustering
-      if(algorithm == "louvain"){
-        multi.res$wc <- consensus_clustering(
-          multi.res$network,
-          corr = cor.data,
-          order = "higher",
-          consensus.iter = consensus.iter
-        )[[consensus.method]]
+      if(!is.function(algorithm)){
+        
+        if(algorithm == "louvain"){
+          
+          multi.res$wc <- consensus_clustering(
+            multi.res$network,
+            corr = cor.data,
+            order = "higher",
+            consensus.iter = consensus.iter
+          )[[consensus.method]]
+          
+        }
+        
       }
       
       if(uni.res$n.dim <= 2 & !is.infinite(multi.res$n.dim)){
@@ -643,13 +656,19 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
                                 algorithm = algorithm, algorithm.args = algorithm.args)
       
       # Perform consensus clustering
-      if(algorithm == "louvain"){
-        multi.res$wc <- consensus_clustering(
-          multi.res$network,
-          corr = cor.data,
-          order = "higher",
-          consensus.iter = consensus.iter
-        )[[consensus.method]]
+      if(!is.function(algorithm)){
+        
+        if(algorithm == "louvain"){
+          
+          multi.res$wc <- consensus_clustering(
+            network = multi.res$network,
+            corr = cor.data,
+            order = "higher",
+            consensus.iter = consensus.iter
+          )[[consensus.method]]
+          
+        }
+        
       }
       
       # Set up results

@@ -131,8 +131,8 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot.NL = FALSE
   }
   
   # Check if there are actual dimensions
-  if(length(wc) == length(unique(wc)))
-  {
+  if(length(wc) == length(unique(wc))){
+    
     # Initialize result list
     res <- list()
     
@@ -164,8 +164,8 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0, plot.NL = FALSE
     dim.uniq <- na.omit(unique(wc))
     
     # Check for single item dimensions
-    for(i in 1:length(dim.uniq))
-    {
+    for(i in 1:length(dim.uniq)){
+      
       len <- length(wc[which(wc==dim.uniq[i])])
       
       if(len == 1)

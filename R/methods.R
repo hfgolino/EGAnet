@@ -1,11 +1,12 @@
-# Methods:
-#
-# Updated 13.05.2022
-#
-#
-#
-#
-# Print dynEGA (Level: Population)----
+#%%%%%%%%%%%%%%%%%%%%%%%%#
+#### EGAnet S3Methods ####
+#%%%%%%%%%%%%%%%%%%%%%%%%#
+
+# Updated 07.06.2022 (DD.MM.YYYY)
+
+# print() Methods ----
+
+# Print dynEGA (Level: Population)
 # Updated 13.05.2022
 #' @export
 print.dynEGA<- function(x, ...) {
@@ -76,7 +77,7 @@ print.dynEGA<- function(x, ...) {
   
 }
 
-# Print dynEGA (Level: Groups)----
+# Print dynEGA (Level: Groups)
 # Updated 13.05.2022
 #' @export
 print.dynEGA.Groups <- function(x, ...) {
@@ -157,7 +158,7 @@ print.dynEGA.Groups <- function(x, ...) {
   
 }
 
-# Print dynEGA (Level: Individuals)----
+# Print dynEGA (Level: Individuals)
 # Updated 13.05.2022
 #' @export
 print.dynEGA.Individuals <- function(x, ...) {
@@ -242,7 +243,7 @@ print.dynEGA.Individuals <- function(x, ...) {
   
 }
 
-# Print EGA----
+# Print EGA
 # Updated 13.05.2022
 #' @export
 print.EGA <- function(x, ...) {
@@ -287,7 +288,7 @@ print.EGA <- function(x, ...) {
   
 }
 
-#Print Network Loadings----
+#Print Network Loadings
 # Updated 13.05.2022
 #' @export
 print.NetLoads <- function(x, ...) {
@@ -298,7 +299,7 @@ print.NetLoads <- function(x, ...) {
   message("Loadings <= |", x$minLoad, "| are blank")
 }
 
-#Print Measurement Invariance----
+#Print Measurement Invariance
 # Updated 10.02.2022
 #' @export
 print.invariance <- function(x, ...) {
@@ -307,7 +308,7 @@ print.invariance <- function(x, ...) {
   cat("Signif. code: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 'n.s.' 1")
 }
 
-#Print Hierarchical EGA----
+#Print Hierarchical EGA
 # Updated 09.05.2022
 #' @export
 print.hierEGA <- function(x, ...) {
@@ -370,7 +371,7 @@ print.hierEGA <- function(x, ...) {
   
 }
 
-#Print Residual EGA----
+#Print Residual EGA
 # Updated 13.05.2022
 #' @export
 print.riEGA <- function(x, ...) {
@@ -428,14 +429,439 @@ print.riEGA <- function(x, ...) {
   
 }
 
-# PLOTS----
-# Updated 16.06.2021
+# summary() Methods ----
+
+# summary dynEGA (Level: Population)----
+# Updated 13.05.2022
 #' @export
-# Plot bootEGA----
+summary.dynEGA<- function(object, ...) {
+  
+  # summary communities
+  cat(paste(
+    "Number of communities (population-level):",
+    object$dynEGA$n.dim,
+    "\n\n"
+  ))
+  
+  # Set up item placements
+  item_placement <- object$dynEGA$wc
+  names(item_placement) <- gsub(
+    ".Ord*.", "", names(item_placement)
+  )
+  
+  # summary item placements
+  print(item_placement)
+  
+  # summary GLLA methods
+  cat("\nGLLA Methods:\n")
+  
+  ## Set up GLLA methods
+  glla.methods <- matrix(
+    nrow = 3, ncol = 1
+  )
+  row.names(glla.methods) <- c(
+    "Embedding Dimensions =",
+    "Embedding Offset (tau) =",
+    "Lag (delta) ="
+  )
+  colnames(glla.methods) <- ""
+  
+  ## Insert values
+  glla.methods["Embedding Dimensions =",] <- object$dynEGA$Methods$glla$n.embed
+  glla.methods["Embedding Offset (tau) =",] <- object$dynEGA$Methods$glla$tau
+  glla.methods["Lag (delta) =",] <- object$dynEGA$Methods$glla$delta
+  
+  ## summary GLLA
+  print(glla.methods, quote = FALSE)
+  
+  # summary EGA methods
+  cat("\nEGA Methods:\n")
+  
+  ## Set up EGA methods
+  ega.methods <- matrix(
+    nrow = 3, ncol = 1
+  )
+  row.names(ega.methods) <- c(
+    "Correlations =",
+    "Model =",
+    "Algorithm ="
+  )
+  colnames(ega.methods) <- ""
+  
+  ## Insert values
+  ega.methods["Correlations =",] <- ifelse(
+    object$dynEGA$Methods$EGA$corr == "cor_auto",
+    "auto (from qgraph)",
+    object$dynEGA$Methods$EGA$corr
+  )
+  ega.methods["Model =",] <- object$dynEGA$Methods$EGA$model
+  ega.methods["Algorithm =",] <- object$dynEGA$Methods$EGA$algorithm
+  
+  ## summary EGA
+  print(ega.methods, quote = FALSE)
+  
+}
+
+# summary dynEGA (Level: Groups)----
+# Updated 13.05.2022
+#' @export
+summary.dynEGA.Groups <- function(object, ...) {
+  
+  for(i in 1:(length(object$dynEGA) - 1)){
+    
+    # summary communities
+    cat(paste(
+      "Number of communities (group-level):",
+      object$dynEGA[[i]]$n.dim, "\n",
+      paste("Group:", names(object$dynEGA[i])),
+      "\n\n"
+    ))
+    
+    # Set up item placements
+    item_placement <- object$dynEGA[[i]]$wc
+    names(item_placement) <- gsub(
+      ".Ord*.", "", names(item_placement)
+    )
+    
+    # summary item placements
+    print(
+      item_placement
+    )
+    
+    # Add space
+    cat("\n")
+    
+  }
+  
+  # summary GLLA methods
+  cat("GLLA Methods:\n")
+  
+  ## Set up GLLA methods
+  glla.methods <- matrix(
+    nrow = 3, ncol = 1
+  )
+  row.names(glla.methods) <- c(
+    "Embedding Dimensions =",
+    "Embedding Offset (tau) =",
+    "Lag (delta) ="
+  )
+  colnames(glla.methods) <- ""
+  
+  ## Insert values
+  glla.methods["Embedding Dimensions =",] <- object$dynEGA$Methods$glla$n.embed
+  glla.methods["Embedding Offset (tau) =",] <- object$dynEGA$Methods$glla$tau
+  glla.methods["Lag (delta) =",] <- object$dynEGA$Methods$glla$delta
+  
+  ## summary GLLA
+  print(glla.methods, quote = FALSE)
+  
+  # summary EGA methods
+  cat("\nEGA Methods:\n")
+  
+  ## Set up EGA methods
+  ega.methods <- matrix(
+    nrow = 3, ncol = 1
+  )
+  row.names(ega.methods) <- c(
+    "Correlations =",
+    "Model =",
+    "Algorithm ="
+  )
+  colnames(ega.methods) <- ""
+  
+  ## Insert values
+  ega.methods["Correlations =",] <- ifelse(
+    object$dynEGA$Methods$EGA$corr == "cor_auto",
+    "auto (from qgraph)",
+    object$dynEGA$Methods$EGA$corr
+  )
+  ega.methods["Model =",] <- object$dynEGA$Methods$EGA$model
+  ega.methods["Algorithm =",] <- object$dynEGA$Methods$EGA$algorithm
+  
+  ## summary EGA
+  print(ega.methods, quote = FALSE)
+  
+}
+
+# summary dynEGA (Level: Individuals)----
+# Updated 13.05.2022
+#' @export
+summary.dynEGA.Individuals <- function(object, ...) {
+  
+  # Number of people
+  cat("Number of Cases (individuals): ")
+  number <- length(object$dynEGA) - 1
+  cat(number, "\n")
+  
+  # Summary statistics
+  cat("\nSummary statistics (number of communities): \n")
+  dim <- sapply(object$dynEGA[-length(object$dynEGA)], "[[", 3)
+  
+  ## Set up summary
+  summary.methods <- matrix(
+    nrow = 4, ncol = 1
+  )
+  row.names(summary.methods) <- c(
+    "Mean =",
+    "Median =",
+    "Min =",
+    "Max ="
+  )
+  colnames(summary.methods) <- ""
+  
+  ## Insert values
+  summary.methods["Mean =",] <- mean(dim)
+  summary.methods["Median =",] <- median(dim)
+  summary.methods["Min =",] <- min(dim)
+  summary.methods["Max =",] <- max(dim)
+  
+  ## summary summary
+  print(summary.methods, quote = FALSE)
+  
+  # summary GLLA methods
+  cat("\nGLLA Methods:\n")
+  
+  ## Set up GLLA methods
+  glla.methods <- matrix(
+    nrow = 3, ncol = 1
+  )
+  row.names(glla.methods) <- c(
+    "Embedding Dimensions =",
+    "Embedding Offset (tau) =",
+    "Lag (delta) ="
+  )
+  colnames(glla.methods) <- ""
+  
+  ## Insert values
+  glla.methods["Embedding Dimensions =",] <- object$dynEGA$Methods$glla$n.embed
+  glla.methods["Embedding Offset (tau) =",] <- object$dynEGA$Methods$glla$tau
+  glla.methods["Lag (delta) =",] <- object$dynEGA$Methods$glla$delta
+  
+  ## summary GLLA
+  print(glla.methods, quote = FALSE)
+  
+  # summary EGA methods
+  cat("\nEGA Methods:\n")
+  
+  ## Set up EGA methods
+  ega.methods <- matrix(
+    nrow = 3, ncol = 1
+  )
+  row.names(ega.methods) <- c(
+    "Correlations =",
+    "Model =",
+    "Algorithm ="
+  )
+  colnames(ega.methods) <- ""
+  
+  ## Insert values
+  ega.methods["Correlations =",] <- ifelse(
+    object$dynEGA$Methods$EGA$corr == "cor_auto",
+    "auto (from qgraph)",
+    object$dynEGA$Methods$EGA$corr
+  )
+  ega.methods["Model =",] <- object$dynEGA$Methods$EGA$model
+  ega.methods["Algorithm =",] <- object$dynEGA$Methods$EGA$algorithm
+  
+  ## summary EGA
+  print(ega.methods, quote = FALSE)
+  
+}
+
+# summary EGA----
+# Updated 13.05.2022
+#' @export
+summary.EGA <- function(object, ...) {
+  
+  # summary lower order communities
+  cat(paste(
+    "Number of communities:",
+    object$n.dim,
+    "\n\n"
+  ))
+  print(object$wc)
+  
+  # summary methods
+  cat("\nMethods:\n")
+  
+  ## Set up methods
+  methods.matrix <- matrix(
+    nrow = 4, ncol = 1
+  )
+  row.names(methods.matrix) <- c(
+    "Correlations =",
+    "Model =",
+    "Algorithm =",
+    "Unidimensional Method ="
+  )
+  colnames(methods.matrix) <- ""
+  
+  methods.matrix["Correlations =",] <- ifelse(
+    object$Methods$corr == "cor_auto",
+    "auto (from qgraph)",
+    object$Methods$corr
+  )
+  methods.matrix["Model =",] <- object$Methods$model
+  methods.matrix["Algorithm =",] <- object$Methods$algorithm
+  methods.matrix["Unidimensional Method =",] <- ifelse(
+    object$Methods$uni.method == "LE",
+    "leading eigenvalue",
+    "expand correlation matrix"
+  )
+  
+  print(methods.matrix, quote = FALSE)
+  
+}
+
+#summary Network Loadings----
+# Updated 13.05.2022
+#' @export
+summary.NetLoads <- function(object, ...) {
+  
+  object$std[which(abs(object$std) <= object$minLoad, arr.ind = TRUE)] <- ""
+  
+  print(object$std)
+  message("Loadings <= |", object$minLoad, "| are blank")
+}
+
+#summary Measurement Invariance----
+# Updated 10.02.2022
+#' @export
+summary.invariance <- function(object, ...) {
+  print(object$results, row.names = FALSE)
+  cat("---\n")
+  cat("Signif. code: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 'n.s.' 1")
+}
+
+#summary Hierarchical EGA----
+# Updated 09.05.2022
+#' @export
+summary.hierEGA <- function(object, ...) {
+  
+  # summary lower order communities
+  cat(paste(
+    "Lower order communities:",
+    object$hierarchical$lower_order$n.dim,
+    "\n\n"
+  ))
+  print(object$hierarchical$lower_order$wc)
+  
+  # summary higher order communities
+  cat(
+    paste(
+      "\nHigher order communities:",
+      object$hierarchical$higher_order$EGA$n.dim,
+      "\n\n"
+    )
+  )
+  print(object$hierarchical$higher_order$EGA$wc)
+  
+  # summary methods
+  cat("\nMethods:\n")
+  
+  ## Set up methods
+  methods.matrix <- matrix(
+    nrow = 7, ncol = 1
+  )
+  row.names(methods.matrix) <- c(
+    "Correlations =",
+    "Model =",
+    "Algorithm =",
+    "Unidimensional Method =",
+    "Scores =",
+    "Consensus Method =",
+    "Consensus Iterations ="
+  )
+  colnames(methods.matrix) <- ""
+  
+  methods.matrix["Correlations =",] <- ifelse(
+    object$hierarchical$Methods$corr == "cor_auto",
+    "auto (from qgraph)",
+    object$hierarchical$Methods$corr
+  )
+  methods.matrix["Model =",] <- object$hierarchical$Methods$model
+  methods.matrix["Algorithm =",] <- object$hierarchical$Methods$algorithm
+  methods.matrix["Unidimensional Method =",] <- ifelse(
+    object$hierarchical$Methods$uni.method == "LE",
+    "leading eigenvalue",
+    "expand correlation matrix"
+  )
+  methods.matrix["Scores =",] <- object$hierarchical$Methods$scores
+  methods.matrix["Consensus Method =",] <- gsub(
+    "_", " ", object$hierarchical$Methods$consensus.method
+  )
+  methods.matrix["Consensus Iterations =",] <- object$hierarchical$Methods$consensus.iter
+  
+  print(methods.matrix, quote = FALSE)
+  
+}
+
+#summary Residual EGA----
+# Updated 13.05.2022
+#' @export
+summary.riEGA <- function(object, ...) {
+  
+  # summary lower order communities
+  cat(paste(
+    "Number of communities:",
+    object$EGA$n.dim,
+    "\n\n"
+  ))
+  print(object$EGA$wc)
+  
+  # summary loadings if RI was necessary
+  if("RI" %in% names(object)){
+    
+    ## Loadings
+    ri_loadings <- round(as.vector(object$RI$loadings), 3)
+    names(ri_loadings) <- row.names(object$RI$loadings)
+    
+    ## summary loadings
+    cat("\nRandom-intercept loadings:\n\n")
+    print(ri_loadings)
+    
+  }
+  
+  # summary methods
+  cat("\nMethods:\n")
+  
+  ## Set up methods
+  methods.matrix <- matrix(
+    nrow = 4, ncol = 1
+  )
+  row.names(methods.matrix) <- c(
+    "Correlations =",
+    "Model =",
+    "Algorithm =",
+    "Unidimensional Method ="
+  )
+  colnames(methods.matrix) <- ""
+  
+  methods.matrix["Correlations =",] <- ifelse(
+    object$Methods$corr == "cor_auto",
+    "auto (from qgraph)",
+    object$Methods$corr
+  )
+  methods.matrix["Model =",] <- object$Methods$model
+  methods.matrix["Algorithm =",] <- object$Methods$algorithm
+  methods.matrix["Unidimensional Method =",] <- ifelse(
+    object$Methods$uni.method == "LE",
+    "leading eigenvalue",
+    "expand correlation matrix"
+  )
+  
+  print(methods.matrix, quote = FALSE)
+  
+}
+
+# plot() Methods ----
+
+# Plot bootEGA
 # Updated 28.07.2021
 plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
                          plot.args = list(), produce = TRUE, ...){
-  #### MISSING ARGUMENTS HANDLING ####
+  
+  # MISSING ARGUMENTS HANDLING
   if(missing(plot.type))
   {plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
@@ -527,71 +953,78 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
       )
     )
     
-  }
-  set.seed(NULL)
-  
-  name <- colnames(x$typicalGraph$graph)
-  
-  name.split <- lapply(name, function(x){
-    unlist(strsplit(x, split = " "))
-  })
-  
-  name <- unlist(
-    lapply(name.split, function(x){
-      
-      len <- length(x)
-      
-      if(len > 1){
-        
-        add.line <- round(len / 2)
-        
-        paste(
-          paste(x[1:add.line], collapse = " "),
-          paste(x[(add.line+1):length(x)], collapse = " "),
-          sep = "\n"
-        )
-        
-      }else{x}
-      
+    name <- colnames(x$typicalGraph$graph)
+    
+    name.split <- lapply(name, function(x){
+      unlist(strsplit(x, split = " "))
     })
-  )
-  
-  # Border color
-  if(all(color.palette == "grayscale" |
-         color.palette == "greyscale" |
-         color.palette == "colorblind")){
-    border.color <- ifelse(palette == "white", "white", "black")
-  }else{border.color <- palette}
-  
-  # Custom nodes: transparent insides and dark borders
-  ega.plot <- ega.plot + 
-    ggplot2::geom_point(ggplot2::aes(color = "color"), size = node.size,
-                        color = border.color,
-                        shape = 1, stroke = 1.5, alpha = .8) +
-    ggplot2::geom_point(ggplot2::aes(color = "color"), size = node.size + .5,
-                        color = palette,
-                        shape = 19, alpha = plot.args$alpha) +
-    ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
-    ggplot2::guides(
-      color = ggplot2::guide_legend(override.aes = list(
-        color = unique(palette),
-        size = node.size,
-        alpha = plot.args$alpha,
-        stroke = 1.5
-      ))
+    
+    name <- unlist(
+      lapply(name.split, function(x){
+        
+        len <- length(x)
+        
+        if(len > 1){
+          
+          add.line <- round(len / 2)
+          
+          paste(
+            paste(x[1:add.line], collapse = " "),
+            paste(x[(add.line+1):length(x)], collapse = " "),
+            sep = "\n"
+          )
+          
+        }else{x}
+        
+      })
     )
+    
+    # Border color
+    if(all(color.palette == "grayscale" |
+           color.palette == "greyscale" |
+           color.palette == "colorblind")){
+      border.color <- ifelse(palette == "white", "white", "black")
+    }else{border.color <- palette}
+    
+    # Custom nodes: transparent insides and dark borders
+    ega.plot <- ega.plot + 
+      ggplot2::geom_point(ggplot2::aes(color = "color"), size = node.size,
+                          color = border.color,
+                          shape = 1, stroke = 1.5, alpha = .8) +
+      ggplot2::geom_point(ggplot2::aes(color = "color"), size = node.size + .5,
+                          color = palette,
+                          shape = 19, alpha = plot.args$alpha) +
+      ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
+      ggplot2::guides(
+        color = ggplot2::guide_legend(override.aes = list(
+          color = unique(palette),
+          size = node.size,
+          alpha = plot.args$alpha,
+          stroke = 1.5
+        ))
+      )
+    
+  }
+  
+  set.seed(NULL)
   
   if(isTRUE(produce)){
     plot(ega.plot)
   }else{return(ega.plot)}
 }
 
-# Plot dynEGA function (Level: Group)----
+# Plot dynEGA function (Level: Group)
 # Updated 28.07.2021
 #' @export
 plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally","qgraph"),
                                plot.args = list(), produce = TRUE, ...){
-  #### MISSING ARGUMENTS HANDLING ####
+  
+  # Remove methods from input list
+  if("Methods" %in% names(x$dynEGA)){
+    x$dynEGA <- x$dynEGA[-which(names(x$dynEGA) == "Methods")]
+  }
+  
+  # MISSING ARGUMENTS HANDLING
   if(missing(plot.type))
   {plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
@@ -747,12 +1180,13 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
   }
 }
 
-# Plot dynEGA function (Level: Individual)----
+# Plot dynEGA function (Level: Individual)
 # Updated 28.07.2021
 #' @export
 plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GGally","qgraph"),
                                     plot.args = list(), produce = TRUE, ...){
-  #### MISSING ARGUMENTS HANDLING ####
+  
+  # MISSING ARGUMENTS HANDLING
   if(missing(plot.type))
   {plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
@@ -895,12 +1329,13 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
   }
 }
 
-# Plot dynEGA function (Level: Population)----
+# Plot dynEGA function (Level: Population)
 # Updated 28.07.2021
 #' @export
 plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
                         plot.args = list(), produce = TRUE, ...){
-  #### MISSING ARGUMENTS HANDLING ####
+  
+  # MISSING ARGUMENTS HANDLING
   if(missing(plot.type))
   {plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
@@ -1050,12 +1485,13 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
   }else{return(ega.plot)}
 }
 
-# Plot EGA----
+# Plot EGA
 # Updated 07.02.2022
 #' @export
 plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
                      plot.args = list(), produce = TRUE, ...){
-  #### MISSING ARGUMENTS HANDLING ####
+  
+  # MISSING ARGUMENTS HANDLING
   if(missing(plot.type))
   {plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
@@ -1216,12 +1652,13 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
   
 }
 
-# Plot EGA.fit----
+# Plot EGA.fit
 # Updated 17.03.2021
 #' @export
 plot.EGA.fit <- function(x,  title = "", plot.type = c("GGally","qgraph"),
                          plot.args = list(), ...){
-  #### MISSING ARGUMENTS HANDLING ####
+  
+  # MISSING ARGUMENTS HANDLING
   if(missing(plot.type))
   {plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
@@ -1229,7 +1666,7 @@ plot.EGA.fit <- function(x,  title = "", plot.type = c("GGally","qgraph"),
   plot.EGA(x$EGA, plot.type = plot.type, plot.args = plot.args)
 }
 
-#Plot net.loads----
+#Plot net.loads
 # Updated 02.05.2020
 #' @export
 plot.NetLoads <- function(x, ...) {
@@ -1237,13 +1674,13 @@ plot.NetLoads <- function(x, ...) {
   plot(x$plot)
 }
 
-# Plot invariance----
+# Plot invariance
 # Updated 10.02.2022
 #' @export
 plot.invariance <- function(
-  x, title = "", labels = NULL,
-  rows, columns, plot.type = c("GGally","qgraph"),
-  plot.args = list(), ...
+    x, title = "", labels = NULL,
+    rows, columns, plot.type = c("GGally","qgraph"),
+    plot.args = list(), ...
 )
 {
   # Obtain structure
@@ -1315,7 +1752,8 @@ plot.invariance <- function(
   
 }
 
-#Plot CFA----
+
+#Plot CFA
 # Updated 02.05.2020
 #' @export
 plot.CFA <- function(x, layout = "spring", vsize = 6, ...) {
@@ -1324,10 +1762,8 @@ plot.CFA <- function(x, layout = "spring", vsize = 6, ...) {
                     "std", cut = 0.5, ...)
 }
 
-#Summary CFA:
-summary.CFA <- function(object, ...) {
-  cat("Summary: Confirmatory Factor Analysis:\n")
-  print(object$summary)
-  cat("\n FIt Measures:\n")
-  print(object$fit.measures)
-}
+
+
+
+
+

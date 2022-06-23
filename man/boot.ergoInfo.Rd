@@ -5,32 +5,34 @@
 \title{Bootstrap Test for the Ergodicity Information Index}
 \usage{
 boot.ergoInfo(
-  dynEGA.pop,
-  iter,
+  dynEGA.object,
+  iter = 500,
   EII,
-  use,
-  embed,
-  tau,
-  delta,
-  derivatives,
+  use = c("edge.list", "weights"),
+  n.embed,
+  tau = 1,
+  delta = 1,
+  use.derivatives = 1,
   model,
   model.args = list(),
   algorithm = c("walktrap", "louvain"),
   algorithm.args = list(),
-  corr,
+  corr = c("cor_auto", "pearson", "spearman"),
+  match.args = TRUE,
   ncores,
   ...
 )
 }
 \arguments{
-\item{dynEGA.pop}{A dynEGA or a dynEGA.pop.ind object.}
+\item{dynEGA.object}{A \code{\link[EGAnet]{dynEGA}} or a 
+\code{\link[EGAnet]{dynEGA.pop.ind}} object}
 
 \item{iter}{Numeric integer.
 Number of random samples to generate in the Monte-Carlo simulation.
 At least \code{500} is recommended}
 
 \item{EII}{Numeric.
-Empirical Ergodicity Information Index obtained via the \code{\link[EGAnet]{ergoInfo}} function.}
+Empirical Ergodicity Information Index obtained via the \code{\link[EGAnet]{ergoInfo}} function}
 
 \item{use}{Character.
 A string indicating what network element will be used to compute the algorithm complexity in the \code{\link[EGAnet]{ergoInfo}} function,
@@ -47,10 +49,9 @@ Current options are:
 {Calculates the algorithm complexity using the weights of the network.}
 }}
 
-\item{embed}{Integer.
+\item{n.embed}{Integer.
 Number of embedded dimensions (the number of observations to be used in the \code{\link[EGAnet]{Embed}} function). For example,
-an \code{"embed = 5"} will use five consecutive observations to estimate a single derivative.
-Default is \code{"embed = 5"}.}
+an \code{"n.embed = 5"} will use five consecutive observations to estimate a single derivative}
 
 \item{tau}{Integer.
 Number of observations to offset successive embeddings in the \code{\link[EGAnet]{Embed}} function. A tau of one uses adjacent observations.
@@ -60,7 +61,7 @@ Default is \code{"tau = 1"}.}
 The time between successive observations in the time series.
 Default is \code{"delta = 1"}.}
 
-\item{derivatives}{Integer.
+\item{use.derivatives}{Integer.
 The order of the derivative to be used in the EGA procedure. Default to 1.}
 
 \item{model}{Character.
@@ -119,6 +120,12 @@ the \code{\link[stats]{cor}}} function.
 the \code{\link[stats]{cor}}} function.
 }}
 
+\item{match.args}{Boolean.
+Should arguments from \code{dynEGA.object} and
+\code{EII} be matched?
+Defaults to \code{TRUE}.
+Set to \code{FALSE} to set different parameters}
+
 \item{ncores}{Numeric.
 Number of cores to use in computing results.
 Defaults to \code{parallel::detectCores() / 2} or half of your
@@ -167,8 +174,7 @@ dyn1 <- dynEGA.ind.pop(data = sim.dynEGA[,-c(22)], n.embed = 5, tau = 1,
 eii1 <- ergoInfo(data = dyn1)$EII
 
 testing.ergoinfo <- boot.ergoInfo(dynEGA.pop = dyn1, iter = 10,EII = eii1,
-embed = 5, tau = 1, delta = 1, derivatives = 1,
-model = "glasso", ncores = 2, corr = "pearson")
+n.embed = 5, ncores = 2)
 }}
 
 }
