@@ -276,7 +276,8 @@ boot.ergoInfo <- function(
   N <- nrow(derivative_estimates)
   IDs <- derivative_estimates[,ncol(derivative_estimates)]
   unique.ids <- unique(IDs)
-  time.points <- table(IDs)
+  unique.ids <- sample(unique.ids, 20, replace = FALSE)
+  time.points <- rep(round(mean(table(IDs)),0), length(unique.ids))#table(IDs)
   time.points <- time.points+(n.embed-1)
 
 
@@ -453,6 +454,7 @@ boot.ergoInfo <- function(
     ),
     envir=environment()
   )
+  op <- pbapply::pboptions(type = "none")
   boot.data <- pbapply::pblapply(
     cl = cl,
     X = target,
@@ -472,13 +474,16 @@ boot.ergoInfo <- function(
     }
 
   )
+  pbapply::pboptions(op)
 
 
   #let user know data generation has started
   message("Estimating the Ergodicity Information Index (be patient, it takes time)\n", appendLF = FALSE)
 
+  op <- pbapply::pboptions(type = "none")
   complexity.estimates <- pbapply::pblapply(X = boot.data, cl = cl,
                                             FUN = ergoInfo, use = use)
+  pbapply::pboptions(op)
   parallel::stopCluster(cl)
 
   #let user know results are being computed

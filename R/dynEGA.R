@@ -129,14 +129,14 @@
 #' dyn.random <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 #' delta = 1, id = 21, group = 22, use.derivatives = 1,
 #' level = "population", model = "glasso", ncores = 2)
-#' 
+#'
 #' plot(dyn.random, plot.type = "qgraph")
 #'
 #' # Group structure:
 #' dyn.group <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 #' delta = 1, id = 21, group = 22, use.derivatives = 1,
 #' level = "group", model = "glasso", ncores = 2)
-#' 
+#'
 #' plot(dyn.group, ncol = 2, nrow = 1, plot.type = "qgraph")
 #'
 #' # Intraindividual structure (commented out for CRAN tests):
@@ -158,7 +158,7 @@
 #' Golino, H., Christensen, A. P., Moulder, R. G., Kim, S., & Boker, S. M. (2021).
 #' Modeling latent topics in social media using Dynamic Exploratory Graph Analysis: The case of the right-wing and left-wing trolls in the 2016 US elections.
 #' \emph{Psychometrika}.
-#' 
+#'
 #' Savitzky, A., & Golay, M. J. (1964).
 #' Smoothing and differentiation of data by simplified least squares procedures.
 #' \emph{Analytical Chemistry}, \emph{36(8)}, 1627-1639.
@@ -226,13 +226,13 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
   if(missing(group))
   {group <- ncol(data)+1
   }else{group <- group}
-  
+
   if(missing(model)){
     model <- "glasso"
   }else{
     model <- match.arg(model)
   }
-  
+
   if(missing(algorithm)){
     algorithm <- "walktrap"
   }else{
@@ -298,7 +298,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
 
   # Stop cluster
   parallel::stopCluster(cl)
-  
+
   ### Estimating the dimensionality structure using EGA:
 
   message("Estimating the dimensionality structure using EGA...\n", appendLF = FALSE)
@@ -308,10 +308,10 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
   }
 
   names(derivlist) <- paste0("ID", cases)
-  
+
   # Population Level:
   if(level == "population"){
-    
+
     # Message user about level
     message("Level: Population...", appendLF = FALSE)
 
@@ -325,7 +325,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
       "1" = grep("Ord1", colnames(data.all)),
       "2" = grep("Ord2", colnames(data.all))
     )
-    
+
     # Estimate using EGA
     ega1 <- suppressWarnings(
       EGA(data = data.all[, derivative_index],
@@ -354,7 +354,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
 
     # Stack group memberships
     data.all <- data.frame(Reduce(rbind, derivlist))
-    
+
     # Obtain derivative indices
     derivative_index <- switch(
       as.character(use.derivatives),
@@ -375,22 +375,22 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
     # parallel::clusterExport(cl = cl,
     #                         varlist = c("data.groups", "group.memb"),
     #                         envir=environment())
-    
+
     # Compute derivatives per Group
     ega.list.groups <- pbapply::pblapply(X = data.groups, cl = cl,
                                          FUN = EGA,
                                          model = model, model.args = model.args,
                                          algorithm = algorithm, algorithm.args = algorithm.args,
                                          corr = corr, plot.EGA = FALSE)
-    
+
     # Stop cluster
     parallel::stopCluster(cl)
-    
+
   }
 
   # Level: Individual (intraindividual structure):
   if(level == "individual"){
-    
+
     # Message user about level
     message("Level: Individual (Intraindividual Structure)...\n", appendLF = FALSE)
 
@@ -409,10 +409,10 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
     data.individuals <- vector("list", length = length(cases))
     data.individuals <- split(data.all[,derivative_index], data.all$ID)
     names(data.individuals) <- paste0("ID", cases)
-    
+
     # Get number of variables
     initial.nvar <- unlist(lapply(data.individuals, ncol))
-    
+
     # Remove variables from participants with no variance
     # in their derivatives
     data.individuals_var <- lapply(data.individuals, function(x){
@@ -423,14 +423,14 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
     })
     # ^^ creates new object to keep reduced columns
     # separate to avoid errors when creating `dim.variables` later
-    
+
     # Get number of variables
     final.nvar <- unlist(lapply(data.individuals_var, ncol))
-    
+
     # Get warnings
     warning.idx <- which(initial.nvar != final.nvar)
     if(length(warning.idx) != 0){
-      
+
       for(i in 1:length(warning.idx)){
         warning(
           paste(
@@ -439,9 +439,9 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
           )
         )
       }
-      
+
     }
-    
+
     #Parallel processing
     cl <- parallel::makeCluster(ncores)
 
@@ -451,6 +451,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
     #                         envir=environment())
 
     # EGA estimates per individual:
+    op <- pbapply::pboptions(type = "none")
     ega.list.individuals <- pbapply::pblapply(
       X = data.individuals_var, cl = cl,
       FUN = EGA,
@@ -458,26 +459,27 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
       algorithm = algorithm, algorithm.args = algorithm.args,
       corr = corr, plot.EGA = FALSE
     )
-    
+    pbapply::pboptions(op)
+
     # Stop cluster
     parallel::stopCluster(cl)
-    
+
     # Add back disconnected variables
     if(length(warning.idx) != 0){
       for(i in 1:length(warning.idx)){
-        
+
         # Obtain target individual
         target_individual <- ega.list.individuals[[names(warning.idx)[i]]]
-        
+
         # Obtain network
         network <- target_individual$network
-        
+
         # Obtain columns to use
         colstouse <- colnames(data.all)[derivative_index]
-        
+
         # Identify zero variance variables
         zero_var <- setdiff(colstouse, colnames(network))
-        
+
         # Add zero variance variables to network
         new_network <- matrix(
           0,
@@ -486,19 +488,19 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
         )
         colnames(new_network) <- c(colnames(network), zero_var)
         row.names(new_network) <- colnames(new_network)
-        
+
         # Insert existing variables into network
         new_network[1:nrow(network), 1:ncol(network)] <- network
-        
+
         # Update wc
         wc <- target_individual$wc
         add_wc <- rep(NA, length(zero_var))
         names(add_wc) <- zero_var
         new_wc <- c(wc, add_wc)
-        
+
         # Update correlation matrix
         correlation <- target_individual$correlation
-        
+
         # Add zero variance variables to correlation
         new_correlation <- matrix(
           NA,
@@ -507,24 +509,24 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
         )
         colnames(new_correlation) <- c(colnames(correlation), zero_var)
         row.names(new_correlation) <- colnames(new_correlation)
-        
+
         # Insert existing variables into correlation
         new_correlation[1:nrow(correlation), 1:ncol(correlation)] <- correlation
-        
+
         # Update order
         new_network <- new_network[colstouse, colstouse]
         new_wc <- new_wc[colstouse]
         new_correlation <- new_correlation[colstouse, colstouse]
-        
+
         # Put back into object
         target_individual$network <- new_network
         target_individual$wc <- new_wc
         target_individual$correlation <- new_correlation
         ega.list.individuals[[names(warning.idx)[i]]] <- target_individual
-        
+
       }
     }
-    
+
   }
 
   # Results:
@@ -532,24 +534,24 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
   results$Derivatives <- vector("list")
   results$Derivatives$Estimates <- derivlist
   results$Derivatives$EstimatesDF <- data.all
-  
-  
+
+
   # Set up methods
   methods <- list(); methods$glla <- list(); methods$EGA <- list()
-  
+
   # GLLA methods
   methods$glla$n.embed <- n.embed
   methods$glla$tau <- tau
   methods$glla$delta <- delta
   methods$glla$derivatives <- use.derivatives
-  
+
   # EGA methods
   methods$EGA$model <- model
   methods$EGA$model.args <- model.args
   methods$EGA$algorithm <- algorithm
   methods$EGA$algorithm.args <- algorithm.args
   methods$EGA$corr <- corr
-  
+
   if(level == "population"){
     results$dynEGA <- ega1
     dim.variables <- data.frame(items = colnames(data[-c(id, group)]), dimension = ega1$wc)
@@ -575,10 +577,10 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
         results$dynEGA[[i]]$dim.variables <- dim.variables[[i]]
       }
   }
-  
+
   # Attach methods to dynEGA output
   results$dynEGA$Methods <- methods
-  
+
   return(results)
 }
 #----
