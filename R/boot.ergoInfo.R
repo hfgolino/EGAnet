@@ -17,8 +17,8 @@
 #' Number of random samples to generate in the Monte-Carlo simulation.
 #' At least \code{500} is recommended
 #'
-#' @param EII Numeric.
-#' Empirical Ergodicity Information Index obtained via the \code{\link[EGAnet]{ergoInfo}} function
+#' @param EII A \code{\link[EGAnet]{ergoInfo}} object, used to estimate the Empirical Ergodicity Information Index, or the estimated value of EII estimated
+#' using the \code{\link[EGAnet]{ergoInfo}} function.
 #'
 #' @param use Character.
 #' A string indicating what network element will be used to compute the algorithm complexity in the \code{\link[EGAnet]{ergoInfo}} function,
@@ -166,7 +166,7 @@
 #'
 #' @export
 # Bootstrap Test for the Ergodicity Information Index
-# Updated 22.06.2022
+# Updated 24.06.2022
 boot.ergoInfo <- function(
     dynEGA.object, iter = 500,
     EII, use = c("edge.list", "weights"),
@@ -250,10 +250,11 @@ boot.ergoInfo <- function(
     # Check for whether arguments should be matched
     if(isTRUE(match.args)){
       use <- EII$use
+      EII <- EII$EII
     }
 
   }else if(!is(EII, "EII")){
-    stop("Object input into `EII` argument does not have class of EII.")
+    EII <- EII$EII
   }
 
   if(missing(ncores)){
@@ -389,7 +390,7 @@ boot.ergoInfo <- function(
   # list.results.sim <- boot.data.ids
 
   #let user know data generation has started
-  message("\nEstimating the Population and Individual Structures...\n", appendLF = FALSE)
+  message("\nEstimating the Population and Individual Structures...(be patient, it takes time)\n", appendLF = FALSE)
 
   # Initialize boot data list
   boot.data <- list()
@@ -444,6 +445,14 @@ boot.ergoInfo <- function(
 
   cl <- parallel::makeCluster(ncores2)
 
+  # #Export variables
+  parallel::clusterExport(
+    cl = cl,
+    varlist = c(
+      "prime.num"
+    ),
+    envir=environment()
+  )
   boot.data <- pbapply::pblapply(
     cl = cl,
     X = target,

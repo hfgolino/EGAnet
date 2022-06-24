@@ -32,8 +32,8 @@ boot.ergoInfo(
 Number of random samples to generate in the Monte-Carlo simulation.
 At least \code{500} is recommended}
 
-\item{EII}{Numeric.
-Empirical Ergodicity Information Index obtained via the \code{\link[EGAnet]{ergoInfo}} function}
+\item{EII}{A \code{\link[EGAnet]{ergoInfo}} object, used to estimate the Empirical Ergodicity Information Index, or the estimated value of EII estimated
+using the \code{\link[EGAnet]{ergoInfo}} function.}
 
 \item{use}{Character.
 A string indicating what network element will be used to compute the algorithm complexity in the \code{\link[EGAnet]{ergoInfo}} function,
