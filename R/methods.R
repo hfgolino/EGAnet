@@ -158,8 +158,8 @@ print.dynEGA.Groups <- function(x, ...) {
   
 }
 
-# Print dynEGA (Level: Individuals)
-# Updated 13.05.2022
+# Print dynEGA (Level: Individuals)----
+# Updated 24.06.2022
 #' @export
 print.dynEGA.Individuals <- function(x, ...) {
   
@@ -170,7 +170,11 @@ print.dynEGA.Individuals <- function(x, ...) {
   
   # Summary statistics
   cat("\nSummary statistics (number of communities): \n")
-  dim <- sapply(x$dynEGA[-length(x$dynEGA)], "[[", 3)
+  dim <- unlist(
+    lapply(x$dynEGA, function(y){
+      y$n.dim
+    })
+  )
   
   ## Set up summary
   summary.methods <- matrix(
@@ -185,10 +189,10 @@ print.dynEGA.Individuals <- function(x, ...) {
   colnames(summary.methods) <- ""
   
   ## Insert values
-  summary.methods["Mean =",] <- mean(dim)
-  summary.methods["Median =",] <- median(dim)
-  summary.methods["Min =",] <- min(dim)
-  summary.methods["Max =",] <- max(dim)
+  summary.methods["Mean =",] <- mean(dim, na.rm = TRUE)
+  summary.methods["Median =",] <- median(dim, na.rm = TRUE)
+  summary.methods["Min =",] <- min(dim, na.rm = TRUE)
+  summary.methods["Max =",] <- max(dim, na.rm = TRUE)
   
   ## Print summary
   print(summary.methods, quote = FALSE)
@@ -431,10 +435,10 @@ print.riEGA <- function(x, ...) {
 
 # summary() Methods ----
 
-# summary dynEGA (Level: Population)----
+# summary dynEGA (Level: Population)
 # Updated 13.05.2022
 #' @export
-summary.dynEGA<- function(object, ...) {
+summary.dynEGA <- function(object, ...) {
   
   # summary communities
   cat(paste(
@@ -502,7 +506,7 @@ summary.dynEGA<- function(object, ...) {
   
 }
 
-# summary dynEGA (Level: Groups)----
+# summary dynEGA (Level: Groups)
 # Updated 13.05.2022
 #' @export
 summary.dynEGA.Groups <- function(object, ...) {
@@ -583,7 +587,7 @@ summary.dynEGA.Groups <- function(object, ...) {
   
 }
 
-# summary dynEGA (Level: Individuals)----
+# summary dynEGA (Level: Individuals)
 # Updated 13.05.2022
 #' @export
 summary.dynEGA.Individuals <- function(object, ...) {
@@ -595,7 +599,11 @@ summary.dynEGA.Individuals <- function(object, ...) {
   
   # Summary statistics
   cat("\nSummary statistics (number of communities): \n")
-  dim <- sapply(object$dynEGA[-length(object$dynEGA)], "[[", 3)
+  dim <- unlist(
+    lapply(x$dynEGA, function(y){
+      y$n.dim
+    })
+  )
   
   ## Set up summary
   summary.methods <- matrix(
@@ -610,10 +618,10 @@ summary.dynEGA.Individuals <- function(object, ...) {
   colnames(summary.methods) <- ""
   
   ## Insert values
-  summary.methods["Mean =",] <- mean(dim)
-  summary.methods["Median =",] <- median(dim)
-  summary.methods["Min =",] <- min(dim)
-  summary.methods["Max =",] <- max(dim)
+  summary.methods["Mean =",] <- mean(dim, na.rm = TRUE)
+  summary.methods["Median =",] <- median(dim, na.rm = TRUE)
+  summary.methods["Min =",] <- min(dim, na.rm = TRUE)
+  summary.methods["Max =",] <- max(dim, na.rm = TRUE)
   
   ## summary summary
   print(summary.methods, quote = FALSE)
@@ -668,7 +676,7 @@ summary.dynEGA.Individuals <- function(object, ...) {
   
 }
 
-# summary EGA----
+# summary EGA
 # Updated 13.05.2022
 #' @export
 summary.EGA <- function(object, ...) {
@@ -713,7 +721,7 @@ summary.EGA <- function(object, ...) {
   
 }
 
-#summary Network Loadings----
+#summary Network Loadings
 # Updated 13.05.2022
 #' @export
 summary.NetLoads <- function(object, ...) {
@@ -724,7 +732,7 @@ summary.NetLoads <- function(object, ...) {
   message("Loadings <= |", object$minLoad, "| are blank")
 }
 
-#summary Measurement Invariance----
+#summary Measurement Invariance
 # Updated 10.02.2022
 #' @export
 summary.invariance <- function(object, ...) {
@@ -733,7 +741,7 @@ summary.invariance <- function(object, ...) {
   cat("Signif. code: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 'n.s.' 1")
 }
 
-#summary Hierarchical EGA----
+#summary Hierarchical EGA
 # Updated 09.05.2022
 #' @export
 summary.hierEGA <- function(object, ...) {
@@ -796,7 +804,7 @@ summary.hierEGA <- function(object, ...) {
   
 }
 
-#summary Residual EGA----
+#summary Residual EGA
 # Updated 13.05.2022
 #' @export
 summary.riEGA <- function(object, ...) {
@@ -858,10 +866,9 @@ summary.riEGA <- function(object, ...) {
 
 # Plot bootEGA
 # Updated 28.07.2021
-plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
+plot.bootEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
                          plot.args = list(), produce = TRUE, ...){
-  
-  # MISSING ARGUMENTS HANDLING
+  #### MISSING ARGUMENTS HANDLING
   if(missing(plot.type))
   {plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
@@ -870,6 +877,9 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
   if(plot.type == "GGally"){
     if("legend.names" %in% names(plot.args)){
       legend.names <- plot.args$legend.names
+    }
+    if("legend.title" %in% names(plot.args)){
+      legend.title <- plot.args$legend.title
     }
     plot.args <- GGally.args(plot.args)
     color.palette <- plot.args$color.palette
@@ -1004,6 +1014,27 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
         ))
       )
     
+    # Add legend and plot title
+    if(title != ""){
+      ega.plot <- ega.plot +
+        labs(title = title)
+    }
+    
+    if(exists("legend.title")){
+      ega.plot <- ega.plot +
+        ggplot2::guides(
+          color = ggplot2::guide_legend(override.aes = list(
+            color = unique(palette),
+            size = node.size,
+            alpha = plot.args$alpha,
+            stroke = 1.5
+          ), title = legend.title)
+        ) +
+        ggplot2::theme(
+          legend.title = element_text()
+        )
+    }
+    
   }
   
   set.seed(NULL)
@@ -1024,7 +1055,7 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
     x$dynEGA <- x$dynEGA[-which(names(x$dynEGA) == "Methods")]
   }
   
-  # MISSING ARGUMENTS HANDLING
+  #### MISSING ARGUMENTS HANDLING
   if(missing(plot.type))
   {plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
@@ -1033,6 +1064,9 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
   if(plot.type == "GGally"){
     if("legend.names" %in% names(plot.args)){
       legend.names <- plot.args$legend.names
+    }
+    if("legend.title" %in% names(plot.args)){
+      legend.title <- plot.args$legend.title
     }
     plot.args <- GGally.args(plot.args)
     color.palette <- plot.args$color.palette
@@ -1171,6 +1205,27 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
           ))
         )
       
+      # Add legend and plot title
+      if(title != ""){
+        plots.net[[i]] <- plots.net[[i]] + 
+          labs(title = title)
+      }
+      
+      if(exists("legend.title")){
+        plots.net[[i]] <- plots.net[[i]] + 
+          ggplot2::guides(
+            color = ggplot2::guide_legend(override.aes = list(
+              color = unique(palette),
+              size = node.size,
+              alpha = plot.args$alpha,
+              stroke = 1.5
+            ), title = legend.title)
+          ) +
+          ggplot2::theme(
+            legend.title = element_text()
+          )
+      }
+      
     }
     group.labels <- names(x$dynEGA)
     set.seed(NULL)
@@ -1185,8 +1240,7 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
 #' @export
 plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GGally","qgraph"),
                                     plot.args = list(), produce = TRUE, ...){
-  
-  # MISSING ARGUMENTS HANDLING
+  #### MISSING ARGUMENTS HANDLING
   if(missing(plot.type))
   {plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
@@ -1195,6 +1249,9 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
   if(plot.type == "GGally"){
     if("legend.names" %in% names(plot.args)){
       legend.names <- plot.args$legend.names
+    }
+    if("legend.title" %in% names(plot.args)){
+      legend.title <- plot.args$legend.title
     }
     plot.args <- GGally.args(plot.args)
     color.palette <- plot.args$color.palette
@@ -1321,6 +1378,27 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
         ))
       )
     
+    # Add legend and plot title
+    if(title != ""){
+      ega.plot <- ega.plot +
+        labs(title = title)
+    }
+    
+    if(exists("legend.title")){
+      ega.plot <- ega.plot +
+        ggplot2::guides(
+          color = ggplot2::guide_legend(override.aes = list(
+            color = unique(palette),
+            size = node.size,
+            alpha = plot.args$alpha,
+            stroke = 1.5
+          ), title = legend.title)
+        ) +
+        ggplot2::theme(
+          legend.title = element_text()
+        )
+    }
+    
     set.seed(NULL)
     
     if(isTRUE(produce)){
@@ -1334,8 +1412,7 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
 #' @export
 plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
                         plot.args = list(), produce = TRUE, ...){
-  
-  # MISSING ARGUMENTS HANDLING
+  #### MISSING ARGUMENTS HANDLING
   if(missing(plot.type))
   {plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
@@ -1344,6 +1421,9 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
   if(plot.type == "GGally"){
     if("legend.names" %in% names(plot.args)){
       legend.names <- plot.args$legend.names
+    }
+    if("legend.title" %in% names(plot.args)){
+      legend.title <- plot.args$legend.title
     }
     plot.args <- GGally.args(plot.args)
     color.palette <- plot.args$color.palette
@@ -1477,6 +1557,27 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
         ))
       )
     
+    # Add legend and plot title
+    if(title != ""){
+      ega.plot <- ega.plot +
+        labs(title = title)
+    }
+    
+    if(exists("legend.title")){
+      ega.plot <- ega.plot +
+        ggplot2::guides(
+          color = ggplot2::guide_legend(override.aes = list(
+            color = unique(palette),
+            size = node.size,
+            alpha = plot.args$alpha,
+            stroke = 1.5
+          ), title = legend.title)
+        ) +
+        ggplot2::theme(
+          legend.title = element_text()
+        )
+    }
+    
   }
   set.seed(NULL)
   
@@ -1490,8 +1591,7 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
 #' @export
 plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
                      plot.args = list(), produce = TRUE, ...){
-  
-  # MISSING ARGUMENTS HANDLING
+  #### MISSING ARGUMENTS HANDLING
   if(missing(plot.type))
   {plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
@@ -1500,6 +1600,9 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
   if(plot.type == "GGally"){
     if("legend.names" %in% names(plot.args)){
       legend.names <- plot.args$legend.names
+    }
+    if("legend.title" %in% names(plot.args)){
+      legend.title <- plot.args$legend.title
     }
     plot.args <- GGally.args(plot.args)
     color.palette <- plot.args$color.palette
@@ -1637,6 +1740,27 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
           ))
         )
       
+      # Add legend and plot title
+      if(title != ""){
+        ega.plot <- ega.plot +
+          labs(title = title)
+      }
+      
+      if(exists("legend.title")){
+        ega.plot <- ega.plot +
+          ggplot2::guides(
+            color = ggplot2::guide_legend(override.aes = list(
+              color = unique(palette),
+              size = node.size,
+              alpha = plot.args$alpha,
+              stroke = 1.5
+            ), title = legend.title)
+          ) +
+          ggplot2::theme(
+            legend.title = element_text()
+          )
+      }
+      
     }
     
     set.seed(NULL)
@@ -1657,13 +1781,12 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
 #' @export
 plot.EGA.fit <- function(x,  title = "", plot.type = c("GGally","qgraph"),
                          plot.args = list(), ...){
-  
-  # MISSING ARGUMENTS HANDLING
+  #### MISSING ARGUMENTS HANDLING
   if(missing(plot.type))
   {plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
   
-  plot.EGA(x$EGA, plot.type = plot.type, plot.args = plot.args)
+  plot.EGA(x$EGA, title = title, plot.type = plot.type, plot.args = plot.args)
 }
 
 #Plot net.loads
@@ -1761,6 +1884,7 @@ plot.CFA <- function(x, layout = "spring", vsize = 6, ...) {
                     sizeInt = 0.8, mar = c(1, 1, 1, 1), residuals = FALSE, intercepts = FALSE, thresholds = FALSE, layout = "spring",
                     "std", cut = 0.5, ...)
 }
+
 
 
 

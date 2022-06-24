@@ -128,11 +128,11 @@
 #' @importFrom graphics plot
 #'
 # PLOTS----
-# Updated 28.07.2021
+# Updated 24.06.2022
 #' @export
 # Plot bootEGA----
 # Updated 28.07.2021
-plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
+plot.bootEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
                          plot.args = list(), produce = TRUE, ...){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
@@ -143,6 +143,9 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
   if(plot.type == "GGally"){
     if("legend.names" %in% names(plot.args)){
       legend.names <- plot.args$legend.names
+    }
+    if("legend.title" %in% names(plot.args)){
+      legend.title <- plot.args$legend.title
     }
     plot.args <- GGally.args(plot.args)
     color.palette <- plot.args$color.palette
@@ -277,6 +280,27 @@ plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
         ))
       )
     
+    # Add legend and plot title
+    if(title != ""){
+      ega.plot <- ega.plot +
+        labs(title = title)
+    }
+    
+    if(exists("legend.title")){
+      ega.plot <- ega.plot +
+        ggplot2::guides(
+          color = ggplot2::guide_legend(override.aes = list(
+            color = unique(palette),
+            size = node.size,
+            alpha = plot.args$alpha,
+            stroke = 1.5
+          ), title = legend.title)
+        ) +
+        ggplot2::theme(
+          legend.title = element_text()
+        )
+    }
+    
   }
   
   set.seed(NULL)
@@ -306,6 +330,9 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
   if(plot.type == "GGally"){
     if("legend.names" %in% names(plot.args)){
       legend.names <- plot.args$legend.names
+    }
+    if("legend.title" %in% names(plot.args)){
+      legend.title <- plot.args$legend.title
     }
     plot.args <- GGally.args(plot.args)
     color.palette <- plot.args$color.palette
@@ -444,6 +471,27 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "", plot.type = c("GGally"
           ))
         )
       
+      # Add legend and plot title
+      if(title != ""){
+        plots.net[[i]] <- plots.net[[i]] + 
+          labs(title = title)
+      }
+      
+      if(exists("legend.title")){
+        plots.net[[i]] <- plots.net[[i]] + 
+          ggplot2::guides(
+            color = ggplot2::guide_legend(override.aes = list(
+              color = unique(palette),
+              size = node.size,
+              alpha = plot.args$alpha,
+              stroke = 1.5
+            ), title = legend.title)
+          ) +
+          ggplot2::theme(
+            legend.title = element_text()
+          )
+      }
+      
     }
     group.labels <- names(x$dynEGA)
     set.seed(NULL)
@@ -467,6 +515,9 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
   if(plot.type == "GGally"){
     if("legend.names" %in% names(plot.args)){
       legend.names <- plot.args$legend.names
+    }
+    if("legend.title" %in% names(plot.args)){
+      legend.title <- plot.args$legend.title
     }
     plot.args <- GGally.args(plot.args)
     color.palette <- plot.args$color.palette
@@ -593,6 +644,27 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL, plot.type = c("GG
         ))
       )
     
+    # Add legend and plot title
+    if(title != ""){
+      ega.plot <- ega.plot +
+        labs(title = title)
+    }
+    
+    if(exists("legend.title")){
+      ega.plot <- ega.plot +
+        ggplot2::guides(
+          color = ggplot2::guide_legend(override.aes = list(
+            color = unique(palette),
+            size = node.size,
+            alpha = plot.args$alpha,
+            stroke = 1.5
+          ), title = legend.title)
+        ) +
+        ggplot2::theme(
+          legend.title = element_text()
+        )
+    }
+    
     set.seed(NULL)
     
     if(isTRUE(produce)){
@@ -615,6 +687,9 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
   if(plot.type == "GGally"){
     if("legend.names" %in% names(plot.args)){
       legend.names <- plot.args$legend.names
+    }
+    if("legend.title" %in% names(plot.args)){
+      legend.title <- plot.args$legend.title
     }
     plot.args <- GGally.args(plot.args)
     color.palette <- plot.args$color.palette
@@ -748,6 +823,27 @@ plot.dynEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
         ))
       )
     
+    # Add legend and plot title
+    if(title != ""){
+      ega.plot <- ega.plot +
+        labs(title = title)
+    }
+    
+    if(exists("legend.title")){
+      ega.plot <- ega.plot +
+        ggplot2::guides(
+          color = ggplot2::guide_legend(override.aes = list(
+            color = unique(palette),
+            size = node.size,
+            alpha = plot.args$alpha,
+            stroke = 1.5
+          ), title = legend.title)
+        ) +
+        ggplot2::theme(
+          legend.title = element_text()
+        )
+    }
+    
   }
   set.seed(NULL)
   
@@ -770,6 +866,9 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
   if(plot.type == "GGally"){
     if("legend.names" %in% names(plot.args)){
       legend.names <- plot.args$legend.names
+    }
+    if("legend.title" %in% names(plot.args)){
+      legend.title <- plot.args$legend.title
     }
     plot.args <- GGally.args(plot.args)
     color.palette <- plot.args$color.palette
@@ -907,6 +1006,27 @@ plot.EGA <- function(x,  title = "", plot.type = c("GGally","qgraph"),
           ))
         )
       
+      # Add legend and plot title
+      if(title != ""){
+        ega.plot <- ega.plot +
+          labs(title = title)
+      }
+      
+      if(exists("legend.title")){
+        ega.plot <- ega.plot +
+          ggplot2::guides(
+            color = ggplot2::guide_legend(override.aes = list(
+              color = unique(palette),
+              size = node.size,
+              alpha = plot.args$alpha,
+              stroke = 1.5
+            ), title = legend.title)
+          ) +
+          ggplot2::theme(
+            legend.title = element_text()
+          )
+      }
+      
     }
     
     set.seed(NULL)
@@ -932,7 +1052,7 @@ plot.EGA.fit <- function(x,  title = "", plot.type = c("GGally","qgraph"),
   {plot.type <- "GGally"
   }else{plot.type <- match.arg(plot.type)}
   
-  plot.EGA(x$EGA, plot.type = plot.type, plot.args = plot.args)
+  plot.EGA(x$EGA, title = title, plot.type = plot.type, plot.args = plot.args)
 }
 
 #Plot net.loads----
