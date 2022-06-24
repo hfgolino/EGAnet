@@ -132,7 +132,7 @@
 #' @export
 # Plot bootEGA----
 # Updated 28.07.2021
-plot.bootEGA <- function(x, plot.type = c("GGally","qgraph"),
+plot.bootEGA <- function(x, title = "", plot.type = c("GGally","qgraph"),
                          plot.args = list(), produce = TRUE, ...){
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(plot.type))
