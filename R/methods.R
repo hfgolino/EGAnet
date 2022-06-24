@@ -158,8 +158,8 @@ print.dynEGA.Groups <- function(x, ...) {
   
 }
 
-# Print dynEGA (Level: Individuals)
-# Updated 13.05.2022
+# Print dynEGA (Level: Individuals)----
+# Updated 24.06.2022
 #' @export
 print.dynEGA.Individuals <- function(x, ...) {
   
@@ -170,7 +170,11 @@ print.dynEGA.Individuals <- function(x, ...) {
   
   # Summary statistics
   cat("\nSummary statistics (number of communities): \n")
-  dim <- sapply(x$dynEGA[-length(x$dynEGA)], "[[", 3)
+  dim <- unlist(
+    lapply(x$dynEGA, function(y){
+      y$n.dim
+    })
+  )
   
   ## Set up summary
   summary.methods <- matrix(
@@ -185,10 +189,10 @@ print.dynEGA.Individuals <- function(x, ...) {
   colnames(summary.methods) <- ""
   
   ## Insert values
-  summary.methods["Mean =",] <- mean(dim)
-  summary.methods["Median =",] <- median(dim)
-  summary.methods["Min =",] <- min(dim)
-  summary.methods["Max =",] <- max(dim)
+  summary.methods["Mean =",] <- mean(dim, na.rm = TRUE)
+  summary.methods["Median =",] <- median(dim, na.rm = TRUE)
+  summary.methods["Min =",] <- min(dim, na.rm = TRUE)
+  summary.methods["Max =",] <- max(dim, na.rm = TRUE)
   
   ## Print summary
   print(summary.methods, quote = FALSE)
@@ -431,10 +435,10 @@ print.riEGA <- function(x, ...) {
 
 # summary() Methods ----
 
-# summary dynEGA (Level: Population)----
+# summary dynEGA (Level: Population)
 # Updated 13.05.2022
 #' @export
-summary.dynEGA<- function(object, ...) {
+summary.dynEGA <- function(object, ...) {
   
   # summary communities
   cat(paste(
@@ -502,7 +506,7 @@ summary.dynEGA<- function(object, ...) {
   
 }
 
-# summary dynEGA (Level: Groups)----
+# summary dynEGA (Level: Groups)
 # Updated 13.05.2022
 #' @export
 summary.dynEGA.Groups <- function(object, ...) {
@@ -583,7 +587,7 @@ summary.dynEGA.Groups <- function(object, ...) {
   
 }
 
-# summary dynEGA (Level: Individuals)----
+# summary dynEGA (Level: Individuals)
 # Updated 13.05.2022
 #' @export
 summary.dynEGA.Individuals <- function(object, ...) {
@@ -595,7 +599,11 @@ summary.dynEGA.Individuals <- function(object, ...) {
   
   # Summary statistics
   cat("\nSummary statistics (number of communities): \n")
-  dim <- sapply(object$dynEGA[-length(object$dynEGA)], "[[", 3)
+  dim <- unlist(
+    lapply(x$dynEGA, function(y){
+      y$n.dim
+    })
+  )
   
   ## Set up summary
   summary.methods <- matrix(
@@ -610,10 +618,10 @@ summary.dynEGA.Individuals <- function(object, ...) {
   colnames(summary.methods) <- ""
   
   ## Insert values
-  summary.methods["Mean =",] <- mean(dim)
-  summary.methods["Median =",] <- median(dim)
-  summary.methods["Min =",] <- min(dim)
-  summary.methods["Max =",] <- max(dim)
+  summary.methods["Mean =",] <- mean(dim, na.rm = TRUE)
+  summary.methods["Median =",] <- median(dim, na.rm = TRUE)
+  summary.methods["Min =",] <- min(dim, na.rm = TRUE)
+  summary.methods["Max =",] <- max(dim, na.rm = TRUE)
   
   ## summary summary
   print(summary.methods, quote = FALSE)
@@ -668,7 +676,7 @@ summary.dynEGA.Individuals <- function(object, ...) {
   
 }
 
-# summary EGA----
+# summary EGA
 # Updated 13.05.2022
 #' @export
 summary.EGA <- function(object, ...) {
@@ -713,7 +721,7 @@ summary.EGA <- function(object, ...) {
   
 }
 
-#summary Network Loadings----
+#summary Network Loadings
 # Updated 13.05.2022
 #' @export
 summary.NetLoads <- function(object, ...) {
@@ -724,7 +732,7 @@ summary.NetLoads <- function(object, ...) {
   message("Loadings <= |", object$minLoad, "| are blank")
 }
 
-#summary Measurement Invariance----
+#summary Measurement Invariance
 # Updated 10.02.2022
 #' @export
 summary.invariance <- function(object, ...) {
@@ -733,7 +741,7 @@ summary.invariance <- function(object, ...) {
   cat("Signif. code: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 'n.s.' 1")
 }
 
-#summary Hierarchical EGA----
+#summary Hierarchical EGA
 # Updated 09.05.2022
 #' @export
 summary.hierEGA <- function(object, ...) {
@@ -796,7 +804,7 @@ summary.hierEGA <- function(object, ...) {
   
 }
 
-#summary Residual EGA----
+#summary Residual EGA
 # Updated 13.05.2022
 #' @export
 summary.riEGA <- function(object, ...) {

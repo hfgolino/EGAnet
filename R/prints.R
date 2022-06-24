@@ -195,7 +195,7 @@ print.dynEGA.Groups <- function(x, ...) {
 }
 
 # Print dynEGA (Level: Individuals)----
-# Updated 13.05.2022
+# Updated 24.06.2022
 #' @export
 print.dynEGA.Individuals <- function(x, ...) {
   
@@ -206,7 +206,11 @@ print.dynEGA.Individuals <- function(x, ...) {
   
   # Summary statistics
   cat("\nSummary statistics (number of communities): \n")
-  dim <- sapply(x$dynEGA[-length(x$dynEGA)], "[[", 3)
+  dim <- unlist(
+    lapply(x$dynEGA, function(y){
+      y$n.dim
+    })
+  )
   
   ## Set up summary
   summary.methods <- matrix(
@@ -221,10 +225,10 @@ print.dynEGA.Individuals <- function(x, ...) {
   colnames(summary.methods) <- ""
   
   ## Insert values
-  summary.methods["Mean =",] <- mean(dim)
-  summary.methods["Median =",] <- median(dim)
-  summary.methods["Min =",] <- min(dim)
-  summary.methods["Max =",] <- max(dim)
+  summary.methods["Mean =",] <- mean(dim, na.rm = TRUE)
+  summary.methods["Median =",] <- median(dim, na.rm = TRUE)
+  summary.methods["Min =",] <- min(dim, na.rm = TRUE)
+  summary.methods["Max =",] <- max(dim, na.rm = TRUE)
   
   ## Print summary
   print(summary.methods, quote = FALSE)
