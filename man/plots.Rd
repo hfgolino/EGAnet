@@ -33,6 +33,10 @@ plot.args = list(), produce = TRUE,  ...)
 \arguments{
 \item{x}{Object from \code{EGAnet} package}
 
+\item{title}{Character.
+Title of the plot.
+Defaults to \code{""}}
+
 \item{plot.type}{Character.
 Plot system to use.
 Current options are \code{\link[qgraph]{qgraph}} and \code{\link{GGally}}.
@@ -106,10 +110,6 @@ Number of columns}
 
 \item{nrow}{Numeric.
 Number of rows}
-
-\item{title}{Character.
-Title of the plot.
-Defaults to \code{""}}
 
 \item{id}{Numeric.
 An integer or character indicating the ID of the individual to plot}

@@ -7,6 +7,7 @@
 boot.ergoInfo(
   dynEGA.object,
   iter = 500,
+  n.ind = 20,
   EII,
   use = c("edge.list", "weights"),
   n.embed,
@@ -29,8 +30,16 @@ boot.ergoInfo(
 \code{\link[EGAnet]{dynEGA.pop.ind}} object}
 
 \item{iter}{Numeric integer.
-Number of random samples to generate in the Monte-Carlo simulation.
+Number of random bootstrap samples to generate.
 At least \code{500} is recommended}
+
+\item{n.ind}{Numeric integer.
+Number of individual data samples to generate. If \code{n.ind} is set to 20 (the recommended)
+in the bootstrap data for 20 individuals will be generated \code{iter} times, being \code{iter} the
+number of bootstraps used in the analysis. \code{n.ind} should not be larger than the number of individuals used in to generate the \code{dynEGA.object}
+using the \code{\link[EGAnet]{dynEGA}} or the \code{\link[EGAnet]{dynEGA.pop.ind}} functions.
+For a reasonable computation time \code{20} is recommended.
+For a dataset with 60 items, \code{500} bootstrap iterations, and \code{20} individual data samples (i.e., mimicking 20 individuals), takes 30 minutes with 6+6 cores.}
 
 \item{EII}{A \code{\link[EGAnet]{ergoInfo}} object, used to estimate the Empirical Ergodicity Information Index, or the estimated value of EII estimated
 using the \code{\link[EGAnet]{ergoInfo}} function.}

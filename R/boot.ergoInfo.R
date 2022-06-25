@@ -14,8 +14,16 @@
 #' \code{\link[EGAnet]{dynEGA.pop.ind}} object
 #'
 #' @param iter Numeric integer.
-#' Number of random samples to generate in the Monte-Carlo simulation.
+#' Number of random bootstrap samples to generate.
 #' At least \code{500} is recommended
+#'
+#' @param n.ind Numeric integer.
+#' Number of individual data samples to generate. If \code{n.ind} is set to 20 (the recommended)
+#' in the bootstrap data for 20 individuals will be generated \code{iter} times, being \code{iter} the
+#' number of bootstraps used in the analysis. \code{n.ind} should not be larger than the number of individuals used in to generate the \code{dynEGA.object}
+#' using the \code{\link[EGAnet]{dynEGA}} or the \code{\link[EGAnet]{dynEGA.pop.ind}} functions.
+#' For a reasonable computation time \code{20} is recommended.
+#' For a dataset with 60 items, \code{500} bootstrap iterations, and \code{20} individual data samples (i.e., mimicking 20 individuals), takes 30 minutes with 6+6 cores.
 #'
 #' @param EII A \code{\link[EGAnet]{ergoInfo}} object, used to estimate the Empirical Ergodicity Information Index, or the estimated value of EII estimated
 #' using the \code{\link[EGAnet]{ergoInfo}} function.
@@ -166,9 +174,9 @@
 #'
 #' @export
 # Bootstrap Test for the Ergodicity Information Index
-# Updated 24.06.2022
+# Updated 25.06.2022
 boot.ergoInfo <- function(
-    dynEGA.object, iter = 500,
+    dynEGA.object, iter = 500, n.ind = 20,
     EII, use = c("edge.list", "weights"),
     n.embed, tau = 1, delta = 1,
     use.derivatives = 1,
@@ -276,7 +284,7 @@ boot.ergoInfo <- function(
   N <- nrow(derivative_estimates)
   IDs <- derivative_estimates[,ncol(derivative_estimates)]
   unique.ids <- unique(IDs)
-  unique.ids <- sample(unique.ids, 20, replace = FALSE)
+  unique.ids <- sample(unique.ids, n.ind, replace = FALSE)
   time.points <- rep(round(mean(table(IDs)),0), length(unique.ids))#table(IDs)
   time.points <- time.points+(n.embed-1)
 
