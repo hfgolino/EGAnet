@@ -180,14 +180,10 @@ knifejack.ergoInfo <- function(
 
   # Check for class of EII
   if(is(EII, "EII")){
-
-    # Check for whether arguments should be matched
-    if(isTRUE(match.args)){
       use <- EII$use
       EII <- EII$EII
     }
-
-  }else if(!is(EII, "EII")){
+    else if(!is(EII, "EII")){
     EII <- EII$EII
   }
 
