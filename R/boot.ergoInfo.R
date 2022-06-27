@@ -284,11 +284,22 @@ boot.ergoInfo <- function(
   N <- nrow(derivative_estimates)
   IDs <- derivative_estimates[,ncol(derivative_estimates)]
   unique.ids <- unique(IDs)
-  unique.ids <- sample(unique.ids, n.ind, replace = FALSE)
-  time.points <- rep(round(mean(table(IDs)),0), length(unique.ids))#table(IDs)
-  time.points <- time.points+(n.embed-1)
-
-
+  #time.points <- rep(round(mean(table(IDs)),0), length(unique.ids))#table(IDs)
+  time.points <- table(IDs)
+  #time.points <- time.points+(n.embed-1)
+  
+  # Get derivatives to use
+  derivatives <- switch(
+    as.character(use.derivatives),
+    "0" = ".Ord0",
+    "1" = ".Ord1",
+    "2" = ".Ord2"
+  )
+  
+  # Obtain only necessary derivatives
+  derivative_estimates <- derivative_estimates[
+    , grep(derivatives, colnames(derivative_estimates))
+  ]
 
 
   # Initialize Data list
@@ -297,11 +308,11 @@ boot.ergoInfo <- function(
     data.sim[[i]] <- vector("list", length = length(unique.ids))
   }
 
-  #if(is(dynEGA.pop, "dynEGA")){
-
   # Obtain sigma
   pop_sigma <- as.matrix(Matrix::nearPD(solve(dynEGA.pop$dynEGA$network))$mat)
 
+  # ^^ do we want to use the network or correlation?
+  
   # Remove everything after ".Ord"
   colnames(pop_sigma) <- gsub(".Ord*.", "", colnames(pop_sigma))
   row.names(pop_sigma) <- colnames(pop_sigma)
@@ -310,25 +321,30 @@ boot.ergoInfo <- function(
   cl <- parallel::makeCluster(ncores)
 
   # Export to cluster
-  # parallel::clusterExport(
-  #   cl = cl,
-  #   varlist = c(
-  #     "unique.ids", "MASS_mvrnorm",
-  #     "pop_sigma", "time.points",
-  #     "long_results"
-  #   ),
-  #   envir = as.environment(asNamespace("EGAnet"))
-  # )
+  parallel::clusterExport(
+    cl = cl,
+    varlist = c(
+      "unique.ids", "MASS_mvrnorm",
+      "pop_sigma", "time.points",
+      "long_results", "n.ind"
+    ),
+    envir = as.environment(asNamespace("EGAnet"))
+  )
 
   # Perform lapply
   data.sim <- pbapply::pblapply(
     cl = cl,
     X = 1:iter,
     FUN = function(i){
+      
+      # Obtain new IDs
+      sampled.ids <- sample(unique.ids, n.ind, replace = FALSE)
+      
+      # ^^ code to sample IDs with 'n.ind'
 
       # Obtain simulated participants
       full_participants <- lapply(
-        X = 1:length(unique.ids),
+        X = 1:length(sampled.ids),
         FUN = function(j){
 
           # Generated data
@@ -337,10 +353,10 @@ boot.ergoInfo <- function(
             mu = rep(0, ncol(pop_sigma)),
             Sigma = pop_sigma
           ))
-
+          
           # Add ID
           data$ID <- rep(
-            unique.ids[j], time.points[[j]]
+            sampled.ids[j], time.points[[j]]
           )
 
           # Return data
@@ -353,145 +369,133 @@ boot.ergoInfo <- function(
       as.data.frame(long_results(full_participants))
 
     }
+    
   )
 
   # Stop cluster
   parallel::stopCluster(cl)
 
-  # # Progress bar
-  # pb <- txtProgressBar(
-  #   min = 0, max = iter, style = 3
-  # )
-  #
-  #   for(i in 1:iter){
-  #     for(j in 1:length(unique.ids)){
-  #       data.sim[[i]][[j]] <- MASS_mvrnorm(
-  #         n = time.points[[j]],
-  #         mu = rep(0, ncol(dynEGA.pop$dynEGA$correlation)),
-  #         Sigma = as.matrix(Matrix::nearPD(solve(dynEGA.pop$dynEGA$network))$mat)
-  #       )
-  #     }
-  #
-  #     # Update progress bar
-  #     setTxtProgressBar(pb, i)
-  #
-  #   }
-  #
-  # # Close progress bar
-  # close(pb)
-
-  # } else if(is(dynEGA.pop, "dynEGA.ind.pop")){
-  #   for(i in 1:iter){
-  #     for(j in 1:length(unique.ids)){
-  #       data.sim[[i]][[j]] <- as.data.frame(MASS_mvrnorm(n = time.points[[j]], mu = rep(0, ncol(dynEGA.pop$dynEGA.pop$cor.data)), Sigma = as.matrix(Matrix::nearPD(solve(dynEGA.pop$dynEGA.pop$network))$mat)))
-  #       data.sim[[i]][[j]]$ID <- rep(j, each = time.points[[j]])
-  #     }
-  #   }
-  # }
-
-  # Convert lists to long format data frames
-  # data.sim.df <- as.data.frame(long_results(data.sim))
-
-  # variab <- ncol(data.sim.df[[1]]) - 1
-
-  # initialize correlation matrix list
-  # boot.data.ids <- vector("list", length = iter)
-  # list.results.sim <- boot.data.ids
-
-  #let user know data generation has started
-  message("\nEstimating the Population and Individual Structures...(be patient, it takes time)\n", appendLF = FALSE)
-
-  # Initialize boot data list
-  boot.data <- list()
-
-  # #Parallel processing
-  # cl <- parallel::makeCluster(ncores)
-  #
-  # #Export variables
+  # Let user know data generation has started
+  message("\nEstimating the Population Structures...")
+  
+  # Set up population data
+  data_pop <- lapply(data.sim, function(x){
+    x <- x[,-ncol(x)] # remove IDs
+    x <- as.matrix(x) # make matrix
+    x <- apply(x, 2, as.numeric) # make numeric
+    return(x)
+  })
+  
+  # Set parallelization
+  cl <- parallel::makeCluster(ncores)
+  
+  # Export variables
   # parallel::clusterExport(
   #   cl = cl,
-  #   varlist = c(
-  #     "dynEGA.ind.pop", "data.sim",
-  #     "n.embed", "tau", "delta",
-  #     "use.deriatives", "model",
-  #     "model.args", "algorithm",
-  #     "algorithm.args", "corr"
-  #   ),
   #   envir=environment()
   # )
+  
+  # Estimate population structures
+  est_pop <- pbapply::pblapply(
+    cl = cl,
+    X = data_pop,
+    FUN = EGA, model = model,
+    model.args = model.args,
+    algorithm = algorithm,
+    algorithm.args = algorithm.args,
+    corr = corr, plot.EGA = FALSE
+  )
+  
+  # Let user know data generation has started
+  message("\nEstimating the Individual Structures...(be patient, it takes time)")
+  
+  # Set up individual data
+  data_ind <- lapply(data.sim, function(x){
+    
+    # Split based on ID
+    x <- split(x, f = x[,ncol(x)])
+    
+    # Remove IDs
+    lapply(x, function(x){
+      x <- x[,-ncol(x)] # remove IDs
+      x <- as.matrix(x) # make matrix
+      x <- apply(x, 2, as.numeric) # make numeric
+      return(x)
+    })
+    
+  })
+  
+  # Export variables
+  parallel::clusterExport(
+    cl = cl,
+    varlist = c(
+      "EGA", "model",
+      "model.args", "algorithm",
+      "algorithm.args", "corr"
+    ),
+    envir = environment()
+  )
+  
+  # Estimate individual structures
+  est_ind <- pbapply::pblapply(
+    cl = cl,
+    X = data_ind,
+    FUN = function(X){
+      
+      # Estimate individual data
+      lapply(
+        X = X,
+        FUN = EGA, model = model,
+        model.args = model.args,
+        algorithm = algorithm,
+        algorithm.args = algorithm.args,
+        corr = corr, plot.EGA = FALSE
+      )
+      
+    }
+      
+  )
+  
+  # Set up data to be consistent with `dyn.ind.pop` output
+  boot.data <- lapply(1:iter, function(i){
+    
+    # Initialize list
+    dynEGA.object <- list()
+    dynEGA.object$dynEGA.pop <- list()
+    dynEGA.object$dynEGA.ind <- list()
+    dynEGA.object$dynEGA.pop$dynEGA <- est_pop[[i]]
+    dynEGA.object$dynEGA.ind$dynEGA <- est_ind[[i]]
+    class(dynEGA.object) <- "dynEGA.ind.pop"
+    return(dynEGA.object)
+    
+  })
+  
+  # Stop cluster
+  parallel::stopCluster(cl)
+  
+  # Let user know data generation has started
+  message("Estimating the Ergodicity Information Index...(be patient, it takes time)", appendLF = FALSE)
 
-  # ^^^ Only necessary when testing outside of package ^^^
-
-
-
-  target <- vector("list", length = length(data.sim))
-  # Compute DynEGA in the population and in the individuals
-  for(i in 1:length(data.sim)){
-
-    # Target data
-    target[[i]] <- data.sim[[i]]
-
-    # Ensure numeric values
-    target[[i]][,-ncol(target[[i]])] <- apply(
-      target[[i]][,-ncol(target[[i]])],
-      2, as.numeric
-    )}
-
-
-  #cl <- parallel::makeCluster(ncores2)
-  #
-  # boot.data <- pbapply::pblapply(X = target, cl = cl, function(x){
-  #                            EGAnet::dynEGA.ind.pop(x,
-  #                            n.embed = n.embed, tau = tau,
-  #                            delta = delta, id = ncol(x),
-  #                            use.derivatives = use.derivatives,
-  #                            model = model, model.args = model.args,
-  #                            algorithm = algorithm,
-  #                            algorithm.args = algorithm.args,
-  #                            corr = corr, ncores = ncores)})
-
-  # Close progress bar
-
-  cl <- parallel::makeCluster(ncores2)
-
-  # #Export variables
+  # Get Prime Numbers
+  # prime.num <- get(data("prime.num", envir = environment()))
+  
+  # Set parallelization
+  cl <- parallel::makeCluster(ncores)
+  
+  # Export variables
   parallel::clusterExport(
     cl = cl,
     varlist = c(
       "prime.num"
     ),
-    envir=environment()
+    envir = environment()
   )
-  op <- pbapply::pboptions(type = "none")
-  boot.data <- pbapply::pblapply(
-    cl = cl,
-    X = target,
-    FUN = function(i){
-
-      dynEGA.ind.pop(
-        data = i,
-        n.embed = n.embed, tau = tau,
-        delta = delta, id = ncol(i),
-        use.derivatives = use.derivatives,
-        model = model, model.args = model.args,
-        algorithm = algorithm,
-        algorithm.args = algorithm.args,
-        corr = corr, ncores = ncores
-      )
-
-    }
-
-  )
-  pbapply::pboptions(op)
-
-
-  #let user know data generation has started
-  message("Estimating the Ergodicity Information Index (be patient, it takes time)\n", appendLF = FALSE)
-
-  op <- pbapply::pboptions(type = "none")
+  
+  # Compute EII
   complexity.estimates <- pbapply::pblapply(X = boot.data, cl = cl,
                                             FUN = ergoInfo, use = use)
-  pbapply::pboptions(op)
+  
+  # Stop cluster
   parallel::stopCluster(cl)
 
   #let user know results are being computed
