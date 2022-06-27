@@ -451,7 +451,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
     #                         envir=environment())
 
     # EGA estimates per individual:
-    op <- pbapply::pboptions(type = "none")
+    # op <- pbapply::pboptions(type = "none")
     ega.list.individuals <- pbapply::pblapply(
       X = data.individuals_var, cl = cl,
       FUN = EGA,
@@ -459,7 +459,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
       algorithm = algorithm, algorithm.args = algorithm.args,
       corr = corr, plot.EGA = FALSE
     )
-    pbapply::pboptions(op)
+    # pbapply::pboptions(op)
 
     # Stop cluster
     parallel::stopCluster(cl)

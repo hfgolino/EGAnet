@@ -5,25 +5,13 @@
 \title{The Knife-Jack Test for the Ergodicity Information Index}
 \usage{
 knifejack.ergoInfo(
-  data,
-  id = NULL,
   dynEGA.object = NULL,
   EII,
   use = c("edge.list", "weights"),
-  ncores,
-  ncores2
+  ncores
 )
 }
 \arguments{
-\item{data}{A data frame with the variables to be used in the analysis.
-The data frame should be in a long format (i.e. observations for the
-same individual (for example, individual 1) are placed in order,
-from time 1 to time t, followed by the observations from individual 2, also
-ordered from time 1 to time t.)}
-
-\item{id}{Numeric.
-Number of the column identifying each individual.}
-
 \item{dynEGA.object}{A \code{\link[EGAnet]{dynEGA}} or a
 \code{\link[EGAnet]{dynEGA.pop.ind}} object that is used to match the arguments of the EII object.}
 
@@ -47,16 +35,6 @@ Current options are:
 
 \item{ncores}{Numeric.
 Number of cores to use in computing results.
-Defaults to \code{parallel::detectCores() / 2} or half of your
-computer's processing power.
-Set to \code{1} to not use parallel computing.
-Recommended to use maximum number of cores minus one
-
-If you're unsure how many cores your computer has,
-then use the following code: \code{parallel::detectCores()}}
-
-\item{ncores2}{Numeric.
-Number of cores to use in computing results of the \code{dyn.pop.ind} function.
 Defaults to \code{parallel::detectCores() / 2} or half of your
 computer's processing power.
 Set to \code{1} to not use parallel computing.
@@ -102,12 +80,13 @@ dyn1 <- dynEGA.ind.pop(data = sim.dynEGA[,-c(22)], n.embed = 5, tau = 1,
                       delta = 1, id = 21, use.derivatives = 1,
                     model = "glasso", ncores = 2, corr = "pearson")
 
-eii1 <- ergoInfo(data = dyn1)$EII
+eii1 <- ergoInfo(dynEGA.object = dyn1)$EII
 
-testing.ergoinfo <- knifejack.ergoInfo(data = sim.dynEGA[,-c(22)],
-id = 21,
-dynEGA.object = dyn1,
- EII = eii1, ncores = 2, ncores2 = 2)
+testing.ergoinfo <- knifejack.ergoInfo(
+  dynEGA.object = dyn1,
+  EII = eii1,
+  use = "edge.list",
+  ncores = 2)
 }}
 
 }

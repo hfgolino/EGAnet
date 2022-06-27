@@ -15,15 +15,6 @@
 #' Small values of p indicate that is very unlikely to obtain an EII as large as the one obtained in the empirical sample if the null hypothesis is true (i.e. all individuals have the same structure as the population structure), thus there is convincing evidence that the empirical Ergodicity Information Index is
 #' different than it could be expected if all individuals had a similar latent structure.
 #'
-#' @param data A data frame with the variables to be used in the analysis.
-#' The data frame should be in a long format (i.e. observations for the
-#' same individual (for example, individual 1) are placed in order,
-#' from time 1 to time t, followed by the observations from individual 2, also
-#' ordered from time 1 to time t.)
-#'
-#' @param id Numeric.
-#' Number of the column identifying each individual.
-#'
 #' @param dynEGA.object  A \code{\link[EGAnet]{dynEGA}} or a
 #' \code{\link[EGAnet]{dynEGA.pop.ind}} object that is used to match the arguments of the EII object.
 #'
@@ -56,16 +47,6 @@
 #' If you're unsure how many cores your computer has,
 #' then use the following code: \code{parallel::detectCores()}
 #'
-#' @param ncores2 Numeric.
-#' Number of cores to use in computing results of the \code{dyn.pop.ind} function.
-#' Defaults to \code{parallel::detectCores() / 2} or half of your
-#' computer's processing power.
-#' Set to \code{1} to not use parallel computing.
-#' Recommended to use maximum number of cores minus one
-#'
-#' If you're unsure how many cores your computer has,
-#' then use the following code: \code{parallel::detectCores()}
-#'
 #' @examples
 #'
 #' \dontrun{
@@ -74,12 +55,13 @@
 #'                       delta = 1, id = 21, use.derivatives = 1,
 #'                     model = "glasso", ncores = 2, corr = "pearson")
 #'
-#' eii1 <- ergoInfo(data = dyn1)$EII
+#' eii1 <- ergoInfo(dynEGA.object = dyn1)$EII
 #'
-#' testing.ergoinfo <- knifejack.ergoInfo(data = sim.dynEGA[,-c(22)],
-#' id = 21,
-#' dynEGA.object = dyn1,
-#'  EII = eii1, ncores = 2, ncores2 = 2)
+#' testing.ergoinfo <- knifejack.ergoInfo(
+#'   dynEGA.object = dyn1,
+#'   EII = eii1,
+#'   use = "edge.list",
+#'   ncores = 2)
 #' }}
 #'
 #' @return Returns a list containing:
@@ -98,24 +80,12 @@
 #'
 #' @export
 # Knife-Jack Test for the Ergodicity Information Index
-# Updated 25.06.2022
+# Updated 27.06.2022
 knifejack.ergoInfo <- function(
-    data,
-    id = NULL,
     dynEGA.object = NULL,
     EII, use = c("edge.list", "weights"),
-    ncores, ncores2
+    ncores
 ){
-
-  # MISSING ARGUMENTS HANDLING
-
-  if(missing(dynEGA.object))
-  {stop("The 'dynEGA.object' argument is missing! \n The 'dynEGA.object' must be provided to it to the arguments of the EII object.")
-  }else{dynEGA.object <- dynEGA.object}
-
-  if(missing(id))
-  {stop("The 'id' argument is missing! \n The number of the column identifying each individual must be provided!")
-  }else{id <- id}
 
   # Check for class
   if(!is(dynEGA.object, "dynEGA") & !is(dynEGA.object, "dynEGA.ind.pop")){
@@ -138,18 +108,17 @@ knifejack.ergoInfo <- function(
   methods <- dynEGA.pop$dynEGA$Methods
 
   # Match arguments
-
-    ## GLLA
-    n.embed <- methods$glla$n.embed
-    tau <- methods$glla$tau
-    delta <- methods$glla$delta
-    use.derivatives <- methods$glla$derivatives
-    ## Model
-    model <- methods$EGA$model
-    model.args <- methods$EGA$model.args
-    algorithm <- methods$EGA$algorithm
-    algorithm.args <- methods$EGA$algorithm.args
-    corr <- methods$EGA$corr
+  ## GLLA
+  n.embed <- methods$glla$n.embed
+  tau <- methods$glla$tau
+  delta <- methods$glla$delta
+  use.derivatives <- methods$glla$derivatives
+  ## Model
+  model <- methods$EGA$model
+  model.args <- methods$EGA$model.args
+  algorithm <- methods$EGA$algorithm
+  algorithm.args <- methods$EGA$algorithm.args
+  corr <- methods$EGA$corr
 
   # Check for EII
   if(missing(EII)){
@@ -163,7 +132,7 @@ knifejack.ergoInfo <- function(
       # Compute EII
       EII <- ergoInfo(
         dynEGA.object = dynEGA.object,
-        use = use
+        use = "edge.list"
       )
 
       # Let user know EII is complete
@@ -182,71 +151,57 @@ knifejack.ergoInfo <- function(
   if(is(EII, "EII")){
       use <- EII$use
       EII <- EII$EII
-    }
-    else if(!is(EII, "EII")){
-    EII <- EII$EII
   }
 
   if(missing(ncores)){
     ncores <- ceiling(parallel::detectCores() / 2)
   }
-
-  if(missing(ncores2)){
-    ncores2 <- ceiling(parallel::detectCores() / 2)
+  
+  # Obtain individual dynEGA objects only
+  dynEGA.ind <- dynEGA.object$dynEGA.ind$dynEGA
+  
+  # Remove methods from dynEGA.ind
+  if("methods" %in% tolower(names(dynEGA.ind))){
+    dynEGA.ind <- dynEGA.ind[-which(tolower(names(dynEGA.ind)) == "methods")]
   }
-
-  # Split based on ID
-  data.ind <- split(data, f = data[,id])
-
-  # Initialize data list:
-  knifejack.data <- vector("list", length = length(data.ind))
-
-  # Let user know data generation has started
-  message("\nGetting the Knife-Jack samples and Estimating the Population and Individual Structures...(be patient, it takes time)")
-
-
-  # Set parallelization
-  cl2 <- parallel::makeCluster(ncores)
-
-  # Export to cluster
+  
+  # Obtain IDs
+  IDs <- names(dynEGA.ind)
+  
+  # Set up knifejack.data to be consistent with `dyn.ind.pop` output
+  knifejack.data <- lapply(seq_along(dynEGA.ind), function(i){
+    
+    # Initialize list
+    dynEGA.object <- list()
+    dynEGA.object$dynEGA.pop <- list()
+    dynEGA.object$dynEGA.ind <- list()
+    dynEGA.object$dynEGA.pop$dynEGA <- dynEGA.ind[[i]]
+    dynEGA.object$dynEGA.ind$dynEGA[[IDs[i]]] <- dynEGA.ind[[i]]
+    class(dynEGA.object) <- "dynEGA.ind.pop"
+    return(dynEGA.object)
+    
+  })
+  
+  # Let user know results are being computed
+  message("Computing results...")
+  
+  # Set up parallelization
+  cl <- parallel::makeCluster(ncores)
+  
+  # Export prime numbers
   parallel::clusterExport(
-    cl = cl2,
-    varlist = c(
-      "data.ind","knifejack.data"),
-    envir = environment()
+    cl = cl,
+    varlist = "prime.num"
   )
-
-  # Estimate population and individual structures, but for each id
-  knifejack.data <- pbapply::pblapply(
-    cl = cl2,
-    X = data.ind,
-    FUN = function(i){
-     dynEGA.ind.pop(data = i,
-                             n.embed = n.embed, # number of embeddings
-                             id = id,
-                             delta = delta,
-                             use.derivatives = use.derivatives, # derivatives to use
-                             model = model, # network estimation method
-                             model.args = model.args,
-                             algorithm = algorithm,
-                             algorithm.args = algorithm.args,
-                             corr = corr,
-                             ncores = ncores2 # processing cores
-      )
-    }
-
-  )
-
 
   # Compute EII
-  complexity.estimates <- pbapply::pblapply(X = knifejack.data, cl = cl2,
-                                            FUN = ergoInfo, use = use)
+  complexity.estimates <- pbapply::pblapply(
+    X = knifejack.data, cl = cl,
+    FUN = ergoInfo, use = use
+  )
 
   # Stop cluster
   parallel::stopCluster(cl)
-
-  #let user know results are being computed
-  message("Computing results...\n")
 
   complexity.estimates2 <- unlist(
     lapply(
@@ -257,28 +212,40 @@ knifejack.ergoInfo <- function(
   )
 
   ## Compute the P-value of the knifejackstrap test:
-  N <- length(unique(data[,id]))
-  p.greater <- (sum(EII>=complexity.estimates2)+1)/(N +1)
-  p.lower <- (sum(EII<=complexity.estimates2)+1)/(N +1)
-  p.values <- c(p.greater, p.lower)
-  two.sided <- 2*min(p.values)
+  # N <- length(dynEGA.ind)
+  # p.greater <- (sum(EII>=complexity.estimates2)+1)/(N +1)
+  # p.lower <- (sum(EII<=complexity.estimates2)+1)/(N +1)
+  # p.values <- c(p.greater, p.lower)
+  # two.sided <- 2*min(p.values)
+  two.sided <- mean(abs(complexity.estimates2) >= abs(EII), na.rm = TRUE)
 
   # Plot:
   complexity.df <- data.frame(EII = complexity.estimates2, ID = 1:length(complexity.estimates2))
-  plot.knifejackErgoInfo <- suppressWarnings(suppressMessages(ggpubr::gghistogram(complexity.df, x = "EII",
-                                                                             add = "mean",
-                                                                             fill = "#00AFBB",
-                                                                             color = "black",
-                                                                             rug = TRUE,
-                                                                             ylab = "Frequency",
-                                                                             xlab = "Ergodicity Information Index")+
-                                                           ggplot2::geom_vline(xintercept = EII, color = "#00AFBB", linetype = "dotted")))
+  plot.knifejackErgoInfo <- suppressWarnings(suppressMessages(
+    ggpubr::gghistogram(complexity.df, x = "EII",
+                        add = "mean",
+                        fill = "#00AFBB",
+                        color = "black",
+                        rug = TRUE,
+                        ylab = "Frequency",
+                        xlab = "Ergodicity Information Index") +
+      ggplot2::geom_vline(xintercept = EII, color = "#00AFBB", linetype = "dotted"))
+  )
 
   ## Return Results:
   results <- vector("list")
   results$knifejack.ergoInfo <- complexity.estimates2
-  results$p.value.twosided <- two.sided
-  results$effect <- ifelse(p.greater<p.greater, "Greater", "Less")
+  results$p.value <- two.sided
+  effect <- ifelse(two.sided <= .05, mean(
+    EII >= complexity.estimates2, na.rm = TRUE
+  ), "n.s.")
+  results$effect <- ifelse(
+    effect == "n.s.", "n.s.",
+    ifelse(
+      effect > .50, "greater", "less"
+    )
+  )
+  
   results$plot.dist <- plot.knifejackErgoInfo
   return(results)
 }
