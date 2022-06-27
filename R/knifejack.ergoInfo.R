@@ -226,7 +226,7 @@ knifejack.ergoInfo <- function(
                              id = id,
                              delta = delta,
                              use.derivatives = use.derivatives, # derivatives to use
-                             model = modle, # network estimation method
+                             model = model, # network estimation method
                              model.args = model.args,
                              algorithm = algorithm,
                              algorithm.args = algorithm.args,
