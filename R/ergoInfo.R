@@ -37,7 +37,7 @@
 #' @export
 #' 
 # Ergodicity Information Index
-# Updated 15.06.2022
+# Updated 30.06.2022
 ergoInfo <- function(
     dynEGA.object,
     use = c("edge.list", "weights")
@@ -98,7 +98,10 @@ ergoInfo <- function(
   mat.size <- mat.size[order(mat.size$Size, decreasing = FALSE),]
 
   # Get Prime Numbers
-  prime.num <- get(data("prime.num", envir = environment()))
+  prime.num <- get(data(
+    "prime.num",
+    package = "EGAnet"
+  ))
 
   # Associate prime number:
   mat.size$Prime <- prime.num[1:nrow(mat.size)]
