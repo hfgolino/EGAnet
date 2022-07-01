@@ -100,7 +100,8 @@ ergoInfo <- function(
   # Get Prime Numbers
   prime.num <- get(data(
     "prime.num",
-    package = "EGAnet"
+    package = "EGAnet",
+    envir = environment()
   ))
 
   # Associate prime number:
