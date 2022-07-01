@@ -139,115 +139,133 @@ infoCluster <- function(
   row.names(vi_matrix) <- ids
   colnames(vi_matrix) <- ids
   
-  # # Scale variation of information matrix to be zero to one
-  # scaled_vi <- custom.min.max(
-  #   vi_matrix, c(0, 1)
+  # Scale variation of information matrix to be zero to one
+  scaled_vi <- custom.min.max(
+    vi_matrix, c(0, 1)
+  )
+
+  # Reverse so 1 = greater similarity, 0 = no similarity
+  scaled_vi <- 1 - scaled_vi
+
+  # Convert to igraph
+  g <- convert2igraph(scaled_vi)
+
+  # Apply Louvain algorithm
+  clusters <- consensus_clustering(
+    scaled_vi,
+    corr = scaled_vi,
+    order = "higher",
+    consensus.iter = 100
+  )$most_common
+  
+  # # Initialize optimal clusters
+  # optimal_clusters <- list()
+  # class(optimal_clusters) <- "try-error"
+  # 
+  # # Initialize maximum clusters
+  # cluster.max <- length(ids)
+  # 
+  # # Message user
+  # message("Searching for optimal clusters...", appendLF = FALSE)
+  # 
+  # # Loop through maximum clusters
+  # while(is(optimal_clusters, "try-error")){
+  #   
+  #   # Optimal clusters using k-means
+  #   optimal_clusters <- try(
+  #     factoextra::fviz_nbclust(
+  #       scaled_vi,
+  #       FUNcluster = kmeans,
+  #       method = "silhouette",
+  #       k.max = cluster.max,
+  #       nboot = 500
+  #     ),
+  #     silent = TRUE
+  #   )
+  #   
+  #   # Subtract 1 from max clusters
+  #   if(is(optimal_clusters, "try-error")){
+  #     cluster.max <- cluster.max - 1 
+  #   }
+  #   
+  # }
+  # 
+  # # Message user
+  # message("done", appendLF = TRUE)
+  # 
+  # # Obtain optimal clusters
+  # optimal_number <- as.numeric(
+  #   as.character(
+  #     optimal_clusters$data$clusters[
+  #       which.max(optimal_clusters$data$y)
+  #     ]
+  #   )
   # )
   # 
-  # # Reverse so 1 = greater similarity, 0 = no similarity
-  # scaled_vi <- 1 - scaled_vi
+  # # Compute hierarchical clustering and cut into maximum clusters
+  # cluster_result <- factoextra::hcut(
+  #   scaled_vi, k = optimal_number, stand = TRUE
+  # )
   # 
-  # # Convert to igraph
-  # g <- convert2igraph(scaled_vi)
+  # # Visualize
+  # cluster_plot <- suppressWarnings(
+  #   factoextra::fviz_dend(
+  #     cluster_result, rect = TRUE, cex = 0.5,
+  #     k_colors = color_palette_EGA(
+  #       "polychrome", wc = 1:cluster.max
+  #     )
+  #   )
+  # )
   # 
-  # # Apply Louvain algorithm
-  # clusters <- cluster_louvain(g)$membership
-  
-  # Initialize optimal clusters
-  optimal_clusters <- list()
-  class(optimal_clusters) <- "try-error"
-  
-  # Initialize maximum clusters
-  cluster.max <- length(ids)
-  
-  # Message user
-  message("Searching for optimal clusters...", appendLF = FALSE)
-  
-  # Loop through maximum clusters
-  while(is(optimal_clusters, "try-error")){
-    
-    # Optimal clusters using k-means
-    optimal_clusters <- try(
-      factoextra::fviz_nbclust(
-        scaled_vi,
-        FUNcluster = kmeans,
-        method = "silhouette",
-        k.max = cluster.max,
-        nboot = 500
-      ),
-      silent = TRUE
-    )
-    
-    # Subtract 1 from max clusters
-    if(is(optimal_clusters, "try-error")){
-      cluster.max <- cluster.max - 1 
-    }
-    
-  }
-  
-  # Message user
-  message("done", appendLF = TRUE)
-  
-  # Obtain optimal clusters
-  optimal_number <- as.numeric(
-    as.character(
-      optimal_clusters$data$clusters[
-        which.max(optimal_clusters$data$y)
-      ]
-    )
-  )
-  
-  # Compute hierarchical clustering and cut into maximum clusters
-  cluster_result <- factoextra::hcut(
-    scaled_vi, k = optimal_number, stand = TRUE
-  )
-  
-  # Visualize
-  cluster_plot <- suppressWarnings(
-    factoextra::fviz_dend(
-      cluster_result, rect = TRUE, cex = 0.5,
-      k_colors = color_palette_EGA(
-        "polychrome", wc = 1:cluster.max
-      )
-    )
-  )
-  
-  # Set up optimal cluster plot
-  optimal_clusters <- optimal_clusters +
-    ggplot2::scale_x_discrete(
-      breaks = as.character(
-        sort(
-          c(
-            seq(optimal_number, 1, -floor(length(ids) / 10)),
-            optimal_number,
-            seq(optimal_number, length(ids), floor(length(ids) / 10)) 
-          )
-        )
-      )
-    )
-  
-  # Organize plots
-  cluster_plot_arrange <- ggpubr::ggarrange(
-    optimal_clusters,
-    cluster_plot
-  )
-  
-  # Plot
-  if(isTRUE(plot.cluster)){
-    cluster_plot_arrange
-  }
+  # # Set up optimal cluster plot
+  # optimal_clusters <- optimal_clusters +
+  #   ggplot2::scale_x_discrete(
+  #     breaks = as.character(
+  #       sort(
+  #         c(
+  #           seq(optimal_number, 1, -floor(length(ids) / 10)),
+  #           optimal_number,
+  #           seq(optimal_number, length(ids), floor(length(ids) / 10)) 
+  #         )
+  #       )
+  #     )
+  #   )
+  # 
+  # # Organize plots
+  # cluster_plot_arrange <- ggpubr::ggarrange(
+  #   optimal_clusters,
+  #   cluster_plot
+  # )
+  # 
+  # # Plot
+  # if(isTRUE(plot.cluster)){
+  #   cluster_plot_arrange
+  # }
+  # 
+  # # Obtain clusters of IDs
+  # id_cluster_list <- list()
+  # 
+  # # Loop through to add IDs
+  # for(i in 1:optimal_number){
+  #   
+  #   id_cluster_list[[as.character(i)]] <-
+  #     names(cluster_result$cluster)[
+  #       cluster_result$cluster == i
+  #     ]
+  #   
+  # }
   
   # Obtain clusters of IDs
   id_cluster_list <- list()
   
   # Loop through to add IDs
-  for(i in 1:optimal_number){
-    
+  for(i in 1:max(clusters)){
+
     id_cluster_list[[as.character(i)]] <-
-      names(cluster_result$cluster)[
-        cluster_result$cluster == i
+      names(clusters)[
+        clusters == i
       ]
-    
+
   }
   
   # Add missing IDs to list
@@ -256,9 +274,9 @@ infoCluster <- function(
   # Return results
   results <- list()
   results$id_clusters <- id_cluster_list
-  results$optimal <- optimal_clusters
-  results$hierarhical <- cluster_result
-  results$plot <- cluster_plot_arrange
+  #results$optimal <- optimal_clusters
+  #results$hierarhical <- cluster_result
+  #results$plot <- cluster_plot_arrange
   
   # Add class
   class(results) <- "infoCluster"
