@@ -139,15 +139,19 @@ infoCluster <- function(
   row.names(vi_matrix) <- ids
   colnames(vi_matrix) <- ids
   
-  # Scale variation of information matrix to be zero to one
+  # # Scale variation of information matrix to be zero to one
   # scaled_vi <- custom.min.max(
   #   vi_matrix, c(0, 1)
   # )
   # 
-  # # Apply clustering algorithm
-  # g <- convert2igraph(cor(scaled_vi))
+  # # Reverse so 1 = greater similarity, 0 = no similarity
+  # scaled_vi <- 1 - scaled_vi
   # 
-  # check <- cluster_louvain(g)
+  # # Convert to igraph
+  # g <- convert2igraph(scaled_vi)
+  # 
+  # # Apply Louvain algorithm
+  # clusters <- cluster_louvain(g)$membership
   
   # Initialize optimal clusters
   optimal_clusters <- list()
