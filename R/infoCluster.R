@@ -274,6 +274,7 @@ infoCluster <- function(
   # Return results
   results <- list()
   results$id_clusters <- id_cluster_list
+  results$cluster_membership <- clusters
   #results$optimal <- optimal_clusters
   #results$hierarhical <- cluster_result
   #results$plot <- cluster_plot_arrange
