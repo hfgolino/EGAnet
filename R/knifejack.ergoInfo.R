@@ -156,21 +156,21 @@ knifejack.ergoInfo <- function(
   if(missing(ncores)){
     ncores <- ceiling(parallel::detectCores() / 2)
   }
-  
+
   # Obtain individual dynEGA objects only
   dynEGA.ind <- dynEGA.object$dynEGA.ind$dynEGA
-  
+
   # Remove methods from dynEGA.ind
   if("methods" %in% tolower(names(dynEGA.ind))){
     dynEGA.ind <- dynEGA.ind[-which(tolower(names(dynEGA.ind)) == "methods")]
   }
-  
+
   # Obtain IDs
   IDs <- names(dynEGA.ind)
-  
+
   # Set up knifejack.data to be consistent with `dyn.ind.pop` output
   knifejack.data <- lapply(seq_along(dynEGA.ind), function(i){
-    
+
     # Initialize list
     dynEGA.object <- list()
     dynEGA.object$dynEGA.pop <- list()
@@ -179,15 +179,15 @@ knifejack.ergoInfo <- function(
     dynEGA.object$dynEGA.ind$dynEGA[[IDs[i]]] <- dynEGA.ind[[i]]
     class(dynEGA.object) <- "dynEGA.ind.pop"
     return(dynEGA.object)
-    
+
   })
-  
+
   # Let user know results are being computed
   message("Computing results...")
-  
+
   # Set up parallelization
   cl <- parallel::makeCluster(ncores)
-  
+
   # Export prime numbers
   parallel::clusterExport(
     cl = cl,
@@ -212,12 +212,12 @@ knifejack.ergoInfo <- function(
   )
 
   ## Compute the P-value of the knifejackstrap test:
-  # N <- length(dynEGA.ind)
+   N <- length(dynEGA.ind)
   # p.greater <- (sum(EII>=complexity.estimates2)+1)/(N +1)
   # p.lower <- (sum(EII<=complexity.estimates2)+1)/(N +1)
   # p.values <- c(p.greater, p.lower)
   # two.sided <- 2*min(p.values)
-  two.sided <- mean(abs(complexity.estimates2) >= abs(EII), na.rm = TRUE)
+  one.sided <- (sum(abs(complexity.estimates2) >= abs(EII), na.rm = TRUE)+1)/(N + 1)
 
   # Plot:
   complexity.df <- data.frame(EII = complexity.estimates2, ID = 1:length(complexity.estimates2))
@@ -235,8 +235,8 @@ knifejack.ergoInfo <- function(
   ## Return Results:
   results <- vector("list")
   results$knifejack.ergoInfo <- complexity.estimates2
-  results$p.value <- two.sided
-  effect <- ifelse(two.sided <= .05, mean(
+  results$p.value <- one.sided
+  effect <- ifelse(one.sided <= .05, mean(
     EII >= complexity.estimates2, na.rm = TRUE
   ), "n.s.")
   results$effect <- ifelse(
@@ -245,7 +245,7 @@ knifejack.ergoInfo <- function(
       effect > .50, "greater", "less"
     )
   )
-  
+
   results$plot.dist <- plot.knifejackErgoInfo
   return(results)
 }
