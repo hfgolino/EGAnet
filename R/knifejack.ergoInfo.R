@@ -104,22 +104,6 @@ knifejack.ergoInfo <- function(
     dynEGA.pop <- dynEGA.object
   }
 
-  # Obtain methods
-  methods <- dynEGA.pop$dynEGA$Methods
-
-  # Match arguments
-  ## GLLA
-  n.embed <- methods$glla$n.embed
-  tau <- methods$glla$tau
-  delta <- methods$glla$delta
-  use.derivatives <- methods$glla$derivatives
-  ## Model
-  model <- methods$EGA$model
-  model.args <- methods$EGA$model.args
-  algorithm <- methods$EGA$algorithm
-  algorithm.args <- methods$EGA$algorithm.args
-  corr <- methods$EGA$corr
-
   # Check for EII
   if(missing(EII)){
 
