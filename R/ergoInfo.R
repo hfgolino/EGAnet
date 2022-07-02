@@ -1,5 +1,5 @@
 #' Ergodicity Information Index
-#' 
+#'
 #' @description Computes the Ergodicity Information Index
 #'
 #' @param dynEGA.object A \code{\link[EGAnet]{dynEGA.ind.pop}} object
@@ -35,7 +35,7 @@
 #'
 #'
 #' @export
-#' 
+#'
 # Ergodicity Information Index
 # Updated 30.06.2022
 ergoInfo <- function(
@@ -46,7 +46,7 @@ ergoInfo <- function(
 
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(use)){use <- "edge.list"}
-  
+
   # Check for class
   if(!is(dynEGA.object, "dynEGA.ind.pop")){
     stop(
@@ -59,11 +59,11 @@ ergoInfo <- function(
       )
     )
   }
-  
+
   # Sort population- and individual-level outputs
   dynEGA.pop <- dynEGA.object$dynEGA.pop
   dynEGA.ind <- dynEGA.object$dynEGA.ind
-  
+
   # Remove Methods
   if("Methods" %in% names(dynEGA.ind$dynEGA)){
     dynEGA.ind$dynEGA <- dynEGA.ind$dynEGA[-which(names(dynEGA.ind$dynEGA) == "Methods")]
@@ -100,7 +100,8 @@ ergoInfo <- function(
   # Get Prime Numbers
   prime.num <- get(data(
     "prime.num",
-    package = "EGAnet"
+    package = "EGAnet",
+    envir = environment()
   ))
 
   # Associate prime number:
@@ -273,7 +274,7 @@ ergoInfo <- function(
   results$EII <- ergo.info.index
   results$use <- use
   class(results) <- "EII"
-  
+
   return(results)
 }
 #----
