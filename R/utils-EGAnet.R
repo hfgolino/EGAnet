@@ -1464,11 +1464,11 @@ cohen.ES <- function(test=c("p","t","r","anov","chisq","f2"),size=c("small","med
 # randnet
 #' @noRd
 # Generate random network
-# Updated 30.12.2021
+# Updated 02.07.2022
 randnet <- function (nodes = NULL, edges = NULL, A = NULL)
 {
-  if(is.null(A))
-  {
+  if(is.null(A)){
+    
     # Initialize matrix
     mat <- matrix(1, nrow = nodes, ncol = nodes)
 
@@ -1500,12 +1500,39 @@ randnet <- function (nodes = NULL, edges = NULL, A = NULL)
 
     # Compute degree
     degrees <- degree(A)
+    
+    # Identify disconnected nodes
+    if(any(degrees == 0)){
+      disconnected <- which(degrees == 0)
+      degrees <- degrees[-disconnected]
+    }
 
     # Get degrees based on directed or undirected
     # Use igraph
-    if(is.list(degrees))
-    {rand <- as.matrix(igraph::as_adj(igraph::sample_degseq(out.deg = degrees$outDegree, in.deg = degrees$inDegree, method = "vl")))
-    }else{rand <- as.matrix(igraph::as_adj(igraph::sample_degseq(out.deg = degrees, method = "vl")))}
+    if(is.list(degrees)){
+      rand <- as.matrix(igraph::as_adj(igraph::sample_degseq(out.deg = degrees$outDegree, in.deg = degrees$inDegree, method = "vl")))
+    }else{
+      rand <- as.matrix(igraph::as_adj(igraph::sample_degseq(out.deg = degrees, method = "vl")))
+    }
+    
+    # Add back disconnected nodes
+    if(exists("disconnected", envir = environment())){
+      
+      # New random matrix
+      new_rand <- matrix(0, nrow = ncol(A), ncol = ncol(A))
+      
+      # Insert old random matrix into new random matrix
+      new_rand[-disconnected, -disconnected] <- rand
+      
+      # Copy new random matrix into old
+      rand <- new_rand
+      
+    }
+    
+    # Apply back row and column names
+    row.names(rand) <- colnames(A)
+    colnames(rand) <- colnames(A)
+    
   }
 
   return(rand)
