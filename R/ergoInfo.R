@@ -195,9 +195,6 @@ ergoInfo <- function(
       # Assign 1s to 0s
       prime_network <- ifelse(prime_network == 0, 1, prime_network)
       
-      # Raise to weight power
-      power_prime_network <- prime_network
-      
     })
     
     # Reduce to encoding matrix
@@ -247,7 +244,7 @@ ergoInfo <- function(
     population_adjacency <- ifelse(population_network != 0, 1, 0)
     
     # Obtain prime matrix
-    population_prime <- population_adjacency * 2 # smallest prime
+    population_prime <- population_adjacency * encoding_matrix
     
     # Obtain edges from networks
     population_edges <- population_network != 0
@@ -382,7 +379,7 @@ ergoInfo <- function(
     population_adjacency <- ifelse(population_network != 0, 1, 0)
     
     # Obtain prime matrix
-    population_prime <- (population_adjacency * 2)^population_network
+    population_prime <- (population_adjacency * encoding_matrix)^population_network
     
     # Obtain edges from networks
     population_edges <- population_network != 0
