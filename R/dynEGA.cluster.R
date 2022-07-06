@@ -312,7 +312,7 @@ dynEGA.cluster <- function(dynEGA.object, ncores, plot.cluster = TRUE)
   
   ## Return data
   results <- list()
-  results$clusters <- cluster_tree$cluster1
+  results$clusters <- cluster_tree[,ncol(cluster_tree)]
   names(results$clusters) <- cluster_tree$id
   results$clusterTree <- cluster_tree
   results$clusterPlot <- phylo_tree
