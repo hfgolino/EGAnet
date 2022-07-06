@@ -4,7 +4,7 @@
 \alias{ergoInfo}
 \title{Ergodicity Information Index}
 \usage{
-ergoInfo(dynEGA.object, use = c("edge.list", "weights"))
+ergoInfo(dynEGA.object, use = c("edge.list", "unweighted", "weighted"))
 }
 \arguments{
 \item{dynEGA.object}{A \code{\link[EGAnet]{dynEGA.ind.pop}} object}
@@ -35,11 +35,13 @@ Returns a list containing:
 
 \item{Kcomp.pop}{The Kolmogorov complexity of the prime-weight encoded population network}
 
+\item{complexity}{The complexity metric proposed by Santora and Nicosia (2020)}
+
 \item{EII}{The Ergodicity Information Index}
 }
 \description{
 Computes the Ergodicity Information Index
 }
 \author{
-Hudson Golino <hfg9s at virginia.edu>
+Hudson Golino <hfg9s at virginia.edu> and Alexander Christensen <alexpaulchristensen@gmail.com>
 }
