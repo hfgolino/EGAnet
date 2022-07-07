@@ -6283,6 +6283,10 @@ rescaled_laplacian <- function(net)
 # Updated 06.07.2022
 vn_entropy <- function(L_mat)
 {
+  
+  # Ensure no missing values
+  # L_mat <- ifelse(is.na(L_mat), 0, L_mat)
+  
   # Eigenvalues
   eigenvalues <- eigen(L_mat)$values
   

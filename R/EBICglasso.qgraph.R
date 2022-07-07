@@ -195,9 +195,14 @@ EBICglasso.qgraph <- function(
     EBICs <- sapply(seq_along(lambda),function(i){
         EBIC(S, glas_path$wi[,,i], n, gamma, countDiagonal=countDiagonal)
     })
+    
+    # jsds <- sapply(seq_along(lambda),function(i){
+    #   jsd(S, glas_path$wi[,,i])
+    # })
 
     # Smallest EBIC:
     opt <- which.min(EBICs)
+    # opt <- which.min(jsds)
 
     # Check if rho is smallest:
     #if (opt == 1){

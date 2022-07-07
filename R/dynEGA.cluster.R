@@ -200,16 +200,16 @@ dynEGA.cluster <- function(dynEGA.object, ncores, plot.cluster = TRUE)
   )$most_common
   
   # Set count
-  count <- 2
+  counter <- 2
   
   # Obtain finer clusters
   while(TRUE){
     
     # Obtain unique clusters
-    unique_clusters <- unique(cluster_list[[count - 1]])
+    unique_clusters <- unique(cluster_list[[counter - 1]])
     
     # Initialize next clusters
-    cluster_list[[count]] <- cluster_list[[count - 1]]
+    cluster_list[[counter]] <- cluster_list[[counter - 1]]
     
     # Initialize cluster number to add
     cluster_add <- 0
@@ -219,11 +219,11 @@ dynEGA.cluster <- function(dynEGA.object, ncores, plot.cluster = TRUE)
       
       # Obtain index
       index <- which(
-        cluster_list[[count - 1]] == i
+        cluster_list[[counter - 1]] == i
       )
       
       # Obtain lower clusters
-      cluster_list[[count]][index] <- consensus_clustering(
+      cluster_list[[counter]][index] <- consensus_clustering(
         jss[index, index],
         corr = jss[index, index],
         order = "lower",
@@ -231,32 +231,24 @@ dynEGA.cluster <- function(dynEGA.object, ncores, plot.cluster = TRUE)
       )$most_common + cluster_add
       
       # Increase cluster number to add
-      cluster_add <- max(cluster_list[[count]][index])
+      cluster_add <- max(cluster_list[[counter]][index])
     
     }
     
     # Break when all are equal
-    if(all(cluster_list[[count]] == cluster_list[[count - 1]])){
-      cluster_list <- cluster_list[-count]
+    if(all(cluster_list[[counter]] == cluster_list[[counter - 1]])){
+      cluster_list <- cluster_list[-counter]
       break
     }
     
     # Increase count
-    count <- count + 1
+    counter <- counter + 1
     
   }
   
   # Message user
   message("done", appendLF = TRUE)
 
-  # Format as 'hclust' object
-  ## Increase cluster list assignments
-  if(length(cluster_list) > 1){
-    for(i in 2:length(cluster_list)){
-      cluster_list[[i]] <- cluster_list[[i]] + max(cluster_list[[i-1]])
-    }
-  }
-  
   ## Initialize tree matrix
   cluster_tree <- data.frame(
     cluster0 = 0,
@@ -312,7 +304,7 @@ dynEGA.cluster <- function(dynEGA.object, ncores, plot.cluster = TRUE)
   
   ## Return data
   results <- list()
-  results$clusters <- cluster_tree$cluster1
+  results$clusters <- cluster_tree[,ncol(cluster_tree)]
   names(results$clusters) <- cluster_tree$id
   results$clusterTree <- cluster_tree
   results$clusterPlot <- phylo_tree
