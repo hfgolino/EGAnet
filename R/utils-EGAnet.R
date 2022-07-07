@@ -892,6 +892,139 @@ consensus_clustering <- function(
   return(results)
 }
 
+# Lancichinetti & Fortunato (2012)
+#' @noRd
+# Most Common Consensus Clustering
+# Updated 07.07.2022
+most_common_consensus <- function(
+    network,
+    order = c("lower", "higher"),
+    consensus.iter
+)
+{
+  
+  # Obtain network names
+  network_names <- colnames(network)
+  
+  # Check for empty network
+  if(sum(network) == 0){
+    
+    # Return individual communities
+    wc <- 1:ncol(network)
+    
+    # Assign names
+    names(wc) <- network_names
+    
+    # Set up results
+    results <- list()
+    results$highest_modularity <- wc
+    results$most_common <- wc
+    results$iterative <- wc
+    results$lowest_tefi <- wc
+    results$summary_table <- "Empty network. No general factors found."
+    
+    # Return consensus
+    return(results)
+    
+    
+  }
+  
+  # Convert network to igraph
+  igraph_network <- suppressWarnings(
+    convert2igraph(abs(network))
+  )
+  
+  # Ensure all nodes are included in igraph
+  if(igraph::vcount(igraph_network) != ncol(network)){
+    
+    igraph_network <- igraph::add.vertices(
+      igraph_network,
+      nv = ncol(network) -
+        igraph::vcount(igraph_network)
+    )
+    
+  }
+  
+  # Apply Louvain
+  communities <- lapply(1:consensus.iter, function(j){
+    
+    # igraph output
+    output <- igraph::cluster_louvain(igraph_network)
+    
+    # Obtain memberships
+    wc <- output$memberships
+    
+    # Check for no rows
+    if(nrow(wc) == 0){
+      wc <- output$membership
+    }else{
+      
+      # Obtain order
+      if(order == "lower"){
+        wc <- wc[1,]
+      }else if(order == "higher"){
+        wc <- wc[nrow(wc),]
+      }
+      
+    }
+    
+    # Return
+    return(wc)
+    
+  })
+  
+  # Simplify to a matrix
+  wc_matrix <- t(simplify2array(communities, higher = FALSE))
+  
+  # Make data frame
+  df <- as.data.frame(wc_matrix)
+  
+  # Obtain duplicate indices
+  dupe_ind <- duplicated(df)
+  
+  # Rows for non-duplicates
+  non_dupes <- data.frame(df[!dupe_ind,])
+  
+  # Rows for duplicates
+  dupes <- data.frame(df[dupe_ind,])
+  
+  # Match duplicates with non-duplicates
+  dupe_count <- table(
+    match(
+      data.frame(t(dupes)), data.frame(t(non_dupes))
+    ))
+  
+  # Change column names of non_dupes
+  if(!is.null(colnames(network))){
+    colnames(non_dupes) <- colnames(network)
+  }
+  
+  # Set up summary table
+  summary_table <- data.frame(
+    N_Dimensions = apply(non_dupes, 1, function(x){
+      length(na.omit(unique(x)))
+    }),
+    Proportion = as.matrix(count(wc_matrix) / nrow(wc_matrix))
+  )
+  
+  # Attach non-duplicate solutions
+  summary_table <- cbind(summary_table, non_dupes)
+  
+  # Obtain max proportion
+  wc_proportion <- unlist(summary_table[
+    which.max(summary_table[,"Proportion"]),
+    -c(1:2)
+  ])
+  
+  # Set up results
+  results <- list()
+  results$most_common <- wc_proportion
+  results$summary_table <- summary_table
+  
+  # Return consensus
+  return(results)
+}
+
 #%%%%%%%%%%%%%%%%%%%%
 # NETWORKTOOLBOX ----
 #%%%%%%%%%%%%%%%%%%%%
@@ -6255,6 +6388,104 @@ itemStability.loadings <- function(res, bootega.obj)
   mean.loadings <- apply(loadings.array, 1:2, mean, na.rm = TRUE)
 
   return(mean.loadings)
+}
+
+#%%%%%%%%%%%%%%%%%%%
+# boot.ergoInfo ----
+#%%%%%%%%%%%%%%%%%%%
+
+#' Expand grid with unique edges
+#' @noRd
+# Updated 07.07.2022
+expand.grid.unique <- function(x, y, include.equals = FALSE)
+{
+  x <- unique(x)
+  
+  y <- unique(y)
+  
+  g <- function(i)
+  {
+    z <- setdiff(y, x[seq_len(i-include.equals)])
+    
+    if(length(z)) cbind(x[i], z, deparse.level=0)
+  }
+  
+  do.call(rbind, lapply(seq_along(x), g))
+}
+
+#' Rewiring function
+#' @noRd
+# Updated 07.07.2022
+rewire <- function(network, noise = TRUE)
+{
+  
+  # Number of edges
+  edges <- sum(ifelse(network != 0, 1, 0)) / 2
+  
+  # Set random proportion
+  proportion <- runif(1, min = 0.10, 0.40)
+  
+  # Obtain proportion of connections to change
+  rewire_number <- floor(edges * proportion)
+  
+  # Add noise
+  if(isTRUE(noise)){
+    
+    # Only add to existing edges
+    network[network != 0] <- network[network != 0] +
+      runif(
+        n = length(network[network != 0]),
+        min = -0.10,
+        max = 0.10
+      )
+    
+  }
+  
+  # Obtain edge list
+  lower_network <- network
+  lower_network[upper.tri(lower_network)] <- 0
+  edge_list <- which(lower_network != 0, arr.ind = TRUE)
+  
+  # Obtain edges to rewire
+  rewire_list <- edge_list[sample(
+    1:edges, rewire_number, replace = FALSE
+  ),]
+  
+  # Edges to replace
+  edge_list <- expand.grid.unique(
+    1:ncol(network), 1:ncol(network)
+  )
+  replace_list <- edge_list[sample(
+    1:nrow(edge_list), rewire_number, replace = FALSE
+  ),]
+  colnames(replace_list) <- c("row", "col")
+  
+  # Rewire edges
+  for(i in 1:nrow(rewire_list)){
+    
+    # Obtain row and column
+    row <- rewire_list[i, "row"]
+    column <- rewire_list[i, "col"]
+    
+    # Obtain replace row and column
+    replace_row <- replace_list[i, "row"]
+    replace_column <- replace_list[i, "col"]
+    
+    # Obtain values
+    original_value <- network[row, column]
+    replace_value <- network[replace_row, replace_column]
+    
+    # Swap values
+    network[replace_row, replace_column] <- original_value
+    network[replace_column, replace_row] <- original_value
+    network[row, column] <- replace_value
+    network[column, row] <- replace_value
+    
+  }
+  
+  # Return the rewired network
+  return(network)
+  
 }
 
 #%%%%%%%%%%%%%%%%%%%%

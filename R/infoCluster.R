@@ -1,7 +1,9 @@
-#' Variation of Information Hierarchical Clustering
+#' Information Theoretic Mixture Clustering for \code{\link[EGAnet]{dynEGA}}
 #'
-#' @description Performs hierarchical k-means clustering using variation of information
-#' of the community memberships derived from individuals in \code{\link[EGAnet]{dynEGA}}
+#' @description Performs hierarchical clustering using Jensen-Shannon distance
+#' followed by the Louvain algorithm with consensus clustering. The method
+#' iteratively identifies smaller and smaller clusters until there is no
+#' change in the clusters identified
 #'
 #' @param dynEGA.object  A \code{\link[EGAnet]{dynEGA}} or a
 #' \code{\link[EGAnet]{dynEGA.pop.ind}} object that is used to match the arguments of the EII object.
@@ -10,6 +12,12 @@
 #' Should plot of optimal and hierarchical clusters be output?
 #' Defaults to \code{TRUE}.
 #' Set to \code{FALSE} to not plot
+#'
+#' @param ncores Numeric.
+#' Number of cores to use in computing results.
+#' Defaults to \code{parallel::detectCores() / 2} or half of your
+#' computer's processing power.
+#' Set to \code{1} to not use parallel computing
 #'
 #' @examples
 #'
@@ -23,40 +31,32 @@
 #' # Perform hierarchical clustering
 #' clust1 <- infoCluster(
 #'   dynEGA.object = dyn1,
+#'   ncores = 2,
 #'   plot.cluster = TRUE
 #' )
 #' }}
 #'
 #' @return Returns a list containing:
 #' 
-#' \item{id_clusters}{A list containing the IDs for each cluster. 
-#' \code{missing} contains IDs that were not able to be included due
-#' to missing too many memberships (NA >= 0.50)}
-#'
-#' \item{optimal}{Optimal clusters determine by *k*-means clustering from
-#' \code{\link[factoextra]{fviz_nbclust}}}
+#' \item{clusters}{A vector corresponding to cluster each participant belongs to}
 #' 
-#' \item{hierarchical}{Results of the hierarchical clustering based on the optimal
-#' number of clusts. Reports results from \code{\link[factoextra]{hcut}}}
+#' \item{clusterTree}{The dendogram data frame showing the hierarhical clustering}
 #'
 #' \item{plot}{Plot output from results}
 #'
 #' @author Hudson Golino <hfg9s at virginia.edu> & Alexander P. Christensen <alexander.christensen at Vanderbilt.Edu>
 #'
 #' @export
-# Information Theoretic Clustering
-# Updated 01.07.2022
-infoCluster <- function(
-    dynEGA.object,
-    plot.cluster = TRUE
-)
+# Information Theoretic Clustering for dynEGA
+# Updated 07.07.2022
+infoCluster <- function(dynEGA.object, ncores, plot.cluster = TRUE)
 {
   
   # Check for class
-  if(!is(dynEGA.object, "dynEGA.Individuals") & !is(dynEGA.object, "dynEGA.ind.pop")){
+  if(!is(dynEGA.object, "dynEGA") & !is(dynEGA.object, "dynEGA.ind.pop")){
     stop(
       paste(
-        "Input into the `dynEGA.object` argument's class is not `dynEGA.Individuals` or `dynEGA.ind.pop`.\n\n",
+        "Input into the `dynEGA.object` argument's class is not `dynEGA` or `dynEGA.ind.pop`.\n\n",
         "Class of dynEGA.object = ", paste(
           class(dynEGA.object), sep = "", collapse = ", "
         ),
@@ -64,225 +64,253 @@ infoCluster <- function(
       )
     )
   }else if(is(dynEGA.object, "dynEGA.ind.pop")){
-    ind_ega <- dynEGA.object$dynEGA.ind$dynEGA
+    dynEGA.pop <- dynEGA.object$dynEGA.pop
   }else if(is(dynEGA.object, "dynEGA")){
-    ind_ega <- dynEGA.object
+    dynEGA.pop <- dynEGA.object
   }
   
-  # Remove methods
-  if("methods" %in% tolower(names(ind_ega))){
-    ind_ega <- ind_ega[-which(tolower(names(ind_ega)) == "methods")]
+  # Missing parallelization
+  if(missing(ncores)){
+    ncores <- ceiling(parallel::detectCores() / 2)
   }
   
-  # Obtain memberships
-  membership_list <- lapply(
-    ind_ega, function(x){
-      x$wc
-    }
-  )
+  # Obtain individual dynEGA objects only
+  dynEGA.ind <- dynEGA.object$dynEGA.ind$dynEGA
   
-  # Obtain all IDs
-  all_ids <- names(membership_list)
+  # Remove methods from dynEGA.ind
+  if("methods" %in% tolower(names(dynEGA.ind))){
+    dynEGA.ind <- dynEGA.ind[-which(tolower(names(dynEGA.ind)) == "methods")]
+  }
   
-  # Remove memberships where NAs are >= .50 of memberships
-  membership_NA <- unlist(
-    lapply(
-      membership_list, function(x){
-        mean(is.na(x)) >= 0.50
-      }
-    )
-  )
+  # Obtain IDs
+  IDs <- names(dynEGA.ind)
   
-  # Remove missing memberships
-  membership_list <- membership_list[!membership_NA]
-  
-  # Obtain usable IDs
-  ids <- names(membership_list)
-  
-  # Make grid with IDs
-  grid_ids <- expand.grid(x = ids, y = ids)
-  
-  # Message user
-  message("Computing variation of information...", appendLF = FALSE)
-  
-  # Obtain variation of information
-  vi_list <- lapply(1:nrow(grid_ids), function(i){
-    
-    # Remove NAs
-    wc_1 <- na.omit(membership_list[[grid_ids[i,1]]])
-    wc_2 <- na.omit(membership_list[[grid_ids[i,2]]])
-    
-    # Obtain common variables
-    common_wc <- intersect(names(wc_1), names(wc_2))
-
-    # Compute variation of information
-    igraph::compare(
-      comm1 = wc_1[common_wc],
-      comm2 = wc_2[common_wc],
-      method = "vi"
-    )
-    
+  # Obtain networks
+  networks <- lapply(dynEGA.ind, function(x){
+    x$network
   })
   
   # Message user
-  message("done", appendLF = TRUE)
+  message("Computing Jensen-Shannon Distance...\n", appendLF = FALSE)
+
+  # Initialize parallelization
+  cl <- parallel::makeCluster(ncores)
   
-  # Convert to matrix
-  vi_matrix <- matrix(
-    unlist(vi_list),
-    nrow = length(ids),
-    ncol = length(ids),
-    byrow = TRUE
+  # Export functions
+  # parallel::clusterExport(
+  #   cl = cl,
+  #   varlist = c(
+  #     "rescaled_laplacian",
+  #     "vn_entropy",
+  #     "jsd",
+  #     "networks"
+  #   ),
+  #   envir = environment()
+  # )
+  
+  # Loop through participants
+  jsd_list <- pbapply::pblapply(
+    cl = cl,
+    X = 2:length(networks),
+    FUN = function(i){
+      
+      # Index
+      index <- i
+      
+      # Loop through other participants
+      jsd_values <- lapply(X = 1:(index-1), FUN = function(j){
+        
+        # Try
+        jsd_value <- try(
+          jsd(
+            networks[[index]], networks[[j]]
+          ),
+          silent = TRUE
+        )
+        
+        # Check if value is OK
+        if(!is(jsd_value, "try-error")){
+          return(jsd_value)
+        }else{
+          return(NA)
+        }
+      
+      })
+      
+      # Return
+      return(unlist(jsd_values))
+      
+    }
   )
   
-  # Name rows and columns
-  row.names(vi_matrix) <- ids
-  colnames(vi_matrix) <- ids
+  # Stop cluster
+  parallel::stopCluster(cl)
   
-  # Scale variation of information matrix to be zero to one
-  scaled_vi <- custom.min.max(
-    vi_matrix, c(0, 1)
+  # Create matrix
+  jsd_matrix <- matrix(
+    0,
+    nrow = length(networks),
+    ncol = length(networks)
   )
-
-  # Reverse so 1 = greater similarity, 0 = no similarity
-  scaled_vi <- 1 - scaled_vi
-
-  # Convert to igraph
-  g <- convert2igraph(scaled_vi)
-
-  # Apply Louvain algorithm
-  clusters <- consensus_clustering(
-    scaled_vi,
-    corr = scaled_vi,
-    order = "higher",
-    consensus.iter = 100
-  )$most_common
   
-  # # Initialize optimal clusters
-  # optimal_clusters <- list()
-  # class(optimal_clusters) <- "try-error"
-  # 
-  # # Initialize maximum clusters
-  # cluster.max <- length(ids)
-  # 
-  # # Message user
-  # message("Searching for optimal clusters...", appendLF = FALSE)
-  # 
-  # # Loop through maximum clusters
-  # while(is(optimal_clusters, "try-error")){
-  #   
-  #   # Optimal clusters using k-means
-  #   optimal_clusters <- try(
-  #     factoextra::fviz_nbclust(
-  #       scaled_vi,
-  #       FUNcluster = kmeans,
-  #       method = "silhouette",
-  #       k.max = cluster.max,
-  #       nboot = 500
-  #     ),
-  #     silent = TRUE
-  #   )
-  #   
-  #   # Subtract 1 from max clusters
-  #   if(is(optimal_clusters, "try-error")){
-  #     cluster.max <- cluster.max - 1 
-  #   }
-  #   
-  # }
-  # 
-  # # Message user
-  # message("done", appendLF = TRUE)
-  # 
-  # # Obtain optimal clusters
-  # optimal_number <- as.numeric(
-  #   as.character(
-  #     optimal_clusters$data$clusters[
-  #       which.max(optimal_clusters$data$y)
-  #     ]
-  #   )
-  # )
-  # 
-  # # Compute hierarchical clustering and cut into maximum clusters
-  # cluster_result <- factoextra::hcut(
-  #   scaled_vi, k = optimal_number, stand = TRUE
-  # )
-  # 
-  # # Visualize
-  # cluster_plot <- suppressWarnings(
-  #   factoextra::fviz_dend(
-  #     cluster_result, rect = TRUE, cex = 0.5,
-  #     k_colors = color_palette_EGA(
-  #       "polychrome", wc = 1:cluster.max
-  #     )
-  #   )
-  # )
-  # 
-  # # Set up optimal cluster plot
-  # optimal_clusters <- optimal_clusters +
-  #   ggplot2::scale_x_discrete(
-  #     breaks = as.character(
-  #       sort(
-  #         c(
-  #           seq(optimal_number, 1, -floor(length(ids) / 10)),
-  #           optimal_number,
-  #           seq(optimal_number, length(ids), floor(length(ids) / 10)) 
-  #         )
-  #       )
-  #     )
-  #   )
-  # 
-  # # Organize plots
-  # cluster_plot_arrange <- ggpubr::ggarrange(
-  #   optimal_clusters,
-  #   cluster_plot
-  # )
-  # 
-  # # Plot
-  # if(isTRUE(plot.cluster)){
-  #   cluster_plot_arrange
-  # }
-  # 
-  # # Obtain clusters of IDs
-  # id_cluster_list <- list()
-  # 
-  # # Loop through to add IDs
-  # for(i in 1:optimal_number){
-  #   
-  #   id_cluster_list[[as.character(i)]] <-
-  #     names(cluster_result$cluster)[
-  #       cluster_result$cluster == i
-  #     ]
-  #   
-  # }
-  
-  # Obtain clusters of IDs
-  id_cluster_list <- list()
-  
-  # Loop through to add IDs
-  for(i in 1:max(clusters)){
-
-    id_cluster_list[[as.character(i)]] <-
-      names(clusters)[
-        clusters == i
-      ]
-
+  # Loop through list
+  for(i in 1:length(jsd_list)){
+    jsd_matrix[i+1, 1:(length(jsd_list[[i]]))] <- jsd_list[[i]]
   }
   
-  # Add missing IDs to list
-  id_cluster_list$missing <- setdiff(all_ids, ids)
+  # Make symmetric
+  jsd_sym <- jsd_matrix + t(jsd_matrix)
   
-  # Return results
+  # Get similarity
+  jss <- 1 - jsd_sym
+  
+  # Add names
+  colnames(jss) <- names(networks)
+  row.names(jss) <- names(networks)
+  
+  # Make diagonal NA
+  diag(jss) <- NA
+  
+  # Remove all NAs
+  rm_cols <- apply(jss, 2, function(x){all(is.na(x))})
+  
+  # Remove missing data points
+  jss <- jss[!rm_cols, !rm_cols]
+  
+  # Make diagonal 1 again
+  diag(jss) <- 1
+  
+  # Remove values -1 > x > 1
+  rm_cols <- apply(jss, 2, function(x){any(abs(x) > 1)})
+  
+  # Remove missing data points
+  jss <- jss[!rm_cols, !rm_cols]
+  
+  # Message user
+  message("Obtaining clusters...", appendLF = FALSE)
+  
+  # Obtain cluster list
+  cluster_list <- list()
+  
+  # Obtain clusters
+  cluster_list[[1]] <- most_common_consensus(
+    jss,
+    order = "lower",
+    consensus.iter = 1000
+  )$most_common
+  
+  # Set count
+  counter <- 2
+  
+  # Obtain finer clusters
+  while(TRUE){
+    
+    # Obtain unique clusters
+    unique_clusters <- unique(cluster_list[[counter - 1]])
+    
+    # Initialize next clusters
+    cluster_list[[counter]] <- cluster_list[[counter - 1]]
+    
+    # Initialize cluster number to add
+    cluster_add <- 0
+    
+    # Apply clustering to clusters
+    for(i in unique_clusters){
+      
+      # Obtain index
+      index <- which(
+        cluster_list[[counter - 1]] == i
+      )
+      
+      # Obtain lower clusters
+      cluster_list[[counter]][index] <- most_common_consensus(
+        jss[index, index],
+        order = "lower",
+        consensus.iter = 1000
+      )$most_common + cluster_add
+      
+      # Increase cluster number to add
+      cluster_add <- max(cluster_list[[counter]][index])
+    
+    }
+    
+    # Break when all are equal
+    if(all(cluster_list[[counter]] == cluster_list[[counter - 1]])){
+      cluster_list <- cluster_list[-counter]
+      break
+    }
+    
+    # Increase count
+    counter <- counter + 1
+    
+  }
+  
+  # Message user
+  message("done", appendLF = TRUE)
+
+  ## Initialize tree matrix
+  cluster_tree <- data.frame(
+    cluster0 = 0,
+    cluster1 = cluster_list[[1]]
+  )
+  
+  ## Populate tree matrix
+  if(length(cluster_list) > 1){
+    for(i in 2:length(cluster_list)){
+      
+      # Make another tree
+      cluster_tree[[paste("cluster", i, sep = "")]] <- cluster_list[[i]]
+      
+    }
+  }
+  
+  ## Add ID
+  cluster_tree$id = names(cluster_list[[1]])
+  row.names(cluster_tree) <- NULL
+  
+  ## Initialize path string
+  cluster_tree$pathString <- 0
+  
+  ## Add path string
+  for(i in 1:nrow(cluster_tree)){
+    
+    cluster_tree$pathString[i] <- paste(
+      cluster_tree[i,-ncol(cluster_tree)], sep = "", collapse = "/"
+    )
+    
+  }
+
+  ## Set as node
+  cluster_node <- data.tree::as.Node(cluster_tree)
+  
+  ## Convert to phylo tree
+  phylo_tree <- ape::as.phylo(
+    cluster_node
+  )
+  
+  ## Check for plot
+  if(isTRUE(plot.cluster)){
+    plot(phylo_tree)
+  }
+  
+  
+  # Prepare data for results
+  ## Remove first and last column of cluster tree
+  cluster_tree <- cluster_tree[,-c(1, ncol(cluster_tree))]
+  
+  ## Move ID to front
+  cluster_tree <- cluster_tree[,c("id", colnames(cluster_tree)[-ncol(cluster_tree)])]
+  
+  ## Return data
   results <- list()
-  results$id_clusters <- id_cluster_list
-  results$cluster_membership <- clusters
-  #results$optimal <- optimal_clusters
-  #results$hierarhical <- cluster_result
-  #results$plot <- cluster_plot_arrange
+  results$clusters <- cluster_tree[,ncol(cluster_tree)]
+  names(results$clusters) <- cluster_tree$id
+  results$clusterTree <- cluster_tree
+  results$clusterPlot <- phylo_tree
   
-  # Add class
+  ## Set class
   class(results) <- "infoCluster"
   
   return(results)
-  
   
 }
