@@ -147,20 +147,18 @@ GLLA is a filtering method for estimating derivatives from data that uses time d
 }
 \examples{
 \donttest{# Population structure:
-## plot.type = "qqraph" used for CRAN checks
-## plot.type = "GGally" is the default
 dyn.random <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 delta = 1, id = 21, group = 22, use.derivatives = 1,
 level = "population", model = "glasso", ncores = 2)
 
-plot(dyn.random, plot.type = "qgraph")
+plot(dyn.random)
 
 # Group structure:
 dyn.group <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 delta = 1, id = 21, group = 22, use.derivatives = 1,
 level = "group", model = "glasso", ncores = 2)
 
-plot(dyn.group, ncol = 2, nrow = 1, plot.type = "qgraph")
+plot(dyn.group, ncol = 2, nrow = 1)
 
 # Intraindividual structure (commented out for CRAN tests):
 # dyn.individual <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,

@@ -18,7 +18,6 @@ bootEGA(
   algorithm.args = list(),
   typicalStructure = TRUE,
   plot.typicalStructure = TRUE,
-  plot.type = c("GGally", "qgraph"),
   plot.args = list(),
   ncores,
   ...
@@ -145,23 +144,10 @@ which is the median of all pairwise correlations over the \emph{n} bootstraps,
 and its estimated dimensions.
 Defaults to \code{TRUE}}
 
-\item{plot.type}{Character.
-Plot system to use.
-Current options are \code{\link[qgraph]{qgraph}} and \code{\link{GGally}}.
-Defaults to \code{"GGally"}.}
-
 \item{plot.args}{List.
 A list of additional arguments for the network plot.
-For \code{plot.type = "qgraph"}:
-
-\itemize{
-
-\item{\strong{\code{vsize}}}
-{Size of the nodes. Defaults to 6.}
-
-}
-For \code{plot.type = "GGally"} (see \code{\link[GGally]{ggnet2}} for
-full list of arguments):
+See \code{\link[GGally]{ggnet2}} for
+full list of arguments:
 
 \itemize{
 
@@ -246,21 +232,20 @@ correlations over the \emph{n} bootstraps.
 wmt <- wmt2[,7:24]
 
 \donttest{# bootEGA glasso example
-## plot.type = "qqraph" used for CRAN checks
-## plot.type = "GGally" is the default
-boot.wmt <- bootEGA(data = wmt, iter = 500, plot.type = "qgraph",
+## plot.typicalStructure = FALSE used for CRAN checks
+boot.wmt <- bootEGA(data = wmt, iter = 500, plot.typicalStructure = FALSE,
 type = "parametric", ncores = 2)
 
 # bootEGA TMFG example
 boot.wmt <- bootEGA(data = wmt, iter = 500, model = "TMFG",
-plot.type = "qgraph", type = "parametric", ncores = 2, seed = 1234)
+plot.typicalStructure = FALSE, type = "parametric", ncores = 2, seed = 1234)
 
 # bootEGA Louvain example
 boot.wmt <- bootEGA(data = wmt, iter = 500, algorithm = "louvain",
-plot.type = "qgraph", type = "parametric", ncores = 2, seed = 1234)
+plot.typicalStructure = FALSE, type = "parametric", ncores = 2, seed = 1234)
 
 # bootEGA Spinglass example
-boot.wmt <- bootEGA(data = wmt, iter = 500, model = "TMFG", plot.type = "qgraph",
+boot.wmt <- bootEGA(data = wmt, iter = 500, model = "TMFG", plot.typicalStructure = FALSE,
 algorithm = igraph::cluster_spinglass, type = "parametric", ncores = 2)
 }
 

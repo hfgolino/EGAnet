@@ -12,6 +12,10 @@ o ADD/UPDATE: `boot.ergoInfo` has achieved functional working order. Results can
 
 o ADD: information theoretic clustering algorithm for dynamic data is available in `infoCluster`
 
+o REMOVE: "alpha" and "adapt" options in `UVA` (removes {fitdistrplus} dependency)
+
+o REMOVE: {qgraph} plots are no longer available
+
 
 Changes in version 1.1.0
 

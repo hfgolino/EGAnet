@@ -4,7 +4,7 @@
 \alias{net.loads}
 \title{Network Loadings}
 \usage{
-net.loads(A, wc, pos.manifold = FALSE, min.load = 0, plot.NL = FALSE)
+net.loads(A, wc, pos.manifold = FALSE, min.load = 0)
 }
 \arguments{
 \item{A}{Matrix, data frame, or \code{\link[EGAnet]{EGA}} object.
@@ -28,13 +28,6 @@ the minimum loading are kept in the output. Values
 less than the minimum loading are removed. This matrix can
 be viewed using \code{print()} or \code{summary()}
 Defaults to \code{0}}
-
-\item{plot.NL}{Boolean.
-Should proportional loadings be plotted?
-Defaults to \code{FALSE}.
-Set to \code{TRUE} for plot with pie charts
-visualizing the proportion of loading associated with
-each dimension}
 }
 \value{
 Returns a list containing:
@@ -47,9 +40,6 @@ strength values for each node}
 
 \item{minLoad}{The minimum loading to appear in summary of network loadings.
 Use \code{print()} or \code{summary()} to view}
-
-\item{plot}{A \code{\link[qgraph]{qgraph}} plot of the network loadings.
-Use \code{plot} to view}
 }
 \description{
 Computes the between- and within-community

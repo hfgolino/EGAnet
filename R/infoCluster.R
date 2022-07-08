@@ -6,7 +6,7 @@
 #' change in the clusters identified
 #'
 #' @param dynEGA.object  A \code{\link[EGAnet]{dynEGA}} or a
-#' \code{\link[EGAnet]{dynEGA.pop.ind}} object that is used to match the arguments of the EII object.
+#' \code{\link[EGAnet]{dynEGA.ind.pop}} object that is used to match the arguments of the EII object.
 #' 
 #' @param plot.cluster Boolean.
 #' Should plot of optimal and hierarchical clusters be output?

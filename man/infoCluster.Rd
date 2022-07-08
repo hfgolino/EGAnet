@@ -8,7 +8,7 @@ infoCluster(dynEGA.object, ncores, plot.cluster = TRUE)
 }
 \arguments{
 \item{dynEGA.object}{A \code{\link[EGAnet]{dynEGA}} or a
-\code{\link[EGAnet]{dynEGA.pop.ind}} object that is used to match the arguments of the EII object.}
+\code{\link[EGAnet]{dynEGA.ind.pop}} object that is used to match the arguments of the EII object.}
 
 \item{ncores}{Numeric.
 Number of cores to use in computing results.

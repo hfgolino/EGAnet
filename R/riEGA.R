@@ -132,11 +132,6 @@
 #' If \code{TRUE}, returns a plot of the network and its estimated dimensions.
 #' Defaults to \code{TRUE}
 #'
-#' @param plot.type Character.
-#' Plot system to use.
-#' Current options are \code{\link[qgraph]{qgraph}} and \code{\link{GGally}}.
-#' Defaults to \code{"GGally"}
-#'
 #' @param plot.args List.
 #' A list of additional arguments for the network plot.
 #' For \code{plot.type = "qgraph"}:
@@ -243,7 +238,7 @@
 #' 
 # Random-Intercept EGA
 # Changed from 'residualEGA.R' on 17.04.2022
-# Updated 13.05.2022
+# Updated 07.07.2022
 riEGA <- function(
     data, n = NULL, uni.method = c("expand", "LE"),
     corr = c("cor_auto", "pearson", "spearman"),
@@ -256,13 +251,13 @@ riEGA <- function(
       "iterative",
       "lowest_tefi"
     ),
-    plot.EGA = TRUE, plot.type = c("GGally", "qgraph"),
+    plot.EGA = TRUE,
     plot.args = list(), estimator = c("auto", "WLSMV", "MLR"),
     lavaan.args = list()
   )
 {
   
-  #### ARGUMENTS HANDLING ####
+  #### ARGUMENTS HANDLING
   
   if(missing(uni.method)){
     uni.method <- "LE"
@@ -285,12 +280,6 @@ riEGA <- function(
   if(missing(consensus.method)){
     consensus.method <- "highest_modularity"
   }else{consensus.method <- match.arg(consensus.method)}
-  
-  if(missing(plot.type)){
-    plot.type <- "GGally"
-  }else{plot.type <- match.arg(plot.type)}
-  
-  #### ARGUMENTS HANDLING ####
   
   # Ensure data is a matrix
   data <- as.matrix(data)
@@ -448,7 +437,6 @@ riEGA <- function(
   ega_defaults$consensus.method <- consensus.method
   ega_defaults$consensus.iter <- consensus.iter
   ega_defaults$plot.EGA <- plot.EGA
-  ega_defaults$plot.type <- plot.type
   ega_defaults$plot.args <- plot.args
   
   # Get EGA

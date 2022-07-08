@@ -24,11 +24,6 @@
 #' @param columns Numeric.
 #' Number of columns to spread plots down
 #' 
-#' @param plot.type Character.
-#' Plot system to use.
-#' Current options are \code{\link[qgraph]{qgraph}} and \code{\link{GGally}}.
-#' Defaults to \code{"GGally"}
-#' 
 #' @param plot.args List.
 #' A list of additional arguments for the network plot.
 #' For \code{plot.type = "qgraph"}:
@@ -38,8 +33,9 @@
 #' \item{\strong{\code{vsize}}}
 #' {Size of the nodes. Defaults to 6.}
 #'
-#'}
-#' For \code{plot.type = "GGally"} (see \code{\link[GGally]{ggnet2}} for
+#' }
+#' 
+#' (see \code{\link[GGally]{ggnet2}} for
 #' full list of arguments):
 #'
 #' \itemize{
@@ -78,12 +74,12 @@
 #' @export
 #
 # Compare EGA plots function
-# Updated 28.03.2022
+# Updated 07.07.2022
 compare.EGA.plots <- function(
   ..., input_list = NULL,
   base_plot = 1,
   labels, rows, columns,
-  plot.type = c("GGally", "qgraph"), plot.args = list()
+  plot.args = list()
 )
 {
   # Check for input list
@@ -113,12 +109,6 @@ compare.EGA.plots <- function(
   
   if(missing(labels)){
     labels <- name
-  }
-  
-  if(missing(plot.type)){
-    plot.type <- "GGally"
-  }else{
-    plot.type <- match.arg(plot.type)
   }
   
   # Check for at least two objects
@@ -202,7 +192,6 @@ compare.EGA.plots <- function(
   plots_ega <- suppressPackageStartupMessages(
     compare.plot.fix.EGA(
       object.list,
-      plot.type = plot.type,
       plot.args = plot.args
     )
   )

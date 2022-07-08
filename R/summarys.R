@@ -210,8 +210,8 @@ summary.dynEGA.Individuals <- function(object, ...) {
   # Summary statistics
   cat("\nSummary statistics (number of communities): \n")
   dim <- unlist(
-    lapply(x$dynEGA, function(y){
-      y$n.dim
+    lapply(object$dynEGA, function(x){
+      x$n.dim
     })
   )
   

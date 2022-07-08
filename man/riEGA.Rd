@@ -16,7 +16,6 @@ riEGA(
   consensus.iter = 100,
   consensus.method = c("highest_modularity", "most_common", "iterative", "lowest_tefi"),
   plot.EGA = TRUE,
-  plot.type = c("GGally", "qgraph"),
   plot.args = list(),
   estimator = c("auto", "WLSMV", "MLR"),
   lavaan.args = list()
@@ -149,11 +148,6 @@ across iterations}
 \item{plot.EGA}{Boolean.
 If \code{TRUE}, returns a plot of the network and its estimated dimensions.
 Defaults to \code{TRUE}}
-
-\item{plot.type}{Character.
-Plot system to use.
-Current options are \code{\link[qgraph]{qgraph}} and \code{\link{GGally}}.
-Defaults to \code{"GGally"}}
 
 \item{plot.args}{List.
 A list of additional arguments for the network plot.

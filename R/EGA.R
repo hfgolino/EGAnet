@@ -137,11 +137,6 @@
 #' If \code{TRUE}, returns a plot of the network and its estimated dimensions.
 #' Defaults to \code{TRUE}
 #'
-#' @param plot.type Character.
-#' Plot system to use.
-#' Current options are \code{\link[qgraph]{qgraph}} and \code{\link{GGally}}.
-#' Defaults to \code{"GGally"}
-#'
 #' @param plot.args List.
 #' A list of additional arguments for the network plot.
 #' For \code{plot.type = "qgraph"}:
@@ -200,22 +195,21 @@
 #'
 #' @examples
 #' \donttest{# Estimate EGA
-#' ## plot.type = "qqraph" used for CRAN checks
-#' ## plot.type = "GGally" is the default
-#' ega.wmt <- EGA(data = wmt2[,7:24], plot.type = "qgraph")
+#' ## plot.EGA = FALSE used for CRAN checks
+#' ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = FALSE)
 #'
 #' # Summary statistics
 #' summary(ega.wmt)
 #'
 #' # Estimate EGAtmfg
-#' ega.wmt <- EGA(data = wmt2[,7:24], model = "TMFG", plot.type = "qgraph")
+#' ega.wmt <- EGA(data = wmt2[,7:24], model = "TMFG", plot.EGA = FALSE)
 #'
 #' # Estimate EGA with Louvain algorithm
-#' ega.wmt <- EGA(data = wmt2[,7:24], algorithm = "louvain", plot.type = "qgraph")
+#' ega.wmt <- EGA(data = wmt2[,7:24], algorithm = "louvain", plot.EGA = FALSE)
 #'
 #' # Estimate EGA with Spinglass algorithm
 #' ega.wmt <- EGA(data = wmt2[,7:24],
-#' algorithm = igraph::cluster_spinglass, plot.type = "qgraph")
+#' algorithm = igraph::cluster_spinglass, plot.EGA = FALSE)
 #'
 #' # Estimate EGA
 #' ega.intel <- EGA(data = intelligenceBattery[,8:66], model = "glasso", plot.EGA = FALSE)
@@ -271,7 +265,7 @@
 #'
 #' @export
 #'
-# Updated 15.06.2022
+# Updated 07.07.2022
 # Consensus clustering 13.05.2022
 # LE adjustment 08.03.2021
 ## EGA Function to detect unidimensionality:
@@ -286,7 +280,7 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
                    "iterative",
                    "lowest_tefi"
                  ),
-                 plot.EGA = TRUE, plot.type = c("GGally", "qgraph"),
+                 plot.EGA = TRUE,
                  plot.args = list(),
                  ...) {
 
@@ -317,7 +311,7 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
     )
   }
 
-  #### ARGUMENTS HANDLING ####
+  #### ARGUMENTS HANDLING
   
   if(missing(uni.method)){
     uni.method <- "LE"
@@ -364,12 +358,6 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
   if(missing(consensus.method)){
     consensus.method <- "most_common"
   }else{consensus.method <- match.arg(consensus.method)}
-
-  if(missing(plot.type)){
-    plot.type <- "GGally"
-  }else{plot.type <- match.arg(plot.type)}
-
-  #### ARGUMENTS HANDLING ####
   
   # Check for correlation matrix or data
   if(isSymmetric(unname(as.matrix(data)))){ ## Correlation matrix
@@ -785,25 +773,9 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
   if(isTRUE(plot.EGA)){
     
     a$Plot.EGA <- suppressPackageStartupMessages(
-      plot(a, plot.type = plot.type, plot.args = plot.args)
+      plot(a, plot.args = plot.args)
     )
     
-    
-    # CREATES ERROR IN EXAMPLES -- not sure what this code is for
-    
-    # # check for variable labels in qgraph
-    # if(plot.type == "qgraph"){
-    #   
-    #   if(is.null(names(a$Plot.EGA$graphAttributes$Nodes$labels))){
-    #     names(a$Plot.EGA$graphAttributes$Nodes$labels) <- paste(1:ncol(data))
-    #   }
-    #   
-    #   row.names(a$dim.variables) <- a$Plot.EGA$graphAttributes$Nodes$labels[match(a$dim.variables$items, names(a$Plot.EGA$graphAttributes$Nodes$labels))]
-    #   
-    # }
-    
-  }else{
-    a$Plot.EGA <- qgraph::qgraph(a$network, DoNotPlot = TRUE)
   }
 
   # Return estimates:
