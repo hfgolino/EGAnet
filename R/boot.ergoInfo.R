@@ -77,7 +77,7 @@
 #'
 #' @export
 # Bootstrap Test for the Ergodicity Information Index
-# Updated 07.07.2022
+# Updated 09.07.2022
 boot.ergoInfo <- function(
     dynEGA.object,
     EII, iter = 100,
@@ -246,6 +246,8 @@ boot.ergoInfo <- function(
     "less" = "The empirical EII was less than what would be expected from random variation in the population structure, meaning non-significant information is lost when aggregating the results into a single, population network.",
     "greater" = "The empirical EII was greater than what would be expected from random variation in the population structure, meaning significant information is lost when aggregating the results into a single, population network."
   )
+  
+  results$interpretation <- interpretation
   
   results$plot.dist <- plot.bootErgoInfo
   
