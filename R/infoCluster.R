@@ -13,12 +13,6 @@
 #' Defaults to \code{TRUE}.
 #' Set to \code{FALSE} to not plot
 #'
-#' @param ncores Numeric.
-#' Number of cores to use in computing results.
-#' Defaults to \code{parallel::detectCores() / 2} or half of your
-#' computer's processing power.
-#' Set to \code{1} to not use parallel computing
-#'
 #' @examples
 #'
 #' \dontrun{
@@ -31,7 +25,6 @@
 #' # Perform hierarchical clustering
 #' clust1 <- infoCluster(
 #'   dynEGA.object = dyn1,
-#'   ncores = 2,
 #'   plot.cluster = TRUE
 #' )
 #' }}
@@ -51,7 +44,7 @@
 #' @export
 # Information Theoretic Clustering for dynEGA
 # Updated 10.07.2022
-infoCluster <- function(dynEGA.object, ncores, plot.cluster = TRUE)
+infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
 {
   
   # Check for class

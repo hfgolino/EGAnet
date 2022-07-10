@@ -4,17 +4,11 @@
 \alias{infoCluster}
 \title{Information Theoretic Mixture Clustering for \code{\link[EGAnet]{dynEGA}}}
 \usage{
-infoCluster(dynEGA.object, ncores, plot.cluster = TRUE)
+infoCluster(dynEGA.object, plot.cluster = TRUE)
 }
 \arguments{
 \item{dynEGA.object}{A \code{\link[EGAnet]{dynEGA}} or a
 \code{\link[EGAnet]{dynEGA.ind.pop}} object that is used to match the arguments of the EII object.}
-
-\item{ncores}{Numeric.
-Number of cores to use in computing results.
-Defaults to \code{parallel::detectCores() / 2} or half of your
-computer's processing power.
-Set to \code{1} to not use parallel computing}
 
 \item{plot.cluster}{Boolean.
 Should plot of optimal and hierarchical clusters be output?
@@ -50,7 +44,6 @@ dyn1 <- dynEGA.ind.pop(data = sim.dynEGA[,-c(22)], n.embed = 5, tau = 1,
 # Perform hierarchical clustering
 clust1 <- infoCluster(
   dynEGA.object = dyn1,
-  ncores = 2,
   plot.cluster = TRUE
 )
 }}
