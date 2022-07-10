@@ -43,6 +43,8 @@
 #' \item{clusterTree}{The dendogram data frame showing the hierarhical clustering}
 #'
 #' \item{clusterPlot}{Plot output from results}
+#' 
+#' \item{JSS}{Jensen-Shannon Similarity based on 1 - Jensen-Shannon Distance}
 #'
 #' @author Hudson Golino <hfg9s at virginia.edu> & Alexander P. Christensen <alexander.christensen at Vanderbilt.Edu>
 #'
