@@ -95,70 +95,50 @@ infoCluster <- function(dynEGA.object, ncores, plot.cluster = TRUE)
   # Message user
   message("Computing Jensen-Shannon Distance...\n", appendLF = FALSE)
 
-  # Initialize parallelization
-  cl <- parallel::makeCluster(ncores)
-  
-  # Export functions
-  parallel::clusterExport(
-    cl = cl,
-    varlist = c(
-      "rescaled_laplacian",
-      "vn_entropy",
-      "jsd",
-      "networks"
-    ),
-    envir = environment()
-  )
-  
-  # Loop through participants
-  jsd_list <- pbapply::pblapply(
-    cl = cl,
-    X = 2:length(networks),
-    FUN = function(i){
-      
-      # Index
-      index <- i
-      
-      # Loop through other participants
-      jsd_values <- lapply(X = 1:(index-1), FUN = function(j){
-        
-        # Try
-        jsd_value <- try(
-          jsd(
-            networks[[index]], networks[[j]]
-          ),
-          silent = TRUE
-        )
-        
-        # Check if value is OK
-        if(!is(jsd_value, "try-error")){
-          return(jsd_value)
-        }else{
-          return(NA)
-        }
-      
-      })
-      
-      # Return
-      return(unlist(jsd_values))
-      
-    }
-  )
-  
-  # Stop cluster
-  parallel::stopCluster(cl)
-  
-  # Create matrix
+  # Initialize JSD matrix
   jsd_matrix <- matrix(
     0,
     nrow = length(networks),
     ncol = length(networks)
   )
   
-  # Loop through list
-  for(i in 1:length(jsd_list)){
-    jsd_matrix[i+1, 1:(length(jsd_list[[i]]))] <- jsd_list[[i]]
+  # Set up progess bar
+  pb <- txtProgressBar(
+    max = length(networks),
+    style = 3
+  )
+  
+  # Populate JSD matrix
+  for(i in 2:length(networks)){
+    
+    for(j in 1:(i-1)){
+      
+      # Try
+      jsd_value <- try(
+        jsd(
+          networks[[i]], networks[[j]]
+        ),
+        silent = TRUE
+      )
+      
+      # Check if value is OK
+      if(!is(jsd_value, "try-error")){
+        jsd_matrix[i,j] <- jsd(
+          networks[[i]], networks[[j]]
+        )
+      }else{
+        jsd_matrix[i,j] <- NA
+      }
+      
+    }
+    
+    # Update progress bar
+    setTxtProgressBar(pb, i)
+    
   }
+  
+  # Close progress bar
+  close(pb)
   
   # Make symmetric
   jsd_sym <- jsd_matrix + t(jsd_matrix)
