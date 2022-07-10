@@ -222,12 +222,15 @@ infoCluster <- function(dynEGA.object, ncores, plot.cluster = TRUE)
         cluster_list[[counter - 1]] == i
       )
       
-      # Obtain lower clusters
-      cluster_list[[counter]][index] <- most_common_consensus(
-        jss[index, index],
-        order = "lower",
-        consensus.iter = 1000
-      )$most_common + cluster_add
+      # Skip over index if not matrix
+      if(is.matrix(jss[index, index])){
+        # Obtain lower clusters
+        cluster_list[[counter]][index] <- most_common_consensus(
+          jss[index, index],
+          order = "lower",
+          consensus.iter = 1000
+        )$most_common + cluster_add
+      }
       
       # Increase cluster number to add
       cluster_add <- max(cluster_list[[counter]][index])
