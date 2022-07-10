@@ -28,7 +28,7 @@ Returns a list containing:
 
 \item{clusterTree}{The dendogram data frame showing the hierarhical clustering}
 
-\item{plot}{Plot output from results}
+\item{clusterPlot}{Plot output from results}
 }
 \description{
 Performs hierarchical clustering using Jensen-Shannon distance

@@ -6425,12 +6425,6 @@ rewire <- function(network, noise = TRUE)
   # Number of edges
   edges <- sum(ifelse(network != 0, 1, 0)) / 2
   
-  # Set random proportion
-  proportion <- runif(1, min = 0.10, 0.40)
-  
-  # Obtain proportion of connections to change
-  rewire_number <- floor(edges * proportion)
-  
   # Add noise
   if(isTRUE(noise)){
     
@@ -6443,6 +6437,12 @@ rewire <- function(network, noise = TRUE)
       )
     
   }
+  
+  # Set random proportion
+  proportion <- runif(1, min = 0.10, max = 0.40)
+  
+  # Obtain proportion of connections to change
+  rewire_number <- floor(edges * proportion)
   
   # Obtain edge list
   lower_network <- network

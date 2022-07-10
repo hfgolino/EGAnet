@@ -42,13 +42,13 @@
 #' 
 #' \item{clusterTree}{The dendogram data frame showing the hierarhical clustering}
 #'
-#' \item{plot}{Plot output from results}
+#' \item{clusterPlot}{Plot output from results}
 #'
 #' @author Hudson Golino <hfg9s at virginia.edu> & Alexander P. Christensen <alexander.christensen at Vanderbilt.Edu>
 #'
 #' @export
 # Information Theoretic Clustering for dynEGA
-# Updated 07.07.2022
+# Updated 10.07.2022
 infoCluster <- function(dynEGA.object, ncores, plot.cluster = TRUE)
 {
   
