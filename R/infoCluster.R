@@ -250,6 +250,17 @@ infoCluster <- function(dynEGA.object, ncores, plot.cluster = TRUE)
   
   # Message user
   message("done", appendLF = TRUE)
+  
+  # Loop through cluster list
+  # Replace all unique with one cluster
+  cluster_list <- lapply(cluster_list, function(x){
+    if(length(x) == length(unique(x))){
+      one <- rep(1, length(x))
+      names(one) <- names(x)
+      x <- one
+    }
+    return(x)
+  })
 
   ## Initialize tree matrix
   cluster_tree <- data.frame(
