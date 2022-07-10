@@ -97,16 +97,16 @@ infoCluster <- function(dynEGA.object, ncores, plot.cluster = TRUE)
   cl <- parallel::makeCluster(ncores)
   
   # Export functions
-  # parallel::clusterExport(
-  #   cl = cl,
-  #   varlist = c(
-  #     "rescaled_laplacian",
-  #     "vn_entropy",
-  #     "jsd",
-  #     "networks"
-  #   ),
-  #   envir = environment()
-  # )
+  parallel::clusterExport(
+    cl = cl,
+    varlist = c(
+      "rescaled_laplacian",
+      "vn_entropy",
+      "jsd",
+      "networks"
+    ),
+    envir = environment()
+  )
   
   # Loop through participants
   jsd_list <- pbapply::pblapply(
@@ -315,12 +315,22 @@ infoCluster <- function(dynEGA.object, ncores, plot.cluster = TRUE)
   ## Move ID to front
   cluster_tree <- cluster_tree[,c("id", colnames(cluster_tree)[-ncol(cluster_tree)])]
   
+  ## Obtain best modularity
+  jss_modularity <- apply(cluster_tree[,-1], 2, function(x){
+    modularity(
+      x, jss, resolution = 1
+    )
+  })
+  return_cluster <- which.max(jss_modularity)
+  
+  
   ## Return data
   results <- list()
-  results$clusters <- cluster_tree[,ncol(cluster_tree)]
+  results$clusters <- cluster_tree[,return_cluster + 1]
   names(results$clusters) <- cluster_tree$id
   results$clusterTree <- cluster_tree
   results$clusterPlot <- phylo_tree
+  results$JSS <- jss
   
   ## Set class
   class(results) <- "infoCluster"
