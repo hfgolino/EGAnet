@@ -297,7 +297,7 @@
 #' @export
 #'
 # Hierarchical EGA
-# Updated 07.07.2022
+# Updated 13.07.2022
 hierEGA <- function(
     data, scores = c("factor", "network"),
     consensus.iter = 1000,
@@ -704,10 +704,19 @@ hierEGA <- function(
 
   }
   
-  # Check for disconnected nodes
-  # If any nodes are disconnected,
-  # then a general factor cannot underlie the data
-  if(any(colSums(hierarchical$higher_order$EGA$network) == 0)){
+  # Perform parallel PCA to check for no general factors
+  sink <- capture.output(
+    pca <- 
+      psych::fa.parallel(
+        x = hierarchical$higher_order$EGA$correlation,
+        fa = "pc",
+        n.obs = nrow(data),
+        plot = FALSE
+      )
+  )
+  
+  # Check if zero components
+  if(pca$ncomp == 0){
     message("No general dimensions were identified. Lower order solution represents major dimensions.")
     hierarchical$higher_order$EGA$n.dim <- 0
     new_wc <- rep(
