@@ -43,7 +43,7 @@
 #'
 #' @export
 # Information Theoretic Clustering for dynEGA
-# Updated 10.07.2022
+# Updated 14.07.2022
 infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
 {
   
@@ -62,11 +62,6 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
     dynEGA.pop <- dynEGA.object$dynEGA.pop
   }else if(is(dynEGA.object, "dynEGA")){
     dynEGA.pop <- dynEGA.object
-  }
-  
-  # Missing parallelization
-  if(missing(ncores)){
-    ncores <- ceiling(parallel::detectCores() / 2)
   }
   
   # Obtain individual dynEGA objects only

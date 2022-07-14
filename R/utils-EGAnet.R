@@ -6534,34 +6534,6 @@ vn_entropy <- function(L_mat)
   
 }
 
-#' @noRd
-# Jensen-Shannon Distance
-# Updated 06.07.2022
-jsd <- function(net1, net2)
-{
-  
-  # Obtain rescaled Laplacian matrices
-  rL1 <- rescaled_laplacian(net1)
-  rL2 <- rescaled_laplacian(net2)
-  
-  # Obtain individual VN entropies
-  vn1 <- vn_entropy(rL1)
-  vn2 <- vn_entropy(rL2)
-  
-  # Obtain combined VN entropy
-  rL_comb <- 0.5 * (rL1 + rL2)
-  vn_comb <- vn_entropy(rL_comb)
-  
-  # Compute JSD
-  JSD <- sqrt(
-    vn_comb - (0.5 * (vn1 + vn2))
-  )
-  
-  # Return
-  return(abs(JSD))
-  
-}
-
 #%%%%%%%%%%%%%%%%%%%%%%
 # SYSTEM FUNCTIONS ----
 #%%%%%%%%%%%%%%%%%%%%%%
