@@ -286,12 +286,16 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
   cluster_tree <- cluster_tree[,c("id", colnames(cluster_tree)[-ncol(cluster_tree)])]
   
   ## Obtain best modularity
-  jss_modularity <- apply(cluster_tree[,-1], 2, function(x){
-    modularity(
-      x, jss, resolution = 1
-    )
-  })
-  return_cluster <- which.max(jss_modularity)
+  if(ncol(cluster_tree) > 2){
+    jss_modularity <- apply(cluster_tree[,-1], 2, function(x){
+      modularity(
+        x, jss, resolution = 1
+      )
+    })
+    return_cluster <- which.max(jss_modularity)
+  }else{
+    return_cluster <- 1
+  }
   
   
   ## Return data
