@@ -16,6 +16,10 @@ o REMOVE: "alpha" and "adapt" options in `UVA` (removes {fitdistrplus} dependenc
 
 o REMOVE: {qgraph} plots are no longer available
 
+o ADD: `convert2igraph` is now a core function
+
+o ADD: Jensen-Shannon Divergence `jsd` for determining (dis)similarity between network strcutures
+
 
 Changes in version 1.1.0
 
