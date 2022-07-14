@@ -166,7 +166,7 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
   cluster_list[[1]] <- most_common_consensus(
     jss,
     order = "lower",
-    consensus.iter = 1000
+    consensus.iter = 100
   )$most_common
   
   # Set count
@@ -198,7 +198,7 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
         cluster_list[[counter]][index] <- most_common_consensus(
           jss[index, index],
           order = "lower",
-          consensus.iter = 1000
+          consensus.iter = 100
         )$most_common + cluster_add
       }
       

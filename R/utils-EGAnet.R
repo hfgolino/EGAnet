@@ -3162,18 +3162,6 @@ MASS_mvrnorm <- function (n = 1, mu, Sigma, tol = 1e-06, empirical = FALSE, EISP
   else t(X)
 }
 
-#' @noRd
-# Converts networks to igraph
-convert2igraph <- function (A)
-{
-  return(
-    igraph::graph_from_adjacency_matrix(
-      A, weighted = TRUE, mode = "undirected",
-      add.colnames = FALSE
-    )
-  )
-}
-
 #%%%%%%%%%%%%%%%%%%%%%%%%
 # DATA GENERATION ----
 #%%%%%%%%%%%%%%%%%%%%%%%%
