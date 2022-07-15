@@ -6488,11 +6488,9 @@ rewire <- function(network, noise = TRUE)
 # Updated 15.07.2022
 rescaled_laplacian <- function(net)
 {
-  # Rescaling factor (c)
-  rescale <- 1 / sum(net)
-  
-  # Laplacian matrix (c * (D - A))
-  L <- rescale * diag(colSums(net)) - net
+
+  # Laplacian matrix
+  L <- diag(colSums(net)) - net
   
   # Density matrix
   density_L <- L / diag(L) / ncol(L)
