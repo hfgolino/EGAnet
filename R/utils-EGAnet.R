@@ -6493,10 +6493,10 @@ rescaled_laplacian <- function(net)
   L <- diag(colSums(net)) - net
   
   # Density matrix
-  density_L <- L / diag(L) / ncol(L)
+  rescaled_L <- L / diag(L) / ncol(L)
   
   # Return
-  return(density_L)
+  return(rescaled_L)
   
 }
 
