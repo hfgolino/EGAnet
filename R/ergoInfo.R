@@ -421,8 +421,8 @@ ergoInfo <- function(
     results$KComp.pop <- mean(unlist(population_kcomp))
     results$complexity <- results$KComp / results$KComp.pop
     results$EII  <- sqrt(dynEGA.pop$dynEGA$n.dim)^((results$KComp/results$KComp.pop)/log(
-      nrow(population_edge_list)
-      # sum(encoding_matrix != 0) / 2
+      # nrow(population_edge_list)
+      sum(encoding_matrix != 0) / 2
       # ^^ used in Santoro and Nicosia (2020)
     ))
     results$use <- use
