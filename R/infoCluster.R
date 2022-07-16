@@ -333,7 +333,9 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
   
   # Check if plot should be plotted
   if(isTRUE(plot.cluster)){
-    plot(cluster_plot)
+    suppressWarnings(
+      plot(cluster_plot)
+    )
   }
   
   ## Return data
