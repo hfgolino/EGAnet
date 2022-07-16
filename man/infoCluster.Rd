@@ -20,11 +20,11 @@ Returns a list containing:
 
 \item{clusters}{A vector corresponding to cluster each participant belongs to}
 
-\item{clusterTree}{The dendogram data frame showing the hierarhical clustering}
+\item{clusterTree}{The dendogram from \code{\link[stats]{hclust}} the hierarhical clustering}
 
 \item{clusterPlot}{Plot output from results}
 
-\item{JSS}{Jensen-Shannon Similarity based on 1 - Jensen-Shannon Distance}
+\item{JSD}{Jensen-Shannon Distance}
 }
 \description{
 Performs hierarchical clustering using Jensen-Shannon distance

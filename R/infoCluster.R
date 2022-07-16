@@ -33,17 +33,19 @@
 #' 
 #' \item{clusters}{A vector corresponding to cluster each participant belongs to}
 #' 
-#' \item{clusterTree}{The dendogram data frame showing the hierarhical clustering}
+#' \item{clusterTree}{The dendogram from \code{\link[stats]{hclust}} the hierarhical clustering}
 #'
 #' \item{clusterPlot}{Plot output from results}
 #' 
-#' \item{JSS}{Jensen-Shannon Similarity based on 1 - Jensen-Shannon Distance}
+#' \item{JSD}{Jensen-Shannon Distance}
 #'
 #' @author Hudson Golino <hfg9s at virginia.edu> & Alexander P. Christensen <alexander.christensen at Vanderbilt.Edu>
-#'
+#' 
+#' @importFrom stats hclust
+#' 
 #' @export
 # Information Theoretic Clustering for dynEGA
-# Updated 14.07.2022
+# Updated 16.07.2022
 infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
 {
   
@@ -131,180 +133,154 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
   # Make symmetric
   jsd_sym <- jsd_matrix + t(jsd_matrix)
   
-  # Get similarity
-  jss <- 1 - jsd_sym
-  
   # Add names
-  colnames(jss) <- names(networks)
-  row.names(jss) <- names(networks)
+  colnames(jsd_sym) <- names(networks)
+  row.names(jsd_sym) <- names(networks)
+  
+  # Make jsdist
+  jsdist <- jsd_sym
   
   # Make diagonal NA
-  diag(jss) <- NA
+  diag(jsdist) <- NA
   
   # Remove all NAs
-  rm_cols <- apply(jss, 2, function(x){all(is.na(x))})
+  rm_cols <- apply(jsdist, 2, function(x){all(is.na(x))})
   
   # Remove missing data points
-  jss <- jss[!rm_cols, !rm_cols]
+  jsdist <- jsdist[!rm_cols, !rm_cols]
   
-  # Make diagonal 1 again
-  diag(jss) <- 1
+  # Make diagonal 0 again
+  diag(jsdist) <- 0
   
-  # Remove values -1 > x > 1
-  rm_cols <- apply(jss, 2, function(x){any(abs(x) > 1)})
-  
-  # Remove missing data points
-  jss <- jss[!rm_cols, !rm_cols]
-  
-  # Message user
-  message("Obtaining clusters...", appendLF = FALSE)
-  
-  # Obtain cluster list
-  cluster_list <- list()
-  
-  # Obtain clusters
-  cluster_list[[1]] <- most_common_consensus(
-    jss,
+  # Compute Louvain
+  consensus <- most_common_consensus(
+    1 - jsdist,
     order = "lower",
-    consensus.iter = 100
+    consensus.iter = 1000
   )$most_common
   
-  # Set count
-  counter <- 2
+  # Unique consensus
+  unique_consensus <- length(na.omit(unique(consensus)))
   
-  # Obtain finer clusters
-  while(TRUE){
+  # Perform hierarchical clustering
+  hier_clust <- hclust(as.dist(jsdist))
+  
+  # Check for single cluster
+  if(
+    unique_consensus == 1 | # consensus = 1 OR
+    unique_consensus == length(consensus) # consensus all individuals
+  ){
     
-    # Obtain unique clusters
-    unique_clusters <- unique(cluster_list[[counter - 1]])
+    # Obtain clusters
+    clusters <- walktrap$membership
+    names(clusters) <- colnames(jsdist)
     
-    # Initialize next clusters
-    cluster_list[[counter]] <- cluster_list[[counter - 1]]
-    
-    # Initialize cluster number to add
-    cluster_add <- 0
-    
-    # Apply clustering to clusters
-    for(i in unique_clusters){
-      
-      # Obtain index
-      index <- which(
-        cluster_list[[counter - 1]] == i
-      )
-      
-      # Skip over index if not matrix
-      if(is.matrix(jss[index, index])){
-        # Obtain lower clusters
-        cluster_list[[counter]][index] <- most_common_consensus(
-          jss[index, index],
-          order = "lower",
-          consensus.iter = 100
-        )$most_common + cluster_add
-      }
-      
-      # Increase cluster number to add
-      cluster_add <- max(cluster_list[[counter]][index])
-    
-    }
-    
-    # Break when all are equal
-    if(all(cluster_list[[counter]] == cluster_list[[counter - 1]])){
-      cluster_list <- cluster_list[-counter]
-      break
-    }
-    
-    # Increase count
-    counter <- counter + 1
-    
-  }
-  
-  # Message user
-  message("done", appendLF = TRUE)
-  
-  # Loop through cluster list
-  # Replace all unique with one cluster
-  cluster_list <- lapply(cluster_list, function(x){
-    if(length(x) == length(unique(x))){
-      one <- rep(1, length(x))
-      names(one) <- names(x)
-      x <- one
-    }
-    return(x)
-  })
-
-  ## Initialize tree matrix
-  cluster_tree <- data.frame(
-    cluster0 = 0,
-    cluster1 = cluster_list[[1]]
-  )
-  
-  ## Populate tree matrix
-  if(length(cluster_list) > 1){
-    for(i in 2:length(cluster_list)){
-      
-      # Make another tree
-      cluster_tree[[paste("cluster", i, sep = "")]] <- cluster_list[[i]]
-      
-    }
-  }
-  
-  ## Add ID
-  cluster_tree$id = names(cluster_list[[1]])
-  row.names(cluster_tree) <- NULL
-  
-  ## Initialize path string
-  cluster_tree$pathString <- 0
-  
-  ## Add path string
-  for(i in 1:nrow(cluster_tree)){
-    
-    cluster_tree$pathString[i] <- paste(
-      cluster_tree[i,-ncol(cluster_tree)], sep = "", collapse = "/"
-    )
-    
-  }
-
-  ## Set as node
-  cluster_node <- data.tree::as.Node(cluster_tree)
-  
-  ## Convert to phylo tree
-  phylo_tree <- ape::as.phylo(
-    cluster_node
-  )
-  
-  ## Check for plot
-  if(isTRUE(plot.cluster)){
-    plot(phylo_tree)
-  }
-  
-  
-  # Prepare data for results
-  ## Remove first and last column of cluster tree
-  cluster_tree <- cluster_tree[,-c(1, ncol(cluster_tree))]
-  
-  ## Move ID to front
-  cluster_tree <- cluster_tree[,c("id", colnames(cluster_tree)[-ncol(cluster_tree)])]
-  
-  ## Obtain best modularity
-  if(ncol(cluster_tree) > 2){
-    jss_modularity <- apply(cluster_tree[,-1], 2, function(x){
-      modularity(
-        x, jss, resolution = 1
-      )
-    })
-    return_cluster <- which.max(jss_modularity)
   }else{
-    return_cluster <- 1
+    
+    # Initialize silhouette vector
+    silhouette_vec <- numeric(length = ncol(jsdist) - 1)
+    
+    # Make names the number of clusters
+    names(silhouette_vec) <- 2:ncol(jsdist)
+    
+    # Loop through cuts
+    for(i in 2:length(silhouette_vec)){
+      
+      # Compute silhouette
+      hier_silho <- cluster::silhouette(
+        x = cutree(hier_clust, i),
+        dist = as.dist(jsdist)
+      )
+      
+      # Obtain summary
+      silho_summ <- summary(hier_silho)
+      
+      # Obtain average silhouette
+      silhouette_vec[i-1] <- mean(silho_summ$clus.avg.widths)
+      
+    }
+    
+    # Obtain maximum average silhouette
+    optimal_cut <- as.numeric(names(which.max(silhouette_vec)))
+    
+    # Obtain clusters
+    clusters <- cutree(hier_clust, optimal_cut)
+    
   }
   
+  # Obtain optimal silhouette
+  optimal_silho <- cluster::silhouette(
+    x = clusters,
+    dist = as.dist(jsdist)
+  )
+  
+  # Convert for ggplot2
+  cluster_data <- ggdendro::dendro_data(
+    hier_clust
+  )
+  
+  # Create data frame
+  cluster_df <- data.frame(
+    label = names(clusters),
+    cluster = factor(clusters)
+  )
+  
+  # Merge data
+  cluster_data$labels <- merge(
+    cluster_data$labels, cluster_df,
+    by = "label"
+  )
+  
+  # Set colors
+  cluster_data$segments$cluster <- cluster_data$labels$cluster[
+    match(
+      floor(cluster_data$segments$x),
+      cluster_data$labels$x
+    )
+  ]
+  
+  # Set up plot
+  cluster_plot <- ggplot2::ggplot() +
+    ggplot2::geom_segment(
+      data = ggdendro::segment(cluster_data),
+      ggplot2::aes(x = x, y = y, xend = xend, yend = yend, color = cluster)
+    ) +
+    ggplot2::geom_text(
+      data = ggdendro::label(cluster_data),
+      ggplot2::aes(x, y, label = label, hjust = 0), 
+      size = 3
+    ) +
+    ggplot2::scale_color_manual(
+      values = color_palette_EGA(
+        "polychrome", wc = 1:max(clusters)
+      )
+    ) +
+    ggplot2::coord_flip() + 
+    ggplot2::scale_y_reverse(expand = c(0.2, 0)) + 
+    ggplot2::theme(
+      axis.line = ggplot2::element_blank(),
+      axis.ticks = ggplot2::element_blank(),
+      axis.text = ggplot2::element_blank(),
+      axis.title = ggplot2::element_blank(),
+      panel.background = ggplot2::element_blank(),
+      panel.grid = ggplot2::element_blank(),
+      legend.key = ggplot2::element_blank()
+    ) +
+    ggplot2::guides(
+      color = ggplot2::guide_legend(title = "Cluster")
+    )
+  
+  # Check if plot should be plotted
+  if(isTRUE(plot.cluster)){
+    plot(cluster_plot)
+  }
   
   ## Return data
   results <- list()
-  results$clusters <- cluster_tree[,return_cluster + 1]
-  names(results$clusters) <- cluster_tree$id
-  results$clusterTree <- cluster_tree
-  results$clusterPlot <- phylo_tree
-  results$JSS <- jss
+  results$clusters <- clusters
+  results$clusterTree <- hier_clust
+  results$clusterPlot <- cluster_plot
+  results$JSD <- jsdist
   
   ## Set class
   class(results) <- "infoCluster"
