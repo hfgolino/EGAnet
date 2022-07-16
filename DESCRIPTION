@@ -13,7 +13,7 @@ Depends: R (>= 3.5.0)
 License: GPL (>= 3.0)
 Encoding: UTF-8
 LazyData: true
-Imports: glasso, GGally, ggdendro,
+Imports: cluster, glasso, GGally, ggdendro,
 	   ggplot2, ggpubr, igraph, lavaan,
 	   Matrix, matrixcalc, methods,
 	   network, OpenMx, pbapply, qgraph,

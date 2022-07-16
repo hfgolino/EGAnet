@@ -41,7 +41,8 @@
 #'
 #' @author Hudson Golino <hfg9s at virginia.edu> & Alexander P. Christensen <alexander.christensen at Vanderbilt.Edu>
 #' 
-#' @importFrom stats hclust
+#' @importFrom stats hclust as.dist cutree
+#' @importFrom utils globalVariables
 #' 
 #' @export
 # Information Theoretic Clustering for dynEGA
@@ -287,15 +288,15 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
   }else{
     label <- c("", 1:max(clusters))
   }
-
+  
   # Set up plot
   cluster_plot <- ggplot2::ggplot() +
     ggplot2::geom_segment(
-      data = ggdendro::segment(cluster_data),
+      data = cluster_data$segment,
       ggplot2::aes(x = x, y = y, xend = xend, yend = yend, color = cluster)
     ) +
     ggplot2::geom_text(
-      data = ggdendro::label(cluster_data),
+      data = cluster_data$label,
       ggplot2::aes(x, y, label = label, hjust = 0),
       size = 3
     ) +
