@@ -6406,7 +6406,7 @@ expand.grid.unique <- function(x, y, include.equals = FALSE)
 
 #' Rewiring function
 #' @noRd
-# Updated 07.07.2022
+# Updated 16.07.2022
 rewire <- function(network, noise = TRUE)
 {
   
@@ -6416,18 +6416,28 @@ rewire <- function(network, noise = TRUE)
   # Add noise
   if(isTRUE(noise)){
     
+    # Lower triangle of network
+    lower_network <- network[lower.tri(network)]
+    
     # Only add to existing edges
-    network[network != 0] <- network[network != 0] +
+    lower_network[lower_network != 0] <- lower_network[lower_network != 0] +
       runif(
-        n = length(network[network != 0]),
+        n = edges,
         min = -0.10,
         max = 0.10
       )
     
+    # Replace lower network
+    network[lower.tri(network)] <- lower_network
+    
+    # Replace upper network
+    network <- t(network)
+    network[lower.tri(network)] <- lower_network
+    
   }
   
   # Set random proportion
-  proportion <- runif(1, min = 0.10, max = 0.40)
+  proportion <- runif(1, min = 0.20, max = 0.40)
   
   # Obtain proportion of connections to change
   rewire_number <- floor(edges * proportion)
