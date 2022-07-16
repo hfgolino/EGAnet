@@ -172,7 +172,7 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
   ){
     
     # Obtain clusters
-    clusters <- walktrap$membership
+    clusters <- rep(1, ncol(jsdist))
     names(clusters) <- colnames(jsdist)
     
   }else{
@@ -231,14 +231,63 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
     by = "label"
   )
   
-  # Set colors
-  cluster_data$segments$cluster <- cluster_data$labels$cluster[
-    match(
-      floor(cluster_data$segments$x),
-      cluster_data$labels$x
-    )
-  ]
+  # Split dendrogram into upper grey section and lower coloured section
+  cut <- max(clusters)
+  height <- unique(cluster_data$segments$y)[order(unique(cluster_data$segments$y), decreasing = TRUE)]
+  cut.height <- mean(c(height[cut], height[cut-1]))
+  cluster_data$segments$line <- ifelse(cluster_data$segments$y == cluster_data$segments$yend &
+                                  cluster_data$segments$y > cut.height, 1, 2)
+  cluster_data$segments$line <- ifelse(cluster_data$segments$yend  > cut.height, 1, cluster_data$segments$line)
   
+  # Number the clusters
+  cluster_data$segments$cluster <- c(-1, diff(cluster_data$segments$line))
+  change <- which(cluster_data$segments$cluster == 1)
+  for (i in 1:cut) cluster_data$segments$cluster[change[i]] = i + 1
+  cluster_data$segments$cluster <-  ifelse(cluster_data$segments$line == 1, 1, 
+                                    ifelse(cluster_data$segments$cluster == 0, NA, cluster_data$segments$cluster))
+  
+    
+  # Replace NA values in cluster
+  for(i in seq_along(cluster_data$segments$cluster)){
+    
+    if(is.na(cluster_data$segments$cluster[i])){
+      cluster_data$segments$cluster[i] <- cluster_data$segments$cluster[i-1]
+    }
+    
+  }
+  
+  
+  # Consistent numbering between segment$cluster and label$cluster
+  cluster_df$label <- factor(cluster_df$label, levels = cluster_data$labels$label)
+  cluster_df$cluster <- factor((cluster_df$cluster), levels = unique(cluster_df$cluster), labels = (1:cut) + 1)
+  cluster_data[["labels"]] <- merge(cluster_data[["labels"]], cluster_df, by = "label")
+  
+  # Positions for cluster labels
+  n.rle <- rle(cluster_data$segments$cluster)
+  N <- cumsum(n.rle$lengths)
+  N <- N[seq(1, length(N), 2)] + 1
+  N.df <- cluster_data$segments[N, ]
+  N.df$cluster <- N.df$cluster - 1
+  
+  # Check for all the same cluster
+  if(all(cluster_data$segments$cluster == -1)){
+    cluster_data$segments$cluster <- rep(
+      1, length(cluster_data$segments$cluster)
+    )
+  }
+  
+  # Ensure clusters are factors
+  cluster_data$segments$cluster <- as.factor(
+    cluster_data$segments$cluster
+  )
+  
+  # Make labels
+  if(max(clusters) == 1){
+    label <- "1"
+  }else{
+    label <- c("", 1:max(clusters))
+  }
+
   # Set up plot
   cluster_plot <- ggplot2::ggplot() +
     ggplot2::geom_segment(
@@ -247,12 +296,23 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
     ) +
     ggplot2::geom_text(
       data = ggdendro::label(cluster_data),
-      ggplot2::aes(x, y, label = label, hjust = 0), 
+      ggplot2::aes(x, y, label = label, hjust = 0),
       size = 3
     ) +
+    ggplot2::geom_text(
+      data = N.df,
+      ggplot2::aes(
+        x = x, y = y, label = factor(cluster),
+        colour = factor(cluster + 1)
+      ),
+      hjust = 1.5, show.legend = FALSE
+    ) +
     ggplot2::scale_color_manual(
-      values = color_palette_EGA(
-        "polychrome", wc = 1:max(clusters)
+      labels = label,
+      values = c(
+        "grey", color_palette_EGA(
+          "polychrome", wc = 1:max(clusters)
+        )
       )
     ) +
     ggplot2::coord_flip() + 
@@ -264,7 +324,8 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
       axis.title = ggplot2::element_blank(),
       panel.background = ggplot2::element_blank(),
       panel.grid = ggplot2::element_blank(),
-      legend.key = ggplot2::element_blank()
+      legend.key = ggplot2::element_blank(),
+      legend.title = ggplot2::element_text(hjust = 0.5)
     ) +
     ggplot2::guides(
       color = ggplot2::guide_legend(title = "Cluster")
