@@ -6498,12 +6498,11 @@ rewire <- function(network, noise = TRUE)
 # Updated 15.07.2022
 rescaled_laplacian <- function(net)
 {
-
-  # Laplacian matrix
-  L <- diag(colSums(net)) - net
+  # Ensure diagonal is zero
+  diag(net) <- 0
   
-  # Density matrix
-  rescaled_L <- L / diag(L) / ncol(L)
+  # Laplacian matrix
+  rescaled_L <- (diag(colSums(net)) - net) / sum(net)
   
   # Return
   return(rescaled_L)

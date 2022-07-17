@@ -57,13 +57,13 @@ jsd <- function(network1, network2)
   # Obtain combined VN entropy
   rL_comb <- 0.5 * (rL1 + rL2)
   vn_comb <- vn_entropy(rL_comb)
-  
+
   # Compute JSD
   JSD <- sqrt(
     vn_comb - (0.5 * (vn1 + vn2))
   )
   
   # Return
-  return(abs(JSD))
+  return(Re(JSD))
   
 }
