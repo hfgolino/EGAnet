@@ -41,10 +41,10 @@ glas1 <- EBICglasso.qgraph(data1)
 glas2 <- EBICglasso.qgraph(data2)
 
 # Compute Jensen-Shannon Distance
-jsd(glas1, glas2) # 0.1614156
+jsd(glas1, glas2) # 0.1832602
 
 # Compute Jensen-Shannon Similarity
-1 - jsd(glas1, glas2) # 0.8385844
+1 - jsd(glas1, glas2) # 0.8167398
 
 }
 \author{

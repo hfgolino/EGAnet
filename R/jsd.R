@@ -30,10 +30,10 @@
 #' glas2 <- EBICglasso.qgraph(data2)
 #' 
 #' # Compute Jensen-Shannon Distance
-#' jsd(glas1, glas2) # 0.1614156
+#' jsd(glas1, glas2) # 0.1832602
 #' 
 #' # Compute Jensen-Shannon Similarity
-#' 1 - jsd(glas1, glas2) # 0.8385844
+#' 1 - jsd(glas1, glas2) # 0.8167398
 #'
 #' @return Returns Jensen-Shannon Distance
 #'
@@ -42,7 +42,7 @@
 #' @export
 #' 
 # Jensen-Shannon Distance
-# Updated 14.07.2022
+# Updated 17.07.2022
 jsd <- function(network1, network2)
 {
   
