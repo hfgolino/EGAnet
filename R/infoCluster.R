@@ -1,10 +1,12 @@
-#' Variation of Information Hierarchical Clustering
+#' Information Theoretic Mixture Clustering for \code{\link[EGAnet]{dynEGA}}
 #'
-#' @description Performs hierarchical k-means clustering using variation of information
-#' of the community memberships derived from individuals in \code{\link[EGAnet]{dynEGA}}
+#' @description Performs hierarchical clustering using Jensen-Shannon distance
+#' followed by the Louvain algorithm with consensus clustering. The method
+#' iteratively identifies smaller and smaller clusters until there is no
+#' change in the clusters identified
 #'
 #' @param dynEGA.object  A \code{\link[EGAnet]{dynEGA}} or a
-#' \code{\link[EGAnet]{dynEGA.pop.ind}} object that is used to match the arguments of the EII object.
+#' \code{\link[EGAnet]{dynEGA.ind.pop}} object that is used to match the arguments of the EII object.
 #' 
 #' @param plot.cluster Boolean.
 #' Should plot of optimal and hierarchical clusters be output?
@@ -29,34 +31,30 @@
 #'
 #' @return Returns a list containing:
 #' 
-#' \item{id_clusters}{A list containing the IDs for each cluster. 
-#' \code{missing} contains IDs that were not able to be included due
-#' to missing too many memberships (NA >= 0.50)}
-#'
-#' \item{optimal}{Optimal clusters determine by *k*-means clustering from
-#' \code{\link[factoextra]{fviz_nbclust}}}
+#' \item{clusters}{A vector corresponding to cluster each participant belongs to}
 #' 
-#' \item{hierarchical}{Results of the hierarchical clustering based on the optimal
-#' number of clusts. Reports results from \code{\link[factoextra]{hcut}}}
+#' \item{clusterTree}{The dendogram from \code{\link[stats]{hclust}} the hierarhical clustering}
 #'
-#' \item{plot}{Plot output from results}
+#' \item{clusterPlot}{Plot output from results}
+#' 
+#' \item{JSD}{Jensen-Shannon Distance}
 #'
 #' @author Hudson Golino <hfg9s at virginia.edu> & Alexander P. Christensen <alexander.christensen at Vanderbilt.Edu>
-#'
+#' 
+#' @importFrom stats hclust as.dist cutree
+#' @importFrom utils globalVariables
+#' 
 #' @export
-# Information Theoretic Clustering
-# Updated 01.07.2022
-infoCluster <- function(
-    dynEGA.object,
-    plot.cluster = TRUE
-)
+# Information Theoretic Clustering for dynEGA
+# Updated 16.07.2022
+infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
 {
   
   # Check for class
-  if(!is(dynEGA.object, "dynEGA.Individuals") & !is(dynEGA.object, "dynEGA.ind.pop")){
+  if(!is(dynEGA.object, "dynEGA") & !is(dynEGA.object, "dynEGA.ind.pop")){
     stop(
       paste(
-        "Input into the `dynEGA.object` argument's class is not `dynEGA.Individuals` or `dynEGA.ind.pop`.\n\n",
+        "Input into the `dynEGA.object` argument's class is not `dynEGA` or `dynEGA.ind.pop`.\n\n",
         "Class of dynEGA.object = ", paste(
           class(dynEGA.object), sep = "", collapse = ", "
         ),
@@ -64,225 +62,293 @@ infoCluster <- function(
       )
     )
   }else if(is(dynEGA.object, "dynEGA.ind.pop")){
-    ind_ega <- dynEGA.object$dynEGA.ind$dynEGA
+    dynEGA.pop <- dynEGA.object$dynEGA.pop
   }else if(is(dynEGA.object, "dynEGA")){
-    ind_ega <- dynEGA.object
+    dynEGA.pop <- dynEGA.object
   }
   
-  # Remove methods
-  if("methods" %in% tolower(names(ind_ega))){
-    ind_ega <- ind_ega[-which(tolower(names(ind_ega)) == "methods")]
+  # Obtain individual dynEGA objects only
+  dynEGA.ind <- dynEGA.object$dynEGA.ind$dynEGA
+  
+  # Remove methods from dynEGA.ind
+  if("methods" %in% tolower(names(dynEGA.ind))){
+    dynEGA.ind <- dynEGA.ind[-which(tolower(names(dynEGA.ind)) == "methods")]
   }
   
-  # Obtain memberships
-  membership_list <- lapply(
-    ind_ega, function(x){
-      x$wc
-    }
-  )
+  # Obtain IDs
+  IDs <- names(dynEGA.ind)
   
-  # Obtain all IDs
-  all_ids <- names(membership_list)
-  
-  # Remove memberships where NAs are >= .50 of memberships
-  membership_NA <- unlist(
-    lapply(
-      membership_list, function(x){
-        mean(is.na(x)) >= 0.50
-      }
-    )
-  )
-  
-  # Remove missing memberships
-  membership_list <- membership_list[!membership_NA]
-  
-  # Obtain usable IDs
-  ids <- names(membership_list)
-  
-  # Make grid with IDs
-  grid_ids <- expand.grid(x = ids, y = ids)
-  
-  # Message user
-  message("Computing variation of information...", appendLF = FALSE)
-  
-  # Obtain variation of information
-  vi_list <- lapply(1:nrow(grid_ids), function(i){
-    
-    # Remove NAs
-    wc_1 <- na.omit(membership_list[[grid_ids[i,1]]])
-    wc_2 <- na.omit(membership_list[[grid_ids[i,2]]])
-    
-    # Obtain common variables
-    common_wc <- intersect(names(wc_1), names(wc_2))
-
-    # Compute variation of information
-    igraph::compare(
-      comm1 = wc_1[common_wc],
-      comm2 = wc_2[common_wc],
-      method = "vi"
-    )
-    
+  # Obtain networks
+  networks <- lapply(dynEGA.ind, function(x){
+    x$network
   })
   
   # Message user
-  message("done", appendLF = TRUE)
-  
-  # Convert to matrix
-  vi_matrix <- matrix(
-    unlist(vi_list),
-    nrow = length(ids),
-    ncol = length(ids),
-    byrow = TRUE
+  message("Computing Jensen-Shannon Distance...\n", appendLF = FALSE)
+
+  # Initialize JSD matrix
+  jsd_matrix <- matrix(
+    0,
+    nrow = length(networks),
+    ncol = length(networks)
   )
   
-  # Name rows and columns
-  row.names(vi_matrix) <- ids
-  colnames(vi_matrix) <- ids
-  
-  # Scale variation of information matrix to be zero to one
-  scaled_vi <- custom.min.max(
-    vi_matrix, c(0, 1)
+  # Set up progess bar
+  pb <- txtProgressBar(
+    max = length(networks),
+    style = 3
   )
-
-  # Reverse so 1 = greater similarity, 0 = no similarity
-  scaled_vi <- 1 - scaled_vi
-
-  # Convert to igraph
-  g <- convert2igraph(scaled_vi)
-
-  # Apply Louvain algorithm
-  clusters <- consensus_clustering(
-    scaled_vi,
-    corr = scaled_vi,
-    order = "higher",
-    consensus.iter = 100
-  )$most_common
   
-  # # Initialize optimal clusters
-  # optimal_clusters <- list()
-  # class(optimal_clusters) <- "try-error"
-  # 
-  # # Initialize maximum clusters
-  # cluster.max <- length(ids)
-  # 
-  # # Message user
-  # message("Searching for optimal clusters...", appendLF = FALSE)
-  # 
-  # # Loop through maximum clusters
-  # while(is(optimal_clusters, "try-error")){
-  #   
-  #   # Optimal clusters using k-means
-  #   optimal_clusters <- try(
-  #     factoextra::fviz_nbclust(
-  #       scaled_vi,
-  #       FUNcluster = kmeans,
-  #       method = "silhouette",
-  #       k.max = cluster.max,
-  #       nboot = 500
-  #     ),
-  #     silent = TRUE
-  #   )
-  #   
-  #   # Subtract 1 from max clusters
-  #   if(is(optimal_clusters, "try-error")){
-  #     cluster.max <- cluster.max - 1 
-  #   }
-  #   
-  # }
-  # 
-  # # Message user
-  # message("done", appendLF = TRUE)
-  # 
-  # # Obtain optimal clusters
-  # optimal_number <- as.numeric(
-  #   as.character(
-  #     optimal_clusters$data$clusters[
-  #       which.max(optimal_clusters$data$y)
-  #     ]
-  #   )
-  # )
-  # 
-  # # Compute hierarchical clustering and cut into maximum clusters
-  # cluster_result <- factoextra::hcut(
-  #   scaled_vi, k = optimal_number, stand = TRUE
-  # )
-  # 
-  # # Visualize
-  # cluster_plot <- suppressWarnings(
-  #   factoextra::fviz_dend(
-  #     cluster_result, rect = TRUE, cex = 0.5,
-  #     k_colors = color_palette_EGA(
-  #       "polychrome", wc = 1:cluster.max
-  #     )
-  #   )
-  # )
-  # 
-  # # Set up optimal cluster plot
-  # optimal_clusters <- optimal_clusters +
-  #   ggplot2::scale_x_discrete(
-  #     breaks = as.character(
-  #       sort(
-  #         c(
-  #           seq(optimal_number, 1, -floor(length(ids) / 10)),
-  #           optimal_number,
-  #           seq(optimal_number, length(ids), floor(length(ids) / 10)) 
-  #         )
-  #       )
-  #     )
-  #   )
-  # 
-  # # Organize plots
-  # cluster_plot_arrange <- ggpubr::ggarrange(
-  #   optimal_clusters,
-  #   cluster_plot
-  # )
-  # 
-  # # Plot
-  # if(isTRUE(plot.cluster)){
-  #   cluster_plot_arrange
-  # }
-  # 
-  # # Obtain clusters of IDs
-  # id_cluster_list <- list()
-  # 
-  # # Loop through to add IDs
-  # for(i in 1:optimal_number){
-  #   
-  #   id_cluster_list[[as.character(i)]] <-
-  #     names(cluster_result$cluster)[
-  #       cluster_result$cluster == i
-  #     ]
-  #   
-  # }
-  
-  # Obtain clusters of IDs
-  id_cluster_list <- list()
-  
-  # Loop through to add IDs
-  for(i in 1:max(clusters)){
-
-    id_cluster_list[[as.character(i)]] <-
-      names(clusters)[
-        clusters == i
-      ]
-
+  # Populate JSD matrix
+  for(i in 2:length(networks)){
+    
+    for(j in 1:(i-1)){
+      
+      # Try
+      jsd_value <- try(
+        jsd(
+          networks[[i]], networks[[j]]
+        ),
+        silent = TRUE
+      )
+      
+      # Check if value is OK
+      if(!is(jsd_value, "try-error")){
+        jsd_matrix[i,j] <- jsd(
+          networks[[i]], networks[[j]]
+        )
+      }else{
+        jsd_matrix[i,j] <- NA
+      }
+      
+    }
+    
+    # Update progress bar
+    setTxtProgressBar(pb, i)
+    
   }
   
-  # Add missing IDs to list
-  id_cluster_list$missing <- setdiff(all_ids, ids)
+  # Close progress bar
+  close(pb)
   
-  # Return results
+  # Make symmetric
+  jsd_sym <- jsd_matrix + t(jsd_matrix)
+  
+  # Add names
+  colnames(jsd_sym) <- names(networks)
+  row.names(jsd_sym) <- names(networks)
+  
+  # Make jsdist
+  jsdist <- jsd_sym
+  
+  # Make diagonal NA
+  diag(jsdist) <- NA
+  
+  # Remove all NAs
+  rm_cols <- apply(jsdist, 2, function(x){all(is.na(x))})
+  
+  # Remove missing data points
+  jsdist <- jsdist[!rm_cols, !rm_cols]
+  
+  # Make diagonal 0 again
+  diag(jsdist) <- 0
+  
+  # Compute Louvain
+  consensus <- most_common_consensus(
+    1 - jsdist,
+    order = "lower",
+    consensus.iter = 1000
+  )$most_common
+  
+  # Unique consensus
+  unique_consensus <- length(na.omit(unique(consensus)))
+  
+  # Perform hierarchical clustering
+  hier_clust <- hclust(as.dist(jsdist))
+  
+  # Check for single cluster
+  if(
+    unique_consensus == 1 | # consensus = 1 OR
+    unique_consensus == length(consensus) # consensus all individuals
+  ){
+    
+    # Obtain clusters
+    clusters <- rep(1, ncol(jsdist))
+    names(clusters) <- colnames(jsdist)
+    
+  }else{
+    
+    # Initialize silhouette vector
+    silhouette_vec <- numeric(length = ncol(jsdist) - 1)
+    
+    # Make names the number of clusters
+    names(silhouette_vec) <- 2:ncol(jsdist)
+    
+    # Loop through cuts
+    for(i in 2:length(silhouette_vec)){
+      
+      # Compute silhouette
+      hier_silho <- cluster::silhouette(
+        x = cutree(hier_clust, i),
+        dist = as.dist(jsdist)
+      )
+      
+      # Obtain summary
+      silho_summ <- summary(hier_silho)
+      
+      # Obtain average silhouette
+      silhouette_vec[i-1] <- mean(silho_summ$clus.avg.widths)
+      
+    }
+    
+    # Obtain maximum average silhouette
+    optimal_cut <- as.numeric(names(which.max(silhouette_vec)))
+    
+    # Obtain clusters
+    clusters <- cutree(hier_clust, optimal_cut)
+    
+  }
+  
+  # Obtain optimal silhouette
+  optimal_silho <- cluster::silhouette(
+    x = clusters,
+    dist = as.dist(jsdist)
+  )
+  
+  # Convert for ggplot2
+  cluster_data <- ggdendro::dendro_data(
+    hier_clust
+  )
+  
+  # Create data frame
+  cluster_df <- data.frame(
+    label = names(clusters),
+    cluster = factor(clusters)
+  )
+  
+  # Merge data
+  cluster_data$labels <- merge(
+    cluster_data$labels, cluster_df,
+    by = "label"
+  )
+  
+  # Split dendrogram into upper grey section and lower coloured section
+  cut <- max(clusters)
+  height <- unique(cluster_data$segments$y)[order(unique(cluster_data$segments$y), decreasing = TRUE)]
+  cut.height <- mean(c(height[cut], height[cut-1]))
+  cluster_data$segments$line <- ifelse(cluster_data$segments$y == cluster_data$segments$yend &
+                                  cluster_data$segments$y > cut.height, 1, 2)
+  cluster_data$segments$line <- ifelse(cluster_data$segments$yend  > cut.height, 1, cluster_data$segments$line)
+  
+  # Number the clusters
+  cluster_data$segments$cluster <- c(-1, diff(cluster_data$segments$line))
+  change <- which(cluster_data$segments$cluster == 1)
+  for (i in 1:cut) cluster_data$segments$cluster[change[i]] = i + 1
+  cluster_data$segments$cluster <-  ifelse(cluster_data$segments$line == 1, 1, 
+                                    ifelse(cluster_data$segments$cluster == 0, NA, cluster_data$segments$cluster))
+  
+    
+  # Replace NA values in cluster
+  for(i in seq_along(cluster_data$segments$cluster)){
+    
+    if(is.na(cluster_data$segments$cluster[i])){
+      cluster_data$segments$cluster[i] <- cluster_data$segments$cluster[i-1]
+    }
+    
+  }
+  
+  
+  # Consistent numbering between segment$cluster and label$cluster
+  cluster_df$label <- factor(cluster_df$label, levels = cluster_data$labels$label)
+  cluster_df$cluster <- factor((cluster_df$cluster), levels = unique(cluster_df$cluster), labels = (1:cut) + 1)
+  cluster_data[["labels"]] <- merge(cluster_data[["labels"]], cluster_df, by = "label")
+  
+  # Positions for cluster labels
+  n.rle <- rle(cluster_data$segments$cluster)
+  N <- cumsum(n.rle$lengths)
+  N <- N[seq(1, length(N), 2)] + 1
+  N.df <- cluster_data$segments[N, ]
+  N.df$cluster <- N.df$cluster - 1
+  
+  # Check for all the same cluster
+  if(all(cluster_data$segments$cluster == -1)){
+    cluster_data$segments$cluster <- rep(
+      1, length(cluster_data$segments$cluster)
+    )
+  }
+  
+  # Ensure clusters are factors
+  cluster_data$segments$cluster <- as.factor(
+    cluster_data$segments$cluster
+  )
+  
+  # Make labels
+  if(max(clusters) == 1){
+    label <- "1"
+  }else{
+    label <- c("", 1:max(clusters))
+  }
+  
+  # Set up plot
+  cluster_plot <- ggplot2::ggplot() +
+    ggplot2::geom_segment(
+      data = cluster_data$segment,
+      ggplot2::aes(x = x, y = y, xend = xend, yend = yend, color = cluster)
+    ) +
+    ggplot2::geom_text(
+      data = cluster_data$label,
+      ggplot2::aes(x, y, label = label, hjust = 0),
+      size = 3
+    ) +
+    ggplot2::geom_text(
+      data = N.df,
+      ggplot2::aes(
+        x = x, y = y, label = factor(cluster),
+        colour = factor(cluster + 1)
+      ),
+      hjust = 1.5, show.legend = FALSE
+    ) +
+    ggplot2::scale_color_manual(
+      labels = label,
+      values = c(
+        "grey", color_palette_EGA(
+          "polychrome", wc = 1:max(clusters)
+        )
+      )
+    ) +
+    ggplot2::coord_flip() + 
+    ggplot2::scale_y_reverse(expand = c(0.2, 0)) + 
+    ggplot2::theme(
+      axis.line = ggplot2::element_blank(),
+      axis.ticks = ggplot2::element_blank(),
+      axis.text = ggplot2::element_blank(),
+      axis.title = ggplot2::element_blank(),
+      panel.background = ggplot2::element_blank(),
+      panel.grid = ggplot2::element_blank(),
+      legend.key = ggplot2::element_blank(),
+      legend.title = ggplot2::element_text(hjust = 0.5)
+    ) +
+    ggplot2::guides(
+      color = ggplot2::guide_legend(title = "Cluster")
+    )
+  
+  # Check if plot should be plotted
+  if(isTRUE(plot.cluster)){
+    suppressWarnings(
+      plot(cluster_plot)
+    )
+  }
+  
+  ## Return data
   results <- list()
-  results$id_clusters <- id_cluster_list
-  results$cluster_membership <- clusters
-  #results$optimal <- optimal_clusters
-  #results$hierarhical <- cluster_result
-  #results$plot <- cluster_plot_arrange
+  results$clusters <- clusters
+  results$clusterTree <- hier_clust
+  results$clusterPlot <- cluster_plot
+  results$JSD <- jsdist
   
-  # Add class
+  ## Set class
   class(results) <- "infoCluster"
   
   return(results)
-  
   
 }

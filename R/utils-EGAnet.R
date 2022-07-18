@@ -577,7 +577,7 @@ reindex_comm <- function(communities)
 # Lancichinetti & Fortunato (2012)
 #' @noRd
 # Consensus Clustering
-# Updated 15.06.2022
+# Updated 07.07.2022
 consensus_clustering <- function(
     network, corr,
     order = c("lower", "higher"),
@@ -860,7 +860,17 @@ consensus_clustering <- function(
       
     }
     
+    # Obtain memberships
     wc <- igraph::cluster_louvain(igraph_network)$memberships
+    
+    # Check for rows
+    if(nrow(wc) == 0){
+      wc <- matrix(
+        igraph::cluster_louvain(igraph_network)$membership,
+        nrow = 1,
+        byrow = TRUE
+      )
+    }
     
     # Obtain order
     if(order == "lower"){
@@ -888,6 +898,139 @@ consensus_clustering <- function(
   results$lowest_tefi <- wc_tefi
   results$summary_table <- summary_table
 
+  # Return consensus
+  return(results)
+}
+
+# Lancichinetti & Fortunato (2012)
+#' @noRd
+# Most Common Consensus Clustering
+# Updated 07.07.2022
+most_common_consensus <- function(
+    network,
+    order = c("lower", "higher"),
+    consensus.iter
+)
+{
+  
+  # Obtain network names
+  network_names <- colnames(network)
+  
+  # Check for empty network
+  if(sum(network) == 0){
+    
+    # Return individual communities
+    wc <- 1:ncol(network)
+    
+    # Assign names
+    names(wc) <- network_names
+    
+    # Set up results
+    results <- list()
+    results$highest_modularity <- wc
+    results$most_common <- wc
+    results$iterative <- wc
+    results$lowest_tefi <- wc
+    results$summary_table <- "Empty network. No general factors found."
+    
+    # Return consensus
+    return(results)
+    
+    
+  }
+  
+  # Convert network to igraph
+  igraph_network <- suppressWarnings(
+    convert2igraph(abs(network))
+  )
+  
+  # Ensure all nodes are included in igraph
+  if(igraph::vcount(igraph_network) != ncol(network)){
+    
+    igraph_network <- igraph::add.vertices(
+      igraph_network,
+      nv = ncol(network) -
+        igraph::vcount(igraph_network)
+    )
+    
+  }
+  
+  # Apply Louvain
+  communities <- lapply(1:consensus.iter, function(j){
+    
+    # igraph output
+    output <- igraph::cluster_louvain(igraph_network)
+    
+    # Obtain memberships
+    wc <- output$memberships
+    
+    # Check for no rows
+    if(nrow(wc) == 0){
+      wc <- output$membership
+    }else{
+      
+      # Obtain order
+      if(order == "lower"){
+        wc <- wc[1,]
+      }else if(order == "higher"){
+        wc <- wc[nrow(wc),]
+      }
+      
+    }
+    
+    # Return
+    return(wc)
+    
+  })
+  
+  # Simplify to a matrix
+  wc_matrix <- t(simplify2array(communities, higher = FALSE))
+  
+  # Make data frame
+  df <- as.data.frame(wc_matrix)
+  
+  # Obtain duplicate indices
+  dupe_ind <- duplicated(df)
+  
+  # Rows for non-duplicates
+  non_dupes <- data.frame(df[!dupe_ind,])
+  
+  # Rows for duplicates
+  dupes <- data.frame(df[dupe_ind,])
+  
+  # Match duplicates with non-duplicates
+  dupe_count <- table(
+    match(
+      data.frame(t(dupes)), data.frame(t(non_dupes))
+    ))
+  
+  # Change column names of non_dupes
+  if(!is.null(colnames(network))){
+    colnames(non_dupes) <- colnames(network)
+  }
+  
+  # Set up summary table
+  summary_table <- data.frame(
+    N_Dimensions = apply(non_dupes, 1, function(x){
+      length(na.omit(unique(x)))
+    }),
+    Proportion = as.matrix(count(wc_matrix) / nrow(wc_matrix))
+  )
+  
+  # Attach non-duplicate solutions
+  summary_table <- cbind(summary_table, non_dupes)
+  
+  # Obtain max proportion
+  wc_proportion <- unlist(summary_table[
+    which.max(summary_table[,"Proportion"]),
+    -c(1:2)
+  ])
+  
+  # Set up results
+  results <- list()
+  results$most_common <- wc_proportion
+  results$summary_table <- summary_table
+  
   # Return consensus
   return(results)
 }
@@ -2454,12 +2597,9 @@ rescale.edges <- function (network, size)
 #' @noRd
 # Compare plots fix
 # Updated 28.03.2022
-compare.plot.fix.EGA <- function(object.list,  plot.type = c("GGally","qgraph"),
+compare.plot.fix.EGA <- function(object.list,
                                  plot.args = list()){
-  #### MISSING ARGUMENTS HANDLING
-  if(missing(plot.type))
-  {plot.type <- "GGally"
-  }else{plot.type <- match.arg(plot.type)}
+
 
   ## Original plot arguments
   original.plot.args <- plot.args
@@ -2489,150 +2629,145 @@ compare.plot.fix.EGA <- function(object.list,  plot.type = c("GGally","qgraph"),
     }
 
     ### Plot ###
-    if(plot.type == "qgraph"){
-      ega.plot <- qgraph::qgraph(x$network, layout = "spring", vsize = plot.args$vsize, groups = as.factor(x$wc))
-    }else if(plot.type == "GGally"){
-
-      if(i != 1){
-        ## Reset plot arguments
-        plot.args <- original.plot.args
-
-        ## Check for input plot arguments
-        if("legend.names" %in% names(plot.args)){
-          legend.names <- plot.args$legend.names
-        }
-        plot.args <- GGally.args(plot.args)
-        color.palette <- plot.args$color.palette
+    if(i != 1){
+      ## Reset plot arguments
+      plot.args <- original.plot.args
+      
+      ## Check for input plot arguments
+      if("legend.names" %in% names(plot.args)){
+        legend.names <- plot.args$legend.names
       }
-
-      # Insignificant values (keeps ggnet2 from erroring out)
-      x$network <- ifelse(abs(as.matrix(x$network)) <= .00001, 0, as.matrix(x$network))
-
-      if(exists("legend.names")){
-        for(l in 1:length(unique(legend.names))){
-          x$wc[x$wc == l] <- legend.names[l]
-        }
-      }
-
-      # Reorder network and communities
-      if(i == 1){
-        x$network <- x$network[order(x$wc), order(x$wc)]
-        x$wc <- x$wc[order(x$wc)]
-        fix.order.wc <- names(x$wc)
-      }else{
-        x$network <- x$network[fix.order.wc, fix.order.wc]
-        x$wc <- x$wc[fix.order.wc]
-      }
-
-      # weighted  network
-      network1 <- network::network(x$network,
-                                   ignore.eval = FALSE,
-                                   names.eval = "weights",
-                                   directed = FALSE)
-
-      network::set.vertex.attribute(network1, attrname= "Communities", value = x$wc)
-      network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
-      network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, plot.args$edge.color[1], plot.args$edge.color[2]))
-      network::set.edge.attribute(network1, "line", ifelse(network::get.edge.value(network1, "weights") > 0, plot.args$edge.lty[1], plot.args$edge.lty[2]))
-      network::set.edge.value(network1,attrname="AbsWeights",value=abs(x$network))
-      network::set.edge.value(network1,attrname="ScaledWeights",
-                              value=matrix(rescale.edges(x$network, plot.args$edge.size),
-                                           nrow = nrow(x$network),
-                                           ncol = ncol(x$network)))
-
-      # Layout "Spring"
-      graph1 <- convert2igraph(x$network)
-      edge.list <- igraph::as_edgelist(graph1)
-      layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
-                                                                 weights =
-                                                                   abs(igraph::E(graph1)$weight/max(abs(igraph::E(graph1)$weight)))^2,
-                                                                 vcount = ncol(x$network))
-
-
-      set.seed(1234)
-      plot.args$net <- network1
-      plot.args$node.color <- "Communities"
-      plot.args$node.alpha <- plot.args$alpha
-      plot.args$node.shape <- plot.args$shape
-      node.size <- plot.args$node.size
-      plot.args$node.size <- 0
-      plot.args$color.palette <- NULL
-      plot.args$palette <- NULL
-      plot.args$edge.color <- "color"
-      plot.args$edge.lty <- "line"
-      plot.args$edge.size <- "ScaledWeights"
-
-      lower <- abs(x$network[lower.tri(x$network)])
-      non.zero <- sqrt(lower[lower != 0])
-
-      plot.args$edge.alpha <- non.zero
-      plot.args$mode <- layout.spring
-      plot.args$label <- colnames(x$network)
-      plot.args$node.label <- rep("", ncol(x$network))
-      if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
-      if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
-
-      palette <- color_palette_EGA(color.palette, as.numeric(factor(x$wc)))
-      palette <- ifelse(is.na(palette), "white", palette)
-
-      ega.plot <- suppressWarnings(
-        suppressMessages(
-          do.call(GGally::ggnet2, plot.args) +
-            ggplot2::theme(legend.title = ggplot2::element_blank())
-        )
-      )
-
-      name <- colnames(x$network)
-
-      name.split <- lapply(name, function(x){
-        unlist(strsplit(x, split = " "))
-      })
-
-      name <- unlist(
-        lapply(name.split, function(x){
-
-          len <- length(x)
-
-          if(len > 1){
-
-            add.line <- round(len / 2)
-
-            paste(
-              paste(x[1:add.line], collapse = " "),
-              paste(x[(add.line+1):length(x)], collapse = " "),
-              sep = "\n"
-            )
-
-          }else{x}
-
-        })
-      )
-
-      # Border color
-      if(all(color.palette == "grayscale" |
-             color.palette == "greyscale" |
-             color.palette == "colorblind")){
-        border.color <- ifelse(palette == "white", "white", "black")
-      }else{border.color <- palette}
-
-      # Custom nodes: transparent insides and dark borders
-      ega.plot <- ega.plot +
-        ggplot2::geom_point(ggplot2::aes(color = "color"), size = node.size,
-                            color = border.color,
-                            shape = 1, stroke = 1.5, alpha = .8) +
-        ggplot2::geom_point(ggplot2::aes(color = "color"), size = node.size + .5,
-                            color = palette,
-                            shape = 19, alpha = plot.args$alpha) +
-        ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
-        ggplot2::guides(
-          color = ggplot2::guide_legend(override.aes = list(
-            color = unique(palette),
-            size = node.size,
-            alpha = as.numeric(names(which.max(table(plot.args$alpha)))),
-            stroke = 1.5
-          ))
-        )
+      plot.args <- GGally.args(plot.args)
+      color.palette <- plot.args$color.palette
     }
+    
+    # Insignificant values (keeps ggnet2 from erroring out)
+    x$network <- ifelse(abs(as.matrix(x$network)) <= .00001, 0, as.matrix(x$network))
+    
+    if(exists("legend.names")){
+      for(l in 1:length(unique(legend.names))){
+        x$wc[x$wc == l] <- legend.names[l]
+      }
+    }
+    
+    # Reorder network and communities
+    if(i == 1){
+      x$network <- x$network[order(x$wc), order(x$wc)]
+      x$wc <- x$wc[order(x$wc)]
+      fix.order.wc <- names(x$wc)
+    }else{
+      x$network <- x$network[fix.order.wc, fix.order.wc]
+      x$wc <- x$wc[fix.order.wc]
+    }
+    
+    # weighted  network
+    network1 <- network::network(x$network,
+                                 ignore.eval = FALSE,
+                                 names.eval = "weights",
+                                 directed = FALSE)
+    
+    network::set.vertex.attribute(network1, attrname= "Communities", value = x$wc)
+    network::set.vertex.attribute(network1, attrname= "Names", value = network::network.vertex.names(network1))
+    network::set.edge.attribute(network1, "color", ifelse(network::get.edge.value(network1, "weights") > 0, plot.args$edge.color[1], plot.args$edge.color[2]))
+    network::set.edge.attribute(network1, "line", ifelse(network::get.edge.value(network1, "weights") > 0, plot.args$edge.lty[1], plot.args$edge.lty[2]))
+    network::set.edge.value(network1,attrname="AbsWeights",value=abs(x$network))
+    network::set.edge.value(network1,attrname="ScaledWeights",
+                            value=matrix(rescale.edges(x$network, plot.args$edge.size),
+                                         nrow = nrow(x$network),
+                                         ncol = ncol(x$network)))
+    
+    # Layout "Spring"
+    graph1 <- convert2igraph(x$network)
+    edge.list <- igraph::as_edgelist(graph1)
+    layout.spring <- qgraph::qgraph.layout.fruchtermanreingold(edgelist = edge.list,
+                                                               weights =
+                                                                 abs(igraph::E(graph1)$weight/max(abs(igraph::E(graph1)$weight)))^2,
+                                                               vcount = ncol(x$network))
+    
+    
+    set.seed(1234)
+    plot.args$net <- network1
+    plot.args$node.color <- "Communities"
+    plot.args$node.alpha <- plot.args$alpha
+    plot.args$node.shape <- plot.args$shape
+    node.size <- plot.args$node.size
+    plot.args$node.size <- 0
+    plot.args$color.palette <- NULL
+    plot.args$palette <- NULL
+    plot.args$edge.color <- "color"
+    plot.args$edge.lty <- "line"
+    plot.args$edge.size <- "ScaledWeights"
+    
+    lower <- abs(x$network[lower.tri(x$network)])
+    non.zero <- sqrt(lower[lower != 0])
+    
+    plot.args$edge.alpha <- non.zero
+    plot.args$mode <- layout.spring
+    plot.args$label <- colnames(x$network)
+    plot.args$node.label <- rep("", ncol(x$network))
+    if(plot.args$label.size == "max_size/2"){plot.args$label.size <- plot.args$size/2}
+    if(plot.args$edge.label.size == "max_size/2"){plot.args$edge.label.size <- plot.args$size/2}
+    
+    palette <- color_palette_EGA(color.palette, as.numeric(factor(x$wc)))
+    palette <- ifelse(is.na(palette), "white", palette)
+    
+    ega.plot <- suppressWarnings(
+      suppressMessages(
+        do.call(GGally::ggnet2, plot.args) +
+          ggplot2::theme(legend.title = ggplot2::element_blank())
+      )
+    )
+    
+    name <- colnames(x$network)
+    
+    name.split <- lapply(name, function(x){
+      unlist(strsplit(x, split = " "))
+    })
+    
+    name <- unlist(
+      lapply(name.split, function(x){
+        
+        len <- length(x)
+        
+        if(len > 1){
+          
+          add.line <- round(len / 2)
+          
+          paste(
+            paste(x[1:add.line], collapse = " "),
+            paste(x[(add.line+1):length(x)], collapse = " "),
+            sep = "\n"
+          )
+          
+        }else{x}
+        
+      })
+    )
+    
+    # Border color
+    if(all(color.palette == "grayscale" |
+           color.palette == "greyscale" |
+           color.palette == "colorblind")){
+      border.color <- ifelse(palette == "white", "white", "black")
+    }else{border.color <- palette}
+    
+    # Custom nodes: transparent insides and dark borders
+    ega.plot <- ega.plot +
+      ggplot2::geom_point(ggplot2::aes(color = "color"), size = node.size,
+                          color = border.color,
+                          shape = 1, stroke = 1.5, alpha = .8) +
+      ggplot2::geom_point(ggplot2::aes(color = "color"), size = node.size + .5,
+                          color = palette,
+                          shape = 19, alpha = plot.args$alpha) +
+      ggplot2::geom_text(ggplot2::aes(label = name), color = "black", size = plot.args$label.size) +
+      ggplot2::guides(
+        color = ggplot2::guide_legend(override.aes = list(
+          color = unique(palette),
+          size = node.size,
+          alpha = as.numeric(names(which.max(table(plot.args$alpha)))),
+          stroke = 1.5
+        ))
+      )
 
     set.seed(NULL)
 
@@ -2650,6 +2785,8 @@ compare.plot.fix.EGA <- function(object.list,  plot.type = c("GGally","qgraph"),
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # MULTI-FUNCTION SUB-ROUTINES ----
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 
 #' \code{\link[qgraph]{EBICglasso}} from \code{\link{qgraph}} 1.4.4
 #'
@@ -3023,13 +3160,6 @@ MASS_mvrnorm <- function (n = 1, mu, Sigma, tol = 1e-06, empirical = FALSE, EISP
   if (n == 1)
     drop(X)
   else t(X)
-}
-
-#' @noRd
-# Converts networks to igraph
-convert2igraph <- function (A, neural = FALSE)
-{
-  return(igraph::as.igraph(qgraph::qgraph(A,DoNotPlot=TRUE)))
 }
 
 #%%%%%%%%%%%%%%%%%%%%%%%%
@@ -3770,13 +3900,6 @@ typicalStructure.network <- function (A, corr, model, model.args, n = NULL, uni.
 # Updated 04.05.2022
 redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.redundancy, plot.args)
 {
-  # Compute redundancy method
-  # if(method == "irt"){
-  #
-  #   mod <- mirt::mirt(data,1)
-  #   sink <- capture.output(tom <- mirt::residuals(mod,type="Q3"))
-  #
-  # }else{
 
   if(method == "wto"){
 
@@ -3808,7 +3931,6 @@ redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.r
 
   }else{tom <- cormat}
 
-  #}
 
   # Ensure column names
   if(is.null(colnames(tom))){
@@ -3846,49 +3968,51 @@ redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.r
     aic <- NULL
     g.dist <- NULL
   }else{## Determine distribution
+    
+    stop('"alpha" and "adapt" have been removed from UVA. Please use "threshold"')
 
-    # Distributions, initialize AIC vector
-    distr <- c("norm", "gamma")
-    aic <- numeric(length(distr))
-    names(aic) <- c("normal", "gamma")
-
-    ## Obtain distribution
-    for(i in 1:length(distr)){
-      capture.output(
-        aic[i] <- fitdistrplus::fitdist(pos.vals, distr[i], method="mle")$aic
-      )
-    }
-
-    ## Obtain parameters
-    g.dist <- suppressWarnings(
-      fitdistrplus::fitdist(
-        pos.vals, distr[which.min(aic)]
-      )$estimate
-    )
-
-    # Estimate p-values
-    pval <- switch(names(aic)[which.min(aic)],
-
-                   normal = 1 - unlist(lapply(pos.vals, # positive values
-                                              pnorm, # probability in normal distribution
-                                              mean = g.dist["mean"], #mean of normal
-                                              sd = g.dist["sd"]) #standard deviation of normal
-                   ),
-
-                   gamma = 1 - unlist(lapply(pos.vals, # positive values
-                                             pgamma, # probability in gamma distribution
-                                             shape = g.dist["shape"], # shape of gamma
-                                             rate = g.dist["rate"]) # rate of gamma
-                   ),
-    )
-
-    # Check if using adaptive alpha
-    if(type == "adapt"){
-      sig <- adapt.a("cor", alpha = sig, n = length(pos.vals), efxize = "medium")$adapt.a
-    }
-
-    # Get redundant pairings
-    redund <- pos.vals[which(pval <= sig)]
+    # # Distributions, initialize AIC vector
+    # distr <- c("norm", "gamma")
+    # aic <- numeric(length(distr))
+    # names(aic) <- c("normal", "gamma")
+    # 
+    # ## Obtain distribution
+    # for(i in 1:length(distr)){
+    #   capture.output(
+    #     aic[i] <- fitdistrplus::fitdist(pos.vals, distr[i], method="mle")$aic
+    #   )
+    # }
+    # 
+    # ## Obtain parameters
+    # g.dist <- suppressWarnings(
+    #   fitdistrplus::fitdist(
+    #     pos.vals, distr[which.min(aic)]
+    #   )$estimate
+    # )
+    # 
+    # # Estimate p-values
+    # pval <- switch(names(aic)[which.min(aic)],
+    # 
+    #                normal = 1 - unlist(lapply(pos.vals, # positive values
+    #                                           pnorm, # probability in normal distribution
+    #                                           mean = g.dist["mean"], #mean of normal
+    #                                           sd = g.dist["sd"]) #standard deviation of normal
+    #                ),
+    # 
+    #                gamma = 1 - unlist(lapply(pos.vals, # positive values
+    #                                          pgamma, # probability in gamma distribution
+    #                                          shape = g.dist["shape"], # shape of gamma
+    #                                          rate = g.dist["rate"]) # rate of gamma
+    #                ),
+    # )
+    # 
+    # # Check if using adaptive alpha
+    # if(type == "adapt"){
+    #   sig <- adapt.a("cor", alpha = sig, n = length(pos.vals), efxize = "medium")$adapt.a
+    # }
+    # 
+    # # Get redundant pairings
+    # redund <- pos.vals[which(pval <= sig)]
 
   }
 
@@ -3992,19 +4116,19 @@ redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.r
                       aic = aic, g.dist = g.dist)
 
   # Add p-values
-  if(type != "threshold"){
-    desc$basic <- cbind(round(sig, 5), desc$basic)
-    colnames(desc$basic)[1] <- "Sig"
-    desc$centralTendency <- cbind(round(pval[row.names(desc$centralTendency)], 5),
-                                  desc$centralTendency)
-    colnames(desc$centralTendency)[1] <- "p-value"
-  }
+  # if(type != "threshold"){
+  #   desc$basic <- cbind(round(sig, 5), desc$basic)
+  #   colnames(desc$basic)[1] <- "Sig"
+  #   desc$centralTendency <- cbind(round(pval[row.names(desc$centralTendency)], 5),
+  #                                 desc$centralTendency)
+  #   colnames(desc$centralTendency)[1] <- "p-value"
+  # }
 
   # Results list
   res <- list()
   res$redundant <- res.list
   res$data <- data
-  if(method != "irt"){res$correlation <- cormat}
+  res$correlation <- cormat
   res$weights <- tom
   if(exists("net")){res$network <- net}
   if(exists("net.plot")){res$plot <- net.plot}
@@ -4012,7 +4136,7 @@ redundancy.process <- function(data, cormat, n, model, method, type, sig, plot.r
   res$method <- method
   res$model <- model
   res$type <- type
-  if(type != "threshold"){res$distribution <- names(aic)[which.min(aic)]}
+  # if(type != "threshold"){res$distribution <- names(aic)[which.min(aic)]}
 
   class(res) <- "node.redundant"
 
@@ -6257,21 +6381,128 @@ itemStability.loadings <- function(res, bootega.obj)
   return(mean.loadings)
 }
 
+#%%%%%%%%%%%%%%%%%%%
+# boot.ergoInfo ----
+#%%%%%%%%%%%%%%%%%%%
+
+#' Expand grid with unique edges
+#' @noRd
+# Updated 07.07.2022
+expand.grid.unique <- function(x, y, include.equals = FALSE)
+{
+  x <- unique(x)
+  
+  y <- unique(y)
+  
+  g <- function(i)
+  {
+    z <- setdiff(y, x[seq_len(i-include.equals)])
+    
+    if(length(z)) cbind(x[i], z, deparse.level=0)
+  }
+  
+  do.call(rbind, lapply(seq_along(x), g))
+}
+
+#' Rewiring function
+#' @noRd
+# Updated 16.07.2022
+rewire <- function(network, noise = TRUE)
+{
+  
+  # Number of edges
+  edges <- sum(ifelse(network != 0, 1, 0)) / 2
+  
+  # Add noise
+  if(isTRUE(noise)){
+    
+    # Lower triangle of network
+    lower_network <- network[lower.tri(network)]
+    
+    # Only add to existing edges
+    lower_network[lower_network != 0] <- lower_network[lower_network != 0] +
+      runif(
+        n = edges,
+        min = -0.10,
+        max = 0.10
+      )
+    
+    # Replace lower network
+    network[lower.tri(network)] <- lower_network
+    
+    # Replace upper network
+    network <- t(network)
+    network[lower.tri(network)] <- lower_network
+    
+  }
+  
+  # Set random proportion
+  proportion <- runif(1, min = 0.20, max = 0.40)
+  
+  # Obtain proportion of connections to change
+  rewire_number <- floor(edges * proportion)
+  
+  # Obtain edge list
+  lower_network <- network
+  lower_network[upper.tri(lower_network)] <- 0
+  edge_list <- which(lower_network != 0, arr.ind = TRUE)
+  
+  # Obtain edges to rewire
+  rewire_list <- edge_list[sample(
+    1:edges, rewire_number, replace = FALSE
+  ),]
+  
+  # Edges to replace
+  edge_list <- expand.grid.unique(
+    1:ncol(network), 1:ncol(network)
+  )
+  replace_list <- edge_list[sample(
+    1:nrow(edge_list), rewire_number, replace = FALSE
+  ),]
+  colnames(replace_list) <- c("row", "col")
+  
+  # Rewire edges
+  for(i in 1:nrow(rewire_list)){
+    
+    # Obtain row and column
+    row <- rewire_list[i, "row"]
+    column <- rewire_list[i, "col"]
+    
+    # Obtain replace row and column
+    replace_row <- replace_list[i, "row"]
+    replace_column <- replace_list[i, "col"]
+    
+    # Obtain values
+    original_value <- network[row, column]
+    replace_value <- network[replace_row, replace_column]
+    
+    # Swap values
+    network[replace_row, replace_column] <- original_value
+    network[replace_column, replace_row] <- original_value
+    network[row, column] <- replace_value
+    network[column, row] <- replace_value
+    
+  }
+  
+  # Return the rewired network
+  return(network)
+  
+}
+
 #%%%%%%%%%%%%%%%%%%%%
 # dynEGA.cluster ----
 #%%%%%%%%%%%%%%%%%%%%
 
 #' @noRd
 # Rescaled Laplacian matrix
-# Updated 06.07.2022
+# Updated 15.07.2022
 rescaled_laplacian <- function(net)
 {
+  # Ensure diagonal is zero
+  diag(net) <- 0
   
   # Laplacian matrix
-  L <- diag(colSums(net)) - net
-  
-  # Rescale
-  rescaled_L <- L / diag(L) / ncol(L)
+  rescaled_L <- (diag(colSums(net)) - net) / sum(net)
   
   # Return
   return(rescaled_L)
@@ -6297,34 +6528,6 @@ vn_entropy <- function(L_mat)
   
   # Return
   return(vn_entropy)
-  
-}
-
-#' @noRd
-# Jensen-Shannon Distance
-# Updated 06.07.2022
-jsd <- function(net1, net2)
-{
-  
-  # Obtain rescaled Laplacian matrices
-  rL1 <- rescaled_laplacian(net1)
-  rL2 <- rescaled_laplacian(net2)
-  
-  # Obtain individual VN entropies
-  vn1 <- vn_entropy(rL1)
-  vn2 <- vn_entropy(rL2)
-  
-  # Obtain combined VN entropy
-  rL_comb <- 0.5 * (rL1 + rL2)
-  vn_comb <- vn_entropy(rL_comb)
-  
-  # Compute JSD
-  JSD <- sqrt(
-    vn_comb - (0.5 * (vn1 + vn2))
-  )
-  
-  # Return
-  return(abs(JSD))
   
 }
 

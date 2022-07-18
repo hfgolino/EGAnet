@@ -146,23 +146,9 @@
 #' If \code{TRUE}, returns a plot of the network and its estimated dimensions.
 #' Defaults to \code{TRUE}
 #'
-#' @param plot.type Character.
-#' Plot system to use.
-#' Current options are \code{\link[qgraph]{qgraph}} and \code{\link{GGally}}.
-#' Defaults to \code{"GGally"}
-#'
 #' @param plot.args List.
-#' A list of additional arguments for the network plot.
-#' For \code{plot.type = "qgraph"}:
-#'
-#' \itemize{
-#'
-#' \item{\strong{\code{vsize}}}
-#' {Size of the nodes. Defaults to 6.}
-#'
-#'}
-#' For \code{plot.type = "GGally"} (see \code{\link[GGally]{ggnet2}} for
-#' full list of arguments):
+#' A list of additional arguments for the network plot. See \code{\link[GGally]{ggnet2}} for
+#' full list of arguments:
 #'
 #' \itemize{
 #'
@@ -311,7 +297,7 @@
 #' @export
 #'
 # Hierarchical EGA
-# Updated 08.06.2022
+# Updated 13.07.2022
 hierEGA <- function(
     data, scores = c("factor", "network"),
     consensus.iter = 1000,
@@ -325,12 +311,12 @@ hierEGA <- function(
     corr = c("cor_auto", "pearson", "spearman"),
     model = c("glasso", "TMFG"), model.args = list(),
     algorithm = c("walktrap", "louvain"), algorithm.args = list(),
-    plot.EGA = TRUE, plot.type = c("GGally", "qgraph"),
+    plot.EGA = TRUE,
     plot.args = list()
 )
 {
 
-  #### ARGUMENTS HANDLING ####
+  #### ARGUMENTS HANDLING
 
   if(missing(scores)){
     scores <- "network"
@@ -355,12 +341,6 @@ hierEGA <- function(
   if(missing(algorithm)){
     algorithm <- "louvain"
   }else if(!is.function(algorithm)){algorithm <- tolower(match.arg(algorithm))}
-
-  if(missing(plot.type)){
-    plot.type <- "GGally"
-  }else{plot.type <- match.arg(plot.type)}
-
-  #### ARGUMENTS HANDLING ####
 
   # Ensure data is a matrix
   data <- as.matrix(data)
@@ -394,7 +374,6 @@ hierEGA <- function(
   lower_order_defaults$algorithm <- "louvain" # for lower order communities
   lower_order_defaults$algorithm.args <- algorithm.args
   lower_order_defaults$plot.lower_order <- FALSE # do not plot
-  lower_order_defaults$plot.type <- plot.type
   lower_order_defaults$plot.args <- plot.args
   lower_order_defaults$lower.louvain <- TRUE # provides lower order Louvain
 
@@ -478,7 +457,6 @@ hierEGA <- function(
     ega_defaults$algorithm <- "walktrap"
     ega_defaults$algorithm.args <- algorithm.args
     ega_defaults$plot.EGA <- FALSE
-    ega_defaults$plot.type <- plot.type
     ega_defaults$plot.args <- plot.args
 
     # Get EGA
@@ -627,7 +605,6 @@ hierEGA <- function(
       ega_defaults$algorithm <- "walktrap"
       ega_defaults$algorithm.args <- algorithm.args
       ega_defaults$plot.EGA <- FALSE
-      ega_defaults$plot.type <- plot.type
       ega_defaults$plot.args <- plot.args
       
       # Get EGA
@@ -727,10 +704,19 @@ hierEGA <- function(
 
   }
   
-  # Check for disconnected nodes
-  # If any nodes are disconnected,
-  # then a general factor cannot underlie the data
-  if(any(colSums(hierarchical$higher_order$EGA$network) == 0)){
+  # Perform parallel PCA to check for no general factors
+  sink <- capture.output(
+    pca <- 
+      psych::fa.parallel(
+        x = hierarchical$higher_order$EGA$correlation,
+        fa = "pc",
+        n.obs = nrow(data),
+        plot = FALSE
+      )
+  )
+  
+  # Check if zero components
+  if(pca$ncomp == 0){
     message("No general dimensions were identified. Lower order solution represents major dimensions.")
     hierarchical$higher_order$EGA$n.dim <- 0
     new_wc <- rep(

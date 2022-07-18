@@ -16,10 +16,6 @@
 #' @param negative.items Numeric vector
 #' A numeric vector indicating the column of the negative items.
 #'
-#' @param plot Boolean.
-#' If \code{TRUE}, returns a plot of the residualized network and its estimated dimensions.
-#' Defaults to \code{TRUE}
-#'
 #' @return Returns a list containing:
 #'
 #' \item{openMx.model}{OpenMX model}
@@ -46,7 +42,7 @@
 #' \dontrun{
 #' # resEGA example
 #' opt.res <- residualEGA(data = data, manifests = colnames(optimism),
-#' lat = 1, negative.items = c(3,7,9), plot = TRUE)
+#' lat = 1, negative.items = c(3,7,9))
 #'
 #' # Fit:
 #' opt.res$Fit
@@ -61,8 +57,8 @@
 #' @export
 #' 
 # Residualized EGA
-# Updated 07.05.2022
-residualEGA <- function(data, manifests,lat, negative.items, plot = TRUE){
+# Updated 07.07.2022
+residualEGA <- function(data, manifests,lat, negative.items){
   
   # Deprecated
   warning(
@@ -191,10 +187,6 @@ residualEGA <- function(data, manifests,lat, negative.items, plot = TRUE){
   results$Fit <- fit.res
   results$WordLoads <- word.loadings
 
-  if (plot == TRUE) {
-    plot.ega <- qgraph::qgraph(res.ega$network, layout = "spring",
-                       vsize = 6, groups = as.factor(res.ega$wc))
-  }
   class(results) <- "resEGA"
   return(results)
 }

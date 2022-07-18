@@ -16,7 +16,6 @@ EGA(
   consensus.iter = 100,
   consensus.method = c("highest_modularity", "most_common", "iterative", "lowest_tefi"),
   plot.EGA = TRUE,
-  plot.type = c("GGally", "qgraph"),
   plot.args = list(),
   ...
 )
@@ -147,11 +146,6 @@ across iterations}
 If \code{TRUE}, returns a plot of the network and its estimated dimensions.
 Defaults to \code{TRUE}}
 
-\item{plot.type}{Character.
-Plot system to use.
-Current options are \code{\link[qgraph]{qgraph}} and \code{\link{GGally}}.
-Defaults to \code{"GGally"}}
-
 \item{plot.args}{List.
 A list of additional arguments for the network plot.
 For \code{plot.type = "qgraph"}:
@@ -223,22 +217,21 @@ can be used to estimate the number of communities (see examples).
 }
 \examples{
 \donttest{# Estimate EGA
-## plot.type = "qqraph" used for CRAN checks
-## plot.type = "GGally" is the default
-ega.wmt <- EGA(data = wmt2[,7:24], plot.type = "qgraph")
+## plot.EGA = FALSE used for CRAN checks
+ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = FALSE)
 
 # Summary statistics
 summary(ega.wmt)
 
 # Estimate EGAtmfg
-ega.wmt <- EGA(data = wmt2[,7:24], model = "TMFG", plot.type = "qgraph")
+ega.wmt <- EGA(data = wmt2[,7:24], model = "TMFG", plot.EGA = FALSE)
 
 # Estimate EGA with Louvain algorithm
-ega.wmt <- EGA(data = wmt2[,7:24], algorithm = "louvain", plot.type = "qgraph")
+ega.wmt <- EGA(data = wmt2[,7:24], algorithm = "louvain", plot.EGA = FALSE)
 
 # Estimate EGA with Spinglass algorithm
 ega.wmt <- EGA(data = wmt2[,7:24],
-algorithm = igraph::cluster_spinglass, plot.type = "qgraph")
+algorithm = igraph::cluster_spinglass, plot.EGA = FALSE)
 
 # Estimate EGA
 ega.intel <- EGA(data = intelligenceBattery[,8:66], model = "glasso", plot.EGA = FALSE)

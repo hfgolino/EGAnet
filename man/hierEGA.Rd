@@ -16,7 +16,6 @@ hierEGA(
   algorithm = c("walktrap", "louvain"),
   algorithm.args = list(),
   plot.EGA = TRUE,
-  plot.type = c("GGally", "qgraph"),
   plot.args = list()
 )
 }
@@ -163,23 +162,9 @@ or some other community detection algorithm function (see examples)}
 If \code{TRUE}, returns a plot of the network and its estimated dimensions.
 Defaults to \code{TRUE}}
 
-\item{plot.type}{Character.
-Plot system to use.
-Current options are \code{\link[qgraph]{qgraph}} and \code{\link{GGally}}.
-Defaults to \code{"GGally"}}
-
 \item{plot.args}{List.
-A list of additional arguments for the network plot.
-For \code{plot.type = "qgraph"}:
-
-\itemize{
-
-\item{\strong{\code{vsize}}}
-{Size of the nodes. Defaults to 6.}
-
-}
-For \code{plot.type = "GGally"} (see \code{\link[GGally]{ggnet2}} for
-full list of arguments):
+A list of additional arguments for the network plot. See \code{\link[GGally]{ggnet2}} for
+full list of arguments:
 
 \itemize{
 

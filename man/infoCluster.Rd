@@ -2,13 +2,13 @@
 % Please edit documentation in R/infoCluster.R
 \name{infoCluster}
 \alias{infoCluster}
-\title{Variation of Information Hierarchical Clustering}
+\title{Information Theoretic Mixture Clustering for \code{\link[EGAnet]{dynEGA}}}
 \usage{
 infoCluster(dynEGA.object, plot.cluster = TRUE)
 }
 \arguments{
 \item{dynEGA.object}{A \code{\link[EGAnet]{dynEGA}} or a
-\code{\link[EGAnet]{dynEGA.pop.ind}} object that is used to match the arguments of the EII object.}
+\code{\link[EGAnet]{dynEGA.ind.pop}} object that is used to match the arguments of the EII object.}
 
 \item{plot.cluster}{Boolean.
 Should plot of optimal and hierarchical clusters be output?
@@ -18,21 +18,19 @@ Set to \code{FALSE} to not plot}
 \value{
 Returns a list containing:
 
-\item{id_clusters}{A list containing the IDs for each cluster. 
-\code{missing} contains IDs that were not able to be included due
-to missing too many memberships (NA >= 0.50)}
+\item{clusters}{A vector corresponding to cluster each participant belongs to}
 
-\item{optimal}{Optimal clusters determine by *k*-means clustering from
-\code{\link[factoextra]{fviz_nbclust}}}
+\item{clusterTree}{The dendogram from \code{\link[stats]{hclust}} the hierarhical clustering}
 
-\item{hierarchical}{Results of the hierarchical clustering based on the optimal
-number of clusts. Reports results from \code{\link[factoextra]{hcut}}}
+\item{clusterPlot}{Plot output from results}
 
-\item{plot}{Plot output from results}
+\item{JSD}{Jensen-Shannon Distance}
 }
 \description{
-Performs hierarchical k-means clustering using variation of information
-of the community memberships derived from individuals in \code{\link[EGAnet]{dynEGA}}
+Performs hierarchical clustering using Jensen-Shannon distance
+followed by the Louvain algorithm with consensus clustering. The method
+iteratively identifies smaller and smaller clusters until there is no
+change in the clusters identified
 }
 \examples{
 

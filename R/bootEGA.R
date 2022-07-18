@@ -126,23 +126,10 @@
 #' and its estimated dimensions.
 #' Defaults to \code{TRUE}
 #'
-#' @param plot.type Character.
-#' Plot system to use.
-#' Current options are \code{\link[qgraph]{qgraph}} and \code{\link{GGally}}.
-#' Defaults to \code{"GGally"}.
-#'
 #' @param plot.args List.
 #' A list of additional arguments for the network plot.
-#' For \code{plot.type = "qgraph"}:
-#'
-#' \itemize{
-#'
-#' \item{\strong{\code{vsize}}}
-#' {Size of the nodes. Defaults to 6.}
-#'
-#'}
-#' For \code{plot.type = "GGally"} (see \code{\link[GGally]{ggnet2}} for
-#' full list of arguments):
+#' See \code{\link[GGally]{ggnet2}} for
+#' full list of arguments:
 #'
 #' \itemize{
 #'
@@ -222,21 +209,20 @@
 #' wmt <- wmt2[,7:24]
 #'
 #' \donttest{# bootEGA glasso example
-#' ## plot.type = "qqraph" used for CRAN checks
-#' ## plot.type = "GGally" is the default
-#' boot.wmt <- bootEGA(data = wmt, iter = 500, plot.type = "qgraph",
+#' ## plot.typicalStructure = FALSE used for CRAN checks
+#' boot.wmt <- bootEGA(data = wmt, iter = 500, plot.typicalStructure = FALSE,
 #' type = "parametric", ncores = 2)
 #'
 #' # bootEGA TMFG example
 #' boot.wmt <- bootEGA(data = wmt, iter = 500, model = "TMFG",
-#' plot.type = "qgraph", type = "parametric", ncores = 2, seed = 1234)
+#' plot.typicalStructure = FALSE, type = "parametric", ncores = 2, seed = 1234)
 #'
 #' # bootEGA Louvain example
 #' boot.wmt <- bootEGA(data = wmt, iter = 500, algorithm = "louvain",
-#' plot.type = "qgraph", type = "parametric", ncores = 2, seed = 1234)
+#' plot.typicalStructure = FALSE, type = "parametric", ncores = 2, seed = 1234)
 #'
 #' # bootEGA Spinglass example
-#' boot.wmt <- bootEGA(data = wmt, iter = 500, model = "TMFG", plot.type = "qgraph",
+#' boot.wmt <- bootEGA(data = wmt, iter = 500, model = "TMFG", plot.typicalStructure = FALSE,
 #' algorithm = igraph::cluster_spinglass, type = "parametric", ncores = 2)
 #' }
 #'
@@ -259,20 +245,19 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 18.05.2022
+# Updated 07.07.2022
 bootEGA <- function(data, n = NULL, uni.method = c("expand", "LE"), iter,
                     type = c("parametric", "resampling"), seed = 1234,
                     corr = c("cor_auto", "pearson", "spearman"),
                     model = c("glasso", "TMFG"), model.args = list(),
                     algorithm = c("walktrap", "louvain"), algorithm.args = list(),
                     typicalStructure = TRUE, plot.typicalStructure = TRUE,
-                    plot.type = c("GGally", "qgraph"),
                     plot.args = list(), ncores, ...) {
   
   # Make data a matrix
   data <- as.matrix(data)
 
-  #### DEPRECATED ARGUMENTS ####
+  #### DEPRECATED ARGUMENTS
 
   # Get additional arguments
   add.args <- list(...)
@@ -301,12 +286,7 @@ bootEGA <- function(data, n = NULL, uni.method = c("expand", "LE"), iter,
     )
   }
 
-  #### DEPRECATED ARGUMENTS ####
-
-  # Message function
-  message(styletext(styletext("\nBootstrap Exploratory Graph Analysis\n", defaults = "underline"), defaults = "bold"))
-
-  #### MISSING ARGUMENTS HANDLING ####
+  #### MISSING ARGUMENTS HANDLING
 
   if(missing(uni.method)){
     uni.method <- "LE"
@@ -338,44 +318,12 @@ bootEGA <- function(data, n = NULL, uni.method = c("expand", "LE"), iter,
     ncores <- ceiling(parallel::detectCores() / 2)
   }
 
-  if(missing(plot.type)){
-    plot.type <- "GGally"
-  }else{
-    plot.type <- match.arg(plot.type)
-  }
-
   ## Check for input plot arguments
   if("color.palette" %in% names(plot.args)){
     color.palette <- plot.args$color.palette
   }else{
     color.palette <- "polychrome"
   }
-
-  #### MISSING ARGUMENTS HANDLING ####
-
-  # Let user know setting
-  message(paste(" \u2022 type = ", type, "\n",
-                " \u2022 iterations = ", iter, "\n",
-                " \u2022 model = ", model, "\n",
-                " \u2022 algorithm = ",
-                gsub(
-                  "igraph", "",
-                  gsub(
-                    "::", "",
-                    gsub(
-                      "cluster_", "",
-                      paste(substitute(algorithm), collapse = "")
-                    )
-                  )
-                ),
-                "\n",
-                " \u2022 correlation = ", corr, "\n",
-                " \u2022 unidimensional check = ", ifelse(
-                  uni.method == "LE",
-                  "leading eigenvalue",
-                  "correlation matrix expansion"
-                ), "\n",
-                sep=""))
 
   #number of cases
   if(is.null(n)){
@@ -594,7 +542,6 @@ bootEGA <- function(data, n = NULL, uni.method = c("expand", "LE"), iter,
   if(typicalStructure & plot.typicalStructure){
     result$plot.typical.ega <- plot(
       result,
-      plot.type = plot.type,
       plot.args = plot.args
     )
   }

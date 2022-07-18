@@ -4,7 +4,7 @@
 \alias{residualEGA}
 \title{Residualized \code{\link[EGAnet]{EGA}}}
 \usage{
-residualEGA(data, manifests, lat, negative.items, plot = TRUE)
+residualEGA(data, manifests, lat, negative.items)
 }
 \arguments{
 \item{data}{Matrix or data frame.
@@ -19,10 +19,6 @@ Only one substantive latent factor is recommended in the current version of the 
 
 \item{negative.items}{Numeric vector
 A numeric vector indicating the column of the negative items.}
-
-\item{plot}{Boolean.
-If \code{TRUE}, returns a plot of the residualized network and its estimated dimensions.
-Defaults to \code{TRUE}}
 }
 \value{
 Returns a list containing:
@@ -53,7 +49,7 @@ data <- optimism
 \dontrun{
 # resEGA example
 opt.res <- residualEGA(data = data, manifests = colnames(optimism),
-lat = 1, negative.items = c(3,7,9), plot = TRUE)
+lat = 1, negative.items = c(3,7,9))
 
 # Fit:
 opt.res$Fit

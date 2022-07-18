@@ -8,6 +8,18 @@ o UPDATE: consesnsus clustering is now used with Louvain in `EGA`
 
 o UPDATE: print/summary S3methods have been standardized
 
+o ADD/UPDATE: `boot.ergoInfo` has achieved functional working order. Results can be trusted to suggest whether dynamic data possess the ergodic property
+
+o ADD: information theoretic clustering algorithm for dynamic data is available in `infoCluster`
+
+o REMOVE: "alpha" and "adapt" options in `UVA` (removes {fitdistrplus} dependency)
+
+o REMOVE: {qgraph} plots are no longer available
+
+o ADD: `convert2igraph` is now a core function
+
+o ADD: Jensen-Shannon Divergence `jsd` for determining (dis)similarity between network strcutures
+
 
 Changes in version 1.1.0
 

@@ -11,7 +11,6 @@ compare.EGA.plots(
   labels,
   rows,
   columns,
-  plot.type = c("GGally", "qgraph"),
   plot.args = list()
 )
 }
@@ -36,11 +35,6 @@ Number of rows to spread plots across}
 \item{columns}{Numeric.
 Number of columns to spread plots down}
 
-\item{plot.type}{Character.
-Plot system to use.
-Current options are \code{\link[qgraph]{qgraph}} and \code{\link{GGally}}.
-Defaults to \code{"GGally"}}
-
 \item{plot.args}{List.
 A list of additional arguments for the network plot.
 For \code{plot.type = "qgraph"}:
@@ -51,7 +45,8 @@ For \code{plot.type = "qgraph"}:
 {Size of the nodes. Defaults to 6.}
 
 }
-For \code{plot.type = "GGally"} (see \code{\link[GGally]{ggnet2}} for
+
+(see \code{\link[GGally]{ggnet2}} for
 full list of arguments):
 
 \itemize{

@@ -1,7 +1,7 @@
 Package: EGAnet
 Title: Exploratory Graph Analysis – a Framework for Estimating the Number of Dimensions in Multivariate Data using Network Psychometrics
 Version: 1.1.1
-Date: 2022-05-13
+Date: 2022-14-07
 Authors@R: c(person("Hudson", "Golino", email = "hfg9s@virginia.edu", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-1601-1447")),
 	     person("Alexander", "Christensen", email = "alexpaulchristensen@gmail.com", role = "aut", comment = c(ORCID = "0000-0002-9798-7037")),
 	     person("Robert", "Moulder", email = "rgm4fd@virginia.edu", role = "ctb", comment = c(ORCID = "0000-0001-7504-9560")),
@@ -13,15 +13,14 @@ Depends: R (>= 3.5.0)
 License: GPL (>= 3.0)
 Encoding: UTF-8
 LazyData: true
-Imports: qgraph (>= 1.4.1), semPlot (>= 1.0.1),
-         igraph (>= 1.0.1), lavaan (>= 0.5-22),
-         glasso (>= 1.10), stats, Matrix (>= 1.2),
-         network (>= 1.16.0), GGally (>= 2.0.0), methods,
-	   fitdistrplus, ggpubr, ggplot2, pbapply,
-	   matrixcalc (>= 1.0-3), OpenMx
-Suggests: psych, psychTools, GPArotation, sna,
-          markdown, knitr, rmarkdown,
-	    gridExtra, rstudioapi,
-	    RColorBrewer
+Imports: cluster, glasso, GGally, ggdendro,
+	   ggplot2, ggpubr, igraph, lavaan,
+	   Matrix, matrixcalc, methods,
+	   network, OpenMx, pbapply, qgraph,
+	   semPlot, stats
+Suggests: GPArotation, gridExtra, knitr,
+	    markdown, psych, psychTools,
+	    RColorBrewer, rmarkdown, rstudioapi,
+	    sna
 VignetteBuilder: knitr
 RoxygenNote: 7.2.0

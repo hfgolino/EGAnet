@@ -124,20 +124,18 @@
 #'
 #' @examples
 #' \donttest{# Population structure:
-#' ## plot.type = "qqraph" used for CRAN checks
-#' ## plot.type = "GGally" is the default
 #' dyn.random <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 #' delta = 1, id = 21, group = 22, use.derivatives = 1,
 #' level = "population", model = "glasso", ncores = 2)
 #'
-#' plot(dyn.random, plot.type = "qgraph")
+#' plot(dyn.random)
 #'
 #' # Group structure:
 #' dyn.group <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
 #' delta = 1, id = 21, group = 22, use.derivatives = 1,
 #' level = "group", model = "glasso", ncores = 2)
 #'
-#' plot(dyn.group, ncol = 2, nrow = 1, plot.type = "qgraph")
+#' plot(dyn.group, ncol = 2, nrow = 1)
 #'
 #' # Intraindividual structure (commented out for CRAN tests):
 #' # dyn.individual <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
@@ -167,7 +165,7 @@
 #'
 #' @export
 # dynEGA
-# Updated 15.06.2022
+# Updated 07.07.2022
 dynEGA <- function(data, n.embed, tau = 1, delta = 1,
                    level = c("individual", "group", "population"),
                    id = NULL, group = NULL,

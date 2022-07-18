@@ -138,15 +138,14 @@ algorithm is varied and unique community solutions are compared using
 wmt <- wmt2[,7:24]
 
 \donttest{# Estimate EGA
-## plot.type = "qqraph" used for CRAN checks
-## plot.type = "GGally" is the default
-ega.wmt <- EGA(data = wmt, plot.type = "qgraph")
+## plot.EGA = FALSE used for CRAN checks
+ega.wmt <- EGA(data = wmt, plot.EGA = FALSE)
 
 # Estimate optimal EGA
 fit.wmt <- EGA.fit(data = wmt)
 
 # Plot optimal fit
-plot(fit.wmt$EGA, plot.type = "qgraph")
+plot(fit.wmt$EGA, produce = FALSE)
 
 # Compare with CFA
 cfa.ega <- CFA(ega.wmt, estimator = "WLSMV", data = wmt)

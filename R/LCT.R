@@ -77,7 +77,7 @@
 #' @export
 #'
 # Loadings Comparison Test----
-# Updated 16.06.2021
+# Updated 07.07.2022
 LCT <- function (data, n, iter = 100,
                  dynamic = FALSE,
                  dynamic.args = list(
@@ -187,7 +187,7 @@ LCT <- function (data, n, iter = 100,
                  corr = "pearson", ncores = 2)
         )), silent = TRUE)$dynEGA
         
-        cor.mat <- net$cor.data
+        cor.mat <- net$correlation
         
       }else{
         net <- try(suppressWarnings(suppressMessages(EGA(cor.mat, n = cases, plot.EGA = FALSE))), silent = TRUE)
