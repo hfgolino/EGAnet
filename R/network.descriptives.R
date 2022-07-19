@@ -51,10 +51,10 @@
 #' wmt <- wmt2[,7:24]
 #'
 #' \donttest{# EGA example
-#' ## plot.type = "qqraph" used for CRAN checks
-#' ## plot.type = "GGally" is the default
-#' ega.wmt <- EGA(data = wmt, plot.type = "qgraph")
-#' }
+#' ega.wmt <- EGA(
+#'   data = wmt,
+#'   plot.EGA = FALSE # No plot for CRAN
+#' )}
 #' 
 #' # Compute descriptives
 #' network.descriptives(ega.wmt)
@@ -80,7 +80,7 @@
 #' @importFrom methods is
 #'
 # Network Descriptive
-# Updated 12.05.2021
+# Updated 19.07.2022
 network.descriptives <- function(network)
 {
   # Check for input
@@ -110,6 +110,9 @@ network.descriptives <- function(network)
   desc["swn.HG"] <- smallworldness(network[degree != 0,degree != 0], method = "HG")$swm
   desc["swn.TJHBL"] <- smallworldness(network[degree != 0,degree != 0], method = "TJHBL")$swm
   desc["scale-free_R-sq"] <- as.matrix(scaleFreeFitIndex(degree, nBreaks = 10)["Rsquared.SFT"])
+  
+  # Set class
+  class(desc) <- "Descriptives"
   
   return(round(desc, 3))
     

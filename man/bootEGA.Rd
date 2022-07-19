@@ -263,6 +263,9 @@ boot.wmt <- bootEGA(
   type = "parametric", ncores = 2
 )
 
+# Produce Methods section
+methods.section(boot.wmt)
+
 # Louvain example
 boot.wmt.louvain <- bootEGA(
   data = wmt, iter = 100, # recommended 500

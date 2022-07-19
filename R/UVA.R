@@ -260,11 +260,14 @@
 #' key <- as.character(psychTools::spi.dictionary$item[key.ind])
 #' 
 #' \donttest{# Automated selection of local dependence (default)
-#' uva.results <- UVA(data = items, key = key)}
+#' uva.results <- UVA(data = items, key = key)
+#' 
+#' # Produce Methods section
+#' methods.section(uva.results)}
 #' 
 #' # Manual selection of local dependence
 #' if(interactive()){
-#' uva.results <- UVA(data = items, key = key, type = "adapt")
+#' uva.results <- UVA(data = items, key = key, auto = FALSE)
 #' }
 #'
 #' @references

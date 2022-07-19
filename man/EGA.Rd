@@ -228,6 +228,9 @@ ega.wmt <- EGA(
 # Summary statistics
 summary(ega.wmt)
 
+# Produce Methods section
+methods.section(ega.wmt)
+
 # Estimate EGAtmfg
 ega.wmt.tmfg <- EGA(
   data = wmt, model = "TMFG",

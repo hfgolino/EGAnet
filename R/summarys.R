@@ -471,3 +471,66 @@ summary.riEGA <- function(object, ...) {
   print(methods.matrix, quote = FALSE)
   
 }
+
+#Summary Network Descriptives----
+# Updated 19.07.2022
+#' @export
+summary.Descriptives <- function(object, ...)
+{
+  # Print weights
+  cat("\nWeights:\n")
+  
+  ## Set up weights
+  weights.matrix <- matrix(
+    nrow = 4, ncol = 1
+  )
+  row.names(weights.matrix) <- c(
+    "Mean =",
+    "Standard Deviation =",
+    "Range =",
+    "Density ="
+  )
+  colnames(weights.matrix) <- ""
+  
+  weights.matrix["Mean =",] <- object["Mean_weight"]
+  weights.matrix["Standard Deviation =",] <- object["SD_weight"]
+  weights.matrix["Range =",] <- paste(
+    object["Min_weight"], "to", object["Max_weight"]
+  )
+  weights.matrix["Density =",] <- object["Density"]
+  
+  print(weights.matrix, quote = FALSE)
+  
+  # Print weights
+  cat("\nGlobal Properties:\n")
+  
+  ## Set up weights
+  global.matrix <- matrix(
+    nrow = 4, ncol = 1
+  )
+  row.names(global.matrix) <- c(
+    "Average Shortest Path Length (ASPL) =",
+    "Clustering Coefficient (CC) =",
+    # "Small-world (Random) =",
+    # "Small-world (Humphries & Gurney, 2008) =",
+    "Small-world (Telesford et al., 2011) =",
+    "R-squared Fit for Scale-free Network ="
+  )
+  colnames(global.matrix) <- ""
+  
+  global.matrix["Average Shortest Path Length (ASPL) =",] <- object["ASPL"]
+  global.matrix["Clustering Coefficient (CC) =",] <- object["CC"]
+  # global.matrix["Small-world (Random) =",] <- x["swn.rand"]
+  # global.matrix["Small-world (Humphries & Gurney, 2008) =",] <- x["swn.HG"]
+  global.matrix["Small-world (Telesford et al., 2011) =",] <- object["swn.TJHBL"]
+  global.matrix["R-squared Fit for Scale-free Network =",] <- object["scale-free_R-sq"]
+  
+  print(global.matrix, quote = FALSE)
+  
+  ## Add interpretation
+  cat("---")
+  # cat("\nSmall-world (Random): 0 'not small-world' 1 'small-world' Inf")
+  # cat("\nSmall-world (Humphries & Gurney, 2008): 0 'not small-world' 3 'small-world' Inf")
+  cat("\nSmall-world (Telesford et al., 2011): -1 'lattice' 0 'random' 1; near 0 = small-world")
+  
+}

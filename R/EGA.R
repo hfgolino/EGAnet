@@ -205,6 +205,9 @@
 #'
 #' # Summary statistics
 #' summary(ega.wmt)
+#' 
+#' # Produce Methods section
+#' methods.section(ega.wmt)
 #'
 #' # Estimate EGAtmfg
 #' ega.wmt.tmfg <- EGA(
@@ -263,7 +266,7 @@
 #'
 #' @export
 #'
-# Updated 07.07.2022
+# Updated 19.07.2022
 # Consensus clustering 13.05.2022
 # LE adjustment 08.03.2021
 ## EGA Function to detect unidimensionality:

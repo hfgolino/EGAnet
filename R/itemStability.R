@@ -76,6 +76,12 @@
 #'   boot.wmt,
 #'   IS.plot = FALSE # NO plot for CRAN checks
 #' )
+#' 
+#' # Produce Methods section
+#' methods.section(
+#'   boot.wmt,
+#'   stats = "itemStability"
+#' )
 #'
 #' # EGA fit example
 #' boot.wmt.fit <- bootEGA(

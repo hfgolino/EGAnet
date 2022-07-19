@@ -468,3 +468,66 @@ print.riEGA <- function(x, ...) {
   print(methods.matrix, quote = FALSE)
   
 }
+
+#Print Network Descriptives----
+# Updated 19.07.2022
+#' @export
+print.Descriptives <- function(x, ...)
+{
+  # Print weights
+  cat("\nWeights:\n")
+  
+  ## Set up weights
+  weights.matrix <- matrix(
+    nrow = 4, ncol = 1
+  )
+  row.names(weights.matrix) <- c(
+    "Mean =",
+    "Standard Deviation =",
+    "Range =",
+    "Density ="
+  )
+  colnames(weights.matrix) <- ""
+  
+  weights.matrix["Mean =",] <- x["Mean_weight"]
+  weights.matrix["Standard Deviation =",] <- x["SD_weight"]
+  weights.matrix["Range =",] <- paste(
+    x["Min_weight"], "to", x["Max_weight"]
+  )
+  weights.matrix["Density =",] <- x["Density"]
+  
+  print(weights.matrix, quote = FALSE)
+  
+  # Print weights
+  cat("\nGlobal Properties:\n")
+  
+  ## Set up weights
+  global.matrix <- matrix(
+    nrow = 4, ncol = 1
+  )
+  row.names(global.matrix) <- c(
+    "Average Shortest Path Length (ASPL) =",
+    "Clustering Coefficient (CC) =",
+    # "Small-world (Random) =",
+    # "Small-world (Humphries & Gurney, 2008) =",
+    "Small-world (Telesford et al., 2011) =",
+    "R-squared Fit for Scale-free Network ="
+  )
+  colnames(global.matrix) <- ""
+  
+  global.matrix["Average Shortest Path Length (ASPL) =",] <- x["ASPL"]
+  global.matrix["Clustering Coefficient (CC) =",] <- x["CC"]
+ # global.matrix["Small-world (Random) =",] <- x["swn.rand"]
+ # global.matrix["Small-world (Humphries & Gurney, 2008) =",] <- x["swn.HG"]
+  global.matrix["Small-world (Telesford et al., 2011) =",] <- x["swn.TJHBL"]
+  global.matrix["R-squared Fit for Scale-free Network =",] <- x["scale-free_R-sq"]
+  
+  print(global.matrix, quote = FALSE)
+  
+  ## Add interpretation
+  cat("---")
+  # cat("\nSmall-world (Random): 0 'not small-world' 1 'small-world' Inf")
+  # cat("\nSmall-world (Humphries & Gurney, 2008): 0 'not small-world' 3 'small-world' Inf")
+  cat("\nSmall-world (Telesford et al., 2011): -1 'lattice' 0 'random' 1; near 0 = small-world")
+  
+}

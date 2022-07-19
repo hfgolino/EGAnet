@@ -41,6 +41,14 @@
 #' # Estimate stability statistics
 #' res <- dimensionStability(boot.wmt)
 #' res$dimension.stability
+#' 
+#' \donttest{# Produce Methods section
+#' methods.section(
+#'   boot.wmt,
+#'   stats = "dimensionStability"
+#' )
+#' }
+#' 
 #'
 #' @references
 #' Christensen, A. P., & Golino, H. (2021).
