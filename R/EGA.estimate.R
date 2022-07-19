@@ -95,26 +95,23 @@
 #' \item{cor.data}{The zero-order correlation matrix}
 #'
 #' @examples
-#' \dontshow{# Fast for CRAN checks
-#' # Pearson's correlation matrix
-#' wmt <- cor(wmt2[,7:24])
-#'
-#' # Estimate EGA
-#' ega.wmt <- EGA.estimate(data = wmt, n = nrow(wmt2), model = "glasso")
-#'
-#' }
-#'
-#' \donttest{
-#' # Estimate EGA
-#' ega.wmt <- EGA.estimate(data = wmt2[,7:24], model = "glasso")
+#' # Obtain data
+#' wmt <- wmt2[,7:24]
+#' 
+#' \donttest{# Estimate EGA
+#' ega.wmt <- EGA.estimate(data = wmt)
 #'
 #' # Estimate EGAtmfg
-#' ega.wmt <- EGA.estimate(data = wmt2[,7:24], model = "TMFG")
+#' ega.wmt.tmfg <- EGA.estimate(data = wmt, model = "TMFG")
 #'
-#' # Estimate EGA with Spinglass
-#' ega.wmt <- EGA.estimate(data = wmt2[,7:24], model = "glasso",
-#' algorithm = igraph::cluster_spinglass)
-#' }
+#' # Estimate EGA with Louvain algorithm
+#' ega.wmt.louvain <- EGA.estimate(data = wmt, algorithm = "louvain")
+#'
+#' # Estimate EGA with Spinglass algorithm
+#' ega.wmt.spinglass <- EGA.estimate(
+#'   data = wmt,
+#'   algorithm = igraph::cluster_spinglass # any {igraph} algorithm
+#' )}
 #'
 #' @seealso \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap
 #' and \code{\link{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.

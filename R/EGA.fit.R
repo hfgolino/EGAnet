@@ -116,26 +116,30 @@
 #' \item{Lowest.EntropyFit}{The lowest value for the \code{\link[EGAnet]{tefi}} Index}
 #'
 #' @examples
-#'
 #' # Load data
 #' wmt <- wmt2[,7:24]
 #'
 #' \donttest{# Estimate EGA
-#' ## plot.EGA = FALSE used for CRAN checks
-#' ega.wmt <- EGA(data = wmt, plot.EGA = FALSE)
+#' ega.wmt <- EGA(
+#'   data = wmt, 
+#'   plot.EGA = FALSE # No plot for CRAN checks
+#' )
 #'
 #' # Estimate optimal EGA
 #' fit.wmt <- EGA.fit(data = wmt)
 #' 
 #' # Plot optimal fit
-#' plot(fit.wmt$EGA, produce = FALSE)
+#' plot(fit.wmt$EGA)
 #'
-#' # Compare with CFA
+#' # Estimate CFAs
 #' cfa.ega <- CFA(ega.wmt, estimator = "WLSMV", data = wmt)
 #' cfa.fit <- CFA(fit.wmt$EGA, estimator = "WLSMV", data = wmt)
 #'
-#' lavaan::lavTestLRT(cfa.ega$fit, cfa.fit$fit, method = "satorra.bentler.2001")
-#' }
+#' # Compare CFAs
+#' lavaan::lavTestLRT(
+#'   cfa.ega$fit, cfa.fit$fit,
+#'   method = "satorra.bentler.2001"
+#' )}
 #'
 #' @references
 #' # Entropy fit measures \cr

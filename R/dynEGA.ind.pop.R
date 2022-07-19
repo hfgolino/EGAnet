@@ -1,6 +1,6 @@
-#' Dynamic EGA used in the mctest.ergoInfo function
+#' Dynamic EGA
 #' 
-#' @description Dynamic EGA used in the mctest.ergoInfo function. DynEGA estimates dynamic factors in multivariate time series (i.e. longitudinal data, panel data, intensive longitudinal data) at multiple
+#' @description DynEGA estimates dynamic factors in multivariate time series (i.e. longitudinal data, panel data, intensive longitudinal data) at multiple
 #' time scales, in different levels of analysis: individuals (intraindividual structure) and population (structure of the population).
 #' Exploratory graph analysis is applied in the derivatives estimated using generalized local linear approximation (\code{\link[EGAnet]{glla}}). Instead of estimating factors by modeling how variables are covarying, as in traditional
 #' EGA, dynEGA is a dynamic model that estimates the factor structure by modeling how variables are changing together.
@@ -103,17 +103,18 @@
 #' @author Hudson Golino <hfg9s at virginia.edu>
 #'
 #' @examples
-#' \dontrun{
-#' \donttest{# Population structure:
-#' dyn.ega1 <- dynEGA.ind.pop(data = sim.dynEGA, n.embed = 5, tau = 1,
-#' delta = 1, id = 21, use.derivatives = 1, model = "glasso", ncores = 2,
-#' cor = "pearson")
-#' }
-#' }
-#'
-#' @importFrom stats cor rnorm runif na.omit
+#' # Obtain data
+#' sim.dynEGA <- sim.dynEGA # bypasses CRAN checks
+#' 
+#' \donttest{# Dynamic EGA individual and population structure
+#' dyn.ega1 <- dynEGA.ind.pop(
+#'   data = sim.dynEGA, n.embed = 5, tau = 1,
+#'   delta = 1, id = 21, use.derivatives = 1, 
+#'   ncores = 2, corr = "pearson"
+#' )}
 #' 
 #' @export
+#'
 # Updated 14.06.2022
 dynEGA.ind.pop <- function(data, n.embed, tau = 1, delta = 1,
                            id = NULL,

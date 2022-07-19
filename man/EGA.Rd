@@ -216,38 +216,36 @@ Notably, any community detection algorithm from the \code{\link{igraph}}
 can be used to estimate the number of communities (see examples).
 }
 \examples{
+# Obtain data
+wmt <- wmt2[,7:24]
+
 \donttest{# Estimate EGA
-## plot.EGA = FALSE used for CRAN checks
-ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = FALSE)
+ega.wmt <- EGA(
+  data = wmt,
+  plot.EGA = FALSE # No plot for CRAN checks
+)
 
 # Summary statistics
 summary(ega.wmt)
 
 # Estimate EGAtmfg
-ega.wmt <- EGA(data = wmt2[,7:24], model = "TMFG", plot.EGA = FALSE)
+ega.wmt.tmfg <- EGA(
+  data = wmt, model = "TMFG",
+  plot.EGA = FALSE # No plot for CRAN checks
+)
 
 # Estimate EGA with Louvain algorithm
-ega.wmt <- EGA(data = wmt2[,7:24], algorithm = "louvain", plot.EGA = FALSE)
+ega.wmt.louvain <- EGA(
+  data = wmt, algorithm = "louvain",
+  plot.EGA = FALSE # No plot for CRAN checks
+)
 
 # Estimate EGA with Spinglass algorithm
-ega.wmt <- EGA(data = wmt2[,7:24],
-algorithm = igraph::cluster_spinglass, plot.EGA = FALSE)
-
-# Estimate EGA
-ega.intel <- EGA(data = intelligenceBattery[,8:66], model = "glasso", plot.EGA = FALSE)
-
-# Summary statistics
-summary(ega.intel)
-}
-
- \dontshow{# Fast for CRAN checks
-# Pearson's correlation matrix
-wmt <- cor(wmt2[,7:24])
-
-# Estimate EGA
-ega.wmt <- EGA(data = wmt, n = nrow(wmt2), model = "glasso", plot.EGA = FALSE)
-
-}
+ega.wmt.spinglass <- EGA(
+  data = wmt,
+  algorithm = igraph::cluster_spinglass, # any {igraph} algorithm
+  plot.EGA = FALSE # No plot for CRAN checks
+)}
 
 }
 \references{

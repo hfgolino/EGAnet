@@ -1,7 +1,7 @@
 ---
 title: "Exploratory Graph Analysis"
 author: "Alexander P. Christensen and Hudson Golino"
-date: Sys.Date()
+date: "`r format(Sys.time(), '%B %d, %Y')`"
 output: html_document
 vignette: >
   %\VignetteIndexEntry{Exploratory Graph Analysis}
@@ -14,3 +14,4 @@ vignette: >
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Coming soon!

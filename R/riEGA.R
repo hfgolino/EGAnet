@@ -207,8 +207,6 @@
 #' 
 #' }
 #' 
-#' 
-#' 
 #' }
 #'
 #' @author  
@@ -223,8 +221,7 @@
 #' # Obtain example data
 #' data <- optimism
 #' 
-#' \dontrun{
-#' # riEGA example
+#' \donttest{# riEGA example
 #' opt.res <- riEGA(data = optimism)
 #' }
 #'
@@ -238,7 +235,7 @@
 #' 
 # Random-Intercept EGA
 # Changed from 'residualEGA.R' on 17.04.2022
-# Updated 07.07.2022
+# Updated 18.07.2022
 riEGA <- function(
     data, n = NULL, uni.method = c("expand", "LE"),
     corr = c("cor_auto", "pearson", "spearman"),
@@ -427,17 +424,15 @@ riEGA <- function(
   }
   
   # Set the rest of the arguments
-  ega_defaults$n <- n
-  ega_defaults$uni.method <- uni.method
-  ega_defaults$corr <- corr
-  ega_defaults$model <- model
-  ega_defaults$model.args <- model.args
-  ega_defaults$algorithm <- algorithm
-  ega_defaults$algorithm.args <- algorithm.args
-  ega_defaults$consensus.method <- consensus.method
-  ega_defaults$consensus.iter <- consensus.iter
-  ega_defaults$plot.EGA <- plot.EGA
-  ega_defaults$plot.args <- plot.args
+  ega_defaults <- list(
+    data = ega_defaults$data,
+    n = n, uni.method = uni.method, corr = corr,
+    model = model, model.args = model.args,
+    algorithm = algorithm, algorithm.args = algorithm.args,
+    consensus.method = consensus.method,
+    consensus.iter = consensus.iter, plot.EGA = plot.EGA,
+    plot.args = plot.args
+  )
   
   # Get EGA
   suppressPackageStartupMessages(

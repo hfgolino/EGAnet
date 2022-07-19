@@ -6,8 +6,8 @@
 \usage{
 compare.EGA.plots(
   ...,
-  input_list = NULL,
-  base_plot = 1,
+  input.list = NULL,
+  base.plot = 1,
   labels,
   rows,
   columns,
@@ -17,11 +17,11 @@ compare.EGA.plots(
 \arguments{
 \item{...}{\code{\link{EGAnet}} objects}
 
-\item{input_list}{List.
+\item{input.list}{List.
 Bypasses \code{...} argument in favor of using a list
 as an input}
 
-\item{base_plot}{Numeric.
+\item{base.plot}{Numeric.
 Plot to be used as the base for the configuration of the networks.
 Uses the number of the order in which the plots are input.
 Defaults to \code{1} or the first plot}
@@ -83,8 +83,24 @@ placed in the same layout to maximize comparison. Community memberships
 are also homogenized across EGA outputs to enhance interpretation
 }
 \examples{
-# obtain SAPA items
+# Obtain SAPA items
 items <- psychTools::spi[,c(11:20)]
+
+# Draw random samples
+sample1 <- items[sample(1:nrow(items), 1000),]
+sample2 <- items[sample(1:nrow(items), 1000),]
+
+\donttest{# Estimate EGAs
+ega1 <- EGA(sample1)
+ega2 <- EGA(sample2)
+
+# Compare EGAs via plot
+compare.EGA.plots(
+  ega1, ega2,
+  base.plot = 1, # use "ega1" as base for comparison
+  labels = c("Sample 1", "Sample 2"),
+  rows = 1, columns = 2
+)}
 
 }
 \author{

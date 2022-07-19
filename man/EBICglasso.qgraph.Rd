@@ -64,44 +64,40 @@ the graph with the best EBIC is selected. The partial correlation matrix
 is computed using \code{\link[qgraph]{wi2net}} and returned.
 }
 \examples{
-### Using wmt2 dataset from EGAnet ###
-data(wmt2)
+# Obtain data
+wmt <- wmt2[,7:24]
 
-\donttest{# Compute correlations:
-CorMat <- qgraph::cor_auto(wmt2[,7:24])
-
-# Compute graph with tuning = 0 (BIC):
-BICgraph <- EBICglasso.qgraph(CorMat, n = nrow(wmt2), gamma = 0)
+\donttest{# Compute graph with tuning = 0 (BIC)
+BICgraph <- EBICglasso.qgraph(
+  data = wmt, gamma = 0
+)
 
 # Compute graph with tuning = 0.5 (EBIC)
-EBICgraph <- EBICglasso.qgraph(CorMat, n = nrow(wmt2), gamma = 0.5)
-
-}
+EBICgraph <- EBICglasso.qgraph(
+  data = wmt, gamma = 0.5
+)}
 
 }
 \references{
+# Instantiation of GLASSO \cr
 Friedman, J., Hastie, T., & Tibshirani, R. (2008).
 Sparse inverse covariance estimation with the graphical lasso.
 \emph{Biostatistics}, \emph{9}, 432-441.
 
-#glasso package
-Jerome Friedman, Trevor Hastie and Rob Tibshirani (2011).
+# Tutorial on EBICglasso
+Epskamp, S., & Fried, E. I. (2018).
+A tutorial on regularized partial correlation networks.
+\emph{Psychological Methods}, \emph{23}(4), 617–634.
+
+# glasso package \cr
+Friedman, J., Hastie, T., & Tibshirani, R. (2011).
 glasso: Graphical lasso-estimation of Gaussian graphical models.
 R package version 1.7.
 
+# glasso + EBIC \cr
 Foygel, R., & Drton, M. (2010).
 Extended Bayesian information criteria for Gaussian graphical models.
-In Advances in neural information processing systems (pp. 604-612).
-
-#psych package
-Revelle, W. (2014) psych: Procedures for Personality and Psychological Research,
-Northwestern University, Evanston, Illinois, USA.
-R package version 1.4.4.
-
-#Matrix package
-Douglas Bates and Martin Maechler (2014).
-Matrix: Sparse and Dense Matrix Classes and Methods.
-R package version 1.1-3.
+\emph{In Advances in neural information processing systems} (pp. 604-612).
 }
 \author{
 Sacha Epskamp <mail@sachaepskamp.com>

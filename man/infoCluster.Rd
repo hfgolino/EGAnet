@@ -33,20 +33,21 @@ iteratively identifies smaller and smaller clusters until there is no
 change in the clusters identified
 }
 \examples{
+# Obtain data
+sim.dynEGA <- sim.dynEGA # bypasses CRAN checks
 
-\dontrun{
-\donttest{
-# Perform dynEGA
-dyn1 <- dynEGA.ind.pop(data = sim.dynEGA[,-c(22)], n.embed = 5, tau = 1,
-                      delta = 1, id = 21, use.derivatives = 1,
-                    model = "glasso", ncores = 2, corr = "pearson")
-
-# Perform hierarchical clustering
-clust1 <- infoCluster(
-  dynEGA.object = dyn1,
-  plot.cluster = TRUE
+\donttest{# Dynamic EGA individual and population structure
+dyn.ega1 <- dynEGA.ind.pop(
+  data = sim.dynEGA, n.embed = 5, tau = 1,
+  delta = 1, id = 21, use.derivatives = 1, 
+  ncores = 2, corr = "pearson"
 )
-}}
+
+# Perform information-theoretic clustering
+clust1 <- infoCluster(
+  dynEGA.object = dyn.ega1,
+  plot.cluster = FALSE # No plot for CRAN checks
+)}
 
 }
 \author{

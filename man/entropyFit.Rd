@@ -31,15 +31,14 @@ Computes the fit of a dimensionality structure using empirical entropy.
 Lower values suggest better fit of a structure to the data.
 }
 \examples{
-
 # Load data
 wmt <- wmt2[,7:24]
 
-\donttest{
-# Estimate EGA model
-ega.wmt <- EGA(data = wmt, model = "glasso", plot.EGA = FALSE)
-
-}
+\donttest{# Estimate EGA model
+ega.wmt <- EGA(
+  data = wmt,
+  plot.EGA = FALSE # No plot for CRAN checks
+)}
 
 # Compute entropy indices
 entropyFit(data = wmt, structure = ega.wmt$wc)

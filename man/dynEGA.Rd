@@ -146,25 +146,38 @@ EGA, dynEGA is a dynamic model that estimates the factor structure by modeling h
 GLLA is a filtering method for estimating derivatives from data that uses time delay embedding and a variant of Savitzky-Golay filtering to accomplish the task.
 }
 \examples{
-\donttest{# Population structure:
-dyn.random <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
-delta = 1, id = 21, group = 22, use.derivatives = 1,
-level = "population", model = "glasso", ncores = 2)
+# Obtain data
+sim.dynEGA <- sim.dynEGA # bypasses CRAN checks
 
+\donttest{# Population structure
+dyn.random <- dynEGA(
+  data = sim.dynEGA, n.embed = 5, tau = 1,
+  delta = 1, id = 21, group = 22, use.derivatives = 1,
+  level = "population", ncores = 2, corr = "pearson"
+)
+
+# Plot population structure
 plot(dyn.random)
 
-# Group structure:
-dyn.group <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
-delta = 1, id = 21, group = 22, use.derivatives = 1,
-level = "group", model = "glasso", ncores = 2)
+# Group structure
+dyn.group <- dynEGA(
+  data = sim.dynEGA, n.embed = 5, tau = 1,
+  delta = 1, id = 21, group = 22, use.derivatives = 1,
+  level = "group", ncores = 2, corr = "pearson"
+)
 
+# Plot group structure
 plot(dyn.group, ncol = 2, nrow = 1)
 
-# Intraindividual structure (commented out for CRAN tests):
-# dyn.individual <- dynEGA(data = sim.dynEGA, n.embed = 5, tau = 1,
-# delta = 1, id = 21, group = 22, use.derivatives = 1,
-# level = "individual", model = "glasso", ncores = 2)
-}
+# Intraindividual structure
+dyn.individual <- dynEGA(
+  data = sim.dynEGA, n.embed = 5, tau = 1,
+  delta = 1, id = 21, group = 22, use.derivatives = 1,
+  level = "individual", ncores = 2, corr = "pearson"
+)
+
+# Plot individual structure (participant 1)
+plot(dyn.individual, id = 1)}
 
 }
 \references{

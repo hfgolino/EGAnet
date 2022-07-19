@@ -12,6 +12,7 @@ bootEGA(
   type = c("parametric", "resampling"),
   seed = 1234,
   corr = c("cor_auto", "pearson", "spearman"),
+  EGA.type = c("EGA", "EGA.fit", "hierEGA", "riEGA"),
   model = c("glasso", "TMFG"),
   model.args = list(),
   algorithm = c("walktrap", "louvain"),
@@ -76,7 +77,9 @@ original dataset, via the \code{\link[MASS]{mvrnorm}} function}
 \item{seed}{Numeric.
 Seed to reproduce results. Defaults to \code{1234}. For random results, set to \code{NULL}}
 
-\item{corr}{Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
+\item{corr}{Character.
+Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
+
 Current options are:
 
 \itemize{
@@ -92,6 +95,28 @@ the \code{\link[stats]{cor}}} function.
 \item{\strong{\code{spearman}}}
 {Computes Spearman's correlation coefficient using the pairwise complete observations via
 the \code{\link[stats]{cor}}} function.
+}}
+
+\item{EGA.type}{Character.
+Type of EGA model to use.
+
+Current options are:
+
+\itemize{
+
+\item{\code{\link[EGAnet]{EGA}}}
+{Uses standard exploratory graph analysis}
+
+\item{\code{\link[EGAnet]{EGA.fit}}}
+{Uses \code{\link[EGAnet]{tefi}} to determine best fit of
+\code{\link[EGAnet]{EGA}}}
+
+\item{\code{\link[EGAnet]{hierEGA}}}
+{Uses hierarhical exploratory graph analysis}
+
+\item{\code{\link[EGAnet]{riEGA}}}
+{Uses random-intercept exploratory graph analysis}
+
 }}
 
 \item{model}{Character.
@@ -231,23 +256,52 @@ correlations over the \emph{n} bootstraps.
 # Load data
 wmt <- wmt2[,7:24]
 
-\donttest{# bootEGA glasso example
-## plot.typicalStructure = FALSE used for CRAN checks
-boot.wmt <- bootEGA(data = wmt, iter = 500, plot.typicalStructure = FALSE,
-type = "parametric", ncores = 2)
+\donttest{# Standard EGA example
+boot.wmt <- bootEGA(
+  data = wmt, iter = 100, # recommended 500
+  plot.typicalStructure = FALSE, # No plot for CRAN checks
+  type = "parametric", ncores = 2
+)
 
-# bootEGA TMFG example
-boot.wmt <- bootEGA(data = wmt, iter = 500, model = "TMFG",
-plot.typicalStructure = FALSE, type = "parametric", ncores = 2, seed = 1234)
+# Louvain example
+boot.wmt.louvain <- bootEGA(
+  data = wmt, iter = 100, # recommended 500
+  algorithm = "louvain",
+  plot.typicalStructure = FALSE, # No plot for CRAN checks
+  type = "parametric", ncores = 2
+)
 
-# bootEGA Louvain example
-boot.wmt <- bootEGA(data = wmt, iter = 500, algorithm = "louvain",
-plot.typicalStructure = FALSE, type = "parametric", ncores = 2, seed = 1234)
+# Spinglass example
+boot.wmt.spinglass <- bootEGA(
+  data = wmt, iter = 100, # recommended 500
+  algorithm = igraph::cluster_spinglass, # use any function from {igraph}
+  plot.typicalStructure = FALSE, # No plot for CRAN checks
+  type = "parametric", ncores = 2
+)
 
-# bootEGA Spinglass example
-boot.wmt <- bootEGA(data = wmt, iter = 500, model = "TMFG", plot.typicalStructure = FALSE,
-algorithm = igraph::cluster_spinglass, type = "parametric", ncores = 2)
-}
+# EGA fit example
+boot.wmt.fit <- bootEGA(
+  data = wmt, iter = 100, # recommended 500
+  EGA.type = "EGA.fit",
+  plot.typicalStructure = FALSE, # No plot for CRAN checks
+  type = "parametric", ncores = 2
+)
+
+# Hierarchical EGA example
+boot.wmt.hier <- bootEGA(
+  data = wmt, iter = 100, # recommended 500
+  EGA.type = "hierEGA",
+  plot.typicalStructure = FALSE, # No plot for CRAN checks
+  type = "parametric", ncores = 2
+)
+
+# Random-intercept EGA example
+boot.wmt.ri <- bootEGA(
+  data = wmt, iter = 100, # recommended 500
+  EGA.type = "riEGA",
+  plot.typicalStructure = FALSE, # No plot for CRAN checks
+  type = "parametric", ncores = 2
+)}
 
 }
 \references{

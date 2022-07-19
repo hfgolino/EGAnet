@@ -12,15 +12,19 @@ ergoInfo(dynEGA.object, use = c("edge.list", "unweighted", "weighted"))
 \item{use}{Character.
 A string indicating what network element will be used
 to compute the algorithm complexity, the list of edges or the weights of the network.
-Defaults to \code{use = "edge.list"}.
+Defaults to \code{use = "weighted"}.
 Current options are:
 
 \itemize{
 
-\item{\strong{\code{edge.list}}}
+\item{\strong{\code{"edge.list"}}}
 {Calculates the algorithm complexity using the list of edges.}
 
-\item{\strong{\code{weights}}}
+\item{\strong{\code{"unweighted"}}}
+{Calculates the algorithm complexity using the binary weights of the network.
+0 = edge absent and 1 = edge present}
+
+\item{\strong{\code{"weighted"}}}
 {Calculates the algorithm complexity using the weights of the network.}
 }}
 }
@@ -41,6 +45,24 @@ Returns a list containing:
 }
 \description{
 Computes the Ergodicity Information Index
+}
+\examples{
+# Obtain data
+sim.dynEGA <- sim.dynEGA # bypasses CRAN checks
+
+\donttest{# Dynamic EGA individual and population structure
+dyn.ega1 <- dynEGA.ind.pop(
+  data = sim.dynEGA, n.embed = 5, tau = 1,
+  delta = 1, id = 21, use.derivatives = 1, 
+  ncores = 2, corr = "pearson"
+)
+
+# Compute empirical ergodicity information index
+eii <- ergoInfo(
+  dynEGA.object = dyn.ega1,
+  use = "weighted"
+)}
+
 }
 \author{
 Hudson Golino <hfg9s at virginia.edu> and Alexander Christensen <alexpaulchristensen@gmail.com>

@@ -266,38 +266,18 @@
 #' @examples
 #' # Obtain example data
 #' data <- optimism
-#'
-#' # hierEGA example (no plots)
+#' 
+#' \donttest{# hierEGA example
 #' opt.hier<- hierEGA(
 #'   data = optimism,
 #'   algorithm = "louvain",
 #'   plot.EGA = FALSE # no plots for CRAN check
-#' )
-#'
-#' \dontrun{
-#'
-#' # hierEGA example (plots)
-#' opt.hier <- hierEGA(
-#'   data = optimism,
-#'   algorithm = "louvain"
-#' )
-#'
-#' # Save plots
-#' ggplot2::ggsave(
-#'   filename = "hierEGA_plot.png", # name of plot
-#'   plot = opt.res$hierarchical$hier_plot, # plot to save
-#'   height = 8, # figure height
-#'   width = 10, # figure width
-#'   dpi = 600 # dots per inch
-#' )
-#'
-#' }
-#'
+#' )}
 #'
 #' @export
 #'
 # Hierarchical EGA
-# Updated 13.07.2022
+# Updated 18.07.2022
 hierEGA <- function(
     data, scores = c("factor", "network"),
     consensus.iter = 1000,
@@ -373,7 +353,7 @@ hierEGA <- function(
   lower_order_defaults$model.args <- model.args
   lower_order_defaults$algorithm <- "louvain" # for lower order communities
   lower_order_defaults$algorithm.args <- algorithm.args
-  lower_order_defaults$plot.lower_order <- FALSE # do not plot
+  lower_order_defaults$plot.EGA <- FALSE # do not plot
   lower_order_defaults$plot.args <- plot.args
   lower_order_defaults$lower.louvain <- TRUE # provides lower order Louvain
 
@@ -386,14 +366,14 @@ hierEGA <- function(
   # Get EGA
   lower_order_result <- suppressMessages(
     do.call(
-      EGA.estimate, lower_order_defaults
+      EGA, lower_order_defaults
     )
   )
 
   # Perform consensus clustering
   lower_order_wc <- consensus_clustering(
     network = lower_order_result$network,
-    corr = lower_order_result$cor.data,
+    corr = lower_order_result$correlation,
     order = "lower",
     consensus.iter = consensus.iter
   )
@@ -420,7 +400,7 @@ hierEGA <- function(
     fm <- suppressPackageStartupMessages(
       suppressWarnings(
         psych::fa(
-          r = lower_order_result$cor.data, # correlation matrix
+          r = lower_order_result$correlation, # correlation matrix
           n.obs = nrow(data),
           nfactors = length(na.omit(unique_memberships)) # number of factors
         )
@@ -733,29 +713,30 @@ hierEGA <- function(
 
   # Obtain higher order result for plot
   higher_order_result <- hierarchical$higher_order$EGA
-
+  
   # Set up plots
-  if(isTRUE(plot.EGA)){
-
-    # Set up plots
-    lower_plot <- suppressMessages(
+  lower_plot <- suppressMessages(
+    suppressWarnings(
+      suppressPackageStartupMessages(
+        plot(lower_order_result, produce = FALSE)
+      )
+    )
+  )
+  
+  # Check for higher order dimensions
+  if(hierarchical$higher_order$EGA$n.dim > 0){
+    
+    higher_plot <- suppressMessages(
       suppressWarnings(
         suppressPackageStartupMessages(
-          plot(lower_order_result, produce = FALSE)
+          plot(higher_order_result, produce = FALSE)
         )
       )
     )
-      
-    # Check for higher order dimensions
-    if(hierarchical$higher_order$EGA$n.dim > 0){
-      
-      higher_plot <- suppressMessages(
-        suppressWarnings(
-          suppressPackageStartupMessages(
-            plot(higher_order_result, produce = FALSE)
-          )
-        )
-      )
+  }
+
+  # Set up plots
+  if(isTRUE(plot.EGA)){
       
       # Set up output
       hier_plot <- suppressMessages(
@@ -783,22 +764,6 @@ hierEGA <- function(
       results$hierarchical$lower_plot <- lower_plot
       results$hierarchical$higher_plot <- higher_plot
       results$hierarchical$hier_plot <- hier_plot
-      
-    }else{
-      
-      # Output plots
-      suppressMessages(
-        suppressWarnings(
-          suppressPackageStartupMessages(
-            plot(lower_plot)
-          )
-        )
-      )
-      
-      # Add to main results
-      results$hierarchical$lower_plot <- lower_plot
-      
-    }
 
     # Send factor warning
     if(scores == "factor"){

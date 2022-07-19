@@ -89,7 +89,7 @@
 #' Defaults to \code{TRUE}.
 #' Set to \code{FALSE} for manual selection
 #' 
-#' @param label_latent Boolean.
+#' @param label.latent Boolean.
 #' Should latent variables be labelled?
 #' Defaults to \code{TRUE}.
 #' Set to \code{FALSE} for arbitrary labelling (i.e., "LV_")
@@ -259,12 +259,10 @@
 #' key.ind <- match(colnames(items), as.character(psychTools::spi.dictionary$item_id))
 #' key <- as.character(psychTools::spi.dictionary$item[key.ind])
 #' 
-#' # Automated selection of redundant variables (default)
-#' \donttest{
-#' uva.results <- UVA(data = items, key = key)
-#' }
+#' \donttest{# Automated selection of local dependence (default)
+#' uva.results <- UVA(data = items, key = key)}
 #' 
-#' # Manual selection of redundant variables
+#' # Manual selection of local dependence
 #' if(interactive()){
 #' uva.results <- UVA(data = items, key = key, type = "adapt")
 #' }
@@ -298,14 +296,14 @@
 #' @export
 #
 # Unique Variable Analysis
-# Updated 01.05.2022
+# Updated 18.07.2022
 UVA <- function(
   data, n = NULL,
   model = c("glasso", "TMFG"),
   corr = c("cor_auto", "pearson", "spearman"),
   method = c("cor", "pcor", "wTO"),
   type = c("adapt", "alpha", "threshold"), sig,
-  key = NULL, reduce = TRUE, auto = TRUE, label_latent = TRUE,
+  key = NULL, reduce = TRUE, auto = TRUE, label.latent = FALSE,
   reduce.method = c("latent", "remove", "sum"),
   lavaan.args = list(), adhoc = TRUE,
   plot.redundancy = FALSE, plot.args = list()
@@ -341,7 +339,7 @@ UVA <- function(
       sig <- switch(method,
                     "cor" = .50,
                     "pcor" = .35,
-                    "wto" = .25
+                    "wto" = .20
       )
     }else{sig <- .05}
   }
@@ -510,7 +508,7 @@ UVA <- function(
                              n = n,
                              model = model,
                              method = method,
-                             type = "threshold", sig = .25,
+                             type = "threshold", sig = .20,
                              plot.redundancy = FALSE, plot.args = plot.args)
         )
         
@@ -678,7 +676,7 @@ UVA <- function(
       # }
       
       # Name latent variables
-      if(isTRUE(label_latent)){
+      if(isTRUE(label.latent)){
         name_question <- "y"
       }else{
         name_question <- "n"

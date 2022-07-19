@@ -86,20 +86,14 @@
 #' # Groups
 #' groups <- rep(1:2, each = nrow(wmt) / 2)
 #' 
-#' \dontshow{# Fast for CRAN
-#' # Measurement invariance
-#' results <- invariance(wmt, groups, iter = 1, memberships = ega.wmt$wc, ncores = 2)
-#' }
-#'
 #' \donttest{
 #' # Measurement invariance
-#' results <- invariance(wmt, groups, ncores = 2)
-#' }
+#' results <- invariance(wmt, groups, ncores = 2)}
 #' 
 #' @export
 #'
 # Measurement Invariance
-# Updated 22.04.2022
+# Updated 18.07.2022
 invariance <- function(
   data, groups, 
   memberships = NULL,

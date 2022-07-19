@@ -276,32 +276,12 @@ estimate factor or network scores, which are used to estimate the higher-order d
 # Obtain example data
 data <- optimism
 
-# hierEGA example (no plots)
+\donttest{# hierEGA example
 opt.hier<- hierEGA(
   data = optimism,
   algorithm = "louvain",
   plot.EGA = FALSE # no plots for CRAN check
-)
-
-\dontrun{
-
-# hierEGA example (plots)
-opt.hier <- hierEGA(
-  data = optimism,
-  algorithm = "louvain"
-)
-
-# Save plots
-ggplot2::ggsave(
-  filename = "hierEGA_plot.png", # name of plot
-  plot = opt.res$hierarchical$hier_plot, # plot to save
-  height = 8, # figure height
-  width = 10, # figure width
-  dpi = 600 # dots per inch
-)
-
-}
-
+)}
 
 }
 \references{
