@@ -116,7 +116,8 @@ infoCluster <- function(
       # "vn_entropy",
       # "jsd",
       "networks"
-    )
+    ),
+    envir = environment()
   )
   
   # Obtain lists
