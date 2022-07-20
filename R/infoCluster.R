@@ -109,15 +109,15 @@ infoCluster <- function(
   cl <- parallel::makeCluster(ncores)
   
   # Export
-  parallel::clusterExport(
-    cl = cl,
-    varlist = c(
-      "rescaled_laplacian",
-      "vn_entropy",
-      "jsd",
-      "networks"
-    )
-  )
+  # parallel::clusterExport(
+  #   cl = cl,
+  #   varlist = c(
+  #     "rescaled_laplacian",
+  #     "vn_entropy",
+  #     "jsd",
+  #     "networks"
+  #   )
+  # )
   
   # Obtain lists
   jsd_lists <- pbapply::pblapply(
