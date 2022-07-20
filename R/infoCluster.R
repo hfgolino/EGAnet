@@ -441,7 +441,9 @@ infoCluster <- function(
   ## Return data
   results <- list()
   results$clusters <- clusters
-  results$modularity <- Qs[which.max(Qs)]
+  if(!exists("Qs", envir = environment())){
+    results$modularity <- NA
+  }
   results$clusterTree <- hier_clust
   results$clusterPlot <- cluster_plot
   results$JSD <- jsdist
