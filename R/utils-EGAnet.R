@@ -6495,14 +6495,23 @@ rewire <- function(network, noise = TRUE)
 
 #' @noRd
 # Rescaled Laplacian matrix
-# Updated 15.07.2022
+# Updated 20.07.2022
 rescaled_laplacian <- function(net)
 {
   # Ensure diagonal is zero
   diag(net) <- 0
   
+  # Make binary
+  net <- ifelse(net != 0, 1, 0)
+  
   # Laplacian matrix
   rescaled_L <- (diag(colSums(net)) - net) / sum(net)
+ 
+  # # Laplacian matrix
+  # L <- diag(colSums(net)) - net
+  # 
+  # # Rescale
+  # rescaled_L <- L / diag(L) / ncol(L)
   
   # Return
   return(rescaled_L)

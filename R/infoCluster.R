@@ -115,9 +115,7 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
       
       # Check if value is OK
       if(!is(jsd_value, "try-error")){
-        jsd_matrix[i,j] <- jsd(
-          networks[[i]], networks[[j]]
-        )
+        jsd_matrix[i,j] <- jsd_value
       }else{
         jsd_matrix[i,j] <- NA
       }
