@@ -227,6 +227,9 @@ infoCluster <- function(
   # Unique consensus
   unique_consensus <- length(na.omit(unique(consensus)))
   
+  # Perform hierarchical clustering
+  hier_clust <- hclust(as.dist(jsdist))
+  
   # Check for single cluster
   if(
     unique_consensus == 1 | # consensus = 1 OR
@@ -238,9 +241,6 @@ infoCluster <- function(
     names(clusters) <- colnames(jsdist)
 
   }else{
-    
-    # Perform hierarchical clustering
-    hier_clust <- hclust(as.dist(jsdist))
     
     # Maximize modularity
     Qs <- unlist(
