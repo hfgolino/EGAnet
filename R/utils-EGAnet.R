@@ -6501,12 +6501,9 @@ rescaled_laplacian <- function(net)
   # Ensure diagonal is zero
   diag(net) <- 0
   
-  # Make binary
-  net <- ifelse(net != 0, 1, 0)
-  
   # Laplacian matrix
   rescaled_L <- (diag(colSums(net)) - net) / sum(net)
- 
+
   # # Laplacian matrix
   # L <- diag(colSums(net)) - net
   # 
@@ -6523,9 +6520,6 @@ rescaled_laplacian <- function(net)
 # Updated 06.07.2022
 vn_entropy <- function(L_mat)
 {
-  
-  # Ensure no missing values
-  # L_mat <- ifelse(is.na(L_mat), 0, L_mat)
   
   # Eigenvalues
   eigenvalues <- eigen(L_mat)$values

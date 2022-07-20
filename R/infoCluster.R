@@ -8,6 +8,15 @@
 #' @param dynEGA.object  A \code{\link[EGAnet]{dynEGA}} or a
 #' \code{\link[EGAnet]{dynEGA.ind.pop}} object that is used to match the arguments of the EII object.
 #' 
+#' @param ncores Numeric.
+#' Number of cores to use in computing results.
+#' Defaults to \code{parallel::detectCores() / 2} or half of your
+#' computer's processing power.
+#' Set to \code{1} to not use parallel computing
+#'
+#' If you're unsure how many cores your computer has,
+#' then use the following code: \code{parallel::detectCores()}
+#' 
 #' @param plot.cluster Boolean.
 #' Should plot of optimal and hierarchical clusters be output?
 #' Defaults to \code{TRUE}.
@@ -48,7 +57,11 @@
 #' @export
 # Information Theoretic Clustering for dynEGA
 # Updated 18.07.2022
-infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
+infoCluster <- function(
+    dynEGA.object,
+    ncores,
+    plot.cluster = TRUE
+)
 {
   
   # Check for class
@@ -86,7 +99,59 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
   
   # Message user
   message("Computing Jensen-Shannon Distance...\n", appendLF = FALSE)
-
+  
+  # Make cluster
+  cl <- parallel::makeCluster(ncores)
+  
+  # Export
+  # parallel::clusterExport(
+  #   cl = cl,
+  #   varlist = c(
+  #     "rescaled_laplacian",
+  #     "vn_entropy",
+  #     "jsd",
+  #     "networks"
+  #   )
+  # )
+  
+  # Obtain lists
+  jsd_lists <- pbapply::pblapply(
+    cl = cl,
+    X = 2:length(networks),
+    FUN = function(i){
+      
+      # Compute JSD values
+      jsd_values <- lapply(1:(i-1), function(j){
+        
+        # Try
+        jsd_value <- try(
+          jsd(
+            networks[[i]], networks[[j]]
+          ),
+          silent = TRUE
+        )
+        
+        # Check if value is OK
+        if(!is(jsd_value, "try-error")){
+          return(jsd_value)
+        }else{
+          retrun(NA)
+        }
+        
+      })
+      
+      # Return
+      return(jsd_values)
+      
+    }
+  )
+  
+  # Stop cluster
+  parallel::stopCluster(cl)
+  
+  # Organize data
+  jsd_i <- lapply(jsd_lists, unlist)
+  
   # Initialize JSD matrix
   jsd_matrix <- matrix(
     0,
@@ -94,41 +159,10 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
     ncol = length(networks)
   )
   
-  # Set up progess bar
-  pb <- txtProgressBar(
-    max = length(networks),
-    style = 3
-  )
-  
-  # Populate JSD matrix
-  for(i in 2:length(networks)){
-    
-    for(j in 1:(i-1)){
-      
-      # Try
-      jsd_value <- try(
-        jsd(
-          networks[[i]], networks[[j]]
-        ),
-        silent = TRUE
-      )
-      
-      # Check if value is OK
-      if(!is(jsd_value, "try-error")){
-        jsd_matrix[i,j] <- jsd_value
-      }else{
-        jsd_matrix[i,j] <- NA
-      }
-      
-    }
-    
-    # Update progress bar
-    setTxtProgressBar(pb, i)
-    
+  # Loop through
+  for(i in 1:length(jsd_i)){
+    jsd_matrix[i+1,1:(length(jsd_i[[i]]))] <- jsd_i[[i]]
   }
-  
-  # Close progress bar
-  close(pb)
   
   # Make symmetric
   jsd_sym <- jsd_matrix + t(jsd_matrix)
@@ -152,30 +186,30 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
   # Make diagonal 0 again
   diag(jsdist) <- 0
   
-  # Compute Louvain
-  consensus <- most_common_consensus(
-    1 - jsdist,
-    order = "lower",
-    consensus.iter = 1000
-  )$most_common
-  
-  # Unique consensus
-  unique_consensus <- length(na.omit(unique(consensus)))
-  
-  # Perform hierarchical clustering
-  hier_clust <- hclust(as.dist(jsdist))
-  
-  # Check for single cluster
-  if(
-    unique_consensus == 1 | # consensus = 1 OR
-    unique_consensus == length(consensus) # consensus all individuals
-  ){
-    
-    # Obtain clusters
-    clusters <- rep(1, ncol(jsdist))
-    names(clusters) <- colnames(jsdist)
-    
-  }else{
+  # # Compute Louvain
+  # consensus <- most_common_consensus(
+  #   1 - jsdist,
+  #   order = "lower",
+  #   consensus.iter = 1000
+  # )$most_common
+  # 
+  # # Unique consensus
+  # unique_consensus <- length(na.omit(unique(consensus)))
+  # 
+  # # Perform hierarchical clustering
+  # hier_clust <- hclust(as.dist(jsdist))
+  # 
+  # # Check for single cluster
+  # if(
+  #   unique_consensus == 1 | # consensus = 1 OR
+  #   unique_consensus == length(consensus) # consensus all individuals
+  # ){
+  #   
+  #   # Obtain clusters
+  #   clusters <- rep(1, ncol(jsdist))
+  #   names(clusters) <- colnames(jsdist)
+  #   
+  # }else{
     
     # Initialize silhouette vector
     silhouette_vec <- numeric(length = ncol(jsdist) - 1)
@@ -206,7 +240,7 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
     # Obtain clusters
     clusters <- cutree(hier_clust, optimal_cut)
     
-  }
+  # }
   
   # Obtain optimal silhouette
   optimal_silho <- cluster::silhouette(
