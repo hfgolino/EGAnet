@@ -109,15 +109,15 @@ infoCluster <- function(
   cl <- parallel::makeCluster(ncores)
   
   # Export
-  # parallel::clusterExport(
-  #   cl = cl,
-  #   varlist = c(
-  #     "rescaled_laplacian",
-  #     "vn_entropy",
-  #     "jsd",
-  #     "networks"
-  #   )
-  # )
+  parallel::clusterExport(
+    cl = cl,
+    varlist = c(
+      # "rescaled_laplacian",
+      # "vn_entropy",
+      # "jsd",
+      "networks"
+    )
+  )
   
   # Obtain lists
   jsd_lists <- pbapply::pblapply(
@@ -216,25 +216,49 @@ infoCluster <- function(
   #   
   # }else{
   
-  # Perform hierarchical clustering
-  hier_clust <- hclust(as.dist(jsdist))
-    
-  # Maximize modularity
-  Qs <- unlist(
-    lapply(
-      X = 1:ncol(jsdist),
-      FUN = function(i){
-        modularity(
-          communities = cutree(hier_clust, i),
-          A = 1 - jsdist,
-          resolution = 1
-        )
-      }
-    )
-  )
+  # Compute Louvain
+  consensus <- most_common_consensus(
+    1 - jsdist,
+    order = "lower",
+    consensus.iter = 1000
+  )$most_common
+
+  # Unique consensus
+  unique_consensus <- length(na.omit(unique(consensus)))
   
-  # Obtain clusters
-  clusters <- cutree(hier_clust, which.max(Qs))
+  # Check for single cluster
+  if(
+    unique_consensus == 1 | # consensus = 1 OR
+    unique_consensus == length(consensus) # consensus all individuals
+  ){
+
+    # Obtain clusters
+    clusters <- rep(1, ncol(jsdist))
+    names(clusters) <- colnames(jsdist)
+
+  }else{
+    
+    # Perform hierarchical clustering
+    hier_clust <- hclust(as.dist(jsdist))
+    
+    # Maximize modularity
+    Qs <- unlist(
+      lapply(
+        X = 1:ncol(jsdist),
+        FUN = function(i){
+          modularity(
+            communities = cutree(hier_clust, i),
+            A = 1 - jsdist,
+            resolution = 1
+          )
+        }
+      )
+    )
+    
+    # Obtain clusters
+    clusters <- cutree(hier_clust, which.max(Qs))
+    
+  }
   
   
   # # Initialize silhouette vector
