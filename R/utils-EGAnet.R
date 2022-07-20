@@ -6501,6 +6501,9 @@ rescaled_laplacian <- function(net)
   # Ensure diagonal is zero
   diag(net) <- 0
   
+  # Make network absolute
+  net <- abs(net)
+  
   # Laplacian matrix
   rescaled_L <- (diag(colSums(net)) - net) / sum(net)
 

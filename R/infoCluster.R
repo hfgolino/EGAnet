@@ -100,19 +100,24 @@ infoCluster <- function(
   # Message user
   message("Computing Jensen-Shannon Distance...\n", appendLF = FALSE)
   
+  # Set cores (if missing)
+  if(missing(ncores)){
+    ncores <- ceiling(parallel::detectCores() / 2)
+  }
+  
   # Make cluster
   cl <- parallel::makeCluster(ncores)
   
   # Export
-  # parallel::clusterExport(
-  #   cl = cl,
-  #   varlist = c(
-  #     "rescaled_laplacian",
-  #     "vn_entropy",
-  #     "jsd",
-  #     "networks"
-  #   )
-  # )
+  parallel::clusterExport(
+    cl = cl,
+    varlist = c(
+      "rescaled_laplacian",
+      "vn_entropy",
+      "jsd",
+      "networks"
+    )
+  )
   
   # Obtain lists
   jsd_lists <- pbapply::pblapply(
@@ -135,7 +140,7 @@ infoCluster <- function(
         if(!is(jsd_value, "try-error")){
           return(jsd_value)
         }else{
-          retrun(NA)
+          return(NA)
         }
         
       })
@@ -210,43 +215,79 @@ infoCluster <- function(
   #   names(clusters) <- colnames(jsdist)
   #   
   # }else{
+  
+  # Perform hierarchical clustering
+  hier_clust <- hclust(as.dist(jsdist))
     
-    # Initialize silhouette vector
-    silhouette_vec <- numeric(length = ncol(jsdist) - 1)
-    
-    # Make names the number of clusters
-    names(silhouette_vec) <- 2:ncol(jsdist)
-    
-    # Loop through cuts
-    for(i in 2:length(silhouette_vec)){
-      
-      # Compute silhouette
-      hier_silho <- cluster::silhouette(
-        x = cutree(hier_clust, i),
-        dist = as.dist(jsdist)
-      )
-      
-      # Obtain summary
-      silho_summ <- summary(hier_silho)
-      
-      # Obtain average silhouette
-      silhouette_vec[i-1] <- mean(silho_summ$clus.avg.widths)
-      
-    }
-    
-    # Obtain maximum average silhouette
-    optimal_cut <- as.numeric(names(which.max(silhouette_vec)))
-    
-    # Obtain clusters
-    clusters <- cutree(hier_clust, optimal_cut)
-    
+  # Maximize modularity
+  Qs <- unlist(
+    lapply(
+      X = 1:ncol(jsdist),
+      FUN = function(i){
+        modularity(
+          communities = cutree(hier_clust, i),
+          A = 1 - jsdist,
+          resolution = 1
+        )
+      }
+    )
+  )
+  
+  # Obtain clusters
+  clusters <- cutree(hier_clust, which.max(Qs))
+  
+  
+  # # Initialize silhouette vector
+  # silhouette_vec <- numeric(length = ncol(jsdist) - 1)
+  # 
+  # # Make names the number of clusters
+  # names(silhouette_vec) <- 2:ncol(jsdist)
+  # 
+  # # Initialize cluster list
+  # cluster_list <- vector("list", length = ncol(jsdist - 1))
+  # 
+  # # Loop through cuts
+  # for(i in 2:length(silhouette_vec)){
+  #   
+  #   # Compute silhouette
+  #   hier_silho <- cluster::silhouette(
+  #     x = cutree(hier_clust, i),
+  #     dist = as.dist(jsdist)
+  #   )
+  #   
+  #   # Obtain summary
+  #   silho_summ <- summary(hier_silho)
+  #   
+  #   # Obtain average silhouette
+  #   silhouette_vec[i-1] <- mean(silho_summ$clus.avg.widths)
+  #   
+  #   # Obtain clusters
+  #   cluster_list[[i-1]] <- cutree(hier_clust, i)
+  #   
   # }
+  # 
+  # # Obtain modularity of clusters
+  # mods <- unlist(lapply(cluster_list, function(x){
+  #   
+  #   if(!is.null(x)){
+  #     modularity(x, A = 1 - jsdist, resolution = 1)
+  #   }
+  #   
+  # }))
+  # 
+  # # Obtain maximum modularity
+  # names[which.max(mods)]
+  # 
+  # # Obtain clusters
+  # # clusters <- cutree(hier_clust, optimal_cut)
+  # 
+  # # }
   
   # Obtain optimal silhouette
-  optimal_silho <- cluster::silhouette(
-    x = clusters,
-    dist = as.dist(jsdist)
-  )
+  # optimal_silho <- cluster::silhouette(
+  #   x = clusters,
+  #   dist = as.dist(jsdist)
+  # )
   
   # Convert for ggplot2
   cluster_data <- ggdendro::dendro_data(
@@ -375,6 +416,7 @@ infoCluster <- function(
   ## Return data
   results <- list()
   results$clusters <- clusters
+  results$modularity <- Qs[which.max(Qs)]
   results$clusterTree <- hier_clust
   results$clusterPlot <- cluster_plot
   results$JSD <- jsdist
