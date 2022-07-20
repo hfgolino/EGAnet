@@ -114,7 +114,7 @@ infoCluster <- function(
     varlist = c(
       # "rescaled_laplacian",
       # "vn_entropy",
-      # "jsd",
+      "jsd",
       "networks"
     ),
     envir = environment()
@@ -217,23 +217,17 @@ infoCluster <- function(
   #   
   # }else{
   
-  # Compute Louvain
-  consensus <- most_common_consensus(
-    1 - jsdist,
-    order = "lower",
-    consensus.iter = 1000
-  )$most_common
-
-  # Unique consensus
-  unique_consensus <- length(na.omit(unique(consensus)))
+  # Compute Walktrap
+  g <- convert2igraph(1 - jsdist)
+  clusters <- igraph::cluster_walktrap(g)$membership
   
   # Perform hierarchical clustering
   hier_clust <- hclust(as.dist(jsdist))
   
   # Check for single cluster
   if(
-    unique_consensus == 1 | # consensus = 1 OR
-    unique_consensus == length(consensus) # consensus all individuals
+    all(clusters == 1) | # consensus = 1 OR
+    unique(clusters) == length(clusters) # consensus all individuals
   ){
 
     # Obtain clusters
@@ -261,7 +255,6 @@ infoCluster <- function(
     
   }
   
-  
   # # Initialize silhouette vector
   # silhouette_vec <- numeric(length = ncol(jsdist) - 1)
   # 
@@ -273,46 +266,46 @@ infoCluster <- function(
   # 
   # # Loop through cuts
   # for(i in 2:length(silhouette_vec)){
-  #   
+  # 
   #   # Compute silhouette
   #   hier_silho <- cluster::silhouette(
   #     x = cutree(hier_clust, i),
   #     dist = as.dist(jsdist)
   #   )
-  #   
+  # 
   #   # Obtain summary
   #   silho_summ <- summary(hier_silho)
-  #   
+  # 
   #   # Obtain average silhouette
   #   silhouette_vec[i-1] <- mean(silho_summ$clus.avg.widths)
-  #   
+  # 
   #   # Obtain clusters
   #   cluster_list[[i-1]] <- cutree(hier_clust, i)
-  #   
+  # 
   # }
   # 
   # # Obtain modularity of clusters
   # mods <- unlist(lapply(cluster_list, function(x){
-  #   
+  # 
   #   if(!is.null(x)){
   #     modularity(x, A = 1 - jsdist, resolution = 1)
   #   }
-  #   
+  # 
   # }))
   # 
   # # Obtain maximum modularity
   # names[which.max(mods)]
-  # 
-  # # Obtain clusters
-  # # clusters <- cutree(hier_clust, optimal_cut)
-  # 
-  # # }
-  
+
+  # Obtain clusters
+  # clusters <- cutree(hier_clust, optimal_cut)
+
+  # }
+
   # Obtain optimal silhouette
-  # optimal_silho <- cluster::silhouette(
-  #   x = clusters,
-  #   dist = as.dist(jsdist)
-  # )
+  optimal_silho <- cluster::silhouette(
+    x = clusters,
+    dist = as.dist(jsdist)
+  )
   
   # Convert for ggplot2
   cluster_data <- ggdendro::dendro_data(
@@ -443,6 +436,8 @@ infoCluster <- function(
   results$clusters <- clusters
   if(!exists("Qs", envir = environment())){
     results$modularity <- NA
+  }else{
+    results$modulariy <- Qs[which.max(Qs)]
   }
   results$clusterTree <- hier_clust
   results$clusterPlot <- cluster_plot
