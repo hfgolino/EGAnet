@@ -5192,7 +5192,7 @@ redund.reduce.auto <- function(node.redundant.obj,
 
 #' @noRd
 # Redundancy Adhoc Reduction (Automated)
-# Updated 01.05.2022
+# Updated 20.07.2022
 redund.adhoc.auto <- function(node.redundant.obj,
                               node.redundant.reduced,
                               node.redundant.original,
@@ -5218,6 +5218,40 @@ redund.adhoc.auto <- function(node.redundant.obj,
       redund <- redund[-which(names(redund) %in% redund[[i]])]
     }
 
+  }
+  
+  # Check for other overlaps
+  for(i in 1:length(redund)){
+    
+    # Identify any overlap
+    target <- any(redund[[i]] %in% unlist(redund[-i]))
+    
+    # Remove latter overlap
+    if(isTRUE(target)){
+      
+      # Obtain matched target
+      matched <- unlist(redund[-i])[match(redund[[i]], unlist(redund[-i]))]
+      matched <- matched[!is.na(matched)]
+      
+      # Remove from each list
+      for(j in 1:length(matched)){
+        
+        # Target list
+        target_list <- redund[[names(matched)[j]]]
+        target_list[which(target_list == matched[j])] <- NA
+        
+        # Return target list
+        redund[[names(matched)[j]]] <- na.omit(target_list)
+      }
+      
+    }
+    
+  }
+  
+  # Remove empty lists
+  lengths <- unlist(lapply(redund, length))
+  if(any(lengths == 0)){
+    redund <- redund[-which(lengths == 0)]
   }
 
   # Copied data
