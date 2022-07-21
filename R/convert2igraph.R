@@ -14,9 +14,12 @@
 #'
 #' @export
 # Convert network to {igraph}
-# Updated 14.07.2022
+# Updated 21.07.2022
 convert2igraph <- function (A)
 {
+  # Make diagonal zero
+  diag(A) <- 0
+  
   return(
     suppressWarnings(
       igraph::graph_from_adjacency_matrix(
