@@ -342,7 +342,7 @@ UVA <- function(
       sig <- switch(method,
                     "cor" = .50,
                     "pcor" = .35,
-                    "wto" = .20
+                    "wto" = .25
       )
     }else{sig <- .05}
   }
