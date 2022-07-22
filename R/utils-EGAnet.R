@@ -577,11 +577,12 @@ reindex_comm <- function(communities)
 # Lancichinetti & Fortunato (2012)
 #' @noRd
 # Consensus Clustering
-# Updated 07.07.2022
+# Updated 22.07.2022
 consensus_clustering <- function(
     network, corr,
     order = c("lower", "higher"),
-    consensus.iter
+    consensus.iter,
+    resolution = 1
 )
 {
   
@@ -631,7 +632,7 @@ consensus_clustering <- function(
   communities <- lapply(1:consensus.iter, function(j){
 
     # igraph output
-    output <- igraph::cluster_louvain(igraph_network)
+    output <- igraph::cluster_louvain(igraph_network, resolution = resolution)
     
     # Obtain memberships
     wc <- output$memberships
@@ -757,7 +758,7 @@ consensus_clustering <- function(
       communities <- lapply(1:consensus.iter, function(j){
 
         # igraph output
-        output <- igraph::cluster_louvain(igraph_network)
+        output <- igraph::cluster_louvain(igraph_network, resolution = resolution)
         
         # Obtain memberships
         wc <- output$memberships
@@ -866,7 +867,7 @@ consensus_clustering <- function(
     # Check for rows
     if(nrow(wc) == 0){
       wc <- matrix(
-        igraph::cluster_louvain(igraph_network)$membership,
+        igraph::cluster_louvain(igraph_network, resolution = resolution)$membership,
         nrow = 1,
         byrow = TRUE
       )
