@@ -19,30 +19,7 @@
 #'
 #' @param n Integer.
 #' Sample size if \code{data} provided is a correlation matrix
-#' 
-#' @param uni.method Character.
-#' What unidimensionality method should be used? 
-#' Defaults to \code{"LE"}.
-#' Current options are:
-#' 
-#' \itemize{
 #'
-#' \item{\strong{\code{expand}}}
-#' {Expands the correlation matrix with four variables correlated .50.
-#' If number of dimension returns 2 or less in check, then the data 
-#' are unidimensional; otherwise, regular EGA with no matrix
-#' expansion is used. This is the method used in the Golino et al. (2020)
-#' \emph{Psychological Methods} simulation.}
-#'
-#' \item{\strong{\code{LE}}}
-#' {Applies the leading eigenvalue algorithm (\code{\link[igraph]{cluster_leading_eigen}})
-#' on the empirical correlation matrix. If the number of dimensions is 1,
-#' then the leading eigenvalue solution is used; otherwise, regular EGA
-#' is used. This is the final method used in the Christensen, Garrido,
-#' and Golino (2021) simulation.}
-#' 
-#' }
-#' 
 #' @param corr Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
 #' Current options are:
 #'
@@ -270,7 +247,7 @@
 # Consensus clustering 13.05.2022
 # LE adjustment 08.03.2021
 ## EGA Function to detect unidimensionality:
-EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
+EGA <- function (data, n = NULL, # uni.method = c("expand", "LE"),
                  corr = c("cor_auto", "pearson", "spearman"),
                  model = c("glasso", "TMFG"), model.args = list(),
                  algorithm = c("walktrap", "louvain"), algorithm.args = list(),
@@ -314,33 +291,33 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
 
   #### ARGUMENTS HANDLING
   
-  if(missing(uni.method)){
-    uni.method <- "LE"
-  }else{uni.method <- match.arg(uni.method)}
-  
-  # Check if uni.method = "LE" has been used
-  if(uni.method == "LE"){
-    # Give change warning
-    warning(
-      call. = FALSE,
-      paste(
-        "Previous versions of EGAnet (<= 0.9.8) checked unidimensionality using",
-        styletext('uni.method = "expand"', defaults = "underline"),
-        "as the default"
-      )
-    )
-  }else if(uni.method == "expand"){
-    # Give change warning
-    warning(
-      call. = FALSE,
-      paste(
-        "Newer evidence suggests that",
-        styletext('uni.method = "LE"', defaults = "underline"),
-        'is more accurate than uni.method = "expand" (see Christensen, Garrido, & Golino, 2021 in references).',
-        '\n\nIt\'s recommended to use uni.method = "LE"'
-      )
-    )
-  }
+  # if(missing(uni.method)){
+  #   uni.method <- "LE"
+  # }else{uni.method <- match.arg(uni.method)}
+  # 
+  # # Check if uni.method = "LE" has been used
+  # if(uni.method == "LE"){
+  #   # Give change warning
+  #   warning(
+  #     call. = FALSE,
+  #     paste(
+  #       "Previous versions of EGAnet (<= 0.9.8) checked unidimensionality using",
+  #       styletext('uni.method = "expand"', defaults = "underline"),
+  #       "as the default"
+  #     )
+  #   )
+  # }else if(uni.method == "expand"){
+  #   # Give change warning
+  #   warning(
+  #     call. = FALSE,
+  #     paste(
+  #       "Newer evidence suggests that",
+  #       styletext('uni.method = "LE"', defaults = "underline"),
+  #       'is more accurate than uni.method = "expand" (see Christensen, Garrido, & Golino, 2021 in references).',
+  #       '\n\nIt\'s recommended to use uni.method = "LE"'
+  #     )
+  #   )
+  # }
   
   if(missing(corr)){
     corr <- "cor_auto"
@@ -397,106 +374,140 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
       }
       
     }
-
+    
     # Unidimensional result
-    if(uni.method == "expand"){
+    wc <- most_common_consensus(
+      network = abs(data),
+      order = "higher",
+      consensus.iter = 1000,
+      resolution = 0.95
+    )$most_common
+    names(wc) <- colnames(data)
+    n.dim <- length(na.omit(unique(wc)))
+    
+    # Set up results
+    if(n.dim == 1){ ## Leading eigenvalue
       
-      # Check for Spinglass algorithm
-      if(is.function(algorithm)){
-        
-        # spins argument is used to identify Spinglass algorithm
-        if("spins" %in% methods::formalArgs(algorithm)){
-          
-          # Generate data
-          uni.data <- MASS_mvrnorm(n = n, mu = rep(0, ncol(data)), Sigma = data)
-          
-          # Simulate data from unidimensional factor model
-          sim.data <- sim.func(data = uni.data, nvar = 4, nfact = 1, load = .70)
-          
-        }else{
-          
-          # Expand correlation matrix
-          sim.data <- expand.corr(data)
-          
-        }
-        
-      }else{# Do regular adjustment
-        
-        # Expand correlation matrix
-        sim.data <- expand.corr(data)
-        
+      cor.data <- data
+      estimated.network <- multi.res$network
+      if(model == "glasso"){
+        gamma <- multi.res$gamma
+        lambda <- multi.res$lambda
       }
       
-      # Estimate unidimensional EGA
-      uni.res <- EGA.estimate(data = sim.data, n = n,
-                              model = model, model.args = model.args,
-                              algorithm = algorithm, algorithm.args = algorithm.args)
+    }else{ ## If not
       
-      # Set up results
-      if(uni.res$n.dim <= 2){ ## If unidimensional
-        
-        n.dim <- uni.res$n.dim
-        cor.data <- data
-        estimated.network <- multi.res$network
-        wc <- uni.res$wc[-c(1:4)]
-        if(model == "glasso"){
-          gamma <- uni.res$gamma
-          lambda <- uni.res$lambda
-        }
-        
-      }else{ ## If not
-        
-        n.dim <- multi.res$n.dim
-        cor.data <- multi.res$cor.data
-        estimated.network <- multi.res$network
-        wc <- multi.res$wc
-        if(model == "glasso"){
-          gamma <- multi.res$gamma
-          lambda <- multi.res$lambda
-        }
-        
-      }
-      
-    }else if(uni.method == "LE"){
-      
-      # Leading eigenvalue approach for one and two dimensions
-      wc <- try(
-        igraph::cluster_leading_eigen(convert2igraph(abs(data)))$membership,
-        silent = TRUE
-      )
-      
-      if(any(class(wc) == "try-error")){
-        wc <- igraph::cluster_louvain(convert2igraph(abs(data)))$membership
-        warning("Error occurred in Leading Eigenvalue algorithm. Using Louvain for unidimensional check")
-      }
-      
-      names(wc) <- colnames(data)
-      n.dim <- length(na.omit(unique(wc)))
-      
-      # Set up results
-      if(n.dim == 1){ ## Leading eigenvalue
-        
-        cor.data <- data
-        estimated.network <- multi.res$network
-        if(model == "glasso"){
-          gamma <- multi.res$gamma
-          lambda <- multi.res$lambda
-        }
-        
-      }else{ ## If not
-        
-        n.dim <- multi.res$n.dim
-        cor.data <- multi.res$cor.data
-        estimated.network <- multi.res$network
-        wc <- multi.res$wc
-        if(model == "glasso"){
-          gamma <- multi.res$gamma
-          lambda <- multi.res$lambda
-        }
-        
+      n.dim <- multi.res$n.dim
+      cor.data <- multi.res$cor.data
+      estimated.network <- multi.res$network
+      wc <- multi.res$wc
+      if(model == "glasso"){
+        gamma <- multi.res$gamma
+        lambda <- multi.res$lambda
       }
       
     }
+    
+
+    # # Unidimensional result
+    # if(uni.method == "expand"){
+    #   
+    #   # Check for Spinglass algorithm
+    #   if(is.function(algorithm)){
+    #     
+    #     # spins argument is used to identify Spinglass algorithm
+    #     if("spins" %in% methods::formalArgs(algorithm)){
+    #       
+    #       # Generate data
+    #       uni.data <- MASS_mvrnorm(n = n, mu = rep(0, ncol(data)), Sigma = data)
+    #       
+    #       # Simulate data from unidimensional factor model
+    #       sim.data <- sim.func(data = uni.data, nvar = 4, nfact = 1, load = .70)
+    #       
+    #     }else{
+    #       
+    #       # Expand correlation matrix
+    #       sim.data <- expand.corr(data)
+    #       
+    #     }
+    #     
+    #   }else{# Do regular adjustment
+    #     
+    #     # Expand correlation matrix
+    #     sim.data <- expand.corr(data)
+    #     
+    #   }
+    #   
+    #   # Estimate unidimensional EGA
+    #   uni.res <- EGA.estimate(data = sim.data, n = n,
+    #                           model = model, model.args = model.args,
+    #                           algorithm = algorithm, algorithm.args = algorithm.args)
+    #   
+    #   # Set up results
+    #   if(uni.res$n.dim <= 2){ ## If unidimensional
+    #     
+    #     n.dim <- uni.res$n.dim
+    #     cor.data <- data
+    #     estimated.network <- multi.res$network
+    #     wc <- uni.res$wc[-c(1:4)]
+    #     if(model == "glasso"){
+    #       gamma <- uni.res$gamma
+    #       lambda <- uni.res$lambda
+    #     }
+    #     
+    #   }else{ ## If not
+    #     
+    #     n.dim <- multi.res$n.dim
+    #     cor.data <- multi.res$cor.data
+    #     estimated.network <- multi.res$network
+    #     wc <- multi.res$wc
+    #     if(model == "glasso"){
+    #       gamma <- multi.res$gamma
+    #       lambda <- multi.res$lambda
+    #     }
+    #     
+    #   }
+    #   
+    # }else if(uni.method == "LE"){
+    #   
+    #   # Leading eigenvalue approach for one and two dimensions
+    #   wc <- try(
+    #     igraph::cluster_leading_eigen(convert2igraph(abs(data)))$membership,
+    #     silent = TRUE
+    #   )
+    #   
+    #   if(any(class(wc) == "try-error")){
+    #     wc <- igraph::cluster_louvain(convert2igraph(abs(data)))$membership
+    #     warning("Error occurred in Leading Eigenvalue algorithm. Using Louvain for unidimensional check")
+    #   }
+    #   
+    #   names(wc) <- colnames(data)
+    #   n.dim <- length(na.omit(unique(wc)))
+    #   
+    #   # Set up results
+    #   if(n.dim == 1){ ## Leading eigenvalue
+    #     
+    #     cor.data <- data
+    #     estimated.network <- multi.res$network
+    #     if(model == "glasso"){
+    #       gamma <- multi.res$gamma
+    #       lambda <- multi.res$lambda
+    #     }
+    #     
+    #   }else{ ## If not
+    #     
+    #     n.dim <- multi.res$n.dim
+    #     cor.data <- multi.res$cor.data
+    #     estimated.network <- multi.res$network
+    #     wc <- multi.res$wc
+    #     if(model == "glasso"){
+    #       gamma <- multi.res$gamma
+    #       lambda <- multi.res$lambda
+    #     }
+    #     
+    #   }
+    #   
+    # }
     
   }else{ ## Data
 
@@ -509,180 +520,253 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
     n <- nrow(data)
 
     # Check for unidimensional structure
-    if(uni.method == "expand"){
-      
-      # Check for Spinglass algorithm
-      if(is.function(algorithm)){
-        
-        # spins argument is used to identify Spinglass algorithm
-        if("spins" %in% methods::formalArgs(algorithm)){
-          
-          # Simulate data from unidimensional factor model
-          sim.data <- sim.func(data = data, nvar = 4, nfact = 1, load = .70)
-          
-          ## Compute correlation matrix
-          cor.data <- suppressMessages(
-            switch(corr,
-                   "cor_auto" = qgraph::cor_auto(sim.data, forcePD = TRUE),
-                   "pearson" = cor(sim.data, use = "pairwise.complete.obs"),
-                   "spearman" = cor(sim.data, method = "spearman", use = "pairwise.complete.obs")
-            )
-          )
-          
-        }else{
-          
-          ## Compute correlation matrix
-          cor.data <- suppressMessages(
-            switch(corr,
-                   "cor_auto" = qgraph::cor_auto(data, forcePD = TRUE),
-                   "pearson" = cor(data, use = "pairwise.complete.obs"),
-                   "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
-            )
-          )
-          
-          ## Expand correlation matrix
-          cor.data <- expand.corr(cor.data)
-          
-        }
-        
-      }else{# Do regular adjustment
-        
-        ## Compute correlation matrix
-        cor.data <- suppressMessages(
-          switch(corr,
-                 "cor_auto" = qgraph::cor_auto(data, forcePD = TRUE),
-                 "pearson" = cor(data, use = "pairwise.complete.obs"),
-                 "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
-          )
-        )
-        
-        ## Expand correlation matrix
-        cor.data <- expand.corr(cor.data)
-        
-      }
-      
-      # Unidimensional result
-      uni.res <- EGA.estimate(data = cor.data, n = n,
+    ## Compute correlation matrix
+    cor.data <- suppressMessages(
+      switch(corr,
+             "cor_auto" = qgraph::cor_auto(data, forcePD = TRUE),
+             "pearson" = cor(data, use = "pairwise.complete.obs"),
+             "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
+      )
+    )
+    
+    # Leading eigenvalue approach for one and two dimensions
+    # wc <- try(
+    #   igraph::cluster_leading_eigen(convert2igraph(abs(cor.data)))$membership,
+    #   silent = TRUE
+    # )
+    # 
+    # if(any(class(wc) == "try-error")){
+    #   wc <- igraph::cluster_louvain(convert2igraph(abs(cor.data)))$membership
+    #   warning("Error occurred in Leading Eigenvalue algorithm. Using Louvain for unidimensional check")
+    # }
+    
+    # Most common consensus with Louvain
+    wc <- most_common_consensus(
+      network = abs(cor.data),
+      order = "higher",
+      consensus.iter = 1000,
+      resolution = 0.95
+    )$most_common
+    names(wc) <- colnames(cor.data)
+    n.dim <- length(na.omit(unique(wc)))
+    
+    # Multidimensional result
+    multi.res <- EGA.estimate(cor.data, n = n,
                               model = model, model.args = model.args,
                               algorithm = algorithm, algorithm.args = algorithm.args)
+    
+    # Perform consensus clustering
+    if(!is.function(algorithm)){
       
-      ## Remove simulated data for multidimensional result
-      cor.data <- cor.data[-c(1:4),-c(1:4)]
-      
-      # Multidimensional result
-      multi.res <- EGA.estimate(cor.data, n = n,
-                                model = model, model.args = model.args,
-                                algorithm = algorithm, algorithm.args = algorithm.args)
-      
-      
-      # Perform consensus clustering
-      if(!is.function(algorithm)){
+      if(algorithm == "louvain"){
         
-        if(algorithm == "louvain"){
-          
-          multi.res$wc <- consensus_clustering(
-            multi.res$network,
-            corr = cor.data,
-            order = "higher",
-            consensus.iter = consensus.iter
-          )[[consensus.method]]
-          
-        }
-        
-      }
-      
-      if(uni.res$n.dim <= 2 & !is.infinite(multi.res$n.dim)){
-        
-        n.dim <- uni.res$n.dim
-        estimated.network <- multi.res$network
-        wc <- uni.res$wc[-c(1:4)]
-        if(model == "glasso"){
-          gamma <- uni.res$gamma
-          lambda <- uni.res$lambda
-        }
-        
-      }else{
-        
-        n.dim <- multi.res$n.dim
-        estimated.network <- multi.res$network
-        wc <- multi.res$wc
-        
-        if(model == "glasso"){
-          gamma <- multi.res$gamma
-          lambda <- multi.res$lambda
-        }
-        
-      }
-      
-    }else if(uni.method == "LE"){
-      
-      ## Compute correlation matrix
-      cor.data <- suppressMessages(
-        switch(corr,
-               "cor_auto" = qgraph::cor_auto(data, forcePD = TRUE),
-               "pearson" = cor(data, use = "pairwise.complete.obs"),
-               "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
-        )
-      )
-      
-      # Leading eigenvalue approach for one and two dimensions
-      wc <- try(
-        igraph::cluster_leading_eigen(convert2igraph(abs(cor.data)))$membership,
-        silent = TRUE
-      )
-      
-      if(any(class(wc) == "try-error")){
-        wc <- igraph::cluster_louvain(convert2igraph(abs(cor.data)))$membership
-        warning("Error occurred in Leading Eigenvalue algorithm. Using Louvain for unidimensional check")
-      }
-  
-      names(wc) <- colnames(cor.data)
-      n.dim <- length(na.omit(unique(wc)))
-      
-      # Multidimensional result
-      multi.res <- EGA.estimate(cor.data, n = n,
-                                model = model, model.args = model.args,
-                                algorithm = algorithm, algorithm.args = algorithm.args)
-      
-      # Perform consensus clustering
-      if(!is.function(algorithm)){
-        
-        if(algorithm == "louvain"){
-          
-          multi.res$wc <- consensus_clustering(
-            network = multi.res$network,
-            corr = cor.data,
-            order = "higher",
-            consensus.iter = consensus.iter
-          )[[consensus.method]]
-          
-        }
-        
-      }
-      
-      # Set up results
-      if(n.dim == 1){ ## Leading eigenvalue
-
-        estimated.network <- multi.res$network
-        if(model == "glasso"){
-          gamma <- multi.res$gamma
-          lambda <- multi.res$lambda
-        }
-        
-      }else{ ## If not
-        
-        n.dim <- multi.res$n.dim
-        estimated.network <- multi.res$network
-        wc <- multi.res$wc
-        
-        if(model == "glasso"){
-          gamma <- multi.res$gamma
-          lambda <- multi.res$lambda
-        }
+        multi.res$wc <- consensus_clustering(
+          network = multi.res$network,
+          corr = cor.data,
+          order = "higher",
+          consensus.iter = consensus.iter
+        )[[consensus.method]]
         
       }
       
     }
+    
+    # Set up results
+    if(n.dim == 1){ ## Leading eigenvalue
+      
+      estimated.network <- multi.res$network
+      if(model == "glasso"){
+        gamma <- multi.res$gamma
+        lambda <- multi.res$lambda
+      }
+      
+    }else{ ## If not
+      
+      n.dim <- multi.res$n.dim
+      estimated.network <- multi.res$network
+      wc <- multi.res$wc
+      
+      if(model == "glasso"){
+        gamma <- multi.res$gamma
+        lambda <- multi.res$lambda
+      }
+      
+    }
+    
+    # if(uni.method == "expand"){
+    #   
+    #   # Check for Spinglass algorithm
+    #   if(is.function(algorithm)){
+    #     
+    #     # spins argument is used to identify Spinglass algorithm
+    #     if("spins" %in% methods::formalArgs(algorithm)){
+    #       
+    #       # Simulate data from unidimensional factor model
+    #       sim.data <- sim.func(data = data, nvar = 4, nfact = 1, load = .70)
+    #       
+    #       ## Compute correlation matrix
+    #       cor.data <- suppressMessages(
+    #         switch(corr,
+    #                "cor_auto" = qgraph::cor_auto(sim.data, forcePD = TRUE),
+    #                "pearson" = cor(sim.data, use = "pairwise.complete.obs"),
+    #                "spearman" = cor(sim.data, method = "spearman", use = "pairwise.complete.obs")
+    #         )
+    #       )
+    #       
+    #     }else{
+    #       
+    #       ## Compute correlation matrix
+    #       cor.data <- suppressMessages(
+    #         switch(corr,
+    #                "cor_auto" = qgraph::cor_auto(data, forcePD = TRUE),
+    #                "pearson" = cor(data, use = "pairwise.complete.obs"),
+    #                "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
+    #         )
+    #       )
+    #       
+    #       ## Expand correlation matrix
+    #       cor.data <- expand.corr(cor.data)
+    #       
+    #     }
+    #     
+    #   }else{# Do regular adjustment
+    #     
+    #     ## Compute correlation matrix
+    #     cor.data <- suppressMessages(
+    #       switch(corr,
+    #              "cor_auto" = qgraph::cor_auto(data, forcePD = TRUE),
+    #              "pearson" = cor(data, use = "pairwise.complete.obs"),
+    #              "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
+    #       )
+    #     )
+    #     
+    #     ## Expand correlation matrix
+    #     cor.data <- expand.corr(cor.data)
+    #     
+    #   }
+    #   
+    #   # Unidimensional result
+    #   uni.res <- EGA.estimate(data = cor.data, n = n,
+    #                           model = model, model.args = model.args,
+    #                           algorithm = algorithm, algorithm.args = algorithm.args)
+    #   
+    #   ## Remove simulated data for multidimensional result
+    #   cor.data <- cor.data[-c(1:4),-c(1:4)]
+    #   
+    #   # Multidimensional result
+    #   multi.res <- EGA.estimate(cor.data, n = n,
+    #                             model = model, model.args = model.args,
+    #                             algorithm = algorithm, algorithm.args = algorithm.args)
+    #   
+    #   
+    #   # Perform consensus clustering
+    #   if(!is.function(algorithm)){
+    #     
+    #     if(algorithm == "louvain"){
+    #       
+    #       multi.res$wc <- consensus_clustering(
+    #         multi.res$network,
+    #         corr = cor.data,
+    #         order = "higher",
+    #         consensus.iter = consensus.iter
+    #       )[[consensus.method]]
+    #       
+    #     }
+    #     
+    #   }
+    #   
+    #   if(uni.res$n.dim <= 2 & !is.infinite(multi.res$n.dim)){
+    #     
+    #     n.dim <- uni.res$n.dim
+    #     estimated.network <- multi.res$network
+    #     wc <- uni.res$wc[-c(1:4)]
+    #     if(model == "glasso"){
+    #       gamma <- uni.res$gamma
+    #       lambda <- uni.res$lambda
+    #     }
+    #     
+    #   }else{
+    #     
+    #     n.dim <- multi.res$n.dim
+    #     estimated.network <- multi.res$network
+    #     wc <- multi.res$wc
+    #     
+    #     if(model == "glasso"){
+    #       gamma <- multi.res$gamma
+    #       lambda <- multi.res$lambda
+    #     }
+    #     
+    #   }
+    #   
+    # }else if(uni.method == "LE"){
+    #   
+    #   ## Compute correlation matrix
+    #   cor.data <- suppressMessages(
+    #     switch(corr,
+    #            "cor_auto" = qgraph::cor_auto(data, forcePD = TRUE),
+    #            "pearson" = cor(data, use = "pairwise.complete.obs"),
+    #            "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
+    #     )
+    #   )
+    #   
+    #   # Leading eigenvalue approach for one and two dimensions
+    #   wc <- try(
+    #     igraph::cluster_leading_eigen(convert2igraph(abs(cor.data)))$membership,
+    #     silent = TRUE
+    #   )
+    #   
+    #   if(any(class(wc) == "try-error")){
+    #     wc <- igraph::cluster_louvain(convert2igraph(abs(cor.data)))$membership
+    #     warning("Error occurred in Leading Eigenvalue algorithm. Using Louvain for unidimensional check")
+    #   }
+    # 
+    #   names(wc) <- colnames(cor.data)
+    #   n.dim <- length(na.omit(unique(wc)))
+    #   
+    #   # Multidimensional result
+    #   multi.res <- EGA.estimate(cor.data, n = n,
+    #                             model = model, model.args = model.args,
+    #                             algorithm = algorithm, algorithm.args = algorithm.args)
+    #   
+    #   # Perform consensus clustering
+    #   if(!is.function(algorithm)){
+    #     
+    #     if(algorithm == "louvain"){
+    #       
+    #       multi.res$wc <- consensus_clustering(
+    #         network = multi.res$network,
+    #         corr = cor.data,
+    #         order = "higher",
+    #         consensus.iter = consensus.iter
+    #       )[[consensus.method]]
+    #       
+    #     }
+    #     
+    #   }
+    #   
+    #   # Set up results
+    #   if(n.dim == 1){ ## Leading eigenvalue
+    # 
+    #     estimated.network <- multi.res$network
+    #     if(model == "glasso"){
+    #       gamma <- multi.res$gamma
+    #       lambda <- multi.res$lambda
+    #     }
+    #     
+    #   }else{ ## If not
+    #     
+    #     n.dim <- multi.res$n.dim
+    #     estimated.network <- multi.res$network
+    #     wc <- multi.res$wc
+    #     
+    #     if(model == "glasso"){
+    #       gamma <- multi.res$gamma
+    #       lambda <- multi.res$lambda
+    #     }
+    #     
+    #   }
+    #   
+    # }
 
   }
 
@@ -737,7 +821,7 @@ EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
   ## Get model and algorithm arguments
   args$model <- model
   args$algorithm <- algorithm
-  args$uni.method <- uni.method
+  # args$uni.method <- uni.method
   args$corr <- corr
   args$consensus.method <- consensus.method
   args$consensus.iter <- consensus.iter

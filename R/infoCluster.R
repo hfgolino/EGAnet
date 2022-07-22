@@ -56,7 +56,7 @@
 #' 
 #' @export
 # Information Theoretic Clustering for dynEGA
-# Updated 18.07.2022
+# Updated 22.07.2022
 infoCluster <- function(
     dynEGA.object,
     ncores,
@@ -218,13 +218,20 @@ infoCluster <- function(
   # }else{
   
   # Compute Leiden
-  g <- convert2igraph(1 - jsdist)
-
-  clusters <- igraph::cluster_leiden(
-    g, objective_function = "modularity",
-    resolution_parameter = 1,
-    n_iterations = 100
-  )$membership
+  # g <- convert2igraph(1 - jsdist)
+  # 
+  # clusters <- igraph::cluster_leiden(
+  #   g, objective_function = "modularity",
+  #   resolution_parameter = 1,
+  #   n_iterations = 100
+  # )$membership
+  
+  clusters <- most_common_consensus(
+    network = 1 - jsdist,
+    order = "higher",
+    consensus.iter = 1000,
+    resolution = 0.95
+  )$most_common
   
   # Perform hierarchical clustering
   hier_clust <- hclust(as.dist(jsdist))

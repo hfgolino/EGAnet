@@ -906,11 +906,12 @@ consensus_clustering <- function(
 # Lancichinetti & Fortunato (2012)
 #' @noRd
 # Most Common Consensus Clustering
-# Updated 07.07.2022
+# Updated 22.07.2022
 most_common_consensus <- function(
     network,
     order = c("lower", "higher"),
-    consensus.iter
+    consensus.iter,
+    resolution = 1
 )
 {
   
@@ -960,7 +961,7 @@ most_common_consensus <- function(
   communities <- lapply(1:consensus.iter, function(j){
     
     # igraph output
-    output <- igraph::cluster_louvain(igraph_network)
+    output <- igraph::cluster_louvain(igraph_network, resolution = resolution)
     
     # Obtain memberships
     wc <- output$memberships

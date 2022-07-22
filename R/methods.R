@@ -265,13 +265,13 @@ print.EGA <- function(x, ...) {
   
   ## Set up methods
   methods.matrix <- matrix(
-    nrow = 4, ncol = 1
+    nrow = 3, ncol = 1
   )
   row.names(methods.matrix) <- c(
     "Correlations =",
     "Model =",
-    "Algorithm =",
-    "Unidimensional Method ="
+    "Algorithm ="# ,
+    # "Unidimensional Method ="
   )
   colnames(methods.matrix) <- ""
   
@@ -282,11 +282,11 @@ print.EGA <- function(x, ...) {
   )
   methods.matrix["Model =",] <- x$Methods$model
   methods.matrix["Algorithm =",] <- x$Methods$algorithm
-  methods.matrix["Unidimensional Method =",] <- ifelse(
-    x$Methods$uni.method == "LE",
-    "leading eigenvalue",
-    "expand correlation matrix"
-  )
+  # methods.matrix["Unidimensional Method =",] <- ifelse(
+  #   x$Methods$uni.method == "LE",
+  #   "leading eigenvalue",
+  #   "expand correlation matrix"
+  # )
   
   print(methods.matrix, quote = FALSE)
   
@@ -340,13 +340,13 @@ print.hierEGA <- function(x, ...) {
   
   ## Set up methods
   methods.matrix <- matrix(
-    nrow = 7, ncol = 1
+    nrow = 6, ncol = 1
   )
   row.names(methods.matrix) <- c(
     "Correlations =",
     "Model =",
     "Algorithm =",
-    "Unidimensional Method =",
+    # "Unidimensional Method =",
     "Scores =",
     "Consensus Method =",
     "Consensus Iterations ="
@@ -360,11 +360,11 @@ print.hierEGA <- function(x, ...) {
   )
   methods.matrix["Model =",] <- x$hierarchical$Methods$model
   methods.matrix["Algorithm =",] <- x$hierarchical$Methods$algorithm
-  methods.matrix["Unidimensional Method =",] <- ifelse(
-    x$hierarchical$Methods$uni.method == "LE",
-    "leading eigenvalue",
-    "expand correlation matrix"
-  )
+  # methods.matrix["Unidimensional Method =",] <- ifelse(
+  #   x$hierarchical$Methods$uni.method == "LE",
+  #   "leading eigenvalue",
+  #   "expand correlation matrix"
+  # )
   methods.matrix["Scores =",] <- x$hierarchical$Methods$scores
   methods.matrix["Consensus Method =",] <- gsub(
     "_", " ", x$hierarchical$Methods$consensus.method
@@ -406,13 +406,13 @@ print.riEGA <- function(x, ...) {
   
   ## Set up methods
   methods.matrix <- matrix(
-    nrow = 4, ncol = 1
+    nrow = 3, ncol = 1
   )
   row.names(methods.matrix) <- c(
     "Correlations =",
     "Model =",
-    "Algorithm =",
-    "Unidimensional Method ="
+    "Algorithm ="# ,
+    # "Unidimensional Method ="
   )
   colnames(methods.matrix) <- ""
   
@@ -423,11 +423,11 @@ print.riEGA <- function(x, ...) {
   )
   methods.matrix["Model =",] <- x$Methods$model
   methods.matrix["Algorithm =",] <- x$Methods$algorithm
-  methods.matrix["Unidimensional Method =",] <- ifelse(
-    x$Methods$uni.method == "LE",
-    "leading eigenvalue",
-    "expand correlation matrix"
-  )
+  # methods.matrix["Unidimensional Method =",] <- ifelse(
+  #   x$Methods$uni.method == "LE",
+  #   "leading eigenvalue",
+  #   "expand correlation matrix"
+  # )
   
   print(methods.matrix, quote = FALSE)
   
@@ -757,13 +757,13 @@ summary.EGA <- function(object, ...) {
   
   ## Set up methods
   methods.matrix <- matrix(
-    nrow = 4, ncol = 1
+    nrow = 3, ncol = 1
   )
   row.names(methods.matrix) <- c(
     "Correlations =",
     "Model =",
-    "Algorithm =",
-    "Unidimensional Method ="
+    "Algorithm ="# ,
+    # "Unidimensional Method ="
   )
   colnames(methods.matrix) <- ""
   
@@ -774,11 +774,11 @@ summary.EGA <- function(object, ...) {
   )
   methods.matrix["Model =",] <- object$Methods$model
   methods.matrix["Algorithm =",] <- object$Methods$algorithm
-  methods.matrix["Unidimensional Method =",] <- ifelse(
-    object$Methods$uni.method == "LE",
-    "leading eigenvalue",
-    "expand correlation matrix"
-  )
+  # methods.matrix["Unidimensional Method =",] <- ifelse(
+  #   object$Methods$uni.method == "LE",
+  #   "leading eigenvalue",
+  #   "expand correlation matrix"
+  # )
   
   print(methods.matrix, quote = FALSE)
   
@@ -832,13 +832,13 @@ summary.hierEGA <- function(object, ...) {
   
   ## Set up methods
   methods.matrix <- matrix(
-    nrow = 7, ncol = 1
+    nrow = 6, ncol = 1
   )
   row.names(methods.matrix) <- c(
     "Correlations =",
     "Model =",
     "Algorithm =",
-    "Unidimensional Method =",
+    # "Unidimensional Method =",
     "Scores =",
     "Consensus Method =",
     "Consensus Iterations ="
@@ -852,11 +852,11 @@ summary.hierEGA <- function(object, ...) {
   )
   methods.matrix["Model =",] <- object$hierarchical$Methods$model
   methods.matrix["Algorithm =",] <- object$hierarchical$Methods$algorithm
-  methods.matrix["Unidimensional Method =",] <- ifelse(
-    object$hierarchical$Methods$uni.method == "LE",
-    "leading eigenvalue",
-    "expand correlation matrix"
-  )
+  # methods.matrix["Unidimensional Method =",] <- ifelse(
+  #   object$hierarchical$Methods$uni.method == "LE",
+  #   "leading eigenvalue",
+  #   "expand correlation matrix"
+  # )
   methods.matrix["Scores =",] <- object$hierarchical$Methods$scores
   methods.matrix["Consensus Method =",] <- gsub(
     "_", " ", object$hierarchical$Methods$consensus.method
@@ -898,13 +898,13 @@ summary.riEGA <- function(object, ...) {
   
   ## Set up methods
   methods.matrix <- matrix(
-    nrow = 4, ncol = 1
+    nrow = 3, ncol = 1
   )
   row.names(methods.matrix) <- c(
     "Correlations =",
     "Model =",
-    "Algorithm =",
-    "Unidimensional Method ="
+    "Algorithm ="# ,
+    # "Unidimensional Method ="
   )
   colnames(methods.matrix) <- ""
   
@@ -915,11 +915,11 @@ summary.riEGA <- function(object, ...) {
   )
   methods.matrix["Model =",] <- object$Methods$model
   methods.matrix["Algorithm =",] <- object$Methods$algorithm
-  methods.matrix["Unidimensional Method =",] <- ifelse(
-    object$Methods$uni.method == "LE",
-    "leading eigenvalue",
-    "expand correlation matrix"
-  )
+  # methods.matrix["Unidimensional Method =",] <- ifelse(
+  #   object$Methods$uni.method == "LE",
+  #   "leading eigenvalue",
+  #   "expand correlation matrix"
+  # )
   
   print(methods.matrix, quote = FALSE)
   
