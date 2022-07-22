@@ -450,31 +450,6 @@ modularity <- function(communities, A, resolution)
   # Compute modularity
   Q <- sum(Q_within * Q_matrix / total)
 
-
-  # # Loop through communities
-  # for(i in 1:length(unique_comm)){
-  #
-  #   # Find target nodes
-  #   target_nodes <- which(communities == unique_comm[i])
-  #
-  #   # Get strength within
-  #   within_strength <- sum(A[target_nodes, target_nodes])
-  #
-  #   # Get total strength
-  #   total_strength <- sum(A[target_nodes,])
-  #
-  #   # Ensure there are connections
-  #   if(total_strength > 0){
-  #
-  #     Q <- Q +
-  #       (within_strength / total) -
-  #       (total_strength / total)^2
-  #
-  #   }
-  #
-  #
-  # }
-
   return(Q)
 
 }
