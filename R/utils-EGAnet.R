@@ -409,10 +409,16 @@ louvain_communities <- function(
 # Modularity function
 #' @noRd
 # Modularity
-# Updated 06.05.2022
+# Updated 23.07.2022
 modularity <- function(communities, A, resolution)
 {
 
+  # Convert to matrix
+  A <- as.matrix(A)
+  
+  # Ensure absolute
+  A <- abs(A)
+  
   # Obtain total sum
   total <- sum(A)
 
