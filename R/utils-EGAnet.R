@@ -89,11 +89,13 @@ poly.irt <- function(loadings, data)
 # Main Louvain step-wise function
 #' @noRd
 # Louvain Communities
-# Updated 06.05.2022
+# Updated 25.07.2022
 louvain_communities <- function(
     newA,
     method,
     resolution,
+    Q_matrix,
+    original_Q_matrix,
     corr,
     original_A = NULL,
     previous_communities = NULL,
@@ -208,14 +210,27 @@ louvain_communities <- function(
 
             # Compute gain
             if(method == "modularity"){
-              gain_vector[neighbor_community] <- modularity( # new modularity
-                new_communities,
-                newA, resolution = resolution
-              ) -
-                modularity( # old modularity
-                  communities,
-                  newA, resolution = resolution
+              gain_vector[neighbor_community] <- 
+                quick_modularity( # new modularity
+                  communities = new_communities,
+                  A = newA,
+                  Q_matrix = Q_matrix
+                ) -
+                quick_modularity( # old modularity
+                  communities = communities,
+                  A = newA,
+                  Q_matrix = Q_matrix
                 )
+                
+              #   modularity( # new modularity
+              #   new_communities,
+              #   newA, resolution = resolution
+              # ) -
+              #   modularity( # old modularity
+              #     communities,
+              #     newA, resolution = resolution
+              #   )
+                
             }else if(method == "tefi"){
 
               # Reverse order (lower is better)
@@ -280,11 +295,17 @@ louvain_communities <- function(
         if(method == "modularity"){
 
           # Higher values are better
-          improve_modularity <- modularity(
+          improve_modularity <- quick_modularity(
             communities = improve_communities,
             A = original_A,
-            resolution = resolution
+            Q_matrix = original_Q_matrix
           )
+          
+          # quick_modularity(
+          #   communities = improve_communities,
+          #   A = original_A,
+          #   resolution = resolution
+          # )
 
           # Check for update
           if(improve_modularity > previous_modularity){
@@ -344,7 +365,12 @@ louvain_communities <- function(
       }
 
       # Obtain modularity
-      Q <- modularity(update_communities, original_A, resolution)
+      # Q <- modularity(update_communities, original_A, resolution)
+      Q <- quick_modularity(
+        communities = update_communities,
+        A = original_A,
+        Q_matrix = original_Q_matrix
+      )
 
       # Obtain new higher order
       newA <- make_higher_order(original_A, update_communities)
@@ -372,6 +398,12 @@ louvain_communities <- function(
       # Reset previous communities and modularity
       previous_communities <- update_communities
       previous_modularity <- update_modularity
+      
+      # Update modularity matrix
+      Q_matrix <- modularity_matrix(
+        A = newA,
+        resolution = resolution
+      )
 
       # Check if gain equals zero
       if(gain == 0){
@@ -382,7 +414,12 @@ louvain_communities <- function(
     }else{
 
       if(method == "modularity"){
-        Q <- modularity(communities, newA, resolution)
+        # Q <- modularity(communities, newA, resolution)
+        Q <- quick_modularity(
+          communities = communities,
+          A = newA,
+          Q_matrix = Q_matrix
+        )
       }else if(method == "tefi"){
         Q <- tefi(corr, communities)$VN.Entropy.Fit
       }
@@ -458,6 +495,72 @@ modularity <- function(communities, A, resolution)
 
   return(Q)
 
+}
+
+# Modularity matrix (for quick_modularity)
+#' @noRd
+# Modularity matrix
+# Updated 25.07.2022
+modularity_matrix <- function(A, resolution)
+{
+  
+  # Convert to matrix
+  A <- as.matrix(A)
+  
+  # Ensure absolute
+  A <- abs(A)
+  
+  # Obtain total sum
+  total <- sum(A)
+  
+  # Initialize modularity
+  Q <- 0
+  
+  # Obtain strength
+  strength <- colSums(A)
+  
+  # Obtain modularity matrix
+  Q_matrix <- A - resolution * (strength %*% t(strength)) / total
+  
+  return(Q_matrix)
+  
+}
+
+# Quick modularity
+#' @noRd
+# Quicker modularity
+# (skips computation of modularity matrix each time)
+# Updated 25.07.2022
+quick_modularity <- function(communities, A, Q_matrix)
+{
+  
+  # Total strength of network
+  total <- sum(abs(as.matrix(A)))
+  
+  # Keep values within communities
+  ## Initialize within matrix
+  init_within <- matrix(
+    rep(communities, times = ncol(A)),
+    byrow = TRUE, nrow = nrow(A),
+    ncol = ncol(A)
+  )
+  
+  ## Create within matrix
+  within_matrix <- !sweep(
+    init_within,
+    MARGIN = 1,
+    STATS = communities,
+    FUN = "-"
+  )
+  
+  ## Obtain Q matrix
+  Q_within <- apply(within_matrix, 2, as.numeric)
+  
+  # Compute modularity
+  Q <- sum(Q_within * Q_matrix / total)
+  
+  return(Q)
+  
 }
 
 # Collapses Louvain nodes into "latent" nodes

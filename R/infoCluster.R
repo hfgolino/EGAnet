@@ -56,7 +56,7 @@
 #' 
 #' @export
 # Information Theoretic Clustering for dynEGA
-# Updated 22.07.2022
+# Updated 25.07.2022
 infoCluster <- function(
     dynEGA.object,
     ncores,
@@ -226,8 +226,12 @@ infoCluster <- function(
   #   n_iterations = 100
   # )$membership
   
+  # Jensen-Shannon Similarity
+  jss <- 1 - jsdist
+  
+  # Louvain consensus clustering
   clusters <- most_common_consensus(
-    network = 1 - jsdist,
+    network = jss,
     order = "higher",
     consensus.iter = 1000,
     resolution = 0.95
@@ -248,16 +252,29 @@ infoCluster <- function(
 
   }else{
     
+    # Compute modularity matrix
+    Q_matrix <- modularity_matrix(
+      A = jss,
+      resolution = 1
+    )
+    
     # Maximize modularity
     Qs <- unlist(
       lapply(
-        X = 1:ncol(jsdist),
+        X = 1:ncol(jss),
         FUN = function(i){
-          modularity(
+          quick_modularity(
             communities = cutree(hier_clust, i),
-            A = 1 - jsdist,
-            resolution = 1
+            A = jss,
+            Q_matrix = Q_matrix
           )
+          
+          # modularity(
+          #   communities = cutree(hier_clust, i),
+          #   A = 1 - jsdist,
+          #   resolution = 1
+          # )
+          
         }
       )
     )
