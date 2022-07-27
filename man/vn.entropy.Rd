@@ -26,16 +26,21 @@ Computes the fit of a dimensionality structure using Von Neumman's entropy when 
 Lower values suggest better fit of a structure to the data.
 }
 \examples{
-# Load data
-dep <- depression[,24:44]
+# Select Five Factor Model personality items only
+idx <- na.omit(match(gsub("-", "", unlist(psychTools::spi.keys[1:5])), colnames(psychTools::spi)))
+items <- psychTools::spi[,idx]
 
 \donttest{# Estimate EGA
-## plot.type = "qqraph" used for CRAN checks
-## plot.type = "GGally" is the default
-ega.dep <- EGA(data = dep, model = "glasso", plot.type = "qgraph")
+ega.spi <- EGA(
+  data = items, model = "glasso",
+  plot.EGA = FALSE # No plot for CRAN checks
+)
 
 # Compute entropy indices
-vn.entropy(data = ega.dep$correlation, structure = ega.dep$wc)
+vn.entropy(
+  data = ega.spi$correlation,
+  structure = ega.spi$wc
+)
 }
 
 }

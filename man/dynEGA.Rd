@@ -15,7 +15,7 @@ dynEGA(
   use.derivatives = 1,
   model = c("glasso", "TMFG"),
   model.args = list(),
-  algorithm = c("walktrap", "louvain"),
+  algorithm = c("walktrap", "leiden", "louvain"),
   algorithm.args = list(),
   corr = c("cor_auto", "pearson", "spearman"),
   ncores,
@@ -90,7 +90,7 @@ A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
 or \code{\link[EGAnet]{TMFG}}}
 
 \item{algorithm}{A string indicating the algorithm to use or a function from \code{\link{igraph}}
-
+Defaults to \code{"walktrap"}.
 Current options are:
 
 \itemize{
@@ -98,8 +98,12 @@ Current options are:
 \item{\strong{\code{walktrap}}}
 {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
 
+\item{\strong{\code{leiden}}}
+{Computes the Leiden algorithm using \code{\link[igraph]{cluster_leiden}}.
+Defaults to \code{objective_function = "modularity"}}
+
 \item{\strong{\code{louvain}}}
-{Computes the Walktrap algorithm using \code{\link[igraph]{cluster_louvain}}}
+{Computes the Louvain algorithm using \code{\link[igraph]{cluster_louvain}}}
 
 }}
 

@@ -513,9 +513,6 @@ modularity_matrix <- function(A, resolution)
   # Obtain total sum
   total <- sum(A)
   
-  # Initialize modularity
-  Q <- 0
-  
   # Obtain strength
   strength <- colSums(A)
   
@@ -1979,6 +1976,125 @@ count <- function(data)
   return(counts)
 }
 
+#%%%%%%%%%
+# EGA ----
+#%%%%%%%%%
+
+#' @noRd
+# Unidimensionality check
+# Updated 27.07.2022
+unidimensionality.check <- function(
+    data,
+    n,
+    corr,
+    correlation, 
+    uni.method = c("louvain", "LE", "expand"),
+    model, model.args,
+    algorithm, algorithm.args,
+    consensus.method, consensus.iter
+)
+{
+  
+  # Make unidimensional method lowercase
+  uni.method <- tolower(uni.method)
+  
+  # Perform algorithm
+  if(uni.method == "louvain"){
+    
+    # Most common consensus with Louvain
+    wc <- most_common_consensus(
+      network = abs(correlation),
+      order = "higher",
+      consensus.iter = 1000,
+      resolution = 0.95
+    )$most_common
+    
+  }else if(uni.method == "le"){
+    
+    
+    # Try Leading Eigenvalue
+    wc <- try(
+      igraph::cluster_leading_eigen(
+        convert2igraph(abs(correlation))
+      )$membership,
+      silent = TRUE
+    )
+    
+    # If error, then use Louvain
+    if(any(class(wc) == "try-error")){
+      
+      # Most common consensus with Louvain
+      wc <- most_common_consensus(
+        network = abs(correlation),
+        order = "higher",
+        consensus.iter = 1000,
+        resolution = 0.95
+      )$most_common
+      
+      warning("Error occurred in Leading Eigenvalue algorithm. Using \"louvain\" for unidimensional check")
+      
+    }
+    
+  }else if(uni.method == "expand"){
+    
+    # Check for {igraph} algorithm
+    if(is.function(algorithm)){
+      
+      # Identify whether algorithm is Spinglass
+      if("spins" %in% methods::formalArgs(algorithm)){
+        
+        # Check for whether data are a correlation matrix
+        if(isSymmetric(unname(as.matrix(data)))){
+          data <- MASS_mvrnorm(n = n, mu = rep(0, ncol(data)), Sigma = data)
+        }
+        
+        # Simulate data from unidimensional factor model
+        sim.data <- sim.func(data = data, nvar = 4, nfact = 1, load = .70)
+        
+        ## Compute correlation matrix
+        correlation <- suppressMessages(
+          switch(corr,
+                 "cor_auto" = qgraph::cor_auto(sim.data, forcePD = TRUE),
+                 "pearson" = cor(sim.data, use = "pairwise.complete.obs"),
+                 "spearman" = cor(sim.data, method = "spearman", use = "pairwise.complete.obs")
+          )
+        )
+        
+      }else{## Expand correlation matrix
+        correlation <- expand.corr(correlation)
+      }
+      
+    }else{## Expand correlation matrix
+      correlation <- expand.corr(correlation)
+    }
+    
+    # Unidimensional result
+    wc <- EGA.estimate(
+      data = correlation, n = n,
+      model = model, model.args = model.args,
+      algorithm = algorithm, algorithm.args = algorithm.args,
+      consensus.method = consensus.method, consensus.iter = consensus.iter
+    )$wc
+    
+  }
+  
+  # Assign names
+  names(wc) <- colnames(correlation)
+  
+  # Collect dimensions
+  n.dim <- length(na.omit(unique(wc)))
+  
+  # Populate results
+  results <- list(
+    wc = wc,
+    n.dim = n.dim
+  )
+  
+  # Return results
+  return(results)
+  
+}
+
 #%%%%%%%%%%%%%%%%%%%%%%
 # NETWORK LOADINGS ----
 #%%%%%%%%%%%%%%%%%%%%%%
@@ -3246,6 +3362,38 @@ MASS_mvrnorm <- function (n = 1, mu, Sigma, tol = 1e-06, empirical = FALSE, EISP
   if (n == 1)
     drop(X)
   else t(X)
+}
+
+#' @noRd
+# Function to obtain arguments
+# Updated 27.07.2022
+obtain.arguments <- function(FUN, FUN.args)
+{
+  
+  # Obtain formal arguments
+  FUN.formals <- formals(FUN)
+  
+  # Check for input arguments
+  if(length(FUN.args) != 0){
+    
+    ## Check for matching arguments
+    if(any(names(FUN.args) %in% names(FUN.formals))){
+      
+      replace.args <- FUN.args[na.omit(match(names(FUN.formals), names(FUN.args)))]
+      
+      FUN.formals[names(replace.args)] <- replace.args
+    }
+    
+  }
+  
+  # Remove ellipses
+  if("..." %in% names(FUN.formals)){
+    FUN.formals[which(names(FUN.formals) == "...")] <- NULL
+  }
+  
+  # Return agrumnets
+  return(FUN.formals)
+  
 }
 
 #%%%%%%%%%%%%%%%%%%%%%%%%

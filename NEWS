@@ -1,4 +1,4 @@
-Changes in version 1.1.1
+Changes in version 1.2.0
 
 o FIX: hex codes used in EGA plots
 
@@ -23,6 +23,10 @@ o ADD: Jensen-Shannon Divergence `jsd` for determining (dis)similarity between n
 o ADD: `riEGA`, `EGA.fit`, and `hierEGA` functionality to `bootEGA`
 
 o ADD: `hierEGA` functionality to `itemStability` and `dimensionStability`
+
+o UPDATE: "louvain" algorithm used as default for unidimensionality check in `EGA`
+
+o INTERNAL: cleaned up `EGA` and `EGA.estimate`; streamlined code; no user facing differences
 
 
 Changes in version 1.1.0

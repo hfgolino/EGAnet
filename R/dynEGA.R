@@ -90,16 +90,20 @@
 #' or \code{\link[EGAnet]{TMFG}}
 #'
 #' @param algorithm A string indicating the algorithm to use or a function from \code{\link{igraph}}
-#'
+#' Defaults to \code{"walktrap"}.
 #' Current options are:
 #'
 #' \itemize{
 #'
 #' \item{\strong{\code{walktrap}}}
 #' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
+#' 
+#' \item{\strong{\code{leiden}}}
+#' {Computes the Leiden algorithm using \code{\link[igraph]{cluster_leiden}}.
+#' Defaults to \code{objective_function = "modularity"}}
 #'
 #' \item{\strong{\code{louvain}}}
-#' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_louvain}}}
+#' {Computes the Louvain algorithm using \code{\link[igraph]{cluster_louvain}}}
 #'
 #' }
 #'
@@ -184,7 +188,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
                    id = NULL, group = NULL,
                    use.derivatives = 1,
                    model = c("glasso", "TMFG"), model.args = list(),
-                   algorithm = c("walktrap", "louvain"), algorithm.args = list(),
+                   algorithm = c("walktrap", "leiden", "louvain"), algorithm.args = list(),
                    corr = c("cor_auto", "pearson", "spearman"),
                    ncores, ...){
 
@@ -339,7 +343,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
 
     # Estimate using EGA
     ega1 <- suppressWarnings(
-      EGA.estimate(data = data.all[, derivative_index],
+      EGA(data = data.all[, derivative_index],
           model = model, model.args = model.args,
           algorithm = algorithm, algorithm.args = algorithm.args,
           corr = corr, plot.EGA = FALSE)
@@ -389,7 +393,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
 
     # Compute derivatives per Group
     ega.list.groups <- pbapply::pblapply(X = data.groups, cl = cl,
-                                         FUN = EGA.estimate,
+                                         FUN = EGA,
                                          model = model, model.args = model.args,
                                          algorithm = algorithm, algorithm.args = algorithm.args,
                                          corr = corr, plot.EGA = FALSE)
@@ -465,7 +469,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
     # op <- pbapply::pboptions(type = "none")
     ega.list.individuals <- pbapply::pblapply(
       X = data.individuals_var, cl = cl,
-      FUN = EGA.estimate,
+      FUN = EGA,
       model = model, model.args = model.args,
       algorithm = algorithm, algorithm.args = algorithm.args,
       corr = corr, plot.EGA = FALSE

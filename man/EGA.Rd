@@ -8,12 +8,13 @@ EGA(
   data,
   n = NULL,
   corr = c("cor_auto", "pearson", "spearman"),
+  uni.method = c("expand", "LE", "louvain"),
   model = c("glasso", "TMFG"),
   model.args = list(),
-  algorithm = c("walktrap", "louvain"),
+  algorithm = c("walktrap", "leiden", "louvain"),
   algorithm.args = list(),
-  consensus.iter = 100,
   consensus.method = c("highest_modularity", "most_common", "iterative", "lowest_tefi"),
+  consensus.iter = 100,
   plot.EGA = TRUE,
   plot.args = list(),
   ...
@@ -46,6 +47,35 @@ the \code{\link[stats]{cor}}} function.
 the \code{\link[stats]{cor}}} function.
 }}
 
+\item{uni.method}{Character.
+What unidimensionality method should be used? 
+Defaults to \code{"LE"}.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{expand}}}
+{Expands the correlation matrix with four variables correlated .50.
+If number of dimension returns 2 or less in check, then the data 
+are unidimensional; otherwise, regular EGA with no matrix
+expansion is used. This is the method used in the Golino et al. (2020)
+\emph{Psychological Methods} simulation.}
+
+\item{\strong{\code{LE}}}
+{Applies the Leading Eigenvalue algorithm (\code{\link[igraph]{cluster_leading_eigen}})
+on the empirical correlation matrix. If the number of dimensions is 1,
+then the Leading Eigenvalue solution is used; otherwise, regular EGA
+is used. This is the final method used in the Christensen, Garrido,
+and Golino (2021) simulation.}
+
+\item{\strong{\code{louvain}}}
+{Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
+on the empirical correlation matrix using a resolution parameter = 0.95.
+If the number of dimensions is 1, then the Louvain solution is used; otherwise,
+regular EGA is used. This method was validated in the Christensen (2022) simulation.}
+
+}}
+
 \item{model}{Character.
 A string indicating the method to use.
 Defaults to \code{"glasso"}.
@@ -75,6 +105,10 @@ Current options are:
 \item{\strong{\code{walktrap}}}
 {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
 
+\item{\strong{\code{leiden}}}
+{Computes the Leiden algorithm using \code{\link[igraph]{cluster_leiden}}.
+Defaults to \code{objective_function = "modularity"}}
+
 \item{\strong{\code{louvain}}}
 {Computes the Louvain algorithm using \code{\link[igraph]{cluster_louvain}}}
 
@@ -83,11 +117,6 @@ Current options are:
 \item{algorithm.args}{List.
 A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
 or some other community detection algorithm function (see examples)}
-
-\item{consensus.iter}{Numeric.
-Number of iterations to perform in consensus clustering for the Louvain algorithm
-(see Lancichinetti & Fortunato, 2012).
-Defaults to \code{100}}
 
 \item{consensus.method}{Character.
 What consensus clustering method should be used? 
@@ -117,6 +146,11 @@ This process repeats iteratively until all nodes have a proportion of
 across iterations}
 
 }}
+
+\item{consensus.iter}{Numeric.
+Number of iterations to perform in consensus clustering for the Louvain algorithm
+(see Lancichinetti & Fortunato, 2012).
+Defaults to \code{100}}
 
 \item{plot.EGA}{Boolean.
 If \code{TRUE}, returns a plot of the network and its estimated dimensions.
@@ -219,6 +253,12 @@ ega.wmt.louvain <- EGA(
   plot.EGA = FALSE # No plot for CRAN checks
 )
 
+# Estimate EGA with Leiden algorithm
+ega.wmt.leiden <- EGA(
+  data = wmt, algorithm = "leiden",
+  plot.EGA = FALSE # No plot for CRAN checks
+)
+
 # Estimate EGA with Spinglass algorithm
 ega.wmt.spinglass <- EGA(
   data = wmt,
@@ -232,6 +272,11 @@ ega.wmt.spinglass <- EGA(
 Blondel, V. D., Guillaume, J.-L., Lambiotte, R., & Lefebvre, E. (2008).
 Fast unfolding of communities in large networks.
 \emph{Journal of Statistical Mechanics: Theory and Experiment}, \emph{2008}, P10008.
+
+# Comprehensive unidimensionality simulation \cr
+Christensen, A. P. (2022).
+Unidimensional community detection: A Monte Carlo simulation, grid search, and comparison.
+\emph{PsyArXiv}.
 
 # Compared all \emph{igraph} community detections algorithms, introduced Louvain algorithm, simulation with continuous and polytomous data \cr
 # Also implements the Leading Eigenvalue unidimensional method \cr

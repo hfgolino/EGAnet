@@ -32,7 +32,7 @@ EGA.methods.section <- function (object, net.loads, net.scores)
                         "(Christensen, Garrido, & Golino, 2021; Golino, Shi et al., 2020).",
                         sep = "")
     
-    refs$christensenC2020 <- paste("Christensen, A. P., Garrido, L. E., & Golino, H. (2021).",
+    refs$christensenD2020 <- paste("Christensen, A. P., Garrido, L. E., & Golino, H. (2021).",
                                    "Comparing community detection algorithms in psychological data: A Monte Carlo simulation.",
                                    "<em>PsyArXiv</em>.",
                                    "https://doi.org/10.31234/osf.io/hz89e")
@@ -48,7 +48,7 @@ EGA.methods.section <- function (object, net.loads, net.scores)
                         "(Christensen, Garrido, & Golino, 2021; Golino et al., 2020).",
                         sep = "")
     
-    refs$christensenC2020 <- paste("Christensen, A. P., Garrido, L. E., & Golino, H. (2021).",
+    refs$christensenD2020 <- paste("Christensen, A. P., Garrido, L. E., & Golino, H. (2021).",
                                    "Comparing community detection algorithms in psychological data: A Monte Carlo simulation.",
                                    "<em>PsyArXiv</em>.",
                                    "https://doi.org/10.31234/osf.io/hz89e")
@@ -198,8 +198,8 @@ EGA.methods.section <- function (object, net.loads, net.scores)
                              "<em>Advances in neural information processing systems</em> (pp. 604--612).",
                              "Retrieved from http://papers.nips.cc/paper/4087-extended-bayesianinformation-criteria-for-gaussian-graphical-models")
     
-  }else if(model == "TMFG")
-  {
+  }else if(model == "TMFG"){
+    
     model.text <- paste("&emsp;This study applied the Triangulated Maximally Filtered Graph (TMFG; Christensen et al., 2018; Massara, Di Matteo, & Aste, 2017), ",
                         "which applies a structural constraint on the zero-order correlation matrix. This constraint ",
                         "restrains the network to retain a certain number of edges (3*n*--6, where *n* is the number ",
@@ -221,7 +221,7 @@ EGA.methods.section <- function (object, net.loads, net.scores)
                         sep = ""
     )
     
-    refs$christensenG2018 <- paste("Christensen, A. P., Kenett, Y. N., Aste, T., Silvia, P. J., & Kwapil, T. R. (2018).",
+    refs$christensenH2018 <- paste("Christensen, A. P., Kenett, Y. N., Aste, T., Silvia, P. J., & Kwapil, T. R. (2018).",
                                    "Network structure of the Wisconsin Schizotypy Scales-Short Forms: Examining psychometric network filtering approaches.",
                                    "<em>Behavior Research Methods</em>, <em>50</em>, 2531--2550.",
                                    "https://doi.org/10.3758/s13428-018-1032-9")
@@ -250,8 +250,8 @@ EGA.methods.section <- function (object, net.loads, net.scores)
   ## Description of community detection algorithm
   algorithm.header <- "## Community Detection Algorithm"
   
-  if(tolower(algorithm) == "walktrap")
-  {
+  if(tolower(algorithm) == "walktrap"){
+    
     steps <- INPUT$steps
     
     # Golino et al. (2020) ==> Golino, Shi et al. (2020)
@@ -306,8 +306,8 @@ EGA.methods.section <- function (object, net.loads, net.scores)
                              "<em>InterJournal, Complex Systems</em>, <em>1695</em>, 1--9.",
                              "Retrieved from https://pdfs.semanticscholar.org/1d27/44b83519657f5f2610698a8ddd177ced4f5c.pdf")
     
-  }else if(algorithm == "louvain")
-  {
+  }else if(algorithm == "louvain"){
+    
     algorithm.text <- paste("&emsp;The Louvain algorithm (also referred to as Multi-level; Blondel et al., 2008)",
                             "is one of the most commonly applied community detection algorithms in network science (Gates et al., 2016). The algorithm",
                             "begins by randomly sorting nodes into communities with their neighbors and then uses",
@@ -357,9 +357,33 @@ EGA.methods.section <- function (object, net.loads, net.scores)
   ## Unidimensionality
   uni.method <- INPUT$uni.method
   
-  if(uni.method == "LE"){
+  if(uni.method == "louvain"){
     
-    unidimensional.text <- paste("\n&emsp;To check for unidimensionality, we used the Leading Eigenvalue algorithm (Newman, 2006) approach, which",
+    unidimensional.text <- paste("\n&emsp;To check for unidimensionality, we used the Louvain algorithm (Blondel et al., 2008) with consensus clustering (Lancichinetti & Fortunato, 2012), which",
+                                 "was applied to the zero-order correlation matrix (Christensen, 2022). This approach applies the Louvain algorithm", 
+                                 "1000 times to the correlation matrix and identifies the most common community solution.",
+                                 "If the algorithm returns one dimension, then the result",
+                                 "unidimensional; otherwise, the standard EGA procedure is followed (Christensen, 2022). The Louvain",
+                                 "algorithm was implemented using the *igraph* package."
+    )
+    
+    refs$christensenB2022 <- paste("Christensen, A. P. (2022).",
+                                   "Unidimensional community detection: A Monte Carlo simulation, grid search, and comparison.",
+                                   "<em>PsyArXiv</em>")
+    
+    refs$blondel2008 <- paste("Blondel, V. D., Guillaume, J.-L., Lambiotte, R., & Lefebvre, E. (2008).",
+                              "Fast unfolding of communities in large networks.",
+                              "<em>Journal of Statistical Mechanics: Theory and Experiment</em>, <em>2008</em>, P10008.",
+                              "https://doi.org/10.1088/1742-5468/2008/10/P10008")
+    
+    refs$lancichinetti2012 <- paste("Lancichinetti, A., & Fortunato, S. (2012).",
+                                   "Consensus clustering in complex networks.",
+                                   "<em>Scientific Reports</em>, <em>2</em>(1), 336.",
+                                   "https://doi.org/10.1038/srep00336")
+    
+  }else if(uni.method == "LE"){
+    
+    unidimensional.text <- paste("\n&emsp;To check for unidimensionality, we used the Leading Eigenvalue algorithm (Newman, 2006) which",
                                  "was applied to the zero-order correlation matrix (Christensen et al., 2021). The algorithm is based", 
                                  "on the spectral properties of the network using the eigenvector of the first eigenvalue of the modularity matrix to",
                                  "determine optimal community structures. The algorithm begins by computing the first eigenvector of the modularity",
@@ -424,7 +448,7 @@ EGA.methods.section <- function (object, net.loads, net.scores)
                      "factor analysis loading matrix (Christensen & Golino, 2021).",
                      sep = "")
     
-    refs$christensenE2020 <- paste("Christensen, A. P., & Golino, H. (2021).",
+    refs$christensenF2020 <- paste("Christensen, A. P., & Golino, H. (2021).",
                                    "On the equivalency of factor and network loadings.",
                                    "<em>Behavior Research Methods</em>, <em>53</em>, 1563--1580",
                                    "https://doi.org/10.3758/s13428-020-01500-6")
@@ -531,7 +555,7 @@ bootEGA.methods.section <- function (object, dim.stability, item.stability)
                       "replicate sample, forming a sampling distribution of EGA results.",
                       sep = "")
   
-  refs$christensenD2019 <- paste("Christensen, A. P., & Golino, H. (2021).",
+  refs$christensenE2019 <- paste("Christensen, A. P., & Golino, H. (2021).",
                                  "Estimating the stability of psychological dimensions via Bootstrap Exploratory Graph Analysis: A Monte Carlo simulation and tutorial.",
                                  "<em>Psych</em>, <em>3</em>(3), 479--500.",
                                  "https://doi.org/10.3390/psych3030032")
@@ -586,7 +610,7 @@ bootEGA.methods.section <- function (object, dim.stability, item.stability)
                      "considered acceptable.",
                      sep = "")
     
-    refs$christensenF2020 <- paste("Christensen, A. P., Golino, H., & Silvia, P. J. (2020).",
+    refs$christensenG2020 <- paste("Christensen, A. P., Golino, H., & Silvia, P. J. (2020).",
                                    "A psychometric network perspective on the validity and validation of personality trait questionnaires.",
                                    "<em>European Journal of Personality</em>, <em>34</em>(6), 1095--1108.",
                                    "https://doi.org/10.1002/per.2265")
@@ -680,7 +704,7 @@ UVA.methods.section <- function (object)
                       "that connects them as well as the edges they share.",
                       sep = "")
   
-  refs$christensenB2020 <- paste("Christensen, A. P., Garrido, L. E., & Golino, H. (2022).",
+  refs$christensenC2020 <- paste("Christensen, A. P., Garrido, L. E., & Golino, H. (2022).",
                                  "Unique variable analysis: A network psychometrics method to detect local dependence.",
                                  "<em>PsyArXiv</em>.",
                                  "https://doi.org/10.31234/osf.io/4kra2")

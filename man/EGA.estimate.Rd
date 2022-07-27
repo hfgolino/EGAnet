@@ -7,11 +7,13 @@
 EGA.estimate(
   data,
   n = NULL,
+  corr = c("cor_auto", "pearson", "spearman"),
   model = c("glasso", "TMFG"),
   model.args = list(),
-  algorithm = c("walktrap", "louvain"),
+  algorithm = c("walktrap", "leiden", "louvain"),
   algorithm.args = list(),
-  corr = c("cor_auto", "pearson", "spearman"),
+  consensus.method = c("highest_modularity", "most_common", "iterative", "lowest_tefi"),
+  consensus.iter = 100,
   ...
 )
 }
@@ -23,6 +25,24 @@ then argument \code{n} (number of cases) is \strong{required}}
 
 \item{n}{Integer.
 Sample size if \code{data} provided is a correlation matrix}
+
+\item{corr}{Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{cor_auto}}}
+{Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
+\code{\link[qgraph]{qgraph}}}.
+
+\item{\strong{\code{pearson}}}
+{Computes Pearson's correlation coefficient using the pairwise complete observations via
+the \code{\link[stats]{cor}}} function.
+
+\item{\strong{\code{spearman}}}
+{Computes Spearman's correlation coefficient using the pairwise complete observations via
+the \code{\link[stats]{cor}}} function.
+}}
 
 \item{model}{Character.
 A string indicating the method to use.
@@ -53,8 +73,11 @@ Current options are:
 \item{\strong{\code{walktrap}}}
 {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
 
+\item{\strong{\code{leiden}}}
+{Computes the Leiden algorithm using \code{\link[igraph]{cluster_leiden}}}
+
 \item{\strong{\code{louvain}}}
-{Computes the Walktrap algorithm using \code{\link[igraph]{cluster_louvain}}}
+{Computes the Louvain algorithm using \code{\link[igraph]{cluster_louvain}}}
 
 }}
 
@@ -62,23 +85,39 @@ Current options are:
 A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
 or some other community detection algorithm function (see examples)}
 
-\item{corr}{Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
+\item{consensus.method}{Character.
+What consensus clustering method should be used? 
+Defaults to \code{"highest_modularity"}.
 Current options are:
 
 \itemize{
 
-\item{\strong{\code{cor_auto}}}
-{Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
-\code{\link[qgraph]{qgraph}}}.
+\item{\strong{\code{highest_modularity}}}
+{Uses the community solution that achieves the highest modularity
+across iterations}
 
-\item{\strong{\code{pearson}}}
-{Computes Pearson's correlation coefficient using the pairwise complete observations via
-the \code{\link[stats]{cor}}} function.
+\item{\strong{\code{most_common}}}
+{Uses the community solution that is found the most
+across iterations}
 
-\item{\strong{\code{spearman}}}
-{Computes Spearman's correlation coefficient using the pairwise complete observations via
-the \code{\link[stats]{cor}}} function.
+\item{\strong{\code{iterative}}}
+{Identifies the most common community solutions across iterations
+and determines how often nodes appear in the same community together.
+A threshold of 0.30 is used to set low proportions to zero.
+This process repeats iteratively until all nodes have a proportion of
+1 in the community solution.
+}
+
+\item{\code{lowest_tefi}}
+{Uses the community solution that achieves the lowest \code{\link[EGAnet]{tefi}}
+across iterations}
+
 }}
+
+\item{consensus.iter}{Numeric.
+Number of iterations to perform in consensus clustering for the Louvain algorithm
+(see Lancichinetti & Fortunato, 2012).
+Defaults to \code{100}}
 
 \item{...}{Additional arguments.
 Used for deprecated arguments from previous versions of \code{\link{EGA}}}

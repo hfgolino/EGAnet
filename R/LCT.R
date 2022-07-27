@@ -90,8 +90,7 @@ LCT <- function (data, n, iter = 100,
   data <- as.matrix(data)
   
   # Number of cases
-  if(nrow(data) == ncol(data))
-  {
+  if(nrow(data) == ncol(data)){
     if(missing(n))
     {stop("Argument 'n' must be supplied for an m x m matrix")}
     

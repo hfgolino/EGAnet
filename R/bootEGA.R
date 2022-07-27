@@ -13,26 +13,32 @@
 #' Sample size if \code{data} provided is a correlation matrix
 #'
 #' @param uni.method Character.
-#' What unidimensionality method should be used?
+#' What unidimensionality method should be used? 
 #' Defaults to \code{"LE"}.
 #' Current options are:
-#'
+#' 
 #' \itemize{
 #'
 #' \item{\strong{\code{expand}}}
 #' {Expands the correlation matrix with four variables correlated .50.
-#' If number of dimension returns 2 or less in check, then the data
+#' If number of dimension returns 2 or less in check, then the data 
 #' are unidimensional; otherwise, regular EGA with no matrix
 #' expansion is used. This is the method used in the Golino et al. (2020)
 #' \emph{Psychological Methods} simulation.}
 #'
 #' \item{\strong{\code{LE}}}
-#' {Applies the leading eigenvalue algorithm (\code{\link[igraph]{cluster_leading_eigen}})
+#' {Applies the Leading Eigenvalue algorithm (\code{\link[igraph]{cluster_leading_eigen}})
 #' on the empirical correlation matrix. If the number of dimensions is 1,
-#' then the leading eigenvalue solution is used; otherwise, regular EGA
+#' then the Leading Eigenvalue solution is used; otherwise, regular EGA
 #' is used. This is the final method used in the Christensen, Garrido,
 #' and Golino (2021) simulation.}
-#'
+#' 
+#' \item{\strong{\code{louvain}}}
+#' {Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
+#' on the empirical correlation matrix using a resolution parameter = 0.95.
+#' If the number of dimensions is 1, then the Louvain solution is used; otherwise,
+#' regular EGA is used. This method was validated in the Christensen (2022) simulation.}
+#' 
 #' }
 #'
 #' @param iter Numeric integer.
@@ -122,15 +128,20 @@
 #' or \code{\link[EGAnet]{TMFG}}
 #'
 #' @param algorithm A string indicating the algorithm to use or a function from \code{\link{igraph}}
+#' Defaults to \code{"walktrap"}.
 #' Current options are:
 #'
 #' \itemize{
 #'
 #' \item{\strong{\code{walktrap}}}
 #' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
+#' 
+#' \item{\strong{\code{leiden}}}
+#' {Computes the Leiden algorithm using \code{\link[igraph]{cluster_leiden}}.
+#' Defaults to \code{objective_function = "modularity"}}
 #'
 #' \item{\strong{\code{louvain}}}
-#' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_louvain}}}
+#' {Computes the Louvain algorithm using \code{\link[igraph]{cluster_louvain}}}
 #'
 #' }
 #'
@@ -304,12 +315,12 @@
 # Bootstrap EGA
 # Updated 18.07.2022
 bootEGA <- function(
-    data, n = NULL, uni.method = c("expand", "LE"), iter,
+    data, n = NULL, uni.method = c("expand", "LE", "louvain"), iter,
     type = c("parametric", "resampling"), seed = 1234,
     corr = c("cor_auto", "pearson", "spearman"),
     EGA.type = c("EGA", "EGA.fit", "hierEGA", "riEGA"),
     model = c("glasso", "TMFG"), model.args = list(),
-    algorithm = c("walktrap", "louvain"), algorithm.args = list(),
+    algorithm = c("walktrap", "leiden", "louvain"), algorithm.args = list(),
     typicalStructure = TRUE, plot.typicalStructure = TRUE,
     plot.args = list(), ncores, ...
 ) 

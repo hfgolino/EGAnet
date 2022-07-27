@@ -70,16 +70,20 @@
 #' or \code{\link[EGAnet]{TMFG}}
 #'
 #' @param algorithm A string indicating the algorithm to use or a function from \code{\link{igraph}}
-#'
+#' Defaults to \code{"walktrap"}.
 #' Current options are:
 #'
 #' \itemize{
 #'
 #' \item{\strong{\code{walktrap}}}
 #' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
+#' 
+#' \item{\strong{\code{leiden}}}
+#' {Computes the Leiden algorithm using \code{\link[igraph]{cluster_leiden}}.
+#' Defaults to \code{objective_function = "modularity"}}
 #'
 #' \item{\strong{\code{louvain}}}
-#' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_louvain}}}
+#' {Computes the Louvain algorithm using \code{\link[igraph]{cluster_louvain}}}
 #'
 #' }
 #'
@@ -120,7 +124,7 @@ dynEGA.ind.pop <- function(data, n.embed, tau = 1, delta = 1,
                            id = NULL,
                            use.derivatives = 1,
                            model = c("glasso", "TMFG"), model.args = list(),
-                           algorithm = c("walktrap", "louvain"), algorithm.args = list(),
+                           algorithm = c("walktrap", "leiden", "louvain"), algorithm.args = list(),
                            corr = c("cor_auto", "pearson", "spearman"),
                            ncores, ...){
 
@@ -200,7 +204,7 @@ dynEGA.ind.pop <- function(data, n.embed, tau = 1, delta = 1,
 
   # Estimate population structure
   ega_pop <- suppressWarnings(
-    EGA.estimate(
+    EGA(
       derivatives_df,
       model = model, model.args = model.args,
       algorithm = algorithm, algorithm.args = algorithm.args,
@@ -293,19 +297,19 @@ dynEGA.ind.pop <- function(data, n.embed, tau = 1, delta = 1,
   # # # EGA Part
   # #
   # # if(use.derivatives == 0){
-  # #   ega1 <- EGA.estimate(data = data.all[,1:ncol(data[,-c(id)])],
+  # #   ega1 <- EGA(data = data.all[,1:ncol(data[,-c(id)])],
   # #                        model = model, model.args = model.args,
   # #                        algorithm = algorithm, algorithm.args = algorithm.args,
   # #                        corr = corr)}
   # # if(use.derivatives == 1){
-  # #   ega1 <- EGA.estimate(data = data.all[,(ncol(data[,-c(id)])+1):(ncol(data[,-c(id)])*2)],
+  # #   ega1 <- EGA(data = data.all[,(ncol(data[,-c(id)])+1):(ncol(data[,-c(id)])*2)],
   # #                        model = model, model.args = model.args,
   # #                        algorithm = algorithm, algorithm.args = algorithm.args,
   # #                        corr = corr)}
   # # if(use.derivatives==2){
   # #   init <- (ncol(data[,-c(id)])*2)+1
   # #   cols <- seq(from = init, to = init+ncol(data[,-c(id)])-1)
-  # #   ega1 <- EGA.estimate(data = data.all[,cols],
+  # #   ega1 <- EGA(data = data.all[,cols],
   # #                        model = model, model.args = model.args,
   # #                        algorithm = algorithm, algorithm.args = algorithm.args,
   # #                        corr = corr)}
@@ -347,7 +351,7 @@ dynEGA.ind.pop <- function(data, n.embed, tau = 1, delta = 1,
   # ega.list.individuals <- list()
   #
   # ega.list.individuals <- pbapply::pblapply(X = data.individuals, cl = cl,
-  #                                           FUN = EGA.estimate,
+  #                                           FUN = EGA,
   #                                           model = model, model.args = model.args,
   #                                           algorithm = algorithm, algorithm.args = algorithm.args,
   #                                           corr = corr)

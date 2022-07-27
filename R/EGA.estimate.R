@@ -48,9 +48,12 @@
 #'
 #' \item{\strong{\code{walktrap}}}
 #' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
+#' 
+#' \item{\strong{\code{leiden}}}
+#' {Computes the Leiden algorithm using \code{\link[igraph]{cluster_leiden}}}
 #'
 #' \item{\strong{\code{louvain}}}
-#' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_louvain}}}
+#' {Computes the Louvain algorithm using \code{\link[igraph]{cluster_louvain}}}
 #'
 #' }
 #'
@@ -74,6 +77,40 @@
 #' \item{\strong{\code{spearman}}}
 #' {Computes Spearman's correlation coefficient using the pairwise complete observations via
 #' the \code{\link[stats]{cor}}} function.
+#' }
+#' 
+#' @param consensus.iter Numeric.
+#' Number of iterations to perform in consensus clustering for the Louvain algorithm
+#' (see Lancichinetti & Fortunato, 2012).
+#' Defaults to \code{100}
+#' 
+#' @param consensus.method Character.
+#' What consensus clustering method should be used? 
+#' Defaults to \code{"highest_modularity"}.
+#' Current options are:
+#' 
+#' \itemize{
+#' 
+#' \item{\strong{\code{highest_modularity}}}
+#' {Uses the community solution that achieves the highest modularity
+#' across iterations}
+#' 
+#' \item{\strong{\code{most_common}}}
+#' {Uses the community solution that is found the most
+#' across iterations}
+#' 
+#' \item{\strong{\code{iterative}}}
+#' {Identifies the most common community solutions across iterations
+#' and determines how often nodes appear in the same community together.
+#' A threshold of 0.30 is used to set low proportions to zero.
+#' This process repeats iteratively until all nodes have a proportion of
+#' 1 in the community solution.
+#' }
+#' 
+#' \item{\code{lowest_tefi}}
+#' {Uses the community solution that achieves the lowest \code{\link[EGAnet]{tefi}}
+#' across iterations}
+#' 
 #' }
 #'
 #' @param ... Additional arguments.
@@ -149,12 +186,20 @@
 #' @export
 #'
 # Estimates EGA
-# Updated 13.05.2022
-EGA.estimate <- function(data, n = NULL,
-                         model = c("glasso", "TMFG"), model.args = list(),
-                         algorithm = c("walktrap", "louvain"), algorithm.args = list(),
-                         corr = c("cor_auto", "pearson", "spearman"),
-                         ...)
+# Updated 27.07.2022
+EGA.estimate <- function(
+    data, n = NULL,
+    corr = c("cor_auto", "pearson", "spearman"),
+    model = c("glasso", "TMFG"), model.args = list(),
+    algorithm = c("walktrap", "leiden", "louvain"), algorithm.args = list(),
+    consensus.method = c(
+      "highest_modularity",
+      "most_common",
+      "iterative",
+      "lowest_tefi"
+    ), consensus.iter = 100, 
+  ...
+)
 {
   # Make the data a matrix
   data <- as.matrix(data)
@@ -183,236 +228,203 @@ EGA.estimate <- function(data, n = NULL,
 
   if(missing(model)){
     model <- "glasso"
-  }else{model <- match.arg(model)}
+  }else{model <- tolower(match.arg(model))}
 
   if(missing(algorithm)){
     algorithm <- "walktrap"
   }else if(!is.function(algorithm)){
     algorithm <- tolower(match.arg(algorithm))
   }
+  
+  if(missing(consensus.method)){
+    consensus.method <- "most_common"
+  }else{consensus.method <- tolower(match.arg(consensus.method))}
 
   if(missing(corr)){
     corr <- "cor_auto"
-  }else{corr <- match.arg(corr)}
+  }else{corr <- tolower(match.arg(corr))}
 
-  # Model Arguments
-  ## Check for model
-  if(model == "glasso"){
-    model.formals <- formals(EBICglasso.qgraph)
-  }else{model.formals <- formals(TMFG)}
-
-  ## Check for input model arguments
-  if(length(model.args) != 0){
-
-    ### Check for matching arguments
-    if(any(names(model.args) %in% names(model.formals))){
-
-      model.replace.args <- model.args[na.omit(match(names(model.formals), names(model.args)))]
-
-      model.formals[names(model.replace.args)] <- model.replace.args
-    }
-
-  }
-
-  ## Remove ellipses
-  if("..." %in% names(model.formals)){
-    model.formals[which(names(model.formals) == "...")] <- NULL
-  }
-
-  # Algorithm Arguments
-  ## Check for algorithm
+  # Model function
+  model.FUN <- switch(
+    model,
+    "glasso" = EBICglasso.qgraph,
+    "tmfg" = TMFG
+  )
+  
+  # Model arguments
+  model.ARGS <- obtain.arguments(
+    FUN = model.FUN,
+    FUN.args = model.args
+  )
+  
+  # Algorithm function
   if(!is.function(algorithm)){
-
-    if(algorithm == "walktrap"){
-      algorithm.formals <- formals(igraph::cluster_walktrap)
-    }else if(algorithm == "louvain"){
-      algorithm.formals <- formals(igraph::cluster_louvain)
-    }
-
-  }else{algorithm.formals <- formals(algorithm)}
-
-  ## Check for input algorithm arguments
-  if(length(algorithm.args) != 0){
-
-    ### Check for matching arguments
-    if(any(names(algorithm.args) %in% names(algorithm.formals))){
-
-      algorithm.replace.args <- algorithm.args[na.omit(match(names(algorithm.formals), names(algorithm.args)))]
-
-      algorithm.formals[names(algorithm.replace.args)] <- algorithm.replace.args
-    }
-
+    algorithm.FUN <- switch(
+      algorithm,
+      "walktrap" = igraph::cluster_walktrap,
+      "leiden" = igraph::cluster_leiden,
+      "louvain" = igraph::cluster_louvain
+    )
+  }else{
+    algorithm.FUN <- algorithm
   }
-
-  ## Remove ellipses
-  if("..." %in% names(algorithm.formals)){
-    algorithm.formals[which(names(algorithm.formals) == "...")] <- NULL
-  }
+  
+  # Algorithm arguments
+  algorithm.ARGS <- obtain.arguments(
+    FUN = algorithm.FUN,
+    FUN.args = algorithm.args
+  )
 
   ## Remove weights from igraph functions' arguments
-  if("weights" %in% names(algorithm.formals)){
-    algorithm.formals[which(names(algorithm.formals) == "weights")] <- NULL
+  if("weights" %in% names(algorithm.ARGS)){
+    algorithm.ARGS[which(names(algorithm.ARGS) == "weights")] <- NULL
   }
 
-  #### ARGUMENTS HANDLING ####
-
-  # Check if data is correlation matrix and positive definite
-  if(nrow(data) != ncol(data)){
-
+  # Check if data are data
+  if(!isSymmetric(unname(as.matrix(data)))){
+    
     # Obtain n
     n <- nrow(data)
-
+    
     # Compute correlation matrix
-    cor.data <- switch(corr,
-                       cor_auto = qgraph::cor_auto(data, forcePD = TRUE),
-                       pearson = cor(data, use = "pairwise.complete.obs", method = "pearson"),
-                       spearman = cor(data, use = "pairwise.complete.obs", method = "spearman")
+    correlation <- switch(
+      corr,
+      cor_auto = qgraph::cor_auto(data, forcePD = TRUE),
+      pearson = cor(data, use = "pairwise.complete.obs", method = "pearson"),
+      spearman = cor(data, use = "pairwise.complete.obs", method = "spearman")
     )
-
-    # Check if positive definite
-    if(any(eigen(cor.data)$values < 0)){
-
-      # Let user know
-      warning("Correlation matrix is not positive definite.\nForcing positive definite matrix using Matrix::nearPD()\nResults may be unreliable")
-
-      # Force positive definite matrix
-      cor.data <- as.matrix(Matrix::nearPD(cor.data, corr = TRUE, keepDiag = TRUE, ensureSymmetry = TRUE)$mat)
-    }
-
-  }else{
-
-    # Check if symmetric (time series data)
-    if(!isSymmetric(data)){
-
-      # Obtain n
-      n <- nrow(data)
-
-      # Compute correlation matrix
-      cor.data <- switch(corr,
-                         cor_auto = qgraph::cor_auto(data, forcePD = TRUE),
-                         pearson = cor(data, use = "pairwise.complete.obs", method = "pearson"),
-                         spearman = cor(data, use = "pairwise.complete.obs", method = "spearman")
-      )
-
-      # Check if positive definite
-      if(any(eigen(cor.data)$values < 0)){
-
-        # Let user know
-        warning("Correlation matrix is not positive definite.\nForcing positive definite matrix using Matrix::nearPD()\nResults may be unreliable")
-
-        # Force positive definite matrix
-        cor.data <- as.matrix(Matrix::nearPD(cor.data, corr = TRUE, keepDiag = TRUE, ensureSymmetry = TRUE)$mat)
-
-      }
-    }else{
-
-      # Check if positive definite
-      if(any(eigen(data)$values < 0)){
-
-        # Let user know
-        warning("Correlation matrix is not positive definite.\nForcing positive definite matrix using Matrix::nearPD()\nResults may be unreliable")
-
-        # Force positive definite matrix
-        cor.data <- as.matrix(Matrix::nearPD(data, corr = TRUE, keepDiag = TRUE, ensureSymmetry = TRUE)$mat)
-
-      }else{cor.data <- data}
-
-    }
-
+    
+  }else{ # Set correlation as data
+    correlation <- data
   }
-
-  #### ADDITIONAL ARGUMENTS HANDLING ####
-
-  model.formals$data <- cor.data
-  model.formals$n <- n
-
-  #### ADDITIONAL ARGUMENTS HANDLING ####
-
+  
+  # Check if positive definite
+  if(any(eigen(correlation)$values < 0)){
+    
+    # Let user know
+    warning("Correlation matrix is not positive definite.\nForcing positive definite matrix using Matrix::nearPD()\nResults may be unreliable")
+    
+    # Force positive definite matrix
+    correlation <- as.matrix(Matrix::nearPD(correlation, corr = TRUE, keepDiag = TRUE, ensureSymmetry = TRUE)$mat)
+    
+  }
+  
+  # Add arguments to model
+  model.ARGS$data <- correlation
+  model.ARGS$n <- n
+  
   # Estimate network
   if(model == "glasso"){
     
-    # GLASSO additional arguments
-    ## Lambda
+    # Check for lambda.min.ratio
     if(!"lambda.min.ratio" %in% names(model.args)){
-      model.formals$lambda.min.ratio <- 0.1
+      model.ARGS$lambda.min.ratio <- 0.1
     }
 
+    # Check for gamma
     if(!"gamma" %in% names(model.args)){
       gamma.values <- seq(from = 0.50, to = 0, length.out = 3)
-    }else{gamma.values <- model.formals$gamma}
+    }else{gamma.values <- model.args$gamma}
 
+    # Loop through gamma values
     for(j in 1:length(gamma.values)){
 
       # Re-instate gamma values
-      model.formals$gamma <- gamma.values[j]
+      model.ARGS$gamma <- gamma.values[j]
 
       # Estimate network
-      estimated.network <- do.call(EBICglasso.qgraph, model.formals)
-
-      if(all(abs(strength(estimated.network))>0)){
+      estimated.network <- do.call(
+        model.FUN, model.ARGS
+      )
+      
+      # Check for disconnected nodes
+      if(all(abs(strength(estimated.network)) > 0)){
         break
       }
+      
     }
 
-  }else if(model == "TMFG"){
-    estimated.network <- TMFG(cor.data)$A
-    colnames(estimated.network) <- colnames(cor.data)
-    rownames(estimated.network) <- rownames(cor.data)
+  }else if(model == "tmfg"){
+    estimated.network <- TMFG(correlation)$A
+    colnames(estimated.network) <- colnames(correlation)
+    rownames(estimated.network) <- rownames(correlation)
   }
 
   # Check for unconnected nodes
-  if(all(degree(estimated.network)==0)){
+  if(all(degree(estimated.network) == 0)){
 
     # Initialize community membership list
     wc <- list()
     wc$membership <- rep(NA, ncol(estimated.network))
-    warning("Estimated network contains unconnected nodes:\n",
-            paste(names(which(strength(estimated.network)==0)), collapse = ", "))
+    warning(
+      "Estimated network contains unconnected nodes:\n",
+      paste(names(which(strength(estimated.network)==0)), collapse = ", ")
+    )
 
-    unconnected <- which(degree(estimated.network)==0)
+    unconnected <- which(degree(estimated.network) == 0)
 
   }else{
 
-    if(any(degree(estimated.network)==0)){
+    if(any(degree(estimated.network) == 0)){
 
-      warning("Estimated network contains unconnected nodes:\n",
-              paste(names(which(strength(estimated.network)==0)), collapse = ", "))
-
-      unconnected <- which(degree(estimated.network)==0)
-
-    }
-
-    # Convert to igraph
-    graph <- suppressWarnings(convert2igraph(abs(estimated.network)))
-
-    # Run community detection algorithm
-    algorithm.formals$graph <- graph
-
-    if(!is.function(algorithm)){
-
-      wc <- switch(algorithm,
-                   walktrap = do.call(igraph::cluster_walktrap, as.list(algorithm.formals)),
-                   louvain = do.call(igraph::cluster_louvain, as.list(algorithm.formals))
+      warning(
+        "Estimated network contains unconnected nodes:\n",
+        paste(names(which(strength(estimated.network)==0)), collapse = ", ")
       )
 
-    }else{wc <- do.call(what = algorithm, args = as.list(algorithm.formals))}
+      unconnected <- which(degree(estimated.network) == 0)
+
+    }
+    
+    # Check if algorithm is a function
+    if(is.function(algorithm)){
+      
+      # Convert to igraph
+      graph <- suppressWarnings(convert2igraph(abs(estimated.network)))
+      
+      # Run community detection algorithm
+      algorithm.ARGS$graph <- graph
+      
+      # Call community detection algorithm
+      wc <- do.call(
+        what = algorithm.FUN,
+        args = algorithm.ARGS
+      )
+      
+    }else if(tolower(algorithm) == "louvain"){
+      
+      # Initialize community membership list
+      wc <- list()
+      
+      # Population community membership list
+      wc$membership <- consensus_clustering(
+        network = estimated.network,
+        corr = correlation,
+        order = "higher",
+        consensus.iter = consensus.iter,
+        resolution = algorithm.ARGS$resolution
+      )[[consensus.method]]
+      
+    }else{
+      
+      # Convert to igraph
+      graph <- suppressWarnings(convert2igraph(abs(estimated.network)))
+      
+      # Run community detection algorithm
+      algorithm.ARGS$graph <- graph
+      
+      # Call community detection algorithm
+      wc <- do.call(
+        what = algorithm.FUN,
+        args = algorithm.ARGS
+      )
+      
+    }
 
   }
   
-  # Check for lower-order Louvain argument
-  if("lower.louvain" %in% names(add.args)){
-    
-    # Check for TRUE
-    if(isTRUE(add.args$lower.louvain)){
-      wc <- wc$memberships[1,] # lowest level of communities
-    }
-    
-  }else{
-    
-    # Obtain community memberships
-    wc <- wc$membership
-    
-  }
+  # Obtain community memberships
+  wc <- wc$membership
 
   # Set up missing memberships
   init.wc <- as.vector(matrix(NA, nrow = 1, ncol = ncol(data)))
@@ -423,47 +435,41 @@ EGA.estimate <- function(data, n = NULL,
   if(exists("unconnected")){
     wc[unconnected] <- NA
   }
-
-  # Convert numbers to be consecutive
-  uniq.wc <- unique(na.omit(wc))
-  wc.ord <- sort(uniq.wc)
-  proper.ord <- 1:length(uniq.wc)
-
-  # Check changes needed for consecutive ordering
-  if(any(wc.ord != proper.ord)){
-
-    # Initialize new wc
-    new.wc <- numeric(length = length(wc))
-
-    # Target wcs to change
-    targets <- which(wc.ord != proper.ord)
-
-    if(length(targets) != 0){
-
-      for(i in targets){
-        new.wc[which(wc == wc.ord[i])] <- proper.ord[i]
-      }
-
-      wc <- ifelse(new.wc == 0, wc, new.wc)
-
-    }
-
+  
+  # Re-index communities
+  wc <- reindex_comm(wc)
+  
+  # Replace singleton communities with NA
+  frequencies <- table(wc)
+  
+  # Check for singleton communities
+  if(any(frequencies == 1)){
+    wc[as.numeric(names(frequencies)[which(frequencies == 1)])] <- NA
   }
 
+  # Name communities
   names(wc) <- colnames(data)
+  
+  # Obtain dimensions
   n.dim <- suppressWarnings(length(unique(na.omit(wc))))
+  
+  # Set methods arguments
+  methods <- list(
+    model = model,
+    model.args = model.ARGS,
+    algorithm = algorithm,
+    algorithm.args = algorithm.ARGS,
+    corr = corr,
+    consensus.method = consensus.method,
+    consensus.iter = consensus.iter
+  )
 
   # Return results
-  res <- list()
-  res$network <- estimated.network
-  res$wc <- wc
-  res$n.dim <- n.dim
-  res$cor.data <- cor.data
-
-  if(model == "glasso"){
-    res$gamma <- model.formals$gamma
-    res$lambda <- model.formals$lambda.min.ratio
-  }
+  res <- list(
+    network = estimated.network, wc = wc,
+    n.dim = n.dim, cor.data = correlation,
+    Methods = methods
+  )
 
   return(res)
 }

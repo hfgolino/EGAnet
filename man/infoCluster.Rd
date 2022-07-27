@@ -55,6 +55,7 @@ dyn.ega1 <- dynEGA.ind.pop(
 # Perform information-theoretic clustering
 clust1 <- infoCluster(
   dynEGA.object = dyn.ega1,
+  ncores = 2, # Two cores for CRAN checks
   plot.cluster = FALSE # No plot for CRAN checks
 )}
 
