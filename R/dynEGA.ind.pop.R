@@ -1,5 +1,5 @@
 #' Dynamic EGA
-#' 
+#'
 #' @description DynEGA estimates dynamic factors in multivariate time series (i.e. longitudinal data, panel data, intensive longitudinal data) at multiple
 #' time scales, in different levels of analysis: individuals (intraindividual structure) and population (structure of the population).
 #' Exploratory graph analysis is applied in the derivatives estimated using generalized local linear approximation (\code{\link[EGAnet]{glla}}). Instead of estimating factors by modeling how variables are covarying, as in traditional
@@ -9,7 +9,7 @@
 #' @param data A data frame with the variables to be used in the analysis.
 #' The data frame should be in a long format (i.e. observations for the
 #' same individual (for example, individual 1) are placed in order,
-#' from time 1 to time t, followed by the observations from individual 2, also 
+#' from time 1 to time t, followed by the observations from individual 2, also
 #' ordered from time 1 to time t.)
 #'
 #' @param n.embed Integer.
@@ -105,14 +105,14 @@
 #' @examples
 #' # Obtain data
 #' sim.dynEGA <- sim.dynEGA # bypasses CRAN checks
-#' 
+#'
 #' \donttest{# Dynamic EGA individual and population structure
 #' dyn.ega1 <- dynEGA.ind.pop(
 #'   data = sim.dynEGA, n.embed = 5, tau = 1,
-#'   delta = 1, id = 21, use.derivatives = 1, 
+#'   delta = 1, id = 21, use.derivatives = 1,
 #'   ncores = 2, corr = "pearson"
 #' )}
-#' 
+#'
 #' @export
 #'
 # Updated 14.06.2022
@@ -123,13 +123,13 @@ dynEGA.ind.pop <- function(data, n.embed, tau = 1, delta = 1,
                            algorithm = c("walktrap", "louvain"), algorithm.args = list(),
                            corr = c("cor_auto", "pearson", "spearman"),
                            ncores, ...){
-  
+
   # Get additional arguments
   add.args <- list(...)
-  
+
   # Check if steps has been input as an argument
   if("steps" %in% names(add.args)){
-    
+
     # Give deprecation warning
     warning(
       paste(
@@ -137,45 +137,45 @@ dynEGA.ind.pop <- function(data, n.embed, tau = 1, delta = 1,
         sep = ""
       )
     )
-    
+
     # Handle the number of steps appropriately
     algorithm.args$steps <- add.args$steps
   }
-  
-  
+
+
   # MISSING ARGUMENTS HANDLING
   if(missing(id))
   {stop("The 'id' argument is missing! \n The number of the column identifying each individual must be provided!")
   }else{id <- id}
-  
+
   if(missing(corr))
   {corr <- "cor_auto"
   }else{corr <- match.arg(corr)}
-  
+
   if(missing(ncores))
   {ncores <- ceiling(parallel::detectCores() / 2)
   }else{ncores}
-  
+
   # # Setting the order:
-  # 
+  #
   # order = 2
-  # 
+  #
   # # ### Spliting by ID:
-  # 
+  #
   # #number of cases
   # cases <- unique(data[,id])
-  # 
+  #
   # #initialize data list
   # datalist <- vector("list", length = length(cases))
   # datalist <- split(data[,-c(id)],data[,id])
-  
+
   # Remove group
   if("group" %in% tolower(colnames(data))){
     datalist <- data[,-which(tolower(colnames(data)) == "group")]
   }else{
     datalist <- data
   }
-  
+
   # Perform dynEGA for individuals first
   ega_individuals <- dynEGA(
     data = datalist, n.embed = n.embed,
@@ -185,38 +185,38 @@ dynEGA.ind.pop <- function(data, n.embed, tau = 1, delta = 1,
     algorithm = algorithm, algorithm.args = algorithm.args,
     corr = corr, ncores = ncores
   )
-  
+
   # Stack derivatives
   derivatives_df <- ega_individuals$Derivatives$EstimatesDF
-  
+
   # Obtain proper derivatives
   derivatives_df <- derivatives_df[,grep(
     paste("Ord", use.derivatives, sep = ""),
     colnames(derivatives_df)
   )]
-  
+
   # Message user for population structure
   message("Level: Population...", appendLF = FALSE)
-  
+
   # Estimate population structure
   ega_pop <- suppressWarnings(
-    EGA(
+    EGA.estimate(
       derivatives_df,
       model = model, model.args = model.args,
       algorithm = algorithm, algorithm.args = algorithm.args,
       corr = corr, plot.EGA = FALSE
     )
   )
-  
+
   # Set up EGA population object
   ega_population <- list()
   ega_population$Derivatives <- ega_individuals$Derivatives
   ega_population$dynEGA <- ega_pop
   ega_population$dynEGA$Methods <- ega_individuals$dynEGA$Methods
-  
+
   # Change class
   class(ega_population) <- "dynEGA"
-  
+
   # ega_population <- dynEGA(
   #   data = datalist, n.embed = n.embed,
   #   tau = tau, delta = delta, level = "population",
@@ -225,10 +225,10 @@ dynEGA.ind.pop <- function(data, n.embed, tau = 1, delta = 1,
   #   algorithm = algorithm, algorithm.args = algorithm.args,
   #   corr = corr, ncores = ncores
   # )
-  
+
   # # Derivatives list
   # derivlist <- ega_population$Derivatives$Estimates
-  # 
+  #
   # # Obtain `use.derivatives` to get individual data
   # data.individuals <- lapply(derivlist, function(x){
   #   x[,grep(
@@ -236,23 +236,23 @@ dynEGA.ind.pop <- function(data, n.embed, tau = 1, delta = 1,
   #     colnames(x)
   #   )]
   # })
-  # 
+  #
   # # ### Estimating the derivatives using GLLA:
-  # # 
+  # #
   # # #let user know derivatives estimation has started
   # # message("\nComputing derivatives using GLLA...\n", appendLF = FALSE)
-  # # 
+  # #
   # # #initialize derivatives list
   # # derivlist <- list()
-  # # 
+  # #
   # # #Parallel processing
   # # cl <- parallel::makeCluster(ncores)
-  # # 
+  # #
   # # #Export variables
   # # parallel::clusterExport(cl = cl,
   # #                         varlist = c("datalist", "derivlist", "cases"),
   # #                         envir=environment())
-  # # 
+  # #
   # # # GLLA Estimation:
   # # glla.multi <- function(data, n.embed = n.embed, tau = tau, delta = delta, order = order){
   # #   order.deriv <- paste0("Ord",seq(from = 0, to = order))
@@ -265,33 +265,33 @@ dynEGA.ind.pop <- function(data, n.embed, tau = 1, delta = 1,
   # #   for(i in 0:order+1){
   # #     data.est2[[i]] <- sapply(data.est, "[[", i)
   # #   }
-  # #   
+  # #
   # #   data.estimates <- data.frame(Reduce(cbind, data.est2))
   # #   colnames(data.estimates) <- paste(colnames(data), rep(order.deriv, each = ncol(data)), sep = ".")
   # #   return(data.estimates)
   # # }
-  # # 
+  # #
   # # #Compute derivatives per ID
   # # derivlist <- pbapply::pblapply(X = datalist, cl = cl,
   # #                                FUN = glla.multi,
   # #                                n.embed = n.embed, tau = tau, delta = delta, order = order)
-  # # 
+  # #
   # # ### Estimating the dimensionality structure using EGA:
-  # # 
+  # #
   # # message("Estimating the dimensionality structure using EGA...\n", appendLF = FALSE)
-  # # 
+  # #
   # # for(i in 1:length(cases)){
   # #   derivlist[[i]]$ID <- data[which(data[,id]==cases[i]),id][-c(1:(n.embed-1))]
   # # }
-  # # 
+  # #
   # # names(derivlist) <- paste0("ID", cases)
   # # # Population Level:
   # # message("Level: Population...\n", appendLF = FALSE)
-  # # 
+  # #
   # # data.all <- data.frame(Reduce(rbind, derivlist))
-  # # 
+  # #
   # # # EGA Part
-  # # 
+  # #
   # # if(use.derivatives == 0){
   # #   ega1 <- EGA.estimate(data = data.all[,1:ncol(data[,-c(id)])],
   # #                        model = model, model.args = model.args,
@@ -309,14 +309,14 @@ dynEGA.ind.pop <- function(data, n.embed, tau = 1, delta = 1,
   # #                        model = model, model.args = model.args,
   # #                        algorithm = algorithm, algorithm.args = algorithm.args,
   # #                        corr = corr)}
-  # # 
+  # #
   # # parallel::stopCluster(cl)
-  # # 
+  # #
   # # # Level: Individual (intraindividual structure):
   # # message("Level: Individual (Intraindividual Structure)...\n", appendLF = FALSE)
-  # # 
+  # #
   # # data.all <- data.frame(Reduce(rbind, derivlist))
-  # # 
+  # #
   # # # Which derivatives to use:
   # # if(use.derivatives == 0){
   # #   colstouse <- colnames(data.all[,1:ncol(data[,-c(id)])])}
@@ -327,35 +327,35 @@ dynEGA.ind.pop <- function(data, n.embed, tau = 1, delta = 1,
   # #   cols <- seq(from = init, to = init+ncol(data[,-c(id)])-1)
   # #   colstouse <- colnames(data.all[,cols])
   # # }
-  # # 
+  # #
   # # #initialize data list
   # # data.individuals <- vector("list", length = length(cases))
   # # data.individuals <- split(data.all[,colstouse],data.all$ID)
   # # names(data.individuals) <- paste0("ID", cases)
-  # 
+  #
   # message("Level: Individual (Intraindividual Structure)...", appendLF = FALSE)
-  # 
+  #
   # #Parallel processing
   # cl <- parallel::makeCluster(ncores)
-  # 
+  #
   # #Export variables
   # # parallel::clusterExport(cl = cl,
   # #                         varlist = c("data.individuals", "cases"),
   # #                         envir=environment())
-  # 
+  #
   # # EGA estimates per individual:
   # ega.list.individuals <- list()
-  # 
+  #
   # ega.list.individuals <- pbapply::pblapply(X = data.individuals, cl = cl,
   #                                           FUN = EGA.estimate,
   #                                           model = model, model.args = model.args,
   #                                           algorithm = algorithm, algorithm.args = algorithm.args,
   #                                           corr = corr)
   # parallel::stopCluster(cl)
-  # 
+  #
   # #let user know results have been computed
   # message("done", appendLF = TRUE)
-  
+
   # Results:
   results <- vector("list")
   results$Derivatives <- ega_individuals$Derivatives # vector("list")

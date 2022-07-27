@@ -24,7 +24,7 @@ dynEGA.ind.pop(
 \item{data}{A data frame with the variables to be used in the analysis.
 The data frame should be in a long format (i.e. observations for the
 same individual (for example, individual 1) are placed in order,
-from time 1 to time t, followed by the observations from individual 2, also 
+from time 1 to time t, followed by the observations from individual 2, also
 ordered from time 1 to time t.)}
 
 \item{n.embed}{Integer.
@@ -128,7 +128,7 @@ sim.dynEGA <- sim.dynEGA # bypasses CRAN checks
 \donttest{# Dynamic EGA individual and population structure
 dyn.ega1 <- dynEGA.ind.pop(
   data = sim.dynEGA, n.embed = 5, tau = 1,
-  delta = 1, id = 21, use.derivatives = 1, 
+  delta = 1, id = 21, use.derivatives = 1,
   ncores = 2, corr = "pearson"
 )}
 

@@ -125,14 +125,14 @@
 #' @examples
 #' # Obtain data
 #' sim.dynEGA <- sim.dynEGA # bypasses CRAN checks
-#' 
+#'
 #' \donttest{# Population structure
 #' dyn.random <- dynEGA(
 #'   data = sim.dynEGA, n.embed = 5, tau = 1,
 #'   delta = 1, id = 21, group = 22, use.derivatives = 1,
 #'   level = "population", ncores = 2, corr = "pearson"
 #' )
-#' 
+#'
 #' # Plot population structure
 #' plot(dyn.random)
 #'
@@ -152,7 +152,7 @@
 #'   delta = 1, id = 21, group = 22, use.derivatives = 1,
 #'   level = "individual", ncores = 2, corr = "pearson"
 #' )
-#' 
+#'
 #' # Plot individual structure (participant 1)
 #' plot(dyn.individual, id = 1)}
 #'
@@ -339,7 +339,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
 
     # Estimate using EGA
     ega1 <- suppressWarnings(
-      EGA(data = data.all[, derivative_index],
+      EGA.estimate(data = data.all[, derivative_index],
           model = model, model.args = model.args,
           algorithm = algorithm, algorithm.args = algorithm.args,
           corr = corr, plot.EGA = FALSE)
@@ -389,7 +389,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
 
     # Compute derivatives per Group
     ega.list.groups <- pbapply::pblapply(X = data.groups, cl = cl,
-                                         FUN = EGA,
+                                         FUN = EGA.estimate,
                                          model = model, model.args = model.args,
                                          algorithm = algorithm, algorithm.args = algorithm.args,
                                          corr = corr, plot.EGA = FALSE)
@@ -465,7 +465,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
     # op <- pbapply::pboptions(type = "none")
     ega.list.individuals <- pbapply::pblapply(
       X = data.individuals_var, cl = cl,
-      FUN = EGA,
+      FUN = EGA.estimate,
       model = model, model.args = model.args,
       algorithm = algorithm, algorithm.args = algorithm.args,
       corr = corr, plot.EGA = FALSE
