@@ -89,7 +89,7 @@
 #' Defaults to \code{TRUE}.
 #' Set to \code{FALSE} for manual selection
 #' 
-#' @param label_latent Boolean.
+#' @param label.latent Boolean.
 #' Should latent variables be labelled?
 #' Defaults to \code{TRUE}.
 #' Set to \code{FALSE} for arbitrary labelling (i.e., "LV_")
@@ -259,14 +259,15 @@
 #' key.ind <- match(colnames(items), as.character(psychTools::spi.dictionary$item_id))
 #' key <- as.character(psychTools::spi.dictionary$item[key.ind])
 #' 
-#' # Automated selection of redundant variables (default)
-#' \donttest{
+#' \donttest{# Automated selection of local dependence (default)
 #' uva.results <- UVA(data = items, key = key)
-#' }
 #' 
-#' # Manual selection of redundant variables
+#' # Produce Methods section
+#' methods.section(uva.results)}
+#' 
+#' # Manual selection of local dependence
 #' if(interactive()){
-#' uva.results <- UVA(data = items, key = key, type = "adapt")
+#' uva.results <- UVA(data = items, key = key, auto = FALSE)
 #' }
 #'
 #' @references
@@ -298,14 +299,14 @@
 #' @export
 #
 # Unique Variable Analysis
-# Updated 01.05.2022
+# Updated 20.07.2022
 UVA <- function(
   data, n = NULL,
   model = c("glasso", "TMFG"),
   corr = c("cor_auto", "pearson", "spearman"),
   method = c("cor", "pcor", "wTO"),
   type = c("adapt", "alpha", "threshold"), sig,
-  key = NULL, reduce = TRUE, auto = TRUE, label_latent = TRUE,
+  key = NULL, reduce = TRUE, auto = TRUE, label.latent = FALSE,
   reduce.method = c("latent", "remove", "sum"),
   lavaan.args = list(), adhoc = TRUE,
   plot.redundancy = FALSE, plot.args = list()
@@ -510,7 +511,7 @@ UVA <- function(
                              n = n,
                              model = model,
                              method = method,
-                             type = "threshold", sig = .25,
+                             type = "threshold", sig = .20,
                              plot.redundancy = FALSE, plot.args = plot.args)
         )
         
@@ -678,7 +679,7 @@ UVA <- function(
       # }
       
       # Name latent variables
-      if(isTRUE(label_latent)){
+      if(isTRUE(label.latent)){
         name_question <- "y"
       }else{
         name_question <- "n"

@@ -8,26 +8,36 @@
 #' @param dynEGA.object  A \code{\link[EGAnet]{dynEGA}} or a
 #' \code{\link[EGAnet]{dynEGA.ind.pop}} object that is used to match the arguments of the EII object.
 #' 
+#' @param ncores Numeric.
+#' Number of cores to use in computing results.
+#' Defaults to \code{parallel::detectCores() / 2} or half of your
+#' computer's processing power.
+#' Set to \code{1} to not use parallel computing
+#'
+#' If you're unsure how many cores your computer has,
+#' then use the following code: \code{parallel::detectCores()}
+#' 
 #' @param plot.cluster Boolean.
 #' Should plot of optimal and hierarchical clusters be output?
 #' Defaults to \code{TRUE}.
 #' Set to \code{FALSE} to not plot
 #'
 #' @examples
-#'
-#' \dontrun{
-#' \donttest{
-#' # Perform dynEGA
-#' dyn1 <- dynEGA.ind.pop(data = sim.dynEGA[,-c(22)], n.embed = 5, tau = 1,
-#'                       delta = 1, id = 21, use.derivatives = 1,
-#'                     model = "glasso", ncores = 2, corr = "pearson")
-#'
-#' # Perform hierarchical clustering
-#' clust1 <- infoCluster(
-#'   dynEGA.object = dyn1,
-#'   plot.cluster = TRUE
+#'# Obtain data
+#' sim.dynEGA <- sim.dynEGA # bypasses CRAN checks
+#' 
+#' \donttest{# Dynamic EGA individual and population structure
+#' dyn.ega1 <- dynEGA.ind.pop(
+#'   data = sim.dynEGA, n.embed = 5, tau = 1,
+#'   delta = 1, id = 21, use.derivatives = 1, 
+#'   ncores = 2, corr = "pearson"
 #' )
-#' }}
+#' 
+#' # Perform information-theoretic clustering
+#' clust1 <- infoCluster(
+#'   dynEGA.object = dyn.ega1,
+#'   plot.cluster = FALSE # No plot for CRAN checks
+#' )}
 #'
 #' @return Returns a list containing:
 #' 
@@ -46,8 +56,12 @@
 #' 
 #' @export
 # Information Theoretic Clustering for dynEGA
-# Updated 16.07.2022
-infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
+# Updated 25.07.2022
+infoCluster <- function(
+    dynEGA.object,
+    ncores,
+    plot.cluster = TRUE
+)
 {
   
   # Check for class
@@ -85,7 +99,65 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
   
   # Message user
   message("Computing Jensen-Shannon Distance...\n", appendLF = FALSE)
-
+  
+  # Set cores (if missing)
+  if(missing(ncores)){
+    ncores <- ceiling(parallel::detectCores() / 2)
+  }
+  
+  # Make cluster
+  cl <- parallel::makeCluster(ncores)
+  
+  # Export
+  parallel::clusterExport(
+    cl = cl,
+    varlist = c(
+      # "rescaled_laplacian",
+      # "vn_entropy",
+      "jsd",
+      "networks"
+    ),
+    envir = environment()
+  )
+  
+  # Obtain lists
+  jsd_lists <- pbapply::pblapply(
+    cl = cl,
+    X = 2:length(networks),
+    FUN = function(i){
+      
+      # Compute JSD values
+      jsd_values <- lapply(1:(i-1), function(j){
+        
+        # Try
+        jsd_value <- try(
+          jsd(
+            networks[[i]], networks[[j]]
+          ),
+          silent = TRUE
+        )
+        
+        # Check if value is OK
+        if(!is(jsd_value, "try-error")){
+          return(jsd_value)
+        }else{
+          return(NA)
+        }
+        
+      })
+      
+      # Return
+      return(jsd_values)
+      
+    }
+  )
+  
+  # Stop cluster
+  parallel::stopCluster(cl)
+  
+  # Organize data
+  jsd_i <- lapply(jsd_lists, unlist)
+  
   # Initialize JSD matrix
   jsd_matrix <- matrix(
     0,
@@ -93,43 +165,10 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
     ncol = length(networks)
   )
   
-  # Set up progess bar
-  pb <- txtProgressBar(
-    max = length(networks),
-    style = 3
-  )
-  
-  # Populate JSD matrix
-  for(i in 2:length(networks)){
-    
-    for(j in 1:(i-1)){
-      
-      # Try
-      jsd_value <- try(
-        jsd(
-          networks[[i]], networks[[j]]
-        ),
-        silent = TRUE
-      )
-      
-      # Check if value is OK
-      if(!is(jsd_value, "try-error")){
-        jsd_matrix[i,j] <- jsd(
-          networks[[i]], networks[[j]]
-        )
-      }else{
-        jsd_matrix[i,j] <- NA
-      }
-      
-    }
-    
-    # Update progress bar
-    setTxtProgressBar(pb, i)
-    
+  # Loop through
+  for(i in 1:length(jsd_i)){
+    jsd_matrix[i+1,1:(length(jsd_i[[i]]))] <- jsd_i[[i]]
   }
-  
-  # Close progress bar
-  close(pb)
   
   # Make symmetric
   jsd_sym <- jsd_matrix + t(jsd_matrix)
@@ -153,68 +192,98 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
   # Make diagonal 0 again
   diag(jsdist) <- 0
   
-  # Compute Louvain
-  consensus <- most_common_consensus(
-    1 - jsdist,
-    order = "lower",
-    consensus.iter = 1000
-  )$most_common
+  # # Compute Louvain
+  # consensus <- most_common_consensus(
+  #   1 - jsdist,
+  #   order = "lower",
+  #   consensus.iter = 1000
+  # )$most_common
+  # 
+  # # Unique consensus
+  # unique_consensus <- length(na.omit(unique(consensus)))
+  # 
+  # # Perform hierarchical clustering
+  # hier_clust <- hclust(as.dist(jsdist))
+  # 
+  # # Check for single cluster
+  # if(
+  #   unique_consensus == 1 | # consensus = 1 OR
+  #   unique_consensus == length(consensus) # consensus all individuals
+  # ){
+  #   
+  #   # Obtain clusters
+  #   clusters <- rep(1, ncol(jsdist))
+  #   names(clusters) <- colnames(jsdist)
+  #   
+  # }else{
   
-  # Unique consensus
-  unique_consensus <- length(na.omit(unique(consensus)))
+  # Compute Leiden
+  # g <- convert2igraph(1 - jsdist)
+  # 
+  # clusters <- igraph::cluster_leiden(
+  #   g, objective_function = "modularity",
+  #   resolution_parameter = 1,
+  #   n_iterations = 100
+  # )$membership
+  
+  # Jensen-Shannon Similarity
+  jss <- 1 - jsdist
+  
+  # Louvain consensus clustering
+  clusters <- most_common_consensus(
+    network = jss,
+    order = "higher",
+    consensus.iter = 1000,
+    resolution = 0.95
+  )$most_common
   
   # Perform hierarchical clustering
   hier_clust <- hclust(as.dist(jsdist))
   
   # Check for single cluster
   if(
-    unique_consensus == 1 | # consensus = 1 OR
-    unique_consensus == length(consensus) # consensus all individuals
+    mean(clusters == 1) >= 0.95 | # at least 95% of individuals
+    length(unique(clusters)) == length(clusters) # consensus all individuals
   ){
-    
+
     # Obtain clusters
     clusters <- rep(1, ncol(jsdist))
     names(clusters) <- colnames(jsdist)
-    
+
   }else{
     
-    # Initialize silhouette vector
-    silhouette_vec <- numeric(length = ncol(jsdist) - 1)
+    # Compute modularity matrix
+    Q_matrix <- modularity_matrix(
+      A = jss,
+      resolution = 1
+    )
     
-    # Make names the number of clusters
-    names(silhouette_vec) <- 2:ncol(jsdist)
-    
-    # Loop through cuts
-    for(i in 2:length(silhouette_vec)){
-      
-      # Compute silhouette
-      hier_silho <- cluster::silhouette(
-        x = cutree(hier_clust, i),
-        dist = as.dist(jsdist)
+    # Maximize modularity
+    Qs <- unlist(
+      lapply(
+        X = 1:ncol(jss),
+        FUN = function(i){
+          quick_modularity(
+            communities = cutree(hier_clust, i),
+            A = jss,
+            Q_matrix = Q_matrix
+          )
+          
+          # modularity(
+          #   communities = cutree(hier_clust, i),
+          #   A = 1 - jsdist,
+          #   resolution = 1
+          # )
+          
+        }
       )
-      
-      # Obtain summary
-      silho_summ <- summary(hier_silho)
-      
-      # Obtain average silhouette
-      silhouette_vec[i-1] <- mean(silho_summ$clus.avg.widths)
-      
-    }
-    
-    # Obtain maximum average silhouette
-    optimal_cut <- as.numeric(names(which.max(silhouette_vec)))
+    )
     
     # Obtain clusters
-    clusters <- cutree(hier_clust, optimal_cut)
+    clusters <- cutree(hier_clust, which.max(Qs))
     
   }
-  
-  # Obtain optimal silhouette
-  optimal_silho <- cluster::silhouette(
-    x = clusters,
-    dist = as.dist(jsdist)
-  )
-  
+
   # Convert for ggplot2
   cluster_data <- ggdendro::dendro_data(
     hier_clust
@@ -342,6 +411,11 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
   ## Return data
   results <- list()
   results$clusters <- clusters
+  if(!exists("Qs", envir = environment())){
+    results$modularity <- NA
+  }else{
+    results$modulariy <- Qs[which.max(Qs)]
+  }
   results$clusterTree <- hier_clust
   results$clusterPlot <- cluster_plot
   results$JSD <- jsdist

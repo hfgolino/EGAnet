@@ -61,38 +61,69 @@
 #' \item{mean.loadings}{Matrix of the average standardized network loading
 #' (computed using \code{\link[EGAnet]{net.loads}}) for each item in each dimension}
 #'
-#' @examples
-#'
-#' # Load data
+#' @examples # Load data
 #' wmt <- wmt2[,7:24]
 #'
-#' \dontrun{# Estimate EGA network
-#' ## plot.type = "qqraph" used for CRAN checks
-#' ## plot.type = "GGally" is the default
-#' ega.wmt <- EGA(data = wmt, model = "glasso", plot.type = "qgraph")
+#' \donttest{# Standard EGA example
+#' boot.wmt <- bootEGA(
+#'   data = wmt, iter = 100, # recommended 500
+#'   plot.typicalStructure = FALSE, # No plot for CRAN checks
+#'   type = "parametric", ncores = 2
+#' )
+#' 
+#' # Standard item stability 
+#' wmt.is <- itemStability(
+#'   boot.wmt,
+#'   IS.plot = FALSE # NO plot for CRAN checks
+#' )
+#' 
+#' # Produce Methods section
+#' methods.section(
+#'   boot.wmt,
+#'   stats = "itemStability"
+#' )
 #'
-#' # Estimate dimension stability
-#' boot.wmt <- bootEGA(data = wmt, iter = 100, typicalStructure = TRUE,
-#' plot.typicalStructure = TRUE, model = "glasso", plot.type = "qgraph",
-#' type = "parametric", ncores = 2)
-#' }
-#'
-#' # Estimate item stability statistics
-#' res <- itemStability(boot.wmt)
-#'
-#' # Changing plot features (ggplot2)
-#' ## Changing colors (ignore warnings)
-#' ### qgraph Defaults
-#' res$plot +
-#'     ggplot2::scale_color_manual(values = rainbow(max(res$membership$unique)))
-#'
-#' ### Pastel
-#' res$plot +
-#'     ggplot2::scale_color_brewer(palette = "Pastel1")
-#'
-#' ## Changing Legend (ignore warnings)
-#' res$plot +
-#'     ggplot2::scale_color_discrete(labels = "Intelligence")
+#' # EGA fit example
+#' boot.wmt.fit <- bootEGA(
+#'   data = wmt, iter = 100, # recommended 500
+#'   EGA.type = "EGA.fit",
+#'   plot.typicalStructure = FALSE, # No plot for CRAN checks
+#'   type = "parametric", ncores = 2
+#' )
+#' 
+#' # EGA fit item stability 
+#' wmt.is.fit <- itemStability(
+#'   boot.wmt.fit,
+#'   IS.plot = FALSE # NO plot for CRAN checks
+#' )
+#' 
+#' # Hierarchical EGA example
+#' boot.wmt.hier <- bootEGA(
+#'   data = wmt, iter = 100, # recommended 500
+#'   EGA.type = "hierEGA",
+#'   plot.typicalStructure = FALSE, # No plot for CRAN checks
+#'   type = "parametric", ncores = 2
+#' )
+#' 
+#' # Hierarchical EGA item stability 
+#' wmt.is.hier <- itemStability(
+#'   boot.wmt.hier,
+#'   IS.plot = FALSE # NO plot for CRAN checks
+#' )
+#' 
+#' # Random-intercept EGA example
+#' boot.wmt.ri <- bootEGA(
+#'   data = wmt, iter = 100, # recommended 500
+#'   EGA.type = "riEGA",
+#'   plot.typicalStructure = FALSE, # No plot for CRAN checks
+#'   type = "parametric", ncores = 2
+#' )
+#' 
+#' # Random-intercept EGA item stability 
+#' wmt.is.ri <- itemStability(
+#'   boot.wmt.ri,
+#'   IS.plot = FALSE # NO plot for CRAN checks
+#' )}
 #'
 #' @references
 #' Christensen, A. P., & Golino, H. (2021).
@@ -110,10 +141,79 @@
 #'
 #' @export
 #Item Stability function
-# Updated 27.02.2021
+# Updated 18.07.2022
 # Major revamp 27.02.2021
 itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
 
+  # Check for 'hierEGA' + 'bootEGA'
+  if("result_lower" %in% names(bootega.obj)){
+    
+    # Message user for lower order analysis
+    message("Performing item stability analysis on lower order...", appendLF = FALSE)
+    
+    # Set up lower and higher order for item stability function
+    higher_order_EGA<- bootega.obj$result_lower$EGA$hierarchical$higher_order$EGA
+    lower_order_EGA <- bootega.obj$result_lower$EGA$hierarchical$lower_order
+    bootega.obj$result_lower$EGA <- lower_order_EGA
+    
+    # Perform item stability on lower order dimensions
+    lower_is <- suppressMessages(
+      itemStability(
+        bootega.obj$result_lower, IS.plot = FALSE, structure = NULL
+      )
+    )
+    
+    # Message user lower order is done
+    message("done.")
+    
+    # Message user for lower order analysis
+    message("Performing item stability analysis on higher order...", appendLF = FALSE)
+    
+    # Set up higher order for item stability function
+    bootega.obj$result_higher$EGA <- higher_order_EGA
+    bootega.obj$result_higher$color.palette <- bootega.obj$result_lower$color.palette
+    
+    # Perform item stability on higher order dimensions
+    higher_is <- suppressMessages(
+      itemStability(
+        bootega.obj$result_higher, IS.plot = FALSE, structure = NULL
+      )
+    )
+    
+    # Message user higher order is done
+    message("done.")
+    
+    # Set up results
+    results <- list(
+      lower_order = lower_is,
+      higher_order = higher_is
+    )
+    
+    # Add plot
+    results$plot <- ggpubr::ggarrange(
+      lower_is$plot +
+        ggplot2::ggtitle("Lower Order") +
+        ggplot2::theme(
+          plot.title = ggplot2::element_text(hjust = 0.5, face = "bold")
+        ),
+      higher_is$plot +
+        ggplot2::ggtitle("Higher Order") +
+        ggplot2::theme(
+          plot.title = ggplot2::element_text(hjust = 0.5, face = "bold")
+        ),
+      nrow = 1, ncol = 2
+    )
+    
+    # Plot to user?
+    if(IS.plot){
+      plot(results$plot)
+    }
+    
+    # Return result
+    return(results)
+    
+  }
+  
   # Check for 'bootEGA' object
   if(is(bootega.obj) != "bootEGA"){
     stop("Input for 'bootega.obj' is not a 'bootEGA' object")
@@ -166,13 +266,13 @@ itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
   ## Network
   empirical.EGA.network <- bootega.obj$EGA$network
 
-  ## User-specified structure:
-  if(is.null(structure)==FALSE){
+  ## Community membership
+  if(isTRUE(is.null(structure))){
+    empirical.EGA.membership <- bootega.obj$EGA$wc
+  }else{
+    ## User-specified structure
     names(structure) <- names(bootega.obj$EGA$wc)
     empirical.EGA.membership <- structure
-  }else{
-  ## Community membership
-  empirical.EGA.membership <- bootega.obj$EGA$wc
   }
   # Get numeric memberships
   membership.numeric <- numeric.membership(empirical.EGA.membership)

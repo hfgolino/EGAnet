@@ -225,8 +225,6 @@ model (if the model converged):
 
 }
 
-
-
 }
 }
 \description{
@@ -239,8 +237,7 @@ reversed items in the database
 # Obtain example data
 data <- optimism
 
-\dontrun{
-# riEGA example
+\donttest{# riEGA example
 opt.res <- riEGA(data = optimism)
 }
 

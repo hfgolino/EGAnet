@@ -4,11 +4,20 @@
 \alias{infoCluster}
 \title{Information Theoretic Mixture Clustering for \code{\link[EGAnet]{dynEGA}}}
 \usage{
-infoCluster(dynEGA.object, plot.cluster = TRUE)
+infoCluster(dynEGA.object, ncores, plot.cluster = TRUE)
 }
 \arguments{
 \item{dynEGA.object}{A \code{\link[EGAnet]{dynEGA}} or a
 \code{\link[EGAnet]{dynEGA.ind.pop}} object that is used to match the arguments of the EII object.}
+
+\item{ncores}{Numeric.
+Number of cores to use in computing results.
+Defaults to \code{parallel::detectCores() / 2} or half of your
+computer's processing power.
+Set to \code{1} to not use parallel computing
+
+If you're unsure how many cores your computer has,
+then use the following code: \code{parallel::detectCores()}}
 
 \item{plot.cluster}{Boolean.
 Should plot of optimal and hierarchical clusters be output?
@@ -33,20 +42,21 @@ iteratively identifies smaller and smaller clusters until there is no
 change in the clusters identified
 }
 \examples{
+# Obtain data
+sim.dynEGA <- sim.dynEGA # bypasses CRAN checks
 
-\dontrun{
-\donttest{
-# Perform dynEGA
-dyn1 <- dynEGA.ind.pop(data = sim.dynEGA[,-c(22)], n.embed = 5, tau = 1,
-                      delta = 1, id = 21, use.derivatives = 1,
-                    model = "glasso", ncores = 2, corr = "pearson")
-
-# Perform hierarchical clustering
-clust1 <- infoCluster(
-  dynEGA.object = dyn1,
-  plot.cluster = TRUE
+\donttest{# Dynamic EGA individual and population structure
+dyn.ega1 <- dynEGA.ind.pop(
+  data = sim.dynEGA, n.embed = 5, tau = 1,
+  delta = 1, id = 21, use.derivatives = 1, 
+  ncores = 2, corr = "pearson"
 )
-}}
+
+# Perform information-theoretic clustering
+clust1 <- infoCluster(
+  dynEGA.object = dyn.ega1,
+  plot.cluster = FALSE # No plot for CRAN checks
+)}
 
 }
 \author{

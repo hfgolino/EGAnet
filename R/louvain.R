@@ -112,11 +112,18 @@ louvain <- function(
   # Set count
   count <- 1
   
+  # Compute modularity matrix
+  original_Q_matrix <- modularity_matrix(
+    A = A,
+    resolution = resolution
+  )
+  
   # Lower order ----
   results <- louvain_communities(
     newA = A,
     method = method,
     resolution = resolution,
+    Q_matrix = original_Q_matrix,
     corr = corr
   )
   community_results[count,] <- results$communities
@@ -133,11 +140,19 @@ louvain <- function(
     # Increase count
     count <- count + 1
     
+    # Compute modularity matrix
+    Q_matrix <- modularity_matrix(
+      A = newA,
+      resolution = resolution
+    )
+    
     # Obtain communities and modularity
     results <- louvain_communities(
       newA = newA,
       method = method,
       resolution = resolution,
+      Q_matrix = Q_matrix,
+      original_Q_matrix = original_Q_matrix,
       corr = corr,
       original_A = A,
       previous_communities = community_results[count - 1,],

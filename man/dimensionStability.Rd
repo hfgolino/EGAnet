@@ -39,35 +39,24 @@ times the original dimension is exactly replicated in across bootstrap samples
 # Load data
 wmt <- wmt2[,7:24]
 
-\dontrun{# Estimate EGA network
-## plot.type = "qqraph" used for CRAN checks
-## plot.type = "GGally" is the default
-ega.wmt <- EGA(data = wmt, model = "glasso", plot.type = "qgraph")
-
-# Estimate bootstrap EGA
-boot.wmt <- bootEGA(data = wmt, iter = 500, typicalStructure = TRUE,
-plot.typicalStructure = TRUE, model = "glasso", plot.type = "qgraph",
-type = "parametric", ncores = 2)
-}
+\donttest{# Estimate bootstrap EGA
+boot.wmt <- bootEGA(
+  data = wmt, iter = 100, # recommended 500
+  plot.typicalStructure = FALSE, # No plot for CRAN checks
+  type = "parametric", ncores = 2
+)}
 
 # Estimate stability statistics
 res <- dimensionStability(boot.wmt)
 res$dimension.stability
 
-# Changing plot features (ggplot2)
-## Changing colors (ignore warnings)
-### qgraph Defaults
-res$item.stability$plot +
-    ggplot2::scale_color_manual(values = rainbow(length(
-    res$dimension.stability$structural.consistency)))
+\donttest{# Produce Methods section
+methods.section(
+  boot.wmt,
+  stats = "dimensionStability"
+)
+}
 
-### Pastel
-res$item.stability$plot +
-    ggplot2::scale_color_brewer(palette = "Pastel1")
-
-## Changing Legend (ignore warnings)
-res$item.stability$plot +
-    ggplot2::scale_color_discrete(labels = "Intelligence")
 
 }
 \references{

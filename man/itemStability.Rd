@@ -71,37 +71,69 @@ bootstraps that an item appeared in each dimension; \code{item.dim.rep}) as well
 network loading for each item in each dimension (\code{item.loadings}).
 }
 \examples{
-
 # Load data
 wmt <- wmt2[,7:24]
 
-\dontrun{# Estimate EGA network
-## plot.type = "qqraph" used for CRAN checks
-## plot.type = "GGally" is the default
-ega.wmt <- EGA(data = wmt, model = "glasso", plot.type = "qgraph")
+\donttest{# Standard EGA example
+boot.wmt <- bootEGA(
+  data = wmt, iter = 100, # recommended 500
+  plot.typicalStructure = FALSE, # No plot for CRAN checks
+  type = "parametric", ncores = 2
+)
 
-# Estimate dimension stability
-boot.wmt <- bootEGA(data = wmt, iter = 100, typicalStructure = TRUE,
-plot.typicalStructure = TRUE, model = "glasso", plot.type = "qgraph",
-type = "parametric", ncores = 2)
-}
+# Standard item stability 
+wmt.is <- itemStability(
+  boot.wmt,
+  IS.plot = FALSE # NO plot for CRAN checks
+)
 
-# Estimate item stability statistics
-res <- itemStability(boot.wmt)
+# Produce Methods section
+methods.section(
+  boot.wmt,
+  stats = "itemStability"
+)
 
-# Changing plot features (ggplot2)
-## Changing colors (ignore warnings)
-### qgraph Defaults
-res$plot +
-    ggplot2::scale_color_manual(values = rainbow(max(res$membership$unique)))
+# EGA fit example
+boot.wmt.fit <- bootEGA(
+  data = wmt, iter = 100, # recommended 500
+  EGA.type = "EGA.fit",
+  plot.typicalStructure = FALSE, # No plot for CRAN checks
+  type = "parametric", ncores = 2
+)
 
-### Pastel
-res$plot +
-    ggplot2::scale_color_brewer(palette = "Pastel1")
+# EGA fit item stability 
+wmt.is.fit <- itemStability(
+  boot.wmt.fit,
+  IS.plot = FALSE # NO plot for CRAN checks
+)
 
-## Changing Legend (ignore warnings)
-res$plot +
-    ggplot2::scale_color_discrete(labels = "Intelligence")
+# Hierarchical EGA example
+boot.wmt.hier <- bootEGA(
+  data = wmt, iter = 100, # recommended 500
+  EGA.type = "hierEGA",
+  plot.typicalStructure = FALSE, # No plot for CRAN checks
+  type = "parametric", ncores = 2
+)
+
+# Hierarchical EGA item stability 
+wmt.is.hier <- itemStability(
+  boot.wmt.hier,
+  IS.plot = FALSE # NO plot for CRAN checks
+)
+
+# Random-intercept EGA example
+boot.wmt.ri <- bootEGA(
+  data = wmt, iter = 100, # recommended 500
+  EGA.type = "riEGA",
+  plot.typicalStructure = FALSE, # No plot for CRAN checks
+  type = "parametric", ncores = 2
+)
+
+# Random-intercept EGA item stability 
+wmt.is.ri <- itemStability(
+  boot.wmt.ri,
+  IS.plot = FALSE # NO plot for CRAN checks
+)}
 
 }
 \references{

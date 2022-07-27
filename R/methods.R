@@ -265,13 +265,13 @@ print.EGA <- function(x, ...) {
   
   ## Set up methods
   methods.matrix <- matrix(
-    nrow = 4, ncol = 1
+    nrow = 3, ncol = 1
   )
   row.names(methods.matrix) <- c(
     "Correlations =",
     "Model =",
-    "Algorithm =",
-    "Unidimensional Method ="
+    "Algorithm ="# ,
+    # "Unidimensional Method ="
   )
   colnames(methods.matrix) <- ""
   
@@ -282,11 +282,11 @@ print.EGA <- function(x, ...) {
   )
   methods.matrix["Model =",] <- x$Methods$model
   methods.matrix["Algorithm =",] <- x$Methods$algorithm
-  methods.matrix["Unidimensional Method =",] <- ifelse(
-    x$Methods$uni.method == "LE",
-    "leading eigenvalue",
-    "expand correlation matrix"
-  )
+  # methods.matrix["Unidimensional Method =",] <- ifelse(
+  #   x$Methods$uni.method == "LE",
+  #   "leading eigenvalue",
+  #   "expand correlation matrix"
+  # )
   
   print(methods.matrix, quote = FALSE)
   
@@ -340,13 +340,13 @@ print.hierEGA <- function(x, ...) {
   
   ## Set up methods
   methods.matrix <- matrix(
-    nrow = 7, ncol = 1
+    nrow = 6, ncol = 1
   )
   row.names(methods.matrix) <- c(
     "Correlations =",
     "Model =",
     "Algorithm =",
-    "Unidimensional Method =",
+    # "Unidimensional Method =",
     "Scores =",
     "Consensus Method =",
     "Consensus Iterations ="
@@ -360,11 +360,11 @@ print.hierEGA <- function(x, ...) {
   )
   methods.matrix["Model =",] <- x$hierarchical$Methods$model
   methods.matrix["Algorithm =",] <- x$hierarchical$Methods$algorithm
-  methods.matrix["Unidimensional Method =",] <- ifelse(
-    x$hierarchical$Methods$uni.method == "LE",
-    "leading eigenvalue",
-    "expand correlation matrix"
-  )
+  # methods.matrix["Unidimensional Method =",] <- ifelse(
+  #   x$hierarchical$Methods$uni.method == "LE",
+  #   "leading eigenvalue",
+  #   "expand correlation matrix"
+  # )
   methods.matrix["Scores =",] <- x$hierarchical$Methods$scores
   methods.matrix["Consensus Method =",] <- gsub(
     "_", " ", x$hierarchical$Methods$consensus.method
@@ -406,13 +406,13 @@ print.riEGA <- function(x, ...) {
   
   ## Set up methods
   methods.matrix <- matrix(
-    nrow = 4, ncol = 1
+    nrow = 3, ncol = 1
   )
   row.names(methods.matrix) <- c(
     "Correlations =",
     "Model =",
-    "Algorithm =",
-    "Unidimensional Method ="
+    "Algorithm ="# ,
+    # "Unidimensional Method ="
   )
   colnames(methods.matrix) <- ""
   
@@ -423,13 +423,76 @@ print.riEGA <- function(x, ...) {
   )
   methods.matrix["Model =",] <- x$Methods$model
   methods.matrix["Algorithm =",] <- x$Methods$algorithm
-  methods.matrix["Unidimensional Method =",] <- ifelse(
-    x$Methods$uni.method == "LE",
-    "leading eigenvalue",
-    "expand correlation matrix"
-  )
+  # methods.matrix["Unidimensional Method =",] <- ifelse(
+  #   x$Methods$uni.method == "LE",
+  #   "leading eigenvalue",
+  #   "expand correlation matrix"
+  # )
   
   print(methods.matrix, quote = FALSE)
+  
+}
+
+#Print Network Descriptives
+# Updated 19.07.2022
+#' @export
+print.Descriptives <- function(x, ...)
+{
+  # Print weights
+  cat("\nWeights:\n")
+  
+  ## Set up weights
+  weights.matrix <- matrix(
+    nrow = 4, ncol = 1
+  )
+  row.names(weights.matrix) <- c(
+    "Mean =",
+    "Standard Deviation =",
+    "Range =",
+    "Density ="
+  )
+  colnames(weights.matrix) <- ""
+  
+  weights.matrix["Mean =",] <- x["Mean_weight"]
+  weights.matrix["Standard Deviation =",] <- x["SD_weight"]
+  weights.matrix["Range =",] <- paste(
+    x["Min_weight"], "to", x["Max_weight"]
+  )
+  weights.matrix["Density =",] <- x["Density"]
+  
+  print(weights.matrix, quote = FALSE)
+  
+  # Print weights
+  cat("\nGlobal Properties:\n")
+  
+  ## Set up weights
+  global.matrix <- matrix(
+    nrow = 4, ncol = 1
+  )
+  row.names(global.matrix) <- c(
+    "Average Shortest Path Length (ASPL) =",
+    "Clustering Coefficient (CC) =",
+    # "Small-world (Random) =",
+    # "Small-world (Humphries & Gurney, 2008) =",
+    "Small-world (Telesford et al., 2011) =",
+    "R-squared Fit for Scale-free Network ="
+  )
+  colnames(global.matrix) <- ""
+  
+  global.matrix["Average Shortest Path Length (ASPL) =",] <- x["ASPL"]
+  global.matrix["Clustering Coefficient (CC) =",] <- x["CC"]
+  # global.matrix["Small-world (Random) =",] <- x["swn.rand"]
+  # global.matrix["Small-world (Humphries & Gurney, 2008) =",] <- x["swn.HG"]
+  global.matrix["Small-world (Telesford et al., 2011) =",] <- x["swn.TJHBL"]
+  global.matrix["R-squared Fit for Scale-free Network =",] <- x["scale-free_R-sq"]
+  
+  print(global.matrix, quote = FALSE)
+  
+  ## Add interpretation
+  cat("---")
+  # cat("\nSmall-world (Random): 0 'not small-world' 1 'small-world' Inf")
+  # cat("\nSmall-world (Humphries & Gurney, 2008): 0 'not small-world' 3 'small-world' Inf")
+  cat("\nSmall-world (Telesford et al., 2011): -1 'lattice' 0 'random' 1; near 0 = small-world")
   
 }
 
@@ -587,7 +650,7 @@ summary.dynEGA.Groups <- function(object, ...) {
   
 }
 
-# summary dynEGA (Level: Individuals)----
+# summary dynEGA (Level: Individuals)
 # Updated 13.05.2022
 #' @export
 summary.dynEGA.Individuals <- function(object, ...) {
@@ -694,13 +757,13 @@ summary.EGA <- function(object, ...) {
   
   ## Set up methods
   methods.matrix <- matrix(
-    nrow = 4, ncol = 1
+    nrow = 3, ncol = 1
   )
   row.names(methods.matrix) <- c(
     "Correlations =",
     "Model =",
-    "Algorithm =",
-    "Unidimensional Method ="
+    "Algorithm ="# ,
+    # "Unidimensional Method ="
   )
   colnames(methods.matrix) <- ""
   
@@ -711,11 +774,11 @@ summary.EGA <- function(object, ...) {
   )
   methods.matrix["Model =",] <- object$Methods$model
   methods.matrix["Algorithm =",] <- object$Methods$algorithm
-  methods.matrix["Unidimensional Method =",] <- ifelse(
-    object$Methods$uni.method == "LE",
-    "leading eigenvalue",
-    "expand correlation matrix"
-  )
+  # methods.matrix["Unidimensional Method =",] <- ifelse(
+  #   object$Methods$uni.method == "LE",
+  #   "leading eigenvalue",
+  #   "expand correlation matrix"
+  # )
   
   print(methods.matrix, quote = FALSE)
   
@@ -769,13 +832,13 @@ summary.hierEGA <- function(object, ...) {
   
   ## Set up methods
   methods.matrix <- matrix(
-    nrow = 7, ncol = 1
+    nrow = 6, ncol = 1
   )
   row.names(methods.matrix) <- c(
     "Correlations =",
     "Model =",
     "Algorithm =",
-    "Unidimensional Method =",
+    # "Unidimensional Method =",
     "Scores =",
     "Consensus Method =",
     "Consensus Iterations ="
@@ -789,11 +852,11 @@ summary.hierEGA <- function(object, ...) {
   )
   methods.matrix["Model =",] <- object$hierarchical$Methods$model
   methods.matrix["Algorithm =",] <- object$hierarchical$Methods$algorithm
-  methods.matrix["Unidimensional Method =",] <- ifelse(
-    object$hierarchical$Methods$uni.method == "LE",
-    "leading eigenvalue",
-    "expand correlation matrix"
-  )
+  # methods.matrix["Unidimensional Method =",] <- ifelse(
+  #   object$hierarchical$Methods$uni.method == "LE",
+  #   "leading eigenvalue",
+  #   "expand correlation matrix"
+  # )
   methods.matrix["Scores =",] <- object$hierarchical$Methods$scores
   methods.matrix["Consensus Method =",] <- gsub(
     "_", " ", object$hierarchical$Methods$consensus.method
@@ -835,13 +898,13 @@ summary.riEGA <- function(object, ...) {
   
   ## Set up methods
   methods.matrix <- matrix(
-    nrow = 4, ncol = 1
+    nrow = 3, ncol = 1
   )
   row.names(methods.matrix) <- c(
     "Correlations =",
     "Model =",
-    "Algorithm =",
-    "Unidimensional Method ="
+    "Algorithm ="# ,
+    # "Unidimensional Method ="
   )
   colnames(methods.matrix) <- ""
   
@@ -852,13 +915,76 @@ summary.riEGA <- function(object, ...) {
   )
   methods.matrix["Model =",] <- object$Methods$model
   methods.matrix["Algorithm =",] <- object$Methods$algorithm
-  methods.matrix["Unidimensional Method =",] <- ifelse(
-    object$Methods$uni.method == "LE",
-    "leading eigenvalue",
-    "expand correlation matrix"
-  )
+  # methods.matrix["Unidimensional Method =",] <- ifelse(
+  #   object$Methods$uni.method == "LE",
+  #   "leading eigenvalue",
+  #   "expand correlation matrix"
+  # )
   
   print(methods.matrix, quote = FALSE)
+  
+}
+
+#Summary Network Descriptives
+# Updated 19.07.2022
+#' @export
+summary.Descriptives <- function(object, ...)
+{
+  # Print weights
+  cat("\nWeights:\n")
+  
+  ## Set up weights
+  weights.matrix <- matrix(
+    nrow = 4, ncol = 1
+  )
+  row.names(weights.matrix) <- c(
+    "Mean =",
+    "Standard Deviation =",
+    "Range =",
+    "Density ="
+  )
+  colnames(weights.matrix) <- ""
+  
+  weights.matrix["Mean =",] <- object["Mean_weight"]
+  weights.matrix["Standard Deviation =",] <- object["SD_weight"]
+  weights.matrix["Range =",] <- paste(
+    object["Min_weight"], "to", object["Max_weight"]
+  )
+  weights.matrix["Density =",] <- object["Density"]
+  
+  print(weights.matrix, quote = FALSE)
+  
+  # Print weights
+  cat("\nGlobal Properties:\n")
+  
+  ## Set up weights
+  global.matrix <- matrix(
+    nrow = 4, ncol = 1
+  )
+  row.names(global.matrix) <- c(
+    "Average Shortest Path Length (ASPL) =",
+    "Clustering Coefficient (CC) =",
+    # "Small-world (Random) =",
+    # "Small-world (Humphries & Gurney, 2008) =",
+    "Small-world (Telesford et al., 2011) =",
+    "R-squared Fit for Scale-free Network ="
+  )
+  colnames(global.matrix) <- ""
+  
+  global.matrix["Average Shortest Path Length (ASPL) =",] <- object["ASPL"]
+  global.matrix["Clustering Coefficient (CC) =",] <- object["CC"]
+  # global.matrix["Small-world (Random) =",] <- x["swn.rand"]
+  # global.matrix["Small-world (Humphries & Gurney, 2008) =",] <- x["swn.HG"]
+  global.matrix["Small-world (Telesford et al., 2011) =",] <- object["swn.TJHBL"]
+  global.matrix["R-squared Fit for Scale-free Network =",] <- object["scale-free_R-sq"]
+  
+  print(global.matrix, quote = FALSE)
+  
+  ## Add interpretation
+  cat("---")
+  # cat("\nSmall-world (Random): 0 'not small-world' 1 'small-world' Inf")
+  # cat("\nSmall-world (Humphries & Gurney, 2008): 0 'not small-world' 3 'small-world' Inf")
+  cat("\nSmall-world (Telesford et al., 2011): -1 'lattice' 0 'random' 1; near 0 = small-world")
   
 }
 

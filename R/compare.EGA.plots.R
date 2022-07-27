@@ -6,11 +6,11 @@
 #'
 #' @param ... \code{\link{EGAnet}} objects
 #' 
-#' @param input_list List.
+#' @param input.list List.
 #' Bypasses \code{...} argument in favor of using a list
 #' as an input
 #' 
-#' @param base_plot Numeric.
+#' @param base.plot Numeric.
 #' Plot to be used as the base for the configuration of the networks.
 #' Uses the number of the order in which the plots are input.
 #' Defaults to \code{1} or the first plot
@@ -66,27 +66,43 @@
 #' @return Visual comparison of \code{\link{EGAnet}} objects
 #' 
 #' @examples
-#' # obtain SAPA items
+#' # Obtain SAPA items
 #' items <- psychTools::spi[,c(11:20)]
+#' 
+#' # Draw random samples
+#' sample1 <- items[sample(1:nrow(items), 1000),]
+#' sample2 <- items[sample(1:nrow(items), 1000),]
+#' 
+#' \donttest{# Estimate EGAs
+#' ega1 <- EGA(sample1)
+#' ega2 <- EGA(sample2)
+#' 
+#' # Compare EGAs via plot
+#' compare.EGA.plots(
+#'   ega1, ega2,
+#'   base.plot = 1, # use "ega1" as base for comparison
+#'   labels = c("Sample 1", "Sample 2"),
+#'   rows = 1, columns = 2
+#' )}
 #' 
 #' @author Alexander Christensen <alexpaulchristensen@gmail.com>
 #'
 #' @export
 #
 # Compare EGA plots function
-# Updated 07.07.2022
+# Updated 18.07.2022
 compare.EGA.plots <- function(
-  ..., input_list = NULL,
-  base_plot = 1,
+  ..., input.list = NULL,
+  base.plot = 1,
   labels, rows, columns,
   plot.args = list()
 )
 {
   # Check for input list
-  if(is.null(input_list)){
+  if(is.null(input.list)){
     object.list <- list(...)
   }else{
-    object.list <- input_list
+    object.list <- input.list
   }
   
   # Identify EGA objects
@@ -117,10 +133,10 @@ compare.EGA.plots <- function(
   }
   
   # Obtain base EGA
-  base_EGA <- object.list[[base_plot]]
+  base_EGA <- object.list[[base.plot]]
   
   # Comparison EGAs
-  comparison_EGA <- object.list[-base_plot]
+  comparison_EGA <- object.list[-base.plot]
   
   # Set up number of communities (for legend later)
   num_wc <- numeric(length(object.list))
@@ -209,8 +225,8 @@ compare.EGA.plots <- function(
   
   # Re-organize plot list with reference to base plot
   set_number <- 1:length(plots_ega) # obtain number of plots
-  set_diff <- setdiff(set_number, base_plot) # remove base plot
-  set_org <- c(base_plot, set_diff) # get set organization
+  set_diff <- setdiff(set_number, base.plot) # remove base plot
+  set_org <- c(base.plot, set_diff) # get set organization
   plots_ega <- plots_ega[set_org] # organize to original inputs
   
   # Set up grid return

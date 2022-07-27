@@ -22,15 +22,14 @@
 #' \item{Average.Entropy}{The average entropy of the dataset}
 #'
 #' @examples
-#'
 #' # Load data
 #' wmt <- wmt2[,7:24]
 #'
-#' \donttest{
-#' # Estimate EGA model
-#' ega.wmt <- EGA(data = wmt, model = "glasso", plot.EGA = FALSE)
-#'
-#' }
+#' \donttest{# Estimate EGA model
+#' ega.wmt <- EGA(
+#'   data = wmt,
+#'   plot.EGA = FALSE # No plot for CRAN checks
+#' )}
 #'
 #' # Compute entropy indices
 #' entropyFit(data = wmt, structure = ega.wmt$wc)
@@ -46,8 +45,8 @@
 #' @author Hudson F. Golino <hfg9s at virginia.edu>, Alexander P. Christensen <alexpaulchristensen@gmail.com> and Robert Moulder <rgm4fd@virginia.edu>
 #'
 #' @export
-#Entropy Fit Index
-# Updated 05.01.2022
+# Entropy Fit Index
+# Updated 18.07.2022
 entropyFit <- function (data, structure)
 {
   if(all(range(data)==c(0,1))){

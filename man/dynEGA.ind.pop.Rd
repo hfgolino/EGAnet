@@ -2,7 +2,7 @@
 % Please edit documentation in R/dynEGA.ind.pop.R
 \name{dynEGA.ind.pop}
 \alias{dynEGA.ind.pop}
-\title{Dynamic EGA used in the mctest.ergoInfo function}
+\title{Dynamic EGA}
 \usage{
 dynEGA.ind.pop(
   data,
@@ -115,20 +115,22 @@ then use the following code: \code{parallel::detectCores()}}
 Used for deprecated arguments from previous versions of \code{\link{EGA}}}
 }
 \description{
-Dynamic EGA used in the mctest.ergoInfo function. DynEGA estimates dynamic factors in multivariate time series (i.e. longitudinal data, panel data, intensive longitudinal data) at multiple
+DynEGA estimates dynamic factors in multivariate time series (i.e. longitudinal data, panel data, intensive longitudinal data) at multiple
 time scales, in different levels of analysis: individuals (intraindividual structure) and population (structure of the population).
 Exploratory graph analysis is applied in the derivatives estimated using generalized local linear approximation (\code{\link[EGAnet]{glla}}). Instead of estimating factors by modeling how variables are covarying, as in traditional
 EGA, dynEGA is a dynamic model that estimates the factor structure by modeling how variables are changing together.
 GLLA is a filtering method for estimating derivatives from data that uses time delay embedding and a variant of Savitzky-Golay filtering to accomplish the task.
 }
 \examples{
-\dontrun{
-\donttest{# Population structure:
-dyn.ega1 <- dynEGA.ind.pop(data = sim.dynEGA, n.embed = 5, tau = 1,
-delta = 1, id = 21, use.derivatives = 1, model = "glasso", ncores = 2,
-cor = "pearson")
-}
-}
+# Obtain data
+sim.dynEGA <- sim.dynEGA # bypasses CRAN checks
+
+\donttest{# Dynamic EGA individual and population structure
+dyn.ega1 <- dynEGA.ind.pop(
+  data = sim.dynEGA, n.embed = 5, tau = 1,
+  delta = 1, id = 21, use.derivatives = 1, 
+  ncores = 2, corr = "pearson"
+)}
 
 }
 \author{

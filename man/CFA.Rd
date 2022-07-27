@@ -44,35 +44,21 @@ Verifies the fit of the structure suggested by \code{\link[EGAnet]{EGA}} using c
 # Load data
 wmt <- wmt2[,7:24]
 
-\dontshow{# Fast for CRAN
-cor.wmt <- cor(wmt)
-
-# Estimate EGA
-ega.wmt <- EGA(data = wmt, n = nrow(wmt2), plot.EGA = FALSE)
-}
-
-\donttest{
-# Estimate EGA
-ega.wmt <- EGA(data = wmt, plot.EGA = FALSE)
+\donttest{# Estimate EGA
+ega.wmt <- EGA(
+  data = wmt,
+  plot.EGA = FALSE # No plot for CRAN checks
+)
 
 # Fit CFA model to EGA results
-cfa.wmt <- CFA(ega.obj = ega.wmt, estimator = 'WLSMV', plot.CFA = TRUE, data = wmt)
+cfa.wmt <- CFA(
+  ega.obj = ega.wmt, estimator = "WLSMV",
+  plot.CFA = FALSE, # No plot for CRAN checks
+  data = wmt
+)
 
 # Additional fit measures
-lavaan::fitMeasures(cfa.wmt$fit, fit.measures = "all")
-}
-
-# Load data
-intel <- intelligenceBattery[,8:66]
-
-\donttest{
-# Estimate EGA
-ega.intel <- EGA(data = intel, plot.EGA = FALSE)
-
-# Fit CFA model to EGA results
-cfa.intel <- CFA(ega.obj = ega.intel, estimator = 'WLSMV', plot.CFA = TRUE,
-data = intel)
-}
+lavaan::fitMeasures(cfa.wmt$fit, fit.measures = "all")}
 
 }
 \references{

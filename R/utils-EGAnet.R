@@ -89,11 +89,13 @@ poly.irt <- function(loadings, data)
 # Main Louvain step-wise function
 #' @noRd
 # Louvain Communities
-# Updated 06.05.2022
+# Updated 25.07.2022
 louvain_communities <- function(
     newA,
     method,
     resolution,
+    Q_matrix,
+    original_Q_matrix,
     corr,
     original_A = NULL,
     previous_communities = NULL,
@@ -208,14 +210,27 @@ louvain_communities <- function(
 
             # Compute gain
             if(method == "modularity"){
-              gain_vector[neighbor_community] <- modularity( # new modularity
-                new_communities,
-                newA, resolution = resolution
-              ) -
-                modularity( # old modularity
-                  communities,
-                  newA, resolution = resolution
+              gain_vector[neighbor_community] <- 
+                quick_modularity( # new modularity
+                  communities = new_communities,
+                  A = newA,
+                  Q_matrix = Q_matrix
+                ) -
+                quick_modularity( # old modularity
+                  communities = communities,
+                  A = newA,
+                  Q_matrix = Q_matrix
                 )
+                
+              #   modularity( # new modularity
+              #   new_communities,
+              #   newA, resolution = resolution
+              # ) -
+              #   modularity( # old modularity
+              #     communities,
+              #     newA, resolution = resolution
+              #   )
+                
             }else if(method == "tefi"){
 
               # Reverse order (lower is better)
@@ -280,11 +295,17 @@ louvain_communities <- function(
         if(method == "modularity"){
 
           # Higher values are better
-          improve_modularity <- modularity(
+          improve_modularity <- quick_modularity(
             communities = improve_communities,
             A = original_A,
-            resolution = resolution
+            Q_matrix = original_Q_matrix
           )
+          
+          # quick_modularity(
+          #   communities = improve_communities,
+          #   A = original_A,
+          #   resolution = resolution
+          # )
 
           # Check for update
           if(improve_modularity > previous_modularity){
@@ -344,7 +365,12 @@ louvain_communities <- function(
       }
 
       # Obtain modularity
-      Q <- modularity(update_communities, original_A, resolution)
+      # Q <- modularity(update_communities, original_A, resolution)
+      Q <- quick_modularity(
+        communities = update_communities,
+        A = original_A,
+        Q_matrix = original_Q_matrix
+      )
 
       # Obtain new higher order
       newA <- make_higher_order(original_A, update_communities)
@@ -372,6 +398,12 @@ louvain_communities <- function(
       # Reset previous communities and modularity
       previous_communities <- update_communities
       previous_modularity <- update_modularity
+      
+      # Update modularity matrix
+      Q_matrix <- modularity_matrix(
+        A = newA,
+        resolution = resolution
+      )
 
       # Check if gain equals zero
       if(gain == 0){
@@ -382,7 +414,12 @@ louvain_communities <- function(
     }else{
 
       if(method == "modularity"){
-        Q <- modularity(communities, newA, resolution)
+        # Q <- modularity(communities, newA, resolution)
+        Q <- quick_modularity(
+          communities = communities,
+          A = newA,
+          Q_matrix = Q_matrix
+        )
       }else if(method == "tefi"){
         Q <- tefi(corr, communities)$VN.Entropy.Fit
       }
@@ -409,10 +446,16 @@ louvain_communities <- function(
 # Modularity function
 #' @noRd
 # Modularity
-# Updated 06.05.2022
+# Updated 23.07.2022
 modularity <- function(communities, A, resolution)
 {
 
+  # Convert to matrix
+  A <- as.matrix(A)
+  
+  # Ensure absolute
+  A <- abs(A)
+  
   # Obtain total sum
   total <- sum(A)
 
@@ -450,33 +493,74 @@ modularity <- function(communities, A, resolution)
   # Compute modularity
   Q <- sum(Q_within * Q_matrix / total)
 
-
-  # # Loop through communities
-  # for(i in 1:length(unique_comm)){
-  #
-  #   # Find target nodes
-  #   target_nodes <- which(communities == unique_comm[i])
-  #
-  #   # Get strength within
-  #   within_strength <- sum(A[target_nodes, target_nodes])
-  #
-  #   # Get total strength
-  #   total_strength <- sum(A[target_nodes,])
-  #
-  #   # Ensure there are connections
-  #   if(total_strength > 0){
-  #
-  #     Q <- Q +
-  #       (within_strength / total) -
-  #       (total_strength / total)^2
-  #
-  #   }
-  #
-  #
-  # }
-
   return(Q)
 
+}
+
+# Modularity matrix (for quick_modularity)
+#' @noRd
+# Modularity matrix
+# Updated 25.07.2022
+modularity_matrix <- function(A, resolution)
+{
+  
+  # Convert to matrix
+  A <- as.matrix(A)
+  
+  # Ensure absolute
+  A <- abs(A)
+  
+  # Obtain total sum
+  total <- sum(A)
+  
+  # Initialize modularity
+  Q <- 0
+  
+  # Obtain strength
+  strength <- colSums(A)
+  
+  # Obtain modularity matrix
+  Q_matrix <- A - resolution * (strength %*% t(strength)) / total
+  
+  return(Q_matrix)
+  
+}
+
+# Quick modularity
+#' @noRd
+# Quicker modularity
+# (skips computation of modularity matrix each time)
+# Updated 25.07.2022
+quick_modularity <- function(communities, A, Q_matrix)
+{
+  
+  # Total strength of network
+  total <- sum(abs(as.matrix(A)))
+  
+  # Keep values within communities
+  ## Initialize within matrix
+  init_within <- matrix(
+    rep(communities, times = ncol(A)),
+    byrow = TRUE, nrow = nrow(A),
+    ncol = ncol(A)
+  )
+  
+  ## Create within matrix
+  within_matrix <- !sweep(
+    init_within,
+    MARGIN = 1,
+    STATS = communities,
+    FUN = "-"
+  )
+  
+  ## Obtain Q matrix
+  Q_within <- apply(within_matrix, 2, as.numeric)
+  
+  # Compute modularity
+  Q <- sum(Q_within * Q_matrix / total)
+  
+  return(Q)
+  
 }
 
 # Collapses Louvain nodes into "latent" nodes
@@ -577,11 +661,12 @@ reindex_comm <- function(communities)
 # Lancichinetti & Fortunato (2012)
 #' @noRd
 # Consensus Clustering
-# Updated 07.07.2022
+# Updated 22.07.2022
 consensus_clustering <- function(
     network, corr,
     order = c("lower", "higher"),
-    consensus.iter
+    consensus.iter,
+    resolution = 1
 )
 {
   
@@ -631,7 +716,7 @@ consensus_clustering <- function(
   communities <- lapply(1:consensus.iter, function(j){
 
     # igraph output
-    output <- igraph::cluster_louvain(igraph_network)
+    output <- igraph::cluster_louvain(igraph_network, resolution = resolution)
     
     # Obtain memberships
     wc <- output$memberships
@@ -757,7 +842,7 @@ consensus_clustering <- function(
       communities <- lapply(1:consensus.iter, function(j){
 
         # igraph output
-        output <- igraph::cluster_louvain(igraph_network)
+        output <- igraph::cluster_louvain(igraph_network, resolution = resolution)
         
         # Obtain memberships
         wc <- output$memberships
@@ -866,7 +951,7 @@ consensus_clustering <- function(
     # Check for rows
     if(nrow(wc) == 0){
       wc <- matrix(
-        igraph::cluster_louvain(igraph_network)$membership,
+        igraph::cluster_louvain(igraph_network, resolution = resolution)$membership,
         nrow = 1,
         byrow = TRUE
       )
@@ -905,11 +990,12 @@ consensus_clustering <- function(
 # Lancichinetti & Fortunato (2012)
 #' @noRd
 # Most Common Consensus Clustering
-# Updated 07.07.2022
+# Updated 22.07.2022
 most_common_consensus <- function(
     network,
     order = c("lower", "higher"),
-    consensus.iter
+    consensus.iter,
+    resolution = 1
 )
 {
   
@@ -959,7 +1045,7 @@ most_common_consensus <- function(
   communities <- lapply(1:consensus.iter, function(j){
     
     # igraph output
-    output <- igraph::cluster_louvain(igraph_network)
+    output <- igraph::cluster_louvain(igraph_network, resolution = resolution)
     
     # Obtain memberships
     wc <- output$memberships
@@ -5192,7 +5278,7 @@ redund.reduce.auto <- function(node.redundant.obj,
 
 #' @noRd
 # Redundancy Adhoc Reduction (Automated)
-# Updated 01.05.2022
+# Updated 20.07.2022
 redund.adhoc.auto <- function(node.redundant.obj,
                               node.redundant.reduced,
                               node.redundant.original,
@@ -5218,6 +5304,40 @@ redund.adhoc.auto <- function(node.redundant.obj,
       redund <- redund[-which(names(redund) %in% redund[[i]])]
     }
 
+  }
+  
+  # Check for other overlaps
+  for(i in 1:length(redund)){
+    
+    # Identify any overlap
+    target <- any(redund[[i]] %in% unlist(redund[-i]))
+    
+    # Remove latter overlap
+    if(isTRUE(target)){
+      
+      # Obtain matched target
+      matched <- unlist(redund[-i])[match(redund[[i]], unlist(redund[-i]))]
+      matched <- matched[!is.na(matched)]
+      
+      # Remove from each list
+      for(j in 1:length(matched)){
+        
+        # Target list
+        target_list <- redund[[names(matched)[j]]]
+        target_list[which(target_list == matched[j])] <- NA
+        
+        # Return target list
+        redund[[names(matched)[j]]] <- na.omit(target_list)
+      }
+      
+    }
+    
+  }
+  
+  # Remove empty lists
+  lengths <- unlist(lapply(redund, length))
+  if(any(lengths == 0)){
+    redund <- redund[-which(lengths == 0)]
   }
 
   # Copied data
@@ -6495,14 +6615,23 @@ rewire <- function(network, noise = TRUE)
 
 #' @noRd
 # Rescaled Laplacian matrix
-# Updated 15.07.2022
+# Updated 20.07.2022
 rescaled_laplacian <- function(net)
 {
   # Ensure diagonal is zero
   diag(net) <- 0
   
+  # Make network absolute
+  net <- abs(net)
+  
   # Laplacian matrix
   rescaled_L <- (diag(colSums(net)) - net) / sum(net)
+
+  # # Laplacian matrix
+  # L <- diag(colSums(net)) - net
+  # 
+  # # Rescale
+  # rescaled_L <- L / diag(L) / ncol(L)
   
   # Return
   return(rescaled_L)
@@ -6514,9 +6643,6 @@ rescaled_laplacian <- function(net)
 # Updated 06.07.2022
 vn_entropy <- function(L_mat)
 {
-  
-  # Ensure no missing values
-  # L_mat <- ifelse(is.na(L_mat), 0, L_mat)
   
   # Eigenvalues
   eigenvalues <- eigen(L_mat)$values

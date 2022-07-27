@@ -58,10 +58,10 @@ Computes descriptive statistics for network models
 wmt <- wmt2[,7:24]
 
 \donttest{# EGA example
-## plot.type = "qqraph" used for CRAN checks
-## plot.type = "GGally" is the default
-ega.wmt <- EGA(data = wmt, plot.type = "qgraph")
-}
+ega.wmt <- EGA(
+  data = wmt,
+  plot.EGA = FALSE # No plot for CRAN
+)}
 
 # Compute descriptives
 network.descriptives(ega.wmt)

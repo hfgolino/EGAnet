@@ -36,36 +36,22 @@
 #' @examples
 #' # Load data
 #' wmt <- wmt2[,7:24]
-#' 
-#' \dontshow{# Fast for CRAN
-#' cor.wmt <- cor(wmt)
-#' 
-#' # Estimate EGA
-#' ega.wmt <- EGA(data = wmt, n = nrow(wmt2), plot.EGA = FALSE)
-#' }
 #'
-#' \donttest{
-#' # Estimate EGA
-#' ega.wmt <- EGA(data = wmt, plot.EGA = FALSE)
+#' \donttest{# Estimate EGA
+#' ega.wmt <- EGA(
+#'   data = wmt,
+#'   plot.EGA = FALSE # No plot for CRAN checks
+#' )
 #' 
 #' # Fit CFA model to EGA results
-#' cfa.wmt <- CFA(ega.obj = ega.wmt, estimator = 'WLSMV', plot.CFA = TRUE, data = wmt)
+#' cfa.wmt <- CFA(
+#'   ega.obj = ega.wmt, estimator = "WLSMV",
+#'   plot.CFA = FALSE, # No plot for CRAN checks
+#'   data = wmt
+#' )
 #'
 #' # Additional fit measures
-#' lavaan::fitMeasures(cfa.wmt$fit, fit.measures = "all")
-#' }
-#'
-#' # Load data
-#' intel <- intelligenceBattery[,8:66]
-#'
-#' \donttest{
-#' # Estimate EGA
-#' ega.intel <- EGA(data = intel, plot.EGA = FALSE)
-#'
-#' # Fit CFA model to EGA results
-#' cfa.intel <- CFA(ega.obj = ega.intel, estimator = 'WLSMV', plot.CFA = TRUE,
-#' data = intel)
-#' }
+#' lavaan::fitMeasures(cfa.wmt$fit, fit.measures = "all")}
 #' 
 #' @references 
 #' Christensen, A. P., Gross, G. M., Golino, H., Silvia, P. J., & Kwapil, T. R. (2019).
@@ -82,14 +68,31 @@
 #' @export
 #'
 # CFA model for EGA
-# Updated 10.02.2021
+# Updated 18.07.2022
 CFA<- function(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ...) {
 
+  ## Get default estimator
+  categories <- apply(data, 2, function(x){
+    length(unique(x))
+  })
+  
+  # Check categories
+  if(sum(categories < 6) > 1){# Not all continuous
+    # estimator <- "WLSMV"
+    missing <- "pairwise"
+    ordered <- TRUE
+  }else{# All can be considered continuous
+    # lavaan.args$estimator <- "MLR"
+    missing <- "fiml"
+    ordered <- FALSE
+  }
+  
+  
     strct <- split(ega.obj$dim.variables[, 1], list(ega.obj$dim.variables[, 2]))
     names(strct) <- paste("Fat", labels(strct))
     model.ega <- paste(names(strct), " =~ ", lapply(strct, function(x) paste(print(x), collapse = " + ")), collapse = " \n ")
     fit.mod.ega <- lavaan::cfa(model = model.ega, estimator = estimator, orthogonal = FALSE,
-                               data = data, ...)
+                               data = data, missing = missing, ordered = ordered, ...)
     summary.cfa <- summary(fit.mod.ega, fit.measures = TRUE)
 
     if (estimator == "WLSMV") {

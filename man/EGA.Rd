@@ -7,7 +7,6 @@
 EGA(
   data,
   n = NULL,
-  uni.method = c("expand", "LE"),
   corr = c("cor_auto", "pearson", "spearman"),
   model = c("glasso", "TMFG"),
   model.args = list(),
@@ -28,29 +27,6 @@ then argument \code{n} (number of cases) is \strong{required}}
 
 \item{n}{Integer.
 Sample size if \code{data} provided is a correlation matrix}
-
-\item{uni.method}{Character.
-What unidimensionality method should be used? 
-Defaults to \code{"LE"}.
-Current options are:
-
-\itemize{
-
-\item{\strong{\code{expand}}}
-{Expands the correlation matrix with four variables correlated .50.
-If number of dimension returns 2 or less in check, then the data 
-are unidimensional; otherwise, regular EGA with no matrix
-expansion is used. This is the method used in the Golino et al. (2020)
-\emph{Psychological Methods} simulation.}
-
-\item{\strong{\code{LE}}}
-{Applies the leading eigenvalue algorithm (\code{\link[igraph]{cluster_leading_eigen}})
-on the empirical correlation matrix. If the number of dimensions is 1,
-then the leading eigenvalue solution is used; otherwise, regular EGA
-is used. This is the final method used in the Christensen, Garrido,
-and Golino (2021) simulation.}
-
-}}
 
 \item{corr}{Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
 Current options are:
@@ -216,38 +192,39 @@ Notably, any community detection algorithm from the \code{\link{igraph}}
 can be used to estimate the number of communities (see examples).
 }
 \examples{
+# Obtain data
+wmt <- wmt2[,7:24]
+
 \donttest{# Estimate EGA
-## plot.EGA = FALSE used for CRAN checks
-ega.wmt <- EGA(data = wmt2[,7:24], plot.EGA = FALSE)
+ega.wmt <- EGA(
+  data = wmt,
+  plot.EGA = FALSE # No plot for CRAN checks
+)
 
 # Summary statistics
 summary(ega.wmt)
 
+# Produce Methods section
+methods.section(ega.wmt)
+
 # Estimate EGAtmfg
-ega.wmt <- EGA(data = wmt2[,7:24], model = "TMFG", plot.EGA = FALSE)
+ega.wmt.tmfg <- EGA(
+  data = wmt, model = "TMFG",
+  plot.EGA = FALSE # No plot for CRAN checks
+)
 
 # Estimate EGA with Louvain algorithm
-ega.wmt <- EGA(data = wmt2[,7:24], algorithm = "louvain", plot.EGA = FALSE)
+ega.wmt.louvain <- EGA(
+  data = wmt, algorithm = "louvain",
+  plot.EGA = FALSE # No plot for CRAN checks
+)
 
 # Estimate EGA with Spinglass algorithm
-ega.wmt <- EGA(data = wmt2[,7:24],
-algorithm = igraph::cluster_spinglass, plot.EGA = FALSE)
-
-# Estimate EGA
-ega.intel <- EGA(data = intelligenceBattery[,8:66], model = "glasso", plot.EGA = FALSE)
-
-# Summary statistics
-summary(ega.intel)
-}
-
- \dontshow{# Fast for CRAN checks
-# Pearson's correlation matrix
-wmt <- cor(wmt2[,7:24])
-
-# Estimate EGA
-ega.wmt <- EGA(data = wmt, n = nrow(wmt2), model = "glasso", plot.EGA = FALSE)
-
-}
+ega.wmt.spinglass <- EGA(
+  data = wmt,
+  algorithm = igraph::cluster_spinglass, # any {igraph} algorithm
+  plot.EGA = FALSE # No plot for CRAN checks
+)}
 
 }
 \references{

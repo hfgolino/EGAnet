@@ -42,20 +42,21 @@
 #' then use the following code: \code{parallel::detectCores()}
 #'
 #' @examples
+#' \donttest{# Dynamic EGA individual and population structures
+#' dyn1 <- dynEGA.ind.pop(
+#'   data = sim.dynEGA[,-c(22)], n.embed = 5, tau = 1,
+#'   delta = 1, id = 21, use.derivatives = 1,
+#'   model = "glasso", ncores = 2, corr = "pearson"
+#' )
 #'
-#' \dontrun{
-#' \donttest{
-#' dyn1 <- dynEGA.ind.pop(data = sim.dynEGA[,-c(22)], n.embed = 5, tau = 1,
-#'                       delta = 1, id = 21, use.derivatives = 1,
-#'                     model = "glasso", ncores = 2, corr = "pearson")
-#'
+#' # Empirical Ergodicity Information Index
 #' eii1 <- ergoInfo(dynEGA.object = dyn1, use = "weighted")
 #'
+#' # Bootstrap Test for Ergodicity Information Index
 #' testing.ergoinfo <- boot.ergoInfo(
-#'   dynEGA.object = dyn1,
-#'   EII = eii1,
-#'   ncores = 2)
-#' }}
+#'   dynEGA.object = dyn1, EII = eii1,
+#'   ncores = 2
+#' )}
 #'
 #' @return Returns a list containing:
 #'
@@ -75,9 +76,14 @@
 #'
 #' @author Hudson Golino <hfg9s at virginia.edu> & Alexander P. Christensen <alexander.christensen at Vanderbilt.Edu>
 #'
+#' @references 
+#' Golino, H., Nesselroade, J., & Christensen, A. P. (2022).
+#' Toward a psychology of individuals: The ergodicity information index and a bottom-up approach for finding generalizations.
+#' \emph{PsyArXiv}.
+#'
 #' @export
 # Bootstrap Test for the Ergodicity Information Index
-# Updated 09.07.2022
+# Updated 18.07.2022
 boot.ergoInfo <- function(
     dynEGA.object,
     EII, iter = 100,

@@ -31,35 +31,24 @@
 #' # Load data
 #' wmt <- wmt2[,7:24]
 #'
-#' \dontrun{# Estimate EGA network
-#' ## plot.type = "qqraph" used for CRAN checks
-#' ## plot.type = "GGally" is the default
-#' ega.wmt <- EGA(data = wmt, model = "glasso", plot.type = "qgraph")
-#'
-#' # Estimate bootstrap EGA
-#' boot.wmt <- bootEGA(data = wmt, iter = 500, typicalStructure = TRUE,
-#' plot.typicalStructure = TRUE, model = "glasso", plot.type = "qgraph",
-#' type = "parametric", ncores = 2)
-#' }
+#' \donttest{# Estimate bootstrap EGA
+#' boot.wmt <- bootEGA(
+#'   data = wmt, iter = 100, # recommended 500
+#'   plot.typicalStructure = FALSE, # No plot for CRAN checks
+#'   type = "parametric", ncores = 2
+#' )}
 #'
 #' # Estimate stability statistics
 #' res <- dimensionStability(boot.wmt)
 #' res$dimension.stability
-#'
-#' # Changing plot features (ggplot2)
-#' ## Changing colors (ignore warnings)
-#' ### qgraph Defaults
-#' res$item.stability$plot +
-#'     ggplot2::scale_color_manual(values = rainbow(length(
-#'     res$dimension.stability$structural.consistency)))
-#'
-#' ### Pastel
-#' res$item.stability$plot +
-#'     ggplot2::scale_color_brewer(palette = "Pastel1")
-#'
-#' ## Changing Legend (ignore warnings)
-#' res$item.stability$plot +
-#'     ggplot2::scale_color_discrete(labels = "Intelligence")
+#' 
+#' \donttest{# Produce Methods section
+#' methods.section(
+#'   boot.wmt,
+#'   stats = "dimensionStability"
+#' )
+#' }
+#' 
 #'
 #' @references
 #' Christensen, A. P., & Golino, H. (2021).
@@ -78,10 +67,60 @@
 #' @export
 #'
 # Dimension Stability function
-# Updated 27.02.2021
+# Updated 18.07.2022
 # Revamp 27.02.2021
 dimensionStability <- function(bootega.obj, ...)
 {
+  
+  # Check for 'hierEGA' + 'bootEGA'
+  if("result_lower" %in% names(bootega.obj)){
+    
+    # Message user for lower order analysis
+    message("Performing dimension stability analysis on lower order...", appendLF = FALSE)
+    
+    # Set up lower and higher order for item stability function
+    higher_order_EGA<- bootega.obj$result_lower$EGA$hierarchical$higher_order$EGA
+    lower_order_EGA <- bootega.obj$result_lower$EGA$hierarchical$lower_order
+    bootega.obj$result_lower$EGA <- lower_order_EGA
+    
+    # Perform dimension stability on lower order dimensions
+    lower_ds <- suppressMessages(
+      dimensionStability(
+        bootega.obj$result_lower, IS.plot = FALSE, structure = NULL
+      )
+    )
+    
+    # Message user lower order is done
+    message("done.")
+    
+    # Message user for higher order analysis
+    message("Performing dimension stability analysis on higher order...", appendLF = FALSE)
+    
+    # Set up higher order for item stability function
+    bootega.obj$result_higher$EGA <- higher_order_EGA
+    bootega.obj$result_higher$color.palette <- bootega.obj$result_lower$color.palette
+    
+    # Perform item stability on higher order dimensions
+    higher_ds <- suppressMessages(
+      dimensionStability(
+        bootega.obj$result_higher, IS.plot = FALSE, structure = NULL
+      )
+    )
+    
+    # Message user higher order is done
+    message("done.")
+
+    # Set up results
+    results <- list(
+      lower_order = lower_ds,
+      higher_order = higher_ds
+    )
+    
+    # Return result
+    return(results)
+    
+  }
+  
   # Check for 'bootEGA' object
   if(is(bootega.obj) != "bootEGA"){
     stop("Input for 'bootega.obj' is not a 'bootEGA' object")

@@ -15,7 +15,7 @@ UVA(
   key = NULL,
   reduce = TRUE,
   auto = TRUE,
-  label_latent = TRUE,
+  label.latent = FALSE,
   reduce.method = c("latent", "remove", "sum"),
   lavaan.args = list(),
   adhoc = TRUE,
@@ -109,7 +109,7 @@ Should redundancy reduction be automated?
 Defaults to \code{TRUE}.
 Set to \code{FALSE} for manual selection}
 
-\item{label_latent}{Boolean.
+\item{label.latent}{Boolean.
 Should latent variables be labelled?
 Defaults to \code{TRUE}.
 Set to \code{FALSE} for arbitrary labelling (i.e., "LV_")}
@@ -285,14 +285,15 @@ items <- psychTools::spi[,idx]
 key.ind <- match(colnames(items), as.character(psychTools::spi.dictionary$item_id))
 key <- as.character(psychTools::spi.dictionary$item[key.ind])
 
-# Automated selection of redundant variables (default)
-\donttest{
+\donttest{# Automated selection of local dependence (default)
 uva.results <- UVA(data = items, key = key)
-}
 
-# Manual selection of redundant variables
+# Produce Methods section
+methods.section(uva.results)}
+
+# Manual selection of local dependence
 if(interactive()){
-uva.results <- UVA(data = items, key = key, type = "adapt")
+uva.results <- UVA(data = items, key = key, auto = FALSE)
 }
 
 }

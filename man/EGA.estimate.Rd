@@ -112,26 +112,23 @@ Notably, any community detection algorithm from the \code{\link{igraph}}
 can be used to estimate the number of communities (see examples).
 }
 \examples{
-\dontshow{# Fast for CRAN checks
-# Pearson's correlation matrix
-wmt <- cor(wmt2[,7:24])
+# Obtain data
+wmt <- wmt2[,7:24]
 
-# Estimate EGA
-ega.wmt <- EGA.estimate(data = wmt, n = nrow(wmt2), model = "glasso")
-
-}
-
-\donttest{
-# Estimate EGA
-ega.wmt <- EGA.estimate(data = wmt2[,7:24], model = "glasso")
+\donttest{# Estimate EGA
+ega.wmt <- EGA.estimate(data = wmt)
 
 # Estimate EGAtmfg
-ega.wmt <- EGA.estimate(data = wmt2[,7:24], model = "TMFG")
+ega.wmt.tmfg <- EGA.estimate(data = wmt, model = "TMFG")
 
-# Estimate EGA with Spinglass
-ega.wmt <- EGA.estimate(data = wmt2[,7:24], model = "glasso",
-algorithm = igraph::cluster_spinglass)
-}
+# Estimate EGA with Louvain algorithm
+ega.wmt.louvain <- EGA.estimate(data = wmt, algorithm = "louvain")
+
+# Estimate EGA with Spinglass algorithm
+ega.wmt.spinglass <- EGA.estimate(
+  data = wmt,
+  algorithm = igraph::cluster_spinglass # any {igraph} algorithm
+)}
 
 }
 \references{
