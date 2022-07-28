@@ -470,7 +470,7 @@ modularity <- function(communities, A, resolution)
 
   # Obtain modularity matrix
   Q_matrix <- A - resolution * (strength %*% t(strength)) / total
-
+  
   # Keep values within communities
   ## Initialize within matrix
   init_within <- matrix(
@@ -518,7 +518,7 @@ modularity_matrix <- function(A, resolution)
   
   # Obtain modularity matrix
   Q_matrix <- A - resolution * (strength %*% t(strength)) / total
-  
+
   return(Q_matrix)
   
 }
