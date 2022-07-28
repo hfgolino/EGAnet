@@ -710,7 +710,7 @@ consensus_clustering <- function(
   }
 
   # Apply Louvain
-  communities <- lapply(1:consensus.iter, function(j){
+  communities <- lapply(1:consensus.iter, function(j, resolution){
 
     # igraph output
     output <- igraph::cluster_louvain(igraph_network, resolution = resolution)
@@ -735,7 +735,7 @@ consensus_clustering <- function(
     # Return
     return(wc)
 
-  })
+  }, resolution = resolution)
 
   # Simplify to a matrix
   wc_matrix <- t(simplify2array(communities, higher = FALSE))
@@ -836,7 +836,7 @@ consensus_clustering <- function(
       }
 
       # Apply Louvain
-      communities <- lapply(1:consensus.iter, function(j){
+      communities <- lapply(1:consensus.iter, function(j, resolution){
 
         # igraph output
         output <- igraph::cluster_louvain(igraph_network, resolution = resolution)
@@ -861,7 +861,7 @@ consensus_clustering <- function(
         # Return
         return(wc)
 
-      })
+      }, resolution = resolution)
 
       # Simplify to a matrix
       wc_matrix <- t(simplify2array(communities, higher = FALSE))
@@ -943,7 +943,7 @@ consensus_clustering <- function(
     }
     
     # Obtain memberships
-    wc <- igraph::cluster_louvain(igraph_network)$memberships
+    wc <- igraph::cluster_louvain(igraph_network, resolution = resolution)$memberships
     
     # Check for rows
     if(nrow(wc) == 0){
@@ -1039,7 +1039,7 @@ most_common_consensus <- function(
   }
   
   # Apply Louvain
-  communities <- lapply(1:consensus.iter, function(j){
+  communities <- lapply(1:consensus.iter, function(j, resolution){
     
     # igraph output
     output <- igraph::cluster_louvain(igraph_network, resolution = resolution)
@@ -1064,7 +1064,7 @@ most_common_consensus <- function(
     # Return
     return(wc)
     
-  })
+  }, resolution = resolution)
   
   # Simplify to a matrix
   wc_matrix <- t(simplify2array(communities, higher = FALSE))
