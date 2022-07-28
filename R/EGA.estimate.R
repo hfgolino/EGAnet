@@ -437,7 +437,9 @@ EGA.estimate <- function(
   }
   
   # Re-index communities
-  wc <- reindex_comm(wc)
+  wc <- suppressWarnings(
+    reindex_comm(wc)
+  )
   
   # Replace singleton communities with NA
   frequencies <- table(wc)
