@@ -273,7 +273,11 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
 
   #initialize data list
   datalist <- vector("list", length = length(cases))
-  datalist <- split(data[,-c(id, group)],data[,id])
+  if("group" %in% colnames(data)){
+    datalist <- split(data[,-c(id, group)], data[,id])
+  }else{
+    datalist <- split(data[,-c(id)], data[,id])
+  }
 
   ### Estimating the derivatives using GLLA:
 
