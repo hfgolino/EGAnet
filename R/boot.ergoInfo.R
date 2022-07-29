@@ -83,7 +83,7 @@
 #'
 #' @export
 # Bootstrap Test for the Ergodicity Information Index
-# Updated 18.07.2022
+# Updated 29.07.2022
 boot.ergoInfo <- function(
     dynEGA.object,
     EII, iter = 100,
@@ -158,6 +158,9 @@ boot.ergoInfo <- function(
     return(x)
   })
   
+  # Let user know data are being generated
+  message("Generating rewired population networks...", appendLF = FALSE)
+  
   # Set up data to be consistent with `dyn.ind.pop` output
   boot.data <- lapply(1:iter, function(i){
     
@@ -181,6 +184,9 @@ boot.ergoInfo <- function(
     return(dynEGA.object)
     
   })
+  
+  # Let user know data generation is done
+  message("done.")
   
   # Let user know results are being computed
   message("Computing results...")
