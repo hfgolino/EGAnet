@@ -207,8 +207,6 @@ infoCluster <- function(
     method = "complete"
   )
   
-  plot(hier_clust)
-  
   # # Check for single cluster
   # if(
   #   all(clusters == 1) | # >= 0.95 | # at least 95% of individuals
