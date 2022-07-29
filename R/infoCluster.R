@@ -189,12 +189,9 @@ infoCluster <- function(
   
   # Remove missing data points
   jsdist <- jsdist[!rm_cols, !rm_cols]
-  
+
   # Make diagonal 0 again
   diag(jsdist) <- 0
-  
-  # Jensen-Shannon Similarity
-  jss <- 1 - jsdist
   
   # # Louvain consensus clustering
   # clusters <- most_common_consensus(
@@ -209,6 +206,8 @@ infoCluster <- function(
     d = as.dist(jsdist),
     method = "complete"
   )
+  
+  plot(hier_clust)
   
   # # Check for single cluster
   # if(
@@ -250,6 +249,9 @@ infoCluster <- function(
   
   # Jensen-Shannon Similarity
   jss <- 1 - jsdist
+  
+  # Make diagonal of Jensen-Shannon Similarity = 0
+  diag(jss) <- 0
   
   # Compute modularity matrix
   Q_matrix <- modularity_matrix(
