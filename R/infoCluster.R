@@ -57,7 +57,7 @@
 #' 
 #' @export
 # Information Theoretic Clustering for dynEGA
-# Updated 25.07.2022
+# Updated 29.07.2022
 infoCluster <- function(
     dynEGA.object,
     ncores,
@@ -230,33 +230,35 @@ infoCluster <- function(
   # Jensen-Shannon Similarity
   jss <- 1 - jsdist
   
-  # Louvain consensus clustering
-  clusters <- most_common_consensus(
-    network = jss,
-    order = "higher",
-    consensus.iter = 1000,
-    resolution = 0.95
-  )$most_common
+  # # Louvain consensus clustering
+  # clusters <- most_common_consensus(
+  #   network = jss,
+  #   order = "higher",
+  #   consensus.iter = 1000,
+  #   resolution = 0.95
+  # )$most_common
   
   # Perform hierarchical clustering
   hier_clust <- hclust(as.dist(jsdist))
   
-  # Check for single cluster
-  if(
-    mean(clusters == 1) >= 0.95 | # at least 95% of individuals
-    length(unique(clusters)) == length(clusters) # consensus all individuals
-  ){
-
-    # Obtain clusters
-    clusters <- rep(1, ncol(jsdist))
-    names(clusters) <- colnames(jsdist)
-
-  }else{
+  # # Check for single cluster
+  # if(
+  #   mean(clusters == 1) >= 0.95 | # at least 95% of individuals
+  #   length(unique(clusters)) == length(clusters) # consensus all individuals
+  # ){
+  # 
+  #   # Obtain clusters
+  #   clusters <- rep(1, ncol(jsdist))
+  #   names(clusters) <- colnames(jsdist)
+  # 
+  # }else{
     
     # Compute modularity matrix
     Q_matrix <- modularity_matrix(
       A = jss,
-      resolution = 1
+      resolution = 0.95
+      # Gives unidimensional structures 0.05 modularity
+      # Forces multidimensional structures to be > 0.05 to be selected
     )
     
     # Maximize modularity
@@ -283,7 +285,7 @@ infoCluster <- function(
     # Obtain clusters
     clusters <- cutree(hier_clust, which.max(Qs))
     
-  }
+  # }
 
   # Convert for ggplot2
   cluster_data <- ggdendro::dendro_data(
