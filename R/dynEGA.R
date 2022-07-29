@@ -583,10 +583,13 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
     dim.variables[[i]] <- dim.variables[[i]][order(dim.variables[[i]][, 2]),]
     results$dynEGA[[i]]$dim.variables <- dim.variables[[i]]}
   }else if(level == "individual"){
+      ega.list.individuals <- ega.list.individuals[!unlist(
+        lapply(ega.list.individuals, is.null)
+      )]
       results$dynEGA <- ega.list.individuals
       class(results) <- "dynEGA.Individuals"
       dim.variables <- list()
-      for(i in 1:length(cases)){
+      for(i in 1:length(ega.list.individuals)){
         dim.variables[[i]] <- data.frame(items = colnames(data.individuals[[i]]), dimension = ega.list.individuals[[i]]$wc)
         dim.variables[[i]] <- dim.variables[[i]][order(dim.variables[[i]][, 2]),]
         results$dynEGA[[i]]$dim.variables <- dim.variables[[i]]
