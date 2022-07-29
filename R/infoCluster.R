@@ -196,54 +196,83 @@ infoCluster <- function(
   # Jensen-Shannon Similarity
   jss <- 1 - jsdist
   
-  # Louvain consensus clustering
-  clusters <- most_common_consensus(
-    network = jss,
-    order = "higher",
-    consensus.iter = 1000,
-    resolution = 1
-  )$most_common
+  # # Louvain consensus clustering
+  # clusters <- most_common_consensus(
+  #   network = jss,
+  #   order = "higher",
+  #   consensus.iter = 1000,
+  #   resolution = 1
+  # )$most_common
   
   # Perform hierarchical clustering
-  hier_clust <- hclust(as.dist(jsdist))
+  hier_clust <- hclust(
+    d = as.dist(jsdist),
+    method = "complete"
+  )
   
-  # Check for single cluster
-  if(
-    all(clusters == 1) | # >= 0.95 | # at least 95% of individuals
-    length(unique(clusters)) == length(clusters) # consensus all individuals
-  ){
-
-    # Obtain clusters
-    clusters <- rep(1, ncol(jsdist))
-    names(clusters) <- colnames(jsdist)
-
-  }else{
-    
-    # Compute modularity matrix
-    Q_matrix <- modularity_matrix(
-      A = jss,
-      resolution = 1
+  # # Check for single cluster
+  # if(
+  #   all(clusters == 1) | # >= 0.95 | # at least 95% of individuals
+  #   length(unique(clusters)) == length(clusters) # consensus all individuals
+  # ){
+  # 
+  #   # Obtain clusters
+  #   clusters <- rep(1, ncol(jsdist))
+  #   names(clusters) <- colnames(jsdist)
+  # 
+  # }else{
+  #   
+  #   # Compute modularity matrix
+  #   Q_matrix <- modularity_matrix(
+  #     A = jss,
+  #     resolution = 1
+  #   )
+  #   
+  #   # Maximize modularity
+  #   Qs <- unlist(
+  #     lapply(
+  #       X = 1:ncol(jss),
+  #       FUN = function(i){
+  #         quick_modularity(
+  #           communities = cutree(hier_clust, i),
+  #           A = jss,
+  #           Q_matrix = Q_matrix
+  #         )
+  #         
+  #       }
+  #     )
+  #   )
+  #   
+  #   # Obtain clusters
+  #   clusters <- cutree(hier_clust, which.max(Qs))
+  #   
+  # }
+  
+  # Jensen-Shannon Similarity
+  jss <- 1 - jsdist
+  
+  # Compute modularity matrix
+  Q_matrix <- modularity_matrix(
+    A = jss,
+    resolution = 1
+  )
+  
+  # Maximize modularity
+  Qs <- unlist(
+    lapply(
+      X = 1:ncol(jss),
+      FUN = function(i){
+        quick_modularity(
+          communities = cutree(hier_clust, i),
+          A = jss,
+          Q_matrix = Q_matrix
+        )
+      }
     )
-    
-    # Maximize modularity
-    Qs <- unlist(
-      lapply(
-        X = 1:ncol(jss),
-        FUN = function(i){
-          quick_modularity(
-            communities = cutree(hier_clust, i),
-            A = jss,
-            Q_matrix = Q_matrix
-          )
-          
-        }
-      )
-    )
-    
-    # Obtain clusters
-    clusters <- cutree(hier_clust, which.max(Qs))
-    
-  }
+  )
+  
+  # Obtain clusters
+  clusters <- cutree(hier_clust, which.max(Qs))
 
   # Convert for ggplot2
   cluster_data <- ggdendro::dendro_data(
