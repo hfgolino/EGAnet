@@ -193,72 +193,36 @@ infoCluster <- function(
   # Make diagonal 0 again
   diag(jsdist) <- 0
   
-  # # Compute Louvain
-  # consensus <- most_common_consensus(
-  #   1 - jsdist,
-  #   order = "lower",
-  #   consensus.iter = 1000
-  # )$most_common
-  # 
-  # # Unique consensus
-  # unique_consensus <- length(na.omit(unique(consensus)))
-  # 
-  # # Perform hierarchical clustering
-  # hier_clust <- hclust(as.dist(jsdist))
-  # 
-  # # Check for single cluster
-  # if(
-  #   unique_consensus == 1 | # consensus = 1 OR
-  #   unique_consensus == length(consensus) # consensus all individuals
-  # ){
-  #   
-  #   # Obtain clusters
-  #   clusters <- rep(1, ncol(jsdist))
-  #   names(clusters) <- colnames(jsdist)
-  #   
-  # }else{
-  
-  # Compute Leiden
-  # g <- convert2igraph(1 - jsdist)
-  # 
-  # clusters <- igraph::cluster_leiden(
-  #   g, objective_function = "modularity",
-  #   resolution_parameter = 1,
-  #   n_iterations = 100
-  # )$membership
-  
   # Jensen-Shannon Similarity
   jss <- 1 - jsdist
   
-  # # Louvain consensus clustering
-  # clusters <- most_common_consensus(
-  #   network = jss,
-  #   order = "higher",
-  #   consensus.iter = 1000,
-  #   resolution = 0.95
-  # )$most_common
+  # Louvain consensus clustering
+  clusters <- most_common_consensus(
+    network = jss,
+    order = "higher",
+    consensus.iter = 1000,
+    resolution = 1
+  )$most_common
   
   # Perform hierarchical clustering
   hier_clust <- hclust(as.dist(jsdist))
   
-  # # Check for single cluster
-  # if(
-  #   mean(clusters == 1) >= 0.95 | # at least 95% of individuals
-  #   length(unique(clusters)) == length(clusters) # consensus all individuals
-  # ){
-  # 
-  #   # Obtain clusters
-  #   clusters <- rep(1, ncol(jsdist))
-  #   names(clusters) <- colnames(jsdist)
-  # 
-  # }else{
+  # Check for single cluster
+  if(
+    all(clusters == 1) | # >= 0.95 | # at least 95% of individuals
+    length(unique(clusters)) == length(clusters) # consensus all individuals
+  ){
+
+    # Obtain clusters
+    clusters <- rep(1, ncol(jsdist))
+    names(clusters) <- colnames(jsdist)
+
+  }else{
     
     # Compute modularity matrix
     Q_matrix <- modularity_matrix(
       A = jss,
-      resolution = 0.95
-      # Gives unidimensional structures 0.05 modularity
-      # Forces multidimensional structures to be > 0.05 to be selected
+      resolution = 1
     )
     
     # Maximize modularity
@@ -272,12 +236,6 @@ infoCluster <- function(
             Q_matrix = Q_matrix
           )
           
-          # modularity(
-          #   communities = cutree(hier_clust, i),
-          #   A = 1 - jsdist,
-          #   resolution = 1
-          # )
-          
         }
       )
     )
@@ -285,7 +243,7 @@ infoCluster <- function(
     # Obtain clusters
     clusters <- cutree(hier_clust, which.max(Qs))
     
-  # }
+  }
 
   # Convert for ggplot2
   cluster_data <- ggdendro::dendro_data(
