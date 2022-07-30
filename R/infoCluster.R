@@ -110,16 +110,16 @@ infoCluster <- function(
   cl <- parallel::makeCluster(ncores)
   
   # Export
-  parallel::clusterExport(
-    cl = cl,
-    varlist = c(
-      # "rescaled_laplacian",
-      # "vn_entropy",
-      "jsd",
-      "networks"
-    ),
-    envir = environment()
-  )
+  # parallel::clusterExport(
+  #   cl = cl,
+  #   varlist = c(
+  #     "rescaled_laplacian",
+  #     "vn_entropy",
+  #     "jsd",
+  #     "networks"
+  #   ),
+  #   envir = environment()
+  # )
   
   # Obtain lists
   jsd_lists <- pbapply::pblapply(
@@ -132,9 +132,7 @@ infoCluster <- function(
         
         # Try
         jsd_value <- try(
-          jsd(
-            networks[[i]], networks[[j]]
-          ),
+          jsd(networks[[i]], networks[[j]]),
           silent = TRUE
         )
         
