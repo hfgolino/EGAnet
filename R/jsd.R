@@ -45,11 +45,14 @@
 #' glas1 <- EBICglasso.qgraph(data1)
 #' glas2 <- EBICglasso.qgraph(data2)
 #' 
-#' # Compute Jensen-Shannon Distance
-#' jsd(glas1, glas2) # 0.1832602
+#' # Spectral JSD 
+#' jsd(glas1, glas2) # 0.1618195
 #' 
-#' # Compute Jensen-Shannon Similarity
-#' 1 - jsd(glas1, glas2) # 0.8167398
+#' # Spectral JSS (similarity)
+#' 1 - jsd(glas1, glas2) # 0.8381805
+#' 
+#' # Jensen-Shannon Divergence
+#' jsd(glas1, glas2, method = "kld") # 0.1923636
 #'
 #' @return Returns Jensen-Shannon Distance
 #'
@@ -93,23 +96,41 @@ jsd <- function(
   }else if(method == "kld"){
     
     # Compute Kullback-Leibler Divergence
-    kld <- function(network1, network2){
-      sum(diag(network1 %*% solve(network2))) -
-        log2(det(network1 %*% solve(network2))) -
-        ncol(network1)
+    kld <- function(comparison, estimated){
+      sum(diag(solve(comparison) %*% estimated)) -
+        log2(det(solve(comparison) %*% estimated)) -
+        ncol(comparison)
+    }
+    
+    # Convert to (inverse) covariance matrix
+    pcor2inv <- function(pcor){
+      
+      # Set diagonal to negative 1
+      diag(pcor) <- -1
+      
+      # Obtain inverse covariance
+      inv <- solve(-pcor)
+
+      # Return
+      return(inv)
+      
     }
     
     # Combine networks
     network_comb <- 0.5 * (network1 + network2)
     
     # Compute KLDs
-    kld1 <- kld(network1, network_comb)
-    kld2 <- kld(network2, network_comb)
+    kld1 <- kld(
+      comparison = pcor2inv(network_comb),
+      estimated = pcor2inv(network1)
+    )
+    kld2 <- kld(
+      comparison = pcor2inv(network_comb), 
+      estimated = pcor2inv(network2)
+    )
     
     # Compute JSD
-    JSD <- sqrt(
-      0.5 * kld1 + 0.5 * kld2
-    )
+    JSD <- 0.5 * kld1 + 0.5 * kld2
     
   }
   
