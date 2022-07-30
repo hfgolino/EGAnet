@@ -113,8 +113,8 @@ infoCluster <- function(
   # parallel::clusterExport(
   #   cl = cl,
   #   varlist = c(
-  #     "rescaled_laplacian",
-  #     "vn_entropy",
+  #     # "rescaled_laplacian",
+  #     # "vn_entropy",
   #     "jsd",
   #     "networks"
   #   ),
@@ -132,7 +132,11 @@ infoCluster <- function(
         
         # Try
         jsd_value <- try(
-          jsd(networks[[i]], networks[[j]]),
+          jsd(
+            network1 = networks[[i]],
+            network2 = networks[[j]],
+            method = "spectral"
+          ),
           silent = TRUE
         )
         
