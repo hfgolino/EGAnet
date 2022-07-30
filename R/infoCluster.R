@@ -245,6 +245,35 @@ infoCluster <- function(
   #   
   # }
   
+  # # Initialize silhouette vector
+  # silhouette_vec <- numeric(length = ncol(jsdist) - 1)
+  # 
+  # # Make names the number of clusters
+  # names(silhouette_vec) <- 2:ncol(jsdist)
+  # 
+  # # Loop through cuts
+  # for(i in 2:length(silhouette_vec)){
+  #   
+  #   # Compute silhouette
+  #   hier_silho <- cluster::silhouette(
+  #     x = cutree(hier_clust, i),
+  #     dist = as.dist(jsdist)
+  #   )
+  #   
+  #   # Obtain summary
+  #   silho_summ <- summary(hier_silho)
+  #   
+  #   # Obtain average silhouette
+  #   silhouette_vec[i-1] <- mean(silho_summ$clus.avg.widths)
+  #   
+  # }
+  # 
+  # # Obtain maximum average silhouette
+  # optimal_cut <- as.numeric(names(which.max(silhouette_vec)))
+  # 
+  # # Obtain clusters
+  # clusters <- cutree(hier_clust, optimal_cut)
+  
   # Jensen-Shannon Similarity
   jss <- 1 - jsdist
   

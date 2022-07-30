@@ -6758,28 +6758,48 @@ rewire <- function(network, noise = TRUE)
 }
 
 #%%%%%%%%%%%%%%%%%%%%
-# dynEGA.cluster ----
+# infoCluster ----
 #%%%%%%%%%%%%%%%%%%%%
 
 #' @noRd
+# Root Mean Square Error (for matrices)
+# Updated 30.07.2022
+matrix_rmse <- function(matrix1, matrix2)
+{
+  # Check for symmetric
+  if(
+    isSymmetric(unname(as.matrix(matrix1))) &
+    isSymmetric(unname(as.matrix(matrix2)))
+  ){
+    
+    # Compute lower triangles
+    matrix1 <- matrix1[lower.tri(matrix1)]
+    matrix2 <- matrix2[lower.tri(matrix2)]
+    
+  }
+  
+  # Compute RMSE
+  rmse <- sqrt(mean((matrix1 - matrix2)^2, na.rm = TRUE))
+  
+  # Return RMSE
+  return(rmse)
+  
+}
+
+#' @noRd
 # Rescaled Laplacian matrix
-# Updated 20.07.2022
+# Updated 30.07.2022
 rescaled_laplacian <- function(net)
 {
   # Ensure diagonal is zero
   diag(net) <- 0
   
   # Make network absolute
-  net <- abs(net)
+  # net <- abs(net)
+  net <- ifelse(net != 0, 1, 0)
   
   # Laplacian matrix
   rescaled_L <- (diag(colSums(net)) - net) / sum(net)
-
-  # # Laplacian matrix
-  # L <- diag(colSums(net)) - net
-  # 
-  # # Rescale
-  # rescaled_L <- L / diag(L) / ncol(L)
   
   # Return
   return(rescaled_L)
