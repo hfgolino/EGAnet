@@ -8,6 +8,22 @@
 #' @param network2 Matrix or data frame.
 #' Second network to be compared
 #'
+#' @param method Character.
+#' Method to compute Jensen-Shannon Distance.
+#' Defaults to \code{"spectral"}.
+#' Options:
+#' 
+#' \itemize{
+#' 
+#' \item{\code{"kld"}}
+#' {Uses Kullback-Leibler Divergence}
+#' 
+#' \item{\code{"spectral"}}
+#' {Uses eigenvalues of combinatiorial Laplacian matrix to compute
+#' Von Neumann entropy}
+#' 
+#' }
+#'
 #' @examples
 #' # Obtain wmt2 data
 #' wmt <- wmt2[,7:24]
@@ -42,26 +58,60 @@
 #' @export
 #' 
 # Jensen-Shannon Distance
-# Updated 20.07.2022
-jsd <- function(network1, network2)
+# Updated 30.07.2022
+jsd <- function(
+    network1, network2,
+    method = c("kld", "spectral")
+)
 {
   
-  # Obtain rescaled Laplacian matrices
-  rL1 <- rescaled_laplacian(network1)
-  rL2 <- rescaled_laplacian(network2)
+  # Missing method
+  if(missing(method)){
+    method <- "spectral"
+  }else{method <- tolower(match.arg(method))}
   
-  # Obtain individual VN entropies
-  vn1 <- vn_entropy(rL1)
-  vn2 <- vn_entropy(rL2)
-  
-  # Obtain combined VN entropy
-  rL_comb <- 0.5 * (rL1 + rL2)
-  vn_comb <- vn_entropy(rL_comb)
-  
-  # Compute JSD
-  JSD <- sqrt(
-    vn_comb - (0.5 * (vn1 + vn2))
-  )
+  # Check for method
+  if(method == "spectral"){
+    
+    # Obtain rescaled Laplacian matrices
+    rL1 <- rescaled_laplacian(network1)
+    rL2 <- rescaled_laplacian(network2)
+    
+    # Obtain individual VN entropies
+    vn1 <- vn_entropy(rL1)
+    vn2 <- vn_entropy(rL2)
+    
+    # Obtain combined VN entropy
+    rL_comb <- 0.5 * (rL1 + rL2)
+    vn_comb <- vn_entropy(rL_comb)
+    
+    # Compute JSD
+    JSD <- sqrt(
+      vn_comb - (0.5 * (vn1 + vn2))
+    )
+    
+  }else if(method == "kld"){
+    
+    # Compute Kullback-Leibler Divergence
+    kld <- function(network1, network2){
+      sum(diag(network1 %*% solve(network2))) -
+        log2(det(network1 %*% solve(network2))) -
+        ncol(network1)
+    }
+    
+    # Combine networks
+    network_comb <- 0.5 * (network1 + network2)
+    
+    # Compute KLDs
+    kld1 <- kld(network1, network_comb)
+    kld2 <- kld(network2, network_comb)
+    
+    # Compute JSD
+    JSD <- sqrt(
+      0.5 * kld1 + 0.5 * kld2
+    )
+    
+  }
   
   # Return
   return(Re(JSD))

@@ -4,7 +4,7 @@
 \alias{jsd}
 \title{Jensen-Shannon Distance}
 \usage{
-jsd(network1, network2)
+jsd(network1, network2, method = c("kld", "spectral"))
 }
 \arguments{
 \item{network1}{Matrix or data frame.
@@ -12,6 +12,22 @@ Network to be compared}
 
 \item{network2}{Matrix or data frame.
 Second network to be compared}
+
+\item{method}{Character.
+Method to compute Jensen-Shannon Distance.
+Defaults to \code{"spectral"}.
+Options:
+
+\itemize{
+
+\item{\code{"kld"}}
+{Uses Kullback-Leibler Divergence}
+
+\item{\code{"spectral"}}
+{Uses eigenvalues of combinatiorial Laplacian matrix to compute
+Von Neumann entropy}
+
+}}
 }
 \value{
 Returns Jensen-Shannon Distance
