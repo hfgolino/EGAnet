@@ -281,18 +281,18 @@ infoCluster <- function(
   
   # Compute modularity matrix
   Q_matrix <- modularity_matrix(
-    A = vidist,
+    A = jss,
     resolution = 1
   )
   
   # Maximize modularity
   Qs <- unlist(
     lapply(
-      X = 1:ncol(vidist),
+      X = 1:ncol(jss),
       FUN = function(i){
         quick_modularity(
           communities = cutree(hier_clust, i),
-          A = vidist,
+          A = jss,
           Q_matrix = Q_matrix
         )
       }
