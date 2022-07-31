@@ -6762,6 +6762,39 @@ rewire <- function(network, noise = TRUE)
 #%%%%%%%%%%%%%%%%%%%%
 
 #' @noRd
+# Variation of information
+# Updated 30.07.2022
+vi <- function(wc1, wc2)
+{
+  
+  # Obtain non-NA memberships
+  nonNA <- !is.na(wc1) & !is.na(wc2)
+  wc1 <- wc1[nonNA]
+  wc2 <- wc2[nonNA]
+  
+  # Compute maximum VI
+  ## Set max memberships
+  max_wc1 <- rep(1, length(wc1))
+  max_wc2 <- 1:length(wc2)
+  max_wc2[length(max_wc2)] <- 1
+  max_vi <- igraph::compare(
+    max_wc1, max_wc2
+  )
+  
+  # Obtain variation of information
+  vi <- igraph::compare(
+    wc1, wc2, method = "vi"
+  )
+  
+  # Normalize VI by maximum value
+  vi <- vi / max_vi
+  
+  # Return
+  return(vi)
+  
+}
+
+#' @noRd
 # Root Mean Square Error (for matrices)
 # Updated 30.07.2022
 matrix_rmse <- function(matrix1, matrix2)
