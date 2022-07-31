@@ -56,11 +56,14 @@ data2 <- wmt[split2,]
 glas1 <- EBICglasso.qgraph(data1)
 glas2 <- EBICglasso.qgraph(data2)
 
-# Compute Jensen-Shannon Distance
-jsd(glas1, glas2) # 0.1832602
+# Spectral JSD 
+jsd(glas1, glas2) # 0.1618195
 
-# Compute Jensen-Shannon Similarity
-1 - jsd(glas1, glas2) # 0.8167398
+# Spectral JSS (similarity)
+1 - jsd(glas1, glas2) # 0.8381805
+
+# Jensen-Shannon Divergence
+jsd(glas1, glas2, method = "kld") # 0.1923636
 
 }
 \author{

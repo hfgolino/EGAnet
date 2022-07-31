@@ -6795,7 +6795,7 @@ rescaled_laplacian <- function(net)
   diag(net) <- 0
   
   # Make network absolute
-  net <- abs(net)
+  # net <- abs(net)
   # net <- ifelse(net != 0, 1, 0)
   
   # Laplacian matrix

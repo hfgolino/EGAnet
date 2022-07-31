@@ -98,6 +98,74 @@ infoCluster <- function(
     x$network
   })
   
+  # # Obtain memberships
+  # wcs <- lapply(dynEGA.ind, function(x){
+  #   x$wc
+  # })
+  # 
+  # # Message user
+  # message("Computing Variation of Information...\n", appendLF = FALSE)
+  # 
+  # # Obtain lists
+  # vi_lists <- lapply(
+  #   X = 2:length(wcs),
+  #   FUN = function(i){
+  #     
+  #     # Compute VI values
+  #     vi_values <- lapply(1:(i-1), function(j){
+  #       
+  #       # Try
+  #       vi_value <- try(
+  #         vi(
+  #           wc1 = wcs[[i]],
+  #           wc2 = wcs[[j]]
+  #         ),
+  #         silent = TRUE
+  #       )
+  #       
+  #       # Check if value is OK
+  #       if(!is(vi_value, "try-error")){
+  #         return(vi_value)
+  #       }else{
+  #         return(NA)
+  #       }
+  #       
+  #     })
+  #     
+  #     # Return
+  #     return(vi_values)
+  #     
+  #   }
+  # )
+  # 
+  # # Organize data
+  # vi_i <- lapply(vi_lists, unlist)
+  # 
+  # # Initialize JSD matrix
+  # vi_matrix <- matrix(
+  #   0,
+  #   nrow = length(networks),
+  #   ncol = length(networks)
+  # )
+  # 
+  # # Loop through
+  # for(i in 1:length(vi_i)){
+  #   vi_matrix[i+1,1:(length(vi_i[[i]]))] <- vi_i[[i]]
+  # }
+  # 
+  # # Make symmetric
+  # vi_sym <- vi_matrix + t(vi_matrix)
+  # 
+  # # Add names
+  # colnames(vi_sym) <- names(networks)
+  # row.names(vi_sym) <- names(networks)
+  # 
+  # # Variation of Information distance
+  # vidist <- vi_sym
+  # 
+  # # Message user
+  # message("done.")
+  
   # Message user
   message("Computing Jensen-Shannon Distance...\n", appendLF = FALSE)
   
@@ -110,16 +178,16 @@ infoCluster <- function(
   cl <- parallel::makeCluster(ncores)
   
   # Export
-  # parallel::clusterExport(
-  #   cl = cl,
-  #   varlist = c(
-  #     # "rescaled_laplacian",
-  #     # "vn_entropy",
-  #     "jsd",
-  #     "networks"
-  #   ),
-  #   envir = environment()
-  # )
+  parallel::clusterExport(
+    cl = cl,
+    varlist = c(
+      # "rescaled_laplacian",
+      # "vn_entropy",
+      "jsd",
+      "networks"
+    ),
+    envir = environment()
+  )
   
   # Obtain lists
   jsd_lists <- pbapply::pblapply(
@@ -195,107 +263,36 @@ infoCluster <- function(
   # Make diagonal 0 again
   diag(jsdist) <- 0
   
-  # # Louvain consensus clustering
-  # clusters <- most_common_consensus(
-  #   network = jss,
-  #   order = "higher",
-  #   consensus.iter = 1000,
-  #   resolution = 1
-  # )$most_common
+  # Combine VI and JSD
+  # infodist <- vidist + jsdist
+  # diag(infodist) <- 0
   
   # Perform hierarchical clustering
   hier_clust <- hclust(
     d = as.dist(jsdist),
-    method = "complete"
+    method = "ward.D2"
   )
-  
-  # # Check for single cluster
-  # if(
-  #   all(clusters == 1) | # >= 0.95 | # at least 95% of individuals
-  #   length(unique(clusters)) == length(clusters) # consensus all individuals
-  # ){
-  # 
-  #   # Obtain clusters
-  #   clusters <- rep(1, ncol(jsdist))
-  #   names(clusters) <- colnames(jsdist)
-  # 
-  # }else{
-  #   
-  #   # Compute modularity matrix
-  #   Q_matrix <- modularity_matrix(
-  #     A = jss,
-  #     resolution = 1
-  #   )
-  #   
-  #   # Maximize modularity
-  #   Qs <- unlist(
-  #     lapply(
-  #       X = 1:ncol(jss),
-  #       FUN = function(i){
-  #         quick_modularity(
-  #           communities = cutree(hier_clust, i),
-  #           A = jss,
-  #           Q_matrix = Q_matrix
-  #         )
-  #         
-  #       }
-  #     )
-  #   )
-  #   
-  #   # Obtain clusters
-  #   clusters <- cutree(hier_clust, which.max(Qs))
-  #   
-  # }
-  
-  # # Initialize silhouette vector
-  # silhouette_vec <- numeric(length = ncol(jsdist) - 1)
-  # 
-  # # Make names the number of clusters
-  # names(silhouette_vec) <- 2:ncol(jsdist)
-  # 
-  # # Loop through cuts
-  # for(i in 2:length(silhouette_vec)){
-  #   
-  #   # Compute silhouette
-  #   hier_silho <- cluster::silhouette(
-  #     x = cutree(hier_clust, i),
-  #     dist = as.dist(jsdist)
-  #   )
-  #   
-  #   # Obtain summary
-  #   silho_summ <- summary(hier_silho)
-  #   
-  #   # Obtain average silhouette
-  #   silhouette_vec[i-1] <- mean(silho_summ$clus.avg.widths)
-  #   
-  # }
-  # 
-  # # Obtain maximum average silhouette
-  # optimal_cut <- as.numeric(names(which.max(silhouette_vec)))
-  # 
-  # # Obtain clusters
-  # clusters <- cutree(hier_clust, optimal_cut)
   
   # Jensen-Shannon Similarity
   jss <- 1 - jsdist
-  
+
   # Make diagonal of Jensen-Shannon Similarity = 0
   diag(jss) <- 0
   
   # Compute modularity matrix
   Q_matrix <- modularity_matrix(
-    A = jss,
+    A = vidist,
     resolution = 1
   )
   
   # Maximize modularity
   Qs <- unlist(
     lapply(
-      X = 1:ncol(jss),
+      X = 1:ncol(vidist),
       FUN = function(i){
         quick_modularity(
           communities = cutree(hier_clust, i),
-          A = jss,
+          A = vidist,
           Q_matrix = Q_matrix
         )
       }

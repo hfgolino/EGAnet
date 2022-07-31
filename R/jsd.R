@@ -90,7 +90,7 @@ jsd <- function(
     
     # Compute JSD
     JSD <- sqrt(
-      vn_comb - (0.5 * (vn1 + vn2))
+      abs(vn_comb - (0.5 * (vn1 + vn2)))
     )
     
   }else if(method == "kld"){
