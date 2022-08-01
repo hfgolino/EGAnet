@@ -57,7 +57,7 @@
 #' 
 #' @export
 # Information Theoretic Clustering for dynEGA
-# Updated 29.07.2022
+# Updated 01.08.2022
 infoCluster <- function(
     dynEGA.object,
     ncores,
@@ -381,6 +381,17 @@ infoCluster <- function(
       )
       
     }
+    
+    # Compile results
+    single_cluster <- list(
+      JSD_random = jsdist_random,
+      t.test = comparison,
+      adaptive.p.value = adaptive_p,
+      d = d(
+        jsdist[lower.tri(jsdist)],
+        jsdist_random[lower.tri(jsdist_random)]
+      )
+    )
 
   }
   
@@ -521,6 +532,11 @@ infoCluster <- function(
     clusterPlot = cluster_plot,
     JSD = jsdist
   )
+  
+  ## Check for single cluster test
+  if(exists("single_cluster")){
+    results$single_cluster_test <- single_cluster
+  }
 
   ## Set class
   class(results) <- "infoCluster"

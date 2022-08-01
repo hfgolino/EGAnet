@@ -1122,6 +1122,39 @@ most_common_consensus <- function(
 # NETWORKTOOLBOX ----
 #%%%%%%%%%%%%%%%%%%%%
 
+#' @noRd
+# Cohen's d
+# Updated 01.08.2021
+d <- function(samp1, samp2)
+{
+  # Remove NAs
+  samp1 <- samp1[!is.na(samp1)]
+  samp2 <- samp2[!is.na(samp2)]
+  
+  # Means
+  m1 <- mean(samp1, na.rm = TRUE)
+  m2 <- mean(samp2, na.rm = TRUE)
+  
+  # Numerator
+  num <- m1 - m2
+  
+  # Degrees of freedom
+  df1 <- length(samp1) - 1
+  df2 <- length(samp2) - 1
+  
+  # Variance
+  var1 <- var(samp1, na.rm = TRUE)
+  var2 <- var(samp2, na.rm = TRUE)
+  
+  # Denominator
+  denom <- sqrt(
+    ((df1 * var1) + (df2 * var2)) \ (df1 + df2)
+  )
+  
+  return(abs(num / denom))
+  
+}
+
 # adapt.a
 #' @noRd
 #' @importFrom stats qchisq
