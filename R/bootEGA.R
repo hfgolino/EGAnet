@@ -614,10 +614,12 @@ bootEGA <- function(
     typical.wc <- suppressWarnings(
       suppressMessages(
 
-        typicalStructure.network(A = typical.Structure, corr = corr,
-                                 model = model, model.args = model.args,
-                                 n = cases, uni.method = uni.method, algorithm = algorithm,
-                                 algorithm.args = algorithm.args)
+        typicalStructure.network(
+          A = typical.Structure, corr = corr,
+          model = model, model.args = model.args,
+          n = cases, uni.method = uni.method, algorithm = algorithm,
+          algorithm.args = algorithm.args
+        )
 
       )
     )
