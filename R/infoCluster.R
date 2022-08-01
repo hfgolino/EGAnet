@@ -97,75 +97,7 @@ infoCluster <- function(
   networks <- lapply(dynEGA.ind, function(x){
     x$network
   })
-  
-  # # Obtain memberships
-  # wcs <- lapply(dynEGA.ind, function(x){
-  #   x$wc
-  # })
-  # 
-  # # Message user
-  # message("Computing Variation of Information...\n", appendLF = FALSE)
-  # 
-  # # Obtain lists
-  # vi_lists <- lapply(
-  #   X = 2:length(wcs),
-  #   FUN = function(i){
-  #     
-  #     # Compute VI values
-  #     vi_values <- lapply(1:(i-1), function(j){
-  #       
-  #       # Try
-  #       vi_value <- try(
-  #         vi(
-  #           wc1 = wcs[[i]],
-  #           wc2 = wcs[[j]]
-  #         ),
-  #         silent = TRUE
-  #       )
-  #       
-  #       # Check if value is OK
-  #       if(!is(vi_value, "try-error")){
-  #         return(vi_value)
-  #       }else{
-  #         return(NA)
-  #       }
-  #       
-  #     })
-  #     
-  #     # Return
-  #     return(vi_values)
-  #     
-  #   }
-  # )
-  # 
-  # # Organize data
-  # vi_i <- lapply(vi_lists, unlist)
-  # 
-  # # Initialize JSD matrix
-  # vi_matrix <- matrix(
-  #   0,
-  #   nrow = length(networks),
-  #   ncol = length(networks)
-  # )
-  # 
-  # # Loop through
-  # for(i in 1:length(vi_i)){
-  #   vi_matrix[i+1,1:(length(vi_i[[i]]))] <- vi_i[[i]]
-  # }
-  # 
-  # # Make symmetric
-  # vi_sym <- vi_matrix + t(vi_matrix)
-  # 
-  # # Add names
-  # colnames(vi_sym) <- names(networks)
-  # row.names(vi_sym) <- names(networks)
-  # 
-  # # Variation of Information distance
-  # vidist <- vi_sym
-  # 
-  # # Message user
-  # message("done.")
-  
+ 
   # Message user
   message("Computing Jensen-Shannon Distance...\n", appendLF = FALSE)
   
@@ -178,16 +110,16 @@ infoCluster <- function(
   cl <- parallel::makeCluster(ncores)
   
   # Export
-  # parallel::clusterExport(
-  #   cl = cl,
-  #   varlist = c(
-  #     # "rescaled_laplacian",
-  #     # "vn_entropy",
-  #     "jsd",
-  #     "networks"
-  #   ),
-  #   envir = environment()
-  # )
+  parallel::clusterExport(
+    cl = cl,
+    varlist = c(
+      "rescaled_laplacian",
+      "vn_entropy",
+      "jsd",
+      "networks"
+    ),
+    envir = environment()
+  )
   
   # Obtain lists
   jsd_lists <- pbapply::pblapply(
@@ -263,9 +195,7 @@ infoCluster <- function(
   # Make diagonal 0 again
   diag(jsdist) <- 0
   
-  # Combine VI and JSD
-  # infodist <- vidist + jsdist
-  # diag(infodist) <- 0
+  mean(jsdist[lower.tri(jsdist)])
   
   # Perform hierarchical clustering
   hier_clust <- hclust(
@@ -329,16 +259,16 @@ infoCluster <- function(
     cl <- parallel::makeCluster(ncores)
 
     # Export
-    # parallel::clusterExport(
-    #   cl = cl,
-    #   varlist = c(
-    #     # "rescaled_laplacian",
-    #     # "vn_entropy",
-    #     "jsd",
-    #     "random_networks"
-    #   ),
-    #   envir = environment()
-    # )
+    parallel::clusterExport(
+      cl = cl,
+      varlist = c(
+        "rescaled_laplacian",
+        "vn_entropy",
+        "jsd",
+        "random_networks"
+      ),
+      envir = environment()
+    )
 
     # Obtain lists
     jsd_random_lists <- pbapply::pblapply(
