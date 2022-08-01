@@ -1148,7 +1148,7 @@ d <- function(samp1, samp2)
   
   # Denominator
   denom <- sqrt(
-    ((df1 * var1) + (df2 * var2)) \ (df1 + df2)
+    ((df1 * var1) + (df2 * var2)) / (df1 + df2)
   )
   
   return(abs(num / denom))
