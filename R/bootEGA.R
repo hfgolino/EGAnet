@@ -14,7 +14,7 @@
 #'
 #' @param uni.method Character.
 #' What unidimensionality method should be used? 
-#' Defaults to \code{"LE"}.
+#' Defaults to \code{"louvain"}.
 #' Current options are:
 #' 
 #' \itemize{
@@ -148,6 +148,40 @@
 #' @param algorithm.args List.
 #' A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
 #' or some other community detection algorithm function (see examples)
+#' 
+#' @param consensus.iter Numeric.
+#' Number of iterations to perform in consensus clustering for the Louvain algorithm
+#' (see Lancichinetti & Fortunato, 2012).
+#' Defaults to \code{100}
+#' 
+#' @param consensus.method Character.
+#' What consensus clustering method should be used? 
+#' Defaults to \code{"highest_modularity"}.
+#' Current options are:
+#' 
+#' \itemize{
+#' 
+#' \item{\strong{\code{highest_modularity}}}
+#' {Uses the community solution that achieves the highest modularity
+#' across iterations}
+#' 
+#' \item{\strong{\code{most_common}}}
+#' {Uses the community solution that is found the most
+#' across iterations}
+#' 
+#' \item{\strong{\code{iterative}}}
+#' {Identifies the most common community solutions across iterations
+#' and determines how often nodes appear in the same community together.
+#' A threshold of 0.30 is used to set low proportions to zero.
+#' This process repeats iteratively until all nodes have a proportion of
+#' 1 in the community solution.
+#' }
+#' 
+#' \item{\code{lowest_tefi}}
+#' {Uses the community solution that achieves the lowest \code{\link[EGAnet]{tefi}}
+#' across iterations}
+#' 
+#' }
 #'
 #' @param typicalStructure Boolean.
 #' If \code{TRUE}, returns the typical network of partial correlations
@@ -321,6 +355,12 @@ bootEGA <- function(
     EGA.type = c("EGA", "EGA.fit", "hierEGA", "riEGA"),
     model = c("glasso", "TMFG"), model.args = list(),
     algorithm = c("walktrap", "leiden", "louvain"), algorithm.args = list(),
+    consensus.method = c(
+      "highest_modularity",
+      "most_common",
+      "iterative",
+      "lowest_tefi"
+    ), consensus.iter = 100,
     typicalStructure = TRUE, plot.typicalStructure = TRUE,
     plot.args = list(), ncores, ...
 ) 
@@ -387,6 +427,11 @@ bootEGA <- function(
   if(missing(type)){
     type <- "parametric"
   }else{type <- match.arg(type)}
+  
+  if(missing(consensus.method)){
+    consensus.method <- "most_common"
+  }else{consensus.method <- tolower(match.arg(consensus.method))}
+  
 
   if(missing(ncores)){
     ncores <- ceiling(parallel::detectCores() / 2)
@@ -424,6 +469,8 @@ bootEGA <- function(
     data = data, n = cases, uni.method = uni.method,
     corr = corr, model = model, model.args = model.args,
     algorithm = algorithm, algorithm.args = algorithm.args,
+    consensus.method = consensus.method,
+    consensus.iter = consensus.iter,
     plot.EGA = FALSE
   )
   
@@ -605,12 +652,14 @@ bootEGA <- function(
 
   if (typicalStructure){
 
-    typical.Structure <- switch(model,
-                                "glasso" = apply(simplify2array(bootGraphs),1:2, median),
-                                "TMFG" = apply(simplify2array(bootGraphs),1:2, mean)
-                         )
+    typical.Structure <- switch(
+      model,
+      "glasso" = apply(simplify2array(bootGraphs),1:2, median),
+      "TMFG" = apply(simplify2array(bootGraphs),1:2, mean)
+      
+    )
 
-    # Sub-routine to following EGA approach (handles undimensional structures)
+    # Sub-routine to following EGA approach (handles unidimensional structures)
     typical.wc <- suppressWarnings(
       suppressMessages(
 
@@ -618,7 +667,9 @@ bootEGA <- function(
           A = typical.Structure, corr = corr,
           model = model, model.args = model.args,
           n = cases, uni.method = uni.method, algorithm = algorithm,
-          algorithm.args = algorithm.args
+          algorithm.args = algorithm.args,
+          consensus.method = consensus.method,
+          consensus.iter = consensus.iter
         )
 
       )
@@ -691,10 +742,14 @@ bootEGA <- function(
       typical.wc_higher <- suppressWarnings(
         suppressMessages(
           
-          typicalStructure.network(A = typical.Structure_higher, corr = corr,
-                                   model = model, model.args = model.args,
-                                   n = cases, uni.method = uni.method, algorithm = algorithm,
-                                   algorithm.args = algorithm.args)
+          typicalStructure.network(
+            A = typical.Structure_higher, corr = corr,
+            model = model, model.args = model.args,
+            n = cases, uni.method = uni.method, algorithm = algorithm,
+            algorithm.args = algorithm.args,
+            consensus.method = consensus.method,
+            consensus.iter = consensus.iter
+          )
           
         )
       )

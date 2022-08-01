@@ -17,6 +17,8 @@ bootEGA(
   model.args = list(),
   algorithm = c("walktrap", "leiden", "louvain"),
   algorithm.args = list(),
+  consensus.method = c("highest_modularity", "most_common", "iterative", "lowest_tefi"),
+  consensus.iter = 100,
   typicalStructure = TRUE,
   plot.typicalStructure = TRUE,
   plot.args = list(),
@@ -33,7 +35,7 @@ Sample size if \code{data} provided is a correlation matrix}
 
 \item{uni.method}{Character.
 What unidimensionality method should be used? 
-Defaults to \code{"LE"}.
+Defaults to \code{"louvain"}.
 Current options are:
 
 \itemize{
@@ -167,6 +169,40 @@ Defaults to \code{objective_function = "modularity"}}
 \item{algorithm.args}{List.
 A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
 or some other community detection algorithm function (see examples)}
+
+\item{consensus.method}{Character.
+What consensus clustering method should be used? 
+Defaults to \code{"highest_modularity"}.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{highest_modularity}}}
+{Uses the community solution that achieves the highest modularity
+across iterations}
+
+\item{\strong{\code{most_common}}}
+{Uses the community solution that is found the most
+across iterations}
+
+\item{\strong{\code{iterative}}}
+{Identifies the most common community solutions across iterations
+and determines how often nodes appear in the same community together.
+A threshold of 0.30 is used to set low proportions to zero.
+This process repeats iteratively until all nodes have a proportion of
+1 in the community solution.
+}
+
+\item{\code{lowest_tefi}}
+{Uses the community solution that achieves the lowest \code{\link[EGAnet]{tefi}}
+across iterations}
+
+}}
+
+\item{consensus.iter}{Numeric.
+Number of iterations to perform in consensus clustering for the Louvain algorithm
+(see Lancichinetti & Fortunato, 2012).
+Defaults to \code{100}}
 
 \item{typicalStructure}{Boolean.
 If \code{TRUE}, returns the typical network of partial correlations

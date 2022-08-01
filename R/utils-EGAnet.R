@@ -4084,9 +4084,12 @@ dnn.predict <- function (loads)
 #' @noRd
 #'
 # Typical network (bootEGA) function
-# Updated 12.03.2020
-typicalStructure.network <- function (A, corr, model, model.args, n = NULL, uni.method,
-                                      algorithm, algorithm.args)
+# Updated 01.08.2022
+typicalStructure.network <- function (
+    A, corr, model, model.args, n = NULL, uni.method,
+    algorithm, algorithm.args,
+    consensus.method, consensus.iter
+)
 {
 
   # Convert to igraph
@@ -4102,54 +4105,105 @@ typicalStructure.network <- function (A, corr, model, model.args, n = NULL, uni.
 
   }
 
-  # Algorithm Arguments
-  ## Check for algorithm
+  # Algorithm function
   if(!is.function(algorithm)){
-
-    if(algorithm == "walktrap"){
-      algorithm.formals <- formals(igraph::cluster_walktrap)
-    }else if(algorithm == "louvain"){
-      algorithm.formals <- formals(igraph::cluster_louvain)
-    }
-
-  }else{algorithm.formals <- formals(algorithm)}
-
-  ## Check for input algorithm arguments
-  if(length(algorithm.args) != 0){
-
-    ### Check for matching arguments
-    if(any(names(algorithm.args) %in% names(algorithm.formals))){
-
-      algorithm.replace.args <- algorithm.args[na.omit(match(names(algorithm.formals), names(algorithm.args)))]
-
-      algorithm.formals[names(algorithm.replace.args)] <- algorithm.replace.args
-    }
-
+    algorithm.FUN <- switch(
+      algorithm,
+      "walktrap" = igraph::cluster_walktrap,
+      "leiden" = igraph::cluster_leiden,
+      "louvain" = igraph::cluster_louvain
+    )
+  }else{
+    algorithm.FUN <- algorithm
   }
-
-  ## Remove ellipses
-  if("..." %in% names(algorithm.formals)){
-    algorithm.formals[which(names(algorithm.formals) == "...")] <- NULL
-  }
+  
+  # Algorithm arguments
+  algorithm.ARGS <- obtain.arguments(
+    FUN = algorithm.FUN,
+    FUN.args = algorithm.args
+  )
 
   ## Remove weights from igraph functions' arguments
-  if("weights" %in% names(algorithm.formals)){
-    algorithm.formals[which(names(algorithm.formals) == "weights")] <- NULL
+  if("weights" %in% names(algorithm.ARGS)){
+    algorithm.ARGS[which(names(algorithm.ARGS) == "weights")] <- NULL
   }
 
-  # Multidimensional result
-  ## Run community detection algorithm
-  algorithm.formals$graph <- graph
-
-  if(!is.function(algorithm)){
-
-    multi.wc <- switch(algorithm,
-                       "walktrap" = do.call(igraph::cluster_walktrap, as.list(algorithm.formals))$membership,
-                       "louvain" = do.call(igraph::cluster_louvain, as.list(algorithm.formals))$membership
+  # Check for unconnected nodes
+  if(all(degree(A) == 0)){
+    
+    # Initialize community membership list
+    wc <- list()
+    wc$membership <- rep(NA, ncol(A))
+    warning(
+      "Estimated network contains unconnected nodes:\n",
+      paste(names(which(strength(A)==0)), collapse = ", ")
     )
-
-  }else{multi.wc <- do.call(what = algorithm, args = as.list(algorithm.formals))$membership}
-
+    
+    unconnected <- which(degree(A) == 0)
+    
+  }else{
+    
+    if(any(degree(A) == 0)){
+      
+      warning(
+        "Estimated network contains unconnected nodes:\n",
+        paste(names(which(strength(A)==0)), collapse = ", ")
+      )
+      
+      unconnected <- which(degree(A) == 0)
+      
+    }
+    
+    # Check if algorithm is a function
+    if(is.function(algorithm)){
+      
+      # Convert to igraph
+      graph <- suppressWarnings(convert2igraph(abs(A)))
+      
+      # Run community detection algorithm
+      algorithm.ARGS$graph <- graph
+      
+      # Call community detection algorithm
+      wc <- do.call(
+        what = algorithm.FUN,
+        args = algorithm.ARGS
+      )$membership
+      
+    }else if(tolower(algorithm) == "louvain"){
+      
+      # Initialize community membership list
+      wc <- list()
+      
+      # Population community membership list
+      wc <- consensus_clustering(
+        network = A,
+        corr = A,
+        order = "higher",
+        consensus.iter = consensus.iter,
+        resolution = algorithm.ARGS$resolution
+      )[[consensus.method]]
+      
+    }else{
+      
+      # Convert to igraph
+      graph <- suppressWarnings(convert2igraph(abs(A)))
+      
+      # Run community detection algorithm
+      algorithm.ARGS$graph <- graph
+      
+      # Call community detection algorithm
+      wc <- do.call(
+        what = algorithm.FUN,
+        args = algorithm.ARGS
+      )$membership
+      
+    }
+    
+  }
+  
+  # Make wc == multi.wc
+  multi.wc <- wc
+  
   # Get new data
   if(model == "glasso"){
 
@@ -4241,13 +4295,32 @@ typicalStructure.network <- function (A, corr, model, model.args, n = NULL, uni.
 
     # Leading eigenvalue approach for one and two dimensions
     wc <- igraph::cluster_leading_eigen(convert2igraph(abs(cor.data)))$membership
-    names(wc) <- colnames(cor.data)
+    names(wc) <- colnames(A)
     n.dim <- length(na.omit(unique(wc)))
 
 
     # Set up results
     if(n.dim != 1){
       wc <- multi.wc
+    }else if(uni.method == "louvain"){
+      
+      ## Compute correlation matrix
+      cor.data <- switch(corr,
+                         "cor_auto" = qgraph::cor_auto(data),
+                         "pearson" = cor(data, use = "pairwise.complete.obs"),
+                         "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
+      )
+      
+      # Most common consensus with Louvain
+      wc <- most_common_consensus(
+        network = abs(cor.data),
+        order = "higher",
+        consensus.iter = 1000,
+        resolution = 0.95
+      )$most_common
+      names(wc) <- colnames(A)
+      n.dim <- length(na.omit(unique(wc)))
+      
     }
 
   }

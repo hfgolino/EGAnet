@@ -234,7 +234,7 @@ infoCluster <- function(
   if(length(unique(na.omit(clusters))) == 1){
 
     # Message user
-    message("One cluster detected. Testing random networks to determine the validity...")
+    message("One cluster detected. Performing single cluster test...")
 
     # Generate random networks
     random_networks <- lapply(networks, function(x){

@@ -34,7 +34,7 @@ Sample size if \code{data} provided is a correlation matrix}
 
 \item{uni.method}{Character.
 What unidimensionality method should be used? 
-Defaults to \code{"LE"}.
+Defaults to \code{"louvain"}.
 Current options are:
 
 \itemize{
@@ -47,11 +47,17 @@ expansion is used. This is the method used in the Golino et al. (2020)
 \emph{Psychological Methods} simulation.}
 
 \item{\strong{\code{LE}}}
-{Applies the leading eigenvalue algorithm (\code{\link[igraph]{cluster_leading_eigen}})
+{Applies the Leading Eigenvalue algorithm (\code{\link[igraph]{cluster_leading_eigen}})
 on the empirical correlation matrix. If the number of dimensions is 1,
-then the leading eigenvalue solution is used; otherwise, regular EGA
+then the Leading Eigenvalue solution is used; otherwise, regular EGA
 is used. This is the final method used in the Christensen, Garrido,
 and Golino (2021) simulation.}
+
+\item{\strong{\code{louvain}}}
+{Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
+on the empirical correlation matrix using a resolution parameter = 0.95.
+If the number of dimensions is 1, then the Louvain solution is used; otherwise,
+regular EGA is used. This method was validated in the Christensen (2022) simulation.}
 
 }}
 
