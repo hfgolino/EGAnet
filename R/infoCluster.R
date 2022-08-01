@@ -195,8 +195,6 @@ infoCluster <- function(
   # Make diagonal 0 again
   diag(jsdist) <- 0
   
-  mean(jsdist[lower.tri(jsdist)])
-  
   # Perform hierarchical clustering
   hier_clust <- hclust(
     d = as.dist(jsdist),
