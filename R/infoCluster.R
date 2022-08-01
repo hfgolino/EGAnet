@@ -587,7 +587,7 @@ infoCluster <- function(
   results <- list(
     clusters = clusters,
     modularity = Qs[which.max(Qs)],
-    clusterTree = hier_cluster,
+    clusterTree = hier_clust,
     clusterPlot = cluster_plot,
     JSD = jsdist
   )
