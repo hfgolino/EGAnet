@@ -1126,47 +1126,139 @@ most_common_consensus <- function(
 #' @noRd
 #' @importFrom stats qchisq
 # Adaptive Alpha
-# Updated 30.12.2021
-adapt.a <- function (test = "cor",
+# Updated 01.08.2022
+adapt.a <- function (test = c("anova","chisq","cor","one.sample","two.sample","paired"),
                      ref.n = NULL, n = NULL, alpha = .05, power = .80,
-                     efxize = c("small","medium","large"))
+                     efxize = c("small","medium","large"), groups = NULL, df = NULL)
 {
-  if(missing(test))
-  {stop("test must be selected")
+  
+  # Need a test
+  if(missing(test)){
+    stop("test must be selected")
   }else{test <- match.arg(test)}
-
-  if(missing(efxize))
-  {
+  
+  # Assign medium effect size
+  if(missing(efxize)){
     efxize <- "medium"
     message("No effect size selected. Medium effect size computed.")
   }else{efxize <- efxize}
-
-  if(test=="cor")
-  {
-    if(efxize=="small")
-    {efxize <- .10
-    }else if(efxize=="medium")
-    {efxize <- .30
-    }else if(efxize=="large")
-    {efxize <- .50}
-
-    if(!is.numeric(efxize))
-    {stop("Effect size must be numeric")}
-
-    if(is.null(ref.n))
-    {ref.n <- pwr.r.test(r=efxize,power=power,sig.level=alpha)$n}
-
+  
+  # ANOVA
+  if(test == "anova"){
+    
+    # Check for groups
+    if(is.null(groups)){
+      stop("ANOVA is selected. Number of groups must be set")
+    }
+    
+    # Set effect size
+    efxize <- switch(
+      efxize,
+      "small" = 0.10,
+      "medium" = 0.25,
+      "large" = 0.40
+    )
+    
+    # Determine reference sample size
+    if(is.null(ref.n)){
+      ref.n <- pwr::pwr.anova.test(f=efxize,power=power,sig.level=alpha,k=groups)$n
+      message("ref.n is observations per group")
+    }
+    
+    # Numerator
     num <- sqrt(ref.n*(log(ref.n)+qchisq((1-alpha),1)))
-  }
+    
+  }else if(test == "chisq"){ # Chi-square
+    
+    # Needs degrees of freedom
+    if(is.null(df)){
+      stop("Chi-square is selected. Degrees of freedom must be set")
+    }
+    
+    # Set effect size
+    efxize <- switch(
+      efxize,
+      "small" = 0.10,
+      "medium" = 0.30,
+      "large" = 0.50
+    )
 
-  #denominator
+    # Determine reference sample size
+    if(is.null(ref.n)){
+      ref.n <- pwr::pwr.chisq.test(w=efxize,df=df,power=power,sig.level=alpha)$N
+    }
+    # Numerator
+    num <- sqrt(ref.n*(log(ref.n)+qchisq((1-alpha),1)))
+    
+  }else if(test == "cor"){ # Correlation
+    
+    # Set effect size
+    efxize <- switch(
+      efxize,
+      "small" = 0.10,
+      "medium" = 0.30,
+      "large" = 0.50
+    )
+    
+    # Determine reference sample size
+    if(is.null(ref.n)){
+      ref.n <- pwr::pwr.r.test(r=efxize,power=power,sig.level=alpha)$n
+    }
+    
+    # Numerator
+    num <- sqrt(ref.n*(log(ref.n)+qchisq((1-alpha),1)))
+    
+  }else if(any(c("one.sample", "two.sample", "paired") %in% test)){# t-test
+    
+    # Set effect size
+    efxize <- switch(
+      efxize,
+      "small" = 0.20,
+      "medium" = 0.50,
+      "large" = 0.80
+    )
+    
+    # Determine reference sample size
+    if(is.null(ref.n)){
+      ref.n <- pwr::pwr.t.test(d=efxize,power=power,sig.level=alpha,type=test)$n
+    }
+    
+    # Numerator
+    num <- sqrt(ref.n*(log(ref.n)+qchisq((1-alpha),1)))
+    
+  }else{stop("test does not exist")}
+  
+  # Denominator
   denom <- (sqrt(n*(log(n)+qchisq((1-alpha),1))))
-  #adjusted alpha calculation
+  
+  # Adjusted alpha calculation
   adj.a <- alpha*num/denom
-
-  #critical values
-  if(test=="cor")
-  {
+  
+  # Critical values
+  if(test == "anova"){
+    
+    critical.f <- function (groups, n, a)
+    {
+      df1 <- groups - 1
+      df2 <- n - groups
+      cvf <- qf(a, df1, df2, lower.tail = FALSE)
+      return(cvf)
+    }
+    
+    cv <- critical.f(groups, n, adj.a)
+    
+  }else if(test == "chisq"){
+    
+    critical.chi <- function (df, a)
+    {
+      cvchi <- qchisq(a, df, lower.tail = FALSE)
+      return(cvchi)
+    }
+    
+    cv <- critical.chi(df, adj.a)
+    
+  }else if(test == "cor"){
+    
     critical.r <- function (n, a)
     {
       df <- n - 2
@@ -1174,21 +1266,40 @@ adapt.a <- function (test = "cor",
       cvr <- sqrt( (critical.t^2) / ( (critical.t^2) + df ) )
       return(cvr)
     }
-
+    
     cv <- critical.r(n, adj.a)
+    
+  }else if(any(c("one.sample", "two.sample", "paired") %in% test)){
+    
+    critical.t <- function (n, a)
+    {
+      df <- n - 2
+      cvt <- qt( a/2, df, lower.tail = FALSE )
+      return(cvt)
+    }
+    
+    cv <- critical.t(n, adj.a)
+    
   }
-
-  #output
-  output <- list()
-  output$adapt.a <- adj.a
-  output$crit.value <- cv
-  output$orig.a <- alpha
-  output$ref.n <- ref.n
-  output$exp.n <- n
-  output$power <- power
-  output$efxize <- efxize
+  
+  # Output
+  output <- list(
+    adapt.a = adj.a, crit.value = cv,
+    orig.a = alpha, ref.n = ref.n,
+    exp.n = n, power = power,
+    efxize = efxize
+  )
+  # Check for ANOVA or Chi-square
+  if(test == "anova"){
+    output$groups <- groups
+    output$df <- c((groups - 1), (n - groups))
+    
+  }else if(test=="chisq"){
+    output$df <- df
+  }
+  # Add test
   output$test <- test
-
+  
   return(output)
 }
 
@@ -6675,7 +6786,7 @@ expand.grid.unique <- function(x, y, include.equals = FALSE)
 #' Rewiring function
 #' @noRd
 # Updated 16.07.2022
-rewire <- function(network, noise = TRUE)
+rewire <- function(network, min = 0.20, max = 0.40, noise = TRUE)
 {
   
   # Number of edges
@@ -6705,7 +6816,7 @@ rewire <- function(network, noise = TRUE)
   }
   
   # Set random proportion
-  proportion <- runif(1, min = 0.20, max = 0.40)
+  proportion <- runif(1, min = min, max = max)
   
   # Obtain proportion of connections to change
   rewire_number <- floor(edges * proportion)
