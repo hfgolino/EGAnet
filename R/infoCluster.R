@@ -110,16 +110,16 @@ infoCluster <- function(
   cl <- parallel::makeCluster(ncores)
   
   # Export
-  parallel::clusterExport(
-    cl = cl,
-    varlist = c(
-      "rescaled_laplacian",
-      "vn_entropy",
-      "jsd",
-      "networks"
-    ),
-    envir = environment()
-  )
+  # parallel::clusterExport(
+  #   cl = cl,
+  #   varlist = c(
+  #     "rescaled_laplacian",
+  #     "vn_entropy",
+  #     "jsd",
+  #     "networks"
+  #   ),
+  #   envir = environment()
+  # )
   
   # Obtain lists
   jsd_lists <- pbapply::pblapply(
@@ -257,16 +257,16 @@ infoCluster <- function(
     cl <- parallel::makeCluster(ncores)
 
     # Export
-    parallel::clusterExport(
-      cl = cl,
-      varlist = c(
-        "rescaled_laplacian",
-        "vn_entropy",
-        "jsd",
-        "random_networks"
-      ),
-      envir = environment()
-    )
+    # parallel::clusterExport(
+    #   cl = cl,
+    #   varlist = c(
+    #     "rescaled_laplacian",
+    #     "vn_entropy",
+    #     "jsd",
+    #     "random_networks"
+    #   ),
+    #   envir = environment()
+    # )
 
     # Obtain lists
     jsd_random_lists <- pbapply::pblapply(
