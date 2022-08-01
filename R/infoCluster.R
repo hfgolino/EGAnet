@@ -447,7 +447,7 @@ infoCluster <- function(
       
       # Let user know
       message(
-        "Empirical Jensen-Shannon distance was no different or greater than random Jensen-Shannon Distance: No clusters exist."
+        "Empirical Jensen-Shannon Distance was no different or greater than random Jensen-Shannon Distance: No clusters detected."
       )
       
     }
