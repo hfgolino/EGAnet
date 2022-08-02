@@ -13,7 +13,7 @@
 #' Defaults to \code{parallel::detectCores() / 2} or half of your
 #' computer's processing power.
 #' Set to \code{1} to not use parallel computing
-#'
+#' 
 #' If you're unsure how many cores your computer has,
 #' then use the following code: \code{parallel::detectCores()}
 #' 
@@ -57,10 +57,9 @@
 #' 
 #' @export
 # Information Theoretic Clustering for dynEGA
-# Updated 01.08.2022
+# Updated 02.08.2022
 infoCluster <- function(
     dynEGA.object,
-    ncores,
     plot.cluster = TRUE
 )
 {
@@ -101,66 +100,6 @@ infoCluster <- function(
   # Message user
   message("Computing Jensen-Shannon Distance...\n", appendLF = FALSE)
   
-  # Set cores (if missing)
-  if(missing(ncores)){
-    ncores <- ceiling(parallel::detectCores() / 2)
-  }
-  
-  # Make cluster
-  cl <- parallel::makeCluster(ncores)
-  
-  # Export
-  # parallel::clusterExport(
-  #   cl = cl,
-  #   varlist = c(
-  #     "rescaled_laplacian",
-  #     "vn_entropy",
-  #     "jsd",
-  #     "networks"
-  #   ),
-  #   envir = environment()
-  # )
-  
-  # Obtain lists
-  jsd_lists <- pbapply::pblapply(
-    cl = cl,
-    X = 2:length(networks),
-    FUN = function(i){
-      
-      # Compute JSD values
-      jsd_values <- lapply(1:(i-1), function(j){
-        
-        # Try
-        jsd_value <- try(
-          jsd(
-            network1 = networks[[i]],
-            network2 = networks[[j]],
-            method = "spectral"
-          ),
-          silent = TRUE
-        )
-        
-        # Check if value is OK
-        if(!is(jsd_value, "try-error")){
-          return(jsd_value)
-        }else{
-          return(NA)
-        }
-        
-      })
-      
-      # Return
-      return(jsd_values)
-      
-    }
-  )
-  
-  # Stop cluster
-  parallel::stopCluster(cl)
-  
-  # Organize data
-  jsd_i <- lapply(jsd_lists, unlist)
-  
   # Initialize JSD matrix
   jsd_matrix <- matrix(
     0,
@@ -168,10 +107,33 @@ infoCluster <- function(
     ncol = length(networks)
   )
   
+  # Set progress bar
+  pb <- txtProgressBar(
+    max = ncol(jsd_matrix),
+    style = 3
+  )
+  
   # Loop through
-  for(i in 1:length(jsd_i)){
-    jsd_matrix[i+1,1:(length(jsd_i[[i]]))] <- jsd_i[[i]]
+  for(i in 2:length(networks)){
+    
+    for(j in 1:(i-1)){
+      
+      # Obtain JSD values
+      jsd_matrix[i,j] <- jsd(
+        network1 = networks[[i]],
+        network2 = networks[[j]],
+        method = "spectral"
+      )
+      
+    }
+    
+    # Update progress
+    setTxtProgressBar(pb, i)
+    
   }
+  
+  # Close progress bar
+  close(pb)
   
   # Make symmetric
   jsd_sym <- jsd_matrix + t(jsd_matrix)
@@ -253,73 +215,41 @@ infoCluster <- function(
     # Message user
     message("Computing Jensen-Shannon Distance for Random Networks...\n", appendLF = FALSE)
 
-    # Make cluster
-    cl <- parallel::makeCluster(ncores)
-
-    # Export
-    # parallel::clusterExport(
-    #   cl = cl,
-    #   varlist = c(
-    #     "rescaled_laplacian",
-    #     "vn_entropy",
-    #     "jsd",
-    #     "random_networks"
-    #   ),
-    #   envir = environment()
-    # )
-
-    # Obtain lists
-    jsd_random_lists <- pbapply::pblapply(
-      cl = cl,
-      X = 2:length(random_networks),
-      FUN = function(i){
-
-        # Compute JSD values
-        jsd_values <- lapply(1:(i-1), function(j){
-
-          # Try
-          jsd_value <- try(
-            jsd(
-              network1 = random_networks[[i]],
-              network2 = random_networks[[j]],
-              method = "spectral"
-            ),
-            silent = TRUE
-          )
-
-          # Check if value is OK
-          if(!is(jsd_value, "try-error")){
-            return(jsd_value)
-          }else{
-            return(NA)
-          }
-
-        })
-
-        # Return
-        return(jsd_values)
-
-      }
-    )
-
-    # Stop cluster
-    parallel::stopCluster(cl)
-
-    # Organize data
-    jsd_random_i <- lapply(jsd_random_lists, unlist)
-
     # Initialize JSD matrix
     jsd_random_matrix <- matrix(
       0,
       nrow = length(random_networks),
       ncol = length(random_networks)
     )
-
+    
+    # Set progress bar
+    pb <- txtProgressBar(
+      max = ncol(jsd_random_matrix),
+      style = 3
+    )
+    
     # Loop through
-    for(i in 1:length(jsd_random_i)){
-      jsd_random_matrix[i+1,1:(length(jsd_random_i[[i]]))] <- jsd_random_i[[i]]
+    for(i in 2:length(random_networks)){
+      
+      for(j in 1:(i-1)){
+        
+        # Obtain JSD values
+        jsd_random_matrix[i,j] <- jsd(
+          network1 = random_networks[[i]],
+          network2 = random_networks[[j]],
+          method = "spectral"
+        )
+        
+      }
+      
+      # Update progress
+      setTxtProgressBar(pb, i)
+      
     }
-
+    
+    # Close progress bar
+    close(pb)
+    
     # Make symmetric
     jsd_random_sym <- jsd_random_matrix + t(jsd_random_matrix)
 

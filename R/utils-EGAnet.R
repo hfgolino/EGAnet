@@ -1157,7 +1157,7 @@ d <- function(samp1, samp2)
 
 # adapt.a
 #' @noRd
-#' @importFrom stats qchisq
+#' @importFrom stats qchisq qf t.test var
 # Adaptive Alpha
 # Updated 01.08.2022
 adapt.a <- function (test = c("anova","chisq","cor","one.sample","two.sample","paired"),
