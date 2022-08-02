@@ -304,7 +304,16 @@ LCT <- function (data, n, iter = 100,
             count_computations <- count_computations + 1
             
             # Update progress
-            if(count_computations %in% runtime_update){
+            if(count_computations < 5){
+              
+              # Update progress
+              custom_progress(
+                i = count_computations,
+                max = total_computations,
+                start_time = "calculating"
+              )
+              
+            }else if(count_computations %in% runtime_update){
               
               # Update progress
               custom_progress(

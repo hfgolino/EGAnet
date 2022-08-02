@@ -131,7 +131,16 @@ infoCluster <- function(
       count_computations <- count_computations + 1
       
       # Update progress
-      if(count_computations %in% runtime_update){
+      if(count_computations < runtime_update[2]){
+        
+        # Update progress
+        custom_progress(
+          i = count_computations,
+          max = total_computations,
+          start_time = "calculating"
+        )
+        
+      }else if(count_computations %in% runtime_update){
         
         # Update progress
         custom_progress(
@@ -174,6 +183,11 @@ infoCluster <- function(
     method = "complete"
   )
   
+  # Obtain cuts
+  hier_cuts <- lapply(1:ncol(jsdist), function(i){
+    cutree(hier_clust, i)
+  })
+  
   # Jensen-Shannon Similarity
   jss <- 1 - jsdist
 
@@ -202,6 +216,14 @@ infoCluster <- function(
   
   # Obtain clusters
   clusters <- cutree(hier_clust, which.max(Qs))
+  
+  # Make moduarity/cluster matrix
+  possible_clusters <- t(simplify2array(hier_cuts))
+  cluster_df <- data.frame(
+    Modularity = round(unlist(Qs), 7),
+    possible_clusters
+  )
+  
   
   # Check if single cluster
   if(length(unique(na.omit(clusters))) == 1){
@@ -266,7 +288,16 @@ infoCluster <- function(
         count_computations <- count_computations + 1
 
         # Update progress
-        if(count_computations %in% runtime_update){
+        if(count_computations < runtime_update[2]){
+          
+          # Update progress
+          custom_progress(
+            i = count_computations,
+            max = total_computations,
+            start_time = "calculating"
+          )
+          
+        }else if(count_computations %in% runtime_update){
           
           # Update progress
           custom_progress(
@@ -492,6 +523,7 @@ infoCluster <- function(
     clusters = clusters,
     modularity = Qs[which.max(Qs)],
     clusterTree = hier_clust,
+    clusterMatrix = possible_clusters,
     clusterPlot = cluster_plot,
     JSD = jsdist
   )
