@@ -355,7 +355,12 @@ infoCluster <- function(
   }
   
   # No plot if no clusters
-  if(all(clusters != 1:ncol(jsdist))){
+  if(all(clusters == 1:ncol(jsdist))){
+  
+    cluster_plot <- NULL
+    
+  }else{
+    
     # Convert for ggplot2
     cluster_data <- ggdendro::dendro_data(
       hier_clust
@@ -479,8 +484,7 @@ infoCluster <- function(
         plot(cluster_plot)
       )
     }
-  }else{
-    cluster_plot <- NULL
+  
   }
   
   ## Return data
