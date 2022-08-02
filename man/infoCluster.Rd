@@ -4,11 +4,16 @@
 \alias{infoCluster}
 \title{Information Theoretic Mixture Clustering for \code{\link[EGAnet]{dynEGA}}}
 \usage{
-infoCluster(dynEGA.object, ncores, plot.cluster = TRUE)
+infoCluster(dynEGA.object, plot.cluster = TRUE)
 }
 \arguments{
 \item{dynEGA.object}{A \code{\link[EGAnet]{dynEGA}} or a
 \code{\link[EGAnet]{dynEGA.ind.pop}} object that is used to match the arguments of the EII object.}
+
+\item{plot.cluster}{Boolean.
+Should plot of optimal and hierarchical clusters be output?
+Defaults to \code{TRUE}.
+Set to \code{FALSE} to not plot}
 
 \item{ncores}{Numeric.
 Number of cores to use in computing results.
@@ -18,11 +23,6 @@ Set to \code{1} to not use parallel computing
 
 If you're unsure how many cores your computer has,
 then use the following code: \code{parallel::detectCores()}}
-
-\item{plot.cluster}{Boolean.
-Should plot of optimal and hierarchical clusters be output?
-Defaults to \code{TRUE}.
-Set to \code{FALSE} to not plot}
 }
 \value{
 Returns a list containing:

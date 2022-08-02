@@ -107,15 +107,27 @@ infoCluster <- function(
     ncol = length(networks)
   )
   
-  # Set progress bar
-  pb <- txtProgressBar(
-    max = ncol(jsd_matrix),
-    style = 3
+  # Calculate total computations
+  total_computations <- length(
+    jsd_matrix[lower.tri(jsd_matrix)]
   )
   
+  # Count computations
+  count_computations <- 0
+
+  # Initialize runtime updates
+  runtime_update <- seq(0, total_computations, floor(total_computations / 100))
+  runtime_update <- c(runtime_update, total_computations)
+  
   # Loop through
-  for(i in 2:length(networks)){
+  for(i in length(networks):2){
     
+    # Obtain start time
+    if(count_computations == 0){
+      start_time <- Sys.time() 
+    }
+    
+    # Loop through values
     for(j in 1:(i-1)){
       
       # Obtain JSD values
@@ -125,15 +137,28 @@ infoCluster <- function(
         method = "spectral"
       )
       
+      # Update computation count
+      count_computations <- count_computations + 1
+      
+      # Update progress
+      if(count_computations %in% runtime_update){
+        
+        # Obtain time to finish based on remaining computations
+        time_multiple <- (total_computations - count_computations) / count_computations
+        
+        # Update progress
+        custom_progress(
+          i = count_computations,
+          max = total_computations,
+          time_multiple = time_multiple,
+          start_time = start_time
+        )
+        
+      }
+      
     }
     
-    # Update progress
-    setTxtProgressBar(pb, i)
-    
   }
-  
-  # Close progress bar
-  close(pb)
   
   # Make symmetric
   jsd_sym <- jsd_matrix + t(jsd_matrix)
@@ -222,14 +247,25 @@ infoCluster <- function(
       ncol = length(random_networks)
     )
     
-    # Set progress bar
-    pb <- txtProgressBar(
-      max = ncol(jsd_random_matrix),
-      style = 3
+    # Calculate total computations
+    total_computations <- length(
+      jsd_random_matrix[lower.tri(jsd_random_matrix)]
     )
+    
+    # Count computations
+    count_computations <- 0
+    
+    # Initialize runtime updates
+    runtime_update <- seq(0, total_computations, floor(total_computations / 100))
+    runtime_update <- c(runtime_update, total_computations)
     
     # Loop through
     for(i in 2:length(random_networks)){
+      
+      # Obtain start time
+      if(count_computations == 0){
+        start_time <- Sys.time() 
+      }
       
       for(j in 1:(i-1)){
         
@@ -240,15 +276,28 @@ infoCluster <- function(
           method = "spectral"
         )
         
+        # Update computation count
+        count_computations <- count_computations + 1
+        
+        # Update progress
+        if(count_computations %in% runtime_update){
+          
+          # Obtain time to finish based on remaining computations
+          time_multiple <- (total_computations - count_computations) / count_computations
+          
+          # Update progress
+          custom_progress(
+            i = count_computations,
+            max = total_computations,
+            time_multiple = time_multiple,
+            start_time = start_time
+          )
+          
+        }
+        
       }
       
-      # Update progress
-      setTxtProgressBar(pb, i)
-      
     }
-    
-    # Close progress bar
-    close(pb)
     
     # Make symmetric
     jsd_random_sym <- jsd_random_matrix + t(jsd_random_matrix)
@@ -472,3 +521,4 @@ infoCluster <- function(
   return(results)
   
 }
+

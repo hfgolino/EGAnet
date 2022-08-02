@@ -3132,7 +3132,100 @@ compare.plot.fix.EGA <- function(object.list,
 # MULTI-FUNCTION SUB-ROUTINES ----
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
+#' @noRd
+#'
+# Custom progress bar for timing
+# Updated 02.08.2022
+custom_progress <- function (
+    i, max, time_multiple, start_time,
+    caps = "|", progress = "+"
+) {
+  
+  # Obtain end time
+  end_time <- Sys.time()
+  
+  # Time difference
+  time_difference <- as.numeric(
+    difftime(
+      time1 = end_time,
+      time2 = start_time,
+      units = "sec"
+    )
+  )
+  
+  # Multiple time difference by remaining computations
+  seconds <- time_multiple * time_difference
+  if(i == max){
+    seconds <- time_difference
+  }
+  
+  # Obtain remaining minutes
+  minutes <- as.numeric(seconds / 60)
+  
+  # Remaining seconds
+  seconds <- round(60 * minutes %% 1)
+  
+  # Floor remaining minutes
+  minutes <- floor(minutes)
+  
+  # Calculate percent complete
+  percent <- i / max * 100
+  
+  # Set timing with seconds
+  timing <- paste0(
+    formatC(
+      seconds, digits = 1,
+      flag = "0", format = "d"
+    ), "s"
+  )
+  
+  # Set timing with minutes
+  if(minutes != 0){
+    timing <- paste(
+      paste0(minutes, "m"),
+      timing
+    )
+  }
+  
+  # If max, then end
+  if(i == max){
+    
+    # Add percentage
+    timing <- paste0(
+      round(percent), "% elapsed=",
+      timing
+    )
+    
+    # Update progress
+    cat(
+      sprintf(
+        paste0("\r", caps, "%-49s", caps, " %s"),
+        paste(rep(progress, percent / 2), collapse = ""),
+        timing
+      )
+    )
+    
+    cat("\n")
+  }else{
+    
+    # Add percentage
+    timing <- paste0(
+      round(percent), "% ~",
+      timing
+    )
+    
+    # Update progress
+    cat(
+      sprintf(
+        paste0("\r", caps, "%-49s", caps, " %s"),
+        paste(rep(progress, percent / 2), collapse = ""),
+        timing
+      )
+    )
+    
+  }
+  
+}
 
 #' \code{\link[qgraph]{EBICglasso}} from \code{\link{qgraph}} 1.4.4
 #'
