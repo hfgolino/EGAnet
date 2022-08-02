@@ -3137,9 +3137,12 @@ compare.plot.fix.EGA <- function(object.list,
 # Custom progress bar for timing
 # Updated 02.08.2022
 custom_progress <- function (
-    i, max, time_multiple, start_time,
+    i, max, start_time,
     caps = "|", progress = "+"
 ) {
+  
+  # Calculate percent complete
+  percent <- i / max * 100
   
   # Obtain end time
   end_time <- Sys.time()
@@ -3152,6 +3155,9 @@ custom_progress <- function (
       units = "sec"
     )
   )
+  
+  # Obtain time to finish based on remaining computations
+  time_multiple <- (max - i) / i
   
   # Multiple time difference by remaining computations
   seconds <- time_multiple * time_difference
@@ -3167,9 +3173,6 @@ custom_progress <- function (
   
   # Floor remaining minutes
   minutes <- floor(minutes)
-  
-  # Calculate percent complete
-  percent <- i / max * 100
   
   # Set timing with seconds
   timing <- paste0(
@@ -3206,6 +3209,7 @@ custom_progress <- function (
     )
     
     cat("\n")
+    
   }else{
     
     # Add percentage

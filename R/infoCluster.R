@@ -8,15 +8,6 @@
 #' @param dynEGA.object  A \code{\link[EGAnet]{dynEGA}} or a
 #' \code{\link[EGAnet]{dynEGA.ind.pop}} object that is used to match the arguments of the EII object.
 #' 
-#' @param ncores Numeric.
-#' Number of cores to use in computing results.
-#' Defaults to \code{parallel::detectCores() / 2} or half of your
-#' computer's processing power.
-#' Set to \code{1} to not use parallel computing
-#' 
-#' If you're unsure how many cores your computer has,
-#' then use the following code: \code{parallel::detectCores()}
-#' 
 #' @param plot.cluster Boolean.
 #' Should plot of optimal and hierarchical clusters be output?
 #' Defaults to \code{TRUE}.
@@ -36,7 +27,6 @@
 #' # Perform information-theoretic clustering
 #' clust1 <- infoCluster(
 #'   dynEGA.object = dyn.ega1,
-#'   ncores = 2, # Two cores for CRAN checks
 #'   plot.cluster = FALSE # No plot for CRAN checks
 #' )}
 #'
@@ -124,7 +114,7 @@ infoCluster <- function(
     
     # Obtain start time
     if(count_computations == 0){
-      start_time <- Sys.time() 
+      start_time <- Sys.time()
     }
     
     # Loop through values
@@ -143,14 +133,10 @@ infoCluster <- function(
       # Update progress
       if(count_computations %in% runtime_update){
         
-        # Obtain time to finish based on remaining computations
-        time_multiple <- (total_computations - count_computations) / count_computations
-        
         # Update progress
         custom_progress(
           i = count_computations,
           max = total_computations,
-          time_multiple = time_multiple,
           start_time = start_time
         )
         
@@ -278,18 +264,14 @@ infoCluster <- function(
         
         # Update computation count
         count_computations <- count_computations + 1
-        
+
         # Update progress
         if(count_computations %in% runtime_update){
-          
-          # Obtain time to finish based on remaining computations
-          time_multiple <- (total_computations - count_computations) / count_computations
           
           # Update progress
           custom_progress(
             i = count_computations,
             max = total_computations,
-            time_multiple = time_multiple,
             start_time = start_time
           )
           

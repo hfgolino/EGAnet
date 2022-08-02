@@ -14,15 +14,6 @@ infoCluster(dynEGA.object, plot.cluster = TRUE)
 Should plot of optimal and hierarchical clusters be output?
 Defaults to \code{TRUE}.
 Set to \code{FALSE} to not plot}
-
-\item{ncores}{Numeric.
-Number of cores to use in computing results.
-Defaults to \code{parallel::detectCores() / 2} or half of your
-computer's processing power.
-Set to \code{1} to not use parallel computing
-
-If you're unsure how many cores your computer has,
-then use the following code: \code{parallel::detectCores()}}
 }
 \value{
 Returns a list containing:
@@ -55,7 +46,6 @@ dyn.ega1 <- dynEGA.ind.pop(
 # Perform information-theoretic clustering
 clust1 <- infoCluster(
   dynEGA.object = dyn.ega1,
-  ncores = 2, # Two cores for CRAN checks
   plot.cluster = FALSE # No plot for CRAN checks
 )}
 

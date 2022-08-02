@@ -273,7 +273,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
 
   #initialize data list
   datalist <- vector("list", length = length(cases))
-  if("group" %in% colnames(data)){
+  if("group" %in% tolower(colnames(data))){
     datalist <- split(data[,-c(id, group)], data[,id])
   }else{
     datalist <- split(data[,-c(id)], data[,id])
