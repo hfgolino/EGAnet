@@ -563,9 +563,17 @@ quick_modularity <- function(communities, A, Q_matrix)
 # Collapses Louvain nodes into "latent" nodes
 #' @noRd
 # Higher order Louvain
-# Updated 06.05.2022
-make_higher_order <- function(A, current_communities)
+# Updated 07.08.2022
+make_higher_order <- function(
+    A, current_communities,
+    method = c("sum", "mean")
+)
 {
+  
+  # Missing
+  if(missing(method)){
+    method <- "sum"
+  }
 
   # Get number of nodes
   n_higher <- ncol(A)
@@ -617,9 +625,15 @@ make_higher_order <- function(A, current_communities)
       ind2 <- community_current[j,]
 
       # Update adjacency matrix
-      newA[i,j] <- sum(
-        A[ind1[ind1 > 0], ind2[ind2 > 0]]
-      )
+      if(method == "sum"){
+        newA[i,j] <- sum(
+          A[ind1[ind1 > 0], ind2[ind2 > 0]]
+        )
+      }else if(method == "mean"){
+        newA[i,j] <- mean(
+          A[ind1[ind1 > 0], ind2[ind2 > 0]]
+        )
+      }
       newA[j,i] <- newA[i,j]
 
     }

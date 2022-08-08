@@ -7,7 +7,7 @@
 riEGA(
   data,
   n = NULL,
-  uni.method = c("expand", "LE"),
+  uni.method = c("expand", "LE", "louvain"),
   corr = c("cor_auto", "pearson", "spearman"),
   model = c("glasso", "TMFG"),
   model.args = list(),

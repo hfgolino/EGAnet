@@ -289,9 +289,9 @@ EGA.estimate <- function(
     # Compute correlation matrix
     correlation <- switch(
       corr,
-      cor_auto = qgraph::cor_auto(data, forcePD = TRUE),
-      pearson = cor(data, use = "pairwise.complete.obs", method = "pearson"),
-      spearman = cor(data, use = "pairwise.complete.obs", method = "spearman")
+      "cor_auto" = qgraph::cor_auto(data, forcePD = TRUE),
+      "pearson" = cor(data, use = "pairwise.complete.obs", method = "pearson"),
+      "spearman" = cor(data, use = "pairwise.complete.obs", method = "spearman")
     )
     
   }else{ # Set correlation as data

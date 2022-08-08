@@ -241,9 +241,9 @@
 #' 
 # Random-Intercept EGA
 # Changed from 'residualEGA.R' on 17.04.2022
-# Updated 18.07.2022
+# Updated 08.08.2022
 riEGA <- function(
-    data, n = NULL, uni.method = c("expand", "LE"),
+    data, n = NULL, uni.method = c("expand", "LE", "louvain"),
     corr = c("cor_auto", "pearson", "spearman"),
     model = c("glasso", "TMFG"), model.args = list(),
     algorithm = c("walktrap", "louvain"), algorithm.args = list(),
@@ -263,7 +263,7 @@ riEGA <- function(
   #### ARGUMENTS HANDLING
   
   if(missing(uni.method)){
-    uni.method <- "LE"
+    uni.method <- "louvain"
   }else{uni.method <- match.arg(uni.method)}
   
   if(missing(corr)){
@@ -281,7 +281,7 @@ riEGA <- function(
   }
   
   if(missing(consensus.method)){
-    consensus.method <- "highest_modularity"
+    consensus.method <- "most_common"
   }else{consensus.method <- match.arg(consensus.method)}
   
   # Ensure data is a matrix
