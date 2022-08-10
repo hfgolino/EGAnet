@@ -4,11 +4,15 @@
 \alias{convert2igraph}
 \title{Convert networks to \code{\link{igraph}}}
 \usage{
-convert2igraph(A)
+convert2igraph(A, diagonal = 0)
 }
 \arguments{
 \item{A}{Matrix or data frame.
 \emph{N} x \emph{N} matrix where \emph{N} is the number of nodes}
+
+\item{diagonal}{Numeric.
+Value to be placed on the diagonal of \code{A}.
+Defaults to \code{0}}
 }
 \value{
 Returns a network in the \code{\link{igraph}} format

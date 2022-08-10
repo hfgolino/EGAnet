@@ -494,7 +494,7 @@ bootEGA <- function(
   if("EGA" %in% names(empirical_EGA)){
     # Obtain EGA output from EGA option 
     ega_output <- empirical_EGA$EGA
-  }else if(class(empirical_EGA) != "EGA"){
+  }else if(!is(empirical_EGA, "EGA")){
     
     # Base on EGA type
     if(tolower(EGA.type) == "hierega"){
@@ -601,7 +601,7 @@ bootEGA <- function(
     boot_output <- lapply(boots, function(x){
       x$EGA
     })
-  }else if(class(boots[[1]]) != "EGA"){
+  }else if(!is(boots[[1]], "EGA")){
     
     # Base on EGA type
     if(tolower(EGA.type) == "hierega"){
