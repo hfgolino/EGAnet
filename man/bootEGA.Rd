@@ -7,20 +7,18 @@
 bootEGA(
   data,
   n = NULL,
-  uni.method = c("expand", "LE", "louvain"),
+  uni.method = c("expand", "LE"),
   iter,
   type = c("parametric", "resampling"),
   seed = 1234,
   corr = c("cor_auto", "pearson", "spearman"),
-  EGA.type = c("EGA", "EGA.fit", "hierEGA", "riEGA"),
   model = c("glasso", "TMFG"),
   model.args = list(),
-  algorithm = c("walktrap", "leiden", "louvain"),
+  algorithm = c("walktrap", "louvain"),
   algorithm.args = list(),
-  consensus.method = c("highest_modularity", "most_common", "iterative", "lowest_tefi"),
-  consensus.iter = 100,
   typicalStructure = TRUE,
   plot.typicalStructure = TRUE,
+  plot.type = c("GGally", "qgraph"),
   plot.args = list(),
   ncores,
   ...
@@ -34,31 +32,25 @@ Includes the variables to be used in the \code{bootEGA} analysis}
 Sample size if \code{data} provided is a correlation matrix}
 
 \item{uni.method}{Character.
-What unidimensionality method should be used? 
-Defaults to \code{"louvain"}.
+What unidimensionality method should be used?
+Defaults to \code{"LE"}.
 Current options are:
 
 \itemize{
 
 \item{\strong{\code{expand}}}
 {Expands the correlation matrix with four variables correlated .50.
-If number of dimension returns 2 or less in check, then the data 
+If number of dimension returns 2 or less in check, then the data
 are unidimensional; otherwise, regular EGA with no matrix
 expansion is used. This is the method used in the Golino et al. (2020)
 \emph{Psychological Methods} simulation.}
 
 \item{\strong{\code{LE}}}
-{Applies the Leading Eigenvalue algorithm (\code{\link[igraph]{cluster_leading_eigen}})
+{Applies the leading eigenvalue algorithm (\code{\link[igraph]{cluster_leading_eigen}})
 on the empirical correlation matrix. If the number of dimensions is 1,
-then the Leading Eigenvalue solution is used; otherwise, regular EGA
+then the leading eigenvalue solution is used; otherwise, regular EGA
 is used. This is the final method used in the Christensen, Garrido,
 and Golino (2021) simulation.}
-
-\item{\strong{\code{louvain}}}
-{Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
-on the empirical correlation matrix using a resolution parameter = 0.95.
-If the number of dimensions is 1, then the Louvain solution is used; otherwise,
-regular EGA is used. This method was validated in the Christensen (2022) simulation.}
 
 }}
 
@@ -85,9 +77,7 @@ original dataset, via the \code{\link[MASS]{mvrnorm}} function}
 \item{seed}{Numeric.
 Seed to reproduce results. Defaults to \code{1234}. For random results, set to \code{NULL}}
 
-\item{corr}{Character.
-Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
-
+\item{corr}{Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
 Current options are:
 
 \itemize{
@@ -103,28 +93,6 @@ the \code{\link[stats]{cor}}} function.
 \item{\strong{\code{spearman}}}
 {Computes Spearman's correlation coefficient using the pairwise complete observations via
 the \code{\link[stats]{cor}}} function.
-}}
-
-\item{EGA.type}{Character.
-Type of EGA model to use.
-
-Current options are:
-
-\itemize{
-
-\item{\code{\link[EGAnet]{EGA}}}
-{Uses standard exploratory graph analysis}
-
-\item{\code{\link[EGAnet]{EGA.fit}}}
-{Uses \code{\link[EGAnet]{tefi}} to determine best fit of
-\code{\link[EGAnet]{EGA}}}
-
-\item{\code{\link[EGAnet]{hierEGA}}}
-{Uses hierarhical exploratory graph analysis}
-
-\item{\code{\link[EGAnet]{riEGA}}}
-{Uses random-intercept exploratory graph analysis}
-
 }}
 
 \item{model}{Character.
@@ -149,7 +117,6 @@ A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
 or \code{\link[EGAnet]{TMFG}}}
 
 \item{algorithm}{A string indicating the algorithm to use or a function from \code{\link{igraph}}
-Defaults to \code{"walktrap"}.
 Current options are:
 
 \itemize{
@@ -157,52 +124,14 @@ Current options are:
 \item{\strong{\code{walktrap}}}
 {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
 
-\item{\strong{\code{leiden}}}
-{Computes the Leiden algorithm using \code{\link[igraph]{cluster_leiden}}.
-Defaults to \code{objective_function = "modularity"}}
-
 \item{\strong{\code{louvain}}}
-{Computes the Louvain algorithm using \code{\link[igraph]{cluster_louvain}}}
+{Computes the Walktrap algorithm using \code{\link[igraph]{cluster_louvain}}}
 
 }}
 
 \item{algorithm.args}{List.
 A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
 or some other community detection algorithm function (see examples)}
-
-\item{consensus.method}{Character.
-What consensus clustering method should be used? 
-Defaults to \code{"highest_modularity"}.
-Current options are:
-
-\itemize{
-
-\item{\strong{\code{highest_modularity}}}
-{Uses the community solution that achieves the highest modularity
-across iterations}
-
-\item{\strong{\code{most_common}}}
-{Uses the community solution that is found the most
-across iterations}
-
-\item{\strong{\code{iterative}}}
-{Identifies the most common community solutions across iterations
-and determines how often nodes appear in the same community together.
-A threshold of 0.30 is used to set low proportions to zero.
-This process repeats iteratively until all nodes have a proportion of
-1 in the community solution.
-}
-
-\item{\code{lowest_tefi}}
-{Uses the community solution that achieves the lowest \code{\link[EGAnet]{tefi}}
-across iterations}
-
-}}
-
-\item{consensus.iter}{Numeric.
-Number of iterations to perform in consensus clustering for the Louvain algorithm
-(see Lancichinetti & Fortunato, 2012).
-Defaults to \code{100}}
 
 \item{typicalStructure}{Boolean.
 If \code{TRUE}, returns the typical network of partial correlations
@@ -216,10 +145,23 @@ which is the median of all pairwise correlations over the \emph{n} bootstraps,
 and its estimated dimensions.
 Defaults to \code{TRUE}}
 
+\item{plot.type}{Character.
+Plot system to use.
+Current options are \code{\link[qgraph]{qgraph}} and \code{\link{GGally}}.
+Defaults to \code{"GGally"}.}
+
 \item{plot.args}{List.
 A list of additional arguments for the network plot.
-See \code{\link[GGally]{ggnet2}} for
-full list of arguments:
+For \code{plot.type = "qgraph"}:
+
+\itemize{
+
+\item{\strong{\code{vsize}}}
+{Size of the nodes. Defaults to 6.}
+
+}
+For \code{plot.type = "GGally"} (see \code{\link[GGally]{ggnet2}} for
+full list of arguments):
 
 \itemize{
 
@@ -303,55 +245,24 @@ correlations over the \emph{n} bootstraps.
 # Load data
 wmt <- wmt2[,7:24]
 
-\donttest{# Standard EGA example
-boot.wmt <- bootEGA(
-  data = wmt, iter = 100, # recommended 500
-  plot.typicalStructure = FALSE, # No plot for CRAN checks
-  type = "parametric", ncores = 2
-)
+\donttest{# bootEGA glasso example
+## plot.type = "qqraph" used for CRAN checks
+## plot.type = "GGally" is the default
+boot.wmt <- bootEGA(data = wmt, iter = 500, plot.type = "qgraph",
+type = "parametric", ncores = 2)
 
-# Produce Methods section
-methods.section(boot.wmt)
+# bootEGA TMFG example
+boot.wmt <- bootEGA(data = wmt, iter = 500, model = "TMFG",
+plot.type = "qgraph", type = "parametric", ncores = 2, seed = 1234)
 
-# Louvain example
-boot.wmt.louvain <- bootEGA(
-  data = wmt, iter = 100, # recommended 500
-  algorithm = "louvain",
-  plot.typicalStructure = FALSE, # No plot for CRAN checks
-  type = "parametric", ncores = 2
-)
+# bootEGA Louvain example
+boot.wmt <- bootEGA(data = wmt, iter = 500, algorithm = "louvain",
+plot.type = "qgraph", type = "parametric", ncores = 2, seed = 1234)
 
-# Spinglass example
-boot.wmt.spinglass <- bootEGA(
-  data = wmt, iter = 100, # recommended 500
-  algorithm = igraph::cluster_spinglass, # use any function from {igraph}
-  plot.typicalStructure = FALSE, # No plot for CRAN checks
-  type = "parametric", ncores = 2
-)
-
-# EGA fit example
-boot.wmt.fit <- bootEGA(
-  data = wmt, iter = 100, # recommended 500
-  EGA.type = "EGA.fit",
-  plot.typicalStructure = FALSE, # No plot for CRAN checks
-  type = "parametric", ncores = 2
-)
-
-# Hierarchical EGA example
-boot.wmt.hier <- bootEGA(
-  data = wmt, iter = 100, # recommended 500
-  EGA.type = "hierEGA",
-  plot.typicalStructure = FALSE, # No plot for CRAN checks
-  type = "parametric", ncores = 2
-)
-
-# Random-intercept EGA example
-boot.wmt.ri <- bootEGA(
-  data = wmt, iter = 100, # recommended 500
-  EGA.type = "riEGA",
-  plot.typicalStructure = FALSE, # No plot for CRAN checks
-  type = "parametric", ncores = 2
-)}
+# bootEGA Spinglass example
+boot.wmt <- bootEGA(data = wmt, iter = 500, model = "TMFG", plot.type = "qgraph",
+algorithm = igraph::cluster_spinglass, type = "parametric", ncores = 2)
+}
 
 }
 \references{
