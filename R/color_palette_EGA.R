@@ -96,26 +96,44 @@ color_palette_EGA <- function (name, wc, sorted = FALSE)
   }
   
   # All palettes
-  all_palettes <- c(row.names(RColorBrewer::brewer.pal.info),
-                    "polychrome", "blue.ridge1", "blue.ridge2",
-                    "rainbow", "rio", "itacare", "grayscale"
-                    )
+  all_palettes <- c(
+    row.names(RColorBrewer::brewer.pal.info),
+    "polychrome", "blue.ridge1", "blue.ridge2",
+    "rainbow", "rio", "itacare", "grayscale"
+  )
 
   # Default palette
   ## Polychrome (40 colors)
-  polychrome <- toupper(
-    paste("#",
-          c("F03D2D", "90DDF0", "C8D96F", "ef8a17", "f5c900",
-            "ba42c0", "17BEBB", "9bafd9", "f27a7d", "f9c58d",
-            "f7f779", "c5f9d7", "a18dce", "f492f0", "919bff",
-            "c792df", "ff4f79", "f9a470", "bc556f", "f7a2a1",
-            "3a445d", "5e5768", "928779", "d4d2a5", "a11692",
-            "6d1a36", "bce7fd", "53917e", "dd99bb", "fcd0a1",
-            "a9fbd7", "d81159", "8f2d56", "006ba6", "39304a",
-            "ff470a", "60b6f1", "fcdebe", "cff27e", "b87d4b"
-            
-          ), sep = "")
-  )
+  if(length(uniq.wc) <= 40){
+    polychrome <- toupper(
+      paste("#",
+            c("F03D2D", "90DDF0", "C8D96F", "ef8a17", "f5c900",
+              "ba42c0", "17BEBB", "9bafd9", "f27a7d", "f9c58d",
+              "f7f779", "c5f9d7", "a18dce", "f492f0", "919bff",
+              "c792df", "ff4f79", "f9a470", "bc556f", "f7a2a1",
+              "3a445d", "5e5768", "928779", "d4d2a5", "a11692",
+              "6d1a36", "bce7fd", "53917e", "dd99bb", "fcd0a1",
+              "a9fbd7", "d81159", "8f2d56", "006ba6", "39304a",
+              "ff470a", "60b6f1", "fcdebe", "cff27e", "b87d4b"
+              
+            ), sep = "")
+    )
+  }else{
+    
+    # Obtain distinct colors
+    qual_col_pals <- RColorBrewer::brewer.pal.info[
+      RColorBrewer::brewer.pal.info$category == "qual",
+    ]
+    # Obtain unique distinct colors
+    polychrome <- unique(unlist(
+      mapply(
+        RColorBrewer::brewer.pal,
+        qual_col_pals$maxcolors,
+        rownames(qual_col_pals)
+      )
+    ))
+    
+  }
   
   # Check colors
   # barplot(
