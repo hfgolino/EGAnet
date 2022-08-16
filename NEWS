@@ -1,3 +1,10 @@
+Changes in 1.2.1
+
+o FIX: `bootEGA` read of bootstrap data (was not calling from `datalist` in `do.call` leading to perfect item stability)
+
+o FIX: number of possible colors expanded to 70 (increased from 40)
+
+
 Changes in version 1.2.0
 
 o FIX: hex codes used in EGA plots
