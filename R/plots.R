@@ -1034,7 +1034,7 @@ plot.invariance <- function(
   
   # Obtain plots
   plots <- compare.EGA.plots(
-    input_list = input_EGA,
+    input.list = input_EGA,
     labels = labels, rows = rows,
     columns = columns,
     plot.args = plot.args
