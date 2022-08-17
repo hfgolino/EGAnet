@@ -246,7 +246,7 @@ infoCluster <- function(
     })
 
     # Message user
-    message("Computing Jensen-Shannon Distance for Random Networks...\n", appendLF = FALSE)
+    message("Computing Jensen-Shannon Distance for random networks...\n", appendLF = FALSE)
 
     # Initialize JSD matrix
     jsd_random_matrix <- matrix(
