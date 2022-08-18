@@ -110,6 +110,35 @@
 #' @param algorithm.args List.
 #' A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
 #' or some other community detection algorithm function (see examples)
+#' 
+#' @param uni.method Character.
+#' What unidimensionality method should be used? 
+#' Defaults to \code{"LE"}.
+#' Current options are:
+#' 
+#' \itemize{
+#'
+#' \item{\strong{\code{expand}}}
+#' {Expands the correlation matrix with four variables correlated .50.
+#' If number of dimension returns 2 or less in check, then the data 
+#' are unidimensional; otherwise, regular EGA with no matrix
+#' expansion is used. This is the method used in the Golino et al. (2020)
+#' \emph{Psychological Methods} simulation.}
+#'
+#' \item{\strong{\code{LE}}}
+#' {Applies the Leading Eigenvalue algorithm (\code{\link[igraph]{cluster_leading_eigen}})
+#' on the empirical correlation matrix. If the number of dimensions is 1,
+#' then the Leading Eigenvalue solution is used; otherwise, regular EGA
+#' is used. This is the final method used in the Christensen, Garrido,
+#' and Golino (2021) simulation.}
+#' 
+#' \item{\strong{\code{louvain}}}
+#' {Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
+#' on the empirical correlation matrix using a resolution parameter = 0.95.
+#' If the number of dimensions is 1, then the Louvain solution is used; otherwise,
+#' regular EGA is used. This method was validated in the Christensen (2022) simulation.}
+#' 
+#' }
 #'
 #' @param ncores Numeric.
 #' Number of cores to use in computing results.
@@ -182,7 +211,7 @@
 #'
 #' @export
 # dynEGA
-# Updated 18.07.2022
+# Updated 18.08.2022
 dynEGA <- function(data, n.embed, tau = 1, delta = 1,
                    level = c("individual", "group", "population"),
                    id = NULL, group = NULL,
@@ -190,6 +219,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
                    model = c("glasso", "TMFG"), model.args = list(),
                    algorithm = c("walktrap", "leiden", "louvain"), algorithm.args = list(),
                    corr = c("cor_auto", "pearson", "spearman"),
+                   uni.method = c("expand", "LE", "louvain"),
                    ncores, ...){
 
   # Get additional arguments
@@ -238,28 +268,28 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
     }else{group <- group}
   }else{level <- match.arg(level)}
 
-  if(missing(group))
-  {group <- ncol(data)+1
+  if(missing(group)){
+    group <- ncol(data)+1
   }else{group <- group}
 
   if(missing(model)){
     model <- "glasso"
-  }else{
-    model <- match.arg(model)
-  }
+  }else{model <- match.arg(model)}
 
   if(missing(algorithm)){
     algorithm <- "walktrap"
-  }else{
-    algorithm <- match.arg(algorithm)
-  }
+  }else{algorithm <- match.arg(algorithm)}
 
-  if(missing(corr))
-  {corr <- "pearson"
+  if(missing(corr)){
+    corr <- "pearson"
   }else{corr <- match.arg(corr)}
+  
+  if(missing(uni.method)){
+    uni.method <- "louvain"
+  }else{uni.method <- match.arg(uni.method)}
 
-  if(missing(ncores))
-  {ncores <- ceiling(parallel::detectCores() / 2)
+  if(missing(ncores)){
+    ncores <- ceiling(parallel::detectCores() / 2)
   }else{ncores}
 
   # Setting the order:
@@ -350,7 +380,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
       EGA(data = data.all[, derivative_index],
           model = model, model.args = model.args,
           algorithm = algorithm, algorithm.args = algorithm.args,
-          corr = corr, plot.EGA = FALSE)
+          corr = corr, uni.method = uni.method, plot.EGA = FALSE)
     )
 
     # Message user that results are done
@@ -400,7 +430,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
                                          FUN = EGA,
                                          model = model, model.args = model.args,
                                          algorithm = algorithm, algorithm.args = algorithm.args,
-                                         corr = corr, plot.EGA = FALSE)
+                                         corr = corr, uni.method = uni.method, plot.EGA = FALSE)
 
     # Stop cluster
     parallel::stopCluster(cl)
@@ -476,7 +506,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
       FUN = EGA,
       model = model, model.args = model.args,
       algorithm = algorithm, algorithm.args = algorithm.args,
-      corr = corr, plot.EGA = FALSE
+      corr = corr, uni.method = uni.method, plot.EGA = FALSE
     )
     # pbapply::pboptions(op)
 
