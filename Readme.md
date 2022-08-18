@@ -1,4 +1,4 @@
-### CRAN 1.2.1 | GitHub 1.2.0
+### CRAN 1.2.2 | GitHub 1.2.0
 
 <img src="inst/EGAnet_hex.png" width = 250 />
 
