@@ -59,7 +59,7 @@
 #' @export
 #'
 # Ergodicity Information Index
-# Updated 18.07.2022
+# Updated 19.08.2022
 ergoInfo <- function(
     dynEGA.object,
     use = c(
@@ -175,7 +175,11 @@ ergoInfo <- function(
     results$KComp <- mean(unlist(individual_kcomp))
     results$KComp.pop <- mean(unlist(population_kcomp))
     results$complexity <- results$KComp / results$KComp.pop
-    results$EII  <- sqrt(dynEGA.pop$dynEGA$n.dim)^((results$KComp/results$KComp.pop)/log(nrow(population_edge_list)))
+    results$EII  <- sqrt(dynEGA.pop$dynEGA$n.dim)^((results$KComp/results$KComp.pop)/log(
+      # nrow(population_edge_list)
+      sum(encoding_matrix != 0) / 2
+      # ^^ used in Santoro and Nicosia (2020)
+    ))
     results$use <- use
     class(results) <- "EII"
 
@@ -306,7 +310,11 @@ ergoInfo <- function(
     results$KComp <- mean(unlist(individual_kcomp))
     results$KComp.pop <- mean(unlist(population_kcomp))
     results$complexity <- results$KComp / results$KComp.pop
-    results$EII  <- sqrt(dynEGA.pop$dynEGA$n.dim)^((results$KComp/results$KComp.pop)/log(nrow(population_edge_list)))
+    results$EII  <- sqrt(dynEGA.pop$dynEGA$n.dim)^((results$KComp/results$KComp.pop)/log(
+      # nrow(population_edge_list)
+      sum(encoding_matrix != 0) / 2
+      # ^^ used in Santoro and Nicosia (2020)
+    ))
     results$use <- use
     class(results) <- "EII"
 
