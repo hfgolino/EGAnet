@@ -250,6 +250,12 @@ invariance <- function(
     algorithm <- tolower(match.arg(algorithm))
   }
   
+  if(missing(uni.method)){
+    uni.method <- "louvain"
+  }else if(!is.function(uni.method)){
+    uni.method <- tolower(match.arg(uni.method))
+  }
+  
   if(missing(consensus.method)){
     consensus.method <- "most_common"
   }else{consensus.method <- tolower(match.arg(consensus.method))}
@@ -302,11 +308,14 @@ invariance <- function(
     stop("Number of cases in 'data' do not match the length of 'groups'. Please check that these numbers match: `nrow(data) == length(groups)`")
   }
   
+  # Obtain EGA arguments
+  ega_args <- obtain.arguments(
+    FUN = EGA,
+    FUN.args = list()
+  )
+  
   # Add data to EGA arguments
   ega_args$data <- data
-  
-  # Ensure class is list!
-  class(ega_args) <- "list"
   
   # Set EGA arguments
   ega_args$corr <- corr
@@ -420,7 +429,8 @@ invariance <- function(
       "unique_groups",
       "perm_groups",
       "data"
-    )
+    ),
+    envir = environment()
   )
   
   # Obtain permutated loadings

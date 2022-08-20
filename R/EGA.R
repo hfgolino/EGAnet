@@ -479,7 +479,7 @@ EGA <- function (
     if(uni.res$n.dim <= 2){ # Unidimensional 
       
       # Set results
-      multi.res$wc <- uni.res$wc
+      multi.res$wc <- uni.res$wc[!grepl("SIM", names(uni.res$wc))]
       multi.res$n.dim <- uni.res$n.dim
       
     }else if(multi.res$n.dim == 0){ # No dimensions
@@ -494,7 +494,7 @@ EGA <- function (
     if(uni.res$n.dim == 1){ # Unidimensional 
       
       # Set results
-      multi.res$wc <- uni.res$wc
+      multi.res$wc <- uni.res$wc[!grepl("SIM", names(uni.res$wc))]
       multi.res$n.dim <- uni.res$n.dim
       
     }else if(multi.res$n.dim == 0){ # No dimensions
