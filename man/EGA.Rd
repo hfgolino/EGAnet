@@ -49,7 +49,7 @@ the \code{\link[stats]{cor}}} function.
 
 \item{uni.method}{Character.
 What unidimensionality method should be used? 
-Defaults to \code{"LE"}.
+Defaults to \code{"louvain"}.
 Current options are:
 
 \itemize{

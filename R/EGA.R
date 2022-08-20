@@ -40,7 +40,7 @@
 #' 
 #' @param uni.method Character.
 #' What unidimensionality method should be used? 
-#' Defaults to \code{"LE"}.
+#' Defaults to \code{"louvain"}.
 #' Current options are:
 #' 
 #' \itemize{
@@ -287,7 +287,7 @@
 #'
 #' @export
 #'
-# Updated 27.07.2022
+# Updated 20.08.2022
 # Louvain unidimensionality 27.07.2022
 # Consensus clustering 13.05.2022
 # LE adjustment 08.03.2021
@@ -474,16 +474,35 @@ EGA <- function (
   }
   
   # Set up results
-  if(uni.res$n.dim == 1){ # Unidimensional 
+  if(uni.method == "expand"){
     
-    # Set results
-    multi.res$wc <- uni.res$wc
-    multi.res$n.dim <- uni.res$n.dim
+    if(uni.res$n.dim <= 2){ # Unidimensional 
+      
+      # Set results
+      multi.res$wc <- uni.res$wc
+      multi.res$n.dim <- uni.res$n.dim
+      
+    }else if(multi.res$n.dim == 0){ # No dimensions
+      
+      # Set results
+      multi.res$n.dim <- NA
+      
+    }
     
-  }else if(multi.res$n.dim == 0){ # No dimensions
+  }else{
     
-    # Set results
-    multi.res$n.dim <- NA
+    if(uni.res$n.dim == 1){ # Unidimensional 
+      
+      # Set results
+      multi.res$wc <- uni.res$wc
+      multi.res$n.dim <- uni.res$n.dim
+      
+    }else if(multi.res$n.dim == 0){ # No dimensions
+      
+      # Set results
+      multi.res$n.dim <- NA
+      
+    }
     
   }
 

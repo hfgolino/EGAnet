@@ -7,11 +7,18 @@
 invariance(
   data,
   groups,
+  iter = 500,
   memberships = NULL,
   type = c("loadings"),
-  iter = 500,
-  ncores,
-  ...
+  corr = c("cor_auto", "pearson", "spearman"),
+  uni.method = c("expand", "LE", "louvain"),
+  model = c("glasso", "TMFG"),
+  model.args = list(),
+  algorithm = c("walktrap", "leiden", "louvain"),
+  algorithm.args = list(),
+  consensus.method = c("highest_modularity", "most_common", "iterative", "lowest_tefi"),
+  consensus.iter = 100,
+  ncores
 )
 }
 \arguments{
@@ -20,6 +27,10 @@ Variables to be used in the analysis}
 
 \item{groups}{Vector.
 Group membership corresponding to each case in data}
+
+\item{iter}{Numeric. 
+Number of iterations to perform for the permutation.
+Defaults to \code{500}}
 
 \item{memberships}{Vector. 
 Node membership for each community or factor. 
@@ -30,9 +41,127 @@ When \code{NULL}, \code{\link[EGAnet]{EGA}} is used to compute node memberships}
 Type of measurement invariance to estimate.
 Only includes \code{"loadings"} at the moment}
 
-\item{iter}{Numeric. 
-Number of iterations to perform for the permutation.
-Defaults to \code{500}}
+\item{corr}{Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{cor_auto}}}
+{Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
+\code{\link[qgraph]{qgraph}}}.
+
+\item{\strong{\code{pearson}}}
+{Computes Pearson's correlation coefficient using the pairwise complete observations via
+the \code{\link[stats]{cor}}} function.
+
+\item{\strong{\code{spearman}}}
+{Computes Spearman's correlation coefficient using the pairwise complete observations via
+the \code{\link[stats]{cor}}} function.
+}}
+
+\item{uni.method}{Character.
+What unidimensionality method should be used? 
+Defaults to \code{"louvain"}.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{expand}}}
+{Expands the correlation matrix with four variables correlated .50.
+If number of dimension returns 2 or less in check, then the data 
+are unidimensional; otherwise, regular EGA with no matrix
+expansion is used. This is the method used in the Golino et al. (2020)
+\emph{Psychological Methods} simulation.}
+
+\item{\strong{\code{LE}}}
+{Applies the Leading Eigenvalue algorithm (\code{\link[igraph]{cluster_leading_eigen}})
+on the empirical correlation matrix. If the number of dimensions is 1,
+then the Leading Eigenvalue solution is used; otherwise, regular EGA
+is used. This is the final method used in the Christensen, Garrido,
+and Golino (2021) simulation.}
+
+\item{\strong{\code{louvain}}}
+{Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
+on the empirical correlation matrix using a resolution parameter = 0.95.
+If the number of dimensions is 1, then the Louvain solution is used; otherwise,
+regular EGA is used. This method was validated in the Christensen (2022) simulation.}
+
+}}
+
+\item{model}{Character.
+A string indicating the method to use.
+
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{glasso}}}
+{Estimates the Gaussian graphical model using graphical LASSO with
+extended Bayesian information criterion to select optimal regularization parameter.
+This is the default method}
+
+\item{\strong{\code{TMFG}}}
+{Estimates a Triangulated Maximally Filtered Graph}
+
+}}
+
+\item{model.args}{List.
+A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
+or \code{\link[EGAnet]{TMFG}}}
+
+\item{algorithm}{A string indicating the algorithm to use or a function from \code{\link{igraph}}
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{walktrap}}}
+{Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
+
+\item{\strong{\code{leiden}}}
+{Computes the Leiden algorithm using \code{\link[igraph]{cluster_leiden}}}
+
+\item{\strong{\code{louvain}}}
+{Computes the Louvain algorithm using \code{\link[igraph]{cluster_louvain}}}
+
+}}
+
+\item{algorithm.args}{List.
+A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
+or some other community detection algorithm function (see examples)}
+
+\item{consensus.method}{Character.
+What consensus clustering method should be used? 
+Defaults to \code{"highest_modularity"}.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{highest_modularity}}}
+{Uses the community solution that achieves the highest modularity
+across iterations}
+
+\item{\strong{\code{most_common}}}
+{Uses the community solution that is found the most
+across iterations}
+
+\item{\strong{\code{iterative}}}
+{Identifies the most common community solutions across iterations
+and determines how often nodes appear in the same community together.
+A threshold of 0.30 is used to set low proportions to zero.
+This process repeats iteratively until all nodes have a proportion of
+1 in the community solution.
+}
+
+\item{\code{lowest_tefi}}
+{Uses the community solution that achieves the lowest \code{\link[EGAnet]{tefi}}
+across iterations}
+
+}}
+
+\item{consensus.iter}{Numeric.
+Number of iterations to perform in consensus clustering for the Louvain algorithm
+(see Lancichinetti & Fortunato, 2012).
+Defaults to \code{100}}
 
 \item{ncores}{Numeric.
 Number of cores to use in computing results.
