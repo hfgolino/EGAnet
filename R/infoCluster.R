@@ -47,7 +47,7 @@
 #' 
 #' @export
 # Information Theoretic Clustering for dynEGA
-# Updated 02.08.2022
+# Updated 20.08.2022
 infoCluster <- function(
     dynEGA.object,
     plot.cluster = TRUE
@@ -188,6 +188,32 @@ infoCluster <- function(
     cutree(hier_clust, i)
   })
   
+  # Name cuts
+  names(hier_cuts) <- 1:ncol(jsdist)
+  
+  # Make any cuts with single clusters NULL
+  remaining_cuts <- lapply(hier_cuts, function(x){
+    
+    # Compute frequencies
+    freq <- table(x)
+    
+    # Check for single clusters
+    if(any(freq == 1)){
+      return(NULL)
+    }else{
+      return(x)
+    }
+    
+  })
+  
+  # Keep cuts that are not NULL
+  remaining_cuts <- remaining_cuts[
+    !unlist(lapply(remaining_cuts, is.null))
+  ]
+  
+  # Obtain cuts
+  cuts <- as.numeric(names(remaining_cuts))
+  
   # Jensen-Shannon Similarity
   jss <- 1 - jsdist
 
@@ -203,7 +229,7 @@ infoCluster <- function(
   # Maximize modularity
   Qs <- unlist(
     lapply(
-      X = 1:ncol(jss),
+      X = cuts,
       FUN = function(i){
         quick_modularity(
           communities = cutree(hier_clust, i),
@@ -215,10 +241,10 @@ infoCluster <- function(
   )
   
   # Obtain clusters
-  clusters <- cutree(hier_clust, which.max(Qs))
+  clusters <- cutree(hier_clust, cuts[which.max(Qs)])
   
   # Make moduarity/cluster matrix
-  possible_clusters <- t(simplify2array(hier_cuts))
+  possible_clusters <- t(simplify2array(remaining_cuts))
   cluster_df <- data.frame(
     Modularity = round(unlist(Qs), 7),
     possible_clusters

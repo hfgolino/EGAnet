@@ -7023,14 +7023,14 @@ expand.grid.unique <- function(x, y, include.equals = FALSE)
 #' Rewiring function
 #' @noRd
 # Updated 16.07.2022
-rewire <- function(network, min = 0.20, max = 0.40, noise = TRUE)
+rewire <- function(network, min = 0.20, max = 0.40, noise = 0.10)
 {
   
   # Number of edges
   edges <- sum(ifelse(network != 0, 1, 0)) / 2
   
   # Add noise
-  if(isTRUE(noise)){
+  if(!is.null(noise)){
     
     # Lower triangle of network
     lower_network <- network[lower.tri(network)]
@@ -7039,8 +7039,8 @@ rewire <- function(network, min = 0.20, max = 0.40, noise = TRUE)
     lower_network[lower_network != 0] <- lower_network[lower_network != 0] +
       runif(
         n = edges,
-        min = -0.10,
-        max = 0.10
+        min = -noise,
+        max = noise
       )
     
     # Replace lower network

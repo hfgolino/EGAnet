@@ -175,7 +175,8 @@ boot.ergoInfo <- function(
       function(i){
         dynEGA.ind[[i]]$network <- rewire(
           dynEGA.pop$dynEGA$network,
-          noise = TRUE
+          min = 0.20, max = 0.40,
+          noise = 0.10
         )
         return(dynEGA.ind[[i]])
       }
