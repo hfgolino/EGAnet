@@ -75,7 +75,7 @@ dyn1 <- dynEGA.ind.pop(
 )
 
 # Empirical Ergodicity Information Index
-eii1 <- ergoInfo(dynEGA.object = dyn1, use = "weighted")
+eii1 <- ergoInfo(dynEGA.object = dyn1, use = "edge.list")
 
 # Bootstrap Test for Ergodicity Information Index
 testing.ergoinfo <- boot.ergoInfo(

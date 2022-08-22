@@ -12,7 +12,7 @@ ergoInfo(dynEGA.object, use = c("edge.list", "unweighted", "weighted"))
 \item{use}{Character.
 A string indicating what network element will be used
 to compute the algorithm complexity, the list of edges or the weights of the network.
-Defaults to \code{use = "weighted"}.
+Defaults to \code{use = "edge.list"}.
 Current options are:
 
 \itemize{
@@ -60,7 +60,7 @@ dyn.ega1 <- dynEGA.ind.pop(
 # Compute empirical ergodicity information index
 eii <- ergoInfo(
   dynEGA.object = dyn.ega1,
-  use = "weighted"
+  use = "edge.list"
 )}
 
 }

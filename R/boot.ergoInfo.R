@@ -50,7 +50,7 @@
 #' )
 #'
 #' # Empirical Ergodicity Information Index
-#' eii1 <- ergoInfo(dynEGA.object = dyn1, use = "weighted")
+#' eii1 <- ergoInfo(dynEGA.object = dyn1, use = "edge.list")
 #'
 #' # Bootstrap Test for Ergodicity Information Index
 #' testing.ergoinfo <- boot.ergoInfo(
@@ -119,7 +119,7 @@ boot.ergoInfo <- function(
       # Compute EII
       EII <- ergoInfo(
         dynEGA.object = dynEGA.object,
-        use = "weighted"
+        use = "edge.list" # "weighted"
       )
       
       # Let user know EII is complete
