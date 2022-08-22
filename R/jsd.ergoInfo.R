@@ -190,9 +190,9 @@ jsd.ergoInfo <- function(
   interpretation <- switch(
     effect,
     "nonergodic" = paste(
-      "The proportion, ",
+      "The proportion of individuals (",
       formatC(proportion, format = "f", flag = 0, digits = 2),
-      ", of individuals with JSDs greater than ",
+      ") with JSDs greater than ",
       formatC(threshold, format = "f", flag = 0, digits = 2),
       " was larger than 0.10 of the sample. ",
       "The population structure cannot adequately generalize to all individuals. ",
@@ -200,9 +200,9 @@ jsd.ergoInfo <- function(
       sep = ""
     ),
     "ergodic" = paste(
-      "The proportion, ",
+      "The proportion of individuals (",
       formatC(proportion, format = "f", flag = 0, digits = 2),
-      ", of individuals with JSDs greater than ",
+      ") with JSDs greater than ",
       formatC(threshold, format = "f", flag = 0, digits = 2),
       " was less than 0.10 of the sample. ",
       "The population structure can adequately generalize to all individuals. ",
