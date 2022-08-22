@@ -196,7 +196,7 @@ jsd.ergoInfo <- function(
       formatC(threshold, format = "f", flag = 0, digits = 2),
       " was larger than 0.10 of the sample. ",
       "The population structure cannot adequately generalize to all individuals. ",
-      "\nThe system is nonergodic.",
+      "The system is nonergodic.",
       sep = ""
     ),
     "ergodic" = paste(
@@ -206,7 +206,7 @@ jsd.ergoInfo <- function(
       formatC(threshold, format = "f", flag = 0, digits = 2),
       " was less than 0.10 of the sample. ",
       "The population structure can adequately generalize to all individuals. ",
-      "\nThe system is ergodic.",
+      "The system is ergodic.",
       sep = ""
     )
   )
