@@ -617,7 +617,7 @@ bootEGA <- function(
       cl = cl,
       X = datalist,
       FUN = function(x){
-        ega_args$data <- x,
+        ega_args$data <- x
         return(do.call(ega_function, ega_args))
       }
     )
