@@ -7363,7 +7363,7 @@ parallel_process <- function(
           X = data_split[[i]],
           fun = function(x){
             FUN_args[[names(FUN_args)[1]]] <- x
-            return(do.call(FUN, FUN_args))
+            return(do.call(FUN, as.list(FUN_args)))
           }
         )
         
@@ -7373,7 +7373,7 @@ parallel_process <- function(
           X = data_split[[i]],
           FUN = function(x){
             FUN_args[[names(FUN_args)[1]]] <- x
-            return(do.call(FUN, FUN_args))
+            return(do.call(FUN, as.list(FUN_args)))
           },
           mc.cores = ncores
         )
@@ -7421,7 +7421,7 @@ parallel_process <- function(
         X = datalist,
         fun = function(x){
           FUN_args[[names(FUN_args)[1]]] <- x
-          return(do.call(FUN, FUN_args))
+          return(do.call(FUN, as.list(FUN_args)))
         }
       )
       
@@ -7431,7 +7431,7 @@ parallel_process <- function(
         X = datalist,
         FUN = function(x){
           FUN_args[[names(FUN_args)[1]]] <- x
-          return(do.call(FUN, FUN_args))
+          return(do.call(FUN, as.list(FUN_args)))
         },
         mc.cores = ncores
       )
