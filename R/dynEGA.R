@@ -588,8 +588,8 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
       
     }else{ # Mac and Linux
       
-      ega.list.groups <- parallel_process(
-        datalist = ega.list.individuals,
+      ega.list.individuals <- parallel_process(
+        datalist = data.individuals_var,
         progress = progress,
         FUN = EGA,
         FUN_args = list(
