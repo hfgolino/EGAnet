@@ -612,6 +612,23 @@ bootEGA <- function(
     # Let user know data generation has started
     message("Estimating EGA networks...\n", appendLF = FALSE)
     
+    # Get start time
+    # start_time <- Sys.time()
+    # 
+    # # `parLapply` solution
+    # boots <- parallel::parLapply(
+    #   cl = cl,
+    #   X = datalist,
+    #   fun = function(x){
+    #     ega_args$data <- x
+    #     return(do.call(ega_function, ega_args))
+    #   }
+    # )
+    # 
+    # # Print end time
+    # print(Sys.time() - start_time)
+    
+    
     # `pblapply` solution
     boots <- pbapply::pblapply(
       cl = cl,
