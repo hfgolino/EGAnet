@@ -603,7 +603,8 @@ bootEGA <- function(
     # parallel::clusterExport(
     #   cl = cl,
     #   varlist = c(
-    #     "ega_function", "ega_args"
+    #     "ega_function", "ega_args",
+    #     "data_split"
     #   ),
     #   envir=environment()
     # )
@@ -611,56 +612,66 @@ bootEGA <- function(
     # Let user know data generation has started
     message("Estimating EGA networks...\n", appendLF = FALSE)
     
-    # Obtain start time
-    if(count_computations == 0){
-      start_time <- Sys.time()
-    }
-    
-    # Estimate networks
-    for(i in seq_along(data_split)){
-      
-      boots[[i]] <- parallel::parLapply(
-        cl = cl,
-        X = data_split[[i]],
-        fun = function(x){
-          ega_args$data <- x
-          return(do.call(ega_function, ega_args))
-        }
-      )
-      
-      # Update computation count
-      count_computations <- count_computations + 
-        length(data_split[[i]])
-      
-      # Update progress
-      if(count_computations < runtime_update[2]){
-        
-        # Update progress
-        custom_progress(
-          i = count_computations,
-          max = total_computations,
-          start_time = "calculating"
-        )
-        
-      }else if(count_computations %in% runtime_update){
-        
-        # Update progress
-        custom_progress(
-          i = count_computations,
-          max = total_computations,
-          start_time = start_time
-        )
-        
+    # `pblapply` solution
+    boots <- pbapply::pblapply(
+      cl = cl,
+      X = datalist,
+      FUN = function(x){
+        ega_args$data <- x,
+        return(do.call(ega_function, ega_args))
       }
-      
-      
-    }
+    )
+    
+    # # Obtain start time
+    # if(count_computations == 0){
+    #   start_time <- Sys.time()
+    # }
+    # 
+    # # Estimate networks
+    # for(i in seq_along(data_split)){
+    # 
+    #   boots[[i]] <- parallel::parLapply(
+    #     cl = cl,
+    #     X = data_split[[i]],
+    #     fun = function(x){
+    #       ega_args$data <- x
+    #       return(do.call(ega_function, ega_args))
+    #     }
+    #   )
+    # 
+    #   # Update computation count
+    #   count_computations <- count_computations +
+    #     length(data_split[[i]])
+    # 
+    #   # Update progress
+    #   if(count_computations < runtime_update[2]){
+    # 
+    #     # Update progress
+    #     custom_progress(
+    #       i = count_computations,
+    #       max = total_computations,
+    #       start_time = "calculating"
+    #     )
+    # 
+    #   }else if(count_computations %in% runtime_update){
+    # 
+    #     # Update progress
+    #     custom_progress(
+    #       i = count_computations,
+    #       max = total_computations,
+    #       start_time = start_time
+    #     )
+    # 
+    #   }
+    #   
+    #   
+    # }
     
     # Stop cluster
     parallel::stopCluster(cl)
     
     # Unwrap bootstraps
-    boots <- unlist(boots, recursive = FALSE)
+    # boots <- unlist(boots, recursive = FALSE)
     
   }else{
     
