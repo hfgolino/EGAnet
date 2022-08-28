@@ -151,8 +151,11 @@
 #'
 #' If you're unsure how many cores your computer has,
 #' then use the following code: \code{parallel::detectCores()}
-#'
-#' @param ... Arguments passed to \code{\link[EGAnet]{EGA}}
+#' 
+#' @param progress Boolean.
+#' Should progress be displayed?
+#' Defaults to \code{TRUE}.
+#' For Windows, \code{FALSE} is about 2x faster
 #'
 #' @return Returns a list containing:
 #' 
@@ -230,7 +233,7 @@ invariance <- function(
     "iterative",
     "lowest_tefi"
   ), consensus.iter = 100, 
-  ncores
+  ncores, progress = TRUE
 )
 {
   # Number of processing cores
@@ -415,71 +418,126 @@ invariance <- function(
   # Message for estimating permutated loadings
   message("Performing permutations...")
   
-  # Set up parallelization
-  cl <- parallel::makeCluster(ncores)
+  # Obtain operating system
+  os <- system.check()$OS
   
-  # Export variables (only necessary for testing)
-  # Comment out for package
-  parallel::clusterExport(
-    cl = cl,
-    varlist = c(
-      "EGA", "ega_args",
-      "memberships",
-      "net.loads",
-      "unique_groups",
-      "perm_groups",
-      "data"
-    ),
-    envir = environment()
-  )
-  
-  # Obtain permutated loadings
-  loadings_list <- pbapply::pblapply(
-    X = seq_along(perm_groups),
-    FUN = function(i){
-      
-      # Estimate loadings
-      loadings_groups <- lapply(seq_along(unique_groups), function(j){
+  # Parallelization
+  if(os == "windows"){
+    
+    # Set up parallelization
+    cl <- parallel::makeCluster(ncores)
+    
+    # Export variables (only necessary for testing)
+    # Comment out for package
+    parallel::clusterExport(
+      cl = cl,
+      varlist = c(
+        "EGA", "ega_args",
+        "memberships",
+        "net.loads",
+        "unique_groups",
+        "perm_groups",
+        "data"
+      ),
+      envir = environment()
+    )
+    
+    # Obtain permutated loadings
+    loadings_list <- pbapply::pblapply(
+      X = seq_along(perm_groups),
+      FUN = function(i){
         
-        # Insert permutated data
-        ega_args$data <- data[which(perm_groups[[i]] == unique_groups[j]),]
+        # Estimate loadings
+        loadings_groups <- lapply(seq_along(unique_groups), function(j){
+          
+          # Insert permutated data
+          ega_args$data <- data[which(perm_groups[[i]] == unique_groups[j]),]
+          
+          # Obtain network
+          network <- do.call(
+            what = EGA,
+            args = ega_args
+          )$network
+          
+          # Obtain loadings
+          loadings <- net.loads(A = network, wc = memberships)$std
+          
+          # Reorder loadings
+          loadings <- loadings[colnames(data),]
+          
+          # Check for vector
+          if(is.vector(loadings)){
+            loadings <- matrix(loadings, ncol = 1)
+            colnames(loadings) <- 1
+            row.names(loadings) <- colnames(data)
+          }
+          
+          # Return loadings
+          return(loadings)
+          
+        })
         
-        # Obtain network
-        network <- do.call(
-          what = EGA,
-          args = ega_args
-        )$network
+        # Name groups
+        names(loadings_groups) <- unique_groups
         
-        # Obtain loadings
-        loadings <- net.loads(A = network, wc = memberships)$std
+        # Return EGA groups
+        return(loadings_groups)
         
-        # Reorder loadings
-        loadings <- loadings[colnames(data),]
+      },
+      cl = cl
+    )
+    
+    # Stop cluster
+    parallel::stopCluster(cl)
+    
+  }else{ # Mac and Linux
+    
+    loadings_list <- parallel_process(
+      datalist = seq_along(perm_groups),
+      progress = progress,
+      FUN = function(i){
         
-        # Check for vector
-        if(is.vector(loadings)){
-          loadings <- matrix(loadings, ncol = 1)
-          colnames(loadings) <- 1
-          row.names(loadings) <- colnames(data)
-        }
+        # Estimate loadings
+        loadings_groups <- lapply(seq_along(unique_groups), function(j){
+          
+          # Insert permutated data
+          ega_args$data <- data[which(perm_groups[[i]] == unique_groups[j]),]
+          
+          # Obtain network
+          network <- do.call(
+            what = EGA,
+            args = ega_args
+          )$network
+          
+          # Obtain loadings
+          loadings <- net.loads(A = network, wc = memberships)$std
+          
+          # Reorder loadings
+          loadings <- loadings[colnames(data),]
+          
+          # Check for vector
+          if(is.vector(loadings)){
+            loadings <- matrix(loadings, ncol = 1)
+            colnames(loadings) <- 1
+            row.names(loadings) <- colnames(data)
+          }
+          
+          # Return loadings
+          return(loadings)
+          
+        })
         
-        # Return loadings
-        return(loadings)
+        # Name groups
+        names(loadings_groups) <- unique_groups
         
-      })
-      
-      # Name groups
-      names(loadings_groups) <- unique_groups
-      
-      # Return EGA groups
-      return(loadings_groups)
-      
-    },
-    cl = cl
-  )
-  
-  # Stop cluster
-  parallel::stopCluster(cl)
+        # Return EGA groups
+        return(loadings_groups)
+        
+      },
+      ncores = ncores
+    )
+    
+  }
   
   # Compute differences
   difference_list <- lapply(loadings_list, function(x){
