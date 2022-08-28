@@ -7311,15 +7311,22 @@ parallel_process <- function(
     }
     
     # Initialize runtime updates
-    if(total_computations <= 100){
+    if(os == "windows"){
+      if(total_computations <= 100){
+        runtime_update <- seq(
+          0, total_computations, ncores
+        )
+      }else{
+        runtime_update <- seq(
+          0, total_computations, floor(total_computations / 5)
+        )
+      }
+    }else{
       runtime_update <- seq(
         0, total_computations, ncores
       )
-    }else{
-      runtime_update <- seq(
-        0, total_computations, floor(total_computations / 5)
-      )
     }
+
     runtime_update <- unique(c(runtime_update, total_computations))
     
     # Loop through data splits
