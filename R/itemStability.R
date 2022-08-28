@@ -141,7 +141,7 @@
 #'
 #' @export
 #Item Stability function
-# Updated 18.07.2022
+# Updated 28.08.2022
 # Major revamp 27.02.2021
 itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
 
@@ -190,23 +190,25 @@ itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
     )
     
     # Add plot
-    results$plot <- ggpubr::ggarrange(
-      lower_is$plot +
-        ggplot2::ggtitle("Lower Order") +
-        ggplot2::theme(
-          plot.title = ggplot2::element_text(hjust = 0.5, face = "bold")
-        ),
-      higher_is$plot +
-        ggplot2::ggtitle("Higher Order") +
-        ggplot2::theme(
-          plot.title = ggplot2::element_text(hjust = 0.5, face = "bold")
-        ),
-      nrow = 1, ncol = 2
-    )
-    
-    # Plot to user?
-    if(IS.plot){
-      plot(results$plot)
+    if("plot" %in% names(higher_is)){
+      results$plot <- ggpubr::ggarrange(
+        lower_is$plot +
+          ggplot2::ggtitle("Lower Order") +
+          ggplot2::theme(
+            plot.title = ggplot2::element_text(hjust = 0.5, face = "bold")
+          ),
+        higher_is$plot +
+          ggplot2::ggtitle("Higher Order") +
+          ggplot2::theme(
+            plot.title = ggplot2::element_text(hjust = 0.5, face = "bold")
+          ),
+        nrow = 1, ncol = 2
+      )
+      
+      # Plot to user?
+      if(IS.plot){
+        plot(results$plot)
+      }
     }
     
     # Return result
@@ -284,6 +286,12 @@ itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
   bootstrap.membership <- simplify2array(bootega.obj$boot.wc)
 
   # Homogenize memberships
+  if(is.list(bootstrap.membership)){
+    message("Differing number of variables were attempted to be compared. This result can occur when there are a different number of higher order dimensions detected. Skipping stability metrics...")
+  
+    return(NULL)
+  }
+  
   final.membership <- try(
     homogenize.membership(membership.numeric, bootstrap.membership),
     silent = TRUE

@@ -724,36 +724,6 @@ bootEGA <- function(
       })
     )
     
-    if (typicalStructure){
-      
-      typical.Structure_higher <- switch(model,
-                                         "glasso" = apply(simplify2array(bootGraphs_higher),1:2, median),
-                                         "TMFG" = apply(simplify2array(bootGraphs_higher),1:2, mean)
-      )
-      
-      # Sub-routine to following EGA approach (handles undimensional structures)
-      typical.wc_higher <- suppressWarnings(
-        suppressMessages(
-          
-          typicalStructure.network(
-            A = typical.Structure_higher, corr = corr,
-            model = model, model.args = model.args,
-            n = cases, uni.method = uni.method, algorithm = algorithm,
-            algorithm.args = algorithm.args,
-            consensus.method = consensus.method,
-            consensus.iter = consensus.iter
-          )
-          
-        )
-      )
-      
-      typical.ndim_higher <- length(na.omit(unique(typical.wc_higher)))
-      
-      if(typical.ndim_higher == 1){typical.wc_higher[1:length(typical.wc_higher)] <- 1}
-      
-      dim.variables_higher <- data.frame(items = names(typical.wc_higher), dimension = typical.wc_higher)
-    }
-    
     Median_higher <- median(boot.ndim_higher[, 2], na.rm = TRUE)
     se.boot_higher <- sd(boot.ndim_higher[, 2], na.rm = TRUE)
     ciMult_higher <- qt(0.95/2 + 0.5, nrow(boot.ndim_higher) - 1)
@@ -822,19 +792,6 @@ bootEGA <- function(
       summary.table = summary.table_higher, frequency = lik_higher
     )
     
-    # Typical structure
-    if (typicalStructure) {
-      
-      typicalGraph_higher <- list(
-        graph = typical.Structure_higher,
-        typical.dim.variables = dim.variables_higher[order(dim.variables_higher[,2]), ],
-        wc = typical.wc_higher
-      )
-      
-      result_higher$typicalGraph <- typicalGraph_higher
-      
-    }
-    
   }
   
   # Add plot arguments (for itemStability)
@@ -848,44 +805,10 @@ bootEGA <- function(
   
   if(typicalStructure & plot.typicalStructure){
     
-    if(tolower(EGA.type) != "hierega"){
-      result$plot.typical.ega <- plot(
-        result,
-        plot.args = plot.args
-      )
-    }else{
-      
-      # Set up output
-      hier_plot <- suppressMessages(
-        suppressWarnings(
-          suppressPackageStartupMessages(
-            ggpubr::ggarrange(
-              plot(
-                result,
-                plot.args = plot.args,
-                produce = FALSE
-              ), # plot lower-order
-              plot(
-                result_higher,
-                plot.args = plot.args,
-                produce = FALSE
-              ), # plot higher-order
-              labels = c("Lower Order", "Higher Order")
-            )
-          )
-        )
-      )
-      
-      # Output plots
-      result$plot.typical.ega <- suppressMessages(
-        suppressWarnings(
-          suppressPackageStartupMessages(
-            plot(hier_plot)
-          )
-        )
-      )
-      
-    }
+    result$plot.typical.ega <- plot(
+      result,
+      plot.args = plot.args
+    )
     
   }
   
