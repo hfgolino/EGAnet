@@ -10,7 +10,7 @@
 #' random noise is added to the edges of the population structure to simulate sampling variability. This noise
 #' follows a random uniform distribution ranging from -0.10 to 0.10. In addition, a proportion of edges are
 #' rewired to allow for slight variations on the population structure. The proportion of nodes that are rewired
-#' is sampled from a random uniform distribution between 0.10 to 0.40. This process is carried out for each
+#' is sampled from a random uniform distribution between 0.20 to 0.25. This process is carried out for each
 #' participant resulting in \emph{n} variations of the population structure. Afterward, EII is computed. This
 #' process is carried out for \emph{i} iterations (e.g., 100).
 #' 
@@ -40,6 +40,11 @@
 #'
 #' If you're unsure how many cores your computer has,
 #' then use the following code: \code{parallel::detectCores()}
+#' 
+#' @param progress Boolean.
+#' Should progress be displayed?
+#' Defaults to \code{TRUE}.
+#' For Windows, \code{FALSE} is about 2x faster
 #'
 #' @examples
 #' \donttest{# Dynamic EGA individual and population structures
@@ -83,11 +88,11 @@
 #'
 #' @export
 # Bootstrap Test for the Ergodicity Information Index
-# Updated 29.07.2022
+# Updated 28.08.2022
 boot.ergoInfo <- function(
     dynEGA.object,
     EII, iter = 100,
-    ncores
+    ncores, progress = TRUE
 ){
   
   # Check for class
@@ -192,23 +197,47 @@ boot.ergoInfo <- function(
   # Let user know results are being computed
   message("Computing results...")
   
-  # Set up parallelization
-  cl <- parallel::makeCluster(ncores)
-  
-  # Export prime numbers
-  parallel::clusterExport(
-    cl = cl,
-    varlist = "prime.num"
-  )
-  
-  # Compute EII
-  complexity.estimates <- pbapply::pblapply(
-    X = boot.data, cl = cl,
-    FUN = ergoInfo, use = use
-  )
-  
-  # Stop cluster
-  parallel::stopCluster(cl)
+  # FOR SOME REASON `parallel_process` WON'T
+  # PARALLELIZE WITH WINDOWS... 
+  # USE `pbapply::pblapply` INSTEAD...
+  if(system.check()$OS == "windows"){
+    
+    # Set up parallelization
+    cl <- parallel::makeCluster(ncores)
+
+    # Export prime numbers
+    parallel::clusterExport(
+      cl = cl,
+      varlist = "prime.num"
+    )
+
+    # Compute EII
+    if(isTRUE(progress)){
+      complexity.estimates <- pbapply::pblapply(
+        X = boot.data, cl = cl,
+        FUN = ergoInfo, use = use
+      )
+    }else{ # No progress bar
+      complexity.estimates <- parallel::parLapply(
+        X = boot.data, cl = cl,
+        fun = ergoInfo, use = use
+      )
+    }
+
+    # Stop cluster
+    parallel::stopCluster(cl)
+    
+  }else{
+    # WORKS WITH MAC & LINUX
+    complexity.estimates <- parallel_process(
+      datalist = boot.data,
+      progress = progress,
+      FUN = ergoInfo,
+      FUN_args = list(use = use),
+      export = "prime.num",
+      ncores = ncores
+    )
+  }
   
   # Obtain EII values
   complexity.estimates2 <- unlist(

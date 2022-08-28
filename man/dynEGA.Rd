@@ -20,6 +20,7 @@ dynEGA(
   corr = c("cor_auto", "pearson", "spearman"),
   uni.method = c("expand", "LE", "louvain"),
   ncores,
+  progress = TRUE,
   ...
 )
 }
@@ -168,6 +169,11 @@ Recommended to use maximum number of cores minus one
 
 If you're unsure how many cores your computer has,
 then use the following code: \code{parallel::detectCores()}}
+
+\item{progress}{Boolean.
+Should progress be displayed?
+Defaults to \code{TRUE}.
+For Windows, \code{FALSE} is about 2x faster}
 
 \item{...}{Additional arguments.
 Used for deprecated arguments from previous versions of \code{\link{EGA}}}

@@ -2,6 +2,8 @@ Changes in 1.2.3
 
 o FIX: many bug fixes related to latest update; functions have largely returned to stable status
 
+o UPDATE: Mac and Linux parallelizations have been optimized
+
 
 Changes in 1.2.1
 

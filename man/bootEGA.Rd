@@ -23,6 +23,7 @@ bootEGA(
   plot.typicalStructure = TRUE,
   plot.args = list(),
   ncores,
+  progress = TRUE,
   ...
 )
 }
@@ -254,6 +255,11 @@ Set to \code{1} to not use parallel computing
 
 If you're unsure how many cores your computer has,
 then use the following code: \code{parallel::detectCores()}}
+
+\item{progress}{Boolean.
+Should progress be displayed?
+Defaults to \code{TRUE}.
+For Windows, \code{FALSE} is about 2x faster}
 
 \item{...}{Additional arguments.
 Used for deprecated arguments from previous versions of \code{\link{EGA}}}

@@ -129,6 +129,11 @@
 #'
 #' If you're unsure how many cores your computer has,
 #' then use the following code: \code{parallel::detectCores()}
+#' 
+#' @param progress Boolean.
+#' Should progress be displayed?
+#' Defaults to \code{TRUE}.
+#' For Windows, \code{FALSE} is about 2x faster
 #'
 #' @param ... Additional arguments.
 #' Used for deprecated arguments from previous versions of \code{\link{EGA}}
@@ -148,7 +153,7 @@
 #'
 #' @export
 #'
-# Updated 19.08.2022
+# Updated 28.08.2022
 dynEGA.ind.pop <- function(data, n.embed, tau = 1, delta = 1,
                            id = NULL,
                            use.derivatives = 1,
@@ -156,7 +161,7 @@ dynEGA.ind.pop <- function(data, n.embed, tau = 1, delta = 1,
                            algorithm = c("walktrap", "leiden", "louvain"), algorithm.args = list(),
                            corr = c("cor_auto", "pearson", "spearman"),
                            uni.method = c("expand", "LE", "louvain"),
-                           ncores, ...){
+                           ncores, progress = TRUE, ...){
 
   # Get additional arguments
   add.args <- list(...)
@@ -217,7 +222,8 @@ dynEGA.ind.pop <- function(data, n.embed, tau = 1, delta = 1,
     id = id, use.derivatives = use.derivatives,
     model = model, model.args = model.args,
     algorithm = algorithm, algorithm.args = algorithm.args,
-    corr = corr, uni.method = uni.method, ncores = ncores
+    corr = corr, uni.method = uni.method, ncores = ncores,
+    progress = progress
   )
 
   # Stack derivatives

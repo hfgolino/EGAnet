@@ -149,6 +149,11 @@
 #'
 #' If you're unsure how many cores your computer has,
 #' then use the following code: \code{parallel::detectCores()}
+#' 
+#' @param progress Boolean.
+#' Should progress be displayed?
+#' Defaults to \code{TRUE}.
+#' For Windows, \code{FALSE} is about 2x faster
 #'
 #' @param ... Additional arguments.
 #' Used for deprecated arguments from previous versions of \code{\link{EGA}}
@@ -211,7 +216,7 @@
 #'
 #' @export
 # dynEGA
-# Updated 18.08.2022
+# Updated 28.08.2022
 dynEGA <- function(data, n.embed, tau = 1, delta = 1,
                    level = c("individual", "group", "population"),
                    id = NULL, group = NULL,
@@ -220,7 +225,7 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
                    algorithm = c("walktrap", "leiden", "louvain"), algorithm.args = list(),
                    corr = c("cor_auto", "pearson", "spearman"),
                    uni.method = c("expand", "LE", "louvain"),
-                   ncores, ...){
+                   ncores, progress = TRUE, ...){
 
   # Get additional arguments
   add.args <- list(...)
@@ -313,40 +318,58 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
 
   # Let user know derivatives estimation has started
   message("\nComputing derivatives using GLLA...\n", appendLF = FALSE)
-
-  #Parallel processing
-  cl <- parallel::makeCluster(ncores)
-
-  #Export variables
-  # parallel::clusterExport(cl = cl,
-  #                         varlist = c("datalist"),
-  #                         envir=environment())
-
-  # GLLA Estimation:
-  glla.multi <- function(data, n.embed = n.embed, tau = tau, delta = delta, order = order){
-    order.deriv <- paste0("Ord",seq(from = 0, to = order))
-    data.est <- vector("list")
-    for(i in 1:ncol(data)){
-      data.est[[i]] <- as.data.frame(EGAnet::glla(data[,i], n.embed = n.embed, tau = tau, delta = delta, order = order))
-      data.est[[i]] <- as.data.frame(data.est[[i]])
+  
+  # Obtain operating system
+  os <- system.check()$OS
+  
+  # Parallelize
+  if(os == "windows"){
+    
+    # Make clusters
+    cl <- parallel::makeCluster(ncores)
+    
+    # Export `glla.multi`
+    parallel::clusterExport(
+      cl = cl,
+      varlist = c("glla.multi"),
+      envir = environment()
+    )
+    
+    # Compute derivatives per ID
+    if(isTRUE(progress)){
+      derivlist <- pbapply::pblapply(
+        X = datalist, cl = cl,
+        FUN = glla.multi,
+        n.embed = n.embed, tau = tau,
+        delta = delta, order = order
+      )
+    }else{ # No progress bar
+      derivlist <- parallel::parLapply(
+        X = datalist, cl = cl,
+        fun = glla.multi,
+        n.embed = n.embed, tau = tau,
+        delta = delta, order = order
+      )
     }
-    data.est2 <- vector("list")
-    for(i in 0:order+1){
-      data.est2[[i]] <- sapply(data.est, "[[", i)
-    }
-
-    data.estimates <- data.frame(Reduce(cbind, data.est2))
-    colnames(data.estimates) <- paste(colnames(data), rep(order.deriv, each = ncol(data)), sep = ".")
-    return(data.estimates)
+    
+    # Stop cluster
+    parallel::stopCluster(cl)
+    
+  }else{ # Mac and Linux
+    
+    derivlist <- parallel_process(
+      datalist = datalist,
+      progress = progress,
+      FUN = glla.multi,
+      FUN_args = list(
+        n.embed = n.embed, tau = tau,
+        delta = delta, order = order
+      ),
+      ncores = ncores
+      
+    )
+    
   }
-
-  # Compute derivatives per ID
-  derivlist <- pbapply::pblapply(X = datalist, cl = cl,
-                                 FUN = glla.multi,
-                                 n.embed = n.embed, tau = tau, delta = delta, order = order)
-
-  # Stop cluster
-  parallel::stopCluster(cl)
 
   ### Estimating the dimensionality structure using EGA:
 
@@ -417,23 +440,59 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
     data.groups <- split(data.all[,derivative_index], data.all$Group)
     names(data.groups) <- paste0("Group", group.memb)
 
-    # Parallel processing
-    cl <- parallel::makeCluster(ncores)
-
-    # Export variables
-    # parallel::clusterExport(cl = cl,
-    #                         varlist = c("data.groups", "group.memb"),
-    #                         envir=environment())
-
-    # Compute derivatives per Group
-    ega.list.groups <- pbapply::pblapply(X = data.groups, cl = cl,
-                                         FUN = EGA,
-                                         model = model, model.args = model.args,
-                                         algorithm = algorithm, algorithm.args = algorithm.args,
-                                         corr = corr, uni.method = uni.method, plot.EGA = FALSE)
-
-    # Stop cluster
-    parallel::stopCluster(cl)
+    
+    # Parallelize
+    if(os == "windows"){
+      
+      # Make clusters
+      cl <- parallel::makeCluster(ncores)
+      
+      # Export variables
+      # parallel::clusterExport(
+      #   cl = cl,
+      #   varlist = c("data.groups", "group.memb"),
+      #   envir = environment()
+      # )
+      
+      # Compute derivatives per ID
+      if(isTRUE(progress)){
+        # Compute derivatives per Group
+        ega.list.groups <- pbapply::pblapply(
+          X = data.groups, cl = cl,
+          FUN = EGA,
+          model = model, model.args = model.args,
+          algorithm = algorithm, algorithm.args = algorithm.args,
+          corr = corr, uni.method = uni.method, plot.EGA = FALSE
+        )
+      }else{ # No progress bar
+        ega.list.groups <- parallel::parLapply(
+          X = data.groups, cl = cl,
+          fun = EGA,
+          model = model, model.args = model.args,
+          algorithm = algorithm, algorithm.args = algorithm.args,
+          corr = corr, uni.method = uni.method, plot.EGA = FALSE
+        )
+      }
+      
+      # Stop cluster
+      parallel::stopCluster(cl)
+      
+    }else{ # Mac and Linux
+      
+      ega.list.groups <- parallel_process(
+        datalist = data.groups,
+        progress = progress,
+        FUN = EGA,
+        FUN_args = list(
+          model = model, model.args = model.args,
+          algorithm = algorithm, algorithm.args = algorithm.args,
+          corr = corr, uni.method = uni.method, plot.EGA = FALSE
+        ),
+        ncores = ncores
+        
+      )
+      
+    }
 
   }
 
@@ -490,28 +549,59 @@ dynEGA <- function(data, n.embed, tau = 1, delta = 1,
       }
 
     }
-
-    #Parallel processing
-    cl <- parallel::makeCluster(ncores)
-
-    #Export variables
-    # parallel::clusterExport(cl = cl,
-    #                         varlist = c("data.individuals_var"),
-    #                         envir=environment())
-
-    # EGA estimates per individual:
-    # op <- pbapply::pboptions(type = "none")
-    ega.list.individuals <- pbapply::pblapply(
-      X = data.individuals_var, cl = cl,
-      FUN = EGA,
-      model = model, model.args = model.args,
-      algorithm = algorithm, algorithm.args = algorithm.args,
-      corr = corr, uni.method = uni.method, plot.EGA = FALSE
-    )
-    # pbapply::pboptions(op)
-
-    # Stop cluster
-    parallel::stopCluster(cl)
+    
+    # Parallelize
+    if(os == "windows"){
+      
+      # Make clusters
+      cl <- parallel::makeCluster(ncores)
+      
+      # Export variables
+      # parallel::clusterExport(
+      #   cl = cl,
+      #   varlist = c("data.individuals_var"),
+      #   envir=environment()
+      # )
+      
+      # Compute derivatives per ID
+      if(isTRUE(progress)){
+        # EGA estimates per individual
+        ega.list.individuals <- pbapply::pblapply(
+          X = data.individuals_var, cl = cl,
+          FUN = EGA,
+          model = model, model.args = model.args,
+          algorithm = algorithm, algorithm.args = algorithm.args,
+          corr = corr, uni.method = uni.method, plot.EGA = FALSE
+        )
+      }else{ # No progress bar
+        ega.list.individuals <- parallel::parLapply(
+          X = data.individuals_var, cl = cl,
+          fun = EGA,
+          model = model, model.args = model.args,
+          algorithm = algorithm, algorithm.args = algorithm.args,
+          corr = corr, uni.method = uni.method, plot.EGA = FALSE
+        )
+      }
+      
+      # Stop cluster
+      parallel::stopCluster(cl)
+      
+    }else{ # Mac and Linux
+      
+      ega.list.groups <- parallel_process(
+        datalist = ega.list.individuals,
+        progress = progress,
+        FUN = EGA,
+        FUN_args = list(
+          model = model, model.args = model.args,
+          algorithm = algorithm, algorithm.args = algorithm.args,
+          corr = corr, uni.method = uni.method, plot.EGA = FALSE
+        ),
+        ncores = ncores
+        
+      )
+      
+    }
 
     # Add back disconnected variables
     if(length(warning.idx) != 0){

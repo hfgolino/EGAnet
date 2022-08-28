@@ -7105,9 +7105,33 @@ rewire <- function(network, min = 0.20, max = 0.40, noise = 0.10)
   
 }
 
-#%%%%%%%%%%%%%%%%%%%%
+
+#%%%%%%%%%%%%
+# dynEGA ----
+#%%%%%%%%%%%%
+
+#' @noRd
+# Updated 28.08.2022
+# GLLA Estimation:
+glla.multi <- function(data, n.embed = n.embed, tau = tau, delta = delta, order = order){
+  order.deriv <- paste0("Ord",seq(from = 0, to = order))
+  data.est <- vector("list")
+  for(i in 1:ncol(data)){
+    data.est[[i]] <- as.data.frame(EGAnet::glla(data[,i], n.embed = n.embed, tau = tau, delta = delta, order = order))
+    data.est[[i]] <- as.data.frame(data.est[[i]])
+  }
+  data.est2 <- vector("list")
+  for(i in 0:order+1){
+    data.est2[[i]] <- sapply(data.est, "[[", i)
+  }
+  data.estimates <- data.frame(Reduce(cbind, data.est2))
+  colnames(data.estimates) <- paste(colnames(data), rep(order.deriv, each = ncol(data)), sep = ".")
+  return(data.estimates)
+}
+
+#%%%%%%%%%%%%%%%%%
 # infoCluster ----
-#%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%
 
 #' @noRd
 # Variation of information
@@ -7209,6 +7233,215 @@ vn_entropy <- function(L_mat)
 #%%%%%%%%%%%%%%%%%%%%%%
 # SYSTEM FUNCTIONS ----
 #%%%%%%%%%%%%%%%%%%%%%%
+
+#' @noRd
+#'
+# General function to perform
+# system-specific parallelization on lists
+# Updated 28.08.2022
+parallel_process <- function(
+    datalist, # list of data
+    iter = NULL, # number of iterations
+    progress = TRUE, # progress bar
+    FUN, # function to use
+    FUN_args = list(), # arguments to use in function
+    export = NULL, # variables to export (if necessary)
+    ncores # number of cores
+){
+  
+  # Obtain arguments
+  FUN_args <- obtain.arguments(
+    FUN = FUN,
+    FUN.args = FUN_args
+  )
+  
+  # Check for operating system
+  os <- system.check()$OS
+  
+  # Make clusters for Windows
+  if(os == "windows"){
+    cl <- parallel::makeCluster(ncores)
+  }
+  
+  # Set progress bar up
+  if(isTRUE(progress)){
+    
+    # Calculate total computations
+    total_computations <- ifelse(
+      is.null(iter), length(datalist), iter
+    )
+    
+    # Count computations
+    count_computations <- 0
+    
+    # Create data splits (necessary for progress bar)
+    if(total_computations <= 100){
+      split_computations <- ncores
+    }else{
+      split_computations <- ifelse(
+        os == "windows",
+        round(total_computations / 5),
+        ncores
+      )
+    }
+    
+    # Set start and end points of data splits
+    split_start <- seq(1, total_computations, split_computations)
+    split_end <- unique(
+      c(
+        seq(split_computations, total_computations, split_computations),
+        total_computations
+      )
+    )
+    
+    # Initialize split list
+    data_split <- vector("list", length = length(split_start))
+    
+    # Populate split list
+    for(i in seq_along(data_split)){
+      data_split[[i]] <- datalist[split_start[i]:split_end[i]]
+    }
+    
+    # Initialize results list
+    results <- vector("list", length = length(data_split))
+    
+    # Obtain start time
+    if(count_computations == 0){
+      start_time <- Sys.time()
+    }
+    
+    # Initialize runtime updates
+    if(total_computations <= 100){
+      runtime_update <- seq(
+        0, total_computations, ncores
+      )
+    }else{
+      runtime_update <- seq(
+        0, total_computations, floor(total_computations / 5)
+      )
+    }
+    runtime_update <- unique(c(runtime_update, total_computations))
+    
+    # Loop through data splits
+    for(i in seq_along(data_split)){
+      
+      # Update progress
+      if(count_computations < runtime_update[2]){
+        
+        # Update progress
+        custom_progress(
+          i = count_computations,
+          max = total_computations,
+          start_time = "calculating"
+        )
+        
+      }
+      
+      # Run parallelization
+      if(os == "windows"){
+        
+        # Export objects
+        parallel::clusterExport(
+          cl = cl,
+          varlist = c(
+            "FUN", "FUN_args",
+            export, "data_split"
+          ),
+          envir = environment()
+        )
+        
+        # Perform parallelization
+        results[[i]] <- parallel::parLapply(
+          cl = cl,
+          X = data_split[[i]],
+          fun = function(x){
+            FUN_args[[names(FUN_args)[1]]] <- x
+            return(do.call(FUN, FUN_args))
+          }
+        )
+        
+      }else{ # Non-Windows
+        
+        results[[i]] <- parallel::mclapply(
+          X = data_split[[i]],
+          FUN = function(x){
+            FUN_args[[names(FUN_args)[1]]] <- x
+            return(do.call(FUN, FUN_args))
+          },
+          mc.cores = ncores
+        )
+        
+      }
+      
+      # Update computation count
+      count_computations <- count_computations +
+        length(data_split[[i]])
+      
+      # Update progress
+      if(count_computations %in% runtime_update){
+        
+        custom_progress(
+          i = count_computations,
+          max = total_computations,
+          start_time = start_time
+        )
+        
+      }
+      
+    }
+    
+    # Unwrap parallelization
+    results <- unlist(results, recursive = FALSE)
+    
+  }else{ # Run without progress
+    
+    # Run parallelization
+    if(os == "windows"){
+      
+      # Export objects
+      parallel::clusterExport(
+        cl = cl,
+        varlist = c(
+          "FUN", "FUN_args",
+          export, "datalist"
+        ),
+        envir = environment()
+      )
+      
+      # Perform parallelization
+      results <- parallel::parLapply(
+        cl = cl,
+        X = datalist,
+        fun = function(x){
+          FUN_args[[names(FUN_args)[1]]] <- x
+          return(do.call(FUN, FUN_args))
+        }
+      )
+      
+    }else{ # Non-Windows
+      
+      results <- parallel::mclapply(
+        X = datalist,
+        FUN = function(x){
+          FUN_args[[names(FUN_args)[1]]] <- x
+          return(do.call(FUN, FUN_args))
+        },
+        mc.cores = ncores
+      )
+      
+    }
+    
+  }
+  
+  # Stop cluster for Windows
+  if(os == "windows"){
+    parallel::stopCluster(cl)
+  }
+  
+  # Return results
+  return(results)
+  
+}
 
 #' Error report
 #'
