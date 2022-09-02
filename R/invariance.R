@@ -281,7 +281,7 @@ invariance <- function(
   )
   
   # Force gamma = 0
-  model.ARGS$gamma <- 0
+  # model.ARGS$gamma <- 0
   
   # Algorithm function
   if(!is.function(algorithm)){
