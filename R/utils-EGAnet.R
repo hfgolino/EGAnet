@@ -6992,7 +6992,7 @@ vn_entropy <- function(L_mat)
 #'
 # General function to perform
 # system-specific parallelization on lists
-# Updated 28.08.2022
+# Updated 02.09.2022
 parallel_process <- function(
     datalist, # list of data
     iter = NULL, # number of iterations
@@ -7029,59 +7029,92 @@ parallel_process <- function(
     count_computations <- 0
     
     # Create data splits (necessary for progress bar)
-    if(total_computations <= 100){
+    if(iter <= 100 | os != "windows"){
+      
+      # Split computations
       split_computations <- ncores
+      
+      # Set start and end points of data splits
+      split_start <- seq(1, total_computations, split_computations)
+      split_end <- unique(
+        c(
+          seq(split_computations, total_computations, split_computations),
+          total_computations
+        )
+      )
+      
+      # Initialize split list
+      data_split <- vector("list", length = length(split_start))
+      
+      # Populate split list
+      for(i in seq_along(data_split)){
+        data_split[[i]] <- datalist[split_start[i]:split_end[i]]
+      }
+      
+      # Initialize results list
+      results <- vector("list", length = length(data_split))
+      
+      # Initialize runtime updates
+      runtime_update <- seq(
+        0, total_computations, ncores
+      )
+      
+      # Obtain runtime updates
+      runtime_update <- unique(c(runtime_update, total_computations))
+      
     }else{
-      split_computations <- ifelse(
-        os == "windows",
-        round(total_computations / 5),
-        ncores
+      
+      # Split computations
+      split_computations <- ncores
+      
+      # Set start and end points of data splits
+      split_start <- seq(1, total_computations, split_computations)
+      split_end <- unique(
+        c(
+          seq(split_computations, total_computations, split_computations),
+          total_computations
+        )
       )
-    }
-    
-    # Set start and end points of data splits
-    split_start <- seq(1, total_computations, split_computations)
-    split_end <- unique(
-      c(
-        seq(split_computations, total_computations, split_computations),
-        total_computations
+      
+      # Batch splits
+      batch_computations <- round(iter / 100)
+      
+      # Set start and end points of data batches
+      batch_start <- seq(1, length(split_end), batch_computations)
+      batch_end <- unique(
+        c(
+          seq(batch_computations, length(split_end), batch_computations),
+          length(split_start)
+        )
       )
-    )
+      
+      # Initialize batch list
+      data_split <- vector("list", length = length(batch_start))
+      
+      # Populate split list
+      for(j in seq_along(data_split)){
+        data_split[[j]] <- datalist[
+          split_start[batch_start[j]]:split_end[batch_end[j]]
+        ]
+      }
+      
+      # Initialize results list
+      results <- vector("list", length = length(data_split))
+      
+      # Initialize runtime updates
+      runtime_update <- seq(
+        0, total_computations, length(data_split[[1]])
+      )
+      
+      # Obtain runtime updates
+      runtime_update <- unique(c(runtime_update, total_computations))
     
-    # Initialize split list
-    data_split <- vector("list", length = length(split_start))
-    
-    # Populate split list
-    for(i in seq_along(data_split)){
-      data_split[[i]] <- datalist[split_start[i]:split_end[i]]
     }
-    
-    # Initialize results list
-    results <- vector("list", length = length(data_split))
     
     # Obtain start time
     if(count_computations == 0){
       start_time <- Sys.time()
     }
-    
-    # Initialize runtime updates
-    if(os == "windows"){
-      if(total_computations <= 100){
-        runtime_update <- seq(
-          0, total_computations, ncores
-        )
-      }else{
-        runtime_update <- seq(
-          0, total_computations, floor(total_computations / 5)
-        )
-      }
-    }else{
-      runtime_update <- seq(
-        0, total_computations, ncores
-      )
-    }
-
-    runtime_update <- unique(c(runtime_update, total_computations))
     
     # Loop through data splits
     for(i in seq_along(data_split)){
