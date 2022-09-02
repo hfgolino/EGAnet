@@ -186,7 +186,7 @@
 #' @export
 #'
 # Estimates EGA
-# Updated 27.07.2022
+# Updated 02.09.2022
 EGA.estimate <- function(
     data, n = NULL,
     corr = c("cor_auto", "pearson", "spearman"),
@@ -446,7 +446,12 @@ EGA.estimate <- function(
   
   # Check for singleton communities
   if(any(frequencies == 1)){
-    wc[as.numeric(names(frequencies)[which(frequencies == 1)])] <- NA
+    
+    # Singleton communities
+    singletons <- as.numeric(names(frequencies)[which(frequencies == 1)])
+    
+    # Replace singletons with NA
+    wc[!is.na(match(wc, singletons))] <- NA
   }
 
   # Name communities
