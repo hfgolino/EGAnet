@@ -13,7 +13,7 @@ invariance(
   corr = c("cor_auto", "pearson", "spearman"),
   uni.method = c("expand", "LE", "louvain"),
   model = c("glasso", "TMFG"),
-  model.args = list(),
+  model.args = list(gamma = 0),
   algorithm = c("walktrap", "leiden", "louvain"),
   algorithm.args = list(),
   consensus.method = c("highest_modularity", "most_common", "iterative", "lowest_tefi"),
@@ -108,7 +108,8 @@ This is the default method}
 
 \item{model.args}{List.
 A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
-or \code{\link[EGAnet]{TMFG}}}
+or \code{\link[EGAnet]{TMFG}}. By default, \code{gamma} is set to 0 in 
+\code{\link[EGAnet]{EBICglasso.qgraph}}}
 
 \item{algorithm}{A string indicating the algorithm to use or a function from \code{\link{igraph}}
 Current options are:

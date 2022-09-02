@@ -18,7 +18,9 @@
 #'
 #' @param nlambda Number of lambda values to test.
 #'
-#' @param lambda.min.ratio Ratio of lowest lambda value compared to maximal lambda
+#' @param lambda.min.ratio Ratio of lowest lambda value compared to maximal lambda.
+#' Defaults to \code{0.1}.
+#' \strong{NOTE} \code{\link{qgraph}} sets the default to \code{0.01}
 #'
 #' @param returnAllResults   If \code{TRUE} this function does not
 #' return a network but the results of the entire glasso path.
@@ -81,14 +83,14 @@
 #' @export
 #'
 # Computes optimal glasso network based on EBIC
-# Updated 17.07.2022
+# Updated 02.09.2022
 EBICglasso.qgraph <- function(
     data, # Sample covariance matrix
     n = NULL,
     gamma = 0.5,
     penalize.diagonal = FALSE, # Penalize diagonal?
     nlambda = 100,
-    lambda.min.ratio = 0.01,
+    lambda.min.ratio = 0.1,
     returnAllResults = FALSE, # If true, returns a list
     penalizeMatrix, # Optional logical matrix to indicate which elements are penalized
     countDiagonal = FALSE, # Set to TRUE to get old qgraph behavior: conting diagonal elements as parameters in EBIC computation. This is not correct, but is included to replicate older analyses

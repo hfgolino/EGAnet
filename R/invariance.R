@@ -40,7 +40,8 @@
 #'
 #' @param model.args List.
 #' A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
-#' or \code{\link[EGAnet]{TMFG}}
+#' or \code{\link[EGAnet]{TMFG}}. By default, \code{gamma} is set to 0 in 
+#' \code{\link[EGAnet]{EBICglasso.qgraph}}
 #'
 #' @param algorithm A string indicating the algorithm to use or a function from \code{\link{igraph}}
 #' Current options are:
@@ -218,14 +219,14 @@
 #' @export
 #'
 # Measurement Invariance
-# Updated 20.08.2022
+# Updated 02.09.2022
 invariance <- function(
   data, groups, iter = 500, 
   memberships = NULL,
   type = c("loadings"),
   corr = c("cor_auto", "pearson", "spearman"),
   uni.method = c("expand", "LE", "louvain"),
-  model = c("glasso", "TMFG"), model.args = list(),
+  model = c("glasso", "TMFG"), model.args = list(gamma = 0),
   algorithm = c("walktrap", "leiden", "louvain"), algorithm.args = list(),
   consensus.method = c(
     "highest_modularity",
@@ -256,7 +257,7 @@ invariance <- function(
   if(missing(uni.method)){
     uni.method <- "louvain"
   }else if(!is.function(uni.method)){
-    uni.method <- tolower(match.arg(uni.method))
+    uni.method <- match.arg(uni.method)
   }
   
   if(missing(consensus.method)){
@@ -279,9 +280,6 @@ invariance <- function(
     FUN = model.FUN,
     FUN.args = model.args
   )
-  
-  # Force gamma = 0
-  # model.ARGS$gamma <- 0
   
   # Algorithm function
   if(!is.function(algorithm)){
@@ -321,6 +319,7 @@ invariance <- function(
   ega_args$data <- data
   
   # Set EGA arguments
+  ega_args$n <- nrow(data)
   ega_args$corr <- corr
   ega_args$model <- model
   ega_args$model.args <- model.ARGS
