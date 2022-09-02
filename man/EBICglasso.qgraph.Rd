@@ -10,7 +10,7 @@ EBICglasso.qgraph(
   gamma = 0.5,
   penalize.diagonal = FALSE,
   nlambda = 100,
-  lambda.min.ratio = 0.01,
+  lambda.min.ratio = 0.1,
   returnAllResults = FALSE,
   penalizeMatrix,
   countDiagonal = FALSE,
