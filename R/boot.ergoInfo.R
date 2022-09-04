@@ -10,7 +10,7 @@
 #' random noise is added to the edges of the population structure to simulate sampling variability. This noise
 #' follows a random uniform distribution ranging from -0.10 to 0.10. In addition, a proportion of edges are
 #' rewired to allow for slight variations on the population structure. The proportion of nodes that are rewired
-#' is sampled from a random uniform distribution between 0.20 to 0.25. This process is carried out for each
+#' is sampled from a random uniform distribution between 0.20 to 0.40. This process is carried out for each
 #' participant resulting in \emph{n} variations of the population structure. Afterward, EII is computed. This
 #' process is carried out for \emph{i} iterations (e.g., 100).
 #' 
@@ -47,15 +47,19 @@
 #' For Windows, \code{FALSE} is about 2x faster
 #'
 #' @examples
-#' \donttest{# Dynamic EGA individual and population structures
+#' # Obtain simulated data
+#' sim.data <- sim.dynEGA
+#' 
+#' \dontrun{
+#' # Dynamic EGA individual and population structures
 #' dyn1 <- dynEGA.ind.pop(
-#'   data = sim.dynEGA[,-c(22)], n.embed = 5, tau = 1,
-#'   delta = 1, id = 21, use.derivatives = 1,
+#'   data = sim.dynEGA[,-26], n.embed = 5, tau = 1,
+#'   delta = 1, id = 25, use.derivatives = 1,
 #'   model = "glasso", ncores = 2, corr = "pearson"
 #' )
 #'
 #' # Empirical Ergodicity Information Index
-#' eii1 <- ergoInfo(dynEGA.object = dyn1, use = "edge.list")
+#' eii1 <- ergoInfo(dynEGA.object = dyn1, use = "weighted")
 #'
 #' # Bootstrap Test for Ergodicity Information Index
 #' testing.ergoinfo <- boot.ergoInfo(
@@ -88,7 +92,7 @@
 #'
 #' @export
 # Bootstrap Test for the Ergodicity Information Index
-# Updated 28.08.2022
+# Updated 04.09.2022
 boot.ergoInfo <- function(
     dynEGA.object,
     EII, iter = 100,
@@ -180,8 +184,8 @@ boot.ergoInfo <- function(
       function(i){
         dynEGA.ind[[i]]$network <- rewire(
           dynEGA.pop$dynEGA$network,
-          min = 0.20, max = 0.25,
-          noise = NULL
+          min = 0.20, max = 0.40,
+          noise = 0.10
         )
         return(dynEGA.ind[[i]])
       }

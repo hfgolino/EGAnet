@@ -73,7 +73,8 @@
 #' sample1 <- items[sample(1:nrow(items), 1000),]
 #' sample2 <- items[sample(1:nrow(items), 1000),]
 #' 
-#' \donttest{# Estimate EGAs
+#' \dontrun{
+#' # Estimate EGAs
 #' ega1 <- EGA(sample1)
 #' ega2 <- EGA(sample2)
 #' 

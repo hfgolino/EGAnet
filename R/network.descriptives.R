@@ -50,11 +50,8 @@
 #' # Load data
 #' wmt <- wmt2[,7:24]
 #'
-#' \donttest{# EGA example
-#' ega.wmt <- EGA(
-#'   data = wmt,
-#'   plot.EGA = FALSE # No plot for CRAN
-#' )}
+#' \dontrun{# EGA example
+#' ega.wmt <- EGA(data = wmt)}
 #' 
 #' # Compute descriptives
 #' network.descriptives(ega.wmt)

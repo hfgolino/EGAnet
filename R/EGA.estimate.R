@@ -135,7 +135,8 @@
 #' # Obtain data
 #' wmt <- wmt2[,7:24]
 #' 
-#' \donttest{# Estimate EGA
+#' \dontrun{
+#' # Estimate EGA
 #' ega.wmt <- EGA.estimate(data = wmt)
 #'
 #' # Estimate EGAtmfg

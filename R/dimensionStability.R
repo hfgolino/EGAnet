@@ -31,10 +31,10 @@
 #' # Load data
 #' wmt <- wmt2[,7:24]
 #'
-#' \donttest{# Estimate bootstrap EGA
+#' \dontrun{
+#' # Estimate bootstrap EGA
 #' boot.wmt <- bootEGA(
-#'   data = wmt, iter = 100, # recommended 500
-#'   plot.typicalStructure = FALSE, # No plot for CRAN checks
+#'   data = wmt, iter = 500,
 #'   type = "parametric", ncores = 2
 #' )}
 #'
@@ -42,12 +42,12 @@
 #' res <- dimensionStability(boot.wmt)
 #' res$dimension.stability
 #' 
-#' \donttest{# Produce Methods section
+#' \dontrun{
+#' # Produce Methods section
 #' methods.section(
 #'   boot.wmt,
 #'   stats = "dimensionStability"
-#' )
-#' }
+#' )}
 #' 
 #'
 #' @references

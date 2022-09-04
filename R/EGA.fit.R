@@ -119,7 +119,8 @@
 #' # Load data
 #' wmt <- wmt2[,7:24]
 #'
-#' \donttest{# Estimate EGA
+#' \dontrun{
+#' # Estimate EGA
 #' ega.wmt <- EGA(
 #'   data = wmt, 
 #'   plot.EGA = FALSE # No plot for CRAN checks

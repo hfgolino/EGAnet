@@ -164,10 +164,11 @@
 #' # Obtain data
 #' sim.dynEGA <- sim.dynEGA # bypasses CRAN checks
 #'
-#' \donttest{# Population structure
+#' \dontrun{
+#' # Population structure
 #' dyn.random <- dynEGA(
 #'   data = sim.dynEGA, n.embed = 5, tau = 1,
-#'   delta = 1, id = 21, group = 22, use.derivatives = 1,
+#'   delta = 1, id = 25, group = 26, use.derivatives = 1,
 #'   level = "population", ncores = 2, corr = "pearson"
 #' )
 #'
@@ -177,17 +178,17 @@
 #' # Group structure
 #' dyn.group <- dynEGA(
 #'   data = sim.dynEGA, n.embed = 5, tau = 1,
-#'   delta = 1, id = 21, group = 22, use.derivatives = 1,
+#'   delta = 1, id = 25, group = 26, use.derivatives = 1,
 #'   level = "group", ncores = 2, corr = "pearson"
 #' )
 #'
 #' # Plot group structure
 #' plot(dyn.group, ncol = 2, nrow = 1)
-#'
+#' 
 #' # Intraindividual structure
 #' dyn.individual <- dynEGA(
 #'   data = sim.dynEGA, n.embed = 5, tau = 1,
-#'   delta = 1, id = 21, group = 22, use.derivatives = 1,
+#'   delta = 1, id = 25, group = 26, use.derivatives = 1,
 #'   level = "individual", ncores = 2, corr = "pearson"
 #' )
 #'

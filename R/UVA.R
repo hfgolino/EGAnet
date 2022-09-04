@@ -259,7 +259,8 @@
 #' key.ind <- match(colnames(items), as.character(psychTools::spi.dictionary$item_id))
 #' key <- as.character(psychTools::spi.dictionary$item[key.ind])
 #' 
-#' \donttest{# Automated selection of local dependence (default)
+#' \dontrun{
+#' # Automated selection of local dependence (default)
 #' uva.results <- UVA(data = items, key = key)
 #' 
 #' # Produce Methods section
@@ -267,8 +268,7 @@
 #' 
 #' # Manual selection of local dependence
 #' if(interactive()){
-#' uva.results <- UVA(data = items, key = key, auto = FALSE)
-#' }
+#' uva.results <- UVA(data = items, key = key, auto = FALSE)}
 #'
 #' @references
 #' # Simulation using \code{UVA} \cr

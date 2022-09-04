@@ -212,7 +212,7 @@
 #' # Groups
 #' groups <- rep(1:2, each = nrow(wmt) / 2)
 #' 
-#' \donttest{
+#' \dontrun{
 #' # Measurement invariance
 #' results <- invariance(wmt, groups, ncores = 2)}
 #' 

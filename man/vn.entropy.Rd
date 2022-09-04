@@ -30,18 +30,14 @@ Lower values suggest better fit of a structure to the data.
 idx <- na.omit(match(gsub("-", "", unlist(psychTools::spi.keys[1:5])), colnames(psychTools::spi)))
 items <- psychTools::spi[,idx]
 
-\donttest{# Estimate EGA
-ega.spi <- EGA(
-  data = items, model = "glasso",
-  plot.EGA = FALSE # No plot for CRAN checks
-)
+\dontrun{# Estimate EGA
+ega.spi <- EGA(data = items, model = "glasso")
 
 # Compute entropy indices
 vn.entropy(
   data = ega.spi$correlation,
   structure = ega.spi$wc
-)
-}
+)}
 
 }
 \references{

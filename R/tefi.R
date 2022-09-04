@@ -22,9 +22,7 @@
 #'
 #' \dontrun{
 #' # Estimate EGA model
-#' ega.wmt <- EGA(data = wmt, model = "glasso")
-#'
-#' }
+#' ega.wmt <- EGA(data = wmt, model = "glasso")}
 #'
 #' # Compute entropy indices
 #' tefi(data = ega.wmt$correlation, structure = ega.wmt$wc)

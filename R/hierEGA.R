@@ -277,11 +277,11 @@
 #' # Obtain example data
 #' data <- optimism
 #' 
-#' \donttest{# hierEGA example
+#' \dontrun{
+#' # hierEGA example
 #' opt.hier<- hierEGA(
 #'   data = optimism,
-#'   algorithm = "louvain",
-#'   plot.EGA = FALSE # no plots for CRAN check
+#'   algorithm = "louvain"
 #' )}
 #'
 #' @export

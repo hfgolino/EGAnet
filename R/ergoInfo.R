@@ -43,17 +43,18 @@
 #' # Obtain data
 #' sim.dynEGA <- sim.dynEGA # bypasses CRAN checks
 #'
-#' \donttest{# Dynamic EGA individual and population structure
+#' \dontrun{
+#' # Dynamic EGA individual and population structure
 #' dyn.ega1 <- dynEGA.ind.pop(
-#'   data = sim.dynEGA, n.embed = 5, tau = 1,
-#'   delta = 1, id = 21, use.derivatives = 1,
+#'   data = sim.dynEGA[,-26], n.embed = 5, tau = 1,
+#'   delta = 1, id = 25, use.derivatives = 1,
 #'   ncores = 2, corr = "pearson"
 #' )
 #'
 #' # Compute empirical ergodicity information index
 #' eii <- ergoInfo(
 #'   dynEGA.object = dyn.ega1,
-#'   use = "edge.list"
+#'   use = "weighted"
 #' )}
 #'
 #' @export

@@ -154,7 +154,8 @@ can be used to estimate the number of communities (see examples).
 # Obtain data
 wmt <- wmt2[,7:24]
 
-\donttest{# Estimate EGA
+\dontrun{
+# Estimate EGA
 ega.wmt <- EGA.estimate(data = wmt)
 
 # Estimate EGAtmfg

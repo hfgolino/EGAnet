@@ -70,7 +70,8 @@
 #' # Obtain data
 #' wmt <- wmt2[,7:24]
 #' 
-#' \donttest{# Compute graph with tuning = 0 (BIC)
+#' \dontrun{
+#' # Compute graph with tuning = 0 (BIC)
 #' BICgraph <- EBICglasso.qgraph(
 #'   data = wmt, gamma = 0
 #' )

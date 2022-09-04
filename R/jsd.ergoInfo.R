@@ -40,10 +40,11 @@
 #' Values can range between 0 and 1
 #'
 #' @examples
-#' \donttest{# Dynamic EGA individual and population structures
+#' \dontrun{
+#' # Dynamic EGA individual and population structures
 #' dyn1 <- dynEGA.ind.pop(
-#'   data = sim.dynEGA[,-c(22)], n.embed = 5, tau = 1,
-#'   delta = 1, id = 21, use.derivatives = 1,
+#'   data = sim.dynEGA[,-26], n.embed = 5, tau = 1,
+#'   delta = 1, id = 25, use.derivatives = 1,
 #'   model = "glasso", ncores = 2, corr = "pearson"
 #' )
 #'

@@ -39,6 +39,11 @@
 #'
 #' @param burnin Number of n first samples to discard when computing the factor scores. Defaults to 1000.
 #'
+#' @param variation Boolean.
+#' Whether parameters should be varied.
+#' Defaults to \code{FALSE}.
+#' Set to \code{TRUE} to add slight variation to all parameters
+#'
 #' @examples
 #'
 #'
@@ -65,34 +70,86 @@
 #'
 #' @export
 # Simulate dynamic factor model
-# Updated 09.05.2022
-simDFM <- function(variab, timep, nfact, error, dfm = c("DAFS","RandomWalk"),
-                   loadings, autoreg, crossreg, var.shock, cov.shock, burnin = 1000){
+# Updated 04.09.2022
+simDFM <- function(
+    variab, timep, nfact, error, dfm = c("DAFS","RandomWalk"),
+    loadings, autoreg, crossreg, var.shock, cov.shock, burnin = 1000,
+    variation = FALSE
+){
 
   #### MISSING ARGUMENTS HANDLING ####
-  if(missing(dfm))
-  {dfm <- "DAFS"
-  }else{level <- match.arg(dfm)}
+  if(missing(dfm)){
+    dfm <- "DAFS"
+  }else{dfm <- match.arg(dfm)}
 
   # Factor Scores:
 
   if(dfm == "DAFS"){
-    # B = Matrix of Bl is a nfact x nfact matrix containing the autoregressive and cross-regressive coefficients
-    B <- matrix(crossreg, ncol = nfact, nrow = nfact)
-    diag(B) <- autoreg
-
-    # Shock = Random shock vectors following a multivariate normal distribution with mean zeros and nfact x nfact q covariance matrix D
-    D <- matrix(var.shock,nfact,nfact)
-    diag(D) <- cov.shock
-    Shock <- MASS_mvrnorm(burnin+timep,matrix(0,nfact,1),D)
-
-    Fscores <- matrix(0,burnin+timep,nfact)
-    Fscores[1,] <- Shock[1,]
-
-    for (t in 2: (burnin+timep)){
-      Fscores[t,] <- Fscores[t-1,] %*% B+ Shock[t,]
+    
+    # Add variation
+    if(isTRUE(variation)){
+      
+      # B = Matrix of Bl is a nfact x nfact matrix containing the autoregressive and cross-regressive coefficients
+      B <- matrix(
+        # Add some variation
+        crossreg + runif(nfact * nfact, -0.05, 0.05),
+        ncol = nfact,
+        nrow = nfact
+      )
+      # Make symmetric
+      B <- (t(B) + B) / 2
+      
+      # Add some varation
+      diag(B) <- autoreg + runif(nfact, -0.05, 0.05)
+      
+      # Shock = Random shock vectors following a multivariate normal distribution with mean zeros and nfact x nfact q covariance matrix D
+      D <- matrix(
+        # Add some variation
+        var.shock + runif(nfact * nfact, -0.05, 0.05),
+        nfact,
+        nfact
+      )
+      # Make symmetric
+      D <- (t(D) + D) / 2
+      
+      # Add some variation
+      diag(D) <- cov.shock + runif(nfact, -0.05, 0.05)
+      
+      # Compute shock
+      Shock <- MASS_mvrnorm(
+        burnin + timep, matrix(0, nfact, 1), D
+      )
+      
+      Fscores <- matrix(0, burnin + timep, nfact)
+      Fscores[1,] <- Shock[1,]
+      
+      for (t in 2: (burnin+timep)){
+        Fscores[t,] <- Fscores[t-1,] %*% B+ Shock[t,]
+      }
+      Fscores <- Fscores[-c(1:burnin),]
+      
+    }else{
+      
+      # B = Matrix of Bl is a nfact x nfact matrix containing the autoregressive and cross-regressive coefficients
+      B <- matrix(
+        crossreg, ncol = nfact, nrow = nfact
+      )
+      diag(B) <- autoreg
+      
+      # Shock = Random shock vectors following a multivariate normal distribution with mean zeros and nfact x nfact q covariance matrix D
+      D <- matrix(var.shock, nfact, nfact)
+      diag(D) <- cov.shock
+      Shock <- MASS_mvrnorm(burnin+timep,matrix(0,nfact,1),D)
+      
+      Fscores <- matrix(0,burnin+timep,nfact)
+      Fscores[1,] <- Shock[1,]
+      
+      for (t in 2: (burnin+timep)){
+        Fscores[t,] <- Fscores[t-1,] %*% B+ Shock[t,]
+      }
+      Fscores <- Fscores[-c(1:burnin),]
+      
     }
-    Fscores <- Fscores[-c(1:burnin),]
 
   }else{
     Fscores <- matrix(rnorm(nfact*(burnin+timep), 0, 1), nfact, burnin+timep)
@@ -102,12 +159,24 @@ simDFM <- function(variab, timep, nfact, error, dfm = c("DAFS","RandomWalk"),
   }
 
 
-  LoadMat <- as.matrix(Matrix::bdiag(lapply(rep(loadings, nfact), rep, variab)))
+  if(isTRUE(variation)){
+    loads <- lapply(rep(loadings, nfact), rep, variab)
+    loads <- lapply(loads, function(x){x + runif(length(x), -0.10, 0.10)})
+    LoadMat <- as.matrix(Matrix::bdiag(loads))
+  }else{
+    LoadMat <- as.matrix(Matrix::bdiag(lapply(rep(loadings, nfact), rep, variab)))
+  }
 
   ## Error: multivariate normal distribution with mean zeros and p x p covariance matrix Q
-  var <- error^2
-  Q <- diag(var,variab*nfact,variab*nfact)
-  e <- t(MASS_mvrnorm(timep, matrix(0,variab*nfact,1),Q))
+  if(isTRUE(variation)){
+    var <- rep(error, variab*nfact) + runif(variab*nfact, -0.025, 0.025)
+    Q <- diag(var,variab*nfact,variab*nfact)
+    e <- t(MASS_mvrnorm(timep, matrix(0,variab*nfact,1),Q))
+  }else{
+    var <- error^2
+    Q <- diag(var,variab*nfact,variab*nfact)
+    e <- t(MASS_mvrnorm(timep, matrix(0,variab*nfact,1),Q))
+  }
 
 
   ## Simulated obs data

@@ -28,11 +28,9 @@
 #' derivatives to be estimated via generalized local linear approximation.
 #'
 #' @examples
-#'
 #' # A time series with 8 time points
 #' tseries <- 49:56
 #' deriv.tseries <- glla(tseries, n.embed = 4, tau = 1, delta = 1, order = 2)
-#'
 #'
 #' @references
 #'

@@ -4,6 +4,8 @@ o FIX: many bug fixes related to latest update; functions have largely returned 
 
 o UPDATE: Mac and Linux parallelizations have been optimized
 
+o UPDATE: documented examples are more efficient for CRAN checks
+
 
 Changes in 1.2.1
 

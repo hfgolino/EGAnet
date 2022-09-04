@@ -243,9 +243,8 @@ reversed items in the database
 # Obtain example data
 data <- optimism
 
-\donttest{# riEGA example
-opt.res <- riEGA(data = optimism)
-}
+\dontrun{# riEGA example
+opt.res <- riEGA(data = optimism)}
 
 }
 \references{

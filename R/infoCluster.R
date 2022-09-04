@@ -17,18 +17,16 @@
 #'# Obtain data
 #' sim.dynEGA <- sim.dynEGA # bypasses CRAN checks
 #' 
-#' \donttest{# Dynamic EGA individual and population structure
+#' \dontrun{
+#' # Dynamic EGA individual and population structure
 #' dyn.ega1 <- dynEGA.ind.pop(
 #'   data = sim.dynEGA, n.embed = 5, tau = 1,
-#'   delta = 1, id = 21, use.derivatives = 1, 
+#'   delta = 1, id = 25, use.derivatives = 1, 
 #'   ncores = 2, corr = "pearson"
 #' )
 #' 
 #' # Perform information-theoretic clustering
-#' clust1 <- infoCluster(
-#'   dynEGA.object = dyn.ega1,
-#'   plot.cluster = FALSE # No plot for CRAN checks
-#' )}
+#' clust1 <- infoCluster(dynEGA.object = dyn.ega1)}
 #'
 #' @return Returns a list containing:
 #' 

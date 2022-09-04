@@ -11,10 +11,8 @@
 #'
 #' @examples
 #' \dontrun{
-#' \donttest{
 #' # Compute total correlation
-#' totalCorMat(wmt2[,7:24])
-#'}}
+#' totalCorMat(wmt2[,7:24])}
 #'
 #' @references
 #' Watanabe, S. (1960).

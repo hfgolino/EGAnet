@@ -37,11 +37,9 @@ Estimates the derivatives of a time series using generalized local linear approx
 GLLA is a filtering method for estimating derivatives from data that uses time delay embedding and a variant of Savitzky-Golay filtering to accomplish the task.
 }
 \examples{
-
 # A time series with 8 time points
 tseries <- 49:56
 deriv.tseries <- glla(tseries, n.embed = 4, tau = 1, delta = 1, order = 2)
-
 
 }
 \references{

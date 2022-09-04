@@ -229,7 +229,8 @@ can be used to estimate the number of communities (see examples).
 # Obtain data
 wmt <- wmt2[,7:24]
 
-\donttest{# Estimate EGA
+\dontrun{
+# Estimate EGA
 ega.wmt <- EGA(
   data = wmt,
   plot.EGA = FALSE # No plot for CRAN checks
@@ -243,27 +244,23 @@ methods.section(ega.wmt)
 
 # Estimate EGAtmfg
 ega.wmt.tmfg <- EGA(
-  data = wmt, model = "TMFG",
-  plot.EGA = FALSE # No plot for CRAN checks
+  data = wmt, model = "TMFG"
 )
 
 # Estimate EGA with Louvain algorithm
 ega.wmt.louvain <- EGA(
-  data = wmt, algorithm = "louvain",
-  plot.EGA = FALSE # No plot for CRAN checks
+  data = wmt, algorithm = "louvain"
 )
 
 # Estimate EGA with Leiden algorithm
 ega.wmt.leiden <- EGA(
-  data = wmt, algorithm = "leiden",
-  plot.EGA = FALSE # No plot for CRAN checks
+  data = wmt, algorithm = "leiden"
 )
 
 # Estimate EGA with Spinglass algorithm
 ega.wmt.spinglass <- EGA(
   data = wmt,
-  algorithm = igraph::cluster_spinglass, # any {igraph} algorithm
-  plot.EGA = FALSE # No plot for CRAN checks
+  algorithm = igraph::cluster_spinglass
 )}
 
 }
