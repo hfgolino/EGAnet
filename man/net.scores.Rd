@@ -79,7 +79,8 @@ For more details, type \code{vignette("Network_Scores")}
 # Load data
 wmt <- wmt2[,7:24]
 
-\donttest{# Estimate EGA
+\dontrun{
+# Estimate EGA
 ega.wmt <- EGA(
   data = wmt,
   plot.EGA = FALSE # No plot for CRAN checks
@@ -88,7 +89,8 @@ ega.wmt <- EGA(
 # Network scores
 net.scores(data = wmt, A = ega.wmt)
 
-\donttest{# Produce Methods section
+\dontrun{
+# Produce Methods section
 methods.section(
   ega.wmt,
   stats = "net.scores"

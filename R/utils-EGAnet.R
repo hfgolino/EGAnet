@@ -7029,7 +7029,7 @@ parallel_process <- function(
     count_computations <- 0
     
     # Create data splits (necessary for progress bar)
-    if(iter <= 100 | os != "windows"){
+    if(total_computations <= 100 | os != "windows"){
       
       # Split computations
       split_computations <- ncores
@@ -7077,7 +7077,7 @@ parallel_process <- function(
       )
       
       # Batch splits
-      batch_computations <- round(iter / 100)
+      batch_computations <- round(total_computations / 100)
       
       # Set start and end points of data batches
       batch_start <- seq(1, length(split_end), batch_computations)

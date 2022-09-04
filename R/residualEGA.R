@@ -36,17 +36,16 @@
 #' @author Hudson F. Golino <hfg9s at virginia.edu> and Robert Moulder <rgm4fd@virginia.edu>
 #'
 #' @examples
-#' 
+#' # Load data
 #' data <- optimism
 #' 
 #' \dontrun{
-#' # resEGA example
+#' # Residual EGA example
 #' opt.res <- residualEGA(data = data, manifests = colnames(optimism),
 #' lat = 1, negative.items = c(3,7,9))
 #'
 #' # Fit:
-#' opt.res$Fit
-#' }
+#' opt.res$Fit}
 #'
 #' @seealso \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA
 #' and \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.

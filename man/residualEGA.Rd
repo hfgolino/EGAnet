@@ -43,17 +43,16 @@ Returns a list containing:
 EGA is applied in the residual of a random intercept item factor model (RIIFA) with one method factor and one substantive factor.
 }
 \examples{
-
+# Load data
 data <- optimism
 
 \dontrun{
-# resEGA example
+# Residual EGA example
 opt.res <- residualEGA(data = data, manifests = colnames(optimism),
 lat = 1, negative.items = c(3,7,9))
 
 # Fit:
-opt.res$Fit
-}
+opt.res$Fit}
 
 }
 \seealso{

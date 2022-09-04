@@ -45,17 +45,12 @@
 #' Set to \code{TRUE} to add slight variation to all parameters
 #'
 #' @examples
-#'
-#'
 #' \dontrun{
-#' \donttest{
 #' # Estimate EGA network
 #' data1 <- simDFM(variab = 5, timep = 50, nfact = 3, error = 0.05,
 #' dfm = "DAFS", loadings = 0.7, autoreg = 0.8,
 #' crossreg = 0.1, var.shock = 0.18,
-#' cov.shock = 0.36, burnin = 1000)
-#'  }
-#'}
+#' cov.shock = 0.36, burnin = 1000)}
 #'
 #' @references
 #' Engle, R., & Watson, M. (1981).

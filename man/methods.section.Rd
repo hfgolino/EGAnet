@@ -56,47 +56,49 @@ an HTML page containing the descriptions of the methods and parameters
 as well as a Reference section for appropriate citation.
 }
 \examples{
-\donttest{# Estimate EGA
-## plot.type = "qqraph" used for CRAN checks
-## plot.type = "GGally" is the default
-ega.wmt <- EGA(data = wmt2[,7:24], plot.type = "qgraph")
-}
+# Load data
+wmt <- wmt2[,7:24]
+
+\dontrun{
+# Estimate EGA
+ega.wmt <- EGA(data = wmt)
+
 # EGA Methods section
-if(interactive()){
 methods.section(ega.wmt)
-}
 
-\donttest{# Estimate standardized network loadings
+# Estimate standardized network loadings
 wmt.loads <- net.loads(ega.wmt)$std
-}
-# EGA Methods section with network loadings
-if(interactive()){
-methods.section(ega.wmt, stats = "net.loads")
-}
 
-\dontrun{# bootEGA example
+# EGA Methods section with network loadings
+methods.section(ega.wmt, stats = "net.loads")
+
+# bootEGA example
 ## plot.type = "qqraph" used for CRAN checks
 ## plot.type = "GGally" is the default
-boot.wmt <- bootEGA(data = wmt2[,7:24], iter = 500, plot.type = "qgraph",
-type = "parametric", ncores = 2)
-}
-# EGA and bootEGA Methods section
-if(interactive()){
-methods.section(ega.wmt, boot.wmt)
-}
+boot.wmt <- bootEGA(
+  data = wmt, iter = 500,
+  type = "parametric", ncores = 2
+)
 
-\donttest{# Estimate structural consistency
+# EGA and bootEGA Methods section
+methods.section(ega.wmt, boot.wmt)
+
+# Estimate structural consistency
 sc.wmt <- dimensionStability(boot.wmt)
-}
+
 # EGA and bootEGA Methods section with structural consistency and item stability
-if(interactive()){
 methods.section(boot.wmt, stats = c("dimensionStability", "itemStability"))
-}
 
 # EGA with network loadings and
 # bootEGA Methods section with structural consistency and item stability
-if(interactive()){
-methods.section(ega.wmt, boot.wmt, stats = c("net.loads", "dimensionStability", "itemStability"))
-}
+methods.section(
+  ega.wmt,
+  boot.wmt, 
+  stats = c(
+    "net.loads",
+    "dimensionStability",
+    "itemStability"
+  )
+)}
 
 }
