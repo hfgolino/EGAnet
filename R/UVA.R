@@ -556,6 +556,11 @@ UVA <- function(
         
       }
       
+      ### Make sure it's positive definite
+      if(any(eigen(cor.data)$values < 0)){
+        cor.data <- as.matrix(Matrix::nearPD(cor.data, keepDiag = TRUE)$mat)
+      }
+      
       adhoc.check <- suppressMessages(
         redundancy.process(data = reduced$data, cormat = cor.data,
                            n = n,
@@ -618,6 +623,11 @@ UVA <- function(
               )
             )
             
+          }
+          
+          ### Make sure it's positive definite
+          if(any(eigen(cor.data)$values < 0)){
+            cor.data <- as.matrix(Matrix::nearPD(cor.data, keepDiag = TRUE)$mat)
           }
           
           adhoc.check <- suppressMessages(
