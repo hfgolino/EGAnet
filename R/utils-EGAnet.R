@@ -5701,6 +5701,7 @@ redund.adhoc.auto <- function(node.redundant.obj,
       }else{# All can be considered continuous
         lavaan.args$estimator <- "MLR"
         lavaan.args$missing <- "fiml"
+        lavaan.args$ordered <- FALSE
       }
 
       ## get CFA function from lavaan

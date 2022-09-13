@@ -299,7 +299,7 @@
 #' @export
 #
 # Unique Variable Analysis
-# Updated 20.07.2022
+# Updated 13.09.2022
 UVA <- function(
   data, n = NULL,
   model = c("glasso", "TMFG"),
