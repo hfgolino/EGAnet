@@ -529,10 +529,12 @@ UVA <- function(
       message("\nCombining variables...", appendLF = FALSE)
       
       # Initial reduction
-      reduced <- redund.reduce.auto(node.redundant.obj = process,
-                                    reduce.method = reduce.method,
-                                    lavaan.args = lavaan.args,
-                                    corr = corr)
+      reduced <- redund.reduce.auto(
+        node.redundant.obj = process,
+        reduce.method = reduce.method,
+        lavaan.args = lavaan.args,
+        corr = corr
+      )
       
       ## Run check
       ## Compute correlation matrix

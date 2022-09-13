@@ -5160,7 +5160,7 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
 
 #' @noRd
 # Redundancy Reduction (Automated)
-# Updated 06.05.2022
+# Updated 13.09.2022
 redund.reduce.auto <- function(node.redundant.obj,
                                reduce.method, lavaan.args, corr)
 {
@@ -5259,6 +5259,7 @@ redund.reduce.auto <- function(node.redundant.obj,
         }else{# All can be considered continuous
           lavaan.args$estimator <- "MLR"
           lavaan.args$missing <- "fiml"
+          lavaan.args$ordered <- FALSE
         }
 
         ## get CFA function from lavaan
