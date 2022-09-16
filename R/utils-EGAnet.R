@@ -6778,7 +6778,7 @@ expand.grid.unique <- function(x, y, include.equals = FALSE)
 
 #' Rewiring function
 #' @noRd
-# Updated 16.07.2022
+# Updated 16.09.2022
 rewire <- function(network, min = 0.20, max = 0.40, noise = 0.10)
 {
   
@@ -6824,13 +6824,32 @@ rewire <- function(network, min = 0.20, max = 0.40, noise = 0.10)
     1:edges, rewire_number, replace = FALSE
   ),]
   
-  # Edges to replace
+  # Ensure rewire list is matrix
+  if(!is.matrix(rewire_list)){
+    rewire_list <- matrix(rewire_list, ncol = 2)
+  }
+  colnames(rewire_list) <- c("row", "col")
+  
+  # Edge list
   edge_list <- expand.grid.unique(
     1:ncol(network), 1:ncol(network)
   )
+  
+  # Ensure edge list is matrix
+  if(!is.matrix(edge_list)){
+    edge_list <- matrix(edge_list, ncol = 2)
+  }
+  colnames(edge_list) <- c("row", "col")
+  
+  # Edges to replace
   replace_list <- edge_list[sample(
     1:nrow(edge_list), rewire_number, replace = FALSE
   ),]
+  
+  # Ensure replace list is matrix
+  if(!is.matrix(replace_list)){
+    replace_list <- matrix(replace_list, ncol = 2)
+  }
   colnames(replace_list) <- c("row", "col")
   
   # Rewire edges
