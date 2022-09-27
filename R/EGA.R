@@ -477,7 +477,7 @@ EGA <- function (
       
       # Set results
       multi.res$wc <- uni.res$wc[!grepl("SIM", names(uni.res$wc))]
-      multi.res$n.dim <- uni.res$n.dim
+      multi.res$n.dim <- length(na.omit(unique(multi.res$wc)))
       
     }else if(multi.res$n.dim == 0){ # No dimensions
       
