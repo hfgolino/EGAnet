@@ -1,4 +1,9 @@
-Changes in 1.2.3
+Changes in version 1.2.4
+
+o REMOVE: `residualEGA` has been removed in favor of `riEGA` (removes {OpenMx} dependency)
+
+
+Changes in version 1.2.3
 
 o FIX: many bug fixes related to latest update; functions have largely returned to stable status
 
@@ -7,7 +12,7 @@ o UPDATE: Mac and Linux parallelizations have been optimized
 o UPDATE: documented examples are more efficient for CRAN checks
 
 
-Changes in 1.2.1
+Changes in version 1.2.1
 
 o FIX: `bootEGA` read of bootstrap data (was not calling from `datalist` in `do.call` leading to perfect item stability)
 
