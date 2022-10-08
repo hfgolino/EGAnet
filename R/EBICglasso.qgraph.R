@@ -32,6 +32,9 @@
 #'
 #' @param refit Logical, should the optimal graph be refitted without LASSO regularization?
 #' Defaults to \code{FALSE}.
+#' 
+#' @param optimization Character.
+#' How lambda should be selected within GLASSO
 #'
 #' @param ... Arguments sent to \code{\link[glasso]{glasso}}
 #'
@@ -84,7 +87,7 @@
 #' @export
 #'
 # Computes optimal glasso network based on EBIC
-# Updated 02.09.2022
+# Updated 08.10.2022
 EBICglasso.qgraph <- function(
     data, # Sample covariance matrix
     n = NULL,
@@ -96,8 +99,14 @@ EBICglasso.qgraph <- function(
     penalizeMatrix, # Optional logical matrix to indicate which elements are penalized
     countDiagonal = FALSE, # Set to TRUE to get old qgraph behavior: conting diagonal elements as parameters in EBIC computation. This is not correct, but is included to replicate older analyses
     refit = FALSE, # If TRUE, network structure is taken and non-penalized version is computed.
+    optimization = c("EBIC", "JSD"),
     ... # glasso arguments
 ) {
+  
+  
+    if(missing(optimization)){
+      optimization <- "EBIC"
+    }else{optimization <- match.arg(optimization)}
 
     # Codes originally implemented by Sacha Epskamp in his qgraph package version 1.4.4.
     # Selects optimal lamba based on EBIC for given covariance matrix.
@@ -185,22 +194,46 @@ EBICglasso.qgraph <- function(
     #     EBICs <- apply(glas_path$wi,3,function(C){
     #       EBIC(S, C, n, gamma)
     #     })
-
-    lik <- sapply(seq_along(lambda),function(i){
-        logGaus(S, glas_path$wi[,,i], n)
-    })
-
-    EBICs <- sapply(seq_along(lambda),function(i){
-        EBIC(S, glas_path$wi[,,i], n, gamma, countDiagonal=countDiagonal)
-    })
     
-    # jsds <- sapply(seq_along(lambda),function(i){
-    #   jsd(S, glas_path$wi[,,i])
-    # })
+    if(optimization == "EBIC"){
+      
+      # Log-likelihood
+      lik <- sapply(seq_along(lambda),function(i){
+        logGaus(S, glas_path$wi[,,i], n)
+      })
+      
+      # EBIC
+      EBICs <- sapply(seq_along(lambda),function(i){
+        EBIC(S, glas_path$wi[,,i], n, gamma, countDiagonal=countDiagonal)
+      })
+      
+      # Optimal
+      opt <- which.min(EBICs)
+      
+    }else if(optimization == "JSD"){
+      
+      # JSD
+      JSDs <- sapply(seq_along(lambda),function(i){
+        
+        # Try (might be errror)
+        res <- try(
+          jsd(solve(S), glas_path$wi[,,i]),
+          silent = TRUE
+        )
+        
+        # Check for error
+        if(is(res, "try-error")){
+          return(NA)
+        }else{
+          return(res)
+        }
 
-    # Smallest EBIC:
-    opt <- which.min(EBICs)
-    # opt <- which.min(jsds)
+      })
+      
+      # Optimal
+      opt <- which.min(JSDs)
+      
+    }
 
     # Check if rho is smallest:
     #if (opt == 1){
@@ -229,15 +262,31 @@ EBICglasso.qgraph <- function(
     }
 
     # Return
-    if (returnAllResults){
+    if(optimization == "EBIC"){
+      
+      if (returnAllResults){
         return(list(
-            results = glas_path,
-            ebic = EBICs,
-            loglik = lik,
-            optnet = net,
-            lambda = lambda,
-            optwi = optwi
+          results = glas_path,
+          ebic = EBICs,
+          loglik = lik,
+          optnet = net,
+          lambda = lambda,
+          optwi = optwi
         ))
-    } else return(net)
+      } else return(net)
+      
+    }else if(optimization == "JSD"){
+      
+      if (returnAllResults){
+        return(list(
+          results = glas_path,
+          jsd = JSDs,
+          optnet = net,
+          lambda = lambda,
+          optwi = optwi
+        ))
+      } else return(net)
+      
+    }
 }
 #----

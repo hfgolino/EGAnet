@@ -15,6 +15,7 @@ EBICglasso.qgraph(
   penalizeMatrix,
   countDiagonal = FALSE,
   refit = FALSE,
+  optimization = c("EBIC", "JSD"),
   ...
 )
 }
@@ -44,6 +45,9 @@ Defaults to \code{FALSE}. Set to \code{TRUE} to mimic qgraph < 1.3 behavior (not
 
 \item{refit}{Logical, should the optimal graph be refitted without LASSO regularization?
 Defaults to \code{FALSE}.}
+
+\item{optimization}{Character.
+How lambda should be selected within GLASSO}
 
 \item{...}{Arguments sent to \code{\link[glasso]{glasso}}}
 }

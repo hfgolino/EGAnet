@@ -3148,6 +3148,62 @@ compare.plot.fix.EGA <- function(object.list,
 
 #' @noRd
 #'
+# Zero-order correlations to partial correlations
+# Updated 08.10.2022
+cor2pcor <- function(corr)
+{
+  # Obtain inverse covariance
+  inv <- solve(corr)
+  
+  # Convert to partial correlations
+  pcor <- -cov2cor(inv)
+  
+  # Set diagonal to zero
+  diag(pcor) <- 0
+  
+  # Return
+  return(pcor)
+  
+}
+
+#' @noRd
+#'
+# Partial correlations to zero-order correlations
+# Updated 08.10.2022
+pcor2cor <- function(pcor)
+{
+  
+  # Obtain inverse covariance
+  inv <- pcor2inv(pcor)
+  
+  # Convert to correlations
+  corr <- cov2cor(inv)
+  
+  # Return
+  return(corr)
+  
+}
+
+#' @noRd
+#'
+# Partial correlations to inverse covariance matrix
+# Updated 08.10.2022
+pcor2inv <- function(pcor)
+{
+  
+  # Set diagonal to negative 1
+  diag(pcor) <- -1
+  
+  # Obtain inverse covariance
+  inv <- solve(-pcor)
+  
+  # Return
+  return(inv)
+  
+}
+
+#' @noRd
+#'
 # Custom progress bar for timing
 # Updated 02.08.2022
 custom_progress <- function (
