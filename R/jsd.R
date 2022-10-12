@@ -102,20 +102,6 @@ jsd <- function(
         ncol(comparison)
     }
     
-    # Convert to (inverse) covariance matrix
-    pcor2inv <- function(pcor){
-      
-      # Set diagonal to negative 1
-      diag(pcor) <- -1
-      
-      # Obtain inverse covariance
-      inv <- solve(-pcor)
-
-      # Return
-      return(inv)
-      
-    }
-    
     # Combine networks
     network_comb <- 0.5 * (network1 + network2)
     

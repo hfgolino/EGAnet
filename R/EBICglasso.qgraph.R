@@ -215,11 +215,16 @@ EBICglasso.qgraph <- function(
       # JSD
       JSDs <- sapply(seq_along(lambda),function(i){
         
-        # Try (might be errror)
+        # Try (might be error)
         res <- try(
-          jsd(solve(S), glas_path$wi[,,i]),
+          jsd(S, glas_path$wi[,,i]),
           silent = TRUE
         )
+        
+        # res <- try(
+        #   jsd(solve(S), glas_path$wi[,,i]),
+        #   silent = TRUE
+        # )
         
         # Check for error
         if(is(res, "try-error")){
@@ -227,7 +232,7 @@ EBICglasso.qgraph <- function(
         }else{
           return(res)
         }
-
+        
       })
       
       # Optimal
