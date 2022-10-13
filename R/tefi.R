@@ -39,7 +39,7 @@
 #'
 #' @export
 # Total Entropy Fit Index Function (for correlation matrices)
-# Updated 5.01.2022
+# Updated 13.10.2022
 tefi <- function(data, structure){
   if(ncol(data)!=nrow(data)){
     data <- qgraph::cor_auto(data)
@@ -57,8 +57,14 @@ tefi <- function(data, structure){
 
   data <- abs(data)
   cor1 <- data/ncol(data)
-  h.vn <- -matrixcalc::matrix.trace(cor1%*%(log(cor1)))
-
+  # matrixcalc::matrix.trace does not use `na.rm = TRUE`
+  # h.vn <- -matrixcalc::matrix.trace(cor1%*%(log(cor1)))
+  trace <- function(x){
+    x <- as.matrix(x)
+    sum(diag(x), na.rm = TRUE)
+  }
+  h.vn <- -trace(cor1%*%(log(cor1)))
+  
   #n <- max(structure)
 
   # getting the number of unique values in the structure:
@@ -71,7 +77,7 @@ tefi <- function(data, structure){
   for(i in 1:n){
     cor.fact[[i]] <- data[which(structure==unique(structure)[i]),which(structure==unique(structure)[i])]
     cor.fact[[i]] <- cor.fact[[i]]/ncol(cor.fact[[i]])
-    h.vn.fact[[i]] <- -matrixcalc::matrix.trace(cor.fact[[i]]%*%log(cor.fact[[i]]))
+    h.vn.fact[[i]] <- -trace(cor.fact[[i]]%*%log(cor.fact[[i]]))
   }
 
   h.vn.fact2 <- unlist(h.vn.fact)
