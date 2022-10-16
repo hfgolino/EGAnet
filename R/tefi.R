@@ -39,7 +39,7 @@
 #'
 #' @export
 # Total Entropy Fit Index Function (for correlation matrices)
-# Updated 13.10.2022
+# Updated 16.10.2022
 tefi <- function(data, structure){
   if(ncol(data)!=nrow(data)){
     data <- qgraph::cor_auto(data)
@@ -83,12 +83,12 @@ tefi <- function(data, structure){
   h.vn.fact2 <- unlist(h.vn.fact)
 
   # Difference between Max the sum of the factor entropies:
-  Hdiff <- h.vn-sum(h.vn.fact2)
+  Hdiff <- h.vn-sum(h.vn.fact2, na.rm = TRUE)
   results <- data.frame(matrix(NA, nrow = 1, ncol = 3))
   colnames(results) <- c("VN.Entropy.Fit", "Total.Correlation","Average.Entropy")
-  results$VN.Entropy.Fit <- (mean(h.vn.fact2)-h.vn)+(Hdiff*(sqrt(n)))
-  results$Total.Correlation <- sum(h.vn.fact2)-h.vn
-  results$Average.Entropy <- mean(h.vn.fact2)-h.vn
+  results$VN.Entropy.Fit <- (mean(h.vn.fact2, na.rm = TRUE)-h.vn)+(Hdiff*(sqrt(n)))
+  results$Total.Correlation <- sum(h.vn.fact2, na.rm = TRUE)-h.vn
+  results$Average.Entropy <- mean(h.vn.fact2, na.rm = TRUE)-h.vn
   return(results)
 }
 #----
