@@ -2140,7 +2140,7 @@ count <- function(data)
 
 #' @noRd
 # Unidimensionality check
-# Updated 27.07.2022
+# Updated 18.10.2022
 unidimensionality.check <- function(
     data,
     n,
@@ -2164,7 +2164,7 @@ unidimensionality.check <- function(
       network = abs(correlation),
       order = "higher",
       consensus.iter = 1000,
-      resolution = 0.95
+      resolution = 1
     )$most_common
     
   }else if(uni.method == "le"){
@@ -2186,7 +2186,7 @@ unidimensionality.check <- function(
         network = abs(correlation),
         order = "higher",
         consensus.iter = 1000,
-        resolution = 0.95
+        resolution = 1
       )$most_common
       
       warning("Error occurred in Leading Eigenvalue algorithm. Using \"louvain\" for unidimensional check")
