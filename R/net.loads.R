@@ -243,8 +243,8 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0)
       colnames(comm.str) <- dims
       
       # Add signs to loadings
-      res.rev <- add.signs(comm.str = comm.str, A = A, wc = wc, dims = dims, pos.manifold = pos.manifold)
-      comm.str <- res.rev$comm.str
+      comm.str <- add.signs(comm.str = comm.str, A = A, wc = wc, dims = dims, pos.manifold = pos.manifold)
+      # comm.str <- res.rev$comm.str
       
       # Initialize result list
       res <- list()

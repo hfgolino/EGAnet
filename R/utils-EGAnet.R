@@ -2634,85 +2634,89 @@ add.signs <- function(comm.str, A, wc, dims, pos.manifold)
     
   }
   
-  # Set combinations
-  combinations <- combn(
-    dims, m = 2
-  )
-  
-  # Loop through combinations
-  for(i in 1:ncol(combinations)){
+  # Check for unidimensional structure
+  if(ncol(comm.str) > 1){
     
-    # Set targets
-    target1 <- combinations[1,i]
-    target2 <- combinations[2,i]
+    # Set combinations
+    combinations <- combn(
+      dims, m = 2
+    )
     
-    # Set minimum 
-    row_sums <- -1
-    minimum_value <- 1
-    
-    # Set while loop
-    while(sign(row_sums[minimum_value]) == -1){
+    # Loop through combinations
+    for(i in 1:ncol(combinations)){
       
-      # Sum of rows
-      row_sums <- rowSums(A[wc == target1, wc == target2], na.rm = TRUE)
+      # Set targets
+      target1 <- combinations[1,i]
+      target2 <- combinations[2,i]
       
-      # Find minimum value
-      minimum_value <- which.min(row_sums)
+      # Set minimum 
+      row_sums <- -1
+      minimum_value <- 1
       
-      # Check for negative
-      if(sign(row_sums[minimum_value]) == -1){
+      # Set while loop
+      while(sign(row_sums[minimum_value]) == -1){
         
-        # Flip variable
-        A[names(minimum_value), wc == target2] <- 
-          -A[names(minimum_value), wc == target2]
+        # Sum of rows
+        row_sums <- rowSums(A[wc == target1, wc == target2], na.rm = TRUE)
         
-        # Add negative
-        comm.str[names(minimum_value), as.character(target2)] <- 
-          -comm.str[names(minimum_value), as.character(target2)]
+        # Find minimum value
+        minimum_value <- which.min(row_sums)
+        
+        # Check for negative
+        if(sign(row_sums[minimum_value]) == -1){
+          
+          # Flip variable
+          A[names(minimum_value), wc == target2] <- 
+            -A[names(minimum_value), wc == target2]
+          
+          # Add negative
+          comm.str[names(minimum_value), as.character(target2)] <- 
+            -comm.str[names(minimum_value), as.character(target2)]
+          
+        }
+        
+      }
+      
+    }
+    
+    # Loop through combinations (switches `target1` with `target2`)
+    for(i in 1:ncol(combinations)){
+      
+      # Set targets
+      target1 <- combinations[2,i]
+      target2 <- combinations[1,i]
+      
+      # Set minimum 
+      row_sums <- -1
+      minimum_value <- 1
+      
+      # Set while loop
+      while(sign(row_sums[minimum_value]) == -1){
+        
+        # Sum of rows
+        row_sums <- rowSums(A[wc == target1, wc == target2], na.rm = TRUE)
+        
+        # Find minimum value
+        minimum_value <- which.min(row_sums)
+        
+        # Check for negative
+        if(sign(row_sums[minimum_value]) == -1){
+          
+          # Flip variable
+          A[names(minimum_value), wc == target2] <- 
+            -A[names(minimum_value), wc == target2]
+          
+          # Add negative
+          comm.str[names(minimum_value), as.character(target2)] <- 
+            -comm.str[names(minimum_value), as.character(target2)]
+          
+        }
         
       }
       
     }
     
   }
-  
-  # Loop through combinations (switches `target1` with `target2`)
-  for(i in 1:ncol(combinations)){
-    
-    # Set targets
-    target1 <- combinations[2,i]
-    target2 <- combinations[1,i]
-    
-    # Set minimum 
-    row_sums <- -1
-    minimum_value <- 1
-    
-    # Set while loop
-    while(sign(row_sums[minimum_value]) == -1){
-      
-      # Sum of rows
-      row_sums <- rowSums(A[wc == target1, wc == target2], na.rm = TRUE)
-      
-      # Find minimum value
-      minimum_value <- which.min(row_sums)
-      
-      # Check for negative
-      if(sign(row_sums[minimum_value]) == -1){
-        
-        # Flip variable
-        A[names(minimum_value), wc == target2] <- 
-          -A[names(minimum_value), wc == target2]
-        
-        # Add negative
-        comm.str[names(minimum_value), as.character(target2)] <- 
-          -comm.str[names(minimum_value), as.character(target2)]
-        
-      }
-      
-    }
-    
-  }
-
 
   # Flip dimensions (if necessary)
   # if(!pos.manifold)
