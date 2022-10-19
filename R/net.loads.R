@@ -90,7 +90,8 @@
 #' @export
 #'
 # Network Loadings
-# Updated 07.07.2022
+# Updated 18.10.2022
+# Signs updated 18.10.2022
 net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0)
 {
   #------------------------------------------#
@@ -197,8 +198,9 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0)
       comm.str <- comm.str[,paste(dims)]
       
       # Add signs to loadings
-      res.rev <- add.signs(comm.str = comm.str, A = A, wc = wc, dims = dims, pos.manifold = pos.manifold)
-      comm.str <- res.rev$comm.str
+      # res.rev <- add.signs(comm.str = comm.str, A = A, wc = wc, dims = dims, pos.manifold = pos.manifold)
+      # comm.str <- res.rev$comm.str
+      comm.str <- add.signs(comm.str = comm.str, A = A, wc = wc, dims = dims, pos.manifold = pos.manifold)
       
       #### START OUTPUT MANAGEMENT
       

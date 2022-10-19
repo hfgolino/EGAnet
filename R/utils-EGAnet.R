@@ -2596,115 +2596,141 @@ stable <- function (A, comm = c("walktrap","louvain"),
 #' @noRd
 #'
 # Add signs
-# Updated 18.03.2020
+# Updated 18.10.2022
 add.signs <- function(comm.str, A, wc, dims, pos.manifold)
 {
-  # Signs within dimension
-  for(i in 1:length(dims))
-  {
-    # Target dimension
-    target <- which(wc==dims[i])
-
-    # Initialize signs
-    signs <- numeric(length(target))
-
-    # Target matrix
-    target.mat <- A[target,target]
-
-    # Sign matrix
-    sign.mat <- sign(target.mat)
-
-    for(j in 1:nrow(sign.mat))
-    {
-      # Save original sign.mat
-      orig.sign <- sign.mat
-
-      # Check for max sums (current max)
-      curr.max <- sum(colSums(sign.mat,na.rm=TRUE),na.rm=TRUE)
-
-      # New sign mat
-      sign.mat[j,] <- -sign.mat[j,]
-
-      # Check for new max sums (new max)
-      new.max <- sum(colSums(sign.mat,na.rm=TRUE),na.rm=TRUE)
-
-      if(new.max <= curr.max)
-      {
-        sign.mat <- orig.sign
-        signs[j] <- 1
-      }else{
-        signs[j] <- -1
+  # Loop through self
+  for(i in dims){
+    
+    # Set minimum 
+    row_sums <- -1
+    minimum_value <- 1
+    
+    # Set while loop
+    while(sign(row_sums[minimum_value]) == -1){
+      
+      # Sum of rows
+      row_sums <- rowSums(A[wc == i, wc == i], na.rm = TRUE)
+      
+      # Find minimum value
+      minimum_value <- which.min(row_sums)
+      
+      # Check for negative
+      if(sign(row_sums[minimum_value]) == -1){
+        
+        # Flip variable
+        A[names(minimum_value), wc == i] <- 
+          -A[names(minimum_value), wc == i]
+        A[wc == i, names(minimum_value)] <- 
+          -A[wc == i, names(minimum_value)]
+        
+        # Add negative
+        comm.str[names(minimum_value), as.character(i)] <- 
+          -comm.str[names(minimum_value), as.character(i)]
+        
       }
+      
     }
-
-    comm.str[which(wc==dims[i]),i] <- comm.str[which(wc==dims[i]),i] * ifelse(signs==0,1,signs)
-    A[,which(wc==dims[i])] <- sweep(A[,which(wc==dims[i])],2,ifelse(signs==0,1,signs),`*`)
+    
   }
-
-  # Signs between dimensions
-  for(i in 1:length(dims))
-    for(j in 1:length(dims))
-    {
-      if(i!=j)
-      {
-        # Target dimension
-        target1 <- which(wc==dims[i])
-        target2 <- which(wc==dims[j])
-
-        # Initialize signs
-        signs <- numeric(length(target1))
-
-        # Target matrix
-        target.mat <- A[target1,target2]
-
-        # Sign matrix
-        sign.mat <- sign(target.mat)
-
-        for(k in 1:nrow(sign.mat))
-        {
-          # Save original sign.mat
-          orig.sign <- sign.mat
-
-          # Check for max sums (current max)
-          curr.max <- sum(colSums(sign.mat,na.rm=TRUE),na.rm=TRUE)
-
-          # New sign mat
-          sign.mat[k,] <- -sign.mat[k,]
-
-          # Check for new max sums (new max)
-          new.max <- sum(colSums(sign.mat,na.rm=TRUE),na.rm=TRUE)
-
-          if(new.max <= curr.max)
-          {
-            sign.mat <- orig.sign
-            signs[k] <- 1
-          }else{
-            signs[k] <- -1
-          }
-        }
-
-        comm.str[which(wc==dims[i]),j] <- comm.str[which(wc==dims[i]),j] * ifelse(signs==0,1,signs)
+  
+  # Set combinations
+  combinations <- combn(
+    dims, m = 2
+  )
+  
+  # Loop through combinations
+  for(i in 1:ncol(combinations)){
+    
+    # Set targets
+    target1 <- combinations[1,i]
+    target2 <- combinations[2,i]
+    
+    # Set minimum 
+    row_sums <- -1
+    minimum_value <- 1
+    
+    # Set while loop
+    while(sign(row_sums[minimum_value]) == -1){
+      
+      # Sum of rows
+      row_sums <- rowSums(A[wc == target1, wc == target2], na.rm = TRUE)
+      
+      # Find minimum value
+      minimum_value <- which.min(row_sums)
+      
+      # Check for negative
+      if(sign(row_sums[minimum_value]) == -1){
+        
+        # Flip variable
+        A[names(minimum_value), wc == target2] <- 
+          -A[names(minimum_value), wc == target2]
+        
+        # Add negative
+        comm.str[names(minimum_value), as.character(target2)] <- 
+          -comm.str[names(minimum_value), as.character(target2)]
+        
       }
+      
     }
+    
+  }
+  
+  # Loop through combinations (switches `target1` with `target2`)
+  for(i in 1:ncol(combinations)){
+    
+    # Set targets
+    target1 <- combinations[2,i]
+    target2 <- combinations[1,i]
+    
+    # Set minimum 
+    row_sums <- -1
+    minimum_value <- 1
+    
+    # Set while loop
+    while(sign(row_sums[minimum_value]) == -1){
+      
+      # Sum of rows
+      row_sums <- rowSums(A[wc == target1, wc == target2], na.rm = TRUE)
+      
+      # Find minimum value
+      minimum_value <- which.min(row_sums)
+      
+      # Check for negative
+      if(sign(row_sums[minimum_value]) == -1){
+        
+        # Flip variable
+        A[names(minimum_value), wc == target2] <- 
+          -A[names(minimum_value), wc == target2]
+        
+        # Add negative
+        comm.str[names(minimum_value), as.character(target2)] <- 
+          -comm.str[names(minimum_value), as.character(target2)]
+        
+      }
+      
+    }
+    
+  }
 
 
   # Flip dimensions (if necessary)
-  if(!pos.manifold)
-  {
-    for(i in 1:length(dims))
-    {
-      wc.sign <- sign(sum(comm.str[which(wc==dims[i]),i]))
+  # if(!pos.manifold)
+  # {
+  #   for(i in 1:length(dims))
+  #   {
+  #     wc.sign <- sign(sum(comm.str[which(wc==dims[i]),i]))
+  # 
+  #     if(wc.sign != 1)
+  #     {comm.str[which(wc==dims[i]),] <- -comm.str[which(wc==dims[i]),]}
+  #   }
+  # }
 
-      if(wc.sign != 1)
-      {comm.str[which(wc==dims[i]),] <- -comm.str[which(wc==dims[i]),]}
-    }
-  }
+  # res <- list()
+  # res$comm.str <- comm.str
+  # res$A <- A
 
-  res <- list()
-  res$comm.str <- comm.str
-  res$A <- A
-
-  return(res)
+  return(comm.str)
 }
 
 #' Unstandardized network loading matrix
