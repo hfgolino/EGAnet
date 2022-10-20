@@ -23,11 +23,10 @@
 #' be viewed using \code{print()} or \code{summary()}
 #' Defaults to \code{0}
 #' 
-#' @param pos.manifold Boolean.
-#' Should a positive manifold be applied (i.e., should
-#' all dimensions be positively correlated)?
-#' Defaults to \code{FALSE}.
-#' Set to \code{TRUE} for a positive manifold
+#' @param rotation Character.
+#' A rotation to use, like factor loadings, to obtain
+#' a simple structure. For a list of rotations,
+#' see \link{GPArotation}
 #'
 #' @return Returns a list containing:
 #'
@@ -90,10 +89,21 @@
 #' @export
 #'
 # Network Loadings
-# Updated 18.10.2022
+# Updated 20.10.2022
 # Signs updated 18.10.2022
-net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0)
+# Rotations added 20.10.2022
+net.loads <- function(
+    A, wc, rotation = "geominQ",
+    min.load = 0,
+    ...
+)
 {
+  
+  # Deprecated arguments
+  if("pos.manifold" %in% names(list(...))){
+    message("Argument 'pos.manifold' has been deprecated.")
+  }
+  
   #------------------------------------------#
   ## DETECT EGA INPUT AND VARIABLE ORDERING ##
   #------------------------------------------#
@@ -265,6 +275,38 @@ net.loads <- function(A, wc, pos.manifold = FALSE, min.load = 0)
     class(res) <- "NetLoads"
     
   }
+  
+  # Obtain rotation from GPArotation package
+  rotation_names <- ls(asNamespace("GPArotation"))
+
+  # Check if rotation exists
+  rotation <- tolower(rotation)
+  rotation_names_lower <- tolower(rotation_names)
+  if(rotation %in% rotation_names_lower){
+    
+    # Obtain rotation function arguments
+    rotation_function <- get(
+      rotation_names[which(rotation == rotation_names_lower)],
+      envir = asNamespace("GPArotation")
+    )
+    
+    # Obtain arguments
+    rotation_arguments <- obtain.arguments(
+      FUN = rotation_function, FUN.args = list(...)
+    )
+    
+    # Set loadings
+    rotation_arguments$L <- as.matrix(res$std)
+    rotation_arguments$Tmat <- diag(ncol(rotation_arguments$L))
+    
+    # Obtain rotated loadings
+    res$rotated <- do.call(
+      what = rotation_function,
+      args = as.list(rotation_arguments)
+    )
+    
+  }
+  
   
   # Add minimum loading
   res$minLoad <- min.load

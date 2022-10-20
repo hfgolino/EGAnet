@@ -4,7 +4,7 @@
 \alias{net.scores}
 \title{Network Scores}
 \usage{
-net.scores(data, A, wc, global = FALSE, impute, ...)
+net.scores(data, A, wc, rotation = "geominQ", impute, ...)
 }
 \arguments{
 \item{data}{Matrix or data frame.
@@ -18,13 +18,10 @@ A vector of community assignments.
 Not necessary if an \code{\link[EGAnet]{EGA}} object
 is input for argument \code{A}}
 
-\item{global}{Boolean.
-Should general network loadings be computed in scores?
-Defaults to \code{FALSE}.
-If there is more than one dimension and there is theoretically
-one global dimension, then general loadings of the dimensions
-onto the global dimension can be included in the weighted
-scores}
+\item{rotation}{Character.
+A rotation to use, like factor loadings, to obtain
+a simple structure. For a list of rotations,
+see \link{GPArotation}}
 
 \item{impute}{Character.
 In the presence of missing data, imputation can be implemented. Currently,

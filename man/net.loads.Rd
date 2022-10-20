@@ -4,7 +4,7 @@
 \alias{net.loads}
 \title{Network Loadings}
 \usage{
-net.loads(A, wc, pos.manifold = FALSE, min.load = 0)
+net.loads(A, wc, rotation = "geominQ", min.load = 0, ...)
 }
 \arguments{
 \item{A}{Matrix, data frame, or \code{\link[EGAnet]{EGA}} object.
@@ -15,11 +15,10 @@ A vector of community assignments.
 If input into \code{A} is an \code{\link[EGAnet]{EGA}} object,
 then \code{wc} is automatically detected}
 
-\item{pos.manifold}{Boolean.
-Should a positive manifold be applied (i.e., should
-all dimensions be positively correlated)?
-Defaults to \code{FALSE}.
-Set to \code{TRUE} for a positive manifold}
+\item{rotation}{Character.
+A rotation to use, like factor loadings, to obtain
+a simple structure. For a list of rotations,
+see \link{GPArotation}}
 
 \item{min.load}{Numeric.
 Sets the minimum loading allowed in the standardized

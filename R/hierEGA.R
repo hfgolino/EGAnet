@@ -25,6 +25,11 @@
 #' By default, both factor and network scores are computed and stored
 #' in the output. The selected option only appears in the main output (\code{$hierarchical})
 #'
+#' @param rotation Character.
+#' A rotation to use, like factor loadings, to obtain
+#' a simple structure. For a list of rotations,
+#' see \link{GPArotation}
+#'
 #' @param consensus.iter Numeric.
 #' Number of iterations to perform in consensus clustering
 #' (see Lancichinetti & Fortunato, 2012).
@@ -287,9 +292,11 @@
 #' @export
 #'
 # Hierarchical EGA
-# Updated 18.07.2022
+# Updated 20.10.2022
+# Added rotation 20.10.2022
 hierEGA <- function(
     data, scores = c("factor", "network"),
+    rotation = "geominQ",
     consensus.iter = 1000,
     consensus.method = c(
       "highest_modularity",
@@ -574,15 +581,16 @@ hierEGA <- function(
         net.scores(
           data = data,
           A = lower_order_result$network,
-          wc = memberships
+          wc = memberships,
+          rotation = rotation
         )
       )
       
       # Score estimates
-      score_est <- nt$std.scores
+      score_est <- nt$scores$rot.scores
       
       # Lower-order loadings
-      lower_loads <- nt$loads
+      lower_loads <- nt$loadings$rotated
       
       # Start higher-order with network ----
       
@@ -616,7 +624,7 @@ hierEGA <- function(
       
       # Set up result
       network_results[[names(network_results)[i]]]$lower_scores <- round(score_est, 3)
-      network_results[[names(network_results)[i]]]$lower_loadings <- round(lower_loads, 3)
+      network_results[[names(network_results)[i]]]$lower_loadings <- lower_loads
       
       ## Walktrap
       network_results[[names(network_results)[i]]]$walktrap <- higher_order_result

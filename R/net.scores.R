@@ -23,13 +23,10 @@
 #' Not necessary if an \code{\link[EGAnet]{EGA}} object
 #' is input for argument \code{A}
 #'
-#' @param global Boolean.
-#' Should general network loadings be computed in scores?
-#' Defaults to \code{FALSE}.
-#' If there is more than one dimension and there is theoretically
-#' one global dimension, then general loadings of the dimensions
-#' onto the global dimension can be included in the weighted
-#' scores
+#' @param rotation Character.
+#' A rotation to use, like factor loadings, to obtain
+#' a simple structure. For a list of rotations,
+#' see \link{GPArotation}
 #'
 #' @param impute Character.
 #' In the presence of missing data, imputation can be implemented. Currently,
@@ -103,45 +100,49 @@
 #'
 #' @export
 #'
-#Network Scores
-#Updated: 09.09.2021
-net.scores <- function (data, A, wc, global = FALSE, impute, ...)
+# Network Scores
+# Updated: 20.10.2022
+# Add rotation: 20.10.2022
+net.scores <- function (
+    data, A, wc, rotation = "geominQ",
+    impute, ...
+)
 {
-  if (missing(data)) {
+  
+  # Depracate global argument
+  if("global" %in% names(list(...))){
+    message("Argument 'global' has been deprecated. Use `hierEGA` object instead.")
+  }
+  
+  # Missing arguments handling
+  if(missing(data)){
     stop("Argument 'data' is required for analysis")
   }
   
-  if (any(class(A) == "EGA")) {
+  # Set network and memberships
+  if(is(A, "EGA")){
     wc <- A$wc
     A <- A$network
-  }else if (any(class(A) == "dynEGA")) {
+  }else if(is(A, "dynEGA")){
     wc <- A$dynEGA$wc
     A <- A$dynEGA$network
-  }else if (missing(A)) {
+  }else if(missing(A)){
     stop("Adjacency matrix is required for analysis")
-  }else if (missing(wc)) {
+  }else if(missing(wc)){
     wc <- rep(1, ncol(data))
   }
   
-  if (missing(impute)) {
+  # Check for imputation
+  if(missing(impute)){
     impute <- "none"
     warning("Argument 'impute' is missing. No imputation will be used.")
   }
   
-  P <- net.loads(A = A, wc = wc, pos.manifold = TRUE)$std
+  # Compute network loadings
+  P <- net.loads(A = A, wc = wc)
   nfacts <- length(unique(wc))
-  if (nfacts > 1) {
-    if (global) {
-      fact.res <- as.data.frame(matrix(0, nrow = nrow(data),
-                                       ncol = (nfacts + 1)))
-    }else {
-      fact.res <- as.data.frame(matrix(0, nrow = nrow(data),
-                                       ncol = nfacts))
-    }
-  }else {
-    fact.res <- as.data.frame(matrix(0, nrow = nrow(data),
-                                     ncol = nfacts))
-  }
+  fact.res <- as.data.frame(matrix(0, nrow = nrow(data),
+                                   ncol = nfacts))
 
   missing <- rowSums(is.na(data))
   if (impute != "none") {
@@ -171,37 +172,33 @@ net.scores <- function (data, A, wc, global = FALSE, impute, ...)
     colnames(net.sco) <- colnames(loads)
     return(net.sco)
   }
-  net.sco <- net.score.fxn(P, data)
+  net.sco <- net.score.fxn(P$std, data)
   fact.res[, 1:nfacts] <- net.sco
   if (nfacts > 1) {
-    colnames(fact.res)[1:nfacts] <- colnames(P)
-  }
-  else {
+    colnames(fact.res)[1:nfacts] <- colnames(P$std)
+  }else{
     colnames(fact.res) <- "1"
   }
-  res <- list()
-
-  if (nfacts > 1) {
-    if (global) {
-      ega.gen <- suppressMessages(EGA(net.sco, plot.EGA = FALSE,
-                                      model = "glasso", ...))
-      C <- ega.gen$network
-      res$commCor <- C
-      nl.gen <- net.loads(A = ega.gen$network, wc = rep(1,
-                                                        ncol(net.sco)), min.load = 0, pos.manifold = TRUE)$std
-      sds.gen <- apply(net.sco, 2, sd, na.rm = TRUE)
-      rel.gen <- nl.gen/sds.gen
-      rel.wei.gen <- (rel.gen/sum(rel.gen)) + 1
-      G <- as.vector(rowSums(t(t(net.sco) * as.vector(as.matrix(rel.wei.gen)))))
-      fact.res[, (nfacts + 1)] <- G
-      colnames(fact.res)[nfacts + 1] <- "Overall"
-    }
-  }
-  res$unstd.scores <- as.data.frame(round(fact.res, 3))
-  res$std.scores <- as.data.frame(round(apply(fact.res, 2,
-                                              scale), 3))
-  res$loads <- P
   
+  net.sco.rotated <- net.score.fxn(P$rotated$loadings, data)
+  fact.res.rotated <- fact.res
+  fact.res.rotated[, 1:nfacts] <- net.sco.rotated
+  if (nfacts > 1) {
+    colnames(fact.res.rotated)[1:nfacts] <- colnames(P$rotated$loadings)
+  }else{
+    colnames(fact.res.rotated) <- "1"
+  }
+  
+  res <- list(
+    scores = list(
+      unstd.scores = as.data.frame(round(fact.res, 3)),
+      std.scores = as.data.frame(round(apply(fact.res, 2, scale), 3)),
+      rot.scores = as.data.frame(round(apply(fact.res.rotated, 2, scale), 3))
+    ),
+    loadings = P
+    
+  )
+
   # Class
   class(res) <- "NetScores"
   

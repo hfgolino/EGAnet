@@ -7,6 +7,7 @@
 hierEGA(
   data,
   scores = c("factor", "network"),
+  rotation = "geominQ",
   consensus.iter = 1000,
   consensus.method = c("highest_modularity", "most_common", "iterative", "lowest_tefi"),
   uni.method = c("expand", "LE", "louvain"),
@@ -40,6 +41,11 @@ the composition of the lower order factors.
 
 By default, both factor and network scores are computed and stored
 in the output. The selected option only appears in the main output (\code{$hierarchical})}
+
+\item{rotation}{Character.
+A rotation to use, like factor loadings, to obtain
+a simple structure. For a list of rotations,
+see \link{GPArotation}}
 
 \item{consensus.iter}{Numeric.
 Number of iterations to perform in consensus clustering
