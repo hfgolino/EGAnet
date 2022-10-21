@@ -709,28 +709,28 @@ hierEGA <- function(
   }
   
   # Perform parallel PCA to check for no general factors
-  sink <- capture.output(
-    pca <- 
-      psych::fa.parallel(
-        x = hierarchical$higher_order$EGA$correlation,
-        fa = "pc",
-        n.obs = nrow(data),
-        plot = FALSE
-      )
-  )
-  
-  # Check if zero components
-  if(pca$ncomp == 0){
-    message("No general dimensions were identified. Lower order solution represents major dimensions.")
-    hierarchical$higher_order$EGA$n.dim <- 0
-    new_wc <- rep(
-      0,
-      length(hierarchical$higher_order$EGA$wc)
-    )
-    names(new_wc) <- names(hierarchical$higher_order$EGA$wc)
-    hierarchical$higher_order$EGA$wc <- new_wc
-    hierarchical$higher_order$EGA$dim.variables$dimension <- 0
-  }
+  # sink <- capture.output(
+  #   pca <- 
+  #     psych::fa.parallel(
+  #       x = hierarchical$higher_order$EGA$correlation,
+  #       fa = "pc",
+  #       n.obs = nrow(data),
+  #       plot = FALSE
+  #     )
+  # )
+  # 
+  # # Check if zero components
+  # if(pca$ncomp == 0){
+  #   message("No general dimensions were identified. Lower order solution represents major dimensions.")
+  #   hierarchical$higher_order$EGA$n.dim <- 0
+  #   new_wc <- rep(
+  #     0,
+  #     length(hierarchical$higher_order$EGA$wc)
+  #   )
+  #   names(new_wc) <- names(hierarchical$higher_order$EGA$wc)
+  #   hierarchical$higher_order$EGA$wc <- new_wc
+  #   hierarchical$higher_order$EGA$dim.variables$dimension <- 0
+  # }
 
   # Insert hierarchical result into results
   results$hierarchical <- hierarchical

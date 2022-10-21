@@ -2163,7 +2163,7 @@ unidimensionality.check <- function(
     wc <- most_common_consensus(
       network = abs(correlation),
       order = "higher",
-      consensus.iter = 1000,
+      consensus.iter = consensus.iter,
       resolution = 1
     )$most_common
     
@@ -2185,7 +2185,7 @@ unidimensionality.check <- function(
       wc <- most_common_consensus(
         network = abs(correlation),
         order = "higher",
-        consensus.iter = 1000,
+        consensus.iter = consensus.iter,
         resolution = 1
       )$most_common
       
