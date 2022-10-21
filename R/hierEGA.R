@@ -292,7 +292,7 @@
 #' @export
 #'
 # Hierarchical EGA
-# Updated 20.10.2022
+# Updated 21.10.2022
 # Added rotation 20.10.2022
 hierEGA <- function(
     data, scores = c("factor", "network"),
@@ -370,6 +370,8 @@ hierEGA <- function(
   lower_order_defaults$model.args <- model.args
   lower_order_defaults$algorithm <- "louvain" # for lower order communities
   lower_order_defaults$algorithm.args <- algorithm.args
+  lower_order_defaults$consensus.method <- consensus.method
+  lower_order_defaults$consensus.iter <- consensus.iter
   lower_order_defaults$plot.EGA <- FALSE # do not plot
   lower_order_defaults$plot.args <- plot.args
   lower_order_defaults$lower.louvain <- TRUE # provides lower order Louvain
@@ -453,6 +455,8 @@ hierEGA <- function(
     ega_defaults$model.args <- model.args
     ega_defaults$algorithm <- "walktrap"
     ega_defaults$algorithm.args <- algorithm.args
+    ega_defaults$consensus.method <- consensus.method
+    ega_defaults$consensus.iter <- consensus.iter
     ega_defaults$plot.EGA <- FALSE
     ega_defaults$plot.args <- plot.args
 
@@ -602,6 +606,8 @@ hierEGA <- function(
       ega_defaults$model.args <- model.args
       ega_defaults$algorithm <- "walktrap"
       ega_defaults$algorithm.args <- algorithm.args
+      ega_defaults$consensus.method <- consensus.method
+      ega_defaults$consensus.iter <- consensus.iter
       ega_defaults$plot.EGA <- FALSE
       ega_defaults$plot.args <- plot.args
       
