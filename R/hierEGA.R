@@ -470,13 +470,13 @@ hierEGA <- function(
       )
     )
 
-    # Make consensus
-    higher_order_wc <- consensus_clustering(
-      network = higher_order_result$network,
-      corr = higher_order_result$correlation,
-      order = "higher",
-      consensus.iter = consensus.iter
-    )[[names(factor_results)[i]]]
+    # No consensus necessary for higher-level
+    # higher_order_wc <- consensus_clustering(
+    #   network = higher_order_result$network,
+    #   corr = higher_order_result$correlation,
+    #   order = "higher",
+    #   consensus.iter = consensus.iter
+    # )[[names(factor_results)[i]]]
 
     # Set up result
     factor_results[[names(factor_results)[i]]]$lower_scores <- round(score_est, 3)
@@ -485,13 +485,26 @@ hierEGA <- function(
     ## Walktrap
     factor_results[[names(factor_results)[i]]]$walktrap <- higher_order_result
 
-    ## Louvain
     ## Adjust memberships in higher order
-    higher_order_result$wc <- higher_order_wc
-    higher_order_result$n.dim <- length(na.omit(unique(higher_order_wc)))
-    higher_order_result$dim.variables[,"dimension"] <- higher_order_wc[
-      higher_order_result$dim.variables[,"items"]
-    ]
+    # higher_order_result$wc <- higher_order_wc
+    # higher_order_result$n.dim <- length(na.omit(unique(higher_order_wc)))
+    # higher_order_result$dim.variables[,"dimension"] <- higher_order_wc[
+    #   higher_order_result$dim.variables[,"items"]
+    # ]
+    
+    # Set the rest of the arguments
+    ega_defaults$algorithm <- "louvain"
+    
+    # Get EGA
+    higher_order_result <- suppressWarnings(
+      suppressMessages(
+        do.call(
+          EGA, ega_defaults
+        )
+      )
+    )
+    
+    ## Louvain
     factor_results[[names(factor_results)[i]]]$louvain <- higher_order_result
 
   }
@@ -622,12 +635,12 @@ hierEGA <- function(
       )
       
       # Make consensus
-      higher_order_wc <- consensus_clustering(
-        network = higher_order_result$network,
-        corr = higher_order_result$correlation,
-        order = "higher",
-        consensus.iter = consensus.iter
-      )[[names(network_results)[i]]]
+      # higher_order_wc <- consensus_clustering(
+      #   network = higher_order_result$network,
+      #   corr = higher_order_result$correlation,
+      #   order = "higher",
+      #   consensus.iter = consensus.iter
+      # )[[names(network_results)[i]]]
       
       # Set up result
       network_results[[names(network_results)[i]]]$lower_scores <- round(score_est, 3)
@@ -638,11 +651,25 @@ hierEGA <- function(
       
       ## Louvain
       ## Adjust memberships in higher order
-      higher_order_result$wc <- higher_order_wc
-      higher_order_result$n.dim <- length(na.omit(unique(higher_order_wc)))
-      higher_order_result$dim.variables[,"dimension"] <- higher_order_wc[
-        higher_order_result$dim.variables[,"items"]
-      ]
+      # higher_order_result$wc <- higher_order_wc
+      # higher_order_result$n.dim <- length(na.omit(unique(higher_order_wc)))
+      # higher_order_result$dim.variables[,"dimension"] <- higher_order_wc[
+      #   higher_order_result$dim.variables[,"items"]
+      # ]
+      
+      # Set the rest of the arguments
+      ega_defaults$algorithm <- "louvain"
+      
+      # Get EGA
+      higher_order_result <- suppressWarnings(
+        suppressMessages(
+          do.call(
+            EGA, ega_defaults
+          )
+        )
+      )
+      
+      ## Louvain
       network_results[[names(network_results)[i]]]$louvain <- higher_order_result
       
     }
