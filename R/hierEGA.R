@@ -292,7 +292,7 @@
 #' @export
 #'
 # Hierarchical EGA
-# Updated 21.10.2022
+# Updated 26.10.2022
 # Added rotation 20.10.2022
 hierEGA <- function(
     data, scores = c("factor", "network"),
@@ -420,8 +420,9 @@ hierEGA <- function(
       suppressWarnings(
         psych::fa(
           r = lower_order_result$correlation, # correlation matrix
-          n.obs = nrow(data),
-          nfactors = length(na.omit(unique_memberships)) # number of factors
+          n.obs = nrow(data), # number of cases
+          nfactors = length(na.omit(unique_memberships)), # number of factors
+          n.rotations = 10 # number of random starts
         )
       )
     )
