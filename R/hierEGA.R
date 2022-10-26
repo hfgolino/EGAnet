@@ -456,7 +456,7 @@ hierEGA <- function(
     ega_defaults$model.args <- model.args
     ega_defaults$algorithm <- "walktrap"
     ega_defaults$algorithm.args <- algorithm.args
-    ega_defaults$consensus.method <- consensus.method
+    ega_defaults$consensus.method <- names(factor_results)[i]
     ega_defaults$consensus.iter <- consensus.iter
     ega_defaults$plot.EGA <- FALSE
     ega_defaults$plot.args <- plot.args
@@ -620,7 +620,7 @@ hierEGA <- function(
       ega_defaults$model.args <- model.args
       ega_defaults$algorithm <- "walktrap"
       ega_defaults$algorithm.args <- algorithm.args
-      ega_defaults$consensus.method <- consensus.method
+      ega_defaults$consensus.method <- names(network_results)[i]
       ega_defaults$consensus.iter <- consensus.iter
       ega_defaults$plot.EGA <- FALSE
       ega_defaults$plot.args <- plot.args
