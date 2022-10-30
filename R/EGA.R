@@ -284,7 +284,7 @@
 #'
 #' @export
 #'
-# Updated 20.08.2022
+# Updated 30.10.2022
 # Louvain unidimensionality 27.07.2022
 # Consensus clustering 13.05.2022
 # LE adjustment 08.03.2021
@@ -378,6 +378,12 @@ EGA <- function (
     algorithm <- "walktrap"
   }else if(!is.function(algorithm)){
     algorithm <- tolower(match.arg(algorithm))
+  }
+  
+  if(!is.function(algorithm)){
+    if(algorithm == "leiden"){
+      algorithm.args <- list(objective_function = "modularity")
+    }
   }
   
   if(missing(consensus.method)){

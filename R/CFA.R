@@ -69,7 +69,7 @@
 #' @export
 #'
 # CFA model for EGA
-# Updated 18.07.2022
+# Updated 30.10.2022
 CFA<- function(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ...) {
 
   ## Get default estimator
@@ -92,8 +92,10 @@ CFA<- function(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ...
     strct <- split(ega.obj$dim.variables[, 1], list(ega.obj$dim.variables[, 2]))
     names(strct) <- paste("Fat", labels(strct))
     model.ega <- paste(names(strct), " =~ ", lapply(strct, function(x) paste(print(x), collapse = " + ")), collapse = " \n ")
-    fit.mod.ega <- lavaan::cfa(model = model.ega, estimator = estimator, orthogonal = FALSE,
-                               data = data, missing = missing, ordered = ordered, ...)
+    fit.mod.ega <- do.call(
+      what = lavaan::cfa,
+      args = lavaan.args
+    )
     summary.cfa <- summary(fit.mod.ega, fit.measures = TRUE)
 
     if (estimator == "WLSMV") {
