@@ -72,26 +72,31 @@
 # Updated 30.10.2022
 CFA<- function(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ...) {
 
+
+  # Set lavaan arguments
+  lavaan.args <- list(...)
+  
   ## Get default estimator
   categories <- apply(data, 2, function(x){
     length(unique(x))
   })
   
-  # Check categories
-  if(sum(categories < 6) > 1){# Not all continuous
-    # estimator <- "WLSMV"
-    missing <- "pairwise"
-    ordered <- TRUE
+  ## Check categories
+  if(any(categories < 6)){# Not all continuous
+    lavaan.args$estimator <- "WLSMV"
+    lavaan.args$missing <- "pairwise"
+    lavaan.args$ordered <- TRUE
   }else{# All can be considered continuous
-    # lavaan.args$estimator <- "MLR"
-    missing <- "fiml"
-    ordered <- FALSE
+    lavaan.args$estimator <- "MLR"
+    lavaan.args$missing <- "fiml"
   }
   
   
     strct <- split(ega.obj$dim.variables[, 1], list(ega.obj$dim.variables[, 2]))
     names(strct) <- paste("Fat", labels(strct))
     model.ega <- paste(names(strct), " =~ ", lapply(strct, function(x) paste(print(x), collapse = " + ")), collapse = " \n ")
+    lavaan.args$model <- model.ega
+    lavaan.args$data <- data
     fit.mod.ega <- do.call(
       what = lavaan::cfa,
       args = lavaan.args
