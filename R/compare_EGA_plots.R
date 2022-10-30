@@ -79,7 +79,7 @@
 #' ega2 <- EGA(sample2)
 #' 
 #' # Compare EGAs via plot
-#' compare.EGA.plots(
+#' compare_EGA_plots(
 #'   ega1, ega2,
 #'   base.plot = 1, # use "ega1" as base for comparison
 #'   labels = c("Sample 1", "Sample 2"),
@@ -92,7 +92,7 @@
 #
 # Compare EGA plots function
 # Updated 18.07.2022
-compare.EGA.plots <- function(
+compare_EGA_plots <- function(
   ..., input.list = NULL,
   base.plot = 1,
   labels, rows, columns,
