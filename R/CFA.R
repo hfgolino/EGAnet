@@ -76,9 +76,29 @@ CFA<- function(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ...
   # Set lavaan arguments
   lavaan.args <- list(...)
   
+  ## lavaan.args
+  if(length(lavaan.args) == 0){
+    lavaan.args <- formals(lavaan::cfa)
+    lavaan.args[length(lavaan.args)] <- NULL
+    lavaan.args$std.lv <- TRUE
+  }else{
+    lavaan.default <- formals(lavaan::cfa)
+    lavaan.default[length(lavaan.default)] <- NULL
+    lavaan.default$std.lv <- TRUE
+    
+    if(any(names(lavaan.args) %in% names(lavaan.default))){
+      lavaan.default[names(lavaan.args)] <- lavaan.args
+    }
+    
+    lavaan.args <- lavaan.default
+  }
+  
+  ## change key if NULL
+  data <- lavaan.formula.names(data)
+  
   ## Get default estimator
   categories <- apply(data, 2, function(x){
-    length(unique(x))
+    length(na.omit(unique(x)))
   })
   
   ## Check categories
@@ -97,8 +117,9 @@ CFA<- function(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ...
     model.ega <- paste(names(strct), " =~ ", lapply(strct, function(x) paste(print(x), collapse = " + ")), collapse = " \n ")
     lavaan.args$model <- model.ega
     lavaan.args$data <- data
+    FUN <- lavaan::cfa
     fit.mod.ega <- do.call(
-      what = lavaan::cfa,
+      what = "FUN",
       args = lavaan.args
     )
     summary.cfa <- summary(fit.mod.ega, fit.measures = TRUE)
