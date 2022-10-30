@@ -4,7 +4,7 @@
 \alias{compare.EGA.plots}
 \title{Visually Compares \code{\link{EGAnet}} plots}
 \usage{
-compare.EGA.plots(
+\method{compare}{EGA.plots}(
   ...,
   input.list = NULL,
   base.plot = 1,
