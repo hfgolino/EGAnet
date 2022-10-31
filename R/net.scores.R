@@ -104,7 +104,7 @@
 # Updated: 20.10.2022
 # Add rotation: 20.10.2022
 net.scores <- function (
-    data, A, wc, rotation = "geominQ",
+    data, A, wc, rotation = "oblimin",
     impute, ...
 )
 {

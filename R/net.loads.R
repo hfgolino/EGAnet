@@ -93,7 +93,7 @@
 # Signs updated 18.10.2022
 # Rotations added 20.10.2022
 net.loads <- function(
-    A, wc, rotation = "geominQ",
+    A, wc, rotation = "oblimin",
     min.load = 0,
     ...
 )
