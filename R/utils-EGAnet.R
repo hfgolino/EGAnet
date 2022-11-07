@@ -2599,6 +2599,12 @@ stable <- function (A, comm = c("walktrap","louvain"),
 # Updated 18.10.2022
 add.signs <- function(comm.str, A, wc, dims, pos.manifold)
 {
+  
+  # Set NA to "NA"
+  if(any(is.na(wc))){
+    wc <- ifelse(is.na(wc), "NA", wc)
+  }
+  
   # Loop through self
   for(i in dims){
     
@@ -6804,8 +6810,10 @@ itemStability.loadings <- function(res, bootega.obj)
     if(all(is.na(memberships[,i]))){
       loadings[[i]] <- NULL
     }else{
-      loadings[[i]] <- net.loads(A = graphs[[i]],
-                                 wc = memberships[,i])$std
+      loadings[[i]] <- net.loads(
+        A = graphs[[i]],
+        wc = memberships[,i]
+      )$std
     }
 
   }
