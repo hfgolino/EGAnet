@@ -7254,7 +7254,7 @@ parallel_process <- function(
           cl = cl,
           varlist = c(
             "FUN", "FUN_args",
-            export, "data_split"
+            export, # "data_split"
           ),
           envir = environment()
         )
@@ -7312,7 +7312,7 @@ parallel_process <- function(
         cl = cl,
         varlist = c(
           "FUN", "FUN_args",
-          export, "datalist"
+          export, # "datalist"
         ),
         envir = environment()
       )
