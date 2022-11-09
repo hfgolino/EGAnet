@@ -89,7 +89,7 @@
 #' @export
 #'
 # Network Loadings
-# Updated 20.10.2022
+# Updated 09.11.2022
 # Signs updated 18.10.2022
 # Rotations added 20.10.2022
 net.loads <- function(
@@ -276,34 +276,42 @@ net.loads <- function(
     
   }
   
-  # Obtain rotation from GPArotation package
-  rotation_names <- ls(asNamespace("GPArotation"))
-
-  # Check if rotation exists
-  rotation <- tolower(rotation)
-  rotation_names_lower <- tolower(rotation_names)
-  if(rotation %in% rotation_names_lower){
+  # Check for more than one dimension
+  if(ncol(std) > 1){
     
-    # Obtain rotation function arguments
-    rotation_function <- get(
-      rotation_names[which(rotation == rotation_names_lower)],
-      envir = asNamespace("GPArotation")
-    )
+    # Check for {GPArotation}
+    check_package("GPArotation")
     
-    # Obtain arguments
-    rotation_arguments <- obtain.arguments(
-      FUN = rotation_function, FUN.args = list(...)
-    )
+    # Obtain rotation from GPArotation package
+    rotation_names <- ls(asNamespace("GPArotation"))
     
-    # Set loadings
-    rotation_arguments$L <- as.matrix(res$std)
-    rotation_arguments$Tmat <- diag(ncol(rotation_arguments$L))
-    
-    # Obtain rotated loadings
-    res$rotated <- do.call(
-      what = rotation_function,
-      args = as.list(rotation_arguments)
-    )
+    # Check if rotation exists
+    rotation <- tolower(rotation)
+    rotation_names_lower <- tolower(rotation_names)
+    if(rotation %in% rotation_names_lower){
+      
+      # Obtain rotation function arguments
+      rotation_function <- get(
+        rotation_names[which(rotation == rotation_names_lower)],
+        envir = asNamespace("GPArotation")
+      )
+      
+      # Obtain arguments
+      rotation_arguments <- obtain.arguments(
+        FUN = rotation_function, FUN.args = list(...)
+      )
+      
+      # Set loadings
+      rotation_arguments$L <- as.matrix(res$std)
+      rotation_arguments$Tmat <- diag(ncol(rotation_arguments$L))
+      
+      # Obtain rotated loadings
+      res$rotated <- do.call(
+        what = rotation_function,
+        args = as.list(rotation_arguments)
+      )
+      
+    }
     
   }
   
