@@ -672,14 +672,25 @@ reindex_comm <- function(communities)
 # Lancichinetti & Fortunato (2012)
 #' @noRd
 # Consensus Clustering
-# Updated 22.07.2022
+# Updated 16.11.2022
 consensus_clustering <- function(
     network, corr,
     order = c("lower", "higher"),
     consensus.iter,
-    resolution = 1
+    resolution = 1,
+    type = c(
+      "all", "highest_modularity",
+      "most_common", "iterative",
+      "lowest_tefi"
+    )
 )
 {
+  # Check for type
+  if(missing(type)){
+    type <- "all"
+  }else{
+    type <- match.arg(type, several.ok = TRUE)
+  }
   
   # Obtain network names
   network_names <- colnames(network)
@@ -772,71 +783,199 @@ consensus_clustering <- function(
       data.frame(t(dupes)), data.frame(t(non_dupes))
     ))
 
-  # Change column names of non_dupes
-  if(!is.null(colnames(network))){
-    colnames(non_dupes) <- colnames(network)
-  }
-
-  # Compute modularity
-  modularities <- apply(non_dupes, 1, modularity, network, 1)
-
-  # Compute TEFI
-  TEFI <- apply(non_dupes, 1, function(x){
-    tefi(abs(corr), x)$VN.Entropy.Fit
-  })
-
   # Set up summary table
   summary_table <- data.frame(
     N_Dimensions = apply(non_dupes, 1, function(x){
       length(na.omit(unique(x)))
     }),
-    Proportion = as.matrix(count(wc_matrix) / nrow(wc_matrix)),
-    Modularity = modularities,
-    TEFI = TEFI
+    Proportion = as.matrix(count(wc_matrix) / nrow(wc_matrix))
   )
-
+  
+  # Change column names of non_dupes
+  if(!is.null(colnames(network))){
+    colnames(non_dupes) <- colnames(network)
+  }
+  
   # Attach non-duplicate solutions
   summary_table <- cbind(summary_table, non_dupes)
-
-  # Ensure descending order
-  summary_table <- summary_table[order(summary_table[,"Modularity"], decreasing = TRUE),]
-  row.names(summary_table) <- NULL
-
-  # Obtain max modularity
-  wc_modularity <- unlist(summary_table[
-    which.max(summary_table[,"Modularity"]),
-    -c(1:4)
-  ])
-
-  # Obtain max proportion
-  wc_proportion <- unlist(summary_table[
-    which.max(summary_table[,"Proportion"]),
-    -c(1:4)
-  ])
-
-  # Obtain minimum TEFI
-  wc_tefi <- unlist(summary_table[
-    which.min(summary_table[,"TEFI"]),
-    -c(1:4)
-  ])
-
-  # Traditional consensus clustering
-
-  # Binary check function
-  binary <- function(b_matrix){
-    all(b_matrix == 0 | b_matrix == 1)
+  
+  if(type == "all" | type == "most_common"){
+    
+    # Obtain max proportion
+    wc_proportion <- unlist(summary_table[
+      which.max(summary_table[,"Proportion"]),
+      -c(1:2)
+    ])
+    
+  }
+  
+  if(type == "all" | type == "lowest_tefi"){
+    
+    # Compute TEFI
+    TEFI <- apply(non_dupes, 1, function(x){
+      tefi(abs(corr), x)$VN.Entropy.Fit
+    })
+    
+    # Add TEFI to summary table
+    summary_table$TEFI <- TEFI
+    
+    # Obtain minimum TEFI
+    wc_tefi <- unlist(summary_table[
+      which.min(summary_table[,"TEFI"]),
+      -c(1:2)
+    ])
+    
+  }
+  
+  if(type == "all" | type == "highest_modularity"){
+    
+    # Compute modularity
+    modularities <- apply(non_dupes, 1, modularity, network, 1)
+    
+    # Add modularities to summary table
+    summary_table$Modularity <- modularities
+    
+    # Ensure descending order
+    summary_table <- summary_table[order(summary_table[,"Modularity"], decreasing = TRUE),]
+    row.names(summary_table) <- NULL
+    
+    # Obtain max modularity
+    wc_modularity <- unlist(summary_table[
+      which.max(summary_table[,"Modularity"]),
+      -c(1:2)
+    ])
+    
   }
 
-  # Initialize count for homogenizing membership
-  iter <- 1
+  # Remove row names
+  row.names(summary_table) <- NULL
 
-  # Set up while loop
-  while(!binary(network)){
-
-    if(iter != 1){
-
-      # Convert network to igraph
-      igraph_network <- convert2igraph(abs(network))
+  # Traditional consensus clustering
+  
+  if(type == "all" | type == "iterative"){
+    
+    # Binary check function
+    binary <- function(b_matrix){
+      all(b_matrix == 0 | b_matrix == 1)
+    }
+    
+    # Initialize count for homogenizing membership
+    iter <- 1
+    
+    # Set up while loop
+    while(!binary(network)){
+      
+      if(iter != 1){
+        
+        # Convert network to igraph
+        igraph_network <- convert2igraph(abs(network))
+        
+        # Ensure all nodes are included in igraph
+        if(igraph::vcount(igraph_network) != ncol(network)){
+          
+          igraph_network <- igraph::add.vertices(
+            igraph_network,
+            nv = ncol(network) -
+              igraph::vcount(igraph_network)
+          )
+          
+        }
+        
+        # Apply Louvain
+        communities <- lapply(1:consensus.iter, function(j, resolution){
+          
+          # igraph output
+          output <- igraph::cluster_louvain(igraph_network, resolution = resolution)
+          
+          # Obtain memberships
+          wc <- output$memberships
+          
+          # Check for no rows
+          if(nrow(wc) == 0){
+            wc <- output$membership
+          }else{
+            
+            # Obtain order
+            if(order == "lower"){
+              wc <- wc[1,]
+            }else if(order == "higher"){
+              wc <- wc[nrow(wc),]
+            }
+            
+          }
+          
+          # Return
+          return(wc)
+          
+        }, resolution = resolution)
+        
+        # Simplify to a matrix
+        wc_matrix <- t(simplify2array(communities, higher = FALSE))
+        
+      }else{
+        
+        # Check for non-unique memberships
+        if(length(wc_proportion) != length(na.omit(unique(wc_proportion)))){
+          
+          # Homogenize memberships
+          wc_matrix <- t(homogenize.membership(
+            target.wc = wc_proportion,
+            convert.wc = t(wc_matrix)
+          ))
+          
+        }
+        
+        # ^^^ checks for whether all variables are in individual
+        # communities
+        #
+        # current workaround for higher order dimensions with
+        # singleton dimensions
+        
+      }
+      
+      # Get indices for matrix
+      d_matrix <- matrix(0, nrow = ncol(wc_matrix), ncol = ncol(wc_matrix))
+      
+      # Obtain combinations for lower
+      combinations <- cbind(
+        rep(1:ncol(wc_matrix), times = ncol(wc_matrix)),
+        rep(1:ncol(wc_matrix), each = ncol(wc_matrix))
+      )
+      
+      # Fill lower order matrix
+      for(i in 1:nrow(combinations)){
+        
+        # Get indices
+        index1 <- combinations[i,1]
+        index2 <- combinations[i,2]
+        
+        d_matrix[index1, index2] <- mean(wc_matrix[,index1] == wc_matrix[,index2], na.rm = TRUE)
+        
+      }
+      
+      # Set values less than threshold to zero
+      d_matrix <- ifelse(d_matrix <= 0.30, 0, d_matrix)
+      
+      # Start over
+      network <- d_matrix
+      
+      # Increase count
+      iter <- iter + 1
+      
+    }
+    
+    # Check for same dimensions
+    if(sum(network) == ncol(network)){
+      
+      # Set to all unique
+      wc <- 1:ncol(network)
+      
+    }else{
+      
+      # Obtain final communities
+      igraph_network <- suppressWarnings(
+        convert2igraph(abs(network))
+      )
       
       # Ensure all nodes are included in igraph
       if(igraph::vcount(igraph_network) != ncol(network)){
@@ -848,152 +987,61 @@ consensus_clustering <- function(
         )
         
       }
-
-      # Apply Louvain
-      communities <- lapply(1:consensus.iter, function(j, resolution){
-
-        # igraph output
-        output <- igraph::cluster_louvain(igraph_network, resolution = resolution)
-        
-        # Obtain memberships
-        wc <- output$memberships
-        
-        # Check for no rows
-        if(nrow(wc) == 0){
-          wc <- output$membership
-        }else{
-          
-          # Obtain order
-          if(order == "lower"){
-            wc <- wc[1,]
-          }else if(order == "higher"){
-            wc <- wc[nrow(wc),]
-          }
-          
-        }
-        
-        # Return
-        return(wc)
-
-      }, resolution = resolution)
-
-      # Simplify to a matrix
-      wc_matrix <- t(simplify2array(communities, higher = FALSE))
-
-    }else{
       
-      # Check for non-unique memberships
-      if(length(wc_proportion) != length(na.omit(unique(wc_proportion)))){
-        
-        # Homogenize memberships
-        wc_matrix <- t(homogenize.membership(
-          target.wc = wc_proportion,
-          convert.wc = t(wc_matrix)
-        ))
-        
+      # Obtain memberships
+      wc <- igraph::cluster_louvain(igraph_network, resolution = resolution)$memberships
+      
+      # Check for rows
+      if(nrow(wc) == 0){
+        wc <- matrix(
+          igraph::cluster_louvain(igraph_network, resolution = resolution)$membership,
+          nrow = 1,
+          byrow = TRUE
+        )
       }
       
-      # ^^^ checks for whether all variables are in individual
-      # communities
-      #
-      # current workaround for higher order dimensions with
-      # singleton dimensions
-
-    }
-
-    # Get indices for matrix
-    d_matrix <- matrix(0, nrow = ncol(wc_matrix), ncol = ncol(wc_matrix))
-
-    # Obtain combinations for lower
-    combinations <- cbind(
-      rep(1:ncol(wc_matrix), times = ncol(wc_matrix)),
-      rep(1:ncol(wc_matrix), each = ncol(wc_matrix))
-    )
-
-    # Fill lower order matrix
-    for(i in 1:nrow(combinations)){
-
-      # Get indices
-      index1 <- combinations[i,1]
-      index2 <- combinations[i,2]
-
-      d_matrix[index1, index2] <- mean(wc_matrix[,index1] == wc_matrix[,index2], na.rm = TRUE)
-
-    }
-
-    # Set values less than threshold to zero
-    d_matrix <- ifelse(d_matrix <= 0.30, 0, d_matrix)
-
-    # Start over
-    network <- d_matrix
-
-    # Increase count
-    iter <- iter + 1
-
-  }
-  
-  # Check for same dimensions
-  if(sum(network) == ncol(network)){
-    
-    # Set to all unique
-    wc <- 1:ncol(network)
-    
-  }else{
-    
-    # Obtain final communities
-    igraph_network <- suppressWarnings(
-      convert2igraph(abs(network))
-    )
-    
-    # Ensure all nodes are included in igraph
-    if(igraph::vcount(igraph_network) != ncol(network)){
+      # Obtain order
+      if(order == "lower"){
+        wc <- wc[1,]
+      }else if(order == "higher"){
+        wc <- wc[nrow(wc),]
+      }
       
-      igraph_network <- igraph::add.vertices(
-        igraph_network,
-        nv = ncol(network) -
-          igraph::vcount(igraph_network)
-      )
+      # Ensure vector
+      wc <- as.vector(wc)
       
     }
     
-    # Obtain memberships
-    wc <- igraph::cluster_louvain(igraph_network, resolution = resolution)$memberships
+    # Assign names
+    names(wc) <- network_names
     
-    # Check for rows
-    if(nrow(wc) == 0){
-      wc <- matrix(
-        igraph::cluster_louvain(igraph_network, resolution = resolution)$membership,
-        nrow = 1,
-        byrow = TRUE
-      )
-    }
-    
-    # Obtain order
-    if(order == "lower"){
-      wc <- wc[1,]
-    }else if(order == "higher"){
-      wc <- wc[nrow(wc),]
-    }
-    
-    # Ensure vector
-    wc <- as.vector(wc)
+    # Assign to traditional
+    wc_traditional <- wc
     
   }
-
-  # Assign names
-  names(wc) <- network_names
-
-  # Assign to traditional
-  wc_traditional <- wc
 
   # Set up results
   results <- list()
-  results$highest_modularity <- wc_modularity
-  results$most_common <- wc_proportion
-  results$iterative <- wc_traditional
-  results$lowest_tefi <- wc_tefi
+  
+  # Set up results
+  if(exists("wc_modularity")){
+    results$highest_modularity <- wc_modularity
+  }
+  
+  if(exists("wc_proportion")){
+    results$most_common <- wc_proportion
+  }
+  
+  if(exists("wc_traditional")){
+    results$iterative <- wc_traditional
+  }
+  
+  if(exists("wc_tefi")){
+    results$lowest_tefi <- wc_tefi
+  }
+  
   results$summary_table <- summary_table
-
+  
   # Return consensus
   return(results)
 }

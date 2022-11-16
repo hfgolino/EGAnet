@@ -157,11 +157,6 @@
 #' A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
 #' or some other community detection algorithm function (see examples)
 #'
-#' @param lower.louvain Boolean.
-#' Should lower Louvain solution be used at the higher order level?
-#' Defaults to \code{FALSE}.
-#' Set to \code{TRUE} to use the lower Louvain solution 
-#'
 #' @param plot.EGA Boolean.
 #' If \code{TRUE}, returns a plot of the network and its estimated dimensions.
 #' Defaults to \code{TRUE}
@@ -294,12 +289,12 @@
 #'   algorithm = "louvain"
 #' )}
 #'
-#' @export
+#' @noRd
 #'
 # Hierarchical EGA
-# Updated 16.11.2022
+# Updated 26.10.2022
 # Added rotation 20.10.2022
-hierEGA <- function(
+hierEGA_all <- function(
     data, scores = c("factor", "network"),
     rotation = "oblimin",
     consensus.iter = 1000,
@@ -313,8 +308,8 @@ hierEGA <- function(
     corr = c("cor_auto", "pearson", "spearman"),
     model = c("glasso", "TMFG"), model.args = list(),
     algorithm = c("walktrap", "leiden", "louvain"), algorithm.args = list(),
-    lower.louvain = FALSE,
-    plot.EGA = TRUE, plot.args = list()
+    plot.EGA = TRUE,
+    plot.args = list()
 )
 {
 
@@ -325,7 +320,7 @@ hierEGA <- function(
   }else{scores <- match.arg(scores)}
 
   if(missing(consensus.method)){
-    consensus.method <- "most_common"
+    consensus.method <- "highest_modularity"
   }else{consensus.method <- match.arg(consensus.method)}
 
   if(missing(uni.method)){
@@ -394,17 +389,33 @@ hierEGA <- function(
     )
   )
 
+  # Perform consensus clustering
+  lower_order_wc <- consensus_clustering(
+    network = lower_order_result$network,
+    corr = lower_order_result$correlation,
+    order = "lower",
+    consensus.iter = consensus.iter
+  )
+
   # End message
   message("done.")
-  
-  # Check for scores
-  if(scores == "factor"){
-    
-    # Estimate scores
-    ## Obtain memberships
-    unique_memberships <- unique(lower_order_result$wc)
-    
-    ## Estimate factor model
+
+  # Estimate scores
+  ## Factor ----
+  # Set up for all three results
+  factor_results <- vector("list", length = length(lower_order_wc) - 1)
+  names(factor_results) <- names(lower_order_wc)[
+    -length(lower_order_wc)
+  ]
+
+  # Loop through
+  for(i in 1:length(factor_results)){
+
+    # Obtain memberships
+    memberships <- lower_order_wc[[names(factor_results)[i]]]
+    unique_memberships <- unique(memberships)
+
+    # Estimate factor model
     fm <- suppressPackageStartupMessages(
       suppressWarnings(
         psych::fa(
@@ -415,43 +426,76 @@ hierEGA <- function(
         )
       )
     )
-    
-    ## Score estimates
+
+    # Score estimates
     score_est <- psych::factor.scores(
       x = data,
       f = fm,
-      method = "Thurstone"
+      method = "tenBerge"
     )$scores
-    
-    ## Lower-order loadings
+
+    # Lower-order loadings
     lower_loads <- fm$loadings[,1:length(na.omit(unique_memberships))]
-    
-    ## Reorder lower loadings and scores
+
+    # Reorder lower loadings and scores
     lower_loads <- lower_loads[,order(colnames(lower_loads))]
     score_est <- score_est[,order(colnames(score_est))]
     
-    ## Obtain highest loading to reorder rows
+    # Obtain highest loading to reorder rows
     highest_loads <- apply(abs(lower_loads), 1, which.max)
     highest_loads[1:length(highest_loads)] <- paste("MR", highest_loads, sep = "")
     lower_loads <- descend.ord(lower_loads, highest_loads)
-    
-    ## Start higher-order with factor ----
-    
-    ## Set the rest of the arguments
+
+    # Start higher-order with factor ----
+
+    # Set the rest of the arguments
     ega_defaults$data <- score_est # set data as score estimates
     ega_defaults$uni.method <- uni.method
     ega_defaults$corr <- corr
     ega_defaults$model <- model
     ega_defaults$model.args <- model.args
-    ega_defaults$algorithm <- algorithm
+    ega_defaults$algorithm <- "walktrap"
     ega_defaults$algorithm.args <- algorithm.args
-    ega_defaults$consensus.method <- consensus.method
+    ega_defaults$consensus.method <- names(factor_results)[i]
     ega_defaults$consensus.iter <- consensus.iter
     ega_defaults$plot.EGA <- FALSE
     ega_defaults$plot.args <- plot.args
-    ega_defaults$lower.louvain <- lower.louvain
+
+    # Get EGA
+    higher_order_result <- suppressWarnings(
+      suppressMessages(
+        do.call(
+          EGA, ega_defaults
+        )
+      )
+    )
+
+    # No consensus necessary for higher-level
+    # higher_order_wc <- consensus_clustering(
+    #   network = higher_order_result$network,
+    #   corr = higher_order_result$correlation,
+    #   order = "higher",
+    #   consensus.iter = consensus.iter
+    # )[[names(factor_results)[i]]]
+
+    # Set up result
+    factor_results[[names(factor_results)[i]]]$lower_scores <- round(score_est, 3)
+    factor_results[[names(factor_results)[i]]]$lower_loadings <- round(lower_loads, 3)
+
+    ## Walktrap
+    factor_results[[names(factor_results)[i]]]$walktrap <- higher_order_result
+
+    ## Adjust memberships in higher order
+    # higher_order_result$wc <- higher_order_wc
+    # higher_order_result$n.dim <- length(na.omit(unique(higher_order_wc)))
+    # higher_order_result$dim.variables[,"dimension"] <- higher_order_wc[
+    #   higher_order_result$dim.variables[,"items"]
+    # ]
     
-    ## Get EGA
+    # Set the rest of the arguments
+    ega_defaults$algorithm <- "louvain"
+    
+    # Get EGA
     higher_order_result <- suppressWarnings(
       suppressMessages(
         do.call(
@@ -460,42 +504,102 @@ hierEGA <- function(
       )
     )
     
-  }else if(scores == "network"){
+    ## Louvain
+    factor_results[[names(factor_results)[i]]]$louvain <- higher_order_result
+
+  }
+
+  # Skip network scores?
+  ## Identify memberships with only one node
+  one_node <- unlist(lapply(lower_order_wc[-length(lower_order_wc)], function(x){
     
-    # Skip network scores?
-    ## Identify memberships with only one node
     ### Obtain frequencies
-    wc_freq <- table(lower_order_result$wc)
+    wc_freq <- table(x)
     
     ### Check for one node memberships
-    one <- any(wc_freq <= 1)
-    
-    # Perform network scores
-    perform_network <- TRUE
-    
-    ## Check for all
-    if(isTRUE(one)){
-      
-      ### Warn that network scores cannot be used
-      warning("All consensus methods detected a single node community. Network scores cannot be computed.")
-      
-      ### Check if scores was what user wanted
-      if(scores == "network"){
-        stop("Network scores could not be computed. Please use factor scores.")
-      }else{
-        perform_network <- FALSE
-      }
-      
+    if(any(wc_freq <= 1)){
+      one <- TRUE
+    }else{
+      one <- FALSE
     }
+    
+    ### Return
+    return(one)
+    
+  }))
+  
+  # Perform network scores
+  perform_network <- TRUE
+  
+  ## Check for all
+  if(all(one_node)){
+    
+    ### Warn that network scores cannot be used
+    warning("All consensus methods detected a single node community. Network scores cannot be computed.")
+    
+    ### Check if scores was what user wanted
+    if(scores == "network"){
+      stop("Network scores could not be computed. Please use factor scores.")
+    }else{
+      perform_network <- FALSE
+    }
+    
+  }else if(any(one_node)){
+    
+    # One node consensus methods
+    one_node_names <- names(lower_order_wc[-length(lower_order_wc)])[one_node]
+    
+    warning(
+      paste(
+        "Some consensus methods detected a single node community. Network scores could not be computed for:\n",
+        paste(one_node_names, collapse = "\n"),
+        sep = ""
+      )
+    )
+    
+    # Remove from list
+    lower_order_wc <- lower_order_wc[-match(one_node_names, names(lower_order_wc))]
+    
+    # Check if method was what user wanted
+    if(consensus.method %in% one_node_names){
+      stop(
+        paste(
+          "Cannot use consensus method due to at least one single node community. Please use one of the following methods:\n",
+          paste(
+            setdiff(c(
+              "highest_modularity", "most_common",
+              "iterative", "lowest_tefi"
+            ), one_node_names),
+            collapse = "\n"
+          ),
+          sep = ""
+        )
+      )
+    }
+    
+  }
+  
+  if(isTRUE(perform_network)){
+    
+    ## Network ----
+    # Set up for all three results
+    network_results <- vector("list", length = length(lower_order_wc) - 1)
+    names(network_results) <- names(lower_order_wc)[
+      -length(lower_order_wc)
+    ]
+    
+    # Loop through
+    for(i in 1:length(network_results)){
       
-    if(isTRUE(perform_network)){
+      # Obtain memberships
+      memberships <- lower_order_wc[[names(network_results)[i]]]
       
       # Compute network scores
       nt <- suppressWarnings(
         net.scores(
           data = data,
           A = lower_order_result$network,
-          wc = lower_order_result$wc,
+          wc = memberships,
           rotation = rotation
         )
       )
@@ -514,13 +618,12 @@ hierEGA <- function(
       ega_defaults$corr <- corr
       ega_defaults$model <- model
       ega_defaults$model.args <- model.args
-      ega_defaults$algorithm <- algorithm
+      ega_defaults$algorithm <- "walktrap"
       ega_defaults$algorithm.args <- algorithm.args
-      ega_defaults$consensus.method <- consensus.method
+      ega_defaults$consensus.method <- names(network_results)[i]
       ega_defaults$consensus.iter <- consensus.iter
       ega_defaults$plot.EGA <- FALSE
       ega_defaults$plot.args <- plot.args
-      ega_defaults$lower.louvain <- lower.louvain
       
       # Get EGA
       higher_order_result <- suppressWarnings(
@@ -531,16 +634,62 @@ hierEGA <- function(
         )
       )
       
-    }else{
-      network_results <- "Did not perform network scores due to at least one single node community in all consensus methods"
+      # Make consensus
+      # higher_order_wc <- consensus_clustering(
+      #   network = higher_order_result$network,
+      #   corr = higher_order_result$correlation,
+      #   order = "higher",
+      #   consensus.iter = consensus.iter
+      # )[[names(network_results)[i]]]
+      
+      # Set up result
+      network_results[[names(network_results)[i]]]$lower_scores <- round(score_est, 3)
+      network_results[[names(network_results)[i]]]$lower_loadings <- lower_loads
+      
+      ## Walktrap
+      network_results[[names(network_results)[i]]]$walktrap <- higher_order_result
+      
+      ## Louvain
+      ## Adjust memberships in higher order
+      # higher_order_result$wc <- higher_order_wc
+      # higher_order_result$n.dim <- length(na.omit(unique(higher_order_wc)))
+      # higher_order_result$dim.variables[,"dimension"] <- higher_order_wc[
+      #   higher_order_result$dim.variables[,"items"]
+      # ]
+      
+      # Set the rest of the arguments
+      ega_defaults$algorithm <- "louvain"
+      
+      # Get EGA
+      higher_order_result <- suppressWarnings(
+        suppressMessages(
+          do.call(
+            EGA, ega_defaults
+          )
+        )
+      )
+      
+      ## Louvain
+      network_results[[names(network_results)[i]]]$louvain <- higher_order_result
+      
     }
     
+  }else{
+    network_results <- "Did not perform network scores due to at least one single node community in all consensus methods"
   }
+
+  # Return results
+  results <- list()
+  results$lower_ega <- lower_order_result
+  results$lower_wc <- lower_order_wc
+  results$factor_results <- factor_results
+  results$network_results <- network_results
 
   # Set up return results
   hierarchical <- list()
 
   # Obtain lower order results
+  lower_order_result$wc <- lower_order_wc[[consensus.method]]
   lower_order_result$n.dim <- length(na.omit(unique(lower_order_result$wc)))
 
   # Get S3 print information for lower order
@@ -565,35 +714,54 @@ hierEGA <- function(
   hierarchical$lower_order <- lower_order_result
 
   # Obtain higher order result
-  hierarchical$higher_order <- list(
-    lower_scores = score_est,
-    lower_loadings = lower_loads,
-    EGA = higher_order_result
-  )
+  if(scores == "factor"){
+
+    hierarchical$higher_order <- factor_results[[consensus.method]][
+      c("lower_scores", "lower_loadings", algorithm)
+    ]
+
+    names(hierarchical$higher_order)[
+      which(names(hierarchical$higher_order) == algorithm)
+    ] <- "EGA"
+
+  }else if(scores == "network"){
+
+    hierarchical$higher_order <- network_results[[consensus.method]][
+      c("lower_scores", "lower_loadings", algorithm)
+    ]
+
+    names(hierarchical$higher_order)[
+      which(names(hierarchical$higher_order) == algorithm)
+    ] <- "EGA"
+
+  }
   
   # Perform parallel PCA to check for no general factors
-  sink <- capture.output(
-    pca <-
-      psych::fa.parallel(
-        x = hierarchical$higher_order$EGA$correlation,
-        fa = "pc",
-        n.obs = nrow(data),
-        plot = FALSE
-      )
-  )
+  # sink <- capture.output(
+  #   pca <- 
+  #     psych::fa.parallel(
+  #       x = hierarchical$higher_order$EGA$correlation,
+  #       fa = "pc",
+  #       n.obs = nrow(data),
+  #       plot = FALSE
+  #     )
+  # )
+  # 
+  # # Check if zero components
+  # if(pca$ncomp == 0){
+  #   message("No general dimensions were identified. Lower order solution represents major dimensions.")
+  #   hierarchical$higher_order$EGA$n.dim <- 0
+  #   new_wc <- rep(
+  #     0,
+  #     length(hierarchical$higher_order$EGA$wc)
+  #   )
+  #   names(new_wc) <- names(hierarchical$higher_order$EGA$wc)
+  #   hierarchical$higher_order$EGA$wc <- new_wc
+  #   hierarchical$higher_order$EGA$dim.variables$dimension <- 0
+  # }
 
-  # Check if zero components
-  if(pca$ncomp == 0){
-    message("No general dimensions were identified. Lower order solution represents major dimensions.")
-    hierarchical$higher_order$EGA$n.dim <- 0
-    new_wc <- rep(
-      0,
-      length(hierarchical$higher_order$EGA$wc)
-    )
-    names(new_wc) <- names(hierarchical$higher_order$EGA$wc)
-    hierarchical$higher_order$EGA$wc <- new_wc
-    hierarchical$higher_order$EGA$dim.variables$dimension <- 0
-  }
+  # Insert hierarchical result into results
+  results$hierarchical <- hierarchical
 
   # Obtain higher order result for plot
   higher_order_result <- hierarchical$higher_order$EGA
@@ -645,9 +813,9 @@ hierEGA <- function(
       )
       
       # Add to main results
-      hierarchical$lower_plot <- lower_plot
-      hierarchical$higher_plot <- higher_plot
-      hierarchical$hier_plot <- hier_plot
+      results$hierarchical$lower_plot <- lower_plot
+      results$hierarchical$higher_plot <- higher_plot
+      results$hierarchical$hier_plot <- hier_plot
 
     # Send factor warning
     if(scores == "factor"){
@@ -663,6 +831,12 @@ hierEGA <- function(
 
   }
 
+  # Reorder results so main results are first
+  results <- results[
+    c("hierarchical", "lower_ega", "lower_wc",
+      "factor_results", "network_results")
+  ]
+
   # Set up Methods
   methods <- list(
     corr = corr, model = model, model.args = model.args,
@@ -672,11 +846,10 @@ hierEGA <- function(
   )
 
   # Insert methods into hierarchical
-  # results$hierarchical$Methods <- methods
-  hierarchical$Methods <- methods
+  results$hierarchical$Methods <- methods
 
   # Make class "hierEGA"
-  class(hierarchical) <- "hierEGA"
+  class(results) <- "hierEGA"
 
-  return(hierarchical)
+  return(results)
 }

@@ -350,28 +350,28 @@ print.invariance <- function(x, ...) {
 }
 
 #Print Hierarchical EGA----
-# Updated 09.05.2022
+# Updated 16.11.2022
 #' @export
 print.hierEGA <- function(x, ...) {
   
   # Print lower order communities
   cat(paste(
     "Lower order communities:",
-    x$hierarchical$lower_order$n.dim,
+    x$lower_order$n.dim,
     "\n\n"
   ))
-  print(x$hierarchical$lower_order$wc)
+  print(x$lower_order$wc)
   
   # Print higher order communities
   cat(
     paste(
       "\nHigher order communities:",
-      x$hierarchical$higher_order$EGA$n.dim,
+      x$higher_order$EGA$n.dim,
       "\n\n"
     )
   )
-  print(x$hierarchical$higher_order$EGA$wc)
-
+  print(x$higher_order$EGA$wc)
+  
   # Print methods
   cat("\nMethods:\n")
   
@@ -391,23 +391,23 @@ print.hierEGA <- function(x, ...) {
   colnames(methods.matrix) <- ""
   
   methods.matrix["Correlations =",] <- ifelse(
-    x$hierarchical$Methods$corr == "cor_auto",
+    x$Methods$corr == "cor_auto",
     "auto (from qgraph)",
-    x$hierarchical$Methods$corr
+    x$Methods$corr
   )
-  methods.matrix["Model =",] <- x$hierarchical$Methods$model
-  methods.matrix["Algorithm =",] <- x$hierarchical$Methods$algorithm
+  methods.matrix["Model =",] <- x$Methods$model
+  methods.matrix["Algorithm =",] <- x$Methods$algorithm
   methods.matrix["Unidimensional Method =",] <- switch(
     tolower(x$Methods$uni.method),
     "expand" = "expand correlation matrix",
     "le" = "leading eigenvalue",
     "louvain" = "louvain with consensus clustering"
   )
-  methods.matrix["Scores =",] <- x$hierarchical$Methods$scores
+  methods.matrix["Scores =",] <- x$Methods$scores
   methods.matrix["Consensus Method =",] <- gsub(
-    "_", " ", x$hierarchical$Methods$consensus.method
+    "_", " ", x$Methods$consensus.method
   )
-  methods.matrix["Consensus Iterations =",] <- x$hierarchical$Methods$consensus.iter
+  methods.matrix["Consensus Iterations =",] <- x$Methods$consensus.iter
   
   print(methods.matrix, quote = FALSE)
   

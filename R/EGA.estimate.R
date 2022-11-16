@@ -187,7 +187,7 @@
 #' @export
 #'
 # Estimates EGA
-# Updated 02.09.2022
+# Updated 16.11.2022
 EGA.estimate <- function(
     data, n = NULL,
     corr = c("cor_auto", "pearson", "spearman"),
@@ -397,13 +397,25 @@ EGA.estimate <- function(
       # Initialize community membership list
       wc <- list()
       
+      # Check for lower order results
+      if("lower.louvain" %in% names(add.args)){
+        
+        louvain.order <- ifelse(
+          add.args$lower.louvain, "lower", "higher"
+        )
+        
+      }else{
+        louvain.order <- "higher"
+      }
+      
       # Population community membership list
       wc$membership <- consensus_clustering(
         network = estimated.network,
         corr = correlation,
-        order = "higher",
+        order = louvain.order,
         consensus.iter = consensus.iter,
-        resolution = algorithm.ARGS$resolution
+        resolution = algorithm.ARGS$resolution,
+        type = consensus.method
       )[[consensus.method]]
       
     }else{

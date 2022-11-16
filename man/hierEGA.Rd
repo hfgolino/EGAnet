@@ -16,6 +16,7 @@ hierEGA(
   model.args = list(),
   algorithm = c("walktrap", "leiden", "louvain"),
   algorithm.args = list(),
+  lower.louvain = FALSE,
   plot.EGA = TRUE,
   plot.args = list()
 )
@@ -173,6 +174,11 @@ Defaults to \code{objective_function = "modularity"}}
 \item{algorithm.args}{List.
 A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
 or some other community detection algorithm function (see examples)}
+
+\item{lower.louvain}{Boolean.
+Should lower Louvain solution be used at the higher order level?
+Defaults to \code{FALSE}.
+Set to \code{TRUE} to use the lower Louvain solution}
 
 \item{plot.EGA}{Boolean.
 If \code{TRUE}, returns a plot of the network and its estimated dimensions.

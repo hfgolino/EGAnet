@@ -4,6 +4,8 @@ o REMOVE: `residualEGA` has been removed in favor of `riEGA` (removes {OpenMx} d
 
 o ADD: rotations to `net.loads` and `net.scores`
 
+o UPDATE: `hierEGA` only outputs specified output (no longer outputs all possible consensus methods and scores combinations -- should be much faster)
+
 
 Changes in version 1.2.3
 

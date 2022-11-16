@@ -284,7 +284,7 @@
 #'
 #' @export
 #'
-# Updated 30.10.2022
+# Updated 16.11.2022
 # Louvain unidimensionality 27.07.2022
 # Consensus clustering 13.05.2022
 # LE adjustment 08.03.2021
@@ -460,7 +460,8 @@ EGA <- function (
       data = correlation, n = n, corr = corr,
       model = model, model.args = model.args,
       algorithm = algorithm, algorithm.args = algorithm.args,
-      consensus.method = consensus.method, consensus.iter = consensus.iter
+      consensus.method = consensus.method, consensus.iter = consensus.iter,
+      ... # used for "lower.louvain"
     ),
     silent = TRUE
   )
