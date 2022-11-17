@@ -187,7 +187,7 @@
 #' @export
 #'
 # Estimates EGA
-# Updated 16.11.2022
+# Updated 17.11.2022
 EGA.estimate <- function(
     data, n = NULL,
     corr = c("cor_auto", "pearson", "spearman"),
@@ -409,14 +409,15 @@ EGA.estimate <- function(
       }
       
       # Population community membership list
-      wc$membership <- consensus_clustering(
+      consensus <- consensus_clustering(
         network = estimated.network,
         corr = correlation,
         order = louvain.order,
         consensus.iter = consensus.iter,
         resolution = algorithm.ARGS$resolution,
         type = consensus.method
-      )[[consensus.method]]
+      )
+      wc$membership <- consensus[[consensus.method]]
       
     }else{
       
@@ -490,6 +491,11 @@ EGA.estimate <- function(
     n.dim = n.dim, cor.data = correlation,
     Methods = methods
   )
+  
+  # Check for consensus
+  if(exists("consensus")){
+    res$consensus <- consensus
+  }
 
   return(res)
 }
