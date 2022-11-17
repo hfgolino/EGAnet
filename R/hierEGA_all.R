@@ -25,6 +25,10 @@
 #' By default, both factor and network scores are computed and stored
 #' in the output. The selected option only appears in the main output (\code{$hierarchical})
 #'
+#' @param factor.scores Character.
+#' Allows factor scores to be set using
+#' \code{\link[psych]{factor.scores}} options
+#'
 #' @param rotation Character.
 #' A rotation to use, like factor loadings, to obtain
 #' a simple structure. For a list of rotations,
@@ -292,10 +296,14 @@
 #' @noRd
 #'
 # Hierarchical EGA
-# Updated 26.10.2022
+# Updated 17.11.2022
 # Added rotation 20.10.2022
 hierEGA_all <- function(
     data, scores = c("factor", "network"),
+    factor.scores = c(
+      "Thurstone", "tenBerge", "Anderson", 
+      "Bartlett", "Harman","components"
+    ),
     rotation = "oblimin",
     consensus.iter = 1000,
     consensus.method = c(
@@ -318,6 +326,10 @@ hierEGA_all <- function(
   if(missing(scores)){
     scores <- "network"
   }else{scores <- match.arg(scores)}
+  
+  if(missing(factor.scores)){
+    factor.scores <- "tenBerge"
+  }else{factor.scores <- match.arg(factor.scores)}
 
   if(missing(consensus.method)){
     consensus.method <- "highest_modularity"
@@ -431,7 +443,7 @@ hierEGA_all <- function(
     score_est <- psych::factor.scores(
       x = data,
       f = fm,
-      method = "tenBerge"
+      method = factor.scores
     )$scores
 
     # Lower-order loadings
