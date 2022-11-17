@@ -672,7 +672,7 @@ reindex_comm <- function(communities)
 # Lancichinetti & Fortunato (2012)
 #' @noRd
 # Consensus Clustering
-# Updated 16.11.2022
+# Updated 17.11.2022
 consensus_clustering <- function(
     network, corr,
     order = c("lower", "higher"),
@@ -799,12 +799,12 @@ consensus_clustering <- function(
   # Attach non-duplicate solutions
   summary_table <- cbind(summary_table, non_dupes)
   
-  if(type == "all" | type == "most_common"){
+  if(type == "all" | type == "most_common" | type == "iterative"){
     
     # Obtain max proportion
     wc_proportion <- unlist(summary_table[
       which.max(summary_table[,"Proportion"]),
-      -c(1:2)
+      -c(1,2)
     ])
     
   }
@@ -825,6 +825,9 @@ consensus_clustering <- function(
       -c(1:2)
     ])
     
+    # Remove TEFI
+    wc_tefi <- wc_tefi[-length(wc_tefi)]
+    
   }
   
   if(type == "all" | type == "highest_modularity"){
@@ -844,6 +847,18 @@ consensus_clustering <- function(
       which.max(summary_table[,"Modularity"]),
       -c(1:2)
     ])
+    
+    # Check for TEFI
+    if("TEFI" %in% names(wc_modularity)){
+      wc_modularity <- wc_modularity[-c(
+        length(wc_modularity) - 1,
+        length(wc_modularity)
+      )]
+    }else{
+      wc_modularity <- wc_modularity[-c(
+        length(wc_modularity)
+      )]
+    }
     
   }
 
@@ -1024,19 +1039,19 @@ consensus_clustering <- function(
   results <- list()
   
   # Set up results
-  if(exists("wc_modularity")){
+  if(exists("wc_modularity", envir = environment())){
     results$highest_modularity <- wc_modularity
   }
   
-  if(exists("wc_proportion")){
+  if(exists("wc_proportion", envir = environment())){
     results$most_common <- wc_proportion
   }
   
-  if(exists("wc_traditional")){
+  if(exists("wc_traditional", envir = environment())){
     results$iterative <- wc_traditional
   }
   
-  if(exists("wc_tefi")){
+  if(exists("wc_tefi", envir = environment())){
     results$lowest_tefi <- wc_tefi
   }
   

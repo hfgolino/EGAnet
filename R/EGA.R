@@ -460,8 +460,8 @@ EGA <- function (
       data = correlation, n = n, corr = corr,
       model = model, model.args = model.args,
       algorithm = algorithm, algorithm.args = algorithm.args,
-      consensus.method = consensus.method, consensus.iter = consensus.iter,
-      ... # used for "lower.louvain"
+      consensus.method = consensus.method, consensus.iter = consensus.iter
+      , ... # used for "lower.louvain"
     ),
     silent = TRUE
   )

@@ -394,9 +394,9 @@ hierEGA_all <- function(
     network = lower_order_result$network,
     corr = lower_order_result$correlation,
     order = "lower",
-    consensus.iter = consensus.iter
+    consensus.iter = consensus.iter,
+    type = "all"
   )
-
   # End message
   message("done.")
 
