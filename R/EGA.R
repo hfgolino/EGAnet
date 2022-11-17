@@ -529,12 +529,22 @@ EGA <- function (
   multi.res$cor.data <- NULL
   
   # Reorder output
-  multi.res <- multi.res[
-    c(
-      "network", "wc", "n.dim", "correlation",
-      "dim.variables", "EGA.type", "Methods"
-    )
-  ]
+  if("consensus" %in% names(multi.res)){
+    multi.res <- multi.res[
+      c(
+        "network", "wc", "n.dim", "correlation",
+        "dim.variables", "EGA.type", "consensus",
+        "Methods"
+      )
+    ]
+  }else{
+    multi.res <- multi.res[
+      c(
+        "network", "wc", "n.dim", "correlation",
+        "dim.variables", "EGA.type","Methods"
+      )
+    ]
+  }
 
   class(multi.res) <- "EGA"
 
