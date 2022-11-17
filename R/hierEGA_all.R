@@ -328,7 +328,7 @@ hierEGA_all <- function(
   }else{scores <- match.arg(scores)}
   
   if(missing(factor.scores)){
-    factor.scores <- "tenBerge"
+    factor.scores <- "Thurstone"
   }else{factor.scores <- match.arg(factor.scores)}
 
   if(missing(consensus.method)){
