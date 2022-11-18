@@ -411,7 +411,8 @@ hierEGA <- function(
           r = lower_order_result$correlation, # correlation matrix
           n.obs = nrow(data), # number of cases
           nfactors = length(na.omit(unique_memberships)), # number of factors
-          n.rotations = 10 # number of random starts
+          n.rotations = 10, # number of random starts
+          maxit = 10000 # number of iterations for convergence
         )
       )
     )
@@ -496,7 +497,9 @@ hierEGA <- function(
           data = data,
           A = lower_order_result$network,
           wc = lower_order_result$wc,
-          rotation = rotation
+          rotation = rotation,
+          n.rotations = 10,
+          maxit = 10000
         )
       )
       

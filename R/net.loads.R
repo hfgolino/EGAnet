@@ -288,26 +288,53 @@ net.loads <- function(
     # Check if rotation exists
     rotation <- tolower(rotation)
     rotation_names_lower <- tolower(rotation_names)
+    
+    # Obtain rotation arguments
+    rot_arguments <- list(...)
+    
     if(rotation %in% rotation_names_lower){
       
       # Obtain rotation function arguments
-      rotation_function <- get(
-        rotation_names[which(rotation == rotation_names_lower)],
-        envir = asNamespace("GPArotation")
-      )
+      # rotation_function <- get(
+      #   rotation_names[which(rotation == rotation_names_lower)],
+      #   envir = asNamespace("GPArotation")
+      # )
+      
+      # Obtain arguments
+      # rotation_arguments <- obtain.arguments(
+      #   FUN = rotation_function, FUN.args = list(...)
+      # )
       
       # Obtain arguments
       rotation_arguments <- obtain.arguments(
-        FUN = rotation_function, FUN.args = list(...)
+        FUN = psych::faRotations, FUN.args = list(rotate = rotation)
+      )
+      
+      # Check for arguments
+      rotation_arguments$loadings <- std
+      rotation_arguments$n.rotations <- ifelse(
+        "n.rotations" %in% names(rot_arguments),
+        rot_arguments$n.rotations,
+        10
+      )
+      rotation_arguments$maxit <- ifelse(
+        "maxit" %in% names(rot_arguments),
+        rot_arguments$maxit,
+        1000
       )
       
       # Set loadings
-      rotation_arguments$L <- as.matrix(res$std)
-      rotation_arguments$Tmat <- diag(ncol(rotation_arguments$L))
+      # rotation_arguments$L <- as.matrix(res$std)
+      # rotation_arguments$Tmat <- diag(ncol(rotation_arguments$L))
+      rotation_arguments$loadings <- as.matrix(res$std)
       
       # Obtain rotated loadings
+      # res$rotated <- do.call(
+      #   what = rotation_function,
+      #   args = as.list(rotation_arguments)
+      # )
       res$rotated <- do.call(
-        what = rotation_function,
+        what = psych::faRotations,
         args = as.list(rotation_arguments)
       )
       

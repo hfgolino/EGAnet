@@ -139,7 +139,7 @@ net.scores <- function (
   }
   
   # Compute network loadings
-  P <- net.loads(A = A, wc = wc)
+  P <- net.loads(A = A, wc = wc, ...)
   nfacts <- length(unique(wc))
   fact.res <- as.data.frame(matrix(0, nrow = nrow(data),
                                    ncol = nfacts))
