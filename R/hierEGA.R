@@ -297,7 +297,7 @@
 #' @export
 #'
 # Hierarchical EGA
-# Updated 16.11.2022
+# Updated 21.11.2022
 # Added rotation 20.10.2022
 hierEGA <- function(
     data, scores = c("factor", "network"),
@@ -402,30 +402,39 @@ hierEGA <- function(
     
     # Estimate scores
     ## Obtain memberships
-    unique_memberships <- unique(lower_order_result$wc)
+    unique_memberships <- length(na.omit(unique(lower_order_result$wc)))
     
     ## Estimate factor model
-    fm <- suppressPackageStartupMessages(
-      suppressWarnings(
-        psych::fa(
-          r = lower_order_result$correlation, # correlation matrix
-          n.obs = nrow(data), # number of cases
-          nfactors = length(na.omit(unique_memberships)), # number of factors
-          n.rotations = 10, # number of random starts
-          maxit = 10000 # number of iterations for convergence
-        )
-      )
+    # fm <- suppressPackageStartupMessages(
+    #   suppressWarnings(
+    #     psych::fa(
+    #       r = lower_order_result$correlation, # correlation matrix
+    #       n.obs = nrow(data), # number of cases
+    #       nfactors = length(na.omit(unique_memberships)), # number of factors
+    #       n.rotations = 10, # number of random starts
+    #       maxit = 10000 # number of iterations for convergence
+    #     )
+    #   )
+    # )
+    fm <- efa(
+      data = data, nfactors = unique_memberships, # number of factors
+      fm = "minres", rotate = "oblimin",
+      n.rotations = 10,
+      maxit = 1e4,
+      factor.scores = "Thurstone",
+      eps = 1e-5
     )
     
     ## Score estimates
-    score_est <- psych::factor.scores(
-      x = data,
-      f = fm,
-      method = "Thurstone"
-    )$scores
+    # score_est <- psych::factor.scores(
+    #   x = data,
+    #   f = fm,
+    #   method = "Thurstone"
+    # )$scores
+    score_est <- fm$factor.scores
     
     ## Lower-order loadings
-    lower_loads <- fm$loadings[,1:length(na.omit(unique_memberships))]
+    lower_loads <- fm$loadings[,1:unique_memberships]
     
     ## Reorder lower loadings and scores
     lower_loads <- lower_loads[,order(colnames(lower_loads))]

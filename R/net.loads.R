@@ -305,38 +305,77 @@ net.loads <- function(
       #   FUN = rotation_function, FUN.args = list(...)
       # )
       
-      # Obtain arguments
-      rotation_arguments <- obtain.arguments(
-        FUN = psych::faRotations, FUN.args = list(rotate = rotation)
-      )
-      
-      # Check for arguments
-      rotation_arguments$loadings <- std
-      rotation_arguments$n.rotations <- ifelse(
-        "n.rotations" %in% names(rot_arguments),
-        rot_arguments$n.rotations,
-        10
-      )
-      rotation_arguments$maxit <- ifelse(
-        "maxit" %in% names(rot_arguments),
-        rot_arguments$maxit,
-        1000
-      )
-      
-      # Set loadings
-      # rotation_arguments$L <- as.matrix(res$std)
-      # rotation_arguments$Tmat <- diag(ncol(rotation_arguments$L))
-      rotation_arguments$loadings <- as.matrix(res$std)
-      
-      # Obtain rotated loadings
-      # res$rotated <- do.call(
-      #   what = rotation_function,
-      #   args = as.list(rotation_arguments)
-      # )
-      res$rotated <- do.call(
-        what = psych::faRotations,
-        args = as.list(rotation_arguments)
-      )
+      if(rotation != "oblimin"){
+        
+        # Obtain arguments
+        rotation_arguments <- obtain.arguments(
+          FUN = psych::faRotations, FUN.args = list(rotate = rotation)
+        )
+        
+        # Check for arguments
+        rotation_arguments$loadings <- std
+        rotation_arguments$n.rotations <- ifelse(
+          "n.rotations" %in% names(rot_arguments),
+          rot_arguments$n.rotations,
+          10
+        )
+        rotation_arguments$maxit <- ifelse(
+          "maxit" %in% names(rot_arguments),
+          rot_arguments$maxit,
+          1000
+        )
+        
+        # Set loadings
+        # rotation_arguments$L <- as.matrix(res$std)
+        # rotation_arguments$Tmat <- diag(ncol(rotation_arguments$L))
+        rotation_arguments$loadings <- as.matrix(res$std)
+        
+        # Obtain rotated loadings
+        # res$rotated <- do.call(
+        #   what = rotation_function,
+        #   args = as.list(rotation_arguments)
+        # )
+        res$rotated <- do.call(
+          what = psych::faRotations,
+          args = as.list(rotation_arguments)
+        )
+        
+      }else{
+        
+        # Obtain arguments
+        rotation_arguments <- obtain.arguments(
+          FUN = oblimin_rotate, FUN.args = list(...)
+        )
+        
+        # Check for arguments
+        rotation_arguments$loadings <- std
+        rotation_arguments$n.rotations <- ifelse(
+          "n.rotations" %in% names(rot_arguments),
+          rot_arguments$n.rotations,
+          10
+        )
+        rotation_arguments$maxit <- ifelse(
+          "maxit" %in% names(rot_arguments),
+          rot_arguments$maxit,
+          1000
+        )
+        
+        # Set loadings
+        # rotation_arguments$L <- as.matrix(res$std)
+        # rotation_arguments$Tmat <- diag(ncol(rotation_arguments$L))
+        rotation_arguments$loadings <- as.matrix(res$std)
+        
+        # Obtain rotated loadings
+        # res$rotated <- do.call(
+        #   what = rotation_function,
+        #   args = as.list(rotation_arguments)
+        # )
+        res$rotated <- do.call(
+          what = oblimin_rotate,
+          args = as.list(rotation_arguments)
+        )
+        
+      }
       
     }
     
