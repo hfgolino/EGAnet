@@ -500,7 +500,7 @@ bootEGA <- function(
     if(tolower(EGA.type) == "hierega"){
       
       # Obtain lower order output
-      ega_output <- empirical_EGA$hierarchical$lower_order
+      ega_output <- empirical_EGA$lower_order
       
     }
     
@@ -596,10 +596,10 @@ bootEGA <- function(
       
       # Obtain lower order output
       boot_output <- lapply(boots, function(x){
-        x$hierarchical$lower_order
+        x$lower_order
       })
       boot_output_higher <- lapply(boots, function(x){
-        x$hierarchical$higher_order$EGA
+        x$higher_order$EGA
       })
       
     }
