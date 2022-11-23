@@ -79,8 +79,8 @@ dimensionStability <- function(bootega.obj, ...)
     message("Performing dimension stability analysis on lower order...", appendLF = FALSE)
     
     # Set up lower and higher order for item stability function
-    higher_order_EGA<- bootega.obj$result_lower$EGA$hierarchical$higher_order$EGA
-    lower_order_EGA <- bootega.obj$result_lower$EGA$hierarchical$lower_order
+    higher_order_EGA<- bootega.obj$result_lower$EGA$higher_order$EGA
+    lower_order_EGA <- bootega.obj$result_lower$EGA$lower_order
     bootega.obj$result_lower$EGA <- lower_order_EGA
     
     # Perform dimension stability on lower order dimensions
