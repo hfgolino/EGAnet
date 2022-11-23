@@ -347,7 +347,7 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 28.08.2022
+# Updated 23.11.2022
 bootEGA <- function(
     data, n = NULL, uni.method = c("expand", "LE", "louvain"), iter,
     type = c("parametric", "resampling"), seed = 1234,

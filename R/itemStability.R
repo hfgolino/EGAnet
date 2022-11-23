@@ -139,7 +139,7 @@ itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
     message("Performing item stability analysis on lower order...", appendLF = FALSE)
     
     # Set up lower and higher order for item stability function
-    higher_order_EGA<- bootega.obj$result_lower$EGA$higher_order$EGA
+    higher_order_EGA <- bootega.obj$result_lower$EGA$higher_order$EGA
     lower_order_EGA <- bootega.obj$result_lower$EGA$lower_order
     bootega.obj$result_lower$EGA <- lower_order_EGA
     
@@ -161,10 +161,8 @@ itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
     bootega.obj$result_higher$color.palette <- bootega.obj$result_lower$color.palette
     
     # Perform item stability on higher order dimensions
-    higher_is <- suppressMessages(
-      itemStability(
-        bootega.obj$result_higher, IS.plot = FALSE, structure = NULL
-      )
+    higher_is <- itemStability(
+      bootega.obj$result_higher, IS.plot = FALSE, structure = NULL
     )
     
     # Message user higher order is done
