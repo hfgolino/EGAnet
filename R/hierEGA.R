@@ -611,6 +611,7 @@ hierEGA <- function(
   higher_order_result <- hierarchical$higher_order$EGA
   
   # Set up plots
+  if(isTRUE(plot.EGA)){
   lower_plot <- suppressMessages(
     suppressWarnings(
       suppressPackageStartupMessages(
@@ -630,6 +631,7 @@ hierEGA <- function(
       )
     )
   }
+}
 
   # Set up plots
   if(isTRUE(plot.EGA)){
