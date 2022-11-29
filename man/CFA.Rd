@@ -2,12 +2,12 @@
 % Please edit documentation in R/CFA.R
 \name{CFA}
 \alias{CFA}
-\title{CFA Fit of \code{\link[EGAnet]{EGA}} Structure}
+\title{CFA Fit of \code{\link[EGAnet]{EGA}} or \code{\link[EGAnet]{hierEGA}} Structure}
 \usage{
 CFA(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ...)
 }
 \arguments{
-\item{ega.obj}{An \code{\link[EGAnet]{EGA}} object}
+\item{ega.obj}{An \code{\link[EGAnet]{EGA}} object or an \code{\link[EGAnet]{hierEGA}}}
 
 \item{data}{A dataframe with the variables to be used in the analysis}
 
@@ -38,7 +38,7 @@ Additional fit measures can be applied using the
 \code{\link[lavaan]{fitMeasures}} function (see examples)}
 }
 \description{
-Verifies the fit of the structure suggested by \code{\link[EGAnet]{EGA}} using confirmatory factor analysis
+Verifies the fit of the structure suggested by \code{\link[EGAnet]{EGA}} or by \code{\link[EGAnet]{hierEGA}} using confirmatory factor analysis
 }
 \examples{
 # Load data
