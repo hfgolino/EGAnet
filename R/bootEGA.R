@@ -591,10 +591,10 @@ bootEGA <- function(
       x$EGA
     })
   }else if(!is(boots[[1]], "EGA")){
-
+    
     # Base on EGA type
     if(tolower(EGA.type) == "hierega"){
-
+      
       # Obtain lower order output
       boot_output <- lapply(boots, function(x){
         x$lower_order
@@ -602,17 +602,17 @@ bootEGA <- function(
       boot_output_higher <- lapply(boots, function(x){
         x$higher_order$EGA
       })
-
+      
     }
-
+    
   }else{
     # Assume output is from standard EGA
     boot_output <- boots
   }
-
+  
   #let user know results are being computed
   message("Computing results...\n")
-
+  
   #get networks
   bootGraphs <- lapply(boot_output, function(x, col.names){
     net <- x$network
@@ -620,38 +620,38 @@ bootEGA <- function(
     row.names(net) <- col.names
     return(net)
   }, col.names = colnames(data))
-
+  
   #get community membership
   boot.wc <- lapply(boot_output, function(x, col.names){
     wc <- x$wc
     names(wc) <- col.names
     return(wc)
   }, col.names = colnames(data))
-
+  
   #get dimensions
   boot.ndim <- matrix(NA, nrow = iter, ncol = 2)
   colnames(boot.ndim) <- c("Boot.Number", "N.Dim")
-
+  
   boot.ndim[,1] <- seq_len(iter)
   boot.ndim[,2] <- unlist(
     lapply(boot_output, function(x){
       x$n.dim
     })
   )
-
+  
   if (typicalStructure){
-
+    
     typical.Structure <- switch(
       model,
       "glasso" = apply(simplify2array(bootGraphs),1:2, median),
       "TMFG" = apply(simplify2array(bootGraphs),1:2, mean)
-
+      
     )
-
+    
     # Sub-routine to following EGA approach (handles unidimensional structures)
     typical.wc <- suppressWarnings(
       suppressMessages(
-
+        
         typicalStructure.network(
           A = typical.Structure, corr = corr,
           model = model, model.args = model.args,
@@ -660,17 +660,17 @@ bootEGA <- function(
           consensus.method = consensus.method,
           consensus.iter = consensus.iter
         )
-
+        
       )
     )
-
+    
     typical.ndim <- length(na.omit(unique(typical.wc)))
-
+    
     if(typical.ndim == 1){typical.wc[1:length(typical.wc)] <- 1}
-
+    
     dim.variables <- data.frame(items = colnames(data), dimension = typical.wc)
   }
-
+  
   Median <- median(boot.ndim[, 2], na.rm = TRUE)
   se.boot <- sd(boot.ndim[, 2], na.rm = TRUE)
   ciMult <- qt(0.95/2 + 0.5, nrow(boot.ndim) - 1)
@@ -681,45 +681,45 @@ bootEGA <- function(
                               Lower.CI = Median - ci, Upper.CI = Median + ci,
                               Lower.Quantile = quant[1], Upper.Quantile = quant[2])
   row.names(summary.table) <- NULL
-
+  
   #compute frequency
   dim.range <- range(boot.ndim[,2], na.rm = TRUE)
   lik <- matrix(0, nrow = diff(dim.range)+1, ncol = 2)
   colnames(lik) <- c("# of Factors", "Frequency")
   count <- 0
-
+  
   for(i in seq(from=min(dim.range),to=max(dim.range),by=1)){
     count <- count + 1
     lik[count,1] <- i
     lik[count,2] <- length(which(boot.ndim[,2]==i))/iter
   }
-
+  
   # Higher order EGA
   if(tolower(EGA.type) == "hierega"){
-
+    
     #get networks
     bootGraphs_higher <- lapply(boot_output_higher, function(x){
       net <- x$network
       return(net)
     })
-
+    
     #get community membership
     boot.wc_higher <- lapply(boot_output_higher, function(x){
       wc <- x$wc
       return(wc)
     })
-
+    
     #get dimensions
     boot.ndim_higher <- matrix(NA, nrow = iter, ncol = 2)
     colnames(boot.ndim_higher) <- c("Boot.Number", "N.Dim")
-
+    
     boot.ndim_higher[,1] <- seq_len(iter)
     boot.ndim_higher[,2] <- unlist(
       lapply(boot_output_higher, function(x){
         x$n.dim
       })
     )
-
+    
     Median_higher <- median(boot.ndim_higher[, 2], na.rm = TRUE)
     se.boot_higher <- sd(boot.ndim_higher[, 2], na.rm = TRUE)
     ciMult_higher <- qt(0.95/2 + 0.5, nrow(boot.ndim_higher) - 1)
@@ -730,24 +730,24 @@ bootEGA <- function(
                                        Lower.CI = Median_higher - ci_higher, Upper.CI = Median_higher + ci_higher,
                                        Lower.Quantile = quant_higher[1], Upper.Quantile = quant_higher[2])
     row.names(summary.table_higher) <- NULL
-
+    
     #compute frequency
     dim.range_higher <- range(boot.ndim_higher[,2], na.rm = TRUE)
     lik_higher <- matrix(0, nrow = diff(dim.range_higher)+1, ncol = 2)
     colnames(lik_higher) <- c("# of Factors", "Frequency")
     count <- 0
-
+    
     for(i in seq(from=min(dim.range_higher),to=max(dim.range_higher),by=1)){
       count <- count + 1
       lik_higher[count,1] <- i
       lik_higher[count,2] <- length(which(boot.ndim_higher[,2]==i))/iter
     }
-
+    
   }
-
+  
   # Reset seed
   set.seed(NULL)
-
+  
   # Set up result list
   if(tolower(EGA.type) == "hierega"){
     result <- list(
@@ -764,50 +764,50 @@ bootEGA <- function(
       EGA = ega_output, EGA.type = EGA.type
     )
   }
-
+  
   # Typical structure
   if (typicalStructure) {
-
+    
     typicalGraph <- list(
       graph = typical.Structure,
       typical.dim.variables = dim.variables[order(dim.variables[,2]), ],
       wc = typical.wc
     )
-
+    
     result$typicalGraph <- typicalGraph
-
+    
   }
-
+  
   # higher order
   if(tolower(EGA.type) == "hierega"){
-
+    
     # Set up result list
     result_higher <- list(
       iter = iter, type = type, boot.ndim = boot.ndim_higher,
       boot.wc = boot.wc_higher, bootGraphs = bootGraphs_higher,
       summary.table = summary.table_higher, frequency = lik_higher
     )
-
+    
   }
-
+  
   # Add plot arguments (for itemStability)
   result$color.palette <- color.palette
-
+  
   class(result) <- "bootEGA"
-
+  
   if(tolower(EGA.type) == "hierega"){
     class(result_higher) <- "bootEGA"
   }
-
+  
   if(typicalStructure & plot.typicalStructure){
-
+    
     result$plot.typical.ega <- plot(
       result,
       plot.args = plot.args
     )
-
+    
   }
-
+  
   # Check if uni.method = "LE" has been used
   if(uni.method == "LE"){
     # Give change warning
@@ -829,17 +829,17 @@ bootEGA <- function(
       )
     )
   }
-
+  
   # Set results for higher order EGA
   if(tolower(EGA.type) == "hierega"){
-
+    
     result <- list(
       result_lower = result,
       result_higher = result_higher
     )
-
+    
   }
-
+  
   return(result)
   
 }

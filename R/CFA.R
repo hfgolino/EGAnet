@@ -69,7 +69,7 @@
 #' @export
 #'
 # CFA model for EGA
-# Updated 30.10.2022
+# Updated 29.11.2022
 CFA<- function(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ...) {
 
 
