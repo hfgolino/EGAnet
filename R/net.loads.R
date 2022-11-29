@@ -89,7 +89,7 @@
 #' @export
 #'
 # Network Loadings
-# Updated 09.11.2022
+# Updated 29.11.2022
 # Signs updated 18.10.2022
 # Rotations added 20.10.2022
 net.loads <- function(
@@ -186,8 +186,7 @@ net.loads <- function(
     attr(dims, "na.action") <- NULL
     
     # Make sure that there are actual dimensions
-    if(length(dims) != 1)
-    {
+    if(length(dims) != 1){
 
       #### START COMPUTE LOADINGS
       
@@ -228,8 +227,8 @@ net.loads <- function(
       }else{std <- t(t(unstd) / sqrt(sum(abs(unstd))))}
       res$std <- as.data.frame(round(descend.ord(std, wc),3))
       
-    }else if(all(is.na(wc)))
-    {
+    }else if(all(is.na(wc))){
+      
       # Create matrix of NAs
       comm.str <- matrix(NA, nrow = ncol(A), ncol = ncol(A))
       
@@ -374,6 +373,29 @@ net.loads <- function(
           what = oblimin_rotate,
           args = as.list(rotation_arguments)
         )
+        
+        # Re-align rotated loadings
+        align_rotated <- apply(
+          abs(cor(res$std, res$rotated$loadings)), 1, which.max
+        )
+        
+        # Align rotated loadings with network loadings
+        rotated_aligned <- res$rotated$loadings[,align_rotated]
+        
+        # Re-align Phi
+        res$rotated$Phi <- res$rotated$Phi[
+          align_rotated, align_rotated
+        ]
+        
+        # Rename Phi
+        colnames(res$rotated$Phi) <- colnames(res$std)
+        row.names(res$rotated$Phi) <- colnames(res$std)
+        
+        # Rename rotated loadings
+        colnames(rotated_aligned) <- colnames(res$std)
+        
+        # Re-assign rotated loadings
+        res$rotated$loadings <- rotated_aligned
         
       }
       
