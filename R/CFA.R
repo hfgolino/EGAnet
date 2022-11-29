@@ -173,11 +173,12 @@ CFA<- function(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ...
   
   if (plot.CFA == TRUE) {
     plot.cfa <- semPlot::semPaths(fit.mod.ega, title = FALSE, label.cex = 0.8, sizeLat = 8, sizeMan = 5, edge.label.cex = 0.6, minimum = 0.1,
-                                  sizeInt = 0.8, mar = c(1, 1, 1, 1), residuals = FALSE, intercepts = FALSE, thresholds = FALSE, layout = "spring",
+                                  sizeInt = 0.8, mar = c(1, 1, 1, 1), residuals = FALSE, intercepts = FALSE, thresholds = FALSE, layout = layout,
                                   "std", cut = 0.5)
   }
   
     cfa <- list()
+    cfa$model <- model.ega
     cfa$fit <- fit.mod.ega
     cfa$summary <- summary.cfa
     cfa$fit.measures <- fit.measures.cfa
