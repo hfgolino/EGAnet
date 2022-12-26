@@ -89,7 +89,7 @@
 #' @export
 #'
 # Network Loadings
-# Updated 29.11.2022
+# Updated 26.12.2022
 # Signs updated 18.10.2022
 # Rotations added 20.10.2022
 net.loads <- function(
@@ -248,8 +248,9 @@ net.loads <- function(
       # Create matrix of NAs
       comm.str <- matrix(strength(A, absolute = TRUE), nrow = ncol(A), ncol = 1)
       
-      # Assign column names
+      # Assign dimension names
       colnames(comm.str) <- dims
+      row.names(comm.str) <- colnames(A)
       
       # Add signs to loadings
       comm.str <- add.signs(comm.str = comm.str, A = A, wc = wc, dims = dims, pos.manifold = pos.manifold)
