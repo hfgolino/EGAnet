@@ -88,7 +88,7 @@ poly.irt <- function(loadings, data)
 
 #' Oblimin rotation (to be consistent in \code{\link[EGAnet]{net.loads}})
 #' @noRd
-# Updated 21.11.2022 -- Marcos
+# Updated 28.11.2022 -- Marcos
 oblimin_rotate <- function(
     loadings,
     n.rotations = 10, # defaults to 10
@@ -103,6 +103,19 @@ oblimin_rotate <- function(
   # Check for number of factors
   if(missing(nfactors)){
     nfactors <- ncol(loadings)
+  }
+  
+  # Check for unidimensional structure (28.11.2022)
+  if(nfactors == 1){
+    
+    # Return results
+    return(
+      list(
+        loadings = loadings,
+        Phi = 1
+      )
+    )
+    
   }
   
   x <- list()
@@ -158,7 +171,7 @@ oblimin <- function(L, gamma = 0) {
 
 #' Factor scores
 #' @noRd
-# Updated 21.11.2022 -- Marcos
+# Updated 28.11.2022 -- Marcos
 fscores <- function(S, loadings, Phi, Shat, scores = NULL, method = "Thurstone") {
   
   # S = empirical correlation matrix
@@ -216,7 +229,9 @@ fscores <- function(S, loadings, Phi, Shat, scores = NULL, method = "Thurstone")
   # Validity coefficients:
   # invL <- diag(1/apply(fs, MARGIN = 2, FUN = sd))
   C <- t(weights) %*% S %*% weights
-  invL <- diag(sqrt(diag(C))) # Standard deviations of the factor scores
+  # invL was updated (28.11.2022) to ensure matrix
+  # when nfactors = 1
+  invL <- diag(sqrt(diag(C)), ncol(loadings)) # Standard deviations of the factor scores
   validity_univocality <- t(LP) %*% weights %*% invL
   validity <- matrix(diag(validity_univocality), nrow = 1)
   rownames(validity) <- ""
