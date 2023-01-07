@@ -44,6 +44,10 @@
 #' {The "median" value of the columns are used to replace the missing data.}
 #'
 #' }
+#' 
+#' @param na.rm Boolean.
+#' Should missing data be removed from network score computation?
+#' Defaults to \code{TRUE}
 #'
 #' @param ... Additional arguments for \code{\link[EGAnet]{EGA}}
 #'
@@ -101,11 +105,11 @@
 #' @export
 #'
 # Network Scores
-# Updated: 20.10.2022
+# Updated: 07.01.2022
 # Add rotation: 20.10.2022
 net.scores <- function (
     data, A, wc, rotation = "oblimin",
-    impute, ...
+    impute, na.rm = TRUE, ...
 )
 {
   
@@ -147,12 +151,12 @@ net.scores <- function (
   missing <- rowSums(is.na(data))
   if (impute != "none") {
     data <- data.matrix(data)
-    miss <- which(is.na(data), arr.ind = TRUE)
+    miss <- which(is.na(data), arr.ind = na.rm)
     if (impute == "mean") {
-      item.means <- colMeans(data, na.rm = TRUE)
+      item.means <- colMeans(data, na.rm = na.rm)
       data[miss] <- item.means[miss[, 2]]
     }else {
-      item.med <- apply(data, 2, median, na.rm = TRUE)
+      item.med <- apply(data, 2, median, na.rm = na.rm)
       data[miss] <- item.med[miss[, 2]]
     }
   }
@@ -164,10 +168,10 @@ net.scores <- function (
       names(f.load) <- row.names(loads)[which(loads[, i] !=
                                                 0)]
       dat <- data[, names(f.load)]
-      f.sds <- apply(dat, 2, sd, na.rm = TRUE)
+      f.sds <- apply(dat, 2, sd, na.rm = na.rm)
       rel <- f.load/f.sds
       rel.wei <- rel/sum(rel)
-      net.sco[, i] <- as.vector(rowSums(t(t(dat) * rel.wei), na.rm = TRUE))
+      net.sco[, i] <- as.vector(rowSums(t(t(dat) * rel.wei), na.rm = na.rm))
     }
     colnames(net.sco) <- colnames(loads)
     return(net.sco)

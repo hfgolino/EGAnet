@@ -4,7 +4,7 @@
 \alias{net.scores}
 \title{Network Scores}
 \usage{
-net.scores(data, A, wc, rotation = "oblimin", impute, ...)
+net.scores(data, A, wc, rotation = "oblimin", impute, na.rm = TRUE, ...)
 }
 \arguments{
 \item{data}{Matrix or data frame.
@@ -39,6 +39,10 @@ three options are available:
 {The "median" value of the columns are used to replace the missing data.}
 
 }}
+
+\item{na.rm}{Boolean.
+Should missing data be removed from network score computation?
+Defaults to \code{TRUE}}
 
 \item{...}{Additional arguments for \code{\link[EGAnet]{EGA}}}
 }
