@@ -1,3 +1,8 @@
+Changes in version 1.2.5
+
+o ADD: `most_common_tefi` method for `*EGA` analyses -- should be more reliable with larger datasets
+
+
 Changes in version 1.2.4
 
 o REMOVE: `residualEGA` has been removed in favor of `riEGA` (removes {OpenMx} dependency)
