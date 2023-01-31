@@ -111,6 +111,12 @@
 #' {Uses the community solution that achieves the lowest \code{\link[EGAnet]{tefi}}
 #' across iterations}
 #' 
+#' \item{\code{most_common_tefi}}
+#' {Uses the most common number of communities detected across the number
+#' of iterations. After, if there is more than one solution for that number
+#' of communities, then the solution with the lowest \code{\link[EGAnet]{tefi}
+#' is used}}
+#' 
 #' }
 #'
 #' @param ... Additional arguments.
@@ -187,7 +193,7 @@
 #' @export
 #'
 # Estimates EGA
-# Updated 17.11.2022
+# Updated 31.01.2023
 EGA.estimate <- function(
     data, n = NULL,
     corr = c("cor_auto", "pearson", "spearman"),
@@ -197,7 +203,8 @@ EGA.estimate <- function(
       "highest_modularity",
       "most_common",
       "iterative",
-      "lowest_tefi"
+      "lowest_tefi",
+      "most_common_tefi"
     ), consensus.iter = 100, 
   ...
 )
@@ -238,7 +245,7 @@ EGA.estimate <- function(
   }
   
   if(missing(consensus.method)){
-    consensus.method <- "most_common"
+    consensus.method <- "most_common_tefi"
   }else{consensus.method <- tolower(match.arg(consensus.method))}
 
   if(missing(corr)){
@@ -409,15 +416,30 @@ EGA.estimate <- function(
       }
       
       # Population community membership list
-      consensus <- consensus_clustering(
-        network = estimated.network,
-        corr = correlation,
-        order = louvain.order,
-        consensus.iter = consensus.iter,
-        resolution = algorithm.ARGS$resolution,
-        type = consensus.method
-      )
-      wc$membership <- consensus[[consensus.method]]
+      if(consensus.method != "most_common_tefi"){
+        
+        consensus <- consensus_clustering(
+          network = estimated.network,
+          corr = correlation,
+          order = louvain.order,
+          consensus.iter = consensus.iter,
+          resolution = algorithm.ARGS$resolution,
+          type = consensus.method
+        )
+        wc$membership <- consensus[[consensus.method]]
+        
+      }else{
+        
+        consensus <- most_common_tefi(
+          network = estimated.network,
+          corr = correlation,
+          order = louvain.order,
+          consensus.iter = consensus.iter,
+          resolution = algorithm.ARGS$resolution
+        )
+        wc$membership <- consensus$most_common
+        
+      }
       
     }else{
       

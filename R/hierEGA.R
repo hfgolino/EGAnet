@@ -61,7 +61,13 @@
 #' \item{\code{lowest_tefi}}
 #' {Uses the community solution that achieves the lowest \code{\link[EGAnet]{tefi}}
 #' across iterations}
-#'
+#' 
+#' \item{\code{most_common_tefi}}
+#' {Uses the most common number of communities detected across the number
+#' of iterations. After, if there is more than one solution for that number
+#' of communities, then the solution with the lowest \code{\link[EGAnet]{tefi}
+#' is used}}
+#' 
 #' }
 #'
 #' By default, all \code{consensus.method} options are computed and
@@ -297,7 +303,7 @@
 #' @export
 #'
 # Hierarchical EGA
-# Updated 21.11.2022
+# Updated 31.01.2023
 # Added rotation 20.10.2022
 hierEGA <- function(
     data, scores = c("factor", "network"),
@@ -307,7 +313,8 @@ hierEGA <- function(
       "highest_modularity",
       "most_common",
       "iterative",
-      "lowest_tefi"
+      "lowest_tefi",
+      "most_common_tefi"
     ),
     uni.method = c("expand", "LE", "louvain"),
     corr = c("cor_auto", "pearson", "spearman"),
@@ -325,7 +332,7 @@ hierEGA <- function(
   }else{scores <- match.arg(scores)}
 
   if(missing(consensus.method)){
-    consensus.method <- "most_common"
+    consensus.method <- "most_common_tefi"
   }else{consensus.method <- match.arg(consensus.method)}
 
   if(missing(uni.method)){
@@ -366,20 +373,14 @@ hierEGA <- function(
 
   # Start lower-order ----
 
-  # Set lower-order defaults
-  lower_order_defaults <- ega_defaults
-  lower_order_defaults$data <- data
-  lower_order_defaults$uni.method <- uni.method
-  lower_order_defaults$corr <- corr
-  lower_order_defaults$model <- model
-  lower_order_defaults$model.args <- model.args
-  lower_order_defaults$algorithm <- "louvain" # for lower order communities
-  lower_order_defaults$algorithm.args <- algorithm.args
-  lower_order_defaults$consensus.method <- consensus.method
-  lower_order_defaults$consensus.iter <- consensus.iter
-  lower_order_defaults$plot.EGA <- FALSE # do not plot
-  lower_order_defaults$plot.args <- plot.args
-  lower_order_defaults$lower.louvain <- TRUE # provides lower order Louvain
+  # Initialize lower-order defaults
+  lower_order_defaults <- ega_defaults; lower_order_defaults$data <- data;
+  lower_order_defaults$uni.method <- uni.method; lower_order_defaults$corr <- corr;
+  lower_order_defaults$model <- model; lower_order_defaults$model.args <- model.args;
+  lower_order_defaults$algorithm <- "louvain"; lower_order_defaults$algorithm.args <- algorithm.args;
+  lower_order_defaults$consensus.method <- consensus.method; lower_order_defaults$consensus.iter <- consensus.iter;
+  lower_order_defaults$plot.EGA <- FALSE; lower_order_defaults$plot.args <- plot.args;
+  lower_order_defaults$lower.louvain <- TRUE; 
 
   # Send message
   message(
@@ -694,3 +695,23 @@ hierEGA <- function(
 
   return(hierarchical)
 }
+
+
+
+
+
+# bug checking
+# data = NetworkToolbox::neoOpen; scores = "network";
+# rotation = "oblimin"; consensus.iter = 1000; corr = "cor_auto";
+# consensus.method = "most_common"; uni.method = "louvain";
+# model = "glasso"; model.args = list();
+# algorithm = "walktrap"; algorithm.args = list();
+# lower.louvain = FALSE; plot.EGA = FALSE; plot.args = list();
+# 
+# source("D:/R Packages/EGAnet/R/utils-EGAnet.R")
+
+
+
+
+
+

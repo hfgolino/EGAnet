@@ -141,6 +141,12 @@
 #' {Uses the community solution that achieves the lowest \code{\link[EGAnet]{tefi}}
 #' across iterations}
 #' 
+#' \item{\code{most_common_tefi}}
+#' {Uses the most common number of communities detected across the number
+#' of iterations. After, if there is more than one solution for that number
+#' of communities, then the solution with the lowest \code{\link[EGAnet]{tefi}
+#' is used}}
+#' 
 #' }
 #'
 #' @param plot.EGA Boolean.
@@ -284,7 +290,7 @@
 #'
 #' @export
 #'
-# Updated 16.11.2022
+# Updated 31.01.2023
 # Louvain unidimensionality 27.07.2022
 # Consensus clustering 13.05.2022
 # LE adjustment 08.03.2021
@@ -298,7 +304,8 @@ EGA <- function (
       "highest_modularity",
       "most_common",
       "iterative",
-      "lowest_tefi"
+      "lowest_tefi",
+      "most_common_tefi"
     ), consensus.iter = 100, 
     plot.EGA = TRUE, plot.args = list(),
     ...
@@ -387,7 +394,7 @@ EGA <- function (
   }
   
   if(missing(consensus.method)){
-    consensus.method <- "most_common"
+    consensus.method <- "most_common_tefi"
   }else{consensus.method <- tolower(match.arg(consensus.method))}
   
   # Check for correlation matrix or data
