@@ -132,6 +132,12 @@
 #' {Uses the community solution that achieves the lowest \code{\link[EGAnet]{tefi}}
 #' across iterations}
 #' 
+#' \item{\code{most_common_tefi}}
+#' {Uses the most common number of communities detected across the number
+#' of iterations. After, if there is more than one solution for that number
+#' of communities, then the solution with the lowest \code{\link[EGAnet]{tefi}
+#' is used}}
+#' 
 #' }
 #'
 #' @param plot.EGA Boolean.
@@ -280,7 +286,7 @@ riEGA <- function(
   }
   
   if(missing(consensus.method)){
-    consensus.method <- "most_common"
+    consensus.method <- "most_common_tefi"
   }else{consensus.method <- match.arg(consensus.method)}
   
   # Ensure data is a matrix

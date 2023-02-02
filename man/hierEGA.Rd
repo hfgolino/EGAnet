@@ -9,7 +9,8 @@ hierEGA(
   scores = c("factor", "network"),
   rotation = "oblimin",
   consensus.iter = 1000,
-  consensus.method = c("highest_modularity", "most_common", "iterative", "lowest_tefi"),
+  consensus.method = c("highest_modularity", "most_common", "iterative", "lowest_tefi",
+    "most_common_tefi"),
   uni.method = c("expand", "LE", "louvain"),
   corr = c("cor_auto", "pearson", "spearman"),
   model = c("glasso", "TMFG"),
@@ -79,6 +80,12 @@ This process repeats iteratively until all nodes have a proportion of
 \item{\code{lowest_tefi}}
 {Uses the community solution that achieves the lowest \code{\link[EGAnet]{tefi}}
 across iterations}
+
+\item{\code{most_common_tefi}}
+{Uses the most common number of communities detected across the number
+of iterations. After, if there is more than one solution for that number
+of communities, then the solution with the lowest \code{\link[EGAnet]{tefi}
+is used}}
 
 }
 

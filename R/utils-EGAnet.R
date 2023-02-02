@@ -1438,6 +1438,203 @@ most_common_consensus <- function(
   return(results)
 }
 
+# Lancichinetti & Fortunato (2012)
+#' @noRd
+# Most Common Consensus Clustering with TEFI Selection
+# Updated 31.01.2023
+most_common_tefi <- function(
+    network, correlation,
+    order = c("lower", "higher"),
+    consensus.iter,
+    resolution = 1
+)
+{
+  
+  # Obtain network names
+  network_names <- colnames(network)
+  
+  # Check for empty network
+  if(sum(network, na.rm = TRUE) == 0){
+    
+    # Return individual communities
+    wc <- 1:ncol(network)
+    
+    # Assign names
+    names(wc) <- network_names
+    
+    # Set up results
+    results <- list()
+    results$highest_modularity <- wc
+    results$most_common <- wc
+    results$iterative <- wc
+    results$lowest_tefi <- wc
+    results$summary_table <- "Empty network. No general factors found."
+    
+    # Return consensus
+    return(results)
+    
+    
+  }
+  
+  # Convert network to igraph
+  igraph_network <- suppressWarnings(
+    convert2igraph(abs(network))
+  )
+  
+  # Ensure all nodes are included in igraph
+  if(igraph::vcount(igraph_network) != ncol(network)){
+    
+    igraph_network <- igraph::add.vertices(
+      igraph_network,
+      nv = ncol(network) -
+        igraph::vcount(igraph_network)
+    )
+    
+  }
+  
+  # Apply Louvain
+  communities <- lapply(1:consensus.iter, function(j, resolution){
+    
+    # igraph output
+    output <- igraph::cluster_louvain(igraph_network, resolution = resolution)
+    
+    # Obtain memberships
+    wc <- output$memberships
+    
+    # Check for no rows
+    if(nrow(wc) == 0){
+      wc <- output$membership
+    }else{
+      
+      # Obtain order
+      if(order == "lower"){
+        wc <- wc[1,]
+      }else if(order == "higher"){
+        wc <- wc[nrow(wc),]
+      }
+      
+    }
+    
+    # Return
+    return(wc)
+    
+  }, resolution = resolution)
+  
+  # Simplify to a matrix
+  wc_matrix <- t(simplify2array(communities, higher = FALSE))
+  
+  # Make data frame
+  df <- as.data.frame(wc_matrix)
+  
+  # Obtain duplicate indices
+  dupe_ind <- duplicated(df)
+  
+  # Rows for non-duplicates
+  non_dupes <- data.frame(df[!dupe_ind,])
+  
+  # Rows for duplicates
+  dupes <- data.frame(df[dupe_ind,])
+  
+  # Match duplicates with non-duplicates
+  dupe_count <- table(
+    match(
+      data.frame(t(dupes)), data.frame(t(non_dupes))
+    ))
+  
+  # Change column names of non_dupes
+  if(!is.null(colnames(network))){
+    colnames(non_dupes) <- colnames(network)
+  }
+  
+  # Set up summary table
+  summary_table <- data.frame(
+    N_Dimensions = apply(non_dupes, 1, function(x){
+      length(na.omit(unique(x)))
+    }),
+    Proportion = as.matrix(count(wc_matrix) / nrow(wc_matrix))
+  )
+  
+  # Attach non-duplicate solutions
+  summary_table <- cbind(summary_table, non_dupes)
+  
+  # Obtain total proportions
+  ## Unique number of dimensions
+  unique_dimensions <- unique(summary_table$N_Dimensions)
+  
+  ## Initialize total proportions
+  total_proportions <- numeric(
+    length(unique_dimensions)
+  )
+  names(total_proportions) <- unique_dimensions
+  
+  # Loop over unique dimensions to collect total proportions
+  for(i in seq_along(total_proportions)){
+    total_proportions[i] <- sum(
+      summary_table$Proportion[
+        summary_table$N_Dimensions == unique_dimensions[i]
+      ],
+      na.rm = TRUE
+    )
+  }
+  
+  # Maximum proportions (including tie)
+  maximum_proportions <- max(total_proportions, na.rm = TRUE)
+  
+  # Indices for maximum proportions
+  index_max_proportions <- total_proportions %in% maximum_proportions
+  
+  # Obtain dimensions
+  maximum_dimensions <- as.numeric(names(total_proportions[index_max_proportions]))
+  
+  # Get solution indices
+  solution_indices <- summary_table$N_Dimensions %in% maximum_dimensions
+  
+  # Get solutions
+  solutions <- summary_table[
+    solution_indices, -which(
+      colnames(summary_table) %in% c("N_Dimensions", "Proportion")
+    )
+  ]
+  
+  # Check for more than one solution
+  if(nrow(solutions) > 1){
+    
+    # Initialize TEFI vector
+    tefi_vector <- numeric(nrow(solutions))
+    
+    # Populate TEFI vector
+    for(i in seq_along(tefi_vector)){
+      
+      tefi_vector[i] <- tefi(
+        data = abs(correlation),
+        structure = unlist(solutions[i,])
+      )$VN.Entropy.Fit
+      
+    }
+    
+    # Minimum TEFI
+    minimum_tefi <- which.min(tefi_vector)
+    
+    # Final solution
+    wc_proportion <- unlist(solutions[minimum_tefi,])
+    
+  }else{
+    
+    # Set most common
+    wc_proportion <- unlist(solutions)
+    
+  }
+  
+  # Set up results
+  results <- list()
+  results$most_common <- wc_proportion
+  results$summary_table <- summary_table
+  
+  # Return consensus
+  return(results)
+  
+}
+
 #%%%%%%%%%%%%%%%%%%%%
 # NETWORKTOOLBOX ----
 #%%%%%%%%%%%%%%%%%%%%

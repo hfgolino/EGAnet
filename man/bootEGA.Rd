@@ -17,7 +17,8 @@ bootEGA(
   model.args = list(),
   algorithm = c("walktrap", "leiden", "louvain"),
   algorithm.args = list(),
-  consensus.method = c("highest_modularity", "most_common", "iterative", "lowest_tefi"),
+  consensus.method = c("highest_modularity", "most_common", "iterative", "lowest_tefi",
+    "most_common_tefi"),
   consensus.iter = 100,
   typicalStructure = TRUE,
   plot.typicalStructure = TRUE,
@@ -194,9 +195,11 @@ This process repeats iteratively until all nodes have a proportion of
 1 in the community solution.
 }
 
-\item{\code{lowest_tefi}}
-{Uses the community solution that achieves the lowest \code{\link[EGAnet]{tefi}}
-across iterations}
+\item{\code{most_common_tefi}}
+{Uses the most common number of communities detected across the number
+of iterations. After, if there is more than one solution for that number
+of communities, then the solution with the lowest \code{\link[EGAnet]{tefi}
+is used}}
 
 }}
 
