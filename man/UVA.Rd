@@ -5,275 +5,113 @@
 \title{Unique Variable Analysis}
 \usage{
 UVA(
-  data,
+  data = NULL,
+  network = NULL,
   n = NULL,
-  model = c("glasso", "TMFG"),
-  corr = c("cor_auto", "pearson", "spearman"),
-  method = c("cor", "pcor", "wTO"),
-  type = c("adapt", "alpha", "threshold"),
-  sig,
   key = NULL,
+  cut.off = 0.25,
   reduce = TRUE,
+  reduce.method = c("latent", "mean", "remove", "sum"),
   auto = TRUE,
   label.latent = FALSE,
-  reduce.method = c("latent", "remove", "sum"),
-  lavaan.args = list(),
-  adhoc = TRUE,
-  plot.redundancy = FALSE,
-  plot.args = list()
+  EGAnet.version = packageVersion("EGAnet"),
+  ...
 )
 }
 \arguments{
-\item{data}{Matrix or data frame.
+\item{data}{Matrix, data frame, or symmetric matrix.
 Input can either be data or a correlation matrix}
 
-\item{n}{Numeric.
+\item{network}{Symmetric matrix.
+Input for a symmetric network matrix.
+
+If both \code{data} and \code{network} are provided,
+then \code{UVA} will proceed to use the input network
+with the data (rather than estimating a network)}
+
+\item{n}{Numeric vector (length = 1).
 If input in \code{data} is a correlation matrix, 
 then sample size is required.
 Defaults to \code{NULL}}
 
-\item{model}{Character.
-A string indicating the method to use.
-Current options are:
+\item{key}{Character vector (length = \code{ncol(data)}).
+Item key for labeling items}
 
-\itemize{
+\item{cut.off}{Numeric vector (length = 1).
+Must be values between \code{0} and \code{1}.
+Defaults to \code{0.25}}
 
-\item{\strong{\code{glasso}}}
-{Estimates the Gaussian graphical model using graphical LASSO with
-extended Bayesian information criterion to select optimal regularization parameter.
-This is the default method}
-
-\item{\strong{\code{TMFG}}}
-{Estimates a Triangulated Maximally Filtered Graph}
-
-}}
-
-\item{corr}{Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
-Current options are:
-
-\itemize{
-
-\item{\strong{\code{cor_auto}}}
-{Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
-\code{\link[qgraph]{qgraph}}}.
-
-\item{\strong{\code{pearson}}}
-{Computes Pearson's correlation coefficient using the pairwise complete observations via
-the \code{\link[stats]{cor}}} function.
-
-\item{\strong{\code{spearman}}}
-{Computes Spearman's correlation coefficient using the pairwise complete observations via
-the \code{\link[stats]{cor}}} function.
-}}
-
-\item{method}{Character.
-Computes weighted topological overlap (\code{"wTO"} using \code{\link[qgraph]{EBICglasso}}),
-partial correlations (\code{"pcor"}), or correlations (\code{"cor"})
-Defaults to \code{"wTO"}}
-
-\item{type}{Character. Type of significance.
-Computes significance using the standard \emph{p}-value (\code{"alpha"}),
-adaptive alpha \emph{p}-value (\code{adapt.a}), 
-or some threshold \code{"threshold"}.
-Defaults to \code{"threshold"}}
-
-\item{sig}{Numeric.
-\emph{p}-value for significance of overlap (defaults to \code{.05}).
-Defaults for \code{"threshold"} for each \code{method}:
-
-\itemize{
-
-\item{\code{"wTO"}}
-{.25}
-
-\item{\code{"pcor"}}
-{.35}
-
-\item{\code{"cor"}}
-{.50}
-
-}}
-
-\item{key}{Character vector.
-A vector with variable descriptions that correspond
-to the order of variables input into \code{data}.
-Defaults to \code{NULL} or the column names of \code{data}}
-
-\item{reduce}{Boolean.
-Should redundancy reduction be performed?
-Defaults to \code{TRUE}.
-Set to \code{FALSE} for redundancy analysis only}
-
-\item{auto}{Boolean.
-Should redundancy reduction be automated?
-Defaults to \code{TRUE}.
-Set to \code{FALSE} for manual selection}
-
-\item{label.latent}{Boolean.
-Should latent variables be labelled?
-Defaults to \code{TRUE}.
-Set to \code{FALSE} for arbitrary labelling (i.e., "LV_")}
+\item{reduce}{Logical (length = 1).
+Whether redundancies should be reduced in data.
+Defaults to \code{TRUE}}
 
 \item{reduce.method}{Character.
-How should data be reduced?
-Defaults to \code{"latent"}
+Method to reduce redundancies:
 
 \itemize{
 
 \item{\code{"latent"}}
-{Redundant variables will be combined into a latent variable}
+{Computes latent variables when there are three or more
+redundant variables. Computes sum otherwise.
+}
 
 \item{\code{"remove"}}
-{All but one redundant variable will be removed}
+{Removes all but one variable from a set of redundant variables
+}
 
 \item{\code{"sum"}}
-{Redundant variables are combined by summing across cases (rows)}
+{Computes sum of redundant variables
+}
 
 }}
 
-\item{lavaan.args}{List.
-If \code{reduce.method = "latent"}, then \code{\link{lavaan}}'s \code{\link[lavaan]{cfa}}
-function will be used to create latent variables to reduce variables.
-Arguments should be input as a list. Some example arguments 
-(see \code{\link[lavaan]{lavOptions} for full details}):
+\item{auto}{Logical (length = 1).
+Whether \code{reduce} should occur automatically using different rules
+depending on reduction method:
 
 \itemize{
 
-\item{\code{estimator}}
-{Estimator to use for latent variables (see \href{https://lavaan.ugent.be/tutorial/est.html}{Estimators})
-for more details. Defaults to \code{"MLR"} for continuous data and \code{"WLSMV"} for mixed and categorical data.
-Data are considered continuous data if they have 6 or more categories (see Rhemtulla, Brosseau-Liard, & Savalei, 2012)}
+\item{\code{"latent"}}
+{Computes latent variables when there are three or more
+redundant variables. Computes sum otherwise.
+}
 
-\item{\code{missing}}
-{How missing data should be handled. Defaults to \code{"fiml"}}
+\item{\code{"remove"}}
+{Removes all but one variable from a set of redundant variables.
+Keeps the variable with the highest variable-total correlation using
+the correlation between each variable and the sum of all other
+variables with the target variable removed. For ties and two variables,
+the variable with the largest standard deviation is kept.
+}
 
-\item{\code{std.lv}}
-{If \code{TRUE}, the metric of each latent variable is determined by fixing their (residual) variances to 1.0.
-If \code{FALSE}, the metric of each latent variable is determined by fixing the factor loading of the first
-indicator to 1.0. If there are multiple groups, \code{std.lv = TRUE} and \code{"loadings"} is included in the
-\code{group.label} argument, then only the latent variances i of the first group will be fixed to 1.0, while
-the latent variances of other groups are set free.
-Defaults to \code{TRUE}}
+\item{\code{"sum"}}
+{Computes sum of redundant variables
+}
 
 }}
 
-\item{adhoc}{Boolean.
-Should adhoc check of redundancies be performed?
-Defaults to \code{TRUE}.
-If \code{TRUE}, adhoc check will run the redundancy analysis
-on the reduced variable set to determine if there are any remaining
-redundancies. This check is performed with the arguments:
-\code{method = "wTO"}, \code{type = "threshold"}, and \code{sig = .20}.
-This check is based on Christensen, Garrido, and Golino's (2020)
-simulation where these parameters were found to be the most conservative,
-demonstrating few false positives and false negatives}
+\item{label.latent}{Boolean (length = 1).
+When \code{reduce.method = "latent"}, should
+latent variables be labelled?
+Defaults to \code{FALSE}.
+Set to \code{TRUE} to type your own labels}
 
-\item{plot.redundancy}{Boolean.
-Should redundancies be plotted in a network plot?
-Defaults to \code{FALSE}}
+\item{EGAnet.version}{Character (length = 1).
+\code{\link{EGAnet}} version used to perform previous
+\code{UVA}.
+Defaults to current version.
+Set version to previous version to reproduce results
+from an older version}
 
-\item{plot.args}{List.
-Arguments to be passed onto \code{\link[GGally]{ggnet2}}.
-Defaults:
-
-\itemize{
-
-\item{\code{vsize = 6}}{Changes node size}
-
-\item{\code{alpha = 0.4}}{Changes transparency}
-
-\item{\code{label.size = 5}}{Changes label size}
-
-\item{\code{edge.alpha = 0.7}}{Changes edge transparency}
-
-}}
-}
-\value{
-Returns a list:
-
-\item{redundancy}{A list containing several objects:
-
-\itemize{
-
-\item{\code{redudant}}
-{Vectors nested within the list corresponding
-to redundant nodes with the name of object in the list}
-
-\item{\code{data}}
-{Original data}
-
-\item{\code{correlation}}
-{Correlation matrix of original data}
-
-\item{\code{weights}}
-{Weights determine by weighted topological overlap,
-partial correlation, or zero-order correlation}
-
-\item{\code{network}}
-{If \code{method = "wTO"}, then
-the network computed following \code{\link[EGAnet]{EGA}} with
-\code{\link[qgraph]{EBICglasso}} network estimation}
-
-\item{\code{plot}}
-{If \code{redundancy.plot = TRUE}, then
-a plot of all redundancies found}
-
-\item{\code{descriptives}}{
-
-\itemize{
-
-\item{basic}
-{A vector containing the mean, standard deviation,
-median, median absolute deviation (MAD), 3 times the MAD, 6 times the MAD,
-minimum, maximum, and critical value for the overlap measure
-(i.e., weighted topological overlap, partial correlation, or threshold)}
-
-\item{centralTendency}
-{A matrix for all (absolute) non-zero values and their
-respective standard deviation from the mean and median absolute deviation
-from the median}
-
-}
-}
-
-\item{\code{method}}
-{Returns \code{method} argument}
-
-\item{\code{type}}
-{Returns \code{type} argument}
-
-\item{\code{distribution}}
-{If \code{type != "threshold"}, then 
-distribution that was used to determine significance}
-
-}
-
-}
-
-\item{reduced}{If \code{reduce = TRUE}, then a list containing:
-
-\itemize{
-
-\item{\code{data}}
-{New data with redundant variables merged or removed}
-
-\item{\code{merged}}{A matrix containing the variables that were
-decided to be redundant with one another}
-
-\item{\code{method}}{Method used to perform redundancy reduction}
-
-}
-
-}
-
-\item{adhoc}{If \code{adhoc = TRUE}, then
-the adhoc check containing the same objects as in
-the \code{redundancy} list object in the output
-}
+\item{...}{Additional arguments.
+Arguments that should be passed onto old versions of \code{UVA}
+(use the \code{EGAnet.version} argument to set the version),
+\code{\link[EGAnet]{EGA}}, and \code{\link[lavaan]{cfa}}}
 }
 \description{
 Identifies redundant variables in a multivariate dataset
-using a number of different association methods and types of significance values
+using the \code{\link[qgraph]{EBICglasso}} network estimation method
+and weighted topological overlap
 (see Christensen, Garrido, & Golino, 2020 for more details)
 }
 \examples{
@@ -285,39 +123,40 @@ items <- psychTools::spi[,idx]
 key.ind <- match(colnames(items), as.character(psychTools::spi.dictionary$item_id))
 key <- as.character(psychTools::spi.dictionary$item[key.ind])
 
+# Results with no reduction
+no_reduce_uva <- UVA(
+  data = items, key = key, reduce = FALSE
+)
+
+# Show summary
+summary(no_reduce_uva)
+
 \dontrun{
-# Automated selection of local dependence (default)
-uva.results <- UVA(data = items, key = key)
-
-# Produce Methods section
-methods.section(uva.results)}
-
-# Manual selection of local dependence
-if(interactive()){
-uva.results <- UVA(data = items, key = key, auto = FALSE)}
+# Results with automatic reduction
+reduced_uva <- UVA(
+  data = items, key = key, reduce = TRUE,
+  reduce.method = "latent" 
+)}
 
 }
 \references{
-# Simulation using \code{UVA} \cr
+# Simulation using UVA
 Christensen, A. P., Garrido, L. E., & Golino, H. (under review).
-Unique Variable Analysis: A novel approach for detecting redundant variables in multivariate data.
+Unique variable analysis: A network psychometrics method to detect local dependence.
 \emph{PsyArXiv}.
 
-# Implementation of \code{UVA} (formally \code{node.redundant}) \cr
+# Implementation of UVA (formally node.redundant)
 Christensen, A. P., Golino, H., & Silvia, P. J. (2020).
 A psychometric network perspective on the validity and validation of personality trait questionnaires.
-\emph{European Journal of Personality}, \emph{34}, 1095-1108.
+\emph{European Journal of Personality}, \emph{34}(6), 1095-1108.
 
-# wTO measure \cr
+# wTO measure
 Nowick, K., Gernat, T., Almaas, E., & Stubbs, L. (2009).
 Differences in human and chimpanzee gene expression patterns define an evolving network of transcription factors in brain.
 \emph{Proceedings of the National Academy of Sciences}, \emph{106}, 22358-22363.
 
-# Selection of CFA Estimator \cr
+# Selection of CFA Estimator
 Rhemtulla, M., Brosseau-Liard, P. E., & Savalei, V. (2012).
 When can categorical variables be treated as continuous? A comparison of robust continuous and categorical SEM estimation methods under suboptimal conditions.
-\emph{Psychological Methods}, \emph{17}, 354-373.
-}
-\author{
-Alexander Christensen <alexpaulchristensen@gmail.com>
+\emph{Psychological Methods}, \emph{17}(3), 354-373.
 }

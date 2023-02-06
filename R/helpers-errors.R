@@ -3,6 +3,30 @@
 #%%%%%%%%%%%%%%%%%%%%%
 
 #' @noRd
+# Error for correlation matrix input
+# Updated 02.02.2023
+symmetric_matrix_error <- function(data, n){
+  
+  # Check for whether rows equal columns
+  if(nrow(data) == ncol(data)){
+    
+    # Check for whether matrix is symmetric
+    if(is_symmetric(data)){ # `is_symmetric` is in "helpers-general.R"
+      
+      # Check for whether "n" argument was provided
+      if(is.null(n)){
+        stop("A correlation matrix was detected as input into the 'data' argument but no 'n' was provided. Sample size must be provided for a correlation matrix.")
+      }
+      
+    }
+    
+  }
+  
+}
+
+
+
+#' @noRd
 # Error for object type
 # Updated 30.09.2022
 object_error <- function(input, expected_type){
