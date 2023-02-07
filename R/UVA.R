@@ -141,7 +141,7 @@
 #' 
 #' @export
 # Unique Variable Analysis ----
-# Updated 03.02.2023
+# Updated 07.02.2023
 UVA <- function(
     data = NULL, network = NULL, n = NULL, key = NULL, cut.off = 0.25,
     reduce = TRUE, reduce.method = c("latent", "mean", "remove", "sum"),
@@ -298,7 +298,7 @@ UVA <- function(
     reduce.method <- tolower(reduce.method)
     
     # All methods except "remove" require raw data (for now...)
-    if(reduce.method != "remove" & is.null(data) | is_symmetric(data)){
+    if(reduce.method != "remove" & is.null(data)){
       
       stop(
         paste0(
@@ -357,21 +357,33 @@ UVA <- function(
         # Obtain `keep` and `remove` variables
         keep <- reduced_results$keep; remove <- reduced_results$remove;
         
-        # Check for whether data was used
-        if(!is.null(data)){
+        # Check for whether raw data was used
+        if(!is.null(data) & !is_symmetric(data)){
           
-          # Check if correlation matrix
-          if(is_symmetric(data)){
-            
-            # Remove variables from correlation matrix
-            reduced_data <- data[-remove, -remove]
-            
-          }else{
-            
-            # Remove variables from data
-            reduced_data <- data[,-remove]
-            
-          }
+          # Remove variables from data
+          reduced_data <- data[,-remove]
+          
+        }else if(is_symmetric(data)){
+          
+          # Remove variables from correlation matrix
+          reduced_data <- data[-remove, -remove]
+          
+        }else if(!is.null(network)){
+          
+          # Remove variables from network
+          reduced_network <- network[-remove, -remove]
+          
+          # Original data can be returned
+          results <- list(
+            reduced_network = reduced_network,
+            original_network = network,
+            redundant = redundant_variables,
+            wto = list(
+              matrix = wto_output, # wTO matrix
+              cut_off = cut.off, # cut-off used
+              descriptives = descriptives # descriptives of wTO matrix
+            )
+          )
           
         }
         
