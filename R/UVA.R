@@ -526,7 +526,7 @@ UVA <- function(
 
 #' @noRd
 # Obtain UVA cut-off values ----
-# Updated 02.02.2023
+# Updated 07.02.2023
 wto_cut_off <- function(wto_output, cut_off)
 {
   
@@ -538,7 +538,16 @@ wto_cut_off <- function(wto_output, cut_off)
     
     # Obtain unique pairs only
     wto_indices <- wto_indices[wto_indices[,"row"] < wto_indices[,"col"],]
+   
+    # Ensure matrix
+    wto_indices <- matrix(
+      wto_indices,
+      ncol = 2
+    )
     
+    # Add column names
+    colnames(wto_indices) <- c("row", "col")
+     
   }
   
   # Return indices
