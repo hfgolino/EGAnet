@@ -267,8 +267,9 @@ UVA <- function(
       network = network,
       wto = list(
         matrix = wto_output, # wTO matrix
-        cut_off = cut.off, # cut-off used
-        descriptives = descriptives # descriptives of wTO matrix
+        pairwise = descriptives$pairwise, # pairwise wTO
+        descriptives = descriptives$basic, # basic statistics
+        cut_off = cut.off # cut-off used
       )
     )
     
@@ -380,8 +381,9 @@ UVA <- function(
             redundant = redundant_variables,
             wto = list(
               matrix = wto_output, # wTO matrix
-              cut_off = cut.off, # cut-off used
-              descriptives = descriptives # descriptives of wTO matrix
+              pairwise = descriptives$pairwise, # pairwise wTO
+              descriptives = descriptives$basic, # basic statistics
+              cut_off = cut.off # cut-off used
             )
           )
           
@@ -400,8 +402,9 @@ UVA <- function(
           network = network,
           wto = list(
             matrix = wto_output, # wTO matrix
-            cut_off = cut.off, # cut-off used
-            descriptives = descriptives # descriptives of wTO matrix
+            pairwise = descriptives$pairwise, # pairwise wTO
+            descriptives = descriptives$basic, # basic statistics
+            cut_off = cut.off # cut-off used
           )
         )
         
@@ -413,8 +416,9 @@ UVA <- function(
           network = network,
           wto = list(
             matrix = wto_output, # wTO matrix
-            cut_off = cut.off, # cut-off used
-            descriptives = descriptives # descriptives of wTO matrix
+            pairwise = descriptives$pairwise, # pairwise wTO
+            descriptives = descriptives$basic, # basic statistics
+            cut_off = cut.off # cut-off used
           )
         )
         
@@ -491,8 +495,9 @@ UVA <- function(
       network = network,
       wto = list(
         matrix = wto_output, # wTO matrix
-        cut_off = cut.off, # cut-off used
-        descriptives = descriptives # descriptives of wTO matrix
+        pairwise = descriptives$pairwise, # pairwise wTO
+        descriptives = descriptives$basic, # basic statistics
+        cut_off = cut.off # cut-off used
       )
     )
     
