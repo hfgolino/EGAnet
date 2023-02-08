@@ -611,14 +611,14 @@ wto_descriptives <- function(wto_output, key = NULL){
   wto_long <- wto_long[order(wto_long$wto, decreasing = TRUE),]
   
   # Compute standard deviation from mean (rounded)
-  wto_long$sd_from_mean <- round(
-    (wto_long$wto - summary_statistics["mean"]) / summary_statistics["sd"], 3
-  )
+  # wto_long$sd_from_mean <- round(
+  #   (wto_long$wto - summary_statistics["mean"]) / summary_statistics["sd"], 3
+  # )
   
   # Compute MAD from median (rounded)
-  wto_long$mad_from_median <- round(
-    (wto_long$wto - summary_statistics["median"]) / summary_statistics["mad"], 3
-  )
+  # wto_long$mad_from_median <- round(
+  #   (wto_long$wto - summary_statistics["median"]) / summary_statistics["mad"], 3
+  # )
   
   # Round wTO values
   wto_long$wto <- round(wto_long$wto, 3)
@@ -627,7 +627,7 @@ wto_descriptives <- function(wto_output, key = NULL){
   return(
     list(
       basic = summary_statistics,
-      centralTendency = wto_long
+      pairwise = wto_long
     )
   )
   
