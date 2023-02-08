@@ -1320,7 +1320,7 @@ summary.UVA <- function(object, ...)
 {
   
   # Obtain wTO matrix
-  wto_matrix <- object$wto$descriptives$centralTendency
+  wto_matrix <- object$wto$pairwise
   
   # Obtain wTO > 30
   wto_30_named <- wto_matrix[
@@ -1455,7 +1455,7 @@ print.UVA <- function(x, ...)
 {
   
   # Obtain wTO matrix
-  wto_matrix <- x$wto$descriptives$centralTendency
+  wto_matrix <- x$wto$pairwise
   
   # Obtain wTO > 30
   wto_30_named <- wto_matrix[
