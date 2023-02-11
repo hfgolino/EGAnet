@@ -50,7 +50,6 @@
 #' For more details, type \code{vignette("Network_Scores")}
 #'
 #' @examples
-#'
 #' # Load data
 #' wmt <- wmt2[,7:24]
 #'
@@ -89,7 +88,7 @@
 #' @export
 #'
 # Network Loadings
-# Updated 26.12.2022
+# Updated 11.02.2023
 # Signs updated 18.10.2022
 # Rotations added 20.10.2022
 net.loads <- function(
@@ -194,13 +193,14 @@ net.loads <- function(
       comm.str <- mat.func(A = A, wc = wc, absolute = TRUE, diagonal = 0)
       
       # Check for missing dimensions
-      if(any(colnames(comm.str)=="NA"))
-      {
+      if(any(colnames(comm.str)=="NA")){
+        
         # Target dimension
         target <- which(colnames(comm.str) == "NA")
         
         # Remove from matrix
         comm.str <- comm.str[,-target]
+        
       }
       
       # Reorder loading matrix
@@ -222,9 +222,13 @@ net.loads <- function(
       res$unstd <- descend.ord(unstd, wc)
       
       # Standardized loadings
-      if(length(dims)!=1)
-      {std <- t(t(unstd) / sqrt(colSums(abs(unstd))))
-      }else{std <- t(t(unstd) / sqrt(sum(abs(unstd))))}
+      if(length(dims)!=1){
+        std <- t(t(unstd) / sqrt(colSums(abs(unstd))))
+      }else{
+        std <- t(t(unstd) / sqrt(sum(abs(unstd))))
+      }
+      
+      # Populate standardized loadings in results
       res$std <- as.data.frame(round(descend.ord(std, wc),3))
       
     }else if(all(is.na(wc))){
@@ -281,6 +285,7 @@ net.loads <- function(
     
     # Check for {GPArotation}
     check_package("GPArotation")
+    check_package("fungible")
     
     # Obtain rotation from GPArotation package
     rotation_names <- ls(asNamespace("GPArotation"))
@@ -376,27 +381,46 @@ net.loads <- function(
         )
         
         # Re-align rotated loadings
-        align_rotated <- apply(
-          abs(cor(res$std, res$rotated$loadings)), 1, which.max
+        aligned_output <- fungible::faAlign(
+          F1 = as.matrix(res$std),
+          F2 = as.matrix(res$rotated$loadings)
         )
         
-        # Align rotated loadings with network loadings
-        rotated_aligned <- res$rotated$loadings[,align_rotated]
-        
-        # Re-align Phi
-        res$rotated$Phi <- res$rotated$Phi[
-          align_rotated, align_rotated
+        # Update aligned loadings
+        aligned_loadings <- aligned_output$F2
+        colnames(aligned_loadings) <- colnames(aligned_output$FactorMap)[
+          aligned_output$FactorMap["Sorted Order",]
         ]
+        
+        # Update aligned Phi
+        res$rotated$Phi <- res$rotated$Phi[
+          aligned_output$FactorMap["Sorted Order",],
+          aligned_output$FactorMap["Sorted Order",]
+        ]
+        
+        
+        # # Re-align rotated loadings
+        # align_rotated <- apply(
+        #   abs(cor(res$std, res$rotated$loadings)), 1, which.max
+        # )
+        # 
+        # # Align rotated loadings with network loadings
+        # rotated_aligned <- res$rotated$loadings[,align_rotated]
+        # 
+        # # Re-align Phi
+        # res$rotated$Phi <- res$rotated$Phi[
+        #   align_rotated, align_rotated
+        # ]
         
         # Rename Phi
         colnames(res$rotated$Phi) <- colnames(res$std)
         row.names(res$rotated$Phi) <- colnames(res$std)
         
-        # Rename rotated loadings
-        colnames(rotated_aligned) <- colnames(res$std)
+        # # Rename rotated loadings
+        # colnames(rotated_aligned) <- colnames(res$std)
         
         # Re-assign rotated loadings
-        res$rotated$loadings <- rotated_aligned
+        res$rotated$loadings <- aligned_loadings
         
       }
       
@@ -410,4 +434,27 @@ net.loads <- function(
   
   return(res)
 }
-#----
+
+# Bug checking ----
+#
+# A = ega.wmt; rotation = "oblimin";
+# min.load = 0; rot_arguments = list();
+# source("./utils-EGAnet.R")
+# source("./helpers-general.R")
+# source("./helpers-functions.R")
+# source("./helpers-errors.R")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
