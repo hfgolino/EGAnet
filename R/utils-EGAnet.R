@@ -1316,9 +1316,6 @@ most_common_consensus <- function(
 )
 {
   
-  # Obtain network names
-  network_names <- colnames(network)
-  
   # Check for empty network
   if(sum(network) == 0){
     
@@ -1326,7 +1323,7 @@ most_common_consensus <- function(
     wc <- 1:ncol(network)
     
     # Assign names
-    names(wc) <- network_names
+    names(wc) <- colnames(network)
     
     # Set up results
     results <- list()
@@ -1407,6 +1404,9 @@ most_common_consensus <- function(
   df <- as.data.frame(
     t(simplify2array(communities, higher = FALSE))
   )
+  
+  # Remove communities
+  rm(communities); gc(verbose = FALSE);
   
   # Obtain duplicate indices
   dupe_ind <- duplicated(df)
