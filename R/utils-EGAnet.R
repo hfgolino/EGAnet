@@ -1404,10 +1404,9 @@ most_common_consensus <- function(
   }, resolution = resolution)
   
   # Simplify to a matrix
-  wc_matrix <- t(simplify2array(communities, higher = FALSE))
-  
-  # Make data frame
-  df <- as.data.frame(wc_matrix)
+  df <- as.data.frame(
+    t(simplify2array(communities, higher = FALSE))
+  )
   
   # Obtain duplicate indices
   dupe_ind <- duplicated(df)
@@ -1418,11 +1417,21 @@ most_common_consensus <- function(
   # Rows for duplicates
   dupes <- data.frame(df[dupe_ind,])
   
+  # Remove data frame 
+  rm(df); gc(verbose = FALSE);
+  
   # Match duplicates with non-duplicates
   dupe_count <- table(
     match(
       data.frame(t(dupes)), data.frame(t(non_dupes))
     ))
+  
+  # Remove dupes
+  rm(dupes); gc(verbose = FALSE);
+  
+  # Obtain counts
+  counts <- rep(1, nrow(non_dupes))
+  counts[as.numeric(names(dupe_count))] <- counts[as.numeric(names(dupe_count))] + dupe_count
   
   # Change column names of non_dupes
   if(!is.null(colnames(network))){
@@ -1434,7 +1443,7 @@ most_common_consensus <- function(
     N_Dimensions = apply(non_dupes, 1, function(x){
       length(na.omit(unique(x)))
     }),
-    Proportion = as.matrix(count(wc_matrix) / nrow(wc_matrix))
+    Proportion = as.matrix(counts / consensus.iter)
   )
   
   # Attach non-duplicate solutions
