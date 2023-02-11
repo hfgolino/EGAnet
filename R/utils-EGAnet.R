@@ -1327,10 +1327,7 @@ most_common_consensus <- function(
     
     # Set up results
     results <- list()
-    results$highest_modularity <- wc
     results$most_common <- wc
-    results$iterative <- wc
-    results$lowest_tefi <- wc
     results$summary_table <- "Empty network. No general factors found."
     
     # Return consensus
@@ -1355,7 +1352,7 @@ most_common_consensus <- function(
     
   }
   
-  # Apply Louvain
+  # Loop over and obtain communities
   communities <- lapply(1:consensus.iter, function(j, resolution){
     
     # igraph output
