@@ -88,7 +88,7 @@
 #' @export
 #'
 # Network Loadings
-# Updated 11.02.2023
+# Updated 21.02.2023
 # Signs updated 18.10.2022
 # Rotations added 20.10.2022
 net.loads <- function(
@@ -388,15 +388,7 @@ net.loads <- function(
         
         # Update aligned loadings
         aligned_loadings <- aligned_output$F2
-        colnames(aligned_loadings) <- colnames(aligned_output$FactorMap)[
-          aligned_output$FactorMap["Sorted Order",]
-        ]
-        
-        # Update aligned Phi
-        res$rotated$Phi <- res$rotated$Phi[
-          aligned_output$FactorMap["Sorted Order",],
-          aligned_output$FactorMap["Sorted Order",]
-        ]
+        colnames(aligned_loadings) <- colnames(res$std)
         
         
         # # Re-align rotated loadings
