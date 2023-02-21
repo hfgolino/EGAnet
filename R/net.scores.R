@@ -105,7 +105,7 @@
 #' @export
 #'
 # Network Scores
-# Updated: 07.01.2022
+# Updated: 15.02.2023
 # Add rotation: 20.10.2022
 net.scores <- function (
     data, A, wc, rotation = "oblimin",
@@ -187,11 +187,11 @@ net.scores <- function (
   net.sco.rotated <- net.score.fxn(P$rotated$loadings, data)
   fact.res.rotated <- fact.res
   fact.res.rotated[, 1:nfacts] <- net.sco.rotated
-  if (nfacts > 1) {
-    colnames(fact.res.rotated)[1:nfacts] <- colnames(P$rotated$loadings)
-  }else{
-    colnames(fact.res.rotated) <- "1"
-  }
+  # if (nfacts > 1) {
+  #   colnames(fact.res.rotated)[1:nfacts] <- colnames(P$rotated$loadings)
+  # }else{
+  #   colnames(fact.res.rotated) <- "1"
+  # }
   
   res <- list(
     scores = list(
