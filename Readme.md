@@ -37,10 +37,10 @@ The old EGA package is now EGAnet, and is now available in The Comprehensive R A
 References
 ============
 
-Chrisensen, A. P., Garrido, L. E., & Golino, H. (under review). Unique Variable Analysis: A novel approach to detect redundant variables in multivariate data. *PsyArXiv*. doi:[10.31234/osf.io/4kra2](https://doi.org/10.31234/osf.io/4kra2)
+Chrisensen, A. P., Garrido, L. E., & Golino, H. (in press). Unique variable analysis: A network psychometrics method to detect local dependence. *Multivariate Behavioral Research*. doi:[10.31234/osf.io/4kra2](https://doi.org/10.31234/osf.io/4kra2)
 + Related functions: `UVA`
 
-Christensen, A. P., Garrido, L. E., & Golino, H. (under review). Comparing community detection algorithms in psychological data: A Monte Carlo simulation. *PsyArXiv*. doi:[10.31234/osf.io/hz89e](https://doi.org/10.31234/osf.io/hz89e)
+Christensen, A. P., Garrido, L. E., Guerra-Pena, K., & Golino, H. (in press). Comparing community detection algorithms in psychometric networks: A Monte Carlo simulation. *Behavior Research Methods*. doi:[10.31234/osf.io/hz89e](https://doi.org/10.31234/osf.io/hz89e)
 + Related functions: `EGA`
 
 Christensen, A. P., & Golino, H. (2021).
@@ -51,13 +51,13 @@ doi:[10.3390/psych3030032](https://doi.org/10.3390/psych3030032)
 Christensen, A. P., & Golino, H. (2021). Factor or network model? Predictions from neural networks. *Journal of Behavioral Data Science*, *1*(1), 85-126. doi:[10.35566/jbds/v1n1/p5](https://doi.org/10.35566/jbds/v1n1/p5)
 + Related functions: `LCT`
 
-Christensen, A. P., & Golino, H. (2021). On the equivalency of factor and network loadings. *Behavior Research Methods*. doi:[10.3758/s13428-020-01500-6](https://doi.org/10.3758/s13428-020-01500-6)
+Christensen, A. P., & Golino, H. (2021). On the equivalency of factor and network loadings. *Behavior Research Methods*, *53*, 1563–1580. doi:[10.3758/s13428-020-01500-6](https://doi.org/10.3758/s13428-020-01500-6)
 + Related functions: `LCT` and `net.loads`
 
 Christensen, A. P., Golino, H., & Silvia, P. J. (2020). A psychometric network perspective on the validity and validation of personality trait questionnaires. *European Journal of Personality*, *34*, 1095-1108. doi:[10.1002/per.2265](https://doi.org/10.1002/per.2265)
 + Related functions: `bootEGA`, `dimensionStability`, `EGA`, `itemStability`, and `UVA`
 
-Golino, H., Christensen, A. P., Moulder, R. G., Kim, S., & Boker, S. M. (under review). Modeling latent topics in social media using Dynamic Exploratory Graph Analysis: The case of the right-wing and left-wing trolls in the 2016 US elections. *PsyArXiv*. doi:[10.31234/osf.io/tfs7c](https://doi.org/10.31234/osf.io/tfs7c)
+Golino, H., Christensen, A. P., Moulder, R. G., Kim, S., & Boker, S. M. (2022). Modeling latent topics in social media using Dynamic Exploratory Graph Analysis: The case of the right-wing and left-wing trolls in the 2016 US elections. *Psychometrika*, *87*(1), 156-187. doi:[10.1007/s11336-021-09820-y](https://doi.org/10.1007/s11336-021-09820-y)
 + Related functions: `dynEGA` and `simDFM`
 
 Golino, H., & Demetriou, A. (2017). Estimating the dimensionality of intelligence like data using Exploratory Graph Analysis. *Intelligence*, *62*, 54-70. doi:[j.intell.2017.02.007](https://www.sciencedirect.com/science/article/pii/S0160289616302240)
