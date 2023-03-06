@@ -1316,6 +1316,163 @@ most_common_consensus <- function(
 )
 {
   
+  # Check for empty network
+  if(sum(network) == 0){
+    
+    # Return individual communities
+    wc <- 1:ncol(network)
+    
+    # Assign names
+    names(wc) <- colnames(network)
+    
+    # Set up results
+    results <- list()
+    results$most_common <- wc
+    results$summary_table <- "Empty network. No general factors found."
+    
+    # Return consensus
+    return(results)
+    
+    
+  }
+  
+  # Convert network to igraph
+  igraph_network <- suppressWarnings(
+    convert2igraph(abs(network))
+  )
+  
+  # Ensure all nodes are included in igraph
+  if(igraph::vcount(igraph_network) != ncol(network)){
+    
+    igraph_network <- igraph::add.vertices(
+      igraph_network,
+      nv = ncol(network) -
+        igraph::vcount(igraph_network)
+    )
+    
+  }
+  
+  # Loop over and obtain communities
+  communities <- lapply(1:consensus.iter, function(j, resolution){
+    
+    # igraph output
+    output <- igraph::cluster_louvain(igraph_network, resolution = resolution)
+    
+    # Obtain memberships
+    wc <- output$memberships
+    
+    # Check for no rows
+    if(nrow(wc) == 0){
+      wc <- output$membership
+    }else{
+      
+      # Obtain order
+      if(order == "lower"){
+        wc <- wc[1,]
+      }else if(order == "higher"){
+        wc <- wc[nrow(wc),]
+      }
+      
+    }
+    
+    # Obtain text for progress
+    progress_text <- paste0(
+      "\r Consensus iteration ", formatC(
+        j, digits = digits(consensus.iter) - 1,
+        format = "d", flag = "0"
+      ), " of ", consensus.iter,
+      " complete."
+    )
+    
+    # Print progress in message text
+    cat(
+      colortext(text = progress_text, defaults = "message")
+    )
+    
+    # Close cat
+    cat("\r")
+    
+    # Return
+    return(wc)
+    
+  }, resolution = resolution)
+  
+  # Simplify to a matrix
+  df <- as.data.frame(
+    t(simplify2array(communities, higher = FALSE))
+  )
+  
+  # Remove communities
+  rm(communities); gc(verbose = FALSE);
+  
+  # Obtain duplicate indices
+  dupe_ind <- duplicated(df)
+  
+  # Rows for non-duplicates
+  non_dupes <- data.frame(df[!dupe_ind,])
+  
+  # Rows for duplicates
+  dupes <- data.frame(df[dupe_ind,])
+  
+  # Remove data frame 
+  rm(df); gc(verbose = FALSE);
+  
+  # Match duplicates with non-duplicates
+  dupe_count <- table(
+    match(
+      data.frame(t(dupes)), data.frame(t(non_dupes))
+    ))
+  
+  # Remove dupes
+  rm(dupes); gc(verbose = FALSE);
+  
+  # Obtain counts
+  counts <- rep(1, nrow(non_dupes))
+  counts[as.numeric(names(dupe_count))] <- counts[as.numeric(names(dupe_count))] + dupe_count
+  
+  # Change column names of non_dupes
+  if(!is.null(colnames(network))){
+    colnames(non_dupes) <- colnames(network)
+  }
+  
+  # Set up summary table
+  summary_table <- data.frame(
+    N_Dimensions = apply(non_dupes, 1, function(x){
+      length(na.omit(unique(x)))
+    }),
+    Proportion = as.matrix(counts / consensus.iter)
+  )
+  
+  # Attach non-duplicate solutions
+  summary_table <- cbind(summary_table, non_dupes)
+  
+  # Obtain max proportion
+  wc_proportion <- unlist(summary_table[
+    which.max(summary_table[,"Proportion"]),
+    -c(1:2)
+  ])
+  
+  # Set up results
+  results <- list()
+  results$most_common <- wc_proportion
+  results$summary_table <- summary_table
+  
+  # Return consensus
+  return(results)
+}
+
+# Lancichinetti & Fortunato (2012)
+#' @noRd
+# Most Common Consensus Clustering
+# Updated 08.02.2023
+most_common_consensus_top5 <- function(
+    network,
+    order = c("lower", "higher"),
+    consensus.iter,
+    resolution = 1
+)
+{
+  
   # Obtain network names
   network_names <- colnames(network)
   
@@ -1381,6 +1538,23 @@ most_common_consensus <- function(
       
     }
     
+    # Obtain text for progress
+    progress_text <- paste0(
+      "\r Consensus iteration ", formatC(
+        j, digits = digits(consensus.iter) - 1,
+        format = "d", flag = "0"
+      ), " of ", consensus.iter,
+      " complete."
+    )
+    
+    # Print progress in message text
+    cat(
+      colortext(text = progress_text, defaults = "message")
+    )
+    
+    # Close cat
+    cat("\r")
+    
     # Return
     return(wc)
     
@@ -1423,11 +1597,76 @@ most_common_consensus <- function(
   # Attach non-duplicate solutions
   summary_table <- cbind(summary_table, non_dupes)
   
-  # Obtain max proportion
-  wc_proportion <- unlist(summary_table[
-    which.max(summary_table[,"Proportion"]),
-    -c(1:2)
-  ])
+  # Ordered table
+  summary_table <- summary_table[
+    order(summary_table$Proportion, decreasing = TRUE),
+  ]
+  
+  # Check for number of rows in summary table
+  if(nrow(summary_table) > 5){
+    
+    # Obtain top five solutions
+    top5 <- summary_table[1:5,]
+    
+  }else if(nrow(summary_table) < 3){
+    
+    # Obtain max proportion
+    wc_proportion <- unlist(summary_table[
+      which.max(summary_table[,"Proportion"]),
+      -c(1:2)
+    ])
+    
+    # Set up results
+    results <- list()
+    results$most_common <- wc_proportion
+    results$summary_table <- summary_table
+    
+  }else{
+    
+    # Obtain top solutions
+    top5 <- summary_table
+    
+  }
+  
+  # Obtain proportions
+  top5_proportions <- top5$Proportion
+  
+  # Obtain solutions (ensures matrix)
+  top5_solutions <- as.matrix(
+    top5[,-c(1,2)],
+    ncol = ncol(top5) - 2
+  )
+  
+  # Compute NMI over
+  nmi_matrix <- matrix(
+    0, nrow = length(top5_proportions),
+    ncol = length(top5_proportions)
+  )
+  
+  # Loop over to get NMI
+  for(i in 1:nrow(nmi_matrix))
+    for(j in 1:ncol(nmi_matrix)){
+      
+      # Lower triangle
+      if(i > j){
+        
+        # Populate NMI matrix
+        nmi_matrix[i,j] <- igraph::compare(
+          top5_solutions[i,], top5_solutions[j,],
+          method = "nmi"
+        )
+        
+      }
+      
+    }
+  
+  # Make symmetric
+  nmi_matrix <- nmi_matrix + t(nmi_matrix); diag(nmi_matrix) <- 1;
+  
+  # Matrix multiply by proportions
+  wc_proportion <- top5_solutions[
+    which.max(as.vector(nmi_matrix %*% top5_proportions)),
+  ]
   
   # Set up results
   results <- list()
