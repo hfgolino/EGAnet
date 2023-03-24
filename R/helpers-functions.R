@@ -121,7 +121,7 @@ make_unidimensional_cfa <- function(variable_names)
 
 #' @noRd
 # Determine estimator arguments
-# Updated 02.02.2023
+# Updated 03.23.2023
 estimator_arguments <- function(lavaan_ARGS)
 {
   
@@ -131,13 +131,13 @@ estimator_arguments <- function(lavaan_ARGS)
   )
   
   # Check for categories
-  if(any(categories < 6)){
+  if(any(categories <= 7)){
     
     # Set arguments
     lavaan_ARGS$estimator <- "WLSMV"
     lavaan_ARGS$missing <- "pairwise"
     lavaan_ARGS$ordered <- names(categories)[
-      categories < 6
+      categories <= 7
     ]
     
   }else{
