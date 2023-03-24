@@ -60,7 +60,6 @@ equivalent to factor loadings (including cross-loadings).
 For more details, type \code{vignette("Network_Scores")}
 }
 \examples{
-
 # Load data
 wmt <- wmt2[,7:24]
 

@@ -429,7 +429,7 @@ EGA <- function (
     # Compute correlation matrix
     correlation <- suppressMessages(
       switch(corr,
-             "cor_auto" = qgraph::cor_auto(data, forcePD = TRUE),
+             "cor_auto" = auto.correlate(data),
              "pearson" = cor(data, use = "pairwise.complete.obs"),
              "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
       )

@@ -162,7 +162,7 @@ EBICglasso.qgraph <- function(
 
     # Compute correlations matrix
     if(nrow(data)!=ncol(data))
-    {S <- qgraph::cor_auto(data)
+    {S <- auto.correlate(data)
     }else{
       S <- data
     }

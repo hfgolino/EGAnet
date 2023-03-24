@@ -238,7 +238,7 @@ EGA.fit <- function (
   if(nrow(data) != ncol(data)){
     n <- nrow(data)
     data <- switch(corr,
-                   "cor_auto" = qgraph::cor_auto(data),
+                   "cor_auto" = auto.correlate(data),
                    "pearson" = cor(data, use = "pairwise.complete.obs"),
                    "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
     )
