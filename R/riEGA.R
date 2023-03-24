@@ -246,7 +246,7 @@
 #' 
 # Random-Intercept EGA
 # Changed from 'residualEGA.R' on 17.04.2022
-# Updated 08.08.2022
+# Updated 24.03.2023
 riEGA <- function(
     data, n = NULL, uni.method = c("expand", "LE", "louvain"),
     corr = c("cor_auto", "pearson", "spearman"),
@@ -320,25 +320,10 @@ riEGA <- function(
     )
   )
   
-  # Check for user changes to default arguments
-  if(length(lavaan.args) == 0){
-    # Set standard arguments
-    lavaan.args <- formals(lavaan::cfa)
-    lavaan.args[length(lavaan.args)] <- NULL
-  }else{
-    # Obtain default arguments
-    lavaan.default <- formals(lavaan::cfa)
-    lavaan.default[length(lavaan.default)] <- NULL
-    
-    # Switch out any defaults with user-specificed arguments
-    if(any(names(lavaan.args) %in% names(lavaan.default))){
-      lavaan.default[names(lavaan.args)] <- lavaan.args
-    }
-    
-    # Change arguments
-    lavaan.args <- lavaan.default
-  }
-  
+  # Set up standard {lavaan} arguments
+  ## See `helpers-functions.R`
+  lavaan.args <- lavaan_arguments(lavaan.args)
+
   # Set random-intercept model
   lavaan.args$model <- ri_model
   
@@ -355,20 +340,9 @@ riEGA <- function(
   # Check for "auto" estimator
   if(estimator == "auto"){
     
-    # Obtain categories
-    categories <- apply(data, 2, function(x){
-      length(na.omit(unique(x)))
-    })
-    
-    # Check categories
-    if(sum(categories < 6) > 1){# Not all continuous
-      lavaan.args$estimator <- "WLSMV"
-      lavaan.args$missing <- "pairwise"
-      lavaan.args$ordered <- TRUE
-    }else{# All can be considered continuous
-      lavaan.args$estimator <- "MLR"
-      lavaan.args$missing <- "fiml"
-    }
+    # Set arguments based on automatic decisions
+    ## See `helpers-functions.R`
+    lavaan.args <- estimator_arguments(lavaan.args)
     
   }
   

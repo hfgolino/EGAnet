@@ -378,7 +378,7 @@ oldUVA <- function(
     
     ## Compute correlation matrix
     cormat <- switch(corr,
-                     "cor_auto" = qgraph::cor_auto(data),
+                     "cor_auto" = auto.correlate(data),
                      "pearson" = cor(data, use = "pairwise.complete.obs"),
                      "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
     )
@@ -500,7 +500,7 @@ oldUVA <- function(
         }else{
           
           cor.data <- switch(corr,
-                             "cor_auto" = qgraph::cor_auto(reduced$data),
+                             "cor_auto" = auto.correlate(reduced$data),
                              "pearson" = cor(reduced$data, use = "pairwise.complete.obs"),
                              "spearman" = cor(reduced$data, method = "spearman", use = "pairwise.complete.obs")
           )
@@ -547,7 +547,7 @@ oldUVA <- function(
           cor.data <- suppressMessages(
             suppressWarnings(
               switch(corr,
-                     "cor_auto" = qgraph::cor_auto(reduced$data),
+                     "cor_auto" = auto.correlate(reduced$data),
                      "pearson" = cor(reduced$data, use = "pairwise.complete.obs"),
                      "spearman" = cor(reduced$data, method = "spearman", use = "pairwise.complete.obs")
               )
@@ -616,7 +616,7 @@ oldUVA <- function(
               cor.data <- suppressMessages(
                 suppressWarnings(
                   switch(corr,
-                         "cor_auto" = qgraph::cor_auto(reduced$data),
+                         "cor_auto" = auto.correlate(reduced$data),
                          "pearson" = cor(reduced$data, use = "pairwise.complete.obs"),
                          "spearman" = cor(reduced$data, method = "spearman", use = "pairwise.complete.obs")
                   )

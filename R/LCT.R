@@ -151,7 +151,7 @@ LCT <- function (data, n, iter = 100,
           
           # Compute correlation
           cor.mat <- suppressMessages(
-            qgraph::cor_auto(dat)
+            auto.correlate(dat)
           )
           
         }
@@ -171,7 +171,7 @@ LCT <- function (data, n, iter = 100,
             dat <- MASS_mvrnorm(cases, mu = rep(0, ncol(data)), Sigma = data)
             
             cor.mat <-  suppressMessages(
-              qgraph::cor_auto(dat)
+              auto.correlate(dat)
             )
           }
           
