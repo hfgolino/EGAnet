@@ -246,7 +246,7 @@
 #' 
 # Random-Intercept EGA
 # Changed from 'residualEGA.R' on 17.04.2022
-# Updated 24.03.2023
+# Updated 03.04.2023
 riEGA <- function(
     data, n = NULL, uni.method = c("expand", "LE", "louvain"),
     corr = c("cor_auto", "pearson", "spearman"),
@@ -345,6 +345,9 @@ riEGA <- function(
     lavaan.args <- estimator_arguments(lavaan.args)
     
   }
+  
+  # Ensure "std.lv = FALSE"
+  lavaan.args$std.lv <- FALSE
   
   # Get CFA function from lavaan
   FUN <- lavaan::cfa
