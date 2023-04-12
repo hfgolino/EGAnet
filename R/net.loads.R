@@ -310,7 +310,7 @@ net.loads <- function(
     
     # Check for {GPArotation} and {fungible}
     # Function in `helpers-general.R`
-    check_package(packages = c("GPArotation", "fungible"))
+    check_package(c("GPArotation", "fungible"))
     
     # Obtain rotation from GPArotation package
     rotation_names <- ls(asNamespace("GPArotation"))
