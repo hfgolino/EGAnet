@@ -140,3 +140,60 @@ no_name_print <- function(object){
   print(df, quote = FALSE, row.names = FALSE)
 
 }
+
+#' @noRd
+#'
+# General function to check for packages
+# Updated 12.04.2023
+check_package <- function(packages)
+{
+  
+  # Check for packages
+  installed <- packages %in% row.names(installed.packages())
+  
+  # Determine which packages are not installed
+  not_installed <- packages[!installed]
+  
+  # Print error with missing packages
+  if(length(not_installed) != 0){
+    
+    # Organize packages error output
+    if(length(not_installed) > 1){
+      
+      # Get missing packages
+      missing_packages <- paste0("{", packages , "}", collapse = ", ")
+      packages <- paste0("\"", packages, "\"", collapse = ", ")
+    
+      # Stop and tell user to install package
+      stop(
+        paste0(
+          missing_packages, 
+          " are not installed but are required for this function. ",
+          "Please run \n\n",
+          "install.packages(c(", packages, "))",
+          "\n\nOnce installed, re-run this function (you may need to restart R/RStudio)."
+        )
+      )
+      
+    }else{
+      
+      # Get missing packages
+      missing_packages <- paste0("{", packages, "}")
+      packages <- paste0("\"", packages, "\"")
+      
+      # Stop and tell user to install package
+      stop(
+        paste0(
+          missing_packages, 
+          " is not installed but is required for this function. ",
+          "Please run \n\n",
+          "install.packages(c(", packages, "))",
+          "\n\nOnce installed, re-run this function (you may need to restart R/RStudio)."
+        )
+      )
+      
+    }
+    
+  }
+  
+}

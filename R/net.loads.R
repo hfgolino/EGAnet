@@ -88,8 +88,8 @@
 #' @export
 #'
 # Network Loadings
-# Updated 21.02.2023
-# Signs updated 18.10.2022
+# Updated 12.04.2023
+# Cross-loadings and signs updated 12.04.2023
 # Rotations added 20.10.2022
 net.loads <- function(
     A, wc, rotation = "oblimin",
@@ -98,19 +98,14 @@ net.loads <- function(
 )
 {
   
-  # Deprecated arguments
-  if("pos.manifold" %in% names(list(...))){
-    message("Argument 'pos.manifold' has been deprecated.")
-  }
+  # For testing
+  A <- ega_third_level
   
-  #------------------------------------------#
-  ## DETECT EGA INPUT AND VARIABLE ORDERING ##
-  #------------------------------------------#
-  
-  if(any(class(A) == "EGA")){
+  # Check for EGA object
+  if(is(A, "EGA")){
     
     # Order
-    ord <- match(colnames(A$network), names(A$wc))
+    wc_order <- match(colnames(A$network), names(A$wc))
     
     # Grab communities
     wc <- A$wc
@@ -118,174 +113,204 @@ net.loads <- function(
     # Replace 'A' with 'EGA' network
     A <- A$network
     
-  }else{ord <- order(wc)} # Reorder by communities
+  }else{
+    
+    # Obtain membership order
+    wc_order <- order(wc)
+    
+  }
   
-  # Make sure membership is named
+  # Ensure names in memberships
   names(wc) <- colnames(A)
   
-  # Ensure matrix object
+  # Make "A" a matrix
   A <- as.matrix(A)
   
-  # Ensure data is matrix
-  if(nrow(A) != ncol(A)){
-    stop("Input for 'A' must be an n x n matrix.")
+  # Check for symmtric
+  if(!is_symmetric(A)){ # Function in `helpers-general.R`
+    stop("Input for 'A' must be a symmetric n x n matrix.")
   }
   
-  # Ensure data is symmetric
-  row.names(A) <- colnames(A)
+  # Obtain NA community memberships
+  NA_wc <- is.na(wc)
   
-  if(!isSymmetric(A)){
-    stop("'A' is not a symmetric matrix. Network loadings can only be computed with undirected networks.")
+  # Check for any NA community memberships
+  if(any(NA_wc)){
+    
+    # Print warning message
+    ## Let's user know that these nodes have been removed
+    warning(
+      paste(
+        "The following nodes were found to have NA community membership:",
+        paste0(colnames(A)[NA_wc], collapse = ", "), "\n",
+        "The nodes have been removed from the loadings matrix."
+      )
+    )
+    
+    # Remove from network
+    A <- A[!NA_wc, !NA_wc]
+    
+    # Remove from memberships
+    wc <- wc[!NA_wc]
+    
   }
   
-  # Check if there are actual dimensions
-  if(length(wc) == length(unique(wc))){
-    
-    # Initialize result list
-    res <- list()
-    
-    res$unstd <- matrix(NA, nrow = ncol(A), ncol = ncol(A))
-    
-    res$std <- matrix(NA, nrow = ncol(A), ncol = ncol(A))
-    
-  }else{
+  # Obtain number of unique communities
+  unique_wc <- unique(wc)
   
-    #### START DATA MANAGEMENT
+  # Obtain length of communities
+  length_wc <- length(wc)
+  
+  # Check for singleton communities
+  if(length_wc == length(unique_wc)){
     
-    #----------------------#
-    ## REORDER FOR OUTPUT ##
-    #----------------------#
+    # Initialize results
+    unstd <- matrix(NA, nrow = ncol(A), ncol = ncol(A))
+    colnames(unstd) <- colnames(A)
+    row.names(unstd) <- colnames(A)
+    
+    # Set up results
+    results <- list(
+      unstd = unstd,
+      std = unstd
+    )
+    
+  }else if(length(unique_wc) == 1){# Check for single community
     
     # Reorder communities
-    wc <- wc[ord]
+    wc <- wc[wc_order]
     
     # Reorder network
-    A <- A[ord,ord]
+    A <- A[wc_order, wc_order]
     
-    #---------------------------#
-    ## DIMENSION QUALITY CHECK ##
-    #---------------------------#
+    # Compute absolute sum of nodes
+    absolute_sum <- colSums(abs(A))
     
-    # Remove NA dimensions
-    dim.uniq <- na.omit(unique(wc))
+    # Come back to this section
+    stop("unidimensional structures are under construction...")
     
-    # Check for single item dimensions
-    for(i in 1:length(dim.uniq)){
+  }else{ # Not singleton dimensions, not unidimensional
+    
+    # Reorder communities
+    wc <- wc[wc_order]
+    
+    # Reorder network
+    A <- A[wc_order, wc_order]
+    
+    # Initialize loading matrix
+    loading_matrix <- matrix(
+      0, nrow = ncol(A),
+      ncol = length(unique_wc)
+    )
+    
+    # Initialize sign vector
+    signs <- numeric(ncol(A))
+    names(signs) <- colnames(A)
+    
+    # Add column and row names
+    row.names(loading_matrix) <- colnames(A)
+    colnames(loading_matrix) <- unique_wc
+    
+    # Populate loading matrix
+    for(dominant in unique_wc){
       
-      len <- length(wc[which(wc==dim.uniq[i])])
+      # Obtain target portion of network
+      target_network <- A[wc == dominant, wc == dominant]
       
-      if(len == 1)
-      {wc[which(wc==dim.uniq[i])] <- NA}
-    }
-    
-    # Remove single item dimensions
-    dims <- na.omit(unique(wc))
-    
-    # Remove NA attribute
-    attr(dims, "na.action") <- NULL
-    
-    # Make sure that there are actual dimensions
-    if(length(dims) != 1){
-
-      #### START COMPUTE LOADINGS
+      # Compute absolute sum for dominant loadings
+      loading_matrix[wc == dominant, as.character(dominant)] <- 
+        colSums(abs(target_network))
       
-      # Compute absolute loadings
-      comm.str <- mat.func(A = A, wc = wc, absolute = TRUE, diagonal = 0)
+      # Determine positive direction for dominant loadings
+      ## Compute total sum of signs
+      target_signs <- colSums(sign(target_network))
       
-      # Check for missing dimensions
-      if(any(colnames(comm.str)=="NA")){
+      ## Check for negative signs
+      if(all(target_signs <= -1)){
         
-        # Target dimension
-        target <- which(colnames(comm.str) == "NA")
+        ## Determine dominant sign based on other variables
+        signs[wc == dominant] <- sign(colSums(A[wc != dominant, wc == dominant]))
         
-        # Remove from matrix
-        comm.str <- comm.str[,-target]
+        
+      }else if(sum(target_signs) >= 0){
+        
+        ## If target signs are equal to or greater than break even,
+        ## then reverse the negative signs
+        signs[wc == dominant][which(target_signs < 0)] <- -1 
+        signs[wc == dominant][which(target_signs >= 0)] <- 1
+        
+      }else if(sum(target_signs) < 0){
+        
+        ## If target signs are less than break even,
+        ## then reverse the positive signs
+        signs[wc == dominant][which(target_signs < 0)] <- 1 
+        signs[wc == dominant][which(target_signs >= 0)] <- -1
         
       }
       
-      # Reorder loading matrix
-      comm.str <- comm.str[,paste(dims)]
-      
-      # Add signs to loadings
-      # res.rev <- add.signs(comm.str = comm.str, A = A, wc = wc, dims = dims, pos.manifold = pos.manifold)
-      # comm.str <- res.rev$comm.str
-      comm.str <- add.signs(comm.str = comm.str, A = A, wc = wc, dims = dims, pos.manifold = pos.manifold)
-      
-      #### START OUTPUT MANAGEMENT
-      
-      # Initialize result list
-      res <- list()
-      
-      # Unstandardized loadings
-      unstd <- as.data.frame(round(comm.str,3))
-      row.names(unstd) <- colnames(A)
-      res$unstd <- descend.ord(unstd, wc)
-      
-      # Standardized loadings
-      if(length(dims)!=1){
-        std <- t(t(unstd) / sqrt(colSums(abs(unstd))))
-      }else{
-        std <- t(t(unstd) / sqrt(sum(abs(unstd))))
+    }
+    
+    # Set dominant loadings
+    loading_matrix <- loading_matrix * signs
+    
+    # Initialize reversed A
+    A_reversed <- A
+    
+    # Create duplicate of network
+    if(any(signs == -1)){
+      A_reversed[which(signs == -1),] <- -A[which(signs == -1),]
+    }
+    
+    # Populate loading matrix
+    for(dominant in unique_wc){
+      for(cross in unique_wc){
+        
+        # Do not use dominant loadings
+        if(dominant != cross){
+          
+          # Compute algebraic sum for cross-loadings
+          loading_matrix[wc == dominant, as.character(cross)] <- 
+            colSums(A_reversed[wc == cross, wc == dominant])
+          
+        }
+        
       }
+    }
+    
+    # Using signs, ensure positive orientation based
+    # on most common direction
+    for(dominant in unique_wc){
       
-      # Populate standardized loadings in results
-      res$std <- as.data.frame(round(descend.ord(std, wc),3))
+      # Determine dominant orientation
+      orientation <- sum(signs[wc == dominant])
       
-    }else if(all(is.na(wc))){
-      
-      # Create matrix of NAs
-      comm.str <- matrix(NA, nrow = ncol(A), ncol = ncol(A))
-      
-      # Set up dimensions for all 
-      dims <- 1:ncol(A)
-      
-      # Assign column names
-      colnames(comm.str) <- dims
-      
-      # Set up return
-      res <- list()
-      res$std <- comm.str
-      res$unstd <- comm.str
-      
-    }else{ # One dimension
-      
-      # Create matrix of NAs
-      comm.str <- matrix(strength(A, absolute = TRUE), nrow = ncol(A), ncol = 1)
-      
-      # Assign dimension names
-      colnames(comm.str) <- dims
-      row.names(comm.str) <- colnames(A)
-      
-      # Add signs to loadings
-      comm.str <- add.signs(comm.str = comm.str, A = A, wc = wc, dims = dims, pos.manifold = pos.manifold)
-      # comm.str <- res.rev$comm.str
-      
-      # Initialize result list
-      res <- list()
-      
-      # Unstandardized loadings
-      unstd <- as.data.frame(round(comm.str,3))
-      row.names(unstd) <- colnames(A)
-      res$unstd <- descend.ord(unstd, wc)
-      
-      # Standardized loadings
-      if(length(dims)!=1)
-      {std <- t(t(unstd) / sqrt(colSums(abs(unstd))))
-      }else{std <- t(t(unstd) / sqrt(sum(abs(unstd))))}
-      res$std <- as.data.frame(round(descend.ord(std, wc),3))
+      # Check for negative orientation
+      if(orientation <= -1){
+        
+        loading_matrix[wc == dominant,] <-
+          -loading_matrix[wc == dominant,]
+        
+      }
       
     }
     
-    class(res) <- "NetLoads"
+    # Obtain standardized loadings
+    standardized <- t(
+      t(loading_matrix) /
+      sqrt(colSums(abs(loading_matrix)))
+    )
     
-  }
-  
-  # Check for more than one dimension
-  if(ncol(std) > 1){
+    # Apply descending order
+    standardized <- descend.ord(standardized, wc)
+    loading_matrix <- loading_matrix[
+      row.names(standardized), colnames(standardized)
+    ] # orients matrix into same ordering
     
-    # Check for {GPArotation}
-    check_package("GPArotation")
-    check_package("fungible")
+    # Set up for rotation
+    
+    # Check for {GPArotation} and {fungible}
+    # Function in `helpers-general.R`
+    check_package(packages = c("GPArotation", "fungible"))
     
     # Obtain rotation from GPArotation package
     rotation_names <- ls(asNamespace("GPArotation"))
@@ -297,18 +322,8 @@ net.loads <- function(
     # Obtain rotation arguments
     rot_arguments <- list(...)
     
+    # Check if rotation exists
     if(rotation %in% rotation_names_lower){
-      
-      # Obtain rotation function arguments
-      # rotation_function <- get(
-      #   rotation_names[which(rotation == rotation_names_lower)],
-      #   envir = asNamespace("GPArotation")
-      # )
-      
-      # Obtain arguments
-      # rotation_arguments <- obtain.arguments(
-      #   FUN = rotation_function, FUN.args = list(...)
-      # )
       
       if(rotation != "oblimin"){
         
@@ -331,16 +346,10 @@ net.loads <- function(
         )
         
         # Set loadings
-        # rotation_arguments$L <- as.matrix(res$std)
-        # rotation_arguments$Tmat <- diag(ncol(rotation_arguments$L))
-        rotation_arguments$loadings <- as.matrix(res$std)
+        rotation_arguments$loadings <- as.matrix(standardized)
         
         # Obtain rotated loadings
-        # res$rotated <- do.call(
-        #   what = rotation_function,
-        #   args = as.list(rotation_arguments)
-        # )
-        res$rotated <- do.call(
+        rotated <- do.call(
           what = psych::faRotations,
           args = as.list(rotation_arguments)
         )
@@ -353,7 +362,6 @@ net.loads <- function(
         )
         
         # Check for arguments
-        rotation_arguments$loadings <- std
         rotation_arguments$n.rotations <- ifelse(
           "n.rotations" %in% names(rot_arguments),
           rot_arguments$n.rotations,
@@ -366,83 +374,106 @@ net.loads <- function(
         )
         
         # Set loadings
-        # rotation_arguments$L <- as.matrix(res$std)
-        # rotation_arguments$Tmat <- diag(ncol(rotation_arguments$L))
-        rotation_arguments$loadings <- as.matrix(res$std)
+        rotation_arguments$loadings <- as.matrix(standardized)
         
         # Obtain rotated loadings
-        # res$rotated <- do.call(
-        #   what = rotation_function,
-        #   args = as.list(rotation_arguments)
-        # )
-        res$rotated <- do.call(
+        rotated <- do.call(
           what = oblimin_rotate,
           args = as.list(rotation_arguments)
         )
         
-        # Re-align rotated loadings
-        aligned_output <- fungible::faAlign(
-          F1 = as.matrix(res$std),
-          F2 = as.matrix(res$rotated$loadings)
-        )
-        
-        # Update aligned loadings
-        aligned_loadings <- aligned_output$F2
-        colnames(aligned_loadings) <- colnames(res$std)
-        
-        
-        # # Re-align rotated loadings
-        # align_rotated <- apply(
-        #   abs(cor(res$std, res$rotated$loadings)), 1, which.max
-        # )
-        # 
-        # # Align rotated loadings with network loadings
-        # rotated_aligned <- res$rotated$loadings[,align_rotated]
-        # 
-        # # Re-align Phi
-        # res$rotated$Phi <- res$rotated$Phi[
-        #   align_rotated, align_rotated
-        # ]
-        
-        # Rename Phi
-        colnames(res$rotated$Phi) <- colnames(res$std)
-        row.names(res$rotated$Phi) <- colnames(res$std)
-        
-        # # Rename rotated loadings
-        # colnames(rotated_aligned) <- colnames(res$std)
-        
-        # Re-assign rotated loadings
-        res$rotated$loadings <- aligned_loadings
-        
       }
       
-    }
+      # Re-align rotated loadings
+      aligned_output <- fungible::faAlign(
+        F1 = as.matrix(standardized),
+        F2 = as.matrix(rotated$loadings)
+      )
+      
+      # Update aligned loadings
+      aligned_loadings <- aligned_output$F2
+      colnames(aligned_loadings) <- colnames(standardized)
+      
+      # Rename Phi
+      colnames(rotated$Phi) <- colnames(standardized)
+      row.names(rotated$Phi) <- colnames(standardized)
+      
+      # Re-assign rotated loadings
+      rotated$loadings <- aligned_loadings
     
+    
+    }
   }
   
+  # Set up results
+  results <- list(
+    unstd = loading_matrix,
+    std = standardized,
+    rotated = rotated,
+    minLoad = min.load
+  )
   
-  # Add minimum loading
-  res$minLoad <- min.load
+  return(results)
   
-  return(res)
+  
 }
+  
 
 # Bug checking ----
-#
-# A = ega.wmt; rotation = "oblimin";
+
+# set.seed(1234)
+# 
+# # Generate data
+# sim_data <- latentFactoR::simulate_factors(
+#   factors = 3,
+#   variables = 3,
+#   loadings = 0.60,
+#   cross_loadings = 0.10,
+#   correlations = 0.30,
+#   sample_size = 1000,
+#   variable_categories = 5,
+#   skew_range = c(-1, 1)
+# )
+# 
+# # Estimate EGA
+# ega <- EGA(sim_data$data)
+# A = ega; rotation = "oblimin";
 # min.load = 0; rot_arguments = list();
 # source("./utils-EGAnet.R")
 # source("./helpers-general.R")
 # source("./helpers-functions.R")
 # source("./helpers-errors.R")
 
-
-
-
-
-
-
-
+# Descending order ----
+#' @noRd
+# Function to order loadings largest to smallest
+# within their respective factors
+descend.ord <- function(loads, wc){
+  
+  # Initialize ordering vector
+  ord.names <- vector("character")
+  
+  # Loop through dimensions
+  for(i in colnames(loads)){
+    ord <- order(loads[names(which(wc == i)),i], decreasing = TRUE)
+    ord.names <- c(ord.names, names(which(wc == i))[ord])
+  }
+  
+  # Reorder
+  reord <- loads[ord.names,]
+  
+  # Check for matrix
+  if(!is.matrix(reord)){
+    reord <- as.matrix(reord)
+  }
+  
+  # Make sure names
+  row.names(reord) <- ord.names
+  colnames(reord) <- colnames(loads)
+  
+  return(reord)
+  
+}
 
 
 
