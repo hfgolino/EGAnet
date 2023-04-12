@@ -7269,32 +7269,6 @@ vn_entropy <- function(L_mat)
 
 #' @noRd
 #'
-# General function to check for packages
-# Updated 09.11.2022
-check_package <- function(package)
-{
-  
-  # Check for package
-  if(!package %in% row.names(installed.packages())){
-    
-    # Stop and tell user to install package
-    stop(
-      paste0(
-        "Package {",
-        package,
-        "} is not installed but is required for this function. ",
-        "Please run \n\n",
-        "install.packages(\"", package, "\")",
-        "\n\nOnce installed, re-run this function (you may need to restart R/RStudio)."
-      )
-    )
-    
-  }
-  
-}
-
-#' @noRd
-#'
 # General function to perform
 # system-specific parallelization on lists
 # Updated 02.09.2022
