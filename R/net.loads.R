@@ -98,9 +98,6 @@ net.loads <- function(
 )
 {
   
-  # For testing
-  A <- ega_third_level
-  
   # Check for EGA object
   if(is(A, "EGA")){
     
