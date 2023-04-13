@@ -4,7 +4,15 @@
 \alias{net.scores}
 \title{Network Scores}
 \usage{
-net.scores(data, A, wc, rotation = "oblimin", impute, na.rm = TRUE, ...)
+net.scores(
+  data,
+  A,
+  wc,
+  rotation = "oblimin",
+  method = "Thurstone",
+  impute = "none",
+  ...
+)
 }
 \arguments{
 \item{data}{Matrix or data frame.
@@ -23,9 +31,23 @@ A rotation to use, like factor loadings, to obtain
 a simple structure. For a list of rotations,
 see \link{GPArotation}}
 
+\item{method}{Character.
+Factor scoring method to use. For a list of scoring methods,
+see \code{\link[psych]{factor.scores}}.
+Defaults to \code{"Thurstone"}
+
+"network" scores can also be computed as a formative method
+using \code{"component"} or \code{"network"}. The core difference
+between these two methods is that \code{"network"} will use the
+weight contributions to communities using each variable's
+standard deviation in combination with their loadings}
+
 \item{impute}{Character.
 In the presence of missing data, imputation can be implemented. Currently,
-three options are available:
+three options are available:}
+
+\item{...}{Additional arguments.
+Arguments to be passed onto \code{\link[EGAnet]{net.loads}}
 
 \itemize{
 
@@ -39,12 +61,6 @@ three options are available:
 {The "median" value of the columns are used to replace the missing data.}
 
 }}
-
-\item{na.rm}{Boolean.
-Should missing data be removed from network score computation?
-Defaults to \code{TRUE}}
-
-\item{...}{Additional arguments for \code{\link[EGAnet]{EGA}}}
 }
 \value{
 Returns a list containing:

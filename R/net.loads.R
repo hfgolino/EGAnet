@@ -14,7 +14,12 @@
 #' A vector of community assignments.
 #' If input into \code{A} is an \code{\link[EGAnet]{EGA}} object,
 #' then \code{wc} is automatically detected
-#'
+#' 
+#' @param rotation Character.
+#' A rotation to use, like factor loadings, to obtain
+#' a simple structure. For a list of rotations,
+#' see \link{GPArotation}
+#' 
 #' @param min.load Numeric.
 #' Sets the minimum loading allowed in the standardized
 #' network loading matrix. Values equal or greater than
@@ -22,11 +27,6 @@
 #' less than the minimum loading are removed. This matrix can
 #' be viewed using \code{print()} or \code{summary()}
 #' Defaults to \code{0}
-#' 
-#' @param rotation Character.
-#' A rotation to use, like factor loadings, to obtain
-#' a simple structure. For a list of rotations,
-#' see \link{GPArotation}
 #'
 #' @return Returns a list containing:
 #'
@@ -88,13 +88,12 @@
 #' @export
 #'
 # Network Loadings
-# Updated 12.04.2023
+# Updated 13.04.2023
 # Cross-loadings and signs updated 12.04.2023
 # Rotations added 20.10.2022
 net.loads <- function(
     A, wc, rotation = "oblimin",
-    min.load = 0,
-    ...
+    min.load = 0, ...
 )
 {
   
@@ -384,19 +383,22 @@ net.loads <- function(
       # Re-align rotated loadings
       aligned_output <- fungible::faAlign(
         F1 = as.matrix(standardized),
-        F2 = as.matrix(rotated$loadings)
+        F2 = as.matrix(rotated$loadings),
+        Phi2 = as.matrix(rotated$Phi)
       )
       
       # Update aligned loadings
       aligned_loadings <- aligned_output$F2
       colnames(aligned_loadings) <- colnames(standardized)
       
-      # Rename Phi
-      colnames(rotated$Phi) <- colnames(standardized)
-      row.names(rotated$Phi) <- colnames(standardized)
+      # Update aligned correlations
+      aligned_Phi <- aligned_output$Phi2
+      colnames(aligned_Phi) <- colnames(standardized)
+      row.names(aligned_Phi) <- colnames(standardized)
       
-      # Re-assign rotated loadings
+      # Re-assign rotated values
       rotated$loadings <- aligned_loadings
+      rotated$Phi <- aligned_Phi
     
     
     }
@@ -409,6 +411,9 @@ net.loads <- function(
     rotated = rotated,
     minLoad = min.load
   )
+  
+  # Set class
+  class(results) <- "NetLoads"
   
   return(results)
   

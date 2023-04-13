@@ -27,10 +27,24 @@
 #' A rotation to use, like factor loadings, to obtain
 #' a simple structure. For a list of rotations,
 #' see \link{GPArotation}
+#' 
+#' @param method Character.
+#' Factor scoring method to use. For a list of scoring methods,
+#' see \code{\link[psych]{factor.scores}}.
+#' Defaults to \code{"Thurstone"}
+#' 
+#' "network" scores can also be computed as a formative method
+#' using \code{"component"} or \code{"network"}. The core difference
+#' between these two methods is that \code{"network"} will use the
+#' weight contributions to communities using each variable's
+#' standard deviation in combination with their loadings
 #'
 #' @param impute Character.
 #' In the presence of missing data, imputation can be implemented. Currently,
 #' three options are available:
+#' 
+#' @param ... Additional arguments.
+#' Arguments to be passed onto \code{\link[EGAnet]{net.loads}}
 #'
 #' \itemize{
 #'
@@ -44,12 +58,6 @@
 #' {The "median" value of the columns are used to replace the missing data.}
 #'
 #' }
-#' 
-#' @param na.rm Boolean.
-#' Should missing data be removed from network score computation?
-#' Defaults to \code{TRUE}
-#'
-#' @param ... Additional arguments for \code{\link[EGAnet]{EGA}}
 #'
 #' @return Returns a list containing:
 #'
@@ -105,19 +113,15 @@
 #' @export
 #'
 # Network Scores
-# Updated: 15.02.2023
+# Updated: 13.04.2023
 # Add rotation: 20.10.2022
 net.scores <- function (
     data, A, wc, rotation = "oblimin",
-    impute, na.rm = TRUE, ...
+    method = "Thurstone", impute = "none",
+    ...
 )
 {
-  
-  # Depracate global argument
-  if("global" %in% names(list(...))){
-    message("Argument 'global' has been deprecated. Use `hierEGA` object instead.")
-  }
-  
+
   # Missing arguments handling
   if(missing(data)){
     stop("Argument 'data' is required for analysis")
@@ -136,76 +140,206 @@ net.scores <- function (
     wc <- rep(1, ncol(data))
   }
   
-  # Check for imputation
-  if(missing(impute)){
-    impute <- "none"
-    warning("Argument 'impute' is missing. No imputation will be used.")
+  # Ensure data is a matrix
+  data <- as.matrix(data)
+  
+  # Perform imputation
+  if(impute != "none"){
+    data <- imputation(data = data, impute = impute)
   }
   
   # Compute network loadings
-  P <- net.loads(A = A, wc = wc, ...)
-  nfacts <- length(unique(wc))
-  fact.res <- as.data.frame(matrix(0, nrow = nrow(data),
-                                   ncol = nfacts))
-
-  missing <- rowSums(is.na(data))
-  if (impute != "none") {
-    data <- data.matrix(data)
-    miss <- which(is.na(data), arr.ind = na.rm)
-    if (impute == "mean") {
-      item.means <- colMeans(data, na.rm = na.rm)
-      data[miss] <- item.means[miss[, 2]]
-    }else {
-      item.med <- apply(data, 2, median, na.rm = na.rm)
-      data[miss] <- item.med[miss[, 2]]
-    }
-  }
-
-  net.score.fxn <- function(loads, data) {
-    net.sco <- matrix(0, nrow = nrow(data), ncol = ncol(loads))
-    for (i in 1:ncol(loads)) {
-      f.load <- loads[which(loads[, i] != 0), i]
-      names(f.load) <- row.names(loads)[which(loads[, i] !=
-                                                0)]
-      dat <- data[, names(f.load)]
-      f.sds <- apply(dat, 2, sd, na.rm = na.rm)
-      rel <- f.load/f.sds
-      rel.wei <- rel/sum(rel)
-      net.sco[, i] <- as.vector(rowSums(t(t(dat) * rel.wei), na.rm = na.rm))
-    }
-    colnames(net.sco) <- colnames(loads)
-    return(net.sco)
-  }
-  net.sco <- net.score.fxn(P$std, data)
-  fact.res[, 1:nfacts] <- net.sco
-  if (nfacts > 1) {
-    colnames(fact.res)[1:nfacts] <- colnames(P$std)
-  }else{
-    colnames(fact.res) <- "1"
-  }
+  loadings <- net.loads(A = A, wc = wc, ...)
   
-  net.sco.rotated <- net.score.fxn(P$rotated$loadings, data)
-  fact.res.rotated <- fact.res
-  fact.res.rotated[, 1:nfacts] <- net.sco.rotated
-  # if (nfacts > 1) {
-  #   colnames(fact.res.rotated)[1:nfacts] <- colnames(P$rotated$loadings)
-  # }else{
-  #   colnames(fact.res.rotated) <- "1"
-  # }
+  # Check for method to compute scores
+  score_results <- compute_scores(
+    loadings_object = loadings,
+    data = data, method = method
+  )
   
-  res <- list(
+  # Set up results list
+  results <- list(
     scores = list(
-      unstd.scores = as.data.frame(round(fact.res, 3)),
-      std.scores = as.data.frame(round(apply(fact.res, 2, scale), 3)),
-      rot.scores = as.data.frame(round(apply(fact.res.rotated, 2, scale), 3))
+      std.scores = as.data.frame(scale(score_results$unrotated)),
+      rot.scores = as.data.frame(scale(score_results$rotated))
     ),
-    loadings = P
-    
+    loadings = loadings
   )
 
   # Class
-  class(res) <- "NetScores"
+  class(results) <- "NetScores"
   
-  return(res)
+  return(results)
 }
-#----
+
+# Imputation ----
+#' @noRd
+# Function to handle imputation
+imputation <- function(data, impute)
+{
+  
+  # Determine missing data
+  missing_data <- which(is.na(data), arr.ind = TRUE)
+  
+  # Check for mean or median imputation
+  if(impute == "mean"){
+    
+    # Compute means
+    variable_impute <- colMeans(data, na.rm = TRUE)
+    
+  }else if(impute == "median"){
+    
+    # Compute medians
+    variable_impute <- apply(data, 2, median, na.rm = TRUE)
+    
+  }
+  
+  # Determine unique columns
+  unique_columns <- unique(missing_data[,"col"])
+  
+  # Loop over unique columns
+  for(column in unique_columns){
+    
+    # Obtain target column
+    target_column <- missing_data[,"col"] == column
+    
+    # Obtain target rows
+    target_rows <- missing_data[,"row"][target_column]
+    
+    # Populate data
+    data[target_rows, column] <- variable_impute[column]
+    
+  }
+  
+  # Return data
+  return(data)
+  
+}
+
+# Network scores computation ----
+#' @noRd
+# Function to compute network scores
+network_scores <- function(loads, data)
+{
+  
+  # Initialize matrix for network scores
+  scores <- matrix(
+    NA, nrow = nrow(data),
+    ncol = ncol(loads)
+  )
+  
+  # Reorder data to match loadings
+  data <- data[,row.names(loads)]
+  
+  # Loop over communities
+  for(i in 1:ncol(loads)){
+    
+    # Obtain target loadings
+    target_loadings <- loads[,i]
+    
+    # Identify which loadings which are not zero
+    non_zero <- target_loadings != 0
+    
+    # Obtain data for non-zero loadings
+    non_zero_loadings <- target_loadings[non_zero]
+    non_zero_data <- data[,non_zero]
+    
+    # Obtain standard deviations
+    standard_devs <- apply(non_zero_data, 2, sd, na.rm = TRUE)
+    
+    # Obtain relative weight
+    relative <- non_zero_loadings / standard_devs
+    relative_weight <- relative / sum(relative, na.rm = TRUE)
+    
+    # Multiple by data
+    score <- as.vector( # Ensure vector
+      colSums(t(non_zero_data) * relative_weight, na.rm = FALSE)
+    )
+    
+    # Add to matrix
+    scores[,i] <- score
+  
+  }
+  
+  # Add column names
+  colnames(scores) <- colnames(loads)
+  
+  # Return scores
+  return(scores)
+  
+}
+
+# Scores computation ----
+#' @noRd
+# Wrapper to compute scores
+compute_scores <- function(loadings_object, data, method)
+{
+  
+  # Set methods
+  methods <- c(
+    "Thurstone", "tenBerge", "Anderson",
+    "Bartlett", "Harman", "components",
+    "network"
+  )
+  
+  # Check for method
+  if(~method %in% methods){
+    
+    # Set up methods
+    methods_text <- paste0("\"", methods, "\"", collapse = ", ")
+    
+    # Send error
+    stop(
+      paste0(
+        "Method \"", method, "\" in not available. \n",
+        "Current options include: ",
+        methods_text
+      )
+    )
+    
+  }
+  
+  # Method must exist, so continue
+  if(method == "network"){
+    
+    # Compute unrotated scores
+    unrotated <- network_scores(
+      loads = loadings_object$std,
+      data = data
+    )
+    
+    # Compute rotated scores
+    rotated <- network_scores(
+      loads = loadings_object$rotated$loadings,
+      data = data
+    )
+    
+  }else{
+    
+    # Compute unrotated scores
+    unrotated <- psych::factor.scores(
+      x = data,
+      f = loadings_object$std,
+      method = method
+    )$scores
+    
+    # Compute rotated scores
+    rotated <- psych::factor.scores(
+      x = data,
+      f = loadings_object$rotated$loadings,
+      Phi = loadings_object$rotated$Phi,
+      method = method
+    )$scores
+    
+  }
+  
+  # Set up results list
+  results <- list(
+    unrotated = unrotated,
+    rotated = rotated
+  )
+  
+  # Return scores
+  return(results)
+  
+}
