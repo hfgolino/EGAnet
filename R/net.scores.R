@@ -283,7 +283,7 @@ compute_scores <- function(loadings_object, data, method)
   )
   
   # Check for method
-  if(~method %in% methods){
+  if(!method %in% methods){
     
     # Set up methods
     methods_text <- paste0("\"", methods, "\"", collapse = ", ")
