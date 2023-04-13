@@ -31,7 +31,7 @@
 #' @param method Character.
 #' Factor scoring method to use. For a list of scoring methods,
 #' see \code{\link[psych]{factor.scores}}.
-#' Defaults to \code{"Thurstone"}
+#' Defaults to \code{"network"}
 #' 
 #' "network" scores can also be computed as a formative method
 #' using \code{"component"} or \code{"network"}. The core difference
@@ -117,7 +117,7 @@
 # Add rotation: 20.10.2022
 net.scores <- function (
     data, A, wc, rotation = "oblimin",
-    method = "Thurstone", impute = "none",
+    method = "network", impute = "none",
     ...
 )
 {

@@ -1,3 +1,10 @@
+Changes in version 1.2.5.1
+
+o FIX: cross-loading bug in `net.loads` was leading to problems when there were negative cross-loadings
+
+o FIX: added `psych::factor.scores` scoring methods in `net.scores`
+
+
 Changes in version 1.2.5
 
 o ADD: `most_common_tefi` method for `*EGA` analyses -- should be more reliable with larger datasets
