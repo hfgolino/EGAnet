@@ -367,7 +367,7 @@ net.loads <- function(
       # Update aligned loadings
       aligned_loadings <- aligned_output$F2
       colnames(aligned_loadings) <- colnames(standardized)
-      row.names(aligned_loadings) <- row.names(standarized)
+      row.names(aligned_loadings) <- row.names(standardized)
       
       # Update aligned correlations
       aligned_Phi <- aligned_output$Phi2
