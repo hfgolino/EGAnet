@@ -88,7 +88,7 @@
 #' @export
 #'
 # Network Loadings
-# Updated 13.04.2023
+# Updated 14.04.2023
 # Cross-loadings and signs updated 12.04.2023
 # Rotations added 20.10.2022
 net.loads <- function(
@@ -116,8 +116,9 @@ net.loads <- function(
     
   }
   
-  # Ensure names in memberships
+  # Ensure names
   names(wc) <- colnames(A)
+  row.names(A) <- colnames(A)
   
   # Make "A" a matrix
   A <- as.matrix(A)
@@ -200,7 +201,7 @@ net.loads <- function(
     )
     
     # Initialize sign vector
-    signs <- numeric(ncol(A))
+    signs <- rep(1, ncol(A)) # start with all positive orientation
     names(signs) <- colnames(A)
     
     # Add column and row names
@@ -218,31 +219,7 @@ net.loads <- function(
         colSums(abs(target_network))
       
       # Determine positive direction for dominant loadings
-      ## Compute total sum of signs
-      target_signs <- colSums(sign(target_network))
-      
-      ## Check for negative signs
-      if(all(target_signs <= -1)){
-        
-        ## Determine dominant sign based on other variables
-        signs[wc == dominant] <- sign(colSums(A[wc != dominant, wc == dominant]))
-        
-        
-      }else if(sum(target_signs) >= 0){
-        
-        ## If target signs are equal to or greater than break even,
-        ## then reverse the negative signs
-        signs[wc == dominant][which(target_signs < 0)] <- -1 
-        signs[wc == dominant][which(target_signs >= 0)] <- 1
-        
-      }else if(sum(target_signs) < 0){
-        
-        ## If target signs are less than break even,
-        ## then reverse the positive signs
-        signs[wc == dominant][which(target_signs < 0)] <- 1 
-        signs[wc == dominant][which(target_signs >= 0)] <- -1
-        
-      }
+      signs[wc == dominant] <- obtain_signs(target_network)
       
     }
     
@@ -390,6 +367,7 @@ net.loads <- function(
       # Update aligned loadings
       aligned_loadings <- aligned_output$F2
       colnames(aligned_loadings) <- colnames(standardized)
+      row.names(aligned_loadings) <- row.names(standarized)
       
       # Update aligned correlations
       aligned_Phi <- aligned_output$Phi2
@@ -477,7 +455,47 @@ descend.ord <- function(loads, wc){
   
 }
 
-
+# Obtain signs ----
+#' @noRd
+# Function to obtain signs on dominant community
+obtain_signs <- function(target_network)
+{
+  
+  # Initialize signs
+  signs <- rep(1, ncol(target_network)) # start with all positive orientation
+  names(signs) <- colnames(target_network)
+  
+  # Set minimum 
+  row_sums <- -1
+  minimum_value <- 1
+  
+  # Set while loop
+  while(sign(row_sums[minimum_value]) == -1){
+    
+    # Sum of rows
+    row_sums <- rowSums(target_network, na.rm = TRUE)
+    
+    # Find minimum value
+    minimum_value <- which.min(row_sums)
+    
+    # Check for negative
+    if(sign(row_sums[minimum_value]) == -1){
+      
+      # Flip variable
+      target_network[names(minimum_value),] <- -target_network[names(minimum_value),]
+      target_network[,names(minimum_value)] <- -target_network[,names(minimum_value)]
+      
+      # Set sign as flipped
+      signs[names(minimum_value)] <- -signs[names(minimum_value)]
+      
+    }
+    
+  }
+  
+  # Return signs
+  return(signs)
+  
+}
 
 
 
