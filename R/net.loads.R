@@ -289,16 +289,15 @@ net.loads <- function(
     rotation_names <- ls(asNamespace("GPArotation"))
     
     # Check if rotation exists
-    rotation <- tolower(rotation)
     rotation_names_lower <- tolower(rotation_names)
     
     # Obtain rotation arguments
     rot_arguments <- list(...)
     
     # Check if rotation exists
-    if(rotation %in% rotation_names_lower){
+    if(tolower(rotation) %in% rotation_names_lower){
       
-      if(rotation != "oblimin"){
+      if(tolower(rotation) != "oblimin"){
         
         # Obtain arguments
         rotation_arguments <- obtain.arguments(
@@ -306,7 +305,7 @@ net.loads <- function(
         )
         
         # Check for arguments
-        rotation_arguments$loadings <- std
+        rotation_arguments$loadings <- standardized
         rotation_arguments$n.rotations <- ifelse(
           "n.rotations" %in% names(rot_arguments),
           rot_arguments$n.rotations,
@@ -417,7 +416,7 @@ net.loads <- function(
 # 
 # # Estimate EGA
 # ega <- EGA(sim_data$data)
-# A = ega; rotation = "oblimin";
+# A = ega; rotation = "geominQ";
 # min.load = 0; rot_arguments = list();
 # source("./utils-EGAnet.R")
 # source("./helpers-general.R")
