@@ -265,7 +265,7 @@ network_scores <- function(loads, data, wc)
   # }
   
   # Obtain standard deviations
-  standard_devs <- apply(non_zero_data, 2, sd, na.rm = TRUE)
+  standard_devs <- apply(data, 2, sd, na.rm = TRUE)
   
   # Divide by standard deviations
   relative <- loads / standard_devs
