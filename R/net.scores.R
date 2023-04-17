@@ -113,7 +113,7 @@
 #' @export
 #'
 # Network Scores
-# Updated: 13.04.2023
+# Updated: 17.04.2023
 # Add rotation: 20.10.2022
 net.scores <- function (
     data, A, wc, rotation = "oblimin",
@@ -232,88 +232,55 @@ network_scores <- function(loads, data, wc)
   # Reorder data to match loadings
   data <- data[,row.names(loads)]
   
-  # # Determine signs and whether coding is necessary
-  # signs <- numeric(nrow(loads))
-  # names(signs) <- row.names(loads)
-  # 
-  # # Obtain unique memberships
-  # unique_wc <- na.omit(unique(wc))
-  # 
-  # # Loop over to obtain direct signs
-  # for(current_wc in unique_wc){
-  # 
-  #   # Obtain signs for current community
-  #   target_loadings <- loads[wc == current_wc, as.character(current_wc)]
-  # 
-  #   # Obtain signs
-  #   signs[names(target_loadings)] <- sign(target_loadings)
-  # 
-  # }
-  # 
-  # # Reverse data (if necessary)
-  # if(any(signs == -1)){
-  # 
-  #   # Flip loadings
-  #   loads <- loads * signs
-  # 
-  #   # Loop over all variables
-  #   for(i in 1:ncol(data)){
-  # 
-  #     # Only do something with negative signs
-  #     if(signs[i] == -1){
-  # 
-  #       # Obtain number of categories
-  #       target_categories <- length(na.omit(unique(data[,i])))
-  # 
-  #       # Determine if data are categorical
-  #       if(target_categories <= 7){
-  # 
-  #         # Reverse code data
-  #         data[,i] <- (max(data[,i], na.rm = TRUE) + 1) - data[,i]
-  # 
-  #       }else{
-  # 
-  #         # Flip signs of data
-  #         data[,i] <- -data[,i]
-  # 
-  #       }
-  # 
-  #     }
-  # 
-  #   }
+  # REPLACED BY MATRIX COMPUTATIONS
+  
+  # # Loop over communities
+  # for(i in 1:ncol(loads)){
+  #   
+  #   # Obtain target loadings
+  #   target_loadings <- loads[,i]
+  #   
+  #   # Identify which loadings which are not zero
+  #   non_zero <- target_loadings != 0
+  #   
+  #   # Obtain data for non-zero loadings
+  #   non_zero_loadings <- target_loadings[non_zero]
+  #   non_zero_data <- data[,non_zero]
+  #   
+  #   # Obtain standard deviations
+  #   standard_devs <- apply(non_zero_data, 2, sd, na.rm = TRUE)
+  #   
+  #   # Obtain relative weight
+  #   relative <- non_zero_loadings / standard_devs
+  #   relative_weight <- relative / sum(abs(relative), na.rm = TRUE)
+  #   
+  #   # Multiple by data
+  #   score <- as.vector( # Ensure vector
+  #     colSums(t(non_zero_data) * relative_weight, na.rm = FALSE)
+  #   )
+  #   
+  #   # Add to matrix
+  #   scores[,i] <- score
   # 
   # }
   
+  # Obtain standard deviations
+  standard_devs <- apply(non_zero_data, 2, sd, na.rm = TRUE)
   
-  # Loop over communities
-  for(i in 1:ncol(loads)){
-    
-    # Obtain target loadings
-    target_loadings <- loads[,i]
-    
-    # Identify which loadings which are not zero
-    non_zero <- target_loadings != 0
-    
-    # Obtain data for non-zero loadings
-    non_zero_loadings <- target_loadings[non_zero]
-    non_zero_data <- data[,non_zero]
-    
-    # Obtain standard deviations
-    standard_devs <- apply(non_zero_data, 2, sd, na.rm = TRUE)
-    
-    # Obtain relative weight
-    relative <- non_zero_loadings / standard_devs
-    relative_weight <- relative / sum(relative, na.rm = TRUE)
-    
-    # Multiple by data
-    score <- as.vector( # Ensure vector
-      colSums(t(non_zero_data) * relative_weight, na.rm = FALSE)
-    )
-    
-    # Add to matrix
-    scores[,i] <- score
+  # Divide by standard deviations
+  relative <- loads / standard_devs
   
-  }
+  # Obtain absolute sums for each community
+  absolute_sums <- colSums(abs(relative), na.rm = TRUE)
+  
+  # Obtain relative weight
+  relative_weight <- sweep(
+    x = relative, MARGIN = 2,
+    STATS = absolute_sums, FUN = "/"
+  )
+  
+  # Multiply with data for scores
+  scores <- data %*% relative_weight
   
   # Add column names
   colnames(scores) <- colnames(loads)
@@ -397,3 +364,4 @@ compute_scores <- function(loadings_object, data, method, wc)
   return(results)
   
 }
+
