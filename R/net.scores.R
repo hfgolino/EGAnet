@@ -154,8 +154,7 @@ net.scores <- function (
   # Check for method to compute scores
   score_results <- compute_scores(
     loadings_object = loadings,
-    data = data, method = method,
-    wc = wc
+    data = data, method = method
   )
   
   # Set up results list
@@ -220,7 +219,7 @@ imputation <- function(data, impute)
 # Network scores computation ----
 #' @noRd
 # Function to compute network scores
-network_scores <- function(loads, data, wc)
+network_scores <- function(loads, data)
 {
   
   # Initialize matrix for network scores
@@ -293,7 +292,7 @@ network_scores <- function(loads, data, wc)
 # Scores computation ----
 #' @noRd
 # Wrapper to compute scores
-compute_scores <- function(loadings_object, data, method, wc)
+compute_scores <- function(loadings_object, data, method)
 {
   
   # Set methods
@@ -326,13 +325,13 @@ compute_scores <- function(loadings_object, data, method, wc)
     # Compute unrotated scores
     unrotated <- network_scores(
       loads = loadings_object$std,
-      data = data, wc = wc
+      data = data
     )
     
     # Compute rotated scores
     rotated <- network_scores(
       loads = loadings_object$rotated$loadings,
-      data = data, wc = wc
+      data = data
     )
     
   }else{
