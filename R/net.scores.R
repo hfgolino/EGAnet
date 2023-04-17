@@ -121,7 +121,35 @@ net.scores <- function (
     ...
 )
 {
-
+  
+  # Generate data
+  sim <- simulate_factors(
+    factors = 2,
+    variables = 6,
+    loadings = 0.55,
+    cross_loadings = 0.10,
+    correlations = 0.30,
+    sample_size = 1000,
+    variable_categories = Inf
+  )
+  
+  # Obtain data
+  data <- sim$data
+  
+  # Flip signs
+  flip_signs <- sample(
+    c(-1, 1), 12, replace = TRUE, prob = c(0.30, 0.70)
+  )
+  
+  # Redo data
+  data[,which(flip_signs == -1)] <- -data[,which(flip_signs == -1)]
+  
+  
+  # Obtain EGA
+  ega <- EGA(data)
+  A <- ega$network
+  wc <- ega$wc
+  
   # Missing arguments handling
   if(missing(data)){
     stop("Argument 'data' is required for analysis")
@@ -252,6 +280,9 @@ network_scores <- function(loads, data, wc)
   
   # Reverse data (if necessary)
   if(any(signs == -1)){
+    
+    # Flip loadings
+    loads <- loads * signs
     
     # Loop over all variables
     for(i in 1:ncol(data)){
