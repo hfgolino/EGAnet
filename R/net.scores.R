@@ -232,57 +232,57 @@ network_scores <- function(loads, data, wc)
   # Reorder data to match loadings
   data <- data[,row.names(loads)]
   
-  # # Determine signs and whether coding is necessary
-  # signs <- numeric(nrow(loads))
-  # names(signs) <- row.names(loads)
-  # 
-  # # Obtain unique memberships
-  # unique_wc <- na.omit(unique(wc))
-  # 
-  # # Loop over to obtain direct signs
-  # for(current_wc in unique_wc){
-  #   
-  #   # Obtain signs for current community
-  #   target_loadings <- loads[wc == current_wc, as.character(current_wc)]
-  #   
-  #   # Obtain signs
-  #   signs[names(target_loadings)] <- sign(target_loadings)
-  #   
-  # }
-  # 
-  # # Reverse data (if necessary)
-  # if(any(signs == -1)){
-  #   
-  #   # Flip loadings
-  #   loads <- loads * signs
-  #   
-  #   # Loop over all variables
-  #   for(i in 1:ncol(data)){
-  #     
-  #     # Only do something with negative signs
-  #     if(signs[i] == -1){
-  #       
-  #       # Obtain number of categories
-  #       target_categories <- length(na.omit(unique(data[,i])))
-  #       
-  #       # Determine if data are categorical
-  #       if(target_categories <= 7){
-  #         
-  #         # Reverse code data
-  #         data[,i] <- (max(data[,i], na.rm = TRUE) + 1) - data[,i]
-  #         
-  #       }else{
-  #         
-  #         # Flip signs of data
-  #         data[,i] <- -data[,i]
-  #         
-  #       }
-  # 
-  #     }
-  #   
-  #   }
-  #   
-  # }
+  # Determine signs and whether coding is necessary
+  signs <- numeric(nrow(loads))
+  names(signs) <- row.names(loads)
+
+  # Obtain unique memberships
+  unique_wc <- na.omit(unique(wc))
+
+  # Loop over to obtain direct signs
+  for(current_wc in unique_wc){
+
+    # Obtain signs for current community
+    target_loadings <- loads[wc == current_wc, as.character(current_wc)]
+
+    # Obtain signs
+    signs[names(target_loadings)] <- sign(target_loadings)
+
+  }
+
+  # Reverse data (if necessary)
+  if(any(signs == -1)){
+
+    # Flip loadings
+    loads <- loads * signs
+
+    # Loop over all variables
+    for(i in 1:ncol(data)){
+
+      # Only do something with negative signs
+      if(signs[i] == -1){
+
+        # Obtain number of categories
+        target_categories <- length(na.omit(unique(data[,i])))
+
+        # Determine if data are categorical
+        if(target_categories <= 7){
+
+          # Reverse code data
+          data[,i] <- (max(data[,i], na.rm = TRUE) + 1) - data[,i]
+
+        }else{
+
+          # Flip signs of data
+          data[,i] <- -data[,i]
+
+        }
+
+      }
+
+    }
+
+  }
   
   
   # Loop over communities
