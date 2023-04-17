@@ -216,79 +216,6 @@ imputation <- function(data, impute)
   
 }
 
-# Network scores computation ----
-#' @noRd
-# Function to compute network scores
-network_scores <- function(loads, data)
-{
-  
-  # Initialize matrix for network scores
-  scores <- matrix(
-    NA, nrow = nrow(data),
-    ncol = ncol(loads)
-  )
-  
-  # Reorder data to match loadings
-  data <- data[,row.names(loads)]
-  
-  # REPLACED BY MATRIX COMPUTATIONS
-  
-  # # Loop over communities
-  # for(i in 1:ncol(loads)){
-  #   
-  #   # Obtain target loadings
-  #   target_loadings <- loads[,i]
-  #   
-  #   # Identify which loadings which are not zero
-  #   non_zero <- target_loadings != 0
-  #   
-  #   # Obtain data for non-zero loadings
-  #   non_zero_loadings <- target_loadings[non_zero]
-  #   non_zero_data <- data[,non_zero]
-  #   
-  #   # Obtain standard deviations
-  #   standard_devs <- apply(non_zero_data, 2, sd, na.rm = TRUE)
-  #   
-  #   # Obtain relative weight
-  #   relative <- non_zero_loadings / standard_devs
-  #   relative_weight <- relative / sum(abs(relative), na.rm = TRUE)
-  #   
-  #   # Multiple by data
-  #   score <- as.vector( # Ensure vector
-  #     colSums(t(non_zero_data) * relative_weight, na.rm = FALSE)
-  #   )
-  #   
-  #   # Add to matrix
-  #   scores[,i] <- score
-  # 
-  # }
-  
-  # Obtain standard deviations
-  standard_devs <- apply(data, 2, sd, na.rm = TRUE)
-  
-  # Divide by standard deviations
-  relative <- loads / standard_devs
-  
-  # Obtain absolute sums for each community
-  absolute_sums <- colSums(abs(relative), na.rm = TRUE)
-  
-  # Obtain relative weight
-  relative_weight <- sweep(
-    x = relative, MARGIN = 2,
-    STATS = absolute_sums, FUN = "/"
-  )
-  
-  # Multiply with data for scores
-  scores <- data %*% relative_weight
-  
-  # Add column names
-  colnames(scores) <- colnames(loads)
-  
-  # Return scores
-  return(scores)
-  
-}
-
 # Scores computation ----
 #' @noRd
 # Wrapper to compute scores
@@ -364,3 +291,75 @@ compute_scores <- function(loadings_object, data, method)
   
 }
 
+# Network scores computation ----
+#' @noRd
+# Function to compute network scores
+network_scores <- function(loads, data)
+{
+  
+  # Initialize matrix for network scores
+  scores <- matrix(
+    NA, nrow = nrow(data),
+    ncol = ncol(loads)
+  )
+  
+  # Reorder data to match loadings
+  data <- data[,row.names(loads)]
+  
+  # REPLACED BY MATRIX COMPUTATIONS
+  
+  # # Loop over communities
+  # for(i in 1:ncol(loads)){
+  #   
+  #   # Obtain target loadings
+  #   target_loadings <- loads[,i]
+  #   
+  #   # Identify which loadings which are not zero
+  #   non_zero <- target_loadings != 0
+  #   
+  #   # Obtain data for non-zero loadings
+  #   non_zero_loadings <- target_loadings[non_zero]
+  #   non_zero_data <- data[,non_zero]
+  #   
+  #   # Obtain standard deviations
+  #   standard_devs <- apply(non_zero_data, 2, sd, na.rm = TRUE)
+  #   
+  #   # Obtain relative weight
+  #   relative <- non_zero_loadings / standard_devs
+  #   relative_weight <- relative / sum(abs(relative), na.rm = TRUE)
+  #   
+  #   # Multiple by data
+  #   score <- as.vector( # Ensure vector
+  #     colSums(t(non_zero_data) * relative_weight, na.rm = FALSE)
+  #   )
+  #   
+  #   # Add to matrix
+  #   scores[,i] <- score
+  # 
+  # }
+  
+  # Obtain standard deviations
+  standard_devs <- apply(data, 2, sd, na.rm = TRUE)
+  
+  # Divide by standard deviations
+  relative <- loads / standard_devs
+  
+  # Obtain absolute sums for each community
+  absolute_sums <- colSums(abs(relative), na.rm = TRUE)
+  
+  # Obtain relative weight
+  relative_weight <- sweep(
+    x = relative, MARGIN = 2,
+    STATS = absolute_sums, FUN = "/"
+  )
+  
+  # Multiply with data for scores
+  scores <- data %*% relative_weight
+  
+  # Add column names
+  colnames(scores) <- colnames(loads)
+  
+  # Return scores
+  return(scores)
+  
+}
