@@ -154,7 +154,8 @@ net.scores <- function (
   # Check for method to compute scores
   score_results <- compute_scores(
     loadings_object = loadings,
-    data = data, method = method
+    data = data, method = method,
+    wc = wc
   )
   
   # Set up results list
