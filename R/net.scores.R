@@ -150,7 +150,10 @@ net.scores <- function (
   }
   
   # Compute network loadings
-  loadings <- net.loads(A = A, wc = wc, ...)
+  loadings <- net.loads(
+    A = A, wc = wc, rotation = rotation, 
+    ...
+  )
   
   # Check for method to compute scores
   score_results <- compute_scores(
