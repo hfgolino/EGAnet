@@ -17,8 +17,9 @@
 #' 
 #' @param rotation Character.
 #' A rotation to use, like factor loadings, to obtain
-#' a simple structure. For a list of rotations,
-#' see \link{GPArotation}
+#' a simple structure.
+#' Defaults to \code{\link[GPArotation]{geominQ}}.
+#' For a list of rotations, see \code{\link{GPArotation}}
 #' 
 #' @param min.load Numeric.
 #' Sets the minimum loading allowed in the standardized
@@ -88,11 +89,11 @@
 #' @export
 #'
 # Network Loadings
-# Updated 14.04.2023
+# Updated 18.04.2023
 # Cross-loadings and signs updated 12.04.2023
 # Rotations added 20.10.2022
 net.loads <- function(
-    A, wc, rotation = "oblimin",
+    A, wc, rotation = "geominQ",
     min.load = 0, ...
 )
 {
@@ -319,6 +320,26 @@ net.loads <- function(
         
         # Add other arguments
         rotation_arguments <- c(rotation_arguments, rot_arguments)
+        
+        # Add default for "geominQ"
+        if(tolower(rotation) == "geominq"){
+          
+          # Check for epsilon
+          if(!"eps" %in% names(rot_arguments)){
+            
+            # Set up standard >= 4 dimensions
+            eps <- 0.01
+            
+            # Check for 2 or 3 dimensions
+            eps <- ifelse(ncol(standardized) == 2, 0.0001, eps)
+            eps <- ifelse(ncol(standardized) == 3, 0.001, eps)
+            
+            # Set up defaults
+            rotation_arguments$eps <- eps
+            
+          }
+          
+        }
         
         # Set loadings
         rotation_arguments$loadings <- as.matrix(standardized)
