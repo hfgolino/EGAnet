@@ -261,7 +261,7 @@ net.loads <- function(
       # Check for negative orientation
       if(orientation <= -1){
         
-        # Reverse direct variables signs across all communities
+        # Reverse dominant variables signs across all communities
         loading_matrix[wc == dominant,] <-
           -loading_matrix[wc == dominant,]
         
