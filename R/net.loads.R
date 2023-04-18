@@ -266,8 +266,8 @@ net.loads <- function(
           -loading_matrix[wc == dominant,]
         
         # Reverse cross-loading signs on target community
-        loading_matrix[wc != dominant, dominant] <- 
-          -loading_matrix[wc != dominant, dominant]
+        loading_matrix[wc != dominant, as.character(dominant)] <- 
+          -loading_matrix[wc != dominant, as.character(dominant)]
         
       }
       
