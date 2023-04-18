@@ -307,7 +307,7 @@
 # Added rotation 20.10.2022
 hierEGA <- function(
     data, scores = c("factor", "network"),
-    rotation = "oblimin",
+    rotation = "geominQ",
     consensus.iter = 1000,
     consensus.method = c(
       "highest_modularity",

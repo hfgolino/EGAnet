@@ -25,8 +25,9 @@
 #'
 #' @param rotation Character.
 #' A rotation to use, like factor loadings, to obtain
-#' a simple structure. For a list of rotations,
-#' see \link{GPArotation}
+#' a simple structure.
+#' Defaults to \code{\link[GPArotation]{geominQ}}.
+#' For a list of rotations, see \code{\link{GPArotation}}
 #' 
 #' @param method Character.
 #' Factor scoring method to use. For a list of scoring methods,
@@ -113,10 +114,10 @@
 #' @export
 #'
 # Network Scores
-# Updated: 17.04.2023
+# Updated: 18.04.2023
 # Add rotation: 20.10.2022
 net.scores <- function (
-    data, A, wc, rotation = "oblimin",
+    data, A, wc, rotation = "geominQ",
     method = "network", impute = "none",
     ...
 )
