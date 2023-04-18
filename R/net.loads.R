@@ -298,7 +298,7 @@ net.loads <- function(
     if(tolower(rotation) %in% rotation_names_lower){
       
       if(tolower(rotation) != "oblimin"){
-        
+      
         # Obtain arguments
         rotation_arguments <- obtain.arguments(
           FUN = psych::faRotations, FUN.args = list(rotate = rotation)
@@ -316,6 +316,9 @@ net.loads <- function(
           rot_arguments$maxit,
           1000
         )
+        
+        # Add other arguments
+        rotation_arguments <- c(rotation_arguments, rot_arguments)
         
         # Set loadings
         rotation_arguments$loadings <- as.matrix(standardized)
