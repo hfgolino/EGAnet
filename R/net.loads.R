@@ -251,6 +251,21 @@ net.loads <- function(
       }
     }
     
+    # # Similarity of clustering with loadings
+    # sapply(unique_wc, function(community){
+    #   
+    #   # Target loadings
+    #   target_loadings <- which(wc == community)
+    #   
+    #   # Obtain maximum absolute loading
+    #   max_wc <- apply(abs(loading_matrix[target_loadings,]), 1, which.max)
+    #   
+    #   # Obtain proportion
+    #   mean(wc[wc == community] == max_wc)
+    #   
+    # })
+    
+    
     # Using signs, ensure positive orientation based
     # on most common direction
     for(dominant in unique_wc){
@@ -278,12 +293,6 @@ net.loads <- function(
       t(loading_matrix) /
       sqrt(colSums(abs(loading_matrix)))
     )
-    
-    # Apply descending order
-    standardized <- descend.ord(standardized, wc)
-    loading_matrix <- loading_matrix[
-      row.names(standardized), colnames(standardized)
-    ] # orients matrix into same ordering
     
     # Set up for rotation
     

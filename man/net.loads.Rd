@@ -4,7 +4,7 @@
 \alias{net.loads}
 \title{Network Loadings}
 \usage{
-net.loads(A, wc, rotation = "oblimin", min.load = 0, ...)
+net.loads(A, wc, rotation = "geominQ", min.load = 0, ...)
 }
 \arguments{
 \item{A}{Matrix, data frame, or \code{\link[EGAnet]{EGA}} object.
@@ -17,8 +17,9 @@ then \code{wc} is automatically detected}
 
 \item{rotation}{Character.
 A rotation to use, like factor loadings, to obtain
-a simple structure. For a list of rotations,
-see \link{GPArotation}}
+a simple structure.
+Defaults to \code{\link[GPArotation]{geominQ}}.
+For a list of rotations, see \code{\link{GPArotation}}}
 
 \item{min.load}{Numeric.
 Sets the minimum loading allowed in the standardized

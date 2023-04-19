@@ -7,7 +7,7 @@
 hierEGA(
   data,
   scores = c("factor", "network"),
-  rotation = "oblimin",
+  rotation = "geominQ",
   consensus.iter = 1000,
   consensus.method = c("highest_modularity", "most_common", "iterative", "lowest_tefi",
     "most_common_tefi"),

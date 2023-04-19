@@ -114,7 +114,7 @@
 #' @export
 #'
 # Network Scores
-# Updated: 18.04.2023
+# Updated: 19.04.2023
 # Add rotation: 20.10.2022
 net.scores <- function (
     data, A, wc, rotation = "geominQ",
@@ -158,7 +158,8 @@ net.scores <- function (
   # Check for method to compute scores
   score_results <- compute_scores(
     loadings_object = loadings,
-    data = data, method = method
+    data = data, method = method,
+    wc = wc
   )
   
   # Set up results list
@@ -223,7 +224,7 @@ imputation <- function(data, impute)
 # Scores computation ----
 #' @noRd
 # Wrapper to compute scores
-compute_scores <- function(loadings_object, data, method)
+compute_scores <- function(loadings_object, data, method, wc)
 {
   
   # Set methods
@@ -310,6 +311,16 @@ network_scores <- function(loads, data)
   # Reorder data to match loadings
   data <- data[,row.names(loads)]
   
+  # Ensure data is scaled
+  # Also automatically converts to a matrix
+  data <- apply(data, 2, scale)
+  
+  # Multiply with data for scores
+  scores <- data %*% loads
+  
+  # Add column names
+  colnames(scores) <- colnames(loads)
+
   # REPLACED BY MATRIX COMPUTATIONS
   
   # # Loop over communities
@@ -341,27 +352,6 @@ network_scores <- function(loads, data)
   #   scores[,i] <- score
   # 
   # }
-  
-  # Obtain standard deviations
-  standard_devs <- apply(data, 2, sd, na.rm = TRUE)
-  
-  # Divide by standard deviations
-  relative <- loads / standard_devs
-  
-  # Obtain absolute sums for each community
-  absolute_sums <- colSums(abs(relative), na.rm = TRUE)
-  
-  # Obtain relative weight
-  relative_weight <- sweep(
-    x = relative, MARGIN = 2,
-    STATS = absolute_sums, FUN = "/"
-  )
-  
-  # Multiply with data for scores
-  scores <- data %*% relative_weight
-  
-  # Add column names
-  colnames(scores) <- colnames(loads)
   
   # Return scores
   return(scores)
