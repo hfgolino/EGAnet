@@ -417,6 +417,13 @@ hierEGA <- function(
     #     )
     #   )
     # )
+    
+    # UPDATE CORRELATIONS: polytomous, dichotomous, mixed
+    # UPDATE EPSILON: number of factors
+    # eps = 0.0001 for 2
+    # eps = 0.001 for 3
+    # eps = 0.01 for >= 4
+    
     fm <- efa(
       data = data, nfactors = unique_memberships, # number of factors
       fm = "minres", rotate = "oblimin",

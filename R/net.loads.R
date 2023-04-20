@@ -333,7 +333,11 @@ net.loads <- function(
         )
         
         # Add other arguments
-        rotation_arguments <- c(rotation_arguments, rot_arguments)
+        rotation_arguments <- c(
+          rotation_arguments, rot_arguments[
+            which(!names(rot_arguments) %in% names(rotation_arguments))
+          ]
+        )
         
         # Add default for "geominQ"
         if(tolower(rotation) == "geominq"){
