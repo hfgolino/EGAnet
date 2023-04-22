@@ -890,24 +890,20 @@ make_higher_order <- function(
 #  Ensures indices have descending orderings
 #' @noRd
 # Reindexing
-# Updated 06.05.2022
-reindex_comm <- function(communities)
-{
-
-  # Get frequencies of communities
-  comm_freq <- t(as.matrix(table(communities)))
-
-  # Get descending order
-  freq_order <- comm_freq[,order(comm_freq, decreasing = TRUE)]
-
-  # Set communities
-  freq_order[1:length(freq_order)] <- 1:length(freq_order)
-
-  # Reindex
-  reindexed <- unname(freq_order[as.character(communities)])
-
+# Updated 22.04.2023
+reindex_comm <- function(communities) {
+  
+  # Get frequencies
+  comm_freq <- table(communities)
+  
+  # Order frequencies in descending order
+  freq_order <- order(comm_freq, decreasing = TRUE)
+  
+  # Re-index them by matching
+  reindexed <- match(communities, names(comm_freq)[freq_order])
+  
+  # Return re-indexed communities
   return(reindexed)
-
 }
 
 

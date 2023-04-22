@@ -89,14 +89,20 @@
 #' @export
 #'
 # Network Loadings
-# Updated 18.04.2023
+# Updated 22.04.2023
 # Cross-loadings and signs updated 12.04.2023
 # Rotations added 20.10.2022
 net.loads <- function(
-    A, wc, rotation = "geominQ",
+    A, wc, sum.method = c("absolute", "signed"),
+    rotation = "geominQ",
     min.load = 0, ...
 )
 {
+  
+  # Check for sum method
+  if(missing(sum.method)){
+    sum.method <- "signed"
+  }
   
   # Check for EGA object
   if(is(A, "EGA")){
@@ -209,30 +215,49 @@ net.loads <- function(
     row.names(loading_matrix) <- colnames(A)
     colnames(loading_matrix) <- unique_wc
     
+    # Select sum function
+    if(sum.method == "absolute"){
+      sum_function <- function(x){colSums(abs(x))}
+    }else if(sum.method == "signed"){
+      sum_function <- colSums
+    }
+    
     # Populate loading matrix
     for(dominant in unique_wc){
       
       # Obtain target portion of network
       target_network <- A[wc == dominant, wc == dominant]
       
+      # Determine positive direction for dominant loadings
+      sign_updated <- obtain_signs(target_network)
+      
+      # Update the target network
+      target_network <- sign_updated$target_network
+      
       # Compute absolute sum for dominant loadings
       loading_matrix[wc == dominant, as.character(dominant)] <- 
-        colSums(abs(target_network))
+        sum_function(target_network)
       
       # Determine positive direction for dominant loadings
-      signs[wc == dominant] <- obtain_signs(target_network)
+      signs[wc == dominant] <- sign_updated$signs
       
     }
     
     # Set dominant loadings
-    loading_matrix <- loading_matrix * signs
+    # loading_matrix <- loading_matrix * signs
+    # Done in previous loop above
     
     # Initialize reversed A
     A_reversed <- A
     
     # Create duplicate of network
-    if(any(signs == -1)){
-      A_reversed[which(signs == -1),] <- -A[which(signs == -1),]
+    if(sum.method == "signed"){
+      
+      if(any(signs == -1)){
+        A_reversed[which(signs == -1),] <- -A[which(signs == -1),]
+        A_reversed[,which(signs == -1)] <- -A[,which(signs == -1)]
+      }
+      
     }
     
     # Populate loading matrix
@@ -244,48 +269,44 @@ net.loads <- function(
           
           # Compute algebraic sum for cross-loadings
           loading_matrix[wc == dominant, as.character(cross)] <- 
-            colSums(A_reversed[wc == cross, wc == dominant])
+            sum_function(A_reversed[wc == cross, wc == dominant])
           
         }
         
       }
     }
     
-    # # Similarity of clustering with loadings
-    # sapply(unique_wc, function(community){
-    #   
-    #   # Target loadings
-    #   target_loadings <- which(wc == community)
-    #   
-    #   # Obtain maximum absolute loading
-    #   max_wc <- apply(abs(loading_matrix[target_loadings,]), 1, which.max)
-    #   
-    #   # Obtain proportion
-    #   mean(wc[wc == community] == max_wc)
-    #   
-    # })
-    
+    # Check for sum method absolute
+    if(sum.method == "absolute"){
+      
+      # Add signs (old way)
+      loading_matrix <- old.add.signs(
+        comm.str = loading_matrix,
+        A = A, wc = wc, dims = unique_wc
+      )
+      
+    }
     
     # Using signs, ensure positive orientation based
     # on most common direction
     for(dominant in unique_wc){
-      
+
       # Determine dominant orientation
       orientation <- sum(signs[wc == dominant])
-      
+
       # Check for negative orientation
       if(orientation <= -1){
-        
+
         # Reverse dominant variables signs across all communities
         loading_matrix[wc == dominant,] <-
           -loading_matrix[wc == dominant,]
-        
+
         # Reverse cross-loading signs on target community
-        loading_matrix[wc != dominant, as.character(dominant)] <- 
+        loading_matrix[wc != dominant, as.character(dominant)] <-
           -loading_matrix[wc != dominant, as.character(dominant)]
-        
+
       }
-      
+
     }
     
     # Obtain standardized loadings
@@ -533,12 +554,165 @@ obtain_signs <- function(target_network)
     
   }
   
-  # Return signs
-  return(signs)
+  # Set up results
+  results <- list(
+    target_network = target_network,
+    signs = signs
+  )
+  
+  # Return results
+  return(results)
   
 }
 
-
+# Obtain signs ----
+#' @noRd
+# Function to obtain signs on dominant community
+old.add.signs <- function(comm.str, A, wc, dims, pos.manifold)
+{
+  
+  # Set NA to "NA"
+  if(any(is.na(wc))){
+    wc <- ifelse(is.na(wc), "NA", wc)
+  }
+  
+  # Loop through self
+  for(i in dims){
+    
+    # Set minimum 
+    row_sums <- -1
+    minimum_value <- 1
+    
+    # Set while loop
+    while(sign(row_sums[minimum_value]) == -1){
+      
+      # Sum of rows
+      row_sums <- rowSums(A[wc == i, wc == i], na.rm = TRUE)
+      
+      # Find minimum value
+      minimum_value <- which.min(row_sums)
+      
+      # Check for negative
+      if(sign(row_sums[minimum_value]) == -1){
+        
+        # Flip variable
+        A[names(minimum_value), wc == i] <- 
+          -A[names(minimum_value), wc == i]
+        A[wc == i, names(minimum_value)] <- 
+          -A[wc == i, names(minimum_value)]
+        
+        # Add negative
+        comm.str[names(minimum_value), as.character(i)] <- 
+          -comm.str[names(minimum_value), as.character(i)]
+        
+      }
+      
+    }
+    
+  }
+  
+  # Check for unidimensional structure
+  if(ncol(comm.str) > 1){
+    
+    # Set combinations
+    combinations <- combn(
+      dims, m = 2
+    )
+    
+    # Loop through combinations
+    for(i in 1:ncol(combinations)){
+      
+      # Set targets
+      target1 <- combinations[1,i]
+      target2 <- combinations[2,i]
+      
+      # Set minimum 
+      row_sums <- -1
+      minimum_value <- 1
+      
+      # Set while loop
+      while(sign(row_sums[minimum_value]) == -1){
+        
+        # Sum of rows
+        row_sums <- rowSums(A[wc == target1, wc == target2], na.rm = TRUE)
+        
+        # Find minimum value
+        minimum_value <- which.min(row_sums)
+        
+        # Check for negative
+        if(sign(row_sums[minimum_value]) == -1){
+          
+          # Flip variable
+          A[names(minimum_value), wc == target2] <- 
+            -A[names(minimum_value), wc == target2]
+          
+          # Add negative
+          comm.str[names(minimum_value), as.character(target2)] <- 
+            -comm.str[names(minimum_value), as.character(target2)]
+          
+        }
+        
+      }
+      
+    }
+    
+    # Loop through combinations (switches `target1` with `target2`)
+    for(i in 1:ncol(combinations)){
+      
+      # Set targets
+      target1 <- combinations[2,i]
+      target2 <- combinations[1,i]
+      
+      # Set minimum 
+      row_sums <- -1
+      minimum_value <- 1
+      
+      # Set while loop
+      while(sign(row_sums[minimum_value]) == -1){
+        
+        # Sum of rows
+        row_sums <- rowSums(A[wc == target1, wc == target2], na.rm = TRUE)
+        
+        # Find minimum value
+        minimum_value <- which.min(row_sums)
+        
+        # Check for negative
+        if(sign(row_sums[minimum_value]) == -1){
+          
+          # Flip variable
+          A[names(minimum_value), wc == target2] <- 
+            -A[names(minimum_value), wc == target2]
+          
+          # Add negative
+          comm.str[names(minimum_value), as.character(target2)] <- 
+            -comm.str[names(minimum_value), as.character(target2)]
+          
+        }
+        
+      }
+      
+    }
+    
+  }
+  
+  # Flip dimensions (if necessary)
+  # if(!pos.manifold)
+  # {
+  #   for(i in 1:length(dims))
+  #   {
+  #     wc.sign <- sign(sum(comm.str[which(wc==dims[i]),i]))
+  # 
+  #     if(wc.sign != 1)
+  #     {comm.str[which(wc==dims[i]),] <- -comm.str[which(wc==dims[i]),]}
+  #   }
+  # }
+  
+  # res <- list()
+  # res$comm.str <- comm.str
+  # res$A <- A
+  
+  return(comm.str)
+}
 
 
 
