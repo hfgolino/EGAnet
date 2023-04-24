@@ -17,8 +17,6 @@ double signed_modularity(double* network, int *membership, int cols) {
     double edge; // Initialize edge value
 
     // Initialize return values
-    double *positive_row_sum = (double *)calloc(cols, sizeof(double));
-    double *negative_row_sum = (double *)calloc(cols, sizeof(double));
     double *positive_column_sum = (double *)calloc(cols, sizeof(double));
     double *negative_column_sum = (double *)calloc(cols, sizeof(double));
 
@@ -36,7 +34,6 @@ double signed_modularity(double* network, int *membership, int cols) {
             if (edge > 0) {
 
                 // Add to positive sums
-                positive_row_sum[i] += edge;
                 positive_column_sum[j] += edge;
                 positive_sum += edge;
 
@@ -44,7 +41,6 @@ double signed_modularity(double* network, int *membership, int cols) {
             } else if (edge < 0) { // Check for negative value
 
                 // Add to negative sums
-                negative_row_sum[i] += edge;
                 negative_column_sum[j] += edge;
                 negative_sum += edge;
 
@@ -73,11 +69,13 @@ double signed_modularity(double* network, int *membership, int cols) {
                 // Check if memberships match, if yes, then update positive modularity
                 if (membership[i] == membership[j]) {
 
-                    Q_positive += (edge -
-                                   positive_row_sum[i] *
-                                   positive_column_sum[j] /
-                                   positive_sum) /
-                                   positive_sum;
+                    Q_positive += (
+                        ((edge > 0) ? edge : 0) -
+                        positive_column_sum[i] *
+                        positive_column_sum[j] /
+                        positive_sum
+                    ) / positive_sum;
+
                 }
 
             }
@@ -88,15 +86,17 @@ double signed_modularity(double* network, int *membership, int cols) {
                 // Check if memberships match, if yes, then update negative modularity
                 if (membership[i] == membership[j]) {
 
-                    Q_negative += (edge -
-                                   negative_row_sum[i] *
-                                   negative_column_sum[j] /
-                                   negative_sum) /
-                                   negative_sum;
+                    Q_negative += (
+                        ((edge < 0) ? edge : 0) -
+                        negative_column_sum[i] *
+                        negative_column_sum[j] /
+                        negative_sum
+                    ) / negative_sum;
 
                 }
 
             }
+
         }
     }
 
@@ -105,9 +105,7 @@ double signed_modularity(double* network, int *membership, int cols) {
                negative_sum * Q_negative / total_sum;
 
     // Free memory
-    free(positive_row_sum);
     free(positive_column_sum);
-    free(negative_row_sum);
     free(negative_column_sum);
 
     // Return modularity
