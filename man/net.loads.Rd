@@ -4,7 +4,14 @@
 \alias{net.loads}
 \title{Network Loadings}
 \usage{
-net.loads(A, wc, rotation = "geominQ", min.load = 0, ...)
+net.loads(
+  A,
+  wc,
+  sum.method = c("absolute", "signed"),
+  rotation = "geominQ",
+  min.load = 0,
+  ...
+)
 }
 \arguments{
 \item{A}{Matrix, data frame, or \code{\link[EGAnet]{EGA}} object.
