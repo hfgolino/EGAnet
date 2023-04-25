@@ -14,7 +14,7 @@ double signed_modularity(double* network, int *membership, int cols) {
 
     // Initialize iterators and index
     int i, j;
-    double edge; // Initialize edge value
+    double edge, positive_edge, negative_edge; // Initialize edge value
 
     // Initialize return values
     double *positive_column_sum = (double *)calloc(cols, sizeof(double));
@@ -25,7 +25,7 @@ double signed_modularity(double* network, int *membership, int cols) {
 
     // Loop over network to obtain matrices
     for (i = 0; i < cols; i++) {
-        for (j = 0; j < cols; j++) {
+        for (j = 0; j <= i; j++) {
 
             // Obtain edge
             edge = network[i * cols + j];
@@ -34,15 +34,24 @@ double signed_modularity(double* network, int *membership, int cols) {
             if (edge > 0) {
 
                 // Add to positive sums
-                positive_column_sum[j] += edge;
+                positive_column_sum[i] += edge;
                 positive_sum += edge;
 
+                if (i != j) {
+                    positive_column_sum[j] += edge;
+                    positive_sum += edge;
+                }
 
             } else if (edge < 0) { // Check for negative value
 
                 // Add to negative sums
-                negative_column_sum[j] += edge;
+                negative_column_sum[i] += edge;
                 negative_sum += edge;
+
+                if (i != j) {
+                    negative_column_sum[j] += edge;
+                    negative_sum += edge;
+                }
 
             }
 
@@ -53,12 +62,12 @@ double signed_modularity(double* network, int *membership, int cols) {
     double total_sum = positive_sum + negative_sum;
 
     // Initialize positive and negative modularity
-    double Q_positive = 0;
-    double Q_negative = 0;
+    double Q_positive = 0.0;
+    double Q_negative = 0.0;
 
     // Loop over matrices
     for (i = 0; i < cols; i++) {
-        for (j = 0; j < cols; j++) {
+        for (j = 0; j <= i; j++) {
 
             // Obtain edge
             edge = network[i * cols + j];
@@ -66,15 +75,27 @@ double signed_modularity(double* network, int *membership, int cols) {
             // Check for positive values in network
             if (positive_sum != 0) {
 
+                // Obtain positive edge
+                positive_edge = ((edge > 0) ? edge : 0);
+
                 // Check if memberships match, if yes, then update positive modularity
                 if (membership[i] == membership[j]) {
 
                     Q_positive += (
-                        ((edge > 0) ? edge : 0) -
+                        positive_edge -
                         positive_column_sum[i] *
                         positive_column_sum[j] /
                         positive_sum
                     ) / positive_sum;
+
+                    if (i != j) {
+                        Q_positive += (
+                            positive_edge -
+                            positive_column_sum[i] *
+                            positive_column_sum[j] /
+                            positive_sum
+                        ) / positive_sum;
+                    }
 
                 }
 
@@ -83,15 +104,27 @@ double signed_modularity(double* network, int *membership, int cols) {
             // Check for negative values in network
             if (negative_sum != 0) {
 
+                // Obtain negative edge
+                negative_edge = ((edge < 0) ? edge : 0);
+
                 // Check if memberships match, if yes, then update negative modularity
                 if (membership[i] == membership[j]) {
 
                     Q_negative += (
-                        ((edge < 0) ? edge : 0) -
+                        negative_edge -
                         negative_column_sum[i] *
                         negative_column_sum[j] /
                         negative_sum
                     ) / negative_sum;
+
+                    if (i != j) {
+                        Q_negative += (
+                            negative_edge -
+                            negative_column_sum[i] *
+                            negative_column_sum[j] /
+                            negative_sum
+                        ) / negative_sum;
+                    }
 
                 }
 
@@ -110,6 +143,206 @@ double signed_modularity(double* network, int *membership, int cols) {
 
     // Return modularity
     return Q;
+
+}
+
+// Structure for `modularity_gain`
+struct modularity_gain_result {
+    double new_modularity;
+    double current_modularity;
+    double gain;
+};
+
+// Signed modularity gain
+struct modularity_gain_result modularity_gain(double* network, int *membership, int *new_membership, int cols) {
+
+    // Initialize iterators and index
+    int i, j;
+    double edge, positive_edge, negative_edge; // Initialize edge value
+
+    // Initialize return values
+    double *positive_column_sum = (double *)calloc(cols, sizeof(double));
+    double *negative_column_sum = (double *)calloc(cols, sizeof(double));
+
+    // Initialize matrix sums
+    double positive_sum = 0, negative_sum = 0;
+
+    // Loop over network to obtain matrices
+    for (i = 0; i < cols; i++) {
+        for (j = 0; j <= i; j++) {
+
+            // Obtain edge
+            edge = network[i * cols + j];
+
+            // Check for positive value
+            if (edge > 0) {
+
+                // Add to positive sums
+                positive_column_sum[i] += edge;
+                positive_sum += edge;
+
+                if (i != j) {
+                    positive_column_sum[j] += edge;
+                    positive_sum += edge;
+                }
+
+            } else if (edge < 0) { // Check for negative value
+
+                // Add to negative sums
+                negative_column_sum[i] += edge;
+                negative_sum += edge;
+
+                if (i != j) {
+                    negative_column_sum[j] += edge;
+                    negative_sum += edge;
+                }
+
+            }
+
+        }
+    }
+
+    // Compute total sum
+    double total_sum = positive_sum + negative_sum;
+
+    // Initialize positive and negative modularity
+    double Q_positive = 0.0, Q_positive_new = 0.0;
+    double Q_negative = 0.0, Q_negative_new = 0.0;
+
+    // Loop over matrices
+    for (i = 0; i < cols; i++) {
+        for (j = 0; j <= i; j++) {
+
+            // Obtain edge
+            edge = network[i * cols + j];
+
+            // Check for positive values in network
+            if (positive_sum != 0) {
+
+                // Obtain positive edge
+                positive_edge = ((edge > 0) ? edge : 0);
+
+                // Check if memberships match, if yes, then update positive modularity
+                if (membership[i] == membership[j]) {
+
+                    Q_positive += (
+                        positive_edge -
+                        positive_column_sum[i] *
+                        positive_column_sum[j] /
+                        positive_sum
+                    ) / positive_sum;
+
+                    if (i != j) {
+                        Q_positive += (
+                            positive_edge -
+                            positive_column_sum[i] *
+                            positive_column_sum[j] /
+                            positive_sum
+                        ) / positive_sum;
+                    }
+
+                }
+
+                // Check if memberships match, if yes, then update positive modularity
+                if (new_membership[i] == new_membership[j]) {
+
+                    Q_positive_new += (
+                        positive_edge -
+                        positive_column_sum[i] *
+                        positive_column_sum[j] /
+                        positive_sum
+                    ) / positive_sum;
+
+                    if (i != j) {
+                        Q_positive_new += (
+                            positive_edge -
+                            positive_column_sum[i] *
+                            positive_column_sum[j] /
+                            positive_sum
+                        ) / positive_sum;
+                    }
+
+                }
+
+            }
+
+            // Check for negative values in network
+            if (negative_sum != 0) {
+
+                // Obtain negative edge
+                negative_edge = ((edge < 0) ? edge : 0);
+
+                // Check if memberships match, if yes, then update negative modularity
+                if (membership[i] == membership[j]) {
+
+                    Q_negative += (
+                        negative_edge -
+                        negative_column_sum[i] *
+                        negative_column_sum[j] /
+                        negative_sum
+                    ) / negative_sum;
+
+                    if (i != j) {
+                        Q_negative += (
+                            negative_edge -
+                            negative_column_sum[i] *
+                            negative_column_sum[j] /
+                            negative_sum
+                        ) / negative_sum;
+                    }
+
+                }
+
+                // Check if memberships match, if yes, then update negative modularity
+                if (new_membership[i] == new_membership[j]) {
+
+                    Q_negative_new += (
+                        negative_edge -
+                        negative_column_sum[i] *
+                        negative_column_sum[j] /
+                        negative_sum
+                    ) / negative_sum;
+
+                    if (i != j) {
+                        Q_negative_new += (
+                            negative_edge -
+                            negative_column_sum[i] *
+                            negative_column_sum[j] /
+                            negative_sum
+                        ) / negative_sum;
+                    }
+
+                }
+
+            }
+
+        }
+    }
+
+    // Compute modularity
+    double Q = positive_sum * Q_positive / total_sum -
+               negative_sum * Q_negative / total_sum;
+
+    // Compute modularity
+    double Q_new = positive_sum * Q_positive_new / total_sum -
+                   negative_sum * Q_negative_new / total_sum;
+
+    // Compute gain
+    double gain = Q_new - Q;
+
+    // Free memory
+    free(positive_column_sum);
+    free(negative_column_sum);
+
+    // Set up return
+    struct modularity_gain_result result = {
+        Q_new,
+        Q,
+        gain
+    };
+
+    // Return result
+    return(result);
 
 }
 
@@ -382,9 +615,13 @@ struct louvain_result main_louvain(
                             // Update current node's community with neighboring community
                             new_communities[i] = neighbor_community;
 
+                            // Obtain gain
+                            struct modularity_gain_result gain_result = modularity_gain(
+                                network, communities, new_communities, cols
+                            );
+
                             // Compute difference
-                            double gain_difference = signed_modularity(network, new_communities, cols) -
-                                                     signed_modularity(network, communities, cols);
+                            double gain_difference = gain_result.gain;
 
                             // Compute difference and add to gains
                             gain_vector[neighbor_community] = gain_difference;
@@ -501,9 +738,6 @@ struct louvain_result main_louvain(
                 Q = update_modularity;
 
             }else{
-
-                // Obtain modularity
-                Q = signed_modularity(original_network, update_communities, original_cols);
 
                 // Make network higher order
                 struct higher_order_result higher_order = make_higher_order(
