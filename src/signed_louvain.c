@@ -17,6 +17,8 @@ double signed_modularity(double* network, int *membership, int cols) {
     double edge; // Initialize edge value
 
     // Initialize return values
+    double *positive_row_sum = (double *)calloc(cols, sizeof(double));
+    double *negative_row_sum = (double *)calloc(cols, sizeof(double));
     double *positive_column_sum = (double *)calloc(cols, sizeof(double));
     double *negative_column_sum = (double *)calloc(cols, sizeof(double));
 
@@ -34,6 +36,7 @@ double signed_modularity(double* network, int *membership, int cols) {
             if (edge > 0) {
 
                 // Add to positive sums
+                positive_row_sum[i] += edge;
                 positive_column_sum[j] += edge;
                 positive_sum += edge;
 
@@ -41,6 +44,7 @@ double signed_modularity(double* network, int *membership, int cols) {
             } else if (edge < 0) { // Check for negative value
 
                 // Add to negative sums
+                negative_row_sum[i] += edge;
                 negative_column_sum[j] += edge;
                 negative_sum += edge;
 
@@ -69,13 +73,11 @@ double signed_modularity(double* network, int *membership, int cols) {
                 // Check if memberships match, if yes, then update positive modularity
                 if (membership[i] == membership[j]) {
 
-                    Q_positive += (
-                        ((edge > 0) ? edge : 0) -
-                        positive_column_sum[i] *
-                        positive_column_sum[j] /
-                        positive_sum
-                    ) / positive_sum;
-
+                    Q_positive += (edge -
+                                   positive_row_sum[i] *
+                                   positive_column_sum[j] /
+                                   positive_sum) /
+                                   positive_sum;
                 }
 
             }
@@ -86,17 +88,15 @@ double signed_modularity(double* network, int *membership, int cols) {
                 // Check if memberships match, if yes, then update negative modularity
                 if (membership[i] == membership[j]) {
 
-                    Q_negative += (
-                        ((edge < 0) ? edge : 0) -
-                        negative_column_sum[i] *
-                        negative_column_sum[j] /
-                        negative_sum
-                    ) / negative_sum;
+                    Q_negative += (edge -
+                                   negative_row_sum[i] *
+                                   negative_column_sum[j] /
+                                   negative_sum) /
+                                   negative_sum;
 
                 }
 
             }
-
         }
     }
 
@@ -105,7 +105,9 @@ double signed_modularity(double* network, int *membership, int cols) {
                negative_sum * Q_negative / total_sum;
 
     // Free memory
+    free(positive_row_sum);
     free(positive_column_sum);
+    free(negative_row_sum);
     free(negative_column_sum);
 
     // Return modularity
@@ -302,7 +304,7 @@ struct louvain_result main_louvain(
 ) {
 
     // Initialize iterators
-    int i, j;
+    int i, j, k;
 
     // Initialize communities and modularity
     int* update_communities = (int*)malloc(original_cols * sizeof(int)); // not yet freed
@@ -515,8 +517,11 @@ struct louvain_result main_louvain(
                 // Update columns
                 cols = higher_order.new_cols;
 
+                // Free communities
+                free(communities);
+
                 // Re-initialize communities
-                communities = initialize_communities(cols); // freed by return
+                int* communities = initialize_communities(cols); // freed by return
 
                 // Free network
                 free(network);
@@ -561,19 +566,22 @@ struct louvain_result main_louvain(
 
 // Define the signed louvain function
 struct signed_louvain_result {
-    int *communities;
+    int **communities;
     double *modularities;
     int count;
 };
 
 // Signed Louvain function
-struct signed_louvain_result signed_louvain(double* network, int cols) {
+struct signed_louvain_result signed_louvain(double* network, int cols){
 
     // Initialize iterators
     int i, j;
 
     // Allocate memory for communities
-    int* communities = (int*)malloc(cols * cols * sizeof(int)); // freed later
+    int** communities = (int**)malloc(cols * sizeof(int*)); // freed later
+    for (i = 0; i < cols; i++) {
+        communities[i] = (int*)malloc(cols * sizeof(int));
+    }
 
     // Allocate memory for modularities
     double* modularities = (double*)malloc(cols * sizeof(double)); // freed later
@@ -590,50 +598,46 @@ struct signed_louvain_result signed_louvain(double* network, int cols) {
     );
 
     // Store results
-    for (i = 0; i < cols; i++) {
-        communities[count * cols + i] = louvain_initial.communities[i];
+    for(i = 0; i < cols; i++){
+        communities[count][i] = louvain_initial.communities[i];
     }
     modularities[count] = louvain_initial.modularity;
 
     // Free memory
     free(louvain_initial.communities); // frees first run communities
 
-    // Declare re-used structures
-    struct louvain_result louvain_next_run;
-    struct higher_order_result higher_order;
-
     // Enter `while` loop for next levels
-    while (1) {
+    while(1){
 
         // Increase count
         count++;
 
         // Obtain higher-order network
-        higher_order = make_higher_order(
-            network, &communities[(count - 1) * cols], cols
+        struct higher_order_result higher_order = make_higher_order(
+            network, communities[count - 1], cols
         );
 
         // Obtain first-level Louvain results
-        louvain_next_run = main_louvain(
+        struct louvain_result louvain_next_run = main_louvain(
             higher_order.new_network,       // double *network
             network,                        // double *original_network
-            &communities[(count - 1) * cols], // int *previous_communities
+            communities[count - 1],         // int *previous_communities
             modularities[count - 1],        // double previous_modularity
             higher_order.new_cols,          // int cols
             cols                            // int original_cols
         );
 
         // Check for break condition
-        if (louvain_next_run.modularity == modularities[count - 1]) {
+        if(louvain_next_run.modularity == modularities[count - 1]){
 
             // Break out of loop
             break;
 
-        } else {
+        }else{
 
             // Store results
             for (i = 0; i < cols; i++) {
-                communities[count * cols + i] = louvain_next_run.communities[i];
+                communities[count][i] = louvain_next_run.communities[i];
             }
             modularities[count] = louvain_next_run.modularity;
 
@@ -642,23 +646,29 @@ struct signed_louvain_result signed_louvain(double* network, int cols) {
     }
 
     // Allocate memory for final communities
-    int* final_communities = (int*)malloc(count * cols * sizeof(int)); // freed with return
+    int** final_communities = (int**)malloc(count * sizeof(int*)); // freed with return
+    for (i = 0; i < count; i++) {
+        final_communities[i] = (int*)malloc(cols * sizeof(int));
+    }
 
     // Shrink matrix
-    for (i = 0; i < count; i++) {
-        for (j = 0; j < cols; j++) {
-            final_communities[i * cols + j] = communities[i * cols + j];
+    for(i = 0; i < count; i++){
+        for(j = 0; j < cols; j++){
+            final_communities[i][j] = communities[i][j];
         }
     }
 
     // Free communities
+    for(i = 0; i < cols; i++){
+        free(communities[i]);
+    }
     free(communities);
 
     // Allocate memory for final modularities
     double* final_modularities = (double*)malloc(count * sizeof(double)); // freed with return
 
     // Shrink vector
-    for (i = 0; i < count; i++) {
+    for(i = 0; i < count; i++){
         final_modularities[i] = modularities[i];
     }
 
@@ -675,7 +685,7 @@ struct signed_louvain_result signed_louvain(double* network, int cols) {
     // Return result
     return(result);
 
-}
+};
 
 SEXP r_signed_louvain(SEXP r_input_network) {
 
