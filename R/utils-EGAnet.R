@@ -329,6 +329,46 @@ efa <- function(data, nfactors, fm = "minres", rotate = "oblimin",
 # LOUVAIN ----
 #%%%%%%%%%%%%%
 
+#' @noRd
+# Re-index membership function
+# Updated 04.05.2023
+reindex_comm <- function(wc) {
+  
+  # Initialize index array
+  index_array <- numeric(length(wc))
+  
+  # Initialize count
+  count <- 0
+  
+  # Loop over to determine index correspondence
+  for(i in seq_along(wc)){
+    
+    # Check if index already exists
+    if(index_array[wc[i]] == 0){
+      
+      # Increase count
+      count <- count + 1
+      
+      # Set index array
+      index_array[wc[i]] <- count
+      
+    }
+    
+  }
+  
+  # Update membership
+  for(i in seq_along(wc)){
+    
+    # Check value in index array
+    wc[i] <- index_array[wc[i]]
+    
+  }
+  
+  # Return re-indexed membership
+  return(wc)
+  
+}
+
 # Lancichinetti & Fortunato (2012)
 #' @noRd
 # Consensus Clustering

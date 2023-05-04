@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 #include <time.h>
 #include <R.h>
 #include <Rinternals.h>
@@ -75,7 +76,7 @@ struct modularity_result modularity_values(double* network, int cols) {
     double total_sum = positive_sum + negative_sum;
 
     // Get indices for modularity values
-    int value_indices = ((cols * (cols - 1)) / 2) + cols;
+    int value_indices = (((cols * (cols - 1)) / 2) + cols);
 
     // Initialize modularity values
     double* positive_modularity_values = (double*)calloc(value_indices, sizeof(double));
@@ -212,7 +213,7 @@ double modularity_gain(
 ) {
 
     // Initialize iterators
-    int i;
+    int i, index;
 
     // Initialize positive and negative value
     double positive_value, negative_value;
@@ -237,8 +238,11 @@ double modularity_gain(
     // Loop over to get values
     for(i = row_start; i < row_end; i++) {
 
+        // Get index
+        index = target_node + count;
+
         // Check for memberships
-        if (target_membership == membership[target_node + count]) {
+        if (target_membership == membership[index]) {
 
             // Values
             positive_value = ((Q_values.positive_sum_flag) ? Q_values.positive_modularity_values[i] : 0);
@@ -256,7 +260,7 @@ double modularity_gain(
 
         }
 
-        if(neighbor_membership == new_memberships[target_node + count]) {
+        if(neighbor_membership == new_memberships[index]) {
 
             // Values
             positive_value = ((Q_values.positive_sum_flag) ? Q_values.positive_modularity_values[i] : 0);
@@ -291,8 +295,11 @@ double modularity_gain(
         // Loop over to get columns
         for(i = 0; i < target_node; i++) {
 
+            // Get index
+            index = target_node - count;
+
             // Check for memberships
-            if (target_membership == membership[target_node - count]) {
+            if (target_membership == membership[index]) {
 
                 // Values
                 positive_value = ((Q_values.positive_sum_flag) ? Q_values.positive_modularity_values[column_index] : 0);
@@ -304,7 +311,7 @@ double modularity_gain(
 
             }
 
-            if(neighbor_membership == new_memberships[target_node - count]) {
+            if(neighbor_membership == new_memberships[index]) {
 
                 // Values
                 positive_value = ((Q_values.positive_sum_flag) ? Q_values.positive_modularity_values[column_index] : 0);
@@ -441,14 +448,24 @@ int* reindex_membership(int* membership, int cols) {
 
 }
 
+// Get clock time in nanoseconds
+uint64_t get_time_ns() {
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    return (uint64_t)ts.tv_sec * 1000000000ULL + (uint64_t)ts.tv_nsec;
+}
+
 // Fisher-Yates (or Knuth) Shuffle
 void shuffle_nodes(int *arr, int cols) {
 
     // Initialize iterators
     int i, j, temp;
 
+    // Get clock time
+    uint64_t current_time_ns = get_time_ns();
+
     // Seed the random number generator
-    srand(time(NULL));
+    srand(current_time_ns);
 
     // Iterate through the array from the last element to the first
     for (i = cols - 1; i > 0; i--) {
