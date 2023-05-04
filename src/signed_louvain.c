@@ -1,696 +1,807 @@
-#include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
-#include <stddef.h>
+#include <stdio.h>
 #include <string.h>
-#include <math.h>
+#include <time.h>
 #include <R.h>
 #include <Rinternals.h>
 
-/* Function for signed modularity */
+// Structure for `modularity_values`
+struct modularity_result {
+    double* positive_modularity_values;
+    double* negative_modularity_values;
+    double positive_sum_flag;
+    double negative_sum_flag;
+    double positive_total_sum;
+    double negative_total_sum;
+};
 
-// Signed modularity
-double signed_modularity(double* network, int *membership, int cols) {
+// Function to compute modularity values
+struct modularity_result modularity_values(double* network, int cols) {
 
-    // Initialize iterators and index
-    int i, j;
-    double edge; // Initialize edge value
+    // Initialize iterators
+    int i, j, network_offset;
+    double edge;
+    int count = 0;
 
-    // Initialize return values
-    double *positive_row_sum = (double *)calloc(cols, sizeof(double));
-    double *negative_row_sum = (double *)calloc(cols, sizeof(double));
-    double *positive_column_sum = (double *)calloc(cols, sizeof(double));
-    double *negative_column_sum = (double *)calloc(cols, sizeof(double));
+    // Initialize sums
+    double* positive_column_sums = (double*)calloc(cols, sizeof(double));
+    double* negative_column_sums = (double*)calloc(cols, sizeof(double));
+    double positive_sum = 0.0, negative_sum = 0.0;
 
-    // Initialize matrix sums
-    double positive_sum = 0, negative_sum = 0;
+    // Loop over to get sums
+    for(i = 0; i < cols; i++) {
 
-    // Loop over network to obtain matrices
-    for (i = 0; i < cols; i++) {
-        for (j = 0; j < cols; j++) {
+        // Compute network offset
+        network_offset = i * cols;
 
-            // Obtain edge
-            edge = network[i * cols + j];
+        for(j = i; j < cols; j++) {
 
-            // Check for positive value
-            if (edge > 0) {
+            // Get edge
+            edge = network[network_offset + j];
 
-                // Add to positive sums
-                positive_row_sum[i] += edge;
-                positive_column_sum[j] += edge;
-                positive_sum += edge;
+            // Compute based on sign
+            if(edge > 0) {
 
+                // Add to sums
+                positive_column_sums[i] += edge;
 
-            } else if (edge < 0) { // Check for negative value
+                // Check for off-diagonal edge
+                if(i != j) {
+                    positive_column_sums[j] += edge;
+                }
 
-                // Add to negative sums
-                negative_row_sum[i] += edge;
-                negative_column_sum[j] += edge;
-                negative_sum += edge;
+            }else if(edge < 0) {
+
+                // Add to sums
+                negative_column_sums[i] += edge;
+
+                // Check for off-diagonal edge
+                if(i != j) {
+                    negative_column_sums[j] += edge;
+                }
 
             }
 
         }
+    }
+
+    // Compute sums
+    for(i = 0; i < cols; i++) {
+        positive_sum += positive_column_sums[i];
+        negative_sum += negative_column_sums[i];
     }
 
     // Compute total sum
     double total_sum = positive_sum + negative_sum;
 
-    // Initialize positive and negative modularity
-    double Q_positive = 0;
-    double Q_negative = 0;
+    // Get indices for modularity values
+    int value_indices = ((cols * (cols - 1)) / 2) + cols;
 
-    // Loop over matrices
+    // Initialize modularity values
+    double* positive_modularity_values = (double*)calloc(value_indices, sizeof(double));
+    double* negative_modularity_values = (double*)calloc(value_indices, sizeof(double));
+
+    // Check if positive_sum and negative_sum are not zero
+    int positive_sum_flag = positive_sum != 0;
+    int negative_sum_flag = negative_sum != 0;
+
+    // Loop over to compute modularity
     for (i = 0; i < cols; i++) {
-        for (j = 0; j < cols; j++) {
 
-            // Obtain edge
-            edge = network[i * cols + j];
+        // Compute network offset
+        network_offset = i * cols;
 
-            // Check for positive values in network
-            if (positive_sum != 0) {
+        for (j = i; j < cols; j++) {
 
-                // Check if memberships match, if yes, then update positive modularity
-                if (membership[i] == membership[j]) {
+            // Obtain edges
+            edge = network[network_offset + j];
 
-                    Q_positive += (edge -
-                                   positive_row_sum[i] *
-                                   positive_column_sum[j] /
-                                   positive_sum) /
-                                   positive_sum;
-                }
+            // Check for positive sum
+            if(positive_sum_flag) {
+
+                // Update positive modularity
+                positive_modularity_values[count] += (
+                    ((edge > 0) ? edge : 0) - // positive edge
+                    positive_column_sums[i] *
+                    positive_column_sums[j] /
+                    positive_sum
+                ) / positive_sum;
+
+            }
+
+            // Check for negative sum
+            if(negative_sum_flag) {
+
+                // Update negative modularity
+                negative_modularity_values[count] += (
+                    ((edge < 0) ? edge : 0) - // negative edge
+                    negative_column_sums[i] *
+                    negative_column_sums[j] /
+                    negative_sum
+                ) / negative_sum;
 
             }
 
-            // Check for negative values in network
-            if (negative_sum != 0) {
-
-                // Check if memberships match, if yes, then update negative modularity
-                if (membership[i] == membership[j]) {
-
-                    Q_negative += (edge -
-                                   negative_row_sum[i] *
-                                   negative_column_sum[j] /
-                                   negative_sum) /
-                                   negative_sum;
-
-                }
-
-            }
-        }
-    }
-
-    // Compute modularity
-    double Q = positive_sum * Q_positive / total_sum -
-               negative_sum * Q_negative / total_sum;
-
-    // Free memory
-    free(positive_row_sum);
-    free(positive_column_sum);
-    free(negative_row_sum);
-    free(negative_column_sum);
-
-    // Return modularity
-    return Q;
-
-}
-
-/* Functions for main louvain */
-
-// Function to initialize communities
-int* initialize_communities(int cols){
-
-    // Allocate memory for communities
-    int* communities = (int*)malloc(cols * sizeof(int));
-
-    // Loop over to populate communities
-    for(int i = 0; i < cols; i++){
-        communities[i] = i + 1;
-    }
-
-    // Return communities
-    return(communities);
-
-}
-
-// Function to find neighboring nodes
-void find_neighbors(
-    double *network, int index, int cols,
-    int **target_neighbors, int *num_target_neighbors
-) {
-
-    // Count the number of neighbors
-    int count = 0;
-
-    // Find neighbors
-    for (int j = 0; j < cols; j++) {
-        if (network[index * cols + j] != 0) {
+            // Increase count
             count++;
         }
     }
 
-    // Allocate memory for target_neighbors array
-    *target_neighbors = (int *)malloc(count * sizeof(int));
-
-    // Fill the target_neighbors array
-    int neighbor = 0;
-    for (int j = 0; j < cols; j++) {
-        if (network[index * cols + j] != 0) {
-            (*target_neighbors)[neighbor] = j;
-            neighbor++;
-        }
-    }
-
-    // Set the number of neighbors
-    *num_target_neighbors = count;
-
-}
-
-// Re-index communities function
-void reindex_comm(int *communities, int size) {
-    int *comm_freq = (int *)calloc(size, sizeof(int));
-    int i;
-
-    // Get frequencies
-    for (i = 0; i < size; i++) {
-        comm_freq[communities[i] - 1]++;
-    }
-
-    // Order frequencies in descending order
-    int *freq_order = (int *)malloc(size * sizeof(int));
-    for (i = 0; i < size; i++) {
-        freq_order[i] = i;
-    }
-
-    int j, temp;
-    for (i = 0; i < size; i++) {
-        for (j = i + 1; j < size; j++) {
-            if (comm_freq[freq_order[i]] < comm_freq[freq_order[j]]) {
-                temp = freq_order[i];
-                freq_order[i] = freq_order[j];
-                freq_order[j] = temp;
-            }
-        }
-    }
-
-    // Re-index them by matching
-    for (i = 0; i < size; i++) {
-        for (j = 0; j < size; j++) {
-            if (communities[i] == freq_order[j] + 1) {
-                communities[i] = j + 1;
-                break;
-            }
-        }
-    }
-
-    free(comm_freq);
-    free(freq_order);
-}
-
-// Structure for `make_higher_order`
-struct higher_order_result {
-    double* new_network;
-    int new_cols;
-};
-
-// Function to make higher-order Louvain results
-struct higher_order_result make_higher_order(double* network, int* communities, int cols){
-
-    // Initialize iterators
-    int i, j;
-
-    // Re-index communities
-    reindex_comm(communities, cols);
-
-    // Obtain number of communities
-    int num_communities = 0;
-
-    // Loop over to get maximum communities
-    for(i = 0; i < cols; i++){
-
-        // Check for greater value
-        if(num_communities < communities[i]){
-            num_communities = communities[i];
-        }
-
-    }
-
-    // Initialize unique communities (automatically sorts)
-    int* unique_communities = (int *) calloc(num_communities, sizeof(int)); // freed later
-
-    // Populate unique communities
-    for(i = 0; i < num_communities; i++){
-        unique_communities[i] = i + 1;
-    }
-
-    // Initialize new network
-    double* new_network = (double *) calloc(num_communities * num_communities, sizeof (double));
-
-    // Populate new network with sums of edges in each community
-    for(i = 0; i < cols; i++){
-        for(j = 0; j < cols; j++){
-
-            // Check for i less than j
-            if(i <= j){
-
-                // Obtain target communities
-                int target_community_i = communities[i] - 1;
-                int target_community_j = communities[j] - 1;
-
-                // Obtain target edge
-                double target_edge = network[i * cols + j];
-
-                // Populate new network
-                new_network[
-                    target_community_i * num_communities + target_community_j
-                ] += target_edge;
-
-                // Fill other side
-                new_network[
-                    target_community_j * num_communities + target_community_i
-                ] += target_edge;
-
-            }
-
-        }
-    }
-
-
-    // Set up return structure
-    struct higher_order_result results = {
-        new_network,
-        num_communities
-    };
-
     // Free memory
-    free(unique_communities);
-
-    // Return results
-    return(results);
-
-}
-
-// Define the main louvain function
-struct louvain_result {
-    int *communities;
-    double modularity;
-};
-
-// Main Louvain function
-struct louvain_result main_louvain(
-    double *network, double *original_network,
-    int *previous_communities, double previous_modularity,
-    int cols, int original_cols
-) {
-
-    // Initialize iterators
-    int i, j, k;
-
-    // Initialize communities and modularity
-    int* update_communities = (int*)malloc(original_cols * sizeof(int)); // not yet freed
-    double update_modularity = 0.0;
-
-    // Update communities and modularity
-    if(previous_communities != NULL){
-
-        // Copy values
-        memcpy(update_communities, previous_communities, original_cols * sizeof(int));
-        update_modularity = previous_modularity; // not yet freed
-
-    }
-
-    // Initialize communities
-    int* communities = initialize_communities(cols); // freed by return
-
-    // Initialize modularity
-    double Q = 0.0;
-
-    // Initialize gain and iterations
-    int gain = 1;
-    int iter = 0;
-
-    // Set up `while` loop for modularity improvement
-    while(gain == 1){
-
-        // Initialize gain
-        gain = 0;
-
-        // Loop over nodes
-        for(i = 0; i < cols; i++){
-
-            // Initialize best increase
-            double best_increase = 0.0;
-
-            // Initialize gain vector
-            double* gain_vector = (double *) calloc(cols + 1, sizeof(double)); // freed later
-
-            // Set target community
-            int target_community = communities[i];
-
-            // Initialize new community
-            int new_community = target_community;
-            int new_community_copy = new_community;
-
-            // Find neighbors of node
-            int *target_neighbors = NULL;
-            int num_target_neighbors;
-            find_neighbors(
-                network, i, cols,
-                &target_neighbors, // freed later
-                &num_target_neighbors
-            );
-
-            // Check that there are neighbors
-            if (num_target_neighbors != 0) {
-
-                // Loop over neighbors
-                for (j = 0; j < num_target_neighbors; j++) {
-
-                    // Determine neighbor's community
-                    int neighbor_community = communities[target_neighbors[j]];
-
-                    // Check for gain with neighbor's community
-                    if (gain_vector[neighbor_community] == 0) {
-
-                        // Check for whether current community equals neighbor's community
-                        if (communities[i] != neighbor_community) {
-
-                            // Allocate memory for new communities
-                            int *new_communities = (int *) malloc(cols * sizeof(int)); // freed later
-
-                            // Copy original communities to new communities
-                            memcpy(new_communities, communities, cols * sizeof(int));
-
-                            // Update current node's community with neighboring community
-                            new_communities[i] = neighbor_community;
-
-                            // Compute difference
-                            double gain_difference = signed_modularity(network, new_communities, cols) -
-                                                     signed_modularity(network, communities, cols);
-
-                            // Compute difference and add to gains
-                            gain_vector[neighbor_community] = gain_difference;
-
-                            // Check if gain is better than previous best increase
-                            if (gain_difference > best_increase) {
-                                best_increase = gain_difference; // Update best increase
-                                new_community_copy = neighbor_community; // Update community membership
-                            }
-
-                            // Free memory
-                            free(new_communities);
-
-                        }
-
-                    }
-                }
-            }
-
-            // Free memory
-            free(target_neighbors);
-            free(gain_vector);
-
-            // Check for whether best increase is greater than 0
-            // That is, there is an improvement in modularity
-            if(best_increase > 0){
-
-                // Update new community
-                new_community = new_community_copy;
-
-            }
-
-            // Check if there are previous communities
-            if(previous_communities == NULL){
-
-                // Update current communities
-                communities[i] = new_community;
-
-            }else{
-
-                // Allocate memory for improve communities
-                int* improve_communities = (int*)calloc(original_cols, sizeof(int)); // freed later
-
-                // Make copy of previous communities
-                memcpy(improve_communities, previous_communities, original_cols * sizeof(int));
-
-                // Update communities
-                for(j = 0; j < original_cols; j++){
-
-                    // Check for target community
-                    if(improve_communities[j] == target_community){
-                        // Update communities
-                        improve_communities[j] = new_community;
-                    }
-
-                }
-
-                // Compute modularity
-                double improve_modularity = signed_modularity(
-                    original_network, improve_communities, original_cols
-                );
-
-                // Check for update
-                if(improve_modularity > previous_modularity){
-
-                    // Update communities
-                    communities[i] = new_community;
-
-                    // Copy into update communities
-                    for(j = 0; j < original_cols; j++){
-                        update_communities[j] = improve_communities[j];
-                    }
-
-                    // Update modularity
-                    update_modularity = improve_modularity;
-
-                }
-
-                // Free memory
-                free(improve_communities);
-
-            }
-
-            // Reset gain
-            if(new_community != target_community){
-                gain = 1; // there was an improvement, keep going
-            }
-
-        }
-
-        // Check for whether there was an original network
-        // This part works on higher levels after first pass
-        if(original_network == NULL){
-
-            // Update modularity
-            Q = signed_modularity(network, communities, cols);
-
-        }else{
-
-            // Re-index communities
-            reindex_comm(previous_communities, original_cols);
-            reindex_comm(update_communities, original_cols);
-
-            // Check if there is no change in modularity
-            if(previous_modularity == update_modularity){
-
-                // Set gain to zero
-                gain = 0;
-
-                // Re-initialize communities
-                communities = update_communities;
-
-                // Update modularity
-                Q = update_modularity;
-
-            }else{
-
-                // Obtain modularity
-                Q = signed_modularity(original_network, update_communities, original_cols);
-
-                // Make network higher order
-                struct higher_order_result higher_order = make_higher_order(
-                    original_network,
-                    update_communities,
-                    original_cols
-                );
-
-                // Update columns
-                cols = higher_order.new_cols;
-
-                // Free communities
-                free(communities);
-
-                // Re-initialize communities
-                int* communities = initialize_communities(cols); // freed by return
-
-                // Free network
-                free(network);
-
-                // Re-initialize network
-                // double* // apparently, don't need to re-intialize
-                network = higher_order.new_network;
-
-                // Free new network
-                // free(higher_order.new_network); // apparently, don't need to free?
-
-                // Re-initialize previous communities
-                previous_communities = update_communities;
-
-                // Update modularity
-                previous_modularity = update_modularity;
-
-            }
-
-        }
-
-        // Increase iterations
-        iter++;
-
-    }
-
-    // Re-index communities for final return
-    reindex_comm(communities, original_cols);
-
-    // Free communities
-    free(update_communities);
-
-    // Set up results
-    struct louvain_result results = {
-        communities, Q
-    };
-
-    // Return results
-    return(results);
-
-}
-
-// Define the signed louvain function
-struct signed_louvain_result {
-    int **communities;
-    double *modularities;
-    int count;
-};
-
-// Signed Louvain function
-struct signed_louvain_result signed_louvain(double* network, int cols){
-
-    // Initialize iterators
-    int i, j;
-
-    // Allocate memory for communities
-    int** communities = (int**)malloc(cols * sizeof(int*)); // freed later
-    for (i = 0; i < cols; i++) {
-        communities[i] = (int*)malloc(cols * sizeof(int));
-    }
-
-    // Allocate memory for modularities
-    double* modularities = (double*)malloc(cols * sizeof(double)); // freed later
-
-    // Initialize count
-    int count = 0;
-
-    // Obtain lowest order Louvain results
-    struct louvain_result louvain_initial = main_louvain(
-        network, NULL,  // double* network, original_network
-        NULL,           // int *previous_communities
-        0,              // double previous_modularity
-        cols, cols      // int cols, original_cols
-    );
-
-    // Store results
-    for(i = 0; i < cols; i++){
-        communities[count][i] = louvain_initial.communities[i];
-    }
-    modularities[count] = louvain_initial.modularity;
-
-    // Free memory
-    free(louvain_initial.communities); // frees first run communities
-
-    // Enter `while` loop for next levels
-    while(1){
-
-        // Increase count
-        count++;
-
-        // Obtain higher-order network
-        struct higher_order_result higher_order = make_higher_order(
-            network, communities[count - 1], cols
-        );
-
-        // Obtain first-level Louvain results
-        struct louvain_result louvain_next_run = main_louvain(
-            higher_order.new_network,       // double *network
-            network,                        // double *original_network
-            communities[count - 1],         // int *previous_communities
-            modularities[count - 1],        // double previous_modularity
-            higher_order.new_cols,          // int cols
-            cols                            // int original_cols
-        );
-
-        // Check for break condition
-        if(louvain_next_run.modularity == modularities[count - 1]){
-
-            // Break out of loop
-            break;
-
-        }else{
-
-            // Store results
-            for (i = 0; i < cols; i++) {
-                communities[count][i] = louvain_next_run.communities[i];
-            }
-            modularities[count] = louvain_next_run.modularity;
-
-        }
-
-    }
-
-    // Allocate memory for final communities
-    int** final_communities = (int**)malloc(count * sizeof(int*)); // freed with return
-    for (i = 0; i < count; i++) {
-        final_communities[i] = (int*)malloc(cols * sizeof(int));
-    }
-
-    // Shrink matrix
-    for(i = 0; i < count; i++){
-        for(j = 0; j < cols; j++){
-            final_communities[i][j] = communities[i][j];
-        }
-    }
-
-    // Free communities
-    for(i = 0; i < cols; i++){
-        free(communities[i]);
-    }
-    free(communities);
-
-    // Allocate memory for final modularities
-    double* final_modularities = (double*)malloc(count * sizeof(double)); // freed with return
-
-    // Shrink vector
-    for(i = 0; i < count; i++){
-        final_modularities[i] = modularities[i];
-    }
-
-    // Free modularities
-    free(modularities);
+    free(positive_column_sums);
+    free(negative_column_sums);
+
+    // Set pointers to NULL
+    positive_column_sums = NULL;
+    negative_column_sums = NULL;
+
+    // Pre-compute division of sums
+    double positive_total_sum = positive_sum / total_sum;
+    double negative_total_sum = negative_sum / total_sum;
 
     // Set up result
-    struct signed_louvain_result result = {
-        final_communities,
-        final_modularities,
-        count
+    struct modularity_result result = {
+        positive_modularity_values,
+        negative_modularity_values,
+        positive_sum_flag,
+        negative_sum_flag,
+        positive_total_sum,
+        negative_total_sum
     };
 
     // Return result
     return(result);
 
+}
+
+// Signed modularity function
+double signed_modularity(struct modularity_result Q_values, int* membership, int cols) {
+
+    // Initialize iterators
+    int i, j;
+    int count = 0;
+
+    // Initialize positive and negative modularity
+    double Q_positive = 0.0, Q_negative = 0.0;
+
+    // Initialize positive and negative value
+    double positive_value, negative_value;
+
+    // Loop over to compute modularity
+    for (i = 0; i < cols; i++) {
+
+        for (j = i; j < cols; j++) {
+
+            // Check for memberships
+            if (membership[i] == membership[j]) {
+
+                // Values
+                positive_value = ((Q_values.positive_sum_flag) ? Q_values.positive_modularity_values[count] : 0);
+                negative_value = ((Q_values.negative_sum_flag) ? Q_values.negative_modularity_values[count] : 0);
+
+                // Update modularity
+                Q_positive += positive_value * 2;
+                Q_negative += negative_value * 2;
+
+                // Check for diagonal edge
+                if (i == j) {
+                    Q_positive -= positive_value;
+                    Q_negative -= negative_value;
+                }
+
+            }
+
+            // Increase count
+            count++;
+        }
+
+    }
+
+    // Return modularity
+    return Q_values.positive_total_sum * Q_positive - Q_values.negative_total_sum * Q_negative;
+
+}
+
+// Function to compute modularity gain
+double modularity_gain(
+    struct modularity_result Q_values,
+    int target_node,
+    int target_membership, int neighbor_membership,
+    int* membership, int* new_memberships,
+    double update_modularity, int cols
+) {
+
+    // Initialize iterators
+    int i;
+
+    // Initialize positive and negative value
+    double positive_value, negative_value;
+
+    // Initialize gain in modularity
+    double gain_positive = 0.0, gain_negative = 0.0;
+
+    // Initialize row start
+    int row_start = 0;
+
+    // Compute row start
+    for(i = 0; i < target_node; i++) {
+        row_start += (cols - i);
+    }
+
+    // Compute row end
+    int row_end = row_start + (cols - target_node);
+
+    // Initialize count
+    int count = 0;
+
+    // Loop over to get values
+    for(i = row_start; i < row_end; i++) {
+
+        // Check for memberships
+        if (target_membership == membership[target_node + count]) {
+
+            // Values
+            positive_value = ((Q_values.positive_sum_flag) ? Q_values.positive_modularity_values[i] : 0);
+            negative_value = ((Q_values.negative_sum_flag) ? Q_values.negative_modularity_values[i] : 0);
+
+            // Update modularity
+            gain_positive -= positive_value * 2;
+            gain_negative -= negative_value * 2;
+
+            // Check for diagonal edge
+            if (i == row_start) {
+                gain_positive += positive_value;
+                gain_negative += negative_value;
+            }
+
+        }
+
+        if(neighbor_membership == new_memberships[target_node + count]) {
+
+            // Values
+            positive_value = ((Q_values.positive_sum_flag) ? Q_values.positive_modularity_values[i] : 0);
+            negative_value = ((Q_values.negative_sum_flag) ? Q_values.negative_modularity_values[i] : 0);
+
+            // Update modularity
+            gain_positive += positive_value * 2;
+            gain_negative += negative_value * 2;
+
+            // Check for diagonal edge
+            if (i == row_start) {
+                gain_positive -= positive_value;
+                gain_negative -= negative_value;
+            }
+
+        }
+
+        // Increase count
+        count++;
+
+    }
+
+    // Check for whether target node equals zero
+    if(target_node != 0) {
+
+        // Initialize target index
+        int column_index = target_node;
+
+        // Reset count
+        count = target_node;
+
+        // Loop over to get columns
+        for(i = 0; i < target_node; i++) {
+
+            // Check for memberships
+            if (target_membership == membership[target_node - count]) {
+
+                // Values
+                positive_value = ((Q_values.positive_sum_flag) ? Q_values.positive_modularity_values[column_index] : 0);
+                negative_value = ((Q_values.negative_sum_flag) ? Q_values.negative_modularity_values[column_index] : 0);
+
+                // Update modularity
+                gain_positive -= positive_value * 2;
+                gain_negative -= negative_value * 2;
+
+            }
+
+            if(neighbor_membership == new_memberships[target_node - count]) {
+
+                // Values
+                positive_value = ((Q_values.positive_sum_flag) ? Q_values.positive_modularity_values[column_index] : 0);
+                negative_value = ((Q_values.negative_sum_flag) ? Q_values.negative_modularity_values[column_index] : 0);
+
+                // Update modularity
+                gain_positive += positive_value * 2;
+                gain_negative += negative_value * 2;
+
+            }
+
+            // Update target index
+            column_index += (cols - i - 1);
+
+            // Decrease count
+            count--;
+
+        }
+
+    }
+
+    // Return modularity
+    return Q_values.positive_total_sum * gain_positive - Q_values.negative_total_sum * gain_negative;
+
+}
+
+/* Functions for Main Louvain */
+
+// Structure for `make_higher_order`
+struct higher_order_result {
+    double* higher_order;
+    int number;
 };
+
+// Function to make higher-order network
+struct higher_order_result make_higher_order(double* network, int* membership, int cols) {
+
+    // Initialize iterators
+    int i, j, network_offset;
+    double edge;
+    int first_position, second_position;
+
+    // Initialize number of communities
+    int number = 0;
+
+    // Loop over to find highest value
+    for(i = 0; i < cols; i++) {
+
+        // Check for new highest value
+        if(membership[i] > number) {
+            number = membership[i];
+        }
+
+    }
+
+    // Increase number by 1
+    number += 1;
+
+    // Initialize higher-order network
+    double* higher_order = (double*)calloc(number * number, sizeof(double));
+
+    // Populate network
+    for(i = 0; i < cols; i++) {
+
+        // Compute network offset
+        network_offset = i * cols;
+
+        for(j = i; j < cols; j++) {
+
+            // Obtain edge
+            edge = network[network_offset + j];
+
+            // Obtain positions
+            first_position = membership[i] * number + membership[j];
+            second_position = membership[j] * number + membership[i];
+
+            // Add edge to current position of memberships
+            higher_order[first_position] += edge;
+            higher_order[second_position] += edge;
+
+        }
+    }
+
+    // Set up result
+    struct higher_order_result result = {
+        higher_order,
+        number
+    };
+
+    // Return result
+    return(result);
+
+}
+
+// Function to re-index membership
+int* reindex_membership(int* membership, int cols) {
+
+    // Initialize iterators
+    int i;
+    int count = 0;
+
+    // Initialize index array
+    int* index_array = (int*)calloc(cols, sizeof(int));
+
+    // Loop over to determine index correspondence
+    for(i = 0; i < cols; i++) {
+
+        // Check if index already exists
+        if(index_array[membership[i]] == 0) {
+
+            // Increase count
+            count++;
+
+            // Set index array
+            index_array[membership[i]] = count;
+
+        }
+
+    }
+
+    // Update membership
+    for(i = 0; i < cols; i++) {
+
+        // Check value in index array
+        membership[i] = index_array[membership[i]] - 1;
+
+    }
+
+    // Free memory
+    free(index_array);
+
+    // Return membership
+    return(membership);
+
+}
+
+// Fisher-Yates (or Knuth) Shuffle
+void shuffle_nodes(int *arr, int cols) {
+
+    // Initialize iterators
+    int i, j, temp;
+
+    // Seed the random number generator
+    srand(time(NULL));
+
+    // Iterate through the array from the last element to the first
+    for (i = cols - 1; i > 0; i--) {
+
+        // Generate a random index between 0 and i (inclusive)
+        j = rand() % (i + 1);
+
+        // Swap the current element with the randomly selected element
+        temp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = temp;
+
+    }
+
+}
+
+// Main Louvain function
+void main_louvain(
+    double* network,
+    struct modularity_result Q_values,
+    int* membership_copy, double previous_modularity,
+    int cols, int original_cols
+) {
+
+    // Initialize iterators
+    int i, j, order, network_offset;
+
+    // Initialize membership
+    int* membership = (int*)malloc(cols * sizeof(int));
+    int* index = (int*)malloc(cols * sizeof(int));
+
+    // Populate membership
+    for(i = 0; i < cols; i++) {
+        membership[i] = i;
+        index[i] = i;
+    }
+
+    // Initialize update to modularity
+    double update_modularity = signed_modularity(Q_values, membership, cols);
+
+    // Initialize commonly used values
+    int target_membership, neighbor_membership, new_membership;
+    double best_increase;
+
+    // Initialize higher order structure
+    struct higher_order_result higher_order;
+
+    // Initialize new memberships
+    int* new_memberships = (int*)malloc(cols * sizeof(int));
+
+    // `while` until there is no gain
+    while(1) {
+
+        // Permutate index
+        shuffle_nodes(index, cols);
+
+        // Set gain to zero
+        int gain = 0;
+
+        // Loop over nodes
+        for(i = 0; i < cols; i++) {
+
+            // Initialize gain vector
+            double* gain_vector = (double*)calloc(cols, sizeof(double));
+
+            // Reset best increase
+            best_increase = 0.0;
+
+            // Get index order
+            order = index[i];
+
+            // Obtain membership of target node
+            target_membership = membership[order];
+
+            // Initialize new membership
+            new_membership = target_membership;
+
+            // Set 1D network offset
+            network_offset = order * cols;
+
+            // Loop over nodes
+            for(j = 0; j < cols; j++){
+
+                // Check if node is a neighbor
+                if(network[network_offset + j] != 0) {
+
+                    // Get neighbor's membership
+                    neighbor_membership = membership[j];
+
+                    // Check whether gain is zero
+                    if(gain_vector[neighbor_membership] == 0 && target_membership != neighbor_membership) {
+
+                        // Make copy of membership
+                        memcpy(new_memberships, membership, cols * sizeof(int));
+
+                        // Update with neighbor membership
+                        new_memberships[order] = neighbor_membership;
+
+                        // Compute gain
+                        gain_vector[neighbor_membership] = modularity_gain(
+                            Q_values, order, target_membership, neighbor_membership,
+                            membership, new_memberships, update_modularity, cols
+                        );
+
+                        // Check for increase
+                        if(gain_vector[neighbor_membership] > best_increase) {
+
+                            // Update best increase
+                            best_increase = gain_vector[neighbor_membership];
+
+                            // Make copy of membership
+                            new_membership = neighbor_membership;
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+            // Check if there was an increase
+            if(best_increase > 0) {
+
+                // Update membership
+                membership[order] = new_membership;
+
+                // Update modularity
+                update_modularity += best_increase;
+
+                // Reset gain
+                gain = 1;
+
+            }
+
+            // Free memory
+            free(gain_vector);
+
+        }
+
+        // Check for higher-order network
+        if(previous_modularity != 0) {
+
+            // Check if modularity has changed
+            if(previous_modularity == update_modularity) {
+
+                // Set gain to zero (break)
+                gain = 0;
+
+            } else {
+
+                // Reset previous modularity
+                previous_modularity = update_modularity;
+
+                // Re-index membership
+                membership = reindex_membership(membership, cols);
+
+                // Update previous membership
+                for(i = 0; i < cols; i++) {
+                    for(j = 0; j < original_cols; j++) {
+
+                        // Update each membership
+                        if(membership_copy[j] == i) {
+                            membership_copy[j] = membership[i];
+                        }
+
+                    }
+                }
+
+                // Obtain new higher-order
+                higher_order = make_higher_order(
+                    network, membership, cols
+                );
+
+                // Update network and number of membership
+                memcpy(network, higher_order.higher_order, higher_order.number * higher_order.number * sizeof(double));
+                cols = higher_order.number;
+
+                // Free memory
+                free(higher_order.higher_order);
+                higher_order.higher_order = NULL;
+
+                // Reallocate memory for membership
+                membership = (int*)realloc(membership, cols * sizeof(int));
+                index = (int*)realloc(index, cols * sizeof(int));
+
+                // Populate membership
+                for(i = 0; i < cols; i++) {
+                    membership[i] = i;
+                    index[i] = i;
+                }
+
+                // Update modularity values
+                Q_values = modularity_values(network, cols);
+
+                // Update modularity
+                update_modularity = signed_modularity(Q_values, membership, cols);
+
+            }
+
+        }
+
+        // Check gain for break condition
+        if(gain == 0){
+            break;
+        }
+
+    }
+
+    // Check for level
+    if(previous_modularity == 0) {
+
+        // Re-index membership
+        membership = reindex_membership(membership, original_cols);
+
+        // Copy to membership copy
+        memcpy(membership_copy, membership, original_cols * sizeof(int));
+
+    } else {
+
+        // Re-index membership
+        membership_copy = reindex_membership(membership_copy, original_cols);
+
+    }
+
+    // Free memory
+    free(index);
+    free(membership);
+    free(new_memberships);
+    index = NULL;
+    membership = NULL;
+    new_memberships = NULL;
+
+}
+
+/* Functions for Signed Louvain */
+
+// Structure for `signed_louvain`
+struct signed_louvain_result {
+    int** memberships;
+    double* modularities;
+    int level;
+};
+
+// Signed Louvain function
+struct signed_louvain_result signed_louvain(double* original_network, int original_cols) {
+
+    // Initialize iterators
+    int level = 0;
+
+    // Initialize membership and modularity results
+    int** memberships = (int**)malloc(original_cols * sizeof(int*));
+    int* membership_copy = (int*)calloc(original_cols, sizeof(int));
+    double* modularities = (double*)malloc(original_cols * sizeof(double));
+
+    // Compute original modularity values
+    struct modularity_result original_Q_values = modularity_values(original_network, original_cols);
+
+    // Compute first level
+    main_louvain(
+        original_network, original_Q_values,
+        membership_copy, 0.0,
+        original_cols, original_cols
+    );
+
+    // Compute modularity
+    modularities[level] = signed_modularity(
+        original_Q_values, membership_copy, original_cols
+    );
+
+    // Populate membership
+    memberships[level] = (int*)malloc(original_cols * sizeof(int));
+    memcpy(memberships[level], membership_copy, original_cols * sizeof(int));
+
+    // Initialize higher order and modularity values
+    struct higher_order_result higher_order;
+    struct modularity_result Q_values;
+
+    // Compute next levels
+    while(1) {
+
+        // Increase level
+        level++;
+
+        // Obtain higher-order network
+        higher_order = make_higher_order(
+            original_network, membership_copy, original_cols
+        );
+
+        // Compute modularity values
+        Q_values = modularity_values(
+            higher_order.higher_order, higher_order.number
+        );
+
+        // Compute next level
+        main_louvain(
+            higher_order.higher_order, Q_values,
+            membership_copy, modularities[level - 1],
+            higher_order.number, original_cols
+        );
+
+        // Compute modularity
+        modularities[level] = signed_modularity(
+            original_Q_values, membership_copy, original_cols
+        );
+
+        // Populate membership
+        memberships[level] = (int*)malloc(original_cols * sizeof(int));
+        memcpy(memberships[level], membership_copy, original_cols * sizeof(int));
+
+        // Free memory
+        free(Q_values.positive_modularity_values);
+        free(Q_values.negative_modularity_values);
+        free(higher_order.higher_order);
+
+        // Set pointers to NULL
+        Q_values.positive_modularity_values = NULL;
+        Q_values.negative_modularity_values = NULL;
+        higher_order.higher_order = NULL;
+
+        // Check for any change
+        if(modularities[level] <= modularities[level - 1]) {
+            break;
+        }
+
+    }
+
+    // Free memory
+    free(original_Q_values.positive_modularity_values);
+    free(original_Q_values.negative_modularity_values);
+    free(membership_copy);
+
+    // Set pointers to NULL
+    original_Q_values.positive_modularity_values = NULL;
+    original_Q_values.negative_modularity_values = NULL;
+    membership_copy = NULL;
+
+    // Set up result
+    struct signed_louvain_result result = {
+        memberships,
+        modularities,
+        level
+    };
+
+    // Return result
+    return(result);
+
+}
 
 SEXP r_signed_louvain(SEXP r_input_network) {
 
     // Initialize iterators
-    int i;
+    int i, j;
 
     // Obtain columns
     int cols = ncols(r_input_network);
@@ -701,30 +812,32 @@ SEXP r_signed_louvain(SEXP r_input_network) {
     // Create R output list
     SEXP r_output = PROTECT(allocVector(VECSXP, 2));
 
-    // Convert the communities result to an R matrix
-    SEXP r_communities = PROTECT(allocMatrix(INTSXP, cols, c_result.count));
-    for (i = 0; i < c_result.count * cols; i++) {
-        INTEGER(r_communities)[i] = c_result.communities[i];
+    // Convert the memberships result to an R matrix
+    SEXP r_memberships = PROTECT(allocMatrix(INTSXP, c_result.level, cols));
+    for (i = 0; i < c_result.level; i++) {
+        for (j = 0; j < cols; j++) {
+            INTEGER(r_memberships)[j * c_result.level + i] = c_result.memberships[i][j] + 1;
+        }
     }
 
     // Convert the modularities result to an R numeric vector
-    SEXP r_modularities = PROTECT(allocVector(REALSXP, c_result.count));
-    for (i = 0; i < c_result.count; i++) {
+    SEXP r_modularities = PROTECT(allocVector(REALSXP, c_result.level));
+    for (i = 0; i < c_result.level; i++) {
         REAL(r_modularities)[i] = c_result.modularities[i];
     }
 
     // Set output list elements
-    SET_VECTOR_ELT(r_output, 0, r_communities);
+    SET_VECTOR_ELT(r_output, 0, r_memberships);
     SET_VECTOR_ELT(r_output, 1, r_modularities);
 
     // Assign names to the output list
     SEXP names = PROTECT(allocVector(STRSXP, 2));
-    SET_STRING_ELT(names, 0, mkChar("communities"));
+    SET_STRING_ELT(names, 0, mkChar("memberships"));
     SET_STRING_ELT(names, 1, mkChar("modularities"));
     setAttrib(r_output, R_NamesSymbol, names);
 
     // Free memory
-    free(c_result.communities);
+    free(c_result.memberships);
     free(c_result.modularities);
 
     // Release protected SEXP objects
@@ -734,71 +847,3 @@ SEXP r_signed_louvain(SEXP r_input_network) {
     return r_output;
 
 }
-
-///* Final output */
-//int main() {
-//
-//    // Initialize iterators
-//    int i;
-//
-//    // Initialize columns
-//    int cols = 10;
-//
-//    // Set up network
-//    double network_data[] = {
-//        0.00, 0.21, 0.03, 0.21, 0.10, 0.00, 0.00, 0.00, 0.00, 0.06,
-//        0.21, 0.00, 0.36, 0.02, 0.23, 0.06, 0.00, 0.03, 0.05, 0.09,
-//        0.03, 0.36, 0.00, 0.08, 0.00, 0.15, 0.01, 0.02, 0.00, 0.06,
-//        0.21, 0.02, 0.08, 0.00, 0.10, 0.07, 0.08, 0.08, 0.02, 0.12,
-//        0.10, 0.23, 0.00, 0.10, 0.00, 0.01, 0.06, 0.01, 0.00, 0.03,
-//        0.00, 0.06, 0.15, 0.07, 0.01, 0.00, 0.16, 0.11, 0.10, 0.13,
-//        0.00, 0.00, 0.01, 0.08, 0.06, 0.16, 0.00, 0.18, 0.00, 0.06,
-//        0.00, 0.03, 0.02, 0.08, 0.01, 0.11, 0.18, 0.00, 0.14, 0.00,
-//        0.00, 0.05, 0.00, 0.02, 0.00, 0.10, 0.00, 0.14, 0.00, 0.20,
-//        0.06, 0.09, 0.06, 0.12, 0.03, 0.13, 0.06, 0.00, 0.20, 0.00
-//    };
-//
-//    // Initialize network
-//    double *network = (double *)malloc(cols * cols * sizeof(double));
-//
-//    // Copy network_data to network
-//    for (i = 0; i < cols * cols; i++) {
-//        network[i] = network_data[i];
-//    }
-//
-//    // Obtain signed Louvain result
-//    struct signed_louvain_result results = signed_louvain(network, cols);
-//
-//    // Calculate the number of levels
-//    int levels = 0;
-//    while (results.modularities[levels] != 0) {
-//        levels++;
-//    }
-//
-//    // Print communities
-//    for (int i = 0; i < levels; i++) {
-//        for (int j = 0; j < cols; j++) {
-//            printf("%d ", results.communities[i * cols + j]);
-//        }
-//        printf("\n");
-//    }
-//    printf("\n");
-//
-//    // Print modularity
-//    for (int i = 0; i < levels; i++) {
-//        printf("%f ", results.modularities[i]);
-//    }
-//    printf("\n");
-//
-//    // Free memory
-//    free(network);
-//
-//    // Free output
-//    free(results.communities);
-//    free(results.modularities);
-//
-//    // Return success
-//    return 0;
-//
-//}
-

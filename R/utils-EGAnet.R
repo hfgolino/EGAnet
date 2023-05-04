@@ -329,585 +329,6 @@ efa <- function(data, nfactors, fm = "minres", rotate = "oblimin",
 # LOUVAIN ----
 #%%%%%%%%%%%%%
 
-# Main Louvain step-wise function
-#' @noRd
-# Louvain Communities
-# Updated 25.07.2022
-louvain_communities <- function(
-    newA,
-    method,
-    resolution,
-    Q_matrix,
-    original_Q_matrix,
-    corr,
-    original_A = NULL,
-    previous_communities = NULL,
-    previous_modularity = NULL
-)
-{
-  # Initialize update for communities and modularity
-  if(!is.null(previous_communities)){
-    update_communities <- previous_communities
-    update_modularity <- previous_modularity
-  }
-
-  # Ensure absolute weights
-  newA <- abs(newA)
-
-  # Set diagonal to zero
-  diag(newA) <- 0
-
-  # Number of nodes
-  n <- ncol(newA)
-
-  # Strength
-  # strength <- colSums(A)
-  # strength2 <- strength
-
-  # Total
-  # total <- sum(A)
-
-  # Diagonal
-  # SumIn <- diag(A)
-
-  # Initialize communities
-  communities <- 1:n
-
-  # Initialize neighbors
-  neighbors <- lapply(1:n, function(i){
-
-    # Obtain target node
-    target_node <-  newA[i,]
-
-    # Return neighbors
-    which(target_node != 0)
-
-  })
-
-  # Initialize sum cost and gain
-  # sum_cost <- 10;
-  gain <- 1
-
-  # Iterations
-  iter <- 0
-
-  # While loop through
-  while(gain == 1){
-
-    # Initialize cost and gain
-    cost <- numeric(n); gain <- 0
-
-    # Loop through nodes
-    for(i in 1:n){
-
-      # Community of target node
-      target_community <- communities[i]
-
-      # Neighbors of target node
-      target_neighbors <- neighbors[[i]]
-
-      # Initialize gain vector
-      gain_vector <- numeric(n)
-
-      # Initialize best increase
-      best_increase <- 0
-
-      # Initialize new community
-      new_community <- target_community
-
-      # Change target community to -1
-      # communities[i] <- -1
-
-      # Subtract strength from strength2
-      # strength2[target_community] <- strength2[target_community] - strength[i]
-
-      # Get nodes with same community
-      same_community <- which(communities == target_community)
-
-      # Diagonal
-      # SumIn[target_community] <- SumIn[target_community] -
-      #   2 * sum(A[i, same_community]) -
-      #   A[i, i]
-
-      # Loop through neighbors
-      for(j in 1:length(target_neighbors)){
-
-        # Community of neighbor node
-        neighbor_community <- communities[target_neighbors[j]]
-
-        # Check if gain is zero
-        if(gain_vector[neighbor_community] == 0){
-
-          # Get nodes with same community
-          same_neighbor_community <- which(communities == neighbor_community)
-
-          # Compute strength within
-          # strength_within <- 2 * sum(A[i, same_neighbor_community])
-
-          # Set new communities
-          new_communities <- communities
-          new_communities[i] <- neighbor_community
-
-          # Check if communities match
-          if(any(communities != new_communities)){
-
-            # Compute gain
-            if(method == "modularity"){
-              gain_vector[neighbor_community] <- 
-                quick_modularity( # new modularity
-                  communities = new_communities,
-                  A = newA,
-                  Q_matrix = Q_matrix
-                ) -
-                quick_modularity( # old modularity
-                  communities = communities,
-                  A = newA,
-                  Q_matrix = Q_matrix
-                )
-                
-              #   modularity( # new modularity
-              #   new_communities,
-              #   newA, resolution = resolution
-              # ) -
-              #   modularity( # old modularity
-              #     communities,
-              #     newA, resolution = resolution
-              #   )
-                
-            }else if(method == "tefi"){
-
-              # Reverse order (lower is better)
-              gain_vector[neighbor_community] <- tefi(corr, communities)$VN.Entropy.Fit -
-                tefi(corr, new_communities)$VN.Entropy.Fit
-
-            }
-
-            # Matlab implementation of gain
-            #(strength_within / total) -
-            #(2 * strength[i] * strength2[neighbor_community]) /
-            #(total * total)
-
-            # Check for better increase
-            if(gain_vector[neighbor_community] > best_increase){
-
-              # Update best increase
-              best_increase <- gain_vector[neighbor_community]
-
-              # Assign new community
-              new_community_t <- neighbor_community
-
-            }
-
-          }
-
-        }
-
-      }
-
-      # Check if best increase is greater than zero
-      if(best_increase > 0){
-
-        # Update new community
-        new_community <- new_community_t
-
-        # Update cost
-        cost[i] <- best_increase
-
-      }
-
-      # Get new community for best increase
-      # community_k <- which(communities == new_community)
-
-      # Diagonal
-      # SumIn[new_community] <- SumIn[new_community] +
-      #   2 * sum(A[i, community_k])
-
-      # Update strength2
-      # strength2[new_community] <- strength2[new_community] +
-      #   strength[i]
-
-      # Check for previous communities
-      if(!is.null(previous_communities)){
-
-        # Check for improvement
-        ## Update communities
-        improve_communities <- previous_communities
-        improve_communities[improve_communities == target_community] <- new_community
-
-        ## Update modularity
-        if(method == "modularity"){
-
-          # Higher values are better
-          improve_modularity <- quick_modularity(
-            communities = improve_communities,
-            A = original_A,
-            Q_matrix = original_Q_matrix
-          )
-          
-          # quick_modularity(
-          #   communities = improve_communities,
-          #   A = original_A,
-          #   resolution = resolution
-          # )
-
-          # Check for update
-          if(improve_modularity > previous_modularity){
-
-            # Update communities
-            communities[i] <- new_community
-            update_communities <- improve_communities
-            update_modularity <- improve_modularity
-
-          }
-
-
-        }else if(method == "tefi"){
-
-          # Lower values are better
-          improve_modularity <- tefi(corr, improve_communities)$VN.Entropy.Fit
-
-          # Check for update
-          if(improve_modularity < previous_modularity){
-
-            # Update communities
-            communities[i] <- new_community
-            update_communities <- improve_communities
-            update_modularity <- improve_modularity
-
-          }
-
-        }
-
-      }else{
-
-        # Update communities
-        communities[i] <- new_community
-
-      }
-
-      # Reset gain
-      if(new_community != target_community){
-        gain <- 1
-      }
-
-    }
-
-    # Update sum cost
-    # sum_cost <- sum(cost)
-
-    # Compute modularity
-    if(!is.null(original_A)){
-
-      # Reindex communities
-      previous_communities <- reindex_comm(previous_communities)
-      update_communities <- reindex_comm(update_communities)
-
-      # Check if previous modularity equals update modularity
-      if(previous_modularity == update_modularity){
-        gain <- 0
-      }
-
-      # Obtain modularity
-      # Q <- modularity(update_communities, original_A, resolution)
-      Q <- quick_modularity(
-        communities = update_communities,
-        A = original_A,
-        Q_matrix = original_Q_matrix
-      )
-
-      # Obtain new higher order
-      newA <- make_higher_order(original_A, update_communities)
-
-      # Make diagonal zero
-      diag(newA) <- 0
-
-      # Update number of communities
-      n <- ncol(newA)
-
-      # Update unique communities
-      communities <- 1:n
-
-      # Update neighbors
-      neighbors <- lapply(1:n, function(i){
-
-        # Obtain target node
-        target_node <-  newA[i,]
-
-        # Return neighbors
-        which(target_node != 0)
-
-      })
-
-      # Reset previous communities and modularity
-      previous_communities <- update_communities
-      previous_modularity <- update_modularity
-      
-      # Update modularity matrix
-      Q_matrix <- modularity_matrix(
-        A = newA,
-        resolution = resolution
-      )
-
-      # Check if gain equals zero
-      if(gain == 0){
-        communities <- update_communities
-        Q <- update_modularity
-      }
-
-    }else{
-
-      if(method == "modularity"){
-        # Q <- modularity(communities, newA, resolution)
-        Q <- quick_modularity(
-          communities = communities,
-          A = newA,
-          Q_matrix = Q_matrix
-        )
-      }else if(method == "tefi"){
-        Q <- tefi(corr, communities)$VN.Entropy.Fit
-      }
-
-    }
-
-    # Increase iterations
-    iter <- iter + 1
-
-  }
-
-  # Reindex communities
-  communities <- reindex_comm(communities)
-
-  # Return results
-  results <- list()
-  results$communities <- communities
-  results$modularity <- Q # OR tefi
-
-  return(results)
-
-}
-
-# Modularity function
-#' @noRd
-# Modularity
-# Updated 23.07.2022
-modularity <- function(communities, A, resolution)
-{
-
-  # Convert to matrix
-  A <- as.matrix(A)
-  
-  # Ensure absolute
-  A <- abs(A)
-  
-  # Obtain total sum
-  total <- sum(A)
-
-  # Initialize modularity
-  Q <- 0
-
-  # Obtain unique communities
-  unique_comm <- sort(unique(communities))
-
-  # Obtain strength
-  strength <- colSums(A)
-
-  # Obtain modularity matrix
-  Q_matrix <- A - resolution * (strength %*% t(strength)) / total
-  
-  # Keep values within communities
-  ## Initialize within matrix
-  init_within <- matrix(
-    rep(communities, times = ncol(A)),
-    byrow = TRUE, nrow = nrow(A),
-    ncol = ncol(A)
-  )
-
-  ## Create within matrix
-  within_matrix <- !sweep(
-    init_within,
-    MARGIN = 1,
-    STATS = communities,
-    FUN = "-"
-  )
-
-  ## Obtain Q matrix
-  Q_within <- apply(within_matrix, 2, as.numeric)
-
-  # Compute modularity
-  Q <- sum(Q_within * Q_matrix / total)
-
-  return(Q)
-
-}
-
-# Modularity matrix (for quick_modularity)
-#' @noRd
-# Modularity matrix
-# Updated 25.07.2022
-modularity_matrix <- function(A, resolution)
-{
-  
-  # Convert to matrix
-  A <- as.matrix(A)
-  
-  # Ensure absolute
-  A <- abs(A)
-  
-  # Obtain total sum
-  total <- sum(A)
-  
-  # Obtain strength
-  strength <- colSums(A)
-  
-  # Obtain modularity matrix
-  Q_matrix <- A - resolution * (strength %*% t(strength)) / total
-
-  return(Q_matrix)
-  
-}
-
-# Quick modularity
-#' @noRd
-# Quicker modularity
-# (skips computation of modularity matrix each time)
-# Updated 25.07.2022
-quick_modularity <- function(communities, A, Q_matrix)
-{
-  
-  # Total strength of network
-  total <- sum(abs(as.matrix(A)))
-  
-  # Keep values within communities
-  ## Initialize within matrix
-  init_within <- matrix(
-    rep(communities, times = ncol(A)),
-    byrow = TRUE, nrow = nrow(A),
-    ncol = ncol(A)
-  )
-  
-  ## Create within matrix
-  within_matrix <- !sweep(
-    init_within,
-    MARGIN = 1,
-    STATS = communities,
-    FUN = "-"
-  )
-  
-  ## Obtain Q matrix
-  Q_within <- apply(within_matrix, 2, as.numeric)
-  
-  # Compute modularity
-  Q <- sum(Q_within * Q_matrix / total)
-  
-  return(Q)
-  
-}
-
-# Collapses Louvain nodes into "latent" nodes
-#' @noRd
-# Higher order Louvain
-# Updated 07.08.2022
-make_higher_order <- function(
-    A, current_communities,
-    method = c("sum", "mean")
-)
-{
-  
-  # Missing
-  if(missing(method)){
-    method <- "sum"
-  }
-
-  # Get number of nodes
-  n_higher <- ncol(A)
-
-  # Reindex communities
-  current_communities <- reindex_comm(current_communities)
-
-  # Obtain unique communities and number
-  unique_communities <- sort(unique(current_communities))
-  number_communities <- length(unique_communities)
-  full_communities <- current_communities
-
-  # Initialize index matrices
-  community_current <- matrix(
-    0, nrow = number_communities,
-    ncol = n_higher
-  )
-  community_full <- matrix(
-    0, nrow = number_communities,
-    ncol = n_higher
-  )
-
-  # Index communities
-  for(p in 1:number_communities){
-
-    # Index current
-    ind_current <- which(current_communities == p)
-    community_current[p, 1:length(ind_current)] <- ind_current
-
-    # Index full
-    ind_full <- which(full_communities == p)
-    community_full[p, 1:length(ind_full)] <- ind_full
-
-  }
-
-  # Initialize new adjacency matrix
-  newA <- matrix(
-    0, nrow = number_communities,
-    ncol = number_communities
-  )
-
-  # Create "latent" nodes
-  for(i in 1:number_communities){
-
-    for(j in i:number_communities){
-
-      # Obtain indices
-      ind1 <- community_current[i,]
-      ind2 <- community_current[j,]
-
-      # Update adjacency matrix
-      if(method == "sum"){
-        newA[i,j] <- sum(
-          A[ind1[ind1 > 0], ind2[ind2 > 0]]
-        )
-      }else if(method == "mean"){
-        newA[i,j] <- mean(
-          A[ind1[ind1 > 0], ind2[ind2 > 0]]
-        )
-      }
-      newA[j,i] <- newA[i,j]
-
-    }
-
-  }
-
-  return(newA)
-
-}
-
-#  Ensures indices have descending orderings
-#' @noRd
-# Reindexing
-# Updated 22.04.2023
-reindex_comm <- function(communities) {
-  
-  # Get frequencies
-  comm_freq <- table(communities)
-  
-  # Order frequencies in descending order
-  freq_order <- order(comm_freq, decreasing = TRUE)
-  
-  # Re-index them by matching
-  reindexed <- match(communities, names(comm_freq)[freq_order])
-  
-  # Return re-indexed communities
-  return(reindexed)
-}
-
-
-
 # Lancichinetti & Fortunato (2012)
 #' @noRd
 # Consensus Clustering
@@ -956,50 +377,26 @@ consensus_clustering <- function(
     
     
   }
-
-  # Convert network to igraph
-  igraph_network <- suppressWarnings(
-    convert2igraph(abs(network))
-  )
   
-  # Ensure all nodes are included in igraph
-  if(igraph::vcount(igraph_network) != ncol(network)){
-    
-    igraph_network <- igraph::add.vertices(
-      igraph_network,
-      nv = ncol(network) -
-        igraph::vcount(igraph_network)
-    )
-    
-  }
+  # NEED TO FIX DISCONNECTED NODES!!!!
 
   # Apply Louvain
-  communities <- lapply(1:consensus.iter, function(j, resolution){
+  communities <- lapply(1:consensus.iter, function(j){
 
     # igraph output
-    output <- igraph::cluster_louvain(igraph_network, resolution = resolution)
+    output <- signed_louvain(network)
     
-    # Obtain memberships
-    wc <- output$memberships
-    
-    # Check for no rows
-    if(nrow(wc) == 0){
-      wc <- output$membership
-    }else{
-      
-      # Obtain order
-      if(order == "lower"){
-        wc <- wc[1,]
-      }else if(order == "higher"){
-        wc <- wc[nrow(wc),]
-      }
-      
+    # Obtain order
+    if(order == "lower"){
+      wc <- output$memberships[1,]
+    }else if(order == "higher"){
+      wc <- output$memberships[nrow(output$memberships),]
     }
 
     # Return
     return(wc)
 
-  }, resolution = resolution)
+  })
 
   # Simplify to a matrix
   wc_matrix <- t(simplify2array(communities, higher = FALSE))
@@ -1121,47 +518,23 @@ consensus_clustering <- function(
       
       if(iter != 1){
         
-        # Convert network to igraph
-        igraph_network <- convert2igraph(abs(network))
-        
-        # Ensure all nodes are included in igraph
-        if(igraph::vcount(igraph_network) != ncol(network)){
-          
-          igraph_network <- igraph::add.vertices(
-            igraph_network,
-            nv = ncol(network) -
-              igraph::vcount(igraph_network)
-          )
-          
-        }
-        
         # Apply Louvain
-        communities <- lapply(1:consensus.iter, function(j, resolution){
+        communities <- lapply(1:consensus.iter, function(j){
           
           # igraph output
-          output <- igraph::cluster_louvain(igraph_network, resolution = resolution)
+          output <- signed_louvain(network)
           
-          # Obtain memberships
-          wc <- output$memberships
-          
-          # Check for no rows
-          if(nrow(wc) == 0){
-            wc <- output$membership
-          }else{
-            
-            # Obtain order
-            if(order == "lower"){
-              wc <- wc[1,]
-            }else if(order == "higher"){
-              wc <- wc[nrow(wc),]
-            }
-            
+          # Obtain order
+          if(order == "lower"){
+            wc <- output$memberships[1,]
+          }else if(order == "higher"){
+            wc <- output$memberships[nrow(output$memberships),]
           }
           
           # Return
           return(wc)
           
-        }, resolution = resolution)
+        })
         
         # Simplify to a matrix
         wc_matrix <- t(simplify2array(communities, higher = FALSE))
@@ -1226,33 +599,8 @@ consensus_clustering <- function(
       
     }else{
       
-      # Obtain final communities
-      igraph_network <- suppressWarnings(
-        convert2igraph(abs(network))
-      )
-      
-      # Ensure all nodes are included in igraph
-      if(igraph::vcount(igraph_network) != ncol(network)){
-        
-        igraph_network <- igraph::add.vertices(
-          igraph_network,
-          nv = ncol(network) -
-            igraph::vcount(igraph_network)
-        )
-        
-      }
-      
       # Obtain memberships
-      wc <- igraph::cluster_louvain(igraph_network, resolution = resolution)$memberships
-      
-      # Check for rows
-      if(nrow(wc) == 0){
-        wc <- matrix(
-          igraph::cluster_louvain(igraph_network, resolution = resolution)$membership,
-          nrow = 1,
-          byrow = TRUE
-        )
-      }
+      wc <- signed_louvain(network)$memberships
       
       # Obtain order
       if(order == "lower"){
@@ -1332,43 +680,17 @@ most_common_consensus <- function(
     
   }
   
-  # Convert network to igraph
-  igraph_network <- suppressWarnings(
-    convert2igraph(abs(network))
-  )
-  
-  # Ensure all nodes are included in igraph
-  if(igraph::vcount(igraph_network) != ncol(network)){
-    
-    igraph_network <- igraph::add.vertices(
-      igraph_network,
-      nv = ncol(network) -
-        igraph::vcount(igraph_network)
-    )
-    
-  }
-  
-  # Loop over and obtain communities
-  communities <- lapply(1:consensus.iter, function(j, resolution){
+  # Apply Louvain
+  communities <- lapply(1:consensus.iter, function(j){
     
     # igraph output
-    output <- igraph::cluster_louvain(igraph_network, resolution = resolution)
+    output <- signed_louvain(network)
     
-    # Obtain memberships
-    wc <- output$memberships
-    
-    # Check for no rows
-    if(nrow(wc) == 0){
-      wc <- output$membership
-    }else{
-      
-      # Obtain order
-      if(order == "lower"){
-        wc <- wc[1,]
-      }else if(order == "higher"){
-        wc <- wc[nrow(wc),]
-      }
-      
+    # Obtain order
+    if(order == "lower"){
+      wc <- output$memberships[1,]
+    }else if(order == "higher"){
+      wc <- output$memberships[nrow(output$memberships),]
     }
     
     # Obtain text for progress
@@ -1391,7 +713,7 @@ most_common_consensus <- function(
     # Return
     return(wc)
     
-  }, resolution = resolution)
+  })
   
   # Simplify to a matrix
   df <- as.data.frame(

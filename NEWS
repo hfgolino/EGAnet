@@ -4,6 +4,8 @@ o FIX: cross-loading bug in `net.loads` was leading to problems when there were 
 
 o FIX: added `psych::factor.scores` scoring methods in `net.scores`
 
+o ADDED: C implementation of the Signed Louvain algorithm
+
 
 Changes in version 1.2.5
 
