@@ -244,8 +244,7 @@ net.loads <- function(
     }
     
     # Set dominant loadings
-    # loading_matrix <- loading_matrix * signs
-    # Done in previous loop above
+    loading_matrix <- loading_matrix * signs
     
     # Initialize reversed A
     A_reversed <- A
