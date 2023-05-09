@@ -82,7 +82,7 @@
 #'
 #' @author Hudson Golino <hfg9s@virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #' 
-# @useDynLib EGAnet, .registration = TRUE
+#' @useDynLib EGAnet, .registration = TRUE
 #' 
 #' @importFrom utils packageDescription
 #'

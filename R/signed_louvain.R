@@ -28,13 +28,13 @@
 #'
 #' @export
 #'
-# Obtain signed louvain communities
-# Updated 24.04.2023
+# Signed Louvain communities
+# Updated 04.05.2023
 signed_louvain <- function(network)
 {
   
-  # Ensure data is an double matrix
-  network <- apply(as.matrix(network), 2, as.double)
+  # Ensure data is a matrix
+  network <- as.matrix(network)
   
   # Call from C
   output <- .Call(
@@ -42,16 +42,13 @@ signed_louvain <- function(network)
     network,
     PACKAGE = "EGAnet"
   )
-  
+
   # Check for variable names
   if(!is.null(colnames(network))){
     
     # Add names to output
-    row.names(output$communities) <- colnames(network)
-    names(output$modularities) <- 1:ncol(output$communities)
-    
-    # Transpose communities
-    output$communities <- t(output$communities)
+    colnames(output$memberships) <- colnames(network)
+    names(output$modularities) <- 1:nrow(output$memberships)
     
   }
 

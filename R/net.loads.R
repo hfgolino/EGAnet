@@ -243,10 +243,6 @@ net.loads <- function(
       
     }
     
-    # Set dominant loadings
-    # loading_matrix <- loading_matrix * signs
-    # Done in previous loop above
-    
     # Initialize reversed A
     A_reversed <- A
     
@@ -308,6 +304,9 @@ net.loads <- function(
       }
 
     }
+    
+    # Set signs
+    loading_matrix <- loading_matrix * signs
     
     # Obtain standardized loadings
     standardized <- t(
