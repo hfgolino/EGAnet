@@ -104,6 +104,13 @@ net.loads <- function(
     sum.method <- "signed"
   }
   
+  # Select sum function
+  if(sum.method == "absolute"){
+    sum_function <- function(x){colSums(abs(x))}
+  }else if(sum.method == "signed"){
+    sum_function <- colSums
+  }
+  
   # Check for EGA object
   if(is(A, "EGA")){
     
@@ -179,21 +186,7 @@ net.loads <- function(
       std = unstd
     )
     
-  }else if(length(unique_wc) == 1){# Check for single community
-    
-    # Reorder communities
-    wc <- wc[wc_order]
-    
-    # Reorder network
-    A <- A[wc_order, wc_order]
-    
-    # Compute absolute sum of nodes
-    absolute_sum <- colSums(abs(A))
-    
-    # Come back to this section
-    stop("unidimensional structures are under construction...")
-    
-  }else{ # Not singleton dimensions, not unidimensional
+  }else{ # Not singleton dimensions
     
     # Reorder communities
     wc <- wc[wc_order]
@@ -215,13 +208,6 @@ net.loads <- function(
     row.names(loading_matrix) <- colnames(A)
     colnames(loading_matrix) <- unique_wc
     
-    # Select sum function
-    if(sum.method == "absolute"){
-      sum_function <- function(x){colSums(abs(x))}
-    }else if(sum.method == "signed"){
-      sum_function <- colSums
-    }
-    
     # Populate loading matrix
     for(dominant in unique_wc){
       
@@ -234,54 +220,68 @@ net.loads <- function(
       # Update the target network
       target_network <- sign_updated$target_network
       
+      # Obtain the sum
+      target_sum <- sum_function(target_network)
+      
       # Compute absolute sum for dominant loadings
       loading_matrix[wc == dominant, as.character(dominant)] <- 
-        sum_function(target_network)
+        target_sum # / sqrt(sum(abs(target_sum)))
       
       # Determine positive direction for dominant loadings
       signs[wc == dominant] <- sign_updated$signs
       
     }
     
-    # Initialize reversed A
-    A_reversed <- A
-    
-    # Create duplicate of network
-    if(sum.method == "signed"){
+    # Check for cross-loadings
+    if(length(unique_wc) > 1){
       
-      if(any(signs == -1)){
-        A_reversed[which(signs == -1),] <- -A[which(signs == -1),]
-        A_reversed[,which(signs == -1)] <- -A[,which(signs == -1)]
-      }
+      # Initialize reversed A
+      A_reversed <- A
       
-    }
-    
-    # Populate loading matrix
-    for(dominant in unique_wc){
-      for(cross in unique_wc){
+      # Create duplicate of network
+      if(sum.method == "signed"){
         
-        # Do not use dominant loadings
-        if(dominant != cross){
-          
-          # Compute algebraic sum for cross-loadings
-          loading_matrix[wc == dominant, as.character(cross)] <- 
-            sum_function(A_reversed[wc == cross, wc == dominant])
-          
+        if(any(signs == -1)){
+          A_reversed[which(signs == -1),] <- -A[which(signs == -1),]
+          A_reversed[,which(signs == -1)] <- -A[,which(signs == -1)]
         }
         
       }
+      
+      # Populate loading matrix
+      for(dominant in unique_wc){
+        for(cross in unique_wc){
+          
+          # Do not use dominant loadings
+          if(dominant != cross){
+            
+            # Obtain the sum
+            target_sum <- sum_function(A_reversed[wc == cross, wc == dominant])
+            
+            # Compute algebraic sum for cross-loadings
+            loading_matrix[wc == dominant, as.character(cross)] <- 
+              target_sum # / sqrt(sum(abs(target_sum)))
+            
+          }
+          
+        }
+      }
+      
+      # Check for sum method absolute
+      if(sum.method == "absolute"){
+        
+        # Add signs (old way)
+        loading_matrix <- old.add.signs(
+          comm.str = loading_matrix,
+          A = A, wc = wc, dims = unique_wc
+        )
+        
+      }
+      
     }
     
-    # Check for sum method absolute
-    if(sum.method == "absolute"){
-      
-      # Add signs (old way)
-      loading_matrix <- old.add.signs(
-        comm.str = loading_matrix,
-        A = A, wc = wc, dims = unique_wc
-      )
-      
-    }
+    # Set signs
+    loading_matrix <- loading_matrix * signs
     
     # Using signs, ensure positive orientation based
     # on most common direction
@@ -296,17 +296,19 @@ net.loads <- function(
         # Reverse dominant variables signs across all communities
         loading_matrix[wc == dominant,] <-
           -loading_matrix[wc == dominant,]
-
-        # Reverse cross-loading signs on target community
-        loading_matrix[wc != dominant, as.character(dominant)] <-
-          -loading_matrix[wc != dominant, as.character(dominant)]
+        
+        # Check for cross-loadings
+        if(length(unique_wc) > 1){
+          
+          # Reverse cross-loading signs on target community
+          loading_matrix[wc != dominant, as.character(dominant)] <-
+            -loading_matrix[wc != dominant, as.character(dominant)]
+          
+        }
 
       }
 
     }
-    
-    # Set signs
-    loading_matrix <- loading_matrix * signs
     
     # Obtain standardized loadings
     standardized <- t(
