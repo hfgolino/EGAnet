@@ -678,16 +678,47 @@ void main_louvain(
     // Check for level
     if(previous_modularity == 0) {
 
-        // Re-index membership
-        membership = reindex_membership(membership, original_cols);
 
-        // Copy to membership copy
-        memcpy(membership_copy, membership, original_cols * sizeof(int));
+        // Check for unidimensionality
+        if(cols == 1) {
+
+            // Index membership
+            for(i = 0; i < original_cols; i++){
+                membership_copy[i] = 0;
+            }
+
+        } else {
+
+            // Re-index membership
+            membership = reindex_membership(membership, original_cols);
+
+            // Copy to membership copy
+            memcpy(membership_copy, membership, original_cols * sizeof(int));
+
+        }
 
     } else {
 
-        // Re-index membership
-        membership_copy = reindex_membership(membership_copy, original_cols);
+        // Check for unidimensionality
+        if(cols == 1) {
+
+            // Index membership
+            for(i = 0; i < original_cols; i++){
+                membership_copy[i] = 0;
+            }
+
+        } else {
+
+            // Re-index membership
+            membership_copy = reindex_membership(membership_copy, original_cols);
+
+        }
+
+        // Free memory
+        free(Q_values.positive_modularity_values);
+    	free(Q_values.negative_modularity_values);
+    	Q_values.positive_modularity_values = NULL;
+        Q_values.negative_modularity_values = NULL;
 
     }
 
@@ -841,6 +872,7 @@ SEXP r_signed_louvain(SEXP r_input_network) {
     SEXP r_modularities = PROTECT(allocVector(REALSXP, c_result.level));
     for (i = 0; i < c_result.level; i++) {
         REAL(r_modularities)[i] = c_result.modularities[i];
+        free(c_result.memberships[i]);
     }
 
     // Set output list elements
