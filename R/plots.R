@@ -241,7 +241,7 @@ plot.bootEGA <- function(x, title = "",
     ggplot2::guides(
       color = ggplot2::guide_legend(override.aes = list(
         color = unique(palette),
-        size = node.size,
+        size = ifelse(length(node.size)>1,max(unique(node.size)),node.size),
         alpha = plot.args$alpha,
         stroke = 1.5
       ))
@@ -419,7 +419,7 @@ plot.dynEGA.Groups <- function(x, ncol, nrow, title = "",
       ggplot2::guides(
         color = ggplot2::guide_legend(override.aes = list(
           color = unique(palette),
-          size = node.size,
+          size = ifelse(length(node.size)>1,max(unique(node.size)),node.size),
           alpha = plot.args$alpha,
           stroke = 1.5
         ))
@@ -581,7 +581,7 @@ plot.dynEGA.Individuals <- function(x, title = "",  id = NULL,
     ggplot2::guides(
       color = ggplot2::guide_legend(override.aes = list(
         color = unique(palette),
-        size = node.size,
+        size = ifelse(length(node.size)>1,max(unique(node.size)),node.size),
         alpha = plot.args$alpha,
         stroke = 1.5
       ))
@@ -750,7 +750,7 @@ plot.dynEGA <- function(x, title = "",
     ggplot2::guides(
       color = ggplot2::guide_legend(override.aes = list(
         color = unique(palette),
-        size = node.size,
+        size = ifelse(length(node.size)>1,max(unique(node.size)),node.size),
         alpha = plot.args$alpha,
         stroke = 1.5
       ))
@@ -923,7 +923,7 @@ plot.EGA <- function(x,  title = "",
       ggplot2::guides(
         color = ggplot2::guide_legend(override.aes = list(
           color = unique(palette),
-          size = node.size,
+          size = ifelse(length(node.size)>1,max(unique(node.size)),node.size),
           alpha = plot.args$alpha,
           stroke = 1.5
         ))
