@@ -1,15 +1,34 @@
+Changes in version 1.3.0
+
+o MAJOR: the update to version 1.3.0 includes many major changes that are designed to improve the reliability and reproducibility of {EGAnet}. The goal of these changes are to eliminate common errors and streamline the code in the package to prevent future error cases. There are several function additions that are provided to facilitate modular use of the {EGAnet} package
+
+o ADD: custom function called `auto.correlate` to compute automatic correlation computations based on C code for faster performance
+
+o ADD: several internal scripts for "helper" functions that are used across the package (no visible changes for the user)
+
+o ADD: `community.consensus` to apply the Consensus Clustering approach introduced by Lancichnetti & Fortunato (2012). Currently only available for the Louvain implementations
+
+o ADD: `community.detection` to apply community detection algorithms as a standalone function
+
+o ADD: `community.louvain` to apply standard and signed Louvain community detection algorithms as a standalone function
+
+o ADD: convenience function to convert an {igraph} object to a standard matrix (`igraph2matrix`)
+
+o ADD: `modularity` to compute standard (absolute values) and signed modularity (implemented in C)
+
+
 Changes in version 1.2.5.1
 
 o FIX: cross-loading bug in `net.loads` was leading to problems when there were negative cross-loadings
 
 o FIX: added `psych::factor.scores` scoring methods in `net.scores`
 
-o ADDED: C implementation of the Signed Louvain algorithm
+o ADD: `signed.louvain` to estimate the Signed Louvain algorithm (implemented in C)
 
 
 Changes in version 1.2.5
 
-o ADD: `most_common_tefi` method for `*EGA` analyses -- should be more reliable with larger datasets
+o ADD: `most_common_tefi` method for `EGA` analyses
 
 
 Changes in version 1.2.4

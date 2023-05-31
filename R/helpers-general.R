@@ -4,11 +4,29 @@
 
 #' @noRd
 # Determine number of digits in a number ----
-# Updated 02.02.2023
+# Updated 27.05.2023
 digits <- function(number)
 {
   # Obtain the lowest value of log base 10 and add 1
-  floor(log10(number)) + 1
+  return(floor(log10(number)) + 1)
+  
+}
+
+#' @noRd
+# Force vector ----
+# (usually for data frame rows/columns)
+# Updated 27.05.2023
+force_vector <- function(desired_vector)
+{
+  # Convert to matrix then vector
+  new_vector <- as.vector(as.matrix(desired_vector))
+  
+  # Keep names (if any)
+  if(!is.null(colnames(desired_vector))){
+    names(new_vector) <- colnames(desired_vector)
+  }
+  
+  return(new_vector)
   
 }
 
@@ -197,3 +215,40 @@ check_package <- function(packages)
   }
   
 }
+
+#' @noRd
+#'
+# General function to silently obtain output
+# Updated 11.05.2023
+silent_call <- function(...){
+  
+  # Make call
+  sink <- capture.output(
+    result <- suppressWarnings(
+      suppressMessages(
+        ...
+      )
+    )
+  )
+  
+  # Return result
+  return(result)
+  
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

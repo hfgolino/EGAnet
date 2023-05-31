@@ -17,13 +17,15 @@
 #' @author Hudson Golino <hfg9s at virginia.edu> & Alexander P. Christensen <alexander.christensen at Vanderbilt.Edu>
 #'
 #' @export
-# Convert network to {igraph}
+# Convert {igraph} network to matrix
 # Updated 10.08.2022
 convert2igraph <- function (A, diagonal = 0)
 {
-  # Make diagonal zero
+  
+  # Change diagonal (to zero)
   diag(A) <- diagonal
   
+  # Return {igraph} network
   return(
     suppressWarnings(
       igraph::graph_from_adjacency_matrix(
@@ -32,4 +34,5 @@ convert2igraph <- function (A, diagonal = 0)
       )
     )
   )
+  
 }

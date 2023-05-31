@@ -1,4 +1,4 @@
-#' Computes the signed Louvain community detection algorithm
+#' Computes the Signed Louvain Community Detection Algorithm
 #'
 #' @param network Matrix or data frame.
 #' A symmetric matrix representing a network
@@ -10,18 +10,23 @@
 #' \item{modularities}{Modularity values for each level}
 #' 
 #' @examples
-#' # Obtain data
+#' # Load data
 #' wmt <- wmt2[,7:24]
 #' 
-#' \dontrun{
-#' # Estimate EGA
-#' ega.wmt <- EGA(
-#'   data = wmt,
-#'   plot.EGA = FALSE # No plot for CRAN checks
-#' )}
+#' # Estimate network
+#' network <- EBICglasso.qgraph(data = wmt)
 #' 
 #' # Estimate signed Louvain
-#' signed_louvain(ega.wmt$network)
+#' signed.louvain(network)
+#' 
+#' @references
+#' Blondel, V. D., Guillaume, J.-L., Lambiotte, R., & Lefebvre, E. (2008).
+#' Fast unfolding of communities in large networks.
+#' \emph{Journal of Statistical Mechanics: Theory and Experiment}, \emph{2008}(10), P10008.
+#' 
+#' Gomez, S., Jensen, P., & Arenas, A. (2009).
+#' Analysis of community structure in networks of correlated data.
+#' \emph{Physical Review E}, \emph{80}(1), 016114.
 #' 
 #' @author
 #' Alexander P. Christensen <alexpaulchristensen@gmail.com> with assistance from GPT-4
@@ -29,8 +34,8 @@
 #' @export
 #'
 # Signed Louvain communities
-# Updated 04.05.2023
-signed_louvain <- function(network)
+# Updated 31.05.2023
+signed.louvain <- function(network)
 {
   
   # Ensure data is a matrix
@@ -48,7 +53,7 @@ signed_louvain <- function(network)
     
     # Add names to output
     colnames(output$memberships) <- colnames(network)
-    names(output$modularities) <- 1:nrow(output$memberships)
+    names(output$modularity) <- 1:nrow(output$memberships)
     
   }
 

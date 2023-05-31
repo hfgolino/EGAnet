@@ -94,6 +94,7 @@
 # Rotations added 20.10.2022
 net.loads <- function(
     A, wc, sum.method = c("absolute", "signed"),
+    positive.orientation = FALSE,
     rotation = "geominQ",
     min.load = 0, ...
 )
@@ -283,31 +284,36 @@ net.loads <- function(
     # Set signs
     loading_matrix <- loading_matrix * signs
     
-    # Using signs, ensure positive orientation based
-    # on most common direction
-    for(dominant in unique_wc){
-
-      # Determine dominant orientation
-      orientation <- sum(signs[wc == dominant])
-
-      # Check for negative orientation
-      if(orientation <= -1){
-
-        # Reverse dominant variables signs across all communities
-        loading_matrix[wc == dominant,] <-
-          -loading_matrix[wc == dominant,]
+    # Check for flipping orientation
+    if(isTRUE(positive.orientation)){
+      
+      # Using signs, ensure positive orientation based
+      # on most common direction
+      for(dominant in unique_wc){
         
-        # Check for cross-loadings
-        if(length(unique_wc) > 1){
+        # Determine dominant orientation
+        orientation <- sum(signs[wc == dominant])
+        
+        # Check for negative orientation
+        if(orientation <= -1){
           
-          # Reverse cross-loading signs on target community
-          loading_matrix[wc != dominant, as.character(dominant)] <-
-            -loading_matrix[wc != dominant, as.character(dominant)]
+          # Reverse dominant variables signs across all communities
+          loading_matrix[wc == dominant,] <-
+            -loading_matrix[wc == dominant,]
+          
+          # Check for cross-loadings
+          if(length(unique_wc) > 1){
+            
+            # Reverse cross-loading signs on target community
+            loading_matrix[wc != dominant, as.character(dominant)] <-
+              -loading_matrix[wc != dominant, as.character(dominant)]
+            
+          }
           
         }
-
+        
       }
-
+      
     }
     
     # Obtain standardized loadings

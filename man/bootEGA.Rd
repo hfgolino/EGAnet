@@ -10,7 +10,6 @@ bootEGA(
   uni.method = c("expand", "LE", "louvain"),
   iter,
   type = c("parametric", "resampling"),
-  seed = 1234,
   corr = c("cor_auto", "pearson", "spearman"),
   EGA.type = c("EGA", "EGA.fit", "hierEGA", "riEGA"),
   model = c("glasso", "TMFG"),
@@ -25,6 +24,7 @@ bootEGA(
   plot.args = list(),
   ncores,
   progress = TRUE,
+  seed = 1234,
   ...
 )
 }
@@ -83,9 +83,6 @@ original dataset, via the \code{\link[MASS]{mvrnorm}} function}
 {Generates n random subsamples of the original data}
 
 }}
-
-\item{seed}{Numeric.
-Seed to reproduce results. Defaults to \code{1234}. For random results, set to \code{NULL}}
 
 \item{corr}{Character.
 Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
@@ -263,6 +260,9 @@ then use the following code: \code{parallel::detectCores()}}
 Should progress be displayed?
 Defaults to \code{TRUE}.
 For Windows, \code{FALSE} is about 2x faster}
+
+\item{seed}{Numeric.
+Seed to reproduce results. Defaults to \code{1234}. For random results, set to \code{NULL}}
 
 \item{...}{Additional arguments.
 Used for deprecated arguments from previous versions of \code{\link{EGA}}}

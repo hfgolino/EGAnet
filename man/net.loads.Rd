@@ -8,6 +8,7 @@ net.loads(
   A,
   wc,
   sum.method = c("absolute", "signed"),
+  positive.orientation = FALSE,
   rotation = "geominQ",
   min.load = 0,
   ...
