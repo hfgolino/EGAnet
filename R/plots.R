@@ -950,8 +950,12 @@ plot.EGA <- function(x,  title = "",
         )
     }
   
+    if(isFALSE(plot.args$legend)){
+      ega.plot <- ega.plot + ggplot2::theme(legend.position = "none") 
+    }
+    
     set.seed(NULL)
-  
+    
     if(isTRUE(produce)){
       plot(ega.plot)
     }else{return(ega.plot)}

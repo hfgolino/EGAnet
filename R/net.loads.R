@@ -283,6 +283,11 @@ net.loads <- function(
     # Set signs
     loading_matrix <- loading_matrix * signs
     
+    # Order columns:
+    
+    loading_matrix <- loading_matrix[,stringr::str_sort(colnames(loading_matrix), numeric = TRUE)]
+    
+    
     # Using signs, ensure positive orientation based
     # on most common direction
     for(dominant in unique_wc){
@@ -315,6 +320,10 @@ net.loads <- function(
       t(loading_matrix) /
       sqrt(colSums(abs(loading_matrix)))
     )
+    
+    # Order columns:
+    
+    standardized <- standardized[,stringr::str_sort(colnames(standardized), numeric = TRUE)]
     
     # Set up for rotation
     
@@ -437,9 +446,9 @@ net.loads <- function(
       colnames(aligned_Phi) <- colnames(standardized)
       row.names(aligned_Phi) <- colnames(standardized)
       
-      # Re-assign rotated values
-      rotated$loadings <- aligned_loadings
-      rotated$Phi <- aligned_Phi
+      # Re-assign rotated values and order columns and rows (for phi)
+      rotated$loadings <- aligned_loadings[,stringr::str_sort(colnames(aligned_loadings), numeric = TRUE)]
+      rotated$Phi <- aligned_Phi[stringr::str_sort(rownames(aligned_loadings), numeric = TRUE),stringr::str_sort(colnames(aligned_loadings), numeric = TRUE)]
     
     
     }

@@ -3049,8 +3049,15 @@ GGally.args <- function(plot.args)
                            edge.alpha = 0.5, layout.exp = 0.2)
   default.args[names(ega.default.args)]  <- ega.default.args
   default.args <- default.args[-length(default.args)]
-
-
+  
+  
+  if("legend" %in% names(plot.args)){
+    plot.args$legend <- plot.args$legend
+  }else{
+    plot.args$legend <- TRUE
+  }
+  
+  
   if("node.alpha" %in% names(plot.args)){
     plot.args$alpha <- plot.args$node.alpha
     plot.args$node.alpha <- NULL
