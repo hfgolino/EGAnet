@@ -447,8 +447,8 @@ net.loads <- function(
       row.names(aligned_Phi) <- colnames(standardized)
       
       # Re-assign rotated values and order columns and rows (for phi)
-      rotated$loadings <- aligned_loadings[,stringr::str_sort(colnames(aligned_loadings), numeric = TRUE)]
-      rotated$Phi <- aligned_Phi[stringr::str_sort(row.names(aligned_Phi), numeric = TRUE),stringr::str_sort(colnames(aligned_Phi), numeric = TRUE)]
+      rotated$loadings <- aligned_loadings
+      rotated$Phi <- aligned_Phi
     
     
     }
