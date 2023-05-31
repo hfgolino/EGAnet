@@ -242,6 +242,13 @@
 #' Defaults to \code{TRUE}.
 #' For Windows, \code{FALSE} is about 2x faster
 #'
+#' @param singleton Boolean. 
+#' Should singleton communities (i.e., communities with only one node) be counted and plot as a community or should return NA?
+#'  \code{"TRUE"} means that every node that forms a single community will show up in the results as a community (impacting the number of communities estimated).
+#'  \code{"FALSE"} means that every node that forms a single community will return \code{NA} in the vector of communities 
+#'  (not impacting the number of communities estimated).
+#' Defaults to \code{"FALSE"}.
+#' 
 #' @param ... Additional arguments.
 #' Used for deprecated arguments from previous versions of \code{\link{EGA}}
 #'
@@ -365,7 +372,8 @@ bootEGA <- function(
       "most_common_tefi"
     ), consensus.iter = 100,
     typicalStructure = TRUE, plot.typicalStructure = TRUE,
-    plot.args = list(), ncores, progress = TRUE, ...
+    plot.args = list(), ncores, progress = TRUE, 
+    singleton = FALSE, ...
 ) 
 {
   
@@ -475,7 +483,7 @@ bootEGA <- function(
     algorithm = algorithm, algorithm.args = algorithm.args,
     consensus.method = consensus.method,
     consensus.iter = consensus.iter,
-    plot.EGA = FALSE
+    plot.EGA = FALSE, singleton = singleton
   )
   
   # Remove calls that are not in formal arguments

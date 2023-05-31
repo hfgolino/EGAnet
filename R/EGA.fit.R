@@ -99,6 +99,13 @@
 #' Higher values lead to smaller communities, lower values lead to larger communities}
 #'
 #' }
+#' 
+#' @param singleton Boolean. 
+#' Should singleton communities (i.e., communities with only one node) be counted and plot as a community or should return NA?
+#'  \code{"TRUE"} means that every node that forms a single community will show up in the results as a community (impacting the number of communities estimated).
+#'  \code{"FALSE"} means that every node that forms a single community will return \code{NA} in the vector of communities 
+#'  (not impacting the number of communities estimated).
+#' Defaults to \code{"FALSE"}.
 #'
 #' @return Returns a list containing:
 #'
@@ -179,7 +186,8 @@ EGA.fit <- function (
   algorithm = c("leiden", "walktrap"),
   algorithm.args = list(
     steps = c(3:8),
-    resolution_parameter = seq(0, 2, .001)
+    resolution_parameter = seq(0, 2, .001),
+    singleton = FALSE
   )
 )
 {
@@ -265,7 +273,8 @@ EGA.fit <- function (
                                             model = model,
                                             model.args = list(steps = steps[i]),
                                             algorithm = "walktrap",
-                                            plot.EGA = FALSE)
+                                            plot.EGA = FALSE,
+                                            singleton = singleton)
       
       dims[,i] <- mods[[as.character(steps[i])]]$wc
     }
@@ -405,7 +414,8 @@ EGA.fit <- function (
               algorithm.args = list(
                 resolution_parameter = resolution[which(ent.vec==min(ent.vec))]
               ),
-              plot.EGA = FALSE)
+              plot.EGA = FALSE,
+              singleton = singleton)
         )
       )
       best.fit$resolution_parameter <- resolution[which(ent.vec==min(ent.vec))]

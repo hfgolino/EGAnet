@@ -196,6 +196,13 @@
 #' Arguments should be input as a list. Some example arguments 
 #' (see \code{\link[lavaan]{lavOptions} for full details})
 #' 
+#' @param singleton Boolean. 
+#' Should singleton communities (i.e., communities with only one node) be counted and plot as a community or should return NA?
+#'  \code{"TRUE"} means that every node that forms a single community will show up in the results as a community (impacting the number of communities estimated).
+#'  \code{"FALSE"} means that every node that forms a single community will return \code{NA} in the vector of communities 
+#'  (not impacting the number of communities estimated).
+#' Defaults to \code{"FALSE"}.
+#' 
 #' @return Returns a list containing:
 #' 
 #' \item{EGA}{Results from \code{\link[EGAnet]{EGA}}}
@@ -261,7 +268,8 @@ riEGA <- function(
     ),
     plot.EGA = TRUE,
     plot.args = list(), estimator = c("auto", "WLSMV", "MLR"),
-    lavaan.args = list()
+    lavaan.args = list(),
+    singleton = FALSE
   )
 {
   
@@ -419,7 +427,7 @@ riEGA <- function(
     algorithm = algorithm, algorithm.args = algorithm.args,
     consensus.method = consensus.method,
     consensus.iter = consensus.iter, plot.EGA = plot.EGA,
-    plot.args = plot.args
+    plot.args = plot.args, singleton = singleton
   )
   
   # Get EGA

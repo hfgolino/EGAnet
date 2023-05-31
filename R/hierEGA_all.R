@@ -193,6 +193,13 @@
 #' more details and examples}
 #'
 #' }
+#' 
+#' @param singleton Boolean. 
+#' Should singleton communities (i.e., communities with only one node) be counted and plot as a community or should return NA?
+#'  \code{"TRUE"} means that every node that forms a single community will show up in the results as a community (impacting the number of communities estimated).
+#'  \code{"FALSE"} means that every node that forms a single community will return \code{NA} in the vector of communities 
+#'  (not impacting the number of communities estimated).
+#' Defaults to \code{"FALSE"}.
 #'
 #' @return Returns a list of lists containing: \cr
 #' \cr
@@ -317,7 +324,8 @@ hierEGA_all <- function(
     model = c("glasso", "TMFG"), model.args = list(),
     algorithm = c("walktrap", "leiden", "louvain"), algorithm.args = list(),
     plot.EGA = TRUE,
-    plot.args = list()
+    plot.args = list(),
+    singleton = FALSE
 )
 {
 
@@ -387,7 +395,8 @@ hierEGA_all <- function(
   lower_order_defaults$plot.EGA <- FALSE # do not plot
   lower_order_defaults$plot.args <- plot.args
   lower_order_defaults$lower.louvain <- TRUE # provides lower order Louvain
-
+  lower_order_defaults$singleton <- singleton 
+  
   # Send message
   message(
     "Obtaining lower-order dimensions...",
@@ -472,6 +481,8 @@ hierEGA_all <- function(
     ega_defaults$consensus.iter <- consensus.iter
     ega_defaults$plot.EGA <- FALSE
     ega_defaults$plot.args <- plot.args
+    ega_defaults$singleton <- singleton 
+    
 
     # Get EGA
     higher_order_result <- suppressWarnings(
