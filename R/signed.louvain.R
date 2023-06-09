@@ -5,9 +5,9 @@
 #' 
 #' @return Returns a list:
 #' 
-#' \item{communities}{Multi-level community matrix}
+#' \item{memberships}{Multi-level community matrix}
 #' 
-#' \item{modularities}{Modularity values for each level}
+#' \item{modularity}{Modularity values for each level}
 #' 
 #' @examples
 #' # Load data
@@ -34,7 +34,7 @@
 #' @export
 #'
 # Signed Louvain communities
-# Updated 31.05.2023
+# Updated 09.06.2023
 signed.louvain <- function(network)
 {
   

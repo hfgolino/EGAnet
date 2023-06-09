@@ -1,8 +1,6 @@
 Changes in version 1.3.0
 
-o MAJOR: the update to version 1.3.0 includes many major changes that are designed to improve the reliability and reproducibility of {EGAnet}. The goal of these changes are to eliminate common errors and streamline the code in the package to prevent future error cases. There are several function additions that are provided to facilitate modular use of the {EGAnet} package
-
-o ADD: custom function called `auto.correlate` to compute automatic correlation computations based on C code for faster performance
+o MAJOR REFACTOR: the update to version 1.3.0 includes many major changes that are designed to improve the reliability and reproducibility of {EGAnet}. The goal of these changes are to eliminate common errors and streamline the code in the package to prevent future error cases. There are several function additions that are provided to facilitate modular use of the {EGAnet} package
 
 o ADD: several internal scripts for "helper" functions that are used across the package (no visible changes for the user)
 
@@ -15,6 +13,10 @@ o ADD: `community.louvain` to apply standard and signed Louvain community detect
 o ADD: convenience function to convert an {igraph} object to a standard matrix (`igraph2matrix`)
 
 o ADD: `modularity` to compute standard (absolute values) and signed modularity (implemented in C)
+
+o ADD: `polychoric.matrix` to compute categorical correlations (implemented in C); handles missing data ("pairwise" or "listwise") as well as empty cells in the joint frequency table (see documentation: `?polychoric.matrix`)
+
+o ADD: `auto.correlate` now computes all correlations internally and no longer depends on external functions; categorical correlations are C based and bi/polyserial correlations are a simplified and vectorized version of {polycor}'s `polyserial`; substantial computational gains (between 10-25x faster than previous use of {qgraph}'s `cor_auto`)
 
 
 Changes in version 1.2.5.1

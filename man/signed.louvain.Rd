@@ -13,9 +13,9 @@ A symmetric matrix representing a network}
 \value{
 Returns a list:
 
-\item{communities}{Multi-level community matrix}
+\item{memberships}{Multi-level community matrix}
 
-\item{modularities}{Modularity values for each level}
+\item{modularity}{Modularity values for each level}
 }
 \description{
 Computes the Signed Louvain Community Detection Algorithm

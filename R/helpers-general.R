@@ -31,6 +31,24 @@ force_vector <- function(desired_vector)
 }
 
 #' @noRd
+# Force matrix ----
+# (usually for vectors)
+# Updated 09.06.2023
+force_matrix <- function(desired_matrix)
+{
+  
+  # Check for matrix form already
+  if(is(desired_matrix, "matrix")){
+    return(desired_matrix)
+  }else if(is(desired_matrix, "data.frame")){
+    return(as.matrix(desired_matrix))
+  }else{# Convert vector to matrix
+    return(matrix(desired_matrix, ncol = 1))
+  }
+  
+}
+
+#' @noRd
 # Determine number of categories in data ----
 # Updated 02.02.2023
 data_categories <- function(data)
