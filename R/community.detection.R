@@ -55,6 +55,13 @@
 #' Caution should be used when setting to \code{FALSE}.
 #' Most algorithms are not able to handle signed (negative)
 #' weights
+#' 
+#' @param allow.singleton Boolean.
+#' Whether singleton or single node communities should be allowed.
+#' Defaults to \code{FALSE}.
+#' When \code{FALSE}, singleton communities will be set to
+#' missing (\code{NA}); otherwise, when \code{TRUE}, singleton
+#' communities will be allowed
 #'
 #' @param ... Additional arguments to be passed on to
 #' \code{\link{igraph}}'s community detection functions
@@ -119,12 +126,23 @@
 #' @export
 #'
 # Compute communities for EGA
-# Updated 31.05.2023
+# Updated 10.06.2023
 community.detection <- function(
-    network, algorithm = "walktrap",
-    absolute = TRUE, ...
+    network, algorithm = c(
+      "edge_betweenness", "fast_greedy",
+      "fluid", "infomap", "label_prop",
+      "leading_eigen", "louvain", "optimal",
+      "signed_louvain", "spinglass", "walktrap"
+    ),
+    absolute = TRUE, allow.singleton = FALSE,
+    ...
 )
 {
+  
+  # Set default algorithm if missing
+  if(missing(algorithm)){
+    algorithm <- "walktrap"
+  }else{algorithm <- tolower(match.arg(algorithm))}
   
   # Determine class of network
   if(is(network, "igraph")){
@@ -160,18 +178,7 @@ community.detection <- function(
   }
   
   # Check for names
-  if(is.null(colnames(network_matrix))){
-    
-    # Assign names
-    names(network_matrix) <- paste0(
-      "V", formatC(
-        x = 1:ncol(network_matrix),
-        digits = digits(ncol(network_matrix)) - 1,
-        flag = "0", format = "d"
-      )
-    )
-    
-  }
+  network_matrix <- ensure_dimension_names(network_matrix)
   
   # Obtain strength
   node_strength <- colSums(abs(network_matrix), na.rm = TRUE)
@@ -230,16 +237,16 @@ community.detection <- function(
     }
     
     # Obtain ellipse arguments
-    ellipse.args <- list(...)
+    ellipse <- list(...)
     
     # Algorithm arguments
-    algorithm.ARGS <- obtain.arguments(
+    algorithm.ARGS <- obtain_arguments(
       FUN = algorithm.FUN,
-      FUN.args = ellipse.args
+      FUN.args = ellipse
     )
     
     # Check for Leading Eigenvalue (needs ARPACK)
-    if(algorithm == "leading_eigen" & !"options" %in% names(ellipse.args)){
+    if(algorithm == "leading_eigen" & !"options" %in% names(ellipse)){
       algorithm.ARGS$options <- igraph::arpack_defaults
     }
     
@@ -275,23 +282,28 @@ community.detection <- function(
   
   }
   
-  # Determine whether there are any singleton communities
-  membership_frequency <- table(membership)
-  
-  # Check for frequencies equal to one
-  if(any(membership_frequency == 1)){
+  # Check singleton behavior
+  if(!isTRUE(allow.singleton)){
     
-    # Identify communities
-    singleton_communities <- as.numeric(
-      names(membership_frequency)[
-        membership_frequency == 1
-      ]
-    )
+    # Determine whether there are any singleton communities
+    membership_frequency <- table(membership)
     
-    # Set values to NA
-    membership[
-      membership %in% singleton_communities
-    ] <- NA
+    # Check for frequencies equal to one
+    if(any(membership_frequency == 1)){
+      
+      # Identify communities
+      singleton_communities <- as.numeric(
+        names(membership_frequency)[
+          membership_frequency == 1
+        ]
+      )
+      
+      # Set values to NA
+      membership[
+        membership %in% singleton_communities
+      ] <- NA
+      
+    }
     
   }
   

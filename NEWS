@@ -18,6 +18,12 @@ o ADD: `polychoric.matrix` to compute categorical correlations (implemented in C
 
 o ADD: `auto.correlate` now computes all correlations internally and no longer depends on external functions; categorical correlations are C based and bi/polyserial correlations are a simplified and vectorized version of {polycor}'s `polyserial`; substantial computational gains (between 10-25x faster than previous use of {qgraph}'s `cor_auto`)
 
+o ADD: `network.estimation` to handle all network estimation in {EGAnet}; *includes* Bayesian GGM from {BGGM} for more seamless incorporation of BEGA
+
+o UPDATE: `EBICglasso.qgraph` and `TMFG` were optimized with `TMFG` now 2x faster
+
+o UPDATE: `TMFG` will now directly estimate a GGM with the argument 'partial = TRUE'; implements the Local-Global Inversion method from Barfuss et al. (2016)
+
 
 Changes in version 1.2.5.1
 

@@ -15,14 +15,20 @@ EBICglasso.qgraph(
   penalizeMatrix,
   countDiagonal = FALSE,
   refit = FALSE,
-  optimization = c("EBIC", "JSD"),
+  model.selection = c("EBIC", "JSD"),
+  verbose = FALSE,
   ...
 )
 }
 \arguments{
-\item{data}{Data matrix}
+\item{data}{Matrix or data frame.
+Either data (cases by variables) or correlation matrix.
+If inputting a correlation matrix, then \code{n} must be
+set}
 
-\item{n}{Number of participants}
+\item{n}{Numeric (length = 1).
+Sample size for when a correlation matrix is input into \code{data}.
+Defaults to \code{NULL}}
 
 \item{gamma}{EBIC tuning parameter. 0.5 is generally a good choice.
 Setting to zero will cause regular BIC to be used.}
@@ -35,8 +41,10 @@ Setting to zero will cause regular BIC to be used.}
 Defaults to \code{0.1}.
 \strong{NOTE} \code{\link{qgraph}} sets the default to \code{0.01}}
 
-\item{returnAllResults}{If \code{TRUE} this function does not
-return a network but the results of the entire glasso path.}
+\item{returnAllResults}{Boolean.
+Whether all results should be returned.
+Defaults to \code{FALSE} (network only).
+Set to \code{TRUE} to access \code{\link[glasso]{glassopath}} output}
 
 \item{penalizeMatrix}{Optional logical matrix to indicate which elements are penalized}
 
@@ -46,8 +54,13 @@ Defaults to \code{FALSE}. Set to \code{TRUE} to mimic qgraph < 1.3 behavior (not
 \item{refit}{Logical, should the optimal graph be refitted without LASSO regularization?
 Defaults to \code{FALSE}.}
 
-\item{optimization}{Character.
+\item{model.selection}{Character.
 How lambda should be selected within GLASSO}
+
+\item{verbose}{Boolean.
+Whether messages and (insignificant) warnings should be output.
+Defaults to \code{FALSE} (silent calls).
+Set to \code{TRUE} to see all messages and warnings for every function call}
 
 \item{...}{Arguments sent to \code{\link[glasso]{glasso}}}
 }
@@ -73,7 +86,6 @@ is computed using \code{\link[qgraph]{wi2net}} and returned.
 # Obtain data
 wmt <- wmt2[,7:24]
 
-\dontrun{
 # Compute graph with tuning = 0 (BIC)
 BICgraph <- EBICglasso.qgraph(
   data = wmt, gamma = 0
@@ -82,7 +94,7 @@ BICgraph <- EBICglasso.qgraph(
 # Compute graph with tuning = 0.5 (EBIC)
 EBICgraph <- EBICglasso.qgraph(
   data = wmt, gamma = 0.5
-)}
+)
 
 }
 \references{

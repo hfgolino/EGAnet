@@ -4,15 +4,75 @@
 \alias{TMFG}
 \title{Triangulated Maximally Filtered Graph}
 \usage{
-TMFG(cormat)
+TMFG(
+  data,
+  n = NULL,
+  corr = c("auto", "pearson", "spearman"),
+  na.data = c("pairwise", "listwise"),
+  partial = FALSE,
+  returnAllResults = FALSE,
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
-\item{cormat}{A correlation matrix}
+\item{data}{Matrix or data frame.
+Either data (cases by variables) or correlation matrix.
+If inputting a correlation matrix, then \code{n} must be
+set}
+
+\item{n}{Numeric (length = 1).
+Sample size for when a correlation matrix is input into \code{data}.
+Defaults to \code{NULL}}
+
+\item{corr}{Character (length = 1).
+Method to compute correlations.
+Defaults to \code{"auto"} to automatically compute
+appropriate correlations using \code{\link[EGAnet]{auto.correlate}}.
+\code{"pearson"} and \code{"spearman"} are provide for completeness.
+For other similarity measures, compute them first and input them
+into \code{data} with the sample size (\code{n})}
+
+\item{na.data}{Character (length = 1).
+How should missing data be handled?
+Available options:
+
+\itemize{
+
+\item{\code{"pairwise"}}
+{Computes correlation for all available cases between
+two variables}
+
+\item{\code{"listwise"}}
+{Computes correlation for all complete cases in the dataset}
+
+}}
+
+\item{partial}{Boolean.
+Whether partial correlations should be output.
+By default, the TMFG method is based on the zero-order correlations.
+The Local-Global Inversion Method (LoGo; see Barfuss et al., 2016 for more details)
+uses the decomposability of the TMFG network to obtain the inverse covariance
+structure of the network (which is then converted to partial correlations).
+Set to \code{TRUE} to obtain the partial correlations from the LoGo method}
+
+\item{returnAllResults}{Boolean.
+Whether all results should be returned.
+Defaults to \code{FALSE} (network only).
+Set to \code{TRUE} to access separators and cliques}
+
+\item{verbose}{Boolean.
+Whether messages and (insignificant) warnings should be output.
+Defaults to \code{FALSE} (silent calls).
+Set to \code{TRUE} to see all messages and warnings for every function call}
+
+\item{...}{Additional arguments to be passed on to
+\code{\link[EGAnet]{auto.correlate}}}
 }
 \value{
-Returns a list containing:
+Returns a network or list containing:
 
-\item{A}{The filtered adjacency matrix}
+\item{network}{The filtered adjacency matrix}
 
 \item{separators}{The separators (3-cliques) in the network}
 
@@ -28,7 +88,7 @@ variables. Then, it iteratively adds each variable with the largest sum of three
 correlations to nodes already in the network until all variables have been added to
 the network. This structure can be associated with the inverse correlation matrix
 (i.e., precision matrix) to be turned into a GGM (i.e., partial correlation network)
-by using Local-Global Inversion Method (see Barfuss et al., 2016 for more details).
+by using Local-Global Inversion Method (LoGo; see Barfuss et al., 2016 for more details).
 See Details for more information on this network estimation method.
 }
 \details{
@@ -52,8 +112,11 @@ drawn on a sphere with no edges crossing (often, however, the networks are depic
 with edges crossing; Tumminello, Aste, Di Matteo, & Mantegna, 2005).
 }
 \examples{
-# Pearson's correlation only for CRAN checks
-A <- TMFG(cor(wmt2[,7:24]))$A
+# TMFG filtered network
+TMFG(wmt2[,7:24])
+
+# Partial correlations using the LoGo method
+TMFG(wmt2[,7:24], partial = TRUE)
 
 }
 \references{

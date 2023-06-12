@@ -33,9 +33,14 @@ force_vector <- function(desired_vector)
 #' @noRd
 # Force matrix ----
 # (usually for vectors)
-# Updated 09.06.2023
-force_matrix <- function(desired_matrix)
+# Updated 12.06.2023
+force_matrix <- function(desired_matrix, dimension = c("col", "row"))
 {
+  
+  # Check for missing dimension argument
+  if(missing(dimension)){
+    dimension <- "col"
+  }else{dimension <- tolower(match.arg(dimension))}
   
   # Check for matrix form already
   if(is(desired_matrix, "matrix")){
@@ -43,8 +48,59 @@ force_matrix <- function(desired_matrix)
   }else if(is(desired_matrix, "data.frame")){
     return(as.matrix(desired_matrix))
   }else{# Convert vector to matrix
-    return(matrix(desired_matrix, ncol = 1))
+    
+    # Set up as a single column or row
+    if(dimension == "col"){
+      return(matrix(desired_matrix, ncol = 1))
+    }else{
+      return(matrix(desired_matrix, nrow = 1))
+    }
+    
   }
+  
+}
+
+#' @noRd
+# Force numeric ----
+# (usually for vectors)
+# Updated 09.06.2023
+force_numeric <- function(desired_numeric)
+{
+  
+  # Check first for feasible coercion
+  if(canCoerce(desired_numeric, "numeric")){
+    
+    # Check for edge cases
+    if(is.factor(desired_numeric) | is.ordered(desired_numeric)){ # factor/ordered
+      
+      # Make character
+      desired_numeric <- as.character(desired_numeric)
+      
+    }else if(is.complex(desired_numeric)){ # complex (force `NA``)
+      
+      # Find imaginary numbers (start as character)
+      imaginary_character <- as.character(desired_numeric)
+      
+      # Determine which are imaginary
+      imaginary <- grepl("i", imaginary_character)
+      
+      # Set imaginary numbers to `NA`
+      desired_numeric[imaginary] <- NA
+      
+    }
+    
+  }else{
+    
+    # Return all NAs
+    desired_numeric <- rep(NA, length(desired_numeric))
+    
+  }
+  
+  # Make numeric
+  desired_numeric <- as.numeric(desired_numeric)
+  
+  # Return result
+  return(desired_numeric)
   
 }
 
@@ -178,8 +234,7 @@ no_name_print <- function(object){
 }
 
 #' @noRd
-#'
-# General function to check for packages
+# General function to check for packages ----
 # Updated 12.04.2023
 check_package <- function(packages)
 {
@@ -236,7 +291,7 @@ check_package <- function(packages)
 
 #' @noRd
 #'
-# General function to silently obtain output
+# General function to silently obtain output ----
 # Updated 11.05.2023
 silent_call <- function(...){
   
@@ -254,10 +309,56 @@ silent_call <- function(...){
   
 }
 
+#' @noRd
+#'
+# General function to silently load package ----
+# Updated 10.06.2023
+silent_load <- function(...){
+  
+  # Return result
+  return(
+    suppressPackageStartupMessages(...)
+  )
+  
+}
 
-
-
-
+#' @noRd
+# Function to obtain arguments
+# Updated 09.06.2023
+obtain_arguments <- function(FUN, FUN.args)
+{
+  
+  # Obtain formal arguments
+  FUN.formals <- formals(FUN)
+  
+  # Check for input arguments
+  if(length(FUN.args) != 0){
+    
+    ## Check for matching arguments
+    if(any(names(FUN.args) %in% names(FUN.formals))){
+      
+      replace.args <- FUN.args[na.omit(match(names(FUN.formals), names(FUN.args)))]
+      
+      FUN.formals[names(replace.args)] <- replace.args
+    }
+    
+  }
+  
+  # Remove ellipses
+  if("..." %in% names(FUN.formals)){
+    FUN.formals[which(names(FUN.formals) == "...")] <- NULL
+  }
+  
+  # Remove call arguments (assume they are supplied elsewhere)
+  call_argument <- sapply(FUN.formals, function(x){is(x, "call")})
+  
+  # Keep non-calls
+  FUN.formals <- FUN.formals[!call_argument]
+  
+  # Return arguments
+  return(FUN.formals)
+  
+}
 
 
 

@@ -4,7 +4,14 @@
 \alias{community.detection}
 \title{Apply a Community Detection Algorithm}
 \usage{
-community.detection(network, algorithm = "walktrap", absolute = TRUE, ...)
+community.detection(
+  network,
+  algorithm = c("edge_betweenness", "fast_greedy", "fluid", "infomap", "label_prop",
+    "leading_eigen", "louvain", "optimal", "signed_louvain", "spinglass", "walktrap"),
+  absolute = TRUE,
+  allow.singleton = FALSE,
+  ...
+)
 }
 \arguments{
 \item{network}{Matrix or \code{\link{igraph}} network object}
@@ -58,6 +65,13 @@ Defaults to \code{TRUE}.
 Caution should be used when setting to \code{FALSE}.
 Most algorithms are not able to handle signed (negative)
 weights}
+
+\item{allow.singleton}{Boolean.
+Whether singleton or single node communities should be allowed.
+Defaults to \code{FALSE}.
+When \code{FALSE}, singleton communities will be set to
+missing (\code{NA}); otherwise, when \code{TRUE}, singleton
+communities will be allowed}
 
 \item{...}{Additional arguments to be passed on to
 \code{\link{igraph}}'s community detection functions

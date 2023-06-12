@@ -2,6 +2,59 @@
 # FUNCTION FUNCTIONS ----
 #%%%%%%%%%%%%%%%%%%%%%%%%
 
+# Function to check for usable variables ----
+#' @noRd
+# Updated 12.06.2023
+usable_data <- function(data, verbose)
+{
+  
+  # Set data to matrix
+  data_matrix <- as.matrix(data)
+  
+  # Try an force all data to numeric
+  forced_numerics <- apply(
+    data_matrix, 2, function(x){
+      
+      # Perform silent, try call
+      ## See `helpers-general.R` for more details
+      output <- try(
+        silent_call(force_numeric(x))
+      )
+      
+      # Check for error
+      if(is(output, "try-error")){
+        return(rep(NA, length(x)))
+      }else{
+        return(output)
+      }
+      
+    }
+  )
+  
+  # Determine whether any columns need to be removed
+  remove_columns <- apply(forced_numerics, 2, function(x){all(is.na(x))})
+  
+  # Check for any columns that need to be removed
+  if(any(remove_columns) & isTRUE(verbose)){
+    
+    # Send warning
+    warning(
+      paste0(
+        "Several variables could not to be coerced to numeric values. These variables have been removed from the analysis:\n",
+        paste0("'", colnames(data)[remove_columns], "'", collapse = ", ")
+      )
+    )
+    
+  }
+  
+  # Store usable data
+  return_data <- data[,!remove_columns]
+  
+  # Send back usuable data
+  return(return_data)
+  
+}
+
 #' @noRd
 # Standard EGA arguments
 # Updated 02.02.2023
