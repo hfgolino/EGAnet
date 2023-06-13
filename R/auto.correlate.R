@@ -8,7 +8,7 @@
 #' @param data Matrix or data frame.
 #' Should consist only of variables that are desired to be correlated
 #' 
-#' @param method Character (length = 1).
+#' @param corr Character (length = 1).
 #' The standard correlation method to be used.
 #' Defaults to \code{"pearson"}.
 #' Using \code{"pearson"} will compute polychoric, tetrachoric, polyserial,
@@ -97,10 +97,10 @@
 #' @export
 #'
 # Automatic correlations ----
-# Updated 09.06.2023
+# Updated 13.06.2023
 auto.correlate <- function(
     data, # Matrix or data frame
-    method = c("kendall", "pearson", "spearman"), # allow changes to standard correlations
+    corr = c("kendall", "pearson", "spearman"), # allow changes to standard correlations
     ordinal.categories = 7, # consider ordinal up to 7 categories
     forcePD = TRUE, # ensure result is positive definite
     na.data = c("pairwise", "listwise"), # use available or complete values
@@ -112,9 +112,9 @@ auto.correlate <- function(
   
   # Missing arguments
   ## Standard correlation method
-  if(missing(method)){
-    method <- "pearson"
-  }else{method <- tolower(match.arg(method))}
+  if(missing(corr)){
+    corr <- "pearson"
+  }else{corr <- tolower(match.arg(corr))}
   ## Missing data
   if(missing(na.data)){
     na.data <- "pairwise"
@@ -138,12 +138,12 @@ auto.correlate <- function(
   # to only select for appropriate variables
   
   # Determine whether categorical correlations are necessary
-  if(method != "pearson"){
+  if(corr != "pearson"){
     
     # Obtain correlation matrix
     correlation_matrix <- cor(
       x = data, use = na.data,
-      method = method
+      method = corr
     )
     
   }else{ # Proceed with determination of categorical correlations

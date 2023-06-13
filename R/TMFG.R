@@ -158,7 +158,7 @@ TMFG <- function(
     if(corr == "auto"){
       
       # Add arguments to 'ellipse'
-      ellipse$method <- "pearson"; ellipse$na.data <- na.data;
+      ellipse$corr <- "pearson"; ellipse$na.data <- na.data;
       
       # Obtain arguments for `auto.correlate`
       auto_ARGS <- obtain_arguments(FUN = auto.correlate, FUN.args = ellipse)

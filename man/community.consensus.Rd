@@ -6,7 +6,7 @@
 \usage{
 community.consensus(
   network,
-  method = c("signed", "standard"),
+  signed = FALSE,
   order = c("lower", "higher"),
   resolution = 1,
   consensus.method = c("highest_modularity", "iterative", "most_common", "lowest_tefi"),
@@ -18,9 +18,9 @@ community.consensus(
 \arguments{
 \item{network}{Matrix or \code{\link{igraph}} network object}
 
-\item{method}{Character (length = 1).
-Whether \code{"standard"} or \code{"signed"} algorithm should be used.
-Defaults to \code{"standard"}}
+\item{signed}{Boolean.
+Whether the standard or signed algorithm should be used.
+Defaults to \code{FALSE} or standard}
 
 \item{order}{Character (length = 1).
 Whether \code{"lower"} or \code{"higher"} order memberships from
@@ -117,50 +117,50 @@ network <- EBICglasso.qgraph(data = wmt)
 
 # Compute standard Louvain with highest modularity approach
 community.consensus(
-  network, method = "standard",
+  network,
   consensus.method = "highest_modularity"
 )
 
 # Compute standard Louvain with iterative (original) approach
 community.consensus(
-  network, method = "standard",
+  network,
   consensus.method = "iterative"
 )
 
 # Compute standard Louvain with most common approach
 community.consensus(
-  network, method = "standard",
+  network,
   consensus.method = "most_common"
 )
 
 # Compute standard Louvain with lowest TEFI approach
 community.consensus(
-  network, method = "standard",
+  network,
   consensus.method = "lowest_tefi",
   correlation.matrix = correlation.matrix
 )
 
 # Compute signed Louvain with highest modularity approach
 community.consensus(
-  network, method = "signed",
+  network, signed = TRUE,
   consensus.method = "highest_modularity"
 )
 
 # Compute signed Louvain with iterative (original) approach
 community.consensus(
-  network, method = "signed",
+  network, signed = TRUE,
   consensus.method = "iterative"
 )
 
 # Compute signed Louvain with most common approach
 community.consensus(
-  network, method = "signed",
+  network, signed = TRUE,
   consensus.method = "most_common"
 )
 
 # Compute signed Louvain with lowest TEFI approach
 community.consensus(
-  network, method = "signed",
+  network, signed = TRUE,
   consensus.method = "lowest_tefi",
   correlation.matrix = correlation.matrix
 )

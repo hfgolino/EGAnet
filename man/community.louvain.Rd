@@ -4,14 +4,14 @@
 \alias{community.louvain}
 \title{Apply the Louvain Community Detection Algorithm}
 \usage{
-community.louvain(network, method = c("signed", "standard"), resolution = 1)
+community.louvain(network, signed = FALSE, resolution = 1)
 }
 \arguments{
 \item{network}{Matrix or \code{\link{igraph}} network object}
 
-\item{method}{Character (length = 1).
-Whether \code{"standard"} or \code{"signed"} algorithm should be used.
-Defaults to \code{"standard"}}
+\item{signed}{Boolean.
+Whether the standard or signed algorithm should be used.
+Defaults to \code{FALSE} or standard}
 
 \item{resolution}{Numeric (length = 1).
 A parameter that adjusts modularity to allow the algorithm to
@@ -40,10 +40,10 @@ wmt <- wmt2[,7:24]
 network <- EBICglasso.qgraph(data = wmt)
 
 # Compute standard Louvain
-community.louvain(network, method = "standard")
+community.louvain(network, signed = FALSE)
 
 # Compute signed Louvain
-community.louvain(network, method = "signed")
+community.louvain(network, signed = TRUE)
 
 }
 \references{

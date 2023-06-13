@@ -9,22 +9,27 @@
 Implements the Exploratory Graph Analysis (\code{\link[EGAnet]{EGA}}; Golino & Epskamp, 2017; Golino, Shi et al., 2020) framework for dimensionality and psychometric assessment.
 EGA is part of a new area called \emph{network psychometrics} that uses undirected network models for the assessment
 of psychometric properties. EGA estimates the number of dimensions (or factors) using graphical lasso \code{\link[qgraph]{EBICglasso}} or
-Triangulated Maximally Filtered Graph (\code{\link[EGAnet]{TMFG}}) and a weighted network community detection algorithm (Christensen, Garrido, Golino, under review A). A bootstrap method for
+Triangulated Maximally Filtered Graph (\code{\link[EGAnet]{TMFG}}) and a weighted network community detection algorithm (Christensen et al., 2023). A bootstrap method for
 verifying the stability of the dimensions and items in those dimensions is available (\code{\link[EGAnet]{bootEGA}}; Christensen & Golino, 2021a). The fit of the structure suggested by EGA
 can be verified using Entropy Fit Indices (\code{\link[EGAnet]{entropyFit}}, \code{\link[EGAnet]{tefi}}; Golino, Moulder et al., 2020). A novel approach called Unique Variable Analysis (\code{\link[EGAnet]{UVA}}) can be used to
-identify and reduce redundant variables in multivariate data (Christensen, Garrido, & Golino, under review B). Network loadings (\code{\link[EGAnet]{net.loads}}),
+identify and reduce redundant variables in multivariate data (Christensen, Garrido, & Golino, 2023). Network loadings (\code{\link[EGAnet]{net.loads}}),
 which are roughly equivalent to factor loadings when the data generating model is a factor model, are available (Christensen & Golino, 2021b, 2021c).
 Network scores (\code{\link[EGAnet]{net.scores}}) can also be computed using the network loadings. Finally, dynamic EGA (\code{\link[EGAnet]{dynEGA}}) will estimate dimensions from time series data for individual, group, and sample levels (Golino, Christensen et al., 2021).
 }
 \references{
-Christensen, A. P., Garrido, L. E., & Golino, H. (under review A).
-Comparing community detection algorithms in psychological data: A Monte Carlo simulation.
+Christensen, A. P. (2023).
+Unidimensional community detection: A Monte Carlo simulation, grid search, and comparison.
 \emph{PsyArXiv}. \cr
+# Related functions: \code{\link[EGAnet]{community.unidimensional}}
+
+Christensen, A. P., Garrido, L. E., Guerra-Pena, K., & Golino, H. (2023).
+Comparing community detection algorithms in psychometric networks: A Monte Carlo simulation.
+\emph{Behavior Research Methods}. \cr
 # Related functions: \code{\link[EGAnet]{EGA}}
 
-Christensen, A. P., Garrido, L. E., & Golino, H. (under review B).
+Christensen, A. P., Garrido, L. E., & Golino, H. (2023).
 Unique Variable Analysis: A novel approach to detect redundant variables in multivariate data.
-\emph{PsyArXiv}. \cr
+\emph{Multivariate Behavioral Research}. \cr
 # Related functions: \code{\link[EGAnet]{UVA}}
 
 Christensen, A. P., & Golino, H. (2021a).

@@ -20,9 +20,9 @@
 #'
 #' @param network Matrix or \code{\link{igraph}} network object
 #' 
-#' @param method Character (length = 1).
-#' Whether \code{"standard"} or \code{"signed"} algorithm should be used.
-#' Defaults to \code{"standard"}
+#' @param signed Boolean.
+#' Whether the standard or signed algorithm should be used.
+#' Defaults to \code{FALSE} or standard
 #' 
 #' @param order Character (length = 1).
 #' Whether \code{"lower"} or \code{"higher"} order memberships from
@@ -100,50 +100,50 @@
 #' 
 #' # Compute standard Louvain with highest modularity approach
 #' community.consensus(
-#'   network, method = "standard",
+#'   network,
 #'   consensus.method = "highest_modularity"
 #' )
 #' 
 #' # Compute standard Louvain with iterative (original) approach
 #' community.consensus(
-#'   network, method = "standard",
+#'   network,
 #'   consensus.method = "iterative"
 #' )
 #' 
 #' # Compute standard Louvain with most common approach
 #' community.consensus(
-#'   network, method = "standard",
+#'   network,
 #'   consensus.method = "most_common"
 #' )
 #' 
 #' # Compute standard Louvain with lowest TEFI approach
 #' community.consensus(
-#'   network, method = "standard",
+#'   network,
 #'   consensus.method = "lowest_tefi",
 #'   correlation.matrix = correlation.matrix
 #' )
 #' 
 #' # Compute signed Louvain with highest modularity approach
 #' community.consensus(
-#'   network, method = "signed",
+#'   network, signed = TRUE,
 #'   consensus.method = "highest_modularity"
 #' )
 #' 
 #' # Compute signed Louvain with iterative (original) approach
 #' community.consensus(
-#'   network, method = "signed",
+#'   network, signed = TRUE,
 #'   consensus.method = "iterative"
 #' )
 #' 
 #' # Compute signed Louvain with most common approach
 #' community.consensus(
-#'   network, method = "signed",
+#'   network, signed = TRUE,
 #'   consensus.method = "most_common"
 #' )
 #' 
 #' # Compute signed Louvain with lowest TEFI approach
 #' community.consensus(
-#'   network, method = "signed",
+#'   network, signed = TRUE,
 #'   consensus.method = "lowest_tefi",
 #'   correlation.matrix = correlation.matrix
 #' )
@@ -168,9 +168,9 @@
 #' @export
 #'
 # Compute consensus clustering for EGA
-# Updated 30.05.2023
+# Updated 13.06.2023
 community.consensus <- function(
-    network, method = c("signed", "standard"), 
+    network, signed = FALSE, 
     order = c("lower", "higher"), resolution = 1,
     consensus.method = c(
       "highest_modularity", "iterative",
@@ -180,11 +180,6 @@ community.consensus <- function(
     progress = TRUE
 )
 {
-  
-  # Set missing method
-  if(missing(method)){
-    method <- "standard"
-  }else{method <- tolower(match.arg(method))}
   
   # Make order lower
   if(missing(order)){
@@ -217,7 +212,7 @@ community.consensus <- function(
     network_matrix <- igraph2matrix(network)
     
     # Check for absolute
-    if(method == "standard"){
+    if(!isTRUE(signed)){
       network_matrix <- abs(network_matrix)
     }
     
@@ -231,7 +226,7 @@ community.consensus <- function(
     network <- as.matrix(network)
     
     # Check for absolute
-    if(method == "standard"){
+    if(!isTRUE(signed)){
       network <- abs(network)
     }
     
@@ -243,14 +238,8 @@ community.consensus <- function(
     
   }
   
-  # Check for names
-  if(is.null(colnames(network_matrix))){
-    
-    # Assign names
-    colnames(network_matrix) <- 
-      ensure_dimension_names(network_matrix)
-    
-  }
+  # Make sure there are variable names
+  network_matrix <- ensure_dimension_names(network_matrix)
   
   # Obtain strength
   node_strength <- colSums(abs(network_matrix), na.rm = TRUE)
@@ -283,14 +272,14 @@ community.consensus <- function(
     }
     
     # Algorithm function
-    algorithm.FUN <- switch(
-      method,
-      "standard" = igraph::cluster_louvain,
-      "signed" = signed.louvain
-    )
+    if(!isTRUE(signed)){
+      algorithm.FUN <- igraph::cluster_louvain
+    }else{
+      algorithm.FUN <- signed.louvain
+    }
     
     # Algorithm arguments
-    algorithm.ARGS <- obtain.arguments(
+    algorithm.ARGS <- obtain_arguments(
       FUN = algorithm.FUN,
       FUN.args = list(resolution = resolution)
     )
@@ -301,9 +290,9 @@ community.consensus <- function(
     }
     
     # Check for proper network
-    if(method == "standard"){
+    if(!isTRUE(signed)){
       algorithm.ARGS[[1]] <- igraph_network
-    }else if(method == "signed"){
+    }else{
       algorithm.ARGS[[1]] <- network_matrix
     }
     
@@ -337,7 +326,7 @@ community.consensus <- function(
 }
 
 # Bug check ----
-# network = ega.wmt$network; method = "standard";
+# network = ega.wmt$network; signed = FALSE;
 # order = "higher"; resolution = 1;
 # consensus.method = "lowest_tefi";
 # consensus.iter = 1000; progress = TRUE;

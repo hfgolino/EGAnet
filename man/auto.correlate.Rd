@@ -6,7 +6,7 @@
 \usage{
 auto.correlate(
   data,
-  method = c("kendall", "pearson", "spearman"),
+  corr = c("kendall", "pearson", "spearman"),
   ordinal.categories = 7,
   forcePD = TRUE,
   na.data = c("pairwise", "listwise"),
@@ -19,7 +19,7 @@ auto.correlate(
 \item{data}{Matrix or data frame.
 Should consist only of variables that are desired to be correlated}
 
-\item{method}{Character (length = 1).
+\item{corr}{Character (length = 1).
 The standard correlation method to be used.
 Defaults to \code{"pearson"}.
 Using \code{"pearson"} will compute polychoric, tetrachoric, polyserial,

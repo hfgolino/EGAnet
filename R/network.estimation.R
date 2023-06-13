@@ -106,7 +106,7 @@
 #' @export
 #'
 # Compute networks for EGA
-# Updated 12.06.2023
+# Updated 13.06.2023
 network.estimation <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -214,7 +214,7 @@ network.estimation <- function(
     if(corr == "auto"){
       
       # Add arguments to 'ellipse'
-      ellipse$method <- "pearson"; ellipse$na.data <- na.data;
+      ellipse$corr <- "pearson"; ellipse$na.data <- na.data;
       
       # Obtain arguments for `auto.correlate`
       auto_ARGS <- obtain_arguments(FUN = auto.correlate, FUN.args = ellipse)
@@ -309,8 +309,8 @@ network.estimation <- function(
 }
 
 # Bug Checking ----
-# ## Basic input
-# data = wmt2[,7:24]; n = NULL;
+## Basic input
+# data = wmt2; n = NULL;
 # corr = "auto"; method = "bggm";
 # na.data = "pairwise"; network.only = TRUE;
 # verbose = FALSE; ellipse = list();

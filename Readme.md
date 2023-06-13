@@ -37,7 +37,10 @@ The old EGA package is now EGAnet, and is now available in The Comprehensive R A
 References
 ============
 
-Chrisensen, A. P., Garrido, L. E., & Golino, H. (in press). Unique variable analysis: A network psychometrics method to detect local dependence. *Multivariate Behavioral Research*. doi:[10.1080/00273171.2023.2194606](https://doi.org/10.1080/00273171.2023.2194606)
+Christensen, A. P. (2023). Unidimensional community detection: A Monte Carlo simulation, grid search, and comparison. *PsyArXiv*. doi:[10.31234/osf.io/ep3vx](https://doi.org/10.31234/osf.io/ep3vx)
++ Related functions: `community.unidimensional`
+
+Christensen, A. P., Garrido, L. E., & Golino, H. (in press). Unique variable analysis: A network psychometrics method to detect local dependence. *Multivariate Behavioral Research*. doi:[10.1080/00273171.2023.2194606](https://doi.org/10.1080/00273171.2023.2194606)
 + Related functions: `UVA`
 
 Christensen, A. P., Garrido, L. E., Guerra-Pena, K., & Golino, H. (in press). Comparing community detection algorithms in psychometric networks: A Monte Carlo simulation. *Behavior Research Methods*. doi:[10.31234/osf.io/hz89e](https://doi.org/10.31234/osf.io/hz89e)

@@ -8,9 +8,9 @@
 #'
 #' @param network Matrix or \code{\link{igraph}} network object
 #' 
-#' @param method Character (length = 1).
-#' Whether \code{"standard"} or \code{"signed"} algorithm should be used.
-#' Defaults to \code{"standard"}
+#' @param signed Boolean.
+#' Whether the standard or signed algorithm should be used.
+#' Defaults to \code{FALSE} or standard
 #' 
 #' @param resolution Numeric (length = 1).
 #' A parameter that adjusts modularity to allow the algorithm to
@@ -33,10 +33,10 @@
 #' network <- EBICglasso.qgraph(data = wmt)
 #' 
 #' # Compute standard Louvain
-#' community.louvain(network, method = "standard")
+#' community.louvain(network, signed = FALSE)
 #' 
 #' # Compute signed Louvain
-#' community.louvain(network, method = "signed")
+#' community.louvain(network, signed = TRUE)
 #'
 #' @references
 #' Blondel, V. D., Guillaume, J.-L., Lambiotte, R., & Lefebvre, E. (2008).
@@ -50,17 +50,12 @@
 #' @export
 #'
 # Compute Louvain communities for EGA
-# Updated 30.05.2023
+# Updated 13.06.2023
 community.louvain <- function(
-    network, method = c("signed", "standard"), 
+    network, signed = FALSE, 
     resolution = 1
 )
 {
-  
-  # Set missing method
-  if(missing(method)){
-    method <- "standard"
-  }else{method <- tolower(match.arg(method))}
   
   # Determine class of network
   if(is(network, "igraph")){
@@ -69,7 +64,7 @@ community.louvain <- function(
     network_matrix <- igraph2matrix(network)
     
     # Check for absolute
-    if(method == "standard"){
+    if(!isTRUE(signed)){
       network_matrix <- abs(network_matrix)
     }
     
@@ -83,7 +78,7 @@ community.louvain <- function(
     network <- as.matrix(network)
     
     # Check for absolute
-    if(method == "standard"){
+    if(!isTRUE(signed)){
       network <- abs(network)
     }
     
@@ -95,19 +90,8 @@ community.louvain <- function(
     
   }
   
-  # Check for names
-  if(is.null(colnames(network_matrix))){
-    
-    # Assign names
-    names(network_matrix) <- paste0(
-      "V", formatC(
-        x = 1:ncol(network_matrix),
-        digits = digits(ncol(network_matrix)) - 1,
-        flag = "0", format = "d"
-      )
-    )
-    
-  }
+  # Make sure there are variable names
+  network_matrix <- ensure_dimension_names(network_matrix)
   
   # Obtain strength
   node_strength <- colSums(abs(network_matrix), na.rm = TRUE)
@@ -140,14 +124,14 @@ community.louvain <- function(
     }
     
     # Algorithm function
-    algorithm.FUN <- switch(
-      method,
-      "standard" = igraph::cluster_louvain,
-      "signed" = signed.louvain
-    )
+    if(isTRUE(signed)){
+      algorithm.FUN <- igraph::cluster_louvain
+    }else{
+      algorithm.FUN <- signed.louvain
+    }
     
     # Algorithm arguments
-    algorithm.ARGS <- obtain.arguments(
+    algorithm.ARGS <- obtain_arguments(
       FUN = algorithm.FUN,
       FUN.args = list(resolution = resolution)
     )
@@ -158,9 +142,9 @@ community.louvain <- function(
     }
     
     # Check for proper network
-    if(method == "standard"){
+    if(!isTRUE(signed)){
       algorithm.ARGS[[1]] <- igraph_network
-    }else if(method == "signed"){
+    }else{
       algorithm.ARGS[[1]] <- network_matrix
     }
     
