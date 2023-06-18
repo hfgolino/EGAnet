@@ -90,6 +90,7 @@
 #' @useDynLib EGAnet, .registration = TRUE
 #' 
 #' @importFrom utils packageDescription
+#' @importFrom Rcpp sourceCpp
 #'
 "_PACKAGE"
 #> [1] "_PACKAGE"

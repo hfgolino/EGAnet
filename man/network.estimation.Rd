@@ -9,7 +9,7 @@ network.estimation(
   n = NULL,
   corr = c("auto", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
-  method = c("BGGM", "glasso", "TMFG"),
+  model = c("BGGM", "glasso", "TMFG"),
   network.only = TRUE,
   verbose = FALSE,
   ...
@@ -47,7 +47,7 @@ two variables}
 
 }}
 
-\item{method}{Character (length = 1).
+\item{model}{Character (length = 1).
 Available options:
 
 \itemize{
@@ -81,8 +81,8 @@ Set to \code{TRUE} to see all messages and warnings for every function call}
 
 \item{...}{Additional arguments to be passed on to
 \code{\link[EGAnet]{auto.correlate}} and the different
-network estimation methods (see \code{method} for
-method specific details)}
+network estimation methods (see \code{model} for
+model specific details)}
 }
 \value{
 Returns a matrix populated with a network from the input data
@@ -94,31 +94,46 @@ General function to apply network estimation methods in \code{\link{EGAnet}}
 # Load data
 wmt <- wmt2[,7:24]
 
-# BGGM with analytic solution
-bggm_network <- network.estimation(
-  data = wmt, method = "BGGM",
-  analytic = TRUE # faster example for CRAN
+# EBICglasso (default for EGA functions)
+glasso_network <- network.estimation(
+  data = wmt, model = "glasso"
 )
 
-# EBICglasso
-glasso_network <- network.estimation(
-  data = wmt, method = "glasso"
+# Plot network
+plot(glasso_network)
+
+# BGGM with analytic solution
+bggm_network <- network.estimation(
+  data = wmt, model = "BGGM",
+  analytic = TRUE # faster example for CRAN
 )
 
 # TMFG
 tmfg_network <- network.estimation(
-  data = wmt, method = "TMFG"
+  data = wmt, model = "TMFG"
 )
 
 }
 \references{
-# Graphical Least Absolute Shrinkage and Selection Operator (GLASSO)
+\strong{Graphical Least Absolute Shrinkage and Selection Operator (GLASSO)} \cr
+Friedman, J., Hastie, T., & Tibshirani, R. (2008). 
+Sparse inverse covariance estimation with the graphical lasso. 
+\emph{Biostatistics}, \emph{9}(3), 432–441.
 
-# GLASSO with Extended Bayesian Information Criterion (EBICglasso)
+\strong{GLASSO with Extended Bayesian Information Criterion (EBICglasso)} \cr
+Epskamp, S., & Fried, E. I. (2018).
+A tutorial on regularized partial correlation networks.
+\emph{Psychological Methods}, \emph{23}(4), 617–634.
 
-# Bayesian Gaussian Graphical Model (BGGM)
+\strong{Bayesian Gaussian Graphical Model (BGGM)} \cr
+Williams, D. R. (2021).
+Bayesian estimation for Gaussian graphical models: Structure learning, predictability, and network comparisons.
+\emph{Multivariate Behavioral Research}, \emph{56}(2), 336–352. 
 
-# Triangulated Maximally Filtered Graph (TMFG)
+\strong{Triangulated Maximally Filtered Graph (TMFG)} \cr
+Massara, G. P., Di Matteo, T., & Aste, T. (2016).
+Network filtering for big data: Triangulated maximally filtered graph.
+\emph{Journal of Complex Networks}, \emph{5}, 161-178.
 }
 \author{
 Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>

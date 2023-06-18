@@ -13,29 +13,34 @@ A symmetric matrix representing a network}
 \value{
 Returns a list:
 
+\item{membership}{Highest level of multi-level community matrix}
+
 \item{memberships}{Multi-level community matrix}
 
 \item{modularity}{Modularity values for each level}
 }
 \description{
-Computes the Signed Louvain Community Detection Algorithm
+This function implementations the Louvain algorithm (Blondel et al., 2008)
+that attempts to maximize signed modularity (Gomez et al., 2009)
 }
 \examples{
 # Load data
 wmt <- wmt2[,7:24]
 
 # Estimate network
-network <- EBICglasso.qgraph(data = wmt)
+network <- network.estimation(wmt, model = "glasso")
 
 # Estimate signed Louvain
 signed.louvain(network)
 
 }
 \references{
+\strong{Louvain algorithm} \cr
 Blondel, V. D., Guillaume, J.-L., Lambiotte, R., & Lefebvre, E. (2008).
 Fast unfolding of communities in large networks.
 \emph{Journal of Statistical Mechanics: Theory and Experiment}, \emph{2008}(10), P10008.
 
+\strong{Signed modularity} \cr
 Gomez, S., Jensen, P., & Arenas, A. (2009).
 Analysis of community structure in networks of correlated data.
 \emph{Physical Review E}, \emph{80}(1), 016114.

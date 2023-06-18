@@ -11,6 +11,344 @@
 # Sections are separated by how they are associated with their utility
 # in other functions.
 
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# REPRODUCIBLE RANDOM GENERATION ----
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+# For these random generation functions, the goal
+# is reproducibility, which runs counter to "random".
+# However, for bootstrap results to be reproduced
+# there is a need to generate "random" samples that
+# can be reproduced so that the user arrives at the
+# same results *without* influencing R's random number
+# generation or changing a user-defined seed previous
+# to, while, or after using {EGAnet} functions.
+#
+# The `reproducible_sample` and `reproducible_seed`
+# functions were written in C++ with the assistance
+# of GPT-4 
+
+#' @noRd
+# Random normal wrapper ----
+# About 4.5x faster than R's `rnorm`
+# Updated 17.06.2023
+rnorm_ziggurat <- function(n, mean = 0, sd = 1)
+{
+  return(mean + sd * RcppZiggurat::zrnorm(n))
+}
+
+#' @noRd
+# Generate multivariate normal data ----
+# Removes MASS package dependency (from version 7.3.54)
+# Function is streamlined to avoid chained `if` calls in original function
+# Updated 17.06.2023
+MASS_mvrnorm <- function(
+    n = 1, mu, Sigma,
+    tol = 1e-06, empirical = FALSE, EISPACK = FALSE
+)
+{
+  
+  # Get number of variables
+  p <- length(mu)
+  
+  # Assumes `mu` == `Sigma` dimensions
+  # if (!all(dim(Sigma) == c(p, p)))
+  
+  # EISPACK is always FALSE
+  # if (EISPACK)
+  
+  # Obtain eigenvectors and values
+  eS <- eigen(Sigma, symmetric = TRUE)
+  ev <- eS$values # Obtain values
+  
+  # SKIP positive definite check (should be from `auto.correlate`)
+  # if (!all(ev >= -tol * abs(ev[1L])))
+  
+  # Generate data
+  X <- matrix(rnorm_ziggurat(n = p * n), n)
+  # X <- matrix(rnorm(p * n), n) # replaces `rnorm` so we can set seed
+  
+  # For empirical data
+  if(isTRUE(empirical)){
+    X <- scale(X, TRUE, FALSE)
+    X <- X %*% svd(X, nu = 0)$v
+    X <- scale(X, FALSE, TRUE)
+  }
+  
+  # Obtain X
+  X <- mu + eS$vectors %*% diag(sqrt(pmax(ev, 0)), p) %*% t(X)
+  
+  # Skip checks
+  # nm <- names(mu)
+  # if (is.null(nm) && !is.null(dn <- dimnames(Sigma)))
+  #   nm <- dn[[1L]]
+  # dimnames(X) <- list(nm, NULL)
+  
+  # Return results
+  if(n == 1){
+    return(drop(X))
+  }else{
+    return(t(X))
+  }
+  
+}
+
+#' @noRd
+# Generate multivariate normal data (quicker) ----
+# Pre-computes `p`
+# Avoids repeated calls to `eigen` in `MASS_mvrnorm`
+# Pre-computes `eS$vectors %*% diag(sqrt(pmax(ev, 0)), p)`
+# Updated 17.06.2023
+MASS_mvrnorm_quick <- function(
+    n = 1, mu, p, coV,
+    tol = 1e-06, empirical = FALSE, EISPACK = FALSE
+)
+{
+  
+  # Get number of variables
+  # p <- length(mu)
+  
+  # Assumes `mu` == `Sigma` dimensions
+  # if (!all(dim(Sigma) == c(p, p)))
+  
+  # EISPACK is always FALSE
+  # if (EISPACK)
+  
+  # Obtain eigenvectors and values
+  # eS <- eigen(Sigma, symmetric = TRUE)
+  # ev <- eS$values # Obtain values
+  
+  # SKIP positive definite check (should be from `auto.correlate`)
+  # if (!all(ev >= -tol * abs(ev[1L])))
+  
+  # Generate data
+  X <- matrix(rnorm_ziggurat(n = p * n), n)
+  # X <- matrix(rnorm(p * n), n) # replaces `rnorm` so we can set seed
+  
+  # For empirical data
+  if(isTRUE(empirical)){
+    X <- scale(X, TRUE, FALSE)
+    X <- X %*% svd(X, nu = 0)$v
+    X <- scale(X, FALSE, TRUE)
+  }
+  
+  # Obtain X
+  # X <- mu + eS$vectors %*% diag(sqrt(pmax(ev, 0)), p) %*% t(X)
+  X <- mu + coV %*% t(X)
+  
+  # Skip checks
+  # nm <- names(mu)
+  # if (is.null(nm) && !is.null(dn <- dimnames(Sigma)))
+  #   nm <- dn[[1L]]
+  # dimnames(X) <- list(nm, NULL)
+  
+  # Return results
+  if(n == 1){
+    return(drop(X))
+  }else{
+    return(t(X))
+  }
+  
+}
+
+#' @noRd
+# Generate reproducible parametric bootstrap ----
+# (multivariate normal samples)
+# A wrapper over `rnorm_ziggurat` and `MASS_mvrnorm`
+# Updated 18.06.2023
+reproducible_parametric <- function(
+    samples, cases, mu, Sigma, seed
+)
+{
+  
+  # First, set seed for random normal generation
+  RcppZiggurat::zsetseed(seed)
+  # Seed does *not* affect R's seed and RNG
+  
+  # Next, perform pre-computations
+  p <- length(mu) # avoids repeated calls to `length`
+  eS <- eigen(Sigma, symmetric = TRUE) # avoids repeated calls to `eigen`
+  coV <- eS$vectors %*% diag(sqrt(pmax(eS$values, 0)), p)
+  # avoids repeated matrix computation
+  
+  # Then, generate samples
+  return(
+    lapply(
+      seq_len(samples), MASS_mvrnorm_quick,
+      n = cases, mu = mu,
+      p = p, coV = coV
+    )
+  )
+  
+}
+
+#' @noRd
+# Generate reproducible seed ----
+# Seed generation that does *not* affect R's RNG
+# Get seeds from zero up to 32-bit maximum
+# `0` is reserved for random seed
+# Updated 17.06.2023
+reproducible_seed <- function(n, seed = NULL)
+{
+  return(r_sample_seeds(n, ifelse(is.null(seed), 0, seed)))
+}
+
+#' @noRd
+# Generate reproducible shuffling ----
+# About 6x faster than R's `sample`
+# Updated 17.06.2023
+reproducible_sample <- function(
+    x, size, replace, seed
+){
+  
+  # Check for with replacement
+  if(isTRUE(replace)){ # With replacement
+    
+    # Get indices
+    ## Implemented in C++
+    ## Internal function
+    shuffled_indices <- r_sample_with_replacement(size, seed)
+    
+  }else{ # Without replacement
+    
+    # Get indices
+    ## Implemented in C++
+    ## Internal function
+    shuffled_indices <- r_sample_without_replacement(seq_len(size), seed)
+    
+  }
+  
+  # Set shuffled data
+  shuffled <- x[shuffled_indices]
+  
+  # Return shuffled data
+  return(shuffled)
+  
+}
+
+#' @noRd
+# Generate reproducible resampling bootstrap ----
+# (multivariate normal samples)
+# A wrapper over `reproducible_seed` and `reproducible_sample`
+# Updated 18.06.2023
+reproducible_resampling <- function(
+    data, samples, cases, seed
+)
+{
+  
+  # First, generate as many seeds as there are samples
+  seeds <- reproducible_seed(n = samples, seed = seed)
+  
+  # Then, generate samples
+  ## More direct approach than calling `reproducible_sample`
+  return(
+    lapply(
+      seq_len(samples),
+      function(i){
+        data[
+          r_sample_with_replacement(n = cases, seed = seeds[i]),
+        ]
+      }
+    )
+  )
+  
+}
+
+#' @noRd
+# Generate reproducible bootstrap data ----
+# Wrapper for `reproducible_parametric` and
+# `reproducible_resampling`
+# Updated 18.06.2023
+reproducible_bootstrap <- function(
+    data, samples, cases, mu, Sigma, seed,
+    type = c("parametric", "resampling")
+)
+{
+  
+  # Based on bootstrap type, generate data
+  if(type == "parametric"){
+    
+    # Obtain bootstrap samples
+    bootstrap_samples <- reproducible_parametric(
+      samples = samples, cases = cases,
+      mu = mu, Sigma = Sigma, seed = seed
+    )
+    
+    
+  }else if(type == "resampling"){
+    
+    # Obtain bootstrap samples
+    bootstrap_samples <- reproducible_resampling(
+      data = data, samples = samples,
+      cases = cases, seed = seed
+    )
+    
+  }
+  
+  # Return bootstrap samples
+  return(bootstrap_samples)
+  
+}
+
+#%%%%%%%%%%%%%%%%%%%%%%
+# FASTER SEQUENCES ----
+#%%%%%%%%%%%%%%%%%%%%%%
+
+# I haven't looked into why `seq_len(n)` is faster
+# than `1:n` or `dim(data)[1]` is faster than
+# `nrow(data)` (same for columns) but both are
+# faster than the latter commonly applied applications
+#
+# GPT-4 reports that `nrow` and `ncol` call `dim`
+
+#' @noRd
+# Faster row sequences ----
+# Updated 13.06.2023
+nrow_sequence <- function(data)
+{
+  return(seq_len(dim(data)[1]))
+}
+
+
+#' @noRd
+# Faster column sequences ----
+# Updated 13.06.2023
+ncol_sequence <- function(data)
+{
+  return(seq_len(dim(data)[2]))
+}
+
+# # Evidence:
+# #
+# # Load benchmark
+# library(microbenchmark)
+# 
+# # Create large matrix
+# large_matrix <- matrix(0, nrow = 10000, ncol = 10000)
+# 
+# # Run row test (around 30 nanoseconds)
+# microbenchmark(
+#   1:nrow(large_matrix),
+#   nrow_sequence(large_matrix),
+#   times = 10000L,
+#   control = list(warmup = 1000L)
+# )
+# 
+# # Run column test (around 30 nanoseconds)
+# microbenchmark(
+#   1:ncol(large_matrix),
+#   ncol_sequence(large_matrix),
+#   times = 10000L,
+#   control = list(warmup = 1000L)
+# )
+#
+# Does it matter? Probably not...
+#
+# ¯\_(ツ)_/¯
+#
+# An actual real reason to use `seq_len`: handles edge cases
+# when there is a length = 0
+
 #%%%%%%%%%%%%%%%%%%%%%%%
 # GENERAL FUNCTIONS ----
 #%%%%%%%%%%%%%%%%%%%%%%%
@@ -118,6 +456,41 @@ force_numeric <- function(desired_numeric)
 }
 
 #' @noRd
+# Count table ----
+# Provides counts of repeated rows in a data frame
+# (clever solution by GPT-4)
+# Updated 16.06.2023
+count_table <- function(data, proportion = FALSE)
+{
+  
+  # Make data frame
+  data <- as.data.frame(data)
+  
+  # Obtain counts of unique rows (clever solution from GPT-4)
+  if(isTRUE(proportion)){
+    counts <- table(do.call(paste, data)) / dim(data)[1]
+  }else{
+    counts <- table(do.call(paste, data))
+  }
+  
+  # Prepare a data frame
+  count_df <- as.data.frame(
+    do.call(rbind, lapply(strsplit(names(counts), split = " "), as.numeric)),
+    stringsAsFactors = FALSE
+  )
+  
+  # Attach counts
+  count_df$count <- counts
+  
+  # Ensure proper naming
+  colnames(count_df) <- c(colnames(data), ifelse(proportion, "Proportion", "Count"))
+  
+  # Return data frame
+  return(count_df)
+  
+}
+
+#' @noRd
 # Determine number of categories in data ----
 # Updated 02.02.2023
 data_categories <- function(data)
@@ -193,27 +566,63 @@ is_symmetric <- function(data){
 }
 
 #' @noRd
+# Format number with certain decimals ----
+# Mainly for naming and printing
+# Updated 14.06.2024
+format_decimal <- function(numbers, places)
+{
+  
+  return(
+    formatC(
+      x = numbers,
+      digits = places,
+      format = "f", flag = "0"
+    )
+  )
+
+}
+
+#' @noRd
+# Format number with certain integer ----
+# Mainly for naming and printing
+# Updated 14.06.2024
+format_integer <- function(numbers, places)
+{
+  
+  return(
+    formatC(
+      x = numbers,
+      digits = places,
+      format = "d", flag = "0"
+    )
+  )
+  
+}
+
+#' @noRd
 # Ensure data has dimension names ----
-# Updated 03.02.2023
+# Updated 14.06.2023
 ensure_dimension_names <- function(data)
 {
+  
+  # Get dimensions
+  dimensions <- dim(data)
   
   # Check for column names
   if(is.null(colnames(data))){
     
     # Standardize names
     colnames(data) <- paste0(
-      "V", formatC(
-        x = 1:ncol(data),
-        digits = (digits(ncol(data)) - 1),
-        format = "d", flag = "0"
+      "V", format_integer(
+        seq_len(dimensions[2]),
+        digits(dimensions[2]) - 1
       )
     )
     
   }
   
   # Check for matrix
-  if(nrow(data) == ncol(data)){
+  if(dimensions[1] == dimensions[2]){
     
     # Check for row names
     if(is.null(data) | any(row.names(data) != colnames(data))){
@@ -248,12 +657,19 @@ no_name_print <- function(object){
 
 #' @noRd
 # General function to check for packages ----
-# Updated 12.04.2023
+# Updated 14.06.2023
 check_package <- function(packages)
 {
   
-  # Check for packages
-  installed <- packages %in% row.names(installed.packages())
+  # # Check for packages
+  # installed <- packages %in% row.names(installed.packages())
+  
+  # Performs what original `installed.packages()` does
+  # but without additional fluff
+  installed <- packages %in%
+    unlist(
+      sapply(.libPaths(), list.files, USE.NAMES = FALSE)
+    )
   
   # Determine which packages are not installed
   not_installed <- packages[!installed]
@@ -579,37 +995,741 @@ estimator_arguments <- function(lavaan_ARGS)
 }
 
 #' @noRd
-# Generate multivariate normal data ----
-# Removes MASS package dependency (from version 7.3.54)
-# Updated 23.12.2021
-MASS_mvrnorm <- function (n = 1, mu, Sigma, tol = 1e-06, empirical = FALSE, EISPACK = FALSE)
+# Set default argument (cleaner missing function) ----
+# Updated 15.06.2023
+set_default <- function(argument, default, FUN)
 {
-  p <- length(mu)
-  if (!all(dim(Sigma) == c(p, p)))
-    stop("incompatible arguments")
-  if (EISPACK)
-    stop("'EISPACK' is no longer supported by R", domain = NA)
-  eS <- eigen(Sigma, symmetric = TRUE)
-  ev <- eS$values
-  if (!all(ev >= -tol * abs(ev[1L])))
-    stop("'Sigma' is not positive definite")
-  X <- matrix(rnorm(p * n), n)
-  if (empirical) {
-    X <- scale(X, TRUE, FALSE)
-    X <- X %*% svd(X, nu = 0)$v
-    X <- scale(X, FALSE, TRUE)
+  
+  # Check for function first and foremost
+  if(is.function(argument)){
+    return(argument)
   }
-  X <- drop(mu) + eS$vectors %*% diag(sqrt(pmax(ev, 0)), p) %*%
-    t(X)
-  nm <- names(mu)
-  if (is.null(nm) && !is.null(dn <- dimnames(Sigma)))
-    nm <- dn[[1L]]
-  dimnames(X) <- list(nm, NULL)
-  if (n == 1)
-    drop(X)
-  else t(X)
+  
+  # Check for value error
+  value_error(argument, base::mode(default))
+  
+  # Check for function
+  if(!is.function(FUN)){
+    choices <- FUN # assume choices were input to function 
+  }else{
+    
+    # Get formal argument choices from default call
+    choices <- formals(FUN)[[substitute(argument)]]
+    
+    # Check if choices is a call
+    if(is.call(choices)){
+      
+      # Get choices
+      choices <- tolower(as.character(choices))
+      
+      # Remove "c" from call
+      choices <- choices[-which(choices == "c")]
+      
+    }
+    
+  }
+  
+  # Check for missing argument
+  if(missing(argument)){
+    argument <- default
+  }else if(length(argument) != 1){
+    argument <- default
+  }
+  
+  # Force lowercase argument
+  if(is.character(argument)){
+    argument <- tolower(argument)
+  }
+  
+  if(!argument %in% choices){
+    stop(
+      paste0(
+        "Invalid argument: ", substitute(argument),
+        " = \"", argument, "\"",
+        "\n\nPlease choose from: ", 
+        paste0(
+          "\"", choices, "\"", collapse = ", "
+        )
+      )
+    )
+  }
+  
+  # Return argument
+  return(argument)
+  
 }
 
+#' @noRd
+# Legacy Argument Handling ----
+# Updated 15.06.2023
+legacy_EGA_args <- function(ellipse)
+{
+  
+  # Check for `model.args`
+  if("model.args" %in% names(ellipse)){
+    
+    # Overwrite arguments
+    ellipse <- overwrite_arguments(ellipse, ellipse$model.args)
+    
+    # Remove `model.args`
+    ellipse <- ellipse[-which(names(ellipse) == "model.args")]
+    
+  }
+  
+  # Check for `algorithm.args`
+  if("algorithm.args" %in% names(ellipse)){
+    
+    # Overwrite arguments
+    ellipse <- overwrite_arguments(ellipse, ellipse$algorithm.args)
+    
+    # Remove `algorithm.args`
+    ellipse <- ellipse[-which(names(ellipse) == "algorithm.args")]
+    
+  }
+  
+  # Return ellipse
+  return(ellipse)
+  
+}
+
+#' @noRd
+# Overwrite Arguments (for Legacy) ----
+# Updated 15.06.2023
+overwrite_arguments <- function(main, ARGS)
+{
+  
+  # Determine whether any arguments are in both
+  if(any(names(ARGS) %in% names(main))){
+    
+    # Target arguments
+    target_args <- intersect(names(ARGS), names(main))
+    
+    # Replace target arguments
+    main[target_args] <- ARGS[target_args]
+    
+  }
+  
+  # Return main arguments
+  return(main)
+  
+}
+
+#%%%%%%%%%%%%%%%%%%%%
+# PLOT FUNCTIONS ----
+#%%%%%%%%%%%%%%%%%%%%
+
+#' @noRd
+# Defaults for GGally plotting ----
+# For plots and methods
+# Updated 15.06.2023
+GGally_args <- function(ellipse)
+{
+  
+  # Get default `ggnet2` arguments
+  default_args <- formals(
+    silent_load(GGally::ggnet2)
+    # Should always be first call to {GGally}
+  )
+  
+  # Get default {EGAnet} arguments
+  ega_default_args <- list(
+    layout.exp = 0.20, label.size = 5,
+    node.alpha = 0.50, node.shape = 19,
+    node.size = 12, edge.alpha = "edge.alpha",
+    edge.size = 8
+  )
+  
+  # Replace `ggnet2` arguments with {EGAnet} arguments
+  default_args <- overwrite_arguments(default_args, ega_default_args)
+  
+  # Replace `ggnet2` arguments with arguments input
+  default_args <- overwrite_arguments(default_args, ellipse)
+  
+  # Remove the ellipse
+  if("..." %in% names(default_args)){
+    default_args <- default_args[-which(names(default_args) == "...")]
+  }
+  
+  # Various possible names for things
+  ## Layout
+  if("layout" %in% names(ellipse)){
+    default_args$mode <- ellipse$layout  
+  }
+  
+  ## Node transparency
+  if("alpha" %in% names(ellipse)){
+    default_args$node.alpha <- ellipse$alpha
+  }
+  
+  ## Node color
+  if("color" %in% names(ellipse)){
+    default_args$node.color <- ellipse$color
+  }
+  
+  ## Node shape
+  if("shape" %in% names(ellipse)){
+    default_args$node.shape <- ellipse$shape
+  }
+  
+  ## Node size
+  if("vsize" %in% names(ellipse)){
+    default_args$node.size <- ellipse$vsize
+  }
+  
+  ## Edge color
+  if(!"edge.color" %in% names(ellipse)){
+    default_args$edge.color <- c("darkgreen", "red")
+  }
+  
+  ## Edge line types
+  if(!"edge.lty" %in% names(ellipse)){
+    default_args$edge.lty <- c("solid", "solid")
+  }
+  
+  ## Color palette
+  if(!"color.palette" %in% names(ellipse)){
+    default_args$color.palette <- "polychrome"
+  }else if(is.character(ellipse$color.palette)){
+    
+    # Check for gray scale options
+    gray_options <- c(
+      "greyscale", "grayscale", "colorblind"
+    )
+    
+    # Check for gray scale
+    if(tolower(ellipse$color.palette) %in% gray_options){
+      default_args$edge.color <- c("#293132", "grey25")
+      default_args$edge.lty <- c("solid", "dashed")
+    }
+      
+  }
+  # NOTE: gray scale will override node and edge colors
+  # as well as line types
+  
+  # Return arguments
+  return(default_args)
+  
+}
+
+#' @noRd
+# Error Checking for GGally plotting ----
+# For plots and methods
+# Updated 15.06.2023
+GGally_errors <- function(
+    plot_ARGS, dimensions,
+    communities, non_zero_edges
+)
+{
+  
+  # Only the most common arguments are checked here
+  # Edge case inputs are not considered
+  
+  # Determine number of nodes and edges
+  nodes <- dimensions[2]
+  edges <- length(non_zero_edges)
+  
+  ### Node arguments
+  
+  # Node Label Alpha
+  value_error(plot_ARGS$label.alpha, "numeric")
+  length_error(plot_ARGS$label.alpha, c(1, nodes))
+  
+  # Node Label Color
+  value_error(plot_ARGS$label.color, "character")
+  length_error(plot_ARGS$label.color, c(1, nodes))
+  
+  # Node Label Size
+  value_error(plot_ARGS$label.size, "numeric")
+  length_error(plot_ARGS$label.size, c(1, nodes))
+  
+  # Node Label
+  value_error(plot_ARGS$node.label, "character")
+  length_error(plot_ARGS$node.label, c(1, nodes))
+  
+  # Node Alpha
+  value_error(plot_ARGS$node.alpha, "numeric")
+  length_error(plot_ARGS$node.shape, c(1, communities, nodes))
+  
+  # Node Color
+  value_error(plot_ARGS$node.color, "character")
+  length_error(plot_ARGS$node.color, c(1, communities, nodes))
+  
+  # Node Shape
+  value_error(plot_ARGS$node.shape, "numeric")
+  length_error(plot_ARGS$node.shape, c(1, communities, nodes))
+  
+  # Node Size
+  value_error(plot_ARGS$node.size, "numeric")
+  length_error(plot_ARGS$node.size, c(1, communities, nodes))
+  
+  ### Edge arguments
+  
+  # Edge Alpha
+  value_error(plot_ARGS$edge.alpha, "numeric")
+  length_error(plot_ARGS$edge.alpha, c(1, edges))
+  
+  # Edge Color (allow two for positive and negative)
+  value_error(plot_ARGS$edge.color, "character")
+  length_error(plot_ARGS$edge.color, c(1, 2, edges))
+  
+  # Edge Size
+  value_error(plot_ARGS$edge.size, "numeric")
+  length_error(plot_ARGS$edge.size, c(1, edges))
+  
+  # Edge line type (allow two for positive and negative)
+  value_error(plot_ARGS$edge.lty, "character")
+  length_error(plot_ARGS$edge.lty, c(1, 2, edges))
+  
+}
+
+#' @noRd
+# Re-scale edges ----
+# Updated 14.06.2023
+rescale_edges <- function(network, edge_size)
+{
+  
+  # Obtain absolute network (as a vector)
+  vector_network <- abs(as.vector(network))
+  
+  # Set up scaling sequence 
+  scale_sequence <- seq(0, 1, 0.0001)
+  names(scale_sequence) <- scale_sequence
+  
+  # Set edge scaling (default `edge.size = 8`)
+  edge_scaling <- scale_sequence * edge_size
+  
+  ## Remove names
+  edge_scaling <- unname(edge_scaling[as.character(vector_network)])
+  
+  # Return scaled edges
+  return(edge_scaling)
+  
+}
+
+#' @noRd
+# Readable names ----
+# Updated 14.06.2023
+readable_names <- function(node_names)
+{
+  
+  # Split names
+  name_split <- strsplit(node_names, split = " ")
+
+  # Add return to names
+  better_names <- sapply(name_split, function(x){
+    
+    # Obtain words in name
+    words <- length(x)
+    
+    # Determine if split is necessary
+    if(words > 1){
+      
+      # Determine number of lines
+      add_line <- round(words / 2)
+      
+      # Paste back together name
+      name <- paste(
+        paste(x[seq_len(add_line)], collapse = " "),
+        paste(x[(add_line+1):words], collapse = " "),
+        sep = "\n"
+      )
+      
+      # Return name
+      return(name)
+      
+    }else{return(x)}
+    
+    
+  })
+  
+  # Return names
+  return(better_names)
+  
+}
+
+#' @noRd
+# Get network layout ----
+# Updated 15.06.2023
+get_layout <- function(
+    network, dimensions,
+    non_zero_index, plot_ARGS, ellipse
+)
+{
+  
+  # Determine whether "mode" or "layout" were used
+  if(
+    !"mode" %in% names(ellipse) &
+    !"layout" %in% names(ellipse)
+  ){ # Default: {qgraph} Fruchterman-Reingold
+    
+    # Lower triangle for edge list
+    network_lower <- network[lower.tri(network)]
+    weights_lower <- network_lower[network_lower != 0]
+    
+    # Set up edge list
+    edge_list <- which(non_zero_index, arr.ind = TRUE)
+    edge_list <- edge_list[edge_list[,"row"] < edge_list[,"col"],]
+    edge_list <- edge_list[order(edge_list[,"row"]),]
+    
+    # Set layout (spring)
+    network_layout <- qgraph::qgraph.layout.fruchtermanreingold(
+      edgelist = edge_list,
+      weights = abs(weights_lower / max(abs(weights_lower)))^2,
+      vcount = dimensions[2]
+    )
+    
+  }else{ # Obtain actual "mode" values using {sna}
+    
+    # Get layout function
+    mode_FUN <- switch(
+      tolower(plot_ARGS$mode),
+      "adj" = sna::gplot.layout.adj,
+      "circle" = sna::gplot.layout.circle,
+      "circrand" = sna::gplot.layout.circrand,
+      "eigen" = sna::gplot.layout.eigen,
+      "fruchtermanreingold" = sna::gplot.layout.fruchtermanreingold,
+      "geodist" = sna::gplot.layout.geodist,
+      "hall" = sna::gplot.layout.hall,
+      "kamadakawai" = sna::gplot.layout.kamadakawai,
+      "mds" = sna::gplot.layout.mds,
+      "princoord" = sna::gplot.layout.princoord,
+      "random" = sna::gplot.layout.random,
+      "rmds" = sna::gplot.layout.rmds,
+      "segeo" = sna::gplot.layout.segeo,
+      "seham" = sna::gplot.layout.seham,
+      "spring" = sna::gplot.layout.spring,
+      "springrepulse" = sna::gplot.layout.springrepulse,
+      "target" = sna::gplot.layout.target
+    )
+    
+    # Set network and arguments
+    mode_ARGS <- list(
+      d = network,
+      layout.par = plot_ARGS$layout.par
+    )
+    
+    # Obtain layout
+    network_layout <- do.call(
+      what = mode_FUN,
+      args = mode_ARGS
+    )
+    
+  }
+  
+  # Return layout
+  return(network_layout)
+  
+}
+
+#' @noRd
+# Basic set up for plots ----
+# Updated 15.06.2023
+basic_plot_setup <- function(network, wc = NULL, ...)
+{
+  
+  # Obtain ellipse arguments
+  ellipse <- list(...)
+  
+  # Ensure network is a matrix
+  network <- as.matrix(network)
+  
+  # Make sure network has a zero diagonal
+  ## Mainly for `TMFG`
+  diag(network) <- 0
+  
+  # Obtain network dimensions
+  dimensions <- dim(network)
+  
+  # Set insignificant values to zero
+  # (prevents `ggnet2` from erroring out)
+  network <- round(network, 4)
+  # Each digit of accuracy increases time 10x
+  
+  # Check for empty network
+  if(sum(network) == 0){
+    
+    # Send message
+    message("Network is empty. No plot produced.")
+    
+    # Return NULL
+    return(NULL)
+    
+  }
+  
+  # Look for memberships in arguments
+  ## If no memberships, then plot network
+  # as if all memberships are missing
+  if(is.null(wc)){
+    wc <- rep(NA, dimensions[2])
+  }
+  
+  # Reorder network and communities
+  new_order <- order(wc)
+  network <- network[new_order, new_order]
+  wc <- wc[new_order]
+  
+  # Obtain number of communities
+  communities <- length(na.omit(unique(wc)))
+  
+  # Obtain node names
+  node_names <- colnames(network)
+  
+  # Check for required packages {GGally}, {network}, and {sna}
+  check_package(c("GGally", "network", "sna"))
+  
+  # With packages, set up arguments
+  plot_ARGS <- GGally_args(ellipse)
+  
+  # Set up the result of the plot arguments (runs in order of `ggnet2` arguments)
+  ## Network
+  plot_ARGS$net <- network
+  
+  # Set up networks for later use
+  ## Full network
+  non_zero_index <- network != 0
+  non_zero_edges <- network[non_zero_index]
+  
+  ## Mode (layout)
+  plot_ARGS$mode <- get_layout(
+    network, dimensions, 
+    non_zero_index,
+    plot_ARGS, ellipse
+  )
+  
+  ### Generic arguments (mostly handled in `GGally_args`)
+    
+  ## Remove some arguments
+  plot_ARGS$alpha <- NULL; plot_ARGS$color <- NULL; plot_ARGS$size <- NULL
+  
+  ### Node arguments
+  
+  ## Color palette
+  if(all(is.na(wc))){
+    palette <- rep("grey", length(wc))
+  }else{
+    palette <- color_palette_EGA(plot_ARGS$color.palette, wc)
+  }
+  ## Set missing values to "white"
+  palette[is.na(palette)] <- "white"
+    
+  ## Remove color palette
+  color.palette <- plot_ARGS$color.palette
+  plot_ARGS$color.palette <- NULL
+  
+  # Get number of node colors supplied
+  node.color_length <- length(plot_ARGS$node.color)
+  
+  ## Set node color to communities
+  if(all(plot_ARGS$node.color == "color")){
+    
+    # Use predefined palette
+    plot_ARGS$node.color <- palette
+    
+  }else if(node.color_length == communities){
+    
+    # If number of node colors supplied is
+    # for communities, then set them for each node
+    plot_ARGS$node.color <- plot_ARGS$node.color[wc]
+    
+  }
+  
+  ## Set node label (default)
+  if(all(plot_ARGS$node.label == "label")){
+    plot_ARGS$node.label <- node_names
+  }
+  
+  ## Set node size to zero (keep original node size)
+  node.size <- plot_ARGS$node.size # handled in `GGally_args`
+  plot_ARGS$node.size <- 0
+  
+  ### Edge arguments
+  
+  ## Set edge alpha (set to "edge.alpha" in `GGally_args`)
+  if(all(plot_ARGS$edge.alpha == "edge.alpha")){
+    plot_ARGS$edge.alpha <- sqrt(abs(non_zero_edges)) * 0.60
+    # Not sure why `* 0.60` is needed to match old behavior
+    # but without it the edges appear darker than original plots
+  }
+  
+  ## Set edge color
+  if(length(plot_ARGS$edge.color) == 2){
+    plot_ARGS$edge.color <- ifelse(non_zero_edges >= 0, plot_ARGS$edge.color[1], plot_ARGS$edge.color[2])
+  }
+  
+  ## Set edge line type
+  if(length(plot_ARGS$edge.lty) == 2){
+    plot_ARGS$edge.lty <- ifelse(non_zero_edges >= 0, plot_ARGS$edge.lty[1], plot_ARGS$edge.lty[2])
+  }
+  
+  ## Set edge size (scale by `edge.size`)
+  if(length(plot_ARGS$edge.size) == 1){
+    plot_ARGS$edge.size <- rescale_edges(non_zero_edges, plot_ARGS$edge.size)
+  }
+  
+  ## Edge label size (not used)
+  plot_ARGS$edge.label.size <- ifelse(
+    plot_ARGS$edge.label.size == "max_size/2",
+    node.size / 2,
+    plot_ARGS$edge.label.size
+  )
+  
+  # Before call, check all arguments 
+  # for any errors
+  GGally_errors(
+    plot_ARGS = plot_ARGS, dimensions = dimensions,
+    communities = communities, non_zero_edges = non_zero_edges
+  )
+  
+  # Get first layer with silent call
+  first_layer <- silent_call(
+    do.call(GGally::ggnet2, plot_ARGS)
+  )
+  
+  # Set up node names to be more readable
+  node_names <- readable_names(plot_ARGS$node.label)
+
+  # Determine border color
+  ## Check for gray scale options
+  gray_options <- c(
+    "greyscale", "grayscale", "colorblind"
+  )
+  
+  ## Set border color
+  if(all(is.na(wc))){ # Plain network (without communities)
+    border_color <- rep("black", dimensions[2])
+  }else if( 
+    length(color.palette) == 1 &
+    color.palette %in% gray_options
+  ){ # Gray scale network
+    border_color <- ifelse(palette == "white", "white", "black")
+  }else{ # Same color as nodes
+    border_color <- plot_ARGS$node.color
+  }
+  
+  # Custom nodes: transparent insides and dark borders
+  second_layer <- first_layer +
+    ggplot2::geom_point( # dark borders
+      size = node.size, color = border_color,
+      shape = 1, stroke = 1.5, alpha = 0.80
+    ) +
+    ggplot2::geom_point( # transparent insides
+      size = node.size + 0.50, shape = 19,
+      color = plot_ARGS$node.color,
+      alpha = plot_ARGS$node.alpha
+    ) +
+    ggplot2::geom_text( # put text back on top
+      ggplot2::aes(label = node_names), color = "black",
+      size = plot_ARGS$label.size
+    ) +
+    ggplot2::guides( # create legend with these settings
+      color = ggplot2::guide_legend(
+        override.aes = list(
+          color = unique(plot_ARGS$node.color),
+          size = median(node.size, na.rm = TRUE),
+          alpha = median(plot_ARGS$node.alpha, na.rm = TRUE),
+          stroke = 1.5
+        ),
+        title = ifelse(
+          "legend.title" %in% names(ellipse),
+          ellipse$legend.title, ""
+        )
+      )
+    )
+  
+  # Check for title
+  if("title" %in% names(ellipse)){
+    second_layer <- second_layer +
+      ggplot2::labs(title = ellipse$title)
+  }
+  
+  # Check for legend labels
+  if("legend.names" %in% names(ellipse)){ # add user assigned names
+    second_layer <- second_layer +
+      ggplot2::scale_color_manual(
+        values = unique(plot_ARGS$node.color),
+        labels = ellipse$legend.names
+      )
+  }else if(all(is.na(wc))){ # no legend (network with no communities plot)
+    second_layer <- second_layer +
+      ggplot2::theme(legend.position = "none")
+  }else{ # add membership names
+    second_layer <- silent_call(
+      second_layer +
+      ggplot2::scale_color_manual(
+        values = unique(plot_ARGS$node.color),
+        labels = unique(wc)
+      )
+    )
+  }
+  
+  # Set up return
+  ## Hidden argument to return arguments plots
+  ## Used most for comparing plots (same node placements)
+  if("arguments" %in% names(ellipse) & isTRUE(ellipse$arguments)){
+    
+    # Set up return list
+    results <- list(
+      network_plot = second_layer,
+      ARGS = plot_ARGS
+    )
+    
+    # Return results
+    return(results)
+    
+  }else{
+    
+    # Return plot only
+    return(second_layer)
+    
+  }
+  
+}
+
+#%%%%%%%%%%%%%%
+# PLOTTING ----
+#%%%%%%%%%%%%%%
+
+#' @noRd
+# Sub-routine for compare.EGA.plots
+# Updated 05.06.2021
+compare.EGA <- function(ega.object1, ega.object2)
+{
+  # Plots
+  plot1 <- ega.object1
+  plot2 <- ega.object2
+  
+  # Reorder node coordinates for plot2
+  plot2$data <- plot2$data[row.names(plot1$data),]
+  
+  # Reorder edge coordinates for plot2
+  for(i in 1:nrow(plot2$layers[[1]]$data)){
+    
+    plot2$layers[[1]]$data$X1[i] <- which(plot2$layers[[1]]$data$X1[i] == plot2$data$x)
+    plot2$layers[[1]]$data$X2[i] <- which(plot2$layers[[1]]$data$X2[i] == plot2$data$x)
+    plot2$layers[[1]]$data$Y1[i] <- which(plot2$layers[[1]]$data$Y1[i] == plot2$data$y)
+    plot2$layers[[1]]$data$Y2[i] <- which(plot2$layers[[1]]$data$Y2[i] == plot2$data$y)
+    
+  }
+  
+  # Reassign edge coordinates based on plot1
+  plot2$layers[[1]]$data$X1 <- plot1$data$x[plot2$layers[[1]]$data$X1] # X1
+  plot2$layers[[1]]$data$X2 <- plot1$data$x[plot2$layers[[1]]$data$X2] # X2
+  plot2$layers[[1]]$data$Y1 <- plot1$data$y[plot2$layers[[1]]$data$Y1] # Y1
+  plot2$layers[[1]]$data$Y2 <- plot1$data$y[plot2$layers[[1]]$data$Y2] # Y2
+  
+  # Assign coordinates of plot1 to plot2
+  plot2$data$x <- plot1$data$x
+  plot2$data$y <- plot1$data$y
+  
+  # Make plot list
+  plots.net <- list()
+  plots.net[[1]] <- plot1
+  plots.net[[2]] <- plot2
+  
+  # Return plot list
+  return(plots.net)
+  
+}
 
 #%%%%%%%%%%%%%%%%%%%%%
 # ERROR FUNCTIONS ----
@@ -1152,4 +2272,31 @@ textsymbol <- function(symbol = c("alpha", "beta", "chi", "delta",
   )
   
   return(sym)
+}
+
+#' @noRd
+# Title Case ----
+# Updated 16.06.2023
+totitle <- function(string)
+{
+  
+  # Split by spaces
+  words <- unlist(strsplit(string, split = " "))
+  
+  # Set first letters to uppercase
+  titleCased <- sapply(words, function(x){
+    
+    # Stitch together letters
+    return(
+      paste0(
+        toupper(substr(x, 1, 1)),
+        tolower(substr(x, 2, nchar(x)))
+      )
+    )
+
+  })
+  
+  # Paste words back together
+  return(paste(titleCased, collapse = " "))
+  
 }

@@ -26,6 +26,16 @@ o UPDATE: `TMFG` can now directly estimate a GGM with the argument 'partial = TR
 
 o ADD: `community.unidimensional` to apply different unidimensional community detection approaches; makes unidimensional community detection more modular and flexible
 
+o ADD: basic (internal) function to handle all network plots to keep changes centralized to a single function; extends flexbility to handle all {GGally}'s `ggnet2` arguments
+
+o UPDATE: more extension S3 Methods for functions
+
+o ADD: implemented reproducible parametric bootstrapping and random sampling thanks to {RcppZiggurat} (also marked speed improvement)
+
+o ADD: implemented reproducible resampling bootstrapping and random sampling in C++ (slight speed improvement)
+
+o ADD: reproducible bootstrapping with seed setting that does *not* affect R's seed and RNG (user's seed will not be affected and will not affected bootstrapping seeds)
+
 
 Changes in version 1.2.5.1
 

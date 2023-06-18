@@ -47,10 +47,12 @@ community.louvain(network, signed = TRUE)
 
 }
 \references{
+\strong{Louvain algorithm} \cr
 Blondel, V. D., Guillaume, J.-L., Lambiotte, R., & Lefebvre, E. (2008).
 Fast unfolding of communities in large networks.
 \emph{Journal of Statistical Mechanics: Theory and Experiment}, \emph{2008}(10), P10008.
 
+\strong{Signed modularity} \cr
 Gomez, S., Jensen, P., & Arenas, A. (2009).
 Analysis of community structure in networks of correlated data.
 \emph{Physical Review E}, \emph{80}(1), 016114.

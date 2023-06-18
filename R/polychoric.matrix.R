@@ -84,18 +84,22 @@
 #'  )
 #' 
 #' @references 
+#' \strong{Beasley-Moro-Springer algorithm} \cr
 #' Beasley, J. D., & Springer, S. G. (1977).
 #' Algorithm AS 111: The percentage points of the normal distribution.
 #' \emph{Journal of the Royal Statistical Society. Series C (Applied Statistics)}, \emph{26}(1), 118-121.
 #' 
+#' \strong{Brent optimization} \cr
 #' Brent, R. P. (2013). 
 #' Algorithms for minimization without derivatives.
 #' Mineola, NY: Dover Publications, Inc.
 #' 
+#' \strong{Drezner-Wesolosky bivariate normal approximation} \cr
 #' Drezner, Z., & Wesolowsky, G. O. (1990).
 #' On the computation of the bivariate normal integral.
 #' \emph{Journal of Statistical Computation and Simulation}, \emph{35}(1-2), 101-107.
 #' 
+#' \strong{Beasley-Moro-Springer algorithm} \cr
 #' Moro, B. (1995).
 #' The full monte.
 #' \emph{Risk 8 (February)}, 57-58.
@@ -106,7 +110,7 @@
 #' @export
 #'
 # Compute polychoric correlation matrix
-# Updated 08.06.2023
+# Updated 17.06.2023
 polychoric.matrix <- function(
     data, na.data = c("pairwise", "listwise"),
     empty.method = c("none", "zero", "all"),
@@ -114,12 +118,10 @@ polychoric.matrix <- function(
 )
 {
   
-  # Check for 'missing' argument
-  if(missing(na.data)){
-    na.data <- "pairwise"
-  }else{
-    na.data <- tolower(match.arg(na.data))
-  }
+  # Set default arguments if missing
+  na.data <- set_default(na.data, "pairwise", polychoric.matrix)
+  empty.method <- set_default(empty.method, "none", polychoric.matrix)
+  empty.value <- set_default(empty.value, "none", polychoric.matrix)
   
   # Ensure data is a matrix
   data <- as.matrix(data)
@@ -134,38 +136,14 @@ polychoric.matrix <- function(
   # Ensure data is an integer matrix
   data <- apply(data, 2, as.integer)
   
-  # Check for 'empty.method' argument
-  if(missing(empty.method)){
-    empty.method <- "none"
-  }else{
-    empty.method <- tolower(match.arg(empty.method))
-  }
-  
-  # Check for 'empty.value' argument
-  if(missing(empty.value)){
-    empty.value <- "none"
-  }else{
-    
-    # Check for numeric 
-    if(!is.character(empty.value)){
-      
-      # Ensure proper range
-      range_error(empty.value, c(0, 1))
-      
-    }else{ # Character input
-      empty.value <- tolower(match.arg(empty.value))
-    }
-    
-  }
-  
   # Set up 'empty.method' and 'empty.value' for C
   if(empty.method == "none"){
-    empty.method <- 0 # Set no value
-    empty.value <- 0 # Set no value
+    empty.method <- 0L # Set no value
+    empty.value <- 0L # Set no value
   }else{
     
     # Set 'empty.method'
-    empty.method <- ifelse(empty.method == "zero", 1, 2)
+    empty.method <- ifelse(empty.method == "zero", 1L, 2L)
     
     # Set 'empty.value'
     if(is.character(empty.value)){
@@ -177,9 +155,7 @@ polychoric.matrix <- function(
   # Call from C
   correlations <- .Call(
     "r_polychoric_correlation_matrix",
-    data,
-    as.integer(empty.method),
-    as.double(empty.value),
+    data, empty.method, as.double(empty.value),
     PACKAGE = "EGAnet"
   )
   
@@ -187,13 +163,11 @@ polychoric.matrix <- function(
   if(!is.null(colnames(data))){
     
     # Add names to rows and columns
-    colnames(correlations) <- 
-      row.names(correlations) <- 
-      colnames(data)
+    colnames(correlations) <- row.names(correlations) <- colnames(data)
+    
   }
 
   # Return
   return(correlations)
-  
   
 }

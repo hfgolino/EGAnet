@@ -9,6 +9,7 @@ community.unidimensional(
   n = NULL,
   corr = c("auto", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
+  model = c("BGGM", "glasso", "TMFG"),
   uni.method = c("expand", "LE", "louvain"),
   verbose = FALSE,
   ...
@@ -43,6 +44,27 @@ two variables}
 
 \item{\code{"listwise"}}
 {Computes correlation for all complete cases in the dataset}
+
+}}
+
+\item{model}{Character (length = 1).
+Available options:
+
+\itemize{
+
+\item{\code{"BGGM"}}
+{Computes the Bayesian Gaussian Graphical Model.
+Set argument \code{ordinal.categories} to determine
+levels allowed for a variable to be considered ordinal.
+See \code{\link[BGGM]{estimate}} for more details}
+
+\item{\code{"glasso"}}
+{Computes the GLASSO with EBIC model selection.
+See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details}
+
+\item{\code{"TMFG"}}
+{Computes the TMFG method.
+See \code{\link[EGAnet]{TMFG}} for more details}
 
 }}
 
@@ -106,18 +128,18 @@ community.unidimensional(wmt, uni.method = "expand")
 
 }
 \references{
-# Expand approach
+\strong{Expand approach} \cr
 Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., Thiyagarajan, J. A., & Martinez-Molina, A. (2020).
 Investigating the performance of exploratory graph analysis and traditional techniques to identify the number of latent factors:
 A simulation and tutorial.
 \emph{Psychological Methods}, \emph{25}, 292-320. 
 
-# Leading Eigenvalue approach
+\strong{Leading Eigenvalue approach} \cr
 Christensen, A. P., Garrido, L. E., Guerra-Pena, K., & Golino, H. (2023).
 Comparing community detection algorithms in psychometric networks: A Monte Carlo simulation.
 \emph{Behavior Research Methods}.
 
-# Louvain approach
+\strong{Louvain approach} \cr
 Christensen, A. P. (2023).
 Unidimensional community detection: A Monte Carlo simulation, grid search, and comparison.
 \emph{PsyArXiv}.

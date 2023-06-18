@@ -39,10 +39,12 @@
 #' community.louvain(network, signed = TRUE)
 #'
 #' @references
+#' \strong{Louvain algorithm} \cr
 #' Blondel, V. D., Guillaume, J.-L., Lambiotte, R., & Lefebvre, E. (2008).
 #' Fast unfolding of communities in large networks.
 #' \emph{Journal of Statistical Mechanics: Theory and Experiment}, \emph{2008}(10), P10008.
 #' 
+#' \strong{Signed modularity} \cr
 #' Gomez, S., Jensen, P., & Arenas, A. (2009).
 #' Analysis of community structure in networks of correlated data.
 #' \emph{Physical Review E}, \emph{80}(1), 016114.
@@ -50,7 +52,7 @@
 #' @export
 #'
 # Compute Louvain communities for EGA
-# Updated 13.06.2023
+# Updated 16.06.2023
 community.louvain <- function(
     network, signed = FALSE, 
     resolution = 1
@@ -64,7 +66,7 @@ community.louvain <- function(
     network_matrix <- igraph2matrix(network)
     
     # Check for absolute
-    if(!isTRUE(signed)){
+    if(isFALSE(signed)){
       network_matrix <- abs(network_matrix)
     }
     
@@ -78,7 +80,7 @@ community.louvain <- function(
     network <- as.matrix(network)
     
     # Check for absolute
-    if(!isTRUE(signed)){
+    if(isFALSE(signed)){
       network <- abs(network)
     }
     
@@ -125,9 +127,9 @@ community.louvain <- function(
     
     # Algorithm function
     if(isTRUE(signed)){
-      algorithm.FUN <- igraph::cluster_louvain
-    }else{
       algorithm.FUN <- signed.louvain
+    }else{
+      algorithm.FUN <- igraph::cluster_louvain
     }
     
     # Algorithm arguments
@@ -142,10 +144,10 @@ community.louvain <- function(
     }
     
     # Check for proper network
-    if(!isTRUE(signed)){
-      algorithm.ARGS[[1]] <- igraph_network
-    }else{
+    if(isTRUE(signed)){
       algorithm.ARGS[[1]] <- network_matrix
+    }else{
+      algorithm.ARGS[[1]] <- igraph_network
     }
     
     # Get result
@@ -160,4 +162,3 @@ community.louvain <- function(
   return(result)
   
 }
-

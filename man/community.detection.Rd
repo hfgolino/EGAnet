@@ -8,8 +8,9 @@ community.detection(
   network,
   algorithm = c("edge_betweenness", "fast_greedy", "fluid", "infomap", "label_prop",
     "leading_eigen", "louvain", "optimal", "signed_louvain", "spinglass", "walktrap"),
-  absolute = TRUE,
+  signed = FALSE,
   allow.singleton = FALSE,
+  membership.only = TRUE,
   ...
 )
 }
@@ -59,10 +60,10 @@ Available options:
 
 }}
 
-\item{absolute}{Boolean.
-Should absolute network values be used?
-Defaults to \code{TRUE}.
-Caution should be used when setting to \code{FALSE}.
+\item{signed}{Boolean.
+Should signed network values be used?
+Defaults to \code{FALSE}.
+Caution should be used when setting to \code{TRUE}.
 Most algorithms are not able to handle signed (negative)
 weights}
 
@@ -72,6 +73,12 @@ Defaults to \code{FALSE}.
 When \code{FALSE}, singleton communities will be set to
 missing (\code{NA}); otherwise, when \code{TRUE}, singleton
 communities will be allowed}
+
+\item{membership.only}{Boolean.
+Whether the memberships only should be output.
+Defaults to \code{TRUE}.
+Set to \code{FALSE} to obtain all output for the
+community detection algorithm}
 
 \item{...}{Additional arguments to be passed on to
 \code{\link{igraph}}'s community detection functions

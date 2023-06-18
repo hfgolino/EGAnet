@@ -284,3 +284,22 @@ color_palette_EGA <- function (name, wc, sorted = FALSE)
 
   }
 }
+
+#' @importFrom graphics text
+#' @noRd
+# Color sorting for EGA palettes
+# For EGA_color_palette
+# Updated 17.12.2020
+color.sort <- function (wc)
+{
+  unlist(lapply(sort(wc, na.last = TRUE), function(x, uniq){
+    
+    if(is.na(x)){
+      NA
+    }else{
+      which(x == uniq)
+    }
+  }, uniq = sort(unique(wc), na.last = TRUE)))
+}
+
+

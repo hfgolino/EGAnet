@@ -80,9 +80,19 @@
 #' Used for computation of \code{\link[EGAnet]{tefi}}.
 #' Only needed when \code{consensus.method = "tefi"}
 #' 
-#' @param progress Boolean.
+#' @param membership.only Boolean.
+#' Whether the memberships only should be output.
+#' Defaults to \code{TRUE}.
+#' Set to \code{FALSE} to obtain all output for the
+#' community detection algorithm
+#' 
+#' @param verbose Boolean.
 #' Whether progress should be printed.
 #' Defaults to \code{TRUE}
+#' 
+#' @param ...
+#' Not actually used but makes it either for general functionality
+#' in the package
 #' 
 #' @return Returns a list containing...
 #' 
@@ -168,7 +178,7 @@
 #' @export
 #'
 # Compute consensus clustering for EGA
-# Updated 13.06.2023
+# Updated 16.06.2023
 community.consensus <- function(
     network, signed = FALSE, 
     order = c("lower", "higher"), resolution = 1,
@@ -177,20 +187,16 @@ community.consensus <- function(
       "most_common", "lowest_tefi"
     ), consensus.iter = 1000, 
     correlation.matrix = NULL,
-    progress = TRUE
+    membership.only = TRUE,
+    verbose = TRUE,
+    ...
 )
 {
   
-  # Make order lower
-  if(missing(order)){
-    order <- "higher"
-  }else{order <- tolower(match.arg(order))}
-  
-  # Set missing consensus method
-  if(missing(consensus.method)){
-    consensus.method <- "iterative"
-  }else{consensus.method <- tolower(match.arg(consensus.method))}
-  
+  # Check for higher or lower order solution
+  order <- set_default(order, "higher", community.consensus)
+  consensus.method <- set_default(consensus.method, "iterative", community.consensus)
+
   # Check for lowest TEFI method
   if(consensus.method == "lowest_tefi"){
     
@@ -212,7 +218,7 @@ community.consensus <- function(
     network_matrix <- igraph2matrix(network)
     
     # Check for absolute
-    if(!isTRUE(signed)){
+    if(isFALSE(signed)){
       network_matrix <- abs(network_matrix)
     }
     
@@ -226,7 +232,7 @@ community.consensus <- function(
     network <- as.matrix(network)
     
     # Check for absolute
-    if(!isTRUE(signed)){
+    if(isFALSE(signed)){
       network <- abs(network)
     }
     
@@ -272,10 +278,10 @@ community.consensus <- function(
     }
     
     # Algorithm function
-    if(!isTRUE(signed)){
-      algorithm.FUN <- igraph::cluster_louvain
-    }else{
+    if(isTRUE(signed)){
       algorithm.FUN <- signed.louvain
+    }else{
+      algorithm.FUN <- igraph::cluster_louvain
     }
     
     # Algorithm arguments
@@ -290,10 +296,10 @@ community.consensus <- function(
     }
     
     # Check for proper network
-    if(!isTRUE(signed)){
-      algorithm.ARGS[[1]] <- igraph_network
-    }else{
+    if(isTRUE(signed)){
       algorithm.ARGS[[1]] <- network_matrix
+    }else{
+      algorithm.ARGS[[1]] <- igraph_network
     }
     
     # Get consensus method function
@@ -312,7 +318,7 @@ community.consensus <- function(
       order = order,
       consensus.iter = consensus.iter,
       correlation.matrix = correlation.matrix,
-      progress = progress
+      verbose = verbose
     )
     
     # Get result
@@ -320,41 +326,194 @@ community.consensus <- function(
     
   }
   
-  # Return results
-  return(result)
+  # Force into vector
+  result$selected_solution <- force_vector(result$selected_solution)
+  
+  # Ensure names
+  names(result$selected_solution) <- colnames(network_matrix)
+  
+  # Set methods attribute
+  attr(result$selected_solution, "methods") <- list(
+    signed = signed,
+    order = order, consensus.method = consensus.method,
+    consensus.iter = consensus.iter
+    
+  )
+  
+  # Check for membership only
+  if(isTRUE(membership.only)){
+    
+    # Set class
+    class(result$selected_solution) <- "EGA.consensus"
+    
+    # Return only membership
+    return(result$selected_solution)
+    
+  }else{
+    
+    # Add names for returning full results
+    ## Memberships
+    if("memberships" %in% names(result)){
+      colnames(memberships) <- colnames(network_matrix)
+    }
+    
+    ## Proportion Table
+    if("proportion_table" %in% names(result)){
+      colnames(proportion_table) <- c(colnames(network_matrix), "Proportion")
+    }
+    
+    # Set class
+    class(result) <- "EGA.consensus"
+    
+    # Return full results
+    return(result)
+    
+  }
   
 }
 
 # Bug check ----
 # network = ega.wmt$network; signed = FALSE;
 # order = "higher"; resolution = 1;
-# consensus.method = "lowest_tefi";
-# consensus.iter = 1000; progress = TRUE;
+# consensus.method = "most_common";
+# consensus.iter = 1000; verbose = FALSE;
 # correlation.matrix = ega.wmt$correlation;
+
+#' @exportS3Method 
+# S3 Print Method ----
+# Updated 16.06.2023
+print.EGA.consensus <- function(x, ...)
+{
+  
+  # Determine whether result is a list
+  if(is.list(x)){
+    membership <- x$selected_solution
+  }else{
+    membership <- x
+  }
+  
+  # Obtain method
+  method <- attr(membership, "methods")
+  
+  # Obtain consensus name
+  consensus_name <- switch(
+    method$consensus.method,
+    "highest_modularity" = "Highest Modularity",
+    "iterative" = "Iterative",
+    "most_common" = "Most Common",
+    "lowest_tefi" = "Lowest TEFI"
+  )
+  
+  # Print method information
+  cat(
+    paste0(
+      "Consensus Method: ", consensus_name,
+      " (", method$consensus.iter, " iterations)",
+      "\nAlgorithm: ", ifelse(method$signed, "Signed Louvain", "Louvain"),
+      "\nOrder: ", totitle(method$order)
+    )
+  )
+  
+  # Add breakspace
+  cat("\n\n")
+  
+  # Determine number of communities
+  communities <- length(na.omit(unique(membership)))
+  
+  # Print communities
+  cat(paste0("Number of communities: "), communities)
+  cat("\n\n") # Add breakspace
+  
+  # Remove attribute for clean print
+  attr(membership, which = "class") <- NULL
+  attr(membership, which = "methods") <- NULL
+  
+  # Print membership
+  print(membership)
+  
+}
+
+#' @exportS3Method 
+# S3 Summary Method ----
+# Updated 16.06.2023
+summary.EGA.consensus <- function(object, ...)
+{
+  
+  # Determine whether result is a list
+  if(is.list(object)){
+    membership <- object$selected_solution
+  }else{
+    membership <- object
+  }
+  
+  # Obtain method
+  method <- attr(membership, "methods")
+  
+  # Obtain consensus name
+  consensus_name <- switch(
+    method$consensus.method,
+    "highest_modularity" = "Highest Modularity",
+    "iterative" = "Iterative",
+    "most_common" = "Most Common",
+    "lowest_tefi" = "Lowest TEFI"
+  )
+  
+  # Print method information
+  cat(
+    paste0(
+      "Consensus Method: ", consensus_name,
+      " (", method$consensus.iter, " iterations)",
+      "\nAlgorithm: ", ifelse(method$signed, "Signed Louvain", "Louvain"),
+      "\nOrder: ", totitle(method$order)
+    )
+  )
+  
+  # Add breakspace
+  cat("\n\n")
+  
+  # Determine number of communities
+  communities <- length(na.omit(unique(membership)))
+  
+  # Print communities
+  cat(paste0("Number of communities: "), communities)
+  cat("\n\n") # Add breakspace
+  
+  # Remove attribute for clean print
+  attr(membership, which = "class") <- NULL
+  attr(membership, which = "methods") <- NULL
+  
+  # Print membership
+  print(membership)
+  
+}
 
 #' @noRd
 # Standard application method ----
-# Updated 27.05.2023
+# Updated 16.06.2023
 consensus_application <- function(
     FUN, FUN.ARGS, 
-    consensus.iter, progress
+    consensus.iter, verbose
 )
 {
   
+  # Obtain number of digits formatting
+  # (rather than calling `consensus.iter` times with progress)
+  format_digits <- digits(consensus.iter) - 1
+  
   # Apply algorithm
   communities <- lapply(
-    1:consensus.iter, function(i){
+    seq_len(consensus.iter), function(i){
       
       # Perform call
       output <- do.call(what = FUN, args = FUN.ARGS)
       
       # Check for progress
-      if(isTRUE(progress)){
+      if(isTRUE(verbose)){
         
         # Obtain text for progress
         progress_text <- paste0(
           "\r Consensus iteration ", formatC(
-            i, digits = digits(consensus.iter) - 1,
+            i, digits = format_digits,
             format = "d", flag = "0"
           ), " of ", consensus.iter,
           " complete."
@@ -381,12 +540,12 @@ consensus_application <- function(
 
 #' @noRd
 # Highest modularity method ----
-# Updated 17.05.2023
+# Updated 16.06.2023
 highest_modularity <- function(
     FUN, FUN.ARGS, 
     order, consensus.iter, 
     correlation.matrix, # not used
-    progress
+    verbose
 )
 {
   
@@ -394,7 +553,7 @@ highest_modularity <- function(
   communities <- consensus_application(
     FUN = FUN, FUN.ARGS = FUN.ARGS,
     consensus.iter = consensus.iter,
-    progress = progress
+    verbose = verbose
   )
   
   # Obtain modularities
@@ -422,7 +581,7 @@ highest_modularity <- function(
   }else if(order == "higher"){
     memberships <- t(sapply(
       communities, function(x){
-        x$memberships[nrow(x$memberships),]
+        x$memberships[dim(x$memberships)[1],]
       }
     ))
   }
@@ -451,12 +610,12 @@ binary_check <- function(b_matrix){
 
 #' @noRd
 # Iterative method ----
-# Updated 27.05.2023
+# Updated 16.06.2023
 iterative <- function(
     FUN, FUN.ARGS, 
     order, consensus.iter,
     correlation.matrix, # not used
-    progress
+    verbose
 )
 {
   
@@ -470,7 +629,7 @@ iterative <- function(
     communities <- consensus_application(
       FUN = FUN, FUN.ARGS = FUN.ARGS,
       consensus.iter = consensus.iter,
-      progress = progress
+      verbose = verbose
     )
     
     # Obtain memberships
@@ -483,37 +642,28 @@ iterative <- function(
     }else if(order == "higher"){
       memberships <- t(sapply(
         communities, function(x){
-          x$memberships[nrow(x$memberships),]
+          x$memberships[dim(x$memberships)[1],]
         }
       ))
     }
     
-    # Obtain maximum memberships
-    maximum_memberships <- max(memberships, na.rm = TRUE)
+    # Number of columns
+    columns <- dim(memberships)[2]
     
     # Initialize consensus matrix
     consensus_matrix <- matrix(
-      0, nrow = ncol(memberships),
-      ncol = ncol(memberships)
+      0, nrow = columns, ncol = columns
     )
     
     # Loop over to get proportions
-    for(i in 1:ncol(memberships)){
-      for(j in i:ncol(memberships)){
+    for(i in seq_len(columns)){
+      for(j in i:columns){
         
         # Fill consensus matrix
-        consensus_matrix[i,j] <- trace(
-          table(
-            factor( # Factor ensures proper table
-              memberships[,i],
-              levels = 1:maximum_memberships
-            ), 
-            factor(
-              memberships[,j],
-              levels = 1:maximum_memberships
-            )
-          )
-        ) / consensus.iter
+        consensus_matrix[i,j] <- sum(
+          memberships[,i] == memberships[,j],
+          na.rm = TRUE
+        )
         
         # Fill other side
         consensus_matrix[j,i] <- consensus_matrix[i,j]
@@ -521,11 +671,14 @@ iterative <- function(
       }
     }
     
+    # Divide by iterations
+    consensus_matrix <- consensus_matrix / consensus.iter
+    
     # Threshold values
     consensus_matrix[consensus_matrix < 0.30] <- 0
     
     # Check for break
-    if(isTRUE(binary_check(consensus_matrix))){
+    if(binary_check(consensus_matrix)){
       break
     }
     
@@ -555,12 +708,12 @@ iterative <- function(
 
 #' @noRd
 # Lowest TEFI method ----
-# Updated 17.05.2023
+# Updated 16.06.2023
 lowest_tefi <- function(
     FUN, FUN.ARGS, 
     order, consensus.iter, 
     correlation.matrix, # used in function
-    progress
+    verbose
 )
 {
   
@@ -568,7 +721,7 @@ lowest_tefi <- function(
   communities <- consensus_application(
     FUN = FUN, FUN.ARGS = FUN.ARGS,
     consensus.iter = consensus.iter,
-    progress = progress
+    verbose = verbose
   )
   
   # Obtain memberships
@@ -581,38 +734,39 @@ lowest_tefi <- function(
   }else if(order == "higher"){
     memberships <- t(sapply(
       communities, function(x){
-        x$memberships[nrow(x$memberships),]
+        x$memberships[dim(x$memberships)[1],]
       }
     ))
   }
   
-  # Make data frame
-  memberships_df <- as.data.frame(memberships)
+  # Prepare a data frame
+  proportion_table <- count_table(memberships, proportion = TRUE)
   
-  # Obtain duplicate indices
-  dupicated_index <- duplicated(memberships_df)
+  # Get dimensions
+  dimensions <- dim(proportion_table)
   
-  # Rows for non-duplicates
-  non_duplicated_df <- data.frame(memberships_df[!dupicated_index,])
+  # Remove last column
+  proportion_table <- proportion_table[,-dimensions[2]]
   
   # Apply TEFI over non-duplicated memberships
   tefis <- sapply(
-    1:nrow(non_duplicated_df), function(i){
+    seq_len(dimensions[1]), function(i){
       tefi(
         abs(correlation.matrix), 
-        as.vector(as.matrix(non_duplicated_df[i,]))
+        force_vector(proportion_table[i,])
       )$VN.Entropy.Fit
     }
   )
   
   # Obtain solution
-  selected_solution <- non_duplicated_df[which.min(tefis),]
+  selected_solution <- proportion_table[which.min(tefis),]
   
   # Set up return list
   results <- list(
     selected_solution = selected_solution,
     memberships = memberships,
-    tefis = tefis
+    tefis = tefis,
+    proportion_table = proportion_table
   )
   
   # Return results
@@ -622,12 +776,12 @@ lowest_tefi <- function(
 
 #' @noRd
 # Most Common method ----
-# Updated 27.05.2023
+# Updated 16.06.2023
 most_common <- function(
     FUN, FUN.ARGS, 
     order, consensus.iter,
     correlation.matrix, # not used
-    progress
+    verbose
 )
 {
   
@@ -635,7 +789,7 @@ most_common <- function(
   communities <- consensus_application(
     FUN = FUN, FUN.ARGS = FUN.ARGS,
     consensus.iter = consensus.iter,
-    progress = progress
+    verbose = verbose
   )
   
   # Obtain memberships
@@ -648,44 +802,17 @@ most_common <- function(
   }else if(order == "higher"){
     memberships <- t(sapply(
       communities, function(x){
-        x$memberships[nrow(x$memberships),]
+        x$memberships[dim(x$memberships)[1],]
       }
     ))
   }
   
-  # Make data frame
-  memberships_df <- as.data.frame(memberships)
-  
-  # Obtain duplicate indices
-  dupicated_index <- duplicated(memberships_df)
-  
-  # Rows for non-duplicates
-  non_duplicated_df <- data.frame(memberships_df[!dupicated_index,])
-  
-  # Rows for duplicates
-  duplicated_df <- data.frame(memberships_df[dupicated_index,])
-  
-  # Match duplicates with non-duplicates
-  duplicated_counts <- table(
-    match(
-      data.frame(t(duplicated_df)), data.frame(t(non_duplicated_df))
-    ))
-  
-  # Obtain counts
-  counts <- rep(1, nrow(non_duplicated_df))
-  counts[as.numeric(names(duplicated_counts))] <- 
-    counts[as.numeric(names(duplicated_counts))] + 
-    duplicated_counts
-  
-  # Add counts to non-duplicated memberships
-  proportion_table <- data.frame(
-    Proportion = counts / consensus.iter,
-    non_duplicated_df
-  )
-  
+  # Prepare a data frame
+  proportion_table <- count_table(memberships, proportion = TRUE)
+
   # Obtain solution
   selected_solution <- proportion_table[
-    which.max(proportion_table$Proportion), -1
+    which.max(proportion_table$Proportion), -dim(proportion_table)[2]
   ]
   
   # Set up return list

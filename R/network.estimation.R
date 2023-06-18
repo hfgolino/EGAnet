@@ -33,7 +33,7 @@
 #' 
 #' }
 #' 
-#' @param method Character (length = 1).
+#' @param model Character (length = 1).
 #' Available options:
 #' 
 #' \itemize{
@@ -67,8 +67,8 @@
 #'
 #' @param ... Additional arguments to be passed on to
 #' \code{\link[EGAnet]{auto.correlate}} and the different
-#' network estimation methods (see \code{method} for
-#' method specific details)
+#' network estimation methods (see \code{model} for
+#' model specific details)
 #'
 #' @return Returns a matrix populated with a network from the input data
 #'
@@ -78,60 +78,65 @@
 #' # Load data
 #' wmt <- wmt2[,7:24]
 #' 
-#' # BGGM with analytic solution
-#' bggm_network <- network.estimation(
-#'   data = wmt, method = "BGGM",
-#'   analytic = TRUE # faster example for CRAN
+#' # EBICglasso (default for EGA functions)
+#' glasso_network <- network.estimation(
+#'   data = wmt, model = "glasso"
 #' )
 #' 
-#' # EBICglasso
-#' glasso_network <- network.estimation(
-#'   data = wmt, method = "glasso"
+#' # Plot network
+#' plot(glasso_network)
+#' 
+#' # BGGM with analytic solution
+#' bggm_network <- network.estimation(
+#'   data = wmt, model = "BGGM",
+#'   analytic = TRUE # faster example for CRAN
 #' )
 #' 
 #' # TMFG
 #' tmfg_network <- network.estimation(
-#'   data = wmt, method = "TMFG"
+#'   data = wmt, model = "TMFG"
 #' )
 #'
 #' @references
-#' # Graphical Least Absolute Shrinkage and Selection Operator (GLASSO)
+#' \strong{Graphical Least Absolute Shrinkage and Selection Operator (GLASSO)} \cr
+#' Friedman, J., Hastie, T., & Tibshirani, R. (2008). 
+#' Sparse inverse covariance estimation with the graphical lasso. 
+#' \emph{Biostatistics}, \emph{9}(3), 432–441.
 #' 
-#' # GLASSO with Extended Bayesian Information Criterion (EBICglasso)
+#' \strong{GLASSO with Extended Bayesian Information Criterion (EBICglasso)} \cr
+#' Epskamp, S., & Fried, E. I. (2018).
+#' A tutorial on regularized partial correlation networks.
+#' \emph{Psychological Methods}, \emph{23}(4), 617–634.
 #' 
-#' # Bayesian Gaussian Graphical Model (BGGM)
+#' \strong{Bayesian Gaussian Graphical Model (BGGM)} \cr
+#' Williams, D. R. (2021).
+#' Bayesian estimation for Gaussian graphical models: Structure learning, predictability, and network comparisons.
+#' \emph{Multivariate Behavioral Research}, \emph{56}(2), 336–352. 
 #'
-#' # Triangulated Maximally Filtered Graph (TMFG)
+#' \strong{Triangulated Maximally Filtered Graph (TMFG)} \cr
+#' Massara, G. P., Di Matteo, T., & Aste, T. (2016).
+#' Network filtering for big data: Triangulated maximally filtered graph.
+#' \emph{Journal of Complex Networks}, \emph{5}, 161-178.
 #'
 #' @export
 #'
 # Compute networks for EGA
-# Updated 13.06.2023
+# Updated 16.06.2023
 network.estimation <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
-    method = c("BGGM", "glasso", "TMFG"),
+    model = c("BGGM", "glasso", "TMFG"),
     network.only = TRUE,
     verbose = FALSE,
     ...
 )
 {
   
-  # Missing arguments
-  ## Correlation method
-  if(missing(corr)){
-    corr <- "auto"
-  }else{corr <- tolower(match.arg(corr))}
-  ## Missing data method
-  if(missing(na.data)){
-    na.data <- "pairwise"
-  }else{na.data <- tolower(match.arg(na.data))}
-  ## Network method
-  if(missing(method)){ # No default!
-    stop("No network estimation 'method' was selected. Please select either \"BGGM\", \"glasso\", or \"TMFG\"")
-  }else{method <- tolower(match.arg(method))}
-  # Makes 'method' *lowercase* for parsimonious handling later
+  # Check for missing arguments (argument, default, function)
+  corr <- set_default(corr, "auto", network.estimation)
+  na.data <- set_default(na.data, "pairwise", network.estimation)
+  model <- set_default(model, "glasso", network.estimation)
   
   # Obtain ellipse arguments
   ellipse <- list(...)
@@ -148,7 +153,7 @@ network.estimation <- function(
     }
     
     # Check for 'BGGM' network estimation (can't be correlation matrix)
-    if(method == "bggm"){
+    if(model == "bggm"){
       stop("A symmetric matrix was provided in the 'data' argument. 'method = \"BGGM\"' is not compatiable with a correlation matrix. Please use the original data instead")
     }
     
@@ -165,14 +170,14 @@ network.estimation <- function(
     
   }
   
-  # For 'method = "BGGM"', take a different path...
-  if(method == "bggm"){
+  # For 'model = "BGGM"', take a different path...
+  if(model == "bggm"){
   
     # Obtain arguments for `BGGM`
-    ## See "helpers-general.R" for `silent_load`
+    ## See "helpers.R" for `silent_load`
     bggm_estimate_ARGS <- obtain_arguments(
       silent_load(BGGM::estimate), 
-      FUN.args = ellipse
+      FUN.args = ellipse 
     )
     
     # Check for override of 'type'
@@ -194,7 +199,9 @@ network.estimation <- function(
     )
     
     # Determine `select` arguments
-    bggm_select_ARGS <- obtain_arguments(BGGM:::select.estimate, FUN.args = ellipse)
+    bggm_select_ARGS <- obtain_arguments(
+      BGGM:::select.estimate, FUN.args = ellipse
+    )
     
     # Send 'bggm_output' to arguments
     bggm_select_ARGS$object <- bggm_output
@@ -210,47 +217,44 @@ network.estimation <- function(
     
   }else{ # Non-BGGM methods
     
-    # Check for automatic correlations
-    if(corr == "auto"){
+    # Check for whether `correlation_matrix` exists
+    if(!exists("correlation_matrix")){
       
-      # Add arguments to 'ellipse'
-      ellipse$corr <- "pearson"; ellipse$na.data <- na.data;
-      
-      # Obtain arguments for `auto.correlate`
-      auto_ARGS <- obtain_arguments(FUN = auto.correlate, FUN.args = ellipse)
-      
-      # Supply data
-      auto_ARGS$data <- data
-      
-      # Obtain correlation matrix
-      correlation_matrix <- do.call(
-        what = auto.correlate,
-        args = auto_ARGS
-      )
-      
-    }else{
-      
-      # Obtain correlations using base R
-      correlation_matrix <- cor(data, use = na.data, method = corr)
+      # Check for automatic correlations
+      if(corr == "auto"){
+        
+        # Obtain correlation matrix
+        correlation_matrix <- auto.correlate(
+          data = data, corr = "pearson",
+          na.data = na.data, verbose = verbose,
+          ...
+        )
+        
+      }else{
+        
+        # Obtain correlations using base R
+        correlation_matrix <- cor(data, use = na.data, method = corr)
+        
+      }
       
     }
     
     # Obtain estimation method function
     estimation_FUN <- switch(
-      method,
+      model,
       "glasso" = EBICglasso.qgraph,
       "tmfg" = TMFG
     )
     
     # Obtain estimation method arguments
     estimation_ARGS <- obtain_arguments(estimation_FUN, ellipse)
-    
+
     # Set data, sample size, output, and verbose
     estimation_ARGS$data <- correlation_matrix
     estimation_ARGS$n <- n
     estimation_ARGS$returnAllResults <- !network.only
     estimation_ARGS$verbose <- verbose
-    
+
     # Perform estimation
     estimation_OUTPUT <- do.call(
       what = estimation_FUN,
@@ -258,7 +262,7 @@ network.estimation <- function(
     )
 
     # Obtain estimated network
-    if(!isTRUE(network.only)){
+    if(isFALSE(network.only)){
       
       # Switch with method
       estimated_network <- estimation_OUTPUT$network
@@ -276,13 +280,32 @@ network.estimation <- function(
   colnames(estimated_network) <- colnames(data)
   row.names(estimated_network) <- colnames(data)
   
+  # Add class
+  class(estimated_network) <- "EGA.network"
+  
+  # Add methods attribute for BGGM
+  ## Methods for GLASSO and TMFG are already there
+  if(model == "bggm"){
+    attr(estimated_network, "methods") <- list(
+      type = bggm_estimate_ARGS$type,
+      analytic = bggm_estimate_ARGS$analytic,
+      prior_sd = bggm_estimate_ARGS$prior_sd,
+      iter = bggm_estimate_ARGS$iter,
+      cred = bggm_select_ARGS$cred,
+      alternative = bggm_select_ARGS$alternative
+    )
+  }
+  
+  # Add model to attributes
+  attr(estimated_network, "methods")$model <- model
+  
   # Set up for return
-  if(isTRUE(network.only)){ # only return network
-    return(estimated_network)
+  if(isTRUE(network.only)){
+    return(estimated_network) # only return network
   }else{ # sort out output to send back
     
-    # BGGM or other method
-    if(method == "bggm"){
+    # BGGM or other model
+    if(model == "bggm"){
       
       # Set up results
       results <- list(
@@ -296,7 +319,7 @@ network.estimation <- function(
       # Set up results
       results <- list(
         estimated_network = estimated_network,
-        method_output = estimation_OUTPUT
+        output = estimation_OUTPUT
       )
       
     }
@@ -311,9 +334,231 @@ network.estimation <- function(
 # Bug Checking ----
 ## Basic input
 # data = wmt2; n = NULL;
-# corr = "auto"; method = "bggm";
+# corr = "auto"; model = "glasso";
 # na.data = "pairwise"; network.only = TRUE;
 # verbose = FALSE; ellipse = list();
+
+#' @noRd
+# Send Network Methods for S3 ----
+# Updated 16.06.2023
+send_network_methods <- function(estimated_network)
+{
+  
+  # Obtain methods
+  methods <- attr(estimated_network, "methods")
+  
+  # Set model
+  model <- methods$model
+  
+  # Send output text based on model
+  if(model == "bggm"){ # BGGM
+    
+    # Send model
+    cat(
+      paste0(
+        "Model: ", toupper(methods$model),
+        " (", methods$type, ")"
+      )
+    )
+    
+    # Send prior information
+    cat(
+      paste0(
+        "\nPrior SD: ", methods$prior_sd,
+        " (", methods$iter, " iterations)"
+      )
+    )
+  
+    # Send statistical information
+    cat(
+      paste0(
+        "\nCredible Interval: ", methods$cred,
+        " (", gsub("\\.", "-", methods$alternative), ")"
+      )
+    )
+    
+  }else if(model == "glasso"){ # GLASSO
+    
+    # Obtain model selection
+    model.selection <- methods$model.selection
+    
+    # Determine whether EBIC was used
+    if(model.selection == "ebic"){
+      model.selection_text <- paste0(
+        " (", toupper(model.selection), 
+        " with gamma = ", methods$gamma, ")"
+      )
+    }else if(model.selection == "jsd"){
+      model.selection_text <- paste0(
+        " (", toupper(model.selection), ")"
+      )
+    }
+    
+    # Send model
+    cat(
+      paste0(
+        "Model: ", toupper(methods$model),
+        model.selection_text
+      )
+    )
+    
+    # Send correlations
+    cat(paste0("\nCorrelations: ", methods$corr))
+    
+    # Send lambda information
+    cat(
+      paste0(
+        "\nLambda: ", methods$lambda,
+        " (n = ", methods$nlambda, ", ratio = ",
+        methods$lambda.min.ratio, ")"
+      )
+    )
+    
+  }else if(model == "tmfg"){ # TMFG
+    
+    # Send model
+    cat(
+      paste0(
+        "Model: ", toupper(methods$model)
+      )
+    )
+    
+    # Send correlations
+    cat(
+      paste0(
+        "\nCorrelations: ", methods$corr,
+        " (", ifelse(methods$partial, "partial", "zero-order"),
+        ")"
+      )
+    )
+    
+  }
+  
+  # Add breakspace
+  cat("\n\n")
+
+}
+
+#' @exportS3Method 
+# S3 Print Method ----
+# Updated 14.06.2023
+print.EGA.network <- function(x, ...)
+{
+  
+  # Determine whether result is a list
+  if(is.list(x)){
+    network <- x$estimated_network
+  }else{
+    network <- x
+  }
+  
+  # Print methods information
+  send_network_methods(network)
+  
+  # Obtain lower triangle
+  lower_triangle <- network[lower.tri(network)]
+  
+  # Non-zero edges
+  non_zero_edges <- lower_triangle[lower_triangle != 0]
+  
+  # Determine number and density of edges
+  edges <- length(non_zero_edges)
+  edge_density <- edges / length(lower_triangle)
+  
+  # Obtain summary statistics
+  average_weight <- mean(non_zero_edges, na.rm = TRUE)
+  sd_weight <- sd(non_zero_edges, na.rm = TRUE)
+  range_weight <- range(non_zero_edges, na.rm = TRUE)
+  
+  # Print information about edges
+  cat(paste0("Number of nodes: ", dim(network)[2], "\n"))
+  cat(paste0("Number of edges: ", edges, "\n"))
+  cat(paste0("Edge density: ", format_decimal(edge_density, 3)))
+  
+  # Add breakspace
+  cat("\n\n")
+  
+  # Print information about weights
+  cat("Non-zero edge weights: ")
+  print_df <- data.frame(
+    c("M", format_decimal(average_weight, 3)),
+    c("SD", format_decimal(sd_weight, 3)),
+    c("Min", format_decimal(range_weight[1], 3)),
+    c("Max", format_decimal(range_weight[2], 3))
+  )
+  no_name_print(print_df)
+  
+}
+
+#' @exportS3Method 
+# S3 Summary Method ----
+# Updated 14.06.2023
+summary.EGA.network <- function(object, ...)
+{
+  
+  # Determine whether result is a list
+  if(is.list(object)){
+    network <- object$estimated_network
+  }else{
+    network <- object
+  }
+  
+  # Print methods information
+  send_network_methods(network)
+  
+  # Obtain lower triangle
+  lower_triangle <- network[lower.tri(network)]
+  
+  # Non-zero edges
+  non_zero_edges <- lower_triangle[lower_triangle != 0]
+  
+  # Determine number and density of edges
+  edges <- length(non_zero_edges)
+  edge_density <- edges / length(lower_triangle)
+  
+  # Obtain summary statistics
+  average_weight <- mean(non_zero_edges, na.rm = TRUE)
+  sd_weight <- sd(non_zero_edges, na.rm = TRUE)
+  range_weight <- range(non_zero_edges, na.rm = TRUE)
+  
+  # Print information about edges
+  cat(paste0("Number of nodes: ", dim(network)[2], "\n"))
+  cat(paste0("Number of edges: ", edges, "\n"))
+  cat(paste0("Edge density: ", format_decimal(edge_density, 3)))
+  
+  # Add breakspace
+  cat("\n\n")
+  
+  # Print information about weights
+  cat("Non-zero edge weights: ")
+  print_df <- data.frame(
+    c("M", format_decimal(average_weight, 3)),
+    c("SD", format_decimal(sd_weight, 3)),
+    c("Min", format_decimal(range_weight[1], 3)),
+    c("Max", format_decimal(range_weight[2], 3))
+  )
+  no_name_print(print_df)
+  
+  
+}
+
+#' @exportS3Method 
+# S3 Plot Method ----
+# Updated 15.06.2023
+plot.EGA.network <- function(x, ...)
+{
+  
+  # Determine whether result is a list
+  if(is.list(x)){
+    network <- x$estimated_network
+  }else{
+    network <- x
+  }
+  
+  # Return plot
+  basic_plot_setup(network = network, ...)
+  
+}
 
 # Function to find 'type' argument for `BGGM` ----
 #' @noRd

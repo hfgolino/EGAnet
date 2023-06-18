@@ -100,14 +100,17 @@
 #' TMFG(wmt2[,7:24], partial = TRUE)
 #'
 #' @references
+#' \strong{Local-Global Inversion Method} \cr
 #' Barfuss, W., Massara, G. P., Di Matteo, T., & Aste, T. (2016).
 #' Parsimonious modeling with information filtering networks.
 #' \emph{Physical Review E}, \emph{94}, 062306.
 #'
+#' \strong{Psychometric network introduction to TMFG} \cr
 #' Christensen, A. P., Kenett, Y. N., Aste, T., Silvia, P. J., & Kwapil, T. R. (2018).
 #' Network structure of the Wisconsin Schizotypy Scales-Short Forms: Examining psychometric network filtering approaches.
 #' \emph{Behavior Research Methods}, \emph{50}, 2531-2550.
 #'
+#' \strong{Triangulated Maximally Filtered Graph} \cr
 #' Massara, G. P., Di Matteo, T., & Aste, T. (2016).
 #' Network filtering for big data: Triangulated maximally filtered graph.
 #' \emph{Journal of Complex Networks}, \emph{5}, 161-178.
@@ -116,7 +119,7 @@
 #'
 #' @export
 # TMFG Filtering Method----
-# Updated 12.06.2023
+# Updated 16.06.2023
 TMFG <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -157,14 +160,14 @@ TMFG <- function(
     # Check for automatic correlations
     if(corr == "auto"){
       
-      # Add arguments to 'ellipse'
-      ellipse$corr <- "pearson"; ellipse$na.data <- na.data;
-      
       # Obtain arguments for `auto.correlate`
       auto_ARGS <- obtain_arguments(FUN = auto.correlate, FUN.args = ellipse)
       
-      # Supply data
+      # Supply data, corr, na.data, and verbose
       auto_ARGS$data <- data
+      auto_ARGS$corr <- "pearson"
+      auto_ARGS$na.data <- na.data
+      auto_ARGS$verbose <- verbose
       
       # Obtain correlation matrix
       correlation_matrix <- do.call(
@@ -181,7 +184,7 @@ TMFG <- function(
     
   }
   
-  # Ensure that the correlation matrix is a matrix
+  # Ensure that the correlation matrix *is* a matrix
   correlation_matrix <- as.matrix(correlation_matrix)
   
   # Obtain number of nodes
@@ -212,14 +215,17 @@ TMFG <- function(
     absolute_matrix * (absolute_matrix > mean(absolute_matrix, na.rm = TRUE))
   )
   
+  # First four nodes
+  first_four <- seq_len(4)
+  
   # Insert the top four nodes
-  inserted[1:4] <- order(four_nodes, decreasing = TRUE)[1:4]
+  inserted[first_four] <- order(four_nodes, decreasing = TRUE)[first_four]
   
   # Set remaining nodes
   remaining <- setdiff(1:nodes, inserted)
   
   # Build tetrahedron
-  triangles[1,] <- inserted[1:3]; triangles[2,] <- inserted[2:4];
+  triangles[1,] <- inserted[seq_len(3)]; triangles[2,] <- inserted[2:4];
   triangles[3,] <- inserted[c(1, 2, 4)]; triangles[4,] <- inserted[c(1, 3, 4)];
   
   # Initialize network (correlations to retain)
@@ -227,8 +233,8 @@ TMFG <- function(
   row.names(network) <- colnames(network) <- colnames(data)
   
   # Add nodes to network
-  network[inserted[1:4], inserted[1:4]] <-
-    correlation_matrix[inserted[1:4], inserted[1:4]]
+  network[inserted[first_four], inserted[first_four]] <-
+    correlation_matrix[inserted[first_four], inserted[first_four]]
   
   # Build gain table
   gain <- matrix(-Inf, nrow = nodes, ncol = 2 * (nodes - 2))
@@ -313,7 +319,7 @@ TMFG <- function(
   
   # Create cliques
   cliques <- rbind(
-    inserted[1:4],
+    inserted[first_four],
     cbind(separators, inserted[5:nodes])
   )
   
@@ -326,7 +332,7 @@ TMFG <- function(
     row.names(partial_network) <- colnames(partial_network) <- colnames(network)
     
     # Loop over cliques and separators
-    for(i in 1:nrow(separators)){
+    for(i in nrow_sequence(separators)){
       
       # Obtain clique
       clique <- cliques[i,]
@@ -361,6 +367,12 @@ TMFG <- function(
     diag(network) <- 0
     
   }
+  
+  # Set methods attribute
+  attr(network, "methods") <- list(
+    corr = corr,
+    partial = partial
+  )
   
   # Set up return
   if(!isTRUE(returnAllResults)){

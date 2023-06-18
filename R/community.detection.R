@@ -49,10 +49,10 @@
 #' 
 #' }
 #'
-#' @param absolute Boolean.
-#' Should absolute network values be used?
-#' Defaults to \code{TRUE}.
-#' Caution should be used when setting to \code{FALSE}.
+#' @param signed Boolean.
+#' Should signed network values be used?
+#' Defaults to \code{FALSE}.
+#' Caution should be used when setting to \code{TRUE}.
 #' Most algorithms are not able to handle signed (negative)
 #' weights
 #' 
@@ -62,6 +62,12 @@
 #' When \code{FALSE}, singleton communities will be set to
 #' missing (\code{NA}); otherwise, when \code{TRUE}, singleton
 #' communities will be allowed
+#' 
+#' @param membership.only Boolean.
+#' Whether the memberships only should be output.
+#' Defaults to \code{TRUE}.
+#' Set to \code{FALSE} to obtain all output for the
+#' community detection algorithm
 #'
 #' @param ... Additional arguments to be passed on to
 #' \code{\link{igraph}}'s community detection functions
@@ -126,7 +132,7 @@
 #' @export
 #'
 # Compute communities for EGA
-# Updated 10.06.2023
+# Updated 16.06.2023
 community.detection <- function(
     network, algorithm = c(
       "edge_betweenness", "fast_greedy",
@@ -134,15 +140,14 @@ community.detection <- function(
       "leading_eigen", "louvain", "optimal",
       "signed_louvain", "spinglass", "walktrap"
     ),
-    absolute = TRUE, allow.singleton = FALSE,
+    signed = FALSE, allow.singleton = FALSE,
+    membership.only = TRUE,
     ...
 )
 {
   
-  # Set default algorithm if missing
-  if(missing(algorithm)){
-    algorithm <- "walktrap"
-  }else{algorithm <- tolower(match.arg(algorithm))}
+  # Check for missing arguments (argument, default, function)
+  algorithm <- set_default(algorithm, "walktrap", community.detection)
   
   # Determine class of network
   if(is(network, "igraph")){
@@ -151,7 +156,7 @@ community.detection <- function(
     network_matrix <- igraph2matrix(network)
     
     # Check for absolute
-    if(isTRUE(absolute)){
+    if(isFALSE(signed)){
       network_matrix <- abs(network_matrix)
     }
     
@@ -164,8 +169,8 @@ community.detection <- function(
     # Ensure network is matrix
     network <- as.matrix(network)
     
-    # Check for absolute
-    if(isTRUE(absolute)){
+    # Check for signed
+    if(isFALSE(signed)){
       network <- abs(network)
     }
     
@@ -246,7 +251,7 @@ community.detection <- function(
     )
     
     # Check for Leading Eigenvalue (needs ARPACK)
-    if(algorithm == "leading_eigen" & !"options" %in% names(ellipse)){
+    if("options" %in% names(algorithm.ARGS) & !"options" %in% names(ellipse)){
       algorithm.ARGS$options <- igraph::arpack_defaults
     }
     
@@ -256,29 +261,28 @@ community.detection <- function(
     }
     
     # Set up network
-    if(tolower(algorithm) == "signed_louvain"){
+    if(is.character(algorithm)){
       
-      # Add {igraph} network
-      algorithm.ARGS[[1]] <- network_matrix
+      # Check for signed Louvain
+      if(algorithm == "signed_louvain"){
+        algorithm.ARGS[[1]] <- network_matrix
+      }else{
+        algorithm.ARGS[[1]] <- igraph_network
+        signed = FALSE # {igraph} networks are absolute
+      }
       
-      # Get result
-      result <- do.call(algorithm.FUN, as.list(algorithm.ARGS))$memberships
-      
-      # Obtain membership (higher-order)
-      membership[!unconnected] <- result[nrow(result),]
-      
-    }else{
+    }else{ # Assume function is {igraph}
       
       # Add {igraph} network
       algorithm.ARGS[[1]] <- igraph_network
       
-      # Get result
-      result <- do.call(algorithm.FUN, as.list(algorithm.ARGS))$membership
-      
-      # Obtain membership
-      membership[!unconnected] <- result[!unconnected]
-      
     }
+    
+    # Get result
+    result <- do.call(algorithm.FUN, as.list(algorithm.ARGS))$membership
+    
+    # Obtain membership
+    membership[!unconnected] <- result[!unconnected]
   
   }
   
@@ -310,8 +314,176 @@ community.detection <- function(
   # Name nodes
   names(membership) <- colnames(network_matrix)
   
-  # Return membership
-  return(membership)
+  # Add methods to membership attributes
+  attr(membership, "methods") <- list(
+    algorithm = algorithm, signed = signed
+  )
+  
+  # Check for whether all results should be returned
+  if(isTRUE(membership.only)){
+    
+    # Set class
+    class(membership) <- "EGA.community"
+    
+    # Only return membership
+    return(membership)
+    
+  }else{
+    
+    # Set up results
+    results <- list(
+      membership = membership,
+      output = result
+    )
+    
+    # Set class
+    class(results) <- "EGA.community"
+    
+    # Return all results
+    return(results)
+    
+  }
+  
+}
+
+# Bug Checking ----
+# ## Basic input
+# network = network.estimation(wmt2[,7:24], model = "glasso");
+# algorithm = "walktrap"; signed = FALSE;
+# allow.singleton = FALSE; membership.only = TRUE;
+# ellipse = list();
+
+#' @exportS3Method 
+# S3 Print Method ----
+# Updated 16.06.2023
+print.EGA.community <- function(x, ...)
+{
+  
+  # Determine whether result is a list
+  if(is.list(x)){
+    membership <- x$membership
+  }else{
+    membership <- x
+  }
+  
+  # Determine number of communities
+  communities <- length(na.omit(unique(membership)))
+  
+  # Obtain algorithm name (if available)
+  algorithm <- attr(membership, "methods")$algorithm
+  
+  # Determine whether algorithm was a function
+  if(!is.function(algorithm)){
+    
+    # Set algorithm name
+    algorithm_name <- switch(
+      algorithm,
+      "edge_betweenness" = "Edge Betweenness",
+      "fast_greedy" = "Fast-greedy",
+      "fluid" = "Fluid",
+      "infomap" = "Infomap",
+      "label_prop" = "Label Propagation",
+      "leading_eigen" = "Leading Eigenvalue",
+      "leiden" = "Leiden",
+      "louvain" = "Louvain",
+      "optimal" = "Optimal",
+      "signed_louvain" = "Louvain",
+      "spinglass" = "Spinglass",
+      "walktrap" = "Walktrap"
+    )
+    
+    # Check for signed
+    algorithm_name <- ifelse(
+      attr(membership, "methods")$signed,
+      paste("Signed", algorithm_name),
+      algorithm_name
+    )
+    
+    # Set up methods
+    cat(paste0("Algorithm: "), algorithm_name)
+    
+    # Add breakspace
+    cat("\n\n")
+    
+  }
+  
+  # Print communities
+  cat(paste0("Number of communities: "), communities)
+  cat("\n\n") # Add breakspace
+  
+  # Remove attribute for clean print
+  attr(membership, which = "class") <- NULL
+  attr(membership, which = "methods") <- NULL
+  
+  # Print membership
+  print(membership)
+  
+}
+
+#' @exportS3Method 
+# S3 Summary Method ----
+# Updated 16.06.2023
+summary.EGA.community <- function(object, ...)
+{
+  
+  # Determine whether result is a list
+  if(is.list(object)){
+    membership <- object$membership
+  }else{
+    membership <- object
+  }
+  
+  # Determine number of communities
+  communities <- length(na.omit(unique(membership)))
+  
+  # Obtain algorithm name (if available)
+  algorithm <- attr(membership, "methods")$algorithm
+  
+  # Determine whether algorithm was a function
+  if(!is.function(algorithm)){
+    
+    # Set algorithm name
+    algorithm_name <- switch(
+      algorithm,
+      "edge_betweenness" = "Edge Betweenness",
+      "fast_greedy" = "Fast-greedy",
+      "fluid" = "Fluid",
+      "infomap" = "Infomap",
+      "label_prop" = "Label Propagation",
+      "leading_eigen" = "Leading Eigenvalue",
+      "leiden" = "Leiden",
+      "louvain" = "Louvain",
+      "optimal" = "Optimal",
+      "signed_louvain" = "Louvain",
+      "spinglass" = "Spinglass",
+      "walktrap" = "Walktrap"
+    )
+    
+    # Check for signed
+    algorithm_name <- ifelse(
+      attr(membership, "methods")$signed,
+      paste("Signed", algorithm_name),
+      algorithm_name
+    )
+    
+    # Set up methods
+    cat(paste0("Algorithm: "), algorithm_name)
+    
+    # Add breakspace
+    cat("\n\n")
+    
+  }
+  
+  # Print communities
+  cat(paste0("Number of communities: "), communities)
+  cat("\n\n") # Add breakspace
+  
+  # Remove attribute for clean print
+  attr(membership, which = "class") <- NULL
+  attr(membership, which = "methods") <- NULL
+  
+  # Print membership
+  print(membership)
   
 }
 

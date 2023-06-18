@@ -12,7 +12,8 @@ auto.correlate(
   na.data = c("pairwise", "listwise"),
   empty.method = c("none", "zero", "all"),
   empty.value = c("none", "point_five", "one_over"),
-  verbose = FALSE
+  verbose = FALSE,
+  ...
 )
 }
 \arguments{
@@ -95,6 +96,9 @@ based on \code{empty.method}. For \code{empty.method = "zero"},
 \item{verbose}{Boolean (length = 1).
 Whether messages should be printed.
 Defaults to \code{FALSE}}
+
+\item{...}{Not actually used but makes it either for general functionality
+in the package}
 }
 \description{
 This wrapper is similar to \code{\link[qgraph]{cor_auto}}. There

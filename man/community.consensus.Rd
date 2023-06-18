@@ -12,7 +12,9 @@ community.consensus(
   consensus.method = c("highest_modularity", "iterative", "most_common", "lowest_tefi"),
   consensus.iter = 1000,
   correlation.matrix = NULL,
-  progress = TRUE
+  membership.only = TRUE,
+  verbose = TRUE,
+  ...
 )
 }
 \arguments{
@@ -78,9 +80,18 @@ Defaults to \code{1000}}
 Used for computation of \code{\link[EGAnet]{tefi}}.
 Only needed when \code{consensus.method = "tefi"}}
 
-\item{progress}{Boolean.
+\item{membership.only}{Boolean.
+Whether the memberships only should be output.
+Defaults to \code{TRUE}.
+Set to \code{FALSE} to obtain all output for the
+community detection algorithm}
+
+\item{verbose}{Boolean.
 Whether progress should be printed.
 Defaults to \code{TRUE}}
+
+\item{...}{Not actually used but makes it either for general functionality
+in the package}
 }
 \value{
 Returns a list containing...

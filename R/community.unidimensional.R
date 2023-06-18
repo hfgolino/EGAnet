@@ -39,6 +39,27 @@
 #' 
 #' }
 #' 
+#' @param model Character (length = 1).
+#' Available options:
+#' 
+#' \itemize{
+#' 
+#' \item{\code{"BGGM"}}
+#' {Computes the Bayesian Gaussian Graphical Model.
+#' Set argument \code{ordinal.categories} to determine
+#' levels allowed for a variable to be considered ordinal.
+#' See \code{\link[BGGM]{estimate}} for more details}
+#' 
+#' \item{\code{"glasso"}}
+#' {Computes the GLASSO with EBIC model selection.
+#' See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details}
+#' 
+#' \item{\code{"TMFG"}}
+#' {Computes the TMFG method.
+#' See \code{\link[EGAnet]{TMFG}} for more details}
+#' 
+#' }
+#' 
 #' @param uni.method Character (length = 1).
 #' Unidimensional method to apply to the data.
 #' Defaults to \code{"louvain"} based on recent evidence (Christensen, 2023).
@@ -90,18 +111,18 @@
 #' community.unidimensional(wmt, uni.method = "expand")
 #'
 #' @references
-#' # Expand approach
+#' \strong{Expand approach} \cr
 #' Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., Thiyagarajan, J. A., & Martinez-Molina, A. (2020).
 #' Investigating the performance of exploratory graph analysis and traditional techniques to identify the number of latent factors:
 #' A simulation and tutorial.
 #' \emph{Psychological Methods}, \emph{25}, 292-320. 
 #' 
-#' # Leading Eigenvalue approach
+#' \strong{Leading Eigenvalue approach} \cr
 #' Christensen, A. P., Garrido, L. E., Guerra-Pena, K., & Golino, H. (2023).
 #' Comparing community detection algorithms in psychometric networks: A Monte Carlo simulation.
 #' \emph{Behavior Research Methods}.
 #' 
-#' # Louvain approach
+#' \strong{Louvain approach} \cr
 #' Christensen, A. P. (2023).
 #' Unidimensional community detection: A Monte Carlo simulation, grid search, and comparison.
 #' \emph{PsyArXiv}.
@@ -109,31 +130,23 @@
 #' @export
 #'
 # Compute unidimensional approaches for EGA
-# Updated 13.06.2023
+# Updated 16.06.2023
 community.unidimensional <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
+    model = c("BGGM", "glasso", "TMFG"),
     uni.method = c("expand", "LE", "louvain"),
     verbose = FALSE,
     ...
 )
 {
   
-  # Missing arguments
-  ## Correlation method
-  if(missing(corr)){
-    corr <- "auto"
-  }else{corr <- tolower(match.arg(corr))}
-  ## Missing data method
-  if(missing(na.data)){
-    na.data <- "pairwise"
-  }else{na.data <- tolower(match.arg(na.data))}
-  ## Unidimensional method
-  if(missing(uni.method)){
-    uni.method <- "louvain"
-  }else{uni.method <- tolower(match.arg(uni.method))}
-  # Makes 'uni.method' *lowercase* for parsimonious handling later
+  # Check for missing arguments (argument, default, function)
+  corr <- set_default(corr, "auto", community.unidimensional)
+  na.data <- set_default(na.data, "pairwise", auto.correlate)  
+  model <- set_default(model, "glasso", network.estimation)
+  uni.method <- set_default(uni.method, "louvain", community.unidimensional)
   
   # Obtain ellipse arguments
   ellipse <- list(...)
@@ -163,14 +176,12 @@ community.unidimensional <- function(
     # Check for automatic correlations
     if(corr == "auto"){
       
-      # Add arguments to 'ellipse'
-      ellipse$corr <- "pearson"; ellipse$na.data <- na.data;
-      
       # Obtain arguments for `auto.correlate`
       auto_ARGS <- obtain_arguments(FUN = auto.correlate, FUN.args = ellipse)
       
-      # Supply data
+      # Supply data and correlation method
       auto_ARGS$data <- data
+      auto_ARGS$corr <- "pearson"
       
       # Obtain correlation matrix
       correlation_matrix <- do.call(
@@ -191,25 +202,34 @@ community.unidimensional <- function(
   if(uni.method == "expand"){
     
     # Perform "expand" approach
-    membership <- expand(correlation_matrix, n)
+    membership <- expand(
+      correlation_matrix, n, model,
+      verbose, ellipse
+    )
     
   }else if(uni.method == "le"){
     
     # Perform Leading Eigenvalue approach (pass arguments on)
     membership <- community.detection(
-      correlation_matrix,
-      algorithm = "leading_eigen",
-      ...
+      correlation_matrix, algorithm = "leading_eigen", ellipse
     )
     
   }else if(uni.method == "louvain"){
     
     # Perform Louvain with Consensus approach
     membership <- consensus_wrapper(
-      correlation_matrix, ellipse, verbose
+      correlation_matrix, verbose, ellipse
     )
     
   }
+  
+  # Add methods attribute
+  attr(membership, "methods") <- list(
+    corr = corr, model = model,
+    uni.method = uni.method
+  )
+  
+  # No S3 methods -- not intended for individual use
   
   # Return membership
   return(membership)
@@ -220,12 +240,13 @@ community.unidimensional <- function(
 # ## Basic input
 # data = wmt2[,7:24]; n = NULL;
 # corr = "auto"; na.data = "pairwise";
-# uni.method = "expand"; ellipse = list()
+# model = "glasso"; uni.method = "expand";
+# verbose = FALSE; ellipse = list()
 
 #' @noRd
 # "Expand" Correlation approach ----
 # Updated 13.06.2023
-expand <- function(correlation_matrix, n)
+expand <- function(correlation_matrix, n, model, verbose, ellipse)
 {
   
   # Number of variables
@@ -254,15 +275,25 @@ expand <- function(correlation_matrix, n)
     (variables + 1):new_total
   ] <- orthogonal_matrix
   
-  # Apply EBICglasso (original implementation)
-  network <- EBICglasso.qgraph(
-    data = expanded_matrix, n = n
-  )
+  # Obtain network estimation arguments
+  network_ARGS <- obtain_arguments(network.estimation, ellipse)
   
-  # Apply Walktrap algorithm
-  membership <- community.detection(
-    network = network, algorithm = "walktrap"
-  )
+  # Set data, n, and model
+  network_ARGS$data <- expanded_matrix
+  network_ARGS$n <- n
+  network_ARGS$model <- model
+  
+  # Apply network estimation method
+  network <- do.call(network.estimation, network_ARGS)
+  
+  # Obtain community detection arguments
+  community_ARGS <- obtain_arguments(community.detection, ellipse)
+  
+  # Set network
+  community_ARGS$network <- network
+
+  # Apply community detection algorithm
+  membership <- do.call(community.detection, community_ARGS)
   
   # Remove additional variables
   membership <- membership[seq_len(variables)]
@@ -277,8 +308,8 @@ expand <- function(correlation_matrix, n)
 
 #' @noRd
 # Wrapper for Louvain consensus ----
-# Updated 13.06.2023
-consensus_wrapper <- function(correlation_matrix, ellipse, verbose)
+# Updated 15.06.2023
+consensus_wrapper <- function(correlation_matrix, verbose, ellipse)
 {
   
   # Obtain arguments

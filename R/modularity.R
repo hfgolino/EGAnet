@@ -55,7 +55,7 @@
 #' @export
 #'
 # Modularity statistic
-# Updated 31.05.2023
+# Updated 17.06.2023
 modularity <- function(network, memberships, signed = FALSE)
 {
   
@@ -78,7 +78,7 @@ modularity <- function(network, memberships, signed = FALSE)
   }
   
   # Check for absolute
-  if(!isTRUE(signed)){
+  if(isFALSE(signed)){
     network <- abs(network)
   }
   

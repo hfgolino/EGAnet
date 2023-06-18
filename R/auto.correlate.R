@@ -85,6 +85,10 @@
 #' Whether messages should be printed.
 #' Defaults to \code{FALSE}
 #' 
+#' @param ...
+#' Not actually used but makes it either for general functionality
+#' in the package
+#' 
 #' @author Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'
 #' @examples
@@ -97,7 +101,7 @@
 #' @export
 #'
 # Automatic correlations ----
-# Updated 13.06.2023
+# Updated 15.06.2023
 auto.correlate <- function(
     data, # Matrix or data frame
     corr = c("kendall", "pearson", "spearman"), # allow changes to standard correlations
@@ -106,27 +110,16 @@ auto.correlate <- function(
     na.data = c("pairwise", "listwise"), # use available or complete values
     empty.method = c("none", "zero", "all"), # zero frequencies in categorical correlations
     empty.value = c("none", "point_five", "one_over"), # value to use in zero cells
-    verbose = FALSE # don't print messages
+    verbose = FALSE, # don't print messages
+    ... # not actually used
 )
 {
   
-  # Missing arguments
-  ## Standard correlation method
-  if(missing(corr)){
-    corr <- "pearson"
-  }else{corr <- tolower(match.arg(corr))}
-  ## Missing data
-  if(missing(na.data)){
-    na.data <- "pairwise"
-  }else{na.data <- tolower(match.arg(na.data))}
-  ## Empty cell method
-  if(missing(empty.method)){
-    empty.method <- "none"
-  }else{empty.method <- tolower(match.arg(empty.method))}
-  ## Empty cell value
-  if(missing(empty.value)){
-    empty.value <- "none"
-  }
+  # Check for missing arguments (argument, default, function)
+  corr <- set_default(corr, "pearson", auto.correlate)
+  na.data <- set_default(na.data, "pairwise", auto.correlate)
+  empty.method <- set_default(empty.method, "none", auto.correlate)
+  empty.value <- set_default(empty.value, "none", auto.correlate)
   
   # Convert to matrix
   data <- as.matrix(data)
@@ -199,7 +192,7 @@ auto.correlate <- function(
           continuous_variables, continuous_variables # ensure proper indexing
         ] <- cor(
           x = data[,continuous_variables],
-          use = na.data, method = method
+          use = na.data, method = corr
         )
         
       }
@@ -232,7 +225,7 @@ auto.correlate <- function(
       # Compute Pearson's correlations
       correlation_matrix <- cor(
         x = data, use = na.data,
-        method = method
+        method = corr
       )
       
     }
@@ -275,7 +268,7 @@ auto.correlate <- function(
 #   )
 # )$data;
 # ordinal.categories = 7;
-# method = "pearson"; forcePD = TRUE;
+# corr = "pearson"; forcePD = TRUE;
 # na.data = "pairwise"; empty.method = "none";
 # empty.value = "none"; verbose = FALSE;
 # 
@@ -306,7 +299,7 @@ auto.correlate <- function(
 #   c(0, 1, 2, 3, 4, 1, 2, 3, 1),
 #   c(0, 1, 2, 2, 1, 2, 2, 4, 2)
 # ); ordinal.categories = 7;
-# method = "pearson"; forcePD = TRUE;
+# corr = "pearson"; forcePD = TRUE;
 # na.data = "pairwise"; empty.method = "none";
 # empty.value = "none"; verbose = FALSE;
 #

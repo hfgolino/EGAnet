@@ -98,7 +98,7 @@
 #' @export
 #'
 # Computes optimal glasso network based on EBIC ----
-# Updated 12.06.2023
+# Updated 16.06.2023
 EBICglasso.qgraph <- function(
     data, # Sample covariance matrix
     n = NULL,
@@ -117,9 +117,9 @@ EBICglasso.qgraph <- function(
 {
   
   # Determine model selection
-  if(missing(model.selection)){
-    model.selection <- "ebic"
-  }else{model.selection <- tolower(match.arg(model.selection))}
+  model.selection <- set_default(
+    model.selection, "ebic", EBICglasso.qgraph
+  )
   
   # Codes originally implemented by Sacha Epskamp in his qgraph package version 1.4.4.
   # Selects optimal lambda based on EBIC for given covariance matrix.
@@ -236,6 +236,15 @@ EBICglasso.qgraph <- function(
   } else {
     optwi <- glas_path$wi[,,opt]
   }
+  
+  # Set methods in attributes
+  attr(net, "methods") <- list(
+    corr = "auto",
+    model.selection = model.selection,
+    lambda = lambda[opt], gamma = gamma,
+    lambda.min.ratio = lambda.min.ratio,
+    nlambda = nlambda
+  )
   
   # Return
   if(isTRUE(returnAllResults)){

@@ -99,18 +99,22 @@ na_correlations <- polychoric.matrix(
 
 }
 \references{
+\strong{Beasley-Moro-Springer algorithm} \cr
 Beasley, J. D., & Springer, S. G. (1977).
 Algorithm AS 111: The percentage points of the normal distribution.
 \emph{Journal of the Royal Statistical Society. Series C (Applied Statistics)}, \emph{26}(1), 118-121.
 
+\strong{Brent optimization} \cr
 Brent, R. P. (2013). 
 Algorithms for minimization without derivatives.
 Mineola, NY: Dover Publications, Inc.
 
+\strong{Drezner-Wesolosky bivariate normal approximation} \cr
 Drezner, Z., & Wesolowsky, G. O. (1990).
 On the computation of the bivariate normal integral.
 \emph{Journal of Statistical Computation and Simulation}, \emph{35}(1-2), 101-107.
 
+\strong{Beasley-Moro-Springer algorithm} \cr
 Moro, B. (1995).
 The full monte.
 \emph{Risk 8 (February)}, 57-58.

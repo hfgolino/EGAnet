@@ -120,14 +120,17 @@ TMFG(wmt2[,7:24], partial = TRUE)
 
 }
 \references{
+\strong{Local-Global Inversion Method} \cr
 Barfuss, W., Massara, G. P., Di Matteo, T., & Aste, T. (2016).
 Parsimonious modeling with information filtering networks.
 \emph{Physical Review E}, \emph{94}, 062306.
 
+\strong{Psychometric network introduction to TMFG} \cr
 Christensen, A. P., Kenett, Y. N., Aste, T., Silvia, P. J., & Kwapil, T. R. (2018).
 Network structure of the Wisconsin Schizotypy Scales-Short Forms: Examining psychometric network filtering approaches.
 \emph{Behavior Research Methods}, \emph{50}, 2531-2550.
 
+\strong{Triangulated Maximally Filtered Graph} \cr
 Massara, G. P., Di Matteo, T., & Aste, T. (2016).
 Network filtering for big data: Triangulated maximally filtered graph.
 \emph{Journal of Complex Networks}, \emph{5}, 161-178.
