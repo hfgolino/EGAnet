@@ -139,7 +139,7 @@ polychoric.matrix <- function(
   # Set up 'empty.method' and 'empty.value' for C
   if(empty.method == "none"){
     empty.method <- 0L # Set no value
-    empty.value <- 0L # Set no value
+    empty.value <- 0 # Set no value
   }else{
     
     # Set 'empty.method'
@@ -159,13 +159,8 @@ polychoric.matrix <- function(
     PACKAGE = "EGAnet"
   )
   
-  # Check for variable names
-  if(!is.null(colnames(data))){
-    
-    # Add names to rows and columns
-    colnames(correlations) <- row.names(correlations) <- colnames(data)
-    
-  }
+  # Transfer variable names
+  correlations <- transfer_names(data, correlations)
 
   # Return
   return(correlations)

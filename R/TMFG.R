@@ -119,7 +119,7 @@
 #'
 #' @export
 # TMFG Filtering Method----
-# Updated 16.06.2023
+# Updated 23.06.2023
 TMFG <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -130,65 +130,28 @@ TMFG <- function(
 )
 {
   
-  # Missing arguments
-  ## Correlation method
-  if(missing(corr)){
-    corr <- "auto"
-  }else{corr <- tolower(match.arg(corr))}
-  ## Missing data method
-  if(missing(na.data)){
-    na.data <- "pairwise"
-  }else{na.data <- tolower(match.arg(na.data))}
-  
-  # Obtain ellipse arguments
-  ellipse <- list(...)
-  
+  # Check for missing arguments (argument, default, function)
+  corr <- set_default(corr, "auto", TMFG)
+  na.data <- set_default(na.data, "pairwise", TMFG)
+
   # Make sure there are variable names
   data <- ensure_dimension_names(data)
   
-  # Check for whether data are data or correlation matrix
-  if(is_symmetric(data)){
-    
-    # Set data as correlation matrix
-    correlation_matrix <- data
-    
-  }else{ # Assume 'data' is data
-    
-    # Check for appropriate variables
-    data <- usable_data(data, verbose)
-    
-    # Check for automatic correlations
-    if(corr == "auto"){
-      
-      # Obtain arguments for `auto.correlate`
-      auto_ARGS <- obtain_arguments(FUN = auto.correlate, FUN.args = ellipse)
-      
-      # Supply data, corr, na.data, and verbose
-      auto_ARGS$data <- data
-      auto_ARGS$corr <- "pearson"
-      auto_ARGS$na.data <- na.data
-      auto_ARGS$verbose <- verbose
-      
-      # Obtain correlation matrix
-      correlation_matrix <- do.call(
-        what = auto.correlate,
-        args = auto_ARGS
-      )
-      
-    }else{
-      
-      # Obtain correlations using base R
-      correlation_matrix <- cor(data, use = na.data, method = corr)
-      
-    }
-    
-  }
+  # Generic function to get necessary inputs
+  output <- obtain_sample_correlations(
+    data = data, n = 1, # "n" is not used but input `1` to avoid error
+    corr = corr, na.data = na.data, 
+    verbose = verbose, ...
+  )
+  
+  # Get correlations
+  correlation_matrix <- output$correlation_matrix
   
   # Ensure that the correlation matrix *is* a matrix
   correlation_matrix <- as.matrix(correlation_matrix)
   
   # Obtain number of nodes
-  nodes <- ncol(correlation_matrix)
+  nodes <- dim(correlation_matrix)[2]
   
   # Set warning for fewer than 9 nodes
   if(nodes < 9 & isTRUE(verbose)){
@@ -230,14 +193,14 @@ TMFG <- function(
   
   # Initialize network (correlations to retain)
   network <- diag(1, nrow = nodes, ncol = nodes)
-  row.names(network) <- colnames(network) <- colnames(data)
   
   # Add nodes to network
   network[inserted[first_four], inserted[first_four]] <-
     correlation_matrix[inserted[first_four], inserted[first_four]]
   
   # Build gain table
-  gain <- matrix(-Inf, nrow = nodes, ncol = 2 * (nodes - 2))
+  gain_columns <- 2 * (nodes - 2)
+  gain <- matrix(-Inf, nrow = nodes, ncol = gain_columns)
   gain[remaining, 1] <- rowSums(absolute_matrix[remaining, triangles[1,]], na.rm = TRUE)
   gain[remaining, 2] <- rowSums(absolute_matrix[remaining, triangles[2,]], na.rm = TRUE)
   gain[remaining, 3] <- rowSums(absolute_matrix[remaining, triangles[3,]], na.rm = TRUE)
@@ -245,8 +208,8 @@ TMFG <- function(
   
   # Number of triangles
   triangle_count <- 4
-  gain_vertex <- numeric(ncol(gain))
-  gain_weight <- numeric(ncol(gain))
+  gain_vertex <- numeric(gain_columns)
+  gain_weight <- numeric(gain_columns)
   
   # Loop over remaining edges
   for(i in 5:nodes){
@@ -329,7 +292,6 @@ TMFG <- function(
     
     # Initialize partial correlation network 
     partial_network <- matrix(0, nrow = nodes, ncol = nodes)
-    row.names(partial_network) <- colnames(partial_network) <- colnames(network)
     
     # Loop over cliques and separators
     for(i in nrow_sequence(separators)){
@@ -352,9 +314,9 @@ TMFG <- function(
       
     }
     
-    # There is always one more clique than separate
+    # There is always one more clique than separator
     ## Obtain last clique
-    clique <- cliques[nrow(cliques),]
+    clique <- cliques[dim(cliques)[1],]
     
     ## Add last clique
     partial_network[clique, clique] <-
@@ -367,6 +329,9 @@ TMFG <- function(
     diag(network) <- 0
     
   }
+  
+  # Transfer variable names
+  network <- transfer_names(data, network)
   
   # Set methods attribute
   attr(network, "methods") <- list(
@@ -395,7 +360,7 @@ TMFG <- function(
 
 # Bug Checking ----
 # ## Basic input
-# data = wmt2[,7:24]; n = NULL;
-# corr = "auto"; na.data = "pairwise";
-# partial = FALSE; returnAllResults = FALSE;
-# verbose = FALSE; ellipse = list()
+# data = wmt2[,7:24]; n = NULL
+# corr = "auto"; na.data = "pairwise"
+# partial = FALSE; returnAllResults = FALSE
+# verbose = FALSE

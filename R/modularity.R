@@ -24,23 +24,20 @@
 #' # Load data
 #' wmt <- wmt2[,7:24]
 #' 
-#' # Estimate network
-#' network <- EBICglasso.qgraph(data = wmt)
-#' 
-#' # Estimate signed Louvain
-#' wc <- signed.louvain(network)$memberships[1,]
+#' # Estimate EGA
+#' ega.wmt <- EGA(wmt, model = "glasso")
 #' 
 #' # Compute standard (absolute values) modularity
 #' modularity(
-#'   network = network,
-#'   memberships = wc,
+#'   network = ega.wmt$network,
+#'   memberships = ega.wmt$wc,
 #'   signed = FALSE
 #' )
 #' 
 #' # Compute signed modularity
 #' modularity(
-#'   network = network,
-#'   memberships = wc,
+#'   network = ega.wmt$network,
+#'   memberships = ega.wmt$wc,
 #'   signed = TRUE
 #' )
 #' 
@@ -55,27 +52,39 @@
 #' @export
 #'
 # Modularity statistic
-# Updated 17.06.2023
+# Updated 23.06.2023
 modularity <- function(network, memberships, signed = FALSE)
 {
   
   # Ensure data is a matrix
   network <- as.matrix(network)
   
+  # Obtain dimensions
+  dimensions <- dim(network)
+  
+  # Ensure names
+  network <- ensure_dimension_names(network)
+  
   # Ensure memberships is a vector
   memberships <- force_vector(memberships)
   
+  # Membership length
+  membership_length <- length(memberships)
+  
   # Ensure membership length equals nodes
-  if(ncol(network) != length(memberships)){
+  if(dimensions[2] != membership_length){
     stop(
       paste0(
         "Number of nodes in the 'network' (`ncol` = ",
-        ncol(network),
+        dimensions[2],
         ") does not equal the number of nodes in the 'memberships' (`length` = ",
-        length(memberships), ")"
+        membership_length, ")"
       )
     )
   }
+  
+  # Apply network names to memberships
+  names(memberships) <- colnames(network)
   
   # Check for absolute
   if(isFALSE(signed)){
@@ -92,12 +101,8 @@ modularity <- function(network, memberships, signed = FALSE)
   # Check for any missing
   if(any(remove_nodes)){
     
-    # Check for node names
-    if(is.null(colnames(network))){
-      missing_nodes <- which(remove_nodes)
-    }else{
-      missing_nodes <- colnames(network)[remove_nodes]
-    }
+    # Set missing node names
+    missing_nodes <- colnames(network)[remove_nodes]
     
     # Push warning
     warning(

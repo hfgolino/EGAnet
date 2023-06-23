@@ -102,7 +102,7 @@
 #' # Compute Label Propagation
 #' community.detection(network, algorithm = "label_prop")
 #' 
-#' # Compute Leading Eigenvalue
+#' # Compute Leading Eigenvector
 #' community.detection(network, algorithm = "leading_eigen")
 #' 
 #' # Compute Louvain
@@ -112,7 +112,13 @@
 #' community.detection(network, algorithm = "optimal")
 #' 
 #' # Compute Signed Louvain
-#' community.detection(network, algorithm = "signed_louvain")
+#' community.detection(
+#'   network,
+#'   algorithm = "signed_louvain",
+#'   signed = TRUE
+#'   # needs to know the network *itself*
+#'   # should be signed
+#' )
 #' 
 #' # Compute Spinglass
 #' community.detection(network, algorithm = "spinglass")
@@ -132,7 +138,7 @@
 #' @export
 #'
 # Compute communities for EGA
-# Updated 16.06.2023
+# Updated 23.06.2023
 community.detection <- function(
     network, algorithm = c(
       "edge_betweenness", "fast_greedy",
@@ -185,11 +191,14 @@ community.detection <- function(
   # Check for names
   network_matrix <- ensure_dimension_names(network_matrix)
   
+  # Obtain network dimensions
+  dimensions <- dim(network_matrix)
+  
   # Obtain strength
   node_strength <- colSums(abs(network_matrix), na.rm = TRUE)
   
   # Initialize memberships as missing
-  membership <- rep(NA, length(node_strength))
+  membership <- rep(NA, dimensions[2])
   
   # Determine whether all nodes are disconnected
   if(all(node_strength == 0)){
@@ -287,7 +296,7 @@ community.detection <- function(
   }
   
   # Check singleton behavior
-  if(!isTRUE(allow.singleton)){
+  if(isFALSE(allow.singleton)){
     
     # Determine whether there are any singleton communities
     membership_frequency <- table(membership)
@@ -316,7 +325,7 @@ community.detection <- function(
   
   # Add methods to membership attributes
   attr(membership, "methods") <- list(
-    algorithm = algorithm, signed = signed
+    algorithm = obtain_algorithm_name(algorithm), signed = signed
   )
   
   # Check for whether all results should be returned
@@ -375,28 +384,11 @@ print.EGA.community <- function(x, ...)
   # Determine whether algorithm was a function
   if(!is.function(algorithm)){
     
-    # Set algorithm name
-    algorithm_name <- switch(
-      algorithm,
-      "edge_betweenness" = "Edge Betweenness",
-      "fast_greedy" = "Fast-greedy",
-      "fluid" = "Fluid",
-      "infomap" = "Infomap",
-      "label_prop" = "Label Propagation",
-      "leading_eigen" = "Leading Eigenvalue",
-      "leiden" = "Leiden",
-      "louvain" = "Louvain",
-      "optimal" = "Optimal",
-      "signed_louvain" = "Louvain",
-      "spinglass" = "Spinglass",
-      "walktrap" = "Walktrap"
-    )
-    
     # Check for signed
     algorithm_name <- ifelse(
       attr(membership, "methods")$signed,
-      paste("Signed", algorithm_name),
-      algorithm_name
+      paste("Signed", algorithm),
+      algorithm
     )
     
     # Set up methods
@@ -442,28 +434,11 @@ summary.EGA.community <- function(object, ...)
   # Determine whether algorithm was a function
   if(!is.function(algorithm)){
     
-    # Set algorithm name
-    algorithm_name <- switch(
-      algorithm,
-      "edge_betweenness" = "Edge Betweenness",
-      "fast_greedy" = "Fast-greedy",
-      "fluid" = "Fluid",
-      "infomap" = "Infomap",
-      "label_prop" = "Label Propagation",
-      "leading_eigen" = "Leading Eigenvalue",
-      "leiden" = "Leiden",
-      "louvain" = "Louvain",
-      "optimal" = "Optimal",
-      "signed_louvain" = "Louvain",
-      "spinglass" = "Spinglass",
-      "walktrap" = "Walktrap"
-    )
-    
     # Check for signed
     algorithm_name <- ifelse(
       attr(membership, "methods")$signed,
-      paste("Signed", algorithm_name),
-      algorithm_name
+      paste("Signed", algorithm),
+      algorithm
     )
     
     # Set up methods
@@ -484,6 +459,74 @@ summary.EGA.community <- function(object, ...)
   
   # Print membership
   print(membership)
+  
+}
+
+#' @noRd
+# Obtain appropriate algorithm name
+# Updated 22.06.2023
+obtain_algorithm_name <- function(algorithm)
+{
+  
+  # Set algorithm names (a hash table of sorts)
+  algorithm_names <- c(
+    # Directly from {igraph}'s `res$algorithm` output (for functions)
+    "edge betweenness" = "Edge Betweenness", "fast greedy" = "Fast-greedy",
+    "fluid communities" = "Fluid", "infomap" = "Infomap",
+    "label propagation" = "Label Propagation",
+    "leading eigenvector" = "Leading Eigenvector",
+    "leiden" = "Leiden", "multi level" = "Louvain",
+    "optimal" = "Optimal", "spinglass" = "Spinglass",
+    "walktrap" = "Walktrap",
+    # Algorithms with different characters from {EGAnet} (for characters)
+    "edge_betweenness" = "Edge Betweenness", "fast_greedy" = "Fast-greedy",
+    "fluid" = "Fluid", "label_prop" = "Label Propagation",
+    "leading_eigen" = "Leading Eigenvector", "louvain" = "Louvain",
+    "signed_louvain" = "Louvain"
+  )
+  
+  # Check for function
+  if(is.function(algorithm)){
+    
+    # Obtain function code
+    function_code <- capture.output(algorithm)
+    
+    # Determine whether algorithm is {igraph}
+    if(any(grepl("namespace:igraph", function_code))){
+      
+      # Proceed with identifying the algorithm
+      algorithm_line <- function_code[
+        grepl("res\\$algorithm", function_code)
+      ]
+      
+      # Everything between \" and \"
+      algorithm_name <- trimws(
+        unlist(
+          regmatches(
+            algorithm_line, 
+            gregexpr("(?<=\")[^\"]*(?=\")", algorithm_line, perl = TRUE)
+          )
+        )
+      )
+    
+    }else{
+      
+      # Return algorithm for what it is
+      ## Not expected to be used,
+      # will likely break `community.detection` function
+      return(algorithm)
+      
+    }
+    
+  }else if(is.character(algorithm)){
+    
+    # Set algorithm name as algorithm
+    algorithm_name <- algorithm
+    
+  }
+  
+  # Obtain name from hash table
+  return(unname(algorithm_names[algorithm_name]))
   
 }
 

@@ -101,7 +101,7 @@
 #' @export
 #'
 # Automatic correlations ----
-# Updated 15.06.2023
+# Updated 18.06.2023
 auto.correlate <- function(
     data, # Matrix or data frame
     corr = c("kendall", "pearson", "spearman"), # allow changes to standard correlations
@@ -126,6 +126,9 @@ auto.correlate <- function(
   
   # Set names
   data <- ensure_dimension_names(data)
+  
+  # Set dimensions
+  dimensions <- dim(data)
   
   # Assumes some preprocessing has taken place
   # to only select for appropriate variables
@@ -156,18 +159,16 @@ auto.correlate <- function(
       
       # Determine continuous variables
       continuous_variables <- setdiff(
-        1:ncol(data), categorical_variables
+        seq_len(dimensions[2]), categorical_variables
       )
       
       # Set up correlation matrix
       correlation_matrix <- matrix(
-        0, nrow = ncol(data),
-        ncol = ncol(data)
+        0, nrow = dimensions[2], ncol = dimensions[2]
       )
       
-      # Set names
-      colnames(correlation_matrix) <- colnames(data)
-      row.names(correlation_matrix) <- colnames(data)
+      # Transfer variable names
+      correlation_matrix <- transfer_names(data, correlation_matrix)
       
       # Determine whether there are more than one categorical variables
       if(categorical_number > 1){
@@ -198,7 +199,7 @@ auto.correlate <- function(
       }
       
       # Determine whether there are mixed variables
-      if(categorical_number != ncol(data)){ # Check for mixed variables
+      if(categorical_number != dimensions[2]){ # Check for mixed variables
         
         # Loop over categorical indices
         for(i in categorical_variables){
@@ -316,7 +317,7 @@ auto.correlate <- function(
 #' Uses two-step approximation from {polycor}'s \code{polyserial}
 #' 
 #' @noRd
-# Updated 09.06.2023
+# Updated 18.06.2023
 polyserial.vector <- function(
     categorical_variable, continuous_variables,
     na.data = c("pairwise", "listwise")
@@ -338,7 +339,7 @@ polyserial.vector <- function(
         combined_cases <- cbind(categorical_variable, x)
         
         # Remove cases and compute rows
-        nrow(na.omit(combined_cases))
+        dim(na.omit(combined_cases))[1]
         
       }
     )
@@ -350,7 +351,7 @@ polyserial.vector <- function(
     
     # Remove cases and compute rows
     categorical_cases <- rep(
-      nrow(na.omit(combined_cases)), ncol(continuous_variables)
+      dim(na.omit(combined_cases))[1], dim(continuous_variables)[2]
     )
     
   }
@@ -375,7 +376,7 @@ polyserial.vector <- function(
 
 # Compute thresholds ----
 #' @noRd
-# Updated 09.06.2023
+# Updated 18.06.2023
 obtain_thresholds <- function(categorical_variable)
 {
   
@@ -385,10 +386,13 @@ obtain_thresholds <- function(categorical_variable)
   # Obtain cumulative sums
   cumulative_sum <- cumsum(frequency)
   
+  # Obtain cumulative length
+  cumsum_length <- length(cumulative_sum)
+  
   # Obtain thresholds
   thresholds <- qnorm(
-    cumulative_sum[-length(cumulative_sum)] / 
-      cumulative_sum[length(cumulative_sum)]
+    cumulative_sum[-cumsum_length] / 
+      cumulative_sum[cumsum_length]
   )
   
   # Return thresholds

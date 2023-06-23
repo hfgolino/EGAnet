@@ -81,7 +81,7 @@ correlated 0.50 with each other and 0.00 to the empirical data
 (Golino et al., 2020)}
 
 \item{\code{"LE"}}
-{Applies the Leading Eigenvalue algorithm \code{\link[igraph]{cluster_leading_eigen}}
+{Applies the Leading Eigenvector algorithm \code{\link[igraph]{cluster_leading_eigen}}
 to the correlation matrix (Christensen et al., 2023)}
 
 \item{\code{"louvain"}}
@@ -111,7 +111,8 @@ the correlation matrix to have orthogonal correlations (\code{"expand"}),
 applying the Leading Eigenvalue community detection algorithm
 \code{\link[igraph]{cluster_leading_eigen}} to the correlation matrix
 (\code{"LE"}), and applying the Louvain community detection algorithm
-\code{\link[igraph]{cluster_louvain}} to the correlation matrix (\code{"louvain"})
+\code{\link[igraph]{cluster_louvain}} to the correlation matrix (\code{"louvain"}).
+Not necessarily intended for individual use -- it's better to use \code{\link[EGAnet]{EGA}}
 }
 \examples{
 # Load data
@@ -120,7 +121,7 @@ wmt <- wmt2[,7:24]
 # Louvain with Consensus Clustering (default)
 community.unidimensional(wmt)
 
-# Leading Eigenvalue
+# Leading Eigenvector
 community.unidimensional(wmt, uni.method = "LE")
 
 # Expand
@@ -134,7 +135,7 @@ Investigating the performance of exploratory graph analysis and traditional tech
 A simulation and tutorial.
 \emph{Psychological Methods}, \emph{25}, 292-320. 
 
-\strong{Leading Eigenvalue approach} \cr
+\strong{Leading Eigenvector approach} \cr
 Christensen, A. P., Garrido, L. E., Guerra-Pena, K., & Golino, H. (2023).
 Comparing community detection algorithms in psychometric networks: A Monte Carlo simulation.
 \emph{Behavior Research Methods}.

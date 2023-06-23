@@ -98,7 +98,7 @@
 #' @export
 #'
 # Computes optimal glasso network based on EBIC ----
-# Updated 16.06.2023
+# Updated 22.06.2023
 EBICglasso.qgraph <- function(
     data, # Sample covariance matrix
     n = NULL,
@@ -121,30 +121,21 @@ EBICglasso.qgraph <- function(
     model.selection, "ebic", EBICglasso.qgraph
   )
   
+  # Obtain dimensions
+  dimensions <- dim(data)
+  
   # Codes originally implemented by Sacha Epskamp in his qgraph package version 1.4.4.
   # Selects optimal lambda based on EBIC for given covariance matrix.
   # EBIC is computed as in Foygel, R., & Drton, M. (2010, November). Extended Bayesian Information Criteria for Gaussian Graphical Models. In NIPS (pp. 604-612). Chicago
   
-  # Check for whether data are data or correlation matrix
-  if(is_symmetric(data)){
-    
-    # Check for sample size
-    if(is.null(n)){
-      stop("A symmetric matrix was provided in the 'data' argument but the sample size argument, 'n', was not set. Please input the sample size into the 'n' argument.")
-    }
-    
-    # Set correlation matrix
-    S <- data
-    
-  }else{ # Assume 'data' is data
-    
-    # Set correlation matrix
-    S <- auto.correlate(data)
-    
-    # Obtain sample size
-    n <- nrow(data)
-    
-  }
+  # Generic function to get necessary inputs
+  output <- obtain_sample_correlations(
+    data = data, n = n, corr = "auto", 
+    na.data = "pairwise", verbose = verbose, ...
+  )
+  
+  # Get correlations and sample size
+  S <- output$correlation_matrix; n <- output$n
   
   # # Compute lambda sequence (code taken from huge package):
   # lambda.max <- max(max(S - diag(nrow(S))), -min(S - diag(nrow(S))))
@@ -152,7 +143,7 @@ EBICglasso.qgraph <- function(
   # lambda <- exp(seq(log(lambda.min), log(lambda.max), length = nlambda))
   
   # Simplify source for fewer computations (minimal improvement)
-  S_zero_diagonal <- S - diag(nrow(S)) # makes diagonal zero
+  S_zero_diagonal <- S - diag(dimensions[2]) # makes diagonal zero
   lambda.max <- max(abs(S_zero_diagonal)) # uses absolute rather than inverse
   lambda.min <- lambda.min.ratio * lambda.max
   lambda <- exp(seq(log(lambda.min), log(lambda.max), length = nlambda))
@@ -162,15 +153,18 @@ EBICglasso.qgraph <- function(
     glas_path <- glasso::glassopath(S, lambda, trace = 0, penalize.diagonal = penalize.diagonal, ...)
   }else{
     
+    # Set up array dimenions
+    new_array <- array(0, c(dimensions[2], dimensions[2], nlambda))
+    
     # Initialize path to be similar to `glassopath` output
     glas_path <- list(
-      w = array(0, c(ncol(S), ncol(S), length(lambda))),
-      wi = array(0, c(ncol(S), ncol(S), length(lambda))),
+      w = new_array,
+      wi = new_array,
       rholist = lambda
     )
     
     # Loop over lambdas
-    for (i in 1:nlambda){
+    for (i in seq_len(nlambda)){
       res <- glasso::glasso(S, penalizeMatrix * lambda[i], trace = 0, penalize.diagonal = penalize.diagonal, ...)
       glas_path$w[,,i] <- res$w
       glas_path$wi[,,i] <- res$wi
@@ -182,14 +176,22 @@ EBICglasso.qgraph <- function(
   if(model.selection == "ebic"){
     
     # Log-likelihood
-    lik <- sapply(seq_along(lambda),function(i){
+    lik <- sapply(seq_len(nlambda),function(i){
       logGaus(S, glas_path$wi[,,i], n)
     })
     
-    # EBIC
-    EBICs <- sapply(seq_along(lambda),function(i){
-      EBIC(S, glas_path$wi[,,i], n, gamma, countDiagonal = countDiagonal)
+    # Compute edges
+    E <- sapply(seq_len(nlambda), function(i){
+      edge_count(glas_path$wi[,,i], dimensions[2], countDiagonal)
     })
+
+    # EBIC (vectorized solution; ~9x faster)
+    EBICs <- -2 * lik + E * log(n) + 4 * E * gamma * log(dimensions[2])
+    
+    # Maintained for legacy (replaced by vectorization above)
+    # EBICs <- sapply(seq_along(lambda),function(i){
+    #   EBIC(S, glas_path$wi[,,i], n, gamma, countDiagonal = countDiagonal)
+    # })
     
     # Optimal
     opt <- which.min(EBICs)
@@ -217,7 +219,7 @@ EBICglasso.qgraph <- function(
   
   # Return network:
   net <- wi2net(glas_path$wi[,,opt])
-  colnames(net) <- rownames(net) <- colnames(S)
+  net <- transfer_names(S, net)
   
   # Check empty network:
   if(all(net == 0) & isTRUE(verbose)){
@@ -231,7 +233,7 @@ EBICglasso.qgraph <- function(
     }
     glassoRes <- silent_call(glasso::glasso(S, 0, zero = which(net == 0 & upper.tri(net), arr.ind=TRUE), trace = 0, penalize.diagonal=penalize.diagonal, ...))
     net <- wi2net(glassoRes$wi)
-    colnames(net) <- rownames(net) <- colnames(S)
+    net <- transfer_names(S, net)
     optwi <- glassoRes$wi
   } else {
     optwi <- glas_path$wi[,,opt]
@@ -243,7 +245,9 @@ EBICglasso.qgraph <- function(
     model.selection = model.selection,
     lambda = lambda[opt], gamma = gamma,
     lambda.min.ratio = lambda.min.ratio,
-    nlambda = nlambda
+    nlambda = nlambda, criterion = ifelse(
+      model.selection == "ebic", EBICs[opt], JSDs[opt]
+    )
   )
   
   # Return
@@ -282,6 +286,7 @@ EBICglasso.qgraph <- function(
 # model.selection = "ebic"
 
 #' @noRd
+# Log-likelihood ----
 # According to huge??? : source comment
 # Updated 10.06.2023
 logGaus <- function(S, K, n)
@@ -305,9 +310,10 @@ logGaus <- function(S, K, n)
 }
 
 #' @noRd
-# Extended Bayesian Information Criterion
-# Updated 12.06.2023
-EBIC <- function(S, K, n, gamma = 0.5, E, countDiagonal = FALSE)
+# Extended Bayesian Information Criterion ----
+# Here for legacy (vectorization applied in function)
+# Updated 18.06.2023
+EBIC <- function(S, K, n, p, gamma = 0.5, E, countDiagonal = FALSE)
 {
   
   # Obtain likelihood
@@ -317,7 +323,7 @@ EBIC <- function(S, K, n, gamma = 0.5, E, countDiagonal = FALSE)
   ## Computes edges and avoids check 
   E <- sum(K[lower.tri(K, diag = countDiagonal)] != 0)
   
-  # Number of variables
+  # Number of nodes
   p <- ncol(K)
   
   # Return EBIC
@@ -328,7 +334,7 @@ EBIC <- function(S, K, n, gamma = 0.5, E, countDiagonal = FALSE)
 }
 
 #' @noRd
-# Converts covariance to correlation matrix
+# Converts covariance to correlation matrix ----
 # Updated 10.06.2023
 wi2net <- function(x)
 {

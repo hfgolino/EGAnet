@@ -41,7 +41,7 @@
 #' @export
 #'
 # Signed Louvain communities
-# Updated 15.06.2023
+# Updated 23.06.2023
 signed.louvain <- function(network)
 {
   
@@ -52,18 +52,21 @@ signed.louvain <- function(network)
   output <- .Call(
     "r_signed_louvain", network, PACKAGE = "EGAnet"
   )
+  
+  # Get dimensions of memberships
+  dimensions <- dim(output$memberships)
 
   # Check for variable names
   if(!is.null(colnames(network))){
     
     # Add names to output
     colnames(output$memberships) <- colnames(network)
-    names(output$modularity) <- nrow_sequence(output$memberships)
+    names(output$modularity) <- seq_len(dimensions[1])
     
   }
   
   # Add highest level
-  output$membership <- output$memberships[nrow(output$memberships),]
+  output$membership <- output$memberships[dimensions[1],]
   
   # Reorder output
   output <- output[c("membership", "memberships", "modularity")]

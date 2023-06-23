@@ -121,7 +121,7 @@
 #' @export
 #'
 # Compute networks for EGA
-# Updated 16.06.2023
+# Updated 23.06.2023
 network.estimation <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -144,29 +144,24 @@ network.estimation <- function(
   # Make sure there are variable names
   data <- ensure_dimension_names(data)
   
-  # Check for whether data are data or correlation matrix
-  if(is_symmetric(data)){
+  # First, compute correlation if necessary
+  if(model != "bggm"){
     
-    # Check for sample size
-    if(is.null(n)){
-      stop("A symmetric matrix was provided in the 'data' argument but the sample size argument, 'n', was not set. Please input the sample size into the 'n' argument.")
-    }
+    # Generic function to get necessary inputs
+    output <- obtain_sample_correlations(
+      data = data, n = n, corr = corr, 
+      na.data = na.data, verbose = verbose, ...
+    )
+    
+    # Get correlations and sample size
+    correlation_matrix <- output$correlation_matrix; n <- output$n
+    
+  }else if(model == "bggm" & is_symmetric(data)){
     
     # Check for 'BGGM' network estimation (can't be correlation matrix)
     if(model == "bggm"){
       stop("A symmetric matrix was provided in the 'data' argument. 'method = \"BGGM\"' is not compatiable with a correlation matrix. Please use the original data instead")
     }
-    
-    # Set data as correlation matrix
-    correlation_matrix <- data
-    
-  }else{ # Assume 'data' is data
-    
-    # Check for appropriate variables
-    data <- usable_data(data, verbose)
-    
-    # Obtain sample size
-    n <- nrow(data)
     
   }
   
@@ -217,28 +212,6 @@ network.estimation <- function(
     
   }else{ # Non-BGGM methods
     
-    # Check for whether `correlation_matrix` exists
-    if(!exists("correlation_matrix")){
-      
-      # Check for automatic correlations
-      if(corr == "auto"){
-        
-        # Obtain correlation matrix
-        correlation_matrix <- auto.correlate(
-          data = data, corr = "pearson",
-          na.data = na.data, verbose = verbose,
-          ...
-        )
-        
-      }else{
-        
-        # Obtain correlations using base R
-        correlation_matrix <- cor(data, use = na.data, method = corr)
-        
-      }
-      
-    }
-    
     # Obtain estimation method function
     estimation_FUN <- switch(
       model,
@@ -276,9 +249,8 @@ network.estimation <- function(
     
   }
   
-  # At the end, ensure network is named
-  colnames(estimated_network) <- colnames(data)
-  row.names(estimated_network) <- colnames(data)
+  # Transfer variable names
+  estimated_network <- transfer_names(data, estimated_network)
   
   # Add class
   class(estimated_network) <- "EGA.network"
@@ -286,13 +258,9 @@ network.estimation <- function(
   # Add methods attribute for BGGM
   ## Methods for GLASSO and TMFG are already there
   if(model == "bggm"){
-    attr(estimated_network, "methods") <- list(
-      type = bggm_estimate_ARGS$type,
-      analytic = bggm_estimate_ARGS$analytic,
-      prior_sd = bggm_estimate_ARGS$prior_sd,
-      iter = bggm_estimate_ARGS$iter,
-      cred = bggm_select_ARGS$cred,
-      alternative = bggm_select_ARGS$alternative
+    attr(estimated_network, "methods") <- c(
+      bggm_estimate_ARGS[c("type", "analytic", "prior_sd", "iter")],
+      bggm_select_ARGS[c("cred", "alternative")]
     )
   }
   
@@ -310,8 +278,10 @@ network.estimation <- function(
       # Set up results
       results <- list(
         estimated_network = estimated_network,
-        bggm_estimate = bggm_output,
-        bggm_select = bggm_select
+        output = list(
+          bggm_estimate = bggm_output,
+          bggm_select = bggm_select
+        )
       )
       
     }else{
@@ -333,7 +303,7 @@ network.estimation <- function(
 
 # Bug Checking ----
 ## Basic input
-# data = wmt2; n = NULL;
+# data = wmt2[,7:24]; n = NULL;
 # corr = "auto"; model = "glasso";
 # na.data = "pairwise"; network.only = TRUE;
 # verbose = FALSE; ellipse = list();
@@ -544,7 +514,7 @@ summary.EGA.network <- function(object, ...)
 
 #' @exportS3Method 
 # S3 Plot Method ----
-# Updated 15.06.2023
+# Updated 22.06.2023
 plot.EGA.network <- function(x, ...)
 {
   
@@ -556,13 +526,13 @@ plot.EGA.network <- function(x, ...)
   }
   
   # Return plot
-  basic_plot_setup(network = network, ...)
+  single_plot(network = network, wc = rep(NA, dim(network)[2]), ...)
   
 }
 
 # Function to find 'type' argument for `BGGM` ----
 #' @noRd
-# Updated 09.06.2023
+# Updated 23.06.2023
 find_BGGM_type <- function(data, ellipse)
 {
   
@@ -592,14 +562,19 @@ find_BGGM_type <- function(data, ellipse)
     }else if(all(categories >= 2) & all(categories <= ellipse$ordinal.categories)){
       type <- "mixed"
     }else{ # not handled... :(
+      
+      # Get range
+      category_range <- range(categories)
+      
+      # Send error
       stop(
         paste0(
           "The `BGGM::estimate` function cannot handle mixed continuous and ordinal data (see documentation `?BGGM::estimate`). ",
           "The range of categories detected in 'data' was between ",
-          paste0(range(categories), collapse = " and "), ". \n\n",
+          paste0(category_range, collapse = " and "), ". \n\n",
           "If you believe this error is a mistake, add the argument 'ordinal.categories' and ",
-          "set the argument to either `", min(categories) - 1, "` to treat all variables as ",
-          "continuous or `", max(categories), "` to treat all variables as ordinal"
+          "set the argument to either `", category_range[1] - 1, "` to treat all variables as ",
+          "continuous or `", category_range[2], "` to treat all variables as ordinal"
         )
       )
     }

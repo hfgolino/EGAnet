@@ -117,7 +117,7 @@ community.detection(network, algorithm = "infomap")
 # Compute Label Propagation
 community.detection(network, algorithm = "label_prop")
 
-# Compute Leading Eigenvalue
+# Compute Leading Eigenvector
 community.detection(network, algorithm = "leading_eigen")
 
 # Compute Louvain
@@ -127,7 +127,13 @@ community.detection(network, algorithm = "louvain")
 community.detection(network, algorithm = "optimal")
 
 # Compute Signed Louvain
-community.detection(network, algorithm = "signed_louvain")
+community.detection(
+  network,
+  algorithm = "signed_louvain",
+  signed = TRUE
+  # needs to know the network *itself*
+  # should be signed
+)
 
 # Compute Spinglass
 community.detection(network, algorithm = "spinglass")

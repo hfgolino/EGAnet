@@ -7,7 +7,6 @@
 \alias{plot.dynEGA}
 \alias{plot.dynEGA.Groups}
 \alias{plot.dynEGA.Individuals}
-\alias{plot.EGA}
 \title{S3Methods for Plotting}
 \usage{
 \method{plot}{bootEGA}(x, title = "",
@@ -23,9 +22,6 @@ plot.args = list(), produce = TRUE, ...)
 
 \method{plot}{dynEGA.Individuals}(x, title = "",  id = NULL,
 plot.args = list(), produce = TRUE, ...)
-
-\method{plot}{EGA}(x, title = "",
-plot.args = list(), produce = TRUE,  ...)
 }
 \arguments{
 \item{x}{Object from \code{EGAnet} package}

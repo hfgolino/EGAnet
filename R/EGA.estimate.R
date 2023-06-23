@@ -145,8 +145,8 @@
 #'
 #' @export
 #'
-# Estimates multidimensional EGA only (no plots)
-# Updated 15.06.2023
+# Estimates multidimensional EGA only (no automatic plots)
+# Updated 23.06.2023
 EGA.estimate <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -159,8 +159,6 @@ EGA.estimate <- function(
 {
   
   # Check for missing arguments (argument, default, function)
-  # Uses actual function they will be used in
-  # (keeping non-function choices for `cor_auto`)
   corr <- set_default(corr, "auto", c("auto", "cor_auto", "pearson", "spearman"))
   corr <- ifelse(corr == "cor_auto", "auto", corr) # deprecate `cor_auto`
   na.data <- set_default(na.data, "pairwise", auto.correlate)
@@ -184,33 +182,14 @@ EGA.estimate <- function(
   # First, compute correlation if necessary
   if(model != "bggm"){
     
-    # Check if data is a correlation matrix
-    if(!is_symmetric(data)){
-      
-      # Check for appropriate variables
-      data <- usable_data(data, verbose)
-      
-      # Obtain sample size
-      n <- nrow(data)
-      
-      # Check for automatic correlations
-      if(corr == "auto"){
-        
-        # Compute correlations
-        data <- auto.correlate(
-          data = data, corr = "pearson",
-          na.data = na.data, verbose = verbose,
-          ...
-        )
-        
-      }else{
-        
-        # Obtain correlations using base R
-        data <- cor(data, use = na.data, method = corr)
-        
-      }
-      
-    }
+    # Generic function to get necessary inputs
+    output <- obtain_sample_correlations(
+      data = data, n = n, corr = corr, 
+      na.data = na.data, verbose = verbose, ...
+    )
+    
+    # Get correlations and sample size
+    data <- output$correlation_matrix; n <- output$n
     
   }
   
@@ -271,15 +250,13 @@ EGA.estimate <- function(
     # Check for consensus method
     consensus.method <- ifelse(
       "consensus.method" %in% names(ellipse),
-      ellipse$consensus.method,
-      "most_common"
+      ellipse$consensus.method, "most_common" # default
     )
     
     # Check for consensus iterations
     consensus.iter <- ifelse(
       "consensus.iter" %in% names(ellipse),
-      ellipse$consensus.iter,
-      1000
+      ellipse$consensus.iter, 1000 # default
     )
     
     # Check for sign
@@ -291,23 +268,26 @@ EGA.estimate <- function(
       consensus.method = consensus.method,
       consensus.iter = consensus.iter,
       membership.only = TRUE,
-      progress = verbose,
+      verbose = verbose,
       ...
     )
     
   }
   
-
   # Set up results
   results <- list(
-    estimated.network = network, wc = wc,
+    network = network, wc = wc,
     n.dim = length(na.omit(unique(wc)))
   )
   
   # Check for correlation matrix
   if(model != "bggm"){
     results$cor.data = data # was made to be correlation matrix earlier
+    results$n = n # return sample size for `EGA`
   }
+  
+  # Set class (attributes are stored in `network` and `wc`)
+  class(results) <- "EGA.estimate"
   
   # Return results
   return(results)
@@ -320,6 +300,56 @@ EGA.estimate <- function(
 # corr = "auto"; na.data = "pairwise"
 # model = "glasso"; algorithm = igraph::cluster_spinglass
 # verbose = FALSE; ellipse = list()
+
+#' @exportS3Method 
+# S3 Print Method ----
+# Updated 22.06.2023
+print.EGA.estimate <- function(x, ...)
+{
+  
+  # Print network estimation
+  print(x$network)
+  
+  # Add break space
+  cat("\n----\n\n")
+  
+  # Print community detection
+  print(x$wc)
+  
+}
+
+#' @exportS3Method 
+# S3 Summary Method ----
+# Updated 22.06.2023
+summary.EGA.estimate <- function(object, ...)
+{
+  
+  # Print network estimation
+  summary(object$network)
+  
+  # Add break space
+  cat("\n----\n\n")
+  
+  # Print community detection
+  summary(object$wc)
+  
+  
+}
+
+#' @exportS3Method 
+# S3 Plot Method ----
+# Updated 22.06.2023
+plot.EGA.estimate <- function(x, ...)
+{
+  
+  # Return plot
+  single_plot(
+    network = x$network,
+    wc = x$wc,
+    ...
+  )
+  
+}
 
 #' @noRd
 # Wrapper for GLASSO ----
@@ -363,9 +393,9 @@ glasso_wrapper <- function(
     
     # Check for disconnected nodes
     if(any(node_strength == 0) & gamma != 0){
-      gamma <- gamma - 0.25 # decreased gamma
+      gamma <- gamma - 0.25 # decrease gamma
     }else{
-      break # all nodes are connected
+      break # all nodes are connected or gamma equals zero
     }
     
   }

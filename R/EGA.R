@@ -289,281 +289,325 @@
 #' @importFrom stats cor rnorm runif na.omit
 #'
 #' @export
-#'
-# Updated 31.01.2023
-# Louvain unidimensionality 27.07.2022
-# Consensus clustering 13.05.2022
-# LE adjustment 08.03.2021
+# Main EGA function
+# Updated 23.06.2023
 EGA <- function (
     data, n = NULL,
-    corr = c("cor_auto", "pearson", "spearman"),
+    corr = c("auto", "pearson", "spearman"),
+    na.data = c("pairwise", "listwise"),
+    model = c("BGGM", "glasso", "TMFG"),  
+    algorithm = c("leiden", "louvain", "walktrap"),
     uni.method = c("expand", "LE", "louvain"),
-    model = c("glasso", "TMFG"), model.args = list(),
-    algorithm = c("walktrap", "leiden", "louvain"), algorithm.args = list(),
-    consensus.method = c(
-      "highest_modularity",
-      "most_common",
-      "iterative",
-      "lowest_tefi",
-      "most_common_tefi"
-    ), consensus.iter = 100, 
-    plot.EGA = TRUE, plot.args = list(),
+    plot.EGA = TRUE, verbose = FALSE,
     ...
 )
 {
 
-  # Get additional arguments
-  add.args <- list(...)
-
-  # Check if steps has been input as an argument
-  if("steps" %in% names(add.args)){
-
-    # Give deprecation warning
-    warning(
-      paste(
-        "\nThe 'steps' argument has been deprecated in all EGA functions.\n\nInstead use: algorithm.args = list(steps = ", add.args$steps, ")\n",
-        sep = ""
-      )
-    )
-
-    # Handle the number of steps appropriately
-    algorithm.args$steps <- add.args$steps
-  }
+  # Check for missing arguments (argument, default, function)
+  # Uses actual function they will be used in
+  # (keeping non-function choices for `cor_auto`)
+  corr <- set_default(corr, "auto", c("auto", "cor_auto", "pearson", "spearman"))
+  corr <- ifelse(corr == "cor_auto", "auto", corr) # deprecate `cor_auto`
+  na.data <- set_default(na.data, "pairwise", auto.correlate)
+  model <- set_default(model, "glasso", network.estimation)
+  algorithm <- set_default(algorithm, "walktrap", community.detection)
+  uni.method <- set_default(uni.method, "louvain", community.unidimensional)
   
-  # Check if uni has been input as an argument
-  if("uni" %in% names(add.args)){
-    
-    # Give deprecation warning
-    warning(
-      "\nThe 'uni' argument has been deprecated in all EGA functions.\n"
-    )
-  }
-
-  #### ARGUMENTS HANDLING
+  # Ensure data has names
+  data <- ensure_dimension_names(data)
   
-  # if(missing(uni.method)){
-  #   uni.method <- "LE"
-  # }else{uni.method <- match.arg(uni.method)}
-  # 
-  # # Check if uni.method = "LE" has been used
-  # if(uni.method == "LE"){
-  #   # Give change warning
-  #   warning(
-  #     call. = FALSE,
-  #     paste(
-  #       "Previous versions of EGAnet (<= 0.9.8) checked unidimensionality using",
-  #       styletext('uni.method = "expand"', defaults = "underline"),
-  #       "as the default"
-  #     )
-  #   )
-  # }else if(uni.method == "expand"){
-  #   # Give change warning
-  #   warning(
-  #     call. = FALSE,
-  #     paste(
-  #       "Newer evidence suggests that",
-  #       styletext('uni.method = "LE"', defaults = "underline"),
-  #       'is more accurate than uni.method = "expand" (see Christensen, Garrido, & Golino, 2021 in references).',
-  #       '\n\nIt\'s recommended to use uni.method = "LE"'
-  #     )
-  #   )
-  # }
-  
-  if(missing(corr)){
-    corr <- "cor_auto"
-  }else{corr <- tolower(match.arg(corr))}
-  
-  if(missing(uni.method)){
-    uni.method <- "louvain"
-  }else{uni.method <- tolower(match.arg(uni.method))}
-
-  if(missing(model)){
-    model <- "glasso"
-  }else{model <- match.arg(model)}
-
-  if(missing(algorithm)){
-    algorithm <- "walktrap"
-  }else if(!is.function(algorithm)){
-    algorithm <- tolower(match.arg(algorithm))
-  }
-  
-  if(!is.function(algorithm)){
-    if(algorithm == "leiden"){
-      algorithm.args <- list(objective_function = "modularity")
-    }
-  }
-  
-  if(missing(consensus.method)){
-    consensus.method <- "most_common_tefi"
-  }else{consensus.method <- tolower(match.arg(consensus.method))}
-  
-  # Check for correlation matrix or data
-  if(isSymmetric(unname(as.matrix(data)))){ ## Correlation matrix
-
-    # Check for column names
-    if(is.null(colnames(data))){
-      colnames(data) <- paste("V", 1:ncol(data), sep = "")
-    }
-    
-    # Force row names to be column names
-    row.names(data) <- colnames(data)
-
-    # Check for number of cases
-    if(missing(n)){
-      stop("There is no input for argument 'n'. Number of cases must be input when the matrix is square.")
-    }
-    
-    # Set correlations as data
-    correlation <- data
-    
-  }else{ # Data
-
-    # Check for column names
-    if(is.null(colnames(data))){
-      colnames(data) <- paste("V", 1:ncol(data), sep = "")
-    }
-
-    # Get number of cases
-    n <- nrow(data)
-    
-    # Compute correlation matrix
-    correlation <- suppressMessages(
-      switch(corr,
-             "cor_auto" = auto.correlate(data),
-             "pearson" = cor(data, use = "pairwise.complete.obs"),
-             "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
-      )
-    )
-
-  }
-  
-  # Unidimensional result
-  uni.res <- try(
-    unidimensionality.check(
-      data = data, n = n, corr = corr,
-      correlation = correlation, 
-      uni.method = uni.method,
-      model = model, model.args = model.args,
-      algorithm = algorithm, algorithm.args = algorithm.args,
-      consensus.method = consensus.method, consensus.iter = consensus.iter
-    ),
-    silent = TRUE
+  # First, obtain the multidimensional result
+  ## Proper correlations are automatically computed in `EGA.estimate`
+  ## Network estimation settings can be passed to unidimensional result
+  multidimensional_result <- EGA.estimate(
+    data = data, n = n, corr = corr, na.data = na.data,
+    model = model, algorithm = algorithm,
+    verbose = verbose, ...
   )
   
-  # Error check
-  if(any(class(uni.res) == "try-error")){
-    return(
-      error.report(
-        result = uni.res,
-        SUB_FUN = "unidimensionality.check",
-        FUN = "EGA"
-      )
-    )
-  }
-
-  # Multidimensional result
-  multi.res <- try(
-    EGA.estimate(
-      data = correlation, n = n, corr = corr,
-      model = model, model.args = model.args,
-      algorithm = algorithm, algorithm.args = algorithm.args,
-      consensus.method = consensus.method, consensus.iter = consensus.iter
-      , ... # used for "lower.louvain"
+  # Store model attributes
+  model_attributes <- attr(multidimensional_result$network, "methods")
+  
+  # Obtain arguments for model
+  model_ARGS <- switch(
+    model_attributes$model,
+    "bggm" = c(
+      obtain_arguments(BGGM::estimate, model_attributes),
+      obtain_arguments(BGGM:::select.estimate, model_attributes)
     ),
-    silent = TRUE
+    "glasso" = obtain_arguments(EBICglasso.qgraph, model_attributes),
+    "tmfg" = obtain_arguments(TMFG, model_attributes)
   )
   
-  # Error check
-  if(any(class(multi.res) == "try-error")){
-    return(
-      error.report(
-        result = multi.res,
-        SUB_FUN = "EGA.estimate",
-        FUN = "EGA"
-      )
-    )
+  # Make adjustments for each model (removes extraneous arguments)
+  model_ARGS <- adjust_model_arguments(model_ARGS)
+  
+  # Set up arguments for unidimensional
+  unidimensional_ARGS <- list( # standard arguments
+    data = data, n = n, corr = corr, na.data = na.data,
+    model = model, uni.method = uni.method,
+    verbose = verbose
+  )
+  
+  # `data` at this point will be data or correlation matrix
+  # For non-BGGM network estimation, OK to use correlation matrix
+  if(model_attributes$model != "bggm"){
+    unidimensional_ARGS$data <- multidimensional_result$cor.data
+    unidimensional_ARGS$n <- multidimensional_result$n
   }
   
-  # Set up results
-  if(uni.method == "expand"){
-    
-    if(uni.res$n.dim <= 2){ # Unidimensional 
-      
-      # Set results
-      multi.res$wc <- uni.res$wc[!grepl("SIM", names(uni.res$wc))]
-      multi.res$n.dim <- length(na.omit(unique(multi.res$wc)))
-      
-    }else if(multi.res$n.dim == 0){ # No dimensions
-      
-      # Set results
-      multi.res$n.dim <- NA
-      
-    }
-    
-  }else{
-    
-    if(uni.res$n.dim == 1){ # Unidimensional 
-      
-      # Set results
-      multi.res$wc <- uni.res$wc[!grepl("SIM", names(uni.res$wc))]
-      multi.res$n.dim <- uni.res$n.dim
-      
-    }else if(multi.res$n.dim == 0){ # No dimensions
-      
-      # Set results
-      multi.res$n.dim <- NA
-      
-    }
-    
+  # Additional arguments for model
+  unidimensional_ARGS <- c(unidimensional_ARGS, model_ARGS)
+  
+  # Third, obtain the unidimensional result
+  unidimensional_result <- do.call(
+    what = community.unidimensional,
+    args = unidimensional_ARGS
+  )
+  
+  # Unidimensional?
+  unidimensional <- length(na.omit(unique(unidimensional_result))) == 1
+  
+  # Determine result
+  if(unidimensional){
+    multidimensional_result$wc <- unidimensional_result
   }
-
-  # Create dimension--variables output
+  
+  # Obtain number of dimensions
+  multidimensional_result$n.dim <- 
+    length(na.omit(unique(multidimensional_result$wc)))
+  
+  # Set up dimension variables data frame
+  ## Mainly for legacy, redundant with named `wc` output
   dim.variables <- data.frame(
     items = colnames(data),
-    dimension = multi.res$wc
+    dimension = as.vector(multidimensional_result$wc)
   )
-  # Reorder by dimension
-  multi.res$dim.variables <- dim.variables[order(dim.variables$dimension),]
   
-  # Add unidimensional method
-  multi.res$Methods$uni.method <- uni.method
+  # Dimension variables data frame by dimension
+  multidimensional_result$dim.variables <- dim.variables[
+    order(dim.variables$dimension),
+  ]
   
-  # Add type of EGA
-  multi.res$EGA.type <- ifelse(multi.res$n.dim <= 2, "Unidimensional EGA", "Traditional EGA")
-
-  # Replace cor.data with correlation
-  multi.res$correlation <- multi.res$cor.data
-  multi.res$cor.data <- NULL
+  # For legacy, change names of output
+  ## Change correlation matrix of `cor.data` to `correlation`
+  names(multidimensional_result)[
+    names(multidimensional_result) == "cor.data"
+  ] <- "correlation"
   
-  # Reorder output
-  if("consensus" %in% names(multi.res)){
-    multi.res <- multi.res[
-      c(
-        "network", "wc", "n.dim", "correlation",
-        "dim.variables", "EGA.type", "consensus",
-        "Methods"
-      )
-    ]
-  }else{
-    multi.res <- multi.res[
-      c(
-        "network", "wc", "n.dim", "correlation",
-        "dim.variables", "EGA.type","Methods"
-      )
-    ]
+  # Add unidimensional attributes
+  attr(multidimensional_result, "unidimensional") <- list(
+    uni.method = uni.method, unidimensional = unidimensional
+  )
+  
+  # Check for Louvain method (for consensus information)
+  if(uni.method == "louvain"){
+    attr(multidimensional_result, "unidimensional")$consensus <-
+      attr(unidimensional_result, "methods")
   }
-
-  class(multi.res) <- "EGA"
-
+  
+  # Set class
+  class(multidimensional_result) <- "EGA"
+  
+  # Check for plot
   if(isTRUE(plot.EGA)){
     
-    multi.res$Plot.EGA <- suppressPackageStartupMessages(
-      plot(multi.res, plot.args = plot.args)
-    )
+    # Set up plot
+    multidimensional_result$Plot.EGA <- plot(multidimensional_result)
+    
+    # Actually send the plot
+    plot(multidimensional_result$Plot.EGA)
     
   }
 
   # Return EGA
-  return(multi.res)
+  return(multidimensional_result)
+  
 }
-#----
+
+# Bug checking ----
+## Basic input
+# data = wmt2[,7:24]; n = NULL; corr = "auto"
+# na.data = "pairwise"; model = "glasso"; algorithm = "walktrap"
+# uni.method = "louvain"; plot.EGA = TRUE; verbose = FALSE
+
+#' @exportS3Method 
+# S3 Print Method ----
+# Updated 22.06.2023
+print.EGA <- function(x, ...)
+{
+  
+  # Print network estimation
+  print(x$network)
+  
+  # Add break space
+  cat("\n----\n\n")
+  
+  # Print community detection
+  print(x$wc)
+  
+  # Add break space
+  cat("\n----\n\n")
+  
+  # Get unidimensional attributes
+  unidimensional_attributes <- attr(x, "unidimensional")
+  
+  # Obtain unidimensional method
+  unidimensional_method <- switch(
+    unidimensional_attributes$uni.method,
+    "expand" = "Expand",
+    "le" = "Leading Eigenvector",
+    "louvain" = "Louvain"
+  )
+  
+  # Set up unidimensional print
+  if(unidimensional_method == "Louvain"){
+    
+    # Set up consensus attributes
+    consensus_attributes <- unidimensional_attributes$consensus
+    
+    # Obtain consensus name
+    consensus_name <- switch(
+      consensus_attributes$consensus.method,
+      "highest_modularity" = "Highest Modularity",
+      "iterative" = "Iterative",
+      "most_common" = "Most Common",
+      "lowest_tefi" = "Lowest TEFI"
+    )
+    
+    # Update unidimensional method text
+    unidimensional_method <- paste0(
+      unidimensional_method, " (", consensus_name,
+      " for ", consensus_attributes$consensus.iter,
+      " iterations)"
+    )
+    
+  }
+  
+  # Print unidimensional
+  cat(
+    paste0(
+      "Unidimensional Method: ", unidimensional_method, "\n",
+      "Unidimensional: ", ifelse(
+        unidimensional_attributes$unidimensional,
+        "Yes", "No"
+      )
+    )
+  )
+  
+}
+
+#' @exportS3Method 
+# S3 Summary Method ----
+# Updated 22.06.2023
+summary.EGA <- function(object, ...)
+{
+  
+  # Print network estimation
+  print(object$network)
+  
+  # Add break space
+  cat("\n----\n\n")
+  
+  # Print community detection
+  print(object$wc)
+  
+  # Add break space
+  cat("\n----\n\n")
+  
+  # Get unidimensional attributes
+  unidimensional_attributes <- attr(object, "unidimensional")
+  
+  # Obtain unidimensional method
+  unidimensional_method <- switch(
+    unidimensional_attributes$uni.method,
+    "expand" = "Expand",
+    "le" = "Leading Eigenvector",
+    "louvain" = "Louvain"
+  )
+  
+  # Set up unidimensional print
+  if(unidimensional_method == "Louvain"){
+    
+    # Set up consensus attributes
+    consensus_attributes <- unidimensional_attributes$consensus
+    
+    # Obtain consensus name
+    consensus_name <- switch(
+      consensus_attributes$consensus.method,
+      "highest_modularity" = "Highest Modularity",
+      "iterative" = "Iterative",
+      "most_common" = "Most Common",
+      "lowest_tefi" = "Lowest TEFI"
+    )
+    
+    # Update unidimensional method text
+    unidimensional_method <- paste0(
+      unidimensional_method, " (", consensus_name,
+      " for ", consensus_attributes$consensus.iter,
+      " iterations)"
+    )
+    
+  }
+  
+  # Print unidimensional
+  cat(
+    paste0(
+      "Unidimensional Method: ", unidimensional_method, "\n",
+      "Unidimensional: ", ifelse(
+        unidimensional_attributes$unidimensional,
+        "Yes", "No"
+      )
+    )
+  )
+  
+}
+
+#' @exportS3Method 
+# S3 Plot Method ----
+# Updated 22.06.2023
+plot.EGA <- function(x, ...)
+{
+  
+  # Return plot
+  single_plot(
+    network = x$network,
+    wc = x$wc,
+    ...
+  )
+  
+}
+
+
+#' @noRd
+# Cleaning adjusts model arguments
+# Updated 23.06.2023
+adjust_model_arguments <- function(model_ARGS)
+{
+  
+  # Arguments to set to NULL
+  null_arguments <- c(
+    # All already exist in `unidimensional_ARGS`
+    "data", "n", "corr", "na.data", "model", "verbose",
+    # EBICglasso-specific arguments
+    "penalizeMatrix",
+    # BGGM-specific arguments
+    "Y", "object"
+  )
+  
+  # Set intersecting arguments to NULL
+  model_ARGS[
+    intersect(names(model_ARGS), null_arguments)
+  ] <- NULL
+  
+  # Return model arguments
+  return(model_ARGS)
+  
+}
+
+
+
+
+
+
+

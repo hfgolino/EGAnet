@@ -35,23 +35,20 @@ Computes the (Signed) Modularity Statistic
 # Load data
 wmt <- wmt2[,7:24]
 
-# Estimate network
-network <- EBICglasso.qgraph(data = wmt)
-
-# Estimate signed Louvain
-wc <- signed.louvain(network)$memberships[1,]
+# Estimate EGA
+ega.wmt <- EGA(wmt, model = "glasso")
 
 # Compute standard (absolute values) modularity
 modularity(
-  network = network,
-  memberships = wc,
+  network = ega.wmt$network,
+  memberships = ega.wmt$wc,
   signed = FALSE
 )
 
 # Compute signed modularity
 modularity(
-  network = network,
-  memberships = wc,
+  network = ega.wmt$network,
+  memberships = ega.wmt$wc,
   signed = TRUE
 )
 

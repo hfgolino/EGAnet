@@ -178,7 +178,7 @@
 #' @export
 #'
 # Compute consensus clustering for EGA
-# Updated 16.06.2023
+# Updated 23.06.2023
 community.consensus <- function(
     network, signed = FALSE, 
     order = c("lower", "higher"), resolution = 1,
@@ -196,7 +196,7 @@ community.consensus <- function(
   # Check for higher or lower order solution
   order <- set_default(order, "higher", community.consensus)
   consensus.method <- set_default(consensus.method, "iterative", community.consensus)
-
+  
   # Check for lowest TEFI method
   if(consensus.method == "lowest_tefi"){
     
@@ -205,7 +205,7 @@ community.consensus <- function(
       stop("A correlation matrix is required to compute TEFI. Please supply network's corresponding correlation matrix using the 'correlation.matrix' argument.")
     }else if(!is_symmetric(correlation.matrix)){ # Check for symmetric correlation matrix
       stop("Correlation matrix is not symmetric.")
-    }else if(ncol(correlation.matrix) != ncol(network)){ # Check for same number of variables
+    }else if(dim(correlation.matrix)[2] != dimensions[2]){ # Check for same number of variables
       stop("Number of variables in 'correlation.matrix' does not match number of variables in 'network'. Double check that the correlation matrix matches the dimensions of the network.")
     }
     
@@ -247,11 +247,14 @@ community.consensus <- function(
   # Make sure there are variable names
   network_matrix <- ensure_dimension_names(network_matrix)
   
+  # Obtain network dimensions
+  dimensions <- dim(network_matrix)
+  
   # Obtain strength
   node_strength <- colSums(abs(network_matrix), na.rm = TRUE)
   
   # Initialize memberships as missing
-  membership <- rep(NA, length(node_strength))
+  membership <- rep(NA, dimensions[2])
   
   # Determine whether all nodes are disconnected
   if(all(node_strength == 0)){
@@ -292,7 +295,7 @@ community.consensus <- function(
     
     # Remove weights from igraph functions' arguments
     if("weights" %in% names(algorithm.ARGS)){
-      algorithm.ARGS[which(names(algorithm.ARGS) == "weights")] <- NULL
+      algorithm.ARGS["weights"] <- NULL
     }
     
     # Check for proper network
@@ -334,8 +337,8 @@ community.consensus <- function(
   
   # Set methods attribute
   attr(result$selected_solution, "methods") <- list(
-    signed = signed,
-    order = order, consensus.method = consensus.method,
+    signed = signed, order = order, 
+    consensus.method = consensus.method,
     consensus.iter = consensus.iter
     
   )

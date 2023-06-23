@@ -456,6 +456,20 @@ force_numeric <- function(desired_numeric)
 }
 
 #' @noRd
+# Edge count ----
+# Counts the number of edges (assumes network is matrix)
+# Updated 18.06.2023
+edge_count <- function(network, nodes, diagonal = FALSE)
+{
+  
+  # Count edges
+  return(
+    (sum(network != 0) - ifelse(diagonal, nodes, 0)) / 2
+  )
+  
+}
+
+#' @noRd
 # Count table ----
 # Provides counts of repeated rows in a data frame
 # (clever solution by GPT-4)
@@ -636,6 +650,26 @@ ensure_dimension_names <- function(data)
   
   # Return named data
   return(data)
+  
+}
+
+#' @noRd
+# Transfer names from data to output ----
+# Usually for matrix and data frame
+# Updated 18.06.2023
+transfer_names <- function(data, output)
+{
+  
+  # Check for variable names
+  if(!is.null(colnames(data))){
+    
+    # Add names to rows and columns
+    colnames(output) <- row.names(output) <- colnames(data)
+    
+  }
+  
+  # Return named output
+  return(output)
   
 }
 
@@ -838,6 +872,64 @@ usable_data <- function(data, verbose)
   
   # Send back usable data
   return(data_matrix)
+  
+}
+
+#' @noRd
+# Obtain data, sample size, correlation matrix ----
+# Generic function to get the usual needed inputs
+# Updated 23.06.2023
+obtain_sample_correlations <- function(data, n, corr, na.data, verbose, ...)
+{
+  
+  # Check if data is a correlation matrix
+  if(!is_symmetric(data)){
+    
+    # Check for appropriate variables
+    data <- usable_data(data, verbose)
+    
+    # Obtain sample size
+    n <- dim(data)[1]
+    
+    # Check for automatic correlations
+    if(corr == "auto"){
+      
+      # Compute correlations
+      correlation_matrix <- auto.correlate(
+        data = data, corr = "pearson",
+        na.data = na.data, verbose = verbose,
+        ...
+      )
+      
+    }else{
+      
+      # Obtain correlations using base R
+      correlation_matrix <- cor(data, use = na.data, method = corr)
+      
+    }
+    
+  }else{
+    
+    # Check for sample size
+    if(is.null(n)){
+      stop("A symmetric matrix was provided in the 'data' argument but the sample size argument, 'n', was not set. Please input the sample size into the 'n' argument.")
+    }
+    
+    # If symmetric and sample size is provided, then
+    # data to correlation matrix
+    correlation_matrix <- data
+    
+  }
+  
+  # Set up results
+  results <- list(
+    data = data,
+    n = n,
+    correlation_matrix = correlation_matrix
+  )
+  
+  # Return results
+  return(results)
   
 }
 
@@ -1134,9 +1226,9 @@ GGally_args <- function(ellipse)
   # Get default {EGAnet} arguments
   ega_default_args <- list(
     layout.exp = 0.20, label.size = 5,
-    node.alpha = 0.50, node.shape = 19,
-    node.size = 12, edge.alpha = "edge.alpha",
-    edge.size = 8
+    edge.label.color = "black", node.alpha = 0.50,
+    node.shape = 19, node.size = 12, 
+    edge.alpha = "edge.alpha", edge.size = 8
   )
   
   # Replace `ggnet2` arguments with {EGAnet} arguments
@@ -1349,7 +1441,7 @@ readable_names <- function(node_names)
 
 #' @noRd
 # Get network layout ----
-# Updated 15.06.2023
+# Updated 20.06.2023
 get_layout <- function(
     network, dimensions,
     non_zero_index, plot_ARGS, ellipse
@@ -1378,42 +1470,59 @@ get_layout <- function(
       vcount = dimensions[2]
     )
     
-  }else{ # Obtain actual "mode" values using {sna}
+  }else{ 
     
-    # Get layout function
-    mode_FUN <- switch(
-      tolower(plot_ARGS$mode),
-      "adj" = sna::gplot.layout.adj,
-      "circle" = sna::gplot.layout.circle,
-      "circrand" = sna::gplot.layout.circrand,
-      "eigen" = sna::gplot.layout.eigen,
-      "fruchtermanreingold" = sna::gplot.layout.fruchtermanreingold,
-      "geodist" = sna::gplot.layout.geodist,
-      "hall" = sna::gplot.layout.hall,
-      "kamadakawai" = sna::gplot.layout.kamadakawai,
-      "mds" = sna::gplot.layout.mds,
-      "princoord" = sna::gplot.layout.princoord,
-      "random" = sna::gplot.layout.random,
-      "rmds" = sna::gplot.layout.rmds,
-      "segeo" = sna::gplot.layout.segeo,
-      "seham" = sna::gplot.layout.seham,
-      "spring" = sna::gplot.layout.spring,
-      "springrepulse" = sna::gplot.layout.springrepulse,
-      "target" = sna::gplot.layout.target
-    )
+    # Determine whether "mode" or "layout" is in arguments
+    # If both, then override with "mode"
+    if(!"mode" %in% names(ellipse) & "layout" %in% names(ellipse)){
+      ellipse$mode <- ellipse$layout
+    }
     
-    # Set network and arguments
-    mode_ARGS <- list(
-      d = network,
-      layout.par = plot_ARGS$layout.par
-    )
-    
-    # Obtain layout
-    network_layout <- do.call(
-      what = mode_FUN,
-      args = mode_ARGS
-    )
-    
+    # Check for whether mode was provided as character
+    # or whether mode was input as 2D distance matrix
+    if(is.character(ellipse$mode)){ # Obtain actual "mode" values using {sna}
+      
+      # Get layout function
+      mode_FUN <- switch(
+        tolower(plot_ARGS$mode),
+        "adj" = sna::gplot.layout.adj,
+        "circle" = sna::gplot.layout.circle,
+        "circrand" = sna::gplot.layout.circrand,
+        "eigen" = sna::gplot.layout.eigen,
+        "fruchtermanreingold" = sna::gplot.layout.fruchtermanreingold,
+        "geodist" = sna::gplot.layout.geodist,
+        "hall" = sna::gplot.layout.hall,
+        "kamadakawai" = sna::gplot.layout.kamadakawai,
+        "mds" = sna::gplot.layout.mds,
+        "princoord" = sna::gplot.layout.princoord,
+        "random" = sna::gplot.layout.random,
+        "rmds" = sna::gplot.layout.rmds,
+        "segeo" = sna::gplot.layout.segeo,
+        "seham" = sna::gplot.layout.seham,
+        "spring" = sna::gplot.layout.spring,
+        "springrepulse" = sna::gplot.layout.springrepulse,
+        "target" = sna::gplot.layout.target
+      )
+      
+      # Set network and arguments
+      mode_ARGS <- list(
+        d = network,
+        layout.par = plot_ARGS$layout.par
+      )
+      
+      # Obtain layout
+      network_layout <- do.call(
+        what = mode_FUN,
+        args = mode_ARGS
+      )
+      
+    }else if(is.numeric(ellipse$mode) & is.matrix(ellipse$mode)){
+      
+      # Assume "mode" is a 2D matrix corresponding to a layout
+      network_layout <- ellipse$mode
+      
+    }
+  
   }
   
   # Return layout
@@ -1423,7 +1532,7 @@ get_layout <- function(
 
 #' @noRd
 # Basic set up for plots ----
-# Updated 15.06.2023
+# Updated 23.06.2023
 basic_plot_setup <- function(network, wc = NULL, ...)
 {
   
@@ -1456,27 +1565,12 @@ basic_plot_setup <- function(network, wc = NULL, ...)
     
   }
   
-  # Look for memberships in arguments
-  ## If no memberships, then plot network
-  # as if all memberships are missing
-  if(is.null(wc)){
-    wc <- rep(NA, dimensions[2])
-  }
-  
-  # Reorder network and communities
-  new_order <- order(wc)
-  network <- network[new_order, new_order]
-  wc <- wc[new_order]
-  
   # Obtain number of communities
   communities <- length(na.omit(unique(wc)))
   
   # Obtain node names
   node_names <- colnames(network)
-  
-  # Check for required packages {GGally}, {network}, and {sna}
-  check_package(c("GGally", "network", "sna"))
-  
+
   # With packages, set up arguments
   plot_ARGS <- GGally_args(ellipse)
   
@@ -1585,6 +1679,9 @@ basic_plot_setup <- function(network, wc = NULL, ...)
     do.call(GGally::ggnet2, plot_ARGS)
   )
   
+  # Return node size to `plot_ARGS` (was removed above)
+  plot_ARGS$node.size <- node.size
+  
   # Set up node names to be more readable
   node_names <- readable_names(plot_ARGS$node.label)
 
@@ -1685,49 +1782,135 @@ basic_plot_setup <- function(network, wc = NULL, ...)
   
 }
 
-#%%%%%%%%%%%%%%
-# PLOTTING ----
-#%%%%%%%%%%%%%%
+#' @noRd
+# Basic set up for single plot ----
+# Updated 20.06.2023
+single_plot <- function(network, wc, ...)
+{
+  
+  # Look for memberships in arguments
+  ## If no memberships, then plot network
+  # as if all memberships are missing
+  if(is.null(wc)){
+    wc <- rep(NA, dimensions[2])
+  }
+  
+  # Reorder network and communities
+  new_order <- order(wc)
+  network <- network[new_order, new_order]
+  wc <- wc[new_order]
+  
+  # Send on and return from `basic_plot_setup`
+  return(basic_plot_setup(network, wc, ...))
+  
+}
 
 #' @noRd
-# Sub-routine for compare.EGA.plots
-# Updated 05.06.2021
-compare.EGA <- function(ega.object1, ega.object2)
-{
-  # Plots
-  plot1 <- ega.object1
-  plot2 <- ega.object2
+# Dimension comparison for comparison plots ----
+# Updated 20.06.2023
+dimension_comparison <- function(original, comparison){
   
-  # Reorder node coordinates for plot2
-  plot2$data <- plot2$data[row.names(plot1$data),]
+  # Get dimensions
+  original_dimensions <- dim(original)
+  comparison_dimensions <- dim(comparison)
   
-  # Reorder edge coordinates for plot2
-  for(i in 1:nrow(plot2$layers[[1]]$data)){
+  # Determine whether network to be compared has same
+  # dimensions as the original plotted network
+  if(any(original_dimensions != comparison_dimensions)){
     
-    plot2$layers[[1]]$data$X1[i] <- which(plot2$layers[[1]]$data$X1[i] == plot2$data$x)
-    plot2$layers[[1]]$data$X2[i] <- which(plot2$layers[[1]]$data$X2[i] == plot2$data$x)
-    plot2$layers[[1]]$data$Y1[i] <- which(plot2$layers[[1]]$data$Y1[i] == plot2$data$y)
-    plot2$layers[[1]]$data$Y2[i] <- which(plot2$layers[[1]]$data$Y2[i] == plot2$data$y)
+    # Send error
+    stop(
+      paste0(
+        "The original network's dimensions (",
+        paste0(original_dimensions, collapse = " x "),
+        ") do not match the comparison network's dimensions (",
+        paste0(comparison_dimensions, collapse = " x "),
+        ").\n\nDouble check to make sure the network dimensions match."
+      )
+    )
     
   }
   
-  # Reassign edge coordinates based on plot1
-  plot2$layers[[1]]$data$X1 <- plot1$data$x[plot2$layers[[1]]$data$X1] # X1
-  plot2$layers[[1]]$data$X2 <- plot1$data$x[plot2$layers[[1]]$data$X2] # X2
-  plot2$layers[[1]]$data$Y1 <- plot1$data$y[plot2$layers[[1]]$data$Y1] # Y1
-  plot2$layers[[1]]$data$Y2 <- plot1$data$y[plot2$layers[[1]]$data$Y2] # Y2
+  # Get names
+  original_names <- colnames(original)
+  comparison_names <- colnames(comparison)
   
-  # Assign coordinates of plot1 to plot2
-  plot2$data$x <- plot1$data$x
-  plot2$data$y <- plot1$data$y
+  # Check for NULL
+  if(!is.null(original_names) & is.null(comparison_names)){
+    comparison_names <- original_names
+  }else if(is.null(original_names) & !is.null(comparison_names)){
+    original_names <- comparison_names
+  }
   
-  # Make plot list
-  plots.net <- list()
-  plots.net[[1]] <- plot1
-  plots.net[[2]] <- plot2
+  # Determine whether network to be compared has same
+  # column names as the original plotted network
+  not_matched <- !comparison_names %in% original_names 
   
-  # Return plot list
-  return(plots.net)
+  # Check for names that don't match
+  if(any(not_matched)){
+    
+    # Obtain names that don't match in comparison
+    no_match_names <- comparison_names[not_matched]
+    
+    # Send error
+    stop(
+      paste0(
+        "Some variable names in the comparison network ",
+        "did not match the original network: ",
+        paste0("\"", no_match_names, "\"", collapse = ", ")
+      )
+    )
+    
+  }
+  
+  
+}
+
+#' @noRd
+# Basic set up for comparing plots ----
+# Updated 22.06.2023
+compare_plots <- function(comparison_network, comparison_wc, plot_ARGS)
+{
+  
+  # Comparison network
+  comparison_network <- ega_first_level$network
+  comparison_wc <- gsub("_.*", "", colnames(comparison_network))
+  plot_ARGS <- first_level_plot$ARGS
+  
+  # Obtain the original network
+  original_network <- plot_ARGS$net
+  
+  # Make sure dimensions are the same before proceeding
+  dimension_comparison(original_network, comparison_network)
+  
+  # Ensure row names to ensure proper ordering
+  row.names(comparison_network) <- colnames(comparison_network)
+  
+  # Put network into same order as original network
+  matching_order <- match(
+    colnames(original_network), # target to match
+    colnames(comparison_network) # adjust to target
+  )
+  
+  # Set comparison network in proper order
+  ## Add to plot arguments
+  plot_ARGS$network <- comparison_network[
+    matching_order, matching_order
+  ]
+  
+  # Also, set comparison memberships in proper order
+  ## Add to plot arguments
+  plot_ARGS$wc <- comparison_wc[matching_order]
+  
+  # Remove some arguments from `plot_ARGS`
+  ## Essentially, the same call but allows some freedom
+  plot_ARGS[c(
+    "net", "node.color", "edge.alpha",
+    "edge.color", "edge.size"
+  )] <- NULL
+  
+  # Send on and return from `basic_plot_setup`
+  return(do.call(basic_plot_setup, plot_ARGS))
   
 }
 

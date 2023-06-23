@@ -5,7 +5,6 @@
 \alias{print.dynEGA}
 \alias{print.dynEGA.Groups}
 \alias{print.dynEGA.Individuals}
-\alias{print.EGA}
 \alias{print.NetLoads}
 \alias{print.invariance}
 \alias{print.hierEGA}
@@ -16,8 +15,6 @@
 \method{print}{dynEGA.Groups}(x, ...)
 
 \method{print}{dynEGA.Individuals}(x, ...)
-
-\method{print}{EGA}(x,  ...)
 
 \method{print}{NetLoads}(x, ...)
 

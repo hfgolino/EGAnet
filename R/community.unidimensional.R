@@ -6,7 +6,8 @@
 #' applying the Leading Eigenvalue community detection algorithm
 #' \code{\link[igraph]{cluster_leading_eigen}} to the correlation matrix
 #' (\code{"LE"}), and applying the Louvain community detection algorithm
-#' \code{\link[igraph]{cluster_louvain}} to the correlation matrix (\code{"louvain"})
+#' \code{\link[igraph]{cluster_louvain}} to the correlation matrix (\code{"louvain"}).
+#' Not necessarily intended for individual use -- it's better to use \code{\link[EGAnet]{EGA}}
 #'
 #' @param data Numeric matrix or data frame.
 #' Either data representing \emph{only} the variables of interest, or
@@ -73,7 +74,7 @@
 #' (Golino et al., 2020)}
 #' 
 #' \item{\code{"LE"}}
-#' {Applies the Leading Eigenvalue algorithm \code{\link[igraph]{cluster_leading_eigen}}
+#' {Applies the Leading Eigenvector algorithm \code{\link[igraph]{cluster_leading_eigen}}
 #' to the correlation matrix (Christensen et al., 2023)}
 #' 
 #' \item{\code{"louvain"}}
@@ -104,7 +105,7 @@
 #' # Louvain with Consensus Clustering (default)
 #' community.unidimensional(wmt)
 #' 
-#' # Leading Eigenvalue
+#' # Leading Eigenvector
 #' community.unidimensional(wmt, uni.method = "LE")
 #'
 #' # Expand
@@ -117,7 +118,7 @@
 #' A simulation and tutorial.
 #' \emph{Psychological Methods}, \emph{25}, 292-320. 
 #' 
-#' \strong{Leading Eigenvalue approach} \cr
+#' \strong{Leading Eigenvector approach} \cr
 #' Christensen, A. P., Garrido, L. E., Guerra-Pena, K., & Golino, H. (2023).
 #' Comparing community detection algorithms in psychometric networks: A Monte Carlo simulation.
 #' \emph{Behavior Research Methods}.
@@ -130,7 +131,7 @@
 #' @export
 #'
 # Compute unidimensional approaches for EGA
-# Updated 16.06.2023
+# Updated 23.06.2023
 community.unidimensional <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -141,12 +142,19 @@ community.unidimensional <- function(
     ...
 )
 {
-  
+
   # Check for missing arguments (argument, default, function)
   corr <- set_default(corr, "auto", community.unidimensional)
   na.data <- set_default(na.data, "pairwise", auto.correlate)  
   model <- set_default(model, "glasso", network.estimation)
   uni.method <- set_default(uni.method, "louvain", community.unidimensional)
+  
+  # Check for incompatible method combinations
+  if(model == "bggm" & uni.method == "expand"){
+    stop(
+      "Support for the \"BGGM\" model and \"expand\" unidimensionality method is not provided."
+    )
+  }
   
   # Obtain ellipse arguments
   ellipse <- list(...)
@@ -154,49 +162,14 @@ community.unidimensional <- function(
   # Make sure there are variable names
   data <- ensure_dimension_names(data)
   
-  # Check for whether data are data or correlation matrix
-  if(is_symmetric(data)){
-    
-    # Check for sample size
-    if(is.null(n)){
-      stop("A symmetric matrix was provided in the 'data' argument but the sample size argument, 'n', was not set. Please input the sample size into the 'n' argument.")
-    }
-
-    # Set data as correlation matrix
-    correlation_matrix <- data
-    
-  }else{ # Assume 'data' is data
-    
-    # Check for appropriate variables
-    data <- usable_data(data, verbose)
-    
-    # Obtain sample size
-    n <- nrow(data)
-    
-    # Check for automatic correlations
-    if(corr == "auto"){
-      
-      # Obtain arguments for `auto.correlate`
-      auto_ARGS <- obtain_arguments(FUN = auto.correlate, FUN.args = ellipse)
-      
-      # Supply data and correlation method
-      auto_ARGS$data <- data
-      auto_ARGS$corr <- "pearson"
-      
-      # Obtain correlation matrix
-      correlation_matrix <- do.call(
-        what = auto.correlate,
-        args = auto_ARGS
-      )
-      
-    }else{
-      
-      # Obtain correlations using base R
-      correlation_matrix <- cor(data, use = na.data, method = corr)
-      
-    }
-    
-  }
+  # Generic function to get necessary inputs
+  output <- obtain_sample_correlations(
+    data = data, n = n, corr = corr, 
+    na.data = na.data, verbose = verbose, ...
+  )
+  
+  # Get correlations and sample size
+  correlation_matrix <- output$correlation_matrix; n <- output$n
   
   # Apply unidimensional approach
   if(uni.method == "expand"){
@@ -209,9 +182,9 @@ community.unidimensional <- function(
     
   }else if(uni.method == "le"){
     
-    # Perform Leading Eigenvalue approach (pass arguments on)
+    # Perform Leading Eigenvector approach (pass arguments on)
     membership <- community.detection(
-      correlation_matrix, algorithm = "leading_eigen", ellipse
+      correlation_matrix, algorithm = "leading_eigen", ...
     )
     
   }else if(uni.method == "louvain"){
@@ -222,12 +195,6 @@ community.unidimensional <- function(
     )
     
   }
-  
-  # Add methods attribute
-  attr(membership, "methods") <- list(
-    corr = corr, model = model,
-    uni.method = uni.method
-  )
   
   # No S3 methods -- not intended for individual use
   
@@ -245,12 +212,12 @@ community.unidimensional <- function(
 
 #' @noRd
 # "Expand" Correlation approach ----
-# Updated 13.06.2023
+# Updated 23.06.2023
 expand <- function(correlation_matrix, n, model, verbose, ellipse)
 {
   
   # Number of variables
-  variables <- ncol(correlation_matrix)
+  variables <- dim(correlation_matrix)[2]
   
   # New total variables
   new_total <- variables + 4
@@ -264,15 +231,20 @@ expand <- function(correlation_matrix, n, model, verbose, ellipse)
   orthogonal_matrix <- matrix(0.50, nrow = 4, ncol = 4)
   diag(orthogonal_matrix) <- 1
   
+  # Set original dimensions
+  original_dimensions <- seq_len(variables)
+  
   # Insert original correlation matrix
   expanded_matrix[
-    seq_len(variables), seq_len(variables)
+    original_dimensions, original_dimensions
   ] <- correlation_matrix
+  
+  # Set expanded dimensions
+  expanded_dimensions <- (variables + 1):new_total
   
   # Insert orthogonal correlations
   expanded_matrix[
-    (variables + 1):new_total,
-    (variables + 1):new_total
+    expanded_dimensions, expanded_dimensions
   ] <- orthogonal_matrix
   
   # Obtain network estimation arguments
@@ -296,7 +268,7 @@ expand <- function(correlation_matrix, n, model, verbose, ellipse)
   membership <- do.call(community.detection, community_ARGS)
   
   # Remove additional variables
-  membership <- membership[seq_len(variables)]
+  membership <- membership[original_dimensions]
   
   # Add back names
   names(membership) <- colnames(correlation_matrix)
@@ -308,7 +280,7 @@ expand <- function(correlation_matrix, n, model, verbose, ellipse)
 
 #' @noRd
 # Wrapper for Louvain consensus ----
-# Updated 15.06.2023
+# Updated 22.06.2023
 consensus_wrapper <- function(correlation_matrix, verbose, ellipse)
 {
   
@@ -318,14 +290,20 @@ consensus_wrapper <- function(correlation_matrix, verbose, ellipse)
   # Add network
   consensus_ARGS$network <- correlation_matrix
   
+  # Set method to "most_common"
+  consensus_ARGS$consensus.method <- "most_common"
+  
+  # Set membership to only
+  consensus_ARGS$membership.only <- TRUE
+  
   # Set progress
-  consensus_ARGS$progress <- verbose
+  consensus_ARGS$verbose <- verbose
   
   # Apply Louvain with consensus approach
   membership <- do.call(
     what = community.consensus,
     args = consensus_ARGS
-  )$selected_solution
+  )
   
   # Add back names
   names(membership) <- colnames(correlation_matrix)

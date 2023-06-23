@@ -5,7 +5,6 @@
 \alias{summary.dynEGA}
 \alias{summary.dynEGA.Groups}
 \alias{summary.dynEGA.Individuals}
-\alias{summary.EGA}
 \alias{summary.NetLoads}
 \alias{summary.invariance}
 \alias{summary.hierEGA}
@@ -17,8 +16,6 @@
 \method{summary}{dynEGA.Groups}(object, ...)
 
 \method{summary}{dynEGA.Individuals}(object, ...)
-
-\method{summary}{EGA}(object,  ...)
 
 \method{summary}{NetLoads}(object, ...)
 

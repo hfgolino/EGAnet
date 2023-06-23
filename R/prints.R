@@ -10,7 +10,6 @@
 #' print.dynEGA
 #' print.dynEGA.Groups
 #' print.dynEGA.Individuals
-#' print.EGA
 #' print.NetLoads
 #' print.invariance
 #' print.hierEGA
@@ -21,8 +20,6 @@
 #' \method{print}{dynEGA.Groups}(x, ...)
 #' 
 #' \method{print}{dynEGA.Individuals}(x, ...)
-#' 
-#' \method{print}{EGA}(x,  ...)
 #' 
 #' \method{print}{NetLoads}(x, ...)
 #' 
@@ -280,52 +277,6 @@ print.dynEGA.Individuals <- function(x, ...) {
   
   ## Print EGA
   print(ega.methods, quote = FALSE)
-  
-}
-
-# Print EGA----
-# Updated 13.05.2022
-#' @export
-print.EGA <- function(x, ...) {
-
-  # Print lower order communities
-  cat(paste(
-    "Number of communities:",
-    x$n.dim,
-    "\n\n"
-  ))
-  print(x$wc)
-
-  # Print methods
-  cat("\nMethods:\n")
-  
-  ## Set up methods
-  methods.matrix <- matrix(
-    nrow = 4, ncol = 1
-  )
-  row.names(methods.matrix) <- c(
-    "Correlations =",
-    "Model =",
-    "Algorithm =",
-    "Unidimensional Method ="
-  )
-  colnames(methods.matrix) <- ""
-  
-  methods.matrix["Correlations =",] <- ifelse(
-    x$Methods$corr == "cor_auto",
-    "auto (from qgraph)",
-    x$Methods$corr
-  )
-  methods.matrix["Model =",] <- x$Methods$model
-  methods.matrix["Algorithm =",] <- x$Methods$algorithm
-  methods.matrix["Unidimensional Method =",] <- switch(
-    tolower(x$Methods$uni.method),
-    "expand" = "expand correlation matrix",
-    "le" = "leading eigenvalue",
-    "louvain" = "louvain with consensus clustering"
-  )
-  
-  print(methods.matrix, quote = FALSE)
   
 }
 
