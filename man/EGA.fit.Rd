@@ -7,108 +7,110 @@
 EGA.fit(
   data,
   n = NULL,
-  uni.method = c("expand", "LE"),
-  corr = c("cor_auto", "pearson", "spearman"),
-  model = c("glasso", "TMFG"),
-  algorithm = c("leiden", "walktrap"),
-  algorithm.args = list(steps = c(3:8), resolution_parameter = seq(0, 2, 0.001))
+  corr = c("auto", "pearson", "spearman"),
+  na.data = c("pairwise", "listwise"),
+  model = c("BGGM", "glasso", "TMFG"),
+  algorithm = c("leiden", "louvain", "walktrap"),
+  plot.EGA = TRUE,
+  verbose = FALSE,
+  ...
 )
 }
 \arguments{
-\item{data}{Matrix or data frame.
-Dataset or correlation matrix}
+\item{data}{Numeric matrix or data frame.
+Either data representing \emph{only} the variables of interest or
+a correlation matrix. Data that are not numeric will be
+removed from the dataset}
 
-\item{n}{Integer.
-Sample size (if the data provided is a correlation matrix)}
+\item{n}{Numeric (length = 1).
+Sample size if \code{data} is a correlation matrix}
 
-\item{uni.method}{Character.
-What unidimensionality method should be used? 
-Defaults to \code{"LE"}.
-Current options are:
+\item{corr}{Character (length = 1).
+Method to compute correlations.
+Defaults to \code{"auto"} to automatically compute
+appropriate correlations using \code{\link[EGAnet]{auto.correlate}}.
+\code{"pearson"} and \code{"spearman"} are provide for completeness.
+For other similarity measures, compute them first and input them
+into \code{data} with the sample size (\code{n})}
 
-\itemize{
-
-\item{\strong{\code{expand}}}
-{Expands the correlation matrix with four variables correlated .50.
-If number of dimension returns 2 or less in check, then the data 
-are unidimensional; otherwise, regular EGA with no matrix
-expansion is used. This is the method used in the Golino et al. (2020)
-\emph{Psychological Methods} simulation.}
-
-\item{\strong{\code{LE}}}
-{Applies the leading eigenvalue algorithm (\code{\link[igraph]{cluster_leading_eigen}})
-on the empirical correlation matrix. If the number of dimensions is 1,
-then the leading eigenvalue solution is used; otherwise, regular EGA
-is used. This is the final method used in the Christensen, Garrido,
-and Golino (2021) simulation.}
-
-}}
-
-\item{corr}{Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
-Current options are:
+\item{na.data}{Character (length = 1).
+How should missing data be handled?
+Available options:
 
 \itemize{
 
-\item{\strong{\code{cor_auto}}}
-{Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
-\code{\link[qgraph]{qgraph}}}.
+\item{\code{"pairwise"}}
+{Computes correlation for all available cases between
+two variables}
 
-\item{\strong{\code{pearson}}}
-{Computes Pearson's correlation coefficient using the pairwise complete observations via
-the \code{\link[stats]{cor}}} function.
+\item{\code{"listwise"}}
+{Computes correlation for all complete cases in the dataset}
 
-\item{\strong{\code{spearman}}}
-{Computes Spearman's correlation coefficient using the pairwise complete observations via
-the \code{\link[stats]{cor}}} function.
 }}
 
-\item{model}{Character.
-A string indicating the method to use.
-Defaults to \code{"glasso"}
-
-Current options are:
+\item{model}{Character (length = 1).
+Available options:
 
 \itemize{
 
-\item{\strong{\code{"glasso"}}}
-{Estimates the Gaussian graphical model using graphical LASSO with
-extended Bayesian information criterion to select optimal regularization parameter.
-See \code{\link[EGAnet]{EBICglasso.qgraph}}}
+\item{\code{"BGGM"}}
+{Computes the Bayesian Gaussian Graphical Model.
+Set argument \code{ordinal.categories} to determine
+levels allowed for a variable to be considered ordinal.
+See \code{\link[BGGM]{estimate}} for more details}
 
-\item{\strong{\code{"TMFG"}}}
-{Estimates a Triangulated Maximally Filtered Graph.
-See \code{\link[EGAnet]{TMFG}}}
+\item{\code{"glasso"}}
+{Computes the GLASSO with EBIC model selection.
+See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details}
+
+\item{\code{"TMFG"}}
+{Computes the TMFG method.
+See \code{\link[EGAnet]{TMFG}} for more details}
 
 }}
 
-\item{algorithm}{A string indicating the algorithm to use or a function from \code{\link{igraph}}
-Defaults to \code{"walktrap"}.
-Current options are:
+\item{algorithm}{Character or \code{\link{igraph}} \code{cluster_*} function.
+Three options are listed below but all are available
+(see \code{\link[EGAnet]{community.detection}} for other options):
 
 \itemize{
 
-\item{\strong{\code{walktrap}}}
-{Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
+\item{\code{"leiden"}}
+{See \code{\link[igraph]{cluster_leiden}} for more details.
+\emph{Note}: The Leiden algorithm will default to the
+Constant Potts Model objective function
+(\code{objective_function = "CPM"}). Set
+\code{objective_function = "modularity"} to use
+modularity instead (see examples). By default, searches along
+resolutions from 0 to 2 in 0.001 increments
+(\code{resolution_parameter = seq.int(0, 2, 0.001)}). Use the argument \code{resolution_parameter}
+to change the search parameters}
 
-\item{\strong{\code{leiden}}}
-{Computes the Leiden algorithm using \code{\link[igraph]{cluster_louvain}}}
+\item{\code{"louvain"}}
+{See \code{\link[igraph]{cluster_louvain}} for more details.
+By default, searches along resolutions from 0 to 2 in 0.001 increments
+(\code{resolution_parameter = seq.int(0, 2, 0.001)}). Use the argument \code{resolution_parameter}
+to change the search parameters}
+
+\item{\code{"walktrap"}}
+{This algorithm is the default. See \code{\link[EGAnet]{cluster_walktrap}} for more details.
+By default, searches along 3 to 8 steps (\code{steps = 3:8}). Use the argument \code{steps}
+to change the search parameters}
 
 }}
 
-\item{algorithm.args}{List.
-A list of additional arguments for \code{\link[igraph]{cluster_walktrap}} or \code{\link[igraph]{cluster_leiden}}.
-Options are:
+\item{plot.EGA}{Boolean.
+If \code{TRUE}, returns a plot of the network and its estimated dimensions.
+Defaults to \code{TRUE}}
 
-\itemize{
+\item{verbose}{Boolean.
+Whether messages and (insignificant) warnings should be output.
+Defaults to \code{FALSE} (silent calls).
+Set to \code{TRUE} to see all messages and warnings for every function call}
 
-\item{\strong{\code{steps}}}
-{Number of steps used in the Walktrap algorithm. Defaults to \code{c(3:8)}}
-
-\item{\strong{\code{leiden}}}
-{Resolution parameter used in the Leiden algorithm. Defaults to \code{seq(0, 2, .001)}.
-Higher values lead to smaller communities, lower values lead to larger communities}
-
-}}
+\item{...}{Additional arguments to be passed on to
+\code{\link[EGAnet]{auto.correlate}}, \code{\link[EGAnet]{network.estimation}},
+\code{\link[EGAnet]{community.detection}}, and \code{\link[EGAnet]{EGA.estimate}}}
 }
 \value{
 Returns a list containing:
@@ -136,28 +138,26 @@ algorithm is varied and unique community solutions are compared using
 # Load data
 wmt <- wmt2[,7:24]
 
-\dontrun{
-# Estimate EGA
-ega.wmt <- EGA(
-  data = wmt, 
-  plot.EGA = FALSE # No plot for CRAN checks
+# Estimate optimal EGA with Walktrap
+fit.walktrap <- EGA.fit(
+  data = wmt, algorithm = "walktrap",
+  plot.EGA = FALSE # no plot for CRAN checks
 )
 
-# Estimate optimal EGA
-fit.wmt <- EGA.fit(data = wmt)
+# Estimate optimal EGA with Louvain
+fit.louvain <- EGA.fit(
+  data = wmt, algorithm = "louvain",
+  resolution_parameter = seq.int(0, 2, 0.50),
+  plot.EGA = FALSE # no plot for CRAN checks
+)
 
-# Plot optimal fit
-plot(fit.wmt$EGA)
-
-# Estimate CFAs
-cfa.ega <- CFA(ega.wmt, estimator = "WLSMV", data = wmt)
-cfa.fit <- CFA(fit.wmt$EGA, estimator = "WLSMV", data = wmt)
-
-# Compare CFAs
-lavaan::lavTestLRT(
-  cfa.ega$fit, cfa.fit$fit,
-  method = "satorra.bentler.2001"
-)}
+# Estimate optimal EGA with Leiden and modularity
+fit.leiden <- EGA.fit(
+  data = wmt, algorithm = "leiden",
+  objective_function = "modularity",
+  resolution_parameter = seq.int(0, 2, 0.50),
+  plot.EGA = FALSE # no plot for CRAN checks
+)
 
 }
 \references{
@@ -180,11 +180,6 @@ From Louvain to Leiden: guaranteeing well-connected communities.
 Pons, P., & Latapy, M. (2006).
 Computing communities in large networks using random walks.
 \emph{Journal of Graph Algorithms and Applications}, \emph{10}, 191-218.
-}
-\seealso{
-\code{\link[EGAnet]{bootEGA}} to investigate the stability of EGA's estimation via bootstrap,
-\code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA,
-and \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{
 Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>

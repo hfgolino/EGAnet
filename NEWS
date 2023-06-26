@@ -42,6 +42,10 @@ o UPDATE: S3method updates for `EGA.estimate` and `EGA` to provide estimation in
 
 o DEPENDENCY: removed {network} because it is no longer used for plotting; switched {sna} to IMPORTS rather than SUGGESTS
 
+o UPDATE: `EGA.fit` updated to be compatiable with all updates to `EGA.estimate` (other optimizations were implemented such as direct communtiy detection application and unique solution finding)
+
+o UPDATE: `tefi` updated with several checks (slightly slower for correlation matrix but much faster with raw data; includes data/matrix checks)
+
 
 Changes in version 1.2.5.1
 

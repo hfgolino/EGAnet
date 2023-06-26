@@ -98,7 +98,7 @@
 #' @export
 #'
 # Computes optimal glasso network based on EBIC ----
-# Updated 22.06.2023
+# Updated 25.06.2023
 EBICglasso.qgraph <- function(
     data, # Sample covariance matrix
     n = NULL,
@@ -146,7 +146,10 @@ EBICglasso.qgraph <- function(
   S_zero_diagonal <- S - diag(dimensions[2]) # makes diagonal zero
   lambda.max <- max(abs(S_zero_diagonal)) # uses absolute rather than inverse
   lambda.min <- lambda.min.ratio * lambda.max
-  lambda <- exp(seq(log(lambda.min), log(lambda.max), length = nlambda))
+  lambda <- exp(seq.int(log(lambda.min), log(lambda.max), length.out = nlambda))
+  
+  # Obtain lambda sequence
+  lambda_sequence <- seq_len(nlambda)
   
   # Perform GLASSO path
   if(missing(penalizeMatrix)){
@@ -164,7 +167,7 @@ EBICglasso.qgraph <- function(
     )
     
     # Loop over lambdas
-    for (i in seq_len(nlambda)){
+    for (i in lambda_sequence){
       res <- glasso::glasso(S, penalizeMatrix * lambda[i], trace = 0, penalize.diagonal = penalize.diagonal, ...)
       glas_path$w[,,i] <- res$w
       glas_path$wi[,,i] <- res$wi
@@ -176,12 +179,12 @@ EBICglasso.qgraph <- function(
   if(model.selection == "ebic"){
     
     # Log-likelihood
-    lik <- sapply(seq_len(nlambda),function(i){
+    lik <- nnapply(lambda_sequence, function(i){
       logGaus(S, glas_path$wi[,,i], n)
     })
     
     # Compute edges
-    E <- sapply(seq_len(nlambda), function(i){
+    E <- nnapply(lambda_sequence, function(i){
       edge_count(glas_path$wi[,,i], dimensions[2], countDiagonal)
     })
 
@@ -199,7 +202,7 @@ EBICglasso.qgraph <- function(
   }else if(model.selection == "jsd"){
     
     # JSD
-    JSDs <- sapply(seq_along(lambda),function(i){
+    JSDs <- nnapply(lambda_sequence,function(i){
       
       # Try (might be error)
       res <- try(
@@ -288,7 +291,7 @@ EBICglasso.qgraph <- function(
 #' @noRd
 # Log-likelihood ----
 # According to huge??? : source comment
-# Updated 10.06.2023
+# Updated 26.06.2023
 logGaus <- function(S, K, n)
 {
   
@@ -305,7 +308,7 @@ logGaus <- function(S, K, n)
   # From source 
   
   return(
-    n / 2 * (log(det(K)) - trace(S %*% K))
+    n / 2 * (log(det(K)) - trace(K %*% S))
   )
 }
 

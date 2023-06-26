@@ -11,6 +11,52 @@
 # Sections are separated by how they are associated with their utility
 # in other functions.
 
+#%%%%%%%%%%%%%%%%%%%%%%
+# *APPLY FUNCTIONS ----
+#%%%%%%%%%%%%%%%%%%%%%%
+
+# These functions are merely wrappers over the `*apply`
+# family to execute specific tasks that are often repeatedly
+# done. Their purpose are to provide slightly cleaner code.
+
+# These `*napply` are specific versions of `vapply` that
+# pre-specify the output. These versions are generally
+# simpler (in function) and marginally faster than 
+# the more commonly used `sapply`. They are more strict
+# in that they require knowing the output format (e.g., numeric)
+
+#' @noRd
+# Character vector/matrix output apply
+# Updated 25.06.2023
+cnapply <- function(X, FUN, ..., LENGTH = 1, USE.NAMES = TRUE)
+{
+  return(vapply(X = X, FUN = FUN, FUN.VALUE = character(LENGTH), ..., USE.NAMES = USE.NAMES))
+}
+
+#' @noRd
+# Logical vector/matrix output apply
+# Updated 25.06.2023
+lnapply <- function(X, FUN, ..., LENGTH = 1, USE.NAMES = TRUE)
+{
+  return(vapply(X = X, FUN = FUN, FUN.VALUE = logical(LENGTH), ..., USE.NAMES = USE.NAMES))
+}
+
+#' @noRd
+# Numeric vector/matrix output apply
+# Updated 25.06.2023
+nnapply <- function(X, FUN, ..., LENGTH = 1, USE.NAMES = TRUE)
+{
+  return(vapply(X = X, FUN = FUN, FUN.VALUE = numeric(LENGTH), ..., USE.NAMES = USE.NAMES))
+}
+
+#' @noRd
+# Unlist `lapply`
+# Updated 25.06.2023
+ulapply <- function(X, FUN, ...)
+{
+  return(unlist(lapply(X, FUN, ...)))
+}
+
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # REPRODUCIBLE RANDOM GENERATION ----
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -31,10 +77,20 @@
 #' @noRd
 # Random normal wrapper ----
 # About 4.5x faster than R's `rnorm`
-# Updated 17.06.2023
+# Updated 24.06.2023
 rnorm_ziggurat <- function(n, mean = 0, sd = 1)
 {
-  return(mean + sd * RcppZiggurat::zrnorm(n))
+  
+  # Generate values
+  values <- RcppZiggurat::zrnorm(n)
+  
+  # Check for usual values (no changes to values)
+  if(mean == 0 & sd == 1){
+    return(values)
+  }else{ # Otherwise, update values
+    return(mean + sd * values)
+  }
+  
 }
 
 #' @noRd
@@ -123,7 +179,8 @@ MASS_mvrnorm_quick <- function(
   
   # Generate data
   X <- matrix(rnorm_ziggurat(n = p * n), n)
-  # X <- matrix(rnorm(p * n), n) # replaces `rnorm` so we can set seed
+  # X <- matrix(rnorm(p * n), n) 
+  # replaces `rnorm` so we can set seed
   
   # For empirical data
   if(isTRUE(empirical)){
@@ -155,21 +212,21 @@ MASS_mvrnorm_quick <- function(
 # Generate reproducible parametric bootstrap ----
 # (multivariate normal samples)
 # A wrapper over `rnorm_ziggurat` and `MASS_mvrnorm`
-# Updated 18.06.2023
+# Updated 24.06.2023
 reproducible_parametric <- function(
     samples, cases, mu, Sigma, seed
 )
 {
   
-  # First, set seed for random normal generation
-  RcppZiggurat::zsetseed(seed)
-  # Seed does *not* affect R's seed and RNG
-  
-  # Next, perform pre-computations
+  # First, perform pre-computations
   p <- length(mu) # avoids repeated calls to `length`
   eS <- eigen(Sigma, symmetric = TRUE) # avoids repeated calls to `eigen`
   coV <- eS$vectors %*% diag(sqrt(pmax(eS$values, 0)), p)
   # avoids repeated matrix computation
+  
+  # Next, set seed for random normal generation
+  RcppZiggurat::zsetseed(seed)
+  # Seed does *not* affect R's seed and RNG
   
   # Then, generate samples
   return(
@@ -349,9 +406,9 @@ ncol_sequence <- function(data)
 # An actual real reason to use `seq_len`: handles edge cases
 # when there is a length = 0
 
-#%%%%%%%%%%%%%%%%%%%%%%%
-# GENERAL FUNCTIONS ----
-#%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%
+# FORMATTING FUNCTIONS ----
+#%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #' @noRd
 # Determine number of digits in a number ----
@@ -364,17 +421,76 @@ digits <- function(number)
 }
 
 #' @noRd
+# Format number with certain decimals ----
+# Mainly for naming and printing
+# Updated 14.06.2024
+format_decimal <- function(numbers, places)
+{
+  
+  return(
+    formatC(
+      x = numbers,
+      digits = places,
+      format = "f", flag = "0"
+    )
+  )
+  
+}
+
+#' @noRd
+# Format number with certain integer ----
+# Mainly for naming and printing
+# Updated 14.06.2024
+format_integer <- function(numbers, places)
+{
+  
+  return(
+    formatC(
+      x = numbers,
+      digits = places,
+      format = "d", flag = "0"
+    )
+  )
+  
+}
+
+#%%%%%%%%%%%%%%%%%%%%%%
+# OBJECT FUNCTIONS ----
+#%%%%%%%%%%%%%%%%%%%%%%
+
+#' @noRd
+# Convert numeric matrix to integers ----
+# About 5x faster than `apply`
+# Updated 26.06.2023
+integer_matrix <- function(data)
+{
+  return(
+    matrix(
+      as.integer(data),
+      ncol = dim(data)[2],
+      byrow = FALSE
+    )
+  )
+}
+
+#' @noRd
 # Force vector ----
 # (usually for data frame rows/columns)
-# Updated 27.05.2023
+# Updated 25.06.2023
 force_vector <- function(desired_vector)
 {
-  # Convert to matrix then vector
-  new_vector <- as.vector(as.matrix(desired_vector))
+  # Convert to matrix
+  desired_vector <- as.matrix(desired_vector)
   
+  # Get column names
+  column_names <- dimnames(desired_vector)[[2]]
+  
+  # Convert to vector
+  new_vector <- as.vector(desired_vector)
+
   # Keep names (if any)
-  if(!is.null(colnames(desired_vector))){
-    names(new_vector) <- colnames(desired_vector)
+  if(!is.null(column_names)){
+    names(new_vector) <- column_names
   }
   
   return(new_vector)
@@ -455,6 +571,19 @@ force_numeric <- function(desired_numeric)
   
 }
 
+#%%%%%%%%%%%%%%%%%%%%%
+# COUNT FUNCTIONS ----
+#%%%%%%%%%%%%%%%%%%%%%
+
+#' @noRd
+# Unique Length ----
+# Counts length of unique variables (without `NA`)
+# Updated 26.06.2023
+unique_length <- function(x)
+{
+  return(sum(!is.na(unique(x))))
+}
+
 #' @noRd
 # Edge count ----
 # Counts the number of edges (assumes network is matrix)
@@ -473,7 +602,7 @@ edge_count <- function(network, nodes, diagonal = FALSE)
 # Count table ----
 # Provides counts of repeated rows in a data frame
 # (clever solution by GPT-4)
-# Updated 16.06.2023
+# Updated 26.06.2023
 count_table <- function(data, proportion = FALSE)
 {
   
@@ -481,96 +610,63 @@ count_table <- function(data, proportion = FALSE)
   data <- as.data.frame(data)
   
   # Obtain counts of unique rows (clever solution from GPT-4)
-  if(isTRUE(proportion)){
-    counts <- table(do.call(paste, data)) / dim(data)[1]
-  }else{
-    counts <- table(do.call(paste, data))
-  }
+  counts <- table(do.call(paste, data))
   
-  # Prepare a data frame
-  count_df <- as.data.frame(
-    do.call(rbind, lapply(strsplit(names(counts), split = " "), as.numeric)),
-    stringsAsFactors = FALSE
+  # Obtain unique vectors
+  unique_vectors <- silent_call(
+    do.call(rbind, lapply(strsplit(names(counts), split = " "), as.numeric))
   )
   
-  # Attach counts
-  count_df$count <- counts
-  
-  # Ensure proper naming
-  colnames(count_df) <- c(colnames(data), ifelse(proportion, "Proportion", "Count"))
-  
+  # Add dimension names
+  dimnames(unique_vectors)[[2]] <- dimnames(data)[[2]]
+    
+  # Check for proportion
+  if(isTRUE(proportion)){
+    counts <- counts / dim(data)[1]
+  }
+
   # Return data frame
-  return(count_df)
+  return(
+    data.frame(
+      unique_vectors,
+      Value = as.vector(counts)
+    )
+  )
   
 }
+
+#%%%%%%%%%%%%%%%%%%%%
+# DATA FUNCTIONS ----
+#%%%%%%%%%%%%%%%%%%%%
 
 #' @noRd
 # Determine number of categories in data ----
-# Updated 02.02.2023
+# Updated 25.06.2023
 data_categories <- function(data)
 {
-  
-  # Ensure data is matrix
-  data <- as.matrix(data)
-  
-  # Loop over columns
-  categories <- apply(
-    data, 2, function(x){
-      length(na.omit(unique(x)))
-    }
-  )
-  
-  # Return categories
-  return(categories)
-  
-}
-
-#' @noRd
-# Convert version to number ----
-# Updated 02.02.2023
-version_conversion <- function(version)
-{
-  
-  # Convert to character
-  version <- as.character(version)
-  
-  # Remove periods
-  version <- gsub("\\.", "", version)
-  
-  # Convert to numeric
-  version <- as.numeric(version)
-  
-  # Return version
-  return(version)
-  
+  return(apply(as.matrix(data), 2, unique_length))
 }
 
 #' @noRd
 # All-purpose symmetric checker ----
-# Updated 03.02.2023
-is_symmetric <- function(data){
+# Faster but less robust than `isSymmetric`
+# Defaults to floating point tolerance
+# Updated 26.06.2023
+is_symmetric <- function(data, tolerance = 1e-06){
+
+  # Get dimensions
+  dimensions <- dim(data)
   
   # Check for whether rows equal columns
-  if(nrow(data) == ncol(data)){
+  if(dimensions[1] != dimensions[2]){ # Not a matrix
+    return(FALSE)
+  }else{
     
     # Convert to matrix
     data_matrix <- as.matrix(data)
     
-    # Remove names
-    data_matrix <- unname(data_matrix)
-    
-    # Check that lower triangle equal upper triangle
-    lower_triangle <- data_matrix[lower.tri(data_matrix)]
-    transpose_matrix <- t(data_matrix) # ensures similar orientation
-    upper_triangle <- transpose_matrix[lower.tri(transpose_matrix)]
-    
     # Check that all are equal
-    all_equal <- all(lower_triangle == upper_triangle, na.rm = TRUE)
-    
-  }else{
-    
-    # Not a matrix
-    return(FALSE)
+    all_equal <- all(abs(data_matrix - t(data_matrix)) < tolerance)
     
   }
   
@@ -580,53 +676,22 @@ is_symmetric <- function(data){
 }
 
 #' @noRd
-# Format number with certain decimals ----
-# Mainly for naming and printing
-# Updated 14.06.2024
-format_decimal <- function(numbers, places)
-{
-  
-  return(
-    formatC(
-      x = numbers,
-      digits = places,
-      format = "f", flag = "0"
-    )
-  )
-
-}
-
-#' @noRd
-# Format number with certain integer ----
-# Mainly for naming and printing
-# Updated 14.06.2024
-format_integer <- function(numbers, places)
-{
-  
-  return(
-    formatC(
-      x = numbers,
-      digits = places,
-      format = "d", flag = "0"
-    )
-  )
-  
-}
-
-#' @noRd
 # Ensure data has dimension names ----
-# Updated 14.06.2023
+# Updated 25.06.2023
 ensure_dimension_names <- function(data)
 {
   
   # Get dimensions
   dimensions <- dim(data)
   
+  # Get dimension names
+  dimension_names <- dimnames(data)
+  
   # Check for column names
-  if(is.null(colnames(data))){
+  if(is.null(dimension_names[[2]])){
     
     # Standardize names
-    colnames(data) <- paste0(
+    dimnames(data)[[2]] <- paste0(
       "V", format_integer(
         seq_len(dimensions[2]),
         digits(dimensions[2]) - 1
@@ -639,10 +704,10 @@ ensure_dimension_names <- function(data)
   if(dimensions[1] == dimensions[2]){
     
     # Check for row names
-    if(is.null(data) | any(row.names(data) != colnames(data))){
+    if(is.null(dimnames(data)[[1]]) | any(dimension_names[[1]] != dimension_names[[2]])){
       
       # Assign column names to row names
-      row.names(data) <- colnames(data)
+      dimnames(data)[[1]] <- dimnames(data)[[2]]
       
     }
     
@@ -656,15 +721,18 @@ ensure_dimension_names <- function(data)
 #' @noRd
 # Transfer names from data to output ----
 # Usually for matrix and data frame
-# Updated 18.06.2023
+# Updated 25.06.2023
 transfer_names <- function(data, output)
 {
   
+  # Obtain column names
+  column_names <- dimnames(data)[[2]]
+  
   # Check for variable names
-  if(!is.null(colnames(data))){
+  if(!is.null(column_names)){
     
     # Add names to rows and columns
-    colnames(output) <- row.names(output) <- colnames(data)
+    dimnames(output) <- list(column_names, column_names)
     
   }
   
@@ -674,158 +742,8 @@ transfer_names <- function(data, output)
 }
 
 #' @noRd
-# No names print ----
-# Updated 03.02.2023
-no_name_print <- function(object){
-  
-  # Convert object to data frame
-  df <- as.data.frame(object)
-  
-  # Remove column names
-  colnames(df) <- NULL
-  
-  # Print with no quotes or row names
-  print(df, quote = FALSE, row.names = FALSE)
-  
-}
-
-#' @noRd
-# General function to check for packages ----
-# Updated 14.06.2023
-check_package <- function(packages)
-{
-  
-  # # Check for packages
-  # installed <- packages %in% row.names(installed.packages())
-  
-  # Performs what original `installed.packages()` does
-  # but without additional fluff
-  installed <- packages %in%
-    unlist(
-      sapply(.libPaths(), list.files, USE.NAMES = FALSE)
-    )
-  
-  # Determine which packages are not installed
-  not_installed <- packages[!installed]
-  
-  # Print error with missing packages
-  if(length(not_installed) != 0){
-    
-    # Organize packages error output
-    if(length(not_installed) > 1){
-      
-      # Get missing packages
-      missing_packages <- paste0("{", packages , "}", collapse = ", ")
-      packages <- paste0("\"", packages, "\"", collapse = ", ")
-      
-      # Stop and tell user to install package
-      stop(
-        paste0(
-          missing_packages, 
-          " are not installed but are required for this function. ",
-          "Please run \n\n",
-          "install.packages(c(", packages, "))",
-          "\n\nOnce installed, re-run this function (you may need to restart R/RStudio)."
-        )
-      )
-      
-    }else{
-      
-      # Get missing packages
-      missing_packages <- paste0("{", packages, "}")
-      packages <- paste0("\"", packages, "\"")
-      
-      # Stop and tell user to install package
-      stop(
-        paste0(
-          missing_packages, 
-          " is not installed but is required for this function. ",
-          "Please run \n\n",
-          "install.packages(c(", packages, "))",
-          "\n\nOnce installed, re-run this function (you may need to restart R/RStudio)."
-        )
-      )
-      
-    }
-    
-  }
-  
-}
-
-#' @noRd
-#'
-# General function to silently obtain output ----
-# Updated 11.05.2023
-silent_call <- function(...){
-  
-  # Make call
-  sink <- capture.output(
-    result <- suppressWarnings(
-      suppressMessages(
-        ...
-      )
-    )
-  )
-  
-  # Return result
-  return(result)
-  
-}
-
-#' @noRd
-#'
-# General function to silently load package ----
-# Updated 10.06.2023
-silent_load <- function(...){
-  
-  # Return result
-  return(
-    suppressPackageStartupMessages(...)
-  )
-  
-}
-
-#' @noRd
-# Function to obtain arguments ----
-# Updated 09.06.2023
-obtain_arguments <- function(FUN, FUN.args)
-{
-  
-  # Obtain formal arguments
-  FUN.formals <- formals(FUN)
-  
-  # Check for input arguments
-  if(length(FUN.args) != 0){
-    
-    ## Check for matching arguments
-    if(any(names(FUN.args) %in% names(FUN.formals))){
-      
-      replace.args <- FUN.args[na.omit(match(names(FUN.formals), names(FUN.args)))]
-      
-      FUN.formals[names(replace.args)] <- replace.args
-    }
-    
-  }
-  
-  # Remove ellipses
-  if("..." %in% names(FUN.formals)){
-    FUN.formals[which(names(FUN.formals) == "...")] <- NULL
-  }
-  
-  # Remove call arguments (assume they are supplied elsewhere)
-  call_argument <- sapply(FUN.formals, function(x){is(x, "call")})
-  
-  # Keep non-calls
-  FUN.formals <- FUN.formals[!call_argument]
-  
-  # Return arguments
-  return(FUN.formals)
-  
-}
-
 # Function to check for usable variables ----
-#' @noRd
-# Updated 13.06.2023
+# Updated 26.06.2023
 usable_data <- function(data, verbose)
 {
   
@@ -833,7 +751,7 @@ usable_data <- function(data, verbose)
   data_matrix <- data.matrix(data)
   
   # All missing after coercions
-  remove_columns <- apply(data_matrix, 2, function(x){all(is.na(x))})
+  remove_columns <- apply(is.na(data_matrix), 2, all)
   
   # Send warning if there are any removals
   if(any(remove_columns)){
@@ -841,8 +759,8 @@ usable_data <- function(data, verbose)
     # Send warning
     warning(
       paste0(
-        "Some variables were could not to be coerced to numeric values. These variables have been removed from the analysis:\n",
-        paste0("'", colnames(data_matrix)[remove_columns], "'", collapse = ", "),
+        "Some variables could not to be coerced to numeric values. These variables have been removed from the analysis:\n",
+        paste0("'", dimnames(data_matrix)[[2]][remove_columns], "'", collapse = ", "),
         "\n\nIf these variables were not intended to be removed, then try converting them to numeric values before inputting the data into the function"
       )
     )
@@ -854,7 +772,7 @@ usable_data <- function(data, verbose)
   }
   
   # Determine whether each variable was coerced
-  coercions <- !apply(data_matrix == data, 2, all, na.rm = TRUE)
+  coercions <- apply(data_matrix != data, 2, all, na.rm = TRUE)
   
   # Send warning for any coercions
   if(any(coercions) & isTRUE(verbose)){
@@ -863,10 +781,9 @@ usable_data <- function(data, verbose)
     warning(
       paste0(
         "Several variables were coerced to numeric values. These variables were changed to numeric values:\n",
-        paste0("'", colnames(data_matrix)[remove_columns], "'", collapse = ", ")
+        paste0("'", dimnames(data_matrix)[[2]][coercions], "'", collapse = ", ")
       )
     )
-    
     
   }
   
@@ -933,38 +850,192 @@ obtain_sample_correlations <- function(data, n, corr, na.data, verbose, ...)
   
 }
 
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# FUNCTIONS & ARGUMENTS FUNCTIONS ----
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 #' @noRd
-# Standard EGA arguments ----
-# Updated 02.02.2023
-ega_arguments <- function(arguments)
-{
+#'
+# General function to silently obtain output ----
+# Updated 11.05.2023
+silent_call <- function(...){
   
-  # Set default arguments
-  default_arguments <- list(
-    data = NULL, n = NULL,
-    corr = "cor_auto", uni.method = "louvain",
-    model = "glasso", model.args = list(),
-    algorithm = "walktrap", algorithm.args = list(),
-    consensus.method = "most_common_tefi", consensus.iter = 100,
-    plot.EGA = TRUE, plot.args = list()
+  # Make call
+  sink <- capture.output(
+    result <- suppressWarnings(
+      suppressMessages(
+        ...
+      )
+    )
   )
   
-  # Match arguments with input
-  matched_arguments <- match(names(arguments), names(default_arguments))
+  # Return result
+  return(result)
   
-  # Check for whether any are not missing
-  if(any(!is.na(matched_arguments))){
+}
+
+#' @noRd
+#'
+# General function to silently load package ----
+# Updated 10.06.2023
+silent_load <- function(...){
+  
+  # Return result
+  return(
+    suppressPackageStartupMessages(...)
+  )
+  
+}
+
+#' @noRd
+# Set default argument (cleaner missing function) ----
+# Updated 24.06.2023
+set_default <- function(argument, default, FUN)
+{
+  
+  # Check for function first and foremost
+  if(is.function(argument)){
+    return(argument)
+  }
+  
+  # Check for value error
+  value_error(argument, base::mode(default))
+  
+  # Check for function
+  if(!is.function(FUN)){
+    choices <- FUN # assume choices were input to function 
+  }else{
     
-    # Remove missing
-    replace_arguments <- na.omit(matched_arguments)
+    # Get formal argument choices from default call
+    choices <- formals(FUN)[[substitute(argument)]]
     
-    # Replace arguments
-    default_arguments[matched_arguments] <- arguments
+    # Check if choices is a call
+    if(is.call(choices)){
+      
+      # Get choices
+      choices <- tolower(as.character(choices))
+      
+      # Remove "c" from call
+      choices <- choices[-which(choices == "c")]
+      
+    }
     
   }
   
+  # Check for missing argument
+  if(missing(argument) | length(argument) != 1){
+    argument <- default
+  }
+  
+  # Force lowercase argument
+  if(is.character(argument)){
+    argument <- tolower(argument)
+  }
+  
+  # Send error for bad argument
+  if(!argument %in% choices){
+    stop(
+      paste0(
+        "Invalid argument: ", substitute(argument),
+        " = \"", argument, "\"",
+        "\n\nPlease choose from: ", 
+        paste0(
+          "\"", choices, "\"", collapse = ", "
+        )
+      )
+    )
+  }
+  
+  # Return argument
+  return(argument)
+  
+}
+
+#' @noRd
+# Overwrite Arguments ----
+# Updated 24.06.2023
+overwrite_arguments <- function(main, ARGS)
+{
+  
+  # Obtain replacement arguments
+  target_args <- ARGS[names(ARGS) %in% names(main)]
+  
+  # Replace the arguments with the same name
+  main[names(target_args)] <- target_args
+  
+  # Return main arguments
+  return(main)
+  
+}
+
+#' @noRd
+# Function to obtain arguments ----
+# Updated 25.06.2023
+obtain_arguments <- function(FUN, FUN.args)
+{
+  
+  # Obtain formal arguments
+  FUN.formals <- formals(FUN)
+  
+  # Overwrite arguments
+  FUN.formals <- overwrite_arguments(FUN.formals, FUN.args)
+  
+  # Remove ellipses
+  if("..." %in% names(FUN.formals)){
+    FUN.formals[which(names(FUN.formals) == "...")] <- NULL
+  }
+  
+  # Remove call arguments (assume they are supplied elsewhere)
+  call_argument <- lnapply(FUN.formals, function(x){is(x, "call")})
+  
+  # Keep non-calls
+  FUN.formals <- FUN.formals[!call_argument]
+  
   # Return arguments
-  return(default_arguments)
+  return(FUN.formals)
+  
+}
+
+#' @noRd
+# Legacy Argument Overwrite ----
+# Preference given to legacy
+# Updated 24.06.2023
+legacy_overwrite <- function(ellipse, legacy_ARG)
+{
+  
+  # Check for legacy argument in ellipse
+  if(legacy_ARG %in% names(ellipse)){
+    
+    # Overwrite arguments
+    ellipse[names(ellipse[[legacy_ARG]])] <- ellipse[[legacy_ARG]]
+    
+    # Remove legacy argument
+    ellipse <- ellipse[names(ellipse) != legacy_ARG]
+    
+  }
+  
+  # Return ellipse
+  return(ellipse)
+  
+}
+
+#' @noRd
+# Legacy Argument Handling ----
+# Updated 24.06.2023
+legacy_EGA_args <- function(ellipse)
+{
+  
+  # `model.args`
+  ellipse <- legacy_overwrite(ellipse, "model.args")
+  
+  # `algorithm.args`
+  ellipse <- legacy_overwrite(ellipse, "algorithm.args")
+  
+  # `plot.args`
+  ellipse <- legacy_overwrite(ellipse, "plot.args")
+  
+  # Return ellipse
+  return(ellipse)
   
 }
 
@@ -1057,9 +1128,7 @@ estimator_arguments <- function(lavaan_ARGS)
 {
   
   # Obtain categories
-  categories <- data_categories(
-    data = lavaan_ARGS$data
-  )
+  categories <- data_categories(lavaan_ARGS$data)
   
   # Check for categories
   if(any(categories <= 7)){
@@ -1086,126 +1155,6 @@ estimator_arguments <- function(lavaan_ARGS)
   
 }
 
-#' @noRd
-# Set default argument (cleaner missing function) ----
-# Updated 15.06.2023
-set_default <- function(argument, default, FUN)
-{
-  
-  # Check for function first and foremost
-  if(is.function(argument)){
-    return(argument)
-  }
-  
-  # Check for value error
-  value_error(argument, base::mode(default))
-  
-  # Check for function
-  if(!is.function(FUN)){
-    choices <- FUN # assume choices were input to function 
-  }else{
-    
-    # Get formal argument choices from default call
-    choices <- formals(FUN)[[substitute(argument)]]
-    
-    # Check if choices is a call
-    if(is.call(choices)){
-      
-      # Get choices
-      choices <- tolower(as.character(choices))
-      
-      # Remove "c" from call
-      choices <- choices[-which(choices == "c")]
-      
-    }
-    
-  }
-  
-  # Check for missing argument
-  if(missing(argument)){
-    argument <- default
-  }else if(length(argument) != 1){
-    argument <- default
-  }
-  
-  # Force lowercase argument
-  if(is.character(argument)){
-    argument <- tolower(argument)
-  }
-  
-  if(!argument %in% choices){
-    stop(
-      paste0(
-        "Invalid argument: ", substitute(argument),
-        " = \"", argument, "\"",
-        "\n\nPlease choose from: ", 
-        paste0(
-          "\"", choices, "\"", collapse = ", "
-        )
-      )
-    )
-  }
-  
-  # Return argument
-  return(argument)
-  
-}
-
-#' @noRd
-# Legacy Argument Handling ----
-# Updated 15.06.2023
-legacy_EGA_args <- function(ellipse)
-{
-  
-  # Check for `model.args`
-  if("model.args" %in% names(ellipse)){
-    
-    # Overwrite arguments
-    ellipse <- overwrite_arguments(ellipse, ellipse$model.args)
-    
-    # Remove `model.args`
-    ellipse <- ellipse[-which(names(ellipse) == "model.args")]
-    
-  }
-  
-  # Check for `algorithm.args`
-  if("algorithm.args" %in% names(ellipse)){
-    
-    # Overwrite arguments
-    ellipse <- overwrite_arguments(ellipse, ellipse$algorithm.args)
-    
-    # Remove `algorithm.args`
-    ellipse <- ellipse[-which(names(ellipse) == "algorithm.args")]
-    
-  }
-  
-  # Return ellipse
-  return(ellipse)
-  
-}
-
-#' @noRd
-# Overwrite Arguments (for Legacy) ----
-# Updated 15.06.2023
-overwrite_arguments <- function(main, ARGS)
-{
-  
-  # Determine whether any arguments are in both
-  if(any(names(ARGS) %in% names(main))){
-    
-    # Target arguments
-    target_args <- intersect(names(ARGS), names(main))
-    
-    # Replace target arguments
-    main[target_args] <- ARGS[target_args]
-    
-  }
-  
-  # Return main arguments
-  return(main)
-  
-}
-
 #%%%%%%%%%%%%%%%%%%%%
 # PLOT FUNCTIONS ----
 #%%%%%%%%%%%%%%%%%%%%
@@ -1213,7 +1162,7 @@ overwrite_arguments <- function(main, ARGS)
 #' @noRd
 # Defaults for GGally plotting ----
 # For plots and methods
-# Updated 15.06.2023
+# Updated 24.06.2023
 GGally_args <- function(ellipse)
 {
   
@@ -1230,6 +1179,9 @@ GGally_args <- function(ellipse)
     node.shape = 19, node.size = 12, 
     edge.alpha = "edge.alpha", edge.size = 8
   )
+  
+  # Legacy arguments
+  ellipse <- legacy_EGA_args(ellipse)
   
   # Replace `ggnet2` arguments with {EGAnet} arguments
   default_args <- overwrite_arguments(default_args, ega_default_args)
@@ -1376,22 +1328,19 @@ GGally_errors <- function(
 
 #' @noRd
 # Re-scale edges ----
-# Updated 14.06.2023
+# Updated 25.06.2023
 rescale_edges <- function(network, edge_size)
 {
   
-  # Obtain absolute network (as a vector)
-  vector_network <- abs(as.vector(network))
-  
   # Set up scaling sequence 
-  scale_sequence <- seq(0, 1, 0.0001)
+  scale_sequence <- seq.int(0, 1, 0.0001)
   names(scale_sequence) <- scale_sequence
   
   # Set edge scaling (default `edge.size = 8`)
   edge_scaling <- scale_sequence * edge_size
   
   ## Remove names
-  edge_scaling <- unname(edge_scaling[as.character(vector_network)])
+  edge_scaling <- unname(edge_scaling[as.character(abs(as.vector(network)))])
   
   # Return scaled edges
   return(edge_scaling)
@@ -1400,7 +1349,7 @@ rescale_edges <- function(network, edge_size)
 
 #' @noRd
 # Readable names ----
-# Updated 14.06.2023
+# Updated 25.06.2023
 readable_names <- function(node_names)
 {
   
@@ -1408,31 +1357,32 @@ readable_names <- function(node_names)
   name_split <- strsplit(node_names, split = " ")
 
   # Add return to names
-  better_names <- sapply(name_split, function(x){
-    
-    # Obtain words in name
-    words <- length(x)
-    
-    # Determine if split is necessary
-    if(words > 1){
+  better_names <- cnapply(
+    name_split, function(x){
       
-      # Determine number of lines
-      add_line <- round(words / 2)
+      # Obtain words in name
+      words <- length(x)
       
-      # Paste back together name
-      name <- paste(
-        paste(x[seq_len(add_line)], collapse = " "),
-        paste(x[(add_line+1):words], collapse = " "),
-        sep = "\n"
-      )
+      # Determine if split is necessary
+      if(words > 1){
+        
+        # Determine number of lines
+        add_line <- round(words / 2)
+        
+        # Paste back together name
+        name <- paste(
+          paste(x[seq_len(add_line)], collapse = " "),
+          paste(x[(add_line + 1):words], collapse = " "),
+          sep = "\n"
+        )
+        
+        # Return name
+        return(name)
+        
+      }else{return(x)}
       
-      # Return name
-      return(name)
-      
-    }else{return(x)}
-    
-    
-  })
+    }
+  )
   
   # Return names
   return(better_names)
@@ -1566,10 +1516,10 @@ basic_plot_setup <- function(network, wc = NULL, ...)
   }
   
   # Obtain number of communities
-  communities <- length(na.omit(unique(wc)))
+  communities <- unique_length(wc)
   
   # Obtain node names
-  node_names <- colnames(network)
+  node_names <- dimnames(network)[[2]]
 
   # With packages, set up arguments
   plot_ARGS <- GGally_args(ellipse)
@@ -1832,8 +1782,8 @@ dimension_comparison <- function(original, comparison){
   }
   
   # Get names
-  original_names <- colnames(original)
-  comparison_names <- colnames(comparison)
+  original_names <- dimnames(original)[[2]]
+  comparison_names <- dimnames(comparison)[[2]]
   
   # Check for NULL
   if(!is.null(original_names) & is.null(comparison_names)){
@@ -1868,13 +1818,16 @@ dimension_comparison <- function(original, comparison){
 
 #' @noRd
 # Basic set up for comparing plots ----
-# Updated 22.06.2023
+# Updated 25.06.2023
 compare_plots <- function(comparison_network, comparison_wc, plot_ARGS)
 {
   
+  # Get dimension names for comparison network
+  comparison_names <- dimnames(comparison_network)
+  
   # Comparison network
   comparison_network <- ega_first_level$network
-  comparison_wc <- gsub("_.*", "", colnames(comparison_network))
+  comparison_wc <- gsub("_.*", "", comparison_names[[2]])
   plot_ARGS <- first_level_plot$ARGS
   
   # Obtain the original network
@@ -1884,12 +1837,12 @@ compare_plots <- function(comparison_network, comparison_wc, plot_ARGS)
   dimension_comparison(original_network, comparison_network)
   
   # Ensure row names to ensure proper ordering
-  row.names(comparison_network) <- colnames(comparison_network)
+  dimnames(comparison_network)[[1]] <- comparison_names[[2]]
   
   # Put network into same order as original network
   matching_order <- match(
-    colnames(original_network), # target to match
-    colnames(comparison_network) # adjust to target
+    dimnames(original_network)[[2]], # target to match
+    comparison_names[[2]] # adjust to target
   )
   
   # Set comparison network in proper order
@@ -1920,11 +1873,14 @@ compare_plots <- function(comparison_network, comparison_wc, plot_ARGS)
 
 #' @noRd
 # Error for correlation matrix input ----
-# Updated 02.02.2023
+# Updated 24.06.2023
 symmetric_matrix_error <- function(data, n){
   
+  # Get dimensions
+  dimensions <- dim(data)
+  
   # Check for whether rows equal columns
-  if(nrow(data) == ncol(data)){
+  if(dimensions[1] == dimensions[2]){
     
     # Check for whether matrix is symmetric
     if(is_symmetric(data)){ # `is_symmetric` is in "helpers-general.R"
@@ -1942,11 +1898,11 @@ symmetric_matrix_error <- function(data, n){
 
 #' @noRd
 # Error for object type ----
-# Updated 30.09.2022
+# Updated 25.06.2023
 object_error <- function(input, expected_type){
   
   # Check for possible object types
-  possible_types <- sapply(
+  possible_types <- cnapply(
     X = expected_type,
     FUN = is,
     object = input
@@ -2049,18 +2005,19 @@ range_error <- function(input, expected_ranges){
 
 #' @noRd
 # Trace of matrix ----
-# Updated 27.05.2023
+# Updated 25.06.2023
 trace <- function(object)
 {
-  
-  # Ensure matrix
-  if(!is(object, "matrix") | !is(object, "table")){
-    object <- as.matrix(object)
-  }
-  
-  # Return trace
-  return(sum(diag(object)))
-  
+  return(sum(diag(object), na.rm = TRUE))
+}
+
+#' @noRd
+# Floating point equal ----
+# Because sometimes 1 != 1 when it should
+# Updated 23.06.2023
+float_equal <- function(x, y, tolerance = 1e-06)
+{
+  return(abs(x - y) < tolerance)
 }
 
 #%%%%%%%%%%%%%%%%%%%%%%%
@@ -2459,7 +2416,10 @@ textsymbol <- function(symbol = c("alpha", "beta", "chi", "delta",
 
 #' @noRd
 # Title Case ----
-# Updated 16.06.2023
+# Not truly title case -- just capitializes
+# the first letter of each word
+# Uses `tools::toTitleCase` for actual title case
+# Updated 25.06.2023
 totitle <- function(string)
 {
   
@@ -2467,7 +2427,7 @@ totitle <- function(string)
   words <- unlist(strsplit(string, split = " "))
   
   # Set first letters to uppercase
-  titleCased <- sapply(words, function(x){
+  titleCased <- cnapply(words, function(x){
     
     # Stitch together letters
     return(
@@ -2481,5 +2441,98 @@ totitle <- function(string)
   
   # Paste words back together
   return(paste(titleCased, collapse = " "))
+  
+}
+
+#' @noRd
+# Convert version to number ----
+# Updated 02.02.2023
+version_conversion <- function(version)
+{
+  
+  # Convert to character
+  version <- as.character(version)
+  
+  # Remove periods
+  version <- gsub("\\.", "", version)
+  
+  # Convert to numeric
+  version <- as.numeric(version)
+  
+  # Return version
+  return(version)
+  
+}
+
+#' @noRd
+# No names print ----
+# Updated 25.06.2023
+no_name_print <- function(object){
+  
+  # Convert object to data frame
+  df <- as.data.frame(object)
+  
+  # Remove column names
+  colnames(df) <- NULL
+  
+  # Print with no quotes or row names
+  print(df, quote = FALSE, row.names = FALSE)
+  
+}
+
+#' @noRd
+# General function to check for packages ----
+# Updated 26.06.2023
+check_package <- function(packages)
+{
+
+  # Performs what original `installed.packages()` does
+  # but without additional fluff
+  installed <- packages %in% ulapply(.libPaths(), list.files)
+  
+  # Determine which packages are not installed
+  not_installed <- packages[!installed]
+  
+  # Print error with missing packages
+  if(length(not_installed) != 0){
+    
+    # Organize packages error output
+    if(length(not_installed) > 1){
+      
+      # Get missing packages
+      missing_packages <- paste0("{", packages , "}", collapse = ", ")
+      packages <- paste0("\"", packages, "\"", collapse = ", ")
+      
+      # Stop and tell user to install package
+      stop(
+        paste0(
+          missing_packages, 
+          " are not installed but are required for this function. ",
+          "Please run \n\n",
+          "install.packages(c(", packages, "))",
+          "\n\nOnce installed, re-run this function (you may need to restart R/RStudio)."
+        )
+      )
+      
+    }else{
+      
+      # Get missing packages
+      missing_packages <- paste0("{", packages, "}")
+      packages <- paste0("\"", packages, "\"")
+      
+      # Stop and tell user to install package
+      stop(
+        paste0(
+          missing_packages, 
+          " is not installed but is required for this function. ",
+          "Please run \n\n",
+          "install.packages(c(", packages, "))",
+          "\n\nOnce installed, re-run this function (you may need to restart R/RStudio)."
+        )
+      )
+      
+    }
+    
+  }
   
 }

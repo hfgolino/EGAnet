@@ -5,100 +5,100 @@
 #' algorithm is varied and unique community solutions are compared using
 #' \code{\link[EGAnet]{tefi}}.
 #'
-#' @param data Matrix or data frame.
-#' Dataset or correlation matrix
+#' @param data Numeric matrix or data frame.
+#' Either data representing \emph{only} the variables of interest or
+#' a correlation matrix. Data that are not numeric will be
+#' removed from the dataset
+#'
+#' @param n Numeric (length = 1).
+#' Sample size if \code{data} is a correlation matrix
+#'
+#' @param corr Character (length = 1).
+#' Method to compute correlations.
+#' Defaults to \code{"auto"} to automatically compute
+#' appropriate correlations using \code{\link[EGAnet]{auto.correlate}}.
+#' \code{"pearson"} and \code{"spearman"} are provide for completeness.
+#' For other similarity measures, compute them first and input them
+#' into \code{data} with the sample size (\code{n})
 #' 
-#' @param n Integer.
-#' Sample size (if the data provided is a correlation matrix)
-#' 
-#' @param uni.method Character.
-#' What unidimensionality method should be used? 
-#' Defaults to \code{"LE"}.
-#' Current options are:
+#' @param na.data Character (length = 1).
+#' How should missing data be handled?
+#' Available options:
 #' 
 #' \itemize{
-#'
-#' \item{\strong{\code{expand}}}
-#' {Expands the correlation matrix with four variables correlated .50.
-#' If number of dimension returns 2 or less in check, then the data 
-#' are unidimensional; otherwise, regular EGA with no matrix
-#' expansion is used. This is the method used in the Golino et al. (2020)
-#' \emph{Psychological Methods} simulation.}
-#'
-#' \item{\strong{\code{LE}}}
-#' {Applies the leading eigenvalue algorithm (\code{\link[igraph]{cluster_leading_eigen}})
-#' on the empirical correlation matrix. If the number of dimensions is 1,
-#' then the leading eigenvalue solution is used; otherwise, regular EGA
-#' is used. This is the final method used in the Christensen, Garrido,
-#' and Golino (2021) simulation.}
+#' 
+#' \item{\code{"pairwise"}}
+#' {Computes correlation for all available cases between
+#' two variables}
+#' 
+#' \item{\code{"listwise"}}
+#' {Computes correlation for all complete cases in the dataset}
 #' 
 #' }
 #' 
-#' @param corr Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
-#' Current options are:
-#'
+#' @param model Character (length = 1).
+#' Available options:
+#' 
 #' \itemize{
-#'
-#' \item{\strong{\code{cor_auto}}}
-#' {Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
-#' \code{\link[qgraph]{qgraph}}}.
-#'
-#' \item{\strong{\code{pearson}}}
-#' {Computes Pearson's correlation coefficient using the pairwise complete observations via
-#' the \code{\link[stats]{cor}}} function.
-#'
-#' \item{\strong{\code{spearman}}}
-#' {Computes Spearman's correlation coefficient using the pairwise complete observations via
-#' the \code{\link[stats]{cor}}} function.
-#' }
-#'
-#' @param model Character.
-#' A string indicating the method to use.
-#' Defaults to \code{"glasso"}
-#'
-#' Current options are:
-#'
-#' \itemize{
-#'
-#' \item{\strong{\code{"glasso"}}}
-#' {Estimates the Gaussian graphical model using graphical LASSO with
-#' extended Bayesian information criterion to select optimal regularization parameter.
-#' See \code{\link[EGAnet]{EBICglasso.qgraph}}}
-#'
-#' \item{\strong{\code{"TMFG"}}}
-#' {Estimates a Triangulated Maximally Filtered Graph.
-#' See \code{\link[EGAnet]{TMFG}}}
-#'
+#' 
+#' \item{\code{"BGGM"}}
+#' {Computes the Bayesian Gaussian Graphical Model.
+#' Set argument \code{ordinal.categories} to determine
+#' levels allowed for a variable to be considered ordinal.
+#' See \code{\link[BGGM]{estimate}} for more details}
+#' 
+#' \item{\code{"glasso"}}
+#' {Computes the GLASSO with EBIC model selection.
+#' See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details}
+#' 
+#' \item{\code{"TMFG"}}
+#' {Computes the TMFG method.
+#' See \code{\link[EGAnet]{TMFG}} for more details}
+#' 
 #' }
 #' 
-#' @param algorithm A string indicating the algorithm to use or a function from \code{\link{igraph}}
-#' Defaults to \code{"walktrap"}.
-#' Current options are:
-#'
+#' @param algorithm Character or \code{\link{igraph}} \code{cluster_*} function.
+#' Three options are listed below but all are available
+#' (see \code{\link[EGAnet]{community.detection}} for other options):
+#' 
 #' \itemize{
 #'
-#' \item{\strong{\code{walktrap}}}
-#' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
-#'
-#' \item{\strong{\code{leiden}}}
-#' {Computes the Leiden algorithm using \code{\link[igraph]{cluster_louvain}}}
-#'
+#' \item{\code{"leiden"}}
+#' {See \code{\link[igraph]{cluster_leiden}} for more details.
+#' \emph{Note}: The Leiden algorithm will default to the
+#' Constant Potts Model objective function
+#' (\code{objective_function = "CPM"}). Set
+#' \code{objective_function = "modularity"} to use
+#' modularity instead (see examples). By default, searches along
+#' resolutions from 0 to 2 in 0.001 increments
+#' (\code{resolution_parameter = seq.int(0, 2, 0.001)}). Use the argument \code{resolution_parameter}
+#' to change the search parameters}
+#' 
+#' \item{\code{"louvain"}}
+#' {See \code{\link[igraph]{cluster_louvain}} for more details.
+#' By default, searches along resolutions from 0 to 2 in 0.001 increments
+#' (\code{resolution_parameter = seq.int(0, 2, 0.001)}). Use the argument \code{resolution_parameter}
+#' to change the search parameters}
+#' 
+#' \item{\code{"walktrap"}}
+#' {This algorithm is the default. See \code{\link[EGAnet]{cluster_walktrap}} for more details.
+#' By default, searches along 3 to 8 steps (\code{steps = 3:8}). Use the argument \code{steps}
+#' to change the search parameters}
+#' 
 #' }
+#' 
+#' @param plot.EGA Boolean.
+#' If \code{TRUE}, returns a plot of the network and its estimated dimensions.
+#' Defaults to \code{TRUE}
+#' 
+#' @param verbose Boolean.
+#' Whether messages and (insignificant) warnings should be output.
+#' Defaults to \code{FALSE} (silent calls).
+#' Set to \code{TRUE} to see all messages and warnings for every function call
 #'
-#' @param algorithm.args List.
-#' A list of additional arguments for \code{\link[igraph]{cluster_walktrap}} or \code{\link[igraph]{cluster_leiden}}.
-#' Options are:
-#'
-#' \itemize{
-#'
-#' \item{\strong{\code{steps}}}
-#' {Number of steps used in the Walktrap algorithm. Defaults to \code{c(3:8)}}
-#'
-#' \item{\strong{\code{leiden}}}
-#' {Resolution parameter used in the Leiden algorithm. Defaults to \code{seq(0, 2, .001)}.
-#' Higher values lead to smaller communities, lower values lead to larger communities}
-#'
-#' }
+#' @param ... Additional arguments to be passed on to
+#' \code{\link[EGAnet]{auto.correlate}}, \code{\link[EGAnet]{network.estimation}},
+#' \code{\link[EGAnet]{community.detection}}, and \code{\link[EGAnet]{EGA.estimate}}
 #'
 #' @return Returns a list containing:
 #'
@@ -118,29 +118,27 @@
 #' @examples
 #' # Load data
 #' wmt <- wmt2[,7:24]
-#'
-#' \dontrun{
-#' # Estimate EGA
-#' ega.wmt <- EGA(
-#'   data = wmt, 
-#'   plot.EGA = FALSE # No plot for CRAN checks
-#' )
-#'
-#' # Estimate optimal EGA
-#' fit.wmt <- EGA.fit(data = wmt)
 #' 
-#' # Plot optimal fit
-#' plot(fit.wmt$EGA)
-#'
-#' # Estimate CFAs
-#' cfa.ega <- CFA(ega.wmt, estimator = "WLSMV", data = wmt)
-#' cfa.fit <- CFA(fit.wmt$EGA, estimator = "WLSMV", data = wmt)
-#'
-#' # Compare CFAs
-#' lavaan::lavTestLRT(
-#'   cfa.ega$fit, cfa.fit$fit,
-#'   method = "satorra.bentler.2001"
-#' )}
+#' # Estimate optimal EGA with Walktrap
+#' fit.walktrap <- EGA.fit(
+#'   data = wmt, algorithm = "walktrap",
+#'   plot.EGA = FALSE # no plot for CRAN checks
+#' )
+#' 
+#' # Estimate optimal EGA with Louvain
+#' fit.louvain <- EGA.fit(
+#'   data = wmt, algorithm = "louvain",
+#'   resolution_parameter = seq.int(0, 2, 0.50),
+#'   plot.EGA = FALSE # no plot for CRAN checks
+#' )
+#' 
+#' # Estimate optimal EGA with Leiden and modularity
+#' fit.leiden <- EGA.fit(
+#'   data = wmt, algorithm = "leiden",
+#'   objective_function = "modularity",
+#'   resolution_parameter = seq.int(0, 2, 0.50),
+#'   plot.EGA = FALSE # no plot for CRAN checks
+#' )
 #'
 #' @references
 #' # Entropy fit measures \cr
@@ -163,271 +161,512 @@
 #' Computing communities in large networks using random walks.
 #' \emph{Journal of Graph Algorithms and Applications}, \emph{10}, 191-218.
 #'
-#' @seealso \code{\link[EGAnet]{bootEGA}} to investigate the stability of EGA's estimation via bootstrap,
-#' \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA,
-#' and \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
-#'
 #' @author Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'
 #' @export
 # EGA fit
-# Updated 11.22.2021
+# Updated 26.06.2023
 EGA.fit <- function (
-  data, n = NULL, uni.method = c("expand", "LE"),
-  corr = c("cor_auto", "pearson", "spearman"),
-  model = c("glasso","TMFG"),
-  algorithm = c("leiden", "walktrap"),
-  algorithm.args = list(
-    steps = c(3:8),
-    resolution_parameter = seq(0, 2, .001)
-  )
+    data, n = NULL,
+    corr = c("auto", "pearson", "spearman"),
+    na.data = c("pairwise", "listwise"),
+    model = c("BGGM", "glasso", "TMFG"),  
+    algorithm = c("leiden", "louvain", "walktrap"),
+    plot.EGA = TRUE, verbose = FALSE,
+    ...
 )
 {
-  if(missing(uni.method)){
-    uni.method <- "LE"
-  }else{uni.method <- match.arg(uni.method)}
   
-  # Check if uni.method = "LE" has been used
-  if(uni.method == "LE"){
-    # Give change warning
-    warning(
-      paste(
-        "Previous versions of EGAnet (<= 0.9.8) checked unidimensionality using",
-        styletext('uni.method = "expand"', defaults = "underline"),
-        "as the default"
-      )
-    )
-  }else if(uni.method == "expand"){
-    # Give change warning
-    warning(
-      paste(
-        "Newer evidence suggests that",
-        styletext('uni.method = "LE"', defaults = "underline"),
-        'is more accurate than uni.method = "expand" (see Christensen, Garrido, & Golino, 2021 in references).',
-        '\n\nIt\'s recommended to use uni.method = "LE"'
-      )
-    )
-  }
+  # Check for missing arguments (argument, default, function)
+  corr <- set_default(corr, "auto", c("auto", "cor_auto", "pearson", "spearman"))
+  corr <- ifelse(corr == "cor_auto", "auto", corr) # deprecate `cor_auto`
+  na.data <- set_default(na.data, "pairwise", auto.correlate)
+  model <- set_default(model, "glasso", network.estimation)
+  algorithm <- set_default(algorithm, "walktrap", EGA.fit)
+
+  # Obtain ellipse arguments
+  ellipse <- list(...)
   
-  if(missing(model)){
-    model <- "glasso"
-  }else{model <- match.arg(model)}
-  
-  if(missing(corr)){
-    corr <- "cor_auto"
-  }else{corr <- match.arg(corr)}
-  
-  if(missing(algorithm)){
-    algorithm <- "walktrap"
-  }else{algorithm <- tolower(match.arg(algorithm))}
-  
-  # Check for algorithm arguments
-  if(algorithm == "walktrap"){
-    if(!"steps" %in% names(algorithm.args)){
-      algorithm.args <- list()
-      algorithm.args$steps <- c(3:8)
-    }
-  }else if(algorithm == "leiden"){
-    if(!"resolution_parameter" %in% names(algorithm.args)){
-      algorithm.args <- list()
-      algorithm.args$resolution_parameter <- seq(0, 2, .001)
-    }
-  }
-  
-  #Speed up process with data
-  if(nrow(data) != ncol(data)){
-    n <- nrow(data)
-    data <- switch(corr,
-                   "cor_auto" = auto.correlate(data),
-                   "pearson" = cor(data, use = "pairwise.complete.obs"),
-                   "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
-    )
-  }
-  
-  # Check algorithm
+  # `EGA.estimate` will handle the data processing (e.g., correlations)
+  ## Branch for Walktrap or Leiden/Louvain
   if(algorithm == "walktrap"){
     
-    best.fit <- list()
+    # Set objective function to NULL
+    objective_function <- NULL
     
-    steps <- algorithm.args$steps
-    
-    num <- length(steps)
-    
-    mods <- list()
-    dims <- matrix(NA, nrow = ncol(data), ncol = num)
-    
-    #Generate walktrap models
-    for(i in 1:num)
-    {
-      message(paste("Estimating EGA -- Walktrap model",i,"of",num,sep=" "))
-      mods[[as.character(steps[i])]] <- EGA(data = data,
-                                            n = n,
-                                            model = model,
-                                            model.args = list(steps = steps[i]),
-                                            algorithm = "walktrap",
-                                            plot.EGA = FALSE)
-      
-      dims[,i] <- mods[[as.character(steps[i])]]$wc
-    }
-    
-    colnames(dims) <- as.character(steps)
-    
-    #remove solutions with missing dimensions
-    rm.cols <- which(apply(apply(dims, 2, is.na), 2, any))
-    
-    if(length(rm.cols) != 0)
-    {
-      dims <- dims[,-rm.cols]
-      steps <- steps[-rm.cols]
-    }
-    
-    #check for unique number of dimensions
-    step <- as.numeric(colnames(dims)[which(!duplicated(homogenize.membership(dims[,1], dims), MARGIN = 2))])
-    
-    len <- length(step)
-    
-    #if all models are the same
-    if(len==1)
-    {
-      best.fit$EGA <- mods[[1]]
-      best.fit$steps <- 4
-      Sys.sleep(1)
-      message("\nAll EGA models are identical.")
-      Sys.sleep(1)
+    # Check for parameter search space
+    if(!"steps" %in% names(ellipse)){
+      steps <- 3:8 # default
     }else{
       
-      ent.vec <- vector("numeric",length=len)
+      # Set steps
+      steps <- ellipse$steps
       
-      for(i in 1:len)
-      {ent.vec[i] <- tefi(abs(mods[[as.character(step[i])]]$correlation), mods[[as.character(step[i])]]$wc)$VN.Entropy.Fit}
+      # Remove objective function from ellipse to
+      # make other arguments available in `do.call`
+      ellipse <- ellipse[names(ellipse) != "steps"]
       
-      names(ent.vec) <- step
-      
-      best.fit$EGA <- mods[as.character(step[which(ent.vec==min(ent.vec))])]
-      best.fit$steps <- step[which(ent.vec==min(ent.vec))]
-      best.fit$EntropyFit <- ent.vec
-      best.fit$Lowest.EntropyFit <- ent.vec[which(ent.vec==min(ent.vec))]
     }
     
-    # Get information for EGA Methods section
-    args <- list()
+    # Get the length of the steps
+    step_length <- length(steps)
     
-    args$model <- model
-    args$algorithm <- "walktrap"
-    args$steps <- range(steps)
-    args$entropy <- best.fit$Lowest.EntropyFit
-    args$solutions <- best.fit$EntropyFit
-    
-    best.fit$Methods <- args
-    
-  }else if(algorithm == "leiden"){
-    
-    best.fit <- list()
-    
-    resolution_parameter <- algorithm.args$resolution_parameter
-    
-    num <- length(resolution_parameter)
-    
-    mods <- list()
-    dims <- matrix(NA, nrow = ncol(data), ncol = num)
-    
-    #Generate Leiden models
-    ## Estimate EGA
-    ega <- suppressMessages(
-      suppressWarnings(
-        EGA(data = data,
-            n = n,
-            model = model,
-            plot.EGA = FALSE)
+    # Perform EGA with first parameter
+    ega_result <- do.call(
+      what = EGA.estimate,
+      args = c(
+        list( # Necessary call
+          data = data, n = n, corr = corr,
+          na.data = na.data, model = model,
+          algorithm = algorithm, verbose = verbose,
+          steps = steps[1]
+        ),
+        ellipse # pass on ellipse
       )
     )
     
-    ## Obtain network
-    net <- ega$network
+    # Set up search matrix
+    search_matrix <- matrix(
+      0, nrow = step_length,
+      ncol = length(ega_result$wc)
+    )
     
-    ## Convert to igraph
-    g <- convert2igraph(abs(net))
+    # Add names
+    colnames(search_matrix) <- names(ega_result$wc)
+    row.names(search_matrix) <- steps
     
-    ## Estimate Leiden results
-    results <- list()
-    
-    for(i in 1:length(resolution_parameter)){
-      
-      mods[[as.character(resolution_parameter[i])]] <- igraph::cluster_leiden(
-        g,
-        resolution_parameter = resolution_parameter[i]
-        
-      )
-      
-      dims[,i] <- mods[[as.character(resolution_parameter[i])]]$membership
-      
-    }
-    
-    colnames(dims) <- as.character(resolution_parameter)
-    
-    #remove solutions with missing dimensions
-    rm.cols <- which(apply(apply(dims, 2, is.na), 2, any))
-    
-    if(length(rm.cols) != 0)
-    {
-      dims <- dims[,-rm.cols]
-      resolution_parameter <- resolution_parameter[-rm.cols]
-    }
-    
-    #check for unique number of dimensions
-    resolution <- as.numeric(colnames(dims)[which(!duplicated(homogenize.membership(dims[,1], dims), MARGIN = 2))])
-    
-    len <- length(resolution)
-    
-    #if all models are the same
-    if(len==1)
-    {
-      best.fit$EGA <- mods[[1]]
-      best.fit$resolution <- resolution_parameter[[1]]
-      Sys.sleep(1)
-      message("\nAll EGA models are identical.")
-      Sys.sleep(1)
-    }else{
-      
-      ent.vec <- vector("numeric",length=len)
-      
-      for(i in 1:len)
-      {ent.vec[i] <- tefi(abs(ega$correlation), mods[[as.character(resolution[i])]]$membership)$VN.Entropy.Fit}
-      
-      names(ent.vec) <- resolution
-      
-      best.fit$EGA <- suppressMessages(
-        suppressWarnings(
-          EGA(data = data,
-              n = n,
-              model = model,
-              algorithm = igraph::cluster_leiden,
-              algorithm.args = list(
-                resolution_parameter = resolution[which(ent.vec==min(ent.vec))]
-              ),
-              plot.EGA = FALSE)
+    # Add first parameter
+    search_matrix[1,] <- ega_result$wc
+
+    # The network won't change so apply the community detection
+    # algorithm over the rest of the parameters
+    for(i in 2:step_length){
+      search_matrix[i,] <- do.call(
+        what = community.detection,
+        args = c(
+          list( # Necessary call
+            network = ega_result$network,
+            algorithm = algorithm,
+            steps = steps[i]
+          ),
+          ellipse # pass on ellipse
         )
       )
-      best.fit$resolution_parameter <- resolution[which(ent.vec==min(ent.vec))]
-      best.fit$EntropyFit <- ent.vec
-      best.fit$Lowest.EntropyFit <- ent.vec[which(ent.vec==min(ent.vec))]
     }
     
-    # Get information for EGA Methods section
-    args <- list()
+  }else{
     
-    args$model <- model
-    args$algorithm <- "leiden"
-    args$steps <- range(resolution)
-    args$entropy <- best.fit$Lowest.EntropyFit
-    args$solutions <- best.fit$EntropyFit
+    # Check for Leiden algorithm
+    if(algorithm == "leiden"){
+
+      # If Leiden, then check for objective function
+      if(!"objective_function" %in% names(ellipse)){
+        objective_function <- "CPM"
+        # default for {igraph} and `community.detection`
+      }else{
+        
+        # Set objective function
+        objective_function <- ellipse$objective_function
+        
+        # Remove objective function from ellipse to
+        # make other arguments available in `do.call`
+        ellipse <- ellipse[names(ellipse) != "objective_function"]
+        
+      }
+
+    }else{ # Set to NULL to avoid conflict with Louvain
+      objective_function <- NULL
+    }
     
-    best.fit$Methods <- args
+    # Check for parameter search space
+    if(!"resolution_parameter" %in% names(ellipse)){
+      resolution_parameter <- seq.int(0, 2, 0.001) # default
+    }else{
+      
+      # Set resolution parameter
+      resolution_parameter <- ellipse$resolution_parameter
+      
+      # Remove resolution parameter from ellipse to
+      # make other arguments available in `do.call`
+      ellipse <- ellipse[names(ellipse) != "resolution_parameter"]
+    
+    }
+    
+    # Get the length of the resolution parameter
+    resolution_parameter_length <- length(resolution_parameter)
+    
+    # Perform EGA with first parameter
+    ega_result <- do.call(
+      what = EGA.estimate,
+      args = c(
+        list( # Necessary call
+          data = data, n = n, corr = corr,
+          na.data = na.data, model = model,
+          algorithm = algorithm, verbose = verbose,
+          resolution_parameter = resolution_parameter[1],
+          objective_function = objective_function
+        ),
+        ellipse # pass on ellipse
+      )
+    )
+    
+    # Set up search matrix
+    search_matrix <- matrix(
+      0, nrow = resolution_parameter_length,
+      ncol = length(ega_result$wc),
+      dimnames = list(
+        resolution_parameter, names(ega_result$wc)
+      )
+    )
+    
+    # Add first parameter
+    search_matrix[1,] <- ega_result$wc
+    
+    # The network won't change so apply the community detection
+    # algorithm over the rest of the parameters
+    for(i in 2:resolution_parameter_length){
+      search_matrix[i,] <- do.call(
+        what = community.detection,
+        args = c(
+          list( # Necessary call
+            network = ega_result$network,
+            algorithm = algorithm,
+            resolution_parameter = resolution_parameter[i],
+            objective_function = objective_function
+          ),
+          ellipse # pass on ellipse
+        )
+      )
+    }
+    
+  }
+  
+  # Obtain only unique solutions
+  search_unique <- unique_solutions(search_matrix)
+  
+  # Obtain absolute correlation matrix
+  if(model != "bggm"){
+    correlation_matrix <- ega_result$cor.data
+  }else{
+    
+    # Needs correlation matrix for BGGM
+    correlation_matrix <- obtain_sample_correlations(
+      data = data, n = 1, # avoids throwing error
+      corr = corr, na.data = na.data,
+      verbose = verbose, ...
+    )$correlation_matrix
+    
+  }
+  
+  # Determine best fitting solution
+  fit_values <- apply(
+    search_unique, 1, function(membership){
+      tefi(correlation_matrix, membership)
+    }$VN.Entropy.Fit
+  )
+  
+  # Determine best fit index
+  best_index <- which.min(fit_values)
+  
+  # Obtain best solution
+  best_solution <- search_unique[best_index,]
+  
+  # Obtain signed argument
+  if(!"signed" %in% names(ellipse)){
+    signed <- FALSE # default
+  }else{signed <- ellipse$signed}
+  
+  # Add methods to membership attributes
+  attr(best_solution, "methods") <- list(
+    algorithm = obtain_algorithm_name(algorithm),
+    # `obtain_algorithm_name` is with `community.detection`
+    signed = signed, objective_function = objective_function
+  )
+  
+  # Set class (proper `EGA.estimate` printing)
+  class(best_solution) <- "EGA.community"
+  
+  # Set up EGA with appropriate memberships
+  ega_result$wc <- best_solution
+  ega_result$n.dim <- unique_length(best_solution)
+  
+  # Set up best fit results
+  best_fit <- list(
+    EGA = ega_result,
+    EntropyFit = fit_values,
+    Lowest.EntropyFit = fit_values[best_index]
+  )
+  
+  # Add parameters
+  if(algorithm == "walktrap"){
+    best_fit$parameter.space <- steps
+  }else{
+    best_fit$parameter.space <- resolution_parameter
+  }
+  
+  # No need for attributes (all necessary information S3 is available)
+  
+  # Set class
+  class(best_fit) <- "EGA.fit"
+  
+  # Check for plot
+  if(isTRUE(plot.EGA)){
+    
+    # Set up plot
+    best_fit$Plot.EGA <- plot(best_fit)
+    
+    # Actually send the plot
+    plot(best_fit$Plot.EGA)
     
   }
       
-  class(best.fit) <- "EGA.fit"
-      
-  return(best.fit)
+  return(best_fit)
 }
-#----
+
+# Bug checking ----
+## Basic input
+# data = wmt2[,7:24]; n = NULL; corr = "auto"
+# na.data = "pairwise"; model = "glasso"; algorithm = "leiden"
+# plot.EGA = TRUE; verbose = FALSE
+# ellipse = list(objective_function = "modularity")
+
+#' @exportS3Method 
+# S3 Print Method ----
+# Updated 23.06.2023
+print.EGA.fit <- function(x, ...)
+{
+  
+  # Print network estimation
+  print(x$EGA$network)
+  
+  # Add break space
+  cat("\n----\n\n")
+  
+  # Obtain membership
+  membership <- x$EGA$wc
+  
+  # Determine number of communities
+  communities <- length(na.omit(unique(membership)))
+  
+  # Obtain algorithm name (if available)
+  algorithm <- attr(membership, "methods")$algorithm
+  
+  # Check for signed
+  algorithm_name <- ifelse(
+    attr(membership, "methods")$signed,
+    paste("Signed", algorithm),
+    algorithm
+  )
+  
+  # Check for Leiden
+  if(algorithm == "Leiden"){
+    
+    # Obtain objective function
+    objective_function <- attr(membership, "methods")$objective_function
+    
+    # Set up algorithm name
+    objective_name <- ifelse(
+      is.null(objective_function),
+      "CPM", objective_function
+    )
+    
+    # Expand "CPM"
+    objective_name <- ifelse(
+      objective_name == "CPM",
+      "Constant Potts Model", "Modularity"
+    )
+    
+    # Finalize algorithm name
+    algorithm_name <- paste(
+      algorithm, "with", objective_name
+    )
+    
+  }
+  
+  # Check for parameter addition
+  algorithm_name <- paste0(
+    algorithm_name,
+    paste0(
+      " (", ifelse(
+        algorithm == "Walktrap",
+        "Steps = ",
+        "Resolution = "
+      ), names(x$Lowest.EntropyFit),
+      ")"
+    )
+  )
+  
+  # Set up methods
+  cat(paste0("Algorithm: "), algorithm_name)
+  
+  # Add breakspace
+  cat("\n\n")
+  
+  # Add TEFI value
+  cat(paste0("TEFI: ", round(x$Lowest.EntropyFit, 3)))
+  
+  # Add breakspace
+  cat("\n\n")
+  
+  # Print communities
+  cat(paste0("Number of communities: "), communities)
+  cat("\n\n") # Add breakspace
+  
+  # Remove attribute for clean print
+  attr(membership, which = "class") <- NULL
+  attr(membership, which = "methods") <- NULL
+  
+  # Print membership
+  print(membership)
+  
+}
+
+#' @exportS3Method 
+# S3 Summary Method ----
+# Updated 23.06.2023
+summary.EGA.fit <- function(object, ...)
+{
+  
+  # Print network estimation
+  print(object$EGA$network)
+  
+  # Add break space
+  cat("\n----\n\n")
+  
+  # Obtain membership
+  membership <- object$EGA$wc
+  
+  # Determine number of communities
+  communities <- length(na.omit(unique(membership)))
+  
+  # Obtain algorithm name (if available)
+  algorithm <- attr(membership, "methods")$algorithm
+  
+  # Check for signed
+  algorithm_name <- ifelse(
+    attr(membership, "methods")$signed,
+    paste("Signed", algorithm),
+    algorithm
+  )
+  
+  # Check for Leiden
+  if(algorithm == "Leiden"){
+    
+    # Obtain objective function
+    objective_function <- attr(membership, "methods")$objective_function
+    
+    # Set up algorithm name
+    objective_name <- ifelse(
+      is.null(objective_function),
+      "CPM", objective_function
+    )
+    
+    # Expand "CPM"
+    objective_name <- ifelse(
+      objective_name == "CPM",
+      "Constant Potts Model", "Modularity"
+    )
+    
+    # Finalize algorithm name
+    algorithm_name <- paste(
+      algorithm, "with", objective_name
+    )
+    
+  }
+  
+  # Check for parameter addition
+  algorithm_name <- paste0(
+    algorithm_name,
+    paste0(
+      " (", ifelse(
+        algorithm == "Walktrap",
+        "Steps = ",
+        "Resolution = "
+      ), names(object$Lowest.EntropyFit),
+      ")"
+    )
+  )
+  
+  # Set up methods
+  cat(paste0("Algorithm: "), algorithm_name)
+  
+  # Add breakspace
+  cat("\n\n")
+  
+  # Add TEFI value
+  cat(paste0("TEFI: ", round(object$Lowest.EntropyFit, 3)))
+  
+  # Add breakspace
+  cat("\n\n")
+  
+  # Print communities
+  cat(paste0("Number of communities: "), communities)
+  cat("\n\n") # Add breakspace
+  
+  # Remove attribute for clean print
+  attr(membership, which = "class") <- NULL
+  attr(membership, which = "methods") <- NULL
+  
+  # Print membership
+  print(membership)
+  
+}
+
+#' @exportS3Method 
+# S3 Plot Method ----
+# Updated 23.06.2023
+plot.EGA.fit <- function(x, ...)
+{
+  
+  # Return plot
+  single_plot(
+    network = x$EGA$network,
+    wc = x$EGA$wc,
+    ...
+  )
+  
+}
+
+#' @noRd
+# Determine unique solutions ----
+# Updated 26.06.2023 
+unique_solutions <- function(search_matrix)
+{
+
+  # Obtain counts to eliminate duplicates
+  search_unique <- unique(search_matrix, MARGIN = 1)
+  
+  # Obtain original rows
+  original_rows <- dim(search_unique)[1]
+  
+  # Remove solutions with singleton
+  search_unique <- na.omit(search_unique)
+
+  # Singleton rows
+  singleton_rows <- dim(search_unique)[1]
+  
+  # Remove unidimensional solutions
+  search_unique <- search_unique[
+    apply(search_unique, 1, function(x){unique_length(x) != 1}),, drop = FALSE
+  ]
+  
+  # Unidimensional rows
+  unidimensional_rows <- dim(search_unique)[1]
+  
+  # Check for errors to send
+  if(singleton_rows == 0){
+    stop("All solutions were determined to include at least one singleton community")
+  }else if(singleton_rows == 1 & unidimensional_rows == 0){
+    stop("All solutions were determined to be unidimensional and/or at least one singleton community")
+  }else if(unidimensional_rows == 0){
+    stop("All solutions were determined to be unidimensional")
+  }
+  
+  # Return unique solutions
+  return(search_unique)
+
+}
+
+
+
+

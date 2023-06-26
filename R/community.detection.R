@@ -30,7 +30,12 @@
 #' {See \code{\link[igraph]{cluster_leading_eigen}} for more details}
 #' 
 #' \item{\code{"leiden"}}
-#' {See \code{\link[igraph]{cluster_leiden}} for more details}
+#' {See \code{\link[igraph]{cluster_leiden}} for more details.
+#' \emph{Note}: The Leiden algorithm will default to the
+#' Constant Potts Model objective function
+#' (\code{objective_function = "CPM"}). Set
+#' \code{objective_function = "modularity"} to use
+#' modularity instead (see examples)}
 #' 
 #' \item{\code{"louvain"}}
 #' {See \code{\link[igraph]{cluster_louvain}} for more details}
@@ -105,6 +110,12 @@
 #' # Compute Leading Eigenvector
 #' community.detection(network, algorithm = "leading_eigen")
 #' 
+#' # Compute Leiden (with modularity)
+#' community.detection(
+#'   network, algorithm = "leiden",
+#'   objective_function = "modularity"
+#' )
+#' 
 #' # Compute Louvain
 #' community.detection(network, algorithm = "louvain")
 #' 
@@ -138,12 +149,12 @@
 #' @export
 #'
 # Compute communities for EGA
-# Updated 23.06.2023
+# Updated 26.06.2023
 community.detection <- function(
     network, algorithm = c(
       "edge_betweenness", "fast_greedy",
       "fluid", "infomap", "label_prop",
-      "leading_eigen", "louvain", "optimal",
+      "leading_eigen", "leiden", "louvain", "optimal",
       "signed_louvain", "spinglass", "walktrap"
     ),
     signed = FALSE, allow.singleton = FALSE,
@@ -270,21 +281,10 @@ community.detection <- function(
     }
     
     # Set up network
-    if(is.character(algorithm)){
-      
-      # Check for signed Louvain
-      if(algorithm == "signed_louvain"){
-        algorithm.ARGS[[1]] <- network_matrix
-      }else{
-        algorithm.ARGS[[1]] <- igraph_network
-        signed = FALSE # {igraph} networks are absolute
-      }
-      
-    }else{ # Assume function is {igraph}
-      
-      # Add {igraph} network
+    if(is.function(algorithm) || algorithm != "signed_louvain"){
       algorithm.ARGS[[1]] <- igraph_network
-      
+    }else{ # Signed Louvain
+      algorithm.ARGS[[1]] <- network_matrix
     }
     
     # Get result
@@ -301,31 +301,32 @@ community.detection <- function(
     # Determine whether there are any singleton communities
     membership_frequency <- table(membership)
     
+    # Singletons
+    singletons <- membership_frequency == 1
+    
     # Check for frequencies equal to one
-    if(any(membership_frequency == 1)){
+    if(any(singletons)){
       
       # Identify communities
       singleton_communities <- as.numeric(
-        names(membership_frequency)[
-          membership_frequency == 1
-        ]
+        names(membership_frequency)[singletons]
       )
       
       # Set values to NA
-      membership[
-        membership %in% singleton_communities
-      ] <- NA
+      membership[membership %in% singleton_communities] <- NA
       
     }
     
   }
   
   # Name nodes
-  names(membership) <- colnames(network_matrix)
+  names(membership) <- dimnames(network_matrix)[[2]]
   
   # Add methods to membership attributes
   attr(membership, "methods") <- list(
-    algorithm = obtain_algorithm_name(algorithm), signed = signed
+    algorithm = obtain_algorithm_name(algorithm), signed = signed,
+    objective_function = algorithm.ARGS$objective_function
+    # `objective_function` will be NULL unless it's there!
   )
   
   # Check for whether all results should be returned
@@ -364,7 +365,7 @@ community.detection <- function(
 
 #' @exportS3Method 
 # S3 Print Method ----
-# Updated 16.06.2023
+# Updated 25.06.2023
 print.EGA.community <- function(x, ...)
 {
   
@@ -376,7 +377,7 @@ print.EGA.community <- function(x, ...)
   }
   
   # Determine number of communities
-  communities <- length(na.omit(unique(membership)))
+  communities <- unique_length(membership)
   
   # Obtain algorithm name (if available)
   algorithm <- attr(membership, "methods")$algorithm
@@ -391,6 +392,31 @@ print.EGA.community <- function(x, ...)
       algorithm
     )
     
+    # Check for Leiden
+    if(algorithm == "Leiden"){
+      
+      # Obtain objective function
+      objective_function <- attr(membership, "methods")$objective_function
+      
+      # Set up algorithm name
+      objective_name <- ifelse(
+        is.null(objective_function),
+        "CPM", objective_function
+      )
+      
+      # Expand "CPM"
+      objective_name <- ifelse(
+        objective_name == "CPM",
+        "Constant Potts Model", "Modularity"
+      )
+      
+      # Finalize algorithm name
+      algorithm_name <- paste(
+        algorithm, "with", objective_name
+      )
+      
+    }
+    
     # Set up methods
     cat(paste0("Algorithm: "), algorithm_name)
     
@@ -403,8 +429,8 @@ print.EGA.community <- function(x, ...)
   cat(paste0("Number of communities: "), communities)
   cat("\n\n") # Add breakspace
   
-  # Remove attribute for clean print
-  attr(membership, which = "class") <- NULL
+  # Remove class and attribute for clean print
+  membership <- unclass(membership)
   attr(membership, which = "methods") <- NULL
   
   # Print membership
@@ -414,7 +440,7 @@ print.EGA.community <- function(x, ...)
 
 #' @exportS3Method 
 # S3 Summary Method ----
-# Updated 16.06.2023
+# Updated 25.06.2023
 summary.EGA.community <- function(object, ...)
 {
   
@@ -426,7 +452,7 @@ summary.EGA.community <- function(object, ...)
   }
   
   # Determine number of communities
-  communities <- length(na.omit(unique(membership)))
+  communities <- unique_length(membership)
   
   # Obtain algorithm name (if available)
   algorithm <- attr(membership, "methods")$algorithm
@@ -441,6 +467,31 @@ summary.EGA.community <- function(object, ...)
       algorithm
     )
     
+    # Check for Leiden
+    if(algorithm == "Leiden"){
+      
+      # Obtain objective function
+      objective_function <- attr(membership, "methods")$objective_function
+      
+      # Set up algorithm name
+      objective_name <- ifelse(
+        is.null(objective_function),
+        "CPM", objective_function
+      )
+      
+      # Expand "CPM"
+      objective_name <- ifelse(
+        objective_name == "CPM",
+        "Constant Potts Model", "Modularity"
+      )
+      
+      # Finalize algorithm name
+      algorithm_name <- paste(
+        algorithm, "with", objective_name
+      )
+      
+    }
+    
     # Set up methods
     cat(paste0("Algorithm: "), algorithm_name)
     
@@ -453,8 +504,8 @@ summary.EGA.community <- function(object, ...)
   cat(paste0("Number of communities: "), communities)
   cat("\n\n") # Add breakspace
   
-  # Remove attribute for clean print
-  attr(membership, which = "class") <- NULL
+  # Remove class and attribute for clean print
+  membership <- unclass(membership)
   attr(membership, which = "methods") <- NULL
   
   # Print membership

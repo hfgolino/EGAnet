@@ -110,7 +110,7 @@
 #' @export
 #'
 # Compute polychoric correlation matrix
-# Updated 17.06.2023
+# Updated 26.06.2023
 polychoric.matrix <- function(
     data, na.data = c("pairwise", "listwise"),
     empty.method = c("none", "zero", "all"),
@@ -134,7 +134,7 @@ polychoric.matrix <- function(
   }
   
   # Ensure data is an integer matrix
-  data <- apply(data, 2, as.integer)
+  data <- integer_matrix(data)
   
   # Set up 'empty.method' and 'empty.value' for C
   if(empty.method == "none"){

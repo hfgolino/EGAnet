@@ -52,7 +52,7 @@
 #' @export
 #'
 # Compute Louvain communities for EGA
-# Updated 16.06.2023
+# Updated 25.06.2023
 community.louvain <- function(
     network, signed = FALSE, 
     resolution = 1
@@ -156,7 +156,7 @@ community.louvain <- function(
   }
   
   # Name nodes
-  colnames(result) <- colnames(network_matrix)
+  dimnames(result)[[2]] <- dimnames(network_matrix)[[2]]
   
   # Return membership
   return(result)

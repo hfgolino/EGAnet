@@ -366,7 +366,7 @@ EGA <- function (
   )
   
   # Unidimensional?
-  unidimensional <- length(na.omit(unique(unidimensional_result))) == 1
+  unidimensional <- unique_length(unidimensional_result) == 1
   
   # Determine result
   if(unidimensional){
@@ -374,13 +374,12 @@ EGA <- function (
   }
   
   # Obtain number of dimensions
-  multidimensional_result$n.dim <- 
-    length(na.omit(unique(multidimensional_result$wc)))
+  multidimensional_result$n.dim <- unique_length(multidimensional_result$wc)
   
   # Set up dimension variables data frame
-  ## Mainly for legacy, redundant with named `wc` output
+  ## Mainly for legacy, redundant with named `wc`
   dim.variables <- data.frame(
-    items = colnames(data),
+    items = dimnames(data)[[2]],
     dimension = as.vector(multidimensional_result$wc)
   )
   

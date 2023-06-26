@@ -119,7 +119,7 @@
 #'
 #' @export
 # TMFG Filtering Method----
-# Updated 23.06.2023
+# Updated 26.06.2023
 TMFG <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -147,9 +147,6 @@ TMFG <- function(
   # Get correlations
   correlation_matrix <- output$correlation_matrix
   
-  # Ensure that the correlation matrix *is* a matrix
-  correlation_matrix <- as.matrix(correlation_matrix)
-  
   # Obtain number of nodes
   nodes <- dim(correlation_matrix)[2]
   
@@ -165,9 +162,12 @@ TMFG <- function(
   # Initialize inserted nodes vector
   inserted <- numeric(nodes)
   
+  # Separator rows
+  separator_rows <- nodes - 4
+  
   # Initialize triangles and separators matrix
-  triangles <- matrix(nrow = 2 * nodes - 4, ncol = 3)
-  separators <- matrix(nrow = nodes - 4, ncol = 3)
+  triangles <- matrix(nrow = 2 * separator_rows, ncol = 3)
+  separators <- matrix(nrow = separator_rows, ncol = 3)
   
   # Obtain four nodes with the largest strength
   # which is greater than the average strength
@@ -175,7 +175,8 @@ TMFG <- function(
   node_strength <- colSums(absolute_matrix, na.rm = TRUE)
   ## Select the four nodes with the largest strength
   four_nodes <- colSums(
-    absolute_matrix * (absolute_matrix > mean(absolute_matrix, na.rm = TRUE))
+    absolute_matrix * (absolute_matrix > mean(absolute_matrix, na.rm = TRUE)),
+    na.rm = TRUE
   )
   
   # First four nodes
@@ -294,7 +295,7 @@ TMFG <- function(
     partial_network <- matrix(0, nrow = nodes, ncol = nodes)
     
     # Loop over cliques and separators
-    for(i in nrow_sequence(separators)){
+    for(i in seq_len(separator_rows)){
       
       # Obtain clique
       clique <- cliques[i,]
@@ -316,7 +317,7 @@ TMFG <- function(
     
     # There is always one more clique than separator
     ## Obtain last clique
-    clique <- cliques[dim(cliques)[1],]
+    clique <- cliques[separator_rows + 1,]
     
     ## Add last clique
     partial_network[clique, clique] <-
@@ -340,7 +341,7 @@ TMFG <- function(
   )
   
   # Set up return
-  if(!isTRUE(returnAllResults)){
+  if(isFALSE(returnAllResults)){
     return(network)
   }else{
     

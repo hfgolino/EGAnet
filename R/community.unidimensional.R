@@ -212,7 +212,7 @@ community.unidimensional <- function(
 
 #' @noRd
 # "Expand" Correlation approach ----
-# Updated 23.06.2023
+# Updated 25.06.2023
 expand <- function(correlation_matrix, n, model, verbose, ellipse)
 {
   
@@ -271,7 +271,7 @@ expand <- function(correlation_matrix, n, model, verbose, ellipse)
   membership <- membership[original_dimensions]
   
   # Add back names
-  names(membership) <- colnames(correlation_matrix)
+  names(membership) <- dimnames(correlation_matrix)[[2]]
   
   # Return membership
   return(membership)
@@ -280,7 +280,7 @@ expand <- function(correlation_matrix, n, model, verbose, ellipse)
 
 #' @noRd
 # Wrapper for Louvain consensus ----
-# Updated 22.06.2023
+# Updated 25.06.2023
 consensus_wrapper <- function(correlation_matrix, verbose, ellipse)
 {
   
@@ -306,7 +306,7 @@ consensus_wrapper <- function(correlation_matrix, verbose, ellipse)
   )
   
   # Add back names
-  names(membership) <- colnames(correlation_matrix)
+  names(membership) <- dimnames(correlation_matrix)[[2]]
   
   # Return membership
   return(membership)

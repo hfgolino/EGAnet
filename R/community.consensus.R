@@ -178,7 +178,7 @@
 #' @export
 #'
 # Compute consensus clustering for EGA
-# Updated 23.06.2023
+# Updated 26.06.2023
 community.consensus <- function(
     network, signed = FALSE, 
     order = c("lower", "higher"), resolution = 1,
@@ -196,20 +196,6 @@ community.consensus <- function(
   # Check for higher or lower order solution
   order <- set_default(order, "higher", community.consensus)
   consensus.method <- set_default(consensus.method, "iterative", community.consensus)
-  
-  # Check for lowest TEFI method
-  if(consensus.method == "lowest_tefi"){
-    
-    # Check for NULL correlation matrix
-    if(is.null(correlation.matrix)){
-      stop("A correlation matrix is required to compute TEFI. Please supply network's corresponding correlation matrix using the 'correlation.matrix' argument.")
-    }else if(!is_symmetric(correlation.matrix)){ # Check for symmetric correlation matrix
-      stop("Correlation matrix is not symmetric.")
-    }else if(dim(correlation.matrix)[2] != dimensions[2]){ # Check for same number of variables
-      stop("Number of variables in 'correlation.matrix' does not match number of variables in 'network'. Double check that the correlation matrix matches the dimensions of the network.")
-    }
-    
-  }
   
   # Determine class of network
   if(is(network, "igraph")){
@@ -249,6 +235,20 @@ community.consensus <- function(
   
   # Obtain network dimensions
   dimensions <- dim(network_matrix)
+  
+  # Check for lowest TEFI method
+  if(consensus.method == "lowest_tefi"){
+    
+    # Check for NULL correlation matrix
+    if(is.null(correlation.matrix)){
+      stop("A correlation matrix is required to compute TEFI. Please supply network's corresponding correlation matrix using the 'correlation.matrix' argument.")
+    }else if(!is_symmetric(correlation.matrix)){ # Check for symmetric correlation matrix
+      stop("Correlation matrix is not symmetric.")
+    }else if(dim(correlation.matrix)[2] != dimensions[2]){ # Check for same number of variables
+      stop("Number of variables in 'correlation.matrix' does not match number of variables in 'network'. Double check that the correlation matrix matches the dimensions of the network.")
+    }
+    
+  }
   
   # Obtain strength
   node_strength <- colSums(abs(network_matrix), na.rm = TRUE)
@@ -321,6 +321,7 @@ community.consensus <- function(
       order = order,
       consensus.iter = consensus.iter,
       correlation.matrix = correlation.matrix,
+      dimensions = dimensions,
       verbose = verbose
     )
     
@@ -332,8 +333,11 @@ community.consensus <- function(
   # Force into vector
   result$selected_solution <- force_vector(result$selected_solution)
   
+  # Obtain network names
+  network_names <- dimnames(network_matrix)[[2]]
+  
   # Ensure names
-  names(result$selected_solution) <- colnames(network_matrix)
+  names(result$selected_solution) <- network_names
   
   # Set methods attribute
   attr(result$selected_solution, "methods") <- list(
@@ -357,12 +361,12 @@ community.consensus <- function(
     # Add names for returning full results
     ## Memberships
     if("memberships" %in% names(result)){
-      colnames(memberships) <- colnames(network_matrix)
+      dimnames(result$memberships)[[2]] <- network_names
     }
     
     ## Proportion Table
     if("proportion_table" %in% names(result)){
-      colnames(proportion_table) <- c(colnames(network_matrix), "Proportion")
+      colnames(result$proportion_table) <- c(network_names, "Proportion")
     }
     
     # Set class
@@ -543,11 +547,12 @@ consensus_application <- function(
 
 #' @noRd
 # Highest modularity method ----
-# Updated 16.06.2023
+# Updated 26.06.2023
 highest_modularity <- function(
     FUN, FUN.ARGS, 
     order, consensus.iter, 
     correlation.matrix, # not used
+    dimensions,
     verbose
 )
 {
@@ -561,13 +566,13 @@ highest_modularity <- function(
   
   # Obtain modularities
   if(order == "lower"){
-    modularities <- sapply(
+    modularities <- nnapply(
       communities, function(x){
         x$modularity[1]
       }
     )
   }else if(order == "higher"){
-    modularities <- sapply(
+    modularities <- nnapply(
       communities, function(x){
         x$modularity[length(x$modularity)]
       }
@@ -576,16 +581,16 @@ highest_modularity <- function(
   
   # Obtain memberships
   if(order == "lower"){
-    memberships <- t(sapply(
+    memberships <- t(nnapply(
       communities, function(x){
         x$memberships[1,]
-      }
+      }, LENGTH = dimensions[2]
     ))
   }else if(order == "higher"){
-    memberships <- t(sapply(
+    memberships <- t(nnapply(
       communities, function(x){
         x$memberships[dim(x$memberships)[1],]
-      }
+      }, LENGTH = dimensions[2]
     ))
   }
   
@@ -613,12 +618,12 @@ binary_check <- function(b_matrix){
 
 #' @noRd
 # Iterative method ----
-# Updated 16.06.2023
+# Updated 26.06.2023
 iterative <- function(
     FUN, FUN.ARGS, 
     order, consensus.iter,
     correlation.matrix, # not used
-    verbose
+    dimensions, verbose
 )
 {
   
@@ -637,30 +642,27 @@ iterative <- function(
     
     # Obtain memberships
     if(order == "lower"){
-      memberships <- t(sapply(
+      memberships <- t(nnapply(
         communities, function(x){
           x$memberships[1,]
-        }
+        }, LENGTH = dimensions[2]
       ))
     }else if(order == "higher"){
-      memberships <- t(sapply(
+      memberships <- t(nnapply(
         communities, function(x){
           x$memberships[dim(x$memberships)[1],]
-        }
+        }, LENGTH = dimensions[2]
       ))
     }
     
-    # Number of columns
-    columns <- dim(memberships)[2]
-    
     # Initialize consensus matrix
     consensus_matrix <- matrix(
-      0, nrow = columns, ncol = columns
+      0, nrow = dimensions[2], ncol = dimensions[2]
     )
     
     # Loop over to get proportions
-    for(i in seq_len(columns)){
-      for(j in i:columns){
+    for(i in seq_len(dimensions[2])){
+      for(j in i:dimensions[2]){
         
         # Fill consensus matrix
         consensus_matrix[i,j] <- sum(
@@ -711,12 +713,12 @@ iterative <- function(
 
 #' @noRd
 # Lowest TEFI method ----
-# Updated 16.06.2023
+# Updated 26.06.2023
 lowest_tefi <- function(
     FUN, FUN.ARGS, 
     order, consensus.iter, 
     correlation.matrix, # used in function
-    verbose
+    dimensions, verbose
 )
 {
   
@@ -729,30 +731,27 @@ lowest_tefi <- function(
   
   # Obtain memberships
   if(order == "lower"){
-    memberships <- t(sapply(
+    memberships <- t(nnapply(
       communities, function(x){
         x$memberships[1,]
-      }
+      }, LENGTH = dimensions[2]
     ))
   }else if(order == "higher"){
-    memberships <- t(sapply(
+    memberships <- t(nnapply(
       communities, function(x){
         x$memberships[dim(x$memberships)[1],]
-      }
+      }, LENGTH = dimensions[2]
     ))
   }
   
   # Prepare a data frame
-  proportion_table <- count_table(memberships, proportion = TRUE)
+  proportion_table <- unique(memberships, MARGIN = 1)
   
   # Get dimensions
   dimensions <- dim(proportion_table)
   
-  # Remove last column
-  proportion_table <- proportion_table[,-dimensions[2]]
-  
   # Apply TEFI over non-duplicated memberships
-  tefis <- sapply(
+  tefis <- nnapply(
     seq_len(dimensions[1]), function(i){
       tefi(
         abs(correlation.matrix), 
@@ -779,12 +778,12 @@ lowest_tefi <- function(
 
 #' @noRd
 # Most Common method ----
-# Updated 16.06.2023
+# Updated 26.06.2023
 most_common <- function(
     FUN, FUN.ARGS, 
     order, consensus.iter,
     correlation.matrix, # not used
-    verbose
+    dimensions, verbose
 )
 {
   
@@ -797,16 +796,16 @@ most_common <- function(
   
   # Obtain memberships
   if(order == "lower"){
-    memberships <- t(sapply(
+    memberships <- t(nnapply(
       communities, function(x){
         x$memberships[1,]
-      }
+      }, LENGTH = dimensions[2]
     ))
   }else if(order == "higher"){
-    memberships <- t(sapply(
+    memberships <- t(nnapply(
       communities, function(x){
         x$memberships[dim(x$memberships)[1],]
-      }
+      }, LENGTH = dimensions[2]
     ))
   }
   
@@ -815,7 +814,7 @@ most_common <- function(
 
   # Obtain solution
   selected_solution <- proportion_table[
-    which.max(proportion_table$Proportion), -dim(proportion_table)[2]
+    which.max(proportion_table$Value), -(dimensions[2] + 1)
   ]
   
   # Set up return list

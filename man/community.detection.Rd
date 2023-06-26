@@ -7,7 +7,8 @@
 community.detection(
   network,
   algorithm = c("edge_betweenness", "fast_greedy", "fluid", "infomap", "label_prop",
-    "leading_eigen", "louvain", "optimal", "signed_louvain", "spinglass", "walktrap"),
+    "leading_eigen", "leiden", "louvain", "optimal", "signed_louvain", "spinglass",
+    "walktrap"),
   signed = FALSE,
   allow.singleton = FALSE,
   membership.only = TRUE,
@@ -41,7 +42,12 @@ Available options:
 {See \code{\link[igraph]{cluster_leading_eigen}} for more details}
 
 \item{\code{"leiden"}}
-{See \code{\link[igraph]{cluster_leiden}} for more details}
+{See \code{\link[igraph]{cluster_leiden}} for more details.
+\emph{Note}: The Leiden algorithm will default to the
+Constant Potts Model objective function
+(\code{objective_function = "CPM"}). Set
+\code{objective_function = "modularity"} to use
+modularity instead (see examples)}
 
 \item{\code{"louvain"}}
 {See \code{\link[igraph]{cluster_louvain}} for more details}
@@ -119,6 +125,12 @@ community.detection(network, algorithm = "label_prop")
 
 # Compute Leading Eigenvector
 community.detection(network, algorithm = "leading_eigen")
+
+# Compute Leiden (with modularity)
+community.detection(
+  network, algorithm = "leiden",
+  objective_function = "modularity"
+)
 
 # Compute Louvain
 community.detection(network, algorithm = "louvain")

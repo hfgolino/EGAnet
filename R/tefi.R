@@ -3,7 +3,7 @@
 #' @description Computes the fit (TEFI) of a dimensionality structure using Von Neumman's entropy when the input is a correlation matrix.
 #' Lower values suggest better fit of a structure to the data.
 #'
-#' @param data A dataframe or correlation matrix
+#' @param data A matrix, data frame, or correlation matrix
 #'
 #' @param structure A vector representing the structure (numbers or labels for each item).
 #' Can be theoretical factors or the structure detected by \code{\link{EGA}}
@@ -20,15 +20,14 @@
 #' # Load data
 #' wmt <- wmt2[,7:24]
 #'
-#' \dontrun{
 #' # Estimate EGA model
-#' ega.wmt <- EGA(data = wmt, model = "glasso")}
+#' ega.wmt <- EGA(
+#'   data = wmt, model = "glasso",
+#'   plot.EGA = FALSE # no plot for CRAN checks
+#' )
 #'
 #' # Compute entropy indices
 #' tefi(data = ega.wmt$correlation, structure = ega.wmt$wc)
-#'
-#' @seealso \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and
-#' \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 #'
 #' @references
 #' Golino, H., Moulder, R. G., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Nesselroade, J., Sadana, R., Thiyagarajan, J. A., & Boker, S. M. (2020).
@@ -39,56 +38,80 @@
 #'
 #' @export
 # Total Entropy Fit Index Function (for correlation matrices)
-# Updated 16.10.2022
-tefi <- function(data, structure){
-  if(ncol(data)!=nrow(data)){
-    data <- qgraph::cor_auto(data)
-  }
+# Updated 26.06.2023
+tefi <- function(data, structure)
+{
+  
+  # Generic function to get necessary inputs
+  output <- obtain_sample_correlations(
+    data = data, n = 1, # set to 1 to avoid error
+    corr = "auto", na.data = "pairwise", 
+    verbose = FALSE
+  )
+  
+  # Get absolute correlations
+  data <- abs(output$correlation_matrix)
+  
+  # Check structure
+  if(anyNA(structure)){
+    
+    # Determine variables that are NA
+    rm.vars <- is.na(structure)
 
-  if(any(is.na(structure)))
-  {
-    rm.vars <- which(is.na(structure))
-
+    # Send warning message
     warning(paste("Some variables did not belong to a dimension:", colnames(data)[rm.vars]))
     message("Use caution: These variables have been removed from the TEFI calculation")
 
-    data <- data[-rm.vars, -rm.vars]
+    # Keep available variables
+    data <- data[!rm.vars, !rm.vars]
+    
   }
 
-  data <- abs(data)
-  cor1 <- data/ncol(data)
-  # matrixcalc::matrix.trace does not use `na.rm = TRUE`
-  # h.vn <- -matrixcalc::matrix.trace(cor1%*%(log(cor1)))
-  trace <- function(x){
-    x <- as.matrix(x)
-    sum(diag(x), na.rm = TRUE)
-  }
-  h.vn <- -trace(cor1%*%(log(cor1)))
+  # Obtain density matrix
+  density_matrix <- data / dim(data)[2]
   
-  #n <- max(structure)
-
-  # getting the number of unique values in the structure:
-  n <- length(unique(structure))
-
-  cor.fact <- vector("list")
-  eigen.fact <- vector("list")
-  l.eigen.fact <- vector("list")
-  h.vn.fact <- vector("list")
-  for(i in 1:n){
-    cor.fact[[i]] <- data[which(structure==unique(structure)[i]),which(structure==unique(structure)[i])]
-    cor.fact[[i]] <- cor.fact[[i]]/ncol(cor.fact[[i]])
-    h.vn.fact[[i]] <- -trace(cor.fact[[i]]%*%log(cor.fact[[i]]))
-  }
-
-  h.vn.fact2 <- unlist(h.vn.fact)
-
-  # Difference between Max the sum of the factor entropies:
-  Hdiff <- h.vn-sum(h.vn.fact2, na.rm = TRUE)
-  results <- data.frame(matrix(NA, nrow = 1, ncol = 3))
-  colnames(results) <- c("VN.Entropy.Fit", "Total.Correlation","Average.Entropy")
-  results$VN.Entropy.Fit <- (mean(h.vn.fact2, na.rm = TRUE)-h.vn)+(Hdiff*(sqrt(n)))
-  results$Total.Correlation <- sum(h.vn.fact2, na.rm = TRUE)-h.vn
-  results$Average.Entropy <- mean(h.vn.fact2, na.rm = TRUE)-h.vn
+  # Obtain Von Neumann's entropy
+  h.vn <- -trace(density_matrix %*% log(density_matrix))
+  
+  # Obtain communities
+  communities <- unique_length(structure)
+  
+  # Initialize Von Neumman entropy by dimension
+  h.vn.wc <- nnapply(seq_len(communities), function(community){
+    
+    # Get indices
+    indices <- structure == community
+    
+    # Obtain community matrix
+    community_matrix <- data[indices, indices]
+    
+    # Obtain community density matrix
+    community_density <- community_matrix / dim(community_matrix)[2]
+    
+    # Return Von Neumann entropy
+    return(-trace(community_density %*% log(community_density)))
+    
+  })
+  
+  # Compute values
+  ## Sum of community Von Neumann
+  sum.h.vn.wc <- sum(h.vn.wc, na.rm = TRUE)
+  ## Mean of community Von Neumann
+  mean.h.vn.wc <- sum.h.vn.wc / communities
+  ## Difference between total and total community
+  Hdiff <- h.vn - sum.h.vn.wc
+  ## Average entropy
+  mean.vn <- mean.h.vn.wc - h.vn
+  
+  # Set up results
+  results <- data.frame(
+    "VN.Entropy.Fit" = mean.vn + (Hdiff * sqrt(communities)),
+    "Total.Correlation" = sum.h.vn.wc - h.vn,
+    "Average.Entropy" = mean.vn
+  )
+  
+  # Return results
   return(results)
+  
 }
-#----
+

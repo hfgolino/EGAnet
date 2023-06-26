@@ -52,7 +52,7 @@
 #' @export
 #'
 # Modularity statistic
-# Updated 23.06.2023
+# Updated 26.06.2023
 modularity <- function(network, memberships, signed = FALSE)
 {
   
@@ -83,8 +83,11 @@ modularity <- function(network, memberships, signed = FALSE)
     )
   }
   
+  # Get network names
+  network_names <- dimnames(network)[[2]]
+  
   # Apply network names to memberships
-  names(memberships) <- colnames(network)
+  names(memberships) <- network_names
   
   # Check for absolute
   if(isFALSE(signed)){
@@ -94,15 +97,11 @@ modularity <- function(network, memberships, signed = FALSE)
   # Obtain for missing memberships
   remove_nodes <- is.na(memberships)
   
-  # Set network and memberships
-  network <- network[!remove_nodes, !remove_nodes]
-  memberships <- as.integer(memberships[!remove_nodes])
-  
   # Check for any missing
   if(any(remove_nodes)){
     
     # Set missing node names
-    missing_nodes <- colnames(network)[remove_nodes]
+    missing_nodes <- network_names[remove_nodes]
     
     # Push warning
     warning(
@@ -118,7 +117,8 @@ modularity <- function(network, memberships, signed = FALSE)
   # Call from C
   output <- .Call(
     "r_signed_modularity",
-    network, memberships,
+    network[!remove_nodes, !remove_nodes], 
+    as.integer(memberships[!remove_nodes]),
     PACKAGE = "EGAnet"
   )
 

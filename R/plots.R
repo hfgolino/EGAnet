@@ -780,14 +780,6 @@ plot.dynEGA <- function(x, title = "",
   }else{return(ega.plot)}
 }
 
-# Plot EGA.fit----
-# Updated 07.07.2022
-#' @export
-plot.EGA.fit <- function(x,  title = "",
-                     plot.args = list(), produce = TRUE, ...){
-  plot.EGA(x$EGA, title = title, plot.args = plot.args, produce = produce)
-}
-
 # Plot invariance----
 # Updated 07.07.2022
 #' @export

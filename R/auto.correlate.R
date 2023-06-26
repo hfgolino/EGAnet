@@ -101,7 +101,7 @@
 #' @export
 #'
 # Automatic correlations ----
-# Updated 18.06.2023
+# Updated 25.06.2023
 auto.correlate <- function(
     data, # Matrix or data frame
     corr = c("kendall", "pearson", "spearman"), # allow changes to standard correlations
@@ -126,6 +126,9 @@ auto.correlate <- function(
   
   # Set names
   data <- ensure_dimension_names(data)
+  
+  # Get variable names
+  variable_names <- dimnames(data)[[2]]
   
   # Set dimensions
   dimensions <- dim(data)
@@ -164,11 +167,9 @@ auto.correlate <- function(
       
       # Set up correlation matrix
       correlation_matrix <- matrix(
-        0, nrow = dimensions[2], ncol = dimensions[2]
+        0, nrow = dimensions[2], ncol = dimensions[2],
+        dimnames = list(variable_names, variable_names)
       )
-      
-      # Transfer variable names
-      correlation_matrix <- transfer_names(data, correlation_matrix)
       
       # Determine whether there are more than one categorical variables
       if(categorical_number > 1){
@@ -201,13 +202,16 @@ auto.correlate <- function(
       # Determine whether there are mixed variables
       if(categorical_number != dimensions[2]){ # Check for mixed variables
         
+        # Obtain continuous data
+        continuous_data <- data[,continuous_variables, drop = FALSE]
+        
         # Loop over categorical indices
         for(i in categorical_variables){
           
           # Polyserial correlations based on {polycor}
           mixed_correlations <- polyserial.vector(
             categorical_variable = data[,i],
-            continuous_variables = data[,continuous_variables],
+            continuous_variables = continuous_data,
             na.data = na.data
           )
           
@@ -317,7 +321,7 @@ auto.correlate <- function(
 #' Uses two-step approximation from {polycor}'s \code{polyserial}
 #' 
 #' @noRd
-# Updated 18.06.2023
+# Updated 25.06.2023
 polyserial.vector <- function(
     categorical_variable, continuous_variables,
     na.data = c("pairwise", "listwise")
@@ -326,7 +330,6 @@ polyserial.vector <- function(
   
   # Ensure matrices (see `helpers-general.R` for more details)
   categorical_variable <- force_matrix(categorical_variable)
-  continuous_variables <- force_matrix(continuous_variables)
   
   # Determine cases based on `na.data` argument
   if(na.data == "pairwise"){
@@ -334,13 +337,7 @@ polyserial.vector <- function(
     # Pairwise cases
     categorical_cases <- apply(
       continuous_variables, 2, function(x){
-        
-        # Combine into single matrix
-        combined_cases <- cbind(categorical_variable, x)
-        
-        # Remove cases and compute rows
-        dim(na.omit(combined_cases))[1]
-        
+        sum(!is.na(categorical_variable) & !is.na(x))
       }
     )
      

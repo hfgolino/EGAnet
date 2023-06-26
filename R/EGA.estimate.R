@@ -146,15 +146,14 @@
 #' @export
 #'
 # Estimates multidimensional EGA only (no automatic plots)
-# Updated 23.06.2023
+# Updated 26.06.2023
 EGA.estimate <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
     model = c("BGGM", "glasso", "TMFG"),  
     algorithm = c("leiden", "louvain", "walktrap"),
-    verbose = FALSE,
-    ...
+    verbose = FALSE, ...
 )
 {
   
@@ -224,25 +223,22 @@ EGA.estimate <- function(
     
   }
   
-  # Check for function
-  if(is.function(algorithm)){
-    
-    # Apply algorithm function
-    wc <- community.detection(
-      network = network, algorithm = algorithm,
-      membership.only = TRUE,
-      ...
-    )
-    
-  }else if(
+  # Check for function or non-Louvain method
+  if(
+    is.function(algorithm) ||
     !algorithm %in% c("louvain", "signed_louvain")
-  ){ #  Check for Louvain algorithm
+  ){
     
     # Apply non-Louvain method
-    wc <- community.detection(
-      network = network, algorithm = algorithm,
-      membership.only = TRUE,
-      ...
+    wc <- do.call(
+      what = community.detection,
+      args = c(
+        list(
+          network = network, algorithm = algorithm,
+          membership.only = TRUE
+        ),
+        ellipse # pass on ellipse
+      )
     )
     
   }else{ # for Louvain, use consensus clustering
@@ -263,21 +259,26 @@ EGA.estimate <- function(
     signed <- algorithm == "signed_louvain"
     
     # Apply consensus clustering
-    wc <- community.consensus(
-      network = network, signed = signed,
-      consensus.method = consensus.method,
-      consensus.iter = consensus.iter,
-      membership.only = TRUE,
-      verbose = verbose,
-      ...
+    wc <- do.call(
+      what = community.consensus,
+      args = c(
+        list(
+          network = network, signed = signed,
+          consensus.method = consensus.method,
+          consensus.iter = consensus.iter,
+          membership.only = TRUE,
+          verbose = verbose
+        ),
+        ellipse # pass on ellipse
+      )
     )
-    
+
   }
   
   # Set up results
   results <- list(
     network = network, wc = wc,
-    n.dim = length(na.omit(unique(wc)))
+    n.dim = unique_length(wc)
   )
   
   # Check for correlation matrix

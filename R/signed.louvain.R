@@ -41,7 +41,7 @@
 #' @export
 #'
 # Signed Louvain communities
-# Updated 23.06.2023
+# Updated 25.06.2023
 signed.louvain <- function(network)
 {
   
@@ -55,12 +55,15 @@ signed.louvain <- function(network)
   
   # Get dimensions of memberships
   dimensions <- dim(output$memberships)
+  
+  # Get dimension names of network
+  network_names <- dimnames(network)[[2]]
 
   # Check for variable names
-  if(!is.null(colnames(network))){
+  if(!is.null(network_names)){
     
     # Add names to output
-    colnames(output$memberships) <- colnames(network)
+    dimnames(output$memberships)[[2]] <- network_names
     names(output$modularity) <- seq_len(dimensions[1])
     
   }
