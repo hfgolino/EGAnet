@@ -82,20 +82,24 @@ Constant Potts Model objective function
 (\code{objective_function = "CPM"}). Set
 \code{objective_function = "modularity"} to use
 modularity instead (see examples). By default, searches along
-resolutions from 0 to 2 in 0.001 increments
-(\code{resolution_parameter = seq.int(0, 2, 0.001)}). Use the argument \code{resolution_parameter}
-to change the search parameters}
+resolutions from 0 to \code{max(abs(network))} or the maximum
+absolute edge weight in the network in 0.001 increments
+(\code{resolution_parameter = seq.int(0, max(abs(network)), 0.001)}). 
+For modularity, searches along resolutions from 0 to 2 in 0.05 increments
+(\code{resolution_parameter = seq.int(0, 2, 0.05)}) by default.
+Use the argument \code{resolution_parameter} to change the search parameters
+(see examples)}
 
 \item{\code{"louvain"}}
-{See \code{\link[igraph]{cluster_louvain}} for more details.
-By default, searches along resolutions from 0 to 2 in 0.001 increments
-(\code{resolution_parameter = seq.int(0, 2, 0.001)}). Use the argument \code{resolution_parameter}
-to change the search parameters}
+{See \code{\link[EGAnet]{community.consensus}} for more details.
+By default, searches along resolutions from 0 to 2 in 0.05 increments
+(\code{resolution_parameter = seq.int(0, 2, 0.05)}). Use the argument \code{resolution_parameter}
+to change the search parameters (see examples)}
 
 \item{\code{"walktrap"}}
 {This algorithm is the default. See \code{\link[EGAnet]{cluster_walktrap}} for more details.
 By default, searches along 3 to 8 steps (\code{steps = 3:8}). Use the argument \code{steps}
-to change the search parameters}
+to change the search parameters (see examples)}
 
 }}
 
@@ -110,23 +114,11 @@ Set to \code{TRUE} to see all messages and warnings for every function call}
 
 \item{...}{Additional arguments to be passed on to
 \code{\link[EGAnet]{auto.correlate}}, \code{\link[EGAnet]{network.estimation}},
-\code{\link[EGAnet]{community.detection}}, and \code{\link[EGAnet]{EGA.estimate}}}
+\code{\link[EGAnet]{community.detection}}, \code{\link[EGAnet]{community.consensus}}, 
+and \code{\link[EGAnet]{EGA.estimate}}}
 }
 \value{
-Returns a list containing:
-
-\item{EGA}{The \code{\link[EGAnet]{EGA}} output for the best fitting model}
-
-\item{steps}{The number of steps used in the best fitting model from
-the \code{\link[igraph]{cluster_walktrap}} algorithm}
-
-\item{resolution_parameter}{The resolution parameter used in the best fitting model from
-the \code{\link[igraph]{cluster_leiden}} algorithm}
-
-\item{EntropyFit}{The \code{\link[EGAnet]{tefi}} Index for the unique solutions given the range of steps
-(vector names represent the number of steps)}
-
-\item{Lowest.EntropyFit}{The lowest value for the \code{\link[EGAnet]{tefi}} Index}
+Returns a list containing...
 }
 \description{
 Estimates the best fitting model using \code{\link[EGAnet]{EGA}}.
@@ -141,13 +133,24 @@ wmt <- wmt2[,7:24]
 # Estimate optimal EGA with Walktrap
 fit.walktrap <- EGA.fit(
   data = wmt, algorithm = "walktrap",
+  steps = 3:8, # default
   plot.EGA = FALSE # no plot for CRAN checks
 )
 
 # Estimate optimal EGA with Louvain
 fit.louvain <- EGA.fit(
   data = wmt, algorithm = "louvain",
-  resolution_parameter = seq.int(0, 2, 0.50),
+  resolution_parameter = seq.int(0, 2, 0.05), # default
+  plot.EGA = FALSE # no plot for CRAN checks
+)
+
+# Estimate optimal EGA with Leiden and CPM
+fit.leiden <- EGA.fit(
+  data = wmt, algorithm = "leiden",
+  objective_function = "CPM", # default
+  # resolution_parameter = seq.int(0, max(abs(network)), 0.50),
+  # For CPM, the default max resolution parameter
+  # is set to the largest absolute edge in the network
   plot.EGA = FALSE # no plot for CRAN checks
 )
 
@@ -155,7 +158,8 @@ fit.louvain <- EGA.fit(
 fit.leiden <- EGA.fit(
   data = wmt, algorithm = "leiden",
   objective_function = "modularity",
-  resolution_parameter = seq.int(0, 2, 0.50),
+  resolution_parameter = seq.int(0, 2, 0.05),
+  # default for modularity
   plot.EGA = FALSE # no plot for CRAN checks
 )
 

@@ -2022,45 +2022,6 @@ randnet <- function (nodes = NULL, edges = NULL, A = NULL)
   return(rand)
 }
 
-# strength
-#' @noRd
-# Node Strength
-# Updated 30.12.2021
-strength <- function (A, absolute = TRUE)
-{
-  if(is.vector(A))
-  {return(0)
-  }else if(nrow(A)!=ncol(A))
-  {stop("Input not an adjacency matrix")}
-
-  if(absolute)
-  {A <- abs(A)}
-  A <- as.matrix(A)
-
-  if(isSymmetric(A, check.attributes = FALSE))
-  {
-    Str <- round(as.vector(colSums(A)),2)
-    names(Str) <- colnames(A)
-    return(Str)
-  }else{
-    #In-strength
-    inStr <- as.vector(colSums(A))
-    names(inStr) <- colnames(A)
-    #Out-strength
-    outStr <- as.vector(rowSums(A))
-    names(outStr) <- colnames(A)
-    #Relative influence
-    relinf <- as.vector((outStr-inStr)/(outStr+inStr))
-    names(relinf) <- colnames(A)
-
-    if(all(relinf<.001))
-    {Str <- round(as.vector(colSums(A)),2)
-    names(Str) <- colnames(A)
-    return(Str)
-    }else{return(list(inStrength=inStr,outStrength=outStr,relInf=relinf))}
-  }
-}
-
 # smallworldness
 #' @noRd
 # Small-worldness measures

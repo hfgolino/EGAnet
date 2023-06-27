@@ -52,7 +52,7 @@
 #' @export
 #'
 # Compute Louvain communities for EGA
-# Updated 25.06.2023
+# Updated 27.06.2023
 community.louvain <- function(
     network, signed = FALSE, 
     resolution = 1
@@ -96,7 +96,7 @@ community.louvain <- function(
   network_matrix <- ensure_dimension_names(network_matrix)
   
   # Obtain strength
-  node_strength <- colSums(abs(network_matrix), na.rm = TRUE)
+  node_strength <- strength(network_matrix)
   
   # Initialize memberships as missing
   membership <- rep(NA, length(node_strength))

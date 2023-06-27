@@ -70,20 +70,24 @@
 #' (\code{objective_function = "CPM"}). Set
 #' \code{objective_function = "modularity"} to use
 #' modularity instead (see examples). By default, searches along
-#' resolutions from 0 to 2 in 0.001 increments
-#' (\code{resolution_parameter = seq.int(0, 2, 0.001)}). Use the argument \code{resolution_parameter}
-#' to change the search parameters}
+#' resolutions from 0 to \code{max(abs(network))} or the maximum
+#' absolute edge weight in the network in 0.001 increments
+#' (\code{resolution_parameter = seq.int(0, max(abs(network)), 0.001)}). 
+#' For modularity, searches along resolutions from 0 to 2 in 0.05 increments
+#' (\code{resolution_parameter = seq.int(0, 2, 0.05)}) by default.
+#' Use the argument \code{resolution_parameter} to change the search parameters
+#' (see examples)}
 #' 
 #' \item{\code{"louvain"}}
-#' {See \code{\link[igraph]{cluster_louvain}} for more details.
-#' By default, searches along resolutions from 0 to 2 in 0.001 increments
-#' (\code{resolution_parameter = seq.int(0, 2, 0.001)}). Use the argument \code{resolution_parameter}
-#' to change the search parameters}
+#' {See \code{\link[EGAnet]{community.consensus}} for more details.
+#' By default, searches along resolutions from 0 to 2 in 0.05 increments
+#' (\code{resolution_parameter = seq.int(0, 2, 0.05)}). Use the argument \code{resolution_parameter}
+#' to change the search parameters (see examples)}
 #' 
 #' \item{\code{"walktrap"}}
 #' {This algorithm is the default. See \code{\link[EGAnet]{cluster_walktrap}} for more details.
 #' By default, searches along 3 to 8 steps (\code{steps = 3:8}). Use the argument \code{steps}
-#' to change the search parameters}
+#' to change the search parameters (see examples)}
 #' 
 #' }
 #' 
@@ -98,23 +102,11 @@
 #'
 #' @param ... Additional arguments to be passed on to
 #' \code{\link[EGAnet]{auto.correlate}}, \code{\link[EGAnet]{network.estimation}},
-#' \code{\link[EGAnet]{community.detection}}, and \code{\link[EGAnet]{EGA.estimate}}
+#' \code{\link[EGAnet]{community.detection}}, \code{\link[EGAnet]{community.consensus}}, 
+#' and \code{\link[EGAnet]{EGA.estimate}}
 #'
-#' @return Returns a list containing:
-#'
-#' \item{EGA}{The \code{\link[EGAnet]{EGA}} output for the best fitting model}
-#'
-#' \item{steps}{The number of steps used in the best fitting model from
-#' the \code{\link[igraph]{cluster_walktrap}} algorithm}
+#' @return Returns a list containing...
 #' 
-#' \item{resolution_parameter}{The resolution parameter used in the best fitting model from
-#' the \code{\link[igraph]{cluster_leiden}} algorithm}
-#'
-#' \item{EntropyFit}{The \code{\link[EGAnet]{tefi}} Index for the unique solutions given the range of steps
-#' (vector names represent the number of steps)}
-#'
-#' \item{Lowest.EntropyFit}{The lowest value for the \code{\link[EGAnet]{tefi}} Index}
-#'
 #' @examples
 #' # Load data
 #' wmt <- wmt2[,7:24]
@@ -122,13 +114,24 @@
 #' # Estimate optimal EGA with Walktrap
 #' fit.walktrap <- EGA.fit(
 #'   data = wmt, algorithm = "walktrap",
+#'   steps = 3:8, # default
 #'   plot.EGA = FALSE # no plot for CRAN checks
 #' )
 #' 
 #' # Estimate optimal EGA with Louvain
 #' fit.louvain <- EGA.fit(
 #'   data = wmt, algorithm = "louvain",
-#'   resolution_parameter = seq.int(0, 2, 0.50),
+#'   resolution_parameter = seq.int(0, 2, 0.05), # default
+#'   plot.EGA = FALSE # no plot for CRAN checks
+#' )
+#' 
+#' # Estimate optimal EGA with Leiden and CPM
+#' fit.leiden <- EGA.fit(
+#'   data = wmt, algorithm = "leiden",
+#'   objective_function = "CPM", # default
+#'   # resolution_parameter = seq.int(0, max(abs(network)), 0.50),
+#'   # For CPM, the default max resolution parameter
+#'   # is set to the largest absolute edge in the network
 #'   plot.EGA = FALSE # no plot for CRAN checks
 #' )
 #' 
@@ -136,7 +139,8 @@
 #' fit.leiden <- EGA.fit(
 #'   data = wmt, algorithm = "leiden",
 #'   objective_function = "modularity",
-#'   resolution_parameter = seq.int(0, 2, 0.50),
+#'   resolution_parameter = seq.int(0, 2, 0.05),
+#'   # default for modularity
 #'   plot.EGA = FALSE # no plot for CRAN checks
 #' )
 #'
@@ -165,7 +169,7 @@
 #'
 #' @export
 # EGA fit
-# Updated 26.06.2023
+# Updated 27.06.2023
 EGA.fit <- function (
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -187,166 +191,52 @@ EGA.fit <- function (
   # Obtain ellipse arguments
   ellipse <- list(...)
   
+  # Set objective function to NULL
+  objective_function <- NULL
+  
   # `EGA.estimate` will handle the data processing (e.g., correlations)
-  ## Branch for Walktrap or Leiden/Louvain
+  ## Branch for algorithm
   if(algorithm == "walktrap"){
     
-    # Set objective function to NULL
-    objective_function <- NULL
-    
-    # Check for parameter search space
-    if(!"steps" %in% names(ellipse)){
-      steps <- 3:8 # default
-    }else{
-      
-      # Set steps
-      steps <- ellipse$steps
-      
-      # Remove objective function from ellipse to
-      # make other arguments available in `do.call`
-      ellipse <- ellipse[names(ellipse) != "steps"]
-      
-    }
-    
-    # Get the length of the steps
-    step_length <- length(steps)
-    
-    # Perform EGA with first parameter
-    ega_result <- do.call(
-      what = EGA.estimate,
-      args = c(
-        list( # Necessary call
-          data = data, n = n, corr = corr,
-          na.data = na.data, model = model,
-          algorithm = algorithm, verbose = verbose,
-          steps = steps[1]
-        ),
-        ellipse # pass on ellipse
-      )
+    # Perform Walktrap parameter sweep
+    fit_result <- walktrap_fit(
+      data = data, n = n, corr = corr,
+      na.data = na.data, model = model, 
+      algorithm = algorithm, verbose = verbose, 
+      ellipse = ellipse
     )
     
-    # Set up search matrix
-    search_matrix <- matrix(
-      0, nrow = step_length,
-      ncol = length(ega_result$wc)
+  }else if(algorithm == "louvain"){
+    
+    # Perform Louvain parameter sweep
+    fit_result <- louvain_fit(
+      data = data, n = n, corr = corr,
+      na.data = na.data, model = model, 
+      algorithm = algorithm, verbose = verbose, 
+      ellipse = ellipse
     )
     
-    # Add names
-    colnames(search_matrix) <- names(ega_result$wc)
-    row.names(search_matrix) <- steps
-    
-    # Add first parameter
-    search_matrix[1,] <- ega_result$wc
+  }else if(algorithm == "leiden"){
 
-    # The network won't change so apply the community detection
-    # algorithm over the rest of the parameters
-    for(i in 2:step_length){
-      search_matrix[i,] <- do.call(
-        what = community.detection,
-        args = c(
-          list( # Necessary call
-            network = ega_result$network,
-            algorithm = algorithm,
-            steps = steps[i]
-          ),
-          ellipse # pass on ellipse
-        )
-      )
-    }
-    
-  }else{
-    
-    # Check for Leiden algorithm
-    if(algorithm == "leiden"){
-
-      # If Leiden, then check for objective function
-      if(!"objective_function" %in% names(ellipse)){
-        objective_function <- "CPM"
-        # default for {igraph} and `community.detection`
-      }else{
-        
-        # Set objective function
-        objective_function <- ellipse$objective_function
-        
-        # Remove objective function from ellipse to
-        # make other arguments available in `do.call`
-        ellipse <- ellipse[names(ellipse) != "objective_function"]
-        
-      }
-
-    }else{ # Set to NULL to avoid conflict with Louvain
-      objective_function <- NULL
-    }
-    
-    # Check for parameter search space
-    if(!"resolution_parameter" %in% names(ellipse)){
-      resolution_parameter <- seq.int(0, 2, 0.001) # default
-    }else{
-      
-      # Set resolution parameter
-      resolution_parameter <- ellipse$resolution_parameter
-      
-      # Remove resolution parameter from ellipse to
-      # make other arguments available in `do.call`
-      ellipse <- ellipse[names(ellipse) != "resolution_parameter"]
-    
-    }
-    
-    # Get the length of the resolution parameter
-    resolution_parameter_length <- length(resolution_parameter)
-    
-    # Perform EGA with first parameter
-    ega_result <- do.call(
-      what = EGA.estimate,
-      args = c(
-        list( # Necessary call
-          data = data, n = n, corr = corr,
-          na.data = na.data, model = model,
-          algorithm = algorithm, verbose = verbose,
-          resolution_parameter = resolution_parameter[1],
-          objective_function = objective_function
-        ),
-        ellipse # pass on ellipse
-      )
+    # Perform Leiden parameter sweep
+    fit_result <- leiden_fit(
+      data = data, n = n, corr = corr,
+      na.data = na.data, model = model, 
+      algorithm = algorithm, verbose = verbose, 
+      ellipse = ellipse
     )
     
-    # Set up search matrix
-    search_matrix <- matrix(
-      0, nrow = resolution_parameter_length,
-      ncol = length(ega_result$wc),
-      dimnames = list(
-        resolution_parameter, names(ega_result$wc)
-      )
-    )
-    
-    # Add first parameter
-    search_matrix[1,] <- ega_result$wc
-    
-    # The network won't change so apply the community detection
-    # algorithm over the rest of the parameters
-    for(i in 2:resolution_parameter_length){
-      search_matrix[i,] <- do.call(
-        what = community.detection,
-        args = c(
-          list( # Necessary call
-            network = ega_result$network,
-            algorithm = algorithm,
-            resolution_parameter = resolution_parameter[i],
-            objective_function = objective_function
-          ),
-          ellipse # pass on ellipse
-        )
-      )
-    }
+    # Update objective function
+    objective_function <- fit_result$objective_function
     
   }
   
   # Obtain only unique solutions
-  search_unique <- unique_solutions(search_matrix)
+  search_unique <- unique_solutions(fit_result$search_matrix)
   
   # Obtain absolute correlation matrix
   if(model != "bggm"){
-    correlation_matrix <- ega_result$cor.data
+    correlation_matrix <- fit_result$ega_result$cor.data
   }else{
     
     # Needs correlation matrix for BGGM
@@ -387,22 +277,18 @@ EGA.fit <- function (
   class(best_solution) <- "EGA.community"
   
   # Set up EGA with appropriate memberships
-  ega_result$wc <- best_solution
-  ega_result$n.dim <- unique_length(best_solution)
+  fit_result$ega_result$wc <- best_solution
+  fit_result$ega_result$n.dim <- unique_length(best_solution)
   
   # Set up best fit results
   best_fit <- list(
-    EGA = ega_result,
+    EGA = fit_result$ega_result,
     EntropyFit = fit_values,
     Lowest.EntropyFit = fit_values[best_index]
   )
   
   # Add parameters
-  if(algorithm == "walktrap"){
-    best_fit$parameter.space <- steps
-  }else{
-    best_fit$parameter.space <- resolution_parameter
-  }
+  best_fit$parameter.space <- fit_result$parameters
   
   # No need for attributes (all necessary information S3 is available)
   
@@ -426,13 +312,13 @@ EGA.fit <- function (
 # Bug checking ----
 ## Basic input
 # data = wmt2[,7:24]; n = NULL; corr = "auto"
-# na.data = "pairwise"; model = "glasso"; algorithm = "leiden"
+# na.data = "pairwise"; model = "glasso"; algorithm = "louvain"
 # plot.EGA = TRUE; verbose = FALSE
 # ellipse = list(objective_function = "modularity")
 
 #' @exportS3Method 
 # S3 Print Method ----
-# Updated 23.06.2023
+# Updated 27.06.2023
 print.EGA.fit <- function(x, ...)
 {
   
@@ -446,10 +332,13 @@ print.EGA.fit <- function(x, ...)
   membership <- x$EGA$wc
   
   # Determine number of communities
-  communities <- length(na.omit(unique(membership)))
+  communities <- unique_length(membership) 
+  
+  # Obtain attributes
+  community_attributes <- attr(membership, "methods")
   
   # Obtain algorithm name (if available)
-  algorithm <- attr(membership, "methods")$algorithm
+  algorithm <- community_attributes$algorithm
   
   # Check for signed
   algorithm_name <- ifelse(
@@ -462,7 +351,7 @@ print.EGA.fit <- function(x, ...)
   if(algorithm == "Leiden"){
     
     # Obtain objective function
-    objective_function <- attr(membership, "methods")$objective_function
+    objective_function <- community_attributes$objective_function
     
     # Set up algorithm name
     objective_name <- ifelse(
@@ -513,7 +402,7 @@ print.EGA.fit <- function(x, ...)
   cat("\n\n") # Add breakspace
   
   # Remove attribute for clean print
-  attr(membership, which = "class") <- NULL
+  membership <- unclass(membership)
   attr(membership, which = "methods") <- NULL
   
   # Print membership
@@ -523,7 +412,7 @@ print.EGA.fit <- function(x, ...)
 
 #' @exportS3Method 
 # S3 Summary Method ----
-# Updated 23.06.2023
+# Updated 27.06.2023
 summary.EGA.fit <- function(object, ...)
 {
   
@@ -537,10 +426,13 @@ summary.EGA.fit <- function(object, ...)
   membership <- object$EGA$wc
   
   # Determine number of communities
-  communities <- length(na.omit(unique(membership)))
+  communities <- unique_length(membership) 
+  
+  # Obtain attributes
+  community_attributes <- attr(membership, "methods")
   
   # Obtain algorithm name (if available)
-  algorithm <- attr(membership, "methods")$algorithm
+  algorithm <- community_attributes$algorithm
   
   # Check for signed
   algorithm_name <- ifelse(
@@ -553,7 +445,7 @@ summary.EGA.fit <- function(object, ...)
   if(algorithm == "Leiden"){
     
     # Obtain objective function
-    objective_function <- attr(membership, "methods")$objective_function
+    objective_function <- community_attributes$objective_function
     
     # Set up algorithm name
     objective_name <- ifelse(
@@ -604,7 +496,7 @@ summary.EGA.fit <- function(object, ...)
   cat("\n\n") # Add breakspace
   
   # Remove attribute for clean print
-  attr(membership, which = "class") <- NULL
+  membership <- unclass(membership)
   attr(membership, which = "methods") <- NULL
   
   # Print membership
@@ -667,6 +559,266 @@ unique_solutions <- function(search_matrix)
 
 }
 
+#' @noRd
+# Fit for Walktrap ----
+# Updated 27.06.2023
+walktrap_fit <- function(
+    data, n, corr, na.data, model,
+    algorithm, verbose, ellipse
+)
+{
+  
+  # Check for parameter search space
+  if(!"steps" %in% names(ellipse)){
+    steps <- 3:8 # default
+  }else{
+    
+    # Set steps
+    steps <- ellipse$steps
+    
+    # Remove objective function from ellipse to
+    # make other arguments available in `do.call`
+    ellipse <- ellipse[names(ellipse) != "steps"]
+    
+  }
+  
+  # Get the length of the steps
+  step_length <- length(steps)
+  
+  # Perform EGA with first parameter
+  ega_result <- do.call(
+    what = EGA.estimate,
+    args = c(
+      list( # Necessary call
+        data = data, n = n, corr = corr,
+        na.data = na.data, model = model,
+        algorithm = algorithm, verbose = verbose,
+        steps = steps[1]
+      ),
+      ellipse # pass on ellipse
+    )
+  )
+  
+  # Set up search matrix
+  search_matrix <- matrix(
+    0, nrow = step_length,
+    ncol = length(ega_result$wc),
+    dimnames = list(
+      steps, names(ega_result$wc)
+    )
+  )
+  
+  # Add first parameter
+  search_matrix[1,] <- ega_result$wc
+  
+  # The network won't change so apply the community detection
+  # algorithm over the rest of the parameters
+  for(i in 2:step_length){
+    search_matrix[i,] <- do.call(
+      what = community.detection,
+      args = c(
+        list( # Necessary call
+          network = ega_result$network,
+          algorithm = algorithm,
+          steps = steps[i]
+        ),
+        ellipse # pass on ellipse
+      )
+    )
+  }
+  
+  # Return results
+  return(
+    list(
+      ega_result = ega_result,
+      search_matrix = search_matrix,
+      parameters = steps
+    )
+  )
+  
+}
 
+#' @noRd
+# Fit for Louvain ----
+# Updated 27.06.2023
+louvain_fit <- function(
+    data, n, corr, na.data, model,
+    algorithm, verbose, ellipse
+)
+{
+  
+  # Check for parameter search space
+  if(!"resolution_parameter" %in% names(ellipse)){
+    resolution_parameter <- seq.int(0, 2, 0.05) # default
+  }else{
+    
+    # Set resolution parameter
+    resolution_parameter <- ellipse$resolution_parameter
+    
+    # Remove resolution parameter from ellipse to
+    # make other arguments available in `do.call`
+    ellipse <- ellipse[names(ellipse) != "resolution_parameter"]
+    
+  }
+  
+  # Get the length of the resolution parameter
+  resolution_parameter_length <- length(resolution_parameter)
+  
+  # Perform EGA with first parameter
+  ega_result <- do.call(
+    what = EGA.estimate,
+    args = c(
+      list( # Necessary call
+        data = data, n = n, corr = corr,
+        na.data = na.data, model = model,
+        algorithm = algorithm, verbose = verbose,
+        resolution_parameter = resolution_parameter[1]
+      ),
+      ellipse # pass on ellipse
+    )
+  )
+  
+  # Set up search matrix
+  search_matrix <- matrix(
+    0, nrow = resolution_parameter_length,
+    ncol = length(ega_result$wc),
+    dimnames = list(
+      resolution_parameter, names(ega_result$wc)
+    )
+  )
+  
+  # Add first parameter
+  search_matrix[1,] <- ega_result$wc
+  
+  # The network won't change so apply the community detection
+  # algorithm over the rest of the parameters
+  for(i in 2:resolution_parameter_length){
+    search_matrix[i,] <- do.call(
+      what = community.consensus,
+      args = c(
+        list( # Necessary call
+          network = ega_result$network,
+          resolution = resolution_parameter[i],
+          verbose = FALSE
+        ),
+        ellipse # pass on ellipse
+      )
+    )
+  }
+  
+  # Return results
+  return(
+    list(
+      ega_result = ega_result,
+      search_matrix = search_matrix,
+      parameters = resolution_parameter
+    )
+  )
+  
+}
 
-
+#' @noRd
+# Fit for Leiden ----
+# Updated 27.06.2023
+leiden_fit <- function(
+    data, n, corr, na.data, model,
+    algorithm, verbose, ellipse
+)
+{
+  
+  # Check for objective function
+  if(!"objective_function" %in% names(ellipse)){
+    objective_function <- "CPM"
+    # default for {igraph} and `community.detection`
+  }else{
+    
+    # Set objective function
+    objective_function <- ellipse$objective_function
+    
+    # Remove objective function from ellipse to
+    # make other arguments available in `do.call`
+    ellipse <- ellipse[names(ellipse) != "objective_function"]
+    
+  }
+  
+  # Perform EGA with first parameter
+  ega_result <- do.call(
+    what = EGA.estimate,
+    args = c(
+      list( # Necessary call
+        data = data, n = n, corr = corr,
+        na.data = na.data, model = model,
+        algorithm = algorithm, verbose = verbose,
+        resolution_parameter = 0,
+        # start with resolution parameter at zero
+        # zero is guaranteed to be unidimensional
+        objective_function = objective_function
+      ),
+      ellipse # pass on ellipse
+    )
+  )
+  
+  # Check for parameter search space
+  if(!"resolution_parameter" %in% names(ellipse)){
+    
+    # Switch based on objective function
+    if(objective_function == "CPM"){
+      resolution_parameter <- seq.int(0, max(ega_result$network), 0.001) # default 
+    }else if(objective_function == "modularity"){
+      resolution_parameter <- seq.int(0, 2, 0.05) # default
+    }
+    
+  }else{
+    
+    # Set resolution parameter
+    resolution_parameter <- ellipse$resolution_parameter
+    
+    # Remove resolution parameter from ellipse to
+    # make other arguments available in `do.call`
+    ellipse <- ellipse[names(ellipse) != "resolution_parameter"]
+    
+  }
+  
+  # Get the length of the resolution parameter
+  resolution_parameter_length <- length(resolution_parameter)
+  
+  # Set up search matrix
+  search_matrix <- matrix(
+    0, nrow = resolution_parameter_length,
+    ncol = length(ega_result$wc),
+    dimnames = list(
+      resolution_parameter, names(ega_result$wc)
+    )
+  )
+  
+  # Add first parameter
+  search_matrix[1,] <- ega_result$wc
+  
+  # The network won't change so apply the community detection
+  # algorithm over the rest of the parameters
+  for(i in 2:resolution_parameter_length){
+    search_matrix[i,] <- do.call(
+      what = community.detection,
+      args = c(
+        list( # Necessary call
+          network = ega_result$network,
+          algorithm = algorithm,
+          resolution_parameter = resolution_parameter[i],
+          objective_function = objective_function
+        ),
+        ellipse # pass on ellipse
+      )
+    )
+  }
+  
+  # Return results
+  return(
+    list(
+      ega_result = ega_result,
+      search_matrix = search_matrix,
+      parameters = resolution_parameter,
+      objective_function = objective_function
+    )
+  )
+  
+}

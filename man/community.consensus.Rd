@@ -56,14 +56,14 @@ of communities in a network but it comes with limitations (e.g., resolution limi
 
 \item{\code{"iterative"}}
 {The original approach proposed by Lancichinetti & Fortunato (2012). See
-"Details" for more information. This method is the \strong{default}}
+"Details" for more information}
 
 \item{\code{"most_common"}}
-{\strong{EXPERIMENTAL.} Selects the community solution that appears the most
+{Selects the community solution that appears the most
 frequently across the applications. The idea behind this method is that the solution
 that appears most often will be the most likely solution for the algorithm as well
 as most reproducible. Can be less stable as the number of nodes increase requiring
-a larger value for \code{consensus.iter}}
+a larger value for \code{consensus.iter}.  This method is the \strong{default}}
 
 \item{\code{"lowest_tefi"}}
 {\strong{EXPERIMENTAL.} Selects the community solution with the lowest Total Entropy
@@ -113,8 +113,7 @@ co-occur with all other nodes in their community (or a proportion of 1.00).
 
 Variations of this procedure are also available in this package but are
 \strong{experimental}. Use these experimental procedures with caution.
-More work is necessary before these experimental procedures are validated.
-Please use the \code{"iterative"} approach before using other procedures
+More work is necessary before these experimental procedures are validated
 }
 \examples{
 # Load data

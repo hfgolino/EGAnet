@@ -4,19 +4,6 @@
 #' The original implementation of this method applies a community detection algorithm repeatedly
 #' to the same network. With stochastic networks, the algorithm is likely to identify different
 #' community solutions with many repeated applications.
-#' 
-#' The goal of the consensus clustering method is to identify a stable solution across
-#' algorithm applications to derive a "consensus" clustering. The standard or "iterative"
-#' approach is to apply the community detection algorithm \emph{N} times. Then, a co-occurrence
-#' matrix is created representing how often each pair of nodes co-occurred across the
-#' applications. Based on some cut-off value (e.g., 0.30), co-occurrences below this value
-#' are set to zero, forming a "new" sparse network. The procedure proceeds until all nodes
-#' co-occur with all other nodes in their community (or a proportion of 1.00).
-#' 
-#' Variations of this procedure are also available in this package but are
-#' \strong{experimental}. Use these experimental procedures with caution.
-#' More work is necessary before these experimental procedures are validated.
-#' Please use the \code{"iterative"} approach before using other procedures
 #'
 #' @param network Matrix or \code{\link{igraph}} network object
 #' 
@@ -56,14 +43,14 @@
 #' 
 #' \item{\code{"iterative"}}
 #' {The original approach proposed by Lancichinetti & Fortunato (2012). See
-#' "Details" for more information. This method is the \strong{default}}
+#' "Details" for more information}
 #' 
 #' \item{\code{"most_common"}}
-#' {\strong{EXPERIMENTAL.} Selects the community solution that appears the most
+#' {Selects the community solution that appears the most
 #' frequently across the applications. The idea behind this method is that the solution
 #' that appears most often will be the most likely solution for the algorithm as well
 #' as most reproducible. Can be less stable as the number of nodes increase requiring
-#' a larger value for \code{consensus.iter}}
+#' a larger value for \code{consensus.iter}.  This method is the \strong{default}}
 #' 
 #' \item{\code{"lowest_tefi"}}
 #' {\strong{EXPERIMENTAL.} Selects the community solution with the lowest Total Entropy
@@ -93,6 +80,18 @@
 #' @param ...
 #' Not actually used but makes it either for general functionality
 #' in the package
+#' 
+#' @details The goal of the consensus clustering method is to identify a stable solution across
+#' algorithm applications to derive a "consensus" clustering. The standard or "iterative"
+#' approach is to apply the community detection algorithm \emph{N} times. Then, a co-occurrence
+#' matrix is created representing how often each pair of nodes co-occurred across the
+#' applications. Based on some cut-off value (e.g., 0.30), co-occurrences below this value
+#' are set to zero, forming a "new" sparse network. The procedure proceeds until all nodes
+#' co-occur with all other nodes in their community (or a proportion of 1.00).
+#' 
+#' Variations of this procedure are also available in this package but are
+#' \strong{experimental}. Use these experimental procedures with caution.
+#' More work is necessary before these experimental procedures are validated
 #' 
 #' @return Returns a list containing...
 #' 
@@ -178,7 +177,7 @@
 #' @export
 #'
 # Compute consensus clustering for EGA
-# Updated 26.06.2023
+# Updated 27.06.2023
 community.consensus <- function(
     network, signed = FALSE, 
     order = c("lower", "higher"), resolution = 1,
@@ -195,7 +194,7 @@ community.consensus <- function(
   
   # Check for higher or lower order solution
   order <- set_default(order, "higher", community.consensus)
-  consensus.method <- set_default(consensus.method, "iterative", community.consensus)
+  consensus.method <- set_default(consensus.method, "most_common", community.consensus)
   
   # Determine class of network
   if(is(network, "igraph")){
@@ -341,6 +340,7 @@ community.consensus <- function(
   
   # Set methods attribute
   attr(result$selected_solution, "methods") <- list(
+    algorithm = "Louvain",
     signed = signed, order = order, 
     consensus.method = consensus.method,
     consensus.iter = consensus.iter
