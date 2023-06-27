@@ -1391,7 +1391,7 @@ readable_names <- function(node_names)
 
 #' @noRd
 # Get network layout ----
-# Updated 20.06.2023
+# Updated 27.06.2023
 get_layout <- function(
     network, dimensions,
     non_zero_index, plot_ARGS, ellipse
@@ -1406,7 +1406,7 @@ get_layout <- function(
     
     # Lower triangle for edge list
     network_lower <- network[lower.tri(network)]
-    weights_lower <- network_lower[network_lower != 0]
+    weights_lower <- abs(network_lower[network_lower != 0])
     
     # Set up edge list
     edge_list <- which(non_zero_index, arr.ind = TRUE)
@@ -1416,7 +1416,7 @@ get_layout <- function(
     # Set layout (spring)
     network_layout <- qgraph::qgraph.layout.fruchtermanreingold(
       edgelist = edge_list,
-      weights = abs(weights_lower / max(abs(weights_lower)))^2,
+      weights = (weights_lower / max(weights_lower))^2,
       vcount = dimensions[2]
     )
     
@@ -2018,6 +2018,21 @@ trace <- function(object)
 float_equal <- function(x, y, tolerance = 1e-06)
 {
   return(abs(x - y) < tolerance)
+}
+
+#' @noRd
+# Node Strength ----
+# Updated 27.06.2023
+strength <- function(network, absolute = TRUE)
+{
+
+  # Determine whether absolute should be used
+  if(isTRUE(absolute)){
+    return(colSums(abs(network), na.rm = TRUE))
+  }else{
+    return(colSums(network, na.rm = TRUE))
+  }
+
 }
 
 #%%%%%%%%%%%%%%%%%%%%%%%

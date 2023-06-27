@@ -149,7 +149,7 @@
 #' @export
 #'
 # Compute communities for EGA
-# Updated 26.06.2023
+# Updated 27.06.2023
 community.detection <- function(
     network, algorithm = c(
       "edge_betweenness", "fast_greedy",
@@ -206,7 +206,7 @@ community.detection <- function(
   dimensions <- dim(network_matrix)
   
   # Obtain strength
-  node_strength <- colSums(abs(network_matrix), na.rm = TRUE)
+  node_strength <- strength(network_matrix)
   
   # Initialize memberships as missing
   membership <- rep(NA, dimensions[2])

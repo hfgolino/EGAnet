@@ -354,7 +354,7 @@ plot.EGA.estimate <- function(x, ...)
 
 #' @noRd
 # Wrapper for GLASSO ----
-# Updated 15.06.2023
+# Updated 27.06.2023
 glasso_wrapper <- function(
     network, data, n, corr, na.data,
     model, network.only, verbose,
@@ -389,11 +389,8 @@ glasso_wrapper <- function(
       )
     )
     
-    # Compute node strength
-    node_strength <- colSums(network, na.rm = TRUE)
-    
     # Check for disconnected nodes
-    if(any(node_strength == 0) & gamma != 0){
+    if(any(strength(network) == 0) & gamma != 0){
       gamma <- gamma - 0.25 # decrease gamma
     }else{
       break # all nodes are connected or gamma equals zero

@@ -21,7 +21,7 @@
 #'
 #' @export
 # Convert {igraph} network to matrix
-# Updated 11.05.2023
+# Updated 27.06.2023
 igraph2matrix <- function (igraph_network, diagonal = 0)
 {
   
@@ -29,14 +29,15 @@ igraph2matrix <- function (igraph_network, diagonal = 0)
   network <- as.matrix(
     igraph::as_adjacency_matrix(
       graph = igraph_network,
-      type = "both",
-      attr = "weight"
+      type = "both", attr = "weight"
     )
   )
   
+  # Get node names
+  node_names <- igraph::vertex.attributes(igraph_network)$`FALSE`
+  
   # Add back names
-  colnames(network) <- igraph::vertex.attributes(igraph_network)$`FALSE`
-  row.names(network) <- colnames(network)
+  dimnames(network) <- list(node_names, node_names)
   
   # Make diagonal zero
   diag(network) <- diagonal

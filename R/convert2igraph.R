@@ -18,18 +18,21 @@
 #'
 #' @export
 # Convert {igraph} network to matrix
-# Updated 10.08.2022
+# Updated 27.06.2023
 convert2igraph <- function (A, diagonal = 0)
 {
+  
+  # Convert to matrix
+   A <- as.matrix(A)
   
   # Change diagonal (to zero)
   diag(A) <- diagonal
   
   # Return {igraph} network
   return(
-    suppressWarnings(
+    silent_call(
       igraph::graph_from_adjacency_matrix(
-        as.matrix(A), weighted = TRUE, mode = "undirected",
+        A, weighted = TRUE, mode = "undirected",
         add.colnames = FALSE
       )
     )

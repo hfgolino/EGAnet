@@ -148,22 +148,19 @@ auto.correlate <- function(
   }else{ # Proceed with determination of categorical correlations
     
     # Obtain the number of categories for each variables
-    # See `helpers-general.R`
     categories <- data_categories(data)
   
     # Determine categorical variables
-    categorical_variables <- which(categories <= ordinal.categories)
+    categorical_variables <- categories <= ordinal.categories
     
     # Determine number of categorical variables
-    categorical_number <- length(categorical_variables)
+    categorical_number <- sum(categorical_variables)
     
     # Determine whether there are any categorical variables
     if(categorical_number != 0){
       
       # Determine continuous variables
-      continuous_variables <- setdiff(
-        seq_len(dimensions[2]), categorical_variables
-      )
+      continuous_variables <- !categorical_variables
       
       # Set up correlation matrix
       correlation_matrix <- matrix(
@@ -186,7 +183,7 @@ auto.correlate <- function(
       }
       
       # Determine whether there are more than one continuous variables
-      if(length(continuous_variables) > 1){
+      if(sum(continuous_variables) > 1){
         
         # Compute continuous correlations (only correlation for continuous data)
         # Add correlations to correlation matrix
@@ -206,11 +203,11 @@ auto.correlate <- function(
         continuous_data <- data[,continuous_variables, drop = FALSE]
         
         # Loop over categorical indices
-        for(i in categorical_variables){
+        for(i in which(categorical_variables)){
           
           # Polyserial correlations based on {polycor}
           mixed_correlations <- polyserial.vector(
-            categorical_variable = data[,i],
+            categorical_variable = data[,i, drop = FALSE],
             continuous_variables = continuous_data,
             na.data = na.data
           )
@@ -321,15 +318,12 @@ auto.correlate <- function(
 #' Uses two-step approximation from {polycor}'s \code{polyserial}
 #' 
 #' @noRd
-# Updated 25.06.2023
+# Updated 27.06.2023
 polyserial.vector <- function(
     categorical_variable, continuous_variables,
     na.data = c("pairwise", "listwise")
 )
 {
-  
-  # Ensure matrices (see `helpers-general.R` for more details)
-  categorical_variable <- force_matrix(categorical_variable)
   
   # Determine cases based on `na.data` argument
   if(na.data == "pairwise"){
@@ -343,13 +337,11 @@ polyserial.vector <- function(
      
   }else if(na.data == "listwise"){
     
-    # Combine into single matrix
-    combined_cases <- cbind(categorical_variable, continuous_variables)
+    # Complete cases
+    complete_cases <- complete.cases(cbind(categorical_variable, continuous_variables))
     
-    # Remove cases and compute rows
-    categorical_cases <- rep(
-      dim(na.omit(combined_cases))[1], dim(continuous_variables)[2]
-    )
+    # Repeat cases for number of continuous variables
+    categorical_cases <- rep(sum(complete_cases), dim(continuous_variables)[2])
     
   }
 

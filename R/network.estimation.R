@@ -532,7 +532,7 @@ plot.EGA.network <- function(x, ...)
 
 # Function to find 'type' argument for `BGGM` ----
 #' @noRd
-# Updated 25.06.2023
+# Updated 27.06.2023
 find_BGGM_type <- function(data, ellipse)
 {
   
@@ -547,7 +547,9 @@ find_BGGM_type <- function(data, ellipse)
   if(isTRUE(unique_categories == 1)){
     
     # Perform switch
-    type <- ifelse(unique_categories == 2, "binary", "ordinal")
+    # (since all categories are the same
+    # just use the first index)
+    type <- unname(ifelse(categories[1], "binary", "ordinal"))
     
   }else{ # Not all are the same, then mixed, continuous, or not handled
     

@@ -251,7 +251,7 @@ community.consensus <- function(
   }
   
   # Obtain strength
-  node_strength <- colSums(abs(network_matrix), na.rm = TRUE)
+  node_strength <- strength(network_matrix)
   
   # Initialize memberships as missing
   membership <- rep(NA, dimensions[2])
@@ -388,7 +388,7 @@ community.consensus <- function(
 
 #' @exportS3Method 
 # S3 Print Method ----
-# Updated 16.06.2023
+# Updated 27.06.2023
 print.EGA.consensus <- function(x, ...)
 {
   
@@ -432,7 +432,7 @@ print.EGA.consensus <- function(x, ...)
   cat("\n\n") # Add breakspace
   
   # Remove attribute for clean print
-  attr(membership, which = "class") <- NULL
+  membership <- unclass(membership)
   attr(membership, which = "methods") <- NULL
   
   # Print membership
@@ -442,7 +442,7 @@ print.EGA.consensus <- function(x, ...)
 
 #' @exportS3Method 
 # S3 Summary Method ----
-# Updated 16.06.2023
+# Updated 27.06.2023
 summary.EGA.consensus <- function(object, ...)
 {
   
@@ -486,7 +486,7 @@ summary.EGA.consensus <- function(object, ...)
   cat("\n\n") # Add breakspace
   
   # Remove attribute for clean print
-  attr(membership, which = "class") <- NULL
+  membership <- unclass(membership)
   attr(membership, which = "methods") <- NULL
   
   # Print membership
@@ -713,7 +713,7 @@ iterative <- function(
 
 #' @noRd
 # Lowest TEFI method ----
-# Updated 26.06.2023
+# Updated 27.06.2023
 lowest_tefi <- function(
     FUN, FUN.ARGS, 
     order, consensus.iter, 
@@ -754,8 +754,8 @@ lowest_tefi <- function(
   tefis <- nnapply(
     seq_len(dimensions[1]), function(i){
       tefi(
-        abs(correlation.matrix), 
-        force_vector(proportion_table[i,])
+        correlation.matrix, 
+        proportion_table[i,,drop = TRUE]
       )$VN.Entropy.Fit
     }
   )
