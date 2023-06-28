@@ -29,7 +29,6 @@ two parameters, one that specifies the number of observations to be used (i.e. t
 embedded dimensions) and the other that specifies the number of observations to offset successive embeddings.
 }
 \examples{
-
 # A time series with 8 time points
 tseries <- 49:56
 embed.tseries <- Embed(tseries, E = 4, tau = 1)

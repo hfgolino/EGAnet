@@ -8,7 +8,6 @@
 \alias{summary.NetLoads}
 \alias{summary.invariance}
 \alias{summary.hierEGA}
-\alias{summary.riEGA}
 \title{S3Methods for summarying}
 \usage{
 \method{summary}{dynEGA}(object,  ...)
@@ -22,8 +21,6 @@
 \method{summary}{invariance}(object, ...)
 
 \method{summary}{hierEGA}(object, ...)
-
-\method{summary}{riEGA}(object, ...)
 }
 \arguments{
 \item{object}{Object from \code{EGAnet} package}

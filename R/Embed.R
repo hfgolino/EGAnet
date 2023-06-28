@@ -20,7 +20,6 @@
 #' @return Returns a matrix containing the embedded matrix.
 #'
 #' @examples
-#'
 #' # A time series with 8 time points
 #' tseries <- 49:56
 #' embed.tseries <- Embed(tseries, E = 4, tau = 1)
@@ -35,12 +34,38 @@
 #'
 #' @export
 # Embed
-# Updated 02.15.2020
-Embed <- function(x,E,tau) {
-  len <- length(x)
-  out <- x[1:(len-(E*tau)+tau)]
-  for(i in 2:E) { out <- cbind(out,x[(1+((i-1)*tau)):(len-(E*tau)+(i*tau))]) }
+# Updated 28.06.2023
+Embed <- function(x, E, tau) {
+  
+  # Get time series length
+  series_length <- length(x)
+  
+  # Pre-compute series length - E * tau
+  sl_E_tau <- series_length - E * tau
+  
+  # Number of embedding rows
+  embedding_rows <- sl_E_tau + tau
+  
+  # Sequence along time series
+  out <- nnapply(
+    seq_len(E), function(i){
+      x[(1 + (i - 1) * tau):(sl_E_tau + i * tau)]
+    }, LENGTH = embedding_rows
+  )
+  
+  # Return embedding
   return(out)
+  
 }
-#----
 
+# Bug checking ----
+## Basic input
+# x <- 49:56; E = 4; tau = 1
+
+# # Original function for comparison
+# Embed <- function(x,E,tau) {
+#   len <- length(x)
+#   out <- x[1:(len-(E*tau)+tau)]
+#   for(i in 2:E) { out <- cbind(out,x[(1+((i-1)*tau)):(len-(E*tau)+(i*tau))]) }
+#   return(out)
+# }

@@ -46,6 +46,12 @@ o UPDATE: `EGA.fit` updated to be compatiable with all updates to `EGA.estimate`
 
 o UPDATE: `tefi` updated with several checks (slightly slower for correlation matrix but much faster with raw data; includes data/matrix checks)
 
+o UPDATE: `entropyFit` uses more effective vectorization (about 5-7x faster)
+
+o UPDATE: `Embed` and `glla` made to be more efficient and includes an internal `glla_setup` function to avoid the same matrix calculations for every participant in a sample for `dynEGA`
+
+o UPDATE: `riEGA` updated to be compatiable with all lower-level updates (slightly faster)
+
 
 Changes in version 1.2.5.1
 

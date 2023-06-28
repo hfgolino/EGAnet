@@ -364,65 +364,6 @@ print.hierEGA <- function(x, ...) {
   
 }
 
-#Print Residual EGA----
-# Updated 13.05.2022
-#' @export
-print.riEGA <- function(x, ...) {
-  
-  # Print lower order communities
-  cat(paste(
-    "Number of communities:",
-    x$EGA$n.dim,
-    "\n\n"
-  ))
-  print(x$EGA$wc)
-  
-  # Print loadings if RI was necessary
-  if("RI" %in% names(x)){
-    
-    ## Loadings
-    ri_loadings <- round(as.vector(x$RI$loadings), 3)
-    names(ri_loadings) <- row.names(x$RI$loadings)
-    
-    ## Print loadings
-    cat("\nRandom-intercept loadings:\n\n")
-    print(ri_loadings)
-    
-  }
-  
-  # Print methods
-  cat("\nMethods:\n")
-  
-  ## Set up methods
-  methods.matrix <- matrix(
-    nrow = 4, ncol = 1
-  )
-  row.names(methods.matrix) <- c(
-    "Correlations =",
-    "Model =",
-    "Algorithm =",
-    "Unidimensional Method ="
-  )
-  colnames(methods.matrix) <- ""
-  
-  methods.matrix["Correlations =",] <- ifelse(
-    x$Methods$corr == "cor_auto",
-    "auto (from qgraph)",
-    x$Methods$corr
-  )
-  methods.matrix["Model =",] <- x$Methods$model
-  methods.matrix["Algorithm =",] <- x$Methods$algorithm
-  methods.matrix["Unidimensional Method =",] <- switch(
-    tolower(x$Methods$uni.method),
-    "expand" = "expand correlation matrix",
-    "le" = "leading eigenvalue",
-    "louvain" = "louvain with consensus clustering"
-  )
-  
-  print(methods.matrix, quote = FALSE)
-  
-}
-
 #Print Network Descriptives----
 # Updated 19.07.2022
 #' @export

@@ -1040,41 +1040,6 @@ legacy_EGA_args <- function(ellipse)
 }
 
 #' @noRd
-# Standard {lavaan} arguments ----
-# Updated 02.02.2023
-lavaan_arguments <- function(arguments)
-{
-  
-  # Set default arguments
-  default_arguments <- list(
-    model = NULL, data = NULL, ordered = NULL,
-    sampling.weights = NULL, sample.cov = NULL,
-    sample.mean = NULL, sample.th = NULL,
-    sample.nobs = NULL, group = NULL, cluster = NULL,
-    constraints = "", WLS.V = NULL, NACOV = NULL,
-    std.lv = TRUE
-  )
-  
-  # Match arguments with input
-  matched_arguments <- match(names(arguments), names(default_arguments))
-  
-  # Check for whether any are not missing
-  if(any(!is.na(matched_arguments))){
-    
-    # Remove missing
-    replace_arguments <- na.omit(matched_arguments)
-    
-    # Replace arguments
-    default_arguments[matched_arguments] <- arguments
-    
-  }
-  
-  # Return arguments
-  return(default_arguments)
-  
-}
-
-#' @noRd
 # Make unidimensional CFA model ----
 # Updated 02.02.2023
 make_unidimensional_cfa <- function(variable_names)
@@ -1123,21 +1088,28 @@ make_unidimensional_cfa <- function(variable_names)
 
 #' @noRd
 # Determine estimator arguments ----
-# Updated 03.23.2023
-estimator_arguments <- function(lavaan_ARGS)
+# Updated 28.06.2023
+estimator_arguments <- function(lavaan_ARGS, ellipse)
 {
+  
+  # Check for `ordinal.categories` in ellipse arguments
+  if(!"ordinal.categories" %in% names(ellipse)){
+    ordinal.categories <- 7
+  }else{
+    ordinal.categories <- ellipse$ordinal.categories
+  }
   
   # Obtain categories
   categories <- data_categories(lavaan_ARGS$data)
   
   # Check for categories
-  if(any(categories <= 7)){
+  if(any(categories <= ordinal.categories)){
     
     # Set arguments
     lavaan_ARGS$estimator <- "WLSMV"
     lavaan_ARGS$missing <- "pairwise"
     lavaan_ARGS$ordered <- names(categories)[
-      categories <= 7
+      categories <= ordinal.categories
     ]
     
   }else{

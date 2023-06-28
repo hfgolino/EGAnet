@@ -12,30 +12,77 @@
 #' Notably, any community detection algorithm from the \code{\link{igraph}}
 #' can be used to estimate the number of communities (see examples).
 #'
-#' @param data Matrix or data frame.
-#' Variables (down columns) or correlation matrix.
-#' If the input is a correlation matrix,
-#' then argument \code{n} (number of cases) is \strong{required}
+#' @param data Numeric matrix or data frame.
+#' Either data representing \emph{only} the variables of interest or
+#' a correlation matrix. Data that are not numeric will be
+#' removed from the dataset
 #'
-#' @param n Integer.
-#' Sample size if \code{data} provided is a correlation matrix
+#' @param n Numeric (length = 1).
+#' Sample size if \code{data} is a correlation matrix
 #'
-#' @param corr Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
-#' Current options are:
-#'
+#' @param corr Character (length = 1).
+#' Method to compute correlations.
+#' Defaults to \code{"auto"} to automatically compute
+#' appropriate correlations using \code{\link[EGAnet]{auto.correlate}}.
+#' \code{"pearson"} and \code{"spearman"} are provide for completeness.
+#' For other similarity measures, compute them first and input them
+#' into \code{data} with the sample size (\code{n})
+#' 
+#' @param na.data Character (length = 1).
+#' How should missing data be handled?
+#' Available options:
+#' 
+#' \itemize{
+#' 
+#' \item{\code{"pairwise"}}
+#' {Computes correlation for all available cases between
+#' two variables}
+#' 
+#' \item{\code{"listwise"}}
+#' {Computes correlation for all complete cases in the dataset}
+#' 
+#' }
+#' 
+#' @param model Character (length = 1).
+#' Available options:
+#' 
+#' \itemize{
+#' 
+#' \item{\code{"BGGM"}}
+#' {Computes the Bayesian Gaussian Graphical Model.
+#' Set argument \code{ordinal.categories} to determine
+#' levels allowed for a variable to be considered ordinal.
+#' See \code{\link[BGGM]{estimate}} for more details}
+#' 
+#' \item{\code{"glasso"}}
+#' {Computes the GLASSO with EBIC model selection.
+#' See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details}
+#' 
+#' \item{\code{"TMFG"}}
+#' {Computes the TMFG method.
+#' See \code{\link[EGAnet]{TMFG}} for more details}
+#' 
+#' }
+#' 
+#' @param algorithm Character or \code{\link{igraph}} \code{cluster_*} function.
+#' Three options are listed below but all are available
+#' (see \code{\link[EGAnet]{community.detection}} for other options):
+#' 
 #' \itemize{
 #'
-#' \item{\strong{\code{cor_auto}}}
-#' {Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
-#' \code{\link[qgraph]{qgraph}}}.
-#'
-#' \item{\strong{\code{pearson}}}
-#' {Computes Pearson's correlation coefficient using the pairwise complete observations via
-#' the \code{\link[stats]{cor}}} function.
-#'
-#' \item{\strong{\code{spearman}}}
-#' {Computes Spearman's correlation coefficient using the pairwise complete observations via
-#' the \code{\link[stats]{cor}}} function.
+#' \item{\code{"leiden"}}
+#' {See \code{\link[igraph]{cluster_leiden}} for more details}
+#' 
+#' \item{\code{"louvain"}}
+#' {By default, \code{"louvain"} will implement the non-signed version
+#' of the Louvain algorithm using the consensus clustering method 
+#' (see \code{\link[EGAnet]{community.consensus}} for more information). 
+#' This function will implement \code{consensus.method = "most_common"}
+#' and \code{consensus.iter = 1000} unless specified otherwise}
+#' 
+#' \item{\code{"walktrap"}}
+#' {This algorithm is the default. See \code{\link[EGAnet]{cluster_walktrap}} for more details}
+#' 
 #' }
 #' 
 #' @param uni.method Character.
@@ -67,132 +114,19 @@
 #' 
 #' }
 #'
-#' @param model Character.
-#' A string indicating the method to use.
-#' Defaults to \code{"glasso"}.
-#' Current options are:
-#'
-#' \itemize{
-#'
-#' \item{\strong{\code{glasso}}}
-#' {Estimates the Gaussian graphical model using graphical LASSO with
-#' extended Bayesian information criterion to select optimal regularization parameter}
-#'
-#' \item{\strong{\code{TMFG}}}
-#' {Estimates a Triangulated Maximally Filtered Graph}
-#'
-#' }
-#'
-#' @param model.args List.
-#' A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
-#' or \code{\link[EGAnet]{TMFG}}
-#'
-#' @param algorithm A string indicating the algorithm to use or a function from \code{\link{igraph}}
-#' Defaults to \code{"walktrap"}.
-#' Current options are:
-#'
-#' \itemize{
-#'
-#' \item{\strong{\code{walktrap}}}
-#' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
-#' 
-#' \item{\strong{\code{leiden}}}
-#' {Computes the Leiden algorithm using \code{\link[igraph]{cluster_leiden}}.
-#' Defaults to \code{objective_function = "modularity"}}
-#'
-#' \item{\strong{\code{louvain}}}
-#' {Computes the Louvain algorithm using \code{\link[igraph]{cluster_louvain}}}
-#'
-#' }
-#'
-#' @param algorithm.args List.
-#' A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
-#' or some other community detection algorithm function (see examples)
-#'
-#' @param consensus.iter Numeric.
-#' Number of iterations to perform in consensus clustering for the Louvain algorithm
-#' (see Lancichinetti & Fortunato, 2012).
-#' Defaults to \code{100}
-#' 
-#' @param consensus.method Character.
-#' What consensus clustering method should be used? 
-#' Defaults to \code{"highest_modularity"}.
-#' Current options are:
-#' 
-#' \itemize{
-#' 
-#' \item{\strong{\code{highest_modularity}}}
-#' {Uses the community solution that achieves the highest modularity
-#' across iterations}
-#' 
-#' \item{\strong{\code{most_common}}}
-#' {Uses the community solution that is found the most
-#' across iterations}
-#' 
-#' \item{\strong{\code{iterative}}}
-#' {Identifies the most common community solutions across iterations
-#' and determines how often nodes appear in the same community together.
-#' A threshold of 0.30 is used to set low proportions to zero.
-#' This process repeats iteratively until all nodes have a proportion of
-#' 1 in the community solution.
-#' }
-#' 
-#' \item{\code{lowest_tefi}}
-#' {Uses the community solution that achieves the lowest \code{\link[EGAnet]{tefi}}
-#' across iterations}
-#' 
-#' \item{\code{most_common_tefi}}
-#' {Uses the most common number of communities detected across the number
-#' of iterations. After, if there is more than one solution for that number
-#' of communities, then the solution with the lowest \code{\link[EGAnet]{tefi}
-#' is used}}
-#' 
-#' }
-#'
 #' @param plot.EGA Boolean.
 #' If \code{TRUE}, returns a plot of the network and its estimated dimensions.
 #' Defaults to \code{TRUE}
+#' 
+#' @param verbose Boolean.
+#' Whether messages and (insignificant) warnings should be output.
+#' Defaults to \code{FALSE} (silent calls).
+#' Set to \code{TRUE} to see all messages and warnings for every function call
 #'
-#' @param plot.args List.
-#' A list of additional arguments for the network plot.
-#' For \code{plot.type = "qgraph"}:
-#'
-#' \itemize{
-#'
-#' \item{\strong{\code{vsize}}}
-#' {Size of the nodes. Defaults to 6.}
-#'
-#'}
-#' For \code{plot.type = "GGally"} (see \code{\link[GGally]{ggnet2}} for
-#' full list of arguments):
-#'
-#' \itemize{
-#'
-#' \item{\strong{\code{vsize}}}
-#' {Size of the nodes. Defaults to 6.}
-#'
-#' \item{\strong{\code{label.size}}}
-#' {Size of the labels. Defaults to 5.}
-#'
-#' \item{\strong{\code{alpha}}}
-#' {The level of transparency of the nodes, which might be a single value or a vector of values. Defaults to 0.7.}
-#'
-#' \item{\strong{\code{edge.alpha}}}
-#' {The level of transparency of the edges, which might be a single value or a vector of values. Defaults to 0.4.}
-#'
-#'  \item{\strong{\code{legend.names}}}
-#' {A vector with names for each dimension}
-#'
-#' \item{\strong{\code{color.palette}}}
-#' {The color palette for the nodes. For custom colors,
-#' enter HEX codes for each dimension in a vector.
-#' See \code{\link[EGAnet]{color_palette_EGA}} for
-#' more details and examples}
-#'
-#' }
-#'
-#' @param ... Additional arguments.
-#' Used for deprecated arguments from previous versions of \code{\link{EGA}}
+#' @param ... Additional arguments to be passed on to
+#' \code{\link[EGAnet]{auto.correlate}}, \code{\link[EGAnet]{network.estimation}},
+#' \code{\link[EGAnet]{community.detection}}, and
+#' \code{\link[EGAnet]{community.consensus}}
 #'
 #' @author Hudson Golino <hfg9s at virginia.edu>, Alexander P. Christensen <alexpaulchristensen at gmail.com>, Maria Dolores Nieto <acinodam at gmail.com> and Luis E. Garrido <garrido.luiseduardo at gmail.com>
 #'

@@ -331,65 +331,6 @@ print.hierEGA <- function(x, ...) {
   
 }
 
-#Print Residual EGA
-# Updated 13.05.2022
-#' @export
-print.riEGA <- function(x, ...) {
-  
-  # Print lower order communities
-  cat(paste(
-    "Number of communities:",
-    x$EGA$n.dim,
-    "\n\n"
-  ))
-  print(x$EGA$wc)
-  
-  # Print loadings if RI was necessary
-  if("RI" %in% names(x)){
-    
-    ## Loadings
-    ri_loadings <- round(as.vector(x$RI$loadings), 3)
-    names(ri_loadings) <- row.names(x$RI$loadings)
-    
-    ## Print loadings
-    cat("\nRandom-intercept loadings:\n\n")
-    print(ri_loadings)
-    
-  }
-  
-  # Print methods
-  cat("\nMethods:\n")
-  
-  ## Set up methods
-  methods.matrix <- matrix(
-    nrow = 4, ncol = 1
-  )
-  row.names(methods.matrix) <- c(
-    "Correlations =",
-    "Model =",
-    "Algorithm =",
-    "Unidimensional Method ="
-  )
-  colnames(methods.matrix) <- ""
-  
-  methods.matrix["Correlations =",] <- ifelse(
-    x$Methods$corr == "cor_auto",
-    "auto (from qgraph)",
-    x$Methods$corr
-  )
-  methods.matrix["Model =",] <- x$Methods$model
-  methods.matrix["Algorithm =",] <- x$Methods$algorithm
-  methods.matrix["Unidimensional Method =",] <- switch(
-    tolower(x$Methods$uni.method),
-    "expand" = "expand correlation matrix",
-    "le" = "leading eigenvalue",
-    "louvain" = "louvain with consensus clustering"
-  )
-  
-  print(methods.matrix, quote = FALSE)
-  
-}
-
 #Print Network Descriptives
 # Updated 19.07.2022
 #' @export
@@ -775,65 +716,6 @@ summary.hierEGA <- function(object, ...) {
     "_", " ", object$Methods$consensus.method
   )
   methods.matrix["Consensus Iterations =",] <- object$Methods$consensus.iter
-  
-  print(methods.matrix, quote = FALSE)
-  
-}
-
-#summary Residual EGA
-# Updated 13.05.2022
-#' @export
-summary.riEGA <- function(object, ...) {
-  
-  # summary lower order communities
-  cat(paste(
-    "Number of communities:",
-    object$EGA$n.dim,
-    "\n\n"
-  ))
-  print(object$EGA$wc)
-  
-  # summary loadings if RI was necessary
-  if("RI" %in% names(object)){
-    
-    ## Loadings
-    ri_loadings <- round(as.vector(object$RI$loadings), 3)
-    names(ri_loadings) <- row.names(object$RI$loadings)
-    
-    ## summary loadings
-    cat("\nRandom-intercept loadings:\n\n")
-    print(ri_loadings)
-    
-  }
-  
-  # summary methods
-  cat("\nMethods:\n")
-  
-  ## Set up methods
-  methods.matrix <- matrix(
-    nrow = 4, ncol = 1
-  )
-  row.names(methods.matrix) <- c(
-    "Correlations =",
-    "Model =",
-    "Algorithm =",
-    "Unidimensional Method ="
-  )
-  colnames(methods.matrix) <- ""
-  
-  methods.matrix["Correlations =",] <- ifelse(
-    object$Methods$corr == "cor_auto",
-    "auto (from qgraph)",
-    object$Methods$corr
-  )
-  methods.matrix["Model =",] <- object$Methods$model
-  methods.matrix["Algorithm =",] <- object$Methods$algorithm
-  methods.matrix["Unidimensional Method =",] <- switch(
-    tolower(object$Methods$uni.method),
-    "expand" = "expand correlation matrix",
-    "le" = "leading eigenvalue",
-    "louvain" = "louvain with consensus clustering"
-  )
   
   print(methods.matrix, quote = FALSE)
   

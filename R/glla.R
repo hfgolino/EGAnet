@@ -51,24 +51,88 @@
 #' @author Hudson Golino <hfg9s at virginia.edu>
 #'
 #' @export
-# glla
-# Updated 22.05.2021
-#'
+# Generalized local linear approximation
+# Updated 28.06.2023
 glla <- function(x, n.embed, tau, delta, order){
-  X <- Embed(x, E = n.embed, tau = tau)
-
-  # Weights:
-  v <- 1:n.embed
-  mv <- mean(v)
-  order.der <- seq(from = 0, to = order)
-  L <- matrix(NA, nrow = n.embed, ncol = length(order.der))
-  for(i in 1:length(order.der)){
-    L[,i] <- ((tau*delta*v-mv)^order.der[[i]])/factorial(order.der[[i]])
+  
+  # Get time-delay embedding
+  embedding <- Embed(x = x, E = n.embed, tau = tau)
+  
+  # Estimate derivatives
+  ## Formally, `embedding %*% L %*% (solve(t(L) %*% L))`
+  ## See helper function `glla_setup` below
+  derivative_estimates <- embedding %*% glla_setup(
+    n.embed = n.embed, tau = tau,
+    delta = delta, order = order
+  )
+  
+  # Add names
+  if(order != 0){
+    dimnames(derivative_estimates)[[2]] <- c(
+      "Obs", paste0("DerivOrd", seq_len(order))
+    )
+  }else{
+    dimnames(derivative_estimates)[[2]] <- "Obs"
   }
-
-  # Estimate the derivatives
-  Y <- X%*%L%*%solve(t(L)%*%L)
-  colnames(Y) <- c("Obs", paste0("DerivOrd", 1:order))
-  return(Y)
+  
+  # Return derivative estimates
+  return(derivative_estimates)
+  
 }
-#----
+
+# Bug checking ----
+## Basic input
+# x <- 49:56; n.embed = 4; tau = 1
+# delta = 1; order = 2
+
+# # Original function for comparison
+# glla <- function(x, n.embed, tau, delta, order){
+#   X <- Embed(x, E = n.embed, tau = tau)
+#   
+#   # Weights:
+#   v <- 1:n.embed
+#   mv <- mean(v)
+#   order.der <- seq(from = 0, to = order)
+#   L <- matrix(NA, nrow = n.embed, ncol = length(order.der))
+#   for(i in 1:length(order.der)){
+#     L[,i] <- ((tau*delta*v-mv)^order.der[[i]])/factorial(order.der[[i]])
+#   }
+#   
+#   # Estimate the derivatives
+#   Y <- X%*%L%*%solve(t(L)%*%L)
+#   colnames(Y) <- c("Obs", paste0("DerivOrd", 1:order))
+#   return(Y)
+# }
+
+#' @noRd
+# GLLA Setup ----
+# The purpose of this function is to avoid multiple repetitive
+# computations of the same exact matrices when performing
+# sample-wide dynamic EGA. By pre-computing the L matrix,
+# embeddings can be multiplied by the same L matrix without
+# the need to compute it for every single participant
+# Updated 28.06.2023
+glla_setup <- function(n.embed, tau, delta, order)
+{
+  
+  # Set up weights
+  embed_sequence <- seq_len(n.embed)
+  
+  # Get mean of embedding sequence
+  mean_sequence <- mean(embed_sequence)
+  
+  # Derivative order
+  derivative_order <- 0:order
+  
+  # Pre-compute tau * delta * embedding sequence - mean sequence
+  embedding_value <- tau * delta * embed_sequence - mean_sequence
+  
+  # Get L matrix
+  L <- nnapply(derivative_order, function(derivative){
+    embedding_value^derivative / factorial(derivative)
+  }, LENGTH = n.embed)
+  
+  # Return L matrix
+  return(L %*% (solve(t(L) %*% L)))
+  
+}
