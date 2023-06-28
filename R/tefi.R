@@ -115,3 +115,8 @@ tefi <- function(data, structure)
   
 }
 
+# Bug Checking ----
+# ## Basic input
+# data <- wmt2[,7:24]; ega.wmt <- EGA(data, plot.EGA = FALSE)
+# data <- ega.wmt$correlation
+# structure <- ega.wmt$wc

@@ -71,8 +71,8 @@
 #' \code{objective_function = "modularity"} to use
 #' modularity instead (see examples). By default, searches along
 #' resolutions from 0 to \code{max(abs(network))} or the maximum
-#' absolute edge weight in the network in 0.001 increments
-#' (\code{resolution_parameter = seq.int(0, max(abs(network)), 0.001)}). 
+#' absolute edge weight in the network in 0.01 increments
+#' (\code{resolution_parameter = seq.int(0, max(abs(network)), 0.01)}). 
 #' For modularity, searches along resolutions from 0 to 2 in 0.05 increments
 #' (\code{resolution_parameter = seq.int(0, 2, 0.05)}) by default.
 #' Use the argument \code{resolution_parameter} to change the search parameters
@@ -129,7 +129,7 @@
 #' fit.leiden <- EGA.fit(
 #'   data = wmt, algorithm = "leiden",
 #'   objective_function = "CPM", # default
-#'   # resolution_parameter = seq.int(0, max(abs(network)), 0.50),
+#'   # resolution_parameter = seq.int(0, max(abs(network)), 0.01),
 #'   # For CPM, the default max resolution parameter
 #'   # is set to the largest absolute edge in the network
 #'   plot.EGA = FALSE # no plot for CRAN checks
@@ -169,7 +169,7 @@
 #'
 #' @export
 # EGA fit
-# Updated 27.06.2023
+# Updated 28.06.2023
 EGA.fit <- function (
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -314,7 +314,7 @@ EGA.fit <- function (
 # data = wmt2[,7:24]; n = NULL; corr = "auto"
 # na.data = "pairwise"; model = "glasso"; algorithm = "louvain"
 # plot.EGA = TRUE; verbose = FALSE
-# ellipse = list(objective_function = "modularity")
+# ellipse = list()
 
 #' @exportS3Method 
 # S3 Print Method ----
@@ -763,7 +763,7 @@ leiden_fit <- function(
     
     # Switch based on objective function
     if(objective_function == "CPM"){
-      resolution_parameter <- seq.int(0, max(ega_result$network), 0.001) # default 
+      resolution_parameter <- seq.int(0, max(ega_result$network), 0.01) # default 
     }else if(objective_function == "modularity"){
       resolution_parameter <- seq.int(0, 2, 0.05) # default
     }

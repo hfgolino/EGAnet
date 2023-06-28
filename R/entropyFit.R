@@ -44,101 +44,137 @@
 #'
 #' @export
 # Entropy Fit Index
-# Updated 18.07.2022
+# Updated 27.06.2023
 entropyFit <- function (data, structure)
 {
-  if(all(range(data)==c(0,1))){
-    data <- ifelse(data == 1, 2, 1)
-  }
-
-  #convert structure to number if necessary
-  if(is.character(structure)){
-    num.comm <- match(structure, unique(structure))
+  
+  # Ensure data is a matrix
+  data <- as.matrix(data)
+  
+  # Get data dimensions
+  dimensions <- dim(data)
+  
+  # Get number of communities
+  communities <- unique_length(structure)
+  
+  # Get number of bins
+  bins <- floor(sqrt(dimensions[1] / 5))
+  
+  # Obtain summed data
+  if(communities == dimensions[2]){
+    summed_data <- data # scores are already summed
   }else{
-    num.comm <- structure
+    
+    # Get sums by community
+    summed_data <- nnapply(seq_len(communities), function(community){
+      rowSums(data[,structure == community, drop = FALSE], na.rm = TRUE)  
+    }, LENGTH = dimensions[1])
+    
   }
-
-  ## Traditional Entropy:
-
-  #number of dimensions
-  #n <- max(num.comm)
-  # getting the number of unique values in the structure:
-  n <- length(unique(structure))
-
-  #communities sorted low to high
-  uniq <- sort(unique(num.comm))
-
-  #initialize entropy vector
-  H <- vector("numeric",length=n)
-  bins <- floor(sqrt(nrow(data)/5))
-  seque <- matrix(NA,nrow=bins+1,ncol=n)
-  sums <- matrix(NA,nrow=nrow(data),ncol=n)
-  bin.sums <- vector("list", n)
-  bin.sums2 <- matrix(NA, nrow=bins, ncol = n)
-  Freq <- matrix(NA,nrow=bins,ncol=n)
-
-  #compute empirical entropy for each community or item
-  for(i in 1:n){
-
-    if(n != ncol(data)){
-      sums[,i] <- rowSums(data[,which(num.comm==uniq[i])])
-    } else{
-      sums[,i] <- data[,i]
-    }
-    seque[,i] <- seq(from = range(sums[,i])[1], to = range(sums[,i])[2], length.out = bins+1)
-    bin.sums[[i]] <- table(cut(sums[,i], breaks = seque[,i], include.lowest = TRUE))
-    bin.sums2[,i] <- as.vector(unlist(bin.sums[[i]]))
-    Freq[,i] <- bin.sums2[,i]/sum(bin.sums2[,i])
-    H[i] <- -sum(ifelse(Freq[,i]>0,Freq[,i] * log(Freq[,i]),0))
-  }
-
-  # Joint Entropy:
-  bin.sums3 <- data.frame(matrix(NA, nrow = nrow(data), ncol = n))
-  for(i in 1:n){
-    bin.sums3[,i] <- cut(sums[,i], breaks = seque[,i], include.lowest = TRUE)
-    joint.table <- count(bin.sums3)
-  }
-
-  freq.joint <- joint.table/sum(joint.table)
-  joint.entropy <- -sum(ifelse(freq.joint >0,freq.joint * log(freq.joint),0))
-
-  # Maximum Entropy:
-  sums.max <- vector("numeric")
-  sums.max <- rowSums(data)
-  joint.table.max <- vector("numeric")
-  seque.min <- seq(from = range(sums.max)[1], to = range(sums.max)[2], length.out = bins+1)
-  bin.sums.min <- cut(sums.max, breaks = seque.min, include.lowest = TRUE)
-  joint.table.max <- count(bin.sums.min)
-
-  freq.joint.max <- joint.table.max/sum(joint.table.max)
-  Hmax <- -sum(ifelse(freq.joint.max >0,freq.joint.max * log(freq.joint.max),0))
-
-  # # Miller-Madow Bias Correction:
-  # # Individual Factors:
-  non.zero.bins1 <- vector("numeric",length=n)
-  H.miller.madow <- vector("numeric",length=n)
-  for(i in 1:n){
-    non.zero.bins1[i] <- length(bin.sums2[bin.sums2[,i]!=0,i])
-    H.miller.madow[i] <- H[i]+((non.zero.bins1[i]-1)/(2*(nrow(data))))
-  }
-
-  # Joint Entropy with Miller-Madow Bias Correction:
-  non.zero.bins.joint <- length(joint.table[joint.table!=0])
-  joint.miller.madow <- joint.entropy+((non.zero.bins.joint-1)/(2*(nrow(data))))
-
-
-  #compute mean emprirical entropy
-  #(empirical entropy per dimension)
-  ent <- mean(H)
-
-  result <- data.frame(matrix(NA, nrow = 1, ncol = 5))
-  colnames(result) <- c("Total.Correlation", "Total.Correlation.MM","Entropy.Fit",
-                        "Entropy.Fit.MM", "Average.Entropy")
-  result$Total.Correlation <- sum(H)-joint.entropy
-  result$Total.Correlation.MM <- sum(H.miller.madow)-joint.miller.madow
-  result$Entropy.Fit <- (ent-joint.entropy)+((Hmax-ent)*(sqrt(n)))
-  result$Entropy.Fit.MM <- (mean(H.miller.madow)-joint.miller.madow)+((Hmax-ent)*(sqrt(n)))
-  result$Average.Entropy <- mean(H)-joint.entropy
+  
+  # Set bin length
+  bin_length <- bins + 1
+  
+  # With summed data, get sequences
+  sequences <- nnapply(seq_len(communities), function(community){
+    
+    # Get range
+    data_range <- range(summed_data[,community], na.rm = TRUE)
+    
+    # Return sequence
+    return(seq.int(data_range[1], data_range[2], length.out = bin_length))
+    
+  }, LENGTH = bin_length)
+  
+  # Get bin cuts
+  bin_cuts <- lapply(seq_len(communities), function(community){
+    cut(
+      summed_data[,community], breaks = sequences[,community],
+      include.lowest = TRUE
+    )
+  })
+  
+  # Get bin sums
+  bin_sums <- nnapply(bin_cuts, function(x){
+    table(x)
+  }, LENGTH = bins)
+  
+  # Get frequencies
+  bin_frequencies <- bin_sums / dimensions[1]
+  
+  # # Get entropies
+  H <- nnapply(seq_len(communities), function(community){
+    
+    # Get non-zero frequencies
+    bin_non_zero <- bin_frequencies[bin_frequencies[,community] > 0, community]
+    
+    # Return entropy
+    return(-sum(bin_non_zero * log(bin_non_zero)))
+    
+  })
+  
+  # Get joint frequency table
+  joint_frequency <- count_table(
+    do.call(cbind.data.frame, bin_cuts)
+  )$Value / dimensions[1]
+  
+  # Get non-zero frequencies
+  joint_non_zero <- joint_frequency[joint_frequency > 0]
+  
+  # Get joint entropy
+  H_joint <- -sum(joint_non_zero * log(joint_non_zero))
+  
+  # Get maximum sums
+  max_sum <- rowSums(data, na.rm = TRUE)
+  
+  # Obtain range
+  max_range <- range(max_sum)
+  
+  # Get maximum sequence
+  max_sequence <- seq.int(max_range[1], max_range[2], length.out = bin_length)
+  
+  # Count the cuts
+  max_frequency <- count_table(
+    cut(max_sum, breaks = max_sequence, include.lowest = TRUE)
+  )$Value / dimensions[1]
+  
+  # Get non-zero frequencies
+  max_non_zero <- max_frequency[max_frequency > 0]
+  
+  # Get maximum entropy
+  H_max <- -sum(max_non_zero * log(max_non_zero))
+  
+  # Miller-Madow Bias Correction (for individual communities)
+  ## Compute denominator for corrections
+  MM_denominator <- 2 * dimensions[1]
+  ## Entropy
+  MM_non_zero <- colSums(bin_frequencies != 0, na.rm = TRUE)
+  MM_H <- H + (MM_non_zero - 1) / MM_denominator
+  ## Joint Entropy
+  MM_joint_non_zero <- sum(joint_frequency != 0)
+  MM_H_joint <- H_joint + (MM_joint_non_zero - 1) / MM_denominator
+  
+  # Compute mean entropy
+  H_mean <- mean(H, na.rm = TRUE)
+  
+  # Compute denominator for entropy fit measures
+  EF_denominator <- (H_max - H_mean) * sqrt(communities)
+  
+  # Set up data frame
+  result <- data.frame(
+    Total.Correlation = sum(H) - H_joint,
+    Total.Correlation.MM = sum(MM_H) - MM_H_joint,
+    Entropy.Fit = H_mean - H_joint + EF_denominator,
+    Entropy.Fit.MM = mean(MM_H) - MM_H_joint + EF_denominator,
+    Average.Entropy = H_mean - H_joint
+  )
+  
+  # Return results
   return(result)
+  
 }
-#----
+
+# Bug Checking ----
+# ## Basic input
+# data <- wmt2[,7:24]; ega.wmt <- EGA(data, plot.EGA = FALSE)
+# structure <- ega.wmt$wc

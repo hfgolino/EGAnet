@@ -83,8 +83,8 @@ Constant Potts Model objective function
 \code{objective_function = "modularity"} to use
 modularity instead (see examples). By default, searches along
 resolutions from 0 to \code{max(abs(network))} or the maximum
-absolute edge weight in the network in 0.001 increments
-(\code{resolution_parameter = seq.int(0, max(abs(network)), 0.001)}). 
+absolute edge weight in the network in 0.01 increments
+(\code{resolution_parameter = seq.int(0, max(abs(network)), 0.01)}). 
 For modularity, searches along resolutions from 0 to 2 in 0.05 increments
 (\code{resolution_parameter = seq.int(0, 2, 0.05)}) by default.
 Use the argument \code{resolution_parameter} to change the search parameters
@@ -148,7 +148,7 @@ fit.louvain <- EGA.fit(
 fit.leiden <- EGA.fit(
   data = wmt, algorithm = "leiden",
   objective_function = "CPM", # default
-  # resolution_parameter = seq.int(0, max(abs(network)), 0.50),
+  # resolution_parameter = seq.int(0, max(abs(network)), 0.01),
   # For CPM, the default max resolution parameter
   # is set to the largest absolute edge in the network
   plot.EGA = FALSE # no plot for CRAN checks
