@@ -1,8 +1,10 @@
 Changes in version 1.3.0
 
-o MAJOR REFACTOR: the update to version 1.3.0 includes many major changes that are designed to improve the reliability and reproducibility of {EGAnet}. The goal of these changes are to eliminate common errors and streamline the code in the package to prevent future error cases. There are several function additions that are provided to facilitate modular use of the {EGAnet} package
+o MAJOR REFACTOR: the update to version 1.3.0 includes many major changes that are designed to improve the speed, reliability, and reproducibility of {EGAnet}. The goal of these changes are to eliminate common errors and streamline the code in the package to prevent future error cases. There are several function additions that are provided to facilitate modular use of the {EGAnet} package
 
-o ADD: several internal scripts for "helper" functions that are used across the package (no visible changes for the user)
+o INTERNALS: function-specific internal functions and S3methods are now located in their respective .R files rather than elsewhere (e.g., "utils-EGAnet.R")
+
+o SWAP: internal script usage of "utils-EGAnet.R" depracated for "helper.R" functions that are used across the package (no visible changes for the user)
 
 o ADD: `community.consensus` to apply the Consensus Clustering approach introduced by Lancichnetti & Fortunato (2012). Currently only available for the Louvain implementations
 
@@ -20,10 +22,6 @@ o ADD: `auto.correlate` now computes all correlations internally and no longer d
 
 o ADD: `network.estimation` to handle all network estimation in {EGAnet}; *includes* Bayesian GGM from {BGGM} for more seamless incorporation of BEGA
 
-o UPDATE: `EBICglasso.qgraph` and `TMFG` were optimized; `TMFG` is now 2x faster
-
-o UPDATE: `TMFG` can now directly estimate a GGM with the argument 'partial = TRUE'; implements the Local-Global Inversion method from Barfuss et al. (2016)
-
 o ADD: `community.unidimensional` to apply different unidimensional community detection approaches; makes unidimensional community detection more modular and flexible
 
 o ADD: basic (internal) function to handle all network plots to keep changes centralized to a single function; extends flexbility to handle all {GGally}'s `ggnet2` arguments
@@ -34,13 +32,15 @@ o ADD: implemented reproducible resampling bootstrapping and random sampling in 
 
 o ADD: reproducible bootstrapping with seed setting that does *not* affect R's seed and RNG (user's seed will not be affected and will not affected bootstrapping seeds)
 
+o UPDATE: `EBICglasso.qgraph` and `TMFG` were optimized; `TMFG` is now 2x faster
+
+o UPDATE: `TMFG` can now directly estimate a GGM with the argument 'partial = TRUE'; implements the Local-Global Inversion method from Barfuss et al. (2016)
+
 o UPDATE: switched on "Byte-Compile" (byte-compiles on our end and not when the user installs)
 
 o UPDATE: `EGA.estimate` and `EGA` core functions have been updated for seamless use with more basic functions `network.estimation` and `community.*` functions
 
 o UPDATE: S3method updates for `EGA.estimate` and `EGA` to provide estimation information
-
-o DEPENDENCY: removed {network} because it is no longer used for plotting; switched {sna} to IMPORTS rather than SUGGESTS
 
 o UPDATE: `EGA.fit` updated to be compatiable with all updates to `EGA.estimate` (other optimizations were implemented such as direct communtiy detection application and unique solution finding)
 
@@ -51,6 +51,24 @@ o UPDATE: `entropyFit` uses more effective vectorization (about 5-7x faster)
 o UPDATE: `Embed` and `glla` made to be more efficient and includes an internal `glla_setup` function to avoid the same matrix calculations for every participant in a sample for `dynEGA`
 
 o UPDATE: `riEGA` updated to be compatiable with all lower-level updates (slightly faster)
+
+o UPDATE: `wto` updated to be fully vectorized (about 10x faster)
+
+o UPDATE: `totalCor` and `totalCorMat` updated to be fully vectorized (about 10x faster)
+
+o UPDATE: implemented internal `fast.data.frame` for more efficient data frame initialization when all values in data frame are the same
+
+o UPDATE: `bootEGA` allows flexibility to add any arguments from any `EGA*` functions; much faster due to optimizations across all functions ("resampling" is nearly as fast as "parametric")
+
+o DEPENDENCY: removed {network} because it is no longer used for plotting; switched {sna} to IMPORTS rather than SUGGESTS
+
+o DEPENDENCY: removed {rstudioapi} from SUGGESTS because it was used in `colortext` and used in the package
+
+o DEPENDENCY: removed {matrixcalc} because it was only used for trace of a matrix (own internal function is used)
+
+o DEPENDENCY: {future} and {future.apply} are used for parallelization (better integration)
+
+o DEPENDENCY: {progress} and {progressr} are used for progress bars (in parallelization)
 
 
 Changes in version 1.2.5.1

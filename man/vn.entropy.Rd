@@ -26,18 +26,14 @@ Computes the fit of a dimensionality structure using Von Neumman's entropy when 
 Lower values suggest better fit of a structure to the data.
 }
 \examples{
-# Select Five Factor Model personality items only
-idx <- na.omit(match(gsub("-", "", unlist(psychTools::spi.keys[1:5])), colnames(psychTools::spi)))
-items <- psychTools::spi[,idx]
+# Get EGA result
+ega.wmt <- EGA(
+  data = wmt2[,7:24], model = "glasso",
+  plot.EGA = FALSE # no plot for CRAN checks
+)
 
-\dontrun{# Estimate EGA
-ega.spi <- EGA(data = items, model = "glasso")
-
-# Compute entropy indices
-vn.entropy(
-  data = ega.spi$correlation,
-  structure = ega.spi$wc
-)}
+# Compute Von Neumman entropy
+vn.entropy(ega.wmt$correlation, ega.wmt$wc)
 
 }
 \references{

@@ -401,9 +401,8 @@ print.EGA.fit <- function(x, ...)
   cat(paste0("Number of communities: "), communities)
   cat("\n\n") # Add breakspace
   
-  # Remove attribute for clean print
-  membership <- unclass(membership)
-  attr(membership, which = "methods") <- NULL
+  # Remove class and attribute for clean print
+  membership <- remove_attributes(membership)
   
   # Print membership
   print(membership)
@@ -495,9 +494,8 @@ summary.EGA.fit <- function(object, ...)
   cat(paste0("Number of communities: "), communities)
   cat("\n\n") # Add breakspace
   
-  # Remove attribute for clean print
-  membership <- unclass(membership)
-  attr(membership, which = "methods") <- NULL
+  # Remove class and attribute for clean print
+  membership <- remove_attributes(membership)
   
   # Print membership
   print(membership)

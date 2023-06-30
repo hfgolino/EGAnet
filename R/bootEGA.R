@@ -349,795 +349,363 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 11.05.2023
+# Updated 30.06.2023
 bootEGA <- function(
-    data, n = NULL, uni.method = c("expand", "LE", "louvain"), iter,
-    type = c("parametric", "resampling"),
-    corr = c("cor_auto", "pearson", "spearman"),
-    EGA.type = c("EGA", "EGA.fit", "hierEGA", "riEGA"),
-    model = c("glasso", "TMFG"), model.args = list(),
-    algorithm = c("walktrap", "leiden", "louvain"), algorithm.args = list(),
-    consensus.method = c(
-      "highest_modularity",
-      "most_common",
-      "iterative",
-      "lowest_tefi",
-      "most_common_tefi"
-    ), consensus.iter = 100,
+    data, n = NULL,
+    corr = c("auto", "pearson", "spearman"),
+    na.data = c("pairwise", "listwise"),
+    model = c("BGGM", "glasso", "TMFG"),  
+    algorithm = c("leiden", "louvain", "walktrap"),
+    uni.method = c("expand", "LE", "louvain"),
+    iter = 500, type = c("parametric", "resampling"),
+    ncores, EGA.type = c("EGA", "EGA.fit", "hierEGA", "riEGA"),
     typicalStructure = TRUE, plot.typicalStructure = TRUE,
-    plot.args = list(), ncores, progress = TRUE, 
-    seed = 1234, ...
+    verbose = TRUE, seed = 1234,
+    ...
 ) 
 {
   
-  #### DEPRECATED ARGUMENTS
+  # Check for missing arguments (argument, default, function)
+  corr <- set_default(corr, "auto", c("auto", "cor_auto", "pearson", "spearman"))
+  corr <- ifelse(corr == "cor_auto", "auto", corr) # deprecate `cor_auto`
+  na.data <- set_default(na.data, "pairwise", auto.correlate)
+  model <- set_default(model, "glasso", network.estimation)
+  algorithm <- set_default(algorithm, "walktrap", community.detection)
+  uni.method <- set_default(uni.method, "louvain", community.unidimensional)
+  type <- set_default(type, "parametric", bootEGA)
+  EGA.type <- set_default(EGA.type, "ega", bootEGA)
   
-  # Get additional arguments
-  add.args <- list(...)
+  # Set cores
+  if(missing(ncores)){ncores <- round(parallel::detectCores() / 2)}
   
-  # Check if steps has been input as an argument
-  if("steps" %in% names(add.args)){
-    
-    # Give deprecation warning
-    warning(
-      paste(
-        "The 'steps' argument has been deprecated in all EGA functions.\n\nInstead use: algorithm.args = list(steps = ", add.args$steps, ")",
-        sep = ""
-      )
-    )
-    
-    # Handle the number of steps appropriately
-    algorithm.args$steps <- add.args$steps
-  }
+  # `EGA.estimate` will handle legacy arguments and data processing 
   
-  # Check if uni has been input as an argument
-  if("uni" %in% names(add.args)){
-    
-    # Give deprecation warning
-    warning(
-      "The 'uni' argument has been deprecated in all EGA functions."
-    )
-    
-  }
+  # Ensure data is matrix
+  data <- as.matrix(data)
   
-  #### MISSING ARGUMENTS HANDLING
+  # Get data dimensions
+  dimensions <- dim(data)
   
-  # Unidimensional method
-  if(missing(uni.method)){
-    uni.method <- "louvain"
-  }else{uni.method <- match.arg(uni.method)}
+  # Ensure data has names
+  data <- ensure_dimension_names(data)
   
-  # Correlations
-  if(missing(corr)){
-    corr <- "cor_auto"
-  }else{corr <- match.arg(corr)}
-  
-  # EGA type
-  if(missing(EGA.type)){
-    EGA.type <- "EGA"
-  }else{EGA.type <- match.arg(EGA.type)}
-  
-  # Network estimation
-  if(missing(model)){
-    model <- "glasso"
-  }else{model <- match.arg(model)}
-  
-  # Community detection algorithm
-  if(missing(algorithm)){
-    algorithm <- "walktrap"
-  }else if(!is.function(algorithm)){
-    algorithm <- match.arg(algorithm)
-  }else{
-    algorithm <- algorithm
-  }
-  
-  # Bootstrap type
-  if(missing(type)){
-    type <- "parametric"
-  }else{type <- match.arg(type)}
-  
-  # Consensus clustering method
-  if(missing(consensus.method)){
-    consensus.method <- "most_common"
-  }else{consensus.method <- tolower(match.arg(consensus.method))}
-  
-  # Number of parallel cores
-  if(missing(ncores)){
-    ncores <- ceiling(parallel::detectCores() / 2)
-  }
-  
-  # Check for input plot arguments
-  if("color.palette" %in% names(plot.args)){
-    color.palette <- plot.args$color.palette
-  }else{color.palette <- "polychrome"}
-  
-  # Number of cases
-  if(is.null(n)){
-    
-    # Send error for symmetric matrix if n is missing
-    # Function in `helpers-general.R`
-    if(is_symmetric(data)){
-      stop("The argument 'n' is missing for a symmetric matrix")
-    }else{
-      cases <- nrow(data)
-    }
-    
-  }else{
-    
-    # Set cases to n
-    cases <- n
-    
-  }
-  
+  # Get variable names
+  variable_names <- dimnames(data)[[2]]
+
+  # NEED HANDLING FOR DIFFERENT TYPES ONLY EGA RIGHT NOW
+
   # Obtain EGA function
   ega_function <- switch(
-    tolower(EGA.type),
+    EGA.type,
     "ega" = EGA,
     "ega.fit" = EGA.fit,
     "hierega" = hierEGA,
     "riega" = riEGA
   )
   
-  # EGA calls
-  ega_args <- list(
-    data = data, n = cases, uni.method = uni.method,
-    corr = corr, model = model, model.args = model.args,
-    algorithm = algorithm, algorithm.args = algorithm.args,
-    consensus.method = consensus.method,
-    consensus.iter = consensus.iter,
-    plot.EGA = FALSE
+  # Estimate empirical EGA
+  empirical_EGA <- ega_function(
+    data = data, n = n, corr = corr,
+    na.data = na.data, model = model,
+    algorithm = algorithm, uni.method = uni.method,
+    plot.EGA = FALSE, verbose = FALSE, ...
   )
+  # If "n" is NULL and a correlation matrix is supplied,
+  # then an error will be thrown within `EGA.estimate`,
+  # so no need to check for "n"
   
-  # Remove calls that are not in formal arguments
-  ega_args <- ega_args[
-    !is.na(
-      match(names(ega_args), formalArgs(ega_function))
-    )
-  ]
-  
-  # Estimate empirical EGA (run quietly)
-  empirical_EGA <- silent_call(
-    do.call(ega_function, ega_args)
+  # Generate data
+  bootstrap_data <- reproducible_bootstrap(
+    data = data, samples = iter, cases = empirical_EGA$n,
+    mu = rep(0, dimensions[2]), Sigma = empirical_EGA$correlation,
+    seed = seed, type = type
   )
-
-  # EGA output
-  if("EGA" %in% names(empirical_EGA)){
-    
-    # Obtain EGA output from EGA option 
-    ega_output <- empirical_EGA$EGA
-    
-  }else if(!is(empirical_EGA, "EGA")){
-    
-    # Base on EGA type
-    if(tolower(EGA.type) == "hierega"){
-      
-      # Obtain lower order output
-      ega_output <- empirical_EGA$lower_order
-      
-    }
-    
-  }else{
-    
-    # Assume output is from standard EGA
-    ega_output <- empirical_EGA
-    
-  }
-  
-  # Set correlation matrix
-  if(type == "parametric"){
-    
-    # Obtain correlation data
-    cor.data <- ega_output$correlation
-    
-    # Generated data will be continuous
-    corr.method <- "pearson"
-    
-  }else if(type == "resampling"){
-    
-    # Check if matrix is symmetric (function in `helpers-general.R`)
-    if(is_symmetric(data)){
-      
-      # If data is symmetric and type is not parametric, then warn
-      warning("The argument 'data' is symmetric and therefore treated as a correlation matrix. Parametric bootstrap will be used instead")
-      
-      # Set bootstrap type to parametric and correlation to Pearson
-      type <- "parametric"; corr.method <- "pearson"
-      
-    }else{
-      
-      # Otherwise, proceed with input correlation method
-      corr.method <- corr
-      
-    }
-    
-  }
-  
-  # Set seed
-  set.seed(seed)
-  
-  # Send warning about seed not being set
-  if(is.null(seed)){
-    warning("Results are unique. Set the 'seed' argument for reproducible results (see examples)")
-  }
-  
-  # Initialize data list
-  datalist <- vector(mode = "list", length = iter)
-  
-  # Initialize count
-  count <- 0
-  
-  # Let user know data generation has started
-  message("Generating data...", appendLF = FALSE)
-  
-  repeat{
-    
-    # Increase count
-    count <- count + 1
-    
-    # Generate data
-    if(type == "parametric"){
-      datalist[[count]] <- MASS_mvrnorm(cases, mu = rep(0, ncol(cor.data)), Sigma = cor.data)
-    }else if(type == "resampling"){
-      datalist[[count]] <- data[sample(1:cases, replace = TRUE),]
-    }
-    
-    # Break out of repeat
-    if(count == iter){
-      break
-    }
-    
-  }
-  
-  # Let user know data generation has ended
-  message("done", appendLF = TRUE)
   
   # Perform bootstrap using parallel processing
-  # See in `helpers-system.R`
   boots <- parallel_process(
-    datalist = datalist,
-    iter = iter,
-    progress = progress,
-    FUN = ega_function,
-    FUN_args = ega_args,
-    ncores = ncores
+    # Parallel processing arguments
+    iterations = iter,
+    datalist = bootstrap_data,
+    ncores = ncores, progress = verbose,
+    # Standard EGA arguments
+    FUN = ega_function, n = n, corr = corr,
+    na.data = na.data, model = model,
+    algorithm = algorithm, uni.method = uni.method,
+    plot.EGA = FALSE, verbose = FALSE,
+    ...
   )
   
-  # Bootstrap output
-  if("EGA" %in% names(boots[[1]])){
-    
-    # Obtain EGA output from EGA option
-    boot_output <- lapply(boots, function(x){
-      x$EGA
-    })
-    
-  }else if(!is(boots[[1]], "EGA")){
-    
-    # Base on EGA type
-    if(tolower(EGA.type) == "hierega"){
-      
-      # Obtain lower order output
-      boot_output <- lapply(boots, function(x){
-        x$lower_order
-      })
-      
-      # Obtain higher order output
-      boot_output_higher <- lapply(boots, function(x){
-        x$higher_order$EGA
-      })
-      
-    }
-    
-  }else{
-    
-    # Assume output is from standard EGA
-    boot_output <- boots
-    
-  }
+  # NEED HANDLING FOR DIFFERENT TYPES ONLY EGA RIGHT NOW
+  # EGA.fit = empirical_EGA$EGA
+  # riEGA = empirical_EGA$EGA
+  # hierEGA = will have "higher" and "lower"
   
-  # Let user know results are being computed
-  message("Computing results...\n")
+  # Get results
+  results <- prepare_bootEGA_results(boots)
   
-  # Obtain variable names
-  variable_names <- colnames(data)
+  # Organize results
+  result <- list(
+    iter = iter, type = type, boot.ndim = results$boot_n.dim,
+    boot.wc = results$boot_memberships, bootGraphs = results$boot_networks,
+    summary.table = results$summary_table, frequency = results$frequencies,
+    EGA = empirical_EGA, EGA.type = EGA.type
+  )
   
-  # Get networks
-  bootGraphs <- lapply(boot_output, function(x){
-    net <- x$network
-    colnames(net) <- variable_names
-    row.names(net) <- variable_names
-    return(net)
-  })
+  # No attributes needed (all information is contained in output)
   
-  # Get community membership
-  boot.wc <- lapply(boot_output, function(x){
-    wc <- x$wc
-    names(wc) <- variable_names
-    return(wc)
-  })
-  
-  # Get dimensions
-  boot.ndim <- matrix(NA, nrow = iter, ncol = 2)
-  colnames(boot.ndim) <- c("Boot.Number", "N.Dim")
-  
-  # Populate bootstrap dimension
-  boot.ndim[,1] <- seq_len(iter)
-  boot.ndim[,2] <- sapply(
-    boot_output, function(x){
-      x$n.dim
-  })
-  
-  # Check for typical structure
-  if(isTRUE(typicalStructure)){
-    
-    # Obtain typical structure
-    typical.Structure <- switch(
-      model,
-      "glasso" = apply(simplify2array(bootGraphs),1:2, median),
-      "TMFG" = apply(simplify2array(bootGraphs),1:2, mean)
-    )
-    
-    # Sub-routine to following EGA approach (handles unidimensional structures)
-    typical.wc <- silent_call(
-      typicalStructure.network(
-        A = typical.Structure, corr = corr,
-        model = model, model.args = model.args,
-        n = cases, uni.method = uni.method, algorithm = algorithm,
-        algorithm.args = algorithm.args,
-        consensus.method = consensus.method,
-        consensus.iter = consensus.iter
-      )
-    )
-    
-    typical.ndim <- length(na.omit(unique(typical.wc)))
-    
-    if(typical.ndim == 1){typical.wc[1:length(typical.wc)] <- 1}
-    
-    dim.variables <- data.frame(items = colnames(data), dimension = typical.wc)
-  }
-  
-  Median <- median(boot.ndim[, 2], na.rm = TRUE)
-  se.boot <- sd(boot.ndim[, 2], na.rm = TRUE)
-  ciMult <- qt(0.95/2 + 0.5, nrow(boot.ndim) - 1)
-  ci <- se.boot * ciMult
-  quant <- quantile(boot.ndim[,2], c(.025, .975), na.rm = TRUE)
-  summary.table <- data.frame(n.Boots = iter, median.dim = Median,
-                              SE.dim = se.boot, CI.dim = ci,
-                              Lower.CI = Median - ci, Upper.CI = Median + ci,
-                              Lower.Quantile = quant[1], Upper.Quantile = quant[2])
-  row.names(summary.table) <- NULL
-  
-  #compute frequency
-  dim.range <- range(boot.ndim[,2], na.rm = TRUE)
-  lik <- matrix(0, nrow = diff(dim.range)+1, ncol = 2)
-  colnames(lik) <- c("# of Factors", "Frequency")
-  count <- 0
-  
-  for(i in seq(from=min(dim.range),to=max(dim.range),by=1)){
-    count <- count + 1
-    lik[count,1] <- i
-    lik[count,2] <- length(which(boot.ndim[,2]==i))/iter
-  }
-  
-  # Higher order EGA
-  if(tolower(EGA.type) == "hierega"){
-    
-    #get networks
-    bootGraphs_higher <- lapply(boot_output_higher, function(x){
-      net <- x$network
-      return(net)
-    })
-    
-    #get community membership
-    boot.wc_higher <- lapply(boot_output_higher, function(x){
-      wc <- x$wc
-      return(wc)
-    })
-    
-    #get dimensions
-    boot.ndim_higher <- matrix(NA, nrow = iter, ncol = 2)
-    colnames(boot.ndim_higher) <- c("Boot.Number", "N.Dim")
-    
-    boot.ndim_higher[,1] <- seq_len(iter)
-    boot.ndim_higher[,2] <- unlist(
-      lapply(boot_output_higher, function(x){
-        x$n.dim
-      })
-    )
-    
-    Median_higher <- median(boot.ndim_higher[, 2], na.rm = TRUE)
-    se.boot_higher <- sd(boot.ndim_higher[, 2], na.rm = TRUE)
-    ciMult_higher <- qt(0.95/2 + 0.5, nrow(boot.ndim_higher) - 1)
-    ci_higher <- se.boot_higher * ciMult_higher
-    quant_higher <- quantile(boot.ndim_higher[,2], c(.025, .975), na.rm = TRUE)
-    summary.table_higher <- data.frame(n.Boots = iter, median.dim = Median_higher,
-                                       SE.dim = se.boot_higher, CI.dim = ci_higher,
-                                       Lower.CI = Median_higher - ci_higher, Upper.CI = Median_higher + ci_higher,
-                                       Lower.Quantile = quant_higher[1], Upper.Quantile = quant_higher[2])
-    row.names(summary.table_higher) <- NULL
-    
-    #compute frequency
-    dim.range_higher <- range(boot.ndim_higher[,2], na.rm = TRUE)
-    lik_higher <- matrix(0, nrow = diff(dim.range_higher)+1, ncol = 2)
-    colnames(lik_higher) <- c("# of Factors", "Frequency")
-    count <- 0
-    
-    for(i in seq(from=min(dim.range_higher),to=max(dim.range_higher),by=1)){
-      count <- count + 1
-      lik_higher[count,1] <- i
-      lik_higher[count,2] <- length(which(boot.ndim_higher[,2]==i))/iter
-    }
-    
-  }
-  
-  # Reset seed
-  set.seed(NULL)
-  
-  # Set up result list
-  if(tolower(EGA.type) == "hierega"){
-    result <- list(
-      iter = iter, type = type, boot.ndim = boot.ndim,
-      boot.wc = boot.wc, bootGraphs = bootGraphs,
-      summary.table = summary.table, frequency = lik,
-      EGA = empirical_EGA, EGA.type = EGA.type
-    )
-  }else{
-    result <- list(
-      iter = iter, type = type, boot.ndim = boot.ndim,
-      boot.wc = boot.wc, bootGraphs = bootGraphs,
-      summary.table = summary.table, frequency = lik,
-      EGA = ega_output, EGA.type = EGA.type
-    )
-  }
-  
-  # Typical structure
-  if (typicalStructure) {
-    
-    typicalGraph <- list(
-      graph = typical.Structure,
-      typical.dim.variables = dim.variables[order(dim.variables[,2]), ],
-      wc = typical.wc
-    )
-    
-    result$typicalGraph <- typicalGraph
-    
-  }
-  
-  # higher order
-  if(tolower(EGA.type) == "hierega"){
-    
-    # Set up result list
-    result_higher <- list(
-      iter = iter, type = type, boot.ndim = boot.ndim_higher,
-      boot.wc = boot.wc_higher, bootGraphs = bootGraphs_higher,
-      summary.table = summary.table_higher, frequency = lik_higher
-    )
-    
-  }
-  
-  # Add plot arguments (for itemStability)
-  result$color.palette <- color.palette
-  
+  # Set class
   class(result) <- "bootEGA"
   
-  if(tolower(EGA.type) == "hierega"){
-    class(result_higher) <- "bootEGA"
-  }
-  
-  if(typicalStructure & plot.typicalStructure){
+  # Check for typical structure results
+  if(isTRUE(typicalStructure)){
     
-    result$plot.typical.ega <- plot(
-      result,
-      plot.args = plot.args
+    # Obtain results
+    result$typicalGraph <- estimate_typicalStructure(
+      data, results, empirical_EGA, verbose, ...
     )
     
-  }
-  
-  # Check if uni.method = "LE" has been used
-  if(uni.method == "LE"){
-    # Give change warning
-    warning(
-      paste(
-        "Previous versions of EGAnet (<= 0.9.8) checked unidimensionality using",
-        styletext('uni.method = "expand"', defaults = "underline"),
-        "as the default"
-      )
-    )
-  }else if(uni.method == "expand"){
-    # Give change warning
-    warning(
-      paste(
-        "Newer evidence suggests that",
-        styletext('uni.method = "LE"', defaults = "underline"),
-        'is more accurate than uni.method = "expand" (see Christensen, Garrido, & Golino, 2021 in references).',
-        '\n\nIt\'s recommended to use uni.method = "LE"'
-      )
-    )
-  }
-  
-  # Set results for higher order EGA
-  if(tolower(EGA.type) == "hierega"){
-    
-    result <- list(
-      result_lower = result,
-      result_higher = result_higher
-    )
+    # Check for plot
+    if(isTRUE(plot.typicalStructure)){
+      
+      # Get plot
+      result$plot.typical.ega <- plot(result)
+      
+      # Actually send plot
+      plot(result$plot.typical.ega)
+      
+    }
     
   }
   
+  # Return result
   return(result)
   
 }
 
 # Bug checking ----
-
-# # Set up arguments
-# data = wmt2[,7:24]; n = nrow(wmt2); uni.method = "louvain";
-# iter = 100; type = "parametric"; corr = "cor_auto";
-# EGA.type = "EGA"; model = "glasso"; model.args = list();
-# algorithm = "walktrap"; algorithm.args = list();
-# consensus.method = "most_common"; consensus.iter = 1000;
+# DATA
+# data = wmt2[,7:24]; n = NULL; corr = "auto"; na.data = "pairwise"
+# model = "glasso"; algorithm = "walktrap"; uni.method = "louvain"
+# iter = 100; type = "parametric"; ncores = 8; EGA.type = "EGA"
 # typicalStructure = TRUE; plot.typicalStructure = TRUE;
-# plot.args = list(); ncores = 8; progress = TRUE;
-# seed = 1234; add.args = list();
+# verbose = TRUE; seed = 1234
+# r_sample_seeds <- EGAnet:::r_sample_seeds
+# r_sample_with_replacement <- EGAnet:::r_sample_with_replacement
+# r_sample_without_replacemetn <- EGAnet:::r_sample_without_replacement
+# Need above functions for testing!
 
 #' @noRd
-# Typical network ----
-# Updated 11.05.2023
-typicalStructure.network <- function(
-    A, corr, n = NULL, uni.method,
-    model, model.args,
-    algorithm, algorithm.args,
-    consensus.method, consensus.iter
+# Typical network and memberships ----
+# Updated 30.06.2023
+estimate_typicalStructure <- function(
+    data, results, empirical_EGA, verbose, ...
 )
 {
+
+  # Get ellipse arguments
+  ellipse <- list(...)
   
-  # Convert to {igraph}
-  graph <- silent_call(convert2igraph(abs(A)))
+  # Attributes from empirical EGA
+  model_attributes <- attr(empirical_EGA$network, "methods")
+  algorithm_attributes <- attr(empirical_EGA$wc, "methods")
+  unidimensional_attributes <- attr(empirical_EGA, "unidimensional")
   
-  # Check for unconnected nodes
-  if(igraph::vcount(graph) != ncol(A)){
-    
-    warning("Estimated network contains unconnected nodes:\n",
-            paste(names(which(degree(A) == 0)), collapse = ", "))
-    
-    unconnected <- which(degree(A) == 0)
-    
-  }
+  # Set model, algorithm and unidimensional method
+  model <- tolower(model_attributes$model)
+  algorithm <- tolower(algorithm_attributes$algorithm)
+  uni.method <- tolower(unidimensional_attributes$uni.method)
   
-  # Algorithm function
-  if(!is.function(algorithm)){
-    algorithm.FUN <- switch(
-      algorithm,
-      "walktrap" = igraph::cluster_walktrap,
-      "leiden" = igraph::cluster_leiden,
-      "louvain" = igraph::cluster_louvain
-    )
-  }else{
-    algorithm.FUN <- algorithm
-  }
-  
-  # Algorithm arguments
-  algorithm.ARGS <- obtain.arguments(
-    FUN = algorithm.FUN,
-    FUN.args = algorithm.args
+  # Get network
+  network <- switch(
+    model,
+    "bggm" = apply(simplify2array(results$boot_networks),1:2, median),
+    "glasso" = apply(simplify2array(results$boot_networks),1:2, median),
+    "tmfg" = apply(simplify2array(results$boot_networks),1:2, mean)
   )
   
-  ## Remove weights from igraph functions' arguments
-  if("weights" %in% names(algorithm.ARGS)){
-    algorithm.ARGS[which(names(algorithm.ARGS) == "weights")] <- NULL
-  }
-  
-  # Check for unconnected nodes
-  if(all(degree(A) == 0)){
+  # Check for function or non-Louvain method
+  if(
+    is.function(algorithm) ||
+    !algorithm %in% c("louvain", "signed_louvain")
+  ){
     
-    # Initialize community membership list
-    wc <- list()
-    wc$membership <- rep(NA, ncol(A))
-    warning(
-      "Estimated network contains unconnected nodes:\n",
-      paste(names(which(strength(A)==0)), collapse = ", ")
-    )
-    
-    unconnected <- which(degree(A) == 0)
-    
-  }else{
-    
-    if(any(degree(A) == 0)){
-      
-      warning(
-        "Estimated network contains unconnected nodes:\n",
-        paste(names(which(strength(A)==0)), collapse = ", ")
+    # Apply non-Louvain method
+    wc <- do.call(
+      what = community.detection,
+      args = c(
+        list(
+          network = network, algorithm = algorithm,
+          membership.only = TRUE
+        ),
+        ellipse # pass on ellipse
       )
-      
-      unconnected <- which(degree(A) == 0)
-      
-    }
+    )
     
-    # Check if algorithm is a function
-    if(is.function(algorithm)){
-      
-      # Convert to igraph
-      graph <- suppressWarnings(convert2igraph(abs(A)))
-      
-      # Run community detection algorithm
-      algorithm.ARGS$graph <- graph
-      
-      # Call community detection algorithm
-      wc <- do.call(
-        what = algorithm.FUN,
-        args = algorithm.ARGS
-      )$membership
-      
-    }else if(tolower(algorithm) == "louvain"){
-      
-      # Initialize community membership list
-      wc <- list()
-      
-      # Population community membership list
-      wc <- consensus_clustering(
-        network = A,
-        corr = A,
-        order = "higher",
-        consensus.iter = consensus.iter,
-        resolution = algorithm.ARGS$resolution
-      )[[consensus.method]]
-      
-    }else{
-      
-      # Convert to igraph
-      graph <- suppressWarnings(convert2igraph(abs(A)))
-      
-      # Run community detection algorithm
-      algorithm.ARGS$graph <- graph
-      
-      # Call community detection algorithm
-      wc <- do.call(
-        what = algorithm.FUN,
-        args = algorithm.ARGS
-      )$membership
-      
-    }
+  }else{ # for Louvain, use consensus clustering
     
-  }
-  
-  # Make wc == multi.wc
-  multi.wc <- wc
-  
-  # Get new data
-  if(model == "glasso"){
+    # Check for consensus method
+    ellipse$consensus.method <- ifelse(
+      "consensus.method" %in% names(ellipse),
+      ellipse$consensus.method, "most_common" # default
+    )
     
-    # Obtain inverse of network
-    g <- -A
-    diag(g) <- 1
+    # Check for consensus iterations
+    ellipse$consensus.iter <- ifelse(
+      "consensus.iter" %in% names(ellipse),
+      ellipse$consensus.iter, 1000 # default
+    )
     
-  }else if(model == "TMFG"){
-    
-    # Generate data
-    g.data <- MASS_mvrnorm(n, mu = rep(0, ncol(A)), Sigma = as.matrix(Matrix::nearPD(A, corr = TRUE, keepDiag = TRUE)$mat))
-    g <- -suppressMessages(LoGo(qgraph::cor_auto(g.data), partial = TRUE))
-    diag(g) <- 1
-    
-  }
-  
-  # New data
-  data <- MASS_mvrnorm(n, mu = rep(0, ncol(g)), Sigma = solve(g))
-  
-  # Check for unidimensional structure
-  if(uni.method == "expand"){
-    
-    # Check for Spinglass algorithm
-    if(is.function(algorithm)){
-      
-      # spins argument is used to identify Spinglass algorithm
-      if("spins" %in% methods::formalArgs(algorithm)){
-        
-        # Simulate data from unidimensional factor model
-        sim.data <- sim.func(data = data, nvar = 4, nfact = 1, load = .70)
-        
-        ## Compute correlation matrix
-        cor.data <- switch(corr,
-                           "cor_auto" = qgraph::cor_auto(sim.data),
-                           "pearson" = cor(sim.data, use = "pairwise.complete.obs"),
-                           "spearman" = cor(sim.data, method = "spearman", use = "pairwise.complete.obs")
-        )
-        
-      }else{
-        
-        ## Compute correlation matrix
-        cor.data <- switch(corr,
-                           "cor_auto" = qgraph::cor_auto(data),
-                           "pearson" = cor(data, use = "pairwise.complete.obs"),
-                           "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
-        )
-        
-        ## Expand correlation matrix
-        cor.data <- expand.corr(cor.data)
-        
-      }
-      
-    }else{# Do regular adjustment
-      
-      ## Compute correlation matrix
-      cor.data <- switch(corr,
-                         "cor_auto" = qgraph::cor_auto(data),
-                         "pearson" = cor(data, use = "pairwise.complete.obs"),
-                         "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
+    # Apply consensus clustering
+    wc <- do.call(
+      what = community.consensus,
+      args = c(
+        list(
+          network = network,
+          signed = algorithm == "signed_louvain",
+          membership.only = TRUE,
+          verbose = FALSE
+        ),
+        ellipse # pass on ellipse
       )
-      
-      ## Expand correlation matrix
-      cor.data <- expand.corr(cor.data)
-      
-    }
-    
-    # Unidimensional result
-    uni.res <- EGA.estimate(data = cor.data, n = n,
-                            model = model, model.args = model.args,
-                            algorithm = algorithm, algorithm.args = algorithm.args)
-    
-    ## Remove simulated data for multidimensional result
-    cor.data <- cor.data[-c(1:4),-c(1:4)]
-    
-    if(uni.res$n.dim <= 2){
-      wc <- uni.res$wc[-c(1:4)]
-    }else{
-      wc <- multi.wc
-    }
-    
-  }else if(uni.method == "LE"){
-    
-    ## Compute correlation matrix
-    cor.data <- switch(corr,
-                       "cor_auto" = qgraph::cor_auto(data),
-                       "pearson" = cor(data, use = "pairwise.complete.obs"),
-                       "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
     )
-    
-    # Leading eigenvalue approach for one and two dimensions
-    wc <- igraph::cluster_leading_eigen(convert2igraph(abs(cor.data)))$membership
-    names(wc) <- colnames(A)
-    n.dim <- length(na.omit(unique(wc)))
-    
-    
-    # Set up results
-    if(n.dim != 1){
-      wc <- multi.wc
-    }
-    
-  }else if(uni.method == "louvain"){
-    
-    ## Compute correlation matrix
-    cor.data <- switch(corr,
-                       "cor_auto" = qgraph::cor_auto(data),
-                       "pearson" = cor(data, use = "pairwise.complete.obs"),
-                       "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
-    )
-    
-    # Most common consensus with Louvain
-    wc <- most_common_consensus(
-      network = abs(cor.data),
-      order = "higher",
-      consensus.iter = 1000,
-      resolution = 0.95
-    )$most_common
-    names(wc) <- colnames(A)
-    n.dim <- length(na.omit(unique(wc)))
     
   }
   
-  # Obtain community memberships
-  init.wc <- as.vector(matrix(NA, nrow = 1, ncol = ncol(A)))
-  names(init.wc) <- colnames(A)
-  init.wc[1:length(wc)] <- wc
-  wc <- init.wc
+  # Obtain arguments for model
+  model_ARGS <- switch(
+    model,
+    "bggm" = c(
+      obtain_arguments(BGGM::estimate, model_attributes),
+      obtain_arguments(BGGM:::select.estimate, model_attributes)
+    ),
+    "glasso" = obtain_arguments(EBICglasso.qgraph, model_attributes),
+    "tmfg" = obtain_arguments(TMFG, model_attributes)
+  )
   
-  # Replace unconnected nodes with NA communities
-  if(exists("unconnected")){
-    wc[unconnected] <- NA
+  # Make adjustments for each model (removes extraneous arguments)
+  model_ARGS <- adjust_model_arguments(model_ARGS)
+  # Found in `EGA` internals
+  
+  # Set up arguments for unidimensional
+  unidimensional_ARGS <- list( # standard arguments
+    data = data, n = empirical_EGA$n, 
+    corr = model_attributes$corr, 
+    na.data = model_attributes$na.data,
+    model = model, uni.method = uni.method,
+    verbose = FALSE
+  )
+  
+  # `data` at this point will be data or correlation matrix
+  # For non-BGGM network estimation, OK to use correlation matrix
+  if(model_attributes$model != "bggm"){
+    unidimensional_ARGS$data <- empirical_EGA$correlation
   }
   
-  names(wc) <- colnames(A)
+  # Additional arguments for model
+  unidimensional_ARGS <- c(unidimensional_ARGS, model_ARGS)
   
-  return(wc)
+  # Third, obtain the unidimensional result
+  unidimensional_result <- do.call(
+    what = community.unidimensional,
+    args = unidimensional_ARGS
+  )
+  
+  # Determine result
+  if(unique_length(unidimensional_result) == 1){
+    wc <- unidimensional_result
+  }
+  
+  # Obtain number of dimensions
+  n.dim <- unique_length(wc)
+  
+  # Set up dimension variables data frame
+  ## Mainly for legacy, redundant with named `wc`
+  dim.variables <- fast.data.frame(
+    c(dimnames(empirical_EGA$network)[[2]], wc),
+    nrow = dim(empirical_EGA$network)[2], ncol = 2,
+    colnames = c("items", "dimension")
+  )
+  
+  # Dimension variables data frame by dimension
+  dim.variables <- dim.variables[
+    order(dim.variables$dimension),
+  ]
+  
+  # Return results
+  return(
+    list(
+      graph = network,
+      typical.dim.variables = dim.variables,
+      wc = wc, n.dim = n.dim
+    )
+  )
+
+}
+
+#' @noRd
+# Prepare `bootEGA` results ----
+# Self-contained to work on `EGA` bootstraps
+# Updated 29.06.2023
+prepare_bootEGA_results <- function(boot_object)
+{
+  
+  # Get number of iterations
+  iter <- length(boot_object)
+  
+  # Get network
+  boot_networks <- lapply(boot_object, function(x){
+    return(x$network)
+  })
+  
+  # Get memberships
+  boot_memberships <- t(nnapply(boot_object, function(x){
+    return(x$wc)
+  }, LENGTH = dim(boot_networks[[1]])[2]))
+  
+  # Get bootstrap dimensions
+  boot_n.dim <- nnapply(boot_object, function(x){x$n.dim})
+  
+  # Set up data frame
+  boot_dimensions <- fast.data.frame(
+    c(seq_len(iter), boot_n.dim),
+    nrow = iter, ncol = 2,
+    colnames = c("Boot.Number", "N.Dim")
+  )
+  
+  # Pre-compute standard deviation and confidence interval
+  median_boot <- median(boot_n.dim, na.rm = TRUE)
+  se_boot <- sd(boot_n.dim, na.rm = TRUE)
+  ci_boot <- se_boot * qt(0.95 / 2 + 0.5, iter - 1)
+  quantile_boot <- quantile(boot_n.dim, c(0.025, 0.975), na.rm = TRUE)
+  
+  # Set up descriptive statistics
+  summary_table <- fast.data.frame(
+    c(
+      iter, median_boot, se_boot, ci_boot, 
+      median_boot - ci_boot, median_boot + ci_boot,
+      quantile_boot
+    ), ncol = 8,
+    colnames = c(
+      "n.Boots", "median.dim", "SE.dim", "CI.dim",
+      "Lower.CI", "Upper.CI", "Lower.Quantile", "Upper.Quantile"
+    ), row.names = ""
+  )
+  
+  # Compute frequency
+  frequencies <- count_table(boot_n.dim, proportion = TRUE)
+  dimnames(frequencies)[[2]] <- c("# of Factors", "Frequency")
+  
+  # Return results
+  return(
+    list(
+      boot_networks = boot_networks,
+      boot_memberships = boot_memberships,
+      boot_n.dim = boot_n.dim,
+      summary_table = summary_table,
+      frequencies = frequencies
+    )
+  )
+  
   
 }
 

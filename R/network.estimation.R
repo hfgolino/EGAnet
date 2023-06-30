@@ -121,7 +121,7 @@
 #' @export
 #'
 # Compute networks for EGA
-# Updated 23.06.2023
+# Updated 30.06.2023
 network.estimation <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -264,8 +264,10 @@ network.estimation <- function(
     )
   }
   
-  # Add model to attributes
-  attr(estimated_network, "methods")$model <- model
+  # Add "model", "corr", and "na.data" to attributes
+  attr(estimated_network, "methods")[
+    c("model", "corr", "na.data")
+  ] <- c(model, corr, na.data)
   
   # Set up for return
   if(isTRUE(network.only)){
@@ -280,7 +282,7 @@ network.estimation <- function(
         estimated_network = estimated_network,
         output = list(
           bggm_estimate = bggm_output,
-          bggm_select = bggm_select
+          bggm_select = bggm_select[names(bggm_select) != "object"]
         )
       )
       
@@ -411,7 +413,7 @@ send_network_methods <- function(estimated_network)
 
 #' @exportS3Method 
 # S3 Print Method ----
-# Updated 14.06.2023
+# Updated 29.06.2023
 print.EGA.network <- function(x, ...)
 {
   
@@ -449,20 +451,23 @@ print.EGA.network <- function(x, ...)
   cat("\n\n")
   
   # Print information about weights
-  cat("Non-zero edge weights: ")
-  print_df <- data.frame(
-    c("M", format_decimal(average_weight, 3)),
-    c("SD", format_decimal(sd_weight, 3)),
-    c("Min", format_decimal(range_weight[1], 3)),
-    c("Max", format_decimal(range_weight[2], 3))
+  cat("Non-zero edge weights: \n")
+  print_df <- fast.data.frame(
+    c(
+      format_decimal(average_weight, 3),
+      format_decimal(sd_weight, 3),
+      format_decimal(range_weight[1], 3),
+      format_decimal(range_weight[2], 3)
+    ), ncol = 4,
+    colnames = c("M", "SD", "Min", "Max")
   )
-  no_name_print(print_df)
+  print(print_df, quote = FALSE, row.names = FALSE)
   
 }
 
 #' @exportS3Method 
 # S3 Summary Method ----
-# Updated 14.06.2023
+# Updated 29.06.2023
 summary.EGA.network <- function(object, ...)
 {
   
@@ -500,15 +505,17 @@ summary.EGA.network <- function(object, ...)
   cat("\n\n")
   
   # Print information about weights
-  cat("Non-zero edge weights: ")
-  print_df <- data.frame(
-    c("M", format_decimal(average_weight, 3)),
-    c("SD", format_decimal(sd_weight, 3)),
-    c("Min", format_decimal(range_weight[1], 3)),
-    c("Max", format_decimal(range_weight[2], 3))
+  cat("Non-zero edge weights: \n")
+  print_df <- fast.data.frame(
+    c(
+      format_decimal(average_weight, 3),
+      format_decimal(sd_weight, 3),
+      format_decimal(range_weight[1], 3),
+      format_decimal(range_weight[2], 3)
+    ), ncol = 4,
+    colnames = c("M", "SD", "Min", "Max")
   )
-  no_name_print(print_df)
-  
+  print(print_df, quote = FALSE, row.names = FALSE)
   
 }
 
@@ -532,9 +539,22 @@ plot.EGA.network <- function(x, ...)
 
 # Function to find 'type' argument for `BGGM` ----
 #' @noRd
-# Updated 27.06.2023
+# Updated 30.06.2023
 find_BGGM_type <- function(data, ellipse)
 {
+  
+  # Check if "type" already exists
+  if("type" %in% ellipse){
+    
+    # To avoid conflict "type" with `bootEGA`
+    if(
+      tolower(ellipse$type) %in% 
+      c("binary", "ordinal", "continuous", "mixed")
+    ){
+      return(ellipse$type)
+    }
+    
+  }
   
   # Obtain categories of the data
   categories <- data_categories(data)

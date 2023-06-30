@@ -177,7 +177,7 @@
 #' @export
 #'
 # Compute consensus clustering for EGA
-# Updated 27.06.2023
+# Updated 29.06.2023
 community.consensus <- function(
     network, signed = FALSE, 
     order = c("lower", "higher"), resolution = 1,
@@ -187,7 +187,7 @@ community.consensus <- function(
     ), consensus.iter = 1000, 
     correlation.matrix = NULL,
     membership.only = TRUE,
-    verbose = TRUE,
+    verbose = FALSE,
     ...
 )
 {
@@ -196,38 +196,10 @@ community.consensus <- function(
   order <- set_default(order, "higher", community.consensus)
   consensus.method <- set_default(consensus.method, "most_common", community.consensus)
   
-  # Determine class of network
-  if(is(network, "igraph")){
-    
-    # Convert to network matrix
-    network_matrix <- igraph2matrix(network)
-    
-    # Check for absolute
-    if(isFALSE(signed)){
-      network_matrix <- abs(network_matrix)
-    }
-    
-    # Convert to {igraph} network (ensures absolute even if {igraph})
-    igraph_network <- convert2igraph(network_matrix)
-    
-    
-  }else{
-    
-    # Ensure network is matrix
-    network <- as.matrix(network)
-    
-    # Check for absolute
-    if(isFALSE(signed)){
-      network <- abs(network)
-    }
-    
-    # Store network as network matrix
-    network_matrix <- network
-    
-    # Convert to {igraph} network
-    igraph_network <- convert2igraph(network)
-    
-  }
+  # Get networks
+  networks <- obtain_networks(network, signed)
+  igraph_network <- networks$igraph_network
+  network_matrix <- networks$network_matrix
   
   # Make sure there are variable names
   network_matrix <- ensure_dimension_names(network_matrix)
@@ -366,7 +338,7 @@ community.consensus <- function(
     
     ## Proportion Table
     if("proportion_table" %in% names(result)){
-      colnames(result$proportion_table) <- c(network_names, "Proportion")
+      dimnames(result$proportion_table)[[2]] <- c(network_names, "Proportion")
     }
     
     # Set class
@@ -388,7 +360,7 @@ community.consensus <- function(
 
 #' @exportS3Method 
 # S3 Print Method ----
-# Updated 27.06.2023
+# Updated 29.06.2023
 print.EGA.consensus <- function(x, ...)
 {
   
@@ -425,15 +397,14 @@ print.EGA.consensus <- function(x, ...)
   cat("\n\n")
   
   # Determine number of communities
-  communities <- length(na.omit(unique(membership)))
+  communities <- unique_length(membership)
   
   # Print communities
   cat(paste0("Number of communities: "), communities)
   cat("\n\n") # Add breakspace
   
   # Remove attribute for clean print
-  membership <- unclass(membership)
-  attr(membership, which = "methods") <- NULL
+  membership <- remove_attributes(membership)
   
   # Print membership
   print(membership)
@@ -442,7 +413,7 @@ print.EGA.consensus <- function(x, ...)
 
 #' @exportS3Method 
 # S3 Summary Method ----
-# Updated 27.06.2023
+# Updated 29.06.2023
 summary.EGA.consensus <- function(object, ...)
 {
   
@@ -479,15 +450,14 @@ summary.EGA.consensus <- function(object, ...)
   cat("\n\n")
   
   # Determine number of communities
-  communities <- length(na.omit(unique(membership)))
+  communities <- unique_length(membership)
   
   # Print communities
   cat(paste0("Number of communities: "), communities)
   cat("\n\n") # Add breakspace
   
   # Remove attribute for clean print
-  membership <- unclass(membership)
-  attr(membership, which = "methods") <- NULL
+  membership <- remove_attributes(membership)
   
   # Print membership
   print(membership)
@@ -618,7 +588,7 @@ binary_check <- function(b_matrix){
 
 #' @noRd
 # Iterative method ----
-# Updated 26.06.2023
+# Updated 29.06.2023
 iterative <- function(
     FUN, FUN.ARGS, 
     order, consensus.iter,
@@ -657,21 +627,21 @@ iterative <- function(
     
     # Initialize consensus matrix
     consensus_matrix <- matrix(
-      0, nrow = dimensions[2], ncol = dimensions[2]
+      nrow = dimensions[2], ncol = dimensions[2]
     )
     
     # Loop over to get proportions
     for(i in seq_len(dimensions[2])){
       for(j in i:dimensions[2]){
         
-        # Fill consensus matrix
-        consensus_matrix[i,j] <- sum(
+        # Get value
+        value <- sum(
           memberships[,i] == memberships[,j],
           na.rm = TRUE
         )
         
-        # Fill other side
-        consensus_matrix[j,i] <- consensus_matrix[i,j]
+        # Fill consensus matrix
+        consensus_matrix[i,j] <- consensus_matrix[j,i] <- value
         
       }
     }
@@ -778,7 +748,7 @@ lowest_tefi <- function(
 
 #' @noRd
 # Most Common method ----
-# Updated 26.06.2023
+# Updated 29.06.2023
 most_common <- function(
     FUN, FUN.ARGS, 
     order, consensus.iter,
@@ -814,7 +784,7 @@ most_common <- function(
 
   # Obtain solution
   selected_solution <- proportion_table[
-    which.max(proportion_table$Value), -(dimensions[2] + 1)
+    which.max(proportion_table$Value), seq_len(dimensions[2])
   ]
   
   # Set up return list

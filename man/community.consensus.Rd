@@ -13,7 +13,7 @@ community.consensus(
   consensus.iter = 1000,
   correlation.matrix = NULL,
   membership.only = TRUE,
-  verbose = TRUE,
+  verbose = FALSE,
   ...
 )
 }

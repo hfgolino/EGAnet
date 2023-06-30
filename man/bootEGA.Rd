@@ -7,23 +7,18 @@
 bootEGA(
   data,
   n = NULL,
+  corr = c("auto", "pearson", "spearman"),
+  na.data = c("pairwise", "listwise"),
+  model = c("BGGM", "glasso", "TMFG"),
+  algorithm = c("leiden", "louvain", "walktrap"),
   uni.method = c("expand", "LE", "louvain"),
-  iter,
+  iter = 500,
   type = c("parametric", "resampling"),
-  corr = c("cor_auto", "pearson", "spearman"),
+  ncores,
   EGA.type = c("EGA", "EGA.fit", "hierEGA", "riEGA"),
-  model = c("glasso", "TMFG"),
-  model.args = list(),
-  algorithm = c("walktrap", "leiden", "louvain"),
-  algorithm.args = list(),
-  consensus.method = c("highest_modularity", "most_common", "iterative", "lowest_tefi",
-    "most_common_tefi"),
-  consensus.iter = 100,
   typicalStructure = TRUE,
   plot.typicalStructure = TRUE,
-  plot.args = list(),
-  ncores,
-  progress = TRUE,
+  verbose = TRUE,
   seed = 1234,
   ...
 )
@@ -34,6 +29,61 @@ Includes the variables to be used in the \code{bootEGA} analysis}
 
 \item{n}{Integer.
 Sample size if \code{data} provided is a correlation matrix}
+
+\item{corr}{Character.
+Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
+
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{cor_auto}}}
+{Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
+\code{\link[qgraph]{qgraph}}}.
+
+\item{\strong{\code{pearson}}}
+{Computes Pearson's correlation coefficient using the pairwise complete observations via
+the \code{\link[stats]{cor}}} function.
+
+\item{\strong{\code{spearman}}}
+{Computes Spearman's correlation coefficient using the pairwise complete observations via
+the \code{\link[stats]{cor}}} function.
+}}
+
+\item{model}{Character.
+A string indicating the method to use.
+
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{glasso}}}
+{Estimates the Gaussian graphical model using graphical LASSO with
+extended Bayesian information criterion to select optimal regularization parameter.
+This is the default method}
+
+\item{\strong{\code{TMFG}}}
+{Estimates a Triangulated Maximally Filtered Graph}
+
+}}
+
+\item{algorithm}{A string indicating the algorithm to use or a function from \code{\link{igraph}}
+Defaults to \code{"walktrap"}.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{walktrap}}}
+{Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
+
+\item{\strong{\code{leiden}}}
+{Computes the Leiden algorithm using \code{\link[igraph]{cluster_leiden}}.
+Defaults to \code{objective_function = "modularity"}}
+
+\item{\strong{\code{louvain}}}
+{Computes the Louvain algorithm using \code{\link[igraph]{cluster_louvain}}}
+
+}}
 
 \item{uni.method}{Character.
 What unidimensionality method should be used? 
@@ -84,25 +134,14 @@ original dataset, via the \code{\link[MASS]{mvrnorm}} function}
 
 }}
 
-\item{corr}{Character.
-Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
+\item{ncores}{Numeric.
+Number of cores to use in computing results.
+Defaults to \code{parallel::detectCores() / 2} or half of your
+computer's processing power.
+Set to \code{1} to not use parallel computing
 
-Current options are:
-
-\itemize{
-
-\item{\strong{\code{cor_auto}}}
-{Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
-\code{\link[qgraph]{qgraph}}}.
-
-\item{\strong{\code{pearson}}}
-{Computes Pearson's correlation coefficient using the pairwise complete observations via
-the \code{\link[stats]{cor}}} function.
-
-\item{\strong{\code{spearman}}}
-{Computes Spearman's correlation coefficient using the pairwise complete observations via
-the \code{\link[stats]{cor}}} function.
-}}
+If you're unsure how many cores your computer has,
+then use the following code: \code{parallel::detectCores()}}
 
 \item{EGA.type}{Character.
 Type of EGA model to use.
@@ -126,48 +165,36 @@ Current options are:
 
 }}
 
-\item{model}{Character.
-A string indicating the method to use.
+\item{typicalStructure}{Boolean.
+If \code{TRUE}, returns the typical network of partial correlations
+(estimated via graphical lasso or via TMFG) and estimates its dimensions.
+The "typical network" is the median of all pairwise correlations over the \emph{n} bootstraps.
+Defaults to \code{TRUE}}
 
-Current options are:
+\item{plot.typicalStructure}{Boolean.
+If \code{TRUE}, returns a plot of the typical network (partial correlations),
+which is the median of all pairwise correlations over the \emph{n} bootstraps,
+and its estimated dimensions.
+Defaults to \code{TRUE}}
 
-\itemize{
+\item{seed}{Numeric.
+Seed to reproduce results. Defaults to \code{1234}. For random results, set to \code{NULL}}
 
-\item{\strong{\code{glasso}}}
-{Estimates the Gaussian graphical model using graphical LASSO with
-extended Bayesian information criterion to select optimal regularization parameter.
-This is the default method}
-
-\item{\strong{\code{TMFG}}}
-{Estimates a Triangulated Maximally Filtered Graph}
-
-}}
+\item{...}{Additional arguments.
+Used for deprecated arguments from previous versions of \code{\link{EGA}}}
 
 \item{model.args}{List.
 A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
 or \code{\link[EGAnet]{TMFG}}}
 
-\item{algorithm}{A string indicating the algorithm to use or a function from \code{\link{igraph}}
-Defaults to \code{"walktrap"}.
-Current options are:
-
-\itemize{
-
-\item{\strong{\code{walktrap}}}
-{Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
-
-\item{\strong{\code{leiden}}}
-{Computes the Leiden algorithm using \code{\link[igraph]{cluster_leiden}}.
-Defaults to \code{objective_function = "modularity"}}
-
-\item{\strong{\code{louvain}}}
-{Computes the Louvain algorithm using \code{\link[igraph]{cluster_louvain}}}
-
-}}
-
 \item{algorithm.args}{List.
 A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
 or some other community detection algorithm function (see examples)}
+
+\item{consensus.iter}{Numeric.
+Number of iterations to perform in consensus clustering for the Louvain algorithm
+(see Lancichinetti & Fortunato, 2012).
+Defaults to \code{100}}
 
 \item{consensus.method}{Character.
 What consensus clustering method should be used? 
@@ -200,23 +227,6 @@ is used}}
 
 }}
 
-\item{consensus.iter}{Numeric.
-Number of iterations to perform in consensus clustering for the Louvain algorithm
-(see Lancichinetti & Fortunato, 2012).
-Defaults to \code{100}}
-
-\item{typicalStructure}{Boolean.
-If \code{TRUE}, returns the typical network of partial correlations
-(estimated via graphical lasso or via TMFG) and estimates its dimensions.
-The "typical network" is the median of all pairwise correlations over the \emph{n} bootstraps.
-Defaults to \code{TRUE}}
-
-\item{plot.typicalStructure}{Boolean.
-If \code{TRUE}, returns a plot of the typical network (partial correlations),
-which is the median of all pairwise correlations over the \emph{n} bootstraps,
-and its estimated dimensions.
-Defaults to \code{TRUE}}
-
 \item{plot.args}{List.
 A list of additional arguments for the network plot.
 See \code{\link[GGally]{ggnet2}} for
@@ -247,25 +257,10 @@ more details and examples}
 
 }}
 
-\item{ncores}{Numeric.
-Number of cores to use in computing results.
-Defaults to \code{parallel::detectCores() / 2} or half of your
-computer's processing power.
-Set to \code{1} to not use parallel computing
-
-If you're unsure how many cores your computer has,
-then use the following code: \code{parallel::detectCores()}}
-
 \item{progress}{Boolean.
 Should progress be displayed?
 Defaults to \code{TRUE}.
 For Windows, \code{FALSE} is about 2x faster}
-
-\item{seed}{Numeric.
-Seed to reproduce results. Defaults to \code{1234}. For random results, set to \code{NULL}}
-
-\item{...}{Additional arguments.
-Used for deprecated arguments from previous versions of \code{\link{EGA}}}
 }
 \value{
 Returns a list containing:

@@ -217,12 +217,6 @@ riEGA <- function(
   # Get variable names
   variable_names <- dimnames(data)[[2]]
   
-  # Configure random-intercept model
-  ri_model <- paste(
-    "RI =~",
-    paste0("1*", variable_names, collapse = " + ")
-  )
-  
   # Get ellipse arguments
   ellipse <- list(...)
   
@@ -233,7 +227,9 @@ riEGA <- function(
   lavaan_ARGS <- obtain_arguments(cfa_FUN, ellipse)
   
   # Set random-intercept model
-  lavaan_ARGS$model <- ri_model
+  lavaan_ARGS$model <- paste(
+    "RI =~", paste0("1*", variable_names, collapse = " + ")
+  )
   
   # Set data
   lavaan_ARGS$data <- data
@@ -241,7 +237,7 @@ riEGA <- function(
   # Check for "auto" estimator
   if(estimator == "auto"){
     lavaan_ARGS <- estimator_arguments(lavaan_ARGS, ellipse)
-  }
+  }else{lavaan_ARGS$estimator <- estimator}
   
   # Ensure std.lv is FALSE
   lavaan_ARGS$std.lv <- FALSE
@@ -250,14 +246,14 @@ riEGA <- function(
   fit <- try(
     do.call(
       what = "cfa_FUN",
-      # not sure why {lavaan}'s function needs to
-      # be in quotes...but it does
+      # not sure why {lavaan}'s `cfa` function
+      # needs to be in quotes...but it does
       args = lavaan_ARGS
     ),
     silent = TRUE
   )
   
-  # Check for "try-error"
+  # Check for non-convergence
   if(is(fit, "try-error")){
     
     # Let user know that random-intercept model did not converge
@@ -294,7 +290,7 @@ riEGA <- function(
     diag(correlation_matrix) <- 1
     
     # Ensure positive definite
-    if(any(eigen(correlation_matrix)$values < 0)){
+    if(is_positive_definite(correlation_matrix)){
       
       correlation_matrix <- as.matrix(
         Matrix::nearPD(
@@ -322,9 +318,7 @@ riEGA <- function(
   # Set up results
   results <- list(
     EGA = ega_result,
-    RI = list(
-      fit = fit, lavaan.args = lavaan_ARGS
-    )
+    RI = list(fit = fit, lavaan.args = lavaan_ARGS)
   )
   
   # Add methods for random-intercept model

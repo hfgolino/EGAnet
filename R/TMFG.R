@@ -119,7 +119,7 @@
 #'
 #' @export
 # TMFG Filtering Method----
-# Updated 26.06.2023
+# Updated 29.06.2023
 TMFG <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -166,7 +166,7 @@ TMFG <- function(
   separator_rows <- nodes - 4
   
   # Initialize triangles and separators matrix
-  triangles <- matrix(nrow = 2 * separator_rows, ncol = 3)
+  triangles <- matrix(nrow = 2 * nodes - 4, ncol = 3)
   separators <- matrix(nrow = separator_rows, ncol = 3)
   
   # Obtain four nodes with the largest strength
@@ -186,7 +186,7 @@ TMFG <- function(
   inserted[first_four] <- order(four_nodes, decreasing = TRUE)[first_four]
   
   # Set remaining nodes
-  remaining <- setdiff(1:nodes, inserted)
+  remaining <- setdiff(seq_len(nodes), inserted)
   
   # Build tetrahedron
   triangles[1,] <- inserted[seq_len(3)]; triangles[2,] <- inserted[2:4];
@@ -238,6 +238,11 @@ TMFG <- function(
     # Update lists
     remaining <- remaining[-existing_vertex]
     inserted[i] <- add_vertex
+    
+    # Stop when length remaining does not equal what it should be
+    if(length(remaining) != nodes - i){
+      stop("check here")
+    }
     
     # Add edges to network
     network[add_vertex, triangles[max_gain,]] <-
@@ -336,8 +341,7 @@ TMFG <- function(
   
   # Set methods attribute
   attr(network, "methods") <- list(
-    corr = corr,
-    partial = partial
+    corr = corr, partial = partial
   )
   
   # Set up return

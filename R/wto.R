@@ -11,14 +11,14 @@
 #' Defaults to \code{TRUE}.
 #' Use \code{FALSE} for absolute values
 #' 
-#' @param diagonal_zero Boolean (length = 1).
+#' @param diagonal.zero Boolean (length = 1).
 #' Whether diagonal of overlap matrix should be set to zero.
 #' Defaults to \code{TRUE}.
 #' Use \code{FALSE} to allow overlap of a node with itself
 #' 
 #' @examples 
 #' # Obtain network
-#' network <- EBICglasso.qgraph(wmt2[,7:24])
+#' network <- network.estimation(wmt2[,7:24], model = "glasso")
 #' 
 #' # Compute wTO
 #' wto(network)
@@ -34,19 +34,24 @@
 #' @export
 #' 
 # Weighted Topological Overlap ----
-# Updated 03.02.2023
-wto <- function (network, signed = TRUE, diagonal_zero = TRUE)
+# Updated 29.06.2023
+wto <- function (network, signed = TRUE, diagonal.zero = TRUE)
 {
+  
+  # Remove {EGAnet} bulk
+  network <- remove_attributes(network)
   
   # Ensure network is matrix
   network <- as.matrix(network)
   
+  # Get dimensions of the network
+  dimensions <- dim(network)
+  
   # Obtain absolute network values
   absolute_network <- abs(network)
   
-  # Determine whether absolute values
-  # should constitute the network
-  if(!isTRUE(signed)){
+  # Determine whether absolute values should constitute the network
+  if(isFALSE(signed)){
     network <- absolute_network
   }
   
@@ -55,41 +60,36 @@ wto <- function (network, signed = TRUE, diagonal_zero = TRUE)
     network # connections between edge node
   
   # Obtain node strengths
-  node_strengths <- colSums(absolute_network, na.rm = TRUE)
+  node_strengths <- strength(absolute_network)
   
   # Obtain variable pair minimums
-  minimum_df <- data.frame(
-    node_i = rep(
-      node_strengths,
-      each = length(node_strengths)
-    ),
-    node_j = rep(
-      node_strengths,
-      times = length(node_strengths)
-    )
+  minimum_pairs <- matrix(
+    c(
+      rep(node_strengths, each = dimensions[2]),
+      rep(node_strengths, times = dimensions[2])
+    ), ncol = 2
   )
   
   # Obtain minimums for each pair
-  minimum_vector <- apply(
-    as.matrix(minimum_df), 1,
-    min, na.rm = TRUE
+  minimum_vector <- ifelse(
+    minimum_pairs[,1] < minimum_pairs[,2],
+    minimum_pairs[,1], minimum_pairs[,2]
   )
   
-  # Create matrix
+  # Create minimum matrix
   minimum_matrix <- matrix(
-    minimum_vector,
-    nrow = nrow(network),
-    ncol = ncol(network)
+    minimum_vector, 
+    nrow = dimensions[2], ncol = dimensions[2]
   )
   
   # Obtain denominator
-  denominator <- minimum_matrix + 1 - abs(network)
+  denominator <- minimum_matrix + 1 - absolute_network
   
   # Divide numerator by denominator
   omega <- numerator / denominator
   
   # Set diagonal to zero
-  if(isTRUE(diagonal_zero)){
+  if(isTRUE(diagonal.zero)){
     diag(omega) <- 0
   }
   
@@ -97,3 +97,8 @@ wto <- function (network, signed = TRUE, diagonal_zero = TRUE)
   return(omega)
   
 }
+
+# Bug Checking ----
+## Basic input
+# network = network.estimation(wmt2[,7:24], model = "glasso")
+# signed = TRUE; diagonal.zero = TRUE

@@ -17,9 +17,8 @@ Returns a square matrix with pairwise total correlations
 Computes the pairwise total correlation for a dataset
 }
 \examples{
-\dontrun{
-# Compute total correlation
-totalCorMat(wmt2[,7:24])}
+# Compute total correlation matrix
+totalCorMat(wmt2[,7:24])
 
 }
 \references{

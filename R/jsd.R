@@ -61,66 +61,100 @@
 #' @export
 #' 
 # Jensen-Shannon Distance
-# Updated 30.07.2022
+# Updated 29.06.2023
 jsd <- function(
     network1, network2,
     method = c("kld", "spectral")
 )
 {
   
-  # Missing method
-  if(missing(method)){
-    method <- "spectral"
-  }else{method <- tolower(match.arg(method))}
+  # Check for missing arguments (argument, default, function)
+  method <- set_default(method, "spectral", jsd)
   
   # Check for method
   if(method == "spectral"){
     
     # Obtain rescaled Laplacian matrices
-    rL1 <- rescaled_laplacian(network1)
-    rL2 <- rescaled_laplacian(network2)
+    laplacian1 <- rescaled_laplacian(network1)
+    laplacian2 <- rescaled_laplacian(network2)
     
     # Obtain individual VN entropies
-    vn1 <- vn_entropy(rL1)
-    vn2 <- vn_entropy(rL2)
+    lentropy1 <- silent_call(entropy_laplacian(laplacian1))
+    lentropy2 <- silent_call(entropy_laplacian(laplacian2))
     
     # Obtain combined VN entropy
-    rL_comb <- 0.5 * (rL1 + rL2)
-    vn_comb <- vn_entropy(rL_comb)
+    laplacian_combined <- 0.5 * (laplacian1 + laplacian2)
+    lentropy_combined <- silent_call(entropy_laplacian(laplacian_combined))
     
     # Compute JSD
-    JSD <- sqrt(
-      abs(vn_comb - (0.5 * (vn1 + vn2)))
-    )
+    JSD <- sqrt(abs(lentropy_combined - (0.5 * (lentropy1 + lentropy2))))
     
   }else if(method == "kld"){
     
-    # Compute Kullback-Leibler Divergence
-    kld <- function(comparison, estimated){
-      sum(diag(solve(comparison) %*% estimated)) -
-        log2(det(solve(comparison) %*% estimated)) -
-        ncol(comparison)
-    }
-    
     # Combine networks
-    network_comb <- 0.5 * (network1 + network2)
+    network_combined <- 0.5 * (network1 + network2)
+    
+    # Pre-compute inverse covariance matrix of combined networks
+    inverse_combined <- pcor2inv(network_combined)
     
     # Compute KLDs
-    kld1 <- kld(
-      comparison = pcor2inv(network_comb),
-      estimated = pcor2inv(network1)
-    )
-    kld2 <- kld(
-      comparison = pcor2inv(network_comb), 
-      estimated = pcor2inv(network2)
-    )
+    kld1 <- kld(inverse_combined, pcor2inv(network1))
+    kld2 <- kld(inverse_combined, pcor2inv(network2))
     
     # Compute JSD
     JSD <- 0.5 * kld1 + 0.5 * kld2
     
   }
   
-  # Return
+  # Return (ensure real numbers)
   return(Re(JSD))
+  
+}
+
+#' @noRd
+# Rescaled Laplacian matrix ----
+# Updated 29.06.2023
+rescaled_laplacian <- function(network)
+{
+  # Ensure diagonal is zero
+  diag(network) <- 0
+  
+  # Return
+  return((diag(colSums(network)) - network) / sum(network))
+  
+}
+
+#' @noRd
+# Von Neumann Entropy ----
+# Called "entropy_laplacian" to avoid conflict with `vn.entropy`
+# Updated 29.06.2023
+entropy_laplacian <- function(laplacian_matrix)
+{
+  return(entropy(matrix_eigenvalues(laplacian_matrix), base = 2))
+}
+
+#' @noRd
+# Kullback-Leibler Divergence ----
+# Updated 29.06.2023
+# Compute Kullback-Leibler Divergence
+kld <- function(network1, network2)
+{
+  
+  # network1 = P
+  # network2 = Q
+  # KLD(P || Q)
+  
+  # Compute inverse of first network
+  inverse_network1 <- solve(network1)
+  
+  # Pre-compute matrix multiplication
+  combined_network <- inverse_network1 %*% network2
+  
+  # Return KLD
+  return(
+    trace(combined_network) -
+    log2(det(combined_network)) -
+    dim(network1)[2]
+  )
   
 }

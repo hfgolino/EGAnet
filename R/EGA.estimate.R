@@ -146,7 +146,7 @@
 #' @export
 #'
 # Estimates multidimensional EGA only (no automatic plots)
-# Updated 26.06.2023
+# Updated 30.06.2023
 EGA.estimate <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -173,29 +173,43 @@ EGA.estimate <- function(
   # Ensure data has names
   data <- ensure_dimension_names(data)
   
-  # Model branching checks
+  # First, get necessary inputs
+  output <- obtain_sample_correlations(
+    data = data, n = n, 
+    corr = corr, na.data = na.data, 
+    verbose = verbose, ...
+  )
+  
+  # Get outputs
+  data <- output$data; n <- output$n
+  correlation_matrix <- output$correlation_matrix
+  
+  # Model branching checks (in order of most likely to be used)
+  # GLASSO = can handle correlation matrix but needs iterative gamma procedure
   # BGGM = needs original data and not correlation matrix
   # TMFG = can handle correlation matrix
-  # glasso = can handle correlation matrix but needs iterative gamma procedure
-  
-  # First, compute correlation if necessary
-  if(model != "bggm"){
+  if(model == "glasso"){
     
-    # Generic function to get necessary inputs
-    output <- obtain_sample_correlations(
-      data = data, n = n, corr = corr, 
-      na.data = na.data, verbose = verbose, ...
+    # Use wrapper to clean up iterative gamma procedure
+    network <- do.call(
+      what = glasso_wrapper,
+      args = c(
+        list( # functions passed into this function
+          data = correlation_matrix, n = n, corr = corr, na.data = na.data,
+          model = model, network.only = TRUE, verbose = verbose
+        ),
+        ellipse # pass on ellipse
+      )
     )
     
-    # Get correlations and sample size
-    data <- output$correlation_matrix; n <- output$n
+  }else if(model == "bggm"){
     
-  }
-  
-  # Second, branch for glasso's iterative gamma procedure
-  if(model != "glasso"){
+    # Check for correlation input
+    if(is_symmetric(data)){
+      stop("A symmetric matrix was provided in the 'data' argument. For 'model = \"BGGM\"', the original data is required.")
+    }
     
-    # Estimate network (BGGM *or* TMFG)
+    # Estimate network
     network <- do.call(
       what = network.estimation,
       args = c(
@@ -207,20 +221,20 @@ EGA.estimate <- function(
       )
     )
     
-  }else{
+  }else if(model == "tmfg"){
     
-    # Use wrapper to clean up iterative gamma procedure
+    # Estimate network (BGGM *or* TMFG)
     network <- do.call(
-      what = glasso_wrapper,
+      what = network.estimation,
       args = c(
         list( # functions passed into this function
-          data = data, n = n, corr = corr, na.data = na.data,
+          data = correlation_matrix, n = n, corr = corr, na.data = na.data,
           model = model, network.only = TRUE, verbose = verbose
         ),
         ellipse # pass on ellipse
       )
     )
-    
+
   }
   
   # Check for function or non-Louvain method
@@ -244,28 +258,24 @@ EGA.estimate <- function(
   }else{ # for Louvain, use consensus clustering
     
     # Check for consensus method
-    consensus.method <- ifelse(
+    ellipse$consensus.method <- ifelse(
       "consensus.method" %in% names(ellipse),
       ellipse$consensus.method, "most_common" # default
     )
     
     # Check for consensus iterations
-    consensus.iter <- ifelse(
+    ellipse$consensus.iter <- ifelse(
       "consensus.iter" %in% names(ellipse),
       ellipse$consensus.iter, 1000 # default
     )
-    
-    # Check for sign
-    signed <- algorithm == "signed_louvain"
     
     # Apply consensus clustering
     wc <- do.call(
       what = community.consensus,
       args = c(
         list(
-          network = network, signed = signed,
-          consensus.method = consensus.method,
-          consensus.iter = consensus.iter,
+          network = network, 
+          signed =  algorithm == "signed_louvain",
           membership.only = TRUE,
           verbose = verbose
         ),
@@ -278,14 +288,10 @@ EGA.estimate <- function(
   # Set up results
   results <- list(
     network = network, wc = wc,
-    n.dim = unique_length(wc)
+    n.dim = unique_length(wc),
+    cor.data = correlation_matrix,
+    n = n
   )
-  
-  # Check for correlation matrix
-  if(model != "bggm"){
-    results$cor.data = data # was made to be correlation matrix earlier
-    results$n = n # return sample size for `EGA`
-  }
   
   # Set class (attributes are stored in `network` and `wc`)
   class(results) <- "EGA.estimate"

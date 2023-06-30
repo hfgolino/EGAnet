@@ -80,17 +80,7 @@ ulapply <- function(X, FUN, ...)
 # Updated 24.06.2023
 rnorm_ziggurat <- function(n, mean = 0, sd = 1)
 {
-  
-  # Generate values
-  values <- RcppZiggurat::zrnorm(n)
-  
-  # Check for usual values (no changes to values)
-  if(mean == 0 & sd == 1){
-    return(values)
-  }else{ # Otherwise, update values
-    return(mean + sd * values)
-  }
-  
+  return(mean + sd * RcppZiggurat::zrnorm(n))
 }
 
 #' @noRd
@@ -160,27 +150,9 @@ MASS_mvrnorm_quick <- function(
     tol = 1e-06, empirical = FALSE, EISPACK = FALSE
 )
 {
-  
-  # Get number of variables
-  # p <- length(mu)
-  
-  # Assumes `mu` == `Sigma` dimensions
-  # if (!all(dim(Sigma) == c(p, p)))
-  
-  # EISPACK is always FALSE
-  # if (EISPACK)
-  
-  # Obtain eigenvectors and values
-  # eS <- eigen(Sigma, symmetric = TRUE)
-  # ev <- eS$values # Obtain values
-  
-  # SKIP positive definite check (should be from `auto.correlate`)
-  # if (!all(ev >= -tol * abs(ev[1L])))
-  
+
   # Generate data
   X <- matrix(rnorm_ziggurat(n = p * n), n)
-  # X <- matrix(rnorm(p * n), n) 
-  # replaces `rnorm` so we can set seed
   
   # For empirical data
   if(isTRUE(empirical)){
@@ -190,14 +162,7 @@ MASS_mvrnorm_quick <- function(
   }
   
   # Obtain X
-  # X <- mu + eS$vectors %*% diag(sqrt(pmax(ev, 0)), p) %*% t(X)
   X <- mu + coV %*% t(X)
-  
-  # Skip checks
-  # nm <- names(mu)
-  # if (is.null(nm) && !is.null(dn <- dimnames(Sigma)))
-  #   nm <- dn[[1L]]
-  # dimnames(X) <- list(nm, NULL)
   
   # Return results
   if(n == 1){
@@ -315,9 +280,9 @@ reproducible_resampling <- function(
 # Generate reproducible bootstrap data ----
 # Wrapper for `reproducible_parametric` and
 # `reproducible_resampling`
-# Updated 18.06.2023
+# Updated 29.06.2023
 reproducible_bootstrap <- function(
-    data, samples, cases, mu, Sigma, seed,
+    data = NULL, samples, cases, mu = NULL, Sigma = NULL, seed,
     type = c("parametric", "resampling")
 )
 {
@@ -344,6 +309,86 @@ reproducible_bootstrap <- function(
   
   # Return bootstrap samples
   return(bootstrap_samples)
+  
+}
+
+#%%%%%%%%%%%%%%%%%%%%%
+# PARALLELIZATION ----
+#%%%%%%%%%%%%%%%%%%%%%
+
+#' @noRd
+# Wrapper for parallelization ----
+# Updated 30.06.2023
+parallel_process <- function(
+    iterations, # number of iterations
+    datalist, # list of data
+    FUN, # function to use
+    ..., # ellipse arguments to pass on
+    export = TRUE, # variables to export (if necessary)
+    ncores, # number of cores
+    progress = TRUE # progress bar
+){
+  
+  # Set up plan
+  future::plan(
+    strategy = "multisession",
+    workers = ncores
+  )
+  
+  # Check for progress
+  if(isTRUE(progress)){
+    
+    # Set up handler
+    progressr::handlers(
+      progressr::handler_progress(
+        format = ":spin [:bar] :percent elapsed: :elapsed ~remaining: :eta",
+        clear = FALSE
+      )
+    )
+    
+    # Run progress locally
+    progressr::with_progress({
+      
+      # Initialize progress bar
+      progressbar <- progressr::progressor(iterations / ncores)
+      
+      # Perform parallel processing
+      results <- future.apply::future_lapply(
+        X = seq_len(iterations),
+        function(iteration){
+          
+          # Update progress with full cores completion
+          # (rather than every completion)
+          if(iteration %% ncores == 0){
+            progressbar()
+          }
+          
+          # Return results
+          return(silent_call(FUN(data = datalist[[iteration]], ...)))
+          
+        },
+        future.globals = export,
+        future.seed = NULL
+      )
+      
+    })
+    
+  }else{
+    
+    # Perform parallel processing
+    results <- silent_call(
+      future.apply::future_lapply(
+        X = datalist,
+        FUN, ..., # arguments will be passed on
+        future.globals = export,
+        future.seed = NULL
+      )
+    )
+    
+  }
+  
+  # Return results
+  return(results)
   
 }
 
@@ -375,34 +420,6 @@ ncol_sequence <- function(data)
   return(seq_len(dim(data)[2]))
 }
 
-# # Evidence:
-# #
-# # Load benchmark
-# library(microbenchmark)
-# 
-# # Create large matrix
-# large_matrix <- matrix(0, nrow = 10000, ncol = 10000)
-# 
-# # Run row test (around 30 nanoseconds)
-# microbenchmark(
-#   1:nrow(large_matrix),
-#   nrow_sequence(large_matrix),
-#   times = 10000L,
-#   control = list(warmup = 1000L)
-# )
-# 
-# # Run column test (around 30 nanoseconds)
-# microbenchmark(
-#   1:ncol(large_matrix),
-#   ncol_sequence(large_matrix),
-#   times = 10000L,
-#   control = list(warmup = 1000L)
-# )
-#
-# Does it matter? Probably not...
-#
-# ¯\_(ツ)_/¯
-#
 # An actual real reason to use `seq_len`: handles edge cases
 # when there is a length = 0
 
@@ -459,16 +476,45 @@ format_integer <- function(numbers, places)
 #%%%%%%%%%%%%%%%%%%%%%%
 
 #' @noRd
+# Faster data frame initialization ----
+# Initializes a matrix and converts to a data frame
+# Data frames are initialized as individual vectors
+# carrying extra overhead -- this function isn't
+# as readable but 
+# Updated 29.06.2023
+fast.data.frame <- function(
+    data = NA, nrow = 1, ncol = 1,
+    rownames = NULL, colnames = NULL,
+    ...
+)
+{
+  
+  return(
+    as.data.frame(
+      matrix(
+        data = data,
+        nrow = nrow, ncol = ncol,
+        dimnames = list(
+          rownames,
+          colnames
+        )
+      ), make.names = FALSE,
+      ...
+    )
+  )
+  
+}
+
+#' @noRd
 # Convert numeric matrix to integers ----
 # About 5x faster than `apply`
-# Updated 26.06.2023
+# Updated 29.06.2023
 integer_matrix <- function(data)
 {
   return(
     matrix(
       as.integer(data),
-      ncol = dim(data)[2],
-      byrow = FALSE
+      ncol = dim(data)[2]
     )
   )
 }
@@ -500,14 +546,12 @@ force_vector <- function(desired_vector)
 #' @noRd
 # Force matrix ----
 # (usually for vectors)
-# Updated 12.06.2023
+# Updated 29.06.2023
 force_matrix <- function(desired_matrix, dimension = c("col", "row"))
 {
   
   # Check for missing dimension argument
-  if(missing(dimension)){
-    dimension <- "col"
-  }else{dimension <- tolower(match.arg(dimension))}
+  dimension <- set_default(dimension, "col", force_matrix)
   
   # Check for matrix form already
   if(is(desired_matrix, "matrix")){
@@ -548,11 +592,8 @@ force_numeric <- function(desired_numeric)
       # Find imaginary numbers (start as character)
       imaginary_character <- as.character(desired_numeric)
       
-      # Determine which are imaginary
-      imaginary <- grepl("i", imaginary_character)
-      
       # Set imaginary numbers to `NA`
-      desired_numeric[imaginary] <- NA
+      desired_numeric[grepl("i", imaginary_character)] <- NA
       
     }
     
@@ -601,13 +642,15 @@ edge_count <- function(network, nodes, diagonal = FALSE)
 #' @noRd
 # Count table ----
 # Provides counts of repeated rows in a data frame
-# (clever solution by GPT-4)
-# Updated 26.06.2023
+# Updated 29.06.2023
 count_table <- function(data, proportion = FALSE)
 {
   
   # Make data frame
   data <- as.data.frame(data)
+  
+  # Get the dimensions of the data
+  dimensions <- dim(data)
   
   # Obtain counts of unique rows (clever solution from GPT-4)
   counts <- table(do.call(paste, data))
@@ -617,19 +660,18 @@ count_table <- function(data, proportion = FALSE)
     do.call(rbind, lapply(strsplit(names(counts), split = " "), as.numeric))
   )
   
-  # Add dimension names
-  dimnames(unique_vectors)[[2]] <- dimnames(data)[[2]]
-    
   # Check for proportion
   if(isTRUE(proportion)){
-    counts <- counts / dim(data)[1]
+    counts <- counts / dimensions[1]
   }
 
   # Return data frame
   return(
-    data.frame(
-      unique_vectors,
-      Value = as.vector(counts)
+    fast.data.frame(
+      c(unique_vectors, counts),
+      nrow = dim(unique_vectors)[1],
+      ncol = dimensions[2] + 1,
+      colnames = c(dimnames(data)[[2]], "Value")
     )
   )
   
@@ -793,6 +835,55 @@ usable_data <- function(data, verbose)
 }
 
 #' @noRd
+# Obtain {igraph} and matrix networks ----
+# Updated 29.06.2023
+obtain_networks <- function(network, signed)
+{
+  
+  # Determine class of network
+  if(is(network, "igraph")){
+    
+    # Convert to network matrix
+    network_matrix <- igraph2matrix(network)
+    
+    # Check for absolute
+    if(isFALSE(signed)){
+      network_matrix <- abs(network_matrix)
+    }
+    
+    # Convert to {igraph} network (ensures absolute even if {igraph})
+    igraph_network <- convert2igraph(network_matrix)
+    
+    
+  }else{
+    
+    # Ensure network is matrix
+    network <- as.matrix(network)
+    
+    # Check for signed
+    if(isFALSE(signed)){
+      network <- abs(network)
+    }
+    
+    # Store network as network matrix
+    network_matrix <- network
+    
+    # Convert to {igraph} network
+    igraph_network <- convert2igraph(network)
+    
+  }
+  
+  # Return networks
+  return(
+    list(
+      igraph_network = igraph_network,
+      network_matrix = network_matrix
+    )
+  )
+  
+}
+
+#' @noRd
 # Obtain data, sample size, correlation matrix ----
 # Generic function to get the usual needed inputs
 # Updated 23.06.2023
@@ -855,7 +946,25 @@ obtain_sample_correlations <- function(data, n, corr, na.data, verbose, ...)
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #' @noRd
-#'
+# Strip classes and attributes from {EGAnet}
+# Updated 29.06.2023
+remove_attributes <- function(object)
+{
+  
+  # First, unclass the object
+  object <- unclass(object)
+  
+  # Then, remove the "methods" attribute
+  if("methods" %in% names(attributes(object))){
+    attr(object, "methods") <- NULL
+  }
+  
+  # Return object
+  return(object)
+  
+}
+
+#' @noRd
 # General function to silently obtain output ----
 # Updated 11.05.2023
 silent_call <- function(...){
@@ -875,7 +984,6 @@ silent_call <- function(...){
 }
 
 #' @noRd
-#'
 # General function to silently load package ----
 # Updated 10.06.2023
 silent_load <- function(...){
@@ -889,17 +997,27 @@ silent_load <- function(...){
 
 #' @noRd
 # Set default argument (cleaner missing function) ----
-# Updated 24.06.2023
+# Updated 30.06.2023
 set_default <- function(argument, default, FUN)
 {
-  
+
   # Check for function first and foremost
   if(is.function(argument)){
     return(argument)
   }
   
+  # Check for NULL
+  if(is.null(argument)){
+    return(default)
+  }
+  
   # Check for value error
   value_error(argument, base::mode(default))
+  
+  # Check for length
+  if(length(argument) != 1){
+    return(default)
+  }
   
   # Check for function
   if(!is.function(FUN)){
@@ -920,11 +1038,6 @@ set_default <- function(argument, default, FUN)
       
     }
     
-  }
-  
-  # Check for missing argument
-  if(missing(argument) | length(argument) != 1){
-    argument <- default
   }
   
   # Force lowercase argument
@@ -1088,16 +1201,15 @@ make_unidimensional_cfa <- function(variable_names)
 
 #' @noRd
 # Determine estimator arguments ----
-# Updated 28.06.2023
+# Updated 29.06.2023
 estimator_arguments <- function(lavaan_ARGS, ellipse)
 {
   
   # Check for `ordinal.categories` in ellipse arguments
-  if(!"ordinal.categories" %in% names(ellipse)){
-    ordinal.categories <- 7
-  }else{
-    ordinal.categories <- ellipse$ordinal.categories
-  }
+  ordinal.categories <- ifelse(
+    !"ordinal.categories" %in% names(ellipse), 7, # default
+    ellipse$ordinal.categories
+  )
   
   # Obtain categories
   categories <- data_categories(lavaan_ARGS$data)
@@ -1163,7 +1275,7 @@ GGally_args <- function(ellipse)
   
   # Remove the ellipse
   if("..." %in% names(default_args)){
-    default_args <- default_args[-which(names(default_args) == "...")]
+    default_args <- default_args[names(default_args) != "..."]
   }
   
   # Various possible names for things
@@ -1300,7 +1412,7 @@ GGally_errors <- function(
 
 #' @noRd
 # Re-scale edges ----
-# Updated 25.06.2023
+# Updated 29.06.2023
 rescale_edges <- function(network, edge_size)
 {
   
@@ -1312,7 +1424,7 @@ rescale_edges <- function(network, edge_size)
   edge_scaling <- scale_sequence * edge_size
   
   ## Remove names
-  edge_scaling <- unname(edge_scaling[as.character(abs(as.vector(network)))])
+  edge_scaling <- unname(edge_scaling[as.character(abs(network))])
   
   # Return scaled edges
   return(edge_scaling)
@@ -1454,7 +1566,7 @@ get_layout <- function(
 
 #' @noRd
 # Basic set up for plots ----
-# Updated 23.06.2023
+# Updated 29.06.2023
 basic_plot_setup <- function(network, wc = NULL, ...)
 {
   
@@ -1515,7 +1627,7 @@ basic_plot_setup <- function(network, wc = NULL, ...)
   ### Generic arguments (mostly handled in `GGally_args`)
     
   ## Remove some arguments
-  plot_ARGS$alpha <- NULL; plot_ARGS$color <- NULL; plot_ARGS$size <- NULL
+  plot_ARGS[c("alpha", "color", "size")] <- NULL
   
   ### Node arguments
   
@@ -1707,7 +1819,7 @@ basic_plot_setup <- function(network, wc = NULL, ...)
 #' @noRd
 # Basic set up for single plot ----
 # Updated 20.06.2023
-single_plot <- function(network, wc, ...)
+single_plot <- function(network, wc = NULL, ...)
 {
   
   # Look for memberships in arguments
@@ -1971,9 +2083,106 @@ range_error <- function(input, expected_ranges){
   
 }
 
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# COVARIANCE CONVERSION FUNCTIONS ----
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+#' @noRd
+# Zero-order correlations to partial correlations ----
+# Updated 29.06.2023
+cor2pcor <- function(correlation_matrix)
+{
+  
+  # Convert to inverse correlations to partial correlations
+  partial_correlations <- -cov2cor(solve(correlation_matrix))
+  
+  # Set diagonal to zero
+  diag(partial_correlations) <- 0
+  
+  # Return
+  return(partial_correlations)
+  
+}
+
+#' @noRd
+# Partial correlations to zero-order correlations ----
+# Updated 29.06.2023
+pcor2cor <- function(partial_correlations)
+{
+  
+  # Set diagonal to negative 1
+  diag(partial_correlations) <- -1
+  
+  # Return partial correlations as zero-order correlations
+  return(cov2cor(solve(-partial_correlations)))
+  
+}
+
+#' @noRd
+# Partial correlations to inverse covariances ----
+# Updated 29.06.2023
+pcor2inv <- function(partial_correlations)
+{
+  
+  # Set diagonal to negative 1
+  diag(partial_correlations) <- -1
+  
+  # Return inverse covariance matrix
+  return(solve(-partial_correlations))
+  
+}
+
 #%%%%%%%%%%%%%%%%%%%%
 # MATH FUNCTIONS ----
 #%%%%%%%%%%%%%%%%%%%%
+
+# There are some redundancies in the math functions because
+# it's often faster to call some functions directly
+# rather than nesting non-base R functions in functions
+
+#' @noRd
+# Matrix entropy calculation ----
+# The default `exp(1)` base is pre-calculated to reduce function calls
+# Returns entropy value
+# Updated 29.06.2023
+matrix_entropy <- function(density_matrix, base = 2.718282)
+{
+  return(
+    -sum(
+      diag(
+        density_matrix %*% log(density_matrix, base = base)
+      ), na.rm = TRUE
+    )
+  )
+
+}
+
+#' @noRd
+# Basic entropy calculation ----
+# Returns entropy value
+# Updated 29.06.2023
+entropy <- function(values, base = 2.718282)
+{
+  return(-sum(values * log(values, base = base), na.rm = TRUE))
+}
+
+#' @noRd
+# Positive definite matrix ----
+# Logical for whether a matrix is positive definite
+# Updated 29.06.2023
+is_positive_definite <- function(data)
+{
+  return(any(eigen(data, symmetric = TRUE, only.values = TRUE)$values < 0))
+}
+
+#' @noRd
+# Wrapper for `eigen` ----
+# Extracts eigenvalues only
+# Updated 29.06.2023
+matrix_eigenvalues <- function(data)
+{
+  return(eigen(data, symmetric = TRUE, only.values = TRUE)$values)
+}
 
 #' @noRd
 # Trace of matrix ----
@@ -2010,216 +2219,6 @@ strength <- function(network, absolute = TRUE)
 #%%%%%%%%%%%%%%%%%%%%%%%
 # SYSTEM FUNCTIONS ----
 #%%%%%%%%%%%%%%%%%%%%%%
-
-#' @noRd
-# Custom Parallelization ----
-# Updated 10.05.2023
-parallel_process <- function(
-    datalist, # list of data
-    iter = NULL, # number of iterations
-    progress = TRUE, # progress bar
-    FUN, # function to use
-    FUN_args = list(), # arguments to use in function
-    export = NULL, # variables to export (if necessary)
-    ncores # number of cores
-){
-  
-  # Obtain arguments
-  FUN_args <- obtain.arguments(
-    FUN = FUN,
-    FUN.args = FUN_args
-  )
-  
-  # Set progress bar up
-  if(isTRUE(progress)){
-    
-    # Calculate total computations
-    total_computations <- ifelse(
-      is.null(iter), length(datalist), iter
-    )
-    
-    # Count computations
-    count_computations <- 0
-    
-    # Create data splits (necessary for progress bar)
-    if(total_computations <= 100){
-      
-      # Split computations
-      split_computations <- ncores
-      
-      # Set start and end points of data splits
-      split_start <- seq(1, total_computations, split_computations)
-      split_end <- unique(
-        c(
-          seq(split_computations, total_computations, split_computations),
-          total_computations
-        )
-      )
-      
-      # Initialize split list
-      data_split <- vector("list", length = length(split_start))
-      
-      # Populate split list
-      for(i in seq_along(data_split)){
-        data_split[[i]] <- datalist[split_start[i]:split_end[i]]
-      }
-      
-      # Initialize results list
-      results <- vector("list", length = length(data_split))
-      
-      # Initialize runtime updates
-      runtime_update <- seq(
-        0, total_computations, ncores
-      )
-      
-      # Obtain runtime updates
-      runtime_update <- unique(c(runtime_update, total_computations))
-      
-    }else{
-      
-      # Split computations
-      split_computations <- ncores
-      
-      # Set start and end points of data splits
-      split_start <- seq(1, total_computations, split_computations)
-      split_end <- unique(
-        c(
-          seq(split_computations, total_computations, split_computations),
-          total_computations
-        )
-      )
-      
-      # Batch splits
-      batch_computations <- round(total_computations / 100)
-      
-      # Set start and end points of data batches
-      batch_start <- seq(1, length(split_end), batch_computations)
-      batch_end <- unique(
-        c(
-          seq(batch_computations, length(split_end), batch_computations),
-          length(split_start)
-        )
-      )
-      
-      # Initialize batch list
-      data_split <- vector("list", length = length(batch_start))
-      
-      # Populate split list
-      for(j in seq_along(data_split)){
-        data_split[[j]] <- datalist[
-          split_start[batch_start[j]]:split_end[batch_end[j]]
-        ]
-      }
-      
-      # Initialize results list
-      results <- vector("list", length = length(data_split))
-      
-      # Initialize runtime updates
-      runtime_update <- seq(
-        0, total_computations, length(data_split[[1]])
-      )
-      
-      # Obtain runtime updates
-      runtime_update <- unique(c(runtime_update, total_computations))
-      
-    }
-    
-    # Obtain start time
-    if(count_computations == 0){
-      start_time <- Sys.time()
-    }
-    
-    # Plan parallelization
-    future::plan(
-      strategy = "multisession",
-      workers = ncores
-    )
-    
-    # Loop through data splits
-    for(i in seq_along(data_split)){
-      
-      # Update progress
-      if(count_computations < runtime_update[2]){
-        
-        # Update progress
-        custom_progress(
-          i = count_computations,
-          max = total_computations,
-          start_time = "calculating"
-        )
-        
-      }
-      
-      # Run parallelization
-      results[[i]] <- future.apply::future_lapply(
-        X = data_split[[i]],
-        FUN = function(x, FUNC, FUN_args){
-          
-          # Add data
-          FUN_args[[names(FUN_args)[1]]] <- x
-          
-          # Return results from function
-          return(do.call(FUNC, as.list(FUN_args)))
-          
-        },
-        FUNC = FUN, FUN_args = FUN_args,
-        future.stdout = FALSE,
-        future.packages = "EGAnet",
-        future.seed = NULL
-      )
-      
-      # Update computation count
-      count_computations <- count_computations +
-        length(data_split[[i]])
-      
-      # Update progress
-      if(count_computations %in% runtime_update){
-        
-        custom_progress(
-          i = count_computations,
-          max = total_computations,
-          start_time = start_time
-        )
-        
-      }
-      
-    }
-    
-    # Unwrap parallelization
-    results <- unlist(results, recursive = FALSE)
-    
-  }else{ # Run without progress
-    
-    # Plan parallelization
-    future::plan(
-      strategy = "multisession",
-      workers = ncores
-    )
-    
-    # Run parallelization
-    results <- future.apply::future_lapply(
-      X = datalist,
-      FUN = function(x, FUNC, FUN_args){
-        
-        # Add data
-        FUN_args[[names(FUN_args)[1]]] <- x
-        
-        # Return results from function
-        return(do.call(FUNC, as.list(FUN_args)))
-        
-      },
-      FUNC = FUN, FUN_args = FUN_args,
-      future.stdout = FALSE,
-      future.packages = "EGAnet",
-      future.seed = NULL
-    )
-    
-  }
-  
-  # Return results
-  return(results)
-  
-}
 
 #' @importFrom utils packageVersion
 #' @noRd
@@ -2303,14 +2302,7 @@ colortext <- function(text, number = NULL, defaults = NULL)
       # Adjust highlight color based on background color
       if(defaults == "highlight")
       {
-        if(sys.check$RSTUDIO)
-        {
-          
-          if(rstudioapi::getThemeInfo()$dark)
-          {number <- 226
-          }else{number <- 208}
-          
-        }else{number <- 208}
+        number <- 208
       }else{
         
         number <- switch(defaults,

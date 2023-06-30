@@ -38,7 +38,7 @@
 #'
 #' @export
 # Total Entropy Fit Index Function (for correlation matrices)
-# Updated 26.06.2023
+# Updated 29.06.2023
 tefi <- function(data, structure)
 {
   
@@ -59,7 +59,7 @@ tefi <- function(data, structure)
     rm.vars <- is.na(structure)
 
     # Send warning message
-    warning(paste("Some variables did not belong to a dimension:", colnames(data)[rm.vars]))
+    warning(paste("Some variables did not belong to a dimension:", dimnames(data)[[2]][rm.vars]))
     message("Use caution: These variables have been removed from the TEFI calculation")
 
     # Keep available variables
@@ -71,43 +71,45 @@ tefi <- function(data, structure)
   density_matrix <- data / dim(data)[2]
   
   # Obtain Von Neumann's entropy
-  h.vn <- -trace(density_matrix %*% log(density_matrix))
+  H_vn <- matrix_entropy(density_matrix)
   
   # Obtain communities
   communities <- unique_length(structure)
   
-  # Initialize Von Neumman entropy by dimension
-  h.vn.wc <- nnapply(seq_len(communities), function(community){
+  # Get Von Neumman entropy by community
+  H_vn_wc <- nnapply(seq_len(communities), function(community){
     
     # Get indices
     indices <- structure == community
     
-    # Obtain community matrix
+    # Get community matrix
     community_matrix <- data[indices, indices]
-    
-    # Obtain community density matrix
-    community_density <- community_matrix / dim(community_matrix)[2]
-    
+
     # Return Von Neumann entropy
-    return(-trace(community_density %*% log(community_density)))
+    return(matrix_entropy(community_matrix / dim(community_matrix)[2]))
     
   })
   
-  # Compute values
-  ## Sum of community Von Neumann
-  sum.h.vn.wc <- sum(h.vn.wc, na.rm = TRUE)
+  # Pre-compute values
   ## Mean of community Von Neumann
-  mean.h.vn.wc <- sum.h.vn.wc / communities
+  mean_H_vn_wc <- mean(H_vn_wc, na.rm = TRUE)
+  ## Sum of community Von Neumann
+  sum_H_vn_wc <- mean_H_vn_wc * communities
   ## Difference between total and total community
-  Hdiff <- h.vn - sum.h.vn.wc
+  H_diff <- H_vn - sum_H_vn_wc
   ## Average entropy
-  mean.vn <- mean.h.vn.wc - h.vn
-  
+  mean_H_vn <- mean_H_vn_wc - H_vn
+
   # Set up results
-  results <- data.frame(
-    "VN.Entropy.Fit" = mean.vn + (Hdiff * sqrt(communities)),
-    "Total.Correlation" = sum.h.vn.wc - h.vn,
-    "Average.Entropy" = mean.vn
+  results <- fast.data.frame(
+    data = c(
+      mean_H_vn + (H_diff * sqrt(communities)),
+      sum_H_vn_wc - H_vn,
+      mean_H_vn
+    ), ncol = 3,
+    colnames = c(
+      "VN.Entropy.Fit", "Total.Correlation", "Average.Entropy"
+    )
   )
   
   # Return results

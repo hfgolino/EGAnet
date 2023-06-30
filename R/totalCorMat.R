@@ -10,9 +10,8 @@
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
 #'
 #' @examples
-#' \dontrun{
-#' # Compute total correlation
-#' totalCorMat(wmt2[,7:24])}
+#' # Compute total correlation matrix
+#' totalCorMat(wmt2[,7:24])
 #'
 #' @references
 #' Watanabe, S. (1960).
@@ -27,16 +26,45 @@
 #' @export
 #'
 # Total Correlation
-# Updated 14.02.2021
+# Updated 28.06.2023
 totalCorMat <- function(data){
-  TotCorMat <- matrix(NA,nrow=ncol(data),ncol=ncol(data))
-  TotCorMat <- matrix(apply(expand.grid( x = 1:ncol(data), y = 1:ncol(data)), 1,
-                              function(x){ return(totalCor( data[ , c(x[1], x[2])])$Total.Cor)}),
-                      ncol = ncol(data))
-  colnames(TotCorMat) <- colnames(data)
-  rownames(TotCorMat) <- colnames(data)
-  return(TotCorMat)
+  
+  # Ensure data is matrix
+  data <- as.matrix(data)
+  
+  # Get dimensions of data
+  dimensions <- dim(data)
+  
+  # Ensure variable names
+  data <- ensure_dimension_names(data)
+  
+  # Get variable names
+  variable_names <- dimnames(data)[[2]]
+  
+  # Initialize total correlation matrix
+  total_correlation <- matrix(
+    nrow = dimensions[2], ncol = dimensions[2],
+    dimnames = list(variable_names, variable_names)
+  )
+  
+  # Fill matrix
+  for(i in seq_len(dimensions[2])){
+    
+    # Loop over other variables
+    for(j in i:dimensions[2]){
+      
+      # Fill both sides of the matrix
+      total_correlation[i,j] <- total_correlation[j,i] <- totalCor(data[,c(i, j)])$Total.Cor
+      
+    }
+    
+  }
+  
+  # Return total correlation matrix
+  return(total_correlation)
 }
 
-
+# Bug Checking ----
+# ## Basic input
+# data <- wmt2[,7:24]
 

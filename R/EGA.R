@@ -224,7 +224,7 @@
 #'
 #' @export
 # Main EGA function
-# Updated 23.06.2023
+# Updated 28.06.2023
 EGA <- function (
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -312,9 +312,10 @@ EGA <- function (
   
   # Set up dimension variables data frame
   ## Mainly for legacy, redundant with named `wc`
-  dim.variables <- data.frame(
-    items = dimnames(data)[[2]],
-    dimension = as.vector(multidimensional_result$wc)
+  dim.variables <- fast.data.frame(
+    c(dimnames(data)[[2]], as.vector(multidimensional_result$wc)),
+    nrow = length(multidimensional_result$wc), ncol = 2,
+    colnames = c("items", "dimension")
   )
   
   # Dimension variables data frame by dimension
@@ -510,7 +511,6 @@ plot.EGA <- function(x, ...)
   )
   
 }
-
 
 #' @noRd
 # Cleaning adjusts model arguments

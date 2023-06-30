@@ -101,7 +101,7 @@
 #' @export
 #'
 # Automatic correlations ----
-# Updated 25.06.2023
+# Updated 29.06.2023
 auto.correlate <- function(
     data, # Matrix or data frame
     corr = c("kendall", "pearson", "spearman"), # allow changes to standard correlations
@@ -164,7 +164,7 @@ auto.correlate <- function(
       
       # Set up correlation matrix
       correlation_matrix <- matrix(
-        0, nrow = dimensions[2], ncol = dimensions[2],
+        nrow = dimensions[2], ncol = dimensions[2],
         dimnames = list(variable_names, variable_names)
       )
       
@@ -199,7 +199,7 @@ auto.correlate <- function(
       # Determine whether there are mixed variables
       if(categorical_number != dimensions[2]){ # Check for mixed variables
         
-        # Obtain continuous data
+        # Obtain continuous data (keep as matrix)
         continuous_data <- data[,continuous_variables, drop = FALSE]
         
         # Loop over categorical indices
@@ -207,16 +207,15 @@ auto.correlate <- function(
           
           # Polyserial correlations based on {polycor}
           mixed_correlations <- polyserial.vector(
-            categorical_variable = data[,i, drop = FALSE],
+            categorical_variable = data[,i], # drops to vector
             continuous_variables = continuous_data,
             na.data = na.data
           )
           
-          # Compute categorical/continuous correlations
-          correlation_matrix[i, continuous_variables] <- mixed_correlations
-          
-          # Fill other side
-          correlation_matrix[continuous_variables, i] <- mixed_correlations
+          # Fill matrix
+          correlation_matrix[continuous_variables, i] <-
+            correlation_matrix[i, continuous_variables] <-
+            mixed_correlations
           
         }
         
@@ -235,7 +234,7 @@ auto.correlate <- function(
   }
   
   # Determine whether matrix is positive definite
-  if(isTRUE(forcePD) & !all(eigen(correlation_matrix)$values > 0)){
+  if(isTRUE(forcePD) & !is_positive_definite(correlation_matrix)){
     
     # Send warning to user (if `verbose`)
     if(isTRUE(verbose)){
@@ -318,7 +317,7 @@ auto.correlate <- function(
 #' Uses two-step approximation from {polycor}'s \code{polyserial}
 #' 
 #' @noRd
-# Updated 27.06.2023
+# Updated 29.06.2023
 polyserial.vector <- function(
     categorical_variable, continuous_variables,
     na.data = c("pairwise", "listwise")
@@ -329,12 +328,11 @@ polyserial.vector <- function(
   if(na.data == "pairwise"){
    
     # Pairwise cases
-    categorical_cases <- apply(
-      continuous_variables, 2, function(x){
-        sum(!is.na(categorical_variable) & !is.na(x))
-      }
+    categorical_cases <- colSums(
+      !is.na(categorical_variable) * 
+      !is.na(continuous_variables)
     )
-     
+    
   }else if(na.data == "listwise"){
     
     # Complete cases
@@ -355,7 +353,7 @@ polyserial.vector <- function(
   correlation <- sqrt((categorical_cases - 1) / categorical_cases) * 
     sd(categorical_variable, na.rm = TRUE) * 
     cor(categorical_variable, scaled_continuous, use = na.data) /
-    sum(dnorm(thresholds))
+    sum(dnorm(thresholds), na.rm = TRUE)
   
   # Return correlation
   return(correlation)

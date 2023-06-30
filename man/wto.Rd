@@ -4,7 +4,7 @@
 \alias{wto}
 \title{Weighted Topological Overlap}
 \usage{
-wto(network, signed = TRUE, diagonal_zero = TRUE)
+wto(network, signed = TRUE, diagonal.zero = TRUE)
 }
 \arguments{
 \item{network}{Symmetric matrix.
@@ -15,7 +15,7 @@ Whether the signed version should be used.
 Defaults to \code{TRUE}.
 Use \code{FALSE} for absolute values}
 
-\item{diagonal_zero}{Boolean (length = 1).
+\item{diagonal.zero}{Boolean (length = 1).
 Whether diagonal of overlap matrix should be set to zero.
 Defaults to \code{TRUE}.
 Use \code{FALSE} to allow overlap of a node with itself}
@@ -30,7 +30,7 @@ the Novick et al. (2009) definition
 }
 \examples{
 # Obtain network
-network <- EBICglasso.qgraph(wmt2[,7:24])
+network <- network.estimation(wmt2[,7:24], model = "glasso")
 
 # Compute wTO
 wto(network)

@@ -52,45 +52,17 @@
 #' @export
 #'
 # Compute Louvain communities for EGA
-# Updated 27.06.2023
+# Updated 29.06.2023
 community.louvain <- function(
     network, signed = FALSE, 
     resolution = 1
 )
 {
   
-  # Determine class of network
-  if(is(network, "igraph")){
-    
-    # Convert to network matrix
-    network_matrix <- igraph2matrix(network)
-    
-    # Check for absolute
-    if(isFALSE(signed)){
-      network_matrix <- abs(network_matrix)
-    }
-    
-    # Convert to {igraph} network (ensures absolute even if {igraph})
-    igraph_network <- convert2igraph(network_matrix)
-    
-    
-  }else{
-    
-    # Ensure network is matrix
-    network <- as.matrix(network)
-    
-    # Check for absolute
-    if(isFALSE(signed)){
-      network <- abs(network)
-    }
-    
-    # Store network as network matrix
-    network_matrix <- network
-    
-    # Convert to {igraph} network
-    igraph_network <- convert2igraph(network)
-    
-  }
+  # Get networks
+  networks <- obtain_networks(network, signed)
+  igraph_network <- networks$igraph_network
+  network_matrix <- networks$network_matrix
   
   # Make sure there are variable names
   network_matrix <- ensure_dimension_names(network_matrix)

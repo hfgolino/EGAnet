@@ -44,7 +44,7 @@
 #'
 #' @export
 # Entropy Fit Index
-# Updated 27.06.2023
+# Updated 29.06.2023
 entropyFit <- function (data, structure)
 {
   
@@ -75,23 +75,21 @@ entropyFit <- function (data, structure)
   # Set bin length
   bin_length <- bins + 1
   
-  # With summed data, get sequences
-  sequences <- nnapply(seq_len(communities), function(community){
+  # Get bin cuts
+  bin_cuts <- lapply(seq_len(communities), function(community){
     
     # Get range
     data_range <- range(summed_data[,community], na.rm = TRUE)
     
-    # Return sequence
-    return(seq.int(data_range[1], data_range[2], length.out = bin_length))
-    
-  }, LENGTH = bin_length)
-  
-  # Get bin cuts
-  bin_cuts <- lapply(seq_len(communities), function(community){
-    cut(
-      summed_data[,community], breaks = sequences[,community],
-      include.lowest = TRUE
+    # Return cuts
+    return(
+      cut(
+        summed_data[,community], 
+        breaks = seq.int(data_range[1], data_range[2], length.out = bin_length),
+        include.lowest = TRUE
+      )
     )
+    
   })
   
   # Get bin sums
@@ -102,73 +100,81 @@ entropyFit <- function (data, structure)
   # Get frequencies
   bin_frequencies <- bin_sums / dimensions[1]
   
-  # # Get entropies
+  # Get entropies
   H <- nnapply(seq_len(communities), function(community){
     
     # Get non-zero frequencies
     bin_non_zero <- bin_frequencies[bin_frequencies[,community] > 0, community]
     
     # Return entropy
-    return(-sum(bin_non_zero * log(bin_non_zero)))
+    return(entropy(bin_non_zero))
     
   })
   
   # Get joint frequency table
   joint_frequency <- count_table(
-    do.call(cbind.data.frame, bin_cuts)
+    do.call(cbind, bin_cuts)
   )$Value / dimensions[1]
   
   # Get non-zero frequencies
   joint_non_zero <- joint_frequency[joint_frequency > 0]
   
   # Get joint entropy
-  H_joint <- -sum(joint_non_zero * log(joint_non_zero))
+  H_joint <- entropy(joint_non_zero)
   
   # Get maximum sums
   max_sum <- rowSums(data, na.rm = TRUE)
   
   # Obtain range
-  max_range <- range(max_sum)
-  
-  # Get maximum sequence
-  max_sequence <- seq.int(max_range[1], max_range[2], length.out = bin_length)
+  max_range <- range(max_sum, na.rm = TRUE)
   
   # Count the cuts
   max_frequency <- count_table(
-    cut(max_sum, breaks = max_sequence, include.lowest = TRUE)
+    cut(
+      max_sum, 
+      breaks = seq.int(max_range[1], max_range[2], length.out = bin_length), 
+      include.lowest = TRUE
+    )
   )$Value / dimensions[1]
   
   # Get non-zero frequencies
   max_non_zero <- max_frequency[max_frequency > 0]
   
   # Get maximum entropy
-  H_max <- -sum(max_non_zero * log(max_non_zero))
+  H_max <- entropy(max_non_zero)
   
   # Miller-Madow Bias Correction (for individual communities)
-  ## Compute denominator for corrections
+  ## Pre-compute denominator for corrections
   MM_denominator <- 2 * dimensions[1]
   ## Entropy
   MM_non_zero <- colSums(bin_frequencies != 0, na.rm = TRUE)
   MM_H <- H + (MM_non_zero - 1) / MM_denominator
   ## Joint Entropy
-  MM_joint_non_zero <- sum(joint_frequency != 0)
+  MM_joint_non_zero <- sum(joint_frequency != 0, na.rm = TRUE)
   MM_H_joint <- H_joint + (MM_joint_non_zero - 1) / MM_denominator
   
   # Compute mean entropy
   H_mean <- mean(H, na.rm = TRUE)
   
-  # Compute denominator for entropy fit measures
+  # Pre-compute denominator for entropy fit measures
   EF_denominator <- (H_max - H_mean) * sqrt(communities)
   
   # Set up data frame
-  result <- data.frame(
-    Total.Correlation = sum(H) - H_joint,
-    Total.Correlation.MM = sum(MM_H) - MM_H_joint,
-    Entropy.Fit = H_mean - H_joint + EF_denominator,
-    Entropy.Fit.MM = mean(MM_H) - MM_H_joint + EF_denominator,
-    Average.Entropy = H_mean - H_joint
+  result <- fast.data.frame(
+    c(
+      sum(H, na.rm = TRUE) - H_joint,
+      sum(MM_H, na.rm = TRUE) - MM_H_joint,
+      H_mean - H_joint + EF_denominator,
+      mean(MM_H, na.rm = TRUE) - MM_H_joint + EF_denominator,
+      H_mean - H_joint
+    ), ncol = 5,
+    colnames = c(
+      "Total.Correlation", "Total.Correlation.MM",
+      "Entropy.Fit", "Entropy.Fit.MM",
+      "Average.Entropy"
+    )
   )
-  
+
   # Return results
   return(result)
   
