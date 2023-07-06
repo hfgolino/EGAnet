@@ -146,7 +146,7 @@
 #' @export
 #'
 # Estimates multidimensional EGA only (no automatic plots)
-# Updated 30.06.2023
+# Updated 02.07.2023
 EGA.estimate <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -191,15 +191,10 @@ EGA.estimate <- function(
   if(model == "glasso"){
     
     # Use wrapper to clean up iterative gamma procedure
-    network <- do.call(
-      what = glasso_wrapper,
-      args = c(
-        list( # functions passed into this function
-          data = correlation_matrix, n = n, corr = corr, na.data = na.data,
-          model = model, network.only = TRUE, verbose = verbose
-        ),
-        ellipse # pass on ellipse
-      )
+    network <- glasso_wrapper(
+      data = correlation_matrix, n = n, corr = corr,
+      na.data = na.data, model = model, network.only = TRUE,
+      verbose = verbose, ellipse = ellipse
     )
     
   }else if(model == "bggm"){
@@ -258,16 +253,14 @@ EGA.estimate <- function(
   }else{ # for Louvain, use consensus clustering
     
     # Check for consensus method
-    ellipse$consensus.method <- ifelse(
-      "consensus.method" %in% names(ellipse),
-      ellipse$consensus.method, "most_common" # default
-    )
+    if(!"consensus.method" %in% names(ellipse)){
+      ellipse$consensus.method <- "most_common" # default
+    }
     
     # Check for consensus iterations
-    ellipse$consensus.iter <- ifelse(
-      "consensus.iter" %in% names(ellipse),
-      ellipse$consensus.iter, 1000 # default
-    )
+    if(!"consensus.iter" %in% names(ellipse)){
+      ellipse$consensus.iter <- 1000 # default
+    }
     
     # Apply consensus clustering
     wc <- do.call(
@@ -276,8 +269,7 @@ EGA.estimate <- function(
         list(
           network = network, 
           signed =  algorithm == "signed_louvain",
-          membership.only = TRUE,
-          verbose = verbose
+          membership.only = TRUE
         ),
         ellipse # pass on ellipse
       )
@@ -360,17 +352,14 @@ plot.EGA.estimate <- function(x, ...)
 
 #' @noRd
 # Wrapper for GLASSO ----
-# Updated 27.06.2023
+# Updated 02.07.2023
 glasso_wrapper <- function(
     network, data, n, corr, na.data,
     model, network.only, verbose,
-    ...
+    ellipse
 )
 {
-  
-  # Obtain ellipse arguments
-  ellipse <- list(...)
-  
+
   # Remove `gamma` from ellipse
   if("gamma" %in% names(ellipse)){
     ellipse <- ellipse[-which(names(ellipse) == "gamma")]

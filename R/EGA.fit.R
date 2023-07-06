@@ -169,8 +169,8 @@
 #'
 #' @export
 # EGA fit
-# Updated 28.06.2023
-EGA.fit <- function (
+# Updated 05.07.2023
+EGA.fit <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
@@ -287,6 +287,13 @@ EGA.fit <- function (
     Lowest.EntropyFit = fit_values[best_index]
   )
   
+  # Ensure consistent naming with `EGA`
+  if("cor.data" %in% names(best_fit$EGA)){
+    names(best_fit$EGA)[
+      names(best_fit$EGA) == "cor.data"
+    ] <- "correlation"
+  }
+  
   # Add parameters
   best_fit$parameter.space <- fit_result$parameters
   
@@ -299,10 +306,11 @@ EGA.fit <- function (
   if(isTRUE(plot.EGA)){
     
     # Set up plot
-    best_fit$Plot.EGA <- plot(best_fit)
+    best_fit$Plot.EGA <- plot(best_fit, ...)
     
     # Actually send the plot
-    plot(best_fit$Plot.EGA)
+    silent_plot(best_fit$Plot.EGA)
+    
     
   }
       
@@ -411,95 +419,10 @@ print.EGA.fit <- function(x, ...)
 
 #' @exportS3Method 
 # S3 Summary Method ----
-# Updated 27.06.2023
+# Updated 05.07.2023
 summary.EGA.fit <- function(object, ...)
 {
-  
-  # Print network estimation
-  print(object$EGA$network)
-  
-  # Add break space
-  cat("\n----\n\n")
-  
-  # Obtain membership
-  membership <- object$EGA$wc
-  
-  # Determine number of communities
-  communities <- unique_length(membership) 
-  
-  # Obtain attributes
-  community_attributes <- attr(membership, "methods")
-  
-  # Obtain algorithm name (if available)
-  algorithm <- community_attributes$algorithm
-  
-  # Check for signed
-  algorithm_name <- ifelse(
-    attr(membership, "methods")$signed,
-    paste("Signed", algorithm),
-    algorithm
-  )
-  
-  # Check for Leiden
-  if(algorithm == "Leiden"){
-    
-    # Obtain objective function
-    objective_function <- community_attributes$objective_function
-    
-    # Set up algorithm name
-    objective_name <- ifelse(
-      is.null(objective_function),
-      "CPM", objective_function
-    )
-    
-    # Expand "CPM"
-    objective_name <- ifelse(
-      objective_name == "CPM",
-      "Constant Potts Model", "Modularity"
-    )
-    
-    # Finalize algorithm name
-    algorithm_name <- paste(
-      algorithm, "with", objective_name
-    )
-    
-  }
-  
-  # Check for parameter addition
-  algorithm_name <- paste0(
-    algorithm_name,
-    paste0(
-      " (", ifelse(
-        algorithm == "Walktrap",
-        "Steps = ",
-        "Resolution = "
-      ), names(object$Lowest.EntropyFit),
-      ")"
-    )
-  )
-  
-  # Set up methods
-  cat(paste0("Algorithm: "), algorithm_name)
-  
-  # Add breakspace
-  cat("\n\n")
-  
-  # Add TEFI value
-  cat(paste0("TEFI: ", round(object$Lowest.EntropyFit, 3)))
-  
-  # Add breakspace
-  cat("\n\n")
-  
-  # Print communities
-  cat(paste0("Number of communities: "), communities)
-  cat("\n\n") # Add breakspace
-  
-  # Remove class and attribute for clean print
-  membership <- remove_attributes(membership)
-  
-  # Print membership
-  print(membership)
-  
+  print(object, ...) # same as print
 }
 
 #' @exportS3Method 
@@ -599,11 +522,9 @@ walktrap_fit <- function(
   
   # Set up search matrix
   search_matrix <- matrix(
-    0, nrow = step_length,
+    nrow = step_length,
     ncol = length(ega_result$wc),
-    dimnames = list(
-      steps, names(ega_result$wc)
-    )
+    dimnames = list(steps, names(ega_result$wc))
   )
   
   # Add first parameter
@@ -678,11 +599,9 @@ louvain_fit <- function(
   
   # Set up search matrix
   search_matrix <- matrix(
-    0, nrow = resolution_parameter_length,
+    nrow = resolution_parameter_length,
     ncol = length(ega_result$wc),
-    dimnames = list(
-      resolution_parameter, names(ega_result$wc)
-    )
+    dimnames = list(resolution_parameter, names(ega_result$wc))
   )
   
   # Add first parameter
@@ -696,8 +615,7 @@ louvain_fit <- function(
       args = c(
         list( # Necessary call
           network = ega_result$network,
-          resolution = resolution_parameter[i],
-          verbose = FALSE
+          resolution = resolution_parameter[i]
         ),
         ellipse # pass on ellipse
       )
@@ -761,7 +679,7 @@ leiden_fit <- function(
     
     # Switch based on objective function
     if(objective_function == "CPM"){
-      resolution_parameter <- seq.int(0, max(ega_result$network), 0.01) # default 
+      resolution_parameter <- seq.int(0, max(abs(ega_result$network)), 0.01) # default 
     }else if(objective_function == "modularity"){
       resolution_parameter <- seq.int(0, 2, 0.05) # default
     }
@@ -782,11 +700,9 @@ leiden_fit <- function(
   
   # Set up search matrix
   search_matrix <- matrix(
-    0, nrow = resolution_parameter_length,
+    nrow = resolution_parameter_length,
     ncol = length(ega_result$wc),
-    dimnames = list(
-      resolution_parameter, names(ega_result$wc)
-    )
+    dimnames = list(resolution_parameter, names(ega_result$wc))
   )
   
   # Add first parameter
@@ -820,3 +736,4 @@ leiden_fit <- function(
   )
   
 }
+

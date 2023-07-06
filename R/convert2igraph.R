@@ -23,7 +23,7 @@ convert2igraph <- function (A, diagonal = 0)
 {
   
   # Convert to matrix
-   A <- as.matrix(A)
+  A <- as.matrix(A)
   
   # Change diagonal (to zero)
   diag(A) <- diagonal

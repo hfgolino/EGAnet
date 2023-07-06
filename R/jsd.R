@@ -61,7 +61,7 @@
 #' @export
 #' 
 # Jensen-Shannon Distance
-# Updated 29.06.2023
+# Updated 02.07.2023
 jsd <- function(
     network1, network2,
     method = c("kld", "spectral")
@@ -83,19 +83,17 @@ jsd <- function(
     lentropy2 <- silent_call(entropy_laplacian(laplacian2))
     
     # Obtain combined VN entropy
-    laplacian_combined <- 0.5 * (laplacian1 + laplacian2)
-    lentropy_combined <- silent_call(entropy_laplacian(laplacian_combined))
+    lentropy_combined <- silent_call(
+      entropy_laplacian(0.5 * (laplacian1 + laplacian2))
+    )
     
     # Compute JSD
     JSD <- sqrt(abs(lentropy_combined - (0.5 * (lentropy1 + lentropy2))))
     
   }else if(method == "kld"){
     
-    # Combine networks
-    network_combined <- 0.5 * (network1 + network2)
-    
     # Pre-compute inverse covariance matrix of combined networks
-    inverse_combined <- pcor2inv(network_combined)
+    inverse_combined <- pcor2inv(0.5 * (network1 + network2))
     
     # Compute KLDs
     kld1 <- kld(inverse_combined, pcor2inv(network1))
@@ -135,7 +133,7 @@ entropy_laplacian <- function(laplacian_matrix)
 
 #' @noRd
 # Kullback-Leibler Divergence ----
-# Updated 29.06.2023
+# Updated 03.07.2023
 # Compute Kullback-Leibler Divergence
 kld <- function(network1, network2)
 {
@@ -144,11 +142,8 @@ kld <- function(network1, network2)
   # network2 = Q
   # KLD(P || Q)
   
-  # Compute inverse of first network
-  inverse_network1 <- solve(network1)
-  
   # Pre-compute matrix multiplication
-  combined_network <- inverse_network1 %*% network2
+  combined_network <- crossprod(solve(network1), network2)
   
   # Return KLD
   return(

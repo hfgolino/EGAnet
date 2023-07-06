@@ -19,42 +19,187 @@
 # family to execute specific tasks that are often repeatedly
 # done. Their purpose are to provide slightly cleaner code.
 
-# These `*napply` are specific versions of `vapply` that
+# These `*vapply` are specific versions of `vapply` that
 # pre-specify the output. These versions are generally
 # simpler (in function) and marginally faster than 
 # the more commonly used `sapply`. They are more strict
 # in that they require knowing the output format (e.g., numeric)
 
 #' @noRd
-# Character vector/matrix output apply
-# Updated 25.06.2023
-cnapply <- function(X, FUN, ..., LENGTH = 1, USE.NAMES = TRUE)
+# Character vector/matrix output apply ----
+# Updated 06.07.2023
+cvapply <- function(X, FUN, ..., LENGTH = 1, USE.NAMES = TRUE)
 {
   return(vapply(X = X, FUN = FUN, FUN.VALUE = character(LENGTH), ..., USE.NAMES = USE.NAMES))
 }
 
 #' @noRd
-# Logical vector/matrix output apply
-# Updated 25.06.2023
-lnapply <- function(X, FUN, ..., LENGTH = 1, USE.NAMES = TRUE)
+# Logical vector/matrix output apply ----
+# Updated 06.07.2023
+lvapply <- function(X, FUN, ..., LENGTH = 1, USE.NAMES = TRUE)
 {
   return(vapply(X = X, FUN = FUN, FUN.VALUE = logical(LENGTH), ..., USE.NAMES = USE.NAMES))
 }
 
 #' @noRd
-# Numeric vector/matrix output apply
-# Updated 25.06.2023
-nnapply <- function(X, FUN, ..., LENGTH = 1, USE.NAMES = TRUE)
+# Numeric vector/matrix output apply ----
+# Updated 06.07.2023
+nvapply <- function(X, FUN, ..., LENGTH = 1, USE.NAMES = TRUE)
 {
   return(vapply(X = X, FUN = FUN, FUN.VALUE = numeric(LENGTH), ..., USE.NAMES = USE.NAMES))
 }
 
 #' @noRd
-# Unlist `lapply`
+# Unlist `lapply` ----
 # Updated 25.06.2023
 ulapply <- function(X, FUN, ...)
 {
   return(unlist(lapply(X, FUN, ...)))
+}
+
+# The `row_apply` and `column_apply` functions are
+# not necessary faster than `apply` but they are
+# more strict in that they return a matrix with
+# the same dimensions that was input into 'X'.
+# Therefore, there is never a need to transpose
+# the output because it will always have the same
+# dimensions as what went in
+
+#' @noRd
+# Stricter `apply` by row ----
+# Slightly faster than `apply` but not appreciably
+# Updated 06.07.2023
+row_apply <- function(X, FUN, ...)
+{
+  
+  # Ensure matrix
+  X <- as.matrix(X)
+  
+  # Get dimensions of data
+  dimensions <- dim(X)
+  
+  # Get appropriate function
+  vapply_FUN <- switch( # in order of most likely
+    typeof(X),
+    "double" = nvapply,
+    "integer" = nvapply,
+    "logical" = lvapply,
+    "character" = cvapply,
+    stop(
+      paste0(
+        "\"", typeof(X), "\"",
+        " is not available for `row_apply`. Only \"character\", \"logical\", and \"numeric\" are available" 
+      ), call. = FALSE
+    )
+  )
+  
+  # Return call
+  return(
+    matrix(
+      vapply_FUN(
+        split(X, seq_len(dimensions[1])),
+        FUN = FUN, ..., LENGTH = dimensions[2],
+        USE.NAMES = FALSE # names are supplied below
+      ), 
+      dimensions, dimnames = dimnames(X), byrow = TRUE
+    )
+  )
+  
+}
+
+#' @noRd
+# Stricter `apply` by column ----
+# Slightly faster than `apply` but not appreciably
+# Updated 06.07.2023
+column_apply <- function(X, FUN, ...)
+{
+  
+  # Ensure matrix
+  X <- as.matrix(X)
+  
+  # Get dimensions of data
+  dimensions <- dim(X)
+  
+  # Get appropriate function
+  vapply_FUN <- switch( # in order of most likely
+    typeof(X),
+    "double" = nvapply,
+    "integer" = nvapply,
+    "logical" = lvapply,
+    "character" = cvapply,
+    stop(
+      paste0(
+        "\"", typeof(X), "\"",
+        " is not available for `row_apply`. Only \"character\", \"logical\", and \"numeric\" are available" 
+      ), call. = FALSE
+    )
+  )
+  
+  # Return call
+  return(
+    matrix(
+      vapply_FUN(
+        split(t(X), seq_len(dimensions[2])),
+        FUN = FUN, ..., LENGTH = dimensions[1],
+        USE.NAMES = FALSE # names are supplied below
+      ), 
+      dimensions, dimnames = dimnames(X), byrow = FALSE
+    )
+  )
+  
+}
+
+#' @noRd
+# 3D Array apply ----
+# Apply's a function across a 3D array to obtain a 2D array
+# About 2x faster than `apply(simplify2array(X), 1:2, FUN)`
+# Updated 06.07.2023
+symmetric_matrix_lapply <- function(X, FUN, ...){
+  
+  # Get dimensions of single matrix in list
+  dimensions <- dim(X[[1]])
+  
+  # Get lower triangles into a matrix
+  lower_matrix <- do.call(
+    rbind, lapply(X, function(x){x[lower.tri(x, diag = TRUE)]})
+  )
+  
+  # Initialize return matrix
+  new_matrix <- matrix(
+    nrow = dimensions[1], ncol = dimensions[2],
+    dimnames = dimnames(X[[1]])
+  )
+  
+  # Get appropriate function
+  vapply_FUN <- switch( # in order of most likely
+    typeof(X[[1]]),
+    "double" = nvapply,
+    "integer" = nvapply,
+    "logical" = lvapply,
+    "character" = cvapply,
+    stop(
+      paste0(
+        "\"", typeof(X), "\"",
+        " is not available for `row_apply`. Only \"character\", \"logical\", and \"numeric\" are available" 
+      ), call. = FALSE
+    )
+  )
+  
+  # Apply function
+  values <- vapply_FUN(as.data.frame(lower_matrix), FUN, ...)
+  
+  # Add values to lower triangle
+  new_matrix[lower.tri(new_matrix, diag = TRUE)] <- values
+  
+  # Transpose 
+  new_matrix <- t(new_matrix)
+  
+  # Add values again to lower triagle
+  new_matrix[lower.tri(new_matrix, diag = TRUE)] <- values
+  
+  # Return new matrix
+  return(new_matrix)
+  
 }
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -85,109 +230,72 @@ rnorm_ziggurat <- function(n, mean = 0, sd = 1)
 
 #' @noRd
 # Generate multivariate normal data ----
-# Removes MASS package dependency (from version 7.3.54)
-# Function is streamlined to avoid chained `if` calls in original function
-# Updated 17.06.2023
+# Removes MASS package dependency (from version 7.3.60)
+# Original code here for legacy and bug checking
+# Updated 03.07.2023
 MASS_mvrnorm <- function(
     n = 1, mu, Sigma,
     tol = 1e-06, empirical = FALSE, EISPACK = FALSE
 )
 {
   
-  # Get number of variables
   p <- length(mu)
-  
-  # Assumes `mu` == `Sigma` dimensions
-  # if (!all(dim(Sigma) == c(p, p)))
-  
-  # EISPACK is always FALSE
-  # if (EISPACK)
-  
-  # Obtain eigenvectors and values
+  if (!all(dim(Sigma) == c(p, p))) 
+    stop("incompatible arguments")
+  if (EISPACK) 
+    stop("'EISPACK' is no longer supported by R", domain = NA)
   eS <- eigen(Sigma, symmetric = TRUE)
-  ev <- eS$values # Obtain values
-  
-  # SKIP positive definite check (should be from `auto.correlate`)
-  # if (!all(ev >= -tol * abs(ev[1L])))
-  
-  # Generate data
-  X <- matrix(rnorm_ziggurat(n = p * n), n)
-  # X <- matrix(rnorm(p * n), n) # replaces `rnorm` so we can set seed
-  
-  # For empirical data
-  if(isTRUE(empirical)){
+  ev <- eS$values
+  if (!all(ev >= -tol * abs(ev[1]))) 
+    stop("'Sigma' is not positive definite")
+  X <- matrix(rnorm(p * n), n)
+  if (empirical) {
     X <- scale(X, TRUE, FALSE)
     X <- X %*% svd(X, nu = 0)$v
     X <- scale(X, FALSE, TRUE)
   }
-  
-  # Obtain X
-  X <- mu + eS$vectors %*% diag(sqrt(pmax(ev, 0)), p) %*% t(X)
-  
-  # Skip checks
-  # nm <- names(mu)
-  # if (is.null(nm) && !is.null(dn <- dimnames(Sigma)))
-  #   nm <- dn[[1L]]
-  # dimnames(X) <- list(nm, NULL)
-  
-  # Return results
-  if(n == 1){
-    return(drop(X))
-  }else{
-    return(t(X))
-  }
+  X <- drop(mu) + eS$vectors %*% diag(sqrt(pmax(ev, 0)), p) %*% 
+    t(X)
+  nm <- names(mu)
+  if (is.null(nm) && !is.null(dn <- dimnames(Sigma))) 
+    nm <- dn[[1]]
+  dimnames(X) <- list(nm, NULL)
+  if (n == 1) 
+    drop(X)
+  else t(X)
   
 }
 
 #' @noRd
 # Generate multivariate normal data (quicker) ----
-# Pre-computes `p`
+# A very aggressive optimization
+# Removes 'tol', 'empirical' and 'EISPACK' arguments
+# Removes safeguards like positive definite (should be from `auto.correlate`)
+# 'empirical' is ALWAYS = FALSE
+# Pre-computes `np` (n * p)
 # Avoids repeated calls to `eigen` in `MASS_mvrnorm`
 # Pre-computes `eS$vectors %*% diag(sqrt(pmax(ev, 0)), p)`
-# Updated 17.06.2023
-MASS_mvrnorm_quick <- function(
-    n = 1, mu, p, coV,
-    tol = 1e-06, empirical = FALSE, EISPACK = FALSE
-)
+# Updated 03.07.2023
+MASS_mvrnorm_quick <- function(n, mu, np, coV)
 {
-
-  # Generate data
-  X <- matrix(rnorm_ziggurat(n = p * n), n)
-  
-  # For empirical data
-  if(isTRUE(empirical)){
-    X <- scale(X, TRUE, FALSE)
-    X <- X %*% svd(X, nu = 0)$v
-    X <- scale(X, FALSE, TRUE)
-  }
-  
-  # Obtain X
-  X <- mu + coV %*% t(X)
-  
-  # Return results
-  if(n == 1){
-    return(drop(X))
-  }else{
-    return(t(X))
-  }
-  
+  return(t(mu + tcrossprod(coV, matrix(rnorm_ziggurat(np), nrow = n))))
 }
 
 #' @noRd
 # Generate reproducible parametric bootstrap ----
-# (multivariate normal samples)
-# A wrapper over `rnorm_ziggurat` and `MASS_mvrnorm`
-# Updated 24.06.2023
+# A wrapper over `rnorm_ziggurat` and `MASS_mvrnorm_quick`
+# Updated 03.07.2023
 reproducible_parametric <- function(
     samples, cases, mu, Sigma, seed
 )
 {
   
   # First, perform pre-computations
-  p <- length(mu) # avoids repeated calls to `length`
+  p <- length(mu) # avoids repeated calls to length
+  np <- cases * p # avoids repeated n * p calls
   eS <- eigen(Sigma, symmetric = TRUE) # avoids repeated calls to `eigen`
   coV <- eS$vectors %*% diag(sqrt(pmax(eS$values, 0)), p)
-  # avoids repeated matrix computation
+  # avoids repeated matrix multiplication
   
   # Next, set seed for random normal generation
   RcppZiggurat::zsetseed(seed)
@@ -196,9 +304,10 @@ reproducible_parametric <- function(
   # Then, generate samples
   return(
     lapply(
-      seq_len(samples), MASS_mvrnorm_quick,
-      n = cases, mu = mu,
-      p = p, coV = coV
+      seq_len(samples), 
+      function(iteration){
+        MASS_mvrnorm_quick(n = cases, mu = mu, np = np, coV = coV)
+      }
     )
   )
   
@@ -218,7 +327,7 @@ reproducible_seed <- function(n, seed = NULL)
 #' @noRd
 # Generate reproducible shuffling ----
 # About 6x faster than R's `sample`
-# Updated 17.06.2023
+# Updated 01.07.2023
 reproducible_sample <- function(
     x, size, replace, seed
 ){
@@ -240,11 +349,8 @@ reproducible_sample <- function(
     
   }
   
-  # Set shuffled data
-  shuffled <- x[shuffled_indices]
-  
   # Return shuffled data
-  return(shuffled)
+  return(x[shuffled_indices])
   
 }
 
@@ -252,24 +358,18 @@ reproducible_sample <- function(
 # Generate reproducible resampling bootstrap ----
 # (multivariate normal samples)
 # A wrapper over `reproducible_seed` and `reproducible_sample`
-# Updated 18.06.2023
+# Updated 03.07.2023
 reproducible_resampling <- function(
     data, samples, cases, seed
 )
 {
   
-  # First, generate as many seeds as there are samples
-  seeds <- reproducible_seed(n = samples, seed = seed)
-  
-  # Then, generate samples
-  ## More direct approach than calling `reproducible_sample`
+  # More direct approach than calling `reproducible_sample`
   return(
     lapply(
-      seq_len(samples),
-      function(i){
-        data[
-          r_sample_with_replacement(n = cases, seed = seeds[i]),
-        ]
+      reproducible_seed(n = samples, seed = seed),
+      function(single_seed){
+        data[r_sample_with_replacement(n = cases, seed = single_seed),]
       }
     )
   )
@@ -280,7 +380,7 @@ reproducible_resampling <- function(
 # Generate reproducible bootstrap data ----
 # Wrapper for `reproducible_parametric` and
 # `reproducible_resampling`
-# Updated 29.06.2023
+# Updated 01.07.2023
 reproducible_bootstrap <- function(
     data = NULL, samples, cases, mu = NULL, Sigma = NULL, seed,
     type = c("parametric", "resampling")
@@ -290,25 +390,25 @@ reproducible_bootstrap <- function(
   # Based on bootstrap type, generate data
   if(type == "parametric"){
     
-    # Obtain bootstrap samples
-    bootstrap_samples <- reproducible_parametric(
-      samples = samples, cases = cases,
-      mu = mu, Sigma = Sigma, seed = seed
+    # Obtain parametric samples
+    return(
+      bootstrap_samples <- reproducible_parametric(
+        samples = samples, cases = cases,
+        mu = mu, Sigma = Sigma, seed = seed
+      )
     )
-    
     
   }else if(type == "resampling"){
     
-    # Obtain bootstrap samples
-    bootstrap_samples <- reproducible_resampling(
-      data = data, samples = samples,
-      cases = cases, seed = seed
+    # Return resampling samples
+    return(
+      reproducible_resampling(
+        data = data, samples = samples,
+        cases = cases, seed = seed
+      )
     )
     
   }
-  
-  # Return bootstrap samples
-  return(bootstrap_samples)
   
 }
 
@@ -396,16 +496,21 @@ parallel_process <- function(
 # FASTER SEQUENCES ----
 #%%%%%%%%%%%%%%%%%%%%%%
 
-# I haven't looked into why `seq_len(n)` is faster
-# than `1:n` or `dim(data)[1]` is faster than
-# `nrow(data)` (same for columns) but both are
-# faster than the latter commonly applied applications
+# These functions aren't often used because
+# dimensions of the data are usually used
+# elsewhere in {EGAnet}; however, these 
+# functions use `seq_len` and `dim` which
+# have minimal speed advantages over their
+# respective `1:nrow` and `1:ncol`
 #
-# GPT-4 reports that `nrow` and `ncol` call `dim`
+# The primary benefit of using this functions
+# is `seq_len` which throws an error with
+# `seq_len(0)` where `1:0` will not
+# (at least not at the top of the call)
 
 #' @noRd
 # Faster row sequences ----
-# Updated 13.06.2023
+# Updated 06.07.2023
 nrow_sequence <- function(data)
 {
   return(seq_len(dim(data)[1]))
@@ -414,14 +519,11 @@ nrow_sequence <- function(data)
 
 #' @noRd
 # Faster column sequences ----
-# Updated 13.06.2023
+# Updated 06.07.2023
 ncol_sequence <- function(data)
 {
   return(seq_len(dim(data)[2]))
 }
-
-# An actual real reason to use `seq_len`: handles edge cases
-# when there is a length = 0
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%
 # FORMATTING FUNCTIONS ----
@@ -476,12 +578,40 @@ format_integer <- function(numbers, places)
 #%%%%%%%%%%%%%%%%%%%%%%
 
 #' @noRd
+# Gets base `EGA` object that are necessary for most
+# functions in {EGAnet}
+# Updated 06.07.2023
+get_EGA_object <- function(object)
+{
+  
+  # `bootEGA` has some precedence with
+  # empirical `EGA` object nested
+  if(is(object, "bootEGA")){
+    object <- object$EGA
+  }
+  
+  # Based on class, get EGA object
+  return(
+    switch(
+      tolower(class(object)),
+      "ega" = object,
+      "ega.fit" = object$EGA,
+      "riega" = object$EGA,
+      stop(
+        "Could not find `EGA` object nested in object",
+        call. = FALSE
+      )
+    )
+  )
+  
+}
+
+#' @noRd
 # Faster data frame initialization ----
 # Initializes a matrix and converts to a data frame
 # Data frames are initialized as individual vectors
-# carrying extra overhead -- this function isn't
-# as readable but 
-# Updated 29.06.2023
+# carrying extra overhead 
+# Updated 06.07.2023
 fast.data.frame <- function(
     data = NA, nrow = 1, ncol = 1,
     rownames = NULL, colnames = NULL,
@@ -494,10 +624,7 @@ fast.data.frame <- function(
       matrix(
         data = data,
         nrow = nrow, ncol = ncol,
-        dimnames = list(
-          rownames,
-          colnames
-        )
+        dimnames = list(rownames,colnames)
       ), make.names = FALSE,
       ...
     )
@@ -508,7 +635,7 @@ fast.data.frame <- function(
 #' @noRd
 # Convert numeric matrix to integers ----
 # About 5x faster than `apply`
-# Updated 29.06.2023
+# Updated 06.07.2023
 integer_matrix <- function(data)
 {
   return(
@@ -520,52 +647,68 @@ integer_matrix <- function(data)
 }
 
 #' @noRd
-# Force vector ----
-# (usually for data frame rows/columns)
-# Updated 25.06.2023
-force_vector <- function(desired_vector)
+# Determine object type ----
+# Updated 05.07.2023
+get_object_type <- function(object)
 {
-  # Convert to matrix
-  desired_vector <- as.matrix(desired_vector)
   
-  # Get column names
-  column_names <- dimnames(desired_vector)[[2]]
+  # Remove attributes and class from object
+  unclassed_object <- remove_attributes(object)
   
-  # Convert to vector
-  new_vector <- as.vector(desired_vector)
-
-  # Keep names (if any)
-  if(!is.null(column_names)){
-    names(new_vector) <- column_names
+  # Add object type to object's attributes
+  ## In order of precedence
+  if(is(object, "tbl")){ # needs precedence over 'data.frame'
+    return("tibble")
+  }else if(is.data.frame(object)){ # needs precedence over 'list'
+    return("data.frame")
+  }else if(is.list(unclassed_object)){ # needs precedence over 'vector'
+    return("list")
+  }else if(is.factor(object)){
+    return("factor")
+  }else if(is.vector(unclassed_object)){
+    return("vector")
+  }else if(is.matrix(unclassed_object)){
+    return("matrix")
+  }else if(is.array(unclassed_object)){
+    return("array")
   }
-  
-  return(new_vector)
   
 }
 
 #' @noRd
-# Force matrix ----
-# (usually for vectors)
-# Updated 29.06.2023
-force_matrix <- function(desired_matrix, dimension = c("col", "row"))
+# Force vector ----
+# For 1D matrix or data frames only
+# Updated 05.07.2023
+force_vector <- function(object)
 {
   
-  # Check for missing dimension argument
-  dimension <- set_default(dimension, "col", force_matrix)
+  # Get object type
+  object_type <- get_object_type(object)
   
-  # Check for matrix form already
-  if(is(desired_matrix, "matrix")){
-    return(desired_matrix)
-  }else if(is(desired_matrix, "data.frame")){
-    return(as.matrix(desired_matrix))
-  }else{# Convert vector to matrix
+  # Branch across types
+  if(object_type == "vector"){
+    return(object) # already a vector
+  }else if(object_type %in% c("matrix", "data.frame", "tibble")){
     
-    # Set up as a single column or row
-    if(dimension == "col"){
-      return(matrix(desired_matrix, ncol = 1))
-    }else{
-      return(matrix(desired_matrix, nrow = 1))
+    # Ensure matrix
+    new_matrix <- as.matrix(object)
+    
+    # Get dimensions
+    dimensions <- dim(new_matrix)
+    
+    # Check for more than one dimension
+    if(all(dimensions) > 1){
+      stop("Cannot sufficiently force object into 'vector'.")
     }
+    
+    # Set as vector
+    new_vector <- as.vector(new_matrix)
+    
+    # Set names based on dimension
+    names(new_vector) <- unlist(dimnames(object)[dimensions != 1])
+    
+    # Return new vector
+    return(new_vector)
     
   }
   
@@ -573,42 +716,30 @@ force_matrix <- function(desired_matrix, dimension = c("col", "row"))
 
 #' @noRd
 # Force numeric ----
-# (usually for vectors)
-# Updated 09.06.2023
-force_numeric <- function(desired_numeric)
+# For factors
+# Updated 05.07.2023
+force_numeric <- function(object)
 {
   
-  # Check first for feasible coercion
-  if(canCoerce(desired_numeric, "numeric")){
+  # Check for whether object is already numeric
+  if(is.numeric(object)){
+    return(object) # just return
+  }else if(is.factor(object)){ # factors are trickier...
     
-    # Check for edge cases
-    if(is.factor(desired_numeric) | is.ordered(desired_numeric)){ # factor/ordered
+    # Switch based on type in the levels
+    if(is.numeric(levels(object))){
       
-      # Make character
-      desired_numeric <- as.character(desired_numeric)
+      # Get original values rather than factor values
+      return(as.numeric(as.character(object)))
       
-    }else if(is.complex(desired_numeric)){ # complex (force `NA``)
+    }else{
       
-      # Find imaginary numbers (start as character)
-      imaginary_character <- as.character(desired_numeric)
-      
-      # Set imaginary numbers to `NA`
-      desired_numeric[grepl("i", imaginary_character)] <- NA
+      # Just used factor assigned values
+      return(as.numeric(object))
       
     }
     
-  }else{
-    
-    # Return all NAs
-    desired_numeric <- rep(NA, length(desired_numeric))
-    
   }
-  
-  # Make numeric
-  desired_numeric <- as.numeric(desired_numeric)
-  
-  # Return result
-  return(desired_numeric)
   
 }
 
@@ -619,59 +750,90 @@ force_numeric <- function(desired_numeric)
 #' @noRd
 # Unique Length ----
 # Counts length of unique variables (without `NA`)
-# Updated 26.06.2023
+# Updated 03.07.2023
 unique_length <- function(x)
 {
-  return(sum(!is.na(unique(x))))
+  return(length(unique(x)) - anyNA(x))
 }
 
 #' @noRd
 # Edge count ----
-# Counts the number of edges (assumes network is matrix)
-# Updated 18.06.2023
+# Counts the number of edges
+# (assumes network is _symmetric_ matrix)
+# Updated 03.07.2023
 edge_count <- function(network, nodes, diagonal = FALSE)
 {
   
   # Count edges
   return(
-    (sum(network != 0) - ifelse(diagonal, nodes, 0)) / 2
+    (sum(network != 0) - ifelse(diagonal, nodes, 0)) * 0.50
   )
+  
+}
+
+#' @noRd
+# Converts entire vectors to a single value ----
+# Same logic as {plyr}'s `id_var` and `ninteraction`
+# Avoids {plyr} dependency for single function
+# Updated 06.07.2023
+vector2factor <- function(data)
+{
+  
+  # Use "paste" method
+  stringed_values <- do.call( 
+    # Get total unique values each variable takes
+    paste, rev(lapply( # `ninteraction`
+      
+      # Ensure data frame
+      as.data.frame(data), function(x){
+      
+      # Get matched ID (`id_var`)
+      matched_id <- match(x, sort(unique(x), na.last = TRUE))
+      
+      # Attached number of unique as attribute
+      attr(matched_id, "n") <- max(matched_id)
+      
+      # Return result
+      return(matched_id)
+      
+    }))
+  )
+
+  # Return unique ID
+  return(factor(match(stringed_values, unique(stringed_values))))
   
 }
 
 #' @noRd
 # Count table ----
 # Provides counts of repeated rows in a data frame
-# Updated 29.06.2023
+# Same logic as {plyr}'s `count`
+# Avoids {plyr} dependency for single function
+# Updated 03.07.2023
 count_table <- function(data, proportion = FALSE)
 {
-  
-  # Make data frame
+
+  # Ensure data frame
   data <- as.data.frame(data)
   
-  # Get the dimensions of the data
-  dimensions <- dim(data)
+  # Get unique ID
+  unique_id <- vector2factor(data)
   
-  # Obtain counts of unique rows (clever solution from GPT-4)
-  counts <- table(do.call(paste, data))
+  # Get unique solutions
+  unique_solutions <- data[!duplicated(unique_id),,drop = FALSE]
   
-  # Obtain unique vectors
-  unique_vectors <- silent_call(
-    do.call(rbind, lapply(strsplit(names(counts), split = " "), as.numeric))
-  )
+  # Tabulate data
+  Value <- tabulate(unique_id, length(levels(unique_id)))
   
   # Check for proportion
   if(isTRUE(proportion)){
-    counts <- counts / dimensions[1]
+    Value <- Value / dim(data)[1]
   }
-
+  
   # Return data frame
   return(
-    fast.data.frame(
-      c(unique_vectors, counts),
-      nrow = dim(unique_vectors)[1],
-      ncol = dimensions[2] + 1,
-      colnames = c(dimnames(data)[[2]], "Value")
+    as.data.frame(
+      cbind(unique_solutions[order(unique(unique_id)),], Value)
     )
   )
   
@@ -683,24 +845,24 @@ count_table <- function(data, proportion = FALSE)
 
 #' @noRd
 # Determine number of categories in data ----
-# Updated 25.06.2023
+# Updated 06.07.2023
 data_categories <- function(data)
 {
-  return(apply(as.matrix(data), 2, unique_length))
+  return(nvapply(as.data.frame(data), unique_length))
 }
 
 #' @noRd
 # All-purpose symmetric checker ----
 # Faster but less robust than `isSymmetric`
 # Defaults to floating point tolerance
-# Updated 26.06.2023
+# Updated 01.07.2023
 is_symmetric <- function(data, tolerance = 1e-06){
 
   # Get dimensions
   dimensions <- dim(data)
   
   # Check for whether rows equal columns
-  if(dimensions[1] != dimensions[2]){ # Not a matrix
+  if(dimensions[1] != dimensions[2]){ # Not a (square) matrix
     return(FALSE)
   }else{
     
@@ -708,48 +870,68 @@ is_symmetric <- function(data, tolerance = 1e-06){
     data_matrix <- as.matrix(data)
     
     # Check that all are equal
-    all_equal <- all(abs(data_matrix - t(data_matrix)) < tolerance)
+    return(all(abs(data_matrix - t(data_matrix)) < tolerance))
     
   }
-  
-  # Return whether all are equal
-  return(all_equal)
   
 }
 
 #' @noRd
 # Ensure data has dimension names ----
-# Updated 25.06.2023
+# Updated 03.07.2023
 ensure_dimension_names <- function(data)
 {
   
-  # Get dimensions
-  dimensions <- dim(data)
+  # Determine object type
+  object_type <- get_object_type(data)
   
-  # Get dimension names
-  dimension_names <- dimnames(data)
-  
-  # Check for column names
-  if(is.null(dimension_names[[2]])){
+  # Branch for vector vs. matrix and data frame
+  if(object_type == "vector"){
     
-    # Standardize names
-    dimnames(data)[[2]] <- paste0(
-      "V", format_integer(
-        seq_len(dimensions[2]),
-        digits(dimensions[2]) - 1
+    # Get length of vector
+    vector_length <- length(data)
+    
+    # Check for names
+    if(is.null(names(data))){
+      names(data) <- paste0(
+        "V", format_integer(
+          seq_len(vector_length),
+          digits(vector_length) - 1
+        )
       )
-    )
+    }
     
-  }
-  
-  # Check for matrix
-  if(dimensions[1] == dimensions[2]){
+  }else if(object_type %in% c("matrix", "data.frame")){ 
     
-    # Check for row names
-    if(is.null(dimnames(data)[[1]]) | any(dimension_names[[1]] != dimension_names[[2]])){
+    # Get dimensions
+    dimensions <- dim(data)
+    
+    # Get dimension names
+    dimension_names <- dimnames(data)
+    
+    # Check for column names
+    if(is.null(dimension_names[[2]])){
       
-      # Assign column names to row names
-      dimnames(data)[[1]] <- dimnames(data)[[2]]
+      # Standardize names
+      dimnames(data)[[2]] <- paste0(
+        "V", format_integer(
+          seq_len(dimensions[2]),
+          digits(dimensions[2]) - 1
+        )
+      )
+      
+    }
+    
+    # Check for matrix
+    if(dimensions[1] == dimensions[2]){
+      
+      # Check for row names
+      if(is.null(dimnames(data)[[1]]) | any(dimension_names[[1]] != dimension_names[[2]])){
+        
+        # Assign column names to row names
+        dimnames(data)[[1]] <- dimnames(data)[[2]]
+        
+      }
       
     }
     
@@ -785,7 +967,7 @@ transfer_names <- function(data, output)
 
 #' @noRd
 # Function to check for usable variables ----
-# Updated 26.06.2023
+# Updated 06.07.2023
 usable_data <- function(data, verbose)
 {
   
@@ -793,7 +975,7 @@ usable_data <- function(data, verbose)
   data_matrix <- data.matrix(data)
   
   # All missing after coercions
-  remove_columns <- apply(is.na(data_matrix), 2, all)
+  remove_columns <- lvapply(as.data.frame(is.na(data_matrix)), all)
   
   # Send warning if there are any removals
   if(any(remove_columns)){
@@ -814,8 +996,8 @@ usable_data <- function(data, verbose)
   }
   
   # Determine whether each variable was coerced
-  coercions <- apply(data_matrix != data, 2, all, na.rm = TRUE)
-  
+  coercions <- lvapply(as.data.frame(data_matrix != data), all, na.rm = TRUE)
+
   # Send warning for any coercions
   if(any(coercions) & isTRUE(verbose)){
     
@@ -836,47 +1018,27 @@ usable_data <- function(data, verbose)
 
 #' @noRd
 # Obtain {igraph} and matrix networks ----
-# Updated 29.06.2023
+# Updated 06.07.2023
 obtain_networks <- function(network, signed)
 {
   
-  # Determine class of network
+  # Get network matrix first
   if(is(network, "igraph")){
-    
-    # Convert to network matrix
     network_matrix <- igraph2matrix(network)
-    
-    # Check for absolute
-    if(isFALSE(signed)){
-      network_matrix <- abs(network_matrix)
-    }
-    
-    # Convert to {igraph} network (ensures absolute even if {igraph})
-    igraph_network <- convert2igraph(network_matrix)
-    
-    
-  }else{
-    
-    # Ensure network is matrix
-    network <- as.matrix(network)
-    
-    # Check for signed
-    if(isFALSE(signed)){
-      network <- abs(network)
-    }
-    
-    # Store network as network matrix
-    network_matrix <- network
-    
-    # Convert to {igraph} network
-    igraph_network <- convert2igraph(network)
-    
+  }else{ # If not {igraph}, then ensure matrix
+    network_matrix <- as.matrix(network)
   }
   
+  # Then, check for sign
+  if(isFALSE(signed)){
+    network_matrix <- abs(network_matrix)
+  }
+
   # Return networks
   return(
     list(
-      igraph_network = igraph_network,
+      # (Re-)convert to {igraph} network
+      igraph_network = convert2igraph(network_matrix),
       network_matrix = network_matrix
     )
   )
@@ -886,7 +1048,7 @@ obtain_networks <- function(network, signed)
 #' @noRd
 # Obtain data, sample size, correlation matrix ----
 # Generic function to get the usual needed inputs
-# Updated 23.06.2023
+# Updated 01.07.2023
 obtain_sample_correlations <- function(data, n, corr, na.data, verbose, ...)
 {
   
@@ -929,45 +1091,34 @@ obtain_sample_correlations <- function(data, n, corr, na.data, verbose, ...)
     
   }
   
-  # Set up results
-  results <- list(
-    data = data,
-    n = n,
-    correlation_matrix = correlation_matrix
+  # Return results
+  return(
+    list(
+      data = data, n = n,
+      correlation_matrix = correlation_matrix
+    )
   )
   
-  # Return results
-  return(results)
-  
 }
 
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-# FUNCTIONS & ARGUMENTS FUNCTIONS ----
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%
+# QUIET CALLS & LOADS ----
+#%%%%%%%%%%%%%%%%%%%%%%%%%
 
-#' @noRd
-# Strip classes and attributes from {EGAnet}
-# Updated 29.06.2023
-remove_attributes <- function(object)
-{
-  
-  # First, unclass the object
-  object <- unclass(object)
-  
-  # Then, remove the "methods" attribute
-  if("methods" %in% names(attributes(object))){
-    attr(object, "methods") <- NULL
-  }
-  
-  # Return object
-  return(object)
-  
-}
+# Lots of R packages and functions print
+# messages that add to the noise of {EGAnet}
+# outputs; these functions make other
+# packages' messages go away
+#
+# NOTE: In some cases, some package messages
+# are important and should not be ignored
+# (don't use these functions in those cases)
 
 #' @noRd
 # General function to silently obtain output ----
-# Updated 11.05.2023
-silent_call <- function(...){
+# Updated 01.07.2023
+silent_call <- function(...)
+{
   
   # Make call
   sink <- capture.output(
@@ -985,47 +1136,77 @@ silent_call <- function(...){
 
 #' @noRd
 # General function to silently load package ----
-# Updated 10.06.2023
-silent_load <- function(...){
+# Updated 01.07.2023
+silent_load <- function(...)
+{
+  return(suppressPackageStartupMessages(...))
+}
+
+#' @noRd
+# Specific function to silently plot ----
+# Updated 06.07.2023
+silent_plot <- function(...)
+{
+  return(silent_call(silent_load(plot(...))))
+}
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# FUNCTIONS & ARGUMENTS FUNCTIONS ----
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+#' @noRd
+# Strip classes and attributes from {EGAnet}
+# Updated 01.07.2023
+remove_attributes <- function(object)
+{
   
-  # Return result
-  return(
-    suppressPackageStartupMessages(...)
-  )
+  # First, remove the "methods" attribute
+  if("methods" %in% names(attributes(object))){
+    attr(object, "methods") <- NULL
+  }
+  
+  # Return object
+  return(unclass(object))
   
 }
 
 #' @noRd
 # Set default argument (cleaner missing function) ----
-# Updated 30.06.2023
-set_default <- function(argument, default, FUN)
+# Updated 05.07.2023
+set_default <- function(argument, default, FUN, several.ok = FALSE)
 {
 
-  # Check for function first and foremost
+  # Get argument name
+  argument_name <- as.character(substitute(argument))
+  
+  # Check for type error
+  typeof_error(argument, c(typeof(default), "closure"))
+  
+  # Return argument if it's a function
   if(is.function(argument)){
     return(argument)
   }
   
-  # Check for NULL
+  # Return default if NULL
   if(is.null(argument)){
     return(default)
   }
   
-  # Check for value error
-  value_error(argument, base::mode(default))
+  # Get number of input arguments
+  argument_length <- length(argument)
   
-  # Check for length
-  if(length(argument) != 1){
+  # Return default if length > 1 and several are not OK
+  if(argument_length > 1 & isFALSE(several.ok)){
     return(default)
   }
   
-  # Check for function
-  if(!is.function(FUN)){
-    choices <- FUN # assume choices were input to function 
-  }else{
+  # Get choices for the function
+  if(!is.function(FUN)){ # choices are provided in 'FUN'
+    choices <- FUN
+  }else{ # get formal arguments from the function itself
     
     # Get formal argument choices from default call
-    choices <- formals(FUN)[[substitute(argument)]]
+    choices <- formals(FUN)[[argument_name]]
     
     # Check if choices is a call
     if(is.call(choices)){
@@ -1040,23 +1221,38 @@ set_default <- function(argument, default, FUN)
     
   }
   
-  # Force lowercase argument
-  if(is.character(argument)){
-    argument <- tolower(argument)
-  }
+  # Make argument lowercase (if necessary)
+  argument <- tolower(argument)
+  
+  # Get arguments not in choices
+  not_in_choices <- !argument %in% choices
+  
+  # Get number not in choices
+  number_not <- sum(not_in_choices)
   
   # Send error for bad argument
-  if(!argument %in% choices){
+  if(number_not > 0){
+    
+    # Only one not in choices
+    if(number_not == 1){
+      argument_text <- paste0(" = \"", argument[not_in_choices], "\"")
+    }else{ # Multiple not in choices
+      argument_text <- paste0(
+        " = c(",
+        paste0("\"", argument[not_in_choices], "\"", collapse = ", "),
+        ")"
+      )
+    }
+    
+    # Throw error
     stop(
       paste0(
-        "Invalid argument: ", substitute(argument),
-        " = \"", argument, "\"",
+        paste0("Invalid argument: ", argument_name, argument_text),
         "\n\nPlease choose from: ", 
-        paste0(
-          "\"", choices, "\"", collapse = ", "
-        )
-      )
+        paste0("\"", choices, "\"", collapse = ", ")
+      ), call. = FALSE
     )
+    
   }
   
   # Return argument
@@ -1083,29 +1279,18 @@ overwrite_arguments <- function(main, ARGS)
 
 #' @noRd
 # Function to obtain arguments ----
-# Updated 25.06.2023
+# Updated 06.07.2023
 obtain_arguments <- function(FUN, FUN.args)
 {
-  
-  # Obtain formal arguments
-  FUN.formals <- formals(FUN)
-  
+
   # Overwrite arguments
-  FUN.formals <- overwrite_arguments(FUN.formals, FUN.args)
+  FUN.formals <- overwrite_arguments(formals(FUN), FUN.args)
   
   # Remove ellipses
-  if("..." %in% names(FUN.formals)){
-    FUN.formals[which(names(FUN.formals) == "...")] <- NULL
-  }
+  FUN.formals <- FUN.formals[names(FUN.formals) != "..."]
   
   # Remove call arguments (assume they are supplied elsewhere)
-  call_argument <- lnapply(FUN.formals, function(x){is(x, "call")})
-  
-  # Keep non-calls
-  FUN.formals <- FUN.formals[!call_argument]
-  
-  # Return arguments
-  return(FUN.formals)
+  return(FUN.formals[!lvapply(FUN.formals, is, "call")])
   
 }
 
@@ -1246,7 +1431,7 @@ estimator_arguments <- function(lavaan_ARGS, ellipse)
 #' @noRd
 # Defaults for GGally plotting ----
 # For plots and methods
-# Updated 24.06.2023
+# Updated 06.07.2023
 GGally_args <- function(ellipse)
 {
   
@@ -1274,9 +1459,7 @@ GGally_args <- function(ellipse)
   default_args <- overwrite_arguments(default_args, ellipse)
   
   # Remove the ellipse
-  if("..." %in% names(default_args)){
-    default_args <- default_args[names(default_args) != "..."]
-  }
+  default_args <- default_args[names(default_args) != "..."]
   
   # Various possible names for things
   ## Layout
@@ -1342,7 +1525,7 @@ GGally_args <- function(ellipse)
 #' @noRd
 # Error Checking for GGally plotting ----
 # For plots and methods
-# Updated 15.06.2023
+# Updated 05.07.2023
 GGally_errors <- function(
     plot_ARGS, dimensions,
     communities, non_zero_edges
@@ -1359,60 +1542,60 @@ GGally_errors <- function(
   ### Node arguments
   
   # Node Label Alpha
-  value_error(plot_ARGS$label.alpha, "numeric")
+  typeof_error(plot_ARGS$label.alpha, "numeric")
   length_error(plot_ARGS$label.alpha, c(1, nodes))
   
   # Node Label Color
-  value_error(plot_ARGS$label.color, "character")
+  typeof_error(plot_ARGS$label.color, "character")
   length_error(plot_ARGS$label.color, c(1, nodes))
   
   # Node Label Size
-  value_error(plot_ARGS$label.size, "numeric")
+  typeof_error(plot_ARGS$label.size, "numeric")
   length_error(plot_ARGS$label.size, c(1, nodes))
   
   # Node Label
-  value_error(plot_ARGS$node.label, "character")
+  typeof_error(plot_ARGS$node.label, "character")
   length_error(plot_ARGS$node.label, c(1, nodes))
   
   # Node Alpha
-  value_error(plot_ARGS$node.alpha, "numeric")
+  typeof_error(plot_ARGS$node.alpha, "numeric")
   length_error(plot_ARGS$node.shape, c(1, communities, nodes))
   
   # Node Color
-  value_error(plot_ARGS$node.color, "character")
+  typeof_error(plot_ARGS$node.color, "character")
   length_error(plot_ARGS$node.color, c(1, communities, nodes))
   
   # Node Shape
-  value_error(plot_ARGS$node.shape, "numeric")
+  typeof_error(plot_ARGS$node.shape, "numeric")
   length_error(plot_ARGS$node.shape, c(1, communities, nodes))
   
   # Node Size
-  value_error(plot_ARGS$node.size, "numeric")
+  typeof_error(plot_ARGS$node.size, "numeric")
   length_error(plot_ARGS$node.size, c(1, communities, nodes))
   
   ### Edge arguments
   
   # Edge Alpha
-  value_error(plot_ARGS$edge.alpha, "numeric")
+  typeof_error(plot_ARGS$edge.alpha, "numeric")
   length_error(plot_ARGS$edge.alpha, c(1, edges))
   
   # Edge Color (allow two for positive and negative)
-  value_error(plot_ARGS$edge.color, "character")
+  typeof_error(plot_ARGS$edge.color, "character")
   length_error(plot_ARGS$edge.color, c(1, 2, edges))
   
   # Edge Size
-  value_error(plot_ARGS$edge.size, "numeric")
+  typeof_error(plot_ARGS$edge.size, "numeric")
   length_error(plot_ARGS$edge.size, c(1, edges))
   
   # Edge line type (allow two for positive and negative)
-  value_error(plot_ARGS$edge.lty, "character")
+  typeof_error(plot_ARGS$edge.lty, "character")
   length_error(plot_ARGS$edge.lty, c(1, 2, edges))
   
 }
 
 #' @noRd
 # Re-scale edges ----
-# Updated 29.06.2023
+# Updated 01.07.2023
 rescale_edges <- function(network, edge_size)
 {
   
@@ -1423,59 +1606,52 @@ rescale_edges <- function(network, edge_size)
   # Set edge scaling (default `edge.size = 8`)
   edge_scaling <- scale_sequence * edge_size
   
-  ## Remove names
-  edge_scaling <- unname(edge_scaling[as.character(abs(network))])
-  
   # Return scaled edges
-  return(edge_scaling)
+  return(unname(edge_scaling[as.character(abs(network))]))
   
 }
 
 #' @noRd
 # Readable names ----
-# Updated 25.06.2023
+# Updated 01.07.2023
 readable_names <- function(node_names)
 {
   
-  # Split names
-  name_split <- strsplit(node_names, split = " ")
-
   # Add return to names
-  better_names <- cnapply(
-    name_split, function(x){
-      
-      # Obtain words in name
-      words <- length(x)
-      
-      # Determine if split is necessary
-      if(words > 1){
+  return(
+    cvapply(
+      strsplit(node_names, split = " "), function(x){
         
-        # Determine number of lines
-        add_line <- round(words / 2)
+        # Obtain words in name
+        words <- length(x)
         
-        # Paste back together name
-        name <- paste(
-          paste(x[seq_len(add_line)], collapse = " "),
-          paste(x[(add_line + 1):words], collapse = " "),
-          sep = "\n"
-        )
+        # Determine if split is necessary
+        if(words > 1){
+          
+          # Determine number of lines
+          add_line <- round(words / 2)
+          
+          # Paste back together name
+          name <- paste(
+            paste(x[seq_len(add_line)], collapse = " "),
+            paste(x[(add_line + 1):words], collapse = " "),
+            sep = "\n"
+          )
+          
+          # Return name
+          return(name)
+          
+        }else{return(x)}
         
-        # Return name
-        return(name)
-        
-      }else{return(x)}
-      
-    }
+      }
+    )
   )
-  
-  # Return names
-  return(better_names)
   
 }
 
 #' @noRd
 # Get network layout ----
-# Updated 27.06.2023
+# Updated 03.07.2023
 get_layout <- function(
     network, dimensions,
     non_zero_index, plot_ARGS, ellipse
@@ -1495,11 +1671,10 @@ get_layout <- function(
     # Set up edge list
     edge_list <- which(non_zero_index, arr.ind = TRUE)
     edge_list <- edge_list[edge_list[,"row"] < edge_list[,"col"],]
-    edge_list <- edge_list[order(edge_list[,"row"]),]
     
     # Set layout (spring)
     network_layout <- qgraph::qgraph.layout.fruchtermanreingold(
-      edgelist = edge_list,
+      edgelist = edge_list[order(edge_list[,"row"]),],
       weights = (weights_lower / max(weights_lower))^2,
       vcount = dimensions[2]
     )
@@ -1799,13 +1974,12 @@ basic_plot_setup <- function(network, wc = NULL, ...)
   if("arguments" %in% names(ellipse) & isTRUE(ellipse$arguments)){
     
     # Set up return list
-    results <- list(
-      network_plot = second_layer,
-      ARGS = plot_ARGS
+    return(
+      list(
+        network_plot = second_layer,
+        ARGS = plot_ARGS
+      )
     )
-    
-    # Return results
-    return(results)
     
   }else{
     
@@ -1818,7 +1992,7 @@ basic_plot_setup <- function(network, wc = NULL, ...)
 
 #' @noRd
 # Basic set up for single plot ----
-# Updated 20.06.2023
+# Updated 01.07.2023
 single_plot <- function(network, wc = NULL, ...)
 {
   
@@ -1831,11 +2005,15 @@ single_plot <- function(network, wc = NULL, ...)
   
   # Reorder network and communities
   new_order <- order(wc)
-  network <- network[new_order, new_order]
-  wc <- wc[new_order]
   
   # Send on and return from `basic_plot_setup`
-  return(basic_plot_setup(network, wc, ...))
+  return(
+    basic_plot_setup(
+      network[new_order, new_order], 
+      wc[new_order], 
+      ...
+    )
+  )
   
 }
 
@@ -1897,36 +2075,29 @@ dimension_comparison <- function(original, comparison){
     
   }
   
-  
 }
 
 #' @noRd
 # Basic set up for comparing plots ----
-# Updated 25.06.2023
+# Updated 03.07.2023
 compare_plots <- function(comparison_network, comparison_wc, plot_ARGS)
 {
   
-  # Get dimension names for comparison network
-  comparison_names <- dimnames(comparison_network)
-  
-  # Comparison network
-  comparison_network <- ega_first_level$network
-  comparison_wc <- gsub("_.*", "", comparison_names[[2]])
-  plot_ARGS <- first_level_plot$ARGS
-  
-  # Obtain the original network
-  original_network <- plot_ARGS$net
-  
+  # original network = plot_ARGS$net
+
   # Make sure dimensions are the same before proceeding
-  dimension_comparison(original_network, comparison_network)
+  dimension_comparison(plot_ARGS$net, comparison_network)
+  
+  # Get comparison network names
+  comparison_names <- dimnames(comparison_network)[[2]]
   
   # Ensure row names to ensure proper ordering
-  dimnames(comparison_network)[[1]] <- comparison_names[[2]]
+  dimnames(comparison_network)[[1]] <- comparison_names
   
   # Put network into same order as original network
   matching_order <- match(
-    dimnames(original_network)[[2]], # target to match
-    comparison_names[[2]] # adjust to target
+    dimnames(plot_ARGS$net)[[2]], # target to match
+    comparison_names # adjust to target
   )
   
   # Set comparison network in proper order
@@ -1956,78 +2127,70 @@ compare_plots <- function(comparison_network, comparison_wc, plot_ARGS)
 #%%%%%%%%%%%%%%%%%%%%%
 
 #' @noRd
-# Error for correlation matrix input ----
-# Updated 24.06.2023
-symmetric_matrix_error <- function(data, n){
-  
-  # Get dimensions
-  dimensions <- dim(data)
-  
-  # Check for whether rows equal columns
-  if(dimensions[1] == dimensions[2]){
-    
-    # Check for whether matrix is symmetric
-    if(is_symmetric(data)){ # `is_symmetric` is in "helpers-general.R"
-      
-      # Check for whether "n" argument was provided
-      if(is.null(n)){
-        stop("A correlation matrix was detected as input into the 'data' argument but no 'n' was provided. Sample size must be provided for a correlation matrix.")
-      }
-      
-    }
-    
-  }
-  
-}
-
-#' @noRd
 # Error for object type ----
-# Updated 25.06.2023
+# Updated 05.07.2023
 object_error <- function(input, expected_type){
   
-  # Check for possible object types
-  possible_types <- cnapply(
-    X = expected_type,
-    FUN = is,
-    object = input
-  )
+  # Get input type
+  input_type <- get_object_type(input)
   
   # Check for object types
-  if(all(!possible_types)){
+  if(!input_type %in% expected_type){
     stop(
       paste(
         "Input into '", deparse(substitute(input)),
         "' argument is not ", paste("'", expected_type, "'", sep = "", collapse = ", "),
-        ". Input is ", paste("'", class(input), "'", sep = "", collapse = ", "),
+        ". Input is ", paste("'", input_type, "'", sep = "", collapse = ", "),
         sep = ""
-      )
+      ), call. = FALSE
     )
   }
   
 }
 
 #' @noRd
-# Error for input value ----
-# Updated 08.08.2022
-value_error <- function(input, expected_value){
+# Error for `typeof` ----
+# Updated 05.07.2023
+typeof_error <- function(input, expected_value){
+  
+  # Switch out "closure" with "function"
+  if("closure" %in% expected_value){
+    expected_value[expected_value == "closure"] <- "function"
+  }
+  
+  # Get type of input
+  typeof_input <- typeof(input)
+  
+  # Convert "integer" and "double" to "numeric"
+  ## Input
+  typeof_input <- ifelse(
+    typeof_input %in% c("integer", "double"),
+    "numeric", typeof_input
+  )
+  ## Expected value
+  expected_value <- ifelse(
+    expected_value %in% c("integer", "double"),
+    "numeric", expected_value
+  )
   
   # Check for value
-  if(!is(input, expected_value)){
+  if(!typeof_input %in% expected_value){
     stop(
       paste(
         "Input into '", deparse(substitute(input)),
-        "' argument is not '", expected_type,
-        "'. Input is ", paste("'", class(input), "'", sep = "", collapse = ", "),
+        "' argument is not ", 
+        paste0("'", expected_value, "'", collapse = ", "),
+        ". Input is ", paste("'", typeof_input, "'", sep = "", collapse = ", "),
         sep = ""
-      )
+      ), call. = FALSE
     )
   }
   
 }
 
 #' @noRd
-# Error for input length ----
-# Updated 08.08.2022
+# Error for `length` ----
+# Updated 05.07.2023
 length_error <- function(input, expected_lengths){
   
   # Check for length of input in expected length
@@ -2038,15 +2201,15 @@ length_error <- function(input, expected_lengths){
         "' (", length(input),") does not match expected length(s). Length must be: ",
         paste("'", expected_lengths, "'", collapse = " or ", sep = ""),
         sep = ""
-      )
+      ), call. = FALSE
     )
   }
   
 }
 
 #' @noRd
-# Error for input range ----
-# Updated 05.09.2022
+# Error for `range` ----
+# Updated 05.07.2023
 range_error <- function(input, expected_ranges){
   
   # Obtain expected maximum and minimum values
@@ -2065,7 +2228,7 @@ range_error <- function(input, expected_ranges){
         "' (", actual_maximum,") does not match expected range(s). Range must be between: ",
         paste0("'", expected_ranges, "'", collapse = " and "),
         sep = ""
-      )
+      ), call. = FALSE
     )
   }
   
@@ -2077,7 +2240,7 @@ range_error <- function(input, expected_ranges){
         "' (", actual_minimum,") does not match expected range(s). Range must be between: ",
         paste0("'", expected_ranges, "'", collapse = " and "),
         sep = ""
-      )
+      ), call. = FALSE
     )
   }
   
@@ -2406,7 +2569,7 @@ totitle <- function(string)
   words <- unlist(strsplit(string, split = " "))
   
   # Set first letters to uppercase
-  titleCased <- cnapply(words, function(x){
+  titleCased <- cvapply(words, function(x){
     
     # Stitch together letters
     return(
@@ -2425,22 +2588,10 @@ totitle <- function(string)
 
 #' @noRd
 # Convert version to number ----
-# Updated 02.02.2023
+# Updated 01.07.2023
 version_conversion <- function(version)
 {
-  
-  # Convert to character
-  version <- as.character(version)
-  
-  # Remove periods
-  version <- gsub("\\.", "", version)
-  
-  # Convert to numeric
-  version <- as.numeric(version)
-  
-  # Return version
-  return(version)
-  
+  return(as.numeric(gsub("\\.", "", as.character(version))))
 }
 
 #' @noRd

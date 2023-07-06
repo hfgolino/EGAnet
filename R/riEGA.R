@@ -177,12 +177,12 @@
 #' 
 # Random-Intercept EGA
 # Changed from 'residualEGA.R' on 17.04.2022
-# Updated 28.06.2023
+# Updated 05.07.2023
 riEGA <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
-    model = c("BGGM", "glasso", "TMFG"),  
+    model = c("glasso", "TMFG"),  
     algorithm = c("leiden", "louvain", "walktrap"),
     uni.method = c("expand", "LE", "louvain"),
     estimator = c("auto", "WLSMV", "MLR"),
@@ -199,6 +199,11 @@ riEGA <- function(
   algorithm <- set_default(algorithm, "walktrap", community.detection)
   uni.method <- set_default(uni.method, "louvain", community.unidimensional)
   estimator <- set_default(estimator, "auto", riEGA)
+  
+  # Catch BGGM
+  if(model == "bggm"){
+    stop("The BGGM is not supported in `riEGA` because it requires the original data. The residual correlation matrix from the random-intercept model is used as input into `EGA`.")
+  }
   
   # Make sure data is usable and a matrix
   data <- usable_data(data, verbose)
@@ -355,10 +360,10 @@ riEGA <- function(
   if(isTRUE(plot.EGA)){
     
     # Set up plot
-    results$Plot.EGA <- plot(results)
+    results$Plot.EGA <- plot(results, ...)
     
     # Actually send the plot
-    plot(results$Plot.EGA)
+    silent_plot(results$Plot.EGA)
     
   }
   
@@ -397,23 +402,10 @@ print.riEGA <- function(x, ...)
 
 #' @exportS3Method 
 # S3 Summary Method ----
-# Updated 28.06.2023
+# Updated 05.07.2023
 summary.riEGA <- function(object, ...)
 {
-  
-  # Print regular EGA result
-  print(object$EGA)
-  
-  # Add random-intercept model
-  ri_attributes <- attr(object$RI, "methods")
-  
-  # Add break space
-  cat("\n\n----\n\n")
-  
-  # Print estimator
-  cat("Random-Intercept Estimator: ", ri_attributes$estimator, "\n")
-  cat("Random-Intercept Loading: ", format_decimal(ri_attributes$loading, 3))
-  
+  print(object, ...) # same as print
 }
 
 #' @exportS3Method 

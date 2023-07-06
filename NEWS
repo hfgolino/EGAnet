@@ -6,6 +6,8 @@ o INTERNALS: function-specific internal functions and S3methods are now located 
 
 o SWAP: internal script usage of "utils-EGAnet.R" depracated for "helper.R" functions that are used across the package (no visible changes for the user)
 
+o ADD: stricter `*apply` functions that are roughly equivalent to `*apply` but have stricter inputs/outputs (uses `vapply` as foundation; often, slightly faster)
+
 o ADD: `community.consensus` to apply the Consensus Clustering approach introduced by Lancichnetti & Fortunato (2012). Currently only available for the Louvain implementations
 
 o ADD: `community.detection` to apply community detection algorithms as a standalone function
@@ -32,6 +34,8 @@ o ADD: implemented reproducible resampling bootstrapping and random sampling in 
 
 o ADD: reproducible bootstrapping with seed setting that does *not* affect R's seed and RNG (user's seed will not be affected and will not affected bootstrapping seeds)
 
+o ADD: `community.homogenize` as a core function rather than internal (previously `homogenize.membership`); about 2.5x faster than the original version
+
 o UPDATE: `EBICglasso.qgraph` and `TMFG` were optimized; `TMFG` is now 2x faster
 
 o UPDATE: `TMFG` can now directly estimate a GGM with the argument 'partial = TRUE'; implements the Local-Global Inversion method from Barfuss et al. (2016)
@@ -52,13 +56,17 @@ o UPDATE: `Embed` and `glla` made to be more efficient and includes an internal 
 
 o UPDATE: `riEGA` updated to be compatiable with all lower-level updates (slightly faster)
 
-o UPDATE: `wto` updated to be fully vectorized (about 10x faster)
+o UPDATE: `wto` updated to be fully vectorized (about 12x faster)
 
 o UPDATE: `totalCor` and `totalCorMat` updated to be fully vectorized (about 10x faster)
 
 o UPDATE: implemented internal `fast.data.frame` for more efficient data frame initialization when all values in data frame are the same
 
 o UPDATE: `bootEGA` allows flexibility to add any arguments from any `EGA*` functions; much faster due to optimizations across all functions ("resampling" is nearly as fast as "parametric")
+
+o UPDATE: support for `EGA.fit` and `riEGA` added to `bootEGA` (support for `hierEGA` will be coming soon...)
+
+o UPDATE: `itemStability` has been updated and runs about 2.5x faster due to `community.homogenize`; S3methods were added; greater flexibility available in plotting but not much support (e.g., error checking) yet
 
 o DEPENDENCY: removed {network} because it is no longer used for plotting; switched {sna} to IMPORTS rather than SUGGESTS
 

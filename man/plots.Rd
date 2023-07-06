@@ -2,16 +2,12 @@
 % Please edit documentation in R/plots.R
 \name{plots}
 \alias{plots}
-\alias{plot.bootEGA}
+\alias{plot.dynEGA.Groups}
 \alias{plot.CFA}
 \alias{plot.dynEGA}
-\alias{plot.dynEGA.Groups}
 \alias{plot.dynEGA.Individuals}
 \title{S3Methods for Plotting}
 \usage{
-\method{plot}{bootEGA}(x, title = "",
-plot.args = list(), produce = TRUE, ...)
-
 \method{plot}{CFA}(x, layout = "spring", vsize = 6, ...)
 
 \method{plot}{dynEGA}(x, title = "",
@@ -25,6 +21,12 @@ plot.args = list(), produce = TRUE, ...)
 }
 \arguments{
 \item{x}{Object from \code{EGAnet} package}
+
+\item{ncol}{Numeric.
+Number of columns}
+
+\item{nrow}{Numeric.
+Number of rows}
 
 \item{title}{Character.
 Title of the plot.
@@ -80,12 +82,6 @@ Defaults to \code{6}}
 \item{layout}{Character.
 Layout of plot (see \code{\link[semPlot]{semPaths}}).
 Defaults to "spring"}
-
-\item{ncol}{Numeric.
-Number of columns}
-
-\item{nrow}{Numeric.
-Number of rows}
 
 \item{id}{Numeric.
 An integer or character indicating the ID of the individual to plot}

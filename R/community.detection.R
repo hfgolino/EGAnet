@@ -337,8 +337,8 @@ community.detection <- function(
 
 #' @exportS3Method 
 # S3 Print Method ----
-# Updated 25.06.2023
-print.EGA.community <- function(x, ...)
+# Updated 05.07.2023
+print.EGA.community <- function(x, boot = FALSE, ...)
 {
   
   # Determine whether result is a list
@@ -392,95 +392,36 @@ print.EGA.community <- function(x, ...)
     # Set up methods
     cat(paste0("Algorithm: "), algorithm_name)
     
-    # Add breakspace
-    cat("\n\n")
-    
+    # Check for bootEGA
+    if(isFALSE(boot)){
+      cat("\n\n") # add breakspace
+    }
+
   }
   
-  # Print communities
-  cat(paste0("Number of communities: "), communities)
-  cat("\n\n") # Add breakspace
-  
-  # Remove class and attribute for clean print
-  membership <- remove_attributes(membership)
-  
-  # Print membership
-  print(membership)
+  # Check for bootEGA
+  if(isFALSE(boot)){
+   
+    # Print communities
+    cat(paste0("Number of communities: "), communities)
+    cat("\n\n") # Add breakspace
+    
+    # Remove class and attribute for clean print
+    membership <- remove_attributes(membership)
+    
+    # Print membership
+    print(membership)
+     
+  }
   
 }
 
 #' @exportS3Method 
 # S3 Summary Method ----
-# Updated 25.06.2023
-summary.EGA.community <- function(object, ...)
+# Updated 05.07.2023
+summary.EGA.community <- function(object, boot = FALSE, ...)
 {
-  
-  # Determine whether result is a list
-  if(is.list(object)){
-    membership <- object$membership
-  }else{
-    membership <- object
-  }
-  
-  # Determine number of communities
-  communities <- unique_length(membership)
-  
-  # Obtain algorithm name (if available)
-  algorithm <- attr(membership, "methods")$algorithm
-  
-  # Determine whether algorithm was a function
-  if(!is.function(algorithm)){
-    
-    # Check for signed
-    algorithm_name <- ifelse(
-      attr(membership, "methods")$signed,
-      paste("Signed", algorithm),
-      algorithm
-    )
-    
-    # Check for Leiden
-    if(algorithm == "Leiden"){
-      
-      # Obtain objective function
-      objective_function <- attr(membership, "methods")$objective_function
-      
-      # Set up algorithm name
-      objective_name <- ifelse(
-        is.null(objective_function),
-        "CPM", objective_function
-      )
-      
-      # Expand "CPM"
-      objective_name <- ifelse(
-        objective_name == "CPM",
-        "Constant Potts Model", "Modularity"
-      )
-      
-      # Finalize algorithm name
-      algorithm_name <- paste(
-        algorithm, "with", objective_name
-      )
-      
-    }
-    
-    # Set up methods
-    cat(paste0("Algorithm: "), algorithm_name)
-    
-    # Add breakspace
-    cat("\n\n")
-    
-  }
-  
-  # Print communities
-  cat(paste0("Number of communities: "), communities)
-  cat("\n\n") # Add breakspace
-  
-  # Remove class and attribute for clean print
-  membership <- remove_attributes(membership)
-  
-  # Print membership
-  print(membership)
-  
+  print(object, boot = boot, ...) # same as print
 }
 
 #' @noRd

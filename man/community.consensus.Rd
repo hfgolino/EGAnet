@@ -13,7 +13,6 @@ community.consensus(
   consensus.iter = 1000,
   correlation.matrix = NULL,
   membership.only = TRUE,
-  verbose = FALSE,
   ...
 )
 }
@@ -85,10 +84,6 @@ Whether the memberships only should be output.
 Defaults to \code{TRUE}.
 Set to \code{FALSE} to obtain all output for the
 community detection algorithm}
-
-\item{verbose}{Boolean.
-Whether progress should be printed.
-Defaults to \code{TRUE}}
 
 \item{...}{Not actually used but makes it either for general functionality
 in the package}

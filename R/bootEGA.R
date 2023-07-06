@@ -349,7 +349,7 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 30.06.2023
+# Updated 06.07.2023
 bootEGA <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -399,8 +399,14 @@ bootEGA <- function(
     EGA.type,
     "ega" = EGA,
     "ega.fit" = EGA.fit,
-    "hierega" = hierEGA,
-    "riega" = riEGA
+    "riega" = riEGA,
+    "hierega" = stop("'EGA.type = \"hierEGA\"' is not yet supported. Support coming soon...", call. = FALSE),
+    stop(
+      paste0(
+        "EGA.type = \"", EGA.type, "\" is not supported. Please use one of the default options: ", 
+        paste0("\"", as.character(formals(bootEGA)$EGA.type)[-1], "\"", collapse = ", ")
+      )
+    )
   )
   
   # Estimate empirical EGA
@@ -414,10 +420,13 @@ bootEGA <- function(
   # then an error will be thrown within `EGA.estimate`,
   # so no need to check for "n"
   
+  # Obtain EGA output
+  empirical_EGA_output <- get_EGA_object(empirical_EGA)
+  
   # Generate data
   bootstrap_data <- reproducible_bootstrap(
-    data = data, samples = iter, cases = empirical_EGA$n,
-    mu = rep(0, dimensions[2]), Sigma = empirical_EGA$correlation,
+    data = data, samples = iter, cases = empirical_EGA_output$n,
+    mu = rep(0, dimensions[2]), Sigma = empirical_EGA_output$correlation,
     seed = seed, type = type
   )
   
@@ -435,50 +444,45 @@ bootEGA <- function(
     ...
   )
   
-  # NEED HANDLING FOR DIFFERENT TYPES ONLY EGA RIGHT NOW
-  # EGA.fit = empirical_EGA$EGA
-  # riEGA = empirical_EGA$EGA
-  # hierEGA = will have "higher" and "lower"
+  # Obtain bootstrap EGA output
+  bootstrap_EGA_output <- lapply(boots, get_EGA_object)
   
   # Get results
-  results <- prepare_bootEGA_results(boots)
+  results <- prepare_bootEGA_results(bootstrap_EGA_output, iter)
   
-  # Organize results
-  result <- list(
-    iter = iter, type = type, boot.ndim = results$boot_n.dim,
-    boot.wc = results$boot_memberships, bootGraphs = results$boot_networks,
-    summary.table = results$summary_table, frequency = results$frequencies,
-    EGA = empirical_EGA, EGA.type = EGA.type
+  # Add additional results
+  results[c("type", "EGA", "EGA.type")] <- list(
+    type, empirical_EGA, EGA.type
   )
   
   # No attributes needed (all information is contained in output)
   
   # Set class
-  class(result) <- "bootEGA"
+  class(results) <- "bootEGA"
   
   # Check for typical structure results
   if(isTRUE(typicalStructure)){
     
     # Obtain results
-    result$typicalGraph <- estimate_typicalStructure(
-      data, results, empirical_EGA, verbose, ...
+    results$typicalGraph <- estimate_typicalStructure(
+      data, results, verbose, ...
     )
     
     # Check for plot
     if(isTRUE(plot.typicalStructure)){
       
       # Get plot
-      result$plot.typical.ega <- plot(result)
+      results$plot.typical.ega <- plot(results, ...)
       
       # Actually send plot
-      plot(result$plot.typical.ega)
+      silent_plot(results$plot.typical.ega)
       
     }
     
   }
   
   # Return result
-  return(result)
+  return(results)
   
 }
 
@@ -487,28 +491,510 @@ bootEGA <- function(
 # data = wmt2[,7:24]; n = NULL; corr = "auto"; na.data = "pairwise"
 # model = "glasso"; algorithm = "walktrap"; uni.method = "louvain"
 # iter = 100; type = "parametric"; ncores = 8; EGA.type = "EGA"
-# typicalStructure = TRUE; plot.typicalStructure = TRUE;
+# typicalStructure = TRUE; plot.typicalStructure = FALSE;
 # verbose = TRUE; seed = 1234
 # r_sample_seeds <- EGAnet:::r_sample_seeds
 # r_sample_with_replacement <- EGAnet:::r_sample_with_replacement
 # r_sample_without_replacemetn <- EGAnet:::r_sample_without_replacement
 # Need above functions for testing!
 
+#' @exportS3Method 
+# S3 Print Method ----
+# Updated 06.07.2023
+print.bootEGA <- function(x, ...)
+{
+  
+  # Ensure proper EGA object
+  ega_object <- get_EGA_object(x)
+  
+  # Print network information
+  send_network_methods(ega_object$network, boot = TRUE)
+  
+  # Add line break
+  cat("\n")
+  
+  # Print community detection
+  print(ega_object$wc, boot = TRUE)
+  
+  # Add line break
+  cat("\n")
+  
+  # Do not print unidimensional for `EGA.fit`
+  if(x$EGA.type != "ega.fit"){
+    
+    # Get unidimensional attributes
+    unidimensional_attributes <- attr(ega_object, "unidimensional")
+    
+    # Obtain unidimensional method
+    unidimensional_method <- switch(
+      unidimensional_attributes$uni.method,
+      "expand" = "Expand",
+      "le" = "Leading Eigenvector",
+      "louvain" = "Louvain"
+    )
+    
+    # Set up unidimensional print
+    if(unidimensional_method == "Louvain"){
+      
+      # Set up consensus attributes
+      consensus_attributes <- unidimensional_attributes$consensus
+      
+      # Obtain consensus name
+      consensus_name <- switch(
+        consensus_attributes$consensus.method,
+        "highest_modularity" = "Highest Modularity",
+        "iterative" = "Iterative",
+        "most_common" = "Most Common",
+        "lowest_tefi" = "Lowest TEFI"
+      )
+      
+      # Update unidimensional method text
+      unidimensional_method <- paste0(
+        unidimensional_method, " (", consensus_name,
+        " for ", consensus_attributes$consensus.iter,
+        " iterations)"
+      )
+      
+    }
+    
+    # Print unidimensional
+    cat("Unidimensional Method: ", unidimensional_method)
+    
+  }
+  
+  # Add break space
+  cat("\n\n----\n\n")
+  
+  # Set proper EGA type name
+  ega_type <- switch(
+    x$EGA.type,
+    "ega" = "EGA",
+    "ega.fit" = "EGA.fit",
+    "hierega" = "hierEGA",
+    "riega" = "riEGA"
+  )
+  
+  # Print EGA type
+  cat(paste0("EGA Type: ", ega_type), "\n")
+  
+  # Set up methods
+  cat(
+    paste0(
+      "Bootstrap Samples: ",
+      x$iter, " (", totitle(x$type), ")\n"
+    )
+  )
+  
+  # Print frequency table
+  frequency_df <- as.data.frame(
+    do.call(rbind, lapply(x$frequency, as.character))
+  );
+  # Adjust dimension names (`dimnames` doesn't work)
+  colnames(frequency_df) <- NULL
+  row.names(frequency_df) <- c("", "Frequency: ")
+  # Finally, print
+  print(frequency_df)
+  
+  # Print summary table
+  cat(
+    paste0(
+      "\nMedian dimensions: ", x$summary.table$median.dim,
+      " [", round(x$summary.table$Lower.CI, 2), ", ",
+      round(x$summary.table$Upper.CI, 2), "] 95% CI"
+    )
+  )
+
+}
+
+#' @exportS3Method 
+# S3 Summary Method ----
+# Updated 05.07.2023
+summary.bootEGA <- function(object, ...)
+{
+  print(object, ...) # same as print
+}
+
+#' @exportS3Method 
+# S3 Plot Method ----
+# Updated 05.07.2023
+plot.bootEGA <- function(x, ...)
+{
+  
+  # Return plot
+  single_plot(
+    network = x$typicalGraph$graph,
+    wc = x$typicalGraph$wc,
+    ...
+  )
+  
+}
+
+#' @noRd
+# Prepare `bootEGA` results ----
+# Self-contained to work on `EGA` bootstraps
+# Updated 06.07.2023
+prepare_bootEGA_results <- function(boot_object, iter)
+{
+  
+  # Get networks
+  boot_networks <- lapply(boot_object, function(x){x$network})
+  
+  # Get memberships
+  boot_memberships <- t(nvapply(boot_object, function(x){x$wc}, LENGTH = dim(boot_networks[[1]])[2]))
+  
+  # Get bootstrap dimensions
+  boot_n.dim <- nvapply(boot_object, function(x){x$n.dim})
+  
+  # Set up data frame
+  boot_dimensions <- fast.data.frame(
+    c(seq_len(iter), boot_n.dim),
+    nrow = iter, ncol = 2,
+    colnames = c("Boot.Number", "N.Dim")
+  )
+  
+  # Pre-compute standard deviation and confidence interval
+  median_boot <- median(boot_n.dim, na.rm = TRUE)
+  se_boot <- sd(boot_n.dim, na.rm = TRUE)
+  ci_boot <- se_boot * qt(0.95 / 2 + 0.5, iter - 1)
+  
+  # Set up descriptive statistics
+  summary_table <- fast.data.frame(
+    c(
+      iter, median_boot, se_boot, ci_boot, 
+      median_boot - ci_boot, median_boot + ci_boot,
+      quantile(boot_n.dim, c(0.025, 0.975), na.rm = TRUE)
+    ), ncol = 8,
+    colnames = c(
+      "n.Boots", "median.dim", "SE.dim", "CI.dim",
+      "Lower.CI", "Upper.CI", "Lower.Quantile", "Upper.Quantile"
+    ), row.names = ""
+  )
+  
+  # Compute frequency
+  frequencies <- count_table(boot_n.dim, proportion = TRUE)
+  dimnames(frequencies)[[2]] <- c("# of Factors", "Frequency")
+  
+  # Return results (keep legacy names)
+  return(
+    list(
+      iter = iter,
+      bootGraphs = boot_networks,
+      boot.wc = boot_memberships,
+      boot.ndim = boot_n.dim,
+      summary.table = summary_table,
+      frequency = frequencies
+    )
+  )
+  
+}
+
+#' @noRd
+# Typical Walktrap `EGA.fit` ----
+# Updated 06.07.2023
+typical_walktrap_fit <- function(network, algorithm, dimensions, ellipse)
+{
+  
+  # Check for parameter search space
+  if(!"steps" %in% names(ellipse)){
+    steps <- 3:8 # default
+  }else{
+    
+    # Set steps
+    steps <- ellipse$steps
+    
+    # Remove objective function from ellipse to
+    # make other arguments available in `do.call`
+    ellipse <- ellipse[names(ellipse) != "steps"]
+    
+  }
+  
+  # Get the length of the steps
+  step_length <- length(steps)
+  
+  # Obtain search matrix
+  search_matrix <- t(nvapply(
+    steps, function(step){
+      do.call(
+        what = community.detection,
+        args = c(
+          list( # Necessary call
+            network = network,
+            algorithm = algorithm,
+            steps = step
+          ),
+          ellipse # pass on ellipse
+        )
+      )
+    }, LENGTH = dimensions[2]
+  ))
+  
+  # Format names
+  dimnames(search_matrix) <- list(
+    steps, dimnames(network)[[2]]
+  )
+  
+  # Return results
+  return(
+    list(
+      search_matrix = search_matrix,
+      parameters = steps
+    )
+  )
+  
+}
+
+#' @noRd
+# Typical Leiden `EGA.fit` ----
+# Updated 06.07.2023
+typical_leiden_fit <- function(network, algorithm, dimensions, ellipse)
+{
+  
+  # Check for objective function
+  if(!"objective_function" %in% names(ellipse)){
+    objective_function <- "CPM"
+    # default for {igraph} and `community.detection`
+  }else{
+    
+    # Set objective function
+    objective_function <- ellipse$objective_function
+    
+    # Remove objective function from ellipse to
+    # make other arguments available in `do.call`
+    ellipse <- ellipse[names(ellipse) != "objective_function"]
+    
+  }
+  
+  # Check for parameter search space
+  if(!"resolution_parameter" %in% names(ellipse)){
+    
+    # Switch based on objective function
+    if(objective_function == "CPM"){
+      resolution_parameter <- seq.int(0, max(abs(network)), 0.01) # default 
+    }else if(objective_function == "modularity"){
+      resolution_parameter <- seq.int(0, 2, 0.05) # default
+    }
+    
+  }else{
+    
+    # Set resolution parameter
+    resolution_parameter <- ellipse$resolution_parameter
+    
+    # Remove resolution parameter from ellipse to
+    # make other arguments available in `do.call`
+    ellipse <- ellipse[names(ellipse) != "resolution_parameter"]
+    
+  }
+  
+  # Get the length of the resolution parameter
+  resolution_parameter_length <- length(resolution_parameter)
+  
+  # Obtain search matrix
+  search_matrix <- t(nvapply(
+    resolution_parameter, function(resolution_parameter){
+      do.call(
+        what = community.detection,
+        args = c(
+          list( # Necessary call
+            network = network,
+            algorithm = algorithm,
+            resolution_parameter = resolution_parameter,
+            objective_function = objective_function
+          ),
+          ellipse # pass on ellipse
+        )
+      )
+    }, LENGTH = dimensions[2]
+  ))
+  
+  # Format names
+  dimnames(search_matrix) <- list(
+    resolution_parameter, dimnames(network)[[2]]
+  )
+  
+  # Return results
+  return(
+    list(
+      search_matrix = search_matrix,
+      parameters = resolution_parameter
+    )
+  )
+  
+}
+
+#' @noRd
+# Typical Louvain `EGA.fit` ----
+# Updated 06.07.2023
+typical_louvain_fit <- function(network, algorithm, dimensions, ellipse)
+{
+  
+  # Check for parameter search space
+  if(!"resolution_parameter" %in% names(ellipse)){
+    resolution_parameter <- seq.int(0, 2, 0.05) # default
+  }else{
+    
+    # Set resolution parameter
+    resolution_parameter <- ellipse$resolution_parameter
+    
+    # Remove resolution parameter from ellipse to
+    # make other arguments available in `do.call`
+    ellipse <- ellipse[names(ellipse) != "resolution_parameter"]
+    
+  }
+  
+  # Get the length of the resolution parameter
+  resolution_parameter_length <- length(resolution_parameter)
+  
+  # Obtain search matrix
+  search_matrix <- t(nvapply(
+    resolution_parameter, function(resolution_parameter){
+      do.call(
+        what = community.consensus,
+        args = c(
+          list( # Necessary call
+            network = network,
+            resolution = resolution_parameter
+          ),
+          ellipse # pass on ellipse
+        )
+      )
+    }, LENGTH = dimensions[2]
+  ))
+  
+  # Format names
+  dimnames(search_matrix) <- list(
+    resolution_parameter, dimnames(network)[[2]]
+  )
+  
+  # Return results
+  return(
+    list(
+      search_matrix = search_matrix,
+      parameters = resolution_parameter
+    )
+  )
+  
+}
+
+#' @noRd
+# Typical `EGA.fit` memberships ----
+# Needs to be handled consistently
+# Updated 06.07.2023
+estimate_typical_EGA.fit <- function(results, ellipse)
+{
+  
+  # Attributes from empirical EGA
+  model_attributes <- attr(results$EGA$EGA$network, "methods")
+  algorithm_attributes <- attr(results$EGA$EGA$wc, "methods")
+  
+  # Set model, algorithm and unidimensional method
+  model <- tolower(model_attributes$model)
+  algorithm <- tolower(algorithm_attributes$algorithm)
+  
+  # Get network
+  network <- switch(
+    model,
+    "bggm" = symmetric_matrix_lapply(results$bootGraphs, median),
+    "glasso" = symmetric_matrix_lapply(results$bootGraphs, median),
+    "tmfg" = symmetric_matrix_lapply(results$bootGraphs, mean)
+  )
+  
+  # Make sure proper names are there
+  dimnames(network) <- dimnames(results$EGA$EGA$network)
+  
+  # Get network dimensions
+  dimensions <- dim(network)
+  
+  # Set objective function to NULL
+  objective_function <- NULL
+  
+  # Branch for fit and obtain search matrix
+  fit_result <- switch(
+    algorithm,
+    "walktrap" = typical_walktrap_fit(network, algorithm, dimensions, ellipse),
+    "leiden" = typical_leiden_fit(network, algorithm, dimensions, ellipse),
+    "louvain" = typical_louvain_fit(network, algorithm, dimensions, ellipse)
+  )
+  
+  # Obtain only unique solutions
+  search_unique <- unique_solutions(fit_result$search_matrix)
+  
+  # Determine best fitting solution
+  fit_values <- apply(
+    search_unique, 1, function(membership){
+      tefi(results$EGA$EGA$correlation, membership)
+    }$VN.Entropy.Fit
+  )
+  
+  # Determine best fit index
+  best_index <- which.min(fit_values)
+  
+  # Obtain best solution
+  best_solution <- search_unique[best_index,]
+  
+  # Obtain signed argument
+  if(!"signed" %in% names(ellipse)){
+    signed <- FALSE # default
+  }else{signed <- ellipse$signed}
+  
+  # Add methods to membership attributes
+  attr(best_solution, "methods") <- list(
+    algorithm = obtain_algorithm_name(algorithm),
+    # `obtain_algorithm_name` is with `community.detection`
+    signed = signed, objective_function = objective_function
+  )
+  
+  # Set class (proper `EGA.estimate` printing)
+  class(best_solution) <- "EGA.community"
+  
+  # Set up dimension variables data frame
+  ## Mainly for legacy, redundant with named `wc`
+  dim.variables <- fast.data.frame(
+    c(dimnames(results$EGA$EGA$network)[[2]], best_solution),
+    nrow = dimensions[2], ncol = 2,
+    colnames = c("items", "dimension")
+  )
+  
+  # Dimension variables data frame by dimension
+  dim.variables <- dim.variables[
+    order(dim.variables$dimension),
+  ]
+  
+  # Return results
+  return(
+    list(
+      graph = network,
+      typical.dim.variables = dim.variables,
+      wc = best_solution, n.dim = unique_length(best_solution),
+      EntropyFit = fit_values,
+      Lowest.EntropyFit = fit_values[best_index],
+      parameter.space = fit_result$parameters
+    )
+  )
+  
+}
+
 #' @noRd
 # Typical network and memberships ----
-# Updated 30.06.2023
+# Updated 06.07.2023
 estimate_typicalStructure <- function(
-    data, results, empirical_EGA, verbose, ...
+    data, results, verbose, ...
 )
 {
 
   # Get ellipse arguments
   ellipse <- list(...)
   
+  # If results are from `EGA.fit`, handle separately
+  if(results$EGA.type == "ega.fit"){
+    return(estimate_typical_EGA.fit(results, ellipse))
+  }else{ # Get proper EGA object
+    ega_object <- get_EGA_object(results)
+  }
+  
   # Attributes from empirical EGA
-  model_attributes <- attr(empirical_EGA$network, "methods")
-  algorithm_attributes <- attr(empirical_EGA$wc, "methods")
-  unidimensional_attributes <- attr(empirical_EGA, "unidimensional")
+  model_attributes <- attr(ega_object$network, "methods")
+  algorithm_attributes <- attr(ega_object$wc, "methods")
+  unidimensional_attributes <- attr(ega_object, "unidimensional")
   
   # Set model, algorithm and unidimensional method
   model <- tolower(model_attributes$model)
@@ -518,10 +1004,13 @@ estimate_typicalStructure <- function(
   # Get network
   network <- switch(
     model,
-    "bggm" = apply(simplify2array(results$boot_networks),1:2, median),
-    "glasso" = apply(simplify2array(results$boot_networks),1:2, median),
-    "tmfg" = apply(simplify2array(results$boot_networks),1:2, mean)
+    "bggm" = symmetric_matrix_lapply(results$bootGraphs, median),
+    "glasso" = symmetric_matrix_lapply(results$bootGraphs, median),
+    "tmfg" = symmetric_matrix_lapply(results$bootGraphs, mean)
   )
+  
+  # Make sure proper names are there
+  dimnames(network) <- dimnames(ega_object$network)
   
   # Check for function or non-Louvain method
   if(
@@ -544,17 +1033,15 @@ estimate_typicalStructure <- function(
   }else{ # for Louvain, use consensus clustering
     
     # Check for consensus method
-    ellipse$consensus.method <- ifelse(
-      "consensus.method" %in% names(ellipse),
-      ellipse$consensus.method, "most_common" # default
-    )
+    if(!"consensus.method" %in% names(ellipse)){
+      ellipse$consensus.method <- "most_common" # default
+    }
     
     # Check for consensus iterations
-    ellipse$consensus.iter <- ifelse(
-      "consensus.iter" %in% names(ellipse),
-      ellipse$consensus.iter, 1000 # default
-    )
-    
+    if(!"consensus.iter" %in% names(ellipse)){
+      ellipse$consensus.iter <- 1000 # default
+    }
+
     # Apply consensus clustering
     wc <- do.call(
       what = community.consensus,
@@ -562,21 +1049,23 @@ estimate_typicalStructure <- function(
         list(
           network = network,
           signed = algorithm == "signed_louvain",
-          membership.only = TRUE,
-          verbose = FALSE
+          membership.only = TRUE
         ),
         ellipse # pass on ellipse
       )
     )
     
   }
-  
+
   # Obtain arguments for model
   model_ARGS <- switch(
     model,
     "bggm" = c(
       obtain_arguments(BGGM::estimate, model_attributes),
-      obtain_arguments(BGGM:::select.estimate, model_attributes)
+      overwrite_arguments(
+        # defaults for `BGGM:::select.estimate`
+        list(cred = 0.95, alternative = "two.sided"), model_attributes
+      )
     ),
     "glasso" = obtain_arguments(EBICglasso.qgraph, model_attributes),
     "tmfg" = obtain_arguments(TMFG, model_attributes)
@@ -588,7 +1077,7 @@ estimate_typicalStructure <- function(
   
   # Set up arguments for unidimensional
   unidimensional_ARGS <- list( # standard arguments
-    data = data, n = empirical_EGA$n, 
+    data = data, n = ega_object$n, 
     corr = model_attributes$corr, 
     na.data = model_attributes$na.data,
     model = model, uni.method = uni.method,
@@ -598,7 +1087,7 @@ estimate_typicalStructure <- function(
   # `data` at this point will be data or correlation matrix
   # For non-BGGM network estimation, OK to use correlation matrix
   if(model_attributes$model != "bggm"){
-    unidimensional_ARGS$data <- empirical_EGA$correlation
+    unidimensional_ARGS$data <- ega_object$correlation
   }
   
   # Additional arguments for model
@@ -615,14 +1104,11 @@ estimate_typicalStructure <- function(
     wc <- unidimensional_result
   }
   
-  # Obtain number of dimensions
-  n.dim <- unique_length(wc)
-  
   # Set up dimension variables data frame
   ## Mainly for legacy, redundant with named `wc`
   dim.variables <- fast.data.frame(
-    c(dimnames(empirical_EGA$network)[[2]], wc),
-    nrow = dim(empirical_EGA$network)[2], ncol = 2,
+    c(dimnames(ega_object$network)[[2]], wc),
+    nrow = dim(ega_object$network)[2], ncol = 2,
     colnames = c("items", "dimension")
   )
   
@@ -636,76 +1122,9 @@ estimate_typicalStructure <- function(
     list(
       graph = network,
       typical.dim.variables = dim.variables,
-      wc = wc, n.dim = n.dim
+      wc = wc, n.dim = unique_length(wc)
     )
   )
 
-}
-
-#' @noRd
-# Prepare `bootEGA` results ----
-# Self-contained to work on `EGA` bootstraps
-# Updated 29.06.2023
-prepare_bootEGA_results <- function(boot_object)
-{
-  
-  # Get number of iterations
-  iter <- length(boot_object)
-  
-  # Get network
-  boot_networks <- lapply(boot_object, function(x){
-    return(x$network)
-  })
-  
-  # Get memberships
-  boot_memberships <- t(nnapply(boot_object, function(x){
-    return(x$wc)
-  }, LENGTH = dim(boot_networks[[1]])[2]))
-  
-  # Get bootstrap dimensions
-  boot_n.dim <- nnapply(boot_object, function(x){x$n.dim})
-  
-  # Set up data frame
-  boot_dimensions <- fast.data.frame(
-    c(seq_len(iter), boot_n.dim),
-    nrow = iter, ncol = 2,
-    colnames = c("Boot.Number", "N.Dim")
-  )
-  
-  # Pre-compute standard deviation and confidence interval
-  median_boot <- median(boot_n.dim, na.rm = TRUE)
-  se_boot <- sd(boot_n.dim, na.rm = TRUE)
-  ci_boot <- se_boot * qt(0.95 / 2 + 0.5, iter - 1)
-  quantile_boot <- quantile(boot_n.dim, c(0.025, 0.975), na.rm = TRUE)
-  
-  # Set up descriptive statistics
-  summary_table <- fast.data.frame(
-    c(
-      iter, median_boot, se_boot, ci_boot, 
-      median_boot - ci_boot, median_boot + ci_boot,
-      quantile_boot
-    ), ncol = 8,
-    colnames = c(
-      "n.Boots", "median.dim", "SE.dim", "CI.dim",
-      "Lower.CI", "Upper.CI", "Lower.Quantile", "Upper.Quantile"
-    ), row.names = ""
-  )
-  
-  # Compute frequency
-  frequencies <- count_table(boot_n.dim, proportion = TRUE)
-  dimnames(frequencies)[[2]] <- c("# of Factors", "Frequency")
-  
-  # Return results
-  return(
-    list(
-      boot_networks = boot_networks,
-      boot_memberships = boot_memberships,
-      boot_n.dim = boot_n.dim,
-      summary_table = summary_table,
-      frequencies = frequencies
-    )
-  )
-  
-  
 }
 

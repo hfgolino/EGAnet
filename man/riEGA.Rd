@@ -9,7 +9,7 @@ riEGA(
   n = NULL,
   corr = c("auto", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
-  model = c("BGGM", "glasso", "TMFG"),
+  model = c("glasso", "TMFG"),
   algorithm = c("leiden", "louvain", "walktrap"),
   uni.method = c("expand", "LE", "louvain"),
   estimator = c("auto", "WLSMV", "MLR"),

@@ -34,27 +34,20 @@
 #'
 #' @export
 # Embed
-# Updated 28.06.2023
+# Updated 06.07.2023
 Embed <- function(x, E, tau) {
   
-  # Get time series length
-  series_length <- length(x)
-  
   # Pre-compute series length - E * tau
-  sl_E_tau <- series_length - E * tau
-  
-  # Number of embedding rows
-  embedding_rows <- sl_E_tau + tau
-  
+  sl_E_tau <- length(x) - E * tau
+
   # Sequence along time series
-  out <- nnapply(
-    seq_len(E), function(i){
-      x[(1 + (i - 1) * tau):(sl_E_tau + i * tau)]
-    }, LENGTH = embedding_rows
+  return(
+    nvapply(
+      seq_len(E), function(i){
+        x[(1 + (i - 1) * tau):(sl_E_tau + i * tau)]
+      }, LENGTH = sl_E_tau + tau
+    )
   )
-  
-  # Return embedding
-  return(out)
   
 }
 

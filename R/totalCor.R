@@ -32,7 +32,7 @@
 #' @export
 #'
 # Total Correlation
-# Updated 29.06.2023
+# Updated 06.07.2023
 totalCor <- function(data)
 {
   
@@ -43,13 +43,13 @@ totalCor <- function(data)
   dimensions <- dim(data)
   
   # Get number of bins
-  bins <- floor(sqrt(dimensions[1] / 5))
+  bins <- floor(sqrt(dimensions[1L] / 5))
   
   # Set bin length
-  bin_length <- bins + 1
+  bin_length <- bins + 1L
   
   # Get bin cuts
-  bin_cuts <- lapply(seq_len(dimensions[2]), function(variable){
+  bin_cuts <- lapply(seq_len(dimensions[2L]), function(variable){
     
     # Get range
     data_range <- range(data[,variable], na.rm = TRUE)
@@ -58,23 +58,18 @@ totalCor <- function(data)
     return(
       cut(
         data[,variable],
-        breaks = seq.int(data_range[1], data_range[2], length.out = bin_length),
+        breaks = seq.int(data_range[1L], data_range[2L], length.out = bin_length),
         include.lowest = TRUE
       )
     )
     
   })
   
-  # Get bin sums
-  bin_sums <- nnapply(bin_cuts, function(x){
-    table(x)
-  }, LENGTH = bins)
-  
-  # Get frequencies
-  bin_frequencies <- bin_sums / dimensions[1]
+  # Get bin frequencies
+  bin_frequencies <- nvapply(bin_cuts, table, LENGTH = bins) / dimensions[1]
   
   # Get entropies
-  H <- nnapply(seq_len(dimensions[2]), function(variable){
+  H <- nvapply(seq_len(dimensions[2L]), function(variable){
     
     # Get non-zero frequencies
     bin_non_zero <- bin_frequencies[bin_frequencies[,variable] > 0, variable]
@@ -86,14 +81,11 @@ totalCor <- function(data)
   
   # Get joint frequency table
   joint_frequency <- count_table(
-    do.call(cbind, bin_cuts)
-  )$Value / dimensions[1]
+    do.call(cbind, bin_cuts), proportion = TRUE
+  )$Value
   
-  # Get non-zero frequencies
-  joint_non_zero <- joint_frequency[joint_frequency > 0]
-  
-  # Get joint entropy
-  H_joint <- entropy(joint_non_zero)
+  # Get joint entropy of positive non-zero values
+  H_joint <- entropy(joint_frequency[joint_frequency > 0])
   
   # Return list
   return(

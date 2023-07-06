@@ -119,7 +119,7 @@
 #'
 #' @export
 # TMFG Filtering Method----
-# Updated 29.06.2023
+# Updated 02.07.2023
 TMFG <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -239,11 +239,6 @@ TMFG <- function(
     remaining <- remaining[-existing_vertex]
     inserted[i] <- add_vertex
     
-    # Stop when length remaining does not equal what it should be
-    if(length(remaining) != nodes - i){
-      stop("check here")
-    }
-    
     # Add edges to network
     network[add_vertex, triangles[max_gain,]] <-
       correlation_matrix[add_vertex, triangles[max_gain,]]
@@ -350,14 +345,13 @@ TMFG <- function(
   }else{
     
     # Set up return list
-    results <- list(
-      network = network,
-      separators = separators,
-      cliques = cliques
+    return(
+      list(
+        network = network,
+        separators = separators,
+        cliques = cliques
+      )
     )
-    
-    # Return results
-    return(results)
     
   }
   

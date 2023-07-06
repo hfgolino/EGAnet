@@ -34,7 +34,7 @@
 #' @export
 #' 
 # Weighted Topological Overlap ----
-# Updated 29.06.2023
+# Updated 02.07.2023
 wto <- function (network, signed = TRUE, diagonal.zero = TRUE)
 {
   
@@ -55,10 +55,6 @@ wto <- function (network, signed = TRUE, diagonal.zero = TRUE)
     network <- absolute_network
   }
   
-  # Obtain numerator
-  numerator <- (network %*% t(network)) + # sum of connections
-    network # connections between edge node
-  
   # Obtain node strengths
   node_strengths <- strength(absolute_network)
   
@@ -70,23 +66,18 @@ wto <- function (network, signed = TRUE, diagonal.zero = TRUE)
     ), ncol = 2
   )
   
-  # Obtain minimums for each pair
-  minimum_vector <- ifelse(
-    minimum_pairs[,1] < minimum_pairs[,2],
-    minimum_pairs[,1], minimum_pairs[,2]
-  )
-  
   # Create minimum matrix
   minimum_matrix <- matrix(
-    minimum_vector, 
+    ifelse(
+      minimum_pairs[,1] < minimum_pairs[,2],
+      minimum_pairs[,1], minimum_pairs[,2]
+    ), 
     nrow = dimensions[2], ncol = dimensions[2]
   )
   
-  # Obtain denominator
-  denominator <- minimum_matrix + 1 - absolute_network
-  
   # Divide numerator by denominator
-  omega <- numerator / denominator
+  omega <- (crossprod(network) + network) / 
+           (minimum_matrix + 1 - absolute_network)
   
   # Set diagonal to zero
   if(isTRUE(diagonal.zero)){

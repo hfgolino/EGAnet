@@ -52,19 +52,14 @@
 #'
 #' @export
 # Generalized local linear approximation
-# Updated 28.06.2023
+# Updated 03.07.2023
 glla <- function(x, n.embed, tau, delta, order){
-  
-  # Get time-delay embedding
-  embedding <- Embed(x = x, E = n.embed, tau = tau)
   
   # Estimate derivatives
   ## Formally, `embedding %*% L %*% (solve(t(L) %*% L))`
   ## See helper function `glla_setup` below
-  derivative_estimates <- embedding %*% glla_setup(
-    n.embed = n.embed, tau = tau,
-    delta = delta, order = order
-  )
+  derivative_estimates <- Embed(x = x, E = n.embed, tau = tau) %*% 
+                          glla_setup(n.embed, tau, delta, order)
   
   # Add names
   if(order != 0){
@@ -111,28 +106,25 @@ glla <- function(x, n.embed, tau, delta, order){
 # sample-wide dynamic EGA. By pre-computing the L matrix,
 # embeddings can be multiplied by the same L matrix without
 # the need to compute it for every single participant
-# Updated 28.06.2023
+# Updated 06.07.2023
 glla_setup <- function(n.embed, tau, delta, order)
 {
   
   # Set up weights
   embed_sequence <- seq_len(n.embed)
   
-  # Get mean of embedding sequence
-  mean_sequence <- mean(embed_sequence)
-  
-  # Derivative order
-  derivative_order <- 0:order
-  
   # Pre-compute tau * delta * embedding sequence - mean sequence
-  embedding_value <- tau * delta * embed_sequence - mean_sequence
+  embedding_value <- tau * delta * embed_sequence - mean(embed_sequence)
   
   # Get L matrix
-  L <- nnapply(derivative_order, function(derivative){
-    embedding_value^derivative / factorial(derivative)
+  L <- nvapply(0:order, function(derivative) {
+    embedding_value^derivative / gamma(derivative + 1)
+    # `gamma` is the .Primitive for `factorial`
+    # same as `factorial` under the hood
   }, LENGTH = n.embed)
   
   # Return L matrix
-  return(L %*% (solve(t(L) %*% L)))
+  # L %*% (solve(t(L) %*% L))
+  return(L %*% solve(crossprod(L)))
   
 }

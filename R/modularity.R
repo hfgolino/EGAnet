@@ -52,7 +52,7 @@
 #' @export
 #'
 # Modularity statistic
-# Updated 26.06.2023
+# Updated 01.07.2023
 modularity <- function(network, memberships, signed = FALSE)
 {
   
@@ -115,15 +115,13 @@ modularity <- function(network, memberships, signed = FALSE)
   }
   
   # Call from C
-  output <- .Call(
-    "r_signed_modularity",
-    network[!remove_nodes, !remove_nodes], 
-    as.integer(memberships[!remove_nodes]),
-    PACKAGE = "EGAnet"
+  return(
+    .Call(
+      "r_signed_modularity",
+      network[!remove_nodes, !remove_nodes], 
+      as.integer(memberships[!remove_nodes]),
+      PACKAGE = "EGAnet"
+    )
   )
-
-  # Return
-  return(output)
-  
   
 }

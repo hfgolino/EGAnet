@@ -41,7 +41,7 @@
 #' @export
 #'
 # Signed Louvain communities
-# Updated 25.06.2023
+# Updated 01.07.2023
 signed.louvain <- function(network)
 {
   
@@ -72,10 +72,7 @@ signed.louvain <- function(network)
   output$membership <- output$memberships[dimensions[1],]
   
   # Reorder output
-  output <- output[c("membership", "memberships", "modularity")]
-
-  # Return
-  return(output)
+  return(output[c("membership", "memberships", "modularity")])
   
   
 }

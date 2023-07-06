@@ -101,7 +101,7 @@
 #' @export
 #'
 # Automatic correlations ----
-# Updated 29.06.2023
+# Updated 03.07.2023
 auto.correlate <- function(
     data, # Matrix or data frame
     corr = c("kendall", "pearson", "spearman"), # allow changes to standard correlations
@@ -204,18 +204,15 @@ auto.correlate <- function(
         
         # Loop over categorical indices
         for(i in which(categorical_variables)){
-          
-          # Polyserial correlations based on {polycor}
-          mixed_correlations <- polyserial.vector(
-            categorical_variable = data[,i], # drops to vector
-            continuous_variables = continuous_data,
-            na.data = na.data
-          )
-          
+        
           # Fill matrix
           correlation_matrix[continuous_variables, i] <-
             correlation_matrix[i, continuous_variables] <-
-            mixed_correlations
+            polyserial.vector( # computes polyserial vector
+              categorical_variable = data[,i], # drops to vector
+              continuous_variables = continuous_data,
+              na.data = na.data
+            )
           
         }
         
@@ -317,7 +314,7 @@ auto.correlate <- function(
 #' Uses two-step approximation from {polycor}'s \code{polyserial}
 #' 
 #' @noRd
-# Updated 29.06.2023
+# Updated 03.07.2023
 polyserial.vector <- function(
     categorical_variable, continuous_variables,
     na.data = c("pairwise", "listwise")
@@ -343,47 +340,38 @@ polyserial.vector <- function(
     
   }
 
-  # Scale continuous data
-  scaled_continuous <- scale(continuous_variables)
-  
-  # Compute thresholds
-  thresholds <- obtain_thresholds(categorical_variable)
-  
   # Compute correlation
-  correlation <- sqrt((categorical_cases - 1) / categorical_cases) * 
-    sd(categorical_variable, na.rm = TRUE) * 
-    cor(categorical_variable, scaled_continuous, use = na.data) /
-    sum(dnorm(thresholds), na.rm = TRUE)
-  
-  # Return correlation
-  return(correlation)
+  return(
+    sqrt((categorical_cases - 1) / categorical_cases) * 
+      sd(categorical_variable, na.rm = TRUE) * 
+      # Correlations with scaled continuous variables
+      cor(categorical_variable, scale(continuous_variables), use = na.data) /
+      # Compute sum of thresholds
+      sum(dnorm(obtain_thresholds(categorical_variable)), na.rm = TRUE)
+  )
   
   
 }
 
 # Compute thresholds ----
 #' @noRd
-# Updated 18.06.2023
+# Updated 03.07.2023
 obtain_thresholds <- function(categorical_variable)
 {
   
-  # Obtain table
-  frequency <- table(categorical_variable)
-  
-  # Obtain cumulative sums
-  cumulative_sum <- cumsum(frequency)
+  # Obtain cumulative sums from frequency table
+  cumulative_sum <- cumsum(table(categorical_variable))
   
   # Obtain cumulative length
   cumsum_length <- length(cumulative_sum)
   
   # Obtain thresholds
-  thresholds <- qnorm(
-    cumulative_sum[-cumsum_length] / 
+  return(
+    qnorm(
+      cumulative_sum[-cumsum_length] / 
       cumulative_sum[cumsum_length]
+    )
   )
-  
-  # Return thresholds
-  return(thresholds)
   
 }
 

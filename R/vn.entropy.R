@@ -39,7 +39,7 @@
 #' @export
 # Entropy Fit Index ----
 # VN Entropy Function (for correlation matrices)
-# Updated 29.06.2023
+# Updated 06.07.2023
 vn.entropy <- function(data, structure)
 {
   
@@ -92,7 +92,7 @@ vn.entropy <- function(data, structure)
   })
   
   # Get Von Neumann's entropy by community
-  H_vn_wc <- nnapply(eigenvalues_wc, entropy)
+  H_vn_wc <- nvapply(eigenvalues_wc, entropy)
   
   # Get eigenvalue Kronecker product
   eigenvalue_kronecker <- Reduce("%x%", eigenvalues_wc)
@@ -107,20 +107,19 @@ vn.entropy <- function(data, structure)
   H_average <- mean_H_vn - H_vn_joint
   
   # Set up results
-  results <- fast.data.frame(
-    c(
-      H_average - ((H_vn - mean_H_vn) * sqrt(communities)),
-      mean_H_vn * communities - H_vn_joint,
-      # uses `mean_H_vn * communities` which is faster than `sum(H_vn_wc)`
-      H_average
-    ), ncol = 3,
-    colnames = c(
-      "VN.Entropy.Fit", "Total.Correlation", "Average.Entropy"
+  return(
+    fast.data.frame(
+      c(
+        H_average - ((H_vn - mean_H_vn) * sqrt(communities)),
+        mean_H_vn * communities - H_vn_joint,
+        # uses `mean_H_vn * communities` which is faster than `sum(H_vn_wc)`
+        H_average
+      ), ncol = 3,
+      colnames = c(
+        "VN.Entropy.Fit", "Total.Correlation", "Average.Entropy"
+      )
     )
   )
-  
-  # Return results
-  return(results)
   
 }
 

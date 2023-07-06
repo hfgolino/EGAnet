@@ -73,10 +73,6 @@
 #' Set to \code{FALSE} to obtain all output for the
 #' community detection algorithm
 #' 
-#' @param verbose Boolean.
-#' Whether progress should be printed.
-#' Defaults to \code{TRUE}
-#' 
 #' @param ...
 #' Not actually used but makes it either for general functionality
 #' in the package
@@ -177,7 +173,7 @@
 #' @export
 #'
 # Compute consensus clustering for EGA
-# Updated 29.06.2023
+# Updated 01.07.2023
 community.consensus <- function(
     network, signed = FALSE, 
     order = c("lower", "higher"), resolution = 1,
@@ -187,7 +183,6 @@ community.consensus <- function(
     ), consensus.iter = 1000, 
     correlation.matrix = NULL,
     membership.only = TRUE,
-    verbose = FALSE,
     ...
 )
 {
@@ -292,8 +287,7 @@ community.consensus <- function(
       order = order,
       consensus.iter = consensus.iter,
       correlation.matrix = correlation.matrix,
-      dimensions = dimensions,
-      verbose = verbose
+      dimensions = dimensions
     )
     
     # Get result
@@ -355,7 +349,7 @@ community.consensus <- function(
 # network = ega.wmt$network; signed = FALSE;
 # order = "higher"; resolution = 1;
 # consensus.method = "most_common";
-# consensus.iter = 1000; verbose = FALSE;
+# consensus.iter = 1000;
 # correlation.matrix = ega.wmt$correlation;
 
 #' @exportS3Method 
@@ -466,83 +460,48 @@ summary.EGA.consensus <- function(object, ...)
 
 #' @noRd
 # Standard application method ----
-# Updated 16.06.2023
+# Updated 06.07.2023
 consensus_application <- function(
-    FUN, FUN.ARGS, 
-    consensus.iter, verbose
+    FUN, FUN.ARGS, consensus.iter
 )
 {
-  
-  # Obtain number of digits formatting
-  # (rather than calling `consensus.iter` times with progress)
-  format_digits <- digits(consensus.iter) - 1
-  
+
   # Apply algorithm
-  communities <- lapply(
-    seq_len(consensus.iter), function(i){
-      
-      # Perform call
-      output <- do.call(what = FUN, args = FUN.ARGS)
-      
-      # Check for progress
-      if(isTRUE(verbose)){
-        
-        # Obtain text for progress
-        progress_text <- paste0(
-          "\r Consensus iteration ", formatC(
-            i, digits = format_digits,
-            format = "d", flag = "0"
-          ), " of ", consensus.iter,
-          " complete."
-        )
-        
-        # Print progress in message text
-        cat(colortext(text = progress_text, defaults = "message"))
-        
-        # Close cat
-        cat("\r")
-        
-      }
-      
-      # Return output
-      return(output)
-      
-    }
+  return(
+    lapply(
+      seq_len(consensus.iter), do.call,
+      what = FUN, args = FUN.ARGS
+    )
   )
-  
-  # Return communities
-  return(communities)
   
 }
 
 #' @noRd
 # Highest modularity method ----
-# Updated 26.06.2023
+# Updated 01.07.2023
 highest_modularity <- function(
     FUN, FUN.ARGS, 
     order, consensus.iter, 
     correlation.matrix, # not used
-    dimensions,
-    verbose
+    dimensions
 )
 {
   
   # Apply algorithm
   communities <- consensus_application(
     FUN = FUN, FUN.ARGS = FUN.ARGS,
-    consensus.iter = consensus.iter,
-    verbose = verbose
+    consensus.iter = consensus.iter
   )
   
   # Obtain modularities
   if(order == "lower"){
-    modularities <- nnapply(
+    modularities <- nvapply(
       communities, function(x){
         x$modularity[1]
       }
     )
   }else if(order == "higher"){
-    modularities <- nnapply(
+    modularities <- nvapply(
       communities, function(x){
         x$modularity[length(x$modularity)]
       }
@@ -551,49 +510,46 @@ highest_modularity <- function(
   
   # Obtain memberships
   if(order == "lower"){
-    memberships <- t(nnapply(
+    memberships <- t(nvapply(
       communities, function(x){
         x$memberships[1,]
       }, LENGTH = dimensions[2]
     ))
   }else if(order == "higher"){
-    memberships <- t(nnapply(
+    memberships <- t(nvapply(
       communities, function(x){
         x$memberships[dim(x$memberships)[1],]
       }, LENGTH = dimensions[2]
     ))
   }
   
-  # Obtain solution
-  selected_solution <- memberships[which.max(modularities),]
-  
   # Set up return list
-  results <- list(
-    selected_solution = selected_solution,
-    memberships = memberships,
-    modularities = modularities
+  return(
+    list(
+      selected_solution = memberships[which.max(modularities),],
+      memberships = memberships,
+      modularities = modularities
+    )
   )
-  
-  # Return results
-  return(results)
   
 }
 
 #' @noRd
 # Function to check for binary matrix ----
-# Updated 27.05.2023
-binary_check <- function(b_matrix){
-  all(b_matrix == 0 | b_matrix == 1)
+# Updated 01.07.2023
+binary_check <- function(b_matrix)
+{
+  return(all(b_matrix == 0 | b_matrix == 1))
 }
 
 #' @noRd
 # Iterative method ----
-# Updated 29.06.2023
+# Updated 06.07.2023
 iterative <- function(
     FUN, FUN.ARGS, 
     order, consensus.iter,
     correlation.matrix, # not used
-    dimensions, verbose
+    dimensions
 )
 {
   
@@ -606,19 +562,18 @@ iterative <- function(
     # Apply algorithm
     communities <- consensus_application(
       FUN = FUN, FUN.ARGS = FUN.ARGS,
-      consensus.iter = consensus.iter,
-      verbose = verbose
+      consensus.iter = consensus.iter
     )
     
     # Obtain memberships
     if(order == "lower"){
-      memberships <- t(nnapply(
+      memberships <- t(nvapply(
         communities, function(x){
           x$memberships[1,]
         }, LENGTH = dimensions[2]
       ))
     }else if(order == "higher"){
-      memberships <- t(nnapply(
+      memberships <- t(nvapply(
         communities, function(x){
           x$memberships[dim(x$memberships)[1],]
         }, LENGTH = dimensions[2]
@@ -634,14 +589,11 @@ iterative <- function(
     for(i in seq_len(dimensions[2])){
       for(j in i:dimensions[2]){
         
-        # Get value
-        value <- sum(
+        # Fill consensus matrix
+        consensus_matrix[i,j] <- consensus_matrix[j,i] <- sum(
           memberships[,i] == memberships[,j],
           na.rm = TRUE
         )
-        
-        # Fill consensus matrix
-        consensus_matrix[i,j] <- consensus_matrix[j,i] <- value
         
       }
     }
@@ -667,47 +619,42 @@ iterative <- function(
     
   }
   
-  # Obtain solution
-  selected_solution <- memberships[1,]
-  
   # Set up return list
-  results <- list(
-    selected_solution = selected_solution,
-    iterations = iterations
+  return(
+    list(
+      selected_solution = memberships[1,],
+      iterations = iterations
+    )
   )
-  
-  # Return results
-  return(results)
   
 }
 
 #' @noRd
 # Lowest TEFI method ----
-# Updated 27.06.2023
+# Updated 06.07.2023
 lowest_tefi <- function(
     FUN, FUN.ARGS, 
     order, consensus.iter, 
     correlation.matrix, # used in function
-    dimensions, verbose
+    dimensions
 )
 {
   
   # Apply algorithm
   communities <- consensus_application(
     FUN = FUN, FUN.ARGS = FUN.ARGS,
-    consensus.iter = consensus.iter,
-    verbose = verbose
+    consensus.iter = consensus.iter
   )
   
   # Obtain memberships
   if(order == "lower"){
-    memberships <- t(nnapply(
+    memberships <- t(nvapply(
       communities, function(x){
         x$memberships[1,]
       }, LENGTH = dimensions[2]
     ))
   }else if(order == "higher"){
-    memberships <- t(nnapply(
+    memberships <- t(nvapply(
       communities, function(x){
         x$memberships[dim(x$memberships)[1],]
       }, LENGTH = dimensions[2]
@@ -715,64 +662,59 @@ lowest_tefi <- function(
   }
   
   # Prepare a data frame
-  proportion_table <- unique(memberships, MARGIN = 1)
+  unique_table <- unique(memberships, MARGIN = 1)
   
   # Get dimensions
-  dimensions <- dim(proportion_table)
+  dimensions <- dim(unique_table)
   
   # Apply TEFI over non-duplicated memberships
-  tefis <- nnapply(
+  tefis <- nvapply(
     seq_len(dimensions[1]), function(i){
       tefi(
         correlation.matrix, 
-        proportion_table[i,,drop = TRUE]
+        unique_table[i,,drop = TRUE]
       )$VN.Entropy.Fit
     }
   )
   
-  # Obtain solution
-  selected_solution <- proportion_table[which.min(tefis),]
-  
   # Set up return list
-  results <- list(
-    selected_solution = selected_solution,
-    memberships = memberships,
-    tefis = tefis,
-    proportion_table = proportion_table
+  return(
+    list(
+      selected_solution = unique_table[which.min(tefis),],
+      memberships = memberships,
+      tefis = tefis,
+      proportion_table = unique_table
+    )
   )
-  
-  # Return results
-  return(results)
   
 }
 
 #' @noRd
 # Most Common method ----
-# Updated 29.06.2023
+# Updated 06.07.2023
 most_common <- function(
     FUN, FUN.ARGS, 
     order, consensus.iter,
     correlation.matrix, # not used
-    dimensions, verbose
+    dimensions
 )
 {
   
   # Apply algorithm
   communities <- consensus_application(
     FUN = FUN, FUN.ARGS = FUN.ARGS,
-    consensus.iter = consensus.iter,
-    verbose = verbose
+    consensus.iter = consensus.iter
   )
   
   # Obtain memberships
   if(order == "lower"){
-    memberships <- t(nnapply(
+    memberships <- t(nvapply(
       communities, function(x){
         x$memberships[1,]
       }, LENGTH = dimensions[2]
     ))
   }else if(order == "higher"){
-    memberships <- t(nnapply(
+    memberships <- t(nvapply(
       communities, function(x){
         x$memberships[dim(x$memberships)[1],]
       }, LENGTH = dimensions[2]
@@ -782,20 +724,16 @@ most_common <- function(
   # Prepare a data frame
   proportion_table <- count_table(memberships, proportion = TRUE)
 
-  # Obtain solution
-  selected_solution <- proportion_table[
-    which.max(proportion_table$Value), seq_len(dimensions[2])
-  ]
-  
   # Set up return list
-  results <- list(
-    selected_solution = selected_solution,
-    memberships = memberships,
-    proportion_table = proportion_table
+  return(
+    list(
+      selected_solution = proportion_table[
+        which.max(proportion_table$Value), seq_len(dimensions[2])
+      ],
+      memberships = memberships,
+      proportion_table = proportion_table
+    )
   )
-  
-  # Return results
-  return(results)
   
 }
 

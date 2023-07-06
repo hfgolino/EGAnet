@@ -38,13 +38,13 @@
 #'
 #' @export
 # Total Entropy Fit Index Function (for correlation matrices)
-# Updated 29.06.2023
+# Updated 06.07.2023
 tefi <- function(data, structure)
 {
   
   # Generic function to get necessary inputs
   output <- obtain_sample_correlations(
-    data = data, n = 1, # set to 1 to avoid error
+    data = data, n = 1L, # set to 1 to avoid error
     corr = "auto", na.data = "pairwise", 
     verbose = FALSE
   )
@@ -67,17 +67,14 @@ tefi <- function(data, structure)
     
   }
 
-  # Obtain density matrix
-  density_matrix <- data / dim(data)[2]
-  
-  # Obtain Von Neumann's entropy
-  H_vn <- matrix_entropy(density_matrix)
+  # Obtain Von Neumann's entropy of density matrix
+  H_vn <- matrix_entropy(data / dim(data)[2L])
   
   # Obtain communities
   communities <- unique_length(structure)
   
   # Get Von Neumman entropy by community
-  H_vn_wc <- nnapply(seq_len(communities), function(community){
+  H_vn_wc <- nvapply(seq_len(communities), function(community){
     
     # Get indices
     indices <- structure == community
@@ -86,7 +83,7 @@ tefi <- function(data, structure)
     community_matrix <- data[indices, indices]
 
     # Return Von Neumann entropy
-    return(matrix_entropy(community_matrix / dim(community_matrix)[2]))
+    return(matrix_entropy(community_matrix / dim(community_matrix)[2L]))
     
   })
   
@@ -101,19 +98,18 @@ tefi <- function(data, structure)
   mean_H_vn <- mean_H_vn_wc - H_vn
 
   # Set up results
-  results <- fast.data.frame(
-    data = c(
-      mean_H_vn + (H_diff * sqrt(communities)),
-      sum_H_vn_wc - H_vn,
-      mean_H_vn
-    ), ncol = 3,
-    colnames = c(
-      "VN.Entropy.Fit", "Total.Correlation", "Average.Entropy"
+  return(
+    fast.data.frame(
+      data = c(
+        mean_H_vn + (H_diff * sqrt(communities)),
+        sum_H_vn_wc - H_vn,
+        mean_H_vn
+      ), ncol = 3,
+      colnames = c(
+        "VN.Entropy.Fit", "Total.Correlation", "Average.Entropy"
+      )
     )
   )
-  
-  # Return results
-  return(results)
   
 }
 

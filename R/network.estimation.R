@@ -121,7 +121,7 @@
 #' @export
 #'
 # Compute networks for EGA
-# Updated 30.06.2023
+# Updated 01.07.2023
 network.estimation <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -169,19 +169,13 @@ network.estimation <- function(
   if(model == "bggm"){
   
     # Obtain arguments for `BGGM`
-    ## See "helpers.R" for `silent_load`
     bggm_estimate_ARGS <- obtain_arguments(
       silent_load(BGGM::estimate), 
       FUN.args = ellipse 
     )
     
     # Check for override of 'type'
-    if(!"type" %in% names(ellipse)){
-      
-      # 'type' was not supplied; apply appropriate type for user
-      bggm_estimate_ARGS$type <- find_BGGM_type(data, ellipse)
-
-    }
+    bggm_estimate_ARGS$type <- find_BGGM_type(data, ellipse)
     
     # Send 'data' and 'verbose' to arguments
     bggm_estimate_ARGS$Y <- data
@@ -194,8 +188,15 @@ network.estimation <- function(
     )
     
     # Determine `select` arguments
-    bggm_select_ARGS <- obtain_arguments(
-      BGGM:::select.estimate, FUN.args = ellipse
+    ## Uses `overwrite_arguments` instead of
+    ## `obtain_arguments` because `BGGM::select`
+    ## is an S3method. It's possible to use
+    ## `BGGM:::select.estimate` but CRAN gets
+    ## mad about triple colons
+    bggm_select_ARGS <- overwrite_arguments(
+      list( # defaults for `BGGM:::select.estimate`
+        cred = 0.95, alternative = "two.sided"
+      ), ARGS = ellipse
     )
     
     # Send 'bggm_output' to arguments
@@ -278,26 +279,27 @@ network.estimation <- function(
     if(model == "bggm"){
       
       # Set up results
-      results <- list(
-        estimated_network = estimated_network,
-        output = list(
-          bggm_estimate = bggm_output,
-          bggm_select = bggm_select[names(bggm_select) != "object"]
+      return(
+        list(
+          estimated_network = estimated_network,
+          output = list(
+            bggm_estimate = bggm_output,
+            bggm_select = bggm_select[names(bggm_select) != "object"]
+          )
         )
       )
       
     }else{
       
       # Set up results
-      results <- list(
-        estimated_network = estimated_network,
-        output = estimation_OUTPUT
+      return(
+        list(
+          estimated_network = estimated_network,
+          output = estimation_OUTPUT
+        )
       )
       
     }
-    
-    # Return results
-    return(results)
   
   }
 
@@ -312,8 +314,8 @@ network.estimation <- function(
 
 #' @noRd
 # Send Network Methods for S3 ----
-# Updated 16.06.2023
-send_network_methods <- function(estimated_network)
+# Updated 05.07.2023
+send_network_methods <- function(estimated_network, boot = FALSE)
 {
   
   # Obtain methods
@@ -349,6 +351,14 @@ send_network_methods <- function(estimated_network)
       )
     )
     
+    # Send whether analytic solution
+    cat(
+      paste0(
+        "\nAnalytic: ", 
+        ifelse(methods$analytic, "Yes", "No")
+      )
+    )
+    
   }else if(model == "glasso"){ # GLASSO
     
     # Obtain model selection
@@ -377,14 +387,19 @@ send_network_methods <- function(estimated_network)
     # Send correlations
     cat(paste0("\nCorrelations: ", methods$corr))
     
-    # Send lambda information
-    cat(
-      paste0(
-        "\nLambda: ", methods$lambda,
-        " (n = ", methods$nlambda, ", ratio = ",
-        methods$lambda.min.ratio, ")"
+    # Check for bootEGA
+    if(isFALSE(boot)){
+      
+      # Send lambda information
+      cat(
+        paste0(
+          "\nLambda: ", methods$lambda,
+          " (n = ", methods$nlambda, ", ratio = ",
+          methods$lambda.min.ratio, ")"
+        )
       )
-    )
+      
+    }
     
   }else if(model == "tmfg"){ # TMFG
     
@@ -406,8 +421,10 @@ send_network_methods <- function(estimated_network)
     
   }
   
-  # Add breakspace
-  cat("\n\n")
+  # Check for bootEGA
+  if(isFALSE(boot)){
+    cat("\n\n") # Add breakspace
+  }
 
 }
 
@@ -467,61 +484,15 @@ print.EGA.network <- function(x, ...)
 
 #' @exportS3Method 
 # S3 Summary Method ----
-# Updated 29.06.2023
+# Updated 05.07.2023
 summary.EGA.network <- function(object, ...)
 {
-  
-  # Determine whether result is a list
-  if(is.list(object)){
-    network <- object$estimated_network
-  }else{
-    network <- object
-  }
-  
-  # Print methods information
-  send_network_methods(network)
-  
-  # Obtain lower triangle
-  lower_triangle <- network[lower.tri(network)]
-  
-  # Non-zero edges
-  non_zero_edges <- lower_triangle[lower_triangle != 0]
-  
-  # Determine number and density of edges
-  edges <- length(non_zero_edges)
-  edge_density <- edges / length(lower_triangle)
-  
-  # Obtain summary statistics
-  average_weight <- mean(non_zero_edges, na.rm = TRUE)
-  sd_weight <- sd(non_zero_edges, na.rm = TRUE)
-  range_weight <- range(non_zero_edges, na.rm = TRUE)
-  
-  # Print information about edges
-  cat(paste0("Number of nodes: ", dim(network)[2], "\n"))
-  cat(paste0("Number of edges: ", edges, "\n"))
-  cat(paste0("Edge density: ", format_decimal(edge_density, 3)))
-  
-  # Add breakspace
-  cat("\n\n")
-  
-  # Print information about weights
-  cat("Non-zero edge weights: \n")
-  print_df <- fast.data.frame(
-    c(
-      format_decimal(average_weight, 3),
-      format_decimal(sd_weight, 3),
-      format_decimal(range_weight[1], 3),
-      format_decimal(range_weight[2], 3)
-    ), ncol = 4,
-    colnames = c("M", "SD", "Min", "Max")
-  )
-  print(print_df, quote = FALSE, row.names = FALSE)
-  
+  print(object, ...) # same as print
 }
 
 #' @exportS3Method 
 # S3 Plot Method ----
-# Updated 22.06.2023
+# Updated 05.07.2023
 plot.EGA.network <- function(x, ...)
 {
   
@@ -533,18 +504,25 @@ plot.EGA.network <- function(x, ...)
   }
   
   # Return plot
-  single_plot(network = network, wc = rep(NA, dim(network)[2]), ...)
+  silent_plot(
+    single_plot(
+      network = network, 
+      wc = rep(NA, dim(network)[2]), 
+      ...
+    )
+  )
+  
   
 }
 
 # Function to find 'type' argument for `BGGM` ----
 #' @noRd
-# Updated 30.06.2023
+# Updated 01.07.2023
 find_BGGM_type <- function(data, ellipse)
 {
   
   # Check if "type" already exists
-  if("type" %in% ellipse){
+  if("type" %in% names(ellipse)){
     
     # To avoid conflict "type" with `bootEGA`
     if(

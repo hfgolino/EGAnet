@@ -280,7 +280,7 @@ expand <- function(correlation_matrix, n, model, verbose, ellipse)
 
 #' @noRd
 # Wrapper for Louvain consensus ----
-# Updated 25.06.2023
+# Updated 01.07.2023
 consensus_wrapper <- function(correlation_matrix, verbose, ellipse)
 {
   
@@ -295,9 +295,6 @@ consensus_wrapper <- function(correlation_matrix, verbose, ellipse)
   
   # Set membership to only
   consensus_ARGS$membership.only <- TRUE
-  
-  # Set progress
-  consensus_ARGS$verbose <- verbose
   
   # Apply Louvain with consensus approach
   membership <- do.call(

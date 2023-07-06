@@ -224,7 +224,7 @@
 #'
 #' @export
 # Main EGA function
-# Updated 28.06.2023
+# Updated 05.07.2023
 EGA <- function (
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -347,10 +347,12 @@ EGA <- function (
   if(isTRUE(plot.EGA)){
     
     # Set up plot
-    multidimensional_result$Plot.EGA <- plot(multidimensional_result)
+    multidimensional_result$Plot.EGA <- plot(
+      multidimensional_result, ...
+    )
     
     # Actually send the plot
-    plot(multidimensional_result$Plot.EGA)
+    silent_plot(multidimensional_result$Plot.EGA)
     
   }
 
@@ -433,68 +435,10 @@ print.EGA <- function(x, ...)
 
 #' @exportS3Method 
 # S3 Summary Method ----
-# Updated 22.06.2023
+# Updated 05.07.2023
 summary.EGA <- function(object, ...)
 {
-  
-  # Print network estimation
-  print(object$network)
-  
-  # Add break space
-  cat("\n----\n\n")
-  
-  # Print community detection
-  print(object$wc)
-  
-  # Add break space
-  cat("\n----\n\n")
-  
-  # Get unidimensional attributes
-  unidimensional_attributes <- attr(object, "unidimensional")
-  
-  # Obtain unidimensional method
-  unidimensional_method <- switch(
-    unidimensional_attributes$uni.method,
-    "expand" = "Expand",
-    "le" = "Leading Eigenvector",
-    "louvain" = "Louvain"
-  )
-  
-  # Set up unidimensional print
-  if(unidimensional_method == "Louvain"){
-    
-    # Set up consensus attributes
-    consensus_attributes <- unidimensional_attributes$consensus
-    
-    # Obtain consensus name
-    consensus_name <- switch(
-      consensus_attributes$consensus.method,
-      "highest_modularity" = "Highest Modularity",
-      "iterative" = "Iterative",
-      "most_common" = "Most Common",
-      "lowest_tefi" = "Lowest TEFI"
-    )
-    
-    # Update unidimensional method text
-    unidimensional_method <- paste0(
-      unidimensional_method, " (", consensus_name,
-      " for ", consensus_attributes$consensus.iter,
-      " iterations)"
-    )
-    
-  }
-  
-  # Print unidimensional
-  cat(
-    paste0(
-      "Unidimensional Method: ", unidimensional_method, "\n",
-      "Unidimensional: ", ifelse(
-        unidimensional_attributes$unidimensional,
-        "Yes", "No"
-      )
-    )
-  )
-  
+  print(object, ...) # same as print
 }
 
 #' @exportS3Method 

@@ -98,7 +98,7 @@
 #' @export
 #'
 # Computes optimal glasso network based on EBIC ----
-# Updated 25.06.2023
+# Updated 06.07.2023
 EBICglasso.qgraph <- function(
     data, # Sample covariance matrix
     n = NULL,
@@ -179,12 +179,12 @@ EBICglasso.qgraph <- function(
   if(model.selection == "ebic"){
     
     # Log-likelihood
-    lik <- nnapply(lambda_sequence, function(i){
+    lik <- nvapply(lambda_sequence, function(i){
       logGaus(S, glas_path$wi[,,i], n)
     })
     
     # Compute edges
-    E <- nnapply(lambda_sequence, function(i){
+    E <- nvapply(lambda_sequence, function(i){
       edge_count(glas_path$wi[,,i], dimensions[2], countDiagonal)
     })
 
@@ -202,7 +202,7 @@ EBICglasso.qgraph <- function(
   }else if(model.selection == "jsd"){
     
     # JSD
-    JSDs <- nnapply(lambda_sequence,function(i){
+    JSDs <- nvapply(lambda_sequence,function(i){
       
       # Try (might be error)
       res <- try(
@@ -268,10 +268,15 @@ EBICglasso.qgraph <- function(
       # Add EBICs and Log-likelihoods
       results$ebic <- EBICs; results$loglik <- lik;
       
-    }else if(model.selection == "jsd")
+    }else if(model.selection == "jsd"){
       
       # Add JSDs
       results$jsd <- JSDs
+      
+    }
+    
+    # Return results
+    return(results)
     
   }else{
     return(net) # only return network
@@ -291,7 +296,7 @@ EBICglasso.qgraph <- function(
 #' @noRd
 # Log-likelihood ----
 # According to huge??? : source comment
-# Updated 26.06.2023
+# Updated 03.07.2023
 logGaus <- function(S, K, n)
 {
   
@@ -307,9 +312,7 @@ logGaus <- function(S, K, n)
   
   # From source 
   
-  return(
-    n / 2 * (log(det(K)) - trace(K %*% S))
-  )
+  return(n / 2 * (log(det(K)) - trace(crossprod(K, S))))
 }
 
 #' @noRd

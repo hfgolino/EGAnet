@@ -44,7 +44,7 @@
 #'
 #' @export
 # Entropy Fit Index
-# Updated 29.06.2023
+# Updated 06.07.2023
 entropyFit <- function (data, structure)
 {
   
@@ -61,14 +61,14 @@ entropyFit <- function (data, structure)
   bins <- floor(sqrt(dimensions[1] / 5))
   
   # Obtain summed data
-  if(communities == dimensions[2]){
+  if(communities == dimensions[2L]){
     summed_data <- data # scores are already summed
   }else{
     
     # Get sums by community
-    summed_data <- nnapply(seq_len(communities), function(community){
+    summed_data <- nvapply(seq_len(communities), function(community){
       rowSums(data[,structure == community, drop = FALSE], na.rm = TRUE)  
-    }, LENGTH = dimensions[1])
+    }, LENGTH = dimensions[1L])
     
   }
   
@@ -85,23 +85,18 @@ entropyFit <- function (data, structure)
     return(
       cut(
         summed_data[,community], 
-        breaks = seq.int(data_range[1], data_range[2], length.out = bin_length),
+        breaks = seq.int(data_range[1L], data_range[2L], length.out = bin_length),
         include.lowest = TRUE
       )
     )
     
   })
   
-  # Get bin sums
-  bin_sums <- nnapply(bin_cuts, function(x){
-    table(x)
-  }, LENGTH = bins)
-  
   # Get frequencies
-  bin_frequencies <- bin_sums / dimensions[1]
+  bin_frequencies <- nvapply(bin_cuts, table, LENGTH = bins) / dimensions[1L]
   
   # Get entropies
-  H <- nnapply(seq_len(communities), function(community){
+  H <- nvapply(seq_len(communities), function(community){
     
     # Get non-zero frequencies
     bin_non_zero <- bin_frequencies[bin_frequencies[,community] > 0, community]
@@ -114,7 +109,7 @@ entropyFit <- function (data, structure)
   # Get joint frequency table
   joint_frequency <- count_table(
     do.call(cbind, bin_cuts)
-  )$Value / dimensions[1]
+  )$Value / dimensions[1L]
   
   # Get non-zero frequencies
   joint_non_zero <- joint_frequency[joint_frequency > 0]
@@ -135,7 +130,7 @@ entropyFit <- function (data, structure)
       breaks = seq.int(max_range[1], max_range[2], length.out = bin_length), 
       include.lowest = TRUE
     )
-  )$Value / dimensions[1]
+  )$Value / dimensions[1L]
   
   # Get non-zero frequencies
   max_non_zero <- max_frequency[max_frequency > 0]
@@ -145,7 +140,7 @@ entropyFit <- function (data, structure)
   
   # Miller-Madow Bias Correction (for individual communities)
   ## Pre-compute denominator for corrections
-  MM_denominator <- 2 * dimensions[1]
+  MM_denominator <- 2L * dimensions[1L]
   ## Entropy
   MM_non_zero <- colSums(bin_frequencies != 0, na.rm = TRUE)
   MM_H <- H + (MM_non_zero - 1) / MM_denominator
@@ -160,23 +155,22 @@ entropyFit <- function (data, structure)
   EF_denominator <- (H_max - H_mean) * sqrt(communities)
   
   # Set up data frame
-  result <- fast.data.frame(
-    c(
-      sum(H, na.rm = TRUE) - H_joint,
-      sum(MM_H, na.rm = TRUE) - MM_H_joint,
-      H_mean - H_joint + EF_denominator,
-      mean(MM_H, na.rm = TRUE) - MM_H_joint + EF_denominator,
-      H_mean - H_joint
-    ), ncol = 5,
-    colnames = c(
-      "Total.Correlation", "Total.Correlation.MM",
-      "Entropy.Fit", "Entropy.Fit.MM",
-      "Average.Entropy"
+  return(
+    fast.data.frame(
+      c(
+        sum(H, na.rm = TRUE) - H_joint,
+        sum(MM_H, na.rm = TRUE) - MM_H_joint,
+        H_mean - H_joint + EF_denominator,
+        mean(MM_H, na.rm = TRUE) - MM_H_joint + EF_denominator,
+        H_mean - H_joint
+      ), ncol = 5L,
+      colnames = c(
+        "Total.Correlation", "Total.Correlation.MM",
+        "Entropy.Fit", "Entropy.Fit.MM",
+        "Average.Entropy"
+      )
     )
   )
-
-  # Return results
-  return(result)
   
 }
 
