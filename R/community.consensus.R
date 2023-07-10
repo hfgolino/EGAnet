@@ -310,7 +310,6 @@ community.consensus <- function(
     signed = signed, order = order, 
     consensus.method = consensus.method,
     consensus.iter = consensus.iter
-    
   )
   
   # Check for membership only

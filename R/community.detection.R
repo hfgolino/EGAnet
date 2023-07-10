@@ -425,7 +425,7 @@ summary.EGA.community <- function(object, boot = FALSE, ...)
 }
 
 #' @noRd
-# Obtain appropriate algorithm name
+# Obtain appropriate algorithm name ----
 # Updated 22.06.2023
 obtain_algorithm_name <- function(algorithm)
 {

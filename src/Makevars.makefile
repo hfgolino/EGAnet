@@ -1,1 +1,0 @@
-PKG_CPPFLAGS =	-I../inst/include/ -I/usr/include/ -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/
