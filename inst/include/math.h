@@ -1,160 +1,181 @@
-/*  math.h
-    Definitions for the math floating point package.
-    Copyright (c) 1987, 1992 by Borland International
-    All Rights Reserved.
-*/
+// -*- C++ -*- compatibility header.
 
-#ifndef  __MATH_H
-#define  __MATH_H
+// Copyright (C) 2002-2018 Free Software Foundation, Inc.
+//
+// This file is part of the GNU ISO C++ Library.  This library is free
+// software; you can redistribute it and/or modify it under the
+// terms of the GNU General Public License as published by the
+// Free Software Foundation; either version 3, or (at your option)
+// any later version.
 
-#if !defined(___DEFS_H)
-#include <_defs.h>
-#endif
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 
-#define HUGE_VAL    _huge_dble
-extern double _Cdecl _huge_dble;
-#define _LHUGE_VAL   _huge_ldble
-extern long double _Cdecl _huge_ldble;
+// Under Section 7 of GPL version 3, you are granted additional
+// permissions described in the GCC Runtime Library Exception, version
+// 3.1, as published by the Free Software Foundation.
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-double  _Cdecl _FARFUNC acos  (double __x);
-double  _Cdecl _FARFUNC asin  (double __x);
-double  _Cdecl atan  (double __x);
-double  _Cdecl _FARFUNC atan2 (double __y, double __x);
-double  _Cdecl _FARFUNC ceil  (double __x);
-double  _Cdecl _FARFUNC cos   (double __x);
-double  _Cdecl _FARFUNC cosh  (double __x);
-double  _Cdecl _FARFUNC exp   (double __x);
-double  _Cdecl fabs  (double __x);
-double  _Cdecl __fabs__  (double __x);          /* Intrinsic */
-double  _Cdecl _FARFUNC floor (double __x);
-double  _Cdecl _FARFUNC fmod  (double __x, double __y);
-double  _Cdecl _FARFUNC frexp (double __x, int _FAR *__exponent);
-double  _Cdecl _FARFUNC ldexp (double __x, int __exponent);
-double  _Cdecl _FARFUNC log   (double __x);
-double  _Cdecl _FARFUNC log10 (double __x);
-double  _Cdecl _FARFUNC modf  (double __x, double _FAR *__ipart);
-double  _Cdecl _FARFUNC pow   (double __x, double __y);
-double  _Cdecl _FARFUNC sin   (double __x);
-double  _Cdecl _FARFUNC sinh  (double __x);
-double  _Cdecl _FARFUNC sqrt  (double __x);
-double  _Cdecl _FARFUNC tan   (double __x);
-double  _Cdecl _FARFUNC tanh  (double __x);
+// You should have received a copy of the GNU General Public License and
+// a copy of the GCC Runtime Library Exception along with this program;
+// see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+// <http://www.gnu.org/licenses/>.
 
-long double _Cdecl _FARFUNC acosl  (long double __x);
-long double _Cdecl _FARFUNC asinl  (long double __x);
-long double _Cdecl _FARFUNC atan2l (long double __x, long double __y);
-long double _Cdecl atanl  (long double __x);
-long double _Cdecl _FARFUNC ceill  (long double __x);
-long double _Cdecl _FARFUNC coshl  (long double __x);
-long double _Cdecl _FARFUNC cosl   (long double __x);
-long double _Cdecl _FARFUNC expl   (long double __x);
-long double _Cdecl fabsl  (long double __x);
-long double _Cdecl _FARFUNC floorl (long double __x);
-long double _Cdecl _FARFUNC fmodl  (long double __x, long double __y);
-long double _Cdecl _FARFUNC frexpl (long double __x, int _FAR *__exponent);
-long double _Cdecl _FARFUNC ldexpl (long double __x, int __exponent);
-long double _Cdecl _FARFUNC log10l (long double __x);
-long double _Cdecl _FARFUNC logl   (long double __x);
-long double _Cdecl _FARFUNC modfl  (long double __x, long double _FAR *__ipart);
-long double _Cdecl _FARFUNC powl   (long double __x, long double __y);
-long double _Cdecl _FARFUNC sinhl  (long double __x);
-long double _Cdecl _FARFUNC sinl   (long double __x);
-long double _Cdecl _FARFUNC sqrtl  (long double __x);
-long double _Cdecl _FARFUNC tanhl  (long double __x);
-long double _Cdecl _FARFUNC tanl   (long double __x);
+/** @file math.h
+ *  This is a Standard C++ Library header.
+ */
 
-typedef enum
-{
-    DOMAIN = 1,    /* argument domain error -- log (-1)        */
-    SING,          /* argument singularity  -- pow (0,-2))     */
-    OVERFLOW,      /* overflow range error  -- exp (1000)      */
-    UNDERFLOW,     /* underflow range error -- exp (-1000)     */
-    TLOSS,         /* total loss of significance -- sin(10e70) */
-    PLOSS,         /* partial loss of signif. -- not used      */
-    STACKFAULT     /* floating point unit stack overflow       */
-}   _mexcep;
-
-#ifdef __cplusplus
-}
-#endif
-
-
-#if !__STDC__
-
-struct  exception
-{
-    int type;
-    char   _FAR *name;
-    double  arg1, arg2, retval;
-};
-
-struct  _exceptionl
-{
-    int type;
-    char   _FAR *name;
-    long double  arg1, arg2, retval;
-};
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-int     _Cdecl abs   (int __x);
-double  _Cdecl atof  (const char _FAR *__s);
-double  _Cdecl _FARFUNC hypot (double __x, double __y);
-long    _Cdecl labs  (long __x);
-int     _Cdecl _FARFUNC matherr (struct exception _FAR *__e);
-double  _Cdecl _FARFUNC poly  (double __x, int __degree, double _FAR *__coeffs);
-double  _Cdecl _FARFUNC pow10 (int __p);
-int     _Cdecl _FARFUNC _matherrl (struct _exceptionl _FAR *__e);
-
-long double _Cdecl _atold (const char _FAR *__s);
-long double _Cdecl _FARFUNC hypotl (long double __x, long double __y);
-long double _Cdecl _FARFUNC polyl  (long double __x, int __degree, long double _FAR *__coeffs);
-long double _Cdecl _FARFUNC pow10l (int __p);
-
-#ifdef __cplusplus
-    /* use class complex instead of cabs in C++ */
+#if !defined __cplusplus || defined _GLIBCXX_INCLUDE_NEXT_C_HEADERS
+# include_next <math.h>
 #else
-struct complex      /* as used by "cabs" function */
-{
-    double  x, y;
-};
 
-struct _complexl    /* as used by "cabsl" function */
-{
-    long double  x, y;
-};
+#ifndef _GLIBCXX_MATH_H
+#define _GLIBCXX_MATH_H 1
 
-#define cabs(z)     (hypot  ((z).x, (z).y))
-#define cabsl(z)    (hypotl ((z).x, (z).y))
+# include <cmath>
+
+using std::abs;
+using std::acos;
+using std::asin;
+using std::atan;
+using std::atan2;
+using std::cos;
+using std::sin;
+using std::tan;
+using std::cosh;
+using std::sinh;
+using std::tanh;
+using std::exp;
+using std::frexp;
+using std::ldexp;
+using std::log;
+using std::log10;
+using std::modf;
+using std::pow;
+using std::sqrt;
+using std::ceil;
+using std::fabs;
+using std::floor;
+using std::fmod;
+
+#if _GLIBCXX_USE_C99_MATH
+using std::fpclassify;
+using std::isfinite;
+using std::isinf;
+using std::isnan;
+using std::isnormal;
+using std::signbit;
+using std::isgreater;
+using std::isgreaterequal;
+using std::isless;
+using std::islessequal;
+using std::islessgreater;
+using std::isunordered;
 #endif
 
-#ifdef __cplusplus
-}
-#endif
+#if __cplusplus >= 201103L && defined(_GLIBCXX_USE_C99_MATH_TR1)
+using std::acosh;
+using std::asinh;
+using std::atanh;
+using std::cbrt;
+using std::copysign;
+using std::erf;
+using std::erfc;
+using std::exp2;
+using std::expm1;
+using std::fdim;
+using std::fma;
+using std::fmax;
+using std::fmin;
+using std::hypot;
+using std::ilogb;
+using std::lgamma;
+using std::llrint;
+using std::llround;
+using std::log1p;
+using std::log2;
+using std::logb;
+using std::lrint;
+using std::lround;
+using std::nearbyint;
+using std::nextafter;
+using std::nexttoward;
+using std::remainder;
+using std::remquo;
+using std::rint;
+using std::round;
+using std::scalbln;
+using std::scalbn;
+using std::tgamma;
+using std::trunc;
+#endif // C++11 && _GLIBCXX_USE_C99_MATH_TR1
 
-/* Constants rounded for 21 decimals. */
-#define M_E         2.71828182845904523536
-#define M_LOG2E     1.44269504088896340736
-#define M_LOG10E    0.434294481903251827651
-#define M_LN2       0.693147180559945309417
-#define M_LN10      2.30258509299404568402
-#define M_PI        3.14159265358979323846
-#define M_PI_2      1.57079632679489661923
-#define M_PI_4      0.785398163397448309616
-#define M_1_PI      0.318309886183790671538
-#define M_2_PI      0.636619772367581343076
-#define M_1_SQRTPI  0.564189583547756286948
-#define M_2_SQRTPI  1.12837916709551257390
-#define M_SQRT2     1.41421356237309504880
-#define M_SQRT_2    0.707106781186547524401
+#if _GLIBCXX_USE_STD_SPEC_FUNCS
+using std::assoc_laguerref;
+using std::assoc_laguerrel;
+using std::assoc_laguerre;
+using std::assoc_legendref;
+using std::assoc_legendrel;
+using std::assoc_legendre;
+using std::betaf;
+using std::betal;
+using std::beta;
+using std::comp_ellint_1f;
+using std::comp_ellint_1l;
+using std::comp_ellint_1;
+using std::comp_ellint_2f;
+using std::comp_ellint_2l;
+using std::comp_ellint_2;
+using std::comp_ellint_3f;
+using std::comp_ellint_3l;
+using std::comp_ellint_3;
+using std::cyl_bessel_if;
+using std::cyl_bessel_il;
+using std::cyl_bessel_i;
+using std::cyl_bessel_jf;
+using std::cyl_bessel_jl;
+using std::cyl_bessel_j;
+using std::cyl_bessel_kf;
+using std::cyl_bessel_kl;
+using std::cyl_bessel_k;
+using std::cyl_neumannf;
+using std::cyl_neumannl;
+using std::cyl_neumann;
+using std::ellint_1f;
+using std::ellint_1l;
+using std::ellint_1;
+using std::ellint_2f;
+using std::ellint_2l;
+using std::ellint_2;
+using std::ellint_3f;
+using std::ellint_3l;
+using std::ellint_3;
+using std::expintf;
+using std::expintl;
+using std::expint;
+using std::hermitef;
+using std::hermitel;
+using std::hermite;
+using std::laguerref;
+using std::laguerrel;
+using std::laguerre;
+using std::legendref;
+using std::legendrel;
+using std::legendre;
+using std::riemann_zetaf;
+using std::riemann_zetal;
+using std::riemann_zeta;
+using std::sph_besself;
+using std::sph_bessell;
+using std::sph_bessel;
+using std::sph_legendref;
+using std::sph_legendrel;
+using std::sph_legendre;
+using std::sph_neumannf;
+using std::sph_neumannl;
+using std::sph_neumann;
+#endif // _GLIBCXX_USE_STD_SPEC_FUNCS
 
-#define EDOM    33      /* Math argument */
-#define ERANGE  34      /* Result too large */
-
-#endif  /* !__STDC__ */
-
-#endif
+#endif // _GLIBCXX_MATH_H
+#endif // __cplusplus
