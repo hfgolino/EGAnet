@@ -6,21 +6,20 @@
 \usage{
 dynEGA(
   data,
-  n.embed,
+  n.embed = 5,
   tau = 1,
   delta = 1,
   level = c("individual", "group", "population"),
   id = NULL,
   group = NULL,
   use.derivatives = 1,
-  model = c("glasso", "TMFG"),
-  model.args = list(),
-  algorithm = c("walktrap", "leiden", "louvain"),
-  algorithm.args = list(),
-  corr = c("cor_auto", "pearson", "spearman"),
+  corr = c("auto", "pearson", "spearman"),
+  na.data = c("pairwise", "listwise"),
+  model = c("BGGM", "glasso", "TMFG"),
+  algorithm = c("leiden", "louvain", "walktrap"),
   uni.method = c("expand", "LE", "louvain"),
   ncores,
-  progress = TRUE,
+  verbose = TRUE,
   ...
 )
 }
@@ -71,6 +70,24 @@ Number of the column identifying group membership. Must be specified only if \co
 \item{use.derivatives}{Integer.
 The order of the derivative to be used in the EGA procedure. Default to 1.}
 
+\item{corr}{Type of correlation matrix to compute. The default uses \code{"pearson"}.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{cor_auto}}}
+{Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
+\code{\link[qgraph]{qgraph}}}.
+
+\item{\strong{\code{pearson}}}
+{Computes Pearson's correlation coefficient using the pairwise complete observations via
+the \code{\link[stats]{cor}}} function.
+
+\item{\strong{\code{spearman}}}
+{Computes Spearman's correlation coefficient using the pairwise complete observations via
+the \code{\link[stats]{cor}}} function.
+}}
+
 \item{model}{Character.
 A string indicating the method to use.
 Current options are:
@@ -86,10 +103,6 @@ This is the default method}
 {Estimates a Triangulated Maximally Filtered Graph}
 
 }}
-
-\item{model.args}{List.
-A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
-or \code{\link[EGAnet]{TMFG}}}
 
 \item{algorithm}{A string indicating the algorithm to use or a function from \code{\link{igraph}}
 Defaults to \code{"walktrap"}.
@@ -107,28 +120,6 @@ Defaults to \code{objective_function = "modularity"}}
 \item{\strong{\code{louvain}}}
 {Computes the Louvain algorithm using \code{\link[igraph]{cluster_louvain}}}
 
-}}
-
-\item{algorithm.args}{List.
-A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
-or some other community detection algorithm function (see examples)}
-
-\item{corr}{Type of correlation matrix to compute. The default uses \code{"pearson"}.
-Current options are:
-
-\itemize{
-
-\item{\strong{\code{cor_auto}}}
-{Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
-\code{\link[qgraph]{qgraph}}}.
-
-\item{\strong{\code{pearson}}}
-{Computes Pearson's correlation coefficient using the pairwise complete observations via
-the \code{\link[stats]{cor}}} function.
-
-\item{\strong{\code{spearman}}}
-{Computes Spearman's correlation coefficient using the pairwise complete observations via
-the \code{\link[stats]{cor}}} function.
 }}
 
 \item{uni.method}{Character.
@@ -170,13 +161,21 @@ Recommended to use maximum number of cores minus one
 If you're unsure how many cores your computer has,
 then use the following code: \code{parallel::detectCores()}}
 
+\item{...}{Additional arguments.
+Used for deprecated arguments from previous versions of \code{\link{EGA}}}
+
+\item{model.args}{List.
+A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
+or \code{\link[EGAnet]{TMFG}}}
+
+\item{algorithm.args}{List.
+A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
+or some other community detection algorithm function (see examples)}
+
 \item{progress}{Boolean.
 Should progress be displayed?
 Defaults to \code{TRUE}.
 For Windows, \code{FALSE} is about 2x faster}
-
-\item{...}{Additional arguments.
-Used for deprecated arguments from previous versions of \code{\link{EGA}}}
 }
 \description{
 Estimates dynamic factors in multivariate time series (i.e. longitudinal data, panel data, intensive longitudinal data) at multiple
@@ -186,39 +185,35 @@ EGA, dynEGA is a dynamic model that estimates the factor structure by modeling h
 GLLA is a filtering method for estimating derivatives from data that uses time delay embedding and a variant of Savitzky-Golay filtering to accomplish the task.
 }
 \examples{
-# Obtain data
-sim.dynEGA <- sim.dynEGA # bypasses CRAN checks
-
-\dontrun{
 # Population structure
-dyn.random <- dynEGA(
-  data = sim.dynEGA, n.embed = 5, tau = 1,
-  delta = 1, id = 25, group = 26, use.derivatives = 1,
-  level = "population", ncores = 2, corr = "pearson"
+simulated_population <- dynEGA(
+  data = sim.dynEGA, level = "population"
+  # uses simulated data in package
+  # useful to understand how data should be structured
 )
-
-# Plot population structure
-plot(dyn.random)
 
 # Group structure
-dyn.group <- dynEGA(
-  data = sim.dynEGA, n.embed = 5, tau = 1,
-  delta = 1, id = 25, group = 26, use.derivatives = 1,
-  level = "group", ncores = 2, corr = "pearson"
+simulated_group <- dynEGA(
+  data = sim.dynEGA, level = "group"
+  # uses simulated data in package
+  # useful to understand how data should be structured
 )
 
-# Plot group structure
-plot(dyn.group, ncol = 2, nrow = 1)
-
-# Intraindividual structure
-dyn.individual <- dynEGA(
-  data = sim.dynEGA, n.embed = 5, tau = 1,
-  delta = 1, id = 25, group = 26, use.derivatives = 1,
-  level = "individual", ncores = 2, corr = "pearson"
+\dontrun{
+# Individual structure
+simulated_individual <- dynEGA(
+  data = sim.dynEGA, level = "individual",
+  ncores = 2, # use more for quicker results
+  verbose = TRUE # progress bar
 )
 
-# Plot individual structure (participant 1)
-plot(dyn.individual, id = 1)}
+# Population, group, and individual structure
+simulated_all <- dynEGA(
+  data = sim.dynEGA, 
+  level = c("individual", "group", "population"),
+  ncores = 2, # use more for quicker results
+  verbose = TRUE # progress bar
+)}
 
 }
 \references{

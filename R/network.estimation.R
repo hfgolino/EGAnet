@@ -314,7 +314,7 @@ network.estimation <- function(
 
 #' @noRd
 # Send Network Methods for S3 ----
-# Updated 05.07.2023
+# Updated 07.07.2023
 send_network_methods <- function(estimated_network, boot = FALSE)
 {
   
@@ -365,15 +365,33 @@ send_network_methods <- function(estimated_network, boot = FALSE)
     model.selection <- methods$model.selection
     
     # Determine whether EBIC was used
-    if(model.selection == "ebic"){
-      model.selection_text <- paste0(
-        " (", toupper(model.selection), 
-        " with gamma = ", methods$gamma, ")"
-      )
-    }else if(model.selection == "jsd"){
-      model.selection_text <- paste0(
-        " (", toupper(model.selection), ")"
-      )
+    if(isFALSE(boot)){
+      
+      # Add gamma
+      if(model.selection == "ebic"){
+        model.selection_text <- paste0(
+          " (", toupper(model.selection), 
+          " with gamma = ", methods$gamma, ")"
+        )
+      }else if(model.selection == "jsd"){
+        model.selection_text <- paste0(
+          " (", toupper(model.selection), ")"
+        )
+      }
+      
+    }else{
+      
+      # Don't print gamma
+      if(model.selection == "ebic"){
+        model.selection_text <- paste0(
+          " (", toupper(model.selection), ")"
+        )
+      }else if(model.selection == "jsd"){
+        model.selection_text <- paste0(
+          " (", toupper(model.selection), ")"
+        )
+      }
+      
     }
     
     # Send model

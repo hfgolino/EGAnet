@@ -156,20 +156,6 @@ column_apply <- function(X, FUN, ...)
 # Updated 06.07.2023
 symmetric_matrix_lapply <- function(X, FUN, ...){
   
-  # Get dimensions of single matrix in list
-  dimensions <- dim(X[[1]])
-  
-  # Get lower triangles into a matrix
-  lower_matrix <- do.call(
-    rbind, lapply(X, function(x){x[lower.tri(x, diag = TRUE)]})
-  )
-  
-  # Initialize return matrix
-  new_matrix <- matrix(
-    nrow = dimensions[1], ncol = dimensions[2],
-    dimnames = dimnames(X[[1]])
-  )
-  
   # Get appropriate function
   vapply_FUN <- switch( # in order of most likely
     typeof(X[[1]]),
@@ -180,22 +166,38 @@ symmetric_matrix_lapply <- function(X, FUN, ...){
     stop(
       paste0(
         "\"", typeof(X), "\"",
-        " is not available for `row_apply`. Only \"character\", \"logical\", and \"numeric\" are available" 
+        " is not available for `symmetric_matrix_lapply`. Only \"character\", \"logical\", and \"numeric\" are available" 
       ), call. = FALSE
     )
   )
   
+  # Get dimensions of single matrix in list
+  dimensions <- dim(X[[1]])
+  
+  # Pre-obtain lower triangle indices
+  # Equivalent to: (`lower.tri(matrix, diag = TRUE)`)
+  lower_triangle_index <- .row(dimensions) >= .col(dimensions)
+  
+  # Get lower triangles
+  lower_matrix <- do.call(rbind, lapply(X, function(x){x[lower_triangle_index]}))
+  
   # Apply function
   values <- vapply_FUN(as.data.frame(lower_matrix), FUN, ...)
   
+  # Initialize return matrix
+  new_matrix <- matrix(
+    nrow = dimensions[1], ncol = dimensions[2],
+    dimnames = dimnames(X[[1]])
+  )
+  
   # Add values to lower triangle
-  new_matrix[lower.tri(new_matrix, diag = TRUE)] <- values
+  new_matrix[lower_triangle_index] <- values
   
   # Transpose 
   new_matrix <- t(new_matrix)
   
   # Add values again to lower triagle
-  new_matrix[lower.tri(new_matrix, diag = TRUE)] <- values
+  new_matrix[lower_triangle_index] <- values
   
   # Return new matrix
   return(new_matrix)
@@ -418,12 +420,13 @@ reproducible_bootstrap <- function(
 
 #' @noRd
 # Wrapper for parallelization ----
-# Updated 30.06.2023
+# Updated 10.07.2023
 parallel_process <- function(
     iterations, # number of iterations
     datalist, # list of data
     FUN, # function to use
     ..., # ellipse arguments to pass on
+    seeds = NULL, # if there are seeds to pass on
     export = TRUE, # variables to export (if necessary)
     ncores, # number of cores
     progress = TRUE # progress bar
@@ -446,44 +449,111 @@ parallel_process <- function(
       )
     )
     
-    # Run progress locally
-    progressr::with_progress({
+    # Check for random seeds
+    if(is.null(seeds)){
       
-      # Initialize progress bar
-      progressbar <- progressr::progressor(iterations / ncores)
+      # Run progress locally
+      progressr::with_progress({
+        
+        # Initialize progress bar
+        progressbar <- progressr::progressor(iterations / ncores)
+        
+        # Perform parallel processing
+        results <- future.apply::future_lapply(
+          X = seq_len(iterations),
+          function(iteration){
+            
+            # Update progress with full cores completion
+            # (rather than every completion)
+            if(iteration %% ncores == 0){
+              progressbar()
+            }
+            
+            # Return results
+            return(
+              silent_call( # Ensures quiet run with all arguments passed on
+                FUN(datalist[[iteration]], ...)
+              )
+            )
+            
+          },
+          future.globals = export,
+          future.seed = NULL
+        )
+        
+      })
       
-      # Perform parallel processing
-      results <- future.apply::future_lapply(
-        X = seq_len(iterations),
-        function(iteration){
-          
-          # Update progress with full cores completion
-          # (rather than every completion)
-          if(iteration %% ncores == 0){
-            progressbar()
-          }
-          
-          # Return results
-          return(silent_call(FUN(data = datalist[[iteration]], ...)))
-          
-        },
-        future.globals = export,
-        future.seed = NULL
-      )
+    }else{
       
-    })
+      # Run progress locally
+      progressr::with_progress({
+        
+        # Initialize progress bar
+        progressbar <- progressr::progressor(iterations / ncores)
+        
+        # Perform parallel processing
+        results <- future.apply::future_lapply(
+          X = seq_len(iterations),
+          function(iteration){
+            
+            # Update progress with full cores completion
+            # (rather than every completion)
+            if(iteration %% ncores == 0){
+              progressbar()
+            }
+            
+            # Return results
+            return(
+              silent_call( # Ensures quiet run with all arguments passed on
+                FUN(datalist[[iteration]], seed = seeds[iteration], ...)
+              )
+            )
+            
+          },
+          future.globals = export,
+          future.seed = NULL
+        )
+        
+      })
+      
+    }
     
   }else{
     
-    # Perform parallel processing
-    results <- silent_call(
-      future.apply::future_lapply(
-        X = datalist,
-        FUN, ..., # arguments will be passed on
-        future.globals = export,
-        future.seed = NULL
+    # Check for seeds
+    if(is.null(seeds)){
+      
+      # Perform parallel processing
+      results <- silent_call(
+        future.apply::future_lapply(
+          X = seq_len(iterations),
+          function(iteration){
+            silent_call( # Ensures quiet run with all arguments passed on
+              FUN(datalist[[iteration]], ...)
+            )
+          },
+          future.globals = export,
+          future.seed = NULL
+        )
       )
-    )
+      
+    }else{
+     
+      # Perform parallel processing
+      results <- silent_call(
+        future.apply::future_lapply(
+          X = seq_len(iterations),
+          function(iteration){
+            silent_call( # Ensures quiet run with all arguments passed on
+              FUN(datalist[[iteration]], seed = seeds[iteration], ...)
+            )
+          },
+          future.globals = export,
+          future.seed = NULL
+        )
+      )
+       
+    }
     
   }
   
@@ -580,9 +650,23 @@ format_integer <- function(numbers, places)
 #' @noRd
 # Gets base `EGA` object that are necessary for most
 # functions in {EGAnet}
-# Updated 06.07.2023
+# Updated 07.07.2023
 get_EGA_object <- function(object)
 {
+  
+  # `dynEGA` is a special case
+  if(is(object, "dynEGA")){
+    
+    # Regardless of level, return all
+    return(
+      list(
+        population = object$dynEGA$population,
+        group = object$dynEGA$group,
+        individual = object$dynEGA$individual
+      )
+    )
+    
+  }
   
   # `bootEGA` has some precedence with
   # empirical `EGA` object nested
@@ -1155,17 +1239,19 @@ silent_plot <- function(...)
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #' @noRd
-# Strip classes and attributes from {EGAnet}
-# Updated 01.07.2023
+# Strip classes and attributes
+# Updated 09.07.2023
 remove_attributes <- function(object)
 {
   
-  # First, remove the "methods" attribute
-  if("methods" %in% names(attributes(object))){
-    attr(object, "methods") <- NULL
-  }
+  # Remove all except special attributes (see `?structure`)
+  attributes(object) <- attributes(object)[
+    names(attributes(object)) %in% c(
+      "dim", "dimnames", "names", "tsp", "levels"
+    )
+  ]
   
-  # Return object
+  # Return unclassed object
   return(unclass(object))
   
 }
@@ -2079,7 +2165,7 @@ dimension_comparison <- function(original, comparison){
 
 #' @noRd
 # Basic set up for comparing plots ----
-# Updated 03.07.2023
+# Updated 07.07.2023
 compare_plots <- function(comparison_network, comparison_wc, plot_ARGS)
 {
   
@@ -2114,7 +2200,7 @@ compare_plots <- function(comparison_network, comparison_wc, plot_ARGS)
   ## Essentially, the same call but allows some freedom
   plot_ARGS[c(
     "net", "node.color", "edge.alpha",
-    "edge.color", "edge.size"
+    "edge.color", "edge.lty", "edge.size"
   )] <- NULL
   
   # Send on and return from `basic_plot_setup`
@@ -2127,8 +2213,26 @@ compare_plots <- function(comparison_network, comparison_wc, plot_ARGS)
 #%%%%%%%%%%%%%%%%%%%%%
 
 #' @noRd
+# Error for class ----
+# Updated 09.07.2023
+class_error <- function(input, expected_class){
+  
+  # Check for object types
+  if(!is(input, expected_class)){
+    stop(
+      paste0(
+        "Input into '", deparse(substitute(input)),
+        "' is not class ", paste0("'", expected_class, "'", collapse = ", "),
+        ". Input is ", paste0("'", class(input), "'", collapse = ", ")
+      ), call. = FALSE
+    )
+  }
+  
+}
+
+#' @noRd
 # Error for object type ----
-# Updated 05.07.2023
+# Updated 09.07.2023
 object_error <- function(input, expected_type){
   
   # Get input type
@@ -2137,11 +2241,10 @@ object_error <- function(input, expected_type){
   # Check for object types
   if(!input_type %in% expected_type){
     stop(
-      paste(
+      paste0(
         "Input into '", deparse(substitute(input)),
-        "' argument is not ", paste("'", expected_type, "'", sep = "", collapse = ", "),
-        ". Input is ", paste("'", input_type, "'", sep = "", collapse = ", "),
-        sep = ""
+        "' argument is not ", paste0("'", expected_type, "'", collapse = ", "),
+        ". Input is ", paste0("'", input_type, "'", collapse = ", ")
       ), call. = FALSE
     )
   }
@@ -2150,7 +2253,7 @@ object_error <- function(input, expected_type){
 
 #' @noRd
 # Error for `typeof` ----
-# Updated 05.07.2023
+# Updated 09.07.2023
 typeof_error <- function(input, expected_value){
   
   # Switch out "closure" with "function"
@@ -2176,12 +2279,11 @@ typeof_error <- function(input, expected_value){
   # Check for value
   if(!typeof_input %in% expected_value){
     stop(
-      paste(
+      paste0(
         "Input into '", deparse(substitute(input)),
         "' argument is not ", 
         paste0("'", expected_value, "'", collapse = ", "),
-        ". Input is ", paste("'", typeof_input, "'", sep = "", collapse = ", "),
-        sep = ""
+        ". Input is ", paste("'", typeof_input, "'", sep = "", collapse = ", ")
       ), call. = FALSE
     )
   }
@@ -2190,17 +2292,16 @@ typeof_error <- function(input, expected_value){
 
 #' @noRd
 # Error for `length` ----
-# Updated 05.07.2023
+# Updated 09.07.2023
 length_error <- function(input, expected_lengths){
   
   # Check for length of input in expected length
   if(!length(input) %in% expected_lengths){
     stop(
-      paste(
+      paste0(
         "Length of '", deparse(substitute(input)),
         "' (", length(input),") does not match expected length(s). Length must be: ",
-        paste("'", expected_lengths, "'", collapse = " or ", sep = ""),
-        sep = ""
+        paste0("'", expected_lengths, "'", collapse = " or ")
       ), call. = FALSE
     )
   }
@@ -2209,7 +2310,7 @@ length_error <- function(input, expected_lengths){
 
 #' @noRd
 # Error for `range` ----
-# Updated 05.07.2023
+# Updated 09.07.2023
 range_error <- function(input, expected_ranges){
   
   # Obtain expected maximum and minimum values
@@ -2223,11 +2324,10 @@ range_error <- function(input, expected_ranges){
   # Check for maximum of input in expected range
   if(actual_maximum > expected_maximum){
     stop(
-      paste(
+      paste0(
         "Maximum of '", deparse(substitute(input)),
         "' (", actual_maximum,") does not match expected range(s). Range must be between: ",
-        paste0("'", expected_ranges, "'", collapse = " and "),
-        sep = ""
+        paste0("'", expected_ranges, "'", collapse = " and ")
       ), call. = FALSE
     )
   }
@@ -2235,11 +2335,10 @@ range_error <- function(input, expected_ranges){
   # Check for maximum of input in expected range
   if(actual_minimum < expected_minimum){
     stop(
-      paste(
+      paste0(
         "Minimum of '", deparse(substitute(input)),
         "' (", actual_minimum,") does not match expected range(s). Range must be between: ",
-        paste0("'", expected_ranges, "'", collapse = " and "),
-        sep = ""
+        paste0("'", expected_ranges, "'", collapse = " and ")
       ), call. = FALSE
     )
   }

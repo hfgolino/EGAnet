@@ -2,20 +2,11 @@
 % Please edit documentation in R/summarys.R
 \name{summarys}
 \alias{summarys}
-\alias{summary.dynEGA}
-\alias{summary.dynEGA.Groups}
-\alias{summary.dynEGA.Individuals}
 \alias{summary.NetLoads}
 \alias{summary.invariance}
 \alias{summary.hierEGA}
 \title{S3Methods for summarying}
 \usage{
-\method{summary}{dynEGA}(object,  ...)
-
-\method{summary}{dynEGA.Groups}(object, ...)
-
-\method{summary}{dynEGA.Individuals}(object, ...)
-
 \method{summary}{NetLoads}(object, ...)
 
 \method{summary}{invariance}(object, ...)

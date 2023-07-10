@@ -9,6 +9,7 @@ extern SEXP r_polychoric_correlation_matrix(SEXP r_input_matrix, SEXP r_empty_me
 extern SEXP _EGAnet_r_sample_with_replacement(SEXP n, SEXP seed);
 extern SEXP _EGAnet_r_sample_without_replacement(SEXP arr, SEXP seed);
 extern SEXP _EGAnet_r_sample_seeds(SEXP n, SEXP seed);
+extern SEXP _EGAnet_r_random_uniform(SEXP n, SEXP min, SEXP max, SEXP seed);
 
 
 // Register native routine
@@ -43,6 +44,11 @@ static const R_CallMethodDef CallEntries[] = {
         "_EGAnet_r_sample_seeds", // Name of function call in R
         (DL_FUNC)&_EGAnet_r_sample_seeds, // Name of C function
          2 // Number of arguments
+    },
+    {
+        "_EGAnet_r_random_uniform", // Name of function call in R
+        (DL_FUNC)&_EGAnet_r_random_uniform, // Name of C function
+         4 // Number of arguments
     },
     {NULL, NULL, 0}
 

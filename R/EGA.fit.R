@@ -169,7 +169,7 @@
 #'
 #' @export
 # EGA fit
-# Updated 05.07.2023
+# Updated 07.07.2023
 EGA.fit <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -191,45 +191,24 @@ EGA.fit <- function(
   # Obtain ellipse arguments
   ellipse <- list(...)
   
-  # Set objective function to NULL
-  objective_function <- NULL
+  # Get fit function
+  fit_FUN <- switch(
+    algorithm, # other algorithms error in `set_default`
+    "walktrap" = walktrap_fit,
+    "louvain" = louvain_fit,
+    "leiden" = leiden_fit
+  )
   
-  # `EGA.estimate` will handle the data processing (e.g., correlations)
-  ## Branch for algorithm
-  if(algorithm == "walktrap"){
-    
-    # Perform Walktrap parameter sweep
-    fit_result <- walktrap_fit(
-      data = data, n = n, corr = corr,
-      na.data = na.data, model = model, 
-      algorithm = algorithm, verbose = verbose, 
-      ellipse = ellipse
-    )
-    
-  }else if(algorithm == "louvain"){
-    
-    # Perform Louvain parameter sweep
-    fit_result <- louvain_fit(
-      data = data, n = n, corr = corr,
-      na.data = na.data, model = model, 
-      algorithm = algorithm, verbose = verbose, 
-      ellipse = ellipse
-    )
-    
-  }else if(algorithm == "leiden"){
-
-    # Perform Leiden parameter sweep
-    fit_result <- leiden_fit(
-      data = data, n = n, corr = corr,
-      na.data = na.data, model = model, 
-      algorithm = algorithm, verbose = verbose, 
-      ellipse = ellipse
-    )
-    
-    # Update objective function
-    objective_function <- fit_result$objective_function
-    
-  }
+  # Get result
+  ## `EGA.estimate` will handle the data processing (e.g., correlations)
+  fit_result <- fit_FUN(
+    data = data, n = n, corr = corr,
+    na.data = na.data, model = model, 
+    verbose = verbose, ellipse = ellipse
+  )
+  
+  # Set objective function (will be NULL for Louvain and Walktrap)
+  objective_function <- fit_result$objective_function
   
   # Obtain only unique solutions
   search_unique <- unique_solutions(fit_result$search_matrix)
@@ -442,7 +421,7 @@ plot.EGA.fit <- function(x, ...)
 
 #' @noRd
 # Determine unique solutions ----
-# Updated 26.06.2023 
+# Updated 07.07.2023 
 unique_solutions <- function(search_matrix)
 {
 
@@ -468,11 +447,11 @@ unique_solutions <- function(search_matrix)
   
   # Check for errors to send
   if(singleton_rows == 0){
-    stop("All solutions were determined to include at least one singleton community")
+    stop("All solutions were determined to include at least one singleton community", call. = FALSE)
   }else if(singleton_rows == 1 & unidimensional_rows == 0){
-    stop("All solutions were determined to be unidimensional and/or at least one singleton community")
+    stop("All solutions were determined to be unidimensional and/or at least one singleton community", call. = FALSE)
   }else if(unidimensional_rows == 0){
-    stop("All solutions were determined to be unidimensional")
+    stop("All solutions were determined to be unidimensional", call. = FALSE)
   }
   
   # Return unique solutions
@@ -482,10 +461,10 @@ unique_solutions <- function(search_matrix)
 
 #' @noRd
 # Fit for Walktrap ----
-# Updated 27.06.2023
+# Updated 07.07.2023
 walktrap_fit <- function(
     data, n, corr, na.data, model,
-    algorithm, verbose, ellipse
+    verbose, ellipse
 )
 {
   
@@ -513,7 +492,7 @@ walktrap_fit <- function(
       list( # Necessary call
         data = data, n = n, corr = corr,
         na.data = na.data, model = model,
-        algorithm = algorithm, verbose = verbose,
+        algorithm = "walktrap", verbose = verbose,
         steps = steps[1]
       ),
       ellipse # pass on ellipse
@@ -538,7 +517,7 @@ walktrap_fit <- function(
       args = c(
         list( # Necessary call
           network = ega_result$network,
-          algorithm = algorithm,
+          algorithm = "walktrap",
           steps = steps[i]
         ),
         ellipse # pass on ellipse
@@ -559,10 +538,10 @@ walktrap_fit <- function(
 
 #' @noRd
 # Fit for Louvain ----
-# Updated 27.06.2023
+# Updated 07.07.2023
 louvain_fit <- function(
     data, n, corr, na.data, model,
-    algorithm, verbose, ellipse
+    verbose, ellipse
 )
 {
   
@@ -590,7 +569,7 @@ louvain_fit <- function(
       list( # Necessary call
         data = data, n = n, corr = corr,
         na.data = na.data, model = model,
-        algorithm = algorithm, verbose = verbose,
+        algorithm = "louvain", verbose = verbose,
         resolution_parameter = resolution_parameter[1]
       ),
       ellipse # pass on ellipse
@@ -635,10 +614,10 @@ louvain_fit <- function(
 
 #' @noRd
 # Fit for Leiden ----
-# Updated 27.06.2023
+# Updated 07.07.2023
 leiden_fit <- function(
     data, n, corr, na.data, model,
-    algorithm, verbose, ellipse
+    verbose, ellipse
 )
 {
   
@@ -664,7 +643,7 @@ leiden_fit <- function(
       list( # Necessary call
         data = data, n = n, corr = corr,
         na.data = na.data, model = model,
-        algorithm = algorithm, verbose = verbose,
+        algorithm = "leiden", verbose = verbose,
         resolution_parameter = 0,
         # start with resolution parameter at zero
         # zero is guaranteed to be unidimensional
@@ -716,7 +695,7 @@ leiden_fit <- function(
       args = c(
         list( # Necessary call
           network = ega_result$network,
-          algorithm = algorithm,
+          algorithm = "leiden",
           resolution_parameter = resolution_parameter[i],
           objective_function = objective_function
         ),

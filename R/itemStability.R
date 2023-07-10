@@ -437,7 +437,7 @@ plot.itemStability <- function(x, ...)
 
 #' @noRd
 # Argument Deprecation
-# Updated 05.07.2023
+# Updated 06.07.2023
 itemStability_deprecation <- function(ellipse)
 {
   
@@ -446,7 +446,8 @@ itemStability_deprecation <- function(ellipse)
     
     # Give deprecation warning
     warning(
-      "The 'orig.wc' argument has been deprecated.\n\nInstead, use the 'structure'"
+      "The 'orig.wc' argument has been deprecated.\n\nInstead, use the 'structure'",
+      call. = FALSE
     )
     
     # Overwrite structure argument
@@ -459,7 +460,7 @@ itemStability_deprecation <- function(ellipse)
   
   # Give warning for 'item.freq'
   if("item.freq" %in% names(ellipse)){
-    warning("The 'item.freq' argument has been deprecated")
+    warning("The 'item.freq' argument has been deprecated", call. = FALSE)
   }
   
   # Check if 'plot.item.rep' has been input as an argument
@@ -470,7 +471,7 @@ itemStability_deprecation <- function(ellipse)
       paste(
         "The 'plot.item.rep' argument has been deprecated.\n\nInstead use: IS.plot =", 
         ellipse$plot.item.rep
-      )
+      ), call. = FALSE
     )
     
     # Handle the plot appropriately

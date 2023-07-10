@@ -105,8 +105,8 @@ glla <- function(x, n.embed, tau, delta, order){
 # computations of the same exact matrices when performing
 # sample-wide dynamic EGA. By pre-computing the L matrix,
 # embeddings can be multiplied by the same L matrix without
-# the need to compute it for every single participant
-# Updated 06.07.2023
+# the need to compute it for every single participant x variable
+# Updated 07.07.2023
 glla_setup <- function(n.embed, tau, delta, order)
 {
   

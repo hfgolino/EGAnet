@@ -4,7 +4,15 @@
 \alias{boot.ergoInfo}
 \title{Bootstrap Test for the Ergodicity Information Index}
 \usage{
-boot.ergoInfo(dynEGA.object, EII, iter = 100, ncores, progress = TRUE)
+boot.ergoInfo(
+  dynEGA.object,
+  EII,
+  use = c("edge.list", "unweighted"),
+  iter = 100,
+  ncores,
+  seed = 1234,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{dynEGA.object}{A \code{\link[EGAnet]{dynEGA}} or a

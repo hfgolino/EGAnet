@@ -2,20 +2,11 @@
 % Please edit documentation in R/prints.R
 \name{prints}
 \alias{prints}
-\alias{print.dynEGA}
-\alias{print.dynEGA.Groups}
-\alias{print.dynEGA.Individuals}
 \alias{print.NetLoads}
 \alias{print.invariance}
 \alias{print.hierEGA}
 \title{S3Methods for Printing}
 \usage{
-\method{print}{dynEGA}(x,  ...)
-
-\method{print}{dynEGA.Groups}(x, ...)
-
-\method{print}{dynEGA.Individuals}(x, ...)
-
 \method{print}{NetLoads}(x, ...)
 
 \method{print}{invariance}(x, ...)

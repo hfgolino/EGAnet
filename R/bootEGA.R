@@ -495,7 +495,7 @@ bootEGA <- function(
 # verbose = TRUE; seed = 1234
 # r_sample_seeds <- EGAnet:::r_sample_seeds
 # r_sample_with_replacement <- EGAnet:::r_sample_with_replacement
-# r_sample_without_replacemetn <- EGAnet:::r_sample_without_replacement
+# r_sample_without_replacement <- EGAnet:::r_sample_without_replacement
 # Need above functions for testing!
 
 #' @exportS3Method 
@@ -588,7 +588,7 @@ print.bootEGA <- function(x, ...)
   # Print frequency table
   frequency_df <- as.data.frame(
     do.call(rbind, lapply(x$frequency, as.character))
-  );
+  )
   # Adjust dimension names (`dimnames` doesn't work)
   colnames(frequency_df) <- NULL
   row.names(frequency_df) <- c("", "Frequency: ")
@@ -690,8 +690,8 @@ prepare_bootEGA_results <- function(boot_object, iter)
 
 #' @noRd
 # Typical Walktrap `EGA.fit` ----
-# Updated 06.07.2023
-typical_walktrap_fit <- function(network, algorithm, dimensions, ellipse)
+# Updated 07.07.2023
+typical_walktrap_fit <- function(network, dimensions, ellipse)
 {
   
   # Check for parameter search space
@@ -719,7 +719,7 @@ typical_walktrap_fit <- function(network, algorithm, dimensions, ellipse)
         args = c(
           list( # Necessary call
             network = network,
-            algorithm = algorithm,
+            algorithm = "walktrap",
             steps = step
           ),
           ellipse # pass on ellipse
@@ -745,8 +745,8 @@ typical_walktrap_fit <- function(network, algorithm, dimensions, ellipse)
 
 #' @noRd
 # Typical Leiden `EGA.fit` ----
-# Updated 06.07.2023
-typical_leiden_fit <- function(network, algorithm, dimensions, ellipse)
+# Updated 07.07.2023
+typical_leiden_fit <- function(network, dimensions, ellipse)
 {
   
   # Check for objective function
@@ -796,7 +796,7 @@ typical_leiden_fit <- function(network, algorithm, dimensions, ellipse)
         args = c(
           list( # Necessary call
             network = network,
-            algorithm = algorithm,
+            algorithm = "leiden",
             resolution_parameter = resolution_parameter,
             objective_function = objective_function
           ),
@@ -823,8 +823,8 @@ typical_leiden_fit <- function(network, algorithm, dimensions, ellipse)
 
 #' @noRd
 # Typical Louvain `EGA.fit` ----
-# Updated 06.07.2023
-typical_louvain_fit <- function(network, algorithm, dimensions, ellipse)
+# Updated 07.07.2023
+typical_louvain_fit <- function(network, dimensions, ellipse)
 {
   
   # Check for parameter search space
@@ -878,13 +878,16 @@ typical_louvain_fit <- function(network, algorithm, dimensions, ellipse)
 #' @noRd
 # Typical `EGA.fit` memberships ----
 # Needs to be handled consistently
-# Updated 06.07.2023
+# Updated 07.07.2023
 estimate_typical_EGA.fit <- function(results, ellipse)
 {
   
+  # Get proper EGA object
+  ega_object <- get_EGA_object(results)
+  
   # Attributes from empirical EGA
-  model_attributes <- attr(results$EGA$EGA$network, "methods")
-  algorithm_attributes <- attr(results$EGA$EGA$wc, "methods")
+  model_attributes <- attr(ega_object$network, "methods")
+  algorithm_attributes <- attr(ega_object$wc, "methods")
   
   # Set model, algorithm and unidimensional method
   model <- tolower(model_attributes$model)
@@ -899,21 +902,24 @@ estimate_typical_EGA.fit <- function(results, ellipse)
   )
   
   # Make sure proper names are there
-  dimnames(network) <- dimnames(results$EGA$EGA$network)
+  dimnames(network) <- dimnames(ega_object$network)
   
   # Get network dimensions
   dimensions <- dim(network)
   
-  # Set objective function to NULL
-  objective_function <- NULL
-  
-  # Branch for fit and obtain search matrix
-  fit_result <- switch(
+  # Branch for fit function
+  fit_FUN <- switch(
     algorithm,
-    "walktrap" = typical_walktrap_fit(network, algorithm, dimensions, ellipse),
-    "leiden" = typical_leiden_fit(network, algorithm, dimensions, ellipse),
-    "louvain" = typical_louvain_fit(network, algorithm, dimensions, ellipse)
+    "walktrap" = typical_walktrap_fit,
+    "leiden" = typical_leiden_fit,
+    "louvain" = typical_louvain_fit
   )
+  
+  # Get fit result
+  fit_result <- fit_FUN(network, dimensions, ellipse)
+  
+  # Set objective function (will be NULL for Louvain and Walktrap)
+  objective_function <- fit_result$objective_function
   
   # Obtain only unique solutions
   search_unique <- unique_solutions(fit_result$search_matrix)
@@ -921,7 +927,7 @@ estimate_typical_EGA.fit <- function(results, ellipse)
   # Determine best fitting solution
   fit_values <- apply(
     search_unique, 1, function(membership){
-      tefi(results$EGA$EGA$correlation, membership)
+      tefi(ega_object$correlation, membership)
     }$VN.Entropy.Fit
   )
   
@@ -949,7 +955,7 @@ estimate_typical_EGA.fit <- function(results, ellipse)
   # Set up dimension variables data frame
   ## Mainly for legacy, redundant with named `wc`
   dim.variables <- fast.data.frame(
-    c(dimnames(results$EGA$EGA$network)[[2]], best_solution),
+    c(dimnames(ega_object$network)[[2]], best_solution),
     nrow = dimensions[2], ncol = 2,
     colnames = c("items", "dimension")
   )

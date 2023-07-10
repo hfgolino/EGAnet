@@ -2,6 +2,16 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #' @noRd
+r_sample_seeds <- function(n, seed = 0L) {
+    .Call(`_EGAnet_r_sample_seeds`, n, seed)
+}
+
+#' @noRd
+r_random_uniform <- function(n, min = 0, max = 1, seed = 0L) {
+    .Call(`_EGAnet_r_random_uniform`, n, min, max, seed)
+}
+
+#' @noRd
 r_sample_without_replacement <- function(arr, seed) {
     .Call(`_EGAnet_r_sample_without_replacement`, arr, seed)
 }
@@ -9,10 +19,5 @@ r_sample_without_replacement <- function(arr, seed) {
 #' @noRd
 r_sample_with_replacement <- function(n, seed) {
     .Call(`_EGAnet_r_sample_with_replacement`, n, seed)
-}
-
-#' @noRd
-r_sample_seeds <- function(n, seed = 0L) {
-    .Call(`_EGAnet_r_sample_seeds`, n, seed)
 }
 
