@@ -10,7 +10,6 @@ boot.ergoInfo(
   use = c("edge.list", "unweighted"),
   iter = 100,
   ncores,
-  seed = 1234,
   verbose = TRUE
 )
 }

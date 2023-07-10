@@ -154,7 +154,7 @@
 #'
 #' @export
 #'
-# Updated 28.08.2022
+# Updated 10.07.2023
 dynEGA.ind.pop <- function(data, n.embed, tau = 1, delta = 1,
                            id = NULL,
                            use.derivatives = 1,
@@ -164,6 +164,20 @@ dynEGA.ind.pop <- function(data, n.embed, tau = 1, delta = 1,
                            uni.method = c("expand", "LE", "louvain"),
                            ncores, progress = TRUE, ...){
 
+  
+  # Use `dynEGA`
+  return(
+    dynEGA(
+      data = data, n.embed = n.embed, tau = tau,
+      delta = delta, id = id, use.derivatives = use.derivatives,
+      level = c("population", "individual"),
+      model = model, model.args = model.args, algorithm = algorithm,
+      algorithm.args = algorithm.args, corr = corr, uni.method = uni.method,
+      ncores = ncores, verbose = progress, ...
+    )
+  )
+  
+  
   # Get additional arguments
   add.args <- list(...)
 

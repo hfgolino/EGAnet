@@ -349,7 +349,7 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 06.07.2023
+# Updated 10.07.2023
 bootEGA <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -360,7 +360,7 @@ bootEGA <- function(
     iter = 500, type = c("parametric", "resampling"),
     ncores, EGA.type = c("EGA", "EGA.fit", "hierEGA", "riEGA"),
     typicalStructure = TRUE, plot.typicalStructure = TRUE,
-    verbose = TRUE, seed = 1234,
+    verbose = TRUE, # seed = 1234,
     ...
 ) 
 {
@@ -427,7 +427,7 @@ bootEGA <- function(
   bootstrap_data <- reproducible_bootstrap(
     data = data, samples = iter, cases = empirical_EGA_output$n,
     mu = rep(0, dimensions[2]), Sigma = empirical_EGA_output$correlation,
-    seed = seed, type = type
+    type = type # , seed = seed
   )
   
   # Perform bootstrap using parallel processing

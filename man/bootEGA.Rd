@@ -19,7 +19,6 @@ bootEGA(
   typicalStructure = TRUE,
   plot.typicalStructure = TRUE,
   verbose = TRUE,
-  seed = 1234,
   ...
 )
 }
@@ -177,11 +176,11 @@ which is the median of all pairwise correlations over the \emph{n} bootstraps,
 and its estimated dimensions.
 Defaults to \code{TRUE}}
 
-\item{seed}{Numeric.
-Seed to reproduce results. Defaults to \code{1234}. For random results, set to \code{NULL}}
-
 \item{...}{Additional arguments.
 Used for deprecated arguments from previous versions of \code{\link{EGA}}}
+
+\item{seed}{Numeric.
+Seed to reproduce results. Defaults to \code{1234}. For random results, set to \code{NULL}}
 
 \item{model.args}{List.
 A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}

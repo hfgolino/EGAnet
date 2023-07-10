@@ -221,14 +221,14 @@ symmetric_matrix_lapply <- function(X, FUN, ...){
 # functions were written in C++ with the assistance
 # of GPT-4 
 
-#' @noRd
-# Random normal wrapper ----
-# About 4.5x faster than R's `rnorm`
-# Updated 24.06.2023
-rnorm_ziggurat <- function(n, mean = 0, sd = 1)
-{
-  return(mean + sd * RcppZiggurat::zrnorm(n))
-}
+
+# # Random normal wrapper ----
+# # About 4.5x faster than R's `rnorm`
+# # Updated 24.06.2023
+# rnorm_ziggurat <- function(n, mean = 0, sd = 1)
+# {
+#   return(mean + sd * RcppZiggurat::zrnorm(n))
+# }
 
 #' @noRd
 # Generate multivariate normal data ----
@@ -277,16 +277,17 @@ MASS_mvrnorm <- function(
 # Pre-computes `np` (n * p)
 # Avoids repeated calls to `eigen` in `MASS_mvrnorm`
 # Pre-computes `eS$vectors %*% diag(sqrt(pmax(ev, 0)), p)`
-# Updated 03.07.2023
+# Updated 10.07.2023
 MASS_mvrnorm_quick <- function(n, mu, np, coV)
 {
-  return(t(mu + tcrossprod(coV, matrix(rnorm_ziggurat(np), nrow = n))))
+  # return(t(mu + tcrossprod(coV, matrix(rnorm_ziggurat(np), nrow = n))))
+  return(t(mu + tcrossprod(coV, matrix(rnorm(np), nrow = n))))
 }
 
 #' @noRd
 # Generate reproducible parametric bootstrap ----
 # A wrapper over `rnorm_ziggurat` and `MASS_mvrnorm_quick`
-# Updated 03.07.2023
+# Updated 10.07.2023
 reproducible_parametric <- function(
     samples, cases, mu, Sigma, seed
 )
@@ -300,78 +301,82 @@ reproducible_parametric <- function(
   # avoids repeated matrix multiplication
   
   # Next, set seed for random normal generation
-  RcppZiggurat::zsetseed(seed)
+  # RcppZiggurat::zsetseed(seed)
   # Seed does *not* affect R's seed and RNG
   
   # Then, generate samples
   return(
     lapply(
-      seq_len(samples), 
-      function(iteration){
-        MASS_mvrnorm_quick(n = cases, mu = mu, np = np, coV = coV)
+      seq_len(samples), function(iteration){
+        MASS_mvrnorm_quick(
+          n = cases, mu = mu, np = np, coV = coV
+        )
       }
     )
   )
   
 }
 
-#' @noRd
-# Generate reproducible seed ----
-# Seed generation that does *not* affect R's RNG
-# Get seeds from zero up to 32-bit maximum
-# `0` is reserved for random seed
-# Updated 17.06.2023
-reproducible_seed <- function(n, seed = NULL)
-{
-  return(r_sample_seeds(n, ifelse(is.null(seed), 0, seed)))
-}
+# # Generate reproducible seed ----
+# # Seed generation that does *not* affect R's RNG
+# # Get seeds from zero up to 32-bit maximum
+# # `0` is reserved for random seed
+# # Updated 17.06.2023
+# reproducible_seed <- function(n, seed = NULL)
+# {
+#   return(r_sample_seeds(n, ifelse(is.null(seed), 0, seed)))
+# }
 
-#' @noRd
-# Generate reproducible shuffling ----
-# About 6x faster than R's `sample`
-# Updated 01.07.2023
-reproducible_sample <- function(
-    x, size, replace, seed
-){
-  
-  # Check for with replacement
-  if(isTRUE(replace)){ # With replacement
-    
-    # Get indices
-    ## Implemented in C++
-    ## Internal function
-    shuffled_indices <- r_sample_with_replacement(size, seed)
-    
-  }else{ # Without replacement
-    
-    # Get indices
-    ## Implemented in C++
-    ## Internal function
-    shuffled_indices <- r_sample_without_replacement(seq_len(size), seed)
-    
-  }
-  
-  # Return shuffled data
-  return(x[shuffled_indices])
-  
-}
+# # Generate reproducible shuffling ----
+# # About 6x faster than R's `sample`
+# # Updated 01.07.2023
+# reproducible_sample <- function(
+#     x, size, replace, seed
+# ){
+#   
+#   # Check for with replacement
+#   if(isTRUE(replace)){ # With replacement
+#     
+#     # Get indices
+#     ## Implemented in C++
+#     ## Internal function
+#     shuffled_indices <- r_sample_with_replacement(size, seed)
+#     
+#   }else{ # Without replacement
+#     
+#     # Get indices
+#     ## Implemented in C++
+#     ## Internal function
+#     shuffled_indices <- r_sample_without_replacement(seq_len(size), seed)
+#     
+#   }
+#   
+#   # Return shuffled data
+#   return(x[shuffled_indices])
+#   
+# }
 
 #' @noRd
 # Generate reproducible resampling bootstrap ----
 # (multivariate normal samples)
 # A wrapper over `reproducible_seed` and `reproducible_sample`
-# Updated 03.07.2023
+# Updated 10.07.2023
 reproducible_resampling <- function(
-    data, samples, cases, seed
+    data, samples, cases# , seed
 )
 {
+  
+  # Get sequence of cases (avoids repeated calculations)
+  case_sequence <- seq_len(cases)
   
   # More direct approach than calling `reproducible_sample`
   return(
     lapply(
-      reproducible_seed(n = samples, seed = seed),
+      seq_len(samples),
+      # reproducible_seed(n = samples, seed = seed),
       function(single_seed){
-        data[r_sample_with_replacement(n = cases, seed = single_seed),]
+        # data[r_sample_with_replacement(n = cases, seed = single_seed),]
+        data[sample(x = case_sequence, size = cases, replace = TRUE)]
       }
     )
   )
@@ -382,9 +387,9 @@ reproducible_resampling <- function(
 # Generate reproducible bootstrap data ----
 # Wrapper for `reproducible_parametric` and
 # `reproducible_resampling`
-# Updated 01.07.2023
+# Updated 10.07.2023
 reproducible_bootstrap <- function(
-    data = NULL, samples, cases, mu = NULL, Sigma = NULL, seed,
+    data = NULL, samples, cases, mu = NULL, Sigma = NULL, # seed,
     type = c("parametric", "resampling")
 )
 {
@@ -396,7 +401,7 @@ reproducible_bootstrap <- function(
     return(
       bootstrap_samples <- reproducible_parametric(
         samples = samples, cases = cases,
-        mu = mu, Sigma = Sigma, seed = seed
+        mu = mu, Sigma = Sigma# , seed = seed
       )
     )
     
@@ -406,7 +411,7 @@ reproducible_bootstrap <- function(
     return(
       reproducible_resampling(
         data = data, samples = samples,
-        cases = cases, seed = seed
+        cases = cases# , seed = seed
       )
     )
     
@@ -426,7 +431,6 @@ parallel_process <- function(
     datalist, # list of data
     FUN, # function to use
     ..., # ellipse arguments to pass on
-    seeds = NULL, # if there are seeds to pass on
     export = TRUE, # variables to export (if necessary)
     ncores, # number of cores
     progress = TRUE # progress bar
@@ -449,111 +453,52 @@ parallel_process <- function(
       )
     )
     
-    # Check for random seeds
-    if(is.null(seeds)){
+    # Run progress locally
+    progressr::with_progress({
       
-      # Run progress locally
-      progressr::with_progress({
-        
-        # Initialize progress bar
-        progressbar <- progressr::progressor(iterations / ncores)
-        
-        # Perform parallel processing
-        results <- future.apply::future_lapply(
-          X = seq_len(iterations),
-          function(iteration){
-            
-            # Update progress with full cores completion
-            # (rather than every completion)
-            if(iteration %% ncores == 0){
-              progressbar()
-            }
-            
-            # Return results
-            return(
-              silent_call( # Ensures quiet run with all arguments passed on
-                FUN(datalist[[iteration]], ...)
-              )
-            )
-            
-          },
-          future.globals = export,
-          future.seed = NULL
-        )
-        
-      })
-      
-    }else{
-      
-      # Run progress locally
-      progressr::with_progress({
-        
-        # Initialize progress bar
-        progressbar <- progressr::progressor(iterations / ncores)
-        
-        # Perform parallel processing
-        results <- future.apply::future_lapply(
-          X = seq_len(iterations),
-          function(iteration){
-            
-            # Update progress with full cores completion
-            # (rather than every completion)
-            if(iteration %% ncores == 0){
-              progressbar()
-            }
-            
-            # Return results
-            return(
-              silent_call( # Ensures quiet run with all arguments passed on
-                FUN(datalist[[iteration]], seed = seeds[iteration], ...)
-              )
-            )
-            
-          },
-          future.globals = export,
-          future.seed = NULL
-        )
-        
-      })
-      
-    }
-    
-  }else{
-    
-    # Check for seeds
-    if(is.null(seeds)){
+      # Initialize progress bar
+      progressbar <- progressr::progressor(iterations / ncores)
       
       # Perform parallel processing
-      results <- silent_call(
-        future.apply::future_lapply(
-          X = seq_len(iterations),
-          function(iteration){
+      results <- future.apply::future_lapply(
+        X = seq_len(iterations),
+        function(iteration){
+          
+          # Update progress with full cores completion
+          # (rather than every completion)
+          if(iteration %% ncores == 0){
+            progressbar()
+          }
+          
+          # Return results
+          return(
             silent_call( # Ensures quiet run with all arguments passed on
               FUN(datalist[[iteration]], ...)
             )
-          },
-          future.globals = export,
-          future.seed = NULL
-        )
+          )
+          
+        },
+        future.globals = export,
+        future.seed = NULL
       )
       
-    }else{
-     
-      # Perform parallel processing
-      results <- silent_call(
-        future.apply::future_lapply(
-          X = seq_len(iterations),
-          function(iteration){
-            silent_call( # Ensures quiet run with all arguments passed on
-              FUN(datalist[[iteration]], seed = seeds[iteration], ...)
-            )
-          },
-          future.globals = export,
-          future.seed = NULL
-        )
+    })
+    
+  }else{
+    
+    # Perform parallel processing
+    results <- silent_call(
+      future.apply::future_lapply(
+        X = seq_len(iterations),
+        function(iteration){
+          silent_call( # Ensures quiet run with all arguments passed on
+            FUN(datalist[[iteration]], ...)
+          )
+        },
+        future.globals = export,
+        future.seed = NULL
       )
-       
-    }
+    )
     
   }
   

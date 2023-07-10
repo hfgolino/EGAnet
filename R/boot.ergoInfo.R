@@ -92,11 +92,11 @@
 #'
 #' @export
 # Bootstrap Test for the Ergodicity Information Index
-# Updated 09.07.2023
+# Updated 10.07.2023
 boot.ergoInfo <- function(
     dynEGA.object, EII, 
     use = c("edge.list", "unweighted"),
-    iter = 100, ncores, seed = 1234,
+    iter = 100, ncores, # seed = 1234,
     verbose = TRUE
 ){
   
@@ -111,7 +111,7 @@ boot.ergoInfo <- function(
   
   # Check for EII
   if(missing(EII)){ # If missing, then compute it
-    EII <- ergoInfo(dynEGA.object, use = use, seed = 0)$EII
+    EII <- ergoInfo(dynEGA.object, use = use)$EII # , seed = 0)$EII
   }else if(is(EII, "EII")){
     use <- attr(EII, "methods")$use; EII <- EII$EII
   }
@@ -167,7 +167,6 @@ boot.ergoInfo <- function(
     iterations = iter,
     datalist = rewired_networks,
     ergoInfo, use = use,
-    seeds = runif(iter, 1, 2147483647), # 32-bit machine maximum
     ncores = ncores,
     progress = verbose
   )

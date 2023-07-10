@@ -63,8 +63,8 @@
 # Updated 10.07.2023
 ergoInfo <- function(
     dynEGA.object,
-    use = c("edge.list", "unweighted"),
-    seed = 1234
+    use = c("edge.list", "unweighted")
+    # , seed = 1234
 )
 {
   
@@ -175,19 +175,21 @@ ergoInfo <- function(
   # Get seeds for reproducible results
   # Includes default number of iterations (1000)
   # (defined in Santoro & Nicosia, 2020)
-  seed_values <- reproducible_seed(n = 1000, seed = seed)
+  # seed_values <- reproducible_seed(n = 1000, seed = seed)
+  iter_sequence <- seq_len(1000)
 
   # Get k-complexity
-  individual_kcomplexity <- nvapply(
-    seed_values, function(single_seed){
+  individual_kcomplexity <- nvapply( # seed_values,
+    iter_sequence, function(iteration){
       
       # Return k-complexity
       return(
         k_complexity(
           edge_list[ # rows
-            reproducible_sample( # reproducible `sample`
+            # reproducible_sample( # reproducible `sample`
+            sample(
               x = edge_sequence, size = edge_rows,
-              replace = TRUE, seed = single_seed
+              replace = TRUE# , seed = single_seed
             ),
             keep_weights # either pairwise edges or weights
           ]
@@ -238,16 +240,17 @@ ergoInfo <- function(
   population_edge_sequence <- seq_len(population_edge_rows)
   
   # Get k-complexity
-  population_kcomplexity <- nvapply(
-    seed_values, function(single_seed){
+  population_kcomplexity <- nvapply( # seed_values,
+    iter_sequence, function(single_seed){
       
       # Return k-complexity
       return(
         k_complexity(
           edge_list[ # rows
-            reproducible_sample( # reproducible `sample`
+            # reproducible_sample( # reproducible `sample`
+            sample(
               x = population_edge_sequence, size = population_edge_rows,
-              replace = TRUE, seed = single_seed
+              replace = TRUE# , seed = single_seed
             ),
             keep_weights # either pairwise edges or weights
           ]
