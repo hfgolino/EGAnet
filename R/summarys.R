@@ -8,7 +8,6 @@
 #'
 #' @aliases 
 #' summary.NetLoads
-#' summary.invariance
 #' summary.hierEGA
 #' 
 #' @usage 
@@ -38,15 +37,6 @@ summary.NetLoads <- function(object, ...) {
   
   print(object$std)
   message("Loadings <= |", object$minLoad, "| are blank")
-}
-
-#summary Measurement Invariance----
-# Updated 10.02.2022
-#' @export
-summary.invariance <- function(object, ...) {
-  print(object$results, row.names = FALSE)
-  cat("---\n")
-  cat("Signif. code: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 'n.s.' 1")
 }
 
 #summary Hierarchical EGA----

@@ -17,15 +17,6 @@ print.NetLoads <- function(x, ...) {
   message("Loadings <= |", x$minLoad, "| are blank")
 }
 
-#Print Measurement Invariance
-# Updated 10.02.2022
-#' @export
-print.invariance <- function(x, ...) {
-  print(x$results, row.names = FALSE)
-  cat("---\n")
-  cat("Signif. code: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 'n.s.' 1")
-}
-
 #Print Hierarchical EGA
 # Updated 16.11.2022
 #' @export
@@ -166,15 +157,6 @@ summary.NetLoads <- function(object, ...) {
   message("Loadings <= |", object$minLoad, "| are blank")
 }
 
-#summary Measurement Invariance
-# Updated 10.02.2022
-#' @export
-summary.invariance <- function(object, ...) {
-  print(object$results, row.names = FALSE)
-  cat("---\n")
-  cat("Signif. code: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 'n.s.' 1")
-}
-
 #summary Hierarchical EGA
 # Updated 09.05.2022
 #' @export
@@ -303,78 +285,6 @@ summary.Descriptives <- function(object, ...)
 }
 
 # plot() Methods ----
-
-# Plot invariance
-# Updated 07.07.2022
-#' @export
-plot.invariance <- function(
-    x, title = "", labels = NULL,
-    rows, columns,
-    plot.args = list(), ...
-)
-{
-  # Obtain structure
-  structure <- x$memberships
-  
-  # Prepare EGA results for plots
-  input_EGA <- lapply(x$groups$EGA, function(x){
-    
-    # Make class 'EGA'
-    class(x) <- "EGA"
-    
-    # Return list
-    return(x)
-    
-  })
-  
-  # Set structure
-  input_EGA <- lapply(input_EGA, function(x){
-    
-    # Set structure
-    x$wc <- structure
-    
-    # Return list
-    return(x)
-    
-  })
-  
-  # Check for labels
-  if(is.null(labels)){
-    labels <- names(input_EGA)
-  }
-  
-  # Check for rows
-  if(missing(rows)){
-    rows <- 1
-  }
-  
-  # Check for columns
-  if(missing(columns)){
-    columns <- length(input_EGA)
-  }
-  
-  # Set up plot arguments
-  if(any(x$results$p <= .05)){
-    
-    # Check for "alpha" in plot.args
-    if(!"alpha" %in% names(plot.args)){
-      plot.args$alpha <- ifelse(
-        x$results$p <= .05, .8, .2
-      )
-    }
-    
-  }
-  
-  # Obtain plots
-  plots <- compare_EGA_plots(
-    input.list = input_EGA,
-    labels = labels, rows = rows,
-    columns = columns,
-    plot.args = plot.args
-  )
-  
-}
-
 
 #Plot CFA
 # Updated 02.05.2020

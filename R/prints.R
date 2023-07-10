@@ -8,13 +8,10 @@
 #'
 #' @aliases 
 #' print.NetLoads
-#' print.invariance
 #' print.hierEGA
 #' 
 #' @usage 
 #' \method{print}{NetLoads}(x, ...)
-#' 
-#' \method{print}{invariance}(x, ...)
 #' 
 #' \method{print}{hierEGA}(x, ...)
 #' 
@@ -40,15 +37,6 @@ print.NetLoads <- function(x, ...) {
   
   print(x$std)
   message("Loadings <= |", x$minLoad, "| are blank")
-}
-
-#Print Measurement Invariance----
-# Updated 10.02.2022
-#' @export
-print.invariance <- function(x, ...) {
-  print(x$results, row.names = FALSE)
-  cat("---\n")
-  cat("Signif. code: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 'n.s.' 1")
 }
 
 #Print Hierarchical EGA----

@@ -2,7 +2,6 @@
 % Please edit documentation in R/plots.R
 \name{plots}
 \alias{plots}
-\alias{plot.invariance}
 \alias{plot.CFA}
 \title{S3Methods for Plotting}
 \usage{
@@ -11,9 +10,35 @@
 \arguments{
 \item{x}{Object from \code{EGAnet} package}
 
+\item{layout}{Character.
+Layout of plot (see \code{\link[semPlot]{semPaths}}).
+Defaults to "spring"}
+
+\item{vsize}{Numeric.
+Size of vertices in \code{\link[EGAnet]{CFA}} plots.
+Defaults to \code{6}}
+
+\item{...}{Arguments passed on to
+
+\itemize{
+
+\item{\code{\link[semPlot]{semPaths}}}
+{Functions: CFA}
+
+}}
+
+\item{ncol}{Numeric.
+Number of columns}
+
+\item{nrow}{Numeric.
+Number of rows}
+
 \item{title}{Character.
 Title of the plot.
 Defaults to \code{""}}
+
+\item{id}{Numeric.
+An integer or character indicating the ID of the individual to plot}
 
 \item{plot.args}{List.
 A list of additional arguments for the network plot. See 
@@ -43,32 +68,6 @@ See \code{\link[EGAnet]{color_palette_EGA}} for
 more details and examples}
 
 }}
-
-\item{...}{Arguments passed on to
-
-\itemize{
-
-\item{\code{\link[semPlot]{semPaths}}}
-{Functions: CFA}
-
-}}
-
-\item{vsize}{Numeric.
-Size of vertices in \code{\link[EGAnet]{CFA}} plots.
-Defaults to \code{6}}
-
-\item{layout}{Character.
-Layout of plot (see \code{\link[semPlot]{semPaths}}).
-Defaults to "spring"}
-
-\item{ncol}{Numeric.
-Number of columns}
-
-\item{nrow}{Numeric.
-Number of rows}
-
-\item{id}{Numeric.
-An integer or character indicating the ID of the individual to plot}
 
 \item{produce}{Boolean.
 This argument is used internally.

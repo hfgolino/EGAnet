@@ -219,148 +219,109 @@
 #' @export
 #'
 # Measurement Invariance
-# Updated 02.09.2022
+# Updated 10.07.2023
 invariance <- function(
-  data, groups, iter = 500, 
-  memberships = NULL,
-  type = c("loadings"),
-  corr = c("cor_auto", "pearson", "spearman"),
-  uni.method = c("expand", "LE", "louvain"),
-  model = c("glasso", "TMFG"), model.args = list(gamma = 0),
-  algorithm = c("walktrap", "leiden", "louvain"), algorithm.args = list(),
-  consensus.method = c(
-    "highest_modularity",
-    "most_common",
-    "iterative",
-    "lowest_tefi"
-  ), consensus.iter = 100, 
-  ncores, progress = TRUE
+    data, groups, iter = 500, 
+    structure = NULL, type = c("loadings"),
+    corr = c("auto", "pearson", "spearman"),
+    na.data = c("pairwise", "listwise"),
+    model = c("BGGM", "glasso", "TMFG"),  
+    algorithm = c("leiden", "louvain", "walktrap"),
+    uni.method = c("expand", "LE", "louvain"),
+    ncores, verbose = TRUE,
+    ...
 )
 {
-  # Number of processing cores
-  if(missing(ncores)){
-    ncores <- round(parallel::detectCores() / 2, 0)
-  }
   
-  # Missing arguments
+  # Check for missing arguments (argument, default, function)
+  corr <- set_default(corr, "auto", c("auto", "cor_auto", "pearson", "spearman"))
+  corr <- ifelse(corr == "cor_auto", "auto", corr) # deprecate `cor_auto`
+  na.data <- set_default(na.data, "pairwise", auto.correlate)
+  model <- set_default(model, "glasso", network.estimation)
+  algorithm <- set_default(algorithm, "walktrap", community.detection)
+  uni.method <- set_default(uni.method, "louvain", community.unidimensional)
+  if(missing(ncores)){ncores <- ceiling(parallel::detectCores() / 2)}
   
-  if(missing(model)){
-    model <- "glasso"
-  }else{model <- tolower(match.arg(model))}
+  # Send error if 'groups' is not a vector, matrix, or data frame
+  object_error(groups, c("vector", "matrix", "data.frame"))
+  groups <- force_vector(groups)
   
-  if(missing(algorithm)){
-    algorithm <- "walktrap"
-  }else if(!is.function(algorithm)){
-    algorithm <- tolower(match.arg(algorithm))
-  }
+  # Get dimensions and dimension names of the data
+  dimensions <- dim(data)
+  dimension_names <- dimnames(data)
   
-  if(missing(uni.method)){
-    uni.method <- "louvain"
-  }else if(!is.function(uni.method)){
-    uni.method <- match.arg(uni.method)
-  }
-  
-  if(missing(consensus.method)){
-    consensus.method <- "most_common"
-  }else{consensus.method <- tolower(match.arg(consensus.method))}
-  
-  if(missing(corr)){
-    corr <- "cor_auto"
-  }else{corr <- tolower(match.arg(corr))}
-  
-  # Model function
-  model.FUN <- switch(
-    model,
-    "glasso" = EBICglasso.qgraph,
-    "tmfg" = TMFG
-  )
-  
-  # Model arguments
-  model.ARGS <- obtain.arguments(
-    FUN = model.FUN,
-    FUN.args = model.args
-  )
-  
-  # Algorithm function
-  if(!is.function(algorithm)){
-    algorithm.FUN <- switch(
-      algorithm,
-      "walktrap" = igraph::cluster_walktrap,
-      "leiden" = igraph::cluster_leiden,
-      "louvain" = igraph::cluster_louvain
+  # Send error if 'data' and 'groups' differ in length
+  if(dimensions[1] != length(groups)){
+    stop(
+      "Number of cases in 'data' do not match the length of 'groups'. Please check that these numbers match: `nrow(data) == length(groups)`",
+      call. = FALSE
     )
-  }else{
-    algorithm.FUN <- algorithm
   }
   
-  # Algorithm arguments
-  algorithm.ARGS <- obtain.arguments(
-    FUN = algorithm.FUN,
-    FUN.args = algorithm.args
+  # Obtain original EGA
+  original_EGA <- EGA(
+    # Standard arguments
+    data = data, corr = corr, model = model,
+    algorithm = algorithm, uni.method = uni.method,
+    plot.EGA = FALSE, ...
+    # Legacy arguments 'model.args' and 'algorithm.args'
+    # are handled in `EGA`
   )
   
-  ## Remove weights from igraph functions' arguments
-  if("weights" %in% names(algorithm.ARGS)){
-    algorithm.ARGS[which(names(algorithm.ARGS) == "weights")] <- NULL
+  # Get ellipse arguments
+  ellipse <- list(...)
+  
+  # Check for legacy argument 'memberships
+  if("memberships" %in% names(ellipse)){
+    structure <- ellipse$memberships
   }
   
-  # Make sure data and groups match
-  if(nrow(data) != length(groups)){
-    stop("Number of cases in 'data' do not match the length of 'groups'. Please check that these numbers match: `nrow(data) == length(groups)`")
+  # Send error if 'structure' is not a vector, matrix, or data frame
+  if(!is.null(structure)){ # If not NULL
+    object_error(structure, c("vector", "matrix", "data.frame"))
+    structure <- force_vector(structure)
+  }else{ # Set structure based on original `EGA`
+    structure <- original_EGA$wc
   }
   
-  # Obtain EGA arguments
-  ega_args <- obtain.arguments(
-    FUN = EGA,
-    FUN.args = list()
-  )
-  
-  # Add data to EGA arguments
-  ega_args$data <- data
-  
-  # Set EGA arguments
-  ega_args$n <- nrow(data)
-  ega_args$corr <- corr
-  ega_args$model <- model
-  ega_args$model.args <- model.ARGS
-  ega_args$algorithm <- algorithm
-  ega_args$algorithm.args <- algorithm.ARGS
-  ega_args$uni.method <- uni.method
-  ega_args$consensus.method <- consensus.method
-  ega_args$plot.EGA <- FALSE
-  
-  # Estimate original EGA
-  original_EGA <- suppressWarnings(
-    suppressMessages(
-      do.call(
-        what = EGA,
-        args = ega_args
-      )
-    )
-  )
-  
-  # Obtain memberships if missing
-  if(is.null(memberships)){
-    memberships <- original_EGA$wc
-  }
-  
-  # Obtain unique groups
+  # Get unique groups
   unique_groups <- na.omit(unique(groups))
   
+  # Send warning about only two groups (for now)
+  if(length(unique_groups) > 2){
+    
+    # Send warning
+    warning(
+      "More than two groups is not yet supported. Using the first two groups...",
+      call. = FALSE
+    )
+    
+    # Update unique groups
+    unique_groups <- unique_groups[c(1L, 2L)]
+    
+    # Keep indices
+    keep_index <- groups %in% unique_groups
+    
+    # Update groups
+    groups <- groups[keep_index]
+    
+    # Update data
+    data <- data[keep_index,]
+    
+    # Update data dimensions
+    dimensions <- dim(data)
+    
+  }
+  
   # Obtain original group EGAs
-  group_ega <- lapply(seq_along(unique_groups), function(i){
+  group_ega <- lapply(unique_groups, function(group){
     
-    # Obtain group data
-    ega_args$data <- data[groups == unique_groups[i],]
-    
-    # Obtain network
-    suppressWarnings(
-      suppressMessages(
-        do.call(
-          what = EGA,
-          args = ega_args
-        )
-      )
+    # Return `EGA`
+    EGA(
+      data = data[groups == group,], 
+      corr = corr, model = model,
+      algorithm = algorithm, uni.method = uni.method,
+      plot.EGA = FALSE, ...
     )
     
   })
@@ -372,202 +333,93 @@ invariance <- function(
   group_loadings <- lapply(group_ega, function(x){
     
     # Obtain loadings
-    loadings <- as.matrix(net.loads(
-      A = x$network, wc = memberships
-    )$std)
+    loadings <- as.matrix(
+      net.loads(A = x$network, wc = structure)$std
+    )
     
-    # Reorder loadings
-    loadings <- loadings[colnames(data),]
-    
-    # Check for vector
-    if(is.vector(loadings)){
-      loadings <- matrix(loadings, ncol = 1)
-      colnames(loadings) <- 1
-      row.names(loadings) <- colnames(data)
-    }
-    
-    # Return loadings
-    return(loadings)
+    # Reorder and return loadings
+    return(loadings[dimension_names[[2]],, drop = FALSE])
     
   })
   
-  ## Reorder order loadings to match group 1
-  if(ncol(group_loadings[[1]]) != 1){
-    group_loadings <- lapply(group_loadings, function(x){
-      x[,colnames(group_loadings[[1]])]
-    })
-  }
+  # Ensure loadings are in the same order
+  group_loadings[[2]] <- group_loadings[[2]][
+    , dimnames(group_loadings[[1]])[[2]]
+  ]
   
   # Original difference
   original_difference <- group_loadings[[1]] - group_loadings[[2]]
   
+  # Get names of dimensions for loadings
+  community_names <- dimnames(original_difference)[[2]]
+  
   # Obtain original dominant difference
-  original_dominant_difference <- unlist(
-    lapply(seq_along(memberships), function(i){
-      original_difference[i,as.character(memberships[i])]
-    })
+  original_dominant_difference <- ulapply(
+    community_names, function(community){
+      original_difference[structure == community, community]
+    }
   )
-  names(original_dominant_difference) <- colnames(data)
   
   # Permutate groups
-  perm_groups <- lapply(1:iter, function(i){
-    sample(groups, size = length(groups), replace = FALSE)
+  perm_groups <- lapply(seq_len(iter), function(i){
+    sample(groups, size = dimensions[1], replace = FALSE)
   })
   
-  # Message for estimating permutated loadings
-  message("Performing permutations...")
-  
-  # Obtain operating system
-  os <- system.check()$OS
-  
-  # Parallelization
-  if(os == "windows"){
-    
-    # Set up parallelization
-    cl <- parallel::makeCluster(ncores)
-    
-    # Export variables (only necessary for testing)
-    # Comment out for package
-    parallel::clusterExport(
-      cl = cl,
-      varlist = c(
-        "EGA", "ega_args",
-        "memberships",
-        "net.loads",
-        "unique_groups",
-        "perm_groups",
-        "data"
-      ),
-      envir = environment()
-    )
-    
-    # Obtain permutated loadings
-    loadings_list <- pbapply::pblapply(
-      X = seq_along(perm_groups),
-      FUN = function(i){
-        
-        # Estimate loadings
-        loadings_groups <- lapply(seq_along(unique_groups), function(j){
+  # Perform permutation estimation of loadings
+  permutated_loadings <- parallel_process(
+    iterations = iter,
+    datalist = perm_groups,
+    function(
+    permutation, unique_groups, structure,
+    data, corr, model, algorithm, uni.method,
+    ...
+    ){
+      
+      # Estimate loadings
+      return( # By groups
+        lapply(unique_groups, function(group){
           
-          # Insert permutated data
-          ega_args$data <- data[which(perm_groups[[i]] == unique_groups[j]),]
           
-          # Obtain network
-          network <- do.call(
-            what = EGA,
-            args = ega_args
+          # Get network
+          network <- EGA(
+            data = data[permutation == group,], 
+            corr = corr, model = model,
+            algorithm = algorithm, uni.method = uni.method,
+            plot.EGA = FALSE, ...
           )$network
           
           # Obtain loadings
-          loadings <- net.loads(A = network, wc = memberships)$std
-          
-          # Reorder loadings
-          loadings <- loadings[colnames(data),]
-          
-          # Check for vector
-          if(is.vector(loadings)){
-            loadings <- matrix(loadings, ncol = 1)
-            colnames(loadings) <- 1
-            row.names(loadings) <- colnames(data)
-          }
+          loadings <- as.matrix(
+            net.loads(A = network, wc = structure)$std
+          )
           
           # Return loadings
           return(loadings)
           
         })
-        
-        # Name groups
-        names(loadings_groups) <- unique_groups
-        
-        # Return EGA groups
-        return(loadings_groups)
-        
-      },
-      cl = cl
-    )
-    
-    # Stop cluster
-    parallel::stopCluster(cl)
-    
-  }else{ # Mac and Linux
-    
-    loadings_list <- parallel_process(
-      datalist = seq_along(perm_groups),
-      progress = progress,
-      FUN = function(i){
-        
-        # Estimate loadings
-        loadings_groups <- lapply(seq_along(unique_groups), function(j){
-          
-          # Insert permutated data
-          ega_args$data <- data[which(perm_groups[[i]] == unique_groups[j]),]
-          
-          # Obtain network
-          network <- do.call(
-            what = EGA,
-            args = ega_args
-          )$network
-          
-          # Obtain loadings
-          loadings <- net.loads(A = network, wc = memberships)$std
-          
-          # Reorder loadings
-          loadings <- loadings[colnames(data),]
-          
-          # Check for vector
-          if(is.vector(loadings)){
-            loadings <- matrix(loadings, ncol = 1)
-            colnames(loadings) <- 1
-            row.names(loadings) <- colnames(data)
-          }
-          
-          # Return loadings
-          return(loadings)
-          
-        })
-        
-        # Name groups
-        names(loadings_groups) <- unique_groups
-        
-        # Return EGA groups
-        return(loadings_groups)
-        
-      },
-      ncores = ncores
-    )
-    
-  }
+      )
+      
+    }, 
+    # Make sure the additional objects get in
+    unique_groups = unique_groups, structure = structure,
+    data = data, corr = corr, model = model,
+    algorithm = algorithm, uni.method = uni.method, ...,
+    ncores = ncores, progress = verbose
+  )
   
-  # Compute differences
-  difference_list <- lapply(loadings_list, function(x){
-    
-    # Ensure same ordering of communities
-    x[[2]] <- x[[2]][,colnames(x[[1]])]
-    
-    # Obtain difference between groups
-    difference_loadings <- x[[1]] - x[[2]]
-    
-    # Return difference loadings
-    return(difference_loadings)
-    
+  # Compute differences (ensure same ordering)
+  difference_list <- lapply(permutated_loadings, function(x){
+    x[[1]][dimension_names[[2]], community_names] -
+      x[[2]][dimension_names[[2]], community_names]
   })
   
   # Obtain dominant loadings only
-  dominant_list <- lapply(difference_list, function(x){
-    
-    # Obtain differences for dominant loadings
-    dominant_difference <- unlist(
-      lapply(seq_along(memberships), function(i){
-        x[i,as.character(memberships[i])]
-      })
+  dominant_list <- lapply(difference_list, function(one_difference){
+    ulapply(
+      community_names, function(community){
+        one_difference[structure == community, community]
+      }
     )
-    
-    # Rename
-    names(dominant_difference) <- row.names(x)
-    
-    # Return dominant differences
-    return(dominant_difference)
-    
   })
   
   # Create results
@@ -579,16 +431,15 @@ invariance <- function(
   permutation_counts <- simplify2array(permutation_counts)
   
   ## Add a column of TRUE (original difference)
-  permutation_counts[,1] <- rep(TRUE, nrow(permutation_counts))
+  permutation_counts[,1] <- rep(TRUE, dimensions[2])
   
   ## p-value
   p_value <- rowMeans(permutation_counts, na.rm = TRUE)
   
   # Results data frame
   results_df <- data.frame(
-    Node = colnames(data),
-    Membership = memberships,
-    Difference = original_dominant_difference,
+    Membership = remove_attributes(structure),
+    Difference = round(original_dominant_difference, 3),
     p = p_value
   )
   
@@ -596,23 +447,38 @@ invariance <- function(
   results_df <- results_df[order(results_df$Membership),]
   
   # Add significance
-  sig <- ifelse(results_df$p <= .10, ".", "n.s.")
+  sig <- ifelse(results_df$p <= .10, ".", "")
   sig <- ifelse(results_df$p <= .05, "*", sig)
-  sig <- ifelse(results_df$p<= .01, "**", sig)
+  sig <- ifelse(results_df$p <= .01, "**", sig)
   sig <- ifelse(results_df$p <= .001, "***", sig)
   results_df$sig <- sig
   
+  # Add direction
+  direction <- ifelse(
+    sign(results_df$Difference) == 1,
+    paste0(unique_groups[1], " > ", unique_groups[2]),
+    paste0(unique_groups[1], " < ", unique_groups[2])
+  )
+  results_df$Direction <- ifelse(
+    results_df$p <= 0.05, direction, ""
+  )
+  
   # Results list
-  results <- list()
-  results$memberships <- memberships
-  results$EGA <- original_EGA
-  results$groups$EGA <- group_ega
-  results$groups$loadings <- group_loadings
-  results$groups$loadingsDifference <- original_dominant_difference
-  results$permutation$groups <- perm_groups
-  results$permutation$loadings <- loadings_list
-  results$permutation$loadingsDifference <- dominant_list
-  results$results <- results_df
+  results <- list(
+    memberships = structure,
+    EGA = original_EGA,
+    groups = list(
+      EGA = group_ega,
+      loadings = group_loadings,
+      loadingsDifference = original_dominant_difference
+    ),
+    permutation = list(
+      groups = perm_groups,
+      loadings = permutated_loadings,
+      loadingsDifference = dominant_list
+    ),
+    results = results_df
+  )
   
   # Add class
   class(results) <- "invariance"
@@ -621,3 +487,47 @@ invariance <- function(
   return(results)
   
 }
+
+# Bug checking ----
+## Basic input
+# set.seed(1234)
+# data = wmt2[,7:24]; dimensions = dim(data)
+# dim_sequence = seq_len(dimensions[1])
+# split1 = sample(dim_sequence, floor(dimensions[1] / 2))
+# split2 = setdiff(dim_sequence, split1)
+# group = c(rep(1, length(split1)), rep(2, length(split2)))
+# data = data[c(split1, split2),]; iter = 500; type = "loadings"
+# corr = "auto"; na.data = "pairwise"; model = "glasso"
+# algorithm = "walktrap"; uni.method = "louvain"
+# ncores = 8; verbose = FALSE; ellipse = list()
+
+#' @exportS3Method 
+# S3 Print Method ----
+# Updated 10.07.2023
+print.invariance <- function(x, ...) {
+  
+  # Print results "as-is"
+  print(x$results)
+  cat("----\n") # Add breakspace and significance code
+  cat("Signif. code: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 'n.s.' 1")
+  
+}
+
+#' @exportS3Method 
+# S3 Summary Method ----
+# Updated 10.07.2023
+summary.invariance <- function(object, ...) {
+  print(object, ...) # same as print
+}
+
+
+
+
+
+
+
+
+
+
+
+

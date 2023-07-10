@@ -8,18 +8,16 @@ invariance(
   data,
   groups,
   iter = 500,
-  memberships = NULL,
+  structure = NULL,
   type = c("loadings"),
-  corr = c("cor_auto", "pearson", "spearman"),
+  corr = c("auto", "pearson", "spearman"),
+  na.data = c("pairwise", "listwise"),
+  model = c("BGGM", "glasso", "TMFG"),
+  algorithm = c("leiden", "louvain", "walktrap"),
   uni.method = c("expand", "LE", "louvain"),
-  model = c("glasso", "TMFG"),
-  model.args = list(gamma = 0),
-  algorithm = c("walktrap", "leiden", "louvain"),
-  algorithm.args = list(),
-  consensus.method = c("highest_modularity", "most_common", "iterative", "lowest_tefi"),
-  consensus.iter = 100,
   ncores,
-  progress = TRUE
+  verbose = FALSE,
+  ...
 )
 }
 \arguments{
@@ -32,11 +30,6 @@ Group membership corresponding to each case in data}
 \item{iter}{Numeric. 
 Number of iterations to perform for the permutation.
 Defaults to \code{500}}
-
-\item{memberships}{Vector. 
-Node membership for each community or factor. 
-Defaults to \code{NULL}.
-When \code{NULL}, \code{\link[EGAnet]{EGA}} is used to compute node memberships}
 
 \item{type}{Character.
 Type of measurement invariance to estimate.
@@ -58,6 +51,39 @@ the \code{\link[stats]{cor}}} function.
 \item{\strong{\code{spearman}}}
 {Computes Spearman's correlation coefficient using the pairwise complete observations via
 the \code{\link[stats]{cor}}} function.
+}}
+
+\item{model}{Character.
+A string indicating the method to use.
+
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{glasso}}}
+{Estimates the Gaussian graphical model using graphical LASSO with
+extended Bayesian information criterion to select optimal regularization parameter.
+This is the default method}
+
+\item{\strong{\code{TMFG}}}
+{Estimates a Triangulated Maximally Filtered Graph}
+
+}}
+
+\item{algorithm}{A string indicating the algorithm to use or a function from \code{\link{igraph}}
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{walktrap}}}
+{Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
+
+\item{\strong{\code{leiden}}}
+{Computes the Leiden algorithm using \code{\link[igraph]{cluster_leiden}}}
+
+\item{\strong{\code{louvain}}}
+{Computes the Louvain algorithm using \code{\link[igraph]{cluster_louvain}}}
+
 }}
 
 \item{uni.method}{Character.
@@ -89,47 +115,33 @@ regular EGA is used. This method was validated in the Christensen (2022) simulat
 
 }}
 
-\item{model}{Character.
-A string indicating the method to use.
+\item{ncores}{Numeric.
+Number of cores to use in computing results.
+Defaults to \code{parallel::detectCores() / 2} or half of your
+computer's processing power.
+Set to \code{1} to not use parallel computing
 
-Current options are:
+If you're unsure how many cores your computer has,
+then use the following code: \code{parallel::detectCores()}}
 
-\itemize{
-
-\item{\strong{\code{glasso}}}
-{Estimates the Gaussian graphical model using graphical LASSO with
-extended Bayesian information criterion to select optimal regularization parameter.
-This is the default method}
-
-\item{\strong{\code{TMFG}}}
-{Estimates a Triangulated Maximally Filtered Graph}
-
-}}
+\item{memberships}{Vector. 
+Node membership for each community or factor. 
+Defaults to \code{NULL}.
+When \code{NULL}, \code{\link[EGAnet]{EGA}} is used to compute node memberships}
 
 \item{model.args}{List.
 A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
 or \code{\link[EGAnet]{TMFG}}. By default, \code{gamma} is set to 0 in 
 \code{\link[EGAnet]{EBICglasso.qgraph}}}
 
-\item{algorithm}{A string indicating the algorithm to use or a function from \code{\link{igraph}}
-Current options are:
-
-\itemize{
-
-\item{\strong{\code{walktrap}}}
-{Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
-
-\item{\strong{\code{leiden}}}
-{Computes the Leiden algorithm using \code{\link[igraph]{cluster_leiden}}}
-
-\item{\strong{\code{louvain}}}
-{Computes the Louvain algorithm using \code{\link[igraph]{cluster_louvain}}}
-
-}}
-
 \item{algorithm.args}{List.
 A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
 or some other community detection algorithm function (see examples)}
+
+\item{consensus.iter}{Numeric.
+Number of iterations to perform in consensus clustering for the Louvain algorithm
+(see Lancichinetti & Fortunato, 2012).
+Defaults to \code{100}}
 
 \item{consensus.method}{Character.
 What consensus clustering method should be used? 
@@ -159,20 +171,6 @@ This process repeats iteratively until all nodes have a proportion of
 across iterations}
 
 }}
-
-\item{consensus.iter}{Numeric.
-Number of iterations to perform in consensus clustering for the Louvain algorithm
-(see Lancichinetti & Fortunato, 2012).
-Defaults to \code{100}}
-
-\item{ncores}{Numeric.
-Number of cores to use in computing results.
-Defaults to \code{parallel::detectCores() / 2} or half of your
-computer's processing power.
-Set to \code{1} to not use parallel computing
-
-If you're unsure how many cores your computer has,
-then use the following code: \code{parallel::detectCores()}}
 
 \item{progress}{Boolean.
 Should progress be displayed?

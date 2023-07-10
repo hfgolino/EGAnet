@@ -3,13 +3,10 @@
 \name{prints}
 \alias{prints}
 \alias{print.NetLoads}
-\alias{print.invariance}
 \alias{print.hierEGA}
 \title{S3Methods for Printing}
 \usage{
 \method{print}{NetLoads}(x, ...)
-
-\method{print}{invariance}(x, ...)
 
 \method{print}{hierEGA}(x, ...)
 }

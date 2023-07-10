@@ -3,7 +3,6 @@
 \name{summarys}
 \alias{summarys}
 \alias{summary.NetLoads}
-\alias{summary.invariance}
 \alias{summary.hierEGA}
 \title{S3Methods for summarying}
 \usage{
