@@ -423,9 +423,39 @@ reproducible_bootstrap <- function(
 # PARALLELIZATION ----
 #%%%%%%%%%%%%%%%%%%%%%
 
+# # Get available memory ----
+# # Updated 11.07.2023
+# available_memory <- function()
+# {
+#   
+#   # Get operating system
+#   OS <- tolower(Sys.info()["sysname"])
+#   
+#   # Branch based on OS
+#   if(OS == "windows"){
+#     
+#     # System information
+#     system_info <- system("systeminfo", intern = TRUE)
+#     
+#     # Get available memory
+#     value <- system_info[
+#       grep("Available Physical Memory", system_info)
+#     ]
+#     
+#     # Remove extraneous information
+#     value <- gsub("Available Physical Memory: ", "", value)
+#     value <- gsub("\\,", "", value)
+#     
+#     
+#   }
+#   
+#   
+#   
+# }
+
 #' @noRd
 # Wrapper for parallelization ----
-# Updated 10.07.2023
+# Updated 11.07.2023
 parallel_process <- function(
     iterations, # number of iterations
     datalist, # list of data
@@ -435,6 +465,9 @@ parallel_process <- function(
     ncores, # number of cores
     progress = TRUE # progress bar
 ){
+  
+  # Set max size ( 8Gb )
+  options(future.globals.maxSize = 8e9)
   
   # Set up plan
   future::plan(
@@ -632,6 +665,75 @@ get_EGA_object <- function(object)
       )
     )
   )
+  
+}
+
+#' @noRd
+# Get appropriate `dynEGA` objects ----
+# Updated 09.07.2023
+get_dynEGA_object <- function(dynEGA.object)
+{
+  
+  # Check for legacy
+  if(is(dynEGA.object, "dynEGA.ind.pop")){
+    
+    # Set up objects
+    dynEGA.pop <- dynEGA.object$dynEGA.pop
+    dynEGA.ind <- dynEGA.object$dynEGA.ind
+    
+    # Remove Methods
+    if("Methods" %in% names(dynEGA.ind$dynEGA)){
+      dynEGA.ind$dynEGA <- dynEGA.ind$dynEGA[names(dynEGA.ind$dynEGA) != "Methods"]
+    }
+    
+    # Return proper objects
+    return(
+      list(
+        population = dynEGA.pop$dynEGA,
+        individual = dynEGA.ind$dynEGA
+      )
+    )
+    
+  }
+  
+  # Get EGA objects
+  ega_objects <- get_EGA_object(dynEGA.object)
+  
+  # Determine which names are available
+  available_objects <- c("population", "individual") %in% names(ega_objects)
+  names(available_objects) <- c("population", "individual")
+  
+  # Get proper objects
+  if(all(available_objects)){
+    
+    # Return population and individual
+    return(
+      list(
+        population = ega_objects$population,
+        individual = ega_objects$individual
+      )
+    )
+    
+  }else{ # Otherwise, send an error
+    
+    # Set up proper messaging
+    missing_objects <- ifelse(
+      sum(available_objects) == 0,
+      paste0("\"population\" and \"individual\""),
+      paste0("\"", names(available_objects)[!available_objects], "\"")
+    )
+    
+    # Send error
+    stop(
+      paste0(
+        "The input for 'dynEGA.object' was class \"dynEGA\" but did not contain object(s): ",
+        missing_objects, "\n\n",
+        "To avoid this error, perform `dynEGA` using the argument: level = c(\"population\", \"individual\")"
+      ),
+      call. = FALSE
+    )
+    
+  }
   
 }
 

@@ -212,7 +212,7 @@ community.unidimensional <- function(
 
 #' @noRd
 # "Expand" Correlation approach ----
-# Updated 25.06.2023
+# Updated 11.07.2023
 expand <- function(correlation_matrix, n, model, verbose, ellipse)
 {
   
@@ -250,8 +250,17 @@ expand <- function(correlation_matrix, n, model, verbose, ellipse)
   # Obtain network estimation arguments
   network_ARGS <- obtain_arguments(network.estimation, ellipse)
   
-  # Set data, n, and model
-  network_ARGS$data <- expanded_matrix
+  # Set data
+  if(model == "tmfg"){
+    
+    # Use correlation matrix
+    network_ARGS$data <- correlation_matrix
+    
+  }else{ # Normal approach
+    network_ARGS$data <- expanded_matrix
+  }
+  
+  # Set n and model
   network_ARGS$n <- n
   network_ARGS$model <- model
   
@@ -262,8 +271,20 @@ expand <- function(correlation_matrix, n, model, verbose, ellipse)
   community_ARGS <- obtain_arguments(community.detection, ellipse)
   
   # Set network
-  community_ARGS$network <- network
-
+  if(model == "tmfg"){
+    
+    # Set network into expanded matrix
+    expanded_matrix[
+      original_dimensions, original_dimensions
+    ] <- network
+    
+    # Use expanded matrix as network
+    community_ARGS$network <- expanded_matrix
+    
+  }else{ # Normal approach
+    community_ARGS$network <- network
+  }
+  
   # Apply community detection algorithm
   membership <- do.call(community.detection, community_ARGS)
   

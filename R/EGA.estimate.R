@@ -352,7 +352,7 @@ plot.EGA.estimate <- function(x, ...)
 
 #' @noRd
 # Wrapper for GLASSO ----
-# Updated 02.07.2023
+# Updated 11.07.2023
 glasso_wrapper <- function(
     network, data, n, corr, na.data,
     model, network.only, verbose,
@@ -360,9 +360,30 @@ glasso_wrapper <- function(
 )
 {
 
-  # Remove `gamma` from ellipse
+  # Go with `gamma` provided
   if("gamma" %in% names(ellipse)){
+    
+    # Obtain `gamma`
+    gamma <- ellipse$gamma
+    
+    # Remove `gamma` from ellipse
     ellipse <- ellipse[-which(names(ellipse) == "gamma")]
+    
+    # Return result
+    return(
+      do.call(
+        what = network.estimation,
+        args = c(
+          list( # functions passed into this function
+            data = data, n = n, corr = corr, na.data = na.data,
+            model = model, network.only = TRUE, verbose = verbose,
+            gamma = gamma
+          ),
+          ellipse # pass on ellipse
+        )
+      )
+    )
+    
   }
   
   # Set gamma 

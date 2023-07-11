@@ -16,7 +16,7 @@ invariance(
   algorithm = c("leiden", "louvain", "walktrap"),
   uni.method = c("expand", "LE", "louvain"),
   ncores,
-  verbose = FALSE,
+  verbose = TRUE,
   ...
 )
 }
