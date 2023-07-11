@@ -423,35 +423,86 @@ reproducible_bootstrap <- function(
 # PARALLELIZATION ----
 #%%%%%%%%%%%%%%%%%%%%%
 
-# # Get available memory ----
-# # Updated 11.07.2023
-# available_memory <- function()
-# {
-#   
-#   # Get operating system
-#   OS <- tolower(Sys.info()["sysname"])
-#   
-#   # Branch based on OS
-#   if(OS == "windows"){
-#     
-#     # System information
-#     system_info <- system("systeminfo", intern = TRUE)
-#     
-#     # Get available memory
-#     value <- system_info[
-#       grep("Available Physical Memory", system_info)
-#     ]
-#     
-#     # Remove extraneous information
-#     value <- gsub("Available Physical Memory: ", "", value)
-#     value <- gsub("\\,", "", value)
-#     
-#     
-#   }
-#   
-#   
-#   
-# }
+#' @noRd
+# Get available memory ----
+# Updated 11.07.2023
+available_memory <- function()
+{
+
+  # Get operating system
+  OS <- tolower(Sys.info()["sysname"])
+
+  # Branch based on OS
+  if(OS == "windows"){ # Windows
+
+    # System information
+    system_info <- system("systeminfo", intern = TRUE)
+
+    # Get available memory
+    value <- system_info[
+      grep("Available Physical Memory", system_info)
+    ]
+
+    # Remove extraneous information
+    value <- gsub("Available Physical Memory: ", "", value)
+    value <- gsub("\\,", "", value)
+    
+    # Convert to bytes
+    value_split <- unlist(strsplit(value, split = " "))
+    
+    # Check for second value
+    bytes <- as.numeric(value_split[1]) * switch(
+      value_split[2],
+      "KB" = 1e03,
+      "MB" = 1e06,
+      "GB" = 1e09
+    )
+
+  }else if(OS == "linux"){ # Linux
+    
+    # Split system information
+    info_split <- strsplit(system("free", intern = TRUE), split = " ")
+    
+    # Remove "Mem:" and "Swap:"
+    info_split <- lapply(info_split, function(x){gsub("Mem:", "", x)})
+    info_split <- lapply(info_split, function(x){gsub("Swap:", "", x)})
+    
+    # Get actual values
+    info_split <- lapply(info_split, function(x){x[x != ""]})
+    
+    # Bind values
+    info_split <- do.call(rbind, info_split[1:2])
+    
+    # Get free values
+    bytes <- as.numeric(info_split[2, info_split[1,] == "free"])
+    
+  }else{ # Mac
+    
+    # System information
+    system_info <- system("top -l 1 -s 0 | grep PhysMem", intern = TRUE)
+
+    # Get everything after comma
+    unused <- gsub(" .*,", "", system_info)
+    
+    # Get values only
+    value <- gsub("PhysMem: ", "", unused)
+    value <- gsub(" unused.", "", value)
+    
+    # Check for bytes
+    if(grepl("M", value)){
+      bytes <- as.numeric(gsub("M", "", value)) * 1e06
+    }else if(grepl("G", value)){
+      bytes <- as.numeric(gsub("G", "", value)) * 1e09
+    }else if(grepl("K", value)){
+      bytes <- as.numeric(gsub("K", "", value)) * 1e03
+    }
+    
+  }
+  
+  # Return bytes
+  return(bytes)
+
+}
 
 #' @noRd
 # Wrapper for parallelization ----
@@ -466,8 +517,8 @@ parallel_process <- function(
     progress = TRUE # progress bar
 ){
   
-  # Set max size ( 8Gb )
-  options(future.globals.maxSize = 8e9)
+  # Set max size ( available memory minus 100MB )
+  options(future.globals.maxSize = available_memory() - 100e06)
   
   # Set up plan
   future::plan(
@@ -1305,7 +1356,7 @@ remove_attributes <- function(object)
 
 #' @noRd
 # Set default argument (cleaner missing function) ----
-# Updated 05.07.2023
+# Updated 11.07.2023
 set_default <- function(argument, default, FUN, several.ok = FALSE)
 {
 
@@ -1345,7 +1396,7 @@ set_default <- function(argument, default, FUN, several.ok = FALSE)
     if(is.call(choices)){
       
       # Get choices
-      choices <- tolower(as.character(choices))
+      choices <- as.character(choices)
       
       # Remove "c" from call
       choices <- choices[-which(choices == "c")]
@@ -1355,7 +1406,7 @@ set_default <- function(argument, default, FUN, several.ok = FALSE)
   }
   
   # Make argument lowercase (if necessary)
-  argument <- tolower(argument)
+  argument <- tolower(argument); choices <- tolower(choices)
   
   # Get arguments not in choices
   not_in_choices <- !argument %in% choices
