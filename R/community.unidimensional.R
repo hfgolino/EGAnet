@@ -212,7 +212,7 @@ community.unidimensional <- function(
 
 #' @noRd
 # "Expand" Correlation approach ----
-# Updated 11.07.2023
+# Updated 12.07.2023
 expand <- function(correlation_matrix, n, model, verbose, ellipse)
 {
   
@@ -247,8 +247,15 @@ expand <- function(correlation_matrix, n, model, verbose, ellipse)
     expanded_dimensions, expanded_dimensions
   ] <- orthogonal_matrix
   
-  # Obtain network estimation arguments
-  network_ARGS <- obtain_arguments(network.estimation, ellipse)
+  # Obtain estimation method function
+  estimation_FUN <- switch(
+    model,
+    "glasso" = EBICglasso.qgraph,
+    "tmfg" = TMFG
+  )
+  
+  # Obtain estimation method arguments
+  network_ARGS <- obtain_arguments(estimation_FUN, ellipse)
   
   # Set data
   if(model == "tmfg"){
@@ -260,12 +267,12 @@ expand <- function(correlation_matrix, n, model, verbose, ellipse)
     network_ARGS$data <- expanded_matrix
   }
   
-  # Set n and model
+  # Set data, sample size, output, and verbose
   network_ARGS$n <- n
-  network_ARGS$model <- model
+  network_ARGS$returnAllResults <- FALSE
   
   # Apply network estimation method
-  network <- do.call(network.estimation, network_ARGS)
+  network <- do.call(estimation_FUN, network_ARGS)
   
   # Obtain community detection arguments
   community_ARGS <- obtain_arguments(community.detection, ellipse)

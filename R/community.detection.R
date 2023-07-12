@@ -149,7 +149,7 @@
 #' @export
 #'
 # Compute communities for EGA
-# Updated 29.06.2023
+# Updated 12.07.2023
 community.detection <- function(
     network, algorithm = c(
       "edge_betweenness", "fast_greedy",
@@ -190,6 +190,9 @@ community.detection <- function(
     warning(
       "The network input is empty. All community memberships are missing."
     )
+    
+    # Set algorithm arguments
+    algorithm.ARGS <- list()
     
   }else{ # Carry on if at least one node is connected
     
