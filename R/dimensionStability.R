@@ -67,147 +67,90 @@
 #' @export
 #'
 # Dimension Stability function
-# Updated 18.07.2022
-# Revamp 27.02.2021
-dimensionStability <- function(bootega.obj, ...)
+# Updated 12.07.2023
+dimensionStability <- function(bootega.obj, IS.plot = TRUE, structure = NULL, ...)
 {
   
-  # Check for 'hierEGA' + 'bootEGA'
-  if("result_lower" %in% names(bootega.obj)){
-    
-    # Message user for lower order analysis
-    message("Performing dimension stability analysis on lower order...", appendLF = FALSE)
-    
-    # Set up lower and higher order for item stability function
-    higher_order_EGA<- bootega.obj$result_lower$EGA$higher_order$EGA
-    lower_order_EGA <- bootega.obj$result_lower$EGA$lower_order
-    bootega.obj$result_lower$EGA <- lower_order_EGA
-    
-    # Perform dimension stability on lower order dimensions
-    lower_ds <- suppressMessages(
-      dimensionStability(
-        bootega.obj$result_lower, IS.plot = FALSE, structure = NULL
-      )
-    )
-    
-    # Message user lower order is done
-    message("done.")
-    
-    # Message user for higher order analysis
-    message("Performing dimension stability analysis on higher order...", appendLF = FALSE)
-    
-    # Set up higher order for item stability function
-    bootega.obj$result_higher$EGA <- higher_order_EGA
-    bootega.obj$result_higher$color.palette <- bootega.obj$result_lower$color.palette
-    
-    # Perform item stability on higher order dimensions
-    higher_ds <- suppressMessages(
-      dimensionStability(
-        bootega.obj$result_higher, IS.plot = FALSE, structure = NULL
-      )
-    )
-    
-    # Message user higher order is done
-    message("done.")
-
-    # Set up results
-    results <- list(
-      lower_order = lower_ds,
-      higher_order = higher_ds
-    )
-    
-    # Return result
-    return(results)
-    
-  }
-  
-  # Check for 'bootEGA' object
-  if(is(bootega.obj) != "bootEGA"){
-    stop("Input for 'bootega.obj' is not a 'bootEGA' object")
-  }
-
-  # Get additional arguments
-  add.args <- list(...)
-
-  # Check if 'orig.wc' has been input as an argument
-  if("orig.wc" %in% names(add.args)){
-
-    # Give deprecation warning
-    warning(
-      "The 'orig.wc' argument has been deprecated in dimensionStability.\n\nInstead, the empirical EGA estimated in bootEGA's results is used"
-    )
-  }
-
   # Compute item stability
-  stability.items <- itemStability(bootega.obj)
+  item_stability <- itemStability(bootega.obj, IS.plot, structure, ...)
 
-  # Compute dimension stability ----
-  ## Grab empirical membership from itemStability output
-  empirical.membership <- stability.items$membership$empirical
+  # Obtain structure (convert to string for NAs)
+  structure <- paste(item_stability$membership$structure)
+  
+  # Get unique structure
+  unique_structure <- unique(structure)
+  
+  # Order unique structure
+  unique_structure <- unique_structure[order(unique_structure)]
+  
+  # Compute dimension stability
+  dimension_stability <- nvapply(
+    unique_structure, function(community){
+      
+      # Across items in community, compute stability for dimension
+      return(
+        mean(
+          lvapply(
+            as.data.frame(
+              t(item_stability$membership$bootstrap[,structure == community])
+            ), function(row){all(row == community, na.rm = TRUE)}
+          ), na.rm = TRUE
+        )
+      )
 
-  ## Grab unique membership from itemStability output
-  unique.membership <- stability.items$membership$unique
-
-  ## Grab bootstrap membership from itemStability output
-  bootstrap.membership <- stability.items$membership$bootstrap
-
-  ## Number of dimensions
-  total.dimensions <- length(unique.membership)
-
-  ## Initialize dimension stability vector
-  stability.dimensions <- numeric(total.dimensions)
-
-  ## Name dimensions
-  names(stability.dimensions) <- unique.membership
-
-  ## Order dimensions
-  stability.dimensions <- stability.dimensions[order(names(stability.dimensions))]
-
-  # Loop through dimensions
-  for(i in 1:total.dimensions){
-
-    # Target items
-    target.items <- which(paste(empirical.membership) == paste(unique.membership[i]))
-
-    # Get dimension stability
-    target.dimension.stability <- apply(bootstrap.membership, # bootstrap membership
-                                        2, # across columns
-                                        function(x, target.dimension){
-
-                                          # all items equal empirical dimension
-                                          all(paste(x[target.items]) == target.dimension)
-
-                                        }, target.dimension = paste(unique.membership[i]))
-
-    # Input mean of dimension stability (round to 3 decimal places)
-    stability.dimensions[paste(unique.membership[i])] <- round(mean(target.dimension.stability, na.rm = TRUE), 3)
-
-  }
-
-  # Compute average item stability ----
-  average.item.stability <- stability.dimensions
-
-  # Obtain item stabilities in empirical dimensions
-  empirical.dimensions <- stability.items$item.stability$empirical.dimensions
-
-  # Loop through dimensions
-  for(i in 1:total.dimensions){
-
-    # Target items
-    target.items <- which(paste(empirical.membership) == paste(unique.membership[i]))
-
-    # Input mean of item stability (round to 3 decimal places)
-    average.item.stability[paste(unique.membership[i])] <- round(mean(empirical.dimensions[target.items], na.rm = TRUE), 3)
-
-  }
-
-  # Initialize and output results
-  results <- list()
-  results$dimension.stability <- list()
-  results$dimension.stability$structural.consistency <- stability.dimensions
-  results$dimension.stability$average.item.stability <- average.item.stability
-  results$item.stability <- stability.items
-
+    }
+  )
+  
+  # Compute average item stability
+  average_item_stability <- nvapply(
+    unique_structure, function(community){
+      mean(
+        item_stability$item.stability$empirical.dimensions[structure == community],
+        na.rm = TRUE
+      )
+    }
+  )
+  
+  # Set up results
+  results <- list(
+    dimension.stability = list(
+      structural.consistency = dimension_stability,
+      average.item.stability = average_item_stability
+    ),
+    item.stability = item_stability
+  )
+  
+  # Add class
+  class(results) <- "dimensionStability"
+  
+  
+  # Return results
   return(results)
+  
 }
-#----
+
+#' @exportS3Method 
+# S3 Print Method ----
+# Updated 12.07.2023
+print.dimensionStability <- function(x, ...)
+{
+  
+  # First, print item stability
+  print(x$item.stability)
+  
+  # Add breakspace
+  cat("\n----\n\n")
+  
+  # Print structural consistency
+  cat("Structural Consistency:\n\n")
+  print(x$dimension.stability$structural.consistency)
+  
+}
+
+#' @exportS3Method 
+# S3 Summary Method ----
+# Updated 12.07.2023
+summary.dimensionStability <- function(object, ...)
+{
+  print(object, ...) # same as print
+}

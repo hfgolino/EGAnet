@@ -89,20 +89,17 @@
 #' @export
 #'
 # Network Loadings
-# Updated 10.07.2023
+# Updated 12.07.2023
 # Default = "BRM" or `net.loads` from version 1.2.3
 # Experimental = new signs and cross-loading adjustment
 net.loads <- function(
     A, wc, loading.method = c("BRM", "experimental"),
-    rotation = "geominQ", ...
+    rotation = NULL, ...
 )
 {
   
   # Check for missing arguments (argument, default, function)
-  # Uses actual function they will be used in
-  # (keeping non-function choices for `cor_auto`)
   loading.method <- set_default(loading.method, "brm", net.loads)
-  rotation <- set_default(rotation, "geominq", net.loads)
   
   # Organize and extract input
   input <- organize_input(A, wc)
@@ -136,7 +133,7 @@ net.loads <- function(
     
   }
   
-  # Not singleton dimensons, so carry on
+  # Not all singleton dimensions, so carry on
   
   # Check for method
   if(loading.method == "brm"){
@@ -147,10 +144,8 @@ net.loads <- function(
     # Add signs to the loadings
     unstandardized <- old_add_signs(unstandardized, A, wc, unique_communities)
     
-    # Before rounding occured prior to standardization (no rounding)
-    standardized <- t(
-      t(unstandardized) / sqrt(colSums(abs(unstandardized), na.rm = TRUE))
-    )
+    # Before rounding occurred prior to standardization (no rounding)
+    standardized <- standardize(unstandardized)
     
     # Get descending order
     standardized <- descending_order(standardized, wc, unique_communities)
@@ -172,376 +167,96 @@ net.loads <- function(
     # Return results
     return(results)
     
-  }else{ # Pass on to experimental
-    
-    # Initialize loading matrix
-    loading_matrix <- matrix(
-      0, nrow = nodes, ncol = communities,
-      dimnames = list(node_names, unique_communities)
-    )
-    
-    # Initialize sign vector
-    signs <- rep(1, nodes)
-    names(signs) <- node_names
-    
-    # Populate loading matrix
-    for(community in unique_communities){
-      
-      # Get community index
-      community_index <- wc == community
-    
-      # Determine positive direction for dominant loadings
-      target_network <- obtain_signs(A[community_index, community_index, drop = FALSE])
-      
-      # Compute absolute sum for dominant loadings
-      loading_matrix[community_index, community] <- colSums(target_network, na.rm = TRUE)
-      
-      # Determine positive direction for dominant loadings
-      signs[community_index] <- attr(target_network, "signs")
-      
-    }
-    
-    # Check for unidimensional structure
-    if(communities > 1){
-      
-      # Check for any negative signs
-      if(any(signs == -1)){
-        
-        # Make a copy of the network
-        A_copy <- A
-        
-        # Flip signs
-        A[signs == -1,] <- A[,signs == -1] <- A_copy[signs == -1,]
-        
-        
-      }
-      
-      # Populate loading matrix with cross-loadings
-      for(community in unique_communities){
-        for(cross in unique_communities){
-          
-          # No need for same community loadings
-          if(community != cross){
-            
-            # Get community index
-            community_index <- wc == community
-            
-            # Compute algebraic sum for cross-loadings
-            loading_matrix[community_index, cross] <- colSums(
-              A[wc == cross, community_index, drop = FALSE], na.rm = TRUE
-            )
-            
-          }
-          
-        }
-      }
-      
-    }
-    
-    # Set signs
-    loading_matrix <- loading_matrix * signs
-
-    # Obtain standardized loadings
-    standardized <- t(
-      t(loading_matrix) / sqrt(colSums(abs(loading_matrix), na.rm = TRUE))
-    )
-    
-    
-    
-    
-    
   }
   
   
-  # Check for singleton communities
-  if(length_wc == length(unique_wc)){
+  # If not "BRM", run experimental
+  
+  # Experimental unstandardized loadings
+  unstandardized <- experimental(
+    A, wc, nodes, node_names, communities, unique_communities
+  )
+  
+  # Obtain standardized loadings
+  standardized <- standardize(unstandardized)
+  
+  # Get descending order
+  standardized <- descending_order(standardized, wc, unique_communities)
     
-    # Initialize results
-    unstd <- matrix(NA, nrow = ncol(A), ncol = ncol(A))
-    colnames(unstd) <- colnames(A)
-    row.names(unstd) <- colnames(A)
+  # Check for rotation
+  if(!is.null(rotation)){
     
-    # Set up results
-    results <- list(
-      unstd = unstd,
-      std = unstd
+    # Errors for...
+    # Missing packages: {GPArotation} and {fungible}
+    # Invalid rotations
+    rotation_errors(rotation)
+    
+    # If rotation exists, then obtain it
+    rotation_FUN <- get(rotation, envir = asNamespace("GPArotation"))
+    
+    # Get ellipse arguments
+    ellipse <- list(...)
+    
+    # Get arguments for function
+    rotation_ARGS <- obtain_arguments(rotation_FUN, ellipse)
+    
+    # Check for "NA" community
+    if("NA" %in% wc){
+      standardized <- standardized[, dimnames(standardized)[[2]] != "NA"]
+      communities <- communities - 1
+      unique_communities <- unique_communities[unique_communities != "NA"]
+    }
+    
+    # Supply loadings
+    rotation_ARGS$A <- standardized
+    
+    # Set default arguments for rotations
+    rotation_ARGS <- rotation_defaults(rotation, rotation_ARGS, ellipse)
+    
+    # Perform rotations
+    rotation_OUTPUT <- do.call(rotation_FUN, rotation_ARGS)
+    
+    # Align rotated loadings
+    aligned_output <- fungible::faAlign(
+      F1 = standardized,
+      F2 = rotation_OUTPUT$loadings,
+      Phi2 = rotation_OUTPUT$Phi
     )
     
-  }else{ # Not singleton dimensions
+    # Set rotated loadings objects
+    ## Loadings
+    rotated_loadings <- aligned_output$F2
+    dimnames(rotated_loadings) <- dimnames(standardized)
+    ## Phi
+    rotated_Phi <- aligned_output$Phi2
+    dimnames(rotated_Phi) <- list(unique_communities, unique_communities)
     
-    # Reorder communities
-    wc <- wc[wc_order]
-    
-    # Reorder network
-    A <- A[wc_order, wc_order]
-    
-    # Initialize loading matrix
-    loading_matrix <- matrix(
-      0, nrow = ncol(A),
-      ncol = length(unique_wc)
+    # Make rotated results list
+    rotated <- list(
+      loadings = rotated_loadings,
+      Phi = rotated_Phi
     )
     
-    # Initialize sign vector
-    signs <- rep(1, ncol(A)) # start with all positive orientation
-    names(signs) <- colnames(A)
-    
-    # Add column and row names
-    row.names(loading_matrix) <- colnames(A)
-    colnames(loading_matrix) <- unique_wc
-    
-    # Populate loading matrix
-    for(dominant in unique_wc){
-      
-      # Obtain target portion of network
-      target_network <- A[wc == dominant, wc == dominant]
-      
-      # Determine positive direction for dominant loadings
-      sign_updated <- obtain_signs(target_network)
-      
-      # Update the target network
-      target_network <- sign_updated$target_network
-      
-      # Obtain the sum
-      target_sum <- sum_function(target_network)
-      
-      # Compute absolute sum for dominant loadings
-      loading_matrix[wc == dominant, as.character(dominant)] <- 
-        target_sum # / sqrt(sum(abs(target_sum)))
-      
-      # Determine positive direction for dominant loadings
-      signs[wc == dominant] <- sign_updated$signs
-      
-    }
-    
-    # Check for cross-loadings
-    if(length(unique_wc) > 1){
-      
-      # Initialize reversed A
-      A_reversed <- A
-      
-      # Create duplicate of network
-      if(sum.method == "signed"){
-        
-        if(any(signs == -1)){
-          A_reversed[which(signs == -1),] <- -A[which(signs == -1),]
-          A_reversed[,which(signs == -1)] <- -A[,which(signs == -1)]
-        }
-        
-      }
-      
-      # Populate loading matrix
-      for(dominant in unique_wc){
-        for(cross in unique_wc){
-          
-          # Do not use dominant loadings
-          if(dominant != cross){
-            
-            # Obtain the sum
-            target_sum <- sum_function(A_reversed[wc == cross, wc == dominant])
-            
-            # Compute algebraic sum for cross-loadings
-            loading_matrix[wc == dominant, as.character(cross)] <- 
-              target_sum # / sqrt(sum(abs(target_sum)))
-            
-          }
-          
-        }
-      }
-      
-      # Check for sum method absolute
-      if(sum.method == "absolute"){
-        
-        # Add signs (old way)
-        loading_matrix <- old.add.signs(
-          comm.str = loading_matrix,
-          A = A, wc = wc, dims = unique_wc
-        )
-        
-      }
-      
-    }
-    
-    # Set signs
-    loading_matrix <- loading_matrix * signs
-    
-    # Check for flipping orientation
-    if(isTRUE(positive.orientation)){
-      
-      # Using signs, ensure positive orientation based
-      # on most common direction
-      for(dominant in unique_wc){
-        
-        # Determine dominant orientation
-        orientation <- sum(signs[wc == dominant])
-        
-        # Check for negative orientation
-        if(orientation <= -1){
-          
-          # Reverse dominant variables signs across all communities
-          loading_matrix[wc == dominant,] <-
-            -loading_matrix[wc == dominant,]
-          
-          # Check for cross-loadings
-          if(length(unique_wc) > 1){
-            
-            # Reverse cross-loading signs on target community
-            loading_matrix[wc != dominant, as.character(dominant)] <-
-              -loading_matrix[wc != dominant, as.character(dominant)]
-            
-          }
-          
-        }
-        
-      }
-      
-    }
-    
-    # Obtain standardized loadings
-    standardized <- t(
-      t(loading_matrix) /
-        sqrt(colSums(abs(loading_matrix)))
-    )
-    
-    # Set up for rotation
-    
-    # Check for {GPArotation} and {fungible}
-    # Function in `helpers-general.R`
-    check_package(c("GPArotation", "fungible"))
-    
-    # Obtain rotation from GPArotation package
-    rotation_names <- ls(asNamespace("GPArotation"))
-    
-    # Check if rotation exists
-    rotation_names_lower <- tolower(rotation_names)
-    
-    # Obtain rotation arguments
-    rot_arguments <- list(...)
-    
-    # Check if rotation exists
-    if(tolower(rotation) %in% rotation_names_lower){
-      
-      if(tolower(rotation) != "oblimin"){
-        
-        # Obtain arguments
-        rotation_arguments <- obtain.arguments(
-          FUN = psych::faRotations, FUN.args = list(rotate = rotation)
-        )
-        
-        # Check for arguments
-        rotation_arguments$loadings <- standardized
-        rotation_arguments$n.rotations <- ifelse(
-          "n.rotations" %in% names(rot_arguments),
-          rot_arguments$n.rotations,
-          10
-        )
-        rotation_arguments$maxit <- ifelse(
-          "maxit" %in% names(rot_arguments),
-          rot_arguments$maxit,
-          1000
-        )
-        
-        # Add other arguments
-        rotation_arguments <- c(
-          rotation_arguments, rot_arguments[
-            which(!names(rot_arguments) %in% names(rotation_arguments))
-          ]
-        )
-        
-        # Add default for "geominQ"
-        if(tolower(rotation) == "geominq"){
-          
-          # Check for epsilon
-          if(!"eps" %in% names(rot_arguments)){
-            
-            # Set up standard >= 4 dimensions
-            eps <- 0.01
-            
-            # Check for 2 or 3 dimensions
-            eps <- ifelse(ncol(standardized) == 2, 0.0001, eps)
-            eps <- ifelse(ncol(standardized) == 3, 0.001, eps)
-            
-            # Set up defaults
-            rotation_arguments$eps <- eps
-            
-          }
-          
-        }
-        
-        # Set loadings
-        rotation_arguments$loadings <- as.matrix(standardized)
-        
-        # Obtain rotated loadings
-        rotated <- do.call(
-          what = psych::faRotations,
-          args = as.list(rotation_arguments)
-        )
-        
-      }else{
-        
-        # Obtain arguments
-        rotation_arguments <- obtain.arguments(
-          FUN = oblimin_rotate, FUN.args = list(...)
-        )
-        
-        # Check for arguments
-        rotation_arguments$n.rotations <- ifelse(
-          "n.rotations" %in% names(rot_arguments),
-          rot_arguments$n.rotations,
-          10
-        )
-        rotation_arguments$maxit <- ifelse(
-          "maxit" %in% names(rot_arguments),
-          rot_arguments$maxit,
-          1000
-        )
-        
-        # Set loadings
-        rotation_arguments$loadings <- as.matrix(standardized)
-        
-        # Obtain rotated loadings
-        rotated <- do.call(
-          what = oblimin_rotate,
-          args = as.list(rotation_arguments)
-        )
-        
-      }
-      
-      # Re-align rotated loadings
-      aligned_output <- fungible::faAlign(
-        F1 = as.matrix(standardized),
-        F2 = as.matrix(rotated$loadings),
-        Phi2 = as.matrix(rotated$Phi)
-      )
-      
-      # Update aligned loadings
-      aligned_loadings <- aligned_output$F2
-      colnames(aligned_loadings) <- colnames(standardized)
-      row.names(aligned_loadings) <- row.names(standardized)
-      
-      # Update aligned correlations
-      aligned_Phi <- aligned_output$Phi2
-      colnames(aligned_Phi) <- colnames(standardized)
-      row.names(aligned_Phi) <- colnames(standardized)
-      
-      # Re-assign rotated values
-      rotated$loadings <- aligned_loadings
-      rotated$Phi <- aligned_Phi
-      
-      
-    }
+  }else{ # If rotation is NULL, then rotated is NULL
+    rotated <- NULL
   }
   
   # Set up results
   results <- list(
-    unstd = loading_matrix,
+    unstd = unstandardized[dimnames(standardized)[[1]],],
     std = standardized,
-    rotated = rotated,
-    minLoad = min.load
+    rotated = rotated
+  )
+  
+  # Add "methods" attributes
+  attr(results, "methods") <- list(
+    loading.method = loading.method, rotation = rotation
   )
   
   # Set class
-  class(results) <- "NetLoads"
+  class(results) <- "net.loads"
   
+  # Return results
   return(results)
   
   
@@ -664,6 +379,89 @@ obtain_signs <- function(target_network)
 }
 
 #' @noRd
+# Experimental loadings ----
+# Updated 12.07.2023
+experimental <- function(A, wc, nodes, node_names, communities, unique_communities)
+{
+  
+  # Initialize loading matrix
+  loading_matrix <- matrix(
+    0, nrow = nodes, ncol = communities,
+    dimnames = list(node_names, unique_communities)
+  )
+  
+  # Initialize sign vector
+  signs <- rep(1, nodes)
+  names(signs) <- node_names
+  
+  # Populate loading matrix
+  for(community in unique_communities){
+    
+    # Get community index
+    community_index <- wc == community
+    
+    # Determine positive direction for dominant loadings
+    target_network <- obtain_signs(A[community_index, community_index, drop = FALSE])
+    
+    # Compute absolute sum for dominant loadings
+    loading_matrix[community_index, community] <- colSums(target_network, na.rm = TRUE)
+    
+    # Determine positive direction for dominant loadings
+    signs[community_index] <- attr(target_network, "signs")
+    
+  }
+  
+  # Check for unidimensional structure
+  if(communities > 1){
+    
+    # Check for any negative signs
+    if(any(signs == -1)){
+      
+      # Make a copy of the network
+      A_copy <- A
+      
+      # Flip signs
+      A[signs == -1,] <- A[,signs == -1] <- A_copy[signs == -1,]
+      
+      
+    }
+    
+    # Populate loading matrix with cross-loadings
+    for(community in unique_communities){
+      for(cross in unique_communities){
+        
+        # No need for same community loadings
+        if(community != cross){
+          
+          # Get community index
+          community_index <- wc == community
+          
+          # Compute algebraic sum for cross-loadings
+          loading_matrix[community_index, cross] <- colSums(
+            A[wc == cross, community_index, drop = FALSE], na.rm = TRUE
+          )
+          
+        }
+        
+      }
+    }
+    
+  }
+  
+  # Set signs
+  return(loading_matrix * signs)
+  
+}
+
+#' @noRd
+# Standardize loadings ----
+# Updated 12.07.2023
+standardize <- function(unstandardized)
+{
+  return(t(t(unstandardized) / sqrt(colSums(abs(unstandardized), na.rm = TRUE))))
+}
+
+#' @noRd
 # Descending order ----
 # Updated 11.07.2023
 descending_order <- function(standardized, wc, unique_communities) 
@@ -690,6 +488,74 @@ descending_order <- function(standardized, wc, unique_communities)
   
   # Return reordered results
   return(standardized[order_names,])
+  
+}
+
+#' @noRd
+# Rotation errors ----
+# Updated 12.07.2023
+rotation_errors <- function(rotation)
+{
+  
+  # Check for packages
+  ## Needs {GPArotation} and {fungible}
+  check_package(c("GPArotation", "fungible"))
+  
+  # Get rotations available in {GPArotation}
+  rotation_names <- ls(asNamespace("GPArotation"))
+  
+  # Check if rotation exists
+  if(!rotation %in% rotation_names){
+    
+    # Send error that rotation is not found
+    stop(
+      paste0(
+        "Invalid rotation: ", rotation, "\n\n",
+        "The rotation \"", rotation, "\" is not available in the {GPArotation} package. ",
+        "\n\nSee `?GPArotation::rotations` for the list of available rotations."
+      )
+    )
+    
+  }
+  
+}
+
+#' @noRd
+# Rotation default arguments ----
+# Updated 12.07.2023
+rotation_defaults <- function(rotation, rotation_ARGS, ellipse)
+{
+  
+  # Check for "n.rotations" (used in {psych})
+  if("n.rotations" %in% ellipse){
+    rotation_ARGS$randomStarts <- ellipse$n.rotations
+  }
+  
+  # Check for random starts
+  if(!"randomStarts" %in% names(ellipse) & !"n.rotations" %in% names(ellipse)){
+    rotation_ARGS$randomStarts <- 10
+  }
+  
+  # Check for maximum iterations argument
+  if(!"maxit" %in% names(ellipse)){
+    rotation_ARGS$maxit <- 1000
+  }
+  
+  # Check for epsilon argument
+  if(!"eps" %in% names(ellipse) & grepl("geomin", rotation)){
+    
+    # Based on number of dimensions, switch epsilon
+    rotation_ARGS$eps <- switch(
+      as.character(dim(rotation_ARGS$A)[2]),
+      "2" = 0.0001, # two dimensions
+      "3" = 0.001, # three dimensions
+      0.01 # four or more dimensions
+    )
+    
+  }
+  
+  # Return arguments
+  return(rotation_ARGS)
   
 }
 
@@ -857,3 +723,227 @@ old_add_signs <- function(unstandardized, A, wc, unique_communities)
   
 }
 
+# SAVE ----
+
+#' Oblimin rotation (to be consistent in \code{\link[EGAnet]{net.loads}})
+#' @noRd
+# Updated 28.11.2022 -- Marcos
+oblimin_rotate <- function(
+    loadings,
+    n.rotations = 10, # defaults to 10
+    nfactors, # number of factors
+    maxit = 1e4, # iterations
+    eps = 1e-5, # convergence
+    gamma = 0, # gamma in oblimin
+    rotate = "oblimin" # rotation
+)
+{
+  
+  # Check for number of factors
+  if(missing(nfactors)){
+    nfactors <- ncol(loadings)
+  }
+  
+  # Check for unidimensional structure (28.11.2022)
+  if(nfactors == 1){
+    
+    # Return results
+    return(
+      list(
+        loadings = loadings,
+        Phi = 1
+      )
+    )
+    
+  }
+  
+  x <- list()
+  fs <- vector(length = n.rotations)
+  
+  for(i in 1:n.rotations) {
+    
+    X <- replicate(nfactors, rnorm(nfactors))
+    Q <- qr.Q(qr(X)) # Random orthogonal matrix (initial value)
+    x[[i]] <- GPArotation::GPFoblq(A = loadings, method = rotate, 
+                                   Tmat = Q, maxit = maxit, eps = eps) # Fit
+    fs[i] <- oblimin(x[[i]]$loadings, gamma) # Fit values
+    
+  }
+  
+  # Results
+  index <- which.min(fs) # Index pertaining to the minimum fit value
+  loadings <- x[[i]]$loadings # Select the corresponding loadings
+  Phi <- x[[i]]$Phi # Factor correlation matrix
+  
+  # Return results
+  return(
+    list(
+      loadings = loadings,
+      Phi = Phi
+    )
+  )
+  
+}
+
+#' Oblimin rotation
+#' @noRd
+# Updated 21.11.2022 -- Marcos
+oblimin <- function(L, gamma = 0) {
+  
+  # Fit value for oblimin
+  # L = rotated loading matrix
+  # gamma = fixed parameter
+  
+  nfactors <- ncol(L)
+  p <- nrow(L)
+  I <- diag(p)
+  gC <- matrix(gamma/p, p, p)
+  IgC <- I - gC
+  
+  N <- matrix(1, nfactors, nfactors)
+  diag(N) <- 0
+  L2 <- L*L
+  f <- sum(diag(t(L2) %*% (IgC %*% L2 %*% N)))/4
+  return(f)
+  
+}
+
+#' Factor scores
+#' @noRd
+# Updated 28.11.2022 -- Marcos
+fscores <- function(S, loadings, Phi, Shat, scores = NULL, method = "Thurstone") {
+  
+  # S = empirical correlation matrix
+  # loadings = rotated loading matrix
+  # Phi = estimated factor correlation matrix
+  # Shat = model correlation matrix
+  # scores = raw scores
+  # method = factor.scores method
+  
+  if(is.null(scores)) stop("Please, provide the matrix of observed scores")
+  
+  uniquenesses <- 1 - diag(Shat)
+  invS <- solve(S)
+  n <- nrow(scores)
+  p <- nrow(loadings)
+  q <- ncol(loadings)
+  z <- scale(scores)
+  
+  Lambda <- loadings
+  Phi <- Phi
+  LP <- Lambda %*% Phi # Correlations between factors and items
+  
+  # Find the weights:
+  
+  if(method == "regression" | method == "Thurstone") {
+    
+    weights <- solve(S, LP)
+    
+  } else if(method == "tenBerge") {
+    
+    SVD <- svd(Phi)
+    Phi12 <- SVD$u %*% diag(sqrt(SVD$d)) %*% t(SVD$v)
+    SVD <- svd(S)
+    R12 <- SVD$u %*% diag(1/sqrt(SVD$d)) %*% t(SVD$v)
+    L <- Lambda %*% Phi12
+    SVD <- svd(t(L) %*% invS %*% L)
+    LRL12 <- SVD$u %*% diag(1/sqrt(SVD$d)) %*% t(SVD$v)
+    C <- R12 %*% L %*% LRL12
+    weights <- R12 %*% C %*% Phi12
+    
+  } else if(method == "Bartlett") {
+    
+    U <- c(fit$efa$uniquenesses)
+    U2 <- diag(1/(U*U))
+    weights <- U2 %*% Lambda %*% solve(t(Lambda) %*% U2 %*% Lambda)
+    
+  } else if(method == "Harman") {
+    
+    weights <- solve(fit$efa$Rhat) %*% Lambda
+    
+  }
+  
+  fs <- z %*% weights # Factor scores
+  
+  # Validity coefficients:
+  # invL <- diag(1/apply(fs, MARGIN = 2, FUN = sd))
+  C <- t(weights) %*% S %*% weights
+  # invL was updated (28.11.2022) to ensure matrix
+  # when nfactors = 1
+  invL <- diag(sqrt(diag(C)), ncol(loadings)) # Standard deviations of the factor scores
+  validity_univocality <- t(LP) %*% weights %*% invL
+  validity <- matrix(diag(validity_univocality), nrow = 1)
+  rownames(validity) <- ""
+  univocality <- validity_univocality
+  diag(univocality) <- NA
+  
+  # Accuracy:
+  accuracy <- stats::cor(fs)
+  
+  # Standard errors for factor scores:
+  r <- matrix(diag(invS), ncol = 1)
+  Rj <- matrix(1-c(validity^2), nrow = 1)
+  se <- sqrt(r %*% Rj / (n-p-1))
+  se <- matrix(se, nrow = p, ncol = q)
+  
+  colnames(fs) <- colnames(weights) <- colnames(validity) <-
+    colnames(univocality) <- rownames(univocality) <-
+    colnames(accuracy) <- rownames(accuracy) <- colnames(se) <-
+    paste("F", sprintf(paste("%0", nchar(q), "d", sep = ""), 1:q), sep = "")
+  
+  result <- list(fscores = fs, weights = weights, validity = validity,
+                 univocality = univocality, accuracy = accuracy, se = se)
+  
+  return(result)
+  
+}
+
+#' Exploratory factor analysis
+#' @noRd
+# Updated 21.11.2022 -- Marcos
+efa <- function(data, nfactors, fm = "minres", rotate = "oblimin",
+                n.rotations = 10, maxit = 1e4, factor.scores = "Thurstone",
+                gamma = 0, eps = 1e-5) {
+  
+  # Function to perform EFA
+  # data = raw data
+  # nfactors = number of factors to extract
+  # fm = factor extraction method
+  # rotate = rotation method (only oblimin is implemented right now)
+  # n.rotations = number of rotations to perform with different initial values
+  # maxit = maximum number of iterations for the rotation to converge
+  # factor.scores = factor scores' method
+  # gamma = fixed parameter for oblimin
+  # eps = stop criteria for the rotation (relative tolerance value)
+  
+  if(rotate != "oblimin") stop("oblimin is the only rotation currently implemented.")
+  
+  # Compute the correlation matrix
+  S <- qgraph::cor_auto(data, verbose = FALSE)
+  
+  # Factor extraction:
+  fa <- psych::fa(S, nfactors = nfactors, fm = fm, rotate = "none")
+
+  # Perform oblimin rotation
+  rotation <- oblimin_rotate(
+    loadings = fa$loadings,
+    n.rotations = n.rotations,
+    nfactors = nfactors,
+    maxit = maxit,
+    eps = eps,
+    gamma = gamma,
+    rotate = rotate
+  )
+  loadings <- rotation$loadings # Select the corresponding loadings
+  Phi <- rotation$Phi # Factor correlation matrix
+  Shat <- fa$model # Model correlation matrix
+  uniquenesses <- fa$uniquenesses
+  
+  # Compute the factor scores
+  fs <- fscores(S = S, loadings = loadings, Phi = Phi, 
+                Shat = Shat, scores = data, method = factor.scores)
+  
+  result <- list(loadings = loadings, Phi = Phi, Shat = Shat,
+                 uniquenesses = uniquenesses, factor.scores = fs$fscores)
+  
+}

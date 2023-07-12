@@ -4,7 +4,7 @@
 \alias{dimensionStability}
 \title{Dimension Stability Statistics from \code{\link[EGAnet]{bootEGA}}}
 \usage{
-dimensionStability(bootega.obj, ...)
+dimensionStability(bootega.obj, IS.plot = TRUE, structure = NULL, ...)
 }
 \arguments{
 \item{bootega.obj}{A \code{\link[EGAnet]{bootEGA}} object}

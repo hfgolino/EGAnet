@@ -8,7 +8,7 @@ net.loads(
   A,
   wc,
   loading.method = c("BRM", "experimental"),
-  rotation = "geominQ",
+  rotation = NULL,
   ...
 )
 }
