@@ -2,14 +2,9 @@
 % Please edit documentation in R/summarys.R
 \name{summarys}
 \alias{summarys}
-\alias{summary.NetLoads}
 \alias{summary.hierEGA}
 \title{S3Methods for summarying}
 \usage{
-\method{summary}{NetLoads}(object, ...)
-
-\method{summary}{invariance}(object, ...)
-
 \method{summary}{hierEGA}(object, ...)
 }
 \arguments{

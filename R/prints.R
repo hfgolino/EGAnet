@@ -7,12 +7,9 @@
 #' @name prints
 #'
 #' @aliases 
-#' print.NetLoads
 #' print.hierEGA
 #' 
 #' @usage 
-#' \method{print}{NetLoads}(x, ...)
-#' 
 #' \method{print}{hierEGA}(x, ...)
 #' 
 #' @description Prints for \code{EGAnet} objects
@@ -27,18 +24,6 @@
 #'
 #' @importFrom graphics par
 #' 
-
-#Print Network Loadings----
-# Updated 13.05.2022
-#' @export
-print.NetLoads <- function(x, ...) {
-  
-  x$std[which(abs(x$std) <= x$minLoad, arr.ind = TRUE)] <- ""
-  
-  print(x$std)
-  message("Loadings <= |", x$minLoad, "| are blank")
-}
-
 #Print Hierarchical EGA----
 # Updated 16.11.2022
 #' @export

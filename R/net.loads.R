@@ -114,14 +114,14 @@ net.loads <- function(
   # Get number of communities
   communities <- length(unique_communities)
   
-  # Get return order of node names and communities (without NA)
-  return_node_order <- order(node_names)
-  return_community_order <- order(
-    unique_communities[unique_communities != "NA"]
-  )
-  
   # If all singleton communities, then send NA for all
   if(nodes == communities){
+    
+    # Get return order of node names and communities (without NA)
+    return_node_order <- order(node_names)
+    return_community_order <- order(
+      unique_communities[unique_communities != "NA"]
+    )
     
     # Send results
     return(
@@ -290,6 +290,82 @@ net.loads <- function(
 # A = ega; loading.method = "brm"
 # rotation = "geominq"
 
+#' @exportS3Method 
+# S3 Print Method
+# Updated 12.07.2023
+print.net.loads <- function(x, ...)
+{
+ 
+  # Get ellipse arguments
+  ellipse <- list(...)
+  
+  # Get method attributes
+  method_attributes <- attr(x, "methods")
+   
+  # Print method
+  cat(
+    paste0(
+      "Loading Method: ", ifelse(
+        method_attributes$loading.method == "brm",
+        "BRM", "Experimental"
+      )
+    )
+  )
+  
+  # Check for rotation
+  if(!is.null(method_attributes$rotation)){
+    
+    # Print rotation
+    cat(
+      paste0(
+        "\nRotation: ", method_attributes$rotation 
+      )
+    )
+    
+  }
+  
+  # Add breakspace
+  cat("\n\n")
+  
+  # Get rounded loadings
+  rounded_loadings <- round(x$std, 3)
+  
+  # Get minimum loadings value
+  minimum <- ifelse(
+    "minimum" %in% names(ellipse),
+    ellipse$minimum, 0.10
+  )
+  
+  # Set loadings below minimum to empty string
+  rounded_loadings[abs(x$std) < minimum] <- ""
+  
+  # Set loadings
+  print(
+    column_apply(
+      as.data.frame(rounded_loadings),
+      format_decimal, places = 3
+    ), quote = FALSE
+  )
+  
+  # Add message about minimum loadings
+  message(
+    paste0(
+      "Loadings >= |", format_decimal(minimum, 2),
+      "| are displayed. To change this 'minimum', use ",
+      "`print(net.loads_object, minimum = 0.10)`"
+    )
+  )
+  
+}
+
+#' @exportS3Method 
+# S3 Summary Method
+# Updated 12.07.2023
+summary.net.loads <- function(object, ...)
+{
+  print(object, ...) # same as print
+}
+
 #' @noRd
 # Organize input ----
 # Updated 10.07.2023
@@ -346,27 +422,24 @@ obtain_signs <- function(target_network)
   signs <- rep(1, dim(target_network)[2])
   names(signs) <- dimnames(target_network)[[2]]
   
-  # Initialize row sums and minimum value
+  # Initialize row sums and minimum index
   row_sums <- rowSums(target_network, na.rm = TRUE)
-  minimum_value <- which.min(row_sums)
+  minimum_index <- which.min(row_sums)
   
   # Set while loop
-  while(sign(row_sums[minimum_value]) == -1){
-    
-    # Get minimum value name
-    minimum_name <- names(minimum_value)
+  while(sign(row_sums[minimum_index]) == -1){
     
     # Flip variable
-    target_network[minimum_name,] <- 
-      target_network[,minimum_name] <-
-      -target_network[,minimum_name]
+    target_network[minimum_index,] <- 
+      target_network[,minimum_index] <-
+        -target_network[minimum_index,]
     
     # Set sign as flipped
-    signs[minimum_name] <- -signs[minimum_name]
+    signs[minimum_index] <- -signs[minimum_index]
     
     # Update row sums and minimum value
     row_sums <- rowSums(target_network, na.rm = TRUE)
-    minimum_value <- which.min(row_sums)
+    minimum_index <- which.min(row_sums)
     
   }
   
@@ -401,7 +474,9 @@ experimental <- function(A, wc, nodes, node_names, communities, unique_communiti
     community_index <- wc == community
     
     # Determine positive direction for dominant loadings
-    target_network <- obtain_signs(A[community_index, community_index, drop = FALSE])
+    target_network <- obtain_signs(
+      A[community_index, community_index, drop = FALSE]
+    )
     
     # Compute absolute sum for dominant loadings
     loading_matrix[community_index, community] <- colSums(target_network, na.rm = TRUE)
@@ -414,27 +489,31 @@ experimental <- function(A, wc, nodes, node_names, communities, unique_communiti
   # Check for unidimensional structure
   if(communities > 1){
     
+    # Get negative sign indices
+    negative_signs <- signs == -1
+    
     # Check for any negative signs
-    if(any(signs == -1)){
+    if(any(negative_signs)){ 
       
-      # Make a copy of the network
+      # Make a copy
       A_copy <- A
       
-      # Flip signs
-      A[signs == -1,] <- A[,signs == -1] <- A_copy[signs == -1,]
-      
-      
+      # Flip them
+      A[negative_signs,] <- -A_copy[negative_signs,]
+      A[,negative_signs] <- -A_copy[,negative_signs]
     }
     
     # Populate loading matrix with cross-loadings
     for(community in unique_communities){
+      
+      # Get community index
+      community_index <- wc == community
+      
+      # Loop across other communities
       for(cross in unique_communities){
         
         # No need for same community loadings
         if(community != cross){
-          
-          # Get community index
-          community_index <- wc == community
           
           # Compute algebraic sum for cross-loadings
           loading_matrix[community_index, cross] <- colSums(
@@ -449,7 +528,38 @@ experimental <- function(A, wc, nodes, node_names, communities, unique_communiti
   }
   
   # Set signs
-  return(loading_matrix * signs)
+  loading_matrix <- loading_matrix * signs
+  
+  # Using signs, ensure positive orientation based on most common direction
+  for(community in unique_communities){
+    
+    
+    # Get community index
+    community_index <- wc == community
+    
+    # Check for negative orientation
+    if(sum(signs[community_index]) <= -1){
+      
+      # Reverse community signs across all communities
+      loading_matrix[community_index,] <- -loading_matrix[community_index,]
+      
+      # Check for cross-loadings
+      if(communities > 1){
+        
+        # Reverse cross-loading signs on target community
+        loading_matrix[!community_index, community] <- 
+          -loading_matrix[!community_index, community]
+        
+      }
+      
+    }
+    
+    
+  }
+  
+  
+  # Return loading matrix
+  return(loading_matrix)
   
 }
 
@@ -463,12 +573,15 @@ standardize <- function(unstandardized)
 
 #' @noRd
 # Descending order ----
-# Updated 11.07.2023
+# Updated 12.07.2023
 descending_order <- function(standardized, wc, unique_communities) 
 {
   
+  # Get node names
+  node_names <- dimnames(standardized)[[1]]
+  
   # Initialize order names
-  order_names <- character(dim(standardized)[1])
+  order_names <- character(length(node_names))
   
   # Loop over communities
   for(community in unique_communities){
@@ -477,14 +590,12 @@ descending_order <- function(standardized, wc, unique_communities)
     community_index <- wc == community
     
     # Get order
-    ordering <- order(standardized[community_index, community])
+    ordering <- order(standardized[community_index, community], decreasing = TRUE)
     
     # Input ordering into order names
-    order_names[community_index] <- dimnames(standardized)[[1]][community_index]
+    order_names[community_index] <- node_names[community_index][ordering]
     
   }
-  
-  
   
   # Return reordered results
   return(standardized[order_names,])
@@ -586,7 +697,7 @@ absolute_weights <- function(A, wc, nodes, unique_communities)
 #' @noRd
 ## Add signs ("BRM") ----
 # From CRAN version 1.2.3
-# Updated 10.07.2023
+# Updated 12.07.2023
 old_add_signs <- function(unstandardized, A, wc, unique_communities)
 {
   
@@ -599,11 +710,8 @@ old_add_signs <- function(unstandardized, A, wc, unique_communities)
     # Get number of nodes
     node_count <- sum(community_index)
     
-    # Get community sub-network
-    community_network <- A[community_index, community_index, drop = FALSE]
-    
     # Initialize sign matrix
-    community_signs <- sign(community_network)
+    community_signs <- sign(A[community_index, community_index, drop = FALSE])
     
     # Initialize signs to all positive
     signs <- rep(1, node_count)
@@ -661,11 +769,8 @@ old_add_signs <- function(unstandardized, A, wc, unique_communities)
         # Get second community index
         community_index2 <- wc == community2
         
-        # Get community sub-network
-        community_network <- A[community_index1, community_index2, drop = FALSE]
-        
         # Initialize sign matrix
-        community_signs <- sign(community_network)
+        community_signs <- sign(A[community_index1, community_index2, drop = FALSE])
         
         # Initialize signs to all positive
         signs <- rep(1, node_count)

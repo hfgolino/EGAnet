@@ -2,12 +2,9 @@
 % Please edit documentation in R/prints.R
 \name{prints}
 \alias{prints}
-\alias{print.NetLoads}
 \alias{print.hierEGA}
 \title{S3Methods for Printing}
 \usage{
-\method{print}{NetLoads}(x, ...)
-
 \method{print}{hierEGA}(x, ...)
 }
 \arguments{

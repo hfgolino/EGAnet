@@ -6,17 +6,6 @@
 
 # print() Methods ----
 
-#Print Network Loadings
-# Updated 13.05.2022
-#' @export
-print.NetLoads <- function(x, ...) {
-  
-  x$std[which(abs(x$std) <= x$minLoad, arr.ind = TRUE)] <- ""
-  
-  print(x$std)
-  message("Loadings <= |", x$minLoad, "| are blank")
-}
-
 #Print Hierarchical EGA
 # Updated 16.11.2022
 #' @export
@@ -145,17 +134,6 @@ print.Descriptives <- function(x, ...)
 }
 
 # summary() Methods ----
-
-#summary Network Loadings
-# Updated 13.05.2022
-#' @export
-summary.NetLoads <- function(object, ...) {
-  
-  object$std[which(abs(object$std) <= object$minLoad, arr.ind = TRUE)] <- ""
-  
-  print(object$std)
-  message("Loadings <= |", object$minLoad, "| are blank")
-}
 
 #summary Hierarchical EGA
 # Updated 09.05.2022

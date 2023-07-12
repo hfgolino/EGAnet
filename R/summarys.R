@@ -7,14 +7,9 @@
 #' @name summarys
 #'
 #' @aliases 
-#' summary.NetLoads
 #' summary.hierEGA
 #' 
 #' @usage 
-#' \method{summary}{NetLoads}(object, ...)
-#' 
-#' \method{summary}{invariance}(object, ...)
-#' 
 #' \method{summary}{hierEGA}(object, ...)
 #' 
 #' @description summarys for \code{EGAnet} objects
@@ -28,17 +23,6 @@
 #' @author Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'
 #' @importFrom graphics par
-#summary Network Loadings----
-# Updated 13.05.2022
-#' @export
-summary.NetLoads <- function(object, ...) {
-  
-  object$std[which(abs(object$std) <= object$minLoad, arr.ind = TRUE)] <- ""
-  
-  print(object$std)
-  message("Loadings <= |", object$minLoad, "| are blank")
-}
-
 #summary Hierarchical EGA----
 # Updated 16.11.2022
 #' @export
