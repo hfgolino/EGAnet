@@ -51,10 +51,10 @@ nvapply <- function(X, FUN, ..., LENGTH = 1, USE.NAMES = TRUE)
 
 #' @noRd
 # Unlist `lapply` ----
-# Updated 25.06.2023
-ulapply <- function(X, FUN, ...)
+# Updated 14.07.2023
+ulapply <- function(X, FUN, ..., recursive = TRUE)
 {
-  return(unlist(lapply(X, FUN, ...)))
+  return(unlist(lapply(X, FUN, ...), recursive = recursive))
 }
 
 # The `row_apply` and `column_apply` functions are
@@ -425,7 +425,7 @@ reproducible_bootstrap <- function(
 
 #' @noRd
 # Get available memory ----
-# Updated 11.07.2023
+# Updated 14.07.2023
 available_memory <- function()
 {
 
@@ -453,9 +453,11 @@ available_memory <- function()
     # Check for second value
     bytes <- as.numeric(value_split[1]) * switch(
       value_split[2],
-      "KB" = 1e03,
-      "MB" = 1e06,
-      "GB" = 1e09
+      "B"  = 1, # edge case
+      "KB" = 1e+03,
+      "MB" = 1e+06,
+      "GB" = 1e+09,
+      "TB" = 1e+12 # edge case
     )
 
   }else if(OS == "linux"){ # Linux
@@ -473,7 +475,7 @@ available_memory <- function()
     # Bind values
     info_split <- do.call(rbind, info_split[1:2])
     
-    # Get free values
+    # Get free values (Linux reports in bytes)
     bytes <- as.numeric(info_split[2, info_split[1,] == "free"])
     
   }else{ # Mac
@@ -485,18 +487,21 @@ available_memory <- function()
     unused <- gsub(" .*,", "", system_info)
     
     # Get values only
-    value <- gsub("PhysMem: ", "", unused)
-    value <- gsub(" unused.", "", value)
+    value <- gsub(" unused.", "", gsub("PhysMem: ", "", unused))
     
     # Check for bytes
     if(grepl("M", value)){
-      bytes <- as.numeric(gsub("M", "", value)) * 1e06
+      bytes <- as.numeric(gsub("M", "", value)) * 1e+06
     }else if(grepl("G", value)){
-      bytes <- as.numeric(gsub("G", "", value)) * 1e09
+      bytes <- as.numeric(gsub("G", "", value)) * 1e+09
     }else if(grepl("K", value)){
-      bytes <- as.numeric(gsub("K", "", value)) * 1e03
+      bytes <- as.numeric(gsub("K", "", value)) * 1e+03
+    }else if(grepl("B", value)){ # edge case
+      bytes <- as.numeric(gsub("B", "", value)) * 1
+    }else if(grepl("T", value)){ # edge case
+      bytes <- as.numeric(gsub("T", "", value)) * 1e+12
     }
-    
+      
   }
   
   # Return bytes
@@ -506,7 +511,7 @@ available_memory <- function()
 
 #' @noRd
 # Wrapper for parallelization ----
-# Updated 11.07.2023
+# Updated 14.07.2023
 parallel_process <- function(
     iterations, # number of iterations
     datalist, # list of data
@@ -517,8 +522,8 @@ parallel_process <- function(
     progress = TRUE # progress bar
 ){
   
-  # Set max size ( available memory minus 100MB )
-  options(future.globals.maxSize = available_memory() - 100e06)
+  # Set max size ( available memory minus 1MB )
+  options(future.globals.maxSize = available_memory() - 1e+06)
   
   # Set up plan
   future::plan(
@@ -2492,9 +2497,9 @@ pcor2inv <- function(partial_correlations)
   
 }
 
-#%%%%%%%%%%%%%%%%%%%%
-# MATH FUNCTIONS ----
-#%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# MATH & STATS FUNCTIONS ----
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 # There are some redundancies in the math functions because
 # it's often faster to call some functions directly
@@ -2574,6 +2579,230 @@ strength <- function(network, absolute = TRUE)
     return(colSums(network, na.rm = TRUE))
   }
 
+}
+
+#' @noRd
+# Cohen's d ----
+# Updated 13.07.2023
+d <- function(sample1, sample2, paired = FALSE)
+{
+  
+  # Check for paired
+  if(isTRUE(paired)){
+    
+    # Get differences
+    differences <- sample1 - sample2
+  
+    # Return paired Cohen's d
+    return(
+      mean(differences, na.rm = TRUE) /
+      sd(differences, na.rm = TRUE)
+    )
+    
+  }
+  
+  # Get usable indices
+  usable1 <- sample1[!is.na(sample1)]
+  usable2 <- sample2[!is.na(sample2)]
+  
+  # Numerator
+  num <- mean(usable1) - mean(usable2)
+  
+  # Degrees of freedom
+  df1 <- length(usable1) - 1
+  df2 <- length(usable2) - 1
+  
+  # Denominator
+  denom <- sqrt(
+    (
+      (df1 * var(usable1)) + (df2 * var(usable2))
+    ) / (df1 + df2)
+  )
+  
+  # Return Cohen's d
+  return(abs(num / denom))
+  
+}
+
+#' @noRd
+#' @importFrom stats qchisq qf t.test var
+# Adaptive Alpha ----
+# Needs desparate updating
+# Updated 01.08.2022
+adapt.a <- function (test = c("anova","chisq","cor","one.sample","two.sample","paired"),
+                     ref.n = NULL, n = NULL, alpha = .05, power = .80,
+                     efxize = c("small","medium","large"), groups = NULL, df = NULL)
+{
+  
+  # Need a test
+  if(missing(test)){
+    stop("test must be selected")
+  }else{test <- match.arg(test)}
+  
+  # Assign medium effect size
+  if(missing(efxize)){
+    efxize <- "medium"
+    message("No effect size selected. Medium effect size computed.")
+  }else{efxize <- efxize}
+  
+  # ANOVA
+  if(test == "anova"){
+    
+    # Check for groups
+    if(is.null(groups)){
+      stop("ANOVA is selected. Number of groups must be set")
+    }
+    
+    # Set effect size
+    efxize <- switch(
+      efxize,
+      "small" = 0.10,
+      "medium" = 0.25,
+      "large" = 0.40
+    )
+    
+    # Determine reference sample size
+    if(is.null(ref.n)){
+      ref.n <- pwr::pwr.anova.test(f=efxize,power=power,sig.level=alpha,k=groups)$n
+      message("ref.n is observations per group")
+    }
+    
+    # Numerator
+    num <- sqrt(ref.n*(log(ref.n)+qchisq((1-alpha),1)))
+    
+  }else if(test == "chisq"){ # Chi-square
+    
+    # Needs degrees of freedom
+    if(is.null(df)){
+      stop("Chi-square is selected. Degrees of freedom must be set")
+    }
+    
+    # Set effect size
+    efxize <- switch(
+      efxize,
+      "small" = 0.10,
+      "medium" = 0.30,
+      "large" = 0.50
+    )
+    
+    # Determine reference sample size
+    if(is.null(ref.n)){
+      ref.n <- pwr::pwr.chisq.test(w=efxize,df=df,power=power,sig.level=alpha)$N
+    }
+    # Numerator
+    num <- sqrt(ref.n*(log(ref.n)+qchisq((1-alpha),1)))
+    
+  }else if(test == "cor"){ # Correlation
+    
+    # Set effect size
+    efxize <- switch(
+      efxize,
+      "small" = 0.10,
+      "medium" = 0.30,
+      "large" = 0.50
+    )
+    
+    # Determine reference sample size
+    if(is.null(ref.n)){
+      ref.n <- pwr::pwr.r.test(r=efxize,power=power,sig.level=alpha)$n
+    }
+    
+    # Numerator
+    num <- sqrt(ref.n*(log(ref.n)+qchisq((1-alpha),1)))
+    
+  }else if(any(c("one.sample", "two.sample", "paired") %in% test)){# t-test
+    
+    # Set effect size
+    efxize <- switch(
+      efxize,
+      "small" = 0.20,
+      "medium" = 0.50,
+      "large" = 0.80
+    )
+    
+    # Determine reference sample size
+    if(is.null(ref.n)){
+      ref.n <- pwr::pwr.t.test(d=efxize,power=power,sig.level=alpha,type=test)$n
+    }
+    
+    # Numerator
+    num <- sqrt(ref.n*(log(ref.n)+qchisq((1-alpha),1)))
+    
+  }else{stop("test does not exist")}
+  
+  # Denominator
+  denom <- (sqrt(n*(log(n)+qchisq((1-alpha),1))))
+  
+  # Adjusted alpha calculation
+  adj.a <- alpha*num/denom
+  
+  # Critical values
+  if(test == "anova"){
+    
+    critical.f <- function (groups, n, a)
+    {
+      df1 <- groups - 1
+      df2 <- n - groups
+      cvf <- qf(a, df1, df2, lower.tail = FALSE)
+      return(cvf)
+    }
+    
+    cv <- critical.f(groups, n, adj.a)
+    
+  }else if(test == "chisq"){
+    
+    critical.chi <- function (df, a)
+    {
+      cvchi <- qchisq(a, df, lower.tail = FALSE)
+      return(cvchi)
+    }
+    
+    cv <- critical.chi(df, adj.a)
+    
+  }else if(test == "cor"){
+    
+    critical.r <- function (n, a)
+    {
+      df <- n - 2
+      critical.t <- qt( a/2, df, lower.tail = FALSE )
+      cvr <- sqrt( (critical.t^2) / ( (critical.t^2) + df ) )
+      return(cvr)
+    }
+    
+    cv <- critical.r(n, adj.a)
+    
+  }else if(any(c("one.sample", "two.sample", "paired") %in% test)){
+    
+    critical.t <- function (n, a)
+    {
+      df <- n - 2
+      cvt <- qt( a/2, df, lower.tail = FALSE )
+      return(cvt)
+    }
+    
+    cv <- critical.t(n, adj.a)
+    
+  }
+  
+  # Output
+  output <- list(
+    adapt.a = adj.a, crit.value = cv,
+    orig.a = alpha, ref.n = ref.n,
+    exp.n = n, power = power,
+    efxize = efxize
+  )
+  # Check for ANOVA or Chi-square
+  if(test == "anova"){
+    output$groups <- groups
+    output$df <- c((groups - 1), (n - groups))
+    
+  }else if(test=="chisq"){
+    output$df <- df
+  }
+  # Add test
+  output$test <- test
+  
+  return(output)
 }
 
 #%%%%%%%%%%%%%%%%%%%%%%%
@@ -2809,7 +3038,7 @@ no_name_print <- function(object){
 
 #' @noRd
 # General function to check for packages ----
-# Updated 26.06.2023
+# Updated 13.07.2023
 check_package <- function(packages)
 {
 
@@ -2836,9 +3065,9 @@ check_package <- function(packages)
           missing_packages, 
           " are not installed but are required for this function. ",
           "Please run \n\n",
-          "install.packages(c(", packages, "))",
+          "`install.packages(c(", packages, "))`",
           "\n\nOnce installed, re-run this function (you may need to restart R/RStudio)."
-        )
+        ), call. = FALSE
       )
       
     }else{
@@ -2853,9 +3082,9 @@ check_package <- function(packages)
           missing_packages, 
           " is not installed but is required for this function. ",
           "Please run \n\n",
-          "install.packages(c(", packages, "))",
+          "`install.packages(", packages, ")`",
           "\n\nOnce installed, re-run this function (you may need to restart R/RStudio)."
-        )
+        ), call. = FALSE
       )
       
     }

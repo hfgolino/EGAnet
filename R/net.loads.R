@@ -89,7 +89,7 @@
 #' @export
 #'
 # Network Loadings
-# Updated 12.07.2023
+# Updated 13.07.2023
 # Default = "BRM" or `net.loads` from version 1.2.3
 # Experimental = new signs and cross-loading adjustment
 net.loads <- function(
@@ -102,6 +102,7 @@ net.loads <- function(
   loading.method <- set_default(loading.method, "brm", net.loads)
   
   # Organize and extract input
+  # `wc` is made to be a character vector to allow `NA`
   input <- organize_input(A, wc)
   A <- input$A; wc <- input$wc
   
@@ -116,20 +117,29 @@ net.loads <- function(
   
   # If all singleton communities, then send NA for all
   if(nodes == communities){
-    
-    # Get return order of node names and communities (without NA)
-    return_node_order <- order(node_names)
-    return_community_order <- order(
-      unique_communities[unique_communities != "NA"]
+
+    # Initialize loading matrix
+    loading_matrix <- matrix(
+      NA, nrow = nodes, ncol = communities,
+      dimnames = list(node_names, unique_communities)
     )
     
-    # Send results
-    return(
-      list(
-        unstd = unstandardized[return_node_order, return_community_order],
-        std = unstandardized[return_node_order, return_community_order]
-      )
+    # Set up results
+    results <- list(
+      unstd = loading_matrix,
+      std = loading_matrix
     )
+    
+    # Add attributes
+    attr(results, "methods") <- list(
+      loading.method = loading.method, rotation = rotation
+    )
+    
+    # Add class
+    class(results) <- "net.loads"
+    
+    # Return results
+    return(results)
     
   }
   
@@ -148,7 +158,7 @@ net.loads <- function(
     standardized <- standardize(unstandardized)
     
     # Get descending order
-    standardized <- descending_order(standardized, wc, unique_communities)
+    standardized <- descending_order(standardized, wc, unique_communities, node_names)
     
     # Set up results
     results <- list(
@@ -181,7 +191,7 @@ net.loads <- function(
   standardized <- standardize(unstandardized)
   
   # Get descending order
-  standardized <- descending_order(standardized, wc, unique_communities)
+  standardized <- descending_order(standardized, wc, unique_communities, node_names)
     
   # Check for rotation
   if(!is.null(rotation)){
@@ -189,7 +199,9 @@ net.loads <- function(
     # Errors for...
     # Missing packages: {GPArotation} and {fungible}
     # Invalid rotations
-    rotation_errors(rotation)
+    # Returns: proper capitalization of rotation
+    # For example: "geominq" returns "geominQ"
+    rotation <- rotation_errors(rotation)
     
     # If rotation exists, then obtain it
     rotation_FUN <- get(rotation, envir = asNamespace("GPArotation"))
@@ -201,10 +213,13 @@ net.loads <- function(
     rotation_ARGS <- obtain_arguments(rotation_FUN, ellipse)
     
     # Check for "NA" community
-    if("NA" %in% wc){
-      standardized <- standardized[, dimnames(standardized)[[2]] != "NA"]
+    NA_community <- unique_communities == "NA"
+    
+    # Check for "NA" community
+    if(any(NA_community)){
+      unique_communities <- unique_communities[!NA_community]
+      standardized <- standardized[,unique_communities]
       communities <- communities - 1
-      unique_communities <- unique_communities[unique_communities != "NA"]
     }
     
     # Supply loadings
@@ -348,12 +363,10 @@ print.net.loads <- function(x, ...)
   )
   
   # Add message about minimum loadings
-  message(
-    paste0(
-      "Loadings >= |", format_decimal(minimum, 2),
-      "| are displayed. To change this 'minimum', use ",
-      "`print(net.loads_object, minimum = 0.10)`"
-    )
+  paste0(
+    "Standardized loadings >= |", format_decimal(minimum, 2),
+    "| are displayed. To change this 'minimum', use ",
+    "`print(net.loads_object, minimum = 0.10)`"
   )
   
 }
@@ -533,7 +546,6 @@ experimental <- function(A, wc, nodes, node_names, communities, unique_communiti
   # Using signs, ensure positive orientation based on most common direction
   for(community in unique_communities){
     
-    
     # Get community index
     community_index <- wc == community
     
@@ -573,12 +585,9 @@ standardize <- function(unstandardized)
 
 #' @noRd
 # Descending order ----
-# Updated 12.07.2023
-descending_order <- function(standardized, wc, unique_communities) 
+# Updated 13.07.2023
+descending_order <- function(standardized, wc, unique_communities, node_names) 
 {
-  
-  # Get node names
-  node_names <- dimnames(standardized)[[1]]
   
   # Initialize order names
   order_names <- character(length(node_names))
@@ -604,7 +613,7 @@ descending_order <- function(standardized, wc, unique_communities)
 
 #' @noRd
 # Rotation errors ----
-# Updated 12.07.2023
+# Updated 13.07.2023
 rotation_errors <- function(rotation)
 {
   
@@ -615,8 +624,12 @@ rotation_errors <- function(rotation)
   # Get rotations available in {GPArotation}
   rotation_names <- ls(asNamespace("GPArotation"))
   
+  # Get lowercase names
+  rotation_lower <- tolower(rotation)
+  rotation_names_lower <- tolower(rotation_names)
+  
   # Check if rotation exists
-  if(!rotation %in% rotation_names){
+  if(!rotation_lower %in% rotation_names_lower){
     
     # Send error that rotation is not found
     stop(
@@ -624,10 +637,13 @@ rotation_errors <- function(rotation)
         "Invalid rotation: ", rotation, "\n\n",
         "The rotation \"", rotation, "\" is not available in the {GPArotation} package. ",
         "\n\nSee `?GPArotation::rotations` for the list of available rotations."
-      )
+      ), call. = FALSE
     )
     
   }
+  
+  # If rotation exists, then return proper name
+  return(rotation_names[rotation_lower == rotation_names_lower])
   
 }
 
@@ -697,7 +713,7 @@ absolute_weights <- function(A, wc, nodes, unique_communities)
 #' @noRd
 ## Add signs ("BRM") ----
 # From CRAN version 1.2.3
-# Updated 12.07.2023
+# Updated 13.07.2023
 old_add_signs <- function(unstandardized, A, wc, unique_communities)
 {
   
@@ -723,13 +739,13 @@ old_add_signs <- function(unstandardized, A, wc, unique_communities)
       signs_copy <- community_signs
       
       # Get current maximum sum
-      current_max <- sum(colSums(community_signs, na.rm = TRUE), na.rm = TRUE)
+      current_max <- sum(community_signs, na.rm = TRUE)
       
       # Flip sign of each node
       community_signs[node,] <- -community_signs[node,]
       
       # Get new maximum sum
-      new_max <- sum(colSums(community_signs, na.rm = TRUE), na.rm = TRUE)
+      new_max <- sum(community_signs, na.rm = TRUE)
       
       # Check for increase
       if(new_max > current_max){
@@ -782,13 +798,13 @@ old_add_signs <- function(unstandardized, A, wc, unique_communities)
           signs_copy <- community_signs
           
           # Get current maximum sum
-          current_max <- sum(colSums(community_signs, na.rm = TRUE), na.rm = TRUE)
+          current_max <- sum(community_signs, na.rm = TRUE)
           
           # Flip sign of each node
           community_signs[node,] <- -community_signs[node,]
           
           # Get new maximum sum
-          new_max <- sum(colSums(community_signs, na.rm = TRUE), na.rm = TRUE)
+          new_max <- sum(community_signs, na.rm = TRUE)
           
           # Check for increase
           if(new_max > current_max){

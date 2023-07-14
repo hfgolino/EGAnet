@@ -36,6 +36,8 @@ o ADD: reproducible bootstrapping with seed setting that does *not* affect R's s
 
 o ADD: `community.homogenize` as a core function rather than internal (previously `homogenize.membership`); about 2.5x faster than the original version
 
+o ADD: `convert2tidygraph` for `ggraph` and `tidygraph` support -- thanks to Dominique Makowski!
+
 o UPDATE: `EBICglasso.qgraph` and `TMFG` were optimized; `TMFG` is now 2x faster
 
 o UPDATE: `TMFG` can now directly estimate a GGM with the argument 'partial = TRUE'; implements the Local-Global Inversion method from Barfuss et al. (2016)
@@ -77,6 +79,8 @@ o UPDATE: `ergoInfo` is about 2x faster
 o UPDATE: `jsd` received several internal functions to expedite procedures in `infoCluster` and `jsd.ergoInfo`
 
 o UPDATE: `net.loads` now includes 'loading.method' argument to allow for reproducibility with "BRM" implementation (and version 1.2.3); "experimental" implementation includes rotations alternative signs and cross-loading computation (potential future default)
+
+o UPDATE: `compare.EGA.plots` is faster, more flexible, and more reliable for comparing two or more plots
 
 o DEPENDENCY: removed {network} because it is no longer used for plotting; switched {sna} to IMPORTS rather than SUGGESTS
 

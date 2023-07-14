@@ -305,38 +305,81 @@ ergoInfo <- function(
 # r_sample_without_replacement <- EGAnet:::r_sample_without_replacement
 # Need above functions for testing!
 
+#' @exportS3Method 
+# S3 Print Method
+# Updated 14.07.2023
+print.EII <- function(x, ...)
+{
+  
+  # Print EII method
+  cat(
+    "EII Method: ",
+    ifelse(
+      attr(x, "methods")$use == "edge.list",
+      "Edge List", "Unweighted"
+    ), "\n"
+  )
+  
+  # Print EII value
+  cat("EII: ", x$EII)
+  
+}
+
+#' @exportS3Method 
+# S3 Summary Method
+# Updated 14.07.2023
+summary.EII <- function(object, ...)
+{
+  print(object, ...) # same as print
+}
+
 #' @noRd
 # k-complexity ----
-# Updated 10.07.2023
+# Updated 14.07.2023
 k_complexity <- function(values)
 {
   
   # Streamlined form
-  return(
-    length( # length of compression
-      memCompress( # bit compression
-        paste0( # bits (matches `toString`)
-          t(values), collapse = ", "
-        ), type = "gzip" # type of compression
-      )
-    )
-  )
-  
-  # Original (first) method
   # return(
   #   length( # length of compression
   #     memCompress( # bit compression
   #       paste0( # bits (matches `toString`)
-  #         values, collapse = ", "
+  #         t(values), collapse = ", "
   #       ), type = "gzip" # type of compression
   #     )
   #   )
   # )
   
+  # Original (first) method
+  return(
+    length( # length of compression
+      memCompress( # bit compression
+        paste0( # bits (matches `toString`)
+          values, collapse = ", "
+        ), type = "gzip" # type of compression
+      )
+    )
+  )
+  
+  # A key question on order of edge list:
+  # Should edges be in order of their pairwise correspondence; for example:
+  #
+  # 1 2
+  # 3 5
+  # 4 5
+  # 5 6
+  #
+  # Reads: "1, 2, 3, 5, 4, 5, 5, 6"
+  #
+  # OR
+  #
+  # Reads (current implementation): "1, 3, 4, 5, 2, 5, 5, 6"
+  
 }
 
 #' @noRd
 # Structural edge overlap ----
+# EXPERIMENTAL -- NOT FINISHED
 # Updated 10.07.2023
 structural_overlap <- function(adjacency_networks)
 {
@@ -362,16 +405,3 @@ structural_overlap <- function(adjacency_networks)
 
 }
 
-# A key question on order of edge list:
-# Should edges be in order of their pairwise correspondence; for example:
-#
-# 1 2
-# 3 5
-# 4 5
-# 5 6
-#
-# Reads: "1, 2, 3, 5, 4, 5, 5, 6"
-#
-# OR
-#
-# Reads (current implementation): "1, 3, 4, 5, 2, 5, 5, 6"

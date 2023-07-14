@@ -8,10 +8,9 @@ compare.EGA.plots(
   ...,
   input.list = NULL,
   base.plot = 1,
-  labels,
-  rows,
-  columns,
-  plot.args = list()
+  labels = NULL,
+  rows = NULL,
+  columns = NULL
 )
 }
 \arguments{

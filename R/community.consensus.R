@@ -173,7 +173,7 @@
 #' @export
 #'
 # Compute consensus clustering for EGA
-# Updated 01.07.2023
+# Updated 14.07.2023
 community.consensus <- function(
     network, signed = FALSE, 
     order = c("lower", "higher"), resolution = 1,
@@ -296,7 +296,10 @@ community.consensus <- function(
   }
   
   # Force into vector
-  result$selected_solution <- force_vector(result$selected_solution)
+  # `reindex_memberships` internal is in `community.detection`
+  result$selected_solution <- reindex_memberships(
+    force_vector(result$selected_solution)
+  )
   
   # Obtain network names
   network_names <- dimnames(network_matrix)[[2]]

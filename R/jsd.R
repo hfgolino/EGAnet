@@ -164,7 +164,7 @@ kld <- function(network1, network2)
 
 #' @noRd
 # Faster pairwise spectral JSD
-# Updated 10.07.2023
+# Updated 13.07.2023
 pairwise_spectral_JSD <- function(network_list)
 {
   

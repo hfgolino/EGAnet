@@ -149,7 +149,7 @@
 #' @export
 #'
 # Compute communities for EGA
-# Updated 12.07.2023
+# Updated 14.07.2023
 community.detection <- function(
     network, algorithm = c(
       "edge_betweenness", "fast_greedy",
@@ -296,6 +296,9 @@ community.detection <- function(
   
   # Name nodes
   names(membership) <- dimnames(network_matrix)[[2]]
+  
+  # Re-index memberships
+  membership <- reindex_memberships(membership)
   
   # Add methods to membership attributes
   attr(membership, "methods") <- list(
@@ -495,3 +498,16 @@ obtain_algorithm_name <- function(algorithm)
   
 }
 
+#' @noRd
+# Re-index memberships ----
+# Updated 14.07.2023
+reindex_memberships <- function(memberships)
+{
+
+  # Re-index back into same vector
+  memberships[] <- as.numeric(factor(memberships, unique(memberships)))
+  
+  # Return memberships
+  return(memberships)
+  
+}

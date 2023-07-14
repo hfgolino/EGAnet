@@ -861,7 +861,7 @@ plot.dynEGA.Group <- function(x, base = 1, ...)
 
 #' @exportS3Method 
 # S3 Plot Method (Individual) ----
-# Updated 07.07.2023
+# Updated 14.07.2023
 plot.dynEGA.Individual <- function(x, id = NULL, ...)
 {
   
