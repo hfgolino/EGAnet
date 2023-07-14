@@ -154,45 +154,25 @@ net.loads <- function(
     # Add signs to the loadings
     unstandardized <- old_add_signs(unstandardized, A, wc, unique_communities)
     
-    # Before rounding occurred prior to standardization (no rounding)
-    standardized <- standardize(unstandardized)
+
+  }else{ # If not "BRM", run experimental
     
-    # Get descending order
-    standardized <- descending_order(standardized, wc, unique_communities, node_names)
-    
-    # Set up results
-    results <- list(
-      unstd = unstandardized[dimnames(standardized)[[1]],],
-      std = standardized
+    # Experimental unstandardized loadings
+    # Differences:
+    # 1. signs are added in a different (more accurate) way
+    # 2. algebraic rather than absolute sums are used
+    unstandardized <- experimental(
+      A, wc, nodes, node_names, communities, unique_communities
     )
-    
-    # Add attributes
-    attr(results, "methods") <- list(
-      loading.method = loading.method, rotation = rotation
-    )
-    
-    # Add class
-    class(results) <- "net.loads"
-    
-    # Return results
-    return(results)
-    
+
   }
-  
-  
-  # If not "BRM", run experimental
-  
-  # Experimental unstandardized loadings
-  unstandardized <- experimental(
-    A, wc, nodes, node_names, communities, unique_communities
-  )
   
   # Obtain standardized loadings
   standardized <- standardize(unstandardized)
   
   # Get descending order
   standardized <- descending_order(standardized, wc, unique_communities, node_names)
-    
+  
   # Check for rotation
   if(!is.null(rotation)){
     

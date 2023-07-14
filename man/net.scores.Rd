@@ -8,9 +8,11 @@ net.scores(
   data,
   A,
   wc,
-  rotation = "geominQ",
-  method = "network",
-  impute = "none",
+  rotation = NULL,
+  loading.method = c("BRM", "experimental"),
+  scoring.method = c("Anderson", "Bartlett", "components", "Harman", "network",
+    "tenBerge", "Thurstone"),
+  impute = c("mean", "median", "none"),
   ...
 )
 }
@@ -32,17 +34,6 @@ a simple structure.
 Defaults to \code{\link[GPArotation]{geominQ}}.
 For a list of rotations, see \code{\link{GPArotation}}}
 
-\item{method}{Character.
-Factor scoring method to use. For a list of scoring methods,
-see \code{\link[psych]{factor.scores}}.
-Defaults to \code{"network"}
-
-"network" scores can also be computed as a formative method
-using \code{"component"} or \code{"network"}. The core difference
-between these two methods is that \code{"network"} will use the
-weight contributions to communities using each variable's
-standard deviation in combination with their loadings}
-
 \item{impute}{Character.
 In the presence of missing data, imputation can be implemented. Currently,
 three options are available:}
@@ -62,6 +53,17 @@ Arguments to be passed onto \code{\link[EGAnet]{net.loads}}
 {The "median" value of the columns are used to replace the missing data.}
 
 }}
+
+\item{method}{Character.
+Factor scoring method to use. For a list of scoring methods,
+see \code{\link[psych]{factor.scores}}.
+Defaults to \code{"network"}
+
+"network" scores can also be computed as a formative method
+using \code{"component"} or \code{"network"}. The core difference
+between these two methods is that \code{"network"} will use the
+weight contributions to communities using each variable's
+standard deviation in combination with their loadings}
 }
 \value{
 Returns a list containing:

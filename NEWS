@@ -80,6 +80,8 @@ o UPDATE: `jsd` received several internal functions to expedite procedures in `i
 
 o UPDATE: `net.loads` now includes 'loading.method' argument to allow for reproducibility with "BRM" implementation (and version 1.2.3); "experimental" implementation includes rotations alternative signs and cross-loading computation (potential future default)
 
+o UPDATE: `net.scores` is much simpler (internally) and quicker; seamlessly integrates with `net.loads`
+
 o UPDATE: `compare.EGA.plots` is faster, more flexible, and more reliable for comparing two or more plots
 
 o DEPENDENCY: removed {network} because it is no longer used for plotting; switched {sna} to IMPORTS rather than SUGGESTS
