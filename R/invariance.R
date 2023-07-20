@@ -360,6 +360,11 @@ invariance <- function(
     }
   )
   
+  # Ensure same order as original data
+  original_assigned_difference <- original_assigned_difference[
+    dimension_names[[2]]
+  ]
+  
   # Permutate groups
   perm_groups <- lapply(seq_len(iter), function(i){
     sample(groups, size = dimensions[1], replace = FALSE)
@@ -415,11 +420,17 @@ invariance <- function(
   
   # Obtain assigned loadings only
   assigned_list <- lapply(difference_list, function(one_difference){
-    ulapply(
+    
+    # Get differences
+    differences <- ulapply(
       community_names, function(community){
         one_difference[structure == community, community]
       }
     )
+    
+    # Ensure same order as original data
+    return(differences[dimension_names[[2]]])
+    
   })
   
   # Create results
@@ -427,15 +438,14 @@ invariance <- function(
     abs(x) >= abs(original_assigned_difference)
   })
   
-  ## Simplify to matrix
-  permutation_counts <- simplify2array(permutation_counts)
+  # Replace the first permutation with all TRUE (original differences)
+  permutation_counts[[1]] <- rep(TRUE, dimensions[2])
   
-  ## Add a column of TRUE (original difference)
-  permutation_counts[,1] <- rep(TRUE, dimensions[2])
-  
-  ## p-value
-  p_value <- rowMeans(permutation_counts, na.rm = TRUE)
-  
+  # Compute p-values
+  p_value <- rowMeans(
+    do.call(cbind, permutation_counts), na.rm = TRUE
+  )
+
   # Results data frame
   results_df <- data.frame(
     Membership = remove_attributes(structure),
