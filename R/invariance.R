@@ -459,9 +459,9 @@ invariance <- function(
   
   # Add significance
   sig <- swiftelse(results_df$p <= 0.10, ".", "")
-  sig <- swiftelse(results_df$p <= 0.05, "***", sig)
+  sig <- swiftelse(results_df$p <= 0.05, "*", sig)
   sig <- swiftelse(results_df$p <= 0.01, "**", sig)
-  results_df$sig <- swiftelse(results_df$p <= 0.001, "*", sig)
+  results_df$sig <- swiftelse(results_df$p <= 0.001, "***", sig)
   
   # Add direction
   direction <- paste(
