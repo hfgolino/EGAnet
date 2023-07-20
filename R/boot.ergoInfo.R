@@ -184,9 +184,9 @@ boot.ergoInfo <- function(
   )
   
   # Get effect direction
-  effect_direction <- ifelse(
+  effect_direction <- swiftelse(
     p_value > 0.05, "n.s.",
-    ifelse(mean(greater_than) > 0.50, "greater", "less")
+    swiftelse(mean(greater_than) > 0.50, "greater", "less")
   )
   
   # Set up results to return

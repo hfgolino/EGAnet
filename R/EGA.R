@@ -241,7 +241,7 @@ EGA <- function (
   # Uses actual function they will be used in
   # (keeping non-function choices for `cor_auto`)
   corr <- set_default(corr, "auto", c("auto", "cor_auto", "pearson", "spearman"))
-  corr <- ifelse(corr == "cor_auto", "auto", corr) # deprecate `cor_auto`
+  corr <- swiftelse(corr == "cor_auto", "auto", corr) # deprecate `cor_auto`
   na.data <- set_default(na.data, "pairwise", auto.correlate)
   model <- set_default(model, "glasso", network.estimation)
   algorithm <- set_default(algorithm, "walktrap", community.detection)
@@ -369,7 +369,7 @@ EGA <- function (
 
 #' @exportS3Method 
 # S3 Print Method ----
-# Updated 22.06.2023
+# Updated 20.07.2023
 print.EGA <- function(x, ...)
 {
   
@@ -397,7 +397,10 @@ print.EGA <- function(x, ...)
   )
   
   # Set up unidimensional print
-  if(unidimensional_method == "Louvain"){
+  if(
+    unidimensional_method == "Louvain" &
+    "consensus.iter" %in% names(unidimensional_attributes$consensus)
+  ){
     
     # Set up consensus attributes
     consensus_attributes <- unidimensional_attributes$consensus
@@ -424,7 +427,7 @@ print.EGA <- function(x, ...)
   cat(
     paste0(
       "Unidimensional Method: ", unidimensional_method, "\n",
-      "Unidimensional: ", ifelse(
+      "Unidimensional: ", swiftelse(
         unidimensional_attributes$unidimensional,
         "Yes", "No"
       )

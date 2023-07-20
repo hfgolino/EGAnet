@@ -114,7 +114,7 @@
 #' @export
 #'
 # Network Scores ----
-# Updated 14.07.2023
+# Updated 15.07.2023
 net.scores <- function (
     data, A, wc, rotation = NULL,
     loading.method = c("BRM", "experimental"),
@@ -126,11 +126,21 @@ net.scores <- function (
 )
 {
   
-  # Send error for missing data
-  if(missing(data)){
-    stop("Input for 'data' is missing. To compute scores, the original data are necessary")
+  # Error on:
+  # 1. missing data
+  # 2. symmetric matrix input as data
+  if(missing(data)){ # Check for missing data
+    stop(
+      "Input for 'data' is missing. To compute scores, the original data are necessary",
+      call. = FALSE
+    )
+  }else if(is_symmetric(data)){ # Check for symmetric matrix
+      stop(
+        "Input for 'data' was detected as symmetric. Correlation matrices cannot be used. The original data are required to estimate scores.",
+        call. = FALSE
+      )
   }else{ # Ensure data is a matrix
-    data <- as.matrix(data)
+    data <- as.matrix(data) 
   }
   
   # Get ellipse arguments
@@ -142,7 +152,7 @@ net.scores <- function (
   }
   
   # Check for missing arguments (argument, default, function)
-  loading.method <- set_default(loading.method, "BRM", net.loads)
+  loading.method <- set_default(loading.method, "brm", net.loads)
   scoring.method <- set_default(scoring.method, "network", net.scores)
   impute <- set_default(impute, "none", net.scores)
   
@@ -198,7 +208,7 @@ imputation <- function(data, impute)
 
 #' @noRd
 # Scores computation ----
-# Updated 14.07.2023
+# Updated 15.07.2023
 compute_scores <- function(loadings, data, scoring.method, wc)
 {
   
@@ -212,7 +222,7 @@ compute_scores <- function(loadings, data, scoring.method, wc)
     )
     
     # Compute rotated scores (if available)
-    if("rotated" %in% names(loadings)){
+    if(!is.null(loadings$rotated)){
       rotated <- network_scores(
         loads = loadings$rotated$loadings,
         data = data
@@ -240,7 +250,7 @@ compute_scores <- function(loadings, data, scoring.method, wc)
     )$scores
     
     # Compute rotated scores (if available)
-    if("rotated" %in% names(loadings)){
+    if(!is.null(loadings$rotated)){
       rotated <- psych::factor.scores(
         x = data,
         f = loadings$rotated$loadings,

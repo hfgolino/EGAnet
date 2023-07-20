@@ -305,16 +305,16 @@ plot.infoCluster <- function(x, ...)
   cut <- unique_length(clusters)
   height <- unique(cluster_data$segments$y)[order(unique(cluster_data$segments$y), decreasing = TRUE)]
   cut.height <- mean(c(height[cut], height[cut-1]))
-  cluster_data$segments$line <- ifelse(cluster_data$segments$y == cluster_data$segments$yend &
+  cluster_data$segments$line <- swiftelse(cluster_data$segments$y == cluster_data$segments$yend &
                                          cluster_data$segments$y > cut.height, 1, 2)
-  cluster_data$segments$line <- ifelse(cluster_data$segments$yend  > cut.height, 1, cluster_data$segments$line)
+  cluster_data$segments$line <- swiftelse(cluster_data$segments$yend  > cut.height, 1, cluster_data$segments$line)
   
   # Number the clusters
   cluster_data$segments$cluster <- c(-1, diff(cluster_data$segments$line))
   change <- which(cluster_data$segments$cluster == 1)
   for (i in 1:cut) cluster_data$segments$cluster[change[i]] = i + 1
-  cluster_data$segments$cluster <-  ifelse(cluster_data$segments$line == 1, 1, 
-                                           ifelse(cluster_data$segments$cluster == 0, NA, cluster_data$segments$cluster))
+  cluster_data$segments$cluster <-  swiftelse(cluster_data$segments$line == 1, 1, 
+                                           swiftelse(cluster_data$segments$cluster == 0, NA, cluster_data$segments$cluster))
   
   
   # Replace NA values in cluster

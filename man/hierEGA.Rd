@@ -6,26 +6,29 @@
 \usage{
 hierEGA(
   data,
+  loading.method = c("BRM", "experimental"),
+  rotation = NULL,
   scores = c("factor", "network"),
-  rotation = "geominQ",
-  consensus.iter = 1000,
-  consensus.method = c("highest_modularity", "most_common", "iterative", "lowest_tefi",
-    "most_common_tefi"),
+  impute = c("mean", "median", "none"),
+  corr = c("auto", "pearson", "spearman"),
+  na.data = c("pairwise", "listwise"),
+  model = c("BGGM", "glasso", "TMFG"),
+  algorithm = c("leiden", "louvain", "walktrap"),
   uni.method = c("expand", "LE", "louvain"),
-  corr = c("cor_auto", "pearson", "spearman"),
-  model = c("glasso", "TMFG"),
-  model.args = list(),
-  algorithm = c("walktrap", "leiden", "louvain"),
-  algorithm.args = list(),
-  lower.louvain = FALSE,
   plot.EGA = TRUE,
-  plot.args = list()
+  verbose = FALSE,
+  ...
 )
 }
 \arguments{
 \item{data}{Matrix or data frame.
 Variables (down columns) only.
 Does not accept correlation matrices}
+
+\item{rotation}{Character.
+A rotation to use, like factor loadings, to obtain
+a simple structure. For a list of rotations,
+see \link{GPArotation}}
 
 \item{scores}{Character.
 How should scores for the higher-order structure be estimated?
@@ -44,10 +47,90 @@ the composition of the lower order factors.
 By default, both factor and network scores are computed and stored
 in the output. The selected option only appears in the main output (\code{$hierarchical})}
 
-\item{rotation}{Character.
-A rotation to use, like factor loadings, to obtain
-a simple structure. For a list of rotations,
-see \link{GPArotation}}
+\item{corr}{Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{cor_auto}}}
+{Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
+\code{\link[qgraph]{qgraph}}}.
+
+\item{\strong{\code{pearson}}}
+{Computes Pearson's correlation coefficient using the pairwise complete observations via
+the \code{\link[stats]{cor}}} function.
+
+\item{\strong{\code{spearman}}}
+{Computes Spearman's correlation coefficient using the pairwise complete observations via
+the \code{\link[stats]{cor}}} function.
+}}
+
+\item{model}{Character.
+A string indicating the method to use.
+Defaults to \code{"glasso"}.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{glasso}}}
+{Estimates the Gaussian graphical model using graphical LASSO with
+extended Bayesian information criterion to select optimal regularization parameter}
+
+\item{\strong{\code{TMFG}}}
+{Estimates a Triangulated Maximally Filtered Graph}
+
+}}
+
+\item{algorithm}{A string indicating the algorithm to use or a function from \code{\link{igraph}}
+Defaults to \code{"walktrap"}.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{walktrap}}}
+{Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
+
+\item{\strong{\code{leiden}}}
+{Computes the Leiden algorithm using \code{\link[igraph]{cluster_leiden}}.
+Defaults to \code{objective_function = "modularity"}}
+
+\item{\strong{\code{louvain}}}
+{Computes the Louvain algorithm using \code{\link[igraph]{cluster_louvain}}}
+
+}}
+
+\item{uni.method}{Character.
+What unidimensionality method should be used? 
+Defaults to \code{"LE"}.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{expand}}}
+{Expands the correlation matrix with four variables correlated .50.
+If number of dimension returns 2 or less in check, then the data 
+are unidimensional; otherwise, regular EGA with no matrix
+expansion is used. This is the method used in the Golino et al. (2020)
+\emph{Psychological Methods} simulation.}
+
+\item{\strong{\code{LE}}}
+{Applies the Leading Eigenvalue algorithm (\code{\link[igraph]{cluster_leading_eigen}})
+on the empirical correlation matrix. If the number of dimensions is 1,
+then the Leading Eigenvalue solution is used; otherwise, regular EGA
+is used. This is the final method used in the Christensen, Garrido,
+and Golino (2021) simulation.}
+
+\item{\strong{\code{louvain}}}
+{Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
+on the empirical correlation matrix using a resolution parameter = 0.95.
+If the number of dimensions is 1, then the Louvain solution is used; otherwise,
+regular EGA is used. This method was validated in the Christensen (2022) simulation.}
+
+}}
+
+\item{plot.EGA}{Boolean.
+If \code{TRUE}, returns a plot of the network and its estimated dimensions.
+Defaults to \code{TRUE}}
 
 \item{consensus.iter}{Numeric.
 Number of iterations to perform in consensus clustering
@@ -93,90 +176,9 @@ By default, all \code{consensus.method} options are computed and
 stored in the output. The selected method will be used to
 plot and appear in the main output (\code{$hierarchical})}
 
-\item{uni.method}{Character.
-What unidimensionality method should be used? 
-Defaults to \code{"LE"}.
-Current options are:
-
-\itemize{
-
-\item{\strong{\code{expand}}}
-{Expands the correlation matrix with four variables correlated .50.
-If number of dimension returns 2 or less in check, then the data 
-are unidimensional; otherwise, regular EGA with no matrix
-expansion is used. This is the method used in the Golino et al. (2020)
-\emph{Psychological Methods} simulation.}
-
-\item{\strong{\code{LE}}}
-{Applies the Leading Eigenvalue algorithm (\code{\link[igraph]{cluster_leading_eigen}})
-on the empirical correlation matrix. If the number of dimensions is 1,
-then the Leading Eigenvalue solution is used; otherwise, regular EGA
-is used. This is the final method used in the Christensen, Garrido,
-and Golino (2021) simulation.}
-
-\item{\strong{\code{louvain}}}
-{Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
-on the empirical correlation matrix using a resolution parameter = 0.95.
-If the number of dimensions is 1, then the Louvain solution is used; otherwise,
-regular EGA is used. This method was validated in the Christensen (2022) simulation.}
-
-}}
-
-\item{corr}{Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
-Current options are:
-
-\itemize{
-
-\item{\strong{\code{cor_auto}}}
-{Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
-\code{\link[qgraph]{qgraph}}}.
-
-\item{\strong{\code{pearson}}}
-{Computes Pearson's correlation coefficient using the pairwise complete observations via
-the \code{\link[stats]{cor}}} function.
-
-\item{\strong{\code{spearman}}}
-{Computes Spearman's correlation coefficient using the pairwise complete observations via
-the \code{\link[stats]{cor}}} function.
-}}
-
-\item{model}{Character.
-A string indicating the method to use.
-Defaults to \code{"glasso"}.
-Current options are:
-
-\itemize{
-
-\item{\strong{\code{glasso}}}
-{Estimates the Gaussian graphical model using graphical LASSO with
-extended Bayesian information criterion to select optimal regularization parameter}
-
-\item{\strong{\code{TMFG}}}
-{Estimates a Triangulated Maximally Filtered Graph}
-
-}}
-
 \item{model.args}{List.
 A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
 or \code{TMFG}}
-
-\item{algorithm}{A string indicating the algorithm to use or a function from \code{\link{igraph}}
-Defaults to \code{"walktrap"}.
-Current options are:
-
-\itemize{
-
-\item{\strong{\code{walktrap}}}
-{Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
-
-\item{\strong{\code{leiden}}}
-{Computes the Leiden algorithm using \code{\link[igraph]{cluster_leiden}}.
-Defaults to \code{objective_function = "modularity"}}
-
-\item{\strong{\code{louvain}}}
-{Computes the Louvain algorithm using \code{\link[igraph]{cluster_louvain}}}
-
-}}
 
 \item{algorithm.args}{List.
 A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
@@ -186,10 +188,6 @@ or some other community detection algorithm function (see examples)}
 Should lower Louvain solution be used at the higher order level?
 Defaults to \code{FALSE}.
 Set to \code{TRUE} to use the lower Louvain solution}
-
-\item{plot.EGA}{Boolean.
-If \code{TRUE}, returns a plot of the network and its estimated dimensions.
-Defaults to \code{TRUE}}
 
 \item{plot.args}{List.
 A list of additional arguments for the network plot. See \code{\link[GGally]{ggnet2}} for

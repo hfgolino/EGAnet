@@ -211,7 +211,7 @@ EBICglasso.qgraph <- function(
       )
       
       # Check for error
-      return(ifelse(is(res, "try-error"), NA, res))
+      return(swiftelse(is(res, "try-error"), NA, res))
       
     })
     
@@ -248,7 +248,7 @@ EBICglasso.qgraph <- function(
     model.selection = model.selection,
     lambda = lambda[opt], gamma = gamma,
     lambda.min.ratio = lambda.min.ratio,
-    nlambda = nlambda, criterion = ifelse(
+    nlambda = nlambda, criterion = swiftelse(
       model.selection == "ebic", EBICs[opt], JSDs[opt]
     )
   )

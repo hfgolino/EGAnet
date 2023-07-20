@@ -159,7 +159,7 @@ EGA.estimate <- function(
   
   # Check for missing arguments (argument, default, function)
   corr <- set_default(corr, "auto", c("auto", "cor_auto", "pearson", "spearman"))
-  corr <- ifelse(corr == "cor_auto", "auto", corr) # deprecate `cor_auto`
+  corr <- swiftelse(corr == "cor_auto", "auto", corr) # deprecate `cor_auto`
   na.data <- set_default(na.data, "pairwise", auto.correlate)
   model <- set_default(model, "glasso", network.estimation)
   algorithm <- set_default(algorithm, "walktrap", community.detection)

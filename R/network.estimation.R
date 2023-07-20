@@ -355,7 +355,7 @@ send_network_methods <- function(estimated_network, boot = FALSE)
     cat(
       paste0(
         "\nAnalytic: ", 
-        ifelse(methods$analytic, "Yes", "No")
+        swiftelse(methods$analytic, "Yes", "No")
       )
     )
     
@@ -432,7 +432,7 @@ send_network_methods <- function(estimated_network, boot = FALSE)
     cat(
       paste0(
         "\nCorrelations: ", methods$corr,
-        " (", ifelse(methods$partial, "partial", "zero-order"),
+        " (", swiftelse(methods$partial, "partial", "zero-order"),
         ")"
       )
     )
@@ -565,7 +565,7 @@ find_BGGM_type <- function(data, ellipse)
     # Perform switch
     # (since all categories are the same
     # just use the first index)
-    type <- unname(ifelse(categories[1], "binary", "ordinal"))
+    type <- unname(swiftelse(categories[1], "binary", "ordinal"))
     
   }else{ # Not all are the same, then mixed, continuous, or not handled
     

@@ -349,7 +349,7 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 10.07.2023
+# Updated 20.07.2023
 bootEGA <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -367,7 +367,7 @@ bootEGA <- function(
   
   # Check for missing arguments (argument, default, function)
   corr <- set_default(corr, "auto", c("auto", "cor_auto", "pearson", "spearman"))
-  corr <- ifelse(corr == "cor_auto", "auto", corr) # deprecate `cor_auto`
+  corr <- swiftelse(corr == "cor_auto", "auto", corr) # deprecate `cor_auto`
   na.data <- set_default(na.data, "pairwise", auto.correlate)
   model <- set_default(model, "glasso", network.estimation)
   algorithm <- set_default(algorithm, "walktrap", community.detection)
@@ -423,25 +423,48 @@ bootEGA <- function(
   # Obtain EGA output
   empirical_EGA_output <- get_EGA_object(empirical_EGA)
   
-  # Generate data
-  bootstrap_data <- reproducible_bootstrap(
-    data = data, samples = iter, cases = empirical_EGA_output$n,
-    mu = rep(0, dimensions[2]), Sigma = empirical_EGA_output$correlation,
-    type = type # , seed = seed
-  )
+  # # Generate data
+  # bootstrap_data <- reproducible_bootstrap(
+  #   data = data, samples = iter, cases = empirical_EGA_output$n,
+  #   mu = rep(0, dimensions[2]), Sigma = empirical_EGA_output$correlation,
+  #   type = type # , seed = seed
+  # )
+  
+  # Get output needed for bootstrap
+  cases <- empirical_EGA_output$n
+  mu <- rep(0, dimensions[2])
+  Sigma <- empirical_EGA_output$correlation
   
   # Perform bootstrap using parallel processing
   boots <- parallel_process(
     # Parallel processing arguments
     iterations = iter,
-    datalist = bootstrap_data,
+    datalist = NULL, # data is generated in each iteration
     ncores = ncores, progress = verbose,
     # Standard EGA arguments
-    FUN = ega_function, n = n, corr = corr,
-    na.data = na.data, model = model,
-    algorithm = algorithm, uni.method = uni.method,
-    plot.EGA = FALSE, verbose = FALSE,
-    ...
+    FUN = function(
+      data, cases, mu, Sigma, type, n, corr,
+      na.data, model, algorithm, uni.method, ...
+    ){
+      
+      # Return EGA
+      return(
+        ega_function(
+          data = reproducible_bootstrap(
+            data = data, 
+            samples = 1, # only one sample per iteration
+            cases = cases, mu = mu, Sigma = Sigma,
+            type = type # , seed = seed
+          )[[1]], # outputs as list, so grab data out
+          n = n, corr = corr, na.data = na.data, model = model,
+          algorithm = algorithm, uni.method = uni.method,
+          plot.EGA = FALSE, verbose = FALSE, ...
+        )
+      )
+  
+    }, # Send all argument variables
+    data, cases, mu, Sigma, type, n, corr,
+    na.data, model, algorithm, uni.method, ...
   )
   
   # Obtain bootstrap EGA output
@@ -534,7 +557,10 @@ print.bootEGA <- function(x, ...)
     )
     
     # Set up unidimensional print
-    if(unidimensional_method == "Louvain"){
+    if(
+      unidimensional_method == "Louvain" &
+      "consensus.iter" %in% names(unidimensional_attributes$consensus)
+    ){
       
       # Set up consensus attributes
       consensus_attributes <- unidimensional_attributes$consensus
@@ -589,6 +615,10 @@ print.bootEGA <- function(x, ...)
   frequency_df <- as.data.frame(
     do.call(rbind, lapply(x$frequency, as.character))
   )
+  
+  # Reorder frequency data frame
+  frequency_df <- silent_call(frequency_df[,order(frequency_df[1,])])
+  
   # Adjust dimension names (`dimnames` doesn't work)
   colnames(frequency_df) <- NULL
   row.names(frequency_df) <- c("", "Frequency: ")
@@ -745,14 +775,25 @@ typical_walktrap_fit <- function(network, dimensions, ellipse)
 
 #' @noRd
 # Typical Leiden `EGA.fit` ----
-# Updated 07.07.2023
+# Updated 20.07.2023
 typical_leiden_fit <- function(network, dimensions, ellipse)
 {
   
   # Check for objective function
   if(!"objective_function" %in% names(ellipse)){
-    objective_function <- "CPM"
-    # default for {igraph} and `community.detection`
+    
+    # Default for {EGAnet}
+    objective_function <- "modularity"
+    
+    # Send warning
+    warning(
+      paste0(
+        "{EGAnet} uses \"modularity\" as the default objective function in the Leiden algorithm. ",
+        "In contrast, {igraph} uses \"CPM\". Set `objective_function = \"CPM\"` to use the Constant Potts ",
+        "Model in {EGAnet}"
+      )
+    )
+    
   }else{
     
     # Set objective function

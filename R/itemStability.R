@@ -400,7 +400,7 @@ plot.itemStability <- function(x, ...)
     )
   
   # Manually update alpha
-  updated_canvas$layers[[2]]$aes_params$alpha <- ifelse(
+  updated_canvas$layers[[2]]$aes_params$alpha <- swiftelse(
     "alpha" %in% names(ellipse), ellipse$alpha, 0.70
   )
   

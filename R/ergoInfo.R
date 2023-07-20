@@ -60,16 +60,18 @@
 #' @export
 #'
 # Ergodicity Information Index
-# Updated 10.07.2023
+# Updated 20.07.2023
 ergoInfo <- function(
     dynEGA.object,
-    use = c("edge.list", "unweighted")
+    use = c("edge.list", "unweighted"),
+    ordering = c("row", "column")
     # , seed = 1234
 )
 {
   
   # Check for missing arguments (argument, default, function)
   use <- set_default(use, "edge.list", ergoInfo)
+  ordering <- set_default(ordering, "column", ergoInfo)
   
   # Check for appropriate class ("dynEGA.ind.pop" defunct to legacy)
   if(!is(dynEGA.object, "dynEGA") & !is(dynEGA.object, "dynEGA.ind.pop")){
@@ -178,6 +180,8 @@ ergoInfo <- function(
   # seed_values <- reproducible_seed(n = 1000, seed = seed)
   iter_sequence <- seq_len(1000)
 
+  set.seed(1234)
+  
   # Get k-complexity
   individual_kcomplexity <- nvapply( # seed_values,
     iter_sequence, function(iteration){
@@ -192,7 +196,8 @@ ergoInfo <- function(
               replace = TRUE# , seed = single_seed
             ),
             keep_weights # either pairwise edges or weights
-          ]
+          ],
+          ordering = ordering
         )
       )
       
@@ -253,7 +258,8 @@ ergoInfo <- function(
               replace = TRUE# , seed = single_seed
             ),
             keep_weights # either pairwise edges or weights
-          ]
+          ],
+          ordering = ordering
         )
       )
       
@@ -314,7 +320,7 @@ print.EII <- function(x, ...)
   # Print EII method
   cat(
     "EII Method: ",
-    ifelse(
+    swiftelse(
       attr(x, "methods")$use == "edge.list",
       "Edge List", "Unweighted"
     ), "\n"
@@ -335,31 +341,32 @@ summary.EII <- function(object, ...)
 
 #' @noRd
 # k-complexity ----
-# Updated 14.07.2023
-k_complexity <- function(values)
+# Updated 20.07.2023
+k_complexity <- function(values, ordering)
 {
   
   # Streamlined form
-  # return(
-  #   length( # length of compression
-  #     memCompress( # bit compression
-  #       paste0( # bits (matches `toString`)
-  #         t(values), collapse = ", "
-  #       ), type = "gzip" # type of compression
-  #     )
-  #   )
-  # )
-  
-  # Original (first) method
-  return(
-    length( # length of compression
-      memCompress( # bit compression
-        paste0( # bits (matches `toString`)
-          values, collapse = ", "
-        ), type = "gzip" # type of compression
+  if(ordering == "row"){
+    return(
+      length( # length of compression
+        memCompress( # bit compression
+          paste0( # bits (matches `toString`)
+            t(values), collapse = ", "
+          ), type = "gzip" # type of compression
+        )
       )
     )
-  )
+  }else if(ordering == "column"){
+    return(
+      length( # length of compression
+        memCompress( # bit compression
+          paste0( # bits (matches `toString`)
+            values, collapse = ", "
+          ), type = "gzip" # type of compression
+        )
+      )
+    )
+  }
   
   # A key question on order of edge list:
   # Should edges be in order of their pairwise correspondence; for example:

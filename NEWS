@@ -6,6 +6,10 @@ o INTERNALS: function-specific internal functions and S3methods are now located 
 
 o SWAP: internal script usage of "utils-EGAnet.R" depracated for "helper.R" functions that are used across the package (no visible changes for the user)
 
+o NOTE: default objective function for Leiden algorithm is set to "modularity"
+
+o NOTE: default for Louvain unidimensional method is set to single-shot *unless* argument "consensus.method" or "consensus.iter" is specified
+
 o ADD: stricter `*apply` functions that are roughly equivalent to `*apply` but have stricter inputs/outputs (uses `vapply` as foundation; often, slightly faster)
 
 o ADD: `community.consensus` to apply the Consensus Clustering approach introduced by Lancichnetti & Fortunato (2012). Currently only available for the Louvain implementations

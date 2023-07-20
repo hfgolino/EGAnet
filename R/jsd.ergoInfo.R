@@ -181,7 +181,7 @@ jsd.ergoInfo <- function(
   
   # Set effect and interpretation
   ## Effect
-  effect <- ifelse(
+  effect <- swiftelse(
     proportion >= max.proportion,
     "nonergodic",
     "ergodic"

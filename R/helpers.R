@@ -324,7 +324,7 @@ reproducible_parametric <- function(
 # # Updated 17.06.2023
 # reproducible_seed <- function(n, seed = NULL)
 # {
-#   return(r_sample_seeds(n, ifelse(is.null(seed), 0, seed)))
+#   return(r_sample_seeds(n, swiftelse(is.null(seed), 0, seed)))
 # }
 
 # # Generate reproducible shuffling ----
@@ -360,7 +360,7 @@ reproducible_parametric <- function(
 # Generate reproducible resampling bootstrap ----
 # (multivariate normal samples)
 # A wrapper over `reproducible_seed` and `reproducible_sample`
-# Updated 10.07.2023
+# Updated 20.07.2023
 reproducible_resampling <- function(
     data, samples, cases# , seed
 )
@@ -376,7 +376,7 @@ reproducible_resampling <- function(
       # reproducible_seed(n = samples, seed = seed),
       function(single_seed){
         # data[r_sample_with_replacement(n = cases, seed = single_seed),]
-        data[sample(x = case_sequence, size = cases, replace = TRUE)]
+        data[sample(x = case_sequence, size = cases, replace = TRUE),]
       }
     )
   )
@@ -511,13 +511,14 @@ available_memory <- function()
 
 #' @noRd
 # Wrapper for parallelization ----
-# Updated 14.07.2023
+# Updated 20.07.2023
 parallel_process <- function(
     iterations, # number of iterations
-    datalist, # list of data
+    datalist = NULL, # list of data
     FUN, # function to use
     ..., # ellipse arguments to pass on
     export = TRUE, # variables to export (if necessary)
+    packages = "EGAnet", # always uses {EGAnet}
     ncores, # number of cores
     progress = TRUE # progress bar
 ){
@@ -560,14 +561,23 @@ parallel_process <- function(
           }
           
           # Return results
-          return(
-            silent_call( # Ensures quiet run with all arguments passed on
-              FUN(datalist[[iteration]], ...)
+          if(!is.null(datalist)){
+            return(
+              silent_call( # Ensures quiet run with all arguments passed on
+                FUN(datalist[[iteration]], ...)
+              )
             )
-          )
+          }else{
+            return(
+              silent_call( # Ensures quiet run with all arguments passed on
+                FUN(...)
+              )
+            )
+          }
           
         },
         future.globals = export,
+        future.packages = packages,
         future.seed = NULL
       )
       
@@ -580,11 +590,25 @@ parallel_process <- function(
       future.apply::future_lapply(
         X = seq_len(iterations),
         function(iteration){
-          silent_call( # Ensures quiet run with all arguments passed on
-            FUN(datalist[[iteration]], ...)
-          )
+          
+          # Return results
+          if(!is.null(datalist)){
+            return(
+              silent_call( # Ensures quiet run with all arguments passed on
+                FUN(datalist[[iteration]], ...)
+              )
+            )
+          }else{
+            return(
+              silent_call( # Ensures quiet run with all arguments passed on
+                FUN(...)
+              )
+            )
+          }
+          
         },
         future.globals = export,
+        future.packages = packages,
         future.seed = NULL
       )
     )
@@ -627,6 +651,54 @@ nrow_sequence <- function(data)
 ncol_sequence <- function(data)
 {
   return(seq_len(dim(data)[2]))
+}
+
+#' @noRd
+# Faster `ifelse` ----
+# For single value replacements:
+# 1.5x faster with 1 value
+# 2.5x faster with 10 values
+# >= 18x faster with >= 100 values
+# Updated 19.07.2023
+swiftelse <- function(condition, true, false)
+{
+  
+  # Get condition length
+  condition_length <- length(condition)
+  
+  # Check for single value
+  if(condition_length == 1){
+  
+    # If TRUE
+    if(condition){
+      return(true)
+    }else{ # Otherwise, FALSE
+      return(false)
+    }
+    
+  }
+  
+  # Initialize result
+  result <- vector(mode(true), condition_length)
+  
+  # Set TRUE condition
+  if(length(true) == 1){
+    result[condition] <- true
+  }else{
+    result[condition] <- true[condition]
+  }
+  
+  # Set FALSE condition
+  if(length(false) == 1){
+    result[!condition] <- false
+  }else{
+    result[!condition] <- false[!condition]
+  }
+  
+  
+  # Return result
+  return(result)
+  
 }
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -773,7 +845,7 @@ get_dynEGA_object <- function(dynEGA.object)
   }else{ # Otherwise, send an error
     
     # Set up proper messaging
-    missing_objects <- ifelse(
+    missing_objects <- swiftelse(
       sum(available_objects) == 0,
       paste0("\"population\" and \"individual\""),
       paste0("\"", names(available_objects)[!available_objects], "\"")
@@ -953,7 +1025,7 @@ edge_count <- function(network, nodes, diagonal = FALSE)
   
   # Count edges
   return(
-    (sum(network != 0) - ifelse(diagonal, nodes, 0)) * 0.50
+    (sum(network != 0) - swiftelse(diagonal, nodes, 0)) * 0.50
   )
   
 }
@@ -1580,7 +1652,7 @@ estimator_arguments <- function(lavaan_ARGS, ellipse)
 {
   
   # Check for `ordinal.categories` in ellipse arguments
-  ordinal.categories <- ifelse(
+  ordinal.categories <- swiftelse(
     !"ordinal.categories" %in% names(ellipse), 7, # default
     ellipse$ordinal.categories
   )
@@ -2045,12 +2117,12 @@ basic_plot_setup <- function(network, wc = NULL, ...)
   
   ## Set edge color
   if(length(plot_ARGS$edge.color) == 2){
-    plot_ARGS$edge.color <- ifelse(non_zero_edges >= 0, plot_ARGS$edge.color[1], plot_ARGS$edge.color[2])
+    plot_ARGS$edge.color <- swiftelse(non_zero_edges >= 0, plot_ARGS$edge.color[1], plot_ARGS$edge.color[2])
   }
   
   ## Set edge line type
   if(length(plot_ARGS$edge.lty) == 2){
-    plot_ARGS$edge.lty <- ifelse(non_zero_edges >= 0, plot_ARGS$edge.lty[1], plot_ARGS$edge.lty[2])
+    plot_ARGS$edge.lty <- swiftelse(non_zero_edges >= 0, plot_ARGS$edge.lty[1], plot_ARGS$edge.lty[2])
   }
   
   ## Set edge size (scale by `edge.size`)
@@ -2059,7 +2131,7 @@ basic_plot_setup <- function(network, wc = NULL, ...)
   }
   
   ## Edge label size (not used)
-  plot_ARGS$edge.label.size <- ifelse(
+  plot_ARGS$edge.label.size <- swiftelse(
     plot_ARGS$edge.label.size == "max_size/2",
     node.size / 2,
     plot_ARGS$edge.label.size
@@ -2096,7 +2168,7 @@ basic_plot_setup <- function(network, wc = NULL, ...)
     length(color.palette) == 1 &
     color.palette %in% gray_options
   ){ # Gray scale network
-    border_color <- ifelse(palette == "white", "white", "black")
+    border_color <- swiftelse(palette == "white", "white", "black")
   }else{ # Same color as nodes
     border_color <- plot_ARGS$node.color
   }
@@ -2124,7 +2196,7 @@ basic_plot_setup <- function(network, wc = NULL, ...)
           alpha = median(plot_ARGS$node.alpha, na.rm = TRUE),
           stroke = 1.5
         ),
-        title = ifelse(
+        title = swiftelse(
           "legend.title" %in% names(ellipse),
           ellipse$legend.title, ""
         )
@@ -2356,7 +2428,7 @@ object_error <- function(input, expected_type){
 
 #' @noRd
 # Error for `typeof` ----
-# Updated 09.07.2023
+# Updated 19.07.2023
 typeof_error <- function(input, expected_value){
   
   # Switch out "closure" with "function"
@@ -2369,13 +2441,13 @@ typeof_error <- function(input, expected_value){
   
   # Convert "integer" and "double" to "numeric"
   ## Input
-  typeof_input <- ifelse(
+  typeof_input <- swiftelse(
     typeof_input %in% c("integer", "double"),
     "numeric", typeof_input
   )
   ## Expected value
-  expected_value <- ifelse(
-    expected_value %in% c("integer", "double"),
+  expected_value <- swiftelse(
+    any(expected_value %in% c("integer", "double")),
     "numeric", expected_value
   )
   
@@ -2856,7 +2928,7 @@ system.check <- function (...)
 {
   OS <- unname(tolower(Sys.info()["sysname"]))
   
-  RSTUDIO <- ifelse(Sys.getenv("RSTUDIO") == "1", TRUE, FALSE)
+  RSTUDIO <- swiftelse(Sys.getenv("RSTUDIO") == "1", TRUE, FALSE)
   
   TEXT <- TRUE
   

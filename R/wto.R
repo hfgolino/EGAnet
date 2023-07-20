@@ -68,7 +68,7 @@ wto <- function (network, signed = TRUE, diagonal.zero = TRUE)
   
   # Create minimum matrix
   minimum_matrix <- matrix(
-    ifelse(
+    swiftelse(
       minimum_pairs[,1] < minimum_pairs[,2],
       minimum_pairs[,1], minimum_pairs[,2]
     ), 

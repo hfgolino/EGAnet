@@ -308,27 +308,39 @@ expand <- function(correlation_matrix, n, model, verbose, ellipse)
 
 #' @noRd
 # Wrapper for Louvain consensus ----
-# Updated 01.07.2023
+# Updated 20.07.2023
 consensus_wrapper <- function(correlation_matrix, verbose, ellipse)
 {
   
-  # Obtain arguments
-  consensus_ARGS <- obtain_arguments(community.consensus, ellipse)
-  
-  # Add network
-  consensus_ARGS$network <- correlation_matrix
-  
-  # Set method to "most_common"
-  consensus_ARGS$consensus.method <- "most_common"
-  
-  # Set membership to only
-  consensus_ARGS$membership.only <- TRUE
-  
-  # Apply Louvain with consensus approach
-  membership <- do.call(
-    what = community.consensus,
-    args = consensus_ARGS
-  )
+  # Check for consensus method
+  if(any(c("consensus.method", "consensus.iter") %in% names(ellipse))){
+    
+    # Obtain arguments
+    consensus_ARGS <- obtain_arguments(community.consensus, ellipse)
+    
+    # Add network
+    consensus_ARGS$network <- correlation_matrix
+    
+    # Set method to "most_common"
+    consensus_ARGS$consensus.method <- "most_common"
+    
+    # Set membership to only
+    consensus_ARGS$membership.only <- TRUE
+    
+    # Apply Louvain with consensus approach
+    membership <- do.call(
+      what = community.consensus,
+      args = consensus_ARGS
+    )
+    
+  }else{ # Use single-shot Louvain
+    
+    # Apply standard Louvain
+    membership <- community.detection(
+      correlation_matrix, algorithm = "louvain"
+    )
+    
+  }
   
   # Add back names
   names(membership) <- dimnames(correlation_matrix)[[2]]

@@ -219,7 +219,7 @@
 #' @export
 #'
 # Measurement Invariance
-# Updated 10.07.2023
+# Updated 18.07.2023
 invariance <- function(
     data, groups, iter = 500, 
     structure = NULL, type = c("loadings"),
@@ -235,7 +235,7 @@ invariance <- function(
   
   # Check for missing arguments (argument, default, function)
   corr <- set_default(corr, "auto", c("auto", "cor_auto", "pearson", "spearman"))
-  corr <- ifelse(corr == "cor_auto", "auto", corr) # deprecate `cor_auto`
+  corr <- swiftelse(corr == "cor_auto", "auto", corr) # deprecate `cor_auto`
   na.data <- set_default(na.data, "pairwise", auto.correlate)
   model <- set_default(model, "glasso", network.estimation)
   algorithm <- set_default(algorithm, "walktrap", community.detection)
@@ -353,8 +353,8 @@ invariance <- function(
   # Get names of dimensions for loadings
   community_names <- dimnames(original_difference)[[2]]
   
-  # Obtain original dominant difference
-  original_dominant_difference <- ulapply(
+  # Obtain original assigned difference
+  original_assigned_difference <- ulapply(
     community_names, function(community){
       original_difference[structure == community, community]
     }
@@ -370,9 +370,9 @@ invariance <- function(
     iterations = iter,
     datalist = perm_groups,
     function(
-    permutation, unique_groups, structure,
-    data, corr, model, algorithm, uni.method,
-    ...
+      permutation, unique_groups, structure,
+      data, corr, model, algorithm, uni.method,
+      ...
     ){
       
       # Estimate loadings
@@ -413,8 +413,8 @@ invariance <- function(
       x[[2]][dimension_names[[2]], community_names]
   })
   
-  # Obtain dominant loadings only
-  dominant_list <- lapply(difference_list, function(one_difference){
+  # Obtain assigned loadings only
+  assigned_list <- lapply(difference_list, function(one_difference){
     ulapply(
       community_names, function(community){
         one_difference[structure == community, community]
@@ -423,8 +423,8 @@ invariance <- function(
   })
   
   # Create results
-  permutation_counts <- lapply(dominant_list, function(x){
-    abs(x) >= abs(original_dominant_difference)
+  permutation_counts <- lapply(assigned_list, function(x){
+    abs(x) >= abs(original_assigned_difference)
   })
   
   ## Simplify to matrix
@@ -439,29 +439,27 @@ invariance <- function(
   # Results data frame
   results_df <- data.frame(
     Membership = remove_attributes(structure),
-    Difference = round(original_dominant_difference, 3),
-    p = p_value
+    Difference = round(original_assigned_difference, 3),
+    p = round(p_value, 3),
+    p_BH = round(p.adjust(p_value, method = "BH"), 3)
   )
   
   # Order by dimension
   results_df <- results_df[order(results_df$Membership),]
   
   # Add significance
-  sig <- ifelse(results_df$p <= .10, ".", "")
-  sig <- ifelse(results_df$p <= .05, "*", sig)
-  sig <- ifelse(results_df$p <= .01, "**", sig)
-  sig <- ifelse(results_df$p <= .001, "***", sig)
-  results_df$sig <- sig
+  sig <- swiftelse(results_df$p <= 0.10, ".", "")
+  sig <- swiftelse(results_df$p <= 0.05, "***", sig)
+  sig <- swiftelse(results_df$p <= 0.01, "**", sig)
+  sig <- swiftelse(results_df$p <= 0.001, "*", sig)
   
   # Add direction
-  direction <- ifelse(
-    sign(results_df$Difference) == 1,
-    paste0(unique_groups[1], " > ", unique_groups[2]),
-    paste0(unique_groups[1], " < ", unique_groups[2])
+  direction <- paste(
+    unique_groups[1],
+    swiftelse(sign(results_df$Difference) == 1, ">", "<"),
+    unique_groups[2]
   )
-  results_df$Direction <- ifelse(
-    results_df$p <= 0.05, direction, ""
-  )
+  results_df$Direction <- swiftelse(results_df$p <= 0.05, direction, "")
   
   # Results list
   results <- list(
@@ -470,12 +468,12 @@ invariance <- function(
     groups = list(
       EGA = group_ega,
       loadings = group_loadings,
-      loadingsDifference = original_dominant_difference
+      loadingsDifference = original_assigned_difference
     ),
     permutation = list(
       groups = perm_groups,
       loadings = permutated_loadings,
-      loadingsDifference = dominant_list
+      loadingsDifference = assigned_list
     ),
     results = results_df
   )

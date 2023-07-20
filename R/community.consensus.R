@@ -384,7 +384,7 @@ print.EGA.consensus <- function(x, ...)
     paste0(
       "Consensus Method: ", consensus_name,
       " (", method$consensus.iter, " iterations)",
-      "\nAlgorithm: ", ifelse(method$signed, "Signed Louvain", "Louvain"),
+      "\nAlgorithm: ", swiftelse(method$signed, "Signed Louvain", "Louvain"),
       "\nOrder: ", totitle(method$order)
     )
   )
@@ -437,7 +437,7 @@ summary.EGA.consensus <- function(object, ...)
     paste0(
       "Consensus Method: ", consensus_name,
       " (", method$consensus.iter, " iterations)",
-      "\nAlgorithm: ", ifelse(method$signed, "Signed Louvain", "Louvain"),
+      "\nAlgorithm: ", swiftelse(method$signed, "Signed Louvain", "Louvain"),
       "\nOrder: ", totitle(method$order)
     )
   )

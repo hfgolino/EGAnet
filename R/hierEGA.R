@@ -303,422 +303,539 @@
 #' @export
 #'
 # Hierarchical EGA
-# Updated 31.01.2023
-# Added rotation 20.10.2022
+# Updated 17.07.2023
 hierEGA <- function(
-    data, scores = c("factor", "network"),
-    rotation = "geominQ",
-    consensus.iter = 1000,
-    consensus.method = c(
-      "highest_modularity",
-      "most_common",
-      "iterative",
-      "lowest_tefi",
-      "most_common_tefi"
-    ),
+    data, 
+    # `net.scores` arguments
+    loading.method = c("BRM", "experimental"),
+    rotation = NULL, scores = c("factor", "network"),
+    impute = c("mean", "median", "none"),
+    # `EGA` arguments
+    corr = c("auto", "pearson", "spearman"),
+    na.data = c("pairwise", "listwise"),
+    model = c("BGGM", "glasso", "TMFG"),  
+    algorithm = c("leiden", "louvain", "walktrap"),
     uni.method = c("expand", "LE", "louvain"),
-    corr = c("cor_auto", "pearson", "spearman"),
-    model = c("glasso", "TMFG"), model.args = list(),
-    algorithm = c("walktrap", "leiden", "louvain"), algorithm.args = list(),
-    lower.louvain = FALSE,
-    plot.EGA = TRUE, plot.args = list()
+    plot.EGA = TRUE, verbose = FALSE,
+    ...
 )
 {
 
-  #### ARGUMENTS HANDLING
-
-  if(missing(scores)){
-    scores <- "network"
-  }else{scores <- match.arg(scores)}
-
-  if(missing(consensus.method)){
-    consensus.method <- "most_common_tefi"
-  }else{consensus.method <- match.arg(consensus.method)}
-
-  if(missing(uni.method)){
-    uni.method <- "louvain"
-  }else{uni.method <- match.arg(uni.method)}
-
-  if(missing(corr)){
-    corr <- "cor_auto"
-  }else{corr <- match.arg(corr)}
-
-  if(missing(model)){
-    model <- "glasso"
-  }else{model <- match.arg(model)}
-
-  if(missing(algorithm)){
-    algorithm <- "louvain"
-  }else if(!is.function(algorithm)){algorithm <- tolower(match.arg(algorithm))}
-
-  # Ensure data is a matrix
-  data <- as.matrix(data)
-
-  # Check for symmetric matrix
-  if(isSymmetric(data)){
-    stop(
-      paste(
-        "Symmetric matrix detected. Data with variables down the columns and cases across the rows are required to compute",
-        scores,
-        "scores for this analysis."
-      )
-    )
-  }
-
-  # Obtain EGA defaults
-  ega_defaults <- formals(EGA)
-
-  # Remove "..."
-  ega_defaults <- ega_defaults[-length(ega_defaults)]
-
-  # Start lower-order ----
-
-  # Initialize lower-order defaults
-  lower_order_defaults <- ega_defaults; lower_order_defaults$data <- data;
-  lower_order_defaults$uni.method <- uni.method; lower_order_defaults$corr <- corr;
-  lower_order_defaults$model <- model; lower_order_defaults$model.args <- model.args;
-  lower_order_defaults$algorithm <- "louvain"; lower_order_defaults$algorithm.args <- algorithm.args;
-  lower_order_defaults$consensus.method <- consensus.method; lower_order_defaults$consensus.iter <- consensus.iter;
-  lower_order_defaults$plot.EGA <- FALSE; lower_order_defaults$plot.args <- plot.args;
-  lower_order_defaults$lower.louvain <- TRUE; 
-
-  # Send message
-  message(
-    "Obtaining lower-order dimensions...",
-    appendLF = FALSE
-  )
-
-  # Get EGA
-  lower_order_result <- suppressMessages(
-    do.call(
-      EGA, lower_order_defaults
-    )
-  )
-
-  # End message
-  message("done.")
+  # Check for missing arguments (argument, default, function)
+  ## `net.scores`
+  loading.method <- set_default(loading.method, "brm", net.loads)
+  scores <- set_default(scores, "network", hierEGA)
+  impute <- set_default(impute, "none", net.scores)
+  ## `EGA`
+  corr <- set_default(corr, "auto", c("auto", "cor_auto", "pearson", "spearman"))
+  corr <- swiftelse(corr == "cor_auto", "auto", corr) # deprecate `cor_auto`
+  na.data <- set_default(na.data, "pairwise", auto.correlate)
+  model <- set_default(model, "glasso", network.estimation)
+  algorithm <- set_default(algorithm, "walktrap", community.detection)
+  uni.method <- set_default(uni.method, "louvain", community.unidimensional)
   
+  # Get EGA
+  lower_order_result <- EGA(
+    data = data, corr = corr, na.data = na.data,
+    model = model, algorithm = "louvain", uni.method = uni.method,
+    plot.EGA = FALSE, verbose = verbose, order = "lower", ...
+  )
+
   # Check for scores
   if(scores == "factor"){
     
-    # Estimate scores
-    ## Obtain memberships
-    unique_memberships <- length(na.omit(unique(lower_order_result$wc)))
-    
-    ## Estimate factor model
-    # fm <- suppressPackageStartupMessages(
-    #   suppressWarnings(
-    #     psych::fa(
-    #       r = lower_order_result$correlation, # correlation matrix
-    #       n.obs = nrow(data), # number of cases
-    #       nfactors = length(na.omit(unique_memberships)), # number of factors
-    #       n.rotations = 10, # number of random starts
-    #       maxit = 10000 # number of iterations for convergence
-    #     )
-    #   )
-    # )
-    
-    # UPDATE CORRELATIONS: polytomous, dichotomous, mixed
-    # UPDATE EPSILON: number of factors
-    # eps = 0.0001 for 2
-    # eps = 0.001 for 3
-    # eps = 0.01 for >= 4
-    
-    fm <- efa(
-      data = data, nfactors = unique_memberships, # number of factors
-      fm = "minres", rotate = "oblimin",
-      n.rotations = 10,
-      maxit = 1e4,
-      factor.scores = "Thurstone",
-      eps = 1e-5
+    # Send warning
+    warning(
+      paste0(
+        "Factor dimensions may not align with `EGA` detected communities. ",
+        "Interpret results with caution. ",
+        "\n\nUse `$higher_order$lower_loadings` to guide interpretations"
+      ),
+      call. = FALSE
     )
     
-    ## Score estimates
-    # score_est <- psych::factor.scores(
-    #   x = data,
-    #   f = fm,
-    #   method = "Thurstone"
-    # )$scores
-    score_est <- fm$factor.scores
+    # Estimate EFA
+    efa_output <- efa_scores(
+      data = data,
+      correlation_matrix = lower_order_result$correlation,
+      nfactors = lower_order_result$n.dim,
+      fm = "minres", rotate = "oblimin",
+      n.rotations = 10, maxit = 10000,
+      factor.scores = "Thurstone",
+      eps = 1e-5, impute = impute
+    )
     
-    ## Lower-order loadings
-    lower_loads <- fm$loadings[,1:unique_memberships]
+    # Get scores
+    score_estimates <- efa_output$scores
+  
+    # Get loading names
+    loading_names <- dimnames(efa_output$loadings)
     
-    ## Reorder lower loadings and scores
-    lower_loads <- lower_loads[,order(colnames(lower_loads))]
-    score_est <- score_est[,order(colnames(score_est))]
+    # Obtain highest loadings for each variable
+    lower_wc <- max.col(abs(efa_output$loadings))
     
-    ## Obtain highest loading to reorder rows
-    highest_loads <- apply(abs(lower_loads), 1, which.max)
-    highest_loads[1:length(highest_loads)] <- paste("MR", highest_loads, sep = "")
-    lower_loads <- descend.ord(lower_loads, highest_loads)
+    # Get max `wc`
+    max_wc <- max(lower_wc, na.rm = TRUE)
     
-    ## Start higher-order with factor ----
+    # Format `wc` to be characters
+    lower_wc <- format_integer(lower_wc, digits(max_wc) - 1)
+    names(lower_wc) <- loading_names[[1]]
     
-    ## Set the rest of the arguments
-    ega_defaults$data <- score_est # set data as score estimates
-    ega_defaults$uni.method <- uni.method
-    ega_defaults$corr <- corr
-    ega_defaults$model <- model
-    ega_defaults$model.args <- model.args
-    ega_defaults$algorithm <- algorithm
-    ega_defaults$algorithm.args <- algorithm.args
-    ega_defaults$consensus.method <- consensus.method
-    ega_defaults$consensus.iter <- consensus.iter
-    ega_defaults$plot.EGA <- FALSE
-    ega_defaults$plot.args <- plot.args
-    ega_defaults$lower.louvain <- lower.louvain
+    # Set up dimension names to mirror network output
+    dimnames(efa_output$loadings)[[2]] <- format_integer(
+      as.numeric(gsub("MR", "", loading_names[[2]])),
+      digits(max_wc) - 1
+    )
+    dimnames(score_estimates)[[2]] <- dimnames(efa_output$loadings)[[2]]
     
-    ## Get EGA
-    higher_order_result <- suppressWarnings(
-      suppressMessages(
-        do.call(
-          EGA, ega_defaults
-        )
-      )
+    # Put loadings in descending order
+    lower_loadings <- descending_order(
+      standardized = efa_output$loadings, wc = lower_wc,
+      unique_communities = sort(dimnames(efa_output$loadings)[[2]]),
+      node_names = loading_names[[1]]
     )
     
   }else if(scores == "network"){
     
-    # Skip network scores?
-    ## Identify memberships with only one node
-    ### Obtain frequencies
-    wc_freq <- table(lower_order_result$wc)
+    # Compute network scores
+    network_output <- net.scores(
+      data = data, A = lower_order_result,
+      rotation = rotation, loading.method = loading.method,
+      scoring.method = "network", impute = impute,
+      ...
+    )
     
-    ### Check for one node memberships
-    one <- any(wc_freq <= 1)
-    
-    # Perform network scores
-    perform_network <- TRUE
-    
-    ## Check for all
-    if(isTRUE(one)){
-      
-      ### Warn that network scores cannot be used
-      warning("All consensus methods detected a single node community. Network scores cannot be computed.")
-      
-      ### Check if scores was what user wanted
-      if(scores == "network"){
-        stop("Network scores could not be computed. Please use factor scores.")
-      }else{
-        perform_network <- FALSE
-      }
-      
-    }
-      
-    if(isTRUE(perform_network)){
-      
-      # Compute network scores
-      nt <- suppressWarnings(
-        net.scores(
-          data = data,
-          A = lower_order_result$network,
-          wc = lower_order_result$wc,
-          rotation = rotation,
-          n.rotations = 10,
-          maxit = 10000
-        )
-      )
-      
-      # Score estimates
-      score_est <- nt$scores$rot.scores
-      
-      # Lower-order loadings
-      lower_loads <- nt$loadings$rotated
-      
-      # Start higher-order with network ----
-      
-      # Set the rest of the arguments
-      ega_defaults$data <- score_est # set data as score estimates
-      ega_defaults$uni.method <- uni.method
-      ega_defaults$corr <- corr
-      ega_defaults$model <- model
-      ega_defaults$model.args <- model.args
-      ega_defaults$algorithm <- algorithm
-      ega_defaults$algorithm.args <- algorithm.args
-      ega_defaults$consensus.method <- consensus.method
-      ega_defaults$consensus.iter <- consensus.iter
-      ega_defaults$plot.EGA <- FALSE
-      ega_defaults$plot.args <- plot.args
-      ega_defaults$lower.louvain <- lower.louvain
-      
-      # Get EGA
-      higher_order_result <- suppressWarnings(
-        suppressMessages(
-          do.call(
-            EGA, ega_defaults
-          )
-        )
-      )
-      
+    # Score estimates
+    if(is.null(rotation)){
+      score_estimates <- network_output$scores$std.scores
+      lower_loadings <- network_output$loadings$std
     }else{
-      network_results <- "Did not perform network scores due to at least one single node community in all consensus methods"
+      score_estimates <- network_output$scores$rot.scores
+      lower_loadings <- network_output$loadings$rotated
     }
     
   }
-
-  # Set up return results
-  hierarchical <- list()
-
-  # Obtain lower order results
-  lower_order_result$n.dim <- length(na.omit(unique(lower_order_result$wc)))
-
-  # Get S3 print information for lower order
-  if(is.null(colnames(data))){
-    dim.variables <- data.frame(
-      items = paste("V", 1:ncol(data), sep = ""),
-      dimension = lower_order_result$wc
+  
+  # Set up results
+  results <- list(
+    lower_order = lower_order_result,
+    higher_order = EGA(
+      data = score_estimates, corr = corr, na.data = na.data,
+      model = model, algorithm = algorithm, uni.method = uni.method,
+      plot.EGA = FALSE, verbose = verbose, ...
+    ),
+    parameters = list(
+      lower_loadings = lower_loadings,
+      lower_scores = score_estimates
     )
-  }else{
-    dim.variables <- data.frame(
-      items = colnames(data),
-      dimension = lower_order_result$wc
-    )
-  }
-  dim.variables <- dim.variables[order(dim.variables[, 2]),]
-  lower_order_result$dim.variables <- dim.variables
-
-  # Set class for lower-order
-  class(lower_order_result) <- "EGA"
-
-  # Insert into hierarchical result
-  hierarchical$lower_order <- lower_order_result
-
-  # Obtain higher order result
-  hierarchical$higher_order <- list(
-    lower_scores = score_est,
-    lower_loadings = lower_loads,
-    EGA = higher_order_result
   )
   
   # Perform parallel PCA to check for no general factors
-  sink <- capture.output(
-    pca <-
-      psych::fa.parallel(
-        x = hierarchical$higher_order$EGA$correlation,
-        fa = "pc",
-        n.obs = nrow(data),
-        plot = FALSE
-      )
+  # sink <- capture.output(
+  #   pca <-
+  #     psych::fa.parallel(
+  #       x = results$higher_order$correlation,
+  #       fa = "pc",
+  #       n.obs = dim(data)[1],
+  #       plot = FALSE
+  #     )
+  # )
+  # Look into alternative solutions
+  
+  # Set "methods" attributes
+  attr(results, "methods") <- list(
+    loading.method = loading.method, 
+    rotation = rotation,
+    scores = scores
   )
 
-  # Check if zero components
-  if(pca$ncomp == 0){
-    message("No general dimensions were identified. Lower order solution represents major dimensions.")
-    hierarchical$higher_order$EGA$n.dim <- 0
-    new_wc <- rep(
-      0,
-      length(hierarchical$higher_order$EGA$wc)
-    )
-    names(new_wc) <- names(hierarchical$higher_order$EGA$wc)
-    hierarchical$higher_order$EGA$wc <- new_wc
-    hierarchical$higher_order$EGA$dim.variables$dimension <- 0
-  }
-
-  # Obtain higher order result for plot
-  higher_order_result <- hierarchical$higher_order$EGA
+  # Set class
+  class(results) <- "hierEGA"
   
-  # Set up plots
+  # Check for plot
   if(isTRUE(plot.EGA)){
-  lower_plot <- suppressMessages(
-    suppressWarnings(
-      suppressPackageStartupMessages(
-        plot(lower_order_result, produce = FALSE)
-      )
-    )
-  )
-  
-  # Check for higher order dimensions
-  if(hierarchical$higher_order$EGA$n.dim > 0){
     
-    higher_plot <- suppressMessages(
-      suppressWarnings(
-        suppressPackageStartupMessages(
-          plot(higher_order_result, produce = FALSE)
-        )
+    # Get plot
+    results$plot.hierEGA <- plot(results, ...)
+    
+    # Actually send plot
+    silent_plot(results$plot.hierEGA)
+  
+  }
+
+  # Return results
+  return(results)
+  
+}
+
+# Bug checking ----
+# data = NetworkToolbox::neoOpen; loading.method = "BRM"
+# rotation = "geominQ"; scores = "network"
+# scoring.method = "network"; impute = "none"
+# corr = "auto"; na.data = "pairwise"; model = "glasso"
+# algorithm = "walktrap"; uni.method = "louvain"
+# plot.EGA = FALSE; verbose = FALSE
+
+#' @noRd
+# S3 Print Method ----
+# Updated 17.07.2023
+print.hierEGA <- function(x, ...)
+{
+  
+  # Print lower order
+  cat("Lower Order\n\n")
+  print(x$lower_order)
+  
+  # Add breakspace
+  cat("\n\n------------\n\n")
+  
+  # Print higher order
+  cat("Higher Order\n\n")
+  print(x$higher_order)
+  
+  
+}
+
+#' @noRd
+# S3 Summary Method ----
+# Updated 17.07.2023
+summary.hierEGA <- function(object, ...)
+{
+  print(object, ...)
+}
+
+
+#' @noRd
+# S3 Plot Method ----
+# Updated 17.07.2023
+plot.hierEGA <- function(x, plot.type = c("multilevel", "separate"), ...)
+{
+  
+  # Get ellipse arguments for defaults
+  ellipse <- list(...)
+  
+  # Get attributes
+  methods_attributes <- attr(x, "methods")
+  
+  # Check for factor scores
+  plot.type <- swiftelse(
+    methods_attributes$scores == "factor",
+    "separate", # must be separate
+    set_default(plot.type, "multilevel", plot.hierEGA)
+  )
+  
+  # Multilevel plot
+  if(plot.type == "multilevel"){
+    
+    # Set edge size
+    if(!"edge.size" %in% ellipse){
+      ellipse$edge.size <- 8 # default in `basic_plot_setup`
+    }
+    
+    # Get names for levels
+    lower_names <- names(x$lower_order$wc)
+    higher_names <- names(x$higher_order$wc)
+    all_names <- c(lower_names, higher_names)
+    
+    # Number of total nodes
+    total_nodes <- length(all_names)
+    
+    # Initialize network
+    hierarchical_network <- matrix(
+      0, nrow = total_nodes, ncol = total_nodes,
+      dimnames = list(all_names, all_names)
+    )
+    
+    
+    # Population hybrid network with lower and higher order networks
+    hierarchical_network[lower_names, lower_names] <- x$lower_order$network
+    hierarchical_network[higher_names, higher_names] <- x$higher_order$network
+    
+    # Add assignment loading to hierarhical network
+    for(community in dimnames(x$parameters$lower_loadings)[[2]]){
+      
+      # Get assignment loadings
+      assignment_loadings <- x$parameters$lower_loadings[
+        names(x$lower_order$wc)[x$lower_order$wc == as.numeric(community)],
+        community
+      ]
+      
+      # Add to hierarchical network
+      hierarchical_network[names(assignment_loadings), community] <- 
+        hierarchical_network[community, names(assignment_loadings)] <- 
+        assignment_loadings
+      
+    }
+    
+    # Set up plot list as standard `EGA`
+    plot_list <- list(
+      # Round hierarhical network to 4
+      # (same as what's used in `basic_plot_setup`)
+      network = round(hierarchical_network, 4),
+      wc = c(
+        paste0("Lower_", x$lower_order$wc),
+        paste0("Higher_", x$higher_order$wc)
       )
     )
+    
+    # Set class
+    class(plot_list) <- "EGA"
+    
+    # Create the initial plot
+    initial_plot <- plot(plot_list, ..., arguments = TRUE)
+    
+    # Make a copy of the hierarchical network
+    hierarchical_copy <- plot_list$network
+    
+    # Add assignment loading to hierarhical network
+    for(community in dimnames(x$parameters$lower_loadings)[[2]]){
+      
+      # Get assignment loadings
+      assignment_loadings <- x$parameters$lower_loadings[
+        names(x$lower_order$wc)[x$lower_order$wc == as.numeric(community)],
+        community
+      ]
+      
+      # Add to hierarchical network
+      hierarchical_copy[names(assignment_loadings), community] <- 
+        hierarchical_copy[community, names(assignment_loadings)] <- 
+        0.0001 # Set all valeus to 0.0001
+      
+    }
+    
+    # Update plot list
+    plot_list$network <- hierarchical_copy
+    
+    # Create the second plot
+    second_plot <- plot(plot_list, arguments = TRUE)
+    
+    # Update multilevel edge appearances
+    
+    # Get edge indices
+    edge_index <- second_plot$ARGS$edge.size == (0.0001 * ellipse$edge.size)
+    
+    # Set edge color
+    edge_color <- initial_plot$ARGS$edge.color
+    edge_color[edge_index] <- "grey"
+      
+    ## Edge line type
+    line_type <- initial_plot$ARGS$edge.lty
+    line_type[edge_index] <- "dashed"
+    
+    ## Edge size
+    edge_size <- initial_plot$ARGS$edge.size
+    edge_size[edge_index] <- 0.50
+    
+    ## Edge alpha
+    edge_alpha <- initial_plot$ARGS$edge.alpha
+    edge_alpha[edge_index] <- 0.50
+    
+    
+    # Get mode (layout)
+    mode <- scale(initial_plot$ARGS$mode, scale = FALSE)
+    
+    # Get maximum y-position
+    y_position <- max(mode[,2]) + 15 # for some space
+    
+    # Get higher order indices
+    higher_index <- seq_along(higher_names)
+    
+    # Shift higher order nodes up
+    mode[higher_index, 2] <- mode[higher_index, 2] + y_position +
+      abs(min(mode[higher_index, 2]))
+    
+    # Re-scale x-position
+    for(index in higher_index){
+      
+      # Get lower mode position
+      lower_mode_position <- match(
+        lower_names[x$lower_order$wc == index],
+        initial_plot$ARGS$node.label
+      )
+      
+      # Get higher mode position
+      higher_mode_position <- match(
+        higher_names[index],
+        initial_plot$ARGS$node.label
+      )
+      
+      # Update x-position for higher order node
+      mode[higher_mode_position, 1] <-
+        median(mode[lower_mode_position, 1])
+      
+    }
+    
+    # Finally, plot
+    return(
+      silent_plot(
+        plot_list,
+        mode = mode,
+        edge.size = edge_size,
+        edge.color = edge_color,
+        edge.alpha = edge_alpha,
+        edge.lty = line_type,
+        ...
+      ) 
+    )
+    
+  }else if(plot.type == "separate"){ # Separate plot
+    
+    # Set labels
+    if(!"labels" %in% ellipse){
+      ellipse$labels <- c("Lower", "Higher")
+    }
+    
+    # Plot lower and higher order side-by-side
+    ggpubr::ggarrange(
+      silent_plot(x$lower_order, ...),
+      silent_plot(x$higher_order, ...),
+      labels = ellipse$labels,
+      ...
+    )
+    
   }
+  
 }
 
-  # Set up plots
-  if(isTRUE(plot.EGA)){
-      
-      # Set up output
-      hier_plot <- suppressMessages(
-        suppressWarnings(
-          suppressPackageStartupMessages(
-            ggpubr::ggarrange(
-              lower_plot, # plot lower-order
-              higher_plot, # plot higher-order
-              labels = c("Lower-order", "Higher-order")
-            )
-          )
-        )
-      )
-      
-      # Output plots
-      suppressMessages(
-        suppressWarnings(
-          suppressPackageStartupMessages(
-            plot(hier_plot)
-          )
-        )
-      )
-      
-      # Add to main results
-      hierarchical$lower_plot <- lower_plot
-      hierarchical$higher_plot <- higher_plot
-      hierarchical$hier_plot <- hier_plot
-
-    # Send factor warning
-    if(scores == "factor"){
-
-      if(
-        length(hierarchical$higher_order$EGA$wc) !=
-        length(na.omit(unique(hierarchical$higher_order$EGA$wc)))
-      ){
-        warning("Lower order factor loadings may not map to lower order network dimensions.\nPlease see `$lower_loadings` to map lower order dimensions to higher order dimensions in the plot")
-      }
-
-    }
-
+#' @noRd
+# Oblimin fit ----
+# Updated 15.07.2023
+oblimin <- function(L, gamma = 0)
+{
+  
+  # Get dimensions of loadings
+  dimensions <- dim(L)
+  
+  # Check for special case of gamma = 0
+  if(gamma == 0){ # Set IgC matrix as identity
+    IgC <- diag(dimensions[1])
+  }else{
+    
+    # Get gC matrix
+    gC <- matrix(
+      gamma / dimensions[1],
+      nrow = dimensions[1], ncol = dimensions[1]
+    )
+    
+    # Subtract gC from identity matrix
+    IgC <- diag(dimensions[1]) - gC
+    
   }
+  
+  # Initialize N matrix
+  N <- matrix(1, nrow = dimensions[2], ncol = dimensions[2])
+  
+  # Set diagonal to zero
+  diag(N) <- 0
+  
+  # Square loadings matrix
+  L2 <- L^2 # nanoseconds faster than L * L
+  
+  # Return f
+  return(sum(diag(crossprod(L2, IgC %*% L2 %*% N))) * 0.25)
+  
+}
 
-  # Set up Methods
-  methods <- list(
-    corr = corr, model = model, model.args = model.args,
-    algorithm = algorithm, algorithm.args = algorithm.args,
-    uni.method = uni.method, scores = scores,
-    consensus.method = consensus.method, consensus.iter = consensus.iter
+#' @noRd
+# Oblimin rotation ----
+# Updated 15.07.2023
+oblimin_rotate <- function(
+    loadings, nfactors, 
+    n.rotations = 10, maxit = 10000,
+    eps = 1e-5, gamma = 0,
+    rotate = "oblimin"
+)
+{
+  
+  # Check for unidimensional structure (28.11.2022)
+  if(nfactors == 1){
+    return(list(loadings = loadings, Phi = 1))
+  }
+  
+  # Get factor sequence
+  factor_sequence <- seq_len(nfactors)
+  
+  # Initialize minimum fit value
+  fit_value <- Inf
+  
+  # Perform loop
+  for(i in seq_len(n.rotations)){
+    
+    # Random values
+    X <- nvapply(factor_sequence, function(x){rnorm(nfactors)}, LENGTH = nfactors)
+    
+    # Loading results
+    result <- GPArotation::GPFoblq(
+      A = loadings, method = rotate, Tmat = qr.Q(qr(X)),
+      maxit = maxit, eps = eps
+    )
+    
+    # Check for improvement in fit
+    if(oblimin(result$loadings, gamma = gamma) < fit_value){
+      return_result <- result[c("loadings", "Phi")]
+    }
+    
+  }
+  
+  # Return results
+  return(return_result)
+  
+}
+
+#' @noRd
+# Exploratory Factor Analysis Scores ----
+# Updated 15.07.2023
+efa_scores <- function(
+    data, correlation_matrix, nfactors, 
+    fm = "minres", rotate = "oblimin",
+    n.rotations = 10, maxit = 1e4, 
+    factor.scores = "Thurstone", gamma = 0,
+    eps = 1e-5, impute
+)
+{
+
+  # Start with {psych}'s factor analysis
+  fa <- psych::fa(
+    correlation_matrix, 
+    nfactors = nfactors, 
+    fm = fm, rotate = "none"
+  )
+  
+  # Perform oblimin rotation
+  rotation <- oblimin_rotate(
+    loadings = fa$loadings, nfactors = nfactors,
+    n.rotations = n.rotations, maxit = maxit,
+    eps = eps, gamma = gamma, rotate = rotate
   )
 
-  # Insert methods into hierarchical
-  # results$hierarchical$Methods <- methods
-  hierarchical$Methods <- methods
+  # Return result
+  return(
+    list(
+      loadings = rotation$loadings,
+      scores = psych::factor.scores(
+        x = data, f = rotation$loadings,
+        Phi = rotation$Phi, method = factor.scores,
+        rho = correlation_matrix, missing = TRUE,
+        impute = impute
+      )$scores
+    )
+  )
 
-  # Make class "hierEGA"
-  class(hierarchical) <- "hierEGA"
+  # At this point, only scores are used and reported
+  # return(
+  #   list(
+  #     loadings = rotation$loadings, Phi = rotation$Phi,
+  #     Shat = fa$model, uniquenesses = fa$uniquenesses,
+  #     factor.scores = psych::factor.scores(
+  #       x = data, f = rotation$loadings,
+  #       Phi = rotation$Phi, method = factor.scores,
+  #       rho = correlation_matrix, missing = TRUE,
+  #       impute = impute
+  #     )
+  #   )
+  # )
 
-  return(hierarchical)
 }
-
-
-
-
-
-# bug checking
-# data = NetworkToolbox::neoOpen; scores = "network";
-# rotation = "oblimin"; consensus.iter = 1000; corr = "cor_auto";
-# consensus.method = "most_common"; uni.method = "louvain";
-# model = "glasso"; model.args = list();
-# algorithm = "walktrap"; algorithm.args = list();
-# lower.louvain = FALSE; plot.EGA = FALSE; plot.args = list();
-# 
-# source("D:/R Packages/EGAnet/R/utils-EGAnet.R")
-
-
-
 
 
 

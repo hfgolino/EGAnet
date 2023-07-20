@@ -140,11 +140,11 @@ polychoric.matrix <- function(
   }else{
     
     # Set 'empty.method'
-    empty.method <- ifelse(empty.method == "zero", 1L, 2L)
+    empty.method <- swiftelse(empty.method == "zero", 1L, 2L)
     
     # Set 'empty.value'
     if(is.character(empty.value)){
-      empty.value <- ifelse(empty.value == "point_five", 0.50, 2)
+      empty.value <- swiftelse(empty.value == "point_five", 0.50, 2)
     }
     
   } 

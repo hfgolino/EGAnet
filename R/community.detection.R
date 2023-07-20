@@ -149,7 +149,7 @@
 #' @export
 #'
 # Compute communities for EGA
-# Updated 14.07.2023
+# Updated 20.07.2023
 community.detection <- function(
     network, algorithm = c(
       "edge_betweenness", "fast_greedy",
@@ -244,6 +244,26 @@ community.detection <- function(
       FUN = algorithm.FUN,
       FUN.args = ellipse
     )
+    
+    # Check for Leiden
+    if(
+      "objective_function" %in% formalArgs(algorithm.FUN) &
+      !"objective_function" %in% names(ellipse)
+    ){
+      
+      # Set default to modularity
+      algorithm.ARGS$objective_function <- "modularity"
+      
+      # Send warning
+      warning(
+        paste0(
+          "{EGAnet} uses \"modularity\" as the default objective function in the Leiden algorithm. ",
+          "In contrast, {igraph} uses \"CPM\". Set `objective_function = \"CPM\"` to use the Constant Potts ",
+          "Model in {EGAnet}"
+        )
+      )
+      
+    }
     
     # Check for Leading Eigenvalue (needs ARPACK)
     if("options" %in% names(algorithm.ARGS) & !"options" %in% names(ellipse)){
@@ -364,7 +384,7 @@ print.EGA.community <- function(x, boot = FALSE, ...)
   if(!is.function(algorithm)){
     
     # Check for signed
-    algorithm_name <- ifelse(
+    algorithm_name <- swiftelse(
       attr(membership, "methods")$signed,
       paste("Signed", algorithm),
       algorithm
@@ -377,13 +397,13 @@ print.EGA.community <- function(x, boot = FALSE, ...)
       objective_function <- attr(membership, "methods")$objective_function
       
       # Set up algorithm name
-      objective_name <- ifelse(
+      objective_name <- swiftelse(
         is.null(objective_function),
         "CPM", objective_function
       )
       
       # Expand "CPM"
-      objective_name <- ifelse(
+      objective_name <- swiftelse(
         objective_name == "CPM",
         "Constant Potts Model", "Modularity"
       )

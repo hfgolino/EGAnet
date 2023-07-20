@@ -4,7 +4,11 @@
 \alias{ergoInfo}
 \title{Ergodicity Information Index}
 \usage{
-ergoInfo(dynEGA.object, use = c("edge.list", "unweighted"))
+ergoInfo(
+  dynEGA.object,
+  use = c("edge.list", "unweighted"),
+  ordering = c("row", "column")
+)
 }
 \arguments{
 \item{dynEGA.object}{A \code{\link[EGAnet]{dynEGA.ind.pop}} object}

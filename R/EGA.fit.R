@@ -183,7 +183,7 @@ EGA.fit <- function(
   
   # Check for missing arguments (argument, default, function)
   corr <- set_default(corr, "auto", c("auto", "cor_auto", "pearson", "spearman"))
-  corr <- ifelse(corr == "cor_auto", "auto", corr) # deprecate `cor_auto`
+  corr <- swiftelse(corr == "cor_auto", "auto", corr) # deprecate `cor_auto`
   na.data <- set_default(na.data, "pairwise", auto.correlate)
   model <- set_default(model, "glasso", network.estimation)
   algorithm <- set_default(algorithm, "walktrap", EGA.fit)
@@ -328,7 +328,7 @@ print.EGA.fit <- function(x, ...)
   algorithm <- community_attributes$algorithm
   
   # Check for signed
-  algorithm_name <- ifelse(
+  algorithm_name <- swiftelse(
     attr(membership, "methods")$signed,
     paste("Signed", algorithm),
     algorithm
@@ -341,13 +341,13 @@ print.EGA.fit <- function(x, ...)
     objective_function <- community_attributes$objective_function
     
     # Set up algorithm name
-    objective_name <- ifelse(
+    objective_name <- swiftelse(
       is.null(objective_function),
       "CPM", objective_function
     )
     
     # Expand "CPM"
-    objective_name <- ifelse(
+    objective_name <- swiftelse(
       objective_name == "CPM",
       "Constant Potts Model", "Modularity"
     )
@@ -363,7 +363,7 @@ print.EGA.fit <- function(x, ...)
   algorithm_name <- paste0(
     algorithm_name,
     paste0(
-      " (", ifelse(
+      " (", swiftelse(
         algorithm == "Walktrap",
         "Steps = ",
         "Resolution = "
@@ -614,7 +614,7 @@ louvain_fit <- function(
 
 #' @noRd
 # Fit for Leiden ----
-# Updated 07.07.2023
+# Updated 20.07.2023
 leiden_fit <- function(
     data, n, corr, na.data, model,
     verbose, ellipse
@@ -623,8 +623,19 @@ leiden_fit <- function(
   
   # Check for objective function
   if(!"objective_function" %in% names(ellipse)){
-    objective_function <- "CPM"
-    # default for {igraph} and `community.detection`
+    
+    # Default for {EGAnet}
+    objective_function <- "modularity"
+    
+    # Send warning
+    warning(
+      paste0(
+        "{EGAnet} uses \"modularity\" as the default objective function in the Leiden algorithm. ",
+        "In contrast, {igraph} uses \"CPM\". Set `objective_function = \"CPM\"` to use the Constant Potts ",
+        "Model in {EGAnet}"
+      )
+    )
+    
   }else{
     
     # Set objective function

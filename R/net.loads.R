@@ -300,7 +300,7 @@ print.net.loads <- function(x, ...)
   # Print method
   cat(
     paste0(
-      "Loading Method: ", ifelse(
+      "Loading Method: ", swiftelse(
         method_attributes$loading.method == "brm",
         "BRM", "Experimental"
       )
@@ -326,7 +326,7 @@ print.net.loads <- function(x, ...)
   rounded_loadings <- round(x$std, 3)
   
   # Get minimum loadings value
-  minimum <- ifelse(
+  minimum <- swiftelse(
     "minimum" %in% names(ellipse),
     ellipse$minimum, 0.10
   )
@@ -361,7 +361,7 @@ summary.net.loads <- function(object, ...)
 
 #' @noRd
 # Organize input ----
-# Updated 10.07.2023
+# Updated 15.07.2023
 organize_input <- function(A, wc)
 {
   
@@ -388,7 +388,11 @@ organize_input <- function(A, wc)
   A <- as.matrix(A); wc <- force_vector(wc)
   
   # Set memberships as string
-  wc <- paste(wc)
+  if(is.numeric(wc)){
+    wc <- format_integer(
+      wc, places = digits(max(wc, na.rm = TRUE)) - 1
+    )
+  }
   
   # Ensure names
   A <- ensure_dimension_names(A)
@@ -446,7 +450,7 @@ obtain_signs <- function(target_network)
 
 #' @noRd
 # Experimental loadings ----
-# Updated 12.07.2023
+# Updated 15.07.2023
 experimental <- function(A, wc, nodes, node_names, communities, unique_communities)
 {
   
@@ -470,6 +474,9 @@ experimental <- function(A, wc, nodes, node_names, communities, unique_communiti
     target_network <- obtain_signs(
       A[community_index, community_index, drop = FALSE]
     )
+    
+    # Set diagonal of target network
+    diag(target_network) <- colSums(target_network, na.rm = TRUE)
     
     # Compute absolute sum for dominant loadings
     loading_matrix[community_index, community] <- colSums(target_network, na.rm = TRUE)
@@ -565,27 +572,29 @@ standardize <- function(unstandardized)
 
 #' @noRd
 # Descending order ----
-# Updated 13.07.2023
+# Updated 15.07.2023
 descending_order <- function(standardized, wc, unique_communities, node_names) 
 {
   
   # Initialize order names
   order_names <- character(length(node_names))
   
-  # Loop over communities
-  for(community in unique_communities){
-    
-    # Get community index
-    community_index <- wc == community
-    
-    # Get order
-    ordering <- order(standardized[community_index, community], decreasing = TRUE)
-    
-    # Input ordering into order names
-    order_names[community_index] <- node_names[community_index][ordering]
-    
-  }
-  
+  # Get order names
+  order_names <- ulapply(
+    unique_communities, function(community){
+      
+      # Get community index
+      community_index <- wc == community
+      
+      # Get order
+      ordering <- order(standardized[community_index, community], decreasing = TRUE)
+      
+      # Return order
+      return(node_names[community_index][ordering])
+      
+    }
+  )
+
   # Return reordered results
   return(standardized[order_names,])
   
@@ -824,227 +833,3 @@ old_add_signs <- function(unstandardized, A, wc, unique_communities)
   
 }
 
-# SAVE ----
-
-#' Oblimin rotation (to be consistent in \code{\link[EGAnet]{net.loads}})
-#' @noRd
-# Updated 28.11.2022 -- Marcos
-oblimin_rotate <- function(
-    loadings,
-    n.rotations = 10, # defaults to 10
-    nfactors, # number of factors
-    maxit = 1e4, # iterations
-    eps = 1e-5, # convergence
-    gamma = 0, # gamma in oblimin
-    rotate = "oblimin" # rotation
-)
-{
-  
-  # Check for number of factors
-  if(missing(nfactors)){
-    nfactors <- ncol(loadings)
-  }
-  
-  # Check for unidimensional structure (28.11.2022)
-  if(nfactors == 1){
-    
-    # Return results
-    return(
-      list(
-        loadings = loadings,
-        Phi = 1
-      )
-    )
-    
-  }
-  
-  x <- list()
-  fs <- vector(length = n.rotations)
-  
-  for(i in 1:n.rotations) {
-    
-    X <- replicate(nfactors, rnorm(nfactors))
-    Q <- qr.Q(qr(X)) # Random orthogonal matrix (initial value)
-    x[[i]] <- GPArotation::GPFoblq(A = loadings, method = rotate, 
-                                   Tmat = Q, maxit = maxit, eps = eps) # Fit
-    fs[i] <- oblimin(x[[i]]$loadings, gamma) # Fit values
-    
-  }
-  
-  # Results
-  index <- which.min(fs) # Index pertaining to the minimum fit value
-  loadings <- x[[i]]$loadings # Select the corresponding loadings
-  Phi <- x[[i]]$Phi # Factor correlation matrix
-  
-  # Return results
-  return(
-    list(
-      loadings = loadings,
-      Phi = Phi
-    )
-  )
-  
-}
-
-#' Oblimin rotation
-#' @noRd
-# Updated 21.11.2022 -- Marcos
-oblimin <- function(L, gamma = 0) {
-  
-  # Fit value for oblimin
-  # L = rotated loading matrix
-  # gamma = fixed parameter
-  
-  nfactors <- ncol(L)
-  p <- nrow(L)
-  I <- diag(p)
-  gC <- matrix(gamma/p, p, p)
-  IgC <- I - gC
-  
-  N <- matrix(1, nfactors, nfactors)
-  diag(N) <- 0
-  L2 <- L*L
-  f <- sum(diag(t(L2) %*% (IgC %*% L2 %*% N)))/4
-  return(f)
-  
-}
-
-#' Factor scores
-#' @noRd
-# Updated 28.11.2022 -- Marcos
-fscores <- function(S, loadings, Phi, Shat, scores = NULL, method = "Thurstone") {
-  
-  # S = empirical correlation matrix
-  # loadings = rotated loading matrix
-  # Phi = estimated factor correlation matrix
-  # Shat = model correlation matrix
-  # scores = raw scores
-  # method = factor.scores method
-  
-  if(is.null(scores)) stop("Please, provide the matrix of observed scores")
-  
-  uniquenesses <- 1 - diag(Shat)
-  invS <- solve(S)
-  n <- nrow(scores)
-  p <- nrow(loadings)
-  q <- ncol(loadings)
-  z <- scale(scores)
-  
-  Lambda <- loadings
-  Phi <- Phi
-  LP <- Lambda %*% Phi # Correlations between factors and items
-  
-  # Find the weights:
-  
-  if(method == "regression" | method == "Thurstone") {
-    
-    weights <- solve(S, LP)
-    
-  } else if(method == "tenBerge") {
-    
-    SVD <- svd(Phi)
-    Phi12 <- SVD$u %*% diag(sqrt(SVD$d)) %*% t(SVD$v)
-    SVD <- svd(S)
-    R12 <- SVD$u %*% diag(1/sqrt(SVD$d)) %*% t(SVD$v)
-    L <- Lambda %*% Phi12
-    SVD <- svd(t(L) %*% invS %*% L)
-    LRL12 <- SVD$u %*% diag(1/sqrt(SVD$d)) %*% t(SVD$v)
-    C <- R12 %*% L %*% LRL12
-    weights <- R12 %*% C %*% Phi12
-    
-  } else if(method == "Bartlett") {
-    
-    U <- c(fit$efa$uniquenesses)
-    U2 <- diag(1/(U*U))
-    weights <- U2 %*% Lambda %*% solve(t(Lambda) %*% U2 %*% Lambda)
-    
-  } else if(method == "Harman") {
-    
-    weights <- solve(fit$efa$Rhat) %*% Lambda
-    
-  }
-  
-  fs <- z %*% weights # Factor scores
-  
-  # Validity coefficients:
-  # invL <- diag(1/apply(fs, MARGIN = 2, FUN = sd))
-  C <- t(weights) %*% S %*% weights
-  # invL was updated (28.11.2022) to ensure matrix
-  # when nfactors = 1
-  invL <- diag(sqrt(diag(C)), ncol(loadings)) # Standard deviations of the factor scores
-  validity_univocality <- t(LP) %*% weights %*% invL
-  validity <- matrix(diag(validity_univocality), nrow = 1)
-  rownames(validity) <- ""
-  univocality <- validity_univocality
-  diag(univocality) <- NA
-  
-  # Accuracy:
-  accuracy <- stats::cor(fs)
-  
-  # Standard errors for factor scores:
-  r <- matrix(diag(invS), ncol = 1)
-  Rj <- matrix(1-c(validity^2), nrow = 1)
-  se <- sqrt(r %*% Rj / (n-p-1))
-  se <- matrix(se, nrow = p, ncol = q)
-  
-  colnames(fs) <- colnames(weights) <- colnames(validity) <-
-    colnames(univocality) <- rownames(univocality) <-
-    colnames(accuracy) <- rownames(accuracy) <- colnames(se) <-
-    paste("F", sprintf(paste("%0", nchar(q), "d", sep = ""), 1:q), sep = "")
-  
-  result <- list(fscores = fs, weights = weights, validity = validity,
-                 univocality = univocality, accuracy = accuracy, se = se)
-  
-  return(result)
-  
-}
-
-#' Exploratory factor analysis
-#' @noRd
-# Updated 21.11.2022 -- Marcos
-efa <- function(data, nfactors, fm = "minres", rotate = "oblimin",
-                n.rotations = 10, maxit = 1e4, factor.scores = "Thurstone",
-                gamma = 0, eps = 1e-5) {
-  
-  # Function to perform EFA
-  # data = raw data
-  # nfactors = number of factors to extract
-  # fm = factor extraction method
-  # rotate = rotation method (only oblimin is implemented right now)
-  # n.rotations = number of rotations to perform with different initial values
-  # maxit = maximum number of iterations for the rotation to converge
-  # factor.scores = factor scores' method
-  # gamma = fixed parameter for oblimin
-  # eps = stop criteria for the rotation (relative tolerance value)
-  
-  if(rotate != "oblimin") stop("oblimin is the only rotation currently implemented.")
-  
-  # Compute the correlation matrix
-  S <- qgraph::cor_auto(data, verbose = FALSE)
-  
-  # Factor extraction:
-  fa <- psych::fa(S, nfactors = nfactors, fm = fm, rotate = "none")
-
-  # Perform oblimin rotation
-  rotation <- oblimin_rotate(
-    loadings = fa$loadings,
-    n.rotations = n.rotations,
-    nfactors = nfactors,
-    maxit = maxit,
-    eps = eps,
-    gamma = gamma,
-    rotate = rotate
-  )
-  loadings <- rotation$loadings # Select the corresponding loadings
-  Phi <- rotation$Phi # Factor correlation matrix
-  Shat <- fa$model # Model correlation matrix
-  uniquenesses <- fa$uniquenesses
-  
-  # Compute the factor scores
-  fs <- fscores(S = S, loadings = loadings, Phi = Phi, 
-                Shat = Shat, scores = data, method = factor.scores)
-  
-  result <- list(loadings = loadings, Phi = Phi, Shat = Shat,
-                 uniquenesses = uniquenesses, factor.scores = fs$fscores)
-  
-}
