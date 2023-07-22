@@ -165,7 +165,7 @@ symmetric_matrix_lapply <- function(X, FUN, ...){
     "character" = cvapply,
     stop(
       paste0(
-        "\"", typeof(X), "\"",
+        "\"", typeof(X[[1]]), "\"",
         " is not available for `symmetric_matrix_lapply`. Only \"character\", \"logical\", and \"numeric\" are available" 
       ), call. = FALSE
     )
@@ -360,14 +360,11 @@ reproducible_parametric <- function(
 # Generate reproducible resampling bootstrap ----
 # (multivariate normal samples)
 # A wrapper over `reproducible_seed` and `reproducible_sample`
-# Updated 20.07.2023
+# Updated 22.07.2023
 reproducible_resampling <- function(
     data, samples, cases# , seed
 )
 {
-  
-  # Get sequence of cases (avoids repeated calculations)
-  case_sequence <- seq_len(cases)
   
   # More direct approach than calling `reproducible_sample`
   return(
@@ -376,7 +373,7 @@ reproducible_resampling <- function(
       # reproducible_seed(n = samples, seed = seed),
       function(single_seed){
         # data[r_sample_with_replacement(n = cases, seed = single_seed),]
-        data[sample(x = case_sequence, size = cases, replace = TRUE),]
+        data[sample.int(n = cases, replace = TRUE, useHash = FALSE),]
       }
     )
   )
@@ -425,7 +422,7 @@ reproducible_bootstrap <- function(
 
 #' @noRd
 # Get available memory ----
-# Updated 14.07.2023
+# Updated 22.07.2023
 available_memory <- function()
 {
 
@@ -435,30 +432,35 @@ available_memory <- function()
   # Branch based on OS
   if(OS == "windows"){ # Windows
 
-    # System information
-    system_info <- system("systeminfo", intern = TRUE)
-
-    # Get available memory
-    value <- system_info[
-      grep("Available Physical Memory", system_info)
-    ]
-
-    # Remove extraneous information
-    value <- gsub("Available Physical Memory: ", "", value)
-    value <- gsub("\\,", "", value)
+    # # System information
+    # system_info <- system("systeminfo", intern = TRUE)
+    # 
+    # # Get available memory
+    # value <- system_info[
+    #   grep("Available Physical Memory", system_info)
+    # ]
+    # 
+    # # Remove extraneous information
+    # value <- gsub("Available Physical Memory: ", "", value)
+    # value <- gsub("\\,", "", value)
+    # 
+    # # Convert to bytes
+    # value_split <- unlist(strsplit(value, split = " "))
+    # 
+    # # Check for second value
+    # bytes <- as.numeric(value_split[1]) * switch(
+    #   value_split[2],
+    #   "B"  = 1, # edge case
+    #   "KB" = 1e+03,
+    #   "MB" = 1e+06,
+    #   "GB" = 1e+09,
+    #   "TB" = 1e+12 # edge case
+    # )
     
-    # Convert to bytes
-    value_split <- unlist(strsplit(value, split = " "))
-    
-    # Check for second value
-    bytes <- as.numeric(value_split[1]) * switch(
-      value_split[2],
-      "B"  = 1, # edge case
-      "KB" = 1e+03,
-      "MB" = 1e+06,
-      "GB" = 1e+09,
-      "TB" = 1e+12 # edge case
-    )
+    # Alternative
+    bytes <- as.numeric(
+      trimws(system("wmic OS get FreePhysicalMemory", intern = TRUE))[2]
+    ) * 1000
 
   }else if(OS == "linux"){ # Linux
     
@@ -511,7 +513,7 @@ available_memory <- function()
 
 #' @noRd
 # Wrapper for parallelization ----
-# Updated 20.07.2023
+# Updated 22.07.2023
 parallel_process <- function(
     iterations, # number of iterations
     datalist = NULL, # list of data
@@ -523,8 +525,31 @@ parallel_process <- function(
     progress = TRUE # progress bar
 ){
   
-  # Set max size ( available memory minus 1MB )
-  options(future.globals.maxSize = available_memory() - 1e+06)
+  # Get available memory ( minus 100MB )
+  memory_available <- available_memory() - 1e+08
+  
+  # Check for global environment size
+  if(isTRUE(export)){
+    global_memory_usage <- sum(nvapply(ls(),function(x){object.size(get(x))}))
+  }else{
+    global_memory_usage <- sum(nvapply(ls()[ls() %in% export],function(x){object.size(get(x))}))
+  }
+  
+  # Check for memory overload
+  if(memory_available < global_memory_usage * ncores){
+    stop(
+      paste0(
+        "Available memory (", byte_digits(memory_available), ") is less than ",
+        "the amount of memory needed to perform parallelization: ",
+        byte_digits(global_memory_usage * ncores), ".\n\n",
+        "Lower the number of cores (`ncores`) or perform ",
+        "batches of your operation."
+      ), call. = FALSE
+    )
+  }
+  
+  # Set max size
+  options(future.globals.maxSize = memory_available)
   
   # Set up plan
   future::plan(
@@ -716,6 +741,33 @@ digits <- function(number)
 }
 
 #' @noRd
+# Determine format of bytes ----
+# Updated 22.07.2023
+byte_digits <- function(bytes)
+{
+  
+  # Get number of digits
+  ndigits <- digits(bytes)
+  
+  # Loop over values
+  if(ndigits > 11){
+    value <- paste0(round(bytes / 1e+12, 2), " TB")
+  }else if(ndigits > 8){
+    value <- paste0(round(bytes / 1e+09, 2), " GB")
+  }else if(ndigits > 5){
+    value <- paste0(round(bytes / 1e+06, 2), " MB")
+  }else if(ndigits > 2){
+    value <- paste0(round(bytes / 1e+03, 2), " KB")
+  }else{
+    value <- paste0(round(bytes, 2), " B")
+  }
+  
+  # Return configured value
+  return(value)
+  
+}
+
+#' @noRd
 # Format number with certain decimals ----
 # Mainly for naming and printing
 # Updated 14.06.2024
@@ -756,7 +808,7 @@ format_integer <- function(numbers, places)
 #' @noRd
 # Gets base `EGA` object that are necessary for most
 # functions in {EGAnet}
-# Updated 07.07.2023
+# Updated 21.07.2023
 get_EGA_object <- function(object)
 {
   
@@ -769,6 +821,19 @@ get_EGA_object <- function(object)
         population = object$dynEGA$population,
         group = object$dynEGA$group,
         individual = object$dynEGA$individual
+      )
+    )
+    
+  }
+  
+  # `hierEGA` is also a special case
+  if(is(object, "hierEGA")){
+    
+    # Return levels
+    return(
+      list(
+        lower = object$lower_order,
+        higher = object$higher_order
       )
     )
     
@@ -787,6 +852,7 @@ get_EGA_object <- function(object)
       "ega" = object,
       "ega.fit" = object$EGA,
       "riega" = object$EGA,
+      "hierega" = object,
       stop(
         "Could not find `EGA` object nested in object",
         call. = FALSE
@@ -1031,6 +1097,31 @@ edge_count <- function(network, nodes, diagonal = FALSE)
 }
 
 #' @noRd
+# Faster table ----
+# Skips many checks in `table`
+# Updated 22.07.2023
+fast_table <- function(values)
+{
+  
+  # Get factor values
+  factor_values <- swiftelse(
+    is.factor(values), values, factor(values)
+  )
+  
+  # Get factor levels
+  factor_levels <- levels(factor_values)
+  
+  # Return with names
+  return(
+    setNames(
+      tabulate(factor_values, length(factor_levels)),
+      factor_levels
+    )
+  )
+
+}
+
+#' @noRd
 # Converts entire vectors to a single value ----
 # Same logic as {plyr}'s `id_var` and `ninteraction`
 # Avoids {plyr} dependency for single function
@@ -1068,7 +1159,7 @@ vector2factor <- function(data)
 # Provides counts of repeated rows in a data frame
 # Same logic as {plyr}'s `count`
 # Avoids {plyr} dependency for single function
-# Updated 03.07.2023
+# Updated 22.07.2023
 count_table <- function(data, proportion = FALSE)
 {
 
@@ -1082,7 +1173,7 @@ count_table <- function(data, proportion = FALSE)
   unique_solutions <- data[!duplicated(unique_id),,drop = FALSE]
   
   # Tabulate data
-  Value <- tabulate(unique_id, length(levels(unique_id)))
+  Value <- fast_table(unique_id) # tabulate(unique_id, length(levels(unique_id)))
   
   # Check for proportion
   if(isTRUE(proportion)){

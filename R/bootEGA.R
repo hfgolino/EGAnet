@@ -376,7 +376,7 @@ bootEGA <- function(
   EGA.type <- set_default(EGA.type, "ega", bootEGA)
   
   # Set cores
-  if(missing(ncores)){ncores <- round(parallel::detectCores() / 2)}
+  if(missing(ncores)){ncores <- ceiling(parallel::detectCores() / 2)}
   
   # `EGA.estimate` will handle legacy arguments and data processing 
   
@@ -392,20 +392,18 @@ bootEGA <- function(
   # Get variable names
   variable_names <- dimnames(data)[[2]]
 
-  # NEED HANDLING FOR DIFFERENT TYPES ONLY EGA RIGHT NOW
-
   # Obtain EGA function
   ega_function <- switch(
     EGA.type,
     "ega" = EGA,
     "ega.fit" = EGA.fit,
     "riega" = riEGA,
-    "hierega" = stop("'EGA.type = \"hierEGA\"' is not yet supported. Support coming soon...", call. = FALSE),
+    "hierega" = hierEGA,
     stop(
       paste0(
         "EGA.type = \"", EGA.type, "\" is not supported. Please use one of the default options: ", 
         paste0("\"", as.character(formals(bootEGA)$EGA.type)[-1], "\"", collapse = ", ")
-      )
+      ), call. = FALSE
     )
   )
   
@@ -422,6 +420,14 @@ bootEGA <- function(
   
   # Obtain EGA output
   empirical_EGA_output <- get_EGA_object(empirical_EGA)
+  
+  # Determine whether output is hierarchical
+  hierarchical <- EGA.type == "hierega"
+  
+  # Check for hierarchical EGA (if so, get lowest level)
+  if(hierarchical){
+    empirical_EGA_output <- empirical_EGA_output$lower
+  }
   
   # # Generate data
   # bootstrap_data <- reproducible_bootstrap(
@@ -470,8 +476,30 @@ bootEGA <- function(
   # Obtain bootstrap EGA output
   bootstrap_EGA_output <- lapply(boots, get_EGA_object)
   
-  # Get results
-  results <- prepare_bootEGA_results(bootstrap_EGA_output, iter)
+  # Branch based on hierarchical EGA
+  if(hierarchical){
+    
+    # Prepare results
+    results <- list(
+      lower_order = prepare_bootEGA_results(
+        lapply(bootstrap_EGA_output, function(x){x$lower}),
+        iter
+      ),
+      # To avoid issues with differing communities,
+      # re-value each variable's membership to their
+      # higher order community
+      higher_order = prepare_bootEGA_results(
+        revalue_memberships(bootstrap_EGA_output),
+        iter
+      )
+    )
+    
+  }else{
+    
+    # Get results
+    results <- prepare_bootEGA_results(bootstrap_EGA_output, iter)
+    
+  }
   
   # Add additional results
   results[c("type", "EGA", "EGA.type")] <- list(
@@ -511,7 +539,7 @@ bootEGA <- function(
 
 # Bug checking ----
 # DATA
-# data = wmt2[,7:24]; n = NULL; corr = "auto"; na.data = "pairwise"
+# data = NetworkToolbox::neoOpen; n = NULL; corr = "auto"; na.data = "pairwise"
 # model = "glasso"; algorithm = "walktrap"; uni.method = "louvain"
 # iter = 100; type = "parametric"; ncores = 8; EGA.type = "EGA"
 # typicalStructure = TRUE; plot.typicalStructure = FALSE;
@@ -523,30 +551,64 @@ bootEGA <- function(
 
 #' @exportS3Method 
 # S3 Print Method ----
-# Updated 06.07.2023
+# Updated 21.07.2023
 print.bootEGA <- function(x, ...)
 {
   
   # Ensure proper EGA object
   ega_object <- get_EGA_object(x)
   
-  # Print network information
-  send_network_methods(ega_object$network, boot = TRUE)
-  
-  # Add line break
-  cat("\n")
-  
-  # Print community detection
-  print(ega_object$wc, boot = TRUE)
-  
-  # Add line break
-  cat("\n")
-  
-  # Do not print unidimensional for `EGA.fit`
-  if(x$EGA.type != "ega.fit"){
+  # Branch for hierarchical EGA
+  if(is(ega_object, "hierEGA")){
+    
+    # Set proper EGA type name
+    ega_type <- switch(
+      x$EGA.type,
+      "ega" = "EGA",
+      "ega.fit" = "EGA.fit",
+      "hierega" = "hierEGA",
+      "riega" = "riEGA"
+    )
+    
+    # Print EGA type
+    cat(paste0("EGA Type: ", ega_type), "\n")
+    
+    # Set up methods
+    cat(
+      paste0(
+        "Bootstrap Samples: ",
+        x$iter, " (", totitle(x$type), ")"
+      )
+    )
+    
+    # Add breakspace
+    cat("\n\n------------\n\n")
+    
+    # Print level
+    cat(
+      styletext(
+        text = styletext(
+          text =  "Lower Order\n\n", 
+          defaults = "underline"
+        ),
+        defaults = "bold"
+      )
+    )
+    
+    # Print network information
+    send_network_methods(ega_object$lower_order$network, boot = TRUE)
+    
+    # Add line break
+    cat("\n")
+    
+    # Print community detection
+    print(ega_object$lower_order$wc, boot = TRUE)
+    
+    # Add line break
+    cat("\n")
     
     # Get unidimensional attributes
-    unidimensional_attributes <- attr(ega_object, "unidimensional")
+    unidimensional_attributes <- attr(ega_object$lower_order, "unidimensional")
     
     # Obtain unidimensional method
     unidimensional_method <- switch(
@@ -586,53 +648,173 @@ print.bootEGA <- function(x, ...)
     # Print unidimensional
     cat("Unidimensional Method: ", unidimensional_method)
     
+    # Add break space
+    cat("\n\n----\n")
+    
+    # Print frequency table
+    frequency_df <- as.data.frame(
+      do.call(rbind, lapply(x$lower_order$frequency, as.character))
+    )
+
+    # Adjust dimension names (`dimnames` doesn't work)
+    colnames(frequency_df) <- NULL
+    row.names(frequency_df) <- c("", "Frequency: ")
+    # Finally, print
+    print(frequency_df)
+    
+    # Print summary table
+    cat(
+      paste0(
+        "\nMedian dimensions: ", x$lower_order$summary.table$median.dim,
+        " [", round(x$lower_order$summary.table$Lower.CI, 2), ", ",
+        round(x$lower_order$summary.table$Upper.CI, 2), "] 95% CI"
+      )
+    )
+    
+    # Add breakspace
+    cat("\n\n------------\n\n")
+    
+    # Print level
+    cat(
+      styletext(
+        text = styletext(
+          text =  "Higher Order\n\n", 
+          defaults = "underline"
+        ),
+        defaults = "bold"
+      )
+    )
+    
+    # Print community detection
+    print(ega_object$higher_order$wc, boot = TRUE)
+
+    # Add break space
+    cat("\n\n----\n")
+    
+    # Print frequency table
+    frequency_df <- as.data.frame(
+      do.call(rbind, lapply(x$higher_order$frequency, as.character))
+    )
+    
+    # Adjust dimension names (`dimnames` doesn't work)
+    colnames(frequency_df) <- NULL
+    row.names(frequency_df) <- c("", "Frequency: ")
+    # Finally, print
+    print(frequency_df)
+    
+    # Print summary table
+    cat(
+      paste0(
+        "\nMedian dimensions: ", x$higher_order$summary.table$median.dim,
+        " [", round(x$higher_order$summary.table$Lower.CI, 2), ", ",
+        round(x$higher_order$summary.table$Upper.CI, 2), "] 95% CI"
+      )
+    )
+    
+  }else{
+    
+    # Print network information
+    send_network_methods(ega_object$network, boot = TRUE)
+    
+    # Add line break
+    cat("\n")
+    
+    # Print community detection
+    print(ega_object$wc, boot = TRUE)
+    
+    # Add line break
+    cat("\n")
+    
+    # Do not print unidimensional for `EGA.fit`
+    if(x$EGA.type != "ega.fit"){
+      
+      # Get unidimensional attributes
+      unidimensional_attributes <- attr(ega_object, "unidimensional")
+      
+      # Obtain unidimensional method
+      unidimensional_method <- switch(
+        unidimensional_attributes$uni.method,
+        "expand" = "Expand",
+        "le" = "Leading Eigenvector",
+        "louvain" = "Louvain"
+      )
+      
+      # Set up unidimensional print
+      if(
+        unidimensional_method == "Louvain" &
+        "consensus.iter" %in% names(unidimensional_attributes$consensus)
+      ){
+        
+        # Set up consensus attributes
+        consensus_attributes <- unidimensional_attributes$consensus
+        
+        # Obtain consensus name
+        consensus_name <- switch(
+          consensus_attributes$consensus.method,
+          "highest_modularity" = "Highest Modularity",
+          "iterative" = "Iterative",
+          "most_common" = "Most Common",
+          "lowest_tefi" = "Lowest TEFI"
+        )
+        
+        # Update unidimensional method text
+        unidimensional_method <- paste0(
+          unidimensional_method, " (", consensus_name,
+          " for ", consensus_attributes$consensus.iter,
+          " iterations)"
+        )
+        
+      }
+      
+      # Print unidimensional
+      cat("Unidimensional Method: ", unidimensional_method)
+      
+    }
+    
+    # Add break space
+    cat("\n\n----\n\n")
+    
+    # Set proper EGA type name
+    ega_type <- switch(
+      x$EGA.type,
+      "ega" = "EGA",
+      "ega.fit" = "EGA.fit",
+      "hierega" = "hierEGA",
+      "riega" = "riEGA"
+    )
+    
+    # Print EGA type
+    cat(paste0("EGA Type: ", ega_type), "\n")
+    
+    # Set up methods
+    cat(
+      paste0(
+        "Bootstrap Samples: ",
+        x$iter, " (", totitle(x$type), ")\n"
+      )
+    )
+    
+    # Print frequency table
+    frequency_df <- as.data.frame(
+      do.call(rbind, lapply(x$frequency, as.character))
+    )
+
+    # Adjust dimension names (`dimnames` doesn't work)
+    colnames(frequency_df) <- NULL
+    row.names(frequency_df) <- c("", "Frequency: ")
+    # Finally, print
+    print(frequency_df)
+    
+    # Print summary table
+    cat(
+      paste0(
+        "\nMedian dimensions: ", x$summary.table$median.dim,
+        " [", round(x$summary.table$Lower.CI, 2), ", ",
+        round(x$summary.table$Upper.CI, 2), "] 95% CI"
+      )
+    )
+    
   }
-  
-  # Add break space
-  cat("\n\n----\n\n")
-  
-  # Set proper EGA type name
-  ega_type <- switch(
-    x$EGA.type,
-    "ega" = "EGA",
-    "ega.fit" = "EGA.fit",
-    "hierega" = "hierEGA",
-    "riega" = "riEGA"
-  )
-  
-  # Print EGA type
-  cat(paste0("EGA Type: ", ega_type), "\n")
-  
-  # Set up methods
-  cat(
-    paste0(
-      "Bootstrap Samples: ",
-      x$iter, " (", totitle(x$type), ")\n"
-    )
-  )
-  
-  # Print frequency table
-  frequency_df <- as.data.frame(
-    do.call(rbind, lapply(x$frequency, as.character))
-  )
-  
-  # Reorder frequency data frame
-  frequency_df <- silent_call(frequency_df[,order(frequency_df[1,])])
-  
-  # Adjust dimension names (`dimnames` doesn't work)
-  colnames(frequency_df) <- NULL
-  row.names(frequency_df) <- c("", "Frequency: ")
-  # Finally, print
-  print(frequency_df)
-  
-  # Print summary table
-  cat(
-    paste0(
-      "\nMedian dimensions: ", x$summary.table$median.dim,
-      " [", round(x$summary.table$Lower.CI, 2), ", ",
-      round(x$summary.table$Upper.CI, 2), "] 95% CI"
-    )
-  )
 
 }
 
@@ -646,23 +828,93 @@ summary.bootEGA <- function(object, ...)
 
 #' @exportS3Method 
 # S3 Plot Method ----
-# Updated 05.07.2023
+# Updated 21.07.2023
 plot.bootEGA <- function(x, ...)
 {
   
-  # Return plot
-  single_plot(
-    network = x$typicalGraph$graph,
-    wc = x$typicalGraph$wc,
-    ...
-  )
+  # Check for hierarchical EGA
+  if(x$EGA.type == "hierega"){
+    
+    # Set up results to be similar to `hierEGA`
+    ## Lower order
+    lower_order_result <- list(
+      network = x$typicalGraph$lower_order$graph,
+      wc = x$typicalGraph$lower_order$wc
+    )
+    class(lower_order_result) <- "EGA"
+    
+    ## Higher order
+    higher_order_result <- list(
+      network = x$typicalGraph$higher_order$graph,
+      wc = x$typicalGraph$higher_order$wc
+    )
+    class(higher_order_result) <- "EGA"
+    
+    # Set up results
+    results <- list(
+      lower_order = lower_order_result,
+      higher_order = higher_order_result,
+      parameters = x$typicalGraph$parameters
+    )
+    
+    # Transfer "methods" attributes
+    attr(results, "methods") <- attr(x$EGA, "methods")
+    
+    # Set class
+    class(results) <- "hierEGA"
+    
+    # Return plot as hierarchical EGA
+    return(plot(results, ...))
+    
+  }else{
+    
+    # Return plot
+    return(
+      single_plot(
+        network = x$typicalGraph$graph,
+        wc = x$typicalGraph$wc,
+        ...
+      ) 
+    )
+    
+  }
   
+}
+
+#' @noRd
+# Revalue higher order results ----
+# Updated 21.07.2023
+revalue_memberships <- function(bootstrap_EGA_output)
+{
+  
+  # Return revalued memberships
+  return(
+    
+    # Loop over iterations
+    lapply(bootstrap_EGA_output, function(output){
+      
+      # Create copy of lower order
+      lower_wc <- output$lower$wc
+      
+      # Assign new memberships
+      lower_wc[] <- output$higher$wc[lower_wc]
+      
+      # Re-assign to the higher order output
+      output$higher$wc <- lower_wc
+      
+      # Return higher order output
+      return(output$higher)
+      
+    })
+    
+  )
+
 }
 
 #' @noRd
 # Prepare `bootEGA` results ----
 # Self-contained to work on `EGA` bootstraps
-# Updated 06.07.2023
+# Updated 21.07.2023
 prepare_bootEGA_results <- function(boot_object, iter)
 {
   
@@ -670,7 +922,7 @@ prepare_bootEGA_results <- function(boot_object, iter)
   boot_networks <- lapply(boot_object, function(x){x$network})
   
   # Get memberships
-  boot_memberships <- t(nvapply(boot_object, function(x){x$wc}, LENGTH = dim(boot_networks[[1]])[2]))
+  boot_memberships <- t(nvapply(boot_object, function(x){x$wc}, LENGTH = length(boot_object[[1]]$wc)))
   
   # Get bootstrap dimensions
   boot_n.dim <- nvapply(boot_object, function(x){x$n.dim})
@@ -712,7 +964,9 @@ prepare_bootEGA_results <- function(boot_object, iter)
       boot.wc = boot_memberships,
       boot.ndim = boot_n.dim,
       summary.table = summary_table,
-      frequency = frequencies
+      frequency = frequencies[
+        order(frequencies[, "# of Factors"]),
+      ]
     )
   )
   
@@ -1022,7 +1276,7 @@ estimate_typical_EGA.fit <- function(results, ellipse)
 
 #' @noRd
 # Typical network and memberships ----
-# Updated 06.07.2023
+# Updated 22.07.2023
 estimate_typicalStructure <- function(
     data, results, verbose, ...
 )
@@ -1031,9 +1285,12 @@ estimate_typicalStructure <- function(
   # Get ellipse arguments
   ellipse <- list(...)
   
-  # If results are from `EGA.fit`, handle separately
+  # If results are from `EGA.fit` or `hierEGA`, handle separately
   if(results$EGA.type == "ega.fit"){
     return(estimate_typical_EGA.fit(results, ellipse))
+  }else if(results$EGA.type == "hierega"){
+    # Get typical structure for lower order first, then higher
+    ega_object <- get_EGA_object(results)$lower_order
   }else{ # Get proper EGA object
     ega_object <- get_EGA_object(results)
   }
@@ -1048,14 +1305,29 @@ estimate_typicalStructure <- function(
   algorithm <- tolower(algorithm_attributes$algorithm)
   uni.method <- tolower(unidimensional_attributes$uni.method)
   
-  # Get network
-  network <- switch(
-    model,
-    "bggm" = symmetric_matrix_lapply(results$bootGraphs, median),
-    "glasso" = symmetric_matrix_lapply(results$bootGraphs, median),
-    "tmfg" = symmetric_matrix_lapply(results$bootGraphs, mean)
-  )
-  
+  # Branch for hierarchical EGA
+  if(results$EGA.type == "hierega"){
+    
+    # Get network
+    network <- switch(
+      model,
+      "bggm" = symmetric_matrix_lapply(results$lower_order$bootGraphs, median),
+      "glasso" = symmetric_matrix_lapply(results$lower_order$bootGraphs, median),
+      "tmfg" = symmetric_matrix_lapply(results$lower_order$bootGraphs, mean)
+    )
+    
+  }else{
+    
+    # Get network
+    network <- switch(
+      model,
+      "bggm" = symmetric_matrix_lapply(results$bootGraphs, median),
+      "glasso" = symmetric_matrix_lapply(results$bootGraphs, median),
+      "tmfg" = symmetric_matrix_lapply(results$bootGraphs, mean)
+    )
+    
+  }
+
   # Make sure proper names are there
   dimnames(network) <- dimnames(ega_object$network)
   
@@ -1087,6 +1359,11 @@ estimate_typicalStructure <- function(
     # Check for consensus iterations
     if(!"consensus.iter" %in% names(ellipse)){
       ellipse$consensus.iter <- 1000 # default
+    }
+    
+    # Force lower order for hierarchical EGA
+    if(results$EGA.type == "hierega"){
+      ellipse$order <- "lower"
     }
 
     # Apply consensus clustering
@@ -1164,14 +1441,85 @@ estimate_typicalStructure <- function(
     order(dim.variables$dimension),
   ]
   
-  # Return results
-  return(
-    list(
-      graph = network,
-      typical.dim.variables = dim.variables,
-      wc = wc, n.dim = unique_length(wc)
+  # Branch for hierarchical EGA
+  if(results$EGA.type == "hierega"){
+    
+    # Get hierarchical methods
+    hierarchical_methods <- attr(results$EGA, "methods")
+    
+    # Check for scores
+    if(hierarchical_methods$scores == "factor"){
+      
+      # Send warning
+      warning(
+        "Typical network structure for `hierEGA` is not supported for `scores = \"factor\"",
+        call. = FALSE
+      )
+      
+    }else if(hierarchical_methods$scores == "network"){
+      
+      # Compute network scores
+      network_output <- net.scores(
+        data = data, A = network, wc = wc,
+        rotation = hierarchical_methods$rotation,
+        loading.method = hierarchical_methods$loading.method,
+        scoring.method = "network",
+        ...
+      )
+      
+      # Score estimates
+      if(is.null(hierarchical_methods$rotation)){
+        score_estimates <- network_output$scores$std.scores
+        lower_loadings <- network_output$loadings$std
+      }else{
+        score_estimates <- network_output$scores$rot.scores
+        lower_loadings <- network_output$loadings$rotated
+      }
+      
+    }
+    
+    # Store higher order results
+    higher_order <- EGA(
+      data = score_estimates, corr = model_attributes$corr, 
+      na.data = model_attributes$na.data,
+      model = model, algorithm = algorithm_attributes$algorithm,
+      uni.method = unidimensional_attributes$uni.method,
+      plot.EGA = FALSE, verbose = verbose, ...
     )
-  )
+    
+    # Return results
+    return(
+      list(
+        lower_order = list(
+          graph = network,
+          typical.dim.variables = dim.variables,
+          wc = wc, n.dim = unique_length(wc)
+        ),
+        higher_order = list(
+          graph = higher_order$network,
+          typical.dim.variables = higher_order$dim.variables,
+          wc = higher_order$wc,
+          n.dim = higher_order$n.dim
+        ),
+        parameters = list(
+          lower_loadings = lower_loadings,
+          lower_scores = score_estimates
+        ) 
+      )
+    )
+    
+  }else{ 
+    
+    # Return results
+    return(
+      list(
+        graph = network,
+        typical.dim.variables = dim.variables,
+        wc = wc, n.dim = unique_length(wc)
+      )
+    )
+    
+  }
 
 }
 

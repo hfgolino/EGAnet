@@ -149,7 +149,7 @@
 #' @export
 #'
 # Compute communities for EGA
-# Updated 20.07.2023
+# Updated 22.07.2023
 community.detection <- function(
     network, algorithm = c(
       "edge_betweenness", "fast_greedy",
@@ -294,7 +294,7 @@ community.detection <- function(
   if(isFALSE(allow.singleton)){
     
     # Determine whether there are any singleton communities
-    membership_frequency <- table(membership)
+    membership_frequency <- fast_table(membership)
     
     # Singletons
     singletons <- membership_frequency == 1

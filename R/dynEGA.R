@@ -574,7 +574,7 @@ print.dynEGA.Group <- function(x, ...)
 
 #' @exportS3Method 
 # S3 Print Method (Individual) ----
-# Updated 07.07.2023
+# Updated 22.07.2023
 print.dynEGA.Individual <- function(x, ...)
 {
   
@@ -615,7 +615,10 @@ print.dynEGA.Individual <- function(x, ...)
   )
   
   # Set up unidimensional print
-  if(unidimensional_method == "Louvain"){
+  if(
+    unidimensional_method == "Louvain" &
+    "consensus.iter" %in% names(unidimensional_attributes$consensus)
+  ){
     
     # Set up consensus attributes
     consensus_attributes <- unidimensional_attributes$consensus
@@ -663,11 +666,14 @@ print.dynEGA.Individual <- function(x, ...)
   cat("\n")
   
   # Get frequencies
-  frequencies <- table(communities)
+  frequencies <- fast_table(communities)
   
-  # Print frequency table
+  # Get frequency table
   frequency_df <- as.data.frame(
-    t(as.data.frame(frequencies))
+    t(data.frame(
+      names(frequencies),
+      frequencies
+    ))
   )
   
   # Adjust dimension names (`dimnames` doesn't work)

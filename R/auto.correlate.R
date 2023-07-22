@@ -235,7 +235,10 @@ auto.correlate <- function(
     
     # Send warning to user (if `verbose`)
     if(isTRUE(verbose)){
-      warning("Correlation matrix is not positive definite. Finding nearest positive definite matrix using `Matrix::nearPD`")
+      warning(
+        "Correlation matrix is not positive definite. Finding nearest positive definite matrix using `Matrix::nearPD`",
+        call. = FALSE
+      )
     }
     
     # Regardless, make matrix positive definite
@@ -355,12 +358,12 @@ polyserial.vector <- function(
 
 # Compute thresholds ----
 #' @noRd
-# Updated 03.07.2023
+# Updated 22.07.2023
 obtain_thresholds <- function(categorical_variable)
 {
   
   # Obtain cumulative sums from frequency table
-  cumulative_sum <- cumsum(table(categorical_variable))
+  cumulative_sum <- cumsum(fast_table(categorical_variable))
   
   # Obtain cumulative length
   cumsum_length <- length(cumulative_sum)

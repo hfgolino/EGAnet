@@ -303,7 +303,7 @@
 #' @export
 #'
 # Hierarchical EGA
-# Updated 17.07.2023
+# Updated 22.07.2023
 hierEGA <- function(
     data, 
     # `net.scores` arguments
@@ -340,6 +340,11 @@ hierEGA <- function(
     model = model, algorithm = "louvain", uni.method = uni.method,
     plot.EGA = FALSE, verbose = verbose, order = "lower", ...
   )
+  
+  # Ensure data has names (needed in `net.scores`)
+  if(is.null(dimnames(data)[[2]])){
+    dimnames(data)[[2]] <- dimnames(lower_order_result$network)[[2]]
+  }
 
   # Check for scores
   if(scores == "factor"){
@@ -354,16 +359,19 @@ hierEGA <- function(
       call. = FALSE
     )
     
-    # Estimate EFA
-    efa_output <- efa_scores(
-      data = data,
-      correlation_matrix = lower_order_result$correlation,
-      nfactors = lower_order_result$n.dim,
-      fm = "minres", rotate = "oblimin",
-      n.rotations = 10, maxit = 10000,
-      factor.scores = "Thurstone",
-      eps = 1e-5, impute = impute
+    # Get arguments for EFA
+    efa_ARGS <- obtain_arguments(efa_scores, list(...))
+    
+    # Set data, correlation matrix, and number of factors
+    efa_ARGS[
+      c("data", "correlation_matrix", "nfactors", "impute")
+    ] <- list(
+      data, lower_order_result$correlation, 
+      lower_order_result$n.dim, impute
     )
+    
+    # Estimate EFA
+    efa_output <- do.call(efa_scores, efa_ARGS)
     
     # Get scores
     score_estimates <- efa_output$scores
@@ -448,7 +456,7 @@ hierEGA <- function(
     rotation = rotation,
     scores = scores
   )
-
+  
   # Set class
   class(results) <- "hierEGA"
   
@@ -476,38 +484,53 @@ hierEGA <- function(
 # algorithm = "walktrap"; uni.method = "louvain"
 # plot.EGA = FALSE; verbose = FALSE
 
-#' @noRd
+#' @exportS3Method 
 # S3 Print Method ----
-# Updated 17.07.2023
+# Updated 22.07.2023
 print.hierEGA <- function(x, ...)
 {
   
   # Print lower order
-  cat("Lower Order\n\n")
+  cat(
+    styletext(
+      text = styletext(
+        text =  "Lower Order\n\n", 
+        defaults = "underline"
+      ),
+      defaults = "bold"
+    )
+  )
   print(x$lower_order)
   
   # Add breakspace
   cat("\n\n------------\n\n")
   
   # Print higher order
-  cat("Higher Order\n\n")
+  cat(
+    styletext(
+      text = styletext(
+        text =  "Higher Order\n\n", 
+        defaults = "underline"
+      ),
+      defaults = "bold"
+    )
+  )
   print(x$higher_order)
-  
   
 }
 
-#' @noRd
+#' @exportS3Method 
 # S3 Summary Method ----
 # Updated 17.07.2023
 summary.hierEGA <- function(object, ...)
 {
-  print(object, ...)
+  print(object, ...) # same as print
 }
 
 
-#' @noRd
+#' @exportS3Method 
 # S3 Plot Method ----
-# Updated 17.07.2023
+# Updated 22.07.2023
 plot.hierEGA <- function(x, plot.type = c("multilevel", "separate"), ...)
 {
   
@@ -599,7 +622,7 @@ plot.hierEGA <- function(x, plot.type = c("multilevel", "separate"), ...)
       # Add to hierarchical network
       hierarchical_copy[names(assignment_loadings), community] <- 
         hierarchical_copy[community, names(assignment_loadings)] <- 
-        0.0001 # Set all valeus to 0.0001
+        1 # Set all values to 1
       
     }
     
@@ -612,7 +635,7 @@ plot.hierEGA <- function(x, plot.type = c("multilevel", "separate"), ...)
     # Update multilevel edge appearances
     
     # Get edge indices
-    edge_index <- second_plot$ARGS$edge.size == (0.0001 * ellipse$edge.size)
+    edge_index <- second_plot$ARGS$edge.size == ellipse$edge.size
     
     # Set edge color
     edge_color <- initial_plot$ARGS$edge.color

@@ -42,6 +42,8 @@ o ADD: `community.homogenize` as a core function rather than internal (previousl
 
 o ADD: `convert2tidygraph` for `ggraph` and `tidygraph` support -- thanks to Dominique Makowski!
 
+o ADD: "multilevel" plotting support for `hierEGA` (only used when `scores = "network"` since factor scores don't directly align with EGA detected dimensions)
+
 o UPDATE: `EBICglasso.qgraph` and `TMFG` were optimized; `TMFG` is now 2x faster
 
 o UPDATE: `TMFG` can now directly estimate a GGM with the argument 'partial = TRUE'; implements the Local-Global Inversion method from Barfuss et al. (2016)
@@ -87,6 +89,8 @@ o UPDATE: `net.loads` now includes 'loading.method' argument to allow for reprod
 o UPDATE: `net.scores` is much simpler (internally) and quicker; seamlessly integrates with `net.loads`
 
 o UPDATE: `compare.EGA.plots` is faster, more flexible, and more reliable for comparing two or more plots
+
+o UPDATE: `hierEGA` is faster and has new S3 methods
 
 o DEPENDENCY: removed {network} because it is no longer used for plotting; switched {sna} to IMPORTS rather than SUGGESTS
 

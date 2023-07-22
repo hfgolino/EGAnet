@@ -32,7 +32,7 @@
 #' @export
 #'
 # Total Correlation
-# Updated 06.07.2023
+# Updated 22.07.2023
 totalCor <- function(data)
 {
   
@@ -66,7 +66,7 @@ totalCor <- function(data)
   })
   
   # Get bin frequencies
-  bin_frequencies <- nvapply(bin_cuts, table, LENGTH = bins) / dimensions[1]
+  bin_frequencies <- nvapply(bin_cuts, fast_table, LENGTH = bins) / dimensions[1]
   
   # Get entropies
   H <- nvapply(seq_len(dimensions[2L]), function(variable){
