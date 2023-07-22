@@ -92,6 +92,8 @@ o UPDATE: `compare.EGA.plots` is faster, more flexible, and more reliable for co
 
 o UPDATE: `hierEGA` is faster and has new S3 methods
 
+o UPDATE: S3 plotting for `invariance`
+
 o DEPENDENCY: removed {network} because it is no longer used for plotting; switched {sna} to IMPORTS rather than SUGGESTS
 
 o DEPENDENCY: removed {rstudioapi} from 'Suggests' because it was used in `colortext` and used in the package

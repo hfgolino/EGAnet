@@ -528,7 +528,149 @@ summary.invariance <- function(object, ...) {
   print(object, ...) # same as print
 }
 
+#' @noRd
+# Set group comparison plots ----
+# Updated 22.07.2023
+group_setup <- function(
+    EGA_object, plot_ARGS,
+    nodes, noninvariant,
+    alpha.invariant, alpha.noninvariant,
+    ...
+)
+{
+  
+  # Get ellipse arguments for defaults
+  ellipse <- list(...)
+  
+  # Set edge size
+  if(!"edge.size" %in% ellipse){
+    ellipse$edge.size <- 8 # default in `basic_plot_setup`
+  }
+  
+  # Make copy of EGA object
+  EGA_object_copy <- EGA_object
+  
+  # Set noninvariant edges to 1
+  for(i in seq_len(nodes)){
+    
+    # Check for noninvariance
+    if(noninvariant[i]){
+      
+      # Get community index
+      community_index <- EGA_object$wc == EGA_object$wc[i]
+      
+      # Target node
+      target_node <- EGA_object$network[i, community_index]
+      
+      # Replace non-zero edges with 1
+      EGA_object_copy$network[i, community_index] <-
+        EGA_object_copy$network[community_index, i] <-
+        swiftelse(target_node != 0, 1, target_node)
+      
+    }
+    
+  }
+  
+  # Set up plot for edges
+  edge_plot <- plot(
+    EGA_object_copy, ..., 
+    arguments = TRUE
+  )
+  
+  # Based on significance...
+  ## Change alpha
+  plot_ARGS$node.alpha <- swiftelse(noninvariant, 0.75, 0.25)
+  ## Change edge type
+  plot_ARGS$edge.lty[
+    edge_plot$ARGS$edge.size == ellipse$edge.size
+  ] <- "dashed"
+  
+  # Set up EGA arguments
+  plot_ARGS$net <- NULL
+  plot_ARGS$network <- EGA_object$network
+  plot_ARGS$wc <- EGA_object$wc
+  
+  # Return plot arguments
+  return(plot_ARGS)
+  
+}
 
+#' @exportS3Method 
+# S3 Plot Method ----
+# Updated 22.07.2023
+plot.invariance <- function(
+    x, p_type = c("p", "p_BH"), p_value = 0.05, ...
+)
+{
+  
+  # Set default for p-value
+  if(missing(p_type)){p_type <- "p"}
+  range_error(p_value, c(0, 1))
+  
+  # Ensure same memberships
+  x$groups$EGA[[1]]$wc <- x$EGA$wc
+  x$groups$EGA[[2]]$wc <- x$EGA$wc
+  
+  # Obtain noninvariant items
+  noninvariant <- x$results[[p_type]] <= p_value
+  
+  # Get number of nodes
+  nodes <- length(noninvariant)
+
+  # Set up first group plot
+  first_group <- plot(
+    x$groups$EGA[[1]], ...,
+    arguments = TRUE
+  )
+  
+  # Get plot arguments
+  second_ARGS <- first_group$ARGS
+  
+  # Remove some arguments from `first_ARGS`
+  ## Essentially, the same call but allows some freedom
+  second_ARGS[c(
+    "net", "node.color", "edge.alpha",
+    "edge.color", "edge.lty", "edge.size"
+  )] <- NULL
+  
+  # Add network and memberships
+  second_ARGS$network <- x$groups$EGA[[2]]$network
+  second_ARGS$wc <- x$groups$EGA[[2]]$wc
+  second_ARGS$arguments <- TRUE
+  
+  # Set up second group plot
+  second_group <- do.call(basic_plot_setup, second_ARGS)
+  
+  # Get updated plots for each group
+  ## First group
+  first_group <- do.call(
+    what = single_plot,
+    args = group_setup(
+      EGA_object = x$groups$EGA[[1]],
+      plot_ARGS = first_group$ARGS,
+      nodes = nodes, noninvariant = noninvariant
+    )
+  )
+  ## Second group
+  second_group <- do.call(
+    what = single_plot,
+    args = group_setup(
+      EGA_object = x$groups$EGA[[2]],
+      plot_ARGS = second_group$ARGS,
+      nodes = nodes, noninvariant = noninvariant
+    )
+  )
+  
+  # Arrange plots
+  ggpubr::ggarrange(
+    first_group, second_group,
+    ncol = 2, nrow = 1,
+    labels = names(x$groups$EGA),
+    legend = "right",
+    common.legend = TRUE
+  )
+  
+}
 
 
 

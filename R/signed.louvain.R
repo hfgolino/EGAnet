@@ -47,10 +47,7 @@ signed.louvain <- function(network)
   
   # <= 70 nodes, faster than {igraph}
   # > 70 nodes, {igraph} is faster
-  
-  # fatal C error with:
-  # network <- abs(EGA(NetworkToolbox::openness)$network)
-  
+
   # Ensure data is a matrix
   network <- as.matrix(network)
   

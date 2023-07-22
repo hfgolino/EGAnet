@@ -882,8 +882,23 @@ plot.bootEGA <- function(x, ...)
 }
 
 #' @noRd
+# Revalue single membership ----
+# Also used in `hierEGA`
+# Updated 22.07.2023
+single_revalue_memberships <- function(lower, higher)
+{
+  
+  # Assign new memberships
+  lower[] <- higher[lower]
+  
+  # Return lower
+  return(lower)
+  
+}
+
+#' @noRd
 # Revalue higher order results ----
-# Updated 21.07.2023
+# Updated 22.07.2023
 revalue_memberships <- function(bootstrap_EGA_output)
 {
   
@@ -892,15 +907,11 @@ revalue_memberships <- function(bootstrap_EGA_output)
     
     # Loop over iterations
     lapply(bootstrap_EGA_output, function(output){
-      
-      # Create copy of lower order
-      lower_wc <- output$lower$wc
-      
-      # Assign new memberships
-      lower_wc[] <- output$higher$wc[lower_wc]
-      
+
       # Re-assign to the higher order output
-      output$higher$wc <- lower_wc
+      output$higher$wc <- single_revalue_memberships(
+        output$lower$wc, output$higher$wc
+      )
       
       # Return higher order output
       return(output$higher)

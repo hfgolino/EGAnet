@@ -438,6 +438,21 @@ hierEGA <- function(
     )
   )
   
+  # Add dimension variables like `EGA`
+  results$dim.variables <- fast.data.frame(
+    c(
+      dimnames(data)[[2]], 
+      as.vector(results$lower_order$wc),
+      as.vector(
+        single_revalue_memberships( # function in `bootEGA` internals
+          results$lower_order$wc, results$higher_order$wc
+        )
+      )
+    ),
+    nrow = length(results$lower_order$wc), ncol = 3,
+    colnames = c("items", "lower", "higher")
+  )
+
   # Perform parallel PCA to check for no general factors
   # sink <- capture.output(
   #   pca <-
