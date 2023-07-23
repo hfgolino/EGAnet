@@ -149,7 +149,7 @@
 #' @export
 #'
 # Compute communities for EGA
-# Updated 22.07.2023
+# Updated 23.07.2023
 community.detection <- function(
     network, algorithm = c(
       "edge_betweenness", "fast_greedy",
@@ -183,12 +183,16 @@ community.detection <- function(
   # Initialize memberships as missing
   membership <- rep(NA, dimensions[2])
   
+  # Determine unconnected nodes
+  unconnected <- node_strength == 0
+  
   # Determine whether all nodes are disconnected
-  if(all(node_strength == 0)){
+  if(all(unconnected)){
     
     # Send warning
     warning(
-      "The network input is empty. All community memberships are missing."
+      "The network input is empty. All community memberships are missing.",
+      call. = FALSE
     )
     
     # Set algorithm arguments
@@ -196,18 +200,13 @@ community.detection <- function(
     
   }else{ # Carry on if at least one node is connected
     
-    # Determine unconnected nodes
-    unconnected <- node_strength == 0
-    
     # Check if any nodes are disconnected
     if(any(unconnected)){
-      
-      # Send warning
       warning(
         "The network input contains unconnected nodes:\n",
-        paste(names(node_strength)[unconnected], collapse = ", ")
+        paste(names(node_strength)[unconnected], collapse = ", "),
+        call. = FALSE
       )
-      
     }
     
     # Algorithm function

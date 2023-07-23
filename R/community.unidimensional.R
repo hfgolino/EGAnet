@@ -131,7 +131,7 @@
 #' @export
 #'
 # Compute unidimensional approaches for EGA
-# Updated 23.06.2023
+# Updated 23.07.2023
 community.unidimensional <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -156,9 +156,6 @@ community.unidimensional <- function(
     )
   }
   
-  # Obtain ellipse arguments
-  ellipse <- list(...)
-  
   # Make sure there are variable names
   data <- ensure_dimension_names(data)
   
@@ -168,38 +165,16 @@ community.unidimensional <- function(
     na.data = na.data, verbose = verbose, ...
   )
   
-  # Get correlations and sample size
-  correlation_matrix <- output$correlation_matrix; n <- output$n
-  
-  # Apply unidimensional approach
-  if(uni.method == "expand"){
-    
-    # Perform "expand" approach
-    membership <- expand(
-      correlation_matrix, n, model,
-      verbose, ellipse
-    )
-    
-  }else if(uni.method == "le"){
-    
-    # Perform Leading Eigenvector approach (pass arguments on)
-    membership <- community.detection(
-      correlation_matrix, algorithm = "leading_eigen", ...
-    )
-    
-  }else if(uni.method == "louvain"){
-    
-    # Perform Louvain with Consensus approach
-    membership <- consensus_wrapper(
-      correlation_matrix, verbose, ellipse
-    )
-    
-  }
-  
+  # Return unidimensional approach
   # No S3 methods -- not intended for individual use
-  
-  # Return membership
-  return(membership)
+  return(
+    switch( # Ordered by most common usage
+      uni.method,
+      "louvain" = consensus_wrapper(output$correlation_matrix, verbose, list(...)),
+      "le" = community.detection(output$correlation_matrix, algorithm = "leading_eigen", ...),
+      "expand" = expand(output$correlation_matrix, output$n, model, verbose, list(...))
+    )
+  )
   
 }
 
@@ -223,9 +198,7 @@ expand <- function(correlation_matrix, n, model, verbose, ellipse)
   new_total <- variables + 4
   
   # Create new matrix
-  expanded_matrix <- matrix(
-    0, nrow = new_total, ncol = new_total
-  )
+  expanded_matrix <- matrix(0, nrow = new_total, ncol = new_total)
   
   # Create orthogonal correlation matrix
   orthogonal_matrix <- matrix(0.50, nrow = 4, ncol = 4)
@@ -258,11 +231,8 @@ expand <- function(correlation_matrix, n, model, verbose, ellipse)
   network_ARGS <- obtain_arguments(estimation_FUN, ellipse)
   
   # Set data
-  if(model == "tmfg"){
-    
-    # Use correlation matrix
+  if(model == "tmfg"){ # Use correlation matrix
     network_ARGS$data <- correlation_matrix
-    
   }else{ # Normal approach
     network_ARGS$data <- expanded_matrix
   }
@@ -281,9 +251,7 @@ expand <- function(correlation_matrix, n, model, verbose, ellipse)
   if(model == "tmfg"){
     
     # Set network into expanded matrix
-    expanded_matrix[
-      original_dimensions, original_dimensions
-    ] <- network
+    expanded_matrix[original_dimensions, original_dimensions] <- network
     
     # Use expanded matrix as network
     community_ARGS$network <- expanded_matrix
@@ -308,7 +276,7 @@ expand <- function(correlation_matrix, n, model, verbose, ellipse)
 
 #' @noRd
 # Wrapper for Louvain consensus ----
-# Updated 20.07.2023
+# Updated 23.07.2023
 consensus_wrapper <- function(correlation_matrix, verbose, ellipse)
 {
   
@@ -318,14 +286,10 @@ consensus_wrapper <- function(correlation_matrix, verbose, ellipse)
     # Obtain arguments
     consensus_ARGS <- obtain_arguments(community.consensus, ellipse)
     
-    # Add network
-    consensus_ARGS$network <- correlation_matrix
-    
-    # Set method to "most_common"
-    consensus_ARGS$consensus.method <- "most_common"
-    
-    # Set membership to only
-    consensus_ARGS$membership.only <- TRUE
+    # Set arguments
+    consensus_ARGS[
+      c("network", "consensus.method", "membership.only")
+    ] <- list(correlation_matrix, "most_common", TRUE)
     
     # Apply Louvain with consensus approach
     membership <- do.call(
@@ -334,12 +298,7 @@ consensus_wrapper <- function(correlation_matrix, verbose, ellipse)
     )
     
   }else{ # Use single-shot Louvain
-    
-    # Apply standard Louvain
-    membership <- community.detection(
-      correlation_matrix, algorithm = "louvain"
-    )
-    
+    membership <- community.detection(correlation_matrix, algorithm = "louvain")
   }
   
   # Add back names

@@ -349,7 +349,7 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 20.07.2023
+# Updated 23.07.2023
 bootEGA <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -380,15 +380,15 @@ bootEGA <- function(
   
   # `EGA.estimate` will handle legacy arguments and data processing 
   
-  # Ensure data is matrix
+  # Ensure matrix
   data <- as.matrix(data)
+  
+  # Ensure variable names
+  data <- ensure_dimension_names(data)
   
   # Get data dimensions
   dimensions <- dim(data)
-  
-  # Ensure data has names
-  data <- ensure_dimension_names(data)
-  
+
   # Get variable names
   variable_names <- dimnames(data)[[2]]
 
@@ -429,17 +429,12 @@ bootEGA <- function(
     empirical_EGA_output <- empirical_EGA_output$lower
   }
   
-  # # Generate data
+  # # Actual reproducible generate data
   # bootstrap_data <- reproducible_bootstrap(
   #   data = data, samples = iter, cases = empirical_EGA_output$n,
   #   mu = rep(0, dimensions[2]), Sigma = empirical_EGA_output$correlation,
-  #   type = type # , seed = seed
+  #   type = type, seed = seed
   # )
-  
-  # Get output needed for bootstrap
-  cases <- empirical_EGA_output$n
-  mu <- rep(0, dimensions[2])
-  Sigma <- empirical_EGA_output$correlation
   
   # Perform bootstrap using parallel processing
   boots <- parallel_process(
@@ -469,7 +464,10 @@ bootEGA <- function(
       )
   
     }, # Send all argument variables
-    data, cases, mu, Sigma, type, n, corr,
+    data, cases = empirical_EGA_output$n, 
+    mu = rep(0, dimensions[2]), 
+    Sigma = empirical_EGA_output$correlation, 
+    type, n, corr,
     na.data, model, algorithm, uni.method, ...
   )
   
@@ -502,9 +500,9 @@ bootEGA <- function(
   }
   
   # Add additional results
-  results[c("type", "EGA", "EGA.type")] <- list(
-    type, empirical_EGA, EGA.type
-  )
+  results[c("type", "iter", "EGA", "EGA.type")] <- list(
+    type, iter, empirical_EGA, EGA.type
+  ) # `iter` is redundant except for `hierEGA`
   
   # No attributes needed (all information is contained in output)
   
@@ -1184,7 +1182,7 @@ typical_louvain_fit <- function(network, dimensions, ellipse)
 #' @noRd
 # Typical `EGA.fit` memberships ----
 # Needs to be handled consistently
-# Updated 07.07.2023
+# Updated 23.07.2023
 estimate_typical_EGA.fit <- function(results, ellipse)
 {
   
@@ -1266,16 +1264,11 @@ estimate_typical_EGA.fit <- function(results, ellipse)
     colnames = c("items", "dimension")
   )
   
-  # Dimension variables data frame by dimension
-  dim.variables <- dim.variables[
-    order(dim.variables$dimension),
-  ]
-  
   # Return results
   return(
     list(
       graph = network,
-      typical.dim.variables = dim.variables,
+      typical.dim.variables = dim.variables[order(dim.variables$dimension),],
       wc = best_solution, n.dim = unique_length(best_solution),
       EntropyFit = fit_values,
       Lowest.EntropyFit = fit_values[best_index],
@@ -1287,7 +1280,7 @@ estimate_typical_EGA.fit <- function(results, ellipse)
 
 #' @noRd
 # Typical network and memberships ----
-# Updated 22.07.2023
+# Updated 23.07.2023
 estimate_typicalStructure <- function(
     data, results, verbose, ...
 )
@@ -1443,14 +1436,9 @@ estimate_typicalStructure <- function(
   ## Mainly for legacy, redundant with named `wc`
   dim.variables <- fast.data.frame(
     c(dimnames(ega_object$network)[[2]], wc),
-    nrow = dim(ega_object$network)[2], ncol = 2,
+    nrow = length(wc), ncol = 2,
     colnames = c("items", "dimension")
   )
-  
-  # Dimension variables data frame by dimension
-  dim.variables <- dim.variables[
-    order(dim.variables$dimension),
-  ]
   
   # Branch for hierarchical EGA
   if(results$EGA.type == "hierega"){
@@ -1525,7 +1513,7 @@ estimate_typicalStructure <- function(
     return(
       list(
         graph = network,
-        typical.dim.variables = dim.variables,
+        typical.dim.variables = dim.variables[order(dim.variables$dimension),],
         wc = wc, n.dim = unique_length(wc)
       )
     )

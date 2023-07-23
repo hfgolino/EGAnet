@@ -146,7 +146,7 @@
 #' @export
 #'
 # Estimates multidimensional EGA only (no automatic plots)
-# Updated 02.07.2023
+# Updated 23.07.2023
 EGA.estimate <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -197,39 +197,38 @@ EGA.estimate <- function(
       verbose = verbose, ellipse = ellipse
     )
     
-  }else if(model == "bggm"){
+  }else{
     
-    # Check for correlation input
-    if(is_symmetric(data)){
-      stop("A symmetric matrix was provided in the 'data' argument. For 'model = \"BGGM\"', the original data is required.")
+    # Set up network estimation arguments
+    estimation_ARGS <- list(
+      n = n, corr = corr, na.data = na.data,
+      model = model, network.only = TRUE, verbose = verbose
+    )
+    
+    # Check for BGGM
+    if(model == "bggm"){
+      
+      # Check for correlation input
+      if(is_symmetric(data)){
+        stop("A symmetric matrix was provided in the 'data' argument. For 'model = \"BGGM\"', the original data is required.")
+      }
+      
+      # Set "data" as data
+      estimation_ARGS$data <- data
+      
+    }else if(model == "tmfg"){ # Set "data" as correlation matrix
+      estimation_ARGS$data <- correlation_matrix
     }
     
     # Estimate network
     network <- do.call(
       what = network.estimation,
       args = c(
-        list( # functions passed into this function
-          data = data, n = n, corr = corr, na.data = na.data,
-          model = model, network.only = TRUE, verbose = verbose
-        ),
+        estimation_ARGS,
         ellipse # pass on ellipse
       )
     )
     
-  }else if(model == "tmfg"){
-    
-    # Estimate network (BGGM *or* TMFG)
-    network <- do.call(
-      what = network.estimation,
-      args = c(
-        list( # functions passed into this function
-          data = correlation_matrix, n = n, corr = corr, na.data = na.data,
-          model = model, network.only = TRUE, verbose = verbose
-        ),
-        ellipse # pass on ellipse
-      )
-    )
-
   }
   
   # Check for function or non-Louvain method
@@ -268,7 +267,7 @@ EGA.estimate <- function(
       args = c(
         list(
           network = network, 
-          signed =  algorithm == "signed_louvain",
+          signed = algorithm == "signed_louvain",
           membership.only = TRUE
         ),
         ellipse # pass on ellipse
@@ -352,7 +351,7 @@ plot.EGA.estimate <- function(x, ...)
 
 #' @noRd
 # Wrapper for GLASSO ----
-# Updated 11.07.2023
+# Updated 23.07.2023
 glasso_wrapper <- function(
     network, data, n, corr, na.data,
     model, network.only, verbose,
@@ -367,7 +366,7 @@ glasso_wrapper <- function(
     gamma <- ellipse$gamma
     
     # Remove `gamma` from ellipse
-    ellipse <- ellipse[-which(names(ellipse) == "gamma")]
+    ellipse <- ellipse[names(ellipse) != "gamma"]
     
     # Return result
     return(
@@ -406,7 +405,7 @@ glasso_wrapper <- function(
     )
     
     # Check for disconnected nodes
-    if(any(strength(network) == 0) & gamma != 0){
+    if(any(strength(network) == 0) & gamma > 0){
       gamma <- gamma - 0.25 # decrease gamma
     }else{
       break # all nodes are connected or gamma equals zero

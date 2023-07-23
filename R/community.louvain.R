@@ -52,12 +52,15 @@
 #' @export
 #'
 # Compute Louvain communities for EGA
-# Updated 29.06.2023
+# Updated 23.07.2023
 community.louvain <- function(
     network, signed = FALSE, 
     resolution = 1
 )
 {
+  
+  # Send errors (bookmark to have full input check)
+  typeof_error(signed, "logical")
   
   # Get networks
   networks <- obtain_networks(network, signed)
@@ -73,36 +76,27 @@ community.louvain <- function(
   # Initialize memberships as missing
   membership <- rep(NA, length(node_strength))
   
+  # Determine unconnected nodes
+  unconnected <- node_strength == 0
+  
   # Determine whether all nodes are disconnected
-  if(all(node_strength == 0)){
-    
-    # Send warning
-    warning(
-      "The network input is empty. All community memberships are missing."
-    )
-    
+  if(all(unconnected)){
+    warning("The network input is empty. All community memberships are missing.", call. = FALSE)
   }else{ # Carry on if at least one node is connected
     
     # Check if any nodes are disconnected
-    if(any(node_strength == 0)){
-      
-      # Determine unconnected nodes
-      unconnected <- node_strength == 0
-      
-      # Send warning
+    if(any(unconnected)){
       warning(
         "The network input contains unconnected nodes:\n",
-        paste(names(node_strength)[unconnected], collapse = ", ")
+        paste(names(node_strength)[unconnected], collapse = ", "),
+        call. = FALSE
       )
-      
     }
     
     # Algorithm function
-    if(isTRUE(signed)){
-      algorithm.FUN <- signed.louvain
-    }else{
-      algorithm.FUN <- igraph::cluster_louvain
-    }
+    algorithm.FUN <- swiftelse(
+      signed, signed.louvain, igraph::cluster_louvain
+    )
     
     # Algorithm arguments
     algorithm.ARGS <- obtain_arguments(
@@ -116,7 +110,7 @@ community.louvain <- function(
     }
     
     # Check for proper network
-    if(isTRUE(signed)){
+    if(signed){
       algorithm.ARGS[[1]] <- network_matrix
     }else{
       algorithm.ARGS[[1]] <- igraph_network

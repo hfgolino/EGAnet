@@ -173,7 +173,7 @@
 #' @export
 #'
 # Compute consensus clustering for EGA
-# Updated 14.07.2023
+# Updated 23.07.2023
 community.consensus <- function(
     network, signed = FALSE, 
     order = c("lower", "higher"), resolution = 1,
@@ -191,6 +191,9 @@ community.consensus <- function(
   order <- set_default(order, "higher", community.consensus)
   consensus.method <- set_default(consensus.method, "most_common", community.consensus)
   
+  # Send errors (bookmark for full input check)
+  typeof_error(signed, "logical")
+  
   # Get networks
   networks <- obtain_networks(network, signed)
   igraph_network <- networks$igraph_network
@@ -207,11 +210,11 @@ community.consensus <- function(
     
     # Check for NULL correlation matrix
     if(is.null(correlation.matrix)){
-      stop("A correlation matrix is required to compute TEFI. Please supply network's corresponding correlation matrix using the 'correlation.matrix' argument.")
+      stop("A correlation matrix is required to compute TEFI. Please supply network's corresponding correlation matrix using the 'correlation.matrix' argument.", call. = FALSE)
     }else if(!is_symmetric(correlation.matrix)){ # Check for symmetric correlation matrix
-      stop("Correlation matrix is not symmetric.")
+      stop("Correlation matrix is not symmetric.", call. = FALSE)
     }else if(dim(correlation.matrix)[2] != dimensions[2]){ # Check for same number of variables
-      stop("Number of variables in 'correlation.matrix' does not match number of variables in 'network'. Double check that the correlation matrix matches the dimensions of the network.")
+      stop("Number of variables in 'correlation.matrix' does not match number of variables in 'network'. Double check that the correlation matrix matches the dimensions of the network.", call. = FALSE)
     }
     
   }
@@ -222,36 +225,27 @@ community.consensus <- function(
   # Initialize memberships as missing
   membership <- rep(NA, dimensions[2])
   
+  # Determine unconnected nodes
+  unconnected <- node_strength == 0
+  
   # Determine whether all nodes are disconnected
-  if(all(node_strength == 0)){
-    
-    # Send warning
-    warning(
-      "The network input is empty. All community memberships are missing."
-    )
-    
+  if(all(unconnected)){
+    warning("The network input is empty. All community memberships are missing.", call. = FALSE)
   }else{ # Carry on if at least one node is connected
     
     # Check if any nodes are disconnected
-    if(any(node_strength == 0)){
-      
-      # Determine unconnected nodes
-      unconnected <- node_strength == 0
-      
-      # Send warning
+    if(any(unconnected)){
       warning(
         "The network input contains unconnected nodes:\n",
-        paste(names(node_strength)[unconnected], collapse = ", ")
+        paste(names(node_strength)[unconnected], collapse = ", "),
+        call. = FALSE
       )
-      
     }
     
     # Algorithm function
-    if(isTRUE(signed)){
-      algorithm.FUN <- signed.louvain
-    }else{
-      algorithm.FUN <- igraph::cluster_louvain
-    }
+    algorithm.FUN <- swiftelse(
+      signed, signed.louvain, igraph::cluster_louvain
+    )
     
     # Algorithm arguments
     algorithm.ARGS <- obtain_arguments(
@@ -265,7 +259,7 @@ community.consensus <- function(
     }
     
     # Check for proper network
-    if(isTRUE(signed)){
+    if(signed){
       algorithm.ARGS[[1]] <- network_matrix
     }else{
       algorithm.ARGS[[1]] <- igraph_network

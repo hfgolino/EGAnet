@@ -132,7 +132,7 @@ matrixize_conversion <- function(convert.membership, target_length)
 
 #' @noRd
 # Get Rand values ----
-# Updated 06.07.2023
+# Updated 23.07.2023
 get_rand <- function(convert_keep, target_keep)
 {
   
@@ -157,8 +157,7 @@ get_rand <- function(convert_keep, target_keep)
         if(total_indices < 3){
           return(0) # Doublets go last
         }else if(
-          target_length == total_indices |
-          convert_length == total_indices
+          target_length == total_indices || convert_length == total_indices
         ){ # All singleton, throw zero
           return(0) 
         }else if((target_length * convert_length) == 1){ 
@@ -181,18 +180,18 @@ get_rand <- function(convert_keep, target_keep)
 
 #' @noRd
 # Core Homogenize Function ----
-# Updated 04.07.2023
+# Updated 23.07.2023
 single_homogenize <- function(target.membership, convert_single)
 {
 
   # Handle NAs
-  missing_memberships <- is.na(target.membership) | is.na(convert_single)
+  keep_memberships <- !(is.na(target.membership) | is.na(convert_single))
   
   # Get memberships to keep
-  target_keep <- target.membership[!missing_memberships]
+  target_keep <- target.membership[keep_memberships]
 
   # Set up conversion as unique values
-  convert_keep <- as.numeric(factor(convert_single[!missing_memberships]))
+  convert_keep <- as.numeric(factor(convert_single[keep_memberships]))
 
   # Create table between target and conversion
   conversion_table <- table(convert_keep, target_keep)
@@ -219,7 +218,7 @@ single_homogenize <- function(target.membership, convert_single)
   names(conversion_table) <- convert_order
   
   # Replace values in original membership
-  convert_single[!missing_memberships] <- conversion_table[as.character(convert_keep)]
+  convert_single[keep_memberships] <- conversion_table[as.character(convert_keep)]
 
   # Get conversion based on conversion table
   return(convert_single)

@@ -101,7 +101,7 @@
 #' @export
 #'
 # Automatic correlations ----
-# Updated 03.07.2023
+# Updated 23.07.2023
 auto.correlate <- function(
     data, # Matrix or data frame
     corr = c("kendall", "pearson", "spearman"), # allow changes to standard correlations
@@ -120,11 +120,11 @@ auto.correlate <- function(
   na.data <- set_default(na.data, "pairwise", auto.correlate)
   empty.method <- set_default(empty.method, "none", auto.correlate)
   empty.value <- set_default(empty.value, "none", auto.correlate)
-  
-  # Convert to matrix
+
+  # Ensure matrix
   data <- as.matrix(data)
   
-  # Set names
+  # Ensure variable names
   data <- ensure_dimension_names(data)
   
   # Get variable names
@@ -267,11 +267,11 @@ auto.correlate <- function(
 #     rep(2, 4), rep(5, 4),
 #     rep(7, 4), rep(Inf, 4)
 #   )
-# )$data;
-# ordinal.categories = 7;
-# corr = "pearson"; forcePD = TRUE;
-# na.data = "pairwise"; empty.method = "none";
-# empty.value = "none"; verbose = FALSE;
+# )$data
+# ordinal.categories = 7
+# corr = "pearson"; forcePD = TRUE
+# na.data = "pairwise"; empty.method = "none"
+# empty.value = "none"; verbose = FALSE
 # 
 # # Compare against {qgraph}'s `cor_auto`
 # qgraph_correlations <- qgraph::cor_auto(data)

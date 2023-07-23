@@ -380,7 +380,7 @@ hierEGA <- function(
     loading_names <- dimnames(efa_output$loadings)
     
     # Obtain highest loadings for each variable
-    lower_wc <- max.col(abs(efa_output$loadings))
+    lower_wc <- max.col(abs(efa_output$loadings), "first")
     
     # Get max `wc`
     max_wc <- max(lower_wc, na.rm = TRUE)
@@ -545,7 +545,7 @@ summary.hierEGA <- function(object, ...)
 
 #' @exportS3Method 
 # S3 Plot Method ----
-# Updated 22.07.2023
+# Updated 23.07.2023
 plot.hierEGA <- function(x, plot.type = c("multilevel", "separate"), ...)
 {
   
@@ -584,12 +584,11 @@ plot.hierEGA <- function(x, plot.type = c("multilevel", "separate"), ...)
       dimnames = list(all_names, all_names)
     )
     
-    
     # Population hybrid network with lower and higher order networks
     hierarchical_network[lower_names, lower_names] <- x$lower_order$network
     hierarchical_network[higher_names, higher_names] <- x$higher_order$network
     
-    # Add assignment loading to hierarhical network
+    # Add assignment loading to hierarchical network
     for(community in dimnames(x$parameters$lower_loadings)[[2]]){
       
       # Get assignment loadings
@@ -607,7 +606,7 @@ plot.hierEGA <- function(x, plot.type = c("multilevel", "separate"), ...)
     
     # Set up plot list as standard `EGA`
     plot_list <- list(
-      # Round hierarhical network to 4
+      # Round hierarchical network to 4
       # (same as what's used in `basic_plot_setup`)
       network = round(hierarchical_network, 4),
       wc = c(
@@ -625,7 +624,7 @@ plot.hierEGA <- function(x, plot.type = c("multilevel", "separate"), ...)
     # Make a copy of the hierarchical network
     hierarchical_copy <- plot_list$network
     
-    # Add assignment loading to hierarhical network
+    # Add assignment loading to hierarchical network
     for(community in dimnames(x$parameters$lower_loadings)[[2]]){
       
       # Get assignment loadings
@@ -662,12 +661,11 @@ plot.hierEGA <- function(x, plot.type = c("multilevel", "separate"), ...)
     
     ## Edge size
     edge_size <- initial_plot$ARGS$edge.size
-    edge_size[edge_index] <- 0.50
+    edge_size[edge_index] <- edge_size[edge_index] * 0.50
     
     ## Edge alpha
     edge_alpha <- initial_plot$ARGS$edge.alpha
     edge_alpha[edge_index] <- 0.50
-    
     
     # Get mode (layout)
     mode <- scale(initial_plot$ARGS$mode, scale = FALSE)

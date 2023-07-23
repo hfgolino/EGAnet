@@ -279,11 +279,12 @@ dynEGA <- function(
   )
   
   # Get derivatives to use
-  derivative_index <- switch(
-    as.character(use.derivatives),
-    "0" = grep("Ord0", dimnames(results$Derivatives$EstimatesDF)[[2]]),
-    "1" = grep("Ord1", dimnames(results$Derivatives$EstimatesDF)[[2]]),
-    "2" = grep("Ord2", dimnames(results$Derivatives$EstimatesDF)[[2]])
+  derivative_index <- grep(
+    switch(
+      as.character(use.derivatives),
+      "0" = "Ord0", "1" = "Ord1", "2" = "Ord2"
+    ),
+    dimnames(results$Derivatives$EstimatesDF)[[2]]
   )
   
   # Compute Dynamic EGA at each level
@@ -412,7 +413,7 @@ dynEGA <- function(
 
 #' @exportS3Method 
 # S3 Print Method (General) ----
-# Updated 07.07.2023
+# Updated 23.07.2023
 print.dynEGA <- function(x, ...)
 {
   
@@ -459,12 +460,12 @@ print.dynEGA <- function(x, ...)
   null_objects <- lvapply(ega_objects, is.null)
   
   # Print population first
-  if(isFALSE(null_objects["population"])){
+  if(null_objects["population"]){
     print(ega_objects$population)
   }
   
   # Print group second
-  if(isFALSE(null_objects["group"])){
+  if(null_objects["group"]){
     
     # Check for breakspace
     if(isFALSE(null_objects["population"])){
@@ -483,13 +484,10 @@ print.dynEGA <- function(x, ...)
   }
   
   # Print individuals third
-  if(isFALSE(null_objects["individual"])){
+  if(null_objects["individual"]){
     
     # Check for breakspace
-    if(
-      isFALSE(null_objects["population"]) |
-      isFALSE(null_objects["group"])
-    ){
+    if(null_objects["population"] | null_objects["group"]){
       cat(
         paste0(
           "\n\n",
@@ -718,7 +716,7 @@ summary.dynEGA.Individual <- function(object, ...)
 
 #' @exportS3Method 
 # S3 Plot Method (General) ----
-# Updated 07.07.2023
+# Updated 23.07.2023
 plot.dynEGA <- function(x, base = 1, id = NULL, ...)
 {
   
@@ -729,7 +727,7 @@ plot.dynEGA <- function(x, base = 1, id = NULL, ...)
   null_total <- sum(null_objects)
   
   # Plot population first
-  if(isFALSE(null_objects["population"])){
+  if(null_objects["population"]){
     
     # Send plot
     plot(x$dynEGA$population, ...)
@@ -742,10 +740,10 @@ plot.dynEGA <- function(x, base = 1, id = NULL, ...)
   }
   
   # Print group second
-  if(isFALSE(null_objects["group"])){
+  if(null_objects["group"]){
     
     # Check for breakspace
-    if(isFALSE(null_objects["population"])){
+    if(null_objects["population"]){
       
       # Allow user to proceed at their own pace
       sink <- readline("Press <ENTER> for 'Group' plot")
@@ -763,13 +761,10 @@ plot.dynEGA <- function(x, base = 1, id = NULL, ...)
   }
   
   # Print individuals third
-  if(isFALSE(null_objects["individual"])){
+  if(null_objects["individual"]){
     
     # Check for breakspace
-    if(
-      isFALSE(null_objects["population"]) |
-      isFALSE(null_objects["group"])
-    ){
+    if(null_objects["population"] | null_objects["group"]){
       # Allow use to proceed at their own pace
       sink <- readline("Press <ENTER> for 'Individual' plot")
     }

@@ -138,6 +138,12 @@ itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
     stop("Input for 'bootega.obj' is not a 'bootEGA' object")
   }
   
+  # Get empirical EGA
+  ega_object <- get_EGA_object(bootega.obj)
+  
+  # Determine if hierarchical EGA
+  hierarchical <- is(ega_object, "hierEGA")
+  
   # Set up ellipse arguments
   ellipse <- list(...)
   
@@ -154,75 +160,43 @@ itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
     IS.plot <- ellipse$IS.plot
   }
   
-  # Get empirical EGA
-  ega_object <- get_EGA_object(bootega.obj)
-  
-  # Get empirical memberships
-  empirical_memberships <- ega_object$wc
-  
-  # Get node names
-  node_names <- names(empirical_memberships)
-  
-  # Get structure (with error catching)
-  structure <- get_structure(empirical_memberships, structure)
-  
-  # Get bootstrap memberships
-  bootstrap_structure <- bootega.obj$boot.wc
-  
-  # Get maximum number of communities
-  maximum_communities <- max(
-    max(bootstrap_structure, na.rm = TRUE),
-    unique_length(structure)
-  )
+  # Check for hierarchical EGA
+  if(hierarchical){
     
-  # Get homogenized memberships
-  homogenized_memberships <- community.homogenize(
-    target.membership = structure,
-    convert.membership = bootstrap_structure
-  )
-  
-  # Tabulate for each variable and get proportions for each community
-  replicate_proportions <- t(
-    nvapply(
-      as.data.frame(homogenized_memberships),
-      tabulate, maximum_communities, 
-      LENGTH = maximum_communities
-    ) 
-  ) / bootega.obj$iter
-  
-  # Assign names
-  dimnames(replicate_proportions) <- list(
-    node_names, # nodes
-    format_integer( # communities
-      numbers = seq_len(maximum_communities),
-      places = digits(maximum_communities) - 1
+    # Check for structure
+    # structure <- hierEGA_structure(structure)
+    
+    # Set up results
+    results <- list()
+    
+    # Get lower results
+    results$lower_order <- itemStability_core(
+      ega_object$lower_order, structure$lower_order, 
+      bootega.obj$lower_order$boot.wc, bootega.obj$lower_order$iter
     )
-  )
-  
-  # Get empirical proportions
-  empirical_proportions <- nvapply(
-    nrow_sequence(replicate_proportions),
-    function(row){replicate_proportions[row, structure[row]]}
-  )
-  
-  # Ensure proper names
-  names(empirical_proportions) <- node_names
-  
-  # Initialize results
-  results <- list(
-    membership = list(
-      empirical = empirical_memberships,
-      bootstrap = homogenized_memberships,
-      structure = structure
-    ),
-    item.stability = list(
-      empirical.dimensions = empirical_proportions,
-      all.dimensions = replicate_proportions
+    
+    # Revalue higher order memberships
+    ega_object$higher_order$wc <- single_revalue_memberships(
+      ega_object$lower_order$wc, ega_object$higher_order$wc
     )
-  )
-  
-  # Set class
-  class(results) <- "itemStability"
+    
+    # Get higher results
+    results$higher_order <- itemStability_core(
+      ega_object$higher_order, structure$higher_order, 
+      bootega.obj$higher_order$boot.wc, bootega.obj$higher_order$iter
+    )
+    
+    # Set class
+    class(results) <- "itemStability" 
+    
+  }else{ 
+    
+    # Get regular results
+    results <- itemStability_core(
+      ega_object, structure, bootega.obj$boot.wc, bootega.obj$iter
+    )
+    
+  }
   
   # Add methods attributes from `bootEGA` object
   attr(results, "methods") <- bootega.obj[c("EGA.type", "iter", "type")]
@@ -230,12 +204,54 @@ itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
   # Determine whether to plot
   if(isTRUE(IS.plot)){
     
-    # Get plot
-    results$plot <- plot(results, ...)
-    
-    # Actually send plot
-    silent_plot(results$plot)
-    
+    # Check for hierarchical
+    if(hierarchical){
+      
+      # Get number of legend columns
+      legend_rows <- digits(
+        max(results$lower_order$membership$structure, na.rm = TRUE)
+      ) + 1
+      
+      # Get lower plot
+      results$lower_order$plot <- plot(results$lower_order, ...) +
+        ggplot2::guides(color = ggplot2::guide_legend(nrow = legend_rows))
+      
+      # Get higher plot
+      results$higher_order$plot <- silent_call(
+        plot(results$higher_order, ...) +
+          ggplot2::guides(color = ggplot2::guide_legend(nrow = legend_rows)) +
+          ggplot2::scale_x_discrete(limits = rev(results$lower_order$plot$data$Node))
+      )
+        
+      # Set up clean side-by-side
+      if(!"nrow" %in% names(ellipse) || ellipse$nrow == 1){
+        
+        # Remove y-axis title from higher order
+        higher_order_plot <- results$higher_order$plot + 
+          ggplot2::theme(axis.title.y = ggplot2::element_blank())
+
+      }
+      
+      # Get final plot
+      results$plot <- ggpubr::ggarrange(
+        results$lower_order$plot, higher_order_plot,
+        labels = c("Lower Order", "Higher Order"),
+        ...
+      )
+      
+      # Actually send plot
+      silent_plot(results$plot)
+      
+    }else{
+      
+      # Get plot
+      results$plot <- plot(results, ...)
+      
+      # Actually send plot
+      silent_plot(results$plot)
+      
+    }
+
   }
   
   # Return results
@@ -245,7 +261,7 @@ itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
 
 #' @exportS3Method 
 # S3 Print Method ----
-# Updated 06.07.2023
+# Updated 23.07.2023
 print.itemStability <- function(x, ...)
 {
   
@@ -276,11 +292,28 @@ print.itemStability <- function(x, ...)
   cat("\n\n") 
   
   # Print replications
-  cat("Proportion Replicated in Empirical Dimensions:\n\n")
+  cat("Proportion Replicated in Dimensions:\n\n")
   
-  # Set up results
-  print(x$item.stability$empirical.dimensions)
-
+  # Branch for hierarchical EGA
+  if(ega_type == "hierEGA"){
+    
+    # Print results
+    print(
+      t(
+        data.frame(
+          Lower = x$lower_order$item.stability$empirical.dimensions,
+          Higher = x$higher_order$item.stability$empirical.dimensions
+        )
+      )
+    )
+  
+  }else{
+    
+    # Print results
+    print(x$item.stability$empirical.dimensions)
+    
+  }
+  
 }
 
 #' @exportS3Method 
@@ -293,7 +326,7 @@ summary.itemStability <- function(object, ...)
 
 #' @noRd
 # Default plotting for `itemStability`
-# Updated 06.07.2023
+# Updated 23.07.2023
 item_stability_defaults <- function(organize_df, ellipse)
 {
   
@@ -302,7 +335,7 @@ item_stability_defaults <- function(organize_df, ellipse)
     data = organize_df,
     x = "Node", y = "Replication",
     group = "Community", color = "Community",
-    legend.title = "Empirical Communities",
+    legend.title = "Communities",
     add = "segments", rotate = TRUE, dot.size = 6,
     label = round(organize_df$Replication, 2),
     font.label = list(
@@ -361,77 +394,126 @@ ggplot2_theme_defaults <- function(organize_df, ellipse)
 
 #' @exportS3Method 
 # S3 Plot Method ----
-# Updated 06.07.2023
+# Updated 23.07.2023
 plot.itemStability <- function(x, ...)
 {
-
+  
   # Obtain ellipse arguments
   ellipse <- list(...)
   
-  # Set up for plot
-  organize_df <- fast.data.frame(
-    c(
-      names(x$membership$empirical),
-      x$item.stability$empirical.dimensions,
-      x$membership$structure
-    ), nrow = length(x$membership$structure), ncol = 3,
-    colnames = c("Node", "Replication", "Community")
-  )
+  # Get attributes
+  x_attributes <- attributes(x)
   
-  # Set up data frame structure
-  organize_df$Replication <- as.numeric(organize_df$Replication)
-  organize_df$Community <- factor(
-    x$membership$structure,
-    levels = seq_len(unique_length(x$membership$structure))
-  )
-  
-  # Get base plot
-  base_canvas <- do.call(
-    ggpubr::ggdotchart,
-    item_stability_defaults(organize_df, ellipse)
-  )
-  
-  # Add additional layer to plot with {ggplot2}'s `theme` updated
-  updated_canvas <- base_canvas +
-    ggplot2::ylim(c(0, 1)) + # non-negotiable
-    do.call( # flexibly allow user to adjust the `theme`
-      ggplot2::theme, 
-      ggplot2_theme_defaults(organize_df, ellipse)
+  # Check for hierarchical EGA
+  if(
+    "methods" %in% names(x_attributes) &&
+    x_attributes$methods$EGA.type == "hierega"
+  ){
+    
+    # Get number of legend columns
+    legend_rows <- digits(
+      max(x$lower_order$membership$structure, na.rm = TRUE)
+    ) + 1
+    
+    # Get lower plot
+    lower_order_plot <- plot(x$lower_order, ...) +
+      ggplot2::guides(color = ggplot2::guide_legend(nrow = legend_rows))
+    
+    # Get higher plot
+    higher_order_plot <- silent_call(
+      plot(x$higher_order, ...) +
+        ggplot2::guides(color = ggplot2::guide_legend(nrow = legend_rows)) +
+        ggplot2::scale_x_discrete(limits = rev(lower_order_plot$data$Node))
     )
-  
-  # Manually update alpha
-  updated_canvas$layers[[2]]$aes_params$alpha <- swiftelse(
-    "alpha" %in% names(ellipse), ellipse$alpha, 0.70
-  )
-  
-  # Update colors
-  if("scale_color_manual" %in% names(ellipse)){
-    updated_canvas <- updated_canvas +
-      do.call(ggplot2::scale_color_manual, ellipse$scale_color_manual)
+    
+    # Set up clean side-by-side
+    if(!"nrow" %in% names(ellipse) || ellipse$nrow == 1){
+      
+      # Remove y-axis title from higher order
+      higher_order_plot <- higher_order_plot + 
+        ggplot2::theme(axis.title.y = ggplot2::element_blank())
+      
+    }
+    
+    # Return final plot
+    return(
+      silent_plot(
+        ggpubr::ggarrange(
+          lower_order_plot, higher_order_plot,
+          labels = c("Lower Order", "Higher Order"),
+          ...
+        )
+      )
+    )
+    
   }else{
     
-    # Use default of "polychrome"
-    updated_canvas <- updated_canvas +
-      ggplot2::scale_color_manual(
-        values = color_palette_EGA(
-          "polychrome", x$membership$structure, sorted = TRUE
-        ),
-        breaks = sort(x$membership$structure)
+    # Set up for plot
+    organize_df <- fast.data.frame(
+      c(
+        names(x$membership$empirical),
+        x$item.stability$empirical.dimensions,
+        x$membership$structure
+      ), nrow = length(x$membership$structure), ncol = 3,
+      colnames = c("Node", "Replication", "Community")
+    )
+    
+    # Set up data frame structure
+    organize_df$Replication <- as.numeric(organize_df$Replication)
+    organize_df$Community <- factor(
+      x$membership$structure,
+      levels = seq_len(unique_length(x$membership$structure))
+    )
+    
+    # Get base plot
+    base_canvas <- do.call(
+      ggpubr::ggdotchart,
+      item_stability_defaults(organize_df, ellipse)
+    )
+    
+    # Add additional layer to plot with {ggplot2}'s `theme` updated
+    updated_canvas <- base_canvas +
+      ggplot2::ylim(c(0, 1)) + # non-negotiable
+      do.call( # flexibly allow user to adjust the `theme`
+        ggplot2::theme, 
+        ggplot2_theme_defaults(organize_df, ellipse)
       )
     
+    # Manually update alpha
+    updated_canvas$layers[[2]]$aes_params$alpha <- swiftelse(
+      "alpha" %in% names(ellipse), ellipse$alpha, 0.70
+    )
+    
+    # Update colors
+    if("scale_color_manual" %in% names(ellipse)){
+      updated_canvas <- updated_canvas +
+        do.call(ggplot2::scale_color_manual, ellipse$scale_color_manual)
+    }else{
+      
+      # Use default of "polychrome"
+      updated_canvas <- updated_canvas +
+        ggplot2::scale_color_manual(
+          values = color_palette_EGA(
+            "polychrome", x$membership$structure, sorted = TRUE
+          ),
+          breaks = sort(x$membership$structure)
+        )
+      
+    }
+    
+    # Lastly, get x-axis organization
+    if("scale_x_discrete" %in% names(ellipse)){
+      updated_canvas <- updated_canvas +
+        do.call(ggplot2::scale_x_discrete, ellipse$scale_x_discrete)
+    }else{ # Otherwise, apply default
+      updated_canvas <- updated_canvas +
+        ggplot2::scale_x_discrete(limits = rev(updated_canvas$data$Node))
+    }
+    
+    # Return plot
+    return(updated_canvas)
+    
   }
-  
-  # Lastly, get x-axis organization
-  if("scale_x_discrete" %in% names(ellipse)){
-    updated_canvas <- updated_canvas +
-      do.call(ggplot2::scale_x_discrete, ellipse$scale_x_discrete)
-  }else{ # Otherwise, apply default
-    updated_canvas <- updated_canvas +
-    ggplot2::scale_x_discrete(limits = rev(updated_canvas$data$Node))
-  }
-  
-  # Return plot
-  return(updated_canvas)
 
 }
 
@@ -535,3 +617,81 @@ get_structure <- function(bootega_wc, structure)
   return(structure)
   
 }
+
+#' @noRd
+# Item stability core ----
+# Main function -- separated to handle `hierEGA`
+# Updated 23.07.2023
+itemStability_core <- function(ega_object, structure, bootstrap_structure, iter)
+{
+
+  # Get empirical memberships
+  empirical_memberships <- ega_object$wc
+  
+  # Get node names
+  node_names <- names(empirical_memberships)
+  
+  # Get structure (with error catching)
+  structure <- get_structure(empirical_memberships, structure)
+  
+  # Get maximum number of communities
+  maximum_communities <- max(
+    max(bootstrap_structure, na.rm = TRUE),
+    unique_length(structure)
+  )
+  
+  # Get homogenized memberships
+  homogenized_memberships <- community.homogenize(
+    target.membership = structure,
+    convert.membership = bootstrap_structure
+  )
+  
+  # Tabulate for each variable and get proportions for each community
+  replicate_proportions <- matrix(
+    nvapply(  # `matrix` prevents drop to vector when all are unidimensional
+      as.data.frame(homogenized_memberships),
+      tabulate, maximum_communities, 
+      LENGTH = maximum_communities
+    ), ncol = maximum_communities, byrow = TRUE
+  ) / iter
+  
+  # Assign names
+  dimnames(replicate_proportions) <- list(
+    node_names, # nodes
+    format_integer( # communities
+      numbers = seq_len(maximum_communities),
+      places = digits(maximum_communities) - 1
+    )
+  )
+  
+  # Get empirical proportions
+  empirical_proportions <- nvapply(
+    nrow_sequence(replicate_proportions),
+    function(row){replicate_proportions[row, structure[row]]}
+  )
+  
+  # Ensure proper names
+  names(empirical_proportions) <- node_names
+  
+  # Initialize results
+  results <- list(
+    membership = list(
+      empirical = empirical_memberships,
+      bootstrap = homogenized_memberships,
+      structure = structure
+    ),
+    item.stability = list(
+      empirical.dimensions = empirical_proportions,
+      all.dimensions = replicate_proportions
+    )
+  )
+  
+  # Set class
+  class(results) <- "itemStability"
+  
+  # Return results
+  return(results)
+  
+}
+
+

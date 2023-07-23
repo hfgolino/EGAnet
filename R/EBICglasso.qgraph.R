@@ -156,7 +156,7 @@ EBICglasso.qgraph <- function(
     glas_path <- glasso::glassopath(S, lambda, trace = 0, penalize.diagonal = penalize.diagonal, ...)
   }else{
     
-    # Set up array dimenions
+    # Set up array dimensions
     new_array <- array(0, c(dimensions[2], dimensions[2], nlambda))
     
     # Initialize path to be similar to `glassopath` output
