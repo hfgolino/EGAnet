@@ -163,7 +163,8 @@ itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
   # Check for hierarchical EGA
   if(hierarchical){
     
-    # Check for structure
+    # Check for structure TODO!!
+    # Check for `$lower_order` and `$higher_order`
     # structure <- hierEGA_structure(structure)
     
     # Set up results

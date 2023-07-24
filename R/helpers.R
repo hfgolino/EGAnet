@@ -287,7 +287,7 @@ MASS_mvrnorm_quick <- function(n, mu, np, coV)
 #' @noRd
 # Generate reproducible parametric bootstrap ----
 # A wrapper over `rnorm_ziggurat` and `MASS_mvrnorm_quick`
-# Updated 10.07.2023
+# Updated 24.07.2023
 reproducible_parametric <- function(
     samples, cases, mu, Sigma, seed
 )
@@ -297,7 +297,11 @@ reproducible_parametric <- function(
   p <- length(mu) # avoids repeated calls to length
   np <- cases * p # avoids repeated n * p calls
   eS <- eigen(Sigma, symmetric = TRUE) # avoids repeated calls to `eigen`
-  coV <- eS$vectors %*% diag(sqrt(pmax(eS$values, 0)), p)
+  eigenvalues <- eS$values # get eigenvalues
+  non_zero <- eigenvalues > 0 # non-zero eigenvalues
+  eigenvalues[!non_zero] <- 0 # set negative values to zero
+  eigenvalues[non_zero] <- sqrt(eigenvalues[non_zero])
+  coV <- eS$vectors %*% diag(eigenvalues, p)
   # avoids repeated matrix multiplication
   
   # Next, set seed for random normal generation
@@ -457,7 +461,7 @@ available_memory <- function()
     #   "TB" = 1e+12 # edge case
     # )
     
-    # Alternative
+    # Alternative (outputs memory in kB)
     bytes <- as.numeric(
       trimws(system("wmic OS get FreePhysicalMemory", intern = TRUE))[2]
     ) * 1000
@@ -529,7 +533,7 @@ parallel_process <- function(
   memory_available <- available_memory() - 1e+08
   
   # Check for global environment size
-  if(isTRUE(export)){
+  if(isTRUE(export)){ # needs `isTRUE` in case of character vector
     global_memory_usage <- sum(nvapply(ls(),function(x){object.size(get(x))}))
   }else{
     global_memory_usage <- sum(nvapply(ls()[ls() %in% export],function(x){object.size(get(x))}))
@@ -684,7 +688,7 @@ ncol_sequence <- function(data)
 # 1.5x faster with 1 value
 # 2.5x faster with 10 values
 # >= 18x faster with >= 100 values
-# Updated 19.07.2023
+# Updated 24.07.2023
 swiftelse <- function(condition, true, false)
 {
   
@@ -717,7 +721,10 @@ swiftelse <- function(condition, true, false)
   if(length(false) == 1){
     result[!condition] <- false
   }else{
-    result[!condition] <- false[!condition]
+    
+    # Get opposite condition (slightly faster than repeated calls)
+    opposite_condition <- !condition
+    result[opposite_condition] <- false[opposite_condition]
   }
   
   
@@ -949,7 +956,7 @@ fast.data.frame <- function(
       matrix(
         data = data,
         nrow = nrow, ncol = ncol,
-        dimnames = list(rownames,colnames)
+        dimnames = list(rownames, colnames)
       ), make.names = FALSE,
       ...
     )
@@ -1085,15 +1092,10 @@ unique_length <- function(x)
 # Edge count ----
 # Counts the number of edges
 # (assumes network is _symmetric_ matrix)
-# Updated 03.07.2023
+# Updated 24.07.2023
 edge_count <- function(network, nodes, diagonal = FALSE)
 {
-  
-  # Count edges
-  return(
-    (sum(network != 0) - swiftelse(diagonal, nodes, 0)) * 0.50
-  )
-  
+  return((sum(network != 0) - swiftelse(diagonal, nodes, 0)) * 0.50)
 }
 
 #' @noRd
@@ -1176,7 +1178,7 @@ count_table <- function(data, proportion = FALSE)
   Value <- fast_table(unique_id) # tabulate(unique_id, length(levels(unique_id)))
   
   # Check for proportion
-  if(isTRUE(proportion)){
+  if(proportion){
     Value <- Value / dim(data)[1]
   }
   
@@ -1228,7 +1230,7 @@ is_symmetric <- function(data, tolerance = 1e-06){
 
 #' @noRd
 # Ensure data has dimension names ----
-# Updated 03.07.2023
+# Updated 24.07.2023
 ensure_dimension_names <- function(data)
 {
   
@@ -1272,8 +1274,8 @@ ensure_dimension_names <- function(data)
       
     }
     
-    # Check for matrix
-    if(dimensions[1] == dimensions[2]){
+    # Check for symmetric matrix
+    if(is_symmetric(data)){
       
       # Check for row names
       if(is.null(dimnames(data)[[1]]) | any(dimension_names[[1]] != dimension_names[[2]])){
@@ -1317,7 +1319,7 @@ transfer_names <- function(data, output)
 
 #' @noRd
 # Function to check for usable variables ----
-# Updated 06.07.2023
+# Updated 24.07.2023
 usable_data <- function(data, verbose)
 {
   
@@ -1340,16 +1342,17 @@ usable_data <- function(data, verbose)
     )
     
     # Remove these variables from `data` and `data_matrix`
-    data <- data[,-remove_columns]
-    data_matrix <- data_matrix[,-remove_columns]
+    keep_columns <- !remove_columns
+    data <- data[,keep_columns]
+    data_matrix <- data_matrix[,keep_columns]
     
   }
   
   # Determine whether each variable was coerced
-  coercions <- lvapply(as.data.frame(data_matrix != data), all, na.rm = TRUE)
+  coercions <- lvapply(as.data.frame(data_matrix != data), any, na.rm = TRUE)
 
   # Send warning for any coercions
-  if(any(coercions) & isTRUE(verbose)){
+  if(any(coercions) & verbose){
     
     # Send warning
     warning(
@@ -1368,7 +1371,7 @@ usable_data <- function(data, verbose)
 
 #' @noRd
 # Obtain {igraph} and matrix networks ----
-# Updated 06.07.2023
+# Updated 24.07.2023
 obtain_networks <- function(network, signed)
 {
   
@@ -1380,7 +1383,7 @@ obtain_networks <- function(network, signed)
   }
   
   # Then, check for sign
-  if(isFALSE(signed)){
+  if(!signed){
     network_matrix <- abs(network_matrix)
   }
 
@@ -1398,12 +1401,23 @@ obtain_networks <- function(network, signed)
 #' @noRd
 # Obtain data, sample size, correlation matrix ----
 # Generic function to get the usual needed inputs
-# Updated 01.07.2023
+# Updated 24.07.2023
 obtain_sample_correlations <- function(data, n, corr, na.data, verbose, ...)
 {
   
   # Check if data is a correlation matrix
-  if(!is_symmetric(data)){
+  if(is_symmetric(data)){
+    
+    # Check for sample size
+    if(is.null(n)){
+      stop("A symmetric matrix was provided in the 'data' argument but the sample size argument, 'n', was not set. Please input the sample size into the 'n' argument.")
+    }
+    
+    # If symmetric and sample size is provided, then
+    # data to correlation matrix
+    correlation_matrix <- data
+    
+  }else{
     
     # Check for appropriate variables
     data <- usable_data(data, verbose)
@@ -1421,23 +1435,9 @@ obtain_sample_correlations <- function(data, n, corr, na.data, verbose, ...)
         ...
       )
       
-    }else{
-      
-      # Obtain correlations using base R
+    }else{ # Obtain correlations using base R
       correlation_matrix <- cor(data, use = na.data, method = corr)
-      
     }
-    
-  }else{
-    
-    # Check for sample size
-    if(is.null(n)){
-      stop("A symmetric matrix was provided in the 'data' argument but the sample size argument, 'n', was not set. Please input the sample size into the 'n' argument.")
-    }
-    
-    # If symmetric and sample size is provided, then
-    # data to correlation matrix
-    correlation_matrix <- data
     
   }
   
@@ -1509,7 +1509,7 @@ silent_plot <- function(...)
 # Updated 09.07.2023
 remove_attributes <- function(object)
 {
-  
+
   # Remove all except special attributes (see `?structure`)
   attributes(object) <- attributes(object)[
     names(attributes(object)) %in% c(
@@ -1524,7 +1524,7 @@ remove_attributes <- function(object)
 
 #' @noRd
 # Set default argument (cleaner missing function) ----
-# Updated 11.07.2023
+# Updated 24.07.2023
 set_default <- function(argument, default, FUN, several.ok = FALSE)
 {
 
@@ -1544,11 +1544,8 @@ set_default <- function(argument, default, FUN, several.ok = FALSE)
     return(default)
   }
   
-  # Get number of input arguments
-  argument_length <- length(argument)
-  
-  # Return default if length > 1 and several are not OK
-  if(argument_length > 1 & isFALSE(several.ok)){
+  # Return default if length > 1 and several are NOT okay
+  if(length(argument) > 1 & !several.ok){
     return(default)
   }
   
@@ -1577,33 +1574,38 @@ set_default <- function(argument, default, FUN, several.ok = FALSE)
   argument <- tolower(argument); choices <- tolower(choices)
   
   # Get arguments not in choices
-  not_in_choices <- !argument %in% choices
-  
-  # Get number not in choices
-  number_not <- sum(not_in_choices)
-  
-  # Send error for bad argument
-  if(number_not > 0){
+  if(any(!argument %in% choices)){ # Repeated calls OK since returning error
     
-    # Only one not in choices
-    if(number_not == 1){
-      argument_text <- paste0(" = \"", argument[not_in_choices], "\"")
-    }else{ # Multiple not in choices
-      argument_text <- paste0(
-        " = c(",
-        paste0("\"", argument[not_in_choices], "\"", collapse = ", "),
-        ")"
+    # Get arguments not in choices
+    not_in_choices <- !argument %in% choices
+    
+    # Get number not in choices
+    number_not <- sum(not_in_choices)
+    
+    # Send error for bad argument
+    if(number_not > 0){
+      
+      # Only one not in choices
+      if(number_not == 1){
+        argument_text <- paste0(" = \"", argument[not_in_choices], "\"")
+      }else{ # Multiple not in choices
+        argument_text <- paste0(
+          " = c(",
+          paste0("\"", argument[not_in_choices], "\"", collapse = ", "),
+          ")"
+        )
+      }
+      
+      # Throw error
+      stop(
+        paste0(
+          paste0("Invalid argument: ", argument_name, argument_text),
+          "\n\nPlease choose from: ", 
+          paste0("\"", choices, "\"", collapse = ", ")
+        ), call. = FALSE
       )
+      
     }
-    
-    # Throw error
-    stop(
-      paste0(
-        paste0("Invalid argument: ", argument_name, argument_text),
-        "\n\nPlease choose from: ", 
-        paste0("\"", choices, "\"", collapse = ", ")
-      ), call. = FALSE
-    )
     
   }
   
@@ -1649,18 +1651,24 @@ obtain_arguments <- function(FUN, FUN.args)
 #' @noRd
 # Legacy Argument Overwrite ----
 # Preference given to legacy
-# Updated 24.06.2023
+# Updated 24.07.2023
 legacy_overwrite <- function(ellipse, legacy_ARG)
 {
   
+  # Get ellipse names
+  ellipse_names <- names(ellipse)
+  
   # Check for legacy argument in ellipse
-  if(legacy_ARG %in% names(ellipse)){
+  if(legacy_ARG %in% ellipse_names){
+    
+    # Get legacy arguments
+    legacy_ARGS <- ellipse[[legacy_ARG]]
     
     # Overwrite arguments
-    ellipse[names(ellipse[[legacy_ARG]])] <- ellipse[[legacy_ARG]]
+    ellipse[names(legacy_ARGS)] <- legacy_ARGS
     
     # Remove legacy argument
-    ellipse <- ellipse[names(ellipse) != legacy_ARG]
+    ellipse <- ellipse[ellipse_names != legacy_ARG]
     
   }
   
@@ -1738,7 +1746,7 @@ make_unidimensional_cfa <- function(variable_names)
 
 #' @noRd
 # Determine estimator arguments ----
-# Updated 29.06.2023
+# Updated 24.07.2023
 estimator_arguments <- function(lavaan_ARGS, ellipse)
 {
   
@@ -1751,15 +1759,16 @@ estimator_arguments <- function(lavaan_ARGS, ellipse)
   # Obtain categories
   categories <- data_categories(lavaan_ARGS$data)
   
+  # Get categorical variables
+  categorical_variables <- categories <= ordinal.categories
+  
   # Check for categories
-  if(any(categories <= ordinal.categories)){
+  if(any(categorical_variables)){
     
     # Set arguments
     lavaan_ARGS$estimator <- "WLSMV"
     lavaan_ARGS$missing <- "pairwise"
-    lavaan_ARGS$ordered <- names(categories)[
-      categories <= ordinal.categories
-    ]
+    lavaan_ARGS$ordered <- names(categories)[categorical_variables]
     
   }else{
     
