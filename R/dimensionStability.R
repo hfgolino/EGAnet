@@ -67,15 +67,104 @@
 #' @export
 #'
 # Dimension Stability function
-# Updated 12.07.2023
+# Updated 24.07.2023
 dimensionStability <- function(bootega.obj, IS.plot = TRUE, structure = NULL, ...)
 {
   
   # Compute item stability
   item_stability <- itemStability(bootega.obj, IS.plot, structure, ...)
+  
+  # Check for hierarchical EGA
+  if("lower_order" %in% names(item_stability)){
+    
+    # Set up results list
+    results <- list(
+      lower_order = dimensionStability_core(item_stability$lower_order),
+      higher_order = dimensionStability_core(item_stability$higher_order),
+      item.stability = item_stability # redundant but cheaper print
+    )
+    
+  }else{ # Otherwise, just run core
+    results <- dimensionStability_core(item_stability)
+  }
+  
+  # Ensure class (needed for `hierEGA` S3)
+  class(results) <- "dimensionStability"
+  
+  # Return results
+  return(results)
+  
+}
 
+#' @exportS3Method 
+# S3 Print Method ----
+# Updated 24.07.2023
+print.dimensionStability <- function(x, ...)
+{
+  
+  # First, print item stability
+  print(x$item.stability)
+  
+  # Add breakspace
+  cat("\n----\n\n")
+  
+  # Print structural consistency
+  cat("Structural Consistency:\n\n")
+  
+  # Then, branch for `hierEGA`
+  if("lower_order" %in% names(x)){
+    
+    # Print level
+    cat(
+      styletext(
+        text = styletext(
+          text =  "Lower Order\n\n", 
+          defaults = "underline"
+        ),
+        defaults = "bold"
+      )
+    )
+    
+    # Print lower order
+    print(x$lower_order$dimension.stability$structural.consistency)
+    
+    # Print level
+    cat(
+      styletext(
+        text = styletext(
+          text =  "\n\nHigher Order\n\n", 
+          defaults = "underline"
+        ),
+        defaults = "bold"
+      )
+    )
+    
+    # Print higher order
+    print(x$higher_order$dimension.stability$structural.consistency)
+    
+  }else{
+    print(x$dimension.stability$structural.consistency)
+  }
+  
+}
+
+#' @exportS3Method 
+# S3 Summary Method ----
+# Updated 12.07.2023
+summary.dimensionStability <- function(object, ...)
+{
+  print(object, ...) # same as print
+}
+
+#' @noRd
+# Dimension stability core ----
+# Main function -- separated to handle `hierEGA`
+# Updated 24.07.2023
+dimensionStability_core <- function(item_stability_object)
+{
+  
   # Obtain structure (convert to string for NAs)
-  structure <- paste(item_stability$membership$structure)
+  structure <- paste(item_stability_object$membership$structure)
   
   # Get unique structure
   unique_structure <- unique(structure)
@@ -92,12 +181,12 @@ dimensionStability <- function(bootega.obj, IS.plot = TRUE, structure = NULL, ..
         mean(
           lvapply(
             as.data.frame(
-              t(item_stability$membership$bootstrap[,structure == community])
+              t(item_stability_object$membership$bootstrap[,structure == community])
             ), function(row){all(row == community, na.rm = TRUE)}
           ), na.rm = TRUE
         )
       )
-
+      
     }
   )
   
@@ -105,52 +194,42 @@ dimensionStability <- function(bootega.obj, IS.plot = TRUE, structure = NULL, ..
   average_item_stability <- nvapply(
     unique_structure, function(community){
       mean(
-        item_stability$item.stability$empirical.dimensions[structure == community],
+        item_stability_object$item.stability$empirical.dimensions[structure == community],
         na.rm = TRUE
       )
     }
   )
   
+  # Set ordering
+  ordering <- order(as.numeric(names(dimension_stability)))
+  
   # Set up results
   results <- list(
     dimension.stability = list(
-      structural.consistency = dimension_stability,
-      average.item.stability = average_item_stability
+      structural.consistency = dimension_stability[ordering],
+      average.item.stability = average_item_stability[ordering]
     ),
-    item.stability = item_stability
+    item.stability = item_stability_object
   )
   
   # Add class
   class(results) <- "dimensionStability"
-  
   
   # Return results
   return(results)
   
 }
 
-#' @exportS3Method 
-# S3 Print Method ----
-# Updated 12.07.2023
-print.dimensionStability <- function(x, ...)
-{
-  
-  # First, print item stability
-  print(x$item.stability)
-  
-  # Add breakspace
-  cat("\n----\n\n")
-  
-  # Print structural consistency
-  cat("Structural Consistency:\n\n")
-  print(x$dimension.stability$structural.consistency)
-  
-}
 
-#' @exportS3Method 
-# S3 Summary Method ----
-# Updated 12.07.2023
-summary.dimensionStability <- function(object, ...)
-{
-  print(object, ...) # same as print
-}
+
+
+
+
+
+
+
+
+
+
+
+
