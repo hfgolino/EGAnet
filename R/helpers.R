@@ -517,7 +517,7 @@ available_memory <- function()
 
 #' @noRd
 # Wrapper for parallelization ----
-# Updated 22.07.2023
+# Updated 24.07.2023
 parallel_process <- function(
     iterations, # number of iterations
     datalist = NULL, # list of data
@@ -529,8 +529,8 @@ parallel_process <- function(
     progress = TRUE # progress bar
 ){
   
-  # Get available memory ( minus 100MB )
-  memory_available <- available_memory() - 1e+08
+  # Get available memory
+  memory_available <- available_memory()
   
   # Check for global environment size
   if(isTRUE(export)){ # needs `isTRUE` in case of character vector
@@ -739,11 +739,11 @@ swiftelse <- function(condition, true, false)
 
 #' @noRd
 # Determine number of digits in a number ----
-# Updated 27.05.2023
+# Updated 24.07.2023
 digits <- function(number)
 {
   # Obtain the lowest value of log base 10 and add 1
-  return(floor(log10(number)) + 1)
+  return(floor(log10(abs(number))) + 1)
   
 }
 

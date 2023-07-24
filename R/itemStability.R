@@ -128,10 +128,8 @@
 #'
 #' @export
 # Item Stability
-# Updated 06.07.2023
+# Updated 24.07.2023
 itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
-  
-  # No `hierEGA` (for now)
   
   # Check for 'bootEGA' object
   if(is(bootega.obj) != "bootEGA"){
@@ -163,9 +161,8 @@ itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
   # Check for hierarchical EGA
   if(hierarchical){
     
-    # Check for structure TODO!!
-    # Check for `$lower_order` and `$higher_order`
-    # structure <- hierEGA_structure(structure)
+    # Check for structure
+    structure <- hierEGA_structure(ega_object, structure)
     
     # Set up results
     results <- list()
@@ -564,6 +561,124 @@ itemStability_deprecation <- function(ellipse)
   
   # Return ellipse arguments
   return(ellipse)
+  
+}
+
+#' @noRd
+# `hierEGA` check for structure input ----
+# Updated 24.07.2023
+hierEGA_structure <- function(ega_object, structure)
+{
+  
+  # Return NULL if NULL
+  if(is.null(structure)){
+    return(
+      list(
+        lower_order = NULL,
+        higher_order = NULL
+      )
+    )
+  }
+  
+  # Get names of structure
+  structure_names <- names(structure)
+  
+  # Not NULL, proceed with lower order
+  if(any(structure_names %in% c("lower_order", "higher_order"))){
+    
+    # Set up result as NULL
+    result <- list(
+      lower_order = NULL,
+      higher_order = NULL
+    )
+    
+    # First, check for lower order
+    if("lower_order" %in% structure_names){
+      
+      # Perform checks
+      length_error(structure$lower_order, length(ega_object$lower_order$wc))
+      
+      # If no error, then ensure names
+      names(structure$lower_order) <- names(ega_object$lower_order$wc)
+      
+      # Send into result
+      result$lower_order <- structure$lower_order
+      
+    }
+    
+    # Then, check for higher order
+    if("higher_order" %in% structure_names){
+      
+      # Get higher order length
+      higher_order_length <- length(ega_object$higher_order$wc)
+      
+      # Check for lower order structure
+      if(!is.null(result$lower_order)){
+        lower_order_length <- unique_length(structure$lower_order)
+      }
+      
+      # Perform checks
+      length_error(
+        structure$higher_order, c( # could be length of higher or lower order
+          lower_order_length,
+          higher_order_length,
+          length(ega_object$lower_order$wc)
+        )
+      )
+      
+      # Check for higher order length
+      if(
+        length(structure$higher_order) %in% 
+        c(lower_order_length, higher_order_length)
+      ){
+        
+        # Needs to be revalued
+        structure$higher_order <- single_revalue_memberships(
+          swiftelse( # If NULL, then base on empirical lower order result
+            is.null(result$lower_order),
+            ega_object$lower_order$wc,
+            result$lower_order
+          ),
+          structure$higher_order
+        )
+        
+      }
+
+      
+      # If no error, then ensure names
+      names(structure$higher_order) <- names(ega_object$lower_order$wc)
+      
+      # Send into result
+      result$higher_order <- structure$higher_order
+      
+    }
+    
+    # Return result
+    return(result)
+    
+  }else{ # Send NULLs and warning
+    
+    # Send warning
+    warning(
+      paste(
+        "Input to `structure` was provided but did not match expected input.",
+        "For `hierEGA`, `structure` should be a list with elements `lower_order`,",
+        "`higher_order`, or both.\n\nUsing default empirical EGA structure instead"
+      ),
+      call. = FALSE
+    )
+    
+    # Send back NULLs
+    return(
+      list(
+        lower_order = NULL,
+        higher_order = NULL
+      )
+    )
+    
+  }
+  
+  
   
 }
 

@@ -34,7 +34,8 @@
 #' @export
 #' 
 # Weighted Topological Overlap ----
-# Updated 02.07.2023
+# About 18-20x faster than `wTO::wTO`
+# Updated 24.07.2023
 wto <- function (network, signed = TRUE, diagonal.zero = TRUE)
 {
   
@@ -56,21 +57,17 @@ wto <- function (network, signed = TRUE, diagonal.zero = TRUE)
   }
   
   # Obtain node strengths
-  node_strengths <- strength(absolute_network)
+  node_strengths <- colSums(absolute_network, na.rm = TRUE)
   
   # Obtain variable pair minimums
-  minimum_pairs <- matrix(
-    c(
-      rep(node_strengths, each = dimensions[2]),
-      rep(node_strengths, times = dimensions[2])
-    ), ncol = 2
-  )
+  strength_each <- rep(node_strengths, each = dimensions[2])
+  strength_times <- rep(node_strengths, times = dimensions[2])
   
   # Create minimum matrix
   minimum_matrix <- matrix(
     swiftelse(
-      minimum_pairs[,1] < minimum_pairs[,2],
-      minimum_pairs[,1], minimum_pairs[,2]
+      strength_each < strength_times,
+      strength_each, strength_times
     ), 
     nrow = dimensions[2], ncol = dimensions[2]
   )
