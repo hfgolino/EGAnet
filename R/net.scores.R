@@ -273,8 +273,8 @@ compute_scores <- function(loadings, data, scoring.method, wc)
 
 #' @noRd
 # Network scores computation ----
-# Updated 14.07.2023
+# Updated 24.07.2023
 network_scores <- function(loads, data)
 {
-  return(scale(data[,dimnames(loads)[[1]]]) %*% loads)
+  return(scale(data) %*% loads[dimnames(data)[[2]],])
 }
