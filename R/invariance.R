@@ -530,11 +530,10 @@ summary.invariance <- function(object, ...) {
 
 #' @noRd
 # Set group comparison plots ----
-# Updated 22.07.2023
+# Updated 24.07.2023
 group_setup <- function(
     EGA_object, plot_ARGS,
     nodes, noninvariant,
-    alpha.invariant, alpha.noninvariant,
     ...
 )
 {
@@ -572,11 +571,12 @@ group_setup <- function(
   }
   
   # Set up plot for edges
-  edge_plot <- plot(
-    EGA_object_copy, ..., 
+  edge_plot <- basic_plot_setup(
+    network = EGA_object_copy$network, 
+    wc = EGA_object_copy$wc, ..., 
     arguments = TRUE
   )
-  
+
   # Based on significance...
   ## Change alpha
   plot_ARGS$node.alpha <- swiftelse(noninvariant, 0.75, 0.25)
@@ -597,14 +597,16 @@ group_setup <- function(
 
 #' @exportS3Method 
 # S3 Plot Method ----
-# Updated 22.07.2023
+# Updated 24.07.2023
 plot.invariance <- function(
     x, p_type = c("p", "p_BH"), p_value = 0.05, ...
 )
 {
   
-  # Set default for p-value
-  if(missing(p_type)){p_type <- "p"}
+  # Set default for p-value type
+  p_type <- swiftelse(missing(p_type), "p", match.arg(p_type))
+  
+  # Check for appropriate p-value range
   range_error(p_value, c(0, 1))
   
   # Ensure same memberships
@@ -612,14 +614,15 @@ plot.invariance <- function(
   x$groups$EGA[[2]]$wc <- x$EGA$wc
   
   # Obtain noninvariant items
-  noninvariant <- x$results[[p_type]] <= p_value
+  noninvariant <- x$results[names(x$EGA$wc), p_type] <= p_value
   
   # Get number of nodes
   nodes <- length(noninvariant)
 
   # Set up first group plot
-  first_group <- plot(
-    x$groups$EGA[[1]], ...,
+  first_group <- basic_plot_setup(
+    network = x$groups$EGA[[1]]$network,
+    wc = x$groups$EGA[[1]]$wc, # ...,
     arguments = TRUE
   )
   
@@ -629,8 +632,7 @@ plot.invariance <- function(
   # Remove some arguments from `first_ARGS`
   ## Essentially, the same call but allows some freedom
   second_ARGS[c(
-    "net", "node.color", "edge.alpha",
-    "edge.color", "edge.lty", "edge.size"
+    "net", "edge.alpha", "edge.color", "edge.lty", "edge.size"
   )] <- NULL
   
   # Add network and memberships
@@ -644,7 +646,7 @@ plot.invariance <- function(
   # Get updated plots for each group
   ## First group
   first_group <- do.call(
-    what = single_plot,
+    what = basic_plot_setup,
     args = group_setup(
       EGA_object = x$groups$EGA[[1]],
       plot_ARGS = first_group$ARGS,
@@ -653,7 +655,7 @@ plot.invariance <- function(
   )
   ## Second group
   second_group <- do.call(
-    what = single_plot,
+    what = basic_plot_setup,
     args = group_setup(
       EGA_object = x$groups$EGA[[2]],
       plot_ARGS = second_group$ARGS,
@@ -661,13 +663,35 @@ plot.invariance <- function(
     )
   )
   
+  # Update `alpha` guide
+  first_group$guides$colour$override.aes$alpha <- 0.25
+  second_group$guides$colour$override.aes$alpha <- 0.75
+  
+  # Update `title` guide
+  first_group$guides$colour$title <- "Invariant"
+  second_group$guides$colour$title <- "Nonnvariant"
+  
+  # Update `title.position` guide
+  first_group$guides$colour$title.position <- "top"
+  second_group$guides$colour$title.position <- "top"
+  
+  # Adjust size and position
+  first_group <- first_group +
+    ggplot2::theme(
+      legend.title = ggplot2::element_text(size = 12, hjust = 0.5)
+    )
+  second_group <- second_group +
+    ggplot2::theme(
+      legend.title = ggplot2::element_text(size = 12, hjust = 0.5)
+    )
+
   # Arrange plots
   ggpubr::ggarrange(
     first_group, second_group,
     ncol = 2, nrow = 1,
     labels = names(x$groups$EGA),
-    legend = "right",
-    common.legend = TRUE
+    legend = "bottom",
+    common.legend = FALSE
   )
   
 }

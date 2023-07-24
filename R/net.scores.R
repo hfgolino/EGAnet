@@ -139,9 +139,10 @@ net.scores <- function (
         "Input for 'data' was detected as symmetric. Correlation matrices cannot be used. The original data are required to estimate scores.",
         call. = FALSE
       )
-  }else{ # Ensure data is a matrix
-    data <- as.matrix(data) 
   }
+  
+  # Ensure data is a matrix
+  data <- as.matrix(data) 
   
   # Get ellipse arguments
   ellipse <- list(...)
@@ -208,7 +209,7 @@ imputation <- function(data, impute)
 
 #' @noRd
 # Scores computation ----
-# Updated 15.07.2023
+# Updated 24.07.2023
 compute_scores <- function(loadings, data, scoring.method, wc)
 {
   
@@ -217,15 +218,15 @@ compute_scores <- function(loadings, data, scoring.method, wc)
     
     # Compute unrotated scores
     unrotated <- network_scores(
-      loads = loadings$std,
-      data = data
+      data = data,
+      loads = loadings$std
     )
     
     # Compute rotated scores (if available)
     if(!is.null(loadings$rotated)){
       rotated <- network_scores(
-        loads = loadings$rotated$loadings,
-        data = data
+        data = data,
+        loads = loadings$rotated$loadings
       )
     }else{rotated <- NULL}
     
@@ -274,7 +275,7 @@ compute_scores <- function(loadings, data, scoring.method, wc)
 #' @noRd
 # Network scores computation ----
 # Updated 24.07.2023
-network_scores <- function(loads, data)
+network_scores <- function(data, loads)
 {
   return(scale(data) %*% loads[dimnames(data)[[2]],])
 }

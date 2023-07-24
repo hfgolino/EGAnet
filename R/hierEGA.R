@@ -424,19 +424,49 @@ hierEGA <- function(
     
   }
   
-  # Set up results
-  results <- list(
-    lower_order = lower_order_result,
-    higher_order = EGA(
-      data = score_estimates, corr = corr, na.data = na.data,
-      model = model, algorithm = algorithm, uni.method = uni.method,
-      plot.EGA = FALSE, verbose = verbose, ...
-    ),
-    parameters = list(
-      lower_loadings = lower_loadings,
-      lower_scores = score_estimates
+  # Check for unidimensional lower order result
+  # (rare but can happen)
+  if(lower_order_result$n.dim == 1){
+    
+    # Set up results
+    results <- list(
+      lower_order = lower_order_result,
+      higher_order = lower_order_result,
+      parameters = list(
+        lower_loadings = lower_loadings,
+        lower_scores = score_estimates
+      )
     )
-  )
+
+  }else{
+    
+    # Set up results
+    results <- list(
+      lower_order = lower_order_result,
+      higher_order = EGA(
+        data = score_estimates, corr = corr, na.data = na.data,
+        model = model, algorithm = algorithm, uni.method = uni.method,
+        plot.EGA = FALSE, verbose = verbose, ...
+      ),
+      parameters = list(
+        lower_loadings = lower_loadings,
+        lower_scores = score_estimates
+      )
+    )
+    
+  }
+  
+  # Perform parallel PCA to check for no general factors
+  # sink <- capture.output(
+  #   pca <-
+  #     psych::fa.parallel(
+  #       x = results$higher_order$correlation,
+  #       fa = "pc",
+  #       n.obs = dim(data)[1],
+  #       plot = FALSE
+  #     )
+  # )
+  # Look into alternative solutions
   
   # Add dimension variables like `EGA`
   results$dim.variables <- fast.data.frame(
@@ -452,18 +482,6 @@ hierEGA <- function(
     nrow = length(results$lower_order$wc), ncol = 3,
     colnames = c("items", "lower", "higher")
   )
-
-  # Perform parallel PCA to check for no general factors
-  # sink <- capture.output(
-  #   pca <-
-  #     psych::fa.parallel(
-  #       x = results$higher_order$correlation,
-  #       fa = "pc",
-  #       n.obs = dim(data)[1],
-  #       plot = FALSE
-  #     )
-  # )
-  # Look into alternative solutions
   
   # Set "methods" attributes
   attr(results, "methods") <- list(
@@ -476,7 +494,7 @@ hierEGA <- function(
   class(results) <- "hierEGA"
   
   # Check for plot
-  if(isTRUE(plot.EGA)){
+  if(lower_order_result$n.dim != 1 && isTRUE(plot.EGA)){
     
     # Get plot
     results$plot.hierEGA <- plot(results, ...)

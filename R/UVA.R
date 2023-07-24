@@ -145,16 +145,27 @@
 UVA <- function(
     data = NULL, network = NULL, n = NULL, key = NULL, cut.off = 0.25,
     reduce = TRUE, reduce.method = c("latent", "mean", "remove", "sum"),
-    auto = TRUE, label.latent = FALSE,
-    EGAnet.version = packageVersion("EGAnet"),
+    auto = TRUE, label.latent = FALSE, verbose = FALSE,
+    uva.method = c("MBR", "EJP"),
     ... # `EGA`, {lavaan}, and "EGAnet.version" arguments
 )
 {
   
-  # If version <= 1.2.4, push to old UVA
-  ## Keeps legacy code alive
-  if(version_conversion(EGAnet.version) <= 124){
+  # Set default method
+  uva.method <- set_default(uva.method, "MBR", UVA)
+  
+  # Check for "manual" (will not be supported after version 2.0.0)
+  UVA_manual_warning(auto)
+  
+  # Check for method ("EJP" is old, not recommended)
+  if(uva.method == "ejp"){
     
+    # Get ellipse
+    ellipse <- list(...)
+    
+    # "type" warning
+    UVA_type_warning(ellipse)
+
     return(
       do.call( # Perform legacy UVA
         what = "oldUVA", # call old UVA function
@@ -170,101 +181,33 @@ UVA <- function(
     
   }
   
-  # Set default for "reduce.method"
-  if(missing(reduce.method)){
-    reduce.method <- "latent"
-  }else{reduce.method <- match.arg(reduce.method)}
+  # Set defaults
+  reduce.method <- set_default(reduce.method, "remove", UVA)
   
-  # Check for valid inputs
-  ## Objects (see "helpers-errors.R" for functions)
-  if(!is.null(data)){
-    object_error(input = data, expected_type = c("matrix", "data.frame"))
-  }else if(!is.null(network)){
-    object_error(input = network, expected_type = c("matrix", "data.frame"))
-  }else{
-    stop("Both 'data' and 'network' are `NULL`. Expected at least one input.")
+  # Get network
+  if(!is.null(data) && is.null(network)){
+    network <- EGA(
+      data, plot.EGA = FALSE, verbose = verbose, ...
+    )$network
   }
-  
-  ## Values
-  if(!is.null(n)){value_error(input = n, expected_value = "numeric")};
-  if(!is.null(key)){value_error(key, "character")}; value_error(cut.off, "numeric"); 
-  value_error(reduce, "logical"); value_error(reduce.method, "character"); 
-  value_error(auto, "logical"); value_error(label.latent, "logical")
-  
-  ## Lengths
-  if(!is.null(n)){length_error(input = n, expected_lengths = 1)};
-  if(!is.null(key)){length_error(key, ncol(data))}; length_error(cut.off, 1);
-  length_error(reduce, 1); length_error(reduce.method, 1);
-  length_error(auto, 1); length_error(label.latent, 1);
-  
-  ## Ranges
-  if(!is.null(n)){range_error(input = n, expected_ranges = c(2, Inf))};
-  range_error(cut.off, c(0, 1));
-  
-  # Get data to network
-  if(!is.null(data)){
-    
-    ## Check for "n"
-    if(is.null(n) & !is_symmetric(data)){
-      n <- nrow(data)
-    }
-    
-    ## Symmetric matrix
-    symmetric_matrix_error(data = data, n = n)
-    
-    ## Ensure dimension names (see "helpers-general.R" for functions)
-    data <- ensure_dimension_names(data)
-    
-    ## Check for network
-    if(is.null(network)){
-      
-      ## EGA arguments (see "helpers-functions.R" for functions)
-      ega_ARGS <- ega_arguments(arguments = list(...))
-      
-      ## Update "data", "n", and "plot.EGA" arguments
-      ega_ARGS$data <- data; ega_ARGS$n <- n; ega_ARGS$plot.EGA <- FALSE;
-      
-      ## Perform EGA
-      ega_output <- do.call(
-        what = "EGA",
-        args = ega_ARGS
-      )
-      
-      ## Extract output for weighted topological overlap
-      network <- ega_output$network
-      
-    }
-    
-  }
-  
-  # At this point, there should be a network somewhere
-  ## Symmetric matrix
-  symmetric_matrix_error(data = network, n = n)
-  
-  ## Ensure dimension names (see "helpers-general.R" for functions)
-  network <- ensure_dimension_names(network)
   
   # Compute weighted topological overlap
-  wto_output <- abs(wto(network, signed = FALSE))
+  wto_output2 <- abs(wto(network))
   
   # Compute descriptives
-  descriptives <- wto_descriptives(
-    wto_output = wto_output, key = key
-  )
+  descriptives2 <- wto_descriptives(wto_output2, key)
   
   # Cut-off indices
-  wto_indices <- wto_cut_off(
-    wto_output = wto_output,
-    cut_off = cut.off
-  )
+  wto_indices2 <- descriptives2$pairwise[
+    descriptives2$pairwise$wto >= cut.off,, drop = FALSE
+  ]
   
   # Check for whether any redundancies exist
-  if(nrow(wto_indices) == 0){
+  if(dim(wto_indices)[1] == 0){
     
     # Return NULLs
     results <- list(
-      redundant = NULL,
-      network = network,
+      redundant = NULL, network = network,
       wto = list(
         matrix = wto_output, # wTO matrix
         pairwise = descriptives$pairwise, # pairwise wTO
@@ -282,16 +225,9 @@ UVA <- function(
   }
   
   # Combine indices into a list
-  overlapping_list <- wto_index_list(
-    wto_output = wto_output, wto_indices = wto_indices
-  )
+  redundant_variables <- get_redundancy_list(wto_output2, wto_indices2)
   
-  # Condense list to remove duplicate entries
-  # And remove elements that are included elsewhere
-  redundant_variables <- condense_overlap(
-    overlapping_list = overlapping_list
-  )
-  
+
   # Determine whether data should be reduced
   if(isTRUE(reduce)){
     
@@ -528,64 +464,37 @@ UVA <- function(
 # ega_ARGS <- ega_arguments(arguments = list())
 # ... # `EGA`, {lavaan}, and "EGAnet.version" arguments
 
-
-#' @noRd
-# Obtain UVA cut-off values ----
-# Updated 07.02.2023
-wto_cut_off <- function(wto_output, cut_off)
-{
-  
-  # Obtain indices that meet cut-off
-  wto_indices <- which(wto_output >= cut_off, arr.ind = TRUE)
-  
-  # Check whether there are values
-  if(nrow(wto_indices) > 0){
-    
-    # Obtain unique pairs only
-    wto_indices <- wto_indices[wto_indices[,"row"] < wto_indices[,"col"],]
-   
-    # Ensure matrix
-    wto_indices <- matrix(
-      wto_indices,
-      ncol = 2
-    )
-    
-    # Add column names
-    colnames(wto_indices) <- c("row", "col")
-     
-  }
-  
-  # Return indices
-  return(wto_indices)
-  
-}
-
 #' @noRd
 # Obtain descriptives ----
-# Updated 02.02.2023
+# Updated 24.07.2023
 wto_descriptives <- function(wto_output, key = NULL){
   
+  # Get dimensions
+  dimensions <- dim(wto_output)
+  
+  # Column sequence
+  dimension_sequence <- seq_len(dimensions[2])
+  
   # Obtain node names
-  if(!is.null(key)){
-    node_names <- key
-  }else{
-    node_names <- colnames(wto_output)
-  }
+  node_names <- swiftelse(
+    is.null(key), dimnames(wto_output)[[2]], key
+  )
   
   # Initialize data frame
-  wto_long <- data.frame(
-    node_i = rep(1:ncol(wto_output), each = ncol(wto_output)),
-    node_j = rep(1:ncol(wto_output), times = ncol(wto_output)),
-    wto = as.vector(as.matrix(wto_output))
+  wto_long <- fast.data.frame(
+    c(
+      rep(dimension_sequence, each = dimensions[2]),
+      rep(dimension_sequence, times = dimensions[2]),
+      as.vector(wto_output)
+    ), nrow = prod(dimensions), ncol = 3,
+    colnames = c("node_i", "node_j", "wto")
   )
   
   # Subset to remove duplicates
   wto_long <- wto_long[wto_long$node_i < wto_long$node_j,]
   
   # Remove all values below zero
-  wto_long <- wto_long[
-    wto_long$wto != 0,
-  ]
+  wto_long <- wto_long[wto_long$wto > 0,]
   
   # Replace node names
   wto_long$node_i <- node_names[wto_long$node_i]
@@ -615,19 +524,6 @@ wto_descriptives <- function(wto_output, key = NULL){
   # Order long data frame
   wto_long <- wto_long[order(wto_long$wto, decreasing = TRUE),]
   
-  # Compute standard deviation from mean (rounded)
-  # wto_long$sd_from_mean <- round(
-  #   (wto_long$wto - summary_statistics["mean"]) / summary_statistics["sd"], 3
-  # )
-  
-  # Compute MAD from median (rounded)
-  # wto_long$mad_from_median <- round(
-  #   (wto_long$wto - summary_statistics["median"]) / summary_statistics["mad"], 3
-  # )
-  
-  # Round wTO values
-  wto_long$wto <- round(wto_long$wto, 3)
-  
   # Return list
   return(
     list(
@@ -639,99 +535,89 @@ wto_descriptives <- function(wto_output, key = NULL){
 }
 
 #' @noRd
-# Condense into index list ----
-# Updated 02.02.2023
-wto_index_list <- function(wto_output, wto_indices)
+# Get the redundancy list ----
+# Updated 24.07.2023
+get_redundancy_list <- function(wto_output, wto_indices)
 {
   
+  # Obtain the node columns of indices
+  node_columns <- as.matrix(wto_indices[, c("node_i", "node_j")])
+  
   # Obtain descending order of frequencies of each index
-  index_frequencies <- sort(table(wto_indices), decreasing = TRUE)
+  index_frequencies <- sort(fast_table(node_columns), decreasing = TRUE)
   
-  # Initialize index wTO sums
-  index_wto_sums <- numeric(length(index_frequencies))
+  # Get index sums
+  index_wto_sums <- nvapply(
+    names(index_frequencies), function(target_index){
+      
+      # Obtain vector of overlap indices
+      overlapping_indices <- unlist(
+        node_columns[
+          node_columns[,"node_i"] == target_index |
+          node_columns[,"node_j"] == target_index,
+        ]
+      )
+      
+      # Return sum
+      return(
+        sum(
+          wto_output[
+            target_index, 
+            overlapping_indices[overlapping_indices != target_index]
+          ], na.rm = TRUE
+        )
+      )
+      
+    }
+  )
   
-  # Obtain sums
-  for(i in seq_along(index_frequencies)){
+  # Create order based on:
+  # 1. number of times node is redundant
+  # 2. the total weight of redundancies
+  ordered_redundancy <- names(
+    index_frequencies[
+      order(index_frequencies, index_wto_sums, decreasing = TRUE)
+    ]
+  )
+  
+  # Create list
+  redundancy_list <- vector("list", length(ordered_redundancy))
+  names(redundancy_list) <- ordered_redundancy
+  
+  # Extract redundancy list
+  while(length(ordered_redundancy) != 0){
     
-    # Target index
-    target_index <- as.numeric(names(index_frequencies)[i])
+    # Check for node in node columns
+    pairwise_exists <- ordered_redundancy[1] == node_columns
     
-    # Obtain overlapping indices
-    overlapping_indices <- overlap_indices(
-      wto_indices = wto_indices, target_index = target_index
-    )
+    # If any exist, then extract them
+    if(any(pairwise_exists)){
+      
+      # Find where pairwise exists
+      pairwise_row <- rowSums(pairwise_exists) != 0
+      
+      # Extract nodes from rows
+      extracted_nodes <- as.vector(node_columns[pairwise_row,])
+      
+      # Add values to redundancy list
+      redundancy_list[[ordered_redundancy[1]]] <-
+        extracted_nodes[extracted_nodes != ordered_redundancy[1]]
+      
+      # Update node columns
+      node_columns <- node_columns[!pairwise_row,, drop = FALSE]
+      
+    }
     
-    # Obtain sum
-    index_wto_sums[i] <- sum(wto_output[target_index, overlapping_indices], na.rm = TRUE)
+    # At the end, remove element from ordered redundancy
+    ordered_redundancy <- ordered_redundancy[-1]
     
   }
-  
-  # Add names to sums
-  names(index_wto_sums) <- names(index_frequencies)
-  
-  # Obtain unique frequenices (should already be descending)
-  unique_frequencies <- unique(index_frequencies)
-  
-  # Loop order unique frequencies
-  ordered_frequencies <- unlist(
-    lapply(unique_frequencies, function(freq){
-      
-      # Obtain target indices
-      target_indices <- index_frequencies[index_frequencies == freq]
-      
-      # Obtain target sums
-      target_sums <- index_wto_sums[names(target_indices)]
-      
-      # Reorder based on sums
-      ordered_nodes <- names(target_sums)[
-        order(target_sums, decreasing = TRUE)
-      ]
-      
-      # Return as numeric
-      return(as.numeric(ordered_nodes))
-      
-    })
-  )
-  
-  
-  # Based on ordered frequencies, extract 
-  # all indices that are tied to each other
-  overlap_list <- lapply(
-    ordered_frequencies,
-    FUN = overlap_indices,
-    wto_indices = wto_indices
-  )
-  
-  # Assign names
-  names(overlap_list) <- ordered_frequencies
-  
+
   # Return list
-  return(overlap_list)
+  return(redundancy_list[!lvapply(redundancy_list, is.null)])
   
 }
 
-#' @noRd
-# Obtain indices that overlap ----
-# Updated 02.02.2023
-overlap_indices <- function(wto_indices, target_index)
-{
-  
-  # Obtain overlap indices
-  overlapping_indices <- wto_indices[
-    wto_indices[,"row"] == target_index |
-      wto_indices[,"col"] == target_index,
-  ]
-  
-  # Obtain vector of overlap indices
-  overlapping_indices <- as.vector(as.matrix(overlapping_indices))
-  
-  # Remove target index
-  overlapping_indices <- overlapping_indices[overlapping_indices != target_index]
-  
-  # Return vector
-  return(overlapping_indices)
-  
-}
 
 #' @noRd
 # Condense the overlapping list ----
@@ -1342,94 +1228,6 @@ summary.UVA <- function(object, ...)
     c("node_i", "node_j", "wto")
   ]
   
-  # # Obtain indices with wTO greater than 0.20
-  # wto_indices <- which(wto_matrix > 0.20, arr.ind = TRUE)
-  # 
-  # # Limit indices to unique elements
-  # wto_elements <- wto_indices[
-  #   wto_indices[,"row"] < wto_indices[,"col"],
-  # ]
-  # 
-  # # Obtain values
-  # values <- numeric(nrow(wto_elements))
-  # 
-  # # Loop over values
-  # for(i in 1:nrow(wto_elements)){
-  #   values[i] <- wto_matrix[
-  #     wto_elements[i,"row"],
-  #     wto_elements[i,"col"]
-  #   ]
-  # }
-  # 
-  # # Add values to elements
-  # wto_sparse <- cbind(wto_elements, values)
-  # 
-  # # Order by values
-  # wto_ordered <- wto_sparse[
-  #   order(wto_sparse[,"values"], decreasing = TRUE),
-  # ]
-  # 
-  # # Cut into chunks
-  # ## 0.30
-  # wto_30 <- wto_ordered[
-  #   wto_ordered[,"values"] > 0.30,
-  # ]
-  # ## 0.25
-  # wto_25 <- wto_ordered[
-  #   wto_ordered[,"values"] > 0.25 &
-  #     wto_ordered[,"values"] < 0.30,
-  # ]
-  # ## 0.20
-  # wto_20 <- wto_ordered[
-  #   wto_ordered[,"values"] > 0.20 &
-  #     wto_ordered[,"values"] < 0.25,
-  # ]
-  # 
-  # # Remove values and condense into lists
-  # ## 0.30
-  # wto_30_list <- condense_overlap(
-  #   overlapping_list = wto_index_list(
-  #     wto_output = wto_matrix,
-  #     wto_indices = wto_30[
-  #       , -which(colnames(wto_30) == "values")
-  #     ]
-  #   )
-  # )
-  # ## 0.25
-  # wto_25_list <- condense_overlap(
-  #   overlapping_list = wto_index_list(
-  #     wto_output = wto_matrix,
-  #     wto_indices = wto_25[
-  #       , -which(colnames(wto_25) == "values")
-  #     ]
-  #   )
-  # )
-  # ## 0.20
-  # wto_20_list <- condense_overlap(
-  #   overlapping_list = wto_index_list(
-  #     wto_output = wto_matrix,
-  #     wto_indices = wto_20[
-  #       , -which(colnames(wto_20) == "values")
-  #     ]
-  #   )
-  # )
-  # 
-  # # Format into matrices
-  # wto_30_matrix <- list_to_matrix(wto_30_list)
-  # wto_25_matrix <- list_to_matrix(wto_25_list)
-  # wto_20_matrix <- list_to_matrix(wto_20_list)
-  # 
-  # # Replace indices with variable names
-  # wto_30_named <- indices_to_names(
-  #   colnames(wto_matrix), wto_30_matrix
-  # )
-  # wto_25_named <- indices_to_names(
-  #   colnames(wto_matrix), wto_25_matrix
-  # )
-  # wto_20_named <- indices_to_names(
-  #   colnames(wto_matrix), wto_20_matrix
-  # )
-  
   # Prepare for print
   ## Print 0.30
   cat("Variable pairs with wTO > 0.30 (large-to-very large redundancy)\n\n")
@@ -1495,7 +1293,50 @@ print.UVA <- function(x, ...)
   
 }  
   
+#' @noRd
+# "type" warning ---
+# Updated 24.07.2023
+UVA_type_warning <- function(ellipse)
+{
+  # Check for "type"
+  if("type" %in% names(ellipse) && ellipse$type != "threshold"){
   
+    warning(
+      paste0(
+        "Argument `type = \"", ellipse$type, "\"` will not be supported ",
+        "in future versions of {EGAnet}. Recent evidence suggests that ",
+        "`cut.off = 0.25` is best practice:",
+        "\n\nChristensen, A. P., Garrido, L. E., & Golino, H. (2023). ",
+        "Unique variable analysis: A network psychometrics method to ",
+        "detect local dependence. ",
+        styletext("Multivariate Behavioral Research", defaults = "italics"),
+        ", 1-18. https://doi.org/10.1080/00273171.2023.2194606",
+        "\n\nDo not submit error reports. Bugs will not be fixed"
+      ), call. = FALSE
+    )
+    
+  }
+}
+
+#' @noRd
+# "auto" is `FALSE` warning ---
+# Updated 24.07.2023
+UVA_manual_warning <- function(auto)
+{
+  
+  # Check for manual
+  if(isFALSE(auto)){
+    warning(
+      paste0(
+        "Manual decisions (`auto = FALSE`) will not be supported ",
+        "in future versions of {EGAnet}.",
+        "\n\nUse `reduce = FALSE` to perform manual inspection instead",
+        "\n\nDo not submit error reports. Bugs will not be fixed"
+      ), call. = FALSE
+    )
+  }
+  
+}
   
 
 

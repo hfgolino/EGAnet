@@ -572,7 +572,7 @@ standardize <- function(unstandardized)
 
 #' @noRd
 # Descending order ----
-# Updated 15.07.2023
+# Updated 24.07.2023
 descending_order <- function(standardized, wc, unique_communities, node_names) 
 {
   
@@ -596,7 +596,7 @@ descending_order <- function(standardized, wc, unique_communities, node_names)
   )
 
   # Return reordered results
-  return(standardized[order_names,])
+  return(standardized[order_names,, drop = FALSE])
   
 }
 

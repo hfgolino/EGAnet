@@ -14,7 +14,8 @@ UVA(
   reduce.method = c("latent", "mean", "remove", "sum"),
   auto = TRUE,
   label.latent = FALSE,
-  EGAnet.version = packageVersion("EGAnet"),
+  verbose = FALSE,
+  uva.method = c("MBR", "EJP"),
   ...
 )
 }
@@ -96,17 +97,17 @@ latent variables be labelled?
 Defaults to \code{FALSE}.
 Set to \code{TRUE} to type your own labels}
 
+\item{...}{Additional arguments.
+Arguments that should be passed onto old versions of \code{UVA}
+(use the \code{EGAnet.version} argument to set the version),
+\code{\link[EGAnet]{EGA}}, and \code{\link[lavaan]{cfa}}}
+
 \item{EGAnet.version}{Character (length = 1).
 \code{\link{EGAnet}} version used to perform previous
 \code{UVA}.
 Defaults to current version.
 Set version to previous version to reproduce results
 from an older version}
-
-\item{...}{Additional arguments.
-Arguments that should be passed onto old versions of \code{UVA}
-(use the \code{EGAnet.version} argument to set the version),
-\code{\link[EGAnet]{EGA}}, and \code{\link[lavaan]{cfa}}}
 }
 \description{
 Identifies redundant variables in a multivariate dataset
