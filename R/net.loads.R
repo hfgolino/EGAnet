@@ -89,7 +89,7 @@
 #' @export
 #'
 # Network Loadings
-# Updated 13.07.2023
+# Updated 25.07.2023
 # Default = "BRM" or `net.loads` from version 1.2.3
 # Experimental = new signs and cross-loading adjustment
 net.loads <- function(
@@ -246,6 +246,11 @@ net.loads <- function(
   # Add "methods" attributes
   attr(results, "methods") <- list(
     loading.method = loading.method, rotation = rotation
+  )
+  
+  # Add "membership" attributes for `net.scores`
+  attr(results, "membership") <- list(
+    wc = wc
   )
   
   # Set class

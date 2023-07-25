@@ -1763,49 +1763,19 @@ legacy_EGA_args <- function(ellipse)
 
 #' @noRd
 # Make unidimensional CFA model ----
-# Updated 02.02.2023
+# Updated 25.07.2023
 make_unidimensional_cfa <- function(variable_names)
 {
-  
-  # Check for number of variables
-  if(length(variable_names) == 2){
-    
-    # Make latent factor model
-    # Fix all loadings to 1
-    model <- paste0(
-      "LF =~ ",
-      paste0(
-        "1*", variable_names, collapse = " + "
+  return(
+    paste(
+      "LF =~",
+      swiftelse(
+        length(variable_names == 2),
+        paste0("a*", variable_names, collapse = " + "),
+        paste(variable_names, collapse = " + ")
       )
     )
-    
-    # Fix residual variances to same value
-    model <- paste(
-      model,
-      paste0(
-        variable_names,
-        "~~theta*",
-        variable_names,
-        collapse = " \n "
-      ),
-      sep = " \n "
-    )
-    
-  }else{
-    
-    # Make latent factor model
-    model <- paste0(
-      "LF =~ ",
-      paste(
-        variable_names, collapse = " + "
-      )
-    )
-    
-  }
-  
-  # Return model
-  return(model)
-  
+  )
 }
 
 #' @noRd
@@ -2417,7 +2387,7 @@ basic_plot_setup <- function(network, wc = NULL, ...)
 
 #' @noRd
 # Basic set up for single plot ----
-# Updated 01.07.2023
+# Updated 25.07.2023
 single_plot <- function(network, wc = NULL, ...)
 {
   
@@ -2425,7 +2395,7 @@ single_plot <- function(network, wc = NULL, ...)
   ## If no memberships, then plot network
   # as if all memberships are missing
   if(is.null(wc)){
-    wc <- rep(NA, dimensions[2])
+    wc <- rep(NA, dim(network)[2])
   }
   
   # Reorder network and communities

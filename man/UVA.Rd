@@ -9,13 +9,12 @@ UVA(
   network = NULL,
   n = NULL,
   key = NULL,
+  uva.method = c("MBR", "EJP"),
   cut.off = 0.25,
   reduce = TRUE,
-  reduce.method = c("latent", "mean", "remove", "sum"),
   auto = TRUE,
-  label.latent = FALSE,
+  reduce.method = c("latent", "mean", "remove", "sum"),
   verbose = FALSE,
-  uva.method = c("MBR", "EJP"),
   ...
 )
 }
@@ -46,26 +45,6 @@ Defaults to \code{0.25}}
 Whether redundancies should be reduced in data.
 Defaults to \code{TRUE}}
 
-\item{reduce.method}{Character.
-Method to reduce redundancies:
-
-\itemize{
-
-\item{\code{"latent"}}
-{Computes latent variables when there are three or more
-redundant variables. Computes sum otherwise.
-}
-
-\item{\code{"remove"}}
-{Removes all but one variable from a set of redundant variables
-}
-
-\item{\code{"sum"}}
-{Computes sum of redundant variables
-}
-
-}}
-
 \item{auto}{Logical (length = 1).
 Whether \code{reduce} should occur automatically using different rules
 depending on reduction method:
@@ -91,16 +70,36 @@ the variable with the largest standard deviation is kept.
 
 }}
 
-\item{label.latent}{Boolean (length = 1).
-When \code{reduce.method = "latent"}, should
-latent variables be labelled?
-Defaults to \code{FALSE}.
-Set to \code{TRUE} to type your own labels}
+\item{reduce.method}{Character.
+Method to reduce redundancies:
+
+\itemize{
+
+\item{\code{"latent"}}
+{Computes latent variables when there are three or more
+redundant variables. Computes sum otherwise.
+}
+
+\item{\code{"remove"}}
+{Removes all but one variable from a set of redundant variables
+}
+
+\item{\code{"sum"}}
+{Computes sum of redundant variables
+}
+
+}}
 
 \item{...}{Additional arguments.
 Arguments that should be passed onto old versions of \code{UVA}
 (use the \code{EGAnet.version} argument to set the version),
 \code{\link[EGAnet]{EGA}}, and \code{\link[lavaan]{cfa}}}
+
+\item{label.latent}{Boolean (length = 1).
+When \code{reduce.method = "latent"}, should
+latent variables be labelled?
+Defaults to \code{FALSE}.
+Set to \code{TRUE} to type your own labels}
 
 \item{EGAnet.version}{Character (length = 1).
 \code{\link{EGAnet}} version used to perform previous

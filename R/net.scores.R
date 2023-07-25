@@ -171,7 +171,7 @@ net.scores <- function (
   # Return results
   return(
     list(
-      scores = compute_scores(loadings, data, scoring.method, wc),
+      scores = compute_scores(loadings, data, scoring.method),
       loadings = loadings
     )
   )
@@ -208,9 +208,37 @@ imputation <- function(data, impute)
 }
 
 #' @noRd
+# Zero-out cross-loadings ----
+# Consistent with hierarchical CFA
+# Updated 25.07.2023
+zero_out <- function(loadings, wc){
+  
+  # Get names of memberships
+  wc_names <- names(wc)
+  
+  # Get loadings names
+  loadings_names <- dimnames(loadings)[[2]]
+  
+  # Loop over unique memberships
+  for(membership in unique(wc)){
+
+    # Set cross-loadings to zero
+    loadings[
+      wc_names[wc == membership],
+      loadings_names != membership
+    ] <- 0
+    
+  }
+  
+  # Return loadings
+  return(loadings)
+  
+}
+
+#' @noRd
 # Scores computation ----
-# Updated 24.07.2023
-compute_scores <- function(loadings, data, scoring.method, wc)
+# Updated 25.07.2023
+compute_scores <- function(loadings, data, scoring.method)
 {
   
   # Method must exist, so continue
@@ -219,14 +247,19 @@ compute_scores <- function(loadings, data, scoring.method, wc)
     # Compute unrotated scores
     unrotated <- network_scores(
       data = data,
-      loads = loadings$std
+      loads = zero_out(
+        loadings$std, attr(loadings, "membership")$wc
+      )
     )
     
     # Compute rotated scores (if available)
     if(!is.null(loadings$rotated)){
       rotated <- network_scores(
         data = data,
-        loads = loadings$rotated$loadings
+        loads = zero_out(
+          loadings$rotated$loadings,
+          attr(loadings, "membership")$wc
+        )
       )
     }else{rotated <- NULL}
     
