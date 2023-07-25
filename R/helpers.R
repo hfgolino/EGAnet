@@ -321,6 +321,70 @@ reproducible_parametric <- function(
   
 }
 
+#' @noRd
+# Get time ----
+# Updated 25.07.2023
+get_time <- function(
+    scale = c(
+      "nanosecond", "microsecond",
+      "millisecond", "second",
+      "minute", "hour"
+    )
+)
+{
+
+  # Return call from C
+  return(
+    .Call(
+      "r_time",
+      switch(
+        scale,
+        "nanosecond" = 1L, "microsecond" = 2L,
+        "millisecond" = 3L, "second" = 4L,
+        "minute" = 5L, "hour" = 6L
+      ),
+      PACKAGE = "EGAnet"
+    )
+  )
+  
+}
+
+#' @noRd
+# Shuffle (without replacement) ----
+# 2-3x faster than `sample.int` with `useHash = FALSE`
+# Updated 25.07.2023
+shuffle <- function(x, seed = NULL)
+{
+  
+  # Return call from C
+  return(
+    .Call(
+      "r_shuffle",
+      x, as.integer(swiftelse(is.null(seed), 0, seed)),
+      PACKAGE = "EGAnet"
+    )
+  )
+  
+}
+
+#' @noRd
+# Shuffle (with replacement) ----
+# 2-3x faster than `sample.int` with `useHash = FALSE`
+# Updated 25.07.2023
+shuffle_replace <- function(x, seed = NULL)
+{
+  
+  # Return call from C
+  return(
+    .Call(
+      "r_shuffle_replace",
+      x, as.integer(swiftelse(is.null(seed), 0, seed)),
+      PACKAGE = "EGAnet"
+    )
+  )
+  
+}
+
 # # Generate reproducible seed ----
 # # Seed generation that does *not* affect R's RNG
 # # Get seeds from zero up to 32-bit maximum
@@ -364,7 +428,7 @@ reproducible_parametric <- function(
 # Generate reproducible resampling bootstrap ----
 # (multivariate normal samples)
 # A wrapper over `reproducible_seed` and `reproducible_sample`
-# Updated 22.07.2023
+# Updated 25.07.2023
 reproducible_resampling <- function(
     data, samples, cases# , seed
 )
@@ -377,7 +441,7 @@ reproducible_resampling <- function(
       # reproducible_seed(n = samples, seed = seed),
       function(single_seed){
         # data[r_sample_with_replacement(n = cases, seed = single_seed),]
-        data[sample.int(n = cases, replace = TRUE, useHash = FALSE),]
+        data[shuffle_replace(seq_len(cases)),]
       }
     )
   )

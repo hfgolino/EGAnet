@@ -862,7 +862,7 @@ plot.dynEGA.Group <- function(x, base = 1, ...)
 
 #' @exportS3Method 
 # S3 Plot Method (Individual) ----
-# Updated 14.07.2023
+# Updated 25.07.2023
 plot.dynEGA.Individual <- function(x, id = NULL, ...)
 {
   
@@ -951,9 +951,7 @@ plot.dynEGA.Individual <- function(x, id = NULL, ...)
     ID_numbers <- min(ID_length, 4)
     
     # Randomly sample from IDs
-    random_IDs <- sample(
-      seq_len(ID_length), ID_numbers, replace = FALSE
-    )
+    random_IDs <- shuffle(seq_len(ID_length))[seq_len(ID_numbers)]
     
     # Get ID names
     ID_names <- names(x)[random_IDs]

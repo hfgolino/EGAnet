@@ -219,7 +219,7 @@
 #' @export
 #'
 # Measurement Invariance
-# Updated 18.07.2023
+# Updated 25.07.2023
 invariance <- function(
     data, groups, iter = 500, 
     structure = NULL, type = c("loadings"),
@@ -367,7 +367,7 @@ invariance <- function(
   
   # Permutate groups
   perm_groups <- lapply(seq_len(iter), function(i){
-    sample(groups, size = dimensions[1], replace = FALSE)
+    shuffle(groups)
   })
   
   # Perform permutation estimation of loadings

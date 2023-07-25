@@ -1,10 +1,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include <time.h>
 #include <R.h>
 #include <Rinternals.h>
 #include "modularity.h"
+#include "shuffle.h"
 
 // Function to compute modularity gain
 double modularity_gain(
@@ -246,13 +246,6 @@ int* reindex_membership(int* membership, int cols) {
     // Return membership
     return(membership);
 
-}
-
-// Get clock time in nanoseconds
-uint64_t get_time_ns() {
-    struct timespec ts;
-    clock_gettime(CLOCK_REALTIME, &ts);
-    return (uint64_t)ts.tv_sec * 1000000000ULL + (uint64_t)ts.tv_nsec;
 }
 
 // Fisher-Yates (or Knuth) Shuffle

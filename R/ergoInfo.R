@@ -180,8 +180,6 @@ ergoInfo <- function(
   # seed_values <- reproducible_seed(n = 1000, seed = seed)
   iter_sequence <- seq_len(1000)
 
-  set.seed(1234)
-  
   # Get k-complexity
   individual_kcomplexity <- nvapply( # seed_values,
     iter_sequence, function(iteration){
@@ -191,10 +189,12 @@ ergoInfo <- function(
         k_complexity(
           edge_list[ # rows
             # reproducible_sample( # reproducible `sample`
-            sample(
-              x = edge_sequence, size = edge_rows,
-              replace = TRUE# , seed = single_seed
-            ),
+            shuffle_replace(edge_sequence),
+            # 
+            # sample(
+            #   x = edge_sequence, size = edge_rows,
+            #   replace = TRUE# , seed = single_seed
+            # )
             keep_weights # either pairwise edges or weights
           ],
           ordering = ordering
@@ -253,10 +253,11 @@ ergoInfo <- function(
         k_complexity(
           edge_list[ # rows
             # reproducible_sample( # reproducible `sample`
-            sample(
-              x = population_edge_sequence, size = population_edge_rows,
-              replace = TRUE# , seed = single_seed
-            ),
+            shuffle_replace(population_edge_sequence),
+            # sample(
+            #   x = population_edge_sequence, size = population_edge_rows,
+            #   replace = TRUE# , seed = single_seed
+            # ),
             keep_weights # either pairwise edges or weights
           ],
           ordering = ordering

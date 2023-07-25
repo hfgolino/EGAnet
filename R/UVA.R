@@ -143,8 +143,9 @@
 # Unique Variable Analysis ----
 # Updated 07.02.2023
 UVA <- function(
-    data = NULL, network = NULL, n = NULL, key = NULL, cut.off = 0.25,
-    reduce = TRUE, reduce.method = c("latent", "mean", "remove", "sum"),
+    data = NULL, network = NULL, n = NULL, 
+    key = NULL, cut.off = 0.25, reduce = TRUE, 
+    reduce.method = c("latent", "mean", "remove", "sum"),
     auto = TRUE, label.latent = FALSE, verbose = FALSE,
     uva.method = c("MBR", "EJP"),
     ... # `EGA`, {lavaan}, and "EGAnet.version" arguments
@@ -191,15 +192,18 @@ UVA <- function(
     )$network
   }
   
+  # Get key
+  key <- swiftelse(is.null(key), dimnames(network)[[2]], key)
+  
   # Compute weighted topological overlap
-  wto_output2 <- abs(wto(network))
+  wto_output <- abs(wto(network))
   
   # Compute descriptives
-  descriptives2 <- wto_descriptives(wto_output2, key)
+  descriptives <- wto_descriptives(wto_output)
   
   # Cut-off indices
-  wto_indices2 <- descriptives2$pairwise[
-    descriptives2$pairwise$wto >= cut.off,, drop = FALSE
+  wto_indices <- descriptives$pairwise[
+    descriptives$pairwise$wto >= cut.off,, drop = FALSE
   ]
   
   # Check for whether any redundancies exist
@@ -225,8 +229,7 @@ UVA <- function(
   }
   
   # Combine indices into a list
-  redundant_variables <- get_redundancy_list(wto_output2, wto_indices2)
-  
+  redundant_variables <- get_redundancy_list(wto_output, wto_indices)
 
   # Determine whether data should be reduced
   if(isTRUE(reduce)){
@@ -448,7 +451,6 @@ UVA <- function(
 }
 
 # Bug checking ----
-
 # # Select Five Factor Model personality items only
 # idx <- na.omit(match(gsub("-", "", unlist(psychTools::spi.keys[1:5])), colnames(psychTools::spi)))
 # items <- psychTools::spi[,idx]
@@ -459,26 +461,20 @@ UVA <- function(
 # 
 # data = items; network = NULL; n = NULL; key = key;
 # cut.off = 0.25; reduce = TRUE; reduce.method = "remove";
-# auto = TRUE; label.latent = FALSE;
-# EGAnet.version = packageVersion("EGAnet");
-# ega_ARGS <- ega_arguments(arguments = list())
-# ... # `EGA`, {lavaan}, and "EGAnet.version" arguments
+# auto = TRUE; label.latent = FALSE; verbose = FALSE
+# EGAnet.version = packageVersion("EGAnet"); uva.method = "MBR"
+# ellipse = list()
 
 #' @noRd
 # Obtain descriptives ----
 # Updated 24.07.2023
-wto_descriptives <- function(wto_output, key = NULL){
+wto_descriptives <- function(wto_output){
   
   # Get dimensions
   dimensions <- dim(wto_output)
   
   # Column sequence
   dimension_sequence <- seq_len(dimensions[2])
-  
-  # Obtain node names
-  node_names <- swiftelse(
-    is.null(key), dimnames(wto_output)[[2]], key
-  )
   
   # Initialize data frame
   wto_long <- fast.data.frame(
@@ -495,10 +491,6 @@ wto_descriptives <- function(wto_output, key = NULL){
   
   # Remove all values below zero
   wto_long <- wto_long[wto_long$wto > 0,]
-  
-  # Replace node names
-  wto_long$node_i <- node_names[wto_long$node_i]
-  wto_long$node_j <- node_names[wto_long$node_j]
   
   # Compute MAD, RANGE, QUANTILE
   MAD <- mad(wto_long$wto, constant = 1, na.rm = TRUE)
@@ -548,7 +540,7 @@ get_redundancy_list <- function(wto_output, wto_indices)
   
   # Get index sums
   index_wto_sums <- nvapply(
-    names(index_frequencies), function(target_index){
+    as.numeric(names(index_frequencies)), function(target_index){
       
       # Obtain vector of overlap indices
       overlapping_indices <- unlist(

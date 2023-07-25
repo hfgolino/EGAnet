@@ -44,6 +44,8 @@ o ADD: `convert2tidygraph` for `ggraph` and `tidygraph` support -- thanks to Dom
 
 o ADD: "multilevel" plotting support for `hierEGA` (only used when `scores = "network"` since factor scores don't directly align with EGA detected dimensions)
 
+o ADD: internal functions `shuffle` and `shuffle_replace` to replace `sample` with and without replacement; performed in C and allows seed setting independent of R (about 2-3x faster)
+
 o UPDATE: `EBICglasso.qgraph` and `TMFG` were optimized; `TMFG` is now 2x faster
 
 o UPDATE: `TMFG` can now directly estimate a GGM with the argument 'partial = TRUE'; implements the Local-Global Inversion method from Barfuss et al. (2016)
