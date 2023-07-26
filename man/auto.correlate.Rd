@@ -39,6 +39,7 @@ Defaults to \code{TRUE}}
 
 \item{na.data}{Character (length = 1).
 How should missing data be handled?
+Defaults to \code{"pairwise"}.
 Available options:
 
 \itemize{
@@ -54,6 +55,7 @@ two variables}
 
 \item{empty.method}{Character (length = 1).
 Method for empty cell correction in \code{\link[EGAnet]{polychoric.matrix}}.
+Defaults to \code{"none"}
 Available options:
 
 \itemize{
@@ -74,13 +76,13 @@ in the joint frequency table between two variables}
 
 \item{empty.value}{Character (length = 1).
 Value to add to the joint frequency table cells in \code{\link[EGAnet]{polychoric.matrix}}.
-Accepts numeric values between 0 and 1 or
-specific methods:
+Defaults to \code{"none"}.
+Accepts numeric values between 0 and 1 or specific methods:
 
 \itemize{
 
 \item{\code{"none"}}
-{Adds no value (\code{0}) to the empirical joint
+{Adds no value (\code{0}) to the empirical joint 
 frequency table between two variables}
 
 \item{\code{"point_five"}}
@@ -89,6 +91,7 @@ frequency table between two variables}
 \item{\code{"one_over"}}
 {Adds \code{1 / n} where \code{n} equals the number of cells
 based on \code{empty.method}. For \code{empty.method = "zero"},
+\code{n} equals the number of zero cells
 }
 
 }}
