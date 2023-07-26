@@ -220,7 +220,7 @@ community.consensus <- function(
   }
   
   # Obtain strength
-  node_strength <- strength(network_matrix)
+  node_strength <- colSums(abs(network_matrix), na.rm = TRUE)
   
   # Initialize memberships as missing
   membership <- rep(NA, dimensions[2])

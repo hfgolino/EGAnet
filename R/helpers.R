@@ -208,27 +208,11 @@ symmetric_matrix_lapply <- function(X, FUN, ...){
 # REPRODUCIBLE RANDOM GENERATION ----
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-# For these random generation functions, the goal
-# is reproducibility, which runs counter to "random".
-# However, for bootstrap results to be reproduced
-# there is a need to generate "random" samples that
-# can be reproduced so that the user arrives at the
-# same results *without* influencing R's random number
-# generation or changing a user-defined seed previous
-# to, while, or after using {EGAnet} functions.
+# Not actually reproducible (yet)
+# Resampling can be made to be reproducible (set seed in C)
+# Parametric cannot
 #
-# The `reproducible_sample` and `reproducible_seed`
-# functions were written in C++ with the assistance
-# of GPT-4 
-
-
-# # Random normal wrapper ----
-# # About 4.5x faster than R's `rnorm`
-# # Updated 24.06.2023
-# rnorm_ziggurat <- function(n, mean = 0, sd = 1)
-# {
-#   return(mean + sd * RcppZiggurat::zrnorm(n))
-# }
+# TODO: implement `rnorm` in C (then reproducible)
 
 #' @noRd
 # Generate multivariate normal data ----
@@ -280,7 +264,6 @@ MASS_mvrnorm <- function(
 # Updated 10.07.2023
 MASS_mvrnorm_quick <- function(n, mu, np, coV)
 {
-  # return(t(mu + tcrossprod(coV, matrix(rnorm_ziggurat(np), nrow = n))))
   return(t(mu + tcrossprod(coV, matrix(rnorm(np), nrow = n))))
 }
 
@@ -303,11 +286,7 @@ reproducible_parametric <- function(
   eigenvalues[non_zero] <- sqrt(eigenvalues[non_zero])
   coV <- eS$vectors %*% diag(eigenvalues, p)
   # avoids repeated matrix multiplication
-  
-  # Next, set seed for random normal generation
-  # RcppZiggurat::zsetseed(seed)
-  # Seed does *not* affect R's seed and RNG
-  
+
   # Then, generate samples
   return(
     lapply(
@@ -385,62 +364,20 @@ shuffle_replace <- function(x, seed = NULL)
   
 }
 
-# # Generate reproducible seed ----
-# # Seed generation that does *not* affect R's RNG
-# # Get seeds from zero up to 32-bit maximum
-# # `0` is reserved for random seed
-# # Updated 17.06.2023
-# reproducible_seed <- function(n, seed = NULL)
-# {
-#   return(r_sample_seeds(n, swiftelse(is.null(seed), 0, seed)))
-# }
-
-# # Generate reproducible shuffling ----
-# # About 6x faster than R's `sample`
-# # Updated 01.07.2023
-# reproducible_sample <- function(
-#     x, size, replace, seed
-# ){
-#   
-#   # Check for with replacement
-#   if(isTRUE(replace)){ # With replacement
-#     
-#     # Get indices
-#     ## Implemented in C++
-#     ## Internal function
-#     shuffled_indices <- r_sample_with_replacement(size, seed)
-#     
-#   }else{ # Without replacement
-#     
-#     # Get indices
-#     ## Implemented in C++
-#     ## Internal function
-#     shuffled_indices <- r_sample_without_replacement(seq_len(size), seed)
-#     
-#   }
-#   
-#   # Return shuffled data
-#   return(x[shuffled_indices])
-#   
-# }
-
 #' @noRd
 # Generate reproducible resampling bootstrap ----
 # (multivariate normal samples)
-# A wrapper over `reproducible_seed` and `reproducible_sample`
 # Updated 25.07.2023
 reproducible_resampling <- function(
-    data, samples, cases# , seed
+    data, samples, cases
 )
 {
   
-  # More direct approach than calling `reproducible_sample`
+  # Return samples
   return(
     lapply(
       seq_len(samples),
-      # reproducible_seed(n = samples, seed = seed),
-      function(single_seed){
-        # data[r_sample_with_replacement(n = cases, seed = single_seed),]
+      function(iteration){
         data[shuffle_replace(seq_len(cases)),]
       }
     )
@@ -452,7 +389,9 @@ reproducible_resampling <- function(
 # Generate reproducible bootstrap data ----
 # Wrapper for `reproducible_parametric` and
 # `reproducible_resampling`
-# Updated 10.07.2023
+# NOT ACTUALLY REPRODUCIBLE
+# NEEDS C IMPLEMENTATION OF `rnorm` (TODO!)
+# Updated 26.07.2023
 reproducible_bootstrap <- function(
     data = NULL, samples, cases, mu = NULL, Sigma = NULL, # seed,
     type = c("parametric", "resampling")
@@ -466,7 +405,7 @@ reproducible_bootstrap <- function(
     return(
       bootstrap_samples <- reproducible_parametric(
         samples = samples, cases = cases,
-        mu = mu, Sigma = Sigma# , seed = seed
+        mu = mu, Sigma = Sigma
       )
     )
     
@@ -476,7 +415,7 @@ reproducible_bootstrap <- function(
     return(
       reproducible_resampling(
         data = data, samples = samples,
-        cases = cases# , seed = seed
+        cases = cases
       )
     )
     
@@ -2761,30 +2700,6 @@ trace <- function(object)
 }
 
 #' @noRd
-# Floating point equal ----
-# Because sometimes 1 != 1 when it should
-# Updated 23.06.2023
-float_equal <- function(x, y, tolerance = 1e-06)
-{
-  return(abs(x - y) < tolerance)
-}
-
-#' @noRd
-# Node Strength ----
-# Updated 27.06.2023
-strength <- function(network, absolute = TRUE)
-{
-
-  # Determine whether absolute should be used
-  if(isTRUE(absolute)){
-    return(colSums(abs(network), na.rm = TRUE))
-  }else{
-    return(colSums(network, na.rm = TRUE))
-  }
-
-}
-
-#' @noRd
 # Cohen's d ----
 # Updated 13.07.2023
 d <- function(sample1, sample2, paired = FALSE)
@@ -3012,46 +2927,6 @@ adapt.a <- function (test = c("anova","chisq","cor","one.sample","two.sample","p
 # SYSTEM FUNCTIONS ----
 #%%%%%%%%%%%%%%%%%%%%%%
 
-#' @importFrom utils packageVersion
-#' @noRd
-# Error Report ----
-# Updated 10.05.2023
-error.report <- function(result, SUB_FUN, FUN)
-{
-  # Let user know that an error has occurred
-  message(paste("\nAn error has occurred in the '", SUB_FUN, "' function of '", FUN, "':\n", sep =""))
-  
-  # Give them the error to send to you
-  cat(paste(result))
-  
-  # Tell them where to send it
-  message("\nPlease open a new issue on GitHub (bug report): https://github.com/hfgolino/EGAnet/issues/new/choose")
-  
-  # Give them information to fill out the issue
-  OS <- as.character(Sys.info()["sysname"])
-  OSversion <- paste(as.character(Sys.info()[c("release", "version")]), collapse = " ")
-  Rversion <- paste(R.version$major, R.version$minor, sep = ".")
-  EGAversion <- paste(unlist(packageVersion("EGAnet")), collapse = ".")
-  
-  # Let them know to provide this information
-  message(paste("\nBe sure to provide the following information:\n"))
-  
-  # To reproduce
-  message(styletext("To Reproduce:", defaults = "bold"))
-  message(paste(" ", textsymbol("bullet"), " Function error occurred in: ", SUB_FUN, " function of ", FUN, sep = ""))
-  
-  # R and {EGAnet} version
-  message(styletext("\nR and {EGAnet} versions:", defaults = "bold"))
-  message(paste(" ", textsymbol("bullet"), " R version: ", Rversion, sep = ""))
-  message(paste(" ", textsymbol("bullet"), " {EGAnet} version: ", EGAversion, sep = ""))
-  
-  # Desktop
-  message(styletext("\nOperating System:", defaults = "bold"))
-  message(paste(" ", textsymbol("bullet"), " OS: ", OS, sep = ""))
-  message(paste(" ", textsymbol("bullet"), " Version: ", OSversion, sep = ""))
-  
-}
-
 #' @noRd
 # OS and System Check ----
 # Updated 08.09.2020
@@ -3121,68 +2996,65 @@ colortext <- function(text, number = NULL, defaults = NULL)
 
 #' @noRd
 # Style text ----
-# Updated 08.09.2020
-styletext <- function(text, defaults = c("bold", "italics", "highlight",
-                                         "underline", "strikethrough"))
+# Updated 26.07.2023
+styletext <- function(
+    text, defaults = c(
+      "bold", "italics", "highlight",
+      "underline", "strikethrough"
+    )
+)
 {
-  # Check system
-  sys.check <- system.check()
-  
-  if(sys.check$TEXT)
+
+  if(system.check()$TEXT)
   {
-    if(missing(defaults))
-    {number <- 0
+    
+    if(missing(defaults)){
+      number <- 0
     }else{
       
-      # Get number code
-      number <- switch(defaults,
-                       bold = 1,
-                       italics = 3,
-                       underline = 4,
-                       highlight = 7,
-                       strikethrough = 9
+      number <- switch(
+        defaults,
+        bold = 1, italics = 3,
+        underline = 4, highlight = 7,
+        strikethrough = 9
       )
       
     }
     
     return(paste("\033[", number, ";m", text, "\033[0m", sep = ""))
-  }else{return(text)}
+    
+  }else{
+    return(text)
+  }
+  
 }
 
 #' @noRd
 # Symbols ----
-# Updated 24.04.2020
-textsymbol <- function(symbol = c("alpha", "beta", "chi", "delta",
-                                  "eta", "gamma", "lambda", "omega",
-                                  "phi", "pi", "rho", "sigma", "tau",
-                                  "theta", "square root", "infinity",
-                                  "check mark", "x", "bullet")
+# Updated 26.07.2024
+textsymbol <- function(
+    symbol = c(
+      "alpha", "beta", "chi", "delta",
+      "eta", "gamma", "lambda", "omega",
+      "phi", "pi", "rho", "sigma", "tau",
+      "theta", "square root", "infinity",
+      "check mark", "x", "bullet"
+    )
 )
 {
-  # Get number code
-  sym <- switch(symbol,
-                alpha = "\u03B1",
-                beta = "\u03B2",
-                chi = "\u03C7",
-                delta = "\u03B4",
-                eta = "\u03B7",
-                gamma = "\u03B3",
-                lambda = "\u03BB,",
-                omega = "\u03C9",
-                phi = "\u03C6",
-                pi = "\u03C0",
-                rho = "\u03C1",
-                sigma = "\u03C3",
-                tau = "\u03C4",
-                theta = "\u03B8",
-                "square root" = "\u221A",
-                infinity = "\u221E",
-                "check mark" = "\u2713",
-                x = "\u2717",
-                bullet = "\u2022"
+  # Return code
+  return(
+    switch(
+      symbol,
+      alpha = "\u03B1", beta = "\u03B2", chi = "\u03C7",
+      delta = "\u03B4", eta = "\u03B7", gamma = "\u03B3",
+      lambda = "\u03BB,", omega = "\u03C9", phi = "\u03C6",
+      pi = "\u03C0", rho = "\u03C1", sigma = "\u03C3", tau = "\u03C4", 
+      theta = "\u03B8", "square root" = "\u221A", infinity = "\u221E", 
+      "check mark" = "\u2713", x = "\u2717", bullet = "\u2022"
+    )
   )
   
-  return(sym)
 }
 
 #' @noRd
@@ -3212,30 +3084,6 @@ totitle <- function(string)
   
   # Paste words back together
   return(paste(titleCased, collapse = " "))
-  
-}
-
-#' @noRd
-# Convert version to number ----
-# Updated 01.07.2023
-version_conversion <- function(version)
-{
-  return(as.numeric(gsub("\\.", "", as.character(version))))
-}
-
-#' @noRd
-# No names print ----
-# Updated 25.06.2023
-no_name_print <- function(object){
-  
-  # Convert object to data frame
-  df <- as.data.frame(object)
-  
-  # Remove column names
-  colnames(df) <- NULL
-  
-  # Print with no quotes or row names
-  print(df, quote = FALSE, row.names = FALSE)
   
 }
 

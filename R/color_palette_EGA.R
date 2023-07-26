@@ -214,7 +214,7 @@ color_palette_EGA <- function (name, wc, sorted = FALSE)
     if(length(name) != length(uniq.wc)){
       
       if(isTRUE(sorted)){
-        return(get("polychrome")[color.sort(wc)])
+        return(get("polychrome")[sort(wc, na.last = TRUE)])
       }else{
         return(get("polychrome")[wc])
       }
@@ -239,7 +239,7 @@ color_palette_EGA <- function (name, wc, sorted = FALSE)
     }
 
     if(isTRUE(sorted)){
-      return(name[color.sort(wc)])
+      return(name[sort(wc, na.last = TRUE)])
     }else{
       return(name[wc])
     }
@@ -250,7 +250,7 @@ color_palette_EGA <- function (name, wc, sorted = FALSE)
     if(name %in% row.names(RColorBrewer::brewer.pal.info)){
 
       if(isTRUE(sorted)){
-        return(RColorBrewer::brewer.pal(max(color.sort(wc), na.rm = TRUE), name)[color.sort(wc)])
+        return(RColorBrewer::brewer.pal(max(sort(wc, na.last = TRUE), na.rm = TRUE), name)[sort(wc, na.last = TRUE)])
       }else{
         return(RColorBrewer::brewer.pal(max(wc, na.rm = TRUE), name)[wc])
       }
@@ -265,7 +265,7 @@ color_palette_EGA <- function (name, wc, sorted = FALSE)
       if(exists(name)){
         
         if(isTRUE(sorted)){
-          return(get(name)[color.sort(wc)])
+          return(get(name)[sort(wc, na.last = TRUE)])
         }else{
           return(get(name)[wc])
         }
@@ -273,7 +273,7 @@ color_palette_EGA <- function (name, wc, sorted = FALSE)
       }else{
         
         if(isTRUE(sorted)){
-          return(get("polychrome")[color.sort(wc)])
+          return(get("polychrome")[sort(wc, na.last = TRUE)])
         }else{
           return(get("polychrome")[wc])
         }
@@ -283,23 +283,6 @@ color_palette_EGA <- function (name, wc, sorted = FALSE)
     }
 
   }
-}
-
-#' @importFrom graphics text
-#' @noRd
-# Color sorting for EGA palettes
-# For EGA_color_palette
-# Updated 17.12.2020
-color.sort <- function (wc)
-{
-  unlist(lapply(sort(wc, na.last = TRUE), function(x, uniq){
-    
-    if(is.na(x)){
-      NA
-    }else{
-      which(x == uniq)
-    }
-  }, uniq = sort(unique(wc), na.last = TRUE)))
 }
 
 

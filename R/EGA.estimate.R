@@ -424,7 +424,7 @@ glasso_wrapper <- function(
     )
     
     # Check for disconnected nodes
-    if(any(strength(network) == 0) & gamma > 0){
+    if(any(colSums(abs(network), na.rm = TRUE) == 0) & gamma > 0){
       gamma <- gamma - 0.25 # decrease gamma
     }else{
       break # all nodes are connected or gamma equals zero

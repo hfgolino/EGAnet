@@ -71,7 +71,7 @@ community.louvain <- function(
   network_matrix <- ensure_dimension_names(network_matrix)
   
   # Obtain strength
-  node_strength <- strength(network_matrix)
+  node_strength <- colSums(abs(network_matrix), na.rm = TRUE)
   
   # Initialize memberships as missing
   membership <- rep(NA, length(node_strength))
