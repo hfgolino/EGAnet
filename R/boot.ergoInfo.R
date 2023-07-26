@@ -1,50 +1,60 @@
-#' Bootstrap Test for the Ergodicity Information Index
+#' @title Bootstrap Test for the Ergodicity Information Index
 #'
-#' @description Tests the Ergodicity Information Index obtained in the empirical sample with a distribution of EII 
-#' obtained by bootstrap sampling. In traditional bootstrap sampling, individual participants are resampled with
-#' replacement from the empirical sample. This process is time consuming when carried out across \emph{v} number
-#' of variables, \emph{n} number of participants, \emph{t} number of time points, and \emph{i} number of iterations.
-#' 
-#' A more efficient process, the approach applied here, is to obtain a sampling distribution of EII values as if
-#' all participants in the data have the population network structure. Sampling is not perfect and therefore
-#' random noise is added to the edges of the population structure to simulate sampling variability. This noise
-#' follows a random uniform distribution ranging from -0.10 to 0.10. In addition, a proportion of edges are
-#' rewired to allow for slight variations on the population structure. The proportion of nodes that are rewired
-#' is sampled from a random uniform distribution between 0.20 to 0.40. This process is carried out for each
-#' participant resulting in \emph{n} variations of the population structure. Afterward, EII is computed. This
-#' process is carried out for \emph{i} iterations (e.g., 100).
-#' 
-#' The result is a sampling distribution of EII values that would be expected if the process was ergodic. If
-#' the empirical EII value is significantly less than the distribution or not significantly different, then 
-#' the empirical data can be expected to be generated from an ergodic process and the population structure is 
-#' sufficient to describe all individuals. If the empirical EII value is significantly greater than the distribution,
-#' then the empirical data cannot be described by the population structure -- significant information is lost when
-#' collapsing across to the population structure.
+#' @description Tests the Ergodicity Information Index obtained in the empirical sample 
+#' with a distribution of EII obtained by bootstrap sampling
+#' (see \strong{Details} for the procedure)
 #'
 #' @param dynEGA.object  A \code{\link[EGAnet]{dynEGA}} or a
-#' \code{\link[EGAnet]{dynEGA.ind.pop}} object that is used to match the arguments of the EII object.
+#' \code{\link[EGAnet]{dynEGA.ind.pop}} object. If a \code{\link[EGAnet]{dynEGA}}
+#' object, then \code{level = c("individual", "population")} is required
 #'
-#' @param EII A \code{\link[EGAnet]{ergoInfo}} object, used to estimate the Empirical Ergodicity Information Index, or the estimated value of EII estimated
-#' using the \code{\link[EGAnet]{ergoInfo}} function. Inherits \code{use} from \code{\link[EGAnet]{ergoInfo}}
+#' @param EII A \code{\link[EGAnet]{ergoInfo}} object 
+#' used to estimate the Empirical Ergodicity Information Index 
+#' or the estimated value of EII estimated using the \code{\link[EGAnet]{ergoInfo}} 
+#' function. Inherits \code{use} from \code{\link[EGAnet]{ergoInfo}}.
+#' If no \code{\link[EGAnet]{ergoInfo}} object is provided, then it is estimated
+#' using \code{use = "edge.list"} by default
 #'
-#' @param iter Numeric integer.
+#' @param iter Numeric (length = 1).
 #' Number of replica samples to generate from the bootstrap analysis.
-#' At least \code{100} is recommended
+#' Defaults to \code{100} (recommended)
 #'
-#' @param ncores Numeric.
+#' @param ncores Numeric (length = 1).
 #' Number of cores to use in computing results.
-#' Defaults to \code{parallel::detectCores() / 2} or half of your
+#' Defaults to \code{ceiling(parallel::detectCores() / 2)} or half of your
 #' computer's processing power.
-#' Set to \code{1} to not use parallel computing.
-#' Recommended to use maximum number of cores minus one
+#' Set to \code{1} to not use parallel computing
 #'
 #' If you're unsure how many cores your computer has,
-#' then use the following code: \code{parallel::detectCores()}
+#' then type: \code{parallel::detectCores()}
 #' 
-#' @param progress Boolean.
+#' @param verbose Boolean (length = 1).
 #' Should progress be displayed?
 #' Defaults to \code{TRUE}.
-#' For Windows, \code{FALSE} is about 2x faster
+#' Set to \code{FALSE} to not display progress
+#' 
+#' @details In traditional bootstrap sampling, individual participants are resampled with 
+#' replacement from the empirical sample. This process is time consuming when carried out 
+#' across \emph{v} number of variables, \emph{n} number of participants,
+#' \emph{t} number of time points, and \emph{i} number of iterations.
+#' 
+#' A more efficient process, the approach applied here, is to obtain a sampling distribution 
+#' of EII values as if all participants in the data have the population network structure. 
+#' Sampling is not perfect and therefore random noise is added to the edges of the population 
+#' structure to simulate sampling variability. This noise follows a random uniform distribution
+#' ranging from -0.10 to 0.10. In addition, a proportion of edges are rewired to allow for 
+#' slight variations on the population structure. The proportion of nodes that are rewired is 
+#' sampled from a random uniform distribution between 0.20 to 0.40. This process is carried out 
+#' for each participant resulting in \emph{n} variations of the population structure. 
+#' Afterward, EII is computed. This process is carried out for \emph{i} iterations (e.g., 100).
+#' 
+#' The result is a sampling distribution of EII values that would be expected if the process 
+#' was ergodic. If the empirical EII value is significantly less than the distribution or 
+#' not significantly different, then  the empirical data can be expected to be generated 
+#' from an ergodic process and the population structure is  sufficient to describe all 
+#' individuals. If the empirical EII value is significantly greater than the distribution, 
+#' then the empirical data cannot be described by the population structure -- significant 
+#' information is lost when collapsing across to the population structure.
 #'
 #' @examples
 #' # Obtain simulated data
@@ -59,55 +69,73 @@
 #' )
 #'
 #' # Empirical Ergodicity Information Index
-#' eii1 <- ergoInfo(dynEGA.object = dyn1, use = "weighted")
+#' eii1 <- ergoInfo(dynEGA.object = dyn1, use = "edge.list")
 #'
 #' # Bootstrap Test for Ergodicity Information Index
 #' testing.ergoinfo <- boot.ergoInfo(
 #'   dynEGA.object = dyn1, EII = eii1,
 #'   ncores = 2
-#' )}
+#' )
+#' 
+#' # Plot result
+#' plot(testing.ergoinfo)
+#' 
+#' # Example using `dynEGA`
+#' dyn2 <- dynEGA(
+#'   data = sim.dynEGA, n.embed = 5, tau = 1,
+#'   delta = 1, use.derivatives = 1, ncores = 2,
+#'   level = c("individual", "population")
+#' )
+#' 
+#' # Empirical Ergodicity Information Index
+#' eii2 <- ergoInfo(dynEGA.object = dyn2, use = "edge.list")
+#' 
+#' # Bootstrap Test for Ergodicity Information Index
+#' testing.ergoinfo2 <- boot.ergoInfo(
+#'   dynEGA.object = dyn2, EII = eii2,
+#'   ncores = 2
+#' )
+#' 
+#' # Plot result
+#' plot(testing.ergoinfo2)}
 #'
 #' @return Returns a list containing:
+#' 
+#' \item{empirical.ergoInfo}{Empirical Ergodicity Information Index}
 #'
 #' \item{boot.ergoInfo}{The values of the Ergodicity Information Index obtained in the bootstrap}
 #'
-#' \item{p.value}{The two-sided *p*-value of the bootstrap test for the Ergodicity Information Index.
+#' \item{p.value}{The two-sided \emph{p}-value of the bootstrap test for the Ergodicity Information Index.
 #' The null hypothesis is that the empirical Ergodicity Information index is equal to the expected value of the EII
 #' with small variation in the population structure}
 #'
 #' \item{effect}{Indicates wheter the empirical EII is greater or less then the bootstrap distribution of EII.}
 #'
 #' \item{interpretation}{How you can interpret the result of the test in plain English}
-#'
-#' \item{plot.dist}{Histogram of the bootstrapped ergodicity information index}
 #' 
-#' \item{methods}{Methods to report for print/summary S3methods and automated Methods section}
-#'
 #' @author Hudson Golino <hfg9s at virginia.edu> & Alexander P. Christensen <alexander.christensen at Vanderbilt.Edu>
 #'
 #' @references 
+#' \strong{Original Implementation} \cr
 #' Golino, H., Nesselroade, J., & Christensen, A. P. (2022).
 #' Toward a psychology of individuals: The ergodicity information index and a bottom-up approach for finding generalizations.
 #' \emph{PsyArXiv}.
 #'
 #' @export
 # Bootstrap Test for the Ergodicity Information Index
-# Updated 10.07.2023
+# Updated 26.07.2023
 boot.ergoInfo <- function(
     dynEGA.object, EII, 
     use = c("edge.list", "unweighted"),
-    iter = 100, ncores, # seed = 1234,
-    verbose = TRUE
+    iter = 100, ncores, verbose = TRUE
 ){
   
   # Check for missing arguments (argument, default, function)
   use <- set_default(use, "edge.list", ergoInfo)
   if(missing(ncores)){ncores <- ceiling(parallel::detectCores() / 2)}
   
-  # Check for appropriate class ("dynEGA.ind.pop" defunct to legacy)
-  if(!is(dynEGA.object, "dynEGA") & !is(dynEGA.object, "dynEGA.ind.pop")){
-    class_error(dynEGA.object, "dynEGA")
-  }
+  # Argument errors
+  boot.ergoInfo_errors(dynEGA.object, iter, ncores, verbose)
   
   # Check for EII
   if(missing(EII)){ # If missing, then compute it
@@ -211,20 +239,53 @@ boot.ergoInfo <- function(
   
 }
 
+#' @noRd
+# Errors ----
+# Updated 26.07.2023
+boot.ergoInfo_errors <- function(dynEGA.object, iter, ncores, verbose)
+{
+  
+  # 'dynEGA.object' errors ("dynEGA.ind.pop" defunct to legacy)
+  if(!is(dynEGA.object, "dynEGA") & !is(dynEGA.object, "dynEGA.ind.pop")){
+    class_error(dynEGA.object, "dynEGA")
+  }
+  
+  # 'iter' errors
+  length_error(iter, 1)
+  typeof_error(iter, "numeric")
+  range_error(iter, c(1, Inf))
+  
+  # 'ncores' errors
+  length_error(ncores, 1)
+  typeof_error(ncores, "numeric")
+  range_error(ncores, c(1, parallel::detectCores()))
+  
+  # 'verbose' errors
+  length_error(verbose, 1)
+  typeof_error(verbose, "logical")
+  
+}
+
 #' @exportS3Method 
 # S3 Print Method ----
-# Updated 09.07.2023
+# Updated 26.07.2023
 print.boot.ergoInfo <- function(x, ...)
 {
+  
+  # Message about print support
+  message("No print support yet")
+  
+  # Print x
+  x
   
 }
 
 #' @exportS3Method 
 # S3 Summary Method ----
-# Updated 09.07.2023
+# Updated 26.07.2023
 summary.boot.ergoInfo <- function(object, ...)
 {
-  
+  print(object, ...) # same as print
 }
 
 #' @exportS3Method 

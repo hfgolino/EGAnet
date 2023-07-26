@@ -70,9 +70,9 @@
 #'
 # CFA model for EGA
 # Updated 29.11.2022
-CFA<- function(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ...) {
-
-
+CFA <- function(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ...) 
+{
+  
   # Set lavaan arguments
   lavaan.args <- list(...)
   

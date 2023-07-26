@@ -100,7 +100,7 @@ based on \code{empty.method}. For \code{empty.method = "zero"},
 Whether messages should be printed.
 Defaults to \code{FALSE}}
 
-\item{...}{Not actually used but makes it either for general functionality
+\item{...}{Not actually used but makes it easier for general functionality
 in the package}
 }
 \description{

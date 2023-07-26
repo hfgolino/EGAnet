@@ -89,7 +89,7 @@
 #' Defaults to \code{FALSE}
 #' 
 #' @param ...
-#' Not actually used but makes it either for general functionality
+#' Not actually used but makes it easier for general functionality
 #' in the package
 #' 
 #' @author Alexander P. Christensen <alexpaulchristensen@gmail.com>
@@ -409,15 +409,3 @@ obtain_thresholds <- function(categorical_variable)
   )
   
 }
-
-
-
-
-
-
-
-
-
-
-
-

@@ -34,11 +34,8 @@ memberships. This function is the core of the
 \code{\link[EGAnet]{itemStability}} functions
 }
 \examples{
-# Load data
-wmt <- wmt2[,7:24]
-
 # Get network
-network <- network.estimation(wmt)
+network <- network.estimation(wmt2[,7:24])
 
 # Apply Walktrap
 network_walktrap <- community.detection(
@@ -55,15 +52,10 @@ community.homogenize(network_walktrap, network_louvain)
 
 }
 \references{
-# Original implementation of bootEGA \cr
+\strong{Original implementation of bootEGA} \cr
 Christensen, A. P., & Golino, H. (2021).
 Estimating the stability of the number of factors via Bootstrap Exploratory Graph Analysis: A tutorial.
 \emph{Psych}, \emph{3}(3), 479-500.
-
-# Structural consistency (see \code{\link[EGAnet]{dimensionStability}}) \cr
-Christensen, A. P., Golino, H., & Silvia, P. J. (2020).
-A psychometric network perspective on the validity and validation of personality trait questionnaires.
-\emph{European Journal of Personality}, \emph{34}(6), 1095-1108.
 }
 \author{
 Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>

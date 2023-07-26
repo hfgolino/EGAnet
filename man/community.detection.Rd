@@ -18,7 +18,8 @@ community.detection(
 \arguments{
 \item{network}{Matrix or \code{\link{igraph}} network object}
 
-\item{algorithm}{Character or \code{\link{igraph}} \code{cluster_*} function.
+\item{algorithm}{Character or \code{\link{igraph}} \code{cluster_*} function
+(length = 1).
 Available options:
 
 \itemize{
@@ -44,10 +45,9 @@ Available options:
 \item{\code{"leiden"}}
 {See \code{\link[igraph]{cluster_leiden}} for more details.
 \emph{Note}: The Leiden algorithm will default to the
-Constant Potts Model objective function
-(\code{objective_function = "CPM"}). Set
-\code{objective_function = "modularity"} to use
-modularity instead (see examples)}
+modularity objective function (\code{objective_function = "modularity"}). 
+Set \code{objective_function = "CPM"} to use the 
+Constant Potts Model instead (see examples)}
 
 \item{\code{"louvain"}}
 {See \code{\link[igraph]{cluster_louvain}} for more details}
@@ -66,21 +66,21 @@ modularity instead (see examples)}
 
 }}
 
-\item{signed}{Boolean.
+\item{signed}{Boolean (length = 1).
 Should signed network values be used?
 Defaults to \code{FALSE}.
 Caution should be used when setting to \code{TRUE}.
 Most algorithms are not able to handle signed (negative)
 weights}
 
-\item{allow.singleton}{Boolean.
+\item{allow.singleton}{Boolean (length = 1).
 Whether singleton or single node communities should be allowed.
 Defaults to \code{FALSE}.
 When \code{FALSE}, singleton communities will be set to
 missing (\code{NA}); otherwise, when \code{TRUE}, singleton
 communities will be allowed}
 
-\item{membership.only}{Boolean.
+\item{membership.only}{Boolean (length = 1).
 Whether the memberships only should be output.
 Defaults to \code{TRUE}.
 Set to \code{FALSE} to obtain all output for the
@@ -130,6 +130,13 @@ community.detection(network, algorithm = "leading_eigen")
 community.detection(
   network, algorithm = "leiden",
   objective_function = "modularity"
+)
+
+# Compute Leiden (with CPM)
+community.detection(
+  network, algorithm = "leiden",
+  objective_function = "CPM",
+  resolution_parameter = 0.05 # "edge density"
 )
 
 # Compute Louvain

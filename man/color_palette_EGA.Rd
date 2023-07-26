@@ -4,7 +4,12 @@
 \alias{color_palette_EGA}
 \title{\code{\link[EGAnet]{EGA}} Color Palettes}
 \usage{
-color_palette_EGA(name, wc, sorted = FALSE)
+color_palette_EGA(
+  name = c("polychrome", "blue.ridge1", "blue.ridge2", "rainbow", "rio", "itacare",
+    "grayscale"),
+  wc,
+  sorted = FALSE
+)
 }
 \arguments{
 \item{name}{Character.
@@ -15,7 +20,7 @@ Defaults to \code{"polychrome"}.
 \itemize{
 
 \item{\code{"polychrome"}}
-{Default 20 color palette}
+{Default 40 color palette}
 
 \item{\code{"grayscale"}}
 {"grayscale", "greyscale", or "colorblind" will produce
@@ -40,14 +45,14 @@ plots suitable for publication purposes}
 
 For custom colors, enter HEX codes for each dimension in a vector}
 
-\item{wc}{Vector.
+\item{wc}{Numeric vector.
 A vector representing the community (dimension) membership
 of each node in the network. \code{NA} values mean that the node
 was disconnected from the network}
 
 \item{sorted}{Boolean.
-Should colors be sorted by wc?
-Defaults to \code{TRUE}}
+Should colors be sorted by \code{wc}?
+Defaults to \code{FALSE}}
 }
 \value{
 Vector of colors for community memberships
@@ -64,7 +69,7 @@ color_palette_EGA(name = "polychrome", wc = ega.wmt$wc)
 color_palette_EGA(name = "blue.ridge1", wc = ega.wmt$wc)
 
 # Custom
-color_palette_EGA(name = "#7FD1B9", wc = ega.wmt$wc)
+color_palette_EGA(name = c("#7FD1B9", "#24547e"), wc = ega.wmt$wc)
 
 }
 \author{

@@ -1,6 +1,6 @@
-#' Applies Several Different Approaches to Detect Unidimensional Communities
+#' @title Approaches to Detect Unidimensional Communities
 #'
-#' A function to apply several approaches to detect a unidimensional community in 
+#' @description A function to apply several approaches to detect a unidimensional community in 
 #' networks. There have many different approaches recently such as expanding
 #' the correlation matrix to have orthogonal correlations (\code{"expand"}),
 #' applying the Leading Eigenvalue community detection algorithm
@@ -9,24 +9,43 @@
 #' \code{\link[igraph]{cluster_louvain}} to the correlation matrix (\code{"louvain"}).
 #' Not necessarily intended for individual use -- it's better to use \code{\link[EGAnet]{EGA}}
 #'
-#' @param data Numeric matrix or data frame.
-#' Either data representing \emph{only} the variables of interest, or
-#' a correlation matrix. Data that are not numeric will be
-#' removed from the dataset
-#' 
+#' @param data Matrix or data frame.
+#' Should consist only of variables that are desired to be in analysis
+#'
 #' @param n Numeric (length = 1).
-#' Sample size if \code{data} is a correlation matrix
+#' Sample size if \code{data} provided is a correlation matrix
 #' 
 #' @param corr Character (length = 1).
 #' Method to compute correlations.
-#' Defaults to \code{"auto"} to automatically compute
-#' appropriate correlations using \code{\link[EGAnet]{auto.correlate}}.
-#' \code{"pearson"} and \code{"spearman"} are provide for completeness.
+#' Defaults to \code{"auto"}.
+#' Available options:
+#' 
+#' \itemize{
+#' 
+#' \item{\code{"auto"}}
+#' {Automatically computes appropriate correlations for
+#' the data using Pearson's for continuous, polychoric for ordinal,
+#' tetrachoric for binary, and polyserial/biserial for ordinal/binary with
+#' continuous. To change the number of categories that are considered
+#' ordinal, use \code{ordinal.categories}
+#' (see \code{\link[EGAnet]{polychoric.matrix}} for more details)}
+#' 
+#' \item{\code{"pearson"}}
+#' {Pearson's correlation is computed for all variables regardless of
+#' categories}
+#' 
+#' \item{\code{"spearman"}}
+#' {Spearman's rank-order correlation is computed for all variables
+#' regardless of categories}
+#' 
+#' }
+#' 
 #' For other similarity measures, compute them first and input them
 #' into \code{data} with the sample size (\code{n})
 #' 
 #' @param na.data Character (length = 1).
 #' How should missing data be handled?
+#' Defaults to \code{"pairwise"}.
 #' Available options:
 #' 
 #' \itemize{
@@ -41,6 +60,7 @@
 #' }
 #' 
 #' @param model Character (length = 1).
+#' Defaults to \code{"glasso"}.
 #' Available options:
 #' 
 #' \itemize{
@@ -60,26 +80,36 @@
 #' See \code{\link[EGAnet]{TMFG}} for more details}
 #' 
 #' }
-#' 
+#'
 #' @param uni.method Character (length = 1).
-#' Unidimensional method to apply to the data.
-#' Defaults to \code{"louvain"} based on recent evidence (Christensen, 2023).
+#' What unidimensionality method should be used? 
+#' Defaults to \code{"louvain"}.
 #' Available options:
 #' 
 #' \itemize{
+#'
+#' \item{\code{expand}}
+#' {Expands the correlation matrix with four variables correlated 0.50.
+#' If number of dimension returns 2 or less in check, then the data 
+#' are unidimensional; otherwise, regular EGA with no matrix
+#' expansion is used. This method was used in the Golino et al.'s (2020)
+#' \emph{Psychological Methods} simulation}
+#'
+#' \item{\code{LE}}
+#' {Applies the Leading Eigenvector algorithm
+#' (\code{\link[igraph]{cluster_leading_eigen}})
+#' on the empirical correlation matrix. If the number of dimensions is 1,
+#' then the Leading Eigenvector solution is used; otherwise, regular EGA
+#' is used. This method was used in the Christensen et al.'s (2023) 
+#' \emph{Behavior Research Methods} simulation}
 #' 
-#' \item{\code{"expand"}}
-#' {Expands the correlation matrix by four variables that are all
-#' correlated 0.50 with each other and 0.00 to the empirical data
-#' (Golino et al., 2020)}
-#' 
-#' \item{\code{"LE"}}
-#' {Applies the Leading Eigenvector algorithm \code{\link[igraph]{cluster_leading_eigen}}
-#' to the correlation matrix (Christensen et al., 2023)}
-#' 
-#' \item{\code{"louvain"}}
-#' {Applies the Louvain algorithm with consensus clustering
-#' \code{\link[EGAnet]{community.consensus}} to the correlation matrix (Christensen, 2023)}
+#' \item{\code{louvain}}
+#' {Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
+#' on the empirical correlation matrix. If the number of dimensions is 1, 
+#' then the Louvain solution is used; otherwise, regular EGA is used. 
+#' This method was validated Christensen's (2022) \emph{PsyArXiv} simulation.
+#' Consensus clustering can be used by specifying either
+#' \code{"consensus.method"} or \code{"consensus.iter"}}
 #' 
 #' }
 #' 
@@ -89,8 +119,10 @@
 #' Set to \code{TRUE} to see all messages and warnings for every function call
 #' 
 #' @param ... Additional arguments to be passed on to
-#' \code{\link[EGAnet]{auto.correlate}}, \code{\link[EGAnet]{network.estimation}},
-#' \code{\link[EGAnet]{community.consensus}}, and \code{\link[EGAnet]{community.detection}}
+#' \code{\link[EGAnet]{auto.correlate}}, 
+#' \code{\link[EGAnet]{network.estimation}},
+#' \code{\link[EGAnet]{community.consensus}}, and 
+#' \code{\link[EGAnet]{community.detection}}
 #' 
 #' @return Returns the memberships of the community detection algorithm.
 #' The memberships will output \emph{regardless} of whether the
@@ -131,7 +163,7 @@
 #' @export
 #'
 # Compute unidimensional approaches for EGA
-# Updated 23.07.2023
+# Updated 26.07.2023
 community.unidimensional <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -148,6 +180,9 @@ community.unidimensional <- function(
   na.data <- set_default(na.data, "pairwise", auto.correlate)  
   model <- set_default(model, "glasso", network.estimation)
   uni.method <- set_default(uni.method, "louvain", community.unidimensional)
+  
+  # Argument errors
+  community.unidimensional_errors(data, n, verbose)
   
   # Check for incompatible method combinations
   if(model == "bggm" & uni.method == "expand"){
@@ -184,6 +219,27 @@ community.unidimensional <- function(
 # corr = "auto"; na.data = "pairwise";
 # model = "glasso"; uni.method = "expand";
 # verbose = FALSE; ellipse = list()
+
+#' @noRd
+# Errors ----
+# Updated 26.07.2023
+community.unidimensional_errors <- function(data, n, verbose)
+{
+  
+  # 'data' errors
+  object_error(data, c("matrix", "data.frame"))
+  
+  # 'n' errors
+  if(!is.null(n)){
+    length_error(n, 1)
+    typeof_error(n, "numeric")
+  }
+  
+  # 'verbose' errors
+  length_error(verbose, 1)
+  typeof_error(verbose, "logical")
+  
+}
 
 #' @noRd
 # "Expand" Correlation approach ----

@@ -1,12 +1,13 @@
-#' Apply a Community Detection Algorithm
+#' @title Apply a Community Detection Algorithm
 #'
-#' General function to apply community detection algorithms available in
+#' @description General function to apply community detection algorithms available in
 #' \code{\link{igraph}}. Follows the \code{\link{EGAnet}} approach of setting
 #' singleton and disconnected nodes to missing (\code{NA})
 #'
 #' @param network Matrix or \code{\link{igraph}} network object
 #' 
-#' @param algorithm Character or \code{\link{igraph}} \code{cluster_*} function.
+#' @param algorithm Character or \code{\link{igraph}} \code{cluster_*} function
+#' (length = 1).
 #' Available options:
 #' 
 #' \itemize{
@@ -32,10 +33,9 @@
 #' \item{\code{"leiden"}}
 #' {See \code{\link[igraph]{cluster_leiden}} for more details.
 #' \emph{Note}: The Leiden algorithm will default to the
-#' Constant Potts Model objective function
-#' (\code{objective_function = "CPM"}). Set
-#' \code{objective_function = "modularity"} to use
-#' modularity instead (see examples)}
+#' modularity objective function (\code{objective_function = "modularity"}). 
+#' Set \code{objective_function = "CPM"} to use the 
+#' Constant Potts Model instead (see examples)}
 #' 
 #' \item{\code{"louvain"}}
 #' {See \code{\link[igraph]{cluster_louvain}} for more details}
@@ -54,21 +54,21 @@
 #' 
 #' }
 #'
-#' @param signed Boolean.
+#' @param signed Boolean (length = 1).
 #' Should signed network values be used?
 #' Defaults to \code{FALSE}.
 #' Caution should be used when setting to \code{TRUE}.
 #' Most algorithms are not able to handle signed (negative)
 #' weights
 #' 
-#' @param allow.singleton Boolean.
+#' @param allow.singleton Boolean (length = 1).
 #' Whether singleton or single node communities should be allowed.
 #' Defaults to \code{FALSE}.
 #' When \code{FALSE}, singleton communities will be set to
 #' missing (\code{NA}); otherwise, when \code{TRUE}, singleton
 #' communities will be allowed
 #' 
-#' @param membership.only Boolean.
+#' @param membership.only Boolean (length = 1).
 #' Whether the memberships only should be output.
 #' Defaults to \code{TRUE}.
 #' Set to \code{FALSE} to obtain all output for the
@@ -116,6 +116,13 @@
 #'   objective_function = "modularity"
 #' )
 #' 
+#' # Compute Leiden (with CPM)
+#' community.detection(
+#'   network, algorithm = "leiden",
+#'   objective_function = "CPM",
+#'   resolution_parameter = 0.05 # "edge density"
+#' )
+#' 
 #' # Compute Louvain
 #' community.detection(network, algorithm = "louvain")
 #' 
@@ -149,7 +156,7 @@
 #' @export
 #'
 # Compute communities for EGA
-# Updated 23.07.2023
+# Updated 26.07.2023
 community.detection <- function(
     network, algorithm = c(
       "edge_betweenness", "fast_greedy",
@@ -165,6 +172,9 @@ community.detection <- function(
   
   # Check for missing arguments (argument, default, function)
   algorithm <- set_default(algorithm, "walktrap", community.detection)
+  
+  # Argument errors
+  community.detection_errors(network, signed, allow.singleton, membership.only)
   
   # Get networks
   networks <- obtain_networks(network, signed)
@@ -290,7 +300,7 @@ community.detection <- function(
   }
   
   # Check singleton behavior
-  if(isFALSE(allow.singleton)){
+  if(!allow.singleton){
     
     # Determine whether there are any singleton communities
     membership_frequency <- fast_table(membership)
@@ -327,7 +337,7 @@ community.detection <- function(
   )
   
   # Check for whether all results should be returned
-  if(isTRUE(membership.only)){
+  if(membership.only){
     
     # Set class
     class(membership) <- "EGA.community"
@@ -359,6 +369,31 @@ community.detection <- function(
 # algorithm = "walktrap"; signed = FALSE;
 # allow.singleton = FALSE; membership.only = TRUE;
 # ellipse = list();
+
+#' @noRd
+# Errors ----
+# Updated 26.07.2023
+community.detection_errors <- function(network, signed, allow.singleton, membership.only)
+{
+  
+  # 'network' errors
+  if(!is(network, "igraph")){
+    object_error(network, c("matrix", "data.frame"))
+  }
+  
+  # 'signed' errors
+  length_error(signed, 1)
+  typeof_error(signed, "logical")
+  
+  # 'allow.singleton' errors
+  length_error(allow.singleton, 1)
+  typeof_error(allow.singleton, "logical")
+  
+  # 'membership.only' errors
+  length_error(membership.only, 1)
+  typeof_error(membership.only, "logical")
+  
+}
 
 #' @exportS3Method 
 # S3 Print Method ----

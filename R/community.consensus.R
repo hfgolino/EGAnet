@@ -1,6 +1,6 @@
-#' Applies the Consensus Clustering Method (\code{\link[EGAnet]{community.louvain}} only)
+#' @title Applies the Consensus Clustering Method (\code{\link[EGAnet]{community.louvain}} only)
 #'
-#' Applies the consensus clustering method introduced by (Lancichinetti & Fortunato, 2012).
+#' @description Applies the consensus clustering method introduced by (Lancichinetti & Fortunato, 2012).
 #' The original implementation of this method applies a community detection algorithm repeatedly
 #' to the same network. With stochastic networks, the algorithm is likely to identify different
 #' community solutions with many repeated applications.
@@ -12,15 +12,16 @@
 #' Defaults to \code{FALSE} or standard
 #' 
 #' @param order Character (length = 1).
+#' Defaults to \code{"higher"}.
 #' Whether \code{"lower"} or \code{"higher"} order memberships from
 #' the Louvain algorithm should be obtained for the consensus.
 #' The \code{"lower"} order Louvain memberships are from the first
 #' initial pass of the Louvain algorithm whereas the \code{"higher"}
 #' order Louvain memberships are from the last pass of the Louvain
-#' algorithm.
-#' Defaults to \code{"higher"}
+#' algorithm
 #' 
 #' @param resolution Numeric (length = 1).
+#' Defaults to \code{1}.
 #' A parameter that adjusts modularity to allow the algorithm to
 #' prefer smaller (\code{resolution} > 1) or larger
 #' (0 < \code{resolution} < 1) communities.
@@ -30,6 +31,7 @@
 #' this parameter
 #' 
 #' @param consensus.method Character (length = 1).
+#' Defaults to \code{"most_common"}.
 #' Available options for arriving at a consensus (\emph{Note}: 
 #' All methods except \code{"iterative"} are considered experimental
 #' until validated):
@@ -74,7 +76,7 @@
 #' community detection algorithm
 #' 
 #' @param ...
-#' Not actually used but makes it either for general functionality
+#' Not actually used but makes it easier for general functionality
 #' in the package
 #' 
 #' @details The goal of the consensus clustering method is to identify a stable solution across
@@ -89,7 +91,15 @@
 #' \strong{experimental}. Use these experimental procedures with caution.
 #' More work is necessary before these experimental procedures are validated
 #' 
-#' @return Returns a list containing...
+#' @return Returns either a vector with the selected solution
+#' or a list when \code{membership.only = FALSE}:
+#' 
+#' \item{selected_solution}{Resulting solution from the consensus method}
+#' 
+#' \item{memberships}{Matrix of memberships across the consensus iterations}
+#' 
+#' \item{proportion_table}{For methods that use frequency, a table that
+#' reports those frequencies alongside their corresponding memberships}
 #' 
 #' @author Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'
@@ -154,26 +164,30 @@
 #' )
 #'
 #' @references
+#' \strong{Louvain algorithm} \cr
 #' Blondel, V. D., Guillaume, J.-L., Lambiotte, R., & Lefebvre, E. (2008).
 #' Fast unfolding of communities in large networks.
 #' \emph{Journal of Statistical Mechanics: Theory and Experiment}, \emph{2008}(10), P10008.
 #' 
+#' \strong{Signed modularity} \cr
 #' Gomez, S., Jensen, P., & Arenas, A. (2009).
 #' Analysis of community structure in networks of correlated data.
 #' \emph{Physical Review E}, \emph{80}(1), 016114.
 #' 
+#' \strong{Consensus clustering} \cr
 #' Lancichinetti, A., & Fortunato, S. (2012).
 #' Consensus clustering in complex networks.
 #' \emph{Scientific Reports}, \emph{2}(1), 1–7.
 #' 
+#' \strong{Entropy fit indices} \cr
 #' Golino, H., Moulder, R. G., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Nesselroade, J., Sadana, R., Thiyagarajan, J. A., & Boker, S. M. (2020).
 #' Entropy fit indices: New fit measures for assessing the structure and dimensionality of multiple latent variables.
 #' \emph{Multivariate Behavioral Research}.
 #'
 #' @export
 #'
-# Compute consensus clustering for EGA
-# Updated 23.07.2023
+# Compute consensus clustering for EGA ----
+# Updated 27.07.2023
 community.consensus <- function(
     network, signed = FALSE, 
     order = c("lower", "higher"), resolution = 1,
@@ -191,8 +205,11 @@ community.consensus <- function(
   order <- set_default(order, "higher", community.consensus)
   consensus.method <- set_default(consensus.method, "most_common", community.consensus)
   
-  # Send errors (bookmark for full input check)
-  typeof_error(signed, "logical")
+  # Arguments errors
+  community.consensus_errors(
+    network, signed, resolution, consensus.iter,
+    correlation.matrix, membership.only
+  )
   
   # Get networks
   networks <- obtain_networks(network, signed)
@@ -310,7 +327,7 @@ community.consensus <- function(
   )
   
   # Check for membership only
-  if(isTRUE(membership.only)){
+  if(membership.only){
     
     # Set class
     class(result$selected_solution) <- "EGA.consensus"
@@ -347,6 +364,45 @@ community.consensus <- function(
 # consensus.method = "most_common";
 # consensus.iter = 1000;
 # correlation.matrix = ega.wmt$correlation;
+
+#' @noRd
+# Errors ----
+# Updated 26.07.2023
+community.consensus_errors <- function(
+    network, signed, resolution, consensus.iter,
+    correlation.matrix, membership.only
+) 
+{
+  
+  # 'network' errors
+  if(!is(network, "igraph")){
+    object_error(network, c("matrix", "data.frame"))
+  }
+  
+  # 'signed' errors
+  length_error(signed, 1)
+  typeof_error(signed, "logical")
+  
+  # 'resolution' errors
+  length_error(resolution, 1)
+  typeof_error(resolution, "numeric")
+  range_error(resolution, c(0, Inf))
+  
+  # 'consensus.iter' errors
+  length_error(consensus.iter, 1)
+  typeof_error(consensus.iter, "numeric")
+  range_error(consensus.iter, c(1, Inf))
+  
+  # 'correlation.matrix' errors
+  if(!is.null(correlation.matrix)){
+    object_error(correlation.matrix, c("matrix", "data.frame"))
+  }
+  
+  # 'membership.only' errors
+  length_error(membership.only, 1)
+  typeof_error(membership.only, "logical")
+  
+}
 
 #' @exportS3Method 
 # S3 Print Method ----

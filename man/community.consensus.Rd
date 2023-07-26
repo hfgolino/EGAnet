@@ -24,15 +24,16 @@ Whether the standard or signed algorithm should be used.
 Defaults to \code{FALSE} or standard}
 
 \item{order}{Character (length = 1).
+Defaults to \code{"higher"}.
 Whether \code{"lower"} or \code{"higher"} order memberships from
 the Louvain algorithm should be obtained for the consensus.
 The \code{"lower"} order Louvain memberships are from the first
 initial pass of the Louvain algorithm whereas the \code{"higher"}
 order Louvain memberships are from the last pass of the Louvain
-algorithm.
-Defaults to \code{"higher"}}
+algorithm}
 
 \item{resolution}{Numeric (length = 1).
+Defaults to \code{1}.
 A parameter that adjusts modularity to allow the algorithm to
 prefer smaller (\code{resolution} > 1) or larger
 (0 < \code{resolution} < 1) communities.
@@ -42,6 +43,7 @@ Future versions may allow \code{"signed"} to take advantage of
 this parameter}
 
 \item{consensus.method}{Character (length = 1).
+Defaults to \code{"most_common"}.
 Available options for arriving at a consensus (\emph{Note}: 
 All methods except \code{"iterative"} are considered experimental
 until validated):
@@ -85,11 +87,19 @@ Defaults to \code{TRUE}.
 Set to \code{FALSE} to obtain all output for the
 community detection algorithm}
 
-\item{...}{Not actually used but makes it either for general functionality
+\item{...}{Not actually used but makes it easier for general functionality
 in the package}
 }
 \value{
-Returns a list containing...
+Returns either a vector with the selected solution
+or a list when \code{membership.only = FALSE}:
+
+\item{selected_solution}{Resulting solution from the consensus method}
+
+\item{memberships}{Matrix of memberships across the consensus iterations}
+
+\item{proportion_table}{For methods that use frequency, a table that
+reports those frequencies alongside their corresponding memberships}
 }
 \description{
 Applies the consensus clustering method introduced by (Lancichinetti & Fortunato, 2012).
@@ -172,18 +182,22 @@ community.consensus(
 
 }
 \references{
+\strong{Louvain algorithm} \cr
 Blondel, V. D., Guillaume, J.-L., Lambiotte, R., & Lefebvre, E. (2008).
 Fast unfolding of communities in large networks.
 \emph{Journal of Statistical Mechanics: Theory and Experiment}, \emph{2008}(10), P10008.
 
+\strong{Signed modularity} \cr
 Gomez, S., Jensen, P., & Arenas, A. (2009).
 Analysis of community structure in networks of correlated data.
 \emph{Physical Review E}, \emph{80}(1), 016114.
 
+\strong{Consensus clustering} \cr
 Lancichinetti, A., & Fortunato, S. (2012).
 Consensus clustering in complex networks.
 \emph{Scientific Reports}, \emph{2}(1), 1–7.
 
+\strong{Entropy fit indices} \cr
 Golino, H., Moulder, R. G., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Nesselroade, J., Sadana, R., Thiyagarajan, J. A., & Boker, S. M. (2020).
 Entropy fit indices: New fit measures for assessing the structure and dimensionality of multiple latent variables.
 \emph{Multivariate Behavioral Research}.

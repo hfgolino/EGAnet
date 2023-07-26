@@ -1,15 +1,15 @@
-#' \code{\link[EGAnet]{EGA}} Network of \code{\link[EGAnet]{wmt2}}Data
+#' @title \code{\link[EGAnet]{EGA}} Network of \code{\link[EGAnet]{wmt2}}Data
 #'
-#' An \code{\link[EGAnet]{EGA}} using the \code{"glasso"} model of the
-#' Wiener Matrizen-Test 2 (WMT-2)
-#'
+#' @description \code{\link[EGAnet]{EGA}} results from \code{ega.wmt <- EGA(wmt2[,7:24])}
+#' for the Wiener Matrizen-Test (WMT-2)
+#' 
 #' @name ega.wmt
 #'
 #' @docType data
 #'
 #' @usage data(ega.wmt)
 #'
-#' @format A 17 x 17 adjacency matrix
+#' @format A list with 7 objects (see \strong{Value} in \code{\link[EGAnet]{EGA}})
 #'
 #' @keywords datasets
 #'
@@ -17,4 +17,3 @@
 #' data("ega.wmt")
 #'
 NULL
-#----

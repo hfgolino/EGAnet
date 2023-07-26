@@ -9,7 +9,7 @@ community.louvain(network, signed = FALSE, resolution = 1)
 \arguments{
 \item{network}{Matrix or \code{\link{igraph}} network object}
 
-\item{signed}{Boolean.
+\item{signed}{Boolean (length = 1).
 Whether the standard or signed algorithm should be used.
 Defaults to \code{FALSE} or standard}
 

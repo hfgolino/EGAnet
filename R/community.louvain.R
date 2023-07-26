@@ -1,6 +1,6 @@
-#' Apply the Louvain Community Detection Algorithm
+#' @title Apply the Louvain Community Detection Algorithm
 #'
-#' A specific function to apply the Louvain community detection algorithm. There
+#' @description A specific function to apply the Louvain community detection algorithm. There
 #' are two versions of the algorithm available: standard and signed. The standard
 #' Louvain algorithm uses the absolute values of the network. The signed Louvain algorithm
 #' uses the signed values of the network, which is made possible by using a signed version
@@ -8,7 +8,7 @@
 #'
 #' @param network Matrix or \code{\link{igraph}} network object
 #' 
-#' @param signed Boolean.
+#' @param signed Boolean (length = 1).
 #' Whether the standard or signed algorithm should be used.
 #' Defaults to \code{FALSE} or standard
 #' 
@@ -51,16 +51,16 @@
 #'
 #' @export
 #'
-# Compute Louvain communities for EGA
-# Updated 23.07.2023
+# Compute Louvain communities for EGA ----
+# Updated 26.07.2023
 community.louvain <- function(
     network, signed = FALSE, 
     resolution = 1
 )
 {
   
-  # Send errors (bookmark to have full input check)
-  typeof_error(signed, "logical")
+  # Argument errors
+  community.louvain_errors(network, signed, resolution)
   
   # Get networks
   networks <- obtain_networks(network, signed)
@@ -126,5 +126,29 @@ community.louvain <- function(
   
   # Return membership
   return(result)
+  
+}
+
+#' @noRd
+# Errors ----
+# Updated 26.07.2023
+community.louvain_errors <- function(
+    network, signed, resolution
+) 
+{
+  
+  # 'network' errors
+  if(!is(network, "igraph")){
+    object_error(network, c("matrix", "data.frame"))
+  }
+  
+  # 'signed' errors
+  length_error(signed, 1)
+  typeof_error(signed, "logical")
+  
+  # 'resolution' errors
+  length_error(resolution, 1)
+  typeof_error(resolution, "numeric")
+  range_error(resolution, c(0, Inf))
   
 }
