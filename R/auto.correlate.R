@@ -1,6 +1,6 @@
-#' Automatic correlations
+#' @title Automatic correlations
 #'
-#' This wrapper is similar to \code{\link[qgraph]{cor_auto}}. There
+#' @description This wrapper is similar to \code{\link[qgraph]{cor_auto}}. There
 #' are some minor adjustments that make this function simpler and to
 #' function within \code{\link{EGAnet}} as desired. \code{NA} values are not treated
 #' as categories (this behavior differs from \code{\link[qgraph]{cor_auto}})
@@ -27,6 +27,7 @@
 #' 
 #' @param na.data Character (length = 1).
 #' How should missing data be handled?
+#' Defaults to \code{"pairwise"}.
 #' Available options:
 #' 
 #' \itemize{
@@ -42,6 +43,7 @@
 #' 
 #' @param empty.method Character (length = 1).
 #' Method for empty cell correction in \code{\link[EGAnet]{polychoric.matrix}}.
+#' Defaults to \code{"none"}
 #' Available options:
 #' 
 #' \itemize{
@@ -62,13 +64,13 @@
 #' 
 #' @param empty.value Character (length = 1).
 #' Value to add to the joint frequency table cells in \code{\link[EGAnet]{polychoric.matrix}}.
-#' Accepts numeric values between 0 and 1 or
-#' specific methods:
+#' Defaults to \code{"none"}.
+#' Accepts numeric values between 0 and 1 or specific methods:
 #' 
 #' \itemize{
 #' 
 #' \item{\code{"none"}}
-#' {Adds no value (\code{0}) to the empirical joint
+#' {Adds no value (\code{0}) to the empirical joint 
 #' frequency table between two variables}
 #' 
 #' \item{\code{"point_five"}}
@@ -77,6 +79,7 @@
 #' \item{\code{"one_over"}}
 #' {Adds \code{1 / n} where \code{n} equals the number of cells
 #' based on \code{empty.method}. For \code{empty.method = "zero"},
+#' \code{n} equals the number of zero cells
 #' }
 #' 
 #' }
@@ -97,11 +100,13 @@
 #' 
 #' # Obtain correlations
 #' wmt_corr <- auto.correlate(wmt)
+#' 
+#' @importFrom stats cor
 #'
 #' @export
 #'
 # Automatic correlations ----
-# Updated 23.07.2023
+# Updated 26.07.2023
 auto.correlate <- function(
     data, # Matrix or data frame
     corr = c("kendall", "pearson", "spearman"), # allow changes to standard correlations
@@ -114,6 +119,9 @@ auto.correlate <- function(
     ... # not actually used
 )
 {
+  
+  # Argument errors
+  auto.correlate_errors(data, ordinal.categories, forcePD, verbose)
   
   # Check for missing arguments (argument, default, function)
   corr <- set_default(corr, "pearson", auto.correlate)
@@ -309,6 +317,30 @@ auto.correlate <- function(
 # of Turbofuns::PolychoricRM to a maximum
 # difference less than or equal to 1.0e-06
 # (or one step beyond floating point)
+
+#' @noRd
+# Errors ----
+# Updated 26.07.2023
+auto.correlate_errors <- function(data, ordinal.categories, forcePD, verbose)
+{
+  
+  # 'data' errors
+  object_error(data, c("matrix", "data.frame"))
+  
+  # 'ordinal.categories' errors
+  length_error(ordinal.categories, 1)
+  typeof_error(ordinal.categories, "numeric")
+  range_error(ordinal.categories, c(2, 11))
+  
+  # 'forcePD' errors
+  length_error(forcePD, 1)
+  typeof_error(forcePD, "logical")
+  
+  # 'verbose' errors
+  length_error(verbose, 1)
+  typeof_error(verbose, "logical")
+  
+}
 
 # Compute polyserial correlation ----
 #' For a single categorical variable, compute correlations

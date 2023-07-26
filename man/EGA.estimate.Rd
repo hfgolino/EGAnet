@@ -26,9 +26,28 @@ Sample size if \code{data} is a correlation matrix}
 
 \item{corr}{Character (length = 1).
 Method to compute correlations.
-Defaults to \code{"auto"} to automatically compute
-appropriate correlations using \code{\link[EGAnet]{auto.correlate}}.
-\code{"pearson"} and \code{"spearman"} are provide for completeness.
+Available options:
+
+\itemize{
+
+\item{\code{"auto"}}
+{Default. Automatically computes appropriate correlations for
+the data using Pearson's for continuous, polychoric for ordinal,
+tetrachoric for binary, and polyserial/biserial for ordinal/binary with
+continuous. To change the number of categories that are considered
+ordinal, use \code{ordinal.categories}
+(see \code{\link[EGAnet]{polychoric.matrix}} for more details)}
+
+\item{\code{"pearson"}}
+{Pearson's correlation is computed for all variables regardless of
+categories}
+
+\item{\code{"spearman"}}
+{Spearman's rank-order correlation is computed for all variables
+regardless of categories}
+
+}
+
 For other similarity measures, compute them first and input them
 into \code{data} with the sample size (\code{n})}
 
@@ -39,7 +58,7 @@ Available options:
 \itemize{
 
 \item{\code{"pairwise"}}
-{Computes correlation for all available cases between
+{Default. Computes correlation for all available cases between
 two variables}
 
 \item{\code{"listwise"}}
@@ -59,7 +78,7 @@ levels allowed for a variable to be considered ordinal.
 See \code{\link[BGGM]{estimate}} for more details}
 
 \item{\code{"glasso"}}
-{Computes the GLASSO with EBIC model selection.
+{Default. Computes the GLASSO with EBIC model selection.
 See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details}
 
 \item{\code{"TMFG"}}
@@ -85,7 +104,7 @@ This function will implement \code{consensus.method = "most_common"}
 and \code{consensus.iter = 1000} unless specified otherwise}
 
 \item{\code{"walktrap"}}
-{This algorithm is the default. See \code{\link[EGAnet]{cluster_walktrap}} for more details}
+{Default. See \code{\link[EGAnet]{cluster_walktrap}} for more details}
 
 }}
 

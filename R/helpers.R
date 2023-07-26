@@ -1715,15 +1715,12 @@ obtain_arguments <- function(FUN, FUN.args)
 #' @noRd
 # Legacy Argument Overwrite ----
 # Preference given to legacy
-# Updated 24.07.2023
+# Updated 25.07.2023
 legacy_overwrite <- function(ellipse, legacy_ARG)
 {
-  
-  # Get ellipse names
-  ellipse_names <- names(ellipse)
-  
+
   # Check for legacy argument in ellipse
-  if(legacy_ARG %in% ellipse_names){
+  if(legacy_ARG %in% names(ellipse)){
     
     # Get legacy arguments
     legacy_ARGS <- ellipse[[legacy_ARG]]
@@ -1732,7 +1729,7 @@ legacy_overwrite <- function(ellipse, legacy_ARG)
     ellipse[names(legacy_ARGS)] <- legacy_ARGS
     
     # Remove legacy argument
-    ellipse <- ellipse[ellipse_names != legacy_ARG]
+    ellipse <- ellipse[names(ellipse) != legacy_ARG]
     
   }
   
