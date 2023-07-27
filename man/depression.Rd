@@ -11,8 +11,8 @@ A 574x78 response matrix
 data(depression)
 }
 \description{
-A response matrix (n = 574) of the Beck Depression Inventory, Beck Anxiety Inventory and
-the Athens Insomnia Scale.
+A response matrix (\emph{n} = 574) of the Beck Depression Inventory, 
+Beck Anxiety Inventory, and the Athens Insomnia Scale.
 }
 \examples{
 data("depression")

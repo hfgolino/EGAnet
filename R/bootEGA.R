@@ -198,6 +198,39 @@
 #' @param plot.typicalStructure Boolean (length = 1).
 #' If \code{TRUE}, returns a plot of the typical network structure.
 #' Defaults to \code{TRUE}
+#' 
+#' @param seed Numeric (length = 1).
+#' Defaults to \code{1234}.
+#' Sets seed in C to produce \code{iter} seeds using
+#' the xoshiro128++ (Blackman & Vigna, 2019) method
+#' for generating pseudorandom numbers. These \code{iter}
+#' seeds are carried forward into data generation where
+#' random number generation methods are used for each \code{type}:
+#' 
+#' \itemize{
+#' 
+#' \item{\code{"parametric"}}
+#' {uses the Ziggurat random normal generation (Marsaglia & Tsang, 2000)}
+#' 
+#' \item{\code{"resampling"}}
+#' {uses the xoshiro128++ to generate random integers with replacement}
+#' 
+#' }
+#' 
+#' Both the Ziggurat and xoshiro128++ methods are considered to be
+#' some of the faster, more robust methods of generating random data
+#' (see references for more information).
+#' 
+#' For random results that will change with each run, use \code{NULL}.
+#' \code{NULL} will obtain your local computer's time in nanoseconds
+#' which in turn is used as the seed for data generation using the
+#' above methods.
+#' 
+#' Because these seeds are set in C, they do not affect seeds
+#' set in R; however, \code{\link[future.apply]{future_lapply}}
+#' will \emph{continue} the sequence of random numbers. In
+#' scripts, setting a seed will keep all results reproducible
+#' so long as the number of iterations stay the same
 #'
 #' @param verbose Boolean (length = 1).
 #' Should progress be displayed?
@@ -336,7 +369,7 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 26.07.2023
+# Updated 27.07.2023
 bootEGA <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -347,7 +380,7 @@ bootEGA <- function(
     iter = 500, type = c("parametric", "resampling"),
     ncores, EGA.type = c("EGA", "EGA.fit", "hierEGA", "riEGA"),
     typicalStructure = TRUE, plot.typicalStructure = TRUE,
-    verbose = TRUE,
+    seed = 1234, verbose = TRUE, 
     ...
 ) 
 {
@@ -368,7 +401,7 @@ bootEGA <- function(
   # Argument errors
   bootEGA_errors(
     data, n, iter, ncores, typicalStructure,
-    plot.typicalStructure, verbose
+    plot.typicalStructure, seed, verbose
   )
   
   # `EGA.estimate` will handle legacy arguments and data processing 
@@ -422,27 +455,56 @@ bootEGA <- function(
     empirical_EGA_output <- empirical_EGA_output$lower
   }
   
+  # Check for seed
+  if(!is.null(seed)){
+    seeds <- reproducible_seeds(iter, seed)
+  }else{ # Set all seeds to zero (or random)
+    seeds <- rep(0, iter)
+  }
+  
+  # Check for parametric (pre-compute values)
+  if(type == "parametric"){
+    
+    # Get parameters
+    mvrnorm_parameters <- mvrnorm_precompute(
+      cases = empirical_EGA$n,
+      Sigma = empirical_EGA$correlation
+    )
+    
+    # Set case sequence to be NULL
+    case_sequence <- NULL
+    
+  }else if(type == "resampling"){
+    
+    # Get case sequence
+    case_sequence <- seq_len(empirical_EGA$n)
+    
+    # Set parameters to NULL
+    mvrnorm_parameters <- NULL
+    
+  }
+  
   # Perform bootstrap using parallel processing
   boots <- parallel_process(
     # Parallel processing arguments
     iterations = iter,
-    datalist = NULL, # data is generated in each iteration
+    datalist = seeds, # data is generated in each iteration
     ncores = ncores, progress = verbose,
     # Standard EGA arguments
     FUN = function(
-      data, cases, mu, Sigma, type, n, corr,
-      na.data, model, algorithm, uni.method, ...
+      seed_value, data, type, case_sequence, mvrnorm_parameters, 
+      n, corr, na.data, model, algorithm, uni.method, ...
     ){
       
       # Return EGA
       return(
         ega_function(
           data = reproducible_bootstrap(
-            data = data, 
-            samples = 1, # only one sample per iteration
-            cases = cases, mu = mu, Sigma = Sigma,
-            type = type # , seed = seed
-          )[[1]], # outputs as list, so grab data out
+            seed = seed_value, data = data,
+            case_sequence = case_sequence,
+            mvrnorm_parameters = mvrnorm_parameters,
+            type = type
+          ), 
           n = n, corr = corr, na.data = na.data, model = model,
           algorithm = algorithm, uni.method = uni.method,
           plot.EGA = FALSE, verbose = FALSE, ...
@@ -450,11 +512,8 @@ bootEGA <- function(
       )
   
     }, # Send all argument variables
-    data, cases = empirical_EGA_output$n, 
-    mu = rep(0, dimensions[2]), 
-    Sigma = empirical_EGA_output$correlation, 
-    type, n, corr,
-    na.data, model, algorithm, uni.method, ...
+    data, type, case_sequence, mvrnorm_parameters,
+    n, corr, na.data, model, algorithm, uni.method, ...
   )
   
   # Obtain bootstrap EGA output
@@ -531,10 +590,10 @@ bootEGA <- function(
 
 #' @noRd
 # Errors ----
-# Updated 26.07.2023
+# Updated 27.07.2023
 bootEGA_errors <- function(
     data, n, iter, ncores, typicalStructure,
-    plot.typicalStructure, verbose
+    plot.typicalStructure, seed, verbose
 )
 {
   
@@ -564,6 +623,16 @@ bootEGA_errors <- function(
   # 'plot.typicalStructure' errors
   length_error(plot.typicalStructure, 1)
   typeof_error(plot.typicalStructure, "logical")
+  
+  # 'seed' errors
+  length_error(seed, 1)
+  typeof_error(seed, "numeric")
+  range_error(seed, 
+    c(
+      -as.double(.Machine$integer.max), 
+      as.double(.Machine$integer.max)
+    )
+  )
   
   # 'verbose' errors
   length_error(verbose, 1)

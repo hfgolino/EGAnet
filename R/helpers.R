@@ -208,11 +208,92 @@ symmetric_matrix_lapply <- function(X, FUN, ...){
 # REPRODUCIBLE RANDOM GENERATION ----
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-# Not actually reproducible (yet)
-# Resampling can be made to be reproducible (set seed in C)
-# Parametric cannot
+# For these random generation functions, the goal
+# is reproducibility, which runs counter to "random".
+# However, for bootstrap results to be reproduced
+# there is a need to generate "random" samples that
+# can be reproduced so that the user arrives at the
+# same results *without* influencing R's random number
+# generation or changing a user-defined seed previous
+# to, while, or after using {EGAnet} functions.
 #
-# TODO: implement `rnorm` in C (then reproducible)
+# Assistance in writing C and interfacing with R
+# was provided by GPT-4
+
+#' @noRd
+# Generate integer seeds ----
+# (non-randomly based on `seed`)
+# `NULL` is reserved for actual pseudo-randomness
+# Uses xoshiro256++ random number generation: https://prng.di.unimi.it/
+# Updated 27.07.2023
+reproducible_seeds <- function(n, seed = NULL)
+{
+  
+  # Return call from C
+  return(
+    .Call(
+      "r_xoshiro_seeds",
+      as.integer(n), swiftelse(is.null(seed), 0, seed),
+      PACKAGE = "EGAnet"
+    )
+  )
+  
+}
+
+#' @noRd
+# Shuffle (without replacement) ----
+# Uses xoshiro256++ random number generation: https://prng.di.unimi.it/
+# Updated 27.07.2023
+shuffle <- function(x, seed = NULL)
+{
+  
+  # Return call from C
+  return(
+    .Call(
+      "r_xoshiro_shuffle",
+      x, swiftelse(is.null(seed), 0, seed),
+      PACKAGE = "EGAnet"
+    )
+  )
+  
+}
+
+#' @noRd
+# Shuffle (with replacement) ----
+# Uses xoshiro256++ random number generation: https://prng.di.unimi.it/
+# Updated 27.07.2023
+shuffle_replace <- function(x, seed = NULL)
+{
+  
+  # Return call from C
+  return(
+    .Call(
+      "r_xoshiro_shuffle_replace",
+      x, swiftelse(is.null(seed), 0, seed),
+      PACKAGE = "EGAnet"
+    )
+  )
+  
+}
+
+#' @noRd
+# Random normal generation with Ziggurat ----
+# https://people.sc.fsu.edu/~jburkardt/cpp_src/ziggurat/ziggurat.html
+# Updated 27.07.2023
+rnorm_ziggurat <- function(n, seed = NULL)
+{
+  
+  # Return call from C
+  return(
+    .Call(
+      "r_ziggurat",
+      as.integer(n), 
+      swiftelse(is.null(seed), 0, seed),
+      PACKAGE = "EGAnet"
+    )
+  )
+  
+}
 
 #' @noRd
 # Generate multivariate normal data ----
@@ -261,139 +342,54 @@ MASS_mvrnorm <- function(
 # Pre-computes `np` (n * p)
 # Avoids repeated calls to `eigen` in `MASS_mvrnorm`
 # Pre-computes `eS$vectors %*% diag(sqrt(pmax(ev, 0)), p)`
-# Updated 10.07.2023
-MASS_mvrnorm_quick <- function(n, mu, np, coV)
+# Updated 27.07.2023
+mvrnorm_precompute <- function(cases, Sigma)
 {
-  return(t(mu + tcrossprod(coV, matrix(rnorm(np), nrow = n))))
-}
-
-#' @noRd
-# Generate reproducible parametric bootstrap ----
-# A wrapper over `rnorm_ziggurat` and `MASS_mvrnorm_quick`
-# Updated 24.07.2023
-reproducible_parametric <- function(
-    samples, cases, mu, Sigma, seed
-)
-{
+ 
+  # Get p (number of variables)
+  p <- dim(Sigma)[2]
   
-  # First, perform pre-computations
-  p <- length(mu) # avoids repeated calls to length
-  np <- cases * p # avoids repeated n * p calls
-  eS <- eigen(Sigma, symmetric = TRUE) # avoids repeated calls to `eigen`
-  eigenvalues <- eS$values # get eigenvalues
-  non_zero <- eigenvalues > 0 # non-zero eigenvalues
-  eigenvalues[!non_zero] <- 0 # set negative values to zero
+  # Compute eigenvalues
+  eS <- eigen(Sigma, symmetric = TRUE)
+  
+  # Get eigenvalues
+  eigenvalues <- eS$values
+  
+  # Get non-zero eigenvalues
+  non_zero <- eigenvalues > 0
+  
+  # Set negative eigenvalues to zero
+  eigenvalues[!non_zero] <- 0
+  
+  # Get square root of non-zero eigenvalues
   eigenvalues[non_zero] <- sqrt(eigenvalues[non_zero])
-  coV <- eS$vectors %*% diag(eigenvalues, p)
-  # avoids repeated matrix multiplication
 
-  # Then, generate samples
+  # Return pre-computed values
   return(
-    lapply(
-      seq_len(samples), function(iteration){
-        MASS_mvrnorm_quick(
-          n = cases, mu = mu, np = np, coV = coV
-        )
-      }
+    list(
+      p = p,
+      np = cases * p,
+      coV = eS$vectors %*% diag(eigenvalues, p)
     )
   )
   
 }
 
 #' @noRd
-# Get time ----
-# Updated 25.07.2023
-get_time <- function(
-    scale = c(
-      "nanosecond", "microsecond",
-      "millisecond", "second",
-      "minute", "hour"
-    )
-)
+# Generate multivariate normal data (quick) ----
+# Updated 27.07.2023
+MASS_mvrnorm_quick <- function(seed = NULL, p, np, coV)
 {
-
-  # Return call from C
-  return(
-    .Call(
-      "r_time",
-      switch(
-        scale,
-        "nanosecond" = 1L, "microsecond" = 2L,
-        "millisecond" = 3L, "second" = 4L,
-        "minute" = 5L, "hour" = 6L
-      ),
-      PACKAGE = "EGAnet"
-    )
-  )
-  
-}
-
-#' @noRd
-# Shuffle (without replacement) ----
-# 2-3x faster than `sample.int` with `useHash = FALSE`
-# Updated 25.07.2023
-shuffle <- function(x, seed = NULL)
-{
-  
-  # Return call from C
-  return(
-    .Call(
-      "r_shuffle",
-      x, as.integer(swiftelse(is.null(seed), 0, seed)),
-      PACKAGE = "EGAnet"
-    )
-  )
-  
-}
-
-#' @noRd
-# Shuffle (with replacement) ----
-# 2-3x faster than `sample.int` with `useHash = FALSE`
-# Updated 25.07.2023
-shuffle_replace <- function(x, seed = NULL)
-{
-  
-  # Return call from C
-  return(
-    .Call(
-      "r_shuffle_replace",
-      x, as.integer(swiftelse(is.null(seed), 0, seed)),
-      PACKAGE = "EGAnet"
-    )
-  )
-  
-}
-
-#' @noRd
-# Generate reproducible resampling bootstrap ----
-# (multivariate normal samples)
-# Updated 25.07.2023
-reproducible_resampling <- function(
-    data, samples, cases
-)
-{
-  
-  # Return samples
-  return(
-    lapply(
-      seq_len(samples),
-      function(iteration){
-        data[shuffle_replace(seq_len(cases)),]
-      }
-    )
-  )
-  
+  return(t(tcrossprod(coV, matrix(rnorm_ziggurat(np, seed), ncol = p))))
 }
 
 #' @noRd
 # Generate reproducible bootstrap data ----
-# Wrapper for `reproducible_parametric` and
-# `reproducible_resampling`
-# NOT ACTUALLY REPRODUCIBLE
-# NEEDS C IMPLEMENTATION OF `rnorm` (TODO!)
-# Updated 26.07.2023
+# Wrapper for `reproducible_parametric` and `reproducible_resampling`
+# Updated 27.07.2023
 reproducible_bootstrap <- function(
-    data = NULL, samples, cases, mu = NULL, Sigma = NULL, # seed,
+    seed = NULL, data = NULL, case_sequence = NULL,
+    mvrnorm_parameters = NULL,
     type = c("parametric", "resampling")
 )
 {
@@ -401,23 +397,21 @@ reproducible_bootstrap <- function(
   # Based on bootstrap type, generate data
   if(type == "parametric"){
     
-    # Obtain parametric samples
+    # Return parametric samples
     return(
-      bootstrap_samples <- reproducible_parametric(
-        samples = samples, cases = cases,
-        mu = mu, Sigma = Sigma
+      do.call(
+        what = MASS_mvrnorm_quick,
+        args = c(
+          list(seed = seed),
+          mvrnorm_parameters
+        )
       )
     )
     
   }else if(type == "resampling"){
     
     # Return resampling samples
-    return(
-      reproducible_resampling(
-        data = data, samples = samples,
-        cases = cases
-      )
-    )
+    return(data[shuffle_replace(case_sequence, seed),])
     
   }
   
@@ -641,7 +635,7 @@ parallel_process <- function(
         },
         future.globals = export,
         future.packages = packages,
-        future.seed = NULL
+        future.seed = FALSE
       )
     )
     
@@ -2346,6 +2340,14 @@ single_plot <- function(network, wc = NULL, ...)
     )
   )
   
+  # I'm not sure why the memberships were ordered
+  # in the original code (before refactoring)
+  # `single_plot` doesn't affect anything in
+  # terms of reordering but it's not good
+  # for more than one plot
+  #
+  # `basic_plot_setup` is preferred for multiple plots
+  
 }
 
 #' @noRd
@@ -2498,7 +2500,7 @@ object_error <- function(input, expected_type){
 
 #' @noRd
 # Error for `typeof` ----
-# Updated 19.07.2023
+# Updated 27.07.2023
 typeof_error <- function(input, expected_value){
   
   # Switch out "closure" with "function"
@@ -2526,9 +2528,10 @@ typeof_error <- function(input, expected_value){
     stop(
       paste0(
         "Input into '", deparse(substitute(input)),
-        "' argument is not ", 
-        paste0("'", expected_value, "'", collapse = ", "),
-        ". Input is ", paste("'", typeof_input, "'", sep = "", collapse = ", ")
+        "' is ", paste("'", typeof_input, "'", sep = "", collapse = ", "),
+        ". Input is expected to be ",
+        paste0("'", expected_value, "'", collapse = " or ")
+        # can use "or" because `typeof` won't ever be more than two
       ), call. = FALSE
     )
   }

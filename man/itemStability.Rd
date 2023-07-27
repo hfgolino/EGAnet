@@ -9,14 +9,16 @@ itemStability(bootega.obj, IS.plot = TRUE, structure = NULL, ...)
 \arguments{
 \item{bootega.obj}{A \code{\link[EGAnet]{bootEGA}} object}
 
-\item{IS.plot}{Should the plot be produced for \code{item.replication}?
-If \code{TRUE}, then a plot for the \code{item.replication} output will be produced.
+\item{IS.plot}{Boolean (length = 1).
+Should the plot be produced for \code{item.replication}?
 Defaults to \code{TRUE}}
 
-\item{structure}{User specified dimensionality structure.}
+\item{structure}{Numeric (length = number of variables).
+A theoretical or pre-defined structure.
+Defaults to \code{NULL} or the empirical \code{\link[EGAnet]{EGA}}
+result in the \code{bootega.obj}}
 
-\item{...}{Additional arguments.
-Used for deprecated arguments from previous versions of \code{\link[EGAnet]{itemStability}}}
+\item{...}{Deprecated arguments from previous versions of \code{\link[EGAnet]{itemStability}}}
 }
 \value{
 Returns a list containing:
@@ -25,50 +27,47 @@ Returns a list containing:
 
 \itemize{
 
-\item{\strong{\code{empirical}}}
+\item{\code{empirical}}
 {The empirical memberships from the empirical \code{\link[EGAnet]{EGA}} result}
 
-\item{\strong{\code{unique}}}
-{The unique dimensions from the empirical \code{\link[EGAnet]{EGA}} result}
+\item{\code{bootstrap}}
+{The homogenized memberships from the replicate samples in 
+the \code{\link[EGAnet]{bootEGA}} results}
 
-\item{\strong{\code{bootstrap}}}
-{The memberships from the replicate samples in the \code{\link[EGAnet]{bootEGA}} results}
-   }
+\item{\code{structure}}
+{The structure used in the analysis. If \code{structure = NULL}, then this output
+will be the same as \code{empirical}}
+   
+}
+
 }
 
 \item{item.stability}{A list containing:
 
 \itemize{
 
-\item{\strong{\code{empirical.dimensions}}}
+\item{\code{empirical.dimensions}}
 {The proportion of times each item replicated
-within the empirical \code{\link[EGAnet]{EGA}} defined dimension.
-This EGA result is defined using the input from
-\code{\link[EGAnet]{bootEGA}}}
+within the structure defined by \code{structure}}
 
-\item{\strong{\code{all.dimensions}}}
+\item{\code{all.dimensions}}
 {The proportion of times each item replicated
-in each of the empirical \code{\link[EGAnet]{EGA}} defined dimensions.
-This EGA result is defined using the input from
-\code{\link[EGAnet]{bootEGA}}}
+in each of the \code{structure} defined dimensions.}
 
+}
 
-   }
 }
 
 \item{plot}{A plot of the number of times each item
-replicated within the empirical \code{\link[EGAnet]{EGA}} defined dimension.}
-
-\item{mean.loadings}{Matrix of the average standardized network loading
-(computed using \code{\link[EGAnet]{net.loads}}) for each item in each dimension}
+replicated within the structure defined by \code{structure}}
 }
 \description{
 Based on the \code{\link[EGAnet]{bootEGA}} results, this function
 computes and plots the number of times an item (variable) is estimated
-in the same factor/dimension as originally estimated by \code{\link[EGAnet]{EGA}} (\code{item.replication}).
+in the same factor/dimension as originally estimated by an empirical
+\code{\link[EGAnet]{EGA}} structure or a theoretical/input structure.
 The output also contains each item's replication frequency (i.e., proportion of
-bootstraps that an item appeared in each dimension; \code{item.dim.rep}) as well as the average
-network loading for each item in each dimension (\code{item.loadings}).
+bootstraps that an item appeared in each dimension.
 }
 \examples{
 # Load data
@@ -77,20 +76,14 @@ wmt <- wmt2[,7:24]
 \dontrun{
 # Standard EGA example
 boot.wmt <- bootEGA(
-  data = wmt, iter = 100, # recommended 500
-  plot.typicalStructure = FALSE, # No plot for CRAN checks
+  data = wmt, iter = 500,
   type = "parametric", ncores = 2
-)
+)}
 
 # Standard item stability 
 wmt.is <- itemStability(boot.wmt)
 
-# Produce Methods section
-methods.section(
-  boot.wmt,
-  stats = "itemStability"
-)
-
+\dontrun{
 # EGA fit example
 boot.wmt.fit <- bootEGA(
   data = wmt, iter = 500,
@@ -123,17 +116,15 @@ wmt.is.ri <- itemStability(boot.wmt.ri)}
 
 }
 \references{
+\strong{Original implementation of bootEGA} \cr
 Christensen, A. P., & Golino, H. (2021).
 Estimating the stability of the number of factors via Bootstrap Exploratory Graph Analysis: A tutorial.
 \emph{Psych}, \emph{3}(3), 479-500.
 
+\strong{Conceptual introduction} \cr
 Christensen, A. P., Golino, H., & Silvia, P. J. (2020).
 A psychometric network perspective on the validity and validation of personality trait questionnaires.
 \emph{European Journal of Personality}, \emph{34}(6), 1095-1108.
-}
-\seealso{
-\code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and
-\code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{
 Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>

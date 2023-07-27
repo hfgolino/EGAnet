@@ -1,13 +1,23 @@
-#' Dimension Stability Statistics from \code{\link[EGAnet]{bootEGA}}
+#' @title Dimension Stability Statistics from \code{\link[EGAnet]{bootEGA}}
 #'
-#' @description Based on the \code{\link[EGAnet]{bootEGA}} results, this function
-#' computes the stability of dimensions. This is computed by assessing the proportion of
-#' times the original dimension is exactly replicated in across bootstrap samples
+#' @description Based on the \code{\link[EGAnet]{bootEGA}} results, 
+#' this function computes the stability of dimensions. Stability is 
+#' computed by assessing the proportion of times the 
+#' original dimension is exactly replicated in across bootstrap samples
 #'
 #' @param bootega.obj A \code{\link[EGAnet]{bootEGA}} object
 #'
+#' @param IS.plot Boolean (length = 1).
+#' Should the plot be produced for \code{item.replication}?
+#' Defaults to \code{TRUE}
+#'
+#' @param structure Numeric (length = number of variables).
+#' A theoretical or pre-defined structure.
+#' Defaults to \code{NULL} or the empirical \code{\link[EGAnet]{EGA}}
+#' result in the \code{bootega.obj}
+#'
 #' @param ... Additional arguments.
-#' Used for deprecated arguments from previous versions of dimStability
+#' Used for deprecated arguments from previous versions of \code{\link[EGAnet]{itemStability}}
 #'
 #' @return Returns a list containing:
 #'
@@ -15,13 +25,15 @@
 #'
 #' \itemize{
 #'
-#' \item{\strong{\code{structural.consistency}}}
+#' \item{\code{structural.consistency}}
 #' {The proportion of times that each empirical \code{\link[EGAnet]{EGA}} dimension
 #' \emph{exactly} replicates across the \code{\link[EGAnet]{bootEGA}} samples}
 #'
-#' \item{\strong{\code{average.item.stability}}}
+#' \item{\code{average.item.stability}}
 #' {The average item stability in each empirical \code{\link[EGAnet]{EGA}} dimension}
-#'   }
+#' 
+#' }
+#' 
 #' }
 #'
 #' \item{item.stability}{Results from \code{\link[EGAnet]{itemStability}}}
@@ -39,39 +51,29 @@
 #' )}
 #'
 #' # Estimate stability statistics
-#' res <- dimensionStability(boot.wmt)
-#' res$dimension.stability
-#' 
-#' \dontrun{
-#' # Produce Methods section
-#' methods.section(
-#'   boot.wmt,
-#'   stats = "dimensionStability"
-#' )}
-#' 
+#' dimensionStability(boot.wmt)
 #'
 #' @references
+#' \strong{Original implementation of bootEGA} \cr
 #' Christensen, A. P., & Golino, H. (2021).
 #' Estimating the stability of the number of factors via Bootstrap Exploratory Graph Analysis: A tutorial.
 #' \emph{Psych}, \emph{3}(3), 479-500.
 #'
+#' \strong{Conceptual introduction} \cr
 #' Christensen, A. P., Golino, H., & Silvia, P. J. (2020).
 #' A psychometric network perspective on the validity and validation of personality trait questionnaires.
 #' \emph{European Journal of Personality}, \emph{34}(6), 1095-1108.
-#'
-#' @seealso \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and
-#' \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 #'
 #' @author Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'
 #' @export
 #'
-# Dimension Stability function
+# Dimension Stability function ----
 # Updated 24.07.2023
 dimensionStability <- function(bootega.obj, IS.plot = TRUE, structure = NULL, ...)
 {
   
-  # Compute item stability
+  # Compute item stability (all error checks occur in `itemStability`)
   item_stability <- itemStability(bootega.obj, IS.plot, structure, ...)
   
   # Check for hierarchical EGA
@@ -219,17 +221,3 @@ dimensionStability_core <- function(item_stability_object)
   return(results)
   
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

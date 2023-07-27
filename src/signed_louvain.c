@@ -4,7 +4,8 @@
 #include <R.h>
 #include <Rinternals.h>
 #include "modularity.h"
-#include "shuffle.h"
+#include "nanotime.h"
+#include "xoshiro.h"
 
 // Function to compute modularity gain
 double modularity_gain(
@@ -254,17 +255,14 @@ void shuffle_nodes(int *arr, int cols) {
     // Initialize iterators
     int i, j, temp;
 
-    // Get clock time
-    uint64_t current_time_ns = get_time_ns();
-
     // Seed the random number generator
-    srand(current_time_ns);
+    seed_xoshiro256((uint32_t) get_time_ns());
 
     // Iterate through the array from the last element to the first
     for (i = cols - 1; i > 0; i--) {
 
         // Generate a random index between 0 and i (inclusive)
-        j = rand() % (i + 1);
+        j = next() % (i + 1);
 
         // Swap the current element with the randomly selected element
         temp = arr[i];

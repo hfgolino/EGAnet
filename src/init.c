@@ -6,14 +6,10 @@
 extern SEXP r_signed_louvain(SEXP r_input_network);
 extern SEXP r_signed_modularity(SEXP r_input_network, SEXP r_input_memberships);
 extern SEXP r_polychoric_correlation_matrix(SEXP r_input_matrix, SEXP r_empty_method, SEXP r_empty_value);
-extern SEXP r_time(SEXP r_scale);
-extern SEXP r_shuffle(SEXP r_vector, SEXP r_seed);
-extern SEXP r_shuffle_replace(SEXP r_vector, SEXP r_seed);
-//extern SEXP _EGAnet_r_sample_with_replacement(SEXP n, SEXP seed);
-//extern SEXP _EGAnet_r_sample_without_replacement(SEXP arr, SEXP seed);
-//extern SEXP _EGAnet_r_sample_seeds(SEXP n, SEXP seed);
-//extern SEXP _EGAnet_r_random_uniform(SEXP n, SEXP min, SEXP max, SEXP seed);
-
+extern SEXP r_ziggurat(SEXP n, SEXP r_seed);
+extern SEXP r_xoshiro_seeds(SEXP n, SEXP r_seed);
+extern SEXP r_xoshiro_shuffle(SEXP r_vector, SEXP r_seed);
+extern SEXP r_xoshiro_shuffle_replace(SEXP r_vector, SEXP r_seed);
 
 // Register native routine
 static const R_CallMethodDef CallEntries[] = {
@@ -34,40 +30,25 @@ static const R_CallMethodDef CallEntries[] = {
          3 // Number of arguments
     },
     {
-        "r_time", // Name of function call in R
-        (DL_FUNC)&r_time, // Name of C function
-         1 // Number of arguments
+        "r_ziggurat", // Name of function call in R
+        (DL_FUNC)&r_ziggurat, // Name of C function
+         2 // Number of arguments
     },
     {
-        "r_shuffle", // Name of function call in R
-        (DL_FUNC)&r_shuffle, // Name of C function
+        "r_xoshiro_seeds", // Name of function call in R
+        (DL_FUNC)&r_xoshiro_seeds, // Name of C function
          2 // Number of arguments
     },
-        {
-        "r_shuffle_replace", // Name of function call in R
-        (DL_FUNC)&r_shuffle_replace, // Name of C function
+    {
+        "r_xoshiro_shuffle", // Name of function call in R
+        (DL_FUNC)&r_xoshiro_shuffle, // Name of C function
          2 // Number of arguments
     },
-//    {
-//        "_EGAnet_r_sample_with_replacement", // Name of function call in R
-//        (DL_FUNC)&_EGAnet_r_sample_with_replacement, // Name of C function
-//         2 // Number of arguments
-//    },
-//    {
-//        "_EGAnet_r_sample_without_replacement", // Name of function call in R
-//        (DL_FUNC)&_EGAnet_r_sample_without_replacement, // Name of C function
-//         2 // Number of arguments
-//    },
-//    {
-//        "_EGAnet_r_sample_seeds", // Name of function call in R
-//        (DL_FUNC)&_EGAnet_r_sample_seeds, // Name of C function
-//         2 // Number of arguments
-//    },
-//    {
-//        "_EGAnet_r_random_uniform", // Name of function call in R
-//        (DL_FUNC)&_EGAnet_r_random_uniform, // Name of C function
-//         4 // Number of arguments
-//    },
+    {
+        "r_xoshiro_shuffle_replace", // Name of function call in R
+        (DL_FUNC)&r_xoshiro_shuffle_replace, // Name of C function
+         2 // Number of arguments
+    },
     {NULL, NULL, 0}
 
 };

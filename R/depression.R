@@ -1,7 +1,7 @@
-#' Depression Data
+#' @title Depression Data
 #'
-#' A response matrix (n = 574) of the Beck Depression Inventory, Beck Anxiety Inventory and
-#' the Athens Insomnia Scale.
+#' @description A response matrix (\emph{n} = 574) of the Beck Depression Inventory, 
+#' Beck Anxiety Inventory, and the Athens Insomnia Scale.
 #'
 #' @name depression
 #'
@@ -17,4 +17,3 @@
 #' data("depression")
 #'
 NULL
-#----

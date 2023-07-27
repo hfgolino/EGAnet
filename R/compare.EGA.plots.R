@@ -1,97 +1,82 @@
-#' Visually Compares \code{\link{EGAnet}} plots
+#' @title Visually Compare Two or More \code{\link{EGAnet}} plots
 #' 
-#' @description Organizes EGA plots for comparison. Ensures that nodes are
-#' placed in the same layout to maximize comparison. Community memberships
-#' are also homogenized across EGA outputs to enhance interpretation
+#' @description Organizes EGA plots for comparison. Ensures that 
+#' nodes are placed in the same layout to maximize comparison
 #'
-#' @param ... \code{\link{EGAnet}} objects
+#' @param ... Handles multiple arguments:
+#' 
+#' \itemize{
+#' 
+#' \item{\code{*EGA} objects}
+#' {can be dropped in without any argument
+#' designation. The function will search across input to find
+#' necessary \code{\link{EGAnet}} objects}
+#' 
+#' \item{\code{\link[GGally]{ggnet2}} arguments}
+#' {can be passed along to \code{\link[GGally]{ggnet2}}}
+#' 
+#' \item{\code{\link[sna]{gplot.layout}}}
+#' {can be specified using \code{mode = } or
+#' \code{layout = } using the name of the layout
+#' (e.g., \code{mode = "circle"} will produce the 
+#' circle layout from \link[sna]{gplot.layout}).
+#' By default, the layout is the same as \code{\link{qgraph}}}
+#'
+#' }
 #' 
 #' @param input.list List.
 #' Bypasses \code{...} argument in favor of using a list
 #' as an input
 #' 
-#' @param base.plot Numeric.
+#' @param base.plot Numeric (length = 1).
 #' Plot to be used as the base for the configuration of the networks.
 #' Uses the number of the order in which the plots are input.
 #' Defaults to \code{1} or the first plot
 #' 
-#' @param labels Character vector.
+#' @param labels Character (same length as input).
 #' Labels for each \code{\link{EGAnet}} object
 #' 
-#' @param rows Numeric.
+#' @param rows Numeric (length = 1).
 #' Number of rows to spread plots across
 #' 
-#' @param columns Numeric.
+#' @param columns Numeric (length = 1).
 #' Number of columns to spread plots down
-#' 
-#' @param plot.args List.
-#' A list of additional arguments for the network plot.
-#' For \code{plot.type = "qgraph"}:
-#'
-#' \itemize{
-#'
-#' \item{\strong{\code{vsize}}}
-#' {Size of the nodes. Defaults to 6.}
-#'
-#' }
-#' 
-#' (see \code{\link[GGally]{ggnet2}} for
-#' full list of arguments):
-#'
-#' \itemize{
-#'
-#' \item{\strong{\code{vsize}}}
-#' {Size of the nodes. Defaults to 6.}
-#'
-#' \item{\strong{\code{label.size}}}
-#' {Size of the labels. Defaults to 5.}
-#'
-#' \item{\strong{\code{alpha}}}
-#' {The level of transparency of the nodes, which might be a single value or a vector of values. Defaults to 0.7.}
-#'
-#' \item{\strong{\code{edge.alpha}}}
-#' {The level of transparency of the edges, which might be a single value or a vector of values. Defaults to 0.4.}
-#'
-#'  \item{\strong{\code{legend.names}}}
-#' {A vector with names for each dimension}
-#'
-#' \item{\strong{\code{color.palette}}}
-#' {The color palette for the nodes. For custom colors,
-#' enter HEX codes for each dimension in a vector.
-#' See \code{\link[EGAnet]{color_palette_EGA}} for
-#' more details and examples}
-#'
-#' }
 #'
 #' @return Visual comparison of \code{\link{EGAnet}} objects
 #' 
 #' @examples
-#' # Obtain SAPA items
-#' items <- psychTools::spi[,c(11:20)]
+#' # Obtain WMT-2 data
+#' wmt <- wmt2[,7:24]
 #' 
-#' # Draw random samples
-#' sample1 <- items[sample(1:nrow(items), 1000),]
-#' sample2 <- items[sample(1:nrow(items), 1000),]
+#' # Draw random samples of 300 cases
+#' sample1 <- wmt[sample(1:nrow(wmt), 300),]
+#' sample2 <- wmt[sample(1:nrow(wmt), 300),]
 #' 
-#' \dontrun{
 #' # Estimate EGAs
 #' ega1 <- EGA(sample1)
 #' ega2 <- EGA(sample2)
 #' 
 #' # Compare EGAs via plot
-#' compare_EGA_plots(
+#' compare.EGA.plots(
 #'   ega1, ega2,
 #'   base.plot = 1, # use "ega1" as base for comparison
 #'   labels = c("Sample 1", "Sample 2"),
 #'   rows = 1, columns = 2
-#' )}
+#' )
+#' 
+#' # Change layout to circle plots
+#' compare.EGA.plots(
+#'   ega1, ega2,
+#'   labels = c("Sample 1", "Sample 2"),
+#'   mode = "circle"
+#' )
 #' 
 #' @author Alexander Christensen <alexpaulchristensen@gmail.com>
 #'
 #' @export
 #
 # Compare EGA plots ----
-# Updated 14.07.2023
+# Updated 27.07.2023
 compare.EGA.plots <- function(
   ..., input.list = NULL, base.plot = 1,
   labels = NULL, rows = NULL, columns = NULL
@@ -194,17 +179,35 @@ compare.EGA.plots <- function(
   # For `ellipse`, get legacy arguments
   ellipse <- legacy_EGA_args(ellipse)
   
+  # Get length of input list
+  input_length <- length(input.list)
+  
+  # Handle rows and columns
+  if(is.null(rows) & is.null(columns)){
+    
+    # Set rows first and then columns
+    rows <- floor(sqrt(input_length))
+    columns <- ceiling(input_length / rows)
+    # use `ceiling` since any non-zero 
+    # remainder means an extra column is necessary
+    
+  }else if(is.null(rows)){ # Set rows based on columns
+    rows <- ceiling(input_length / columns)
+  }else if(is.null(columns)){ # Set columns based on rows
+    columns <- ceiling(input_length / rows)
+  }
+  
   # Add labels, rows, and columns
   ellipse[c("nrow", "ncol")] <- list(rows, columns)
   
   # Plot using all "IDs"
   return(
     do.call(
-      plot,
+      what = plot,
       args = c(
         list(
           x = input.list,
-          id = seq_along(input.list)
+          id = seq_len(input_length)
         ),
         ellipse
       )
