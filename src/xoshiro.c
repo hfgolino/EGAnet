@@ -123,6 +123,12 @@ void seed_xoshiro256(uint32_t seed) {
     }
 }
 
+// Function to generate random uniform data between 0 and 1
+float xoshiro_uniform(void) {
+  return (float) next() / ((float) UINT32_MAX + 1);
+}
+
+
 // Function get "random" seeds
 SEXP r_xoshiro_seeds(SEXP n, SEXP r_seed) {
 
@@ -132,7 +138,7 @@ SEXP r_xoshiro_seeds(SEXP n, SEXP r_seed) {
 
     // For random seed, use zero
     if(seed_value == 0) { // Use clocktime in nanoseconds
-        seed_value = get_time_ns();
+      seed_value = (uint32_t) get_time_ns();
     }
 
     // Seed the random number generator
@@ -165,7 +171,7 @@ SEXP r_xoshiro_shuffle(SEXP r_vector, SEXP r_seed) {
 
     // For random seed, use zero
     if(seed_value == 0) { // Use clocktime in nanoseconds
-        seed_value = get_time_ns();
+      seed_value = (uint32_t) get_time_ns();
     }
 
     // Seed the random number generator
@@ -194,14 +200,14 @@ SEXP r_xoshiro_shuffle(SEXP r_vector, SEXP r_seed) {
 SEXP r_xoshiro_shuffle_replace(SEXP r_vector, SEXP r_seed) {
 
     // Get length of R vector
-    double vector_length = length(r_vector);
+    uint32_t vector_length = (uint32_t) length(r_vector);
 
     // Initialize R values
     uint32_t seed_value = (uint32_t) REAL(r_seed)[0];
 
     // For random seed, use zero
     if(seed_value == 0) { // Use clocktime in nanoseconds
-        seed_value = get_time_ns();
+      seed_value = (uint32_t) get_time_ns();
     }
 
     // Seed the random number generator
@@ -212,7 +218,7 @@ SEXP r_xoshiro_shuffle_replace(SEXP r_vector, SEXP r_seed) {
 
     // Shuffle
     for(int i = 0; i < vector_length; i++) {
-        REAL(r_output)[i] = (double) (next() % ((uint32_t) vector_length)) + 1;
+        REAL(r_output)[i] = (double) (next() % (vector_length)) + 1;
     }
 
     // Release protected SEXP objects

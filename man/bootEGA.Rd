@@ -18,7 +18,7 @@ bootEGA(
   EGA.type = c("EGA", "EGA.fit", "hierEGA", "riEGA"),
   typicalStructure = TRUE,
   plot.typicalStructure = TRUE,
-  seed = 1234,
+  seed = NULL,
   verbose = TRUE,
   ...
 )
@@ -217,37 +217,10 @@ If \code{TRUE}, returns a plot of the typical network structure.
 Defaults to \code{TRUE}}
 
 \item{seed}{Numeric (length = 1).
-Defaults to \code{1234}.
-Sets seed in C to produce \code{iter} seeds using
-the xoshiro128++ (Blackman & Vigna, 2019) method
-for generating pseudorandom numbers. These \code{iter}
-seeds are carried forward into data generation where
-random number generation methods are used for each \code{type}:
-
-\itemize{
-
-\item{\code{"parametric"}}
-{uses the Ziggurat random normal generation (Marsaglia & Tsang, 2000)}
-
-\item{\code{"resampling"}}
-{uses the xoshiro128++ to generate random integers with replacement}
-
-}
-
-Both the Ziggurat and xoshiro128++ methods are considered to be
-some of the faster, more robust methods of generating random data
-(see references for more information).
-
-For random results that will change with each run, use \code{NULL}.
-\code{NULL} will obtain your local computer's time in nanoseconds
-which in turn is used as the seed for data generation using the
-above methods.
-
-Because these seeds are set in C, they do not affect seeds
-set in R; however, \code{\link[future.apply]{future_lapply}}
-will \emph{continue} the sequence of random numbers. In
-scripts, setting a seed will keep all results reproducible
-so long as the number of iterations stay the same}
+Defaults to \code{NULL} or random results
+Set for reproducible results.
+See \code{\link[EGAnet]{rng}} for more details on random
+number generation in \code{\link{EGAnet}}}
 
 \item{verbose}{Boolean (length = 1).
 Should progress be displayed?

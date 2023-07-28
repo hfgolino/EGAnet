@@ -1,27 +1,26 @@
-#' Estimates \code{EGA} for Multidimensional Structures
+#' Estimates \code{\link[EGAnet]{EGA}} for Multidimensional Structures
 #'
-#' A basic function to estimate \code{EGA} for multidimensional structures.
-#' This function does not include the unidimensional check and it does not
+#' A basic function to estimate \code{\link[EGAnet]{EGA}} for multidimensional structures.
+#' This function does \emph{not} include the unidimensional check and it does not
 #' plot the results. This function can be used as a streamlined approach
-#' for quick \code{EGA} estimation when unidimensionality or visualization
+#' for quick \code{\link[EGAnet]{EGA}} estimation when unidimensionality or visualization
 #' is not a priority
 #'
-#' @param data Numeric matrix or data frame.
-#' Either data representing \emph{only} the variables of interest or
-#' a correlation matrix. Data that are not numeric will be
-#' removed from the dataset
+#' @param data Matrix or data frame.
+#' Should consist only of variables that are desired to be in analysis
 #'
 #' @param n Numeric (length = 1).
-#' Sample size if \code{data} is a correlation matrix
-#'
+#' Sample size if \code{data} provided is a correlation matrix
+#' 
 #' @param corr Character (length = 1).
 #' Method to compute correlations.
+#' Defaults to \code{"auto"}.
 #' Available options:
 #' 
 #' \itemize{
 #' 
 #' \item{\code{"auto"}}
-#' {Default. Automatically computes appropriate correlations for
+#' {Automatically computes appropriate correlations for
 #' the data using Pearson's for continuous, polychoric for ordinal,
 #' tetrachoric for binary, and polyserial/biserial for ordinal/binary with
 #' continuous. To change the number of categories that are considered
@@ -43,12 +42,13 @@
 #' 
 #' @param na.data Character (length = 1).
 #' How should missing data be handled?
+#' Defaults to \code{"pairwise"}.
 #' Available options:
 #' 
 #' \itemize{
 #' 
 #' \item{\code{"pairwise"}}
-#' {Default. Computes correlation for all available cases between
+#' {Computes correlation for all available cases between
 #' two variables}
 #' 
 #' \item{\code{"listwise"}}
@@ -57,6 +57,7 @@
 #' }
 #' 
 #' @param model Character (length = 1).
+#' Defaults to \code{"glasso"}.
 #' Available options:
 #' 
 #' \itemize{
@@ -68,7 +69,7 @@
 #' See \code{\link[BGGM]{estimate}} for more details}
 #' 
 #' \item{\code{"glasso"}}
-#' {Default. Computes the GLASSO with EBIC model selection.
+#' {Computes the GLASSO with EBIC model selection.
 #' See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details}
 #' 
 #' \item{\code{"TMFG"}}
@@ -77,7 +78,9 @@
 #' 
 #' }
 #' 
-#' @param algorithm Character or \code{\link{igraph}} \code{cluster_*} function.
+#' @param algorithm Character or 
+#' \code{\link{igraph}} \code{cluster_*} function (length = 1).
+#' Defaults to \code{"walktrap"}.
 #' Three options are listed below but all are available
 #' (see \code{\link[EGAnet]{community.detection}} for other options):
 #' 
@@ -94,11 +97,11 @@
 #' and \code{consensus.iter = 1000} unless specified otherwise}
 #' 
 #' \item{\code{"walktrap"}}
-#' {Default. See \code{\link[EGAnet]{cluster_walktrap}} for more details}
+#' {See \code{\link[EGAnet]{cluster_walktrap}} for more details}
 #' 
 #' }
 #' 
-#' @param verbose Boolean.
+#' @param verbose Boolean (length = 1).
 #' Whether messages and (insignificant) warnings should be output.
 #' Defaults to \code{FALSE} (silent calls).
 #' Set to \code{TRUE} to see all messages and warnings for every function call
@@ -139,10 +142,10 @@
 #'   analytic = TRUE # faster example for CRAN
 #' )
 #' 
-#' # Estimate EGA with Spinglass algorithm
-#' ega.wmt.spinglass <- EGA.estimate(
+#' # Estimate EGA with an {igraph} function (Fast-greedy)
+#' ega.wmt.greedy <- EGA.estimate(
 #'   data = wmt,
-#'   algorithm = igraph::cluster_spinglass # any {igraph} algorithm
+#'   algorithm = igraph::cluster_fast_greedy
 #' )
 #'
 #' @references
@@ -165,7 +168,7 @@
 #' @export
 #'
 # Estimates multidimensional EGA only (no automatic plots)
-# Updated 23.07.2023
+# Updated 27.07.2023
 EGA.estimate <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -183,6 +186,9 @@ EGA.estimate <- function(
   model <- set_default(model, "glasso", network.estimation)
   algorithm <- set_default(algorithm, "walktrap", community.detection)
 
+  # Argument errors
+  EGA.estimate_errors(data, n, verbose)
+  
   # Obtain ellipse arguments
   ellipse <- list(...)
   
@@ -317,6 +323,27 @@ EGA.estimate <- function(
 # corr = "auto"; na.data = "pairwise"
 # model = "glasso"; algorithm = igraph::cluster_spinglass
 # verbose = FALSE; ellipse = list()
+
+#' @noRd
+# Errors ----
+# Updated 27.07.2023
+EGA.estimate_errors <- function(data, n, verbose)
+{
+  
+  # 'data' errors
+  object_error(data, c("matrix", "data.frame"))
+  
+  # 'n' errors
+  if(!is.null(n)){
+    length_error(n, 1)
+    typeof_error(n, "numeric")
+  }
+  
+  # 'verbose' errors
+  length_error(verbose, 1)
+  typeof_error(verbose, "logical")
+  
+}
 
 #' @exportS3Method 
 # S3 Print Method ----

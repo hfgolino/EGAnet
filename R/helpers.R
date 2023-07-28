@@ -1521,13 +1521,10 @@ remove_attributes <- function(object)
 
 #' @noRd
 # Set default argument (cleaner missing function) ----
-# Updated 24.07.2023
+# Updated 28.07.2023
 set_default <- function(argument, default, FUN, several.ok = FALSE)
 {
 
-  # Get argument name
-  argument_name <- as.character(substitute(argument))
-  
   # Check for type error
   typeof_error(argument, c(typeof(default), "closure"))
   
@@ -1545,6 +1542,9 @@ set_default <- function(argument, default, FUN, several.ok = FALSE)
   if(length(argument) > 1 & !several.ok){
     return(default)
   }
+  
+  # Get argument name
+  argument_name <- as.character(substitute(argument))
   
   # Get choices for the function
   if(!is.function(FUN)){ # choices are provided in 'FUN'
@@ -2506,6 +2506,9 @@ typeof_error <- function(input, expected_value){
   # Switch out "closure" with "function"
   if("closure" %in% expected_value){
     expected_value[expected_value == "closure"] <- "function"
+  }
+  if("closure" %in% input){
+    input[input == "closure"] <- "function"
   }
   
   # Get type of input

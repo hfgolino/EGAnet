@@ -200,38 +200,11 @@
 #' Defaults to \code{TRUE}
 #' 
 #' @param seed Numeric (length = 1).
-#' Defaults to \code{1234}.
-#' Sets seed in C to produce \code{iter} seeds using
-#' the xoshiro128++ (Blackman & Vigna, 2019) method
-#' for generating pseudorandom numbers. These \code{iter}
-#' seeds are carried forward into data generation where
-#' random number generation methods are used for each \code{type}:
+#' Defaults to \code{NULL} or random results
+#' Set for reproducible results.
+#' See \code{\link[EGAnet]{rng}} for more details on random
+#' number generation in \code{\link{EGAnet}}
 #' 
-#' \itemize{
-#' 
-#' \item{\code{"parametric"}}
-#' {uses the Ziggurat random normal generation (Marsaglia & Tsang, 2000)}
-#' 
-#' \item{\code{"resampling"}}
-#' {uses the xoshiro128++ to generate random integers with replacement}
-#' 
-#' }
-#' 
-#' Both the Ziggurat and xoshiro128++ methods are considered to be
-#' some of the faster, more robust methods of generating random data
-#' (see references for more information).
-#' 
-#' For random results that will change with each run, use \code{NULL}.
-#' \code{NULL} will obtain your local computer's time in nanoseconds
-#' which in turn is used as the seed for data generation using the
-#' above methods.
-#' 
-#' Because these seeds are set in C, they do not affect seeds
-#' set in R; however, \code{\link[future.apply]{future_lapply}}
-#' will \emph{continue} the sequence of random numbers. In
-#' scripts, setting a seed will keep all results reproducible
-#' so long as the number of iterations stay the same
-#'
 #' @param verbose Boolean (length = 1).
 #' Should progress be displayed?
 #' Defaults to \code{TRUE}.
@@ -369,7 +342,7 @@
 #' @export
 #'
 # Bootstrap EGA
-# Updated 27.07.2023
+# Updated 28.07.2023
 bootEGA <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -380,7 +353,7 @@ bootEGA <- function(
     iter = 500, type = c("parametric", "resampling"),
     ncores, EGA.type = c("EGA", "EGA.fit", "hierEGA", "riEGA"),
     typicalStructure = TRUE, plot.typicalStructure = TRUE,
-    seed = 1234, verbose = TRUE, 
+    seed = NULL, verbose = TRUE, 
     ...
 ) 
 {
@@ -460,6 +433,7 @@ bootEGA <- function(
     seeds <- reproducible_seeds(iter, seed)
   }else{ # Set all seeds to zero (or random)
     seeds <- rep(0, iter)
+    message("Argument 'seed' is set to `NULL`. Results will not be reproducible. Set seed for reproducible results")
   }
   
   # Check for parametric (pre-compute values)
@@ -467,8 +441,8 @@ bootEGA <- function(
     
     # Get parameters
     mvrnorm_parameters <- mvrnorm_precompute(
-      cases = empirical_EGA$n,
-      Sigma = empirical_EGA$correlation
+      cases = empirical_EGA_output$n,
+      Sigma = empirical_EGA_output$correlation
     )
     
     # Set case sequence to be NULL
@@ -477,7 +451,7 @@ bootEGA <- function(
   }else if(type == "resampling"){
     
     # Get case sequence
-    case_sequence <- seq_len(empirical_EGA$n)
+    case_sequence <- seq_len(empirical_EGA_output$n)
     
     # Set parameters to NULL
     mvrnorm_parameters <- NULL
@@ -590,7 +564,7 @@ bootEGA <- function(
 
 #' @noRd
 # Errors ----
-# Updated 27.07.2023
+# Updated 28.07.2023
 bootEGA_errors <- function(
     data, n, iter, ncores, typicalStructure,
     plot.typicalStructure, seed, verbose
@@ -625,14 +599,16 @@ bootEGA_errors <- function(
   typeof_error(plot.typicalStructure, "logical")
   
   # 'seed' errors
-  length_error(seed, 1)
-  typeof_error(seed, "numeric")
-  range_error(seed, 
-    c(
-      -as.double(.Machine$integer.max), 
-      as.double(.Machine$integer.max)
+  if(!is.null(seed)){
+    length_error(seed, 1)
+    typeof_error(seed, "numeric")
+    range_error(seed, 
+                c(
+                  -as.double(.Machine$integer.max), 
+                  as.double(.Machine$integer.max)
+                )
     )
-  )
+  }
   
   # 'verbose' errors
   length_error(verbose, 1)

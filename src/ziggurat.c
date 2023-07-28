@@ -2,333 +2,36 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <R.h>
 #include <Rinternals.h>
 #include <Rmath.h>
 #include "ziggurat.h"
+#include "xoshiro.h"
 #include "nanotime.h"
 
-/******************************************************************************/
-
-uint32_t cong_seeded ( uint32_t *jcong )
-
-/******************************************************************************/
 /*
-  Purpose:
 
-    cong_seeded() evaluates the CONG congruential random number generator.
-
-  Licensing:
-
-    This code is distributed under the GNU LGPL license.
-
-  Modified:
-
-    16 October 2013
-
-  Author:
-
-    John Burkardt
-
-  Reference:
-
-    George Marsaglia, Wai Wan Tsang,
-    The Ziggurat Method for Generating Random Variables,
-    Journal of Statistical Software,
-    Volume 5, Number 8, October 2000, seven pages.
-
-  Parameters:
-
-    Input/output, uint32_t *JCONG, the seed, which is updated
-    on each call.
-
-    Output, uint32_t CONG_SEEDED, the new value.
+ The base ziggurat.c code has been modified to support the use
+ of the xoshiro128++ generator for random uniform numbers. The
+ xoshiro128++ uniform generator replaced the `r4_uni`,
+ which was the original random uniform generating function.
+ This new uniform generating function is called `xoshiro_uniform`.
+ 
+ This replacement voids the need for several functions that
+ were previously used to set random seeds: 
+    +   `cong_seeded`
+    +   `kiss_seeded`
+    +   `mwc_seeded`
+ 
+ Further, it eliminates the need to call a seed into `r4_uni` as
+ well as any manipulation of the seed. Code for the xoshiro128++
+ can be found in the xoshiro.c file.
+ 
+ Modified date: 28.07.2023
+ Modified by: Alexander P. Christensen <alexpaulchristensen@gmail.com>
+ 
 */
-{
-  uint32_t value;
 
-  *jcong = 69069 * ( *jcong ) + 1234567;
-
-  value = *jcong;
-
-  return value;
-}
-/******************************************************************************/
-
-double cpu_time ( )
-
-/******************************************************************************/
-/*
-  Purpose:
-
-    cpu_time() returns the current reading on the CPU clock.
-
-  Licensing:
-
-    This code is distributed under the GNU LGPL license.
-
-  Modified:
-
-    08 December 2008
-
-  Author:
-
-    John Burkardt
-
-  Parameters:
-
-    Output, double CPU_TIME, the current reading of the CPU clock, in seconds.
-*/
-{
-  double value;
-
-  value = ( double ) clock ( ) / ( double ) CLOCKS_PER_SEC;
-
-  return value;
-}
-/******************************************************************************/
-
-uint32_t kiss_seeded ( uint32_t *jcong, uint32_t *jsr, uint32_t *w, uint32_t *z )
-
-/******************************************************************************/
-/*
-  Purpose:
-
-    kiss_seeded() evaluates the KISS random number generator.
-
-  Licensing:
-
-    This code is distributed under the GNU LGPL license.
-
-  Modified:
-
-    15 October 2013
-
-  Author:
-
-    John Burkardt
-
-  Reference:
-
-    George Marsaglia, Wai Wan Tsang,
-    The Ziggurat Method for Generating Random Variables,
-    Journal of Statistical Software,
-    Volume 5, Number 8, October 2000, seven pages.
-
-  Parameters:
-
-    Input/output, uint32_t *JCONG, uint32_t *JSR, uint32_t *W, uint32_t *Z,
-    the seeds, which are updated on each call.
-
-    Output, uint32_t KISS_SEEDED, the new value.
-*/
-{
-  uint32_t value;
-
-  value = ( mwc_seeded ( w, z ) ^ cong_seeded ( jcong ) ) + shr3_seeded ( jsr );
-
-  return value;
-}
-/******************************************************************************/
-
-uint32_t mwc_seeded ( uint32_t *w, uint32_t *z )
-
-/******************************************************************************/
-/*
-  Purpose:
-
-    mwc_seeded() evaluates the MWC multiply-with-carry random number generator.
-
-  Licensing:
-
-    This code is distributed under the GNU LGPL license.
-
-  Modified:
-
-    15 October 2013
-
-  Author:
-
-    John Burkardt
-
-  Reference:
-
-    George Marsaglia, Wai Wan Tsang,
-    The Ziggurat Method for Generating Random Variables,
-    Journal of Statistical Software,
-    Volume 5, Number 8, October 2000, seven pages.
-
-  Parameters:
-
-    Input/output, uint32_t *W, uint32_t *Z, the seeds, which are updated
-    on each call.
-
-    Output, uint32_t MWC_SEEDED, the new value.
-*/
-{
-  uint32_t value;
-
-  *z = 36969 * ( *z & 65535 ) + ( *z >> 16 );
-  *w = 18000 * ( *w & 65535 ) + ( *w >> 16 );
-
-  value = ( *z << 16 ) + *w;
-
-  return value;
-}
-/******************************************************************************/
-
-float r4_exp ( uint32_t *jsr, uint32_t ke[256], float fe[256], float we[256] )
-
-/******************************************************************************/
-/*
-  Purpose:
-
-    r4_exp() returns an exponentially distributed single precision real value.
-
-  Discussion:
-
-    The underlying algorithm is the ziggurat method.
-
-    Before the first call to this function, the user must call r4_exp_setup()
-    to determine the values of KE, FE and WE.
-
-  Licensing:
-
-    This code is distributed under the GNU LGPL license.
-
-  Modified:
-
-    15 October 2013
-
-  Author:
-
-    John Burkardt
-
-  Reference:
-
-    George Marsaglia, Wai Wan Tsang,
-    The Ziggurat Method for Generating Random Variables,
-    Journal of Statistical Software,
-    Volume 5, Number 8, October 2000, seven pages.
-
-  Parameters:
-
-    Input/output, uint32_t *JSR, the seed.
-
-    Input, uint32_t KE[256], data computed by R4_EXP_SETUP.
-
-    Input, float FE[256], WE[256], data computed by R4_EXP_SETUP.
-
-    Output, float R4_EXP, an exponentially distributed random value.
-*/
-{
-  uint32_t iz;
-  uint32_t jz;
-  float value;
-  float x;
-
-  jz = shr3_seeded ( jsr );
-  iz = ( jz & 255 );
-
-  if ( jz < ke[iz] )
-  {
-    value = ( float ) ( jz ) * we[iz];
-  }
-  else
-  {
-    for ( ; ; )
-    {
-      if ( iz == 0 )
-      {
-        value = 7.69711 - log ( r4_uni ( jsr ) );
-        break;
-      }
-
-      x = ( float ) ( jz ) * we[iz];
-
-      if ( fe[iz] + r4_uni ( jsr ) * ( fe[iz-1] - fe[iz] ) < exp ( - x ) )
-      {
-        value = x;
-        break;
-      }
-
-      jz = shr3_seeded ( jsr );
-      iz = ( jz & 255 );
-
-      if ( jz < ke[iz] )
-      {
-        value = ( float ) ( jz ) * we[iz];
-        break;
-      }
-    }
-  }
-  return value;
-}
-/******************************************************************************/
-
-void r4_exp_setup ( uint32_t ke[256], float fe[256], float we[256] )
-
-/******************************************************************************/
-/*
-  Purpose:
-
-    r4_exp_setup() sets data needed by r4_exp().
-
-  Licensing:
-
-    This code is distributed under the GNU LGPL license.
-
-  Modified:
-
-    14 October 2013
-
-  Author:
-
-    John Burkardt
-
-  Reference:
-
-    George Marsaglia, Wai Wan Tsang,
-    The Ziggurat Method for Generating Random Variables,
-    Journal of Statistical Software,
-    Volume 5, Number 8, October 2000, seven pages.
-
-  Parameters:
-
-    Output, uint32_t KE[256], data needed by R4_EXP.
-
-    Output, float FE[256], WE[256], data needed by R4_EXP.
-*/
-{
-  double de = 7.697117470131487;
-  int i;
-  const double m2 = 2147483648.0;
-  double q;
-  double te = 7.697117470131487;
-  const double ve = 3.949659822581572E-03;
-
-  q = ve / exp ( - de );
-
-  ke[0] = ( uint32_t ) ( ( de / q ) * m2 );
-  ke[1] = 0;
-
-  we[0] = ( float ) ( q / m2 );
-  we[255] = ( float ) ( de / m2 );
-
-  fe[0] = 1.0;
-  fe[255] = ( float ) ( exp ( - de ) );
-
-  for ( i = 254; 1 <= i; i-- )
-  {
-    de = - log ( ve / de + exp ( - de ) );
-    ke[i+1] = ( uint32_t ) ( ( de / te ) * m2 );
-    te = de;
-    fe[i] = ( float ) ( exp ( - de ) );
-    we[i] = ( float ) ( de / m2 );
-  }
-  return;
-}
 /******************************************************************************/
 
 float r4_nor ( uint32_t *jsr, uint32_t kn[128], float fn[128], float wn[128] )
@@ -407,8 +110,8 @@ float r4_nor ( uint32_t *jsr, uint32_t kn[128], float fn[128], float wn[128] )
       {
         for ( ; ; )
         {
-          x = - 0.2904764 * log ( r4_uni ( jsr ) );
-          y = - log ( r4_uni ( jsr ) );
+          x = - 0.2904764 * log ( xoshiro_uniform( ) );
+          y = - log ( xoshiro_uniform( ) );
           if ( x * x <= y + y )
           {
             break;
@@ -428,7 +131,7 @@ float r4_nor ( uint32_t *jsr, uint32_t kn[128], float fn[128], float wn[128] )
 
       x = ( float ) ( hz ) * wn[iz];
 
-      if ( fn[iz] + r4_uni ( jsr ) * ( fn[iz-1] - fn[iz] )
+      if ( fn[iz] + xoshiro_uniform( ) * ( fn[iz-1] - fn[iz] )
         < exp ( - 0.5 * x * x ) )
       {
         value = x;
@@ -515,57 +218,6 @@ void r4_nor_setup ( uint32_t kn[128], float fn[128], float wn[128] )
 }
 /******************************************************************************/
 
-float r4_uni ( uint32_t *jsr )
-
-/******************************************************************************/
-/*
-  Purpose:
-
-    r4_uni() returns a uniformly distributed real value.
-
-  Licensing:
-
-    This code is distributed under the GNU LGPL license.
-
-  Modified:
-
-    04 October 2013
-
-  Author:
-
-    John Burkardt
-
-  Reference:
-
-    George Marsaglia, Wai Wan Tsang,
-    The Ziggurat Method for Generating Random Variables,
-    Journal of Statistical Software,
-    Volume 5, Number 8, October 2000, seven pages.
-
-  Parameters:
-
-    Input/output, uint32_t *JSR, the seed.
-
-    Output, float R4_UNI, a uniformly distributed random value in
-    the range [0,1].
-*/
-{
-  uint32_t jsr_input;
-  float value;
-
-  jsr_input = *jsr;
-
-  *jsr = ( *jsr ^ ( *jsr <<   13 ) );
-  *jsr = ( *jsr ^ ( *jsr >>   17 ) );
-  *jsr = ( *jsr ^ ( *jsr <<    5 ) );
-
-  value = fmod ( 0.5
-    + ( float ) ( jsr_input + *jsr ) / 65536.0 / 65536.0, 1.0 );
-
-  return value;
-}
-/******************************************************************************/
-
 uint32_t shr3_seeded ( uint32_t *jsr )
 
 /******************************************************************************/
@@ -621,69 +273,6 @@ uint32_t shr3_seeded ( uint32_t *jsr )
 }
 /******************************************************************************/
 
-void timestamp ( )
-
-/******************************************************************************/
-/*
-  Purpose:
-
-    timestamp() prints the current YMDHMS date as a time stamp.
-
-  Example:
-
-    31 May 2001 09:45:54 AM
-
-  Licensing:
-
-    This code is distributed under the GNU LGPL license.
-
-  Modified:
-
-    24 September 2003
-
-  Author:
-
-    John Burkardt
-*/
-{
-# define TIME_SIZE 40
-
-  static char time_buffer[TIME_SIZE];
-  const struct tm *tm;
-  time_t now;
-
-  now = time ( NULL );
-  tm = localtime ( &now );
-
-  strftime ( time_buffer, TIME_SIZE, "%d %B %Y %I:%M:%S %p", tm );
-
-  printf ( "%s\n", time_buffer );
-
-  return;
-# undef TIME_SIZE
-}
-
-float* ziggurat_rng(int n, uint32_t seed)
-{
-    // Set up tables
-    uint32_t kn[128];
-    float fn[128];
-    float wn[128];
-    r4_nor_setup(kn, fn, wn);
-
-    // Initialize vector
-    float* values = malloc(n * sizeof(float));
-
-    // Loop over to get values
-    for(int i = 0; i < n; i++) {
-        values[i] = r4_nor(&seed, kn, fn, wn);
-    }
-
-    // Return values
-    return values;
-
-}
-
 SEXP r_ziggurat(SEXP n, SEXP r_seed) {
 
     // Initialize values
@@ -700,19 +289,25 @@ SEXP r_ziggurat(SEXP n, SEXP r_seed) {
         seed_value = (uint32_t) get_time_ns();
 
     }
+    
+    // Set up tables
+    uint32_t kn[128];
+    float fn[128];
+    float wn[128];
+    r4_nor_setup(kn, fn, wn);
+    
+    // Seed the (uniform) random number generator
+    seed_xoshiro256(seed_value);
 
     // Generate your random numbers
-    float* random_values = ziggurat_rng(n_values, seed_value);
     for(int i = 0; i < n_values; i++) {
-        REAL(r_output)[i] = random_values[i];
+        REAL(r_output)[i] = r4_nor(&seed_value, kn, fn, wn);
     }
-
-    // Free memory
-    free(random_values);
 
     // Release protected SEXP objects
     UNPROTECT(1);
 
     // Return result
     return r_output;
+    
 }

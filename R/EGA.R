@@ -1,35 +1,49 @@
-#' Applies the Exploratory Graph Analysis technique
+#' @title Exploratory Graph Analysis
 #'
-#' Estimates the number of dimensions of a given dataset or correlation matrix
-#' using the graphical lasso (\code{\link{EBICglasso.qgraph}}) or the
-#' Triangulated Maximally Filtered Graph (\code{\link[EGAnet]{TMFG}})
-#' network estimation methods.
+#' @description Estimates the number of communities (dimensions) of
+#' a dataset or correlation matrix using a network estimation method
+#' (Golino & Epskamp, 2017; Golino et al., 2020). After, a community
+#' detection algorithm is applied (Christensen et al., 2023) for
+#' multidimensional data. A unidimensional check is also applied
+#' based on findings from Golino et al. (2020) and Christensen (2023) 
 #'
-#' Two community detection algorithms, Walktrap (Pons & Latapy, 2006) and
-#' Louvain (Blondel et al., 2008), are pre-programmed because of their
-#' superior performance in simulation studies on psychological
-#' data generated from factor models (Christensen & Golino; 2020; Golino et al., 2020).
-#' Notably, any community detection algorithm from the \code{\link{igraph}}
-#' can be used to estimate the number of communities (see examples).
-#'
-#' @param data Numeric matrix or data frame.
-#' Either data representing \emph{only} the variables of interest or
-#' a correlation matrix. Data that are not numeric will be
-#' removed from the dataset
+#' @param data Matrix or data frame.
+#' Should consist only of variables that are desired to be in analysis
 #'
 #' @param n Numeric (length = 1).
-#' Sample size if \code{data} is a correlation matrix
-#'
+#' Sample size if \code{data} provided is a correlation matrix
+#' 
 #' @param corr Character (length = 1).
 #' Method to compute correlations.
-#' Defaults to \code{"auto"} to automatically compute
-#' appropriate correlations using \code{\link[EGAnet]{auto.correlate}}.
-#' \code{"pearson"} and \code{"spearman"} are provide for completeness.
+#' Defaults to \code{"auto"}.
+#' Available options:
+#' 
+#' \itemize{
+#' 
+#' \item{\code{"auto"}}
+#' {Automatically computes appropriate correlations for
+#' the data using Pearson's for continuous, polychoric for ordinal,
+#' tetrachoric for binary, and polyserial/biserial for ordinal/binary with
+#' continuous. To change the number of categories that are considered
+#' ordinal, use \code{ordinal.categories}
+#' (see \code{\link[EGAnet]{polychoric.matrix}} for more details)}
+#' 
+#' \item{\code{"pearson"}}
+#' {Pearson's correlation is computed for all variables regardless of
+#' categories}
+#' 
+#' \item{\code{"spearman"}}
+#' {Spearman's rank-order correlation is computed for all variables
+#' regardless of categories}
+#' 
+#' }
+#' 
 #' For other similarity measures, compute them first and input them
 #' into \code{data} with the sample size (\code{n})
 #' 
 #' @param na.data Character (length = 1).
 #' How should missing data be handled?
+#' Defaults to \code{"pairwise"}.
 #' Available options:
 #' 
 #' \itemize{
@@ -44,6 +58,7 @@
 #' }
 #' 
 #' @param model Character (length = 1).
+#' Defaults to \code{"glasso"}.
 #' Available options:
 #' 
 #' \itemize{
@@ -64,7 +79,9 @@
 #' 
 #' }
 #' 
-#' @param algorithm Character or \code{\link{igraph}} \code{cluster_*} function.
+#' @param algorithm Character or 
+#' \code{\link{igraph}} \code{cluster_*} function (length = 1).
+#' Defaults to \code{"walktrap"}.
 #' Three options are listed below but all are available
 #' (see \code{\link[EGAnet]{community.detection}} for other options):
 #' 
@@ -81,52 +98,58 @@
 #' and \code{consensus.iter = 1000} unless specified otherwise}
 #' 
 #' \item{\code{"walktrap"}}
-#' {This algorithm is the default. See \code{\link[EGAnet]{cluster_walktrap}} for more details}
+#' {See \code{\link[EGAnet]{cluster_walktrap}} for more details}
 #' 
 #' }
-#' 
-#' @param uni.method Character.
+#'
+#' @param uni.method Character (length = 1).
 #' What unidimensionality method should be used? 
 #' Defaults to \code{"louvain"}.
-#' Current options are:
+#' Available options:
 #' 
 #' \itemize{
 #'
-#' \item{\strong{\code{expand}}}
-#' {Expands the correlation matrix with four variables correlated .50.
+#' \item{\code{expand}}
+#' {Expands the correlation matrix with four variables correlated 0.50.
 #' If number of dimension returns 2 or less in check, then the data 
 #' are unidimensional; otherwise, regular EGA with no matrix
-#' expansion is used. This is the method used in the Golino et al. (2020)
-#' \emph{Psychological Methods} simulation.}
+#' expansion is used. This method was used in the Golino et al.'s (2020)
+#' \emph{Psychological Methods} simulation}
 #'
-#' \item{\strong{\code{LE}}}
-#' {Applies the Leading Eigenvalue algorithm (\code{\link[igraph]{cluster_leading_eigen}})
+#' \item{\code{LE}}
+#' {Applies the Leading Eigenvector algorithm
+#' (\code{\link[igraph]{cluster_leading_eigen}})
 #' on the empirical correlation matrix. If the number of dimensions is 1,
-#' then the Leading Eigenvalue solution is used; otherwise, regular EGA
-#' is used. This is the final method used in the Christensen, Garrido,
-#' and Golino (2021) simulation.}
+#' then the Leading Eigenvector solution is used; otherwise, regular EGA
+#' is used. This method was used in the Christensen et al.'s (2023) 
+#' \emph{Behavior Research Methods} simulation}
 #' 
-#' \item{\strong{\code{louvain}}}
+#' \item{\code{louvain}}
 #' {Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
-#' on the empirical correlation matrix using a resolution parameter = 0.95.
-#' If the number of dimensions is 1, then the Louvain solution is used; otherwise,
-#' regular EGA is used. This method was validated in the Christensen (2022) simulation.}
+#' on the empirical correlation matrix. If the number of dimensions is 1, 
+#' then the Louvain solution is used; otherwise, regular EGA is used. 
+#' This method was validated Christensen's (2022) \emph{PsyArXiv} simulation.
+#' Consensus clustering can be used by specifying either
+#' \code{"consensus.method"} or \code{"consensus.iter"}}
 #' 
 #' }
 #'
-#' @param plot.EGA Boolean.
-#' If \code{TRUE}, returns a plot of the network and its estimated dimensions.
-#' Defaults to \code{TRUE}
+#' @param plot.EGA Boolean (length = 1).
+#' Defaults to \code{TRUE}.
+#' Whether the plot should be returned with the results.
+#' Set to \code{FALSE} for no plot
 #' 
-#' @param verbose Boolean.
+#' @param verbose Boolean (length = 1).
 #' Whether messages and (insignificant) warnings should be output.
 #' Defaults to \code{FALSE} (silent calls).
 #' Set to \code{TRUE} to see all messages and warnings for every function call
 #'
 #' @param ... Additional arguments to be passed on to
-#' \code{\link[EGAnet]{auto.correlate}}, \code{\link[EGAnet]{network.estimation}},
-#' \code{\link[EGAnet]{community.detection}}, and
-#' \code{\link[EGAnet]{community.consensus}}
+#' \code{\link[EGAnet]{auto.correlate}}, 
+#' \code{\link[EGAnet]{network.estimation}},
+#' \code{\link[EGAnet]{community.detection}}, 
+#' \code{\link[EGAnet]{community.consensus}}, and
+#' \code{\link[EGAnet]{community.unidimensional}}
 #'
 #' @author Hudson Golino <hfg9s at virginia.edu>, Alexander P. Christensen <alexpaulchristensen at gmail.com>, Maria Dolores Nieto <acinodam at gmail.com> and Luis E. Garrido <garrido.luiseduardo at gmail.com>
 #'
@@ -147,84 +170,65 @@
 #' # Obtain data
 #' wmt <- wmt2[,7:24]
 #' 
-#' \dontrun{
 #' # Estimate EGA
 #' ega.wmt <- EGA(
 #'   data = wmt,
 #'   plot.EGA = FALSE # No plot for CRAN checks
 #' )
 #'
-#' # Summary statistics
-#' summary(ega.wmt)
-#' 
-#' # Produce Methods section
-#' methods.section(ega.wmt)
+#' # Print results
+#' print(ega.wmt)
 #' 
 #' # Estimate EGAtmfg
 #' ega.wmt.tmfg <- EGA(
-#'   data = wmt, model = "TMFG"
+#'   data = wmt, model = "TMFG",
+#'   plot.EGA = FALSE # No plot for CRAN checks
 #' )
 #'
 #' # Estimate EGA with Louvain algorithm
 #' ega.wmt.louvain <- EGA(
-#'   data = wmt, algorithm = "louvain"
+#'   data = wmt, algorithm = "louvain",
+#'   plot.EGA = FALSE # No plot for CRAN checks
 #' )
 #' 
-#' # Estimate EGA with Leiden algorithm
-#' ega.wmt.leiden <- EGA(
-#'   data = wmt, algorithm = "leiden"
+#' # Estimate EGA with an {igraph} function (Fast-greedy)
+#' ega.wmt.greedy <- EGA(
+#'   data = wmt,
+#'   algorithm = igraph::cluster_fast_greedy,
+#'   plot.EGA = FALSE # No plot for CRAN checks
 #' )
 #'
-#' # Estimate EGA with Spinglass algorithm
-#' ega.wmt.spinglass <- EGA(
-#'   data = wmt,
-#'   algorithm = igraph::cluster_spinglass
-#' )}
-#'
-#' @seealso \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap
-#' and \code{\link{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
-#'
 #' @references
-#' # Louvain algorithm \cr
-#' Blondel, V. D., Guillaume, J.-L., Lambiotte, R., & Lefebvre, E. (2008).
-#' Fast unfolding of communities in large networks.
-#' \emph{Journal of Statistical Mechanics: Theory and Experiment}, \emph{2008}, P10008.
-#'
-#' # Comprehensive unidimensionality simulation \cr
+#' \strong{Original simulation and implementation of EGA} \cr
+#' Golino, H. F., & Epskamp, S. (2017).
+#' Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research.
+#' \emph{PLoS ONE}, \emph{12}, e0174035.
+#' 
+#' \strong{Current implementation of EGA, introduced unidimensional checks, continuous and dichotomous data} \cr
+#' Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., & Thiyagarajan, J. A. (2020).
+#' Investigating the performance of Exploratory Graph Analysis and traditional techniques to identify the number of latent factors: A simulation and tutorial.
+#' \emph{Psychological Methods}, \emph{25}, 292-320.
+#' 
+#' \strong{Compared all \emph{igraph} community detection algorithms, introduced Louvain algorithm, simulation with continuous and polytomous data} \cr
+#' \strong{Also implements the Leading Eigenvalue unidimensional method} \cr
+#' Christensen, A. P., Garrido, L. E., Pena, K. G., & Golino, H. (2023).
+#' Comparing community detection algorithms in psychological data: A Monte Carlo simulation.
+#' \emph{Behavior Research Methods}.
+#' 
+#' \strong{Comprehensive unidimensionality simulation} \cr
 #' Christensen, A. P. (2022).
 #' Unidimensional community detection: A Monte Carlo simulation, grid search, and comparison.
 #' \emph{PsyArXiv}.
 #'
-#' # Compared all \emph{igraph} community detections algorithms, introduced Louvain algorithm, simulation with continuous and polytomous data \cr
+#' \strong{Compared all \emph{igraph} community detections algorithms, introduced Louvain algorithm, simulation with continuous and polytomous data} \cr
 #' # Also implements the Leading Eigenvalue unidimensional method \cr
 #' Christensen, A. P., Garrido, L. E., & Golino, H. (2021).
 #' Comparing community detection algorithms in psychological data: A Monte Carlo simulation.
 #' \emph{PsyArXiv}.
 #'
-#' # Original simulation and implementation of EGA \cr
-#' Golino, H. F., & Epskamp, S. (2017).
-#' Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research.
-#' \emph{PLoS ONE}, \emph{12}, e0174035.
-#'
-#' Golino, H. F., & Demetriou, A. (2017).
-#' Estimating the dimensionality of intelligence like data using Exploratory Graph Analysis.
-#' \emph{Intelligence}, \emph{62}, 54-70.
-#'
-#' # Current implementation of EGA, introduced unidimensional checks, continuous and dichotomous data \cr
-#' Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., & Thiyagarajan, J. A. (2020).
-#' Investigating the performance of Exploratory Graph Analysis and traditional techniques to identify the number of latent factors: A simulation and tutorial.
-#' \emph{Psychological Methods}, \emph{25}, 292-320.
-#'
-#' # Walktrap algorithm \cr
-#' Pons, P., & Latapy, M. (2006).
-#' Computing communities in large networks using random walks.
-#' \emph{Journal of Graph Algorithms and Applications}, \emph{10}, 191-218.
-#'
-#' @importFrom stats cor rnorm runif na.omit
-#'
 #' @export
-# Main EGA function
-# Updated 05.07.2023
+# EGA ----
+# Updated 27.07.2023
 EGA <- function (
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -246,6 +250,9 @@ EGA <- function (
   model <- set_default(model, "glasso", network.estimation)
   algorithm <- set_default(algorithm, "walktrap", community.detection)
   uni.method <- set_default(uni.method, "louvain", community.unidimensional)
+  
+  # Argument errors
+  EGA_errors(data, n, plot.EGA, verbose)
   
   # Ensure data has names
   data <- ensure_dimension_names(data)
@@ -366,6 +373,31 @@ EGA <- function (
 # data = wmt2[,7:24]; n = NULL; corr = "auto"
 # na.data = "pairwise"; model = "glasso"; algorithm = "walktrap"
 # uni.method = "louvain"; plot.EGA = TRUE; verbose = FALSE
+
+#' @noRd
+# Errors ----
+# Updated 27.07.2023
+EGA_errors <- function(data, n, plot.EGA, verbose)
+{
+  
+  # 'data' errors
+  object_error(data, c("matrix", "data.frame"))
+  
+  # 'n' errors
+  if(!is.null(n)){
+    length_error(n, 1)
+    typeof_error(n, "numeric")
+  }
+  
+  # 'plot.EGA' errors
+  length_error(plot.EGA, 1)
+  typeof_error(plot.EGA, "logical")
+  
+  # 'verbose' errors
+  length_error(verbose, 1)
+  typeof_error(verbose, "logical")
+  
+}
 
 #' @exportS3Method 
 # S3 Print Method ----
