@@ -299,16 +299,12 @@ SEXP r_ziggurat(SEXP n, SEXP r_seed) {
     float wn[128];
     r4_nor_setup(kn, fn, wn);
     
-    // Initialize C output
-    float value;
-    
     // Create R vector
     SEXP r_output = PROTECT(allocVector(REALSXP, n_values));
     
     // Generate random numbers
     for(i = 0; i < n_values; i++) {
-      value = r4_nor(&seed_value, kn, fn, wn);
-      REAL(r_output)[i] = value;
+      REAL(r_output)[i] = r4_nor(&seed_value, kn, fn, wn);
     }
     
     // Release protected SEXP objects
