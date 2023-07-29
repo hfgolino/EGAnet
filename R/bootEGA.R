@@ -202,8 +202,8 @@
 #' @param seed Numeric (length = 1).
 #' Defaults to \code{NULL} or random results
 #' Set for reproducible results.
-#' See \code{\link[EGAnet]{rng}} for more details on random
-#' number generation in \code{\link{EGAnet}}
+#' See https://github.com/hfgolino/EGAnet/wiki/Reproducibility-and-PRNG
+#' for more details on random number generation in \code{\link{EGAnet}}
 #' 
 #' @param verbose Boolean (length = 1).
 #' Should progress be displayed?
@@ -358,6 +358,9 @@ bootEGA <- function(
 ) 
 {
   
+  # Store random state (if there is one)
+  store_state()
+  
   # Check for missing arguments (argument, default, function)
   corr <- set_default(corr, "auto", c("auto", "cor_auto", "pearson", "spearman"))
   corr <- swiftelse(corr == "cor_auto", "auto", corr) # deprecate `cor_auto`
@@ -433,7 +436,7 @@ bootEGA <- function(
     seeds <- reproducible_seeds(iter, seed)
   }else{ # Set all seeds to zero (or random)
     seeds <- rep(0, iter)
-    message("Argument 'seed' is set to `NULL`. Results will not be reproducible. Set seed for reproducible results")
+    message("Argument 'seed' is set to `NULL`. Results will not be reproducible. Set 'seed' for reproducible results")
   }
   
   # Check for parametric (pre-compute values)
@@ -548,6 +551,9 @@ bootEGA <- function(
     }
     
   }
+  
+  # Restore random state (if there is one)
+  restore_state()
   
   # Return result
   return(results)

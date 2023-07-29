@@ -9,11 +9,13 @@ hierEGA(
   loading.method = c("BRM", "experimental"),
   rotation = NULL,
   scores = c("factor", "network"),
+  loading.structure = c("simple", "full"),
   impute = c("mean", "median", "none"),
   corr = c("auto", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
   model = c("BGGM", "glasso", "TMFG"),
-  algorithm = c("leiden", "louvain", "walktrap"),
+  lower.algorithm = "louvain",
+  higher.algorithm = c("leiden", "louvain", "walktrap"),
   uni.method = c("expand", "LE", "louvain"),
   plot.EGA = TRUE,
   verbose = FALSE,
@@ -78,24 +80,6 @@ extended Bayesian information criterion to select optimal regularization paramet
 
 \item{\strong{\code{TMFG}}}
 {Estimates a Triangulated Maximally Filtered Graph}
-
-}}
-
-\item{algorithm}{A string indicating the algorithm to use or a function from \code{\link{igraph}}
-Defaults to \code{"walktrap"}.
-Current options are:
-
-\itemize{
-
-\item{\strong{\code{walktrap}}}
-{Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
-
-\item{\strong{\code{leiden}}}
-{Computes the Leiden algorithm using \code{\link[igraph]{cluster_leiden}}.
-Defaults to \code{objective_function = "modularity"}}
-
-\item{\strong{\code{louvain}}}
-{Computes the Louvain algorithm using \code{\link[igraph]{cluster_louvain}}}
 
 }}
 
@@ -179,6 +163,24 @@ plot and appear in the main output (\code{$hierarchical})}
 \item{model.args}{List.
 A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
 or \code{TMFG}}
+
+\item{algorithm}{A string indicating the algorithm to use or a function from \code{\link{igraph}}
+Defaults to \code{"walktrap"}.
+Current options are:
+
+\itemize{
+
+\item{\strong{\code{walktrap}}}
+{Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
+
+\item{\strong{\code{leiden}}}
+{Computes the Leiden algorithm using \code{\link[igraph]{cluster_leiden}}.
+Defaults to \code{objective_function = "modularity"}}
+
+\item{\strong{\code{louvain}}}
+{Computes the Louvain algorithm using \code{\link[igraph]{cluster_louvain}}}
+
+}}
 
 \item{algorithm.args}{List.
 A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},

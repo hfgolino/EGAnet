@@ -764,71 +764,81 @@ double polychoric(int* input_data, int rows, int i, int j, int empty_method, dou
 }
 
 // The updated polychoric_correlation_matrix function
-double* polychoric_correlation_matrix(int* input_data, int rows, int cols, int empty_method, double empty_value) {
+double* polychoric_correlation_matrix(
+    int* input_data, int rows, int cols, int length,
+    int empty_method, double empty_value
+) {
   
   // Initialize iterators
-  int i, j, matrix_offset;
+  int i, j;
+  double correlation;
+  int matrix_offset[cols];
+  matrix_offset[0] = 0;
+  
+  // Initialize offset
+  for(i = 1; i < cols; i++){
+    matrix_offset[i] = matrix_offset[i - 1] + cols;
+  }
   
   // Allocate memory for polychoric_matrix as a 1D array
-  double* polychoric_matrix = malloc(cols * cols * sizeof(double));
+  double* polychoric_matrix = malloc(length * sizeof(double));
   
   // Perform polychoric correlations over the input_matrix
   for (i = 0; i < cols; i++) {
     
-    // Matrix offset
-    matrix_offset = i * cols;
+    // Fill diagonal
+    polychoric_matrix[matrix_offset[i] + i] = 1;
     
     // Loop over other variables
-    for (j = i; j < cols; j++) {
+    for (j = i + 1; j < cols; j++) {
       
-      // Fill diagonal
-      if (i == j) {
-        
-        polychoric_matrix[matrix_offset + j] = 1;
-        
-      }else{ // Fill matrix
-        
-        // Compute correlation
-        double correlation = polychoric(
-          input_data, rows, i, j, empty_method, empty_value
-        );
-        
-        // Add to matrix
-        polychoric_matrix[matrix_offset + j] = correlation;
-        
-        // Fill opposite of triangle
-        polychoric_matrix[j * cols + i] = correlation;
-        
-      }
+      // Compute correlation
+      correlation = polychoric(
+        input_data, rows, i, j, empty_method, empty_value
+      );
+      
+      // Add to matrix
+      polychoric_matrix[matrix_offset[i] + j] = correlation;
+      
+      // Fill opposite of triangle
+      polychoric_matrix[matrix_offset[j] + i] = correlation;
+      
     }
   }
   
+  // Return correlations
   return polychoric_matrix;
+  
 }
 
-SEXP r_polychoric_correlation_matrix(SEXP r_input_matrix, SEXP r_empty_method, SEXP r_empty_value) {
+SEXP r_polychoric_correlation_matrix(
+    SEXP r_input_matrix, SEXP r_empty_method, SEXP r_empty_value,
+    SEXP r_rows, SEXP r_cols
+) {
   
-  int rows = nrows(r_input_matrix);
-  int cols = ncols(r_input_matrix);
-  int i, j, matrix_offset;
+  // Initialize columns
+  int cols = INTEGER(r_cols)[0];
+  int length = cols * cols;
   
   // Call the C function
-  double* c_result = polychoric_correlation_matrix(INTEGER(r_input_matrix), rows, cols, INTEGER(r_empty_method)[0], REAL(r_empty_value)[0]);
+  double* c_result = polychoric_correlation_matrix(
+    INTEGER(r_input_matrix), INTEGER(r_rows)[0], cols, length,
+    INTEGER(r_empty_method)[0], REAL(r_empty_value)[0]
+  );
   
-  // Convert the C result to an R matrix
-  SEXP r_result = PROTECT(allocMatrix(REALSXP, cols, cols));
-  for (i = 0; i < cols; i++) {
-    matrix_offset = i * cols;
-    for (j = i; j < cols; j++) {
-      REAL(r_result)[matrix_offset + j] = c_result[matrix_offset + j];
-      REAL(r_result)[j * cols + i] = c_result[matrix_offset + j];
-    }
-  }
+  // Initialize R result
+  SEXP r_result = PROTECT(allocVector(REALSXP, length));
   
-  // Free the C result memory
+  // Copy correlations
+  memcpy(REAL(r_result), c_result, length * sizeof(double));
+
+  // Free R result
+  UNPROTECT(1);
+  
+  // Free memory
   free(c_result);
   
-  UNPROTECT(1);
+  // Return R result
   return r_result;
   
 }

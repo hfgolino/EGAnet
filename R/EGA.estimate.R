@@ -293,6 +293,7 @@ EGA.estimate <- function(
         list(
           network = network, 
           signed = algorithm == "signed_louvain",
+          correlation.matrix = correlation_matrix,
           membership.only = TRUE
         ),
         ellipse # pass on ellipse

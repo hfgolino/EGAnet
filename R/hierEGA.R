@@ -303,44 +303,76 @@
 #' @export
 #'
 # Hierarchical EGA
-# Updated 22.07.2023
+# Updated 28.07.2023
 hierEGA <- function(
     data, 
     # `net.scores` arguments
     loading.method = c("BRM", "experimental"),
     rotation = NULL, scores = c("factor", "network"),
+    loading.structure = c("simple", "full"),
     impute = c("mean", "median", "none"),
     # `EGA` arguments
     corr = c("auto", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
-    model = c("BGGM", "glasso", "TMFG"),  
-    algorithm = c("leiden", "louvain", "walktrap"),
+    model = c("BGGM", "glasso", "TMFG"),
+    lower.algorithm = "louvain",
+    higher.algorithm = c("leiden", "louvain", "walktrap"),
     uni.method = c("expand", "LE", "louvain"),
     plot.EGA = TRUE, verbose = FALSE,
     ...
 )
 {
 
+  # Get ellipse arguments
+  ellipse <- list(...)
+  
   # Check for missing arguments (argument, default, function)
   ## `net.scores`
   loading.method <- set_default(loading.method, "brm", net.loads)
   scores <- set_default(scores, "network", hierEGA)
+  loading.structure <- set_default(loading.structure, "simple", hierEGA)
   impute <- set_default(impute, "none", net.scores)
   ## `EGA`
   corr <- set_default(corr, "auto", c("auto", "cor_auto", "pearson", "spearman"))
   corr <- swiftelse(corr == "cor_auto", "auto", corr) # deprecate `cor_auto`
   na.data <- set_default(na.data, "pairwise", auto.correlate)
   model <- set_default(model, "glasso", network.estimation)
-  algorithm <- set_default(algorithm, "walktrap", community.detection)
   uni.method <- set_default(uni.method, "louvain", community.unidimensional)
   
-  # Get EGA
-  lower_order_result <- EGA(
-    data = data, corr = corr, na.data = na.data,
-    model = model, algorithm = "louvain", uni.method = uni.method,
-    plot.EGA = FALSE, verbose = verbose, order = "lower", ...
-  )
+  ## Determine if single algorithm is entered
+  ## Overwrite 'lower.algorithm' and 'higher.algorithm'
+  if("algorithm" %in% names(ellipse)){
+    
+    # Set lower and higher order algorithm to single algorithm
+    lower.algorithm <- ellipse$algorithm
+    higher.algorithm <- ellipse$algorithm
+    
+    # Remove 'algorithm' from ellipse to avoid conflicts
+    ellipse <- ellipse[names(ellipse) != "algorithm"]
+    
+  }
   
+  ## Handle 'lower.algorithm' and 'higher.algorithm' arguments (workaround)
+  algorithm <- lower.algorithm
+  lower.algorithm <- set_default(algorithm, "louvain", community.detection)
+  algorithm <- higher.algorithm
+  higher.algorithm <- set_default(algorithm, "walktrap", community.detection)
+  
+  # Get EGA
+  lower_order_result <- do.call(
+    what = EGA,
+    args = c(
+      # Standard `EGA` arguments
+      list(
+        data = data, corr = corr, na.data = na.data,
+        model = model, algorithm = lower.algorithm, uni.method = uni.method,
+        plot.EGA = FALSE, verbose = verbose, order = "lower"
+      ),
+      # Send ellipse arguments
+      ellipse
+    )
+  )
+
   # Ensure data has names (needed in `net.scores`)
   if(is.null(dimnames(data)[[2]])){
     dimnames(data)[[2]] <- dimnames(lower_order_result$network)[[2]]
@@ -409,7 +441,9 @@ hierEGA <- function(
     network_output <- net.scores(
       data = data, A = lower_order_result,
       rotation = rotation, loading.method = loading.method,
-      scoring.method = "network", impute = impute,
+      scoring.method = "network", 
+      loading.structure = loading.structure,
+      impute = impute,
       ...
     )
     
@@ -443,10 +477,18 @@ hierEGA <- function(
     # Set up results
     results <- list(
       lower_order = lower_order_result,
-      higher_order = EGA(
-        data = score_estimates, corr = corr, na.data = na.data,
-        model = model, algorithm = algorithm, uni.method = uni.method,
-        plot.EGA = FALSE, verbose = verbose, ...
+      higher_order = do.call(
+        what = EGA,
+        args = c(
+          # Standard `EGA` arguments
+          list(
+            data = score_estimates, corr = corr, na.data = na.data,
+            model = model, algorithm = higher.algorithm, uni.method = uni.method,
+            plot.EGA = FALSE, verbose = verbose
+          ),
+          # Send ellipse arguments
+          ellipse
+        )
       ),
       parameters = list(
         lower_loadings = lower_loadings,
@@ -563,7 +605,7 @@ summary.hierEGA <- function(object, ...)
 
 #' @exportS3Method 
 # S3 Plot Method ----
-# Updated 23.07.2023
+# Updated 28.07.2023
 plot.hierEGA <- function(x, plot.type = c("multilevel", "separate"), ...)
 {
   
@@ -622,6 +664,14 @@ plot.hierEGA <- function(x, plot.type = c("multilevel", "separate"), ...)
       
     }
     
+    # Set up names for higher order memberships
+    higher_order_names <- paste0("Higher_", x$higher_order$wc)
+    
+    # Replace "NA" names in higher order
+    # Forces singleton representation
+    higher_order_names[grep("NA", higher_order_names)] <-
+      paste0("Higher_", names(x$higher_order$wc)[is.na(x$higher_order$wc)])
+    
     # Set up plot list as standard `EGA`
     plot_list <- list(
       # Round hierarchical network to 4
@@ -629,7 +679,7 @@ plot.hierEGA <- function(x, plot.type = c("multilevel", "separate"), ...)
       network = round(hierarchical_network, 4),
       wc = c(
         paste0("Lower_", x$lower_order$wc),
-        paste0("Higher_", x$higher_order$wc)
+        higher_order_names
       )
     )
     
@@ -719,17 +769,15 @@ plot.hierEGA <- function(x, plot.type = c("multilevel", "separate"), ...)
       
     }
     
-    # Finally, plot
-    return(
-      silent_plot(
-        plot_list,
-        mode = mode,
-        edge.size = edge_size,
-        edge.color = edge_color,
-        edge.alpha = edge_alpha,
-        edge.lty = line_type,
-        ...
-      ) 
+    # Plot
+    silent_plot(
+      plot_list,
+      mode = mode,
+      edge.size = edge_size,
+      edge.color = edge_color,
+      edge.alpha = edge_alpha,
+      edge.lty = line_type,
+      ...
     )
     
   }else if(plot.type == "separate"){ # Separate plot

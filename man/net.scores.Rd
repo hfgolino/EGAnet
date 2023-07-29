@@ -12,6 +12,7 @@ net.scores(
   loading.method = c("BRM", "experimental"),
   scoring.method = c("Anderson", "Bartlett", "components", "Harman", "network",
     "tenBerge", "Thurstone"),
+  loading.structure = c("simple", "full"),
   impute = c("mean", "median", "none"),
   ...
 )

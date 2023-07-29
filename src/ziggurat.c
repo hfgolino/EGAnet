@@ -98,7 +98,7 @@ float r4_nor ( uint32_t *jsr, uint32_t kn[128], float fn[128], float wn[128] )
   hz = ( int ) shr3_seeded ( jsr );
   iz = ( hz & 127 );
 
-  if ( fabs ( hz ) < kn[iz] )
+  if ( abs ( hz ) < kn[iz] )
   {
     value = ( float ) ( hz ) * wn[iz];
   }
@@ -141,7 +141,7 @@ float r4_nor ( uint32_t *jsr, uint32_t kn[128], float fn[128], float wn[128] )
       hz = ( int ) shr3_seeded ( jsr );
       iz = ( hz & 127 );
 
-      if ( fabs ( hz ) < kn[iz] )
+      if ( abs ( hz ) < kn[iz] )
       {
         value = ( float ) ( hz ) * wn[iz];
         break;
@@ -275,12 +275,12 @@ uint32_t shr3_seeded ( uint32_t *jsr )
 
 SEXP r_ziggurat(SEXP n, SEXP r_seed) {
 
+    // Initialize iterators
+    int i;
+  
     // Initialize values
     int n_values = INTEGER(n)[0];
     uint32_t seed_value = (uint32_t) REAL(r_seed)[0];
-
-    // Create R vector
-    SEXP r_output = PROTECT(allocVector(REALSXP, n_values));
 
     // For random seed, use zero
     if(seed_value == 0) {
@@ -290,20 +290,27 @@ SEXP r_ziggurat(SEXP n, SEXP r_seed) {
 
     }
     
+    // Seed the (uniform) random number generator
+    seed_xoshiro256(seed_value);
+    
     // Set up tables
     uint32_t kn[128];
     float fn[128];
     float wn[128];
     r4_nor_setup(kn, fn, wn);
     
-    // Seed the (uniform) random number generator
-    seed_xoshiro256(seed_value);
-
-    // Generate your random numbers
-    for(int i = 0; i < n_values; i++) {
-        REAL(r_output)[i] = r4_nor(&seed_value, kn, fn, wn);
+    // Initialize C output
+    float value;
+    
+    // Create R vector
+    SEXP r_output = PROTECT(allocVector(REALSXP, n_values));
+    
+    // Generate random numbers
+    for(i = 0; i < n_values; i++) {
+      value = r4_nor(&seed_value, kn, fn, wn);
+      REAL(r_output)[i] = value;
     }
-
+    
     // Release protected SEXP objects
     UNPROTECT(1);
 

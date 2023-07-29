@@ -219,8 +219,8 @@ Defaults to \code{TRUE}}
 \item{seed}{Numeric (length = 1).
 Defaults to \code{NULL} or random results
 Set for reproducible results.
-See \code{\link[EGAnet]{rng}} for more details on random
-number generation in \code{\link{EGAnet}}}
+See https://github.com/hfgolino/EGAnet/wiki/Reproducibility-and-PRNG
+for more details on random number generation in \code{\link{EGAnet}}}
 
 \item{verbose}{Boolean (length = 1).
 Should progress be displayed?

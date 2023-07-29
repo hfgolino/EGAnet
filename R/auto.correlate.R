@@ -106,7 +106,7 @@
 #' @export
 #'
 # Automatic correlations ----
-# Updated 26.07.2023
+# Updated 28.07.2023
 auto.correlate <- function(
     data, # Matrix or data frame
     corr = c("kendall", "pearson", "spearman"), # allow changes to standard correlations
@@ -237,6 +237,9 @@ auto.correlate <- function(
     }
 
   }
+  
+  # Set diagonal as one
+  diag(correlation_matrix) <- 1
   
   # Determine whether matrix is positive definite
   if(isTRUE(forcePD) & !is_positive_definite(correlation_matrix)){

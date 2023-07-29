@@ -597,7 +597,7 @@ group_setup <- function(
 
 #' @exportS3Method 
 # S3 Plot Method ----
-# Updated 24.07.2023
+# Updated 28.07.2023
 plot.invariance <- function(
     x, p_type = c("p", "p_BH"), p_value = 0.05, ...
 )
@@ -669,7 +669,7 @@ plot.invariance <- function(
   
   # Update `title` guide
   first_group$guides$colour$title <- "Invariant"
-  second_group$guides$colour$title <- "Nonnvariant"
+  second_group$guides$colour$title <- "Noninvariant"
   
   # Update `title.position` guide
   first_group$guides$colour$title.position <- "top"

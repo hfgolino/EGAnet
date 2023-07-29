@@ -114,14 +114,16 @@
 #' @export
 #'
 # Network Scores ----
-# Updated 15.07.2023
+# Updated 28.07.2023
 net.scores <- function (
     data, A, wc, rotation = NULL,
     loading.method = c("BRM", "experimental"),
     scoring.method = c(
       "Anderson", "Bartlett", "components",
       "Harman", "network", "tenBerge", "Thurstone"
-    ), impute = c("mean", "median", "none"),
+    ),
+    loading.structure = c("simple", "full"),
+    impute = c("mean", "median", "none"),
     ...
 )
 {
@@ -155,6 +157,7 @@ net.scores <- function (
   # Check for missing arguments (argument, default, function)
   loading.method <- set_default(loading.method, "brm", net.loads)
   scoring.method <- set_default(scoring.method, "network", net.scores)
+  loading.structure <- set_default(loading.structure, "simple", net.scores)
   impute <- set_default(impute, "none", net.scores)
   
   # Perform imputation
@@ -164,14 +167,16 @@ net.scores <- function (
   
   # Compute network loadings (will handle `EGA` objects)
   loadings <- net.loads(
-    A = A, wc = wc, loading.method = loading.method, 
+    A = A, wc = wc, loading.method = loading.method,
     rotation = rotation, ...
   )
   
   # Return results
   return(
     list(
-      scores = compute_scores(loadings, data, scoring.method),
+      scores = compute_scores(
+        loadings, data, scoring.method, loading.structure
+      ),
       loadings = loadings
     )
   )
@@ -210,23 +215,28 @@ imputation <- function(data, impute)
 #' @noRd
 # Zero-out cross-loadings ----
 # Consistent with hierarchical CFA
-# Updated 25.07.2023
-zero_out <- function(loadings, wc){
+# Updated 28.07.2023
+zero_out <- function(loadings, wc, loading.structure){
   
-  # Get names of memberships
-  wc_names <- names(wc)
-  
-  # Get loadings names
-  loadings_names <- dimnames(loadings)[[2]]
-  
-  # Loop over unique memberships
-  for(membership in unique(wc)){
-
-    # Set cross-loadings to zero
-    loadings[
-      wc_names[wc == membership],
-      loadings_names != membership
-    ] <- 0
+  # Check for loading structure
+  if(loading.structure == "simple"){
+    
+    # Get names of memberships
+    wc_names <- names(wc)
+    
+    # Get loadings names
+    loadings_names <- dimnames(loadings)[[2]]
+    
+    # Loop over unique memberships
+    for(membership in unique(wc)){
+      
+      # Set cross-loadings to zero
+      loadings[
+        wc_names[wc == membership],
+        loadings_names != membership
+      ] <- 0
+      
+    }
     
   }
   
@@ -237,8 +247,10 @@ zero_out <- function(loadings, wc){
 
 #' @noRd
 # Scores computation ----
-# Updated 25.07.2023
-compute_scores <- function(loadings, data, scoring.method)
+# Updated 28.07.2023
+compute_scores <- function(
+    loadings, data, scoring.method, loading.structure
+)
 {
   
   # Method must exist, so continue
@@ -248,7 +260,8 @@ compute_scores <- function(loadings, data, scoring.method)
     unrotated <- network_scores(
       data = data,
       loads = zero_out(
-        loadings$std, attr(loadings, "membership")$wc
+        loadings$std, attr(loadings, "membership")$wc,
+        loading.structure
       )
     )
     
@@ -258,7 +271,8 @@ compute_scores <- function(loadings, data, scoring.method)
         data = data,
         loads = zero_out(
           loadings$rotated$loadings,
-          attr(loadings, "membership")$wc
+          attr(loadings, "membership")$wc,
+          loading.structure
         )
       )
     }else{rotated <- NULL}

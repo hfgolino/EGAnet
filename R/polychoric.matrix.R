@@ -110,7 +110,7 @@
 #' @export
 #'
 # Compute polychoric correlation matrix
-# Updated 02.07.2023
+# Updated 29.07.2023
 polychoric.matrix <- function(
     data, na.data = c("pairwise", "listwise"),
     empty.method = c("none", "zero", "all"),
@@ -125,6 +125,9 @@ polychoric.matrix <- function(
   
   # Ensure data is a matrix
   data <- as.matrix(data)
+  
+  # Get dimensions of data
+  dimensions <- as.integer(dim(data))
   
   # Check for missing data
   if(na.data == "pairwise"){
@@ -150,13 +153,16 @@ polychoric.matrix <- function(
   } 
   
   # Call from C
-  correlations <- .Call(
-    "r_polychoric_correlation_matrix",
-    integer_matrix(data), # ensure data is integers
-    empty.method, empty.value,
-    PACKAGE = "EGAnet"
+  correlations <- matrix(
+    .Call(
+      "r_polychoric_correlation_matrix",
+      as.integer(data),
+      empty.method, empty.value,
+      dimensions[1], dimensions[2],
+      PACKAGE = "EGAnet"
+    ), nrow = dimensions[2], ncol = dimensions[2]
   )
-  
+
   # Transfer variable names
   return(transfer_names(data, correlations))
   

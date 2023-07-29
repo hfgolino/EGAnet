@@ -513,8 +513,29 @@ available_memory <- function()
 }
 
 #' @noRd
+# Store random state ----
+# Updated 28.07.2023
+store_state <- function()
+{
+  if(exists(".Random.seed", envir = .GlobalEnv)){
+    assign("saved_state", .Random.seed, envir = .GlobalEnv)
+  }
+}
+
+#' @noRd
+# Restore and remove random state ----
+# Updated 28.07.2023
+restore_state <- function()
+{
+  if(exists("saved_state", envir = .GlobalEnv)){
+    assign(".Random.seed", saved_state, envir = .GlobalEnv)
+    rm("saved_state", envir = .GlobalEnv)
+  }
+}
+
+#' @noRd
 # Wrapper for parallelization ----
-# Updated 24.07.2023
+# Updated 28.07.2023
 parallel_process <- function(
     iterations, # number of iterations
     datalist = NULL, # list of data
@@ -612,31 +633,29 @@ parallel_process <- function(
   }else{
     
     # Perform parallel processing
-    results <- silent_call(
-      future.apply::future_lapply(
-        X = seq_len(iterations),
-        function(iteration){
-          
-          # Return results
-          if(!is.null(datalist)){
-            return(
-              silent_call( # Ensures quiet run with all arguments passed on
-                FUN(datalist[[iteration]], ...)
-              )
+    results <- future.apply::future_lapply(
+      X = seq_len(iterations),
+      function(iteration){
+        
+        # Return results
+        if(!is.null(datalist)){
+          return(
+            silent_call( # Ensures quiet run with all arguments passed on
+              FUN(datalist[[iteration]], ...)
             )
-          }else{
-            return(
-              silent_call( # Ensures quiet run with all arguments passed on
-                FUN(...)
-              )
+          )
+        }else{
+          return(
+            silent_call( # Ensures quiet run with all arguments passed on
+              FUN(...)
             )
-          }
-          
-        },
-        future.globals = export,
-        future.packages = packages,
-        future.seed = FALSE
-      )
+          )
+        }
+        
+      },
+      future.globals = export,
+      future.packages = packages,
+      future.seed = NULL
     )
     
   }
@@ -959,20 +978,6 @@ fast.data.frame <- function(
     )
   )
   
-}
-
-#' @noRd
-# Convert numeric matrix to integers ----
-# About 5x faster than `apply`
-# Updated 06.07.2023
-integer_matrix <- function(data)
-{
-  return(
-    matrix(
-      as.integer(data),
-      ncol = dim(data)[2]
-    )
-  )
 }
 
 #' @noRd
@@ -1976,18 +1981,19 @@ readable_names <- function(node_names)
 
 #' @noRd
 # Get network layout ----
-# Updated 03.07.2023
+# Updated 28.07.2023
 get_layout <- function(
     network, dimensions,
     non_zero_index, plot_ARGS, ellipse
 )
 {
   
+  # Get ellipse names
+  ellipse_names <- names(ellipse)
+  
   # Determine whether "mode" or "layout" were used
-  if(
-    !"mode" %in% names(ellipse) &
-    !"layout" %in% names(ellipse)
-  ){ # Default: {qgraph} Fruchterman-Reingold
+  if(!any(c("mode", "layout") %in% ellipse_names)){ 
+    # Default: {qgraph} Fruchterman-Reingold
     
     # Lower triangle for edge list
     network_lower <- network[lower.tri(network)]
@@ -1995,11 +2001,11 @@ get_layout <- function(
     
     # Set up edge list
     edge_list <- which(non_zero_index, arr.ind = TRUE)
-    edge_list <- edge_list[edge_list[,"row"] < edge_list[,"col"],]
+    edge_list <- edge_list[edge_list[,"row"] < edge_list[,"col"],, drop = FALSE]
     
     # Set layout (spring)
     network_layout <- qgraph::qgraph.layout.fruchtermanreingold(
-      edgelist = edge_list[order(edge_list[,"row"]),],
+      edgelist = edge_list[order(edge_list[,"row"]),, drop = FALSE],
       weights = (weights_lower / max(weights_lower))^2,
       vcount = dimensions[2]
     )
@@ -2008,8 +2014,9 @@ get_layout <- function(
     
     # Determine whether "mode" or "layout" is in arguments
     # If both, then override with "mode"
-    if(!"mode" %in% names(ellipse) & "layout" %in% names(ellipse)){
+    if(!"mode" %in% ellipse_names & "layout" %in% ellipse_names){
       ellipse$mode <- ellipse$layout
+      ellipse <- ellipse[ellipse_names != "layout"] # remove "layout"
     }
     
     # Check for whether mode was provided as character

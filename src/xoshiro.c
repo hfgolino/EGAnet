@@ -218,7 +218,7 @@ SEXP r_xoshiro_shuffle_replace(SEXP r_vector, SEXP r_seed) {
 
     // Shuffle
     for(int i = 0; i < vector_length; i++) {
-        REAL(r_output)[i] = (double) (next() % (vector_length)) + 1;
+        REAL(r_output)[i] = (double) (next() % vector_length) + 1;
     }
 
     // Release protected SEXP objects
