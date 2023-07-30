@@ -241,6 +241,25 @@ reproducible_seeds <- function(n, seed = NULL)
 }
 
 #' @noRd
+# Generate uniform data ----
+# Always between 0 and 1
+# Updated 30.07.2023
+runif_xoshiro <- function(n, seed = NULL)
+{
+  
+  # Return call from C
+  return(
+    .Call(
+      "r_xoshiro_uniform",
+      as.integer(n),
+      swiftelse(is.null(seed), 0, seed),
+      PACKAGE = "EGAnet"
+    )
+  )
+  
+}
+
+#' @noRd
 # Shuffle (without replacement) ----
 # Uses xoshiro256++ random number generation: https://prng.di.unimi.it/
 # Updated 27.07.2023
