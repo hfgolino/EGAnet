@@ -366,9 +366,7 @@ invariance <- function(
   ]
   
   # Permutate groups
-  perm_groups <- lapply(seq_len(iter), function(i){
-    shuffle(groups)
-  })
+  perm_groups <- lapply(seq_len(iter), function(i){shuffle(groups)})
   
   # Perform permutation estimation of loadings
   permutated_loadings <- parallel_process(

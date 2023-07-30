@@ -60,12 +60,11 @@
 #' @export
 #'
 # Ergodicity Information Index
-# Updated 20.07.2023
+# Updated 30.07.2023
 ergoInfo <- function(
     dynEGA.object,
     use = c("edge.list", "unweighted"),
     ordering = c("row", "column")
-    # , seed = 1234
 )
 {
   
@@ -153,19 +152,17 @@ ergoInfo <- function(
   # Set upper triangle to FALSE
   edges[upper_triangle] <- FALSE
   
-  # Get weights
   # Use `keep_weights` for quick indexing
-  if(use == "edge.list"){
-    weights <- 1 # not used!
-    keep_weights <- c(1L, 2L)
-  }else{
-    weights <- encoding_matrix[edges]
-    keep_weights <- c(1L, 2L, 3L)
-    # original: keep_weights <- 3L 
-  }
+  keep_weights <- swiftelse(
+    use == "edge.list",
+    c(1L, 2L), c(1L, 2L, 3L)
+  )
   
   # Get edge list ("col" then "row" matches {igraph})
-  edge_list <- cbind(which(edges, arr.ind = TRUE)[,c("col", "row")], weights)
+  edge_list <- cbind(
+    which(edges, arr.ind = TRUE)[,c("col", "row")],
+    1 # sets weights to `1` no matter `edge_list` or `unweighted`
+  )
   # Order matters!! (see pasting in `k_complexity`)
   
   # Get edge list rows
@@ -188,13 +185,7 @@ ergoInfo <- function(
       return(
         k_complexity(
           edge_list[ # rows
-            # reproducible_sample( # reproducible `sample`
             shuffle_replace(edge_sequence),
-            # 
-            # sample(
-            #   x = edge_sequence, size = edge_rows,
-            #   replace = TRUE# , seed = single_seed
-            # )
             keep_weights # either pairwise edges or weights
           ],
           ordering = ordering
@@ -223,18 +214,10 @@ ergoInfo <- function(
   # Set upper triangle to FALSE
   population_edges[upper_triangle] <- FALSE
   
-  # Get weights
-  # `keep_weights` was defined above
-  if(use == "edge.list"){
-    population_weights <- 1 # not used!
-  }else{
-    population_weights <- population_encoding[population_edges]
-  }
-  
   # Get edge list ("col" then "row" matches {igraph})
   population_edge_list <- cbind(
     which(population_edges, arr.ind = TRUE)[,c("col", "row")], 
-    population_weights
+    1 # sets weights to `1` no matter `edge_list` or `unweighted`
   )
   # Order matters!! (see pasting in `k_complexity`)
   
@@ -252,12 +235,7 @@ ergoInfo <- function(
       return(
         k_complexity(
           edge_list[ # rows
-            # reproducible_sample( # reproducible `sample`
             shuffle_replace(population_edge_sequence),
-            # sample(
-            #   x = population_edge_sequence, size = population_edge_rows,
-            #   replace = TRUE# , seed = single_seed
-            # ),
             keep_weights # either pairwise edges or weights
           ],
           ordering = ordering

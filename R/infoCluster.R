@@ -150,7 +150,7 @@ infoCluster <- function(
       
       # Set shuffled indices up to edges to 1
       new_network[
-        shuffle(upper_indices)[seq_len(edge_count(network))]
+        shuffle(upper_indices, size = edge_count(network))
       ] <- 1
       
       # Make network symmetric

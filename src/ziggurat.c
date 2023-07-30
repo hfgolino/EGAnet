@@ -45,7 +45,7 @@ void r4_nor_initialize() {
  Further, all `float` have been updated to `double` to be compatible
  with the 64-bit generation used in xshiro256++
  
- Modified date: 28.07.2023
+ Modified date: 30.07.2023
  Modified by: Alexander P. Christensen <alexpaulchristensen@gmail.com>
  
  */

@@ -313,7 +313,7 @@ plot.boot.ergoInfo <- function(x, ...)
 #' @noRd
 # Rewire networks ----
 # About 10x faster than previous implementation
-# Updated 25.07.2023
+# Updated 30.07.2023
 rewire <- function(
     network, min = 0.20, max = 0.40,
     noise = 0.10, lower_triangle
@@ -341,17 +341,12 @@ rewire <- function(
   # Number of edges to rewire
   rewire_edges <- floor(edges * runif(1, min, max))
   
-  # Get rewire sequence
-  rewire_sequence <- seq_len(rewire_edges)
-  
   # Get rewiring indices
-  rewire_index <- shuffle(non_zero_edges)[rewire_sequence]
-  # sample(non_zero_edges, rewire_edges, replace = FALSE)
-  
+  rewire_index <- shuffle(non_zero_edges, size = rewire_edges)
+ 
   # Get replacement indices
-  replace_index <- shuffle(seq_along(lower_network))[rewire_sequence]
-  # sample(setdiff(seq_len(edges), non_zero_edges), rewire_edges, replace = FALSE)
-  
+  replace_index <- shuffle(seq_along(lower_network), size = rewire_edges)
+ 
   # Make a copy of the lower network
   lower_network_original <- lower_network
   

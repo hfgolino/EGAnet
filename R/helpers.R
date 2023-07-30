@@ -262,17 +262,18 @@ runif_xoshiro <- function(n, seed = NULL)
 #' @noRd
 # Shuffle (without replacement) ----
 # Uses xoshiro256++ random number generation: https://prng.di.unimi.it/
-# Updated 27.07.2023
-shuffle <- function(x, seed = NULL)
+# Updated 30.07.2023
+shuffle <- function(x, size = length(x), seed = NULL)
 {
   
   # Return call from C
   return(
-    .Call(
-      "r_xoshiro_shuffle",
-      x, swiftelse(is.null(seed), 0, seed),
-      PACKAGE = "EGAnet"
-    )
+    x[.Call(
+        "r_xoshiro_shuffle",
+        as.integer(seq_along(x)), 
+        swiftelse(is.null(seed), 0, seed),
+        PACKAGE = "EGAnet"
+    )][seq_len(size)]
   )
   
 }
@@ -280,17 +281,17 @@ shuffle <- function(x, seed = NULL)
 #' @noRd
 # Shuffle (with replacement) ----
 # Uses xoshiro256++ random number generation: https://prng.di.unimi.it/
-# Updated 27.07.2023
-shuffle_replace <- function(x, seed = NULL)
+# Updated 30.07.2023
+shuffle_replace <- function(x, size = length(x), seed = NULL)
 {
   
   # Return call from C
   return(
-    .Call(
+    x[.Call(
       "r_xoshiro_shuffle_replace",
       x, swiftelse(is.null(seed), 0, seed),
       PACKAGE = "EGAnet"
-    )
+    )][seq_len(size)]
   )
   
 }
@@ -405,7 +406,7 @@ MASS_mvrnorm_quick <- function(seed = NULL, p, np, coV)
 #' @noRd
 # Generate reproducible bootstrap data ----
 # Wrapper for `reproducible_parametric` and `reproducible_resampling`
-# Updated 27.07.2023
+# Updated 30.07.2023
 reproducible_bootstrap <- function(
     seed = NULL, data = NULL, case_sequence = NULL,
     mvrnorm_parameters = NULL,
@@ -430,7 +431,7 @@ reproducible_bootstrap <- function(
   }else if(type == "resampling"){
     
     # Return resampling samples
-    return(data[shuffle_replace(case_sequence, seed),])
+    return(data[shuffle_replace(x = case_sequence, seed = seed),])
     
   }
   
