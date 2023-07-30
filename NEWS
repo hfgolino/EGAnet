@@ -46,6 +46,10 @@ o ADD: "multilevel" plotting support for `hierEGA` (only used when `scores = "ne
 
 o ADD: internal functions `shuffle` and `shuffle_replace` to replace `sample` with and without replacement; performed in C and allows seed setting independent of R (about 2-3x faster)
 
+o ADD: xoshiro256++ PRNG for higher quailty random number generation, permutation, and resampling (~2x faster than `runif` and `sample`); based in C
+
+o ADD: Ziggurat method for random normal generation over top xoshiro256++ (2-5x faster than `rnorm`); based in C
+
 o UPDATE: `EBICglasso.qgraph` and `TMFG` were optimized; `TMFG` is now 2x faster
 
 o UPDATE: `TMFG` can now directly estimate a GGM with the argument 'partial = TRUE'; implements the Local-Global Inversion method from Barfuss et al. (2016)

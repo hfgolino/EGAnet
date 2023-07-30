@@ -2527,19 +2527,21 @@ object_error <- function(input, expected_type){
 
 #' @noRd
 # Error for `typeof` ----
-# Updated 27.07.2023
+# Updated 30.07.2023
 typeof_error <- function(input, expected_value){
   
   # Switch out "closure" with "function"
   if("closure" %in% expected_value){
     expected_value[expected_value == "closure"] <- "function"
   }
-  if("closure" %in% input){
-    input[input == "closure"] <- "function"
-  }
   
   # Get type of input
   typeof_input <- typeof(input)
+  
+  # Convert "closure" to "function"
+  if("closure" %in% typeof_input){
+    typeof_input[typeof_input == "closure"] <- "function"
+  }
   
   # Convert "integer" and "double" to "numeric"
   ## Input

@@ -4,46 +4,56 @@
 #' (Friedman, Hastie and Tibshirani, 2011) to compute a
 #' sparse gaussian graphical model with the graphical lasso
 #' (Friedman, Hastie & Tibshirani, 2008).
-#' The tuning parameter is chosen using the Extended Bayesian Information criterium
+#' The tuning parameter is chosen using the Extended Bayesian Information criterion
 #' (EBIC) described by Foygel & Drton (2010).
 #'
 #' @param data Matrix or data frame.
-#' Either data (cases by variables) or correlation matrix.
-#' If inputting a correlation matrix, then \code{n} must be
-#' set
+#' Should consist only of variables that are desired to be in analysis
 #'
 #' @param n Numeric (length = 1).
-#' Sample size for when a correlation matrix is input into \code{data}.
-#' Defaults to \code{NULL}
+#' Sample size if \code{data} provided is a correlation matrix
 #'
-#' @param gamma EBIC tuning parameter. 0.5 is generally a good choice.
-#' Setting to zero will cause regular BIC to be used.
+#' @param gamma Numeric (length = 1)
+#' EBIC tuning parameter.
+#' Defaults to \code{0.50} and is generally a good choice.
+#' Setting to \code{0} will cause regular BIC to be used
 #'
-#' @param penalize.diagonal Should the diagonal be penalized?
+#' @param penalize.diagonal Boolean (length = 1).
+#' Should the diagonal be penalized?
+#' Defaults to \code{FALSE}
 #'
-#' @param nlambda Number of lambda values to test.
+#' @param nlambda Numeric (length = 1).
+#' Number of lambda values to test.
+#' Defaults to \code{100}
 #'
-#' @param lambda.min.ratio Ratio of lowest lambda value compared to maximal lambda.
+#' @param lambda.min.ratio Numeric (length = 1).
+#' Ratio of lowest lambda value compared to maximal lambda.
 #' Defaults to \code{0.1}.
 #' \strong{NOTE} \code{\link{qgraph}} sets the default to \code{0.01}
 #'
-#' @param returnAllResults Boolean.
+#' @param returnAllResults Boolean (length = 1).
 #' Whether all results should be returned.
 #' Defaults to \code{FALSE} (network only).
 #' Set to \code{TRUE} to access \code{\link[glasso]{glassopath}} output
 #'
-#' @param penalizeMatrix Optional logical matrix to indicate which elements are penalized
+#' @param penalizeMatrix Boolean matrix.
+#' Optional logical matrix to indicate which elements are penalized
 #'
-#' @param countDiagonal     Should diagonal be counted in EBIC computation?
-#' Defaults to \code{FALSE}. Set to \code{TRUE} to mimic qgraph < 1.3 behavior (not recommended!).
-#'
-#' @param refit Logical, should the optimal graph be refitted without LASSO regularization?
+#' @param countDiagonal Boolean (length = 1).
+#' Should diagonal be counted in EBIC computation?
 #' Defaults to \code{FALSE}.
+#' Set to \code{TRUE} to mimic \code{\link{qgraph}} < 1.3 behavior (not recommended!)
+#'
+#' @param refit Boolean (length = 1).
+#' Should the optimal graph be refitted without LASSO regularization?
+#' Defaults to \code{FALSE}
 #' 
-#' @param model.selection Character.
-#' How lambda should be selected within GLASSO
+#' @param model.selection Character (length = 1).
+#' How lambda should be selected within GLASSO.
+#' Defaults to \code{"EBIC"}.
+#' \code{"JSD"} is experimental and should not be used otherwise
 #' 
-#' @param verbose Boolean.
+#' @param verbose Boolean (length = 1).
 #' Whether messages and (insignificant) warnings should be output.
 #' Defaults to \code{FALSE} (silent calls).
 #' Set to \code{TRUE} to see all messages and warnings for every function call
@@ -59,46 +69,43 @@
 #' @return A partial correlation matrix
 #'
 #' @references
-#' # Instantiation of GLASSO \cr
+#' \strong{Instantiation of GLASSO} \cr
 #' Friedman, J., Hastie, T., & Tibshirani, R. (2008).
 #' Sparse inverse covariance estimation with the graphical lasso.
 #' \emph{Biostatistics}, \emph{9}, 432-441.
 #' 
-#' # Tutorial on EBICglasso
-#' Epskamp, S., & Fried, E. I. (2018).
-#' A tutorial on regularized partial correlation networks.
-#' \emph{Psychological Methods}, \emph{23}(4), 617–634.
+#' \strong{glasso + EBIC} \cr
+#' Foygel, R., & Drton, M. (2010).
+#' Extended Bayesian information criteria for Gaussian graphical models.
+#' \emph{In Advances in neural information processing systems} (pp. 604-612).
 #' 
-#' # glasso package \cr
+#' \strong{glasso package} \cr
 #' Friedman, J., Hastie, T., & Tibshirani, R. (2011).
 #' glasso: Graphical lasso-estimation of Gaussian graphical models.
 #' R package version 1.7.
 #' 
-#' # glasso + EBIC \cr
-#' Foygel, R., & Drton, M. (2010).
-#' Extended Bayesian information criteria for Gaussian graphical models.
-#' \emph{In Advances in neural information processing systems} (pp. 604-612).
+#' \strong{Tutorial on EBICglasso} \cr
+#' Epskamp, S., & Fried, E. I. (2018).
+#' A tutorial on regularized partial correlation networks.
+#' \emph{Psychological Methods}, \emph{23}(4), 617–634.
 #'
-#' @author Sacha Epskamp <mail@sachaepskamp.com>
+#' @author Sacha Epskamp; for maintanence,
+#' Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen at gmail.com>
 #'
 #' @examples
 #' # Obtain data
 #' wmt <- wmt2[,7:24]
 #' 
 #' # Compute graph with tuning = 0 (BIC)
-#' BICgraph <- EBICglasso.qgraph(
-#'   data = wmt, gamma = 0
-#' )
+#' BICgraph <- EBICglasso.qgraph(data = wmt, gamma = 0)
 #'
 #' # Compute graph with tuning = 0.5 (EBIC)
-#' EBICgraph <- EBICglasso.qgraph(
-#'   data = wmt, gamma = 0.5
-#' )
+#' EBICgraph <- EBICglasso.qgraph(data = wmt, gamma = 0.5)
 #'
 #' @export
 #'
 # Computes optimal glasso network based on EBIC ----
-# Updated 06.07.2023
+# Updated 30.07.2023
 EBICglasso.qgraph <- function(
     data, # Sample covariance matrix
     n = NULL,
@@ -117,8 +124,12 @@ EBICglasso.qgraph <- function(
 {
   
   # Determine model selection
-  model.selection <- set_default(
-    model.selection, "ebic", EBICglasso.qgraph
+  model.selection <- set_default(model.selection, "ebic", EBICglasso.qgraph)
+  
+  # Argument errors
+  EBICglasso.qgraph_errors(
+    data, n, gamma, penalize.diagonal, nlambda,
+    returnAllResults, countDiagonal, refit, verbose
   )
   
   # Obtain dimensions
@@ -292,6 +303,56 @@ EBICglasso.qgraph <- function(
 # returnAllResults = FALSE;
 # countDiagonal = FALSE; refit = FALSE;
 # model.selection = "ebic"
+
+#' @noRd
+# Errors ----
+# Updated 30.07.2023
+EBICglasso.qgraph_errors <- function(
+    data, n, gamma, penalize.diagonal, nlambda,
+    returnAllResults, countDiagonal, refit, verbose
+)
+{
+
+  # 'data' errors
+  object_error(data, c("matrix", "data.frame"))
+  
+  # 'n' errors
+  if(!is.null(n)){
+    length_error(n, 1)
+    typeof_error(n, "numeric")
+  }
+  
+  # 'gamma' errors
+  length_error(gamma, 1)
+  typeof_error(gamma, "numeric")
+  range_error(gamma, c(0, Inf))
+  
+  # 'penalize.diagonal' errors
+  length_error(penalize.diagonal, 1)
+  typeof_error(penalize.diagonal, "logical")
+  
+  # 'nlambda' errors
+  length_error(nlambda, 1)
+  typeof_error(nlambda, "numeric")
+  range_error(nlambda, c(1, Inf))
+  
+  # 'returnAllResults' errors
+  length_error(returnAllResults, 1)
+  typeof_error(returnAllResults, "logical")
+  
+  # 'countDiagonal' errors
+  length_error(countDiagonal, 1)
+  typeof_error(countDiagonal, "logical")
+  
+  # 'refit' errors
+  length_error(refit, 1)
+  typeof_error(refit, "logical")
+  
+  # 'verbose' errors
+  length_error(verbose, 1)
+  typeof_error(verbose, "logical")
+  
+}
 
 #' @noRd
 # Log-likelihood ----

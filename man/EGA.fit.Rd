@@ -165,22 +165,27 @@ fit.leiden <- EGA.fit(
 
 }
 \references{
-# Entropy fit measures \cr
+\strong{Entropy fit measures} \cr
 Golino, H., Moulder, R. G., Shi, D., Christensen, A. P., Garrido, L. E., Neito, M. D., Nesselroade, J., Sadana, R., Thiyagarajan, J. A., & Boker, S. M. (in press).
 Entropy fit indices: New fit measures for assessing the structure and dimensionality of multiple latent variables.
 \emph{Multivariate Behavioral Research}.
 
-# Simulation for EGA.fit \cr
+\strong{Simulation for EGA.fit} \cr
 Jamison, L., Christensen, A. P., & Golino, H. (under review).
 Optimizing Walktrap's community detection in networks using the Total Entropy Fit Index.
 \emph{PsyArXiv}.
 
-# Leiden algorithm \cr
+\strong{Leiden algorithm} \cr
 Traag, V. A., Waltman, L., & Van Eck, N. J. (2019).
 From Louvain to Leiden: guaranteeing well-connected communities.
 \emph{Scientific Reports}, \emph{9}(1), 1-12.
 
-# Walktrap algorithm \cr
+\strong{Louvain algorithm} \cr
+Blondel, V. D., Guillaume, J. L., Lambiotte, R., & Lefebvre, E. (2008). 
+Fast unfolding of communities in large networks. 
+\emph{Journal of Statistical Mechanics: Theory and Experiment}, \emph{2008}(10), P10008.
+
+\strong{Walktrap algorithm} \cr
 Pons, P., & Latapy, M. (2006).
 Computing communities in large networks using random walks.
 \emph{Journal of Graph Algorithms and Applications}, \emph{10}, 191-218.

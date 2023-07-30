@@ -145,22 +145,27 @@
 #' )
 #'
 #' @references
-#' # Entropy fit measures \cr
+#' \strong{Entropy fit measures} \cr
 #' Golino, H., Moulder, R. G., Shi, D., Christensen, A. P., Garrido, L. E., Neito, M. D., Nesselroade, J., Sadana, R., Thiyagarajan, J. A., & Boker, S. M. (in press).
 #' Entropy fit indices: New fit measures for assessing the structure and dimensionality of multiple latent variables.
 #' \emph{Multivariate Behavioral Research}.
 #' 
-#' # Simulation for EGA.fit \cr
+#' \strong{Simulation for EGA.fit} \cr
 #' Jamison, L., Christensen, A. P., & Golino, H. (under review).
 #' Optimizing Walktrap's community detection in networks using the Total Entropy Fit Index.
 #' \emph{PsyArXiv}.
 #' 
-#' # Leiden algorithm \cr
+#' \strong{Leiden algorithm} \cr
 #' Traag, V. A., Waltman, L., & Van Eck, N. J. (2019).
 #' From Louvain to Leiden: guaranteeing well-connected communities.
 #' \emph{Scientific Reports}, \emph{9}(1), 1-12.
 #' 
-#' # Walktrap algorithm \cr
+#' \strong{Louvain algorithm} \cr
+#' Blondel, V. D., Guillaume, J. L., Lambiotte, R., & Lefebvre, E. (2008). 
+#' Fast unfolding of communities in large networks. 
+#' \emph{Journal of Statistical Mechanics: Theory and Experiment}, \emph{2008}(10), P10008.
+#' 
+#' \strong{Walktrap algorithm} \cr
 #' Pons, P., & Latapy, M. (2006).
 #' Computing communities in large networks using random walks.
 #' \emph{Journal of Graph Algorithms and Applications}, \emph{10}, 191-218.
@@ -168,8 +173,9 @@
 #' @author Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'
 #' @export
+#' 
 # EGA fit
-# Updated 07.07.2023
+# Updated 30.07.2023
 EGA.fit <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -187,6 +193,9 @@ EGA.fit <- function(
   na.data <- set_default(na.data, "pairwise", auto.correlate)
   model <- set_default(model, "glasso", network.estimation)
   algorithm <- set_default(algorithm, "walktrap", EGA.fit)
+  
+  # Argument errors
+  EGA.fit_errors(data, n, plot.EGA, verbose)
 
   # Obtain ellipse arguments
   ellipse <- list(...)
@@ -292,8 +301,35 @@ EGA.fit <- function(
     
     
   }
-      
+  
+  # Return results
   return(best_fit)
+  
+}
+
+#' @noRd
+# Errors ----
+# Updated 30.07.2023
+EGA.fit_errors <- function(data, n, plot.EGA, verbose)
+{
+  
+  # 'data' errors
+  object_error(data, c("matrix", "data.frame"))
+  
+  # 'n' errors
+  if(!is.null(n)){
+    length_error(n, 1)
+    typeof_error(n, "numeric")
+  }
+  
+  # 'plot.EGA' errors
+  length_error(plot.EGA, 1)
+  typeof_error(plot.EGA, "logical")
+  
+  # 'verbose' errors
+  length_error(verbose, 1)
+  typeof_error(verbose, "logical")
+  
 }
 
 # Bug checking ----
