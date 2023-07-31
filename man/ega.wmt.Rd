@@ -5,7 +5,7 @@
 \alias{ega.wmt}
 \title{\code{\link[EGAnet]{EGA}} Network of \code{\link[EGAnet]{wmt2}}Data}
 \format{
-A list with 7 objects (see \strong{Value} in \code{\link[EGAnet]{EGA}})
+A list with 8 objects (see \strong{Value} in \code{\link[EGAnet]{EGA}})
 }
 \usage{
 data(ega.wmt)
@@ -16,6 +16,5 @@ for the Wiener Matrizen-Test (WMT-2)
 }
 \examples{
 data("ega.wmt")
-
 }
 \keyword{datasets}

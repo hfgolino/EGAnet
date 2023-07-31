@@ -106,6 +106,8 @@ o UPDATE: `UVA` supports legacy of inital conception in Christensen, Golino, and
 
 o UPDATE: streamlined `UVA` (about 4x faster); fixed bugs related to reverse coding issues 
 
+o UPDATE: `tefi` now handles all `EGA*` function objects including `hierEGA` which computes generalized TEFI
+
 o DEPENDENCY: removed {network} because it is no longer used for plotting; switched {sna} to IMPORTS rather than SUGGESTS
 
 o DEPENDENCY: removed {rstudioapi} from 'Suggests' because it was used in `colortext` and used in the package

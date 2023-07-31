@@ -105,7 +105,15 @@
 #' \code{\link[EGAnet]{community.detection}}, \code{\link[EGAnet]{community.consensus}}, 
 #' and \code{\link[EGAnet]{EGA.estimate}}
 #'
-#' @return Returns a list containing...
+#' @return Returns a list containing:
+#' 
+#' \item{EGA}{\code{\link[EGAnet]{EGA}} results of the best fitting solution}
+#' 
+#' \item{EntropyFit}{\code{\link[EGAnet]{tefi}} fit values for each solution}
+#' 
+#' \item{Lowest.EntropyFit}{The best fitting solution based on \code{\link[EGAnet]{tefi}}}
+#' 
+#' \item{parameter.space}{Parameter values used in search space}
 #' 
 #' @examples
 #' # Load data
@@ -174,7 +182,7 @@
 #'
 #' @export
 #' 
-# EGA fit
+# EGA fit ----
 # Updated 30.07.2023
 EGA.fit <- function(
     data, n = NULL,
@@ -414,12 +422,6 @@ print.EGA.fit <- function(x, ...)
   # Add breakspace
   cat("\n\n")
   
-  # Add TEFI value
-  cat(paste0("TEFI: ", round(x$Lowest.EntropyFit, 3)))
-  
-  # Add breakspace
-  cat("\n\n")
-  
   # Print communities
   cat(paste0("Number of communities: "), communities)
   cat("\n\n") # Add breakspace
@@ -429,6 +431,12 @@ print.EGA.fit <- function(x, ...)
   
   # Print membership
   print(membership)
+  
+  # Add breakspace
+  cat("\n\n----\n\n")
+  
+  # Add TEFI value
+  cat(paste0("TEFI: ", round(x$Lowest.EntropyFit, 3)))
   
 }
 

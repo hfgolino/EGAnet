@@ -118,7 +118,15 @@ Set to \code{TRUE} to see all messages and warnings for every function call}
 and \code{\link[EGAnet]{EGA.estimate}}}
 }
 \value{
-Returns a list containing...
+Returns a list containing:
+
+\item{EGA}{\code{\link[EGAnet]{EGA}} results of the best fitting solution}
+
+\item{EntropyFit}{\code{\link[EGAnet]{tefi}} fit values for each solution}
+
+\item{Lowest.EntropyFit}{The best fitting solution based on \code{\link[EGAnet]{tefi}}}
+
+\item{parameter.space}{Parameter values used in search space}
 }
 \description{
 Estimates the best fitting model using \code{\link[EGAnet]{EGA}}.

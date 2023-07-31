@@ -4,7 +4,7 @@
 \alias{tefi}
 \title{Total Entropy Fit Index using Von Neumman's entropy (Quantum Information Theory) for correlation matrices}
 \usage{
-tefi(data, structure)
+tefi(data, structure = NULL)
 }
 \arguments{
 \item{data}{A matrix, data frame, or correlation matrix}

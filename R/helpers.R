@@ -875,8 +875,8 @@ get_EGA_object <- function(object)
     # Return levels
     return(
       list(
-        lower = object$lower_order,
-        higher = object$higher_order
+        lower_order = object$lower_order,
+        higher_order = object$higher_order
       )
     )
     

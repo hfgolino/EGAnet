@@ -5,16 +5,15 @@
 \alias{boot.wmt}
 \title{\code{\link[EGAnet]{bootEGA}} Results of \code{\link[EGAnet]{wmt2}}Data}
 \format{
-A list with 11 objects (see \strong{Value} in \code{\link[EGAnet]{bootEGA}})
+A list with 12 objects (see \strong{Value} in \code{\link[EGAnet]{bootEGA}})
 }
 \usage{
 data(boot.wmt)
 }
 \description{
-\code{\link[EGAnet]{bootEGA}} results from \code{boot.wmt <- bootEGA(wmt2[,7:24])}
+\code{\link[EGAnet]{bootEGA}} results from \code{boot.wmt <- bootEGA(wmt2[,7:24], seed = 1234)}
 }
 \examples{
 data("boot.wmt")
-
 }
 \keyword{datasets}

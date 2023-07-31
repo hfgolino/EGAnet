@@ -9,11 +9,10 @@
 #'
 #' @usage data(ega.wmt)
 #'
-#' @format A list with 7 objects (see \strong{Value} in \code{\link[EGAnet]{EGA}})
+#' @format A list with 8 objects (see \strong{Value} in \code{\link[EGAnet]{EGA}})
 #'
 #' @keywords datasets
 #'
 #' @examples
 #' data("ega.wmt")
-#'
 NULL

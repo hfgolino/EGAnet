@@ -6,9 +6,7 @@
 
  See <http://creativecommons.org/publicdomain/zero/1.0/>. */
 
-#include <time.h>
 #include <stdint.h>
-#include <stdlib.h>
 #include <R.h>
 #include <Rinternals.h>
 #include "nanotime.h"

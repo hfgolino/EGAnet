@@ -120,7 +120,7 @@
 #'
 #' @export
 # Item Stability function ----
-# Updated 24.07.2023
+# Updated 31.07.2023
 itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
   
   # Check for 'bootEGA' object
@@ -130,7 +130,7 @@ itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
   
   # Get empirical EGA
   ega_object <- get_EGA_object(bootega.obj)
-  
+
   # Determine if hierarchical EGA
   hierarchical <- is(ega_object, "hierEGA")
   
@@ -558,7 +558,7 @@ itemStability_deprecation <- function(ellipse)
 
 #' @noRd
 # `hierEGA` check for structure input ----
-# Updated 24.07.2023
+# Updated 31.07.2023
 hierEGA_structure <- function(ega_object, structure)
 {
   
@@ -566,8 +566,10 @@ hierEGA_structure <- function(ega_object, structure)
   if(is.null(structure)){
     return(
       list(
-        lower_order = NULL,
-        higher_order = NULL
+        lower_order = ega_object$lower_order$wc,
+        higher_order = single_revalue_memberships(
+          ega_object$lower_order$wc, ega_object$higher_order$wc
+        )
       )
     )
   }
@@ -653,9 +655,9 @@ hierEGA_structure <- function(ega_object, structure)
     # Send warning
     warning(
       paste(
-        "Input to `structure` was provided but did not match expected input.",
-        "For `hierEGA`, `structure` should be a list with elements `lower_order`,",
-        "`higher_order`, or both.\n\nUsing default empirical EGA structure instead"
+        "Input to 'structure' was provided but did not match expected input.",
+        "For `hierEGA`, 'structure' should be a list with elements \"lower_order\",",
+        "\"higher_order\", or both.\n\nUsing default empirical EGA structure instead"
       ),
       call. = FALSE
     )
@@ -670,12 +672,10 @@ hierEGA_structure <- function(ega_object, structure)
     
   }
   
-  
-  
 }
 
 #' @noRd
-# Get structure with error catching
+# Get structure with error catching ----
 # Updated 05.07.2023
 get_structure <- function(bootega_wc, structure)
 {

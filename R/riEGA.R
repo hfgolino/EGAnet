@@ -177,7 +177,7 @@
 #' 
 # Random-Intercept EGA
 # Changed from 'residualEGA.R' on 17.04.2022
-# Updated 05.07.2023
+# Updated 31.07.2023
 riEGA <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -355,6 +355,9 @@ riEGA <- function(
   
   # Make class "riEGA"
   class(results) <- "riEGA"
+  
+  # Add TEFI to the result
+  results$TEFI <- tefi(results)$VN.Entropy.Fit
   
   # Check for plot
   if(isTRUE(plot.EGA)){

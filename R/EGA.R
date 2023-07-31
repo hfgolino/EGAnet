@@ -228,7 +228,7 @@
 #'
 #' @export
 # EGA ----
-# Updated 27.07.2023
+# Updated 31.07.2023
 EGA <- function (
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -350,6 +350,9 @@ EGA <- function (
   # Set class
   class(multidimensional_result) <- "EGA"
   
+  # Add TEFI to the result
+  multidimensional_result$TEFI <- tefi(multidimensional_result)$VN.Entropy.Fit
+  
   # Check for plot
   if(isTRUE(plot.EGA)){
     
@@ -401,7 +404,7 @@ EGA_errors <- function(data, n, plot.EGA, verbose)
 
 #' @exportS3Method 
 # S3 Print Method ----
-# Updated 20.07.2023
+# Updated 31.07.2023
 print.EGA <- function(x, ...)
 {
   
@@ -466,6 +469,17 @@ print.EGA <- function(x, ...)
     )
   )
   
+  # Check for "TEFI" in output
+  if("TEFI" %in% names(x)){
+    
+    # Add break space
+    cat("\n\n----\n\n")
+    
+    # Print TEFI
+    cat(paste0("TEFI: ", round(x$TEFI, 3)))
+    
+  }
+  
 }
 
 #' @exportS3Method 
@@ -516,10 +530,3 @@ adjust_model_arguments <- function(model_ARGS)
   return(model_ARGS)
   
 }
-
-
-
-
-
-
-

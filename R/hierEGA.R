@@ -302,8 +302,8 @@
 #'
 #' @export
 #'
-# Hierarchical EGA
-# Updated 28.07.2023
+# Hierarchical EGA ----
+# Updated 31.07.2023
 hierEGA <- function(
     data, 
     # `net.scores` arguments
@@ -535,6 +535,9 @@ hierEGA <- function(
   # Set class
   class(results) <- "hierEGA"
   
+  # Add TEFI to the result
+  results$TEFI <- tefi(results)$VN.Entropy.Fit
+  
   # Check for plot
   if(lower_order_result$n.dim != 1 && isTRUE(plot.EGA)){
     
@@ -561,7 +564,7 @@ hierEGA <- function(
 
 #' @exportS3Method 
 # S3 Print Method ----
-# Updated 22.07.2023
+# Updated 31.07.2023
 print.hierEGA <- function(x, ...)
 {
   
@@ -591,6 +594,12 @@ print.hierEGA <- function(x, ...)
     )
   )
   print(x$higher_order)
+  
+  # Add break space
+  cat("\n\n----\n\n")
+  
+  # Print TEFI
+  cat(paste0("Generalized TEFI: ", round(x$TEFI, 3)))
   
 }
 

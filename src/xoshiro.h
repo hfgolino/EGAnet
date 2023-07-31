@@ -6,6 +6,9 @@
 // Function to get the next random number
 uint64_t next(void);
 
+// Get initial states
+uint64_t splitmix64(uint64_t *x);
+
 // Function to set single seed to get the 4 random seeds
 void seed_xoshiro256(uint64_t seed);
 

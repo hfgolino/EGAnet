@@ -341,8 +341,8 @@
 #'
 #' @export
 #'
-# Bootstrap EGA
-# Updated 28.07.2023
+# Bootstrap EGA ----
+# Updated 31.07.2023
 bootEGA <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -360,6 +360,9 @@ bootEGA <- function(
   
   # Store random state (if there is one)
   store_state()
+  
+  # Get ellipse arguments
+  ellipse <- list(...)
   
   # Check for missing arguments (argument, default, function)
   corr <- set_default(corr, "auto", c("auto", "cor_auto", "pearson", "spearman"))
@@ -409,12 +412,32 @@ bootEGA <- function(
     )
   )
   
-  # Estimate empirical EGA
-  empirical_EGA <- ega_function(
+  # Set up default EGA arguments
+  EGA_ARGS <- list(
     data = data, n = n, corr = corr,
     na.data = na.data, model = model,
     algorithm = algorithm, uni.method = uni.method,
-    plot.EGA = FALSE, verbose = FALSE, ...
+    plot.EGA = FALSE, verbose = FALSE
+  )
+  
+  # Determine whether output is hierarchical
+  hierarchical <- EGA.type == "hierega"
+  
+  # Branch for hierarchical
+  if(hierarchical){
+    
+    # Handle hierarchical EGA arguments
+    ellipse <- handle_hierEGA_ARGS(algorithm, ellipse, names(ellipse))
+    
+    # For `hierEGA`, remove "algorithm" from EGA arguments
+    EGA_ARGS <- EGA_ARGS[names(EGA_ARGS) != "algorithm"]
+    
+  }
+  
+  # Estimate empirical EGA
+  empirical_EGA <- do.call(
+    what = ega_function,
+    args = c(EGA_ARGS, ellipse)
   )
   # If "n" is NULL and a correlation matrix is supplied,
   # then an error will be thrown within `EGA.estimate`,
@@ -423,12 +446,9 @@ bootEGA <- function(
   # Obtain EGA output
   empirical_EGA_output <- get_EGA_object(empirical_EGA)
   
-  # Determine whether output is hierarchical
-  hierarchical <- EGA.type == "hierega"
-  
   # Check for hierarchical EGA (if so, get lowest level)
   if(hierarchical){
-    empirical_EGA_output <- empirical_EGA_output$lower
+    empirical_EGA_output <- empirical_EGA_output$lower_order
   }
   
   # Check for seed
@@ -469,28 +489,29 @@ bootEGA <- function(
     ncores = ncores, progress = verbose,
     # Standard EGA arguments
     FUN = function(
-      seed_value, data, type, case_sequence, mvrnorm_parameters, 
-      n, corr, na.data, model, algorithm, uni.method, ...
+      seed_value, data, type, case_sequence, 
+      mvrnorm_parameters, EGA_ARGS, ellipse
     ){
       
-      # Return EGA
+      # Replace data in EGA arguments
+      EGA_ARGS$data <- reproducible_bootstrap(
+        seed = seed_value, data = data,
+        case_sequence = case_sequence,
+        mvrnorm_parameters = mvrnorm_parameters,
+        type = type
+      )
+      
+      # Estimate EGA
       return(
-        ega_function(
-          data = reproducible_bootstrap(
-            seed = seed_value, data = data,
-            case_sequence = case_sequence,
-            mvrnorm_parameters = mvrnorm_parameters,
-            type = type
-          ), 
-          n = n, corr = corr, na.data = na.data, model = model,
-          algorithm = algorithm, uni.method = uni.method,
-          plot.EGA = FALSE, verbose = FALSE, ...
+        empirical_EGA <- do.call(
+          what = ega_function,
+          args = c(EGA_ARGS, ellipse)
         )
       )
-  
+
     }, # Send all argument variables
-    data, type, case_sequence, mvrnorm_parameters,
-    n, corr, na.data, model, algorithm, uni.method, ...
+    data, type, case_sequence, 
+    mvrnorm_parameters, EGA_ARGS, ellipse
   )
   
   # Obtain bootstrap EGA output
@@ -502,7 +523,7 @@ bootEGA <- function(
     # Prepare results
     results <- list(
       lower_order = prepare_bootEGA_results(
-        lapply(bootstrap_EGA_output, function(x){x$lower}),
+        lapply(bootstrap_EGA_output, function(x){x$lower_order}),
         iter
       ),
       # To avoid issues with differing communities,
@@ -535,10 +556,14 @@ bootEGA <- function(
   if(isTRUE(typicalStructure)){
     
     # Obtain results
-    results$typicalGraph <- estimate_typicalStructure(
-      data, results, verbose, ...
+    results$typicalGraph <- do.call(
+      what = estimate_typicalStructure,
+      args = c(
+        list(data = data, results = results, verbose = verbose),
+        ellipse
+      )
     )
-    
+
     # Check for plot
     if(isTRUE(plot.typicalStructure)){
       
@@ -566,7 +591,6 @@ bootEGA <- function(
 # iter = 100; type = "parametric"; ncores = 8; EGA.type = "EGA"
 # typicalStructure = TRUE; plot.typicalStructure = FALSE;
 # verbose = TRUE
-# Need above functions for testing!
 
 #' @noRd
 # Errors ----
@@ -955,6 +979,61 @@ plot.bootEGA <- function(x, ...)
 }
 
 #' @noRd
+# Handle `hierEGA` arguments ----
+# Updated 31.07.2023
+handle_hierEGA_ARGS <- function(algorithm, ellipse, ellipse_names)
+{
+  
+  # Determine whether "lower" and "higher" algorithms are used
+  if("lower.algorithm" %in% names(ellipse) & !"higher.algorithm" %in% ellipse_names){
+    
+    # Use "algorithm" as "higher.algorithm"
+    ellipse$higher.algorithm <- algorithm
+    
+    # Send message
+    warning(
+      paste0(
+        "Argument 'lower.algorithm' was set to \"", ellipse$lower.algorithm,
+        "\" but 'higher.algorithm' was not set ",
+        "with 'EGA.type = \"hierEGA\"'.", 
+        "\n\nSetting 'higher.algorithm = \"", algorithm, "\"'"
+      ), call. = FALSE
+    )
+    
+  }else if(!"lower.algorithm" %in% names(ellipse) & "higher.algorithm" %in% ellipse_names){
+    
+    # Set default "louvain"
+    ellipse$lower.algorithm <- "louvain"
+    ellipse$consensus.method <- "most_common"
+    ellipse$consensus.iter <- 1000
+    
+    # Send message
+    warning(
+      paste0(
+        "Argument 'higher.algorithm' was set to \"", ellipse$higher.algorithm,
+        "\" but 'lower.algorithm' was not set ",
+        "with 'EGA.type = \"hierEGA\"'.",
+        "\n\nSetting 'lower.algorithm' to the default: ",
+        "\"louvain\" with most common consensus clustering (1000 iterations)"
+      )
+    )
+    
+  }else if(!any(c("lower.algorithm", "higher.algorithm") %in% ellipse_names)){
+    
+    # Set to defaults but use "algorithm" as higher order algorithm
+    ellipse$lower.algorithm <- "louvain"
+    ellipse$consensus.method <- "most_common"
+    ellipse$consensus.iter <- 1000
+    ellipse$higher.algorithm <- algorithm
+    
+  }
+  
+  # Return ellipse
+  return(ellipse)
+
+}
+
+#' @noRd
 # Revalue single membership ----
 # Also used in `hierEGA`
 # Updated 22.07.2023
@@ -982,12 +1061,12 @@ revalue_memberships <- function(bootstrap_EGA_output)
     lapply(bootstrap_EGA_output, function(output){
 
       # Re-assign to the higher order output
-      output$higher$wc <- single_revalue_memberships(
-        output$lower$wc, output$higher$wc
+      output$higher_order$wc <- single_revalue_memberships(
+        output$lower_order$wc, output$higher_order$wc
       )
       
       # Return higher order output
-      return(output$higher)
+      return(output$higher_order)
       
     })
     
@@ -998,7 +1077,7 @@ revalue_memberships <- function(bootstrap_EGA_output)
 #' @noRd
 # Prepare `bootEGA` results ----
 # Self-contained to work on `EGA` bootstraps
-# Updated 21.07.2023
+# Updated 31.07.2023
 prepare_bootEGA_results <- function(boot_object, iter)
 {
   
@@ -1050,7 +1129,8 @@ prepare_bootEGA_results <- function(boot_object, iter)
       summary.table = summary_table,
       frequency = frequencies[
         order(frequencies[, "# of Factors"]),
-      ]
+      ],
+      TEFI = nvapply(boot_object, function(x){x$TEFI})
     )
   )
   
@@ -1355,7 +1435,7 @@ estimate_typical_EGA.fit <- function(results, ellipse)
 
 #' @noRd
 # Typical network and memberships ----
-# Updated 23.07.2023
+# Updated 31.07.2023
 estimate_typicalStructure <- function(
     data, results, verbose, ...
 )
@@ -1556,7 +1636,7 @@ estimate_typicalStructure <- function(
     higher_order <- EGA(
       data = score_estimates, corr = model_attributes$corr, 
       na.data = model_attributes$na.data,
-      model = model, algorithm = algorithm_attributes$algorithm,
+      model = model, algorithm = ellipse$higher.algorithm,
       uni.method = unidimensional_attributes$uni.method,
       plot.EGA = FALSE, verbose = verbose, ...
     )
