@@ -141,70 +141,81 @@ double modularity_gain(
 
 /* Functions for Main Louvain */
 
+// Get maximum membership
+int maximum_membership(int* memberships, int cols){
+  
+  // Initialize max membership
+  int max_membership = 0;
+  
+  // Loop over to get maximum membership
+  for(int i = 0; i < cols; i++){
+    
+    // Check for greater membership
+    if(memberships[i] > max_membership){
+      max_membership = memberships[i];
+    }
+    
+  }
+  
+  // Return maximum membership
+  return max_membership;
+  
+}
+
 // Structure for `make_higher_order`
 struct higher_order_result {
-    double* higher_order;
-    int number;
+  double* higher_order;
+  int number;
 };
 
 // Function to make higher-order network
 struct higher_order_result make_higher_order(double* network, int* membership, int cols) {
-
-    // Initialize iterators
-    int i, j, network_offset;
-    double edge;
-    int first_position, second_position;
-
-    // Initialize number of communities
-    int number = 0;
-
-    // Loop over to find highest value
-    for(i = 0; i < cols; i++) {
-
-        // Check for new highest value
-        if(membership[i] > number) {
-            number = membership[i];
-        }
-
+  
+  // Initialize iterators
+  int i, j, network_offset;
+  double edge;
+  int first_position, second_position;
+  
+  // Get maximum membership (number of communities)
+  int number = maximum_membership(membership, cols);
+  
+  // Increase number by 1
+  number += 1;
+  
+  // Initialize higher-order network
+  double* higher_order = (double*)calloc(number * number, sizeof(double));
+  
+  // Populate network
+  for(i = 0; i < cols; i++) {
+    
+    // Compute network offset
+    network_offset = i * cols;
+    
+    for(j = i; j < cols; j++) {
+      
+      // Obtain edge
+      edge = network[network_offset + j];
+      
+      // Obtain positions
+      first_position = membership[i] * number + membership[j];
+      second_position = membership[j] * number + membership[i];
+      
+      // Add edge to current position of memberships
+      higher_order[first_position] += edge;
+      higher_order[second_position] += edge;
+      
     }
-
-    // Increase number by 1
-    number += 1;
-
-    // Initialize higher-order network
-    double* higher_order = (double*)calloc(number * number, sizeof(double));
-
-    // Populate network
-    for(i = 0; i < cols; i++) {
-
-        // Compute network offset
-        network_offset = i * cols;
-
-        for(j = i; j < cols; j++) {
-
-            // Obtain edge
-            edge = network[network_offset + j];
-
-            // Obtain positions
-            first_position = membership[i] * number + membership[j];
-            second_position = membership[j] * number + membership[i];
-
-            // Add edge to current position of memberships
-            higher_order[first_position] += edge;
-            higher_order[second_position] += edge;
-
-        }
-    }
-
-    // Set up result
-    struct higher_order_result result = {
-        higher_order,
-        number
-    };
-
-    // Return result
-    return(result);
-
+  }
+  
+  // Set up result
+  struct higher_order_result result = {
+    higher_order,
+    number
+  };
+  
+  // Return result
+  return(result);
+  
 }
 
 // Function to re-index membership
@@ -250,13 +261,13 @@ int* reindex_membership(int* membership, int cols) {
 }
 
 // Fisher-Yates (or Knuth) Shuffle
-void shuffle_nodes(int *arr, int cols) {
+void shuffle_nodes(int *arr, int cols, uint64_t* seed) {
 
     // Initialize iterators
     int i, j, temp;
 
     // Seed the random number generator
-    seed_xoshiro256((uint32_t) get_time_ns());
+    seed_xoshiro256(*seed);
 
     // Iterate through the array from the last element to the first
     for (i = cols - 1; i > 0; i--) {
@@ -270,6 +281,9 @@ void shuffle_nodes(int *arr, int cols) {
         arr[j] = temp;
 
     }
+    
+    // Increment seed by 1
+    (*seed)++;
 
 }
 
@@ -278,7 +292,8 @@ void main_louvain(
     double* network,
     struct modularity_result Q_values,
     int* membership_copy, double previous_modularity,
-    int cols, int original_cols
+    int cols, int original_cols,
+    double resolution, uint64_t* seed
 ) {
 
     // Initialize iterators
@@ -311,7 +326,7 @@ void main_louvain(
     while(1) {
 
         // Permutate index
-        shuffle_nodes(index, cols);
+        shuffle_nodes(index, cols, seed);
 
         // Set gain to zero
         int gain = 0;
@@ -450,7 +465,7 @@ void main_louvain(
                 }
 
                 // Update modularity values
-                Q_values = modularity_values(network, cols);
+                Q_values = modularity_values(network, cols, resolution);
 
                 // Update modularity
                 update_modularity = signed_modularity(Q_values, membership, cols);
@@ -507,8 +522,8 @@ void main_louvain(
 
         // Free memory
         free(Q_values.positive_modularity_values);
-    	free(Q_values.negative_modularity_values);
-    	Q_values.positive_modularity_values = NULL;
+    	  free(Q_values.negative_modularity_values);
+    	  Q_values.positive_modularity_values = NULL;
         Q_values.negative_modularity_values = NULL;
 
     }
@@ -527,133 +542,171 @@ void main_louvain(
 
 // Structure for `signed_louvain`
 struct signed_louvain_result {
-    int** memberships;
-    double* modularities;
-    int level;
+  int** memberships;
+  double* modularities;
+  int level;
 };
 
 // Signed Louvain function
-struct signed_louvain_result signed_louvain(double* original_network, int original_cols) {
-
-    // Initialize iterators
-    int level = 0;
-
-    // Initialize membership and modularity results
-    int** memberships = (int**)malloc(original_cols * sizeof(int*));
-    int* membership_copy = (int*)calloc(original_cols, sizeof(int));
-    double* modularities = (double*)malloc(original_cols * sizeof(double));
-
-    // Compute original modularity values
-    struct modularity_result original_Q_values = modularity_values(original_network, original_cols);
-
-    // Compute first level
-    main_louvain(
-        original_network, original_Q_values,
-        membership_copy, 0.0,
-        original_cols, original_cols
+struct signed_louvain_result signed_louvain(
+    double* original_network, int original_cols,
+    double resolution, uint64_t* seed
+) {
+  
+  // Initialize iterators
+  int i, level = 0;
+  
+  // Initialize membership and modularity results
+  int** memberships = (int**)malloc(original_cols * sizeof(int*));
+  int* membership_copy = (int*)calloc(original_cols, sizeof(int));
+  double* modularities = (double*)malloc(original_cols * sizeof(double));
+  
+  // Compute original modularity values
+  struct modularity_result original_Q_values = modularity_values(
+    original_network, original_cols, resolution
+  );
+  
+  // Compute first level
+  main_louvain(
+    original_network, original_Q_values,
+    membership_copy, 0.0,
+    original_cols, original_cols,
+    resolution, seed
+  );
+  
+  // Compute modularity
+  modularities[level] = signed_modularity(
+    original_Q_values, membership_copy, original_cols
+  );
+  
+  // Populate membership
+  memberships[level] = (int*)malloc(original_cols * sizeof(int));
+  memcpy(memberships[level], membership_copy, original_cols * sizeof(int));
+  
+  // Initialize higher order and modularity values
+  struct higher_order_result higher_order;
+  struct modularity_result Q_values;
+  
+  // Get maximum membership
+  int max_communities = maximum_membership(memberships[level], original_cols);
+  
+  // Compute next levels
+  while(max_communities != (original_cols - 1)) {
+    
+    // Increase level
+    level++;
+    
+    // Obtain higher-order network
+    higher_order = make_higher_order(
+      original_network, membership_copy, original_cols
     );
-
+    
+    // Compute modularity values
+    Q_values = modularity_values(
+      higher_order.higher_order, higher_order.number, resolution
+    );
+    
+    // Compute next level
+    main_louvain(
+      higher_order.higher_order, Q_values,
+      membership_copy, modularities[level - 1],
+      higher_order.number, original_cols,
+      resolution, seed
+    );
+    
     // Compute modularity
     modularities[level] = signed_modularity(
-        original_Q_values, membership_copy, original_cols
+      original_Q_values, membership_copy, original_cols
     );
-
+    
     // Populate membership
     memberships[level] = (int*)malloc(original_cols * sizeof(int));
     memcpy(memberships[level], membership_copy, original_cols * sizeof(int));
-
-    // Initialize higher order and modularity values
-    struct higher_order_result higher_order;
-    struct modularity_result Q_values;
-
-    // Compute next levels
-    while(1) {
-
-        // Increase level
-        level++;
-
-        // Obtain higher-order network
-        higher_order = make_higher_order(
-            original_network, membership_copy, original_cols
-        );
-
-        // Compute modularity values
-        Q_values = modularity_values(
-            higher_order.higher_order, higher_order.number
-        );
-
-        // Compute next level
-        main_louvain(
-            higher_order.higher_order, Q_values,
-            membership_copy, modularities[level - 1],
-            higher_order.number, original_cols
-        );
-
-        // Compute modularity
-        modularities[level] = signed_modularity(
-            original_Q_values, membership_copy, original_cols
-        );
-
-        // Populate membership
-        memberships[level] = (int*)malloc(original_cols * sizeof(int));
-        memcpy(memberships[level], membership_copy, original_cols * sizeof(int));
-
-        // Free memory
-        free(Q_values.positive_modularity_values);
-        free(Q_values.negative_modularity_values);
-        free(higher_order.higher_order);
-
-        // Set pointers to NULL
-        Q_values.positive_modularity_values = NULL;
-        Q_values.negative_modularity_values = NULL;
-        higher_order.higher_order = NULL;
-
-        // Check for any change
-        if(modularities[level] <= modularities[level - 1]) {
-            break;
-        }
-
-    }
-
+    
     // Free memory
-    free(original_Q_values.positive_modularity_values);
-    free(original_Q_values.negative_modularity_values);
-    free(membership_copy);
-
+    free(Q_values.positive_modularity_values);
+    free(Q_values.negative_modularity_values);
+    free(higher_order.higher_order);
+    
     // Set pointers to NULL
-    original_Q_values.positive_modularity_values = NULL;
-    original_Q_values.negative_modularity_values = NULL;
-    membership_copy = NULL;
-
-    // Set up result
-    struct signed_louvain_result result = {
-        memberships,
-        modularities,
-        level
-    };
-
-    // Return result
-    return(result);
-
+    Q_values.positive_modularity_values = NULL;
+    Q_values.negative_modularity_values = NULL;
+    higher_order.higher_order = NULL;
+    
+    // Check for any change
+    if(modularities[level] <= modularities[level - 1]) {
+      // level = level - 1; // go back a level
+      break;
+    }
+    
+    // Initialize all zero count (unidimensionality)
+    int all_zero = 0;
+    
+    // Count number of zeros
+    for(i = 0; i < original_cols; i++){
+      all_zero += memberships[level][i] == 0;
+    }
+    
+    // If number of zeros is the same as length of memberships, then break
+    if(all_zero == original_cols){
+      break;
+    }
+    
+    // Update communities
+    max_communities = maximum_membership(memberships[level], original_cols);
+    
+  }
+  
+  // Free memory
+  free(original_Q_values.positive_modularity_values);
+  free(original_Q_values.negative_modularity_values);
+  free(membership_copy);
+  
+  // Set pointers to NULL
+  original_Q_values.positive_modularity_values = NULL;
+  original_Q_values.negative_modularity_values = NULL;
+  membership_copy = NULL;
+  
+  // Set up result
+  struct signed_louvain_result result = {
+    memberships,
+    modularities,
+    level
+  };
+  
+  // Return result
+  return(result);
+  
 }
 
-SEXP r_signed_louvain(SEXP r_input_network) {
+SEXP r_signed_louvain(SEXP r_input_network, SEXP r_resolution, SEXP r_seed) {
 
     // Initialize iterators
     int i, j;
 
     // Obtain columns
     int cols = ncols(r_input_network);
+    
+    // Initialize R values
+    uint64_t seed_value = (uint64_t) REAL(r_seed)[0];
+    
+    // For random seed, use zero
+    if(seed_value == 0) { // Use clocktime in nanoseconds
+      seed_value = get_time_ns();
+    }
 
     // Call the C function
-    struct signed_louvain_result c_result = signed_louvain(REAL(r_input_network), cols);
+    struct signed_louvain_result c_result = signed_louvain(
+      REAL(r_input_network), cols,
+      REAL(r_resolution)[0], &seed_value
+    );
 
     // Create R output list
     SEXP r_output = PROTECT(allocVector(VECSXP, 2));
 
     // Convert the memberships result to an R matrix
     SEXP r_memberships = PROTECT(allocMatrix(INTSXP, c_result.level, cols));
-    for (i = 0; i < c_result.level; i++) {
+    for (i = 0; i <= c_result.level; i++) {
         for (j = 0; j < cols; j++) {
             INTEGER(r_memberships)[j * c_result.level + i] = c_result.memberships[i][j] + 1;
         }
@@ -661,7 +714,7 @@ SEXP r_signed_louvain(SEXP r_input_network) {
 
     // Convert the modularities result to an R numeric vector
     SEXP r_modularities = PROTECT(allocVector(REALSXP, c_result.level));
-    for (i = 0; i < c_result.level; i++) {
+    for (i = 0; i <= c_result.level; i++) {
         REAL(r_modularities)[i] = c_result.modularities[i];
         free(c_result.memberships[i]);
     }
@@ -676,12 +729,12 @@ SEXP r_signed_louvain(SEXP r_input_network) {
     SET_STRING_ELT(names, 1, mkChar("modularity"));
     setAttrib(r_output, R_NamesSymbol, names);
 
+    // Release protected SEXP objects
+    UNPROTECT(4);
+    
     // Free memory
     free(c_result.memberships);
     free(c_result.modularities);
-
-    // Release protected SEXP objects
-    UNPROTECT(4);
 
     // Return the result
     return r_output;

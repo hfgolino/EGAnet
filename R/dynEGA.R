@@ -862,18 +862,18 @@ summary.dynEGA.Individual <- function(object, ...)
 
 #' @exportS3Method 
 # S3 Plot Method (General) ----
-# Updated 23.07.2023
+# Updated 31.07.2023
 plot.dynEGA <- function(x, base = 1, id = NULL, ...)
 {
   
-  # Determine NULLs
-  null_objects <- lvapply(get_EGA_object(x), is.null)
+  # Determine non-NULLs
+  non_null_objects <- !lvapply(get_EGA_object(x), is.null)
   
   # Get number of NULLs
-  null_total <- sum(null_objects)
+  null_total <- sum(!non_null_objects)
   
   # Plot population first
-  if(null_objects["population"]){
+  if(non_null_objects["population"]){
     
     # Send plot
     plot(x$dynEGA$population, ...)
@@ -886,10 +886,10 @@ plot.dynEGA <- function(x, base = 1, id = NULL, ...)
   }
   
   # Print group second
-  if(null_objects["group"]){
+  if(non_null_objects["group"]){
     
     # Check for breakspace
-    if(null_objects["population"]){
+    if(non_null_objects["population"]){
       
       # Allow user to proceed at their own pace
       sink <- readline("Press <ENTER> for 'Group' plot")
@@ -907,10 +907,10 @@ plot.dynEGA <- function(x, base = 1, id = NULL, ...)
   }
   
   # Print individuals third
-  if(null_objects["individual"]){
+  if(non_null_objects["individual"]){
     
     # Check for breakspace
-    if(null_objects["population"] | null_objects["group"]){
+    if(non_null_objects["population"] | non_null_objects["group"]){
       # Allow use to proceed at their own pace
       sink <- readline("Press <ENTER> for 'Individual' plot")
     }

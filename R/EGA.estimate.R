@@ -107,7 +107,8 @@
 #' Set to \code{TRUE} to see all messages and warnings for every function call
 #'
 #' @param ... Additional arguments to be passed on to
-#' \code{\link[EGAnet]{auto.correlate}}, \code{\link[EGAnet]{network.estimation}},
+#' \code{\link[EGAnet]{auto.correlate}}, 
+#' \code{\link[EGAnet]{network.estimation}},
 #' \code{\link[EGAnet]{community.detection}}, and
 #' \code{\link[EGAnet]{community.consensus}}
 #'

@@ -10,7 +10,18 @@ tefi(data, structure = NULL)
 \item{data}{A matrix, data frame, or correlation matrix}
 
 \item{structure}{A vector representing the structure (numbers or labels for each item).
-Can be theoretical factors or the structure detected by \code{\link{EGA}}}
+Can be theoretical factors or the structure detected by \code{\link{EGA}}. For high-order and correlated bifactor structures,
+\code{structure} should be a list containing:
+
+\itemize{
+
+\item{\code{lower_order}}
+{A vector representing the first-order structure (numbers or labels for each item in each first-order factor or community).}
+
+\item{\code{higher_order}}
+{A vector representing the second-order structure (numbers or labels for each item in each second-order factor or community).}
+
+}}
 }
 \value{
 Returns a list containing:
@@ -23,7 +34,8 @@ Returns a list containing:
 }
 \description{
 Computes the fit (TEFI) of a dimensionality structure using Von Neumman's entropy when the input is a correlation matrix.
-Lower values suggest better fit of a structure to the data.
+Lower values suggest better fit of a structure to the data. For high-order and correlated bifactor structures (or \code{\link{hierEGA}} objects), the Generalized
+Total Entropy Fit index is computed.
 }
 \examples{
 # Load data
@@ -37,6 +49,24 @@ ega.wmt <- EGA(
 
 # Compute entropy indices
 tefi(data = ega.wmt$correlation, structure = ega.wmt$wc)
+
+# Load data
+data <- optimism
+
+# Not run: 
+# hierEGA example
+ opt.hier<- hierEGA(
+ data = optimism,
+ algorithm = "louvain")
+ 
+ # Create a list with the lower and higher order structures:
+ hier.structure <- vector("list")
+ hier.structure$lower_order <- opt.hier$dim.variables$lower
+ hier.structure$higher_order <- opt.hier$dim.variables$higher
+ 
+ # Compute the Generalized Total Entropy Fit Index
+ gen.tefi.opt <- tefi(opt.hier$lower_order$correlation, structure = hier.structure)
+ 
 
 }
 \references{

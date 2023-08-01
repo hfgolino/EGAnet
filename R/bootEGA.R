@@ -632,12 +632,7 @@ bootEGA_errors <- function(
   if(!is.null(seed)){
     length_error(seed, 1)
     typeof_error(seed, "numeric")
-    range_error(seed, 
-                c(
-                  -as.double(.Machine$integer.max), 
-                  as.double(.Machine$integer.max)
-                )
-    )
+    range_error(seed,  c(0, as.double(.Machine$integer.max)))
   }
   
   # 'verbose' errors

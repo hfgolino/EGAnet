@@ -4,11 +4,28 @@
 \alias{signed.louvain}
 \title{Computes the Signed Louvain Community Detection Algorithm}
 \usage{
-signed.louvain(network)
+signed.louvain(network, resolution = 1, seed = NULL)
 }
 \arguments{
 \item{network}{Matrix or data frame.
 A symmetric matrix representing a network}
+
+\item{resolution}{Numeric (length = 1).}
+
+\item{seed}{Numeric (length = 1).
+Defaults to \code{NULL} or random results
+Set for reproducible results.
+See https://github.com/hfgolino/EGAnet/wiki/Reproducibility-and-PRNG
+for more details on random number generation in \code{\link{EGAnet}}.
+
+Louvain is a special case for reproducibility. It is standard practice
+to shuffle the node order in the Louvain algorithm. By setting a seed,
+node order will still be shuffled but the shuffle will be predictable
+because of the seed.
+
+Shuffling can happen multiple times in the Louvain algorithm meaning
+that a single seed isn't enough; however, the current implementation
+uses the current seed and increments the seed by \code{1} with each pass}
 }
 \value{
 Returns a list:
@@ -21,7 +38,9 @@ Returns a list:
 }
 \description{
 This function implementations the Louvain algorithm (Blondel et al., 2008)
-that attempts to maximize signed modularity (Gomez et al., 2009)
+that attempts to maximize signed modularity (Gomez et al., 2009). When there
+are no negative values in the network or absolute values are used, this function
+is equivalent to \code{\link[igraph]{cluster_louvain}}
 }
 \examples{
 # Load data

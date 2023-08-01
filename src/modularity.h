@@ -16,7 +16,7 @@ struct modularity_result {
 };
 
 // Function prototypes
-struct modularity_result modularity_values(double* network, int cols);
+struct modularity_result modularity_values(double* network, int cols, double resolution);
 double signed_modularity(struct modularity_result Q_values, int* membership, int cols);
 
 #endif /* MODULARITY_H */

@@ -52,10 +52,9 @@
 #' @export
 #'
 # Compute Louvain communities for EGA ----
-# Updated 26.07.2023
+# Updated 01.08.2023
 community.louvain <- function(
-    network, signed = FALSE, 
-    resolution = 1
+    network, signed = FALSE, resolution = 1
 )
 {
   
@@ -73,8 +72,15 @@ community.louvain <- function(
   # Obtain strength
   node_strength <- colSums(abs(network_matrix), na.rm = TRUE)
   
+  # Get number of nodes
+  nodes <- length(node_strength)
+  
+  # Get node names
+  node_names <- dimnames(network_matrix)[[2]]
+  
   # Initialize memberships as missing
-  membership <- rep(NA, length(node_strength))
+  membership <- rep(NA, nodes)
+  names(membership) <- node_names
   
   # Determine unconnected nodes
   unconnected <- node_strength == 0
@@ -87,15 +93,22 @@ community.louvain <- function(
     # Check if any nodes are disconnected
     if(any(unconnected)){
       warning(
-        "The network input contains unconnected nodes:\n",
+        "The network input contains unconnected nodes: ",
         paste(names(node_strength)[unconnected], collapse = ", "),
         call. = FALSE
       )
     }
     
+    # Algorithm condition
+    louvain_condition <- signed | nodes < 85
+    # Based on benchmarking, `signed.louvain` is faster
+    # than `igraph::cluster_louvain` when there are fewer
+    # than 85 nodes. Afterwards, `igraph::cluster_louvain`
+    # is faster
+
     # Algorithm function
     algorithm.FUN <- swiftelse(
-      signed, signed.louvain, igraph::cluster_louvain
+      louvain_condition, signed.louvain, igraph::cluster_louvain
     )
     
     # Algorithm arguments
@@ -110,22 +123,31 @@ community.louvain <- function(
     }
     
     # Check for proper network
-    if(signed){
+    if(louvain_condition){
       algorithm.ARGS[[1]] <- network_matrix
     }else{
       algorithm.ARGS[[1]] <- igraph_network
     }
     
     # Get result
-    result <- do.call(algorithm.FUN, as.list(algorithm.ARGS))$memberships
+    result <- do.call(algorithm.FUN, as.list(algorithm.ARGS))
+    
+    # Put result into membership
+    membership[!unconnected] <- result$membership[!unconnected]
+    
+    # Set all memberships to NA for unconnected
+    result$memberships[,unconnected] <- NA
     
   }
   
-  # Name nodes
-  dimnames(result)[[2]] <- dimnames(network_matrix)[[2]]
+  # Return membership to result
+  result$membership <- membership
+  
+  # Ensure names on memberships
+  dimnames(result$memberships)[[2]] <- node_names
   
   # Return membership
-  return(result)
+  return(remove_attributes(result))
   
 }
 

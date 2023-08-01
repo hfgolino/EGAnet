@@ -4,7 +4,7 @@
 #include "modularity.h"
 
 // Function to compute modularity values
-struct modularity_result modularity_values(double* network, int cols) {
+struct modularity_result modularity_values(double* network, int cols, double resolution) {
 
     // Initialize iterators
     int i, j, network_offset;
@@ -90,9 +90,7 @@ struct modularity_result modularity_values(double* network, int cols) {
                 // Update positive modularity
                 positive_modularity_values[count] += (
                     ((edge > 0) ? edge : 0) - // positive edge
-                    positive_column_sums[i] *
-                    positive_column_sums[j] /
-                    positive_sum
+                    (resolution * positive_column_sums[i] * positive_column_sums[j] / positive_sum)
                 ) / positive_sum;
 
             }
@@ -103,9 +101,7 @@ struct modularity_result modularity_values(double* network, int cols) {
                 // Update negative modularity
                 negative_modularity_values[count] += (
                     ((edge < 0) ? edge : 0) - // negative edge
-                    negative_column_sums[i] *
-                    negative_column_sums[j] /
-                    negative_sum
+                    (resolution * negative_column_sums[i] * negative_column_sums[j] / negative_sum)
                 ) / negative_sum;
 
             }

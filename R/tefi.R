@@ -10,9 +10,15 @@
 #' Can be theoretical factors or the structure detected by \code{\link{EGA}}. For high-order and correlated bifactor structures,
 #' \code{structure} should be a list containing:
 #' 
-#' \item{lower_order}{A vector representing the first-order structure (numbers or labels for each item in each first-order factor or community).}
+#' \itemize{
+#' 
+#' \item{\code{lower_order}}
+#' {A vector representing the first-order structure (numbers or labels for each item in each first-order factor or community).}
 #'
-#' \item{higher_order}{A vector representing the second-order structure (numbers or labels for each item in each second-order factor or community).}
+#' \item{\code{higher_order}}
+#' {A vector representing the second-order structure (numbers or labels for each item in each second-order factor or community).}
+#' 
+#' }
 #'
 #' @return Returns a list containing:
 #'
@@ -62,7 +68,7 @@
 #'
 #' @export
 # Total Entropy Fit Index Function (for correlation matrices)
-# Updated 31.07.2023
+# Updated 01.08.2023
 tefi <- function(data, structure = NULL)
 {
   

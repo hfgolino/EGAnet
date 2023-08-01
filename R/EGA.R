@@ -216,15 +216,14 @@
 #' \emph{Behavior Research Methods}.
 #' 
 #' \strong{Comprehensive unidimensionality simulation} \cr
-#' Christensen, A. P. (2022).
+#' Christensen, A. P. (2023).
 #' Unidimensional community detection: A Monte Carlo simulation, grid search, and comparison.
 #' \emph{PsyArXiv}.
 #'
-#' \strong{Compared all \emph{igraph} community detections algorithms, introduced Louvain algorithm, simulation with continuous and polytomous data} \cr
-#' # Also implements the Leading Eigenvalue unidimensional method \cr
-#' Christensen, A. P., Garrido, L. E., & Golino, H. (2021).
-#' Comparing community detection algorithms in psychological data: A Monte Carlo simulation.
-#' \emph{PsyArXiv}.
+#' \strong{Compared all} \code{\link{igraph}} \strong{community detection algorithms, simulation with continuous and polytomous data} \cr
+#' Christensen, A. P., Garrido, L. E., Guerra-Pena, K., & Golino, H. (2023).
+#' Comparing community detection algorithms in psychometric networks: A Monte Carlo simulation.
+#' \emph{Behavior Research Methods}.
 #'
 #' @export
 # EGA ----
