@@ -12,7 +12,7 @@
 #' 
 #' \item{lower_order}{A vector representing the first-order structure (numbers or labels for each item in each first-order factor or community).}
 #'
-#' \item{high_order}{A vector representing the second-order structure (numbers or labels for each item in each second-order factor or community).}
+#' \item{higher_order}{A vector representing the second-order structure (numbers or labels for each item in each second-order factor or community).}
 #'
 #' @return Returns a list containing:
 #'
@@ -34,6 +34,24 @@
 #'
 #' # Compute entropy indices
 #' tefi(data = ega.wmt$correlation, structure = ega.wmt$wc)
+#' 
+#' # Load data
+#' data <- optimism
+#' 
+#' # Not run: 
+#' # hierEGA example
+#'  opt.hier<- hierEGA(
+#'  data = optimism,
+#'  algorithm = "louvain")
+#'  
+#'  # Create a list with the lower and higher order structures:
+#'  hier.structure <- vector("list")
+#'  hier.structure$lower_order <- opt.hier$dim.variables$lower
+#'  hier.structure$higher_order <- opt.hier$dim.variables$higher
+#'  
+#'  # Compute the Generalized Total Entropy Fit Index
+#'  gen.tefi.opt <- tefi(opt.hier$lower_order$correlation, structure = hier.structure)
+#'  
 #'
 #' @references
 #' Golino, H., Moulder, R. G., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Nesselroade, J., Sadana, R., Thiyagarajan, J. A., & Boker, S. M. (2020).
