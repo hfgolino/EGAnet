@@ -261,13 +261,10 @@ int* reindex_membership(int* membership, int cols) {
 }
 
 // Fisher-Yates (or Knuth) Shuffle
-void shuffle_nodes(int *arr, int cols, uint64_t* seed) {
+void shuffle_nodes(int *arr, int cols) {
 
     // Initialize iterators
     int i, j, temp;
-
-    // Seed the random number generator
-    seed_xoshiro256(*seed);
 
     // Iterate through the array from the last element to the first
     for (i = cols - 1; i > 0; i--) {
@@ -281,9 +278,6 @@ void shuffle_nodes(int *arr, int cols, uint64_t* seed) {
         arr[j] = temp;
 
     }
-    
-    // Increment seed by 1
-    (*seed)++;
 
 }
 
@@ -293,7 +287,7 @@ void main_louvain(
     struct modularity_result Q_values,
     int* membership_copy, double previous_modularity,
     int cols, int original_cols,
-    double resolution, uint64_t* seed
+    double resolution
 ) {
 
     // Initialize iterators
@@ -326,7 +320,7 @@ void main_louvain(
     while(1) {
 
         // Permutate index
-        shuffle_nodes(index, cols, seed);
+        shuffle_nodes(index, cols);
 
         // Set gain to zero
         int gain = 0;
@@ -549,8 +543,7 @@ struct signed_louvain_result {
 
 // Signed Louvain function
 struct signed_louvain_result signed_louvain(
-    double* original_network, int original_cols,
-    double resolution, uint64_t* seed
+    double* original_network, int original_cols, double resolution
 ) {
   
   // Initialize iterators
@@ -571,7 +564,7 @@ struct signed_louvain_result signed_louvain(
     original_network, original_Q_values,
     membership_copy, 0.0,
     original_cols, original_cols,
-    resolution, seed
+    resolution
   );
   
   // Compute modularity
@@ -611,7 +604,7 @@ struct signed_louvain_result signed_louvain(
       higher_order.higher_order, Q_values,
       membership_copy, modularities[level - 1],
       higher_order.number, original_cols,
-      resolution, seed
+      resolution
     );
     
     // Compute modularity
@@ -687,18 +680,20 @@ SEXP r_signed_louvain(SEXP r_input_network, SEXP r_resolution, SEXP r_seed) {
     // Obtain columns
     int cols = ncols(r_input_network);
     
-    // Initialize R values
+    // Initialize seed value
     uint64_t seed_value = (uint64_t) REAL(r_seed)[0];
     
     // For random seed, use zero
     if(seed_value == 0) { // Use clocktime in nanoseconds
       seed_value = get_time_ns();
     }
+    
+    // Seed the random number generator
+    seed_xoshiro256(seed_value);
 
     // Call the C function
     struct signed_louvain_result c_result = signed_louvain(
-      REAL(r_input_network), cols,
-      REAL(r_resolution)[0], &seed_value
+      REAL(r_input_network), cols, REAL(r_resolution)[0]
     );
 
     // Create R output list
