@@ -545,7 +545,7 @@ hierEGA <- function(
     results$plot.hierEGA <- plot(results, ...)
     
     # Actually send plot
-    silent_plot(results$plot.hierEGA)
+    results$plot.hierEGA
   
   }
 
@@ -877,21 +877,23 @@ plot.hierEGA <- function(
       # Set them off
       options(warn = -1)
       
-      # Send it
-      silent_plot(second_layer)
-      
       # Set them back to the user's setting
-      options(warn = current_warning)
+      on.exit(options(warn = current_warning))
+      
+      # Send it
+      return(silent_plot(second_layer))
       
     }else{
-      silent_plot(
-        plot_list,
-        mode = mode,
-        edge.size = edge_size,
-        edge.color = edge_color,
-        edge.alpha = edge_alpha,
-        edge.lty = line_type,
-        ...
+      return(
+        silent_plot(
+          plot_list,
+          mode = mode,
+          edge.size = edge_size,
+          edge.color = edge_color,
+          edge.alpha = edge_alpha,
+          edge.lty = line_type,
+          ...
+        )
       )
     }
 
@@ -903,11 +905,13 @@ plot.hierEGA <- function(
     }
     
     # Plot lower and higher order side-by-side
-    ggpubr::ggarrange(
-      silent_plot(x$lower_order, ...),
-      silent_plot(x$higher_order, ...),
-      labels = ellipse$labels,
-      ...
+    return(
+      ggpubr::ggarrange(
+        silent_plot(x$lower_order, ...),
+        silent_plot(x$higher_order, ...),
+        labels = ellipse$labels,
+        ...
+      )
     )
     
   }
