@@ -402,15 +402,21 @@ EGA_errors <- function(data, n, plot.EGA, verbose)
 
 #' @exportS3Method 
 # S3 Print Method ----
-# Updated 31.07.2023
+# Updated 02.08.2023
 print.EGA <- function(x, ...)
 {
+  
+  # Make network have S3 class
+  class(x$network) <- "EGA.network"
   
   # Print network estimation
   print(x$network)
   
   # Add break space
   cat("\n----\n\n")
+  
+  # Make memberships have S3 class
+  class(x$wc) <- "EGA.community"
   
   # Print community detection
   print(x$wc)

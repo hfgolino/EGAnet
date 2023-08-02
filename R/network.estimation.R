@@ -253,9 +253,6 @@ network.estimation <- function(
   # Transfer variable names
   estimated_network <- transfer_names(data, estimated_network)
   
-  # Add class
-  class(estimated_network) <- "EGA.network"
-  
   # Add methods attribute for BGGM
   ## Methods for GLASSO and TMFG are already there
   if(model == "bggm"){

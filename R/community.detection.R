@@ -318,9 +318,6 @@ community.detection <- function(
   # Check for whether all results should be returned
   if(membership.only){
     
-    # Set class
-    class(membership) <- "EGA.community"
-    
     # Only return membership
     return(membership)
     
@@ -331,9 +328,6 @@ community.detection <- function(
       membership = membership,
       output = result
     )
-    
-    # Set class
-    class(results) <- "EGA.community"
     
     # Return all results
     return(results)
