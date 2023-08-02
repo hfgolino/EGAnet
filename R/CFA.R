@@ -133,7 +133,7 @@ CFA <- function(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ..
     
     ## Organizing 2nd level items and factors:
     
-    dim.variables.second <- data.frame(items = colnames(hierEGA.obj$lower_order$network), 
+    dim.variables.second <- data.frame(items = colnames(hierEGA.obj$lower_order$network[]), 
                                        dimension = hierEGA.obj$higher_order$EGA$wc[as.character(hierEGA.obj$lower_order$wc)])
     
     strct.2nd <- split(dim.variables.second[, 1], list(paste("GenFact", dim.variables.second[, 2])))
