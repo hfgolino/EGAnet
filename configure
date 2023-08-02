@@ -1781,9 +1781,12 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
- # Replace with your package name and version
- # Replace with your Autoconf version
 
+
+
+# Test for the pthread library in a platform-independent way
+saved_LIBS="$LIBS"
+LIBS="-lpthread $LIBS"
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -2574,46 +2577,29 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for pthread_create in -lpthread" >&5
-$as_echo_n "checking for pthread_create in -lpthread... " >&6; }
-if ${ac_cv_lib_pthread_pthread_create+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lpthread  $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char pthread_create ();
+#include <pthread.h>
 int
 main ()
 {
-return pthread_create ();
+pthread_create(0, 0, 0, 0);
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_pthread_pthread_create=yes
+  PTHREAD_LIBS=-lpthread
+ pthread_found="yes"
 else
-  ac_cv_lib_pthread_pthread_create=no
+  pthread_found="no"
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_pthread_pthread_create" >&5
-$as_echo "$ac_cv_lib_pthread_pthread_create" >&6; }
-if test "x$ac_cv_lib_pthread_pthread_create" = xyes; then :
-  PTHREAD_LIBS=-lpthread
+LIBS="$saved_LIBS"
 
-else
+# If pthread was not found, check for winpthread
+if test "x$pthread_found" = "xno"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pthread_create in -lwinpthread" >&5
 $as_echo_n "checking for pthread_create in -lwinpthread... " >&6; }
 if ${ac_cv_lib_winpthread_pthread_create+:} false; then :
@@ -2658,7 +2644,6 @@ else
 fi
 
 fi
-
 
 ac_config_files="$ac_config_files src/Makevars"
 
