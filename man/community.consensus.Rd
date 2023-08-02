@@ -2,11 +2,10 @@
 % Please edit documentation in R/community.consensus.R
 \name{community.consensus}
 \alias{community.consensus}
-\title{Applies the Consensus Clustering Method (\code{\link[EGAnet]{community.louvain}} only)}
+\title{Applies the Consensus Clustering Method (Louvain only)}
 \usage{
 community.consensus(
   network,
-  signed = FALSE,
   order = c("lower", "higher"),
   resolution = 1,
   consensus.method = c("highest_modularity", "iterative", "most_common", "lowest_tefi"),
@@ -19,10 +18,6 @@ community.consensus(
 \arguments{
 \item{network}{Matrix or \code{\link{igraph}} network object}
 
-\item{signed}{Boolean.
-Whether the standard or signed algorithm should be used.
-Defaults to \code{FALSE} or standard}
-
 \item{order}{Character (length = 1).
 Defaults to \code{"higher"}.
 Whether \code{"lower"} or \code{"higher"} order memberships from
@@ -33,14 +28,10 @@ order Louvain memberships are from the last pass of the Louvain
 algorithm}
 
 \item{resolution}{Numeric (length = 1).
-Defaults to \code{1}.
 A parameter that adjusts modularity to allow the algorithm to
 prefer smaller (\code{resolution} > 1) or larger
 (0 < \code{resolution} < 1) communities.
-Defaults to \code{1} (standard modularity computation).
-Currently, this argument is only available for \code{"standard"}.
-Future versions may allow \code{"signed"} to take advantage of
-this parameter}
+Defaults to \code{1} (standard modularity computation)}
 
 \item{consensus.method}{Character (length = 1).
 Defaults to \code{"most_common"}.
@@ -119,6 +110,8 @@ co-occur with all other nodes in their community (or a proportion of 1.00).
 Variations of this procedure are also available in this package but are
 \strong{experimental}. Use these experimental procedures with caution.
 More work is necessary before these experimental procedures are validated
+
+\emph{At this time, seed setting for consensus clustering is not supported}
 }
 \examples{
 # Load data
@@ -155,42 +148,12 @@ community.consensus(
   correlation.matrix = correlation.matrix
 )
 
-# Compute signed Louvain with highest modularity approach
-community.consensus(
-  network, signed = TRUE,
-  consensus.method = "highest_modularity"
-)
-
-# Compute signed Louvain with iterative (original) approach
-community.consensus(
-  network, signed = TRUE,
-  consensus.method = "iterative"
-)
-
-# Compute signed Louvain with most common approach
-community.consensus(
-  network, signed = TRUE,
-  consensus.method = "most_common"
-)
-
-# Compute signed Louvain with lowest TEFI approach
-community.consensus(
-  network, signed = TRUE,
-  consensus.method = "lowest_tefi",
-  correlation.matrix = correlation.matrix
-)
-
 }
 \references{
 \strong{Louvain algorithm} \cr
 Blondel, V. D., Guillaume, J.-L., Lambiotte, R., & Lefebvre, E. (2008).
 Fast unfolding of communities in large networks.
 \emph{Journal of Statistical Mechanics: Theory and Experiment}, \emph{2008}(10), P10008.
-
-\strong{Signed modularity} \cr
-Gomez, S., Jensen, P., & Arenas, A. (2009).
-Analysis of community structure in networks of correlated data.
-\emph{Physical Review E}, \emph{80}(1), 016114.
 
 \strong{Consensus clustering} \cr
 Lancichinetti, A., & Fortunato, S. (2012).

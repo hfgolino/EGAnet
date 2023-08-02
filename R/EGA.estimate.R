@@ -90,11 +90,11 @@
 #' {See \code{\link[igraph]{cluster_leiden}} for more details}
 #' 
 #' \item{\code{"louvain"}}
-#' {By default, \code{"louvain"} will implement the non-signed version
-#' of the Louvain algorithm using the consensus clustering method 
-#' (see \code{\link[EGAnet]{community.consensus}} for more information). 
-#' This function will implement \code{consensus.method = "most_common"}
-#' and \code{consensus.iter = 1000} unless specified otherwise}
+#' {By default, \code{"louvain"} will implement the Louvain algorithm using 
+#' the consensus clustering method (see \code{\link[EGAnet]{community.consensus}} 
+#' for more information). This function will implement
+#' \code{consensus.method = "most_common"} and \code{consensus.iter = 1000} 
+#' unless specified otherwise}
 #' 
 #' \item{\code{"walktrap"}}
 #' {See \code{\link[EGAnet]{cluster_walktrap}} for more details}
@@ -258,10 +258,7 @@ EGA.estimate <- function(
   }
   
   # Check for function or non-Louvain method
-  if(
-    is.function(algorithm) ||
-    !algorithm %in% c("louvain", "signed_louvain")
-  ){
+  if(is.function(algorithm) || algorithm != "louvain"){
     
     # Apply non-Louvain method
     wc <- do.call(
@@ -292,8 +289,7 @@ EGA.estimate <- function(
       what = community.consensus,
       args = c(
         list(
-          network = network, 
-          signed = algorithm == "signed_louvain",
+          network = network,
           correlation.matrix = correlation_matrix,
           membership.only = TRUE
         ),

@@ -1,4 +1,4 @@
-#' @title Applies the Consensus Clustering Method (\code{\link[EGAnet]{community.louvain}} only)
+#' @title Applies the Consensus Clustering Method (Louvain only)
 #'
 #' @description Applies the consensus clustering method introduced by (Lancichinetti & Fortunato, 2012).
 #' The original implementation of this method applies a community detection algorithm repeatedly
@@ -6,10 +6,6 @@
 #' community solutions with many repeated applications.
 #'
 #' @param network Matrix or \code{\link{igraph}} network object
-#' 
-#' @param signed Boolean.
-#' Whether the standard or signed algorithm should be used.
-#' Defaults to \code{FALSE} or standard
 #' 
 #' @param order Character (length = 1).
 #' Defaults to \code{"higher"}.
@@ -21,14 +17,10 @@
 #' algorithm
 #' 
 #' @param resolution Numeric (length = 1).
-#' Defaults to \code{1}.
 #' A parameter that adjusts modularity to allow the algorithm to
 #' prefer smaller (\code{resolution} > 1) or larger
 #' (0 < \code{resolution} < 1) communities.
-#' Defaults to \code{1} (standard modularity computation).
-#' Currently, this argument is only available for \code{"standard"}.
-#' Future versions may allow \code{"signed"} to take advantage of
-#' this parameter
+#' Defaults to \code{1} (standard modularity computation)
 #' 
 #' @param consensus.method Character (length = 1).
 #' Defaults to \code{"most_common"}.
@@ -91,6 +83,8 @@
 #' \strong{experimental}. Use these experimental procedures with caution.
 #' More work is necessary before these experimental procedures are validated
 #' 
+#' \emph{At this time, seed setting for consensus clustering is not supported}
+#' 
 #' @return Returns either a vector with the selected solution
 #' or a list when \code{membership.only = FALSE}:
 #' 
@@ -137,42 +131,12 @@
 #'   consensus.method = "lowest_tefi",
 #'   correlation.matrix = correlation.matrix
 #' )
-#' 
-#' # Compute signed Louvain with highest modularity approach
-#' community.consensus(
-#'   network, signed = TRUE,
-#'   consensus.method = "highest_modularity"
-#' )
-#' 
-#' # Compute signed Louvain with iterative (original) approach
-#' community.consensus(
-#'   network, signed = TRUE,
-#'   consensus.method = "iterative"
-#' )
-#' 
-#' # Compute signed Louvain with most common approach
-#' community.consensus(
-#'   network, signed = TRUE,
-#'   consensus.method = "most_common"
-#' )
-#' 
-#' # Compute signed Louvain with lowest TEFI approach
-#' community.consensus(
-#'   network, signed = TRUE,
-#'   consensus.method = "lowest_tefi",
-#'   correlation.matrix = correlation.matrix
-#' )
 #'
 #' @references
 #' \strong{Louvain algorithm} \cr
 #' Blondel, V. D., Guillaume, J.-L., Lambiotte, R., & Lefebvre, E. (2008).
 #' Fast unfolding of communities in large networks.
 #' \emph{Journal of Statistical Mechanics: Theory and Experiment}, \emph{2008}(10), P10008.
-#' 
-#' \strong{Signed modularity} \cr
-#' Gomez, S., Jensen, P., & Arenas, A. (2009).
-#' Analysis of community structure in networks of correlated data.
-#' \emph{Physical Review E}, \emph{80}(1), 016114.
 #' 
 #' \strong{Consensus clustering} \cr
 #' Lancichinetti, A., & Fortunato, S. (2012).
@@ -187,9 +151,9 @@
 #' @export
 #'
 # Compute consensus clustering for EGA ----
-# Updated 27.07.2023
+# Updated 02.08.2023
 community.consensus <- function(
-    network, signed = FALSE, 
+    network, 
     order = c("lower", "higher"), resolution = 1,
     consensus.method = c(
       "highest_modularity", "iterative",
@@ -207,20 +171,23 @@ community.consensus <- function(
   
   # Arguments errors
   community.consensus_errors(
-    network, signed, resolution, consensus.iter,
+    network, resolution, consensus.iter,
     correlation.matrix, membership.only
   )
   
-  # Get networks
-  networks <- obtain_networks(network, signed)
-  igraph_network <- networks$igraph_network
-  network_matrix <- networks$network_matrix
+  # Check for {igraph} network
+  if(is(network, "igraph")){
+    network <- igraph2matrix(network)
+  }
+  
+  # Use network matrix for now
+  network <- abs(as.matrix(network))
   
   # Make sure there are variable names
-  network_matrix <- ensure_dimension_names(network_matrix)
+  network <- ensure_dimension_names(network)
   
   # Obtain network dimensions
-  dimensions <- dim(network_matrix)
+  dimensions <- dim(network)
   
   # Check for lowest TEFI method
   if(consensus.method == "lowest_tefi"){
@@ -237,7 +204,10 @@ community.consensus <- function(
   }
   
   # Obtain strength
-  node_strength <- colSums(abs(network_matrix), na.rm = TRUE)
+  node_strength <- colSums(network, na.rm = TRUE)
+  
+  # Get number of nodes
+  nodes <- length(node_strength)
   
   # Initialize memberships as missing
   membership <- rep(NA, dimensions[2])
@@ -260,9 +230,7 @@ community.consensus <- function(
     }
     
     # Algorithm function
-    algorithm.FUN <- swiftelse(
-      signed, signed.louvain, igraph::cluster_louvain
-    )
+    algorithm.FUN <- igraph::cluster_louvain
     
     # Algorithm arguments
     algorithm.ARGS <- obtain_arguments(
@@ -272,15 +240,11 @@ community.consensus <- function(
     
     # Remove weights from igraph functions' arguments
     if("weights" %in% names(algorithm.ARGS)){
-      algorithm.ARGS["weights"] <- NULL
+      algorithm.ARGS[which(names(algorithm.ARGS) == "weights")] <- NULL
     }
     
     # Check for proper network
-    if(signed){
-      algorithm.ARGS[[1]] <- network_matrix
-    }else{
-      algorithm.ARGS[[1]] <- igraph_network
-    }
+    algorithm.ARGS[[1]] <- convert2igraph(network)
     
     # Get consensus method function
     consensus.FUN <- switch(
@@ -313,15 +277,14 @@ community.consensus <- function(
   )
   
   # Obtain network names
-  network_names <- dimnames(network_matrix)[[2]]
+  network_names <- dimnames(network)[[2]]
   
   # Ensure names
   names(result$selected_solution) <- network_names
   
   # Set methods attribute
   attr(result$selected_solution, "methods") <- list(
-    algorithm = "Louvain",
-    signed = signed, order = order, 
+    algorithm = "Louvain", order = order, 
     consensus.method = consensus.method,
     consensus.iter = consensus.iter
   )
@@ -359,17 +322,17 @@ community.consensus <- function(
 }
 
 # Bug check ----
-# network = ega.wmt$network; signed = FALSE;
-# order = "higher"; resolution = 1;
-# consensus.method = "most_common";
-# consensus.iter = 1000;
-# correlation.matrix = ega.wmt$correlation;
+# network = ega.wmt$network;
+# order = "higher"; resolution = 1
+# consensus.method = "most_common"
+# consensus.iter = 1000; membership.only = TRUE
+# correlation.matrix = ega.wmt$correlation; seed = NULL
 
 #' @noRd
 # Errors ----
-# Updated 26.07.2023
+# Updated 02.08.2023
 community.consensus_errors <- function(
-    network, signed, resolution, consensus.iter,
+    network, resolution, consensus.iter,
     correlation.matrix, membership.only
 ) 
 {
@@ -378,10 +341,6 @@ community.consensus_errors <- function(
   if(!is(network, "igraph")){
     object_error(network, c("matrix", "data.frame"))
   }
-  
-  # 'signed' errors
-  length_error(signed, 1)
-  typeof_error(signed, "logical")
   
   # 'resolution' errors
   length_error(resolution, 1)
@@ -411,11 +370,7 @@ print.EGA.consensus <- function(x, ...)
 {
   
   # Determine whether result is a list
-  if(is.list(x)){
-    membership <- x$selected_solution
-  }else{
-    membership <- x
-  }
+  membership <- swiftelse(is.list(x), x$selected_solution, x)
   
   # Obtain method
   method <- attr(membership, "methods")
@@ -434,7 +389,7 @@ print.EGA.consensus <- function(x, ...)
     paste0(
       "Consensus Method: ", consensus_name,
       " (", method$consensus.iter, " iterations)",
-      "\nAlgorithm: ", swiftelse(method$signed, "Signed Louvain", "Louvain"),
+      "\nAlgorithm: Louvain",
       "\nOrder: ", totitle(method$order)
     )
   )
@@ -462,62 +417,17 @@ print.EGA.consensus <- function(x, ...)
 # Updated 29.06.2023
 summary.EGA.consensus <- function(object, ...)
 {
-  
-  # Determine whether result is a list
-  if(is.list(object)){
-    membership <- object$selected_solution
-  }else{
-    membership <- object
-  }
-  
-  # Obtain method
-  method <- attr(membership, "methods")
-  
-  # Obtain consensus name
-  consensus_name <- switch(
-    method$consensus.method,
-    "highest_modularity" = "Highest Modularity",
-    "iterative" = "Iterative",
-    "most_common" = "Most Common",
-    "lowest_tefi" = "Lowest TEFI"
-  )
-  
-  # Print method information
-  cat(
-    paste0(
-      "Consensus Method: ", consensus_name,
-      " (", method$consensus.iter, " iterations)",
-      "\nAlgorithm: ", swiftelse(method$signed, "Signed Louvain", "Louvain"),
-      "\nOrder: ", totitle(method$order)
-    )
-  )
-  
-  # Add breakspace
-  cat("\n\n")
-  
-  # Determine number of communities
-  communities <- unique_length(membership)
-  
-  # Print communities
-  cat(paste0("Number of communities: "), communities)
-  cat("\n\n") # Add breakspace
-  
-  # Remove attribute for clean print
-  membership <- remove_attributes(membership)
-  
-  # Print membership
-  print(membership)
-  
+  print(object, ...) # same as print
 }
 
 #' @noRd
 # Standard application method ----
-# Updated 06.07.2023
+# Updated 02.08.2023
 consensus_application <- function(
     FUN, FUN.ARGS, consensus.iter
 )
 {
-
+  
   # Apply algorithm
   return(
     lapply(

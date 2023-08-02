@@ -7,6 +7,7 @@
  See <http://creativecommons.org/publicdomain/zero/1.0/>. */
 
 #include <stdint.h>
+#include <pthread.h>
 #include <R.h>
 #include <Rinternals.h>
 #include "nanotime.h"
@@ -26,7 +27,8 @@ static inline uint64_t rotl(const uint64_t x, int k) {
   return (x << k) | (x >> (64 - k));
 }
 
-static uint64_t s[4];
+// Stores locally on each thread
+__thread uint64_t s[4];
 
 uint64_t next(void) {
   const uint64_t result = rotl(s[0] + s[3], 23) + s[0];
