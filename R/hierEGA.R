@@ -578,6 +578,8 @@ print.hierEGA <- function(x, ...)
       defaults = "bold"
     )
   )
+  
+  # Print lower network
   print(x$lower_order)
   
   # Add breakspace
@@ -593,6 +595,8 @@ print.hierEGA <- function(x, ...)
       defaults = "bold"
     )
   )
+  
+  # Print higher network
   print(x$higher_order)
   
   # Add break space
@@ -614,8 +618,11 @@ summary.hierEGA <- function(object, ...)
 
 #' @exportS3Method 
 # S3 Plot Method ----
-# Updated 28.07.2023
-plot.hierEGA <- function(x, plot.type = c("multilevel", "separate"), ...)
+# Updated 02.08.2023
+plot.hierEGA <- function(
+    x, plot.type = c("multilevel", "separate"),
+    color.match = TRUE, ...
+)
 {
   
   # Get ellipse arguments for defaults
@@ -673,13 +680,23 @@ plot.hierEGA <- function(x, plot.type = c("multilevel", "separate"), ...)
       
     }
     
+    # Get digits based on lower order communities (includes `NA`)
+    places <- digits(length(unique(x$lower_order$wc))) - 1
+    
     # Set up names for higher order memberships
-    higher_order_names <- paste0("Higher_", x$higher_order$wc)
+    higher_order_names <- paste0(
+      "Higher_", format_integer(x$higher_order$wc, places)
+    )
     
     # Replace "NA" names in higher order
     # Forces singleton representation
     higher_order_names[grep("NA", higher_order_names)] <-
-      paste0("Higher_", names(x$higher_order$wc)[is.na(x$higher_order$wc)])
+      paste0(
+        "Higher_", 
+        format_integer(
+          names(x$higher_order$wc)[is.na(x$higher_order$wc)], places
+        )
+      )
     
     # Set up plot list as standard `EGA`
     plot_list <- list(
@@ -687,7 +704,10 @@ plot.hierEGA <- function(x, plot.type = c("multilevel", "separate"), ...)
       # (same as what's used in `basic_plot_setup`)
       network = round(hierarchical_network, 4),
       wc = c(
-        paste0("Lower_", x$lower_order$wc),
+        paste0(
+          "Lower_", 
+          format_integer(x$lower_order$wc, places)
+        ),
         higher_order_names
       )
     )
@@ -778,17 +798,103 @@ plot.hierEGA <- function(x, plot.type = c("multilevel", "separate"), ...)
       
     }
     
-    # Plot
-    silent_plot(
-      plot_list,
-      mode = mode,
-      edge.size = edge_size,
-      edge.color = edge_color,
-      edge.alpha = edge_alpha,
-      edge.lty = line_type,
-      ...
-    )
-    
+    # Check for community matching between layers
+    if(color.match){
+      
+      # Get first plot list
+      first_plot_list <- silent_plot(
+        plot_list,
+        mode = mode,
+        edge.size = edge_size,
+        edge.color = edge_color,
+        edge.alpha = edge_alpha,
+        edge.lty = line_type,
+        node.size = NA,
+        ...,
+        arguments = TRUE
+      )
+      
+      # Separate plot and arguments
+      first_layer <- first_plot_list$network_plot
+      plot_ARGS <- first_plot_list$ARGS
+      
+      # Create copy of node colors for border colors
+      border_color <- plot_ARGS$node.color
+      
+      # Get targets
+      higher_order_targets <- match(names(x$higher_order$wc), plot_ARGS$node.label)
+      
+      # Target higher order colors
+      border_color[higher_order_targets] <- unique(
+        border_color[match(names(x$lower_order$wc), plot_ARGS$node.label)]
+      )
+      
+      # Set stroke size to be thicker for higher order only
+      ## Get stroke size
+      stroke_size <- rep(
+        first_layer$guides$colour$override.aes$stroke, total_nodes
+      )
+      ## Adjust higher order only
+      stroke_size[higher_order_targets] <- 2.5
+
+      # Custom nodes: transparent insides and dark borders
+      second_layer <- first_layer +
+        ggplot2::geom_point( # transparent insides
+          size = second_plot$ARGS$node.size + 0.50, shape = 19,
+          color = plot_ARGS$node.color,
+          alpha = plot_ARGS$node.alpha,
+          show.legend = FALSE
+        ) +
+        ggplot2::geom_point( # dark borders
+          size = second_plot$ARGS$node.size,
+          color = border_color,
+          shape = 1, stroke = stroke_size, alpha = 1
+        ) +
+        ggplot2::geom_text( # put text back on top
+          ggplot2::aes(label = first_layer$data$label), 
+          color = "black",
+          size = plot_ARGS$label.size
+        ) +
+        ggplot2::guides( # create legend with these settings
+          color = ggplot2::guide_legend(
+            override.aes = list(
+              shape = 21,
+              fill = unique(plot_ARGS$node.color),
+              size = median(second_plot$ARGS$node.size, na.rm = TRUE),
+              alpha = median(plot_ARGS$node.alpha, na.rm = TRUE),
+              stroke = 1.5
+            ),
+            title = swiftelse(
+              "legend.title" %in% names(ellipse),
+              ellipse$legend.title, ""
+            )
+          )
+        )
+      
+      # Get current warning options
+      current_warning <- getOption("warn")
+      
+      # Set them off
+      options(warn = -1)
+      
+      # Send it
+      silent_plot(second_layer)
+      
+      # Set them back to the user's setting
+      options(warn = current_warning)
+      
+    }else{
+      silent_plot(
+        plot_list,
+        mode = mode,
+        edge.size = edge_size,
+        edge.color = edge_color,
+        edge.alpha = edge_alpha,
+        edge.lty = line_type,
+        ...
+      )
+    }
+
   }else if(plot.type == "separate"){ # Separate plot
     
     # Set labels

@@ -505,31 +505,6 @@ summary.EGA.network <- function(object, ...)
   print(object, ...) # same as print
 }
 
-#' @exportS3Method 
-# S3 Plot Method ----
-# Updated 05.07.2023
-plot.EGA.network <- function(x, ...)
-{
-  
-  # Determine whether result is a list
-  if(is.list(x)){
-    network <- x$estimated_network
-  }else{
-    network <- x
-  }
-  
-  # Return plot
-  silent_plot(
-    single_plot(
-      network = network, 
-      wc = rep(NA, dim(network)[2]), 
-      ...
-    )
-  )
-  
-  
-}
-
 # Function to find 'type' argument for `BGGM` ----
 #' @noRd
 # Updated 01.07.2023

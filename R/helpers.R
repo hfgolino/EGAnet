@@ -2266,14 +2266,15 @@ basic_plot_setup <- function(network, wc = NULL, ...)
   
   # Custom nodes: transparent insides and dark borders
   second_layer <- first_layer +
-    ggplot2::geom_point( # dark borders
-      size = node.size, color = border_color,
-      shape = 1, stroke = 1.5, alpha = 0.80
-    ) +
     ggplot2::geom_point( # transparent insides
       size = node.size + 0.50, shape = 19,
       color = plot_ARGS$node.color,
-      alpha = plot_ARGS$node.alpha
+      alpha = plot_ARGS$node.alpha,
+      show.legend = FALSE
+    ) +
+    ggplot2::geom_point( # dark borders
+      size = node.size, color = border_color,
+      shape = 1, stroke = 1.5, alpha = 0.80
     ) +
     ggplot2::geom_text( # put text back on top
       ggplot2::aes(label = node_names), color = "black",

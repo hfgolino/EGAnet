@@ -415,9 +415,6 @@ print.EGA <- function(x, ...)
   # Add break space
   cat("\n----\n\n")
   
-  # Make memberships have S3 class
-  class(x$wc) <- "EGA.community"
-  
   # Print community detection
   print(x$wc)
   
