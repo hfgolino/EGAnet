@@ -628,7 +628,7 @@ struct signed_louvain_result signed_louvain(
     
     // Check for any change
     if(modularities[level] <= modularities[level - 1]) {
-      // level = level - 1; // go back a level
+      level = level - 1; // go back a level
       break;
     }
     
@@ -698,18 +698,31 @@ SEXP r_signed_louvain(SEXP r_input_network, SEXP r_resolution, SEXP r_seed) {
 
     // Create R output list
     SEXP r_output = PROTECT(allocVector(VECSXP, 2));
+    
+    // Increase level
+    int level = c_result.level + 1;
 
-    // Convert the memberships result to an R matrix
-    SEXP r_memberships = PROTECT(allocMatrix(INTSXP, c_result.level, cols));
-    for (i = 0; i <= c_result.level; i++) {
-        for (j = 0; j < cols; j++) {
-            INTEGER(r_memberships)[j * c_result.level + i] = c_result.memberships[i][j] + 1;
-        }
+    // Initialize R membership matrix
+    SEXP r_memberships = PROTECT(allocMatrix(INTSXP, level, cols));
+    
+    // Populate memberships
+    for (i = 0; i < level; i++) {
+      for (j = 0; j < cols; j++) {
+        INTEGER(r_memberships)[j * level + i] = c_result.memberships[i][j] + 1;
+      }
     }
+    
+    // Ensure membership matrix *is* a matrix
+    SEXP dim = PROTECT(allocVector(INTSXP, 2));
+    INTEGER(dim)[0] = level;
+    INTEGER(dim)[1] = cols;
+    setAttrib(r_memberships, R_DimSymbol, dim);
 
-    // Convert the modularities result to an R numeric vector
-    SEXP r_modularities = PROTECT(allocVector(REALSXP, c_result.level));
-    for (i = 0; i <= c_result.level; i++) {
+    // Initialize R modularities vector
+    SEXP r_modularities = PROTECT(allocVector(REALSXP, level));
+    
+    // Copy C modularities into R modularities
+    for (i = 0; i < level; i++) {
         REAL(r_modularities)[i] = c_result.modularities[i];
         free(c_result.memberships[i]);
     }
@@ -725,7 +738,7 @@ SEXP r_signed_louvain(SEXP r_input_network, SEXP r_resolution, SEXP r_seed) {
     setAttrib(r_output, R_NamesSymbol, names);
 
     // Release protected SEXP objects
-    UNPROTECT(4);
+    UNPROTECT(5);
     
     // Free memory
     free(c_result.memberships);
