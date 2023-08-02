@@ -72,28 +72,6 @@ struct modularity_result modularity_values(double* network, int cols, double res
     // Check if positive_sum and negative_sum are not zero
     int positive_sum_flag = positive_sum != 0;
     int negative_sum_flag = negative_sum != 0;
-    
-    // Set up resolution sum columns
-    double* positive_resolution_sums = (double*)calloc(cols, sizeof(double));
-    double* negative_resolution_sums = (double*)calloc(cols, sizeof(double));
-    
-    // Adjust resolution sums based on resolution
-    if(resolution == 1){ // Default
-      
-      // Copy current columns into resolution sums
-      memcpy(positive_resolution_sums, positive_column_sums, sizeof(double));
-      memcpy(negative_resolution_sums, negative_column_sums, sizeof(double));
-      
-    }else{
-      
-      // Apply adjustment
-      for(i = 0; i < cols; i++){
-        positive_resolution_sums[i] = resolution * positive_column_sums[i];
-        negative_resolution_sums[i] = resolution * negative_column_sums[i];
-      }
-      
-    }
-    
 
     // Loop over to compute modularity
     for (i = 0; i < cols; i++) {
@@ -112,7 +90,7 @@ struct modularity_result modularity_values(double* network, int cols, double res
                 // Update positive modularity
                 positive_modularity_values[count] += (
                     ((edge > 0) ? edge : 0) - // positive edge
-                    (positive_resolution_sums[i] * positive_column_sums[j] / positive_sum)
+                    (resolution * positive_column_sums[i] * positive_column_sums[j] / positive_sum)
                 ) / positive_sum;
 
             }
@@ -123,7 +101,7 @@ struct modularity_result modularity_values(double* network, int cols, double res
                 // Update negative modularity
                 negative_modularity_values[count] += (
                     ((edge < 0) ? edge : 0) - // negative edge
-                    (negative_resolution_sums[i] * negative_column_sums[j] / negative_sum)
+                    (resolution * negative_column_sums[i] * negative_column_sums[j] / negative_sum)
                 ) / negative_sum;
 
             }
@@ -136,14 +114,10 @@ struct modularity_result modularity_values(double* network, int cols, double res
     // Free memory
     free(positive_column_sums);
     free(negative_column_sums);
-    free(positive_resolution_sums);
-    free(negative_resolution_sums);
 
     // Set pointers to NULL
     positive_column_sums = NULL;
     negative_column_sums = NULL;
-    positive_resolution_sums = NULL;
-    negative_resolution_sums = NULL;
 
     // Pre-compute division of sums
     double positive_total_sum = positive_sum / total_sum;
