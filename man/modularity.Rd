@@ -4,7 +4,7 @@
 \alias{modularity}
 \title{Computes the (Signed) Modularity Statistic}
 \usage{
-modularity(network, memberships, signed = FALSE)
+modularity(network, memberships, resolution = 1, signed = FALSE)
 }
 \arguments{
 \item{network}{Matrix or data frame.
@@ -14,7 +14,13 @@ A symmetric matrix representing a network}
 A numeric vector of integer values corresponding to 
 each node's community membership}
 
-\item{signed}{Boolean.
+\item{resolution}{Numeric (length = 1).
+A parameter that adjusts modularity to
+prefer smaller (\code{resolution} > 1) or larger
+(0 < \code{resolution} < 1) communities.
+Defaults to \code{1} (standard modularity computation)}
+
+\item{signed}{Boolean (length = 1).
 Whether signed or absolute modularity should be computed.
 The most common modularity metric is defined by positive values only. 
 Gomez et al. (2009) introduced a signed version of modularity that

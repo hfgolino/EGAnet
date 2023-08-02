@@ -91,11 +91,10 @@
 #' {See \code{\link[igraph]{cluster_leiden}} for more details}
 #' 
 #' \item{\code{"louvain"}}
-#' {By default, \code{"louvain"} will implement the non-signed version
-#' of the Louvain algorithm using the consensus clustering method 
-#' (see \code{\link[EGAnet]{community.consensus}} for more information). 
-#' This function will implement \code{consensus.method = "most_common"}
-#' and \code{consensus.iter = 1000} unless specified otherwise}
+#' {See \code{\link[EGAnet]{community.consensus}} for more details.
+#' By default, searches along resolutions from 0 to 2 in 0.05 increments
+#' (\code{resolution_parameter = seq.int(0, 2, 0.05)}). Use the argument \code{resolution_parameter}
+#' to change the search parameters (see examples)}
 #' 
 #' \item{\code{"walktrap"}}
 #' {See \code{\link[EGAnet]{cluster_walktrap}} for more details}
@@ -227,7 +226,7 @@
 #'
 #' @export
 # EGA ----
-# Updated 31.07.2023
+# Updated 02.08.2023
 EGA <- function (
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),

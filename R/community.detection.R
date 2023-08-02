@@ -43,9 +43,6 @@
 #' \item{\code{"optimal"}}
 #' {See \code{\link[igraph]{cluster_optimal}} for more details}
 #' 
-#' \item{\code{"signed_louvain"}}
-#' {See \code{\link[EGAnet]{signed.louvain}} for more details}
-#' 
 #' \item{\code{"spinglass"}}
 #' {See \code{\link[EGAnet]{cluster_spinglass}} for more details}
 #' 
@@ -53,13 +50,6 @@
 #' {See \code{\link[EGAnet]{cluster_walktrap}} for more details}
 #' 
 #' }
-#'
-#' @param signed Boolean (length = 1).
-#' Should signed network values be used?
-#' Defaults to \code{FALSE}.
-#' Caution should be used when setting to \code{TRUE}.
-#' Most algorithms are not able to handle signed (negative)
-#' weights
 #' 
 #' @param allow.singleton Boolean (length = 1).
 #' Whether singleton or single node communities should be allowed.
@@ -76,7 +66,7 @@
 #'
 #' @param ... Additional arguments to be passed on to
 #' \code{\link{igraph}}'s community detection functions
-#' (see \code{algorithm} for arguments for each algorithm)
+#' (see \code{algorithm} for link to arguments of each algorithm)
 #'
 #' @return Returns memberships from a community detection algorithm
 #'
@@ -129,15 +119,6 @@
 #' # Compute Optimal (identifies maximum modularity solution)
 #' community.detection(network, algorithm = "optimal")
 #' 
-#' # Compute Signed Louvain
-#' community.detection(
-#'   network,
-#'   algorithm = "signed_louvain",
-#'   signed = TRUE
-#'   # needs to know the network *itself*
-#'   # should be signed
-#' )
-#' 
 #' # Compute Spinglass
 #' community.detection(network, algorithm = "spinglass")
 #' 
@@ -156,15 +137,15 @@
 #' @export
 #'
 # Compute communities for EGA
-# Updated 26.07.2023
+# Updated 02.08.2023
 community.detection <- function(
     network, algorithm = c(
       "edge_betweenness", "fast_greedy",
       "fluid", "infomap", "label_prop",
       "leading_eigen", "leiden", "louvain", "optimal",
-      "signed_louvain", "spinglass", "walktrap"
+      "spinglass", "walktrap"
     ),
-    signed = FALSE, allow.singleton = FALSE,
+    allow.singleton = FALSE,
     membership.only = TRUE,
     ...
 )
@@ -174,21 +155,24 @@ community.detection <- function(
   algorithm <- set_default(algorithm, "walktrap", community.detection)
   
   # Argument errors
-  community.detection_errors(network, signed, allow.singleton, membership.only)
+  community.detection_errors(network, allow.singleton, membership.only)
   
-  # Get networks
-  networks <- obtain_networks(network, signed)
-  igraph_network <- networks$igraph_network
-  network_matrix <- networks$network_matrix
+  # Check for {igraph} network
+  if(is(network, "igraph")){
+    network <- igraph2matrix(network)
+  }
+  
+  # Use network matrix for now
+  network <- abs(as.matrix(network))
   
   # Check for names
-  network_matrix <- ensure_dimension_names(network_matrix)
+  network <- ensure_dimension_names(network)
   
   # Obtain network dimensions
-  dimensions <- dim(network_matrix)
-  
+  dimensions <- dim(network)
+
   # Obtain strength
-  node_strength <- colSums(abs(network_matrix), na.rm = TRUE)
+  node_strength <- colSums(network, na.rm = TRUE)
   
   # Initialize memberships as missing
   membership <- rep(NA, dimensions[2])
@@ -233,7 +217,6 @@ community.detection <- function(
         "leiden" = igraph::cluster_leiden,
         "louvain" = igraph::cluster_louvain,
         "optimal" = igraph::cluster_optimal,
-        "signed_louvain" = signed.louvain,
         "spinglass" = igraph::cluster_spinglass,
         "walktrap" = igraph::cluster_walktrap
       )
@@ -285,11 +268,7 @@ community.detection <- function(
     }
     
     # Set up network
-    if(is.function(algorithm) || algorithm != "signed_louvain"){
-      algorithm.ARGS[[1]] <- igraph_network
-    }else{ # Signed Louvain
-      algorithm.ARGS[[1]] <- network_matrix
-    }
+    algorithm.ARGS[[1]] <- convert2igraph(network)
     
     # Get result
     result <- do.call(algorithm.FUN, as.list(algorithm.ARGS))$membership
@@ -324,14 +303,14 @@ community.detection <- function(
   }
   
   # Name nodes
-  names(membership) <- dimnames(network_matrix)[[2]]
+  names(membership) <- dimnames(network)[[2]]
   
   # Re-index memberships
   membership <- reindex_memberships(membership)
   
   # Add methods to membership attributes
   attr(membership, "methods") <- list(
-    algorithm = obtain_algorithm_name(algorithm), signed = signed,
+    algorithm = obtain_algorithm_name(algorithm),
     objective_function = algorithm.ARGS$objective_function
     # `objective_function` will be NULL unless it's there!
   )
@@ -366,24 +345,20 @@ community.detection <- function(
 # Bug Checking ----
 # ## Basic input
 # network = network.estimation(wmt2[,7:24], model = "glasso");
-# algorithm = "walktrap"; signed = FALSE;
+# algorithm = "walktrap";
 # allow.singleton = FALSE; membership.only = TRUE;
 # ellipse = list();
 
 #' @noRd
 # Errors ----
-# Updated 26.07.2023
-community.detection_errors <- function(network, signed, allow.singleton, membership.only)
+# Updated 02.08.2023
+community.detection_errors <- function(network, allow.singleton, membership.only)
 {
   
   # 'network' errors
   if(!is(network, "igraph")){
     object_error(network, c("matrix", "data.frame"))
   }
-  
-  # 'signed' errors
-  length_error(signed, 1)
-  typeof_error(signed, "logical")
   
   # 'allow.singleton' errors
   length_error(allow.singleton, 1)
@@ -397,16 +372,12 @@ community.detection_errors <- function(network, signed, allow.singleton, members
 
 #' @exportS3Method 
 # S3 Print Method ----
-# Updated 05.07.2023
+# Updated 02.08.2023
 print.EGA.community <- function(x, boot = FALSE, ...)
 {
   
   # Determine whether result is a list
-  if(is.list(x)){
-    membership <- x$membership
-  }else{
-    membership <- x
-  }
+  membership <- swiftelse(is.list(x), x$membership, x)
   
   # Determine number of communities
   communities <- unique_length(membership)
@@ -416,13 +387,6 @@ print.EGA.community <- function(x, boot = FALSE, ...)
   
   # Determine whether algorithm was a function
   if(!is.function(algorithm)){
-    
-    # Check for signed
-    algorithm_name <- swiftelse(
-      attr(membership, "methods")$signed,
-      paste("Signed", algorithm),
-      algorithm
-    )
     
     # Check for Leiden
     if(algorithm == "Leiden"){
@@ -443,14 +407,14 @@ print.EGA.community <- function(x, boot = FALSE, ...)
       )
       
       # Finalize algorithm name
-      algorithm_name <- paste(
+      algorithm <- paste(
         algorithm, "with", objective_name
       )
       
     }
     
     # Set up methods
-    cat(paste0("Algorithm: "), algorithm_name)
+    cat(paste0("Algorithm: "), algorithm)
     
     # Check for bootEGA
     if(isFALSE(boot)){
@@ -486,7 +450,7 @@ summary.EGA.community <- function(object, boot = FALSE, ...)
 
 #' @noRd
 # Obtain appropriate algorithm name ----
-# Updated 22.06.2023
+# Updated 02.08.2023
 obtain_algorithm_name <- function(algorithm)
 {
   
@@ -503,8 +467,7 @@ obtain_algorithm_name <- function(algorithm)
     # Algorithms with different characters from {EGAnet} (for characters)
     "edge_betweenness" = "Edge Betweenness", "fast_greedy" = "Fast-greedy",
     "fluid" = "Fluid", "label_prop" = "Label Propagation",
-    "leading_eigen" = "Leading Eigenvector", "louvain" = "Louvain",
-    "signed_louvain" = "Louvain"
+    "leading_eigen" = "Leading Eigenvector", "louvain" = "Louvain"
   )
   
   # Check for function

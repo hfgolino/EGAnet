@@ -91,11 +91,11 @@
 #' {See \code{\link[igraph]{cluster_leiden}} for more details}
 #' 
 #' \item{\code{"louvain"}}
-#' {By default, \code{"louvain"} will implement the non-signed version
-#' of the Louvain algorithm using the consensus clustering method 
-#' (see \code{\link[EGAnet]{community.consensus}} for more information). 
-#' This function will implement \code{consensus.method = "most_common"}
-#' and \code{consensus.iter = 1000} unless specified otherwise}
+#' {By default, \code{"louvain"} will implement the Louvain algorithm using 
+#' the consensus clustering method (see \code{\link[EGAnet]{community.consensus}} 
+#' for more information). This function will implement
+#' \code{consensus.method = "most_common"} and \code{consensus.iter = 1000} 
+#' unless specified otherwise}
 #' 
 #' \item{\code{"walktrap"}}
 #' {See \code{\link[EGAnet]{cluster_walktrap}} for more details}
@@ -632,7 +632,7 @@ bootEGA_errors <- function(
   if(!is.null(seed)){
     length_error(seed, 1)
     typeof_error(seed, "numeric")
-    range_error(seed,  c(0, as.double(.Machine$integer.max)))
+    range_error(seed,  c(0, Inf))
   }
   
   # 'verbose' errors
@@ -1391,16 +1391,11 @@ estimate_typical_EGA.fit <- function(results, ellipse)
   # Obtain best solution
   best_solution <- search_unique[best_index,]
   
-  # Obtain signed argument
-  if(!"signed" %in% names(ellipse)){
-    signed <- FALSE # default
-  }else{signed <- ellipse$signed}
-  
   # Add methods to membership attributes
   attr(best_solution, "methods") <- list(
     algorithm = obtain_algorithm_name(algorithm),
     # `obtain_algorithm_name` is with `community.detection`
-    signed = signed, objective_function = objective_function
+    objective_function = objective_function
   )
   
   # Set class (proper `EGA.estimate` printing)
@@ -1486,10 +1481,7 @@ estimate_typicalStructure <- function(
   dimnames(network) <- dimnames(ega_object$network)
   
   # Check for function or non-Louvain method
-  if(
-    is.function(algorithm) ||
-    !algorithm %in% c("louvain", "signed_louvain")
-  ){
+  if(is.function(algorithm) || algorithm != "louvain"){
     
     # Apply non-Louvain method
     wc <- do.call(
@@ -1526,7 +1518,6 @@ estimate_typicalStructure <- function(
       args = c(
         list(
           network = network,
-          signed = algorithm == "signed_louvain",
           membership.only = TRUE
         ),
         ellipse # pass on ellipse

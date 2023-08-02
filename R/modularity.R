@@ -7,7 +7,13 @@
 #' A numeric vector of integer values corresponding to 
 #' each node's community membership
 #' 
-#' @param signed Boolean.
+#' @param resolution Numeric (length = 1).
+#' A parameter that adjusts modularity to
+#' prefer smaller (\code{resolution} > 1) or larger
+#' (0 < \code{resolution} < 1) communities.
+#' Defaults to \code{1} (standard modularity computation)
+#' 
+#' @param signed Boolean (length = 1).
 #' Whether signed or absolute modularity should be computed.
 #' The most common modularity metric is defined by positive values only. 
 #' Gomez et al. (2009) introduced a signed version of modularity that
@@ -52,8 +58,8 @@
 #' @export
 #'
 # Modularity statistic
-# Updated 01.07.2023
-modularity <- function(network, memberships, signed = FALSE)
+# Updated 02.08.2023
+modularity <- function(network, memberships, resolution = 1, signed = FALSE)
 {
   
   # Ensure data is a matrix
@@ -120,6 +126,7 @@ modularity <- function(network, memberships, signed = FALSE)
       "r_signed_modularity",
       network[!remove_nodes, !remove_nodes], 
       as.integer(memberships[!remove_nodes]),
+      resolution,
       PACKAGE = "EGAnet"
     )
   )

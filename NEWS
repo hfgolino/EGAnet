@@ -12,11 +12,9 @@ o NOTE: default for Louvain unidimensional method is set to single-shot *unless*
 
 o ADD: stricter `*apply` functions that are roughly equivalent to `*apply` but have stricter inputs/outputs (uses `vapply` as foundation; often, slightly faster)
 
-o ADD: `community.consensus` to apply the Consensus Clustering approach introduced by Lancichnetti & Fortunato (2012). Currently only available for the Louvain implementations
+o ADD: `community.consensus` to apply the Consensus Clustering approach introduced by Lancichnetti & Fortunato (2012). Currently only available for the Louvain algorithm
 
 o ADD: `community.detection` to apply community detection algorithms as a standalone function
-
-o ADD: `community.louvain` to apply standard and signed Louvain community detection algorithms as a standalone function
 
 o ADD: convenience function to convert an {igraph} object to a standard matrix (`igraph2matrix`)
 
@@ -32,9 +30,9 @@ o ADD: `community.unidimensional` to apply different unidimensional community de
 
 o ADD: basic (internal) function to handle all network plots to keep changes centralized to a single function; extends flexbility to handle all {GGally}'s `ggnet2` arguments
 
-o ADD: implemented reproducible parametric bootstrapping and random sampling thanks to {RcppZiggurat} (also marked speed improvement)
+o ADD: implemented reproducible parametric bootstrapping and random sampling (see <https://github.com/hfgolino/EGAnet/wiki/Reproducibility-and-PRNG> for more details)
 
-o ADD: implemented reproducible resampling bootstrapping and random sampling in C++ (slight speed improvement)
+o ADD: implemented reproducible resampling bootstrapping and random sampling (see <https://github.com/hfgolino/EGAnet/wiki/Reproducibility-and-PRNG> for more details)
 
 o ADD: reproducible bootstrapping with seed setting that does *not* affect R's seed and RNG (user's seed will not be affected and will not affected bootstrapping seeds)
 
@@ -49,6 +47,8 @@ o ADD: internal functions `shuffle` and `shuffle_replace` to replace `sample` wi
 o ADD: xoshiro256++ PRNG for higher quailty random number generation, permutation, and resampling (~2x faster than `runif` and `sample`); based in C
 
 o ADD: Ziggurat method for random normal generation over top xoshiro256++ (2-5x faster than `rnorm`); based in C
+
+o REMOVE: `signed.louvain` until reproducibility can be sorted
 
 o UPDATE: `EBICglasso.qgraph` and `TMFG` were optimized; `TMFG` is now 2x faster
 

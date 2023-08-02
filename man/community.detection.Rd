@@ -7,9 +7,7 @@
 community.detection(
   network,
   algorithm = c("edge_betweenness", "fast_greedy", "fluid", "infomap", "label_prop",
-    "leading_eigen", "leiden", "louvain", "optimal", "signed_louvain", "spinglass",
-    "walktrap"),
-  signed = FALSE,
+    "leading_eigen", "leiden", "louvain", "optimal", "spinglass", "walktrap"),
   allow.singleton = FALSE,
   membership.only = TRUE,
   ...
@@ -55,9 +53,6 @@ Constant Potts Model instead (see examples)}
 \item{\code{"optimal"}}
 {See \code{\link[igraph]{cluster_optimal}} for more details}
 
-\item{\code{"signed_louvain"}}
-{See \code{\link[EGAnet]{signed.louvain}} for more details}
-
 \item{\code{"spinglass"}}
 {See \code{\link[EGAnet]{cluster_spinglass}} for more details}
 
@@ -65,13 +60,6 @@ Constant Potts Model instead (see examples)}
 {See \code{\link[EGAnet]{cluster_walktrap}} for more details}
 
 }}
-
-\item{signed}{Boolean (length = 1).
-Should signed network values be used?
-Defaults to \code{FALSE}.
-Caution should be used when setting to \code{TRUE}.
-Most algorithms are not able to handle signed (negative)
-weights}
 
 \item{allow.singleton}{Boolean (length = 1).
 Whether singleton or single node communities should be allowed.
@@ -88,7 +76,7 @@ community detection algorithm}
 
 \item{...}{Additional arguments to be passed on to
 \code{\link{igraph}}'s community detection functions
-(see \code{algorithm} for arguments for each algorithm)}
+(see \code{algorithm} for link to arguments of each algorithm)}
 }
 \value{
 Returns memberships from a community detection algorithm
@@ -144,15 +132,6 @@ community.detection(network, algorithm = "louvain")
 
 # Compute Optimal (identifies maximum modularity solution)
 community.detection(network, algorithm = "optimal")
-
-# Compute Signed Louvain
-community.detection(
-  network,
-  algorithm = "signed_louvain",
-  signed = TRUE
-  # needs to know the network *itself*
-  # should be signed
-)
 
 # Compute Spinglass
 community.detection(network, algorithm = "spinglass")

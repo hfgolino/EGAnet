@@ -257,16 +257,11 @@ EGA.fit <- function(
   # Obtain best solution
   best_solution <- search_unique[best_index,]
   
-  # Obtain signed argument
-  if(!"signed" %in% names(ellipse)){
-    signed <- FALSE # default
-  }else{signed <- ellipse$signed}
-  
   # Add methods to membership attributes
   attr(best_solution, "methods") <- list(
     algorithm = obtain_algorithm_name(algorithm),
     # `obtain_algorithm_name` is with `community.detection`
-    signed = signed, objective_function = objective_function
+    objective_function = objective_function
   )
   
   # Set class (proper `EGA.estimate` printing)
@@ -371,13 +366,6 @@ print.EGA.fit <- function(x, ...)
   # Obtain algorithm name (if available)
   algorithm <- community_attributes$algorithm
   
-  # Check for signed
-  algorithm_name <- swiftelse(
-    attr(membership, "methods")$signed,
-    paste("Signed", algorithm),
-    algorithm
-  )
-  
   # Check for Leiden
   if(algorithm == "Leiden"){
     
@@ -397,15 +385,13 @@ print.EGA.fit <- function(x, ...)
     )
     
     # Finalize algorithm name
-    algorithm_name <- paste(
-      algorithm, "with", objective_name
-    )
+    algorithm <- paste(algorithm, "with", objective_name)
     
   }
   
   # Check for parameter addition
-  algorithm_name <- paste0(
-    algorithm_name,
+  algorithm <- paste0(
+    algorithm,
     paste0(
       " (", swiftelse(
         algorithm == "Walktrap",
@@ -417,7 +403,7 @@ print.EGA.fit <- function(x, ...)
   )
   
   # Set up methods
-  cat(paste0("Algorithm: "), algorithm_name)
+  cat(paste0("Algorithm: "), algorithm)
   
   # Add breakspace
   cat("\n\n")
