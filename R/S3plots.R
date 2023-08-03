@@ -23,7 +23,63 @@
 #' Check out our Wiki on faster plots in 
 #' \href{https://tinyurl.com/EGAnet-plotting}{EGAnet (and R)}}
 #' 
-#' @section Class List of S3 Plot Methods:
+#' @usage 
+#' plot(x, ...)
+#' plot.dynEGA(x, base = 1, id = NULL, ...)
+#' plot.dynEGA.Group(x, base = 1, ...)
+#' plot.dynEGA.Individual(x, base = 1, id = NULL, ...)
+#' plot.hierEGA(
+#'   x, plot.type = c("multilevel", "separate"), 
+#'   color.match = FALSE, ...
+#' )
+#' 
+#' @param x \code{\link{EGAnet}} object with available S3 plot
+#' method (see full list below)
+#' 
+#' @param color.palette Character (vector).
+#' Either a character (length = 1) from the
+#' pre-defined palettes in \code{\link[EGAnet]{color_palette_EGA}}
+#' or character (length = total number of communities) using
+#' HEX codes (see \strong{Color Palettes} and \strong{Examples} sections)
+#' 
+#' @param layout Character (length = 1).
+#' Layouts can be set using \code{\link[sna]{gplot.layout}} and the
+#' ending layout name; for example, \code{gplot.layout.circle} can be set
+#' in these functions using \code{layout = "circle"} or \code{mode = "circle"}
+#' (see \strong{Examples})
+#' 
+#' @param base Numeric (length = 1).
+#' Plot to be used as the base for the configuration of the networks.
+#' Uses the number of the order in which the plots are input.
+#' Defaults to \code{1} or the first plot
+#' 
+#' @param id Numeric index(es) or character name(s).
+#' IDs to use when plotting \code{\link[EGAnet]{dynEGA}} \code{level = "individual"}.
+#' Defaults to \code{NULL} or 4 IDs drawn at random
+#' 
+#' @param plot.type Character (length = 1).
+#' Whether \code{\link[EGAnet]{hierEGA}} networks should plotted in
+#' a stacked, \code{"multilevel"} fashion or as \code{"separate"} plots.
+#' Defaults to \code{"multilevel"}
+#' 
+#' @param color.match Boolean (length = 1).
+#' Whether lower order community colors in the \code{\link[EGAnet]{hierEGA}} plot
+#' should be "matched" and used as the border color for the higher order
+#' communities.
+#' Defaults to \code{FALSE}
+#' 
+#' @param ... Additional arguments to pass on to
+#' \code{\link[GGally]{ggnet2}} and \code{\link[sna]{gplot.layout}}
+#' (see \strong{Examples})
+#' 
+#' @section \code{*EGA} Plots:
+#' 
+#' \code{\link[EGAnet]{bootEGA}}, \code{\link[EGAnet]{dynEGA}},
+#' \code{\link[EGAnet]{EGA}}, \code{\link[EGAnet]{EGA.estimate}},
+#' \code{\link[EGAnet]{EGA.fit}}, \code{\link[EGAnet]{hierEGA}},
+#' \code{\link[EGAnet]{invariance}}, \code{\link[EGAnet]{riEGA}}
+#' 
+#' @section All Available S3 Plot Methods:
 #' 
 #' \code{\link[EGAnet]{boot.ergoInfo}}, \code{\link[EGAnet]{bootEGA}}, 
 #' \code{\link[EGAnet]{dynEGA}}, \code{dynEGA.Group}, \code{dynEGA.Individual},
@@ -33,73 +89,12 @@
 #' \code{\link[EGAnet]{invariance}}, \code{\link[EGAnet]{itemStability}},
 #' \code{\link[EGAnet]{riEGA}}
 #' 
-#' \strong{Usage}: \code{plot(x, ...)}
-#' 
-#' @section \code{*EGA} Plots:
-#' 
-#' \strong{Related Functions}
-#' 
-#' \code{\link[EGAnet]{bootEGA}}, \code{\link[EGAnet]{dynEGA}},
-#' \code{\link[EGAnet]{EGA}}, \code{\link[EGAnet]{EGA.estimate}},
-#' \code{\link[EGAnet]{EGA.fit}}, \code{\link[EGAnet]{hierEGA}},
-#' \code{\link[EGAnet]{invariance}}, \code{\link[EGAnet]{riEGA}}
-#' 
-#' \strong{Plot Arguments}
-#' 
-#' These plots leverage all arguments in \code{\link[GGally]{ggnet2}}
-#' (see documentation and arguments to see what can be changed in \code{\link{EGAnet}})
-#' 
-#' \strong{Layout Arguments}
-#' 
-#' Layouts can be set using \code{\link[sna]{gplot.layout}} and the
-#' ending layout name; for example, \code{gplot.layout.circle} can be set
-#' in these functions using \code{layout = "circle"} or \code{mode = "circle"}
-#' 
-#' \strong{Additional Usage}
-#' 
-#' Some S3 plots have additional arguments. Below, these functions are
-#' listed with their argument usage. \strong{Example} sections of these 
-#' functions should also have examples.
-#' 
-#' \code{plot.dynEGA(x, base = 1, id = NULL, ...)}
-#' 
-#' \code{plot.dynEGA.Group(x, base = 1, ...)}
-#' 
-#' \code{plot.dynEGA.Individual(x, base = 1, id = NULL, ...)}
-#' 
-#' \code{plot.hierEGA(x, plot.type = c("multilevel", "separate"), color.match = FALSE, ...)}
-#' 
-#' \strong{Arguments}
-#' 
-#' \code{base} Numeric (length = 1).
-#' Plot to be used as the base for the configuration of the networks.
-#' Uses the number of the order in which the plots are input.
-#' Defaults to \code{1} or the first plot
-#' 
-#' \code{id} Numeric index(es) or character name(s).
-#' IDs to use when plotting \code{\link[EGAnet]{dynEGA}} individuals
-#' Defaults to \code{NULL} or 4 IDs drawn at random
-#' 
-#' \code{plot.type} Character (length = 1).
-#' Whether \code{\link[EGAnet]{hierEGA}} networks should plotted in
-#' a stacked, \code{"multilevel"} fashion or as \code{"separate"} plots.
-#' Defaults to \code{"multilevel"}
-#' 
-#' \code{color.match} Boolean (length = 1).
-#' Whether lower order community colors in the \code{\link[EGAnet]{hierEGA}} plot
-#' should be "matched" and used as the border color for the higher order
-#' communities.
-#' Defaults to \code{FALSE}
-#' 
-#' \strong{Color Palettes}
+#' @section Color Palettes:
 #' 
 #' \code{\link[EGAnet]{color_palette_EGA}} will implement some color palettes in
-#' \code{\link{EGAnet}}. Admittedly, these palettes are still a work in progress.
-#' The main \code{\link{EGAnet}} style palette is \code{"polychrome"}. This palette
-#' currently has 40 colors but there will likely be a need to expand it further
+#' \code{\link{EGAnet}}. The main \code{\link{EGAnet}} style palette is \code{"polychrome"}. 
+#' This palette currently has 40 colors but there will likely be a need to expand it further
 #' (e.g., \code{\link[EGAnet]{hierEGA}} demands a lot of colors).
-#' 
-#' Example: \code{plot(ega.wmt, color.palette = "blue.ridge2")}
 #' 
 #' The \code{color.palette} argument will also accept HEX code colors that 
 #' are the same length as the number of communities in the plot.
@@ -109,6 +104,7 @@
 #' as those in the color scheme of \code{\link[RColorBrewer]{RColorBrewer}}
 #' 
 #' @examples
+#' \dontrun{
 #' # Using different arguments in {GGally}'s `ggnet2`
 #' plot(ega.wmt, node.size = 6, edge.size = 4)
 #' 
@@ -117,6 +113,10 @@
 #' plot(ega.wmt, mode = "circle") # 'mode' argument
 #' 
 #' # Using different color palettes with `color_palette_EGA`
+#' 
+#' ## Pre-defined palette
+#' plot(ega.wmt, color.palette = "blue.ridge2")
+#' 
 #' ## University of Virginia colors
 #' plot(ega.wmt, color.palette = c("#232D4B", "#F84C1E"))
 #' 
@@ -125,7 +125,7 @@
 #' plot(
 #'   ega.wmt, color.palette = c("#FFFFFF", "#866D4B"), 
 #'   label.color = "#000000"
-#' )
+#' )}
 #' 
 #' @aliases plot.EGAnet
 #' 
