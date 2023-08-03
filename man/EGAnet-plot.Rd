@@ -32,6 +32,8 @@ to maintain the \code{\link{EGAnet}} style
 \code{\link[EGAnet]{hierEGA}}, \code{\link[EGAnet]{infoCluster}}, 
 \code{\link[EGAnet]{invariance}}, \code{\link[EGAnet]{itemStability}},
 \code{\link[EGAnet]{riEGA}}
+
+\strong{Usage}: \code{plot(x, ...)}
 }
 
 \section{\code{*EGA} Plots}{
@@ -43,8 +45,6 @@ to maintain the \code{\link{EGAnet}} style
 \code{\link[EGAnet]{EGA}}, \code{\link[EGAnet]{EGA.estimate}},
 \code{\link[EGAnet]{EGA.fit}}, \code{\link[EGAnet]{hierEGA}},
 \code{\link[EGAnet]{invariance}}, \code{\link[EGAnet]{riEGA}}
-
-\strong{Usage}: \code{plot(x, ...)}
 
 \strong{Plot Arguments}
 
