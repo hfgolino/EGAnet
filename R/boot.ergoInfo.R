@@ -120,15 +120,20 @@
 #' Golino, H., Nesselroade, J., & Christensen, A. P. (2022).
 #' Toward a psychology of individuals: The ergodicity information index and a bottom-up approach for finding generalizations.
 #' \emph{PsyArXiv}.
+#' 
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
 #'
 #' @export
 # Bootstrap Test for the Ergodicity Information Index
-# Updated 26.07.2023
+# Updated 03.08.2023
 boot.ergoInfo <- function(
     dynEGA.object, EII, 
     use = c("edge.list", "unweighted"),
     iter = 100, ncores, verbose = TRUE
 ){
+  
+  # Send experimental message (for now)
+  experimental("boot.ergoInfo")
   
   # Check for missing arguments (argument, default, function)
   use <- set_default(use, "edge.list", ergoInfo)

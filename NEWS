@@ -48,6 +48,8 @@ o ADD: xoshiro256++ PRNG for higher quailty random number generation, permutatio
 
 o ADD: Ziggurat method for random normal generation over top xoshiro256++ (2-5x faster than `rnorm`); based in C
 
+o ADD: configural invariance was added to `invariance` (see Details section)
+
 o REMOVE: `signed.louvain` until reproducibility can be sorted
 
 o UPDATE: `EBICglasso.qgraph` and `TMFG` were optimized; `TMFG` is now 2x faster

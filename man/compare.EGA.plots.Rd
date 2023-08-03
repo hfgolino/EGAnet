@@ -7,7 +7,7 @@
 compare.EGA.plots(
   ...,
   input.list = NULL,
-  base.plot = 1,
+  base = 1,
   labels = NULL,
   rows = NULL,
   columns = NULL
@@ -39,7 +39,7 @@ By default, the layout is the same as \code{\link{qgraph}}}
 Bypasses \code{...} argument in favor of using a list
 as an input}
 
-\item{base.plot}{Numeric (length = 1).
+\item{base}{Numeric (length = 1).
 Plot to be used as the base for the configuration of the networks.
 Uses the number of the order in which the plots are input.
 Defaults to \code{1} or the first plot}
@@ -75,7 +75,7 @@ ega2 <- EGA(sample2)
 # Compare EGAs via plot
 compare.EGA.plots(
   ega1, ega2,
-  base.plot = 1, # use "ega1" as base for comparison
+  base = 1, # use "ega1" as base for comparison
   labels = c("Sample 1", "Sample 2"),
   rows = 1, columns = 2
 )
@@ -87,6 +87,9 @@ compare.EGA.plots(
   mode = "circle"
 )
 
+}
+\seealso{
+\code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
 }
 \author{
 Alexander Christensen <alexpaulchristensen@gmail.com>

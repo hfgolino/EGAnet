@@ -250,6 +250,9 @@ dyn.ega1 <- dynEGA.ind.pop(
 )}
 
 }
+\seealso{
+\code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
+}
 \author{
 Hudson Golino <hfg9s at virginia.edu>
 }

@@ -10,7 +10,8 @@ entropyFit(data, structure)
 \item{data}{Matrix or data frame.
 Contains variables to be used in the analysis}
 
-\item{structure}{A vector representing the structure (numbers or labels for each item).
+\item{structure}{Numeric or character vector (length = \code{ncol(data)}).
+A vector representing the structure (numbers or labels for each item).
 Can be theoretical factors or the structure detected by \code{\link[EGAnet]{EGA}}}
 }
 \value{

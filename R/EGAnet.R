@@ -1,4 +1,4 @@
-#' EGAnet--package
+#' @title EGAnet-package
 #' 
 #' @description Implements the Exploratory Graph Analysis (\code{\link[EGAnet]{EGA}}; Golino & Epskamp, 2017; Golino, Shi et al., 2020) framework for dimensionality and psychometric assessment.
 #' EGA is part of a new area called \emph{network psychometrics} that uses undirected network models for the assessment
@@ -90,7 +90,6 @@
 #' @useDynLib EGAnet, .registration = TRUE
 #' 
 #' @importFrom utils packageDescription
-#' @importFrom Rcpp sourceCpp
 #'
 "_PACKAGE"
 #> [1] "_PACKAGE"

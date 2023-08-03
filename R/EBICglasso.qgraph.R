@@ -1,6 +1,6 @@
-#' \code{\link[qgraph]{EBICglasso}} from \code{\link{qgraph}} 1.4.4
+#' @title \code{\link[qgraph]{EBICglasso}} from \code{\link{qgraph}} 1.4.4
 #'
-#' This function uses the \code{\link[glasso]{glasso}} package
+#' @description This function uses the \code{\link[glasso]{glasso}} package
 #' (Friedman, Hastie and Tibshirani, 2011) to compute a
 #' sparse gaussian graphical model with the graphical lasso
 #' (Friedman, Hastie & Tibshirani, 2008).
@@ -8,7 +8,7 @@
 #' (EBIC) described by Foygel & Drton (2010).
 #'
 #' @param data Matrix or data frame.
-#' Should consist only of variables that are desired to be in analysis
+#' Should consist only of variables to be used in the analysis
 #'
 #' @param n Numeric (length = 1).
 #' Sample size if \code{data} provided is a correlation matrix

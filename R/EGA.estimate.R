@@ -1,13 +1,13 @@
-#' Estimates \code{\link[EGAnet]{EGA}} for Multidimensional Structures
+#' @title Estimates \code{\link[EGAnet]{EGA}} for Multidimensional Structures
 #'
-#' A basic function to estimate \code{\link[EGAnet]{EGA}} for multidimensional structures.
+#' @description A basic function to estimate \code{\link[EGAnet]{EGA}} for multidimensional structures.
 #' This function does \emph{not} include the unidimensional check and it does not
 #' plot the results. This function can be used as a streamlined approach
 #' for quick \code{\link[EGAnet]{EGA}} estimation when unidimensionality or visualization
 #' is not a priority
 #'
 #' @param data Matrix or data frame.
-#' Should consist only of variables that are desired to be in analysis
+#' Should consist only of variables to be used in the analysis
 #'
 #' @param n Numeric (length = 1).
 #' Sample size if \code{data} provided is a correlation matrix
@@ -165,6 +165,8 @@
 #' Christensen, A. P., Garrido, L. E., Guerra-Pena, K., & Golino, H. (2023).
 #' Comparing community detection algorithms in psychometric networks: A Monte Carlo simulation.
 #' \emph{Behavior Research Methods}.
+#' 
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
 #'
 #' @export
 #'

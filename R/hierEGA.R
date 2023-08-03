@@ -1,288 +1,248 @@
-#' Hierarchical \code{\link[EGAnet]{EGA}}
+#' @title Hierarchical \code{\link[EGAnet]{EGA}}
 #'
-#' Estimates EGA using the lower-order solution of \code{\link[igraph]{cluster_louvain}}
-#' to identify the lower-order dimensions and then uses factor or network loadings to
-#' estimate factor or network scores, which are used to estimate the higher-order dimensions
+#' @description Estimates EGA using the lower-order solution of the Louvain
+#' algorithm (\code{\link[igraph]{cluster_louvain}})to identify the lower-order 
+#' dimensions and then uses factor or network loadings to estimate factor 
+#' or network scores, which are used to estimate the higher-order dimensions
+#' (for more details, see Jiménez et al., 2023)
 #'
 #' @param data Matrix or data frame.
-#' Variables (down columns) only.
-#' Does not accept correlation matrices
+#' Should consist only of variables to be used in the analysis
+#' (does not accept correlation matrices)
+#' 
+#' @param loading.method Character (length = 1).
+#' Sets network loading calculation based on implementation
+#' described in \code{"BRM"} (Christensen & Golino, 2021) or
+#' an \code{"experimental"} implementation.
+#' Defaults to \code{"BRM"}
+#' 
+#' @param rotation Character.
+#' A rotation to use to obtain a simpler structure. 
+#' For a list of rotations, see \code{\link{GPArotation}} for options.
+#' Defaults to \code{NULL} or no rotation.
+#' By setting a rotation, \code{scores} estimation will be
+#' based on the rotated loadings rather than unrotated loadings
 #'
-#' @param scores Character.
+#' @param scores Character (length = 1).
 #' How should scores for the higher-order structure be estimated?
 #' Defaults to \code{"network"} for network scores computed using
 #' the \code{\link[EGAnet]{net.scores}} function.
 #' Set to \code{"factor"} for factor scores computed using
-#' \code{\link[psych]{fa}}. Factors are assumed to be correlated
-#' using the \code{"oblimin"} rotation. \emph{NOTE}: Factor scores
-#' use the number of communities from \code{\link[EGAnet]{EGA}}.
-#' Estimated factor may not align with these communities. The plots
-#' using factor scores with have higher order factors that may not
-#' completely map onto the lower order communities. Look at the
-#' \code{$hierarchical$higher_order$lower_loadings} to determine
-#' the composition of the lower order factors.
+#' \code{\link[psych]{fa}}. Factors scores will be based on
+#' \strong{EFA} (as in Jiménez et al., 2023)
+#' 
+#' \emph{Factor scores use the number of communities from 
+#' \code{\link[EGAnet]{EGA}}. Estimated factor loadings may 
+#' not align with these communities. The plots using factor scores 
+#' will have higher order factors that may not completely map on to 
+#' the lower order communities. Look at
+#' \code{$hierarchical$higher_order$lower_loadings} to determine the 
+#' composition of the lower order factors.}
+#' 
+#' @param loading.structure Character (length = 1).
+#' Whether simple structure or the saturated loading matrix
+#' should be used when computing scores (\code{scores = "network"} only).
+#' Defaults to \code{"simple"}
+#' 
+#' \code{"simple"} structure more closely mirrors traditional
+#' hierarchical factor analytic methods such as CFA; \code{"full"}
+#' structure more closely mirrors EFA methods
+#' 
+#' Simple structure is the more conservative (established) approach
+#' and is therefore the default. Treat \code{"full"} as experimental
+#' as proper vetting and validation has not been established
 #'
-#' By default, both factor and network scores are computed and stored
-#' in the output. The selected option only appears in the main output (\code{$hierarchical})
-#'
-#' @param rotation Character.
-#' A rotation to use, like factor loadings, to obtain
-#' a simple structure. For a list of rotations,
-#' see \link{GPArotation}
-#'
-#' @param consensus.iter Numeric.
-#' Number of iterations to perform in consensus clustering
-#' (see Lancichinetti & Fortunato, 2012).
-#' Defaults to \code{1000}
-#'
-#' @param consensus.method Character.
-#' What consensus clustering method should be used?
-#' Defaults to \code{"highest_modularity"}.
-#' Current options are:
+#' @param impute Character (length = 1).
+#' If there are any missing data, then imputation can be implemented. 
+#' Available options:
 #'
 #' \itemize{
 #'
-#' \item{\strong{\code{highest_modularity}}}
-#' {Uses the community solution that achieves the highest modularity
-#' across iterations}
+#' \item{\code{"none"}}
+#' {Default. No imputation is performed}
 #'
-#' \item{\strong{\code{most_common}}}
-#' {Uses the community solution that is found the most
-#' across iterations}
+#' \item{\code{"mean"}}
+#' {The mean value of each variable is used to replace missing data
+#' for that variable}
 #'
-#' \item{\strong{\code{iterative}}}
-#' {Identifies the most common community solutions across iterations
-#' and determines how often nodes appear in the same community together.
-#' A threshold of 0.30 is used to set low proportions to zero.
-#' This process repeats iteratively until all nodes have a proportion of
-#' 1 in the community solution.
+#' \item{\code{"median"}}
+#' {The median value of each variable is used to replace missing data
+#' for that variable}
+#'
 #' }
 #'
-#' \item{\code{lowest_tefi}}
-#' {Uses the community solution that achieves the lowest \code{\link[EGAnet]{tefi}}
-#' across iterations}
+#' @param corr Character (length = 1).
+#' Method to compute correlations.
+#' Defaults to \code{"auto"}.
+#' Available options:
 #' 
-#' \item{\code{most_common_tefi}}
-#' {Uses the most common number of communities detected across the number
-#' of iterations. After, if there is more than one solution for that number
-#' of communities, then the solution with the lowest \code{\link[EGAnet]{tefi}
-#' is used}}
+#' \itemize{
+#' 
+#' \item{\code{"auto"}}
+#' {Automatically computes appropriate correlations for
+#' the data using Pearson's for continuous, polychoric for ordinal,
+#' tetrachoric for binary, and polyserial/biserial for ordinal/binary with
+#' continuous. To change the number of categories that are considered
+#' ordinal, use \code{ordinal.categories}
+#' (see \code{\link[EGAnet]{polychoric.matrix}} for more details)}
+#' 
+#' \item{\code{"pearson"}}
+#' {Pearson's correlation is computed for all variables regardless of
+#' categories}
+#' 
+#' \item{\code{"spearman"}}
+#' {Spearman's rank-order correlation is computed for all variables
+#' regardless of categories}
+#' 
+#' }
+#' 
+#' For other similarity measures, compute them first and input them
+#' into \code{data} with the sample size (\code{n})
+#' 
+#' @param na.data Character (length = 1).
+#' How should missing data be handled?
+#' Defaults to \code{"pairwise"}.
+#' Available options:
+#' 
+#' \itemize{
+#' 
+#' \item{\code{"pairwise"}}
+#' {Computes correlation for all available cases between
+#' two variables}
+#' 
+#' \item{\code{"listwise"}}
+#' {Computes correlation for all complete cases in the dataset}
+#' 
+#' }
+#' 
+#' @param model Character (length = 1).
+#' Defaults to \code{"glasso"}.
+#' Available options:
+#' 
+#' \itemize{
+#' 
+#' \item{\code{"BGGM"}}
+#' {Computes the Bayesian Gaussian Graphical Model.
+#' Set argument \code{ordinal.categories} to determine
+#' levels allowed for a variable to be considered ordinal.
+#' See \code{\link[BGGM]{estimate}} for more details}
+#' 
+#' \item{\code{"glasso"}}
+#' {Computes the GLASSO with EBIC model selection.
+#' See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details}
+#' 
+#' \item{\code{"TMFG"}}
+#' {Computes the TMFG method.
+#' See \code{\link[EGAnet]{TMFG}} for more details}
 #' 
 #' }
 #'
-#' By default, all \code{consensus.method} options are computed and
-#' stored in the output. The selected method will be used to
-#' plot and appear in the main output (\code{$hierarchical})
+#' @param lower.algorithm Character or 
+#' \code{\link{igraph}} \code{cluster_*} function (length = 1).
+#' Defaults to the lower order \code{"louvain"} with most common 
+#' consensus clustering (1000 iterations; see 
+#' \code{\link[EGAnet]{community.consensus}} for more details)
+#' 
+#' Louvain with consensus clustering is \emph{strongly}
+#' recommended. Using any other algorithm is considered
+#' \emph{experimental} as they have not been designed to
+#' capture lower order communities
+#' 
+#' @param higher.algorithm Character or 
+#' \code{\link{igraph}} \code{cluster_*} function (length = 1).
+#' Defaults to \code{"walktrap"}.
+#' Three options are listed below but all are available
+#' (see \code{\link[EGAnet]{community.detection}} for other options):
+#' 
+#' \itemize{
 #'
-#' @param uni.method Character.
+#' \item{\code{"leiden"}}
+#' {See \code{\link[igraph]{cluster_leiden}} for more details}
+#' 
+#' \item{\code{"louvain"}}
+#' {By default, \code{"louvain"} will implement the Louvain algorithm using 
+#' the consensus clustering method (see \code{\link[EGAnet]{community.consensus}} 
+#' for more information). This function will implement
+#' \code{consensus.method = "most_common"} and \code{consensus.iter = 1000} 
+#' unless specified otherwise}
+#' 
+#' \item{\code{"walktrap"}}
+#' {See \code{\link[EGAnet]{cluster_walktrap}} for more details}
+#' 
+#' }
+#' 
+#' Using \code{algorithm} will set only \code{higher.algorithm} and
+#' \code{lower.algorithm} will default to Louvain with most common
+#' consensus clustering (1000 iterations)
+#' 
+#' @param uni.method Character (length = 1).
 #' What unidimensionality method should be used? 
-#' Defaults to \code{"LE"}.
-#' Current options are:
+#' Defaults to \code{"louvain"}.
+#' Available options:
 #' 
 #' \itemize{
 #'
-#' \item{\strong{\code{expand}}}
-#' {Expands the correlation matrix with four variables correlated .50.
+#' \item{\code{expand}}
+#' {Expands the correlation matrix with four variables correlated 0.50.
 #' If number of dimension returns 2 or less in check, then the data 
 #' are unidimensional; otherwise, regular EGA with no matrix
-#' expansion is used. This is the method used in the Golino et al. (2020)
-#' \emph{Psychological Methods} simulation.}
+#' expansion is used. This method was used in the Golino et al.'s (2020)
+#' \emph{Psychological Methods} simulation}
 #'
-#' \item{\strong{\code{LE}}}
-#' {Applies the Leading Eigenvalue algorithm (\code{\link[igraph]{cluster_leading_eigen}})
+#' \item{\code{LE}}
+#' {Applies the Leading Eigenvector algorithm
+#' (\code{\link[igraph]{cluster_leading_eigen}})
 #' on the empirical correlation matrix. If the number of dimensions is 1,
-#' then the Leading Eigenvalue solution is used; otherwise, regular EGA
-#' is used. This is the final method used in the Christensen, Garrido,
-#' and Golino (2021) simulation.}
+#' then the Leading Eigenvector solution is used; otherwise, regular EGA
+#' is used. This method was used in the Christensen et al.'s (2023) 
+#' \emph{Behavior Research Methods} simulation}
 #' 
-#' \item{\strong{\code{louvain}}}
+#' \item{\code{louvain}}
 #' {Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
-#' on the empirical correlation matrix using a resolution parameter = 0.95.
-#' If the number of dimensions is 1, then the Louvain solution is used; otherwise,
-#' regular EGA is used. This method was validated in the Christensen (2022) simulation.}
+#' on the empirical correlation matrix. If the number of dimensions is 1, 
+#' then the Louvain solution is used; otherwise, regular EGA is used. 
+#' This method was validated Christensen's (2022) \emph{PsyArXiv} simulation.
+#' Consensus clustering can be used by specifying either
+#' \code{"consensus.method"} or \code{"consensus.iter"}}
 #' 
 #' }
-#'
-#' @param corr Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
-#' Current options are:
-#'
-#' \itemize{
-#'
-#' \item{\strong{\code{cor_auto}}}
-#' {Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
-#' \code{\link[qgraph]{qgraph}}}.
-#'
-#' \item{\strong{\code{pearson}}}
-#' {Computes Pearson's correlation coefficient using the pairwise complete observations via
-#' the \code{\link[stats]{cor}}} function.
-#'
-#' \item{\strong{\code{spearman}}}
-#' {Computes Spearman's correlation coefficient using the pairwise complete observations via
-#' the \code{\link[stats]{cor}}} function.
-#' }
-#'
-#' @param model Character.
-#' A string indicating the method to use.
-#' Defaults to \code{"glasso"}.
-#' Current options are:
-#'
-#' \itemize{
-#'
-#' \item{\strong{\code{glasso}}}
-#' {Estimates the Gaussian graphical model using graphical LASSO with
-#' extended Bayesian information criterion to select optimal regularization parameter}
-#'
-#' \item{\strong{\code{TMFG}}}
-#' {Estimates a Triangulated Maximally Filtered Graph}
-#'
-#' }
-#'
-#' @param model.args List.
-#' A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
-#' or \code{TMFG}
-#'
-#' @param algorithm A string indicating the algorithm to use or a function from \code{\link{igraph}}
-#' Defaults to \code{"walktrap"}.
-#' Current options are:
-#'
-#' \itemize{
-#'
-#' \item{\strong{\code{walktrap}}}
-#' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
-#' 
-#' \item{\strong{\code{leiden}}}
-#' {Computes the Leiden algorithm using \code{\link[igraph]{cluster_leiden}}.
-#' Defaults to \code{objective_function = "modularity"}}
-#'
-#' \item{\strong{\code{louvain}}}
-#' {Computes the Louvain algorithm using \code{\link[igraph]{cluster_louvain}}}
-#'
-#' }
-#'
-#' @param algorithm.args List.
-#' A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
-#' or some other community detection algorithm function (see examples)
-#'
-#' @param lower.louvain Boolean.
-#' Should lower Louvain solution be used at the higher order level?
-#' Defaults to \code{FALSE}.
-#' Set to \code{TRUE} to use the lower Louvain solution 
 #'
 #' @param plot.EGA Boolean.
 #' If \code{TRUE}, returns a plot of the network and its estimated dimensions.
 #' Defaults to \code{TRUE}
 #'
-#' @param plot.args List.
-#' A list of additional arguments for the network plot. See \code{\link[GGally]{ggnet2}} for
-#' full list of arguments:
-#'
-#' \itemize{
-#'
-#' \item{\strong{\code{vsize}}}
-#' {Size of the nodes. Defaults to 6.}
-#'
-#' \item{\strong{\code{label.size}}}
-#' {Size of the labels. Defaults to 5.}
-#'
-#' \item{\strong{\code{alpha}}}
-#' {The level of transparency of the nodes, which might be a single value or a vector of values. Defaults to 0.7.}
-#'
-#' \item{\strong{\code{edge.alpha}}}
-#' {The level of transparency of the edges, which might be a single value or a vector of values. Defaults to 0.4.}
-#'
-#'  \item{\strong{\code{legend.names}}}
-#' {A vector with names for each dimension}
-#'
-#' \item{\strong{\code{color.palette}}}
-#' {The color palette for the nodes. For custom colors,
-#' enter HEX codes for each dimension in a vector.
-#' See \code{\link[EGAnet]{color_palette_EGA}} for
-#' more details and examples}
-#'
-#' }
-#'
-#' @return Returns a list of lists containing: \cr
-#' \cr
-#' \strong{Main Results} \cr
-#'
-#' \item{hierarhical}{The main results list containing:
-#'
-#' \itemize{
-#'
-#' \item{\code{lower_order}}
-#' {Lower order \code{\link[EGAnet]{EGA}} results for the selected methods}
-#'
-#' \item{\code{higher_order}}
-#' {Higher order \code{\link[EGAnet]{EGA} results for the selected methods}}
-#'
-#' If \code{plot.EGA = TRUE}, then:
-#'
-#' \item{\code{lower_plot}}
-#' {Plot of the lower order results}
-#'
-#' \item{\code{higher_plot}}
-#' {Plot of the higher order results}
-#'
-#' \item{\code{hier_plot}}
-#' {Plot of the lower and higher order results together, side-by-side}
-#'
-#' }
-#'
-#' }
-#'
-#' \strong{Secondary Results} \cr
-#'
-#' \item{lower_ega}{A list containing the lower order \code{\link[EGAnet]{EGA}}
-#' results. The \code{$wc} does not contain valid results. Do not use its output.
-#' }
-#'
-#' \item{lower_wc}{A list containing consensus clustering results:
-#'
-#' \itemize{
-#'
-#' \item{\code{highest_modularity}}
-#' {Community memberships based on the highest modularity across the
-#' \code{\link[igraph]{cluster_louvain}} applications}
-#'
-#' \item{\code{most_common}}
-#' {Community memberships based on the most commonly found memberships across the
-#' \code{\link[igraph]{cluster_louvain}} applications}
-#'
-#' \item{\code{iterative}}
-#' {Community memberships based on consensus clustering described by
-#' Lancichinetti & Fortunato (2012)}
-#'
-#' \item{\code{lowest_tefi}}
-#' {Community memberships based on the lowest \code{\link[EGAnet]{tefi}}
-#' across the \code{\link[igraph]{cluster_louvain}} applications}
-#'
-#' \item{\code{summary_table}}
-#' {A data frame summarizing the unique community solutions across the iterations. Down the
-#' columns indicate: number of dimensions (\code{N_Dimensions}),
-#' proportion of times each community solution was identified (\code{Proportion}),
-#' modularity of each community solution (\code{Modularity}),
-#' total entropy fit index of each community solution (\code{\link[EGAnet]{tefi}}),
-#' and the memberships for each item. Across the rows indicate each
-#' unique community solution
-#' }
-#'
-#' }
-#'
-#' }
-#'
-#' \item{factor_results}{A list containing higher order results based on factor scores.
-#' A list for each \code{consensus.method} is provided with their \code{\link[EGAnet]{EGA}} results}
-#'
-#' \item{network_results}{A list containing higher order results based on network scores.
-#' A list for each \code{consensus.method} is provided with their \code{\link[EGAnet]{EGA}} results}
-#'
+#' @return Returns a list of lists containing:
+#' 
+#' \item{lower_order}{\code{\link[EGAnet]{EGA}} results for the lower order structure}
+#' 
+#' \item{higher_order}{\code{\link[EGAnet]{EGA}} results for the higher order structure}
+#' 
+#' \item{parameters}{A list containing \code{lower_loadings} and \code{lower_scores}
+#' that were used to estimate scores and the higher order \code{\link[EGAnet]{EGA}}
+#' results, respectively}
+#' 
+#' \item{dim.variables}{A data frame with variable names and their lower and higher 
+#' order assignments}
+#' 
+#' \item{TEFI}{Generalized TEFI using \code{\link[EGAnet]{tefi}}}
+#' 
+#' \item{plot.hierEGA}{Plot output if \code{plot.EGA = TRUE}}
+#' 
 #' @references
-#' Lancichinetti, A., & Fortunato, S. (2012).
-#' Consensus clustering in complex networks.
-#' \emph{Scientific Reports}, \emph{2}(1), 1-7.
+#' \strong{Hierarchical EGA simulation} \cr
+#' Jiménez, M., Abad, F. J., Garcia-Garzon, E., Golino, H., Christensen, A. P., & Garrido, L. E. (2023). 
+#' Dimensionality assessment in bifactor structures with multiple general factors: A network psychometrics approach. 
+#' \emph{Psychological Methods}.
+#' 
+#' \strong{Conceptual implementation} \cr
+#' Golino, H., Thiyagarajan, J. A., Sadana, R., Teles, M., Christensen, A. P., & Boker, S. M. (2020).
+#' Investigating the broad domains of intrinsic capacity, functional ability and
+#' environment: An exploratory graph analysis approach for improving analytical
+#' methodologies for measuring healthy aging.
+#' \emph{PsyArXiv}. 
 #'
 #' @author
-#' Marcos Jimenez <marcosjnezhquez@gmailcom>,
+#' Marcos Jiménez <marcosjnezhquez@gmailcom>,
 #' Francisco J. Abad <fjose.abad@uam.es>,
 #' Eduardo Garcia-Garzon <egarcia@ucjc.edu>,
 #' Hudson Golino <hfg9s@virginia.edu>,
@@ -290,20 +250,30 @@
 #' Luis Eduardo Garrido <luisgarrido@pucmm.edu.do>
 #'
 #' @examples
-#' # Obtain example data
-#' data <- optimism
+#' # Example using network scores
+#' opt.hier <- hierEGA(
+#'   data = optimism, scores = "network",
+#'   plot.EGA = FALSE # No plot for CRAN checks
+#' )
 #' 
 #' \dontrun{
-#' # hierEGA example
-#' opt.hier<- hierEGA(
-#'   data = optimism,
-#'   algorithm = "louvain"
-#' )}
+#' # Plot multilevel plot
+#' plot(opt.hier, plot.type = "multilevel")
+#' 
+#' # Plot multilevel plot with higher order
+#' # border color matching the corresponding 
+#' # lower order color
+#' plot(opt.hier, color.match = TRUE)
+#' 
+#' # Plot levels separately
+#' plot(opt.hier, plot.type = "separate")}
+#' 
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
 #'
 #' @export
 #'
 # Hierarchical EGA ----
-# Updated 31.07.2023
+# Updated 03.08.2023
 hierEGA <- function(
     data, 
     # `net.scores` arguments
@@ -323,6 +293,12 @@ hierEGA <- function(
 )
 {
 
+  # Send experimental message (for now)
+  experimental("hierEGA")
+  
+  # Argument errors
+  hierEGA_errors(data, plot.EGA, verbose)
+  
   # Get ellipse arguments
   ellipse <- list(...)
   
@@ -343,8 +319,10 @@ hierEGA <- function(
   ## Overwrite 'lower.algorithm' and 'higher.algorithm'
   if("algorithm" %in% names(ellipse)){
     
-    # Set lower and higher order algorithm to single algorithm
-    lower.algorithm <- ellipse$algorithm
+    # Set lower and higher order algorithm
+    lower.algorithm <- "louvain"
+    ellipse$consensus.method <- "most_common"
+    ellipse$consensus.iter <- 1000
     higher.algorithm <- ellipse$algorithm
     
     # Remove 'algorithm' from ellipse to avoid conflicts
@@ -562,6 +540,25 @@ hierEGA <- function(
 # algorithm = "walktrap"; uni.method = "louvain"
 # plot.EGA = FALSE; verbose = FALSE
 
+#' @noRd
+# Argument errors ----
+# Updated 03.08.2023
+hierEGA_errors <- function(data, plot.EGA, verbose)
+{
+  
+  # 'data' errors
+  object_error(data, c("matrix", "data frame"))
+  
+  # 'plot.EGA' errors
+  length_error(plot.EGA, 1)
+  typeof_error(plot.EGA, "logical")
+  
+  # 'verbose' errors
+  length_error(verbose, 1)
+  typeof_error(verbose, "logical")
+  
+}
+
 #' @exportS3Method 
 # S3 Print Method ----
 # Updated 31.07.2023
@@ -621,7 +618,7 @@ summary.hierEGA <- function(object, ...)
 # Updated 02.08.2023
 plot.hierEGA <- function(
     x, plot.type = c("multilevel", "separate"),
-    color.match = TRUE, ...
+    color.match = FALSE, ...
 )
 {
   
@@ -809,7 +806,7 @@ plot.hierEGA <- function(
         edge.color = edge_color,
         edge.alpha = edge_alpha,
         edge.lty = line_type,
-        node.size = NA,
+        node.size = -1,
         ...,
         arguments = TRUE
       )
@@ -870,15 +867,6 @@ plot.hierEGA <- function(
             )
           )
         )
-      
-      # Get current warning options
-      current_warning <- getOption("warn")
-      
-      # Set them off
-      options(warn = -1)
-      
-      # Set them back to the user's setting
-      on.exit(options(warn = current_warning))
       
       # Send it
       return(silent_plot(second_layer))

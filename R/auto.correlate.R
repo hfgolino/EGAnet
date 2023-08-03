@@ -6,7 +6,7 @@
 #' as categories (this behavior differs from \code{\link[qgraph]{cor_auto}})
 #'
 #' @param data Matrix or data frame.
-#' Should consist only of variables that are desired to be correlated
+#' Should consist only of variables to be used in the analysis
 #' 
 #' @param corr Character (length = 1).
 #' The standard correlation method to be used.

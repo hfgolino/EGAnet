@@ -1,7 +1,7 @@
-#' \code{\link[EGAnet]{EGA}} Color Palettes
+#' @title \code{\link[EGAnet]{EGA}} Color Palettes
 #'
-#' Color palettes for plotting \code{\link[GGally]{ggnet2}} \code{\link[EGAnet]{EGA}}
-#' network plots
+#' @description Color palettes for plotting \code{\link[GGally]{ggnet2}} 
+#' \code{\link[EGAnet]{EGA}} network plots
 #'
 #' @param name Character.
 #' Name of color scheme (see \code{\link[RColorBrewer]{RColorBrewer}}).
@@ -58,6 +58,8 @@
 #'
 #' # Custom
 #' color_palette_EGA(name = c("#7FD1B9", "#24547e"), wc = ega.wmt$wc)
+#' 
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
 #'
 #' @export
 #' 

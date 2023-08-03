@@ -18,7 +18,7 @@ auto.correlate(
 }
 \arguments{
 \item{data}{Matrix or data frame.
-Should consist only of variables that are desired to be correlated}
+Should consist only of variables to be used in the analysis}
 
 \item{corr}{Character (length = 1).
 The standard correlation method to be used.

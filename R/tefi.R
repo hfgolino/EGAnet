@@ -1,4 +1,4 @@
-#' Total Entropy Fit Index using Von Neumman's entropy (Quantum Information Theory) for correlation matrices
+#' @title Total Entropy Fit Index using Von Neumman's entropy (Quantum Information Theory) for correlation matrices
 #'
 #' @description Computes the fit (TEFI) of a dimensionality structure using Von Neumman's entropy when the input is a correlation matrix.
 #' Lower values suggest better fit of a structure to the data. For high-order and correlated bifactor structures (or \code{\link{hierEGA}} objects), the Generalized

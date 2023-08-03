@@ -28,7 +28,7 @@
 #' Bypasses \code{...} argument in favor of using a list
 #' as an input
 #' 
-#' @param base.plot Numeric (length = 1).
+#' @param base Numeric (length = 1).
 #' Plot to be used as the base for the configuration of the networks.
 #' Uses the number of the order in which the plots are input.
 #' Defaults to \code{1} or the first plot
@@ -59,7 +59,7 @@
 #' # Compare EGAs via plot
 #' compare.EGA.plots(
 #'   ega1, ega2,
-#'   base.plot = 1, # use "ega1" as base for comparison
+#'   base = 1, # use "ega1" as base for comparison
 #'   labels = c("Sample 1", "Sample 2"),
 #'   rows = 1, columns = 2
 #' )
@@ -72,13 +72,15 @@
 #' )
 #' 
 #' @author Alexander Christensen <alexpaulchristensen@gmail.com>
+#' 
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
 #'
 #' @export
 #
 # Compare EGA plots ----
-# Updated 27.07.2023
+# Updated 03.08.2023
 compare.EGA.plots <- function(
-  ..., input.list = NULL, base.plot = 1,
+  ..., input.list = NULL, base = 1,
   labels = NULL, rows = NULL, columns = NULL
 )
 {
@@ -158,13 +160,13 @@ compare.EGA.plots <- function(
   input.list <- c(ega_list, dynega_list)
   
   # Organize input list with base plot
-  if(is.character(base.plot)){
-    base.plot <- which(names(input.list) == base.plot)
+  if(is.character(base)){
+    base <- which(names(input.list) == base)
   }
   
   # Re-assemble input list
   input.list <- c(
-    input.list[base.plot], input.list[-base.plot]
+    input.list[base], input.list[-base]
   )
   
   # Assign "labels"
@@ -207,7 +209,8 @@ compare.EGA.plots <- function(
       args = c(
         list(
           x = input.list,
-          id = seq_len(input_length)
+          id = seq_len(input_length),
+          base = 1
         ),
         ellipse
       )

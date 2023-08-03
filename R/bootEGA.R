@@ -8,7 +8,7 @@
 #' \strong{Details} for information about the typical median network structure).
 #'
 #' @param data Matrix or data frame.
-#' Should consist only of variables that are desired to be in analysis
+#' Should consist only of variables to be used in the analysis
 #'
 #' @param n Numeric (length = 1).
 #' Sample size if \code{data} provided is a correlation matrix
@@ -200,7 +200,7 @@
 #' Defaults to \code{TRUE}
 #' 
 #' @param seed Numeric (length = 1).
-#' Defaults to \code{NULL} or random results
+#' Defaults to \code{NULL} or random results.
 #' Set for reproducible results.
 #' See https://github.com/hfgolino/EGAnet/wiki/Reproducibility-and-PRNG
 #' for more details on random number generation in \code{\link{EGAnet}}
@@ -292,14 +292,7 @@
 #'   type = "resampling", ncores = 2
 #' )
 #' 
-#' # Standard Louvain example
-#' boot.wmt.louvain <- bootEGA(
-#'   data = wmt, iter = 500,
-#'   algorithm = "louvain",
-#'   type = "parametric", ncores = 2
-#' )
-#' 
-#' # Standard Spinglass example
+#' # Example using {igraph} `cluster_*` function
 #' boot.wmt.spinglass <- bootEGA(
 #'   data = wmt, iter = 500,
 #'   algorithm = igraph::cluster_spinglass,
@@ -342,7 +335,7 @@
 #' @export
 #'
 # Bootstrap EGA ----
-# Updated 31.07.2023
+# Updated 03.08.2023
 bootEGA <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -454,9 +447,16 @@ bootEGA <- function(
   # Check for seed
   if(!is.null(seed)){
     seeds <- reproducible_seeds(iter, seed)
-  }else{ # Set all seeds to zero (or random)
+  }else{ 
+    
+    # Set all seeds to zero (or random)
     seeds <- rep(0, iter)
-    message("Argument 'seed' is set to `NULL`. Results will not be reproducible. Set 'seed' for reproducible results")
+    
+    # Check for external suppression
+    if(!"suppress" %in% names(ellipse) || !ellipse$suppress){
+      message("Argument 'seed' is set to `NULL`. Results will not be reproducible. Set 'seed' for reproducible results")
+    }
+
   }
   
   # Check for parametric (pre-compute values)
@@ -487,6 +487,7 @@ bootEGA <- function(
     iterations = iter,
     datalist = seeds, # data is generated in each iteration
     ncores = ncores, progress = verbose,
+    clear = swiftelse("clear" %in% names(ellipse), ellipse$clear, FALSE),
     # Standard EGA arguments
     FUN = function(
       seed_value, data, type, case_sequence, 

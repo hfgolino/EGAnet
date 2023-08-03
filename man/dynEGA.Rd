@@ -295,7 +295,21 @@ simulated_all <- dynEGA(
   level = c("individual", "group", "population"),
   ncores = 2, # use more for quicker results
   verbose = TRUE # progress bar
-)}
+)
+
+# Plot population
+plot(simulated_all$dynEGA$population)
+
+# Plot groups
+plot(simulated_all$dynEGA$group)
+
+# Plot individual
+plot(simulated_all$dynEGA$individual, id = 1)
+
+# Step through all plots
+# Unless `id` is specified, 4 random IDs
+# will be drawn from individuals
+plot(simulated_all)}
 
 }
 \references{
@@ -318,6 +332,9 @@ Modeling latent topics in social media using Dynamic Exploratory Graph Analysis:
 Savitzky, A., & Golay, M. J. (1964).
 Smoothing and differentiation of data by simplified least squares procedures.
 \emph{Analytical Chemistry}, \emph{36(8)}, 1627-1639.
+}
+\seealso{
+\code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
 }
 \author{
 Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>

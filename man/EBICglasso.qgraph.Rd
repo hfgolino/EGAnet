@@ -22,7 +22,7 @@ EBICglasso.qgraph(
 }
 \arguments{
 \item{data}{Matrix or data frame.
-Should consist only of variables that are desired to be in analysis}
+Should consist only of variables to be used in the analysis}
 
 \item{n}{Numeric (length = 1).
 Sample size if \code{data} provided is a correlation matrix}

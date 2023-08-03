@@ -17,10 +17,8 @@ EGA.fit(
 )
 }
 \arguments{
-\item{data}{Numeric matrix or data frame.
-Either data representing \emph{only} the variables of interest or
-a correlation matrix. Data that are not numeric will be
-removed from the dataset}
+\item{data}{Matrix or data frame.
+Should consist only of variables to be used in the analysis}
 
 \item{n}{Numeric (length = 1).
 Sample size if \code{data} is a correlation matrix}
@@ -197,6 +195,9 @@ Fast unfolding of communities in large networks.
 Pons, P., & Latapy, M. (2006).
 Computing communities in large networks using random walks.
 \emph{Journal of Graph Algorithms and Applications}, \emph{10}, 191-218.
+}
+\seealso{
+\code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
 }
 \author{
 Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>

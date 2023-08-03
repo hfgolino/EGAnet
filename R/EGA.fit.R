@@ -1,14 +1,12 @@
-#' \code{\link[EGAnet]{EGA}} Optimal Model Fit using the Total Entropy Fit Index  (\code{\link[EGAnet]{tefi}})
+#' @title \code{\link[EGAnet]{EGA}} Optimal Model Fit using the Total Entropy Fit Index  (\code{\link[EGAnet]{tefi}})
 #'
 #' @description Estimates the best fitting model using \code{\link[EGAnet]{EGA}}.
 #' The number of steps in the \code{\link[igraph]{cluster_walktrap}} detection
 #' algorithm is varied and unique community solutions are compared using
 #' \code{\link[EGAnet]{tefi}}.
 #'
-#' @param data Numeric matrix or data frame.
-#' Either data representing \emph{only} the variables of interest or
-#' a correlation matrix. Data that are not numeric will be
-#' removed from the dataset
+#' @param data Matrix or data frame.
+#' Should consist only of variables to be used in the analysis
 #'
 #' @param n Numeric (length = 1).
 #' Sample size if \code{data} is a correlation matrix
@@ -179,6 +177,8 @@
 #' \emph{Journal of Graph Algorithms and Applications}, \emph{10}, 191-218.
 #'
 #' @author Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
+#'
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
 #'
 #' @export
 #' 

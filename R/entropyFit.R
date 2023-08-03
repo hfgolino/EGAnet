@@ -1,4 +1,4 @@
-#' Entropy Fit Index
+#' @title Entropy Fit Index
 #'
 #' @description Computes the fit of a dimensionality structure using empirical entropy.
 #' Lower values suggest better fit of a structure to the data.
@@ -6,7 +6,8 @@
 #' @param data Matrix or data frame.
 #' Contains variables to be used in the analysis
 #'
-#' @param structure A vector representing the structure (numbers or labels for each item).
+#' @param structure Numeric or character vector (length = \code{ncol(data)}).
+#' A vector representing the structure (numbers or labels for each item).
 #' Can be theoretical factors or the structure detected by \code{\link[EGAnet]{EGA}}
 #'
 #' @return Returns a list containing:
@@ -43,10 +44,13 @@
 #' @author Hudson F. Golino <hfg9s at virginia.edu>, Alexander P. Christensen <alexpaulchristensen@gmail.com> and Robert Moulder <rgm4fd@virginia.edu>
 #'
 #' @export
-# Entropy Fit Index
-# Updated 06.07.2023
+# Entropy Fit Index ----
+# Updated 03.08.2023
 entropyFit <- function (data, structure)
 {
+  
+  # Argument errors
+  entropyFit_errors(data, structure)
   
   # Ensure data is a matrix
   data <- as.matrix(data)
@@ -178,3 +182,24 @@ entropyFit <- function (data, structure)
 # ## Basic input
 # data <- wmt2[,7:24]; ega.wmt <- EGA(data, plot.EGA = FALSE)
 # structure <- ega.wmt$wc
+
+#' @noRd
+# Argument errors ----
+entropyFit_errors <- function(data, structure)
+{
+  
+  # 'data' errors
+  object_error(data, c("matrix", "data.frame"))
+  
+  # 'structure' errors
+  object_error(structure, "vector")
+  length_error(structure, dim(data)[2])
+  
+}
+
+
+
+
+
+
+

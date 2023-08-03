@@ -8,7 +8,7 @@
 #' based on findings from Golino et al. (2020) and Christensen (2023) 
 #'
 #' @param data Matrix or data frame.
-#' Should consist only of variables that are desired to be in analysis
+#' Should consist only of variables to be used in the analysis
 #'
 #' @param n Numeric (length = 1).
 #' Sample size if \code{data} provided is a correlation matrix
@@ -223,6 +223,8 @@
 #' Christensen, A. P., Garrido, L. E., Guerra-Pena, K., & Golino, H. (2023).
 #' Comparing community detection algorithms in psychometric networks: A Monte Carlo simulation.
 #' \emph{Behavior Research Methods}.
+#' 
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
 #'
 #' @export
 # EGA ----

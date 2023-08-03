@@ -271,7 +271,21 @@
 #'   level = c("individual", "group", "population"),
 #'   ncores = 2, # use more for quicker results
 #'   verbose = TRUE # progress bar
-#' )}
+#' )
+#' 
+#' # Plot population
+#' plot(simulated_all$dynEGA$population)
+#' 
+#' # Plot groups
+#' plot(simulated_all$dynEGA$group)
+#' 
+#' # Plot individual
+#' plot(simulated_all$dynEGA$individual, id = 1)
+#' 
+#' # Step through all plots
+#' # Unless `id` is specified, 4 random IDs
+#' # will be drawn from individuals
+#' plot(simulated_all)}
 #'
 #' @references
 #' \strong{Generalized local linear approximation} \cr
@@ -293,6 +307,8 @@
 #' Savitzky, A., & Golay, M. J. (1964).
 #' Smoothing and differentiation of data by simplified least squares procedures.
 #' \emph{Analytical Chemistry}, \emph{36(8)}, 1627-1639.
+#' 
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
 #'
 #' @export
 #' 
@@ -1009,7 +1025,7 @@ plot.dynEGA.Group <- function(x, base = 1, ...)
 #' @exportS3Method 
 # S3 Plot Method (Individual) ----
 # Updated 30.07.2023
-plot.dynEGA.Individual <- function(x, id = NULL, ...)
+plot.dynEGA.Individual <- function(x, base = 1, id = NULL, ...)
 {
   
   # Get ellipse
@@ -1030,13 +1046,13 @@ plot.dynEGA.Individual <- function(x, id = NULL, ...)
       ID_names <- names(x)
       
       # Order group names
-      ID_names <- c(ID_names[id[1]], ID_names[id[-1]])
+      ID_names <- c(ID_names[id[base]], ID_names[id[-base]])
       
       # Use first ID as base
-      base_object <- x[[id[1]]]
+      base_object <- x[[id[base]]]
       
       # Extract other IDs
-      other_objects <- x[id[-1]]
+      other_objects <- x[id[-base]]
       
       # Get sequence length of other objects
       sequence_length <- seq_len(length(other_objects))

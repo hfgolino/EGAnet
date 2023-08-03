@@ -7,193 +7,217 @@
 invariance(
   data,
   groups,
-  iter = 500,
   structure = NULL,
-  type = c("loadings"),
+  iter = 500,
+  configural.threshold = 0.7,
+  configural.type = c("parametric", "resampling"),
   corr = c("auto", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
   model = c("BGGM", "glasso", "TMFG"),
   algorithm = c("leiden", "louvain", "walktrap"),
   uni.method = c("expand", "LE", "louvain"),
   ncores,
+  seed = NULL,
   verbose = TRUE,
   ...
 )
 }
 \arguments{
 \item{data}{Matrix or data frame.
-Variables to be used in the analysis}
+Should consist only of variables to be used in the analysis}
 
-\item{groups}{Vector.
+\item{groups}{Numeric or character vector (length = \code{ncol(data)}).
 Group membership corresponding to each case in data}
 
-\item{iter}{Numeric. 
+\item{structure}{Numeric or character vector (length = \code{ncol(data)}).
+A vector representing the structure (numbers or labels for each item).
+Can be theoretical factors or the structure detected by \code{\link[EGAnet]{EGA}}}
+
+\item{iter}{Numeric (length = 1).
 Number of iterations to perform for the permutation.
-Defaults to \code{500}}
+Defaults to \code{500} (recommended)}
 
-\item{type}{Character.
-Type of measurement invariance to estimate.
-Only includes \code{"loadings"} at the moment}
+\item{configural.threshold}{Numeric (length = 1).
+Value to use a threshold in \code{\link[EGAnet]{itemStability}} to determine
+which items should be removed during configural invariance (see \strong{Details}
+for more information).
+Defaults to \code{0.70} (recommended)}
 
-\item{corr}{Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
-Current options are:
+\item{configural.type}{Character (length = 1).
+Type of bootstrap to use for configural invariance in \code{\link[EGAnet]{bootEGA}}.
+Defaults to \code{"parametric"}}
 
-\itemize{
-
-\item{\strong{\code{cor_auto}}}
-{Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
-\code{\link[qgraph]{qgraph}}}.
-
-\item{\strong{\code{pearson}}}
-{Computes Pearson's correlation coefficient using the pairwise complete observations via
-the \code{\link[stats]{cor}}} function.
-
-\item{\strong{\code{spearman}}}
-{Computes Spearman's correlation coefficient using the pairwise complete observations via
-the \code{\link[stats]{cor}}} function.
-}}
-
-\item{model}{Character.
-A string indicating the method to use.
-
-Current options are:
+\item{corr}{Character (length = 1).
+Method to compute correlations.
+Defaults to \code{"auto"}.
+Available options:
 
 \itemize{
 
-\item{\strong{\code{glasso}}}
-{Estimates the Gaussian graphical model using graphical LASSO with
-extended Bayesian information criterion to select optimal regularization parameter.
-This is the default method}
+\item{\code{"auto"}}
+{Automatically computes appropriate correlations for
+the data using Pearson's for continuous, polychoric for ordinal,
+tetrachoric for binary, and polyserial/biserial for ordinal/binary with
+continuous. To change the number of categories that are considered
+ordinal, use \code{ordinal.categories}
+(see \code{\link[EGAnet]{polychoric.matrix}} for more details)}
 
-\item{\strong{\code{TMFG}}}
-{Estimates a Triangulated Maximally Filtered Graph}
+\item{\code{"pearson"}}
+{Pearson's correlation is computed for all variables regardless of
+categories}
 
-}}
+\item{\code{"spearman"}}
+{Spearman's rank-order correlation is computed for all variables
+regardless of categories}
 
-\item{algorithm}{A string indicating the algorithm to use or a function from \code{\link{igraph}}
-Current options are:
+}
+
+For other similarity measures, compute them first and input them
+into \code{data} with the sample size (\code{n})}
+
+\item{na.data}{Character (length = 1).
+How should missing data be handled?
+Defaults to \code{"pairwise"}.
+Available options:
 
 \itemize{
 
-\item{\strong{\code{walktrap}}}
-{Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
+\item{\code{"pairwise"}}
+{Computes correlation for all available cases between
+two variables}
 
-\item{\strong{\code{leiden}}}
-{Computes the Leiden algorithm using \code{\link[igraph]{cluster_leiden}}}
-
-\item{\strong{\code{louvain}}}
-{Computes the Louvain algorithm using \code{\link[igraph]{cluster_louvain}}}
+\item{\code{"listwise"}}
+{Computes correlation for all complete cases in the dataset}
 
 }}
 
-\item{uni.method}{Character.
+\item{model}{Character (length = 1).
+Defaults to \code{"glasso"}.
+Available options:
+
+\itemize{
+
+\item{\code{"BGGM"}}
+{Computes the Bayesian Gaussian Graphical Model.
+Set argument \code{ordinal.categories} to determine
+levels allowed for a variable to be considered ordinal.
+See \code{\link[BGGM]{estimate}} for more details}
+
+\item{\code{"glasso"}}
+{Computes the GLASSO with EBIC model selection.
+See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details}
+
+\item{\code{"TMFG"}}
+{Computes the TMFG method.
+See \code{\link[EGAnet]{TMFG}} for more details}
+
+}}
+
+\item{algorithm}{Character or 
+\code{\link{igraph}} \code{cluster_*} function (length = 1).
+Defaults to \code{"walktrap"}.
+Three options are listed below but all are available
+(see \code{\link[EGAnet]{community.detection}} for other options):
+
+\itemize{
+
+\item{\code{"leiden"}}
+{See \code{\link[igraph]{cluster_leiden}} for more details}
+
+\item{\code{"louvain"}}
+{By default, \code{"louvain"} will implement the Louvain algorithm using 
+the consensus clustering method (see \code{\link[EGAnet]{community.consensus}} 
+for more information). This function will implement
+\code{consensus.method = "most_common"} and \code{consensus.iter = 1000} 
+unless specified otherwise}
+
+\item{\code{"walktrap"}}
+{See \code{\link[EGAnet]{cluster_walktrap}} for more details}
+
+}}
+
+\item{uni.method}{Character (length = 1).
 What unidimensionality method should be used? 
 Defaults to \code{"louvain"}.
-Current options are:
+Available options:
 
 \itemize{
 
-\item{\strong{\code{expand}}}
-{Expands the correlation matrix with four variables correlated .50.
+\item{\code{expand}}
+{Expands the correlation matrix with four variables correlated 0.50.
 If number of dimension returns 2 or less in check, then the data 
 are unidimensional; otherwise, regular EGA with no matrix
-expansion is used. This is the method used in the Golino et al. (2020)
-\emph{Psychological Methods} simulation.}
+expansion is used. This method was used in the Golino et al.'s (2020)
+\emph{Psychological Methods} simulation}
 
-\item{\strong{\code{LE}}}
-{Applies the Leading Eigenvalue algorithm (\code{\link[igraph]{cluster_leading_eigen}})
+\item{\code{LE}}
+{Applies the Leading Eigenvector algorithm
+(\code{\link[igraph]{cluster_leading_eigen}})
 on the empirical correlation matrix. If the number of dimensions is 1,
-then the Leading Eigenvalue solution is used; otherwise, regular EGA
-is used. This is the final method used in the Christensen, Garrido,
-and Golino (2021) simulation.}
+then the Leading Eigenvector solution is used; otherwise, regular EGA
+is used. This method was used in the Christensen et al.'s (2023) 
+\emph{Behavior Research Methods} simulation}
 
-\item{\strong{\code{louvain}}}
+\item{\code{louvain}}
 {Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
-on the empirical correlation matrix using a resolution parameter = 0.95.
-If the number of dimensions is 1, then the Louvain solution is used; otherwise,
-regular EGA is used. This method was validated in the Christensen (2022) simulation.}
+on the empirical correlation matrix. If the number of dimensions is 1, 
+then the Louvain solution is used; otherwise, regular EGA is used. 
+This method was validated Christensen's (2022) \emph{PsyArXiv} simulation.
+Consensus clustering can be used by specifying either
+\code{"consensus.method"} or \code{"consensus.iter"}}
 
 }}
 
-\item{ncores}{Numeric.
+\item{ncores}{Numeric (length = 1).
 Number of cores to use in computing results.
-Defaults to \code{parallel::detectCores() / 2} or half of your
+Defaults to \code{ceiling(parallel::detectCores() / 2)} or half of your
 computer's processing power.
 Set to \code{1} to not use parallel computing
 
 If you're unsure how many cores your computer has,
-then use the following code: \code{parallel::detectCores()}}
+then type: \code{parallel::detectCores()}}
 
-\item{memberships}{Vector. 
-Node membership for each community or factor. 
-Defaults to \code{NULL}.
-When \code{NULL}, \code{\link[EGAnet]{EGA}} is used to compute node memberships}
+\item{seed}{Numeric (length = 1).
+Defaults to \code{NULL} or random results.
+Set for reproducible results.
+See https://github.com/hfgolino/EGAnet/wiki/Reproducibility-and-PRNG
+for more details on random number generation in \code{\link{EGAnet}}}
 
-\item{model.args}{List.
-A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
-or \code{\link[EGAnet]{TMFG}}. By default, \code{gamma} is set to 0 in 
-\code{\link[EGAnet]{EBICglasso.qgraph}}}
-
-\item{algorithm.args}{List.
-A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
-or some other community detection algorithm function (see examples)}
-
-\item{consensus.iter}{Numeric.
-Number of iterations to perform in consensus clustering for the Louvain algorithm
-(see Lancichinetti & Fortunato, 2012).
-Defaults to \code{100}}
-
-\item{consensus.method}{Character.
-What consensus clustering method should be used? 
-Defaults to \code{"highest_modularity"}.
-Current options are:
-
-\itemize{
-
-\item{\strong{\code{highest_modularity}}}
-{Uses the community solution that achieves the highest modularity
-across iterations}
-
-\item{\strong{\code{most_common}}}
-{Uses the community solution that is found the most
-across iterations}
-
-\item{\strong{\code{iterative}}}
-{Identifies the most common community solutions across iterations
-and determines how often nodes appear in the same community together.
-A threshold of 0.30 is used to set low proportions to zero.
-This process repeats iteratively until all nodes have a proportion of
-1 in the community solution.
-}
-
-\item{\code{lowest_tefi}}
-{Uses the community solution that achieves the lowest \code{\link[EGAnet]{tefi}}
-across iterations}
-
-}}
-
-\item{progress}{Boolean.
+\item{verbose}{Boolean (length = 1).
 Should progress be displayed?
 Defaults to \code{TRUE}.
-For Windows, \code{FALSE} is about 2x faster}
+Set to \code{FALSE} to not display progress}
+
+\item{...}{Additional arguments that can be passed on to
+\code{\link[EGAnet]{auto.correlate}},
+\code{\link[EGAnet]{network.estimation}},
+\code{\link[EGAnet]{community.detection}},
+\code{\link[EGAnet]{community.consensus}},
+\code{\link[EGAnet]{EGA}}, 
+\code{\link[EGAnet]{bootEGA}}, and
+\code{\link[EGAnet]{net.loads}}}
 }
 \value{
 Returns a list containing:
 
-\item{memberships}{Original memberships provided in \code{memberships}
-or from \code{\link[EGAnet]{EGA}} if \code{NULL}}
+\item{configural.results}{\code{\link[EGAnet]{bootEGA}} results from
+the final run that produced configural invariance. This output will be
+output on the final run of unsuccessful configural invariance runs}
 
-\item{EGA}{Original \code{\link[EGAnet]{EGA}} results for the sample}
+\item{memberships}{Original memberships provided in \code{structure}
+or from \code{\link[EGAnet]{EGA}} if \code{structure = NULL}}
+
+\item{EGA}{Original \code{\link[EGAnet]{EGA}} results for the full sample}
 
 \item{groups}{
 
 \itemize{
 
 \item{\code{\link[EGAnet]{EGA}}}
-{EGA results for each group}
+{\code{\link[EGAnet]{EGA}} results for each group}
 
 \item{\code{loadings}}
-{Network loadings for each group}
+{Network loadings (\code{\link[EGAnet]{net.loads}}) for each group}
 
 \item{\code{loadingsDifference}}
 {Difference between the dominant loadings of each group}
@@ -210,7 +234,7 @@ or from \code{\link[EGAnet]{EGA}} if \code{NULL}}
 {Permutated groups acorss iterations}
 
 \item{\code{loadings}}
-{Loadings for each group for each permutation}
+{Network loadings (\code{\link[EGAnet]{net.loads}}) for each group for each permutation}
 
 \item{\code{loadingsDifference}}
 {Difference between the dominant loadings of each group for each permutation}
@@ -222,7 +246,59 @@ or from \code{\link[EGAnet]{EGA}} if \code{NULL}}
 \item{results}{Data frame of the results (which are printed)}
 }
 \description{
-Estimates metric invariance of \code{\link[EGAnet]{EGA}} or specified structure
+Estimates configural invariance using \code{\link[EGAnet]{bootEGA}}
+on all data (across groups) first. After configural variance is established,
+then metric invariance is tested using the community structure that established
+configural invariance (see \strong{Details} for more information on this process)
+}
+\details{
+In traditional psychometrics, measurement invariance is performed in
+sequential testing from more flexible (more free parameters) to more rigid
+(fewer free parameters) structures. Measurement invariance in network
+psychometrics is no different.
+
+\strong{Configural Invariance}
+
+To establish configural invariance, the data are collapsed across groups
+and a common sample structure is identified used \code{\link[EGAnet]{bootEGA}}
+and \code{\link[EGAnet]{itemStability}}. If some variables have a replication
+less than 0.70 in their assigned dimension, then they are considered unstable
+and therefore not invariant. These variables are removed and this process
+is repeated until all items are considered stable (replication values greater
+than 0.70) or there are no variables left. If configural invariance cannot be
+established, then the last run of results are returned and metric invariance
+is not tested (because configural invariance is not met). Importantly, if any
+variables \emph{are} removed, then configural invariance is not met for the
+original structure. Any removal would suggest only partial configural invariance
+is met.
+
+\strong{Metric Invariance}
+
+The variables that remain after configural invariance are submitted to metric
+invariance. First, each group estimates a network and then network loadings 
+(\code{\link[EGAnet]{net.loads}}) are computed using the assigned
+community memberships (determined during configural invariance). Then,
+the difference between the assigned loadings of the groups is computed. This
+difference represents the empirical values. Second, the group memberships
+are permutated and networks are estimated based on the these permutated
+groups for \code{iter} times. Then, network loadings are computed and
+the difference between the assigned loadings of the group is computed, resulting
+in a null distribution. The empirical difference is then compared against
+the null distribution using a two-tailed \emph{p}-value based on the number
+of null distribution differences that are greater and less than the empirical
+differences for each variable. Both uncorrected and false discovery rate
+corrected \emph{p}-values are returned in the results. Uncorrected \emph{p}-values
+are flagged for significance along with the direction of group differences.
+
+\strong{Three or More Groups}
+
+At this time, only two groups are supported. There is a method proposed to
+test three or more groups in Jamison, Golino, and Christensen (2023) but
+this approach has not been thoroughly vetted and validated. Future versions
+of the package will provide support for three or more groups once there is
+an established consensus for best practice.
+
+For more details, see Jamison, Golino, and Christensen (2023)
 }
 \examples{
 # Load data
@@ -233,11 +309,26 @@ groups <- rep(1:2, each = nrow(wmt) / 2)
 
 \dontrun{
 # Measurement invariance
-results <- invariance(wmt, groups, ncores = 2)}
+results <- invariance(wmt, groups, ncores = 2)
 
+# Plot with uncorrected alpha = 0.05
+plot(results, p_type = "p", p_value = 0.05)
+
+# Plot with BH-corrected alpha = 0.10
+plot(results, p_type = "p_BH", p_value = 0.10)}
+
+}
+\references{
+\strong{Original implementation} \cr
+Jamison, L., Golino, H., & Christensen, A. P. (2023).
+Metric invariance in exploratory graph analysis via permutation testing.
+\emph{PsyArXiv}.
+}
+\seealso{
+\code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
 }
 \author{
 Laura Jamison <lj5yn@virginia.edu>,
-Alexander P. Christensen <alexpaulchristensen@gmail.com>, and 
-Hudson F. Golino <hfg9s at virginia.edu>
+Hudson F. Golino <hfg9s at virginia.edu>, and
+Alexander P. Christensen <alexpaulchristensen@gmail.com>,
 }

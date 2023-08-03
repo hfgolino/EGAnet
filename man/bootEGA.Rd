@@ -25,7 +25,7 @@ bootEGA(
 }
 \arguments{
 \item{data}{Matrix or data frame.
-Should consist only of variables that are desired to be in analysis}
+Should consist only of variables to be used in the analysis}
 
 \item{n}{Numeric (length = 1).
 Sample size if \code{data} provided is a correlation matrix}
@@ -217,7 +217,7 @@ If \code{TRUE}, returns a plot of the typical network structure.
 Defaults to \code{TRUE}}
 
 \item{seed}{Numeric (length = 1).
-Defaults to \code{NULL} or random results
+Defaults to \code{NULL} or random results.
 Set for reproducible results.
 See https://github.com/hfgolino/EGAnet/wiki/Reproducibility-and-PRNG
 for more details on random number generation in \code{\link{EGAnet}}}
@@ -317,14 +317,7 @@ boot.wmt <- bootEGA(
   type = "resampling", ncores = 2
 )
 
-# Standard Louvain example
-boot.wmt.louvain <- bootEGA(
-  data = wmt, iter = 500,
-  algorithm = "louvain",
-  type = "parametric", ncores = 2
-)
-
-# Standard Spinglass example
+# Example using {igraph} `cluster_*` function
 boot.wmt.spinglass <- bootEGA(
   data = wmt, iter = 500,
   algorithm = igraph::cluster_spinglass,

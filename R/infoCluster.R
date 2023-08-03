@@ -1,4 +1,4 @@
-#' Information Theoretic Mixture Clustering for \code{\link[EGAnet]{dynEGA}}
+#' @title Information Theoretic Mixture Clustering for \code{\link[EGAnet]{dynEGA}}
 #'
 #' @description Performs hierarchical clustering using Jensen-Shannon distance
 #' followed by the Louvain algorithm with consensus clustering. The method
@@ -6,9 +6,10 @@
 #' change in the clusters identified
 #'
 #' @param dynEGA.object  A \code{\link[EGAnet]{dynEGA}} or a
-#' \code{\link[EGAnet]{dynEGA.ind.pop}} object that is used to match the arguments of the EII object.
+#' \code{\link[EGAnet]{dynEGA.ind.pop}} object that is used to match 
+#' the arguments of the EII object
 #' 
-#' @param plot.cluster Boolean.
+#' @param plot.cluster Boolean (length = 1).
 #' Should plot of optimal and hierarchical clusters be output?
 #' Defaults to \code{TRUE}.
 #' Set to \code{FALSE} to not plot
@@ -40,17 +41,17 @@
 #'
 #' @author Hudson Golino <hfg9s at virginia.edu> & Alexander P. Christensen <alexander.christensen at Vanderbilt.Edu>
 #' 
-#' @importFrom stats hclust as.dist cutree
-#' @importFrom utils globalVariables
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
 #' 
 #' @export
+#' 
 # Information Theoretic Clustering for dynEGA
-# Updated 13.07.2023
-infoCluster <- function(
-    dynEGA.object,
-    plot.cluster = TRUE
-)
+# Updated 03.08.2023
+infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
 {
+  
+  # Send experimental message (for now)
+  experimental("infoCluster")
   
   # Check for appropriate class ("dynEGA.ind.pop" defunct to legacy)
   if(!is(dynEGA.object, "dynEGA") & !is(dynEGA.object, "dynEGA.ind.pop")){

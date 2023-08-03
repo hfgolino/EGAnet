@@ -171,6 +171,8 @@
 #' Rhemtulla, M., Brosseau-Liard, P. E., & Savalei, V. (2012).
 #' When can categorical variables be treated as continuous? A comparison of robust continuous and categorical SEM estimation methods under suboptimal conditions.
 #' \emph{Psychological Methods}, \emph{17}, 354-373.
+#' 
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
 #'
 #' @export
 #' 

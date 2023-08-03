@@ -1,0 +1,107 @@
+#' @title S3 Plot Methods for \code{\link{EGAnet}}
+#' 
+#' @name EGAnet-plot
+#' 
+#' @description General usage for plots created by \code{\link{EGAnet}}'s S3 methods.
+#' Plots across the \code{\link{EGAnet}} package leverage \code{\link[GGally]{ggnet2}} 
+#' and \code{\link[ggplot2]{ggplot}}.
+#' 
+#' Most plots allow the full usage of the \code{gg*} series functionality and therefore
+#' plotting arguments should be referenced through those packages rather than here in
+#' \code{\link{EGAnet}}.
+#' 
+#' The sections below list the functions and their usage for the S3 plot methods.
+#' The plot methods are intended to be generic and without many arguments so that
+#' nearly all arguments are passed to \code{\link[GGally]{ggnet2}} and \code{\link[ggplot2]{ggplot}}.
+#' 
+#' There are some constraints placed on certain plots to keep the \code{\link{EGAnet}} style
+#' throughout the (network) plots in the package, so be aware that if some settings are
+#' not changing your plot output, then these settings might be fixed 
+#' to maintain the \code{\link{EGAnet}} style
+#' 
+#' @section Class List of S3 Plot Methods:
+#' 
+#' \code{\link[EGAnet]{boot.ergoInfo}}, \code{\link[EGAnet]{bootEGA}}, 
+#' \code{\link[EGAnet]{dynEGA}}, \code{dynEGA.Group}, \code{dynEGA.Individual},
+#' \code{dynEGA.Population}, \code{\link[EGAnet]{EGA}}, 
+#' \code{\link[EGAnet]{EGA.estimate}}, \code{\link[EGAnet]{EGA.fit}}, 
+#' \code{\link[EGAnet]{hierEGA}}, \code{\link[EGAnet]{infoCluster}}, 
+#' \code{\link[EGAnet]{invariance}}, \code{\link[EGAnet]{itemStability}},
+#' \code{\link[EGAnet]{riEGA}}
+#' 
+#' @section \code{*EGA} Plots:
+#' 
+#' \strong{Related Functions}
+#' 
+#' \code{\link[EGAnet]{bootEGA}}, \code{\link[EGAnet]{dynEGA}},
+#' \code{\link[EGAnet]{EGA}}, \code{\link[EGAnet]{EGA.estimate}},
+#' \code{\link[EGAnet]{EGA.fit}}, \code{\link[EGAnet]{hierEGA}},
+#' \code{\link[EGAnet]{invariance}}, \code{\link[EGAnet]{riEGA}}
+#' 
+#' \strong{Usage}: \code{plot(x, ...)}
+#' 
+#' \strong{Plot Arguments}
+#' 
+#' These plots leverage all arguments in \code{\link[GGally]{ggnet2}}
+#' (see documentation and arguments to see what can be changed in \code{\link{EGAnet}})
+#' 
+#' \strong{Layout Arguments}
+#' 
+#' Layouts can be set using \code{\link[sna]{gplot.layout}} and the
+#' ending layout name; for example, \code{gplot.layout.circle} can be set
+#' in these functions using \code{layout = "circle"} or \code{mode = "circle"}
+#' 
+#' \strong{Additional Usage}
+#' 
+#' Some S3 plots have additional arguments. Below, these functions are
+#' listed with their argument usage. \strong{Example} sections of these 
+#' functions should also have examples.
+#' 
+#' \code{plot.dynEGA(x, base = 1, id = NULL, ...)}
+#' 
+#' \code{plot.dynEGA.Group(x, base = 1, ...)}
+#' 
+#' \code{plot.dynEGA.Individual(x, base = 1, id = NULL, ...)}
+#' 
+#' \code{plot.hierEGA(x, plot.type = c("multilevel", "separate"), color.match = FALSE, ...)}
+#' 
+#' \strong{Arguments}
+#' 
+#' \code{base} Numeric (length = 1).
+#' Plot to be used as the base for the configuration of the networks.
+#' Uses the number of the order in which the plots are input.
+#' Defaults to \code{1} or the first plot
+#' 
+#' \code{id} Numeric index(es) or character name(s).
+#' IDs to use when plotting \code{\link[EGAnet]{dynEGA}} individuals
+#' Defaults to \code{NULL} or 4 IDs drawn at random
+#' 
+#' \code{plot.type} Character (length = 1).
+#' Whether \code{\link[EGAnet]{hierEGA}} networks should plotted in
+#' a stacked, \code{"multilevel"} fashion or as \code{"separate"} plots.
+#' Defaults to \code{"multilevel"}
+#' 
+#' \code{color.match} Boolean (length = 1).
+#' Whether lower order community colors in the \code{\link[EGAnet]{hierEGA}} plot
+#' should be "matched" and used as the border color for the higher order
+#' communities.
+#' Defaults to \code{FALSE}
+#' 
+#' \strong{Color Palettes}
+#' 
+#' \code{\link[EGAnet]{color_palette_EGA}} will implement some color palettes in
+#' \code{\link{EGAnet}}. Admittedly, these palettes are still a work in progress.
+#' The main \code{\link{EGAnet}} style palette is \code{"polychrome"}. This palette
+#' currently has 40 colors but there will likely be a need to expand it further
+#' (e.g., \code{\link[EGAnet]{hierEGA}} demands a lot of colors).
+#' 
+#' \strong{Usage}: \code{plot(x, color.palette = "polychrome", ...)}
+#' 
+#' In any network plots, the \code{color.palette} argument can be used to
+#' select color palettes from \code{\link[EGAnet]{color_palette_EGA}} as well
+#' as those in the color scheme of \code{\link[RColorBrewer]{RColorBrewer}}
+#' 
+#' @aliases plot.EGAnet
+#' 
+#' @rdname EGAnet-plot
+NULL

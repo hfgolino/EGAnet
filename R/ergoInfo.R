@@ -1,10 +1,10 @@
-#' Ergodicity Information Index
+#' @title Ergodicity Information Index
 #'
 #' @description Computes the Ergodicity Information Index
 #'
 #' @param dynEGA.object A \code{\link[EGAnet]{dynEGA.ind.pop}} object
 #'
-#' @param use Character.
+#' @param use Character (length = 1).
 #' A string indicating what network element will be used
 #' to compute the algorithm complexity, the list of edges or the weights of the network.
 #' Defaults to \code{use = "edge.list"}.
@@ -12,15 +12,13 @@
 #'
 #' \itemize{
 #'
-#' \item{\strong{\code{"edge.list"}}}
+#' \item{\code{"edge.list"}}
 #' {Calculates the algorithm complexity using the list of edges.}
 #'
-#' \item{\strong{\code{"unweighted"}}}
+#' \item{\code{"unweighted"}}
 #' {Calculates the algorithm complexity using the binary weights of the network.
 #' 0 = edge absent and 1 = edge present}
-#'
-#' \item{\strong{\code{"weighted"}}}
-#' {Calculates the algorithm complexity using the weights of the network.}
+#' 
 #' }
 #'
 #' @return Returns a list containing:
@@ -54,19 +52,22 @@
 #' # Compute empirical ergodicity information index
 #' eii <- ergoInfo(
 #'   dynEGA.object = dyn.ega1,
-#'   use = "weighted"
+#'   use = "edge.list"
 #' )}
 #'
 #' @export
 #'
-# Ergodicity Information Index
-# Updated 30.07.2023
+# Ergodicity Information Index ----
+# Updated 03.08.2023
 ergoInfo <- function(
     dynEGA.object,
     use = c("edge.list", "unweighted"),
     ordering = c("row", "column")
 )
 {
+  
+  # Send experimental message (for now)
+  experimental("ergoInfo")
   
   # Check for missing arguments (argument, default, function)
   use <- set_default(use, "edge.list", ergoInfo)

@@ -1,11 +1,11 @@
-#' Convert \code{\link{igraph}} network to matrix
+#' @title Convert \code{\link{igraph}} network to matrix
 #'
 #' @description Converts \code{\link{igraph}} network to matrix
 #'
 #' @param igraph_network \code{\link{igraph}} network object
 #' 
-#' @param diagonal Numeric.
-#' Value to be placed on the diagonal of \code{A}.
+#' @param diagonal Numeric (length = 1).
+#' Value to be placed on the diagonal of \code{network}.
 #' Defaults to \code{0}
 #' 
 #' @examples
@@ -20,10 +20,14 @@
 #' @author Hudson Golino <hfg9s at virginia.edu> & Alexander P. Christensen <alexander.christensen at Vanderbilt.Edu>
 #'
 #' @export
+#' 
 # Convert {igraph} network to matrix
-# Updated 27.06.2023
+# Updated 03.08.2023
 igraph2matrix <- function (igraph_network, diagonal = 0)
 {
+  
+  # Argument errors
+  igraph2matrix_errors(igraph_network, diagonal)
   
   # Convert {igraph} network to matrix
   network <- as.matrix(
@@ -44,5 +48,21 @@ igraph2matrix <- function (igraph_network, diagonal = 0)
   
   # Return network
   return(network)
+  
+}
+
+#' @noRd
+# Argument errors
+# Updated 03.08.2023
+igraph2matrix_errors <- function(igraph_network, diagonal)
+{
+  
+  # 'igraph_network' errors
+  class_error(igraph_network, "igraph")
+  
+  # 'diagonal' errors
+  length_error(diagonal, 1)
+  typeof_error(diagonal, "numeric")
+  range_error(diagonal, c(-1, 1))
   
 }

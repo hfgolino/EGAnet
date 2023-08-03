@@ -13,7 +13,7 @@ ergoInfo(
 \arguments{
 \item{dynEGA.object}{A \code{\link[EGAnet]{dynEGA.ind.pop}} object}
 
-\item{use}{Character.
+\item{use}{Character (length = 1).
 A string indicating what network element will be used
 to compute the algorithm complexity, the list of edges or the weights of the network.
 Defaults to \code{use = "edge.list"}.
@@ -21,15 +21,13 @@ Current options are:
 
 \itemize{
 
-\item{\strong{\code{"edge.list"}}}
+\item{\code{"edge.list"}}
 {Calculates the algorithm complexity using the list of edges.}
 
-\item{\strong{\code{"unweighted"}}}
+\item{\code{"unweighted"}}
 {Calculates the algorithm complexity using the binary weights of the network.
 0 = edge absent and 1 = edge present}
 
-\item{\strong{\code{"weighted"}}}
-{Calculates the algorithm complexity using the weights of the network.}
 }}
 }
 \value{
@@ -65,7 +63,7 @@ dyn.ega1 <- dynEGA.ind.pop(
 # Compute empirical ergodicity information index
 eii <- ergoInfo(
   dynEGA.object = dyn.ega1,
-  use = "weighted"
+  use = "edge.list"
 )}
 
 }

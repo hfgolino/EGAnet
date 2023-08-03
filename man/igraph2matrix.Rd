@@ -9,8 +9,8 @@ igraph2matrix(igraph_network, diagonal = 0)
 \arguments{
 \item{igraph_network}{\code{\link{igraph}} network object}
 
-\item{diagonal}{Numeric.
-Value to be placed on the diagonal of \code{A}.
+\item{diagonal}{Numeric (length = 1).
+Value to be placed on the diagonal of \code{network}.
 Defaults to \code{0}}
 }
 \value{

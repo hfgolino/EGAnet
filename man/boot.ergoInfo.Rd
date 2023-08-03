@@ -137,6 +137,9 @@ Golino, H., Nesselroade, J., & Christensen, A. P. (2022).
 Toward a psychology of individuals: The ergodicity information index and a bottom-up approach for finding generalizations.
 \emph{PsyArXiv}.
 }
+\seealso{
+\code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
+}
 \author{
 Hudson Golino <hfg9s at virginia.edu> & Alexander P. Christensen <alexander.christensen at Vanderbilt.Edu>
 }

@@ -555,7 +555,7 @@ restore_state <- function()
 
 #' @noRd
 # Wrapper for parallelization ----
-# Updated 28.07.2023
+# Updated 03.08.2023
 parallel_process <- function(
     iterations, # number of iterations
     datalist = NULL, # list of data
@@ -564,7 +564,8 @@ parallel_process <- function(
     export = TRUE, # variables to export (if necessary)
     packages = "EGAnet", # always uses {EGAnet}
     ncores, # number of cores
-    progress = TRUE # progress bar
+    progress = TRUE, # progress bar
+    clear = FALSE # whether progress bar should be cleared
 ){
   
   # Get available memory
@@ -606,7 +607,7 @@ parallel_process <- function(
     progressr::handlers(
       progressr::handler_progress(
         format = ":spin [:bar] :percent elapsed: :elapsed ~remaining: :eta",
-        clear = FALSE
+        clear = clear
       )
     )
     
@@ -648,7 +649,7 @@ parallel_process <- function(
         future.seed = NULL
       )
       
-    })
+    }, enable = TRUE)
     
   }else{
     
@@ -2093,7 +2094,7 @@ get_layout <- function(
 
 #' @noRd
 # Basic set up for plots ----
-# Updated 29.06.2023
+# Updated 03.08.2023
 basic_plot_setup <- function(network, wc = NULL, ...)
 {
   
@@ -2486,6 +2487,20 @@ compare_plots <- function(comparison_network, comparison_wc, plot_ARGS)
 #%%%%%%%%%%%%%%%%%%%%%
 # ERROR FUNCTIONS ----
 #%%%%%%%%%%%%%%%%%%%%%
+
+#' @noRd
+# Experimental warning ----
+# Updated 03.08.2023
+experimental <- function(function_name)
+{
+  warning(
+    paste0(
+      "This implementation of `", function_name,
+      "` is ", styletext("experimental", "italics"), ". \n\nThe underlying function ",
+      "and/or output may change until the results have been appropriately vetted and validated."
+    ), call. = FALSE
+  )
+}
 
 #' @noRd
 # Error for class ----

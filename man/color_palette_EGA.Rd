@@ -58,8 +58,8 @@ Defaults to \code{FALSE}}
 Vector of colors for community memberships
 }
 \description{
-Color palettes for plotting \code{\link[GGally]{ggnet2}} \code{\link[EGAnet]{EGA}}
-network plots
+Color palettes for plotting \code{\link[GGally]{ggnet2}} 
+\code{\link[EGAnet]{EGA}} network plots
 }
 \examples{
 # Default
@@ -71,6 +71,9 @@ color_palette_EGA(name = "blue.ridge1", wc = ega.wmt$wc)
 # Custom
 color_palette_EGA(name = c("#7FD1B9", "#24547e"), wc = ega.wmt$wc)
 
+}
+\seealso{
+\code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
 }
 \author{
 Hudson Golino <hfg9s at virginia.edu>, Alexander P. Christensen <alexpaulchristensen at gmail.com>

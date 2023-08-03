@@ -118,7 +118,10 @@
 #'
 #' @author Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
+#'
 #' @export
+#' 
 # Item Stability function ----
 # Updated 31.07.2023
 itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){

@@ -89,7 +89,7 @@
 #' @export
 #'
 # Network Loadings
-# Updated 25.07.2023
+# Updated 03.08.2023
 # Default = "BRM" or `net.loads` from version 1.2.3
 # Experimental = new signs and cross-loading adjustment
 net.loads <- function(
@@ -157,11 +157,14 @@ net.loads <- function(
 
   }else{ # If not "BRM", run experimental
     
+    # Send experimental message (for now)
+    experimental("net.loads")
+    
     # Experimental unstandardized loadings
     # Differences:
     # 1. signs are added in a different (more accurate) way
     # 2. algebraic rather than absolute sums are used
-    unstandardized <- experimental(
+    unstandardized <- experimental_loadings(
       A, wc, nodes, node_names, communities, unique_communities
     )
 
@@ -456,7 +459,7 @@ obtain_signs <- function(target_network)
 #' @noRd
 # Experimental loadings ----
 # Updated 15.07.2023
-experimental <- function(A, wc, nodes, node_names, communities, unique_communities)
+experimental_loadings <- function(A, wc, nodes, node_names, communities, unique_communities)
 {
   
   # Initialize loading matrix

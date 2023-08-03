@@ -131,7 +131,8 @@
 #' )
 #'
 #' @references
-#' Csardi, G., & Nepusz, T. (2006). The igraph software package for complex network research.
+#' Csardi, G., & Nepusz, T. (2006). 
+#' The igraph software package for complex network research.
 #' \emph{InterJournal, Complex Systems}, 1695.
 #'
 #' @export

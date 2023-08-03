@@ -227,6 +227,8 @@
 #'   delta = 1, id = 25, use.derivatives = 1,
 #'   ncores = 2, corr = "pearson"
 #' )}
+#' 
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
 #'
 #' @export
 #'
