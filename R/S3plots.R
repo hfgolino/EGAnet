@@ -19,6 +19,10 @@
 #' not changing your plot output, then these settings might be fixed 
 #' to maintain the \code{\link{EGAnet}} style
 #' 
+#' \emph{Do \code{\link{EGAnet}} plots load slow? \cr
+#' Check out our Wiki on faster plots in 
+#' \href{https://tinyurl.com/EGAnet-plotting}{EGAnet (and R)}}
+#' 
 #' @section Class List of S3 Plot Methods:
 #' 
 #' \code{\link[EGAnet]{boot.ergoInfo}}, \code{\link[EGAnet]{bootEGA}}, 
@@ -95,11 +99,33 @@
 #' currently has 40 colors but there will likely be a need to expand it further
 #' (e.g., \code{\link[EGAnet]{hierEGA}} demands a lot of colors).
 #' 
-#' \strong{Usage}: \code{plot(x, color.palette = "polychrome", ...)}
+#' Example: \code{plot(ega.wmt, color.palette = "blue.ridge2")}
+#' 
+#' The \code{color.palette} argument will also accept HEX code colors that 
+#' are the same length as the number of communities in the plot.
 #' 
 #' In any network plots, the \code{color.palette} argument can be used to
 #' select color palettes from \code{\link[EGAnet]{color_palette_EGA}} as well
 #' as those in the color scheme of \code{\link[RColorBrewer]{RColorBrewer}}
+#' 
+#' @examples
+#' # Using different arguments in {GGally}'s `ggnet2`
+#' plot(ega.wmt, node.size = 6, edge.size = 4)
+#' 
+#' # Using a different layout in {sna}'s `gplot.layout`
+#' plot(ega.wmt, layout = "circle") # 'layout' argument
+#' plot(ega.wmt, mode = "circle") # 'mode' argument
+#' 
+#' # Using different color palettes with `color_palette_EGA`
+#' ## University of Virginia colors
+#' plot(ega.wmt, color.palette = c("#232D4B", "#F84C1E"))
+#' 
+#' ## Vanderbilt University colors
+#' ## (with additional {GGally} `ggnet2` argument)
+#' plot(
+#'   ega.wmt, color.palette = c("#FFFFFF", "#866D4B"), 
+#'   label.color = "#000000"
+#' )
 #' 
 #' @aliases plot.EGAnet
 #' 

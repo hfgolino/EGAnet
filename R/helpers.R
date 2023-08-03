@@ -1782,7 +1782,7 @@ estimator_arguments <- function(lavaan_ARGS, ellipse)
 #' @noRd
 # Defaults for GGally plotting ----
 # For plots and methods
-# Updated 06.07.2023
+# Updated 03.08.2023
 GGally_args <- function(ellipse)
 {
   
@@ -1795,6 +1795,7 @@ GGally_args <- function(ellipse)
   # Get default {EGAnet} arguments
   ega_default_args <- list(
     layout.exp = 0.20, label.size = 5,
+    label.color = "black",
     edge.label.color = "black", node.alpha = 0.50,
     node.shape = 19, node.size = 12, 
     edge.alpha = "edge.alpha", edge.size = 8
@@ -1859,7 +1860,7 @@ GGally_args <- function(ellipse)
     )
     
     # Check for gray scale
-    if(tolower(ellipse$color.palette) %in% gray_options){
+    if(any(tolower(ellipse$color.palette) %in% gray_options)){
       default_args$edge.color <- c("#293132", "grey25")
       default_args$edge.lty <- c("solid", "dashed")
     }
@@ -2002,18 +2003,15 @@ readable_names <- function(node_names)
 
 #' @noRd
 # Get network layout ----
-# Updated 28.07.2023
-get_layout <- function(
-    network, dimensions,
-    non_zero_index, plot_ARGS, ellipse
-)
+# Updated 03.08.2023
+get_layout <- function(network, dimensions, non_zero_index, plot_ARGS)
 {
   
-  # Get ellipse names
-  ellipse_names <- names(ellipse)
+  # Get plot argument names
+  plot_ARGS_names <- names(plot_ARGS)
   
-  # Determine whether "mode" or "layout" were used
-  if(!any(c("mode", "layout") %in% ellipse_names)){ 
+  # Determine whether "mode" was used
+  if(!"mode" %in% plot_ARGS_names){ 
     # Default: {qgraph} Fruchterman-Reingold
     
     # Lower triangle for edge list
@@ -2031,18 +2029,11 @@ get_layout <- function(
       vcount = dimensions[2]
     )
     
-  }else{ 
-    
-    # Determine whether "mode" or "layout" is in arguments
-    # If both, then override with "mode"
-    if(!"mode" %in% ellipse_names & "layout" %in% ellipse_names){
-      ellipse$mode <- ellipse$layout
-      ellipse <- ellipse[ellipse_names != "layout"] # remove "layout"
-    }
+  }else{
     
     # Check for whether mode was provided as character
     # or whether mode was input as 2D distance matrix
-    if(is.character(ellipse$mode)){ # Obtain actual "mode" values using {sna}
+    if(is.character(plot_ARGS$mode)){ # Obtain actual "mode" values using {sna}
       
       # Get layout function
       mode_FUN <- switch(
@@ -2078,10 +2069,10 @@ get_layout <- function(
         args = mode_ARGS
       )
       
-    }else if(is.numeric(ellipse$mode) & is.matrix(ellipse$mode)){
+    }else if(is.numeric(plot_ARGS$mode) & is.matrix(plot_ARGS$mode)){
       
       # Assume "mode" is a 2D matrix corresponding to a layout
-      network_layout <- ellipse$mode
+      network_layout <- plot_ARGS$mode
       
     }
   
@@ -2148,8 +2139,7 @@ basic_plot_setup <- function(network, wc = NULL, ...)
   ## Mode (layout)
   plot_ARGS$mode <- get_layout(
     network, dimensions, 
-    non_zero_index,
-    plot_ARGS, ellipse
+    non_zero_index, plot_ARGS
   )
   
   ### Generic arguments (mostly handled in `GGally_args`)
@@ -2257,7 +2247,7 @@ basic_plot_setup <- function(network, wc = NULL, ...)
   if(all(is.na(wc))){ # Plain network (without communities)
     border_color <- rep("black", dimensions[2])
   }else if( 
-    length(color.palette) == 1 &
+    length(color.palette) == 1 &&
     color.palette %in% gray_options
   ){ # Gray scale network
     border_color <- swiftelse(palette == "white", "white", "black")
@@ -2278,7 +2268,8 @@ basic_plot_setup <- function(network, wc = NULL, ...)
       shape = 1, stroke = 1.5, alpha = 0.80
     ) +
     ggplot2::geom_text( # put text back on top
-      ggplot2::aes(label = node_names), color = "black",
+      ggplot2::aes(label = node_names), 
+      color = plot_ARGS$label.color,
       size = plot_ARGS$label.size
     ) +
     ggplot2::guides( # create legend with these settings
