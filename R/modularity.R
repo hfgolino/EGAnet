@@ -1,4 +1,8 @@
-#' Computes the (Signed) Modularity Statistic
+#' @title Computes the (Signed) Modularity Statistic
+#'
+#' @description Computes (signed) modularity statistic
+#' given a network and community structure. Allows the
+#' resolution parameter to be set 
 #'
 #' @param network Matrix or data frame.
 #' A symmetric matrix representing a network
@@ -39,6 +43,7 @@
 #'   memberships = ega.wmt$wc,
 #'   signed = FALSE
 #' )
+#' # 0.1697952
 #' 
 #' # Compute signed modularity
 #' modularity(
@@ -46,6 +51,7 @@
 #'   memberships = ega.wmt$wc,
 #'   signed = TRUE
 #' )
+#' # 0.1701946
 #' 
 #' @references
 #' Gomez, S., Jensen, P., & Arenas, A. (2009).
@@ -58,9 +64,14 @@
 #' @export
 #'
 # Modularity statistic
-# Updated 02.08.2023
+# Updated 04.08.2023
 modularity <- function(network, memberships, resolution = 1, signed = FALSE)
 {
+  
+  # Argument errors (returns 'memberships' as a vector)
+  memberships <- modularity_errors(
+    network, memberships, resolution, signed
+  )
   
   # Ensure data is a matrix
   network <- as.matrix(network)
@@ -70,10 +81,7 @@ modularity <- function(network, memberships, resolution = 1, signed = FALSE)
   
   # Ensure names
   network <- ensure_dimension_names(network)
-  
-  # Ensure memberships is a vector
-  memberships <- force_vector(memberships)
-  
+
   # Membership length
   membership_length <- length(memberships)
   
@@ -132,3 +140,34 @@ modularity <- function(network, memberships, resolution = 1, signed = FALSE)
   )
   
 }
+
+#' @noRd
+# Argument errors ----
+# Updated 04.08.2023
+modularity_errors <- function(
+    network, memberships, resolution, signed
+)
+{
+  
+  # 'network' errors
+  object_error(network, c("matrix", "data.frame"))
+  
+  # 'memberships' errors
+  object_error(memberships, c("vector", "matrix", "data.frame"))
+  memberships <- force_vector(memberships)
+  length_error(memberships, dim(network)[2])
+  
+  # 'resolution' errors
+  length_error(resolution, 1)
+  typeof_error(resolution, "numeric")
+  range_error(resolution, c(0, Inf))
+  
+  # 'signed' errors
+  length_error(signed, 1)
+  typeof_error(signed, "logical")
+  
+  # Return memberships as a vector
+  return(memberships)
+  
+}
+  

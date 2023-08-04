@@ -277,7 +277,7 @@
 #' 
 #' }
 #' 
-#' \item{plot.typical.ega}{Stored plot of typical network}
+#' \item{plot.typical.ega}{Plot output if \code{plot.typicalStructure = TRUE}}
 #'
 #' @author Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'

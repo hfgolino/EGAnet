@@ -1,33 +1,27 @@
-#' Network Loadings
+#' @title Network Loadings
 #'
 #' @description Computes the between- and within-community
-#' \code{strength} of each item
-#' for each community. This function uses the
-#' \code{comcat} and
-#' \code{stable} functions to calculate
-#' the between- and within-community strength of each item, respectively.
+#' \code{strength} of each variable for each community
 #'
-#' @param A Matrix, data frame, or \code{\link[EGAnet]{EGA}} object.
-#' A network adjacency matrix
+#' @param A Network matrix, data frame, or \code{\link[EGAnet]{EGA}} object
 #'
-#' @param wc Numeric or character vector.
+#' @param wc Numeric or character vector (length = \code{ncol(A)}).
 #' A vector of community assignments.
 #' If input into \code{A} is an \code{\link[EGAnet]{EGA}} object,
 #' then \code{wc} is automatically detected
 #' 
-#' @param rotation Character.
-#' A rotation to use, like factor loadings, to obtain
-#' a simple structure.
-#' Defaults to \code{\link[GPArotation]{geominQ}}.
-#' For a list of rotations, see \code{\link{GPArotation}}
+#' @param loading.method Character (length = 1).
+#' Sets network loading calculation based on implementation
+#' described in \code{"BRM"} (Christensen & Golino, 2021) or
+#' an \code{"experimental"} implementation.
+#' Defaults to \code{"BRM"}
 #' 
-#' @param min.load Numeric.
-#' Sets the minimum loading allowed in the standardized
-#' network loading matrix. Values equal or greater than
-#' the minimum loading are kept in the output. Values
-#' less than the minimum loading are removed. This matrix can
-#' be viewed using \code{print()} or \code{summary()}
-#' Defaults to \code{0}
+#' @param rotation Character.
+#' A rotation to use to obtain a simpler structure. 
+#' For a list of rotations, see \code{\link{GPArotation}} for options.
+#' Defaults to \code{NULL} or no rotation.
+#' By setting a rotation, \code{scores} estimation will be
+#' based on the rotated loadings rather than unrotated loadings
 #'
 #' @return Returns a list containing:
 #'
@@ -37,49 +31,39 @@
 #' \item{std}{A matrix of the standardized within- and between-community
 #' strength values for each node}
 #' 
-#' \item{minLoad}{The minimum loading to appear in summary of network loadings.
-#' Use \code{print()} or \code{summary()} to view}
+#' \item{rotated}{\code{NULL} if \code{rotation = NULL}; otherwise,
+#' a list containing the rotated standardized network loadings
+#' (\code{loadings}) and correlations between dimensions (\code{Phi})
+#' from the rotation}
 #'
 #' @details Simulation studies have demonstrated that a node's strength
 #' centrality is roughly equivalent to factor loadings
-#' (Christensen, Golino, & Silvia, 2019; Hallquist, Wright, & Molenaar, in press).
-#' Hallquist and colleagues (in press) found that node strength represented a
+#' (Christensen & Golino, 2021; Hallquist, Wright, & Molenaar, 2019).
+#' Hallquist and colleagues (2019) found that node strength represented a
 #' combination of dominant and cross-factor loadings. This function computes
 #' each node's strength within each specified dimension, providing a rough
-#' equivalent to factor loadings (including cross-loadings).
-#'
-#' For more details, type \code{vignette("Network_Scores")}
+#' equivalent to factor loadings (including cross-loadings; Christensen & Golino, 2021).
 #'
 #' @examples
 #' # Load data
 #' wmt <- wmt2[,7:24]
 #'
-#' \dontrun{
 #' # Estimate EGA
 #' ega.wmt <- EGA(
 #'   data = wmt,
 #'   plot.EGA = FALSE # No plot for CRAN checks
-#' )}
+#' )
 #'
 #' # Network loadings
 #' net.loads(ega.wmt)
-#' 
-#' \dontrun{
-#' # Produce Methods section
-#' methods.section(
-#'   ega.wmt,
-#'   stats = "net.loads"
-#' )}
 #'
 #' @references
+#' \strong{Original implementation and simulation} \cr
 #' Christensen, A. P., & Golino, H. (2021).
 #' On the equivalency of factor and network loadings.
 #' \emph{Behavior Research Methods}, \emph{53}, 1563-1580.
 #' 
-#' Christensen, A. P., Golino, H., & Silvia, P. J. (2020).
-#' A psychometric network perspective on the validity and validation of personality trait questionnaires.
-#' \emph{European Journal of Personality}, \emph{34}, 1095-1108.
-#'
+#' \strong{Demonstration of node strength similarity to CFA loadings} \cr
 #' Hallquist, M., Wright, A. C. G., & Molenaar, P. C. M. (2019).
 #' Problems with centrality measures in psychopathology symptom networks: Why network psychometrics cannot escape psychometric theory.
 #' \emph{Multivariate Behavioral Research}, 1-25.
@@ -89,7 +73,7 @@
 #' @export
 #'
 # Network Loadings
-# Updated 03.08.2023
+# Updated 04.08.2023
 # Default = "BRM" or `net.loads` from version 1.2.3
 # Experimental = new signs and cross-loading adjustment
 net.loads <- function(
@@ -101,7 +85,7 @@ net.loads <- function(
   # Check for missing arguments (argument, default, function)
   loading.method <- set_default(loading.method, "brm", net.loads)
   
-  # Organize and extract input
+  # Organize and extract input (handles argument errors)
   # `wc` is made to be a character vector to allow `NA`
   input <- organize_input(A, wc)
   A <- input$A; wc <- input$wc
@@ -458,8 +442,11 @@ obtain_signs <- function(target_network)
 
 #' @noRd
 # Experimental loadings ----
-# Updated 15.07.2023
-experimental_loadings <- function(A, wc, nodes, node_names, communities, unique_communities)
+# Updated 04.08.2023
+experimental_loadings <- function(
+    A, wc, nodes, node_names, 
+    communities, unique_communities
+)
 {
   
   # Initialize loading matrix
@@ -483,9 +470,6 @@ experimental_loadings <- function(A, wc, nodes, node_names, communities, unique_
       A[community_index, community_index, drop = FALSE]
     )
     
-    # Set diagonal of target network
-    diag(target_network) <- colSums(target_network, na.rm = TRUE)
-    
     # Compute absolute sum for dominant loadings
     loading_matrix[community_index, community] <- colSums(target_network, na.rm = TRUE)
     
@@ -493,6 +477,11 @@ experimental_loadings <- function(A, wc, nodes, node_names, communities, unique_
     signs[community_index] <- attr(target_network, "signs")
     
   }
+  
+  # Multiply the assigned loading matrix by 1.5
+  # This computation is a vectorization of putting half
+  # of a node's within-community strength on it's diagonal
+  loading_matrix <- loading_matrix * 1.5
   
   # Check for unidimensional structure
   if(communities > 1){

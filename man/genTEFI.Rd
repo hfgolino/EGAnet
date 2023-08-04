@@ -7,56 +7,45 @@
 genTEFI(data, structure = NULL)
 }
 \arguments{
-\item{data}{A matrix, data frame, or correlation matrix}
+\item{data}{Matrix, data frame, or \code{\link[EGAnet]{hierEGA}} object.
+Can be raw data or correlation matrix}
 
 \item{structure}{For high-order and correlated bifactor structures,
 \code{structure} should be a list containing:
 
 \itemize{
 
-\item{\code{lower_order}}
-{A vector representing the first-order structure (numbers or labels for each item in each first-order factor or community).}
+\item{\code{lower_order} --- }
+{A vector (length = \code{ncol(data)}) representing the first-order structure 
+(numbers or labels for each item in each first-order factor or community)}
 
-\item{\code{higher_order}}
-{A vector representing the second-order structure (numbers or labels for each item in each second-order factor or community).}
+\item{\code{higher_order} --- }
+{A vector (length = \code{ncol(data)} or number of \code{lower_order} communities)representing 
+the second-order structure (numbers or labels for each item in each second-order 
+factor or community)}
 
 }}
 }
 \value{
-Returns a list containing:
-
-\item{VN.Entropy.Fit}{The Generalized Total Entropy Fit Index using Von Neumman's entropy}
+Returns a single column data frame of the Generalized Total Entropy 
+Fit Index using Von Neumman's entropy (\code{VN.Entropy.Fit})
 }
 \description{
-Computes the fit (Generalized TEFI) of a hierarchical or correlated bifactor dimensionality structure (or \code{\link{hierEGA}} objects) using Von Neumman's entropy when the input is a correlation matrix.
-Lower values suggest better fit of a structure to the data.
+Computes the fit (Generalized TEFI) of a hierarchical or correlated bifactor 
+dimensionality structure (or \code{\link{hierEGA}} objects) using Von Neumman's entropy 
+when the input is a correlation matrix. Lower values suggest better fit of a structure to the data
 }
 \examples{
+# Example using network scores
+opt.hier <- hierEGA(
+  data = optimism, scores = "network",
+  plot.EGA = FALSE # No plot for CRAN checks
+)
 
-# Load data
-data <- optimism
+Compute the Generalized Total Entropy Fit Index
+genTEFI(opt.hier)
 
-# Not run: 
-# hierEGA example
- opt.hier<- hierEGA(
- data = optimism,
- algorithm = "louvain")
- 
- # Create a list with the lower and higher order structures:
- hier.structure <- vector("list")
- hier.structure$lower_order <- opt.hier$dim.variables$lower
- hier.structure$higher_order <- opt.hier$dim.variables$higher
- 
- # Compute the Generalized Total Entropy Fit Index
- gen.tefi.opt <- tefi(opt.hier$lower_order$correlation, structure = hier.structure)
- 
-
-}
-\references{
-Golino, H., Moulder, R. G., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Nesselroade, J., Sadana, R., Thiyagarajan, J. A., & Boker, S. M. (2020).
-Entropy fit indices: New fit measures for assessing the structure and dimensionality of multiple latent variables.
-\emph{Multivariate Behavioral Research}.
 }
 \author{
-Hudson Golino <hfg9s at virginia.edu>, Alexander P. Christensen <alexpaulchristensen@gmail.com>, and Robert Moulder <rgm4fd@virginia.edu>
+Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 }

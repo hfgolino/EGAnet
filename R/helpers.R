@@ -2494,8 +2494,22 @@ experimental <- function(function_name)
 }
 
 #' @noRd
+# Not refactored warning ----
+# Updated 04.08.2023
+not_refactored <- function(function_name)
+{
+  warning(
+    paste0(
+      "This implementation of `", function_name, "` was not refactored in the {EGAnet} 2.0.0 update.",
+      "There are no guarantees that this function will work.\n\n",
+      "Please do not create a GitHub issue or bug report for this function"
+    ), call. = FALSE
+  )
+}
+
+#' @noRd
 # Error for class ----
-# Updated 09.07.2023
+# Updated 04.08.2023
 class_error <- function(input, expected_class){
   
   # Check for object types
@@ -2503,8 +2517,8 @@ class_error <- function(input, expected_class){
     stop(
       paste0(
         "Input into '", deparse(substitute(input)),
-        "' is not class ", paste0("'", expected_class, "'", collapse = ", "),
-        ". Input is ", paste0("'", class(input), "'", collapse = ", ")
+        "' is not the expected class ", paste0("'", expected_class, "'", collapse = ", "),
+        ". Input is class ", paste0("'", class(input), "'", collapse = ", ")
       ), call. = FALSE
     )
   }

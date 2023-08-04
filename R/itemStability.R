@@ -1,11 +1,11 @@
 #' @title Item Stability Statistics from \code{\link[EGAnet]{bootEGA}}
 #'
 #' @description Based on the \code{\link[EGAnet]{bootEGA}} results, this function
-#' computes and plots the number of times an item (variable) is estimated
-#' in the same factor/dimension as originally estimated by an empirical
+#' computes and plots the number of times an variable is estimated
+#' in the same dimension as originally estimated by an empirical
 #' \code{\link[EGAnet]{EGA}} structure or a theoretical/input structure.
-#' The output also contains each item's replication frequency (i.e., proportion of
-#' bootstraps that an item appeared in each dimension.
+#' The output also contains each variable's replication frequency (i.e., proportion of
+#' bootstraps that a variable appeared in each dimension
 #'
 #' @param bootega.obj A \code{\link[EGAnet]{bootEGA}} object
 #'
@@ -26,15 +26,15 @@
 #'
 #' \itemize{
 #'
-#' \item{\code{empirical}}
-#' {The empirical memberships from the empirical \code{\link[EGAnet]{EGA}} result}
+#' \item{\code{empirical} --- }
+#' {A vector of the empirical memberships from the empirical \code{\link[EGAnet]{EGA}} result}
 #'
-#' \item{\code{bootstrap}}
-#' {The homogenized memberships from the replicate samples in 
+#' \item{\code{bootstrap} --- }
+#' {A matrix of the homogenized memberships from the replicate samples in 
 #' the \code{\link[EGAnet]{bootEGA}} results}
 #' 
-#' \item{\code{structure}}
-#' {The structure used in the analysis. If \code{structure = NULL}, then this output
+#' \item{\code{structure} --- }
+#' {A vector of the structure used in the analysis. If \code{structure = NULL}, then this output
 #' will be the same as \code{empirical}}
 #'    
 #' }
@@ -45,20 +45,19 @@
 #'
 #' \itemize{
 #'
-#' \item{\code{empirical.dimensions}}
-#' {The proportion of times each item replicated
+#' \item{\code{empirical.dimensions} --- }
+#' {A vector of the proportion of times each item replicated
 #' within the structure defined by \code{structure}}
 #'
-#' \item{\code{all.dimensions}}
-#' {The proportion of times each item replicated
+#' \item{\code{all.dimensions} --- }
+#' {A matrix of the proportion of times each item replicated
 #' in each of the \code{structure} defined dimensions.}
 #'
 #' }
 #' 
 #' }
 #'
-#' \item{plot}{A plot of the number of times each item
-#' replicated within the structure defined by \code{structure}}
+#' \item{plot}{Plot output if \code{IS.plot = TRUE}}
 #'
 #' @examples
 #' # Load data
@@ -123,19 +122,8 @@
 #' @export
 #' 
 # Item Stability function ----
-# Updated 31.07.2023
+# Updated 04.08.2023
 itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
-  
-  # Check for 'bootEGA' object
-  if(is(bootega.obj) != "bootEGA"){
-    stop("Input for 'bootega.obj' is not a 'bootEGA' object")
-  }
-  
-  # Get empirical EGA
-  ega_object <- get_EGA_object(bootega.obj)
-
-  # Determine if hierarchical EGA
-  hierarchical <- is(ega_object, "hierEGA")
   
   # Set up ellipse arguments
   ellipse <- list(...)
@@ -152,6 +140,15 @@ itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
   if("IS.plot" %in% names(ellipse)){
     IS.plot <- ellipse$IS.plot
   }
+  
+  # Argument errors
+  itemStability_errors(bootega.obj, IS.plot)
+  
+  # Get empirical EGA
+  ega_object <- get_EGA_object(bootega.obj)
+
+  # Determine if hierarchical EGA
+  hierarchical <- is(ega_object, "hierEGA")
   
   # Check for hierarchical EGA
   if(hierarchical){
@@ -195,7 +192,7 @@ itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
   attr(results, "methods") <- bootega.obj[c("EGA.type", "iter", "type")]
   
   # Determine whether to plot
-  if(isTRUE(IS.plot)){
+  if(IS.plot){
     
     # Check for hierarchical
     if(hierarchical){
@@ -249,6 +246,23 @@ itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
   
   # Return results
   return(results)
+  
+}
+
+#' @noRd
+# itemStability errors
+# Updated 04.08.2023
+itemStability_errors <- function(bootega.obj, IS.plot)
+{
+  
+  # 'bootega.obj' errors
+  class_error(bootgea.obj, "bootEGA")
+  
+  # 'IS.plot' errors
+  length_error(IS.plot, 1)
+  typeof_error(IS.plot, "logical")
+  
+  # 'structure' errors are handled in `get_structure`
   
 }
 

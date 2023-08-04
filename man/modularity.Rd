@@ -35,7 +35,9 @@ Defaults to \code{FALSE}}
 Returns the modularity statistic
 }
 \description{
-Computes the (Signed) Modularity Statistic
+Computes (signed) modularity statistic
+given a network and community structure. Allows the
+resolution parameter to be set
 }
 \examples{
 # Load data
@@ -50,6 +52,7 @@ modularity(
   memberships = ega.wmt$wc,
   signed = FALSE
 )
+# 0.1697952
 
 # Compute signed modularity
 modularity(
@@ -57,6 +60,7 @@ modularity(
   memberships = ega.wmt$wc,
   signed = TRUE
 )
+# 0.1701946
 
 }
 \references{

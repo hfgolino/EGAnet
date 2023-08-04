@@ -50,6 +50,8 @@ o ADD: Ziggurat method for random normal generation over top xoshiro256++ (2-5x 
 
 o ADD: configural invariance was added to `invariance` (see Details section)
 
+o ADD: `genTEFI` to compute the Generalized Total Entropy Fit Index solely; `tefi` serves as a general function to compute TEFI for all `*EGA` classes
+
 o REMOVE: `signed.louvain` until reproducibility can be sorted
 
 o UPDATE: `EBICglasso.qgraph` and `TMFG` were optimized; `TMFG` is now 2x faster
@@ -109,6 +111,8 @@ o UPDATE: `UVA` supports legacy of inital conception in Christensen, Golino, and
 o UPDATE: streamlined `UVA` (about 4x faster); fixed bugs related to reverse coding issues 
 
 o UPDATE: `tefi` now handles all `EGA*` function objects including `hierEGA` which computes generalized TEFI
+
+o UPDATE: documentation for all functions have been thoroughly revised to provide better instruction on how to use functions and their expected inputs
 
 o DEPENDENCY: removed {network} because it is no longer used for plotting; switched {sna} to IMPORTS rather than SUGGESTS
 

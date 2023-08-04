@@ -13,17 +13,17 @@ Network to be compared}
 \item{network2}{Matrix or data frame.
 Second network to be compared}
 
-\item{method}{Character.
+\item{method}{Character (length = 1).
 Method to compute Jensen-Shannon Distance.
 Defaults to \code{"spectral"}.
-Options:
+Available options:
 
 \itemize{
 
-\item{\code{"kld"}}
+\item{\code{"kld"} --- }
 {Uses Kullback-Leibler Divergence}
 
-\item{\code{"spectral"}}
+\item{\code{"spectral"} --- }
 {Uses eigenvalues of combinatiorial Laplacian matrix to compute
 Von Neumann entropy}
 
@@ -57,13 +57,16 @@ glas1 <- EBICglasso.qgraph(data1)
 glas2 <- EBICglasso.qgraph(data2)
 
 # Spectral JSD 
-jsd(glas1, glas2) # 0.1618195
+jsd(glas1, glas2) 
+# 0.1595893
 
 # Spectral JSS (similarity)
-1 - jsd(glas1, glas2) # 0.8381805
+1 - jsd(glas1, glas2) 
+# 0.8404107
 
 # Jensen-Shannon Divergence
-jsd(glas1, glas2, method = "kld") # 0.1923636
+jsd(glas1, glas2, method = "kld") 
+# 0.1393621
 
 }
 \author{

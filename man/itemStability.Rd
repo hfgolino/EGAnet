@@ -27,15 +27,15 @@ Returns a list containing:
 
 \itemize{
 
-\item{\code{empirical}}
-{The empirical memberships from the empirical \code{\link[EGAnet]{EGA}} result}
+\item{\code{empirical} --- }
+{A vector of the empirical memberships from the empirical \code{\link[EGAnet]{EGA}} result}
 
-\item{\code{bootstrap}}
-{The homogenized memberships from the replicate samples in 
+\item{\code{bootstrap} --- }
+{A matrix of the homogenized memberships from the replicate samples in 
 the \code{\link[EGAnet]{bootEGA}} results}
 
-\item{\code{structure}}
-{The structure used in the analysis. If \code{structure = NULL}, then this output
+\item{\code{structure} --- }
+{A vector of the structure used in the analysis. If \code{structure = NULL}, then this output
 will be the same as \code{empirical}}
    
 }
@@ -46,28 +46,27 @@ will be the same as \code{empirical}}
 
 \itemize{
 
-\item{\code{empirical.dimensions}}
-{The proportion of times each item replicated
+\item{\code{empirical.dimensions} --- }
+{A vector of the proportion of times each item replicated
 within the structure defined by \code{structure}}
 
-\item{\code{all.dimensions}}
-{The proportion of times each item replicated
+\item{\code{all.dimensions} --- }
+{A matrix of the proportion of times each item replicated
 in each of the \code{structure} defined dimensions.}
 
 }
 
 }
 
-\item{plot}{A plot of the number of times each item
-replicated within the structure defined by \code{structure}}
+\item{plot}{Plot output if \code{IS.plot = TRUE}}
 }
 \description{
 Based on the \code{\link[EGAnet]{bootEGA}} results, this function
-computes and plots the number of times an item (variable) is estimated
-in the same factor/dimension as originally estimated by an empirical
+computes and plots the number of times an variable is estimated
+in the same dimension as originally estimated by an empirical
 \code{\link[EGAnet]{EGA}} structure or a theoretical/input structure.
-The output also contains each item's replication frequency (i.e., proportion of
-bootstraps that an item appeared in each dimension.
+The output also contains each variable's replication frequency (i.e., proportion of
+bootstraps that a variable appeared in each dimension
 }
 \examples{
 # Load data

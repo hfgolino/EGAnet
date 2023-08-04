@@ -283,7 +283,7 @@ quantiles (lower = 2.5\% and upper = 97.5\%)}
 
 }
 
-\item{plot.typical.ega}{Stored plot of typical network}
+\item{plot.typical.ega}{Plot output if \code{plot.typicalStructure = TRUE}}
 }
 \description{
 \code{bootEGA} Estimates the number of dimensions of \code{iter} bootstraps

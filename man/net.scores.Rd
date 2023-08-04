@@ -8,10 +8,10 @@ net.scores(
   data,
   A,
   wc,
-  rotation = NULL,
   loading.method = c("BRM", "experimental"),
-  scoring.method = c("Anderson", "Bartlett", "components", "Harman", "network",
-    "tenBerge", "Thurstone"),
+  rotation = NULL,
+  scores = c("Anderson", "Bartlett", "components", "Harman", "network", "tenBerge",
+    "Thurstone"),
   loading.structure = c("simple", "full"),
   impute = c("mean", "median", "none"),
   ...
@@ -19,114 +19,115 @@ net.scores(
 }
 \arguments{
 \item{data}{Matrix or data frame.
-Must be a dataset}
+Should consist only of variables to be used in the analysis}
 
-\item{A}{Matrix, data frame, or \code{\link[EGAnet]{EGA}} object.
-An adjacency matrix of network data}
+\item{A}{Network matrix, data frame, or \code{\link[EGAnet]{EGA}} object}
 
-\item{wc}{Numeric.
+\item{wc}{Numeric or character vector (length = \code{ncol(A)}).
 A vector of community assignments.
-Not necessary if an \code{\link[EGAnet]{EGA}} object
-is input for argument \code{A}}
+If input into \code{A} is an \code{\link[EGAnet]{EGA}} object,
+then \code{wc} is automatically detected}
+
+\item{loading.method}{Character (length = 1).
+Sets network loading calculation based on implementation
+described in \code{"BRM"} (Christensen & Golino, 2021) or
+an \code{"experimental"} implementation.
+Defaults to \code{"BRM"}}
 
 \item{rotation}{Character.
-A rotation to use, like factor loadings, to obtain
-a simple structure.
-Defaults to \code{\link[GPArotation]{geominQ}}.
-For a list of rotations, see \code{\link{GPArotation}}}
+A rotation to use to obtain a simpler structure. 
+For a list of rotations, see \code{\link{GPArotation}} for options.
+Defaults to \code{NULL} or no rotation.
+By setting a rotation, \code{scores} estimation will be
+based on the rotated loadings rather than unrotated loadings}
 
-\item{impute}{Character.
-In the presence of missing data, imputation can be implemented. Currently,
-three options are available:}
+\item{scores}{Character (length = 1).
+How should scores be estimated?
+Defaults to \code{"network"} for network scores.
+Set to other scoring methods which will be computed using
+\code{\link[psych]{factor.scores}} (see link for arguments
+and explanations for other methods)}
 
-\item{...}{Additional arguments.
-Arguments to be passed onto \code{\link[EGAnet]{net.loads}}
+\item{loading.structure}{Character (length = 1).
+Whether simple structure or the saturated loading matrix
+should be used when computing scores.
+Defaults to \code{"simple"}
+
+\code{"simple"} structure more closely mirrors sum scores and CFA; 
+\code{"full"} structure more closely mirrors EFA
+
+Simple structure is the more "conservative" (established) approach
+and is therefore the default. Treat \code{"full"} as experimental
+as proper vetting and validation has not been established}
+
+\item{impute}{Character (length = 1).
+If there are any missing data, then imputation can be implemented. 
+Available options:
 
 \itemize{
 
-\item{\strong{\code{none}}}
-{No imputation is performed. This is the default.}
+\item{\code{"none"} --- }
+{Default. No imputation is performed}
 
-\item{\strong{\code{mean}}}
-{The "mean" value of the columns are used to replace the missing data.}
+\item{\code{"mean"} --- }
+{The mean value of each variable is used to replace missing data
+for that variable}
 
-\item{\strong{\code{median}}}
-{The "median" value of the columns are used to replace the missing data.}
+\item{\code{"median"} --- }
+{The median value of each variable is used to replace missing data
+for that variable}
 
 }}
 
-\item{method}{Character.
-Factor scoring method to use. For a list of scoring methods,
-see \code{\link[psych]{factor.scores}}.
-Defaults to \code{"network"}
-
-"network" scores can also be computed as a formative method
-using \code{"component"} or \code{"network"}. The core difference
-between these two methods is that \code{"network"} will use the
-weight contributions to communities using each variable's
-standard deviation in combination with their loadings}
+\item{...}{Additional arguments to be passed on to 
+\code{\link[EGAnet]{net.loads}} and
+\code{\link[psych]{factor.scores}}}
 }
 \value{
 Returns a list containing:
 
-\item{unstd.scores}{The unstandardized network scores for each participant
-and community (including the overall score)}
+\item{scores}{A list containing the standardized (\code{std.scores})
+rotated (\code{rot.scores}) scores. If \code{rotation = NULL}, then
+\code{rot.scores} will be \code{NULL}}
 
-\item{std.scores}{The standardized network scores for each participant
-and community (including the overall score)}
-
-\item{commCor}{Partial correlations between the specified or identified communities}
-
-\item{loads}{Standardized network loadings for each item in each dimension
-(computed using \code{\link[EGAnet]{net.loads}})}
+\item{loadings}{Output from \code{\link[EGAnet]{net.loads}}}
 }
 \description{
 This function computes network scores computed based on
-each node's \code{strength} within each
-community (i.e., factor) in the network (see \code{\link[EGAnet]{net.loads}}).
-These values are used as network "factor loadings" for the weights of each item.
-Notably, network analysis allows nodes to contribution to more than one community.
-These loadings are considered in the network scores. In addition,
-if the construct is a hierarchy (e.g., personality questionnaire;
-items in facet scales in a trait domain), then an overall
-score can be computed (see argument \code{global}). An important difference
-is that the network scores account for cross-loadings in their
-estimation of scores
-}
-\details{
-For more details, type \code{vignette("Network_Scores")}
+each node's \code{strength} within each community in the network 
+(see \code{\link[EGAnet]{net.loads}}). These values are used as "network loadings" 
+for the weights of each variable.
+
+Network scores are computed as a formative composite rather than a reflective factor.
+This composite representation is consistent with no latent factors that psychometric
+network theory proposes.
+
+Scores can be computed as a "simple" structure, which is equivalent to a weighted
+sum scores or as a "full" structure, which is equivalent to an EFA approach.
+Conservatively, the "simple" structure approach is recommended until further
+validation
 }
 \examples{
 # Load data
 wmt <- wmt2[,7:24]
 
-\dontrun{
 # Estimate EGA
 ega.wmt <- EGA(
   data = wmt,
   plot.EGA = FALSE # No plot for CRAN checks
-)}
+)
 
 # Network scores
 net.scores(data = wmt, A = ega.wmt)
 
-\dontrun{
-# Produce Methods section
-methods.section(
-  ega.wmt,
-  stats = "net.scores"
-)}
-
 }
 \references{
+\strong{Original implementation and simulation for loadings} \cr
 Christensen, A. P., & Golino, H. (2021).
 On the equivalency of factor and network loadings.
 \emph{Behavior Research Methods}, \emph{53}, 1563-1580.
 
-Christensen, A. P., Golino, H., & Silvia, P. J. (2020).
-A psychometric network perspective on the validity and validation of personality trait questionnaires.
-\emph{European Journal of Personality}, \emph{34}, 1095-1108.
-
+\strong{Preliminary simulation for scores} \cr
 Golino, H., Christensen, A. P., Moulder, R., Kim, S., & Boker, S. M. (2021).
 Modeling latent topics in social media using Dynamic Exploratory Graph Analysis: The case of the right-wing and left-wing trolls in the 2016 US elections.
 \emph{Psychometrika}.

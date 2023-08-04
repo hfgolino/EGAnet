@@ -126,9 +126,22 @@ get_tefi_structure <- function(data, structure, ega_object = NULL)
       # If not `EGA`, then check for proper object structure in `structure`
       if(all(names(structure) %in% c("lower_order", "higher_order"))){
         
-        # Perform checks
+        # Perform length check on lower order
         length_error(structure$lower_order, variables)
-        length_error(structure$higher_order, variables)
+        
+        # Get number of communities in lower order
+        lower_order_communities <- unique_length(structure$lower_order)
+        
+        # Perform length check on higher order
+        length_error(structure$higher_order, c(lower_order_communities, variables))
+        
+        # Check for whether higher order's length is equal to
+        # lower order communities
+        if(length(structure$higher_order) == lower_order_communities){
+          structure$higher_order <- single_revalue_memberships(
+            structure$lower_order, structure$higher_order
+          )
+        }
         
       }else{ # Bad 'structure' with NULL `EGA` object
         

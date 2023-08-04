@@ -72,7 +72,7 @@
 #' 
 #' @importFrom utils setTxtProgressBar txtProgressBar
 #'
-#' @export
+#' @noRd
 #'
 # Loadings Comparison Test----
 # Updated 07.07.2022
@@ -84,6 +84,10 @@ LCT <- function (data, n, iter = 100,
                    )
                  )
 {
+  
+  # Send not refactored warning (for now)
+  not_refactored("LCT")
+  
   # Convert data to matrix
   data <- as.matrix(data)
   

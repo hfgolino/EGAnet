@@ -1,6 +1,6 @@
-#' Computes Polychoric Correlations
+#' @title Computes Polychoric Correlations
 #' 
-#' A fast implementation of polychoric correlations in C.
+#' @description A fast implementation of polychoric correlations in C.
 #' Uses the Beasley-Springer-Moro algorithm (Boro & Springer, 1977; Moro, 1995)
 #' to estimate the inverse univariate normal CDF, the Drezner-Wesolosky 
 #' approximation (Drezner & Wesolosky, 1990) to estimate the bivariate normal
@@ -12,15 +12,16 @@
 #' 
 #' @param na.data Character (length = 1).
 #' How should missing data be handled?
+#' Defaults to \code{"pairwise"}.
 #' Available options:
 #' 
 #' \itemize{
 #' 
-#' \item{\code{"pairwise"}}
+#' \item{\code{"pairwise"} --- }
 #' {Computes correlation for all available cases between
 #' two variables}
 #' 
-#' \item{\code{"listwise"}}
+#' \item{\code{"listwise"} --- }
 #' {Computes correlation for all complete cases in the dataset}
 #' 
 #' }
@@ -31,15 +32,15 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{"none"}}
+#' \item{\code{"none"} --- }
 #' {Adds no value (\code{empty.value = "none"})
 #' to the empirical joint frequency table between two variables}
 #' 
-#' \item{\code{"zero"}}
+#' \item{\code{"zero"} --- }
 #' {Adds \code{empty.value} to the cells with zero
 #' in the joint frequency table between two variables}
 #' 
-#' \item{\code{"all"}}
+#' \item{\code{"all"} --- }
 #' {Adds \code{empty.value} to all
 #' in the joint frequency table between two variables}
 #' 
@@ -52,16 +53,17 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{"none"}}
+#' \item{\code{"none"} --- }
 #' {Adds no value (\code{0}) to the empirical joint
 #' frequency table between two variables}
 #' 
-#' \item{\code{"point_five"}}
+#' \item{\code{"point_five"} --- }
 #' {Adds \code{0.5} to the cells defined by \code{empty.method}}
 #' 
-#' \item{\code{"one_over"}}
-#' {Adds \code{1 / n} where \code{n} equals the number of cells
+#' \item{\code{"one_over"} --- }
+#' {Adds \code{1 / n} where \emph{n} equals the number of cells
 #' based on \code{empty.method}. For \code{empty.method = "zero"},
+#' \emph{n} equals the number of \emph{zero} cells
 #' }
 #' 
 #' }
@@ -79,9 +81,7 @@
 #' wmt[sample(1:length(wmt), 1000)] <- NA
 #' 
 #' # Compute polychoric correlation matrix with pairwise method
-#' na_correlations <- polychoric.matrix(
-#'   wmt, na.data = "pairwise"
-#'  )
+#' na_correlations <- polychoric.matrix(wmt, na.data = "pairwise")
 #' 
 #' @references 
 #' \strong{Beasley-Moro-Springer algorithm} \cr
@@ -110,7 +110,7 @@
 #' @export
 #'
 # Compute polychoric correlation matrix
-# Updated 29.07.2023
+# Updated 04.08.2023
 polychoric.matrix <- function(
     data, na.data = c("pairwise", "listwise"),
     empty.method = c("none", "zero", "all"),
