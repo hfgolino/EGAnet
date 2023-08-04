@@ -517,13 +517,13 @@ hierEGA <- function(
   results$TEFI <- tefi(results)$VN.Entropy.Fit
   
   # Check for plot
-  if(lower_order_result$n.dim != 1 && isTRUE(plot.EGA)){
+  if(lower_order_result$n.dim != 1 && plot.EGA){
     
     # Get plot
     results$plot.hierEGA <- plot(results, ...)
     
     # Actually send plot
-    results$plot.hierEGA
+    plot(results$plot.hierEGA)
   
   }
 
@@ -615,7 +615,7 @@ summary.hierEGA <- function(object, ...)
 
 #' @exportS3Method 
 # S3 Plot Method ----
-# Updated 02.08.2023
+# Updated 04.08.2023
 plot.hierEGA <- function(
     x, plot.type = c("multilevel", "separate"),
     color.match = FALSE, ...
