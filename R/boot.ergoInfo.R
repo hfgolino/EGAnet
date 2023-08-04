@@ -4,7 +4,7 @@
 #' with a distribution of EII obtained by bootstrap sampling
 #' (see \strong{Details} for the procedure)
 #'
-#' @param dynEGA.object  A \code{\link[EGAnet]{dynEGA}} or a
+#' @param dynEGA.object A \code{\link[EGAnet]{dynEGA}} or a
 #' \code{\link[EGAnet]{dynEGA.ind.pop}} object. If a \code{\link[EGAnet]{dynEGA}}
 #' object, then \code{level = c("individual", "population")} is required
 #'

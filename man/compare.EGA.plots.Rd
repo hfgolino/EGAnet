@@ -18,15 +18,15 @@ compare.EGA.plots(
 
 \itemize{
 
-\item{\code{*EGA} objects}
+\item{\code{*EGA} objects --- }
 {can be dropped in without any argument
 designation. The function will search across input to find
 necessary \code{\link{EGAnet}} objects}
 
-\item{\code{\link[GGally]{ggnet2}} arguments}
+\item{\code{\link[GGally]{ggnet2}} arguments --- }
 {can be passed along to \code{\link[GGally]{ggnet2}}}
 
-\item{\code{\link[sna]{gplot.layout}}}
+\item{\code{\link[sna]{gplot.layout}} --- }
 {can be specified using \code{mode = } or
 \code{layout = } using the name of the layout
 (e.g., \code{mode = "circle"} will produce the 

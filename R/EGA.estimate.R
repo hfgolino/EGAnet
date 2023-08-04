@@ -19,7 +19,7 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{"auto"}}
+#' \item{\code{"auto"} --- }
 #' {Automatically computes appropriate correlations for
 #' the data using Pearson's for continuous, polychoric for ordinal,
 #' tetrachoric for binary, and polyserial/biserial for ordinal/binary with
@@ -27,11 +27,11 @@
 #' ordinal, use \code{ordinal.categories}
 #' (see \code{\link[EGAnet]{polychoric.matrix}} for more details)}
 #' 
-#' \item{\code{"pearson"}}
+#' \item{\code{"pearson"} --- }
 #' {Pearson's correlation is computed for all variables regardless of
 #' categories}
 #' 
-#' \item{\code{"spearman"}}
+#' \item{\code{"spearman"} --- }
 #' {Spearman's rank-order correlation is computed for all variables
 #' regardless of categories}
 #' 
@@ -47,11 +47,11 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{"pairwise"}}
+#' \item{\code{"pairwise"} --- }
 #' {Computes correlation for all available cases between
 #' two variables}
 #' 
-#' \item{\code{"listwise"}}
+#' \item{\code{"listwise"} --- }
 #' {Computes correlation for all complete cases in the dataset}
 #' 
 #' }
@@ -62,17 +62,17 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{"BGGM"}}
+#' \item{\code{"BGGM"} --- }
 #' {Computes the Bayesian Gaussian Graphical Model.
 #' Set argument \code{ordinal.categories} to determine
 #' levels allowed for a variable to be considered ordinal.
 #' See \code{\link[BGGM]{estimate}} for more details}
 #' 
-#' \item{\code{"glasso"}}
+#' \item{\code{"glasso"} --- }
 #' {Computes the GLASSO with EBIC model selection.
 #' See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details}
 #' 
-#' \item{\code{"TMFG"}}
+#' \item{\code{"TMFG"} --- }
 #' {Computes the TMFG method.
 #' See \code{\link[EGAnet]{TMFG}} for more details}
 #' 
@@ -86,17 +86,17 @@
 #' 
 #' \itemize{
 #'
-#' \item{\code{"leiden"}}
+#' \item{\code{"leiden"} --- }
 #' {See \code{\link[igraph]{cluster_leiden}} for more details}
 #' 
-#' \item{\code{"louvain"}}
+#' \item{\code{"louvain"} --- }
 #' {By default, \code{"louvain"} will implement the Louvain algorithm using 
 #' the consensus clustering method (see \code{\link[EGAnet]{community.consensus}} 
 #' for more information). This function will implement
 #' \code{consensus.method = "most_common"} and \code{consensus.iter = 1000} 
 #' unless specified otherwise}
 #' 
-#' \item{\code{"walktrap"}}
+#' \item{\code{"walktrap"} --- }
 #' {See \code{\link[EGAnet]{cluster_walktrap}} for more details}
 #' 
 #' }
@@ -116,8 +116,8 @@
 #'
 #' @return Returns a list containing:
 #'
-#' \item{estimated.network}{A symmetric network estimated using either the
-#' \code{\link{EBICglasso.qgraph}} or \code{\link[EGAnet]{TMFG}}}
+#' \item{network}{A matrix containing a network estimated using 
+#' \code{link[EGAnet]{network.estimation}}}
 #'
 #' \item{wc}{A vector representing the community (dimension) membership
 #' of each node in the network. \code{NA} values mean that the node
@@ -126,6 +126,8 @@
 #' \item{n.dim}{A scalar of how many total dimensions were identified in the network}
 #'
 #' \item{cor.data}{The zero-order correlation matrix}
+#' 
+#' \item{n}{Number of cases in \code{data}}
 #'
 #' @examples
 #' # Obtain data

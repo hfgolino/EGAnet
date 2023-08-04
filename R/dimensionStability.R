@@ -25,11 +25,11 @@
 #'
 #' \itemize{
 #'
-#' \item{\code{structural.consistency}}
+#' \item{\code{structural.consistency} --- }
 #' {The proportion of times that each empirical \code{\link[EGAnet]{EGA}} dimension
 #' \emph{exactly} replicates across the \code{\link[EGAnet]{bootEGA}} samples}
 #'
-#' \item{\code{average.item.stability}}
+#' \item{\code{average.item.stability} --- }
 #' {The average item stability in each empirical \code{\link[EGAnet]{EGA}} dimension}
 #' 
 #' }

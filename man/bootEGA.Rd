@@ -37,7 +37,7 @@ Available options:
 
 \itemize{
 
-\item{\code{"auto"}}
+\item{\code{"auto"} --- }
 {Automatically computes appropriate correlations for
 the data using Pearson's for continuous, polychoric for ordinal,
 tetrachoric for binary, and polyserial/biserial for ordinal/binary with
@@ -45,11 +45,11 @@ continuous. To change the number of categories that are considered
 ordinal, use \code{ordinal.categories}
 (see \code{\link[EGAnet]{polychoric.matrix}} for more details)}
 
-\item{\code{"pearson"}}
+\item{\code{"pearson"} --- }
 {Pearson's correlation is computed for all variables regardless of
 categories}
 
-\item{\code{"spearman"}}
+\item{\code{"spearman"} --- }
 {Spearman's rank-order correlation is computed for all variables
 regardless of categories}
 
@@ -65,11 +65,11 @@ Available options:
 
 \itemize{
 
-\item{\code{"pairwise"}}
+\item{\code{"pairwise"} --- }
 {Computes correlation for all available cases between
 two variables}
 
-\item{\code{"listwise"}}
+\item{\code{"listwise"} --- }
 {Computes correlation for all complete cases in the dataset}
 
 }}
@@ -80,17 +80,17 @@ Available options:
 
 \itemize{
 
-\item{\code{"BGGM"}}
+\item{\code{"BGGM"} --- }
 {Computes the Bayesian Gaussian Graphical Model.
 Set argument \code{ordinal.categories} to determine
 levels allowed for a variable to be considered ordinal.
 See \code{\link[BGGM]{estimate}} for more details}
 
-\item{\code{"glasso"}}
+\item{\code{"glasso"} --- }
 {Computes the GLASSO with EBIC model selection.
 See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details}
 
-\item{\code{"TMFG"}}
+\item{\code{"TMFG"} --- }
 {Computes the TMFG method.
 See \code{\link[EGAnet]{TMFG}} for more details}
 
@@ -104,17 +104,17 @@ Three options are listed below but all are available
 
 \itemize{
 
-\item{\code{"leiden"}}
+\item{\code{"leiden"} --- }
 {See \code{\link[igraph]{cluster_leiden}} for more details}
 
-\item{\code{"louvain"}}
+\item{\code{"louvain"} --- }
 {By default, \code{"louvain"} will implement the Louvain algorithm using 
 the consensus clustering method (see \code{\link[EGAnet]{community.consensus}} 
 for more information). This function will implement
 \code{consensus.method = "most_common"} and \code{consensus.iter = 1000} 
 unless specified otherwise}
 
-\item{\code{"walktrap"}}
+\item{\code{"walktrap"} --- }
 {See \code{\link[EGAnet]{cluster_walktrap}} for more details}
 
 }}
@@ -126,14 +126,14 @@ Available options:
 
 \itemize{
 
-\item{\code{expand}}
+\item{\code{"expand"} --- }
 {Expands the correlation matrix with four variables correlated 0.50.
 If number of dimension returns 2 or less in check, then the data 
 are unidimensional; otherwise, regular EGA with no matrix
 expansion is used. This method was used in the Golino et al.'s (2020)
 \emph{Psychological Methods} simulation}
 
-\item{\code{LE}}
+\item{\code{"LE"} --- }
 {Applies the Leading Eigenvector algorithm
 (\code{\link[igraph]{cluster_leading_eigen}})
 on the empirical correlation matrix. If the number of dimensions is 1,
@@ -141,7 +141,7 @@ then the Leading Eigenvector solution is used; otherwise, regular EGA
 is used. This method was used in the Christensen et al.'s (2023) 
 \emph{Behavior Research Methods} simulation}
 
-\item{\code{louvain}}
+\item{\code{"louvain"} --- }
 {Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
 on the empirical correlation matrix. If the number of dimensions is 1, 
 then the Louvain solution is used; otherwise, regular EGA is used. 
@@ -162,12 +162,12 @@ Available options:
 
 \itemize{
 
-\item{\code{"parametric"}}
+\item{\code{"parametric"} --- }
 {Generates \code{iter} new datasets from
 (multivariate normal random distributions) based on the
 original dataset using \code{\link[MASS]{mvrnorm}}}
 
-\item{\code{"resampling"}}
+\item{\code{"resampling"} --- }
 {Generates \code{iter} new datasets from random subsamples 
 of the original data}
 
@@ -189,22 +189,23 @@ Available options:
 
 \itemize{
 
-\item{\code{"\link[EGAnet]{EGA}"}}
+\item{\code{"\link[EGAnet]{EGA}"} --- }
 {Uses standard exploratory graph analysis}
 
-\item{\code{"\link[EGAnet]{EGA.fit}"}}
+\item{\code{"\link[EGAnet]{EGA.fit}"} --- }
 {Uses \code{\link[EGAnet]{tefi}} to determine best fit of
 \code{\link[EGAnet]{EGA}}}
 
-\item{\code{"\link[EGAnet]{hierEGA}"}}
+\item{\code{"\link[EGAnet]{hierEGA}"} --- }
 {Uses hierarhical exploratory graph analysis}
 
-\item{\code{"\link[EGAnet]{riEGA}"}}
+\item{\code{"\link[EGAnet]{riEGA}"} --- }
 {Uses random-intercept exploratory graph analysis}
 
 }
 
-Arguments for \code{EGA.type} can be added}
+Arguments for \code{EGA.type} can be added (see links
+for details on specific function arguments)}
 
 \item{typicalStructure}{Boolean (length = 1).
 If \code{TRUE}, returns the median (\code{"glasso"} or \code{"BGGM"}) or
@@ -219,7 +220,7 @@ Defaults to \code{TRUE}}
 \item{seed}{Numeric (length = 1).
 Defaults to \code{NULL} or random results.
 Set for reproducible results.
-See https://github.com/hfgolino/EGAnet/wiki/Reproducibility-and-PRNG
+See \href{https://github.com/hfgolino/EGAnet/wiki/Reproducibility-and-PRNG}{Reproducibility and PRNG}
 for more details on random number generation in \code{\link{EGAnet}}}
 
 \item{verbose}{Boolean (length = 1).
@@ -242,35 +243,40 @@ Returns a list containing:
 
 \item{iter}{Number of replica samples in bootstrap}
 
-\item{bootGraphs}{Networks of each replica sample}
+\item{bootGraphs}{A list containing the networks of each replica sample}
 
-\item{boot.wc}{Membership assignments for each replica network}
+\item{boot.wc}{A matrix of membership assignments for each replica network
+with variables down the columns and replicas across the rows}
 
 \item{boot.ndim}{Number of dimensions identified in each replica sample}
 
-\item{summary.table}{Summary table containing number of replica samples, 
+\item{summary.table}{A data frame containing number of replica samples, 
 median, standard deviation, standard error, 95\% confidence intervals, and 
 quantiles (lower = 2.5\% and upper = 97.5\%)}
 
-\item{frequency}{Proportion of times the number of dimensions was identified
+\item{frequency}{A data frame containing the proportion of times the number of dimensions was identified
 (e.g., .85 of 1,000 = 850 times that specific number of dimensions was found)}
+
+\item{TEFI}{\code{\link[EGAnet]{tefi}} value for each replica sample}
 
 \item{type}{Type of bootstrap used}
 
 \item{EGA}{Output of the empirical EGA results
 (output will vary based on \code{EGA.type})}
 
+\item{EGA.type}{Type of \code{*EGA} function used}
+
 \item{typicalGraph}{A list containing:
 
 \itemize{
 
-\item{\code{graph}}
+\item{\code{graph} --- }
 {Network matrix of the median network structure}
 
-\item{\code{typical.dim.variables}}
+\item{\code{typical.dim.variables} --- }
 {An ordered matrix of item allocation}
 
-\item{\code{wc}}
+\item{\code{wc} --- }
 {Membership assignments of the median network}
 
 }

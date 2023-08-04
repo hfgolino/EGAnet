@@ -32,6 +32,9 @@
 #'   x, plot.type = c("multilevel", "separate"), 
 #'   color.match = FALSE, ...
 #' )
+#' plot.invariance(
+#'   x, p_type = c("p", "p_BH"), p_value = 0.05, ...
+#' )
 #' 
 #' @param x \code{\link{EGAnet}} object with available S3 plot
 #' method (see full list below)
@@ -67,6 +70,16 @@
 #' should be "matched" and used as the border color for the higher order
 #' communities.
 #' Defaults to \code{FALSE}
+#' 
+#' @param p_type Character (length = 1).
+#' Type of \emph{p}-value when plotting \code{\link[EGAnet]{invariance}}.
+#' Defaults to \code{"p"} or uncorrected \emph{p}-value.
+#' Set to \code{"p_BH"} for the Benjamini-Hochberg corrected \emph{p}-value
+#' 
+#' @param p_value Numeric (length = 1).
+#' The \emph{p}-value to use alongside \code{p_type} when 
+#' plotting \code{\link[EGAnet]{invariance}}.
+#' Defaults to \code{0.05}
 #' 
 #' @param ... Additional arguments to pass on to
 #' \code{\link[GGally]{ggnet2}} and \code{\link[sna]{gplot.layout}}
@@ -130,4 +143,6 @@
 #' @aliases plot.EGAnet
 #' 
 #' @rdname EGAnet-plot
+#' 
+# Updated 04.08.2023
 NULL

@@ -12,10 +12,10 @@
 #'
 #' \itemize{
 #'
-#' \item{\code{"edge.list"}}
+#' \item{\code{"edge.list"} --- }
 #' {Calculates the algorithm complexity using the list of edges.}
 #'
-#' \item{\code{"unweighted"}}
+#' \item{\code{"unweighted"} --- }
 #' {Calculates the algorithm complexity using the binary weights of the network.
 #' 0 = edge absent and 1 = edge present}
 #' 

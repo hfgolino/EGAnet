@@ -22,7 +22,7 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{"auto"}}
+#' \item{\code{"auto"} --- }
 #' {Automatically computes appropriate correlations for
 #' the data using Pearson's for continuous, polychoric for ordinal,
 #' tetrachoric for binary, and polyserial/biserial for ordinal/binary with
@@ -30,11 +30,11 @@
 #' ordinal, use \code{ordinal.categories}
 #' (see \code{\link[EGAnet]{polychoric.matrix}} for more details)}
 #' 
-#' \item{\code{"pearson"}}
+#' \item{\code{"pearson"} --- }
 #' {Pearson's correlation is computed for all variables regardless of
 #' categories}
 #' 
-#' \item{\code{"spearman"}}
+#' \item{\code{"spearman"} --- }
 #' {Spearman's rank-order correlation is computed for all variables
 #' regardless of categories}
 #' 
@@ -50,11 +50,11 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{"pairwise"}}
+#' \item{\code{"pairwise"} --- }
 #' {Computes correlation for all available cases between
 #' two variables}
 #' 
-#' \item{\code{"listwise"}}
+#' \item{\code{"listwise"} --- }
 #' {Computes correlation for all complete cases in the dataset}
 #' 
 #' }
@@ -65,17 +65,17 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{"BGGM"}}
+#' \item{\code{"BGGM"} --- }
 #' {Computes the Bayesian Gaussian Graphical Model.
 #' Set argument \code{ordinal.categories} to determine
 #' levels allowed for a variable to be considered ordinal.
 #' See \code{\link[BGGM]{estimate}} for more details}
 #' 
-#' \item{\code{"glasso"}}
+#' \item{\code{"glasso"} --- }
 #' {Computes the GLASSO with EBIC model selection.
 #' See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details}
 #' 
-#' \item{\code{"TMFG"}}
+#' \item{\code{"TMFG"} --- }
 #' {Computes the TMFG method.
 #' See \code{\link[EGAnet]{TMFG}} for more details}
 #' 
@@ -88,14 +88,14 @@
 #' 
 #' \itemize{
 #'
-#' \item{\code{expand}}
+#' \item{\code{"expand"} --- }
 #' {Expands the correlation matrix with four variables correlated 0.50.
 #' If number of dimension returns 2 or less in check, then the data 
 #' are unidimensional; otherwise, regular EGA with no matrix
 #' expansion is used. This method was used in the Golino et al.'s (2020)
 #' \emph{Psychological Methods} simulation}
 #'
-#' \item{\code{LE}}
+#' \item{\code{"LE"} --- }
 #' {Applies the Leading Eigenvector algorithm
 #' (\code{\link[igraph]{cluster_leading_eigen}})
 #' on the empirical correlation matrix. If the number of dimensions is 1,
@@ -103,7 +103,7 @@
 #' is used. This method was used in the Christensen et al.'s (2023) 
 #' \emph{Behavior Research Methods} simulation}
 #' 
-#' \item{\code{louvain}}
+#' \item{\code{"louvain"} --- }
 #' {Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
 #' on the empirical correlation matrix. If the number of dimensions is 1, 
 #' then the Louvain solution is used; otherwise, regular EGA is used. 

@@ -12,41 +12,41 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{"edge_betweenness"}}
+#' \item{\code{"edge_betweenness"} --- }
 #' {See \code{\link[igraph]{cluster_edge_betweenness}} for more details}
 #' 
-#' \item{\code{"fast_greedy"}}
+#' \item{\code{"fast_greedy"} --- }
 #' {See \code{\link[igraph]{cluster_fast_greedy}} for more details}
 #' 
-#' \item{\code{"fluid"}}
+#' \item{\code{"fluid"} --- }
 #' {See \code{\link[igraph]{cluster_fluid_communities}} for more details}
 #' 
-#' \item{\code{"infomap"}}
+#' \item{\code{"infomap"} --- }
 #' {See \code{\link[igraph]{cluster_infomap}} for more details}
 #' 
-#' \item{\code{"label_prop"}}
+#' \item{\code{"label_prop"} --- }
 #' {See \code{\link[igraph]{cluster_label_prop}} for more details}
 #' 
-#' \item{\code{"leading_eigen"}}
+#' \item{\code{"leading_eigen"} --- }
 #' {See \code{\link[igraph]{cluster_leading_eigen}} for more details}
 #' 
-#' \item{\code{"leiden"}}
+#' \item{\code{"leiden"} --- }
 #' {See \code{\link[igraph]{cluster_leiden}} for more details.
 #' \emph{Note}: The Leiden algorithm will default to the
 #' modularity objective function (\code{objective_function = "modularity"}). 
 #' Set \code{objective_function = "CPM"} to use the 
 #' Constant Potts Model instead (see examples)}
 #' 
-#' \item{\code{"louvain"}}
+#' \item{\code{"louvain"} --- }
 #' {See \code{\link[igraph]{cluster_louvain}} for more details}
 #' 
-#' \item{\code{"optimal"}}
+#' \item{\code{"optimal"} --- }
 #' {See \code{\link[igraph]{cluster_optimal}} for more details}
 #' 
-#' \item{\code{"spinglass"}}
+#' \item{\code{"spinglass"} --- }
 #' {See \code{\link[EGAnet]{cluster_spinglass}} for more details}
 #' 
-#' \item{\code{"walktrap"}}
+#' \item{\code{"walktrap"} --- }
 #' {See \code{\link[EGAnet]{cluster_walktrap}} for more details}
 #' 
 #' }
