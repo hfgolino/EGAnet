@@ -55,8 +55,19 @@
 # Updated 01.08.2023
 genTEFI <- function(data, structure = NULL)
 {
+  # Check if data is an EGA object
+  if(is(data, "EGA")){
+    
+    stop(
+      paste(
+        "Data is an EGA object",
+        "For genTEFI, an hierEGA object should be used instead."
+      ),
+      call. = FALSE
+    )    
+  } else{
   
-  # Get correlation matrix based on EGA
+  # Get correlation matrix based on hierEGA
   if(is(data, "hierEGA")){
 
    gen.tefi <- tefi(data, structure)
@@ -79,5 +90,6 @@ genTEFI <- function(data, structure = NULL)
         )
         
       }
+    }
   }
 }
