@@ -363,7 +363,7 @@ EGA <- function (
   multidimensional_result$TEFI <- tefi(multidimensional_result)$VN.Entropy.Fit
   
   # Check for plot
-  if(isTRUE(plot.EGA)){
+  if(plot.EGA){
     
     # Set up plot
     multidimensional_result$Plot.EGA <- plot(

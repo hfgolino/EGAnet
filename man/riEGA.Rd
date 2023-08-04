@@ -19,125 +19,155 @@ riEGA(
 )
 }
 \arguments{
-\item{data}{Numeric matrix or data frame.
-Must be data representing \emph{only} the \strong{unrecoded} variables of interest.
-\strong{Cannot} be a correlation matrix. Data that are not numeric will be
-removed from the dataset}
+\item{data}{Matrix or data frame.
+Should consist only of variables to be used in the analysis.
+\strong{Must} be raw data and not a correlation matrix}
 
 \item{corr}{Character (length = 1).
 Method to compute correlations.
-Defaults to \code{"auto"} to automatically compute
-appropriate correlations using \code{\link[EGAnet]{auto.correlate}}.
-\code{"pearson"} and \code{"spearman"} are provide for completeness.
+Defaults to \code{"auto"}.
+Available options:
+
+\itemize{
+
+\item{\code{"auto"} --- }
+{Automatically computes appropriate correlations for
+the data using Pearson's for continuous, polychoric for ordinal,
+tetrachoric for binary, and polyserial/biserial for ordinal/binary with
+continuous. To change the number of categories that are considered
+ordinal, use \code{ordinal.categories}
+(see \code{\link[EGAnet]{polychoric.matrix}} for more details)}
+
+\item{\code{"pearson"} --- }
+{Pearson's correlation is computed for all variables regardless of
+categories}
+
+\item{\code{"spearman"} --- }
+{Spearman's rank-order correlation is computed for all variables
+regardless of categories}
+
+}
+
 For other similarity measures, compute them first and input them
 into \code{data} with the sample size (\code{n})}
 
 \item{na.data}{Character (length = 1).
 How should missing data be handled?
+Defaults to \code{"pairwise"}.
 Available options:
 
 \itemize{
 
-\item{\code{"pairwise"}}
+\item{\code{"pairwise"} --- }
 {Computes correlation for all available cases between
 two variables}
 
-\item{\code{"listwise"}}
+\item{\code{"listwise"} --- }
 {Computes correlation for all complete cases in the dataset}
 
 }}
 
 \item{model}{Character (length = 1).
+Defaults to \code{"glasso"}.
 Available options:
 
 \itemize{
 
-\item{\code{"BGGM"}}
+\item{\code{"BGGM"} --- }
 {Computes the Bayesian Gaussian Graphical Model.
 Set argument \code{ordinal.categories} to determine
 levels allowed for a variable to be considered ordinal.
 See \code{\link[BGGM]{estimate}} for more details}
 
-\item{\code{"glasso"}}
+\item{\code{"glasso"} --- }
 {Computes the GLASSO with EBIC model selection.
 See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details}
 
-\item{\code{"TMFG"}}
+\item{\code{"TMFG"} --- }
 {Computes the TMFG method.
 See \code{\link[EGAnet]{TMFG}} for more details}
 
 }}
 
-\item{algorithm}{Character or \code{\link{igraph}} \code{cluster_*} function.
+\item{algorithm}{Character or 
+\code{\link{igraph}} \code{cluster_*} function (length = 1).
+Defaults to \code{"walktrap"}.
 Three options are listed below but all are available
 (see \code{\link[EGAnet]{community.detection}} for other options):
 
 \itemize{
 
-\item{\code{"leiden"}}
+\item{\code{"leiden"} --- }
 {See \code{\link[igraph]{cluster_leiden}} for more details}
 
-\item{\code{"louvain"}}
-{See \code{\link[EGAnet]{community.consensus}} for more details.
-By default, searches along resolutions from 0 to 2 in 0.05 increments
-(\code{resolution_parameter = seq.int(0, 2, 0.05)}). Use the argument \code{resolution_parameter}
-to change the search parameters (see examples)}
+\item{\code{"louvain"} --- }
+{By default, \code{"louvain"} will implement the Louvain algorithm using 
+the consensus clustering method (see \code{\link[EGAnet]{community.consensus}} 
+for more information). This function will implement
+\code{consensus.method = "most_common"} and \code{consensus.iter = 1000} 
+unless specified otherwise}
 
-\item{\code{"walktrap"}}
-{This algorithm is the default. See \code{\link[EGAnet]{cluster_walktrap}} for more details}
+\item{\code{"walktrap"} --- }
+{See \code{\link[EGAnet]{cluster_walktrap}} for more details}
 
 }}
 
-\item{uni.method}{Character.
+\item{uni.method}{Character (length = 1).
 What unidimensionality method should be used? 
 Defaults to \code{"louvain"}.
-Current options are:
+Available options:
 
 \itemize{
 
-\item{\strong{\code{expand}}}
-{Expands the correlation matrix with four variables correlated .50.
+\item{\code{"expand"} --- }
+{Expands the correlation matrix with four variables correlated 0.50.
 If number of dimension returns 2 or less in check, then the data 
 are unidimensional; otherwise, regular EGA with no matrix
-expansion is used. This is the method used in the Golino et al. (2020)
-\emph{Psychological Methods} simulation.}
+expansion is used. This method was used in the Golino et al.'s (2020)
+\emph{Psychological Methods} simulation}
 
-\item{\strong{\code{LE}}}
-{Applies the Leading Eigenvalue algorithm (\code{\link[igraph]{cluster_leading_eigen}})
+\item{\code{"LE"} --- }
+{Applies the Leading Eigenvector algorithm
+(\code{\link[igraph]{cluster_leading_eigen}})
 on the empirical correlation matrix. If the number of dimensions is 1,
-then the Leading Eigenvalue solution is used; otherwise, regular EGA
-is used. This is the final method used in the Christensen, Garrido,
-and Golino (2021) simulation.}
+then the Leading Eigenvector solution is used; otherwise, regular EGA
+is used. This method was used in the Christensen et al.'s (2023) 
+\emph{Behavior Research Methods} simulation}
 
-\item{\strong{\code{louvain}}}
+\item{\code{"louvain"} --- }
 {Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
-on the empirical correlation matrix using a resolution parameter = 0.95.
-If the number of dimensions is 1, then the Louvain solution is used; otherwise,
-regular EGA is used. This method was validated in the Christensen (2022) simulation.}
+on the empirical correlation matrix. If the number of dimensions is 1, 
+then the Louvain solution is used; otherwise, regular EGA is used. 
+This method was validated Christensen's (2022) \emph{PsyArXiv} simulation.
+Consensus clustering can be used by specifying either
+\code{"consensus.method"} or \code{"consensus.iter"}}
 
 }}
 
-\item{estimator}{Character.
+\item{estimator}{Character (length = 1).
 Estimator to use for random-intercept model (see \href{https://lavaan.ugent.be/tutorial/est.html}{Estimators}
 for more details).
 Defaults to \code{"auto"}, which selects \code{"MLR"} for continuous data and
 \code{"WLSMV"} for mixed and categorical data.
-Data are considered continuous data if they have 8 or
-more categories (see Rhemtulla, Brosseau-Liard, & Savalei, 2012)}
+Data are considered continuous data if they have \code{8} or
+more categories (see Rhemtulla, Brosseau-Liard, & Savalei, 2012).
+To change this behavior, set \code{oridinal.categories} as an argument}
 
-\item{plot.EGA}{Boolean.
+\item{plot.EGA}{Boolean (length = 1).
 If \code{TRUE}, returns a plot of the network and its estimated dimensions.
 Defaults to \code{TRUE}}
 
-\item{verbose}{Boolean.
+\item{verbose}{Boolean (length = 1).
 Whether messages and (insignificant) warnings should be output.
 Defaults to \code{FALSE} (silent calls).
 Set to \code{TRUE} to see all messages and warnings for every function call}
 
 \item{...}{Additional arguments to be passed on to
-\code{\link[EGAnet]{auto.correlate}}, \code{\link[EGAnet]{network.estimation}},
-\code{\link[EGAnet]{community.detection}}, and
-\code{\link[EGAnet]{community.consensus}}}
+\code{\link[EGAnet]{auto.correlate}}, 
+\code{\link[EGAnet]{network.estimation}},
+\code{\link[EGAnet]{community.detection}},
+\code{\link[EGAnet]{community.consensus}}, and
+\code{\link[EGAnet]{EGA}}}
 }
 \value{
 Returns a list containing:
@@ -149,27 +179,31 @@ model (if the model converged):
 
 \itemize{
 
-\item{fit}
+\item{\code{fit} --- }
 {The fit object for the random-intercept model using \code{\link[lavaan]{cfa}}}
 
-\item{lavaan.args}
+\item{\code{lavaan.args} --- }
 {The arguments used in \code{\link[lavaan]{cfa}}}
 
-\item{loadings}
+\item{\code{loadings} --- }
 {Standardized loadings from the random-intercept model}
 
-\item{correlation}
+\item{\code{correlation} --- }
 {Residual correlations after accounting for the random-intercept model}
 
 }
 
 }
+
+\item{TEFI}{\code{link[EGAnet]{tefi}} for the estimated structure}
+
+\item{plot.EGA}{Plot output if \code{plot.EGA = TRUE}}
 }
 \description{
-Estimates the number of substantive dimensions after controlling for wording effects. 
-EGA is applied to a residual correlation matrix after subtracting and random intercept
-factor with equal unstandardized loadings from all the regular and unrecoded
-reversed items in the database
+Estimates the number of substantive dimensions after controlling 
+for wording effects. EGA is applied to a residual correlation matrix after 
+subtracting and random intercept factor with equal unstandardized loadings 
+from all the regular and unrecoded reversed items in the database
 }
 \examples{
 # Obtain example data
@@ -181,7 +215,7 @@ riEGA(data = wmt, plot.EGA = FALSE)
 
 }
 \references{
-# Selection of CFA Estimator \cr
+\strong{Selection of CFA Estimator} \cr
 Rhemtulla, M., Brosseau-Liard, P. E., & Savalei, V. (2012).
 When can categorical variables be treated as continuous? A comparison of robust continuous and categorical SEM estimation methods under suboptimal conditions.
 \emph{Psychological Methods}, \emph{17}, 354-373.

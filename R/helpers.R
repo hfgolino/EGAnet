@@ -1782,7 +1782,7 @@ estimator_arguments <- function(lavaan_ARGS, ellipse)
 #' @noRd
 # Defaults for GGally plotting ----
 # For plots and methods
-# Updated 03.08.2023
+# Updated 04.08.2023
 GGally_args <- function(ellipse)
 {
   
@@ -1795,7 +1795,7 @@ GGally_args <- function(ellipse)
   # Get default {EGAnet} arguments
   ega_default_args <- list(
     layout.exp = 0.20, label.size = 5,
-    label.color = "black",
+    label.color = "black", mode = "qgraph",
     edge.label.color = "black", node.alpha = 0.50,
     node.shape = 19, node.size = 12, 
     edge.alpha = "edge.alpha", edge.size = 8
@@ -2003,37 +2003,32 @@ readable_names <- function(node_names)
 
 #' @noRd
 # Get network layout ----
-# Updated 03.08.2023
+# Updated 04.08.2023
 get_layout <- function(network, dimensions, non_zero_index, plot_ARGS)
 {
   
-  # Get plot argument names
-  plot_ARGS_names <- names(plot_ARGS)
-  
   # Determine whether "mode" was used
-  if(!"mode" %in% plot_ARGS_names){ 
-    # Default: {qgraph} Fruchterman-Reingold
+  if(is.character(plot_ARGS$mode)){
     
-    # Lower triangle for edge list
-    network_lower <- network[lower.tri(network)]
-    weights_lower <- abs(network_lower[network_lower != 0])
-    
-    # Set up edge list
-    edge_list <- which(non_zero_index, arr.ind = TRUE)
-    edge_list <- edge_list[edge_list[,"row"] < edge_list[,"col"],, drop = FALSE]
-    
-    # Set layout (spring)
-    network_layout <- qgraph::qgraph.layout.fruchtermanreingold(
-      edgelist = edge_list[order(edge_list[,"row"]),, drop = FALSE],
-      weights = (weights_lower / max(weights_lower))^2,
-      vcount = dimensions[2]
-    )
-    
-  }else{
-    
-    # Check for whether mode was provided as character
-    # or whether mode was input as 2D distance matrix
-    if(is.character(plot_ARGS$mode)){ # Obtain actual "mode" values using {sna}
+    # Check for {qgraph}
+    if(plot_ARGS$mode == "qgraph"){
+      
+      # Lower triangle for edge list
+      network_lower <- network[lower.tri(network)]
+      weights_lower <- abs(network_lower[network_lower != 0])
+      
+      # Set up edge list
+      edge_list <- which(non_zero_index, arr.ind = TRUE)
+      edge_list <- edge_list[edge_list[,"row"] < edge_list[,"col"],, drop = FALSE]
+      
+      # Set layout (spring)
+      network_layout <- qgraph::qgraph.layout.fruchtermanreingold(
+        edgelist = edge_list[order(edge_list[,"row"]),, drop = FALSE],
+        weights = (weights_lower / max(weights_lower))^2,
+        vcount = dimensions[2]
+      )
+      
+    }else{
       
       # Get layout function
       mode_FUN <- switch(
@@ -2069,15 +2064,12 @@ get_layout <- function(network, dimensions, non_zero_index, plot_ARGS)
         args = mode_ARGS
       )
       
-    }else if(is.numeric(plot_ARGS$mode) & is.matrix(plot_ARGS$mode)){
-      
-      # Assume "mode" is a 2D matrix corresponding to a layout
-      network_layout <- plot_ARGS$mode
-      
     }
-  
+    
+  }else{ # Assume "mode" is a 2D matrix corresponding to a layout
+    network_layout <- plot_ARGS$mode
   }
-  
+
   # Return layout
   return(network_layout)
   
