@@ -351,9 +351,11 @@ tefi_generalized <- function(correlation_matrix, structure)
   # Set up results
   return(
     fast.data.frame(
-      ((A + E) / lower_communities) - (2 * H_vn) + ((2 * H_vn) - A - E) * sqrt(lower_communities), 
-      ncol = 1,
-      colnames = "VN.Entropy.Fit"
+      c(((A + E) / lower_communities) - (2 * H_vn) + ((2 * H_vn) - A - E) * sqrt(lower_communities),
+        ((A / lower_communities - H_vn) + (H_vn - A) * sqrt(lower_communities)),
+        ((E / lower_communities - H_vn) + (H_vn - E) * sqrt(lower_communities))),
+      ncol = 3,
+      colnames = c("VN.Entropy.Fit","Lower_Order_VN","High_Order_VN")
     )
   )
   
