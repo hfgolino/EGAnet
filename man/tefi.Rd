@@ -18,11 +18,21 @@ Can be theoretical factors or the structure detected by \code{\link{EGA}}.}
 \value{
 Returns a data frame with columns:
 
-\item{VN.Entropy.Fit}{The Entropy Fit Index using Von Neumman's entropy}
+\strong{Non-hierarchical Structure}
+
+\item{VN.Entropy.Fit}{The Total Entropy Fit Index using Von Neumman's entropy}
 
 \item{Total.Correlation}{The total correlation of the dataset}
 
 \item{Average.Entropy}{The average entropy of the dataset}
+
+\strong{Hierarchical Structure}
+
+\item{VN.Entropy.Fit}{The Generalized Total Entropy Fit Index using Von Neumman's entropy}
+
+\item{Lower.Order.VN}{Lower order (only) Total Entropy Fit Index}
+
+\item{Higher.Order.VN}{Higher order (only) Total Entropy Fit Index}
 }
 \description{
 Computes the fit (TEFI) of a dimensionality structure using Von Neumman's entropy 

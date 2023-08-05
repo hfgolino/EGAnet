@@ -13,6 +13,7 @@ LCT(
   algorithm = c("leiden", "louvain", "walktrap"),
   uni.method = c("expand", "LE", "louvain"),
   iter = 100,
+  seed = NULL,
   verbose = TRUE,
   ...
 )
@@ -150,6 +151,12 @@ Consensus clustering can be used by specifying either
 Number of replicate samples to be drawn from a multivariate
 normal distribution (uses \code{MASS::mvrnorm}).
 Defaults to \code{100} (recommended)}
+
+\item{seed}{Numeric (length = 1).
+Defaults to \code{NULL} or random results.
+Set for reproducible results.
+See \href{https://github.com/hfgolino/EGAnet/wiki/Reproducibility-and-PRNG}{Reproducibility and PRNG}
+for more details on random number generation in \code{\link{EGAnet}}}
 
 \item{verbose}{Boolean (length = 1).
 Should progress be displayed?

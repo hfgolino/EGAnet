@@ -139,6 +139,12 @@
 #' normal distribution (uses \code{MASS::mvrnorm}).
 #' Defaults to \code{100} (recommended)
 #' 
+#' @param seed Numeric (length = 1).
+#' Defaults to \code{NULL} or random results.
+#' Set for reproducible results.
+#' See \href{https://github.com/hfgolino/EGAnet/wiki/Reproducibility-and-PRNG}{Reproducibility and PRNG}
+#' for more details on random number generation in \code{\link{EGAnet}}
+#' 
 #' @param verbose Boolean (length = 1).
 #' Should progress be displayed?
 #' Defaults to \code{TRUE}.
@@ -187,7 +193,7 @@ LCT <- function(
     model = c("BGGM", "glasso", "TMFG"),  
     algorithm = c("leiden", "louvain", "walktrap"),
     uni.method = c("expand", "LE", "louvain"),
-    iter = 100, verbose = TRUE, ...
+    iter = 100, seed = NULL, verbose = TRUE, ...
 )
 {
   
@@ -227,12 +233,26 @@ LCT <- function(
   # Set up progress bar
   if(verbose){pb <- txtProgressBar(max = iter, style = 3)}
   
+  # Check for seed
+  if(!is.null(seed)){
+    seeds <- reproducible_seeds(iter, seed)
+  }else{ 
+    
+    # Set all seeds to zero (or random)
+    seeds <- rep(0, iter)
+    
+    # Send message about NULL seed
+    message("Argument 'seed' is set to `NULL`. Results will not be reproducible. Set 'seed' for reproducible results")
+    
+  }
+  
+  
   # Perform loop
   for(iteration in seq_len(iter)){
     
     # Generate data
     generated_data <- reproducible_bootstrap(
-      seed = NULL, type = "parametric",
+      seed = seeds[iteration], type = "parametric",
       mvrnorm_parameters = mvrnorm_parameters
     )
     
@@ -312,6 +332,9 @@ LCT <- function(
   # Set names
   new_table[names(bootstrap_predictions)] <- bootstrap_predictions
   names(new_table) <- c("Factor", "Network")
+  
+  # Restore random state (if there is one)
+  restore_state()
 
   # Return results
   return(

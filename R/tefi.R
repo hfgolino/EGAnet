@@ -13,11 +13,22 @@
 #' 
 #' @return Returns a data frame with columns:
 #'
-#' \item{VN.Entropy.Fit}{The Entropy Fit Index using Von Neumman's entropy}
+#' \strong{Non-hierarchical Structure}
+#'
+#' \item{VN.Entropy.Fit}{The Total Entropy Fit Index using Von Neumman's entropy}
 #'
 #' \item{Total.Correlation}{The total correlation of the dataset}
 #'
 #' \item{Average.Entropy}{The average entropy of the dataset}
+#' 
+#' \strong{Hierarchical Structure}
+#' 
+#' \item{VN.Entropy.Fit}{The Generalized Total Entropy Fit Index using Von Neumman's entropy}
+#'
+#' \item{Lower.Order.VN}{Lower order (only) Total Entropy Fit Index}
+#'
+#' \item{Higher.Order.VN}{Higher order (only) Total Entropy Fit Index}
+#' 
 #'
 #' @examples
 #' # Load data
@@ -45,7 +56,7 @@
 #'
 #' @export
 # Total Entropy Fit Index Function (for correlation matrices)
-# Updated 04.08.2023
+# Updated 05.08.2023
 tefi <- function(data, structure = NULL)
 {
   
@@ -264,7 +275,7 @@ tefi_standard <- function(correlation_matrix, structure)
 
 #' @noRd
 # `tefi` generalized function ----
-# Updated 31.07.2023
+# Updated 05.08.2023
 tefi_generalized <- function(correlation_matrix, structure)
 {
   
@@ -348,14 +359,19 @@ tefi_generalized <- function(correlation_matrix, structure)
   # E = sum of the Von Neumann entropy for each higher order community
   E <- sum(H_vn_wc_higher, na.rm = TRUE)
   
+  # Pre-compute values
+  sqrt_lower <- sqrt(lower_communities)
+  
   # Set up results
   return(
     fast.data.frame(
-      c(((A + E) / lower_communities) - (2 * H_vn) + ((2 * H_vn) - A - E) * sqrt(lower_communities),
-        ((A / lower_communities - H_vn) + (H_vn - A) * sqrt(lower_communities)),
-        ((E / lower_communities - H_vn) + (H_vn - E) * sqrt(lower_communities))),
+      c(
+        ((A + E) / lower_communities) - (2 * H_vn) + ((2 * H_vn) - A - E) * sqrt_lower,
+        (A / lower_communities - H_vn) + (H_vn - A) * sqrt_lower,
+        (E / lower_communities - H_vn) + (H_vn - E) * sqrt_lower
+      ),
       ncol = 3,
-      colnames = c("VN.Entropy.Fit","Lower_Order_VN","High_Order_VN")
+      colnames = c("VN.Entropy.Fit","Lower.Order.VN","High.Order.VN")
     )
   )
   
