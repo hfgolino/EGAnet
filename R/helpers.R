@@ -534,22 +534,23 @@ available_memory <- function()
 
 #' @noRd
 # Store random state ----
-# Updated 28.07.2023
+# Updated 04.08.2023
 store_state <- function()
 {
-  if(exists(".Random.seed", envir = .GlobalEnv)){
-    assign("saved_state", .Random.seed, envir = .GlobalEnv)
+  if(exists(".Random.seed", envir = parent.frame(2))){
+    assign("saved_state", .Random.seed, envir = parent.frame(2))
   }
 }
 
 #' @noRd
 # Restore and remove random state ----
-# Updated 28.07.2023
+# Updated 04.08.2023
 restore_state <- function()
 {
-  if(exists("saved_state", envir = .GlobalEnv)){
-    assign(".Random.seed", saved_state, envir = .GlobalEnv)
-    rm("saved_state", envir = .GlobalEnv)
+  if(exists("saved_state", envir = parent.frame(2))){
+    saved_state <- get("saved_state", envir = parent.frame(2))
+    assign(".Random.seed", saved_state, envir = parent.frame(2))
+    rm("saved_state", envir = parent.frame(2))
   }
 }
 
@@ -2791,7 +2792,6 @@ d <- function(sample1, sample2, paired = FALSE)
 }
 
 #' @noRd
-#' @importFrom stats qchisq qf t.test var
 # Adaptive Alpha ----
 # Needs desparate updating
 # Updated 01.08.2022

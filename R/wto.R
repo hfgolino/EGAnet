@@ -1,10 +1,10 @@
-#' Weighted Topological Overlap
+#' @title Weighted Topological Overlap
 #' 
 #' @description Computes weighted topological overlap following
 #' the Novick et al. (2009) definition
 #'
-#' @param network Symmetric matrix.
-#' Input for a symmetric network matrix
+#' @param network Symmetric matrix or data frame.
+#' A symmetric network
 #' 
 #' @param signed Boolean (length = 1).
 #' Whether the signed version should be used.
@@ -24,6 +24,7 @@
 #' wto(network)
 #' 
 #' @references 
+#' \strong{Original formalization} \cr
 #' Nowick, K., Gernat, T., Almaas, E., & Stubbs, L. (2009).
 #' Differences in human and chimpanzee gene expression patterns define an evolving network of transcription factors in brain.
 #' \emph{Proceedings of the National Academy of Sciences}, \emph{106}, 22358-22363.
@@ -34,16 +35,13 @@
 #' @export
 #' 
 # Weighted Topological Overlap ----
-# About 18-20x faster than `wTO::wTO`
-# Updated 24.07.2023
+# About 10x faster than `wTO::wTO`
+# Updated 04.08.2023
 wto <- function (network, signed = TRUE, diagonal.zero = TRUE)
 {
   
-  # Remove {EGAnet} bulk
-  network <- remove_attributes(network)
-  
-  # Ensure network is matrix
-  network <- as.matrix(network)
+  # Check for errors, remove attributes, and ensure network is matrix
+  network <- wto_errors(network, signed, diagonal.zero)
   
   # Get dimensions of the network
   dimensions <- dim(network)
@@ -52,7 +50,7 @@ wto <- function (network, signed = TRUE, diagonal.zero = TRUE)
   absolute_network <- abs(network)
   
   # Determine whether absolute values should constitute the network
-  if(isFALSE(signed)){
+  if(signed){
     network <- absolute_network
   }
   
@@ -77,12 +75,34 @@ wto <- function (network, signed = TRUE, diagonal.zero = TRUE)
            (minimum_matrix + 1 - absolute_network)
   
   # Set diagonal to zero
-  if(isTRUE(diagonal.zero)){
+  if(diagonal.zero){
     diag(omega) <- 0
   }
   
   # Return weighted topological overlap
   return(omega)
+  
+}
+
+#' @noRd
+# Argument errors ----
+# Updated 08.04.2023
+wto_errors <- function(network, signed, diagonal.zero)
+{
+  
+  # 'network' errors
+  object_error(network, c("matrix", "data.frame"))
+  
+  # 'signed' errors
+  length_error(signed, 1)
+  typeof_error(signed, "logical")
+  
+  # 'diagonal.zero' errors
+  length_error(diagonal.zero, 1)
+  typeof_error(diagonal.zero, "logical")
+  
+  # Return network without attributes and as matrix
+  return(as.matrix(remove_attributes(network)))
   
 }
 

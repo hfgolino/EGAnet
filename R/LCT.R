@@ -70,8 +70,6 @@
 #' Factor or network model? Predictions from neural networks.
 #' \emph{Journal of Behavioral Data Science}, \emph{1}(1), 85-126.
 #' 
-#' @importFrom utils setTxtProgressBar txtProgressBar
-#'
 #' @noRd
 #'
 # Loadings Comparison Test----

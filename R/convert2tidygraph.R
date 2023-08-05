@@ -1,6 +1,6 @@
-#' Convert networks to \code{\link{tidygraph}}
-#'
-#' @description Converts networks to \code{\link{tidygraph}} format
+#' Convert networks to \code{tidygraph}
+#' 
+#' @description Converts networks to \code{tidygraph} format
 #'
 #' @param EGA.object
 #' A single \code{\link{EGAnet}} object containing the outputs
@@ -9,7 +9,7 @@
 #' @examples
 #' convert2tidygraph(ega.wmt)
 #'
-#' @return Returns a network in the \code{\link{tidygraph}} format
+#' @return Returns a network in the \code{tidygraph} format
 #' 
 #' @author Dominique Makowski, Hudson Golino <hfg9s at virginia.edu>, & Alexander P. Christensen <alexander.christensen at Vanderbilt.Edu>
 #'

@@ -19,7 +19,8 @@ EGA(
 }
 \arguments{
 \item{data}{Matrix or data frame.
-Should consist only of variables to be used in the analysis}
+Should consist only of variables to be used in the analysis.
+Can be raw data or a correlation matrix}
 
 \item{n}{Numeric (length = 1).
 Sample size if \code{data} provided is a correlation matrix}
@@ -109,7 +110,7 @@ for more information). This function will implement
 unless specified otherwise}
 
 \item{\code{"walktrap"} --- }
-{See \code{\link[EGAnet]{cluster_walktrap}} for more details}
+{See \code{\link[igraph]{cluster_walktrap}} for more details}
 
 }}
 

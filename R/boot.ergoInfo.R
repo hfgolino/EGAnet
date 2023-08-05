@@ -14,6 +14,23 @@
 #' function. Inherits \code{use} from \code{\link[EGAnet]{ergoInfo}}.
 #' If no \code{\link[EGAnet]{ergoInfo}} object is provided, then it is estimated
 #' using \code{use = "edge.list"} by default
+#' 
+#' @param use Character (length = 1).
+#' A string indicating what network element will be used
+#' to compute the algorithm complexity, the list of edges or the weights of the network.
+#' Defaults to \code{use = "edge.list"}.
+#' Current options are:
+#'
+#' \itemize{
+#'
+#' \item{\code{"edge.list"} --- }
+#' {Calculates the algorithm complexity using the list of edges.}
+#'
+#' \item{\code{"unweighted"} --- }
+#' {Calculates the algorithm complexity using the binary weights of the network.
+#' 0 = edge absent and 1 = edge present}
+#' 
+#' }
 #'
 #' @param iter Numeric (length = 1).
 #' Number of replica samples to generate from the bootstrap analysis.

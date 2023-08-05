@@ -167,7 +167,7 @@
 #' unless specified otherwise}
 #' 
 #' \item{\code{"walktrap"} --- }
-#' {See \code{\link[EGAnet]{cluster_walktrap}} for more details}
+#' {See \code{\link[igraph]{cluster_walktrap}} for more details}
 #' 
 #' }
 #' 
@@ -210,6 +210,19 @@
 #' @param plot.EGA Boolean.
 #' If \code{TRUE}, returns a plot of the network and its estimated dimensions.
 #' Defaults to \code{TRUE}
+#' 
+#' @param verbose Boolean (length = 1).
+#' Whether messages and (insignificant) warnings should be output.
+#' Defaults to \code{FALSE} (silent calls).
+#' Set to \code{TRUE} to see all messages and warnings for every function call
+#'
+#' @param ... Additional arguments to be passed on to
+#' \code{\link[EGAnet]{auto.correlate}},
+#' \code{\link[EGAnet]{network.estimation}},
+#' \code{\link[EGAnet]{community.detection}},
+#' \code{\link[EGAnet]{community.consensus}},
+#' \code{\link[EGAnet]{EGA}}, and
+#' \code{\link{GPArotation}}
 #'
 #' @return Returns a list of lists containing:
 #' 

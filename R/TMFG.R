@@ -1,63 +1,86 @@
-#' Triangulated Maximally Filtered Graph
+#' @title Triangulated Maximally Filtered Graph
 #'
 #' @description Applies the Triangulated Maximally Filtered Graph (TMFG) filtering method
-#' (\strong{please see and cite Massara et al., 2016}). The TMFG method uses a structural
+#' (see Massara et al., 2016). The TMFG method uses a structural
 #' constraint that limits the number of zero-order correlations included in the network
-#' (3n - 6; where \emph{n} is the number of variables). The TMFG algorithm begins by
+#' (3\emph{n} - 6; where \emph{n} is the number of variables). The TMFG algorithm begins by
 #' identifying four variables which have the largest sum of correlations to all other
 #' variables. Then, it iteratively adds each variable with the largest sum of three
 #' correlations to nodes already in the network until all variables have been added to
 #' the network. This structure can be associated with the inverse correlation matrix
 #' (i.e., precision matrix) to be turned into a GGM (i.e., partial correlation network)
 #' by using Local-Global Inversion Method (LoGo; see Barfuss et al., 2016 for more details).
-#' See Details for more information on this network estimation method.
+#' See \strong{Details} for more information
 #'
 #' @param data Matrix or data frame.
-#' Either data (cases by variables) or correlation matrix.
-#' If inputting a correlation matrix, then \code{n} must be
-#' set
+#' Should consist only of variables to be used in the analysis.
+#' Can be raw data or correlation matrix
 #'
 #' @param n Numeric (length = 1).
 #' Sample size for when a correlation matrix is input into \code{data}.
-#' Defaults to \code{NULL}
+#' Defaults to \code{NULL}.
+#' \code{n} is not necessary and is provided for better functionality in
+#' \code{\link{EGAnet}}
 #' 
 #' @param corr Character (length = 1).
 #' Method to compute correlations.
-#' Defaults to \code{"auto"} to automatically compute
-#' appropriate correlations using \code{\link[EGAnet]{auto.correlate}}.
-#' \code{"pearson"} and \code{"spearman"} are provide for completeness.
+#' Defaults to \code{"auto"}.
+#' Available options:
+#' 
+#' \itemize{
+#' 
+#' \item{\code{"auto"} --- }
+#' {Automatically computes appropriate correlations for
+#' the data using Pearson's for continuous, polychoric for ordinal,
+#' tetrachoric for binary, and polyserial/biserial for ordinal/binary with
+#' continuous. To change the number of categories that are considered
+#' ordinal, use \code{ordinal.categories}
+#' (see \code{\link[EGAnet]{polychoric.matrix}} for more details)}
+#' 
+#' \item{\code{"pearson"} --- }
+#' {Pearson's correlation is computed for all variables regardless of
+#' categories}
+#' 
+#' \item{\code{"spearman"} --- }
+#' {Spearman's rank-order correlation is computed for all variables
+#' regardless of categories}
+#' 
+#' }
+#' 
 #' For other similarity measures, compute them first and input them
 #' into \code{data} with the sample size (\code{n})
 #' 
 #' @param na.data Character (length = 1).
 #' How should missing data be handled?
+#' Defaults to \code{"pairwise"}.
 #' Available options:
 #' 
 #' \itemize{
 #' 
-#' \item{\code{"pairwise"}}
+#' \item{\code{"pairwise"} --- }
 #' {Computes correlation for all available cases between
 #' two variables}
 #' 
-#' \item{\code{"listwise"}}
+#' \item{\code{"listwise"} --- }
 #' {Computes correlation for all complete cases in the dataset}
 #' 
 #' }
 #' 
-#' @param partial Boolean.
+#' @param partial Boolean (length = 1).
 #' Whether partial correlations should be output.
-#' By default, the TMFG method is based on the zero-order correlations.
-#' The Local-Global Inversion Method (LoGo; see Barfuss et al., 2016 for more details)
+#' Defaults to \code{FALSE}.
+#' The TMFG method is based on the zero-order correlations;
+#' the Local-Global Inversion Method (LoGo; see Barfuss et al., 2016 for more details)
 #' uses the decomposability of the TMFG network to obtain the inverse covariance
 #' structure of the network (which is then converted to partial correlations).
 #' Set to \code{TRUE} to obtain the partial correlations from the LoGo method
 #' 
-#' @param returnAllResults Boolean.
+#' @param returnAllResults Boolean (length = 1).
 #' Whether all results should be returned.
 #' Defaults to \code{FALSE} (network only).
 #' Set to \code{TRUE} to access separators and cliques
 #' 
-#' @param verbose Boolean.
+#' @param verbose Boolean (length = 1).
 #' Whether messages and (insignificant) warnings should be output.
 #' Defaults to \code{FALSE} (silent calls).
 #' Set to \code{TRUE} to see all messages and warnings for every function call
@@ -119,7 +142,7 @@
 #'
 #' @export
 # TMFG Filtering Method----
-# Updated 02.07.2023
+# Updated 04.08.2023
 TMFG <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -129,6 +152,9 @@ TMFG <- function(
     ...
 )
 {
+  
+  # Argument errors
+  TMFG_errors(data, n, partial, returnAllResults, verbose)
   
   # Check for missing arguments (argument, default, function)
   corr <- set_default(corr, "auto", TMFG)
@@ -363,3 +389,33 @@ TMFG <- function(
 # corr = "auto"; na.data = "pairwise"
 # partial = FALSE; returnAllResults = FALSE
 # verbose = FALSE
+
+#' @noRd
+# Errors ----
+# Updated 04.08.2023
+TMFG_errors <- function(data, n, partial, returnAllResults, verbose)
+{
+  
+  # 'data' errors
+  object_error(data, c("matrix", "data.frame"))
+  
+  # 'n' errors
+  if(!is.null(n)){
+    length_error(n, 1)
+    typeof_error(n, "numeric")
+  }
+  
+  # 'partial' errors
+  length_error(partial, 1)
+  typeof_error(partial, "logical")
+  
+  # 'returnAllResults' errors
+  length_error(returnAllResults, 1)
+  typeof_error(returnAllResults, "logical")
+  
+  # 'verbose' errors
+  length_error(verbose, 1)
+  typeof_error(verbose, "logical")
+  
+}
+

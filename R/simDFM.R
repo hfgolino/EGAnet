@@ -72,6 +72,9 @@ simDFM <- function(
     variation = FALSE
 ){
 
+  # Send not refactored message (for now)
+  not_refactored("simDFM")
+  
   #### MISSING ARGUMENTS HANDLING ####
   if(missing(dfm)){
     dfm <- "DAFS"

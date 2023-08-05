@@ -42,7 +42,7 @@ opt.hier <- hierEGA(
   plot.EGA = FALSE # No plot for CRAN checks
 )
 
-Compute the Generalized Total Entropy Fit Index
+# Compute the Generalized Total Entropy Fit Index
 genTEFI(opt.hier)
 
 }

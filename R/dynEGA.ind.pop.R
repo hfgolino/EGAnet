@@ -27,10 +27,6 @@
 #' @param id Numeric or character (length = 1).
 #' Number or name of the column identifying each individual.
 #' Defaults to \code{NULL}
-#' 
-#' @param group Numeric or character (length = 1).
-#' Number of the column identifying group membership.
-#' Defaults to \code{NULL}
 #'
 #' @param n.embed Numeric (length = 1).
 #' Defaults to \code{5}.
@@ -157,7 +153,7 @@
 #' unless specified otherwise}
 #' 
 #' \item{\code{"walktrap"} --- }
-#' {See \code{\link[EGAnet]{cluster_walktrap}} for more details}
+#' {See \code{\link[igraph]{cluster_walktrap}} for more details}
 #' 
 #' }
 #'

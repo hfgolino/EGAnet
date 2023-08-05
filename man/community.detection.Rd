@@ -54,10 +54,10 @@ Constant Potts Model instead (see examples)}
 {See \code{\link[igraph]{cluster_optimal}} for more details}
 
 \item{\code{"spinglass"} --- }
-{See \code{\link[EGAnet]{cluster_spinglass}} for more details}
+{See \code{\link[igraph]{cluster_spinglass}} for more details}
 
 \item{\code{"walktrap"} --- }
-{See \code{\link[EGAnet]{cluster_walktrap}} for more details}
+{See \code{\link[igraph]{cluster_walktrap}} for more details}
 
 }}
 

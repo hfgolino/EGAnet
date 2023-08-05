@@ -35,12 +35,12 @@
 #' Christensen, A. P., & Golino, H. (2021b).
 #' Factor or network model? Predictions from neural networks.
 #' \emph{Journal of Behavioral Data Science}, \emph{1}(1), 85-126. \cr
-#' # Related functions: \code{\link[EGAnet]{LCT}}
+#' # Related functions: \code{LCT}
 #' 
 #' Christensen, A. P., & Golino, H. (2021c).
 #' On the equivalency of factor and network loadings.
 #' \emph{Behavior Research Methods}, \emph{53}, 1563-1580. \cr
-#' # Related functions: \code{\link[EGAnet]{LCT}} and \code{\link[EGAnet]{net.loads}}
+#' # Related functions: \code{LCT} and \code{\link[EGAnet]{net.loads}}
 #' 
 #' Christensen, A. P., Golino, H., & Silvia, P. J. (2020).
 #' A psychometric network perspective on the validity and validation of personality trait questionnaires.
@@ -89,7 +89,10 @@
 #' 
 #' @useDynLib EGAnet, .registration = TRUE
 #' 
-#' @importFrom utils packageDescription
+#' @importFrom graphics par text
+#' @importFrom methods formalArgs is
+#' @importFrom stats as.dist complete.cases cor cov cov2cor cutree dnorm hclust ks.test mad median na.omit p.adjust pgamma pnorm qchisq qf qgamma qnorm qt quantile rnorm runif sd setNames t.test uniroot var wilcox.test
+#' @importFrom utils browseURL capture.output combn data globalVariables object.size packageDescription packageVersion setTxtProgressBar txtProgressBar
 #'
 "_PACKAGE"
 #> [1] "_PACKAGE"

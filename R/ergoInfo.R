@@ -20,6 +20,12 @@
 #' 0 = edge absent and 1 = edge present}
 #' 
 #' }
+#' 
+#' @param ordering Character (length = 1).
+#' Changes ordering of edge list.
+#' \code{"row"} goes across the rows;
+#' \code{"column"} goes down the columns.
+#' Defaults to \code{"column"} (original implementation)
 #'
 #' @return Returns a list containing:
 #'

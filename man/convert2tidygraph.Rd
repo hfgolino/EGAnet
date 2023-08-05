@@ -2,7 +2,7 @@
 % Please edit documentation in R/convert2tidygraph.R
 \name{convert2tidygraph}
 \alias{convert2tidygraph}
-\title{Convert networks to \code{\link{tidygraph}}}
+\title{Convert networks to \code{tidygraph}}
 \usage{
 convert2tidygraph(EGA.object)
 }
@@ -11,10 +11,10 @@ convert2tidygraph(EGA.object)
 \code{$network} and \code{$wc}}
 }
 \value{
-Returns a network in the \code{\link{tidygraph}} format
+Returns a network in the \code{tidygraph} format
 }
 \description{
-Converts networks to \code{\link{tidygraph}} format
+Converts networks to \code{tidygraph} format
 }
 \examples{
 convert2tidygraph(ega.wmt)

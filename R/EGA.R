@@ -8,7 +8,8 @@
 #' based on findings from Golino et al. (2020) and Christensen (2023) 
 #'
 #' @param data Matrix or data frame.
-#' Should consist only of variables to be used in the analysis
+#' Should consist only of variables to be used in the analysis.
+#' Can be raw data or a correlation matrix
 #'
 #' @param n Numeric (length = 1).
 #' Sample size if \code{data} provided is a correlation matrix
@@ -98,7 +99,7 @@
 #' unless specified otherwise}
 #' 
 #' \item{\code{"walktrap"} --- }
-#' {See \code{\link[EGAnet]{cluster_walktrap}} for more details}
+#' {See \code{\link[igraph]{cluster_walktrap}} for more details}
 #' 
 #' }
 #'
@@ -278,12 +279,22 @@ EGA <- function (
   # Store model attributes
   model_attributes <- attr(multidimensional_result$network, "methods")
   
+  # Determine `select` arguments
+  ## Uses `overwrite_arguments` instead of
+  ## `obtain_arguments` because `BGGM::select`
+  ## is an S3method. It's possible to use
+  ## `BGGM:::select.estimate` but CRAN gets
+  ## mad about triple colons
+  bggm_select_ARGS <- list( # defaults for `BGGM:::select.estimate`
+    cred = 0.95, alternative = "two.sided"
+  )
+  
   # Obtain arguments for model
   model_ARGS <- switch(
     model_attributes$model,
     "bggm" = c(
       obtain_arguments(BGGM::estimate, model_attributes),
-      obtain_arguments(BGGM:::select.estimate, model_attributes)
+      overwrite_arguments(bggm_select_ARGS, model_attributes)
     ),
     "glasso" = obtain_arguments(EBICglasso.qgraph, model_attributes),
     "tmfg" = obtain_arguments(TMFG, model_attributes)

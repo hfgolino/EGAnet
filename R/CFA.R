@@ -115,7 +115,7 @@ CFA <- function(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ..
   }
   
   
-  if(class(ega.obj)=="EGA"){
+  if(is(ega.obj, "EGA")){
     strct <- split(ega.obj$dim.variables[, 1], list(ega.obj$dim.variables[, 2]))
     names(strct) <- paste("Fat", labels(strct))
     model.ega <- paste(names(strct), " =~ ", lapply(strct, function(x) paste(print(x), collapse = " + ")), collapse = " \n ")
@@ -126,8 +126,7 @@ CFA <- function(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ..
       what = "FUN",
       args = lavaan.args
     )
-}
-  if(class(ega.obj)=="hierEGA"){
+  }else if(is(ega.obj, "hierEGA")){
      ## Organizing 1st level items and factors:
     hierEGA.obj <- ega.obj
     

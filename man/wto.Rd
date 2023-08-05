@@ -7,8 +7,8 @@
 wto(network, signed = TRUE, diagonal.zero = TRUE)
 }
 \arguments{
-\item{network}{Symmetric matrix.
-Input for a symmetric network matrix}
+\item{network}{Symmetric matrix or data frame.
+A symmetric network}
 
 \item{signed}{Boolean (length = 1).
 Whether the signed version should be used.
@@ -37,6 +37,7 @@ wto(network)
 
 }
 \references{
+\strong{Original formalization} \cr
 Nowick, K., Gernat, T., Almaas, E., & Stubbs, L. (2009).
 Differences in human and chimpanzee gene expression patterns define an evolving network of transcription factors in brain.
 \emph{Proceedings of the National Academy of Sciences}, \emph{106}, 22358-22363.

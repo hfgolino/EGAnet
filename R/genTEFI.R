@@ -34,7 +34,7 @@
 #'   plot.EGA = FALSE # No plot for CRAN checks
 #' )
 #' 
-#' Compute the Generalized Total Entropy Fit Index
+#' # Compute the Generalized Total Entropy Fit Index
 #' genTEFI(opt.hier)
 #'
 #' @author Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>

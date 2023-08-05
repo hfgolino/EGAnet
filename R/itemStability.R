@@ -256,7 +256,7 @@ itemStability_errors <- function(bootega.obj, IS.plot)
 {
   
   # 'bootega.obj' errors
-  class_error(bootgea.obj, "bootEGA")
+  class_error(bootega.obj, "bootEGA")
   
   # 'IS.plot' errors
   length_error(IS.plot, 1)

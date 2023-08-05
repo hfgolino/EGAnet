@@ -8,6 +8,9 @@
 #' @param data Matrix or data frame.
 #' Should consist only of variables to be used in the analysis.
 #' \strong{Must} be raw data and not a correlation matrix
+#' 
+#' @param n Numeric (length = 1).
+#' Sample size if \code{data} provided is a correlation matrix
 #'
 #' @param corr Character (length = 1).
 #' Method to compute correlations.
@@ -94,7 +97,7 @@
 #' unless specified otherwise}
 #' 
 #' \item{\code{"walktrap"} --- }
-#' {See \code{\link[EGAnet]{cluster_walktrap}} for more details}
+#' {See \code{\link[igraph]{cluster_walktrap}} for more details}
 #' 
 #' }
 #'

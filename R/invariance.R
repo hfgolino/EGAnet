@@ -114,7 +114,7 @@
 #' unless specified otherwise}
 #' 
 #' \item{\code{"walktrap"} --- }
-#' {See \code{\link[EGAnet]{cluster_walktrap}} for more details}
+#' {See \code{\link[igraph]{cluster_walktrap}} for more details}
 #' 
 #' }
 #'

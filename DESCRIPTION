@@ -14,13 +14,12 @@ Depends: R (>= 3.5.0)
 License: GPL (>= 3.0)
 Encoding: UTF-8
 LazyData: true
-Imports: future, future.apply, glasso, GGally, ggdendro,
-	 ggplot2, ggpubr, igraph (>= 1.3.0), lavaan,
-	 Matrix, methods, progress, progressr, qgraph, 
-	 semPlot, sna, stats
-Suggests: fungible, GPArotation, gridExtra, knitr,
-	  markdown, psych, pwr,
-	  RColorBrewer
+Imports: BGGM, future, future.apply, glasso, GGally, 
+         ggdendro, ggplot2, ggpubr, GPArotation, 
+         igraph (>= 1.3.0), lavaan, Matrix, methods, 
+         network, progressr, qgraph, semPlot, sna, stats
+Suggests: fungible, knitr, markdown,
+          pbapply, progress, psych, pwr, RColorBrewer
 Byte-Compile: true
-VignetteBuilder: knitr
+BugReports: https://github.com/hfgolino/EGAnet/issues
 RoxygenNote: 7.2.3

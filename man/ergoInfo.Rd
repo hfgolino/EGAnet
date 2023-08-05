@@ -29,6 +29,12 @@ Current options are:
 0 = edge absent and 1 = edge present}
 
 }}
+
+\item{ordering}{Character (length = 1).
+Changes ordering of edge list.
+\code{"row"} goes across the rows;
+\code{"column"} goes down the columns.
+Defaults to \code{"column"} (original implementation)}
 }
 \value{
 Returns a list containing:

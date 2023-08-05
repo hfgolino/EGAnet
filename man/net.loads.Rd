@@ -32,6 +32,8 @@ For a list of rotations, see \code{\link{GPArotation}} for options.
 Defaults to \code{NULL} or no rotation.
 By setting a rotation, \code{scores} estimation will be
 based on the rotated loadings rather than unrotated loadings}
+
+\item{...}{Additional arguments to pass on to \code{\link{GPArotation}}}
 }
 \value{
 Returns a list containing:

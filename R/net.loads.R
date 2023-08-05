@@ -23,6 +23,8 @@
 #' By setting a rotation, \code{scores} estimation will be
 #' based on the rotated loadings rather than unrotated loadings
 #'
+#' @param ... Additional arguments to pass on to \code{\link{GPArotation}}
+#'
 #' @return Returns a list containing:
 #'
 #' \item{unstd}{A matrix of the unstandardized within- and between-community

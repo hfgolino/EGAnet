@@ -41,12 +41,12 @@ Estimating the stability of the number of factors via Bootstrap Exploratory Grap
 Christensen, A. P., & Golino, H. (2021b).
 Factor or network model? Predictions from neural networks.
 \emph{Journal of Behavioral Data Science}, \emph{1}(1), 85-126. \cr
-# Related functions: \code{\link[EGAnet]{LCT}}
+# Related functions: \code{LCT}
 
 Christensen, A. P., & Golino, H. (2021c).
 On the equivalency of factor and network loadings.
 \emph{Behavior Research Methods}, \emph{53}, 1563-1580. \cr
-# Related functions: \code{\link[EGAnet]{LCT}} and \code{\link[EGAnet]{net.loads}}
+# Related functions: \code{LCT} and \code{\link[EGAnet]{net.loads}}
 
 Christensen, A. P., Golino, H., & Silvia, P. J. (2020).
 A psychometric network perspective on the validity and validation of personality trait questionnaires.
@@ -90,6 +90,13 @@ Jamison, L., Christensen, A. P., & Golino, H. (under review).
 Optimizing Walktrap's community detection in networks using the Total Entropy Fit Index.
 \emph{PsyArXiv}. \cr
 # Related functions: \code{\link[EGAnet]{EGA.fit}} and \code{\link[EGAnet]{tefi}}
+}
+\seealso{
+Useful links:
+\itemize{
+  \item Report bugs at \url{https://github.com/hfgolino/EGAnet/issues}
+}
+
 }
 \author{
 Hudson Golino <hfg9s@virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>

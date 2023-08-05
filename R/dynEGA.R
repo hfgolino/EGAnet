@@ -177,7 +177,7 @@
 #' unless specified otherwise}
 #' 
 #' \item{\code{"walktrap"} --- }
-#' {See \code{\link[EGAnet]{cluster_walktrap}} for more details}
+#' {See \code{\link[igraph]{cluster_walktrap}} for more details}
 #' 
 #' }
 #'
@@ -395,7 +395,7 @@ dynEGA <- function(
   # "id" and "group" columns will be added as "ID" and "Group"
   # attributes to the data
   # These columns will be removed from the data!
-  data <- get_attributes(data, id, group, level)
+  data <- get_attributes(data, dimensions, id, group, level)
   
   # Get variable names
   variable_names <- dimnames(data)[[2]]
@@ -1239,8 +1239,8 @@ plot.dynEGA.Individual <- function(x, base = 1, id = NULL, ...)
 
 #' @noRd
 # Get ID from data ----
-# Updated 07.07.2023
-get_ID <- function(data, id, level, variable_names)
+# Updated 04.078.2023
+get_ID <- function(data, id, level, variable_names, dimensions)
 {
   
   # First, check for 'id' in variable names
@@ -1311,8 +1311,8 @@ get_ID <- function(data, id, level, variable_names)
 
 #' @noRd
 # Get Group from data ----
-# Updated 09.07.2023
-get_Group <- function(data, group, level, variable_names)
+# Updated 04.08.2023
+get_Group <- function(data, group, level, variable_names, dimensions)
 {
   
   # First, check for 'id' in variable names
@@ -1386,20 +1386,21 @@ get_Group <- function(data, group, level, variable_names)
 #' @noRd
 # Get "ID" and "Group" attributes ----
 # Updated 07.07.2023
-get_attributes <- function(data, id, group, level)
+get_attributes <- function(data, dimensions, id, group, level)
 {
   
   # Check for proper ID
   # If "individual" in 'level', then assigns "ID" as attribute
   # If 'id' is in the data, then it is removed!
-  ID_result <- get_ID(data, id, level, tolower(dimnames(data)[[2]]))
+  ID_result <- get_ID(data, id, level, tolower(dimnames(data)[[2]]), dimensions)
   
   # Check for proper Group
   # If "group" in 'level', then assigns "Group" as attribute
   # If 'group' is in the data, then it is removed!
   Group_result <- get_Group(
     ID_result$data, group, level,
-    tolower(dimnames(ID_result$data)[[2]])
+    tolower(dimnames(ID_result$data)[[2]]),
+    dimensions
   )
   
   # Get data from Group result

@@ -4,7 +4,6 @@
 
 # pwr.r.test
 #' @noRd
-#' @importFrom stats uniroot
 # Power for correlations from pwr 1.3.0
 # Updated 30.12.2021
 pwr.r.test <- function (n = NULL, r = NULL, sig.level = 0.05, power = NULL,
@@ -230,8 +229,6 @@ dnn.model.weights <- function (loads, weights)
 #' @param loads Matrix of loadings
 #'
 #' @return The model prediction
-#'
-#' @importFrom utils data
 #'
 #' @noRd
 #'
@@ -752,7 +749,6 @@ redund.plot <- function(plot.matrix, plot.args, plot.reduce = FALSE)
   return(redund.net)
 }
 
-#' @importFrom graphics text
 #' @noRd
 # Redundancy Reduction
 # Updated 04.05.2022
@@ -987,10 +983,6 @@ redund.reduce <- function(node.redundant.obj, reduce.method, plot.args, lavaan.a
         row.names(tab) <- c("0 (Target)", 1:length(comb))
 
         tab[,1:(ncol(tab) - 2)] <- matrix(sprintf("%.2f", tab[,1:(ncol(tab) - 2)]), nrow = nrow(tab), ncol = ncol(tab) - 2)
-
-        if(!isSymmetric(new.data)){
-          gridExtra::grid.arrange(gridExtra::tableGrob(tab))
-        }
 
         # Input check
         new.input <- input.check(poss = c(target.item, comb), type = "remove")

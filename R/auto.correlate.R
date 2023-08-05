@@ -100,8 +100,6 @@
 #' 
 #' # Obtain correlations
 #' wmt_corr <- auto.correlate(wmt)
-#' 
-#' @importFrom stats cor
 #'
 #' @export
 #'

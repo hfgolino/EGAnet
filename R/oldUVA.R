@@ -293,9 +293,6 @@
 #'
 #' @author Alexander Christensen <alexpaulchristensen@gmail.com>
 #'
-#' @importFrom stats pgamma pnorm qgamma qnorm cov2cor mad
-#' @importFrom utils capture.output
-#'
 #' @noRd
 #
 # Unique Variable Analysis
@@ -313,6 +310,10 @@ oldUVA <- function(
   plot.redundancy = FALSE, plot.args = list()
 )
 {
+  
+  # Send not refactored message
+  not_refactored("oldUVA")
+  
   # Make sure data is a matrix
   data <- as.matrix(data)
   

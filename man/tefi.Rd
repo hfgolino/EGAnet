@@ -7,13 +7,16 @@
 tefi(data, structure = NULL)
 }
 \arguments{
-\item{data}{A matrix, data frame, or correlation matrix}
+\item{data}{Matrix, data frame, or \code{*EGA} class object.
+Matrix or data frame can be raw data or a correlation matrix.
+All \code{*EGA} objects are accepted. \code{\link[EGAnet]{hierEGA}}
+input will produced the Generalized TEFI (see \code{\link[EGAnet]{genTEFI}})}
 
-\item{structure}{A vector representing the structure (numbers or labels for each item).
+\item{structure}{Numeric or character vector (length = \code{ncol(data)}).
 Can be theoretical factors or the structure detected by \code{\link{EGA}}.}
 }
 \value{
-Returns a list containing:
+Returns a data frame with columns:
 
 \item{VN.Entropy.Fit}{The Entropy Fit Index using Von Neumman's entropy}
 
@@ -22,8 +25,8 @@ Returns a list containing:
 \item{Average.Entropy}{The average entropy of the dataset}
 }
 \description{
-Computes the fit (TEFI) of a dimensionality structure using Von Neumman's entropy when the input is a correlation matrix.
-Lower values suggest better fit of a structure to the data.
+Computes the fit (TEFI) of a dimensionality structure using Von Neumman's entropy 
+when the input is a correlation matrix. Lower values suggest better fit of a structure to the data.
 }
 \examples{
 # Load data
@@ -35,11 +38,15 @@ ega.wmt <- EGA(
   plot.EGA = FALSE # no plot for CRAN checks
 )
 
-# Compute entropy indices
-tefi(data = ega.wmt$correlation, structure = ega.wmt$wc)
+# Compute entropy indices for empirical EGA
+tefi(ega.wmt)
+
+# User-defined structure (with `EGA` object)
+tefi(ega.wmt, structure = c(rep(1, 5), rep(2, 5), rep(3, 8)))
 
 }
 \references{
+\strong{Initial formalization and simulation} \cr
 Golino, H., Moulder, R. G., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Nesselroade, J., Sadana, R., Thiyagarajan, J. A., & Boker, S. M. (2020).
 Entropy fit indices: New fit measures for assessing the structure and dimensionality of multiple latent variables.
 \emph{Multivariate Behavioral Research}.

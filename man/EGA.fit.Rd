@@ -117,7 +117,7 @@ By default, searches along resolutions from 0 to 2 in 0.05 increments
 to change the search parameters (see examples)}
 
 \item{\code{"walktrap"} --- }
-{This algorithm is the default. See \code{\link[EGAnet]{cluster_walktrap}} for more details.
+{This algorithm is the default. See \code{\link[igraph]{cluster_walktrap}} for more details.
 By default, searches along 3 to 8 steps (\code{steps = 3:8}). Use the argument \code{steps}
 to change the search parameters (see examples)}
 
@@ -165,13 +165,6 @@ fit.walktrap <- EGA.fit(
   plot.EGA = FALSE # no plot for CRAN checks
 )
 
-# Estimate optimal EGA with Louvain
-fit.louvain <- EGA.fit(
-  data = wmt, algorithm = "louvain",
-  resolution_parameter = seq.int(0, 2, 0.05), # default
-  plot.EGA = FALSE # no plot for CRAN checks
-)
-
 # Estimate optimal EGA with Leiden and CPM
 fit.leiden <- EGA.fit(
   data = wmt, algorithm = "leiden",
@@ -190,6 +183,14 @@ fit.leiden <- EGA.fit(
   # default for modularity
   plot.EGA = FALSE # no plot for CRAN checks
 )
+
+\dontrun{
+# Estimate optimal EGA with Louvain
+fit.louvain <- EGA.fit(
+  data = wmt, algorithm = "louvain",
+  resolution_parameter = seq.int(0, 2, 0.05), # default
+  plot.EGA = FALSE # no plot for CRAN checks
+)}
 
 }
 \references{

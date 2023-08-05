@@ -419,7 +419,10 @@ plot.infoCluster <- function(x, ...)
   
 }
 
-
+#' @noRd
+# Global variables needed for CRAN checks ----
+# Updated 04.08.2023
+utils::globalVariables(c("x", "y", "xend", "yend", "cluster")) 
 
 
 

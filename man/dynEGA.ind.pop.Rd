@@ -171,7 +171,7 @@ for more information). This function will implement
 unless specified otherwise}
 
 \item{\code{"walktrap"} --- }
-{See \code{\link[EGAnet]{cluster_walktrap}} for more details}
+{See \code{\link[igraph]{cluster_walktrap}} for more details}
 
 }}
 
@@ -227,10 +227,6 @@ Set to \code{FALSE} to not display progress}
 \code{\link[EGAnet]{community.detection}},
 \code{\link[EGAnet]{community.consensus}}, and
 \code{\link[EGAnet]{EGA}}}
-
-\item{group}{Numeric or character (length = 1).
-Number of the column identifying group membership.
-Defaults to \code{NULL}}
 }
 \value{
 Same output as \code{\link{EGAnet}{dynEGA}} returning list
