@@ -1020,7 +1020,7 @@ legacy_UVA <- function(
 {
   
   # Old UVA arguments
-  oldUVA.args <- obtain.arguments(
+  oldUVA.args <- obtain_arguments(
     FUN = oldUVA, FUN.args = FUN.args # Need to set up defaults
   )
   

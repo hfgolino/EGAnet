@@ -321,6 +321,9 @@ invariance <- function(
 )
 {
   
+  # Store random state (if there is one)
+  store_state()
+  
   # Check for missing arguments (argument, default, function)
   configural.type <- set_default(configural.type, "parametric", invariance)
   corr <- set_default(corr, "auto", c("auto", "cor_auto", "pearson", "spearman"))
@@ -633,6 +636,9 @@ invariance <- function(
   
   # Add class
   class(results) <- "invariance"
+  
+  # Restore random state (if there is one)
+  restore_state()
   
   # Return results
   return(results)

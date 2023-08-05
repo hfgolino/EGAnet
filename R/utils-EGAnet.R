@@ -274,9 +274,34 @@ dnn.predict <- function (loads)
 
 }
 
-#%%%%%%%%%
-# UVA ----
-#%%%%%%%%%
+#%%%%%%%%%%%%
+# oldUVA ----
+#%%%%%%%%%%%%
+
+#' @noRd
+# Rescale edges for GGally
+# For plots
+# Updated 17.01.2021
+rescale.edges <- function (network, size)
+{
+  # Set rescaling
+  scaling <- seq(0, 1, .000001) * size
+  names(scaling) <- seq(0, 1, .000001)
+  
+  # Vectorize edges
+  edges <- round(as.vector(as.matrix(network)), 5)
+  
+  # Get absolute edges
+  abs.edges <- abs(edges)
+  
+  # Get edge signs
+  signs.edges <- sign(edges)
+  
+  # Rescale edges
+  rescaled.edges <- unname(scaling[as.character(abs.edges)])
+  
+  return(rescaled.edges)
+}
 
 #' @noRd
 # Redundancy Processing

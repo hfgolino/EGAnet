@@ -240,7 +240,7 @@ auto.correlate <- function(
   diag(correlation_matrix) <- 1
   
   # Determine whether matrix is positive definite
-  if(isTRUE(forcePD) & !is_positive_definite(correlation_matrix)){
+  if(!is_positive_definite(correlation_matrix) && isTRUE(forcePD)){
     
     # Send warning to user (if `verbose`)
     if(isTRUE(verbose)){

@@ -190,7 +190,7 @@ net.scores <- function (
 
 #' @noRd
 # Imputation ----
-# Updated 14.07.2023
+# Updated 04.08.2023
 imputation <- function(data, impute)
 {
   
@@ -201,6 +201,9 @@ imputation <- function(data, impute)
     "median" = nvapply(as.data.frame(data), median, na.rm = TRUE)
   )
   
+  # Get missing data
+  missing_data <- which(is.na(data), arr.ind = TRUE)
+  
   # Loop over unique columns
   for(column in unique(missing_data[,"col"])){
     
@@ -208,7 +211,7 @@ imputation <- function(data, impute)
     target_rows <- missing_data[,"row"][missing_data[,"col"] == column]
     
     # Populate data
-    data[target_rows, column] <- variable_impute[column]
+    data[target_rows, column] <- impute_values[column]
     
   }
   

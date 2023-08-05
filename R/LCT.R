@@ -1,48 +1,155 @@
-#' Loadings Comparison Test
+#' @title Loadings Comparison Test
 #'
-#' An algorithm to identify whether data were generated from a
+#' @description An algorithm to identify whether data were generated from a
 #' factor or network model using factor and network loadings.
 #' The algorithm uses heuristics based on theory and simulation. These
 #' heuristics were then submitted to several deep learning neural networks
 #' with 240,000 samples per model with varying parameters.
 #'
 #' @param data Matrix or data frame.
-#' A data frame with the variables to be used in the test or a correlation matrix.
-#' If the data used is a correlation matrix, the argument \code{n} will need to be specified
+#' Should consist only of variables to be used in the analysis.
+#' Can be raw data or a correlation matrix
 #'
-#' @param n Integer.
-#' Sample size (if the data provided is a correlation matrix)
+#' @param n Numeric (length = 1).
+#' Sample size if \code{data} provided is a correlation matrix
 #' 
-#' @param iter Integer.
-#' Number of replicate samples to be drawn from a multivariate
-#' normal distribution (uses \code{mvtnorm::mvrnorm}).
-#' Defaults to \code{100}
-#' 
-#' @param dynamic Boolean.
-#' Is the dataset a time series where rows are time points and
-#' columns are variables?
-#' Defaults to \code{FASLE}.
-#' 
-#' @param dynamic.args List.
-#' Arguments to be used in \code{\link[EGAnet]{dynEGA}}.
-#' Defaults:
+#' @param corr Character (length = 1).
+#' Method to compute correlations.
+#' Defaults to \code{"auto"}.
+#' Available options:
 #' 
 #' \itemize{
 #' 
-#' \item{\code{n.embed}}
-#' {Number of embeddings: 4}
+#' \item{\code{"auto"} --- }
+#' {Automatically computes appropriate correlations for
+#' the data using Pearson's for continuous, polychoric for ordinal,
+#' tetrachoric for binary, and polyserial/biserial for ordinal/binary with
+#' continuous. To change the number of categories that are considered
+#' ordinal, use \code{ordinal.categories}
+#' (see \code{\link[EGAnet]{polychoric.matrix}} for more details)}
 #' 
-#' \item{\code{tau}}
-#' {Lag: 1}
+#' \item{\code{"pearson"} --- }
+#' {Pearson's correlation is computed for all variables regardless of
+#' categories}
 #' 
-#' \item{\code{delta}}
-#' {Delta: 1}
-#' 
-#' \item{\code{use.derivatives}}
-#' {Derivatives: 1}
+#' \item{\code{"spearman"} --- }
+#' {Spearman's rank-order correlation is computed for all variables
+#' regardless of categories}
 #' 
 #' }
 #' 
+#' For other similarity measures, compute them first and input them
+#' into \code{data} with the sample size (\code{n})
+#' 
+#' @param na.data Character (length = 1).
+#' How should missing data be handled?
+#' Defaults to \code{"pairwise"}.
+#' Available options:
+#' 
+#' \itemize{
+#' 
+#' \item{\code{"pairwise"} --- }
+#' {Computes correlation for all available cases between
+#' two variables}
+#' 
+#' \item{\code{"listwise"} --- }
+#' {Computes correlation for all complete cases in the dataset}
+#' 
+#' }
+#' 
+#' @param model Character (length = 1).
+#' Defaults to \code{"glasso"}.
+#' Available options:
+#' 
+#' \itemize{
+#' 
+#' \item{\code{"BGGM"} --- }
+#' {Computes the Bayesian Gaussian Graphical Model.
+#' Set argument \code{ordinal.categories} to determine
+#' levels allowed for a variable to be considered ordinal.
+#' See \code{\link[BGGM]{estimate}} for more details}
+#' 
+#' \item{\code{"glasso"} --- }
+#' {Computes the GLASSO with EBIC model selection.
+#' See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details}
+#' 
+#' \item{\code{"TMFG"} --- }
+#' {Computes the TMFG method.
+#' See \code{\link[EGAnet]{TMFG}} for more details}
+#' 
+#' }
+#' 
+#' @param algorithm Character or 
+#' \code{\link{igraph}} \code{cluster_*} function (length = 1).
+#' Defaults to \code{"walktrap"}.
+#' Three options are listed below but all are available
+#' (see \code{\link[EGAnet]{community.detection}} for other options):
+#' 
+#' \itemize{
+#'
+#' \item{\code{"leiden"} --- }
+#' {See \code{\link[igraph]{cluster_leiden}} for more details}
+#' 
+#' \item{\code{"louvain"} --- }
+#' {By default, \code{"louvain"} will implement the Louvain algorithm using 
+#' the consensus clustering method (see \code{\link[EGAnet]{community.consensus}} 
+#' for more information). This function will implement
+#' \code{consensus.method = "most_common"} and \code{consensus.iter = 1000} 
+#' unless specified otherwise}
+#' 
+#' \item{\code{"walktrap"} --- }
+#' {See \code{\link[igraph]{cluster_walktrap}} for more details}
+#' 
+#' }
+#'
+#' @param uni.method Character (length = 1).
+#' What unidimensionality method should be used? 
+#' Defaults to \code{"louvain"}.
+#' Available options:
+#' 
+#' \itemize{
+#'
+#' \item{\code{"expand"} --- }
+#' {Expands the correlation matrix with four variables correlated 0.50.
+#' If number of dimension returns 2 or less in check, then the data 
+#' are unidimensional; otherwise, regular EGA with no matrix
+#' expansion is used. This method was used in the Golino et al.'s (2020)
+#' \emph{Psychological Methods} simulation}
+#'
+#' \item{\code{"LE"} --- }
+#' {Applies the Leading Eigenvector algorithm
+#' (\code{\link[igraph]{cluster_leading_eigen}})
+#' on the empirical correlation matrix. If the number of dimensions is 1,
+#' then the Leading Eigenvector solution is used; otherwise, regular EGA
+#' is used. This method was used in the Christensen et al.'s (2023) 
+#' \emph{Behavior Research Methods} simulation}
+#' 
+#' \item{\code{"louvain"} --- }
+#' {Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
+#' on the empirical correlation matrix. If the number of dimensions is 1, 
+#' then the Louvain solution is used; otherwise, regular EGA is used. 
+#' This method was validated Christensen's (2022) \emph{PsyArXiv} simulation.
+#' Consensus clustering can be used by specifying either
+#' \code{"consensus.method"} or \code{"consensus.iter"}}
+#' 
+#' }
+#'
+#' @param iter Numeric (length = 1).
+#' Number of replicate samples to be drawn from a multivariate
+#' normal distribution (uses \code{MASS::mvrnorm}).
+#' Defaults to \code{100} (recommended)
+#' 
+#' @param verbose Boolean (length = 1).
+#' Should progress be displayed?
+#' Defaults to \code{TRUE}.
+#' Set to \code{FALSE} to not display progress
+#'
+#' @param ... Additional arguments that can be passed on to
+#' \code{\link[EGAnet]{auto.correlate}},
+#' \code{\link[EGAnet]{network.estimation}},
+#' \code{\link[EGAnet]{community.detection}},
+#' \code{\link[EGAnet]{community.consensus}}, and
+#' \code{\link[EGAnet]{EGA}}
 #'
 #' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen at gmail.com>
 #'
@@ -56,333 +163,252 @@
 #' \item{proportion}{Proportions of models suggested across bootstraps}
 #'
 #' @examples
-#' \donttest{# Compute LCT
+#' # Get data
+#' data <- psych::bfi[,1:25]
+#' 
+#' \dontrun{# Compute LCT
 #' ## Factor model
-#' LCT(data = psychTools::bfi[,1:25])}
-#' 
-#' \dontrun{
-#' # Dynamic LCT
-#' LCT(sim.dynEGA[sim.dynEGA$ID == 1,1:24], dynamic = TRUE)}
-#' 
+#' LCT(data)} 
 #' 
 #' @references
+#' \strong{Model training and validation} \cr
 #' Christensen, A. P., & Golino, H. (2021).
 #' Factor or network model? Predictions from neural networks.
 #' \emph{Journal of Behavioral Data Science}, \emph{1}(1), 85-126.
 #' 
-#' @noRd
+#' @export
 #'
-# Loadings Comparison Test----
-# Updated 07.07.2022
-LCT <- function (data, n, iter = 100,
-                 dynamic = FALSE,
-                 dynamic.args = list(
-                   n.embed = 4, tau = 1, delta = 1,
-                   use.derivatives = 1
-                   )
-                 )
+# Loadings Comparison Test ----
+# Updated 04.08.2023
+LCT <- function(
+    data, n = NULL,
+    corr = c("auto", "pearson", "spearman"),
+    na.data = c("pairwise", "listwise"),
+    model = c("BGGM", "glasso", "TMFG"),  
+    algorithm = c("leiden", "louvain", "walktrap"),
+    uni.method = c("expand", "LE", "louvain"),
+    iter = 100, verbose = TRUE, ...
+)
 {
   
-  # Send not refactored warning (for now)
-  not_refactored("LCT")
+  # Store random state (if there is one)
+  store_state()
   
-  # Convert data to matrix
-  data <- as.matrix(data)
+  # Argument errors
+  LCT_errors(data, n, iter, verbose)
   
-  # Number of cases
-  if(nrow(data) == ncol(data)){
-    if(missing(n))
-    {stop("Argument 'n' must be supplied for an m x m matrix")}
-    
-    cases <- n
-  }else{cases <- nrow(data)}
+  # Check for missing arguments (argument, default, function)
+  corr <- set_default(corr, "auto", c("auto", "cor_auto", "pearson", "spearman"))
+  corr <- swiftelse(corr == "cor_auto", "auto", corr) # deprecate `cor_auto`
+  na.data <- set_default(na.data, "pairwise", auto.correlate)
+  model <- set_default(model, "glasso", network.estimation)
+  algorithm <- set_default(algorithm, "walktrap", community.detection)
+  uni.method <- set_default(uni.method, "louvain", community.unidimensional)
   
-  # Initialize network loading matrix
-  nl <- matrix(0, nrow = iter, ncol = 5)
-  fl <- nl
+  # Ensure data has names
+  data <- ensure_dimension_names(data)
   
-  # Calculate total computations
-  total_computations <- iter
-  
-  # Count computations
-  count_computations <- 0
-  
-  # Initialize runtime updates
-  runtime_update <- seq(0, total_computations, floor(total_computations / 100))
-  runtime_update <- c(runtime_update, total_computations)
-  
-  # Obtain start time
-  if(count_computations == 0){
-    start_time <- Sys.time()
-  }
-  
-  repeat{
-    
-    # Good sample?
-    good <- FALSE
-    
-    while(!good){
-      
-      # Turn off pblapply progress bar
-      if(isTRUE(dynamic)){
-        opb <- pbapply::pboptions(type = "none")
-      }
-      
-      # Generate data
-      if(nrow(data) != ncol(data)) {
-        
-        if(count_computations == 1) {
-          dat <- data
-        } else {
-          dat <- MASS_mvrnorm(cases, mu = rep(0, ncol(data)), Sigma = cov(data, use = "pairwise.complete.obs"))
-          
-        }
-        
-        # Static or dynamic
-        if(isTRUE(dynamic)){
-          
-          # Organize time series
-          dat <- dyn.org(data, dat)
-          
-          # Organize for dynamic EGA
-          dat <- cbind(dat, rep(1, nrow(dat)), rep(1, nrow(dat)))
-          colnames(dat)[(ncol(dat)-1):ncol(dat)] <- c("ID", "Group")
-          dat <- as.data.frame(dat)
-          
-        }else{
-          
-          # Compute correlation
-          cor.mat <- suppressMessages(
-            auto.correlate(dat)
-          )
-          
-        }
-        
-      }else{
-        
-        if(isTRUE(dynamic)){
-          
-          stop("Dynamic LCT requires the raw data. A correlation matrix cannot be used as input")
-          
-        }else{
-          
-          if(count_computations == 1) {
-            cor.mat <- data
-          } else {
-            
-            dat <- MASS_mvrnorm(cases, mu = rep(0, ncol(data)), Sigma = data)
-            
-            cor.mat <-  suppressMessages(
-              auto.correlate(dat)
-            )
-          }
-          
-        }
-        
-      }
-      
-      # Make sure there are column names
-      if(!isTRUE(dynamic)){
-        if(is.null(colnames(cor.mat)))
-        {colnames(cor.mat) <- paste("V", 1:ncol(cor.mat), sep = "")}
-      }
-      
-      # Estimate network
-      if(isTRUE(dynamic)){
-        
-        net <- try(suppressWarnings(suppressMessages(
-          dynEGA(dat, n.embed = dynamic.args$n.embed,
-                 tau = dynamic.args$tau, delta = dynamic.args$delta,
-                 use.derivatives = dynamic.args$use.derivatives,
-                 id = ncol(dat) - 1, group = ncol(dat),
-                 model = "glasso", algorithm = "walktrap",
-                 corr = "pearson", ncores = 2)$dynEGA
-        )), silent = TRUE)
-        
-        cor.mat <- net$correlation
-        
-      }else{
-        net <- try(suppressWarnings(suppressMessages(EGA(cor.mat, n = cases, plot.EGA = FALSE))), silent = TRUE)
-      }
-      
-      if(any(class(net) == "try-error"))
-      {good <- FALSE
-      }else{
-        
-        if(length(net$wc) == length(unique(net$wc)))
-        {good <- FALSE
-        }else{
-          
-          # Remove variables missing dimension
-          rm.NA <- which(is.na(net$wc))
-          if(length(rm.NA) != 0){
-            net$wc <- net$wc[-rm.NA]
-            net$network <- net$network[-rm.NA, -rm.NA]
-          }
-          
-          # Try to estimate network loadings
-          n.loads <- try(abs(as.matrix(net.loads(net$network, net$wc)$std)), silent = TRUE)
-          
-          if(any(class(n.loads) == "try-error"))
-          {good <- FALSE
-          }else{
-            
-            # Reorder network loadings
-            n.loads <- as.matrix(n.loads[match(names(net$wc), row.names(n.loads)),])
-            
-            # Get network loading proportions
-            n.low <- mean(n.loads >= 0.15, na.rm = TRUE)
-            n.mod <- mean(n.loads >= 0.25, na.rm = TRUE)
-            n.high <- mean(n.loads >= 0.35, na.rm = TRUE)
-            
-            if(ncol(n.loads) != 1)
-            {
-              # Initialize dominate loadings
-              n.dom <- numeric(ncol(data))
-              n.loads2 <- n.loads
-              
-              for(i in 1:ncol(n.loads))
-              {
-                n.dom[which(net$wc == i)] <- n.loads[which(net$wc == i), i]
-                n.loads2[which(net$wc == i), i] <- 0
-              }
-              
-              # Get dominant and cross-loading proportions
-              n.dom <- mean(n.dom >= 0.15)
-              n.cross <- mean(ifelse(n.loads2 == 0, NA, n.loads2) >= 0.15, na.rm = TRUE)
-              n.cross <- ifelse(is.na(n.cross), 0, n.cross)
-              
-              
-            }else{
-              n.dom <- NA
-              n.cross <- NA
-            }
-            
-            nl[count_computations,] <- c(n.low, n.mod, n.high, n.dom, n.cross)
-            
-            # Get factor loading proportions
-            if(length(rm.NA) != 0){
-              cor.mat <- cor.mat[-rm.NA, -rm.NA]
-            }
-            
-            f.loads <- suppressWarnings(abs(as.matrix(psych::fa(cor.mat, nfactors = ncol(n.loads), n.obs = cases)$loadings[,1:ncol(n.loads)])))
-            f.loads <- as.matrix(f.loads[match(names(net$wc), row.names(f.loads)),])
-            f.low <- mean(f.loads >= 0.40, na.rm = TRUE)
-            f.mod <- mean(f.loads >= 0.55, na.rm = TRUE)
-            f.high <- mean(f.loads >= 0.70, na.rm = TRUE)
-            
-            # Organize loadings
-            org <- numeric(ncol(cor.mat))
-            
-            for(i in 1:ncol(cor.mat))
-            {org[i] <- which.max(f.loads[i,])}
-            
-            if(ncol(f.loads) != 1)
-            {
-              # Initialize dominate loadings
-              f.dom <- numeric(ncol(cor.mat))
-              f.loads2 <- f.loads
-              
-              for(i in 1:max(org))
-              {
-                f.dom[which(org == i)] <- f.loads[which(org == i), i]
-                f.loads2[which(org == i), i] <- 0
-              }
-              
-              # Get dominant and cross-loading proportions
-              f.dom <- mean(f.dom >= 0.40)
-              f.cross <- mean(ifelse(f.loads2 == 0, NA, f.loads2) >= 0.40, na.rm = TRUE)
-              f.cross <- ifelse(is.na(f.cross), 0, f.cross)
-            }else{
-              f.dom <- NA
-              f.cross <- NA
-            }
-            
-            fl[count_computations,] <- c(f.low, f.mod, f.high, f.dom, f.cross)
-            
-            # Increase count
-            count_computations <- count_computations + 1
-            
-            # Update progress
-            if(count_computations < 5){
-              
-              # Update progress
-              custom_progress(
-                i = count_computations,
-                max = total_computations,
-                start_time = "calculating"
-              )
-              
-            }else if(count_computations %in% runtime_update){
-              
-              # Update progress
-              custom_progress(
-                i = count_computations,
-                max = total_computations,
-                start_time = start_time
-              )
-              
-            }
-            
-            # Good data!
-            good <- TRUE
-          }
-        }
-        
-      }
-      
-    }
-    
-    # Break out of repeat
-    if(count_computations == (iter+1))
-    {break}
-  }
-  
-  # Convert to data frames
-  loads.mat <- as.matrix(cbind(nl, fl))
-  dimnames(loads.mat) <- NULL
-  loads.mat <- ifelse(is.na(loads.mat), 0, loads.mat)
-  
-  # Predictions
-  predictions <- list()
-  
-  # Without bootstrap
-  wo.boot <- paste(dnn.predict(loads.mat[1,]))
-  
-  wo.boot <- switch(wo.boot,
-                 "1" = "Factor",
-                 "2" = "Network"
+  # First, get necessary inputs
+  output <- obtain_sample_correlations(
+    data = data, n = n, 
+    corr = corr, na.data = na.data, 
+    verbose = verbose, ...
   )
   
-  predictions$empirical <- wo.boot
-  
-  # Bootstrap prediction
-  boot <- paste(dnn.predict(colMeans(loads.mat, na.rm = TRUE)))
-  
-  boot <- switch(boot,
-                 "1" = "Factor",
-                 "2" = "Network"
+  # Get parameters for parametric bootstrap
+  mvrnorm_parameters <- mvrnorm_precompute(
+    cases = output$n,
+    Sigma = output$correlation
   )
   
-  predictions$bootstrap <- boot
+  # Initialize factor and network loading matrices
+  fl_proportions <- nl_proportions <- matrix(0, nrow = iter, ncol = 5)
   
-  # Bootstrap proportions
-  boot.prop <- apply(na.omit(loads.mat), 1, dnn.predict)
+  # Set up progress bar
+  if(verbose){pb <- txtProgressBar(max = iter, style = 3)}
   
-  boot.prop <- colMeans(proportion.table(as.matrix(boot.prop)))
-  
-  prop <- vector("numeric", length = 2)
-  names(prop) <- c("Factor", "Network")
-  
-  prop[1:length(boot.prop)] <- boot.prop
-  
-  predictions$proportion <- round(prop, 3)
-  
-  # Reset pboptions
-  if(isTRUE(dynamic)){
-    on.exit(pbapply::pboptions(opb))
+  # Perform loop
+  for(iteration in seq_len(iter)){
+    
+    # Generate data
+    generated_data <- reproducible_bootstrap(
+      seed = NULL, type = "parametric",
+      mvrnorm_parameters = mvrnorm_parameters
+    )
+    
+    # Estimate EGA
+    ega <- EGA(generated_data, plot.EGA = FALSE, ...)
+    
+    # Get correlation matrix
+    generated_correlation <- ega$correlation
+    
+    # Remove variables with missing membership
+    keep_membership <- !is.na(ega$wc)
+    ega$wc <- ega$wc[keep_membership]
+    ega$network <- ega$network[keep_membership, keep_membership]
+    generated_correlation <- generated_correlation[keep_membership, keep_membership]
+    
+    # Estimate network loadings
+    network_loadings <- abs(net.loads(ega, loading.method = "BRM")$std)
+    
+    # Get proportions
+    nl_proportions[iteration,] <- c(
+      mean(network_loadings >= 0.15, na.rm = TRUE),
+      mean(network_loadings >= 0.25, na.rm = TRUE),
+      mean(network_loadings >= 0.35, na.rm = TRUE),
+      assigned_proportions(network_loadings, ega$wc, "network"),
+      unassigned_proportions(network_loadings, ega$wc, "network")
+    )
+    
+    # Get dimension sequence
+    dimension_sequence <- seq_len(ega$n.dim)
+    
+    # Estimate factor loadings
+    factor_loadings <- silent_call(
+      abs(
+        psych::fa(
+          generated_correlation, nfactors = ega$n.dim, n.obs = output$n
+        )$loadings[,dimension_sequence]
+      )
+    )
+    
+    # Get "memberships"
+    factor_wc <- max.col(factor_loadings, ties.method = "first")
+    dimnames(factor_loadings)[[2]] <- dimension_sequence
+    names(factor_wc) <- dimnames(factor_loadings)[[1]]
+    
+    # Get proportions
+    fl_proportions[iteration,] <- c(
+      mean(factor_loadings >= 0.40, na.rm = TRUE),
+      mean(factor_loadings >= 0.55, na.rm = TRUE),
+      mean(factor_loadings >= 0.70, na.rm = TRUE),
+      assigned_proportions(factor_loadings, factor_wc, "factor"),
+      unassigned_proportions(factor_loadings, factor_wc, "factor")
+    )
+    
+    # Update progress bar
+    if(verbose){setTxtProgressBar(pb, iteration)}
+    
   }
   
-  return(predictions)
+  # Close progress bar
+  if(verbose){close(pb)}
+  
+  # Combine proportions into a matrix
+  loadings_matrix <- cbind(nl_proportions, fl_proportions)
+  
+  # Set NA values to zero
+  loadings_matrix[] <- swiftelse(is.na(loadings_matrix), 0, loadings_matrix)
+
+  # Collapse across matrix
+  bootstrap_predictions <- apply(na.omit(loadings_matrix), 1, dnn.predict)
+  
+  # Get table
+  bootstrap_predictions <- fast_table(bootstrap_predictions) / iter
+  
+  # Set new table
+  new_table <- c("1" = 0, "2" = 0)
+  
+  # Set names
+  new_table[names(bootstrap_predictions)] <- bootstrap_predictions
+  names(new_table) <- c("Factor", "Network")
+
+  # Return results
+  return(
+    list(
+      # Single-shot
+      empirical = swiftelse(
+        dnn.predict(loadings_matrix[1,]) == 1,
+        "Factor", "Network"
+      ),
+      # Bootstrap
+      bootstrap = swiftelse(
+        dnn.predict(colMeans(loadings_matrix, na.rm = TRUE)) == 1,
+        "Factor", "Network"
+      ),
+      # Proportion
+      proportion = new_table
+    )
+  )
+  
+}
+
+#' @noRd
+# Errors ----
+# Updated 28.07.2023
+LCT_errors <- function(data, n, iter, verbose)
+{
+  
+  # 'data' errors
+  object_error(data, c("matrix", "data.frame"))
+  
+  # 'n' errors
+  if(!is.null(n)){
+    length_error(n, 1)
+    typeof_error(n, "numeric")
+  }
+  
+  # 'iter' errors
+  length_error(iter, 1)
+  typeof_error(iter, "numeric")
+  range_error(iter, c(1, Inf))
+  
+  # 'verbose' errors
+  length_error(verbose, 1)
+  typeof_error(verbose, "logical")
+  
+}
+
+#' @noRd
+# Assigned proportions ----
+# Updated 05.08.2023
+assigned_proportions <- function(loadings, memberships, type)
+{
+  
+  # Get cut-off value
+  cut_off <- swiftelse(type == "network", 0.15, 0.40)
+  
+  # Return assigned proportions
+  return(
+    mean(
+      ulapply(unique(memberships), function(community){
+        
+        # Get community index
+        community_index <- memberships == community
+        
+        # Return assigned proportion
+        return(loadings[names(memberships)[community_index], as.character(community)] >= cut_off)
+        
+      }),
+      na.rm = TRUE
+    )
+  )
+  
+}
+
+#' @noRd
+# Unassigned proportions ----
+# Updated 05.08.2023
+unassigned_proportions <- function(loadings, memberships, type)
+{
+  
+  # Get cut-off value
+  cut_off <- swiftelse(type == "network", 0.15, 0.40)
+  
+  # Return assigned proportions
+  return(
+    mean(
+      ulapply(unique(memberships), function(community){
+        
+        # Get community index
+        community_index <- memberships != community
+        
+        # Return assigned proportion
+        return(loadings[names(memberships)[community_index], as.character(community)] >= cut_off)
+        
+      }),
+      na.rm = TRUE
+    )
+  )
   
 }

@@ -440,7 +440,7 @@ oldUVA <- function(
 
   ## plot.args
   plot.args <- suppressPackageStartupMessages(
-    GGally.args(plot.args)
+    GGally_args(plot.args)
   )
   
   # Perform redundancy analysis

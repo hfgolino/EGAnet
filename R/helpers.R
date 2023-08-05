@@ -2728,7 +2728,7 @@ entropy <- function(values, base = 2.718282)
 # Updated 29.06.2023
 is_positive_definite <- function(data)
 {
-  return(any(eigen(data, symmetric = TRUE, only.values = TRUE)$values < 0))
+  return(all(eigen(data, symmetric = TRUE, only.values = TRUE)$values > 0))
 }
 
 #' @noRd
