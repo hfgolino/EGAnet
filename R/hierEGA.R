@@ -286,7 +286,7 @@
 #' @export
 #'
 # Hierarchical EGA ----
-# Updated 03.08.2023
+# Updated 06.08.2023
 hierEGA <- function(
     data, 
     # `net.scores` arguments
@@ -369,8 +369,22 @@ hierEGA <- function(
     dimnames(data)[[2]] <- dimnames(lower_order_result$network)[[2]]
   }
 
-  # Check for scores
-  if(scores == "factor"){
+  # Check for no dimensions in lower order
+  if(lower_order_result$n.dim == 0){
+    
+    # Return empty results except lower order
+    return(
+      list(
+        lower_order = lower_order_result,
+        higher_order = NULL,
+        parameters = list(
+          lower_loadings = NULL,
+          lower_scores = NULL
+        )
+      )
+    )
+    
+  }else if(scores == "factor"){
     
     # Send warning
     warning(
@@ -462,6 +476,9 @@ hierEGA <- function(
         lower_scores = score_estimates
       )
     )
+    
+    # Set higher order flag
+    higher_order <- FALSE
 
   }else{
     
@@ -475,7 +492,10 @@ hierEGA <- function(
           list(
             data = score_estimates, corr = corr, na.data = na.data,
             model = model, algorithm = higher.algorithm, uni.method = uni.method,
-            plot.EGA = FALSE, verbose = verbose
+            plot.EGA = FALSE, verbose = FALSE
+            # issues at the this level may be inconsistent
+            # with the output (e.g., singleton communities)
+            # for this reason, 'verbose = FALSE'
           ),
           # Send ellipse arguments
           ellipse
@@ -486,6 +506,20 @@ hierEGA <- function(
         lower_scores = score_estimates
       )
     )
+    
+    # For higher order, allow singleton communities
+    if(anyNA(results$higher_order$wc)){
+      
+      # Get missing indices
+      missing_index <- is.na(results$higher_order$wc) 
+      
+      # Update missing indices with singleton values
+      results$higher_order$wc[missing_index] <-
+        seq_len(sum(missing_index)) + results$higher_order$n.dim
+    }
+    
+    # Set higher order flag
+    higher_order <- TRUE
     
   }
   
@@ -504,7 +538,7 @@ hierEGA <- function(
   # Add dimension variables like `EGA`
   results$dim.variables <- fast.data.frame(
     c(
-      dimnames(data)[[2]], 
+      names(results$lower_order$wc), 
       as.vector(results$lower_order$wc),
       as.vector(
         single_revalue_memberships( # function in `bootEGA` internals
@@ -526,11 +560,20 @@ hierEGA <- function(
   # Set class
   class(results) <- "hierEGA"
   
-  # Add TEFI to the result
-  results$TEFI <- tefi(results)$VN.Entropy.Fit
+  # Obtain generalized TEFI
+  gTEFI <- tefi(results)
+  
+  # Set up TEFI results
+  results$lower_order$TEFI <- gTEFI$Lower.Order.VN
+  results$TEFI <- gTEFI$VN.Entropy.Fit
+  
+  # Set up check for higher order results
+  if(higher_order){
+    results$higher_order$TEFI <- gTEFI$Higher.Order.VN
+  }
   
   # Check for plot
-  if(lower_order_result$n.dim != 1 && plot.EGA){
+  if(higher_order && plot.EGA){
     
     # Get plot
     results$plot.hierEGA <- plot(results, ...)
@@ -547,10 +590,11 @@ hierEGA <- function(
 
 # Bug checking ----
 # data = NetworkToolbox::neoOpen; loading.method = "BRM"
+# loading.structure = "simple"
 # rotation = "geominQ"; scores = "network"
 # scoring.method = "network"; impute = "none"
 # corr = "auto"; na.data = "pairwise"; model = "glasso"
-# algorithm = "walktrap"; uni.method = "louvain"
+# ellipse = list(algorithm = "walktrap"); uni.method = "louvain"
 # plot.EGA = FALSE; verbose = FALSE
 
 #' @noRd
@@ -628,7 +672,7 @@ summary.hierEGA <- function(object, ...)
 
 #' @exportS3Method 
 # S3 Plot Method ----
-# Updated 04.08.2023
+# Updated 06.08.2023
 plot.hierEGA <- function(
     x, plot.type = c("multilevel", "separate"),
     color.match = FALSE, ...
@@ -698,26 +742,13 @@ plot.hierEGA <- function(
       "Higher_", format_integer(x$higher_order$wc, places)
     )
     
-    # Replace "NA" names in higher order
-    # Forces singleton representation
-    higher_order_names[grep("NA", higher_order_names)] <-
-      paste0(
-        "Higher_", 
-        format_integer(
-          names(x$higher_order$wc)[is.na(x$higher_order$wc)], places
-        )
-      )
-    
     # Set up plot list as standard `EGA`
     plot_list <- list(
       # Round hierarchical network to 4
       # (same as what's used in `basic_plot_setup`)
       network = round(hierarchical_network, 4),
       wc = c(
-        paste0(
-          "Lower_", 
-          format_integer(x$lower_order$wc, places)
-        ),
+        paste0("Lower_", format_integer(x$lower_order$wc, places)),
         higher_order_names
       )
     )

@@ -61,6 +61,13 @@
 #' Used for computation of \code{\link[EGAnet]{tefi}}.
 #' Only needed when \code{consensus.method = "tefi"}
 #' 
+#' @param allow.singleton Boolean (length = 1).
+#' Whether singleton or single node communities should be allowed.
+#' Defaults to \code{FALSE}.
+#' When \code{FALSE}, singleton communities will be set to
+#' missing (\code{NA}); otherwise, when \code{TRUE}, singleton
+#' communities will be allowed
+#' 
 #' @param membership.only Boolean.
 #' Whether the memberships only should be output.
 #' Defaults to \code{TRUE}.
@@ -151,7 +158,7 @@
 #' @export
 #'
 # Compute consensus clustering for EGA ----
-# Updated 02.08.2023
+# Updated 06.08.2023
 community.consensus <- function(
     network, 
     order = c("lower", "higher"), resolution = 1,
@@ -160,6 +167,7 @@ community.consensus <- function(
       "most_common", "lowest_tefi"
     ), consensus.iter = 1000, 
     correlation.matrix = NULL,
+    allow.singleton = FALSE,
     membership.only = TRUE,
     ...
 )
@@ -172,7 +180,7 @@ community.consensus <- function(
   # Arguments errors
   community.consensus_errors(
     network, resolution, consensus.iter,
-    correlation.matrix, membership.only
+    correlation.matrix, allow.singleton, membership.only
   )
   
   # Check for {igraph} network
@@ -217,7 +225,13 @@ community.consensus <- function(
   
   # Determine whether all nodes are disconnected
   if(all(unconnected)){
+    
+    # Send warning about empty network
     warning("The network input is empty. All community memberships are missing.", call. = FALSE)
+    
+    # Set up results
+    result <- list(selected_solution = rep(NA, nodes))
+    
   }else{ # Carry on if at least one node is connected
     
     # Check if any nodes are disconnected
@@ -271,16 +285,42 @@ community.consensus <- function(
   }
   
   # Force into vector
-  # `reindex_memberships` internal is in `community.detection`
-  result$selected_solution <- reindex_memberships(
-    force_vector(result$selected_solution)
-  )
+  result$selected_solution <- force_vector(result$selected_solution)
   
   # Obtain network names
   network_names <- dimnames(network)[[2]]
   
   # Ensure names
   names(result$selected_solution) <- network_names
+  
+  # Check singleton behavior
+  if(!allow.singleton){
+    
+    # Determine whether there are any singleton communities
+    membership_frequency <- fast_table(result$selected_solution)
+    
+    # Singletons
+    singletons <- membership_frequency == 1
+    
+    # Check for frequencies equal to one
+    if(any(singletons)){
+      
+      # Identify communities
+      singleton_communities <- as.numeric(
+        names(membership_frequency)[singletons]
+      )
+      
+      # Set values to NA
+      result$selected_solution[
+        result$selected_solution %in% singleton_communities
+      ] <- NA
+      
+    }
+    
+  }
+  
+  # `reindex_memberships` internal is in `community.detection`
+  result$selected_solution <- reindex_memberships(result$selected_solution)
   
   # Set methods attribute
   attr(result$selected_solution, "methods") <- list(
@@ -330,10 +370,10 @@ community.consensus <- function(
 
 #' @noRd
 # Errors ----
-# Updated 02.08.2023
+# Updated 06.08.2023
 community.consensus_errors <- function(
     network, resolution, consensus.iter,
-    correlation.matrix, membership.only
+    correlation.matrix, allow.singleton, membership.only
 ) 
 {
   
@@ -356,6 +396,10 @@ community.consensus_errors <- function(
   if(!is.null(correlation.matrix)){
     object_error(correlation.matrix, c("matrix", "data.frame"))
   }
+  
+  # 'allow.singleton' errors
+  length_error(allow.singleton, 1)
+  typeof_error(allow.singleton, "logical")
   
   # 'membership.only' errors
   length_error(membership.only, 1)

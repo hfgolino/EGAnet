@@ -494,7 +494,7 @@ send_network_methods <- function(estimated_network, boot = FALSE)
 
 #' @exportS3Method 
 # S3 Print Method ----
-# Updated 29.06.2023
+# Updated 06.08.2023
 print.EGA.network <- function(x, ...)
 {
   
@@ -518,10 +518,16 @@ print.EGA.network <- function(x, ...)
   edges <- length(non_zero_edges)
   edge_density <- edges / length(lower_triangle)
   
-  # Obtain summary statistics
-  average_weight <- mean(non_zero_edges, na.rm = TRUE)
-  sd_weight <- sd(non_zero_edges, na.rm = TRUE)
-  range_weight <- range(non_zero_edges, na.rm = TRUE)
+  # Obtain summary statistics (check for no edges)
+  if(edges != 0){
+    average_weight <- mean(non_zero_edges, na.rm = TRUE)
+    sd_weight <- sd(non_zero_edges, na.rm = TRUE)
+    range_weight <- range(non_zero_edges, na.rm = TRUE)
+  }else{
+    average_weight <- sd_weight <- 0
+    range_weight <- numeric(2)
+  }
+  
   
   # Print information about edges
   cat(paste0("Number of nodes: ", dim(network)[2], "\n"))

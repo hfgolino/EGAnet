@@ -206,7 +206,7 @@
 #' @export
 #' 
 # EGA fit ----
-# Updated 30.07.2023
+# Updated 06.08.2023
 EGA.fit <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -317,7 +317,7 @@ EGA.fit <- function(
   class(best_fit) <- "EGA.fit"
   
   # Check for plot
-  if(isTRUE(plot.EGA)){
+  if(plot.EGA && sum(best_fit$EGA$network != 0)){
     
     # Set up plot
     best_fit$Plot.EGA <- plot(best_fit, ...)

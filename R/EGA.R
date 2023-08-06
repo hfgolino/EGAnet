@@ -238,7 +238,7 @@
 #'
 #' @export
 # EGA ----
-# Updated 02.08.2023
+# Updated 06.08.2023
 EGA <- function (
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -279,6 +279,7 @@ EGA <- function (
   # Store model attributes
   model_attributes <- attr(multidimensional_result$network, "methods")
   
+  # Check for zero dimensions
   # Determine `select` arguments
   ## Uses `overwrite_arguments` instead of
   ## `obtain_arguments` because `BGGM::select`
@@ -331,16 +332,22 @@ EGA <- function (
   
   # Determine result
   if(unidimensional){
+    
+    # Replace memberships with unidimensional result
     multidimensional_result$wc <- unidimensional_result
+    
+    # Update number of dimensions
+    multidimensional_result$n.dim <- 1
+    
   }
-  
-  # Obtain number of dimensions
-  multidimensional_result$n.dim <- unique_length(multidimensional_result$wc)
   
   # Set up dimension variables data frame
   ## Mainly for legacy, redundant with named `wc`
   dim.variables <- fast.data.frame(
-    c(dimnames(data)[[2]], as.vector(multidimensional_result$wc)),
+    c( # should have names at this point
+      names(multidimensional_result$wc),
+      as.vector(multidimensional_result$wc)
+    ),
     nrow = length(multidimensional_result$wc), ncol = 2,
     colnames = c("items", "dimension")
   )
@@ -374,7 +381,7 @@ EGA <- function (
   multidimensional_result$TEFI <- tefi(multidimensional_result)$VN.Entropy.Fit
   
   # Check for plot
-  if(plot.EGA){
+  if(plot.EGA && sum(multidimensional_result$network != 0)){
     
     # Set up plot
     multidimensional_result$Plot.EGA <- plot(

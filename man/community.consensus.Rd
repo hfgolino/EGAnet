@@ -11,6 +11,7 @@ community.consensus(
   consensus.method = c("highest_modularity", "iterative", "most_common", "lowest_tefi"),
   consensus.iter = 1000,
   correlation.matrix = NULL,
+  allow.singleton = FALSE,
   membership.only = TRUE,
   ...
 )
@@ -71,6 +72,13 @@ Defaults to \code{1000}}
 \item{correlation.matrix}{Symmetric matrix.
 Used for computation of \code{\link[EGAnet]{tefi}}.
 Only needed when \code{consensus.method = "tefi"}}
+
+\item{allow.singleton}{Boolean (length = 1).
+Whether singleton or single node communities should be allowed.
+Defaults to \code{FALSE}.
+When \code{FALSE}, singleton communities will be set to
+missing (\code{NA}); otherwise, when \code{TRUE}, singleton
+communities will be allowed}
 
 \item{membership.only}{Boolean.
 Whether the memberships only should be output.

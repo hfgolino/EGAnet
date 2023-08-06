@@ -200,7 +200,7 @@ get_tefi_structure <- function(data, structure, ega_object = NULL)
 
 #' @noRd
 # `tefi` standard function ----
-# Updated 31.07.2023
+# Updated 06.08.2023
 tefi_standard <- function(correlation_matrix, structure)
 {
   
@@ -214,8 +214,8 @@ tefi_standard <- function(correlation_matrix, structure)
     warning(
       paste(
         "Some variables did not belong to a dimension:", 
-        dimnames(correlation_matrix)[[2]][rm.vars], "\n\n",
-        "Use caution: These variables have been removed from the TEFI calculation"
+        paste0(dimnames(correlation_matrix)[[2]][rm.vars], collapse = ", "),
+        "\n\nUse caution: These variables have been removed from the TEFI calculation"
       ), call. = FALSE
     )
     
@@ -275,7 +275,7 @@ tefi_standard <- function(correlation_matrix, structure)
 
 #' @noRd
 # `tefi` generalized function ----
-# Updated 05.08.2023
+# Updated 06.08.2023
 tefi_generalized <- function(correlation_matrix, structure)
 {
   
@@ -295,8 +295,8 @@ tefi_generalized <- function(correlation_matrix, structure)
     warning(
       paste(
         "Some variables did not belong to a dimension:", 
-        dimnames(correlation_matrix)[[2]][rm.vars], "\n\n",
-        "Use caution: These variables have been removed from the TEFI calculation"
+        paste0(dimnames(correlation_matrix)[[2]][rm.vars], collapse = ", "),
+        "\n\nUse caution: These variables have been removed from the TEFI calculation"
       ), call. = FALSE
     )
     
@@ -371,7 +371,7 @@ tefi_generalized <- function(correlation_matrix, structure)
         (E / lower_communities - H_vn) + (H_vn - E) * sqrt_lower
       ),
       ncol = 3,
-      colnames = c("VN.Entropy.Fit","Lower.Order.VN","High.Order.VN")
+      colnames = c("VN.Entropy.Fit","Lower.Order.VN","Higher.Order.VN")
     )
   )
   
