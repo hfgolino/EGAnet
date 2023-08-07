@@ -294,17 +294,19 @@ mean pairwise (partial) correlations over the \emph{iter} bootstraps (see
 \strong{Details} for information about the typical median network structure).
 }
 \details{
+The typical network structure is derived from the median (or mean) value
+of each pairwise relationship. These values tend to reflect the
+"typical" value taken by an edge across the bootstrap networks. Afterward,
+the same community detection algorithm is applied to the typical network as the
+bootstrap networks. 
+
+Because the community detection algorithm is applied to the typical network structure,
+there is a possibility that the community algorithm determines
+a different number of dimensions than the median number derived from the bootstraps.
 The typical network structure (and number of dimensions) may \emph{not}
 match the empirical \code{\link[EGAnet]{EGA}} number of dimensions or
 the median number of dimensions from the bootstrap. This result is known
 and \emph{not} a bug.
-
-The typical network structure is derived from the median (or mean) value
-of each pairwise relationship. These values are intended to reflect the
-"typical" value taken by an edge across the bootstrap networks. Afterward,
-the same community detection algorithm is applied to the typical network as the
-bootstrap networks. There is a possibility that the community algorithm determines
-a different number of dimensions than the median number derived from the bootstraps.
 }
 \examples{
 # Load data

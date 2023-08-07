@@ -523,18 +523,6 @@ hierEGA <- function(
     
   }
   
-  # Perform parallel PCA to check for no general factors
-  # sink <- capture.output(
-  #   pca <-
-  #     psych::fa.parallel(
-  #       x = results$higher_order$correlation,
-  #       fa = "pc",
-  #       n.obs = dim(data)[1],
-  #       plot = FALSE
-  #     )
-  # )
-  # Look into alternative solutions
-  
   # Add dimension variables like `EGA`
   results$dim.variables <- fast.data.frame(
     c(
@@ -569,7 +557,31 @@ hierEGA <- function(
   
   # Set up check for higher order results
   if(higher_order){
+
+    # Set higher order TEFI
     results$higher_order$TEFI <- gTEFI$Higher.Order.VN
+    
+    # Message for correlated factor vs. bifactor
+
+    # # Set up messages
+    # ## General start
+    # general_start <- paste0(
+    #   "Based on lower (", round(results$lower_order$TEFI, 3),
+    #   ") and higher (", round(results$higher_order$TEFI, 3),
+    #   ") TEFI, there is better fit for a "
+    # )
+    # 
+    # ## Alternates
+    # first_order <- paste0("correlated lower order factor structure than bifactor structure")
+    # bifactor <- paste0("bifactor structure than correlated lower order factor structure")
+    # 
+    # # Compare
+    # swiftelse(
+    #   results$lower_order$TEFI < results$higher_order$TEFI,
+    #   message(paste0(general_start, first_order)),
+    #   message(paste0(general_start, bifactor)),
+    # )
+
   }
   
   # Check for plot

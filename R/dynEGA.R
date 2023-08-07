@@ -1427,7 +1427,9 @@ variable_derivatives <- function(variable, n.embed, tau, L)
   # Add column names
   dimnames(derivatives)[[2]] <- paste0("Ord", 0:2)
   
+  # Return derivatives
   return(derivatives)
+  
 }
 
 #' @noRd

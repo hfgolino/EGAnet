@@ -221,17 +221,19 @@
 #' \code{\link[EGAnet]{hierEGA}}, and
 #' \code{\link[EGAnet]{riEGA}}
 #'
-#' @details The typical network structure (and number of dimensions) may \emph{not}
-#' match the empirical \code{\link[EGAnet]{EGA}} number of dimensions or
-#' the median number of dimensions from the bootstrap. This result is known
-#' and \emph{not} a bug.
-#' 
-#' The typical network structure is derived from the median (or mean) value
-#' of each pairwise relationship. These values are intended to reflect the
+#' @details The typical network structure is derived from the median (or mean) value
+#' of each pairwise relationship. These values tend to reflect the
 #' "typical" value taken by an edge across the bootstrap networks. Afterward,
 #' the same community detection algorithm is applied to the typical network as the
-#' bootstrap networks. There is a possibility that the community algorithm determines
+#' bootstrap networks. 
+#' 
+#' Because the community detection algorithm is applied to the typical network structure,
+#' there is a possibility that the community algorithm determines
 #' a different number of dimensions than the median number derived from the bootstraps.
+#' The typical network structure (and number of dimensions) may \emph{not}
+#' match the empirical \code{\link[EGAnet]{EGA}} number of dimensions or
+#' the median number of dimensions from the bootstrap. This result is known
+#' and \emph{not} a bug. 
 #'
 #' @return Returns a list containing:
 #'
@@ -419,7 +421,7 @@ bootEGA <- function(
     plot.EGA = FALSE, verbose = FALSE
   )
   
-  # Determine whether output is hierarchical
+  # Set flag for hierarchical EGA
   hierarchical <- EGA.type == "hierega"
   
   # Branch for hierarchical
@@ -458,7 +460,7 @@ bootEGA <- function(
     # Set all seeds to zero (or random)
     seeds <- rep(0, iter)
     
-    # Check for external suppression
+    # Check for external suppression (from `invariance`)
     if(!"suppress" %in% names(ellipse) || !ellipse$suppress){
       message("Argument 'seed' is set to `NULL`. Results will not be reproducible. Set 'seed' for reproducible results")
     }
@@ -493,7 +495,7 @@ bootEGA <- function(
     iterations = iter,
     datalist = seeds, # data is generated in each iteration
     ncores = ncores, progress = verbose,
-    clear = swiftelse("clear" %in% names(ellipse), ellipse$clear, FALSE),
+    clear = swiftelse("clear" %in% names(ellipse), ellipse$clear, FALSE), # from `invariance`
     # Standard EGA arguments
     FUN = function(
       seed_value, data, type, case_sequence, 
@@ -560,7 +562,7 @@ bootEGA <- function(
   class(results) <- "bootEGA"
   
   # Check for typical structure results
-  if(isTRUE(typicalStructure)){
+  if(typicalStructure){
     
     # Obtain results
     results$typicalGraph <- do.call(
@@ -572,7 +574,7 @@ bootEGA <- function(
     )
 
     # Check for plot
-    if(isTRUE(plot.typicalStructure)){
+    if(plot.typicalStructure){
       
       # Get plot
       results$plot.typical.ega <- plot(results, ...)
@@ -597,7 +599,7 @@ bootEGA <- function(
 # model = "glasso"; algorithm = "walktrap"; uni.method = "louvain"
 # iter = 100; type = "parametric"; ncores = 8; EGA.type = "EGA"
 # typicalStructure = TRUE; plot.typicalStructure = FALSE;
-# verbose = TRUE
+# seed = 1234; verbose = TRUE
 
 #' @noRd
 # Errors ----
@@ -1087,7 +1089,9 @@ prepare_bootEGA_results <- function(boot_object, iter)
   boot_networks <- lapply(boot_object, function(x){x$network})
   
   # Get memberships
-  boot_memberships <- t(nvapply(boot_object, function(x){x$wc}, LENGTH = length(boot_object[[1]]$wc)))
+  boot_memberships <- t(
+    nvapply(boot_object, function(x){x$wc}, LENGTH = length(boot_object[[1]]$wc))
+  )
   
   # Get bootstrap dimensions
   boot_n.dim <- nvapply(boot_object, function(x){x$n.dim})
@@ -1195,7 +1199,7 @@ typical_walktrap_fit <- function(network, dimensions, ellipse)
 
 #' @noRd
 # Typical Leiden `EGA.fit` ----
-# Updated 20.07.2023
+# Updated 07.08.2023
 typical_leiden_fit <- function(network, dimensions, ellipse)
 {
   
@@ -1246,9 +1250,6 @@ typical_leiden_fit <- function(network, dimensions, ellipse)
     
   }
   
-  # Get the length of the resolution parameter
-  resolution_parameter_length <- length(resolution_parameter)
-  
   # Obtain search matrix
   search_matrix <- t(nvapply(
     resolution_parameter, function(resolution_parameter){
@@ -1284,7 +1285,7 @@ typical_leiden_fit <- function(network, dimensions, ellipse)
 
 #' @noRd
 # Typical Louvain `EGA.fit` ----
-# Updated 07.07.2023
+# Updated 07.08.2023
 typical_louvain_fit <- function(network, dimensions, ellipse)
 {
   
@@ -1301,9 +1302,6 @@ typical_louvain_fit <- function(network, dimensions, ellipse)
     ellipse <- ellipse[names(ellipse) != "resolution_parameter"]
     
   }
-  
-  # Get the length of the resolution parameter
-  resolution_parameter_length <- length(resolution_parameter)
   
   # Obtain search matrix
   search_matrix <- t(nvapply(

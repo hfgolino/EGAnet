@@ -161,7 +161,7 @@ UVA <- function(
   ellipse <- list(...)
   
   # Check for method ("EJP" is old, not recommended)
-  if(uva.method == "ejp" | !auto){
+  if(uva.method == "ejp" || !auto){
     
     # Check for type = "adapt" or "alpha" 
     # (will not be supported after version 2.0.0)
@@ -1056,12 +1056,12 @@ UVA_type_warning <- function(ellipse)
 
 #' @noRd
 # "auto" is `FALSE` warning ---
-# Updated 24.07.2023
+# Updated 07.08.2023
 UVA_manual_warning <- function(auto)
 {
   
   # Check for manual
-  if(isFALSE(auto)){
+  if(!auto){
     warning(
       paste0(
         "Manual decisions (`auto = FALSE`) will not be supported ",
@@ -1073,15 +1073,3 @@ UVA_manual_warning <- function(auto)
   }
   
 }
-  
-
-
-
-
-
-
-
-
-
-
-

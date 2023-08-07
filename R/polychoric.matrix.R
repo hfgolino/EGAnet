@@ -109,7 +109,7 @@
 #' @export
 #'
 # Compute polychoric correlation matrix
-# Updated 04.08.2023
+# Updated 07.08.2023
 polychoric.matrix <- function(
     data, na.data = c("pairwise", "listwise"),
     empty.method = c("none", "zero", "all"),
@@ -120,7 +120,7 @@ polychoric.matrix <- function(
   # Set default arguments if missing
   na.data <- set_default(na.data, "pairwise", polychoric.matrix)
   empty.method <- set_default(empty.method, "none", polychoric.matrix)
-  empty.value <- set_default(empty.value, "none", polychoric.matrix)
+  if(missing(empty.value)){empty.value <- "none"}
   
   # Ensure data is a matrix
   data <- as.matrix(data)

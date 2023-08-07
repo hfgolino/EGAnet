@@ -25,8 +25,8 @@
 #'
 #' @return Returns a three-column data frame of the Generalized Total Entropy 
 #' Fit Index using Von Neumman's entropy (\code{VN.Entropy.Fit}) (first column), as well as
-#' \code{Lower_Order_VN} - TEFI for the first-order factors (second column), and
-#' \code{High_Order_VN}, the equivalent for the second-order factors.
+#' \code{Lower.Order.VN} - TEFI for the first-order factors (second column), and
+#' \code{Higher.Order.VN}, the equivalent for the second-order factors.
 #'
 #'
 #' @examples
@@ -43,7 +43,7 @@
 #'
 #' @export
 # Total Entropy Fit Index Function (for correlation matrices)
-# Updated 04.08.2023
+# Updated 07.08.2023
 genTEFI <- function(data, structure = NULL)
 {
   
@@ -57,7 +57,7 @@ genTEFI <- function(data, structure = NULL)
 
 #' @noRd
 # Argument errors
-# Updated 04.08.2023
+# Updated 07.08.2023
 genTEFI_errors <- function(data, structure)
 {
   
@@ -71,6 +71,7 @@ genTEFI_errors <- function(data, structure)
   # 'structure' errors
   if(!is.null(structure)){
     object_error(structure, "list")
+    length_error(structure, 2)
   }
   
 }

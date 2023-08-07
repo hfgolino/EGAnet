@@ -246,7 +246,6 @@ LCT <- function(
     
   }
   
-  
   # Perform loop
   for(iteration in seq_len(iter)){
     

@@ -106,7 +106,7 @@ in the package}
 \description{
 This wrapper is similar to \code{\link[qgraph]{cor_auto}}. There
 are some minor adjustments that make this function simpler and to
-function within \code{\link{EGAnet}} as desired. \code{NA} values are not treated
+function within \code{\link{EGAnet}}. \code{NA} values are not treated
 as categories (this behavior differs from \code{\link[qgraph]{cor_auto}})
 }
 \examples{

@@ -22,8 +22,7 @@ object, then \code{level = c("individual", "population")} is required}
 used to estimate the Empirical Ergodicity Information Index 
 or the estimated value of EII estimated using the \code{\link[EGAnet]{ergoInfo}} 
 function. Inherits \code{use} from \code{\link[EGAnet]{ergoInfo}}.
-If no \code{\link[EGAnet]{ergoInfo}} object is provided, then it is estimated
-using \code{use = "edge.list"} by default}
+If no \code{\link[EGAnet]{ergoInfo}} object is provided, then it is estimated}
 
 \item{use}{Character (length = 1).
 A string indicating what network element will be used

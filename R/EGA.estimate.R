@@ -372,17 +372,7 @@ print.EGA.estimate <- function(x, ...)
 # Updated 22.06.2023
 summary.EGA.estimate <- function(object, ...)
 {
-  
-  # Print network estimation
-  summary(object$network)
-  
-  # Add break space
-  cat("\n----\n\n")
-  
-  # Print community detection
-  summary(object$wc)
-  
-  
+  print(object, ...) # same as print
 }
 
 #' @exportS3Method 
@@ -456,7 +446,7 @@ glasso_wrapper <- function(
     )
     
     # Check for disconnected nodes
-    if(any(colSums(abs(network), na.rm = TRUE) == 0) & gamma > 0){
+    if(any(colSums(abs(network), na.rm = TRUE) == 0) && gamma > 0){
       gamma <- gamma - 0.25 # decrease gamma
     }else{
       break # all nodes are connected or gamma equals zero

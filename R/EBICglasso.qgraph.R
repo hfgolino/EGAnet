@@ -239,15 +239,13 @@ EBICglasso.qgraph <- function(
   net <- transfer_names(S, net)
   
   # Check empty network:
-  if(all(net == 0) & isTRUE(verbose)){
+  if(verbose && all(net == 0)){
     message("An empty network was selected to be the best fitting network. Possibly set 'lambda.min.ratio' higher to search more sparse networks. You can also change the 'gamma' parameter to improve sensitivity (at the cost of specificity).")
   }
   
   # Check for whether to refit:
-  if(isTRUE(refit)){
-    if(isTRUE(verbose)){
-      message("Refitting network without LASSO regularization")
-    }
+  if(refit){
+    if(verbose){message("Refitting network without LASSO regularization")}
     glassoRes <- silent_call(glasso::glasso(S, 0, zero = which(net == 0 & upper.tri(net), arr.ind=TRUE), trace = 0, penalize.diagonal=penalize.diagonal, ...))
     net <- wi2net(glassoRes$wi)
     net <- transfer_names(S, net)
@@ -268,7 +266,9 @@ EBICglasso.qgraph <- function(
   )
   
   # Return
-  if(isTRUE(returnAllResults)){
+  if(!returnAllResults){
+    return(net) # only return network
+  }else{
     
     # General result structure
     result <- list(
@@ -292,8 +292,6 @@ EBICglasso.qgraph <- function(
     # Return results
     return(results)
     
-  }else{
-    return(net) # only return network
   }
   
 }

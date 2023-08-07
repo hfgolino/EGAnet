@@ -185,7 +185,7 @@ community.unidimensional <- function(
   community.unidimensional_errors(data, n, verbose)
   
   # Check for incompatible method combinations
-  if(model == "bggm" & uni.method == "expand"){
+  if(model == "bggm" && uni.method == "expand"){
     stop(
       "Support for the \"BGGM\" model and \"expand\" unidimensionality method is not provided.",
       call. = FALSE

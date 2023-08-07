@@ -2,7 +2,7 @@
 #'
 #' @description This wrapper is similar to \code{\link[qgraph]{cor_auto}}. There
 #' are some minor adjustments that make this function simpler and to
-#' function within \code{\link{EGAnet}} as desired. \code{NA} values are not treated
+#' function within \code{\link{EGAnet}}. \code{NA} values are not treated
 #' as categories (this behavior differs from \code{\link[qgraph]{cor_auto}})
 #'
 #' @param data Matrix or data frame.
@@ -104,7 +104,7 @@
 #' @export
 #'
 # Automatic correlations ----
-# Updated 28.07.2023
+# Updated 07.08.2023
 auto.correlate <- function(
     data, # Matrix or data frame
     corr = c("kendall", "pearson", "spearman"), # allow changes to standard correlations
@@ -240,10 +240,10 @@ auto.correlate <- function(
   diag(correlation_matrix) <- 1
   
   # Determine whether matrix is positive definite
-  if(!is_positive_definite(correlation_matrix) && isTRUE(forcePD)){
+  if(!is_positive_definite(correlation_matrix) && forcePD){
     
     # Send warning to user (if `verbose`)
-    if(isTRUE(verbose)){
+    if(verbose){
       warning(
         "Correlation matrix is not positive definite. Finding nearest positive definite matrix using `Matrix::nearPD`",
         call. = FALSE
@@ -385,8 +385,7 @@ polyserial.vector <- function(
       # Compute sum of thresholds
       sum(dnorm(obtain_thresholds(categorical_variable)), na.rm = TRUE)
   )
-  
-  
+
 }
 
 # Compute thresholds ----

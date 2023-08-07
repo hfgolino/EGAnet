@@ -318,7 +318,7 @@ TMFG <- function(
   
   # Check for whether partial correlation network should be computed
   ## An extension of the TMFG method using the LoGo method (Barfuss et al., 2016)
-  if(isTRUE(partial)){
+  if(partial){
     
     # Initialize partial correlation network 
     partial_network <- matrix(0, nrow = nodes, ncol = nodes)
@@ -369,7 +369,7 @@ TMFG <- function(
   )
   
   # Set up return
-  if(isFALSE(returnAllResults)){
+  if(!returnAllResults){
     return(network)
   }else{
     

@@ -244,7 +244,7 @@ riEGA <- function(
   # Catch BGGM
   if(model == "bggm"){
     stop(
-      "BGGM is not supported in `riEGA` because it requires the original data and the residual correlation matrix from the random-intercept model is used as input into `EGA`.",
+      "'model = BGGM' is not supported in `riEGA` because it requires the original data and the residual correlation matrix from the random-intercept model is used as input into `EGA`.",
       call. = FALSE
     )
   }

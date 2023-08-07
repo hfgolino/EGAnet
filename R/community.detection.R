@@ -137,7 +137,7 @@
 #'
 #' @export
 #'
-# Compute communities for EGA
+# Compute communities for EGA ----
 # Updated 02.08.2023
 community.detection <- function(
     network, algorithm = c(

@@ -678,7 +678,7 @@ lowest_tefi <- function(
     seq_len(dimensions[1]), function(i){
       tefi(
         correlation.matrix, 
-        unique_table[i,,drop = TRUE]
+        unique_table[i,,drop = TRUE] # drop to vector
       )$VN.Entropy.Fit
     }
   )

@@ -29,8 +29,8 @@ factor or community)}
 \value{
 Returns a three-column data frame of the Generalized Total Entropy 
 Fit Index using Von Neumman's entropy (\code{VN.Entropy.Fit}) (first column), as well as
-\code{Lower_Order_VN} - TEFI for the first-order factors (second column), and
-\code{High_Order_VN}, the equivalent for the second-order factors.
+\code{Lower.Order.VN} - TEFI for the first-order factors (second column), and
+\code{Higher.Order.VN}, the equivalent for the second-order factors.
 }
 \description{
 Computes the fit (Generalized TEFI) of a hierarchical or correlated bifactor 

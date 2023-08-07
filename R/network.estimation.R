@@ -141,7 +141,7 @@
 #' @export
 #'
 # Compute networks for EGA ----
-# Updated 04.08.2023
+# Updated 07.08.2023
 network.estimation <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -179,15 +179,13 @@ network.estimation <- function(
     # Get correlations and sample size
     correlation_matrix <- output$correlation_matrix; n <- output$n
     
-  }else if(model == "bggm" & is_symmetric(data)){
+  }else if(is_symmetric(data)){
     
-    # Check for 'BGGM' network estimation (can't be correlation matrix)
-    if(model == "bggm"){
-      stop(
-        "A symmetric matrix was provided in the 'data' argument. 'method = \"BGGM\"' is not compatiable with a correlation matrix. Please use the original data instead",
-        call. = FALSE
-      )
-    }
+    # 'BGGM' network estimation can't be correlation matrix
+    stop(
+      "A symmetric matrix was provided in the 'data' argument. 'model = \"BGGM\"' is not compatiable with a correlation matrix. Please use the original data instead",
+      call. = FALSE
+    )
     
   }
   
@@ -294,7 +292,7 @@ network.estimation <- function(
   ] <- c(model, corr, na.data)
   
   # Set up for return
-  if(isTRUE(network.only)){
+  if(network.only){
     return(estimated_network) # only return network
   }else{ # sort out output to send back
     

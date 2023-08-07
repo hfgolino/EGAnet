@@ -13,7 +13,6 @@
 #' or the estimated value of EII estimated using the \code{\link[EGAnet]{ergoInfo}} 
 #' function. Inherits \code{use} from \code{\link[EGAnet]{ergoInfo}}.
 #' If no \code{\link[EGAnet]{ergoInfo}} object is provided, then it is estimated
-#' using \code{use = "edge.list"} by default
 #' 
 #' @param use Character (length = 1).
 #' A string indicating what network element will be used
@@ -172,8 +171,7 @@ boot.ergoInfo <- function(
   
   # Replace individual networks with population networks
   individual_networks <- lapply(
-    dynega_objects$individual,
-    function(x){dynega_objects$population$network}
+    dynega_objects$individual, function(x){dynega_objects$population$network}
   )
   
   # Get lower triangle indices (avoids repeated computation)
