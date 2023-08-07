@@ -7,33 +7,36 @@
 Embed(x, E, tau)
 }
 \arguments{
-\item{x}{Vector.
+\item{x}{Numeric vector.
 An observed time series to be reorganized into a time-delayed embedded matrix.}
 
-\item{E}{Integer.
-Number of embedded dimensions or the number of observations to be used. For example,
-an \code{"E = 5"} will generate a matrix with five columns, meaning that five consecutive observations are used to create each row of the embedded matrix.}
+\item{E}{Numeric (length = 1).
+Number of embedded dimensions or the number of observations to 
+be used. \code{E = 5}, for example, will generate a matrix with 
+five columns corresponding to five consecutive observations across
+each row of the embedded matrix}
 
-\item{tau}{Integer.
-Number of observations to offset successive embeddings. A tau of one uses adjacent observations.
-Default is \code{"tau = 1"}.}
+\item{tau}{Numeric (length = 1).
+Number of observations to offset successive embeddings. 
+A tau of one uses adjacent observations.
+Default is \code{tau = 1}}
 }
 \value{
-Returns a matrix containing the embedded matrix.
+Returns a numeric matrix
 }
 \description{
-Reorganizes an individual’s observed time
-series into an embedded matrix. The embedded matrix is constructed with replicates of an
-individual time series that are offset from each other in time. The function requires
-two parameters, one that specifies the number of observations to be used (i.e. the number of
-embedded dimensions) and the other that specifies the number of observations to offset successive embeddings.
+Reorganizes a single observed time series into an embedded matrix. The embedded 
+matrix is constructed with replicates of an individual time series that are offset from 
+each other in time. The function requires two parameters, one that specifies the number 
+of observations to be used (i.e., the number of embedded dimensions) and the other that 
+specifies the number of observations to offset successive embeddings
 }
 \examples{
-
 # A time series with 8 time points
-tseries <- 49:56
-embed.tseries <- Embed(tseries, E = 4, tau = 1)
+time_series <- 49:56
 
+# Time series embedding
+Embed(time_series, E = 5, tau = 1)
 
 }
 \references{
@@ -42,5 +45,5 @@ Using derivative estimates to describe intraindividual variability at multiple t
 \emph{Psychological Methods}, \emph{14}, 367-386.
 }
 \author{
-Pascal Deboeck <pascal.deboeck at psych.utah.edu>
+Pascal Deboeck <pascal.deboeck at psych.utah.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 }

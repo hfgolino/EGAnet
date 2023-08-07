@@ -4,47 +4,62 @@
 \alias{tefi}
 \title{Total Entropy Fit Index using Von Neumman's entropy (Quantum Information Theory) for correlation matrices}
 \usage{
-tefi(data, structure)
+tefi(data, structure = NULL)
 }
 \arguments{
-\item{data}{A dataframe or correlation matrix}
+\item{data}{Matrix, data frame, or \code{*EGA} class object.
+Matrix or data frame can be raw data or a correlation matrix.
+All \code{*EGA} objects are accepted. \code{\link[EGAnet]{hierEGA}}
+input will produced the Generalized TEFI (see \code{\link[EGAnet]{genTEFI}})}
 
-\item{structure}{A vector representing the structure (numbers or labels for each item).
-Can be theoretical factors or the structure detected by \code{\link{EGA}}}
+\item{structure}{Numeric or character vector (length = \code{ncol(data)}).
+Can be theoretical factors or the structure detected by \code{\link{EGA}}.}
 }
 \value{
-Returns a list containing:
+Returns a data frame with columns:
 
-\item{VN.Entropy.Fit}{The Entropy Fit Index using Von Neumman's entropy}
+\strong{Non-hierarchical Structure}
+
+\item{VN.Entropy.Fit}{The Total Entropy Fit Index using Von Neumman's entropy}
 
 \item{Total.Correlation}{The total correlation of the dataset}
 
 \item{Average.Entropy}{The average entropy of the dataset}
+
+\strong{Hierarchical Structure}
+
+\item{VN.Entropy.Fit}{The Generalized Total Entropy Fit Index using Von Neumman's entropy}
+
+\item{Lower.Order.VN}{Lower order (only) Total Entropy Fit Index}
+
+\item{Higher.Order.VN}{Higher order (only) Total Entropy Fit Index}
 }
 \description{
-Computes the fit (TEFI) of a dimensionality structure using Von Neumman's entropy when the input is a correlation matrix.
-Lower values suggest better fit of a structure to the data.
+Computes the fit (TEFI) of a dimensionality structure using Von Neumman's entropy 
+when the input is a correlation matrix. Lower values suggest better fit of a structure to the data.
 }
 \examples{
 # Load data
 wmt <- wmt2[,7:24]
 
-\dontrun{
 # Estimate EGA model
-ega.wmt <- EGA(data = wmt, model = "glasso")}
+ega.wmt <- EGA(
+  data = wmt, model = "glasso",
+  plot.EGA = FALSE # no plot for CRAN checks
+)
 
-# Compute entropy indices
-tefi(data = ega.wmt$correlation, structure = ega.wmt$wc)
+# Compute entropy indices for empirical EGA
+tefi(ega.wmt)
+
+# User-defined structure (with `EGA` object)
+tefi(ega.wmt, structure = c(rep(1, 5), rep(2, 5), rep(3, 8)))
 
 }
 \references{
+\strong{Initial formalization and simulation} \cr
 Golino, H., Moulder, R. G., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Nesselroade, J., Sadana, R., Thiyagarajan, J. A., & Boker, S. M. (2020).
 Entropy fit indices: New fit measures for assessing the structure and dimensionality of multiple latent variables.
 \emph{Multivariate Behavioral Research}.
-}
-\seealso{
-\code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and
-\code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{
 Hudson Golino <hfg9s at virginia.edu>, Alexander P. Christensen <alexpaulchristensen@gmail.com>, and Robert Moulder <rgm4fd@virginia.edu>

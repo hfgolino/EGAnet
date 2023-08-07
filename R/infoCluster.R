@@ -1,4 +1,4 @@
-#' Information Theoretic Mixture Clustering for \code{\link[EGAnet]{dynEGA}}
+#' @title Information Theoretic Mixture Clustering for \code{\link[EGAnet]{dynEGA}}
 #'
 #' @description Performs hierarchical clustering using Jensen-Shannon distance
 #' followed by the Louvain algorithm with consensus clustering. The method
@@ -6,9 +6,10 @@
 #' change in the clusters identified
 #'
 #' @param dynEGA.object  A \code{\link[EGAnet]{dynEGA}} or a
-#' \code{\link[EGAnet]{dynEGA.ind.pop}} object that is used to match the arguments of the EII object.
+#' \code{\link[EGAnet]{dynEGA.ind.pop}} object that is used to match 
+#' the arguments of the EII object
 #' 
-#' @param plot.cluster Boolean.
+#' @param plot.cluster Boolean (length = 1).
 #' Should plot of optimal and hierarchical clusters be output?
 #' Defaults to \code{TRUE}.
 #' Set to \code{FALSE} to not plot
@@ -40,328 +41,145 @@
 #'
 #' @author Hudson Golino <hfg9s at virginia.edu> & Alexander P. Christensen <alexander.christensen at Vanderbilt.Edu>
 #' 
-#' @importFrom stats hclust as.dist cutree
-#' @importFrom utils globalVariables
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
 #' 
 #' @export
+#' 
 # Information Theoretic Clustering for dynEGA
-# Updated 20.08.2022
-infoCluster <- function(
-    dynEGA.object,
-    plot.cluster = TRUE
-)
+# Updated 03.08.2023
+infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
 {
   
-  # Check for class
+  # Send experimental message (for now)
+  experimental("infoCluster")
+  
+  # Check for appropriate class ("dynEGA.ind.pop" defunct to legacy)
   if(!is(dynEGA.object, "dynEGA") & !is(dynEGA.object, "dynEGA.ind.pop")){
-    stop(
-      paste(
-        "Input into the `dynEGA.object` argument's class is not `dynEGA` or `dynEGA.ind.pop`.\n\n",
-        "Class of dynEGA.object = ", paste(
-          class(dynEGA.object), sep = "", collapse = ", "
-        ),
-        sep = ""
-      )
-    )
-  }else if(is(dynEGA.object, "dynEGA.ind.pop")){
-    dynEGA.pop <- dynEGA.object$dynEGA.pop
-  }else if(is(dynEGA.object, "dynEGA")){
-    dynEGA.pop <- dynEGA.object
+    class_error(dynEGA.object, "dynEGA")
   }
   
-  # Obtain individual dynEGA objects only
-  dynEGA.ind <- dynEGA.object$dynEGA.ind$dynEGA
+  # Get proper objects (if not, send an error)
+  dynega_objects <- get_dynEGA_object(dynEGA.object)
   
-  # Remove methods from dynEGA.ind
-  if("methods" %in% tolower(names(dynEGA.ind))){
-    dynEGA.ind <- dynEGA.ind[-which(tolower(names(dynEGA.ind)) == "methods")]
-  }
-  
-  # Obtain IDs
-  IDs <- names(dynEGA.ind)
-  
-  # Obtain networks
-  networks <- lapply(dynEGA.ind, function(x){
-    x$network
-  })
- 
-  # Message user
-  message("Computing Jensen-Shannon Distance...\n", appendLF = FALSE)
-  
-  # Initialize JSD matrix
-  jsd_matrix <- matrix(
-    0,
-    nrow = length(networks),
-    ncol = length(networks)
+  # Get individual networks 
+  individual_networks <- lapply(
+    dynega_objects$individual, function(x){x$network}
   )
   
-  # Calculate total computations
-  total_computations <- length(
-    jsd_matrix[lower.tri(jsd_matrix)]
-  )
-  
-  # Count computations
-  count_computations <- 0
+  # Get pairwise JSD
+  jsd_matrix <- pairwise_spectral_JSD(individual_networks)
 
-  # Initialize runtime updates
-  runtime_update <- seq(0, total_computations, floor(total_computations / 100))
-  runtime_update <- c(runtime_update, total_computations)
-  
-  # Loop through
-  for(i in length(networks):2){
-    
-    # Obtain start time
-    if(count_computations == 0){
-      start_time <- Sys.time()
-    }
-    
-    # Loop through values
-    for(j in 1:(i-1)){
-      
-      # Obtain JSD values
-      jsd_matrix[i,j] <- jsd(
-        network1 = networks[[i]],
-        network2 = networks[[j]],
-        method = "spectral"
-      )
-      
-      # Update computation count
-      count_computations <- count_computations + 1
-      
-      # Update progress
-      if(count_computations < runtime_update[2]){
-        
-        # Update progress
-        custom_progress(
-          i = count_computations,
-          max = total_computations,
-          start_time = "calculating"
-        )
-        
-      }else if(count_computations %in% runtime_update){
-        
-        # Update progress
-        custom_progress(
-          i = count_computations,
-          max = total_computations,
-          start_time = start_time
-        )
-        
-      }
-      
-    }
-    
-  }
-  
-  # Make symmetric
-  jsd_sym <- jsd_matrix + t(jsd_matrix)
-  
-  # Add names
-  colnames(jsd_sym) <- names(networks)
-  row.names(jsd_sym) <- names(networks)
-  
-  # Make jsdist
-  jsdist <- jsd_sym
-  
   # Make diagonal NA
-  diag(jsdist) <- NA
+  diag(jsd_matrix) <- NA
   
   # Remove all NAs
-  rm_cols <- apply(jsdist, 2, function(x){all(is.na(x))})
-  
+  rm_cols <- lvapply(
+    as.data.frame(jsd_matrix), function(x){all(is.na(x))}
+  )
+    
   # Remove missing data points
-  jsdist <- jsdist[!rm_cols, !rm_cols]
+  jsd_matrix <- jsd_matrix[!rm_cols, !rm_cols]
+  
+  # Get similarity matrix
+  jss_matrix <- 1 - jsd_matrix
 
   # Make diagonal 0 again
-  diag(jsdist) <- 0
+  diag(jss_matrix) <- diag(jsd_matrix) <- 0
   
-  # Perform hierarchical clustering
+  # Perform hierarchical clustering (follows Walktrap)
   hier_clust <- hclust(
-    d = as.dist(jsdist),
+    d = as.dist(jsd_matrix),
     method = "complete"
   )
   
+  # Get number of cases
+  cases <- dim(jsd_matrix)[2]
+
+  # Get cut sequence
+  cut_sequence <- seq_len(cases)
+
   # Obtain cuts
-  hier_cuts <- lapply(1:ncol(jsdist), function(i){
+  hier_cuts <- lapply(cut_sequence, function(i){
     cutree(hier_clust, i)
   })
-  
-  # Name cuts
-  names(hier_cuts) <- 1:ncol(jsdist)
-  
-  # Make any cuts with single clusters NULL
-  remaining_cuts <- lapply(hier_cuts, function(x){
-    
-    # Compute frequencies
-    freq <- table(x)
-    
-    # Check for single clusters
-    if(any(freq == 1)){
-      return(NULL)
-    }else{
-      return(x)
-    }
-    
-  })
-  
-  # Keep cuts that are not NULL
-  remaining_cuts <- remaining_cuts[
-    !unlist(lapply(remaining_cuts, is.null))
-  ]
-  
-  # Obtain cuts
-  cuts <- as.numeric(names(remaining_cuts))
-  
-  # Jensen-Shannon Similarity
-  jss <- 1 - jsdist
 
-  # Make diagonal of Jensen-Shannon Similarity = 0
-  diag(jss) <- 0
-  
-  # Compute modularity matrix
-  Q_matrix <- modularity_matrix(
-    A = jss,
-    resolution = 1
+  # Name cuts
+  names(hier_cuts) <- cut_sequence
+
+  # Make any cuts with singleton clusters NULL
+  remaining_cuts <- !lvapply(
+    hier_cuts, function(x){any(table(x) == 1)}
   )
-  
-  # Maximize modularity
-  Qs <- unlist(
-    lapply(
-      X = cuts,
-      FUN = function(i){
-        quick_modularity(
-          communities = cutree(hier_clust, i),
-          A = jss,
-          Q_matrix = Q_matrix
-        )
-      }
-    )
+
+  # Obtain cuts
+  cuts <- as.numeric(names(remaining_cuts)[remaining_cuts])
+
+  # Get modularities
+  Qs <- nvapply(
+    cuts, function(cut_value){
+      modularity(jss_matrix, cutree(hier_clust, cut_value))
+    }
   )
+    
+  # Maybe just use Walktrap?
+  # clusters <- remove_attributes(
+  #   community.detection(jss_matrix, algorithm = "walktrap")
+  # )
+  
+  # Possibility for Louvain with consensus?
+  # clusters <- remove_attributes(
+  #   community.consensus(jss_matrix)
+  # )
   
   # Obtain clusters
   clusters <- cutree(hier_clust, cuts[which.max(Qs)])
   
-  # Make moduarity/cluster matrix
-  possible_clusters <- t(simplify2array(remaining_cuts))
-  cluster_df <- data.frame(
-    Modularity = round(unlist(Qs), 7),
-    possible_clusters
-  )
-  
-  
   # Check if single cluster
-  if(length(unique(na.omit(clusters))) == 1){
+  if(unique_length(clusters) == 1){
 
-    # Message user
-    message("One cluster detected. Performing single cluster test...")
-
+    # Get number of nodes to initialize matrices
+    nodes <- dim(individual_networks[[1]])[2]
+    
+    # Get indices of upper triangle
+    upper_indices <- which(upper.tri(diag(nodes)))
+    
     # Generate random networks
-    random_networks <- lapply(networks, function(x){
+    random_networks <- lapply(individual_networks, function(network){
 
-      # Obtain random network
-      random_network <- randnet(
-        nodes = ncol(x),
-        edges = sum(ifelse(x != 0, 1, 0)) / 2
-      )
-
-      # Return random network
-      return(random_network)
-
+      # Initialize new matrix
+      new_network <- matrix(0, nrow = nodes, ncol = nodes)
+      
+      # Set shuffled indices up to edges to 1
+      new_network[
+        shuffle(upper_indices, size = edge_count(network))
+      ] <- 1
+      
+      # Make network symmetric
+      return(new_network + t(new_network))
+    
     })
-
-    # Message user
-    message("Computing Jensen-Shannon Distance for random networks...\n", appendLF = FALSE)
-
-    # Initialize JSD matrix
-    jsd_random_matrix <- matrix(
-      0,
-      nrow = length(random_networks),
-      ncol = length(random_networks)
-    )
     
-    # Calculate total computations
-    total_computations <- length(
-      jsd_random_matrix[lower.tri(jsd_random_matrix)]
-    )
+    # Get the random JSD matrix
+    jsd_random_matrix <- pairwise_spectral_JSD(random_networks)
     
-    # Count computations
-    count_computations <- 0
-    
-    # Initialize runtime updates
-    runtime_update <- seq(0, total_computations, floor(total_computations / 100))
-    runtime_update <- c(runtime_update, total_computations)
-    
-    # Loop through
-    for(i in 2:length(random_networks)){
-      
-      # Obtain start time
-      if(count_computations == 0){
-        start_time <- Sys.time() 
-      }
-      
-      for(j in 1:(i-1)){
-        
-        # Obtain JSD values
-        jsd_random_matrix[i,j] <- jsd(
-          network1 = random_networks[[i]],
-          network2 = random_networks[[j]],
-          method = "spectral"
-        )
-        
-        # Update computation count
-        count_computations <- count_computations + 1
-
-        # Update progress
-        if(count_computations < runtime_update[2]){
-          
-          # Update progress
-          custom_progress(
-            i = count_computations,
-            max = total_computations,
-            start_time = "calculating"
-          )
-          
-        }else if(count_computations %in% runtime_update){
-          
-          # Update progress
-          custom_progress(
-            i = count_computations,
-            max = total_computations,
-            start_time = start_time
-          )
-          
-        }
-        
-      }
-      
-    }
-    
-    # Make symmetric
-    jsd_random_sym <- jsd_random_matrix + t(jsd_random_matrix)
-
-    # Add names
-    colnames(jsd_random_sym) <- names(random_networks)
-    row.names(jsd_random_sym) <- names(random_networks)
-
-    # Make jsdist
-    jsdist_random <- jsd_random_sym
-
     # Make diagonal NA
-    diag(jsdist_random) <- NA
-
+    diag(jsd_random_matrix) <- NA
+    
     # Remove all NAs
-    rm_cols <- apply(jsdist_random, 2, function(x){all(is.na(x))})
-
+    rm_cols <- lvapply(
+      as.data.frame(jsd_random_matrix), function(x){all(is.na(x))}
+    )
+    
     # Remove missing data points
-    jsdist_random <- jsdist_random[!rm_cols, !rm_cols]
+    jsd_random_matrix <- jsd_random_matrix[!rm_cols, !rm_cols]
 
     # Make diagonal 0 again
-    diag(jsdist_random) <- 0
+    diag(jsd_random_matrix) <- 0
 
     # Compare to empirical
     comparison <- t.test(
-      jsdist[lower.tri(jsdist)],
-      jsdist_random[lower.tri(jsdist_random)],
+      jsd_matrix[upper_indices],
+      jsd_random_matrix[upper_indices],
       paired = TRUE,
       var.equal = FALSE
     )
@@ -372,47 +190,105 @@ infoCluster <- function(
     # Compute adaptive alpha
     adaptive_p <- adapt.a(
       test = "paired",
-      n = length(jsdist[lower.tri(jsdist)]),
+      n = length(upper_indices),
       alpha = .001,
       power = 0.80,
       efxize = "large"
     )
     
-    # Check for empirical JSD > random JSD OR
-    # non-significant t-test
-    if(
-      comparison_sign == 1 |
-      comparison$p.value > adaptive_p$adapt.a
-    ){
+    # Check for empirical JSD > random JSD OR non-significant t-test
+    if(comparison_sign == 1 | comparison$p.value > adaptive_p$adapt.a){
       
       # Set clusters to all individuals
-      clusters <- 1:ncol(jsdist)
-      names(clusters) <- colnames(jsdist)
-      
-      # Let user know
-      message(
-        "Empirical Jensen-Shannon Distance was no different or greater than random Jensen-Shannon Distance: No clusters detected."
-      )
+      clusters <- cut_sequence
+      names(clusters) <- dimnames(jsd_matrix)[[2]]
       
     }
     
     # Compile results
     single_cluster <- list(
-      JSD_random = jsdist_random,
+      JSD_random = jsd_random_matrix,
       t.test = comparison,
       adaptive.p.value = adaptive_p,
       d = d(
-        jsdist[lower.tri(jsdist)],
-        jsdist_random[lower.tri(jsdist_random)]
+        jsd_matrix[upper_indices],
+        jsd_random_matrix[upper_indices],
+        paired = TRUE
       )
     )
 
   }
   
-  # Convert for ggplot2
-  cluster_data <- ggdendro::dendro_data(
-    hier_clust
+  # Set up results
+  results <- list(
+    clusters = clusters,
+    modularity = Qs[which.max(Qs)],
+    clusterTree = hier_clust,
+    JSD = jsd_matrix
   )
+  
+  # Check for single cluster test
+  if(exists("single_cluster")){
+    results$single.cluster.test <- single_cluster
+  }
+
+  # Set class
+  class(results) <- "infoCluster"
+  
+  # Check for plot
+  if(isTRUE(plot.cluster)){
+    
+    # Get plot
+    results$plot_cluster <- plot(results)
+    
+    # Actually send plot
+    silent_plot(results$plot_cluster)
+    
+  }
+  
+  # Return results
+  return(results)
+  
+}
+
+#' @exportS3Method 
+# S3 Print Method ----
+# Updated 14.07.2023
+print.infoCluster <- function(x, ...)
+{
+ 
+  # Print clusters
+  cat("Number of cases: ", length(x$clusters), "\n")
+  cat("Number of clusters: ", unique_length(x$clusters))
+  
+  # Add breakspace
+  cat("\n\n")
+  
+  # Print cluster assignments
+  print(x$clusters)
+
+}
+
+#' @exportS3Method 
+# S3 Summary Method ----
+# Updated 14.07.2023
+summary.infoCluster <- function(object, ...)
+{
+  print(object, ...) # same as print
+}
+
+#' @exportS3Method 
+# S3 Plot Method ----
+# Works fast enough, so leaving as original code
+# Updated 13.07.2023
+plot.infoCluster <- function(x, ...)
+{
+  
+  # Prepare data for {ggplot2}
+  cluster_data <- ggdendro::dendro_data(x$clusterTree)
+  
+  # Get clusters
+  clusters <- x$clusters
   
   # Create data frame
   cluster_df <- data.frame(
@@ -427,19 +303,19 @@ infoCluster <- function(
   )
   
   # Split dendrogram into upper grey section and lower coloured section
-  cut <- max(clusters)
+  cut <- unique_length(clusters)
   height <- unique(cluster_data$segments$y)[order(unique(cluster_data$segments$y), decreasing = TRUE)]
   cut.height <- mean(c(height[cut], height[cut-1]))
-  cluster_data$segments$line <- ifelse(cluster_data$segments$y == cluster_data$segments$yend &
+  cluster_data$segments$line <- swiftelse(cluster_data$segments$y == cluster_data$segments$yend &
                                          cluster_data$segments$y > cut.height, 1, 2)
-  cluster_data$segments$line <- ifelse(cluster_data$segments$yend  > cut.height, 1, cluster_data$segments$line)
+  cluster_data$segments$line <- swiftelse(cluster_data$segments$yend  > cut.height, 1, cluster_data$segments$line)
   
   # Number the clusters
   cluster_data$segments$cluster <- c(-1, diff(cluster_data$segments$line))
   change <- which(cluster_data$segments$cluster == 1)
   for (i in 1:cut) cluster_data$segments$cluster[change[i]] = i + 1
-  cluster_data$segments$cluster <-  ifelse(cluster_data$segments$line == 1, 1, 
-                                           ifelse(cluster_data$segments$cluster == 0, NA, cluster_data$segments$cluster))
+  cluster_data$segments$cluster <-  swiftelse(cluster_data$segments$line == 1, 1, 
+                                           swiftelse(cluster_data$segments$cluster == 0, NA, cluster_data$segments$cluster))
   
   
   # Replace NA values in cluster
@@ -510,7 +386,7 @@ infoCluster <- function(
       labels = label,
       values = c(
         "grey", color_palette_EGA(
-          "polychrome", wc = 1:max(clusters)
+              "polychrome", wc = 1:max(clusters)
         )
       )
     ) +
@@ -531,39 +407,22 @@ infoCluster <- function(
     )
   
   # Remove clusters if none
-  if(all(clusters == 1:ncol(jsdist))){
+  if(all(clusters == ncol_sequence(x$JSD))){
     cluster_plot <- cluster_plot +
       ggplot2::theme(
         legend.position = "none"
       )
   }
   
-  # Check if plot should be plotted
-  if(isTRUE(plot.cluster)){
-    suppressWarnings(
-      plot(cluster_plot)
-    )
-  }
-  
-  ## Return data
-  results <- list(
-    clusters = clusters,
-    modularity = Qs[which.max(Qs)],
-    clusterTree = hier_clust,
-    clusterMatrix = possible_clusters,
-    clusterPlot = cluster_plot,
-    JSD = jsdist
-  )
-  
-  ## Check for single cluster test
-  if(exists("single_cluster")){
-    results$single_cluster_test <- single_cluster
-  }
-
-  ## Set class
-  class(results) <- "infoCluster"
-  
-  return(results)
+  # Return plot
+  return(cluster_plot)
   
 }
+
+#' @noRd
+# Global variables needed for CRAN checks ----
+# Updated 04.08.2023
+utils::globalVariables(c("x", "y", "xend", "yend", "cluster")) 
+
+
 

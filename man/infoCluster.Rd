@@ -8,9 +8,10 @@ infoCluster(dynEGA.object, plot.cluster = TRUE)
 }
 \arguments{
 \item{dynEGA.object}{A \code{\link[EGAnet]{dynEGA}} or a
-\code{\link[EGAnet]{dynEGA.ind.pop}} object that is used to match the arguments of the EII object.}
+\code{\link[EGAnet]{dynEGA.ind.pop}} object that is used to match 
+the arguments of the EII object}
 
-\item{plot.cluster}{Boolean.
+\item{plot.cluster}{Boolean (length = 1).
 Should plot of optimal and hierarchical clusters be output?
 Defaults to \code{TRUE}.
 Set to \code{FALSE} to not plot}
@@ -47,6 +48,9 @@ dyn.ega1 <- dynEGA.ind.pop(
 # Perform information-theoretic clustering
 clust1 <- infoCluster(dynEGA.object = dyn.ega1)}
 
+}
+\seealso{
+\code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
 }
 \author{
 Hudson Golino <hfg9s at virginia.edu> & Alexander P. Christensen <alexander.christensen at Vanderbilt.Edu>

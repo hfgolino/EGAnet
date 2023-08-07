@@ -4,15 +4,98 @@
 \alias{TMFG}
 \title{Triangulated Maximally Filtered Graph}
 \usage{
-TMFG(cormat)
+TMFG(
+  data,
+  n = NULL,
+  corr = c("auto", "pearson", "spearman"),
+  na.data = c("pairwise", "listwise"),
+  partial = FALSE,
+  returnAllResults = FALSE,
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
-\item{cormat}{A correlation matrix}
+\item{data}{Matrix or data frame.
+Should consist only of variables to be used in the analysis.
+Can be raw data or correlation matrix}
+
+\item{n}{Numeric (length = 1).
+Sample size for when a correlation matrix is input into \code{data}.
+Defaults to \code{NULL}.
+\code{n} is not necessary and is provided for better functionality in
+\code{\link{EGAnet}}}
+
+\item{corr}{Character (length = 1).
+Method to compute correlations.
+Defaults to \code{"auto"}.
+Available options:
+
+\itemize{
+
+\item{\code{"auto"} --- }
+{Automatically computes appropriate correlations for
+the data using Pearson's for continuous, polychoric for ordinal,
+tetrachoric for binary, and polyserial/biserial for ordinal/binary with
+continuous. To change the number of categories that are considered
+ordinal, use \code{ordinal.categories}
+(see \code{\link[EGAnet]{polychoric.matrix}} for more details)}
+
+\item{\code{"pearson"} --- }
+{Pearson's correlation is computed for all variables regardless of
+categories}
+
+\item{\code{"spearman"} --- }
+{Spearman's rank-order correlation is computed for all variables
+regardless of categories}
+
+}
+
+For other similarity measures, compute them first and input them
+into \code{data} with the sample size (\code{n})}
+
+\item{na.data}{Character (length = 1).
+How should missing data be handled?
+Defaults to \code{"pairwise"}.
+Available options:
+
+\itemize{
+
+\item{\code{"pairwise"} --- }
+{Computes correlation for all available cases between
+two variables}
+
+\item{\code{"listwise"} --- }
+{Computes correlation for all complete cases in the dataset}
+
+}}
+
+\item{partial}{Boolean (length = 1).
+Whether partial correlations should be output.
+Defaults to \code{FALSE}.
+The TMFG method is based on the zero-order correlations;
+the Local-Global Inversion Method (LoGo; see Barfuss et al., 2016 for more details)
+uses the decomposability of the TMFG network to obtain the inverse covariance
+structure of the network (which is then converted to partial correlations).
+Set to \code{TRUE} to obtain the partial correlations from the LoGo method}
+
+\item{returnAllResults}{Boolean (length = 1).
+Whether all results should be returned.
+Defaults to \code{FALSE} (network only).
+Set to \code{TRUE} to access separators and cliques}
+
+\item{verbose}{Boolean (length = 1).
+Whether messages and (insignificant) warnings should be output.
+Defaults to \code{FALSE} (silent calls).
+Set to \code{TRUE} to see all messages and warnings for every function call}
+
+\item{...}{Additional arguments to be passed on to
+\code{\link[EGAnet]{auto.correlate}}}
 }
 \value{
-Returns a list containing:
+Returns a network or list containing:
 
-\item{A}{The filtered adjacency matrix}
+\item{network}{The filtered adjacency matrix}
 
 \item{separators}{The separators (3-cliques) in the network}
 
@@ -20,16 +103,16 @@ Returns a list containing:
 }
 \description{
 Applies the Triangulated Maximally Filtered Graph (TMFG) filtering method
-(\strong{please see and cite Massara et al., 2016}). The TMFG method uses a structural
+(see Massara et al., 2016). The TMFG method uses a structural
 constraint that limits the number of zero-order correlations included in the network
-(3n - 6; where \emph{n} is the number of variables). The TMFG algorithm begins by
+(3\emph{n} - 6; where \emph{n} is the number of variables). The TMFG algorithm begins by
 identifying four variables which have the largest sum of correlations to all other
 variables. Then, it iteratively adds each variable with the largest sum of three
 correlations to nodes already in the network until all variables have been added to
 the network. This structure can be associated with the inverse correlation matrix
 (i.e., precision matrix) to be turned into a GGM (i.e., partial correlation network)
-by using Local-Global Inversion Method (see Barfuss et al., 2016 for more details).
-See Details for more information on this network estimation method.
+by using Local-Global Inversion Method (LoGo; see Barfuss et al., 2016 for more details).
+See \strong{Details} for more information
 }
 \details{
 The TMFG method applies a structural constraint on the network,
@@ -52,19 +135,25 @@ drawn on a sphere with no edges crossing (often, however, the networks are depic
 with edges crossing; Tumminello, Aste, Di Matteo, & Mantegna, 2005).
 }
 \examples{
-# Pearson's correlation only for CRAN checks
-A <- TMFG(cor(wmt2[,7:24]))$A
+# TMFG filtered network
+TMFG(wmt2[,7:24])
+
+# Partial correlations using the LoGo method
+TMFG(wmt2[,7:24], partial = TRUE)
 
 }
 \references{
+\strong{Local-Global Inversion Method} \cr
 Barfuss, W., Massara, G. P., Di Matteo, T., & Aste, T. (2016).
 Parsimonious modeling with information filtering networks.
 \emph{Physical Review E}, \emph{94}, 062306.
 
+\strong{Psychometric network introduction to TMFG} \cr
 Christensen, A. P., Kenett, Y. N., Aste, T., Silvia, P. J., & Kwapil, T. R. (2018).
 Network structure of the Wisconsin Schizotypy Scales-Short Forms: Examining psychometric network filtering approaches.
 \emph{Behavior Research Methods}, \emph{50}, 2531-2550.
 
+\strong{Triangulated Maximally Filtered Graph} \cr
 Massara, G. P., Di Matteo, T., & Aste, T. (2016).
 Network filtering for big data: Triangulated maximally filtered graph.
 \emph{Journal of Complex Networks}, \emph{5}, 161-178.

@@ -1,22 +1,96 @@
-#' Triangulated Maximally Filtered Graph
+#' @title Triangulated Maximally Filtered Graph
 #'
 #' @description Applies the Triangulated Maximally Filtered Graph (TMFG) filtering method
-#' (\strong{please see and cite Massara et al., 2016}). The TMFG method uses a structural
+#' (see Massara et al., 2016). The TMFG method uses a structural
 #' constraint that limits the number of zero-order correlations included in the network
-#' (3n - 6; where \emph{n} is the number of variables). The TMFG algorithm begins by
+#' (3\emph{n} - 6; where \emph{n} is the number of variables). The TMFG algorithm begins by
 #' identifying four variables which have the largest sum of correlations to all other
 #' variables. Then, it iteratively adds each variable with the largest sum of three
 #' correlations to nodes already in the network until all variables have been added to
 #' the network. This structure can be associated with the inverse correlation matrix
 #' (i.e., precision matrix) to be turned into a GGM (i.e., partial correlation network)
-#' by using Local-Global Inversion Method (see Barfuss et al., 2016 for more details).
-#' See Details for more information on this network estimation method.
+#' by using Local-Global Inversion Method (LoGo; see Barfuss et al., 2016 for more details).
+#' See \strong{Details} for more information
 #'
-#' @param cormat A correlation matrix
+#' @param data Matrix or data frame.
+#' Should consist only of variables to be used in the analysis.
+#' Can be raw data or correlation matrix
 #'
-#' @return Returns a list containing:
+#' @param n Numeric (length = 1).
+#' Sample size for when a correlation matrix is input into \code{data}.
+#' Defaults to \code{NULL}.
+#' \code{n} is not necessary and is provided for better functionality in
+#' \code{\link{EGAnet}}
+#' 
+#' @param corr Character (length = 1).
+#' Method to compute correlations.
+#' Defaults to \code{"auto"}.
+#' Available options:
+#' 
+#' \itemize{
+#' 
+#' \item{\code{"auto"} --- }
+#' {Automatically computes appropriate correlations for
+#' the data using Pearson's for continuous, polychoric for ordinal,
+#' tetrachoric for binary, and polyserial/biserial for ordinal/binary with
+#' continuous. To change the number of categories that are considered
+#' ordinal, use \code{ordinal.categories}
+#' (see \code{\link[EGAnet]{polychoric.matrix}} for more details)}
+#' 
+#' \item{\code{"pearson"} --- }
+#' {Pearson's correlation is computed for all variables regardless of
+#' categories}
+#' 
+#' \item{\code{"spearman"} --- }
+#' {Spearman's rank-order correlation is computed for all variables
+#' regardless of categories}
+#' 
+#' }
+#' 
+#' For other similarity measures, compute them first and input them
+#' into \code{data} with the sample size (\code{n})
+#' 
+#' @param na.data Character (length = 1).
+#' How should missing data be handled?
+#' Defaults to \code{"pairwise"}.
+#' Available options:
+#' 
+#' \itemize{
+#' 
+#' \item{\code{"pairwise"} --- }
+#' {Computes correlation for all available cases between
+#' two variables}
+#' 
+#' \item{\code{"listwise"} --- }
+#' {Computes correlation for all complete cases in the dataset}
+#' 
+#' }
+#' 
+#' @param partial Boolean (length = 1).
+#' Whether partial correlations should be output.
+#' Defaults to \code{FALSE}.
+#' The TMFG method is based on the zero-order correlations;
+#' the Local-Global Inversion Method (LoGo; see Barfuss et al., 2016 for more details)
+#' uses the decomposability of the TMFG network to obtain the inverse covariance
+#' structure of the network (which is then converted to partial correlations).
+#' Set to \code{TRUE} to obtain the partial correlations from the LoGo method
+#' 
+#' @param returnAllResults Boolean (length = 1).
+#' Whether all results should be returned.
+#' Defaults to \code{FALSE} (network only).
+#' Set to \code{TRUE} to access separators and cliques
+#' 
+#' @param verbose Boolean (length = 1).
+#' Whether messages and (insignificant) warnings should be output.
+#' Defaults to \code{FALSE} (silent calls).
+#' Set to \code{TRUE} to see all messages and warnings for every function call
 #'
-#' \item{A}{The filtered adjacency matrix}
+#' @param ... Additional arguments to be passed on to
+#' \code{\link[EGAnet]{auto.correlate}}
+#'
+#' @return Returns a network or list containing:
+#'
+#' \item{network}{The filtered adjacency matrix}
 #'
 #' \item{separators}{The separators (3-cliques) in the network}
 #'
@@ -42,18 +116,24 @@
 #' with edges crossing; Tumminello, Aste, Di Matteo, & Mantegna, 2005).
 #'
 #' @examples
-#' # Pearson's correlation only for CRAN checks
-#' A <- TMFG(cor(wmt2[,7:24]))$A
+#' # TMFG filtered network
+#' TMFG(wmt2[,7:24])
+#' 
+#' # Partial correlations using the LoGo method
+#' TMFG(wmt2[,7:24], partial = TRUE)
 #'
 #' @references
+#' \strong{Local-Global Inversion Method} \cr
 #' Barfuss, W., Massara, G. P., Di Matteo, T., & Aste, T. (2016).
 #' Parsimonious modeling with information filtering networks.
 #' \emph{Physical Review E}, \emph{94}, 062306.
 #'
+#' \strong{Psychometric network introduction to TMFG} \cr
 #' Christensen, A. P., Kenett, Y. N., Aste, T., Silvia, P. J., & Kwapil, T. R. (2018).
 #' Network structure of the Wisconsin Schizotypy Scales-Short Forms: Examining psychometric network filtering approaches.
 #' \emph{Behavior Research Methods}, \emph{50}, 2531-2550.
 #'
+#' \strong{Triangulated Maximally Filtered Graph} \cr
 #' Massara, G. P., Di Matteo, T., & Aste, T. (2016).
 #' Network filtering for big data: Triangulated maximally filtered graph.
 #' \emph{Journal of Complex Networks}, \emph{5}, 161-178.
@@ -62,143 +142,283 @@
 #'
 #' @export
 # TMFG Filtering Method----
-# Updated 04.05.2022
-TMFG <-function (cormat)
+# Updated 04.08.2023
+TMFG <- function(
+    data, n = NULL,
+    corr = c("auto", "pearson", "spearman"),
+    na.data = c("pairwise", "listwise"),
+    partial = FALSE, returnAllResults = FALSE,
+    verbose = FALSE, 
+    ...
+)
 {
-    # Number of nodes
-    n <- ncol(cormat)
+  
+  # Argument errors
+  TMFG_errors(data, n, partial, returnAllResults, verbose)
+  
+  # Check for missing arguments (argument, default, function)
+  corr <- set_default(corr, "auto", TMFG)
+  na.data <- set_default(na.data, "pairwise", TMFG)
 
-    # Signed correlations
-    tcormat <- cormat
-    cormat <- abs(cormat)
-
-    # Let user know matrix is too small for TMFG estimation
-    # It is still okay to proceed
-    if(n < 9)
-    {print("Matrix is too small")}
-
-    # Initialize sparse edge matrix
-    nodeTO <- sort(c(rep(1:n,n)))
-    nodeFROM <- c(rep(1:n,n))
-    nodeWEIGHT <- as.vector(cormat)
-
-    # Initialize matrices
-    M <- cbind(nodeTO, nodeFROM, nodeWEIGHT) # sparse node-weight matrix
-    in_v <- matrix(nrow=nrow(cormat), ncol=1) # inserted vertices matrix
-    ou_v <- matrix(nrow=nrow(cormat), ncol=1) # not yet inserted vertices matrix
-    tri <- matrix(nrow=((2*n)-4), ncol=3) # triangles matrix
-    separators <- matrix(nrow=n-4, ncol=3) # matrix of 3-cliques (non-face triangles)
-
-    # Find 3 vertices with largest strength
-    s <- rowSums(cormat*(cormat > mean(matrix(unlist(cormat), nrow=1)))*1)
-
-    # Order vertices with largest strength
-    # and grab the top 4
-    in_v[1:4] <- order(s,decreasing=TRUE)[1:4]
-
-    # Set aside nodes that are not in the top 4
-    ou_v <- setdiff(1:nrow(in_v),in_v)
-
-    # Build tetrahedron with the largest strength
-    ## Insert triangles
-    tri[1,]<-in_v[1:3,]
-    tri[2,]<-in_v[2:4,]
-    tri[3,]<-in_v[c(1,2,4),]
-    tri[4,]<-in_v[c(1,3,4),]
-
-    # Initialize sparse TMFG matrix
-    S <- matrix(nrow=(3*nrow(cormat)-6),ncol=3)
-
-    # Algorithm for traditional network
-    S[1,] <- c(in_v[1],in_v[2],1)
-    S[2,] <- c(in_v[1],in_v[3],1)
-    S[3,] <- c(in_v[1],in_v[4],1)
-    S[4,] <- c(in_v[2],in_v[3],1)
-    S[5,] <- c(in_v[2],in_v[4],1)
-    S[6,] <- c(in_v[3],in_v[4],1)
-
-    #build initial gain table
-    gain <- matrix(-Inf,nrow=n,ncol=(2*(n-2)))
-    gain[ou_v,1] <- rowSums(cormat[ou_v,(tri[1,])])
-    gain[ou_v,2] <- rowSums(cormat[ou_v,(tri[2,])])
-    gain[ou_v,3] <- rowSums(cormat[ou_v,(tri[3,])])
-    gain[ou_v,4] <- rowSums(cormat[ou_v,(tri[4,])])
-
-    ntri <- 4 #number of triangles
-    gij <- matrix(nrow=1,ncol=ncol(gain))
-    v <- matrix(nrow=1,ncol=ncol(gain))
-    ve <- array()
-    tr <- 0
-    for(e in 5:n)
-    {
-        if(length(ou_v)==1){
-            ve<-ou_v
-            v<-1
-            w<-1
-            tr<-which.max(gain[ou_v,])
-        }else{
-            for(q in 1:ncol(gain))
-            {
-                gij[,q] <- max(gain[ou_v,q])
-                v[,q] <- which.max(gain[ou_v,q])
-                tr <- which.max(gij)
-            }
-
-            ve <- ou_v[v[tr]]
-            w <- v[tr]
-        }
-
-        #update vertex lists
-        ou_v<-ou_v[-w]
-        in_v[e]<-ve
-
-        #update adjacency matrix
-        for(u in 1:length(tri[tr,]))
-        {
-            cou<-6+((3*(e-5))+u)
-            S[cou,]<-cbind(ve,tri[tr,u],1)
-        }
-
-        #update 3-clique list
-        separators[e-4,]<-tri[tr,]
-        #update triangle list replacing 1 and adding 2 triangles
-        tri[ntri+1,]<-cbind(rbind(tri[tr,c(1,3)]),ve)
-        tri[ntri+2,]<-cbind(rbind(tri[tr,c(2,3)]),ve)
-        tri[tr,]<-cbind(rbind(tri[tr,c(1,2)]),ve)
-        #update gain table
-        gain[ve,]<-0
-        gain[ou_v,tr]<-rowSums(cormat[ou_v,tri[tr,],drop=FALSE])
-        gain[ou_v,ntri+1]<-rowSums(cormat[ou_v,tri[ntri+1,],drop=FALSE])
-        gain[ou_v,ntri+2]<-rowSums(cormat[ou_v,tri[ntri+2,],drop=FALSE])
-
-        #update triangles
-        ntri<-ntri+2
+  # Make sure there are variable names
+  data <- ensure_dimension_names(data)
+  
+  # Generic function to get necessary inputs
+  output <- obtain_sample_correlations(
+    data = data, n = 1, # "n" is not used but input `1` to avoid error
+    corr = corr, na.data = na.data, 
+    verbose = verbose, ...
+  )
+  
+  # Get correlations
+  correlation_matrix <- output$correlation_matrix
+  
+  # Obtain number of nodes
+  nodes <- dim(correlation_matrix)[2]
+  
+  # Set warning for fewer than 9 nodes
+  if(nodes < 9 & isTRUE(verbose)){
+    warning(
+      "The TMFG method requires more than 9 nodes to obtain a chordal network. With fewer than 9 nodes, this property does not hold",
+      call. = FALSE
+    )
+  }
+  
+  # For signed correlations, use absolute correlation matrix
+  # and obtain element-wise inclusion of signed correlation matrix later
+  absolute_matrix <- abs(correlation_matrix)
+  
+  # Initialize inserted nodes vector
+  inserted <- numeric(nodes)
+  
+  # Separator rows
+  separator_rows <- nodes - 4
+  
+  # Initialize triangles and separators matrix
+  triangles <- matrix(nrow = 2 * nodes - 4, ncol = 3)
+  separators <- matrix(nrow = separator_rows, ncol = 3)
+  
+  # Obtain four nodes with the largest strength
+  # which is greater than the average strength
+  ## Compute node strength
+  node_strength <- colSums(absolute_matrix, na.rm = TRUE)
+  ## Select the four nodes with the largest strength
+  four_nodes <- colSums(
+    absolute_matrix * (absolute_matrix > mean(absolute_matrix, na.rm = TRUE)),
+    na.rm = TRUE
+  )
+  
+  # First four nodes
+  first_four <- seq_len(4)
+  
+  # Insert the top four nodes
+  inserted[first_four] <- order(four_nodes, decreasing = TRUE)[first_four]
+  
+  # Set remaining nodes
+  remaining <- setdiff(seq_len(nodes), inserted)
+  
+  # Build tetrahedron
+  triangles[1,] <- inserted[seq_len(3)]; triangles[2,] <- inserted[2:4];
+  triangles[3,] <- inserted[c(1, 2, 4)]; triangles[4,] <- inserted[c(1, 3, 4)];
+  
+  # Initialize network (correlations to retain)
+  network <- diag(1, nrow = nodes, ncol = nodes)
+  
+  # Add nodes to network
+  network[inserted[first_four], inserted[first_four]] <-
+    correlation_matrix[inserted[first_four], inserted[first_four]]
+  
+  # Build gain table
+  gain_columns <- 2 * (nodes - 2)
+  gain <- matrix(-Inf, nrow = nodes, ncol = gain_columns)
+  gain[remaining, 1] <- rowSums(absolute_matrix[remaining, triangles[1,]], na.rm = TRUE)
+  gain[remaining, 2] <- rowSums(absolute_matrix[remaining, triangles[2,]], na.rm = TRUE)
+  gain[remaining, 3] <- rowSums(absolute_matrix[remaining, triangles[3,]], na.rm = TRUE)
+  gain[remaining, 4] <- rowSums(absolute_matrix[remaining, triangles[4,]], na.rm = TRUE)
+  
+  # Number of triangles
+  triangle_count <- 4
+  gain_vertex <- numeric(gain_columns)
+  gain_weight <- numeric(gain_columns)
+  
+  # Loop over remaining edges
+  for(i in 5:nodes){
+    
+    # Check for one remaining node
+    if(length(remaining) == 1){
+      
+      # Last vertex to add
+      add_vertex <- remaining; existing_vertex <- 1;
+      gain_vertex <- 1; max_gain <- which.max(gain[remaining,]);
+      
+    }else{
+      
+      # Vectorized solution (avoids nested loop)
+      gain_location <- which(gain[remaining,] == max(gain[remaining,]), arr.ind = TRUE)
+      
+      # Obtain existing vertex (already in network)
+      # and vertex from remaining based on the maximum gain
+      max_gain <- gain_location[,"col"]
+      existing_vertex <- gain_location[,"row"]
+      add_vertex <- remaining[existing_vertex]
+      
     }
-    cliques<-rbind(in_v[1:4],(cbind(separators,in_v[5:ncol(cormat)])))
-
-    L<-S
-    L[,1]<-S[,2]
-    L[,2]<-S[,1]
-    K<-rbind(S,L)
-
-    x <- matrix(0, nrow = ncol(cormat), ncol = ncol(cormat))
-
-    for(i in 1:nrow(K))
-    {
-        x[K[i,1], K[i,2]] <- 1
-        x[K[i,2], K[i,1]] <- 1
+    
+    # Update lists
+    remaining <- remaining[-existing_vertex]
+    inserted[i] <- add_vertex
+    
+    # Add edges to network
+    network[add_vertex, triangles[max_gain,]] <-
+      correlation_matrix[add_vertex, triangles[max_gain,]]
+    
+    # Add to other side
+    network[triangles[max_gain,], add_vertex] <-
+      correlation_matrix[triangles[max_gain,], add_vertex]
+    
+    # Update separators
+    separators[i-4,] <- triangles[max_gain,]
+    
+    # Update triangles list
+    ## Add two triangles
+    triangles[triangle_count + 1,] <- c(triangles[max_gain, c(1, 3)], add_vertex)
+    triangles[triangle_count + 2,] <- c(triangles[max_gain, c(2, 3)], add_vertex)
+    ## Replace maximum gain triangle (no longer a triangle)
+    triangles[max_gain,] <- c(triangles[max_gain, c(1, 2)], add_vertex)
+    
+    # Update gain table
+    ## Set gain to zero for added node
+    gain[add_vertex,] <- 0
+    ## Maximum gain
+    gain[remaining, max_gain] <- rowSums(
+      absolute_matrix[remaining, triangles[max_gain,], drop = FALSE], 
+      na.rm = TRUE
+    )
+    ## First new triangle
+    gain[remaining, triangle_count + 1] <- rowSums(
+      absolute_matrix[remaining, triangles[triangle_count + 1,], drop = FALSE], 
+      na.rm = TRUE
+    )
+    ## Second new triangle
+    gain[remaining, triangle_count + 2] <- rowSums(
+      absolute_matrix[remaining, triangles[triangle_count + 2,], drop = FALSE], 
+      na.rm = TRUE
+    )
+    
+    ## Increase triangle count
+    triangle_count <- triangle_count + 2
+    
+  }
+  
+  # Create cliques
+  cliques <- rbind(
+    inserted[first_four],
+    cbind(separators, inserted[5:nodes])
+  )
+  
+  # Check for whether partial correlation network should be computed
+  ## An extension of the TMFG method using the LoGo method (Barfuss et al., 2016)
+  if(partial){
+    
+    # Initialize partial correlation network 
+    partial_network <- matrix(0, nrow = nodes, ncol = nodes)
+    
+    # Loop over cliques and separators
+    for(i in seq_len(separator_rows)){
+      
+      # Obtain clique
+      clique <- cliques[i,]
+      
+      # Add clique
+      partial_network[clique, clique] <-
+        partial_network[clique, clique] +
+        solve(correlation_matrix[clique, clique])
+      
+      # Obtain separator
+      separator <- separators[i,]
+        
+      # Subtract separator
+      partial_network[separator, separator] <-
+        partial_network[separator, separator] -
+        solve(correlation_matrix[separator, separator])
+      
     }
-
-    diag(x)<-1
-
-    for(r in 1:nrow(x))
-        for(z in 1:ncol(x))
-        {if(x[r,z]==1){x[r,z]<-tcormat[r,z]}}
-
-    colnames(x)<-colnames(cormat)
-    x <- as.data.frame(x)
-    row.names(x)<-colnames(x)
-    x <- as.matrix(x)
-
-    return(list(A=x, separators=separators, cliques=cliques))
+    
+    # There is always one more clique than separator
+    ## Obtain last clique
+    clique <- cliques[separator_rows + 1,]
+    
+    ## Add last clique
+    partial_network[clique, clique] <-
+      partial_network[clique, clique] +
+      solve(correlation_matrix[clique, clique])
+    
+    # Convert inverse covariance matrix to partial correlations
+    ## Replaces the original network
+    network <- -cov2cor(partial_network)
+    diag(network) <- 0
+    
+  }
+  
+  # Transfer variable names
+  network <- transfer_names(data, network)
+  
+  # Set methods attribute
+  attr(network, "methods") <- list(
+    corr = corr, partial = partial
+  )
+  
+  # Set up return
+  if(!returnAllResults){
+    return(network)
+  }else{
+    
+    # Set up return list
+    return(
+      list(
+        network = network,
+        separators = separators,
+        cliques = cliques
+      )
+    )
+    
+  }
+  
 }
+
+# Bug Checking ----
+# ## Basic input
+# data = wmt2[,7:24]; n = NULL
+# corr = "auto"; na.data = "pairwise"
+# partial = FALSE; returnAllResults = FALSE
+# verbose = FALSE
+
+#' @noRd
+# Errors ----
+# Updated 04.08.2023
+TMFG_errors <- function(data, n, partial, returnAllResults, verbose)
+{
+  
+  # 'data' errors
+  object_error(data, c("matrix", "data.frame"))
+  
+  # 'n' errors
+  if(!is.null(n)){
+    length_error(n, 1)
+    typeof_error(n, "numeric")
+  }
+  
+  # 'partial' errors
+  length_error(partial, 1)
+  typeof_error(partial, "logical")
+  
+  # 'returnAllResults' errors
+  length_error(returnAllResults, 1)
+  typeof_error(returnAllResults, "logical")
+  
+  # 'verbose' errors
+  length_error(verbose, 1)
+  typeof_error(verbose, "logical")
+  
+}
+

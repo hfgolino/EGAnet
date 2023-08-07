@@ -2,337 +2,334 @@
 % Please edit documentation in R/bootEGA.R
 \name{bootEGA}
 \alias{bootEGA}
-\title{Dimension Stability Analysis of \code{\link[EGAnet]{EGA}}}
+\title{Bootstrap Exploratory Graph Analysis}
 \usage{
 bootEGA(
   data,
   n = NULL,
+  corr = c("auto", "pearson", "spearman"),
+  na.data = c("pairwise", "listwise"),
+  model = c("BGGM", "glasso", "TMFG"),
+  algorithm = c("leiden", "louvain", "walktrap"),
   uni.method = c("expand", "LE", "louvain"),
-  iter,
+  iter = 500,
   type = c("parametric", "resampling"),
-  seed = 1234,
-  corr = c("cor_auto", "pearson", "spearman"),
+  ncores,
   EGA.type = c("EGA", "EGA.fit", "hierEGA", "riEGA"),
-  model = c("glasso", "TMFG"),
-  model.args = list(),
-  algorithm = c("walktrap", "leiden", "louvain"),
-  algorithm.args = list(),
-  consensus.method = c("highest_modularity", "most_common", "iterative", "lowest_tefi",
-    "most_common_tefi"),
-  consensus.iter = 100,
   typicalStructure = TRUE,
   plot.typicalStructure = TRUE,
-  plot.args = list(),
-  ncores,
-  progress = TRUE,
+  seed = NULL,
+  verbose = TRUE,
   ...
 )
 }
 \arguments{
 \item{data}{Matrix or data frame.
-Includes the variables to be used in the \code{bootEGA} analysis}
+Should consist only of variables to be used in the analysis}
 
-\item{n}{Integer.
+\item{n}{Numeric (length = 1).
 Sample size if \code{data} provided is a correlation matrix}
 
-\item{uni.method}{Character.
-What unidimensionality method should be used? 
-Defaults to \code{"louvain"}.
-Current options are:
+\item{corr}{Character (length = 1).
+Method to compute correlations.
+Defaults to \code{"auto"}.
+Available options:
 
 \itemize{
 
-\item{\strong{\code{expand}}}
-{Expands the correlation matrix with four variables correlated .50.
-If number of dimension returns 2 or less in check, then the data 
-are unidimensional; otherwise, regular EGA with no matrix
-expansion is used. This is the method used in the Golino et al. (2020)
-\emph{Psychological Methods} simulation.}
+\item{\code{"auto"} --- }
+{Automatically computes appropriate correlations for
+the data using Pearson's for continuous, polychoric for ordinal,
+tetrachoric for binary, and polyserial/biserial for ordinal/binary with
+continuous. To change the number of categories that are considered
+ordinal, use \code{ordinal.categories}
+(see \code{\link[EGAnet]{polychoric.matrix}} for more details)}
 
-\item{\strong{\code{LE}}}
-{Applies the Leading Eigenvalue algorithm (\code{\link[igraph]{cluster_leading_eigen}})
-on the empirical correlation matrix. If the number of dimensions is 1,
-then the Leading Eigenvalue solution is used; otherwise, regular EGA
-is used. This is the final method used in the Christensen, Garrido,
-and Golino (2021) simulation.}
+\item{\code{"pearson"} --- }
+{Pearson's correlation is computed for all variables regardless of
+categories}
 
-\item{\strong{\code{louvain}}}
-{Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
-on the empirical correlation matrix using a resolution parameter = 0.95.
-If the number of dimensions is 1, then the Louvain solution is used; otherwise,
-regular EGA is used. This method was validated in the Christensen (2022) simulation.}
+\item{\code{"spearman"} --- }
+{Spearman's rank-order correlation is computed for all variables
+regardless of categories}
 
-}}
-
-\item{iter}{Numeric integer.
-Number of replica samples to generate from the bootstrap analysis.
-At least \code{500} is recommended}
-
-\item{type}{Character.
-A string indicating the type of bootstrap to use.
-
-Current options are:
-
-\itemize{
-
-\item{\strong{\code{"parametric"}}}
-{Generates \code{n} new datasets (multivariate normal random distributions) based on the
-original dataset, via the \code{\link[MASS]{mvrnorm}} function}
-
-\item{\strong{\code{"resampling"}}}
-{Generates n random subsamples of the original data}
-
-}}
-
-\item{seed}{Numeric.
-Seed to reproduce results. Defaults to \code{1234}. For random results, set to \code{NULL}}
-
-\item{corr}{Character.
-Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
-
-Current options are:
-
-\itemize{
-
-\item{\strong{\code{cor_auto}}}
-{Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
-\code{\link[qgraph]{qgraph}}}.
-
-\item{\strong{\code{pearson}}}
-{Computes Pearson's correlation coefficient using the pairwise complete observations via
-the \code{\link[stats]{cor}}} function.
-
-\item{\strong{\code{spearman}}}
-{Computes Spearman's correlation coefficient using the pairwise complete observations via
-the \code{\link[stats]{cor}}} function.
-}}
-
-\item{EGA.type}{Character.
-Type of EGA model to use.
-
-Current options are:
-
-\itemize{
-
-\item{\code{\link[EGAnet]{EGA}}}
-{Uses standard exploratory graph analysis}
-
-\item{\code{\link[EGAnet]{EGA.fit}}}
-{Uses \code{\link[EGAnet]{tefi}} to determine best fit of
-\code{\link[EGAnet]{EGA}}}
-
-\item{\code{\link[EGAnet]{hierEGA}}}
-{Uses hierarhical exploratory graph analysis}
-
-\item{\code{\link[EGAnet]{riEGA}}}
-{Uses random-intercept exploratory graph analysis}
-
-}}
-
-\item{model}{Character.
-A string indicating the method to use.
-
-Current options are:
-
-\itemize{
-
-\item{\strong{\code{glasso}}}
-{Estimates the Gaussian graphical model using graphical LASSO with
-extended Bayesian information criterion to select optimal regularization parameter.
-This is the default method}
-
-\item{\strong{\code{TMFG}}}
-{Estimates a Triangulated Maximally Filtered Graph}
-
-}}
-
-\item{model.args}{List.
-A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
-or \code{\link[EGAnet]{TMFG}}}
-
-\item{algorithm}{A string indicating the algorithm to use or a function from \code{\link{igraph}}
-Defaults to \code{"walktrap"}.
-Current options are:
-
-\itemize{
-
-\item{\strong{\code{walktrap}}}
-{Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
-
-\item{\strong{\code{leiden}}}
-{Computes the Leiden algorithm using \code{\link[igraph]{cluster_leiden}}.
-Defaults to \code{objective_function = "modularity"}}
-
-\item{\strong{\code{louvain}}}
-{Computes the Louvain algorithm using \code{\link[igraph]{cluster_louvain}}}
-
-}}
-
-\item{algorithm.args}{List.
-A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
-or some other community detection algorithm function (see examples)}
-
-\item{consensus.method}{Character.
-What consensus clustering method should be used? 
-Defaults to \code{"highest_modularity"}.
-Current options are:
-
-\itemize{
-
-\item{\strong{\code{highest_modularity}}}
-{Uses the community solution that achieves the highest modularity
-across iterations}
-
-\item{\strong{\code{most_common}}}
-{Uses the community solution that is found the most
-across iterations}
-
-\item{\strong{\code{iterative}}}
-{Identifies the most common community solutions across iterations
-and determines how often nodes appear in the same community together.
-A threshold of 0.30 is used to set low proportions to zero.
-This process repeats iteratively until all nodes have a proportion of
-1 in the community solution.
 }
 
-\item{\code{most_common_tefi}}
-{Uses the most common number of communities detected across the number
-of iterations. After, if there is more than one solution for that number
-of communities, then the solution with the lowest \code{\link[EGAnet]{tefi}
-is used}}
+For other similarity measures, compute them first and input them
+into \code{data} with the sample size (\code{n})}
 
-}}
-
-\item{consensus.iter}{Numeric.
-Number of iterations to perform in consensus clustering for the Louvain algorithm
-(see Lancichinetti & Fortunato, 2012).
-Defaults to \code{100}}
-
-\item{typicalStructure}{Boolean.
-If \code{TRUE}, returns the typical network of partial correlations
-(estimated via graphical lasso or via TMFG) and estimates its dimensions.
-The "typical network" is the median of all pairwise correlations over the \emph{n} bootstraps.
-Defaults to \code{TRUE}}
-
-\item{plot.typicalStructure}{Boolean.
-If \code{TRUE}, returns a plot of the typical network (partial correlations),
-which is the median of all pairwise correlations over the \emph{n} bootstraps,
-and its estimated dimensions.
-Defaults to \code{TRUE}}
-
-\item{plot.args}{List.
-A list of additional arguments for the network plot.
-See \code{\link[GGally]{ggnet2}} for
-full list of arguments:
+\item{na.data}{Character (length = 1).
+How should missing data be handled?
+Defaults to \code{"pairwise"}.
+Available options:
 
 \itemize{
 
-\item{\strong{\code{vsize}}}
-{Size of the nodes. Defaults to 6.}
+\item{\code{"pairwise"} --- }
+{Computes correlation for all available cases between
+two variables}
 
-\item{\strong{\code{label.size}}}
-{Size of the labels. Defaults to 5.}
-
-\item{\strong{\code{alpha}}}
-{The level of transparency of the nodes, which might be a single value or a vector of values. Defaults to 0.7.}
-
-\item{\strong{\code{edge.alpha}}}
-{The level of transparency of the edges, which might be a single value or a vector of values. Defaults to 0.4.}
-
- \item{\strong{\code{legend.names}}}
-{A vector with names for each dimension}
-
-\item{\strong{\code{color.palette}}}
-{The color palette for the nodes. For custom colors,
-enter HEX codes for each dimension in a vector.
-See \code{\link[EGAnet]{color_palette_EGA}} for
-more details and examples}
+\item{\code{"listwise"} --- }
+{Computes correlation for all complete cases in the dataset}
 
 }}
 
-\item{ncores}{Numeric.
+\item{model}{Character (length = 1).
+Defaults to \code{"glasso"}.
+Available options:
+
+\itemize{
+
+\item{\code{"BGGM"} --- }
+{Computes the Bayesian Gaussian Graphical Model.
+Set argument \code{ordinal.categories} to determine
+levels allowed for a variable to be considered ordinal.
+See \code{\link[BGGM]{estimate}} for more details}
+
+\item{\code{"glasso"} --- }
+{Computes the GLASSO with EBIC model selection.
+See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details}
+
+\item{\code{"TMFG"} --- }
+{Computes the TMFG method.
+See \code{\link[EGAnet]{TMFG}} for more details}
+
+}}
+
+\item{algorithm}{Character or 
+\code{\link{igraph}} \code{cluster_*} function (length = 1).
+Defaults to \code{"walktrap"}.
+Three options are listed below but all are available
+(see \code{\link[EGAnet]{community.detection}} for other options):
+
+\itemize{
+
+\item{\code{"leiden"} --- }
+{See \code{\link[igraph]{cluster_leiden}} for more details}
+
+\item{\code{"louvain"} --- }
+{By default, \code{"louvain"} will implement the Louvain algorithm using 
+the consensus clustering method (see \code{\link[EGAnet]{community.consensus}} 
+for more information). This function will implement
+\code{consensus.method = "most_common"} and \code{consensus.iter = 1000} 
+unless specified otherwise}
+
+\item{\code{"walktrap"} --- }
+{See \code{\link[igraph]{cluster_walktrap}} for more details}
+
+}}
+
+\item{uni.method}{Character (length = 1).
+What unidimensionality method should be used? 
+Defaults to \code{"louvain"}.
+Available options:
+
+\itemize{
+
+\item{\code{"expand"} --- }
+{Expands the correlation matrix with four variables correlated 0.50.
+If number of dimension returns 2 or less in check, then the data 
+are unidimensional; otherwise, regular EGA with no matrix
+expansion is used. This method was used in the Golino et al.'s (2020)
+\emph{Psychological Methods} simulation}
+
+\item{\code{"LE"} --- }
+{Applies the Leading Eigenvector algorithm
+(\code{\link[igraph]{cluster_leading_eigen}})
+on the empirical correlation matrix. If the number of dimensions is 1,
+then the Leading Eigenvector solution is used; otherwise, regular EGA
+is used. This method was used in the Christensen et al.'s (2023) 
+\emph{Behavior Research Methods} simulation}
+
+\item{\code{"louvain"} --- }
+{Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
+on the empirical correlation matrix. If the number of dimensions is 1, 
+then the Louvain solution is used; otherwise, regular EGA is used. 
+This method was validated Christensen's (2022) \emph{PsyArXiv} simulation.
+Consensus clustering can be used by specifying either
+\code{"consensus.method"} or \code{"consensus.iter"}}
+
+}}
+
+\item{iter}{Numeric (length = 1).
+Number of replica samples to generate from the bootstrap analysis.
+Defaults to \code{500} (recommended)}
+
+\item{type}{Character (length = 1).
+What type of bootstrap should be performed?
+Defaults to \code{"parametric"}.
+Available options:
+
+\itemize{
+
+\item{\code{"parametric"} --- }
+{Generates \code{iter} new datasets from
+(multivariate normal random distributions) based on the
+original dataset using \code{\link[MASS]{mvrnorm}}}
+
+\item{\code{"resampling"} --- }
+{Generates \code{iter} new datasets from random subsamples 
+of the original data}
+
+}}
+
+\item{ncores}{Numeric (length = 1).
 Number of cores to use in computing results.
-Defaults to \code{parallel::detectCores() / 2} or half of your
+Defaults to \code{ceiling(parallel::detectCores() / 2)} or half of your
 computer's processing power.
 Set to \code{1} to not use parallel computing
 
 If you're unsure how many cores your computer has,
-then use the following code: \code{parallel::detectCores()}}
+then type: \code{parallel::detectCores()}}
 
-\item{progress}{Boolean.
+\item{EGA.type}{Character (length = 1).
+Type of EGA model to use.
+Defaults to \code{"EGA"}
+Available options:
+
+\itemize{
+
+\item{\code{"\link[EGAnet]{EGA}"} --- }
+{Uses standard exploratory graph analysis}
+
+\item{\code{"\link[EGAnet]{EGA.fit}"} --- }
+{Uses \code{\link[EGAnet]{tefi}} to determine best fit of
+\code{\link[EGAnet]{EGA}}}
+
+\item{\code{"\link[EGAnet]{hierEGA}"} --- }
+{Uses hierarhical exploratory graph analysis}
+
+\item{\code{"\link[EGAnet]{riEGA}"} --- }
+{Uses random-intercept exploratory graph analysis}
+
+}
+
+Arguments for \code{EGA.type} can be added (see links
+for details on specific function arguments)}
+
+\item{typicalStructure}{Boolean (length = 1).
+If \code{TRUE}, returns the median (\code{"glasso"} or \code{"BGGM"}) or
+mean (\code{"TMFG"}) network structure and estimates its dimensions 
+(see \strong{Details} for more information).
+Defaults to \code{TRUE}}
+
+\item{plot.typicalStructure}{Boolean (length = 1).
+If \code{TRUE}, returns a plot of the typical network structure.
+Defaults to \code{TRUE}}
+
+\item{seed}{Numeric (length = 1).
+Defaults to \code{NULL} or random results.
+Set for reproducible results.
+See \href{https://github.com/hfgolino/EGAnet/wiki/Reproducibility-and-PRNG}{Reproducibility and PRNG}
+for more details on random number generation in \code{\link{EGAnet}}}
+
+\item{verbose}{Boolean (length = 1).
 Should progress be displayed?
 Defaults to \code{TRUE}.
-For Windows, \code{FALSE} is about 2x faster}
+Set to \code{FALSE} to not display progress}
 
-\item{...}{Additional arguments.
-Used for deprecated arguments from previous versions of \code{\link{EGA}}}
+\item{...}{Additional arguments that can be passed on to
+\code{\link[EGAnet]{auto.correlate}},
+\code{\link[EGAnet]{network.estimation}},
+\code{\link[EGAnet]{community.detection}},
+\code{\link[EGAnet]{community.consensus}},
+\code{\link[EGAnet]{EGA}},
+\code{\link[EGAnet]{EGA.fit}},
+\code{\link[EGAnet]{hierEGA}}, and
+\code{\link[EGAnet]{riEGA}}}
 }
 \value{
 Returns a list containing:
 
 \item{iter}{Number of replica samples in bootstrap}
 
+\item{bootGraphs}{A list containing the networks of each replica sample}
+
+\item{boot.wc}{A matrix of membership assignments for each replica network
+with variables down the columns and replicas across the rows}
+
 \item{boot.ndim}{Number of dimensions identified in each replica sample}
 
-\item{boot.wc}{Item allocation for each replica sample}
+\item{summary.table}{A data frame containing number of replica samples, 
+median, standard deviation, standard error, 95\% confidence intervals, and 
+quantiles (lower = 2.5\% and upper = 97.5\%)}
 
-\item{bootGraphs}{Networks of each replica sample}
-
-\item{summary.table}{Summary table containing number of replica samples, median,
-standard deviation, standard error, 95\% confidence intervals, and quantiles (lower = 2.5\% and upper = 97.5\%)}
-
-\item{frequency}{Proportion of times the number of dimensions was identified
+\item{frequency}{A data frame containing the proportion of times the number of dimensions was identified
 (e.g., .85 of 1,000 = 850 times that specific number of dimensions was found)}
 
-\item{EGA}{Output of the original \code{\link[EGAnet]{EGA}} results}
+\item{TEFI}{\code{\link[EGAnet]{tefi}} value for each replica sample}
+
+\item{type}{Type of bootstrap used}
+
+\item{EGA}{Output of the empirical EGA results
+(output will vary based on \code{EGA.type})}
+
+\item{EGA.type}{Type of \code{*EGA} function used}
 
 \item{typicalGraph}{A list containing:
 
 \itemize{
 
-\item{\strong{\code{graph}}}
+\item{\code{graph} --- }
 {Network matrix of the median network structure}
 
-\item{\strong{\code{typical.dim.variables}}}
+\item{\code{typical.dim.variables} --- }
 {An ordered matrix of item allocation}
 
-\item{\strong{\code{wc}}}
-{Item allocation of the median network}
-   }
+\item{\code{wc} --- }
+{Membership assignments of the median network}
+
 }
+
+}
+
+\item{plot.typical.ega}{Plot output if \code{plot.typicalStructure = TRUE}}
 }
 \description{
-\code{bootEGA} Estimates the number of dimensions of \emph{n} bootstraps
-using the empirical (partial) correlation matrix (parametric) or resampling from
-the empirical dataset (non-parametric). It also estimates a typical
-median network structure, which is formed by the median or mean pairwise (partial)
-correlations over the \emph{n} bootstraps.
+\code{bootEGA} Estimates the number of dimensions of \code{iter} bootstraps
+using the empirical zero-order correlation matrix (\code{"parametric"}) or 
+\code{"resampling"} from the empirical dataset (non-parametric). \code{bootEGA}
+estimates a typical median network structure, which is formed by the median or 
+mean pairwise (partial) correlations over the \emph{iter} bootstraps (see
+\strong{Details} for information about the typical median network structure).
+}
+\details{
+The typical network structure is derived from the median (or mean) value
+of each pairwise relationship. These values tend to reflect the
+"typical" value taken by an edge across the bootstrap networks. Afterward,
+the same community detection algorithm is applied to the typical network as the
+bootstrap networks. 
+
+Because the community detection algorithm is applied to the typical network structure,
+there is a possibility that the community algorithm determines
+a different number of dimensions than the median number derived from the bootstraps.
+The typical network structure (and number of dimensions) may \emph{not}
+match the empirical \code{\link[EGAnet]{EGA}} number of dimensions or
+the median number of dimensions from the bootstrap. This result is known
+and \emph{not} a bug.
 }
 \examples{
 # Load data
 wmt <- wmt2[,7:24]
 
 \dontrun{
-# Standard EGA example
+# Standard EGA parametric example
 boot.wmt <- bootEGA(
   data = wmt, iter = 500,
   type = "parametric", ncores = 2
 )
 
-# Produce Methods section
-methods.section(boot.wmt)
-
-# Louvain example
-boot.wmt.louvain <- bootEGA(
+# Standard resampling example
+boot.wmt <- bootEGA(
   data = wmt, iter = 500,
-  algorithm = "louvain",
-  type = "parametric", ncores = 2
+  type = "resampling", ncores = 2
 )
 
-# Spinglass example
+# Example using {igraph} `cluster_*` function
 boot.wmt.spinglass <- bootEGA(
   data = wmt, iter = 500,
-  algorithm = igraph::cluster_spinglass, # use any function from {igraph}
+  algorithm = igraph::cluster_spinglass,
+  # use any function from {igraph}
   type = "parametric", ncores = 2
 )
 
@@ -359,19 +356,16 @@ boot.wmt.ri <- bootEGA(
 
 }
 \references{
-# Original implementation of bootEGA \cr
+\strong{Original implementation of bootEGA} \cr
 Christensen, A. P., & Golino, H. (2021).
 Estimating the stability of the number of factors via Bootstrap Exploratory Graph Analysis: A tutorial.
 \emph{Psych}, \emph{3}(3), 479-500.
-
-# Structural consistency (see \code{\link[EGAnet]{dimensionStability}}) \cr
-Christensen, A. P., Golino, H., & Silvia, P. J. (2020).
-A psychometric network perspective on the validity and validation of personality trait questionnaires.
-\emph{European Journal of Personality}, \emph{34}(6), 1095-1108.
 }
 \seealso{
-\code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA
-and \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
+\code{\link[EGAnet]{itemStability}} to estimate the stability of
+the variables in the empirical dimensions and
+\code{\link[EGAnet]{dimensionStability}} to estimate the stability of
+the dimensions (structural consistency)
 }
 \author{
 Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>

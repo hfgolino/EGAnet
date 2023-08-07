@@ -1,10 +1,14 @@
-#' CFA Fit of \code{\link[EGAnet]{EGA}} or \code{\link[EGAnet]{hierEGA}} Structure
+#' @title CFA Fit of \code{\link[EGAnet]{EGA}} or \code{\link[EGAnet]{hierEGA}} Structure
 #'
-#' Verifies the fit of the structure suggested by \code{\link[EGAnet]{EGA}} or by \code{\link[EGAnet]{hierEGA}} using confirmatory factor analysis
+#' @description Verifies the fit of the structure suggested by 
+#' \code{\link[EGAnet]{EGA}} or by \code{\link[EGAnet]{hierEGA}} using 
+#' confirmatory factor analysis
 #'
-#' @param ega.obj An \code{\link[EGAnet]{EGA}} object or an \code{\link[EGAnet]{hierEGA}}
+#' @param ega.obj An \code{\link[EGAnet]{EGA}} object or 
+#' an \code{\link[EGAnet]{hierEGA}}
 #'
-#' @param data A dataframe with the variables to be used in the analysis
+#' @param data Matrix or data frame.
+#' Should consist only of variables to be used in the analysis
 #'
 #' @param estimator The estimator used in the confirmatory factor analysis.
 #' 'WLSMV' is the estimator of choice for ordinal variables.
@@ -55,24 +59,23 @@
 #' lavaan::fitMeasures(cfa.wmt$fit, fit.measures = "all")}
 #' 
 #' @references 
+#' \strong{Demonstrative use} \cr
 #' Christensen, A. P., Gross, G. M., Golino, H., Silvia, P. J., & Kwapil, T. R. (2019).
 #' Exploratory graph analysis of the Multidimensional Schizotypy Scale.
 #' \emph{Schizophrenia Research}, \emph{206}, 43-51.
 #' 
+#' \strong{Initial implementation} \cr
 #' Golino, H., & Epskamp, S. (2017).
 #' Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research.
 #' \emph{PLoS ONE}, \emph{12}, e0174035.
-#'
-#' @seealso \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and
-#' \code{\link[EGAnet]{bootEGA}} to investigate the stability of EGA's estimation via bootstrap.
 #'
 #' @export
 #'
 # CFA model for EGA
 # Updated 29.11.2022
-CFA<- function(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ...) {
-
-
+CFA <- function(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ...) 
+{
+  
   # Set lavaan arguments
   lavaan.args <- list(...)
   
@@ -112,7 +115,7 @@ CFA<- function(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ...
   }
   
   
-  if(class(ega.obj)=="EGA"){
+  if(is(ega.obj, "EGA")){
     strct <- split(ega.obj$dim.variables[, 1], list(ega.obj$dim.variables[, 2]))
     names(strct) <- paste("Fat", labels(strct))
     model.ega <- paste(names(strct), " =~ ", lapply(strct, function(x) paste(print(x), collapse = " + ")), collapse = " \n ")
@@ -123,8 +126,7 @@ CFA<- function(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ...
       what = "FUN",
       args = lavaan.args
     )
-}
-  if(class(ega.obj)=="hierEGA"){
+  }else if(is(ega.obj, "hierEGA")){
      ## Organizing 1st level items and factors:
     hierEGA.obj <- ega.obj
     
@@ -133,8 +135,8 @@ CFA<- function(ega.obj, data, estimator, plot.CFA = TRUE, layout = "spring", ...
     
     ## Organizing 2nd level items and factors:
     
-    dim.variables.second <- data.frame(items = colnames(hierEGA.obj$lower_order$network), 
-                                       dimension = hierEGA.obj$higher_order$EGA$wc[as.character(hierEGA.obj$lower_order$wc)])
+    dim.variables.second <- data.frame(items = colnames(hierEGA.obj$lower_order$network[]), 
+                                       dimension = hierEGA.obj$higher_order$wc[as.character(hierEGA.obj$lower_order$wc)])
     
     strct.2nd <- split(dim.variables.second[, 1], list(paste("GenFact", dim.variables.second[, 2])))
     

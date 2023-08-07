@@ -15,39 +15,62 @@ EBICglasso.qgraph(
   penalizeMatrix,
   countDiagonal = FALSE,
   refit = FALSE,
-  optimization = c("EBIC", "JSD"),
+  model.selection = c("EBIC", "JSD"),
+  verbose = FALSE,
   ...
 )
 }
 \arguments{
-\item{data}{Data matrix}
+\item{data}{Matrix or data frame.
+Should consist only of variables to be used in the analysis}
 
-\item{n}{Number of participants}
+\item{n}{Numeric (length = 1).
+Sample size if \code{data} provided is a correlation matrix}
 
-\item{gamma}{EBIC tuning parameter. 0.5 is generally a good choice.
-Setting to zero will cause regular BIC to be used.}
+\item{gamma}{Numeric (length = 1)
+EBIC tuning parameter.
+Defaults to \code{0.50} and is generally a good choice.
+Setting to \code{0} will cause regular BIC to be used}
 
-\item{penalize.diagonal}{Should the diagonal be penalized?}
+\item{penalize.diagonal}{Boolean (length = 1).
+Should the diagonal be penalized?
+Defaults to \code{FALSE}}
 
-\item{nlambda}{Number of lambda values to test.}
+\item{nlambda}{Numeric (length = 1).
+Number of lambda values to test.
+Defaults to \code{100}}
 
-\item{lambda.min.ratio}{Ratio of lowest lambda value compared to maximal lambda.
+\item{lambda.min.ratio}{Numeric (length = 1).
+Ratio of lowest lambda value compared to maximal lambda.
 Defaults to \code{0.1}.
 \strong{NOTE} \code{\link{qgraph}} sets the default to \code{0.01}}
 
-\item{returnAllResults}{If \code{TRUE} this function does not
-return a network but the results of the entire glasso path.}
+\item{returnAllResults}{Boolean (length = 1).
+Whether all results should be returned.
+Defaults to \code{FALSE} (network only).
+Set to \code{TRUE} to access \code{\link[glasso]{glassopath}} output}
 
-\item{penalizeMatrix}{Optional logical matrix to indicate which elements are penalized}
+\item{penalizeMatrix}{Boolean matrix.
+Optional logical matrix to indicate which elements are penalized}
 
-\item{countDiagonal}{Should diagonal be counted in EBIC computation?
-Defaults to \code{FALSE}. Set to \code{TRUE} to mimic qgraph < 1.3 behavior (not recommended!).}
+\item{countDiagonal}{Boolean (length = 1).
+Should diagonal be counted in EBIC computation?
+Defaults to \code{FALSE}.
+Set to \code{TRUE} to mimic \code{\link{qgraph}} < 1.3 behavior (not recommended!)}
 
-\item{refit}{Logical, should the optimal graph be refitted without LASSO regularization?
-Defaults to \code{FALSE}.}
+\item{refit}{Boolean (length = 1).
+Should the optimal graph be refitted without LASSO regularization?
+Defaults to \code{FALSE}}
 
-\item{optimization}{Character.
-How lambda should be selected within GLASSO}
+\item{model.selection}{Character (length = 1).
+How lambda should be selected within GLASSO.
+Defaults to \code{"EBIC"}.
+\code{"JSD"} is experimental and should not be used otherwise}
+
+\item{verbose}{Boolean (length = 1).
+Whether messages and (insignificant) warnings should be output.
+Defaults to \code{FALSE} (silent calls).
+Set to \code{TRUE} to see all messages and warnings for every function call}
 
 \item{...}{Arguments sent to \code{\link[glasso]{glasso}}}
 }
@@ -59,7 +82,7 @@ This function uses the \code{\link[glasso]{glasso}} package
 (Friedman, Hastie and Tibshirani, 2011) to compute a
 sparse gaussian graphical model with the graphical lasso
 (Friedman, Hastie & Tibshirani, 2008).
-The tuning parameter is chosen using the Extended Bayesian Information criterium
+The tuning parameter is chosen using the Extended Bayesian Information criterion
 (EBIC) described by Foygel & Drton (2010).
 }
 \details{
@@ -73,39 +96,35 @@ is computed using \code{\link[qgraph]{wi2net}} and returned.
 # Obtain data
 wmt <- wmt2[,7:24]
 
-\dontrun{
 # Compute graph with tuning = 0 (BIC)
-BICgraph <- EBICglasso.qgraph(
-  data = wmt, gamma = 0
-)
+BICgraph <- EBICglasso.qgraph(data = wmt, gamma = 0)
 
 # Compute graph with tuning = 0.5 (EBIC)
-EBICgraph <- EBICglasso.qgraph(
-  data = wmt, gamma = 0.5
-)}
+EBICgraph <- EBICglasso.qgraph(data = wmt, gamma = 0.5)
 
 }
 \references{
-# Instantiation of GLASSO \cr
+\strong{Instantiation of GLASSO} \cr
 Friedman, J., Hastie, T., & Tibshirani, R. (2008).
 Sparse inverse covariance estimation with the graphical lasso.
 \emph{Biostatistics}, \emph{9}, 432-441.
 
-# Tutorial on EBICglasso
-Epskamp, S., & Fried, E. I. (2018).
-A tutorial on regularized partial correlation networks.
-\emph{Psychological Methods}, \emph{23}(4), 617–634.
+\strong{glasso + EBIC} \cr
+Foygel, R., & Drton, M. (2010).
+Extended Bayesian information criteria for Gaussian graphical models.
+\emph{In Advances in neural information processing systems} (pp. 604-612).
 
-# glasso package \cr
+\strong{glasso package} \cr
 Friedman, J., Hastie, T., & Tibshirani, R. (2011).
 glasso: Graphical lasso-estimation of Gaussian graphical models.
 R package version 1.7.
 
-# glasso + EBIC \cr
-Foygel, R., & Drton, M. (2010).
-Extended Bayesian information criteria for Gaussian graphical models.
-\emph{In Advances in neural information processing systems} (pp. 604-612).
+\strong{Tutorial on EBICglasso} \cr
+Epskamp, S., & Fried, E. I. (2018).
+A tutorial on regularized partial correlation networks.
+\emph{Psychological Methods}, \emph{23}(4), 617–634.
 }
 \author{
-Sacha Epskamp <mail@sachaepskamp.com>
+Sacha Epskamp; for maintanence,
+Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen at gmail.com>
 }

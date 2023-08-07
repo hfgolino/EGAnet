@@ -1,29 +1,30 @@
-#' Weighted Topological Overlap
+#' @title Weighted Topological Overlap
 #' 
 #' @description Computes weighted topological overlap following
 #' the Novick et al. (2009) definition
 #'
-#' @param network Symmetric matrix.
-#' Input for a symmetric network matrix
+#' @param network Symmetric matrix or data frame.
+#' A symmetric network
 #' 
 #' @param signed Boolean (length = 1).
 #' Whether the signed version should be used.
 #' Defaults to \code{TRUE}.
 #' Use \code{FALSE} for absolute values
 #' 
-#' @param diagonal_zero Boolean (length = 1).
+#' @param diagonal.zero Boolean (length = 1).
 #' Whether diagonal of overlap matrix should be set to zero.
 #' Defaults to \code{TRUE}.
 #' Use \code{FALSE} to allow overlap of a node with itself
 #' 
 #' @examples 
 #' # Obtain network
-#' network <- EBICglasso.qgraph(wmt2[,7:24])
+#' network <- network.estimation(wmt2[,7:24], model = "glasso")
 #' 
 #' # Compute wTO
 #' wto(network)
 #' 
 #' @references 
+#' \strong{Original formalization} \cr
 #' Nowick, K., Gernat, T., Almaas, E., & Stubbs, L. (2009).
 #' Differences in human and chimpanzee gene expression patterns define an evolving network of transcription factors in brain.
 #' \emph{Proceedings of the National Academy of Sciences}, \emph{106}, 22358-22363.
@@ -34,62 +35,47 @@
 #' @export
 #' 
 # Weighted Topological Overlap ----
-# Updated 03.02.2023
-wto <- function (network, signed = TRUE, diagonal_zero = TRUE)
+# About 10x faster than `wTO::wTO`
+# Updated 07.08.2023
+wto <- function (network, signed = TRUE, diagonal.zero = TRUE)
 {
   
-  # Ensure network is matrix
-  network <- as.matrix(network)
+  # Check for errors, remove attributes, and ensure network is matrix
+  network <- wto_errors(network, signed, diagonal.zero)
+  
+  # Get dimensions of the network
+  dimensions <- dim(network)
   
   # Obtain absolute network values
   absolute_network <- abs(network)
   
-  # Determine whether absolute values
-  # should constitute the network
-  if(!isTRUE(signed)){
+  # Determine whether absolute values should constitute the network
+  if(!signed){
     network <- absolute_network
   }
-  
-  # Obtain numerator
-  numerator <- (network %*% t(network)) + # sum of connections
-    network # connections between edge node
   
   # Obtain node strengths
   node_strengths <- colSums(absolute_network, na.rm = TRUE)
   
   # Obtain variable pair minimums
-  minimum_df <- data.frame(
-    node_i = rep(
-      node_strengths,
-      each = length(node_strengths)
-    ),
-    node_j = rep(
-      node_strengths,
-      times = length(node_strengths)
-    )
-  )
+  strength_each <- rep(node_strengths, each = dimensions[2])
+  strength_times <- rep(node_strengths, times = dimensions[2])
   
-  # Obtain minimums for each pair
-  minimum_vector <- apply(
-    as.matrix(minimum_df), 1,
-    min, na.rm = TRUE
-  )
-  
-  # Create matrix
+  # Create minimum matrix
   minimum_matrix <- matrix(
-    minimum_vector,
-    nrow = nrow(network),
-    ncol = ncol(network)
+    swiftelse(
+      strength_each < strength_times,
+      strength_each, strength_times
+    ), 
+    nrow = dimensions[2], ncol = dimensions[2]
   )
-  
-  # Obtain denominator
-  denominator <- minimum_matrix + 1 - abs(network)
   
   # Divide numerator by denominator
-  omega <- numerator / denominator
+  omega <- (crossprod(network) + network) / 
+           (minimum_matrix + 1 - absolute_network)
   
   # Set diagonal to zero
-  if(isTRUE(diagonal_zero)){
+  if(diagonal.zero){
     diag(omega) <- 0
   }
   
@@ -97,3 +83,30 @@ wto <- function (network, signed = TRUE, diagonal_zero = TRUE)
   return(omega)
   
 }
+
+#' @noRd
+# Argument errors ----
+# Updated 08.04.2023
+wto_errors <- function(network, signed, diagonal.zero)
+{
+  
+  # 'network' errors
+  object_error(network, c("matrix", "data.frame"))
+  
+  # 'signed' errors
+  length_error(signed, 1)
+  typeof_error(signed, "logical")
+  
+  # 'diagonal.zero' errors
+  length_error(diagonal.zero, 1)
+  typeof_error(diagonal.zero, "logical")
+  
+  # Return network without attributes and as matrix
+  return(as.matrix(remove_attributes(network)))
+  
+}
+
+# Bug Checking ----
+## Basic input
+# network = network.estimation(wmt2[,7:24], model = "glasso")
+# signed = TRUE; diagonal.zero = TRUE

@@ -1,167 +1,183 @@
-#' Unique Variable Analysis
+#' @title Unique Variable Analysis
 #' 
-#' @description Identifies redundant variables in a multivariate dataset
-#' using the \code{\link[qgraph]{EBICglasso}} network estimation method
-#' and weighted topological overlap
-#' (see Christensen, Garrido, & Golino, 2020 for more details)
+#' @description Identifies locally dependent (redundant) variables in a 
+#' multivariate dataset using the \code{\link[EGAnet]{EBICglasso.qgraph}} 
+#' network estimation method and weighted topological overlap
+#' (see Christensen, Garrido, & Golino, 2023 for more details)
 #'
-#' @param data Matrix, data frame, or symmetric matrix.
-#' Input can either be data or a correlation matrix
-#' 
-#' @param network Symmetric matrix.
-#' Input for a symmetric network matrix.
-#' 
-#' If both \code{data} and \code{network} are provided,
-#' then \code{UVA} will proceed to use the input network
-#' with the data (rather than estimating a network)
-#' 
-#' @param n Numeric vector (length = 1).
-#' If input in \code{data} is a correlation matrix, 
-#' then sample size is required.
+#' @param data Matrix or data frame.
+#' Should consist only of variables to be used in the analysis.
+#' Can be raw data or a correlation matrix.
 #' Defaults to \code{NULL}
 #' 
-#' @param cut.off Numeric vector (length = 1).
+#' @param network Symmetric matrix or data frame.
+#' A symmetric network.
+#' Defaults to \code{NULL}
+#' 
+#' If both \code{data} and \code{network} are provided,
+#' then \code{UVA} will use the \code{network}
+#' with the \code{data} (rather than estimating a 
+#' network from the \code{data})
+#' 
+#' @param n Numeric (length = 1).
+#' Sample size if \code{data} provided is a correlation matrix.
+#' Defaults to \code{NULL}
+#' 
+#' @param key Character vector (length = \code{ncol(data)}).
+#' Item key for labeling variables in the results
+#' 
+#' @param uva.method Character (length = 1).
+#' Whether the method described in Christensen, Garrido, and
+#' Golino (2023) publication in \emph{Multivariate Behavioral Research}
+#' (\code{"MBR"}) or Christensen, Golino, and Silvia (2020) publication
+#' in \emph{European Journal of Personality} (\code{"EJP"}) should be used.
+#' Defaults to \code{"MBR"}
+#' 
+#' Based on simulation and accumulating empirical evidence, the methods
+#' described in Christensen, Golino, and Silvia (2020) such as 
+#' adaptive alpha are \strong{outdated}. Evidence supports using a 
+#' single cut-off value (regardless of continuous, polytomous, or
+#' dichotomous data; Christensen, Garrido, & Golino, 2023)
+#' 
+#' @param cut.off Numeric (length = 1).
+#' Cut-off used to determine when pairwise \code{\link[EGAnet]{wto}}
+#' values are considered locally dependent (or redundant).
 #' Must be values between \code{0} and \code{1}.
 #' Defaults to \code{0.25}
 #' 
-#' @param key Character vector (length = \code{ncol(data)}).
-#' Item key for labeling items
+#' This cut-off value is \strong{recommended} and based on extensive simulation
+#' (Christensen, Garrido, & Golino, 2023). Printing the result will
+#' provide a gradient of pairwise redundancies in increments of 0.20,
+#' 0.25, and 0.30. Use \code{print} or \code{summary} on the output
+#' rather than adjusting this cut-off value
 #' 
 #' @param reduce Logical (length = 1).
 #' Whether redundancies should be reduced in data.
 #' Defaults to \code{TRUE}
 #' 
-#' @param reduce.method Character.
-#' Method to reduce redundancies:
+#' @param reduce.method Character (length = 1).
+#' Method to reduce redundancies.
+#' Available options:
 #' 
 #' \itemize{
 #' 
-#' \item{\code{"latent"}}
-#' {Computes latent variables when there are three or more
-#' redundant variables. Computes sum otherwise.
-#' }
+#' \item{\code{"latent"} --- }
+#' {Computes latent variables using \code{\link[lavaan]{cfa}} when 
+#' there are three or more redundant variables. If variables are not 
+#' all coded in the same direction, then they will be recoded as necessary.
+#' A warning will be produced for all variables that are flipped}
 #' 
-#' \item{\code{"remove"}}
-#' {Removes all but one variable from a set of redundant variables
-#' }
+#' \item{\code{"mean"} --- }
+#' {Computes mean of redundant variables. If variables are not all coded in the
+#' same direction, then they will be recoded as necessary.
+#' A warning will be produced for all variables that are flipped}
 #' 
-#' \item{\code{"sum"}}
-#' {Computes sum of redundant variables
-#' }
+#' \item{\code{"remove"} --- }
+#' {Removes all but one variable from a set of redundant variables}
+#' 
+#' \item{\code{"sum"} --- }
+#' {Computes sum of redundant variables. If variables are not all coded in the
+#' same direction, then they will be recoded as necessary.
+#' A warning will be produced for all variables that are flipped}
 #' 
 #' }
 #' 
 #' @param auto Logical (length = 1).
-#' Whether \code{reduce} should occur automatically using different rules
-#' depending on reduction method:
+#' Whether \code{reduce} should occur automatically. For
+#' \code{reduce.method = "remove"}, the automated decision
+#' process is as follows:
 #' 
 #' \itemize{
 #' 
-#' \item{\code{"latent"}}
-#' {Computes latent variables when there are three or more
-#' redundant variables. Computes sum otherwise.
-#' }
+#' \item{\code{Two variables} --- }
+#' {The variable with the lowest maximum \code{\link[EGAnet]{wto}} 
+#' to all other variables (other than the one it is redundant with)
+#' is retained and the other is removed}
 #' 
-#' \item{\code{"remove"}}
-#' {Removes all but one variable from a set of redundant variables.
-#' Keeps the variable with the highest variable-total correlation using
-#' the correlation between each variable and the sum of all other
-#' variables with the target variable removed. For ties and two variables,
-#' the variable with the largest standard deviation is kept.
-#' }
-#' 
-#' \item{\code{"sum"}}
-#' {Computes sum of redundant variables
-#' }
+#' \item{\code{Three or more variables} --- }
+#' {The variable with the highest mean \code{\link[EGAnet]{wto}}
+#' to all other variables that are redundant with one another
+#' is retained and all others are removed}
 #' 
 #' }
 #' 
-#' @param label.latent Boolean (length = 1).
-#' When \code{reduce.method = "latent"}, should
-#' latent variables be labelled?
-#' Defaults to \code{FALSE}.
-#' Set to \code{TRUE} to type your own labels 
+#' @param verbose Boolean (length = 1).
+#' Whether messages and (insignificant) warnings should be output.
+#' Defaults to \code{FALSE} (silent calls).
+#' Set to \code{TRUE} to see all messages and warnings for every function call
 #' 
-#' @param EGAnet.version Character (length = 1).
-#' \code{\link{EGAnet}} version used to perform previous
-#' \code{UVA}.
-#' Defaults to current version.
-#' Set version to previous version to reproduce results
-#' from an older version
-#' 
-#' @param ... Additional arguments.
-#' Arguments that should be passed onto old versions of \code{UVA}
-#' (use the \code{EGAnet.version} argument to set the version),
-#' \code{\link[EGAnet]{EGA}}, and \code{\link[lavaan]{cfa}}
+#' @param ... Additional arguments that should be passed on to 
+#' old versions of \code{UVA} or to
+#' \code{\link[EGAnet]{EGA}} and
+#' \code{\link[lavaan]{cfa}}
 #' 
 #' @examples 
-#' # Select Five Factor Model personality items only
-#' idx <- na.omit(match(gsub("-", "", unlist(psychTools::spi.keys[1:5])), colnames(psychTools::spi)))
-#' items <- psychTools::spi[,idx]
-#' 
-#' # Change names in redundancy output to each item's description
-#' key.ind <- match(colnames(items), as.character(psychTools::spi.dictionary$item_id))
-#' key <- as.character(psychTools::spi.dictionary$item[key.ind])
-#' 
-#' # Results with no reduction
-#' no_reduce_uva <- UVA(
-#'   data = items, key = key, reduce = FALSE
-#' )
+#' # Perform UVA
+#' uva.wmt <- UVA(wmt2[,7:24])
 #' 
 #' # Show summary
-#' summary(no_reduce_uva)
-#' 
-#' \dontrun{
-#' # Results with automatic reduction
-#' reduced_uva <- UVA(
-#'   data = items, key = key, reduce = TRUE,
-#'   reduce.method = "latent" 
-#' )}
+#' summary(uva.wmt)
 #' 
 #' @references 
-#' # Simulation using UVA
-#' Christensen, A. P., Garrido, L. E., & Golino, H. (under review).
+#' \strong{Most recent simulation and implementation} \cr
+#' Christensen, A. P., Garrido, L. E., & Golino, H. (2023).
 #' Unique variable analysis: A network psychometrics method to detect local dependence.
-#' \emph{PsyArXiv}.
+#' \emph{Multivariate Behavioral Research}.
 #' 
-#' # Implementation of UVA (formally node.redundant)
+#' \strong{Conceptual foundation and outdated methods} \cr
 #' Christensen, A. P., Golino, H., & Silvia, P. J. (2020).
 #' A psychometric network perspective on the validity and validation of personality trait questionnaires.
 #' \emph{European Journal of Personality}, \emph{34}(6), 1095-1108.
 #' 
-#' # wTO measure
+#' \strong{Weighted topological overlap} \cr
 #' Nowick, K., Gernat, T., Almaas, E., & Stubbs, L. (2009).
 #' Differences in human and chimpanzee gene expression patterns define an evolving network of transcription factors in brain.
 #' \emph{Proceedings of the National Academy of Sciences}, \emph{106}, 22358-22363.
 #' 
-#' # Selection of CFA Estimator
+#' \strong{Selection of CFA Estimator} \cr
 #' Rhemtulla, M., Brosseau-Liard, P. E., & Savalei, V. (2012).
 #' When can categorical variables be treated as continuous? A comparison of robust continuous and categorical SEM estimation methods under suboptimal conditions.
 #' \emph{Psychological Methods}, \emph{17}(3), 354-373.
 #' 
 #' @export
 # Unique Variable Analysis ----
-# Updated 07.02.2023
+# Updated 04.08.2023
 UVA <- function(
-    data = NULL, network = NULL, n = NULL, key = NULL, cut.off = 0.25,
-    reduce = TRUE, reduce.method = c("latent", "mean", "remove", "sum"),
-    auto = TRUE, label.latent = FALSE,
-    EGAnet.version = packageVersion("EGAnet"),
-    ... # `EGA`, {lavaan}, and "EGAnet.version" arguments
+    data = NULL, network = NULL, n = NULL, key = NULL,
+    uva.method = c("MBR", "EJP"),
+    cut.off = 0.25, reduce = TRUE,
+    reduce.method = c("latent", "mean", "remove", "sum"),
+    auto = TRUE, verbose = FALSE, ... # `EGA` and {lavaan} arguments
 )
 {
   
-  # If version <= 1.2.4, push to old UVA
-  ## Keeps legacy code alive
-  if(version_conversion(EGAnet.version) <= 124){
+  # Argument errors
+  UVA_errors(data, network, n, cut.off, reduce, auto, verbose)
+  
+  # Set default method
+  uva.method <- set_default(uva.method, "MBR", UVA)
+  
+  # Get ellipse
+  ellipse <- list(...)
+  
+  # Check for method ("EJP" is old, not recommended)
+  if(uva.method == "ejp" || !auto){
     
+    # Check for type = "adapt" or "alpha" 
+    # (will not be supported after version 2.0.0)
+    UVA_type_warning(ellipse)
+    
+    # Check for "manual" (will not be supported after version 2.0.0)
+    if(!auto){UVA_manual_warning(auto)}
+  
+    # Return legacy UVA
     return(
       do.call( # Perform legacy UVA
         what = "oldUVA", # call old UVA function
         args = as.list( # force list into call
           legacy_UVA( # grab input from function calls
             data, n, key, cut.off, reduce,
-            reduce.method, auto, label.latent,
+            reduce.method, auto,
             FUN.args = list(...) # any other lingering arguments
           )
         )
@@ -170,101 +186,41 @@ UVA <- function(
     
   }
   
-  # Set default for "reduce.method"
-  if(missing(reduce.method)){
-    reduce.method <- "latent"
-  }else{reduce.method <- match.arg(reduce.method)}
+  # Set defaults
+  reduce.method <- set_default(reduce.method, "remove", UVA)
   
-  # Check for valid inputs
-  ## Objects (see "helpers-errors.R" for functions)
-  if(!is.null(data)){
-    object_error(input = data, expected_type = c("matrix", "data.frame"))
-  }else if(!is.null(network)){
-    object_error(input = network, expected_type = c("matrix", "data.frame"))
-  }else{
-    stop("Both 'data' and 'network' are `NULL`. Expected at least one input.")
+  # Get EGA output (regardless)
+  ega_output <- EGA(data, plot.EGA = FALSE, verbose = verbose, ...)
+  
+  # Get network
+  if(!is.null(data) && is.null(network)){
+    network <- ega_output$network
   }
   
-  ## Values
-  if(!is.null(n)){value_error(input = n, expected_value = "numeric")};
-  if(!is.null(key)){value_error(key, "character")}; value_error(cut.off, "numeric"); 
-  value_error(reduce, "logical"); value_error(reduce.method, "character"); 
-  value_error(auto, "logical"); value_error(label.latent, "logical")
-  
-  ## Lengths
-  if(!is.null(n)){length_error(input = n, expected_lengths = 1)};
-  if(!is.null(key)){length_error(key, ncol(data))}; length_error(cut.off, 1);
-  length_error(reduce, 1); length_error(reduce.method, 1);
-  length_error(auto, 1); length_error(label.latent, 1);
-  
-  ## Ranges
-  if(!is.null(n)){range_error(input = n, expected_ranges = c(2, Inf))};
-  range_error(cut.off, c(0, 1));
-  
-  # Get data to network
-  if(!is.null(data)){
-    
-    ## Check for "n"
-    if(is.null(n) & !is_symmetric(data)){
-      n <- nrow(data)
-    }
-    
-    ## Symmetric matrix
-    symmetric_matrix_error(data = data, n = n)
-    
-    ## Ensure dimension names (see "helpers-general.R" for functions)
-    data <- ensure_dimension_names(data)
-    
-    ## Check for network
-    if(is.null(network)){
-      
-      ## EGA arguments (see "helpers-functions.R" for functions)
-      ega_ARGS <- ega_arguments(arguments = list(...))
-      
-      ## Update "data", "n", and "plot.EGA" arguments
-      ega_ARGS$data <- data; ega_ARGS$n <- n; ega_ARGS$plot.EGA <- FALSE;
-      
-      ## Perform EGA
-      ega_output <- do.call(
-        what = "EGA",
-        args = ega_ARGS
-      )
-      
-      ## Extract output for weighted topological overlap
-      network <- ega_output$network
-      
-    }
-    
-  }
-  
-  # At this point, there should be a network somewhere
-  ## Symmetric matrix
-  symmetric_matrix_error(data = network, n = n)
-  
-  ## Ensure dimension names (see "helpers-general.R" for functions)
-  network <- ensure_dimension_names(network)
+  # Get key
+  key <- swiftelse(is.null(key), dimnames(network)[[2]], key)
   
   # Compute weighted topological overlap
-  wto_output <- abs(wto(network, signed = FALSE))
+  wto_output <- abs(wto(network))
   
   # Compute descriptives
-  descriptives <- wto_descriptives(
-    wto_output = wto_output, key = key
-  )
+  descriptives <- wto_descriptives(wto_output)
   
   # Cut-off indices
-  wto_indices <- wto_cut_off(
-    wto_output = wto_output,
-    cut_off = cut.off
-  )
+  wto_indices <- descriptives$pairwise[
+    descriptives$pairwise$wto >= cut.off,, drop = FALSE
+  ]
+  
+  # Assign names from key (needs to be after cut-off)
+  descriptives$pairwise$node_i <- key[descriptives$pairwise$node_i]
+  descriptives$pairwise$node_j <- key[descriptives$pairwise$node_j]
   
   # Check for whether any redundancies exist
-  if(nrow(wto_indices) == 0){
+  if(dim(wto_indices)[1] == 0){
     
     # Return NULLs
     results <- list(
-      redundant = NULL,
-      network = network,
+      redundant = NULL, network = network,
       wto = list(
         matrix = wto_output, # wTO matrix
         pairwise = descriptives$pairwise, # pairwise wTO
@@ -273,55 +229,45 @@ UVA <- function(
       )
     )
     
-    # Ensure "UVA" class
-    class(results) <- "UVA"
+  }else{ # Branch for redundancies
     
-    # Return results
-    return(results)
+    # Combine indices into a list
+    redundant_variables <- get_redundancy_list(wto_output, wto_indices)
     
-  }
-  
-  # Combine indices into a list
-  overlapping_list <- wto_index_list(
-    wto_output = wto_output, wto_indices = wto_indices
-  )
-  
-  # Condense list to remove duplicate entries
-  # And remove elements that are included elsewhere
-  redundant_variables <- condense_overlap(
-    overlapping_list = overlapping_list
-  )
-  
-  # Determine whether data should be reduced
-  if(isTRUE(reduce)){
-    
-    # Force lowercase for character input
-    reduce.method <- tolower(reduce.method)
-    
-    # All methods except "remove" require raw data (for now...)
-    if(reduce.method != "remove" & is.null(data)){
+    # Check for reduction
+    if(!reduce){
       
-      stop(
-        paste0(
-          "Raw data are necessary to perform reduction using reduce.method = \"",
-          reduce.method, "\""
+      # Assign names from key
+      redundant_variables <- lapply(redundant_variables, function(x){key[x]})
+      names(redundant_variables) <- cvapply(names(redundant_variables), function(x){key[as.numeric(x)]})
+      
+      # If no reduction, then return results
+      results <- list(
+        redundant = redundant_variables,
+        network = network,
+        wto = list(
+          matrix = wto_output, # wTO matrix
+          pairwise = descriptives$pairwise, # pairwise wTO
+          descriptives = descriptives$basic, # basic statistics
+          cut_off = cut.off # cut-off used
         )
       )
       
-    }
-    
-    # Check for whether {lavaan} arguments are necessary
-    if(reduce.method == "latent"){
+    }else{ # Proceed with reduction of data
       
-      ## {lavaan} arguments (see "helpers-functions.R" for functions)
-      lavaan_ARGS <- lavaan_arguments(arguments = list(...))
-    
-    }
-    
-    # Determine whether to use automated procedure
-    if(isTRUE(auto)){
+      # All methods except "remove" require raw data (for now...)
+      if(reduce.method != "remove" & is.null(data)){
+        
+        stop(
+          paste0(
+            "Raw data are necessary to perform reduction using reduce.method = \"",
+            reduce.method, "\""
+          ), call. = FALSE
+        )
+        
+      }
       
-      # Use switch to grab function
+      # Should be automatic reduction from here, so get proper function
       reduce_FUN <- switch(
         reduce.method,
         "latent" = reduce_latent,
@@ -332,187 +278,82 @@ UVA <- function(
       
       # Set up arguments
       reduce_ARGS <- list(
-        data = data,
-        wto_output = wto_output,
-        redundant_variables = redundant_variables
+        data = data, wto_output = wto_output,
+        redundant_variables = redundant_variables,
+        correlation_matrix = ega_output$correlation,
+        ellipse = ellipse
       )
-      
-      # Check for whether {lavaan} arguments are necessary
-      if(reduce.method == "latent"){
-        reduce_ARGS$lavaan_ARGS <- lavaan_ARGS
-      }
       
       # Call reduction function
-      reduced_results <- do.call(
-        what = reduce_FUN, args = reduce_ARGS 
-      )
-      
-      # Organize output for each method
-      if(reduce.method != "remove"){
-        
-        # Obtain reduced 
-        reduced_data <- reduced_results
-        
-      }else{
-        
-        # Obtain `keep` and `remove` variables
-        keep <- reduced_results$keep; remove <- reduced_results$remove;
-        
-        # Check for whether raw data was used
-        if(!is.null(data) & !is_symmetric(data)){
-          
-          # Remove variables from data
-          reduced_data <- data[,-remove]
-          
-        }else if(is_symmetric(data)){
-          
-          # Remove variables from correlation matrix
-          reduced_data <- data[-remove, -remove]
-          
-        }else if(!is.null(network)){
-          
-          # Remove variables from network
-          reduced_network <- network[-remove, -remove]
-          
-          # Original data can be returned
-          results <- list(
-            reduced_network = reduced_network,
-            original_network = network,
-            redundant = redundant_variables,
-            wto = list(
-              matrix = wto_output, # wTO matrix
-              pairwise = descriptives$pairwise, # pairwise wTO
-              descriptives = descriptives$basic, # basic statistics
-              cut_off = cut.off # cut-off used
-            )
-          )
-          
-        }
-        
-      }
-      
-      # Generalized reduction results return
-      if(!is.null(data)){
-        
-        # Original data can be returned
-        results <- list(
-          reduced_data = reduced_data,
-          original_data = data,
-          redundant = redundant_variables,
-          network = network,
-          wto = list(
-            matrix = wto_output, # wTO matrix
-            pairwise = descriptives$pairwise, # pairwise wTO
-            descriptives = descriptives$basic, # basic statistics
-            cut_off = cut.off # cut-off used
-          )
-        )
-        
-      }else{
-        
-        # No data -- network should not be reduced
-        results <- list(
-          redundant = redundant_variables,
-          network = network,
-          wto = list(
-            matrix = wto_output, # wTO matrix
-            pairwise = descriptives$pairwise, # pairwise wTO
-            descriptives = descriptives$basic, # basic statistics
-            cut_off = cut.off # cut-off used
-          )
-        )
-        
-      }
+      reduced_results <- do.call(reduce_FUN, reduce_ARGS)
       
       # Check for "remove" method
       if(reduce.method == "remove"){
         
-        # For "remove", add `keep` and `remove`
-        results$keep_remove <- list(
-          keep = keep, remove = remove
-        )
+        # Get remove variables
+        remove <- reduced_results$remove
         
+        # Determine what data input were
+        if(!is.null(data)){
+          
+          # Check for correlation matrix
+          if(is_symmetric(data)){ # Correlation matrix
+            data <- data[-remove, -remove]
+          }else{ # Raw data
+            data <- data[, -remove]
+          }
+          
+        }else if(!is.null(network)){
+          data <- network[-remove, -remove]
+        }
+        
+      }else{ # Send reduced data
+        data <- reduced_results
       }
       
-      # Ensure "UVA" class
-      class(results) <- "UVA"
+      # Assign names from key
+      redundant_variables <- lapply(redundant_variables, function(x){key[x]})
+      names(redundant_variables) <- cvapply(names(redundant_variables), function(x){key[as.numeric(x)]})
       
-      # Return results
-      return(results)
-  
-    }else{
-      
-      # Enter into user procedure...
-      
-      
-      
-      
-      
-      
-      
-      
-      # User guided procedure...
-      ## Re-direct to older version (for now...)
-      return(
-        do.call( # Perform legacy UVA
-          what = "oldUVA", # call old UVA function
-          args = as.list( # force list into call
-            legacy_UVA( # grab input from function calls
-              data, n, key, cut.off, reduce,
-              reduce.method, auto, label.latent,
-              FUN.args = list(...) # any other lingering arguments
-            )
-          )
+      # Set up results to be returned
+      results <- list(
+        reduced_data = data,
+        redundant = redundant_variables,
+        network = network,
+        wto = list(
+          matrix = wto_output, # wTO matrix
+          pairwise = descriptives$pairwise, # pairwise wTO
+          descriptives = descriptives$basic, # basic statistics
+          cut_off = cut.off # cut-off used
         )
       )
-    
-    }
-    
-  }else{
-    
-    # Check for key
-    if(!is.null(key)){
       
-      ## Assign names from key
-      redundant_variables <- assign_redundancy_names(
-        redundant_variables = redundant_variables,
-        name_vector = key
-      )
-      
-    }else{
-      
-      ## Assign names from data
-      redundant_variables <- assign_redundancy_names(
-        redundant_variables = redundant_variables,
-        name_vector = colnames(data)
-      )
+      # For "remove", send variables retained and removed
+      if(reduce.method == "remove"){
+        results$keep_remove <- list(
+          keep = key[reduced_results$keep],
+          remove = key[reduced_results$remove]
+        )
+      }
       
     }
-    
-    # If no reduction, then return results
-    results <- list(
-      redundant = redundant_variables,
-      network = network,
-      wto = list(
-        matrix = wto_output, # wTO matrix
-        pairwise = descriptives$pairwise, # pairwise wTO
-        descriptives = descriptives$basic, # basic statistics
-        cut_off = cut.off # cut-off used
-      )
-    )
-    
-    # Ensure "UVA" class
-    class(results) <- "UVA"
-    
-    # Return results
-    return(results)
     
   }
+  
+  # Add "methods" attribute
+  attr(results, "methods") <- list(
+    uva.method = uva.method, cut.off = cut.off, reduce = reduce
+  )
+  
+  # Add "UVA" class
+  class(results) <- "UVA"
+  
+  # Return results
+  return(results)
   
 }
 
 # Bug checking ----
-
 # # Select Five Factor Model personality items only
 # idx <- na.omit(match(gsub("-", "", unlist(psychTools::spi.keys[1:5])), colnames(psychTools::spi)))
 # items <- psychTools::spi[,idx]
@@ -523,73 +364,128 @@ UVA <- function(
 # 
 # data = items; network = NULL; n = NULL; key = key;
 # cut.off = 0.25; reduce = TRUE; reduce.method = "remove";
-# auto = TRUE; label.latent = FALSE;
-# EGAnet.version = packageVersion("EGAnet");
-# ega_ARGS <- ega_arguments(arguments = list())
-# ... # `EGA`, {lavaan}, and "EGAnet.version" arguments
-
+# auto = TRUE; label.latent = FALSE; verbose = FALSE
+# EGAnet.version = packageVersion("EGAnet"); uva.method = "MBR"
+# ellipse = list()
 
 #' @noRd
-# Obtain UVA cut-off values ----
-# Updated 07.02.2023
-wto_cut_off <- function(wto_output, cut_off)
+# Argument errors ----
+# Updated 04.08.2023
+UVA_errors <- function(data, network, n, cut.off, reduce, auto, verbose)
 {
   
-  # Obtain indices that meet cut-off
-  wto_indices <- which(wto_output >= cut_off, arr.ind = TRUE)
-  
-  # Check whether there are values
-  if(nrow(wto_indices) > 0){
-    
-    # Obtain unique pairs only
-    wto_indices <- wto_indices[wto_indices[,"row"] < wto_indices[,"col"],]
-   
-    # Ensure matrix
-    wto_indices <- matrix(
-      wto_indices,
-      ncol = 2
-    )
-    
-    # Add column names
-    colnames(wto_indices) <- c("row", "col")
-     
+  # 'data' errors
+  if(!is.null(data)){
+    object_error(data, c("matrix", "data.frame"))
   }
   
-  # Return indices
-  return(wto_indices)
+  # 'network' errors
+  if(!is.null(network)){
+    object_error(network, c("matrix", "data.frame"))
+  }
   
+  # 'n' errors
+  if(!is.null(n)){
+    length_error(n, 1)
+    typeof_error(n, "numeric")
+  }
+  
+  # 'cut.off' errors
+  length_error(cut.off, 1)
+  typeof_error(cut.off, "numeric")
+  range_error(cut.off, c(0, 1))
+  
+  # 'reduce' errors
+  length_error(reduce, 1)
+  typeof_error(reduce, "logical")
+  
+  # 'auto' errors
+  length_error(auto, 1)
+  typeof_error(auto, "logical")
+  
+  # 'verbose' errors
+  length_error(verbose, 1)
+  typeof_error(verbose, "logical")
+  
+}
+
+
+#' @exportS3Method 
+# S3Method Print Method ----
+# Updated 04.08.2023
+print.UVA <- function(x, ...)
+{
+  
+  # Obtain wTO matrix
+  wto_matrix <- x$wto$pairwise
+  
+  # Obtain wTO > 0.30
+  large <- wto_matrix$wto > 0.30
+  
+  # Obtain wTO > 0.25
+  moderate <- wto_matrix$wto < 0.30 & wto_matrix$wto > 0.25
+  
+  # Obtain wTO > 20
+  small <- wto_matrix$wto < 0.25 & wto_matrix$wto > 0.20
+  
+  # Prepare for print
+  ## Print 0.30
+  cat("Variable pairs with wTO > 0.30 (large-to-very large redundancy)\n")
+  if(any(large)){
+    cat("\n")
+    print(wto_matrix[large,], quote = FALSE, row.names = FALSE, digits = 3)
+  }
+  ## Print 0.25
+  cat("\n----\n")
+  cat("\nVariable pairs with wTO > 0.25 (moderate-to-large redundancy)\n")
+  if(any(moderate)){
+    cat("\n")
+    print(wto_matrix[moderate,], quote = FALSE, row.names = FALSE, digits = 3)
+  }
+  ## Print 0.20
+  cat("\n----\n")
+  cat("\nVariable pairs with wTO > 0.20 (small-to-moderate redundancy)\n")
+  if(any(small)){
+    cat("\n")
+    print(wto_matrix[small,], quote = FALSE, row.names = FALSE, digits = 3)
+  }
+  
+}
+
+#' @exportS3Method 
+# S3Method Summary Method ----
+# Updated 25.07.2023
+summary.UVA <- function(object, ...)
+{
+  print(object, ...) # same as print
 }
 
 #' @noRd
 # Obtain descriptives ----
-# Updated 02.02.2023
-wto_descriptives <- function(wto_output, key = NULL){
+# Updated 07.08.2023
+wto_descriptives <- function(wto_output){
   
-  # Obtain node names
-  if(!is.null(key)){
-    node_names <- key
-  }else{
-    node_names <- colnames(wto_output)
-  }
+  # Get dimensions
+  dimensions <- dim(wto_output)
+  
+  # Column sequence
+  dimension_sequence <- seq_len(dimensions[2])
   
   # Initialize data frame
-  wto_long <- data.frame(
-    node_i = rep(1:ncol(wto_output), each = ncol(wto_output)),
-    node_j = rep(1:ncol(wto_output), times = ncol(wto_output)),
-    wto = as.vector(as.matrix(wto_output))
+  wto_long <- fast.data.frame(
+    c(
+      rep(dimension_sequence, each = dimensions[2]),
+      rep(dimension_sequence, times = dimensions[2]),
+      as.vector(wto_output)
+    ), nrow = length(wto_output), ncol = 3,
+    colnames = c("node_i", "node_j", "wto")
   )
   
   # Subset to remove duplicates
   wto_long <- wto_long[wto_long$node_i < wto_long$node_j,]
   
   # Remove all values below zero
-  wto_long <- wto_long[
-    wto_long$wto != 0,
-  ]
-  
-  # Replace node names
-  wto_long$node_i <- node_names[wto_long$node_i]
-  wto_long$node_j <- node_names[wto_long$node_j]
+  wto_long <- wto_long[wto_long$wto > 0,]
   
   # Compute MAD, RANGE, QUANTILE
   MAD <- mad(wto_long$wto, constant = 1, na.rm = TRUE)
@@ -597,317 +493,116 @@ wto_descriptives <- function(wto_output, key = NULL){
   QUANTILE <- quantile(wto_long$wto, probs = c(0.975, 0.995))
   names(QUANTILE) = c("95%", "99%")
   
-  # Compute summary statistics (rounded)
-  summary_statistics <- round(
-    c(
-      "mean" = mean(wto_long$wto, na.rm = TRUE),
-      "sd" = sd(wto_long$wto, na.rm = TRUE),
-      "minimum" = RANGE[1],
-      "maximum" = RANGE[2],
-      "median" = median(wto_long$wto, na.rm = TRUE),
-      "mad" = MAD,
-      "mad3" = MAD * 3,
-      "mad6" = MAD * 6,
-      QUANTILE
-    ), 3
-  )
-  
-  # Order long data frame
-  wto_long <- wto_long[order(wto_long$wto, decreasing = TRUE),]
-  
-  # Compute standard deviation from mean (rounded)
-  # wto_long$sd_from_mean <- round(
-  #   (wto_long$wto - summary_statistics["mean"]) / summary_statistics["sd"], 3
-  # )
-  
-  # Compute MAD from median (rounded)
-  # wto_long$mad_from_median <- round(
-  #   (wto_long$wto - summary_statistics["median"]) / summary_statistics["mad"], 3
-  # )
-  
-  # Round wTO values
-  wto_long$wto <- round(wto_long$wto, 3)
-  
   # Return list
   return(
     list(
-      basic = summary_statistics,
-      pairwise = wto_long
+      basic = round(
+        c(
+          "mean" = mean(wto_long$wto, na.rm = TRUE),
+          "sd" = sd(wto_long$wto, na.rm = TRUE),
+          "minimum" = RANGE[1],
+          "maximum" = RANGE[2],
+          "median" = median(wto_long$wto, na.rm = TRUE),
+          "mad" = MAD,
+          "mad3" = MAD * 3,
+          "mad6" = MAD * 6,
+          QUANTILE
+        ), 3
+      ),
+      pairwise = wto_long[order(wto_long$wto, decreasing = TRUE),]
     )
   )
   
 }
 
 #' @noRd
-# Condense into index list ----
-# Updated 02.02.2023
-wto_index_list <- function(wto_output, wto_indices)
+# Get the redundancy list ----
+# Updated 24.07.2023
+get_redundancy_list <- function(wto_output, wto_indices)
 {
+  
+  # Obtain the node columns of indices
+  node_columns <- as.matrix(wto_indices[, c("node_i", "node_j")])
   
   # Obtain descending order of frequencies of each index
-  index_frequencies <- sort(table(wto_indices), decreasing = TRUE)
+  index_frequencies <- sort(fast_table(node_columns), decreasing = TRUE)
   
-  # Initialize index wTO sums
-  index_wto_sums <- numeric(length(index_frequencies))
-  
-  # Obtain sums
-  for(i in seq_along(index_frequencies)){
-    
-    # Target index
-    target_index <- as.numeric(names(index_frequencies)[i])
-    
-    # Obtain overlapping indices
-    overlapping_indices <- overlap_indices(
-      wto_indices = wto_indices, target_index = target_index
-    )
-    
-    # Obtain sum
-    index_wto_sums[i] <- sum(wto_output[target_index, overlapping_indices], na.rm = TRUE)
-    
-  }
-  
-  # Add names to sums
-  names(index_wto_sums) <- names(index_frequencies)
-  
-  # Obtain unique frequenices (should already be descending)
-  unique_frequencies <- unique(index_frequencies)
-  
-  # Loop order unique frequencies
-  ordered_frequencies <- unlist(
-    lapply(unique_frequencies, function(freq){
+  # Get index sums
+  index_wto_sums <- nvapply(
+    as.numeric(names(index_frequencies)), function(target_index){
       
-      # Obtain target indices
-      target_indices <- index_frequencies[index_frequencies == freq]
+      # Obtain vector of overlap indices
+      overlapping_indices <- unlist(
+        node_columns[
+          node_columns[,"node_i"] == target_index |
+          node_columns[,"node_j"] == target_index,
+        ]
+      )
       
-      # Obtain target sums
-      target_sums <- index_wto_sums[names(target_indices)]
+      # Return sum
+      return(
+        sum(
+          wto_output[
+            target_index, 
+            overlapping_indices[overlapping_indices != target_index]
+          ], na.rm = TRUE
+        )
+      )
       
-      # Reorder based on sums
-      ordered_nodes <- names(target_sums)[
-        order(target_sums, decreasing = TRUE)
-      ]
-      
-      # Return as numeric
-      return(as.numeric(ordered_nodes))
-      
-    })
-  )
-  
-  
-  # Based on ordered frequencies, extract 
-  # all indices that are tied to each other
-  overlap_list <- lapply(
-    ordered_frequencies,
-    FUN = overlap_indices,
-    wto_indices = wto_indices
-  )
-  
-  # Assign names
-  names(overlap_list) <- ordered_frequencies
-  
-  # Return list
-  return(overlap_list)
-  
-}
-
-#' @noRd
-# Obtain indices that overlap ----
-# Updated 02.02.2023
-overlap_indices <- function(wto_indices, target_index)
-{
-  
-  # Obtain overlap indices
-  overlapping_indices <- wto_indices[
-    wto_indices[,"row"] == target_index |
-      wto_indices[,"col"] == target_index,
-  ]
-  
-  # Obtain vector of overlap indices
-  overlapping_indices <- as.vector(as.matrix(overlapping_indices))
-  
-  # Remove target index
-  overlapping_indices <- overlapping_indices[overlapping_indices != target_index]
-  
-  # Return vector
-  return(overlapping_indices)
-  
-}
-
-#' @noRd
-# Condense the overlapping list ----
-# Updated 02.02.2023
-condense_overlap <- function(overlapping_list)
-{
-  
-  # Convert all values to character
-  character_list <- lapply(overlapping_list, as.character)
-  
-  # Initialize current index
-  current_index <- 1
-  
-  # Remove name of list (target node) from overlap indices
-  while(current_index < length(character_list)){
-    
-    # Obtain current target node
-    target_node <- names(character_list)[current_index]
-    
-    # Update character list
-    character_list <- condense_target_node(
-      character_list, target_node
-    )
-    
-    # Remove empty lists
-    character_list <- remove_empty_elements(character_list)
-    
-    # Obtain current element node(s)
-    element_node <- character_list[[current_index]]
-    
-    # Update character list
-    character_list <- condense_element_node(
-      character_list, target_node, element_node
-    )
-    
-    # Remove empty lists
-    character_list <- remove_empty_elements(character_list)
-    
-    # Update current index
-    current_index <- current_index + 1
-    
-  }
-  
-  # Convert back to numeric values
-  numeric_list <- lapply(character_list, as.numeric)
-  
-  # Return list
-  return(numeric_list)
-  
-}
-
-#' @noRd
-# Condense target node ----
-# Updated 02.02.2023
-condense_target_node <- function(character_list, target_node)
-{
-  
-  # Determine whether target node is indexed
-  ## Update character list
-  updated_list <- lapply(character_list, function(x){
-    
-    # Check whether target node is in the list
-    if(target_node %in% x){
-      x <- x[x != target_node]
     }
-    
-    # Return value
-    return(x)
-    
-  })
+  )
   
-  # Return updated list
-  return(updated_list)
-
+  # Create order based on:
+  # 1. number of times node is redundant
+  # 2. the total weight of redundancies
+  ordered_redundancy <- names(
+    index_frequencies[
+      order(index_frequencies, index_wto_sums, decreasing = TRUE)
+    ]
+  )
   
-}
-
-#' @noRd
-# Condense element node ----
-# Updated 02.02.2023
-condense_element_node <- function(character_list, target_node, element_node)
-{
+  # Create list
+  redundancy_list <- vector("list", length(ordered_redundancy))
+  names(redundancy_list) <- ordered_redundancy
   
-  # Obtain target lists
-  target_lists <- !names(character_list) %in% target_node
-  
-  # Determine whether element node is indexed
-  for(node in element_node){
+  # Extract redundancy list
+  while(length(ordered_redundancy) != 0){
     
-    ## Update character list (element-wise)
-    character_list[target_lists] <- lapply(character_list[target_lists], function(x){
-      
-      # Check whether element node is in the list
-      if(node %in% x){
-        x <- x[x != node]
-      }
-      
-      # Return value
-      return(x)
-      
-    })
+    # Check for node in node columns
+    pairwise_exists <- ordered_redundancy[1] == node_columns
     
-    ## Update character list (name-wise)
-    if(node %in% names(character_list)){
+    # If any exist, then extract them
+    if(any(pairwise_exists)){
       
-      # Set list name to NULL
-      character_list[
-        names(character_list) %in% node
-      ] <- NULL
+      # Find where pairwise exists
+      pairwise_row <- rowSums(pairwise_exists) != 0
+      
+      # Extract nodes from rows
+      extracted_nodes <- as.vector(node_columns[pairwise_row,])
+      
+      # Add values to redundancy list
+      redundancy_list[[ordered_redundancy[1]]] <-
+        extracted_nodes[extracted_nodes != ordered_redundancy[1]]
+      
+      # Update node columns
+      node_columns <- node_columns[!pairwise_row,, drop = FALSE]
       
     }
     
+    # At the end, remove element from ordered redundancy
+    ordered_redundancy <- ordered_redundancy[-1]
+    
   }
-  
-  # Return kept elements
-  return(character_list)
-  
-}
 
-
-#' @noRd
-# Remove empty elements ----
-# Updated 02.02.2023
-remove_empty_elements <- function(object)
-{
-  
-  # Loop over object to find elements to keep
-  keep_elements <- unlist(
-    lapply(object, function(x){
-      
-      # Check whether values exist
-      if(is.null(x)){
-        return(FALSE)
-      }else if(length(x) == 0){
-        return(FALSE)
-      }else{
-        return(TRUE)
-      }
-      
-    })
-  )
-  
-  # Return kept elements
-  return(object[keep_elements])
-  
-}
-
-#' @noRd
-# Assign names to redundancy list ----
-# Updated 02.02.2023
-assign_redundancy_names <- function(redundant_variables, name_vector)
-{
-  
-  # Re-assign names
-  ## List names
-  names(redundant_variables) <- name_vector[
-    as.numeric(names(redundant_variables))
-  ]
-  
-  ## Element names
-  redundant_variables <- lapply(redundant_variables, function(x){
-    name_vector[x]
-  })
-  
   # Return list
-  return(redundant_variables)
-  
+  return(redundancy_list[!lvapply(redundancy_list, is.null)])
   
 }
 
 #' @noRd
 # Obtain redundant variables ----
-# Updated 02.02.2023
-obtain_redundant_variables <- function(
-    redundant_variables, index
-)
+# Updated 25.07.2023
+obtain_redundant_variables <- function(redundant_variables, index)
 {
   
   # Check for whether all indices
@@ -918,10 +613,7 @@ obtain_redundant_variables <- function(
     
     # Obtain element node(s)
     element_node <- unname(unlist(redundant_variables))
-    
-    # Obtain all nodes
-    all_nodes <- c(named_node, element_node)
-    
+
   }else{
     
     # Obtain named node
@@ -930,297 +622,384 @@ obtain_redundant_variables <- function(
     # Obtain element node(s)
     element_node <- redundant_variables[[index]]
     
-    # Obtain all nodes
-    all_nodes <- c(named_node, element_node)
-    
   }
   
-  # Return all nodes
-  return(all_nodes)
+  # Return all nodes (redundant but ensure unique)
+  return(unique(c(named_node, element_node)))
   
 }
 
 #' @noRd
 # Create composite variable matrix ----
-# Updated 02.02.2023
+# Updated 25.07.2023
 create_composite_variable_matrix <- function(data, redundant_variables)
 {
   
-  # Create matrix for composite variables
-  composite_variables <- matrix(
-    NA, nrow = nrow(data),
-    ncol = length(redundant_variables)
-  )
+  # Get redundant variable length
+  redundant_length <- length(redundant_variables)
   
-  # Name composite variables
-  colnames(composite_variables) <- paste0(
-    "CV", formatC(
-      1:ncol(composite_variables),
-      digits = digits(ncol(composite_variables)) - 1,
-      format = "d", flag = "0"
+  # Return matrix for composite variables
+  return(
+    matrix(
+      NA, nrow = dim(data)[1], ncol = redundant_length,
+      dimnames = list(
+        NULL, paste0(
+          "CV", 
+          format_integer(
+            seq_len(redundant_length),
+            digits(redundant_length) - 1
+          )
+        )
+      )
     )
   )
   
-  # Return matrix
-  return(composite_variables)
+}
+
+#' @noRd
+# Recode ----
+# Not ideal but must happen to ensure proper values
+# Updated 25.07.2023
+recode <- function(data, all_names, correlation_matrix, ellipse)
+{
+  
+  # Get data dimensions
+  dimensions <- dim(data)
+  
+  # Get variables
+  variables <- data[, all_names, drop = FALSE]
+  
+  # Get variable categories
+  variable_categories <- data_categories(variables)
+  
+  # Get correlations
+  variable_correlations <- correlation_matrix[all_names, all_names]
+  
+  # Set diagonal to zero
+  diag(variable_correlations) <- 0
+  
+  # Get signs (`obtain_signs` is in `net.loads` internals)
+  variable_signs <- attr(obtain_signs(variable_correlations), "signs")
+  
+  # Get negative signs
+  negative_signs <- variable_signs == -1
+  
+  # Check for any negative signs
+  if(any(negative_signs)){
+    
+    # Check for dominant direction
+    dominant_sums <- sum(variable_signs)
+    
+    # Get ordinal categories
+    ordinal.categories <- swiftelse(
+      "ordinal.categories" %in% names(ellipse),
+      ellipse$ordinal.categories, 7
+    )
+    
+    # If greater or equal to zero, then flip negative signs
+    if(dominant_sums >= 0){
+      
+      # Get subtraction vector
+      subtraction_vector <- swiftelse(
+        variable_categories[negative_signs] <= ordinal.categories,
+        ordinal.categories, 0
+      )
+      
+      # Get variable names that will be flipped
+      flipped_variables <- names(negative_signs)[negative_signs]
+      
+      # Loop over variables and flip them
+      variables[, negative_signs] <- nvapply(
+        seq_along(subtraction_vector), function(index){
+        subtraction_vector[index] - 
+        variables[, flipped_variables[index]]
+      }, LENGTH = dimensions[1])
+    
+      
+    }else{ # If less than zero, then flip positive signs
+      
+      # Get positive signs
+      positive_signs <- !negative_signs
+      
+      # Get subtraction vector
+      subtraction_vector <- swiftelse(
+        variable_categories[positive_signs] <= ordinal.categories,
+        ordinal.categories, 0
+      )
+      
+      # Get variable names that will be flipped
+      flipped_variables <- names(positive_signs)[positive_signs]
+
+      # Loop over variables and flip them
+      variables[, positive_signs] <- nvapply(
+        seq_along(subtraction_vector), function(index){
+          subtraction_vector[index] - 
+            variables[, flipped_variables[index]]
+        }, LENGTH = dimensions[1])
+      
+    }
+    
+    # Send warning about variables flipped
+    warning(
+      paste(
+        "Some variables were recoded to ensure proper aggregation:",
+        paste0(flipped_variables, collapse = ", ")
+      ), call. = FALSE
+    )
+    
+  }
+  
+  # Return variables
+  return(variables)
   
 }
 
 #' @noRd
 # "Latent" reduce method ----
-# Updated 02.02.2023
+# Updated 25.07.2023
 reduce_latent <- function(
-    data,
-    wto_output, 
-    redundant_variables,
-    lavaan_ARGS
+    data, wto_output, # not used
+    redundant_variables, 
+    correlation_matrix,
+    ellipse
 )
 {
   
+  # Get case sequence
+  case_sequence <- nrow_sequence(data)
+  
+  # Get variable names
+  variable_names <- dimnames(data)[[2]]
+  
+  # Get redundant length
+  redundant_length <- length(redundant_variables)
+  
   # Create matrix for composite variables
   composite_variables <- create_composite_variable_matrix(
-    data = data, redundant_variables = redundant_variables
+    data, redundant_variables
   )
   
-  # Obtain CFA function
-  lavaan_cfa <- lavaan::cfa
+  # Get {lavaan}'s CFA function
+  cfa_FUN <- silent_load(lavaan::cfa)
   
-  # Original {lavaan} arguments
-  original_lavaan_ARGS <- lavaan_ARGS
+  # Get {lavaan} CFA arguments
+  lavaan_ARGS_copy <- obtain_arguments(cfa_FUN, ellipse)
+  
+  # Send message about latent variable estimation
+  message("Estimating latent variables...", appendLF = FALSE)
   
   # Loop over redundant variables
-  for(i in seq_along(redundant_variables)){
+  for(index in seq_len(redundant_length)){
     
-    # Re-set {lavaan} arguments (unnecessary but to be sure)
-    lavaan_ARGS <- original_lavaan_ARGS
+    # Refresh {lavaan} arguments
+    lavaan_ARGS <- lavaan_ARGS_copy
     
-    # Obtain all nodes
-    all_nodes <- obtain_redundant_variables(
-      redundant_variables = redundant_variables,
-      index = i
+    # Get variable names (from nodes)
+    all_names <- variable_names[
+      obtain_redundant_variables(
+        redundant_variables, index = index
+      )
+    ]
+    
+    # Make CFA model (in `helpers.R`)
+    lavaan_ARGS$model <- make_unidimensional_cfa(all_names)
+    
+    # Send data
+    lavaan_ARGS$data <- recode(
+      data, all_names, correlation_matrix, ellipse
     )
+  
+    # Get estimator arguments (in `helpers.R`)
+    lavaan_ARGS <- estimator_arguments(lavaan_ARGS, ellipse)
     
-    # Obtain variable names for nodes
-    variable_names <- colnames(data)[all_nodes]
-    
-    # Make CFA model
-    ## (see "helper-functions.R" for function)
-    model <- make_unidimensional_cfa(variable_names)
-    
-    # Replace "model" and "data" arguments
-    lavaan_ARGS$model <- model
-    lavaan_ARGS$data <- data[,all_nodes]
-    
-    # Obtain estimator arguments
-    ## (see "helper-functions.R" for function)
-    lavaan_ARGS <- estimator_arguments(lavaan_ARGS)
+    # Set `std.lv` to `TRUE`
+    lavaan_ARGS$std.lv <- TRUE
     
     # Estimate latent variable model
-    cfa_estimate <- do.call(
-      what = "lavaan_cfa",
-      args = lavaan_ARGS
-    )
+    cfa_estimate <- do.call("cfa_FUN", lavaan_ARGS)
     
     # Identify available cases
-    available_cases <- lavaan::inspect(
-      cfa_estimate, what = "case.idx"
-    )
+    available_cases <- lavaan::inspect(cfa_estimate, what = "case.idx")
     
     # Obtain latent score
-    latent_score <- lavaan::lavPredict(cfa_estimate)
-    
-    # Obtain corresponding cases for scores
-    corresponding_cases <- intersect(1:nrow(data), available_cases)
+    latent_score <- lavaan::lavPredict(
+      cfa_estimate, optim.method = "nlminb"
+      # "nlminb" is faster than "bfgs" (with no difference in scores)
+    )
     
     # Compute new composite
-    composite_variables[corresponding_cases, i] <- latent_score 
+    composite_variables[
+      case_sequence %in% available_cases, index
+    ] <- latent_score
+    
+    # Update message
+    message(
+      paste0("\rEstimating latent variables... (", index, " of ", redundant_length, " complete)"),
+      appendLF = FALSE
+    )
     
   }
   
+  # Update message
+  message(
+    paste0(
+      "\rEstimating latent variables...done.",
+      paste0(rep(" ", 13 + digits(redundant_length)), collapse = "")
+    )
+  )
+  
   # Obtain all redundant nodes
-  all_nodes <- obtain_redundant_variables(
-    redundant_variables = redundant_variables,
-    index = "all"
+  remove_variables <- obtain_redundant_variables(
+    redundant_variables, index = "all"
   )
-  
-  # Remove redundant nodes from data
-  new_data <- data[,-all_nodes]
-  
-  # Add composite variables to new data
-  new_data <- cbind(
-    new_data, composite_variables
-  )
-  
-  # Return new data
-  return(new_data)
+
+  # Return data with new composites
+  return(cbind(data[,-remove_variables], composite_variables))
   
 }
 
 #' @noRd
 # "Mean" reduce method ----
-# Updated 02.02.2023
+# Updated 25.07.2023
 reduce_mean <- function(
-    data,
-    wto_output, # wto_output is not actually used
-    # used as placeholder for other `reduce_remove` function
-    redundant_variables
+    data, wto_output, # not used
+    redundant_variables, 
+    correlation_matrix,
+    ellipse # not used
 )
 {
   
   # Create matrix for composite variables
   composite_variables <- create_composite_variable_matrix(
-    data = data, redundant_variables = redundant_variables
+    data, redundant_variables
   )
   
-  # Loop over redundant variables
-  for(i in seq_along(redundant_variables)){
+  # Compute means into the composite variable matrix
+  composite_variables[] <- nvapply(seq_along(redundant_variables), function(index){
     
     # Obtain all nodes
     all_nodes <- obtain_redundant_variables(
-      redundant_variables = redundant_variables,
-      index = i
+      redundant_variables, index
     )
     
-    # Compute new composite
-    composite_variables[,i] <- rowMeans(
-      data[,all_nodes], na.rm = TRUE
+    # Return new composite
+    return(
+      rowMeans(
+        recode(data, all_nodes, correlation_matrix, ellipse),
+        na.rm = TRUE
+      )
     )
-    
-  }
-  
+ 
+  }, LENGTH = dim(data)[1])
+
   # Obtain all redundant nodes
-  all_nodes <- obtain_redundant_variables(
-    redundant_variables = redundant_variables,
-    index = "all"
+  remove_variables <- obtain_redundant_variables(
+    redundant_variables, index = "all"
   )
   
-  # Remove redundant nodes from data
-  new_data <- data[,-all_nodes]
-  
-  # Add composite variables to new data
-  new_data <- cbind(
-    new_data, composite_variables
-  )
-  
-  # Return new data
-  return(new_data)
+  # Return data with new composites
+  return(cbind(data[,-remove_variables], composite_variables))
   
 }
 
 #' @noRd
 # "Remove" reduce method ----
-# Updated 02.02.2023
+# Updated 25.07.2023
 reduce_remove <- function(
-    data, # data is not actually used
-    # used as placeholder for other `reduce_*` functions
-    wto_output, 
-    redundant_variables
+    data, # not used
+    wto_output, redundant_variables, 
+    correlation_matrix, ellipse
 )
 {
   
-  # Initialize lists: keep and remove
-  remove <- keep <- list()
-  
-  # Loop over redundant variables to determine
-  # which variables to keep and remove
-  for(i in seq_along(redundant_variables)){
+  # Loop over redundant variables and return keep and remove
+  selection_list <- lapply(seq_along(redundant_variables), function(index){
     
     # Obtain all nodes
     all_nodes <- obtain_redundant_variables(
-      redundant_variables = redundant_variables,
-      index = i
+      redundant_variables, index
     )
     
     # Determine whether to use wTO or standard deviation
     if(length(all_nodes) > 2){
       
-      # Selection index based on maximum average wTO value
-      # to other redundant variables
+      # Selection index based on maximum average 
+      # wTO value to other redundant variables
       selection_index <- which.max(
         colMeans(wto_output[all_nodes, all_nodes], na.rm = TRUE)
       )
       
     }else{ # Only two nodes
       
-      # Selection index based on lowest maximum wTO value
-      # to all other variables
+      # Selection index based on lowest maximum 
+      # wTO value to all other variables
       selection_index <- which.min(
-        apply(wto_output[all_nodes,-all_nodes], 1, max, na.rm = TRUE)
+        apply(wto_output[all_nodes, -all_nodes], 1, max, na.rm = TRUE)
       )
-    
+      
     }
     
-    # Determine which to keep
-    keep[[i]] <- all_nodes[selection_index]
-    
-    # Determine which to remove
-    remove[[i]] <- all_nodes[setdiff(seq_along(all_nodes), selection_index)]
-    
-  }
+    # Return list
+    return(
+      list(
+        keep = all_nodes[selection_index], 
+        remove = all_nodes[-selection_index]
+      )
+    )
   
-  # Unlist lists
-  keep <- unlist(keep)
-  remove <- unlist(remove)
-  
-  # Set up results
-  results <- list(
-    keep = sort(keep),
-    remove = sort(remove)
-  )
+  })
   
   # Return results
-  return(results)
+  return(
+    list(
+      keep = sort(ulapply(selection_list, function(x){x$keep})),
+      remove = sort(ulapply(selection_list, function(x){x$remove}))
+    )
+  )
   
 }
 
 #' @noRd
 # "Sum" reduce method ----
-# Updated 02.02.2023
+# Updated 25.07.2023
 reduce_sum <- function(
-    data,
-    wto_output, # wto_output is not actually used
-    # used as placeholder for other `reduce_remove` function
-    redundant_variables
+    data, wto_output, # not used
+    redundant_variables, 
+    correlation_matrix,
+    ellipse # not used
 )
 {
   
   # Create matrix for composite variables
   composite_variables <- create_composite_variable_matrix(
-    data = data, redundant_variables = redundant_variables
+    data, redundant_variables
   )
   
-  # Loop over redundant variables
-  for(i in seq_along(redundant_variables)){
+  # Compute means into the composite variable matrix
+  composite_variables[] <- nvapply(seq_along(redundant_variables), function(index){
     
     # Obtain all nodes
     all_nodes <- obtain_redundant_variables(
-      redundant_variables = redundant_variables,
-      index = i
+      redundant_variables, index
     )
     
-    # Compute new composite
-    composite_variables[,i] <- rowSums(
-      data[,all_nodes], na.rm = TRUE
+    # Return new composite
+    return(
+      rowSums(
+        recode(data, all_nodes, correlation_matrix, ellipse),
+        na.rm = TRUE
+      )
     )
     
-  }
+  }, LENGTH = dim(data)[1])
   
   # Obtain all redundant nodes
-  all_nodes <- obtain_redundant_variables(
-    redundant_variables = redundant_variables,
-    index = "all"
+  remove_variables <- obtain_redundant_variables(
+    redundant_variables, index = "all"
   )
   
-  # Remove redundant nodes from data
-  new_data <- data[,-all_nodes]
-  
-  # Add composite variables to new data
-  new_data <- cbind(
-    new_data, composite_variables
-  )
-  
-  # Return new data
-  return(new_data)
+  # Return data with new composites
+  return(cbind(data[,-remove_variables], composite_variables))
   
 }
 
@@ -1235,7 +1014,7 @@ legacy_UVA <- function(
 {
   
   # Old UVA arguments
-  oldUVA.args <- obtain.arguments(
+  oldUVA.args <- obtain_arguments(
     FUN = oldUVA, FUN.args = FUN.args # Need to set up defaults
   )
   
@@ -1251,260 +1030,46 @@ legacy_UVA <- function(
 }
   
 #' @noRd
-# Format redundant list into matrix ----
-# Updated 03.02.2023
-list_to_matrix <- function(redundant_list)
+# "type" warning ---
+# Updated 24.07.2023
+UVA_type_warning <- function(ellipse)
 {
+  # Check for "type"
+  if("type" %in% names(ellipse) && ellipse$type != "threshold"){
   
-  # Find maximum length
-  lengths <- sapply(redundant_list, length)
-  
-  # Initialize matrix
-  redundant_matrix <- matrix(
-    "", nrow = length(redundant_list),
-    ncol = max(lengths, na.rm = TRUE) + 1
-  ) 
-  
-  # Populate matrix
-  for(i in seq_along(redundant_list)){
-    
-    # Obtain values
-    values <- c(
-      as.numeric(names(redundant_list)[i]),
-      unname(unlist(redundant_list[[i]]))
+    warning(
+      paste0(
+        "Argument `type = \"", ellipse$type, "\"` will not be supported ",
+        "in future versions of {EGAnet}. Recent evidence suggests that ",
+        "`cut.off = 0.25` is best practice:",
+        "\n\nChristensen, A. P., Garrido, L. E., & Golino, H. (2023). ",
+        "Unique variable analysis: A network psychometrics method to ",
+        "detect local dependence. ",
+        styletext("Multivariate Behavioral Research", defaults = "italics"),
+        ", 1-18. https://doi.org/10.1080/00273171.2023.2194606",
+        "\n\nDo not submit error reports. Bugs will not be fixed"
+      ), call. = FALSE
     )
     
-    redundant_matrix[i,1:length(values)] <- values
-    
   }
-  
-  # Return redundant matrix
-  return(redundant_matrix)
-  
 }
 
 #' @noRd
-# Convert indices to names ----
-# Updated 03.02.2023
-indices_to_names <- function(wto_names, redundant_matrix)
+# "auto" is `FALSE` warning ---
+# Updated 07.08.2023
+UVA_manual_warning <- function(auto)
 {
   
-  # Loop over matrix
-  for(i in 1:nrow(redundant_matrix)){
-    
-    # Replace indices with names
-    numeric_indices <- as.numeric(redundant_matrix[i,])
-    
-    # Convert to names
-    named_indices <- wto_names[numeric_indices]
-    
-    # Convert `NA` to `""`
-    named_indices <- ifelse(
-      is.na(named_indices), "", named_indices
+  # Check for manual
+  if(!auto){
+    warning(
+      paste0(
+        "Manual decisions (`auto = FALSE`) will not be supported ",
+        "in future versions of {EGAnet}.",
+        "\n\nUse `reduce = FALSE` to perform manual inspection instead",
+        "\n\nDo not submit error reports. Bugs will not be fixed"
+      ), call. = FALSE
     )
-    
-    # Replace in matrix
-    redundant_matrix[i,] <- named_indices
-    
   }
   
-  # Return redundant matrix
-  return(redundant_matrix)
-  
 }
-  
-#' @export
-# S3Method for `summary()` ----
-# Updated 03.02.2023
-summary.UVA <- function(object, ...)
-{
-  
-  # Obtain wTO matrix
-  wto_matrix <- object$wto$pairwise
-  
-  # Obtain wTO > 30
-  wto_30_named <- wto_matrix[
-    wto_matrix$wto > 0.30,
-    c("node_i", "node_j", "wto")
-  ]
-  
-  # Obtain wTO > 25
-  wto_25_named <- wto_matrix[
-    wto_matrix$wto < 0.30 &
-      wto_matrix$wto > 0.25,
-    c("node_i", "node_j", "wto")
-  ]
-  
-  # Obtain wTO > 20
-  wto_20_named <- wto_matrix[
-    wto_matrix$wto < 0.25 &
-      wto_matrix$wto > 0.20,
-    c("node_i", "node_j", "wto")
-  ]
-  
-  # # Obtain indices with wTO greater than 0.20
-  # wto_indices <- which(wto_matrix > 0.20, arr.ind = TRUE)
-  # 
-  # # Limit indices to unique elements
-  # wto_elements <- wto_indices[
-  #   wto_indices[,"row"] < wto_indices[,"col"],
-  # ]
-  # 
-  # # Obtain values
-  # values <- numeric(nrow(wto_elements))
-  # 
-  # # Loop over values
-  # for(i in 1:nrow(wto_elements)){
-  #   values[i] <- wto_matrix[
-  #     wto_elements[i,"row"],
-  #     wto_elements[i,"col"]
-  #   ]
-  # }
-  # 
-  # # Add values to elements
-  # wto_sparse <- cbind(wto_elements, values)
-  # 
-  # # Order by values
-  # wto_ordered <- wto_sparse[
-  #   order(wto_sparse[,"values"], decreasing = TRUE),
-  # ]
-  # 
-  # # Cut into chunks
-  # ## 0.30
-  # wto_30 <- wto_ordered[
-  #   wto_ordered[,"values"] > 0.30,
-  # ]
-  # ## 0.25
-  # wto_25 <- wto_ordered[
-  #   wto_ordered[,"values"] > 0.25 &
-  #     wto_ordered[,"values"] < 0.30,
-  # ]
-  # ## 0.20
-  # wto_20 <- wto_ordered[
-  #   wto_ordered[,"values"] > 0.20 &
-  #     wto_ordered[,"values"] < 0.25,
-  # ]
-  # 
-  # # Remove values and condense into lists
-  # ## 0.30
-  # wto_30_list <- condense_overlap(
-  #   overlapping_list = wto_index_list(
-  #     wto_output = wto_matrix,
-  #     wto_indices = wto_30[
-  #       , -which(colnames(wto_30) == "values")
-  #     ]
-  #   )
-  # )
-  # ## 0.25
-  # wto_25_list <- condense_overlap(
-  #   overlapping_list = wto_index_list(
-  #     wto_output = wto_matrix,
-  #     wto_indices = wto_25[
-  #       , -which(colnames(wto_25) == "values")
-  #     ]
-  #   )
-  # )
-  # ## 0.20
-  # wto_20_list <- condense_overlap(
-  #   overlapping_list = wto_index_list(
-  #     wto_output = wto_matrix,
-  #     wto_indices = wto_20[
-  #       , -which(colnames(wto_20) == "values")
-  #     ]
-  #   )
-  # )
-  # 
-  # # Format into matrices
-  # wto_30_matrix <- list_to_matrix(wto_30_list)
-  # wto_25_matrix <- list_to_matrix(wto_25_list)
-  # wto_20_matrix <- list_to_matrix(wto_20_list)
-  # 
-  # # Replace indices with variable names
-  # wto_30_named <- indices_to_names(
-  #   colnames(wto_matrix), wto_30_matrix
-  # )
-  # wto_25_named <- indices_to_names(
-  #   colnames(wto_matrix), wto_25_matrix
-  # )
-  # wto_20_named <- indices_to_names(
-  #   colnames(wto_matrix), wto_20_matrix
-  # )
-  
-  # Prepare for print
-  ## Print 0.30
-  cat("Variable pairs with wTO > 0.30 (large-to-very large redundancy)\n\n")
-  print(wto_30_named, quote = FALSE, row.names = FALSE)
-  # no_name_print(wto_30_named)
-  ## Print 0.25
-  cat("\n----\n")
-  cat("\nVariable pairs with wTO > 0.25 (moderate-to-large redundancy)\n\n")
-  print(wto_25_named, quote = FALSE, row.names = FALSE)
-  # no_name_print(wto_25_named)
-  ## Print 0.20
-  cat("\n----\n")
-  cat("\nVariable pairs with wTO > 0.20 (small-to-moderate redundancy)\n\n")
-  print(wto_20_named, quote = FALSE, row.names = FALSE)
-  # no_name_print(wto_20_named)
-  
-}  
-  
-#' @export
-# S3Method for `print()` ----
-# Updated 03.02.2023
-print.UVA <- function(x, ...)
-{
-  
-  # Obtain wTO matrix
-  wto_matrix <- x$wto$pairwise
-  
-  # Obtain wTO > 30
-  wto_30_named <- wto_matrix[
-    wto_matrix$wto > 0.30,
-    c("node_i", "node_j", "wto")
-  ]
-  
-  # Obtain wTO > 25
-  wto_25_named <- wto_matrix[
-    wto_matrix$wto < 0.30 &
-      wto_matrix$wto > 0.25,
-    c("node_i", "node_j", "wto")
-  ]
-  
-  # Obtain wTO > 20
-  wto_20_named <- wto_matrix[
-    wto_matrix$wto < 0.25 &
-      wto_matrix$wto > 0.20,
-    c("node_i", "node_j", "wto")
-  ]
-  
-  # Prepare for print
-  ## Print 0.30
-  cat("Variable pairs with wTO > 0.30 (large-to-very large redundancy)\n\n")
-  print(wto_30_named, quote = FALSE, row.names = FALSE)
-  # no_name_print(wto_30_named)
-  ## Print 0.25
-  cat("\n----\n")
-  cat("\nVariable pairs with wTO > 0.25 (moderate-to-large redundancy)\n\n")
-  print(wto_25_named, quote = FALSE, row.names = FALSE)
-  # no_name_print(wto_25_named)
-  ## Print 0.20
-  cat("\n----\n")
-  cat("\nVariable pairs with wTO > 0.20 (small-to-moderate redundancy)\n\n")
-  print(wto_20_named, quote = FALSE, row.names = FALSE)
-  # no_name_print(wto_20_named)
-  
-}  
-  
-  
-  
-
-
-
-
-
-
-
-
-
-
-

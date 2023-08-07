@@ -191,8 +191,8 @@
 #'
 #' @author Hudson Golino <hfg9s at virginia.edu>
 #'
-#'
-#' @export
+#' @noRd
+#' 
 # Monte-Carlo Test for the Ergodicity Information Index
 # Updated 30.12.2021
 mctest.ergoInfo <- function(iter, N,
@@ -216,6 +216,12 @@ mctest.ergoInfo <- function(iter, N,
 ){
 
 
+  # Send experimental message (for now)
+  experimental("mctest.ergoInfo")
+  
+  # Send not refactored message (for now)
+  not_refactored("mctest.ergoInfo")
+  
   #### MISSING ARGUMENTS HANDLING ####
 
   if(missing(dfm))

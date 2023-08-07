@@ -1,7 +1,6 @@
-#' \code{\link[EGAnet]{bootEGA}} Results of \code{\link[EGAnet]{wmt2}}Data
+#' @title \code{\link[EGAnet]{bootEGA}} Results of \code{\link[EGAnet]{wmt2}}Data
 #'
-#' \code{\link[EGAnet]{bootEGA}} results using the \code{"glasso"} model and 500 iterations
-#' of the Wiener Matrizen-Test 2 (WMT-2)
+#' @description \code{\link[EGAnet]{bootEGA}} results from \code{boot.wmt <- bootEGA(wmt2[,7:24], seed = 1234)}
 #'
 #' @name boot.wmt
 #'
@@ -9,12 +8,10 @@
 #'
 #' @usage data(boot.wmt)
 #'
-#' @format A list with 9 objects (see \code{\link[EGAnet]{bootEGA}})
+#' @format A list with 12 objects (see \strong{Value} in \code{\link[EGAnet]{bootEGA}})
 #'
 #' @keywords datasets
 #'
 #' @examples
 #' data("boot.wmt")
-#'
 NULL
-#----

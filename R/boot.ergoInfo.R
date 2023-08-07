@@ -1,50 +1,76 @@
-#' Bootstrap Test for the Ergodicity Information Index
+#' @title Bootstrap Test for the Ergodicity Information Index
 #'
-#' @description Tests the Ergodicity Information Index obtained in the empirical sample with a distribution of EII 
-#' obtained by bootstrap sampling. In traditional bootstrap sampling, individual participants are resampled with
-#' replacement from the empirical sample. This process is time consuming when carried out across \emph{v} number
-#' of variables, \emph{n} number of participants, \emph{t} number of time points, and \emph{i} number of iterations.
+#' @description Tests the Ergodicity Information Index obtained in the empirical sample 
+#' with a distribution of EII obtained by bootstrap sampling
+#' (see \strong{Details} for the procedure)
+#'
+#' @param dynEGA.object A \code{\link[EGAnet]{dynEGA}} or a
+#' \code{\link[EGAnet]{dynEGA.ind.pop}} object. If a \code{\link[EGAnet]{dynEGA}}
+#' object, then \code{level = c("individual", "population")} is required
+#'
+#' @param EII A \code{\link[EGAnet]{ergoInfo}} object 
+#' used to estimate the Empirical Ergodicity Information Index 
+#' or the estimated value of EII estimated using the \code{\link[EGAnet]{ergoInfo}} 
+#' function. Inherits \code{use} from \code{\link[EGAnet]{ergoInfo}}.
+#' If no \code{\link[EGAnet]{ergoInfo}} object is provided, then it is estimated
 #' 
-#' A more efficient process, the approach applied here, is to obtain a sampling distribution of EII values as if
-#' all participants in the data have the population network structure. Sampling is not perfect and therefore
-#' random noise is added to the edges of the population structure to simulate sampling variability. This noise
-#' follows a random uniform distribution ranging from -0.10 to 0.10. In addition, a proportion of edges are
-#' rewired to allow for slight variations on the population structure. The proportion of nodes that are rewired
-#' is sampled from a random uniform distribution between 0.20 to 0.40. This process is carried out for each
-#' participant resulting in \emph{n} variations of the population structure. Afterward, EII is computed. This
-#' process is carried out for \emph{i} iterations (e.g., 100).
+#' @param use Character (length = 1).
+#' A string indicating what network element will be used
+#' to compute the algorithm complexity, the list of edges or the weights of the network.
+#' Defaults to \code{use = "edge.list"}.
+#' Current options are:
+#'
+#' \itemize{
+#'
+#' \item{\code{"edge.list"} --- }
+#' {Calculates the algorithm complexity using the list of edges.}
+#'
+#' \item{\code{"unweighted"} --- }
+#' {Calculates the algorithm complexity using the binary weights of the network.
+#' 0 = edge absent and 1 = edge present}
 #' 
-#' The result is a sampling distribution of EII values that would be expected if the process was ergodic. If
-#' the empirical EII value is significantly less than the distribution or not significantly different, then 
-#' the empirical data can be expected to be generated from an ergodic process and the population structure is 
-#' sufficient to describe all individuals. If the empirical EII value is significantly greater than the distribution,
-#' then the empirical data cannot be described by the population structure -- significant information is lost when
-#' collapsing across to the population structure.
+#' }
 #'
-#' @param dynEGA.object  A \code{\link[EGAnet]{dynEGA}} or a
-#' \code{\link[EGAnet]{dynEGA.ind.pop}} object that is used to match the arguments of the EII object.
-#'
-#' @param EII A \code{\link[EGAnet]{ergoInfo}} object, used to estimate the Empirical Ergodicity Information Index, or the estimated value of EII estimated
-#' using the \code{\link[EGAnet]{ergoInfo}} function. Inherits \code{use} from \code{\link[EGAnet]{ergoInfo}}
-#'
-#' @param iter Numeric integer.
+#' @param iter Numeric (length = 1).
 #' Number of replica samples to generate from the bootstrap analysis.
-#' At least \code{100} is recommended
+#' Defaults to \code{100} (recommended)
 #'
-#' @param ncores Numeric.
+#' @param ncores Numeric (length = 1).
 #' Number of cores to use in computing results.
-#' Defaults to \code{parallel::detectCores() / 2} or half of your
+#' Defaults to \code{ceiling(parallel::detectCores() / 2)} or half of your
 #' computer's processing power.
-#' Set to \code{1} to not use parallel computing.
-#' Recommended to use maximum number of cores minus one
+#' Set to \code{1} to not use parallel computing
 #'
 #' If you're unsure how many cores your computer has,
-#' then use the following code: \code{parallel::detectCores()}
+#' then type: \code{parallel::detectCores()}
 #' 
-#' @param progress Boolean.
+#' @param verbose Boolean (length = 1).
 #' Should progress be displayed?
 #' Defaults to \code{TRUE}.
-#' For Windows, \code{FALSE} is about 2x faster
+#' Set to \code{FALSE} to not display progress
+#' 
+#' @details In traditional bootstrap sampling, individual participants are resampled with 
+#' replacement from the empirical sample. This process is time consuming when carried out 
+#' across \emph{v} number of variables, \emph{n} number of participants,
+#' \emph{t} number of time points, and \emph{i} number of iterations.
+#' 
+#' A more efficient process, the approach applied here, is to obtain a sampling distribution 
+#' of EII values as if all participants in the data have the population network structure. 
+#' Sampling is not perfect and therefore random noise is added to the edges of the population 
+#' structure to simulate sampling variability. This noise follows a random uniform distribution
+#' ranging from -0.10 to 0.10. In addition, a proportion of edges are rewired to allow for 
+#' slight variations on the population structure. The proportion of nodes that are rewired is 
+#' sampled from a random uniform distribution between 0.20 to 0.40. This process is carried out 
+#' for each participant resulting in \emph{n} variations of the population structure. 
+#' Afterward, EII is computed. This process is carried out for \emph{i} iterations (e.g., 100).
+#' 
+#' The result is a sampling distribution of EII values that would be expected if the process 
+#' was ergodic. If the empirical EII value is significantly less than the distribution or 
+#' not significantly different, then  the empirical data can be expected to be generated 
+#' from an ergodic process and the population structure is  sufficient to describe all 
+#' individuals. If the empirical EII value is significantly greater than the distribution, 
+#' then the empirical data cannot be described by the population structure -- significant 
+#' information is lost when collapsing across to the population structure.
 #'
 #' @examples
 #' # Obtain simulated data
@@ -59,254 +85,312 @@
 #' )
 #'
 #' # Empirical Ergodicity Information Index
-#' eii1 <- ergoInfo(dynEGA.object = dyn1, use = "weighted")
+#' eii1 <- ergoInfo(dynEGA.object = dyn1, use = "edge.list")
 #'
 #' # Bootstrap Test for Ergodicity Information Index
 #' testing.ergoinfo <- boot.ergoInfo(
 #'   dynEGA.object = dyn1, EII = eii1,
 #'   ncores = 2
-#' )}
+#' )
+#' 
+#' # Plot result
+#' plot(testing.ergoinfo)
+#' 
+#' # Example using `dynEGA`
+#' dyn2 <- dynEGA(
+#'   data = sim.dynEGA, n.embed = 5, tau = 1,
+#'   delta = 1, use.derivatives = 1, ncores = 2,
+#'   level = c("individual", "population")
+#' )
+#' 
+#' # Empirical Ergodicity Information Index
+#' eii2 <- ergoInfo(dynEGA.object = dyn2, use = "edge.list")
+#' 
+#' # Bootstrap Test for Ergodicity Information Index
+#' testing.ergoinfo2 <- boot.ergoInfo(
+#'   dynEGA.object = dyn2, EII = eii2,
+#'   ncores = 2
+#' )
+#' 
+#' # Plot result
+#' plot(testing.ergoinfo2)}
 #'
 #' @return Returns a list containing:
+#' 
+#' \item{empirical.ergoInfo}{Empirical Ergodicity Information Index}
 #'
 #' \item{boot.ergoInfo}{The values of the Ergodicity Information Index obtained in the bootstrap}
 #'
-#' \item{p.value}{The two-sided *p*-value of the bootstrap test for the Ergodicity Information Index.
+#' \item{p.value}{The two-sided \emph{p}-value of the bootstrap test for the Ergodicity Information Index.
 #' The null hypothesis is that the empirical Ergodicity Information index is equal to the expected value of the EII
 #' with small variation in the population structure}
 #'
 #' \item{effect}{Indicates wheter the empirical EII is greater or less then the bootstrap distribution of EII.}
 #'
 #' \item{interpretation}{How you can interpret the result of the test in plain English}
-#'
-#' \item{plot.dist}{Histogram of the bootstrapped ergodicity information index}
 #' 
-#' \item{methods}{Methods to report for print/summary S3methods and automated Methods section}
-#'
 #' @author Hudson Golino <hfg9s at virginia.edu> & Alexander P. Christensen <alexander.christensen at Vanderbilt.Edu>
 #'
 #' @references 
+#' \strong{Original Implementation} \cr
 #' Golino, H., Nesselroade, J., & Christensen, A. P. (2022).
 #' Toward a psychology of individuals: The ergodicity information index and a bottom-up approach for finding generalizations.
 #' \emph{PsyArXiv}.
+#' 
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
 #'
 #' @export
 # Bootstrap Test for the Ergodicity Information Index
-# Updated 04.09.2022
+# Updated 03.08.2023
 boot.ergoInfo <- function(
-    dynEGA.object,
-    EII, iter = 100,
-    ncores, progress = TRUE
+    dynEGA.object, EII, 
+    use = c("edge.list", "unweighted"),
+    iter = 100, ncores, verbose = TRUE
 ){
   
-  # Check for class
-  if(!is(dynEGA.object, "dynEGA") & !is(dynEGA.object, "dynEGA.ind.pop")){
-    stop(
-      paste(
-        "Input into the `dynEGA.object` argument's class is not `dynEGA` or `dynEGA.ind.pop`.\n\n",
-        "Class of dynEGA.object = ", paste(
-          class(dynEGA.object), sep = "", collapse = ", "
-        ),
-        sep = ""
-      )
-    )
-  }else if(is(dynEGA.object, "dynEGA.ind.pop")){
-    dynEGA.pop <- dynEGA.object$dynEGA.pop
-  }else if(is(dynEGA.object, "dynEGA")){
-    dynEGA.pop <- dynEGA.object
-  }
+  # Send experimental message (for now)
+  experimental("boot.ergoInfo")
+  
+  # Check for missing arguments (argument, default, function)
+  use <- set_default(use, "edge.list", ergoInfo)
+  if(missing(ncores)){ncores <- ceiling(parallel::detectCores() / 2)}
+  
+  # Argument errors
+  boot.ergoInfo_errors(dynEGA.object, iter, ncores, verbose)
   
   # Check for EII
-  if(missing(EII)){
-    
-    # Check for dynEGA.ind.pop object
-    if(is(dynEGA.object, "dynEGA.ind.pop")){
-      
-      # Let user know that EII will be computed
-      message("`EII` argument is missing. Computing EII...", appendLF = FALSE)
-      
-      # Compute EII
-      EII <- ergoInfo(
-        dynEGA.object = dynEGA.object,
-        use = "edge.list" # "weighted"
-      )
-      
-      # Let user know EII is complete
-      message("done", appendLF = TRUE)
-      
-    }else{
-      
-      # Let user know that EII cannot be computed
-      stop("`EII` argument is missing. EII cannot be computed without a `dynEGA.ind.pop` object class as input to `dynEGA.object`", appendLF = FALSE)
-      
-    }
-    
+  if(missing(EII)){ # If missing, then compute it
+    EII <- ergoInfo(dynEGA.object, use = use)$EII # , seed = 0)$EII
+  }else if(is(EII, "EII")){
+    use <- attr(EII, "methods")$use; EII <- EII$EII
   }
   
-  # Check for class of EII
-  if(is(EII, "EII")){
-    use <- EII$use
-    EII <- EII$EII
-  }
-  
-  if(missing(ncores)){
-    ncores <- ceiling(parallel::detectCores() / 2)
-  }
-  
-  # Obtain individual dynEGA objects only
-  dynEGA.ind <- dynEGA.object$dynEGA.ind$dynEGA
-  
-  # Remove methods from dynEGA.ind
-  if("methods" %in% tolower(names(dynEGA.ind))){
-    dynEGA.ind <- dynEGA.ind[-which(tolower(names(dynEGA.ind)) == "methods")]
-  }
+  # Get proper objects (if not, send an error)
+  # Function found in `ergoInfo`
+  dynega_objects <- get_dynEGA_object(dynEGA.object)
   
   # Replace individual networks with population networks
-  dynEGA.ind <- lapply(dynEGA.ind, function(x){
-    x$network <- dynEGA.pop$dynEGA$network
-    return(x)
-  })
+  individual_networks <- lapply(
+    dynega_objects$individual, function(x){dynega_objects$population$network}
+  )
   
-  # Let user know data are being generated
-  message("Generating rewired population networks...", appendLF = FALSE)
+  # Get lower triangle indices (avoids repeated computation)
+  lower_triangle <- lower.tri(dynega_objects$population$network)
   
-  # Set up data to be consistent with `dyn.ind.pop` output
-  boot.data <- lapply(1:iter, function(i){
-    
-    # Initialize list
-    dynEGA.object <- list()
-    dynEGA.object$dynEGA.pop <- list()
-    dynEGA.object$dynEGA.ind <- list()
-    dynEGA.object$dynEGA.pop <- dynEGA.pop
-    dynEGA.object$dynEGA.ind$dynEGA <- dynEGA.ind
-    dynEGA.object$dynEGA.ind$dynEGA <- lapply(
-      1:length(dynEGA.ind), # same number of individuals
-      function(i){
-        dynEGA.ind[[i]]$network <- rewire(
-          dynEGA.pop$dynEGA$network,
-          min = 0.20, max = 0.40,
-          noise = 0.10
+  # Get rewired networks
+  rewired_networks <- lapply(
+    seq_len(iter), function(iteration){
+      
+      # Initialize `dynEGA` object structure
+      rewired_dynEGA <- list(
+        dynEGA = list(
+          population = list(
+            network = dynega_objects$population$network,
+            n.dim = dynega_objects$population$n.dim
+          ),
+          individual = lapply( # Return as list named "network"
+            individual_networks, function(x){
+              list(
+                network = rewire(
+                  network = x, min = 0.20, max = 0.40,
+                  noise = 0.10, lower_triangle = lower_triangle
+                )
+              )
+            }
+          )
         )
-        return(dynEGA.ind[[i]])
-      }
-    )
-    class(dynEGA.object) <- "dynEGA.ind.pop"
-    return(dynEGA.object)
-    
-  })
-  
-  # Let user know data generation is done
-  message("done.")
-  
-  # Let user know results are being computed
-  message("Computing results...")
-  
-  # FOR SOME REASON `parallel_process` WON'T
-  # PARALLELIZE WITH WINDOWS... 
-  # USE `pbapply::pblapply` INSTEAD...
-  if(system.check()$OS == "windows"){
-    
-    # Set up parallelization
-    cl <- parallel::makeCluster(ncores)
-
-    # Export prime numbers
-    parallel::clusterExport(
-      cl = cl,
-      varlist = "prime.num"
-    )
-
-    # Compute EII
-    if(isTRUE(progress)){
-      complexity.estimates <- pbapply::pblapply(
-        X = boot.data, cl = cl,
-        FUN = ergoInfo, use = use
       )
-    }else{ # No progress bar
-      complexity.estimates <- parallel::parLapply(
-        X = boot.data, cl = cl,
-        fun = ergoInfo, use = use
-      )
+      
+      # Set class
+      class(rewired_dynEGA) <- "dynEGA"
+      
+      # Return rewired networks
+      return(rewired_dynEGA)
+      
     }
-
-    # Stop cluster
-    parallel::stopCluster(cl)
-    
-  }else{
-    # WORKS WITH MAC & LINUX
-    complexity.estimates <- parallel_process(
-      datalist = boot.data,
-      progress = progress,
-      FUN = ergoInfo,
-      FUN_args = list(use = use),
-      export = "prime.num",
-      ncores = ncores
-    )
-  }
-  
-  # Obtain EII values
-  complexity.estimates2 <- unlist(
-    lapply(
-      complexity.estimates, function(x){
-        x$EII
-      }
-    )
   )
   
-  ## Compute the p-value of the bootstrap test:
-  N <- iter # length(dynEGA.ind)
-  p.greater <- (sum(EII>=complexity.estimates2)+1)/(N +1)
-  p.lower <- (sum(EII<=complexity.estimates2)+1)/(N +1)
-  p.values <- c(p.greater, p.lower)
-  two.sided <- 2*min(p.values)
-  #one.sided <- (sum(abs(complexity.estimates2) >= abs(EII), na.rm = TRUE)+1)/(N + 1)
-  
-  # Plot:
-  complexity.df <- data.frame(EII = complexity.estimates2, ID = 1:length(complexity.estimates2))
-  plot.bootErgoInfo <- suppressWarnings(suppressMessages(
-    ggpubr::gghistogram(complexity.df, x = "EII",
-                        add = "mean",
-                        fill = "#00AFBB",
-                        color = "black",
-                        rug = TRUE,
-                        ylab = "Frequency",
-                        xlab = "Ergodicity Information Index") +
-      ggplot2::geom_vline(xintercept = EII, color = "#00AFBB", linetype = "dotted"))
+  # Perform parallelization
+  rewired_EII <- parallel_process(
+    iterations = iter,
+    datalist = rewired_networks,
+    ergoInfo, use = use,
+    ncores = ncores,
+    progress = verbose
   )
   
-  ## Return Results:
-  results <- vector("list")
-  results$boot.ergoInfo <- complexity.estimates2
-  results$p.value <- two.sided
-  effect <- ifelse(two.sided <= .05, mean(
-    EII >= complexity.estimates2, na.rm = TRUE
-  ), "n.s.")
-  results$effect <- ifelse(
-    effect == "n.s.", "n.s.",
-    ifelse(
-      effect > .50, "greater", "less"
+  # Get EII values
+  EII_values <- nvapply(rewired_EII, function(x){x$EII})
+  
+  # Get indices for empirical EII greater than or equal to rewired values
+  greater_than <- EII >= EII_values
+  
+  # Get p-value
+  p_value = 2 * min(
+    (sum(greater_than) + 1) / (iter + 1),
+    (sum(EII <= EII_values) + 1) / (iter + 1)
+  )
+  
+  # Get effect direction
+  effect_direction <- swiftelse(
+    p_value > 0.05, "n.s.",
+    swiftelse(mean(greater_than) > 0.50, "greater", "less")
+  )
+  
+  # Set up results to return
+  results <- list(
+    empirical.ergoInfo = EII,
+    boot.ergoInfo = EII_values,
+    p.value = p_value,
+    effect = effect_direction,
+    interpretation = switch(
+      effect_direction,
+      "n.s." = "The empirical EII was not different from what would be expected from random variation in the population structure, meaning non-significant information is lost when aggregating the results into a single, population network.",
+      "less" = "The empirical EII was less than what would be expected from random variation in the population structure, meaning non-significant information is lost when aggregating the results into a single, population network.",
+      "greater" = "The empirical EII was greater than what would be expected from random variation in the population structure, meaning significant information is lost when aggregating the results into a single, population network."
     )
   )
-  interpretation <- switch(
-    results$effect,
-    "n.s." = "The empirical EII was not different from what would be expected from random variation in the population structure, meaning non-significant information is lost when aggregating the results into a single, population network.",
-    "less" = "The empirical EII was less than what would be expected from random variation in the population structure, meaning non-significant information is lost when aggregating the results into a single, population network.",
-    "greater" = "The empirical EII was greater than what would be expected from random variation in the population structure, meaning significant information is lost when aggregating the results into a single, population network."
-  )
-  
-  results$interpretation <- interpretation
-  
-  results$plot.dist <- plot.bootErgoInfo
-  
-  # Prepare methods
-  methods <- list()
-  methods$use <- use
-  methods$iter <- iter
-  
-  results$Methods <- methods
   
   # Set class
   class(results) <- "boot.ergoInfo"
   
+  # Return results
   return(results)
+  
 }
-#----
+
+#' @noRd
+# Errors ----
+# Updated 26.07.2023
+boot.ergoInfo_errors <- function(dynEGA.object, iter, ncores, verbose)
+{
+  
+  # 'dynEGA.object' errors ("dynEGA.ind.pop" defunct to legacy)
+  if(!is(dynEGA.object, "dynEGA") & !is(dynEGA.object, "dynEGA.ind.pop")){
+    class_error(dynEGA.object, "dynEGA")
+  }
+  
+  # 'iter' errors
+  length_error(iter, 1)
+  typeof_error(iter, "numeric")
+  range_error(iter, c(1, Inf))
+  
+  # 'ncores' errors
+  length_error(ncores, 1)
+  typeof_error(ncores, "numeric")
+  range_error(ncores, c(1, parallel::detectCores()))
+  
+  # 'verbose' errors
+  length_error(verbose, 1)
+  typeof_error(verbose, "logical")
+  
+}
+
+#' @exportS3Method 
+# S3 Print Method ----
+# Updated 26.07.2023
+print.boot.ergoInfo <- function(x, ...)
+{
+  
+  # Message about print support
+  message("No print support yet")
+  
+  # Print x
+  x
+  
+}
+
+#' @exportS3Method 
+# S3 Summary Method ----
+# Updated 26.07.2023
+summary.boot.ergoInfo <- function(object, ...)
+{
+  print(object, ...) # same as print
+}
+
+#' @exportS3Method 
+# S3 Plot Method ----
+# Updated 09.07.2023
+plot.boot.ergoInfo <- function(x, ...)
+{
+  
+  # Send plot
+  silent_plot(
+    ggpubr::gghistogram(
+      data = data.frame(EII = x$boot.ergoInfo),
+      x = "EII", add = "mean", fill = "#00AFBB",
+      color = "black", rug = TRUE, ylab = "Frequency",
+      xlab = "Ergodicity Information Index",
+      ...
+    ) +
+      ggplot2::geom_vline(
+        xintercept = x$empirical.ergoInfo, color = "#00AFBB", linetype = "dotted" 
+      )
+  )
+  
+}
+
+#' @noRd
+# Rewire networks ----
+# About 10x faster than previous implementation
+# Updated 30.07.2023
+rewire <- function(
+    network, min = 0.20, max = 0.40,
+    noise = 0.10, lower_triangle
+)
+{
+  
+  # Work only with the lower triangle
+  lower_network <- network[lower_triangle]
+  
+  # Get non-zero edges
+  non_zero_edges <- which(lower_network != 0)
+  
+  # Number of edges
+  edges <- length(non_zero_edges)
+  
+  # Add noise
+  if(!is.null(noise)){
+    
+    # Only add to existing edges
+    lower_network[non_zero_edges] <- 
+      lower_network[non_zero_edges] + runif(edges, -noise, noise)
+    
+  }
+  
+  # Number of edges to rewire
+  rewire_edges <- floor(edges * runif(1, min, max))
+  
+  # Get rewiring indices
+  rewire_index <- shuffle(non_zero_edges, size = rewire_edges)
+ 
+  # Get replacement indices
+  replace_index <- shuffle(seq_along(lower_network), size = rewire_edges)
+ 
+  # Make a copy of the lower network
+  lower_network_original <- lower_network
+  
+  # Replace values
+  lower_network[rewire_index] <- lower_network_original[replace_index]
+  lower_network[replace_index] <- lower_network_original[rewire_index]
+  
+  # Get nodes in original network
+  nodes <- dim(network)[2]
+  
+  # Initialize a new network
+  new_network <- matrix(
+    0, nrow = nodes, ncol = nodes,
+    dimnames = dimnames(network)
+  )
+  
+  # Replace values
+  new_network[lower_triangle] <- lower_network
+  new_network <- t(new_network)
+  new_network[lower_triangle] <- lower_network
+  
+  # Return the rewired network
+  return(new_network)
+  
+}
+
+

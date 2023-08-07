@@ -1,4 +1,4 @@
-#' Convert networks to \code{\link{igraph}}
+#' @title Convert networks to \code{\link{igraph}}
 #'
 #' @description Converts networks to \code{\link{igraph}} format
 #'
@@ -17,19 +17,46 @@
 #' @author Hudson Golino <hfg9s at virginia.edu> & Alexander P. Christensen <alexander.christensen at Vanderbilt.Edu>
 #'
 #' @export
-# Convert network to {igraph}
-# Updated 10.08.2022
+# Convert matrix to {igraph} network
+# Updated 03.08.2023
 convert2igraph <- function (A, diagonal = 0)
 {
-  # Make diagonal zero
+  
+  # Argument errors
+  convert2igraph_errors(A, diagonal)
+  
+  # Convert to matrix
+  A <- as.matrix(A)
+  
+  # Change diagonal (to zero)
   diag(A) <- diagonal
   
+  # Return {igraph} network
   return(
-    suppressWarnings(
+    silent_call(
       igraph::graph_from_adjacency_matrix(
-        as.matrix(A), weighted = TRUE, mode = "undirected",
+        A, weighted = TRUE, mode = "undirected",
         add.colnames = FALSE
       )
     )
   )
+  
 }
+
+#' @noRd
+# Argument errors
+# Updated 03.08.2023
+convert2igraph_errors <- function(A, diagonal)
+{
+  
+  # 'A' errors
+  object_error(A, c("matrix", "data.frame"))
+  
+  # 'diagonal' errors
+  length_error(diagonal, 1)
+  typeof_error(diagonal, "numeric")
+  range_error(diagonal, c(-1, 1))
+  
+}
+
+

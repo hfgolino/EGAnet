@@ -1,110 +1,112 @@
-#' Network Scores
+#' @title Network Scores
 #'
 #' @description This function computes network scores computed based on
-#' each node's \code{strength} within each
-#' community (i.e., factor) in the network (see \code{\link[EGAnet]{net.loads}}).
-#' These values are used as network "factor loadings" for the weights of each item.
-#' Notably, network analysis allows nodes to contribution to more than one community.
-#' These loadings are considered in the network scores. In addition,
-#' if the construct is a hierarchy (e.g., personality questionnaire;
-#' items in facet scales in a trait domain), then an overall
-#' score can be computed (see argument \code{global}). An important difference
-#' is that the network scores account for cross-loadings in their
-#' estimation of scores
+#' each node's \code{strength} within each community in the network 
+#' (see \code{\link[EGAnet]{net.loads}}). These values are used as "network loadings" 
+#' for the weights of each variable.
+#' 
+#' Network scores are computed as a formative composite rather than a reflective factor.
+#' This composite representation is consistent with no latent factors that psychometric
+#' network theory proposes.
+#' 
+#' Scores can be computed as a "simple" structure, which is equivalent to a weighted
+#' sum scores or as a "full" structure, which is equivalent to an EFA approach.
+#' Conservatively, the "simple" structure approach is recommended until further
+#' validation
 #'
 #' @param data Matrix or data frame.
-#' Must be a dataset
+#' Should consist only of variables to be used in the analysis
 #'
-#' @param A Matrix, data frame, or \code{\link[EGAnet]{EGA}} object.
-#' An adjacency matrix of network data
+#' @param A Network matrix, data frame, or \code{\link[EGAnet]{EGA}} object
 #'
-#' @param wc Numeric.
+#' @param wc Numeric or character vector (length = \code{ncol(A)}).
 #' A vector of community assignments.
-#' Not necessary if an \code{\link[EGAnet]{EGA}} object
-#' is input for argument \code{A}
+#' If input into \code{A} is an \code{\link[EGAnet]{EGA}} object,
+#' then \code{wc} is automatically detected
 #'
+#' @param loading.method Character (length = 1).
+#' Sets network loading calculation based on implementation
+#' described in \code{"BRM"} (Christensen & Golino, 2021) or
+#' an \code{"experimental"} implementation.
+#' Defaults to \code{"BRM"}
+#' 
 #' @param rotation Character.
-#' A rotation to use, like factor loadings, to obtain
-#' a simple structure.
-#' Defaults to \code{\link[GPArotation]{geominQ}}.
-#' For a list of rotations, see \code{\link{GPArotation}}
+#' A rotation to use to obtain a simpler structure. 
+#' For a list of rotations, see \code{\link{GPArotation}} for options.
+#' Defaults to \code{NULL} or no rotation.
+#' By setting a rotation, \code{scores} estimation will be
+#' based on the rotated loadings rather than unrotated loadings
 #' 
-#' @param method Character.
-#' Factor scoring method to use. For a list of scoring methods,
-#' see \code{\link[psych]{factor.scores}}.
-#' Defaults to \code{"network"}
+#' @param scores Character (length = 1).
+#' How should scores be estimated?
+#' Defaults to \code{"network"} for network scores.
+#' Set to other scoring methods which will be computed using
+#' \code{\link[psych]{factor.scores}} (see link for arguments
+#' and explanations for other methods)
 #' 
-#' "network" scores can also be computed as a formative method
-#' using \code{"component"} or \code{"network"}. The core difference
-#' between these two methods is that \code{"network"} will use the
-#' weight contributions to communities using each variable's
-#' standard deviation in combination with their loadings
+#' @param loading.structure Character (length = 1).
+#' Whether simple structure or the saturated loading matrix
+#' should be used when computing scores.
+#' Defaults to \code{"simple"}
+#' 
+#' \code{"simple"} structure more closely mirrors sum scores and CFA; 
+#' \code{"full"} structure more closely mirrors EFA
+#' 
+#' Simple structure is the more "conservative" (established) approach
+#' and is therefore the default. Treat \code{"full"} as experimental
+#' as proper vetting and validation has not been established
 #'
-#' @param impute Character.
-#' In the presence of missing data, imputation can be implemented. Currently,
-#' three options are available:
-#' 
-#' @param ... Additional arguments.
-#' Arguments to be passed onto \code{\link[EGAnet]{net.loads}}
+#' @param impute Character (length = 1).
+#' If there are any missing data, then imputation can be implemented. 
+#' Available options:
 #'
 #' \itemize{
 #'
-#' \item{\strong{\code{none}}}
-#' {No imputation is performed. This is the default.}
+#' \item{\code{"none"} --- }
+#' {Default. No imputation is performed}
 #'
-#' \item{\strong{\code{mean}}}
-#' {The "mean" value of the columns are used to replace the missing data.}
+#' \item{\code{"mean"} --- }
+#' {The mean value of each variable is used to replace missing data
+#' for that variable}
 #'
-#' \item{\strong{\code{median}}}
-#' {The "median" value of the columns are used to replace the missing data.}
+#' \item{\code{"median"} --- }
+#' {The median value of each variable is used to replace missing data
+#' for that variable}
 #'
 #' }
+#' 
+#' @param ... Additional arguments to be passed on to 
+#' \code{\link[EGAnet]{net.loads}} and
+#' \code{\link[psych]{factor.scores}}
 #'
 #' @return Returns a list containing:
 #'
-#' \item{unstd.scores}{The unstandardized network scores for each participant
-#' and community (including the overall score)}
-#'
-#' \item{std.scores}{The standardized network scores for each participant
-#' and community (including the overall score)}
-#'
-#' \item{commCor}{Partial correlations between the specified or identified communities}
-#'
-#' \item{loads}{Standardized network loadings for each item in each dimension
-#' (computed using \code{\link[EGAnet]{net.loads}})}
-#'
-#' @details For more details, type \code{vignette("Network_Scores")}
+#' \item{scores}{A list containing the standardized (\code{std.scores})
+#' rotated (\code{rot.scores}) scores. If \code{rotation = NULL}, then
+#' \code{rot.scores} will be \code{NULL}}
+#' 
+#' \item{loadings}{Output from \code{\link[EGAnet]{net.loads}}}
 #'
 #' @examples
 #' # Load data
 #' wmt <- wmt2[,7:24]
 #'
-#' \dontrun{
 #' # Estimate EGA
 #' ega.wmt <- EGA(
 #'   data = wmt,
 #'   plot.EGA = FALSE # No plot for CRAN checks
-#' )}
+#' )
 #'
 #' # Network scores
 #' net.scores(data = wmt, A = ega.wmt)
-#' 
-#' \dontrun{
-#' # Produce Methods section
-#' methods.section(
-#'   ega.wmt,
-#'   stats = "net.scores"
-#' )}
 #'
 #' @references
+#' \strong{Original implementation and simulation for loadings} \cr
 #' Christensen, A. P., & Golino, H. (2021).
 #' On the equivalency of factor and network loadings.
 #' \emph{Behavior Research Methods}, \emph{53}, 1563-1580.
 #' 
-#' Christensen, A. P., Golino, H., & Silvia, P. J. (2020).
-#' A psychometric network perspective on the validity and validation of personality trait questionnaires.
-#' \emph{European Journal of Personality}, \emph{34}, 1095-1108.
-#'
+#' \strong{Preliminary simulation for scores} \cr
 #' Golino, H., Christensen, A. P., Moulder, R., Kim, S., & Boker, S. M. (2021).
 #' Modeling latent topics in social media using Dynamic Exploratory Graph Analysis: The case of the right-wing and left-wing trolls in the 2016 US elections.
 #' \emph{Psychometrika}.
@@ -113,106 +115,103 @@
 #'
 #' @export
 #'
-# Network Scores
-# Updated: 19.04.2023
-# Add rotation: 20.10.2022
+# Network Scores ----
+# Updated 04.08.2023
 net.scores <- function (
-    data, A, wc, rotation = "geominQ",
-    method = "network", impute = "none",
+    data, A, wc, 
+    loading.method = c("BRM", "experimental"),
+    rotation = NULL,
+    scores = c(
+      "Anderson", "Bartlett", "components",
+      "Harman", "network", "tenBerge", "Thurstone"
+    ),
+    loading.structure = c("simple", "full"),
+    impute = c("mean", "median", "none"),
     ...
 )
 {
   
-  # Missing arguments handling
-  if(missing(data)){
-    stop("Argument 'data' is required for analysis")
-  }
+  # All argument errors are handled here or in `net.loads`
   
-  # Set network and memberships
-  if(is(A, "EGA")){
-    wc <- A$wc
-    A <- A$network
-  }else if(is(A, "dynEGA")){
-    wc <- A$dynEGA$wc
-    A <- A$dynEGA$network
-  }else if(missing(A)){
-    stop("Adjacency matrix is required for analysis")
-  }else if(missing(wc)){
-    wc <- rep(1, ncol(data))
+  # Error on:
+  # 1. missing data
+  # 2. symmetric matrix input as data
+  if(missing(data)){ # Check for missing data
+    stop(
+      "Input for 'data' is missing. To compute scores, the original data are necessary",
+      call. = FALSE
+    )
+  }else if(is_symmetric(data)){ # Check for symmetric matrix
+    stop(
+      "Input for 'data' was detected as symmetric. Correlation matrices cannot be used. The original data are required to estimate scores.",
+      call. = FALSE
+    )
   }
   
   # Ensure data is a matrix
-  data <- as.matrix(data)
+  data <- as.matrix(data) 
+  
+  # Get ellipse arguments
+  ellipse <- list(...)
+  
+  # Check for defunct "method"
+  if("method" %in% names(ellipse)){
+    scores <- ellipse$method
+  }
+  
+  # Check for missing arguments (argument, default, function)
+  loading.method <- set_default(loading.method, "brm", net.loads)
+  scores <- set_default(scores, "network", net.scores)
+  loading.structure <- set_default(loading.structure, "simple", net.scores)
+  impute <- set_default(impute, "none", net.scores)
   
   # Perform imputation
   if(impute != "none"){
-    data <- imputation(data = data, impute = impute)
+    data <- imputation(data, impute)
   }
   
-  # Compute network loadings
+  # Compute network loadings (will handle `EGA` objects)
   loadings <- net.loads(
-    A = A, wc = wc, rotation = rotation, 
-    ...
+    A = A, wc = wc, loading.method = loading.method,
+    rotation = rotation, ...
   )
   
-  # Check for method to compute scores
-  score_results <- compute_scores(
-    loadings_object = loadings,
-    data = data, method = method,
-    wc = wc
+  # Return results
+  return(
+    list(
+      scores = compute_scores(
+        loadings, data, scores, loading.structure
+      ),
+      loadings = loadings
+    )
   )
   
-  # Set up results list
-  results <- list(
-    scores = list(
-      std.scores = as.data.frame(scale(score_results$unrotated)),
-      rot.scores = as.data.frame(scale(score_results$rotated))
-    ),
-    loadings = loadings
-  )
-
-  # Class
-  class(results) <- "NetScores"
-  
-  return(results)
 }
 
-# Imputation ----
 #' @noRd
-# Function to handle imputation
+# Imputation ----
+# Updated 04.08.2023
 imputation <- function(data, impute)
 {
   
-  # Determine missing data
+  # Get imputation function
+  impute_values <- switch(
+    impute,
+    "mean" = colMeans(data, na.rm = TRUE),
+    "median" = nvapply(as.data.frame(data), median, na.rm = TRUE)
+  )
+  
+  # Get missing data
   missing_data <- which(is.na(data), arr.ind = TRUE)
   
-  # Check for mean or median imputation
-  if(impute == "mean"){
-    
-    # Compute means
-    variable_impute <- colMeans(data, na.rm = TRUE)
-    
-  }else if(impute == "median"){
-    
-    # Compute medians
-    variable_impute <- apply(data, 2, median, na.rm = TRUE)
-    
-  }
-  
-  # Determine unique columns
-  unique_columns <- unique(missing_data[,"col"])
-  
   # Loop over unique columns
-  for(column in unique_columns){
-    
-    # Obtain target column
-    target_column <- missing_data[,"col"] == column
+  for(column in unique(missing_data[,"col"])){
     
     # Obtain target rows
-    target_rows <- missing_data[,"row"][target_column]
+    target_rows <- missing_data[,"row"][missing_data[,"col"] == column]
     
     # Populate data
-    data[target_rows, column] <- variable_impute[column]
+    data[target_rows, column] <- impute_values[column]
     
   }
   
@@ -221,139 +220,117 @@ imputation <- function(data, impute)
   
 }
 
-# Scores computation ----
 #' @noRd
-# Wrapper to compute scores
-compute_scores <- function(loadings_object, data, method, wc)
-{
+# Zero-out cross-loadings ----
+# Consistent with hierarchical CFA
+# Updated 28.07.2023
+zero_out <- function(loadings, wc, loading.structure){
   
-  # Set methods
-  methods <- c(
-    "Thurstone", "tenBerge", "Anderson",
-    "Bartlett", "Harman", "components",
-    "network"
-  )
-  
-  # Check for method
-  if(!method %in% methods){
+  # Check for loading structure
+  if(loading.structure == "simple"){
     
-    # Set up methods
-    methods_text <- paste0("\"", methods, "\"", collapse = ", ")
+    # Get names of memberships
+    wc_names <- names(wc)
     
-    # Send error
-    stop(
-      paste0(
-        "Method \"", method, "\" in not available. \n",
-        "Current options include: ",
-        methods_text
-      )
-    )
+    # Get loadings names
+    loadings_names <- dimnames(loadings)[[2]]
+    
+    # Loop over unique memberships
+    for(membership in unique(wc)){
+      
+      # Set cross-loadings to zero
+      loadings[
+        wc_names[wc == membership],
+        loadings_names != membership
+      ] <- 0
+      
+    }
     
   }
   
+  # Return loadings
+  return(loadings)
+  
+}
+
+#' @noRd
+# Scores computation ----
+# Updated 04.08.2023
+compute_scores <- function(
+    loadings, data, scores, loading.structure
+)
+{
+  
   # Method must exist, so continue
-  if(method == "network"){
+  if(scores == "network"){
     
     # Compute unrotated scores
     unrotated <- network_scores(
-      loads = loadings_object$std,
-      data = data
+      data = data,
+      loads = zero_out(
+        loadings$std, attr(loadings, "membership")$wc,
+        loading.structure
+      )
     )
     
-    # Compute rotated scores
-    rotated <- network_scores(
-      loads = loadings_object$rotated$loadings,
-      data = data
-    )
+    # Compute rotated scores (if available)
+    if(!is.null(loadings$rotated)){
+      rotated <- network_scores(
+        data = data,
+        loads = zero_out(
+          loadings$rotated$loadings,
+          attr(loadings, "membership")$wc,
+          loading.structure
+        )
+      )
+    }else{rotated <- NULL}
     
   }else{
+    
+    # Switch lowercase method back to appropriate case
+    scores <- switch(
+      scores,
+      "anderson" = "Anderson", 
+      "bartlett" = "Bartlett",
+      "components" = "components",
+      "harman" = "Harman", 
+      "tenberge" = "tenBerge",
+      "thurstone" = "Thurstone"
+    )
     
     # Compute unrotated scores
     unrotated <- psych::factor.scores(
       x = data,
-      f = loadings_object$std,
-      method = method
+      f = loadings$std,
+      method = scores
     )$scores
     
-    # Compute rotated scores
-    rotated <- psych::factor.scores(
-      x = data,
-      f = loadings_object$rotated$loadings,
-      Phi = loadings_object$rotated$Phi,
-      method = method
-    )$scores
+    # Compute rotated scores (if available)
+    if(!is.null(loadings$rotated)){
+      rotated <- psych::factor.scores(
+        x = data,
+        f = loadings$rotated$loadings,
+        Phi = loadings$rotated$Phi,
+        method = scores
+      )$scores
+    }else{rotated <- NULL}
     
   }
   
-  # Set up results list
-  results <- list(
-    unrotated = unrotated,
-    rotated = rotated
-  )
-  
   # Return scores
-  return(results)
+  return(
+    list(
+      std.scores = unrotated,
+      rot.scores = rotated
+    )
+  )
   
 }
 
-# Network scores computation ----
 #' @noRd
-# Function to compute network scores
-network_scores <- function(loads, data)
+# Network scores computation ----
+# Updated 24.07.2023
+network_scores <- function(data, loads)
 {
-  
-  # Initialize matrix for network scores
-  scores <- matrix(
-    NA, nrow = nrow(data),
-    ncol = ncol(loads)
-  )
-  
-  # Reorder data to match loadings
-  data <- data[,row.names(loads)]
-  
-  # Ensure data is scaled
-  # Also automatically converts to a matrix
-  data <- apply(data, 2, scale)
-  
-  # Multiply with data for scores
-  scores <- data %*% loads
-  
-  # Add column names
-  colnames(scores) <- colnames(loads)
-
-  # REPLACED BY MATRIX COMPUTATIONS
-  
-  # # Loop over communities
-  # for(i in 1:ncol(loads)){
-  #   
-  #   # Obtain target loadings
-  #   target_loadings <- loads[,i]
-  #   
-  #   # Identify which loadings which are not zero
-  #   non_zero <- target_loadings != 0
-  #   
-  #   # Obtain data for non-zero loadings
-  #   non_zero_loadings <- target_loadings[non_zero]
-  #   non_zero_data <- data[,non_zero]
-  #   
-  #   # Obtain standard deviations
-  #   standard_devs <- apply(non_zero_data, 2, sd, na.rm = TRUE)
-  #   
-  #   # Obtain relative weight
-  #   relative <- non_zero_loadings / standard_devs
-  #   relative_weight <- relative / sum(abs(relative), na.rm = TRUE)
-  #   
-  #   # Multiple by data
-  #   score <- as.vector( # Ensure vector
-  #     colSums(t(non_zero_data) * relative_weight, na.rm = FALSE)
-  #   )
-  #   
-  #   # Add to matrix
-  #   scores[,i] <- score
-  # 
-  # }
-  
-  # Return scores
-  return(scores)
-  
+  return(scale(data) %*% loads[dimnames(data)[[2]],])
 }

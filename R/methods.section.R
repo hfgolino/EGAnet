@@ -91,7 +91,7 @@
 #' 
 #' @importFrom utils packageVersion browseURL
 #'
-#' @export
+#' @noRd
 #'
 # Methods Section----
 # Updated 24.03.2021

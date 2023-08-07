@@ -5,17 +5,16 @@
 \alias{ega.wmt}
 \title{\code{\link[EGAnet]{EGA}} Network of \code{\link[EGAnet]{wmt2}}Data}
 \format{
-A 17 x 17 adjacency matrix
+A list with 8 objects (see \strong{Value} in \code{\link[EGAnet]{EGA}})
 }
 \usage{
 data(ega.wmt)
 }
 \description{
-An \code{\link[EGAnet]{EGA}} using the \code{"glasso"} model of the
-Wiener Matrizen-Test 2 (WMT-2)
+\code{\link[EGAnet]{EGA}} results from \code{ega.wmt <- EGA(wmt2[,7:24])}
+for the Wiener Matrizen-Test (WMT-2)
 }
 \examples{
 data("ega.wmt")
-
 }
 \keyword{datasets}

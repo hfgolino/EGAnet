@@ -1,15 +1,146 @@
+Changes in version 2.0.0
+
+o MAJOR REFACTOR: the update to version 2.0.0 includes many major changes that are designed to improve the speed, reliability, and reproducibility of {EGAnet}. The goal of these changes are to eliminate common errors and streamline the code in the package to prevent future error cases. There are several function additions that are provided to facilitate modular use of the {EGAnet} package
+
+o INTERNALS: function-specific internal functions and S3methods are now located in their respective .R files rather than elsewhere (e.g., "utils-EGAnet.R")
+
+o SWAP: internal script usage of "utils-EGAnet.R" depracated for "helper.R" functions that are used across the package (no visible changes for the user)
+
+o NOTE: default objective function for Leiden algorithm is set to "modularity"
+
+o NOTE: default for Louvain unidimensional method is set to single-shot *unless* argument "consensus.method" or "consensus.iter" is specified
+
+o ADD: stricter `*apply` functions that are roughly equivalent to `*apply` but have stricter inputs/outputs (uses `vapply` as foundation; often, slightly faster)
+
+o ADD: `community.consensus` to apply the Consensus Clustering approach introduced by Lancichnetti & Fortunato (2012). Currently only available for the Louvain algorithm
+
+o ADD: `community.detection` to apply community detection algorithms as a standalone function
+
+o ADD: convenience function to convert an {igraph} object to a standard matrix (`igraph2matrix`)
+
+o ADD: `modularity` to compute standard (absolute values) and signed modularity (implemented in C)
+
+o ADD: `polychoric.matrix` to compute categorical correlations (implemented in C); handles missing data ("pairwise" or "listwise") as well as empty cells in the joint frequency table (see documentation: `?polychoric.matrix`)
+
+o ADD: `auto.correlate` now computes all correlations internally and no longer depends on external functions; categorical correlations are C based and bi/polyserial correlations are a simplified and vectorized version of {polycor}'s `polyserial`; substantial computational gains (between 10-25x faster than previous use of {qgraph}'s `cor_auto`)
+
+o ADD: `network.estimation` to handle all network estimation in {EGAnet}; *includes* Bayesian GGM from {BGGM} for more seamless incorporation of BEGA
+
+o ADD: `community.unidimensional` to apply different unidimensional community detection approaches; makes unidimensional community detection more modular and flexible
+
+o ADD: basic (internal) function to handle all network plots to keep changes centralized to a single function; extends flexbility to handle all {GGally}'s `ggnet2` arguments
+
+o ADD: implemented reproducible parametric bootstrapping and random sampling (see <https://github.com/hfgolino/EGAnet/wiki/Reproducibility-and-PRNG> for more details)
+
+o ADD: implemented reproducible resampling bootstrapping and random sampling (see <https://github.com/hfgolino/EGAnet/wiki/Reproducibility-and-PRNG> for more details)
+
+o ADD: reproducible bootstrapping with seed setting that does *not* affect R's seed and RNG (user's seed will not be affected and will not affected bootstrapping seeds)
+
+o ADD: `community.homogenize` as a core function rather than internal (previously `homogenize.membership`); about 2.5x faster than the original version
+
+o ADD: `convert2tidygraph` for `ggraph` and `tidygraph` support -- thanks to Dominique Makowski!
+
+o ADD: "multilevel" plotting support for `hierEGA` (only used when `scores = "network"` since factor scores don't directly align with EGA detected dimensions)
+
+o ADD: internal functions `shuffle` and `shuffle_replace` to replace `sample` with and without replacement; performed in C and allows seed setting independent of R (about 2-3x faster)
+
+o ADD: xoshiro256++ PRNG for higher quailty random number generation, permutation, and resampling (~2x faster than `runif` and `sample`); based in C
+
+o ADD: Ziggurat method for random normal generation over top xoshiro256++ (2-5x faster than `rnorm`); based in C
+
+o ADD: configural invariance was added to `invariance` (see Details section)
+
+o ADD: `genTEFI` to compute the Generalized Total Entropy Fit Index solely; `tefi` serves as a general function to compute TEFI for all `*EGA` classes
+
+o REMOVE: `signed.louvain` until reproducibility can be sorted
+
+o UPDATE: `EBICglasso.qgraph` and `TMFG` were optimized; `TMFG` is now 2x faster
+
+o UPDATE: `TMFG` can now directly estimate a GGM with the argument 'partial = TRUE'; implements the Local-Global Inversion method from Barfuss et al. (2016)
+
+o UPDATE: switched on "Byte-Compile" (byte-compiles on our end and not when the user installs)
+
+o UPDATE: `EGA.estimate` and `EGA` core functions have been updated for seamless use with more basic functions `network.estimation` and `community.*` functions
+
+o UPDATE: S3method updates for `EGA.estimate` and `EGA` to provide estimation information
+
+o UPDATE: `EGA.fit` updated to be compatiable with all updates to `EGA.estimate` (other optimizations were implemented such as direct communtiy detection application and unique solution finding)
+
+o UPDATE: `tefi` updated with several checks (slightly slower for correlation matrix but much faster with raw data; includes data/matrix checks)
+
+o UPDATE: `entropyFit` uses more effective vectorization (about 5-7x faster)
+
+o UPDATE: `Embed` and `glla` made to be more efficient and includes an internal `glla_setup` function to avoid the same matrix calculations for every participant in a sample for `dynEGA`
+
+o UPDATE: `riEGA` updated to be compatiable with all lower-level updates (slightly faster)
+
+o UPDATE: `wto` updated to be fully vectorized (about 12x faster)
+
+o UPDATE: `totalCor` and `totalCorMat` updated to be fully vectorized (about 10x faster)
+
+o UPDATE: implemented internal `fast.data.frame` for more efficient data frame initialization when all values in data frame are the same
+
+o UPDATE: `bootEGA` allows flexibility to add any arguments from any `EGA*` functions; much faster due to optimizations across all functions ("resampling" is nearly as fast as "parametric")
+
+o UPDATE: support for `EGA.fit` and `riEGA` added to `bootEGA` (support for `hierEGA` will be coming soon...)
+
+o UPDATE: `itemStability` has been updated and runs about 2.5x faster due to `community.homogenize`; S3methods were added; greater flexibility available in plotting but not much support (e.g., error checking) yet
+
+o UPDATE: `dimensionStability` has been updated and maintains speed gains from `itemStability`
+
+o UPDATE: `dynEGA.ind.pop` now calls `dynEGA` with `level = c("individual", "population")`; legacy `dynEGA.ind.pop` class is maintained across ergodicity functions
+
+o UPDATE: `ergoInfo` is about 2x faster
+
+o UPDATE: `jsd` received several internal functions to expedite procedures in `infoCluster` and `jsd.ergoInfo`
+
+o UPDATE: `net.loads` now includes 'loading.method' argument to allow for reproducibility with "BRM" implementation (and version 1.2.3); "experimental" implementation includes rotations alternative signs and cross-loading computation (potential future default)
+
+o UPDATE: `net.scores` is much simpler (internally) and quicker; seamlessly integrates with `net.loads`
+
+o UPDATE: `compare.EGA.plots` is faster, more flexible, and more reliable for comparing two or more plots
+
+o UPDATE: `hierEGA` is faster and has new S3 methods
+
+o UPDATE: S3 plotting for `invariance`
+
+o UPDATE: `hierEGA` + `bootEGA` integration for `itemStability` and `dimensionStability` (includes full S3 methods)
+
+o UPDATE: `UVA` supports legacy of inital conception in Christensen, Golino, and Silvia (EJP, 2020) but will no longer fix bugs related to: manual variable selection, "adapt" or "alpha" methods (warnings will be thrown)
+
+o UPDATE: streamlined `UVA` (about 4x faster); fixed bugs related to reverse coding issues 
+
+o UPDATE: `tefi` now handles all `EGA*` function objects including `hierEGA` which computes generalized TEFI
+
+o UPDATE: documentation for all functions have been thoroughly revised to provide better instruction on how to use functions and their expected inputs
+
+o DEPENDENCY: removed {network} because it is no longer used for plotting; switched {sna} to IMPORTS rather than SUGGESTS
+
+o DEPENDENCY: removed {rstudioapi} from 'Suggests' because it was used in `colortext` and used in the package
+
+o DEPENDENCY: removed {matrixcalc} because it was only used for trace of a matrix (own internal function is used)
+
+o DEPENDENCY: {future} and {future.apply} are used for parallelization (better integration); includes internal function to check for available memory to not break in big data cases
+
+o DEPENDENCY: {progress} and {progressr} are used for progress bars (in parallelization)
+
+o DEPENDENCY: removed {psychTools} from 'Suggests' which was only used in examples
+
+o DEPENDENCY: removed {rmarkdown} from 'Suggests' since it wasn't being used across the package
+
+
 Changes in version 1.2.5.1
 
 o FIX: cross-loading bug in `net.loads` was leading to problems when there were negative cross-loadings
 
 o FIX: added `psych::factor.scores` scoring methods in `net.scores`
 
-o ADDED: C implementation of the Signed Louvain algorithm
+o ADD: `signed.louvain` to estimate the Signed Louvain algorithm (implemented in C)
 
 
 Changes in version 1.2.5
 
-o ADD: `most_common_tefi` method for `*EGA` analyses -- should be more reliable with larger datasets
+o ADD: `most_common_tefi` method for `EGA` analyses
 
 
 Changes in version 1.2.4

@@ -1,143 +1,218 @@
-#' Dynamic EGA
+#' @title Intra- and Inter-individual \code{\link[EGAnet]{dynEGA}}
 #'
-#' @description DynEGA estimates dynamic factors in multivariate time series (i.e. longitudinal data, panel data, intensive longitudinal data) at multiple
-#' time scales, in different levels of analysis: individuals (intraindividual structure) and population (structure of the population).
-#' Exploratory graph analysis is applied in the derivatives estimated using generalized local linear approximation (\code{\link[EGAnet]{glla}}). Instead of estimating factors by modeling how variables are covarying, as in traditional
-#' EGA, dynEGA is a dynamic model that estimates the factor structure by modeling how variables are changing together.
-#' GLLA is a filtering method for estimating derivatives from data that uses time delay embedding and a variant of Savitzky-Golay filtering to accomplish the task.
+#' @description A wrapper function to estimate both intraindividiual
+#' (\code{level = "individual"}) and interindividual (\code{level = "population"})
+#' structures using \code{\link[EGAnet]{dynEGA}}
+#' 
+#' @param data Matrix or data frame.
+#' Participants and variable should be in long format such that
+#' row \emph{t} represents observations for all variables at time point 
+#' \emph{t} for a participant. The next row, \emph{t + 1}, represents
+#' the next measurement occasion for that same participant. The next
+#' participant's data should immediately follow, in the same pattern,
+#' after the previous participant
+#' 
+#' \code{data} should have an ID variable labeled \code{"ID"}; otherwise, it is
+#' assumed that the data represent the population
+#' 
+#' For groups, \code{data} should have a Group variable labeled \code{"Group"};
+#' otherwise, it is assumed that there are no groups in \code{data}
+#' 
+#' Arguments \code{id} and \code{group} can be specified to tell the function
+#' which column in \code{data} it should use as the ID and Group variable, respectively
+#' 
+#' A measurement occasion variable is not necessary and should be \emph{removed}
+#' from the data before proceeding with the analysis
+#' 
+#' @param id Numeric or character (length = 1).
+#' Number or name of the column identifying each individual.
+#' Defaults to \code{NULL}
 #'
-#' @param data A data frame with the variables to be used in the analysis.
-#' The data frame should be in a long format (i.e. observations for the
-#' same individual (for example, individual 1) are placed in order,
-#' from time 1 to time t, followed by the observations from individual 2, also
-#' ordered from time 1 to time t.)
+#' @param n.embed Numeric (length = 1).
+#' Defaults to \code{5}.
+#' Number of embedded dimensions (the number of observations to 
+#' be used in the \code{\link[EGAnet]{Embed}} function). For example,
+#' an \code{"n.embed = 5"} will use five consecutive observations 
+#' to estimate a single derivative
 #'
-#' @param n.embed Integer.
-#' Number of embedded dimensions (the number of observations to be used in the \code{\link[EGAnet]{Embed}} function). For example,
-#' an \code{n.embed = 5} will use five consecutive observations to estimate a single derivative.
+#' @param tau Numeric (length = 1).
+#' Defaults to \code{1}.
+#' Number of observations to offset successive embeddings in 
+#' the \code{\link[EGAnet]{Embed}} function.
+#' Generally recommended to leave "as is"
 #'
-#' @param tau Integer.
-#' Number of observations to offset successive embeddings in the \code{\link[EGAnet]{Embed}} function. A tau of one uses adjacent observations.
-#' Default is \code{tau = 1}.
-#'
-#' @param delta Integer.
-#' The time between successive observations in the time series.
-#' Default is \code{delta = 1}.
-#'
-#' @param id Numeric.
-#' Number of the column identifying each individual.
-#'
-#'
-#' @param use.derivatives Integer.
-#' The order of the derivative to be used in the EGA procedure. Default to 1.
-#'
-#' @param corr Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
-#' Current options are:
-#'
+#' @param delta Numeric (length = 1).
+#' Defaults to \code{1}.
+#' The time between successive observations in the time series (i.e, lag).
+#' Generally recommended to leave "as is"
+#' 
+#' @param use.derivatives Numeric (length = 1).
+#' Defaults to \code{1}.
+#' The order of the derivative to be used in the analysis.
+#' Available options:
+#' 
 #' \itemize{
-#'
-#' \item{\strong{\code{cor_auto}}}
-#' {Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
-#' \code{\link[qgraph]{qgraph}}}.
-#'
-#' \item{\strong{\code{pearson}}}
-#' {Computes Pearson's correlation coefficient using the pairwise complete observations via
-#' the \code{\link[stats]{cor}}} function.
-#'
-#' \item{\strong{\code{spearman}}}
-#' {Computes Spearman's correlation coefficient using the pairwise complete observations via
-#' the \code{\link[stats]{cor}}} function.
+#' 
+#' \item{\code{0}}
+#' {No derivatives; consistent with moving average}
+#' 
+#' \item{\code{1}}
+#' {First-order derivatives; interpretated as "velocity" or 
+#' rate of change over time}
+#' 
+#' \item{\code{2}}
+#' {Second-order derivatives; interpreted as "acceleration" or
+#' rate of the rate of change over time}
+#' 
 #' }
-#'
-#' @param model Character.
-#' A string indicating the method to use. Defaults to \code{glasso}.
-#' Current options are:
-#'
+#' 
+#' Generally recommended to leave "as is"
+#' 
+#' @param corr Character (length = 1).
+#' Method to compute correlations.
+#' Defaults to \code{"auto"}.
+#' Available options:
+#' 
 #' \itemize{
-#'
-#' \item{\strong{\code{glasso}}}
-#' {Estimates the Gaussian graphical model using graphical LASSO with
-#' extended Bayesian information criterion to select optimal regularization parameter.
-#' This is the default method}
-#'
-#' \item{\strong{\code{TMFG}}}
-#' {Estimates a Triangulated Maximally Filtered Graph}
-#'
+#' 
+#' \item{\code{"auto"} --- }
+#' {Automatically computes appropriate correlations for
+#' the data using Pearson's for continuous, polychoric for ordinal,
+#' tetrachoric for binary, and polyserial/biserial for ordinal/binary with
+#' continuous. To change the number of categories that are considered
+#' ordinal, use \code{ordinal.categories}
+#' (see \code{\link[EGAnet]{polychoric.matrix}} for more details)}
+#' 
+#' \item{\code{"pearson"} --- }
+#' {Pearson's correlation is computed for all variables regardless of
+#' categories}
+#' 
+#' \item{\code{"spearman"} --- }
+#' {Spearman's rank-order correlation is computed for all variables
+#' regardless of categories}
+#' 
 #' }
-#'
-#' @param model.args List.
-#' A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
-#' or \code{\link[EGAnet]{TMFG}}
-#'
-#' @param algorithm A string indicating the algorithm to use or a function from \code{\link{igraph}}
+#' 
+#' For other similarity measures, compute them first and input them
+#' into \code{data} with the sample size (\code{n})
+#' 
+#' @param na.data Character (length = 1).
+#' How should missing data be handled?
+#' Defaults to \code{"pairwise"}.
+#' Available options:
+#' 
+#' \itemize{
+#' 
+#' \item{\code{"pairwise"} --- }
+#' {Computes correlation for all available cases between
+#' two variables}
+#' 
+#' \item{\code{"listwise"} --- }
+#' {Computes correlation for all complete cases in the dataset}
+#' 
+#' }
+#' 
+#' @param model Character (length = 1).
+#' Defaults to \code{"glasso"}.
+#' Available options:
+#' 
+#' \itemize{
+#' 
+#' \item{\code{"BGGM"} --- }
+#' {Computes the Bayesian Gaussian Graphical Model.
+#' Set argument \code{ordinal.categories} to determine
+#' levels allowed for a variable to be considered ordinal.
+#' See \code{\link[BGGM]{estimate}} for more details}
+#' 
+#' \item{\code{"glasso"} --- }
+#' {Computes the GLASSO with EBIC model selection.
+#' See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details}
+#' 
+#' \item{\code{"TMFG"} --- }
+#' {Computes the TMFG method.
+#' See \code{\link[EGAnet]{TMFG}} for more details}
+#' 
+#' }
+#' 
+#' @param algorithm Character or 
+#' \code{\link{igraph}} \code{cluster_*} function (length = 1).
 #' Defaults to \code{"walktrap"}.
-#' Current options are:
-#'
+#' Three options are listed below but all are available
+#' (see \code{\link[EGAnet]{community.detection}} for other options):
+#' 
 #' \itemize{
 #'
-#' \item{\strong{\code{walktrap}}}
-#' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
+#' \item{\code{"leiden"} --- }
+#' {See \code{\link[igraph]{cluster_leiden}} for more details}
 #' 
-#' \item{\strong{\code{leiden}}}
-#' {Computes the Leiden algorithm using \code{\link[igraph]{cluster_leiden}}.
-#' Defaults to \code{objective_function = "modularity"}}
-#'
-#' \item{\strong{\code{louvain}}}
-#' {Computes the Louvain algorithm using \code{\link[igraph]{cluster_louvain}}}
-#'
+#' \item{\code{"louvain"} --- }
+#' {By default, \code{"louvain"} will implement the Louvain algorithm using 
+#' the consensus clustering method (see \code{\link[EGAnet]{community.consensus}} 
+#' for more information). This function will implement
+#' \code{consensus.method = "most_common"} and \code{consensus.iter = 1000} 
+#' unless specified otherwise}
+#' 
+#' \item{\code{"walktrap"} --- }
+#' {See \code{\link[igraph]{cluster_walktrap}} for more details}
+#' 
 #' }
 #'
-#' @param algorithm.args List.
-#' A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
-#' or some other community detection algorithm function (see examples)
-#' 
-#' @param uni.method Character.
+#' @param uni.method Character (length = 1).
 #' What unidimensionality method should be used? 
-#' Defaults to \code{"LE"}.
-#' Current options are:
+#' Defaults to \code{"louvain"}.
+#' Available options:
 #' 
 #' \itemize{
 #'
-#' \item{\strong{\code{expand}}}
-#' {Expands the correlation matrix with four variables correlated .50.
+#' \item{\code{"expand"} --- }
+#' {Expands the correlation matrix with four variables correlated 0.50.
 #' If number of dimension returns 2 or less in check, then the data 
 #' are unidimensional; otherwise, regular EGA with no matrix
-#' expansion is used. This is the method used in the Golino et al. (2020)
-#' \emph{Psychological Methods} simulation.}
+#' expansion is used. This method was used in the Golino et al.'s (2020)
+#' \emph{Psychological Methods} simulation}
 #'
-#' \item{\strong{\code{LE}}}
-#' {Applies the Leading Eigenvalue algorithm (\code{\link[igraph]{cluster_leading_eigen}})
+#' \item{\code{"LE"} --- }
+#' {Applies the Leading Eigenvector algorithm
+#' (\code{\link[igraph]{cluster_leading_eigen}})
 #' on the empirical correlation matrix. If the number of dimensions is 1,
-#' then the Leading Eigenvalue solution is used; otherwise, regular EGA
-#' is used. This is the final method used in the Christensen, Garrido,
-#' and Golino (2021) simulation.}
+#' then the Leading Eigenvector solution is used; otherwise, regular EGA
+#' is used. This method was used in the Christensen et al.'s (2023) 
+#' \emph{Behavior Research Methods} simulation}
 #' 
-#' \item{\strong{\code{louvain}}}
+#' \item{\code{"louvain"} --- }
 #' {Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
-#' on the empirical correlation matrix using a resolution parameter = 0.95.
-#' If the number of dimensions is 1, then the Louvain solution is used; otherwise,
-#' regular EGA is used. This method was validated in the Christensen (2022) simulation.}
+#' on the empirical correlation matrix. If the number of dimensions is 1, 
+#' then the Louvain solution is used; otherwise, regular EGA is used. 
+#' This method was validated Christensen's (2022) \emph{PsyArXiv} simulation.
+#' Consensus clustering can be used by specifying either
+#' \code{"consensus.method"} or \code{"consensus.iter"}}
 #' 
 #' }
-#'
-#' @param ncores Numeric.
+#' 
+#' @param ncores Numeric (length = 1).
 #' Number of cores to use in computing results.
-#' Defaults to \code{parallel::detectCores() / 2} or half of your
+#' Defaults to \code{ceiling(parallel::detectCores() / 2)} or half of your
 #' computer's processing power.
-#' Set to \code{1} to not use parallel computing.
-#' Recommended to use maximum number of cores minus one
+#' Set to \code{1} to not use parallel computing
 #'
 #' If you're unsure how many cores your computer has,
-#' then use the following code: \code{parallel::detectCores()}
-#' 
-#' @param progress Boolean.
+#' then type: \code{parallel::detectCores()}
+#'
+#' @param verbose Boolean (length = 1).
 #' Should progress be displayed?
 #' Defaults to \code{TRUE}.
-#' For Windows, \code{FALSE} is about 2x faster
+#' Set to \code{FALSE} to not display progress
 #'
-#' @param ... Additional arguments.
-#' Used for deprecated arguments from previous versions of \code{\link{EGA}}
-#'
+#' @param ... Additional arguments to be passed on to
+#' \code{\link[EGAnet]{auto.correlate}},
+#' \code{\link[EGAnet]{network.estimation}},
+#' \code{\link[EGAnet]{community.detection}},
+#' \code{\link[EGAnet]{community.consensus}}, and
+#' \code{\link[EGAnet]{EGA}}
+#' 
+#' @return Same output as \code{\link{EGAnet}{dynEGA}} returning list
+#' objects for \code{level = "individual"} and \code{level = "population"}
+#' 
 #' @author Hudson Golino <hfg9s at virginia.edu>
 #'
 #' @examples
@@ -151,268 +226,36 @@
 #'   delta = 1, id = 25, use.derivatives = 1,
 #'   ncores = 2, corr = "pearson"
 #' )}
+#' 
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
 #'
 #' @export
 #'
-# Updated 28.08.2022
-dynEGA.ind.pop <- function(data, n.embed, tau = 1, delta = 1,
-                           id = NULL,
-                           use.derivatives = 1,
-                           model = c("glasso", "TMFG"), model.args = list(),
-                           algorithm = c("walktrap", "leiden", "louvain"), algorithm.args = list(),
-                           corr = c("cor_auto", "pearson", "spearman"),
-                           uni.method = c("expand", "LE", "louvain"),
-                           ncores, progress = TRUE, ...){
+# Intra- and Interindividual dynEGA
+# Updated 27.07.2023
+dynEGA.ind.pop <- function(
+  # `dynEGA` arguments
+  data,  id = NULL,
+  n.embed = 5, tau = 1, delta = 1, use.derivatives = 1,
+  # `EGA` arguments
+  corr = c("auto", "pearson", "spearman"),
+  na.data = c("pairwise", "listwise"),
+  model = c("BGGM", "glasso", "TMFG"),  
+  algorithm = c("leiden", "louvain", "walktrap"),
+  uni.method = c("expand", "LE", "louvain"),
+  ncores, verbose = TRUE, ...
+){
 
-  # Get additional arguments
-  add.args <- list(...)
-
-  # Check if steps has been input as an argument
-  if("steps" %in% names(add.args)){
-
-    # Give deprecation warning
-    warning(
-      paste(
-        "The 'steps' argument has been deprecated in all EGA functions.\n\nInstead use: algorithm.args = list(steps = ", add.args$steps, ")",
-        sep = ""
-      )
-    )
-
-    # Handle the number of steps appropriately
-    algorithm.args$steps <- add.args$steps
-  }
-
-
-  # MISSING ARGUMENTS HANDLING
-  if(missing(id))
-  {stop("The 'id' argument is missing! \n The number of the column identifying each individual must be provided!")
-  }else{id <- id}
-
-  if(missing(corr))
-  {corr <- "cor_auto"
-  }else{corr <- match.arg(corr)}
-
-  if(missing(ncores))
-  {ncores <- ceiling(parallel::detectCores() / 2)
-  }else{ncores}
-
-  # # Setting the order:
-  #
-  # order = 2
-  #
-  # # ### Spliting by ID:
-  #
-  # #number of cases
-  # cases <- unique(data[,id])
-  #
-  # #initialize data list
-  # datalist <- vector("list", length = length(cases))
-  # datalist <- split(data[,-c(id)],data[,id])
-
-  # Remove group
-  if("group" %in% tolower(colnames(data))){
-    datalist <- data[,-which(tolower(colnames(data)) == "group")]
-  }else{
-    datalist <- data
-  }
-
-  # Perform dynEGA for individuals first
-  ega_individuals <- dynEGA(
-    data = datalist, n.embed = n.embed,
-    tau = tau, delta = delta, level = "individual",
-    id = id, use.derivatives = use.derivatives,
-    model = model, model.args = model.args,
-    algorithm = algorithm, algorithm.args = algorithm.args,
-    corr = corr, uni.method = uni.method, ncores = ncores,
-    progress = progress
-  )
-
-  # Stack derivatives
-  derivatives_df <- ega_individuals$Derivatives$EstimatesDF
-
-  # Obtain proper derivatives
-  derivatives_df <- derivatives_df[,grep(
-    paste("Ord", use.derivatives, sep = ""),
-    colnames(derivatives_df)
-  )]
-
-  # Message user for population structure
-  message("Level: Population...", appendLF = FALSE)
-
-  # Estimate population structure
-  ega_pop <- suppressWarnings(
-    EGA(
-      derivatives_df,
-      model = model, model.args = model.args,
-      algorithm = algorithm, algorithm.args = algorithm.args,
-      corr = corr, uni.method = uni.method, plot.EGA = FALSE
+  # Use `dynEGA`
+  return(
+    dynEGA(
+      data = data, id = id, n.embed = n.embed, tau = tau,
+      delta = delta, use.derivatives = use.derivatives,
+      level = c("population", "individual"),
+      corr = corr, na.data = na.data,
+      model = model, algorithm = algorithm, uni.method = uni.method,
+      ncores = ncores, verbose = verbose, ...
     )
   )
-
-  # Set up EGA population object
-  ega_population <- list()
-  ega_population$Derivatives <- ega_individuals$Derivatives
-  ega_population$dynEGA <- ega_pop
-  ega_population$dynEGA$Methods <- ega_individuals$dynEGA$Methods
-
-  # Change class
-  class(ega_population) <- "dynEGA"
-
-  # ega_population <- dynEGA(
-  #   data = datalist, n.embed = n.embed,
-  #   tau = tau, delta = delta, level = "population",
-  #   id = id, use.derivatives = use.derivatives,
-  #   model = model, model.args = model.args,
-  #   algorithm = algorithm, algorithm.args = algorithm.args,
-  #   corr = corr, ncores = ncores
-  # )
-
-  # # Derivatives list
-  # derivlist <- ega_population$Derivatives$Estimates
-  #
-  # # Obtain `use.derivatives` to get individual data
-  # data.individuals <- lapply(derivlist, function(x){
-  #   x[,grep(
-  #     paste("Ord", use.derivatives, sep = ""),
-  #     colnames(x)
-  #   )]
-  # })
-  #
-  # # ### Estimating the derivatives using GLLA:
-  # #
-  # # #let user know derivatives estimation has started
-  # # message("\nComputing derivatives using GLLA...\n", appendLF = FALSE)
-  # #
-  # # #initialize derivatives list
-  # # derivlist <- list()
-  # #
-  # # #Parallel processing
-  # # cl <- parallel::makeCluster(ncores)
-  # #
-  # # #Export variables
-  # # parallel::clusterExport(cl = cl,
-  # #                         varlist = c("datalist", "derivlist", "cases"),
-  # #                         envir=environment())
-  # #
-  # # # GLLA Estimation:
-  # # glla.multi <- function(data, n.embed = n.embed, tau = tau, delta = delta, order = order){
-  # #   order.deriv <- paste0("Ord",seq(from = 0, to = order))
-  # #   data.est <- vector("list")
-  # #   for(i in 1:ncol(data)){
-  # #     data.est[[i]] <- as.data.frame(EGAnet::glla(data[,i], n.embed = n.embed, tau = tau, delta = delta, order = order))
-  # #     data.est[[i]] <- as.data.frame(data.est[[i]])
-  # #   }
-  # #   data.est2 <- vector("list")
-  # #   for(i in 0:order+1){
-  # #     data.est2[[i]] <- sapply(data.est, "[[", i)
-  # #   }
-  # #
-  # #   data.estimates <- data.frame(Reduce(cbind, data.est2))
-  # #   colnames(data.estimates) <- paste(colnames(data), rep(order.deriv, each = ncol(data)), sep = ".")
-  # #   return(data.estimates)
-  # # }
-  # #
-  # # #Compute derivatives per ID
-  # # derivlist <- pbapply::pblapply(X = datalist, cl = cl,
-  # #                                FUN = glla.multi,
-  # #                                n.embed = n.embed, tau = tau, delta = delta, order = order)
-  # #
-  # # ### Estimating the dimensionality structure using EGA:
-  # #
-  # # message("Estimating the dimensionality structure using EGA...\n", appendLF = FALSE)
-  # #
-  # # for(i in 1:length(cases)){
-  # #   derivlist[[i]]$ID <- data[which(data[,id]==cases[i]),id][-c(1:(n.embed-1))]
-  # # }
-  # #
-  # # names(derivlist) <- paste0("ID", cases)
-  # # # Population Level:
-  # # message("Level: Population...\n", appendLF = FALSE)
-  # #
-  # # data.all <- data.frame(Reduce(rbind, derivlist))
-  # #
-  # # # EGA Part
-  # #
-  # # if(use.derivatives == 0){
-  # #   ega1 <- EGA(data = data.all[,1:ncol(data[,-c(id)])],
-  # #                        model = model, model.args = model.args,
-  # #                        algorithm = algorithm, algorithm.args = algorithm.args,
-  # #                        corr = corr)}
-  # # if(use.derivatives == 1){
-  # #   ega1 <- EGA(data = data.all[,(ncol(data[,-c(id)])+1):(ncol(data[,-c(id)])*2)],
-  # #                        model = model, model.args = model.args,
-  # #                        algorithm = algorithm, algorithm.args = algorithm.args,
-  # #                        corr = corr)}
-  # # if(use.derivatives==2){
-  # #   init <- (ncol(data[,-c(id)])*2)+1
-  # #   cols <- seq(from = init, to = init+ncol(data[,-c(id)])-1)
-  # #   ega1 <- EGA(data = data.all[,cols],
-  # #                        model = model, model.args = model.args,
-  # #                        algorithm = algorithm, algorithm.args = algorithm.args,
-  # #                        corr = corr)}
-  # #
-  # # parallel::stopCluster(cl)
-  # #
-  # # # Level: Individual (intraindividual structure):
-  # # message("Level: Individual (Intraindividual Structure)...\n", appendLF = FALSE)
-  # #
-  # # data.all <- data.frame(Reduce(rbind, derivlist))
-  # #
-  # # # Which derivatives to use:
-  # # if(use.derivatives == 0){
-  # #   colstouse <- colnames(data.all[,1:ncol(data[,-c(id)])])}
-  # # if(use.derivatives == 1){
-  # #   colstouse <- colnames(data.all[,(ncol(data[,-c(id)])+1):(ncol(data[,-c(id)])*2)])}
-  # # if(use.derivatives==2){
-  # #   init <- (ncol(data[,-c(id)])*2)+1
-  # #   cols <- seq(from = init, to = init+ncol(data[,-c(id)])-1)
-  # #   colstouse <- colnames(data.all[,cols])
-  # # }
-  # #
-  # # #initialize data list
-  # # data.individuals <- vector("list", length = length(cases))
-  # # data.individuals <- split(data.all[,colstouse],data.all$ID)
-  # # names(data.individuals) <- paste0("ID", cases)
-  #
-  # message("Level: Individual (Intraindividual Structure)...", appendLF = FALSE)
-  #
-  # #Parallel processing
-  # cl <- parallel::makeCluster(ncores)
-  #
-  # #Export variables
-  # # parallel::clusterExport(cl = cl,
-  # #                         varlist = c("data.individuals", "cases"),
-  # #                         envir=environment())
-  #
-  # # EGA estimates per individual:
-  # ega.list.individuals <- list()
-  #
-  # ega.list.individuals <- pbapply::pblapply(X = data.individuals, cl = cl,
-  #                                           FUN = EGA,
-  #                                           model = model, model.args = model.args,
-  #                                           algorithm = algorithm, algorithm.args = algorithm.args,
-  #                                           corr = corr)
-  # parallel::stopCluster(cl)
-  #
-  # #let user know results have been computed
-  # message("done", appendLF = TRUE)
-
-  # Results:
-  results <- vector("list")
-  results$Derivatives <- ega_individuals$Derivatives # vector("list")
-  # results$Derivatives$Estimates <- derivlist
-  # results$Derivatives$EstimatesDF <- data.all
-  results$dynEGA.pop <- ega_population # ega1
-  results$dynEGA.ind <- ega_individuals # ega.list.individuals
-  # if(use.derivatives == 0){
-  #   results$data.all <- data.all[,1:ncol(data[,-c(id)])]}
-  # if(use.derivatives == 1){
-  #   results$data.all <- data.all[,(ncol(data[,-c(id)])+1):(ncol(data[,-c(id)])*2)]}
-  # if(use.derivatives == 2){
-  #   results$data.all <- data.all[,cols]}
-  results$data.all <- derivatives_df
-  results$data.individuals <- ega_individuals$Derivatives$Estimates # data.individuals
-  results$model <- model
-  class(results) <- "dynEGA.ind.pop"
-  return(results)
+  
 }

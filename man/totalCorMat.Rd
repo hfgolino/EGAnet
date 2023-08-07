@@ -8,26 +8,27 @@ totalCorMat(data)
 }
 \arguments{
 \item{data}{Matrix or data frame.
-Variables to be used in the analysis}
+Should consist only of variables to be used in the analysis}
 }
 \value{
-Returns a square matrix with pairwise total correlations
+Returns a symmetric matrix with pairwise total correlations
 }
 \description{
-Computes the pairwise total correlation for a dataset
+Computes the pairwise total correlation
+(\code{\link[EGAnet]{totalCor}}) for a dataset
 }
 \examples{
-\dontrun{
-# Compute total correlation
-totalCorMat(wmt2[,7:24])}
+# Compute total correlation matrix
+totalCorMat(wmt2[,7:24])
 
 }
 \references{
+\strong{Formalization of total correlation} \cr
 Watanabe, S. (1960).
 Information theoretical analysis of multivariate correlation.
 \emph{IBM Journal of Research and Development} \emph{4}, 66-82.
 
-# Implementation
+\strong{Applied implementation} \cr
 Felix, L. M., Mansur-Alves, M., Teles, M., Jamison, L., & Golino, H. (2021).
 Longitudinal impact and effects of booster sessions in a cognitive training program for healthy older adults.
 \emph{Archives of Gerontology and Geriatrics}, \emph{94}, 104337.

@@ -1,22 +1,24 @@
-#' Item Stability Statistics from \code{\link[EGAnet]{bootEGA}}
+#' @title Item Stability Statistics from \code{\link[EGAnet]{bootEGA}}
 #'
 #' @description Based on the \code{\link[EGAnet]{bootEGA}} results, this function
-#' computes and plots the number of times an item (variable) is estimated
-#' in the same factor/dimension as originally estimated by \code{\link[EGAnet]{EGA}} (\code{item.replication}).
-#' The output also contains each item's replication frequency (i.e., proportion of
-#' bootstraps that an item appeared in each dimension; \code{item.dim.rep}) as well as the average
-#' network loading for each item in each dimension (\code{item.loadings}).
+#' computes and plots the number of times an variable is estimated
+#' in the same dimension as originally estimated by an empirical
+#' \code{\link[EGAnet]{EGA}} structure or a theoretical/input structure.
+#' The output also contains each variable's replication frequency (i.e., proportion of
+#' bootstraps that a variable appeared in each dimension
 #'
 #' @param bootega.obj A \code{\link[EGAnet]{bootEGA}} object
 #'
-#' @param IS.plot Should the plot be produced for \code{item.replication}?
-#' If \code{TRUE}, then a plot for the \code{item.replication} output will be produced.
+#' @param IS.plot Boolean (length = 1).
+#' Should the plot be produced for \code{item.replication}?
 #' Defaults to \code{TRUE}
 #'
-#' @param structure User specified dimensionality structure.
+#' @param structure Numeric (length = number of variables).
+#' A theoretical or pre-defined structure.
+#' Defaults to \code{NULL} or the empirical \code{\link[EGAnet]{EGA}}
+#' result in the \code{bootega.obj}
 #'
-#' @param ... Additional arguments.
-#' Used for deprecated arguments from previous versions of \code{\link[EGAnet]{itemStability}}
+#' @param ... Deprecated arguments from previous versions of \code{\link[EGAnet]{itemStability}}
 #'
 #' @return Returns a list containing:
 #'
@@ -24,42 +26,38 @@
 #'
 #' \itemize{
 #'
-#' \item{\strong{\code{empirical}}}
-#' {The empirical memberships from the empirical \code{\link[EGAnet]{EGA}} result}
+#' \item{\code{empirical} --- }
+#' {A vector of the empirical memberships from the empirical \code{\link[EGAnet]{EGA}} result}
 #'
-#' \item{\strong{\code{unique}}}
-#' {The unique dimensions from the empirical \code{\link[EGAnet]{EGA}} result}
-#'
-#' \item{\strong{\code{bootstrap}}}
-#' {The memberships from the replicate samples in the \code{\link[EGAnet]{bootEGA}} results}
-#'    }
+#' \item{\code{bootstrap} --- }
+#' {A matrix of the homogenized memberships from the replicate samples in 
+#' the \code{\link[EGAnet]{bootEGA}} results}
+#' 
+#' \item{\code{structure} --- }
+#' {A vector of the structure used in the analysis. If \code{structure = NULL}, then this output
+#' will be the same as \code{empirical}}
+#'    
+#' }
+#' 
 #' }
 #'
 #' \item{item.stability}{A list containing:
 #'
 #' \itemize{
 #'
-#' \item{\strong{\code{empirical.dimensions}}}
-#' {The proportion of times each item replicated
-#' within the empirical \code{\link[EGAnet]{EGA}} defined dimension.
-#' This EGA result is defined using the input from
-#' \code{\link[EGAnet]{bootEGA}}}
+#' \item{\code{empirical.dimensions} --- }
+#' {A vector of the proportion of times each item replicated
+#' within the structure defined by \code{structure}}
 #'
-#' \item{\strong{\code{all.dimensions}}}
-#' {The proportion of times each item replicated
-#' in each of the empirical \code{\link[EGAnet]{EGA}} defined dimensions.
-#' This EGA result is defined using the input from
-#' \code{\link[EGAnet]{bootEGA}}}
+#' \item{\code{all.dimensions} --- }
+#' {A matrix of the proportion of times each item replicated
+#' in each of the \code{structure} defined dimensions.}
 #'
-#'
-#'    }
+#' }
+#' 
 #' }
 #'
-#' \item{plot}{A plot of the number of times each item
-#' replicated within the empirical \code{\link[EGAnet]{EGA}} defined dimension.}
-#'
-#' \item{mean.loadings}{Matrix of the average standardized network loading
-#' (computed using \code{\link[EGAnet]{net.loads}}) for each item in each dimension}
+#' \item{plot}{Plot output if \code{IS.plot = TRUE}}
 #'
 #' @examples
 #' # Load data
@@ -68,20 +66,14 @@
 #' \dontrun{
 #' # Standard EGA example
 #' boot.wmt <- bootEGA(
-#'   data = wmt, iter = 100, # recommended 500
-#'   plot.typicalStructure = FALSE, # No plot for CRAN checks
+#'   data = wmt, iter = 500,
 #'   type = "parametric", ncores = 2
-#' )
+#' )}
 #' 
 #' # Standard item stability 
 #' wmt.is <- itemStability(boot.wmt)
 #' 
-#' # Produce Methods section
-#' methods.section(
-#'   boot.wmt,
-#'   stats = "itemStability"
-#' )
-#'
+#' \dontrun{
 #' # EGA fit example
 #' boot.wmt.fit <- bootEGA(
 #'   data = wmt, iter = 500,
@@ -113,305 +105,718 @@
 #' wmt.is.ri <- itemStability(boot.wmt.ri)}
 #'
 #' @references
+#' \strong{Original implementation of bootEGA} \cr
 #' Christensen, A. P., & Golino, H. (2021).
 #' Estimating the stability of the number of factors via Bootstrap Exploratory Graph Analysis: A tutorial.
 #' \emph{Psych}, \emph{3}(3), 479-500.
 #'
+#' \strong{Conceptual introduction} \cr
 #' Christensen, A. P., Golino, H., & Silvia, P. J. (2020).
 #' A psychometric network perspective on the validity and validation of personality trait questionnaires.
 #' \emph{European Journal of Personality}, \emph{34}(6), 1095-1108.
 #'
-#' @seealso \code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and
-#' \code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
-#'
 #' @author Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
+#'
 #' @export
-#Item Stability function
-# Updated 28.08.2022
-# Major revamp 27.02.2021
+#' 
+# Item Stability function ----
+# Updated 04.08.2023
 itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
+  
+  # Set up ellipse arguments
+  ellipse <- list(...)
+  
+  # Cover legacy arguments
+  ellipse <- itemStability_deprecation(ellipse)
+  
+  # Check for 'structure' in 'ellipse'
+  if("structure" %in% names(ellipse)){
+    structure <- ellipse$structure
+  }
+  
+  # Check for 'IS.plot' in 'ellipse'
+  if("IS.plot" %in% names(ellipse)){
+    IS.plot <- ellipse$IS.plot
+  }
+  
+  # Argument errors
+  itemStability_errors(bootega.obj, IS.plot)
+  
+  # Get empirical EGA
+  ega_object <- get_EGA_object(bootega.obj)
 
-  # Check for 'hierEGA' + 'bootEGA'
-  if("result_lower" %in% names(bootega.obj)){
+  # Determine if hierarchical EGA
+  hierarchical <- is(ega_object, "hierEGA")
+  
+  # Check for hierarchical EGA
+  if(hierarchical){
     
-    # Message user for lower order analysis
-    message("Performing item stability analysis on lower order...", appendLF = FALSE)
-    
-    # Set up lower and higher order for item stability function
-    higher_order_EGA <- bootega.obj$result_lower$EGA$higher_order$EGA
-    lower_order_EGA <- bootega.obj$result_lower$EGA$lower_order
-    bootega.obj$result_lower$EGA <- lower_order_EGA
-    
-    # Perform item stability on lower order dimensions
-    lower_is <- suppressMessages(
-      itemStability(
-        bootega.obj$result_lower, IS.plot = FALSE, structure = NULL
-      )
-    )
-    
-    # Message user lower order is done
-    message("done.")
-    
-    # Message user for lower order analysis
-    message("Performing item stability analysis on higher order...", appendLF = FALSE)
-    
-    # Set up higher order for item stability function
-    bootega.obj$result_higher$EGA <- higher_order_EGA
-    bootega.obj$result_higher$color.palette <- bootega.obj$result_lower$color.palette
-    
-    # Perform item stability on higher order dimensions
-    higher_is <- itemStability(
-      bootega.obj$result_higher, IS.plot = FALSE, structure = NULL
-    )
-    
-    # Message user higher order is done
-    message("done.")
+    # Check for structure
+    structure <- hierEGA_structure(ega_object, structure)
     
     # Set up results
-    results <- list(
-      lower_order = lower_is,
-      higher_order = higher_is
+    results <- list()
+    
+    # Get lower results
+    results$lower_order <- itemStability_core(
+      ega_object$lower_order, structure$lower_order, 
+      bootega.obj$lower_order$boot.wc, bootega.obj$lower_order$iter
     )
     
-    # Add plot
-    if("plot" %in% names(higher_is)){
+    # Revalue higher order memberships
+    ega_object$higher_order$wc <- single_revalue_memberships(
+      ega_object$lower_order$wc, ega_object$higher_order$wc
+    )
+    
+    # Get higher results
+    results$higher_order <- itemStability_core(
+      ega_object$higher_order, structure$higher_order, 
+      bootega.obj$higher_order$boot.wc, bootega.obj$higher_order$iter
+    )
+    
+    # Set class
+    class(results) <- "itemStability" 
+    
+  }else{ 
+    
+    # Get regular results
+    results <- itemStability_core(
+      ega_object, structure, bootega.obj$boot.wc, bootega.obj$iter
+    )
+    
+  }
+  
+  # Add methods attributes from `bootEGA` object
+  attr(results, "methods") <- bootega.obj[c("EGA.type", "iter", "type")]
+  
+  # Determine whether to plot
+  if(IS.plot){
+    
+    # Check for hierarchical
+    if(hierarchical){
+      
+      # Get number of legend columns
+      legend_rows <- digits(
+        max(results$lower_order$membership$structure, na.rm = TRUE)
+      ) + 1
+      
+      # Get lower plot
+      results$lower_order$plot <- plot(results$lower_order, ...) +
+        ggplot2::guides(color = ggplot2::guide_legend(nrow = legend_rows))
+      
+      # Get higher plot
+      results$higher_order$plot <- silent_call(
+        plot(results$higher_order, ...) +
+          ggplot2::guides(color = ggplot2::guide_legend(nrow = legend_rows)) +
+          ggplot2::scale_x_discrete(limits = rev(results$lower_order$plot$data$Node))
+      )
+        
+      # Set up clean side-by-side
+      if(!"nrow" %in% names(ellipse) || ellipse$nrow == 1){
+        
+        # Remove y-axis title from higher order
+        higher_order_plot <- results$higher_order$plot + 
+          ggplot2::theme(axis.title.y = ggplot2::element_blank())
+
+      }
+      
+      # Get final plot
       results$plot <- ggpubr::ggarrange(
-        lower_is$plot +
-          ggplot2::ggtitle("Lower Order") +
-          ggplot2::theme(
-            plot.title = ggplot2::element_text(hjust = 0.5, face = "bold")
-          ),
-        higher_is$plot +
-          ggplot2::ggtitle("Higher Order") +
-          ggplot2::theme(
-            plot.title = ggplot2::element_text(hjust = 0.5, face = "bold")
-          ),
-        nrow = 1, ncol = 2
+        results$lower_order$plot, higher_order_plot,
+        labels = c("Lower Order", "Higher Order"),
+        ...
       )
       
-      # Plot to user?
-      if(IS.plot){
-        plot(results$plot)
+      # Actually send plot
+      silent_plot(results$plot)
+      
+    }else{
+      
+      # Get plot
+      results$plot <- plot(results, ...)
+      
+      # Actually send plot
+      silent_plot(results$plot)
+      
+    }
+
+  }
+  
+  # Return results
+  return(results)
+  
+}
+
+#' @noRd
+# itemStability errors
+# Updated 04.08.2023
+itemStability_errors <- function(bootega.obj, IS.plot)
+{
+  
+  # 'bootega.obj' errors
+  class_error(bootega.obj, "bootEGA")
+  
+  # 'IS.plot' errors
+  length_error(IS.plot, 1)
+  typeof_error(IS.plot, "logical")
+  
+  # 'structure' errors are handled in `get_structure`
+  
+}
+
+#' @exportS3Method 
+# S3 Print Method ----
+# Updated 23.07.2023
+print.itemStability <- function(x, ...)
+{
+  
+  # Get attributes
+  bootega_attributes <- attr(x, "methods")
+  
+  # Set proper EGA type name
+  ega_type <- switch(
+    bootega_attributes$EGA.type,
+    "ega" = "EGA",
+    "ega.fit" = "EGA.fit",
+    "hierega" = "hierEGA",
+    "riega" = "riEGA"
+  )
+  
+  # Print EGA type
+  cat(paste0("EGA Type: ", ega_type), "\n")
+  
+  # Set up methods
+  cat(
+    paste0(
+      "Bootstrap Samples: ", bootega_attributes$iter,
+      " (", totitle(bootega_attributes$type), ")"
+    )
+  )
+  
+  # Add breakspace
+  cat("\n\n") 
+  
+  # Print replications
+  cat("Proportion Replicated in Dimensions:\n\n")
+  
+  # Branch for hierarchical EGA
+  if(ega_type == "hierEGA"){
+    
+    # Print results
+    print(
+      t(
+        data.frame(
+          Lower = x$lower_order$item.stability$empirical.dimensions,
+          Higher = x$higher_order$item.stability$empirical.dimensions
+        )
+      )
+    )
+  
+  }else{
+    
+    # Print results
+    print(x$item.stability$empirical.dimensions)
+    
+  }
+  
+}
+
+#' @exportS3Method 
+# S3 Summary Method ----
+# Updated 05.07.2023
+summary.itemStability <- function(object, ...)
+{
+  print(object, ...) # same as print
+}
+
+#' @noRd
+# Default plotting for `itemStability`
+# Updated 23.07.2023
+item_stability_defaults <- function(organize_df, ellipse)
+{
+  
+  # Set up default arguments
+  item_stability_defaults <- list(
+    data = organize_df,
+    x = "Node", y = "Replication",
+    group = "Community", color = "Community",
+    legend.title = "Communities",
+    add = "segments", rotate = TRUE, dot.size = 6,
+    label = round(organize_df$Replication, 2),
+    font.label = list(
+      color = "black", size = 8, vjust = 0.5
+    ),
+    ggtheme = ggpubr::theme_pubr()
+  )
+  
+  # Change arguments based on used input
+  return(overwrite_arguments(item_stability_defaults, ellipse))
+  
+}
+
+#' @noRd
+# Default for {ggplot2} `theme`
+# Updated 06.07.2023
+ggplot2_theme_defaults <- function(organize_df, ellipse)
+{
+  
+  # Get dimensions of the data frame
+  dimensions <- dim(organize_df)
+  
+  # Set size defaults
+  size_default <- seq.int(6, 12, 0.25) # length = 25
+  
+  # Adjust label sizes based on number of nodes
+  number_size <- min(
+    which(dimensions[1] > seq.int(200, 0, length.out = 25))
+  )
+  
+  # Adjust label sizes based on characters in item name
+  max_characters <- max(nvapply(organize_df$Node, nchar))
+  character_size <- min(
+    which(max_characters > seq.int(100, 0, length.out = 25))
+  )
+  
+  # Get text size
+  text_size <- size_default[min(number_size, character_size)]
+  
+  # Set up defaults
+  theme_defaults <- list(
+    legend.title = ggplot2::element_text(face = "bold"),
+    axis.title = ggplot2::element_text(face = "bold"),
+    axis.text.y = ggplot2::element_text( # size based on above
+      size = size_default[min(number_size, character_size)] 
+    )
+  )
+  
+  # Get `theme` defaults and overwrite them as necessary
+  theme_ARGS <- obtain_arguments(ggplot2::theme, theme_defaults)
+  
+  # Overwrite with user-supplied arguments
+  return(overwrite_arguments(theme_ARGS, ellipse))
+  
+}
+
+#' @exportS3Method 
+# S3 Plot Method ----
+# Updated 23.07.2023
+plot.itemStability <- function(x, ...)
+{
+  
+  # Obtain ellipse arguments
+  ellipse <- list(...)
+  
+  # Get attributes
+  x_attributes <- attributes(x)
+  
+  # Check for hierarchical EGA
+  if(
+    "methods" %in% names(x_attributes) &&
+    x_attributes$methods$EGA.type == "hierega"
+  ){
+    
+    # Get number of legend columns
+    legend_rows <- digits(
+      max(x$lower_order$membership$structure, na.rm = TRUE)
+    ) + 1
+    
+    # Get lower plot
+    lower_order_plot <- plot(x$lower_order, ...) +
+      ggplot2::guides(color = ggplot2::guide_legend(nrow = legend_rows))
+    
+    # Get higher plot
+    higher_order_plot <- silent_call(
+      plot(x$higher_order, ...) +
+        ggplot2::guides(color = ggplot2::guide_legend(nrow = legend_rows)) +
+        ggplot2::scale_x_discrete(limits = rev(lower_order_plot$data$Node))
+    )
+    
+    # Set up clean side-by-side
+    if(!"nrow" %in% names(ellipse) || ellipse$nrow == 1){
+      
+      # Remove y-axis title from higher order
+      higher_order_plot <- higher_order_plot + 
+        ggplot2::theme(axis.title.y = ggplot2::element_blank())
+      
+    }
+    
+    # Return final plot
+    return(
+      silent_plot(
+        ggpubr::ggarrange(
+          lower_order_plot, higher_order_plot,
+          labels = c("Lower Order", "Higher Order"),
+          ...
+        )
+      )
+    )
+    
+  }else{
+    
+    # Set up for plot
+    organize_df <- fast.data.frame(
+      c(
+        names(x$membership$empirical),
+        x$item.stability$empirical.dimensions,
+        x$membership$structure
+      ), nrow = length(x$membership$structure), ncol = 3,
+      colnames = c("Node", "Replication", "Community")
+    )
+    
+    # Set up data frame structure
+    organize_df$Replication <- as.numeric(organize_df$Replication)
+    organize_df$Community <- factor(
+      x$membership$structure,
+      levels = seq_len(unique_length(x$membership$structure))
+    )
+    
+    # Get base plot
+    base_canvas <- do.call(
+      ggpubr::ggdotchart,
+      item_stability_defaults(organize_df, ellipse)
+    )
+    
+    # Add additional layer to plot with {ggplot2}'s `theme` updated
+    updated_canvas <- base_canvas +
+      ggplot2::ylim(c(0, 1)) + # non-negotiable
+      do.call( # flexibly allow user to adjust the `theme`
+        ggplot2::theme, 
+        ggplot2_theme_defaults(organize_df, ellipse)
+      )
+    
+    # Manually update alpha
+    updated_canvas$layers[[2]]$aes_params$alpha <- swiftelse(
+      "alpha" %in% names(ellipse), ellipse$alpha, 0.70
+    )
+    
+    # Update colors
+    if("scale_color_manual" %in% names(ellipse)){
+      updated_canvas <- updated_canvas +
+        do.call(ggplot2::scale_color_manual, ellipse$scale_color_manual)
+    }else{
+      
+      # Use default of "polychrome"
+      updated_canvas <- updated_canvas +
+        ggplot2::scale_color_manual(
+          values = color_palette_EGA(
+            "polychrome", x$membership$structure, sorted = TRUE
+          ),
+          breaks = sort(x$membership$structure)
+        )
+      
+    }
+    
+    # Lastly, get x-axis organization
+    if("scale_x_discrete" %in% names(ellipse)){
+      updated_canvas <- updated_canvas +
+        do.call(ggplot2::scale_x_discrete, ellipse$scale_x_discrete)
+    }else{ # Otherwise, apply default
+      updated_canvas <- updated_canvas +
+        ggplot2::scale_x_discrete(limits = rev(updated_canvas$data$Node))
+    }
+    
+    # Return plot
+    return(updated_canvas)
+    
+  }
+
+}
+
+#' @noRd
+# Argument Deprecation
+# Updated 06.07.2023
+itemStability_deprecation <- function(ellipse)
+{
+  
+  # Check if 'orig.wc' has been input as an argument
+  if("orig.wc" %in% names(ellipse)){
+    
+    # Give deprecation warning
+    warning(
+      "The 'orig.wc' argument has been deprecated.\n\nInstead, use the 'structure'",
+      call. = FALSE
+    )
+    
+    # Overwrite structure argument
+    ellipse$structure <- ellipse$orig.wc
+    
+    # Remove 'orig.wc' argument
+    ellipse <- ellipse[names(ellipse) != "orig.wc"]
+    
+  }
+  
+  # Give warning for 'item.freq'
+  if("item.freq" %in% names(ellipse)){
+    warning("The 'item.freq' argument has been deprecated", call. = FALSE)
+  }
+  
+  # Check if 'plot.item.rep' has been input as an argument
+  if("plot.item.rep" %in% names(ellipse)){
+    
+    # Give deprecation warning
+    warning(
+      paste(
+        "The 'plot.item.rep' argument has been deprecated.\n\nInstead use: IS.plot =", 
+        ellipse$plot.item.rep
+      ), call. = FALSE
+    )
+    
+    # Handle the plot appropriately
+    ellipse$IS.plot <- ellipse$plot.item.rep
+    
+  }
+  
+  # Return ellipse arguments
+  return(ellipse)
+  
+}
+
+#' @noRd
+# `hierEGA` check for structure input ----
+# Updated 31.07.2023
+hierEGA_structure <- function(ega_object, structure)
+{
+  
+  # Return NULL if NULL
+  if(is.null(structure)){
+    return(
+      list(
+        lower_order = ega_object$lower_order$wc,
+        higher_order = single_revalue_memberships(
+          ega_object$lower_order$wc, ega_object$higher_order$wc
+        )
+      )
+    )
+  }
+  
+  # Get names of structure
+  structure_names <- names(structure)
+  
+  # Not NULL, proceed with lower order
+  if(any(structure_names %in% c("lower_order", "higher_order"))){
+    
+    # Set up result as NULL
+    result <- list(
+      lower_order = NULL,
+      higher_order = NULL
+    )
+    
+    # First, check for lower order
+    if("lower_order" %in% structure_names){
+      
+      # Perform checks
+      length_error(structure$lower_order, length(ega_object$lower_order$wc))
+      
+      # If no error, then ensure names
+      names(structure$lower_order) <- names(ega_object$lower_order$wc)
+      
+      # Send into result
+      result$lower_order <- structure$lower_order
+      
+    }
+    
+    # Then, check for higher order
+    if("higher_order" %in% structure_names){
+      
+      # Get higher order length
+      higher_order_length <- length(ega_object$higher_order$wc)
+      
+      # Check for lower order structure
+      if(!is.null(result$lower_order)){
+        lower_order_length <- unique_length(structure$lower_order)
       }
+      
+      # Perform checks
+      length_error(
+        structure$higher_order, c( # could be length of higher or lower order
+          lower_order_length,
+          higher_order_length,
+          length(ega_object$lower_order$wc)
+        )
+      )
+      
+      # Check for higher order length
+      if(
+        length(structure$higher_order) %in% 
+        c(lower_order_length, higher_order_length)
+      ){
+        
+        # Needs to be revalued
+        structure$higher_order <- single_revalue_memberships(
+          swiftelse( # If NULL, then base on empirical lower order result
+            is.null(result$lower_order),
+            ega_object$lower_order$wc,
+            result$lower_order
+          ),
+          structure$higher_order
+        )
+        
+      }
+
+      
+      # If no error, then ensure names
+      names(structure$higher_order) <- names(ega_object$lower_order$wc)
+      
+      # Send into result
+      result$higher_order <- structure$higher_order
+      
     }
     
     # Return result
-    return(results)
+    return(result)
+    
+  }else{ # Send NULLs and warning
+    
+    # Send warning
+    warning(
+      paste(
+        "Input to 'structure' was provided but did not match expected input.",
+        "For `hierEGA`, 'structure' should be a list with elements \"lower_order\",",
+        "\"higher_order\", or both.\n\nUsing default empirical EGA structure instead"
+      ),
+      call. = FALSE
+    )
+    
+    # Send back NULLs
+    return(
+      list(
+        lower_order = NULL,
+        higher_order = NULL
+      )
+    )
     
   }
   
-  # Check for 'bootEGA' object
-  if(is(bootega.obj) != "bootEGA"){
-    stop("Input for 'bootega.obj' is not a 'bootEGA' object")
-  }
+}
 
-  # Get additional arguments
-  add.args <- list(...)
-
-  # Check if 'orig.wc' has been input as an argument
-  if("orig.wc" %in% names(add.args)){
-
-    # Give deprecation warning
-    warning(
-        "The 'orig.wc' argument has been deprecated in itemStability.\n\nInstead, the empirical EGA estimated in bootEGA's results is used"
-    )
-  }
-
-  # Check if 'item.freq' has been input as an argument
-  if("item.freq" %in% names(add.args)){
-
-    # Give deprecation warning
-    warning(
-      "The 'item.freq' argument has been deprecated in itemStability"
-    )
-  }
-
-  # Check if 'plot.item.rep' has been input as an argument
-  if("plot.item.rep" %in% names(add.args)){
-
-    # Give deprecation warning
-    warning(
-
-      paste(
-        "The 'plot.item.rep' argument has been deprecated in itemStability.\n\nInstead use: IS.plot =", add.args$plot.item.rep, sep = " "
-      )
-
-    )
-
-    # Handle the plot appropriately
-    IS.plot <- add.args$plot.item.rep
-  }
-
-  # Message function
-  message(styletext(styletext("\nItem Stability Analysis", defaults = "underline"), defaults = "bold"))
-
-  # Let user know results are being organized
-  message("\nOrganizing data...", appendLF = FALSE)
-
-  # Original EGA result
-  ## Network
-  empirical.EGA.network <- bootega.obj$EGA$network
-
-  ## Community membership
-  if(isTRUE(is.null(structure))){
-    empirical.EGA.membership <- bootega.obj$EGA$wc
-  }else{
-    ## User-specified structure
-    names(structure) <- names(bootega.obj$EGA$wc)
-    empirical.EGA.membership <- structure
-  }
-  # Get numeric memberships
-  membership.numeric <- numeric.membership(empirical.EGA.membership)
-
-  # Get unique memberships
-  unique.membership <- unique(membership.numeric)
-
-  # Obtain bootstrap membership matrix
-  bootstrap.membership <- simplify2array(bootega.obj$boot.wc)
-
-  # Homogenize memberships
-  if(is.list(bootstrap.membership)){
-    message("Differing number of variables were attempted to be compared. This result can occur when there are a different number of higher order dimensions detected. Skipping stability metrics...")
+#' @noRd
+# Get structure with error catching ----
+# Updated 05.07.2023
+get_structure <- function(bootega_wc, structure)
+{
   
-    return(NULL)
+  # Update target structure
+  if(is.null(structure)){
+    
+    # No structure provided, then use empirical EGA
+    structure <- bootega_wc
+    
+  }else{ # User provided structure... make sure it works
+    
+    # Object type error
+    object_error(structure, c("vector", "factor", "matrix", "data.frame"))
+    
+    # Get object type
+    object_type <- get_object_type(structure)
+    
+    # Get length of bootstrap (empirical) membership
+    wc_length <- length(bootega_wc)
+    
+    # Make adjustment for matrix or data frame
+    if(object_type %in% c("matrix", "data.frame")){
+      structure <- force_vector(structure)
+    }
+    
+    # Make sure length is the same as bootstrap (empirical) membership
+    length_error(structure, wc_length)
+    
+    # Finally, force values to be numeric
+    structure <- force_numeric(structure)
+    
   }
   
-  final.membership <- try(
-    homogenize.membership(membership.numeric, bootstrap.membership),
-    silent = TRUE
-  )
-
-  # Error check
-  if(any(class(final.membership) == "try-error")){
-    return(
-      error.report(final.membership,
-                   "homogenize.membership",
-                   "itemStability")
+  # Check that structure isn't missing completely
+  if(all(is.na(structure))){
+    stop(
+      paste0(
+        "The 'structure' provided contains all missing values. Check the empirical structure. If you did not provide an empirical structure, then check your `bootEGA` output:`your_output$EGA$wc`",
+        "\n\nIf all memberships are `NA`, then your network may be empty or different settings need to be applied in the community detection algorithm of `bootEGA`"
+      ),
+      call. = FALSE
     )
   }
+  
+  # Return the structure
+  return(structure)
+  
+}
 
-  # Let user know results are done being organized
-  message("done\n")
+#' @noRd
+# Item stability core ----
+# Main function -- separated to handle `hierEGA`
+# Updated 23.07.2023
+itemStability_core <- function(ega_object, structure, bootstrap_structure, iter)
+{
 
-  # Let user know results are being computed
-  message("Computing results...", appendLF = FALSE)
-
-  # Get proportion table
-  replication.proportion <- try(
-    proportion.table(final.membership),
-    silent = TRUE
+  # Get empirical memberships
+  empirical_memberships <- ega_object$wc
+  
+  # Get node names
+  node_names <- names(empirical_memberships)
+  
+  # Get structure (with error catching)
+  structure <- get_structure(empirical_memberships, structure)
+  
+  # Get maximum number of communities
+  maximum_communities <- max(
+    max(bootstrap_structure, na.rm = TRUE),
+    unique_length(structure)
   )
-
-  # Error check
-  if(any(class(replication.proportion) == "try-error")){
-    return(
-      error.report(replication.proportion,
-                   "proportion.table",
-                   "itemStability")
-    )
-  }
-
-  # Adjust for missing and NA dimensions
-  final.proportion <- try(
-    missing.dimension.check(replication.proportion,
-                            membership.numeric,
-                            bootstrap.membership),
-    silent = TRUE
+  
+  # Get homogenized memberships
+  homogenized_memberships <- community.homogenize(
+    target.membership = structure,
+    convert.membership = bootstrap_structure
   )
-
-  # Error check
-  if(any(class(final.proportion) == "try-error")){
-    return(
-      error.report(final.proportion,
-                   "missing.dimension.check",
-                   "itemStability")
+  
+  # Tabulate for each variable and get proportions for each community
+  replicate_proportions <- matrix(
+    nvapply(  # `matrix` prevents drop to vector when all are unidimensional
+      as.data.frame(homogenized_memberships),
+      tabulate, maximum_communities, 
+      LENGTH = maximum_communities
+    ), ncol = maximum_communities, byrow = TRUE
+  ) / iter
+  
+  # Assign names
+  dimnames(replicate_proportions) <- list(
+    node_names, # nodes
+    format_integer( # communities
+      numbers = seq_len(maximum_communities),
+      places = digits(maximum_communities) - 1
     )
-  }
-
+  )
+  
+  # Get empirical proportions
+  empirical_proportions <- nvapply(
+    nrow_sequence(replicate_proportions),
+    function(row){replicate_proportions[row, structure[row]]}
+  )
+  
+  # Ensure proper names
+  names(empirical_proportions) <- node_names
+  
   # Initialize results
-  results <- list()
-
-  # Add empirical results
-  results$membership <- list()
-  results$membership$empirical <- empirical.EGA.membership
-  results$membership$unique <- unique.membership
-  results$membership$bootstrap <- final.membership
-
-  # Add item stability to the results
-  ## Item stability for empirical dimension
-  empirical.stability <- membership.numeric
-
-  for(i in 1:nrow(final.proportion)){
-    empirical.stability[i] <- final.proportion[i,paste(empirical.EGA.membership[i])]
-  }
-
-  results$item.stability <- list()
-  results$item.stability$empirical.dimensions <- empirical.stability
-
-  # Add full proportion matrix to the results
-  final.proportion <- as.matrix(final.proportion)
-  if(any(is.na(colnames(final.proportion))) | any(colnames(final.proportion) == "NA")){
-
-    final.proportion <- final.proportion[,-which(is.na(colnames(final.proportion)) | colnames(final.proportion) == "NA")]
-
-  }
-
-  results$item.stability$all.dimensions <- final.proportion
-  # as.matrix() resolves unidimensional structures
-
-  # Plot
-  results <- try(
-    itemStability.plot(results, bootega.obj),
-    silent = TRUE
-  )
-
-  # Error check
-  if(any(class(results) == "try-error")){
-    return(
-      error.report(results,
-                   "itemStability.plot",
-                   "itemStability")
+  results <- list(
+    membership = list(
+      empirical = empirical_memberships,
+      bootstrap = homogenized_memberships,
+      structure = structure
+    ),
+    item.stability = list(
+      empirical.dimensions = empirical_proportions,
+      all.dimensions = replicate_proportions
     )
-  }
-
-  # Reorder empirical and all dimensions stability
-  results$item.stability$empirical.dimensions <- results$item.stability$empirical.dimensions[as.character(results$plot$data$Item)]
-  results$item.stability$all.dimensions <- results$item.stability$all.dimensions[as.character(results$plot$data$Item),]
-
-  # Compute network loadings
-  loadings <- try(
-    itemStability.loadings(results, bootega.obj),
-    silent = TRUE
   )
-
-  # Error check
-  if(any(class(loadings) == "try-error")){
-    return(
-      error.report(loadings,
-                   "itemStability.loadings",
-                   "itemStability")
-    )
-  }
-
-  # Insert loadings into results
-  results$mean.loadings <- loadings
-
-  # Reorder mean loadings
-  results$mean.loadings <- results$mean.loadings[as.character(results$plot$data$Item),]
-
-  # Let user know results are done being organized
-  message("done\n")
-
+  
   # Set class
   class(results) <- "itemStability"
-
-  # Plot to user?
-  if(IS.plot){
-    plot(results$plot)
-  }
-
+  
+  # Return results
   return(results)
-
+  
 }
-#----
+
+

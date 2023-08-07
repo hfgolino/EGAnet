@@ -2,40 +2,112 @@
 % Please edit documentation in R/auto.correlate.R
 \name{auto.correlate}
 \alias{auto.correlate}
-\title{Automatic correlations based on \code{\link[qgraph]{cor_auto}}}
+\title{Automatic correlations}
 \usage{
 auto.correlate(
   data,
+  corr = c("kendall", "pearson", "spearman"),
   ordinal.categories = 7,
   forcePD = TRUE,
-  missing = "pairwise",
-  verbose = FALSE
+  na.data = c("pairwise", "listwise"),
+  empty.method = c("none", "zero", "all"),
+  empty.value = c("none", "point_five", "one_over"),
+  verbose = FALSE,
+  ...
 )
 }
 \arguments{
 \item{data}{Matrix or data frame.
-Should consist only of variables that are desired to be correlated}
+Should consist only of variables to be used in the analysis}
+
+\item{corr}{Character (length = 1).
+The standard correlation method to be used.
+Defaults to \code{"pearson"}.
+Using \code{"pearson"} will compute polychoric, tetrachoric, polyserial,
+and biserial correlations for categorical and categorical/continuous correlations
+by default. To obtain \code{"pearson"} correlations regardless, use \code{\link{cor}}.
+Other options of \code{"kendall"} and \code{"spearman"} are provided for
+completeness and use \code{\link{cor}}}
 
 \item{ordinal.categories}{Numeric (length = 1).
-Number of categories before a variable is considered continuous.
+\emph{Up to} the number of categories \emph{before} a variable is considered continuous.
 Defaults to \code{7} categories before \code{8} is considered continuous}
 
 \item{forcePD}{Boolean (length = 1).
 Whether positive definite matrix should be enforced.
 Defaults to \code{TRUE}}
 
-\item{missing}{Character (length = 1).
-Corresponds to \code{\link[lavaan]{lavCor}}'s \code{missing} argument}
+\item{na.data}{Character (length = 1).
+How should missing data be handled?
+Defaults to \code{"pairwise"}.
+Available options:
+
+\itemize{
+
+\item{\code{"pairwise"} --- }
+{Computes correlation for all available cases between
+two variables}
+
+\item{\code{"listwise"} --- }
+{Computes correlation for all complete cases in the dataset}
+
+}}
+
+\item{empty.method}{Character (length = 1).
+Method for empty cell correction in \code{\link[EGAnet]{polychoric.matrix}}.
+Defaults to \code{"none"}
+Available options:
+
+\itemize{
+
+\item{\code{"none"} --- }
+{Adds no value (\code{empty.value = "none"})
+to the empirical joint frequency table between two variables}
+
+\item{\code{"zero"} --- }
+{Adds \code{empty.value} to the cells with zero
+in the joint frequency table between two variables}
+
+\item{\code{"all"} --- }
+{Adds \code{empty.value} to all
+in the joint frequency table between two variables}
+
+}}
+
+\item{empty.value}{Character (length = 1).
+Value to add to the joint frequency table cells in \code{\link[EGAnet]{polychoric.matrix}}.
+Defaults to \code{"none"}.
+Accepts numeric values between 0 and 1 or specific methods:
+
+\itemize{
+
+\item{\code{"none"} --- }
+{Adds no value (\code{0}) to the empirical joint 
+frequency table between two variables}
+
+\item{\code{"point_five"} --- }
+{Adds \code{0.5} to the cells defined by \code{empty.method}}
+
+\item{\code{"one_over"} --- }
+{Adds \code{1 / n} where \code{n} equals the number of cells
+based on \code{empty.method}. For \code{empty.method = "zero"},
+\code{n} equals the number of zero cells
+}
+
+}}
 
 \item{verbose}{Boolean (length = 1).
 Whether messages should be printed.
 Defaults to \code{FALSE}}
+
+\item{...}{Not actually used but makes it easier for general functionality
+in the package}
 }
 \description{
-This wrapper is based on \code{\link[qgraph]{cor_auto}}. There
+This wrapper is similar to \code{\link[qgraph]{cor_auto}}. There
 are some minor adjustments that make this function simpler and to
-function within EGAnet as desired. \code{NA} values are not treated
-as categories
+function within \code{\link{EGAnet}}. \code{NA} values are not treated
+as categories (this behavior differs from \code{\link[qgraph]{cor_auto}})
 }
 \examples{
 # Load data
@@ -45,13 +117,6 @@ wmt <- wmt2[,7:24]
 wmt_corr <- auto.correlate(wmt)
 
 }
-\references{
-Sacha Epskamp, Angelique O. J. Cramer, Lourens J. Waldorp, Verena D. Schmittmann, Denny Borsboom (2012). qgraph: Network Visualizations of Relationships in Psychometric Data. Journal of Statistical Software, 48(4), 1-18.
-
-Yves Rosseel (2012). lavaan: An R Package for Structural Equation Modeling. Journal of Statistical Software, 48(2), 1-36. URL http://www.jstatsoft.org/v48/i02/.
-
-Douglas Bates and Martin Maechler (2014). Matrix: Sparse and Dense Matrix Classes and Methods. R package version 1.1-3. http://CRAN.R-project.org/package=Matrix
-}
 \author{
-Sacha Epskamp <mail@sachaepskamp.com> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
+Alexander P. Christensen <alexpaulchristensen@gmail.com>
 }

@@ -4,18 +4,18 @@
 \alias{wto}
 \title{Weighted Topological Overlap}
 \usage{
-wto(network, signed = TRUE, diagonal_zero = TRUE)
+wto(network, signed = TRUE, diagonal.zero = TRUE)
 }
 \arguments{
-\item{network}{Symmetric matrix.
-Input for a symmetric network matrix}
+\item{network}{Symmetric matrix or data frame.
+A symmetric network}
 
 \item{signed}{Boolean (length = 1).
 Whether the signed version should be used.
 Defaults to \code{TRUE}.
 Use \code{FALSE} for absolute values}
 
-\item{diagonal_zero}{Boolean (length = 1).
+\item{diagonal.zero}{Boolean (length = 1).
 Whether diagonal of overlap matrix should be set to zero.
 Defaults to \code{TRUE}.
 Use \code{FALSE} to allow overlap of a node with itself}
@@ -30,13 +30,14 @@ the Novick et al. (2009) definition
 }
 \examples{
 # Obtain network
-network <- EBICglasso.qgraph(wmt2[,7:24])
+network <- network.estimation(wmt2[,7:24], model = "glasso")
 
 # Compute wTO
 wto(network)
 
 }
 \references{
+\strong{Original formalization} \cr
 Nowick, K., Gernat, T., Almaas, E., & Stubbs, L. (2009).
 Differences in human and chimpanzee gene expression patterns define an evolving network of transcription factors in brain.
 \emph{Proceedings of the National Academy of Sciences}, \emph{106}, 22358-22363.
