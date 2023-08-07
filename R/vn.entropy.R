@@ -40,7 +40,7 @@
 #' @export
 #' 
 # VN Entropy Function ----
-# Updated 04.08.2023
+# Updated 07.08.2023
 vn.entropy <- function(data, structure)
 {
   
@@ -64,7 +64,12 @@ vn.entropy <- function(data, structure)
     rm.vars <- is.na(structure)
     
     # Send warning message
-    warning(paste("Some variables did not belong to a dimension:", dimnames(data)[[2]][rm.vars]))
+    warning(
+      paste(
+        "Some variables did not belong to a dimension:",
+        paste0(dimnames(data)[[2]][rm.vars], collapse = ", ")
+      ), call. = FALSE
+    )
     message("Use caution: These variables have been removed from the TEFI calculation")
     
     # Keep available variables

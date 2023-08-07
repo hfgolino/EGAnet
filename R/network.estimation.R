@@ -183,7 +183,10 @@ network.estimation <- function(
     
     # Check for 'BGGM' network estimation (can't be correlation matrix)
     if(model == "bggm"){
-      stop("A symmetric matrix was provided in the 'data' argument. 'method = \"BGGM\"' is not compatiable with a correlation matrix. Please use the original data instead")
+      stop(
+        "A symmetric matrix was provided in the 'data' argument. 'method = \"BGGM\"' is not compatiable with a correlation matrix. Please use the original data instead",
+        call. = FALSE
+      )
     }
     
   }
@@ -619,7 +622,7 @@ find_BGGM_type <- function(data, ellipse)
           "If you believe this error is a mistake, add the argument 'ordinal.categories' and ",
           "set the argument to either `", category_range[1] - 1, "` to treat all variables as ",
           "continuous or `", category_range[2], "` to treat all variables as ordinal"
-        )
+        ), call. = FALSE
       )
     }
     

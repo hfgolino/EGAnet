@@ -253,7 +253,7 @@ community.detection <- function(
           "{EGAnet} uses \"modularity\" as the default objective function in the Leiden algorithm. ",
           "In contrast, {igraph} uses \"CPM\". Set `objective_function = \"CPM\"` to use the Constant Potts ",
           "Model in {EGAnet}"
-        )
+        ), call. = FALSE
       )
       
     }

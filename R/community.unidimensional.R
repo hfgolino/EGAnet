@@ -163,7 +163,7 @@
 #' @export
 #'
 # Compute unidimensional approaches for EGA
-# Updated 26.07.2023
+# Updated 07.08.2023
 community.unidimensional <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -187,7 +187,8 @@ community.unidimensional <- function(
   # Check for incompatible method combinations
   if(model == "bggm" & uni.method == "expand"){
     stop(
-      "Support for the \"BGGM\" model and \"expand\" unidimensionality method is not provided."
+      "Support for the \"BGGM\" model and \"expand\" unidimensionality method is not provided.",
+      call. = FALSE
     )
   }
   

@@ -243,7 +243,10 @@ riEGA <- function(
   
   # Catch BGGM
   if(model == "bggm"){
-    stop("The BGGM is not supported in `riEGA` because it requires the original data. The residual correlation matrix from the random-intercept model is used as input into `EGA`.")
+    stop(
+      "BGGM is not supported in `riEGA` because it requires the original data and the residual correlation matrix from the random-intercept model is used as input into `EGA`.",
+      call. = FALSE
+    )
   }
   
   # Make sure data is usable and a matrix
@@ -254,7 +257,10 @@ riEGA <- function(
   
   # Check that data is not symmetric or square matrix
   if(is_symmetric(data)){
-    stop("A symmetric matrix was input into 'data'. The original data needs to be used to properly estimate the random-intercept model.")
+    stop(
+      "A symmetric matrix was input into 'data'. The original data needs to be used to properly estimate the random-intercept model.",
+      call. = FALSE
+    )
   }
   
   # Get data dimensions

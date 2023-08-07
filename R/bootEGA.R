@@ -1017,7 +1017,7 @@ handle_hierEGA_ARGS <- function(algorithm, ellipse, ellipse_names)
         "with 'EGA.type = \"hierEGA\"'.",
         "\n\nSetting 'lower.algorithm' to the default: ",
         "\"louvain\" with most common consensus clustering (1000 iterations)"
-      )
+      ), call. = FALSE
     )
     
   }else if(!any(c("lower.algorithm", "higher.algorithm") %in% ellipse_names)){
@@ -1211,7 +1211,7 @@ typical_leiden_fit <- function(network, dimensions, ellipse)
         "{EGAnet} uses \"modularity\" as the default objective function in the Leiden algorithm. ",
         "In contrast, {igraph} uses \"CPM\". Set `objective_function = \"CPM\"` to use the Constant Potts ",
         "Model in {EGAnet}"
-      )
+      ), call. = FALSE
     )
     
   }else{
@@ -1339,7 +1339,7 @@ typical_louvain_fit <- function(network, dimensions, ellipse)
 #' @noRd
 # Typical `EGA.fit` memberships ----
 # Needs to be handled consistently
-# Updated 23.07.2023
+# Updated 07.08.2023
 estimate_typical_EGA.fit <- function(results, ellipse)
 {
   
@@ -1383,7 +1383,7 @@ estimate_typical_EGA.fit <- function(results, ellipse)
   objective_function <- fit_result$objective_function
   
   # Obtain only unique solutions
-  search_unique <- unique_solutions(fit_result$search_matrix)
+  search_unique <- unique(fit_result$search_matrix, MARGIN = 1)
   
   # Determine best fitting solution
   fit_values <- apply(

@@ -173,7 +173,7 @@
 #' @export
 #'
 # Estimates multidimensional EGA only (no automatic plots)
-# Updated 27.07.2023
+# Updated 07.08.2023
 EGA.estimate <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -240,7 +240,10 @@ EGA.estimate <- function(
       
       # Check for correlation input
       if(is_symmetric(data)){
-        stop("A symmetric matrix was provided in the 'data' argument. For 'model = \"BGGM\"', the original data is required.")
+        stop(
+          "A symmetric matrix was provided in the 'data' argument. For 'model = \"BGGM\"', the original data is required.",
+          call. = FALSE
+        )
       }
       
       # Set "data" as data

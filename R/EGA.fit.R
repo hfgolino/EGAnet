@@ -206,7 +206,7 @@
 #' @export
 #' 
 # EGA fit ----
-# Updated 06.08.2023
+# Updated 07.08.2023
 EGA.fit <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -251,7 +251,7 @@ EGA.fit <- function(
   objective_function <- fit_result$objective_function
   
   # Obtain only unique solutions
-  search_unique <- unique_solutions(fit_result$search_matrix)
+  search_unique <- unique(fit_result$search_matrix, MARGIN = 1)
   
   # Obtain absolute correlation matrix
   if(model != "bggm"){
@@ -300,6 +300,9 @@ EGA.fit <- function(
     EntropyFit = fit_values,
     Lowest.EntropyFit = fit_values[best_index]
   )
+  
+  # Add TEFI to 'EGA' result for `bootEGA`
+  best_fit$EGA$TEFI <- best_fit$Lowest.EntropyFit
   
   # Ensure consistent naming with `EGA`
   if("cor.data" %in% names(best_fit$EGA)){
@@ -470,46 +473,6 @@ plot.EGA.fit <- function(x, ...)
     ...
   )
   
-}
-
-#' @noRd
-# Determine unique solutions ----
-# Updated 07.07.2023 
-unique_solutions <- function(search_matrix)
-{
-
-  # Obtain counts to eliminate duplicates
-  search_unique <- unique(search_matrix, MARGIN = 1)
-  
-  # Obtain original rows
-  original_rows <- dim(search_unique)[1]
-  
-  # Remove solutions with singleton
-  search_unique <- na.omit(search_unique)
-
-  # Singleton rows
-  singleton_rows <- dim(search_unique)[1]
-  
-  # Remove unidimensional solutions
-  search_unique <- search_unique[
-    apply(search_unique, 1, function(x){unique_length(x) != 1}),, drop = FALSE
-  ]
-  
-  # Unidimensional rows
-  unidimensional_rows <- dim(search_unique)[1]
-  
-  # Check for errors to send
-  if(singleton_rows == 0){
-    stop("All solutions were determined to include at least one singleton community", call. = FALSE)
-  }else if(singleton_rows == 1 & unidimensional_rows == 0){
-    stop("All solutions were determined to be unidimensional and/or at least one singleton community", call. = FALSE)
-  }else if(unidimensional_rows == 0){
-    stop("All solutions were determined to be unidimensional", call. = FALSE)
-  }
-  
-  # Return unique solutions
-  return(search_unique)
-
 }
 
 #' @noRd
@@ -686,7 +649,7 @@ leiden_fit <- function(
         "{EGAnet} uses \"modularity\" as the default objective function in the Leiden algorithm. ",
         "In contrast, {igraph} uses \"CPM\". Set `objective_function = \"CPM\"` to use the Constant Potts ",
         "Model in {EGAnet}"
-      )
+      ), call. = FALSE
     )
     
   }else{

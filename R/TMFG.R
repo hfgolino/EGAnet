@@ -178,7 +178,10 @@ TMFG <- function(
   
   # Set warning for fewer than 9 nodes
   if(nodes < 9 & isTRUE(verbose)){
-    warning("The TMFG method requires more than 9 nodes to obtain a chordal network. With fewer than 9 nodes, this property does not hold")
+    warning(
+      "The TMFG method requires more than 9 nodes to obtain a chordal network. With fewer than 9 nodes, this property does not hold",
+      call. = FALSE
+    )
   }
   
   # For signed correlations, use absolute correlation matrix

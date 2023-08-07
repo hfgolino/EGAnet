@@ -916,10 +916,3 @@ configural <- function(
   
 }
 
-
-
-
-
-
-
-

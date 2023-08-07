@@ -1054,7 +1054,7 @@ force_vector <- function(object)
     
     # Check for more than one dimension
     if(all(dimensions) > 1){
-      stop("Cannot sufficiently force object into 'vector'.")
+      stop("Cannot sufficiently force object into 'vector'.", call. = FALSE)
     }
     
     # Set as vector
@@ -1362,7 +1362,7 @@ usable_data <- function(data, verbose)
         "Some variables could not to be coerced to numeric values. These variables have been removed from the analysis:\n",
         paste0("'", dimnames(data_matrix)[[2]][remove_columns], "'", collapse = ", "),
         "\n\nIf these variables were not intended to be removed, then try converting them to numeric values before inputting the data into the function"
-      )
+      ), call. = FALSE
     )
     
     # Remove these variables from `data` and `data_matrix`
@@ -1383,7 +1383,7 @@ usable_data <- function(data, verbose)
       paste0(
         "Several variables were coerced to numeric values. These variables were changed to numeric values:\n",
         paste0("'", dimnames(data_matrix)[[2]][coercions], "'", collapse = ", ")
-      )
+      ), call. = FALSE
     )
     
   }
@@ -1434,7 +1434,10 @@ obtain_sample_correlations <- function(data, n, corr, na.data, verbose, ...)
     
     # Check for sample size
     if(is.null(n)){
-      stop("A symmetric matrix was provided in the 'data' argument but the sample size argument, 'n', was not set. Please input the sample size into the 'n' argument.")
+      stop(
+        "A symmetric matrix was provided in the 'data' argument but the sample size argument, 'n', was not set. Please input the sample size into the 'n' argument.",
+        call. = FALSE
+      )
     }
     
     # If symmetric and sample size is provided, then
@@ -2384,7 +2387,8 @@ dimension_comparison <- function(original, comparison){
         ") do not match the comparison network's dimensions (",
         paste0(comparison_dimensions, collapse = " x "),
         ").\n\nDouble check to make sure the network dimensions match."
-      )
+      ),
+      call. = FALSE
     )
     
   }
@@ -2416,7 +2420,8 @@ dimension_comparison <- function(original, comparison){
         "Some variable names in the comparison network ",
         "did not match the original network: ",
         paste0("\"", no_match_names, "\"", collapse = ", ")
-      )
+      ),
+      call. = FALSE
     )
     
   }

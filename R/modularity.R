@@ -64,7 +64,7 @@
 #' @export
 #'
 # Modularity statistic
-# Updated 04.08.2023
+# Updated 07.08.2023
 modularity <- function(network, memberships, resolution = 1, signed = FALSE)
 {
   
@@ -93,7 +93,7 @@ modularity <- function(network, memberships, resolution = 1, signed = FALSE)
         dimensions[2],
         ") does not equal the number of nodes in the 'memberships' (`length` = ",
         membership_length, ")"
-      )
+      ), call. = FALSE
     )
   }
   
@@ -104,7 +104,7 @@ modularity <- function(network, memberships, resolution = 1, signed = FALSE)
   names(memberships) <- network_names
   
   # Check for absolute
-  if(isFALSE(signed)){
+  if(!signed){
     network <- abs(network)
   }
   
@@ -123,7 +123,7 @@ modularity <- function(network, memberships, resolution = 1, signed = FALSE)
         "Nodes were missing values in 'memberships'. Modularity ",
         "was computed without these nodes: ",
         missing_nodes
-      )
+      ), call. = FALSE
     )
     
   }
