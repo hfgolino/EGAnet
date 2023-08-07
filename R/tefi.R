@@ -200,7 +200,7 @@ get_tefi_structure <- function(data, structure, ega_object = NULL)
 
 #' @noRd
 # `tefi` standard function ----
-# Updated 06.08.2023
+# Updated 07.08.2023
 tefi_standard <- function(correlation_matrix, structure)
 {
   
@@ -219,11 +219,14 @@ tefi_standard <- function(correlation_matrix, structure)
       ), call. = FALSE
     )
     
+    # Keep variables
+    keep_vars <- !rm.vars
+    
     # Keep available variables
-    correlation_matrix <- correlation_matrix[!rm.vars, !rm.vars]
+    correlation_matrix <- correlation_matrix[keep_vars, keep_vars]
     
     # Remove NAs from structure
-    structure <- structure[!rm.vars]
+    structure <- structure[keep_vars]
     
   }
   
@@ -253,7 +256,7 @@ tefi_standard <- function(correlation_matrix, structure)
   ## Sum of community Von Neumann
   sum_H_vn_wc <- mean_H_vn_wc * communities
   ## Difference between total and total community
-  H_diff <- H_vn - sum_H_vn_wc
+  # H_diff <- H_vn - sum_H_vn_wc
   ## Average entropy
   mean_H_vn <- mean_H_vn_wc - H_vn
 
@@ -261,7 +264,7 @@ tefi_standard <- function(correlation_matrix, structure)
   return(
     fast.data.frame(
       data = c(
-        mean_H_vn + (H_diff * sqrt(communities)),
+        mean_H_vn + ((H_vn - sum_H_vn_wc) * sqrt(communities)),
         sum_H_vn_wc - H_vn,
         mean_H_vn
       ), ncol = 3,
@@ -275,7 +278,7 @@ tefi_standard <- function(correlation_matrix, structure)
 
 #' @noRd
 # `tefi` generalized function ----
-# Updated 06.08.2023
+# Updated 07.08.2023
 tefi_generalized <- function(correlation_matrix, structure)
 {
   
@@ -300,11 +303,14 @@ tefi_generalized <- function(correlation_matrix, structure)
       ), call. = FALSE
     )
     
+    # Keep variables
+    keep_vars <- !rm.vars
+    
     # Keep available variables
-    correlation_matrix <- correlation_matrix[!rm.vars, !rm.vars]
+    correlation_matrix <- correlation_matrix[keep_vars, keep_vars]
     
     # Remove NAs from structure
-    structure <- lapply(structure, function(x){x[!rm.vars]})
+    structure <- lapply(structure, function(x){x[keep_vars]})
     
   }
   
@@ -360,13 +366,14 @@ tefi_generalized <- function(correlation_matrix, structure)
   E <- sum(H_vn_wc_higher, na.rm = TRUE)
   
   # Pre-compute values
-  sqrt_lower <- sqrt(lower_communities)
+  sqrt_lower <- sqrt(lower_communities) # sqrt(B)
+  double_H_vn <- 2 * H_vn # 2 * C
   
   # Set up results
   return(
     fast.data.frame(
       c(
-        ((A + E) / lower_communities) - (2 * H_vn) + ((2 * H_vn) - A - E) * sqrt_lower,
+        ((A + E) / lower_communities) - double_H_vn + (double_H_vn - A - E) * sqrt_lower,
         (A / lower_communities - H_vn) + (H_vn - A) * sqrt_lower,
         (E / lower_communities - H_vn) + (H_vn - E) * sqrt_lower
       ),

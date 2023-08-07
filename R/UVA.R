@@ -462,7 +462,7 @@ summary.UVA <- function(object, ...)
 
 #' @noRd
 # Obtain descriptives ----
-# Updated 24.07.2023
+# Updated 07.08.2023
 wto_descriptives <- function(wto_output){
   
   # Get dimensions
@@ -477,7 +477,7 @@ wto_descriptives <- function(wto_output){
       rep(dimension_sequence, each = dimensions[2]),
       rep(dimension_sequence, times = dimensions[2]),
       as.vector(wto_output)
-    ), nrow = prod(dimensions), ncol = 3,
+    ), nrow = length(wto_output), ncol = 3,
     colnames = c("node_i", "node_j", "wto")
   )
   
@@ -493,29 +493,23 @@ wto_descriptives <- function(wto_output){
   QUANTILE <- quantile(wto_long$wto, probs = c(0.975, 0.995))
   names(QUANTILE) = c("95%", "99%")
   
-  # Compute summary statistics (rounded)
-  summary_statistics <- round(
-    c(
-      "mean" = mean(wto_long$wto, na.rm = TRUE),
-      "sd" = sd(wto_long$wto, na.rm = TRUE),
-      "minimum" = RANGE[1],
-      "maximum" = RANGE[2],
-      "median" = median(wto_long$wto, na.rm = TRUE),
-      "mad" = MAD,
-      "mad3" = MAD * 3,
-      "mad6" = MAD * 6,
-      QUANTILE
-    ), 3
-  )
-  
-  # Order long data frame
-  wto_long <- wto_long[order(wto_long$wto, decreasing = TRUE),]
-  
   # Return list
   return(
     list(
-      basic = summary_statistics,
-      pairwise = wto_long
+      basic = round(
+        c(
+          "mean" = mean(wto_long$wto, na.rm = TRUE),
+          "sd" = sd(wto_long$wto, na.rm = TRUE),
+          "minimum" = RANGE[1],
+          "maximum" = RANGE[2],
+          "median" = median(wto_long$wto, na.rm = TRUE),
+          "mad" = MAD,
+          "mad3" = MAD * 3,
+          "mad6" = MAD * 6,
+          QUANTILE
+        ), 3
+      ),
+      pairwise = wto_long[order(wto_long$wto, decreasing = TRUE),]
     )
   )
   
@@ -940,7 +934,7 @@ reduce_remove <- function(
       # Selection index based on lowest maximum 
       # wTO value to all other variables
       selection_index <- which.min(
-        apply(wto_output[all_nodes,-all_nodes], 1, max, na.rm = TRUE)
+        apply(wto_output[all_nodes, -all_nodes], 1, max, na.rm = TRUE)
       )
       
     }

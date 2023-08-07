@@ -36,7 +36,7 @@
 #' 
 # Weighted Topological Overlap ----
 # About 10x faster than `wTO::wTO`
-# Updated 04.08.2023
+# Updated 07.08.2023
 wto <- function (network, signed = TRUE, diagonal.zero = TRUE)
 {
   
@@ -50,7 +50,7 @@ wto <- function (network, signed = TRUE, diagonal.zero = TRUE)
   absolute_network <- abs(network)
   
   # Determine whether absolute values should constitute the network
-  if(signed){
+  if(!signed){
     network <- absolute_network
   }
   

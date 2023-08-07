@@ -105,7 +105,7 @@
 #' @export
 #'
 # Computes optimal glasso network based on EBIC ----
-# Updated 30.07.2023
+# Updated 07.08.2023
 EBICglasso.qgraph <- function(
     data, # Sample covariance matrix
     n = NULL,
@@ -189,9 +189,12 @@ EBICglasso.qgraph <- function(
   # Determine model selection criterion
   if(model.selection == "ebic"){
     
+    # Pre-compute half of n
+    half_n <- n / 2
+    
     # Log-likelihood
     lik <- nvapply(lambda_sequence, function(i){
-      logGaus(S, glas_path$wi[,,i], n)
+      logGaus(S, glas_path$wi[,,i], half_n)
     })
     
     # Compute edges
@@ -357,8 +360,8 @@ EBICglasso.qgraph_errors <- function(
 #' @noRd
 # Log-likelihood ----
 # According to huge??? : source comment
-# Updated 03.07.2023
-logGaus <- function(S, K, n)
+# Updated 07.08.2023
+logGaus <- function(S, K, half_n)
 {
   
   # Simply computes the Gaussian log likelihood given sample covariance and estimate of precision:
@@ -373,7 +376,8 @@ logGaus <- function(S, K, n)
   
   # From source 
   
-  return(n / 2 * (log(det(K)) - trace(crossprod(K, S))))
+  return(half_n * (log(det(K)) - trace(S %*% K)))
+
 }
 
 #' @noRd

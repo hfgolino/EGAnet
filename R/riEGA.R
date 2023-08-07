@@ -215,7 +215,7 @@
 #' 
 # Random-Intercept EGA
 # Changed from 'residualEGA.R' on 17.04.2022
-# Updated 06.08.2023
+# Updated 07.08.2023
 riEGA <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -336,7 +336,7 @@ riEGA <- function(
     diag(correlation_matrix) <- 1
     
     # Ensure positive definite
-    if(is_positive_definite(correlation_matrix)){
+    if(!is_positive_definite(correlation_matrix)){
       
       correlation_matrix <- as.matrix(
         Matrix::nearPD(

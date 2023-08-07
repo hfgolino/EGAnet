@@ -355,7 +355,6 @@ network.estimation_errors <- function(data, n, network.only, verbose)
   length_error(verbose, 1)
   typeof_error(verbose, "logical")
   
-  
 }
 
 #' @noRd
