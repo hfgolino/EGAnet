@@ -1,207 +1,162 @@
-#' Random-Intercept \code{\link[EGAnet]{EGA}}
+#' @title Random-Intercept \code{\link[EGAnet]{EGA}}
 #'
-#' Estimates the number of substantive dimensions after controlling for wording effects. 
-#' EGA is applied to a residual correlation matrix after subtracting and random intercept
-#' factor with equal unstandardized loadings from all the regular and unrecoded
-#' reversed items in the database
+#' @description Estimates the number of substantive dimensions after controlling 
+#' for wording effects. EGA is applied to a residual correlation matrix after 
+#' subtracting and random intercept factor with equal unstandardized loadings 
+#' from all the regular and unrecoded reversed items in the database
 #'
 #' @param data Matrix or data frame.
-#' Variables (down columns) or correlation matrix.
-#' If the input is a correlation matrix,
-#' then argument \code{n} (number of cases) is \strong{required}.
-#' Variables \strong{MUST} be unrecoded -- reversed items should
-#' \strong{remain} reversed
-#'
-#' @param n Integer.
-#' Sample size if \code{data} provided is a correlation matrix
+#' Should consist only of variables to be used in the analysis.
+#' \strong{Must} be raw data and not a correlation matrix
 #' 
-#' @param uni.method Character.
+#' @param n Numeric (length = 1).
+#' Sample size if \code{data} provided is a correlation matrix
+#'
+#' @param corr Character (length = 1).
+#' Method to compute correlations.
+#' Defaults to \code{"auto"}.
+#' Available options:
+#' 
+#' \itemize{
+#' 
+#' \item{\code{"auto"} --- }
+#' {Automatically computes appropriate correlations for
+#' the data using Pearson's for continuous, polychoric for ordinal,
+#' tetrachoric for binary, and polyserial/biserial for ordinal/binary with
+#' continuous. To change the number of categories that are considered
+#' ordinal, use \code{ordinal.categories}
+#' (see \code{\link[EGAnet]{polychoric.matrix}} for more details)}
+#' 
+#' \item{\code{"pearson"} --- }
+#' {Pearson's correlation is computed for all variables regardless of
+#' categories}
+#' 
+#' \item{\code{"spearman"} --- }
+#' {Spearman's rank-order correlation is computed for all variables
+#' regardless of categories}
+#' 
+#' }
+#' 
+#' For other similarity measures, compute them first and input them
+#' into \code{data} with the sample size (\code{n})
+#' 
+#' @param na.data Character (length = 1).
+#' How should missing data be handled?
+#' Defaults to \code{"pairwise"}.
+#' Available options:
+#' 
+#' \itemize{
+#' 
+#' \item{\code{"pairwise"} --- }
+#' {Computes correlation for all available cases between
+#' two variables}
+#' 
+#' \item{\code{"listwise"} --- }
+#' {Computes correlation for all complete cases in the dataset}
+#' 
+#' }
+#' 
+#' @param model Character (length = 1).
+#' Defaults to \code{"glasso"}.
+#' Available options:
+#' 
+#' \itemize{
+#' 
+#' \item{\code{"BGGM"} --- }
+#' {Computes the Bayesian Gaussian Graphical Model.
+#' Set argument \code{ordinal.categories} to determine
+#' levels allowed for a variable to be considered ordinal.
+#' See \code{\link[BGGM]{estimate}} for more details}
+#' 
+#' \item{\code{"glasso"} --- }
+#' {Computes the GLASSO with EBIC model selection.
+#' See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details}
+#' 
+#' \item{\code{"TMFG"} --- }
+#' {Computes the TMFG method.
+#' See \code{\link[EGAnet]{TMFG}} for more details}
+#' 
+#' }
+#' 
+#' @param algorithm Character or 
+#' \code{\link{igraph}} \code{cluster_*} function (length = 1).
+#' Defaults to \code{"walktrap"}.
+#' Three options are listed below but all are available
+#' (see \code{\link[EGAnet]{community.detection}} for other options):
+#' 
+#' \itemize{
+#'
+#' \item{\code{"leiden"} --- }
+#' {See \code{\link[igraph]{cluster_leiden}} for more details}
+#' 
+#' \item{\code{"louvain"} --- }
+#' {By default, \code{"louvain"} will implement the Louvain algorithm using 
+#' the consensus clustering method (see \code{\link[EGAnet]{community.consensus}} 
+#' for more information). This function will implement
+#' \code{consensus.method = "most_common"} and \code{consensus.iter = 1000} 
+#' unless specified otherwise}
+#' 
+#' \item{\code{"walktrap"} --- }
+#' {See \code{\link[igraph]{cluster_walktrap}} for more details}
+#' 
+#' }
+#'
+#' @param uni.method Character (length = 1).
 #' What unidimensionality method should be used? 
 #' Defaults to \code{"louvain"}.
-#' Current options are:
+#' Available options:
 #' 
 #' \itemize{
 #'
-#' \item{\strong{\code{expand}}}
-#' {Expands the correlation matrix with four variables correlated .50.
+#' \item{\code{"expand"} --- }
+#' {Expands the correlation matrix with four variables correlated 0.50.
 #' If number of dimension returns 2 or less in check, then the data 
 #' are unidimensional; otherwise, regular EGA with no matrix
-#' expansion is used. This is the method used in the Golino et al. (2020)
-#' \emph{Psychological Methods} simulation.}
+#' expansion is used. This method was used in the Golino et al.'s (2020)
+#' \emph{Psychological Methods} simulation}
 #'
-#' \item{\strong{\code{LE}}}
-#' {Applies the Leading Eigenvalue algorithm (\code{\link[igraph]{cluster_leading_eigen}})
+#' \item{\code{"LE"} --- }
+#' {Applies the Leading Eigenvector algorithm
+#' (\code{\link[igraph]{cluster_leading_eigen}})
 #' on the empirical correlation matrix. If the number of dimensions is 1,
-#' then the Leading Eigenvalue solution is used; otherwise, regular EGA
-#' is used. This is the final method used in the Christensen, Garrido,
-#' and Golino (2021) simulation.}
+#' then the Leading Eigenvector solution is used; otherwise, regular EGA
+#' is used. This method was used in the Christensen et al.'s (2023) 
+#' \emph{Behavior Research Methods} simulation}
 #' 
-#' \item{\strong{\code{louvain}}}
+#' \item{\code{"louvain"} --- }
 #' {Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
-#' on the empirical correlation matrix using a resolution parameter = 0.95.
-#' If the number of dimensions is 1, then the Louvain solution is used; otherwise,
-#' regular EGA is used. This method was validated in the Christensen (2022) simulation.}
+#' on the empirical correlation matrix. If the number of dimensions is 1, 
+#' then the Louvain solution is used; otherwise, regular EGA is used. 
+#' This method was validated Christensen's (2022) \emph{PsyArXiv} simulation.
+#' Consensus clustering can be used by specifying either
+#' \code{"consensus.method"} or \code{"consensus.iter"}}
 #' 
 #' }
 #' 
-#' @param corr Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
-#' Current options are:
-#'
-#' \itemize{
-#'
-#' \item{\strong{\code{cor_auto}}}
-#' {Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
-#' \code{\link[qgraph]{qgraph}}}.
-#'
-#' \item{\strong{\code{pearson}}}
-#' {Computes Pearson's correlation coefficient using the pairwise complete observations via
-#' the \code{\link[stats]{cor}}} function.
-#'
-#' \item{\strong{\code{spearman}}}
-#' {Computes Spearman's correlation coefficient using the pairwise complete observations via
-#' the \code{\link[stats]{cor}}} function.
-#' }
-#'
-#' @param model Character.
-#' A string indicating the method to use.
-#' Defaults to \code{"glasso"}.
-#' Current options are:
-#'
-#' \itemize{
-#'
-#' \item{\strong{\code{glasso}}}
-#' {Estimates the Gaussian graphical model using graphical LASSO with
-#' extended Bayesian information criterion to select optimal regularization parameter}
-#'
-#' \item{\strong{\code{TMFG}}}
-#' {Estimates a Triangulated Maximally Filtered Graph}
-#'
-#' }
-#'
-#' @param model.args List.
-#' A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
-#' or \code{TMFG}
-#'
-#' @param algorithm A string indicating the algorithm to use or a function from \code{\link{igraph}}
-#' Defaults to \code{"walktrap"}.
-#' Current options are:
-#'
-#' \itemize{
-#'
-#' \item{\strong{\code{walktrap}}}
-#' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
-#'
-#' \item{\strong{\code{louvain}}}
-#' {Computes the Louvain algorithm using \code{\link[igraph]{cluster_louvain}}}
-#'
-#' }
-#'
-#' @param algorithm.args List.
-#' A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
-#' or some other community detection algorithm function (see examples)
-#'
-#' @param consensus.iter Numeric.
-#' Number of iterations to perform in consensus clustering for the Louvain algorithm
-#' (see Lancichinetti & Fortunato, 2012).
-#' Defaults to \code{100}
-#' 
-#' @param consensus.method Character.
-#' What consensus clustering method should be used? 
-#' Defaults to \code{"highest_modularity"}.
-#' Current options are:
-#' 
-#' \itemize{
-#' 
-#' \item{\strong{\code{highest_modularity}}}
-#' {Uses the community solution that achieves the highest modularity
-#' across iterations}
-#' 
-#' \item{\strong{\code{most_common}}}
-#' {Uses the community solution that is found the most
-#' across iterations}
-#' 
-#' \item{\strong{\code{iterative}}}
-#' {Identifies the most common community solutions across iterations
-#' and determines how often nodes appear in the same community together.
-#' A threshold of 0.30 is used to set low proportions to zero.
-#' This process repeats iteratively until all nodes have a proportion of
-#' 1 in the community solution.
-#' }
-#' 
-#' \item{\code{lowest_tefi}}
-#' {Uses the community solution that achieves the lowest \code{\link[EGAnet]{tefi}}
-#' across iterations}
-#' 
-#' \item{\code{most_common_tefi}}
-#' {Uses the most common number of communities detected across the number
-#' of iterations. After, if there is more than one solution for that number
-#' of communities, then the solution with the lowest \code{\link[EGAnet]{tefi}
-#' is used}}
-#' 
-#' }
-#'
-#' @param plot.EGA Boolean.
-#' If \code{TRUE}, returns a plot of the network and its estimated dimensions.
-#' Defaults to \code{TRUE}
-#'
-#' @param plot.args List.
-#' A list of additional arguments for the network plot.
-#' For \code{plot.type = "qgraph"}:
-#'
-#' \itemize{
-#'
-#' \item{\strong{\code{vsize}}}
-#' {Size of the nodes. Defaults to 6.}
-#'
-#'}
-#' For \code{plot.type = "GGally"} (see \code{\link[GGally]{ggnet2}} for
-#' full list of arguments):
-#'
-#' \itemize{
-#'
-#' \item{\strong{\code{vsize}}}
-#' {Size of the nodes. Defaults to 6.}
-#'
-#' \item{\strong{\code{label.size}}}
-#' {Size of the labels. Defaults to 5.}
-#'
-#' \item{\strong{\code{alpha}}}
-#' {The level of transparency of the nodes, which might be a single value or a vector of values. Defaults to 0.7.}
-#'
-#' \item{\strong{\code{edge.alpha}}}
-#' {The level of transparency of the edges, which might be a single value or a vector of values. Defaults to 0.4.}
-#'
-#'  \item{\strong{\code{legend.names}}}
-#' {A vector with names for each dimension}
-#'
-#' \item{\strong{\code{color.palette}}}
-#' {The color palette for the nodes. For custom colors,
-#' enter HEX codes for each dimension in a vector.
-#' See \code{\link[EGAnet]{color_palette_EGA}} for
-#' more details and examples}
-#'
-#' }
-#' 
-#' @param estimator Character.
+#' @param estimator Character (length = 1).
 #' Estimator to use for random-intercept model (see \href{https://lavaan.ugent.be/tutorial/est.html}{Estimators}
 #' for more details).
 #' Defaults to \code{"auto"}, which selects \code{"MLR"} for continuous data and
 #' \code{"WLSMV"} for mixed and categorical data.
-#' Data are considered continuous data if they have 6 or
-#' more categories (see Rhemtulla, Brosseau-Liard, & Savalei, 2012)
+#' Data are considered continuous data if they have \code{8} or
+#' more categories (see Rhemtulla, Brosseau-Liard, & Savalei, 2012).
+#' To change this behavior, set \code{oridinal.categories} as an argument
+#'
+#' @param plot.EGA Boolean (length = 1).
+#' If \code{TRUE}, returns a plot of the network and its estimated dimensions.
+#' Defaults to \code{TRUE}
 #' 
-#' @param lavaan.args List.
-#' If \code{reduce.method = "latent"}, then \code{\link{lavaan}}'s \code{\link[lavaan]{cfa}}
-#' function will be used to create latent variables to reduce variables.
-#' Arguments should be input as a list. Some example arguments 
-#' (see \code{\link[lavaan]{lavOptions} for full details})
-#' 
-#' @param singleton Boolean. 
-#' Should singleton communities (i.e., communities with only one node) be counted and plot as a community or should return NA?
-#'  \code{"TRUE"} means that every node that forms a single community will show up in the results as a community (impacting the number of communities estimated).
-#'  \code{"FALSE"} means that every node that forms a single community will return \code{NA} in the vector of communities 
-#'  (not impacting the number of communities estimated).
-#' Defaults to \code{"FALSE"}.
+#' @param verbose Boolean (length = 1).
+#' Whether messages and (insignificant) warnings should be output.
+#' Defaults to \code{FALSE} (silent calls).
+#' Set to \code{TRUE} to see all messages and warnings for every function call
+#'
+#' @param ... Additional arguments to be passed on to
+#' \code{\link[EGAnet]{auto.correlate}}, 
+#' \code{\link[EGAnet]{network.estimation}},
+#' \code{\link[EGAnet]{community.detection}},
+#' \code{\link[EGAnet]{community.consensus}}, and
+#' \code{\link[EGAnet]{EGA}}
 #' 
 #' @return Returns a list containing:
 #' 
@@ -212,21 +167,25 @@
 #' 
 #' \itemize{
 #' 
-#' \item{fit}
+#' \item{\code{fit} --- }
 #' {The fit object for the random-intercept model using \code{\link[lavaan]{cfa}}}
 #' 
-#' \item{lavaan.args}
+#' \item{\code{lavaan.args} --- }
 #' {The arguments used in \code{\link[lavaan]{cfa}}}
 #' 
-#' \item{loadings}
+#' \item{\code{loadings} --- }
 #' {Standardized loadings from the random-intercept model}
 #' 
-#' \item{correlation}
+#' \item{\code{correlation} --- }
 #' {Residual correlations after accounting for the random-intercept model}
 #' 
 #' }
 #' 
 #' }
+#' 
+#' \item{TEFI}{\code{link[EGAnet]{tefi}} for the estimated structure}
+#' 
+#' \item{plot.EGA}{Plot output if \code{plot.EGA = TRUE}}
 #'
 #' @author  
 #' Alejandro Garcia-Pardina <alejandrogp97@gmail.com>,
@@ -238,141 +197,138 @@
 #'
 #' @examples
 #' # Obtain example data
-#' data <- optimism
+#' wmt <- wmt2[,7:24]
 #' 
-#' \dontrun{# riEGA example
-#' opt.res <- riEGA(data = optimism)}
+#' # riEGA example
+#' riEGA(data = wmt, plot.EGA = FALSE)
+#' # no plot for CRAN checks
 #'
 #' @references 
-#' # Selection of CFA Estimator \cr
+#' \strong{Selection of CFA Estimator} \cr
 #' Rhemtulla, M., Brosseau-Liard, P. E., & Savalei, V. (2012).
 #' When can categorical variables be treated as continuous? A comparison of robust continuous and categorical SEM estimation methods under suboptimal conditions.
 #' \emph{Psychological Methods}, \emph{17}, 354-373.
+#' 
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
 #'
 #' @export
 #' 
 # Random-Intercept EGA
 # Changed from 'residualEGA.R' on 17.04.2022
-# Updated 03.04.2023
+# Updated 07.08.2023
 riEGA <- function(
-    data, n = NULL, uni.method = c("expand", "LE", "louvain"),
-    corr = c("cor_auto", "pearson", "spearman"),
-    model = c("glasso", "TMFG"), model.args = list(),
-    algorithm = c("walktrap", "louvain"), algorithm.args = list(),
-    consensus.iter = 100,
-    consensus.method = c(
-      "highest_modularity",
-      "most_common",
-      "iterative",
-      "lowest_tefi"
-    ),
-    plot.EGA = TRUE,
-    plot.args = list(), estimator = c("auto", "WLSMV", "MLR"),
-    lavaan.args = list(),
-    singleton = FALSE
-  )
+    data, n = NULL,
+    corr = c("auto", "pearson", "spearman"),
+    na.data = c("pairwise", "listwise"),
+    model = c("glasso", "TMFG"),  
+    algorithm = c("leiden", "louvain", "walktrap"),
+    uni.method = c("expand", "LE", "louvain"),
+    estimator = c("auto", "WLSMV", "MLR"),
+    plot.EGA = TRUE, verbose = FALSE,
+    ...
+)
 {
   
-  #### ARGUMENTS HANDLING
+  # Argument errors
+  riEGA_errors(data, n, plot.EGA, verbose)
   
-  if(missing(uni.method)){
-    uni.method <- "louvain"
-  }else{uni.method <- match.arg(uni.method)}
+  # Check for missing arguments (argument, default, function)
+  corr <- set_default(corr, "auto", c("auto", "cor_auto", "pearson", "spearman"))
+  corr <- swiftelse(corr == "cor_auto", "auto", corr) # deprecate `cor_auto`
+  na.data <- set_default(na.data, "pairwise", auto.correlate)
+  model <- set_default(model, "glasso", network.estimation)
+  algorithm <- set_default(algorithm, "walktrap", community.detection)
+  uni.method <- set_default(uni.method, "louvain", community.unidimensional)
+  estimator <- set_default(estimator, "auto", riEGA)
   
-  if(missing(corr)){
-    corr <- "cor_auto"
-  }else{corr <- match.arg(corr)}
-  
-  if(missing(model)){
-    model <- "glasso"
-  }else{model <- match.arg(model)}
-  
-  if(missing(algorithm)){
-    algorithm <- "walktrap"
-  }else if(!is.function(algorithm)){
-    algorithm <- tolower(match.arg(algorithm))
-  }
-  
-  if(missing(consensus.method)){
-    consensus.method <- "most_common_tefi"
-  }else{consensus.method <- match.arg(consensus.method)}
-  
-  # Ensure data is a matrix
-  data <- as.matrix(data)
-  
-  # Check for number of variables
-  if(is.null(n)){
-    
-    # Check for sample
-    if(nrow(data) != ncol(data)){
-      
-      # Obtain sample size
-      n <- nrow(data)
-      
-    }else{
-      stop("Argument 'n' must be specified for square matrices.")
-    }
-    
-  }
-  
-  # Obtain variable names
-  # (ensure these names are OK with lavaan)
-  data <- lavaan.formula.names(data)
-  variables <- colnames(data)
-  
-  # Configure random-intercept model
-  ri_model <- paste(
-    "RI =~",
-    paste(
-      "1*", variables, sep = "", collapse = " + "
+  # Catch BGGM
+  if(model == "bggm"){
+    stop(
+      "'model = BGGM' is not supported in `riEGA` because it requires the original data and the residual correlation matrix from the random-intercept model is used as input into `EGA`.",
+      call. = FALSE
     )
+  }
+  
+  # Make sure data is usable and a matrix
+  data <- usable_data(data, verbose)
+  
+  # Ensure data has names
+  data <- ensure_dimension_names(data)
+  
+  # Check that data is not symmetric or square matrix
+  if(is_symmetric(data)){
+    stop(
+      "A symmetric matrix was input into 'data'. The original data needs to be used to properly estimate the random-intercept model.",
+      call. = FALSE
+    )
+  }
+  
+  # Get data dimensions
+  dimensions <- dim(data)
+  
+  # Get variable names
+  variable_names <- dimnames(data)[[2]]
+  
+  # Get ellipse arguments
+  ellipse <- list(...)
+  
+  # Get {lavaan}'s CFA function
+  cfa_FUN <- silent_load(lavaan::cfa)
+  
+  # Get {lavaan} CFA arguments
+  lavaan_ARGS <- obtain_arguments(cfa_FUN, ellipse)
+  
+  # Set random-intercept model
+  lavaan_ARGS$model <- paste(
+    "RI =~", paste0("1*", variable_names, collapse = " + ")
   )
   
-  # Set up standard {lavaan} arguments
-  ## See `helpers-functions.R`
-  lavaan.args <- lavaan_arguments(lavaan.args)
-
-  # Set random-intercept model
-  lavaan.args$model <- ri_model
-  
   # Set data
-  lavaan.args$data <- data
-  
-  # Obtain estimator
-  if(missing(estimator)){
-    estimator <- "auto"
-  }else{
-    estimator <- match.arg(estimator)
-  }
+  lavaan_ARGS$data <- data
   
   # Check for "auto" estimator
   if(estimator == "auto"){
-    
-    # Set arguments based on automatic decisions
-    ## See `helpers-functions.R`
-    lavaan.args <- estimator_arguments(lavaan.args)
-    
-  }
+    lavaan_ARGS <- estimator_arguments(lavaan_ARGS, ellipse)
+  }else{lavaan_ARGS$estimator <- estimator}
   
-  # Ensure "std.lv = FALSE"
-  lavaan.args$std.lv <- FALSE
-  
-  # Get CFA function from lavaan
-  FUN <- lavaan::cfa
+  # Ensure std.lv is FALSE
+  lavaan_ARGS$std.lv <- FALSE
   
   # Fit model
   fit <- try(
-    do.call(what = "FUN", args = as.list(lavaan.args)),
+    do.call(
+      what = "cfa_FUN",
+      # not sure why {lavaan}'s `cfa` function
+      # needs to be in quotes...but it does
+      args = lavaan_ARGS
+    ),
     silent = TRUE
   )
   
-  # Check for "try-error"
-  if(any(class(fit) == "try-error")){
-  
+  # Check for non-convergence
+  if(is(fit, "try-error")){
+    
     # Let user know that random-intercept model did not converge
     message(
       "Random-intercept model did not converge suggesting that there is not substantial evidence for wording effects."
     )
+    
+    # Get correlations since they won't come from random-intercept model
+    if(corr == "auto"){
+      
+      # Compute correlations
+      correlation_matrix <- auto.correlate(
+        data = data, corr = "pearson",
+        na.data = na.data, verbose = verbose,
+        ...
+      )
+      
+    }else{
+      
+      # Obtain correlations using base R
+      correlation_matrix <- cor(data, use = na.data, method = corr)
+      
+    }
     
   }else{ # Proceed with random-intercept model
     
@@ -380,109 +336,165 @@ riEGA <- function(
     ri_loadings <- lavaan::inspect(fit, what = "std")$lambda
     
     # Obtain residual correlation matrix
-    ri_correlations <- lavaan::residuals(fit, type = "cor")$cov
+    correlation_matrix <- lavaan::residuals(fit, type = "cor")$cov
     
     # Change diagonal to 1
-    diag(ri_correlations) <- 1
+    diag(correlation_matrix) <- 1
     
     # Ensure positive definite
-    if(any(eigen(ri_correlations)$values < 0)){
+    if(!is_positive_definite(correlation_matrix)){
       
-      ri_correlations <- as.matrix(
+      correlation_matrix <- as.matrix(
         Matrix::nearPD(
-          ri_correlations,
+          correlation_matrix,
           corr = TRUE,
           keepDiag = TRUE
         )$mat
       )
       
+    }else{ # Remove {lavaan} class
+      correlation_matrix <- unclass(correlation_matrix)
     }
     
   }
   
-  # Obtain EGA defaults
-  ega_defaults <- formals(EGA)
   
-  # Remove "..."
-  ega_defaults <- ega_defaults[-length(ega_defaults)]
-  
-  # Insert values
-  if(exists("ri_correlations")){
-    
-    # Set correlations
-    ega_defaults$data <- ri_correlations
-    
-  }else{
-    
-    # Set data
-    ega_defaults$data <- data
-    
-  }
-  
-  # Set the rest of the arguments
-  ega_defaults <- list(
-    data = ega_defaults$data,
-    n = n, uni.method = uni.method, corr = corr,
-    model = model, model.args = model.args,
-    algorithm = algorithm, algorithm.args = algorithm.args,
-    consensus.method = consensus.method,
-    consensus.iter = consensus.iter, plot.EGA = plot.EGA,
-    plot.args = plot.args, singleton = singleton
+  # Estimate EGA
+  ega_result <- EGA(
+    data = correlation_matrix, n = dimensions[1],
+    corr = corr, na.data = na.data, model = model,
+    algorithm = algorithm, uni.method = uni.method,
+    plot.EGA = FALSE, verbose = verbose, ...
   )
   
-  # Get EGA
-  suppressPackageStartupMessages(
-    ega_result <- do.call(
-      EGA, ega_defaults
-    )
+  # Set up results
+  results <- list(
+    EGA = ega_result,
+    RI = list(fit = fit, lavaan.args = lavaan_ARGS)
   )
-
-  # Return results
-  results <- list()
-  results$EGA <- ega_result
   
-  # Random-intercept model
-  results$RI <- list()
-  results$RI$fit <- fit
-  results$RI$lavaan.args <- lavaan.args
+  # Add methods for random-intercept model
+  attr(results$RI, "methods") <- list(
+    model = lavaan_ARGS$model,
+    estimator = lavaan_ARGS$estimator,
+    ordered = lavaan_ARGS$ordered
+  )
   
-  # Check for whether random-intercept model converged
-  if(exists("ri_correlations")){
+  # Check for random-intercept model convergence
+  if(!is(fit, "try-error")){
     
-    # Report loadings and correlations
+    # Send loadings and correlations
     results$RI$loadings <- ri_loadings
-    results$RI$correlation <- ri_correlations
+    results$RI$correlation <- correlation_matrix
     
-    # Message user about recoding
-    recoding_message <- paste(
-      "\nRandom-intercept model converged. Wording effects likely. Results are only valid if data are ",
-      styletext(
-        "unrecoded", defaults = "underline"
-      ), ".\n",
-      sep = ""
+    # Add loadings attribute
+    attr(results$RI, "methods")$loading <- unname(unique(ri_loadings))
+    
+    # Send message about recoding (regardless of 'verbose')
+    message(
+      paste0(
+        "The random-intercept model converged. Wording effects likely. Results are only valid if data are ",
+        styletext("unrecoded", defaults = "underline"), "."
+      )
     )
     
-    message(recoding_message)
-  
   }
-  
-  # Obtain methods
-  methods <- list()
-  
-  # Lavaan methods
-  methods$estimator <- lavaan.args$estimator
-  methods$corr <- corr
-  methods$model <- model
-  methods$model.args <- model.args
-  methods$algorithm <- algorithm
-  methods$algorithm.args <- algorithm.args
-  methods$uni.method <- uni.method
-  
-  # Add methods to results
-  results$Methods <- methods
   
   # Make class "riEGA"
   class(results) <- "riEGA"
   
+  # Add TEFI to the result
+  results$TEFI <- results$EGA$TEFI
+  
+  # Check for plot
+  if(plot.EGA && sum(results$EGA$network != 0)){
+    
+    # Set up plot
+    results$Plot.EGA <- plot(results, ...)
+    
+    # Actually send the plot
+    silent_plot(results$Plot.EGA)
+    
+  }
+  
+  # Return results
   return(results)
+  
 }
+
+# Bug checking ----
+## Basic input
+# data = wmt2[,7:24]; n = NULL; corr = "auto"; estimator = "auto"
+# na.data = "pairwise"; model = "glasso"; algorithm = "leiden"
+# uni.method = "louvain"; plot.EGA = TRUE; verbose = FALSE;
+# ellipse = list()
+
+#' @noRd
+# Errors ----
+# Updated 04.08.2023
+riEGA_errors <- function(data, n, plot.EGA, verbose)
+{
+  
+  # 'data' errors
+  object_error(data, c("matrix", "data.frame"))
+  
+  # 'n' errors
+  if(!is.null(n)){
+    length_error(n, 1)
+    typeof_error(n, "numeric")
+  }
+  
+  # 'plot.EGA' errors
+  length_error(plot.EGA, 1)
+  typeof_error(plot.EGA, "logical")
+  
+  # 'verbose' errors
+  length_error(verbose, 1)
+  typeof_error(verbose, "logical")
+  
+}
+
+#' @exportS3Method 
+# S3 Print Method ----
+# Updated 28.06.2023
+print.riEGA <- function(x, ...)
+{
+  
+  # Print regular EGA result
+  print(x$EGA)
+  
+  # Add random-intercept model
+  ri_attributes <- attr(x$RI, "methods")
+  
+  # Add break space
+  cat("\n\n----\n\n")
+  
+  # Print estimator
+  cat("Random-Intercept Estimator: ", ri_attributes$estimator, "\n")
+  cat("Random-Intercept Loading: ", format_decimal(ri_attributes$loading, 3))
+  
+}
+
+#' @exportS3Method 
+# S3 Summary Method ----
+# Updated 05.07.2023
+summary.riEGA <- function(object, ...)
+{
+  print(object, ...) # same as print
+}
+
+#' @exportS3Method 
+# S3 Plot Method ----
+# Updated 28.06.2023
+plot.riEGA <- function(x, ...)
+{
+  
+  # Return plot
+  single_plot(
+    network = x$EGA$network,
+    wc = x$EGA$wc,
+    ...
+  )
+  
+}
+
