@@ -54,6 +54,8 @@ o ADD: `genTEFI` to compute the Generalized Total Entropy Fit Index solely; `tef
 
 o REMOVE: `signed.louvain` until reproducibility can be sorted
 
+o REMOVE: `methods.section` and `utils-EGAnet.methods.section` to avoid space issues in ./R directory (1MB)
+
 o UPDATE: `EBICglasso.qgraph` and `TMFG` were optimized; `TMFG` is now 2x faster
 
 o UPDATE: `TMFG` can now directly estimate a GGM with the argument 'partial = TRUE'; implements the Local-Global Inversion method from Barfuss et al. (2016)

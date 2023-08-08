@@ -141,7 +141,7 @@
 #' 
 #' @export
 # Unique Variable Analysis ----
-# Updated 04.08.2023
+# Updated 08.08.2023
 UVA <- function(
     data = NULL, network = NULL, n = NULL, key = NULL,
     uva.method = c("MBR", "EJP"),
@@ -161,7 +161,11 @@ UVA <- function(
   ellipse <- list(...)
   
   # Check for method ("EJP" is old, not recommended)
-  if(uva.method == "ejp" || !auto){
+  if(
+    uva.method == "ejp" || !auto ||
+    "type" %in% names(ellipse) && 
+    ellipse$type %in% c("adapt", "alpha", "threshold")
+  ){
     
     # Check for type = "adapt" or "alpha" 
     # (will not be supported after version 2.0.0)
@@ -176,8 +180,8 @@ UVA <- function(
         what = "oldUVA", # call old UVA function
         args = as.list( # force list into call
           legacy_UVA( # grab input from function calls
-            data, n, key, cut.off, reduce,
-            reduce.method, auto,
+            data = data, n = n, key = key, reduce = reduce,
+            reduce.method = reduce.method, auto = auto,
             FUN.args = list(...) # any other lingering arguments
           )
         )
@@ -1005,10 +1009,10 @@ reduce_sum <- function(
 
 #' @noRd
 # Legacy arguments for "oldUVA.R" ----
-# Updated 02.02.2023
+# Updated 08.08.2023
 legacy_UVA <- function(
-    data, n, key, cut.off, reduce,
-    reduce.method, auto, label.latent,
+    data, n, key, reduce,
+    reduce.method, auto,
     FUN.args
 )
 {
@@ -1019,10 +1023,9 @@ legacy_UVA <- function(
   )
   
   # Replace necessary arguments
-  oldUVA.args$data <- data; oldUVA.args$n <- n; oldUVA.args$key <- key;
-  oldUVA.args$sig <- cut.off; oldUVA.args$reduce <- reduce;
-  oldUVA.args$reduce.method <- reduce.method; oldUVA.args$auto <- auto;
-  oldUVA.args$label.latent <- label.latent
+  oldUVA.args$data <- data; oldUVA.args$n <- n; oldUVA.args$key <- key
+  oldUVA.args$reduce <- reduce; oldUVA.args$reduce.method <- reduce.method
+  oldUVA.args$auto <- auto;
   
   # Return arguments
   return(oldUVA.args)

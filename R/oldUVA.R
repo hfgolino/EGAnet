@@ -311,9 +311,6 @@ oldUVA <- function(
 )
 {
   
-  # Send not refactored message
-  not_refactored("oldUVA")
-  
   # Make sure data is a matrix
   data <- as.matrix(data)
   

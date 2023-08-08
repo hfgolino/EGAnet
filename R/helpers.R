@@ -2498,7 +2498,7 @@ not_refactored <- function(function_name)
 {
   warning(
     paste0(
-      "This implementation of `", function_name, "` was not refactored in the {EGAnet} 2.0.0 update.",
+      "This implementation of `", function_name, "` was not refactored in the {EGAnet} 2.0.0 update. ",
       "There are no guarantees that this function will work.\n\n",
       "Please do not create a GitHub issue or bug report for this function"
     ), call. = FALSE
