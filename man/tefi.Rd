@@ -4,7 +4,7 @@
 \alias{tefi}
 \title{Total Entropy Fit Index using Von Neumman's entropy (Quantum Information Theory) for correlation matrices}
 \usage{
-tefi(data, structure = NULL)
+tefi(data, structure = NULL, verbose = TRUE)
 }
 \arguments{
 \item{data}{Matrix, data frame, or \code{*EGA} class object.
@@ -13,7 +13,13 @@ All \code{*EGA} objects are accepted. \code{\link[EGAnet]{hierEGA}}
 input will produced the Generalized TEFI (see \code{\link[EGAnet]{genTEFI}})}
 
 \item{structure}{Numeric or character vector (length = \code{ncol(data)}).
-Can be theoretical factors or the structure detected by \code{\link{EGA}}.}
+Can be theoretical factors or the structure detected by \code{\link{EGA}}}
+
+\item{verbose}{Boolean (length = 1).
+Whether messages and (insignificant) warnings should be output.
+Defaults to \code{TRUE} to see all messages and warnings for every 
+function call.
+Set to \code{FALSE} to ignore messages and warnings}
 }
 \value{
 Returns a data frame with columns:

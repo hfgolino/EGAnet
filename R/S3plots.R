@@ -3,8 +3,8 @@
 #' @name EGAnet-plot
 #' 
 #' @description General usage for plots created by \code{\link{EGAnet}}'s S3 methods.
-#' Plots across the \code{\link{EGAnet}} package leverage \code{\link[GGally]{ggnet2}} 
-#' and \code{\link[ggplot2]{ggplot}}.
+#' Plots across the \code{\link{EGAnet}} package leverage \{\link{GGally}\}'s \code{\link[GGally]{ggnet2}} 
+#' and \{\link{ggplot2}\}'s \code{\link[ggplot2]{ggplot}}.
 #' 
 #' Most plots allow the full usage of the \code{gg*} series functionality and therefore
 #' plotting arguments should be referenced through those packages rather than here in
@@ -129,6 +129,8 @@
 #' In any network plots, the \code{color.palette} argument can be used to
 #' select color palettes from \code{\link[EGAnet]{color_palette_EGA}} as well
 #' as those in the color scheme of \code{\link[RColorBrewer]{RColorBrewer}}
+#' 
+#' \emph{For more worked examples than below, see \href{https://tinyurl.com/plots-in-eganet}{Plots in \{EGAnet\}}}
 #' 
 #' @examples
 #' \dontrun{

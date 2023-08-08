@@ -270,7 +270,7 @@ EGA.fit <- function(
   # Determine best fitting solution
   fit_values <- apply(
     search_unique, 1, function(membership){
-      tefi(correlation_matrix, membership)
+      tefi(correlation_matrix, membership, verbose = FALSE)
     }$VN.Entropy.Fit
   )
   
@@ -370,9 +370,12 @@ EGA.fit_errors <- function(data, n, plot.EGA, verbose)
 
 #' @exportS3Method 
 # S3 Print Method ----
-# Updated 27.06.2023
+# Updated 07.08.2023
 print.EGA.fit <- function(x, ...)
 {
+  
+  # Add class to network
+  class(x$EGA$network) <- "EGA.network"
   
   # Print network estimation
   print(x$EGA$network)
