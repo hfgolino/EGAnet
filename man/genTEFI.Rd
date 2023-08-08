@@ -4,7 +4,7 @@
 \alias{genTEFI}
 \title{Generalized Total Entropy Fit Index using Von Neumman's entropy (Quantum Information Theory) for correlation matrices}
 \usage{
-genTEFI(data, structure = NULL)
+genTEFI(data, structure = NULL, verbose = TRUE)
 }
 \arguments{
 \item{data}{Matrix, data frame, or \code{\link[EGAnet]{hierEGA}} object.
@@ -25,6 +25,12 @@ the second-order structure (numbers or labels for each item in each second-order
 factor or community)}
 
 }}
+
+\item{verbose}{Boolean (length = 1).
+Whether messages and (insignificant) warnings should be output.
+Defaults to \code{TRUE} to see all messages and warnings for every 
+function call.
+Set to \code{FALSE} to ignore messages and warnings}
 }
 \value{
 Returns a three-column data frame of the Generalized Total Entropy 

@@ -22,6 +22,12 @@
 #' factor or community)}
 #' 
 #' }
+#' 
+#' @param verbose Boolean (length = 1).
+#' Whether messages and (insignificant) warnings should be output.
+#' Defaults to \code{TRUE} to see all messages and warnings for every 
+#' function call.
+#' Set to \code{FALSE} to ignore messages and warnings
 #'
 #' @return Returns a three-column data frame of the Generalized Total Entropy 
 #' Fit Index using Von Neumman's entropy (\code{VN.Entropy.Fit}) (first column), as well as
@@ -44,21 +50,21 @@
 #' @export
 # Total Entropy Fit Index Function (for correlation matrices)
 # Updated 07.08.2023
-genTEFI <- function(data, structure = NULL)
+genTEFI <- function(data, structure = NULL, verbose = TRUE)
 {
   
   # Argument errors
-  genTEFI_errors(data, structure)
+  genTEFI_errors(data, structure, verbose)
   
   # Perform TEFI
-  return(tefi(data, structure))
+  return(tefi(data, structure, verbose))
 
 }
 
 #' @noRd
 # Argument errors
 # Updated 07.08.2023
-genTEFI_errors <- function(data, structure)
+genTEFI_errors <- function(data, structure, verbose)
 {
   
   # 'data' errors
@@ -73,6 +79,10 @@ genTEFI_errors <- function(data, structure)
     object_error(structure, "list")
     length_error(structure, 2)
   }
+  
+  # 'verbose' errors
+  length_error(verbose, 1)
+  typeof_error(verbose, "logical")
   
 }
 

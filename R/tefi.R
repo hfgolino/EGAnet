@@ -9,7 +9,13 @@
 #' input will produced the Generalized TEFI (see \code{\link[EGAnet]{genTEFI}})
 #'
 #' @param structure Numeric or character vector (length = \code{ncol(data)}).
-#' Can be theoretical factors or the structure detected by \code{\link{EGA}}. 
+#' Can be theoretical factors or the structure detected by \code{\link{EGA}}
+#' 
+#' @param verbose Boolean (length = 1).
+#' Whether messages and (insignificant) warnings should be output.
+#' Defaults to \code{TRUE} to see all messages and warnings for every 
+#' function call.
+#' Set to \code{FALSE} to ignore messages and warnings
 #' 
 #' @return Returns a data frame with columns:
 #'
@@ -56,12 +62,12 @@
 #'
 #' @export
 # Total Entropy Fit Index Function (for correlation matrices)
-# Updated 05.08.2023
-tefi <- function(data, structure = NULL)
+# Updated 07.08.2023
+tefi <- function(data, structure = NULL, verbose = TRUE)
 {
   
-  # Get flag for `EGA` class
-  ega_class <- grepl("EGA", class(data))
+  # Check for errors and get flag for `EGA` class
+  ega_class <- tefi_errors(data, verbose)
   
   # Branch for `EGA` class
   if(any(ega_class)){
@@ -88,7 +94,7 @@ tefi <- function(data, structure = NULL)
     output <- obtain_sample_correlations(
       data = data, n = 1L, # set to 1 to avoid error
       corr = "auto", na.data = "pairwise", 
-      verbose = FALSE
+      verbose = verbose
     )
     
     # Get correlation matrix
@@ -103,8 +109,8 @@ tefi <- function(data, structure = NULL)
   return(
     swiftelse( # hierarchical will be a list
       get_object_type(structure) == "list",
-      tefi_generalized(correlation_matrix, structure),
-      tefi_standard(correlation_matrix, structure)
+      tefi_generalized(correlation_matrix, structure, verbose),
+      tefi_standard(correlation_matrix, structure, verbose)
     )
   )
 
@@ -115,6 +121,29 @@ tefi <- function(data, structure = NULL)
 # data <- wmt2[,7:24]; ega.wmt <- EGA(data, plot.EGA = FALSE)
 # data <- ega.wmt$correlation
 # structure <- ega.wmt$wc
+
+#' @noRd
+# Argument errors
+# Updated 07.08.2023
+tefi_errors <- function(data, verbose)
+{
+  
+  # Get `EGA` class
+  ega_class <- grepl("EGA", class(data))
+  
+  # 'data' errors
+  if(any(!ega_class)){
+    object_error(data, c("matrix", "data.frame"))
+  }
+  
+  # 'verbose' errors
+  length_error(verbose, 1)
+  typeof_error(verbose, "logical")
+  
+  # Return `EGA` classes
+  return(ega_class)
+  
+}
 
 #' @noRd
 # Handle structure input ----
@@ -201,7 +230,7 @@ get_tefi_structure <- function(data, structure, ega_object = NULL)
 #' @noRd
 # `tefi` standard function ----
 # Updated 07.08.2023
-tefi_standard <- function(correlation_matrix, structure)
+tefi_standard <- function(correlation_matrix, structure, verbose)
 {
   
   # Check structure
@@ -211,13 +240,15 @@ tefi_standard <- function(correlation_matrix, structure)
     rm.vars <- is.na(structure)
     
     # Send warning message
-    warning(
-      paste(
-        "Some variables did not belong to a dimension:", 
-        paste0(dimnames(correlation_matrix)[[2]][rm.vars], collapse = ", "),
-        "\n\nUse caution: These variables have been removed from the TEFI calculation"
-      ), call. = FALSE
-    )
+    if(verbose){
+      warning(
+        paste(
+          "Some variables did not belong to a dimension:", 
+          paste0(dimnames(correlation_matrix)[[2]][rm.vars], collapse = ", "),
+          "\n\nUse caution: These variables have been removed from the TEFI calculation"
+        ), call. = FALSE
+      )
+    }
     
     # Keep variables
     keep_vars <- !rm.vars
@@ -279,7 +310,7 @@ tefi_standard <- function(correlation_matrix, structure)
 #' @noRd
 # `tefi` generalized function ----
 # Updated 07.08.2023
-tefi_generalized <- function(correlation_matrix, structure)
+tefi_generalized <- function(correlation_matrix, structure, verbose)
 {
   
   # Get variables
@@ -295,13 +326,15 @@ tefi_generalized <- function(correlation_matrix, structure)
   if(any(rm.vars)){
     
     # Send warning message
-    warning(
-      paste(
-        "Some variables did not belong to a dimension:", 
-        paste0(dimnames(correlation_matrix)[[2]][rm.vars], collapse = ", "),
-        "\n\nUse caution: These variables have been removed from the TEFI calculation"
-      ), call. = FALSE
-    )
+    if(verbose){
+      warning(
+        paste(
+          "Some variables did not belong to a dimension:", 
+          paste0(dimnames(correlation_matrix)[[2]][rm.vars], collapse = ", "),
+          "\n\nUse caution: These variables have been removed from the TEFI calculation"
+        ), call. = FALSE
+      )
+    }
     
     # Keep variables
     keep_vars <- !rm.vars

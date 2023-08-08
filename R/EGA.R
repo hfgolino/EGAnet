@@ -238,7 +238,7 @@
 #'
 #' @export
 # EGA ----
-# Updated 06.08.2023
+# Updated 07.08.2023
 EGA <- function (
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),

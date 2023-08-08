@@ -44,8 +44,51 @@ uint64_t next(xoshiro256_state* state) {
     return result;
 }
 
-/* `jump` and `long_jump` have been removed from the original
-    source file because they are not used in {EGAnet} */
+/* 
+  
+ `jump` and `long_jump` have been removed from the original
+  source file because they are not used in {EGAnet} 
+ 
+ `jump` ensures non-overlapping subsequences within xoshiro256++;
+ however, {EGAnet} does not take advantage of it
+ 
+ instead, seeds are pre-generated and allow splitmix64 to
+ do some of the work
+ 
+ according to Blackman and Vigna (2019), splitmix64 passes BigCrush,
+ meaning there is sufficient randomness when setting xoshiro256++'s state
+ 
+ further, in a footnote (p.11), they state that "with 256 bits of state,
+ 2^64 sequences of length 2^64 starting at 2^64 random points in the
+ state space have an overlap probability less than 2^-64"
+ 
+ leaving the sequence length aside, there is never a case that people 
+ should ever get close to 2^64 random starting points (seeds) in {EGAnet} 
+ (e.g., 500 is the default for `bootEGA`) -- even with Monte Carlo 
+ simulation work most values wouldn't cross 2^20 or 1 million 
+ random starting points
+ 
+ based on Vigna (2020), the upper bound on the overlap probability
+ is formally defined as n^2 * L / P where n = processors (or starting points),
+ L is sequence length, and P is the period of the PRNG
+ 
+ using a sequence length of 2^64 (far beyond anything used in {EGAnet}
+ and Monte Carlo simulations in quantitative psychology) and xoshiro256++'s 
+ period of 2^256 - 1, then some upper bound probabilities of n 
+ random starting points are defined below:
+ 
+ 500 (default `bootEGA`) = 3.98273e-53
+ 
+ 1e06 (large simulation) = 1.593092e-46
+ 
+ 1e12 (one trillion seeds) = 1.593092e-34
+ 
+ taken together, `jump` ensures non-overlapping subsequences, but
+ the approach applied here is common and the state space is large
+ enough that although there is a non-zero chance of subsequence 
+ overlap, the result is extremely unlikely < 1.593092e-34
+
+*/
 
 // Get initial states
 uint64_t splitmix64(uint64_t *x) {
@@ -202,3 +245,23 @@ SEXP r_xoshiro_shuffle_replace(SEXP r_vector, SEXP r_seed) {
     return r_output;
 
 }
+
+/* References
+ 
+ // xoshiro256++
+ Blackman, D., & Vigna, S. (2021). Scrambled linear pseudorandom 
+ number generators. ACM Transactions on Mathematical Software 
+ (TOMS), 47(4), 1-32. https://doi.org/10.1145/3460772
+ 
+ // splitmix64
+ Steele Jr, G. L., Lea, D., & Flood, C. H. (2014). Fast splittable 
+ pseudorandom number generators. ACM SIGPLAN Notices, 49(10), 453-472.
+ https://doi.org/10.1145/2714064.2660195
+
+ // upper bound of overlapping subsequences
+ Vigna, S. (2020). On the probability of overlap of random subsequences 
+ of pseudorandom number generators. Information Processing Letters, 
+ 158, 105939. https://doi.org/10.1016/j.ipl.2020.105939
+ 
+  
+*/

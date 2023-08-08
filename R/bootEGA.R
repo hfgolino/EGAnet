@@ -1386,7 +1386,7 @@ estimate_typical_EGA.fit <- function(results, ellipse)
   # Determine best fitting solution
   fit_values <- apply(
     search_unique, 1, function(membership){
-      tefi(ega_object$correlation, membership)
+      tefi(ega_object$correlation, membership, verbose = FALSE)
     }$VN.Entropy.Fit
   )
   
