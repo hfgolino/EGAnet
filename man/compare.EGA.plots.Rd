@@ -72,6 +72,7 @@ sample2 <- wmt[sample(1:nrow(wmt), 300),]
 ega1 <- EGA(sample1)
 ega2 <- EGA(sample2)
 
+\dontrun{
 # Compare EGAs via plot
 compare.EGA.plots(
   ega1, ega2,
@@ -85,7 +86,7 @@ compare.EGA.plots(
   ega1, ega2,
   labels = c("Sample 1", "Sample 2"),
   mode = "circle"
-)
+)}
 
 }
 \seealso{

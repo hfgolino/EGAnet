@@ -56,6 +56,7 @@
 #' ega1 <- EGA(sample1)
 #' ega2 <- EGA(sample2)
 #' 
+#' \dontrun{
 #' # Compare EGAs via plot
 #' compare.EGA.plots(
 #'   ega1, ega2,
@@ -69,7 +70,7 @@
 #'   ega1, ega2,
 #'   labels = c("Sample 1", "Sample 2"),
 #'   mode = "circle"
-#' )
+#' )}
 #' 
 #' @author Alexander Christensen <alexpaulchristensen@gmail.com>
 #' 
@@ -78,7 +79,7 @@
 #' @export
 #
 # Compare EGA plots ----
-# Updated 03.08.2023
+# Updated 08.08.2023
 compare.EGA.plots <- function(
   ..., input.list = NULL, base = 1,
   labels = NULL, rows = NULL, columns = NULL
