@@ -1,8 +1,13 @@
-### CRAN 1.2.3 | GitHub 2.0.0
-
 <img src="inst/EGAnet_hex.png" width = 250 />
 
-[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active) [![Downloads Total](https://cranlogs.r-pkg.org/badges/grand-total/EGAnet?color=brightgreen)](https://cran.r-project.org/package=EGAnet) [![Downloads per month](http://cranlogs.r-pkg.org/badges/EGAnet?color=brightgreen)](https://cran.r-project.org/package=EGAnet) 
+<div id="badges"><!-- pkgdown markup -->
+<a href="https://CRAN.R-project.org/package=EGAnet"><img border="0" src="https://www.r-pkg.org/badges/version/EGAnet" alt="CRAN version"/></a>
+<a href="https://github.com/hfgolino/EGAnet/releases"><img src="https://img.shields.io/github/v/release/hfgolino/EGAnet" alt="GitHub version"/></a>
+<a href="https://github.com/hfgolino/EGAnet/actions/workflows/r.yml"><img border="0" src="https://github.com/hfgolino/EGAnet/actions/workflows/r.yml/badge.svg" alt="R CMD check status"/></a> </br>
+<a href="https://www.repostatus.org/#active"><img border="0" src="https://www.repostatus.org/badges/latest/active.svg" alt="Project Status: Active – The project has reached a stable, usable state and is being actively developed."/></a>
+<a href="https://cran.r-project.org/package=EGAnet"><img border="0" src="https://cranlogs.r-pkg.org/badges/grand-total/EGAnet?color=brightgreen" alt="Downloads Total"/></a>
+<a href="https://cran.r-project.org/package=EGAnet"><img border="0" src="http://cranlogs.r-pkg.org/badges/EGAnet?color=brightgreen" alt="Downloads per month"/></a>
+</div>
 
 How to Install
 =============
