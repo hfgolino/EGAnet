@@ -118,6 +118,7 @@ A Bayesian approach for dimensionality assessment in psychological networks.
 \seealso{
 Useful links:
 \itemize{
+  \item \url{https://github.com/hfgolino/EGAnet}
   \item Report bugs at \url{https://github.com/hfgolino/EGAnet/issues}
 }
 

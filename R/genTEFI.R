@@ -49,12 +49,12 @@
 #'
 #' @export
 # Total Entropy Fit Index Function (for correlation matrices)
-# Updated 07.08.2023
+# Updated 09.08.2023
 genTEFI <- function(data, structure = NULL, verbose = TRUE)
 {
   
-  # Argument errors
-  genTEFI_errors(data, structure, verbose)
+  # Argument errors (return data in case of tibble)
+  data <- genTEFI_errors(data, structure, verbose)
   
   # Perform TEFI
   return(tefi(data, structure, verbose))
@@ -63,13 +63,21 @@ genTEFI <- function(data, structure = NULL, verbose = TRUE)
 
 #' @noRd
 # Argument errors
-# Updated 07.08.2023
+# Updated 09.08.2023
 genTEFI_errors <- function(data, structure, verbose)
 {
   
   # 'data' errors
   if(any(!grepl("EGA", class(data)))){
-    object_error(data, c("matrix", "data.frame"))
+    
+    # Check for appropriate data
+    object_error(data, c("matrix", "data.frame", "tibble"))
+    
+    # Check for tibble
+    if(get_object_type(data) == "tibble"){
+      data <- as.data.frame(data)
+    }
+    
   }else{
     class_error(data, "hierEGA")
   }
@@ -83,6 +91,9 @@ genTEFI_errors <- function(data, structure, verbose)
   # 'verbose' errors
   length_error(verbose, 1)
   typeof_error(verbose, "logical")
+  
+  # Return data in case of tibble
+  return(data)
   
 }
 

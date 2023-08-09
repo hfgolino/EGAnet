@@ -94,8 +94,17 @@ correlations <- polychoric.matrix(wmt)
 # Randomly assign missing data
 wmt[sample(1:length(wmt), 1000)] <- NA
 
-# Compute polychoric correlation matrix with pairwise method
-na_correlations <- polychoric.matrix(wmt, na.data = "pairwise")
+# Compute polychoric correlation matrix 
+# with pairwise missing
+pairwise_correlations <- polychoric.matrix(
+  wmt, na.data = "pairwise"
+)
+
+# Compute polychoric correlation matrix 
+# with listwise missing
+pairwise_correlations <- polychoric.matrix(
+  wmt, na.data = "listwise"
+)
 
 }
 \references{
@@ -113,7 +122,7 @@ Brent, R. P. (2013).
 Algorithms for minimization without derivatives.
 Mineola, NY: Dover Publications, Inc.
 
-\strong{Drezner-Wesolosky bivariate normal approximation} \cr
+\strong{Drezner-Wesolowsky bivariate normal approximation} \cr
 Drezner, Z., & Wesolowsky, G. O. (1990).
 On the computation of the bivariate normal integral.
 \emph{Journal of Statistical Computation and Simulation}, \emph{35}(1-2), 101-107.

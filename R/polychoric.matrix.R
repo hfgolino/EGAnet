@@ -80,8 +80,17 @@
 #' # Randomly assign missing data
 #' wmt[sample(1:length(wmt), 1000)] <- NA
 #' 
-#' # Compute polychoric correlation matrix with pairwise method
-#' na_correlations <- polychoric.matrix(wmt, na.data = "pairwise")
+#' # Compute polychoric correlation matrix 
+#' # with pairwise missing
+#' pairwise_correlations <- polychoric.matrix(
+#'   wmt, na.data = "pairwise"
+#' )
+#' 
+#' # Compute polychoric correlation matrix 
+#' # with listwise missing
+#' pairwise_correlations <- polychoric.matrix(
+#'   wmt, na.data = "listwise"
+#' )
 #' 
 #' @references 
 #' \strong{Beasley-Moro-Springer algorithm} \cr
@@ -98,7 +107,7 @@
 #' Algorithms for minimization without derivatives.
 #' Mineola, NY: Dover Publications, Inc.
 #' 
-#' \strong{Drezner-Wesolosky bivariate normal approximation} \cr
+#' \strong{Drezner-Wesolowsky bivariate normal approximation} \cr
 #' Drezner, Z., & Wesolowsky, G. O. (1990).
 #' On the computation of the bivariate normal integral.
 #' \emph{Journal of Statistical Computation and Simulation}, \emph{35}(1-2), 101-107.
@@ -109,7 +118,7 @@
 #' @export
 #'
 # Compute polychoric correlation matrix
-# Updated 07.08.2023
+# Updated 09.08.2023
 polychoric.matrix <- function(
     data, na.data = c("pairwise", "listwise"),
     empty.method = c("none", "zero", "all"),
@@ -125,15 +134,15 @@ polychoric.matrix <- function(
   # Ensure data is a matrix
   data <- as.matrix(data)
   
-  # Get dimensions of data
-  dimensions <- as.integer(dim(data))
-  
   # Check for missing data
   if(na.data == "pairwise"){
     data[is.na(data)] <- 99 # "pairwise" is performed in C
   }else if(na.data == "listwise"){
     data <- na.omit(data) # no performance difference with C
   }
+  
+  # Get dimensions of data
+  dimensions <- as.integer(dim(data))
   
   # Set up 'empty.method' and 'empty.value' for C
   if(empty.method == "none"){

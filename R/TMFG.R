@@ -153,8 +153,8 @@ TMFG <- function(
 )
 {
   
-  # Argument errors
-  TMFG_errors(data, n, partial, returnAllResults, verbose)
+  # Argument errors (return data in case of tibble)
+  data <- TMFG_errors(data, n, partial, returnAllResults, verbose)
   
   # Check for missing arguments (argument, default, function)
   corr <- set_default(corr, "auto", TMFG)
@@ -395,12 +395,17 @@ TMFG <- function(
 
 #' @noRd
 # Errors ----
-# Updated 04.08.2023
+# Updated 09.08.2023
 TMFG_errors <- function(data, n, partial, returnAllResults, verbose)
 {
   
   # 'data' errors
-  object_error(data, c("matrix", "data.frame"))
+  object_error(data, c("matrix", "data.frame", "tibble"))
+  
+  # Check for tibble
+  if(get_object_type(data) == "tibble"){
+    data <- as.data.frame(data)
+  }
   
   # 'n' errors
   if(!is.null(n)){
@@ -419,6 +424,9 @@ TMFG_errors <- function(data, n, partial, returnAllResults, verbose)
   # 'verbose' errors
   length_error(verbose, 1)
   typeof_error(verbose, "logical")
+  
+  # Return data in case of tibble
+  return(data)
   
 }
 

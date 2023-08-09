@@ -43,12 +43,12 @@
 #'
 #' @export
 # Entropy Fit Index ----
-# Updated 03.08.2023
+# Updated 09.08.2023
 entropyFit <- function (data, structure)
 {
   
-  # Argument errors
-  entropyFit_errors(data, structure)
+  # Argument errors (return data in case of tibble)
+  data <- entropyFit_errors(data, structure)
   
   # Ensure data is a matrix
   data <- as.matrix(data)
@@ -183,16 +183,24 @@ entropyFit <- function (data, structure)
 
 #' @noRd
 # Argument errors ----
-# Updated 04.08.2023
+# Updated 09.08.2023
 entropyFit_errors <- function(data, structure)
 {
   
   # 'data' errors
-  object_error(data, c("matrix", "data.frame"))
+  object_error(data, c("matrix", "data.frame", "tibble"))
+  
+  # Check for tibble
+  if(get_object_type(data) == "tibble"){
+    data <- as.data.frame(data)
+  }
   
   # 'structure' errors
   object_error(structure, "vector")
   length_error(structure, dim(data)[2])
+  
+  # Return data in case of tibble
+  return(data)
   
 }
 

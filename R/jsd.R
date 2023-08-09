@@ -64,7 +64,7 @@
 #' @export
 #' 
 # Jensen-Shannon Distance
-# Updated 04.08.2023
+# Updated 09.08.2023
 jsd <- function(
     network1, network2,
     method = c("kld", "spectral")
@@ -74,8 +74,11 @@ jsd <- function(
   # Check for missing arguments (argument, default, function)
   method <- set_default(method, "spectral", jsd)
   
-  # Argument errors
-  jsd_errors(network1, network2)
+  # Argument errors (send back networks in case of tibble)
+  error_return <- jsd_errors(network1, network2)
+  
+  # Get networks
+  network1 <- error_return$network1; network2 <- error_return$network2
   
   # Check for method
   if(method == "spectral"){
@@ -115,15 +118,28 @@ jsd <- function(
 
 #' @noRd
 # Argument errors ----
-# Updated 04.08.2023
+# Updated 09.08.2023
 jsd_errors <- function(network1, network2)
 {
   
   # 'network1' errors
-  object_error(network1, c("matrix", "data.frame"))
+  object_error(network1, c("matrix", "data.frame", "tibble"))
+  
+  # Check for tibble
+  if(!is(network1, "matrix")){
+    network1 <- as.matrix(network1)
+  }
   
   # 'network2' errors
   object_error(network2, c("matrix", "data.frame"))
+  
+  # Check for tibble
+  if(!is(network2, "matrix")){
+    network2 <- as.matrix(network2)
+  }
+  
+  # Return networks
+  return(list(network1 = network1, network2 = network2))
   
 }
 

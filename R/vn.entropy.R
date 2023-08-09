@@ -44,8 +44,8 @@
 vn.entropy <- function(data, structure)
 {
   
-  # Argument errors
-  vn.entropy_errors(data, structure)
+  # Argument errors (return data in case of tibble)
+  data <- vn.entropy_errors(data, structure)
   
   # Generic function to get necessary inputs
   output <- obtain_sample_correlations(
@@ -134,16 +134,24 @@ vn.entropy <- function(data, structure)
 
 #' @noRd
 # Argument errors ----
-# Updated 04.08.2023
+# Updated 09.08.2023
 vn.entropy_errors <- function(data, structure)
 {
   
   # 'data' errors
-  object_error(data, c("matrix", "data.frame"))
+  object_error(data, c("matrix", "data.frame", "tibble"))
+  
+  # Check for tibble
+  if(get_object_type(data) == "tibble"){
+    data <- as.data.frame(data)
+  }
   
   # 'structure' errors
   object_error(structure, "vector")
   length_error(structure, dim(data)[2])
+  
+  # Return data in case of tibble
+  return(data)
   
 }
 

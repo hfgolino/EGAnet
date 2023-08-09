@@ -353,7 +353,7 @@
 #' @export
 #' 
 # dynEGA ----
-# Updated 27.07.2022
+# Updated 09.08.2023
 dynEGA <- function(
     # `dynEGA` arguments
     data,  id = NULL, group = NULL,
@@ -382,8 +382,8 @@ dynEGA <- function(
     level <- "population" # default to full sample
   }else{level <- match.arg(level, several.ok = TRUE)}
   
-  # Argument errors
-  dynEGA_errors(
+  # Argument errors (return data in case of tibble)
+  data <- dynEGA_errors(
     data, id, group, n.embed, tau, delta,
     use.derivatives, ncores, verbose
   )
@@ -561,7 +561,7 @@ dynEGA <- function(
 
 #' @noRd
 # Errors ----
-# Updated 26.07.2023
+# Updated 09.08.2023
 dynEGA_errors <- function(
     data, id, group, n.embed, tau, delta,
     use.derivatives, ncores, verbose
@@ -569,7 +569,12 @@ dynEGA_errors <- function(
 {
   
   # 'data' errors
-  object_error(data, c("matrix", "data.frame"))
+  object_error(data, c("matrix", "data.frame", "tibble"))
+  
+  # Check for tibble
+  if(get_object_type(data) == "tibble"){
+    data <- as.data.frame(data)
+  }
   
   # 'id' errors
   if(!is.null(id)){
@@ -610,6 +615,9 @@ dynEGA_errors <- function(
   # 'verbose' errors
   length_error(verbose, 1)
   typeof_error(verbose, "logical")
+  
+  # Return data in case of tibble
+  return(data)
   
 }
 

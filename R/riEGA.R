@@ -215,7 +215,7 @@
 #' 
 # Random-Intercept EGA
 # Changed from 'residualEGA.R' on 17.04.2022
-# Updated 07.08.2023
+# Updated 09.08.2023
 riEGA <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -229,8 +229,8 @@ riEGA <- function(
 )
 {
   
-  # Argument errors
-  riEGA_errors(data, n, plot.EGA, verbose)
+  # Argument errors (return data in case of tibble)
+  data <- riEGA_errors(data, n, plot.EGA, verbose)
   
   # Check for missing arguments (argument, default, function)
   corr <- set_default(corr, "auto", c("auto", "cor_auto", "pearson", "spearman"))
@@ -431,12 +431,17 @@ riEGA <- function(
 
 #' @noRd
 # Errors ----
-# Updated 04.08.2023
+# Updated 09.08.2023
 riEGA_errors <- function(data, n, plot.EGA, verbose)
 {
   
   # 'data' errors
-  object_error(data, c("matrix", "data.frame"))
+  object_error(data, c("matrix", "data.frame", "tibble"))
+  
+  # Check for tibble
+  if(get_object_type(data) == "tibble"){
+    data <- as.data.frame(data)
+  }
   
   # 'n' errors
   if(!is.null(n)){
@@ -451,6 +456,9 @@ riEGA_errors <- function(data, n, plot.EGA, verbose)
   # 'verbose' errors
   length_error(verbose, 1)
   typeof_error(verbose, "logical")
+  
+  # Return data in case of tibble
+  return(data)
   
 }
 

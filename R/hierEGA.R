@@ -286,7 +286,7 @@
 #' @export
 #'
 # Hierarchical EGA ----
-# Updated 06.08.2023
+# Updated 09.08.2023
 hierEGA <- function(
     data, 
     # `net.scores` arguments
@@ -309,8 +309,8 @@ hierEGA <- function(
   # Send experimental message (for now)
   experimental("hierEGA")
   
-  # Argument errors
-  hierEGA_errors(data, plot.EGA, verbose)
+  # Argument errors (return data in case of tibble)
+  data <- hierEGA_errors(data, plot.EGA, verbose)
   
   # Get ellipse arguments
   ellipse <- list(...)
@@ -611,12 +611,17 @@ hierEGA <- function(
 
 #' @noRd
 # Argument errors ----
-# Updated 03.08.2023
+# Updated 09.08.2023
 hierEGA_errors <- function(data, plot.EGA, verbose)
 {
   
   # 'data' errors
-  object_error(data, c("matrix", "data.frame"))
+  object_error(data, c("matrix", "data.frame", "tibble"))
+  
+  # Check for tibble
+  if(get_object_type(data) == "tibble"){
+    data <- as.data.frame(data)
+  }
   
   # 'plot.EGA' errors
   length_error(plot.EGA, 1)
@@ -625,6 +630,9 @@ hierEGA_errors <- function(data, plot.EGA, verbose)
   # 'verbose' errors
   length_error(verbose, 1)
   typeof_error(verbose, "logical")
+  
+  # Return data in case of tibble
+  return(data)
   
 }
 

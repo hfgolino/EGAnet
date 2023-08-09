@@ -105,7 +105,7 @@
 #' @export
 #'
 # Computes optimal glasso network based on EBIC ----
-# Updated 07.08.2023
+# Updated 09.08.2023
 EBICglasso.qgraph <- function(
     data, # Sample covariance matrix
     n = NULL,
@@ -126,8 +126,8 @@ EBICglasso.qgraph <- function(
   # Determine model selection
   model.selection <- set_default(model.selection, "ebic", EBICglasso.qgraph)
   
-  # Argument errors
-  EBICglasso.qgraph_errors(
+  # Argument errors (return data in case of tibble)
+  data <- EBICglasso.qgraph_errors(
     data, n, gamma, penalize.diagonal, nlambda,
     returnAllResults, countDiagonal, refit, verbose
   )
@@ -315,7 +315,12 @@ EBICglasso.qgraph_errors <- function(
 {
 
   # 'data' errors
-  object_error(data, c("matrix", "data.frame"))
+  object_error(data, c("matrix", "data.frame", "tibble"))
+  
+  # Check for tibble
+  if(get_object_type(data) == "tibble"){
+    data <- as.data.frame(data)
+  }
   
   # 'n' errors
   if(!is.null(n)){
@@ -352,6 +357,9 @@ EBICglasso.qgraph_errors <- function(
   # 'verbose' errors
   length_error(verbose, 1)
   typeof_error(verbose, "logical")
+  
+  # Return data in case of tibble
+  return(data)
   
 }
 

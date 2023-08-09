@@ -150,7 +150,7 @@ modularity_errors <- function(
 {
   
   # 'network' errors
-  object_error(network, c("matrix", "data.frame"))
+  object_error(network, c("matrix", "data.frame", "tibble"))
   
   # 'memberships' errors
   object_error(memberships, c("vector", "matrix", "data.frame"))

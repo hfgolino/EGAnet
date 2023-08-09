@@ -246,7 +246,7 @@ dynEGA.ind.pop <- function(
   ncores, verbose = TRUE, ...
 ){
 
-  # Use `dynEGA`
+  # Use `dynEGA` (input handling occurs inside `dynEGA`)
   return(
     dynEGA(
       data = data, id = id, n.embed = n.embed, tau = tau,

@@ -32,5 +32,6 @@ Imports: BGGM, future, future.apply, glasso, GGally,
 Suggests: fitdistrplus, fungible, gridExtra, knitr, markdown,
           pbapply, progress, psych, pwr, RColorBrewer
 Byte-Compile: true
+URL: https://github.com/hfgolino/EGAnet
 BugReports: https://github.com/hfgolino/EGAnet/issues
 RoxygenNote: 7.2.3

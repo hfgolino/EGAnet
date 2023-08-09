@@ -306,7 +306,7 @@
 #' @export
 #'
 # Measurement Invariance
-# Updated 03.08.2023
+# Updated 09.08.2023
 invariance <- function(
     data, groups, structure = NULL,
     iter = 500, configural.threshold = 0.70,
@@ -334,9 +334,14 @@ invariance <- function(
   uni.method <- set_default(uni.method, "louvain", community.unidimensional)
   if(missing(ncores)){ncores <- ceiling(parallel::detectCores() / 2)}
   
-  # Send error if 'groups' is not a vector, matrix, or data frame
-  object_error(groups, c("vector", "matrix", "data.frame"))
-  groups <- force_vector(groups)
+  # Argument errors (returns 'data' and 'groups')
+  error_return <- invariance_errors(
+    data, groups, iter, configural.threshold,
+    ncores, seed, verbose
+  )
+  
+  # Get data and groups
+  data <- error_return$data; groups <- error_return$groups
   
   # Ensure data has variable names
   data <- ensure_dimension_names(data)
@@ -344,14 +349,6 @@ invariance <- function(
   # Get dimensions and dimension names of the data
   original_dimensions <- dim(data)
   original_dimension_names <- dimnames(data)
-  
-  # Send error if 'data' and 'groups' differ in length
-  if(original_dimensions[1] != length(groups)){
-    stop(
-      "Number of cases in 'data' do not match the length of 'groups'. Please check that these numbers match: `nrow(data) == length(groups)`",
-      call. = FALSE
-    )
-  }
   
   # Get ellipse arguments
   ellipse <- list(...)
@@ -652,6 +649,59 @@ invariance <- function(
 # configural.type = "parametric"; corr = "auto"; na.data = "pairwise"
 # model = "glasso"; algorithm = "walktrap"; uni.method = "louvain"
 # ncores = 8; verbose = TRUE
+
+#' @noRd
+# Errors ----
+# Updated 09.08.2023
+invariance_errors <- function(
+    data, groups, iter, configural.threshold,
+    ncores, seed, verbose
+)
+{
+  
+  # 'data' errors
+  object_error(data, c("matrix", "data.frame", "tibble"))
+  
+  # Check for tibble
+  if(get_object_type(data) == "tibble"){
+    data <- as.data.frame(data)
+  }
+  
+  # 'groups' errors
+  object_error(groups, c("vector", "matrix", "data.frame"))
+  groups <- force_vector(groups)
+  length_error(groups, dim(data)[1])
+  
+  # 'iter' errors
+  length_error(iter, 1)
+  typeof_error(iter, "numeric")
+  range_error(iter, c(1, Inf))
+  
+  # 'configural.threshold' errors
+  length_error(configural.threshold, 1)
+  typeof_error(configural.threshold, "numeric")
+  range_error(configural.threshold, c(0, 1))
+  
+  # 'ncores' errors
+  length_error(ncores, 1)
+  typeof_error(ncores, "numeric")
+  range_error(ncores, c(1, parallel::detectCores()))
+ 
+  # 'seed' errors
+  if(!is.null(seed)){
+    length_error(seed, 1)
+    typeof_error(seed, "numeric")
+    range_error(seed,  c(0, Inf))
+  }
+  
+  # 'verbose' errors
+  length_error(verbose, 1)
+  typeof_error(verbose, "logical")
+  
+  # Return data and groups
+  return(list(data = data, groups = groups))
+  
+}
 
 #' @exportS3Method 
 # S3 Print Method ----

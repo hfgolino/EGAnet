@@ -343,7 +343,7 @@
 #' @export
 #'
 # Bootstrap EGA ----
-# Updated 03.08.2023
+# Updated 09.08.2023
 bootEGA <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -378,8 +378,8 @@ bootEGA <- function(
   # Set cores
   if(missing(ncores)){ncores <- ceiling(parallel::detectCores() / 2)}
   
-  # Argument errors
-  bootEGA_errors(
+  # Argument errors (return data in case of tibble)
+  data <- bootEGA_errors(
     data, n, iter, ncores, typicalStructure,
     plot.typicalStructure, seed, verbose
   )
@@ -603,7 +603,7 @@ bootEGA <- function(
 
 #' @noRd
 # Errors ----
-# Updated 28.07.2023
+# Updated 09.08.2023
 bootEGA_errors <- function(
     data, n, iter, ncores, typicalStructure,
     plot.typicalStructure, seed, verbose
@@ -611,7 +611,12 @@ bootEGA_errors <- function(
 {
   
   # 'data' errors
-  object_error(data, c("matrix", "data.frame"))
+  object_error(data, c("matrix", "data.frame", "tibble"))
+  
+  # Check for tibble
+  if(get_object_type(data) == "tibble"){
+    data <- as.data.frame(data)
+  }
   
   # 'n' errors
   if(!is.null(n)){
@@ -647,6 +652,9 @@ bootEGA_errors <- function(
   # 'verbose' errors
   length_error(verbose, 1)
   typeof_error(verbose, "logical")
+  
+  # Return data (in case of tibble)
+  return(data)
   
 }
 

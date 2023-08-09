@@ -173,7 +173,7 @@
 #' @export
 #'
 # Estimates multidimensional EGA only (no automatic plots)
-# Updated 07.08.2023
+# Updated 09.08.2023
 EGA.estimate <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -191,8 +191,8 @@ EGA.estimate <- function(
   model <- set_default(model, "glasso", network.estimation)
   algorithm <- set_default(algorithm, "walktrap", community.detection)
 
-  # Argument errors
-  EGA.estimate_errors(data, n, verbose)
+  # Argument errors (return data in case of tibble)
+  data <- EGA.estimate_errors(data, n, verbose)
   
   # Obtain ellipse arguments
   ellipse <- list(...)
@@ -331,12 +331,17 @@ EGA.estimate <- function(
 
 #' @noRd
 # Errors ----
-# Updated 27.07.2023
+# Updated 09.08.2023
 EGA.estimate_errors <- function(data, n, verbose)
 {
   
   # 'data' errors
-  object_error(data, c("matrix", "data.frame"))
+  object_error(data, c("matrix", "data.frame", "tibble"))
+  
+  # Check for tibble
+  if(get_object_type(data) == "tibble"){
+    data <- as.data.frame(data)
+  }
   
   # 'n' errors
   if(!is.null(n)){
@@ -347,6 +352,9 @@ EGA.estimate_errors <- function(data, n, verbose)
   # 'verbose' errors
   length_error(verbose, 1)
   typeof_error(verbose, "logical")
+  
+  # Return data (in case of tibble)
+  return(data)
   
 }
 

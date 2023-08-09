@@ -18,12 +18,12 @@
 #'
 #' @export
 # Convert matrix to {igraph} network
-# Updated 03.08.2023
+# Updated 09.08.2023
 convert2igraph <- function (A, diagonal = 0)
 {
   
-  # Argument errors
-  convert2igraph_errors(A, diagonal)
+  # Argument errors (return A in case of tibble)
+  A <- convert2igraph_errors(A, diagonal)
   
   # Convert to matrix
   A <- as.matrix(A)
@@ -45,17 +45,25 @@ convert2igraph <- function (A, diagonal = 0)
 
 #' @noRd
 # Argument errors
-# Updated 03.08.2023
+# Updated 09.08.2023
 convert2igraph_errors <- function(A, diagonal)
 {
   
   # 'A' errors
-  object_error(A, c("matrix", "data.frame"))
+  object_error(A, c("matrix", "data.frame", "tibble"))
+  
+  # Check for tibble
+  if(get_object_type(A) == "tibble"){
+    A <- as.data.frame(A)
+  }
   
   # 'diagonal' errors
   length_error(diagonal, 1)
   typeof_error(diagonal, "numeric")
   range_error(diagonal, c(-1, 1))
+  
+  # Return A in case of tibble
+  return(A)
   
 }
 

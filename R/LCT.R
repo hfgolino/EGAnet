@@ -185,7 +185,7 @@
 #' @export
 #'
 # Loadings Comparison Test ----
-# Updated 04.08.2023
+# Updated 09.08.2023
 LCT <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -200,8 +200,8 @@ LCT <- function(
   # Store random state (if there is one)
   store_state()
   
-  # Argument errors
-  LCT_errors(data, n, iter, verbose)
+  # Argument errors (return data in case of tibble)
+  data <- LCT_errors(data, n, iter, verbose)
   
   # Check for missing arguments (argument, default, function)
   corr <- set_default(corr, "auto", c("auto", "cor_auto", "pearson", "spearman"))
@@ -357,12 +357,17 @@ LCT <- function(
 
 #' @noRd
 # Errors ----
-# Updated 28.07.2023
+# Updated 09.08.2023
 LCT_errors <- function(data, n, iter, verbose)
 {
   
   # 'data' errors
-  object_error(data, c("matrix", "data.frame"))
+  object_error(data, c("matrix", "data.frame", "tibble"))
+  
+  # Check for tibble
+  if(get_object_type(data) == "tibble"){
+    data <- as.data.frame(data)
+  }
   
   # 'n' errors
   if(!is.null(n)){
@@ -378,6 +383,9 @@ LCT_errors <- function(data, n, iter, verbose)
   # 'verbose' errors
   length_error(verbose, 1)
   typeof_error(verbose, "logical")
+  
+  # Return data in case of tibble
+  return(data)
   
 }
 

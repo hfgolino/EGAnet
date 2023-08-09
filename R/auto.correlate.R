@@ -104,7 +104,7 @@
 #' @export
 #'
 # Automatic correlations ----
-# Updated 07.08.2023
+# Updated 09.08.2023
 auto.correlate <- function(
     data, # Matrix or data frame
     corr = c("kendall", "pearson", "spearman"), # allow changes to standard correlations
@@ -118,8 +118,8 @@ auto.correlate <- function(
 )
 {
   
-  # Argument errors
-  auto.correlate_errors(data, ordinal.categories, forcePD, verbose)
+  # Argument errors (return data in case of tibble)
+  data <- auto.correlate_errors(data, ordinal.categories, forcePD, verbose)
   
   # Check for missing arguments (argument, default, function)
   corr <- set_default(corr, "pearson", auto.correlate)
@@ -321,12 +321,17 @@ auto.correlate <- function(
 
 #' @noRd
 # Errors ----
-# Updated 26.07.2023
+# Updated 09.08.2023
 auto.correlate_errors <- function(data, ordinal.categories, forcePD, verbose)
 {
   
   # 'data' errors
-  object_error(data, c("matrix", "data.frame"))
+  object_error(data, c("matrix", "data.frame", "tibble"))
+  
+  # Check for tibble
+  if(get_object_type(data) == "tibble"){
+    data <- as.data.frame(data)
+  }
   
   # 'ordinal.categories' errors
   length_error(ordinal.categories, 1)
@@ -340,6 +345,9 @@ auto.correlate_errors <- function(data, ordinal.categories, forcePD, verbose)
   # 'verbose' errors
   length_error(verbose, 1)
   typeof_error(verbose, "logical")
+  
+  # Return data (in case of tibble)
+  return(data)
   
 }
 

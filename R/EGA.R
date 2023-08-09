@@ -238,7 +238,7 @@
 #'
 #' @export
 # EGA ----
-# Updated 07.08.2023
+# Updated 09.08.2023
 EGA <- function (
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -261,8 +261,8 @@ EGA <- function (
   algorithm <- set_default(algorithm, "walktrap", community.detection)
   uni.method <- set_default(uni.method, "louvain", community.unidimensional)
   
-  # Argument errors
-  EGA_errors(data, n, plot.EGA, verbose)
+  # Argument errors (return data in case of tibble)
+  data <- EGA_errors(data, n, plot.EGA, verbose)
   
   # Ensure data has names
   data <- ensure_dimension_names(data)
@@ -406,12 +406,17 @@ EGA <- function (
 
 #' @noRd
 # Errors ----
-# Updated 27.07.2023
+# Updated 09.08.2023
 EGA_errors <- function(data, n, plot.EGA, verbose)
 {
   
   # 'data' errors
-  object_error(data, c("matrix", "data.frame"))
+  object_error(data, c("matrix", "data.frame", "tibble"))
+  
+  # Check for tibble
+  if(get_object_type(data) == "tibble"){
+    data <- as.data.frame(data)
+  }
   
   # 'n' errors
   if(!is.null(n)){
@@ -426,6 +431,9 @@ EGA_errors <- function(data, n, plot.EGA, verbose)
   # 'verbose' errors
   length_error(verbose, 1)
   typeof_error(verbose, "logical")
+  
+  # Return data in case of tibble
+  return(data)
   
 }
 

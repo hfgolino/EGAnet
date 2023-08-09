@@ -62,12 +62,15 @@
 #'
 #' @export
 # Total Entropy Fit Index Function (for correlation matrices)
-# Updated 07.08.2023
+# Updated 09.08.2023
 tefi <- function(data, structure = NULL, verbose = TRUE)
 {
   
-  # Check for errors and get flag for `EGA` class
-  ega_class <- tefi_errors(data, verbose)
+  # Check for errors (returns 'data' and 'ega_class' flag)
+  error_return <- tefi_errors(data, verbose)
+  
+  # Get 'data' and 'ega_class' flag
+  data <- error_return$data; ega_class <- error_return$ega_class
   
   # Branch for `EGA` class
   if(any(ega_class)){
@@ -124,7 +127,7 @@ tefi <- function(data, structure = NULL, verbose = TRUE)
 
 #' @noRd
 # Argument errors
-# Updated 07.08.2023
+# Updated 09.08.2023
 tefi_errors <- function(data, verbose)
 {
   
@@ -133,15 +136,23 @@ tefi_errors <- function(data, verbose)
   
   # 'data' errors
   if(any(!ega_class)){
-    object_error(data, c("matrix", "data.frame"))
+    
+    # Check for appropriate data
+    object_error(data, c("matrix", "data.frame", "tibble"))
+    
+    # Check for tibble
+    if(get_object_type(data) == "tibble"){
+      data <- as.data.frame(data)
+    }
+    
   }
   
   # 'verbose' errors
   length_error(verbose, 1)
   typeof_error(verbose, "logical")
   
-  # Return `EGA` classes
-  return(ega_class)
+  # Return data and `EGA` classes
+  return(list(data = data, ega_class = ega_class))
   
 }
 

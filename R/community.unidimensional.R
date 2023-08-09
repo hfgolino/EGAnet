@@ -163,7 +163,7 @@
 #' @export
 #'
 # Compute unidimensional approaches for EGA
-# Updated 07.08.2023
+# Updated 09.08.2023
 community.unidimensional <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -181,8 +181,8 @@ community.unidimensional <- function(
   model <- set_default(model, "glasso", network.estimation)
   uni.method <- set_default(uni.method, "louvain", community.unidimensional)
   
-  # Argument errors
-  community.unidimensional_errors(data, n, verbose)
+  # Argument errors (return data in case of tibble)
+  data <- community.unidimensional_errors(data, n, verbose)
   
   # Check for incompatible method combinations
   if(model == "bggm" && uni.method == "expand"){
@@ -223,12 +223,17 @@ community.unidimensional <- function(
 
 #' @noRd
 # Errors ----
-# Updated 26.07.2023
+# Updated 09.08.2023
 community.unidimensional_errors <- function(data, n, verbose)
 {
   
   # 'data' errors
-  object_error(data, c("matrix", "data.frame"))
+  object_error(data, c("matrix", "data.frame", "tibble"))
+  
+  # Check for tibble
+  if(get_object_type(data) == "tibble"){
+    data <- as.data.frame(data)
+  }
   
   # 'n' errors
   if(!is.null(n)){
@@ -239,6 +244,9 @@ community.unidimensional_errors <- function(data, n, verbose)
   # 'verbose' errors
   length_error(verbose, 1)
   typeof_error(verbose, "logical")
+  
+  # Return data in case of tibble
+  return(data)
   
 }
 

@@ -16,7 +16,7 @@
 #' @export
 # Convert network to {tidygraph}
 # Updated 14.07.2023
-convert2tidygraph <- function (EGA.object)
+convert2tidygraph <- function(EGA.object)
 {
   
   # Set up nodes

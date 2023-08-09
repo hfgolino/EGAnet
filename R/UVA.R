@@ -151,8 +151,8 @@ UVA <- function(
 )
 {
   
-  # Argument errors
-  UVA_errors(data, network, n, cut.off, reduce, auto, verbose)
+  # Argument errors (return data in case of tibble)
+  data <- UVA_errors(data, network, n, cut.off, reduce, auto, verbose)
   
   # Set default method
   uva.method <- set_default(uva.method, "MBR", UVA)
@@ -374,13 +374,21 @@ UVA <- function(
 
 #' @noRd
 # Argument errors ----
-# Updated 04.08.2023
+# Updated 09.08.2023
 UVA_errors <- function(data, network, n, cut.off, reduce, auto, verbose)
 {
   
   # 'data' errors
   if(!is.null(data)){
-    object_error(data, c("matrix", "data.frame"))
+    
+    # Check for appropriate object
+    object_error(data, c("matrix", "data.frame", "tibble"))
+    
+    # Check for tibble
+    if(get_object_type(data) == "tibble"){
+      data <- as.data.frame(data)
+    }
+    
   }
   
   # 'network' errors
@@ -411,8 +419,10 @@ UVA_errors <- function(data, network, n, cut.off, reduce, auto, verbose)
   length_error(verbose, 1)
   typeof_error(verbose, "logical")
   
+  # Return data in case of tibble
+  return(data)
+  
 }
-
 
 #' @exportS3Method 
 # S3Method Print Method ----
