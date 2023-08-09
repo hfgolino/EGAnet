@@ -79,7 +79,7 @@
 #' @export
 #
 # Compare EGA plots ----
-# Updated 08.08.2023
+# Updated 09.08.2023
 compare.EGA.plots <- function(
   ..., input.list = NULL, base = 1,
   labels = NULL, rows = NULL, columns = NULL
@@ -152,6 +152,23 @@ compare.EGA.plots <- function(
     dynega_list <- c(
       dynega_population, dynega_other
     )
+    
+    # Remove ".Ord*" labels
+    dynega_list <- lapply(dynega_list, function(x){
+      
+      # New names
+      new_names <- gsub(".Ord*.", "", dimnames(x$network)[[2]])
+      
+      # Change the network names
+      dimnames(x$network) <- list(new_names, new_names)
+      
+      # Change the membership names
+      names(x$wc) <- new_names
+      
+      # Return full result
+      return(x)
+      
+    })
     
   }else{ # Set up empty list
     dynega_list <- list()

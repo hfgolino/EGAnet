@@ -623,7 +623,7 @@ dynEGA_errors <- function(
 
 #' @exportS3Method 
 # S3 Print Method (General) ----
-# Updated 23.07.2023
+# Updated 09.08.2023
 print.dynEGA <- function(x, ...)
 {
   
@@ -667,7 +667,7 @@ print.dynEGA <- function(x, ...)
   ega_objects <- get_EGA_object(x)
   
   # Determine NULLs
-  null_objects <- lvapply(ega_objects, is.null)
+  null_objects <- !lvapply(ega_objects, is.null)
   
   # Print population first
   if(null_objects["population"]){
