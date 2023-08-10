@@ -146,7 +146,7 @@ as those in the color scheme of \code{\link[RColorBrewer]{RColorBrewer}}
 }
 
 \examples{
-\dontrun{
+\donttest{
 # Using different arguments in {GGally}'s `ggnet2`
 plot(ega.wmt, node.size = 6, edge.size = 4)
 

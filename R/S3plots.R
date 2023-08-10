@@ -133,7 +133,7 @@
 #' \emph{For more worked examples than below, see \href{https://tinyurl.com/plots-in-eganet}{Plots in \{EGAnet\}}}
 #' 
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' # Using different arguments in {GGally}'s `ggnet2`
 #' plot(ega.wmt, node.size = 6, edge.size = 4)
 #' 

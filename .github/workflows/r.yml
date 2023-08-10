@@ -38,8 +38,7 @@ jobs:
         with:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
-          use-public-rspm: true
-          install-ghostscript: true          
+          use-public-rspm: true        
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
@@ -48,4 +47,5 @@ jobs:
 
       - uses: r-lib/actions/check-r-package@v2
         with:
+          args: 'c("--no-manual", "--as-cran")'
           upload-snapshots: true

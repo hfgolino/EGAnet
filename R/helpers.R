@@ -556,7 +556,7 @@ restore_state <- function()
 
 #' @noRd
 # Wrapper for parallelization ----
-# Updated 03.08.2023
+# Updated 10.08.2023
 parallel_process <- function(
     iterations, # number of iterations
     datalist = NULL, # list of data
@@ -681,6 +681,9 @@ parallel_process <- function(
     )
     
   }
+  
+  # Force close of connections
+  future::plan(strategy = "sequential")
   
   # Return results
   return(results)

@@ -72,7 +72,7 @@ sample2 <- wmt[sample(1:nrow(wmt), 300),]
 ega1 <- EGA(sample1)
 ega2 <- EGA(sample2)
 
-\dontrun{
+\donttest{
 # Compare EGAs via plot
 compare.EGA.plots(
   ega1, ega2,

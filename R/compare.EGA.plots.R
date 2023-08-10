@@ -56,7 +56,7 @@
 #' ega1 <- EGA(sample1)
 #' ega2 <- EGA(sample2)
 #' 
-#' \dontrun{
+#' \donttest{
 #' # Compare EGAs via plot
 #' compare.EGA.plots(
 #'   ega1, ega2,

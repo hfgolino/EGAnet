@@ -269,7 +269,7 @@
 #'   plot.EGA = FALSE # No plot for CRAN checks
 #' )
 #' 
-#' \dontrun{
+#' \donttest{
 #' # Plot multilevel plot
 #' plot(opt.hier, plot.type = "multilevel")
 #' 
