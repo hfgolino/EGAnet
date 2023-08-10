@@ -1,4 +1,4 @@
-<img src="inst/EGAnet_hex.png" width = 250 />
+<img src="inst/EGAnet_hex_2.png" width = 250 />
 
 <div id="badges"><!-- pkgdown markup -->
 <a href="https://CRAN.R-project.org/package=EGAnet"><img border="0" src="https://www.r-pkg.org/badges/version/EGAnet" alt="CRAN version"/></a>
