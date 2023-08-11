@@ -21,11 +21,7 @@
 #include <stddef.h>
 #include <R.h>
 #include <Rinternals.h>
-
-// Define constants in commonly used functions (optimization process)
-
-// Constant for hard cut-off for polychoric
-#define CUT 11 // similar to {Turbofuns}
+#include "polychoric_matrix.h" // Constants are defined here
 
 // Constants in `bsm_inverse_cdf`
 const double CONST_A[6] = {-39.69683028665376, 220.9460984245205, -275.928510446969, 138.357751867269, -30.66479806614716, 2.506628277459239};
@@ -33,24 +29,9 @@ const double CONST_B[5] = {-54.47609879822406, 161.5858368580409, -155.698979859
 const double CONST_C[6] = {-0.007784894002430293, -0.3223964580411365, -2.400758277161838, -2.549732539343734, 4.374664141464968, 2.938163982698783};
 const double CONST_D[4] = {0.007784695709041462, 0.3224671290700398, 2.445134137142996, 3.754408661907416};
 
-// Constants in `error_function`
-#define A1 0.254829592
-#define A2 -0.284496736
-#define A3 1.421413741
-#define A4 -1.453152027
-#define A5 1.061405429
-#define P 0.3275911
-
 // Constants in `drezner_bivariate_normal`
-#define INT_NX 5
-#define COR_MAX 0.7
-#define BV_FAC1 0.13298076
-#define BV_FAC2 0.053051647
-const double DOUBLE_X[INT_NX] = {0.04691008, 0.23076534, 0.5, 0.76923466, 0.95308992};
-const double DOUBLE_W[INT_NX] = {0.018854042, 0.038088059, 0.0452707394, 0.038088059, 0.018854042};
-
-// Constants in `optimize`
-#define ZEPS 1e-10
+const double DOUBLE_X[5] = {0.04691008, 0.23076534, 0.5, 0.76923466, 0.95308992};
+const double DOUBLE_W[5] = {0.018854042, 0.038088059, 0.0452707394, 0.038088059, 0.018854042};
 
 // Using the Beasley-Springer-Moro algorithm to perform `qnorm` function
 double bsm_inverse_cdf(double probability){
@@ -66,7 +47,7 @@ double bsm_inverse_cdf(double probability){
   double q, r, x;
 
   // Determine region
-  if(probability >= 0.02425 && probability <= 1 - 0.02425){ // Middle
+  if(probability >= 0.02425 && probability <= 0.97575){ // Middle
 
     // Define q
     q = probability - 0.50;
@@ -127,7 +108,7 @@ int** joint_frequency_table(
     Y = input_data[k + matrix_offset_j];
 
     // Check for missing data
-    if(X != 99 && Y != 99){
+    if(X != MISSING && Y != MISSING){
       joint_frequency[X][Y]++;
     }else{
       (*missing)++;
@@ -252,13 +233,6 @@ double** update_joint_frequency (int** joint_frequency_max, int* cat_X, int* cat
   // Return frequency table
   return joint_frequency_trim;
 
-}
-
-// Compute thresholds
-void compute_threshold(double* probability, int cat, double* threshold){
-    for (int i = 0; i < cat; i++) {
-        threshold[i] = bsm_inverse_cdf(probability[i]);
-    }
 }
 
 // Define structure for return values
@@ -627,13 +601,12 @@ double polychoric_log_likelihood(
 double optimize(double (*f)(double, double**, double*, double*, double*, double*, int, int),
                 double** joint_frequency, double* threshold_X, double* threshold_Y,
                 double* probability_X, double* probability_Y,
-                int cat_X, int cat_Y,
-                double lower, double upper, double tol, int max_iter
+                int cat_X, int cat_Y
 ) {
 
   // Initialize variables for the optimization algorithm
-  double a = lower;
-  double b = upper;
+  double a = LOWER;
+  double b = UPPER;
   double c = a + (b - a) / 2.0;
 
   double x = c;
@@ -649,11 +622,11 @@ double optimize(double (*f)(double, double**, double*, double*, double*, double*
 
   // Iterate using Brent's method until the maximum number of iterations
   // is reached, or until the solution is found within the specified tolerance
-  for (int iter = 0; iter < max_iter; ++iter) {
+  for (int iter = 0; iter < MAX_ITER; ++iter) {
 
     // Calculate the midpoint of the current interval and the tolerance
     double mid = (a + b) / 2.0;
-    double tol1 = tol * fabs(x) + ZEPS;
+    double tol1 = TOL * fabs(x) + ZEPS;
     double tol2 = 2.0 * tol1;
 
     // Check if the solution is within the tolerance
@@ -749,19 +722,12 @@ double polychoric(int* input_data, int rows, int i, int j, int empty_method, dou
   // Obtain joint frequency table, probability_X, and probability_Y from thresholds function
   struct ThresholdsResult thresholds_result = thresholds(input_data, rows, i, j, empty_method, empty_value);
 
-  // Initialize parameters for optimization
-  double lower = -1.0;
-  double upper = 1.0;
-  double tol = 1e-05; // tolerate to floating point
-  int max_iter = 100;
-
   // Perform optimization
   double rho_optimum = optimize(
     polychoric_log_likelihood, thresholds_result.joint_frequency,
     thresholds_result.threshold_X, thresholds_result.threshold_Y,
     thresholds_result.probability_X, thresholds_result.probability_Y,
-    thresholds_result.cat_X, thresholds_result.cat_Y,
-    lower, upper, tol, max_iter
+    thresholds_result.cat_X, thresholds_result.cat_Y
   );
 
   // Free memory

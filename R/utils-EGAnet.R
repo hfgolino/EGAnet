@@ -115,7 +115,7 @@ cohen.ES <- function(test=c("p","t","r","anov","chisq","f2"),size=c("small","med
 #' @noRd
 # Normalize DNN weights
 # Updated 24.03.2021
-min.max <- function(vec)
+min_max <- function(vec)
 {
   exp.min <- exp(0) / exp(1)
   exp.max <- exp(1) / exp(0)
@@ -126,7 +126,7 @@ min.max <- function(vec)
 #' @noRd
 # Custom range min-max
 # Updated 26.05.2021
-custom.min.max <- function(vec, ran)
+custom.min_max <- function(vec, ran)
 {
   a <- ran[1]
   b <- ran[2]
@@ -171,7 +171,7 @@ dyn.org <- function(data, gen)
 {
   for(i in 1:ncol(data)){
 
-    gen[,i] <- custom.min.max(
+    gen[,i] <- custom.min_max(
       sort(gen[,i])[rank(data[,i], ties.method = "first")],
       range(data[,i])
     )
@@ -251,11 +251,11 @@ dnn.predict <- function (loads)
   ## Cross ratio
   cross.ratio <- exp(loads[5]) / exp(loads[10])
 
-  small.ratio <- min.max(small.ratio)
-  moderate.ratio <- min.max(moderate.ratio)
-  large.ratio <- min.max(large.ratio)
-  dominant.ratio <- min.max(dominant.ratio)
-  cross.ratio <- min.max(cross.ratio)
+  small.ratio <- min_max(small.ratio)
+  moderate.ratio <- min_max(moderate.ratio)
+  large.ratio <- min_max(large.ratio)
+  dominant.ratio <- min_max(dominant.ratio)
+  cross.ratio <- min_max(cross.ratio)
 
   # Factor versus network model
   f_n <- vector("numeric", length = 3)

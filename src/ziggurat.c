@@ -16,7 +16,7 @@ static double wn[128];
 static int initialized = 0;
 
 // Function to initialize table
-void r4_nor_initialize() {
+void r4_nor_initialize(void) {
   if (!initialized) {
     r4_nor_setup(kn, fn, wn);
     initialized = 1;

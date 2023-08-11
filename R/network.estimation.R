@@ -103,9 +103,6 @@
 #'   data = wmt, model = "glasso"
 #' )
 #' 
-#' # Plot network
-#' plot(glasso_network)
-#' 
 #' # BGGM with analytic solution
 #' bggm_network <- network.estimation(
 #'   data = wmt, model = "BGGM",
