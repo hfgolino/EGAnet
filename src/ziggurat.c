@@ -108,50 +108,42 @@ double r4_nor ( xoshiro256_state* state, uint32_t kn[128], double fn[128], doubl
 {
   int hz;
   uint32_t iz;
-  const double r = 3.442620;
-  double value;
-  double x;
-  double y;
+  double x, y, value;
 
   hz = ( int ) next ( state ); // cast may cause negative (and that's OK)
   iz = ( hz & 127 );
 
-  if ( abs ( hz ) < kn[iz] )
-  {
+  if ( abs ( hz ) < kn[iz] ) {
     value = ( double ) ( hz ) * wn[iz];
-  }
-  else
-  {
-    for ( ; ; )
-    {
-      if ( iz == 0 )
-      {
-        for ( ; ; )
-        {
+  } else {
+    
+    for ( ; ; ) {
+      
+      if ( iz == 0 ) {
+        
+        for ( ; ; ) {
+          
           x = - 0.2904764 * log ( xoshiro_uniform( state ) );
           y = - log ( xoshiro_uniform( state ) );
-          if ( x * x <= y + y )
-          {
+          if ( x * x <= y + y ) {
             break;
           }
+          
         }
+        
+        value = ( hz <= 0 ) ? ( -R - x ) : ( R + x );
 
-        if ( hz <= 0 )
-        {
-          value = - r - x;
-        }
-        else
-        {
-          value = + r + x;
-        }
         break;
+        
       }
 
       x = ( double ) ( hz ) * wn[iz];
 
-      if ( fn[iz] + xoshiro_uniform( state ) * ( fn[iz-1] - fn[iz] )
-             < exp ( - 0.5 * x * x ) )
-      {
+      if ( 
+          fn[iz] + xoshiro_uniform( state ) * 
+          ( fn[iz-1] - fn[iz] ) < 
+          exp ( - 0.5 * x * x )
+      ) {
         value = x;
         break;
       }
@@ -159,15 +151,17 @@ double r4_nor ( xoshiro256_state* state, uint32_t kn[128], double fn[128], doubl
       hz = ( int ) next ( state ); // cast may cause negative (and that's OK)
       iz = ( hz & 127 );
 
-      if ( abs ( hz ) < kn[iz] )
-      {
+      if ( abs ( hz ) < kn[iz] ) {
         value = ( double ) ( hz ) * wn[iz];
         break;
       }
+      
     }
+    
   }
 
   return value;
+  
 }
 /******************************************************************************/
 
@@ -205,31 +199,62 @@ void r4_nor_setup ( uint32_t kn[128], double fn[128], double wn[128] )
    Output, float FN[128], WN[128], data needed by R4_NOR.
    */
 {
-  double dn = 3.442619855899;
+  
+  /*
+    
+   Original code for comparison is provide below.
+   Constants were calculated by hand computing each
+   calculation
+    
+   
+      double dn = 3.442619855899;
+      int i;
+      const double m1 = 2147483648.0;
+      double q;
+      double tn = 3.442619855899;
+      const double vn = 9.91256303526217E-03;
+    
+      q = vn / exp ( - 0.5 * dn * dn );
+    
+      kn[0] = ( uint32_t ) ( ( dn / q ) * m1 );
+      kn[1] = 0;
+    
+      wn[0] = ( q / m1 );
+      wn[127] = ( dn / m1 );
+    
+      fn[0] = 1.0;
+      fn[127] = ( exp ( - 0.5 * dn * dn ) );
+    
+      for ( i = 126; 1 <= i; i-- )
+      {
+        dn = sqrt ( - 2.0 * log ( vn / dn + exp ( - 0.5 * dn * dn ) ) );
+        kn[i+1] = ( uint32_t ) ( ( dn / tn ) * m1 );
+        tn = dn;
+        fn[i] = ( exp ( - 0.5 * dn * dn ) );
+        wn[i] = ( dn / m1 );
+      }
+  */
+  
   int i;
-  const double m1 = 2147483648.0;
-  double q;
-  double tn = 3.442619855899;
-  const double vn = 9.91256303526217E-03;
+  double dn = DN;
+  double tn = DN;
 
-  q = vn / exp ( - 0.5 * dn * dn );
-
-  kn[0] = ( uint32_t ) ( ( dn / q ) * m1 );
+  kn[0] = 1991057938;
   kn[1] = 0;
 
-  wn[0] = ( q / m1 );
-  wn[127] = ( dn / m1 );
+  wn[0] = 1.729040521542796563654E-09;
+  wn[127] = 1.603094793809112161398E-09;
 
   fn[0] = 1.0;
-  fn[127] = ( exp ( - 0.5 * dn * dn ) );
+  fn[127] = 0.002669629083880925288704;
 
   for ( i = 126; 1 <= i; i-- )
   {
-    dn = sqrt ( - 2.0 * log ( vn / dn + exp ( - 0.5 * dn * dn ) ) );
-    kn[i+1] = ( uint32_t ) ( ( dn / tn ) * m1 );
+    dn = sqrt ( - 2.0 * log ( VN / dn + exp ( - 0.5 * dn * dn ) ) );
+    kn[i+1] = ( uint32_t ) ( ( dn / tn ) * M1 );
     tn = dn;
     fn[i] = ( exp ( - 0.5 * dn * dn ) );
-    wn[i] = ( dn / m1 );
+    wn[i] = ( dn / M1 );
   }
 
   return;
@@ -238,9 +263,6 @@ void r4_nor_setup ( uint32_t kn[128], double fn[128], double wn[128] )
 /******************************************************************************/
 
 SEXP r_ziggurat(SEXP n, SEXP r_seed) {
-
-  // Initialize iterators
-  int i;
 
   // Initialize values
   int n_values = INTEGER(n)[0];
@@ -263,10 +285,13 @@ SEXP r_ziggurat(SEXP n, SEXP r_seed) {
 
   // Create R vector
   SEXP r_output = PROTECT(allocVector(REALSXP, n_values));
-
+  
+  // Get a pointer to the double data of the R vector
+  double* vec_data = REAL(r_output);
+  
   // Generate random numbers
-  for(i = 0; i < n_values; i++) {
-    REAL(r_output)[i] = r4_nor(&state, kn, fn, wn);
+  for(int i = 0; i < n_values; i++) {
+    vec_data[i] = r4_nor(&state, kn, fn, wn);
   }
 
   // Release protected SEXP objects

@@ -130,9 +130,12 @@ SEXP r_xoshiro_uniform(SEXP n, SEXP r_seed) {
   // Create R vector
   SEXP r_output = PROTECT(allocVector(REALSXP, n_values));
 
+  // Get a pointer to the double data of the R vector
+  double* vec_data = REAL(r_output);
+
   // Generate a random number and store it in the array
   for(int i = 0; i < n_values; i++) {
-    REAL(r_output)[i] = xoshiro_uniform(&state);
+    vec_data[i] = xoshiro_uniform(&state);
   }
 
   // Release protected SEXP objects
@@ -162,9 +165,12 @@ SEXP r_xoshiro_seeds(SEXP n, SEXP r_seed) {
     // Create R vector
     SEXP r_output = PROTECT(allocVector(REALSXP, n_values));
 
+    // Get a pointer to the double data of the R vector
+    double* vec_data = REAL(r_output);
+
     // Generate a random number and store it in the array
     for(int i = 0; i < n_values; i++) {
-        REAL(r_output)[i] = (double) next(&state);
+        vec_data[i] = (double) next(&state);
     }
 
     // Release protected SEXP objects
@@ -196,12 +202,15 @@ SEXP r_xoshiro_shuffle(SEXP r_vector, SEXP r_seed) {
     // Protect the input SEXP
     PROTECT(r_vector);
 
+    // Get a pointer to the integer data of the R vector
+    int* vec_data = INTEGER(r_vector);
+
     // Shuffle the array using the Fisher-Yates (or Knuth shuffle) algorithm
     for (int i = vector_length - 1; i > 0; i--) {
         int j = next(&state) % (i + 1); // generates random index between 0 and i
-        int tmp = INTEGER(r_vector)[j];
-        INTEGER(r_vector)[j] = INTEGER(r_vector)[i];
-        INTEGER(r_vector)[i] = tmp;
+        int tmp = vec_data[j];
+        vec_data[j] = vec_data[i];
+        vec_data[i] = tmp;
     }
 
     // Unprotect the SEXP
@@ -233,9 +242,12 @@ SEXP r_xoshiro_shuffle_replace(SEXP r_vector, SEXP r_seed) {
     // Create R vector
     SEXP r_output = PROTECT(allocVector(REALSXP, vector_length));
 
+    // Get a pointer to the double data of the R vector
+    double* vec_data = REAL(r_output);
+
     // Shuffle
     for(int i = 0; i < vector_length; i++) {
-        REAL(r_output)[i] = (double) (next(&state) % vector_length) + 1;
+        vec_data[i] = (double) (next(&state) % vector_length) + 1;
     }
 
     // Release protected SEXP objects

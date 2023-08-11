@@ -91,9 +91,10 @@ int** joint_frequency_table(
   int X, Y, k;
 
   // Allocate memory space for table
-  int** joint_frequency = (int**) calloc(CUT, sizeof(int*));
+  int** joint_frequency = (int**) malloc(CUT * sizeof(int*));
+  int* joint_frequency_data = (int*) calloc(CUT * CUT, sizeof(int));
   for (k = 0; k < CUT; k++) {
-    joint_frequency[k] = (int*) calloc(CUT, sizeof(int));
+    joint_frequency[k] = &(joint_frequency_data[k * CUT]);
   }
 
   // Pre-compute matrix offset for i and j
@@ -127,6 +128,10 @@ double** update_joint_frequency (int** joint_frequency_max, int* cat_X, int* cat
 
   // Initialize iterators
   int i, j;
+  
+  // Count the non-zero rows and columns
+  int non_zero_rows = 0;
+  int non_zero_columns = 0;
 
   // Initialize zero rows and columns
   bool* zero_rows = (bool*) calloc(CUT, sizeof(bool));
@@ -148,30 +153,17 @@ double** update_joint_frequency (int** joint_frequency_max, int* cat_X, int* cat
 
     }
 
-    // Check for zero sums
+    // Check for zero row sums
     if(row_sum == 0){
       zero_rows[i] = true;
-    }
-    if(column_sum == 0){
-      zero_columns[i] = true;
-    }
-
-  }
-
-  // Count the non-zero rows and columns
-  int non_zero_rows = 0;
-  int non_zero_columns = 0;
-
-  // Loop over zero vectors
-  for(i = 0; i < CUT; i++){
-
-    // Increase row count
-    if(!zero_rows[i]){
+    }else{
       non_zero_rows++;
     }
-
-    // Increase column count
-    if(!zero_columns[i]){
+    
+    // Check for zero column sums
+    if(column_sum == 0){
+      zero_columns[i] = true;
+    }else{
       non_zero_columns++;
     }
 
@@ -179,8 +171,9 @@ double** update_joint_frequency (int** joint_frequency_max, int* cat_X, int* cat
 
   // Create new joint frequency table
   double** joint_frequency_trim = (double**) malloc(non_zero_rows * sizeof(double*));
-  for(i = 0; i < non_zero_rows; i++) {
-    joint_frequency_trim[i] = (double*) calloc(non_zero_columns, sizeof(double));
+  double* joint_frequency_data = (double*) calloc(non_zero_rows * non_zero_columns, sizeof(double));
+  for (i = 0; i < non_zero_rows; i++) {
+    joint_frequency_trim[i] = &(joint_frequency_data[i * non_zero_columns]);
   }
 
   // Initialize row count
@@ -269,9 +262,7 @@ struct ThresholdsResult thresholds(int* input_data, int rows, int i, int j, int 
   double** joint_frequency = update_joint_frequency(joint_frequency_max, &cat_X, &cat_Y, &zero_count);
 
   // Free memory
-  for (k = 0; k < CUT; ++k) {
-    free(joint_frequency_max[k]);
-  }
+  free(joint_frequency_max[0]);
   free(joint_frequency_max);
 
   // Initialize added value
@@ -731,9 +722,7 @@ double polychoric(int* input_data, int rows, int i, int j, int empty_method, dou
   );
 
   // Free memory
-  for (int i = 0; i < thresholds_result.cat_X; i++) {
-    free(thresholds_result.joint_frequency[i]);
-  }
+  free(thresholds_result.joint_frequency[0]);
   free(thresholds_result.joint_frequency);
   free(thresholds_result.threshold_X);
   free(thresholds_result.threshold_Y);
@@ -746,81 +735,72 @@ double polychoric(int* input_data, int rows, int i, int j, int empty_method, dou
 }
 
 // The updated polychoric_correlation_matrix function
-double* polychoric_correlation_matrix(
+void polychoric_correlation_matrix(
     int* input_data, int rows, int cols, int length,
-    int empty_method, double empty_value
+    int empty_method, double empty_value, double* polychoric_matrix
 ) {
-
+  
   // Initialize iterators
   int i, j;
   double correlation;
   int matrix_offset[cols];
   matrix_offset[0] = 0;
-
+  
   // Initialize offset
   for(i = 1; i < cols; i++){
     matrix_offset[i] = matrix_offset[i - 1] + cols;
   }
-
-  // Allocate memory for polychoric_matrix as a 1D array
-  double* polychoric_matrix = malloc(length * sizeof(double));
-
+  
   // Perform polychoric correlations over the input_matrix
   for (i = 0; i < cols; i++) {
-
+    
     // Fill diagonal
     polychoric_matrix[matrix_offset[i] + i] = 1;
-
+    
     // Loop over other variables
     for (j = i + 1; j < cols; j++) {
-
+      
       // Compute correlation
       correlation = polychoric(
         input_data, rows, i, j, empty_method, empty_value
       );
-
+      
       // Add to matrix
       polychoric_matrix[matrix_offset[i] + j] = correlation;
-
+      
       // Fill opposite of triangle
       polychoric_matrix[matrix_offset[j] + i] = correlation;
-
+      
     }
   }
-
-  // Return correlations
-  return polychoric_matrix;
-
+  
 }
 
+// Interface with R
 SEXP r_polychoric_correlation_matrix(
-    SEXP r_input_matrix, SEXP r_empty_method, SEXP r_empty_value,
-    SEXP r_rows, SEXP r_cols
+    SEXP r_input_matrix, SEXP r_empty_method, 
+    SEXP r_empty_value, SEXP r_rows, SEXP r_cols
 ) {
-
+  
   // Initialize columns
   int cols = INTEGER(r_cols)[0];
   int length = cols * cols;
-
-  // Call the C function
-  double* c_result = polychoric_correlation_matrix(
-    INTEGER(r_input_matrix), INTEGER(r_rows)[0], cols, length,
-    INTEGER(r_empty_method)[0], REAL(r_empty_value)[0]
-  );
-
+  
   // Initialize R result
   SEXP r_result = PROTECT(allocVector(REALSXP, length));
-
-  // Copy correlations
-  memcpy(REAL(r_result), c_result, length * sizeof(double));
-
+  double* c_result = REAL(r_result);
+  
+  // Call the C function
+  polychoric_correlation_matrix(
+    INTEGER(r_input_matrix), INTEGER(r_rows)[0], cols, length,
+    INTEGER(r_empty_method)[0], REAL(r_empty_value)[0],
+    c_result // Pass the pointer directly to the C function
+  );
+  
   // Free R result
   UNPROTECT(1);
-
-  // Free memory
-  free(c_result);
-
+  
   // Return R result
   return r_result;
-
+  
 }
