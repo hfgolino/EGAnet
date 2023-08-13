@@ -352,22 +352,22 @@ community.detection <- function(
 
 #' @noRd
 # Errors ----
-# Updated 02.08.2023
+# Updated 13.08.2023
 community.detection_errors <- function(network, allow.singleton, membership.only)
 {
   
   # 'network' errors
   if(!is(network, "igraph")){
-    object_error(network, c("matrix", "data.frame"))
+    object_error(network, c("matrix", "data.frame"), "community.detection")
   }
   
   # 'allow.singleton' errors
-  length_error(allow.singleton, 1)
-  typeof_error(allow.singleton, "logical")
+  length_error(allow.singleton, 1, "community.detection")
+  typeof_error(allow.singleton, "logical", "community.detection")
   
   # 'membership.only' errors
-  length_error(membership.only, 1)
-  typeof_error(membership.only, "logical")
+  length_error(membership.only, 1, "community.detection")
+  typeof_error(membership.only, "logical", "community.detection")
   
 }
 

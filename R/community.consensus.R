@@ -370,7 +370,7 @@ community.consensus <- function(
 
 #' @noRd
 # Errors ----
-# Updated 06.08.2023
+# Updated 13.08.2023
 community.consensus_errors <- function(
     network, resolution, consensus.iter,
     correlation.matrix, allow.singleton, membership.only
@@ -379,31 +379,31 @@ community.consensus_errors <- function(
   
   # 'network' errors
   if(!is(network, "igraph")){
-    object_error(network, c("matrix", "data.frame"))
+    object_error(network, c("matrix", "data.frame"), "community.consensus")
   }
   
   # 'resolution' errors
-  length_error(resolution, 1)
-  typeof_error(resolution, "numeric")
-  range_error(resolution, c(0, Inf))
+  length_error(resolution, 1, "community.consensus")
+  typeof_error(resolution, "numeric", "community.consensus")
+  range_error(resolution, c(0, Inf), "community.consensus")
   
   # 'consensus.iter' errors
-  length_error(consensus.iter, 1)
-  typeof_error(consensus.iter, "numeric")
-  range_error(consensus.iter, c(1, Inf))
+  length_error(consensus.iter, 1, "community.consensus")
+  typeof_error(consensus.iter, "numeric", "community.consensus")
+  range_error(consensus.iter, c(1, Inf), "community.consensus")
   
   # 'correlation.matrix' errors
   if(!is.null(correlation.matrix)){
-    object_error(correlation.matrix, c("matrix", "data.frame"))
+    object_error(correlation.matrix, c("matrix", "data.frame"), "community.consensus")
   }
   
   # 'allow.singleton' errors
-  length_error(allow.singleton, 1)
-  typeof_error(allow.singleton, "logical")
+  length_error(allow.singleton, 1, "community.consensus")
+  typeof_error(allow.singleton, "logical", "community.consensus")
   
   # 'membership.only' errors
-  length_error(membership.only, 1)
-  typeof_error(membership.only, "logical")
+  length_error(membership.only, 1, "community.consensus")
+  typeof_error(membership.only, "logical", "community.consensus")
   
 }
 

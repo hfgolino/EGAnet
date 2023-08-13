@@ -116,7 +116,7 @@
 #' @export
 #'
 # Network Scores ----
-# Updated 04.08.2023
+# Updated 13.08.2023
 net.scores <- function (
     data, A, wc, 
     loading.method = c("BRM", "experimental"),
@@ -137,14 +137,16 @@ net.scores <- function (
   # 1. missing data
   # 2. symmetric matrix input as data
   if(missing(data)){ # Check for missing data
-    stop(
-      "Input for 'data' is missing. To compute scores, the original data are necessary",
-      call. = FALSE
+    .handleSimpleError(
+      h = stop,
+      msg = "Input for 'data' is missing. To compute scores, the original data are necessary", 
+      call = "net.scores"
     )
   }else if(is_symmetric(data)){ # Check for symmetric matrix
-    stop(
-      "Input for 'data' was detected as symmetric. Correlation matrices cannot be used. The original data are required to estimate scores.",
-      call. = FALSE
+    .handleSimpleError(
+      h = stop,
+      msg = "Input for 'data' was detected as symmetric. Correlation matrices cannot be used. The original data are required to estimate scores.",
+      call = "net.scores"
     )
   }
   

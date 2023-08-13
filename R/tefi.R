@@ -127,7 +127,7 @@ tefi <- function(data, structure = NULL, verbose = TRUE)
 
 #' @noRd
 # Argument errors
-# Updated 09.08.2023
+# Updated 13.08.2023
 tefi_errors <- function(data, verbose)
 {
   
@@ -138,7 +138,7 @@ tefi_errors <- function(data, verbose)
   if(any(!ega_class)){
     
     # Check for appropriate data
-    object_error(data, c("matrix", "data.frame", "tibble"))
+    object_error(data, c("matrix", "data.frame", "tibble"), "tefi")
     
     # Check for tibble
     if(get_object_type(data) == "tibble"){
@@ -148,8 +148,8 @@ tefi_errors <- function(data, verbose)
   }
   
   # 'verbose' errors
-  length_error(verbose, 1)
-  typeof_error(verbose, "logical")
+  length_error(verbose, 1, "tefi")
+  typeof_error(verbose, "logical", "tefi")
   
   # Return data and `EGA` classes
   return(list(data = data, ega_class = ega_class))
@@ -158,7 +158,7 @@ tefi_errors <- function(data, verbose)
 
 #' @noRd
 # Handle structure input ----
-# Updated 31.07.2023
+# Updated 13.08.2023
 get_tefi_structure <- function(data, structure, ega_object = NULL)
 {
   
@@ -186,13 +186,13 @@ get_tefi_structure <- function(data, structure, ega_object = NULL)
       if(all(names(structure) %in% c("lower_order", "higher_order"))){
         
         # Perform length check on lower order
-        length_error(structure$lower_order, variables)
+        length_error(structure$lower_order, variables, "tefi")
         
         # Get number of communities in lower order
         lower_order_communities <- unique_length(structure$lower_order)
         
         # Perform length check on higher order
-        length_error(structure$higher_order, c(lower_order_communities, variables))
+        length_error(structure$higher_order, c(lower_order_communities, variables), "tefi")
         
         # Check for whether higher order's length is equal to
         # lower order communities
@@ -217,7 +217,7 @@ get_tefi_structure <- function(data, structure, ega_object = NULL)
       
     }else{
       # Perform length check
-      length_error(structure, variables)
+      length_error(structure, variables, "tefi")
     }
 
   }else{
@@ -228,7 +228,7 @@ get_tefi_structure <- function(data, structure, ega_object = NULL)
     }else if(is.null(structure)){
       structure <- ega_object$wc
     }else{ # Ensure proper length
-      length_error(structure, length(ega_object$wc))
+      length_error(structure, length(ega_object$wc), "tefi")
     }
 
   }

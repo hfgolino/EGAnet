@@ -603,7 +603,7 @@ bootEGA <- function(
 
 #' @noRd
 # Errors ----
-# Updated 09.08.2023
+# Updated 13.08.2023
 bootEGA_errors <- function(
     data, n, iter, ncores, typicalStructure,
     plot.typicalStructure, seed, verbose
@@ -611,7 +611,7 @@ bootEGA_errors <- function(
 {
   
   # 'data' errors
-  object_error(data, c("matrix", "data.frame", "tibble"))
+  object_error(data, c("matrix", "data.frame", "tibble"), "bootEGA")
   
   # Check for tibble
   if(get_object_type(data) == "tibble"){
@@ -620,38 +620,38 @@ bootEGA_errors <- function(
   
   # 'n' errors
   if(!is.null(n)){
-    length_error(n, 1)
-    typeof_error(n, "numeric")
+    length_error(n, 1, "bootEGA")
+    typeof_error(n, "numeric", "bootEGA")
   }
   
   # 'iter' errors
-  length_error(iter, 1)
-  typeof_error(iter, "numeric")
-  range_error(iter, c(1, Inf))
+  length_error(iter, 1, "bootEGA")
+  typeof_error(iter, "numeric", "bootEGA")
+  range_error(iter, c(1, Inf), "bootEGA")
   
   # 'ncores' errors
-  length_error(ncores, 1)
-  typeof_error(ncores, "numeric")
-  range_error(ncores, c(1, parallel::detectCores()))
+  length_error(ncores, 1, "bootEGA")
+  typeof_error(ncores, "numeric", "bootEGA")
+  range_error(ncores, c(1, parallel::detectCores()), "bootEGA")
    
   # 'typicalStructure' errors
-  length_error(typicalStructure, 1)
-  typeof_error(typicalStructure, "logical")
+  length_error(typicalStructure, 1, "bootEGA")
+  typeof_error(typicalStructure, "logical", "bootEGA")
   
   # 'plot.typicalStructure' errors
-  length_error(plot.typicalStructure, 1)
-  typeof_error(plot.typicalStructure, "logical")
+  length_error(plot.typicalStructure, 1, "bootEGA")
+  typeof_error(plot.typicalStructure, "logical", "bootEGA")
   
   # 'seed' errors
   if(!is.null(seed)){
-    length_error(seed, 1)
-    typeof_error(seed, "numeric")
-    range_error(seed,  c(0, Inf))
+    length_error(seed, 1, "bootEGA")
+    typeof_error(seed, "numeric", "bootEGA")
+    range_error(seed,  c(0, Inf), "bootEGA")
   }
   
   # 'verbose' errors
-  length_error(verbose, 1)
-  typeof_error(verbose, "logical")
+  length_error(verbose, 1, "bootEGA")
+  typeof_error(verbose, "logical", "bootEGA")
   
   # Return data (in case of tibble)
   return(data)

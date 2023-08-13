@@ -186,7 +186,7 @@ polychoric.matrix_errors <- function(data)
 {
   
   # 'data' errors
-  range_error(data, c(0, 11))
+  range_error(data, c(0, 11), "polychoric.matrix")
   
 }
 

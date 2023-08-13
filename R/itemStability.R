@@ -256,11 +256,11 @@ itemStability_errors <- function(bootega.obj, IS.plot)
 {
   
   # 'bootega.obj' errors
-  class_error(bootega.obj, "bootEGA")
+  class_error(bootega.obj, "bootEGA", "itemStability")
   
   # 'IS.plot' errors
-  length_error(IS.plot, 1)
-  typeof_error(IS.plot, "logical")
+  length_error(IS.plot, 1, "itemStability")
+  typeof_error(IS.plot, "logical", "itemStability")
   
   # 'structure' errors are handled in `get_structure`
   
@@ -575,7 +575,7 @@ itemStability_deprecation <- function(ellipse)
 
 #' @noRd
 # `hierEGA` check for structure input ----
-# Updated 31.07.2023
+# Updated 13.08.2023
 hierEGA_structure <- function(ega_object, structure)
 {
   
@@ -607,7 +607,7 @@ hierEGA_structure <- function(ega_object, structure)
     if("lower_order" %in% structure_names){
       
       # Perform checks
-      length_error(structure$lower_order, length(ega_object$lower_order$wc))
+      length_error(structure$lower_order, length(ega_object$lower_order$wc), "hierEGA_structure")
       
       # If no error, then ensure names
       names(structure$lower_order) <- names(ega_object$lower_order$wc)
@@ -634,7 +634,7 @@ hierEGA_structure <- function(ega_object, structure)
           lower_order_length,
           higher_order_length,
           length(ega_object$lower_order$wc)
-        )
+        ), "hierEGA_structure"
       )
       
       # Check for higher order length
@@ -693,7 +693,7 @@ hierEGA_structure <- function(ega_object, structure)
 
 #' @noRd
 # Get structure with error catching ----
-# Updated 05.07.2023
+# Updated 13.08.2023
 get_structure <- function(bootega_wc, structure)
 {
   
@@ -706,7 +706,7 @@ get_structure <- function(bootega_wc, structure)
   }else{ # User provided structure... make sure it works
     
     # Object type error
-    object_error(structure, c("vector", "factor", "matrix", "data.frame"))
+    object_error(structure, c("vector", "factor", "matrix", "data.frame"), "get_structure")
     
     # Get object type
     object_type <- get_object_type(structure)
@@ -720,7 +720,7 @@ get_structure <- function(bootega_wc, structure)
     }
     
     # Make sure length is the same as bootstrap (empirical) membership
-    length_error(structure, wc_length)
+    length_error(structure, wc_length, "get_structure")
     
     # Finally, force values to be numeric
     structure <- force_numeric(structure)

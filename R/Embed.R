@@ -60,26 +60,26 @@ Embed <- function(x, E, tau) {
 
 #' @noRd
 # Argument errors ----
-# Updated 31.07.2023
+# Updated 13.08.2023
 Embed_errors <- function(x, E, tau)
 {
   
   # 'x' errors
-  object_error(x, "vector")
-  typeof_error(x, "numeric")
+  object_error(x, "vector", "Embed")
+  typeof_error(x, "numeric", "Embed")
   
   # Get length of `x`
   x_length <- length(x)
   
   # 'E' errors
-  length_error(E, 1)
-  typeof_error(E, "numeric")
-  range_error(E, c(1, x_length))
+  length_error(E, 1, "Embed")
+  typeof_error(E, "numeric", "Embed")
+  range_error(E, c(1, x_length), "Embed")
   
   # 'tau' errors
-  length_error(tau, 1)
-  typeof_error(tau, "numeric")
-  range_error(tau, c(1, x_length))
+  length_error(tau, 1, "Embed")
+  typeof_error(tau, "numeric", "Embed")
+  range_error(tau, c(1, x_length), "Embed")
   
   # Return 'x' length
   return(x_length)

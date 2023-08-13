@@ -395,12 +395,12 @@ TMFG <- function(
 
 #' @noRd
 # Errors ----
-# Updated 09.08.2023
+# Updated 13.08.2023
 TMFG_errors <- function(data, n, partial, returnAllResults, verbose)
 {
   
   # 'data' errors
-  object_error(data, c("matrix", "data.frame", "tibble"))
+  object_error(data, c("matrix", "data.frame", "tibble"), "TMFG")
   
   # Check for tibble
   if(get_object_type(data) == "tibble"){
@@ -409,21 +409,21 @@ TMFG_errors <- function(data, n, partial, returnAllResults, verbose)
   
   # 'n' errors
   if(!is.null(n)){
-    length_error(n, 1)
-    typeof_error(n, "numeric")
+    length_error(n, 1, "TMFG")
+    typeof_error(n, "numeric", "TMFG")
   }
   
   # 'partial' errors
-  length_error(partial, 1)
-  typeof_error(partial, "logical")
+  length_error(partial, 1, "TMFG")
+  typeof_error(partial, "logical", "TMFG")
   
   # 'returnAllResults' errors
-  length_error(returnAllResults, 1)
-  typeof_error(returnAllResults, "logical")
+  length_error(returnAllResults, 1, "TMFG")
+  typeof_error(returnAllResults, "logical", "TMFG")
   
   # 'verbose' errors
-  length_error(verbose, 1)
-  typeof_error(verbose, "logical")
+  length_error(verbose, 1, "TMFG")
+  typeof_error(verbose, "logical", "TMFG")
   
   # Return data in case of tibble
   return(data)

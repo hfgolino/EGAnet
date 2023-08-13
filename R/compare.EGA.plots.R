@@ -101,9 +101,10 @@ compare.EGA.plots <- function(
     
     # Check for no `EGA` objects
     if(!any(ega_object)){
-      stop(
-        "The 'input.list' was `NULL` and there were no `EGA` class objects detected.",
-        call. = FALSE
+      .handleSimpleError(
+        h = stop,
+        msg = "The 'input.list' was `NULL` and there were no `EGA` class objects detected.",
+        call = "compare.EGA.plots"
       )
     }
     

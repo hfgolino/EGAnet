@@ -63,7 +63,7 @@ genTEFI <- function(data, structure = NULL, verbose = TRUE)
 
 #' @noRd
 # Argument errors
-# Updated 09.08.2023
+# Updated 13.08.2023
 genTEFI_errors <- function(data, structure, verbose)
 {
   
@@ -71,7 +71,7 @@ genTEFI_errors <- function(data, structure, verbose)
   if(any(!grepl("EGA", class(data)))){
     
     # Check for appropriate data
-    object_error(data, c("matrix", "data.frame", "tibble"))
+    object_error(data, c("matrix", "data.frame", "tibble"), "genTEFI")
     
     # Check for tibble
     if(get_object_type(data) == "tibble"){
@@ -79,18 +79,18 @@ genTEFI_errors <- function(data, structure, verbose)
     }
     
   }else{
-    class_error(data, "hierEGA")
+    class_error(data, "hierEGA", "genTEFI")
   }
   
   # 'structure' errors
   if(!is.null(structure)){
-    object_error(structure, "list")
-    length_error(structure, 2)
+    object_error(structure, "list", "genTEFI")
+    length_error(structure, 2, "genTEFI")
   }
   
   # 'verbose' errors
-  length_error(verbose, 1)
-  typeof_error(verbose, "logical")
+  length_error(verbose, 1, "genTEFI")
+  typeof_error(verbose, "logical", "genTEFI")
   
   # Return data in case of tibble
   return(data)

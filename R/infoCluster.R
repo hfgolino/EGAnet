@@ -46,7 +46,7 @@
 #' @export
 #' 
 # Information Theoretic Clustering for dynEGA
-# Updated 03.08.2023
+# Updated 13.08.2023
 infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
 {
   
@@ -55,7 +55,7 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
   
   # Check for appropriate class ("dynEGA.ind.pop" defunct to legacy)
   if(!is(dynEGA.object, "dynEGA") & !is(dynEGA.object, "dynEGA.ind.pop")){
-    class_error(dynEGA.object, "dynEGA")
+    class_error(dynEGA.object, "dynEGA", "infoCluster")
   }
   
   # Get proper objects (if not, send an error)

@@ -118,12 +118,12 @@ jsd <- function(
 
 #' @noRd
 # Argument errors ----
-# Updated 09.08.2023
+# Updated 13.08.2023
 jsd_errors <- function(network1, network2)
 {
   
   # 'network1' errors
-  object_error(network1, c("matrix", "data.frame", "tibble"))
+  object_error(network1, c("matrix", "data.frame", "tibble"), "jsd")
   
   # Check for tibble
   if(!is(network1, "matrix")){
@@ -131,7 +131,7 @@ jsd_errors <- function(network1, network2)
   }
   
   # 'network2' errors
-  object_error(network2, c("matrix", "data.frame"))
+  object_error(network2, c("matrix", "data.frame"), "jsd")
   
   # Check for tibble
   if(!is(network2, "matrix")){

@@ -87,29 +87,29 @@ glla <- function(x, n.embed, tau, delta, order){
 
 #' @noRd
 # GLLA errors
-# Updated 03.08.2023
+# Updated 13.08.2023
 glla_errors <- function(x, n.embed, tau, delta, order)
 {
   
   # 'x' errors
-  object_error(x, c("vector", "matrix"))
-  typeof_error(x, "numeric")
+  object_error(x, c("vector", "matrix"), "glla")
+  typeof_error(x, "numeric", "glla")
   
   # 'n.embed' errors
-  typeof_error(n.embed, "numeric")
-  length_error(n.embed, 1)
+  typeof_error(n.embed, "numeric", "glla")
+  length_error(n.embed, 1, "glla")
   
   # 'tau' errors
-  typeof_error(tau, "numeric")
-  length_error(tau, 1)
+  typeof_error(tau, "numeric", "glla")
+  length_error(tau, 1, "glla")
   
   # 'delta' errors
-  typeof_error(delta, "numeric")
-  length_error(delta, 1)
+  typeof_error(delta, "numeric", "glla")
+  length_error(delta, 1, "glla")
   
   # 'order' errors
-  typeof_error(order, "numeric")
-  length_error(order, 1)
+  typeof_error(order, "numeric", "glla")
+  length_error(order, 1, "glla")
   
   
 }

@@ -374,7 +374,7 @@ UVA <- function(
 
 #' @noRd
 # Argument errors ----
-# Updated 09.08.2023
+# Updated 13.08.2023
 UVA_errors <- function(data, network, n, cut.off, reduce, auto, verbose)
 {
   
@@ -382,7 +382,7 @@ UVA_errors <- function(data, network, n, cut.off, reduce, auto, verbose)
   if(!is.null(data)){
     
     # Check for appropriate object
-    object_error(data, c("matrix", "data.frame", "tibble"))
+    object_error(data, c("matrix", "data.frame", "tibble"), "UVA")
     
     # Check for tibble
     if(get_object_type(data) == "tibble"){
@@ -393,31 +393,31 @@ UVA_errors <- function(data, network, n, cut.off, reduce, auto, verbose)
   
   # 'network' errors
   if(!is.null(network)){
-    object_error(network, c("matrix", "data.frame"))
+    object_error(network, c("matrix", "data.frame"), "UVA")
   }
   
   # 'n' errors
   if(!is.null(n)){
-    length_error(n, 1)
-    typeof_error(n, "numeric")
+    length_error(n, 1, "UVA")
+    typeof_error(n, "numeric", "UVA")
   }
   
   # 'cut.off' errors
-  length_error(cut.off, 1)
-  typeof_error(cut.off, "numeric")
-  range_error(cut.off, c(0, 1))
+  length_error(cut.off, 1, "UVA")
+  typeof_error(cut.off, "numeric", "UVA")
+  range_error(cut.off, c(0, 1), "UVA")
   
   # 'reduce' errors
-  length_error(reduce, 1)
-  typeof_error(reduce, "logical")
+  length_error(reduce, 1, "UVA")
+  typeof_error(reduce, "logical", "UVA")
   
   # 'auto' errors
-  length_error(auto, 1)
-  typeof_error(auto, "logical")
+  length_error(auto, 1, "UVA")
+  typeof_error(auto, "logical", "UVA")
   
   # 'verbose' errors
-  length_error(verbose, 1)
-  typeof_error(verbose, "logical")
+  length_error(verbose, 1, "UVA")
+  typeof_error(verbose, "logical", "UVA")
   
   # Return data in case of tibble
   return(data)

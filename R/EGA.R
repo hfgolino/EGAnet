@@ -406,12 +406,12 @@ EGA <- function (
 
 #' @noRd
 # Errors ----
-# Updated 09.08.2023
+# Updated 13.08.2023
 EGA_errors <- function(data, n, plot.EGA, verbose)
 {
   
   # 'data' errors
-  object_error(data, c("matrix", "data.frame", "tibble"))
+  object_error(data, c("matrix", "data.frame", "tibble"), "EGA")
   
   # Check for tibble
   if(get_object_type(data) == "tibble"){
@@ -420,17 +420,17 @@ EGA_errors <- function(data, n, plot.EGA, verbose)
   
   # 'n' errors
   if(!is.null(n)){
-    length_error(n, 1)
-    typeof_error(n, "numeric")
+    length_error(n, 1, "EGA")
+    typeof_error(n, "numeric", "EGA")
   }
   
   # 'plot.EGA' errors
-  length_error(plot.EGA, 1)
-  typeof_error(plot.EGA, "logical")
+  length_error(plot.EGA, 1, "EGA")
+  typeof_error(plot.EGA, "logical", "EGA")
   
   # 'verbose' errors
-  length_error(verbose, 1)
-  typeof_error(verbose, "logical")
+  length_error(verbose, 1, "EGA")
+  typeof_error(verbose, "logical", "EGA")
   
   # Return data in case of tibble
   return(data)

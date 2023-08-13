@@ -611,12 +611,12 @@ hierEGA <- function(
 
 #' @noRd
 # Argument errors ----
-# Updated 09.08.2023
+# Updated 13.08.2023
 hierEGA_errors <- function(data, plot.EGA, verbose)
 {
   
   # 'data' errors
-  object_error(data, c("matrix", "data.frame", "tibble"))
+  object_error(data, c("matrix", "data.frame", "tibble"), "hierEGA")
   
   # Check for tibble
   if(get_object_type(data) == "tibble"){
@@ -624,12 +624,12 @@ hierEGA_errors <- function(data, plot.EGA, verbose)
   }
   
   # 'plot.EGA' errors
-  length_error(plot.EGA, 1)
-  typeof_error(plot.EGA, "logical")
+  length_error(plot.EGA, 1, "hierEGA")
+  typeof_error(plot.EGA, "logical", "hierEGA")
   
   # 'verbose' errors
-  length_error(verbose, 1)
-  typeof_error(verbose, "logical")
+  length_error(verbose, 1, "hierEGA")
+  typeof_error(verbose, "logical", "hierEGA")
   
   # Return data in case of tibble
   return(data)

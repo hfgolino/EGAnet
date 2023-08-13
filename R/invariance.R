@@ -306,7 +306,7 @@
 #' @export
 #'
 # Measurement Invariance
-# Updated 09.08.2023
+# Updated 13.08.2023
 invariance <- function(
     data, groups, structure = NULL,
     iter = 500, configural.threshold = 0.70,
@@ -442,7 +442,7 @@ invariance <- function(
     structure <- remove_attributes(structure)
     
     # If not `NULL`, then check for error in object type
-    object_error(structure, c("vector", "matrix", "data.frame"))
+    object_error(structure, c("vector", "matrix", "data.frame"), "invariance")
     
     # Make sure 'structure' is a vector
     structure <- force_vector(structure)
@@ -652,7 +652,7 @@ invariance <- function(
 
 #' @noRd
 # Errors ----
-# Updated 09.08.2023
+# Updated 13.08.2023
 invariance_errors <- function(
     data, groups, iter, configural.threshold,
     ncores, seed, verbose
@@ -660,7 +660,7 @@ invariance_errors <- function(
 {
   
   # 'data' errors
-  object_error(data, c("matrix", "data.frame", "tibble"))
+  object_error(data, c("matrix", "data.frame", "tibble"), "invariance")
   
   # Check for tibble
   if(get_object_type(data) == "tibble"){
@@ -668,35 +668,35 @@ invariance_errors <- function(
   }
   
   # 'groups' errors
-  object_error(groups, c("vector", "matrix", "data.frame"))
+  object_error(groups, c("vector", "matrix", "data.frame"), "invariance")
   groups <- force_vector(groups)
-  length_error(groups, dim(data)[1])
+  length_error(groups, dim(data)[1], "invariance")
   
   # 'iter' errors
-  length_error(iter, 1)
-  typeof_error(iter, "numeric")
-  range_error(iter, c(1, Inf))
+  length_error(iter, 1, "invariance")
+  typeof_error(iter, "numeric", "invariance")
+  range_error(iter, c(1, Inf), "invariance")
   
   # 'configural.threshold' errors
-  length_error(configural.threshold, 1)
-  typeof_error(configural.threshold, "numeric")
-  range_error(configural.threshold, c(0, 1))
+  length_error(configural.threshold, 1, "invariance")
+  typeof_error(configural.threshold, "numeric", "invariance")
+  range_error(configural.threshold, c(0, 1), "invariance")
   
   # 'ncores' errors
-  length_error(ncores, 1)
-  typeof_error(ncores, "numeric")
-  range_error(ncores, c(1, parallel::detectCores()))
+  length_error(ncores, 1, "invariance")
+  typeof_error(ncores, "numeric", "invariance")
+  range_error(ncores, c(1, parallel::detectCores()), "invariance")
  
   # 'seed' errors
   if(!is.null(seed)){
-    length_error(seed, 1)
-    typeof_error(seed, "numeric")
-    range_error(seed,  c(0, Inf))
+    length_error(seed, 1, "invariance")
+    typeof_error(seed, "numeric", "invariance")
+    range_error(seed,  c(0, Inf), "invariance")
   }
   
   # 'verbose' errors
-  length_error(verbose, 1)
-  typeof_error(verbose, "logical")
+  length_error(verbose, 1, "invariance")
+  typeof_error(verbose, "logical", "invariance")
   
   # Return data and groups
   return(list(data = data, groups = groups))
@@ -791,7 +791,7 @@ group_setup <- function(
 
 #' @exportS3Method 
 # S3 Plot Method ----
-# Updated 04.08.2023
+# Updated 13.08.2023
 plot.invariance <- function(x, p_type = c("p", "p_BH"), p_value = 0.05, ...)
 {
   
@@ -799,7 +799,7 @@ plot.invariance <- function(x, p_type = c("p", "p_BH"), p_value = 0.05, ...)
   p_type <- swiftelse(missing(p_type), "p", match.arg(p_type))
   
   # Check for appropriate p-value range
-  range_error(p_value, c(0, 1))
+  range_error(p_value, c(0, 1), "plot.invariance")
   
   # Ensure same memberships
   x$groups$EGA[[1]]$wc <- x$EGA$wc

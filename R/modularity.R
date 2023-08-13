@@ -143,28 +143,28 @@ modularity <- function(network, memberships, resolution = 1, signed = FALSE)
 
 #' @noRd
 # Argument errors ----
-# Updated 04.08.2023
+# Updated 13.08.2023
 modularity_errors <- function(
     network, memberships, resolution, signed
 )
 {
   
   # 'network' errors
-  object_error(network, c("matrix", "data.frame", "tibble"))
+  object_error(network, c("matrix", "data.frame", "tibble"), "modularity")
   
   # 'memberships' errors
-  object_error(memberships, c("vector", "matrix", "data.frame"))
+  object_error(memberships, c("vector", "matrix", "data.frame"), "modularity")
   memberships <- force_vector(memberships)
-  length_error(memberships, dim(network)[2])
+  length_error(memberships, dim(network)[2], "modularity")
   
   # 'resolution' errors
-  length_error(resolution, 1)
-  typeof_error(resolution, "numeric")
-  range_error(resolution, c(0, Inf))
+  length_error(resolution, 1, "modularity")
+  typeof_error(resolution, "numeric", "modularity")
+  range_error(resolution, c(0, Inf), "modularity")
   
   # 'signed' errors
-  length_error(signed, 1)
-  typeof_error(signed, "logical")
+  length_error(signed, 1, "modularity")
+  typeof_error(signed, "logical", "modularity")
   
   # Return memberships as a vector
   return(memberships)

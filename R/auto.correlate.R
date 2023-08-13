@@ -321,12 +321,12 @@ auto.correlate <- function(
 
 #' @noRd
 # Errors ----
-# Updated 09.08.2023
+# Updated 13.08.2023
 auto.correlate_errors <- function(data, ordinal.categories, forcePD, verbose)
 {
   
   # 'data' errors
-  object_error(data, c("matrix", "data.frame", "tibble"))
+  object_error(data, c("matrix", "data.frame", "tibble"), "auto.correlate")
   
   # Check for tibble
   if(get_object_type(data) == "tibble"){
@@ -334,17 +334,17 @@ auto.correlate_errors <- function(data, ordinal.categories, forcePD, verbose)
   }
   
   # 'ordinal.categories' errors
-  length_error(ordinal.categories, 1)
-  typeof_error(ordinal.categories, "numeric")
-  range_error(ordinal.categories, c(2, 11))
+  length_error(ordinal.categories, 1, "auto.correlate")
+  typeof_error(ordinal.categories, "numeric", "auto.correlate")
+  range_error(ordinal.categories, c(2, 11), "auto.correlate")
   
   # 'forcePD' errors
-  length_error(forcePD, 1)
-  typeof_error(forcePD, "logical")
+  length_error(forcePD, 1, "auto.correlate")
+  typeof_error(forcePD, "logical", "auto.correlate")
   
   # 'verbose' errors
-  length_error(verbose, 1)
-  typeof_error(verbose, "logical")
+  length_error(verbose, 1, "auto.correlate")
+  typeof_error(verbose, "logical", "auto.correlate")
   
   # Return data (in case of tibble)
   return(data)

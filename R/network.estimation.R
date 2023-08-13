@@ -332,12 +332,12 @@ network.estimation <- function(
 
 #' @noRd
 # Argument errors ----
-# Updated 09.08.2023
+# Updated 13.08.2023
 network.estimation_errors <- function(data, n, network.only, verbose)
 {
   
   # 'data' errors
-  object_error(data, c("matrix", "data.frame", "tibble"))
+  object_error(data, c("matrix", "data.frame", "tibble"), "network.estimation")
   
   # Check for tibble
   if(get_object_type(data) == "tibble"){
@@ -346,17 +346,17 @@ network.estimation_errors <- function(data, n, network.only, verbose)
   
   # 'n' errors
   if(!is.null(n)){
-    length_error(n, 1)
-    typeof_error(n, "numeric")
+    length_error(n, 1, "network.estimation")
+    typeof_error(n, "numeric", "network.estimation")
   }
   
   # 'network.only' errors
-  length_error(network.only, 1)
-  typeof_error(network.only, "logical")
+  length_error(network.only, 1, "network.estimation")
+  typeof_error(network.only, "logical", "network.estimation")
   
   # 'verbose' errors
-  length_error(verbose, 1)
-  typeof_error(verbose, "logical")
+  length_error(verbose, 1, "network.estimation")
+  typeof_error(verbose, "logical", "network.estimation")
   
   # Return data in case of tibble
   return(data)

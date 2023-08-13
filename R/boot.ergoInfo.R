@@ -261,28 +261,28 @@ boot.ergoInfo <- function(
 
 #' @noRd
 # Errors ----
-# Updated 26.07.2023
+# Updated 13.08.2023
 boot.ergoInfo_errors <- function(dynEGA.object, iter, ncores, verbose)
 {
   
   # 'dynEGA.object' errors ("dynEGA.ind.pop" defunct to legacy)
   if(!is(dynEGA.object, "dynEGA") & !is(dynEGA.object, "dynEGA.ind.pop")){
-    class_error(dynEGA.object, "dynEGA")
+    class_error(dynEGA.object, "dynEGA", "boot.ergoInfo")
   }
   
   # 'iter' errors
-  length_error(iter, 1)
-  typeof_error(iter, "numeric")
-  range_error(iter, c(1, Inf))
+  length_error(iter, 1, "boot.ergoInfo")
+  typeof_error(iter, "numeric", "boot.ergoInfo")
+  range_error(iter, c(1, Inf), "boot.ergoInfo")
   
   # 'ncores' errors
-  length_error(ncores, 1)
-  typeof_error(ncores, "numeric")
-  range_error(ncores, c(1, parallel::detectCores()))
+  length_error(ncores, 1, "boot.ergoInfo")
+  typeof_error(ncores, "numeric", "boot.ergoInfo")
+  range_error(ncores, c(1, parallel::detectCores()), "boot.ergoInfo")
   
   # 'verbose' errors
-  length_error(verbose, 1)
-  typeof_error(verbose, "logical")
+  length_error(verbose, 1, "boot.ergoInfo")
+  typeof_error(verbose, "logical", "boot.ergoInfo")
   
 }
 

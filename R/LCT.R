@@ -357,12 +357,12 @@ LCT <- function(
 
 #' @noRd
 # Errors ----
-# Updated 09.08.2023
+# Updated 13.08.2023
 LCT_errors <- function(data, n, iter, verbose)
 {
   
   # 'data' errors
-  object_error(data, c("matrix", "data.frame", "tibble"))
+  object_error(data, c("matrix", "data.frame", "tibble"), "LCT")
   
   # Check for tibble
   if(get_object_type(data) == "tibble"){
@@ -371,18 +371,18 @@ LCT_errors <- function(data, n, iter, verbose)
   
   # 'n' errors
   if(!is.null(n)){
-    length_error(n, 1)
-    typeof_error(n, "numeric")
+    length_error(n, 1, "LCT")
+    typeof_error(n, "numeric", "LCT")
   }
   
   # 'iter' errors
-  length_error(iter, 1)
-  typeof_error(iter, "numeric")
-  range_error(iter, c(1, Inf))
+  length_error(iter, 1, "LCT")
+  typeof_error(iter, "numeric", "LCT")
+  range_error(iter, c(1, Inf), "LCT")
   
   # 'verbose' errors
-  length_error(verbose, 1)
-  typeof_error(verbose, "logical")
+  length_error(verbose, 1, "LCT")
+  typeof_error(verbose, "logical", "LCT")
   
   # Return data in case of tibble
   return(data)

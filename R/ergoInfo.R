@@ -64,7 +64,7 @@
 #' @export
 #'
 # Ergodicity Information Index ----
-# Updated 03.08.2023
+# Updated 13.08.2023
 ergoInfo <- function(
     dynEGA.object,
     use = c("edge.list", "unweighted"),
@@ -81,7 +81,7 @@ ergoInfo <- function(
   
   # Check for appropriate class ("dynEGA.ind.pop" defunct to legacy)
   if(!is(dynEGA.object, "dynEGA") & !is(dynEGA.object, "dynEGA.ind.pop")){
-    class_error(dynEGA.object, "dynEGA")
+    class_error(dynEGA.object, "dynEGA", "ergoInfo")
   }
   
   # Get proper objects (if not, send an error)

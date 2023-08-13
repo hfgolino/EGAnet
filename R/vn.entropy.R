@@ -134,12 +134,12 @@ vn.entropy <- function(data, structure)
 
 #' @noRd
 # Argument errors ----
-# Updated 09.08.2023
+# Updated 13.08.2023
 vn.entropy_errors <- function(data, structure)
 {
   
   # 'data' errors
-  object_error(data, c("matrix", "data.frame", "tibble"))
+  object_error(data, c("matrix", "data.frame", "tibble"), "vn.entropy")
   
   # Check for tibble
   if(get_object_type(data) == "tibble"){
@@ -147,8 +147,8 @@ vn.entropy_errors <- function(data, structure)
   }
   
   # 'structure' errors
-  object_error(structure, "vector")
-  length_error(structure, dim(data)[2])
+  object_error(structure, "vector", "vn.entropy")
+  length_error(structure, dim(data)[2], "vn.entropy")
   
   # Return data in case of tibble
   return(data)

@@ -163,7 +163,7 @@
 #' @export
 #'
 # Compute unidimensional approaches for EGA
-# Updated 09.08.2023
+# Updated 13.08.2023
 community.unidimensional <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -186,9 +186,10 @@ community.unidimensional <- function(
   
   # Check for incompatible method combinations
   if(model == "bggm" && uni.method == "expand"){
-    stop(
-      "Support for the \"BGGM\" model and \"expand\" unidimensionality method is not provided.",
-      call. = FALSE
+    .handleSimpleError(
+      h = stop,
+      msg = "Support for the \"BGGM\" model and \"expand\" unidimensionality method is not provided.", 
+      call = "community.unidimensional"
     )
   }
   
@@ -223,12 +224,12 @@ community.unidimensional <- function(
 
 #' @noRd
 # Errors ----
-# Updated 09.08.2023
+# Updated 13.08.2023
 community.unidimensional_errors <- function(data, n, verbose)
 {
   
   # 'data' errors
-  object_error(data, c("matrix", "data.frame", "tibble"))
+  object_error(data, c("matrix", "data.frame", "tibble"), "community.unidimensional")
   
   # Check for tibble
   if(get_object_type(data) == "tibble"){
@@ -237,13 +238,13 @@ community.unidimensional_errors <- function(data, n, verbose)
   
   # 'n' errors
   if(!is.null(n)){
-    length_error(n, 1)
-    typeof_error(n, "numeric")
+    length_error(n, 1, "community.unidimensional")
+    typeof_error(n, "numeric", "community.unidimensional")
   }
   
   # 'verbose' errors
-  length_error(verbose, 1)
-  typeof_error(verbose, "logical")
+  length_error(verbose, 1, "community.unidimensional")
+  typeof_error(verbose, "logical", "community.unidimensional")
   
   # Return data in case of tibble
   return(data)

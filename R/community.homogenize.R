@@ -57,8 +57,8 @@ community.homogenize <- function(target.membership, convert.membership)
 {
   
   # Send error if memberships are not a vector, matrix, or data frame
-  object_error(target.membership, c("vector", "matrix", "data.frame"))
-  object_error(convert.membership, c("vector", "matrix", "data.frame"))
+  object_error(target.membership, c("vector", "matrix", "data.frame"), "community.homogenize")
+  object_error(convert.membership, c("vector", "matrix", "data.frame"), "community.homogenize")
   
   # Ensure target membership is a vector
   target.membership <- force_vector(target.membership)
@@ -95,7 +95,7 @@ matrixize_conversion <- function(convert.membership, target_length)
   if(get_object_type(convert.membership) == "vector"){
     
     # Make sure length equals target membership
-    length_error(convert.membership, target_length)
+    length_error(convert.membership, target_length, "community.homogenize")
     
     # Convert to matrix
     return(matrix(convert.membership, nrow = 1))

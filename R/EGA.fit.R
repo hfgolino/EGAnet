@@ -206,7 +206,7 @@
 #' @export
 #' 
 # EGA fit ----
-# Updated 07.08.2023
+# Updated 13.08.2023
 EGA.fit <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -225,8 +225,8 @@ EGA.fit <- function(
   model <- set_default(model, "glasso", network.estimation)
   algorithm <- set_default(algorithm, "walktrap", EGA.fit)
   
-  # Argument errors
-  EGA.fit_errors(data, n, plot.EGA, verbose)
+  # Argument errors (return data in case of tibble)
+  data <- EGA.fit_errors(data, n, plot.EGA, verbose)
 
   # Obtain ellipse arguments
   ellipse <- list(...)
@@ -338,26 +338,34 @@ EGA.fit <- function(
 
 #' @noRd
 # Errors ----
-# Updated 30.07.2023
+# Updated 13.08.2023
 EGA.fit_errors <- function(data, n, plot.EGA, verbose)
 {
   
   # 'data' errors
-  object_error(data, c("matrix", "data.frame"))
+  object_error(data, c("matrix", "data.frame", "tibble"), "EGA.fit")
+  
+  # Check for tibble
+  if(get_object_type(data) == "tibble"){
+    data <- as.data.frame(data)
+  }
   
   # 'n' errors
   if(!is.null(n)){
-    length_error(n, 1)
-    typeof_error(n, "numeric")
+    length_error(n, 1, "EGA.fit")
+    typeof_error(n, "numeric", "EGA.fit")
   }
   
   # 'plot.EGA' errors
-  length_error(plot.EGA, 1)
-  typeof_error(plot.EGA, "logical")
+  length_error(plot.EGA, 1, "EGA.fit")
+  typeof_error(plot.EGA, "logical", "EGA.fit")
   
   # 'verbose' errors
-  length_error(verbose, 1)
-  typeof_error(verbose, "logical")
+  length_error(verbose, 1, "EGA.fit")
+  typeof_error(verbose, "logical", "EGA.fit")
+  
+  # Return data (in case of tibble)
+  return(data)
   
 }
 

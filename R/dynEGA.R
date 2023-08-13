@@ -569,7 +569,7 @@ dynEGA_errors <- function(
 {
   
   # 'data' errors
-  object_error(data, c("matrix", "data.frame", "tibble"))
+  object_error(data, c("matrix", "data.frame", "tibble"), "dynEGA")
   
   # Check for tibble
   if(get_object_type(data) == "tibble"){
@@ -578,43 +578,43 @@ dynEGA_errors <- function(
   
   # 'id' errors
   if(!is.null(id)){
-    length_error(id, 1)
-    typeof_error(id, c("numeric", "character"))
+    length_error(id, 1, "dynEGA")
+    typeof_error(id, c("numeric", "character"), "dynEGA")
   }
   # 'group' errors
   if(!is.null(group)){
-    length_error(group, 1)
-    typeof_error(group, c("numeric", "character"))
+    length_error(group, 1, "dynEGA")
+    typeof_error(group, c("numeric", "character"), "dynEGA")
   }
   
   # 'n.embed' errors
-  length_error(n.embed, 1)
-  typeof_error(n.embed, "numeric")
-  range_error(n.embed, c(3, Inf))
+  length_error(n.embed, 1, "dynEGA")
+  typeof_error(n.embed, "numeric", "dynEGA")
+  range_error(n.embed, c(3, Inf), "dynEGA")
   
   # 'tau' errors
-  length_error(tau, 1)
-  typeof_error(tau, "numeric")
-  range_error(tau, c(1, 3)) # don't allow more than 3
+  length_error(tau, 1, "dynEGA")
+  typeof_error(tau, "numeric", "dynEGA")
+  range_error(tau, c(1, 3), "dynEGA") # don't allow more than 3
   
   # 'delta' errors
-  length_error(delta, 1)
-  typeof_error(delta, "numeric")
-  range_error(delta, c(1, 3)) # don't allow more than 3
+  length_error(delta, 1, "dynEGA")
+  typeof_error(delta, "numeric", "dynEGA")
+  range_error(delta, c(1, 3), "dynEGA") # don't allow more than 3
   
   # 'use.derivatives' errors
-  length_error(use.derivatives, 1)
-  typeof_error(use.derivatives, "numeric")
-  range_error(use.derivatives, c(0, 2)) # only 0, 1, or 2
+  length_error(use.derivatives, 1, "dynEGA")
+  typeof_error(use.derivatives, "numeric", "dynEGA")
+  range_error(use.derivatives, c(0, 2), "dynEGA") # only 0, 1, or 2
   
   # 'ncores' errors
   length_error(ncores, 1)
-  typeof_error(ncores, "numeric")
-  range_error(ncores, c(1, parallel::detectCores()))
+  typeof_error(ncores, "numeric", "dynEGA")
+  range_error(ncores, c(1, parallel::detectCores()), "dynEGA")
   
   # 'verbose' errors
-  length_error(verbose, 1)
-  typeof_error(verbose, "logical")
+  length_error(verbose, 1, "dynEGA")
+  typeof_error(verbose, "logical", "dynEGA")
   
   # Return data in case of tibble
   return(data)
@@ -1283,8 +1283,8 @@ get_ID <- function(data, id, level, variable_names, dimensions)
     if(id_length != 1){ 
       
       # Check for errors
-      object_error(id, "vector")
-      length_error(id, dimensions[1])
+      object_error(id, "vector", "dynEGA")
+      length_error(id, dimensions[1], "dynEGA")
       
       # Make the vector into ID
       ID <- id
@@ -1357,8 +1357,8 @@ get_Group <- function(data, group, level, variable_names, dimensions)
     if(group_length != 1){ 
       
       # Check for errors
-      object_error(group, "vector")
-      length_error(group, dimensions[1])
+      object_error(group, "vector", "dynEGA")
+      length_error(group, dimensions[1], "dynEGA")
       
       # Make the vector into ID
       Group <- group

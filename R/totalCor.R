@@ -33,12 +33,12 @@
 #' @export
 #'
 # Total Correlation ----
-# Updated 09.08.2023
+# Updated 13.08.2023
 totalCor <- function(data)
 {
   
   # 'data' errors
-  object_error(data, c("matrix", "data.frame", "tibble"))
+  object_error(data, c("matrix", "data.frame", "tibble"), "totalCor")
   
   # Ensure data is a matrix
   data <- as.matrix(data)

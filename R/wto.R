@@ -86,20 +86,20 @@ wto <- function (network, signed = TRUE, diagonal.zero = TRUE)
 
 #' @noRd
 # Argument errors ----
-# Updated 09.08.2023
+# Updated 13.08.2023
 wto_errors <- function(network, signed, diagonal.zero)
 {
   
   # 'network' errors
-  object_error(network, c("matrix", "data.frame", "tibble"))
+  object_error(network, c("matrix", "data.frame", "tibble"), "wto")
   
   # 'signed' errors
-  length_error(signed, 1)
-  typeof_error(signed, "logical")
+  length_error(signed, 1, "wto")
+  typeof_error(signed, "logical", "wto")
   
   # 'diagonal.zero' errors
-  length_error(diagonal.zero, 1)
-  typeof_error(diagonal.zero, "logical")
+  length_error(diagonal.zero, 1, "wto")
+  typeof_error(diagonal.zero, "logical", "wto")
   
   # Return network without attributes and as matrix
   return(as.matrix(remove_attributes(network)))

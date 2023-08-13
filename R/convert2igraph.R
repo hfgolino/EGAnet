@@ -45,12 +45,12 @@ convert2igraph <- function (A, diagonal = 0)
 
 #' @noRd
 # Argument errors
-# Updated 09.08.2023
+# Updated 13.08.2023
 convert2igraph_errors <- function(A, diagonal)
 {
   
   # 'A' errors
-  object_error(A, c("matrix", "data.frame", "tibble"))
+  object_error(A, c("matrix", "data.frame", "tibble"), "convert2igraph")
   
   # Check for tibble
   if(get_object_type(A) == "tibble"){
@@ -58,9 +58,9 @@ convert2igraph_errors <- function(A, diagonal)
   }
   
   # 'diagonal' errors
-  length_error(diagonal, 1)
-  typeof_error(diagonal, "numeric")
-  range_error(diagonal, c(-1, 1))
+  length_error(diagonal, 1, "convert2igraph")
+  typeof_error(diagonal, "numeric", "convert2igraph")
+  range_error(diagonal, c(-1, 1), "convert2igraph")
   
   # Return A in case of tibble
   return(A)

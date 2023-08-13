@@ -355,7 +355,7 @@ summary.net.loads <- function(object, ...)
 
 #' @noRd
 # Organize input ----
-# Updated 15.07.2023
+# Updated 13.08.2023
 organize_input <- function(A, wc)
 {
   
@@ -372,9 +372,9 @@ organize_input <- function(A, wc)
   }else{
     
     # Produce errors for miss aligned data
-    length_error(wc, dim(A)[2]) # length between network and memberships
-    object_error(A, c("matrix", "data.frame")) # must be matrix or data frame
-    object_error(wc, c("vector", "matrix", "data.frame")) # must be one of these
+    length_error(wc, dim(A)[2], "net.loads") # length between network and memberships
+    object_error(A, c("matrix", "data.frame"), "net.loads") # must be matrix or data frame
+    object_error(wc, c("vector", "matrix", "data.frame"), "net.loads") # must be one of these
     
   }
   
@@ -601,7 +601,7 @@ descending_order <- function(standardized, wc, unique_communities, node_names)
 
 #' @noRd
 # Rotation errors ----
-# Updated 13.07.2023
+# Updated 13.08.2023
 rotation_errors <- function(rotation)
 {
   
@@ -620,12 +620,14 @@ rotation_errors <- function(rotation)
   if(!rotation_lower %in% rotation_names_lower){
     
     # Send error that rotation is not found
-    stop(
-      paste0(
+    .handleSimpleError(
+      h = stop,
+      msg = paste0(
         "Invalid rotation: ", rotation, "\n\n",
         "The rotation \"", rotation, "\" is not available in the {GPArotation} package. ",
         "\n\nSee `?GPArotation::rotations` for the list of available rotations."
-      ), call. = FALSE
+      ), 
+      call = "net.loads"
     )
     
   }

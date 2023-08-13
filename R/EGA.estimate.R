@@ -331,12 +331,12 @@ EGA.estimate <- function(
 
 #' @noRd
 # Errors ----
-# Updated 09.08.2023
+# Updated 13.08.2023
 EGA.estimate_errors <- function(data, n, verbose)
 {
   
   # 'data' errors
-  object_error(data, c("matrix", "data.frame", "tibble"))
+  object_error(data, c("matrix", "data.frame", "tibble"), "EGA.estimate")
   
   # Check for tibble
   if(get_object_type(data) == "tibble"){
@@ -345,13 +345,13 @@ EGA.estimate_errors <- function(data, n, verbose)
   
   # 'n' errors
   if(!is.null(n)){
-    length_error(n, 1)
-    typeof_error(n, "numeric")
+    length_error(n, 1, "EGA.estimate")
+    typeof_error(n, "numeric", "EGA.estimate")
   }
   
   # 'verbose' errors
-  length_error(verbose, 1)
-  typeof_error(verbose, "logical")
+  length_error(verbose, 1, "EGA.estimate")
+  typeof_error(verbose, "logical", "EGA.estimate")
   
   # Return data (in case of tibble)
   return(data)

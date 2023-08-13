@@ -315,7 +315,7 @@ EBICglasso.qgraph_errors <- function(
 {
 
   # 'data' errors
-  object_error(data, c("matrix", "data.frame", "tibble"))
+  object_error(data, c("matrix", "data.frame", "tibble"), "EBICglasso.qgraph")
   
   # Check for tibble
   if(get_object_type(data) == "tibble"){
@@ -324,39 +324,39 @@ EBICglasso.qgraph_errors <- function(
   
   # 'n' errors
   if(!is.null(n)){
-    length_error(n, 1)
-    typeof_error(n, "numeric")
+    length_error(n, 1, "EBICglasso.qgraph")
+    typeof_error(n, "numeric", "EBICglasso.qgraph")
   }
   
   # 'gamma' errors
-  length_error(gamma, 1)
-  typeof_error(gamma, "numeric")
-  range_error(gamma, c(0, Inf))
+  length_error(gamma, 1, "EBICglasso.qgraph")
+  typeof_error(gamma, "numeric", "EBICglasso.qgraph")
+  range_error(gamma, c(0, Inf), "EBICglasso.qgraph")
   
   # 'penalize.diagonal' errors
-  length_error(penalize.diagonal, 1)
-  typeof_error(penalize.diagonal, "logical")
+  length_error(penalize.diagonal, 1, "EBICglasso.qgraph")
+  typeof_error(penalize.diagonal, "logical", "EBICglasso.qgraph")
   
   # 'nlambda' errors
-  length_error(nlambda, 1)
-  typeof_error(nlambda, "numeric")
-  range_error(nlambda, c(1, Inf))
+  length_error(nlambda, 1, "EBICglasso.qgraph")
+  typeof_error(nlambda, "numeric", "EBICglasso.qgraph")
+  range_error(nlambda, c(1, Inf), "EBICglasso.qgraph")
   
   # 'returnAllResults' errors
-  length_error(returnAllResults, 1)
-  typeof_error(returnAllResults, "logical")
+  length_error(returnAllResults, 1, "EBICglasso.qgraph")
+  typeof_error(returnAllResults, "logical", "EBICglasso.qgraph")
   
   # 'countDiagonal' errors
-  length_error(countDiagonal, 1)
-  typeof_error(countDiagonal, "logical")
+  length_error(countDiagonal, 1, "EBICglasso.qgraph")
+  typeof_error(countDiagonal, "logical", "EBICglasso.qgraph")
   
   # 'refit' errors
-  length_error(refit, 1)
-  typeof_error(refit, "logical")
+  length_error(refit, 1, "EBICglasso.qgraph")
+  typeof_error(refit, "logical", "EBICglasso.qgraph")
   
   # 'verbose' errors
-  length_error(verbose, 1)
-  typeof_error(verbose, "logical")
+  length_error(verbose, 1, "EBICglasso.qgraph")
+  typeof_error(verbose, "logical", "EBICglasso.qgraph")
   
   # Return data in case of tibble
   return(data)

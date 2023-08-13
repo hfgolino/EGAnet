@@ -53,16 +53,16 @@ igraph2matrix <- function (igraph_network, diagonal = 0)
 
 #' @noRd
 # Argument errors
-# Updated 03.08.2023
+# Updated 13.08.2023
 igraph2matrix_errors <- function(igraph_network, diagonal)
 {
   
   # 'igraph_network' errors
-  class_error(igraph_network, "igraph")
+  class_error(igraph_network, "igraph", "igraph2matrix")
   
   # 'diagonal' errors
-  length_error(diagonal, 1)
-  typeof_error(diagonal, "numeric")
-  range_error(diagonal, c(-1, 1))
+  length_error(diagonal, 1, "igraph2matrix")
+  typeof_error(diagonal, "numeric", "igraph2matrix")
+  range_error(diagonal, c(-1, 1), "igraph2matrix")
   
 }

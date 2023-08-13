@@ -431,12 +431,12 @@ riEGA <- function(
 
 #' @noRd
 # Errors ----
-# Updated 09.08.2023
+# Updated 13.08.2023
 riEGA_errors <- function(data, n, plot.EGA, verbose)
 {
   
   # 'data' errors
-  object_error(data, c("matrix", "data.frame", "tibble"))
+  object_error(data, c("matrix", "data.frame", "tibble"), "riEGA")
   
   # Check for tibble
   if(get_object_type(data) == "tibble"){
@@ -445,17 +445,17 @@ riEGA_errors <- function(data, n, plot.EGA, verbose)
   
   # 'n' errors
   if(!is.null(n)){
-    length_error(n, 1)
-    typeof_error(n, "numeric")
+    length_error(n, 1, "riEGA")
+    typeof_error(n, "numeric", "riEGA")
   }
   
   # 'plot.EGA' errors
-  length_error(plot.EGA, 1)
-  typeof_error(plot.EGA, "logical")
+  length_error(plot.EGA, 1, "riEGA")
+  typeof_error(plot.EGA, "logical", "riEGA")
   
   # 'verbose' errors
-  length_error(verbose, 1)
-  typeof_error(verbose, "logical")
+  length_error(verbose, 1, "riEGA")
+  typeof_error(verbose, "logical", "riEGA")
   
   # Return data in case of tibble
   return(data)

@@ -1559,7 +1559,7 @@ set_default <- function(argument, default, FUN, several.ok = FALSE)
 {
 
   # Check for type error
-  typeof_error(argument, c(typeof(default), "closure"))
+  typeof_error(argument, c(typeof(default), "closure"), "set_default")
   
   # Return argument if it's a function
   if(is.function(argument)){
@@ -1884,7 +1884,7 @@ GGally_args <- function(ellipse)
 #' @noRd
 # Error Checking for GGally plotting ----
 # For plots and methods
-# Updated 05.07.2023
+# Updated 13.08.2023
 GGally_errors <- function(
     plot_ARGS, dimensions,
     communities, non_zero_edges
@@ -1901,54 +1901,54 @@ GGally_errors <- function(
   ### Node arguments
   
   # Node Label Alpha
-  typeof_error(plot_ARGS$label.alpha, "numeric")
-  length_error(plot_ARGS$label.alpha, c(1, nodes))
+  typeof_error(plot_ARGS$label.alpha, "numeric", "plot.EGAnet")
+  length_error(plot_ARGS$label.alpha, c(1, nodes), "plot.EGAnet")
   
   # Node Label Color
-  typeof_error(plot_ARGS$label.color, "character")
-  length_error(plot_ARGS$label.color, c(1, nodes))
+  typeof_error(plot_ARGS$label.color, "character", "plot.EGAnet")
+  length_error(plot_ARGS$label.color, c(1, nodes), "plot.EGAnet")
   
   # Node Label Size
-  typeof_error(plot_ARGS$label.size, "numeric")
-  length_error(plot_ARGS$label.size, c(1, nodes))
+  typeof_error(plot_ARGS$label.size, "numeric", "plot.EGAnet")
+  length_error(plot_ARGS$label.size, c(1, nodes), "plot.EGAnet")
   
   # Node Label
-  typeof_error(plot_ARGS$node.label, "character")
-  length_error(plot_ARGS$node.label, c(1, nodes))
+  typeof_error(plot_ARGS$node.label, "character", "plot.EGAnet")
+  length_error(plot_ARGS$node.label, c(1, nodes), "plot.EGAnet")
   
   # Node Alpha
-  typeof_error(plot_ARGS$node.alpha, "numeric")
-  length_error(plot_ARGS$node.shape, c(1, communities, nodes))
+  typeof_error(plot_ARGS$node.alpha, "numeric", "plot.EGAnet")
+  length_error(plot_ARGS$node.shape, c(1, communities, nodes), "plot.EGAnet")
   
   # Node Color
-  typeof_error(plot_ARGS$node.color, "character")
-  length_error(plot_ARGS$node.color, c(1, communities, nodes))
+  typeof_error(plot_ARGS$node.color, "character", "plot.EGAnet")
+  length_error(plot_ARGS$node.color, c(1, communities, nodes), "plot.EGAnet")
   
   # Node Shape
-  typeof_error(plot_ARGS$node.shape, "numeric")
-  length_error(plot_ARGS$node.shape, c(1, communities, nodes))
+  typeof_error(plot_ARGS$node.shape, "numeric", "plot.EGAnet")
+  length_error(plot_ARGS$node.shape, c(1, communities, nodes), "plot.EGAnet")
   
   # Node Size
-  typeof_error(plot_ARGS$node.size, "numeric")
-  length_error(plot_ARGS$node.size, c(1, communities, nodes))
+  typeof_error(plot_ARGS$node.size, "numeric", "plot.EGAnet")
+  length_error(plot_ARGS$node.size, c(1, communities, nodes), "plot.EGAnet")
   
   ### Edge arguments
   
   # Edge Alpha
-  typeof_error(plot_ARGS$edge.alpha, "numeric")
-  length_error(plot_ARGS$edge.alpha, c(1, edges))
+  typeof_error(plot_ARGS$edge.alpha, "numeric", "plot.EGAnet")
+  length_error(plot_ARGS$edge.alpha, c(1, edges), "plot.EGAnet")
   
   # Edge Color (allow two for positive and negative)
-  typeof_error(plot_ARGS$edge.color, "character")
-  length_error(plot_ARGS$edge.color, c(1, 2, edges))
+  typeof_error(plot_ARGS$edge.color, "character", "plot.EGAnet")
+  length_error(plot_ARGS$edge.color, c(1, 2, edges), "plot.EGAnet")
   
   # Edge Size
-  typeof_error(plot_ARGS$edge.size, "numeric")
-  length_error(plot_ARGS$edge.size, c(1, edges))
+  typeof_error(plot_ARGS$edge.size, "numeric", "plot.EGAnet")
+  length_error(plot_ARGS$edge.size, c(1, edges), "plot.EGAnet")
   
   # Edge line type (allow two for positive and negative)
-  typeof_error(plot_ARGS$edge.lty, "character")
-  length_error(plot_ARGS$edge.lty, c(1, 2, edges))
+  typeof_error(plot_ARGS$edge.lty, "character", "plot.EGAnet")
+  length_error(plot_ARGS$edge.lty, c(1, 2, edges), "plot.EGAnet")
   
 }
 
@@ -2510,17 +2510,19 @@ not_refactored <- function(function_name)
 
 #' @noRd
 # Error for class ----
-# Updated 04.08.2023
-class_error <- function(input, expected_class){
+# Updated 13.08.2023
+class_error <- function(input, expected_class, function_name){
   
   # Check for object types
   if(!is(input, expected_class)){
-    stop(
-      paste0(
+    .handleSimpleError(
+      h = stop,
+      msg = paste0(
         "Input into '", deparse(substitute(input)),
         "' is not the expected class ", paste0("'", expected_class, "'", collapse = ", "),
         ". Input is class ", paste0("'", class(input), "'", collapse = ", ")
-      ), call. = FALSE
+      ), 
+      call = function_name
     )
   }
   
@@ -2528,20 +2530,22 @@ class_error <- function(input, expected_class){
 
 #' @noRd
 # Error for object type ----
-# Updated 09.07.2023
-object_error <- function(input, expected_type){
+# Updated 13.08.2023
+object_error <- function(input, expected_type, function_name){
   
   # Get input type
   input_type <- get_object_type(input)
   
   # Check for object types
   if(!input_type %in% expected_type){
-    stop(
-      paste0(
+    .handleSimpleError(
+      h = stop,
+      msg = paste0(
         "Input into '", deparse(substitute(input)),
         "' argument is not ", paste0("'", expected_type, "'", collapse = ", "),
         ". Input is ", paste0("'", input_type, "'", collapse = ", ")
-      ), call. = FALSE
+      ), 
+      call = function_name
     )
   }
   
@@ -2549,8 +2553,8 @@ object_error <- function(input, expected_type){
 
 #' @noRd
 # Error for `typeof` ----
-# Updated 30.07.2023
-typeof_error <- function(input, expected_value){
+# Updated 13.08.2023
+typeof_error <- function(input, expected_value, function_name){
   
   # Switch out "closure" with "function"
   if("closure" %in% expected_value){
@@ -2579,14 +2583,16 @@ typeof_error <- function(input, expected_value){
   
   # Check for value
   if(!typeof_input %in% expected_value){
-    stop(
-      paste0(
+    .handleSimpleError(
+      h = stop,
+      msg = paste0(
         "Input into '", deparse(substitute(input)),
         "' is ", paste("'", typeof_input, "'", sep = "", collapse = ", "),
         ". Input is expected to be ",
         paste0("'", expected_value, "'", collapse = " or ")
         # can use "or" because `typeof` won't ever be more than two
-      ), call. = FALSE
+      ), 
+      call = function_name
     )
   }
   
@@ -2594,17 +2600,19 @@ typeof_error <- function(input, expected_value){
 
 #' @noRd
 # Error for `length` ----
-# Updated 09.07.2023
-length_error <- function(input, expected_lengths){
+# Updated 13.08.2023
+length_error <- function(input, expected_lengths, function_name){
   
   # Check for length of input in expected length
   if(!length(input) %in% expected_lengths){
-    stop(
-      paste0(
+    .handleSimpleError(
+      h = stop,
+      msg = paste0(
         "Length of '", deparse(substitute(input)),
         "' (", length(input),") does not match expected length(s). Length must be: ",
         paste0("'", expected_lengths, "'", collapse = " or ")
-      ), call. = FALSE
+      ), 
+      call = function_name
     )
   }
   
@@ -2613,7 +2621,7 @@ length_error <- function(input, expected_lengths){
 #' @noRd
 # Error for `range` ----
 # Updated 13.08.2023
-range_error <- function(input, expected_ranges){
+range_error <- function(input, expected_ranges, function_name){
   
   # Obtain expected maximum and minimum values
   expected_maximum <- max(expected_ranges, na.rm = TRUE)
@@ -2625,23 +2633,27 @@ range_error <- function(input, expected_ranges){
   
   # Check for maximum of input in expected range
   if(actual_maximum > expected_maximum){
-    stop(
-      paste0(
+    .handleSimpleError(
+      h = stop,
+      msg = paste0(
         "Maximum of '", deparse(substitute(input)),
         "' (", actual_maximum,") does not match expected range(s). Range must be between: ",
         paste0("'", expected_ranges, "'", collapse = " and ")
-      ), call. = FALSE
+      ), 
+      call = function_name
     )
   }
   
   # Check for maximum of input in expected range
   if(actual_minimum < expected_minimum){
-    stop(
-      paste0(
+    .handleSimpleError(
+      h = stop,
+      msg = paste0(
         "Minimum of '", deparse(substitute(input)),
         "' (", actual_minimum,") does not match expected range(s). Range must be between: ",
         paste0("'", expected_ranges, "'", collapse = " and ")
-      ), call. = FALSE
+      ), 
+      call = function_name
     )
   }
   
