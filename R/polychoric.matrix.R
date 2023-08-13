@@ -118,7 +118,7 @@
 #' @export
 #'
 # Compute polychoric correlation matrix
-# Updated 09.08.2023
+# Updated 13.08.2023
 polychoric.matrix <- function(
     data, na.data = c("pairwise", "listwise"),
     empty.method = c("none", "zero", "all"),
@@ -133,6 +133,9 @@ polychoric.matrix <- function(
   
   # Ensure data is a matrix
   data <- as.matrix(data)
+  
+  # Argument errors
+  polychoric.matrix_errors(data)
   
   # Check for missing data
   if(na.data == "pairwise"){
@@ -175,3 +178,19 @@ polychoric.matrix <- function(
   return(transfer_names(data, correlations))
   
 }
+
+#' @noRd
+# Argument errors ----
+# Updated 13.08.2023
+polychoric.matrix_errors <- function(data)
+{
+  
+  # 'data' errors
+  range_error(data, c(0, 11))
+  
+}
+
+
+
+
+

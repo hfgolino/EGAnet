@@ -2612,16 +2612,16 @@ length_error <- function(input, expected_lengths){
 
 #' @noRd
 # Error for `range` ----
-# Updated 09.07.2023
+# Updated 13.08.2023
 range_error <- function(input, expected_ranges){
   
   # Obtain expected maximum and minimum values
-  expected_maximum <- max(expected_ranges)
-  expected_minimum <- min(expected_ranges)
+  expected_maximum <- max(expected_ranges, na.rm = TRUE)
+  expected_minimum <- min(expected_ranges, na.rm = TRUE)
   
   # Obtain maximum and minimum values
-  actual_maximum <- round(max(input), 3)
-  actual_minimum <- round(min(input), 3)
+  actual_maximum <- round(max(input, na.rm = TRUE), 3)
+  actual_minimum <- round(min(input, na.rm = TRUE), 3)
   
   # Check for maximum of input in expected range
   if(actual_maximum > expected_maximum){
