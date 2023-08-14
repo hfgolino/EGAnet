@@ -22,7 +22,7 @@ extern const double CONST_D[4];
 #define P 0.3275911
 
 // Constants in `drezner_bivariate_normal`
-#define INT_NX 5
+// #define INT_NX 5 // not needed with loop unrolling
 #define COR_MAX 0.7
 #define BV_FAC1 0.13298076
 #define BV_FAC2 0.053051647

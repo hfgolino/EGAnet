@@ -14,7 +14,11 @@ polychoric.matrix(
 \arguments{
 \item{data}{Matrix or data frame.
 A dataset with all ordinal values
-(rows = cases, columns = variables)}
+(rows = cases, columns = variables).
+Data are required to be between \code{0} and \code{11}.
+Proper adjustments should be made prior to analysis (e.g.,
+scales from -3 to 3 in increments of 1 should be shifted
+by added 4 to all values)}
 
 \item{na.data}{Character (length = 1).
 How should missing data be handled?

@@ -413,7 +413,7 @@ double drezner_bivariate_normal(double h1, double h2, double rho, double p1, dou
   }
 
   // Initialize iterator
-  int i;
+  // int i; // not used with loops unrolled
 
   // Initialize probability and h3
   double bv = 0.0;
@@ -425,20 +425,48 @@ double drezner_bivariate_normal(double h1, double h2, double rho, double p1, dou
 
   // Check for correlation lower than maximum
   if(rho_abs <= COR_MAX) {
-
+  
     // Initialize r1 and rr2
     double r1, rr2;
-
+    
     // Compute h3
     h3 = h1 * h2;
-
+    
+    // Standard loop
+    
+    // // Compute probability
+    // for (i = 0; i < INT_NX; i++) {
+    //   r1 = rho * DOUBLE_X[i];
+    //   rr2 = 1 - r1 * r1;
+    //   bv += DOUBLE_W[i] * exp((r1 * h3 - h12) / rr2) / sqrt(rr2);
+    // }
+    // 
+    // // Finalize probability
+    // bv = p1 * p2 + rho * bv;
+    
+    // Unrolled loop
+    
     // Compute probability
-    for (i = 0; i < INT_NX; i++) {
-      r1 = rho * DOUBLE_X[i];
-      rr2 = 1 - r1 * r1;
-      bv += DOUBLE_W[i] * exp((r1 * h3 - h12) / rr2) / sqrt(rr2);
-    }
-
+    r1 = rho * DOUBLE_X[0];
+    rr2 = 1 - r1 * r1;
+    bv += DOUBLE_W[0] * exp((r1 * h3 - h12) / rr2) / sqrt(rr2);
+    
+    r1 = rho * DOUBLE_X[1];
+    rr2 = 1 - r1 * r1;
+    bv += DOUBLE_W[1] * exp((r1 * h3 - h12) / rr2) / sqrt(rr2);
+    
+    r1 = rho * DOUBLE_X[2];
+    rr2 = 1 - r1 * r1;
+    bv += DOUBLE_W[2] * exp((r1 * h3 - h12) / rr2) / sqrt(rr2);
+    
+    r1 = rho * DOUBLE_X[3];
+    rr2 = 1 - r1 * r1;
+    bv += DOUBLE_W[3] * exp((r1 * h3 - h12) / rr2) / sqrt(rr2);
+    
+    r1 = rho * DOUBLE_X[4];
+    rr2 = 1 - r1 * r1;
+    bv += DOUBLE_W[4] * exp((r1 * h3 - h12) / rr2) / sqrt(rr2);
+    
     // Finalize probability
     bv = p1 * p2 + rho * bv;
 
@@ -474,14 +502,44 @@ double drezner_bivariate_normal(double h1, double h2, double rho, double p1, dou
       bv = BV_FAC1 * h6 * ab * (1.0 - univariate_normal(h6)) - exp(-h5 / r2) * (ab + aa * r2) * BV_FAC2;
 
       double r1, rr;
+      
+      // Standard loop
 
+      // // Compute probability
+      // for (i = 0; i < INT_NX; i++) {
+      //   r1 = r3 * DOUBLE_X[i];
+      //   rr = r1 * r1;
+      //   r2 = sqrt(1.0 - rr);
+      //   bv += -DOUBLE_W[i] * exp(-h5 / rr) * (exp(-h3 / (1.0 + r2)) / r2 / h7 - 1.0 - aa * rr);
+      // }
+      
+      // Unrolled loop
+      
       // Compute probability
-      for (i = 0; i < INT_NX; i++) {
-        r1 = r3 * DOUBLE_X[i];
-        rr = r1 * r1;
-        r2 = sqrt(1.0 - rr);
-        bv += -DOUBLE_W[i] * exp(-h5 / rr) * (exp(-h3 / (1.0 + r2)) / r2 / h7 - 1.0 - aa * rr);
-      }
+      r1 = r3 * DOUBLE_X[0];
+      rr = r1 * r1;
+      r2 = sqrt(1.0 - rr);
+      bv += -DOUBLE_W[0] * exp(-h5 / rr) * (exp(-h3 / (1.0 + r2)) / r2 / h7 - 1.0 - aa * rr);
+      
+      r1 = r3 * DOUBLE_X[1];
+      rr = r1 * r1;
+      r2 = sqrt(1.0 - rr);
+      bv += -DOUBLE_W[1] * exp(-h5 / rr) * (exp(-h3 / (1.0 + r2)) / r2 / h7 - 1.0 - aa * rr);
+      
+      r1 = r3 * DOUBLE_X[2];
+      rr = r1 * r1;
+      r2 = sqrt(1.0 - rr);
+      bv += -DOUBLE_W[2] * exp(-h5 / rr) * (exp(-h3 / (1.0 + r2)) / r2 / h7 - 1.0 - aa * rr);
+      
+      r1 = r3 * DOUBLE_X[3];
+      rr = r1 * r1;
+      r2 = sqrt(1.0 - rr);
+      bv += -DOUBLE_W[3] * exp(-h5 / rr) * (exp(-h3 / (1.0 + r2)) / r2 / h7 - 1.0 - aa * rr);
+      
+      r1 = r3 * DOUBLE_X[4];
+      rr = r1 * r1;
+      r2 = sqrt(1.0 - rr);
+      bv += -DOUBLE_W[4] * exp(-h5 / rr) * (exp(-h3 / (1.0 + r2)) / r2 / h7 - 1.0 - aa * rr);
 
     }
 
@@ -736,7 +794,7 @@ double polychoric(int* input_data, int rows, int i, int j, int empty_method, dou
 
 // The updated polychoric_correlation_matrix function
 void polychoric_correlation_matrix(
-    int* input_data, int rows, int cols, int length,
+    int* input_data, int rows, int cols,
     int empty_method, double empty_value, double* polychoric_matrix
 ) {
   
@@ -784,15 +842,14 @@ SEXP r_polychoric_correlation_matrix(
   
   // Initialize columns
   int cols = INTEGER(r_cols)[0];
-  int length = cols * cols;
   
   // Initialize R result
-  SEXP r_result = PROTECT(allocVector(REALSXP, length));
+  SEXP r_result = PROTECT(allocVector(REALSXP, cols * cols));
   double* c_result = REAL(r_result);
   
   // Call the C function
   polychoric_correlation_matrix(
-    INTEGER(r_input_matrix), INTEGER(r_rows)[0], cols, length,
+    INTEGER(r_input_matrix), INTEGER(r_rows)[0], cols,
     INTEGER(r_empty_method)[0], REAL(r_empty_value)[0],
     c_result // Pass the pointer directly to the C function
   );
