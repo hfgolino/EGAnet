@@ -228,6 +228,33 @@ double** update_joint_frequency (int** joint_frequency_max, int* cat_X, int* cat
 
 }
 
+// Function to compute probabilities
+static inline void compute_probabilities(double* frequency, int cat, double cases) {
+  
+  for(int k = 0; k < cat; k++) {
+    frequency[k] = frequency[k] / cases;
+  }
+  
+}
+
+// Function to compute cumulative sums
+static inline void compute_cumulative(double* frequency, int cat) {
+  
+  for (int k = 1; k < cat; k++) {
+    frequency[k] += frequency[k - 1];
+  }
+  
+}
+
+// Function to compute thresholds
+static inline void compute_thresholds(double* frequency, int cat, double* threshold) {
+  
+  for (int k = 0; k < cat; k++) {
+    threshold[k] = bsm_inverse_cdf(frequency[k]);
+  }
+  
+}
+
 // Define structure for return values
 struct ThresholdsResult {
   double** joint_frequency;
@@ -318,50 +345,32 @@ struct ThresholdsResult thresholds(int* input_data, int rows, int i, int j, int 
     }
   }
 
-  // Initialize memory space for probabilities and thresholds
-  double* probability_X = (double*) malloc(cat_X * sizeof(double));
-  double* probability_Y = (double*) malloc(cat_Y * sizeof(double));
-  double* threshold_X = (double*) malloc(cat_X * sizeof(double));
-  double* threshold_Y = (double*) malloc(cat_Y * sizeof(double));
-
   // Compute cases
   double cases = rows - missing + added_sum;
 
-  // Compute probabilities
-  for(k = 0; k < cat_X; k++) {
-      probability_X[k] = frequency_X[k] / cases;
-  }
-  for(k = 0; k < cat_Y; k++) {
-      probability_Y[k] = frequency_Y[k] / cases;
-  }
+  // Convert frequencies to probabilities
+  compute_probabilities(frequency_X, cat_X, cases);
+  compute_probabilities(frequency_Y, cat_Y, cases);
 
-  // Free the memory for frequency_X and frequency_Y
-  free(frequency_X);
-  free(frequency_Y);
-
-  // Compute cumulative sums
-  for (k = 1; k < cat_X; k++) {
-      probability_X[k] += probability_X[k - 1];
-  }
-  for (k = 1; k < cat_Y; k++) {
-      probability_Y[k] += probability_Y[k - 1];
-  }
+  // Convert probabilities to cumulative sums
+  compute_cumulative(frequency_X, cat_X);
+  compute_cumulative(frequency_Y, cat_Y);
+  
+  // Initialize memory space for thresholds
+  double* threshold_X = (double*) malloc(cat_X * sizeof(double));
+  double* threshold_Y = (double*) malloc(cat_Y * sizeof(double));
 
   // Obtain thresholds
-  for (k = 0; k < cat_X; k++) {
-      threshold_X[k] = bsm_inverse_cdf(probability_X[k]);
-  }
-  for (k = 0; k < cat_Y; k++) {
-      threshold_Y[k] = bsm_inverse_cdf(probability_Y[k]);
-  }
+  compute_thresholds(frequency_X, cat_X, threshold_X);
+  compute_thresholds(frequency_Y, cat_Y, threshold_Y);
 
   // Create structure for return values
   struct ThresholdsResult result;
   result.joint_frequency = joint_frequency;
   result.threshold_X = threshold_X;
   result.threshold_Y = threshold_Y;
-  result.probability_X = probability_X;
-  result.probability_Y = probability_Y;
+  result.probability_X = frequency_X;
+  result.probability_Y = frequency_Y;
   result.cat_X = cat_X;
   result.cat_Y = cat_Y;
 
@@ -370,7 +379,7 @@ struct ThresholdsResult thresholds(int* input_data, int rows, int i, int j, int 
 }
 
 // Error function
-double error_function(double x) {
+static inline double error_function(double x) {
 
   // Initialize values
   double t_value, y;
@@ -555,6 +564,31 @@ double drezner_bivariate_normal(double h1, double h2, double rho, double p1, dou
 
 }
 
+// Compute values for bivariate normal
+static inline void compute_thresholds_and_probabilities(
+    double* threshold, double* probability, 
+    int cat, int index, 
+    double* lower_t, double* upper_t, 
+    double* lower_p, double* upper_p
+) {
+  
+  // Initialize values
+  *lower_t = threshold[index - 1]; *lower_p = probability[index - 1];
+  *upper_t = threshold[index]; *upper_p = probability[index];
+  
+  // Update on end cases
+  // Lowest category
+  if(index == 0){
+    *lower_t = -INFINITY; *lower_p = 0;
+  }
+  // Highest category
+  if(index == cat - 1){
+    *upper_t = INFINITY; *upper_p = 1;
+  }
+  
+}
+
+
 // Estimate log-likelihood
 double polychoric_log_likelihood(
     double rho, double** joint_frequency,
@@ -577,39 +611,19 @@ double polychoric_log_likelihood(
   // Compute log-likelihood
   for (i = 0; i < cat_X; ++i) {
 
-    // Set up thresholds and probabilities
-    // X
-    // Initialize X values
-    lower_ti = threshold_X[i - 1]; lower_pi = probability_X[i - 1];
-    upper_ti = threshold_X[i]; upper_pi = probability_X[i];
-
-    // Update on end cases
-    // Lowest category
-    if(i == 0){
-      lower_ti = -INFINITY; lower_pi = 0;
-    }
-    // Highest category
-    if(i == cat_X - 1){
-      upper_ti = INFINITY; upper_pi = 1;
-    }
+    // Set up thresholds and probabilities for X
+    compute_thresholds_and_probabilities(
+        threshold_X, probability_X, cat_X, i, 
+        &lower_ti, &upper_ti, &lower_pi, &upper_pi
+    );
 
     for (j = 0; j < cat_Y; ++j) {
 
-      // Set up thresholds and probabilities
-      // Y
-      // Initialize Y values
-      lower_tj = threshold_Y[j - 1]; lower_pj = probability_Y[j - 1];
-      upper_tj = threshold_Y[j]; upper_pj = probability_Y[j];
-
-      // Update on end cases
-      // Lowest category
-      if(j == 0){
-        lower_tj = -INFINITY; lower_pj = 0;
-      }
-      // Highest category
-      if(j == cat_Y - 1){
-        upper_tj = INFINITY; upper_pj = 1;
-      }
+      // Set up thresholds and probabilities for Y
+      compute_thresholds_and_probabilities(
+        threshold_Y, probability_Y, cat_Y, j, 
+        &lower_tj, &upper_tj, &lower_pj, &upper_pj
+      );
 
       // Compute bivariate normal CDF
       probability = drezner_bivariate_normal(upper_ti, upper_tj, rho, upper_pi, upper_pj) -
