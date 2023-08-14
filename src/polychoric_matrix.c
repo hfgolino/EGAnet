@@ -37,17 +37,17 @@ const double DOUBLE_W[5] = {0.018854042, 0.038088059, 0.0452707394, 0.038088059,
 double bsm_inverse_cdf(double probability){
 
   // Check for zero and one probabilities
-  if(probability == 0){
-    return(-INFINITY);
-  } else if(probability == 1){
-    return(INFINITY);
-  }
+  if(probability == 0) return(-INFINITY);
+  if(probability == 1) return(INFINITY);
 
   // Initialize variables once
   double q, r, x;
+  
+  // (Not) lower tail flag
+  bool not_lower_tail = probability >= 0.02425;
 
   // Determine region
-  if(probability >= 0.02425 && probability <= 0.97575){ // Middle
+  if(not_lower_tail && probability <= 0.97575){ // Middle
 
     // Define q
     q = probability - 0.50;
@@ -61,17 +61,17 @@ double bsm_inverse_cdf(double probability){
   } else { // Ends
 
     // Define q
-    if(probability < 0.02425){
-      q = sqrt(-2 * log(probability));
-    } else {
+    if(not_lower_tail){
       q = sqrt(-2 * log(1 - probability));
+    } else {
+      q = sqrt(-2 * log(probability));
     }
 
     // Define x
     x = (((((CONST_C[0] * q + CONST_C[1]) * q + CONST_C[2]) * q + CONST_C[3]) * q + CONST_C[4]) * q + CONST_C[5]) / ((((CONST_D[0] * q + CONST_D[1]) * q + CONST_D[2]) * q + CONST_D[3]) * q + 1);
 
     // Check if the sign needs to be reversed
-    if(probability >= 0.02425){
+    if(not_lower_tail){
       x = -x;
     }
 
@@ -274,6 +274,10 @@ struct ThresholdsResult thresholds(int* input_data, int rows, int i, int j, int 
 
     // If there are zero cells, check method
     if(empty_method != 0){
+      
+      // Flag for empty cell methods
+      bool zero = empty_method == 1;
+      // bool all = empty_method == 2;
 
       // Check for one over method
       if(empty_value > 1.0){
@@ -287,10 +291,10 @@ struct ThresholdsResult thresholds(int* input_data, int rows, int i, int j, int 
         for(l = 0; l < cat_Y; l++){
 
           // Check for method
-          if(empty_method == 1 && joint_frequency[k][l] == 0){
+          if(zero && joint_frequency[k][l] == 0){
             joint_frequency[k][l] += added_value;
             added_sum += added_value;
-          }else if(empty_method == 2){
+          } else { // if(all){
             joint_frequency[k][l] += added_value;
             added_sum += added_value;
           }
@@ -388,7 +392,7 @@ double error_function(double x) {
 }
 
 // Univariate normal CDF
-double univariate_normal(double x) {
+static inline double univariate_normal(double x) {
 
   // This function is streamlined for use in this function
   // With mean = 0 and sd = 1, then the z-score of x is x
@@ -404,13 +408,9 @@ double univariate_normal(double x) {
 double drezner_bivariate_normal(double h1, double h2, double rho, double p1, double p2) {
 
   // Check for infinities
-  if(h1 == -INFINITY || h2 == -INFINITY){
-    return(0.0);
-  } else if(h1 == INFINITY){
-    return(p2);
-  } else if(h2 == INFINITY){
-    return(p1);
-  }
+  if(h1 == -INFINITY || h2 == -INFINITY) return(0.0);
+  if(h1 == INFINITY) return(p2);
+  if(h2 == INFINITY) return(p1);
 
   // Initialize iterator
   // int i; // not used with loops unrolled
@@ -440,9 +440,6 @@ double drezner_bivariate_normal(double h1, double h2, double rho, double p1, dou
     //   rr2 = 1 - r1 * r1;
     //   bv += DOUBLE_W[i] * exp((r1 * h3 - h12) / rr2) / sqrt(rr2);
     // }
-    // 
-    // // Finalize probability
-    // bv = p1 * p2 + rho * bv;
     
     // Unrolled loop
     
@@ -572,7 +569,7 @@ double polychoric_log_likelihood(
 
   // Initialize variables
   double log_likelihood = 0.0;
-  double probability, log_prob;
+  double probability;
 
   // Initialize iterators
   int i, j;
@@ -626,16 +623,8 @@ double polychoric_log_likelihood(
         probability = DBL_MIN;
       }
 
-      // Compute log probability
-      log_prob = log(probability);
-
-      // Handle infinite log probabilities
-      if (isinf(log_prob)) {
-        log_prob = DBL_MIN;
-      }
-
       // Update log-likelihood
-      log_likelihood += joint_frequency[i][j] * log_prob;
+      log_likelihood += joint_frequency[i][j] * log(probability);
 
     }
 
