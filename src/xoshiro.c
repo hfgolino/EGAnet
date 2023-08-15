@@ -100,15 +100,21 @@ uint64_t splitmix64(uint64_t *x) {
 
 // Function to set single seed to get the 4 random seeds
 void seed_xoshiro256(xoshiro256_state* state, uint64_t seed) {
-    for(int i = 0; i < 4; i++) {
-        seed = splitmix64(&seed);
-        state->s[i] = seed;
-    }
+    
+    // Loop unrolled
+    seed = splitmix64(&seed); state->s[0] = seed;
+    seed = splitmix64(&seed); state->s[1] = seed;
+    seed = splitmix64(&seed); state->s[2] = seed;
+    seed = splitmix64(&seed); state->s[3] = seed;
+    
 }
+
+// Stored so it doesn't need to be repeatedly called
+static const double UINT64_MAX_PLUS_ONE = (double) UINT64_MAX + 1;
 
 // Function to generate random uniform data between 0 and 1
 double xoshiro_uniform(xoshiro256_state* state) {
-  return (double) (next(state) / ((double) UINT64_MAX + 1));
+  return (double) (next(state) / UINT64_MAX_PLUS_ONE);
 }
 
 // Function to uniform values into R
