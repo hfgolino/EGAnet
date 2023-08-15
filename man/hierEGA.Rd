@@ -35,7 +35,7 @@ Defaults to \code{"BRM"}}
 
 \item{rotation}{Character.
 A rotation to use to obtain a simpler structure. 
-For a list of rotations, see \code{\link{GPArotation}} for options.
+For a list of rotations, see \code{\link[GPArotation]{rotations}} for options.
 Defaults to \code{NULL} or no rotation.
 By setting a rotation, \code{scores} estimation will be
 based on the rotated loadings rather than unrotated loadings}
@@ -239,7 +239,7 @@ Set to \code{TRUE} to see all messages and warnings for every function call}
 \code{\link[EGAnet]{community.detection}},
 \code{\link[EGAnet]{community.consensus}},
 \code{\link[EGAnet]{EGA}}, and
-\code{\link{GPArotation}}}
+\code{\link[GPArotation]{rotations}}}
 }
 \value{
 Returns a list of lists containing:
