@@ -8,8 +8,6 @@
 <a href="https://cran.r-project.org/package=EGAnet"><img border="0" src="https://cranlogs.r-pkg.org/badges/grand-total/EGAnet?color=blue" alt="Downloads Total"/></a>
 <a href="https://cran.r-project.org/package=EGAnet"><img border="0" src="http://cranlogs.r-pkg.org/badges/EGAnet?color=blue" alt="Downloads per month"/></a>
 <a href="https://cran.r-project.org/package=EGAnet"><img border="0" src="http://cranlogs.r-pkg.org/badges/last-day/EGAnet" alt="Downloads Yesterday"/></a>
-<a href="https://cran.r-project.org/package=EGAnet"><img border="0" src="http://cranlogs.r-pkg.org/badges/last-day/EGAnet" alt="Downloads Yesterday"/></a>
-
 </div>
 
 How to Install
