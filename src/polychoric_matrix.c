@@ -42,7 +42,7 @@ double bsm_inverse_cdf(double probability){
 
   // Initialize variables once
   double q, r, x;
-  
+
   // (Not) lower tail flag
   bool not_lower_tail = probability >= 0.02425;
 
@@ -128,7 +128,7 @@ double** update_joint_frequency (int** joint_frequency_max, int* cat_X, int* cat
 
   // Initialize iterators
   int i, j;
-  
+
   // Count the non-zero rows and columns
   int non_zero_rows = 0;
   int non_zero_columns = 0;
@@ -159,7 +159,7 @@ double** update_joint_frequency (int** joint_frequency_max, int* cat_X, int* cat
     }else{
       non_zero_rows++;
     }
-    
+
     // Check for zero column sums
     if(column_sum == 0){
       zero_columns[i] = true;
@@ -230,29 +230,29 @@ double** update_joint_frequency (int** joint_frequency_max, int* cat_X, int* cat
 
 // Function to compute probabilities
 static inline void compute_probabilities(double* frequency, int cat, double cases) {
-  
+
   for(int k = 0; k < cat; k++) {
     frequency[k] = frequency[k] / cases;
   }
-  
+
 }
 
 // Function to compute cumulative sums
 static inline void compute_cumulative(double* frequency, int cat) {
-  
+
   for (int k = 1; k < cat; k++) {
     frequency[k] += frequency[k - 1];
   }
-  
+
 }
 
 // Function to compute thresholds
 static inline void compute_thresholds(double* frequency, int cat, double* threshold) {
-  
+
   for (int k = 0; k < cat; k++) {
     threshold[k] = bsm_inverse_cdf(frequency[k]);
   }
-  
+
 }
 
 // Define structure for return values
@@ -301,7 +301,7 @@ struct ThresholdsResult thresholds(int* input_data, int rows, int i, int j, int 
 
     // If there are zero cells, check method
     if(empty_method != 0){
-      
+
       // Flag for empty cell methods
       bool zero = empty_method == 1;
       // bool all = empty_method == 2;
@@ -355,7 +355,7 @@ struct ThresholdsResult thresholds(int* input_data, int rows, int i, int j, int 
   // Convert probabilities to cumulative sums
   compute_cumulative(frequency_X, cat_X);
   compute_cumulative(frequency_Y, cat_Y);
-  
+
   // Initialize memory space for thresholds
   double* threshold_X = (double*) malloc(cat_X * sizeof(double));
   double* threshold_Y = (double*) malloc(cat_Y * sizeof(double));
@@ -434,45 +434,45 @@ double drezner_bivariate_normal(double h1, double h2, double rho, double p1, dou
 
   // Check for correlation lower than maximum
   if(rho_abs <= COR_MAX) {
-  
+
     // Initialize r1 and rr2
     double r1, rr2;
-    
+
     // Compute h3
     h3 = h1 * h2;
-    
+
     // Standard loop
-    
+
     // // Compute probability
     // for (i = 0; i < INT_NX; i++) {
     //   r1 = rho * DOUBLE_X[i];
     //   rr2 = 1 - r1 * r1;
     //   bv += DOUBLE_W[i] * exp((r1 * h3 - h12) / rr2) / sqrt(rr2);
     // }
-    
+
     // Unrolled loop
-    
+
     // Compute probability
     r1 = rho * DOUBLE_X[0];
     rr2 = 1 - r1 * r1;
     bv += DOUBLE_W[0] * exp((r1 * h3 - h12) / rr2) / sqrt(rr2);
-    
+
     r1 = rho * DOUBLE_X[1];
     rr2 = 1 - r1 * r1;
     bv += DOUBLE_W[1] * exp((r1 * h3 - h12) / rr2) / sqrt(rr2);
-    
+
     r1 = rho * DOUBLE_X[2];
     rr2 = 1 - r1 * r1;
     bv += DOUBLE_W[2] * exp((r1 * h3 - h12) / rr2) / sqrt(rr2);
-    
+
     r1 = rho * DOUBLE_X[3];
     rr2 = 1 - r1 * r1;
     bv += DOUBLE_W[3] * exp((r1 * h3 - h12) / rr2) / sqrt(rr2);
-    
+
     r1 = rho * DOUBLE_X[4];
     rr2 = 1 - r1 * r1;
     bv += DOUBLE_W[4] * exp((r1 * h3 - h12) / rr2) / sqrt(rr2);
-    
+
     // Finalize probability
     bv = p1 * p2 + rho * bv;
 
@@ -508,7 +508,7 @@ double drezner_bivariate_normal(double h1, double h2, double rho, double p1, dou
       bv = BV_FAC1 * h6 * ab * (1.0 - univariate_normal(h6)) - exp(-h5 / r2) * (ab + aa * r2) * BV_FAC2;
 
       double r1, rr;
-      
+
       // Standard loop
 
       // // Compute probability
@@ -518,30 +518,30 @@ double drezner_bivariate_normal(double h1, double h2, double rho, double p1, dou
       //   r2 = sqrt(1.0 - rr);
       //   bv += -DOUBLE_W[i] * exp(-h5 / rr) * (exp(-h3 / (1.0 + r2)) / r2 / h7 - 1.0 - aa * rr);
       // }
-      
+
       // Unrolled loop
-      
+
       // Compute probability
       r1 = r3 * DOUBLE_X[0];
       rr = r1 * r1;
       r2 = sqrt(1.0 - rr);
       bv += -DOUBLE_W[0] * exp(-h5 / rr) * (exp(-h3 / (1.0 + r2)) / r2 / h7 - 1.0 - aa * rr);
-      
+
       r1 = r3 * DOUBLE_X[1];
       rr = r1 * r1;
       r2 = sqrt(1.0 - rr);
       bv += -DOUBLE_W[1] * exp(-h5 / rr) * (exp(-h3 / (1.0 + r2)) / r2 / h7 - 1.0 - aa * rr);
-      
+
       r1 = r3 * DOUBLE_X[2];
       rr = r1 * r1;
       r2 = sqrt(1.0 - rr);
       bv += -DOUBLE_W[2] * exp(-h5 / rr) * (exp(-h3 / (1.0 + r2)) / r2 / h7 - 1.0 - aa * rr);
-      
+
       r1 = r3 * DOUBLE_X[3];
       rr = r1 * r1;
       r2 = sqrt(1.0 - rr);
       bv += -DOUBLE_W[3] * exp(-h5 / rr) * (exp(-h3 / (1.0 + r2)) / r2 / h7 - 1.0 - aa * rr);
-      
+
       r1 = r3 * DOUBLE_X[4];
       rr = r1 * r1;
       r2 = sqrt(1.0 - rr);
@@ -566,26 +566,24 @@ double drezner_bivariate_normal(double h1, double h2, double rho, double p1, dou
 
 // Compute values for bivariate normal
 static inline void compute_thresholds_and_probabilities(
-    double* threshold, double* probability, 
-    int cat, int index, 
-    double* lower_t, double* upper_t, 
+    double* threshold, double* probability,
+    int cat, int index,
+    double* lower_t, double* upper_t,
     double* lower_p, double* upper_p
 ) {
-  
-  // Initialize values
-  *lower_t = threshold[index - 1]; *lower_p = probability[index - 1];
-  *upper_t = threshold[index]; *upper_p = probability[index];
-  
-  // Update on end cases
+
   // Lowest category
-  if(index == 0){
+  if(index == 0) {
     *lower_t = -INFINITY; *lower_p = 0;
-  }
-  // Highest category
-  if(index == cat - 1){
+    *upper_t = threshold[index]; *upper_p = probability[index];
+  }else if(index == cat - 1) { // Highest category
+    *lower_t = threshold[index - 1]; *lower_p = probability[index - 1];
     *upper_t = INFINITY; *upper_p = 1;
+  }else{ // Between category
+    *lower_t = threshold[index - 1]; *lower_p = probability[index - 1];
+    *upper_t = threshold[index]; *upper_p = probability[index];
   }
-  
+
 }
 
 
@@ -613,7 +611,7 @@ double polychoric_log_likelihood(
 
     // Set up thresholds and probabilities for X
     compute_thresholds_and_probabilities(
-        threshold_X, probability_X, cat_X, i, 
+        threshold_X, probability_X, cat_X, i,
         &lower_ti, &upper_ti, &lower_pi, &upper_pi
     );
 
@@ -621,7 +619,7 @@ double polychoric_log_likelihood(
 
       // Set up thresholds and probabilities for Y
       compute_thresholds_and_probabilities(
-        threshold_Y, probability_Y, cat_Y, j, 
+        threshold_Y, probability_Y, cat_Y, j,
         &lower_tj, &upper_tj, &lower_pj, &upper_pj
       );
 
@@ -800,67 +798,67 @@ void polychoric_correlation_matrix(
     int* input_data, int rows, int cols,
     int empty_method, double empty_value, double* polychoric_matrix
 ) {
-  
+
   // Initialize iterators
   int i, j;
   double correlation;
   int matrix_offset[cols];
   matrix_offset[0] = 0;
-  
+
   // Initialize offset
   for(i = 1; i < cols; i++){
     matrix_offset[i] = matrix_offset[i - 1] + cols;
   }
-  
+
   // Perform polychoric correlations over the input_matrix
   for (i = 0; i < cols; i++) {
-    
+
     // Fill diagonal
     polychoric_matrix[matrix_offset[i] + i] = 1;
-    
+
     // Loop over other variables
     for (j = i + 1; j < cols; j++) {
-      
+
       // Compute correlation
       correlation = polychoric(
         input_data, rows, i, j, empty_method, empty_value
       );
-      
+
       // Add to matrix
       polychoric_matrix[matrix_offset[i] + j] = correlation;
-      
+
       // Fill opposite of triangle
       polychoric_matrix[matrix_offset[j] + i] = correlation;
-      
+
     }
   }
-  
+
 }
 
 // Interface with R
 SEXP r_polychoric_correlation_matrix(
-    SEXP r_input_matrix, SEXP r_empty_method, 
+    SEXP r_input_matrix, SEXP r_empty_method,
     SEXP r_empty_value, SEXP r_rows, SEXP r_cols
 ) {
-  
+
   // Initialize columns
   int cols = INTEGER(r_cols)[0];
-  
+
   // Initialize R result
   SEXP r_result = PROTECT(allocVector(REALSXP, cols * cols));
   double* c_result = REAL(r_result);
-  
+
   // Call the C function
   polychoric_correlation_matrix(
     INTEGER(r_input_matrix), INTEGER(r_rows)[0], cols,
     INTEGER(r_empty_method)[0], REAL(r_empty_value)[0],
     c_result // Pass the pointer directly to the C function
   );
-  
+
   // Free R result
   UNPROTECT(1);
-  
+
   // Return R result
   return r_result;
-  
+
 }
