@@ -307,7 +307,7 @@ EBICglasso.qgraph <- function(
 
 #' @noRd
 # Errors ----
-# Updated 30.07.2023
+# Updated 19.08.2023
 EBICglasso.qgraph_errors <- function(
     data, n, gamma, penalize.diagonal, nlambda,
     returnAllResults, countDiagonal, refit, verbose
@@ -358,8 +358,8 @@ EBICglasso.qgraph_errors <- function(
   length_error(verbose, 1, "EBICglasso.qgraph")
   typeof_error(verbose, "logical", "EBICglasso.qgraph")
   
-  # Return data in case of tibble
-  return(data)
+  # Return usable data in case of tibble
+  return(usable_data(data, verbose))
   
 }
 

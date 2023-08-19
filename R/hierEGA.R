@@ -611,7 +611,7 @@ hierEGA <- function(
 
 #' @noRd
 # Argument errors ----
-# Updated 13.08.2023
+# Updated 19.08.2023
 hierEGA_errors <- function(data, plot.EGA, verbose)
 {
   
@@ -631,8 +631,8 @@ hierEGA_errors <- function(data, plot.EGA, verbose)
   length_error(verbose, 1, "hierEGA")
   typeof_error(verbose, "logical", "hierEGA")
   
-  # Return data in case of tibble
-  return(data)
+  # Return usable data in case of tibble
+  return(usable_data(data, verbose))
   
 }
 

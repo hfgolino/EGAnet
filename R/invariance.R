@@ -652,7 +652,7 @@ invariance <- function(
 
 #' @noRd
 # Errors ----
-# Updated 13.08.2023
+# Updated 19.08.2023
 invariance_errors <- function(
     data, groups, iter, configural.threshold,
     ncores, seed, verbose
@@ -698,8 +698,8 @@ invariance_errors <- function(
   length_error(verbose, 1, "invariance")
   typeof_error(verbose, "logical", "invariance")
   
-  # Return data and groups
-  return(list(data = data, groups = groups))
+  # Return usable data and groups
+  return(list(data = usable_data(data, verbose), groups = groups))
   
 }
 

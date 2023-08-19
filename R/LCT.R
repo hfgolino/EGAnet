@@ -357,7 +357,7 @@ LCT <- function(
 
 #' @noRd
 # Errors ----
-# Updated 13.08.2023
+# Updated 19.08.2023
 LCT_errors <- function(data, n, iter, verbose)
 {
   
@@ -384,8 +384,8 @@ LCT_errors <- function(data, n, iter, verbose)
   length_error(verbose, 1, "LCT")
   typeof_error(verbose, "logical", "LCT")
   
-  # Return data in case of tibble
-  return(data)
+  # Return usable data in case of tibble
+  return(usable_data(data, verbose))
   
 }
 

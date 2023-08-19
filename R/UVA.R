@@ -374,7 +374,7 @@ UVA <- function(
 
 #' @noRd
 # Argument errors ----
-# Updated 13.08.2023
+# Updated 19.08.2023
 UVA_errors <- function(data, network, n, cut.off, reduce, auto, verbose)
 {
   
@@ -419,8 +419,8 @@ UVA_errors <- function(data, network, n, cut.off, reduce, auto, verbose)
   length_error(verbose, 1, "UVA")
   typeof_error(verbose, "logical", "UVA")
   
-  # Return data in case of tibble
-  return(data)
+  # Return usable data in case of tibble
+  return(usable_data(data, verbose))
   
 }
 

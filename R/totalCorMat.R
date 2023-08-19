@@ -28,14 +28,14 @@
 #' @export
 #'
 # Total Correlation Matrix ----
-# Updated 13.08.2023
+# Updated 19.08.2023
 totalCorMat <- function(data){
   
   # 'data' errors
   object_error(data, c("matrix", "data.frame", "tibble"), "totalCorMat")
   
   # Ensure data is matrix
-  data <- as.matrix(data)
+  data <- as.matrix(usable_data(data, verbose = TRUE))
   
   # Get dimensions of data
   dimensions <- dim(data)

@@ -116,7 +116,7 @@
 #' @export
 #'
 # Network Scores ----
-# Updated 13.08.2023
+# Updated 19.08.2023
 net.scores <- function (
     data, A, wc, 
     loading.method = c("BRM", "experimental"),
@@ -151,7 +151,7 @@ net.scores <- function (
   }
   
   # Ensure data is a matrix
-  data <- as.matrix(data) 
+  data <- as.matrix(usable_data(data, verbose = TRUE)) 
   
   # Get ellipse arguments
   ellipse <- list(...)

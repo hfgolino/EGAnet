@@ -321,7 +321,7 @@ auto.correlate <- function(
 
 #' @noRd
 # Errors ----
-# Updated 13.08.2023
+# Updated 19.08.2023
 auto.correlate_errors <- function(data, ordinal.categories, forcePD, verbose)
 {
   
@@ -346,8 +346,8 @@ auto.correlate_errors <- function(data, ordinal.categories, forcePD, verbose)
   length_error(verbose, 1, "auto.correlate")
   typeof_error(verbose, "logical", "auto.correlate")
   
-  # Return data (in case of tibble)
-  return(data)
+  # Return usable data (in case of tibble)
+  return(usable_data(data, verbose))
   
 }
 

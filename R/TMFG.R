@@ -395,7 +395,7 @@ TMFG <- function(
 
 #' @noRd
 # Errors ----
-# Updated 13.08.2023
+# Updated 19.08.2023
 TMFG_errors <- function(data, n, partial, returnAllResults, verbose)
 {
   
@@ -425,8 +425,8 @@ TMFG_errors <- function(data, n, partial, returnAllResults, verbose)
   length_error(verbose, 1, "TMFG")
   typeof_error(verbose, "logical", "TMFG")
   
-  # Return data in case of tibble
-  return(data)
+  # Return usable data in case of tibble
+  return(usable_data(data, verbose))
   
 }
 

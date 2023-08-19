@@ -127,12 +127,16 @@ tefi <- function(data, structure = NULL, verbose = TRUE)
 
 #' @noRd
 # Argument errors
-# Updated 13.08.2023
+# Updated 19.08.2023
 tefi_errors <- function(data, verbose)
 {
   
   # Get `EGA` class
   ega_class <- grepl("EGA", class(data))
+  
+  # 'verbose' errors
+  length_error(verbose, 1, "tefi")
+  typeof_error(verbose, "logical", "tefi")
   
   # 'data' errors
   if(any(!ega_class)){
@@ -145,11 +149,10 @@ tefi_errors <- function(data, verbose)
       data <- as.data.frame(data)
     }
     
+    # Ensure usable data
+    data <- usable_data(data, verbose)
+    
   }
-  
-  # 'verbose' errors
-  length_error(verbose, 1, "tefi")
-  typeof_error(verbose, "logical", "tefi")
   
   # Return data and `EGA` classes
   return(list(data = data, ega_class = ega_class))

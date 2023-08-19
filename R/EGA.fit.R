@@ -338,7 +338,7 @@ EGA.fit <- function(
 
 #' @noRd
 # Errors ----
-# Updated 13.08.2023
+# Updated 19.08.2023
 EGA.fit_errors <- function(data, n, plot.EGA, verbose)
 {
   
@@ -364,8 +364,8 @@ EGA.fit_errors <- function(data, n, plot.EGA, verbose)
   length_error(verbose, 1, "EGA.fit")
   typeof_error(verbose, "logical", "EGA.fit")
   
-  # Return data (in case of tibble)
-  return(data)
+  # Return usable data (in case of tibble)
+  return(usable_data(data, verbose))
   
 }
 

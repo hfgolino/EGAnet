@@ -603,7 +603,7 @@ bootEGA <- function(
 
 #' @noRd
 # Errors ----
-# Updated 13.08.2023
+# Updated 19.08.2023
 bootEGA_errors <- function(
     data, n, iter, ncores, typicalStructure,
     plot.typicalStructure, seed, verbose
@@ -653,8 +653,8 @@ bootEGA_errors <- function(
   length_error(verbose, 1, "bootEGA")
   typeof_error(verbose, "logical", "bootEGA")
   
-  # Return data (in case of tibble)
-  return(data)
+  # Return usable data (in case of tibble)
+  return(usable_data(data, verbose))
   
 }
 

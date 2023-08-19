@@ -331,7 +331,7 @@ EGA.estimate <- function(
 
 #' @noRd
 # Errors ----
-# Updated 13.08.2023
+# Updated 19.08.2023
 EGA.estimate_errors <- function(data, n, verbose)
 {
   
@@ -354,7 +354,7 @@ EGA.estimate_errors <- function(data, n, verbose)
   typeof_error(verbose, "logical", "EGA.estimate")
   
   # Return data (in case of tibble)
-  return(data)
+  return(usable_data(data, verbose))
   
 }
 

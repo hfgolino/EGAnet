@@ -431,7 +431,7 @@ riEGA <- function(
 
 #' @noRd
 # Errors ----
-# Updated 13.08.2023
+# Updated 19.08.2023
 riEGA_errors <- function(data, n, plot.EGA, verbose)
 {
   
@@ -457,8 +457,8 @@ riEGA_errors <- function(data, n, plot.EGA, verbose)
   length_error(verbose, 1, "riEGA")
   typeof_error(verbose, "logical", "riEGA")
   
-  # Return data in case of tibble
-  return(data)
+  # Return usable data in case of tibble
+  return(usable_data(data, verbose))
   
 }
 

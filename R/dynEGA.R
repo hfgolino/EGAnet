@@ -561,7 +561,7 @@ dynEGA <- function(
 
 #' @noRd
 # Errors ----
-# Updated 09.08.2023
+# Updated 19.08.2023
 dynEGA_errors <- function(
     data, id, group, n.embed, tau, delta,
     use.derivatives, ncores, verbose

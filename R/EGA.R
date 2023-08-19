@@ -406,7 +406,7 @@ EGA <- function (
 
 #' @noRd
 # Errors ----
-# Updated 13.08.2023
+# Updated 19.08.2023
 EGA_errors <- function(data, n, plot.EGA, verbose)
 {
   
@@ -433,7 +433,7 @@ EGA_errors <- function(data, n, plot.EGA, verbose)
   typeof_error(verbose, "logical", "EGA")
   
   # Return data in case of tibble
-  return(data)
+  return(usable_data(data, verbose))
   
 }
 

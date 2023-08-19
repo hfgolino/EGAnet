@@ -150,8 +150,8 @@ vn.entropy_errors <- function(data, structure)
   object_error(structure, "vector", "vn.entropy")
   length_error(structure, dim(data)[2], "vn.entropy")
   
-  # Return data in case of tibble
-  return(data)
+  # Return usable data in case of tibble
+  return(usable_data(data, verbose = TRUE))
   
 }
 

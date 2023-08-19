@@ -33,7 +33,7 @@
 #' @export
 #'
 # Total Correlation ----
-# Updated 13.08.2023
+# Updated 19.08.2023
 totalCor <- function(data)
 {
   
@@ -41,7 +41,7 @@ totalCor <- function(data)
   object_error(data, c("matrix", "data.frame", "tibble"), "totalCor")
   
   # Ensure data is a matrix
-  data <- as.matrix(data)
+  data <- as.matrix(usable_data(data, verbose = TRUE))
   
   # Get data dimensions
   dimensions <- dim(data)
