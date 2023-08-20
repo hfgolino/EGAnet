@@ -2084,7 +2084,7 @@ get_layout <- function(network, dimensions, non_zero_index, plot_ARGS)
 
 #' @noRd
 # Basic set up for plots ----
-# Updated 03.08.2023
+# Updated 20.08.2023
 basic_plot_setup <- function(network, wc = NULL, ...)
 {
   
@@ -2225,6 +2225,12 @@ basic_plot_setup <- function(network, wc = NULL, ...)
     communities = communities, non_zero_edges = non_zero_edges
   )
   
+  # Set up node names to be more readable
+  node_names <- readable_names(plot_ARGS$node.label)
+  
+  # Remove node labels
+  plot_ARGS$node.label <- NULL
+  
   # Get first layer with silent call
   first_layer <- silent_call(
     do.call(GGally::ggnet2, plot_ARGS)
@@ -2232,9 +2238,6 @@ basic_plot_setup <- function(network, wc = NULL, ...)
   
   # Return node size to `plot_ARGS` (was removed above)
   plot_ARGS$node.size <- node.size
-  
-  # Set up node names to be more readable
-  node_names <- readable_names(plot_ARGS$node.label)
 
   # Determine border color
   ## Check for gray scale options
