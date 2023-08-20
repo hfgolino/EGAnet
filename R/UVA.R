@@ -141,7 +141,7 @@
 #' 
 #' @export
 # Unique Variable Analysis ----
-# Updated 08.08.2023
+# Updated 20.08.2023
 UVA <- function(
     data = NULL, network = NULL, n = NULL, key = NULL,
     uva.method = c("MBR", "EJP"),
@@ -194,7 +194,7 @@ UVA <- function(
   reduce.method <- set_default(reduce.method, "remove", UVA)
   
   # Get EGA output (regardless)
-  ega_output <- EGA(data, plot.EGA = FALSE, verbose = verbose, ...)
+  ega_output <- EGA(data, n = n, plot.EGA = FALSE, verbose = verbose, ...)
   
   # Get network
   if(!is.null(data) && is.null(network)){
