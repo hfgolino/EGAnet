@@ -142,7 +142,7 @@
 #'
 #' @export
 # TMFG Filtering Method----
-# Updated 04.08.2023
+# Updated 03.09.2023
 TMFG <- function(
     data, n = NULL,
     corr = c("auto", "pearson", "spearman"),
@@ -243,7 +243,7 @@ TMFG <- function(
   
   # Loop over remaining edges
   for(i in 5:nodes){
-    
+  
     # Check for one remaining node
     if(length(remaining) == 1){
       
@@ -253,8 +253,19 @@ TMFG <- function(
       
     }else{
       
+      # Get max gains
+      max_gains <- gain[remaining,] == max(gain[remaining,])
+      
+      # Get total gains
+      total_gains <- sum(max_gains)
+
+      # Check for more than 1
+      if(total_gains > 1){
+        max_gains[max_gains][2:total_gains] <- FALSE
+      }
+      
       # Vectorized solution (avoids nested loop)
-      gain_location <- which(gain[remaining,] == max(gain[remaining,]), arr.ind = TRUE)
+      gain_location <- which(max_gains, arr.ind = TRUE)
       
       # Obtain existing vertex (already in network)
       # and vertex from remaining based on the maximum gain
