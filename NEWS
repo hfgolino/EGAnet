@@ -1,3 +1,13 @@
+Changes in version 2.0.2
+
+o FIX: ties for max gain in `TMFG`
+
+
+Changes in version 2.0.1
+
+o updated the polychoric C code to avoid out-of-bounds access errors
+
+
 Changes in version 2.0.0
 
 o MAJOR REFACTOR: the update to version 2.0.0 includes many major changes that are designed to improve the speed, reliability, and reproducibility of {EGAnet}. The goal of these changes are to eliminate common errors and streamline the code in the package to prevent future error cases. There are several function additions that are provided to facilitate modular use of the {EGAnet} package
