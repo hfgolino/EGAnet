@@ -210,15 +210,22 @@ polychoric.matrix_errors <- function(data)
 continuous2categorical <- function(values)
 {
  
-  # Check for conversion
-  return(
-    swiftelse(
-      all(values == as.integer(values)),
-      values, # all are integer, so return values "as-is"
-      as.numeric(factor(values))
-      # not all are integer, so convert to integer
-    )
+  # Get non-NA indices
+  non_NA <- !is.na(values)
+  
+  # Get non-NA values
+  actual_values <- values[non_NA]
+  
+  # Return values into actual values
+  values[non_NA] <- swiftelse(
+    all(actual_values == as.integer(actual_values)),
+    actual_values, # all are integer, so return values "as-is"
+    as.numeric(factor(actual_values))
+    # not all are integer, so convert to integer
   )
+  
+  # Check for conversion
+  return(values)
   
 }
 
