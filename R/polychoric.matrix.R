@@ -138,8 +138,8 @@ polychoric.matrix <- function(
   # Ensure data is a matrix
   data <- as.matrix(usable_data(data, verbose = TRUE))
   
-  # Argument errors
-  polychoric.matrix_errors(data)
+  # Argument errors (try to return ordinal data)
+  data <- polychoric.matrix_errors(data)
   
   # Check for missing data
   if(na.data == "pairwise"){
@@ -185,16 +185,42 @@ polychoric.matrix <- function(
 
 #' @noRd
 # Argument errors ----
-# Updated 13.08.2023
+# Updated 04.09.2023
 polychoric.matrix_errors <- function(data)
 {
+  
+  # Attempt to convert all data to be ordinal
+  data <- column_apply(data, continuous2categorical)
   
   # 'data' errors
   range_error(data, c(0, 11), "polychoric.matrix")
   
+  # Return data
+  return(data)
+  
 }
 
-
+#' @noRd
+# Convert continuous to categorical data ----
+# If continuous data is passed but has few values,
+# then it is treated as categorical
+# In order to pass these non-integer values to C,
+# these values need to be converted
+# Updated 04.09.2023
+continuous2categorical <- function(values)
+{
+ 
+  # Check for conversion
+  return(
+    swiftelse(
+      all(values == as.integer(values)),
+      values, # all are integer, so return values "as-is"
+      as.numeric(factor(values))
+      # not all are integer, so convert to integer
+    )
+  )
+  
+}
 
 
 

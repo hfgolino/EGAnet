@@ -2,6 +2,8 @@ Changes in version 2.0.2
 
 o FIX: ties for max gain in `TMFG`
 
+o FIX: continuous variables with few categories that are treated as ordinal in `polychoric.matrix`
+
 
 Changes in version 2.0.1
 
