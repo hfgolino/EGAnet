@@ -4,6 +4,8 @@ o FIX: ties for max gain in `TMFG`
 
 o FIX: continuous variables with few categories that are treated as ordinal in `polychoric.matrix`
 
+o ADD: website pointing to different data check errors added to error output (hopefully, makes errors more understandable)
+
 
 Changes in version 2.0.1
 

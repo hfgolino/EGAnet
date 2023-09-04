@@ -2513,7 +2513,7 @@ not_refactored <- function(function_name)
 
 #' @noRd
 # Error for class ----
-# Updated 13.08.2023
+# Updated 04.09.2023
 class_error <- function(input, expected_class, function_name){
   
   # Check for object types
@@ -2522,8 +2522,10 @@ class_error <- function(input, expected_class, function_name){
       h = stop,
       msg = paste0(
         "Input into '", deparse(substitute(input)),
-        "' is not the expected class ", paste0("'", expected_class, "'", collapse = ", "),
-        ". Input is class ", paste0("'", class(input), "'", collapse = ", ")
+        "' is an object with ", paste0("'", class(input), "'", collapse = ", "), " class(es)",
+        ". Input is expected to be ", paste0("'", expected_class, "'", collapse = ", "), " class(es)",
+        "\n\n For more details on how to fix this error, see:\n",
+        "https://r-ega.net/articles/errors.html#class-error"
       ), 
       call = function_name
     )
@@ -2533,7 +2535,7 @@ class_error <- function(input, expected_class, function_name){
 
 #' @noRd
 # Error for object type ----
-# Updated 13.08.2023
+# Updated 04.09.2023
 object_error <- function(input, expected_type, function_name){
   
   # Get input type
@@ -2545,8 +2547,10 @@ object_error <- function(input, expected_type, function_name){
       h = stop,
       msg = paste0(
         "Input into '", deparse(substitute(input)),
-        "' argument is not ", paste0("'", expected_type, "'", collapse = ", "),
-        ". Input is ", paste0("'", input_type, "'", collapse = ", ")
+        "' is a ", paste0("'", input_type, "'", collapse = ", "), " object",
+        ". Input is expected to be ", paste0("'", expected_type, "'", collapse = ", "), " object",
+        "\n\n For more details on how to fix this error, see:\n",
+        "https://r-ega.net/articles/errors.html#object-error"
       ), 
       call = function_name
     )
@@ -2556,7 +2560,7 @@ object_error <- function(input, expected_type, function_name){
 
 #' @noRd
 # Error for `typeof` ----
-# Updated 13.08.2023
+# Updated 04.09.2023
 typeof_error <- function(input, expected_value, function_name){
   
   # Switch out "closure" with "function"
@@ -2590,9 +2594,11 @@ typeof_error <- function(input, expected_value, function_name){
       h = stop,
       msg = paste0(
         "Input into '", deparse(substitute(input)),
-        "' is ", paste("'", typeof_input, "'", sep = "", collapse = ", "),
+        "' is ", paste("'", typeof_input, "'", sep = "", collapse = ", "), " type",
         ". Input is expected to be ",
-        paste0("'", expected_value, "'", collapse = " or ")
+        paste0("'", expected_value, "'", collapse = " or "), " type",
+        "\n\n For more details on how to fix this error, see:\n",
+        "https://r-ega.net/articles/errors.html#typeof-error"
         # can use "or" because `typeof` won't ever be more than two
       ), 
       call = function_name
@@ -2603,7 +2609,7 @@ typeof_error <- function(input, expected_value, function_name){
 
 #' @noRd
 # Error for `length` ----
-# Updated 13.08.2023
+# Updated 04.09.2023
 length_error <- function(input, expected_lengths, function_name){
   
   # Check for length of input in expected length
@@ -2613,7 +2619,9 @@ length_error <- function(input, expected_lengths, function_name){
       msg = paste0(
         "Length of '", deparse(substitute(input)),
         "' (", length(input),") does not match expected length(s). Length must be: ",
-        paste0("'", expected_lengths, "'", collapse = " or ")
+        paste0("'", expected_lengths, "'", collapse = " or "),
+        "\n\n For more details on how to fix this error, see:\n",
+        "https://r-ega.net/articles/errors.html#length-error"
       ), 
       call = function_name
     )
@@ -2623,7 +2631,7 @@ length_error <- function(input, expected_lengths, function_name){
 
 #' @noRd
 # Error for `range` ----
-# Updated 13.08.2023
+# Updated 04.09.2023
 range_error <- function(input, expected_ranges, function_name){
   
   # Obtain expected maximum and minimum values
@@ -2639,9 +2647,11 @@ range_error <- function(input, expected_ranges, function_name){
     .handleSimpleError(
       h = stop,
       msg = paste0(
-        "Maximum of '", deparse(substitute(input)),
-        "' (", actual_maximum,") does not match expected range(s). Range must be between: ",
-        paste0("'", expected_ranges, "'", collapse = " and ")
+        "Maximum value of '", deparse(substitute(input)),
+        "' (", actual_maximum,") does not match expected range(s). Values must range between: ",
+        paste0("'", expected_ranges, "'", collapse = " and "),
+        "\n\n For more details on how to fix this error, see:\n",
+        "https://r-ega.net/articles/errors.html#range-error"
       ), 
       call = function_name
     )
@@ -2652,9 +2662,11 @@ range_error <- function(input, expected_ranges, function_name){
     .handleSimpleError(
       h = stop,
       msg = paste0(
-        "Minimum of '", deparse(substitute(input)),
-        "' (", actual_minimum,") does not match expected range(s). Range must be between: ",
-        paste0("'", expected_ranges, "'", collapse = " and ")
+        "Minimum value of '", deparse(substitute(input)),
+        "' (", actual_minimum,") does not match expected range(s). Values must range between: ",
+        paste0("'", expected_ranges, "'", collapse = " and "),
+        "\n\n For more details on how to fix this error, see:\n",
+        "https://r-ega.net/articles/errors.html#range-error"
       ), 
       call = function_name
     )
