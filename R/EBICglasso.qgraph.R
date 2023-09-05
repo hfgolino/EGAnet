@@ -12,6 +12,51 @@
 #'
 #' @param n Numeric (length = 1).
 #' Sample size if \code{data} provided is a correlation matrix
+#' 
+#' @param corr Character (length = 1).
+#' Method to compute correlations.
+#' Defaults to \code{"auto"}.
+#' Available options:
+#' 
+#' \itemize{
+#' 
+#' \item{\code{"auto"} --- }
+#' {Automatically computes appropriate correlations for
+#' the data using Pearson's for continuous, polychoric for ordinal,
+#' tetrachoric for binary, and polyserial/biserial for ordinal/binary with
+#' continuous. To change the number of categories that are considered
+#' ordinal, use \code{ordinal.categories}
+#' (see \code{\link[EGAnet]{polychoric.matrix}} for more details)}
+#' 
+#' \item{\code{"cor_auto"} --- }
+#' {Uses \code{\link[qgraph]{cor_auto}} to compute correlations. Arguments
+#' can be passed along to the function}
+#' 
+#' \item{\code{"pearson"} --- }
+#' {Pearson's correlation is computed for all variables regardless of
+#' categories}
+#' 
+#' \item{\code{"spearman"} --- }
+#' {Spearman's rank-order correlation is computed for all variables
+#' regardless of categories}
+#' 
+#' }
+#' 
+#' @param na.data Character (length = 1).
+#' How should missing data be handled?
+#' Defaults to \code{"pairwise"}.
+#' Available options:
+#' 
+#' \itemize{
+#' 
+#' \item{\code{"pairwise"} --- }
+#' {Computes correlation for all available cases between
+#' two variables}
+#' 
+#' \item{\code{"listwise"} --- }
+#' {Computes correlation for all complete cases in the dataset}
+#' 
+#' }
 #'
 #' @param gamma Numeric (length = 1)
 #' EBIC tuning parameter.
@@ -105,10 +150,12 @@
 #' @export
 #'
 # Computes optimal glasso network based on EBIC ----
-# Updated 09.08.2023
+# Updated 04.09.2023
 EBICglasso.qgraph <- function(
     data, # Sample covariance matrix
     n = NULL,
+    corr = c("auto", "cor_auto", "pearson", "spearman"),
+    na.data = c("pairwise", "listwise"),
     gamma = 0.5,
     penalize.diagonal = FALSE, # Penalize diagonal?
     nlambda = 100,
@@ -123,7 +170,9 @@ EBICglasso.qgraph <- function(
 )
 {
   
-  # Determine model selection
+  # Check for missing arguments (argument, default, function)
+  corr <- set_default(corr, "auto", EBICglasso.qgraph)
+  na.data <- set_default(na.data, "pairwise", auto.correlate)
   model.selection <- set_default(model.selection, "ebic", EBICglasso.qgraph)
   
   # Argument errors (return data in case of tibble)
@@ -141,8 +190,8 @@ EBICglasso.qgraph <- function(
   
   # Generic function to get necessary inputs
   output <- obtain_sample_correlations(
-    data = data, n = n, corr = "auto", 
-    na.data = "pairwise", verbose = verbose, ...
+    data = data, n = n, corr = corr, 
+    na.data = na.data, verbose = verbose, ...
   )
   
   # Get correlations and sample size

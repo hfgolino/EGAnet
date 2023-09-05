@@ -1428,7 +1428,7 @@ obtain_networks <- function(network, signed)
 #' @noRd
 # Obtain data, sample size, correlation matrix ----
 # Generic function to get the usual needed inputs
-# Updated 24.07.2023
+# Updated 04.09.2023
 obtain_sample_correlations <- function(data, n, corr, na.data, verbose, ...)
 {
   
@@ -1457,15 +1457,28 @@ obtain_sample_correlations <- function(data, n, corr, na.data, verbose, ...)
     
     # Check for automatic correlations
     if(corr == "auto"){
-      
-      # Compute correlations
       correlation_matrix <- auto.correlate(
-        data = data, corr = "pearson",
-        na.data = na.data, verbose = verbose,
-        ...
+        data = data, corr = "pearson", na.data = na.data, 
+        verbose = verbose, ...
+      )
+    }else if(corr == "cor_auto"){
+      
+      # Get arguments for `cor_auto`
+      cor_auto_ARGS <- obtain_arguments(
+        FUN = qgraph::cor_auto,
+        FUN.args = list(...)
       )
       
-    }else{ # Obtain correlations using base R
+      # Set 'data' and 'verbose' arguments
+      cor_auto_ARGS[c("data", "verbose")] <- list(data, verbose)
+      
+      # Obtain correlations
+      correlation_matrix <- do.call(
+        what = qgraph::cor_auto,
+        args = cor_auto_ARGS
+      )
+      
+    }else{
       correlation_matrix <- cor(data, use = na.data, method = corr)
     }
     

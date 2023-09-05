@@ -27,6 +27,10 @@
 #' ordinal, use \code{ordinal.categories}
 #' (see \code{\link[EGAnet]{polychoric.matrix}} for more details)}
 #' 
+#' \item{\code{"cor_auto"} --- }
+#' {Uses \code{\link[qgraph]{cor_auto}} to compute correlations. Arguments
+#' can be passed along to the function}
+#' 
 #' \item{\code{"pearson"} --- }
 #' {Pearson's correlation is computed for all variables regardless of
 #' categories}
@@ -214,11 +218,11 @@
 #' @export
 #' 
 # Random-Intercept EGA
-# Changed from 'residualEGA.R' on 17.04.2022
-# Updated 09.08.2023
+# Superceded 'residualEGA.R' on 17.04.2022
+# Updated 05.09.2023
 riEGA <- function(
     data, n = NULL,
-    corr = c("auto", "pearson", "spearman"),
+    corr = c("auto", "cor_auto", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
     model = c("glasso", "TMFG"),  
     algorithm = c("leiden", "louvain", "walktrap"),
@@ -233,8 +237,7 @@ riEGA <- function(
   data <- riEGA_errors(data, n, plot.EGA, verbose)
   
   # Check for missing arguments (argument, default, function)
-  corr <- set_default(corr, "auto", c("auto", "cor_auto", "pearson", "spearman"))
-  corr <- swiftelse(corr == "cor_auto", "auto", corr) # deprecate `cor_auto`
+  corr <- set_default(corr, "auto", riEGA)
   na.data <- set_default(na.data, "pairwise", auto.correlate)
   model <- set_default(model, "glasso", network.estimation)
   algorithm <- set_default(algorithm, "walktrap", community.detection)

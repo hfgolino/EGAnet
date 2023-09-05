@@ -29,6 +29,10 @@
 #' ordinal, use \code{ordinal.categories}
 #' (see \code{\link[EGAnet]{polychoric.matrix}} for more details)}
 #' 
+#' \item{\code{"cor_auto"} --- }
+#' {Uses \code{\link[qgraph]{cor_auto}} to compute correlations. Arguments
+#' can be passed along to the function}
+#' 
 #' \item{\code{"pearson"} --- }
 #' {Pearson's correlation is computed for all variables regardless of
 #' categories}
@@ -238,10 +242,10 @@
 #'
 #' @export
 # EGA ----
-# Updated 09.08.2023
+# Updated 04.09.2023
 EGA <- function (
     data, n = NULL,
-    corr = c("auto", "pearson", "spearman"),
+    corr = c("auto", "cor_auto", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
     model = c("BGGM", "glasso", "TMFG"),  
     algorithm = c("leiden", "louvain", "walktrap"),
@@ -254,12 +258,11 @@ EGA <- function (
   # Check for missing arguments (argument, default, function)
   # Uses actual function they will be used in
   # (keeping non-function choices for `cor_auto`)
-  corr <- set_default(corr, "auto", c("auto", "cor_auto", "pearson", "spearman"))
-  corr <- swiftelse(corr == "cor_auto", "auto", corr) # deprecate `cor_auto`
+  corr <- set_default(corr, "auto", EGA)
   na.data <- set_default(na.data, "pairwise", auto.correlate)
   model <- set_default(model, "glasso", network.estimation)
   algorithm <- set_default(algorithm, "walktrap", community.detection)
-  uni.method <- set_default(uni.method, "louvain", community.unidimensional)
+  uni.method <- set_default(uni.method, "louvain", EGA)
   
   # Argument errors (return data in case of tibble)
   data <- EGA_errors(data, n, plot.EGA, verbose)

@@ -6,6 +6,8 @@ o FIX: continuous variables with few categories that are treated as ordinal in `
 
 o ADD: website pointing to different data check errors added to error output (hopefully, makes errors more understandable)
 
+o UPDATE: `corr = "cor_auto"` now performs `qgraph::cor_auto` in favor of legacy; previous behavior starting at 2.0.0 was to deprecate `"cor_auto"` in favor of `"auto"`; default remains `corr = "auto"`
+
 
 Changes in version 2.0.1
 

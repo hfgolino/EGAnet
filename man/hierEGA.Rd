@@ -11,7 +11,7 @@ hierEGA(
   scores = c("factor", "network"),
   loading.structure = c("simple", "full"),
   impute = c("mean", "median", "none"),
-  corr = c("auto", "pearson", "spearman"),
+  corr = c("auto", "cor_auto", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
   model = c("BGGM", "glasso", "TMFG"),
   lower.algorithm = "louvain",
@@ -102,6 +102,10 @@ tetrachoric for binary, and polyserial/biserial for ordinal/binary with
 continuous. To change the number of categories that are considered
 ordinal, use \code{ordinal.categories}
 (see \code{\link[EGAnet]{polychoric.matrix}} for more details)}
+
+\item{\code{"cor_auto"} --- }
+{Uses \code{\link[qgraph]{cor_auto}} to compute correlations. Arguments
+can be passed along to the function}
 
 \item{\code{"pearson"} --- }
 {Pearson's correlation is computed for all variables regardless of

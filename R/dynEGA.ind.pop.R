@@ -83,6 +83,10 @@
 #' ordinal, use \code{ordinal.categories}
 #' (see \code{\link[EGAnet]{polychoric.matrix}} for more details)}
 #' 
+#' \item{\code{"cor_auto"} --- }
+#' {Uses \code{\link[qgraph]{cor_auto}} to compute correlations. Arguments
+#' can be passed along to the function}
+#' 
 #' \item{\code{"pearson"} --- }
 #' {Pearson's correlation is computed for all variables regardless of
 #' categories}
@@ -232,13 +236,13 @@
 #' @export
 #'
 # Intra- and Interindividual dynEGA
-# Updated 27.07.2023
+# Updated 04.09.2023
 dynEGA.ind.pop <- function(
   # `dynEGA` arguments
   data,  id = NULL,
   n.embed = 5, tau = 1, delta = 1, use.derivatives = 1,
   # `EGA` arguments
-  corr = c("auto", "pearson", "spearman"),
+  corr = c("auto", "cor_auto", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
   model = c("BGGM", "glasso", "TMFG"),  
   algorithm = c("leiden", "louvain", "walktrap"),

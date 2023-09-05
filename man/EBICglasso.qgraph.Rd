@@ -7,6 +7,8 @@
 EBICglasso.qgraph(
   data,
   n = NULL,
+  corr = c("auto", "cor_auto", "pearson", "spearman"),
+  na.data = c("pairwise", "listwise"),
   gamma = 0.5,
   penalize.diagonal = FALSE,
   nlambda = 100,
@@ -26,6 +28,51 @@ Should consist only of variables to be used in the analysis}
 
 \item{n}{Numeric (length = 1).
 Sample size if \code{data} provided is a correlation matrix}
+
+\item{corr}{Character (length = 1).
+Method to compute correlations.
+Defaults to \code{"auto"}.
+Available options:
+
+\itemize{
+
+\item{\code{"auto"} --- }
+{Automatically computes appropriate correlations for
+the data using Pearson's for continuous, polychoric for ordinal,
+tetrachoric for binary, and polyserial/biserial for ordinal/binary with
+continuous. To change the number of categories that are considered
+ordinal, use \code{ordinal.categories}
+(see \code{\link[EGAnet]{polychoric.matrix}} for more details)}
+
+\item{\code{"cor_auto"} --- }
+{Uses \code{\link[qgraph]{cor_auto}} to compute correlations. Arguments
+can be passed along to the function}
+
+\item{\code{"pearson"} --- }
+{Pearson's correlation is computed for all variables regardless of
+categories}
+
+\item{\code{"spearman"} --- }
+{Spearman's rank-order correlation is computed for all variables
+regardless of categories}
+
+}}
+
+\item{na.data}{Character (length = 1).
+How should missing data be handled?
+Defaults to \code{"pairwise"}.
+Available options:
+
+\itemize{
+
+\item{\code{"pairwise"} --- }
+{Computes correlation for all available cases between
+two variables}
+
+\item{\code{"listwise"} --- }
+{Computes correlation for all complete cases in the dataset}
+
+}}
 
 \item{gamma}{Numeric (length = 1)
 EBIC tuning parameter.

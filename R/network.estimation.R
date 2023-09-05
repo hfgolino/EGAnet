@@ -23,6 +23,10 @@
 #' ordinal, use \code{ordinal.categories}
 #' (see \code{\link[EGAnet]{polychoric.matrix}} for more details)}
 #' 
+#' \item{\code{"cor_auto"} --- }
+#' {Uses \code{\link[qgraph]{cor_auto}} to compute correlations. Arguments
+#' can be passed along to the function}
+#' 
 #' \item{\code{"pearson"} --- }
 #' {Pearson's correlation is computed for all variables regardless of
 #' categories}
@@ -138,10 +142,10 @@
 #' @export
 #'
 # Compute networks for EGA ----
-# Updated 09.08.2023
+# Updated 05.09.2023
 network.estimation <- function(
     data, n = NULL,
-    corr = c("auto", "pearson", "spearman"),
+    corr = c("auto", "cor_auto", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
     model = c("BGGM", "glasso", "TMFG"),
     network.only = TRUE,

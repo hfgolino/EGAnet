@@ -44,6 +44,10 @@
 #' ordinal, use \code{ordinal.categories}
 #' (see \code{\link[EGAnet]{polychoric.matrix}} for more details)}
 #' 
+#' \item{\code{"cor_auto"} --- }
+#' {Uses \code{\link[qgraph]{cor_auto}} to compute correlations. Arguments
+#' can be passed along to the function}
+#' 
 #' \item{\code{"pearson"} --- }
 #' {Pearson's correlation is computed for all variables regardless of
 #' categories}
@@ -306,12 +310,14 @@
 #' @export
 #'
 # Measurement Invariance
-# Updated 13.08.2023
+# Updated 05.09.2023
 invariance <- function(
+    # `invariance` arguments
     data, groups, structure = NULL,
     iter = 500, configural.threshold = 0.70,
     configural.type = c("parametric", "resampling"),
-    corr = c("auto", "pearson", "spearman"),
+    # standard arguments
+    corr = c("auto", "cor_auto", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
     model = c("BGGM", "glasso", "TMFG"),  
     algorithm = c("leiden", "louvain", "walktrap"),
@@ -326,8 +332,7 @@ invariance <- function(
   
   # Check for missing arguments (argument, default, function)
   configural.type <- set_default(configural.type, "parametric", invariance)
-  corr <- set_default(corr, "auto", c("auto", "cor_auto", "pearson", "spearman"))
-  corr <- swiftelse(corr == "cor_auto", "auto", corr) # deprecate `cor_auto`
+  corr <- set_default(corr, "auto", invariance)
   na.data <- set_default(na.data, "pairwise", auto.correlate)
   model <- set_default(model, "glasso", network.estimation)
   algorithm <- set_default(algorithm, "walktrap", community.detection)
