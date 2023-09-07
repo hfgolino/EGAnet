@@ -198,7 +198,7 @@ EGA.estimate <- function(
   data <- EGA.estimate_errors(data, n, verbose, ...)
   
   # Obtain ellipse arguments
-  ellipse <- list(needs_usable = FALSE)
+  ellipse <- list(needs_usable = FALSE, ...)
   
   # Handle legacy arguments (`model.args` and `algorithm.args`)
   ellipse <- legacy_EGA_args(ellipse)
@@ -236,7 +236,8 @@ EGA.estimate <- function(
     # Set up network estimation arguments
     estimation_ARGS <- list(
       n = n, corr = corr, na.data = na.data,
-      model = model, network.only = TRUE, verbose = verbose
+      model = model, network.only = TRUE,
+      verbose = verbose
     )
     
     # Check for BGGM
