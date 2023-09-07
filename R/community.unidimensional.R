@@ -167,7 +167,7 @@
 #' @export
 #'
 # Compute unidimensional approaches for EGA
-# Updated 04.09.2023
+# Updated 07.09.2023
 community.unidimensional <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "pearson", "spearman"),
@@ -186,7 +186,7 @@ community.unidimensional <- function(
   uni.method <- set_default(uni.method, "louvain", community.unidimensional)
   
   # Argument errors (return data in case of tibble)
-  data <- community.unidimensional_errors(data, n, verbose)
+  data <- community.unidimensional_errors(data, n, verbose, ...)
   
   # Check for incompatible method combinations
   if(model == "bggm" && uni.method == "expand"){
@@ -203,7 +203,9 @@ community.unidimensional <- function(
   # Generic function to get necessary inputs
   output <- obtain_sample_correlations(
     data = data, n = n, corr = corr, 
-    na.data = na.data, verbose = verbose, ...
+    na.data = na.data, verbose = verbose, 
+    needs_usable = FALSE, # skips usable data check
+    ...
   )
   
   # Return unidimensional approach
@@ -228,8 +230,8 @@ community.unidimensional <- function(
 
 #' @noRd
 # Errors ----
-# Updated 13.08.2023
-community.unidimensional_errors <- function(data, n, verbose)
+# Updated 07.09.2023
+community.unidimensional_errors <- function(data, n, verbose, ...)
 {
   
   # 'data' errors
@@ -249,6 +251,11 @@ community.unidimensional_errors <- function(data, n, verbose)
   # 'verbose' errors
   length_error(verbose, 1, "community.unidimensional")
   typeof_error(verbose, "logical", "community.unidimensional")
+  
+  # Check for usable data
+  if(needs_usable(list(...))){
+    data <- usable_data(data, verbose)
+  }
   
   # Return data in case of tibble
   return(data)

@@ -367,7 +367,7 @@ bootEGA <- function(
   store_state()
   
   # Get ellipse arguments
-  ellipse <- list(...)
+  ellipse <- list(needs_usable = FALSE, ...)
   
   # Check for missing arguments (argument, default, function)
   corr <- set_default(corr, "auto", bootEGA)
@@ -384,7 +384,7 @@ bootEGA <- function(
   # Argument errors (return data in case of tibble)
   data <- bootEGA_errors(
     data, n, iter, ncores, typicalStructure,
-    plot.typicalStructure, seed, verbose
+    plot.typicalStructure, seed, verbose, ...
   )
   
   # `EGA.estimate` will handle legacy arguments and data processing 
@@ -606,10 +606,10 @@ bootEGA <- function(
 
 #' @noRd
 # Errors ----
-# Updated 19.08.2023
+# Updated 07.09.2023
 bootEGA_errors <- function(
     data, n, iter, ncores, typicalStructure,
-    plot.typicalStructure, seed, verbose
+    plot.typicalStructure, seed, verbose, ...
 )
 {
   
@@ -656,8 +656,13 @@ bootEGA_errors <- function(
   length_error(verbose, 1, "bootEGA")
   typeof_error(verbose, "logical", "bootEGA")
   
+  # Check for usable data
+  if(needs_usable(list(...))){
+    data <- usable_data(data, verbose)
+  }
+  
   # Return usable data (in case of tibble)
-  return(usable_data(data, verbose))
+  return(data)
   
 }
 

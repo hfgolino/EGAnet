@@ -242,7 +242,7 @@
 #'
 #' @export
 # EGA ----
-# Updated 04.09.2023
+# Updated 07.09.2023
 EGA <- function (
     data, n = NULL,
     corr = c("auto", "cor_auto", "pearson", "spearman"),
@@ -265,7 +265,7 @@ EGA <- function (
   uni.method <- set_default(uni.method, "louvain", EGA)
   
   # Argument errors (return data in case of tibble)
-  data <- EGA_errors(data, n, plot.EGA, verbose)
+  data <- EGA_errors(data, n, plot.EGA, verbose, ...)
   
   # Ensure data has names
   data <- ensure_dimension_names(data)
@@ -276,7 +276,8 @@ EGA <- function (
   multidimensional_result <- EGA.estimate(
     data = data, n = n, corr = corr, na.data = na.data,
     model = model, algorithm = algorithm,
-    verbose = verbose, ...
+    verbose = verbose, needs_usable = FALSE, # skips usable data check
+    ...
   )
   
   # Store model attributes
@@ -311,7 +312,7 @@ EGA <- function (
   unidimensional_ARGS <- list( # standard arguments
     data = data, n = n, corr = corr, na.data = na.data,
     model = model, uni.method = uni.method,
-    verbose = verbose
+    verbose = verbose, needs_usable = FALSE # skips usable data check
   )
   
   # `data` at this point will be data or correlation matrix
@@ -387,12 +388,12 @@ EGA <- function (
   if(plot.EGA && sum(multidimensional_result$network != 0)){
     
     # Set up plot
-    multidimensional_result$Plot.EGA <- plot(
+    multidimensional_result$plot.EGA <- plot(
       multidimensional_result, ...
     )
     
     # Actually send the plot
-    silent_plot(multidimensional_result$Plot.EGA)
+    silent_plot(multidimensional_result$plot.EGA)
     
   }
 
@@ -409,8 +410,8 @@ EGA <- function (
 
 #' @noRd
 # Errors ----
-# Updated 19.08.2023
-EGA_errors <- function(data, n, plot.EGA, verbose)
+# Updated 07.09.2023
+EGA_errors <- function(data, n, plot.EGA, verbose, ...)
 {
   
   # 'data' errors
@@ -435,8 +436,13 @@ EGA_errors <- function(data, n, plot.EGA, verbose)
   length_error(verbose, 1, "EGA")
   typeof_error(verbose, "logical", "EGA")
   
+  # Check for usable data
+  if(needs_usable(list(...))){
+    data <- usable_data(data, verbose)
+  }
+  
   # Return data in case of tibble
-  return(usable_data(data, verbose))
+  return(data)
   
 }
 

@@ -8,7 +8,8 @@ polychoric.matrix(
   data,
   na.data = c("pairwise", "listwise"),
   empty.method = c("none", "zero", "all"),
-  empty.value = c("none", "point_five", "one_over")
+  empty.value = c("none", "point_five", "one_over"),
+  ...
 )
 }
 \arguments{
@@ -77,6 +78,9 @@ based on \code{empty.method}. For \code{empty.method = "zero"},
 }
 
 }}
+
+\item{...}{Not used but made available for easier
+argument passing}
 }
 \value{
 Returns a polychoric correlation matrix

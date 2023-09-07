@@ -146,7 +146,7 @@
 #'
 #' @export
 # TMFG Filtering Method----
-# Updated 03.09.2023
+# Updated 07.09.2023
 TMFG <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "pearson", "spearman"),
@@ -158,7 +158,7 @@ TMFG <- function(
 {
   
   # Argument errors (return data in case of tibble)
-  data <- TMFG_errors(data, n, partial, returnAllResults, verbose)
+  data <- TMFG_errors(data, n, partial, returnAllResults, verbose, ...)
   
   # Check for missing arguments (argument, default, function)
   corr <- set_default(corr, "auto", TMFG)
@@ -171,7 +171,8 @@ TMFG <- function(
   output <- obtain_sample_correlations(
     data = data, n = 1, # "n" is not used but input `1` to avoid error
     corr = corr, na.data = na.data, 
-    verbose = verbose, ...
+    verbose = verbose, needs_usable = FALSE, # skips usable data check
+    ...
   )
   
   # Get correlations
@@ -410,8 +411,8 @@ TMFG <- function(
 
 #' @noRd
 # Errors ----
-# Updated 19.08.2023
-TMFG_errors <- function(data, n, partial, returnAllResults, verbose)
+# Updated 07.09.2023
+TMFG_errors <- function(data, n, partial, returnAllResults, verbose, ...)
 {
   
   # 'data' errors
@@ -440,8 +441,13 @@ TMFG_errors <- function(data, n, partial, returnAllResults, verbose)
   length_error(verbose, 1, "TMFG")
   typeof_error(verbose, "logical", "TMFG")
   
+  # Check for usable data
+  if(needs_usable(list(...))){
+    data <- usable_data(data, verbose)
+  }
+  
   # Return usable data in case of tibble
-  return(usable_data(data, verbose))
+  return(data)
   
 }
 

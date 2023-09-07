@@ -1426,6 +1426,14 @@ obtain_networks <- function(network, signed)
 }
 
 #' @noRd
+# Single function check for whether usable data is needed
+# Updated 07.09.2023
+needs_usable <- function(ellipse)
+{
+  return(!"needs_usable" %in% names(ellipse) || ellipse$needs_usable)
+}
+
+#' @noRd
 # Obtain data, sample size, correlation matrix ----
 # Generic function to get the usual needed inputs
 # Updated 04.09.2023
@@ -1449,8 +1457,10 @@ obtain_sample_correlations <- function(data, n, corr, na.data, verbose, ...)
     
   }else{
     
-    # Check for appropriate variables
-    data <- usable_data(data, verbose)
+    # Check for usable data
+    if(needs_usable(list(...))){
+      data <- usable_data(data, verbose)
+    }
     
     # Obtain sample size
     n <- dim(data)[1]

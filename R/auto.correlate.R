@@ -104,7 +104,7 @@
 #' @export
 #'
 # Automatic correlations ----
-# Updated 09.08.2023
+# Updated 07.09.2023
 auto.correlate <- function(
     data, # Matrix or data frame
     corr = c("kendall", "pearson", "spearman"), # allow changes to standard correlations
@@ -119,7 +119,7 @@ auto.correlate <- function(
 {
   
   # Argument errors (return data in case of tibble)
-  data <- auto.correlate_errors(data, ordinal.categories, forcePD, verbose)
+  data <- auto.correlate_errors(data, ordinal.categories, forcePD, verbose, ...)
   
   # Check for missing arguments (argument, default, function)
   corr <- set_default(corr, "pearson", auto.correlate)
@@ -183,7 +183,8 @@ auto.correlate <- function(
           categorical_variables, categorical_variables # ensure proper indexing
         ] <- polychoric.matrix(
           data = data[,categorical_variables], na.data = na.data,
-          empty.method = empty.method, empty.value = empty.value
+          empty.method = empty.method, empty.value = empty.value,
+          needs_usable = FALSE # skip usable data check
         )
         
       }
@@ -321,8 +322,8 @@ auto.correlate <- function(
 
 #' @noRd
 # Errors ----
-# Updated 19.08.2023
-auto.correlate_errors <- function(data, ordinal.categories, forcePD, verbose)
+# Updated 07.09.2023
+auto.correlate_errors <- function(data, ordinal.categories, forcePD, verbose, ...)
 {
   
   # 'data' errors
@@ -346,8 +347,13 @@ auto.correlate_errors <- function(data, ordinal.categories, forcePD, verbose)
   length_error(verbose, 1, "auto.correlate")
   typeof_error(verbose, "logical", "auto.correlate")
   
+  # Check for usable data
+  if(needs_usable(list(...))){
+    data <- usable_data(data, verbose)
+  }
+  
   # Return usable data (in case of tibble)
-  return(usable_data(data, verbose))
+  return(data)
   
 }
 

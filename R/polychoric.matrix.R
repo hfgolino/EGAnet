@@ -72,6 +72,9 @@
 #' 
 #' }
 #' 
+#' @param ... Not used but made available for easier
+#' argument passing
+#' 
 #' @return Returns a polychoric correlation matrix
 #' 
 #' @examples
@@ -122,11 +125,12 @@
 #' @export
 #'
 # Compute polychoric correlation matrix
-# Updated 19.08.2023
+# Updated 07.09.2023
 polychoric.matrix <- function(
     data, na.data = c("pairwise", "listwise"),
     empty.method = c("none", "zero", "all"),
-    empty.value = c("none", "point_five", "one_over")
+    empty.value = c("none", "point_five", "one_over"),
+    ...
 )
 {
   
@@ -135,8 +139,13 @@ polychoric.matrix <- function(
   empty.method <- set_default(empty.method, "none", polychoric.matrix)
   if(missing(empty.value)){empty.value <- "none"}
   
+  # Check for need to check for usable data
+  if(needs_usable(list(...))){
+    data <- usable_data(data, verbose = TRUE)
+  }
+  
   # Ensure data is a matrix
-  data <- as.matrix(usable_data(data, verbose = TRUE))
+  data <- as.matrix(data)
   
   # Argument errors (try to return ordinal data)
   data <- polychoric.matrix_errors(data)

@@ -142,7 +142,7 @@
 #' @export
 #'
 # Compute networks for EGA ----
-# Updated 05.09.2023
+# Updated 07.09.2023
 network.estimation <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "pearson", "spearman"),
@@ -155,7 +155,7 @@ network.estimation <- function(
 {
   
   # Argument errors (return data in case of tibble)
-  data <- network.estimation_errors(data, n, network.only, verbose)
+  data <- network.estimation_errors(data, n, network.only, verbose, ...)
   
   # Check for missing arguments (argument, default, function)
   corr <- set_default(corr, "auto", network.estimation)
@@ -174,7 +174,9 @@ network.estimation <- function(
     # Generic function to get necessary inputs
     output <- obtain_sample_correlations(
       data = data, n = n, corr = corr, 
-      na.data = na.data, verbose = verbose, ...
+      na.data = na.data, verbose = verbose, 
+      needs_usable = FALSE, # skips usable data check
+      ...
     )
     
     # Get correlations and sample size
@@ -253,6 +255,7 @@ network.estimation <- function(
     estimation_ARGS$n <- n
     estimation_ARGS$returnAllResults <- !network.only
     estimation_ARGS$verbose <- verbose
+    estimation_ARGS$needs_usable <- FALSE # skips usable data check
 
     # Perform estimation
     estimation_OUTPUT <- do.call(
@@ -336,8 +339,8 @@ network.estimation <- function(
 
 #' @noRd
 # Argument errors ----
-# Updated 19.08.2023
-network.estimation_errors <- function(data, n, network.only, verbose)
+# Updated 07.09.2023
+network.estimation_errors <- function(data, n, network.only, verbose, ...)
 {
   
   # 'data' errors
@@ -362,8 +365,13 @@ network.estimation_errors <- function(data, n, network.only, verbose)
   length_error(verbose, 1, "network.estimation")
   typeof_error(verbose, "logical", "network.estimation")
   
+  # Check for usable data
+  if(needs_usable(list(...))){
+    data <- usable_data(data, verbose)
+  }
+  
   # Return usable data in case of tibble
-  return(usable_data(data, verbose))
+  return(data)
   
 }
 

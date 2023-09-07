@@ -219,7 +219,7 @@
 #' 
 # Random-Intercept EGA
 # Superceded 'residualEGA.R' on 17.04.2022
-# Updated 05.09.2023
+# Updated 07.09.2023
 riEGA <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "pearson", "spearman"),
@@ -234,7 +234,7 @@ riEGA <- function(
 {
   
   # Argument errors (return data in case of tibble)
-  data <- riEGA_errors(data, n, plot.EGA, verbose)
+  data <- riEGA_errors(data, n, plot.EGA, verbose, ...)
   
   # Check for missing arguments (argument, default, function)
   corr <- set_default(corr, "auto", riEGA)
@@ -251,9 +251,6 @@ riEGA <- function(
       call. = FALSE
     )
   }
-  
-  # Make sure data is usable and a matrix
-  data <- usable_data(data, verbose)
   
   # Ensure data has names
   data <- ensure_dimension_names(data)
@@ -323,6 +320,7 @@ riEGA <- function(
       correlation_matrix <- auto.correlate(
         data = data, corr = "pearson",
         na.data = na.data, verbose = verbose,
+        needs_usable = FALSE, # skips usable data check
         ...
       )
       
@@ -367,7 +365,9 @@ riEGA <- function(
     data = correlation_matrix, n = dimensions[1],
     corr = corr, na.data = na.data, model = model,
     algorithm = algorithm, uni.method = uni.method,
-    plot.EGA = FALSE, verbose = verbose, ...
+    plot.EGA = FALSE, verbose = verbose,
+    needs_usable = FALSE, # skips usable data check
+    ...
   )
   
   # Set up results
@@ -434,8 +434,8 @@ riEGA <- function(
 
 #' @noRd
 # Errors ----
-# Updated 19.08.2023
-riEGA_errors <- function(data, n, plot.EGA, verbose)
+# Updated 07.09.2023
+riEGA_errors <- function(data, n, plot.EGA, verbose, ...)
 {
   
   # 'data' errors
@@ -460,8 +460,13 @@ riEGA_errors <- function(data, n, plot.EGA, verbose)
   length_error(verbose, 1, "riEGA")
   typeof_error(verbose, "logical", "riEGA")
   
+  # Check for usable data
+  if(needs_usable(list(...))){
+    data <- usable_data(data, verbose)
+  }
+  
   # Return usable data in case of tibble
-  return(usable_data(data, verbose))
+  return(data)
   
 }
 

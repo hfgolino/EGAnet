@@ -177,7 +177,7 @@
 #' @export
 #'
 # Estimates multidimensional EGA only (no automatic plots)
-# Updated 04.09.2023
+# Updated 07.09.2023
 EGA.estimate <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "pearson", "spearman"),
@@ -195,10 +195,10 @@ EGA.estimate <- function(
   algorithm <- set_default(algorithm, "walktrap", community.detection)
 
   # Argument errors (return data in case of tibble)
-  data <- EGA.estimate_errors(data, n, verbose)
+  data <- EGA.estimate_errors(data, n, verbose, ...)
   
   # Obtain ellipse arguments
-  ellipse <- list(...)
+  ellipse <- list(needs_usable = FALSE)
   
   # Handle legacy arguments (`model.args` and `algorithm.args`)
   ellipse <- legacy_EGA_args(ellipse)
@@ -210,7 +210,8 @@ EGA.estimate <- function(
   output <- obtain_sample_correlations(
     data = data, n = n, 
     corr = corr, na.data = na.data, 
-    verbose = verbose, ...
+    verbose = verbose, needs_usable = FALSE, # skips usable data check
+    ...
   )
   
   # Get outputs
@@ -334,8 +335,8 @@ EGA.estimate <- function(
 
 #' @noRd
 # Errors ----
-# Updated 19.08.2023
-EGA.estimate_errors <- function(data, n, verbose)
+# Updated 07.09.2023
+EGA.estimate_errors <- function(data, n, verbose, ...)
 {
   
   # 'data' errors
@@ -356,8 +357,13 @@ EGA.estimate_errors <- function(data, n, verbose)
   length_error(verbose, 1, "EGA.estimate")
   typeof_error(verbose, "logical", "EGA.estimate")
   
+  # Check for usable data
+  if(needs_usable(list(...))){
+    data <- usable_data(data, verbose)
+  }
+  
   # Return data (in case of tibble)
-  return(usable_data(data, verbose))
+  return(data)
   
 }
 
