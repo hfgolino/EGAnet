@@ -1250,25 +1250,12 @@ plot.dynEGA.Individual <- function(x, base = 1, id = NULL, ...)
 
 #' @noRd
 # Get ID from data ----
-# Updated 28.08.2023
+# Updated 28.09.2023
 get_ID <- function(data, id, level, variable_names, dimensions)
 {
   
-  # First, check for 'id' in variable names
-  if(is.null(id)){
-    
-    # Set id to be `1` (same as "population")
-    ID <- rep(1, dim(data)[1])
-    
-    # Send warning
-    if(level == "individual"){
-      warning(
-        "'level' included \"individual\" but no 'id' was provided. Setting all 'id' to `1` or same as level = \"population\"",
-        call. = FALSE
-      )
-    }
-    
-  }else if("id" %in% variable_names){
+  # First, check for 'id' in variable names (revert)
+  if("id" %in% variable_names){
     
     # Get 'id' from data if already listed as a column
     id <- which(variable_names == "id")
@@ -1278,6 +1265,19 @@ get_ID <- function(data, id, level, variable_names, dimensions)
     
     # Remove 'id' from data
     data <- data[,-id]
+    
+  }else if(is.null(id)){
+    
+    # Set id to be `1` (same as "population")
+    ID <- rep(1, dim(data)[1])
+    
+    # Send warning
+    if("individual" %in% level){
+      warning(
+        "'level' included \"individual\" but no 'id' was provided. Setting all 'id' to `1` or same as level = \"population\"",
+        call. = FALSE
+      )
+    }
     
   }else{ # Otherwise, check for proper IDs
     
@@ -1313,23 +1313,29 @@ get_ID <- function(data, id, level, variable_names, dimensions)
   }
   
   # Return list
-  return(
-    list(
-      data = data,
-      ID = ID
-    )
-  )
+  return(list(data = data, ID = ID))
   
 }
 
 #' @noRd
 # Get Group from data ----
-# Updated 28.08.2023
+# Updated 28.09.2023
 get_Group <- function(data, group, level, variable_names, dimensions)
 {
   
-  # First, check for 'id' in variable names
-  if(is.null(group)){
+  # First, check for 'group' in variable names (revert)
+  if("group" %in% variable_names){
+    
+    # Get 'group' from data if already listed as a column
+    group <- which(variable_names == "group")
+    
+    # Get 'group'
+    Group <- data[,group]
+    
+    # Remove 'group' from data
+    data <- data[,-group]
+    
+  }else if(is.null(group)){
     
     # Set group to be `1` (same as "population")
     Group <- rep(1, dim(data)[1])
@@ -1341,17 +1347,6 @@ get_Group <- function(data, group, level, variable_names, dimensions)
         call. = FALSE
       )
     }
-    
-  }else if("group" %in% variable_names){
-    
-    # Get 'group' from data if already listed as a column
-    group <- which(variable_names == "group")
-    
-    # Get 'group'
-    Group <- data[,group]
-    
-    # Remove 'group' from data
-    data <- data[,-group]
     
   }else{ # Otherwise, check for proper Groups
     
@@ -1387,12 +1382,7 @@ get_Group <- function(data, group, level, variable_names, dimensions)
   }
   
   # Return list
-  return(
-    list(
-      data = data,
-      Group = Group
-    )
-  )
+  return(list(data = data, Group = Group))
   
 }
 

@@ -79,7 +79,7 @@
 #' @export
 #
 # Compare EGA plots ----
-# Updated 09.08.2023
+# Updated 28.09.2023
 compare.EGA.plots <- function(
   ..., input.list = NULL, base = 1,
   labels = NULL, rows = NULL, columns = NULL
@@ -193,10 +193,6 @@ compare.EGA.plots <- function(
     names(input.list) <- labels
   }
   
-  # Set up as `dynEGA.Individual` object to
-  # leverage the code already implemented there
-  class(input.list) <- "dynEGA.Individual"
-  
   # For `ellipse`, get legacy arguments
   ellipse <- legacy_EGA_args(ellipse)
   
@@ -221,18 +217,110 @@ compare.EGA.plots <- function(
   # Add labels, rows, and columns
   ellipse[c("nrow", "ncol")] <- list(rows, columns)
   
-  # Plot using all "IDs"
-  return(
+  # Set up for individual plots
+  
+  # Remove base from individuals
+  base_object <- input.list[[base]]
+  
+  # Extract other groups
+  other_objects <- input.list[-base]
+  
+  # Get sequence length of other objects
+  sequence_length <- seq_len(length(other_objects))
+  
+  # Get base plot
+  base_plot <- silent_load(
     do.call(
-      what = plot,
+      what = basic_plot_setup,
       args = c(
         list(
-          x = input.list,
-          id = seq_len(input_length),
-          base = 1
-        ),
-        ellipse
+          network = base_object$network,
+          wc = base_object$wc,
+          arguments = TRUE
+        ), ellipse
       )
+    )
+  )
+  
+  # Check if any arguments in `ellipse`
+  # match with `base_plot`
+  base_plot$ARGS <- overwrite_arguments(base_plot$ARGS, ellipse)
+  
+  # Set removal arguments
+  removal_ARGS <- c(
+    "node.color", "edge.alpha",
+    "edge.color", "edge.lty", "edge.size"
+  )
+  
+  # Check for if any arguments in still need
+  # to be removed from `base_plot`
+  removal_ARGS <- removal_ARGS[!removal_ARGS %in% names(ellipse)]
+  
+  # Check for any remaining arguments to remove
+  if(length(removal_ARGS) != 0){
+    
+    # Remove some arguments from `base_plot`
+    base_plot$ARGS <- base_plot$ARGS[
+      !names(base_plot$ARGS) %in% removal_ARGS
+    ]
+    
+  }
+  
+  # Set up comparison plots
+  comparison_plots <- lapply(
+    sequence_length, function(i){
+      compare_plots(
+        comparison_network = other_objects[[i]]$network,
+        comparison_wc = other_objects[[i]]$wc,
+        plot_ARGS = base_plot$ARGS
+      )
+    }
+  )
+  
+  # Set up plot list
+  plotlist <- c(list(base_plot$network_plot), comparison_plots)
+  
+  # `ggarrange` does not like non-plot arguments for its ellipse
+  ellipse <- ellipse[
+    names(ellipse) %in% names(formals(ggpubr::ggarrange))
+  ]
+  
+  # Store plots all-in-one
+  all_in_one <- silent_plot(
+    do.call(
+      what = ggpubr::ggarrange,
+      args = c(
+        list(
+          plotlist = plotlist,
+          labels = labels,
+          legend = "bottom"
+        ), ellipse
+      )
+    )
+  )
+  
+  # Print all-in-one plot
+  silent_plot(all_in_one)
+  
+  # Check for labels
+  if(is.null(labels)){
+    
+    # Plot numbers
+    plot_numbers <- seq_along(plotlist) 
+    
+    # Get non-base plot labels
+    not_base_labels <- plot_numbers[!plot_numbers %in% base]
+    
+    # Set labels
+    names(plotlist) <- c(base, not_base_labels)
+    
+  }
+  
+  # Return plot lists
+  return(
+    list(
+      all = all_in_one,
+      individual = plotlist
     )
   )
 

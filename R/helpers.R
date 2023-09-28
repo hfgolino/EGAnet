@@ -1426,7 +1426,7 @@ obtain_networks <- function(network, signed)
 }
 
 #' @noRd
-# Single function check for whether usable data is needed
+# Whether usable data is needed ----
 # Updated 07.09.2023
 needs_usable <- function(ellipse)
 {
@@ -2459,7 +2459,7 @@ dimension_comparison <- function(original, comparison){
 
 #' @noRd
 # Basic set up for comparing plots ----
-# Updated 07.07.2023
+# Updated 28.09.2023
 compare_plots <- function(comparison_network, comparison_wc, plot_ARGS)
 {
   
@@ -2492,10 +2492,23 @@ compare_plots <- function(comparison_network, comparison_wc, plot_ARGS)
   
   # Remove some arguments from `plot_ARGS`
   ## Essentially, the same call but allows some freedom
-  plot_ARGS[c(
-    "net", "node.color", "edge.alpha",
-    "edge.color", "edge.lty", "edge.size"
-  )] <- NULL
+  plot_ARGS[c("net", "node.color")] <- NULL
+  
+  ## Check for "edge" stuff
+  edge_stuff <- c(
+    "edge.alpha", "edge.color", 
+    "edge.lty", "edge.size"
+  )
+  
+  ## Check for lengths of "edge" stuff
+  edge_lengths <- edge_stuff[
+    nvapply(plot_ARGS[edge_stuff], length) > 1
+  ]
+  
+  ## Get edges arguments
+  if(length(edge_lengths) != 0){
+    plot_ARGS[edge_lengths] <- NULL
+  }
   
   # Send on and return from `basic_plot_setup`
   return(do.call(basic_plot_setup, plot_ARGS))

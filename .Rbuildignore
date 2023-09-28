@@ -2,4 +2,4 @@
 ^\.github$
 ^\.Rproj\.user$
 ^Readme\.md$
-
+.gitignore
