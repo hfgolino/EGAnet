@@ -230,18 +230,31 @@ get_tefi_structure <- function(data, structure, ega_object = NULL)
       structure <- hierEGA_structure(ega_object, structure)
     }else if(is.null(structure)){ # Use EGA memberships
       structure <- ega_object$wc
-    }else{ 
-      
-      # Ensure proper length
+    }else{ # Ensure proper length
       length_error(structure, length(ega_object$wc), "tefi")
-      
-      # Convert if string
-      if(is.character(structure)){
-        structure <- as.numeric(reindex_memberships(structure))
-      }
-      
     }
 
+  }
+  
+  # Convert if string
+  if(is.list(structure)){
+    
+    # Check for characters
+    structure <- lapply(
+      structure, function(x){
+        
+        # If characters, then convert to numeric
+        swiftelse(
+          is.character(x),
+          as.numeric(reindex_memberships(x)),
+          x
+        )
+        
+      }
+    )
+    
+  }else if(is.character(structure)){
+    structure <- as.numeric(reindex_memberships(structure))
   }
   
   # Return structure
