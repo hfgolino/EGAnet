@@ -79,7 +79,7 @@
 #' @export
 #
 # Compare EGA plots ----
-# Updated 28.09.2023
+# Updated 06.10.2023
 compare.EGA.plots <- function(
   ..., input.list = NULL, base = 1,
   labels = NULL, rows = NULL, columns = NULL
@@ -298,9 +298,6 @@ compare.EGA.plots <- function(
       )
     )
   )
-  
-  # Print all-in-one plot
-  silent_plot(all_in_one)
   
   # Check for labels
   if(is.null(labels)){
