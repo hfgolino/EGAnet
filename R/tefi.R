@@ -161,7 +161,7 @@ tefi_errors <- function(data, verbose)
 
 #' @noRd
 # Handle structure input ----
-# Updated 13.08.2023
+# Updated 06.10.2023
 get_tefi_structure <- function(data, structure, ega_object = NULL)
 {
   
@@ -228,10 +228,18 @@ get_tefi_structure <- function(data, structure, ega_object = NULL)
     # Get flag for hierarchical
     if(is(data, "hierEGA")){ # Use internal `hierEGA_structure` from `itemStability`
       structure <- hierEGA_structure(ega_object, structure)
-    }else if(is.null(structure)){
+    }else if(is.null(structure)){ # Use EGA memberships
       structure <- ega_object$wc
-    }else{ # Ensure proper length
+    }else{ 
+      
+      # Ensure proper length
       length_error(structure, length(ega_object$wc), "tefi")
+      
+      # Convert if string
+      if(is.character(structure)){
+        structure <- as.numeric(reindex_memberships(structure))
+      }
+      
     }
 
   }
