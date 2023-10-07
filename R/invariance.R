@@ -13,7 +13,9 @@
 #' 
 #' @param structure Numeric or character vector (length = \code{ncol(data)}).
 #' A vector representing the structure (numbers or labels for each item).
-#' Can be theoretical factors or the structure detected by \code{\link[EGAnet]{EGA}}
+#' Can be theoretical factors or the structure detected by \code{\link[EGAnet]{EGA}}.
+#' If supplied, then configural invariance check is skipped (i.e., configural
+#' invariance is assumed based on the given structure)
 #' 
 #' @param iter Numeric (length = 1).
 #' Number of iterations to perform for the permutation.
@@ -310,7 +312,7 @@
 #' @export
 #'
 # Measurement Invariance
-# Updated 05.09.2023
+# Updated 06.10.2023
 invariance <- function(
     # `invariance` arguments
     data, groups, structure = NULL,
@@ -397,51 +399,51 @@ invariance <- function(
     
   }
   
-  # Send message
-  message("Testing configural invariance...")
-  
-  # Perform configural invariance
-  configural_results <- configural(
-    data = data, iter = iter, structure = structure,
-    configural.threshold = configural.threshold,
-    configural.type = configural.type, corr = corr,
-    na.data = na.data, model = model, algorithm = algorithm,
-    uni.method = uni.method, ncores = ncores, seed = seed,
-    verbose = verbose, ...
-  )
-  
-  # Check for configural invariance
-  if(!configural_results$configural_flag){
+  # If structure is supplied, then skip configural invariance
+  if(is.null(structure)){
     
     # Send message
-    message("\nConfigural invariance was not found. Terminating invariance testing...")
+    message("Testing configural invariance...")
     
-    # Return configural invariance results
-    return(configural_results)
+    # Perform configural invariance
+    configural_results <- configural(
+      data = data, iter = iter, structure = structure,
+      configural.threshold = configural.threshold,
+      configural.type = configural.type, corr = corr,
+      na.data = na.data, model = model, algorithm = algorithm,
+      uni.method = uni.method, ncores = ncores, seed = seed,
+      verbose = verbose, ...
+    )
     
-  }
-  
-  # Configural invariance was found, continue with metric
-  
-  # Send message
-  message(paste(
-    "\nConfigural invariance was found with", 
-    length(configural_results$stable_items), "variables", 
-    "\n\nTesting metric invariance..."
-  ))
-
-  # Update data
-  data <- configural_results$data
-  
-  # Update dimensions and dimension names of the data
-  dimensions <- dim(data)
-  dimension_names <- dimnames(data)
-  
-  # Update original EGA
-  original_EGA <- configural_results$boot_object$EGA
-  
-  # Send error if 'structure' is not a vector, matrix, or data frame
-  if(!is.null(structure)){
+    # Check for configural invariance
+    if(!configural_results$configural_flag){
+      
+      # Send message
+      message("\nConfigural invariance was not found. Terminating invariance testing...")
+      
+      # Return configural invariance results
+      return(configural_results)
+      
+    }
+    
+    # Configural invariance was found, continue with metric
+    
+    # Send message
+    message(paste(
+      "\nConfigural invariance was found with", 
+      length(configural_results$stable_items), "variables\n"
+    ))
+    
+    # Update data
+    data <- configural_results$data
+    
+    # Update original EGA
+    original_EGA <- configural_results$boot_object$EGA
+    
+    # Set structure based on original `EGA`
+    structure <- original_EGA$wc
+    
+  }else{
     
     # Remove attributes
     structure <- remove_attributes(structure)
@@ -455,12 +457,14 @@ invariance <- function(
     # Make sure 'structure' has names
     names(structure) <- original_dimension_names[[2]]
     
-    # Reduce based on stable items
-    structure <- structure[names(configural_results$stable_items)]
-    
-  }else{ # Set structure based on original `EGA`
-    structure <- original_EGA$wc
   }
+  
+  # Send message about continuing on with metric invariance
+  message("Testing metric invariance...")
+  
+  # Update dimensions and dimension names of the data
+  dimensions <- dim(data)
+  dimension_names <- dimnames(data)
 
   # Get community names
   community_names <- as.character(unique(structure))
@@ -620,9 +624,17 @@ invariance <- function(
   
   # Results list
   results <- list(
-    configural.results = configural_results,
+    configural.results = swiftelse(
+      exists("configural_results"),
+      configural_results,
+      NULL
+    ),
     memberships = structure,
-    EGA = original_EGA,
+    EGA = swiftelse(
+      exists("original_EGA"),
+      original_EGA,
+      NULL
+    ),
     groups = list(
       EGA = group_ega,
       loadings = group_loadings,

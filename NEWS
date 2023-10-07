@@ -6,11 +6,15 @@ o FIX: ties for max gain in `TMFG`
 
 o FIX: continuous variables with few categories that are treated as ordinal in `polychoric.matrix`
 
+o FIX: character input for `structure` is now accepted
+
 o ADD: website pointing to different data check errors added to error output (hopefully, makes errors more understandable)
 
 o UPDATE: `corr = "cor_auto"` now performs `qgraph::cor_auto` in favor of legacy; previous behavior starting at 2.0.0 was to deprecate `"cor_auto"` in favor of `"auto"`; default remains `corr = "auto"`
 
 o UPDATE: `compare.EGA.plots` outputs `$all` and `$individual` for the plots
+
+o UPDATE: when `structure` is supplied for `invariance`, then configural check is skipped (structure is assumed to be invariant)
 
 
 Changes in version 2.0.1

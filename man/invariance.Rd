@@ -31,7 +31,9 @@ Group membership corresponding to each case in data}
 
 \item{structure}{Numeric or character vector (length = \code{ncol(data)}).
 A vector representing the structure (numbers or labels for each item).
-Can be theoretical factors or the structure detected by \code{\link[EGAnet]{EGA}}}
+Can be theoretical factors or the structure detected by \code{\link[EGAnet]{EGA}}.
+If supplied, then configural invariance check is skipped (i.e., configural
+invariance is assumed based on the given structure)}
 
 \item{iter}{Numeric (length = 1).
 Number of iterations to perform for the permutation.
