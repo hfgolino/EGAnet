@@ -281,7 +281,7 @@ net.loads <- function(
 
 #' @exportS3Method 
 # S3 Print Method
-# Updated 12.07.2023
+# Updated 08.10.2023
 print.net.loads <- function(x, ...)
 {
  
@@ -337,12 +337,14 @@ print.net.loads <- function(x, ...)
   )
   
   # Add message about minimum loadings
-  paste0(
-    "Standardized loadings >= |", format_decimal(minimum, 2),
-    "| are displayed. To change this 'minimum', use ",
-    "`print(net.loads_object, minimum = 0.10)`"
+  cat(
+    paste0(
+      "Standardized loadings >= |", format_decimal(minimum, 2),
+      "| are displayed. To change this 'minimum', use ",
+      "`print(net.loads_object, minimum = 0.10)`"
+    )
   )
-  
+
 }
 
 #' @exportS3Method 
