@@ -808,7 +808,7 @@ group_setup <- function(
 
 #' @exportS3Method 
 # S3 Plot Method ----
-# Updated 13.08.2023
+# Updated 08.10.2023
 plot.invariance <- function(x, p_type = c("p", "p_BH"), p_value = 0.05, ...)
 {
   
@@ -819,11 +819,11 @@ plot.invariance <- function(x, p_type = c("p", "p_BH"), p_value = 0.05, ...)
   range_error(p_value, c(0, 1), "plot.invariance")
   
   # Ensure same memberships
-  x$groups$EGA[[1]]$wc <- x$EGA$wc
-  x$groups$EGA[[2]]$wc <- x$EGA$wc
+  x$groups$EGA[[1]]$wc <- x$memberships
+  x$groups$EGA[[2]]$wc <- x$memberships
   
   # Obtain noninvariant items
-  noninvariant <- x$results[names(x$EGA$wc), p_type] <= p_value
+  noninvariant <- x$results[names(x$memberships), p_type] <= p_value
   
   # Get number of nodes
   nodes <- length(noninvariant)
