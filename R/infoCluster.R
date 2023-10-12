@@ -280,7 +280,7 @@ summary.infoCluster <- function(object, ...)
 #' @exportS3Method 
 # S3 Plot Method ----
 # Works fast enough, so leaving as original code
-# Updated 13.07.2023
+# Updated 12.10.2023
 plot.infoCluster <- function(x, ...)
 {
   
@@ -304,51 +304,63 @@ plot.infoCluster <- function(x, ...)
   
   # Split dendrogram into upper grey section and lower coloured section
   cut <- unique_length(clusters)
-  height <- unique(cluster_data$segments$y)[order(unique(cluster_data$segments$y), decreasing = TRUE)]
-  cut.height <- mean(c(height[cut], height[cut-1]))
-  cluster_data$segments$line <- swiftelse(cluster_data$segments$y == cluster_data$segments$yend &
-                                         cluster_data$segments$y > cut.height, 1, 2)
-  cluster_data$segments$line <- swiftelse(cluster_data$segments$yend  > cut.height, 1, cluster_data$segments$line)
   
-  # Number the clusters
-  cluster_data$segments$cluster <- c(-1, diff(cluster_data$segments$line))
-  change <- which(cluster_data$segments$cluster == 1)
-  for (i in 1:cut) cluster_data$segments$cluster[change[i]] = i + 1
-  cluster_data$segments$cluster <-  swiftelse(cluster_data$segments$line == 1, 1, 
-                                           swiftelse(cluster_data$segments$cluster == 0, NA, cluster_data$segments$cluster))
-  
-  
-  # Replace NA values in cluster
-  if(!all(is.na(cluster_data$segments$cluster))){
-    for(i in seq_along(cluster_data$segments$cluster)){
-      
-      if(is.na(cluster_data$segments$cluster[i])){
-        cluster_data$segments$cluster[i] <- cluster_data$segments$cluster[i-1]
+  # Check for maximum clusters (i.e., no clusters)
+  if(cut != length(clusters)){
+    
+    unique_y_segments <- unique(cluster_data$segments$y)
+    height <- unique_y_segments[order(unique_y_segments, decreasing = TRUE)]
+    cut.height <- mean(c(height[cut], height[cut-1]))
+    cluster_data$segments$line <- swiftelse(cluster_data$segments$y == cluster_data$segments$yend &
+                                              cluster_data$segments$y > cut.height, 1, 2)
+    cluster_data$segments$line <- swiftelse(cluster_data$segments$yend  > cut.height, 1, cluster_data$segments$line)
+    
+    # Number the clusters
+    cluster_data$segments$cluster <- c(-1, diff(cluster_data$segments$line))
+    change <- which(cluster_data$segments$cluster == 1)
+    for (i in 1:cut) cluster_data$segments$cluster[change[i]] = i + 1
+    cluster_data$segments$cluster <-  swiftelse(cluster_data$segments$line == 1, 1, 
+                                                swiftelse(cluster_data$segments$cluster == 0, NA, cluster_data$segments$cluster))
+    
+    
+    # Replace NA values in cluster
+    if(!all(is.na(cluster_data$segments$cluster))){
+      for(i in seq_along(cluster_data$segments$cluster)){
+        
+        if(is.na(cluster_data$segments$cluster[i])){
+          cluster_data$segments$cluster[i] <- cluster_data$segments$cluster[i-1]
+        }
+        
       }
-      
+    }else{
+      cluster_data$segments$cluster <- -1
     }
+    
+    
+    # Consistent numbering between segment$cluster and label$cluster
+    cluster_df$label <- factor(cluster_df$label, levels = cluster_data$labels$label)
+    cluster_df$cluster <- factor((cluster_df$cluster), levels = unique(cluster_df$cluster), labels = (1:cut) + 1)
+    cluster_data[["labels"]] <- merge(cluster_data[["labels"]], cluster_df, by = "label")
+    
+    # Positions for cluster labels
+    n.rle <- rle(cluster_data$segments$cluster)
+    N <- cumsum(n.rle$lengths)
+    N <- N[seq(1, length(N), 2)] + 1
+    N.df <- cluster_data$segments[N, ]
+    N.df$cluster <- N.df$cluster - 1
+    
+    # Check for all the same cluster
+    if(all(cluster_data$segments$cluster == -1)){
+      cluster_data$segments$cluster <- rep(
+        1, length(cluster_data$segments$cluster)
+      )
+    }
+    
   }else{
-    cluster_data$segments$cluster <- -1
-  }
-  
-  
-  # Consistent numbering between segment$cluster and label$cluster
-  cluster_df$label <- factor(cluster_df$label, levels = cluster_data$labels$label)
-  cluster_df$cluster <- factor((cluster_df$cluster), levels = unique(cluster_df$cluster), labels = (1:cut) + 1)
-  cluster_data[["labels"]] <- merge(cluster_data[["labels"]], cluster_df, by = "label")
-  
-  # Positions for cluster labels
-  n.rle <- rle(cluster_data$segments$cluster)
-  N <- cumsum(n.rle$lengths)
-  N <- N[seq(1, length(N), 2)] + 1
-  N.df <- cluster_data$segments[N, ]
-  N.df$cluster <- N.df$cluster - 1
-  
-  # Check for all the same cluster
-  if(all(cluster_data$segments$cluster == -1)){
-    cluster_data$segments$cluster <- rep(
-      1, length(cluster_data$segments$cluster)
-    )
+    
+    # Set clusters to 1
+    cluster_data$segments$cluster <- 1
+    
   }
   
   # Ensure clusters are factors
@@ -374,14 +386,6 @@ plot.infoCluster <- function(x, ...)
       ggplot2::aes(x, y, label = label, hjust = 0),
       size = 3
     ) +
-    ggplot2::geom_text(
-      data = N.df,
-      ggplot2::aes(
-        x = x, y = y, label = factor(cluster),
-        colour = factor(cluster + 1)
-      ),
-      hjust = 1.5, show.legend = FALSE
-    ) +
     ggplot2::scale_color_manual(
       labels = label,
       values = c(
@@ -405,6 +409,22 @@ plot.infoCluster <- function(x, ...)
     ggplot2::guides(
       color = ggplot2::guide_legend(title = "Cluster")
     )
+  
+  # Check whether "N.df" exists
+  if(exists("N.df")){
+    
+    cluster_plot <- cluster_plot +
+      ggplot2::geom_text(
+        data = N.df,
+        ggplot2::aes(
+          x = x, y = y, label = factor(cluster),
+          colour = factor(cluster + 1)
+        ),
+        hjust = 1.5, show.legend = FALSE
+      )
+    
+  }
+  
   
   # Remove clusters if none
   if(all(clusters == ncol_sequence(x$JSD))){

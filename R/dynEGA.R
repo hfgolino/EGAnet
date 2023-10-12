@@ -785,7 +785,7 @@ print.dynEGA.Group <- function(x, ...)
 
 #' @exportS3Method 
 # S3 Print Method (Individual) ----
-# Updated 22.07.2023
+# Updated 11.10.2023
 print.dynEGA.Individual <- function(x, ...)
 {
   
@@ -804,12 +804,6 @@ print.dynEGA.Individual <- function(x, ...)
   
   # Print network information
   send_network_methods(x[[1]]$network, boot = TRUE)
-  
-  # Add line break
-  cat("\n")
-  
-  # Print community detection
-  print(x[[1]]$wc, boot = TRUE)
   
   # Add line break
   cat("\n")

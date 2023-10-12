@@ -163,9 +163,14 @@ rescaled_laplacian <- function(network)
 #' @noRd
 # Von Neumann Entropy ----
 # Called "entropy_laplacian" to avoid conflict with `vn.entropy`
-# Updated 10.07.2023
+# Updated 11.10.2023
 entropy_laplacian <- function(laplacian_matrix)
 {
+  
+  # Set NAs to zero
+  if(anyNA(laplacian_matrix)){
+    laplacian_matrix[is.na(laplacian_matrix)] <- 0
+  }
   
   # Get eigenvalues
   eigenvalues <- eigen(laplacian_matrix, symmetric = TRUE, only.values = TRUE)$values

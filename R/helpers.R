@@ -1119,10 +1119,10 @@ unique_length <- function(x)
 # Edge count ----
 # Counts the number of edges
 # (assumes network is _symmetric_ matrix)
-# Updated 24.07.2023
+# Updated 11.10.2023
 edge_count <- function(network, nodes, diagonal = FALSE)
 {
-  return((sum(network != 0) - swiftelse(diagonal, nodes, 0)) * 0.50)
+  return((sum(network != 0, na.rm = TRUE) - swiftelse(diagonal, nodes, 0)) * 0.50)
 }
 
 #' @noRd
