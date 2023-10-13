@@ -104,7 +104,10 @@ Available options:
 If number of dimension returns 2 or less in check, then the data 
 are unidimensional; otherwise, regular EGA with no matrix
 expansion is used. This method was used in the Golino et al.'s (2020)
-\emph{Psychological Methods} simulation}
+\emph{Psychological Methods} simulation.
+
+\emph{Note}: \code{model = "BGGM"} will generated new data to be
+used in the estimation based on the same four variables correlated 0.50}
 
 \item{\code{"LE"} --- }
 {Applies the Leading Eigenvector algorithm

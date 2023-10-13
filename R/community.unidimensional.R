@@ -97,7 +97,10 @@
 #' If number of dimension returns 2 or less in check, then the data 
 #' are unidimensional; otherwise, regular EGA with no matrix
 #' expansion is used. This method was used in the Golino et al.'s (2020)
-#' \emph{Psychological Methods} simulation}
+#' \emph{Psychological Methods} simulation.
+#' 
+#' \emph{Note}: \code{model = "BGGM"} will generated new data to be
+#' used in the estimation based on the same four variables correlated 0.50}
 #'
 #' \item{\code{"LE"} --- }
 #' {Applies the Leading Eigenvector algorithm
@@ -167,7 +170,7 @@
 #' @export
 #'
 # Compute unidimensional approaches for EGA
-# Updated 07.09.2023
+# Updated 13.10.2023
 community.unidimensional <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "pearson", "spearman"),
@@ -188,15 +191,6 @@ community.unidimensional <- function(
   # Argument errors (return data in case of tibble)
   data <- community.unidimensional_errors(data, n, verbose, ...)
   
-  # Check for incompatible method combinations
-  if(model == "bggm" && uni.method == "expand"){
-    .handleSimpleError(
-      h = stop,
-      msg = "Support for the \"BGGM\" model and \"expand\" unidimensionality method is not provided.", 
-      call = "community.unidimensional"
-    )
-  }
-  
   # Make sure there are variable names
   data <- ensure_dimension_names(data)
   
@@ -208,16 +202,27 @@ community.unidimensional <- function(
     ...
   )
   
-  # Return unidimensional approach
-  # No S3 methods -- not intended for individual use
-  return(
-    switch( # Ordered by most common usage
-      uni.method,
-      "louvain" = consensus_wrapper(output$correlation_matrix, verbose, list(...)),
-      "le" = community.detection(output$correlation_matrix, algorithm = "leading_eigen", ...),
-      "expand" = expand(output$correlation_matrix, output$n, model, verbose, list(...))
+  # Check for incompatible method combinations
+  if(model == "bggm" && uni.method == "expand"){
+    
+    # Return unidimensional approach
+    # No S3 methods -- not intended for individual use
+    return(expand_data(output$data, output$n, list(...)))
+    
+  }else{
+    
+    # Return unidimensional approach
+    # No S3 methods -- not intended for individual use
+    return(
+      switch( # Ordered by most common usage
+        uni.method,
+        "louvain" = consensus_wrapper(output$correlation_matrix, verbose, list(...)),
+        "le" = community.detection(output$correlation_matrix, algorithm = "leading_eigen", ...),
+        "expand" = expand(output$correlation_matrix, output$n, model, verbose, list(...))
+      )
     )
-  )
+    
+  }
   
 }
 
@@ -352,6 +357,103 @@ expand <- function(correlation_matrix, n, model, verbose, ellipse)
 }
 
 #' @noRd
+# "Expand" Data approach ----
+# Updated 13.10.2023
+expand_data <- function(data, n, ellipse)
+{
+  
+  # Set Cholesky based on a population correlation matrix
+  # of all r's = 0.50 (i.e., loadings = 0.70)
+  cholesky <- matrix(
+    c(
+      1, 0.5000000, 0.5000000, 0.5000000,
+      0, 0.8660254, 0.2886751, 0.2886751,
+      0, 0.0000000, 0.8164966, 0.2041241,
+      0, 0.0000000, 0.0000000, 0.7905694
+    ), nrow = 4, ncol = 4, byrow = TRUE
+  )
+  
+  # Generate data
+  simulated_data <- MASS_mvrnorm_quick(
+    seed = NULL, p = 4, np = 4 * n, diag(4)
+  ) %*% cholesky
+  
+  # Get median categories of original data
+  original_categories <- median(data_categories(data), na.rm = TRUE)
+  
+  # Check for need to categories
+  if(original_categories <= 6){
+    
+    # Categorize the data
+    simulated_data <- expand_categorize(
+      simulated_data, original_categories
+    )
+    
+  }
+  
+  # Add variable names
+  dimnames(simulated_data)[[2]] <- paste0("sim_V", 1:4)
+
+  # Combine data
+  combined_data <- cbind(simulated_data, data)
+  
+  # Ensure 'verbose' is FALSE
+  ellipse$verbose <- FALSE
+  
+  # Apply BGGM
+  bega <- do.call(
+    what = EGA.estimate,
+    args = c(
+      list(
+        data = combined_data, 
+        n = n, model = "BGGM"
+      ),
+      ellipse
+    )
+  )
+  
+  # Return memberships
+  return(bega$wc[-c(1:4)])
+  
+  
+}
+
+#' @noRd
+# Categorization function adapted from {latentFactoR}
+# Updated 13.10.2023
+expand_categorize <- function(data, categories)
+{
+  
+  # Skew is always zero
+  skew_values <- switch(
+    as.character(categories),
+    "2" = 0,
+    "3" = c(-0.4307, 0.4307),
+    "4" = c(-0.6745, 0.0000, 0.6745),
+    "5" = c(-0.8416, -0.2533, 0.2534, 0.8416),
+    "6" = c(-0.9674, -0.4307, 0.0000, 0.4307, 0.9674)
+  )
+  
+  # Categorize biased data with updated thresholds
+  for(i in (length(skew_values) + 1):1){
+    
+    # First category
+    if(i == 1){
+      data[data < skew_values[i]] <- i
+    }else if(i == length(skew_values) + 1){ # Last category
+      data[data >= skew_values[i-1]] <- i
+    }else{ # Middle category
+      data[data >= skew_values[i-1] & data < skew_values[i]] <- i
+    }
+    
+  }
+  
+  # Return categorized data
+  return(data)
+  
+}
+
+#' @noRd
 # Wrapper for Louvain consensus ----
 # Updated 23.07.2023
 consensus_wrapper <- function(correlation_matrix, verbose, ellipse)
@@ -385,4 +487,3 @@ consensus_wrapper <- function(correlation_matrix, verbose, ellipse)
   return(membership)
   
 }
-

@@ -16,6 +16,8 @@ o UPDATE: `compare.EGA.plots` outputs `$all` and `$individual` for the plots
 
 o UPDATE: when `structure` is supplied for `invariance`, then configural check is skipped (structure is assumed to be invariant)
 
+o UPDATE: added data generation for `model = "BGGM"` and `uni.method = "expand"` in `community.unidimensional`
+
 
 Changes in version 2.0.1
 
