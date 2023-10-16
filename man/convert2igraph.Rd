@@ -4,7 +4,7 @@
 \alias{convert2igraph}
 \title{Convert networks to \code{\link{igraph}}}
 \usage{
-convert2igraph(A, neural = FALSE)
+convert2igraph(A, diagonal = 0)
 }
 \arguments{
 \item{A}{Matrix or data frame.

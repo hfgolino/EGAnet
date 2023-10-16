@@ -6,7 +6,7 @@
 \usage{
 ergoInfo(
   dynEGA.object,
-  use = c("unweighted", "weighted", "edge.list"),
+  use = c("edge.list", "unweighted", "weighted"),
   ordering = c("row", "column")
 )
 }
@@ -21,16 +21,16 @@ Current options are:
 
 \itemize{
 
-\item{\code{"unweighted"} --- }
-{Calculates the algorithm complexity using the binary weights of the encoded prime transformed network.
-0 = edge absent and 1 = edge present}
-
-#' \item{\code{"weighted"} --- }
-{Calculates the algorithm complexity using the weights of encoded prime-weight transformed network}
-
-#' \item{\code{"edge.list"} --- }
+\item{\code{"edge.list"} --- }
 {Calculates the algorithm complexity using the list of edges.}
 
+\item{\code{"unweighted"} --- }
+{Calculates the algorithm complexity using the binary weights of the encoded prime 
+transformed network. 0 = edge absent and 1 = edge present}
+
+\item{\code{"weighted"} --- }
+{Calculates the algorithm complexity using the weights of encoded prime-weight transformed network
+where the weights are multiplied by 10 and rounded (to force integers)}
 
 }}
 
