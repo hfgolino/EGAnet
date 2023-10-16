@@ -12,20 +12,24 @@
 #'
 #' \itemize{
 #'
-#' \item{\code{"edge.list"} --- }
-#' {Calculates the algorithm complexity using the list of edges.}
-#'
 #' \item{\code{"unweighted"} --- }
-#' {Calculates the algorithm complexity using the binary weights of the network.
+#' {Calculates the algorithm complexity using the binary weights of the encoded prime transformed network.
 #' 0 = edge absent and 1 = edge present}
 #' 
+#' #' \item{\code{"weighted"} --- }
+#' {Calculates the algorithm complexity using the weights of encoded prime-weight transformed network}
+#' 
+#' #' \item{\code{"edge.list"} --- }
+#' {Calculates the algorithm complexity using the list of edges.}
+#'
+#'
 #' }
 #' 
 #' @param ordering Character (length = 1).
 #' Changes ordering of edge list.
 #' \code{"row"} goes across the rows;
 #' \code{"column"} goes down the columns.
-#' Defaults to \code{"column"} (original implementation)
+#' Defaults to \code{"row"}
 #'
 #' @return Returns a list containing:
 #'
@@ -64,10 +68,10 @@
 #' @export
 #'
 # Ergodicity Information Index ----
-# Updated 13.08.2023
+# Updated 16.10.2023
 ergoInfo <- function(
     dynEGA.object,
-    use = c("edge.list", "unweighted"),
+    use = c("unweighted","weighted","edge.list"),
     ordering = c("row", "column")
 )
 {
@@ -77,7 +81,7 @@ ergoInfo <- function(
   
   # Check for missing arguments (argument, default, function)
   use <- set_default(use, "edge.list", ergoInfo)
-  ordering <- set_default(ordering, "column", ergoInfo)
+  ordering <- set_default(ordering, "row", ergoInfo)
   
   # Check for appropriate class ("dynEGA.ind.pop" defunct to legacy)
   if(!is(dynEGA.object, "dynEGA") & !is(dynEGA.object, "dynEGA.ind.pop")){
@@ -85,7 +89,7 @@ ergoInfo <- function(
   }
   
   # Get proper objects (if not, send an error)
-  dynega_objects <- get_dynEGA_object(dynEGA.object)
+  dynega_objects <- EGAnet:::get_dynEGA_object(dynEGA.object)
   
   # Get individual networks
   individual_networks <- lapply(dynega_objects$individual, function(x){x$network})
@@ -111,14 +115,14 @@ ergoInfo <- function(
   )
   
   # Get ANY edges across the individual networks
-  edges <- symmetric_matrix_lapply(adjacency_networks, any)
+  edges <- EGAnet:::symmetric_matrix_lapply(adjacency_networks, any)
   
   # "unweighted" needs canonical prime association
   if(use == "unweighted"){
-  
+    
     # Get order of each counts
     edge_ordering <- order(
-      nvapply(adjacency_networks, attr, "edges"), 
+      EGAnet:::nvapply(adjacency_networks, attr, "edges"), 
       decreasing = FALSE
     )
     
@@ -135,10 +139,10 @@ ergoInfo <- function(
     prime_weights <- lapply(individual_sequence, function(case){
       
       # Assign primes
-      prime_network <- adjacency_networks[[case]] * prime_numbers[case]
+      prime_network <-  prime_numbers[case]^adjacency_networks[[case]]
       
       # Assign 1s to 0s
-      prime_network[prime_network == 0] <- 1
+      #prime_network[prime_network == 0] <- 1
       
       # Return prime network
       return(prime_network)
@@ -150,7 +154,57 @@ ergoInfo <- function(
     
     # Revert 1s to 0s
     encoding_matrix[encoding_matrix == 1] <- 0
+    edge_list <- igraph::get.data.frame(convert2igraph(encoding_matrix))[,1:3]
+  }
+  
+  # "weighted" needs canonical prime association
+  if(use == "weighted"){
     
+    # Get order of each counts
+    edge_ordering <- order(
+      EGAnet:::nvapply(adjacency_networks, attr, "edges"), 
+      decreasing = FALSE
+    )
+    
+    # Reorder networks and adjacencys
+    individual_networks <- individual_networks[edge_ordering]
+    adjacency_networks <- adjacency_networks[edge_ordering]
+    
+    # Get prime numbers
+    prime_numbers <- get(
+      data("prime.num", package = "EGAnet", envir = environment())
+    )[individual_sequence]
+    
+    # Get prime weights
+    prime_weights <- lapply(individual_sequence, function(case){
+      
+      # Assign primes
+      prime_network <-  prime_numbers[case]^round(individual_networks[[case]]*10,0)
+      
+      # Assign 1s to 0s
+      #prime_network[prime_network == 0] <- 1
+      
+      # Return prime network
+      return(prime_network)
+      
+    })
+    
+    # Get encoding matrix
+    encoding_matrix <- Reduce("*", prime_weights)
+    
+    # Revert 1s to 0s
+    encoding_matrix[encoding_matrix == 1] <- 0
+    edge_list <- igraph::get.data.frame(convert2igraph(encoding_matrix))[,1:3]
+    
+  }
+  
+  
+  # "weighted" needs canonical prime association
+  if(use == "edge.list"){
+    edge_list <- cbind(
+      which(edges, arr.ind = TRUE)[,c("col", "row")],
+      1 # sets weights to `1` no matter `edge_list` or `unweighted`
+    )
   }
   
   # Store upper triangle indices (use for population as well)
@@ -160,16 +214,16 @@ ergoInfo <- function(
   edges[upper_triangle] <- FALSE
   
   # Use `keep_weights` for quick indexing
-  keep_weights <- swiftelse(
+  keep_weights <- EGAnet:::swiftelse(
     use == "edge.list",
     c(1L, 2L), c(1L, 2L, 3L)
   )
   
   # Get edge list ("col" then "row" matches {igraph})
-  edge_list <- cbind(
-    which(edges, arr.ind = TRUE)[,c("col", "row")],
-    1 # sets weights to `1` no matter `edge_list` or `unweighted`
-  )
+  #edge_list <- cbind(
+  #  which(edges, arr.ind = TRUE)[,c("col", "row")],
+  #  1 # sets weights to `1` no matter `edge_list` or `unweighted`
+  #)
   # Order matters!! (see pasting in `k_complexity`)
   
   # Get edge list rows
@@ -183,16 +237,16 @@ ergoInfo <- function(
   # (defined in Santoro & Nicosia, 2020)
   # seed_values <- reproducible_seed(n = 1000, seed = seed)
   iter_sequence <- seq_len(1000)
-
+  
   # Get k-complexity
-  individual_kcomplexity <- nvapply( # seed_values,
+  individual_kcomplexity <- EGAnet:::nvapply( # seed_values,
     iter_sequence, function(iteration){
       
       # Return k-complexity
       return(
-        k_complexity(
+        EGAnet:::k_complexity(
           edge_list[ # rows
-            shuffle_replace(edge_sequence),
+            EGAnet:::shuffle_replace(edge_sequence),
             keep_weights # either pairwise edges or weights
           ],
           ordering = ordering
@@ -211,10 +265,22 @@ ergoInfo <- function(
   if(use == "unweighted"){
     
     # Prime will always be equal 2
-    population_encoding <- population_edges * 2
- 
+    population_encoding <-   2^population_edges
+    
     # Revert 1s to 0s
-    population_encoding[population_encoding == 1] <- 0
+    #population_encoding[population_encoding == 1] <- 0
+    population_edge_list <- igraph::get.data.frame(convert2igraph(population_encoding))[,1:3]
+    
+  }
+  
+  if(use == "weighted"){
+    
+    # Prime will always be equal 2
+    population_encoding <-   2^dynega_objects$population$network
+    
+    # Revert 1s to 0s
+    #population_encoding[population_encoding == 1] <- 0
+    population_edge_list <- igraph::get.data.frame(convert2igraph(population_encoding))[,1:3]
     
   }
   
@@ -228,6 +294,7 @@ ergoInfo <- function(
   )
   # Order matters!! (see pasting in `k_complexity`)
   
+  
   # Get edge list rows
   population_edge_rows <- dim(population_edge_list)[1]
   
@@ -235,14 +302,14 @@ ergoInfo <- function(
   population_edge_sequence <- seq_len(population_edge_rows)
   
   # Get k-complexity
-  population_kcomplexity <- nvapply( # seed_values,
+  population_kcomplexity <- EGAnet:::nvapply( # seed_values,
     iter_sequence, function(single_seed){
       
       # Return k-complexity
       return(
-        k_complexity(
+        EGAnet:::k_complexity(
           edge_list[ # rows
-            shuffle_replace(population_edge_sequence),
+            EGAnet:::shuffle_replace(population_edge_sequence),
             keep_weights # either pairwise edges or weights
           ],
           ordering = ordering
@@ -260,22 +327,27 @@ ergoInfo <- function(
   results <- list(
     KComp = mean_individual_complexity,
     KComp.pop = mean_population_complexity,
-    EII = sqrt(dynega_objects$population$n.dim)^(
-      (mean_individual_complexity / mean_population_complexity) / log(edge_rows)
-    )
+    EII = sqrt(dynega_objects$population$n.dim)^
+      (
+        (mean_individual_complexity / mean_population_complexity) / log(edge_rows)
+      )
   )
   
   # Check for prime weights
   if(use == "unweighted"){
-    results$PrimeWeight <- remove_attributes(encoding_matrix)
-    results$PrimeWeight.pop <- remove_attributes(population_encoding)
+    results$PrimeWeight <- EGAnet:::remove_attributes(encoding_matrix)
+    results$PrimeWeight.pop <- EGAnet:::remove_attributes(population_encoding)
+  }
+  if(use == "weighted"){
+    results$PrimeWeight <- EGAnet:::remove_attributes(encoding_matrix)
+    results$PrimeWeight.pop <- EGAnet:::remove_attributes(population_encoding)
   }
   
   # Add "methods" attribute
   attr(results, "methods") <- list(use = use)
   
   # Add class
-  class(results) <- "EII"
+  #class(results) <- "EII"
   
   # Return results
   return(results)
@@ -398,3 +470,18 @@ structural_overlap <- function(adjacency_networks)
 
 }
 
+#' @noRd
+# convert2igraph ---- from SemNeT
+# Updated 16.10.2023
+convert2igraph <- function (A, neural = FALSE) 
+{
+  original_diagonal <- diag(A)[1]
+  diag(A) <- 0
+  unconnected <- colSums(A) == 0
+  if (any(unconnected)) {
+    A <- A[!unconnected, !unconnected]
+  }
+  diag(A) <- original_diagonal
+  net <- igraph::as.igraph(qgraph::qgraph(A, DoNotPlot = TRUE))
+  return(net)
+}
