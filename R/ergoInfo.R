@@ -225,11 +225,10 @@ ergoInfo <- function(
     
     # Create integer weights if weighted
     if(use == "weighted"){
-      population_edges <- 2 ^ round(dynega_objects$population$network * 10)
+      population_encoding <- 2 ^ round(dynega_objects$population$network * 10)
+    }else{
+      population_encoding <- 2 ^ population_edges
     }
-    
-    # Create int
-    population_encoding <- 2 ^ population_edges
     
     # Revert 1s to 0s
     population_encoding[population_encoding == 1] <- 0
@@ -317,16 +316,18 @@ ergoInfo <- function(
 
 #' @exportS3Method 
 # S3 Print Method
-# Updated 14.07.2023
+# Updated 16.10.2023
 print.EII <- function(x, ...)
 {
   
   # Print EII method
   cat(
     "EII Method: ",
-    swiftelse(
-      attr(x, "methods")$use == "edge.list",
-      "Edge List", "Unweighted"
+    switch(
+      attr(x, "methods")$use,
+      "edge.list" = "Edge List",
+      "unweighted" = "Unweighted",
+      "weighted" = "Weighted"
     ), "\n"
   )
   
