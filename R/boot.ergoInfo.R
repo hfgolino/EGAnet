@@ -144,7 +144,7 @@
 # Updated 03.08.2023
 boot.ergoInfo <- function(
     dynEGA.object, EII, 
-    use = c("edge.list", "unweighted"),
+    use = c("edge.list", "unweighted", "weighted"),
     iter = 100, ncores, verbose = TRUE
 ){
   
