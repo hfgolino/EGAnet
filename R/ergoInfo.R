@@ -68,7 +68,7 @@
 #' @export
 #'
 # Ergodicity Information Index ----
-# Updated 16.10.2023
+# Updated 17.10.2023
 ergoInfo <- function(
     dynEGA.object,
     use = c("edge.list", "unweighted", "weighted"),
@@ -144,7 +144,7 @@ ergoInfo <- function(
       
       # Create integer weights if weighted
       if(use == "weighted"){
-        adjacency_networks[[case]] <- round(adjacency_networks[[case]] * 10)
+        adjacency_networks[[case]] <- round(individual_networks[[case]] * 10)
       }
       
       # Assign primes
