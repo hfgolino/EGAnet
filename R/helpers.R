@@ -443,7 +443,7 @@ reproducible_bootstrap <- function(
 
 #' @noRd
 # Get available memory ----
-# Updated 22.07.2023
+# Updated 18.10.2023
 available_memory <- function()
 {
 
@@ -452,36 +452,11 @@ available_memory <- function()
 
   # Branch based on OS
   if(OS == "windows"){ # Windows
-
-    # # System information
-    # system_info <- system("systeminfo", intern = TRUE)
-    # 
-    # # Get available memory
-    # value <- system_info[
-    #   grep("Available Physical Memory", system_info)
-    # ]
-    # 
-    # # Remove extraneous information
-    # value <- gsub("Available Physical Memory: ", "", value)
-    # value <- gsub("\\,", "", value)
-    # 
-    # # Convert to bytes
-    # value_split <- unlist(strsplit(value, split = " "))
-    # 
-    # # Check for second value
-    # bytes <- as.numeric(value_split[1]) * switch(
-    #   value_split[2],
-    #   "B"  = 1, # edge case
-    #   "KB" = 1e+03,
-    #   "MB" = 1e+06,
-    #   "GB" = 1e+09,
-    #   "TB" = 1e+12 # edge case
-    # )
     
     # Alternative (outputs memory in kB)
     bytes <- as.numeric(
       trimws(system("wmic OS get FreePhysicalMemory", intern = TRUE))[2]
-    ) * 1000
+    ) * 1e+03
 
   }else if(OS == "linux"){ # Linux
     
@@ -498,8 +473,8 @@ available_memory <- function()
     # Bind values
     info_split <- do.call(rbind, info_split[1:2])
     
-    # Get free values (Linux reports in bytes)
-    bytes <- as.numeric(info_split[2, info_split[1,] == "free"])
+    # Get free values (Linux reports in *kilo*bytes -- thanks, Aleksandar Tomasevic)
+    bytes <- as.numeric(info_split[2, info_split[1,] == "available"]) * 1e+03
     
   }else{ # Mac
     
