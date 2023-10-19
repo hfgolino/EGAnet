@@ -46,7 +46,7 @@
 #' @export
 #' 
 # Information Theoretic Clustering for dynEGA
-# Updated 13.08.2023
+# Updated 19.10.2023
 infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
 {
   
@@ -143,16 +143,26 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
     # Get indices of upper triangle
     upper_indices <- which(upper.tri(diag(nodes)))
     
+    # Get length of upper indices
+    upper_length <- length(upper_indices)
+    
     # Generate random networks
     random_networks <- lapply(individual_networks, function(network){
 
       # Initialize new matrix
       new_network <- matrix(0, nrow = nodes, ncol = nodes)
       
+      # Get shuffled indices
+      shuffled_indices <- upper_indices[shuffle(seq_len(upper_length))]
+      
+      # Get shuffled edges
+      shuffled_edges <- shuffled_indices[seq_len(edge_count(network))]
+      
+      # Get upper network
+      upper_network <- network[upper_indices]
+      
       # Set shuffled indices up to edges to 1
-      new_network[
-        shuffle(upper_indices, size = edge_count(network))
-      ] <- 1
+      new_network[shuffled_edges] <- upper_network[upper_network != 0]
       
       # Make network symmetric
       return(new_network + t(new_network))
