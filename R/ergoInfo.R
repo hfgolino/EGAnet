@@ -144,7 +144,7 @@ ergoInfo <- function(
       
       # Create integer weights if weighted
       if(use == "weighted"){
-        adjacency_networks[[case]] <- round(individual_networks[[case]] * 10)
+        adjacency_networks[[case]] <- individual_networks[[case]]
       }
       
       # Assign primes
@@ -192,7 +192,7 @@ ergoInfo <- function(
   # Includes default number of iterations (1000)
   # (defined in Santoro & Nicosia, 2020)
   # seed_values <- reproducible_seed(n = 1000, seed = seed)
-  iter_sequence <- seq_len(1000)
+  iter_sequence <- seq_len(5000)
   
   # Get k-complexity
   individual_kcomplexity <- nvapply( # seed_values,
@@ -225,7 +225,7 @@ ergoInfo <- function(
     
     # Create integer weights if weighted
     if(use == "weighted"){
-      population_encoding <- 2 ^ round(dynega_objects$population$network * 10)
+      population_encoding <- 2 ^ dynega_objects$population$network
     }else{
       population_encoding <- 2 ^ population_edges
     }
@@ -277,7 +277,7 @@ ergoInfo <- function(
   results <- list(
     KComp = mean_individual_complexity,
     KComp.pop = mean_population_complexity,
-    EII = sqrt(dynega_objects$population$n.dim)^(
+    EII = sqrt(dynega_objects$population$n.dim+1)^(
       (mean_individual_complexity / mean_population_complexity) / log(edge_rows)
     )
   )
@@ -309,9 +309,9 @@ ergoInfo <- function(
 #   ncores = 8, verbose = TRUE
 # )
 # use = "edge.list"; seed = 1234
-# r_sample_seeds <- EGAnet:::r_sample_seeds
-# r_sample_with_replacement <- EGAnet:::r_sample_with_replacement
-# r_sample_without_replacement <- EGAnet:::r_sample_without_replacement
+# r_sample_seeds <- r_sample_seeds
+# r_sample_with_replacement <- r_sample_with_replacement
+# r_sample_without_replacement <- r_sample_without_replacement
 # Need above functions for testing!
 
 #' @exportS3Method 
