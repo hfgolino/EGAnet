@@ -184,7 +184,12 @@ simDFM <- function(
   results <- list()
   results$data <- obs.data
   results$Fscores <- as.data.frame(Fscores)
-  colnames(results$Fscores) <- paste0("F", 1:ncol(Fscores))
+  if(nfact>1){
+    colnames(results$Fscores) <- paste0("F", 1:ncol(Fscores))  
+  }else{
+    colnames(results$Fscores) <- "F1"
+  }
+  
   results$LoadMat <- LoadMat
   results$Structure <- rep(1:nfact, each = variab)
   return(results)
