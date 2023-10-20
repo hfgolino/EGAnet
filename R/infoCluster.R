@@ -131,8 +131,11 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
   #   community.consensus(jss_matrix)
   # )
   
+  # Get largest modularity index
+  Q_index <- which.max(Qs)
+  
   # Obtain clusters
-  clusters <- cutree(hier_clust, cuts[which.max(Qs)])
+  clusters <- cutree(hier_clust, cuts[Q_index])
   
   # Check if single cluster
   if(unique_length(clusters) == 1){
@@ -203,7 +206,7 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
       n = length(upper_indices),
       alpha = .001,
       power = 0.80,
-      efxize = "large"
+      efxize = "small"
     )
     
     # Check for empirical JSD > random JSD OR non-significant t-test
@@ -232,7 +235,7 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
   # Set up results
   results <- list(
     clusters = clusters,
-    modularity = Qs[which.max(Qs)],
+    modularity = Qs[Q_index],
     clusterTree = hier_clust,
     JSD = jsd_matrix
   )
