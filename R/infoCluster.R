@@ -116,8 +116,8 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
 
   # Get modularities
   Qs <- nvapply(
-    cuts, function(cut_value){
-      modularity(jss_matrix, cutree(hier_clust, cut_value))
+    hier_cuts[cuts], function(cuts){
+      modularity(jss_matrix, cuts)
     }
   )
     
@@ -131,11 +131,11 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
   #   community.consensus(jss_matrix)
   # )
   
-  # Get largest modularity index
-  Q_index <- which.max(Qs)
+  # Get largest change in the modularity index
+  Q_index <- which.max(diff(c(0, Qs)))
   
   # Obtain clusters
-  clusters <- cutree(hier_clust, cuts[Q_index])
+  clusters <- hier_cuts[[Q_index]] # cutree(hier_clust, cuts[Q_index])
   
   # Check if single cluster
   if(unique_length(clusters) == 1){
