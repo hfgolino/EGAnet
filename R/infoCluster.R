@@ -46,7 +46,7 @@
 #' @export
 #' 
 # Information Theoretic Clustering for dynEGA
-# Updated 19.10.2023
+# Updated 21.10.2023
 infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
 {
   
@@ -80,11 +80,11 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
   # Remove missing data points
   jsd_matrix <- jsd_matrix[!rm_cols, !rm_cols]
   
+  # Make diagonal 0 again
+  diag(jsd_matrix) <- 0
+  
   # Get similarity matrix
   jss_matrix <- 1 - jsd_matrix
-
-  # Make diagonal 0 again
-  diag(jss_matrix) <- diag(jsd_matrix) <- 0
   
   # Perform hierarchical clustering (follows Walktrap)
   hier_clust <- hclust(
