@@ -132,7 +132,7 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
   # )
   
   # Get largest change in the modularity index
-  Q_index <- which.max(diff(c(0, Qs)))
+  Q_index <- which.max(Qs)
   
   # Obtain clusters
   clusters <- hier_cuts[[Q_index]] # cutree(hier_clust, cuts[Q_index])
