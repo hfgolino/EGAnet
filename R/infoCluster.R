@@ -46,7 +46,7 @@
 #' @export
 #' 
 # Information Theoretic Clustering for dynEGA
-# Updated 19.10.2023
+# Updated 21.10.2023
 infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
 {
   
@@ -82,7 +82,7 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
   
   # Get similarity matrix
   jss_matrix <- 1 - jsd_matrix
-
+  
   # Make diagonal 0 again
   diag(jss_matrix) <- diag(jsd_matrix) <- 0
   
@@ -116,8 +116,8 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
 
   # Get modularities
   Qs <- nvapply(
-    cuts, function(cut_value){
-      modularity(jss_matrix, cutree(hier_clust, cut_value))
+    hier_cuts[cuts], function(cuts){
+      modularity(jss_matrix, cuts)
     }
   )
     
@@ -131,8 +131,11 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
   #   community.consensus(jss_matrix)
   # )
   
+  # Get largest change in the modularity index
+  Q_index <- which.max(Qs)
+  
   # Obtain clusters
-  clusters <- cutree(hier_clust, cuts[which.max(Qs)])
+  clusters <- hier_cuts[[Q_index]] # cutree(hier_clust, cuts[Q_index])
   
   # Check if single cluster
   if(unique_length(clusters) == 1){
@@ -203,7 +206,7 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
       n = length(upper_indices),
       alpha = .001,
       power = 0.80,
-      efxize = "large"
+      efxize = "small"
     )
     
     # Check for empirical JSD > random JSD OR non-significant t-test
@@ -232,7 +235,7 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
   # Set up results
   results <- list(
     clusters = clusters,
-    modularity = Qs[which.max(Qs)],
+    modularity = Qs[Q_index],
     clusterTree = hier_clust,
     JSD = jsd_matrix
   )

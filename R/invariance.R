@@ -312,7 +312,7 @@
 #' @export
 #'
 # Measurement Invariance
-# Updated 06.10.2023
+# Updated 20.10.2023
 invariance <- function(
     # `invariance` arguments
     data, groups, structure = NULL,
@@ -494,7 +494,9 @@ invariance <- function(
     )
     
     # Reorder and return loadings
-    return(loadings[dimension_names[[2]], community_names])
+    return(
+      loadings[dimension_names[[2]], community_names, drop = FALSE]
+    )
     
   })
   
@@ -565,8 +567,8 @@ invariance <- function(
   
   # Compute differences (ensure same ordering)
   difference_list <- lapply(permutated_loadings, function(x){
-    x[[1]][dimension_names[[2]], community_names] -
-      x[[2]][dimension_names[[2]], community_names]
+    x[[1]][dimension_names[[2]], community_names, drop = FALSE] -
+      x[[2]][dimension_names[[2]], community_names, drop = FALSE]
   })
   
   # Obtain assigned loadings only
@@ -575,7 +577,7 @@ invariance <- function(
     # Get differences
     differences <- ulapply(
       community_names, function(community){
-        one_difference[structure == community, community]
+        one_difference[structure == community, community, drop = FALSE]
       }
     )
     
