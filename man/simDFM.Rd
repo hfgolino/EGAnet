@@ -70,8 +70,8 @@ dynamic factor model with random walk factor scores.
 # Estimate EGA network
 data1 <- simDFM(variab = 5, timep = 50, nfact = 3, error = 0.05,
 dfm = "DAFS", loadings = 0.7, autoreg = 0.8,
-crossreg = 0.1, var.shock = 0.18,
-cov.shock = 0.36, burnin = 1000)}
+crossreg = 0.1, var.shock = 0.36,
+cov.shock = 0.18, burnin = 1000)}
 
 }
 \references{

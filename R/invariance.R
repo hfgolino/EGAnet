@@ -312,7 +312,7 @@
 #' @export
 #'
 # Measurement Invariance
-# Updated 20.10.2023
+# Updated 22.10.2023
 invariance <- function(
     # `invariance` arguments
     data, groups, structure = NULL,
@@ -494,9 +494,7 @@ invariance <- function(
     )
     
     # Reorder and return loadings
-    return(
-      loadings[dimension_names[[2]], community_names, drop = FALSE]
-    )
+    return(loadings[dimension_names[[2]], community_names, drop = FALSE])
     
   })
   
@@ -577,7 +575,7 @@ invariance <- function(
     # Get differences
     differences <- ulapply(
       community_names, function(community){
-        one_difference[structure == community, community, drop = FALSE]
+        one_difference[structure == community, community]
       }
     )
     
