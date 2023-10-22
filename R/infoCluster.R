@@ -46,7 +46,7 @@
 #' @export
 #' 
 # Information Theoretic Clustering for dynEGA
-# Updated 21.10.2023
+# Updated 22.10.2023
 infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
 {
   
@@ -120,17 +120,7 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
       modularity(jss_matrix, cuts)
     }
   )
-    
-  # Maybe just use Walktrap?
-  # clusters <- remove_attributes(
-  #   community.detection(jss_matrix, algorithm = "walktrap")
-  # )
-  
-  # Possibility for Louvain with consensus?
-  # clusters <- remove_attributes(
-  #   community.consensus(jss_matrix)
-  # )
-  
+
   # Get largest change in the modularity index
   Q_index <- which.max(Qs)
   
@@ -140,37 +130,15 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
   # Check if single cluster
   if(unique_length(clusters) == 1){
 
-    # Get number of nodes to initialize matrices
-    nodes <- dim(individual_networks[[1]])[2]
-    
-    # Get indices of upper triangle
-    upper_indices <- which(upper.tri(diag(nodes)))
-    
-    # Get length of upper indices
-    upper_length <- length(upper_indices)
+    # Get lower triangle
+    lower_triangle <- lower.tri(individual_networks[[1]])
     
     # Generate random networks
-    random_networks <- lapply(individual_networks, function(network){
-
-      # Initialize new matrix
-      new_network <- matrix(0, nrow = nodes, ncol = nodes)
-      
-      # Get shuffled indices
-      shuffled_indices <- upper_indices[shuffle(seq_len(upper_length))]
-      
-      # Get shuffled edges
-      shuffled_edges <- shuffled_indices[seq_len(edge_count(network))]
-      
-      # Get upper network
-      upper_network <- network[upper_indices]
-      
-      # Set shuffled indices up to edges to 1
-      new_network[shuffled_edges] <- upper_network[upper_network != 0]
-      
-      # Make network symmetric
-      return(new_network + t(new_network))
-    
-    })
+    random_networks <- lapply(
+      individual_networks, rewire,
+      min = 0.05, max = 0.05, noise = NULL,
+      lower_triangle = lower_triangle
+    )
     
     # Get the random JSD matrix
     jsd_random_matrix <- pairwise_spectral_JSD(random_networks)
@@ -191,8 +159,8 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
 
     # Compare to empirical
     comparison <- t.test(
-      jsd_matrix[upper_indices],
-      jsd_random_matrix[upper_indices],
+      jsd_matrix[lower_triangle],
+      jsd_random_matrix[lower_triangle],
       paired = TRUE,
       var.equal = FALSE
     )
@@ -203,14 +171,21 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
     # Compute adaptive alpha
     adaptive_p <- adapt.a(
       test = "paired",
-      n = length(upper_indices),
+      n = length(lower_triangle),
       alpha = .001,
       power = 0.80,
       efxize = "small"
     )
     
+    # Compute Cohen's d
+    cohens_d <- d(
+      jsd_matrix[lower_triangle],
+      jsd_random_matrix[lower_triangle],
+      paired = TRUE
+    )
+    
     # Check for empirical JSD > random JSD OR non-significant t-test
-    if(comparison_sign == 1 | comparison$p.value > adaptive_p$adapt.a){
+    if(comparison_sign == 1 | abs(cohens_d) < 0.20){
       
       # Set clusters to all individuals
       clusters <- cut_sequence
@@ -223,11 +198,7 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
       JSD_random = jsd_random_matrix,
       t.test = comparison,
       adaptive.p.value = adaptive_p,
-      d = d(
-        jsd_matrix[upper_indices],
-        jsd_random_matrix[upper_indices],
-        paired = TRUE
-      )
+      d = cohens_d
     )
 
   }

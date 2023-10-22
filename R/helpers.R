@@ -2734,6 +2734,73 @@ pcor2inv <- function(partial_correlations)
   
 }
 
+#%%%%%%%%%%%%%%%%%%%%%%%%
+## NETWORK FUNCTIONS ----
+#%%%%%%%%%%%%%%%%%%%%%%%%
+
+#' @noRd
+# Rewire networks ----
+# About 10x faster than previous implementation
+# Updated 30.07.2023
+rewire <- function(
+    network, min = 0.20, max = 0.40,
+    noise = 0.10, lower_triangle
+)
+{
+  
+  # Work only with the lower triangle
+  lower_network <- network[lower_triangle]
+  
+  # Get non-zero edges
+  non_zero_edges <- which(lower_network != 0)
+  
+  # Number of edges
+  edges <- length(non_zero_edges)
+  
+  # Add noise
+  if(!is.null(noise)){
+    
+    # Only add to existing edges
+    lower_network[non_zero_edges] <- 
+      lower_network[non_zero_edges] + runif(edges, -noise, noise)
+    
+  }
+  
+  # Number of edges to rewire
+  rewire_edges <- floor(edges * runif(1, min, max))
+  
+  # Get rewiring indices
+  rewire_index <- shuffle(non_zero_edges, size = rewire_edges)
+  
+  # Get replacement indices
+  replace_index <- shuffle(seq_along(lower_network), size = rewire_edges)
+  
+  # Make a copy of the lower network
+  lower_network_original <- lower_network
+  
+  # Replace values
+  lower_network[rewire_index] <- lower_network_original[replace_index]
+  lower_network[replace_index] <- lower_network_original[rewire_index]
+  
+  # Get nodes in original network
+  nodes <- dim(network)[2]
+  
+  # Initialize a new network
+  new_network <- matrix(
+    0, nrow = nodes, ncol = nodes,
+    dimnames = dimnames(network)
+  )
+  
+  # Replace values
+  new_network[lower_triangle] <- lower_network
+  new_network <- t(new_network)
+  new_network[lower_triangle] <- lower_network
+  
+  # Return the rewired network
+  return(new_network)
+  
+}
+
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # MATH & STATS FUNCTIONS ----
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%
