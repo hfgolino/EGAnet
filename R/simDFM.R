@@ -135,8 +135,8 @@ simDFM <- function(
       diag(B) <- autoreg
       
       # Shock = Random shock vectors following a multivariate normal distribution with mean zeros and nfact x nfact q covariance matrix D
-      D <- matrix(var.shock, nfact, nfact)
-      diag(D) <- cov.shock
+      D <- matrix(cov.shock, nfact, nfact)
+      diag(D) <- var.shock
       Shock <- MASS_mvrnorm(burnin+timep,matrix(0,nfact,1),D)
       
       Fscores <- matrix(0,burnin+timep,nfact)
