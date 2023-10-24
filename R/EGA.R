@@ -290,9 +290,9 @@ EGA <- function (
   ## is an S3method. It's possible to use
   ## `BGGM:::select.estimate` but CRAN gets
   ## mad about triple colons
-  bggm_select_ARGS <- list( # defaults for `BGGM:::select.estimate`
-    cred = 0.95, alternative = "two.sided"
-  )
+  # bggm_select_ARGS <- list( # defaults for `BGGM:::select.estimate`
+  #   cred = 0.95, alternative = "two.sided"
+  # )
   
   # Check for {BGGM}
   if(model == "bggm"){

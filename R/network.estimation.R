@@ -282,12 +282,12 @@ network.estimation <- function(
   
   # Add methods attribute for BGGM
   ## Methods for GLASSO and TMFG are already there
-  if(model == "bggm"){
-    attr(estimated_network, "methods") <- c(
-      bggm_estimate_ARGS[c("type", "analytic", "prior_sd", "iter")],
-      bggm_select_ARGS[c("cred", "alternative")]
-    )
-  }
+  # if(model == "bggm"){
+  #   attr(estimated_network, "methods") <- c(
+  #     bggm_estimate_ARGS[c("type", "analytic", "prior_sd", "iter")],
+  #     bggm_select_ARGS[c("cred", "alternative")]
+  #   )
+  # }
   
   # Add "model", "corr", and "na.data" to attributes
   attr(estimated_network, "methods")[
@@ -302,16 +302,16 @@ network.estimation <- function(
     # BGGM or other model
     if(model == "bggm"){
       
-      # Set up results
-      return(
-        list(
-          estimated_network = estimated_network,
-          output = list(
-            bggm_estimate = bggm_output,
-            bggm_select = bggm_select[names(bggm_select) != "object"]
-          )
-        )
-      )
+      # # Set up results
+      # return(
+      #   list(
+      #     estimated_network = estimated_network,
+      #     output = list(
+      #       bggm_estimate = bggm_output,
+      #       bggm_select = bggm_select[names(bggm_select) != "object"]
+      #     )
+      #   )
+      # )
       
     }else{
       

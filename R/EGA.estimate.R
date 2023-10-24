@@ -143,12 +143,6 @@
 #' # Estimate EGA with TMFG
 #' ega.wmt.tmfg <- EGA.estimate(data = wmt, model = "TMFG")
 #' 
-#' # Estimate Bayesian EGA (BEGA)
-#' bega.wmt <- EGA.estimate(
-#'   data = wmt, model = "BGGM",
-#'   analytic = TRUE # faster example for CRAN
-#' )
-#' 
 #' # Estimate EGA with an {igraph} function (Fast-greedy)
 #' ega.wmt.greedy <- EGA.estimate(
 #'   data = wmt,
