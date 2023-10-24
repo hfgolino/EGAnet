@@ -107,12 +107,6 @@
 #'   data = wmt, model = "glasso"
 #' )
 #' 
-#' # BGGM with analytic solution
-#' bggm_network <- network.estimation(
-#'   data = wmt, model = "BGGM",
-#'   analytic = TRUE # faster example for CRAN
-#' )
-#' 
 #' # TMFG
 #' tmfg_network <- network.estimation(
 #'   data = wmt, model = "TMFG"
@@ -142,7 +136,7 @@
 #' @export
 #'
 # Compute networks for EGA ----
-# Updated 07.09.2023
+# Updated 24.10.2023
 network.estimation <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "pearson", "spearman"),
@@ -161,6 +155,57 @@ network.estimation <- function(
   corr <- set_default(corr, "auto", network.estimation)
   na.data <- set_default(na.data, "pairwise", network.estimation)
   model <- set_default(model, "glasso", network.estimation)
+  
+  # Temporary catch for {BGGM}
+  if(model == "bggm"){
+    
+    # Check for necessary packages
+    necessary_packages <- ulapply(.libPaths(), list.files)
+    
+    # Check for {BFpack}
+    BFpack_installed <- "BFpack" %in% necessary_packages
+    
+    # Check for {BGGM}
+    BGGM_installed <- "BGGM" %in% necessary_packages
+    
+    # Set up message
+    message <- ""
+    
+    # Check for both
+    if(!BFpack_installed & !BGGM_installed){
+      
+      # Send error instruction
+      stop(
+        "`model = \"BGGM\"` was selected but some necesary packages are not installed\n",
+        "Please install these packages using the following code:\n\n",
+        "devtools::install_github(\"cran/BFpack\")\n\n",
+        "devtools::install_github(\"cran/BGGM\")\n\n",
+        "After these packages are installed, try your code again"
+      )
+
+    }else if(!BFpack_installed & BGGM_installed){
+      
+      # Send error instruction
+      stop(
+        "`model = \"BGGM\"` was selected but package {BFpack} is not installed\n",
+        "Please install {BFpack} using the following code:\n\n",
+        "devtools::install_github(\"cran/BFpack\")\n\n",
+        "After {BFpack} is installed, try your code again"
+      )
+      
+    }else if(BFpack_installed & !BGGM_installed){
+      
+      # Send error instruction
+      stop(
+        "`model = \"BGGM\"` was selected but package {BGGM} is not installed\n",
+        "Please install {BGGM} using the following code:\n\n",
+        "devtools::install_github(\"cran/BGGM\")\n\n",
+        "After {BGGM} is installed, try your code again"
+      )
+      
+    }
+    
+  }
   
   # Obtain ellipse arguments
   ellipse <- list(...)

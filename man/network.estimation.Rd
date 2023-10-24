@@ -123,12 +123,6 @@ glasso_network <- network.estimation(
   data = wmt, model = "glasso"
 )
 
-# BGGM with analytic solution
-bggm_network <- network.estimation(
-  data = wmt, model = "BGGM",
-  analytic = TRUE # faster example for CRAN
-)
-
 # TMFG
 tmfg_network <- network.estimation(
   data = wmt, model = "TMFG"

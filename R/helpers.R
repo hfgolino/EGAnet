@@ -531,7 +531,7 @@ restore_state <- function()
 
 #' @noRd
 # Wrapper for parallelization ----
-# Updated 10.08.2023
+# Updated 24.10.2023
 parallel_process <- function(
     iterations, # number of iterations
     datalist = NULL, # list of data
@@ -545,30 +545,38 @@ parallel_process <- function(
 ){
   
   # Get available memory
-  memory_available <- available_memory()
-  
-  # Check for global environment size
-  if(isTRUE(export)){ # needs `isTRUE` in case of character vector
-    global_memory_usage <- sum(nvapply(ls(),function(x){object.size(get(x))}))
-  }else{
-    global_memory_usage <- sum(nvapply(ls()[ls() %in% export],function(x){object.size(get(x))}))
+  memory_available <- try(
+    available_memory,
+    silent = TRUE
+  )
+
+  # In case the memory check fails
+  if(!is(memory_available, "try-error")){
+    
+    # Check for global environment size
+    if(export){ # needs `isTRUE` in case of character vector
+      global_memory_usage <- sum(nvapply(ls(),function(x){object.size(get(x))}))
+    }else{
+      global_memory_usage <- sum(nvapply(ls()[ls() %in% export],function(x){object.size(get(x))}))
+    }
+    
+    # Check for memory overload
+    if(memory_available < global_memory_usage * ncores){
+      stop(
+        paste0(
+          "Available memory (", byte_digits(memory_available), ") is less than ",
+          "the amount of memory needed to perform parallelization: ",
+          byte_digits(global_memory_usage * ncores), ".\n\n",
+          "Lower the number of cores (`ncores`) or perform ",
+          "batches of your operation."
+        ), call. = FALSE
+      )
+    }
+    
+    # Set max size
+    options(future.globals.maxSize = memory_available)
+    
   }
-  
-  # Check for memory overload
-  if(memory_available < global_memory_usage * ncores){
-    stop(
-      paste0(
-        "Available memory (", byte_digits(memory_available), ") is less than ",
-        "the amount of memory needed to perform parallelization: ",
-        byte_digits(global_memory_usage * ncores), ".\n\n",
-        "Lower the number of cores (`ncores`) or perform ",
-        "batches of your operation."
-      ), call. = FALSE
-    )
-  }
-  
-  # Set max size
-  options(future.globals.maxSize = memory_available)
   
   # Set up plan
   future::plan(
