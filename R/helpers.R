@@ -546,7 +546,7 @@ parallel_process <- function(
   
   # Get available memory
   memory_available <- try(
-    available_memory,
+    available_memory(),
     silent = TRUE
   )
 

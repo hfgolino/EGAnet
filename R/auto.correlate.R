@@ -32,12 +32,11 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{"pairwise"} --- }
-#' {Computes correlation for all available cases between
-#' two variables}
+#' \item \code{"pairwise"} --- Computes correlation for all available 
+#' cases between two variables
 #' 
-#' \item{\code{"listwise"} --- }
-#' {Computes correlation for all complete cases in the dataset}
+#' \item \code{"listwise"} --- Computes correlation for all complete 
+#' cases in the dataset
 #' 
 #' }
 #' 
@@ -48,17 +47,14 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{"none"} --- }
-#' {Adds no value (\code{empty.value = "none"})
-#' to the empirical joint frequency table between two variables}
+#' \item \code{"none"} --- Adds no value (\code{empty.value = "none"})
+#' to the empirical joint frequency table between two variables
 #' 
-#' \item{\code{"zero"} --- }
-#' {Adds \code{empty.value} to the cells with zero
-#' in the joint frequency table between two variables}
+#' \item \code{"zero"} --- Adds \code{empty.value} to the cells with 
+#' zero in the joint frequency table between two variables
 #' 
-#' \item{\code{"all"} --- }
-#' {Adds \code{empty.value} to all
-#' in the joint frequency table between two variables}
+#' \item \code{"all"} --- Adds \code{empty.value} to all
+#' in the joint frequency table between two variables
 #' 
 #' }
 #' 
@@ -69,18 +65,15 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{"none"} --- }
-#' {Adds no value (\code{0}) to the empirical joint 
-#' frequency table between two variables}
+#' \item \code{"none"} --- Adds no value (\code{0}) to the empirical 
+#' joint  frequency table between two variables
 #' 
-#' \item{\code{"point_five"} --- }
-#' {Adds \code{0.5} to the cells defined by \code{empty.method}}
+#' \item \code{"point_five"} --- Adds \code{0.5} to the cells 
+#' defined by \code{empty.method}
 #' 
-#' \item{\code{"one_over"} --- }
-#' {Adds \code{1 / n} where \code{n} equals the number of cells
-#' based on \code{empty.method}. For \code{empty.method = "zero"},
-#' \code{n} equals the number of zero cells
-#' }
+#' \item \code{"one_over"} --- Adds \code{1 / n} where \code{n} equals the 
+#' number of cells based on \code{empty.method}. For 
+#' \code{empty.method = "zero"}, \code{n} equals the number of zero cells
 #' 
 #' }
 #' 
