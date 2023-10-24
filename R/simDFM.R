@@ -19,12 +19,11 @@
 #'
 #' \itemize{
 #'
-#' \item{\strong{\code{DAFS}}}
-#' {Simulates data using the direct autoregressive factor score model.
-#' This is the default method}
+#' \item \strong{\code{DAFS}} --- Simulates data using the direct autoregressive factor score model.
+#' This is the default method
 #'
-#' \item{\strong{\code{RandomWalk}}}
-#' {Simulates data using a dynamic factor model with random walk factor scores.}
+#' \item \strong{\code{RandomWalk}} --- Simulates data using a dynamic factor model with random walk factor scores
+#'
 #'}
 #'
 #' @param loadings Magnitude of the loadings.
@@ -65,7 +64,7 @@
 #'
 #' @export
 # Simulate dynamic factor model
-# Updated 04.09.2022
+# Updated 24.10.2022
 simDFM <- function(
     variab, timep, nfact, error, dfm = c("DAFS","RandomWalk"),
     loadings, autoreg, crossreg, var.shock, cov.shock, burnin = 1000,

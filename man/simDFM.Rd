@@ -35,12 +35,11 @@ Current options are:
 
 \itemize{
 
-\item{\strong{\code{DAFS}}}
-{Simulates data using the direct autoregressive factor score model.
-This is the default method}
+\item \strong{\code{DAFS}} --- Simulates data using the direct autoregressive factor score model.
+This is the default method
 
-\item{\strong{\code{RandomWalk}}}
-{Simulates data using a dynamic factor model with random walk factor scores.}
+\item \strong{\code{RandomWalk}} --- Simulates data using a dynamic factor model with random walk factor scores
+
 }}
 
 \item{loadings}{Magnitude of the loadings.}

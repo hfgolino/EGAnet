@@ -75,24 +75,20 @@ Available options:
 
 \itemize{
 
-\item{\code{"latent"} --- }
-{Computes latent variables using \code{\link[lavaan]{cfa}} when 
+\item \code{"latent"} --- Computes latent variables using \code{\link[lavaan]{cfa}} when 
 there are three or more redundant variables. If variables are not 
 all coded in the same direction, then they will be recoded as necessary.
-A warning will be produced for all variables that are flipped}
+A warning will be produced for all variables that are flipped
 
-\item{\code{"mean"} --- }
-{Computes mean of redundant variables. If variables are not all coded in the
+\item \code{"mean"} --- Computes mean of redundant variables. If variables are not all coded in the
 same direction, then they will be recoded as necessary.
-A warning will be produced for all variables that are flipped}
+A warning will be produced for all variables that are flipped
 
-\item{\code{"remove"} --- }
-{Removes all but one variable from a set of redundant variables}
+\item \code{"remove"} --- Removes all but one variable from a set of redundant variables
 
-\item{\code{"sum"} --- }
-{Computes sum of redundant variables. If variables are not all coded in the
+\item \code{"sum"} --- Computes sum of redundant variables. If variables are not all coded in the
 same direction, then they will be recoded as necessary.
-A warning will be produced for all variables that are flipped}
+A warning will be produced for all variables that are flipped
 
 }}
 
@@ -103,15 +99,13 @@ process is as follows:
 
 \itemize{
 
-\item{\code{Two variables} --- }
-{The variable with the lowest maximum \code{\link[EGAnet]{wto}} 
+\item \code{Two variables} --- The variable with the lowest maximum \code{\link[EGAnet]{wto}} 
 to all other variables (other than the one it is redundant with)
-is retained and the other is removed}
+is retained and the other is removed
 
-\item{\code{Three or more variables} --- }
-{The variable with the highest mean \code{\link[EGAnet]{wto}}
+\item \code{Three or more variables} --- The variable with the highest mean \code{\link[EGAnet]{wto}}
 to all other variables that are redundant with one another
-is retained and all others are removed}
+is retained and all others are removed
 
 }}
 

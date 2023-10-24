@@ -15,12 +15,10 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{"kld"} --- }
-#' {Uses Kullback-Leibler Divergence}
+#' \item \code{"kld"} --- Uses Kullback-Leibler Divergence
 #' 
-#' \item{\code{"spectral"} --- }
-#' {Uses eigenvalues of combinatiorial Laplacian matrix to compute
-#' Von Neumann entropy}
+#' \item \code{"spectral"} --- Uses eigenvalues of combinatorial Laplacian matrix to compute
+#' Von Neumann entropy
 #' 
 #' }
 #'
@@ -64,7 +62,7 @@
 #' @export
 #' 
 # Jensen-Shannon Distance
-# Updated 09.08.2023
+# Updated 24.10.2023
 jsd <- function(
     network1, network2,
     method = c("kld", "spectral")

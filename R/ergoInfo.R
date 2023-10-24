@@ -12,16 +12,12 @@
 #'
 #' \itemize{
 #'
-#' \item{\code{"edge.list"} --- }
-#' {Calculates the algorithm complexity using the list of edges.}
+#' \item \code{"edge.list"} --- Calculates the algorithm complexity using the list of edges
 #'
-#' \item{\code{"unweighted"} --- }
-#' {Calculates the algorithm complexity using the binary weights of the encoded prime 
-#' transformed network. 0 = edge absent and 1 = edge present}
+#' \item \code{"unweighted"} --- Calculates the algorithm complexity using the binary weights of the encoded prime 
+#' transformed network. 0 = edge absent and 1 = edge present
 #' 
-#' \item{\code{"weighted"} --- }
-#' {Calculates the algorithm complexity using the weights of encoded prime-weight transformed network
-#' where the weights are multiplied by 10 and rounded (to force integers)}
+#' \item \code{"weighted"} --- Calculates the algorithm complexity using the weights of encoded prime-weight transformed network
 #' 
 #' }
 #' 
@@ -68,7 +64,7 @@
 #' @export
 #'
 # Ergodicity Information Index ----
-# Updated 17.10.2023
+# Updated 24.10.2023
 ergoInfo <- function(
     dynEGA.object,
     use = c("edge.list", "unweighted", "weighted"),

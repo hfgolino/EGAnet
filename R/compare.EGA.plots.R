@@ -7,20 +7,17 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{*EGA} objects --- }
-#' {can be dropped in without any argument
+#' \item \code{*EGA} objects --- can be dropped in without any argument
 #' designation. The function will search across input to find
-#' necessary \code{\link{EGAnet}} objects}
+#' necessary \code{\link{EGAnet}} objects
 #' 
-#' \item{\code{\link[GGally]{ggnet2}} arguments --- }
-#' {can be passed along to \code{\link[GGally]{ggnet2}}}
+#' \item \code{\link[GGally]{ggnet2}} arguments --- can be passed along to \code{\link[GGally]{ggnet2}}
 #' 
-#' \item{\code{\link[sna]{gplot.layout}} --- }
-#' {can be specified using \code{mode = } or
+#' \item \code{\link[sna]{gplot.layout}} --- can be specified using \code{mode = } or
 #' \code{layout = } using the name of the layout
 #' (e.g., \code{mode = "circle"} will produce the 
 #' circle layout from \link[sna]{gplot.layout}).
-#' By default, the layout is the same as \code{\link{qgraph}}}
+#' By default, the layout is the same as \code{\link{qgraph}}
 #'
 #' }
 #' 
@@ -79,7 +76,7 @@
 #' @export
 #
 # Compare EGA plots ----
-# Updated 06.10.2023
+# Updated 24.10.2023
 compare.EGA.plots <- function(
   ..., input.list = NULL, base = 1,
   labels = NULL, rows = NULL, columns = NULL

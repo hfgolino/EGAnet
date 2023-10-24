@@ -66,16 +66,13 @@ Available options:
 
 \itemize{
 
-\item{\code{"none"} --- }
-{Default. No imputation is performed}
+\item \code{"none"} --- Default. No imputation is performed
 
-\item{\code{"mean"} --- }
-{The mean value of each variable is used to replace missing data
-for that variable}
+\item \code{"mean"} --- The mean value of each variable is used to replace missing data
+for that variable
 
-\item{\code{"median"} --- }
-{The median value of each variable is used to replace missing data
-for that variable}
+\item \code{"median"} --- The median value of each variable is used to replace missing data
+for that variable
 
 }}
 

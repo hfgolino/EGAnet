@@ -20,25 +20,21 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{"auto"} --- }
-#' {Automatically computes appropriate correlations for
+#' \item \code{"auto"} --- Automatically computes appropriate correlations for
 #' the data using Pearson's for continuous, polychoric for ordinal,
 #' tetrachoric for binary, and polyserial/biserial for ordinal/binary with
 #' continuous. To change the number of categories that are considered
 #' ordinal, use \code{ordinal.categories}
-#' (see \code{\link[EGAnet]{polychoric.matrix}} for more details)}
+#' (see \code{\link[EGAnet]{polychoric.matrix}} for more details)
 #' 
-#' \item{\code{"cor_auto"} --- }
-#' {Uses \code{\link[qgraph]{cor_auto}} to compute correlations. Arguments
-#' can be passed along to the function}
+#' \item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to 
+#' compute correlations. Arguments can be passed along to the function
 #' 
-#' \item{\code{"pearson"} --- }
-#' {Pearson's correlation is computed for all variables regardless of
-#' categories}
+#' \item \code{"pearson"} --- Pearson's correlation is computed for 
+#' all variables regardless of categories
 #' 
-#' \item{\code{"spearman"} --- }
-#' {Spearman's rank-order correlation is computed for all variables
-#' regardless of categories}
+#' \item \code{"spearman"} --- Spearman's rank-order correlation is 
+#' computed for all variables regardless of categories
 #' 
 #' }
 #' 
@@ -49,13 +45,12 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{"pairwise"} --- }
-#' {Computes correlation for all available cases between
-#' two variables}
+#' \item \code{"pairwise"} --- Computes correlation for all available 
+#' cases between two variables
 #' 
-#' \item{\code{"listwise"} --- }
-#' {Computes correlation for all complete cases in the dataset}
-#' 
+#' \item \code{"listwise"} --- Computes correlation for all complete 
+#' cases in the dataset
+#'
 #' }
 #'
 #' @param gamma Numeric (length = 1)
@@ -150,7 +145,7 @@
 #' @export
 #'
 # Computes optimal glasso network based on EBIC ----
-# Updated 07.09.2023
+# Updated 24.10.2023
 EBICglasso.qgraph <- function(
     data, # Sample covariance matrix
     n = NULL,

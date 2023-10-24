@@ -1,5 +1,5 @@
 Package: EGAnet
-Title: Exploratory Graph Analysis – A Framework for Estimating the Number of Dimensions in Multivariate Data using Network Psychometrics
+Title: Exploratory Graph Analysis – a Framework for Estimating the Number of Dimensions in Multivariate Data using Network Psychometrics
 Version: 2.0.2
 Date: 2023-10-24
 Authors@R: c(person("Hudson", "Golino", email = "hfg9s@virginia.edu", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-1601-1447")),

@@ -27,16 +27,14 @@ Returns a list containing:
 
 \itemize{
 
-\item{\code{empirical} --- }
-{A vector of the empirical memberships from the empirical \code{\link[EGAnet]{EGA}} result}
+\item \code{empirical} --- A vector of the empirical memberships from the 
+empirical \code{\link[EGAnet]{EGA}} result
 
-\item{\code{bootstrap} --- }
-{A matrix of the homogenized memberships from the replicate samples in 
-the \code{\link[EGAnet]{bootEGA}} results}
+\item \code{bootstrap} --- A matrix of the homogenized memberships from the replicate samples in 
+the \code{\link[EGAnet]{bootEGA}} results
 
-\item{\code{structure} --- }
-{A vector of the structure used in the analysis. If \code{structure = NULL}, then this output
-will be the same as \code{empirical}}
+\item \code{structure} --- A vector of the structure used in the analysis. If \code{structure = NULL}, then this output
+will be the same as \code{empirical}
    
 }
 
@@ -46,13 +44,11 @@ will be the same as \code{empirical}}
 
 \itemize{
 
-\item{\code{empirical.dimensions} --- }
-{A vector of the proportion of times each item replicated
-within the structure defined by \code{structure}}
+\item \code{empirical.dimensions} --- A vector of the proportion of times each item replicated
+within the structure defined by \code{structure}
 
-\item{\code{all.dimensions} --- }
-{A matrix of the proportion of times each item replicated
-in each of the \code{structure} defined dimensions.}
+\item \code{all.dimensions} --- A matrix of the proportion of times each item replicated
+in each of the \code{structure} defined dimensions
 
 }
 

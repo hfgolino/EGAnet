@@ -62,16 +62,13 @@
 #'
 #' \itemize{
 #'
-#' \item{\code{"none"} --- }
-#' {Default. No imputation is performed}
+#' \item \code{"none"} --- Default. No imputation is performed
 #'
-#' \item{\code{"mean"} --- }
-#' {The mean value of each variable is used to replace missing data
-#' for that variable}
+#' \item \code{"mean"} --- The mean value of each variable is used to replace missing data
+#' for that variable
 #'
-#' \item{\code{"median"} --- }
-#' {The median value of each variable is used to replace missing data
-#' for that variable}
+#' \item \code{"median"} --- The median value of each variable is used to replace missing data
+#' for that variable
 #'
 #' }
 #' 
@@ -116,7 +113,7 @@
 #' @export
 #'
 # Network Scores ----
-# Updated 19.08.2023
+# Updated 24.10.2023
 net.scores <- function (
     data, A, wc, 
     loading.method = c("BRM", "experimental"),

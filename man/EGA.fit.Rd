@@ -30,25 +30,21 @@ Available options:
 
 \itemize{
 
-\item{\code{"auto"} --- }
-{Automatically computes appropriate correlations for
+\item \code{"auto"} --- Automatically computes appropriate correlations for
 the data using Pearson's for continuous, polychoric for ordinal,
 tetrachoric for binary, and polyserial/biserial for ordinal/binary with
 continuous. To change the number of categories that are considered
 ordinal, use \code{ordinal.categories}
-(see \code{\link[EGAnet]{polychoric.matrix}} for more details)}
+(see \code{\link[EGAnet]{polychoric.matrix}} for more details)
 
-\item{\code{"cor_auto"} --- }
-{Uses \code{\link[qgraph]{cor_auto}} to compute correlations. Arguments
-can be passed along to the function}
+\item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations. 
+Arguments can be passed along to the function
 
-\item{\code{"pearson"} --- }
-{Pearson's correlation is computed for all variables regardless of
-categories}
+\item \code{"pearson"} --- Pearson's correlation is computed for all 
+variables regardless of categories
 
-\item{\code{"spearman"} --- }
-{Spearman's rank-order correlation is computed for all variables
-regardless of categories}
+\item \code{"spearman"} --- Spearman's rank-order correlation is computed 
+for all variables regardless of categories
 
 }
 
@@ -62,12 +58,10 @@ Available options:
 
 \itemize{
 
-\item{\code{"pairwise"} --- }
-{Computes correlation for all available cases between
-two variables}
+\item \code{"pairwise"} --- Computes correlation for all available cases between
+two variables
 
-\item{\code{"listwise"} --- }
-{Computes correlation for all complete cases in the dataset}
+\item \code{"listwise"} --- Computes correlation for all complete cases in the dataset
 
 }}
 
@@ -77,19 +71,16 @@ Available options:
 
 \itemize{
 
-\item{\code{"BGGM"} --- }
-{Computes the Bayesian Gaussian Graphical Model.
+\item \code{"BGGM"} --- Computes the Bayesian Gaussian Graphical Model.
 Set argument \code{ordinal.categories} to determine
 levels allowed for a variable to be considered ordinal.
-See \code{\link[BGGM]{estimate}} for more details}
+See \code{\link[BGGM]{estimate}} for more details
 
-\item{\code{"glasso"} --- }
-{Computes the GLASSO with EBIC model selection.
-See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details}
+\item \code{"glasso"} --- Computes the GLASSO with EBIC model selection.
+See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details
 
-\item{\code{"TMFG"} --- }
-{Computes the TMFG method.
-See \code{\link[EGAnet]{TMFG}} for more details}
+\item \code{"TMFG"} --- Computes the TMFG method.
+See \code{\link[EGAnet]{TMFG}} for more details
 
 }}
 
@@ -99,8 +90,7 @@ Three options are listed below but all are available
 
 \itemize{
 
-\item{\code{"leiden"} --- }
-{See \code{\link[igraph]{cluster_leiden}} for more details.
+\item \code{"leiden"} --- See \code{\link[igraph]{cluster_leiden}} for more details.
 \emph{Note}: The Leiden algorithm will default to the
 Constant Potts Model objective function
 (\code{objective_function = "CPM"}). Set
@@ -112,18 +102,16 @@ absolute edge weight in the network in 0.01 increments
 For modularity, searches along resolutions from 0 to 2 in 0.05 increments
 (\code{resolution_parameter = seq.int(0, 2, 0.05)}) by default.
 Use the argument \code{resolution_parameter} to change the search parameters
-(see examples)}
+(see examples)
 
-\item{\code{"louvain"} --- }
-{See \code{\link[EGAnet]{community.consensus}} for more details.
+\item \code{"louvain"} --- See \code{\link[EGAnet]{community.consensus}} for more details.
 By default, searches along resolutions from 0 to 2 in 0.05 increments
 (\code{resolution_parameter = seq.int(0, 2, 0.05)}). Use the argument \code{resolution_parameter}
-to change the search parameters (see examples)}
+to change the search parameters (see examples)
 
-\item{\code{"walktrap"} --- }
-{This algorithm is the default. See \code{\link[igraph]{cluster_walktrap}} for more details.
+\item \code{"walktrap"} --- This algorithm is the default. See \code{\link[igraph]{cluster_walktrap}} for more details.
 By default, searches along 3 to 8 steps (\code{steps = 3:8}). Use the argument \code{steps}
-to change the search parameters (see examples)}
+to change the search parameters (see examples)
 
 }}
 

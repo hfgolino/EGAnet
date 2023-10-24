@@ -30,26 +30,22 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{"highest_modularity"} --- }
-#' {\strong{EXPERIMENTAL.} Selects the community solution with the highest modularity across
+#' \item \code{"highest_modularity"} --- \strong{EXPERIMENTAL.} Selects the community solution with the highest modularity across
 #' the applications. Modularity is a reasonable metric for identifying the number
-#' of communities in a network but it comes with limitations (e.g., resolution limit)}
+#' of communities in a network but it comes with limitations (e.g., resolution limit)
 #' 
-#' \item{\code{"iterative"} --- }
-#' {The original approach proposed by Lancichinetti & Fortunato (2012). See
-#' "Details" for more information}
+#' \item \code{"iterative"} --- The original approach proposed by Lancichinetti & Fortunato (2012). See
+#' "Details" for more information
 #' 
-#' \item{\code{"most_common"} --- }
-#' {Selects the community solution that appears the most
+#' \item \code{"most_common"} --- Selects the community solution that appears the most
 #' frequently across the applications. The idea behind this method is that the solution
 #' that appears most often will be the most likely solution for the algorithm as well
 #' as most reproducible. Can be less stable as the number of nodes increase requiring
-#' a larger value for \code{consensus.iter}.  This method is the \strong{default}}
+#' a larger value for \code{consensus.iter}.  This method is the \strong{default}
 #' 
-#' \item{\code{"lowest_tefi"} --- }
-#' {\strong{EXPERIMENTAL.} Selects the community solution with the lowest Total Entropy
+#' \item \code{"lowest_tefi"} --- \strong{EXPERIMENTAL.} Selects the community solution with the lowest Total Entropy
 #' Fit Index (\code{\link[EGAnet]{tefi}}) across the applications. TEFI is a reasonable metric
-#' to identify the number of communities in a network based on Golino, Moulder et al. (2020)}
+#' to identify the number of communities in a network based on Golino, Moulder et al. (2020)
 #' 
 #' }
 #' 

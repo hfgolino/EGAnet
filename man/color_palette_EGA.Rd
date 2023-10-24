@@ -19,27 +19,20 @@ Defaults to \code{"polychrome"}.
 
 \itemize{
 
-\item{\code{"polychrome"}}
-{Default 40 color palette}
+\item \code{"polychrome"} --- Default 40 color palette
 
-\item{\code{"grayscale"}}
-{"grayscale", "greyscale", or "colorblind" will produce
-plots suitable for publication purposes}
+\item \code{"grayscale"} --- "grayscale", "greyscale", or "colorblind" will produce
+plots suitable for publication purposes
 
-\item{\code{"blue.ridge1"}}
-{Palette inspired by the Blue Ridge Mountains}
+\item \code{"blue.ridge1"} --- Palette inspired by the Blue Ridge Mountains
 
-\item{\code{"blue.ridge2"}}
-{Second palette inspired by the Blue Ridge Mountains}
+\item \code{"blue.ridge2"} --- Second palette inspired by the Blue Ridge Mountains
 
-\item{\code{"rainbow"}}
-{Rainbow colors. Default for \code{\link[qgraph]{qgraph}}}
+\item \code{"rainbow"} --- Rainbow colors. Default for \code{\link[qgraph]{qgraph}}
 
-\item{\code{"rio"}}
-{Palette inspired by Rio de Janiero, Brazil}
+\item \code{"rio"} --- Palette inspired by Rio de Janiero, Brazil
 
- \item{\code{"itacare"}}
-{Palette inspired by Itacare, Brazil}
+ \item \code{"itacare"} --- Palette inspired by Itacare, Brazil
 
 }
 

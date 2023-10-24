@@ -12,14 +12,12 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{lower_order} --- }
-#' {A vector (length = \code{ncol(data)}) representing the first-order structure 
-#' (numbers or labels for each item in each first-order factor or community)}
+#' \item \code{lower_order} --- A vector (length = \code{ncol(data)}) representing the first-order structure 
+#' (numbers or labels for each item in each first-order factor or community)
 #'
-#' \item{\code{higher_order} --- }
-#' {A vector (length = \code{ncol(data)} or number of \code{lower_order} communities)representing 
+#' \item \code{higher_order} --- A vector (length = \code{ncol(data)} or number of \code{lower_order} communities)representing 
 #' the second-order structure (numbers or labels for each item in each second-order 
-#' factor or community)}
+#' factor or community)
 #' 
 #' }
 #' 

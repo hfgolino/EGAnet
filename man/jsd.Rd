@@ -20,12 +20,10 @@ Available options:
 
 \itemize{
 
-\item{\code{"kld"} --- }
-{Uses Kullback-Leibler Divergence}
+\item \code{"kld"} --- Uses Kullback-Leibler Divergence
 
-\item{\code{"spectral"} --- }
-{Uses eigenvalues of combinatiorial Laplacian matrix to compute
-Von Neumann entropy}
+\item \code{"spectral"} --- Uses eigenvalues of combinatorial Laplacian matrix to compute
+Von Neumann entropy
 
 }}
 }

@@ -58,16 +58,13 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{0} --- }
-#' {No derivatives; consistent with moving average}
+#' \item \code{0} --- No derivatives; consistent with moving average
 #' 
-#' \item{\code{1} --- }
-#' {First-order derivatives; interpretated as "velocity" or 
-#' rate of change over time}
+#' \item \code{1} --- First-order derivatives; interpreted as "velocity" or 
+#' rate of change over time
 #' 
-#' \item{\code{2} --- }
-#' {Second-order derivatives; interpreted as "acceleration" or
-#' rate of the rate of change over time}
+#' \item \code{2} --- Second-order derivatives; interpreted as "acceleration" or
+#' rate of the rate of change over time
 #' 
 #' }
 #' 
@@ -78,17 +75,14 @@
 #'
 #' \itemize{
 #'
-#' \item{\code{"individual"} --- }
-#' {Estimates \code{\link[EGAnet]{EGA}} for each individual in \code{data}
-#' (intraindividual structure; requires an \code{"ID"} column, see \code{data})}
+#' \item \code{"individual"} --- Estimates \code{\link[EGAnet]{EGA}} for each individual in \code{data}
+#' (intraindividual structure; requires an \code{"ID"} column, see \code{data})
 #' 
-#' \item{\code{"group"} --- }
-#' {Estimates \code{\link[EGAnet]{EGA}} for each group in \code{data}
-#' (group structure; requires a \code{"Group"} column, see \code{data})}
+#' \item \code{"group"} --- Estimates \code{\link[EGAnet]{EGA}} for each group in \code{data}
+#' (group structure; requires a \code{"Group"} column, see \code{data})
 #' 
-#' \item{\code{"population"} --- }
-#' {Estimates \code{\link[EGAnet]{EGA}} across all \code{data}
-#' (interindividual structure)}
+#' \item \code{"population"} --- Estimates \code{\link[EGAnet]{EGA}} across all \code{data}
+#' (interindividual structure)
 #'
 #' }
 #'
@@ -99,25 +93,21 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{"auto"} --- }
-#' {Automatically computes appropriate correlations for
+#' \item \code{"auto"} --- Automatically computes appropriate correlations for
 #' the data using Pearson's for continuous, polychoric for ordinal,
 #' tetrachoric for binary, and polyserial/biserial for ordinal/binary with
 #' continuous. To change the number of categories that are considered
 #' ordinal, use \code{ordinal.categories}
-#' (see \code{\link[EGAnet]{polychoric.matrix}} for more details)}
+#' (see \code{\link[EGAnet]{polychoric.matrix}} for more details)
 #' 
-#' \item{\code{"cor_auto"} --- }
-#' {Uses \code{\link[qgraph]{cor_auto}} to compute correlations. Arguments
-#' can be passed along to the function}
+#' \item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations. 
+#' Arguments can be passed along to the function
 #' 
-#' \item{\code{"pearson"} --- }
-#' {Pearson's correlation is computed for all variables regardless of
-#' categories}
+#' \item \code{"pearson"} --- Pearson's correlation is computed for all 
+#' variables regardless of categories
 #' 
-#' \item{\code{"spearman"} --- }
-#' {Spearman's rank-order correlation is computed for all variables
-#' regardless of categories}
+#' \item \code{"spearman"} --- Spearman's rank-order correlation is computed 
+#' for all variables regardless of categories
 #' 
 #' }
 #' 
@@ -131,12 +121,10 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{"pairwise"} --- }
-#' {Computes correlation for all available cases between
-#' two variables}
+#' \item \code{"pairwise"} --- Computes correlation for all available cases between
+#' two variables
 #' 
-#' \item{\code{"listwise"} --- }
-#' {Computes correlation for all complete cases in the dataset}
+#' \item \code{"listwise"} --- Computes correlation for all complete cases in the dataset
 #' 
 #' }
 #' 
@@ -146,19 +134,16 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{"BGGM"} --- }
-#' {Computes the Bayesian Gaussian Graphical Model.
+#' \item \code{"BGGM"} --- Computes the Bayesian Gaussian Graphical Model.
 #' Set argument \code{ordinal.categories} to determine
 #' levels allowed for a variable to be considered ordinal.
-#' See \code{\link[BGGM]{estimate}} for more details}
+#' See \code{\link[BGGM]{estimate}} for more details
 #' 
-#' \item{\code{"glasso"} --- }
-#' {Computes the GLASSO with EBIC model selection.
-#' See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details}
+#' \item \code{"glasso"} --- Computes the GLASSO with EBIC model selection.
+#' See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details
 #' 
-#' \item{\code{"TMFG"} --- }
-#' {Computes the TMFG method.
-#' See \code{\link[EGAnet]{TMFG}} for more details}
+#' \item \code{"TMFG"} --- Computes the TMFG method.
+#' See \code{\link[EGAnet]{TMFG}} for more details
 #' 
 #' }
 #' 
@@ -170,18 +155,15 @@
 #' 
 #' \itemize{
 #'
-#' \item{\code{"leiden"} --- }
-#' {See \code{\link[igraph]{cluster_leiden}} for more details}
+#' \item \code{"leiden"} --- See \code{\link[igraph]{cluster_leiden}} for more details
 #' 
-#' \item{\code{"louvain"} --- }
-#' {By default, \code{"louvain"} will implement the Louvain algorithm using 
+#' \item \code{"louvain"} --- By default, \code{"louvain"} will implement the Louvain algorithm using 
 #' the consensus clustering method (see \code{\link[EGAnet]{community.consensus}} 
 #' for more information). This function will implement
 #' \code{consensus.method = "most_common"} and \code{consensus.iter = 1000} 
-#' unless specified otherwise}
+#' unless specified otherwise
 #' 
-#' \item{\code{"walktrap"} --- }
-#' {See \code{\link[igraph]{cluster_walktrap}} for more details}
+#' \item \code{"walktrap"} --- See \code{\link[igraph]{cluster_walktrap}} for more details
 #' 
 #' }
 #'
@@ -192,28 +174,25 @@
 #' 
 #' \itemize{
 #'
-#' \item{\code{"expand"} --- }
-#' {Expands the correlation matrix with four variables correlated 0.50.
+#' \item \code{"expand"} --- Expands the correlation matrix with four variables correlated 0.50.
 #' If number of dimension returns 2 or less in check, then the data 
 #' are unidimensional; otherwise, regular EGA with no matrix
 #' expansion is used. This method was used in the Golino et al.'s (2020)
-#' \emph{Psychological Methods} simulation}
+#' \emph{Psychological Methods} simulation
 #'
-#' \item{\code{"LE"} --- }
-#' {Applies the Leading Eigenvector algorithm
+#' \item \code{"LE"} --- Applies the Leading Eigenvector algorithm
 #' (\code{\link[igraph]{cluster_leading_eigen}})
 #' on the empirical correlation matrix. If the number of dimensions is 1,
 #' then the Leading Eigenvector solution is used; otherwise, regular EGA
 #' is used. This method was used in the Christensen et al.'s (2023) 
-#' \emph{Behavior Research Methods} simulation}
+#' \emph{Behavior Research Methods} simulation
 #' 
-#' \item{\code{"louvain"} --- }
-#' {Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
+#' \item \code{"louvain"} --- Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
 #' on the empirical correlation matrix. If the number of dimensions is 1, 
 #' then the Louvain solution is used; otherwise, regular EGA is used. 
 #' This method was validated Christensen's (2022) \emph{PsyArXiv} simulation.
 #' Consensus clustering can be used by specifying either
-#' \code{"consensus.method"} or \code{"consensus.iter"}}
+#' \code{"consensus.method"} or \code{"consensus.iter"}
 #' 
 #' }
 #' 
@@ -244,15 +223,13 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{Estimates} --- }
-#' {A list the length of the unique IDs containing
-#' data frames of zero- to second-order derivatives for each ID in \code{data}}
+#' \item \code{Estimates} --- A list the length of the unique IDs containing
+#' data frames of zero- to second-order derivatives for each ID in \code{data}
 #' 
-#' \item{\code{EstimatesDF} --- }
-#' {A data frame of derivatives across all IDs containing
+#' \item \code{EstimatesDF} --- A data frame of derivatives across all IDs containing
 #' columns of the zero- to second-order derivatives as well as \code{id} and
 #' \code{group} variables (\code{group} is automatically set to \code{1}
-#' for all if no \code{group} is provided)}
+#' for all if no \code{group} is provided)
 #' 
 #' }
 #' 
@@ -262,17 +239,14 @@
 #' 
 #' \itemize{
 #' 
-#' \item{\code{population} --- }
-#' {If \code{level} includes \code{"populaton"}, then
-#' the \code{\link[EGAnet]{EGA}} results for the entire sample}
+#' \item \code{population} --- If \code{level} includes \code{"populaton"}, then
+#' the \code{\link[EGAnet]{EGA}} results for the entire sample
 #' 
-#' \item{\code{group} --- }
-#' {If \code{level} includes \code{"group"}, then
-#' a list containing the \code{\link[EGAnet]{EGA}} results for each \code{group}}
+#' \item \code{group} --- If \code{level} includes \code{"group"}, then
+#' a list containing the \code{\link[EGAnet]{EGA}} results for each \code{group}
 #' 
-#' \item{\code{individual} --- }
-#' {If \code{level} includes \code{"individual"}, then
-#' a list containing the \code{\link[EGAnet]{EGA}} results for each \code{id}}
+#' \item \code{individual} --- If \code{level} includes \code{"individual"}, then
+#' a list containing the \code{\link[EGAnet]{EGA}} results for each \code{id}
 #' 
 #' }
 #' 
@@ -357,7 +331,7 @@
 #' @export
 #' 
 # dynEGA ----
-# Updated 04.09.2023
+# Updated 24.10.2023
 dynEGA <- function(
     # `dynEGA` arguments
     data,  id = NULL, group = NULL,

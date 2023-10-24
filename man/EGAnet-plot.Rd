@@ -52,56 +52,46 @@ plot.invariance(x, p_type = c("p", "p_BH"), p_value = 0.05, ...)
 
 \itemize{
 
-\item{\code{x} --- }
-{\code{\link{EGAnet}} object with available S3 plot method 
-(see full list below)}
+\item \code{x} --- \code{\link{EGAnet}} object with available S3 plot method 
+(see full list below)
 
-\item{\code{color.palette} --- }
-{Character (vector). Either a character (length = 1) from the
+\item \code{color.palette} --- Character (vector). Either a character (length = 1) from the
 pre-defined palettes in \code{\link[EGAnet]{color_palette_EGA}}
 or character (length = total number of communities) using
-HEX codes (see \strong{Color Palettes} and \strong{Examples} sections)}
+HEX codes (see \strong{Color Palettes} and \strong{Examples} sections)
 
-\item{\code{layout} --- }
-{Character (length = 1). Layouts can be set using \code{\link[sna]{gplot.layout}} and the
+\item \code{layout} --- Character (length = 1). Layouts can be set using \code{\link[sna]{gplot.layout}} and the
 ending layout name; for example, \code{gplot.layout.circle} can be set
 in these functions using \code{layout = "circle"} or \code{mode = "circle"}
-(see \strong{Examples})}
+(see \strong{Examples})
 
-\item{\code{base} --- }
-{Numeric (length = 1). Plot to be used as the base for the configuration of the networks.
+\item \code{base} --- Numeric (length = 1). Plot to be used as the base for the configuration of the networks.
 Uses the number of the order in which the plots are input.
-Defaults to \code{1} or the first plot}
+Defaults to \code{1} or the first plot
 
-\item{\code{id} --- }
-{Numeric index(es) or character name(s). IDs to use when plotting 
+\item \code{id} --- Numeric index(es) or character name(s). IDs to use when plotting 
 \code{\link[EGAnet]{dynEGA}} \code{level = "individual"}.
-Defaults to \code{NULL} or 4 IDs drawn at random}
+Defaults to \code{NULL} or 4 IDs drawn at random
 
-\item{\code{plot.type} --- }
-{Character (length = 1). Whether \code{\link[EGAnet]{hierEGA}} 
+\item \code{plot.type} --- Character (length = 1). Whether \code{\link[EGAnet]{hierEGA}} 
 networks should plotted in a stacked, \code{"multilevel"} fashion 
-or as \code{"separate"} plots. Defaults to \code{"multilevel"}}
+or as \code{"separate"} plots. Defaults to \code{"multilevel"}
 
-\item{\code{color.match} --- }
-{Boolean (length = 1). Whether lower order community colors in the 
+\item \code{color.match} --- Boolean (length = 1). Whether lower order community colors in the 
 \code{\link[EGAnet]{hierEGA}} plot should be "matched" and used as 
-the border color for the higher order communities. Defaults to \code{FALSE}}
+the border color for the higher order communities. Defaults to \code{FALSE}
 
-\item{\code{p_type} --- }
-{Character (length = 1). Type of \emph{p}-value when plotting 
+\item \code{p_type} --- Character (length = 1). Type of \emph{p}-value when plotting 
 \code{\link[EGAnet]{invariance}}. Defaults to \code{"p"} or 
 uncorrected \emph{p}-value. Set to \code{"p_BH"} for the 
-Benjamini-Hochberg corrected \emph{p}-value}
+Benjamini-Hochberg corrected \emph{p}-value
 
-\item{\code{p_value} --- }
-{Numeric (length = 1). The \emph{p}-value to use alongside \code{p_type} when 
-plotting \code{\link[EGAnet]{invariance}}. Defaults to \code{0.05}}
+\item \code{p_value} --- Numeric (length = 1). The \emph{p}-value to use alongside \code{p_type} when 
+plotting \code{\link[EGAnet]{invariance}}. Defaults to \code{0.05}
 
-\item{\code{...} --- }
-{Additional arguments to pass on to
+\item \code{...} --- Additional arguments to pass on to
 \code{\link[GGally]{ggnet2}} and \code{\link[sna]{gplot.layout}}
-(see \strong{Examples})}
+(see \strong{Examples})
 
 }
 }

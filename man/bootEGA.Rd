@@ -37,25 +37,21 @@ Available options:
 
 \itemize{
 
-\item{\code{"auto"} --- }
-{Automatically computes appropriate correlations for
+\item \code{"auto"} --- Automatically computes appropriate correlations for
 the data using Pearson's for continuous, polychoric for ordinal,
 tetrachoric for binary, and polyserial/biserial for ordinal/binary with
 continuous. To change the number of categories that are considered
 ordinal, use \code{ordinal.categories}
-(see \code{\link[EGAnet]{polychoric.matrix}} for more details)}
+(see \code{\link[EGAnet]{polychoric.matrix}} for more details)
 
-\item{\code{"cor_auto"} --- }
-{Uses \code{\link[qgraph]{cor_auto}} to compute correlations. Arguments
-can be passed along to the function}
+\item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations. 
+Arguments can be passed along to the function
 
-\item{\code{"pearson"} --- }
-{Pearson's correlation is computed for all variables regardless of
-categories}
+\item \code{"pearson"} --- Pearson's correlation is computed for all 
+variables regardless of categories
 
-\item{\code{"spearman"} --- }
-{Spearman's rank-order correlation is computed for all variables
-regardless of categories}
+\item \code{"spearman"} --- Spearman's rank-order correlation is computed 
+for all variables regardless of categories
 
 }
 
@@ -69,12 +65,10 @@ Available options:
 
 \itemize{
 
-\item{\code{"pairwise"} --- }
-{Computes correlation for all available cases between
-two variables}
+\item \code{"pairwise"} --- Computes correlation for all available cases between
+two variables
 
-\item{\code{"listwise"} --- }
-{Computes correlation for all complete cases in the dataset}
+\item \code{"listwise"} --- Computes correlation for all complete cases in the dataset
 
 }}
 
@@ -84,19 +78,16 @@ Available options:
 
 \itemize{
 
-\item{\code{"BGGM"} --- }
-{Computes the Bayesian Gaussian Graphical Model.
+\item \code{"BGGM"} --- Computes the Bayesian Gaussian Graphical Model.
 Set argument \code{ordinal.categories} to determine
 levels allowed for a variable to be considered ordinal.
-See \code{\link[BGGM]{estimate}} for more details}
+See \code{\link[BGGM]{estimate}} for more details
 
-\item{\code{"glasso"} --- }
-{Computes the GLASSO with EBIC model selection.
-See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details}
+\item \code{"glasso"} --- Computes the GLASSO with EBIC model selection.
+See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details
 
-\item{\code{"TMFG"} --- }
-{Computes the TMFG method.
-See \code{\link[EGAnet]{TMFG}} for more details}
+\item \code{"TMFG"} --- Computes the TMFG method.
+See \code{\link[EGAnet]{TMFG}} for more details
 
 }}
 
@@ -108,18 +99,15 @@ Three options are listed below but all are available
 
 \itemize{
 
-\item{\code{"leiden"} --- }
-{See \code{\link[igraph]{cluster_leiden}} for more details}
+\item \code{"leiden"} --- See \code{\link[igraph]{cluster_leiden}} for more details
 
-\item{\code{"louvain"} --- }
-{By default, \code{"louvain"} will implement the Louvain algorithm using 
+\item \code{"louvain"} --- By default, \code{"louvain"} will implement the Louvain algorithm using 
 the consensus clustering method (see \code{\link[EGAnet]{community.consensus}} 
 for more information). This function will implement
 \code{consensus.method = "most_common"} and \code{consensus.iter = 1000} 
-unless specified otherwise}
+unless specified otherwise
 
-\item{\code{"walktrap"} --- }
-{See \code{\link[igraph]{cluster_walktrap}} for more details}
+\item \code{"walktrap"} --- See \code{\link[igraph]{cluster_walktrap}} for more details
 
 }}
 
@@ -130,28 +118,25 @@ Available options:
 
 \itemize{
 
-\item{\code{"expand"} --- }
-{Expands the correlation matrix with four variables correlated 0.50.
+\item \code{"expand"} --- Expands the correlation matrix with four variables correlated 0.50.
 If number of dimension returns 2 or less in check, then the data 
 are unidimensional; otherwise, regular EGA with no matrix
 expansion is used. This method was used in the Golino et al.'s (2020)
-\emph{Psychological Methods} simulation}
+\emph{Psychological Methods} simulation
 
-\item{\code{"LE"} --- }
-{Applies the Leading Eigenvector algorithm
+\item \code{"LE"} --- Applies the Leading Eigenvector algorithm
 (\code{\link[igraph]{cluster_leading_eigen}})
 on the empirical correlation matrix. If the number of dimensions is 1,
 then the Leading Eigenvector solution is used; otherwise, regular EGA
 is used. This method was used in the Christensen et al.'s (2023) 
-\emph{Behavior Research Methods} simulation}
+\emph{Behavior Research Methods} simulation
 
-\item{\code{"louvain"} --- }
-{Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
+\item \code{"louvain"} --- Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
 on the empirical correlation matrix. If the number of dimensions is 1, 
 then the Louvain solution is used; otherwise, regular EGA is used. 
 This method was validated Christensen's (2022) \emph{PsyArXiv} simulation.
 Consensus clustering can be used by specifying either
-\code{"consensus.method"} or \code{"consensus.iter"}}
+\code{"consensus.method"} or \code{"consensus.iter"}
 
 }}
 
@@ -166,14 +151,12 @@ Available options:
 
 \itemize{
 
-\item{\code{"parametric"} --- }
-{Generates \code{iter} new datasets from
+\item \code{"parametric"} --- Generates \code{iter} new datasets from
 (multivariate normal random distributions) based on the
-original dataset using \code{\link[MASS]{mvrnorm}}}
+original dataset using \code{\link[MASS]{mvrnorm}}
 
-\item{\code{"resampling"} --- }
-{Generates \code{iter} new datasets from random subsamples 
-of the original data}
+\item \code{"resampling"} --- Generates \code{iter} new datasets from random subsamples 
+of the original data
 
 }}
 
@@ -193,18 +176,14 @@ Available options:
 
 \itemize{
 
-\item{\code{"\link[EGAnet]{EGA}"} --- }
-{Uses standard exploratory graph analysis}
+\item \code{"\link[EGAnet]{EGA}"} --- Uses standard exploratory graph analysis
 
-\item{\code{"\link[EGAnet]{EGA.fit}"} --- }
-{Uses \code{\link[EGAnet]{tefi}} to determine best fit of
-\code{\link[EGAnet]{EGA}}}
+\item \code{"\link[EGAnet]{EGA.fit}"} --- Uses \code{\link[EGAnet]{tefi}} to determine best fit of
+\code{\link[EGAnet]{EGA}}
 
-\item{\code{"\link[EGAnet]{hierEGA}"} --- }
-{Uses hierarhical exploratory graph analysis}
+\item \code{"\link[EGAnet]{hierEGA}"} --- Uses hierarchical exploratory graph analysis
 
-\item{\code{"\link[EGAnet]{riEGA}"} --- }
-{Uses random-intercept exploratory graph analysis}
+\item \code{"\link[EGAnet]{riEGA}"} --- Uses random-intercept exploratory graph analysis
 
 }
 
@@ -274,14 +253,11 @@ quantiles (lower = 2.5\% and upper = 97.5\%)}
 
 \itemize{
 
-\item{\code{graph} --- }
-{Network matrix of the median network structure}
+\item \code{graph} --- Network matrix of the median network structure
 
-\item{\code{typical.dim.variables} --- }
-{An ordered matrix of item allocation}
+\item \code{typical.dim.variables} --- An ordered matrix of item allocation
 
-\item{\code{wc} --- }
-{Membership assignments of the median network}
+\item \code{wc} --- Membership assignments of the median network
 
 }
 
