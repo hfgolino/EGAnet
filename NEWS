@@ -18,7 +18,8 @@ o UPDATE: when `structure` is supplied for `invariance`, then configural check i
 
 o UPDATE: added data generation for `model = "BGGM"` and `uni.method = "expand"` in `community.unidimensional`
 
-o DEPENDENCY: {BGGM} has been moved to "Suggests" for the time being -- there are some CRAN check issues in the dependency chain that is not allowing {EGAnet} to be on CRAN otherwise
+o DEPENDENCY: {BGGM} has been removed until dependency chain on CRAN can be resolved
+
 
 Changes in version 2.0.1
 

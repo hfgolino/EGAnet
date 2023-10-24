@@ -156,55 +156,9 @@ network.estimation <- function(
   na.data <- set_default(na.data, "pairwise", network.estimation)
   model <- set_default(model, "glasso", network.estimation)
   
-  # Temporary catch for {BGGM}
+  # Check for {BGGM}
   if(model == "bggm"){
-    
-    # Check for necessary packages
-    necessary_packages <- ulapply(.libPaths(), list.files)
-    
-    # Check for {BFpack}
-    BFpack_installed <- "BFpack" %in% necessary_packages
-    
-    # Check for {BGGM}
-    BGGM_installed <- "BGGM" %in% necessary_packages
-    
-    # Set up message
-    message <- ""
-    
-    # Check for both
-    if(!BFpack_installed & !BGGM_installed){
-      
-      # Send error instruction
-      stop(
-        "`model = \"BGGM\"` was selected but some necesary packages are not installed\n",
-        "Please install these packages using the following code:\n\n",
-        "devtools::install_github(\"cran/BFpack\")\n\n",
-        "devtools::install_github(\"cran/BGGM\")\n\n",
-        "After these packages are installed, try your code again"
-      )
-
-    }else if(!BFpack_installed & BGGM_installed){
-      
-      # Send error instruction
-      stop(
-        "`model = \"BGGM\"` was selected but package {BFpack} is not installed\n",
-        "Please install {BFpack} using the following code:\n\n",
-        "devtools::install_github(\"cran/BFpack\")\n\n",
-        "After {BFpack} is installed, try your code again"
-      )
-      
-    }else if(BFpack_installed & !BGGM_installed){
-      
-      # Send error instruction
-      stop(
-        "`model = \"BGGM\"` was selected but package {BGGM} is not installed\n",
-        "Please install {BGGM} using the following code:\n\n",
-        "devtools::install_github(\"cran/BGGM\")\n\n",
-        "After {BGGM} is installed, try your code again"
-      )
-      
-    }
-    
+    stop("Due to CRAN check issues, `model = \"BGGM\"` is not available at the moment.")
   }
   
   # Obtain ellipse arguments
@@ -240,48 +194,48 @@ network.estimation <- function(
   # For 'model = "BGGM"', take a different path...
   if(model == "bggm"){
   
-    # Obtain arguments for `BGGM`
-    bggm_estimate_ARGS <- obtain_arguments(
-      silent_load(BGGM::estimate), 
-      FUN.args = ellipse 
-    )
-    
-    # Check for override of 'type'
-    bggm_estimate_ARGS$type <- find_BGGM_type(data, ellipse)
-    
-    # Send 'data' and 'verbose' to arguments
-    bggm_estimate_ARGS$Y <- data
-    bggm_estimate_ARGS$progress <- verbose
-    
-    # Perform BGGM estimate
-    bggm_output <- do.call(
-      what = BGGM::estimate,
-      args = bggm_estimate_ARGS
-    )
-    
-    # Determine `select` arguments
-    ## Uses `overwrite_arguments` instead of
-    ## `obtain_arguments` because `BGGM::select`
-    ## is an S3method. It's possible to use
-    ## `BGGM:::select.estimate` but CRAN gets
-    ## mad about triple colons
-    bggm_select_ARGS <- overwrite_arguments(
-      list( # defaults for `BGGM:::select.estimate`
-        cred = 0.95, alternative = "two.sided"
-      ), ARGS = ellipse
-    )
-    
-    # Send 'bggm_output' to arguments
-    bggm_select_ARGS$object <- bggm_output
-    
-    # Perform BGGM select
-    bggm_select <- do.call(
-      what = BGGM::select,
-      args = bggm_select_ARGS
-    )
-    
-    # Obtain network (regardless of 'network.only')
-    estimated_network <- bggm_select$pcor_adj
+    # # Obtain arguments for `BGGM`
+    # bggm_estimate_ARGS <- obtain_arguments(
+    #   silent_load(BGGM::estimate), 
+    #   FUN.args = ellipse 
+    # )
+    # 
+    # # Check for override of 'type'
+    # bggm_estimate_ARGS$type <- find_BGGM_type(data, ellipse)
+    # 
+    # # Send 'data' and 'verbose' to arguments
+    # bggm_estimate_ARGS$Y <- data
+    # bggm_estimate_ARGS$progress <- verbose
+    # 
+    # # Perform BGGM estimate
+    # bggm_output <- do.call(
+    #   what = BGGM::estimate,
+    #   args = bggm_estimate_ARGS
+    # )
+    # 
+    # # Determine `select` arguments
+    # ## Uses `overwrite_arguments` instead of
+    # ## `obtain_arguments` because `BGGM::select`
+    # ## is an S3method. It's possible to use
+    # ## `BGGM:::select.estimate` but CRAN gets
+    # ## mad about triple colons
+    # bggm_select_ARGS <- overwrite_arguments(
+    #   list( # defaults for `BGGM:::select.estimate`
+    #     cred = 0.95, alternative = "two.sided"
+    #   ), ARGS = ellipse
+    # )
+    # 
+    # # Send 'bggm_output' to arguments
+    # bggm_select_ARGS$object <- bggm_output
+    # 
+    # # Perform BGGM select
+    # bggm_select <- do.call(
+    #   what = BGGM::select,
+    #   args = bggm_select_ARGS
+    # )
+    # 
+    # # Obtain network (regardless of 'network.only')
+    # estimated_network <- bggm_select$pcor_adj
     
   }else{ # Non-BGGM methods
     

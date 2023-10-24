@@ -29,7 +29,7 @@ Imports: future, future.apply, glasso, GGally,
          ggdendro, ggplot2, ggpubr, GPArotation, 
          igraph (>= 1.3.0), lavaan, Matrix, methods, 
          network, progressr, qgraph, semPlot, sna, stats
-Suggests: BGGM, fitdistrplus, fungible, gridExtra, knitr, markdown,
+Suggests: fitdistrplus, fungible, gridExtra, knitr, markdown,
           pbapply, progress, psych, pwr, RColorBrewer
 URL: https://r-ega.net
 BugReports: https://github.com/hfgolino/EGAnet/issues

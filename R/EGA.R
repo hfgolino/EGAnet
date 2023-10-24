@@ -242,7 +242,7 @@
 #'
 #' @export
 # EGA ----
-# Updated 07.09.2023
+# Updated 24.10.2023
 EGA <- function (
     data, n = NULL,
     corr = c("auto", "cor_auto", "pearson", "spearman"),
@@ -294,13 +294,18 @@ EGA <- function (
     cred = 0.95, alternative = "two.sided"
   )
   
+  # Check for {BGGM}
+  if(model == "bggm"){
+    stop("Due to CRAN check issues, `model = \"BGGM\"` is not available at the moment.")
+  }
+  
   # Obtain arguments for model
   model_ARGS <- switch(
     model_attributes$model,
-    "bggm" = c(
-      obtain_arguments(BGGM::estimate, model_attributes),
-      overwrite_arguments(bggm_select_ARGS, model_attributes)
-    ),
+    # "bggm" = c(
+    #   obtain_arguments(BGGM::estimate, model_attributes),
+    #   overwrite_arguments(bggm_select_ARGS, model_attributes)
+    # ),
     "glasso" = obtain_arguments(EBICglasso.qgraph, model_attributes),
     "tmfg" = obtain_arguments(TMFG, model_attributes)
   )

@@ -1368,10 +1368,15 @@ estimate_typical_EGA.fit <- function(results, ellipse)
   model <- tolower(model_attributes$model)
   algorithm <- tolower(algorithm_attributes$algorithm)
   
+  # Check for {BGGM}
+  if(model == "bggm"){
+    stop("Due to CRAN check issues, `model = \"BGGM\"` is not available at the moment.")
+  }
+  
   # Get network
   network <- switch(
     model,
-    "bggm" = symmetric_matrix_lapply(results$bootGraphs, median),
+    # "bggm" = symmetric_matrix_lapply(results$bootGraphs, median),
     "glasso" = symmetric_matrix_lapply(results$bootGraphs, median),
     "tmfg" = symmetric_matrix_lapply(results$bootGraphs, mean)
   )
@@ -1446,7 +1451,7 @@ estimate_typical_EGA.fit <- function(results, ellipse)
 
 #' @noRd
 # Typical network and memberships ----
-# Updated 31.07.2023
+# Updated 24.10.2023
 estimate_typicalStructure <- function(
     data, results, verbose, ...
 )
@@ -1475,13 +1480,18 @@ estimate_typicalStructure <- function(
   algorithm <- tolower(algorithm_attributes$algorithm)
   uni.method <- tolower(unidimensional_attributes$uni.method)
   
+  # Check for {BGGM}
+  if(model == "bggm"){
+    stop("Due to CRAN check issues, `model = \"BGGM\"` is not available at the moment.")
+  }
+  
   # Branch for hierarchical EGA
   if(results$EGA.type == "hierega"){
     
     # Get network
     network <- switch(
       model,
-      "bggm" = symmetric_matrix_lapply(results$lower_order$bootGraphs, median),
+      # "bggm" = symmetric_matrix_lapply(results$lower_order$bootGraphs, median),
       "glasso" = symmetric_matrix_lapply(results$lower_order$bootGraphs, median),
       "tmfg" = symmetric_matrix_lapply(results$lower_order$bootGraphs, mean)
     )
@@ -1491,7 +1501,7 @@ estimate_typicalStructure <- function(
     # Get network
     network <- switch(
       model,
-      "bggm" = symmetric_matrix_lapply(results$bootGraphs, median),
+      # "bggm" = symmetric_matrix_lapply(results$bootGraphs, median),
       "glasso" = symmetric_matrix_lapply(results$bootGraphs, median),
       "tmfg" = symmetric_matrix_lapply(results$bootGraphs, mean)
     )
@@ -1550,13 +1560,13 @@ estimate_typicalStructure <- function(
   # Obtain arguments for model
   model_ARGS <- switch(
     model,
-    "bggm" = c(
-      obtain_arguments(BGGM::estimate, model_attributes),
-      overwrite_arguments(
-        # defaults for `BGGM:::select.estimate`
-        list(cred = 0.95, alternative = "two.sided"), model_attributes
-      )
-    ),
+    # "bggm" = c(
+    #   obtain_arguments(BGGM::estimate, model_attributes),
+    #   overwrite_arguments(
+    #     # defaults for `BGGM:::select.estimate`
+    #     list(cred = 0.95, alternative = "two.sided"), model_attributes
+    #   )
+    # ),
     "glasso" = obtain_arguments(EBICglasso.qgraph, model_attributes),
     "tmfg" = obtain_arguments(TMFG, model_attributes)
   )
