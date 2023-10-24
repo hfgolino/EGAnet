@@ -136,7 +136,7 @@ Available options:
 \item \code{"BGGM"} --- Computes the Bayesian Gaussian Graphical Model.
 Set argument \code{ordinal.categories} to determine
 levels allowed for a variable to be considered ordinal.
-See \code{\link[BGGM]{estimate}} for more details
+See \code{?BGGM::estimate} for more details
 
 \item \code{"glasso"} --- Computes the GLASSO with EBIC model selection.
 See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details
