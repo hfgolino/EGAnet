@@ -10,7 +10,8 @@ compare.EGA.plots(
   base = 1,
   labels = NULL,
   rows = NULL,
-  columns = NULL
+  columns = NULL,
+  plot.all = TRUE
 )
 }
 \arguments{
@@ -49,6 +50,12 @@ Number of rows to spread plots across}
 
 \item{columns}{Numeric (length = 1).
 Number of columns to spread plots down}
+
+\item{plot.all}{Boolean (length = 1).
+Whether plot should be produced or just output.
+Defaults to \code{TRUE}.
+Set to \code{FALSE} to avoid plotting (but still obtain
+plot objects)}
 }
 \value{
 Visual comparison of \code{\link{EGAnet}} objects

@@ -38,6 +38,12 @@
 #' 
 #' @param columns Numeric (length = 1).
 #' Number of columns to spread plots down
+#' 
+#' @param plot.all Boolean (length = 1).
+#' Whether plot should be produced or just output.
+#' Defaults to \code{TRUE}.
+#' Set to \code{FALSE} to avoid plotting (but still obtain
+#' plot objects)
 #'
 #' @return Visual comparison of \code{\link{EGAnet}} objects
 #' 
@@ -76,10 +82,11 @@
 #' @export
 #
 # Compare EGA plots ----
-# Updated 24.10.2023
+# Updated 26.10.2023
 compare.EGA.plots <- function(
   ..., input.list = NULL, base = 1,
-  labels = NULL, rows = NULL, columns = NULL
+  labels = NULL, rows = NULL, columns = NULL,
+  plot.all = TRUE
 )
 {
   
@@ -283,18 +290,21 @@ compare.EGA.plots <- function(
   ]
   
   # Store plots all-in-one
-  all_in_one <- silent_plot(
-    do.call(
-      what = ggpubr::ggarrange,
-      args = c(
-        list(
-          plotlist = plotlist,
-          labels = labels,
-          legend = "bottom"
-        ), ellipse
-      )
+  all_in_one <- do.call(
+    what = ggpubr::ggarrange,
+    args = c(
+      list(
+        plotlist = plotlist,
+        labels = labels,
+        legend = "bottom"
+      ), ellipse
     )
   )
+  
+  # Should the plot be produced?
+  if(isTRUE(plot.all)){
+    silent_plot(all_in_one)
+  }
   
   # Check for labels
   if(is.null(labels)){

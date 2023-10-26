@@ -242,20 +242,27 @@ reproducible_seeds <- function(n, seed = NULL)
 
 #' @noRd
 # Generate uniform data ----
-# Always between 0 and 1
-# Updated 30.07.2023
-runif_xoshiro <- function(n, seed = NULL)
+# Allows adjustment of range
+# Updated 26.10.2023
+runif_xoshiro <- function(n, min = 0, max = 1, seed = NULL)
 {
   
-  # Return call from C
-  return(
-    .Call(
-      "r_xoshiro_uniform",
-      as.integer(n),
-      swiftelse(is.null(seed), 0, seed),
-      PACKAGE = "EGAnet"
-    )
+  # Get values
+  values <- .Call(
+    "r_xoshiro_uniform",
+    as.integer(n),
+    swiftelse(is.null(seed), 0, seed),
+    PACKAGE = "EGAnet"
   )
+  
+  # Check for changes to minimum and maximum
+  if(min != 0 || max != 1){ # transform
+    values <- min + (max - min) * values
+  }
+  
+  
+  # Return call from C
+  return(values)
   
 }
 
@@ -2754,12 +2761,16 @@ pcor2inv <- function(partial_correlations)
 #' @noRd
 # Rewire networks ----
 # About 10x faster than previous implementation
-# Updated 30.07.2023
+# Updated 26.10.2023
 rewire <- function(
     network, min = 0.20, max = 0.40,
-    noise = 0.10, lower_triangle
+    noise = 0.10, lower_triangle,
+    seed = NULL
 )
 {
+  
+  # Generate seeds
+  seeds <- reproducible_seeds(n = 4, seed = seed)
   
   # Work only with the lower triangle
   lower_network <- network[lower_triangle]
@@ -2775,18 +2786,22 @@ rewire <- function(
     
     # Only add to existing edges
     lower_network[non_zero_edges] <- 
-      lower_network[non_zero_edges] + runif(edges, -noise, noise)
+      lower_network[non_zero_edges] + runif_xoshiro(
+        n = edges, min = -noise, max = noise, seed = seeds[1]
+      )
     
   }
   
   # Number of edges to rewire
-  rewire_edges <- floor(edges * runif(1, min, max))
+  rewire_edges <- floor(edges * runif_xoshiro(1, min, max, seeds[2]))
   
   # Get rewiring indices
-  rewire_index <- shuffle(non_zero_edges, size = rewire_edges)
+  rewire_index <- shuffle(non_zero_edges, size = rewire_edges, seed = seeds[3])
   
   # Get replacement indices
-  replace_index <- shuffle(seq_along(lower_network), size = rewire_edges)
+  replace_index <- shuffle(
+    seq_along(lower_network), size = rewire_edges, seed = seeds[4]
+  )
   
   # Make a copy of the lower network
   lower_network_original <- lower_network
