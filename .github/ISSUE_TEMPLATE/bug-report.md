@@ -14,9 +14,9 @@ assignees: AlexChristensen
 
 <br />
 
-**Reproducible Example** <br />
-(see [reproducible example](https://stackoverflow.com/questions/5963269/how-to-make-a-great-r-reproducible-example) for more details)
-[Provide code, data, and examples to reproduce bug.]
+**Reproducible Example**
+(see [reproducible example](https://stackoverflow.com/questions/5963269/how-to-make-a-great-r-reproducible-example) for more details) <br />
+[Provide code, data, and examples to reproduce bug.] 
 
 _If the error is specific to your data, then please send along the minimal data necessary in a .RData file to <alexpaulchristensen@gmail.com> with a reference to this issue_
 
