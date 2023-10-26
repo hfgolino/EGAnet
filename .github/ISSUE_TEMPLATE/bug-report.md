@@ -17,6 +17,8 @@ assignees: AlexChristensen
 **Reproducible Example** <br />
 [Provide code, data, and examples to reproduce bug.]
 
+_If the error is specific to your data, then please send along the minimal data necessary in a .RData file to <alexpaulchristensen@gmail.com> with a reference to this issue_
+
 <br />
 
 **Additional Context** <br />
