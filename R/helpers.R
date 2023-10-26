@@ -2442,7 +2442,7 @@ dimension_comparison <- function(original, comparison){
 
 #' @noRd
 # Basic set up for comparing plots ----
-# Updated 28.09.2023
+# Updated 26.10.2023
 compare_plots <- function(comparison_network, comparison_wc, plot_ARGS)
 {
   
@@ -2477,20 +2477,25 @@ compare_plots <- function(comparison_network, comparison_wc, plot_ARGS)
   ## Essentially, the same call but allows some freedom
   plot_ARGS[c("net", "node.color")] <- NULL
   
-  ## Check for "edge" stuff
-  edge_stuff <- c(
-    "edge.alpha", "edge.color", 
-    "edge.lty", "edge.size"
-  )
+  # Check for edges
+  ## Assume more than one edge alpha is default
+  if(length(plot_ARGS[["edge.alpha"]]) > 1){
+    plot_ARGS[["edge.alpha"]] <- NULL
+  }
   
-  ## Check for lengths of "edge" stuff
-  edge_lengths <- edge_stuff[
-    nvapply(plot_ARGS[edge_stuff], length) > 1
-  ]
+  ## Assume more than two edge color is default
+  if(length(plot_ARGS[["edge.color"]]) > 2){
+    plot_ARGS[["edge.color"]] <- NULL
+  }
   
-  ## Get edges arguments
-  if(length(edge_lengths) != 0){
-    plot_ARGS[edge_lengths] <- NULL
+  ## Assume more than two edge line type is default
+  if(length(plot_ARGS[["edge.lty"]]) > 2){
+    plot_ARGS[["edge.lty"]] <- NULL
+  }
+  
+  ## Assume more than one edge size is default
+  if(length(plot_ARGS[["edge.size"]]) > 1){
+    plot_ARGS[["edge.size"]] <- NULL
   }
   
   # Send on and return from `basic_plot_setup`
