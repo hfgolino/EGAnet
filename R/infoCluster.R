@@ -129,9 +129,6 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
   
   # Check if single cluster
   if(unique_length(clusters) == 1){
-
-    # Get lower triangle
-    lower_triangle <- lower.tri(individual_networks[[1]])
     
     # Generate random networks
     random_networks <- lapply(
@@ -155,6 +152,9 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
 
     # Make diagonal 0 again
     diag(jsd_random_matrix) <- 0
+    
+    # Get lower triangle
+    lower_triangle <- lower.tri(individual_networks[[1]])
 
     # Compare to empirical
     comparison <- t.test(
@@ -184,7 +184,7 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
     )
     
     # Check for empirical JSD > random JSD OR non-significant t-test
-    if(comparison_sign == 1 | abs(cohens_d) < 0.20){
+    if(comparison_sign == 1 || abs(cohens_d) < 0.20){
       
       # Set clusters to all individuals
       clusters <- cut_sequence
