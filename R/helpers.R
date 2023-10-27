@@ -2761,71 +2761,64 @@ pcor2inv <- function(partial_correlations)
 #' @noRd
 # Rewire networks ----
 # About 10x faster than previous implementation
-# Updated 26.10.2023
-rewire <- function(
-    network, min = 0.20, max = 0.40,
-    noise = 0.10, lower_triangle,
-    seed = NULL
-)
+# Updated 27.10.2023
+rewire <- function(network, p)
 {
   
-  # Generate seeds
-  seeds <- reproducible_seeds(n = 4, seed = seed)
+  # Get number of nodes
+  nodes <- dim(network)[2]
   
-  # Work only with the lower triangle
-  lower_network <- network[lower_triangle]
+  # Get node sequence
+  node_sequence <- seq_len(nodes)
+  
+  # Get sparse matrix
+  sparse_network <- data.frame(
+    row = rep(node_sequence, times = nodes),
+    col = rep(node_sequence, each = nodes),
+    weight = as.vector(network)
+  )
   
   # Get non-zero edges
-  non_zero_edges <- which(lower_network != 0)
+  sparse_network <- sparse_network[sparse_network$weight != 0,]
   
-  # Number of edges
-  edges <- length(non_zero_edges)
+  # Get number of edges
+  edges <- dim(sparse_network)[1]
   
-  # Add noise
-  if(!is.null(noise)){
+  # Get edge sequence
+  edge_sequence <- seq_len(edges)
+  
+  # Get number of edges to rewire
+  rewire_number <- ceiling(edges * p)
+  
+  # Get indices to rewire
+  rewire_index <- shuffle(edge_sequence, rewire_number)
+  
+  # Loop over indices to ensure no self loops
+  for(i in seq_len(rewire_number)){
     
-    # Only add to existing edges
-    lower_network[non_zero_edges] <- 
-      lower_network[non_zero_edges] + runif_xoshiro(
-        n = edges, min = -noise, max = noise, seed = seeds[1]
-      )
+    # Get current node
+    current_node <- sparse_network$row[rewire_index[i]]
+    
+    # Get randomly assigned nodes
+    sparse_network$col[rewire_index[i]] <- shuffle(setdiff(node_sequence, current_node), size = 1)
     
   }
   
-  # Number of edges to rewire
-  rewire_edges <- floor(edges * runif_xoshiro(1, min, max, seeds[2]))
+  # Populate rewired network
+  rewired_network <- matrix(0, nrow = nodes, ncol = nodes)
   
-  # Get rewiring indices
-  rewire_index <- shuffle(non_zero_edges, size = rewire_edges, seed = seeds[3])
+  # Loop over sparse network
+  for(i in edge_sequence){
+    
+    # Update network
+    rewired_network[sparse_network$row[i], sparse_network$col[i]] <-
+    rewired_network[sparse_network$col[i], sparse_network$row[i]] <-
+    sparse_network$weight[i]
+    
+  }
   
-  # Get replacement indices
-  replace_index <- shuffle(
-    seq_along(lower_network), size = rewire_edges, seed = seeds[4]
-  )
-  
-  # Make a copy of the lower network
-  lower_network_original <- lower_network
-  
-  # Replace values
-  lower_network[rewire_index] <- lower_network_original[replace_index]
-  lower_network[replace_index] <- lower_network_original[rewire_index]
-  
-  # Get nodes in original network
-  nodes <- dim(network)[2]
-  
-  # Initialize a new network
-  new_network <- matrix(
-    0, nrow = nodes, ncol = nodes,
-    dimnames = dimnames(network)
-  )
-  
-  # Replace values
-  new_network[lower_triangle] <- lower_network
-  new_network <- t(new_network)
-  new_network[lower_triangle] <- lower_network
-  
-  # Return the rewired network
-  return(new_network)
+  # Return rewired network
+  return(transfer_names(network, rewired_network))
   
 }
 

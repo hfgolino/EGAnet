@@ -192,8 +192,9 @@ boot.ergoInfo <- function(
             individual_networks, function(x){
               list(
                 network = rewire(
-                  network = x, min = 0.20, max = 0.40,
-                  noise = 0.10, lower_triangle = lower_triangle
+                  network = x, p = runif_xoshiro(
+                    1, min = 0.20, max = 0.40
+                  )
                 )
               )
             }
