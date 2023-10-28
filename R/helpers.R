@@ -2761,7 +2761,7 @@ pcor2inv <- function(partial_correlations)
 #' @noRd
 # Rewire networks ----
 # About 10x faster than previous implementation
-# Updated 27.10.2023
+# Updated 28.10.2023
 rewire <- function(network, p)
 {
   
@@ -2778,13 +2778,19 @@ rewire <- function(network, p)
     weight = as.vector(network)
   )
   
-  # Get non-zero edges
-  sparse_network <- sparse_network[sparse_network$weight != 0,]
-  
   # Get one-way edges
   sparse_network <- sparse_network[
     sparse_network$row < sparse_network$col,
   ]
+  
+  # Get non-zero edges
+  non_zero <- sparse_network$weight != 0
+  
+  # Get number of zero edges
+  zero_edges <- sum(!non_zero)
+  
+  # Get non-zero edges
+  sparse_network <- sparse_network[sparse_network$weight != 0,]
   
   # Get number of edges
   edges <- dim(sparse_network)[1]
@@ -2793,7 +2799,7 @@ rewire <- function(network, p)
   edge_sequence <- seq_len(edges)
   
   # Get number of edges to rewire
-  rewire_number <- ceiling(edges * p)
+  rewire_number <- ceiling(zero_edges * p)
   
   # Get indices to rewire
   rewire_index <- shuffle(edge_sequence, rewire_number)
