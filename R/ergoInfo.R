@@ -64,7 +64,7 @@
 #' @export
 #'
 # Ergodicity Information Index ----
-# Updated 24.10.2023
+# Updated 28.10.2023
 ergoInfo <- function(
     dynEGA.object,
     use = c("edge.list", "unweighted", "weighted"),
@@ -254,7 +254,7 @@ ergoInfo <- function(
       # Return k-complexity
       return(
         k_complexity(
-          edge_list[ # rows
+          population_edge_list[ # rows
             shuffle_replace(population_edge_sequence),
             keep_weights # either pairwise edges or weights
           ],
