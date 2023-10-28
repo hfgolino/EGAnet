@@ -2786,14 +2786,20 @@ rewire <- function(network, p)
   # Get non-zero edges
   non_zero <- sparse_network$weight != 0
   
-  # Get number of zero edges
-  zero_edges <- sum(!non_zero)
+  # Get zero edges
+  zero <- !non_zero
   
-  # Get non-zero edges
-  sparse_network <- sparse_network[sparse_network$weight != 0,]
+  # Get sparse zero edges
+  sparse_zero <- sparse_network[zero,]
   
-  # Get number of edges
+  # Get sparse non-zero edges
+  sparse_network <- sparse_network[non_zero,]
+  
+  # Get number of non-zero edges
   edges <- dim(sparse_network)[1]
+  
+  # Get number of zero edges
+  zero_edges <- dim(sparse_zero)[1]
   
   # Get edge sequence
   edge_sequence <- seq_len(edges)
@@ -2810,16 +2816,28 @@ rewire <- function(network, p)
     # Get current node
     current_node <- sparse_network$row[rewire_index[i]]
     
-    # Current neighbors
-    current_neighbors <- c(
-      sparse_network$col[sparse_network$row == current_node],
-      sparse_network$row[sparse_network$col == current_node]
-    )
+    # Get possible rewire index
+    row_index <- which(sparse_zero$row == current_node)
+    column_index <- which(sparse_zero$col == current_node)
+    
+    # Get possible node index
+    row_node_index <- sparse_zero$col[row_index]
+    column_node_index <- sparse_zero$row[column_index]
+    
+    # Possible rewires
+    possible_rewire <- c(row_node_index, column_node_index)
+    
+    # Add names
+    names(possible_rewire) <- c(row_index, column_index)
+    
+    # Get rewire node
+    rewire_node <- shuffle(possible_rewire, size = 1)
     
     # Get randomly assigned nodes
-    sparse_network$col[rewire_index[i]] <- shuffle(
-      setdiff(node_sequence, c(current_node, current_neighbors)), size = 1
-    )
+    sparse_network$col[rewire_index[i]] <- rewire_node
+    
+    # Remove possibility from sparse zero
+    sparse_zero <- sparse_zero[-as.numeric(names(rewire_node)),]
     
   }
   
