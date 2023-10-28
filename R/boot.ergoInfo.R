@@ -141,7 +141,7 @@
 #'
 #' @export
 # Bootstrap Test for the Ergodicity Information Index
-# Updated 24.10.2023
+# Updated 28.10.2023
 boot.ergoInfo <- function(
     dynEGA.object, EII, 
     use = c("edge.list", "unweighted", "weighted"),
@@ -193,7 +193,7 @@ boot.ergoInfo <- function(
               list(
                 network = rewire(
                   network = x, p = runif_xoshiro(
-                    1, min = 0.20, max = 0.40
+                    1, min = 0.10, max = 0.20
                   )
                 )
               )
