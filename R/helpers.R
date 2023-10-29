@@ -2761,7 +2761,7 @@ pcor2inv <- function(partial_correlations)
 #' @noRd
 # Rewire networks ----
 # About 10x faster than previous implementation
-# Updated 28.10.2023
+# Updated 29.10.2023
 rewire <- function(network, p)
 {
   
@@ -2810,34 +2810,48 @@ rewire <- function(network, p)
   # Get indices to rewire
   rewire_index <- shuffle(edge_sequence, rewire_number)
   
+  # Get row or column
+  rewire_dimension <- swiftelse(
+    runif_xoshiro(rewire_number) < 0.50, 1, 2
+  )
+
   # Loop over indices to ensure no self loops
   for(i in seq_len(rewire_number)){
     
     # Get current node
-    current_node <- sparse_network$row[rewire_index[i]]
+    current_node <- sparse_network[
+      rewire_index[i], rewire_dimension[i]
+    ]
     
     # Get possible rewire index
     row_index <- which(sparse_zero$row == current_node)
     column_index <- which(sparse_zero$col == current_node)
     
-    # Get possible node index
-    row_node_index <- sparse_zero$col[row_index]
-    column_node_index <- sparse_zero$row[column_index]
+    # Get possible nodes
+    row_node <- sparse_zero$col[row_index]
+    column_node <- sparse_zero$row[column_index]
     
     # Possible rewires
-    possible_rewire <- c(row_node_index, column_node_index)
+    possible_rewire <- c(row_node, column_node)
     
-    # Add names
-    names(possible_rewire) <- c(row_index, column_index)
-    
-    # Get rewire node
-    rewire_node <- shuffle(possible_rewire, size = 1)
-    
-    # Get randomly assigned nodes
-    sparse_network$col[rewire_index[i]] <- rewire_node
-    
-    # Remove possibility from sparse zero
-    sparse_zero <- sparse_zero[-as.numeric(names(rewire_node)),]
+    # Skip if no possible rewire
+    if(length(possible_rewire) != 0){
+      
+      # Add names
+      names(possible_rewire) <- c(row_index, column_index)
+      
+      # Get rewire node
+      rewire_node <- shuffle(possible_rewire, size = 1)
+      
+      # Get randomly assigned nodes
+      sparse_network[
+        rewire_index[i], 3 - rewire_dimension[i]
+      ] <- rewire_node
+      
+      # Remove possibility from sparse zero
+      sparse_zero <- sparse_zero[-as.numeric(names(rewire_node)),]
+      
+    }
     
   }
   
