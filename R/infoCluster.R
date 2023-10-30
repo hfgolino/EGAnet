@@ -46,7 +46,7 @@
 #' @export
 #' 
 # Information Theoretic Clustering for dynEGA
-# Updated 22.10.2023
+# Updated 30.10.2023
 infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
 {
   
@@ -132,8 +132,8 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
     
     # Generate random networks
     random_networks <- lapply(
-      individual_networks, rewire,
-      p = runif(1, min = 0.10, max = 0.20)
+      individual_networks, igraph_rewire,
+      prob = runif_xoshiro(1, min = 0.10, max = 0.20)
     )
     
     # Get the random JSD matrix

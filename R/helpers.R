@@ -2759,6 +2759,23 @@ pcor2inv <- function(partial_correlations)
 #%%%%%%%%%%%%%%%%%%%%%%%%
 
 #' @noRd
+# Rewiring based on {igraph}
+# Updated 30.10.2023
+igraph_rewire <- function(network, prob)
+{
+  
+  return(
+    igraph2matrix(
+      igraph::rewire(
+        graph = convert2igraph(network),
+        with = igraph::each_edge(prob = prob)
+      )
+    )
+  )
+
+}
+
+#' @noRd
 # Rewire networks ----
 # About 10x faster than previous implementation
 # Updated 29.10.2023

@@ -141,7 +141,7 @@
 #'
 #' @export
 # Bootstrap Test for the Ergodicity Information Index
-# Updated 28.10.2023
+# Updated 30.10.2023
 boot.ergoInfo <- function(
     dynEGA.object, EII, 
     use = c("edge.list", "unweighted", "weighted"),
@@ -175,7 +175,7 @@ boot.ergoInfo <- function(
   )
   
   # Get lower triangle indices (avoids repeated computation)
-  lower_triangle <- lower.tri(dynega_objects$population$network)
+  # lower_triangle <- lower.tri(dynega_objects$population$network)
   
   # Get rewired networks
   rewired_networks <- lapply(
@@ -191,10 +191,9 @@ boot.ergoInfo <- function(
           individual = lapply( # Return as list named "network"
             individual_networks, function(x){
               list(
-                network = rewire(
-                  network = x, p = runif_xoshiro(
-                    1, min = 0.10, max = 0.20
-                  )
+                network = igraph_rewire(
+                  network = dynega_objects$population$network,
+                  prob = runif_xoshiro(1, min = 0.10, max = 0.20)
                 )
               )
             }
