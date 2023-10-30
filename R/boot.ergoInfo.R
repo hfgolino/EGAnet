@@ -193,7 +193,8 @@ boot.ergoInfo <- function(
               list(
                 network = igraph_rewire(
                   network = dynega_objects$population$network,
-                  prob = runif_xoshiro(1, min = 0.10, max = 0.20)
+                  prob = runif_xoshiro(1, min = 0.10, max = 0.20),
+                  noise = 0.10
                 )
               )
             }

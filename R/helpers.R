@@ -2761,17 +2761,52 @@ pcor2inv <- function(partial_correlations)
 #' @noRd
 # Rewiring based on {igraph}
 # Updated 30.10.2023
-igraph_rewire <- function(network, prob)
+igraph_rewire <- function(network, prob, noise = 0)
 {
   
-  return(
-    igraph2matrix(
-      igraph::rewire(
-        graph = convert2igraph(network),
-        with = igraph::each_edge(prob = prob)
-      )
+  # Get nodes
+  nodes <- dim(network)[2]
+  
+  # Get rewired network
+  rewired_network <- igraph2matrix(
+    igraph::rewire(
+      graph = convert2igraph(network),
+      with = igraph::each_edge(prob = prob)
     )
   )
+  
+  # Add noise (if any)
+  if(noise != 0){
+    
+    # Get absolute noise
+    abs_noise <- abs(noise)
+    
+    # Get lower triangle
+    lower_triangle <- lower.tri(rewired_network)
+    
+    # Get lower triangle
+    rewired_lower <- rewired_network[lower_triangle]
+    
+    # Get non-zero
+    non_zero <- rewired_lower != 0
+    
+    # Set noise
+    rewired_lower[non_zero] <- rewired_lower[non_zero] +
+      runif_xoshiro(sum(non_zero), min = -abs_noise, max = abs_noise)
+    
+    # Create new matrix
+    rewired_network <- matrix(0, nrow = nodes, ncol = nodes)
+    
+    # Add to lower triangle
+    rewired_network[lower_triangle] <- rewired_lower
+    
+    # Make symmetric
+    rewired_network <- rewired_network + t(rewired_network)
+  
+  }
+  
+  # Return rewired network
+  return(rewired_network)
 
 }
 
