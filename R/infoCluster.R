@@ -133,8 +133,7 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
     # Generate random networks
     random_networks <- lapply(
       individual_networks, igraph_rewire,
-      prob = runif_xoshiro(1, min = 0.10, max = 0.20),
-      noise = 0.10
+      prob = runif_xoshiro(1, min = 0.10, max = 0.20)
     )
     
     # Get the random JSD matrix
