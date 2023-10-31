@@ -13,18 +13,30 @@ data(sim.dynEGA)
 \description{
 A simulated (multivariate time series) data with 24 variables,
 100 individual observations, 50 time points per individual and 
-2 groups of individuals.
+2 groups of individuals
 }
 \details{
 Data were generated using the \code{\link[EGAnet]{simDFM}} function
 with the following arguments:
 
+\strong{Group 1}
+
 \code{simDFM(
-  variab = 12, timep = 50, nfact = 2,
-  error = 0.175, dfm = "DAFS",
-  loadings = 0.70, autoreg = 0.50,
-  crossreg = 0.10, var.shock = 0.09,
-  cov.shock = 0.30, variation = TRUE
+  variab = 8, timep = 50, nfact = 3,
+  error = 0.125, dfm = "DAFS",
+  loadings = 0.60, autoreg = 0.80,
+  crossreg = 0.00, var.shock = 0.36,
+  cov.shock = 0.18, variation = TRUE
+)}
+
+\strong{Group 2}
+
+\code{simDFM(
+  variab = 6, timep = 50, nfact = 4,
+  error = 0.125, dfm = "DAFS",
+  loadings = 0.60, autoreg = 0.80,
+  crossreg = 0.00, var.shock = 0.36,
+  cov.shock = 0.18, variation = TRUE
 )}
 }
 \examples{

@@ -254,7 +254,7 @@ ergoInfo <- function(
       # Return k-complexity
       return(
         k_complexity(
-          population_edge_list[ # rows
+          edge_list[ # rows
             shuffle_replace(population_edge_sequence),
             keep_weights # either pairwise edges or weights
           ],
