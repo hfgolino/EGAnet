@@ -2767,6 +2767,9 @@ igraph_rewire <- function(network, prob, noise = 0)
   # Get nodes
   nodes <- dim(network)[2]
   
+  # Assume NAs are zero
+  network[is.na(network)] <- 0
+  
   # Get rewired network
   rewired_network <- igraph2matrix(
     igraph::rewire(
