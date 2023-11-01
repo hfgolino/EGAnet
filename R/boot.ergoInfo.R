@@ -141,7 +141,7 @@
 #'
 #' @export
 # Bootstrap Test for the Ergodicity Information Index
-# Updated 30.10.2023
+# Updated 01.11.2023
 boot.ergoInfo <- function(
     dynEGA.object, EII, 
     use = c("edge.list", "unweighted", "weighted"),
@@ -152,7 +152,7 @@ boot.ergoInfo <- function(
   experimental("boot.ergoInfo")
   
   # Check for missing arguments (argument, default, function)
-  use <- set_default(use, "edge.list", ergoInfo)
+  use <- set_default(use, "unweighted", ergoInfo)
   if(missing(ncores)){ncores <- ceiling(parallel::detectCores() / 2)}
   
   # Argument errors
@@ -160,7 +160,7 @@ boot.ergoInfo <- function(
   
   # Check for EII
   if(missing(EII)){ # If missing, then compute it
-    EII <- ergoInfo(dynEGA.object, use = use)$EII # , seed = 0)$EII
+    EII <- ergoInfo(dynEGA.object, use = use)$EII
   }else if(is(EII, "EII")){
     use <- attr(EII, "methods")$use; EII <- EII$EII
   }
@@ -168,14 +168,6 @@ boot.ergoInfo <- function(
   # Get proper objects (if not, send an error)
   # Function found in `ergoInfo`
   dynega_objects <- get_dynEGA_object(dynEGA.object)
-  
-  # Replace individual networks with population networks
-  individual_networks <- lapply(
-    dynega_objects$individual, function(x){dynega_objects$population$network}
-  )
-  
-  # Get lower triangle indices (avoids repeated computation)
-  # lower_triangle <- lower.tri(dynega_objects$population$network)
   
   # Get rewired networks
   rewired_networks <- lapply(
@@ -189,12 +181,12 @@ boot.ergoInfo <- function(
             n.dim = dynega_objects$population$n.dim
           ),
           individual = lapply( # Return as list named "network"
-            individual_networks, function(x){
+            dynega_objects$individual, function(x){
               list(
                 network = igraph_rewire(
                   network = dynega_objects$population$network,
-                  prob = runif_xoshiro(1, min = 0.10, max = 0.20),
-                  noise = 0.10
+                  prob = runif_xoshiro(1, min = 0.05, max = 0.15),
+                  noise = 0.05
                 )
               )
             }
@@ -246,7 +238,7 @@ boot.ergoInfo <- function(
     effect = effect_direction,
     interpretation = switch(
       effect_direction,
-      "n.s." = "The empirical EII was not different from what would be expected from random variation in the population structure, meaning non-significant information is lost when aggregating the results into a single, population network.",
+      "n.s." = "The empirical EII was not different from random variation in the population structure, meaning significant information is lost when aggregating the results into a single, population network.",
       "less" = "The empirical EII was less than what would be expected from random variation in the population structure, meaning non-significant information is lost when aggregating the results into a single, population network.",
       "greater" = "The empirical EII was greater than what would be expected from random variation in the population structure, meaning significant information is lost when aggregating the results into a single, population network."
     )
@@ -292,7 +284,7 @@ boot.ergoInfo_errors <- function(dynEGA.object, iter, ncores, verbose)
 
 #' @exportS3Method 
 # S3 Print Method ----
-# Updated 19.10.2023
+# Updated 01.11.2023
 print.boot.ergoInfo <- function(x, ...)
 {
   
@@ -341,7 +333,7 @@ print.boot.ergoInfo <- function(x, ...)
       "Mean = ", round(mean(x$boot.ergoInfo, na.rm = TRUE), 4),
       " (SD = ", round(sd(x$boot.ergoInfo, na.rm = TRUE), 4), ")",
       "\np-value = ", round(x$p.value, 4), " (", x$effect, ")",
-      "\nErgodic: ", swiftelse(x$effect == "greater", "No", "Yes")
+      "\nErgodic: ", swiftelse(x$effect == "less", "Yes", "No")
     )
   )
   

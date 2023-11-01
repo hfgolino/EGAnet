@@ -64,7 +64,7 @@
 #'
 #' @export
 # Simulate dynamic factor model
-# Updated 24.10.2022
+# Updated 01.11.2023
 simDFM <- function(
     variab, timep, nfact, error, dfm = c("DAFS","RandomWalk"),
     loadings, autoreg, crossreg, var.shock, cov.shock, burnin = 1000,
@@ -166,7 +166,7 @@ simDFM <- function(
 
   ## Error: multivariate normal distribution with mean zeros and p x p covariance matrix Q
   if(isTRUE(variation)){
-    var <- rep(error, variab*nfact) + runif(variab*nfact, -0.025, 0.025)
+    var <- (rep(error, variab*nfact) + runif(variab*nfact, -0.025, 0.025))^2
     Q <- diag(var,variab*nfact,variab*nfact)
     e <- t(MASS_mvrnorm(timep, matrix(0,variab*nfact,1),Q))
   }else{

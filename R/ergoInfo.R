@@ -64,7 +64,7 @@
 #' @export
 #'
 # Ergodicity Information Index ----
-# Updated 28.10.2023
+# Updated 01.11.2023
 ergoInfo <- function(
     dynEGA.object,
     use = c("edge.list", "unweighted", "weighted"),
@@ -273,7 +273,7 @@ ergoInfo <- function(
   results <- list(
     KComp = mean_individual_complexity,
     KComp.pop = mean_population_complexity,
-    EII = sqrt(dynega_objects$population$n.dim+1)^(
+    EII = sqrt(dynega_objects$population$n.dim + 1)^(
       (mean_individual_complexity / mean_population_complexity) / log(edge_rows)
     )
   )
