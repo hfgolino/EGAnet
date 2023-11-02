@@ -76,7 +76,7 @@ ergoInfo <- function(
   experimental("ergoInfo")
   
   # Check for missing arguments (argument, default, function)
-  use <- set_default(use, "edge.list", ergoInfo)
+  use <- set_default(use, "unweighted", ergoInfo)
   ordering <- set_default(ordering, "row", ergoInfo)
   
   # Check for appropriate class ("dynEGA.ind.pop" defunct to legacy)
