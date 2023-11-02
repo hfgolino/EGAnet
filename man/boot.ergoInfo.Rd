@@ -96,10 +96,9 @@ for each participant resulting in \emph{n} variations of the population structur
 Afterward, EII is computed. This process is carried out for \emph{i} iterations (e.g., 100).
 
 The result is a sampling distribution of EII values that would be expected if the process 
-was ergodic. If the empirical EII value is significantly less than the distribution or 
-not significantly different, then  the empirical data can be expected to be generated 
+was ergodic. If the empirical EII value is not significantly different, then  the empirical data can be expected to be generated 
 from an ergodic process and the population structure is  sufficient to describe all 
-individuals. If the empirical EII value is significantly greater than the distribution, 
+individuals. If the empirical EII value is significantly different than the distribution, 
 then the empirical data cannot be described by the population structure -- significant 
 information is lost when collapsing across to the population structure.
 }
@@ -116,12 +115,12 @@ dyn1 <- dynEGA.ind.pop(
 )
 
 # Empirical Ergodicity Information Index
-eii1 <- ergoInfo(dynEGA.object = dyn1, use = "edge.list")
+eii1 <- ergoInfo(dynEGA.object = dyn1, use = "unweighted")
 
 # Bootstrap Test for Ergodicity Information Index
 testing.ergoinfo <- boot.ergoInfo(
   dynEGA.object = dyn1, EII = eii1,
-  ncores = 2
+  ncores = 2, use = "unweighted"
 )
 
 # Plot result
@@ -135,7 +134,7 @@ dyn2 <- dynEGA(
 )
 
 # Empirical Ergodicity Information Index
-eii2 <- ergoInfo(dynEGA.object = dyn2, use = "edge.list")
+eii2 <- ergoInfo(dynEGA.object = dyn2, use = "unweighted")
 
 # Bootstrap Test for Ergodicity Information Index
 testing.ergoinfo2 <- boot.ergoInfo(

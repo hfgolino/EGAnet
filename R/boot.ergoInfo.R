@@ -65,10 +65,9 @@
 #' Afterward, EII is computed. This process is carried out for \emph{i} iterations (e.g., 100).
 #' 
 #' The result is a sampling distribution of EII values that would be expected if the process 
-#' was ergodic. If the empirical EII value is significantly less than the distribution or 
-#' not significantly different, then  the empirical data can be expected to be generated 
+#' was ergodic. If the empirical EII value is not significantly different, then  the empirical data can be expected to be generated 
 #' from an ergodic process and the population structure is  sufficient to describe all 
-#' individuals. If the empirical EII value is significantly greater than the distribution, 
+#' individuals. If the empirical EII value is significantly different than the distribution, 
 #' then the empirical data cannot be described by the population structure -- significant 
 #' information is lost when collapsing across to the population structure.
 #'
@@ -85,12 +84,12 @@
 #' )
 #'
 #' # Empirical Ergodicity Information Index
-#' eii1 <- ergoInfo(dynEGA.object = dyn1, use = "edge.list")
+#' eii1 <- ergoInfo(dynEGA.object = dyn1, use = "unweighted")
 #'
 #' # Bootstrap Test for Ergodicity Information Index
 #' testing.ergoinfo <- boot.ergoInfo(
 #'   dynEGA.object = dyn1, EII = eii1,
-#'   ncores = 2
+#'   ncores = 2, use = "unweighted"
 #' )
 #' 
 #' # Plot result
@@ -104,7 +103,7 @@
 #' )
 #' 
 #' # Empirical Ergodicity Information Index
-#' eii2 <- ergoInfo(dynEGA.object = dyn2, use = "edge.list")
+#' eii2 <- ergoInfo(dynEGA.object = dyn2, use = "unweighted")
 #' 
 #' # Bootstrap Test for Ergodicity Information Index
 #' testing.ergoinfo2 <- boot.ergoInfo(
@@ -239,8 +238,8 @@ boot.ergoInfo <- function(
     interpretation = switch(
       effect_direction,
       "n.s." = "The empirical EII was not different from random variation in the population structure, meaning significant information is lost when aggregating the results into a single, population network.",
-      "less" = "The empirical EII was less than what would be expected from random variation in the population structure, meaning non-significant information is lost when aggregating the results into a single, population network.",
-      "greater" = "The empirical EII was greater than what would be expected from random variation in the population structure, meaning significant information is lost when aggregating the results into a single, population network."
+      "less" = "The empirical EII was significantly different from random variation in the population structure, meaning non-significant information is lost when aggregating the results into a single, population network.",
+      "greater" = "The empirical EII was significantly different from random variation in the population structure, meaning non-significant information is lost when aggregating the results into a single, population network."
     )
   )
   
@@ -333,7 +332,7 @@ print.boot.ergoInfo <- function(x, ...)
       "Mean = ", round(mean(x$boot.ergoInfo, na.rm = TRUE), 4),
       " (SD = ", round(sd(x$boot.ergoInfo, na.rm = TRUE), 4), ")",
       "\np-value = ", round(x$p.value, 4), " (", x$effect, ")",
-      "\nErgodic: ", swiftelse(x$effect == "less", "Yes", "No")
+      "\nErgodic: ", swiftelse(x$effect == "n.s.", "Yes", "No")
     )
   )
   
