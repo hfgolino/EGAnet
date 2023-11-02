@@ -237,9 +237,9 @@ boot.ergoInfo <- function(
     effect = effect_direction,
     interpretation = switch(
       effect_direction,
-      "n.s." = "The empirical EII was not different from random variation in the population structure, meaning significant information is lost when aggregating the results into a single, population network.",
-      "less" = "The empirical EII was significantly different from random variation in the population structure, meaning non-significant information is lost when aggregating the results into a single, population network.",
-      "greater" = "The empirical EII was significantly different from random variation in the population structure, meaning non-significant information is lost when aggregating the results into a single, population network."
+      "n.s." = "The empirical EII was not different from values that would be expected if the process was ergodic, meaning the empirical data can be expected to be generated from an ergodic process and the population structure is sufficient to describe all individuals",
+      "less" = "The empirical EII was significantly different from values that would be expected if the process was ergodic, meaning the empirical data cannot be described by the population structure -- significant information is lost when collapsing across to the population structure",
+      "greater" = "The empirical EII was significantly different from values that would be expected if the process was ergodic, meaning the empirical data cannot be described by the population structure -- significant information is lost when collapsing across to the population structure"
     )
   )
   
