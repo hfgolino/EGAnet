@@ -7,7 +7,7 @@
 #' @param use Character (length = 1).
 #' A string indicating what network element will be used
 #' to compute the algorithm complexity, the list of edges or the weights of the network.
-#' Defaults to \code{use = "edge.list"}.
+#' Defaults to \code{use = "unweighted"}.
 #' Current options are:
 #'
 #' \itemize{
@@ -58,7 +58,7 @@
 #' # Compute empirical ergodicity information index
 #' eii <- ergoInfo(
 #'   dynEGA.object = dyn.ega1,
-#'   use = "edge.list"
+#'   use = "unweighted"
 #' )}
 #'
 #' @export

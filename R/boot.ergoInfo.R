@@ -60,7 +60,7 @@
 #' structure to simulate sampling variability. This noise follows a random uniform distribution
 #' ranging from -0.10 to 0.10. In addition, a proportion of edges are rewired to allow for 
 #' slight variations on the population structure. The proportion of nodes that are rewired is 
-#' sampled from a random uniform distribution between 0.20 to 0.40. This process is carried out 
+#' sampled from a random uniform distribution between 0.05 to 0.15. This process is carried out 
 #' for each participant resulting in \emph{n} variations of the population structure. 
 #' Afterward, EII is computed. This process is carried out for \emph{i} iterations (e.g., 100).
 #' 
