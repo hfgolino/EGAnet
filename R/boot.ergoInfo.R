@@ -35,6 +35,10 @@
 #' Number of replica samples to generate from the bootstrap analysis.
 #' Defaults to \code{100} (recommended)
 #'
+#' @param shuffles Numeric.
+#' Number of shuffles used to compute the Kolmogorov complexity.
+#' Defaults to \code{5000} (recommended)
+#' 
 #' @param ncores Numeric (length = 1).
 #' Number of cores to use in computing results.
 #' Defaults to \code{ceiling(parallel::detectCores() / 2)} or half of your
@@ -146,7 +150,7 @@
 boot.ergoInfo <- function(
     dynEGA.object, EII, 
     use = c("edge.list", "unweighted", "weighted"),
-    iter = 100, ncores, verbose = TRUE
+    iter = 100, shuffles = 5000, ncores, verbose = TRUE
 ){
   
   # Send experimental message (for now)
@@ -161,7 +165,7 @@ boot.ergoInfo <- function(
   
   # Check for EII
   if(missing(EII)){ # If missing, then compute it
-    EII <- ergoInfo(dynEGA.object, use = use)$EII
+    EII <- ergoInfo(dynEGA.object, use = use, shuffles = shuffles)$EII
   }else if(is(EII, "EII")){
     use <- attr(EII, "methods")$use; EII <- EII$EII
   }

@@ -9,6 +9,7 @@ boot.ergoInfo(
   EII,
   use = c("edge.list", "unweighted", "weighted"),
   iter = 100,
+  shuffles = 5000,
   ncores,
   verbose = TRUE
 )
@@ -44,6 +45,10 @@ Current options are:
 \item{iter}{Numeric (length = 1).
 Number of replica samples to generate from the bootstrap analysis.
 Defaults to \code{100} (recommended)}
+
+\item{shuffles}{Numeric.
+Number of shuffles used to compute the Kolmogorov complexity.
+Defaults to \code{5000} (recommended)}
 
 \item{ncores}{Numeric (length = 1).
 Number of cores to use in computing results.

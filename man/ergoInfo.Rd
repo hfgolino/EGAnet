@@ -7,7 +7,8 @@
 ergoInfo(
   dynEGA.object,
   use = c("edge.list", "unweighted", "weighted"),
-  ordering = c("row", "column")
+  ordering = c("row", "column"),
+  shuffles = 5000
 )
 }
 \arguments{
@@ -35,6 +36,9 @@ Changes ordering of edge list.
 \code{"row"} goes across the rows;
 \code{"column"} goes down the columns.
 Defaults to \code{"row"}}
+
+\item{shuffles}{Numeric.
+Number of shuffles used to compute the Kolmogorov complexity}
 }
 \value{
 Returns a list containing:
@@ -69,7 +73,7 @@ dyn.ega1 <- dynEGA.ind.pop(
 # Compute empirical ergodicity information index
 eii <- ergoInfo(
   dynEGA.object = dyn.ega1,
-  use = "unweighted"
+  use = "unweighted", shuffles = 5000
 )}
 
 }

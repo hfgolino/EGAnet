@@ -26,6 +26,9 @@
 #' \code{"row"} goes across the rows;
 #' \code{"column"} goes down the columns.
 #' Defaults to \code{"row"}
+#' 
+#' @param shuffles Numeric.
+#' Number of shuffles used to compute the Kolmogorov complexity 
 #'
 #' @return Returns a list containing:
 #'
@@ -58,7 +61,7 @@
 #' # Compute empirical ergodicity information index
 #' eii <- ergoInfo(
 #'   dynEGA.object = dyn.ega1,
-#'   use = "unweighted"
+#'   use = "unweighted", shuffles = 5000
 #' )}
 #'
 #' @export
@@ -68,7 +71,7 @@
 ergoInfo <- function(
     dynEGA.object,
     use = c("edge.list", "unweighted", "weighted"),
-    ordering = c("row", "column")
+    ordering = c("row", "column"), shuffles = 5000
 )
 {
   
@@ -188,7 +191,7 @@ ergoInfo <- function(
   # Includes default number of iterations (1000)
   # (defined in Santoro & Nicosia, 2020)
   # seed_values <- reproducible_seed(n = 1000, seed = seed)
-  iter_sequence <- seq_len(5000)
+  iter_sequence <- seq_len(shuffles)
   
   # Get k-complexity
   individual_kcomplexity <- nvapply( # seed_values,
