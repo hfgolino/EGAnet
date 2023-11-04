@@ -371,7 +371,13 @@ plot.infoCluster <- function(x, ...)
   segment_order <- segment_frequency[
     order(segment_frequency)[cluster_order]
   ]
-  segment_order[] <- seq_along(segment_order) + 1
+  
+  # Additional check for equivalence
+  segment_order[] <- swiftelse(
+    unique_length(segment_frequency) == 1,
+    rev(seq_along(segment_order)) + 1,
+    seq_along(segment_order) + 1
+  )
   
   # Fifth, vectorize back
   cluster_data$segments$cluster[
