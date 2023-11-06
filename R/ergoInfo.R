@@ -67,7 +67,7 @@
 #' @export
 #'
 # Ergodicity Information Index ----
-# Updated 01.11.2023
+# Updated 06.11.2023
 ergoInfo <- function(
     dynEGA.object,
     use = c("edge.list", "unweighted", "weighted"),
@@ -86,6 +86,12 @@ ergoInfo <- function(
   if(!is(dynEGA.object, "dynEGA") & !is(dynEGA.object, "dynEGA.ind.pop")){
     class_error(dynEGA.object, "dynEGA", "ergoInfo")
   }
+  
+  # Control exponential notation of numbers
+  user_scipen <- options("scipen")
+  
+  # Set option
+  options(scipen = 0)
   
   # Get proper objects (if not, send an error)
   dynega_objects <- get_dynEGA_object(dynEGA.object)
@@ -156,7 +162,7 @@ ergoInfo <- function(
     
     # Get encoding matrix
     encoding_matrix <- Reduce("*", prime_weights)
-    
+
     # Revert 1s to 0s
     encoding_matrix[encoding_matrix == 1] <- 0
     
@@ -292,6 +298,9 @@ ergoInfo <- function(
   
   # Add class
   class(results) <- "EII"
+  
+  # Restore user's "scipen" option
+  options(scipen = user_scipen)
   
   # Return results
   return(results)
