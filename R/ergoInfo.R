@@ -88,7 +88,7 @@ ergoInfo <- function(
   }
   
   # Control exponential notation of numbers
-  user_scipen <- options("scipen")
+  user_scipen <- options("scipen")$scipen
   
   # Set option
   options(scipen = 0)
