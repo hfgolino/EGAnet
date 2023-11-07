@@ -192,6 +192,20 @@ boot.ergoInfo <- function(
   n_dimensions <- dynEGA.object$population$n.dim
   individual_sequence <- seq_along(dynEGA.object$individual)
   
+  # Get lower triangle
+  lower_triangle <- lower.tri(population_network)
+  
+  # Get rewire estimates
+  rewire_estimates <- rewire_estimate(
+    base = population_network,
+    network_list = lapply(
+      dynEGA.object$individual, function(x){x$network}
+    )
+  )
+  
+  # Determine range
+  rewire_range <- range(rewire_estimates, na.rm = TRUE) / 2
+  
   # Remove `dynEGA.object` from memory
   rm(dynEGA.object); clear_memory()
   
@@ -220,7 +234,10 @@ boot.ergoInfo <- function(
               list(
                 network = igraph_rewire(
                   network = population_network,
-                  prob = runif_xoshiro(1, min = 0.05, max = 0.15),
+                  prob = runif_xoshiro(
+                    1, min = rewire_range[1], 
+                    max = rewire_range[2]
+                  ),
                   noise = 0.05
                 )
               )
@@ -419,4 +436,43 @@ plot.boot.ergoInfo <- function(x, ...)
   
 }
 
-
+#' @noRd
+# Estimate of rewiring
+# Updated 11.07.2023
+rewire_estimate <- function(base, network_list)
+{
+  
+  # Get lower triangle based on base
+  lower_triangle <- lower.tri(base)
+  
+  # Get base lower triangle
+  base_lower <- base[lower_triangle]
+  
+  # Get binarized base
+  base_lower[base_lower != 0] <- 1
+  
+  # Get indices that equal 1
+  base_edge <- base_lower == 1
+  
+  # Get edges
+  edges <- sum(base_edge)
+  
+  # Loop over network list
+  return(
+    nvapply(
+      network_list, function(x){
+        
+        # Get lower triangle
+        x <- x[lower_triangle]
+        
+        # Binarize network
+        x[x != 0] <- 1
+        
+        # Compute proportion
+        return(1 - sum(base_edge & x == 1) / edges)
+        
+      }
+    )
+  )
+  
+}
