@@ -193,7 +193,7 @@ boot.ergoInfo <- function(
   individual_sequence <- seq_along(dynEGA.object$individual)
   
   # Remove `dynEGA.object` from memory
-  rm(dynEGA.object) 
+  rm(dynEGA.object); clear_memory()
   
   # Get rewired networks
   rewired_EII <- parallel_process(

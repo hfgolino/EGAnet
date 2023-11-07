@@ -449,6 +449,16 @@ reproducible_bootstrap <- function(
 #%%%%%%%%%%%%%%%%%%%%%
 
 #' @noRd
+# Clear memory ----
+# Updated 07.11.2023
+clear_memory <- function()
+{
+  sink <- capture.output(
+    gc(verbose = FALSE, reset = TRUE, full = TRUE)
+  )
+}
+
+#' @noRd
 # Get available memory ----
 # Updated 18.10.2023
 available_memory <- function()
