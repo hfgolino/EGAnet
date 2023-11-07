@@ -28,7 +28,8 @@
 #' Defaults to \code{"row"}
 #' 
 #' @param shuffles Numeric.
-#' Number of shuffles used to compute the Kolmogorov complexity 
+#' Number of shuffles used to compute the Kolmogorov complexity.
+#' Defaults to \code{5000}
 #'
 #' @return Returns a list containing:
 #'
@@ -59,15 +60,12 @@
 #' )
 #'
 #' # Compute empirical ergodicity information index
-#' eii <- ergoInfo(
-#'   dynEGA.object = dyn.ega1,
-#'   use = "unweighted", shuffles = 5000
-#' )}
+#' eii <- ergoInfo(dyn.ega1)}
 #'
 #' @export
 #'
 # Ergodicity Information Index ----
-# Updated 06.11.2023
+# Updated 07.11.2023
 ergoInfo <- function(
     dynEGA.object,
     use = c("edge.list", "unweighted", "weighted"),
@@ -94,10 +92,10 @@ ergoInfo <- function(
   options(scipen = 0)
   
   # Get proper objects (if not, send an error)
-  dynega_objects <- get_dynEGA_object(dynEGA.object)
+  dynEGA.object <- get_dynEGA_object(dynEGA.object)
   
   # Get individual networks
-  individual_networks <- lapply(dynega_objects$individual, function(x){x$network})
+  individual_networks <- lapply(dynEGA.object$individual, function(x){x$network})
   
   # Get sequence for number of individuals
   individual_sequence <- seq_along(individual_networks)
@@ -193,34 +191,10 @@ ergoInfo <- function(
   # Get edge list sequence
   edge_sequence <- seq_len(edge_rows)
   
-  # Get seeds for reproducible results
-  # Includes default number of iterations (1000)
-  # (defined in Santoro & Nicosia, 2020)
-  # seed_values <- reproducible_seed(n = 1000, seed = seed)
-  iter_sequence <- seq_len(shuffles)
-  
-  # Get k-complexity
-  individual_kcomplexity <- nvapply( # seed_values,
-    iter_sequence, function(iteration){
-      
-      # Return k-complexity
-      return(
-        k_complexity(
-          edge_list[ # rows
-            shuffle_replace(edge_sequence),
-            keep_weights # either pairwise edges or weights
-          ],
-          ordering = ordering
-        )
-      )
-      
-    }
-  )
-  
   # Set up population
   
   # Get population adjacency
-  population_edges <- dynega_objects$population$network != 0
+  population_edges <- dynEGA.object$population$network != 0
   
   # Initialize population encoding matrix
   population_encoding <- matrix(1, nrow = dimensions[1], ncol = dimensions[2])
@@ -230,7 +204,7 @@ ergoInfo <- function(
     
     # Create integer weights if weighted
     if(use == "weighted"){
-      population_encoding <- 2 ^ dynega_objects$population$network
+      population_encoding <- 2 ^ dynEGA.object$population$network
     }else{
       population_encoding <- 2 ^ population_edges
     }
@@ -256,33 +230,51 @@ ergoInfo <- function(
   # Get edge list sequence
   population_edge_sequence <- seq_len(population_edge_rows)
   
-  # Get k-complexity
-  population_kcomplexity <- nvapply( # seed_values,
-    iter_sequence, function(single_seed){
+  # K-complexity
+  
+  # Get k-complexity for individuals and population
+  kcomplexities <- lapply(
+    seq_len(shuffles), function(iteration){
+      
+      # Get individual k-complexity
+      individual <- k_complexity(
+        edge_list[ # rows
+          shuffle_replace(edge_sequence),
+          keep_weights # either pairwise edges or weights
+        ],
+        ordering = ordering
+      )
+      
+      # Get population k-complexity
+      population <- k_complexity(
+        population_edge_list[ # rows
+          shuffle_replace(population_edge_sequence),
+          keep_weights # either pairwise edges or weights
+        ],
+        ordering = ordering
+      )
       
       # Return k-complexity
-      return(
-        k_complexity(
-          population_edge_list[ # rows
-            shuffle_replace(population_edge_sequence),
-            keep_weights # either pairwise edges or weights
-          ],
-          ordering = ordering
-        )
-      )
+      return(c(individual = individual, population = population))
       
     }
   )
   
   # Pre-compute values
-  mean_individual_complexity <- mean(individual_kcomplexity, na.rm = TRUE)
-  mean_population_complexity <- mean(population_kcomplexity, na.rm = TRUE)
+  mean_individual_complexity <- mean(
+    nvapply(kcomplexities, function(x){x["individual"]}), 
+    na.rm = TRUE
+  )
+  mean_population_complexity <- mean(
+    nvapply(kcomplexities, function(x){x["population"]}), 
+    na.rm = TRUE
+  )
   
   # Set up results
   results <- list(
     KComp = mean_individual_complexity,
     KComp.pop = mean_population_complexity,
-    EII = sqrt(dynega_objects$population$n.dim + 1)^(
+    EII = sqrt(dynEGA.object$population$n.dim + 1)^(
       (mean_individual_complexity / mean_population_complexity) / log(edge_rows)
     )
   )
@@ -294,7 +286,9 @@ ergoInfo <- function(
   }
   
   # Add "methods" attribute
-  attr(results, "methods") <- list(use = use)
+  attr(results, "methods") <- list(
+    use = use, ordering = ordering, shuffles = shuffles
+  )
   
   # Add class
   class(results) <- "EII"
@@ -324,19 +318,23 @@ ergoInfo <- function(
 
 #' @exportS3Method 
 # S3 Print Method
-# Updated 16.10.2023
+# Updated 07.11.2023
 print.EII <- function(x, ...)
 {
   
   # Print EII method
   cat(
-    "EII Method: ",
-    switch(
-      attr(x, "methods")$use,
-      "edge.list" = "Edge List",
-      "unweighted" = "Unweighted",
-      "weighted" = "Weighted"
-    ), "\n"
+    paste0(
+      "EII Method: ",
+      switch(
+        attr(x, "methods")$use,
+        "edge.list" = "Edge List",
+        "unweighted" = "Unweighted",
+        "weighted" = "Weighted"
+      ), "\n",
+      "Ordering: ", totitle(attr(x, "methods")$ordering), "\n",
+      "Shuffles: ", attr(x, "methods")$shuffles, "\n"
+    )
   )
   
   # Print EII value

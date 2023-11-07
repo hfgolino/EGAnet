@@ -8,8 +8,9 @@ boot.ergoInfo(
   dynEGA.object,
   EII,
   use = c("edge.list", "unweighted", "weighted"),
-  iter = 100,
+  ordering = c("row", "column"),
   shuffles = 5000,
+  iter = 200,
   ncores,
   verbose = TRUE
 )
@@ -28,27 +29,33 @@ If no \code{\link[EGAnet]{ergoInfo}} object is provided, then it is estimated}
 \item{use}{Character (length = 1).
 A string indicating what network element will be used
 to compute the algorithm complexity, the list of edges or the weights of the network.
-Defaults to \code{use = "edge.list"}.
+Defaults to \code{use = "unweighted"}.
 Current options are:
 
 \itemize{
 
 \item \code{"edge.list"} --- Calculates the algorithm complexity using the list of edges
 
-\item \code{"unweighted"} --- Calculates the algorithm complexity using the binary weights of the network.
-0 = edge absent and 1 = edge present
+\item \code{"unweighted"} --- Calculates the algorithm complexity using the binary weights of the encoded prime 
+transformed network. 0 = edge absent and 1 = edge present
 
 \item \code{"weighted"} --- Calculates the algorithm complexity using the weights of encoded prime-weight transformed network
 
 }}
 
-\item{iter}{Numeric (length = 1).
-Number of replica samples to generate from the bootstrap analysis.
-Defaults to \code{100} (recommended)}
+\item{ordering}{Character (length = 1).
+Changes ordering of edge list.
+\code{"row"} goes across the rows;
+\code{"column"} goes down the columns.
+Defaults to \code{"row"}}
 
 \item{shuffles}{Numeric.
 Number of shuffles used to compute the Kolmogorov complexity.
-Defaults to \code{5000} (recommended)}
+Defaults to \code{5000}}
+
+\item{iter}{Numeric (length = 1).
+Number of replica samples to generate from the bootstrap analysis.
+Defaults to \code{200} (recommended)}
 
 \item{ncores}{Numeric (length = 1).
 Number of cores to use in computing results.

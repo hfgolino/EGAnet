@@ -17,28 +17,34 @@
 #' @param use Character (length = 1).
 #' A string indicating what network element will be used
 #' to compute the algorithm complexity, the list of edges or the weights of the network.
-#' Defaults to \code{use = "edge.list"}.
+#' Defaults to \code{use = "unweighted"}.
 #' Current options are:
 #'
 #' \itemize{
 #'
 #' \item \code{"edge.list"} --- Calculates the algorithm complexity using the list of edges
 #'
-#' \item \code{"unweighted"} --- Calculates the algorithm complexity using the binary weights of the network.
-#' 0 = edge absent and 1 = edge present
+#' \item \code{"unweighted"} --- Calculates the algorithm complexity using the binary weights of the encoded prime 
+#' transformed network. 0 = edge absent and 1 = edge present
 #' 
 #' \item \code{"weighted"} --- Calculates the algorithm complexity using the weights of encoded prime-weight transformed network
 #' 
 #' }
+#' 
+#' @param ordering Character (length = 1).
+#' Changes ordering of edge list.
+#' \code{"row"} goes across the rows;
+#' \code{"column"} goes down the columns.
+#' Defaults to \code{"row"}
+#' 
+#' @param shuffles Numeric.
+#' Number of shuffles used to compute the Kolmogorov complexity.
+#' Defaults to \code{5000}
 #'
 #' @param iter Numeric (length = 1).
 #' Number of replica samples to generate from the bootstrap analysis.
-#' Defaults to \code{100} (recommended)
+#' Defaults to \code{200} (recommended)
 #'
-#' @param shuffles Numeric.
-#' Number of shuffles used to compute the Kolmogorov complexity.
-#' Defaults to \code{5000} (recommended)
-#' 
 #' @param ncores Numeric (length = 1).
 #' Number of cores to use in computing results.
 #' Defaults to \code{ceiling(parallel::detectCores() / 2)} or half of your
@@ -146,11 +152,12 @@
 #'
 #' @export
 # Bootstrap Test for the Ergodicity Information Index
-# Updated 01.11.2023
+# Updated 07.11.2023
 boot.ergoInfo <- function(
     dynEGA.object, EII, 
     use = c("edge.list", "unweighted", "weighted"),
-    iter = 100, shuffles = 5000, ncores, verbose = TRUE
+    ordering = c("row", "column"), shuffles = 5000,
+    iter = 200, ncores, verbose = TRUE
 ){
   
   # Send experimental message (for now)
@@ -167,29 +174,52 @@ boot.ergoInfo <- function(
   if(missing(EII)){ # If missing, then compute it
     EII <- ergoInfo(dynEGA.object, use = use, shuffles = shuffles)$EII
   }else if(is(EII, "EII")){
-    use <- attr(EII, "methods")$use; EII <- EII$EII
+    
+    # Get attributes
+    use <- attr(EII, "methods")$use
+    ordering <- attr(EII, "methods")$ordering
+    shuffles <- attr(EII, "methods")$shuffles
+    EII <- EII$EII # Save empirical EII for last
+    
   }
   
   # Get proper objects (if not, send an error)
   # Function found in `ergoInfo`
-  dynega_objects <- get_dynEGA_object(dynEGA.object)
+  dynEGA.object <- get_dynEGA_object(dynEGA.object)
+  
+  # Only use necessary data (saves memory!)
+  population_network <- dynEGA.object$population$network
+  n_dimensions <- dynEGA.object$population$n.dim
+  individual_sequence <- seq_along(dynEGA.object$individual)
+  
+  # Remove `dynEGA.object` from memory
+  rm(dynEGA.object) 
   
   # Get rewired networks
-  rewired_networks <- lapply(
-    seq_len(iter), function(iteration){
+  rewired_EII <- parallel_process(
+    iterations = iter,
+    FUN = function(
+      iteration,
+      # dynEGA Arguments
+      population_network = population_network,
+      n_dimensions = n_dimensions,
+      individual_sequence = individual_sequence,
+      # EII Arguments
+      use = use, ordering = ordering, shuffles = shuffles
+    ){
       
       # Initialize `dynEGA` object structure
       rewired_dynEGA <- list(
         dynEGA = list(
           population = list(
-            network = dynega_objects$population$network,
-            n.dim = dynega_objects$population$n.dim
+            network = population_network,
+            n.dim = n_dimensions
           ),
           individual = lapply( # Return as list named "network"
-            dynega_objects$individual, function(x){
+            individual_sequence, function(x){
               list(
                 network = igraph_rewire(
-                  network = dynega_objects$population$network,
+                  network = population_network,
                   prob = runif_xoshiro(1, min = 0.05, max = 0.15),
                   noise = 0.05
                 )
@@ -202,19 +232,23 @@ boot.ergoInfo <- function(
       # Set class
       class(rewired_dynEGA) <- "dynEGA"
       
-      # Return rewired networks
-      return(rewired_dynEGA)
+      # Return EII
+      return(
+        ergoInfo(
+          rewired_dynEGA, use = use,
+          ordering = ordering, shuffles = shuffles
+        )
+      )
       
-    }
-  )
-  
-  # Perform parallelization
-  rewired_EII <- parallel_process(
-    iterations = iter,
-    datalist = rewired_networks,
-    ergoInfo, use = use,
-    ncores = ncores,
-    progress = verbose
+    },
+    # dynEGA Arguments
+    population_network = population_network,
+    n_dimensions = n_dimensions,
+    individual_sequence = individual_sequence,
+    # EII Arguments
+    use = use, ordering = ordering, shuffles = shuffles,
+    # Parallelization settings
+    ncores = ncores, progress = verbose
   )
   
   # Get EII values
@@ -250,7 +284,9 @@ boot.ergoInfo <- function(
   )
   
   # Add "methods" attribute
-  attr(results, "methods") <- list(use = use)
+  attr(results, "methods") <- list(
+    use = use, ordering = ordering, shuffles = shuffles
+  )
   
   # Set class
   class(results) <- "boot.ergoInfo"
@@ -289,7 +325,7 @@ boot.ergoInfo_errors <- function(dynEGA.object, iter, ncores, verbose)
 
 #' @exportS3Method 
 # S3 Print Method ----
-# Updated 01.11.2023
+# Updated 07.11.2023
 print.boot.ergoInfo <- function(x, ...)
 {
   
@@ -306,13 +342,17 @@ print.boot.ergoInfo <- function(x, ...)
   
   # Print EII method
   cat(
-    "EII Method: ",
-    switch(
-      attr(x, "methods")$use,
-      "edge.list" = "Edge List",
-      "unweighted" = "Unweighted",
-      "weighted" = "Weighted"
-    ), "\n"
+    paste0(
+      "EII Method: ",
+      switch(
+        attr(x, "methods")$use,
+        "edge.list" = "Edge List",
+        "unweighted" = "Unweighted",
+        "weighted" = "Weighted"
+      ), "\n",
+      "Ordering: ", totitle(attr(x, "methods")$ordering), "\n",
+      "Shuffles: ", attr(x, "methods")$shuffles, "\n"
+    )
   )
   
   # Print EII value

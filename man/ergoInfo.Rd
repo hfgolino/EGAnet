@@ -38,7 +38,8 @@ Changes ordering of edge list.
 Defaults to \code{"row"}}
 
 \item{shuffles}{Numeric.
-Number of shuffles used to compute the Kolmogorov complexity}
+Number of shuffles used to compute the Kolmogorov complexity.
+Defaults to \code{5000}}
 }
 \value{
 Returns a list containing:
@@ -71,10 +72,7 @@ dyn.ega1 <- dynEGA.ind.pop(
 )
 
 # Compute empirical ergodicity information index
-eii <- ergoInfo(
-  dynEGA.object = dyn.ega1,
-  use = "unweighted", shuffles = 5000
-)}
+eii <- ergoInfo(dyn.ega1)}
 
 }
 \author{
