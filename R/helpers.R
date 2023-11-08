@@ -2769,7 +2769,31 @@ pcor2inv <- function(partial_correlations)
 #%%%%%%%%%%%%%%%%%%%%%%%%
 
 #' @noRd
-# Rewiring based on {igraph}
+# Create sparse network ----
+# Updated 08.11.2023
+sparse_network <- function(network)
+{
+  
+  # Get number of nodes
+  nodes <- dim(network)[2]
+  
+  # Get node sequence
+  node_sequence <- seq_len(nodes)
+  
+  # Create data frame
+  sparse_df <- data.frame(
+    row = rep(node_sequence, each = nodes),
+    col = rep(node_sequence, times = nodes),
+    weight = as.vector(network)
+  )
+  
+  # Return lower triangle
+  return(sparse_df[sparse_df$row < sparse_df$col,])
+  
+}
+
+#' @noRd
+# Rewiring based on {igraph} ----
 # Updated 30.10.2023
 igraph_rewire <- function(network, prob, noise = 0)
 {
