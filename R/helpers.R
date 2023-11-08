@@ -1749,14 +1749,14 @@ legacy_EGA_args <- function(ellipse)
 
 #' @noRd
 # Make unidimensional CFA model ----
-# Updated 25.07.2023
+# Updated 08.11.2023
 make_unidimensional_cfa <- function(variable_names)
 {
   return(
     paste(
       "LF =~",
       swiftelse(
-        length(variable_names == 2),
+        length(variable_names) == 2,
         paste0("a*", variable_names, collapse = " + "),
         paste(variable_names, collapse = " + ")
       )

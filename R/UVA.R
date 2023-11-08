@@ -812,7 +812,7 @@ reduce_latent <- function(
     # Make CFA model (in `helpers.R`)
     lavaan_ARGS$model <- make_unidimensional_cfa(all_names)
     
-    # Send data
+    # Send data (`obtain_signs` is in `net.loads`)
     lavaan_ARGS$data <- recode(
       data, all_names, correlation_matrix, ellipse
     )
