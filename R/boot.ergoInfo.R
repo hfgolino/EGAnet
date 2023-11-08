@@ -522,31 +522,79 @@ network_homogenize <- function(base, comparison)
   # Decide on how many to add
   if(difference_sign == 1){
     
+    # # Get random edges to add from base
+    # base_random <- shuffle(
+    #   which(base_edges & !comparison_edges), # indices from unique base
+    #   edge_difference # number of indices to draw
+    # )
+    # 
+    # # Add unique edges from base to comparison
+    # comparison_sparse$weight[base_random] <- base_sparse$weight[base_random]
+    # 
+    # # Set equivalent edges
+    # equivalent_sparse <- comparison_sparse
+    
+    # Get number of unique edges in comparison
+    unique_comparison <- sum(!base_edges & comparison_edges)
+    
     # Get random edges to add from base
     base_random <- shuffle(
-      which(base_edges & !comparison_edges), # indices from unique base
-      edge_difference # number of indices to draw
+      which(base_edges), # indices from base
+      unique_comparison # number of indices to draw
     )
     
-    # Add unique edges from base to comparison
-    comparison_sparse$weight[base_random] <- base_sparse$weight[base_random]
-    
-    # Set equivalent edges
-    equivalent_sparse <- comparison_sparse
-    
-  }else if(difference_sign == -1){
-    
-    # Get random edges to add from comparison
-    comparison_random <- shuffle(
-      which(!base_edges & comparison_edges), # indices from unique comparison
-      abs(edge_difference) # number of indices to draw
+    # Get random edges not in base
+    base_missing <- shuffle(
+      which(!base_edges), # indices not in base
+      unique_comparison # number of indices to draw
     )
     
-    # Add unique edges from base to comparison
-    base_sparse$weight[comparison_random] <- comparison_sparse$weight[comparison_random]
+    # Update base with random edges
+    base_sparse$weight[base_missing] <- base_sparse$weight[base_random]
+    
+    # Set base random edges to zero
+    base_sparse$weight[base_random] <- 0
     
     # Set equivalent edges
     equivalent_sparse <- base_sparse
+    
+  }else if(difference_sign == -1){
+    
+    # # Get random edges to add from comparison
+    # comparison_random <- shuffle(
+    #   which(!base_edges & comparison_edges), # indices from unique comparison
+    #   abs(edge_difference) # number of indices to draw
+    # )
+    # 
+    # # Add unique edges from base to comparison
+    # base_sparse$weight[comparison_random] <- comparison_sparse$weight[comparison_random]
+    # 
+    # # Set equivalent edges
+    # equivalent_sparse <- base_sparse
+    
+    # Get number of unique edges in base
+    unique_base <- sum(base_edges & !comparison_edges)
+    
+    # Get random edges to add from comparison
+    comparison_random <- shuffle(
+      which(comparison_edges), # indices from comparison
+      unique_base # number of indices to draw
+    )
+    
+    # Get random edges not in base
+    comparison_missing <- shuffle(
+      which(!comparison_edges), # indices not in comparison
+      unique_base # number of indices to draw
+    )
+    
+    # Update base with random edges
+    comparison_sparse$weight[comparison_missing] <- comparison_sparse$weight[comparison_random]
+    
+    # Set base random edges to zero
+    comparison_sparse$weight[comparison_random] <- 0
+    
+    # Set equivalent edges
+    equivalent_sparse <- comparison_sparse
     
   }
   
@@ -576,4 +624,3 @@ network_homogenize <- function(base, comparison)
   return(return_network)
   
 }
-
