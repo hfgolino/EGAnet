@@ -152,7 +152,7 @@
 #'
 #' @export
 # Bootstrap Test for the Ergodicity Information Index
-# Updated 07.11.2023
+# Updated 09.11.2023
 boot.ergoInfo <- function(
     dynEGA.object, EII, 
     use = c("edge.list", "unweighted", "weighted"),
@@ -191,21 +191,6 @@ boot.ergoInfo <- function(
   population_network <- dynEGA.object$population$network
   n_dimensions <- dynEGA.object$population$n.dim
   individual_networks <- lapply(dynEGA.object$individual, function(x){x$network})
-  # individual_sequence <- seq_along(dynEGA.object$individual)
-  
-  # # Get lower triangle
-  # lower_triangle <- lower.tri(population_network)
-  # 
-  # # Get rewire estimates
-  # rewire_estimates <- rewire_estimate(
-  #   base = population_network,
-  #   network_list = lapply(
-  #     dynEGA.object$individual, function(x){x$network}
-  #   )
-  # )
-  # 
-  # # Determine range
-  # rewire_range <- range(rewire_estimates, na.rm = TRUE) / 2
   
   # Remove `dynEGA.object` from memory
   rm(dynEGA.object); clear_memory()
@@ -213,15 +198,7 @@ boot.ergoInfo <- function(
   # Get rewired networks
   rewired_EII <- parallel_process(
     iterations = iter,
-    FUN = function(
-      iteration,
-      # # dynEGA Arguments
-      # population_network = population_network,
-      # n_dimensions = n_dimensions,
-      # individual_sequence = individual_sequence,
-      # EII Arguments
-      use = use, ordering = ordering, shuffles = shuffles
-    ){
+    FUN = function(iteration, use, ordering, shuffles){
       
       # Initialize `dynEGA` object structure
       rewired_dynEGA <- list(
@@ -231,20 +208,11 @@ boot.ergoInfo <- function(
             n.dim = n_dimensions
           ),
           individual = lapply( # Return as list named "network"
-            individual_networks, function(individual){
+            individual_networks, function(individual_network){
               list(
                 network = network_homogenize(
-                  population_network, individual
+                  population_network, individual_network
                 ) 
-                  
-                # igraph_rewire(
-                #   network = population_network,
-                #   prob = runif_xoshiro(
-                #     1, min = rewire_range[1], 
-                #     max = rewire_range[2]
-                #   ),
-                #   noise = 0.05
-                # )
               )
             }
           )
@@ -263,11 +231,7 @@ boot.ergoInfo <- function(
       )
       
     },
-    # # dynEGA Arguments
-    # population_network = population_network,
-    # n_dimensions = n_dimensions,
-    # individual_sequence = individual_sequence,
-    # EII Arguments
+    # EII settings
     use = use, ordering = ordering, shuffles = shuffles,
     # Parallelization settings
     ncores = ncores, progress = verbose
@@ -457,50 +421,9 @@ plot.boot.ergoInfo <- function(x, ...)
   
 }
 
-#' #' @noRd
-#' # Estimate of rewiring
-#' # Updated 11.07.2023
-#' rewire_estimate <- function(base, network_list)
-#' {
-#'   
-#'   # Get lower triangle based on base
-#'   lower_triangle <- lower.tri(base)
-#'   
-#'   # Get base lower triangle
-#'   base_lower <- base[lower_triangle]
-#'   
-#'   # Get binarized base
-#'   base_lower[base_lower != 0] <- 1
-#'   
-#'   # Get indices that equal 1
-#'   base_edge <- base_lower == 1
-#'   
-#'   # Get edges
-#'   edges <- sum(base_edge)
-#'   
-#'   # Loop over network list
-#'   return(
-#'     nvapply(
-#'       network_list, function(x){
-#'         
-#'         # Get lower triangle
-#'         x <- x[lower_triangle]
-#'         
-#'         # Binarize network
-#'         x[x != 0] <- 1
-#'         
-#'         # Compute proportion
-#'         return(1 - sum(base_edge & x == 1) / edges)
-#'         
-#'       }
-#'     )
-#'   )
-#'   
-#' }
-
 #' @noRd
 # Homogenize networks
-# Updated 08.11.2023
+# Updated 09.11.2023
 network_homogenize <- function(base, comparison)
 {
   
@@ -515,24 +438,11 @@ network_homogenize <- function(base, comparison)
   base_edges <- base_sparse$weight != 0
   comparison_edges <- comparison_sparse$weight != 0
   
-  # Get difference
-  edge_difference <- sum(base_edges) - sum(comparison_edges)
-  difference_sign <- sign(edge_difference)
+  # Get more
+  base_greater <- sum(base_edges) >= sum(comparison_edges)
   
   # Decide on how many to add
-  if(difference_sign == 1){
-    
-    # # Get random edges to add from base
-    # base_random <- shuffle(
-    #   which(base_edges & !comparison_edges), # indices from unique base
-    #   edge_difference # number of indices to draw
-    # )
-    # 
-    # # Add unique edges from base to comparison
-    # comparison_sparse$weight[base_random] <- base_sparse$weight[base_random]
-    # 
-    # # Set equivalent edges
-    # equivalent_sparse <- comparison_sparse
+  if(base_greater){
     
     # Get number of unique edges in comparison
     unique_comparison <- sum(!base_edges & comparison_edges)
@@ -558,19 +468,7 @@ network_homogenize <- function(base, comparison)
     # Set equivalent edges
     equivalent_sparse <- base_sparse
     
-  }else if(difference_sign == -1){
-    
-    # # Get random edges to add from comparison
-    # comparison_random <- shuffle(
-    #   which(!base_edges & comparison_edges), # indices from unique comparison
-    #   abs(edge_difference) # number of indices to draw
-    # )
-    # 
-    # # Add unique edges from base to comparison
-    # base_sparse$weight[comparison_random] <- comparison_sparse$weight[comparison_random]
-    # 
-    # # Set equivalent edges
-    # equivalent_sparse <- base_sparse
+  }else{
     
     # Get number of unique edges in base
     unique_base <- sum(base_edges & !comparison_edges)
@@ -610,13 +508,12 @@ network_homogenize <- function(base, comparison)
   for(i in nrow_sequence(equivalent_sparse)){
     
     # Set indices
-    row <- equivalent_sparse$row[i]
-    col <- equivalent_sparse$col[i]
+    index <- equivalent_sparse[i,]
     
     # Populate return network
-    return_network[row, col] <-
-      return_network[col, row] <-
-      equivalent_sparse$weight[i]
+    return_network[index[,1], index[,2]] <-
+    return_network[index[,2], index[,1]] <-
+    index[,3]
     
   }
   
