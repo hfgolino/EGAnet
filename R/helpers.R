@@ -2802,8 +2802,8 @@ sparse_network <- function(network)
 }
 
 #' @noRd
-# Scramble networks
-# Updated 10.11.2023 ----
+# Scramble networks ----
+# Updated 10.11.2023
 network_scramble <- function(base, comparison)
 {
   
@@ -2819,50 +2819,27 @@ network_scramble <- function(base, comparison)
   comparison_edges <- comparison_sparse$weight != 0
   
   # Get shared edges
-  shared_edges <- base_edges & comparison_edges
-  shared_total <- sum(shared_edges)
-  
-  # Get totals
-  base_total <- sum(base_edges)
-  comparison_total <- sum(comparison_edges)
+  shared_total <- sum(base_edges & comparison_edges)
   
   # Decide on how many to add
-  if(base_total >= comparison_total){
-    
-    # Shuffle shared edges
-    shared_index <- shuffle(
-      which(base_edges), shared_total
-    )
-    
-    # Shuffle unique base edges
-    unique_index <- shuffle(
-      which(!base_edges & comparison_edges), 
-      comparison_total - shared_total
-    )
+  if(sum(base_edges) >= sum(comparison_edges)){
     
     # Assign edges
-    base_sparse$weight[-shared_index] <- 0
-    base_sparse$weight[unique_index] <- comparison_sparse$weight[unique_index]
+    base_sparse$weight[-shuffle(which(base_edges), shared_total)] <- 0
+    base_sparse$weight[unique_index] <- comparison_sparse$weight[
+      which(!base_edges & comparison_edges)
+    ]
     
     # Set equivalent edges
     equivalent_sparse <- base_sparse
     
   }else{
     
-    # Shuffle shared edges
-    shared_index <- shuffle(
-      which(comparison_edges), shared_total
-    )
-    
-    # Shuffle unique base edges
-    unique_index <- shuffle(
-      which(base_edges & !comparison_edges), 
-      base_total - shared_total
-    )
-    
     # Assign edges
-    comparison_sparse$weight[-shared_index] <- 0
-    comparison_sparse$weight[unique_index] <- base_sparse$weight[unique_index]
+    comparison_sparse$weight[-shuffle(which(comparison_edges), shared_total)] <- 0
+    comparison_sparse$weight[unique_index] <- base_sparse$weight[
+      which(base_edges & !comparison_edges)
+    ]
     
     # Set equivalent edges
     equivalent_sparse <- comparison_sparse
