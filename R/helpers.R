@@ -780,32 +780,11 @@ swiftelse <- function(condition, true, false)
 
 #' @noRd
 # Determine decimal places before non-zero ----
+# From StackOverflow: https://stackoverflow.com/questions/35553244/count-leading-zeros-between-the-decimal-point-and-first-nonzero-digit
 # Updated 10.11.2023
 leading_zero <- function(number)
 {
-  
-  # Turn number into split string
-  string_number <- unlist(strsplit(as.character(abs(number)), split = ""))
-  
-  # Find decimal
-  decimal <- grep("\\.", string_number)
-  
-  # Check for decimal
-  if(length(decimal) == 0){
-    return(0)
-  }else{
-    
-    # Find zeros
-    zeros <- grep("0", string_number) - decimal
-
-    # Get max
-    max_zero <- min(setdiff(seq_len(max(zeros)), zeros))
-    
-    # Return value
-    return(swiftelse(max_zero > 0, max_zero, 0))
-    
-  }
-  
+  floor(-log10(.Machine$double.eps + abs(number) - floor(abs(number))))
 }
 
 #' @noRd
