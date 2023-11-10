@@ -10,21 +10,25 @@
 #' \strong{Group 1}
 #' 
 #' \code{simDFM(
-#'   variab = 8, timep = 50, nfact = 3,
-#'   error = 0.125, dfm = "DAFS",
-#'   loadings = 0.60, autoreg = 0.80,
-#'   crossreg = 0.00, var.shock = 0.36,
-#'   cov.shock = 0.18, variation = TRUE
+#'  variab = 12, timep = 50,
+#'  nfact = 2, error = 0.125,
+#'  dfm = "DAFS", 
+#'  loadings = EGAnet:::runif_xoshiro(
+#'    1, min = 0.50, max = 0.70
+#'  ), autoreg = 0.80, crossreg = 0.00,
+#'  var.shock = 0.36, cov.shock = 0.18
 #' )}
 #' 
 #' \strong{Group 2}
 #' 
 #' \code{simDFM(
-#'   variab = 6, timep = 50, nfact = 4,
-#'   error = 0.125, dfm = "DAFS",
-#'   loadings = 0.60, autoreg = 0.80,
-#'   crossreg = 0.00, var.shock = 0.36,
-#'   cov.shock = 0.18, variation = TRUE
+#'  variab = 8, timep = 50,
+#'  nfact = 3, error = 0.125,
+#'  dfm = "DAFS", 
+#'  loadings = EGAnet:::runif_xoshiro(
+#'    1, min = 0.50, max = 0.70
+#'  ), autoreg = 0.80, crossreg = 0.00,
+#'  var.shock = 0.36, cov.shock = 0.18
 #' )}
 #'
 #' @name sim.dynEGA
