@@ -2793,6 +2793,100 @@ sparse_network <- function(network)
 }
 
 #' @noRd
+# Scramble networks
+# Updated 10.11.2023 ----
+network_scramble <- function(base, comparison)
+{
+  
+  # Get number of nodes
+  nodes <- dim(base)[2]
+  
+  # Get sparse networks
+  base_sparse <- sparse_network(base)
+  comparison_sparse <- sparse_network(comparison)
+  
+  # Get edges
+  base_edges <- base_sparse$weight != 0
+  comparison_edges <- comparison_sparse$weight != 0
+  
+  # Get shared edges
+  shared_edges <- base_edges & comparison_edges
+  shared_total <- sum(shared_edges)
+  
+  # Get totals
+  base_total <- sum(base_edges)
+  comparison_total <- sum(comparison_edges)
+  
+  # Decide on how many to add
+  if(base_total >= comparison_total){
+    
+    # Shuffle shared edges
+    shared_index <- shuffle(
+      which(base_edges), shared_total
+    )
+    
+    # Shuffle unique base edges
+    unique_index <- shuffle(
+      which(!base_edges & comparison_edges), 
+      comparison_total - shared_total
+    )
+    
+    # Assign edges
+    base_sparse$weight[-shared_index] <- 0
+    base_sparse$weight[unique_index] <- comparison_sparse$weight[unique_index]
+    
+    # Set equivalent edges
+    equivalent_sparse <- base_sparse
+    
+  }else{
+    
+    # Shuffle shared edges
+    shared_index <- shuffle(
+      which(comparison_edges), shared_total
+    )
+    
+    # Shuffle unique base edges
+    unique_index <- shuffle(
+      which(base_edges & !comparison_edges), 
+      base_total - shared_total
+    )
+    
+    # Assign edges
+    comparison_sparse$weight[-shared_index] <- 0
+    comparison_sparse$weight[unique_index] <- base_sparse$weight[unique_index]
+    
+    # Set equivalent edges
+    equivalent_sparse <- comparison_sparse
+    
+  }
+  
+  # Remove zero edges from equivalent
+  equivalent_sparse <- equivalent_sparse[
+    equivalent_sparse$weight != 0,
+  ]
+  
+  # Initialize network to return
+  return_network <- matrix(0, nrow = nodes, ncol = nodes)
+  
+  # Loop over sparse equivalent
+  for(i in nrow_sequence(equivalent_sparse)){
+    
+    # Set indices
+    index <- equivalent_sparse[i,]
+    
+    # Populate return network
+    return_network[index[,1], index[,2]] <-
+      return_network[index[,2], index[,1]] <-
+      index[,3]
+    
+  }
+  
+  # Return the network
+  return(return_network)
+  
+}
+
+#' @noRd
 # Rewiring based on {igraph} ----
 # Updated 30.10.2023
 igraph_rewire <- function(network, prob, noise = 0)
@@ -2839,126 +2933,11 @@ igraph_rewire <- function(network, prob, noise = 0)
     
     # Make symmetric
     rewired_network <- rewired_network + t(rewired_network)
-  
+    
   }
   
   # Return rewired network
   return(rewired_network)
-
-}
-
-#' @noRd
-# Rewire networks ----
-# About 10x faster than previous implementation
-# Updated 29.10.2023
-rewire <- function(network, p)
-{
-  
-  # Get number of nodes
-  nodes <- dim(network)[2]
-  
-  # Get node sequence
-  node_sequence <- seq_len(nodes)
-  
-  # Get sparse matrix
-  sparse_network <- data.frame(
-    row = rep(node_sequence, times = nodes),
-    col = rep(node_sequence, each = nodes),
-    weight = as.vector(network)
-  )
-  
-  # Get one-way edges
-  sparse_network <- sparse_network[
-    sparse_network$row < sparse_network$col,
-  ]
-  
-  # Get non-zero edges
-  non_zero <- sparse_network$weight != 0
-  
-  # Get zero edges
-  zero <- !non_zero
-  
-  # Get sparse zero edges
-  sparse_zero <- sparse_network[zero,]
-  
-  # Get sparse non-zero edges
-  sparse_network <- sparse_network[non_zero,]
-  
-  # Get number of non-zero edges
-  edges <- dim(sparse_network)[1]
-  
-  # Get number of zero edges
-  zero_edges <- dim(sparse_zero)[1]
-  
-  # Get edge sequence
-  edge_sequence <- seq_len(edges)
-  
-  # Get number of edges to rewire
-  rewire_number <- ceiling(zero_edges * p)
-  
-  # Get indices to rewire
-  rewire_index <- shuffle(edge_sequence, rewire_number)
-  
-  # Get row or column
-  rewire_dimension <- swiftelse(
-    runif_xoshiro(rewire_number) < 0.50, 1, 2
-  )
-
-  # Loop over indices to ensure no self loops
-  for(i in seq_len(rewire_number)){
-    
-    # Get current node
-    current_node <- sparse_network[
-      rewire_index[i], rewire_dimension[i]
-    ]
-    
-    # Get possible rewire index
-    row_index <- which(sparse_zero$row == current_node)
-    column_index <- which(sparse_zero$col == current_node)
-    
-    # Get possible nodes
-    row_node <- sparse_zero$col[row_index]
-    column_node <- sparse_zero$row[column_index]
-    
-    # Possible rewires
-    possible_rewire <- c(row_node, column_node)
-    
-    # Skip if no possible rewire
-    if(length(possible_rewire) != 0){
-      
-      # Add names
-      names(possible_rewire) <- c(row_index, column_index)
-      
-      # Get rewire node
-      rewire_node <- shuffle(possible_rewire, size = 1)
-      
-      # Get randomly assigned nodes
-      sparse_network[
-        rewire_index[i], 3 - rewire_dimension[i]
-      ] <- rewire_node
-      
-      # Remove possibility from sparse zero
-      sparse_zero <- sparse_zero[-as.numeric(names(rewire_node)),]
-      
-    }
-    
-  }
-  
-  # Populate rewired network
-  rewired_network <- matrix(0, nrow = nodes, ncol = nodes)
-  
-  # Loop over sparse network
-  for(i in edge_sequence){
-    
-    # Update network
-    rewired_network[sparse_network$row[i], sparse_network$col[i]] <-
-    rewired_network[sparse_network$col[i], sparse_network$row[i]] <-
-    sparse_network$weight[i]
-    
-  }
-  
-  # Return rewired network
-  return(transfer_names(network, rewired_network))
   
 }
 

@@ -46,7 +46,7 @@
 #' @export
 #' 
 # Information Theoretic Clustering for dynEGA
-# Updated 30.10.2023
+# Updated 10.11.2023
 infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
 {
   
@@ -125,33 +125,33 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
   Q_index <- which.max(Qs)
   
   # Obtain clusters
-  clusters <- hier_cuts[[Q_index]] # cutree(hier_clust, cuts[Q_index])
+  clusters <- hier_cuts[[Q_index]]
   
   # Check if single cluster
   if(unique_length(clusters) == 1){
     
-    # Generate random networks
-    random_networks <- lapply(
+    # Generate rewired networks
+    rewired_networks <- lapply(
       individual_networks, igraph_rewire,
       prob = runif_xoshiro(1, min = 0.10, max = 0.20)
     )
     
-    # Get the random JSD matrix
-    jsd_random_matrix <- pairwise_spectral_JSD(random_networks)
+    # Get the rewired JSD matrix
+    jsd_rewired_matrix <- pairwise_spectral_JSD(rewired_networks)
     
     # Make diagonal NA
-    diag(jsd_random_matrix) <- NA
+    diag(jsd_rewired_matrix) <- NA
     
     # Remove all NAs
     rm_cols <- lvapply(
-      as.data.frame(jsd_random_matrix), function(x){all(is.na(x))}
+      as.data.frame(jsd_rewired_matrix), function(x){all(is.na(x))}
     )
     
     # Remove missing data points
-    jsd_random_matrix <- jsd_random_matrix[!rm_cols, !rm_cols]
+    jsd_rewired_matrix <- jsd_rewired_matrix[!rm_cols, !rm_cols]
 
     # Make diagonal 0 again
-    diag(jsd_random_matrix) <- 0
+    diag(jsd_rewired_matrix) <- 0
     
     # Get lower triangle
     lower_triangle <- lower.tri(individual_networks[[1]])
@@ -159,7 +159,7 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
     # Compare to empirical
     comparison <- t.test(
       jsd_matrix[lower_triangle],
-      jsd_random_matrix[lower_triangle],
+      jsd_rewired_matrix[lower_triangle],
       paired = TRUE,
       var.equal = FALSE
     )
@@ -194,7 +194,7 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
     
     # Compile results
     single_cluster <- list(
-      JSD_random = jsd_random_matrix,
+      JSD_rewired = jsd_rewired_matrix,
       t.test = comparison,
       adaptive.p.value = adaptive_p,
       d = cohens_d
