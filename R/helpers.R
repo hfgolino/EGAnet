@@ -2803,12 +2803,9 @@ sparse_network <- function(network)
 
 #' @noRd
 # Scramble networks ----
-# Updated 10.11.2023
+# Updated 11.11.2023
 network_scramble <- function(base, comparison)
 {
-  
-  # Get number of nodes
-  nodes <- dim(base)[2]
   
   # Get sparse networks
   base_sparse <- sparse_network(base)
@@ -2821,49 +2818,29 @@ network_scramble <- function(base, comparison)
   # Get shared edges
   shared_total <- sum(base_edges & comparison_edges)
   
-  # Decide on how many to add
-  if(sum(base_edges) >= sum(comparison_edges)){
-    
-    # Assign edges
-    base_sparse$weight[-shuffle(which(base_edges), shared_total)] <- 0
-    base_sparse$weight[unique_index] <- comparison_sparse$weight[
-      which(!base_edges & comparison_edges)
-    ]
-    
-    # Set equivalent edges
-    equivalent_sparse <- base_sparse
-    
-  }else{
-    
-    # Assign edges
-    comparison_sparse$weight[-shuffle(which(comparison_edges), shared_total)] <- 0
-    comparison_sparse$weight[unique_index] <- base_sparse$weight[
-      which(base_edges & !comparison_edges)
-    ]
-    
-    # Set equivalent edges
-    equivalent_sparse <- comparison_sparse
-    
-  }
+  # Get unique indices in comparison
+  unique_index <- !base_edges & comparison_edges
+  
+  # Assign edges
+  base_sparse$weight[-shuffle(which(base_edges), shared_total)] <- 0
+  base_sparse$weight[unique_index] <- comparison_sparse$weight[unique_index]
   
   # Remove zero edges from equivalent
-  equivalent_sparse <- equivalent_sparse[
-    equivalent_sparse$weight != 0,
-  ]
+  base_sparse <- base_sparse[base_sparse$weight != 0,]
+  
+  # Get number of nodes
+  nodes <- dim(base)[2]
   
   # Initialize network to return
   return_network <- matrix(0, nrow = nodes, ncol = nodes)
   
   # Loop over sparse equivalent
-  for(i in nrow_sequence(equivalent_sparse)){
-    
-    # Set indices
-    index <- equivalent_sparse[i,]
-    
+  for(i in nrow_sequence(base_sparse)){
+   
     # Populate return network
-    return_network[index[,1], index[,2]] <-
-      return_network[index[,2], index[,1]] <-
-      index[,3]
+    return_network[base_sparse$row[i], base_sparse$col[i]] <-
+    return_network[base_sparse$col[i], base_sparse$row[i]] <-
+    base_sparse$weight[i]
     
   }
   
