@@ -179,11 +179,11 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
     # Compute Cohen's d
     cohens_d <- d(
       jsd_matrix[lower_triangle],
-      jsd_random_matrix[lower_triangle],
+      jsd_rewired_matrix[lower_triangle],
       paired = TRUE
     )
     
-    # Check for empirical JSD > random JSD OR non-significant t-test
+    # Check for empirical JSD > rewired JSD OR non-significant t-test
     if(comparison_sign == 1 || abs(cohens_d) < 0.20){
       
       # Set clusters to all individuals
