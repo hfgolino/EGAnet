@@ -287,7 +287,8 @@ boot.ergoInfo <- function(
   
   # Add "methods" attribute
   attr(results, "methods") <- list(
-    use = use, ordering = ordering, shuffles = shuffles
+    use = use, ordering = ordering, 
+    shuffles = shuffles, iter = iter
   )
   
   # Set class
@@ -343,7 +344,7 @@ boot.ergoInfo_errors <- function(dynEGA.object, iter, ncores, verbose)
 
 #' @exportS3Method 
 # S3 Print Method ----
-# Updated 10.11.2023
+# Updated 11.11.2023
 print.boot.ergoInfo <- function(x, ...)
 {
   
@@ -393,7 +394,8 @@ print.boot.ergoInfo <- function(x, ...)
   # Print descriptives
   cat(
     paste0(
-      "Mean = ", round(mean(x$boot.ergoInfo, na.rm = TRUE), 4),
+      "Iterations: ", attr(x, "methods")$iter, 
+      "\nMean = ", round(mean(x$boot.ergoInfo, na.rm = TRUE), 4),
       " (SD = ", round(sd(x$boot.ergoInfo, na.rm = TRUE), 4), ")",
       "\np-value = ", round(x$p.value, 4), " (", x$effect, ")",
       "\nErgodic: ", swiftelse(x$effect == "less", "Yes", "No")
