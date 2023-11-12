@@ -46,7 +46,7 @@
 #' @export
 #' 
 # Information Theoretic Clustering for dynEGA
-# Updated 10.11.2023
+# Updated 12.11.2023
 infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
 {
   
@@ -73,134 +73,48 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
   diag(jsd_matrix) <- NA
   
   # Remove all NAs
-  rm_cols <- lvapply(
+  rm_cols <- !lvapply(
     as.data.frame(jsd_matrix), function(x){all(is.na(x))}
   )
     
-  # Remove missing data points
-  jsd_matrix <- jsd_matrix[!rm_cols, !rm_cols]
+  # Remove missing data points and convert to distance
+  jsd_matrix <- jsd_matrix[rm_cols, rm_cols]
   
   # Get similarity matrix
   jss_matrix <- 1 - jsd_matrix
   
   # Make diagonal 0 again
   diag(jss_matrix) <- diag(jsd_matrix) <- 0
-  
-  # Perform hierarchical clustering (follows Walktrap)
+
+  # Use agglomerative Ward's D
   hier_clust <- hclust(
     d = as.dist(jsd_matrix),
-    method = "complete"
+    method = "ward.D2"
   )
-  
+
   # Get number of cases
   cases <- dim(jsd_matrix)[2]
 
   # Get cut sequence
-  cut_sequence <- seq_len(cases)
+  cut_sequence <- seq_len(cases)[-1]
 
   # Obtain cuts
   hier_cuts <- lapply(cut_sequence, function(i){
     cutree(hier_clust, i)
   })
 
-  # Name cuts
-  names(hier_cuts) <- cut_sequence
-
-  # Make any cuts with singleton clusters NULL
-  remaining_cuts <- !lvapply(
-    hier_cuts, function(x){any(table(x) == 1)}
-  )
-
-  # Obtain cuts
-  cuts <- as.numeric(names(remaining_cuts)[remaining_cuts])
-
-  # Get modularities
+  # Compute modularity over solutions
   Qs <- nvapply(
-    hier_cuts[cuts], function(cuts){
-      modularity(jss_matrix, cuts)
+    hier_cuts, function(cut){
+      modularity(jss_matrix, cut)
     }
   )
-
-  # Get largest change in the modularity index
-  Q_index <- which.max(Qs)
+  
+  # Use largest gap in modularity
+  Q_index <- which.max(abs(diff(Qs)))
   
   # Obtain clusters
   clusters <- hier_cuts[[Q_index]]
-  
-  # Check if single cluster
-  if(unique_length(clusters) == 1){
-    
-    # Generate rewired networks
-    rewired_networks <- lapply(
-      individual_networks, igraph_rewire,
-      prob = runif_xoshiro(1, min = 0.10, max = 0.20)
-    )
-    
-    # Get the rewired JSD matrix
-    jsd_rewired_matrix <- pairwise_spectral_JSD(rewired_networks)
-    
-    # Make diagonal NA
-    diag(jsd_rewired_matrix) <- NA
-    
-    # Remove all NAs
-    rm_cols <- lvapply(
-      as.data.frame(jsd_rewired_matrix), function(x){all(is.na(x))}
-    )
-    
-    # Remove missing data points
-    jsd_rewired_matrix <- jsd_rewired_matrix[!rm_cols, !rm_cols]
-
-    # Make diagonal 0 again
-    diag(jsd_rewired_matrix) <- 0
-    
-    # Get lower triangle
-    lower_triangle <- lower.tri(individual_networks[[1]])
-
-    # Compare to empirical
-    comparison <- t.test(
-      jsd_matrix[lower_triangle],
-      jsd_rewired_matrix[lower_triangle],
-      paired = TRUE,
-      var.equal = FALSE
-    )
-    
-    # Obtain sign of statistic
-    comparison_sign <- sign(comparison$statistic)
-    
-    # Compute adaptive alpha
-    adaptive_p <- adapt.a(
-      test = "paired",
-      n = length(lower_triangle),
-      alpha = .001,
-      power = 0.80,
-      efxize = "small"
-    )
-    
-    # Compute Cohen's d
-    cohens_d <- d(
-      jsd_matrix[lower_triangle],
-      jsd_rewired_matrix[lower_triangle],
-      paired = TRUE
-    )
-    
-    # Check for empirical JSD > rewired JSD OR non-significant t-test
-    if(comparison_sign == 1 || abs(cohens_d) < 0.20){
-      
-      # Set clusters to all individuals
-      clusters <- cut_sequence
-      names(clusters) <- dimnames(jsd_matrix)[[2]]
-      
-    }
-    
-    # Compile results
-    single_cluster <- list(
-      JSD_rewired = jsd_rewired_matrix,
-      t.test = comparison,
-      adaptive.p.value = adaptive_p,
-      d = cohens_d
-    )
-
-  }
   
   # Set up results
   results <- list(
@@ -209,11 +123,6 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
     clusterTree = hier_clust,
     JSD = jsd_matrix
   )
-  
-  # Check for single cluster test
-  if(exists("single_cluster")){
-    results$single.cluster.test <- single_cluster
-  }
 
   # Set class
   class(results) <- "infoCluster"
