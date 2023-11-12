@@ -31,12 +31,6 @@
 #' 
 #' }
 #' 
-#' @param ordering Character (length = 1).
-#' Changes ordering of edge list.
-#' \code{"row"} goes across the rows;
-#' \code{"column"} goes down the columns.
-#' Defaults to \code{"row"}
-#' 
 #' @param shuffles Numeric.
 #' Number of shuffles used to compute the Kolmogorov complexity.
 #' Defaults to \code{5000}
@@ -144,7 +138,7 @@
 #'
 #' @references 
 #' \strong{Original Implementation} \cr
-#' Golino, H., Nesselroade, J., & Christensen, A. P. (2022).
+#' Golino, H., Nesselroade, J. R., & Christensen, A. P. (2022).
 #' Toward a psychology of individuals: The ergodicity information index and a bottom-up approach for finding generalizations.
 #' \emph{PsyArXiv}.
 #' 
@@ -152,24 +146,19 @@
 #'
 #' @export
 # Bootstrap Test for the Ergodicity Information Index
-# Updated 09.11.2023
+# Updated 12.11.2023
 boot.ergoInfo <- function(
     dynEGA.object, EII, 
     use = c("edge.list", "unweighted", "weighted"),
-    ordering = c("row", "column"), shuffles = 5000,
-    iter = 200, ncores, verbose = TRUE
+    shuffles = 5000, iter = 200, ncores, verbose = TRUE
 ){
-  
-  # Send experimental message (for now)
-  experimental("boot.ergoInfo")
   
   # Check for missing arguments (argument, default, function)
   use <- set_default(use, "unweighted", ergoInfo)
-  ordering <- set_default(ordering, "row", ergoInfo)
   if(missing(ncores)){ncores <- ceiling(parallel::detectCores() / 2)}
   
   # Argument errors
-  boot.ergoInfo_errors(dynEGA.object, iter, ncores, verbose)
+  boot.ergoInfo_errors(dynEGA.object, shuffles, iter, ncores, verbose)
   
   # Check for EII
   if(missing(EII)){ # If missing, then compute it
@@ -178,7 +167,6 @@ boot.ergoInfo <- function(
     
     # Get attributes
     use <- attr(EII, "methods")$use
-    ordering <- attr(EII, "methods")$ordering
     shuffles <- attr(EII, "methods")$shuffles
     EII <- EII$EII # Save empirical EII for last
     
@@ -196,44 +184,37 @@ boot.ergoInfo <- function(
   # Remove `dynEGA.object` from memory
   rm(dynEGA.object); clear_memory()
   
+  # Set up scramble dynamic EGA object (more efficient)
+  scramble_dynEGA <- list(
+    dynEGA = list(
+      population = list(network = population_network, n.dim = n_dimensions),
+      individual = vector("list", length = length(individual_networks))
+    )
+  )
+  
+  # Set class
+  class(scramble_dynEGA) <- "dynEGA"
+  
   # Get rewired networks
   rewired_EII <- parallel_process(
     iterations = iter,
-    FUN = function(iteration, use, ordering, shuffles){
+    FUN = function(iteration){
       
-      # Initialize `dynEGA` object structure
-      rewired_dynEGA <- list(
-        dynEGA = list(
-          population = list(
-            network = population_network,
-            n.dim = n_dimensions
-          ),
-          individual = lapply( # Return as list named "network"
-            individual_networks, function(individual_network){
-              list(
-                network = network_scramble(
-                  population_network, individual_network
-                ) 
-              )
-            }
+      # Population individuals
+      scramble_dynEGA$dynEGA$individual <- lapply(
+        individual_networks, function(individual_network){
+          list(
+            network = network_scramble(
+              population_network, individual_network
+            ) 
           )
-        )
+        }
       )
-      
-      # Set class
-      class(rewired_dynEGA) <- "dynEGA"
       
       # Return EII
-      return(
-        ergoInfo(
-          rewired_dynEGA, use = use,
-          ordering = ordering, shuffles = shuffles
-        )
-      )
+      return(ergoInfo(scramble_dynEGA, use = use, shuffles = shuffles))
       
     },
-    # EII settings
-    use = use, ordering = ordering, shuffles = shuffles,
     # Parallelization settings
     ncores = ncores, progress = verbose
   )
@@ -286,10 +267,7 @@ boot.ergoInfo <- function(
   )
   
   # Add "methods" attribute
-  attr(results, "methods") <- list(
-    use = use, ordering = ordering, 
-    shuffles = shuffles, iter = iter
-  )
+  attr(results, "methods") <- list(use = use, shuffles = shuffles, iter = iter)
   
   # Set class
   class(results) <- "boot.ergoInfo"
@@ -317,14 +295,19 @@ boot.ergoInfo <- function(
 
 #' @noRd
 # Errors ----
-# Updated 13.08.2023
-boot.ergoInfo_errors <- function(dynEGA.object, iter, ncores, verbose)
+# Updated 12.11.2023
+boot.ergoInfo_errors <- function(dynEGA.object, shuffle, iter, ncores, verbose)
 {
   
   # 'dynEGA.object' errors ("dynEGA.ind.pop" defunct to legacy)
   if(!is(dynEGA.object, "dynEGA") & !is(dynEGA.object, "dynEGA.ind.pop")){
     class_error(dynEGA.object, "dynEGA", "boot.ergoInfo")
   }
+  
+  # 'shuffle' errors
+  length_error(shuffle, 1, "boot.ergoInfo")
+  typeof_error(shuffle, "numeric", "boot.ergoInfo")
+  range_error(shuffle, c(1, Inf), "boot.ergoInfo")
   
   # 'iter' errors
   length_error(iter, 1, "boot.ergoInfo")
@@ -369,7 +352,6 @@ print.boot.ergoInfo <- function(x, ...)
         "unweighted" = "Unweighted",
         "weighted" = "Weighted"
       ), "\n",
-      "Ordering: ", totitle(attr(x, "methods")$ordering), "\n",
       "Shuffles: ", attr(x, "methods")$shuffles, "\n"
     )
   )

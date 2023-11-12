@@ -172,8 +172,8 @@ summary.infoCluster <- function(object, ...)
 #' @exportS3Method 
 # S3 Plot Method ----
 # Works fast enough, so leaving as original code
-# Updated 04.11.2023
-plot.infoCluster <- function(x, ...)
+# Updated 12.11.2023
+plot.infoCluster <- function(x, label_size = 3, ...)
 {
   
   # Prepare data for {ggplot2}
@@ -317,7 +317,7 @@ plot.infoCluster <- function(x, ...)
     ggplot2::geom_text(
       data = cluster_data$label,
       ggplot2::aes(x, y, label = label, hjust = 0),
-      size = 3
+      size = label_size
     ) +
     ggplot2::scale_color_manual(
       labels = label,

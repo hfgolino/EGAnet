@@ -21,12 +21,6 @@
 #' 
 #' }
 #' 
-#' @param ordering Character (length = 1).
-#' Changes ordering of edge list.
-#' \code{"row"} goes across the rows;
-#' \code{"column"} goes down the columns.
-#' Defaults to \code{"row"}
-#' 
 #' @param shuffles Numeric.
 #' Number of shuffles used to compute the Kolmogorov complexity.
 #' Defaults to \code{5000}
@@ -61,24 +55,26 @@
 #'
 #' # Compute empirical ergodicity information index
 #' eii <- ergoInfo(dyn.ega1)}
+#' 
+#' @references 
+#' \strong{Original Implementation} \cr
+#' Golino, H., Nesselroade, J. R., & Christensen, A. P. (2022).
+#' Toward a psychology of individuals: The ergodicity information index and a bottom-up approach for finding generalizations.
+#' \emph{PsyArXiv}.
 #'
 #' @export
 #'
 # Ergodicity Information Index ----
-# Updated 07.11.2023
+# Updated 12.11.2023
 ergoInfo <- function(
     dynEGA.object,
     use = c("edge.list", "unweighted", "weighted"),
-    ordering = c("row", "column"), shuffles = 5000
+    shuffles = 5000
 )
 {
   
-  # Send experimental message (for now)
-  experimental("ergoInfo")
-  
   # Check for missing arguments (argument, default, function)
   use <- set_default(use, "unweighted", ergoInfo)
-  ordering <- set_default(ordering, "row", ergoInfo)
   
   # Check for appropriate class ("dynEGA.ind.pop" defunct to legacy)
   if(!is(dynEGA.object, "dynEGA") & !is(dynEGA.object, "dynEGA.ind.pop")){
@@ -172,12 +168,6 @@ ergoInfo <- function(
   # Set upper triangle to FALSE
   edges[upper_triangle] <- FALSE
   
-  # Use `keep_weights` for quick indexing
-  keep_weights <- swiftelse(
-    use == "edge.list",
-    c(1L, 2L), c(1L, 2L, 3L)
-  )
-  
   # Get edge list ("col" then "row" matches {igraph})
   edge_list <- cbind(
     which(edges, arr.ind = TRUE)[,c("col", "row")],
@@ -232,30 +222,31 @@ ergoInfo <- function(
   
   # K-complexity
   
+  # Use `keep_weights` for quick indexing
+  keep_weights <- swiftelse(
+    use == "edge.list",
+    c(1L, 2L), c(1L, 2L, 3L)
+  )
+  
+  # Transpose edge lists (more efficient)
+  edge_list <- t(edge_list[,keep_weights])
+  population_edge_list <- t(population_edge_list[,keep_weights])
+  
   # Get k-complexity for individuals and population
   kcomplexities <- lapply(
     seq_len(shuffles), function(iteration){
       
-      # Get individual k-complexity
-      individual <- k_complexity(
-        edge_list[ # rows
-          shuffle_replace(edge_sequence),
-          keep_weights # either pairwise edges or weights
-        ],
-        ordering = ordering
+      # Set up return
+      return(
+        c(
+          individual = k_complexity(
+            edge_list[,shuffle_replace(edge_sequence)]
+          ),
+          population = k_complexity(
+            population_edge_list[,shuffle_replace(population_edge_sequence)]
+          )
+        )
       )
-      
-      # Get population k-complexity
-      population <- k_complexity(
-        population_edge_list[ # rows
-          shuffle_replace(population_edge_sequence),
-          keep_weights # either pairwise edges or weights
-        ],
-        ordering = ordering
-      )
-      
-      # Return k-complexity
-      return(c(individual = individual, population = population))
       
     }
   )
@@ -286,9 +277,7 @@ ergoInfo <- function(
   }
   
   # Add "methods" attribute
-  attr(results, "methods") <- list(
-    use = use, ordering = ordering, shuffles = shuffles
-  )
+  attr(results, "methods") <- list(use = use, shuffles = shuffles)
   
   # Add class
   class(results) <- "EII"
@@ -318,7 +307,7 @@ ergoInfo <- function(
 
 #' @exportS3Method 
 # S3 Print Method
-# Updated 07.11.2023
+# Updated 12.11.2023
 print.EII <- function(x, ...)
 {
   
@@ -332,7 +321,6 @@ print.EII <- function(x, ...)
         "unweighted" = "Unweighted",
         "weighted" = "Weighted"
       ), "\n",
-      "Ordering: ", totitle(attr(x, "methods")$ordering), "\n",
       "Shuffles: ", attr(x, "methods")$shuffles, "\n"
     )
   )
@@ -352,74 +340,19 @@ summary.EII <- function(object, ...)
 
 #' @noRd
 # k-complexity ----
-# Updated 20.07.2023
-k_complexity <- function(values, ordering)
+# Updated 12.11.2023
+k_complexity <- function(values)
 {
   
   # Streamlined form
-  if(ordering == "row"){
-    return(
-      length( # length of compression
-        memCompress( # bit compression
-          paste0( # bits (matches `toString`)
-            t(values), collapse = ", "
-          ), type = "gzip" # type of compression
-        )
+  return(
+    length( # length of compression
+      memCompress( # bit compression
+        paste0( # bits (matches `toString`)
+          values, collapse = ", "
+        ), type = "gzip" # type of compression
       )
     )
-  }else if(ordering == "column"){
-    return(
-      length( # length of compression
-        memCompress( # bit compression
-          paste0( # bits (matches `toString`)
-            values, collapse = ", "
-          ), type = "gzip" # type of compression
-        )
-      )
-    )
-  }
-  
-  # A key question on order of edge list:
-  # Should edges be in order of their pairwise correspondence; for example:
-  #
-  # 1 2
-  # 3 5
-  # 4 5
-  # 5 6
-  #
-  # Reads: "1, 2, 3, 5, 4, 5, 5, 6"
-  #
-  # OR
-  #
-  # Reads (current implementation): "1, 3, 4, 5, 2, 5, 5, 6"
+  )
   
 }
-
-#' @noRd
-# Structural edge overlap ----
-# EXPERIMENTAL -- NOT FINISHED
-# Updated 10.07.2023
-structural_overlap <- function(adjacency_networks)
-{
-  
-  # Convert to numeric
-  numeric_adjacency <- lapply(adjacency_networks, function(x){x * 1})
-  
-  # Get edge overlap (defined as "o")
-  edge_overlap <- symmetric_matrix_lapply(numeric_adjacency, sum)
-  
-  # Number of layers (defined as "M")
-  layers <- length(adjacency_networks)
-  
-  # Get copy of edge overlap
-  M_edge_overlap <- edge_overlap
-  
-  # Set non-zero values to 1 (defined as "Heaviside o")
-  M_edge_overlap[M_edge_overlap != 0] <- 1
-  
-  # Return structural overlap
-  (layers / (layers - 1)) *
-    ((edge_overlap / (layers * M_edge_overlap)) - (1 / layers))
-  
-}
-
