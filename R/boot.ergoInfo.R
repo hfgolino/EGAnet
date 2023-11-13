@@ -1,8 +1,8 @@
 #' @title Bootstrap Test for the Ergodicity Information Index
 #'
-#' @description Tests the Ergodicity Information Index obtained in the empirical sample 
-#' with a distribution of EII obtained by bootstrap sampling
-#' (see \strong{Details} for the procedure)
+#' @description Tests the Ergodicity Information Index obtained in the 
+#' empirical sample with a distribution of EII obtained by a variant of
+#' bootstrap sampling (see \strong{Details} for the procedure)
 #'
 #' @param dynEGA.object A \code{\link[EGAnet]{dynEGA}} or a
 #' \code{\link[EGAnet]{dynEGA.ind.pop}} object. If a \code{\link[EGAnet]{dynEGA}}
@@ -53,29 +53,40 @@
 #' Defaults to \code{TRUE}.
 #' Set to \code{FALSE} to not display progress
 #' 
-#' @details In traditional bootstrap sampling, individual participants are resampled with 
-#' replacement from the empirical sample. This process is time consuming when carried out 
-#' across \emph{v} number of variables, \emph{n} number of participants,
-#' \emph{t} number of time points, and \emph{i} number of iterations.
+#' @details In traditional bootstrap sampling, individual participants are resampled 
+#' with replacement from the empirical sample. This process is time consuming 
+#' when carried out across \emph{v} number of variables, \emph{n} number of 
+#' participants, \emph{t} number of time points, and \emph{i} number of iterations.
+#' Instead, \code{boot.ergoInfo} uses the premise of an ergodic process to 
+#' establish more efficient test that works directly on the sample's networks.
 #' 
-#' The approach applied in \code{boot.ergoInfo}, is to obtain a sampling distribution 
-#' of EII values as if all participants in the data have the population network structure. 
-#' To mirror the sample of individuals, we generate as many population variants as there are participants 
-#' in the empirical sample. With the new sample containing the population network variants, we compute EII 
-#' with the original population network as the population network and the population network variants as the individuals. 
-#' We repeat this process for \emph{X} iterations (e.g., 200). This approach creates a sampling distribution of EII that would 
-#' be expected when the individuals in the population are deviations on the population structure -- that is, much of the 
-#' population structure is retained but with different variations of noise in each individual. If the empirical EII is 
-#' significant different than the generated distribution, then there is significant information lost when representing the sample 
-#' as an aggregate, population network; otherwise, the system is determine to be ergodic and the sample can adequately be 
-#' represented with the population network.
+#' With an ergodic process, the expectation is that all individuals will have
+#' a systematic relationship with the population. Destroying this relationship
+#' should result in a significant loss of information. Following this conjecture,
+#' \code{boot.ergoInfo} shuffles a random subset of edges that exist in the
+#' \strong{population} that is \emph{equal} to the number of shared edges
+#' it has with an individual. An individual's unique edges remain the same,
+#' controlling for their unique information. The result is a replicate individual
+#' that contains the same total number of edges as the actual individual but
+#' its shared information with the population has been scrambled. 
 #' 
-#' How to interpret the results: the result of \code{boot.ergoInfo} is a sampling distribution of EII values that would be expected if the process 
-#' was ergodic (null distribution). If the empirical EII value is not significantly different from the null distribution, then  the empirical data can 
-#' be expected to be generated from an ergodic process and the population structure is  sufficient to describe all 
-#' individuals. If the empirical EII value is significantly different from the null distribution, 
-#' then the empirical data cannot be described by the population structure -- significant 
-#' information is lost when collapsing across to the population structure.
+#' This process is repeated over each individual to create a replicate sample
+#' and is repeated for \emph{X} iterations (e.g., 100). This approach creates
+#' a sampling distribution that represents the expected information between
+#' the population and individuals when a random process generates the shared
+#' information between them. If the shared information between the population
+#' and individuals in the empirical sample is sufficiently meaningful, then
+#' this process should result in significant information loss.
+#' 
+#' How to interpret the results: the result of \code{boot.ergoInfo} is a sampling 
+#' distribution of EII values that would be expected if the process was random 
+#' (null distribution). If the empirical EII value is \emph{greater than} or
+#' not significantly different from the null distribution, then the empirical 
+#' data can be expected to be generated from an nonergodic process and the 
+#' population structure is not sufficient to describe all individuals. If the 
+#' empirical EII value is significantly \emph{lower than} the null distribution, 
+#' then the empirical data can be described by the population structure -- the
+#' population structure is sufficient to describe all individuals.
 #'
 #' @examples
 #' # Obtain simulated data
