@@ -37,7 +37,7 @@
 #'
 #' @param iter Numeric (length = 1).
 #' Number of replica samples to generate from the bootstrap analysis.
-#' Defaults to \code{200} (recommended)
+#' Defaults to \code{100} (\code{1000} for robustness)
 #'
 #' @param ncores Numeric (length = 1).
 #' Number of cores to use in computing results.
@@ -150,7 +150,7 @@
 boot.ergoInfo <- function(
     dynEGA.object, EII, 
     use = c("edge.list", "unweighted", "weighted"),
-    shuffles = 5000, iter = 200, ncores, verbose = TRUE
+    shuffles = 5000, iter = 100, ncores, verbose = TRUE
 ){
   
   # Check for missing arguments (argument, default, function)

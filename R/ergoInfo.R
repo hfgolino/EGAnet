@@ -96,42 +96,28 @@ ergoInfo <- function(
   # Get sequence for number of individuals
   individual_sequence <- seq_along(individual_networks)
   
-  # Get adjacency networks
-  adjacency_networks <- lapply(
-    individual_networks, # NAs occur when there is zero variance 
-    function(x){
-      
-      # Get adjacency
-      adjacency <- x != 0 & !is.na(x)
-      
-      # Attach number of edges as attribute
-      attr(adjacency, "edges") <- sum(adjacency) / 2
-      
-      # Return adjacency
-      return(adjacency)
-      
-    }
-  )
-  
-  # Get ANY edges across the individual networks
-  edges <- symmetric_matrix_lapply(adjacency_networks, any)
-  
   # Initialize encoding matrix
-  dimensions <- dim(edges)
+  dimensions <- dim(individual_networks[[1]])
   encoding_matrix <- matrix(1, nrow = dimensions[1], ncol = dimensions[2])
   
   # "unweighted" and "weighted" needs canonical prime association
   if(use != "edge.list"){
     
-    # Get order of each counts
-    edge_ordering <- order(
-      nvapply(adjacency_networks, attr, "edges"), 
-      decreasing = FALSE
-    )
+    # Set individual networks based on use
+    if(use == "unweighted"){
+      
+      # Binarize networks
+      individual_networks <- lapply(
+        individual_networks, # NAs occur when there is zero variance 
+        function(x){return(x != 0 & !is.na(x))}
+      )
+      
+    }
     
-    # Reorder networks and adjacencys
-    individual_networks <- individual_networks[edge_ordering]
-    adjacency_networks <- adjacency_networks[edge_ordering]
+    # Order networks
+    individual_networks <- individual_networks[
+      order(nvapply(individual_networks, edge_count), decreasing = FALSE)
+    ]
     
     # Get prime numbers
     prime_numbers <- get(
@@ -140,18 +126,7 @@ ergoInfo <- function(
     
     # Get prime weights
     prime_weights <- lapply(individual_sequence, function(case){
-      
-      # Create integer weights if weighted
-      if(use == "weighted"){
-        adjacency_networks[[case]] <- individual_networks[[case]]
-      }
-      
-      # Assign primes
-      prime_network <- prime_numbers[case] ^ adjacency_networks[[case]]
-      
-      # Return prime network
-      return(prime_network)
-      
+      return(prime_numbers[[case]] ^ individual_networks[[case]])
     })
     
     # Get encoding matrix
@@ -162,20 +137,10 @@ ergoInfo <- function(
     
   }
   
-  # Store upper triangle indices (use for population as well)
-  upper_triangle <- upper.tri(edges)
+  # Get edge list (matches {igraph})
+  edge_list <- sparse_network(encoding_matrix)
   
-  # Set upper triangle to FALSE
-  edges[upper_triangle] <- FALSE
-  
-  # Get edge list ("col" then "row" matches {igraph})
-  edge_list <- cbind(
-    which(edges, arr.ind = TRUE)[,c("col", "row")],
-    encoding_matrix[edges]
-  )
-  # Order matters!! (see pasting in `k_complexity`)
-  
-  # Get edge list rows
+  # Get edge list rows (used at the end)
   edge_rows <- dim(edge_list)[1]
   
   # Get edge list sequence
@@ -192,12 +157,11 @@ ergoInfo <- function(
   # Branch based on "use"
   if(use != "edge.list"){
     
-    # Create integer weights if weighted
-    if(use == "weighted"){
-      population_encoding <- 2 ^ dynEGA.object$population$network
-    }else{
-      population_encoding <- 2 ^ population_edges
-    }
+    # Check for weighted vs. unweighted
+    population_encoding <- 2 ^ swiftelse(
+      use == "unweighted", population_edges,
+      dynEGA.object$population$network
+    )
     
     # Revert 1s to 0s
     population_encoding[population_encoding == 1] <- 0
@@ -205,20 +169,16 @@ ergoInfo <- function(
   }
   
   # Set upper triangle to FALSE
-  population_edges[upper_triangle] <- FALSE
+  population_edges[upper.tri(population_edges)] <- FALSE
   
   # Get edge list ("col" then "row" matches {igraph})
   population_edge_list <- cbind(
     which(population_edges, arr.ind = TRUE)[,c("col", "row")], 
     population_encoding[population_edges]
   )
-  # Order matters!! (see pasting in `k_complexity`)
-  
-  # Get edge list rows
-  population_edge_rows <- dim(population_edge_list)[1]
   
   # Get edge list sequence
-  population_edge_sequence <- seq_len(population_edge_rows)
+  population_edge_sequence <- nrow_sequence(population_edge_list)
   
   # K-complexity
   
@@ -287,7 +247,6 @@ ergoInfo <- function(
   
   # Return results
   return(results)
-  
   
 }
 
