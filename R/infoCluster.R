@@ -110,8 +110,8 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
     }
   )
   
-  # Use largest gap in modularity
-  Q_index <- which.max(abs(diff(Qs)))
+  # Switch based on positive modularity
+  Q_index <- which.max(Qs)
   
   # Obtain clusters
   clusters <- hier_cuts[[Q_index]]
