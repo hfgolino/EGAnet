@@ -206,32 +206,31 @@ boot.ergoInfo <- function(
   # Set class
   class(scramble_dynEGA) <- "dynEGA"
   
-  # Get rewired networks
-  rewired_EII <- parallel_process(
-    iterations = iter,
-    FUN = function(iteration){
-      
-      # Population individuals
-      scramble_dynEGA$dynEGA$individual <- lapply(
-        individual_networks, function(individual_network){
-          list(
-            network = network_scramble(
-              population_network, individual_network
-            ) 
-          )
-        }
-      )
-      
-      # Return EII
-      return(ergoInfo(scramble_dynEGA, use = use, shuffles = shuffles))
-      
-    },
-    # Parallelization settings
-    ncores = ncores, progress = verbose
+  # Get scrambled EII
+  EII_values <- unlist(
+    parallel_process(
+      iterations = iter,
+      FUN = function(iteration){
+        
+        # Population individuals
+        scramble_dynEGA$dynEGA$individual <- lapply(
+          individual_networks, function(individual_network){
+            list(
+              network = network_scramble(
+                population_network, individual_network
+              ) 
+            )
+          }
+        )
+        
+        # Return EII
+        return(ergoInfo(scramble_dynEGA, use = use, shuffles = shuffles)$EII)
+        
+      },
+      # Parallelization settings
+      ncores = ncores, progress = verbose
+    )
   )
-  
-  # Get EII values
-  EII_values <- nvapply(rewired_EII, function(x){x$EII})
   
   # Get indices for empirical EII greater than or equal to rewired values
   greater_than <- EII >= EII_values

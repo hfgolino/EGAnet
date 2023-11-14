@@ -2803,7 +2803,7 @@ sparse_network <- function(network)
 
 #' @noRd
 # Scramble networks ----
-# Updated 11.11.2023
+# Updated 14.11.2023
 network_scramble <- function(base, comparison)
 {
   
@@ -2816,19 +2816,36 @@ network_scramble <- function(base, comparison)
   comparison_edges <- comparison_sparse$weight != 0
   
   # Get shared edges
-  shared_total <- sum(base_edges & comparison_edges)
+  shared_edges <- base_edges & comparison_edges
   
   # Get unique indices in comparison
   unique_index <- !base_edges & comparison_edges
   
-  # Assign edges
-  base_sparse$weight[-shuffle(which(base_edges), shared_total)] <- 0
-  base_sparse$weight[unique_index] <- comparison_sparse$weight[unique_index]
+  # Get range for noise
+  shared_range <- range(
+    base_sparse$weight[shared_edges] - 
+    comparison_sparse$weight[shared_edges]
+  )
   
+  # Assign shared edges
+  base_sparse$weight[-shuffle(which(base_edges), sum(shared_edges))] <- 0
+  
+  # Add random noise to the shared edges
+  non_zero <- which(base_sparse$weight != 0)
+  base_sparse$weight[non_zero] <- base_sparse$weight[non_zero] + 
+    runif_xoshiro( # add noise with similar range
+      length(non_zero), 
+      min = shared_range[1], 
+      max = shared_range[2]
+    )
+  
+  # Assign unique edges
+  base_sparse$weight[unique_index] <- comparison_sparse$weight[unique_index]
+
   # Remove zero edges from equivalent
   base_sparse <- base_sparse[base_sparse$weight != 0,]
   
-  # Get number of nodes
+  # Get dimensions
   nodes <- dim(base)[2]
   
   # Initialize network to return
