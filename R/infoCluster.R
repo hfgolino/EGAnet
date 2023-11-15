@@ -106,7 +106,7 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
   # Compute modularity over solutions
   Qs <- nvapply(
     hier_cuts, function(cut){
-      modularity(jss_matrix, cut)
+      modularity(jss_matrix, cut, resolution = 1.01)
     }
   )
   
