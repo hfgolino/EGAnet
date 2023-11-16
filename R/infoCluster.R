@@ -172,159 +172,57 @@ summary.infoCluster <- function(object, ...)
 #' @exportS3Method 
 # S3 Plot Method ----
 # Works fast enough, so leaving as original code
-# Updated 12.11.2023
+# Updated 16.11.2023
 plot.infoCluster <- function(x, label_size = 3, ...)
 {
   
-  # Prepare data for {ggplot2}
-  cluster_data <- ggdendro::dendro_data(x$clusterTree)
+  # Get maximum clusters
+  max_clusters <- max(x$clusters)
   
-  # Get clusters
-  clusters <- x$clusters
-  
-  # Create data frame
-  cluster_df <- data.frame(
-    label = names(clusters),
-    cluster = factor(clusters)
-  )
-  
-  # Merge data
-  cluster_data$labels <- merge(
-    cluster_data$labels, cluster_df,
-    by = "label"
-  )
-  
-  # Split dendrogram into upper grey section and lower coloured section
-  cut <- unique_length(clusters)
-  
-  # Check for maximum clusters (i.e., no clusters)
-  if(cut != length(clusters)){
-    
-    unique_y_segments <- unique(cluster_data$segments$y)
-    height <- unique_y_segments[order(unique_y_segments, decreasing = TRUE)]
-    cut.height <- mean(c(height[cut], height[cut-1]))
-    cluster_data$segments$line <- swiftelse(cluster_data$segments$y == cluster_data$segments$yend &
-                                              cluster_data$segments$y > cut.height, 1, 2)
-    cluster_data$segments$line <- swiftelse(cluster_data$segments$yend  > cut.height, 1, cluster_data$segments$line)
-    
-    # Number the clusters
-    cluster_data$segments$cluster <- c(-1, diff(cluster_data$segments$line))
-    change <- which(cluster_data$segments$cluster == 1)
-    for (i in 1:cut) cluster_data$segments$cluster[change[i]] = i + 1
-    cluster_data$segments$cluster <-  swiftelse(
-      cluster_data$segments$line == 1, 1, 
-      swiftelse(
-        cluster_data$segments$cluster == 0, 
-        NA, cluster_data$segments$cluster
-      )
-    )
-    
-    # Replace NA values in cluster
-    if(!all(is.na(cluster_data$segments$cluster))){
-      for(i in seq_along(cluster_data$segments$cluster)){
-        
-        if(is.na(cluster_data$segments$cluster[i])){
-          cluster_data$segments$cluster[i] <- cluster_data$segments$cluster[i-1]
-        }
-        
-      }
-    }else{
-      cluster_data$segments$cluster <- -1
-    }
-    
-    
-    # Consistent numbering between segment$cluster and label$cluster
-    cluster_df$label <- factor(cluster_df$label, levels = cluster_data$labels$label)
-    cluster_df$cluster <- factor((cluster_df$cluster), levels = unique(cluster_df$cluster), labels = (1:cut) + 1)
-    cluster_data[["labels"]] <- merge(cluster_data[["labels"]], cluster_df, by = "label")
-    
-    # Positions for cluster labels
-    n.rle <- rle(cluster_data$segments$cluster)
-    N <- cumsum(n.rle$lengths)
-    N <- N[seq(1, length(N), 2)] + 1
-    N.df <- cluster_data$segments[N, ]
-    N.df$cluster <- N.df$cluster - 1
-    
-    # Check for all the same cluster
-    if(all(cluster_data$segments$cluster == -1)){
-      cluster_data$segments$cluster <- rep(
-        1, length(cluster_data$segments$cluster)
-      )
-    }
-    
-  }else{
-    
-    # Set clusters to 1
-    cluster_data$segments$cluster <- 1
-    
-  }
-  
-  # This code is necessary to flip the colors to the proper
-  # order that is consistent with the output of `infoCluster$clusters`
-  # I have no idea why it doesn't work without it but
-  # after much MacGyvering, this solution works
-  
-  # First, extract cluster not equal to 1 (connecting lines)
-  not_one_clusters <- cluster_data$segments$cluster[
-    cluster_data$segments$cluster != 1
-  ]
-  
-  # Second, get the frequencies
-  segment_frequency <- fast_table(not_one_clusters)
-  
-  # Third, get the actual cluster frequencies
-  cluster_frequency <- fast_table(x$clusters)
-  
-  # Fourth, map the values
-  cluster_order <- order(cluster_frequency)
-  segment_order <- segment_frequency[
-    order(segment_frequency)[cluster_order]
-  ]
-  
-  # Additional check for equivalence
-  segment_order[] <- swiftelse(
-    unique_length(segment_frequency) == 1,
-    rev(seq_along(segment_order)) + 1,
-    seq_along(segment_order) + 1
-  )
-  
-  # Fifth, vectorize back
-  cluster_data$segments$cluster[
-    cluster_data$segments$cluster != 1
-  ] <- segment_order[as.character(not_one_clusters)]
-  
+  # Get cluster sequence
+  cluster_sequence <- seq_len(max_clusters)
 
-  # Ensure clusters are factors
-  cluster_data$segments$cluster <- as.factor(
-    cluster_data$segments$cluster
+  # Get color palette
+  color_palette <- color_palette_EGA("polychrome", wc = rev(cluster_sequence))
+  
+  # Get dendrogram and color branches
+  cluster_data <- dendextend::as.ggdend(
+    dendextend::color_branches(
+      as.dendrogram(x$clusterTree),
+      clusters =  x$clusters[x$clusterTree$order],
+      col = color_palette
+    )
   )
   
-  # Get clusters and cluster sequence
-  cluster_sequence <- seq_len(cut)
+  # Change NA to grey
+  cluster_data$segments$col[is.na(cluster_data$segments$col)] <- "grey"
   
-  # Make labels
-  label <- swiftelse(
-    cut == 1, "1",
-    c("", cluster_sequence)
+  # Update color palette
+  color_palette <- c("grey", rev(color_palette))
+  
+  # Factor segments by color
+  cluster_data$segments$col <- factor(
+    cluster_data$segments$col, levels = color_palette
   )
-  
+
   # Set up plot
-  cluster_plot <- ggplot2::ggplot() +
+  cluster_plot <- ggplot2::ggplot() + 
     ggplot2::geom_segment(
       data = cluster_data$segment,
-      ggplot2::aes(x = x, y = y, xend = xend, yend = yend, color = cluster)
+      ggplot2::aes(
+        x = x, y = y, 
+        xend = xend, yend = yend, 
+        color = col
+      )
     ) +
     ggplot2::geom_text(
-      data = cluster_data$label,
+      data = cluster_data$labels,
       ggplot2::aes(x, y, label = label, hjust = 0),
       size = label_size
     ) +
     ggplot2::scale_color_manual(
-      labels = label,
-      values = c(
-        "grey", 
-        color_palette_EGA("polychrome", wc = cluster_sequence)
-      )
+      labels = c("", cluster_sequence),
+      values = color_palette
     ) +
     ggplot2::coord_flip() + 
     ggplot2::scale_y_reverse(expand = c(0.2, 0)) + 
@@ -343,7 +241,7 @@ plot.infoCluster <- function(x, label_size = 3, ...)
     )
  
   # Remove clusters if none
-  if(all(clusters == ncol_sequence(x$JSD))){
+  if(all(x$clusters == ncol_sequence(x$JSD))){
     cluster_plot <- cluster_plot +
       ggplot2::theme(legend.position = "none")
   }

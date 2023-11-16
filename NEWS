@@ -6,6 +6,8 @@ o FIX: freed `edge.*` arguments in `compare.EGA.plots` to allow full customizati
 
 o UPDATE: optimizations for speed and memory in `ergoInfo` and `boot.ergoInfo`
 
+o DEPENDENCY: swapped out {ggdendro} for {dendextend}
+
 
 Changes in version 2.0.2
 
