@@ -548,24 +548,23 @@ hierEGA <- function(
     
     # Message for correlated factor vs. bifactor
 
-    # # Set up messages
-    # ## General start
-    # general_start <- paste0(
-    #   "Based on lower (", round(results$lower_order$TEFI, 3),
-    #   ") and higher (", round(results$higher_order$TEFI, 3),
-    #   ") TEFI, there is better fit for a "
-    # )
-    # 
-    # ## Alternates
-    # first_order <- paste0("correlated lower order factor structure than bifactor structure")
-    # bifactor <- paste0("bifactor structure than correlated lower order factor structure")
-    # 
-    # # Compare
-    # swiftelse(
-    #   results$lower_order$TEFI < results$higher_order$TEFI,
-    #   message(paste0(general_start, first_order)),
-    #   message(paste0(general_start, bifactor)),
-    # )
+    # Set up messages
+    ## General start
+    general_start <- paste0(
+      "Based on lower (", round(results$lower_order$TEFI, 3),
+      ") and higher (", round(results$higher_order$TEFI, 3),
+      ") TEFI, there is better fit for a "
+    )
+
+    ## Alternates
+    first_order <- paste0("correlated lower order factor structure than bifactor structure")
+    bifactor <- paste0("bifactor structure than correlated lower order factor structure")
+
+    # Compare
+    attr(results, "methods")$interpretation <- swiftelse(
+      results$lower_order$TEFI < results$higher_order$TEFI,
+      paste0(general_start, first_order), paste0(general_start, bifactor)
+    )
 
   }
   
@@ -628,7 +627,7 @@ hierEGA_errors <- function(data, plot.EGA, verbose, ...)
 
 #' @exportS3Method 
 # S3 Print Method ----
-# Updated 31.07.2023
+# Updated 17.11.2023
 print.hierEGA <- function(x, ...)
 {
   
@@ -668,6 +667,17 @@ print.hierEGA <- function(x, ...)
   
   # Print TEFI
   cat(paste0("Generalized TEFI: ", round(x$TEFI, 3)))
+  
+  # Check for interpretation
+  if("interpretation" %in% names(attr(x, "methods"))){
+    
+    # Add break space
+    cat("\n\n----\n\n")
+    
+    # Print interpretation
+    cat(paste0("Interpretation: ", attr(x, "methods")$interpretation))
+    
+  }
   
 }
 
