@@ -52,7 +52,7 @@
 #' @export
 #'
 # Make memberships as homogeneous as possible ----
-# Updated 06.07.2023
+# Updated 19.11.2023
 community.homogenize <- function(target.membership, convert.membership)
 {
   
@@ -62,7 +62,7 @@ community.homogenize <- function(target.membership, convert.membership)
   
   # Ensure target membership is a vector
   target.membership <- force_vector(target.membership)
-  
+
   # Ensure conversion matrix is a case-by-row matrix
   convert.membership <- matrixize_conversion(
     convert.membership, length(target.membership)
@@ -172,7 +172,7 @@ get_rand <- function(convert_keep, target_keep)
 
 #' @noRd
 # Core Homogenize Function ----
-# Updated 23.07.2023
+# Updated 19.11.2023
 single_homogenize <- function(target.membership, convert_single)
 {
 
@@ -183,7 +183,7 @@ single_homogenize <- function(target.membership, convert_single)
   target_keep <- target.membership[keep_memberships]
 
   # Set up conversion as unique values
-  convert_keep <- as.numeric(factor(convert_single[keep_memberships]))
+  convert_keep <- reindex_memberships(convert_single[keep_memberships])
 
   # Create table between target and conversion
   conversion_table <- table(convert_keep, target_keep)

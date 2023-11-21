@@ -2778,6 +2778,20 @@ pcor2inv <- function(partial_correlations)
 #%%%%%%%%%%%%%%%%%%%%%%%%
 
 #' @noRd
+# Re-index memberships ----
+# Updated 19.11.2023
+reindex_memberships <- function(memberships)
+{
+  
+  # Re-index back into same vector
+  memberships[] <- as.numeric(factor(memberships, unique(memberships)))
+  
+  # Return memberships
+  return(memberships)
+  
+}
+
+#' @noRd
 # Create sparse network ----
 # Updated 08.11.2023
 sparse_network <- function(network)

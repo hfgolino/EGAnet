@@ -504,17 +504,3 @@ obtain_algorithm_name <- function(algorithm)
   return(unname(algorithm_names[algorithm_name]))
   
 }
-
-#' @noRd
-# Re-index memberships ----
-# Updated 14.07.2023
-reindex_memberships <- function(memberships)
-{
-
-  # Re-index back into same vector
-  memberships[] <- as.numeric(factor(memberships, unique(memberships)))
-  
-  # Return memberships
-  return(memberships)
-  
-}

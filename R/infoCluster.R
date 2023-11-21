@@ -46,12 +46,9 @@
 #' @export
 #' 
 # Information Theoretic Clustering for dynEGA
-# Updated 12.11.2023
+# Updated 21.11.2023
 infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
 {
-  
-  # Send experimental message (for now)
-  experimental("infoCluster")
   
   # Check for appropriate class ("dynEGA.ind.pop" defunct to legacy)
   if(!is(dynEGA.object, "dynEGA") & !is(dynEGA.object, "dynEGA.ind.pop")){
@@ -172,7 +169,7 @@ summary.infoCluster <- function(object, ...)
 #' @exportS3Method 
 # S3 Plot Method ----
 # Works fast enough, so leaving as original code
-# Updated 16.11.2023
+# Updated 21.11.2023
 plot.infoCluster <- function(x, label_size = 3, ...)
 {
   
@@ -197,14 +194,21 @@ plot.infoCluster <- function(x, label_size = 3, ...)
   # Change NA to grey
   cluster_data$segments$col[is.na(cluster_data$segments$col)] <- "grey"
   
-  # Update color palette
+  # Update cluster sequence and color palette
+  cluster_sequence <- c("", cluster_sequence)
   color_palette <- c("grey", rev(color_palette))
   
   # Factor segments by color
   cluster_data$segments$col <- factor(
     cluster_data$segments$col, levels = color_palette
   )
-
+  
+  # Re-set cluster sequence and color palette (if necessary)
+  if(!"grey" %in% cluster_data$segments$col){
+    cluster_sequence <- cluster_sequence[-1]
+    color_palette <- color_palette[-1]
+  }
+  
   # Set up plot
   cluster_plot <- ggplot2::ggplot() + 
     ggplot2::geom_segment(
@@ -221,7 +225,7 @@ plot.infoCluster <- function(x, label_size = 3, ...)
       size = label_size
     ) +
     ggplot2::scale_color_manual(
-      labels = c("", cluster_sequence),
+      labels = cluster_sequence,
       values = color_palette
     ) +
     ggplot2::coord_flip() + 
@@ -241,7 +245,7 @@ plot.infoCluster <- function(x, label_size = 3, ...)
     )
  
   # Remove clusters if none
-  if(all(x$clusters == ncol_sequence(x$JSD))){
+  if(max_clusters == dim(x$JSD)[2]){
     cluster_plot <- cluster_plot +
       ggplot2::theme(legend.position = "none")
   }
