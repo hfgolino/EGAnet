@@ -446,7 +446,7 @@ obtain_signs <- function(target_network)
 
 #' @noRd
 # Experimental loadings ----
-# Updated 05.09.2023
+# Updated 30.11.2023
 experimental_loadings <- function(
     A, wc, nodes, node_names, 
     communities, unique_communities
@@ -485,7 +485,7 @@ experimental_loadings <- function(
   # Multiply the assigned loading matrix by 2
   # This computation is a vectorization of putting half
   # of a node's within-community strength on it's diagonal
-  loading_matrix <- loading_matrix * 2
+  #\loading_matrix <- loading_matrix * 2
   
   # Check for unidimensional structure
   if(communities > 1){
