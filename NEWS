@@ -4,6 +4,8 @@ Changes in version 2.0.4
 
 o FIX: plotting for `infoCluster` when there are grey lines involved (or not)
 
+o ADD: `community.compare` to perform permutation test to determine statistical significance of cluster similarity
+
 o UPDATE: moved `reindex_memberships` to helpers
 
 o UPDATE: `reindex_memberships` used in `community.homogenize`
