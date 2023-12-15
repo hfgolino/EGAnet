@@ -40,6 +40,12 @@
 #' Defaults to \code{TRUE}.
 #' Set to \code{FALSE} to not display progress
 #' 
+#' @param seed Numeric (length = 1).
+#' Defaults to \code{NULL} or random results.
+#' Set for reproducible results.
+#' See \href{https://r-ega.net/articles/reproducibility-prng.html}{Reproducibility and PRNG}
+#' for more details on random number generation in \code{\link{EGAnet}}
+#' 
 #' @return Returns data frame containing method used (\code{Method}), empirical or observed
 #' value (\code{Empirical}), and p-value based on the permutation test (\code{p.value})
 #'
@@ -105,7 +111,7 @@ community.compare <- function(
     base, comparison,
     method = c(
       "vi", "nmi", "split.join", "rand", "adjusted.rand"
-    ), iter = 1000, verbose = TRUE
+    ), iter = 1000, verbose = TRUE, seed = NULL
 )
 {
   
@@ -113,7 +119,20 @@ community.compare <- function(
   method <- set_default(method, "adjusted.rand", community.compare)
   
   # Argument errors (returns usable solutions)
-  output <- community.compare_errors(base, comparison, iter, verbose)
+  output <- community.compare_errors(base, comparison, iter, verbose, seed)
+  
+  # Check for seed
+  if(!is.null(seed)){
+    seeds <- reproducible_seeds(iter * 2, seed)
+  }else{ 
+    
+    # Set all seeds to zero (or random)
+    seeds <- reproducible_seeds(iter * 2, 0)
+    
+    # Check for external suppression (from `invariance`)
+    message("Argument 'seed' is set to `NULL`. Results will not be reproducible. Set 'seed' for reproducible results")
+    
+  }
   
   # Assign updated 'base' and 'comparison' values
   base <- output$base; comparison <- output$comparison
@@ -127,11 +146,11 @@ community.compare <- function(
   # Perform permutations
   permutation_values <- nvapply(
     seq_len(iter - 1), function(i){
-      
+
       # Compute comparison
       igraph::compare(
-        base[shuffle(element_sequence)],
-        comparison[shuffle(element_sequence)],
+        base[shuffle(element_sequence, seed = seeds[i])],
+        comparison[shuffle(element_sequence, seed = seeds[i + iter])],
         method = method
       )
       
@@ -169,7 +188,7 @@ community.compare <- function(
 #' @noRd
 # Errors ----
 # Updated 15.12.2023
-community.compare_errors <- function(base, comparison, iter, verbose)
+community.compare_errors <- function(base, comparison, iter, verbose, seed)
 {
   
   # 'base' errors
@@ -245,6 +264,13 @@ community.compare_errors <- function(base, comparison, iter, verbose)
       ), call. = FALSE
     )
     
+  }
+  
+  # 'seed' errors
+  if(!is.null(seed)){
+    length_error(seed, 1, "community.compare")
+    typeof_error(seed, "numeric", "community.compare")
+    range_error(seed,  c(0, Inf), "community.compare")
   }
   
   # Return 'base' and 'comparison'
