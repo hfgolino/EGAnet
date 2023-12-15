@@ -43,6 +43,11 @@ Available options:
 \item{iter}{Numeric (length = 1).
 Number of permutations to perform.
 Defaults to \code{1000} (recommended)}
+
+\item{verbose}{Boolean (length = 1).
+Should progress be displayed?
+Defaults to \code{TRUE}.
+Set to \code{FALSE} to not display progress}
 }
 \value{
 Returns data frame containing method used (\code{Method}), empirical or observed

@@ -35,6 +35,11 @@
 #' Number of permutations to perform.
 #' Defaults to \code{1000} (recommended)
 #' 
+#' @param verbose Boolean (length = 1).
+#' Should progress be displayed?
+#' Defaults to \code{TRUE}.
+#' Set to \code{FALSE} to not display progress
+#' 
 #' @return Returns data frame containing method used (\code{Method}), empirical or observed
 #' value (\code{Empirical}), and p-value based on the permutation test (\code{p.value})
 #'
@@ -95,7 +100,7 @@
 #' @export
 #'
 # Perform permutations for clusters ----
-# Updated 03.12.2023
+# Updated 15.12.2023
 community.compare <- function(
     base, comparison,
     method = c(
@@ -163,7 +168,7 @@ community.compare <- function(
 
 #' @noRd
 # Errors ----
-# Updated 03.12.2023
+# Updated 15.12.2023
 community.compare_errors <- function(base, comparison, iter, verbose)
 {
   
