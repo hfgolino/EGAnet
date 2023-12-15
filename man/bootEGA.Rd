@@ -203,7 +203,7 @@ Defaults to \code{TRUE}}
 \item{seed}{Numeric (length = 1).
 Defaults to \code{NULL} or random results.
 Set for reproducible results.
-See \href{https://github.com/hfgolino/EGAnet/wiki/Reproducibility-and-PRNG}{Reproducibility and PRNG}
+See \href{https://r-ega.net/articles/reproducibility-prng.html}{Reproducibility and PRNG}
 for more details on random number generation in \code{\link{EGAnet}}}
 
 \item{verbose}{Boolean (length = 1).
