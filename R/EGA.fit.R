@@ -632,7 +632,7 @@ louvain_fit <- function(
 
 #' @noRd
 # Fit for Leiden ----
-# Updated 31.12.2023
+# Updated 01.01.2024
 leiden_fit <- function(
     data, n, corr, na.data, model,
     verbose, ellipse
@@ -665,6 +665,26 @@ leiden_fit <- function(
 
   }
 
+  # Set resolution ellipse flag
+  resolution_flag <- "resolution_parameter" %in% names(ellipse)
+
+  # If resolution is in ellipse, then handle
+  if(resolution_flag){
+
+    # Set resolution parameter
+    resolution_parameter <- ellipse$resolution_parameter
+
+    # Remove resolution parameter from ellipse to
+    # make other arguments available in `do.call`
+    ellipse <- ellipse[names(ellipse) != "resolution_parameter"]
+
+  }else{
+
+    # Set up single resolution
+    resolution_parameter <- 0
+
+  }
+
   # Perform EGA with first parameter
   ega_result <- do.call(
     what = EGA.estimate,
@@ -673,32 +693,24 @@ leiden_fit <- function(
         data = data, n = n, corr = corr,
         na.data = na.data, model = model,
         algorithm = "leiden", verbose = verbose,
-        resolution_parameter = 0,
+        resolution_parameter = resolution_parameter[1],
         # start with resolution parameter at zero
         # zero is guaranteed to be unidimensional
         objective_function = objective_function
-      )
+      ),
+      ellipse # pass on ellipse
     )
   )
 
   # Check for parameter search space
-  if(!"resolution_parameter" %in% names(ellipse)){
+  if(!resolution_flag){
 
     # Switch based on objective function
-    if(objective_function == "CPM"){
-      resolution_parameter <- seq.int(0, max(abs(ega_result$network)), 0.01) # default
-    }else if(objective_function == "modularity"){
-      resolution_parameter <- seq.int(0, 2, 0.05) # default
-    }
-
-  }else{
-
-    # Set resolution parameter
-    resolution_parameter <- ellipse$resolution_parameter
-
-    # Remove resolution parameter from ellipse to
-    # make other arguments available in `do.call`
-    ellipse <- ellipse[names(ellipse) != "resolution_parameter"]
+    resolution_parameter <- switch(
+      objective_function,
+      "CPM" = seq.int(0, max(abs(ega_result$network)), 0.01),
+      "modularity" = seq.int(0, 2, 0.05)
+    )
 
   }
 
