@@ -37,13 +37,13 @@ continuous. To change the number of categories that are considered
 ordinal, use \code{ordinal.categories}
 (see \code{\link[EGAnet]{polychoric.matrix}} for more details)
 
-\item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations. 
+\item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations.
 Arguments can be passed along to the function
 
-\item \code{"pearson"} --- Pearson's correlation is computed for all 
+\item \code{"pearson"} --- Pearson's correlation is computed for all
 variables regardless of categories
 
-\item \code{"spearman"} --- Spearman's rank-order correlation is computed 
+\item \code{"spearman"} --- Spearman's rank-order correlation is computed
 for all variables regardless of categories
 
 }
@@ -98,7 +98,7 @@ Constant Potts Model objective function
 modularity instead (see examples). By default, searches along
 resolutions from 0 to \code{max(abs(network))} or the maximum
 absolute edge weight in the network in 0.01 increments
-(\code{resolution_parameter = seq.int(0, max(abs(network)), 0.01)}). 
+(\code{resolution_parameter = seq.int(0, max(abs(network)), 0.01)}).
 For modularity, searches along resolutions from 0 to 2 in 0.05 increments
 (\code{resolution_parameter = seq.int(0, 2, 0.05)}) by default.
 Use the argument \code{resolution_parameter} to change the search parameters
@@ -126,7 +126,7 @@ Set to \code{TRUE} to see all messages and warnings for every function call}
 
 \item{...}{Additional arguments to be passed on to
 \code{\link[EGAnet]{auto.correlate}}, \code{\link[EGAnet]{network.estimation}},
-\code{\link[EGAnet]{community.detection}}, \code{\link[EGAnet]{community.consensus}}, 
+\code{\link[EGAnet]{community.detection}}, \code{\link[EGAnet]{community.consensus}},
 and \code{\link[EGAnet]{EGA.estimate}}}
 }
 \value{
@@ -202,8 +202,8 @@ From Louvain to Leiden: guaranteeing well-connected communities.
 \emph{Scientific Reports}, \emph{9}(1), 1-12.
 
 \strong{Louvain algorithm} \cr
-Blondel, V. D., Guillaume, J. L., Lambiotte, R., & Lefebvre, E. (2008). 
-Fast unfolding of communities in large networks. 
+Blondel, V. D., Guillaume, J. L., Lambiotte, R., & Lefebvre, E. (2008).
+Fast unfolding of communities in large networks.
 \emph{Journal of Statistical Mechanics: Theory and Experiment}, \emph{2008}(10), P10008.
 
 \strong{Walktrap algorithm} \cr
