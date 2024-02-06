@@ -33,4 +33,4 @@ Suggests: fitdistrplus, fungible, gridExtra, knitr, markdown,
           pbapply, progress, psych, pwr, RColorBrewer
 URL: https://r-ega.net
 BugReports: https://github.com/hfgolino/EGAnet/issues
-RoxygenNote: 7.3.0
+RoxygenNote: 7.3.1

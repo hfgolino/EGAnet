@@ -9,17 +9,18 @@ community.compare(
   comparison,
   method = c("vi", "nmi", "split.join", "rand", "adjusted.rand"),
   iter = 1000,
+  shuffle.base = TRUE,
   verbose = TRUE,
   seed = NULL
 )
 }
 \arguments{
 \item{base}{Character or numeric vector.
-A vector of characters or numbers that are treated as the 
+A vector of characters or numbers that are treated as the
 baseline communities}
 
 \item{comparison}{Character or numeric vector (length = \code{length(base)}).
-A vector of characters or numbers that are treated as the 
+A vector of characters or numbers that are treated as the
 baseline communities}
 
 \item{method}{Character (length = 1).
@@ -44,6 +45,14 @@ Available options:
 \item{iter}{Numeric (length = 1).
 Number of permutations to perform.
 Defaults to \code{1000} (recommended)}
+
+\item{shuffle.base}{Boolean (length = 1).
+Whether the \code{base} cluster solution should be shuffled.
+Defaults to \code{TRUE} to remain consistent with original
+implementation (Qannari et al., 2014); however, from a theoretical
+standpoint, it might make sense to only shuffle the \code{comparison}
+to determine whether it is specifically different
+from the recognized \code{base}}
 
 \item{verbose}{Boolean (length = 1).
 Should progress be displayed?
@@ -84,38 +93,38 @@ community.compare(edge_between, fast_greedy)
 }
 \references{
 \strong{Implementation of Permutation Test} \cr
-Qannari, E. M., Courcoux, P., & Faye, P. (2014). 
-Significance test of the adjusted Rand index. Application to the free sorting task. 
+Qannari, E. M., Courcoux, P., & Faye, P. (2014).
+Significance test of the adjusted Rand index. Application to the free sorting task.
 \emph{Food Quality and Preference}, \emph{32}, 93–97.
 
 \strong{Variation of Information} \cr
 Meila, M. (2003, August).
-Comparing clusterings by the variation of information. 
-In \emph{Learning Theory and Kernel Machines: 16th Annual Conference on Learning Theory and 7th Kernel Workshop}, 
+Comparing clusterings by the variation of information.
+In \emph{Learning Theory and Kernel Machines: 16th Annual Conference on Learning Theory and 7th Kernel Workshop},
 COLT/Kernel 2003, Washington, DC, USA, August 24-27, 2003. Proceedings (pp. 173-187). Berlin, DE: Springer Berlin Heidelberg.
 
 \strong{Normalized Mutual Information} \cr
-Danon, L., Diaz-Guilera, A., Duch, J., & Arenas, A. (2005). 
-Comparing community structure identification. 
+Danon, L., Diaz-Guilera, A., Duch, J., & Arenas, A. (2005).
+Comparing community structure identification.
 \emph{Journal of Statistical Mechanics: Theory and Experiment}, \emph{2005}(09), P09008.
 
 \strong{Split-join Distance} \cr
-Dongen, S. (2000). 
-Performance criteria for graph clustering and Markov cluster experiments. 
+Dongen, S. (2000).
+Performance criteria for graph clustering and Markov cluster experiments.
 \emph{CWI (Centre for Mathematics and Computer Science)}.
 
 \strong{Rand Index} \cr
-Rand, W. M. (1971). 
-Objective criteria for the evaluation of clustering methods. 
+Rand, W. M. (1971).
+Objective criteria for the evaluation of clustering methods.
 \emph{Journal of the American Statistical Association}, \emph{66}(336), 846-850.
 
 \strong{Adjusted Rand Index} \cr
-Hubert, L., & Arabie, P. (1985). 
-Comparing partitions. 
+Hubert, L., & Arabie, P. (1985).
+Comparing partitions.
 \emph{Journal of Classification}, \emph{2}, 193-218.
 
-Steinley, D. (2004). 
-Properties of the Hubert-Arabie adjusted rand index. 
+Steinley, D. (2004).
+Properties of the Hubert-Arabie adjusted rand index.
 \emph{Psychological Methods}, \emph{9}(3), 386.
 }
 \author{
