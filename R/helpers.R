@@ -2552,62 +2552,53 @@ compare_plots <- function(comparison_network, comparison_wc, plot_ARGS)
 #' @noRd
 # Creates a basic heatmap of a symmetric matrix
 # Updated 07.02.2024
-ggsymmetric <- function(
-    symmetric.matrix,
+ggheatmap <- function(
+    matrix_input,
     type = c("full", "lower", "upper"),
     tile.color = "grey50" # default
 )
 {
 
   # Set defaults
-  type <- set_default(type, default = "full", ggsymmetric)
+  type <- set_default(type, default = "full", ggheatmap)
 
   # Ensure matrix
-  symmetric.matrix <- as.matrix(symmetric.matrix)
-
-  # Check for symmetric matrix
-  if(!is_symmetric(symmetric.matrix)){
-    stop("Matrix is not symmetric", call. = FALSE)
-  }
+  matrix_input <- as.matrix(matrix_input)
 
   # Ensure dimension names
-  symmetric.matrix <- ensure_dimension_names(symmetric.matrix)
+  matrix_input <- ensure_dimension_names(matrix_input)
 
   # Get dimensions and dimension names
-  dimensions <- dim(symmetric.matrix)
-  dimension_names <- dimnames(symmetric.matrix)
+  dimensions <- dim(matrix_input)
+  dimension_names <- dimnames(matrix_input)
 
   # Set up data frame
-  symmetric_df <- data.frame(
+  matrix_df <- data.frame(
     Rows = rep(dimension_names[[1]], each = dimensions[2]),
     Columns = rep(dimension_names[[2]], times = dimensions[2]),
-    Values = as.vector(symmetric.matrix)
+    Values = as.vector(matrix_input)
   )
 
   # Set up factors
-  symmetric_df$Rows <- factor(
-    symmetric_df$Rows, levels = dimension_names[[1]]
-  )
-  symmetric_df$Columns <- factor(
-    symmetric_df$Columns, levels = rev(dimension_names[[2]])
-  )
-  symmetric_df$Values <- as.numeric(symmetric_df$Values)
+  matrix_df$Rows <- factor(matrix_df$Rows, levels = dimension_names[[1]])
+  matrix_df$Columns <- factor(matrix_df$Columns, levels = rev(dimension_names[[2]]))
+  matrix_df$Values <- as.numeric(matrix_df$Values)
 
   # Determine full/lower/upper
   NA_indices <- switch(
     type,
-    "full" = rep(FALSE, length(symmetric_df$Values)),
-    "lower" = as.numeric(symmetric_df$Rows) > rev(as.numeric(symmetric_df$Columns)),
-    "upper" = rev(as.numeric(symmetric_df$Columns)) > as.numeric(symmetric_df$Rows)
+    "full" = rep(FALSE, length(matrix_df$Values)),
+    "lower" = as.numeric(matrix_df$Rows) > rev(as.numeric(matrix_df$Columns)),
+    "upper" = rev(as.numeric(matrix_df$Columns)) > as.numeric(matrix_df$Rows)
   )
 
   # Set NAs
-  symmetric_df$Values[NA_indices] <- NA
+  matrix_df$Values[NA_indices] <- NA
 
   # Plot
   return(
     ggplot2::ggplot(
-      data = symmetric_df, ggplot2::aes(x = Rows, y = Columns, fill = Values)
+      data = matrix_df, ggplot2::aes(x = Rows, y = Columns, fill = Values)
     ) + ggplot2::geom_tile(color = tile.color) + ggplot2::theme(
       panel.background = ggplot2::element_blank()
     )
