@@ -2609,7 +2609,7 @@ ggsymmetric <- function(
     ggplot2::ggplot(
       data = symmetric_df, ggplot2::aes(x = Rows, y = Columns, fill = Values)
     ) + ggplot2::geom_tile(color = tile.color) + ggplot2::theme(
-      panel.background = ggplot2::element_theme()
+      panel.background = ggplot2::element_blank()
     )
   )
 
