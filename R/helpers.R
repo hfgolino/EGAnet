@@ -2552,11 +2552,7 @@ compare_plots <- function(comparison_network, comparison_wc, plot_ARGS)
 #' @noRd
 # Creates a basic heatmap of a symmetric matrix
 # Updated 07.02.2024
-ggheatmap <- function(
-    matrix_input,
-    type = c("full", "lower", "upper"),
-    tile.color = "grey50" # default
-)
+ggheatmap <- function(matrix_input, type = c("full", "lower", "upper"), ...)
 {
 
   # Set defaults
@@ -2567,6 +2563,7 @@ ggheatmap <- function(
 
   # Ensure dimension names
   matrix_input <- ensure_dimension_names(matrix_input)
+  matrix_input <- t(ensure_dimension_names(t(matrix_input)))
 
   # Get dimensions and dimension names
   dimensions <- dim(matrix_input)
@@ -2575,7 +2572,7 @@ ggheatmap <- function(
   # Set up data frame
   matrix_df <- data.frame(
     Rows = rep(dimension_names[[1]], each = dimensions[2]),
-    Columns = rep(dimension_names[[2]], times = dimensions[2]),
+    Columns = rep(dimension_names[[2]], times = dimensions[1]),
     Values = as.vector(matrix_input)
   )
 
@@ -2599,7 +2596,7 @@ ggheatmap <- function(
   return(
     ggplot2::ggplot(
       data = matrix_df, ggplot2::aes(x = Rows, y = Columns, fill = Values)
-    ) + ggplot2::geom_tile(color = tile.color) + ggplot2::theme(
+    ) + ggplot2::geom_tile(...) + ggplot2::theme(
       panel.background = ggplot2::element_blank()
     )
   )
