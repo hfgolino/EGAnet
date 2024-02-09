@@ -1,4 +1,13 @@
-BANNER: New website at https://r-ega.net
+WEBISTE: https://r-ega.net
+
+Changes in version 2.0.5
+
+o UPDATE: `plot.bootEGA` will output `itemStability` plot by default
+
+o UPDATE: `dimensionStability` output now included in `bootEGA` as output `$stability`
+
+o DEPRECATED: `typicalStructure` and `plot.typicalStructure` have been deprecated to `FALSE`
+
 
 Changes in version 2.0.4
 

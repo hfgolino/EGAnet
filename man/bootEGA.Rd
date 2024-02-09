@@ -16,8 +16,9 @@ bootEGA(
   type = c("parametric", "resampling"),
   ncores,
   EGA.type = c("EGA", "EGA.fit", "hierEGA", "riEGA"),
-  typicalStructure = TRUE,
-  plot.typicalStructure = TRUE,
+  plot.itemStability = TRUE,
+  typicalStructure = FALSE,
+  plot.typicalStructure = FALSE,
   seed = NULL,
   verbose = TRUE,
   ...
@@ -44,13 +45,13 @@ continuous. To change the number of categories that are considered
 ordinal, use \code{ordinal.categories}
 (see \code{\link[EGAnet]{polychoric.matrix}} for more details)
 
-\item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations. 
+\item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations.
 Arguments can be passed along to the function
 
-\item \code{"pearson"} --- Pearson's correlation is computed for all 
+\item \code{"pearson"} --- Pearson's correlation is computed for all
 variables regardless of categories
 
-\item \code{"spearman"} --- Spearman's rank-order correlation is computed 
+\item \code{"spearman"} --- Spearman's rank-order correlation is computed
 for all variables regardless of categories
 
 }
@@ -91,7 +92,7 @@ See \code{\link[EGAnet]{TMFG}} for more details
 
 }}
 
-\item{algorithm}{Character or 
+\item{algorithm}{Character or
 \code{\link{igraph}} \code{cluster_*} function (length = 1).
 Defaults to \code{"walktrap"}.
 Three options are listed below but all are available
@@ -101,10 +102,10 @@ Three options are listed below but all are available
 
 \item \code{"leiden"} --- See \code{\link[igraph]{cluster_leiden}} for more details
 
-\item \code{"louvain"} --- By default, \code{"louvain"} will implement the Louvain algorithm using 
-the consensus clustering method (see \code{\link[EGAnet]{community.consensus}} 
+\item \code{"louvain"} --- By default, \code{"louvain"} will implement the Louvain algorithm using
+the consensus clustering method (see \code{\link[EGAnet]{community.consensus}}
 for more information). This function will implement
-\code{consensus.method = "most_common"} and \code{consensus.iter = 1000} 
+\code{consensus.method = "most_common"} and \code{consensus.iter = 1000}
 unless specified otherwise
 
 \item \code{"walktrap"} --- See \code{\link[igraph]{cluster_walktrap}} for more details
@@ -112,14 +113,14 @@ unless specified otherwise
 }}
 
 \item{uni.method}{Character (length = 1).
-What unidimensionality method should be used? 
+What unidimensionality method should be used?
 Defaults to \code{"louvain"}.
 Available options:
 
 \itemize{
 
 \item \code{"expand"} --- Expands the correlation matrix with four variables correlated 0.50.
-If number of dimension returns 2 or less in check, then the data 
+If number of dimension returns 2 or less in check, then the data
 are unidimensional; otherwise, regular EGA with no matrix
 expansion is used. This method was used in the Golino et al.'s (2020)
 \emph{Psychological Methods} simulation
@@ -128,12 +129,12 @@ expansion is used. This method was used in the Golino et al.'s (2020)
 (\code{\link[igraph]{cluster_leading_eigen}})
 on the empirical correlation matrix. If the number of dimensions is 1,
 then the Leading Eigenvector solution is used; otherwise, regular EGA
-is used. This method was used in the Christensen et al.'s (2023) 
+is used. This method was used in the Christensen et al.'s (2023)
 \emph{Behavior Research Methods} simulation
 
 \item \code{"louvain"} --- Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
-on the empirical correlation matrix. If the number of dimensions is 1, 
-then the Louvain solution is used; otherwise, regular EGA is used. 
+on the empirical correlation matrix. If the number of dimensions is 1,
+then the Louvain solution is used; otherwise, regular EGA is used.
 This method was validated Christensen's (2022) \emph{PsyArXiv} simulation.
 Consensus clustering can be used by specifying either
 \code{"consensus.method"} or \code{"consensus.iter"}
@@ -155,7 +156,7 @@ Available options:
 (multivariate normal random distributions) based on the
 original dataset using \code{\link[MASS]{mvrnorm}}
 
-\item \code{"resampling"} --- Generates \code{iter} new datasets from random subsamples 
+\item \code{"resampling"} --- Generates \code{iter} new datasets from random subsamples
 of the original data
 
 }}
@@ -190,15 +191,19 @@ Available options:
 Arguments for \code{EGA.type} can be added (see links
 for details on specific function arguments)}
 
+\item{plot.itemStability}{Boolean (length = 1).
+Should the plot be produced for \code{item.replication}?
+Defaults to \code{TRUE}}
+
 \item{typicalStructure}{Boolean (length = 1).
 If \code{TRUE}, returns the median (\code{"glasso"} or \code{"BGGM"}) or
-mean (\code{"TMFG"}) network structure and estimates its dimensions 
+mean (\code{"TMFG"}) network structure and estimates its dimensions
 (see \strong{Details} for more information).
-Defaults to \code{TRUE}}
+Defaults to \code{FALSE}}
 
 \item{plot.typicalStructure}{Boolean (length = 1).
 If \code{TRUE}, returns a plot of the typical network structure.
-Defaults to \code{TRUE}}
+Defaults to \code{FALSE}}
 
 \item{seed}{Numeric (length = 1).
 Defaults to \code{NULL} or random results.
@@ -233,8 +238,8 @@ with variables down the columns and replicas across the rows}
 
 \item{boot.ndim}{Number of dimensions identified in each replica sample}
 
-\item{summary.table}{A data frame containing number of replica samples, 
-median, standard deviation, standard error, 95\% confidence intervals, and 
+\item{summary.table}{A data frame containing number of replica samples,
+median, standard deviation, standard error, 95\% confidence intervals, and
 quantiles (lower = 2.5\% and upper = 97.5\%)}
 
 \item{frequency}{A data frame containing the proportion of times the number of dimensions was identified
@@ -267,9 +272,9 @@ quantiles (lower = 2.5\% and upper = 97.5\%)}
 }
 \description{
 \code{bootEGA} Estimates the number of dimensions of \code{iter} bootstraps
-using the empirical zero-order correlation matrix (\code{"parametric"}) or 
+using the empirical zero-order correlation matrix (\code{"parametric"}) or
 \code{"resampling"} from the empirical dataset (non-parametric). \code{bootEGA}
-estimates a typical median network structure, which is formed by the median or 
+estimates a typical median network structure, which is formed by the median or
 mean pairwise (partial) correlations over the \emph{iter} bootstraps (see
 \strong{Details} for information about the typical median network structure).
 }
@@ -278,7 +283,7 @@ The typical network structure is derived from the median (or mean) value
 of each pairwise relationship. These values tend to reflect the
 "typical" value taken by an edge across the bootstrap networks. Afterward,
 the same community detection algorithm is applied to the typical network as the
-bootstrap networks. 
+bootstrap networks.
 
 Because the community detection algorithm is applied to the typical network structure,
 there is a possibility that the community algorithm determines

@@ -43,13 +43,13 @@ continuous. To change the number of categories that are considered
 ordinal, use \code{ordinal.categories}
 (see \code{\link[EGAnet]{polychoric.matrix}} for more details)
 
-\item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to 
+\item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to
 compute correlations. Arguments can be passed along to the function
 
-\item \code{"pearson"} --- Pearson's correlation is computed for 
+\item \code{"pearson"} --- Pearson's correlation is computed for
 all variables regardless of categories
 
-\item \code{"spearman"} --- Spearman's rank-order correlation is 
+\item \code{"spearman"} --- Spearman's rank-order correlation is
 computed for all variables regardless of categories
 
 }}
@@ -61,10 +61,10 @@ Available options:
 
 \itemize{
 
-\item \code{"pairwise"} --- Computes correlation for all available 
+\item \code{"pairwise"} --- Computes correlation for all available
 cases between two variables
 
-\item \code{"listwise"} --- Computes correlation for all complete 
+\item \code{"listwise"} --- Computes correlation for all complete
 cases in the dataset
 
 }}
