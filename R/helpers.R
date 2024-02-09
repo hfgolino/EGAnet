@@ -2550,6 +2550,7 @@ compare_plots <- function(comparison_network, comparison_wc, plot_ARGS)
 }
 
 #' @noRd
+# Heatmap ----
 # Creates a basic heatmap of a symmetric matrix
 # Updated 07.02.2024
 ggheatmap <- function(matrix_input, type = c("full", "lower", "upper"), ...)
@@ -2602,6 +2603,11 @@ ggheatmap <- function(matrix_input, type = c("full", "lower", "upper"), ...)
   )
 
 }
+
+#' @noRd
+# Global variables needed for CRAN checks ----
+# Updated 09.02.2024
+utils::globalVariables(c("Rows", "Columns", "Values"))
 
 #%%%%%%%%%%%%%%%%%%%%%
 # ERROR FUNCTIONS ----
