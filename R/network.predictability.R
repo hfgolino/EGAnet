@@ -49,7 +49,7 @@
 #' coefficients
 #'
 #' 5. \strong{Dichotomous and polytomous} data are given categorical values based
-#' on the \strong{origindal data's} thresholds and these thresholds are used to
+#' on the \strong{original data's} thresholds and these thresholds are used to
 #' convert the continuous predicted values into their corresponding categorical values
 #'
 #' 6. Evaluation metrics:
