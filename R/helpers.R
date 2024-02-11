@@ -1227,26 +1227,6 @@ count_table <- function(data, proportion = FALSE)
 
 }
 
-#' @noRd
-# Cohen's Kappa ----
-# Updated 06.02.2024
-kappa <- function(base, comparison)
-{
-
-  # Get elements
-  elements <- length(base)
-
-  # Compute observed agreement
-  po <- sum(diag(table(base, comparison))) / elements
-
-  # Compute expected agreement (based on random assignment)
-  pe <- sum(fast_table(base) * fast_table(comparison)) / elements^2
-
-  # Return Kappa
-  return((po - pe) / (1 - pe))
-
-}
-
 #%%%%%%%%%%%%%%%%%%%%
 # DATA FUNCTIONS ----
 #%%%%%%%%%%%%%%%%%%%%
@@ -2850,6 +2830,109 @@ pcor2inv <- function(partial_correlations)
 
   # Return inverse covariance matrix
   return(solve(-partial_correlations))
+
+}
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# EVALUATION METRICS FUNCTIONS ----
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+#' @noRd
+# Cohen's Kappa (for clusters) ----
+# Updated 06.02.2024
+cluster_kappa <- function(base, comparison)
+{
+
+  # Get elements
+  elements <- length(base)
+
+  # Compute observed agreement
+  po <- sum(diag(table(base, comparison))) / elements
+
+  # Compute expected agreement (based on random assignment)
+  pe <- sum(fast_table(base) * fast_table(comparison)) / elements^2
+
+  # Return Kappa
+  return((po - pe) / (1 - pe))
+
+}
+
+#' @noRd
+# Root mean square error (for data) ----
+# Updated 10.02.2024
+data_rmse <- function(predicted, observed){
+  return(sqrt(mean((predicted - observed)^2, na.rm = TRUE)))
+}
+
+#' @noRd
+# R-squared (for data) ----
+# Updated 10.02.2024
+data_r_squared <- function(predicted, observed){
+
+  return(
+    1 - (
+      sum((predicted - observed)^2, na.rm = TRUE) /
+      sum((observed - mean(observed, na.rm = TRUE))^2, na.rm = TRUE)
+    )
+  )
+
+}
+
+#' @noRd
+# Accuracy (for data) ----
+# Updated 10.02.2024
+data_accuracy <- function(prediction, observed)
+{
+
+  # Get maximum categories
+  max_categories <- max(prediction, observed)
+
+  # Set category sequence
+  category_sequence <- seq_len(max_categories)
+
+  # Set up table
+  accuracy_table <- matrix(
+    0, nrow = max_categories, ncol = max_categories,
+    dimnames = list(category_sequence, category_sequence)
+  )
+
+  # Get table
+  tabled <- table(observed, prediction)
+
+  # Get names from table
+  table_names <- dimnames(tabled)
+
+  # Populate accuracy table
+  accuracy_table[table_names$observed, table_names$prediction] <- tabled
+
+  # Get empirical frequencies
+  frequency <- table(factor(observed, levels = category_sequence))
+
+  # Get total values
+  total_values <- sum(frequency)
+
+  # Get minimum possible weight accuracy
+  minimum_weighted <- 0.5^(max_categories - 1) * total_values
+
+  # Get diagonal of table (correct predictions)
+  correct <- diag(accuracy_table)
+
+  # Return accuracy by category
+  return(
+    c(
+      correct / frequency,
+      accuracy = sum(correct, na.rm = TRUE) / total_values,
+      balanced = sum(
+        correct / rowSums(accuracy_table, na.rm = TRUE),
+        na.rm = TRUE
+      ) / max_categories,
+      weighted = (sum(0.5^abs(prediction - observed), na.rm = TRUE) - minimum_weighted) /
+                 # weighted total
+                 (total_values - minimum_weighted)
+                 # normalization: all differences of 0 minus
+                 # all differences of maximum absolute difference
+    )
+  )
 
 }
 

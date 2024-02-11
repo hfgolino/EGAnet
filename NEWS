@@ -2,6 +2,8 @@ WEBISTE: https://r-ega.net
 
 Changes in version 2.0.5
 
+o ADD: `network.predictability` to estimate network genearlizability to new data
+
 o UPDATE: `plot.bootEGA` will output `itemStability` plot by default
 
 o UPDATE: `dimensionStability` output now included in `bootEGA` as output `$stability`
