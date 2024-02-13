@@ -171,6 +171,7 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
 
   # Get predictions
   predictions <- newdata_scaled %*% betas
+  adjusted_predictions <- predictions
 
   # Loop over variables
   for(i in dim_sequence){
@@ -189,12 +190,13 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
         # Check for lowest category
         minimum_value <- min(original.data[,i])
 
-        # Re-adjust minimum category to 1
+        # Re-adjust minimum category to 1 for new data
         if(minimum_value <= 0){
           newdata[,i] <- newdata[,i] + (abs(minimum_value) + 1)
-        }else if(minimum_value > 1){
-          predictions[,i] <- predictions[,i] + (minimum_value - 1)
         }
+
+        # Set adjusted predictions (for returning)
+        adjusted_predictions[,i] <- predictions[,i] + (minimum_value - 1)
 
     }
 
@@ -202,8 +204,8 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
 
   # Obtain results
   results <- setup_results(
-    predictions, original.data, newdata, flags, betas,
-    node_names, dimensions, dim_sequence
+    predictions, adjusted_predictions, original.data, newdata,
+    flags, betas, node_names, dimensions, dim_sequence
   )
 
   # Attach flags to results
@@ -329,8 +331,8 @@ summary.predictability <- function(object, ...)
 # Set up results ----
 # Updated 12.02.2024
 setup_results <- function(
-    predictions, original.data, newdata, flags, betas,
-    node_names, dimensions, dim_sequence
+    predictions, adjusted_predictions, original.data, newdata,
+    flags, betas, node_names, dimensions, dim_sequence
 )
 {
 
@@ -431,7 +433,7 @@ setup_results <- function(
   # Return final results
   return(
     list(
-      predictions = predictions,
+      predictions = adjusted_predictions,
       betas = betas,
       results = results
     )
