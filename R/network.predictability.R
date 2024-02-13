@@ -113,7 +113,7 @@
 #' @export
 #'
 # Predict new data based on network ----
-# Updated 11.02.2024
+# Updated 12.02.2024
 network.predictability <- function(network, original.data, newdata, ordinal.categories = 7)
 {
 
@@ -153,34 +153,21 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
   # Get the inverse variances
   inverse_variances <- diag(pcor2inv(network))
 
-  # Initialize betas
-  betas <- matrix(
-    0, nrow = dimensions[2], ncol = dimensions[2],
-    dimnames = list(node_names, node_names)
-  )
-
-  # Compute betas
-  for(i in dim_sequence){
-    for(j in i:dimensions[2]){
-
-      # Populate betas
-      betas[i,j] <- network[i,j] * sqrt(inverse_variances[i] / inverse_variances[j])
-      betas[j,i] <- network[j,i] * sqrt(inverse_variances[j] / inverse_variances[i])
-
-    }
-  }
-
-  # Initialize scaled new data
-  newdata_scaled <- newdata
+  # Get betas
+  betas <- network * sqrt(outer(inverse_variances, inverse_variances, FUN = "/"))
 
   # Obtain means and standard deviations
   original_means <- colMeans(original.data, na.rm = TRUE)
   original_sds <- nvapply(dim_sequence, function(i){sd(original.data[,i])})
 
   # Scale from original data
-  for(i in dim_sequence){
-    newdata_scaled[,i] <- (newdata[,i] - original_means[i]) / original_sds[i]
-  }
+  newdata_scaled <- matrix(
+    nvapply(dim_sequence, function(i){
+      (newdata[,i] - original_means[i]) / original_sds[i]
+    }, LENGTH = dimensions[1]),
+    ncol = dimensions[2],
+    dimnames = list(NULL, node_names)
+  )
 
   # Get predictions
   predictions <- newdata_scaled %*% betas
@@ -355,7 +342,7 @@ setup_results <- function(
       matrix(
         nvapply(
           dim_sequence, function(i){
-            data_accuracy(predictions[,i], newdata[,i])[["accuracy"]]
+            categorical_accuracy(predictions[,i], newdata[,i])[["accuracy"]]
           }
         ), dimnames = list(node_names, "Accuracy")
       )
@@ -368,7 +355,7 @@ setup_results <- function(
       matrix(
         nvapply(
           dim_sequence, function(i){
-            data_accuracy(predictions[,i], newdata[,i])[c("accuracy", "weighted")]
+            categorical_accuracy(predictions[,i], newdata[,i])[c("accuracy", "weighted")]
           }, LENGTH = 2
         ), ncol = 2, byrow = TRUE,
         dimnames = list(node_names, c("Accuracy", "Weighted"))
@@ -383,11 +370,7 @@ setup_results <- function(
       matrix(
         nvapply(
           dim_sequence, function(i){
-            # Get R-squared and RMSE
-            c(
-              data_r_squared(predictions[,i], newdata[,i]),
-              data_rmse(predictions[,i], newdata[,i])
-            )
+            continuous_accuracy(predictions[,i], newdata[,i])
           }, LENGTH = 2
         ), ncol = 2, byrow = TRUE,
         dimnames = list(node_names, c("R2", "RMSE"))
@@ -409,7 +392,7 @@ setup_results <- function(
       # Get results
       results$Accuracy[flags$dichotomous] <- t(nvapply(
         dim_sequence[flags$dichotomous], function(i){
-          data_accuracy(predictions[,i], newdata[,i])[["accuracy"]]
+          categorical_accuracy(predictions[,i], newdata[,i])[["accuracy"]]
         }
       ))
 
@@ -422,7 +405,7 @@ setup_results <- function(
       results[flags$polytomous, c("Accuracy", "Weighted")] <- t(
         nvapply(
           dim_sequence[flags$polytomous], function(i){
-            data_accuracy(predictions[,i], newdata[,i])[c("accuracy", "weighted")]
+            categorical_accuracy(predictions[,i], newdata[,i])[c("accuracy", "weighted")]
           }, LENGTH = 2
         )
       )
@@ -436,11 +419,7 @@ setup_results <- function(
       results[flags$continuous, c("R2", "RMSE")] <- t(
         nvapply(
           dim_sequence[flags$continuous], function(i){
-            # Get R-squared and RMSE
-            c(
-              data_r_squared(predictions[,i], newdata[,i]),
-              data_rmse(predictions[,i], newdata[,i])
-            )
+            continuous_accuracy(predictions[,i], newdata[,i])
           }, LENGTH = 2
         )
       )

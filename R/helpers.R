@@ -2880,30 +2880,31 @@ cluster_kappa <- function(base, comparison)
 }
 
 #' @noRd
-# Root mean square error (for data) ----
-# Updated 10.02.2024
-data_rmse <- function(predicted, observed){
-  return(sqrt(mean((predicted - observed)^2, na.rm = TRUE)))
-}
+# Continuous Accuracy (for single variable) ----
+# Updated 12.02.2024
+continuous_accuracy <- function(prediction, observed)
+{
 
-#' @noRd
-# R-squared (for data) ----
-# Updated 10.02.2024
-data_r_squared <- function(predicted, observed){
+  # Compute square error
+  square_error <- (prediction - observed)^2
 
+  # Return accuracies
   return(
-    1 - (
-      sum((predicted - observed)^2, na.rm = TRUE) /
-      sum((observed - mean(observed, na.rm = TRUE))^2, na.rm = TRUE)
+    c(
+      R2 = 1 - (
+        sum(square_error, na.rm = TRUE) /
+        sum((observed - mean(observed, na.rm = TRUE))^2, na.rm = TRUE)
+      ),
+      RMSE = sqrt(mean(square_error, na.rm = TRUE))
     )
   )
 
 }
 
 #' @noRd
-# Accuracy (for data) ----
-# Updated 10.02.2024
-data_accuracy <- function(prediction, observed)
+# Categorical Accuracy (for single variable) ----
+# Updated 12.02.2024
+categorical_accuracy <- function(prediction, observed)
 {
 
   # Get maximum categories
