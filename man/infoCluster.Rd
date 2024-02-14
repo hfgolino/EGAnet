@@ -8,7 +8,7 @@ infoCluster(dynEGA.object, plot.cluster = TRUE)
 }
 \arguments{
 \item{dynEGA.object}{A \code{\link[EGAnet]{dynEGA}} or a
-\code{\link[EGAnet]{dynEGA.ind.pop}} object that is used to match 
+\code{\link[EGAnet]{dynEGA.ind.pop}} object that is used to match
 the arguments of the EII object}
 
 \item{plot.cluster}{Boolean (length = 1).
@@ -41,7 +41,7 @@ sim.dynEGA <- sim.dynEGA # bypasses CRAN checks
 # Dynamic EGA individual and population structure
 dyn.ega1 <- dynEGA.ind.pop(
   data = sim.dynEGA, n.embed = 5, tau = 1,
-  delta = 1, id = 25, use.derivatives = 1, 
+  delta = 1, id = 25, use.derivatives = 1,
   ncores = 2, corr = "pearson"
 )
 
