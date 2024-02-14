@@ -135,10 +135,17 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
   dim_sequence <- seq_len(dimensions[2])
 
   # Get node names
-  node_names <- colnames(network)
+  node_names <- dimnames(network)[[2]]
 
   # Get data categories
   categories <- data_categories(rbind(original.data, newdata))
+
+  # Get ranges
+  ranges <- nvapply(
+    seq_along(node_names), function(i){
+      range(original.data[,i], newdata[,i])
+    }, LENGTH = 2
+  )
 
   # Set flags
   flags <- list(
@@ -196,24 +203,29 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
     # Check for categories
     if(flags$categorical[[i]]){
 
-        # Get thresholds from original data
-        thresholds <- obtain_thresholds(original.data[,i])
+      # Set factors for data
+      factored_data <- factor(
+        original.data[,i], levels = seq.int(ranges[1,i], ranges[2,i], 1)
+      )
 
-        # Assign categories to each observation
-        predictions[,i] <- as.numeric(
-          cut(x = predictions[,i], breaks = c(-Inf, thresholds, Inf))
-        )
+      # Handle thresholds
+      thresholds <- handle_thresholds(factored_data)
 
-        # Check for lowest category
-        minimum_value <- min(original.data[,i])
+      # Assign categories to each observation
+      predictions[,i] <- as.numeric(
+        cut(x = predictions[,i], breaks = c(-Inf, thresholds, Inf))
+      )
 
-        # Re-adjust minimum category to 1 for new data
-        if(minimum_value <= 0){
-          newdata[,i] <- newdata[,i] + (abs(minimum_value) + 1)
-        }
+      # Check for lowest category
+      minimum_value <- ranges[1,i]
 
-        # Set adjusted predictions (for returning)
-        adjusted_predictions[,i] <- predictions[,i] + (minimum_value - 1)
+      # Re-adjust minimum category to 1 for new data
+      if(minimum_value <= 0){
+        newdata[,i] <- newdata[,i] + (abs(minimum_value) + 1)
+      }
+
+      # Set adjusted predictions (for returning)
+      adjusted_predictions[,i] <- predictions[,i] + (minimum_value - 1)
 
     }
 
@@ -345,6 +357,51 @@ summary.predictability <- function(object, ...)
 }
 
 #' @noRd
+# Handle thresholds ----
+# Updated 14.02.2024
+handle_thresholds <- function(factored_data)
+{
+
+  # Get thresholds from original data
+  thresholds <- obtain_thresholds(factored_data)
+
+  # Detect infinities (with signs)
+  infinities <- is.infinite(thresholds) * sign(thresholds)
+
+  # Check for infinities
+  if(any(abs(infinities) == 1)){
+
+    # Convert negative infinities
+    negative_infinities <- infinities == -1
+    thresholds[negative_infinities] <- -1000 + (1:sum(negative_infinities))
+
+    # Convert positive infinities
+    positive_infinities <- infinities == 1
+    thresholds[positive_infinities] <- 1000 - (sum(positive_infinities):1)
+
+  }
+
+  # Determine identical thresholds
+  while(any(colSums(outer(thresholds, thresholds, FUN = "==")) > 1)){
+
+    # Loop over thresholds and increase from the highest threshold
+    for(i in length(thresholds):2){
+
+      # Check for identical thresholds (provide slight nudge)
+      if(thresholds[i] == thresholds[i - 1]){
+        thresholds[i] <- thresholds[i] + 1e-07
+      }
+
+    }
+
+  }
+
+  # Return thresholds
+  return(thresholds)
+
+}
+
+#' @noRd
 # Set up results ----
 # Updated 12.02.2024
 setup_results <- function(
@@ -380,6 +437,10 @@ setup_results <- function(
         dimnames = list(node_names, c("Accuracy", "Weighted"))
       )
     )
+
+    for(i in dim_sequence){
+      categorical_accuracy(predictions[,i], newdata[,i])[c("accuracy", "weighted")]
+    }
 
   }else if(all(flags$continuous)){ # Check for all continuous
 
