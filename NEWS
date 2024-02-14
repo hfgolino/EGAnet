@@ -10,6 +10,8 @@ o UPDATE: `plot.bootEGA` will output `itemStability` plot by default
 
 o UPDATE: `dimensionStability` output now included in `bootEGA` as output `$stability`
 
+o UPDATE: 'rotate' argument added to `infoCluster` plot to allow for different angle of dendrogram
+
 o DEPRECATED: `typicalStructure` and `plot.typicalStructure` have been deprecated to `FALSE`
 
 
