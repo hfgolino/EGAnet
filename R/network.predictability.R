@@ -113,7 +113,7 @@
 #' @export
 #'
 # Predict new data based on network ----
-# Updated 13.02.2024
+# Updated 16.02.2024
 network.predictability <- function(network, original.data, newdata, ordinal.categories = 7)
 {
 
@@ -143,7 +143,7 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
   # Get ranges
   ranges <- nvapply(
     seq_along(node_names), function(i){
-      range(original.data[,i], newdata[,i])
+      range(original.data[,i], newdata[,i], na.rm = TRUE)
     }, LENGTH = 2
   )
 
@@ -163,26 +163,11 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
   # Get betas
   betas <- network * sqrt(outer(inverse_variances, inverse_variances, FUN = "/"))
 
-  # Initialize betas
-  betas <- matrix(
-    0, nrow = dimensions[2], ncol = dimensions[2],
-    dimnames = list(node_names, node_names)
-  )
-
-  # Compute betas
-  for(i in dim_sequence){
-    for(j in i:dimensions[2]){
-
-      # Populate betas
-      betas[i,j] <- network[i,j] * sqrt(inverse_variances[i] / inverse_variances[j])
-      betas[j,i] <- network[j,i] * sqrt(inverse_variances[j] / inverse_variances[i])
-
-    }
-  }
-
   # Obtain means and standard deviations
   original_means <- colMeans(original.data, na.rm = TRUE)
-  original_sds <- nvapply(dim_sequence, function(i){sd(original.data[,i])})
+  original_sds <- nvapply(
+    dim_sequence, function(i){sd(original.data[,i], na.rm = TRUE)}
+  )
 
   # Scale from original data
   newdata_scaled <- matrix(
