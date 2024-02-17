@@ -113,7 +113,7 @@
 #' @export
 #'
 # Predict new data based on network ----
-# Updated 16.02.2024
+# Updated 17.02.2024
 network.predictability <- function(network, original.data, newdata, ordinal.categories = 7)
 {
 
@@ -179,7 +179,7 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
   )
 
   # Get predictions
-  predictions <- newdata_scaled %*% betas
+  predictions <- missing_matrix_multiply(newdata_scaled, betas)
   adjusted_predictions <- predictions
 
   # Loop over variables
@@ -236,9 +236,12 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
 # Bug Checking ----
 ## Basic input
 # wmt <- NetworkToolbox::neoOpen; set.seed(42); training <- sample(1:nrow(wmt), round(nrow(wmt) * 0.80))
-# original.data <- wmt[training,]; newdata <- wmt[-training,]
+# original.data <- as.matrix(wmt[training,]); newdata <- as.matrix(wmt[-training,])
 # network <- network.estimation(original.data, model = "glasso")
 # ordinal.categories = 7
+# # Missing data
+# original.data[sample(1:length(original.data), 1000)] <- NA
+# newdata[sample(1:length(newdata), 1000)] <- NA
 
 #' @noRd
 # Argument errors ----
@@ -339,6 +342,38 @@ print.predictability <- function(x, ...)
 summary.predictability <- function(object, ...)
 {
   print(object, ...) # same as `print`
+}
+
+#' @noRd
+# Missing data matrix multiplication ----
+# Updated 17.02.2024
+missing_matrix_multiply <- function(X, Y)
+{
+
+  # For this function, only X is expected to have missing data
+
+  # Check for missing
+  if(anyNA(X)){
+
+    # Determine NA indices
+    indices <- is.na(X)
+
+    # Set NAs to zero
+    X[indices] <- 0
+
+    # Perform matrix multiplication
+    outcome <- X %*% Y
+
+    # Set outcomes to NA
+    outcome[indices] <- NA
+
+    # Return outcome
+    return(outcome)
+
+  }else{ # no missing return normal
+    return(X %*% Y)
+  }
+
 }
 
 #' @noRd

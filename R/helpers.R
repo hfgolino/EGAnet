@@ -2903,12 +2903,12 @@ continuous_accuracy <- function(prediction, observed)
 
 #' @noRd
 # Categorical Accuracy (for single variable) ----
-# Updated 12.02.2024
+# Updated 17.02.2024
 categorical_accuracy <- function(prediction, observed)
 {
 
   # Get maximum categories
-  max_categories <- max(prediction, observed)
+  max_categories <- max(prediction, observed, na.rm = TRUE)
 
   # Set category sequence
   category_sequence <- seq_len(max_categories)
