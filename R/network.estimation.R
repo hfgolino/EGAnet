@@ -261,6 +261,7 @@ network.estimation <- function(
     # Set data, sample size, output, and verbose
     estimation_ARGS$data <- correlation_matrix
     estimation_ARGS$n <- n
+    estimation_ARGS$corr <- corr
     estimation_ARGS$returnAllResults <- !network.only
     estimation_ARGS$verbose <- verbose
     estimation_ARGS$needs_usable <- FALSE # skips usable data check

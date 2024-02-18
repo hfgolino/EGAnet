@@ -9,7 +9,7 @@ bootEGA(
   n = NULL,
   corr = c("auto", "cor_auto", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
-  model = c("BGGM", "glasso", "TMFG"),
+  model = c("BGGM", "glasso", "nonreg", "TMFG"),
   algorithm = c("leiden", "louvain", "walktrap"),
   uni.method = c("expand", "LE", "louvain"),
   iter = 500,
@@ -86,6 +86,9 @@ See \code{?BGGM::estimate} for more details
 
 \item \code{"glasso"} --- Computes the GLASSO with EBIC model selection.
 See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details
+
+\item \code{"nonreg"} --- Computes the Maximum Likelihood non-regularized
+approach. See \code{\link[EGAnet]{ggm_inference.GGMnonreg}} for more details
 
 \item \code{"TMFG"} --- Computes the TMFG method.
 See \code{\link[EGAnet]{TMFG}} for more details

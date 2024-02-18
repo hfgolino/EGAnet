@@ -8,7 +8,7 @@ ggm_inference.GGMnonreg(
   data,
   n = NULL,
   p.value = 0.1,
-  boot = TRUE,
+  bootstrap = TRUE,
   iter = 100,
   corr = c("auto", "cor_auto", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
@@ -30,7 +30,7 @@ in the package}
 Significance level for edge inclusion.
 Defaults to \code{0.10} based on Williams and Rodriguez (2022)}
 
-\item{boot}{Boolean (length = 1).
+\item{bootstrap}{Boolean (length = 1).
 Defaults to \code{TRUE}.
 Can only be \code{FALSE} for Pearson's
 (\code{corr = "pearson"}) and Spearman's

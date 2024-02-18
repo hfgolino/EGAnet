@@ -18,7 +18,7 @@
 #' Significance level for edge inclusion.
 #' Defaults to \code{0.10} based on Williams and Rodriguez (2022)
 #'
-#' @param boot Boolean (length = 1).
+#' @param bootstrap Boolean (length = 1).
 #' Defaults to \code{TRUE}.
 #' Can only be \code{FALSE} for Pearson's
 #' (\code{corr = "pearson"}) and Spearman's
@@ -116,7 +116,7 @@
 # Computes non-regularized network using Maximum Likelihood ----
 # Updated 18.02.2024
 ggm_inference.GGMnonreg <- function(
-    data, n = NULL, p.value = 0.10, boot = TRUE, iter = 100,
+    data, n = NULL, p.value = 0.10, bootstrap = TRUE, iter = 100,
     corr = c("auto", "cor_auto", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
     returnAllResults = FALSE,
@@ -129,14 +129,14 @@ ggm_inference.GGMnonreg <- function(
   na.data <- set_default(na.data, "pairwise", auto.correlate)
 
   # Argument errors (return data in case of tibble)
-  data <- ggm_inference.GGMnonreg_errors(data, p.value, boot, iter, verbose, ...)
+  data <- ggm_inference.GGMnonreg_errors(data, p.value, bootstrap, iter, verbose, ...)
 
   # Check for correlation conflicts with bootstrap
-  if(!boot && !corr %in% c("pearson", "spearman")){
+  if(!bootstrap && !corr %in% c("pearson", "spearman")){
 
     # Send error
     stop(
-      "With `boot = FALSE`, argument 'corr' must either be \"pearson\" or \"spearman\"",
+      "With `bootstrap = FALSE`, argument 'corr' must either be \"pearson\" or \"spearman\"",
       call. = FALSE
     )
 
@@ -147,8 +147,8 @@ ggm_inference.GGMnonreg <- function(
   dimension_names <- dimnames(data)
   row_sequence <- seq_len(dimensions[1])
 
-  # Check for boot
-  if(boot){
+  # Check for bootstrap
+  if(bootstrap){
 
     # Get bootstrapped partial correlations
     bootstrap_partial <- lapply(
@@ -209,7 +209,7 @@ ggm_inference.GGMnonreg <- function(
   # Set methods in attributes
   attr(network, "methods") <- list(
     corr = corr, na.data = na.data,
-    p.value = p.value, boot = boot,
+    p.value = p.value, bootstrap = bootstrap,
     iter = iter
   )
 
@@ -220,14 +220,14 @@ ggm_inference.GGMnonreg <- function(
 
 # Bug Checking ----
 # ## Basic input
-# data = wmt2[,7:24]; alpha = 0.10; boot = TRUE
+# data = wmt2[,7:24]; alpha = 0.10; bootstrap = TRUE
 # iter = 100; corr = "auto"; na.data = "pairwise"
 # verbose = FALSE
 
 #' @noRd
 # Errors ----
 # Updated 18.02.2024
-ggm_inference.GGMnonreg_errors <- function(data, p.value, boot, iter, verbose, ...)
+ggm_inference.GGMnonreg_errors <- function(data, p.value, bootstrap, iter, verbose, ...)
 {
 
   # 'data' errors
@@ -243,9 +243,9 @@ ggm_inference.GGMnonreg_errors <- function(data, p.value, boot, iter, verbose, .
   typeof_error(p.value, "numeric", "ggm_inference.GGMnonreg")
   range_error(p.value, c(0.01, 0.99), "ggm_inference.GGMnonreg")
 
-  # 'boot' errors
-  length_error(boot, 1, "ggm_inference.GGMnonreg")
-  typeof_error(boot, "logical", "ggm_inference.GGMnonreg")
+  # 'bootstrap' errors
+  length_error(bootstrap, 1, "ggm_inference.GGMnonreg")
+  typeof_error(bootstrap, "logical", "ggm_inference.GGMnonreg")
 
   # 'iter' errors
   length_error(iter, 1, "ggm_inference.GGMnonreg")

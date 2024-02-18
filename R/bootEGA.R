@@ -69,6 +69,9 @@
 #' \item \code{"glasso"} --- Computes the GLASSO with EBIC model selection.
 #' See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details
 #'
+#' \item \code{"nonreg"} --- Computes the Maximum Likelihood non-regularized
+#' approach. See \code{\link[EGAnet]{ggm_inference.GGMnonreg}} for more details
+#'
 #' \item \code{"TMFG"} --- Computes the TMFG method.
 #' See \code{\link[EGAnet]{TMFG}} for more details
 #'
@@ -327,12 +330,12 @@
 #' @export
 #'
 # Bootstrap EGA ----
-# Updated 09.02.2023
+# Updated 18.02.2024
 bootEGA <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
-    model = c("BGGM", "glasso", "TMFG"),
+    model = c("BGGM", "glasso", "nonreg", "TMFG"),
     algorithm = c("leiden", "louvain", "walktrap"),
     uni.method = c("expand", "LE", "louvain"),
     iter = 500, type = c("parametric", "resampling"),
@@ -944,7 +947,7 @@ summary.bootEGA <- function(object, ...)
 
 #' @exportS3Method
 # S3 Plot Method ----
-# Updated 09.02.2024
+# Updated 18.02.2024
 plot.bootEGA <- function(x, ...)
 {
 
@@ -983,17 +986,15 @@ plot.bootEGA <- function(x, ...)
       class(results) <- "hierEGA"
 
       # Return plot as hierarchical EGA
-      return(plot(results, ...))
+      plot(results, ...)
 
     }else{
 
       # Return plot
-      return(
-        single_plot(
-          network = x$typicalGraph$graph,
-          wc = x$typicalGraph$wc,
-          ...
-        )
+      single_plot(
+        network = x$typicalGraph$graph,
+        wc = x$typicalGraph$wc,
+        ...
       )
 
     }
@@ -1385,6 +1386,7 @@ estimate_typical_EGA.fit <- function(results, ellipse)
     model,
     # "bggm" = symmetric_matrix_lapply(results$bootGraphs, median),
     "glasso" = symmetric_matrix_lapply(results$bootGraphs, median),
+    "nonreg" = symmetric_matrix_lapply(results$bootGraphs, median),
     "tmfg" = symmetric_matrix_lapply(results$bootGraphs, mean)
   )
 
@@ -1500,6 +1502,7 @@ estimate_typicalStructure <- function(
       model,
       # "bggm" = symmetric_matrix_lapply(results$lower_order$bootGraphs, median),
       "glasso" = symmetric_matrix_lapply(results$lower_order$bootGraphs, median),
+      "nonreg" = symmetric_matrix_lapply(results$lower_order$bootGraphs, median),
       "tmfg" = symmetric_matrix_lapply(results$lower_order$bootGraphs, mean)
     )
 
@@ -1510,6 +1513,7 @@ estimate_typicalStructure <- function(
       model,
       # "bggm" = symmetric_matrix_lapply(results$bootGraphs, median),
       "glasso" = symmetric_matrix_lapply(results$bootGraphs, median),
+      "nonreg" = symmetric_matrix_lapply(results$bootGraphs, median),
       "tmfg" = symmetric_matrix_lapply(results$bootGraphs, mean)
     )
 
@@ -1575,6 +1579,7 @@ estimate_typicalStructure <- function(
     #   )
     # ),
     "glasso" = obtain_arguments(EBICglasso.qgraph, model_attributes),
+    "nonreg" = obtain_arguments(ggm_inference.GGMnonreg, model_attributes),
     "tmfg" = obtain_arguments(TMFG, model_attributes)
   )
 
@@ -1593,7 +1598,7 @@ estimate_typicalStructure <- function(
 
   # `data` at this point will be data or correlation matrix
   # For non-BGGM network estimation, OK to use correlation matrix
-  if(model_attributes$model != "bggm"){
+  if(!model_attributes$model %in% c("bggm", "nonreg")){
     unidimensional_ARGS$data <- ega_object$correlation
   }
 

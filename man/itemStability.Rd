@@ -27,15 +27,15 @@ Returns a list containing:
 
 \itemize{
 
-\item \code{empirical} --- A vector of the empirical memberships from the 
+\item \code{empirical} --- A vector of the empirical memberships from the
 empirical \code{\link[EGAnet]{EGA}} result
 
-\item \code{bootstrap} --- A matrix of the homogenized memberships from the replicate samples in 
+\item \code{bootstrap} --- A matrix of the homogenized memberships from the replicate samples in
 the \code{\link[EGAnet]{bootEGA}} results
 
 \item \code{structure} --- A vector of the structure used in the analysis. If \code{structure = NULL}, then this output
 will be the same as \code{empirical}
-   
+
 }
 
 }
@@ -75,7 +75,7 @@ boot.wmt <- bootEGA(
   type = "parametric", ncores = 2
 )}
 
-# Standard item stability 
+# Standard item stability
 wmt.is <- itemStability(boot.wmt)
 
 \dontrun{
@@ -86,7 +86,7 @@ boot.wmt.fit <- bootEGA(
   type = "parametric", ncores = 2
 )
 
-# EGA fit item stability 
+# EGA fit item stability
 wmt.is.fit <- itemStability(boot.wmt.fit)
 
 # Hierarchical EGA example
@@ -96,7 +96,7 @@ boot.wmt.hier <- bootEGA(
   type = "parametric", ncores = 2
 )
 
-# Hierarchical EGA item stability 
+# Hierarchical EGA item stability
 wmt.is.hier <- itemStability(boot.wmt.hier)
 
 # Random-intercept EGA example
@@ -106,7 +106,7 @@ boot.wmt.ri <- bootEGA(
   type = "parametric", ncores = 2
 )
 
-# Random-intercept EGA item stability 
+# Random-intercept EGA item stability
 wmt.is.ri <- itemStability(boot.wmt.ri)}
 
 }
