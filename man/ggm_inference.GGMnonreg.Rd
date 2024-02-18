@@ -6,11 +6,13 @@
 \usage{
 ggm_inference.GGMnonreg(
   data,
-  alpha = 0.1,
+  n = NULL,
+  p.value = 0.1,
   boot = TRUE,
   iter = 100,
   corr = c("auto", "cor_auto", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
+  returnAllResults = FALSE,
   verbose = FALSE,
   ...
 )
@@ -20,7 +22,11 @@ ggm_inference.GGMnonreg(
 Should consist only of variables to be used in the analysis.
 Raw data must be provided (i.e., no correlation matrices)}
 
-\item{alpha}{Numeric (length = 1).
+\item{n}{\code{NULL}.
+Not actually used but makes it easier for general functionality
+in the package}
+
+\item{p.value}{Numeric (length = 1).
 Significance level for edge inclusion.
 Defaults to \code{0.10} based on Williams and Rodriguez (2022)}
 
@@ -74,6 +80,10 @@ cases between two variables
 cases in the dataset
 
 }}
+
+\item{returnAllResults}{Boolean (length = 1).
+Not actually used but makes it easier for general functionality
+in the package}
 
 \item{verbose}{Boolean (length = 1).
 Whether messages and (insignificant) warnings should be output.

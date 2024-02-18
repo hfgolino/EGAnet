@@ -10,7 +10,11 @@
 #' Should consist only of variables to be used in the analysis.
 #' Raw data must be provided (i.e., no correlation matrices)
 #'
-#' @param alpha Numeric (length = 1).
+#' @param n \code{NULL}.
+#' Not actually used but makes it easier for general functionality
+#' in the package
+#'
+#' @param p.value Numeric (length = 1).
 #' Significance level for edge inclusion.
 #' Defaults to \code{0.10} based on Williams and Rodriguez (2022)
 #'
@@ -65,6 +69,10 @@
 #'
 #' }
 #'
+#' @param returnAllResults Boolean (length = 1).
+#' Not actually used but makes it easier for general functionality
+#' in the package
+#'
 #' @param verbose Boolean (length = 1).
 #' Whether messages and (insignificant) warnings should be output.
 #' Defaults to \code{FALSE} (silent calls).
@@ -108,9 +116,10 @@
 # Computes non-regularized network using Maximum Likelihood ----
 # Updated 18.02.2024
 ggm_inference.GGMnonreg <- function(
-    data, alpha = 0.10, boot = TRUE, iter = 100,
+    data, n = NULL, p.value = 0.10, boot = TRUE, iter = 100,
     corr = c("auto", "cor_auto", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
+    returnAllResults = FALSE,
     verbose = FALSE, ...
 )
 {
@@ -120,7 +129,7 @@ ggm_inference.GGMnonreg <- function(
   na.data <- set_default(na.data, "pairwise", auto.correlate)
 
   # Argument errors (return data in case of tibble)
-  data <- ggm_inference.GGMnonreg_errors(data, alpha, boot, iter, verbose, ...)
+  data <- ggm_inference.GGMnonreg_errors(data, p.value, boot, iter, verbose, ...)
 
   # Check for correlation conflicts with bootstrap
   if(!boot && !corr %in% c("pearson", "spearman")){
@@ -159,7 +168,7 @@ ggm_inference.GGMnonreg <- function(
     )
 
     # Set confidence interval
-    ci <- alpha / 2
+    ci <- p.value / 2
 
     # Get means of network values
     boot_means <- symmetric_matrix_lapply(bootstrap_partial, mean)
@@ -193,14 +202,14 @@ ggm_inference.GGMnonreg <- function(
     )
 
     # Get network
-    network <- partial * ((pnorm(statistic, lower.tail = FALSE) * 2) < alpha)
+    network <- partial * ((pnorm(statistic, lower.tail = FALSE) * 2) < p.value)
 
   }
 
   # Set methods in attributes
   attr(network, "methods") <- list(
     corr = corr, na.data = na.data,
-    alpha = alpha, boot = boot,
+    p.value = p.value, boot = boot,
     iter = iter
   )
 
@@ -218,7 +227,7 @@ ggm_inference.GGMnonreg <- function(
 #' @noRd
 # Errors ----
 # Updated 18.02.2024
-ggm_inference.GGMnonreg_errors <- function(data, alpha, boot, iter, verbose, ...)
+ggm_inference.GGMnonreg_errors <- function(data, p.value, boot, iter, verbose, ...)
 {
 
   # 'data' errors
@@ -229,10 +238,10 @@ ggm_inference.GGMnonreg_errors <- function(data, alpha, boot, iter, verbose, ...
     data <- as.data.frame(data)
   }
 
-  # 'alpha' errors
-  length_error(alpha, 1, "ggm_inference.GGMnonreg")
-  typeof_error(alpha, "numeric", "ggm_inference.GGMnonreg")
-  range_error(alpha, c(0.01, 0.99), "ggm_inference.GGMnonreg")
+  # 'p.value' errors
+  length_error(p.value, 1, "ggm_inference.GGMnonreg")
+  typeof_error(p.value, "numeric", "ggm_inference.GGMnonreg")
+  range_error(p.value, c(0.01, 0.99), "ggm_inference.GGMnonreg")
 
   # 'boot' errors
   length_error(boot, 1, "ggm_inference.GGMnonreg")

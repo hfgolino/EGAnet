@@ -9,7 +9,7 @@ community.unidimensional(
   n = NULL,
   corr = c("auto", "cor_auto", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
-  model = c("BGGM", "glasso", "TMFG"),
+  model = c("BGGM", "glasso", "nonreg", "TMFG"),
   uni.method = c("expand", "LE", "louvain"),
   verbose = FALSE,
   ...
@@ -36,13 +36,13 @@ continuous. To change the number of categories that are considered
 ordinal, use \code{ordinal.categories}
 (see \code{\link[EGAnet]{polychoric.matrix}} for more details)
 
-\item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations. 
+\item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations.
 Arguments can be passed along to the function
 
-\item \code{"pearson"} --- Pearson's correlation is computed for all 
+\item \code{"pearson"} --- Pearson's correlation is computed for all
 variables regardless of categories
 
-\item \code{"spearman"} --- Spearman's rank-order correlation is computed 
+\item \code{"spearman"} --- Spearman's rank-order correlation is computed
 for all variables regardless of categories
 
 }
@@ -78,20 +78,23 @@ See \code{?BGGM::estimate} for more details
 \item \code{"glasso"} --- Computes the GLASSO with EBIC model selection.
 See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details
 
+\item \code{"nonreg"} --- Computes the Maximum Likelihood non-regularized
+approach. See \code{\link[EGAnet]{ggm_inference.GGMnonref}} for more details
+
 \item \code{"TMFG"} --- Computes the TMFG method.
 See \code{\link[EGAnet]{TMFG}} for more details
 
 }}
 
 \item{uni.method}{Character (length = 1).
-What unidimensionality method should be used? 
+What unidimensionality method should be used?
 Defaults to \code{"louvain"}.
 Available options:
 
 \itemize{
 
 \item \code{"expand"} --- Expands the correlation matrix with four variables correlated 0.50.
-If number of dimension returns 2 or less in check, then the data 
+If number of dimension returns 2 or less in check, then the data
 are unidimensional; otherwise, regular EGA with no matrix
 expansion is used. This method was used in the Golino et al.'s (2020)
 \emph{Psychological Methods} simulation
@@ -100,12 +103,12 @@ expansion is used. This method was used in the Golino et al.'s (2020)
 (\code{\link[igraph]{cluster_leading_eigen}})
 on the empirical correlation matrix. If the number of dimensions is 1,
 then the Leading Eigenvector solution is used; otherwise, regular EGA
-is used. This method was used in the Christensen et al.'s (2023) 
+is used. This method was used in the Christensen et al.'s (2023)
 \emph{Behavior Research Methods} simulation
 
 \item \code{"louvain"} --- Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
-on the empirical correlation matrix. If the number of dimensions is 1, 
-then the Louvain solution is used; otherwise, regular EGA is used. 
+on the empirical correlation matrix. If the number of dimensions is 1,
+then the Louvain solution is used; otherwise, regular EGA is used.
 This method was validated Christensen's (2022) \emph{PsyArXiv} simulation.
 Consensus clustering can be used by specifying either
 \code{"consensus.method"} or \code{"consensus.iter"}
@@ -118,9 +121,9 @@ Defaults to \code{FALSE} (silent calls).
 Set to \code{TRUE} to see all messages and warnings for every function call}
 
 \item{...}{Additional arguments to be passed on to
-\code{\link[EGAnet]{auto.correlate}}, 
+\code{\link[EGAnet]{auto.correlate}},
 \code{\link[EGAnet]{network.estimation}},
-\code{\link[EGAnet]{community.consensus}}, and 
+\code{\link[EGAnet]{community.consensus}}, and
 \code{\link[EGAnet]{community.detection}}}
 }
 \value{
@@ -129,7 +132,7 @@ The memberships will output \emph{regardless} of whether the
 network is unidimensional
 }
 \description{
-A function to apply several approaches to detect a unidimensional community in 
+A function to apply several approaches to detect a unidimensional community in
 networks. There have many different approaches recently such as expanding
 the correlation matrix to have orthogonal correlations (\code{"expand"}),
 applying the Leading Eigenvalue community detection algorithm
@@ -142,8 +145,11 @@ Not necessarily intended for individual use -- it's better to use \code{\link[EG
 # Load data
 wmt <- wmt2[,7:24]
 
-# Louvain with Consensus Clustering (default)
+# Louvain (default)
 community.unidimensional(wmt)
+
+# Louvain with consensus clustering
+community.unidimensional(wmt, consensus.iter = 1000)
 
 # Leading Eigenvector
 community.unidimensional(wmt, uni.method = "LE")
@@ -157,7 +163,7 @@ community.unidimensional(wmt, uni.method = "expand")
 Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., Thiyagarajan, J. A., & Martinez-Molina, A. (2020).
 Investigating the performance of exploratory graph analysis and traditional techniques to identify the number of latent factors:
 A simulation and tutorial.
-\emph{Psychological Methods}, \emph{25}, 292-320. 
+\emph{Psychological Methods}, \emph{25}, 292-320.
 
 \strong{Leading Eigenvector approach} \cr
 Christensen, A. P., Garrido, L. E., Guerra-Pena, K., & Golino, H. (2023).

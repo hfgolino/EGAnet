@@ -498,7 +498,7 @@ send_network_methods <- function(estimated_network, boot = FALSE)
     # Send correlations
     cat(
       paste0(
-        "\nCorrelations: ", methods$corr, " (alpha = ", methods$alpha, ")"
+        "\nCorrelations: ", methods$corr, " (alpha = ", methods$p.value, ")"
       )
     )
 
