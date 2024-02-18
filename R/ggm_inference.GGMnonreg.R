@@ -197,6 +197,13 @@ ggm_inference.GGMnonreg <- function(
 
   }
 
+  # Set methods in attributes
+  attr(network, "methods") <- list(
+    corr = corr, na.data = na.data,
+    alpha = alpha, boot = boot,
+    iter = iter
+  )
+
   # Return network
   return(network)
 
