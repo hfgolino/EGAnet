@@ -1,7 +1,7 @@
 ---
 name: To-do
 about: Internal marker for to-do list
-title: To-do
+title: [To-do]
 labels: enhancement
 
 ---
