@@ -13,7 +13,7 @@ hierEGA(
   impute = c("mean", "median", "none"),
   corr = c("auto", "cor_auto", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
-  model = c("BGGM", "glasso", "TMFG"),
+  model = c("BGGM", "glasso", "nonreg", "TMFG"),
   lower.algorithm = "louvain",
   higher.algorithm = c("leiden", "louvain", "walktrap"),
   uni.method = c("expand", "LE", "louvain"),
@@ -34,7 +34,7 @@ an \code{"experimental"} implementation.
 Defaults to \code{"BRM"}}
 
 \item{rotation}{Character.
-A rotation to use to obtain a simpler structure. 
+A rotation to use to obtain a simpler structure.
 For a list of rotations, see \code{\link[GPArotation]{rotations}} for options.
 Defaults to \code{NULL} or no rotation.
 By setting a rotation, \code{scores} estimation will be
@@ -48,12 +48,12 @@ Set to \code{"factor"} for factor scores computed using
 \code{\link[psych]{fa}}. Factors scores will be based on
 \strong{EFA} (as in Jiménez et al., 2023)
 
-\emph{Factor scores use the number of communities from 
-\code{\link[EGAnet]{EGA}}. Estimated factor loadings may 
-not align with these communities. The plots using factor scores 
-will have higher order factors that may not completely map on to 
+\emph{Factor scores use the number of communities from
+\code{\link[EGAnet]{EGA}}. Estimated factor loadings may
+not align with these communities. The plots using factor scores
+will have higher order factors that may not completely map on to
 the lower order communities. Look at
-\code{$hierarchical$higher_order$lower_loadings} to determine the 
+\code{$hierarchical$higher_order$lower_loadings} to determine the
 composition of the lower order factors.}}
 
 \item{loading.structure}{Character (length = 1).
@@ -70,7 +70,7 @@ and is therefore the default. Treat \code{"full"} as experimental
 as proper vetting and validation has not been established}
 
 \item{impute}{Character (length = 1).
-If there are any missing data, then imputation can be implemented. 
+If there are any missing data, then imputation can be implemented.
 Available options:
 
 \itemize{
@@ -99,13 +99,13 @@ continuous. To change the number of categories that are considered
 ordinal, use \code{ordinal.categories}
 (see \code{\link[EGAnet]{polychoric.matrix}} for more details)
 
-\item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations. 
+\item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations.
 Arguments can be passed along to the function
 
-\item \code{"pearson"} --- Pearson's correlation is computed for all 
+\item \code{"pearson"} --- Pearson's correlation is computed for all
 variables regardless of categories
 
-\item \code{"spearman"} --- Spearman's rank-order correlation is computed 
+\item \code{"spearman"} --- Spearman's rank-order correlation is computed
 for all variables regardless of categories
 
 }
@@ -141,15 +141,18 @@ See \code{?BGGM::estimate} for more details
 \item \code{"glasso"} --- Computes the GLASSO with EBIC model selection.
 See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details
 
+\item \code{"nonreg"} --- Computes the Maximum Likelihood non-regularized
+approach. See \code{\link[EGAnet]{ggm_inference.GGMnonreg}} for more details
+
 \item \code{"TMFG"} --- Computes the TMFG method.
 See \code{\link[EGAnet]{TMFG}} for more details
 
 }}
 
-\item{lower.algorithm}{Character or 
+\item{lower.algorithm}{Character or
 \code{\link{igraph}} \code{cluster_*} function (length = 1).
-Defaults to the lower order \code{"louvain"} with most common 
-consensus clustering (1000 iterations; see 
+Defaults to the lower order \code{"louvain"} with most common
+consensus clustering (1000 iterations; see
 \code{\link[EGAnet]{community.consensus}} for more details)
 
 Louvain with consensus clustering is \emph{strongly}
@@ -157,7 +160,7 @@ recommended. Using any other algorithm is considered
 \emph{experimental} as they have not been designed to
 capture lower order communities}
 
-\item{higher.algorithm}{Character or 
+\item{higher.algorithm}{Character or
 \code{\link{igraph}} \code{cluster_*} function (length = 1).
 Defaults to \code{"walktrap"}.
 Three options are listed below but all are available
@@ -167,10 +170,10 @@ Three options are listed below but all are available
 
 \item \code{"leiden"} --- See \code{\link[igraph]{cluster_leiden}} for more details
 
-\item \code{"louvain"} --- By default, \code{"louvain"} will implement the Louvain algorithm using 
-the consensus clustering method (see \code{\link[EGAnet]{community.consensus}} 
+\item \code{"louvain"} --- By default, \code{"louvain"} will implement the Louvain algorithm using
+the consensus clustering method (see \code{\link[EGAnet]{community.consensus}}
 for more information). This function will implement
-\code{consensus.method = "most_common"} and \code{consensus.iter = 1000} 
+\code{consensus.method = "most_common"} and \code{consensus.iter = 1000}
 unless specified otherwise
 
 \item \code{"walktrap"} --- See \code{\link[igraph]{cluster_walktrap}} for more details
@@ -182,14 +185,14 @@ Using \code{algorithm} will set only \code{higher.algorithm} and
 consensus clustering (1000 iterations)}
 
 \item{uni.method}{Character (length = 1).
-What unidimensionality method should be used? 
+What unidimensionality method should be used?
 Defaults to \code{"louvain"}.
 Available options:
 
 \itemize{
 
 \item \code{"expand"} --- Expands the correlation matrix with four variables correlated 0.50.
-If number of dimension returns 2 or less in check, then the data 
+If number of dimension returns 2 or less in check, then the data
 are unidimensional; otherwise, regular EGA with no matrix
 expansion is used. This method was used in the Golino et al.'s (2020)
 \emph{Psychological Methods} simulation
@@ -198,12 +201,12 @@ expansion is used. This method was used in the Golino et al.'s (2020)
 (\code{\link[igraph]{cluster_leading_eigen}})
 on the empirical correlation matrix. If the number of dimensions is 1,
 then the Leading Eigenvector solution is used; otherwise, regular EGA
-is used. This method was used in the Christensen et al.'s (2023) 
+is used. This method was used in the Christensen et al.'s (2023)
 \emph{Behavior Research Methods} simulation
 
 \item \code{"louvain"} --- Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
-on the empirical correlation matrix. If the number of dimensions is 1, 
-then the Louvain solution is used; otherwise, regular EGA is used. 
+on the empirical correlation matrix. If the number of dimensions is 1,
+then the Louvain solution is used; otherwise, regular EGA is used.
 This method was validated Christensen's (2022) \emph{PsyArXiv} simulation.
 Consensus clustering can be used by specifying either
 \code{"consensus.method"} or \code{"consensus.iter"}
@@ -238,7 +241,7 @@ Returns a list of lists containing:
 that were used to estimate scores and the higher order \code{\link[EGAnet]{EGA}}
 results, respectively}
 
-\item{dim.variables}{A data frame with variable names and their lower and higher 
+\item{dim.variables}{A data frame with variable names and their lower and higher
 order assignments}
 
 \item{TEFI}{Generalized TEFI using \code{\link[EGAnet]{tefi}}}
@@ -247,8 +250,8 @@ order assignments}
 }
 \description{
 Estimates EGA using the lower-order solution of the Louvain
-algorithm (\code{\link[igraph]{cluster_louvain}})to identify the lower-order 
-dimensions and then uses factor or network loadings to estimate factor 
+algorithm (\code{\link[igraph]{cluster_louvain}})to identify the lower-order
+dimensions and then uses factor or network loadings to estimate factor
 or network scores, which are used to estimate the higher-order dimensions
 (for more details, see Jiménez et al., 2023)
 }
@@ -264,7 +267,7 @@ opt.hier <- hierEGA(
 plot(opt.hier, plot.type = "multilevel")
 
 # Plot multilevel plot with higher order
-# border color matching the corresponding 
+# border color matching the corresponding
 # lower order color
 plot(opt.hier, color.match = TRUE)
 
@@ -274,8 +277,8 @@ plot(opt.hier, plot.type = "separate")}
 }
 \references{
 \strong{Hierarchical EGA simulation} \cr
-Jiménez, M., Abad, F. J., Garcia-Garzon, E., Golino, H., Christensen, A. P., & Garrido, L. E. (2023). 
-Dimensionality assessment in bifactor structures with multiple general factors: A network psychometrics approach. 
+Jiménez, M., Abad, F. J., Garcia-Garzon, E., Golino, H., Christensen, A. P., & Garrido, L. E. (2023).
+Dimensionality assessment in bifactor structures with multiple general factors: A network psychometrics approach.
 \emph{Psychological Methods}.
 
 \strong{Conceptual implementation} \cr

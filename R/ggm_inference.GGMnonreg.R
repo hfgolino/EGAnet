@@ -24,7 +24,7 @@
 #' (\code{corr = "pearson"}) and Spearman's
 #' (\code{corr = "spearman"}) correlations
 #'
-#' @param iter Numeric (length = 1).
+#' @param nonreg.iter Numeric (length = 1).
 #' Number of replica samples to generate from the bootstrap analysis.
 #' Defaults to \code{100} (minimum allowed).
 #' Default in \code{GGMnonreg} is \code{1000}
@@ -116,7 +116,10 @@
 # Computes non-regularized network using Maximum Likelihood ----
 # Updated 18.02.2024
 ggm_inference.GGMnonreg <- function(
-    data, n = NULL, p.value = 0.10, bootstrap = TRUE, iter = 100,
+    data, n = NULL,
+    # Arguments for `ggm_inference`
+    p.value = 0.10, bootstrap = TRUE, nonreg.iter = 100,
+    # Standard arguments for network estimation
     corr = c("auto", "cor_auto", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
     returnAllResults = FALSE,
@@ -129,7 +132,7 @@ ggm_inference.GGMnonreg <- function(
   na.data <- set_default(na.data, "pairwise", auto.correlate)
 
   # Argument errors (return data in case of tibble)
-  data <- ggm_inference.GGMnonreg_errors(data, p.value, bootstrap, iter, verbose, ...)
+  data <- ggm_inference.GGMnonreg_errors(data, p.value, bootstrap, nonreg.iter, verbose, ...)
 
   # Check for correlation conflicts with bootstrap
   if(!bootstrap && !corr %in% c("pearson", "spearman")){
@@ -152,7 +155,7 @@ ggm_inference.GGMnonreg <- function(
 
     # Get bootstrapped partial correlations
     bootstrap_partial <- lapply(
-      seq_len(iter), function(iteration){
+      seq_len(nonreg.iter), function(iteration){
 
         # Return partial correlations
         return(
@@ -210,7 +213,7 @@ ggm_inference.GGMnonreg <- function(
   attr(network, "methods") <- list(
     corr = corr, na.data = na.data,
     p.value = p.value, bootstrap = bootstrap,
-    iter = iter
+    nonreg.iter = nonreg.iter
   )
 
   # Return network
@@ -220,14 +223,14 @@ ggm_inference.GGMnonreg <- function(
 
 # Bug Checking ----
 # ## Basic input
-# data = wmt2[,7:24]; alpha = 0.10; bootstrap = TRUE
-# iter = 100; corr = "auto"; na.data = "pairwise"
+# data = wmt2[,7:24]; p.value = 0.10; bootstrap = TRUE
+# nonreg.iter = 100; corr = "auto"; na.data = "pairwise"
 # verbose = FALSE
 
 #' @noRd
 # Errors ----
 # Updated 18.02.2024
-ggm_inference.GGMnonreg_errors <- function(data, p.value, bootstrap, iter, verbose, ...)
+ggm_inference.GGMnonreg_errors <- function(data, p.value, bootstrap, nonreg.iter, verbose, ...)
 {
 
   # 'data' errors
@@ -247,10 +250,10 @@ ggm_inference.GGMnonreg_errors <- function(data, p.value, bootstrap, iter, verbo
   length_error(bootstrap, 1, "ggm_inference.GGMnonreg")
   typeof_error(bootstrap, "logical", "ggm_inference.GGMnonreg")
 
-  # 'iter' errors
-  length_error(iter, 1, "ggm_inference.GGMnonreg")
-  typeof_error(iter, "numeric", "ggm_inference.GGMnonreg")
-  range_error(iter, c(100, Inf), "ggm_inference.GGMnonreg")
+  # 'nonreg.iter' errors
+  length_error(nonreg.iter, 1, "ggm_inference.GGMnonreg")
+  typeof_error(nonreg.iter, "numeric", "ggm_inference.GGMnonreg")
+  range_error(nonreg.iter, c(100, Inf), "ggm_inference.GGMnonreg")
 
   # 'verbose' errors
   length_error(verbose, 1, "ggm_inference.GGMnonreg")

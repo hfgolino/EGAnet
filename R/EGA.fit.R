@@ -67,6 +67,9 @@
 #' \item \code{"glasso"} --- Computes the GLASSO with EBIC model selection.
 #' See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details
 #'
+#' \item \code{"nonreg"} --- Computes the Maximum Likelihood non-regularized
+#' approach. See \code{\link[EGAnet]{ggm_inference.GGMnonreg}} for more details
+#'
 #' \item \code{"TMFG"} --- Computes the TMFG method.
 #' See \code{\link[EGAnet]{TMFG}} for more details
 #'
@@ -198,12 +201,12 @@
 #' @export
 #'
 # EGA fit ----
-# Updated 24.10.2023
+# Updated 18.02.2024
 EGA.fit <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
-    model = c("BGGM", "glasso", "TMFG"),
+    model = c("BGGM", "glasso", "nonreg", "TMFG"),
     algorithm = c("leiden", "louvain", "walktrap"),
     plot.EGA = TRUE, verbose = FALSE,
     ...

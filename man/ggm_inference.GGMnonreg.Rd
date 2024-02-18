@@ -9,7 +9,7 @@ ggm_inference.GGMnonreg(
   n = NULL,
   p.value = 0.1,
   bootstrap = TRUE,
-  iter = 100,
+  nonreg.iter = 100,
   corr = c("auto", "cor_auto", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
   returnAllResults = FALSE,
@@ -36,7 +36,7 @@ Can only be \code{FALSE} for Pearson's
 (\code{corr = "pearson"}) and Spearman's
 (\code{corr = "spearman"}) correlations}
 
-\item{iter}{Numeric (length = 1).
+\item{nonreg.iter}{Numeric (length = 1).
 Number of replica samples to generate from the bootstrap analysis.
 Defaults to \code{100} (minimum allowed).
 Default in \code{GGMnonreg} is \code{1000}}

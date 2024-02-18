@@ -13,7 +13,7 @@ invariance(
   configural.type = c("parametric", "resampling"),
   corr = c("auto", "cor_auto", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
-  model = c("BGGM", "glasso", "TMFG"),
+  model = c("BGGM", "glasso", "nonreg", "TMFG"),
   algorithm = c("leiden", "louvain", "walktrap"),
   uni.method = c("expand", "LE", "louvain"),
   ncores,
@@ -63,13 +63,13 @@ continuous. To change the number of categories that are considered
 ordinal, use \code{ordinal.categories}
 (see \code{\link[EGAnet]{polychoric.matrix}} for more details)
 
-\item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations. 
+\item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations.
 Arguments can be passed along to the function
 
-\item \code{"pearson"} --- Pearson's correlation is computed for all 
+\item \code{"pearson"} --- Pearson's correlation is computed for all
 variables regardless of categories
 
-\item \code{"spearman"} --- Spearman's rank-order correlation is computed 
+\item \code{"spearman"} --- Spearman's rank-order correlation is computed
 for all variables regardless of categories
 
 }
@@ -105,12 +105,15 @@ See \code{?BGGM::estimate} for more details
 \item \code{"glasso"} --- Computes the GLASSO with EBIC model selection.
 See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details
 
+\item \code{"nonreg"} --- Computes the Maximum Likelihood non-regularized
+approach. See \code{\link[EGAnet]{ggm_inference.GGMnonreg}} for more details
+
 \item \code{"TMFG"} --- Computes the TMFG method.
 See \code{\link[EGAnet]{TMFG}} for more details
 
 }}
 
-\item{algorithm}{Character or 
+\item{algorithm}{Character or
 \code{\link{igraph}} \code{cluster_*} function (length = 1).
 Defaults to \code{"walktrap"}.
 Three options are listed below but all are available
@@ -120,10 +123,10 @@ Three options are listed below but all are available
 
 \item \code{"leiden"} --- See \code{\link[igraph]{cluster_leiden}} for more details
 
-\item \code{"louvain"} --- By default, \code{"louvain"} will implement the Louvain algorithm using 
-the consensus clustering method (see \code{\link[EGAnet]{community.consensus}} 
+\item \code{"louvain"} --- By default, \code{"louvain"} will implement the Louvain algorithm using
+the consensus clustering method (see \code{\link[EGAnet]{community.consensus}}
 for more information). This function will implement
-\code{consensus.method = "most_common"} and \code{consensus.iter = 1000} 
+\code{consensus.method = "most_common"} and \code{consensus.iter = 1000}
 unless specified otherwise
 
 \item \code{"walktrap"} --- See \code{\link[igraph]{cluster_walktrap}} for more details
@@ -131,14 +134,14 @@ unless specified otherwise
 }}
 
 \item{uni.method}{Character (length = 1).
-What unidimensionality method should be used? 
+What unidimensionality method should be used?
 Defaults to \code{"louvain"}.
 Available options:
 
 \itemize{
 
 \item \code{"expand"} --- Expands the correlation matrix with four variables correlated 0.50.
-If number of dimension returns 2 or less in check, then the data 
+If number of dimension returns 2 or less in check, then the data
 are unidimensional; otherwise, regular EGA with no matrix
 expansion is used. This method was used in the Golino et al.'s (2020)
 \emph{Psychological Methods} simulation
@@ -147,12 +150,12 @@ expansion is used. This method was used in the Golino et al.'s (2020)
 (\code{\link[igraph]{cluster_leading_eigen}})
 on the empirical correlation matrix. If the number of dimensions is 1,
 then the Leading Eigenvector solution is used; otherwise, regular EGA
-is used. This method was used in the Christensen et al.'s (2023) 
+is used. This method was used in the Christensen et al.'s (2023)
 \emph{Behavior Research Methods} simulation
 
 \item \code{"louvain"} --- Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
-on the empirical correlation matrix. If the number of dimensions is 1, 
-then the Louvain solution is used; otherwise, regular EGA is used. 
+on the empirical correlation matrix. If the number of dimensions is 1,
+then the Louvain solution is used; otherwise, regular EGA is used.
 This method was validated Christensen's (2022) \emph{PsyArXiv} simulation.
 Consensus clustering can be used by specifying either
 \code{"consensus.method"} or \code{"consensus.iter"}
@@ -184,7 +187,7 @@ Set to \code{FALSE} to not display progress}
 \code{\link[EGAnet]{network.estimation}},
 \code{\link[EGAnet]{community.detection}},
 \code{\link[EGAnet]{community.consensus}},
-\code{\link[EGAnet]{EGA}}, 
+\code{\link[EGAnet]{EGA}},
 \code{\link[EGAnet]{bootEGA}}, and
 \code{\link[EGAnet]{net.loads}}}
 }
@@ -260,7 +263,7 @@ is met.
 \strong{Metric Invariance}
 
 The variables that remain after configural invariance are submitted to metric
-invariance. First, each group estimates a network and then network loadings 
+invariance. First, each group estimates a network and then network loadings
 (\code{\link[EGAnet]{net.loads}}) are computed using the assigned
 community memberships (determined during configural invariance). Then,
 the difference between the assigned loadings of the groups is computed. This

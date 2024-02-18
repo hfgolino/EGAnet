@@ -507,7 +507,7 @@ send_network_methods <- function(estimated_network, boot = FALSE)
     if(methods$boot){
 
       # Analytic solution was not used
-      cat(paste0("\nAnalytic: No (iterations = ", methods$iter, ")"))
+      cat(paste0("\nAnalytic: No (iterations = ", methods$nonreg.iter, ")"))
 
     }else{
 
