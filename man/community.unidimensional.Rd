@@ -79,7 +79,7 @@ See \code{?BGGM::estimate} for more details
 See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details
 
 \item \code{"nonreg"} --- Computes the Maximum Likelihood non-regularized
-approach. See \code{\link[EGAnet]{ggm_inference.GGMnonref}} for more details
+approach. See \code{\link[EGAnet]{ggm_inference.GGMnonreg}} for more details
 
 \item \code{"TMFG"} --- Computes the TMFG method.
 See \code{\link[EGAnet]{TMFG}} for more details
