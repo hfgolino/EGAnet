@@ -6,6 +6,8 @@ o ADD: `network.predictability` to predict new data based on a network
 
 o ADD: `network.generalizability` to estimate network generalizability to new data (leverages `network.predictability`)
 
+o ADD: a minimal version of `ggm_inference.GGMnonreg` to support non-regularized approaches in {EGAnet} (uses faster polychoric correlations)
+
 o UPDATE: `plot.bootEGA` will output `itemStability` plot by default
 
 o UPDATE: `dimensionStability` output now included in `bootEGA` as output `$stability`

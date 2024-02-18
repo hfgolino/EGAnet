@@ -513,7 +513,7 @@ setup_results <- function(
         nvapply(
           dim_sequence[flags$polytomous], function(i){
             categorical_accuracy(
-              predictions[,i], newdata[,i], category[[i]]
+              predictions[,i], newdata[,i], categories[[i]]
             )[c("accuracy", "weighted")]
           }, LENGTH = 2
         )
