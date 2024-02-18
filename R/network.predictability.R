@@ -113,7 +113,7 @@
 #' @export
 #'
 # Predict new data based on network ----
-# Updated 17.02.2024
+# Updated 18.02.2024
 network.predictability <- function(network, original.data, newdata, ordinal.categories = 7)
 {
 
@@ -121,7 +121,9 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
   if(missing(newdata)){newdata <- original.data}
 
   # Argument errors (return data in case of tibble)
-  output <- network.predictability_errors(network, original.data, newdata, ordinal.categories)
+  output <- network.predictability_errors(
+    network, original.data, newdata, ordinal.categories
+  )
 
   # Put everything into a matrix
   network <- as.matrix(output$network)
@@ -142,7 +144,7 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
 
   # Get ranges
   ranges <- nvapply(
-    seq_along(node_names), function(i){
+    dim_sequence, function(i){
       range(original.data[,i], newdata[,i], na.rm = TRUE)
     }, LENGTH = 2
   )
@@ -178,7 +180,7 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
     dimnames = list(NULL, node_names)
   )
 
-  # Get predictions
+  # Get predictions (and initialize adjusted predictions)
   predictions <- missing_matrix_multiply(newdata_scaled, betas)
   adjusted_predictions <- predictions
 
@@ -189,16 +191,17 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
     if(flags$categorical[[i]]){
 
       # Set factors for data
-      factored_data <- factor(
+      factored_data <- factor( # ensures proper tabling for accuracy
         original.data[,i], levels = seq.int(ranges[1,i], ranges[2,i], 1)
       )
 
-      # Handle thresholds
-      thresholds <- handle_thresholds(factored_data)
-
       # Assign categories to each observation
       predictions[,i] <- as.numeric(
-        cut(x = predictions[,i], breaks = c(-Inf, thresholds, Inf))
+        cut(
+          x = predictions[,i], breaks = c(
+            -Inf, handle_thresholds(factored_data), Inf
+          ) # `handle_thresholds` will properly adjust for missing thresholds
+        )
       )
 
       # Check for lowest category
@@ -218,12 +221,14 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
 
   # Obtain results
   results <- setup_results(
-    predictions, adjusted_predictions, original.data, newdata,
+    predictions, adjusted_predictions, newdata, categories,
     flags, betas, node_names, dimensions, dim_sequence
   )
 
-  # Attach flags to results
-  attr(results$results, "flags") <- flags
+  # Attach categories to results
+  attr(results$results, "categories") <- list(
+    categories = categories, flags = flags
+  )
 
   # Set class
   class(results) <- "predictability"
@@ -285,12 +290,12 @@ network.predictability_errors <- function(network, original.data, newdata, ordin
 
 #' @exportS3Method
 # S3 Print Method ----
-# Updated 12.02.2024
+# Updated 18.02.2024
 print.predictability <- function(x, ...)
 {
 
   # Get flags
-  flags <- attr(x$results, "flags")
+  flags <- attr(x$results, "categories")$flags
 
   # Set up full flags
   full_flags <- lapply(flags, any)
@@ -423,9 +428,9 @@ handle_thresholds <- function(factored_data)
 
 #' @noRd
 # Set up results ----
-# Updated 12.02.2024
+# Updated 18.02.2024
 setup_results <- function(
-    predictions, adjusted_predictions, original.data, newdata,
+    predictions, adjusted_predictions, newdata, categories,
     flags, betas, node_names, dimensions, dim_sequence
 )
 {
@@ -438,7 +443,9 @@ setup_results <- function(
       matrix(
         nvapply(
           dim_sequence, function(i){
-            categorical_accuracy(predictions[,i], newdata[,i])[["accuracy"]]
+            categorical_accuracy(
+              predictions[,i], newdata[,i], categories[[i]]
+            )[["accuracy"]]
           }
         ), dimnames = list(node_names, "Accuracy")
       )
@@ -451,16 +458,14 @@ setup_results <- function(
       matrix(
         nvapply(
           dim_sequence, function(i){
-            categorical_accuracy(predictions[,i], newdata[,i])[c("accuracy", "weighted")]
+            categorical_accuracy(
+              predictions[,i], newdata[,i], categories[[i]]
+            )[c("accuracy", "weighted")]
           }, LENGTH = 2
         ), ncol = 2, byrow = TRUE,
         dimnames = list(node_names, c("Accuracy", "Weighted"))
       )
     )
-
-    for(i in dim_sequence){
-      categorical_accuracy(predictions[,i], newdata[,i])[c("accuracy", "weighted")]
-    }
 
   }else if(all(flags$continuous)){ # Check for all continuous
 
@@ -492,7 +497,9 @@ setup_results <- function(
       # Get results
       results$Accuracy[flags$dichotomous] <- t(nvapply(
         dim_sequence[flags$dichotomous], function(i){
-          categorical_accuracy(predictions[,i], newdata[,i])[["accuracy"]]
+          categorical_accuracy(
+            predictions[,i], newdata[,i], categories[[i]]
+          )[["accuracy"]]
         }
       ))
 
@@ -505,7 +512,9 @@ setup_results <- function(
       results[flags$polytomous, c("Accuracy", "Weighted")] <- t(
         nvapply(
           dim_sequence[flags$polytomous], function(i){
-            categorical_accuracy(predictions[,i], newdata[,i])[c("accuracy", "weighted")]
+            categorical_accuracy(
+              predictions[,i], newdata[,i], category[[i]]
+            )[c("accuracy", "weighted")]
           }, LENGTH = 2
         )
       )

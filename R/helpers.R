@@ -2903,19 +2903,16 @@ continuous_accuracy <- function(prediction, observed)
 
 #' @noRd
 # Categorical Accuracy (for single variable) ----
-# Updated 17.02.2024
-categorical_accuracy <- function(prediction, observed)
+# Updated 18.02.2024
+categorical_accuracy <- function(prediction, observed, category)
 {
 
-  # Get maximum categories
-  max_categories <- max(prediction, observed, na.rm = TRUE)
-
   # Set category sequence
-  category_sequence <- seq_len(max_categories)
+  category_sequence <- seq_len(category)
 
   # Set up table
   accuracy_table <- matrix(
-    0, nrow = max_categories, ncol = max_categories,
+    0, nrow = category, ncol = category,
     dimnames = list(category_sequence, category_sequence)
   )
 
@@ -2936,7 +2933,7 @@ categorical_accuracy <- function(prediction, observed)
 
   # Get maximum possible distance incorrect
   max_distance <- pmax(
-    abs(max_categories - category_sequence), # distance from maximum category
+    abs(category - category_sequence), # distance from maximum category
     abs(min(category_sequence) - category_sequence) # distance from minimum category
   )
 
@@ -2954,7 +2951,7 @@ categorical_accuracy <- function(prediction, observed)
       balanced = sum(
         correct / rowSums(accuracy_table, na.rm = TRUE),
         na.rm = TRUE
-      ) / max_categories,
+      ) / category,
       weighted = (sum(0.5^abs(prediction - observed), na.rm = TRUE) - minimum_weighted) /
                  # weighted total
                  (total_values - minimum_weighted)
