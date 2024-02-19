@@ -2954,7 +2954,7 @@ categorical_accuracy <- function(prediction, observed)
       balanced = sum(
         correct / rowSums(accuracy_table, na.rm = TRUE),
         na.rm = TRUE
-      ) / category,
+      ) / max_category,
       weighted = (sum(0.5^abs(prediction - observed), na.rm = TRUE) - minimum_weighted) /
                  # weighted total
                  (total_values - minimum_weighted)

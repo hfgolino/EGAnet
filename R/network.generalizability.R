@@ -238,7 +238,7 @@
 #' @export
 #'
 # Perform generalizability analysis ----
-# Updated 18.02.2024
+# Updated 19.02.2024
 network.generalizability <- function(
     data,
     # generalizability arguments
@@ -456,8 +456,8 @@ network.generalizability <- function(
     # Initialize adjusted predictions
     adjusted_predictions <- prediction_matrix
 
-    # Get category attributes
-    category_attributes <- attr(prediction_results[[1]]$results, "categories")
+    # Get flags
+    flags <- attr(prediction_results[[1]]$results, "flags")
 
     # Get column sequence
     column_sequence <- seq_len(dimensions[2])
@@ -473,7 +473,7 @@ network.generalizability <- function(
     for(i in column_sequence){
 
       # Check for categories
-      if(category_attributes$flags$categorical[[i]]){
+      if(flags$categorical[[i]]){
 
         # Check for lowest category
         minimum_value <- ranges[1,i]
@@ -498,14 +498,13 @@ network.generalizability <- function(
     metric_summary <- setup_results(
       predictions = prediction_matrix,
       adjusted_predictions = adjusted_predictions,
-      newdata = data, flags = category_attributes$flags,
-      categories = category_attributes$categories,
+      newdata = data, flags = flags,
       betas = NULL, node_names = dimnames(data)[[2]],
       dimensions = dimensions, dim_sequence = column_sequence
     )
 
     # Attach categories to results
-    attr(metric_summary$results, "categories") <- category_attributes
+    attr(metric_summary$results, "flags") <- flags
 
     # Set class
     class(metric_summary) <- "predictability"

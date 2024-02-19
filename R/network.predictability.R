@@ -139,15 +139,15 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
   # Get node names
   node_names <- dimnames(network)[[2]]
 
-  # Get data categories
-  categories <- data_categories(rbind(original.data, newdata))
-
   # Get ranges
   ranges <- nvapply(
     dim_sequence, function(i){
       range(original.data[,i], newdata[,i], na.rm = TRUE)
     }, LENGTH = 2
   )
+
+  # Get data categories
+  categories <- data_categories(rbind(original.data, newdata))
 
   # Set flags
   flags <- list(
@@ -226,9 +226,7 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
   )
 
   # Attach categories to results
-  attr(results$results, "categories") <- list(
-    categories = categories, flags = flags
-  )
+  attr(results$results, "flags") <- flags
 
   # Set class
   class(results) <- "predictability"
@@ -290,12 +288,12 @@ network.predictability_errors <- function(network, original.data, newdata, ordin
 
 #' @exportS3Method
 # S3 Print Method ----
-# Updated 18.02.2024
+# Updated 19.02.2024
 print.predictability <- function(x, ...)
 {
 
   # Get flags
-  flags <- attr(x$results, "categories")$flags
+  flags <- attr(x$results, "flags")
 
   # Set up full flags
   full_flags <- lapply(flags, any)
