@@ -493,7 +493,7 @@ setup_results <- function(
       # Get results
       results$Accuracy[flags$dichotomous] <- t(nvapply(
         dim_sequence[flags$dichotomous], function(i){
-          categorical_accuracy(predictions[,i], newdata[,i], categories[[i]])[["accuracy"]]
+          categorical_accuracy(predictions[,i], newdata[,i])[["accuracy"]]
         }
       ))
 
