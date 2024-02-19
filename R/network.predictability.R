@@ -113,7 +113,7 @@
 #' @export
 #'
 # Predict new data based on network ----
-# Updated 18.02.2024
+# Updated 19.02.2024
 network.predictability <- function(network, original.data, newdata, ordinal.categories = 7)
 {
 
@@ -221,7 +221,7 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
 
   # Obtain results
   results <- setup_results(
-    predictions, adjusted_predictions, newdata, categories,
+    predictions, adjusted_predictions, newdata,
     flags, betas, node_names, dimensions, dim_sequence
   )
 
@@ -428,9 +428,9 @@ handle_thresholds <- function(factored_data)
 
 #' @noRd
 # Set up results ----
-# Updated 18.02.2024
+# Updated 19.02.2024
 setup_results <- function(
-    predictions, adjusted_predictions, newdata, categories,
+    predictions, adjusted_predictions, newdata,
     flags, betas, node_names, dimensions, dim_sequence
 )
 {
@@ -443,9 +443,7 @@ setup_results <- function(
       matrix(
         nvapply(
           dim_sequence, function(i){
-            categorical_accuracy(
-              predictions[,i], newdata[,i], categories[[i]]
-            )[["accuracy"]]
+            categorical_accuracy(predictions[,i], newdata[,i])[["accuracy"]]
           }
         ), dimnames = list(node_names, "Accuracy")
       )
@@ -458,9 +456,7 @@ setup_results <- function(
       matrix(
         nvapply(
           dim_sequence, function(i){
-            categorical_accuracy(
-              predictions[,i], newdata[,i], categories[[i]]
-            )[c("accuracy", "weighted")]
+            categorical_accuracy(predictions[,i], newdata[,i])[c("accuracy", "weighted")]
           }, LENGTH = 2
         ), ncol = 2, byrow = TRUE,
         dimnames = list(node_names, c("Accuracy", "Weighted"))
@@ -497,9 +493,7 @@ setup_results <- function(
       # Get results
       results$Accuracy[flags$dichotomous] <- t(nvapply(
         dim_sequence[flags$dichotomous], function(i){
-          categorical_accuracy(
-            predictions[,i], newdata[,i], categories[[i]]
-          )[["accuracy"]]
+          categorical_accuracy(predictions[,i], newdata[,i], categories[[i]])[["accuracy"]]
         }
       ))
 
@@ -512,9 +506,7 @@ setup_results <- function(
       results[flags$polytomous, c("Accuracy", "Weighted")] <- t(
         nvapply(
           dim_sequence[flags$polytomous], function(i){
-            categorical_accuracy(
-              predictions[,i], newdata[,i], categories[[i]]
-            )[c("accuracy", "weighted")]
+            categorical_accuracy(predictions[,i], newdata[,i])[c("accuracy", "weighted")]
           }, LENGTH = 2
         )
       )
