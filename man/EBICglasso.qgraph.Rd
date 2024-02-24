@@ -17,7 +17,7 @@ EBICglasso.qgraph(
   penalizeMatrix,
   countDiagonal = FALSE,
   refit = FALSE,
-  model.selection = c("EBIC", "JSD"),
+  model.selection = c("AIC", "AICc", "BIC", "EBIC", "JSD", "LL"),
   verbose = FALSE,
   ...
 )
@@ -107,7 +107,24 @@ Defaults to \code{FALSE}}
 \item{model.selection}{Character (length = 1).
 How lambda should be selected within GLASSO.
 Defaults to \code{"EBIC"}.
-\code{"JSD"} is experimental and should not be used otherwise}
+Options include:
+
+\itemize{
+
+\item \code{"AIC"} --- Akaike's information criterion (minimized)
+
+\item \code{"AICc"} --- Akaike's information criterion corrected (minimized)
+
+\item \code{"BIC"} --- Bayesian information criterion (minimized; equivalent to EBIC with \code{gamma = 0})
+
+\item \code{"EBIC"} --- extended Bayesian information criterion (minimized)
+
+\item \code{"JSD"} --- Jensen-Shannon Distance (minimized)
+
+\item \code{"LIK"} --- log-likelihood (maximized)
+
+
+}}
 
 \item{verbose}{Boolean (length = 1).
 Whether messages and (insignificant) warnings should be output.

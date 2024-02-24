@@ -91,7 +91,24 @@
 #' @param model.selection Character (length = 1).
 #' How lambda should be selected within GLASSO.
 #' Defaults to \code{"EBIC"}.
-#' \code{"JSD"} is experimental and should not be used otherwise
+#' Options include:
+#'
+#' \itemize{
+#'
+#' \item \code{"AIC"} --- Akaike's information criterion (minimized)
+#'
+#' \item \code{"AICc"} --- Akaike's information criterion corrected (minimized)
+#'
+#' \item \code{"BIC"} --- Bayesian information criterion (minimized; equivalent to EBIC with \code{gamma = 0})
+#'
+#' \item \code{"EBIC"} --- extended Bayesian information criterion (minimized)
+#'
+#' \item \code{"JSD"} --- Jensen-Shannon Distance (minimized)
+#'
+#' \item \code{"LIK"} --- log-likelihood (maximized)
+#'
+#'
+#' }
 #'
 #' @param verbose Boolean (length = 1).
 #' Whether messages and (insignificant) warnings should be output.
@@ -159,7 +176,7 @@ EBICglasso.qgraph <- function(
     penalizeMatrix, # Optional logical matrix to indicate which elements are penalized
     countDiagonal = FALSE, # Set to TRUE to get old qgraph behavior: conting diagonal elements as parameters in EBIC computation. This is not correct, but is included to replicate older analyses
     refit = FALSE, # If TRUE, network structure is taken and non-penalized version is computed.
-    model.selection = c("EBIC", "JSD"),
+    model.selection = c("AIC", "AICc", "BIC", "EBIC", "JSD", "LL"),
     verbose = FALSE,
     ... # glasso arguments
 )
@@ -272,7 +289,7 @@ EBICglasso.qgraph <- function(
   }
 
   # Determine model selection criterion
-  if(model.selection == "ebic"){
+  if(model.selection != "jsd"){
 
     # Pre-compute half of n
     half_n <- n / 2
@@ -282,30 +299,49 @@ EBICglasso.qgraph <- function(
       logGaus(S, glas_path$wi[,,i], half_n)
     })
 
-    # Compute edges
-    E <- nvapply(lambda_sequence, function(i){
-      edge_count(glas_path$wi[,,i], dimensions[2], countDiagonal)
-    })
+    # Check for log-likelihood
+    if(model.selection != "ll"){
 
-    # EBIC (vectorized solution; ~9x faster)
-    EBICs <- -2 * lik + E * log(n) + 4 * E * gamma * log(dimensions[2])
+      # Compute edges
+      E <- nvapply(lambda_sequence, function(i){
+        edge_count(glas_path$wi[,,i], dimensions[2], countDiagonal)
+      })
 
-    # Maintained for legacy (replaced by vectorization above)
-    # EBICs <- sapply(seq_along(lambda),function(i){
-    #   EBIC(S, glas_path$wi[,,i], n, gamma, countDiagonal = countDiagonal)
-    # })
+      # vectorized solution (~9x faster)
+      criterion <- switch(
+        model.selection,
+        "aic" = 2 * E - 2 * lik,
+        "aicc" = (2 * E^2 + 2 * E) / (n - E - 1),
+        "bic" = -2 * lik + E * log(n),
+        "ebic" = -2 * lik + E * log(n) + 4 * E * gamma * log(dimensions[2])
+      )
 
-    # Optimal
-    opt <- which.min(EBICs)
+      # Maintained for legacy (replaced by vectorization above)
+      # EBICs <- sapply(seq_along(lambda),function(i){
+      #   EBIC(S, glas_path$wi[,,i], n, gamma, countDiagonal = countDiagonal)
+      # })
 
-  }else if(model.selection == "jsd"){
+      # Get optimal value
+      opt <- which.min(criterion)
+
+    }else{
+
+      # Set criterion as log-likelihood
+      criterion <- lik
+
+      # Select highest log-likelihood
+      opt <- which.max(criterion)
+
+    }
+
+  }else{
 
     # JSD
-    JSDs <- nvapply(lambda_sequence,function(i){
+    criterion <- nvapply(lambda_sequence,function(i){
 
       # Try (might be error)
       res <- try(
-        jsd(S, glas_path$wi[,,i]),
+        jsd(abs(solve(S)), abs(glas_path$w[,,i])),
         silent = TRUE
       )
 
@@ -315,7 +351,8 @@ EBICglasso.qgraph <- function(
     })
 
     # Optimal
-    opt <- which.min(JSDs)
+    opt <- which.min(criterion)
+
 
   }
 
@@ -345,9 +382,7 @@ EBICglasso.qgraph <- function(
     model.selection = model.selection,
     lambda = lambda[opt], gamma = gamma,
     lambda.min.ratio = lambda.min.ratio,
-    nlambda = nlambda, criterion = swiftelse(
-      model.selection == "ebic", EBICs[opt], JSDs[opt]
-    )
+    nlambda = nlambda, criterion = criterion[opt]
   )
 
   # Return
@@ -365,12 +400,12 @@ EBICglasso.qgraph <- function(
     if(model.selection == "ebic"){
 
       # Add EBICs and Log-likelihoods
-      results$ebic <- EBICs; results$loglik <- lik;
+      results$ebic <- criterion; results$loglik <- lik;
 
-    }else if(model.selection == "jsd"){
+    }else{
 
-      # Add JSDs
-      results$jsd <- JSDs
+      # Add criterion
+      results$criterion <- criterion
 
     }
 
@@ -388,7 +423,8 @@ EBICglasso.qgraph <- function(
 # nlambda = 100; lambda.min.ratio = 0.1;
 # returnAllResults = FALSE;
 # countDiagonal = FALSE; refit = FALSE;
-# model.selection = "ebic"
+# model.selection = "ebic"; verbose = FALSE
+# corr = "auto"; na.data = "pairwise"
 
 #' @noRd
 # Errors ----
