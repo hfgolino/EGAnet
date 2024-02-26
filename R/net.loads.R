@@ -159,7 +159,7 @@ net.loads <- function(
   }
 
   # Obtain standardized loadings
-  standardized <- standardize(unstandardized, loading.method)
+  standardized <- standardize(unstandardized, loading.method, wc)
 
   # Get descending order
   standardized <- descending_order(standardized, wc, unique_communities, node_names)
@@ -576,7 +576,7 @@ experimental_loadings <- function(
 #' @noRd
 # Standardize loadings ----
 # Updated 25.02.2024
-standardize <- function(unstandardized, loading.method)
+standardize <- function(unstandardized, loading.method, wc)
 {
   return(
     switch(
@@ -585,7 +585,7 @@ standardize <- function(unstandardized, loading.method)
         t(unstandardized) / sqrt(colSums(abs(unstandardized), na.rm = TRUE))
       ),
       "experimental" = t(
-        t(unstandardized) / sqrt(log(colSums(abs(unstandardized), na.rm = TRUE) + 1))
+        t(unstandardized) / sqrt(log(colSums(abs(unstandardized), na.rm = TRUE) + fast_table(wc)))
       )
     )
   )
