@@ -2903,12 +2903,12 @@ continuous_accuracy <- function(prediction, observed)
 
 #' @noRd
 # Categorical Accuracy (for single variable) ----
-# Updated 19.02.2024
+# Updated 26.02.2024
 categorical_accuracy <- function(prediction, observed)
 {
 
   # Get maximum categories
-  max_category <- max(prediction, observed)
+  max_category <- max(prediction, observed, na.rm = TRUE)
 
   # Set category sequence
   category_sequence <- seq_len(max_category)
@@ -2928,38 +2928,35 @@ categorical_accuracy <- function(prediction, observed)
   # Populate accuracy table
   accuracy_table[table_names$observed, table_names$prediction] <- tabled
 
-  # Get empirical frequencies
-  frequency <- table(factor(observed, levels = category_sequence))
+  # Get frequencies
+  observed_frequency <- table(factor(observed, levels = category_sequence))
+  prediction_frequency <- table(factor(prediction, levels = category_sequence))
 
   # Get total values
-  total_values <- sum(frequency)
-
-  # Get maximum possible distance incorrect
-  max_distance <- pmax(
-    abs(max_category - category_sequence), # distance from maximum category
-    abs(min(category_sequence) - category_sequence) # distance from minimum category
-  )
-
-  # Get minimum possible weight accuracy
-  minimum_weighted <- sum(0.5^max_distance * frequency)
+  total_values <- sum(observed_frequency)
 
   # Get diagonal of table (correct predictions)
   correct <- diag(accuracy_table)
 
+  # Standardize tables
+  observed_standard <- observed_frequency / total_values
+  prediction_standard <- prediction_frequency / total_values
+  confusion_matrix <- accuracy_table / total_values
+
+  # Compute weights
+  weights <- outer(
+    category_sequence, category_sequence,
+    FUN = function(x, y){(x - y)^2}
+  )
+
   # Return accuracy by category
   return(
     c(
-      correct / frequency,
       accuracy = sum(correct, na.rm = TRUE) / total_values,
-      balanced = sum(
-        correct / rowSums(accuracy_table, na.rm = TRUE),
-        na.rm = TRUE
-      ) / max_category,
-      weighted = (sum(0.5^abs(prediction - observed), na.rm = TRUE) - minimum_weighted) /
-                 # weighted total
-                 (total_values - minimum_weighted)
-                 # normalization: all differences of 0 minus
-                 # all differences of maximum absolute difference
+      weighted = 1 - (
+        sum(weights * confusion_matrix) / # observed
+        sum(weights * tcrossprod(observed_standard, prediction_standard)) # expected
+      )
     )
   )
 

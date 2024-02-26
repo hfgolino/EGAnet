@@ -66,17 +66,12 @@ convert the continuous predicted values into their corresponding categorical val
 
 \itemize{
 
-\item dichotomous --- Accuracy or the percent correctly predicted for the 0s and 1s
+\item dichotomous --- \code{"Accuracy"} or the percent correctly predicted for the 0s and 1s
 
-\item polytomous --- Accuracy based on the correctly predicting the ordinal category exactly
-(i.e., 1 = 1, 2, = 2, etc.) and a weighted accuracy such that absolute distance of the
-predicted value from the actual value (e.g., |prediction - actual| = 1) is used
-as the power of 0.5. This weighted approach provides an overall distance in terms of
-accuracy where each predicted value away from the actual value is given a harsher
-penalty (absolute difference = accuracy value): 0 = 1.000, 1 = 0.500, 2 = 0.2500,
-3 = 0.1250, 4 = 0.0625, etc.
+\item polytomous --- \code{"Accuracy"} based on the correctly predicting the ordinal category exactly
+(i.e., 1 = 1, 2, = 2, etc.) and the quadratic \code{"Weighted"} kappa metric
 
-\item continuous --- R-sqaured and root mean square error
+\item continuous --- R-squared (\code{"R2"}) and root mean square error (\code{"RMSE"})
 
 }
 }

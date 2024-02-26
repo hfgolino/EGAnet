@@ -56,17 +56,12 @@
 #'
 #' \itemize{
 #'
-#' \item dichotomous --- Accuracy or the percent correctly predicted for the 0s and 1s
+#' \item dichotomous --- \code{"Accuracy"} or the percent correctly predicted for the 0s and 1s
 #'
-#' \item polytomous --- Accuracy based on the correctly predicting the ordinal category exactly
-#' (i.e., 1 = 1, 2, = 2, etc.) and a weighted accuracy such that absolute distance of the
-#' predicted value from the actual value (e.g., |prediction - actual| = 1) is used
-#' as the power of 0.5. This weighted approach provides an overall distance in terms of
-#' accuracy where each predicted value away from the actual value is given a harsher
-#' penalty (absolute difference = accuracy value): 0 = 1.000, 1 = 0.500, 2 = 0.2500,
-#' 3 = 0.1250, 4 = 0.0625, etc.
+#' \item polytomous --- \code{"Accuracy"} based on the correctly predicting the ordinal category exactly
+#' (i.e., 1 = 1, 2, = 2, etc.) and the quadratic \code{"Weighted"} kappa metric
 #'
-#' \item continuous --- R-sqaured and root mean square error
+#' \item continuous --- R-squared (\code{"R2"}) and root mean square error (\code{"RMSE"})
 #'
 #' }
 #'
@@ -113,7 +108,7 @@
 #' @export
 #'
 # Predict new data based on network ----
-# Updated 19.02.2024
+# Updated 26.02.2024
 network.predictability <- function(network, original.data, newdata, ordinal.categories = 7)
 {
 
@@ -139,15 +134,14 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
   # Get node names
   node_names <- dimnames(network)[[2]]
 
-  # Get ranges
-  ranges <- nvapply(
-    dim_sequence, function(i){
-      range(original.data[,i], newdata[,i], na.rm = TRUE)
-    }, LENGTH = 2
-  )
+  # Combine original and new data
+  combined <- rbind(original.data, newdata)
+
+  # Get sample size for the original data
+  original_n <- dim(combined)[1] - dimensions[1]
 
   # Get data categories
-  categories <- data_categories(rbind(original.data, newdata))
+  categories <- data_categories(combined)
 
   # Set flags
   flags <- list(
@@ -158,6 +152,19 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
   # Set categorical/continuous flag
   flags$categorical <- flags$dichotomous | flags$polytomous
   flags$continuous <- !flags$categorical
+
+  # Check for categories
+  if(any(flags$categorical)){
+
+    # Ensure categories start at 1
+    one_start_list <- ensure_one_start(combined, flags, original_n)
+
+    # Sort out data
+    original.data <- one_start_list$original.data
+    newdata <- matrix(one_start_list$newdata, nrow = dimensions[1], ncol = dimensions[2])
+    categorical_factors <- one_start_list$categorical_factors
+
+  }
 
   # Get the inverse variances (use absolute for less than ideal matrices)
   inverse_variances <- abs(diag(pcor2inv(network)))
@@ -180,9 +187,8 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
     dimnames = list(NULL, node_names)
   )
 
-  # Get predictions (and initialize adjusted predictions)
+  # Get predictions
   predictions <- missing_matrix_multiply(newdata_scaled, betas)
-  adjusted_predictions <- predictions
 
   # Loop over variables
   for(i in dim_sequence){
@@ -192,7 +198,7 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
 
       # Set factors for data
       factored_data <- factor( # ensures proper tabling for accuracy
-        original.data[,i], levels = seq.int(ranges[1,i], ranges[2,i], 1)
+        original.data[,i], levels = seq.int(1, max(original.data[,i]), 1)
       )
 
       # Assign categories to each observation
@@ -204,26 +210,31 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
         )
       )
 
-      # Check for lowest category
-      minimum_value <- ranges[1,i]
-
-      # Re-adjust minimum category to 1 for new data
-      if(minimum_value <= 0){
-        newdata[,i] <- newdata[,i] + (abs(minimum_value) + 1)
-      }
-
-      # Set adjusted predictions (for returning)
-      adjusted_predictions[,i] <- predictions[,i] + (minimum_value - 1)
-
     }
 
   }
 
   # Obtain results
   results <- setup_results(
-    predictions, adjusted_predictions, newdata,
-    flags, betas, node_names, dimensions, dim_sequence
+    predictions, newdata, flags, betas,
+    node_names, dimensions, dim_sequence
   )
+
+  # Check for categorical data
+  if(any(flags$categorical)){
+
+    # Get categorical predictions
+    categorical_predictions <- results$predictions[, flags$categorical, drop = FALSE]
+
+    # Convert predicted categories back into their original sequence
+    for(i in ncol_sequence(categorical_predictions)){
+      categorical_predictions[,i] <- categorical_factors[[i]][categorical_predictions[,i]]
+    }
+
+    # Return to results
+    results$predictions[,flags$categorical] <- categorical_predictions[,, drop = FALSE]
+
+  }
 
   # Attach categories to results
   attr(results$results, "flags") <- flags
@@ -348,6 +359,59 @@ summary.predictability <- function(object, ...)
 }
 
 #' @noRd
+# Ensure that categorical data start at one ----
+# Updated 26.02.2024
+ensure_one_start <- function(combined, flags, original_n)
+{
+
+  # Convert categories
+  categorical_data <- combined[, flags$categorical, drop = FALSE]
+
+  # Get categorical sequence
+  categorical_sequence <- ncol_sequence(categorical_data)
+
+  # Initialize factors
+  categorical_factors <- lapply(
+    categorical_sequence, function(i){
+      return(as.numeric(levels(factor(categorical_data[,i]))))
+    }
+  )
+
+  # Get minimum values
+  minimum_values <- nvapply(as.data.frame(categorical_data), min)
+
+  # Set starting values to 1 for all categorical data
+  for(i in categorical_sequence){
+
+    # Check for categorical values *not* equal to one
+    if(minimum_values[i] != 1){
+
+      # Replace data
+      categorical_data[,i] <- swiftelse(
+        minimum_values[i] > 1,
+        categorical_data[,i] - (minimum_values[i] - (minimum_values[i] - 1)),
+        categorical_data[,i] + (abs(minimum_values[i]) - (abs(minimum_values[i]) - 1))
+      )
+
+    }
+
+  }
+
+  # Get original data indices
+  original_index <- seq_len(original_n)
+
+  # Return results
+  return(
+    list(
+      original.data = categorical_data[original_index,, drop = FALSE],
+      newdata = categorical_data[-original_index,, drop = FALSE],
+      categorical_factors = categorical_factors
+    )
+  )
+
+}
+
+#' @noRd
 # Missing data matrix multiplication ----
 # Updated 17.02.2024
 missing_matrix_multiply <- function(X, Y)
@@ -426,10 +490,10 @@ handle_thresholds <- function(factored_data)
 
 #' @noRd
 # Set up results ----
-# Updated 19.02.2024
+# Updated 25.02.2024
 setup_results <- function(
-    predictions, adjusted_predictions, newdata,
-    flags, betas, node_names, dimensions, dim_sequence
+    predictions, newdata, flags, betas,
+    node_names, dimensions, dim_sequence
 )
 {
 
@@ -530,7 +594,7 @@ setup_results <- function(
   # Return final results
   return(
     list(
-      predictions = adjusted_predictions,
+      predictions = predictions,
       betas = betas,
       results = results
     )
@@ -538,3 +602,55 @@ setup_results <- function(
 
 }
 
+#' @noRd
+# Ensure that categorical data start at one ----
+# Updated 26.02.2024
+ensure_one_start <- function(combined, flags, original_n)
+{
+
+  # Convert categories
+  categorical_data <- combined[, flags$categorical, drop = FALSE]
+
+  # Get categorical sequence
+  categorical_sequence <- ncol_sequence(categorical_data)
+
+  # Initialize factors
+  categorical_factors <- lapply(
+    categorical_sequence, function(i){
+      return(as.numeric(levels(factor(categorical_data[,i]))))
+    }
+  )
+
+  # Get minimum values
+  minimum_values <- nvapply(as.data.frame(categorical_data), min)
+
+  # Set starting values to 1 for all categorical data
+  for(i in categorical_sequence){
+
+    # Check for categorical values *not* equal to one
+    if(minimum_values[i] != 1){
+
+      # Replace data
+      categorical_data[,i] <- swiftelse(
+        minimum_values[i] > 1,
+        categorical_data[,i] - (minimum_values[i] - (minimum_values[i] - 1)),
+        categorical_data[,i] + (abs(minimum_values[i]) - (abs(minimum_values[i]) - 1))
+      )
+
+    }
+
+  }
+
+  # Get original data indices
+  original_index <- seq_len(original_n)
+
+  # Return results
+  return(
+    list(
+      original.data = categorical_data[original_index,],
+      newdata = categorical_data[-original_index,],
+      categorical_factors = categorical_factors
+    )
+  )
+
+}

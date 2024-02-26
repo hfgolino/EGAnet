@@ -238,7 +238,7 @@
 #' @export
 #'
 # Perform generalizability analysis ----
-# Updated 19.02.2024
+# Updated 26.02.2024
 network.generalizability <- function(
     data,
     # generalizability arguments
@@ -453,54 +453,32 @@ network.generalizability <- function(
       rbind, lapply(prediction_results, function(x){x$predictions})
     )
 
-    # Initialize adjusted predictions
-    adjusted_predictions <- prediction_matrix
-
     # Get flags
     flags <- attr(prediction_results[[1]]$results, "flags")
 
-    # Get column sequence
-    column_sequence <- seq_len(dimensions[2])
+    # Check for categories
+    if(any(flags$categorical)){
 
-    # Get ranges
-    ranges <- nvapply(
-      column_sequence, function(i){
-        range(prediction_matrix[,i], data[,i], na.rm = TRUE)
-      }, LENGTH = 2
-    )
+      # Set up for combined
+      combined <- rbind(data, prediction_matrix)
 
-    # Ensure 'prediction_matrix' and 'data' start at 1
-    for(i in column_sequence){
+      # Get original sample size
+      original_n <- dimensions[1]
 
-      # Check for categories
-      if(flags$categorical[[i]]){
+      # Ensure categories start at 1
+      one_start_list <- ensure_one_start(combined, flags, original_n)
 
-        # Check for lowest category
-        minimum_value <- ranges[1,i]
-
-        # Re-adjust minimum category to 1 for new data
-        if(minimum_value <= 0){
-
-          # Value to add
-          add_value <- abs(minimum_value) + 1
-
-          # Add value to 'data' and 'prediction_matrix'
-          data[,i] <- data[,i] + add_value
-          prediction_matrix[,i] <- prediction_matrix[,i] + add_value
-
-        }
-
-      }
+      # Sort out data
+      original.data <- one_start_list$original.data
+      newdata <- one_start_list$newdata
 
     }
 
     # Set up as if at the end of `network.predictability`
     metric_summary <- setup_results(
-      predictions = prediction_matrix,
-      adjusted_predictions = adjusted_predictions,
-      newdata = data, flags = flags,
+      predictions = newdata, newdata = original.data, flags = flags,
       betas = NULL, node_names = dimnames(data)[[2]],
-      dimensions = dimensions, dim_sequence = column_sequence
+      dimensions = dimensions, dim_sequence = seq_len(dimensions[2])
     )
 
     # Attach categories to results
