@@ -159,7 +159,7 @@ net.loads <- function(
   }
 
   # Obtain standardized loadings
-  standardized <- standardize(unstandardized, loading.method, wc)
+  standardized <- standardize(unstandardized, loading.method, A, wc)
 
   # Get descending order
   standardized <- descending_order(standardized, wc, unique_communities, node_names)
@@ -575,20 +575,47 @@ experimental_loadings <- function(
 
 #' @noRd
 # Standardize loadings ----
-# Updated 25.02.2024
-standardize <- function(unstandardized, loading.method, wc)
+# Updated 27.02.2024
+standardize <- function(unstandardized, loading.method, A, wc)
 {
-  return(
-    switch(
-      loading.method,
-      "brm" = t(
-        t(unstandardized) / sqrt(colSums(abs(unstandardized), na.rm = TRUE))
-      ),
-      "experimental" = t(
-        t(unstandardized) / sqrt(log(colSums(abs(unstandardized), na.rm = TRUE) + fast_table(wc)))
-      )
+
+  # Check for loading method
+  if(loading.method == "brm"){
+    return(t(t(unstandardized) / sqrt(colSums(abs(unstandardized), na.rm = TRUE))))
+  }else if(loading.method == "experimental"){
+
+    # Original community order
+    original_order <- dimnames(unstandardized)[[2]]
+
+    # Set communities
+    community_sequence <- seq_len(dim(unstandardized)[2])
+
+    # Get eigenvectors and eigenvalues
+    eigens <- eigen(A)
+
+    # Get signs
+    signs <- sign(unstandardized)
+
+    # Perform min-max scaling on unstandardized
+    # unstandardized <- log(abs(unstandardized) + 1) * signs
+
+    # Align loadings
+    alignment <- fungible::faAlign(
+      F1 = eigens$vectors[,community_sequence],
+      F2 = unstandardized[dimnames(A)[[2]],]
     )
-  )
+
+    # Re-align
+    sorted <- unstandardized[,alignment$FactorMap["Sorted Order",]]
+
+    # Get loadings
+    loadings <- t(t(sorted) * sqrt(eigens$values[community_sequence]))
+
+    # Return loadings
+    return(log(abs(loadings[,original_order]) + 1) * signs)
+    # return(loadings[,original_order])
+
+  }
 
 }
 
