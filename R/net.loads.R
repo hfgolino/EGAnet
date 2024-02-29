@@ -75,7 +75,7 @@
 #' @export
 #'
 # Network Loadings
-# Updated 04.08.2023
+# Updated 29.02.2024
 # Default = "BRM" or `net.loads` from version 1.2.3
 # Experimental = new signs and cross-loading adjustment
 net.loads <- function(
@@ -86,6 +86,12 @@ net.loads <- function(
 
   # Check for missing arguments (argument, default, function)
   loading.method <- set_default(loading.method, "brm", net.loads)
+
+  # Check for correlation-based method
+  rotation <- swiftelse(
+    loading.method == "eigen" && is.null(rotation),
+    "geominQ", rotation
+  )
 
   # Organize and extract input (handles argument errors)
   # `wc` is made to be a character vector to allow `NA`
