@@ -6,11 +6,15 @@ o ADD: `network.predictability` to predict new data based on a network
 
 o ADD: `network.generalizability` to estimate network generalizability to new data (leverages `network.predictability`)
 
+o UPDATE: new loadings have been added to resolve issues in original loadings (e.g., signs, cross-loadings, standardization) 
+
 o UPDATE: `plot.bootEGA` will output `itemStability` plot by default
 
 o UPDATE: `dimensionStability` output now included in `bootEGA` as output `$stability`
 
 o UPDATE: 'rotate' argument added to `infoCluster` plot to allow for different angle of dendrogram
+
+o DEPENDENCY: {fungible} is now 'IMPORTS' over 'SUGGESTS' for dependency in new loadings
 
 o DEPRECATED: `typicalStructure` and `plot.typicalStructure` have been deprecated to `FALSE`
 
