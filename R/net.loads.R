@@ -575,7 +575,7 @@ experimental_loadings <- function(
 
 #' @noRd
 # Standardize loadings ----
-# Updated 27.02.2024
+# Updated 29.02.2024
 standardize <- function(unstandardized, loading.method, A, wc)
 {
 
@@ -590,14 +590,14 @@ standardize <- function(unstandardized, loading.method, A, wc)
     # Set communities
     community_sequence <- seq_len(dim(unstandardized)[2])
 
+    # Set diagonal of network to 1
+    diag(A) <- 1
+
     # Get eigenvectors and eigenvalues
     eigens <- eigen(A)
 
     # Get signs
     signs <- sign(unstandardized)
-
-    # Perform min-max scaling on unstandardized
-    # unstandardized <- log(abs(unstandardized) + 1) * signs
 
     # Align loadings
     alignment <- fungible::faAlign(
@@ -605,15 +605,20 @@ standardize <- function(unstandardized, loading.method, A, wc)
       F2 = unstandardized[dimnames(A)[[2]],]
     )
 
+    # Pre-compute values for standardization
+    absolute <- abs(unstandardized)
+
+    # Standardize loadings
+    standardized <- absolute / (absolute + 1)
+
     # Re-align
-    sorted <- unstandardized[,alignment$FactorMap["Sorted Order",]]
+    sorted <- standardized[,alignment$FactorMap["Sorted Order",]]
 
     # Get loadings
     loadings <- t(t(sorted) * sqrt(eigens$values[community_sequence]))
 
     # Return loadings
-    return(log(abs(loadings[,original_order]) + 1) * signs)
-    # return(loadings[,original_order])
+    return(loadings[,original_order] * signs)
 
   }
 
