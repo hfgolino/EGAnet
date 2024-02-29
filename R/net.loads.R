@@ -87,12 +87,6 @@ net.loads <- function(
   # Check for missing arguments (argument, default, function)
   loading.method <- set_default(loading.method, "brm", net.loads)
 
-  # Check for correlation-based method
-  rotation <- swiftelse(
-    loading.method == "eigen" && is.null(rotation),
-    "geominQ", rotation
-  )
-
   # Organize and extract input (handles argument errors)
   # `wc` is made to be a character vector to allow `NA`
   input <- organize_input(A, wc)
@@ -503,7 +497,6 @@ experimental_loadings <- function(
     FUN = "*"
   )
 
-
   # Check for unidimensional structure
   if(communities > 1){
 
@@ -593,7 +586,7 @@ standardize <- function(unstandardized, loading.method, A, wc)
     # Original community order
     original_order <- dimnames(unstandardized)[[2]]
 
-    # Set communities
+    # Set community sequence
     community_sequence <- seq_len(dim(unstandardized)[2])
 
     # Set diagonal of network to 1
@@ -611,16 +604,16 @@ standardize <- function(unstandardized, loading.method, A, wc)
       F2 = unstandardized[dimnames(A)[[2]],]
     )
 
-    # Pre-compute values for standardization
+    # Pre-compute absolute values for standardization
     absolute <- abs(unstandardized)
 
     # Standardize loadings
     standardized <- absolute / (absolute + 1)
 
-    # Re-align
+    # Get sorted order to pre-multiply by eigenvalues
     sorted <- standardized[,alignment$FactorMap["Sorted Order",]]
 
-    # Get loadings
+    # Get scaled loadings
     loadings <- t(t(sorted) * sqrt(eigens$values[community_sequence]))
 
     # Return loadings
