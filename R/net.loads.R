@@ -148,10 +148,10 @@ net.loads <- function(
 
     # Experimental unstandardized loadings
     # Differences:
-    # 1. signs are added in a different (more accurate) way
+    # 1. signs are added in a more accurate way
     # 2. algebraic rather than absolute sums are used
-    # 3. within-community sums are computed in a different way
-    # 4. standardization is performed using the denominator: sqrt(log(abs(sums) + 1))
+    # 3. within-community sums are computed using (sums / (n - 1)) * n
+    # 4. standardization uses (abs(x) / (abs(x) + 1)) %*% diag(sqrt(eigenvalues))
     unstandardized <- experimental_loadings(
       A, wc, nodes, node_names, communities, unique_communities
     )
