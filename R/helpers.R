@@ -548,7 +548,7 @@ restore_state <- function()
 
 #' @noRd
 # Wrapper for parallelization ----
-# Updated 24.10.2023
+# Updated 01.03.2024
 parallel_process <- function(
     iterations, # number of iterations
     datalist = NULL, # list of data
@@ -591,15 +591,21 @@ parallel_process <- function(
     }
 
     # Set max size
-    options(future.globals.maxSize = memory_available)
+    memory_options <- options(future.globals.maxSize = memory_available)
+
+    # Set up undo changes
+    on.exit(memory_options)
 
   }
 
   # Set up plan
-  future::plan(
+  parallel_plan <- future::plan(
     strategy = "multisession",
     workers = ncores
   )
+
+  # Set up undo changes
+  on.exit(future::plan(parallel_plan))
 
   # Check for progress
   if(isTRUE(progress)){
@@ -681,9 +687,6 @@ parallel_process <- function(
     )
 
   }
-
-  # Force close of connections
-  future::plan(strategy = "sequential")
 
   # Return results
   return(results)
