@@ -307,10 +307,12 @@ network.generalizability <- function(
     )
 
     # Get community results
-    community_summary <- tefi(
-      data = data[-shuffled_indices,], structure = train_results$wc,
-      verbose = FALSE # ignore positive definite
-    )$VN.Entropy.Fit
+    community_summary <- c(
+      TEFI = tefi(
+        data = data[-shuffled_indices,], structure = train_results$wc,
+        verbose = FALSE # ignore positive definite
+      )$VN.Entropy.Fit
+    )
 
   }else if(method == "cv"){
 

@@ -67,9 +67,10 @@ convert the continuous predicted values into their corresponding categorical val
 \itemize{
 
 \item dichotomous --- \code{"Accuracy"} or the percent correctly predicted for the 0s and 1s
+and \code{"Kappa"} or Cohen's Kappa (see cite)
 
-\item polytomous --- \code{"Accuracy"} based on the correctly predicting the ordinal category exactly
-(i.e., 1 = 1, 2, = 2, etc.) and the quadratic \code{"Weighted"} kappa metric
+\item polytomous --- \code{"Linear Kappa"} or linearly weighted Kappa and
+\code{"Krippendorff's alpha"} (see cite)
 
 \item continuous --- R-squared (\code{"R2"}) and root mean square error (\code{"RMSE"})
 
@@ -113,6 +114,18 @@ How well do network models predict observations? On the importance of predictabi
 Williams, D. R., & Rodriguez, J. E. (2022).
 Why overfitting is not (usually) a problem in partial correlation networks.
 \emph{Psychological Methods}, \emph{27}(5), 822–840.
+
+\strong{Cohen's Kappa} \cr
+Cohen, J. (1960). A coefficient of agreement for nominal scales.
+\emph{Educational and Psychological Measurement}, \emph{20}(1), 37-46.
+
+Cohen, J. (1968). Weighted kappa: nominal scale agreement provision for scaled disagreement or partial credit.
+\emph{Psychological Bulletin}, \emph{70}(4), 213-220.
+
+\strong{Krippendorff's alpha} \cr
+Krippendorff, K. (2013).
+Content analysis: An introduction to its methodology (3rd ed.).
+Thousand Oaks, CA: Sage.
 }
 \author{
 Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>

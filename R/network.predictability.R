@@ -57,9 +57,10 @@
 #' \itemize{
 #'
 #' \item dichotomous --- \code{"Accuracy"} or the percent correctly predicted for the 0s and 1s
+#' and \code{"Kappa"} or Cohen's Kappa (see cite)
 #'
-#' \item polytomous --- \code{"Accuracy"} based on the correctly predicting the ordinal category exactly
-#' (i.e., 1 = 1, 2, = 2, etc.) and the quadratic \code{"Weighted"} kappa metric
+#' \item polytomous --- \code{"Linear Kappa"} or linearly weighted Kappa and
+#' \code{"Krippendorff's alpha"} (see cite)
 #'
 #' \item continuous --- R-squared (\code{"R2"}) and root mean square error (\code{"RMSE"})
 #'
@@ -105,10 +106,22 @@
 #' Why overfitting is not (usually) a problem in partial correlation networks.
 #' \emph{Psychological Methods}, \emph{27}(5), 822–840.
 #'
+#' \strong{Cohen's Kappa} \cr
+#' Cohen, J. (1960). A coefficient of agreement for nominal scales.
+#' \emph{Educational and Psychological Measurement}, \emph{20}(1), 37-46.
+#'
+#' Cohen, J. (1968). Weighted kappa: nominal scale agreement provision for scaled disagreement or partial credit.
+#' \emph{Psychological Bulletin}, \emph{70}(4), 213-220.
+#'
+#' \strong{Krippendorff's alpha} \cr
+#' Krippendorff, K. (2013).
+#' Content analysis: An introduction to its methodology (3rd ed.).
+#' Thousand Oaks, CA: Sage.
+#'
 #' @export
 #'
 # Predict new data based on network ----
-# Updated 26.02.2024
+# Updated 02.03.2024
 network.predictability <- function(network, original.data, newdata, ordinal.categories = 7)
 {
 
@@ -317,7 +330,7 @@ print.predictability <- function(x, ...)
   if(full_flags$dichotomous){
     cat("Dichotomous\n\n")
     print(
-      t(x$results[flags$dichotomous, "Accuracy", drop = FALSE]),
+      t(x$results[flags$dichotomous, c("Accuracy", "Kappa"), drop = FALSE]),
       quote = FALSE, digits = 3
     )
   }
@@ -330,7 +343,7 @@ print.predictability <- function(x, ...)
     }
     cat("Polytomous\n\n")
     print(
-      t(x$results[flags$polytomous, c("Accuracy", "Weighted"), drop = FALSE]),
+      t(x$results[flags$polytomous, c("Linear Kappa", "Krippendorff's Alpha"), drop = FALSE]),
       quote = FALSE, digits = 3
     )
   }
@@ -490,7 +503,7 @@ handle_thresholds <- function(factored_data)
 
 #' @noRd
 # Set up results ----
-# Updated 25.02.2024
+# Updated 02.03.2024
 setup_results <- function(
     predictions, newdata, flags, betas,
     node_names, dimensions, dim_sequence
@@ -505,9 +518,10 @@ setup_results <- function(
       matrix(
         nvapply(
           dim_sequence, function(i){
-            categorical_accuracy(predictions[,i], newdata[,i])[["accuracy"]]
-          }
-        ), dimnames = list(node_names, "Accuracy")
+            binary_accuracy(predictions[,i], newdata[,i])[c("accuracy", "kappa")]
+          }, LENGTH = 2
+        ), ncol = 2, byrow = TRUE,
+        dimnames = list(node_names, c("Accuracy", "Kappa"))
       )
     )
 
@@ -518,10 +532,10 @@ setup_results <- function(
       matrix(
         nvapply(
           dim_sequence, function(i){
-            categorical_accuracy(predictions[,i], newdata[,i])[c("accuracy", "weighted")]
+            ordinal_accuracy(predictions[,i], newdata[,i])[c("linear_kappa", "kripp_alpha")]
           }, LENGTH = 2
         ), ncol = 2, byrow = TRUE,
-        dimnames = list(node_names, c("Accuracy", "Weighted"))
+        dimnames = list(node_names, c("Linear Kappa", "Krippendorff's Alpha"))
       )
     )
 
@@ -544,20 +558,26 @@ setup_results <- function(
 
     # Initialize matrix
     results <- fast.data.frame(
-      NA, nrow = dimensions[2], ncol = 4,
+      NA, nrow = dimensions[2], ncol = 6,
       rownames = node_names,
-      colnames = c("Accuracy", "Weighted", "R2", "RMSE")
+      colnames = c(
+        "Accuracy", "Kappa",
+        "Linear Kappa", "Krippendorff's Alpha",
+        "R2", "RMSE"
+      )
     )
 
     # Check for dichotomous data
     if(any(flags$dichotomous)){
 
       # Get results
-      results$Accuracy[flags$dichotomous] <- t(nvapply(
-        dim_sequence[flags$dichotomous], function(i){
-          categorical_accuracy(predictions[,i], newdata[,i])[["accuracy"]]
-        }
-      ))
+      results[flags$dichotomous, c("Accuracy", "Kappa")] <- t(
+        nvapply(
+          dim_sequence[flags$dichotomous], function(i){
+            binary_accuracy(predictions[,i], newdata[,i])[c("accuracy", "kappa")]
+          }, LENGTH = 2
+        )
+      )
 
     }
 
@@ -565,10 +585,10 @@ setup_results <- function(
     if(any(flags$polytomous)){
 
       # Get results
-      results[flags$polytomous, c("Accuracy", "Weighted")] <- t(
+      results[flags$polytomous, c("Linear Kappa", "Krippendorff's Alpha")] <- t(
         nvapply(
           dim_sequence[flags$polytomous], function(i){
-            categorical_accuracy(predictions[,i], newdata[,i])[c("accuracy", "weighted")]
+            ordinal_accuracy(predictions[,i], newdata[,i])[c("linear_kappa", "kripp_alpha")]
           }, LENGTH = 2
         )
       )
