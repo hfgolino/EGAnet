@@ -2893,6 +2893,11 @@ ordinal_accuracy <- function(prediction, observed)
   # Get maximum categories
   max_category <- max(prediction, observed, na.rm = TRUE)
 
+  # Check for single category
+  if(max_category == 1){
+    return(c(linear_kappa =  1, kripp_alpha = 1))
+  }
+
   # Set category sequence
   category_sequence <- seq_len(max_category)
 
