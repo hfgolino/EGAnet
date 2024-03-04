@@ -3046,7 +3046,14 @@ binary_accuracy <- function(prediction, observed)
   pe <- sum(observed_frequency * prediction_frequency) / elements^2
 
   # Return metrics
-  return(c(accuracy = po, kappa = (po - pe) / (1 - pe)))
+  return(
+    c(
+      accuracy = po,
+      kappa = swiftelse(
+        po == 1 && pe == 1, 1, (po - pe) / (1 - pe))
+    )
+  )
+
 
 }
 
