@@ -280,6 +280,9 @@ EBICglasso.qgraph <- function(
   # Based on: http://psychosystems.org/qgraph_1.5
   if(threshold){
 
+    # Throw experimental warning
+    experimental("EBICglasso.qgraph")
+
     # Compute threshold
     threshold_value <- (log(dimensions[2] * (dimensions[2] - 1) / 2)) / sqrt(n)
 
