@@ -18,6 +18,7 @@ EBICglasso.qgraph(
   countDiagonal = FALSE,
   refit = FALSE,
   model.selection = c("EBIC", "JSD"),
+  threshold = FALSE,
   verbose = FALSE,
   ...
 )
@@ -108,6 +109,10 @@ Defaults to \code{FALSE}}
 How lambda should be selected within GLASSO.
 Defaults to \code{"EBIC"}.
 \code{"JSD"} is experimental and should not be used otherwise}
+
+\item{threshold}{Boolean (length = 1).
+Should an additional threshold be applied to increase specificity?
+Defaults to \code{FALSE}}
 
 \item{verbose}{Boolean (length = 1).
 Whether messages and (insignificant) warnings should be output.

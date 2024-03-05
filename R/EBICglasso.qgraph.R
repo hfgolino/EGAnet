@@ -93,6 +93,10 @@
 #' Defaults to \code{"EBIC"}.
 #' \code{"JSD"} is experimental and should not be used otherwise
 #'
+#' @param threshold Boolean (length = 1).
+#' Should an additional threshold be applied to increase specificity?
+#' Defaults to \code{FALSE}
+#'
 #' @param verbose Boolean (length = 1).
 #' Whether messages and (insignificant) warnings should be output.
 #' Defaults to \code{FALSE} (silent calls).
@@ -145,7 +149,7 @@
 #' @export
 #'
 # Computes optimal glasso network based on EBIC ----
-# Updated 24.10.2023
+# Updated 05.03.2024
 EBICglasso.qgraph <- function(
     data, # Sample covariance matrix
     n = NULL,
@@ -160,6 +164,7 @@ EBICglasso.qgraph <- function(
     countDiagonal = FALSE, # Set to TRUE to get old qgraph behavior: conting diagonal elements as parameters in EBIC computation. This is not correct, but is included to replicate older analyses
     refit = FALSE, # If TRUE, network structure is taken and non-penalized version is computed.
     model.selection = c("EBIC", "JSD"),
+    threshold = FALSE,
     verbose = FALSE,
     ... # glasso arguments
 )
@@ -174,7 +179,7 @@ EBICglasso.qgraph <- function(
   data <- EBICglasso.qgraph_errors(
     data, n, gamma, penalize.diagonal, nlambda,
     returnAllResults, countDiagonal, refit,
-    verbose, ...
+    threshold, verbose, ...
   )
 
   # Obtain dimensions
@@ -266,6 +271,29 @@ EBICglasso.qgraph <- function(
       # Populate covariance arrays
       glas_path$w[,,i] <- res$w
       glas_path$wi[,,i] <- res$wi
+
+    }
+
+  }
+
+  # Check for threshold
+  # Based on: http://psychosystems.org/qgraph_1.5
+  if(threshold){
+
+    # Compute threshold
+    threshold_value <- (log(dimensions[2] * (dimensions[2] - 1) / 2)) / sqrt(n)
+
+    # Apply threshold to glasso paths
+    for(i in lambda_sequence){
+
+      # Obtain path
+      path <- glas_path$wi[,,i]
+
+      # Set threshold
+      path[abs(path) < threshold_value] <- 0
+
+      # Return to glasso path
+      glas_path$wi[,,i] <- path
 
     }
 
@@ -392,11 +420,11 @@ EBICglasso.qgraph <- function(
 
 #' @noRd
 # Errors ----
-# Updated 07.09.2023
+# Updated 05.03.2024
 EBICglasso.qgraph_errors <- function(
     data, n, gamma, penalize.diagonal, nlambda,
     returnAllResults, countDiagonal, refit,
-    verbose, ...
+    threshold, verbose, ...
 )
 {
 
@@ -439,6 +467,10 @@ EBICglasso.qgraph_errors <- function(
   # 'refit' errors
   length_error(refit, 1, "EBICglasso.qgraph")
   typeof_error(refit, "logical", "EBICglasso.qgraph")
+
+  # 'threshold' errors
+  length_error(threshold, 1, "EBICglasso.qgraph")
+  typeof_error(threshold, "logical", "EBICglasso.qgraph")
 
   # 'verbose' errors
   length_error(verbose, 1, "EBICglasso.qgraph")
