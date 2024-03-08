@@ -74,7 +74,7 @@
 #'
 #' @export
 #'
-# Network Loadings
+# Network Loadings ----
 # Updated 29.02.2024
 # Default = "BRM" or `net.loads` from version 1.2.3
 # Experimental = new signs and cross-loading adjustment
