@@ -282,7 +282,7 @@ net.loads <- function(
 # rotation = "geominq"
 
 #' @exportS3Method
-# S3 Print Method
+# S3 Print Method ----
 # Updated 08.10.2023
 print.net.loads <- function(x, ...)
 {
@@ -350,7 +350,7 @@ print.net.loads <- function(x, ...)
 }
 
 #' @exportS3Method
-# S3 Summary Method
+# S3 Summary Method ----
 # Updated 12.07.2023
 summary.net.loads <- function(object, ...)
 {
