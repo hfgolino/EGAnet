@@ -574,7 +574,7 @@ experimental_loadings <- function(
 
 #' @noRd
 # Standardize loadings ----
-# Updated 29.02.2024
+# Updated 08.03.2024
 standardize <- function(unstandardized, loading.method, A, wc)
 {
 
@@ -601,7 +601,7 @@ standardize <- function(unstandardized, loading.method, A, wc)
     # Align loadings
     alignment <- fungible::faAlign(
       F1 = eigens$vectors[,community_sequence],
-      F2 = unstandardized[dimnames(A)[[2]],]
+      F2 = unstandardized
     )
 
     # Pre-compute absolute values for standardization
