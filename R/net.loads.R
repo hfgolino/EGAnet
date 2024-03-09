@@ -448,7 +448,7 @@ obtain_signs <- function(target_network)
 
 #' @noRd
 # Experimental loadings ----
-# Updated 25.02.2024
+# Updated 09.03.2024
 experimental_loadings <- function(
     A, wc, nodes, node_names,
     communities, unique_communities
@@ -574,7 +574,7 @@ experimental_loadings <- function(
 
 #' @noRd
 # Standardize loadings ----
-# Updated 08.03.2024
+# Updated 09.03.2024
 standardize <- function(unstandardized, loading.method, A, wc)
 {
 
@@ -583,41 +583,15 @@ standardize <- function(unstandardized, loading.method, A, wc)
     return(t(t(unstandardized) / sqrt(colSums(abs(unstandardized), na.rm = TRUE))))
   }else if(loading.method == "experimental"){
 
-    # Original community order
-    original_order <- dimnames(unstandardized)[[2]]
-
-    # Set community sequence
-    community_sequence <- seq_len(dim(unstandardized)[2])
-
-    # Set diagonal of network to 1
-    diag(A) <- 1
-
-    # Get eigenvectors and eigenvalues
-    eigens <- eigen(A)
-
-    # Get signs
-    signs <- sign(unstandardized)
-
-    # Align loadings
-    alignment <- fungible::faAlign(
-      F1 = eigens$vectors[,community_sequence],
-      F2 = unstandardized
+    # Get sums within-community
+    sums <- nvapply(
+      dimnames(unstandardized)[[2]], function(community){
+        sum(abs(unstandardized[wc == community, community]), na.rm = TRUE)
+      }
     )
 
-    # Pre-compute absolute values for standardization
-    absolute <- abs(unstandardized)
-
-    # Standardize loadings
-    standardized <- absolute / (absolute + 1)
-
-    # Get sorted order to pre-multiply by eigenvalues
-    sorted <- standardized[,alignment$FactorMap["Sorted Order",]]
-
-    # Get scaled loadings
-    loadings <- t(t(sorted) * sqrt(eigens$values[community_sequence]))
-
     # Return loadings
-    return(loadings[,original_order] * signs)
+    return(t(t(unstandardized) / (sums)^(1 / sqrt(fast_table(wc)))))
 
   }
 
