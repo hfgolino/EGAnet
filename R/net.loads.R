@@ -448,7 +448,7 @@ obtain_signs <- function(target_network)
 
 #' @noRd
 # Experimental loadings ----
-# Updated 09.03.2024
+# Updated 10.03.2024
 experimental_loadings <- function(
     A, wc, nodes, node_names,
     communities, unique_communities
@@ -496,6 +496,9 @@ experimental_loadings <- function(
     STATS = community_table,
     FUN = "*"
   )
+
+  # Compute sums
+  community_sums <- colSums(abs(loading_matrix), na.rm = TRUE)
 
   # Check for unidimensional structure
   if(communities > 1){
@@ -566,6 +569,11 @@ experimental_loadings <- function(
 
   }
 
+  # Add attributes
+  attr(loading_matrix, "community") <- list(
+    community_sums = community_sums,
+    community_table = community_table
+  )
 
   # Return loading matrix
   return(loading_matrix)
@@ -574,7 +582,7 @@ experimental_loadings <- function(
 
 #' @noRd
 # Standardize loadings ----
-# Updated 09.03.2024
+# Updated 10.03.2024
 standardize <- function(unstandardized, loading.method, A, wc)
 {
 
@@ -583,15 +591,13 @@ standardize <- function(unstandardized, loading.method, A, wc)
     return(t(t(unstandardized) / sqrt(colSums(abs(unstandardized), na.rm = TRUE))))
   }else if(loading.method == "experimental"){
 
-    # Get sums within-community
-    sums <- nvapply(
-      dimnames(unstandardized)[[2]], function(community){
-        sum(abs(unstandardized[wc == community, community]), na.rm = TRUE)
-      }
-    )
+    # Get attributes
+    community <- attr(unstandardized, "community")
 
     # Return loadings
-    return(t(t(unstandardized) / (sums)^(1 / sqrt(fast_table(wc)))))
+    return(
+      t(t(unstandardized) / (community$community_sums^(1 / log(community$community_table))))
+    )
 
   }
 
