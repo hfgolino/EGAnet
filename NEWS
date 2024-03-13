@@ -8,7 +8,7 @@ o ADD: `network.predictability` to predict new data based on a network
 
 o ADD: `network.generalizability` to estimate network generalizability to new data (leverages `network.predictability`)
 
-o UPDATE: new loadings have been added to resolve issues in original loadings (e.g., signs, cross-loadings, standardization) 
+o UPDATE: new loadings (`net.loads(..., loading.method = "experimental")`) have been added to resolve issues in original loadings (e.g., signs, cross-loadings, standardization) 
 
 o UPDATE: `plot.bootEGA` will output `itemStability` plot by default
 
