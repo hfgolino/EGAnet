@@ -1448,7 +1448,7 @@ needs_usable <- function(ellipse)
 #' @noRd
 # Obtain data, sample size, correlation matrix ----
 # Generic function to get the usual needed inputs
-# Updated 04.09.2023
+# Updated 16.03.2024
 obtain_sample_correlations <- function(data, n, corr, na.data, verbose, ...)
 {
 
@@ -1501,7 +1501,13 @@ obtain_sample_correlations <- function(data, n, corr, na.data, verbose, ...)
       )
 
     }else{
-      correlation_matrix <- cor(data, use = na.data, method = corr)
+      correlation_matrix <- cor(
+        data, use = swiftelse(
+          na.data == "pairwise",
+          "pairwise.complete.obs",
+          "complete.obs"
+        ), method = corr
+      )
     }
 
   }

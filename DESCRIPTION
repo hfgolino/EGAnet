@@ -1,7 +1,7 @@
 Package: EGAnet
 Title: Exploratory Graph Analysis – a Framework for Estimating the Number of Dimensions in Multivariate Data using Network Psychometrics
-Version: 2.0.5
-Date: 2024-03-14
+Version: 2.0.6
+Date: 2024-03-16
 Authors@R: c(person("Hudson", "Golino", email = "hfg9s@virginia.edu", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-1601-1447")),
 	     person("Alexander", "Christensen", email = "alexpaulchristensen@gmail.com", role = "aut", comment = c(ORCID = "0000-0002-9798-7037")),
 	     person("Robert", "Moulder", email = "rgm4fd@virginia.edu", role = "ctb", comment = c(ORCID = "0000-0001-7504-9560")),
@@ -11,15 +11,15 @@ Authors@R: c(person("Hudson", "Golino", email = "hfg9s@virginia.edu", role = c("
 Maintainer: Hudson Golino <hfg9s@virginia.edu>
 Description: Implements the Exploratory Graph Analysis (EGA) framework for dimensionality
              and psychometric assessment. EGA estimates the number of dimensions in
-	     psychological data using network estimation methods and community detection
+	     	 psychological data using network estimation methods and community detection
              algorithms. A bootstrap method is provided to assess the stability of dimensions
-	     and items. Fit is evaluated using the Entropy Fit family of indices. Unique 
+	     	 and items. Fit is evaluated using the Entropy Fit family of indices. Unique 
              Variable Analysis evaluates the extent to which items are locally dependent (or
              redundant). Network loadings provide similar information to factor loadings and
-	     can be used to compute network scores. A bootstrap and permutation approach are
+	     	 can be used to compute network scores. A bootstrap and permutation approach are
              available to assess configural and metric invariance. Hierarchical structures
              can be detected using Hierarchical EGA. Time series and intensive longitudinal 
-	     data can be analyzed using Dynamic EGA, supporting individual, group, and 
+	     	 data can be analyzed using Dynamic EGA, supporting individual, group, and 
              population level assessments.
 Depends: R (>= 3.5.0)
 License: GPL (>= 3.0)

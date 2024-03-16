@@ -97,7 +97,7 @@
 #' @export
 #'
 # Automatic correlations ----
-# Updated 07.09.2023
+# Updated 16.03.2024
 auto.correlate <- function(
     data, # Matrix or data frame
     corr = c("kendall", "pearson", "spearman"), # allow changes to standard correlations
@@ -140,8 +140,11 @@ auto.correlate <- function(
 
     # Obtain correlation matrix
     correlation_matrix <- cor(
-      x = data, use = na.data,
-      method = corr
+      x = data, use = swiftelse(
+        na.data == "pairwise",
+        "pairwise.complete.obs",
+        "complete.obs"
+      ), method = corr
     )
 
   }else{ # Proceed with determination of categorical correlations
@@ -191,7 +194,11 @@ auto.correlate <- function(
           continuous_variables, continuous_variables # ensure proper indexing
         ] <- cor(
           x = data[,continuous_variables],
-          use = na.data, method = corr
+          use = swiftelse(
+            na.data == "pairwise",
+            "pairwise.complete.obs",
+            "complete.obs"
+          ), method = corr
         )
 
       }
@@ -222,8 +229,11 @@ auto.correlate <- function(
 
       # Compute Pearson's correlations
       correlation_matrix <- cor(
-        x = data, use = na.data,
-        method = corr
+        x = data, use = swiftelse(
+          na.data == "pairwise",
+          "pairwise.complete.obs",
+          "complete.obs"
+        ), method = corr
       )
 
     }
@@ -357,7 +367,7 @@ auto.correlate_errors <- function(data, ordinal.categories, forcePD, verbose, ..
 #' Uses two-step approximation from {polycor}'s \code{polyserial}
 #'
 #' @noRd
-# Updated 03.07.2023
+# Updated 16.03.2024
 polyserial.vector <- function(
     categorical_variable, continuous_variables,
     na.data = c("pairwise", "listwise")
@@ -388,7 +398,14 @@ polyserial.vector <- function(
     sqrt((categorical_cases - 1) / categorical_cases) *
       sd(categorical_variable, na.rm = TRUE) *
       # Correlations with scaled continuous variables
-      cor(categorical_variable, scale(continuous_variables), use = na.data) /
+      cor(
+        categorical_variable, scale(continuous_variables),
+        use = swiftelse(
+          na.data == "pairwise",
+          "pairwise.complete.obs",
+          "complete.obs"
+        )
+      ) /
       # Compute sum of thresholds
       sum(dnorm(obtain_thresholds(categorical_variable)), na.rm = TRUE)
   )
