@@ -460,10 +460,6 @@ experimental_loadings <- function(
 )
 {
 
-  # Set up reset
-  A <- bfi_ega$network
-  wc <- bfi_ega$wc
-
   # Initialize loading matrix
   loading_matrix <- matrix(
     0, nrow = nodes, ncol = communities,
