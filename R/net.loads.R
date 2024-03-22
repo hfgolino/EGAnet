@@ -409,7 +409,7 @@ organize_input <- function(A, wc)
 #' @noRd
 # Obtain signs ----
 # Function to obtain signs on dominant community
-# Updated 11.07.2023
+# Updated 22.03.2024
 obtain_signs <- function(target_network)
 {
 
@@ -438,6 +438,11 @@ obtain_signs <- function(target_network)
 
   }
 
+  # Determine whether signs should be flipped
+  if(sum(signs) <= -1){
+    signs <- -signs
+  }
+
   # Add signs as an attribute to the target network
   attr(target_network, "signs") <- signs
 
@@ -448,12 +453,16 @@ obtain_signs <- function(target_network)
 
 #' @noRd
 # Experimental loadings ----
-# Updated 10.03.2024
+# Updated 22.03.2024
 experimental_loadings <- function(
     A, wc, nodes, node_names,
     communities, unique_communities
 )
 {
+
+  # Set up reset
+  A <- bfi_ega$network
+  wc <- bfi_ega$wc
 
   # Initialize loading matrix
   loading_matrix <- matrix(
@@ -504,17 +513,16 @@ experimental_loadings <- function(
   if(communities > 1){
 
     # Get negative sign indices
-    negative_signs <- signs == -1
+    negative_signs <- which(signs == -1)
 
-    # Check for any negative signs
-    if(any(negative_signs)){
+    # Loop over negative signs
+    if(length(negative_signs) != 0){
 
-      # Make a copy
-      A_copy <- A
+      # Flip signs
+      for(negative in negative_signs){
+        A[negative,] <- A[,negative] <- -A[,negative]
+      }
 
-      # Flip them
-      A[negative_signs,] <- -A_copy[negative_signs,]
-      A[,negative_signs] <- -A_copy[,negative_signs]
     }
 
     # Populate loading matrix with cross-loadings
@@ -543,31 +551,6 @@ experimental_loadings <- function(
 
   # Set signs
   loading_matrix <- loading_matrix * signs
-
-  # Using signs, ensure positive orientation based on most common direction
-  for(community in unique_communities){
-
-    # Get community index
-    community_index <- wc == community
-
-    # Check for negative orientation
-    if(sum(signs[community_index]) <= -1){
-
-      # Reverse community signs across all communities
-      loading_matrix[community_index,] <- -loading_matrix[community_index,]
-
-      # Check for cross-loadings
-      if(communities > 1){
-
-        # Reverse cross-loading signs on target community
-        loading_matrix[!community_index, community] <-
-          -loading_matrix[!community_index, community]
-
-      }
-
-    }
-
-  }
 
   # Add attributes
   attr(loading_matrix, "community") <- list(

@@ -4,6 +4,8 @@ Changes in version 2.0.6
 
 o FIX: bug when using `na.data = "listwise"` in standard `cor()` function
 
+o FIX: update to revised network loadings signs
+
 
 Changes in version 2.0.5
 
