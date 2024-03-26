@@ -2881,7 +2881,7 @@ continuous_accuracy <- function(prediction, observed)
   # Return accuracies
   return(
     c(
-      R2 = sum(prediction^2, na.rm = TRUE) / sum(observed^2, na.rm = TRUE),
+      R2 = cor(prediction, observed, use = "pairwise")^2,
       RMSE = sqrt(mean((prediction - observed)^2, na.rm = TRUE))
     )
   )
