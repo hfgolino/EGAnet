@@ -10,6 +10,8 @@ o FIX: bug in argument 'returnAllResults' for `EBICglasso.qgraph`
 
 o UPDATE: `network.predictability` uses empirical inverse variances (rather than network-implied)
 
+o UPDATE: R-squared in `continuous_accuracy` helper uses formula for no intercept
+
 
 Changes in version 2.0.5
 
