@@ -145,7 +145,7 @@
 #' @export
 #'
 # Computes optimal glasso network based on EBIC ----
-# Updated 24.10.2023
+# Updated 26.03.2024
 EBICglasso.qgraph <- function(
     data, # Sample covariance matrix
     n = NULL,
@@ -365,17 +365,17 @@ EBICglasso.qgraph <- function(
     if(model.selection == "ebic"){
 
       # Add EBICs and Log-likelihoods
-      results$ebic <- EBICs; results$loglik <- lik;
+      result$ebic <- EBICs; result$loglik <- lik;
 
     }else if(model.selection == "jsd"){
 
       # Add JSDs
-      results$jsd <- JSDs
+      result$jsd <- JSDs
 
     }
 
     # Return results
-    return(results)
+    return(result)
 
   }
 
