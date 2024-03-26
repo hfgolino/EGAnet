@@ -6,6 +6,8 @@ o FIX: bug when using `na.data = "listwise"` in standard `cor()` function
 
 o FIX: update to revised network loadings signs
 
+o FIX: bug in argument 'returnAllResults' for `EBICglasso.qgraph`
+
 
 Changes in version 2.0.5
 
