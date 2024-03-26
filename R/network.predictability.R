@@ -121,7 +121,7 @@
 #' @export
 #'
 # Predict new data based on network ----
-# Updated 02.03.2024
+# Updated 26.03.2024
 network.predictability <- function(network, original.data, newdata, ordinal.categories = 7)
 {
 
@@ -179,8 +179,12 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
 
   }
 
-  # Get the inverse variances (use absolute for less than ideal matrices)
-  inverse_variances <- abs(diag(pcor2inv(network)))
+  # Get the inverse variances of original data
+  inverse_variances <- diag(solve(auto.correlate(original.data)))
+  # Although it's probably more appropriate to use the network-implied
+  # invariance (co)variances, there are some network estimation methods
+  # that result in non-positive definite or near singular matrices with
+  # negative inverse variances
 
   # Get betas
   betas <- network * sqrt(outer(inverse_variances, inverse_variances, FUN = "/"))
