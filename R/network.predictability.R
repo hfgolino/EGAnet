@@ -276,12 +276,12 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
 
 #' @noRd
 # Argument errors ----
-# Updated 10.02.2024
+# Updated 30.03.2024
 network.predictability_errors <- function(network, original.data, newdata, ordinal.categories)
 {
 
   # 'network' errors
-  object_error(network, c("matrix", "data.frame", "tibble"), "network.predict")
+  object_error(network, c("matrix", "data.frame", "tibble"), "network.predictability")
 
   # Check for tibble
   if(get_object_type(network) == "tibble"){
@@ -289,7 +289,7 @@ network.predictability_errors <- function(network, original.data, newdata, ordin
   }
 
   # 'original.data' errors
-  object_error(original.data, c("matrix", "data.frame", "tibble"), "network.predict")
+  object_error(original.data, c("matrix", "data.frame", "tibble"), "network.predictability")
 
   # Check for tibble
   if(get_object_type(original.data) == "tibble"){
@@ -297,7 +297,7 @@ network.predictability_errors <- function(network, original.data, newdata, ordin
   }
 
   # 'newdata' errors
-  object_error(newdata, c("matrix", "data.frame", "tibble"), "network.predict")
+  object_error(newdata, c("matrix", "data.frame", "tibble"), "network.predictability")
 
   # Check for tibble
   if(get_object_type(newdata) == "tibble"){
@@ -305,9 +305,9 @@ network.predictability_errors <- function(network, original.data, newdata, ordin
   }
 
   # 'ordinal.categories' errors
-  length_error(ordinal.categories, 1, "network.predict")
-  typeof_error(ordinal.categories, "numeric", "network.predict")
-  range_error(ordinal.categories, c(2, 11), "network.predict")
+  length_error(ordinal.categories, 1, "network.predictability")
+  typeof_error(ordinal.categories, "numeric", "network.predictability")
+  range_error(ordinal.categories, c(2, 11), "network.predictability")
 
   # Return usable data (in case of tibble)
   return(list(network = network, original.data = original.data, newdata = newdata))
