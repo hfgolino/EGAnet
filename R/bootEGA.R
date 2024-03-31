@@ -327,7 +327,7 @@
 #' @export
 #'
 # Bootstrap EGA ----
-# Updated 09.02.2023
+# Updated 31.03.2024
 bootEGA <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "pearson", "spearman"),
@@ -545,9 +545,16 @@ bootEGA <- function(
   # Set class
   class(results) <- "bootEGA"
 
-  # Compute dimension and item stability
-  results$stability <- dimensionStability(
-    bootega.obj = results, IS.plot = plot.itemStability, ...
+  # Compute dimension and item stability (collect proper arguments)
+  results$stability <- do.call(
+    what = dimensionStability,
+    args = obtain_arguments(  # ensures only proper arguments are passed
+      dimensionStability,
+      FUN.args = c(
+        list(bootega.obj = results, IS.plot = plot.itemStability),
+        ellipse
+      )
+    )
   )
 
   # Re-order results
