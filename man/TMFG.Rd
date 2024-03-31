@@ -40,13 +40,13 @@ continuous. To change the number of categories that are considered
 ordinal, use \code{ordinal.categories}
 (see \code{\link[EGAnet]{polychoric.matrix}} for more details)
 
-\item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations. 
+\item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations.
 Arguments can be passed along to the function
 
-\item \code{"pearson"} --- Pearson's correlation is computed for all 
+\item \code{"pearson"} --- Pearson's correlation is computed for all
 variables regardless of categories
 
-\item \code{"spearman"} --- Spearman's rank-order correlation is computed 
+\item \code{"spearman"} --- Spearman's rank-order correlation is computed
 for all variables regardless of categories
 
 }
