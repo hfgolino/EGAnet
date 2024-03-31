@@ -10,6 +10,10 @@ o FIX: bug in argument 'returnAllResults' for `EBICglasso.qgraph`
 
 o FIX: bug when passing additional non-`dimensionStability` arugments into `bootEGA`
 
+o FIX: bug when printing `hierEGA` summary from `bootEGA`
+
+o UPDATE: colors in `itemStability` plots will match colors of `hierEGA` plot
+
 o UPDATE: `network.predictability` uses empirical inverse variances (rather than network-implied)
 
 o UPDATE: R-squared in `continuous_accuracy` helper uses formula for no intercept

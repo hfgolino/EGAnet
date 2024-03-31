@@ -558,13 +558,36 @@ bootEGA <- function(
   )
 
   # Re-order results
-  results <- results[
-    c(
-      "summary.table", "frequency", "stability",
-      "bootGraphs", "boot.wc", "boot.ndim", "TEFI",
+  if(EGA.type == "hierega"){
+
+    # Hierarchical results
+    results <- results[c(
+      "lower_order", "higher_order", "stability",
       "EGA", "EGA.type", "type", "iter"
+    )]
+
+    # Order for rest of results
+    results_order <- c(
+      "summary.table", "frequency", "bootGraphs",
+      "boot.wc", "boot.ndim", "TEFI", "iter"
     )
-  ]
+
+    ## Organize lower order
+    results$lower_order <- results$lower_order[results_order]
+
+    ## Organize higher order
+    results$higher_order <- results$higher_order[results_order]
+
+  }else{
+
+    # Non-hierarchical results
+    results <- results[c(
+        "summary.table", "frequency", "stability",
+        "bootGraphs", "boot.wc", "boot.ndim", "TEFI",
+        "EGA", "EGA.type", "type", "iter"
+    )]
+
+  }
 
   # Set class (again)
   class(results) <- "bootEGA"
@@ -674,27 +697,27 @@ bootEGA_errors <- function(
 
 #' @exportS3Method
 # S3 Print Method ----
-# Updated 21.07.2023
+# Updated 31.03.2024
 print.bootEGA <- function(x, ...)
 {
 
   # Ensure proper EGA object
   ega_object <- get_EGA_object(x)
 
-  # Branch for hierarchical EGA
-  if(is(ega_object, "hierEGA")){
+  # Set proper EGA type name
+  ega_type <- switch(
+    x$EGA.type,
+    "ega" = "EGA",
+    "ega.fit" = "EGA.fit",
+    "hierega" = "hierEGA",
+    "riega" = "riEGA"
+  )
 
-    # Set proper EGA type name
-    ega_type <- switch(
-      x$EGA.type,
-      "ega" = "EGA",
-      "ega.fit" = "EGA.fit",
-      "hierega" = "hierEGA",
-      "riega" = "riEGA"
-    )
+  # Branch for hierarchical EGA
+  if(ega_type == "hierEGA"){
 
     # Print EGA type
-    cat(paste0("EGA Type: ", ega_type), "\n")
+    cat("EGA Type: hierEGA \n")
 
     # Set up methods
     cat(
@@ -849,7 +872,7 @@ print.bootEGA <- function(x, ...)
     cat("\n")
 
     # Do not print unidimensional for `EGA.fit`
-    if(x$EGA.type != "ega.fit"){
+    if(ega_type != "ega.fit"){
 
       # Get unidimensional attributes
       unidimensional_attributes <- attr(ega_object, "unidimensional")
@@ -896,15 +919,6 @@ print.bootEGA <- function(x, ...)
 
     # Add break space
     cat("\n\n----\n\n")
-
-    # Set proper EGA type name
-    ega_type <- switch(
-      x$EGA.type,
-      "ega" = "EGA",
-      "ega.fit" = "EGA.fit",
-      "hierega" = "hierEGA",
-      "riega" = "riEGA"
-    )
 
     # Print EGA type
     cat(paste0("EGA Type: ", ega_type), "\n")
