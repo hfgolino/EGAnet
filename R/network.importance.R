@@ -1,6 +1,6 @@
-#' @title Network (Relative) Importance
+#' @title Network (Node) Importance
 #'
-#' @description Computes node-wise relative importance by permutating each
+#' @description Computes node-wise (variable) importance by permutating each
 #' variable in the dataset to determine the average effect on prediction power
 #'
 #' @param data Matrix or data frame.
@@ -45,8 +45,8 @@
 #'
 #' @export
 #'
-# Compute node-wise relative importance ----
-# Updated 26.03.2024
+# Compute node-wise (variable) importance ----
+# Updated 01.04.2024
 network.importance <- function(data, network, ordinal.categories = 7, iter = 1)
 {
 
@@ -102,6 +102,37 @@ network.importance <- function(data, network, ordinal.categories = 7, iter = 1)
     column_sequence, function(i){sd(original.data[,i], na.rm = TRUE)}
   )
 
+  # Set up factors
+  original_factors <- lapply(
+    column_sequence, function(i){
+
+      # Check for categories
+      if(flags$categorical[[i]]){
+
+        # Set factors for data
+        factor( # ensures proper tabling for accuracy
+          original.data[,i], levels = seq.int(1, max(original.data[,i]), 1)
+        )
+
+      }else{ # Return data otherwise
+        original.data[,i]
+      }
+
+    }
+  )
+
+  # Initialize new data
+  newdata <- matrix(
+    nvapply(column_sequence, function(i){
+      (original.data[,i] - original_means[i]) / original_sds[i]
+    }, LENGTH = dimensions[1]),
+    ncol = dimensions[2],
+    dimnames = list(NULL, node_names)
+  )
+
+  # Create copy for shuffled data
+  shuffled_data <- newdata
+
   # Loop over shuffle indices
   result_list <- lapply(
     iter_sequence, function(iteration){
@@ -109,23 +140,11 @@ network.importance <- function(data, network, ordinal.categories = 7, iter = 1)
       # Get predictability for each node
       run <- lapply(column_sequence, function(node){
 
-        # Set new data
-        newdata <- original.data
-
         # Shuffle node
-        newdata[,node] <- newdata[shuffled[[iteration]], node]
-
-        # Scale from original data
-        newdata_scaled <- matrix(
-          nvapply(column_sequence, function(i){
-            (newdata[,i] - original_means[i]) / original_sds[i]
-          }, LENGTH = dimensions[1]),
-          ncol = dimensions[2],
-          dimnames = list(NULL, node_names)
-        )
+        shuffled_data[,node] <- newdata[shuffled[[iteration]], node]
 
         # Get predictions
-        predictions <- missing_matrix_multiply(newdata_scaled, original_result$betas)
+        predictions <- missing_matrix_multiply(shuffled_data, original_result$betas)
 
         # Loop over variables
         for(i in column_sequence){
@@ -133,16 +152,11 @@ network.importance <- function(data, network, ordinal.categories = 7, iter = 1)
           # Check for categories
           if(flags$categorical[[i]]){
 
-            # Set factors for data
-            factored_data <- factor( # ensures proper tabling for accuracy
-              original.data[,i], levels = seq.int(1, max(original.data[,i]), 1)
-            )
-
             # Assign categories to each observation
             predictions[,i] <- as.numeric(
               cut(
                 x = predictions[,i], breaks = c(
-                  -Inf, handle_thresholds(factored_data), Inf
+                  -Inf, handle_thresholds(original_factors[[i]]), Inf
                 ) # `handle_thresholds` will properly adjust for missing thresholds
               )
             )
@@ -161,7 +175,7 @@ network.importance <- function(data, network, ordinal.categories = 7, iter = 1)
         differences <- original_result$results - results$results
 
         # Get indices
-        indices <- rowMeans(differences, na.rm = TRUE) != 0
+        indices <- rowSums(differences, na.rm = TRUE) != 0
 
         # Check for indices
         return(

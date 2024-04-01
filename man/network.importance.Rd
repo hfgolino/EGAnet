@@ -2,7 +2,7 @@
 % Please edit documentation in R/network.importance.R
 \name{network.importance}
 \alias{network.importance}
-\title{Network (Relative) Importance}
+\title{Network (Node) Importance}
 \usage{
 network.importance(data, network, ordinal.categories = 7, iter = 1)
 }
@@ -34,7 +34,7 @@ A list containing:
 }
 }
 \description{
-Computes node-wise relative importance by permutating each
+Computes node-wise (variable) importance by permutating each
 variable in the dataset to determine the average effect on prediction power
 }
 \examples{
