@@ -140,7 +140,7 @@
 #'
 #' @export
 # TMFG Filtering Method----
-# Updated 31.03.2024
+# Updated 01.04.2024
 TMFG <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "pearson", "spearman"),
@@ -297,26 +297,33 @@ TMFG <- function(
     triangles[max_gain,] <- c(triangles[max_gain, triangle_index[-3]], add_vertex)
 
     # Update gain table
+
     ## Set gain to zero for added node
     gain[add_vertex,] <- 0
+
     ## Maximum gain
     gain[remaining, max_gain] <- rowSums(
       absolute_matrix[remaining, triangles[max_gain,], drop = FALSE],
       na.rm = TRUE
     )
+
+    ## Update triangle count
+    triangle_count <- triangle_count + 1
+
     ## First new triangle
-    gain[remaining, triangle_count + 1] <- rowSums(
-      absolute_matrix[remaining, triangles[triangle_count + 1,], drop = FALSE],
-      na.rm = TRUE
-    )
-    ## Second new triangle
-    gain[remaining, triangle_count + 2] <- rowSums(
-      absolute_matrix[remaining, triangles[triangle_count + 2,], drop = FALSE],
+    gain[remaining, triangle_count] <- rowSums(
+      absolute_matrix[remaining, triangles[triangle_count,], drop = FALSE],
       na.rm = TRUE
     )
 
-    ## Increase triangle count
-    triangle_count <- triangle_count + 2
+    ## Update triangle count
+    triangle_count <- triangle_count + 1
+
+    ## Second new triangle
+    gain[remaining, triangle_count] <- rowSums(
+      absolute_matrix[remaining, triangles[triangle_count,], drop = FALSE],
+      na.rm = TRUE
+    )
 
   }
 
