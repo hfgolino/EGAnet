@@ -787,7 +787,7 @@ group_setup <- function(
 
 #' @exportS3Method
 # S3 Plot Method ----
-# Updated 08.10.2023
+# Updated 01.04.2024
 plot.invariance <- function(x, p_type = c("p", "p_BH"), p_value = 0.05, ...)
 {
 
@@ -851,10 +851,6 @@ plot.invariance <- function(x, p_type = c("p", "p_BH"), p_value = 0.05, ...)
     )
   )
 
-  # Update `alpha` guide
-  first_group$guides$colour$override.aes$alpha <- 0.25
-  second_group$guides$colour$override.aes$alpha <- 0.75
-
   # Set up p-value title
   if(p_type == "p") {
     invariant_title <- bquote(
@@ -872,14 +868,29 @@ plot.invariance <- function(x, p_type = c("p", "p_BH"), p_value = 0.05, ...)
     )
   }
 
-  # Update `title` guide
-  first_group$guides$colour$title <- invariant_title
-
-  second_group$guides$colour$title <- noninvariant_title
-
-  # Update `title.position` guide
-  first_group$guides$colour$title.position <- "top"
-  second_group$guides$colour$title.position <- "top"
+  # Update legend guide
+  first_group <- first_group +
+    ggplot2::guides(
+      colour = ggplot2::guide_legend(
+        title = invariant_title,
+        title.position = "top",
+        override.aes = list(
+          alpha = 0.25, size = second_ARGS$node.size,
+          stroke = 1.5
+        )
+      )
+    )
+  second_group <- second_group +
+    ggplot2::guides(
+      colour = ggplot2::guide_legend(
+        title = noninvariant_title,
+        title.position = "top",
+        override.aes = list(
+          alpha = 0.75, size = second_ARGS$node.size,
+          stroke = 1.5
+        )
+      )
+    )
 
   # Adjust size and position
   first_group <- first_group +
