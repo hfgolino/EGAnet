@@ -417,7 +417,7 @@ ggplot2_theme_defaults <- function(organize_df, ellipse)
 
 #' @exportS3Method
 # S3 Plot Method ----
-# Updated 31.03.2024
+# Updated 01.04.2024
 plot.itemStability <- function(x, ...)
 {
 
@@ -459,14 +459,14 @@ plot.itemStability <- function(x, ...)
     ]
 
     # Get lower plot
-    results$lower_order$plot <- plot(results$lower_order, color = lower_colors, ...) +
+    lower_order_plot <- plot(results$lower_order, color = lower_colors, ...) +
       ggplot2::guides(color = ggplot2::guide_legend(nrow = legend_rows))
 
     # Get higher plot
-    results$higher_order$plot <- silent_call(
+    higher_order_plot <- silent_call(
       plot(results$higher_order, color = higher_colors, ...) +
         ggplot2::guides(color = ggplot2::guide_legend(nrow = legend_rows)) +
-        ggplot2::scale_x_discrete(limits = rev(results$lower_order$plot$data$Node))
+        ggplot2::scale_x_discrete(limits = rev(lower_order_plot$data$Node))
     )
 
     # Return final plot
