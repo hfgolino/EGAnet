@@ -561,7 +561,7 @@ experimental_loadings <- function(
 
 #' @noRd
 # Standardize loadings ----
-# Updated 10.03.2024
+# Updated 06.04.2024
 standardize <- function(unstandardized, loading.method, A, wc)
 {
 
@@ -575,7 +575,7 @@ standardize <- function(unstandardized, loading.method, A, wc)
 
     # Return loadings
     return(
-      t(t(unstandardized) / (community$community_sums^(1 / log(community$community_table))))
+      t(t(unstandardized) / (community$community_sums^(1 / log(2 * community$community_table))))
     )
 
   }
