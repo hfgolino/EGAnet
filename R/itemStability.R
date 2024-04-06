@@ -118,7 +118,7 @@
 #' @export
 #'
 # Item Stability function ----
-# Updated 31.03.2024
+# Updated 06.04.2024
 itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
 
   # Set up ellipse arguments
@@ -186,6 +186,9 @@ itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
 
   # Add methods attributes from `bootEGA` object
   attr(results, "methods") <- bootega.obj[c("EGA.type", "iter", "type")]
+  attr(results, "color") <- unique(
+    plot(bootega.obj$EGA, produce = FALSE, arguments = TRUE)$ARGS$node.color
+  )
 
   # Determine whether to plot
   if(IS.plot){
@@ -199,9 +202,7 @@ itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
       ) + 1
 
       # Set up colors
-      colors <- unique(
-        plot(bootega.obj$EGA, produce = FALSE, arguments = TRUE)$ARGS$node.color
-      )
+      colors <- attributes(results)$color
 
       # Get number of higher order
       higher_ndim <- seq_len(unique_length(structure$higher_order))
@@ -417,7 +418,7 @@ ggplot2_theme_defaults <- function(organize_df, ellipse)
 
 #' @exportS3Method
 # S3 Plot Method ----
-# Updated 01.04.2024
+# Updated 06.04.2024
 plot.itemStability <- function(x, ...)
 {
 
@@ -439,9 +440,7 @@ plot.itemStability <- function(x, ...)
     ) + 1
 
     # Set up colors
-    colors <- unique(
-      plot(bootega.obj$EGA, produce = FALSE, arguments = TRUE)$ARGS$node.color
-    )
+    colors <- attributes(x)$color
 
     # Get number of higher order
     higher_ndim <- seq_len(unique_length(x$higher_order$membership$structure))
@@ -459,12 +458,12 @@ plot.itemStability <- function(x, ...)
     ]
 
     # Get lower plot
-    lower_order_plot <- plot(results$lower_order, color = lower_colors, ...) +
+    lower_order_plot <- plot(x$lower_order, color = lower_colors, ...) +
       ggplot2::guides(color = ggplot2::guide_legend(nrow = legend_rows))
 
     # Get higher plot
     higher_order_plot <- silent_call(
-      plot(results$higher_order, color = higher_colors, ...) +
+      plot(x$higher_order, color = higher_colors, ...) +
         ggplot2::guides(color = ggplot2::guide_legend(nrow = legend_rows)) +
         ggplot2::scale_x_discrete(limits = rev(lower_order_plot$data$Node))
     )
@@ -567,7 +566,7 @@ plot.itemStability <- function(x, ...)
 }
 
 #' @noRd
-# Argument Deprecation
+# Argument Deprecation ----
 # Updated 06.07.2023
 itemStability_deprecation <- function(ellipse)
 {
