@@ -16,6 +16,12 @@
 #' an \code{"experimental"} implementation.
 #' Defaults to \code{"BRM"}
 #'
+#' @param scaling Numeric (length = 1).
+#' Scaling factor for the magnitude of the \code{"experimental"} network loadings.
+#' Defaults to \code{2}.
+#' \code{10} makes loadings roughly the size of factor loadings when correlations
+#' between factors are orthogonal
+#'
 #' @param rotation Character.
 #' A rotation to use to obtain a simpler structure.
 #' For a list of rotations, see \code{\link[GPArotation]{rotations}} for options.
@@ -75,12 +81,12 @@
 #' @export
 #'
 # Network Loadings ----
-# Updated 29.02.2024
+# Updated 06.04.2024
 # Default = "BRM" or `net.loads` from version 1.2.3
 # Experimental = new signs and cross-loading adjustment
 net.loads <- function(
     A, wc, loading.method = c("BRM", "experimental"),
-    rotation = NULL, ...
+    scaling = 2, rotation = NULL, ...
 )
 {
 
@@ -159,7 +165,7 @@ net.loads <- function(
   }
 
   # Obtain standardized loadings
-  standardized <- standardize(unstandardized, loading.method, A, wc)
+  standardized <- standardize(unstandardized, loading.method, A, wc, scaling)
 
   # Get descending order
   standardized <- descending_order(standardized, wc, unique_communities, node_names)
@@ -562,7 +568,7 @@ experimental_loadings <- function(
 #' @noRd
 # Standardize loadings ----
 # Updated 06.04.2024
-standardize <- function(unstandardized, loading.method, A, wc)
+standardize <- function(unstandardized, loading.method, A, wc, scaling)
 {
 
   # Check for loading method
@@ -575,7 +581,7 @@ standardize <- function(unstandardized, loading.method, A, wc)
 
     # Return loadings
     return(
-      t(t(unstandardized) / (community$community_sums^(1 / log(2 * community$community_table))))
+      t(t(unstandardized) / (community$community_sums^(1 / log(scaling * community$community_table))))
     )
 
   }

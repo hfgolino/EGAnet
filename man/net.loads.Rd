@@ -8,6 +8,7 @@ net.loads(
   A,
   wc,
   loading.method = c("BRM", "experimental"),
+  scaling = 2,
   rotation = NULL,
   ...
 )
@@ -25,6 +26,12 @@ Sets network loading calculation based on implementation
 described in \code{"BRM"} (Christensen & Golino, 2021) or
 an \code{"experimental"} implementation.
 Defaults to \code{"BRM"}}
+
+\item{scaling}{Numeric (length = 1).
+Scaling factor for the magnitude of the \code{"experimental"} network loadings.
+Defaults to \code{2}.
+\code{10} makes loadings roughly the size of factor loadings when correlations
+between factors are orthogonal}
 
 \item{rotation}{Character.
 A rotation to use to obtain a simpler structure.
