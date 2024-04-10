@@ -26,7 +26,7 @@ invariance(
 \item{data}{Matrix or data frame.
 Should consist only of variables to be used in the analysis}
 
-\item{groups}{Numeric or character vector (length = \code{ncol(data)}).
+\item{groups}{Numeric or character vector (length = \code{nrow(data)}).
 Group membership corresponding to each case in data}
 
 \item{structure}{Numeric or character vector (length = \code{ncol(data)}).

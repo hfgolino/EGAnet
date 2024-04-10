@@ -8,7 +8,7 @@
 #' @param data Matrix or data frame.
 #' Should consist only of variables to be used in the analysis
 #'
-#' @param groups Numeric or character vector (length = \code{ncol(data)}).
+#' @param groups Numeric or character vector (length = \code{nrow(data)}).
 #' Group membership corresponding to each case in data
 #'
 #' @param structure Numeric or character vector (length = \code{ncol(data)}).
@@ -291,7 +291,7 @@
 #' @export
 #'
 # Measurement Invariance
-# Updated 09.03.2024
+# Updated 10.04.2024
 invariance <- function(
     # `invariance` arguments
     data, groups, structure = NULL,
