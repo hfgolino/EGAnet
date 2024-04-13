@@ -915,7 +915,7 @@ plot.invariance <- function(x, p_type = c("p", "p_BH"), p_value = 0.05, ...)
 
 #' @noRd
 # Configural invariance ----
-# Updated 03.08.2023
+# Updated 13.04.2024
 configural <- function(
     data, iter, structure, configural.threshold,
     configural.type, corr, na.data, model,
@@ -937,17 +937,15 @@ configural <- function(
       uni.method = uni.method, iter = iter,
       type = configural.type, ncores = ncores,
       EGA.type = "EGA", typicalStructure = FALSE,
+      plot.itemStability = FALSE,
       plot.typicalStructure = FALSE,
       seed = seed, verbose = verbose,
       clear = TRUE, suppress = TRUE, # additional internal arguments to `bootEGA`
       ...
     )
 
-    # Perform itemStability
-    item_stability <- itemStability(boot, IS.plot = FALSE, structure = structure)
-
-    # Stable items
-    stable_items <- item_stability$item.stability$empirical.dimensions >= configural.threshold
+    # Get stable items
+    stable_items <- boot$stability$item.stability$item.stability$empirical.dimensions >= configural.threshold
 
     # Perform checks
     stability <- all(stable_items)
@@ -966,7 +964,7 @@ configural <- function(
       data = data,
       stable_items = stable_items,
       boot_object = boot,
-      item_stability = item_stability,
+      item_stability = boot$stability$item.stability,
       configural_flag = items > 0
     )
   )
