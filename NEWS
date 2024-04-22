@@ -4,11 +4,11 @@ Changes in version 2.0.6
 
 o FIX: bug when using `na.data = "listwise"` in standard `cor()` function
 
-o FIX: update to revised network loadings signs
+o FIX: update to revised network loadings signs: `net.loads(..., loading.method = "experimental")`
 
 o FIX: bug in argument 'returnAllResults' for `EBICglasso.qgraph`
 
-o FIX: bug when passing additional non-`dimensionStability` arugments into `bootEGA`
+o FIX: bug when passing additional non-`dimensionStability` arguments into `bootEGA`
 
 o FIX: bug when printing `hierEGA` summary from `bootEGA`
 
@@ -16,7 +16,7 @@ o UPDATE: colors in `itemStability` plots will match colors of `hierEGA` plot
 
 o UPDATE: `network.predictability` uses empirical inverse variances (rather than network-implied)
 
-o UPDATE: R-squared in `continuous_accuracy` helper uses formula for no intercept
+o UPDATE: R-squared in `continuous_accuracy` helper uses Pearson's correlation squared
 
 
 Changes in version 2.0.5
