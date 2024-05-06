@@ -10,7 +10,7 @@
 <a href="https://cran.r-project.org/package=EGAnet"><img border="0" src="http://cranlogs.r-pkg.org/badges/last-day/EGAnet" alt="Downloads Yesterday"/></a>
 </div>
 
-### Package Website: [r-ega.net](https://r-ega.net)
+### To get started with some tutorials, chexk out the website: [r-ega.net](https://r-ega.net)
 
 How to Install
 =============
