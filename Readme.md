@@ -29,7 +29,8 @@ Exploratory Graph Analysis
 ### Contact: <hfg9s@virginia.edu> ###
 
 ### Alexander P. Christensen ###
-### Assistant Professor of Quantitative Methods, Department of Psychology and Human Development, Vanderbilt University ###
+### Assistant Professor of Quantitative Methods, Department of Psychology and Human Development, Vanderbilt University
+###
 ### Contact: <alexander.christensen@vanderbilt.edu> ###
 
 
@@ -41,10 +42,6 @@ The EGAnet package version 2.0.0 (Blue Metallic) is now available on [CRAN](http
 You can read about some of the changes in this dedicated [Wiki](https://github.com/hfgolino/EGAnet/wiki/What's-Changed%3F). There's also a [Wiki for the new plotting system](https://github.com/hfgolino/EGAnet/wiki/Plots-in-%7BEGAnet%7D), and a series of posts about the package on Twitter: [some new functions](https://twitter.com/GolinoHudson/status/1691800126866829739?s=20), [new stability analysis](https://twitter.com/GolinoHudson/status/1684912389194436610?s=20), and [more](https://twitter.com/GolinoHudson/).
 
 The EGAnet package is currently supported by two University of Virginia grants, one from the STAR - [Support Transformative Autism Research](https://curry.virginia.edu/faculty-research/centers-labs-projects/supporting-transformative-autism-research-star) initiative and one from the [Democracy Initiative](http://democracyinitiative.virginia.edu).
-
-
-The old EGA package is now EGAnet, and is now available in The Comprehensive R Archive Network (CRAN): https://cran.r-project.org/web/packages/EGAnet/index.html
-
 
 References
 ============
