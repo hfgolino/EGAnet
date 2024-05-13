@@ -628,7 +628,7 @@ setup_results <- function(
 
 #' @noRd
 # Ensure that categorical data start at one ----
-# Updated 26.02.2024
+# Updated 13.05.2024
 ensure_one_start <- function(combined, flags, original_n)
 {
 
@@ -646,7 +646,7 @@ ensure_one_start <- function(combined, flags, original_n)
   )
 
   # Get minimum values
-  minimum_values <- nvapply(as.data.frame(categorical_data), min)
+  minimum_values <- nvapply(as.data.frame(categorical_data), min, na.rm = TRUE)
 
   # Set starting values to 1 for all categorical data
   for(i in categorical_sequence){
