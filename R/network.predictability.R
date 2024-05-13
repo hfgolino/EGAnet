@@ -236,6 +236,30 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
 
   }
 
+  # Check for continuous data
+  if(any(flags$continuous)){
+
+    # Get continuous predictions
+    continuous_predictions <- predictions[,flags$continuous, drop = FALSE]
+
+    # Get continuous means and standard deviations
+    continuous_means <- original_means[flags$continuous]
+    continuous_sds <- original_sds[flags$continuous]
+
+    # Put continuous predictions back to scale with the original continuous variables
+    for(i in ncol_sequence(continuous_predictions)){
+
+      # Back to scale
+      continuous_predictions[,i] <- continuous_predictions[,i] *
+                                    continuous_sds[i] + continuous_means[i]
+
+    }
+
+    # Return to predictions
+    predictions[,flags$continuous] <- continuous_predictions
+
+  }
+
   # Obtain results
   results <- setup_results(
     predictions, newdata, flags, betas,

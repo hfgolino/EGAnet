@@ -6,6 +6,8 @@ WEBSITE: https://r-ega.net
 
 + UPDATE: NEWS is now formatted in markdown
 
++ UPDATE: prediction and RMSE output for continuous data `network.predictability` is set to original scale to increase interpretability
+
 
 ## Changes in version 2.0.6
 
