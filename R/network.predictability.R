@@ -121,7 +121,7 @@
 #' @export
 #'
 # Predict new data based on network ----
-# Updated 26.03.2024
+# Updated 13.05.2024
 network.predictability <- function(network, original.data, newdata, ordinal.categories = 7)
 {
 
@@ -173,9 +173,14 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
     one_start_list <- ensure_one_start(combined, flags, original_n)
 
     # Sort out data
-    original.data <- one_start_list$original.data
-    newdata <- matrix(one_start_list$newdata, nrow = dimensions[1], ncol = dimensions[2])
-    categorical_factors <- one_start_list$categorical_factors
+    original.data[,flags$categorical] <- one_start_list$original.data
+    newdata[,flags$categorical] <- one_start_list$newdata
+
+    # Create categorical factors list
+    categorical_factors <- vector("list", length = dimensions[2])
+
+    # Insert categorical factors
+    categorical_factors[flags$categorical] <- one_start_list$categorical_factors
 
   }
 
@@ -215,7 +220,7 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
 
       # Set factors for data
       factored_data <- factor( # ensures proper tabling for accuracy
-        original.data[,i], levels = seq.int(1, max(original.data[,i]), 1)
+        original.data[,i], levels = seq.int(1, max(original.data[,i], na.rm = TRUE), 1)
       )
 
       # Assign categories to each observation

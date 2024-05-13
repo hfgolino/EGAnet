@@ -2,7 +2,7 @@ WEBSITE: https://r-ega.net
 
 ## Changes in version 2.0.7
 
-+ FIX: missing data in `ensure_one_start` function for `network.predictability`
++ FIX: mixed data with missing data in `network.predictability`
 
 + UPDATE: NEWS is now formatted in markdown
 
