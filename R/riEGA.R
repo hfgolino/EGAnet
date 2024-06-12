@@ -260,7 +260,11 @@ riEGA <- function(
   lavaan_ARGS[c(
     "sample.cov", "sample.nobs", "estimator",
     "std.lv", "se"
-  )] <- list(output$correlation_matrix, output$n, "ml", FALSE, "none")
+  )] <- list(
+    output$correlation_matrix, output$n,
+    swiftelse("estimator" %in% names(ellipse), estimator, "ml"),
+    FALSE, "none"
+  )
 
   # Fit model
   fit <- try(
