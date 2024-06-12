@@ -12,7 +12,6 @@ riEGA(
   model = c("glasso", "TMFG"),
   algorithm = c("leiden", "louvain", "walktrap"),
   uni.method = c("expand", "LE", "louvain"),
-  estimator = c("auto", "WLSMV", "MLR"),
   plot.EGA = TRUE,
   verbose = FALSE,
   ...
@@ -40,13 +39,13 @@ continuous. To change the number of categories that are considered
 ordinal, use \code{ordinal.categories}
 (see \code{\link[EGAnet]{polychoric.matrix}} for more details)
 
-\item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations. 
+\item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations.
 Arguments can be passed along to the function
 
-\item \code{"pearson"} --- Pearson's correlation is computed for all 
+\item \code{"pearson"} --- Pearson's correlation is computed for all
 variables regardless of categories
 
-\item \code{"spearman"} --- Spearman's rank-order correlation is computed 
+\item \code{"spearman"} --- Spearman's rank-order correlation is computed
 for all variables regardless of categories
 
 }
@@ -87,7 +86,7 @@ See \code{\link[EGAnet]{TMFG}} for more details
 
 }}
 
-\item{algorithm}{Character or 
+\item{algorithm}{Character or
 \code{\link{igraph}} \code{cluster_*} function (length = 1).
 Defaults to \code{"walktrap"}.
 Three options are listed below but all are available
@@ -97,10 +96,10 @@ Three options are listed below but all are available
 
 \item \code{"leiden"} --- See \code{\link[igraph]{cluster_leiden}} for more details
 
-\item \code{"louvain"} --- By default, \code{"louvain"} will implement the Louvain algorithm using 
-the consensus clustering method (see \code{\link[EGAnet]{community.consensus}} 
+\item \code{"louvain"} --- By default, \code{"louvain"} will implement the Louvain algorithm using
+the consensus clustering method (see \code{\link[EGAnet]{community.consensus}}
 for more information). This function will implement
-\code{consensus.method = "most_common"} and \code{consensus.iter = 1000} 
+\code{consensus.method = "most_common"} and \code{consensus.iter = 1000}
 unless specified otherwise
 
 \item \code{"walktrap"} --- See \code{\link[igraph]{cluster_walktrap}} for more details
@@ -108,14 +107,14 @@ unless specified otherwise
 }}
 
 \item{uni.method}{Character (length = 1).
-What unidimensionality method should be used? 
+What unidimensionality method should be used?
 Defaults to \code{"louvain"}.
 Available options:
 
 \itemize{
 
 \item \code{"expand"} --- Expands the correlation matrix with four variables correlated 0.50.
-If number of dimension returns 2 or less in check, then the data 
+If number of dimension returns 2 or less in check, then the data
 are unidimensional; otherwise, regular EGA with no matrix
 expansion is used. This method was used in the Golino et al.'s (2020)
 \emph{Psychological Methods} simulation
@@ -124,26 +123,17 @@ expansion is used. This method was used in the Golino et al.'s (2020)
 (\code{\link[igraph]{cluster_leading_eigen}})
 on the empirical correlation matrix. If the number of dimensions is 1,
 then the Leading Eigenvector solution is used; otherwise, regular EGA
-is used. This method was used in the Christensen et al.'s (2023) 
+is used. This method was used in the Christensen et al.'s (2023)
 \emph{Behavior Research Methods} simulation
 
 \item \code{"louvain"} --- Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
-on the empirical correlation matrix. If the number of dimensions is 1, 
-then the Louvain solution is used; otherwise, regular EGA is used. 
+on the empirical correlation matrix. If the number of dimensions is 1,
+then the Louvain solution is used; otherwise, regular EGA is used.
 This method was validated Christensen's (2022) \emph{PsyArXiv} simulation.
 Consensus clustering can be used by specifying either
 \code{"consensus.method"} or \code{"consensus.iter"}
 
 }}
-
-\item{estimator}{Character (length = 1).
-Estimator to use for random-intercept model (see \href{https://lavaan.ugent.be/tutorial/est.html}{Estimators}
-for more details).
-Defaults to \code{"auto"}, which selects \code{"MLR"} for continuous data and
-\code{"WLSMV"} for mixed and categorical data.
-Data are considered continuous data if they have \code{8} or
-more categories (see Rhemtulla, Brosseau-Liard, & Savalei, 2012).
-To change this behavior, set \code{oridinal.categories} as an argument}
 
 \item{plot.EGA}{Boolean (length = 1).
 If \code{TRUE}, returns a plot of the network and its estimated dimensions.
@@ -155,7 +145,7 @@ Defaults to \code{FALSE} (silent calls).
 Set to \code{TRUE} to see all messages and warnings for every function call}
 
 \item{...}{Additional arguments to be passed on to
-\code{\link[EGAnet]{auto.correlate}}, 
+\code{\link[EGAnet]{auto.correlate}},
 \code{\link[EGAnet]{network.estimation}},
 \code{\link[EGAnet]{community.detection}},
 \code{\link[EGAnet]{community.consensus}}, and
@@ -188,9 +178,9 @@ model (if the model converged):
 \item{plot.EGA}{Plot output if \code{plot.EGA = TRUE}}
 }
 \description{
-Estimates the number of substantive dimensions after controlling 
-for wording effects. EGA is applied to a residual correlation matrix after 
-subtracting and random intercept factor with equal unstandardized loadings 
+Estimates the number of substantive dimensions after controlling
+for wording effects. EGA is applied to a residual correlation matrix after
+subtracting and random intercept factor with equal unstandardized loadings
 from all the regular and unrecoded reversed items in the database
 }
 \examples{
