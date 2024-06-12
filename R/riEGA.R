@@ -262,7 +262,7 @@ riEGA <- function(
     "std.lv", "se"
   )] <- list(
     output$correlation_matrix, output$n,
-    swiftelse("estimator" %in% names(ellipse), estimator, "ml"),
+    swiftelse("estimator" %in% names(ellipse), ellipse$estimator, "ML"),
     FALSE, "none"
   )
 
