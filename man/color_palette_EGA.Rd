@@ -51,7 +51,7 @@ Defaults to \code{FALSE}}
 Vector of colors for community memberships
 }
 \description{
-Color palettes for plotting \code{\link[GGally]{ggnet2}} 
+Color palettes for plotting \code{\link[GGally]{ggnet2}}
 \code{\link[EGAnet]{EGA}} network plots
 }
 \examples{
