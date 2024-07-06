@@ -54,16 +54,16 @@ data2 <- wmt[split2,]
 glas1 <- EBICglasso.qgraph(data1)
 glas2 <- EBICglasso.qgraph(data2)
 
-# Spectral JSD 
-jsd(glas1, glas2) 
+# Spectral JSD
+jsd(glas1, glas2)
 # 0.1595893
 
 # Spectral JSS (similarity)
-1 - jsd(glas1, glas2) 
+1 - jsd(glas1, glas2)
 # 0.8404107
 
 # Jensen-Shannon Divergence
-jsd(glas1, glas2, method = "kld") 
+jsd(glas1, glas2, method = "kld")
 # 0.1393621
 
 }
