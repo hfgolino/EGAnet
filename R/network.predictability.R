@@ -121,7 +121,7 @@
 #' @export
 #'
 # Predict new data based on network ----
-# Updated 13.05.2024
+# Updated 10.07.2024
 network.predictability <- function(network, original.data, newdata, ordinal.categories = 7)
 {
 
@@ -261,10 +261,7 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
   }
 
   # Obtain results
-  results <- setup_results(
-    predictions, newdata, flags, betas,
-    node_names, dimensions, dim_sequence
-  )
+  results <- setup_results(predictions, newdata, betas, node_names, dim_sequence)
 
   # Check for categorical data
   if(any(flags$categorical)){
@@ -345,54 +342,12 @@ network.predictability_errors <- function(network, original.data, newdata, ordin
 
 #' @exportS3Method
 # S3 Print Method ----
-# Updated 19.02.2024
+# Updated 10.07.2024
 print.predictability <- function(x, ...)
 {
 
-  # Get flags
-  flags <- attr(x$results, "flags")
-
-  # Set up full flags
-  full_flags <- lapply(flags, any)
-
-  # Get node names
-  node_names <- row.names(x$results)
-
-  # Set up category prints
-  ## Dichotomous
-  if(full_flags$dichotomous){
-    cat("Dichotomous\n\n")
-    print(
-      t(x$results[flags$dichotomous, c("Accuracy", "Kappa"), drop = FALSE]),
-      quote = FALSE, digits = 3
-    )
-  }
-  ## Polytomous
-  if(full_flags$polytomous){
-
-    ## Check for break from dichotomous
-    if(full_flags$dichotomous){
-      cat("\n----\n\n")
-    }
-    cat("Polytomous\n\n")
-    print(
-      t(x$results[flags$polytomous, c("Linear Kappa", "Krippendorff's Alpha"), drop = FALSE]),
-      quote = FALSE, digits = 3
-    )
-  }
-  ## Continuous
-  if(full_flags$continuous){
-
-    ## Check for break from dichotomous
-    if(full_flags$categorical){
-      cat("\n----\n\n")
-    }
-    cat("Continuous\n\n")
-    print(
-      t(x$results[flags$continuous, c("R2", "RMSE"), drop = FALSE]),
-      quote = FALSE, digits = 3
-    )
-  }
+  # Print with three digits
+  print(x$results, digits = 3, quote = FALSE)
 
 }
 
@@ -535,121 +490,46 @@ handle_thresholds <- function(factored_data)
 }
 
 #' @noRd
-# Set up results ----
-# Updated 02.03.2024
-setup_results <- function(
-    predictions, newdata, flags, betas,
-    node_names, dimensions, dim_sequence
-)
+# Get accuracy ----
+# Updated 10.07.2024
+accuracy <- function(prediction, observed)
 {
 
-  # Check for all dichotomous
-  if(all(flags$dichotomous)){
+  # Try to get correlation
+  correlation <- try(
+    silent_call(auto.correlate(cbind(prediction, observed))),
+    silent = TRUE
+  )
 
-    # Get results
-    results <- as.data.frame(
-      matrix(
-        nvapply(
-          dim_sequence, function(i){
-            binary_accuracy(predictions[,i], newdata[,i])[c("accuracy", "kappa")]
-          }, LENGTH = 2
-        ), ncol = 2, byrow = TRUE,
-        dimnames = list(node_names, c("Accuracy", "Kappa"))
-      )
+  # Return values
+  return(
+    c(
+      R2 = swiftelse(is(correlation, "try-error"), NA, correlation[1,2])^2,
+      MAE = mean(abs(prediction - observed), na.rm = TRUE)
     )
+  )
 
-  }else if(all(flags$polytomous)){ # Check for all polytomous
+}
 
-    # Get results
-    results <- as.data.frame(
-      matrix(
-        nvapply(
-          dim_sequence, function(i){
-            ordinal_accuracy(predictions[,i], newdata[,i])[c("linear_kappa", "kripp_alpha")]
-          }, LENGTH = 2
-        ), ncol = 2, byrow = TRUE,
-        dimnames = list(node_names, c("Linear Kappa", "Krippendorff's Alpha"))
-      )
-    )
-
-  }else if(all(flags$continuous)){ # Check for all continuous
-
-
-    # Get results
-    results <- as.data.frame(
-      matrix(
-        nvapply(
-          dim_sequence, function(i){
-            continuous_accuracy(predictions[,i], newdata[,i])
-          }, LENGTH = 2
-        ), ncol = 2, byrow = TRUE,
-        dimnames = list(node_names, c("R2", "RMSE"))
-      )
-    )
-
-  }else{ # Data are mixed
-
-    # Initialize matrix
-    results <- fast.data.frame(
-      NA, nrow = dimensions[2], ncol = 6,
-      rownames = node_names,
-      colnames = c(
-        "Accuracy", "Kappa",
-        "Linear Kappa", "Krippendorff's Alpha",
-        "R2", "RMSE"
-      )
-    )
-
-    # Check for dichotomous data
-    if(any(flags$dichotomous)){
-
-      # Get results
-      results[flags$dichotomous, c("Accuracy", "Kappa")] <- t(
-        nvapply(
-          dim_sequence[flags$dichotomous], function(i){
-            binary_accuracy(predictions[,i], newdata[,i])[c("accuracy", "kappa")]
-          }, LENGTH = 2
-        )
-      )
-
-    }
-
-    # Check for polytomous data
-    if(any(flags$polytomous)){
-
-      # Get results
-      results[flags$polytomous, c("Linear Kappa", "Krippendorff's Alpha")] <- t(
-        nvapply(
-          dim_sequence[flags$polytomous], function(i){
-            ordinal_accuracy(predictions[,i], newdata[,i])[c("linear_kappa", "kripp_alpha")]
-          }, LENGTH = 2
-        )
-      )
-
-    }
-
-    # Check for polytomous data
-    if(any(flags$continuous)){
-
-      # Get results
-      results[flags$continuous, c("R2", "RMSE")] <- t(
-        nvapply(
-          dim_sequence[flags$continuous], function(i){
-            continuous_accuracy(predictions[,i], newdata[,i])
-          }, LENGTH = 2
-        )
-      )
-
-    }
-
-  }
+#' @noRd
+# Set up results ----
+# Updated 10.07.2024
+setup_results <- function(predictions, newdata, betas, node_names, dim_sequence)
+{
 
   # Return final results
   return(
     list(
       predictions = predictions,
       betas = betas,
-      results = results
+      results = as.data.frame(
+        matrix(
+          nvapply(
+            dim_sequence, function(i){accuracy(predictions[,i], newdata[,i])}, LENGTH = 2
+          ), ncol = 2, byrow = TRUE,
+          dimnames = list(node_names, c("R2", "MAE"))
+        )
+      )
     )
   )
 

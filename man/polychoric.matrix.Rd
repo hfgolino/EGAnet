@@ -79,7 +79,7 @@ Returns a polychoric correlation matrix
 \description{
 A fast implementation of polychoric correlations in C.
 Uses the Beasley-Springer-Moro algorithm (Boro & Springer, 1977; Moro, 1995)
-to estimate the inverse univariate normal CDF, the Drezner-Wesolosky 
+to estimate the inverse univariate normal CDF, the Drezner-Wesolosky
 approximation (Drezner & Wesolosky, 1990) to estimate the bivariate normal
 CDF, and Brent's method (Brent, 2013) for optimization of rho
 }
@@ -93,13 +93,13 @@ correlations <- polychoric.matrix(wmt)
 # Randomly assign missing data
 wmt[sample(1:length(wmt), 1000)] <- NA
 
-# Compute polychoric correlation matrix 
+# Compute polychoric correlation matrix
 # with pairwise missing
 pairwise_correlations <- polychoric.matrix(
   wmt, na.data = "pairwise"
 )
 
-# Compute polychoric correlation matrix 
+# Compute polychoric correlation matrix
 # with listwise missing
 pairwise_correlations <- polychoric.matrix(
   wmt, na.data = "listwise"
@@ -117,7 +117,7 @@ The full monte.
 \emph{Risk 8 (February)}, 57-58.
 
 \strong{Brent optimization} \cr
-Brent, R. P. (2013). 
+Brent, R. P. (2013).
 Algorithms for minimization without derivatives.
 Mineola, NY: Dover Publications, Inc.
 

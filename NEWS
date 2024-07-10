@@ -4,9 +4,15 @@ WEBSITE: https://r-ega.net
 
 + FIX: mixed data with missing data in `network.predictability`
 
++ ADD: `frobenius` norm to compare networks
+
++ UPDATE: `jsd` with `method = "spectral"` uses absolute values (no longer produces impossible values)
+
 + UPDATE: NEWS is now formatted in markdown
 
-+ UPDATE: prediction and RMSE output for continuous data `network.predictability` is set to original scale to increase interpretability
++ UPDATE: `network.predictability` uses R-squared and mean absolute error (MAE) for all node predictions
+
++ INTERNAL: `network.generalizabilty` was moved to be internal (needs some work yet)
 
 
 ## Changes in version 2.0.6

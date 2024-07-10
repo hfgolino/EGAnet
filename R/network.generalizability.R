@@ -207,16 +207,16 @@
 #'
 #' @examples
 #' # Data splitting
-#' network.generalizability(
-#'   data = wmt2[,7:24], method = "split",
-#'   number = 0.80 # 80/20 training/testing
-#' )
+#' # network.generalizability(
+#' #  data = wmt2[,7:24], method = "split",
+#' #  number = 0.80 # 80/20 training/testing
+#' # )
 #'
 #' # k-folds cross-validation
-#' network.generalizability(
-#'   data = wmt2[,7:24], method = "cv",
-#'   number = 5 # 5-fold cross-validation
-#' )
+#' # network.generalizability(
+#' #  data = wmt2[,7:24], method = "cv",
+#' #  number = 5 # 5-fold cross-validation
+#' # )
 #'
 #' \dontrun{
 #' # Leave-one-out cross-validation
@@ -235,7 +235,7 @@
 #' Why overfitting is not (usually) a problem in partial correlation networks.
 #' \emph{Psychological Methods}, \emph{27}(5), 822–840.
 #'
-#' @export
+#' @noRd
 #'
 # Perform generalizability analysis ----
 # Updated 26.02.2024
@@ -478,9 +478,9 @@ network.generalizability <- function(
 
     # Set up as if at the end of `network.predictability`
     metric_summary <- setup_results(
-      predictions = newdata, newdata = original.data, flags = flags,
+      predictions = newdata, newdata = original.data,
       betas = NULL, node_names = dimnames(data)[[2]],
-      dimensions = dimensions, dim_sequence = seq_len(dimensions[2])
+      dim_sequence = seq_len(dimensions[2])
     )
 
     # Attach categories to results

@@ -215,7 +215,7 @@ riEGA <- function(
   uni.method <- set_default(uni.method, "louvain", community.unidimensional)
 
   # Obtain correlations
-  output <- EGAnet:::obtain_sample_correlations(data, n, corr, na.data, verbose)
+  output <- obtain_sample_correlations(data, n, corr, na.data, verbose)
 
   # Catch BGGM
   if(model == "bggm"){
