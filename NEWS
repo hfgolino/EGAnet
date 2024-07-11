@@ -6,6 +6,8 @@ WEBSITE: https://r-ega.net
 
 + ADD: `frobenius` norm to compare networks
 
++ ADD: `network.compare` function to test for differences in network structures using three different metrics (Frobenius Norm, Jensen-Shannon Similarity, total network strength)
+
 + UPDATE: `jsd` with `method = "spectral"` uses absolute values (no longer produces impossible values)
 
 + UPDATE: NEWS is now formatted in markdown
