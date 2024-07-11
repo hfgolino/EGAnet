@@ -246,12 +246,13 @@ network.compare <- function(
   return(
     t(data.frame(
       "statistic" = empirical_values,
-      "p.value" = colMeans(
-        sweep(
-          x = abs(permutated_values), MARGIN = 2,
-          STATS = empirical_values, FUN = ">="
-        ), na.rm = TRUE
-      )
+      "p.value" = c(
+        mean(permutated_values[,1] <= empirical_values[1]),
+        mean(permutated_values[,2] <= empirical_values[2]),
+        mean(abs(permutated_values[,3]) >= empirical_values[3])
+      ),
+      "M_permutated" = colMeans(permutated_values),
+      "SD_permutated" = apply(permutated_values, 2, sd)
     ))
   )
 
