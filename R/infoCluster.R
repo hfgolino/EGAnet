@@ -14,6 +14,9 @@
 #' Defaults to \code{TRUE}.
 #' Set to \code{FALSE} to not plot
 #'
+#' @param ... Additional arguments to be passed on to
+#' \code{\link[EGAnet]{jsd}}
+#'
 #' @examples
 #'# Obtain data
 #' sim.dynEGA <- sim.dynEGA # bypasses CRAN checks
@@ -46,8 +49,8 @@
 #' @export
 #'
 # Information Theoretic Clustering for dynEGA
-# Updated 21.11.2023
-infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
+# Updated 27.07.2024
+infoCluster <- function(dynEGA.object, plot.cluster = TRUE, ...)
 {
 
   # Check for appropriate class ("dynEGA.ind.pop" defunct to legacy)
@@ -64,7 +67,7 @@ infoCluster <- function(dynEGA.object, plot.cluster = TRUE)
   )
 
   # Get pairwise JSD
-  jsd_matrix <- pairwise_spectral_JSD(individual_networks)
+  jsd_matrix <- pairwise_spectral_JSD(individual_networks, ...)
 
   # Make diagonal NA
   diag(jsd_matrix) <- NA

@@ -22,6 +22,10 @@
 #'
 #' }
 #'
+#' @param signed Boolean. (length = 1).
+#' Should networks be remain signed?
+#' Defaults to \code{TRUE}
+#'
 #' @examples
 #' # Obtain wmt2 data
 #' wmt <- wmt2[,7:24]
@@ -62,10 +66,11 @@
 #' @export
 #'
 # Jensen-Shannon Distance
-# Updated 06.07.2024
+# Updated 27.07.2024
 jsd <- function(
     network1, network2,
-    method = c("kld", "spectral")
+    method = c("kld", "spectral"),
+    signed = TRUE
 )
 {
 
@@ -73,7 +78,7 @@ jsd <- function(
   method <- set_default(method, "spectral", jsd)
 
   # Argument errors (send back networks in case of tibble)
-  error_return <- jsd_errors(network1, network2)
+  error_return <- jsd_errors(network1, network2, signed)
 
   # Get networks
   network1 <- error_return$network1; network2 <- error_return$network2
@@ -82,8 +87,8 @@ jsd <- function(
   if(method == "spectral"){
 
     # Obtain rescaled Laplacian matrices
-    laplacian1 <- rescaled_laplacian(abs(network1))
-    laplacian2 <- rescaled_laplacian(abs(network2))
+    laplacian1 <- rescaled_laplacian(network1)
+    laplacian2 <- rescaled_laplacian(network2)
 
     # Obtain individual VN entropies
     lentropy1 <- entropy_laplacian(laplacian1)
@@ -116,8 +121,8 @@ jsd <- function(
 
 #' @noRd
 # Argument errors ----
-# Updated 13.08.2023
-jsd_errors <- function(network1, network2)
+# Updated 27.07.2024
+jsd_errors <- function(network1, network2, signed)
 {
 
   # 'network1' errors
@@ -136,8 +141,17 @@ jsd_errors <- function(network1, network2)
     network2 <- as.matrix(network2)
   }
 
+  # 'Check for 'signed' errors
+  length_error(signed, 1, "jsd")
+  typeof_error(signed, "logical", "jsd")
+
   # Return networks
-  return(list(network1 = network1, network2 = network2))
+  return(
+    list(
+      network1 = swiftelse(signed, network1, abs(network1)),
+      network2 = swiftelse(signed, network2, abs(network2))
+    )
+  )
 
 }
 
@@ -203,9 +217,12 @@ kld <- function(network1, network2)
 
 #' @noRd
 # Faster pairwise spectral JSD
-# Updated 13.07.2023
-pairwise_spectral_JSD <- function(network_list)
+# Updated 27.07.2024
+pairwise_spectral_JSD <- function(network_list, ...)
 {
+
+  # Get ellipse
+  ellipse <- list(...)
 
   # Get length of list
   network_length <- length(network_list)
@@ -218,6 +235,14 @@ pairwise_spectral_JSD <- function(network_list)
     nrow = network_length, ncol = network_length,
     dimnames = list(ID_names, ID_names)
   )
+
+  # Check for signed
+  if("signed" %in% names(ellipse) && !ellipse$signed){
+
+    # Get absolute networks
+    network_list <- lapply(network_list, abs)
+
+  }
 
   # Pre-compute rescaled Laplacian matrices
   rescaled_L <- lapply(network_list, rescaled_laplacian)
@@ -250,9 +275,21 @@ pairwise_spectral_JSD <- function(network_list)
 
 #' @noRd
 # Faster comparison spectral JSD
-# Updated 10.07.2023
-comparison_spectral_JSD <- function(base, network_list)
+# Updated 27.07.2024
+comparison_spectral_JSD <- function(base, network_list, ...)
 {
+
+  # Get ellipse
+  ellipse <- list(...)
+
+  # Check for signed
+  if("signed" %in% names(ellipse) && !ellipse$signed){
+
+    # Get absolute networks
+    base <- abs(base)
+    network_list <- lapply(network_list, abs)
+
+  }
 
   # Pre-compute rescaled Laplacian and entropy for base
   rescaled_base <- rescaled_laplacian(base)

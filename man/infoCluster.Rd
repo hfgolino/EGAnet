@@ -4,7 +4,7 @@
 \alias{infoCluster}
 \title{Information Theoretic Mixture Clustering for \code{\link[EGAnet]{dynEGA}}}
 \usage{
-infoCluster(dynEGA.object, plot.cluster = TRUE)
+infoCluster(dynEGA.object, plot.cluster = TRUE, ...)
 }
 \arguments{
 \item{dynEGA.object}{A \code{\link[EGAnet]{dynEGA}} or a
@@ -15,6 +15,9 @@ the arguments of the EII object}
 Should plot of optimal and hierarchical clusters be output?
 Defaults to \code{TRUE}.
 Set to \code{FALSE} to not plot}
+
+\item{...}{Additional arguments to be passed on to
+\code{\link[EGAnet]{jsd}}}
 }
 \value{
 Returns a list containing:

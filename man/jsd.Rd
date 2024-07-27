@@ -4,7 +4,7 @@
 \alias{jsd}
 \title{Jensen-Shannon Distance}
 \usage{
-jsd(network1, network2, method = c("kld", "spectral"))
+jsd(network1, network2, method = c("kld", "spectral"), signed = TRUE)
 }
 \arguments{
 \item{network1}{Matrix or data frame.
@@ -26,6 +26,10 @@ Available options:
 Von Neumann entropy
 
 }}
+
+\item{signed}{Boolean. (length = 1).
+Should networks be remain signed?
+Defaults to \code{TRUE}}
 }
 \value{
 Returns Jensen-Shannon Distance
