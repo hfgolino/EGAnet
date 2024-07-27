@@ -38,11 +38,6 @@
 #'
 #' @param burnin Number of n first samples to discard when computing the factor scores. Defaults to 1000.
 #'
-#' @param variation Boolean.
-#' Whether parameters should be varied.
-#' Defaults to \code{FALSE}.
-#' Set to \code{TRUE} to add slight variation to all parameters
-#'
 #' @examples
 #' \dontrun{
 #' # Estimate EGA network
@@ -63,134 +58,165 @@
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
 #'
 #' @export
-# Simulate dynamic factor model
-# Updated 01.11.2023
+# Simulate dynamic factor model ----
+# Updated 27.07.2024
 simDFM <- function(
     variab, timep, nfact, error, dfm = c("DAFS","RandomWalk"),
-    loadings, autoreg, crossreg, var.shock, cov.shock, burnin = 1000,
-    variation = FALSE
-){
+    loadings, autoreg, crossreg, var.shock, cov.shock, burnin = 1000
+)
+{
 
-  # Send not refactored message (for now)
-  not_refactored("simDFM")
-  
-  #### MISSING ARGUMENTS HANDLING ####
-  if(missing(dfm)){
-    dfm <- "DAFS"
-  }else{dfm <- match.arg(dfm)}
+  # Check for missing arguments (argument, default, function)
+  dfm <- set_default(dfm, "DAFS", simDFM)
 
-  # Factor Scores:
+  # Check for errors
+  simDFM_errors(
+    variab, timep, nfact, error,
+    loadings, autoreg, crossreg,
+    var.shock, cov.shock, burnin
+  )
 
-  if(dfm == "DAFS"){
-    
-    # Add variation
-    if(isTRUE(variation)){
-      
-      # B = Matrix of Bl is a nfact x nfact matrix containing the autoregressive and cross-regressive coefficients
-      B <- matrix(
-        # Add some variation
-        crossreg + runif(nfact * nfact, -0.05, 0.05),
-        ncol = nfact,
-        nrow = nfact
-      )
-      # Make symmetric
-      B <- (t(B) + B) / 2
-      
-      # Add some varation
-      diag(B) <- autoreg + runif(nfact, -0.05, 0.05)
-      
-      # Shock = Random shock vectors following a multivariate normal distribution with mean zeros and nfact x nfact q covariance matrix D
-      D <- matrix(
-        # Add some variation
-        cov.shock + runif(nfact * nfact, -0.05, 0.05),
-        nfact,
-        nfact
-      )
-      # Make symmetric
-      D <- (t(D) + D) / 2
-      
-      # Add some variation
-      diag(D) <- var.shock + runif(nfact, -0.05, 0.05)
-      
-      # Compute shock
-      Shock <- MASS_mvrnorm(
-        burnin + timep, matrix(0, nfact, 1), D
-      )
-      
-      Fscores <- matrix(0, burnin + timep, nfact)
-      Fscores[1,] <- Shock[1,]
-      
-      for (t in 2: (burnin+timep)){
-        Fscores[t,] <- Fscores[t-1,] %*% B+ Shock[t,]
-      }
-      Fscores <- Fscores[-c(1:burnin),]
-      
-    }else{
-      
-      # B = Matrix of Bl is a nfact x nfact matrix containing the autoregressive and cross-regressive coefficients
-      B <- matrix(
-        crossreg, ncol = nfact, nrow = nfact
-      )
-      diag(B) <- autoreg
-      
-      # Shock = Random shock vectors following a multivariate normal distribution with mean zeros and nfact x nfact q covariance matrix D
-      D <- matrix(cov.shock, nfact, nfact)
-      diag(D) <- var.shock
-      Shock <- MASS_mvrnorm(burnin+timep,matrix(0,nfact,1),D)
-      
-      Fscores <- matrix(0,burnin+timep,nfact)
-      Fscores[1,] <- Shock[1,]
-      
-      for (t in 2: (burnin+timep)){
-        Fscores[t,] <- Fscores[t-1,] %*% B+ Shock[t,]
-      }
-      Fscores <- Fscores[-c(1:burnin),]
-      
+  # Get N
+  N <- burnin + timep
+
+  # Compute scores
+  if(dfm == "dafs"){ # Dynamic Factor Model
+
+    # B = Matrix of Bl is a nfact x nfact matrix containing the
+    # autoregressive and cross-regressive coefficients
+    B <- matrix(crossreg, ncol = nfact, nrow = nfact)
+    diag(B) <- autoreg
+
+    # Shock = Random shock vectors following a multivariate normal
+    # distribution with mean zeros and nfact x nfact q covariance matrix D
+    D <- matrix(cov.shock, nfact, nfact)
+    diag(D) <- var.shock
+
+    # Set up shock
+    Shock <- MASS_mvrnorm_quick(p = nfact, np = N * nfact, coV = D)
+
+    # Get factor scores
+    Fscores <- matrix(0, nrow = N, ncol = nfact)
+    Fscores[1,] <- Shock[1,]
+
+    # Loop over to get scores
+    for(time in 2:N){
+      Fscores[time,] <- Fscores[time-1,] %*% B + Shock[time,]
     }
 
-  }else{
-    Fscores <- matrix(rnorm(nfact*(burnin+timep), 0, 1), nfact, burnin+timep)
-    Fscores <- Fscores[,-c(1:burnin)]
-    ## nfact x timep matrix of scaled latent trends
-    Fscores <- scale(apply(Fscores,1,cumsum))
+    # Remove burn-in
+    Fscores <- Fscores[-seq_len(burnin),]
+
+  }else{ # Random Walk
+
+    # Initialize factor scores
+    Fscores <- matrix(
+      rnorm_ziggurat(n = nfact * N),
+      nrow = nfact, ncol = N
+    )
+
+    # Remove burn-in
+    Fscores <- Fscores[,-seq_len(burnin)]
+
+    # nfact x timep matrix of scaled latent trends
+    Fscores <- scale(apply(Fscores, 1, cumsum))
+
   }
 
+  # Get loading matrix
+  LoadMat <- as.matrix(Matrix::bdiag(lapply(rep(loadings, nfact), rep, variab)))
 
-  if(isTRUE(variation)){
-    loads <- lapply(rep(loadings, nfact), rep, variab)
-    loads <- lapply(loads, function(x){x + runif(length(x), -0.10, 0.10)})
-    LoadMat <- as.matrix(Matrix::bdiag(loads))
-  }else{
-    LoadMat <- as.matrix(Matrix::bdiag(lapply(rep(loadings, nfact), rep, variab)))
-  }
+  # Set number of variables
+  p <- variab * nfact
 
-  ## Error: multivariate normal distribution with mean zeros and p x p covariance matrix Q
-  if(isTRUE(variation)){
-    var <- (rep(error, variab*nfact) + runif(variab*nfact, -0.025, 0.025))^2
-    Q <- diag(var,variab*nfact,variab*nfact)
-    e <- t(MASS_mvrnorm(timep, matrix(0,variab*nfact,1),Q))
-  }else{
-    var <- error^2
-    Q <- diag(var,variab*nfact,variab*nfact)
-    e <- t(MASS_mvrnorm(timep, matrix(0,variab*nfact,1),Q))
-  }
+  # Set up for generating data
+  Q <- diag(error^2, nrow = p, ncol = p)
+  e <- t(MASS_mvrnorm_quick(p = p, np = timep * p, coV = Q))
 
+  # Simulate observed data
+  observed <- t(tcrossprod(LoadMat, Fscores) + e)
 
-  ## Simulated obs data
-  obs.data <- LoadMat %*% t(Fscores) + e
-  obs.data <- as.data.frame(t(obs.data))
-  colnames(obs.data) <- paste0("V", 1:ncol(obs.data))
-  results <- list()
-  results$data <- obs.data
-  results$Fscores <- as.data.frame(Fscores)
-  if(nfact>1){
-    colnames(results$Fscores) <- paste0("F", 1:ncol(Fscores))  
-  }else{
-    colnames(results$Fscores) <- "F1"
-  }
-  
-  results$LoadMat <- LoadMat
-  results$Structure <- rep(1:nfact, each = variab)
-  return(results)
+  # Get factor sequence
+  factor_sequence <- seq_len(nfact)
+
+  # Set names
+  dimnames(observed)[[2]] <- paste0("V", seq_len(p))
+  dimnames(Fscores)[[2]] <- paste0("F", factor_sequence)
+
+  # Return results
+  return(
+    list(
+      data = observed,
+      Fscores = Fscores,
+      LoadMat = LoadMat,
+      Structure = rep(factor_sequence, each = variab)
+    )
+  )
+
 }
-#----
+
+#' @noRd
+# Errors ----
+# Updated 27.07.2024
+simDFM_errors <- function(
+    variab, timep, nfact, error,
+    loadings, autoreg, crossreg,
+    var.shock, cov.shock, burnin
+)
+{
+
+  # 'variab' errors
+  length_error(variab, 1, "simDFM")
+  typeof_error(variab, "numeric", "simDFM")
+  range_error(variab, c(2, Inf), "simDFM")
+
+  # 'timep' errors
+  length_error(timep, 1, "simDFM")
+  typeof_error(timep, "numeric", "simDFM")
+  range_error(timep, c(2, Inf), "simDFM")
+
+  # 'nfact' errors
+  length_error(nfact, 1, "simDFM")
+  typeof_error(nfact, "numeric", "simDFM")
+  range_error(nfact, c(1, Inf), "simDFM")
+
+  # 'error' errors
+  length_error(error, 1, "simDFM")
+  typeof_error(error, "numeric", "simDFM")
+  range_error(error, c(0, 1), "simDFM")
+
+  # 'loadings' errors
+  length_error(loadings, 1, "simDFM")
+  typeof_error(loadings, "numeric", "simDFM")
+  range_error(loadings, c(-1, 1), "simDFM")
+
+  # 'autoreg' errors
+  length_error(autoreg, 1, "simDFM")
+  typeof_error(autoreg, "numeric", "simDFM")
+  range_error(autoreg, c(0, 1), "simDFM")
+
+  # 'crossreg' errors
+  length_error(crossreg, 1, "simDFM")
+  typeof_error(crossreg, "numeric", "simDFM")
+  range_error(crossreg, c(0, 1), "simDFM")
+
+  # 'var.shock' errors
+  length_error(var.shock, 1, "simDFM")
+  typeof_error(var.shock, "numeric", "simDFM")
+  range_error(var.shock, c(0, 1), "simDFM")
+
+  # 'cov.shock' errors
+  length_error(cov.shock, 1, "simDFM")
+  typeof_error(cov.shock, "numeric", "simDFM")
+  range_error(cov.shock, c(0, 1), "simDFM")
+
+  # 'burnin' errors
+  length_error(burnin, 1, "simDFM")
+  typeof_error(burnin, "numeric", "simDFM")
+  range_error(burnin, c(1, Inf), "simDFM")
+
+}
+
+
+
+
