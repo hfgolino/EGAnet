@@ -97,8 +97,9 @@
 #' \code{\link[EGAnet]{auto.correlate}},
 #' \code{\link[EGAnet]{network.estimation}},
 #' \code{\link[EGAnet]{community.detection}},
-#' \code{\link[EGAnet]{community.consensus}}, and
-#' \code{\link[EGAnet]{EGA}}
+#' \code{\link[EGAnet]{community.consensus}},
+#' \code{\link[EGAnet]{EGA}}, and
+#' \code{\link[EGAnet]{jsd}}
 #'
 #' @return Returns data frame with row names of each measure, empirical value (\code{statisticl}), and p-value based on the permutation test (\code{p.value})
 #'
@@ -138,7 +139,7 @@
 #' @export
 #'
 # Perform permutations for network structures ----
-# Updated 11.07.2024
+# Updated 27.07.2024
 network.compare <- function(
     base, comparison,
     # EGA arguments
@@ -197,7 +198,7 @@ network.compare <- function(
   empirical_values = abs(
     c(
       "Frobenius" = frobenius(base_empirical_network, comparison_empirical_network),
-      "JSS" = 1 - jsd(base_empirical_network, comparison_empirical_network),
+      "JSS" = 1 - jsd(base_empirical_network, comparison_empirical_network, ...),
       "Total Strength" = sum(colSums(abs(base_empirical_network), na.rm = TRUE), na.rm = TRUE) -
         sum(colSums(abs(comparison_empirical_network), na.rm = TRUE), na.rm = TRUE)
     )

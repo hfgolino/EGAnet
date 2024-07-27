@@ -112,8 +112,9 @@ for more details on random number generation in \code{\link{EGAnet}}}
 \code{\link[EGAnet]{auto.correlate}},
 \code{\link[EGAnet]{network.estimation}},
 \code{\link[EGAnet]{community.detection}},
-\code{\link[EGAnet]{community.consensus}}, and
-\code{\link[EGAnet]{EGA}}}
+\code{\link[EGAnet]{community.consensus}},
+\code{\link[EGAnet]{EGA}}, and
+\code{\link[EGAnet]{jsd}}}
 }
 \value{
 Returns data frame with row names of each measure, empirical value (\code{statisticl}), and p-value based on the permutation test (\code{p.value})

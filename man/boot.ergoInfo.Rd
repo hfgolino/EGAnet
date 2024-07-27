@@ -19,9 +19,9 @@ boot.ergoInfo(
 \code{\link[EGAnet]{dynEGA.ind.pop}} object. If a \code{\link[EGAnet]{dynEGA}}
 object, then \code{level = c("individual", "population")} is required}
 
-\item{EII}{A \code{\link[EGAnet]{ergoInfo}} object 
-used to estimate the Empirical Ergodicity Information Index 
-or the estimated value of EII estimated using the \code{\link[EGAnet]{ergoInfo}} 
+\item{EII}{A \code{\link[EGAnet]{ergoInfo}} object
+used to estimate the Empirical Ergodicity Information Index
+or the estimated value of EII estimated using the \code{\link[EGAnet]{ergoInfo}}
 function. Inherits \code{use} from \code{\link[EGAnet]{ergoInfo}}.
 If no \code{\link[EGAnet]{ergoInfo}} object is provided, then it is estimated}
 
@@ -35,7 +35,7 @@ Current options are:
 
 \item \code{"edge.list"} --- Calculates the algorithm complexity using the list of edges
 
-\item \code{"unweighted"} --- Calculates the algorithm complexity using the binary weights of the encoded prime 
+\item \code{"unweighted"} --- Calculates the algorithm complexity using the binary weights of the encoded prime
 transformed network. 0 = edge absent and 1 = edge present
 
 \item \code{"weighted"} --- Calculates the algorithm complexity using the weights of encoded prime-weight transformed network
@@ -72,7 +72,7 @@ Returns a list containing:
 \item{boot.ergoInfo}{The values of the Ergodicity Information Index obtained in the bootstrap}
 
 \item{p.value}{The two-sided \emph{p}-value of the bootstrap test for the Ergodicity Information Index.
-The null hypothesis is that the empirical Ergodicity Information index is equal to the expected value of the EII
+The null hypothesis is that the empirical Ergodicity Information index is equal to or greater than the expected value of the EII
 with small variation in the population structure}
 
 \item{effect}{Indicates wheter the empirical EII is greater or less then the bootstrap distribution of EII.}
@@ -80,16 +80,16 @@ with small variation in the population structure}
 \item{interpretation}{How you can interpret the result of the test in plain English}
 }
 \description{
-Tests the Ergodicity Information Index obtained in the 
+Tests the Ergodicity Information Index obtained in the
 empirical sample with a distribution of EII obtained by a variant of
 bootstrap sampling (see \strong{Details} for the procedure)
 }
 \details{
-In traditional bootstrap sampling, individual participants are resampled 
-with replacement from the empirical sample. This process is time consuming 
-when carried out across \emph{v} number of variables, \emph{n} number of 
+In traditional bootstrap sampling, individual participants are resampled
+with replacement from the empirical sample. This process is time consuming
+when carried out across \emph{v} number of variables, \emph{n} number of
 participants, \emph{t} number of time points, and \emph{i} number of iterations.
-Instead, \code{boot.ergoInfo} uses the premise of an ergodic process to 
+Instead, \code{boot.ergoInfo} uses the premise of an ergodic process to
 establish more efficient test that works directly on the sample's networks.
 
 With an ergodic process, the expectation is that all individuals will have
@@ -100,7 +100,7 @@ should result in a significant loss of information. Following this conjecture,
 it has with an individual. An individual's unique edges remain the same,
 controlling for their unique information. The result is a replicate individual
 that contains the same total number of edges as the actual individual but
-its shared information with the population has been scrambled. 
+its shared information with the population has been scrambled.
 
 This process is repeated over each individual to create a replicate sample
 and is repeated for \emph{X} iterations (e.g., 100). This approach creates
@@ -110,13 +110,13 @@ information between them. If the shared information between the population
 and individuals in the empirical sample is sufficiently meaningful, then
 this process should result in significant information loss.
 
-How to interpret the results: the result of \code{boot.ergoInfo} is a sampling 
-distribution of EII values that would be expected if the process was random 
+How to interpret the results: the result of \code{boot.ergoInfo} is a sampling
+distribution of EII values that would be expected if the process was random
 (null distribution). If the empirical EII value is \emph{greater than} or
-not significantly different from the null distribution, then the empirical 
-data can be expected to be generated from an nonergodic process and the 
-population structure is not sufficient to describe all individuals. If the 
-empirical EII value is significantly \emph{lower than} the null distribution, 
+not significantly different from the null distribution, then the empirical
+data can be expected to be generated from an nonergodic process and the
+population structure is not sufficient to describe all individuals. If the
+empirical EII value is significantly \emph{lower than} the null distribution,
 then the empirical data can be described by the population structure -- the
 population structure is sufficient to describe all individuals.
 }
