@@ -4,11 +4,19 @@
 \alias{totalCorMat}
 \title{Total Correlation Matrix}
 \usage{
-totalCorMat(data)
+totalCorMat(data, base = 2.718282, normalized = FALSE)
 }
 \arguments{
 \item{data}{Matrix or data frame.
 Should consist only of variables to be used in the analysis}
+
+\item{base}{Numeric (length = 1).
+Base to use for entropy.
+Defaults to \code{exp(1)} or \code{2.718282}}
+
+\item{normalized}{Boolean (length = 1).
+Should the normalized total correlation be computed?
+Defaults to \code{FALSE}}
 }
 \value{
 Returns a symmetric matrix with pairwise total correlations

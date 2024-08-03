@@ -276,10 +276,10 @@ shuffle <- function(x, size = length(x), seed = NULL)
   # Return call from C
   return(
     x[.Call(
-        "r_xoshiro_shuffle",
-        as.integer(seq_along(x)),
-        swiftelse(is.null(seed), 0, seed),
-        PACKAGE = "EGAnet"
+      "r_xoshiro_shuffle",
+      as.integer(seq_along(x)),
+      swiftelse(is.null(seed), 0, seed),
+      PACKAGE = "EGAnet"
     )][seq_len(size)]
   )
 
@@ -1178,16 +1178,16 @@ vector2factor <- function(data)
       # Ensure data frame
       as.data.frame(data), function(x){
 
-      # Get matched ID (`id_var`)
-      matched_id <- match(x, sort(unique(x), na.last = TRUE))
+        # Get matched ID (`id_var`)
+        matched_id <- match(x, sort(unique(x), na.last = TRUE))
 
-      # Attached number of unique as attribute
-      attr(matched_id, "n") <- max(matched_id)
+        # Attached number of unique as attribute
+        attr(matched_id, "n") <- max(matched_id)
 
-      # Return result
-      return(matched_id)
+        # Return result
+        return(matched_id)
 
-    }))
+      }))
   )
 
   # Return unique ID
@@ -2371,10 +2371,10 @@ basic_plot_setup <- function(network, wc = NULL, ...)
   }else{ # add membership names
     second_layer <- silent_call(
       second_layer +
-      ggplot2::scale_color_manual(
-        values = unique(plot_ARGS$node.color),
-        labels = unique(wc)
-      )
+        ggplot2::scale_color_manual(
+          values = unique(plot_ARGS$node.color),
+          labels = unique(wc)
+        )
     )
   }
 
@@ -2999,11 +2999,11 @@ ordinal_accuracy <- function(prediction, observed)
     c(
       linear_kappa =  1 - (
         sum(weights * confusion_matrix) / # observed
-        sum(weights * tcrossprod(observed_standard, prediction_standard)) # expected
+          sum(weights * tcrossprod(observed_standard, prediction_standard)) # expected
       ),
       kripp_alpha = 1 - (sum(coincidence_table) - 1) *
-                    sum(coincidence_upper * diff2) /
-                    sum(coincidence_outer * diff2)
+        sum(coincidence_upper * diff2) /
+        sum(coincidence_outer * diff2)
     )
   )
 
@@ -3141,8 +3141,8 @@ network_scramble <- function(base, comparison)
 
     # Populate return network
     return_network[base_sparse$row[i], base_sparse$col[i]] <-
-    return_network[base_sparse$col[i], base_sparse$row[i]] <-
-    base_sparse$weight[i]
+      return_network[base_sparse$col[i], base_sparse$row[i]] <-
+      base_sparse$weight[i]
 
   }
 

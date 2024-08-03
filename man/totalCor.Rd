@@ -4,11 +4,15 @@
 \alias{totalCor}
 \title{Total Correlation}
 \usage{
-totalCor(data)
+totalCor(data, base = 2.718282)
 }
 \arguments{
 \item{data}{Matrix or data frame.
 Should consist only of variables to be used in the analysis}
+
+\item{base}{Numeric (length = 1).
+Base to use for entropy.
+Defaults to \code{exp(1)} or \code{2.718282}}
 }
 \value{
 Returns a list containing:
@@ -18,6 +22,8 @@ Returns a list containing:
 \item{Joint.Entropy}{The joint entropy of the dataset}
 
 \item{Total.Cor}{The total correlation of the dataset}
+
+\item{Normalized}{Total correlation divided by the sum of the individual entropies minus the maximum of the individual entropies}
 }
 \description{
 Computes the total correlation of a dataset
