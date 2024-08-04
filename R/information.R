@@ -244,7 +244,7 @@ entropy <- function(values, base = 2.718282)
 }
 
 #' @noRd
-# Get joint entropy
+# Get joint entropy ----
 # Updated 03.08.2024
 joint_entropy <- function(bin_cuts, base)
 {
@@ -257,4 +257,12 @@ joint_entropy <- function(bin_cuts, base)
   # Return joint entropy
   return(entropy(joint_frequency[joint_frequency > 0], base = base))
 
+}
+
+#' @noRd
+# Get mutual information ----
+# Updated 04.08.2024
+mutual_information <- function(Hx, Hy, Hxy)
+{
+  return(Hx + Hy - Hxy)
 }
