@@ -3232,15 +3232,6 @@ matrix_entropy <- function(density_matrix, base = 2.718282)
 }
 
 #' @noRd
-# Basic entropy calculation ----
-# Returns entropy value
-# Updated 29.06.2023
-entropy <- function(values, base = 2.718282)
-{
-  return(-sum(values * log(values, base = base), na.rm = TRUE))
-}
-
-#' @noRd
 # Positive definite matrix ----
 # Logical for whether a matrix is positive definite
 # Updated 29.06.2023

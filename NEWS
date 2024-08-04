@@ -8,7 +8,7 @@ WEBSITE: https://r-ega.net
 
 + ADD: `network.compare` function to test for differences in network structures using three different metrics (Frobenius Norm, Jensen-Shannon Similarity, total network strength)
 
-+ ADD: information theoretic measures of dual total correlation (`dualTotalCor`) and O-information (`Oinformation`)
++ ADD: a general function called `information` to compute several information theory measures
 
 + UPDATE: added 'signed' argument in `jsd` to allow for signed or absolute networks to be used in computations (includes downstream functions: `infoCluster`)
 
