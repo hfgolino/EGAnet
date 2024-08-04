@@ -61,7 +61,7 @@ individual entropies
 the \code{data} (Han, 1978). Values range from \code{0} to joint entropy
 
 \item \code{"o.information"} --- quantifies the extent to which the \code{data} is represented
-by lower-order (\code{> 0}; redundancy) or higher-order (\code{< 0}; synergy) constraints
+by lower-order (\code{> 0}; redundancy) or higher-order (\code{< 0}; synergy) constraints (Crutchfield, 1994)
 
 }
 
