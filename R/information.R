@@ -50,7 +50,8 @@
 #' the \code{data} (Han, 1978). Values range from \code{0} to joint entropy
 #'
 #' \item \code{"o.information"} --- quantifies the extent to which the \code{data} is represented
-#' by lower-order (\code{> 0}; redundancy) or higher-order (\code{< 0}; synergy) constraints (Crutchfield, 1994)
+#' by lower-order (\code{> 0}; redundancy) or higher-order (\code{< 0}; synergy) constraint
+#' (Crutchfield, 1994)
 #'
 #' }
 #'
@@ -99,7 +100,7 @@
 #' @export
 #'
 # Information function ----
-# Updated 04.08.2024
+# Updated 06.08.2024
 information <- function(
     data, base = 2.718282, bins = floor(sqrt(nrow(data) / 5)),
     statistic = c(
