@@ -19,6 +19,7 @@ invariance(
   ncores,
   seed = NULL,
   verbose = TRUE,
+  search = TRUE,
   ...
 )
 }
@@ -277,11 +278,13 @@ are flagged for significance along with the direction of group differences.
 
 \strong{Three or More Groups}
 
-At this time, only two groups are supported. There is a method proposed to
-test three or more groups in Jamison, Golino, and Christensen (2023) but
-this approach has not been thoroughly vetted and validated. Future versions
-of the package will provide support for three or more groups once there is
-an established consensus for best practice.
+When there are 3 or more groups, the function performs metric invariance testing by comparing all possible pairs of groups. Specifically:
+\itemize{
+\item \emph{Pairwise Comparisons}: The function generates all possible unique group pairings and computes the differences in network loadings for each pair. The same community structure, derived from configural invariance or provided by the user, is used for all groups.
+\item \emph{Permutation Testing}: For each group pair, permutation tests are conducted to assess the statistical significance of the observed differences in loadings. P-values are calculated based on the proportion of permuted differences that are greater than or equal to the observed difference.
+\item \emph{Result Compilation}: The function compiles the results for each pair, including both uncorrected and FDR-corrected (Benjamini-Hochberg) p-values, and the direction of differences. It returns a summary of the findings for all pairwise comparisons.
+}
+This approach allows for a detailed examination of metric invariance across multiple groups, ensuring that all potential differences are thoroughly assessed while maintaining the ability to identify specific group differences.
 
 For more details, see Jamison, Golino, and Christensen (2023)
 }
