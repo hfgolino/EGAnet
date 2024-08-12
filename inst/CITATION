@@ -8,10 +8,10 @@ bibentry(
 		    person("Christensen,", "Alexander P")),
 	year	= "2024",
 	url	= "https://r-ega.net",
-	note    = "R package version 2.0.5",
+	note    = "R package version 2.0.7",
 
   textVersion  =
   paste0("Golino, H., & Christensen, A. P. (2024). ",
         "EGAnet: Exploratory Graph Analysis – A framework for estimating the number of dimensions in multivariate data using network psychometrics. ",
-	"R package version 2.0.5. URL: https://r-ega.net")
+	"R package version 2.0.7. URL: https://r-ega.net")
 )
