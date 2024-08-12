@@ -10,6 +10,8 @@ WEBSITE: https://r-ega.net
 
 + ADD: a general function called `information` to compute several information theory measures
 
++ UPDATE: `invariance` handles more than 2 groups (plots up to 4 groups pairwise)
+
 + UPDATE: added 'signed' argument in `jsd` to allow for signed or absolute networks to be used in computations (includes downstream functions: `infoCluster`)
 
 + UPDATE: NEWS is now formatted in markdown
