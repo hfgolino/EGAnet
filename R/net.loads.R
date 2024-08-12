@@ -12,9 +12,9 @@
 #'
 #' @param loading.method Character (length = 1).
 #' Sets network loading calculation based on implementation
-#' described in \code{"BRM"} (Christensen & Golino, 2021) or
-#' an \code{"experimental"} implementation.
-#' Defaults to \code{"BRM"}
+#' described in \code{"original"} (Christensen & Golino, 2021) or
+#' the \code{"revised"} (Christensen et al., 2024) implementation.
+#' Defaults to \code{"revised"}
 #'
 #' @param scaling Numeric (length = 1).
 #' Scaling factor for the magnitude of the \code{"experimental"} network loadings.
@@ -76,22 +76,40 @@
 #' Problems with centrality measures in psychopathology symptom networks: Why network psychometrics cannot escape psychometric theory.
 #' \emph{Multivariate Behavioral Research}, 1-25.
 #'
+#' \strong{Revised network loadings} \cr
+#' Christensen, A. P., Golino, H., Abad, F. J., & Garrido, L. E. (2024).
+#' Revised network loadings.
+#' \emph{PsyArXiv}.
+#'
 #' @author Alexander P. Christensen <alexpaulchristensen@gmail.com> and Hudson Golino <hfg9s at virginia.edu>
 #'
 #' @export
 #'
 # Network Loadings ----
-# Updated 06.04.2024
-# Default = "BRM" or `net.loads` from version 1.2.3
-# Experimental = new signs and cross-loading adjustment
+# Updated 12.08.2024
 net.loads <- function(
-    A, wc, loading.method = c("BRM", "experimental"),
+    A, wc, loading.method = c("original", "revised"),
     scaling = 2, rotation = NULL, ...
 )
 {
 
-  # Check for missing arguments (argument, default, function)
-  loading.method <- set_default(loading.method, "brm", net.loads)
+  # Check for no input in 'loading.method'
+  if(length(loading.method) > 1){
+    loading.method <- "revised"
+  }else{
+
+    # Switch out old calls
+    loading.method <- switch(
+      tolower(loading.method),
+      "brm" = "original",
+      "experimental" = "revised",
+      loading.method
+    )
+
+    # Check for missing arguments (argument, default, function)
+    loading.method <- set_default(loading.method, "revised", net.loads)
+
+  }
 
   # Organize and extract input (handles argument errors)
   # `wc` is made to be a character vector to allow `NA`
@@ -138,7 +156,17 @@ net.loads <- function(
   # Not all singleton dimensions, so carry on
 
   # Check for method
-  if(loading.method == "brm"){
+  if(loading.method == "revised"){
+
+    # Revised unstandardized loadings
+    unstandardized <- revised_loadings(
+      A, wc, nodes, node_names, communities, unique_communities
+    )
+
+
+
+
+  }else{
 
     # Compute unstandardized loadings (absolute sums)
     unstandardized <- absolute_weights(A, wc, nodes, unique_communities)
@@ -146,21 +174,6 @@ net.loads <- function(
     # Add signs to the loadings
     unstandardized <- old_add_signs(unstandardized, A, wc, unique_communities)
 
-
-  }else{ # If not "BRM", run experimental
-
-    # Send experimental message (for now)
-    experimental("net.loads")
-
-    # Experimental unstandardized loadings
-    # Differences:
-    # 1. signs are added in a more accurate way
-    # 2. algebraic rather than absolute sums are used
-    # 3. within-community sums are computed using (sums / (n - 1)) * n
-    # 4. standardization uses (abs(x) / (abs(x) + 1)) %*% diag(sqrt(eigenvalues))
-    unstandardized <- experimental_loadings(
-      A, wc, nodes, node_names, communities, unique_communities
-    )
 
   }
 
@@ -253,6 +266,16 @@ net.loads <- function(
   # Set class
   class(results) <- "net.loads"
 
+  # Send message about changed defaults
+  if(loading.method == "revised"){
+    message(
+      paste(
+        "The default 'loading.method' has changed to \"revised\" in {EGAnet} version >= 2.0.7.\n\n",
+        "For the previous default (version <= 2.0.6), use `loading.method = \"original\"`"
+      )
+    )
+  }
+
   # Return results
   return(results)
 
@@ -284,12 +307,12 @@ net.loads <- function(
 # # Estimate EGA
 # ega <- EGA(sim_data$data, plot.EGA = FALSE)
 # ega$wc[8] <- NA
-# A = ega; loading.method = "brm"
+# A = ega; loading.method = "revised"
 # rotation = "geominq"
 
 #' @exportS3Method
 # S3 Print Method ----
-# Updated 08.10.2023
+# Updated 12.08.2024
 print.net.loads <- function(x, ...)
 {
 
@@ -303,8 +326,8 @@ print.net.loads <- function(x, ...)
   cat(
     paste0(
       "Loading Method: ", swiftelse(
-        method_attributes$loading.method == "brm",
-        "BRM", "Experimental"
+        method_attributes$loading.method == "revised",
+        "Revised", "Original"
       )
     )
   )
@@ -458,9 +481,9 @@ obtain_signs <- function(target_network)
 }
 
 #' @noRd
-# Experimental loadings ----
-# Updated 22.03.2024
-experimental_loadings <- function(
+# Revised loadings ----
+# Updated 12.08.2024
+revised_loadings <- function(
     A, wc, nodes, node_names,
     communities, unique_communities
 )
@@ -567,14 +590,12 @@ experimental_loadings <- function(
 
 #' @noRd
 # Standardize loadings ----
-# Updated 06.04.2024
+# Updated 12.08.2024
 standardize <- function(unstandardized, loading.method, A, wc, scaling)
 {
 
   # Check for loading method
-  if(loading.method == "brm"){
-    return(t(t(unstandardized) / sqrt(colSums(abs(unstandardized), na.rm = TRUE))))
-  }else if(loading.method == "experimental"){
+  if(loading.method == "revised"){
 
     # Get attributes
     community <- attr(unstandardized, "community")
@@ -584,6 +605,8 @@ standardize <- function(unstandardized, loading.method, A, wc, scaling)
       t(t(unstandardized) / (community$community_sums^(1 / log(scaling * community$community_table))))
     )
 
+  }else if(loading.method == "original"){
+    return(t(t(unstandardized) / sqrt(colSums(abs(unstandardized), na.rm = TRUE))))
   }
 
 }
@@ -695,9 +718,9 @@ rotation_defaults <- function(rotation, rotation_ARGS, ellipse)
 
 }
 
-#%%%%%%%%%%%%%%%%%
-# BRM Legacy ----
-#%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%
+# Original Legacy ----
+#%%%%%%%%%%%%%%%%%%%%%
 
 #' @noRd
 ## Absolute weights ("BRM") ----
