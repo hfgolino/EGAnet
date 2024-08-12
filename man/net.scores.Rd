@@ -8,7 +8,7 @@ net.scores(
   data,
   A,
   wc,
-  loading.method = c("BRM", "experimental"),
+  loading.method = c("original", "revised"),
   rotation = NULL,
   scores = c("Anderson", "Bartlett", "components", "Harman", "network", "tenBerge",
     "Thurstone"),
@@ -30,12 +30,12 @@ then \code{wc} is automatically detected}
 
 \item{loading.method}{Character (length = 1).
 Sets network loading calculation based on implementation
-described in \code{"BRM"} (Christensen & Golino, 2021) or
-an \code{"experimental"} implementation.
-Defaults to \code{"BRM"}}
+described in \code{"original"} (Christensen & Golino, 2021) or
+the \code{"revised"} (Christensen et al., 2024) implementation.
+Defaults to \code{"revised"}}
 
 \item{rotation}{Character.
-A rotation to use to obtain a simpler structure. 
+A rotation to use to obtain a simpler structure.
 For a list of rotations, see \code{\link[GPArotation]{rotations}} for options.
 Defaults to \code{NULL} or no rotation.
 By setting a rotation, \code{scores} estimation will be
@@ -53,7 +53,7 @@ Whether simple structure or the saturated loading matrix
 should be used when computing scores.
 Defaults to \code{"simple"}
 
-\code{"simple"} structure more closely mirrors sum scores and CFA; 
+\code{"simple"} structure more closely mirrors sum scores and CFA;
 \code{"full"} structure more closely mirrors EFA
 
 Simple structure is the more "conservative" (established) approach
@@ -61,7 +61,7 @@ and is therefore the default. Treat \code{"full"} as experimental
 as proper vetting and validation has not been established}
 
 \item{impute}{Character (length = 1).
-If there are any missing data, then imputation can be implemented. 
+If there are any missing data, then imputation can be implemented.
 Available options:
 
 \itemize{
@@ -76,7 +76,7 @@ for that variable
 
 }}
 
-\item{...}{Additional arguments to be passed on to 
+\item{...}{Additional arguments to be passed on to
 \code{\link[EGAnet]{net.loads}} and
 \code{\link[psych]{factor.scores}}}
 }
@@ -91,8 +91,8 @@ rotated (\code{rot.scores}) scores. If \code{rotation = NULL}, then
 }
 \description{
 This function computes network scores computed based on
-each node's \code{strength} within each community in the network 
-(see \code{\link[EGAnet]{net.loads}}). These values are used as "network loadings" 
+each node's \code{strength} within each community in the network
+(see \code{\link[EGAnet]{net.loads}}). These values are used as "network loadings"
 for the weights of each variable.
 
 Network scores are computed as a formative composite rather than a reflective factor.
@@ -128,6 +128,11 @@ On the equivalency of factor and network loadings.
 Golino, H., Christensen, A. P., Moulder, R., Kim, S., & Boker, S. M. (2021).
 Modeling latent topics in social media using Dynamic Exploratory Graph Analysis: The case of the right-wing and left-wing trolls in the 2016 US elections.
 \emph{Psychometrika}.
+
+\strong{Revised network loadings} \cr
+Christensen, A. P., Golino, H., Abad, F. J., & Garrido, L. E. (2024).
+Revised network loadings.
+\emph{PsyArXiv}.
 }
 \author{
 Alexander P. Christensen <alexpaulchristensen@gmail.com> and Hudson F. Golino <hfg9s at virginia.edu>

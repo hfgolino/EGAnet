@@ -6,7 +6,7 @@
 \usage{
 hierEGA(
   data,
-  loading.method = c("BRM", "experimental"),
+  loading.method = c("original", "revised"),
   rotation = NULL,
   scores = c("factor", "network"),
   loading.structure = c("simple", "full"),
@@ -29,9 +29,9 @@ Should consist only of variables to be used in the analysis
 
 \item{loading.method}{Character (length = 1).
 Sets network loading calculation based on implementation
-described in \code{"BRM"} (Christensen & Golino, 2021) or
-an \code{"experimental"} implementation (Christensen et al., 2024).
-Defaults to \code{"experimental"}}
+described in \code{"original"} (Christensen & Golino, 2021) or
+the \code{"revised"} (Christensen et al., 2024) implementation.
+Defaults to \code{"revised"}}
 
 \item{rotation}{Character.
 A rotation to use to obtain a simpler structure.

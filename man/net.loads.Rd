@@ -7,7 +7,7 @@
 net.loads(
   A,
   wc,
-  loading.method = c("BRM", "experimental"),
+  loading.method = c("original", "revised"),
   scaling = 2,
   rotation = NULL,
   ...
@@ -23,9 +23,9 @@ then \code{wc} is automatically detected}
 
 \item{loading.method}{Character (length = 1).
 Sets network loading calculation based on implementation
-described in \code{"BRM"} (Christensen & Golino, 2021) or
-an \code{"experimental"} implementation.
-Defaults to \code{"BRM"}}
+described in \code{"original"} (Christensen & Golino, 2021) or
+the \code{"revised"} (Christensen et al., 2024) implementation.
+Defaults to \code{"revised"}}
 
 \item{scaling}{Numeric (length = 1).
 Scaling factor for the magnitude of the \code{"experimental"} network loadings.
@@ -93,6 +93,11 @@ On the equivalency of factor and network loadings.
 Hallquist, M., Wright, A. C. G., & Molenaar, P. C. M. (2019).
 Problems with centrality measures in psychopathology symptom networks: Why network psychometrics cannot escape psychometric theory.
 \emph{Multivariate Behavioral Research}, 1-25.
+
+\strong{Revised network loadings} \cr
+Christensen, A. P., Golino, H., Abad, F. J., & Garrido, L. E. (2024).
+Revised network loadings.
+\emph{PsyArXiv}.
 }
 \author{
 Alexander P. Christensen <alexpaulchristensen@gmail.com> and Hudson Golino <hfg9s at virginia.edu>
