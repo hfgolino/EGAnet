@@ -697,10 +697,13 @@ print.invariance <- function(x, pairs = list(), ...)
   pairs_sequence <- seq_len(total_pairs)
 
   # Create combination of pairs
-  possible_pairs <- combn(length(x$groups$EGA), 2, simplify = FALSE)
+  possible_pairs <- combn(names(x$groups$EGA), 2, simplify = FALSE)
+
+  # Check for pairs
+  input_pairs <- length(pairs) == 0
 
   # Check for missing pairs
-  if(length(pairs) == 0){
+  if(input_pairs){
     pairs <- possible_pairs
   }
 
@@ -729,7 +732,12 @@ print.invariance <- function(x, pairs = list(), ...)
   }
 
   # Print significance codes
-  cat("Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 'n.s.' 1\n")
+  cat("Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 'n.s.' 1\n\n")
+
+  # Let user know about print
+  if(input_pairs && total_pairs > 1){
+    cat("Use the argument 'pairs = list()' for individual paired results using `c()` inside `list()` (for multiple pairs, use `c()` inside `list()` for each pair).\n")
+  }
 
 }
 
@@ -781,7 +789,7 @@ summary.invariance <- function(object, ...)
   }
 
   # Let user know about print
-  cat("Use `print()` and the argument 'pairs' for detailed results.\n")
+  cat("Use `print()` for more detailed results.\n")
 
 }
 
@@ -872,10 +880,13 @@ plot.invariance <- function(x, pairs = list(), p_type = c("p", "p_BH"), p_value 
   pairs_sequence <- seq_len(total_pairs)
 
   # Create combination of pairs
-  possible_pairs <- combn(length(x$groups$EGA), 2, simplify = FALSE)
+  possible_pairs <- combn(names(x$groups$EGA), 2, simplify = FALSE)
+
+  # Check for pairs
+  input_pairs <- length(pairs) == 0
 
   # Check for missing pairs
-  if(length(pairs) == 0){
+  if(input_pairs){
     pairs <- possible_pairs
   }else if(length(pairs) > 6){ # Don't do more than 6 comparisons (equivalent to 4 groups)
 
@@ -1070,7 +1081,7 @@ plot.invariance <- function(x, pairs = list(), p_type = c("p", "p_BH"), p_value 
         ggpubr::ggarrange(
           first_group, second_group,
           ncol = 2, nrow = 1,
-          labels = names(x$groups$EGA)[possible_pairs[[pair_index[[index]]]]],
+          labels = possible_pairs[[pair_index[[index]]]],
           legend = "bottom",
           common.legend = FALSE
         )
@@ -1091,7 +1102,7 @@ plot.invariance <- function(x, pairs = list(), p_type = c("p", "p_BH"), p_value 
         ggpubr::ggarrange(
           first_group, second_group,
           ncol = 2, nrow = 1,
-          labels = names(x$groups$EGA)[possible_pairs[[pair_index[[index]]]]],
+          labels = possible_pairs[[pair_index[[index]]]],
           legend = "none"
         )
       )
@@ -1201,7 +1212,7 @@ plot.invariance <- function(x, pairs = list(), p_type = c("p", "p_BH"), p_value 
           ggpubr::ggarrange(
             first_group, second_group,
             ncol = 2, nrow = 1,
-            labels = names(x$groups$EGA)[possible_pairs[[pair_index[[index]]]]],
+            labels = possible_pairs[[pair_index[[index]]]],
             legend = "bottom",
             common.legend = FALSE
           )
@@ -1222,7 +1233,7 @@ plot.invariance <- function(x, pairs = list(), p_type = c("p", "p_BH"), p_value 
           ggpubr::ggarrange(
             first_group, second_group,
             ncol = 2, nrow = 1,
-            labels = names(x$groups$EGA)[possible_pairs[[pair_index[[index]]]]],
+            labels = possible_pairs[[pair_index[[index]]]],
             legend = "none"
           )
         )
@@ -1239,6 +1250,11 @@ plot.invariance <- function(x, pairs = list(), p_type = c("p", "p_BH"), p_value 
       ), ncol = columns, nrow = 1
     )
 
+  }
+
+  # Let user know about plot
+  if(input_pairs && total_pairs > 1){
+    cat("Use the argument 'pairs = list()' for individual paired results using `c()` inside `list()` (for multiple pairs, use `c()` inside `list()` for each pair).\n")
   }
 
   # Return final plots
