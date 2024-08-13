@@ -309,7 +309,7 @@
 #' @export
 #'
 # Measurement Invariance
-# Updated 10.08.2024
+# Updated 13.08.2024
 invariance <- function(
     data, groups, structure = NULL,
     iter = 500, configural.threshold = 0.70,
@@ -350,7 +350,13 @@ invariance <- function(
   dimensions <- dim(data)
   dimension_names <- dimnames(data)
 
-  # Get unique groups
+  # Get unique groups (factored)
+  unique_factors <- na.omit(unique(groups))
+
+  # Set groups as factors
+  groups <- as.numeric(factor(groups, levels = unique_factors))
+
+  # Get unique groups (numeric)
   unique_groups <- na.omit(unique(groups))
 
   # Generate all possible group pairings
@@ -427,7 +433,7 @@ invariance <- function(
       algorithm = algorithm, uni.method = uni.method,
       plot.EGA = FALSE, ...
     )
-  }); names(group_ega) <- unique_groups # add names
+  }); names(group_ega) <- unique_factors # add names
 
   # Calculate loadings for all groups
   group_loadings <- lapply(group_ega, function(x){
@@ -457,7 +463,11 @@ invariance <- function(
     # Ensure same order as original data
     return(original_assigned_difference[dimension_names[[2]]])
 
-  }); names(original_differences) <- lapply(group_pairs, paste, collapse = "-")
+  }); names(original_differences) <- lapply(
+    group_pairs, function(x){
+      paste0(unique_factors[x[1]], "-", unique_factors[x[2]])
+    }
+  )
 
   # Permutate groups for this pair
   perm_groups <- lapply(
@@ -564,9 +574,9 @@ invariance <- function(
 
     # Add direction
     direction <- paste(
-      group_pairs[[i]][1],
+      unique_factors[group_pairs[[i]][1]],
       swiftelse(sign(results_df$Difference) == 1, ">", "<"),
-      group_pairs[[i]][2]
+      unique_factors[group_pairs[[i]][2]]
     )
     results_df$Direction <- swiftelse(results_df$p <= 0.05, direction, "")
 
@@ -589,7 +599,8 @@ invariance <- function(
     groups = list(
       EGA = group_ega,
       loadings = group_loadings,
-      loadingsDifference = original_differences
+      loadingsDifference = original_differences,
+      unique_groups = unique_factors
     ),
     permutation = list(
       groups = perm_groups,
@@ -673,7 +684,7 @@ invariance_errors <- function(
 
 #' @exportS3Method
 # S3 Print Method ----
-# Updated 11.08.2024
+# Updated 13.08.2024
 # Updated print method
 print.invariance <- function(x, pairs = list(), ...)
 {
@@ -724,7 +735,7 @@ print.invariance <- function(x, pairs = list(), ...)
 
 #' @exportS3Method
 # S3 Summary Method ----
-# Updated 11.08.2024
+# Updated 13.08.2024
 summary.invariance <- function(object, ...)
 {
 
@@ -739,7 +750,13 @@ summary.invariance <- function(object, ...)
   for(pair in seq_along(object$results)){
 
     # Print groups
-    cat("Comparison:", gsub("-", " vs ", names(object$results)[pair]), "\n")
+    cat(
+      styletext(
+        paste(
+          "\nComparison:", gsub("-", " vs ", names(x$results)[pair])
+        ), defaults = "underline"
+      ), "\n"
+    )
 
     # Print noninvariant items
     cat(
@@ -827,9 +844,12 @@ group_setup <- function(
 
 #' @exportS3Method
 # S3 Plot Method ----
-# Updated 12.08.2024
+# Updated 13.08.2024
 plot.invariance <- function(x, pairs = list(), p_type = c("p", "p_BH"), p_value = 0.05, ...)
 {
+
+  # Obtain unique groups
+  unique_factors <- x$groups$unique_groups
 
   # Set default for p-value type
   p_type <- swiftelse(missing(p_type), "p", match.arg(p_type))
@@ -857,7 +877,13 @@ plot.invariance <- function(x, pairs = list(), p_type = c("p", "p_BH"), p_value 
       paste(
         "Due to the complexity of plotting more than 6 pairwise plots,",
         "only the combinations involving the first six comparisons will be used:\n",
-        paste(lapply(pairs, paste, collapse = " vs "), collapse = ", ")
+        paste(
+          lapply(
+            pairs, function(x){
+              paste(unique_factors[x[1]], "vs", unique_factors[x[2]])
+            }
+          ), collapse = ", "
+        )
       )
     )
 
