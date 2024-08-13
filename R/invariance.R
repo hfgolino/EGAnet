@@ -753,7 +753,7 @@ summary.invariance <- function(object, ...)
     cat(
       styletext(
         paste(
-          "\nComparison:", gsub("-", " vs ", names(x$results)[pair])
+          "\nComparison:", gsub("-", " vs ", names(object$results)[pair])
         ), defaults = "underline"
       ), "\n"
     )
