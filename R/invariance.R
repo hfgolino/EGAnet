@@ -761,11 +761,21 @@ summary.invariance <- function(object, ...)
     # Print noninvariant items
     cat(
       "Number of noninvariant items (p < 0.05):",
-      sum(object$results[[pair]]$p < 0.05), "\n"
+      sum(object$results[[pair]]$p < 0.05),
+      paste0(
+        "(",
+        format_decimal(mean(object$results[[pair]]$p < 0.05) * 100, 1),
+        "%)\n"
+      )
     )
     cat(
       "Number of noninvariant items (p_BH < 0.05):",
-      sum(object$results[[pair]]$p_BH < 0.05), "\n\n"
+      sum(object$results[[pair]]$p_BH < 0.05),
+      paste0(
+        "(",
+        format_decimal(mean(object$results[[pair]]$p_BH < 0.05) * 100, 1),
+        "%)\n\n"
+      )
     )
 
   }
