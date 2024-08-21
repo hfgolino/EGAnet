@@ -278,6 +278,10 @@ Jiménez, M., Abad, F. J., Garcia-Garzon, E., Golino, H., Christensen, A. P., & 
 Dimensionality assessment in bifactor structures with multiple general factors: A network psychometrics approach.
 \emph{Psychological Methods}.
 
+\strong{3+ level hierarchical EGA} \cr
+Samo, A., Christensen, A. P., Abad, F. J., Garrido, L. E., Garcia-Garzon, E., Golino, H. & McAbee, S. T. (2023). Building the structure of personality from the bottom-up using Hierarchical Exploratory Graph Analysis.
+\emph{PsyArXiv}.
+
 \strong{Conceptual implementation} \cr
 Golino, H., Thiyagarajan, J. A., Sadana, R., Teles, M., Christensen, A. P., & Boker, S. M. (2020).
 Investigating the broad domains of intrinsic capacity, functional ability and

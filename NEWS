@@ -22,6 +22,8 @@ WEBSITE: https://r-ega.net
 
 + INTERNAL: `network.generalizabilty` was moved to be internal (needs some work yet)
 
++ INTERNAL: signs for `net.loads` uses the first eigenvector of the target network (rather than the custom `obtain_signs` function)
+
 
 ## Changes in version 2.0.6
 
