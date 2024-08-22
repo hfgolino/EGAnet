@@ -479,7 +479,7 @@ obtain_signs <- function(target_network)
 
 #' @noRd
 # Revised loadings ----
-# Updated 21.08.2024
+# Updated 22.08.2024
 revised_loadings <- function(
     A, wc, nodes, node_names,
     communities, unique_communities
@@ -514,7 +514,7 @@ revised_loadings <- function(
     ) / (community_table[community] - 1)
 
     # Obtain signs
-    target_signs <- sign(eigen(pcor2cor(target_network), symmetric = TRUE)$vector[,1])
+    target_signs <- sign(eigen(target_network, symmetric = TRUE)$vector[,1])
     # Thank you to Sacha Epskamp for pointing out this simpler approach to us!
 
     # Determine positive direction for dominant loadings
