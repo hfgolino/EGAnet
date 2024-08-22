@@ -148,7 +148,7 @@
 #' }
 #'
 #' @param algorithm Character or
-#' \code{\link{igraph}} \code{cluster_*} function (length = 1).
+#' \code{igraph} \code{cluster_*} function (length = 1).
 #' Defaults to \code{"walktrap"}.
 #' Three options are listed below but all are available
 #' (see \code{\link[EGAnet]{community.detection}} for other options):
@@ -326,7 +326,7 @@
 #' Smoothing and differentiation of data by simplified least squares procedures.
 #' \emph{Analytical Chemistry}, \emph{36(8)}, 1627-1639.
 #'
-#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{EGAnet}
 #'
 #' @export
 #'

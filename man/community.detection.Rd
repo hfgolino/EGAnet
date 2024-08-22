@@ -14,9 +14,9 @@ community.detection(
 )
 }
 \arguments{
-\item{network}{Matrix or \code{\link{igraph}} network object}
+\item{network}{Matrix or \code{igraph} network object}
 
-\item{algorithm}{Character or \code{\link{igraph}} \code{cluster_*} function
+\item{algorithm}{Character or \code{igraph} \code{cluster_*} function
 (length = 1).
 Available options:
 
@@ -36,8 +36,8 @@ Available options:
 
 \item \code{"leiden"} --- See \code{\link[igraph]{cluster_leiden}} for more details.
 \emph{Note}: The Leiden algorithm will default to the
-modularity objective function (\code{objective_function = "modularity"}). 
-Set \code{objective_function = "CPM"} to use the 
+modularity objective function (\code{objective_function = "modularity"}).
+Set \code{objective_function = "CPM"} to use the
 Constant Potts Model instead (see examples)
 
 \item \code{"louvain"} --- See \code{\link[igraph]{cluster_louvain}} for more details
@@ -64,7 +64,7 @@ Set to \code{FALSE} to obtain all output for the
 community detection algorithm}
 
 \item{...}{Additional arguments to be passed on to
-\code{\link{igraph}}'s community detection functions
+\code{igraph}'s community detection functions
 (see \code{algorithm} for link to arguments of each algorithm)}
 }
 \value{
@@ -72,7 +72,7 @@ Returns memberships from a community detection algorithm
 }
 \description{
 General function to apply community detection algorithms available in
-\code{\link{igraph}}. Follows the \code{\link{EGAnet}} approach of setting
+\code{igraph}. Follows the \code{EGAnet} approach of setting
 singleton and disconnected nodes to missing (\code{NA})
 }
 \examples{
@@ -135,7 +135,7 @@ community.detection(
 
 }
 \references{
-Csardi, G., & Nepusz, T. (2006). 
+Csardi, G., & Nepusz, T. (2006).
 The igraph software package for complex network research.
 \emph{InterJournal, Complex Systems}, 1695.
 }

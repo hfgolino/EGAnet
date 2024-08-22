@@ -84,7 +84,7 @@ See \code{\link[EGAnet]{TMFG}} for more details
 
 }}
 
-\item{algorithm}{Character or \code{\link{igraph}} \code{cluster_*} function.
+\item{algorithm}{Character or \code{igraph} \code{cluster_*} function.
 Three options are listed below but all are available
 (see \code{\link[EGAnet]{community.detection}} for other options):
 
@@ -212,7 +212,7 @@ Computing communities in large networks using random walks.
 \emph{Journal of Graph Algorithms and Applications}, \emph{10}, 191-218.
 }
 \seealso{
-\code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
+\code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{EGAnet}
 }
 \author{
 Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>

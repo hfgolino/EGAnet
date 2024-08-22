@@ -167,7 +167,7 @@ See \code{\link[EGAnet]{TMFG}} for more details
 }}
 
 \item{algorithm}{Character or
-\code{\link{igraph}} \code{cluster_*} function (length = 1).
+\code{igraph} \code{cluster_*} function (length = 1).
 Defaults to \code{"walktrap"}.
 Three options are listed below but all are available
 (see \code{\link[EGAnet]{community.detection}} for other options):
@@ -353,7 +353,7 @@ Smoothing and differentiation of data by simplified least squares procedures.
 \emph{Analytical Chemistry}, \emph{36(8)}, 1627-1639.
 }
 \seealso{
-\code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
+\code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{EGAnet}
 }
 \author{
 Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>

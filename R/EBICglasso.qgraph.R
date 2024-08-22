@@ -1,4 +1,4 @@
-#' @title \code{\link[qgraph]{EBICglasso}} from \code{\link{qgraph}} 1.4.4
+#' @title \code{\link[qgraph]{EBICglasso}} from \code{qgraph} 1.4.4
 #'
 #' @description This function uses the \code{\link[glasso]{glasso}} package
 #' (Friedman, Hastie and Tibshirani, 2011) to compute a
@@ -69,7 +69,7 @@
 #' @param lambda.min.ratio Numeric (length = 1).
 #' Ratio of lowest lambda value compared to maximal lambda.
 #' Defaults to \code{0.1}.
-#' \strong{NOTE} \code{\link{qgraph}} sets the default to \code{0.01}
+#' \strong{NOTE} \code{qgraph} sets the default to \code{0.01}
 #'
 #' @param returnAllResults Boolean (length = 1).
 #' Whether all results should be returned.
@@ -82,7 +82,7 @@
 #' @param countDiagonal Boolean (length = 1).
 #' Should diagonal be counted in EBIC computation?
 #' Defaults to \code{FALSE}.
-#' Set to \code{TRUE} to mimic \code{\link{qgraph}} < 1.3 behavior (not recommended!)
+#' Set to \code{TRUE} to mimic \code{qgraph} < 1.3 behavior (not recommended!)
 #'
 #' @param refit Boolean (length = 1).
 #' Should the optimal graph be refitted without LASSO regularization?

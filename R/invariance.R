@@ -93,7 +93,7 @@
 #' }
 #'
 #' @param algorithm Character or
-#' \code{\link{igraph}} \code{cluster_*} function (length = 1).
+#' \code{} \code{cluster_*} function (length = 1).
 #' Defaults to \code{"walktrap"}.
 #' Three options are listed below but all are available
 #' (see \code{\link[EGAnet]{community.detection}} for other options):
@@ -154,7 +154,7 @@
 #' Defaults to \code{NULL} or random results.
 #' Set for reproducible results.
 #' See \href{https://github.com/hfgolino/EGAnet/wiki/Reproducibility-and-PRNG}{Reproducibility and PRNG}
-#' for more details on random number generation in \code{\link{EGAnet}}
+#' for more details on random number generation in \code{}
 #'
 #' @param verbose Boolean (length = 1).
 #' Should progress be displayed?
@@ -304,7 +304,7 @@
 #' # Plot with BH-corrected alpha = 0.10
 #' plot(results, p_type = "p_BH", p_value = 0.10)}
 #'
-#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{}
 #'
 #' @export
 #'

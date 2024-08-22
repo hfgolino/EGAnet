@@ -2,7 +2,7 @@
 % Please edit documentation in R/EBICglasso.qgraph.R
 \name{EBICglasso.qgraph}
 \alias{EBICglasso.qgraph}
-\title{\code{\link[qgraph]{EBICglasso}} from \code{\link{qgraph}} 1.4.4}
+\title{\code{\link[qgraph]{EBICglasso}} from \code{qgraph} 1.4.4}
 \usage{
 EBICglasso.qgraph(
   data,
@@ -85,7 +85,7 @@ Defaults to \code{100}}
 \item{lambda.min.ratio}{Numeric (length = 1).
 Ratio of lowest lambda value compared to maximal lambda.
 Defaults to \code{0.1}.
-\strong{NOTE} \code{\link{qgraph}} sets the default to \code{0.01}}
+\strong{NOTE} \code{qgraph} sets the default to \code{0.01}}
 
 \item{returnAllResults}{Boolean (length = 1).
 Whether all results should be returned.
@@ -98,7 +98,7 @@ Optional logical matrix to indicate which elements are penalized}
 \item{countDiagonal}{Boolean (length = 1).
 Should diagonal be counted in EBIC computation?
 Defaults to \code{FALSE}.
-Set to \code{TRUE} to mimic \code{\link{qgraph}} < 1.3 behavior (not recommended!)}
+Set to \code{TRUE} to mimic \code{qgraph} < 1.3 behavior (not recommended!)}
 
 \item{refit}{Boolean (length = 1).
 Should the optimal graph be refitted without LASSO regularization?

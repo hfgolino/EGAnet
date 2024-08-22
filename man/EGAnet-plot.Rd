@@ -3,24 +3,24 @@
 \name{EGAnet-plot}
 \alias{EGAnet-plot}
 \alias{plot.EGAnet}
-\title{S3 Plot Methods for \code{\link{EGAnet}}}
+\title{S3 Plot Methods for \code{EGAnet}}
 \description{
-General usage for plots created by \code{\link{EGAnet}}'s S3 methods.
-Plots across the \code{\link{EGAnet}} package leverage \{\link{GGally}\}'s \code{\link[GGally]{ggnet2}}
-and \{\link{ggplot2}\}'s \code{\link[ggplot2]{ggplot}}.
+General usage for plots created by \code{EGAnet}'s S3 methods.
+Plots across the \code{EGAnet} package leverage \code{GGally}'s \code{\link[GGally]{ggnet2}}
+and \code{ggplot2}'s \code{\link[ggplot2]{ggplot}}.
 
 Most plots allow the full usage of the \code{gg*} series functionality and therefore
 plotting arguments should be referenced through those packages rather than here in
-\code{\link{EGAnet}}.
+\code{EGAnet}.
 
 The sections below list the functions and their usage for the S3 plot methods.
 The plot methods are intended to be generic and without many arguments so that
 nearly all arguments are passed to \code{\link[GGally]{ggnet2}} and \code{\link[ggplot2]{ggplot}}.
 
-There are some constraints placed on certain plots to keep the \code{\link{EGAnet}} style
+There are some constraints placed on certain plots to keep the \code{EGAnet} style
 throughout the (network) plots in the package, so be aware that if some settings are
 not changing your plot output, then these settings might be fixed
-to maintain the \code{\link{EGAnet}} style
+to maintain the \code{EGAnet} style
 }
 \section{General Usage}{
 
@@ -48,7 +48,7 @@ plot.invariance(x, p_type = c("p", "p_BH"), p_value = 0.05, ...)
 
 \itemize{
 
-\item \code{x} --- \code{\link{EGAnet}} object with available S3 plot method
+\item \code{x} --- \code{EGAnet} object with available S3 plot method
 (see full list below)
 
 \item \code{color.palette} --- Character (vector). Either a character (length = 1) from the
@@ -117,7 +117,7 @@ plotting \code{\link[EGAnet]{invariance}}. Defaults to \code{0.05}
 
 
 \code{\link[EGAnet]{color_palette_EGA}} will implement some color palettes in
-\code{\link{EGAnet}}. The main \code{\link{EGAnet}} style palette is \code{"polychrome"}.
+\code{EGAnet}. The main \code{EGAnet} style palette is \code{"polychrome"}.
 This palette currently has 40 colors but there will likely be a need to expand it further
 (e.g., \code{\link[EGAnet]{hierEGA}} demands a lot of colors).
 

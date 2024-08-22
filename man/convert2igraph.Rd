@@ -2,7 +2,7 @@
 % Please edit documentation in R/convert2igraph.R
 \name{convert2igraph}
 \alias{convert2igraph}
-\title{Convert networks to \code{\link{igraph}}}
+\title{Convert networks to \code{igraph}}
 \usage{
 convert2igraph(A, diagonal = 0)
 }
@@ -15,10 +15,10 @@ Value to be placed on the diagonal of \code{A}.
 Defaults to \code{0}}
 }
 \value{
-Returns a network in the \code{\link{igraph}} format
+Returns a network in the \code{igraph} format
 }
 \description{
-Converts networks to \code{\link{igraph}} format
+Converts networks to \code{igraph} format
 }
 \examples{
 convert2igraph(ega.wmt$network)

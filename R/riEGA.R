@@ -74,7 +74,7 @@
 #' }
 #'
 #' @param algorithm Character or
-#' \code{\link{igraph}} \code{cluster_*} function (length = 1).
+#' \code{igraph} \code{cluster_*} function (length = 1).
 #' Defaults to \code{"walktrap"}.
 #' Three options are listed below but all are available
 #' (see \code{\link[EGAnet]{community.detection}} for other options):
@@ -185,7 +185,7 @@
 #' When can categorical variables be treated as continuous? A comparison of robust continuous and categorical SEM estimation methods under suboptimal conditions.
 #' \emph{Psychological Methods}, \emph{17}, 354-373.
 #'
-#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{EGAnet}
 #'
 #' @export
 #'

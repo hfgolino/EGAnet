@@ -72,7 +72,7 @@
 #'
 #' }
 #'
-#' @param algorithm Character or \code{\link{igraph}} \code{cluster_*} function.
+#' @param algorithm Character or \code{igraph} \code{cluster_*} function.
 #' Three options are listed below but all are available
 #' (see \code{\link[EGAnet]{community.detection}} for other options):
 #'
@@ -193,7 +193,7 @@
 #'
 #' @author Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'
-#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{EGAnet}
 #'
 #' @export
 #'

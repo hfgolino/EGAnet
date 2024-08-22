@@ -111,7 +111,7 @@ See \code{\link[EGAnet]{TMFG}} for more details
 }}
 
 \item{algorithm}{Character or
-\code{\link{igraph}} \code{cluster_*} function (length = 1).
+\code{} \code{cluster_*} function (length = 1).
 Defaults to \code{"walktrap"}.
 Three options are listed below but all are available
 (see \code{\link[EGAnet]{community.detection}} for other options):
@@ -172,7 +172,7 @@ then type: \code{parallel::detectCores()}}
 Defaults to \code{NULL} or random results.
 Set for reproducible results.
 See \href{https://github.com/hfgolino/EGAnet/wiki/Reproducibility-and-PRNG}{Reproducibility and PRNG}
-for more details on random number generation in \code{\link{EGAnet}}}
+for more details on random number generation in \code{}}
 
 \item{verbose}{Boolean (length = 1).
 Should progress be displayed?
@@ -328,7 +328,7 @@ Metric invariance in exploratory graph analysis via permutation testing.
 \emph{Methodology}, \emph{20}(2), 144-186.
 }
 \seealso{
-\code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
+\code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{}
 }
 \author{
 Laura Jamison <lj5yn@virginia.edu>,

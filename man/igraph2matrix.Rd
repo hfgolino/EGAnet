@@ -2,22 +2,22 @@
 % Please edit documentation in R/igraph2matrix.R
 \name{igraph2matrix}
 \alias{igraph2matrix}
-\title{Convert \code{\link{igraph}} network to matrix}
+\title{Convert \code{} network to matrix}
 \usage{
 igraph2matrix(igraph_network, diagonal = 0)
 }
 \arguments{
-\item{igraph_network}{\code{\link{igraph}} network object}
+\item{igraph_network}{\code{} network object}
 
 \item{diagonal}{Numeric (length = 1).
 Value to be placed on the diagonal of \code{network}.
 Defaults to \code{0}}
 }
 \value{
-Returns a network in the \code{\link{igraph}} format
+Returns a network in the \code{} format
 }
 \description{
-Converts \code{\link{igraph}} network to matrix
+Converts \code{} network to matrix
 }
 \examples{
 # Convert network to {igraph}

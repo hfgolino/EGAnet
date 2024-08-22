@@ -36,13 +36,13 @@ continuous. To change the number of categories that are considered
 ordinal, use \code{ordinal.categories}
 (see \code{\link[EGAnet]{polychoric.matrix}} for more details)
 
-\item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations. 
+\item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations.
 Arguments can be passed along to the function
 
-\item \code{"pearson"} --- Pearson's correlation is computed for all 
+\item \code{"pearson"} --- Pearson's correlation is computed for all
 variables regardless of categories
 
-\item \code{"spearman"} --- Spearman's rank-order correlation is computed 
+\item \code{"spearman"} --- Spearman's rank-order correlation is computed
 for all variables regardless of categories
 
 }
@@ -83,8 +83,8 @@ See \code{\link[EGAnet]{TMFG}} for more details
 
 }}
 
-\item{algorithm}{Character or 
-\code{\link{igraph}} \code{cluster_*} function (length = 1).
+\item{algorithm}{Character or
+\code{igraph} \code{cluster_*} function (length = 1).
 Defaults to \code{"walktrap"}.
 Three options are listed below but all are available
 (see \code{\link[EGAnet]{community.detection}} for other options):
@@ -93,10 +93,10 @@ Three options are listed below but all are available
 
 \item \code{"leiden"} --- See \code{\link[igraph]{cluster_leiden}} for more details
 
-\item \code{"louvain"} --- By default, \code{"louvain"} will implement the Louvain algorithm using 
-the consensus clustering method (see \code{\link[EGAnet]{community.consensus}} 
+\item \code{"louvain"} --- By default, \code{"louvain"} will implement the Louvain algorithm using
+the consensus clustering method (see \code{\link[EGAnet]{community.consensus}}
 for more information). This function will implement
-\code{consensus.method = "most_common"} and \code{consensus.iter = 1000} 
+\code{consensus.method = "most_common"} and \code{consensus.iter = 1000}
 unless specified otherwise
 
 \item \code{"walktrap"} --- See \code{\link[igraph]{cluster_walktrap}} for more details
@@ -109,7 +109,7 @@ Defaults to \code{FALSE} (silent calls).
 Set to \code{TRUE} to see all messages and warnings for every function call}
 
 \item{...}{Additional arguments to be passed on to
-\code{\link[EGAnet]{auto.correlate}}, 
+\code{\link[EGAnet]{auto.correlate}},
 \code{\link[EGAnet]{network.estimation}},
 \code{\link[EGAnet]{community.detection}}, and
 \code{\link[EGAnet]{community.consensus}}}
@@ -117,7 +117,7 @@ Set to \code{TRUE} to see all messages and warnings for every function call}
 \value{
 Returns a list containing:
 
-\item{network}{A matrix containing a network estimated using 
+\item{network}{A matrix containing a network estimated using
 \code{link[EGAnet]{network.estimation}}}
 
 \item{wc}{A vector representing the community (dimension) membership
@@ -166,13 +166,13 @@ Investigating the performance of Exploratory Graph Analysis and traditional tech
 \emph{Psychological Methods}, \emph{25}, 292-320.
 
 
-\strong{Compared all} \code{\link{igraph}} \strong{community detection algorithms, simulation with continuous and polytomous data} \cr
+\strong{Compared all} \code{igraph} \strong{community detection algorithms, simulation with continuous and polytomous data} \cr
 Christensen, A. P., Garrido, L. E., Guerra-Pena, K., & Golino, H. (2023).
 Comparing community detection algorithms in psychometric networks: A Monte Carlo simulation.
 \emph{Behavior Research Methods}.
 }
 \seealso{
-\code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
+\code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{EGAnet}
 }
 \author{
 Alexander P. Christensen <alexpaulchristensen at gmail.com> and Hudson Golino <hfg9s at virginia.edu>

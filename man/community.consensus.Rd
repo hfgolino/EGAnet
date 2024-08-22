@@ -17,7 +17,7 @@ community.consensus(
 )
 }
 \arguments{
-\item{network}{Matrix or \code{\link{igraph}} network object}
+\item{network}{Matrix or \code{igraph} network object}
 
 \item{order}{Character (length = 1).
 Defaults to \code{"higher"}.
@@ -36,7 +36,7 @@ Defaults to \code{1} (standard modularity computation)}
 
 \item{consensus.method}{Character (length = 1).
 Defaults to \code{"most_common"}.
-Available options for arriving at a consensus (\emph{Note}: 
+Available options for arriving at a consensus (\emph{Note}:
 All methods except \code{"iterative"} are considered experimental
 until validated):
 

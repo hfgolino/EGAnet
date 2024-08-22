@@ -87,7 +87,7 @@ See \code{\link[EGAnet]{TMFG}} for more details
 }}
 
 \item{algorithm}{Character or
-\code{\link{igraph}} \code{cluster_*} function (length = 1).
+\code{igraph} \code{cluster_*} function (length = 1).
 Defaults to \code{"walktrap"}.
 Three options are listed below but all are available
 (see \code{\link[EGAnet]{community.detection}} for other options):
@@ -199,7 +199,7 @@ When can categorical variables be treated as continuous? A comparison of robust 
 \emph{Psychological Methods}, \emph{17}, 354-373.
 }
 \seealso{
-\code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
+\code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{EGAnet}
 }
 \author{
 Alejandro Garcia-Pardina <alejandrogp97@gmail.com>,

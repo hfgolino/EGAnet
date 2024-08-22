@@ -130,7 +130,7 @@
 #' }
 #'
 #' @param lower.algorithm Character or
-#' \code{\link{igraph}} \code{cluster_*} function (length = 1).
+#' \code{} \code{cluster_*} function (length = 1).
 #' Defaults to the lower order \code{"louvain"} with most common
 #' consensus clustering (1000 iterations; see
 #' \code{\link[EGAnet]{community.consensus}} for more details)
@@ -141,7 +141,7 @@
 #' capture lower order communities
 #'
 #' @param higher.algorithm Character or
-#' \code{\link{igraph}} \code{cluster_*} function (length = 1).
+#' \code{} \code{cluster_*} function (length = 1).
 #' Defaults to \code{"louvain"}.
 #' Three options are listed below but all are available
 #' (see \code{\link[EGAnet]{community.detection}} for other options):
@@ -276,7 +276,7 @@
 #' # Plot levels separately
 #' plot(opt.hier, plot.type = "separate")}
 #'
-#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{}
 #'
 #' @export
 #'
