@@ -117,7 +117,13 @@ for more details on random number generation in \code{\link{EGAnet}}}
 \code{\link[EGAnet]{jsd}}}
 }
 \value{
-Returns data frame with row names of each measure, empirical value (\code{statisticl}), and p-value based on the permutation test (\code{p.value})
+Returns a list:
+
+\item{network}{Data frame with row names of each measure, empirical value (\code{statistic}), and
+\emph{p}-value based on the permutation test (\code{p.value})}
+
+\item{edges}{List containing matrices of values for empirical values (\code{statistic}),
+\emph{p}-values (\code{p.value}), and Benjamini-Hochberg corrected \emph{p}-values (\code{p.adjusted})}
 }
 \description{
 A permutation implementation to determine statistical
@@ -134,8 +140,14 @@ groups <- rep(1:2, each = nrow(wmt) / 2)
 group1 <- wmt[groups == 1,]
 group2 <- wmt[groups == 2,]
 
-\dontrun{
-results <- network.compare(group1, group2)}
+\dontrun{# Perform comparison
+results <- network.compare(group1, group2)
+
+# Print results
+print(results)
+
+# Plot edge differences
+plot(results)}
 
 }
 \references{

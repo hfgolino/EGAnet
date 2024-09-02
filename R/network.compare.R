@@ -101,7 +101,13 @@
 #' \code{\link[EGAnet]{EGA}}, and
 #' \code{\link[EGAnet]{jsd}}
 #'
-#' @return Returns data frame with row names of each measure, empirical value (\code{statisticl}), and p-value based on the permutation test (\code{p.value})
+#' @return Returns a list:
+#'
+#' \item{network}{Data frame with row names of each measure, empirical value (\code{statistic}), and
+#' \emph{p}-value based on the permutation test (\code{p.value})}
+#'
+#' \item{edges}{List containing matrices of values for empirical values (\code{statistic}),
+#' \emph{p}-values (\code{p.value}), and Benjamini-Hochberg corrected \emph{p}-values (\code{p.adjusted})}
 #'
 #' @author Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'
@@ -116,8 +122,14 @@
 #' group1 <- wmt[groups == 1,]
 #' group2 <- wmt[groups == 2,]
 #'
-#' \dontrun{
-#' results <- network.compare(group1, group2)}
+#' \dontrun{# Perform comparison
+#' results <- network.compare(group1, group2)
+#'
+#' # Print results
+#' print(results)
+#'
+#' # Plot edge differences
+#' plot(results)}
 #'
 #' @references
 #' \strong{Frobenius Norm} \cr
@@ -139,7 +151,7 @@
 #' @export
 #'
 # Perform permutations for network structures ----
-# Updated 27.07.2024
+# Updated 02.09.2024
 network.compare <- function(
     base, comparison,
     # EGA arguments
@@ -195,7 +207,7 @@ network.compare <- function(
   )$network
 
   # Get empirical estimates
-  empirical_values = abs(
+  empirical_values <- abs(
     c(
       "Frobenius" = frobenius(base_empirical_network, comparison_empirical_network),
       "JSS" = 1 - jsd(base_empirical_network, comparison_empirical_network, ...),
@@ -203,6 +215,9 @@ network.compare <- function(
         sum(colSums(abs(comparison_empirical_network), na.rm = TRUE), na.rm = TRUE)
     )
   )
+
+  # Empirical differences
+  empirical_matrix <- base_empirical_network - comparison_empirical_network
 
   # Create combined dataset
   combined <- rbind(base, comparison)
@@ -212,40 +227,64 @@ network.compare <- function(
   base_length <- dim(base)[1]
 
   # Perform permutations
-  permutated_values <- do.call(
-    rbind, parallel_process(
-      iterations = iter, datalist = seeds, FUN = function(seed, ...){
+  permutated <- parallel_process(
+    iterations = iter, datalist = seeds, FUN = function(seed, ...){
 
-        # Get shuffled indices
-        base_shuffled <- shuffle(combined_index, size = base_length, seed = seed)
+      # Get shuffled indices
+      base_shuffled <- shuffle(combined_index, size = base_length, seed = seed)
 
-        # Get permutated networks
-        base_network <- EGA(
-          combined[base_shuffled,], corr = corr, na.data = na.data,
-          model = model, plot.EGA = FALSE, ...
-        )$network
-        comparison_network <- EGA(
-          combined[-base_shuffled,], corr = corr, na.data = na.data,
-          model = model, plot.EGA = FALSE, ...
-        )$network
+      # Get permutated networks
+      base_network <- EGA(
+        combined[base_shuffled,], corr = corr, na.data = na.data,
+        model = model, plot.EGA = FALSE, ...
+      )$network
+      comparison_network <- EGA(
+        combined[-base_shuffled,], corr = corr, na.data = na.data,
+        model = model, plot.EGA = FALSE, ...
+      )$network
 
-        # Return permutated estimates
-        return(
-          c(
+      # Return permutated estimates
+      return(
+        list(
+          empirical_values = c(
             "Frobenius" = frobenius(base_network, comparison_network),
-            "JSS" = 1 - jsd(base_network, comparison_network),
+            "JSS" = 1 - jsd(base_network, comparison_network, ...),
             "Total Strength" = sum(colSums(abs(base_network), na.rm = TRUE), na.rm = TRUE) -
               sum(colSums(abs(comparison_network), na.rm = TRUE), na.rm = TRUE)
-          )
+          ),
+          empirical_matrix = base_network - comparison_network
         )
+      )
 
-      }, ncores = ncores, progress = verbose, ...
-    )
+    }, ncores = ncores, progress = verbose, ...
   )
 
-  # Return statistics
-  return(
-    t(data.frame(
+  # Separate values from matrices
+  permutated_values <- do.call(
+    rbind, lapply(permutated, function(x){x$empirical_values})
+  )
+  permutated_matrices <- lapply(permutated, function(x){x$empirical_matrix})
+
+  # Get the p-values for edges
+  edge_p <- apply(
+    simplify2array(
+      lapply(permutated_matrices, function(x){
+        abs(x) >= abs(empirical_matrix)
+      })
+    ), 1:2, mean, na.rm = TRUE
+  )
+
+  # Get lower triangle
+  lower_triangle <- lower.tri(edge_p)
+  edge_p_adjusted <- edge_p
+  edge_p_adjusted_lower <- p.adjust(edge_p[lower_triangle], method = "BH")
+  edge_p_adjusted[lower_triangle] <- edge_p_adjusted_lower
+  edge_p_adjusted <- t(edge_p_adjusted)
+  edge_p_adjusted[lower_triangle] <- edge_p_adjusted_lower
+
+  # Set up results
+  results <- list(
+    network = t(data.frame(
       "statistic" = empirical_values,
       "p.value" = c(
         mean(permutated_values[,1] <= empirical_values[1]),
@@ -254,8 +293,21 @@ network.compare <- function(
       ),
       "M_permutated" = colMeans(permutated_values),
       "SD_permutated" = apply(permutated_values, 2, sd)
-    ))
+    )),
+    edges = list(
+      statistic = empirical_matrix,
+      p.value = edge_p,
+      p.adjusted = edge_p_adjusted,
+      M_permutated = apply(simplify2array(permutated_matrices), 1:2, mean, na.rm = TRUE),
+      SD_permutated = apply(simplify2array(permutated_matrices), 1:2, sd, na.rm = TRUE)
+    )
   )
+
+  # Set class
+  class(results) <- "network.compare"
+
+  # Return statistics
+  return(results)
 
 }
 
@@ -333,3 +385,107 @@ network.compare_errors <- function(base, comparison, iter, verbose, seed, ...)
   return(list(base = base, comparison = comparison))
 
 }
+
+#' @exportS3Method
+# S3 Print Method ----
+# Updated 02.09.2024
+print.network.compare <- function(x, ...)
+{
+
+  # Print network results
+  print(x$network, digits = 4)
+
+  # Print edges
+  cat(
+    paste0(
+      "\nNumber of significant edges (p <= 0.05): ",
+      length(which(x$edges$p.value <= 0.05)) / 2,
+      "\nNumber of significant edges (p_BH <= 0.10): ",
+      length(which(x$edges$p.adjusted <= 0.10)) / 2
+    )
+  )
+
+}
+
+#' @exportS3Method
+# S3 Summary Method ----
+# Updated 02.09.2024
+summary.network.compare <- function(object, ...)
+{
+
+  # Same as print
+  print(object, ...)
+
+}
+
+#' @exportS3Method
+# S3 Plot Method ----
+# Updated 02.09.2024
+plot.network.compare <- function(x, p_type = c("p", "p_BH"), p_value = 0.05, ...)
+{
+
+  # Get p errors
+  p_type <- swiftelse(missing(p_type), "p", match.arg(p_type))
+  range_error(p_value, c(0, 1), "plot.network.compare")
+
+  # Get number of nodes
+  nodes <- dim(x$edges$statistic)[2]
+  node_sequence <- seq_len(nodes)
+
+  # Set up data frame
+  plot_df <- data.frame(
+    Rows = rep(node_sequence, each = nodes),
+    Columns = rep(node_sequence, times = nodes),
+    statistic = swiftelse(
+      x$edges$statistic == 0, "",
+      format_decimal(as.numeric(x$edges$statistic), 2)
+    ),
+    p.value = swiftelse(
+      as.numeric(
+        x$edges[[swiftelse(p_type == "p", "p.value", "p.adjusted")]]
+      ) <= p_value, 1, 0
+    )
+  )
+
+  # Set names (if possible)
+  node_names <- dimnames(x$edges$statistic)[[2]]
+  if(!is.null(node_names)){
+
+    # Replace in plot data frame
+    plot_df$Rows <- factor(node_names[plot_df$Rows], levels = node_names)
+    plot_df$Columns <- factor(node_names[plot_df$Columns], levels = rev(node_names))
+
+  }
+
+  # Plot
+  ggplot2::ggplot(
+    data = plot_df,
+    ggplot2::aes(x = Rows, y = Columns, fill = p.value, label = statistic)
+  ) +
+    ggplot2::geom_tile(color = "black") +
+    ggplot2::geom_text() +
+    ggplot2::scale_fill_gradient(low = "white", high = "grey", limits = c(0, 1)) +
+    ggplot2::labs(
+      title = "Significant Edge Differences",
+      subtitle = swiftelse(
+        p_type == "p",
+        bquote(paste(italic(p), " < ", .(p_value))),
+        bquote(paste(italic(p)[adj.], " < ", .(p_value)))
+      )
+    ) +
+    ggplot2::theme(
+      panel.background = ggplot2::element_blank(),
+      plot.title = ggplot2::element_text(size = 12, hjust = 0.5, face = "bold"),
+      plot.subtitle = ggplot2::element_text(size = 10, hjust = 0.5),
+      axis.title = ggplot2::element_blank(),
+      axis.text = ggplot2::element_text(size = 10),
+      axis.ticks = ggplot2::element_blank(),
+      legend.position = "none"
+    )
+
+}
+
+#' @noRd
+# Global variables needed for CRAN checks ----
+# Updated 09.02.2024
+utils::globalVariables(c("p.value", "statistic"))
