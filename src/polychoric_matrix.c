@@ -334,8 +334,8 @@ struct ThresholdsResult thresholds(int* input_data, int rows, int i, int j, int 
   }
 
   // Initialize memory space for frequencies
-  double* frequency_X = (double*) calloc(cat_X, sizeof(double));
-  double* frequency_Y = (double*) calloc(cat_Y, sizeof(double));
+  double* frequency_X = (double*) R_alloc(cat_X, sizeof(double));
+  double* frequency_Y = (double*) R_alloc(cat_Y, sizeof(double));
 
   // Obtain frequencies
   for(k = 0; k < cat_X; k++) {
@@ -785,8 +785,10 @@ double polychoric(int* input_data, int rows, int i, int j, int empty_method, dou
   free(thresholds_result.joint_frequency);
   free(thresholds_result.threshold_X);
   free(thresholds_result.threshold_Y);
+  /* Apparently, `R_alloc` will handle this?
   free(thresholds_result.probability_X);
   free(thresholds_result.probability_Y);
+  */
 
   // Return
   return rho_optimum;
