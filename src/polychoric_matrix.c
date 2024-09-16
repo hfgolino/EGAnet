@@ -332,11 +332,27 @@ struct ThresholdsResult thresholds(int* input_data, int rows, int i, int j, int 
     }
 
   }
+  
+  // Validate category sizes before allocation
+  if ((cat_X <= 0) || (cat_X > CUT)) {
+      Rf_error("Invalid category sizes for variable X. Terminating...");
+      struct ThresholdsResult result = {0}; // Return an empty result struct
+      return result;
+  }
+  
+   // Validate category sizes before allocation
+  if ((cat_Y <= 0) || (cat_Y > CUT)) {
+      Rf_error("Invalid category sizes for variable Y. Terminating...");
+      struct ThresholdsResult result = {0}; // Return an empty result struct
+      return result;
+  }
+  
+  /* Above code seems to be OK with CRAN checks */
 
   // Initialize memory space for frequencies
-  double* frequency_X = (double*) R_alloc(cat_X, sizeof(double));
-  double* frequency_Y = (double*) R_alloc(cat_Y, sizeof(double));
-
+  double* frequency_X = (double*) calloc(cat_X, sizeof(double));
+  double* frequency_Y = (double*) calloc(cat_Y, sizeof(double));
+  
   // Obtain frequencies
   for(k = 0; k < cat_X; k++) {
     for(l = 0; l < cat_Y; l++) {
@@ -785,10 +801,8 @@ double polychoric(int* input_data, int rows, int i, int j, int empty_method, dou
   free(thresholds_result.joint_frequency);
   free(thresholds_result.threshold_X);
   free(thresholds_result.threshold_Y);
-  /* Apparently, `R_alloc` will handle this?
   free(thresholds_result.probability_X);
   free(thresholds_result.probability_Y);
-  */
 
   // Return
   return rho_optimum;
