@@ -5,9 +5,9 @@
 <a href="https://github.com/hfgolino/EGAnet/releases"><img src="https://img.shields.io/github/v/release/hfgolino/EGAnet" alt="GitHub version"/></a>
 <a href="https://github.com/hfgolino/EGAnet/actions/workflows/r.yml"><img border="0" src="https://github.com/hfgolino/EGAnet/actions/workflows/r.yml/badge.svg" alt="R CMD check status"/></a> </br>
 <a href="https://www.repostatus.org/#active"><img border="0" src="https://www.repostatus.org/badges/latest/active.svg" alt="Project Status: Active – The project has reached a stable, usable state and is being actively developed."/></a>
-<a href="https://cran.r-project.org/package=EGAnet"><img border="0" src="https://cranlogs.r-pkg.org/badges/grand-total/EGAnet?color=blue" alt="Downloads Total"/></a>
-<a href="https://cran.r-project.org/package=EGAnet"><img border="0" src="http://cranlogs.r-pkg.org/badges/EGAnet?color=blue" alt="Downloads per month"/></a>
-<a href="https://cran.r-project.org/package=EGAnet"><img border="0" src="http://cranlogs.r-pkg.org/badges/last-day/EGAnet" alt="Downloads Yesterday"/></a>
+<a href="https://r-ega.net"><img border="0" src="https://cranlogs.r-pkg.org/badges/grand-total/EGAnet?color=blue" alt="Downloads Total"/></a>
+<a href="https://r-ega.net"><img border="0" src="http://cranlogs.r-pkg.org/badges/EGAnet?color=blue" alt="Downloads per month"/></a>
+<a href="https://r-ega.net"><img border="0" src="http://cranlogs.r-pkg.org/badges/last-day/EGAnet" alt="Downloads Yesterday"/></a>
 </div>
 
 ### To get started, check out the website: [r-ega.net](https://r-ega.net) ###
