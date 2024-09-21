@@ -6,7 +6,7 @@
 \usage{
 auto.correlate(
   data,
-  corr = c("kendall", "pearson", "spearman"),
+  corr = c("cosine", "kendall", "pearson", "spearman"),
   ordinal.categories = 7,
   forcePD = TRUE,
   na.data = c("pairwise", "listwise"),
@@ -27,7 +27,7 @@ Using \code{"pearson"} will compute polychoric, tetrachoric, polyserial,
 and biserial correlations for categorical and categorical/continuous correlations
 by default. To obtain \code{"pearson"} correlations regardless, use \code{\link{cor}}.
 Other options of \code{"kendall"} and \code{"spearman"} are provided for
-completeness and use \code{\link{cor}}}
+completeness and use \code{\link{cor}}. \code{\link[EGAnet]{cosine}} is also available}
 
 \item{ordinal.categories}{Numeric (length = 1).
 \emph{Up to} the number of categories \emph{before} a variable is considered continuous.

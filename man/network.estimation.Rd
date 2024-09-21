@@ -7,7 +7,7 @@
 network.estimation(
   data,
   n = NULL,
-  corr = c("auto", "cor_auto", "pearson", "spearman"),
+  corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
   model = c("BGGM", "glasso", "TMFG"),
   network.only = TRUE,
@@ -36,13 +36,15 @@ continuous. To change the number of categories that are considered
 ordinal, use \code{ordinal.categories}
 (see \code{\link[EGAnet]{polychoric.matrix}} for more details)
 
-\item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations. 
+\item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations.
 Arguments can be passed along to the function
 
-\item \code{"pearson"} --- Pearson's correlation is computed for all 
+\item \code{"cosine"} --- Uses \code{\link[EGAnet]{cosine}} to compute cosine similarity
+
+\item \code{"pearson"} --- Pearson's correlation is computed for all
 variables regardless of categories
 
-\item \code{"spearman"} --- Spearman's rank-order correlation is computed 
+\item \code{"spearman"} --- Spearman's rank-order correlation is computed
 for all variables regardless of categories
 
 }
@@ -122,8 +124,8 @@ tmfg_network <- network.estimation(
 }
 \references{
 \strong{Graphical Least Absolute Shrinkage and Selection Operator (GLASSO)} \cr
-Friedman, J., Hastie, T., & Tibshirani, R. (2008). 
-Sparse inverse covariance estimation with the graphical lasso. 
+Friedman, J., Hastie, T., & Tibshirani, R. (2008).
+Sparse inverse covariance estimation with the graphical lasso.
 \emph{Biostatistics}, \emph{9}(3), 432–441.
 
 \strong{GLASSO with Extended Bayesian Information Criterion (EBICglasso)} \cr
@@ -134,7 +136,7 @@ A tutorial on regularized partial correlation networks.
 \strong{Bayesian Gaussian Graphical Model (BGGM)} \cr
 Williams, D. R. (2021).
 Bayesian estimation for Gaussian graphical models: Structure learning, predictability, and network comparisons.
-\emph{Multivariate Behavioral Research}, \emph{56}(2), 336–352. 
+\emph{Multivariate Behavioral Research}, \emph{56}(2), 336–352.
 
 \strong{Triangulated Maximally Filtered Graph (TMFG)} \cr
 Massara, G. P., Di Matteo, T., & Aste, T. (2016).

@@ -28,6 +28,8 @@
 #' \item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations.
 #' Arguments can be passed along to the function
 #'
+#' \item \code{"cosine"} --- Uses \code{\link[EGAnet]{cosine}} to compute cosine similarity
+#'
 #' \item \code{"pearson"} --- Pearson's correlation is computed for all
 #' variables regardless of categories
 #'
@@ -201,7 +203,7 @@
 # Updated 24.10.2023
 EGA.fit <- function(
     data, n = NULL,
-    corr = c("auto", "cor_auto", "pearson", "spearman"),
+    corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
     model = c("BGGM", "glasso", "TMFG"),
     algorithm = c("leiden", "louvain", "walktrap"),

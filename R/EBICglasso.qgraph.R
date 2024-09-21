@@ -27,16 +27,21 @@
 #' ordinal, use \code{ordinal.categories}
 #' (see \code{\link[EGAnet]{polychoric.matrix}} for more details)
 #'
-#' \item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to
-#' compute correlations. Arguments can be passed along to the function
+#' \item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations.
+#' Arguments can be passed along to the function
 #'
-#' \item \code{"pearson"} --- Pearson's correlation is computed for
-#' all variables regardless of categories
+#' \item \code{"cosine"} --- Uses \code{\link[EGAnet]{cosine}} to compute cosine similarity
 #'
-#' \item \code{"spearman"} --- Spearman's rank-order correlation is
-#' computed for all variables regardless of categories
+#' \item \code{"pearson"} --- Pearson's correlation is computed for all
+#' variables regardless of categories
+#'
+#' \item \code{"spearman"} --- Spearman's rank-order correlation is computed
+#' for all variables regardless of categories
 #'
 #' }
+#'
+#' For other similarity measures, compute them first and input them
+#' into \code{data} with the sample size (\code{n})
 #'
 #' @param na.data Character (length = 1).
 #' How should missing data be handled?
@@ -145,11 +150,11 @@
 #' @export
 #'
 # Computes optimal glasso network based on EBIC ----
-# Updated 26.03.2024
+# Updated 21.09.2024
 EBICglasso.qgraph <- function(
     data, # Sample covariance matrix
     n = NULL,
-    corr = c("auto", "cor_auto", "pearson", "spearman"),
+    corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
     gamma = 0.5,
     penalize.diagonal = FALSE, # Penalize diagonal?

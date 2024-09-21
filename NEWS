@@ -4,6 +4,8 @@ WEBSITE: https://r-ega.net
 
 + FIX: issue with dynamic memory allocation in `polychoric_matrix.c` during CRAN's install of the package
 
++ ADD: `cosine` similarity added as a default for `auto.correlate` and 'corr' arguments
+
 
 ## Changes in version 2.0.7
 

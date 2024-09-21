@@ -1448,7 +1448,7 @@ needs_usable <- function(ellipse)
 #' @noRd
 # Obtain data, sample size, correlation matrix ----
 # Generic function to get the usual needed inputs
-# Updated 16.03.2024
+# Updated 21.09.2024
 obtain_sample_correlations <- function(data, n, corr, na.data, verbose, ...)
 {
 
@@ -1478,7 +1478,9 @@ obtain_sample_correlations <- function(data, n, corr, na.data, verbose, ...)
     n <- dim(data)[1]
 
     # Check for automatic correlations
-    if(corr == "auto"){
+    if(corr == "cosine"){
+      correlation_matrix <- cosine(data)
+    }else if(corr == "auto"){
       correlation_matrix <- auto.correlate(
         data = data, corr = "pearson", na.data = na.data,
         verbose = verbose, ...

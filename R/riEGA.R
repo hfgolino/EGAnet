@@ -29,6 +29,8 @@
 #' \item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations.
 #' Arguments can be passed along to the function
 #'
+#' \item \code{"cosine"} --- Uses \code{\link[EGAnet]{cosine}} to compute cosine similarity
+#'
 #' \item \code{"pearson"} --- Pearson's correlation is computed for all
 #' variables regardless of categories
 #'
@@ -191,10 +193,10 @@
 #'
 # Random-Intercept EGA
 # Superceded 'residualEGA.R' on 17.04.2022
-# Updated 12.06.2024
+# Updated 21.09.2024
 riEGA <- function(
     data, n = NULL,
-    corr = c("auto", "cor_auto", "pearson", "spearman"),
+    corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
     model = c("glasso", "TMFG"),
     algorithm = c("leiden", "louvain", "walktrap"),

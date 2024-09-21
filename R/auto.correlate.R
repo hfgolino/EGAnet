@@ -15,7 +15,7 @@
 #' and biserial correlations for categorical and categorical/continuous correlations
 #' by default. To obtain \code{"pearson"} correlations regardless, use \code{\link{cor}}.
 #' Other options of \code{"kendall"} and \code{"spearman"} are provided for
-#' completeness and use \code{\link{cor}}
+#' completeness and use \code{\link{cor}}. \code{\link[EGAnet]{cosine}} is also available
 #'
 #' @param ordinal.categories Numeric (length = 1).
 #' \emph{Up to} the number of categories \emph{before} a variable is considered continuous.
@@ -100,7 +100,7 @@
 # Updated 16.03.2024
 auto.correlate <- function(
     data, # Matrix or data frame
-    corr = c("kendall", "pearson", "spearman"), # allow changes to standard correlations
+    corr = c("cosine", "kendall", "pearson", "spearman"), # allow changes to standard correlations
     ordinal.categories = 7, # consider ordinal up to 7 categories
     forcePD = TRUE, # ensure result is positive definite
     na.data = c("pairwise", "listwise"), # use available or complete values
@@ -135,8 +135,13 @@ auto.correlate <- function(
   # Assumes some preprocessing has taken place
   # to only select for appropriate variables
 
-  # Determine whether categorical correlations are necessary
-  if(corr != "pearson"){
+  # Separate return for cosine similarity
+  if(corr == "cosine"){
+
+    # Return cosine matrix
+    return(cosine(data))
+
+  }else if(corr != "pearson"){ # Determine whether categorical correlations are necessary
 
     # Obtain correlation matrix
     correlation_matrix <- cor(
