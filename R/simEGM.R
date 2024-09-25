@@ -250,7 +250,7 @@ simEGM_errors <- function(communities, variables, cross.loadings, sample.size, m
   range_error(communities, c(1, Inf), "simEGM")
 
   # 'variables'
-  length_error(variables, c(1, length(communities)), "simEGM")
+  length_error(variables, c(1, communities), "simEGM")
   typeof_error(variables, "numeric", "simEGM")
   range_error(variables, c(2, Inf), "simEGM")
 
