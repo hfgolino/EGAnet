@@ -2858,9 +2858,11 @@ pcor2cor <- function(partial_correlations)
 pcor2inv <- function(partial_correlations)
 {
 
+  # Set diagonal to negative 1
+  diag(partial_correlations) <- -1
+
   # Return inverse covariance matrix
-  return(solve(pcor2cor(partial_correlations)))
-  # Using `pcor2cor` puts it back to the original precision matrix values
+  return(solve(-partial_correlations))
 
 }
 
