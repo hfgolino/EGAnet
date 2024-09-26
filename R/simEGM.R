@@ -10,21 +10,24 @@
 #'
 #' @param loadings Character (length = 1).
 #' Magnitude of the assigned network loadings.
-#' Available options:
+#' Available options (revised network loadings with \code{scaling = 2} in parentheses):
 #'
 #' \itemize{
 #'
-#' \item \code{"small"} --- about 0.20
+#' \item \code{"small"} --- 0.15 (approximates 0.20)
 #'
-#' \item \code{"moderate"} --- about 0.35
+#' \item \code{"moderate"} --- 0.20 (approximates 0.35)
 #'
-#' \item \code{"large"} --- about 0.50
+#' \item \code{"large"} --- 0.25 (approximates 0.50)
 #'
 #' }
 #'
+#' Values provided are for \code{scaling = 2/3} in \code{\link[EGAnet]{net.loads}}.
+#' Uses \code{runif(n, min = value - 0.025, max = value + 0.025)} for some jitter in the loadings
+#'
 #' @param cross.loadings Numeric (length = 1).
 #' Standard deviation of a normal distribution with a mean of zero.
-#' Defaults to \code{1}
+#' Defaults to \code{0.01}
 #'
 #' @param correlations Character (length = 1).
 #' Magnitude of the community correlations.
@@ -43,6 +46,8 @@
 #' \item \code{"very large"} --- 0.70 (adds about 0.09 to the cross-loadings)
 #'
 #' }
+#'
+#' Uses \code{rnorm(n, mean = value, sd = 0.01)} for some jitter in the correlations
 #'
 #' @param sample.size Numeric (length = 1).
 #' Number of observations to generate
@@ -65,6 +70,7 @@
 #' @noRd
 #
 # Simulate EGM ----
+# Updated 26.09.2024
 simEGM <- function(
     communities, variables,
     loadings = c("small", "moderate", "large"), cross.loadings = 0.01,
@@ -118,17 +124,26 @@ simEGM <- function(
     "large" = 0.25
   )
 
-  # Determine correlation ranges
-  correlation_range <- swiftelse(
-    correlations == "none", 0.00,
-    switch(
-      correlations,
-      "small" = 0.015,
-      "moderate" = 0.03,
-      "large" = 0.06,
-      "very large" = 0.09
-    )
+  # Correlation adjustment based on correlations
+  correlation_adjustment <- switch(
+    loadings,
+    "small" = 0.015, # take a step up
+    "moderate" = 0.000, # remain the same
+    "large" = -0.015 # take a step down
   )
+
+  # Determine correlation ranges
+  correlation_range <- switch(
+    correlations,
+    "none" = 0,
+    "small" = 0.015,
+    "moderate" = 0.03,
+    "large" = 0.045,
+    "very large" = 0.06
+  ) + correlation_adjustment
+
+  # Ensure zero is minimum
+  correlation_range <- swiftelse(correlation_range < 0, 0, correlation_range)
 
   # Initialize R
   R <- NA
@@ -149,7 +164,10 @@ simEGM <- function(
     for(i in community_sequence){
 
       # Populate assigned loadings
-      loadings_matrix[start[i]:end[i], i] <- loading_range + rnorm_ziggurat(variables[i]) * 0.02
+      loadings_matrix[start[i]:end[i], i] <- runif_xoshiro(
+        variables[i], min = loading_range - 0.025, max = loading_range + 0.025
+      )
+      # loading_range + rnorm_ziggurat(variables[i]) * 0.02
       # rnorm(variables[i], mean = loading_range, sd = 0.01)
 
       # Get indices
@@ -173,23 +191,10 @@ simEGM <- function(
 
     }
 
-    # Compute A
-    A <- -tcrossprod(loadings_matrix)
+    # Obtain partial correlations from loadings
+    P <- nload2pcor(loadings_matrix)
 
-    # Obtain uniqueness
-    uniqueness <- 1 - rowSums(loadings_matrix^2)
-
-    # Add uniqueness to diagonal
-    diag(A) <- uniqueness
-
-    # Obtain anti-image
-    anti_image <- A %*% pcor2inv(A) %*% A
-
-    # Obtain partial correlation matrix
-    P <- -anti_image / tcrossprod(sqrt(uniqueness))
-    diag(P) <- 0
-
-    # Convert to correlation matrix
+    # Obtain zero-order correlations from partial correlations
     R <- silent_call(pcor2cor(P))
 
     # Check for max iterations
@@ -225,7 +230,7 @@ simEGM <- function(
   return(
     list(
       data = data %*% cholesky,
-      population_partial_correlatiion = P,
+      population_partial_correlation = P,
       population_correlation = R,
       parameters = list(
         loadings = loadings_matrix,
@@ -268,5 +273,32 @@ simEGM_errors <- function(communities, variables, cross.loadings, sample.size, m
   length_error(max.iterations, 1, "simEGM")
   typeof_error(max.iterations, "numeric", "simEGM")
   range_error(max.iterations, c(1, Inf), "simEGM")
+
+}
+
+#' @noRd
+# Network loadings to partial correlations ----
+# Updated 26.09.2024
+nload2pcor <- function(loadings)
+{
+
+  # Compute A
+  A <- -tcrossprod(loadings)
+
+  # Obtain uniqueness
+  uniqueness <- 1 - rowSums(loadings^2)
+
+  # Add uniqueness to diagonal
+  diag(A) <- uniqueness
+
+  # Obtain anti-image
+  anti_image <- A %*% pcor2inv(A) %*% A
+
+  # Obtain partial correlation matrix
+  P <- -anti_image / tcrossprod(sqrt(uniqueness))
+  diag(P) <- 0
+
+  # Return
+  return(P)
 
 }
