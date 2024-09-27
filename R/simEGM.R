@@ -98,7 +98,7 @@ simEGM <- function(
   community_sequence <- seq_len(communities)
 
   # Table variables
-  variables <- table(membership)
+  variables <- as.numeric(table(membership))
 
   # Get total variables
   total_variables <- sum(variables)
@@ -119,9 +119,9 @@ simEGM <- function(
   # Determine loading ranges
   loading_range <- switch(
     loadings,
-    "small" = 0.225,
-    "moderate" = 0.250,
-    "large" = 0.275
+    "small" = 0.20,
+    "moderate" = 0.30,
+    "large" = 0.40
   )
 
   # Correlation adjustment based on correlations
@@ -135,12 +135,15 @@ simEGM <- function(
   # Determine correlation ranges
   correlation_range <- switch(
     correlations,
-    "none" = 0,
+    "none" = 0.000,
     "small" = 0.015,
-    "moderate" = 0.03,
+    "moderate" = 0.030,
     "large" = 0.045,
-    "very large" = 0.06
+    "very large" = 0.060
   ) + correlation_adjustment
+
+  # Scale correlations with communities
+  correlation_range <- correlation_range * (3 / communities)
 
   # Ensure zero is minimum
   correlation_range <- swiftelse(correlation_range < 0, 0, correlation_range)
@@ -170,15 +173,21 @@ simEGM <- function(
     # Increase count
     count <- count + 1
 
+    # Store community sums
+    community_sums <- numeric(communities)
+
     # Populate loadings
     for(i in community_sequence){
 
       # Populate assigned loadings
       loadings_matrix[start[i]:end[i], i] <- runif_xoshiro(
-        variables[i], min = loading_range - 0.025, max = loading_range + 0.025
+        variables[i], min = loading_range - 0.05, max = loading_range + 0.05
       )
       # loading_range + rnorm_ziggurat(variables[i]) * 0.02
       # rnorm(variables[i], mean = loading_range, sd = 0.01)
+
+      # Obtain the sum
+      community_sums[i] <- sum(abs(loadings_matrix[start[i]:end[i], i]))
 
       # Get indices
       indices <- loadings_matrix[start[i]:end[i], -i]
@@ -202,6 +211,9 @@ simEGM <- function(
         )
 
     }
+
+    # Adjust loadings matrix for number of variables in each community
+    loadings_matrix <- t(t(loadings_matrix) / (community_sums^(1 / log(2 * variables))))
 
     # Obtain partial correlations from loadings
     P <- nload2pcor(loadings_matrix)
