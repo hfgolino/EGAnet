@@ -54,7 +54,7 @@
 #'
 #' @param max.iterations Numeric (length = 1).
 #' Number of iterations to attempt to get convergence before erroring out.
-#' Defaults to \code{100}
+#' Defaults to \code{1000}
 #'
 #' @examples
 #' \dontrun{
@@ -75,7 +75,7 @@ simEGM <- function(
     communities, variables,
     loadings = c("small", "moderate", "large"), cross.loadings = 0.01,
     correlations = c("none", "small", "moderate", "large", "very large"),
-    sample.size, max.iterations = 100
+    sample.size, max.iterations = 1000
 )
 {
 
@@ -140,7 +140,7 @@ simEGM <- function(
     "moderate" = 0.030,
     "large" = 0.045,
     "very large" = 0.060
-  ) + correlation_adjustment
+  ) + swiftelse(loadings == "small", 0.015, 0.000)
 
   # Scale correlations with communities
   correlation_range <- correlation_range * (3 / communities)
@@ -196,7 +196,7 @@ simEGM <- function(
       index_length <- length(indices)
 
       # Add correlations on cross-loadings
-      loadings_matrix[start[i]:end[i], -i] <- correlation_range + rnorm_ziggurat(index_length) * 0.01
+      loadings_matrix[start[i]:end[i], -i] <- correlation_range + rnorm_ziggurat(index_length) * 0.0075
       # rnorm(index_length, mean = correlation_range, sd = 0.01)
 
       # Populate cross-loading
@@ -213,7 +213,7 @@ simEGM <- function(
     }
 
     # Adjust loadings matrix for number of variables in each community
-    loadings_matrix <- t(t(loadings_matrix) / (community_sums^(1 / log(2 * variables))))
+    loadings_matrix <- t(t(loadings_matrix) / (community_sums^(1 / log((1 + 2/3) * variables))))
 
     # Obtain partial correlations from loadings
     P <- nload2pcor(loadings_matrix)
