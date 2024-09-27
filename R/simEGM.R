@@ -127,9 +127,9 @@ simEGM <- function(
   # Correlation adjustment based on correlations
   correlation_adjustment <- switch(
     loadings,
-    "small" = 0.015, # take a step up
+    "small" = 0.005, # take a step up
     "moderate" = 0.000, # remain the same
-    "large" = -0.015 # take a step down
+    "large" = -0.005 # take a step down
   )
 
   # Determine correlation ranges
