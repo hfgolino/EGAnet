@@ -140,7 +140,7 @@ simEGM <- function(
     "moderate" = 0.030,
     "large" = 0.045,
     "very large" = 0.060
-  ) + swiftelse(loadings == "small", 0.015, 0.000)
+  ) + correlation_adjustment
 
   # Scale correlations with communities
   correlation_range <- correlation_range * (3 / communities)
