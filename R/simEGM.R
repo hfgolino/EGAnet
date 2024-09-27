@@ -125,12 +125,12 @@ simEGM <- function(
   )
 
   # Correlation adjustment based on correlations
-  correlation_adjustment <- switch(
-    loadings,
-    "small" = 0.005, # take a step up
-    "moderate" = 0.000, # remain the same
-    "large" = -0.005 # take a step down
-  )
+  # correlation_adjustment <- switch(
+  #   loadings,
+  #   "small" = 0.005, # take a step up
+  #   "moderate" = 0.000, # remain the same
+  #   "large" = -0.005 # take a step down
+  # )
 
   # Determine correlation ranges
   correlation_range <- switch(
@@ -140,10 +140,10 @@ simEGM <- function(
     "moderate" = 0.030,
     "large" = 0.045,
     "very large" = 0.060
-  ) + correlation_adjustment
+  ) # + correlation_adjustment
 
   # Scale correlations with communities
-  correlation_range <- correlation_range * (3 / communities)
+  correlation_range <- correlation_range * (2 / communities)
 
   # Ensure zero is minimum
   correlation_range <- swiftelse(correlation_range < 0, 0, correlation_range)
