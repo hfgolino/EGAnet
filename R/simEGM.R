@@ -119,9 +119,9 @@ simEGM <- function(
   # Determine loading ranges
   loading_range <- switch(
     loadings,
-    "small" = 0.15,
-    "moderate" = 0.20,
-    "large" = 0.25
+    "small" = 0.225,
+    "moderate" = 0.250,
+    "large" = 0.275
   )
 
   # Correlation adjustment based on correlations
@@ -145,14 +145,24 @@ simEGM <- function(
   # Ensure zero is minimum
   correlation_range <- swiftelse(correlation_range < 0, 0, correlation_range)
 
+  # Sparsity adjustment based on correlations
+  sparsity_adjustment <- switch(
+    correlations,
+    "none" = log10(sample.size),
+    "small" = 1,
+    "moderate" = 0.50,
+    "large" = 0.25,
+    "very large" = 0
+  )
+
+  # Set cross-loading sparsity parameter
+  sparsity <- 1 / log10(sample.size) * sparsity_adjustment
+
   # Initialize R
   R <- NA
 
   # Count iterations
   count <- 0
-
-  # Set cross-loading sparsity parameter
-  sparsity <- 1 / log10(sample.size)
 
   # Iterate until positive definite
   while(anyNA(R) || any(matrix_eigenvalues(R) < 0)){
@@ -180,14 +190,16 @@ simEGM <- function(
       loadings_matrix[start[i]:end[i], -i] <- correlation_range + rnorm_ziggurat(index_length) * 0.01
       # rnorm(index_length, mean = correlation_range, sd = 0.01)
 
-      # Generate cross-loadings
-      cross_loading <- sample( # Probability of cross-loading being included is set by `log10(sample.size)`
-        c(0, 1), size = index_length, replace = TRUE, prob = c(sparsity, 1 - sparsity)
-      ) * (0.00 + rnorm_ziggurat(index_length) * cross.loadings)
+      # Populate cross-loading
+      loadings_matrix[start[i]:end[i], -i] <- loadings_matrix[start[i]:end[i], -i] +
+        (0.00 + rnorm_ziggurat(index_length) * cross.loadings)
       # rnorm(index_length, mean = 0.00, sd = cross.loadings)
 
-      # Populate cross-loading
-      loadings_matrix[start[i]:end[i], -i] <- loadings_matrix[start[i]:end[i], -i] + cross_loading
+      # Set sparsity in cross-loadings
+      loadings_matrix[start[i]:end[i], -i] <- loadings_matrix[start[i]:end[i], -i] *
+        sample( # Probability of cross-loading being included is set by `log10(sample.size)`
+          c(0, 1), size = index_length, replace = TRUE, prob = c(sparsity, 1 - sparsity)
+        )
 
     }
 

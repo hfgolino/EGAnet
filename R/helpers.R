@@ -3260,6 +3260,22 @@ trace <- function(object)
 }
 
 #' @noRd
+# Standardized root mean square ----
+# Updated 24.09.2024
+srmr <- function(base, comparison)
+{
+
+  # Obtain lower triangle
+  lower_triangle <- lower.tri(base)
+
+  # Return SRMR
+  return(
+    sqrt(mean((base[lower_triangle] - comparison[lower_triangle])^2))
+  )
+
+}
+
+#' @noRd
 # Cohen's d ----
 # Updated 13.07.2023
 d <- function(sample1, sample2, paired = FALSE)

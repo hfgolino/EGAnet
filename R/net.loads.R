@@ -253,15 +253,16 @@ net.loads <- function(
     rotated = rotated
   )
 
-  # Add "community" attributes
-  if(loading.method == "revised"){
-    attr(results, "community") <- unstd_attributes
-  }
-
   # Add "methods" attributes
   attr(results, "methods") <- list(
     loading.method = loading.method, rotation = rotation
   )
+
+  # Add "community" attributes
+  if(loading.method == "revised"){
+    attr(results, "methods")$scaling <- scaling
+    attr(results, "community") <- unstd_attributes
+  }
 
   # Add "membership" attributes for `net.scores`
   attr(results, "membership") <- list(
