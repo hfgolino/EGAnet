@@ -125,36 +125,12 @@ simEGM <- function(
   )
 
   # Correlation adjustment based on correlations
-  if(loadings == "small"){
-
-    # Step up correlations
-    correlation_adjustment <- switch(
-      correlations,
-      "none" = 0.000,
-      "small" = 0.015,
-      "moderate" = 0.030,
-      "large" = 0.015,
-      "very large" = 0.015
-    )
-
-  }else if(loadings == "large"){
-
-    # Step down correlations
-    correlation_adjustment <- switch(
-      correlations,
-      "none" = 0.000,
-      "small" = -0.0075,
-      "moderate" = -0.015,
-      "large" = -0.030,
-      "very large" = -0.015
-    )
-
-  }else{
-
-    # No change for moderate
-    correlation_adjustment <- 0.000
-
-  }
+  correlation_adjustment <- switch(
+    loadings,
+    "small" = 0.005, # take a step up
+    "moderate" = 0.000, # remain the same
+    "large" = -0.005 # take a step down
+  )
 
   # Determine correlation ranges
   correlation_range <- switch(
@@ -162,12 +138,12 @@ simEGM <- function(
     "none" = 0.000,
     "small" = 0.015,
     "moderate" = 0.030,
-    "large" = 0.060,
-    "very large" = 0.075
+    "large" = 0.040,
+    "very large" = 0.045
   ) + correlation_adjustment
 
   # Scale correlations with communities
-  correlation_range <- correlation_range * (2 / communities)
+  correlation_range <- correlation_range * (3 / communities)
 
   # Ensure zero is minimum
   correlation_range <- swiftelse(correlation_range < 0, 0, correlation_range)
@@ -220,7 +196,7 @@ simEGM <- function(
       index_length <- length(indices)
 
       # Add correlations on cross-loadings
-      loadings_matrix[start[i]:end[i], -i] <- correlation_range + rnorm_ziggurat(index_length) * 0.015
+      loadings_matrix[start[i]:end[i], -i] <- correlation_range + rnorm_ziggurat(index_length) * 0.0075
       # rnorm(index_length, mean = correlation_range, sd = 0.01)
 
       # Populate cross-loading
