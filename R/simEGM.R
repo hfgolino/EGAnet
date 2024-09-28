@@ -143,7 +143,7 @@ simEGM <- function(
   ) + correlation_adjustment
 
   # Scale correlations with communities
-  correlation_range <- correlation_range * (2 / communities)
+  correlation_range <- correlation_range * (3 / communities)
 
   # Ensure zero is minimum
   correlation_range <- swiftelse(correlation_range < 0, 0, correlation_range)
