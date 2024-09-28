@@ -107,15 +107,6 @@ simEGM <- function(
   end <- cumsum(variables)
   start <- (end + 1) - variables
 
-  # Generate loadings
-  loadings_matrix <- matrix(
-    0, nrow = total_variables, ncol = communities,
-    dimnames = list(
-      paste0("V", format_integer(seq_len(total_variables), digits(total_variables) - 1)),
-      paste0("C", format_integer(community_sequence, digits(communities) - 1))
-    )
-  )
-
   # Determine loading ranges
   loading_range <- switch(
     loadings,
@@ -124,26 +115,23 @@ simEGM <- function(
     "large" = 0.40
   )
 
-  # Correlation adjustment based on correlations
-  correlation_adjustment <- switch(
-    loadings,
-    "small" = 0.005, # take a step up
-    "moderate" = 0.000, # remain the same
-    "large" = -0.005 # take a step down
-  )
-
   # Determine correlation ranges
-  correlation_range <- switch(
+  correlation_range <- (switch(
     correlations,
     "none" = 0.000,
     "small" = 0.015,
     "moderate" = 0.030,
     "large" = 0.040,
-    "very large" = 0.045
-  ) + correlation_adjustment
+    "very large" = 0.050
+  ) + switch(
+    loadings,
+    "small" = 0.020,
+    "moderate" = 0.010,
+    "large" = 0.000
+  ))
 
-  # Scale correlations with communities
-  correlation_range <- correlation_range * (3 / communities)
+  # Divide correlation range over variables
+  correlation_range <- correlation_range * ((1.5 / communities) + (9 / variables^2))
 
   # Ensure zero is minimum
   correlation_range <- swiftelse(correlation_range < 0, 0, correlation_range)
@@ -169,6 +157,15 @@ simEGM <- function(
 
   # Iterate until positive definite
   while(anyNA(R) || any(matrix_eigenvalues(R) < 0)){
+
+    # Generate loadings
+    loadings_matrix <- matrix(
+      0, nrow = total_variables, ncol = communities,
+      dimnames = list(
+        paste0("V", format_integer(seq_len(total_variables), digits(total_variables) - 1)),
+        paste0("C", format_integer(community_sequence, digits(communities) - 1))
+      )
+    )
 
     # Increase count
     count <- count + 1
@@ -196,7 +193,7 @@ simEGM <- function(
       index_length <- length(indices)
 
       # Add correlations on cross-loadings
-      loadings_matrix[start[i]:end[i], -i] <- correlation_range + rnorm_ziggurat(index_length) * 0.0075
+      loadings_matrix[start[i]:end[i], -i] <- correlation_range[i] + rnorm_ziggurat(index_length) * 0.01
       # rnorm(index_length, mean = correlation_range, sd = 0.01)
 
       # Populate cross-loading
