@@ -70,7 +70,7 @@
 #' @noRd
 #
 # Simulate EGM ----
-# Updated 26.09.2024
+# Updated 29.09.2024
 simEGM <- function(
     communities, variables,
     loadings = c("small", "moderate", "large"), cross.loadings = 0.01,
@@ -78,7 +78,6 @@ simEGM <- function(
     sample.size, max.iterations = 1000
 )
 {
-
 
   # Check for missing arguments (argument, default, function)
   loadings <- set_default(loadings, "moderate", simEGM)
@@ -110,28 +109,25 @@ simEGM <- function(
   # Determine loading ranges
   loading_range <- switch(
     loadings,
-    "small" = 0.20,
-    "moderate" = 0.30,
-    "large" = 0.40
+    "small" = 0.40,
+    "moderate" = 0.55,
+    "large" = 0.70
   )
 
   # Determine correlation ranges
   correlation_range <- (switch(
     correlations,
     "none" = 0.000,
-    "small" = 0.015,
-    "moderate" = 0.030,
-    "large" = 0.040,
-    "very large" = 0.050
+    "small" = 0.15,
+    "moderate" = 0.25,
+    "large" = 0.35,
+    "very large" = 0.45
   ) + switch(
     loadings,
-    "small" = 0.020,
-    "moderate" = 0.010,
-    "large" = 0.000
-  ))
-
-  # Divide correlation range over variables
-  correlation_range <- correlation_range * ((1.5 / communities) + (9 / variables^2))
+    "small" = 0.050,
+    "moderate" = 0.000,
+    "large" = -0.050
+  )) / log(variables)
 
   # Ensure zero is minimum
   correlation_range <- swiftelse(correlation_range < 0, 0, correlation_range)
@@ -141,10 +137,11 @@ simEGM <- function(
     correlations,
     "none" = log10(sample.size),
     "small" = 1,
-    "moderate" = 0.50,
+    "moderate" = 1/3,
     "large" = 0.25,
     "very large" = 0
   )
+
 
   # Set cross-loading sparsity parameter
   sparsity <- 1 / log10(sample.size) * sparsity_adjustment
@@ -193,12 +190,18 @@ simEGM <- function(
       index_length <- length(indices)
 
       # Add correlations on cross-loadings
-      loadings_matrix[start[i]:end[i], -i] <- correlation_range[i] + rnorm_ziggurat(index_length) * 0.01
+      loadings_matrix[start[i]:end[i], -i] <- runif_xoshiro(
+        variables[i], min = correlation_range[i] - 0.05, max = correlation_range[i] + 0.05
+      )
+      # correlation_range[i] + rnorm_ziggurat(index_length) * 0.01
       # rnorm(index_length, mean = correlation_range, sd = 0.01)
 
       # Populate cross-loading
       loadings_matrix[start[i]:end[i], -i] <- loadings_matrix[start[i]:end[i], -i] +
-        (0.00 + rnorm_ziggurat(index_length) * cross.loadings)
+        (0.00 + rnorm_ziggurat(index_length) * cross.loadings) *
+        sample( # Probability of cross-loading being included is set by `log10(sample.size)`
+          c(0, 1), size = index_length, replace = TRUE, prob = c(sparsity, 1 - sparsity)
+        )
       # rnorm(index_length, mean = 0.00, sd = cross.loadings)
 
       # Set sparsity in cross-loadings
@@ -210,13 +213,13 @@ simEGM <- function(
     }
 
     # Adjust loadings matrix for number of variables in each community
-    loadings_matrix <- t(t(loadings_matrix) / (community_sums^(1 / log((1 + 2/3) * variables))))
+    loadings_matrix <- t(t(loadings_matrix) / (community_sums^(1 / log(2 * variables))))
 
     # Obtain partial correlations from loadings
-    P <- nload2pcor(loadings_matrix)
+    P <- silent_call(nload2pcor(loadings_matrix))
 
-    # Obtain zero-order correlations from partial correlations
-    R <- silent_call(pcor2cor(P))
+    # Obtain zero-order correlations from loadings
+    R <- silent_call(nload2cor(loadings_matrix))
 
     # Check for max iterations
     if(count >= max.iterations){
@@ -299,27 +302,71 @@ simEGM_errors <- function(communities, variables, cross.loadings, sample.size, m
 
 #' @noRd
 # Network loadings to partial correlations ----
-# Updated 26.09.2024
+# Updated 29.09.2024
 nload2pcor <- function(loadings)
 {
-
-  # Compute A
-  A <- -tcrossprod(loadings)
 
   # Obtain uniqueness
   uniqueness <- 1 - rowSums(loadings^2)
 
-  # Add uniqueness to diagonal
-  diag(A) <- uniqueness
-
-  # Obtain anti-image
-  anti_image <- A %*% pcor2inv(A) %*% A
-
-  # Obtain partial correlation matrix
-  P <- -anti_image / tcrossprod(sqrt(uniqueness))
+  # Compute partial correlation
+  P <- tcrossprod(loadings) * tcrossprod(sqrt(uniqueness))
   diag(P) <- 0
+
+  # # Obtain uniqueness
+  # uniqueness <- 1 - rowSums(loadings^2)
+  #
+  # # Compute A
+  # A <- -tcrossprod(loadings) * tcrossprod(sqrt(uniqueness))
+  #
+  # # Add uniqueness to diagonal
+  # diag(A) <- uniqueness
+  #
+  # # Obtain anti-image
+  # anti_image <- A %*% pcor2inv(A) %*% A
+  #
+  # # Obtain partial correlation matrix
+  # P <- -anti_image / tcrossprod(sqrt(uniqueness))
+  # diag(P) <- 0
 
   # Return
   return(P)
+
+}
+
+#' @noRd
+# Network loadings to correlations ----
+# Updated 29.09.2024
+nload2cor <- function(loadings)
+{
+
+  # Obtain uniqueness
+  uniqueness <- 1 - rowSums(loadings^2)
+
+  # Compute partial correlation
+  P <- tcrossprod(loadings) * tcrossprod(sqrt(uniqueness))
+  diag(P) <- sqrt(1 - uniqueness)
+
+  # Return correlation
+  return(cov2cor(P))
+
+  # # Obtain uniqueness
+  # uniqueness <- 1 - rowSums(loadings^2)
+  #
+  # # Compute A
+  # A <- -tcrossprod(loadings) * tcrossprod(sqrt(uniqueness))
+  #
+  # # Add uniqueness to diagonal
+  # diag(A) <- uniqueness
+  #
+  # # Obtain anti-image
+  # anti_image <- A %*% pcor2inv(A) %*% A
+  #
+  # # Obtain partial correlation matrix
+  # P <- -anti_image / tcrossprod(sqrt(uniqueness))
+  # diag(P) <- sqrt(1 - uniqueness)
+  #
+  # # Return correlation
+  # return(cov2cor(solve(-P)))
 
 }
