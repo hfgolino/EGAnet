@@ -117,17 +117,17 @@ simEGM <- function(
   # Determine correlation ranges
   correlation_range <- (switch(
     correlations,
-    "none" = 0.000,
+    "none" = 0.00,
     "small" = 0.15,
-    "moderate" = 0.25,
-    "large" = 0.35,
-    "very large" = 0.45
+    "moderate" = 0.30,
+    "large" = 0.40,
+    "very large" = 0.50
   ) + switch(
     loadings,
-    "small" = 0.050,
-    "moderate" = 0.000,
-    "large" = -0.050
-  )) / log(variables)
+    "small" = -0.10,
+    "moderate" = 0.00,
+    "large" = 0.05
+  )) / sqrt(log(variables^2))
 
   # Ensure zero is minimum
   correlation_range <- swiftelse(correlation_range < 0, 0, correlation_range)
