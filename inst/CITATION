@@ -11,7 +11,7 @@ bibentry(
 	year = "2024",
 	url	= "https://r-ega.net",
 	doi = "10.32614/CRAN.package.EGAnet",
-	note = "R package version 2.0.7",
+	note = "R package version 2.0.9",
 
   textVersion  =
   paste0("Golino, H., & Christensen, A. P. (2024). ",
