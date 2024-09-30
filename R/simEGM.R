@@ -311,7 +311,10 @@ nload2pcor <- function(loadings)
 
   # Compute partial correlation
   P <- tcrossprod(loadings) * tcrossprod(sqrt(uniqueness))
-  diag(P) <- 0
+  diag(P) <- sqrt(1 - uniqueness)
+
+  # Return partial correlation
+  return(cor2pcor(cov2cor(P)))
 
   # # Obtain uniqueness
   # uniqueness <- 1 - rowSums(loadings^2)
@@ -328,9 +331,9 @@ nload2pcor <- function(loadings)
   # # Obtain partial correlation matrix
   # P <- -anti_image / tcrossprod(sqrt(uniqueness))
   # diag(P) <- 0
-
-  # Return
-  return(P)
+  #
+  # # Return
+  # return(P)
 
 }
 
