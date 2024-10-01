@@ -198,10 +198,7 @@ simEGM <- function(
 
       # Populate cross-loading
       loadings_matrix[start[i]:end[i], -i] <- loadings_matrix[start[i]:end[i], -i] +
-        (0.00 + rnorm_ziggurat(index_length) * cross.loadings) *
-        sample( # Probability of cross-loading being included is set by `log10(sample.size)`
-          c(0, 1), size = index_length, replace = TRUE, prob = c(sparsity, 1 - sparsity)
-        )
+        (0.00 + rnorm_ziggurat(index_length) * cross.loadings)
       # rnorm(index_length, mean = 0.00, sd = cross.loadings)
 
       # Set sparsity in cross-loadings
