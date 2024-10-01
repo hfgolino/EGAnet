@@ -109,24 +109,24 @@ simEGM <- function(
   # Determine loading ranges
   loading_range <- switch(
     loadings,
-    "small" = 0.40,
-    "moderate" = 0.55,
-    "large" = 0.70
+    "small" = 0.225,
+    "moderate" = 0.35,
+    "large" = 0.50
   )
 
   # Determine correlation ranges
   correlation_range <- (switch(
     correlations,
     "none" = 0.00,
-    "small" = 0.15,
-    "moderate" = 0.30,
-    "large" = 0.40,
-    "very large" = 0.50
+    "small" = 0.06,
+    "moderate" = 0.15,
+    "large" = 0.24,
+    "very large" = 0.40
   ) + switch(
     loadings,
-    "small" = -0.10,
-    "moderate" = 0.00,
-    "large" = 0.05
+    "small" = -0.050,
+    "moderate" = 0.000,
+    "large" = 0.050
   )) / sqrt(log(variables^2))
 
   # Ensure zero is minimum
@@ -168,7 +168,7 @@ simEGM <- function(
     count <- count + 1
 
     # Store community sums
-    community_sums <- numeric(communities)
+    # community_sums <- numeric(communities)
 
     # Populate loadings
     for(i in community_sequence){
@@ -181,7 +181,7 @@ simEGM <- function(
       # rnorm(variables[i], mean = loading_range, sd = 0.01)
 
       # Obtain the sum
-      community_sums[i] <- sum(abs(loadings_matrix[start[i]:end[i], i]))
+      # community_sums[i] <- sum(abs(loadings_matrix[start[i]:end[i], i]))
 
       # Get indices
       indices <- loadings_matrix[start[i]:end[i], -i]
@@ -191,7 +191,7 @@ simEGM <- function(
 
       # Add correlations on cross-loadings
       loadings_matrix[start[i]:end[i], -i] <- runif_xoshiro(
-        variables[i], min = correlation_range[i] - 0.05, max = correlation_range[i] + 0.05
+        variables[i], min = correlation_range[i] - 0.03, max = correlation_range[i] + 0.03
       )
       # correlation_range[i] + rnorm_ziggurat(index_length) * 0.01
       # rnorm(index_length, mean = correlation_range, sd = 0.01)
@@ -213,7 +213,7 @@ simEGM <- function(
     }
 
     # Adjust loadings matrix for number of variables in each community
-    loadings_matrix <- t(t(loadings_matrix) / (community_sums^(1 / log(2 * variables))))
+    # loadings_matrix <- t(t(loadings_matrix) / (community_sums^(1 / log(2 * variables))))
 
     # Obtain partial correlations from loadings
     P <- silent_call(nload2pcor(loadings_matrix))
@@ -281,7 +281,7 @@ simEGM_errors <- function(communities, variables, cross.loadings, sample.size, m
   # 'variables'
   length_error(variables, c(1, communities), "simEGM")
   typeof_error(variables, "numeric", "simEGM")
-  range_error(variables, c(2, Inf), "simEGM")
+  range_error(variables, c(1, Inf), "simEGM")
 
   # 'cross.loadings'
   length_error(cross.loadings, 1, "simEGM")
