@@ -383,13 +383,16 @@ obtain_matrices <- function(loadings_matrix, network.sparsity)
 {
 
   # Obtain partial correlations from loadings
-  original_P <- P <- silent_call(nload2pcor(loadings_matrix))
+  P <- silent_call(nload2pcor(loadings_matrix))
 
   # Get value at said sparsity
   value <- quantile(abs(P[lower.tri(P)]), probs = network.sparsity)
 
   # Set sparseness of edges
   P[abs(P) < value] <- 0
+
+  # Set up vector
+  P_vector <- as.vector(P)
 
   # Get zeros
   zeros <- P_vector != 0
@@ -409,8 +412,11 @@ obtain_matrices <- function(loadings_matrix, network.sparsity)
     # Get correlation matrix
     R_matrix <- silent_call(pcor2cor(P_matrix))
 
+    # Try for positive definite
+    PD <- try(is_positive_definite(R_matrix), silent = TRUE)
+
     # Ensure positive definite
-    if(is_positive_definite(R_matrix)){
+    if(!is(PD, "try-error") && PD){
       return(srmr(R, R_matrix))
     }else{return(1)}
 
