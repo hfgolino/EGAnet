@@ -52,6 +52,11 @@
 #' @param sample.size Numeric (length = 1).
 #' Number of observations to generate
 #'
+#' @param network.sparsity Numeric (length = 1).
+#' Sparsity of the partial correlation matrix to generate.
+#' Can take values between \code{0} and \code{1}.
+#' Defaults to \code{0.25}
+#'
 #' @param max.iterations Numeric (length = 1).
 #' Number of iterations to attempt to get convergence before erroring out.
 #' Defaults to \code{1000}
@@ -75,7 +80,7 @@ simEGM <- function(
     communities, variables,
     loadings = c("small", "moderate", "large"), cross.loadings = 0.01,
     correlations = c("none", "small", "moderate", "large", "very large"),
-    sample.size, max.iterations = 1000
+    sample.size,  network.sparsity = 0.25, max.iterations = 1000
 )
 {
 
@@ -212,11 +217,11 @@ simEGM <- function(
     # Adjust loadings matrix for number of variables in each community
     # loadings_matrix <- t(t(loadings_matrix) / (community_sums^(1 / log(2 * variables))))
 
-    # Obtain partial correlations from loadings
-    P <- silent_call(nload2pcor(loadings_matrix))
+    # Obtain correlation matrices
+    matrices <- obtain_matrices(loadings_matrix, network.sparsity)
 
-    # Obtain zero-order correlations from loadings
-    R <- silent_call(nload2cor(loadings_matrix))
+    # Set values
+    R <- matrices$R; P <- matrices$P
 
     # Check for max iterations
     if(count >= max.iterations){
@@ -368,5 +373,68 @@ nload2cor <- function(loadings)
   #
   # # Return correlation
   # return(cov2cor(solve(-P)))
+
+}
+
+#' @noRd
+# Obtain correlation matrices ----
+# Updated 02.10.2024
+obtain_matrices <- function(loadings_matrix, network.sparsity)
+{
+
+  # Obtain partial correlations from loadings
+  original_P <- P <- silent_call(nload2pcor(loadings_matrix))
+
+  # Get value at said sparsity
+  value <- quantile(abs(P[lower.tri(P)]), probs = network.sparsity)
+
+  # Set sparseness of edges
+  P[abs(P) < value] <- 0
+
+  # Get zeros
+  zeros <- P_vector != 0
+
+  # Obtain zero-order correlations from loadings
+  R <- silent_call(nload2cor(loadings_matrix))
+
+  # SRMR cost function
+  srmr_cost <- function(P_vector, zeros, R, ...) {
+
+    # Get partial correlations
+    P_matrix <- matrix(P_vector * zeros, nrow = nrow(R))
+
+    # Ensure symmetric
+    P_matrix <- (P_matrix + t(P_matrix)) / 2
+
+    # Get correlation matrix
+    R_matrix <- silent_call(pcor2cor(P_matrix))
+
+    # Ensure positive definite
+    if(is_positive_definite(R_matrix)){
+      return(srmr(R, R_matrix))
+    }else{return(1)}
+
+  }
+
+  # Use optimize to minimize the SRMR
+  result <- optim(
+    par = P_vector, fn = srmr_cost,
+    zeros = zeros, R = R, method = "BFGS"
+  )
+
+  # Fill out matrix
+  P <- matrix(result$par, nrow = nrow(R))
+
+  # Set R
+  R <- pcor2cor(P)
+  R <- (R + t(R)) / 2
+
+  # Maintain names
+  dimnames(R) <- dimnames(P) <- list(
+    row.names(loadings_matrix), row.names(loadings_matrix)
+  )
+
+  # Return results
+  return(list(R = R, P = P))
 
 }

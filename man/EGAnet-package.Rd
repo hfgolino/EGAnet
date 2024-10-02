@@ -10,13 +10,13 @@ Implements the Exploratory Graph Analysis (EGA) framework for dimensionality
 and psychometric assessment. EGA estimates the number of dimensions in
 psychological data using network estimation methods and community detection
 algorithms. A bootstrap method is provided to assess the stability of dimensions
-and items. Fit is evaluated using the Entropy Fit family of indices. Unique 
+and items. Fit is evaluated using the Entropy Fit family of indices. Unique
 Variable Analysis evaluates the extent to which items are locally dependent (or
 redundant). Network loadings provide similar information to factor loadings and
 can be used to compute network scores. A bootstrap and permutation approach are
 available to assess configural and metric invariance. Hierarchical structures
-can be detected using Hierarchical EGA. Time series and intensive longitudinal 
-data can be analyzed using Dynamic EGA, supporting individual, group, and 
+can be detected using Hierarchical EGA. Time series and intensive longitudinal
+data can be analyzed using Dynamic EGA, supporting individual, group, and
 population level assessments.
 }
 \references{
@@ -80,7 +80,7 @@ Exploratory graph analysis: A new approach for estimating the number of dimensio
 Golino, H., Moulder, R., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Nesselroade, J., Sadana, R., Thiyagarajan, J. A., & Boker, S. M. (2020).
 Entropy fit indices: New fit measures for assessing the structure and dimensionality of multiple latent variables.
 \emph{Multivariate Behavioral Research}. \cr
-# Related functions: \code{\link[EGAnet]{entropyFit}}, \code{\link[EGAnet]{tefi}}, and \code{\link[EGAnet]{vn.entropy}} 
+# Related functions: \code{\link[EGAnet]{entropyFit}}, \code{\link[EGAnet]{tefi}}, and \code{\link[EGAnet]{vn.entropy}}
 
 Golino, H., Nesselroade, J. R., & Christensen, A. P. (2022).
 Towards a psychology of individuals: The ergodicity information index and a bottom-up approach for finding generalizations.
