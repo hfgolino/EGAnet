@@ -388,8 +388,19 @@ obtain_matrices <- function(loadings_matrix, network.sparsity)
   # Get value at said sparsity
   value <- quantile(abs(P[lower.tri(P)]), probs = network.sparsity)
 
+  # Get indices below value
+  low_indices <- abs(P) < value
+
+  # Get total low indices
+  total_indices <- sum(low_indices)
+
   # Set sparseness of edges
-  P[abs(P) < value] <- 0
+  P[low_indices] <- runif_xoshiro(
+    total_indices, min = -1e-06, max = 1e-06
+  ) * sample(
+      c(0, 1), total_indices, replace = TRUE,
+      prob = c(network.sparsity, 1 - network.sparsity)
+  )
 
   # Set up vector
   P_vector <- as.vector(P)
@@ -400,36 +411,29 @@ obtain_matrices <- function(loadings_matrix, network.sparsity)
   # Obtain zero-order correlations from loadings
   R <- silent_call(nload2cor(loadings_matrix))
 
-  # SRMR cost function
-  srmr_cost <- function(P_vector, zeros, R, ...) {
-
-    # Get partial correlations
-    P_matrix <- matrix(P_vector * zeros, nrow = nrow(R))
-
-    # Ensure symmetric
-    P_matrix <- (P_matrix + t(P_matrix)) / 2
-
-    # Get correlation matrix
-    R_matrix <- silent_call(pcor2cor(P_matrix))
-
-    # Try for positive definite
-    PD <- try(is_positive_definite(R_matrix), silent = TRUE)
-
-    # Ensure positive definite
-    if(!is(PD, "try-error") && PD){
-      return(srmr(R, R_matrix))
-    }else{return(1)}
-
-  }
-
   # Use optimize to minimize the SRMR
   result <- optim(
-    par = P_vector, fn = srmr_cost,
+    par = P_vector, fn = P_cost,
     zeros = zeros, R = R, method = "BFGS"
   )
 
   # Fill out matrix
   P <- matrix(result$par, nrow = nrow(R))
+
+  # Set bounds
+  loading_vector <- as.vector(loadings_matrix)
+
+  # Use optimize to minimize the SRMR
+  result <- optim(
+    par = loading_vector, fn = N_cost,
+    P = P, method = "BFGS"
+  )
+
+  # Extract optimized loadings
+  loadings_matrix <- matrix(
+    result$par, nrow = nrow(loadings_matrix),
+    dimnames = dimnames(loadings_matrix)
+  )
 
   # Set R
   R <- pcor2cor(P)
@@ -442,5 +446,47 @@ obtain_matrices <- function(loadings_matrix, network.sparsity)
 
   # Return results
   return(list(R = R, P = P))
+
+}
+
+#' Partial correlation cost ----
+#' @noRd
+# Updated 02.10.2024
+P_cost <- function(P_vector, zeros, R, ...)
+{
+
+  # Get partial correlations
+  P_matrix <- matrix(P_vector * zeros, nrow = nrow(R))
+
+  # Ensure symmetric
+  P_matrix <- (P_matrix + t(P_matrix)) / 2
+
+  # Get correlation matrix
+  R_matrix <- silent_call(pcor2cor(P_matrix))
+
+  # Try for positive definite
+  PD <- try(is_positive_definite(R_matrix), silent = TRUE)
+
+  # Ensure positive definite
+  if(!is(PD, "try-error") && PD){
+    return(srmr(R, R_matrix))
+  }else{return(1)}
+
+}
+
+#' Loadings partial correlation cost ----
+#' @noRd
+# Updated 02.10.2024
+N_cost <- function(loadings_vector, P, ...)
+{
+
+  # Get loadings from vector
+  loadings_matrix <- matrix(loadings_vector, nrow = nrow(P))
+
+  # Estimate partial correlations from loadings
+  model_pcor <- nload2pcor(loadings_matrix)
+
+  # Return SRMR
+  srmr(P, model_pcor)
 
 }
