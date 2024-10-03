@@ -80,7 +80,7 @@ simEGM <- function(
     communities, variables,
     loadings = c("small", "moderate", "large"), cross.loadings = 0.01,
     correlations = c("none", "small", "moderate", "large", "very large"),
-    sample.size,  network.sparsity = 0.25, max.iterations = 1000
+    sample.size,  network.sparsity = 0.625, max.iterations = 1000
 )
 {
 
