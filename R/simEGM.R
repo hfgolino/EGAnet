@@ -395,9 +395,8 @@ obtain_matrices <- function(loadings_matrix, network.sparsity)
   total_indices <- sum(low_indices)
 
   # Set sparseness of edges
-  P[low_indices] <- runif_xoshiro(
-    total_indices, min = -1e-06, max = 1e-06
-  ) * sample(
+  P[low_indices] <- EGAnet:::rnorm_ziggurat(total_indices) * 1e-06 *
+  sample(
       c(0, 1), total_indices, replace = TRUE,
       prob = c(network.sparsity, 1 - network.sparsity)
   )
