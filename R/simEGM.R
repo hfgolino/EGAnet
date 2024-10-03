@@ -75,12 +75,12 @@
 #' @noRd
 #
 # Simulate EGM ----
-# Updated 29.09.2024
+# Updated 03.10.2024
 simEGM <- function(
     communities, variables,
     loadings = c("small", "moderate", "large"), cross.loadings = 0.01,
     correlations = c("none", "small", "moderate", "large", "very large"),
-    sample.size,  network.sparsity = 0.625, max.iterations = 1000
+    sample.size,  network.sparsity = NULL, max.iterations = 1000
 )
 {
 
@@ -378,23 +378,28 @@ nload2cor <- function(loadings)
 
 #' @noRd
 # Obtain correlation matrices ----
-# Updated 02.10.2024
+# Updated 03.10.2024
 obtain_matrices <- function(loadings_matrix, network.sparsity, loadings, correlations)
 {
 
-  # # Set sparsity
-  # network.sparsity <- switch(
-  #   correlations,
-  #   "small" = 0.75,
-  #   "moderate" = 0.50,
-  #   "large" = 0.25,
-  #   "very large" = 0.90
-  # ) + switch(
-  #   loadings,
-  #   "small" = 0.05,
-  #   "moderate" = 0.00,
-  #   "large" = -0.05
-  # )
+  # Check for user-provided value
+  if(is.null(network.sparsity)){
+
+    # Set sparsity with defaults
+    network.sparsity <- switch(
+      correlations,
+      "small" = 0.65,
+      "moderate" = 0.45,
+      "large" = 0.25,
+      "very large" = 0.05
+    ) + switch(
+      loadings,
+      "small" = -0.10,
+      "moderate" = -0.05,
+      "large" = 0.00
+    )
+
+  }
 
   # Obtain partial correlations from loadings
   P <- silent_call(nload2pcor(loadings_matrix))
@@ -418,6 +423,9 @@ obtain_matrices <- function(loadings_matrix, network.sparsity, loadings, correla
   # Set up vector
   P_vector <- as.vector(P)
 
+  # Get length
+  P_length <- length(P_vector)
+
   # Get zeros
   zeros <- P_vector != 0
 
@@ -427,7 +435,9 @@ obtain_matrices <- function(loadings_matrix, network.sparsity, loadings, correla
   # Use optimize to minimize the SRMR
   result <- nlminb(
     objective = P_cost, start = P_vector,
-    zeros = zeros, R = R
+    zeros = zeros, R = R,
+    lower = rep(-1 * zeros, P_length),
+    upper = rep(1 * zeros, P_length)
   )
 
   # Fill out matrix
@@ -462,7 +472,7 @@ obtain_matrices <- function(loadings_matrix, network.sparsity, loadings, correla
 #' Partial correlation cost ----
 #' @noRd
 # Updated 02.10.2024
-P_cost <- function(P_vector, zeros, R, ...)
+P_cost <- function(P_vector, zeros, R)
 {
 
   # Get partial correlations
