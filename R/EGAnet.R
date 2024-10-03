@@ -115,7 +115,7 @@
 #'
 #' @importFrom graphics par text
 #' @importFrom methods formalArgs is
-#' @importFrom stats as.dendrogram as.dist complete.cases cor cov cov2cor cutree dnorm hclust ks.test mad median na.omit optim p.adjust pgamma pnorm qchisq qf qgamma qnorm qt quantile rnorm runif sd setNames t.test uniroot var wilcox.test
+#' @importFrom stats as.dendrogram as.dist complete.cases cor cov cov2cor cutree dnorm hclust ks.test mad median na.omit nlminb nlm p.adjust pgamma pnorm qchisq qf qgamma qnorm qt quantile rnorm runif sd setNames t.test uniroot var wilcox.test
 #' @importFrom utils browseURL capture.output combn data globalVariables object.size packageDescription packageVersion setTxtProgressBar txtProgressBar
 #'
 "_PACKAGE"

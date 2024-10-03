@@ -180,7 +180,7 @@ simEGM <- function(
 
       # Populate assigned loadings
       loadings_matrix[start[i]:end[i], i] <- runif_xoshiro(
-        variables[i], min = loading_range - 0.05, max = loading_range + 0.05
+        variables[i], min = loading_range - 0.075, max = loading_range + 0.075
       )
       # loading_range + rnorm_ziggurat(variables[i]) * 0.02
       # rnorm(variables[i], mean = loading_range, sd = 0.01)
@@ -218,7 +218,7 @@ simEGM <- function(
     # loadings_matrix <- t(t(loadings_matrix) / (community_sums^(1 / log(2 * variables))))
 
     # Obtain correlation matrices
-    matrices <- obtain_matrices(loadings_matrix, network.sparsity)
+    matrices <- obtain_matrices(loadings_matrix, network.sparsity, loadings, correlations)
 
     # Set values
     R <- matrices$R; P <- matrices$P
@@ -379,8 +379,22 @@ nload2cor <- function(loadings)
 #' @noRd
 # Obtain correlation matrices ----
 # Updated 02.10.2024
-obtain_matrices <- function(loadings_matrix, network.sparsity)
+obtain_matrices <- function(loadings_matrix, network.sparsity, loadings, correlations)
 {
+
+  # # Set sparsity
+  # network.sparsity <- switch(
+  #   correlations,
+  #   "small" = 0.75,
+  #   "moderate" = 0.50,
+  #   "large" = 0.25,
+  #   "very large" = 0.90
+  # ) + switch(
+  #   loadings,
+  #   "small" = 0.05,
+  #   "moderate" = 0.00,
+  #   "large" = -0.05
+  # )
 
   # Obtain partial correlations from loadings
   P <- silent_call(nload2pcor(loadings_matrix))
@@ -411,9 +425,9 @@ obtain_matrices <- function(loadings_matrix, network.sparsity)
   R <- silent_call(nload2cor(loadings_matrix))
 
   # Use optimize to minimize the SRMR
-  result <- optim(
-    par = P_vector, fn = P_cost,
-    zeros = zeros, R = R, method = "BFGS"
+  result <- nlminb(
+    objective = P_cost, start = P_vector,
+    zeros = zeros, R = R
   )
 
   # Fill out matrix
@@ -423,14 +437,11 @@ obtain_matrices <- function(loadings_matrix, network.sparsity)
   loading_vector <- as.vector(loadings_matrix)
 
   # Use optimize to minimize the SRMR
-  result <- optim(
-    par = loading_vector, fn = N_cost,
-    P = P, method = "BFGS"
-  )
+  result <- nlm(f = N_cost, p = loading_vector, P = P)
 
   # Extract optimized loadings
   loadings_matrix <- matrix(
-    result$par, nrow = nrow(loadings_matrix),
+    result$estimate, nrow = nrow(loadings_matrix),
     dimnames = dimnames(loadings_matrix)
   )
 
