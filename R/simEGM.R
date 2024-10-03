@@ -116,7 +116,7 @@ simEGM <- function(
     loadings,
     "small" = 0.225,
     "moderate" = 0.35,
-    "large" = 0.50
+    "large" = 0.500
   )
 
   # Determine correlation ranges
@@ -388,15 +388,16 @@ obtain_matrices <- function(loadings_matrix, network.sparsity, loadings, correla
     # Set sparsity with defaults
     network.sparsity <- switch(
       correlations,
-      "small" = 0.65,
-      "moderate" = 0.45,
+      "none" = 0.55,
+      "small" = 0.45,
+      "moderate" = 0.35,
       "large" = 0.25,
-      "very large" = 0.05
+      "very large" = 0.10
     ) + switch(
       loadings,
-      "small" = -0.10,
-      "moderate" = -0.05,
-      "large" = 0.00
+      "small" = 0.05,
+      "moderate" = 0.00,
+      "large" = -0.05
     )
 
   }
@@ -414,9 +415,8 @@ obtain_matrices <- function(loadings_matrix, network.sparsity, loadings, correla
   total_indices <- sum(low_indices)
 
   # Set sparseness of edges
-  P[low_indices] <- EGAnet:::rnorm_ziggurat(total_indices) * 1e-06 *
-  sample(
-      c(0, 1), total_indices, replace = TRUE,
+  P[low_indices] <- rnorm_ziggurat(total_indices) * sample(
+      c(0, 1e-06), total_indices, replace = TRUE,
       prob = c(network.sparsity, 1 - network.sparsity)
   )
 
@@ -433,11 +433,13 @@ obtain_matrices <- function(loadings_matrix, network.sparsity, loadings, correla
   R <- silent_call(nload2cor(loadings_matrix))
 
   # Use optimize to minimize the SRMR
-  result <- nlminb(
-    objective = P_cost, start = P_vector,
-    zeros = zeros, R = R,
-    lower = rep(-1 * zeros, P_length),
-    upper = rep(1 * zeros, P_length)
+  result <- silent_call(
+    nlminb(
+      objective = P_cost, start = P_vector,
+      zeros = zeros, R = R,
+      lower = rep(-1 * zeros, P_length),
+      upper = rep(1 * zeros, P_length)
+    )
   )
 
   # Fill out matrix
@@ -447,7 +449,7 @@ obtain_matrices <- function(loadings_matrix, network.sparsity, loadings, correla
   loading_vector <- as.vector(loadings_matrix)
 
   # Use optimize to minimize the SRMR
-  result <- nlm(f = N_cost, p = loading_vector, P = P)
+  result <- silent_call(nlm(f = N_cost, p = loading_vector, P = P))
 
   # Extract optimized loadings
   loadings_matrix <- matrix(
