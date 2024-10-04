@@ -52,10 +52,9 @@
 #' @param sample.size Numeric (length = 1).
 #' Number of observations to generate
 #'
-#' @param network.sparsity Numeric (length = 1).
-#' Sparsity of the partial correlation matrix to generate.
-#' Can take values between \code{0} and \code{1}.
-#' Defaults to \code{0.25}
+#' @param p.in placeholder
+#'
+#' @param p.out placeholder
 #'
 #' @param max.iterations Numeric (length = 1).
 #' Number of iterations to attempt to get convergence before erroring out.
@@ -75,7 +74,7 @@
 #' @noRd
 #
 # Simulate EGM ----
-# Updated 03.10.2024
+# Updated 04.10.2024
 simEGM <- function(
     communities, variables,
     loadings = c("small", "moderate", "large"), cross.loadings = 0.01,
@@ -172,9 +171,6 @@ simEGM <- function(
     # Increase count
     count <- count + 1
 
-    # Store community sums
-    # community_sums <- numeric(communities)
-
     # Populate loadings
     for(i in community_sequence){
 
@@ -182,11 +178,6 @@ simEGM <- function(
       loadings_matrix[start[i]:end[i], i] <- runif_xoshiro(
         variables[i], min = loading_range - 0.075, max = loading_range + 0.075
       )
-      # loading_range + rnorm_ziggurat(variables[i]) * 0.02
-      # rnorm(variables[i], mean = loading_range, sd = 0.01)
-
-      # Obtain the sum
-      # community_sums[i] <- sum(abs(loadings_matrix[start[i]:end[i], i]))
 
       # Get indices
       indices <- loadings_matrix[start[i]:end[i], -i]
@@ -198,8 +189,6 @@ simEGM <- function(
       loadings_matrix[start[i]:end[i], -i] <- runif_xoshiro(
         variables[i], min = correlation_range[i] - 0.03, max = correlation_range[i] + 0.03
       )
-      # correlation_range[i] + rnorm_ziggurat(index_length) * 0.01
-      # rnorm(index_length, mean = correlation_range, sd = 0.01)
 
       # Populate cross-loading
       loadings_matrix[start[i]:end[i], -i] <- loadings_matrix[start[i]:end[i], -i] +
@@ -214,17 +203,14 @@ simEGM <- function(
 
     }
 
-    # Adjust loadings matrix for number of variables in each community
-    # loadings_matrix <- t(t(loadings_matrix) / (community_sums^(1 / log(2 * variables))))
-
     # Obtain correlation matrices
-    matrices <- obtain_matrices(
-      total_variables, communities, variables, start, end,
+    loadings_matrix <- update_loadings(
+      total_variables, communities, start, end,
       p.in, p.out, loadings_matrix
     )
 
-    # Set values
-    R <- matrices$R; P <- matrices$P; loadings_matrix <- matrices$loadings_matrix
+    # Set correlations
+    R <- nload2cor(loadings_matrix)
 
     # Check for max iterations
     if(count >= max.iterations){
@@ -259,7 +245,7 @@ simEGM <- function(
   return(
     list(
       data = data %*% cholesky,
-      population_partial_correlation = P,
+      population_partial_correlation = cor2pcor(R),
       population_correlation = R,
       parameters = list(
         loadings = loadings_matrix,
@@ -342,18 +328,73 @@ nload2cor <- function(loadings)
 }
 
 #' @noRd
-# Obtain correlation matrices ----
+# Update loadings to align with network ----
 # Updated 03.10.2024
-obtain_matrices <- function(
-    total_variables, communities, variables, start, end,
+update_loadings <- function(
+    total_variables, communities, start, end,
     p.in, p.out, loadings_matrix
 )
 {
 
-  # Initialize community network
-  community_network <- matrix(
-    1, nrow = total_variables, ncol = total_variables
+  # Obtain partial correlation matrix
+  P <- create_community(
+    total_variables, communities, start, end, p.in, p.out
+  ) * nload2pcor(loadings_matrix)
+
+  # Set up vector
+  P_vector <- as.vector(P)
+
+  # Get length
+  P_length <- length(P_vector)
+
+  # Get zeros
+  zeros <- P_vector != 0
+
+  # Obtain zero-order correlations from loadings
+  R <- silent_call(nload2cor(loadings_matrix))
+
+  # Use optimize to minimize the SRMR
+  result <- silent_call(
+    nlminb(
+      objective = P_cost, start = P_vector,
+      zeros = zeros, R = R,
+      lower = rep(-1 * zeros, P_length),
+      upper = rep(1 * zeros, P_length)
+    )
   )
+
+  # Fill out matrix
+  P <- matrix(result$par, nrow = nrow(R))
+
+  # Set bounds
+  loading_vector <- as.vector(loadings_matrix)
+
+  # Use optimize to minimize the SRMR
+  result <- silent_call(
+    nlm(f = N_cost, p = loading_vector, P = P, iterlim = 1000)
+  )
+
+  # Extract optimized loadings
+  loadings_matrix <- matrix(
+    result$estimate, nrow = nrow(loadings_matrix),
+    dimnames = dimnames(loadings_matrix)
+  )
+
+  # Return results
+  return(loadings_matrix)
+
+}
+
+#' @noRd
+# Obtain correlation matrices ----
+# Updated 04.10.2024
+create_community <- function(
+    total_variables, communities, start, end, p.in, p.out
+)
+{
+
+  # Initialize community network
+  community_network <- matrix(1, nrow = total_variables, ncol = total_variables)
 
   # Set community blocks
   for(i in seq_len(communities)){
@@ -396,63 +437,9 @@ obtain_matrices <- function(
   # Make symmetric
   community_network <- community_network + t(community_network)
 
-  # Set all 2s to 1
-  community_network[] <- swiftelse(
-    community_network == 2, 1, 0
-  )
-
-  # Obtain partial correlation matrix
-  P <- community_network * nload2pcor(loadings_matrix)
-
-  # Set up vector
-  P_vector <- as.vector(P)
-
-  # Get length
-  P_length <- length(P_vector)
-
-  # Get zeros
-  zeros <- P_vector != 0
-
-  # Obtain zero-order correlations from loadings
-  R <- silent_call(nload2cor(loadings_matrix))
-
-  # Use optimize to minimize the SRMR
-  result <- silent_call(
-    nlminb(
-      objective = P_cost, start = P_vector,
-      zeros = zeros, R = R,
-      lower = rep(-1 * zeros, P_length),
-      upper = rep(1 * zeros, P_length)
-    )
-  )
-
-  # Fill out matrix
-  P <- matrix(result$par, nrow = nrow(R))
-
-  # Set bounds
-  loading_vector <- as.vector(loadings_matrix)
-
-  # Use optimize to minimize the SRMR
-  result <- silent_call(
-    nlm(f = N_cost, p = loading_vector, P = P, iterlim = 1000)
-  )
-
-  # Extract optimized loadings
-  loadings_matrix <- matrix(
-    result$estimate, nrow = nrow(loadings_matrix),
-    dimnames = dimnames(loadings_matrix)
-  )
-
-  # Set R
-  R <- pcor2cor(P)
-
-  # Maintain names
-  dimnames(R) <- dimnames(P) <- list(
-    row.names(loadings_matrix), row.names(loadings_matrix)
-  )
-
-  # Return results
-  return(list(R = R, P = P, loadings_matrix = loadings_matrix))
+  # Return community network
+  # Setting all 2s to 1s and 1s to 0s
+  return(community_network - 1)
 
 }
 
