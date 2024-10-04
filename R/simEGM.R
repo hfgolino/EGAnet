@@ -218,7 +218,10 @@ simEGM <- function(
     # loadings_matrix <- t(t(loadings_matrix) / (community_sums^(1 / log(2 * variables))))
 
     # Obtain correlation matrices
-    matrices <- obtain_matrices(loadings_matrix, network.sparsity, loadings, correlations)
+    matrices <- obtain_matrices(
+      total_variables, communities, variables, start, end,
+      p.in, p.out, loadings_matrix
+    )
 
     # Set values
     R <- matrices$R; P <- matrices$P; loadings_matrix <- matrices$loadings_matrix
@@ -344,7 +347,6 @@ nload2cor <- function(loadings)
 obtain_matrices <- function(
     total_variables, communities, variables, start, end,
     p.in, p.out, loadings_matrix
-
 )
 {
 
