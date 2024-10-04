@@ -54,29 +54,46 @@ EGM <- function(data, structure = NULL, ...)
   standard_scores <- compute_scores(output, data, "network", "simple")$std.scores
 
   # Compute community correlations
-  standard_correlations <- cor(standard_scores)
+  standard_correlations <- cor(standard_scores, use = "pairwise")
 
   # Obtain model-implied correlations
   standard_R <- nload2cor(standard_loadings)
   standard_P <- cor2pcor(standard_R)
 
+  # Get loading dimensions
+  dimensions <- dim(standard_loadings)
+  dimension_names <- dimnames(standard_loadings)
+
   # Obtain loadings vector and get bounds
-  loading_vector <- as.vector(standard_loadings)
-  zeros <- loading_vector != 0
+  loadings_vector <- as.vector(standard_loadings)
+  zeros <- loadings_vector != 0
+
+  # Set up loading structure
+  loading_structure <- matrix(
+    FALSE, nrow = dimensions[1],
+    ncol = dimensions[2],
+    dimnames = dimension_names
+  )
+
+  # Fill structure
+  for(i in seq_along(structure)){
+    loading_structure[i, structure[i]] <- TRUE
+  }
 
   # Use optimize to minimize the SRMR
   result <- silent_call(
     nlm(
-      p = loading_vector, f = estimated_N_cost,
+      p = loadings_vector, f = estimated_N_cost,
       zeros = zeros, R = ega$correlation,
+      loading_structure = standard_loadings * loading_structure,
       iterlim = 1000
     )
   )
 
   # Extract optimized loadings
   optimized_loadings <- matrix(
-    result$estimate, nrow = nrow(standard_loadings),
-    dimnames = dimnames(standard_loadings)
+    result$estimate, nrow = dimensions[1],
+    dimnames = dimension_names
   )
 
   # Replace loadings output with optimized loadings
@@ -86,7 +103,7 @@ EGM <- function(data, structure = NULL, ...)
   optimized_scores <- compute_scores(output, data, "network", "simple")$std.scores
 
   # Compute community correlations
-  optimized_correlations <- cor(optimized_scores)
+  optimized_correlations <- cor(optimized_scores, use = "pairwise")
 
   # Obtain model-implied correlations
   optimized_R <- nload2cor(optimized_loadings)
@@ -204,9 +221,20 @@ nload2cor <- function(loadings)
 #' Estimated loadings cost (based on SRMR) ----
 #' @noRd
 # Updated 04.10.2024
-estimated_N_cost <- function(loadings_vector, zeros, R, ...)
+estimated_N_cost <- function(
+    loadings_vector, zeros, R, loading_structure, ...
+)
 {
-  return(srmr(R, nload2cor(matrix(loadings_vector * zeros, nrow = nrow(R)))))
+
+  # Assemble loading matrix
+  loading_matrix <- matrix(loadings_vector * zeros, nrow = nrow(R))
+
+  # Set penalties
+  penalty <- sqrt(mean((loading_matrix - loading_structure)^2))
+
+  # Return cost
+  return(srmr(R, nload2cor(loading_matrix)) + penalty)
+
 }
 
 #' Function to compute log-likelihood metrics ----
