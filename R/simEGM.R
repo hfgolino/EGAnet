@@ -124,7 +124,7 @@ simEGM <- function(
     "none" = 0.00,
     "small" = 0.06,
     "moderate" = 0.15,
-    "large" = 0.24,
+    "large" = 0.30,
     "very large" = 0.40
   ) + switch(
     loadings,
