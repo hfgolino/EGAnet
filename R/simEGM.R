@@ -80,7 +80,7 @@ simEGM <- function(
     communities, variables,
     loadings = c("small", "moderate", "large"), cross.loadings = 0.01,
     correlations = c("none", "small", "moderate", "large", "very large"),
-    sample.size,  network.sparsity = NULL, max.iterations = 1000
+    sample.size,  p.in = 0.95, p.out = 0.90, max.iterations = 1000
 )
 {
 
@@ -221,7 +221,7 @@ simEGM <- function(
     matrices <- obtain_matrices(loadings_matrix, network.sparsity, loadings, correlations)
 
     # Set values
-    R <- matrices$R; P <- matrices$P
+    R <- matrices$R; P <- matrices$P; loadings_matrix <- matrices$loadings_matrix
 
     # Check for max iterations
     if(count >= max.iterations){
@@ -318,25 +318,6 @@ nload2pcor <- function(loadings)
   # Return partial correlation
   return(cor2pcor(cov2cor(P)))
 
-  # # Obtain uniqueness
-  # uniqueness <- 1 - rowSums(loadings^2)
-  #
-  # # Compute A
-  # A <- -tcrossprod(loadings) * tcrossprod(sqrt(uniqueness))
-  #
-  # # Add uniqueness to diagonal
-  # diag(A) <- uniqueness
-  #
-  # # Obtain anti-image
-  # anti_image <- A %*% pcor2inv(A) %*% A
-  #
-  # # Obtain partial correlation matrix
-  # P <- -anti_image / tcrossprod(sqrt(uniqueness))
-  # diag(P) <- 0
-  #
-  # # Return
-  # return(P)
-
 }
 
 #' @noRd
@@ -355,70 +336,71 @@ nload2cor <- function(loadings)
   # Return correlation
   return(cov2cor(P))
 
-  # # Obtain uniqueness
-  # uniqueness <- 1 - rowSums(loadings^2)
-  #
-  # # Compute A
-  # A <- -tcrossprod(loadings) * tcrossprod(sqrt(uniqueness))
-  #
-  # # Add uniqueness to diagonal
-  # diag(A) <- uniqueness
-  #
-  # # Obtain anti-image
-  # anti_image <- A %*% pcor2inv(A) %*% A
-  #
-  # # Obtain partial correlation matrix
-  # P <- -anti_image / tcrossprod(sqrt(uniqueness))
-  # diag(P) <- sqrt(1 - uniqueness)
-  #
-  # # Return correlation
-  # return(cov2cor(solve(-P)))
-
 }
 
 #' @noRd
 # Obtain correlation matrices ----
 # Updated 03.10.2024
-obtain_matrices <- function(loadings_matrix, network.sparsity, loadings, correlations)
+obtain_matrices <- function(
+    total_variables, communities, variables, start, end,
+    p.in, p.out, loadings_matrix
+
+)
 {
 
-  # Check for user-provided value
-  if(is.null(network.sparsity)){
+  # Initialize community network
+  community_network <- matrix(
+    1, nrow = total_variables, ncol = total_variables
+  )
 
-    # Set sparsity with defaults
-    network.sparsity <- switch(
-      correlations,
-      "none" = 0.55,
-      "small" = 0.45,
-      "moderate" = 0.35,
-      "large" = 0.25,
-      "very large" = 0.10
-    ) + switch(
-      loadings,
-      "small" = 0.05,
-      "moderate" = 0.00,
-      "large" = -0.05
+  # Set community blocks
+  for(i in seq_len(communities)){
+
+    # Randomly set zero in block
+    indices <- community_network[start[i]:end[i], start[i]:end[i]]
+
+    # Get lower triangle
+    lower_triangle <- lower.tri(indices)
+
+    # Sample to set to zero
+    indices[lower_triangle] <- sample(
+      c(0, 1), size = sum(lower_triangle),
+      replace = TRUE, prob = c(1 - p.in, p.in)
     )
+
+    # Set back into block
+    community_network[start[i]:end[i], start[i]:end[i]] <- indices
+
+    # Set between-community indices
+    indices <- community_network[start[i]:end[i], -c(start[i]:end[i])]
+
+    # Set as vector
+    vector_indices <- as.vector(indices)
+
+    # Sample to set to zero
+    vector_indices <- sample(
+      c(0, 1), size = length(vector_indices),
+      replace = TRUE, prob = c(1 - p.out, p.out)
+    )
+
+    # Set back into indices
+    indices[] <- vector_indices
+
+    # Set between-community indices
+    community_network[start[i]:end[i], -c(start[i]:end[i])] <- indices
 
   }
 
-  # Obtain partial correlations from loadings
-  P <- silent_call(nload2pcor(loadings_matrix))
+  # Make symmetric
+  community_network <- community_network + t(community_network)
 
-  # Get value at said sparsity
-  value <- quantile(abs(P[lower.tri(P)]), probs = network.sparsity)
-
-  # Get indices below value
-  low_indices <- abs(P) < value
-
-  # Get total low indices
-  total_indices <- sum(low_indices)
-
-  # Set sparseness of edges
-  P[low_indices] <- rnorm_ziggurat(total_indices) * sample(
-      c(0, 1e-06), total_indices, replace = TRUE,
-      prob = c(network.sparsity, 1 - network.sparsity)
+  # Set all 2s to 1
+  community_network[] <- swiftelse(
+    community_network == 2, 1, 0
   )
+
+  # Obtain partial correlation matrix
+  P <- community_network * nload2pcor(loadings_matrix)
 
   # Set up vector
   P_vector <- as.vector(P)
@@ -449,7 +431,9 @@ obtain_matrices <- function(loadings_matrix, network.sparsity, loadings, correla
   loading_vector <- as.vector(loadings_matrix)
 
   # Use optimize to minimize the SRMR
-  result <- silent_call(nlm(f = N_cost, p = loading_vector, P = P))
+  result <- silent_call(
+    nlm(f = N_cost, p = loading_vector, P = P, iterlim = 1000)
+  )
 
   # Extract optimized loadings
   loadings_matrix <- matrix(
@@ -459,7 +443,6 @@ obtain_matrices <- function(loadings_matrix, network.sparsity, loadings, correla
 
   # Set R
   R <- pcor2cor(P)
-  R <- (R + t(R)) / 2
 
   # Maintain names
   dimnames(R) <- dimnames(P) <- list(
@@ -467,7 +450,7 @@ obtain_matrices <- function(loadings_matrix, network.sparsity, loadings, correla
   )
 
   # Return results
-  return(list(R = R, P = P))
+  return(list(R = R, P = P, loadings_matrix = loadings_matrix))
 
 }
 
