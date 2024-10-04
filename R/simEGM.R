@@ -176,7 +176,7 @@ simEGM <- function(
 
       # Populate assigned loadings
       loadings_matrix[start[i]:end[i], i] <- runif_xoshiro(
-        variables[i], min = loading_range - 0.075, max = loading_range + 0.075
+        variables[i], min = loading_range - 0.05, max = loading_range + 0.05
       )
 
       # Get indices
