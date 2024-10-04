@@ -1,6 +1,6 @@
-#' Simulate data following a Exploratory Graph Model
+#' Simulate data following a Exploratory Graph Model (\code{\link[EGAnet]{EGM}})
 #'
-#' @description Function to simulate data based on the Exploratory Graph Model
+#' @description Function to simulate data based on \code{\link[EGAnet]{EGM}}
 #'
 #' @param communities Numeric (length = 1).
 #' Number of communities to generate
@@ -10,23 +10,22 @@
 #'
 #' @param loadings Character (length = 1).
 #' Magnitude of the assigned network loadings.
-#' Available options (revised network loadings with \code{scaling = 2} in parentheses):
+#' Available options (based on revised network loadings with \code{scaling = 2}):
 #'
 #' \itemize{
 #'
-#' \item \code{"small"} --- 0.15 (approximates 0.20)
+#' \item \code{"small"} --- 0.225 (approximates 0.20)
 #'
-#' \item \code{"moderate"} --- 0.20 (approximates 0.35)
+#' \item \code{"moderate"} --- 0.35 (approximates 0.35)
 #'
-#' \item \code{"large"} --- 0.25 (approximates 0.50)
+#' \item \code{"large"} --- 0.50 (approximates 0.50)
 #'
 #' }
 #'
-#' Values provided are for \code{scaling = 2/3} in \code{\link[EGAnet]{net.loads}}.
 #' Uses \code{runif(n, min = value - 0.025, max = value + 0.025)} for some jitter in the loadings
 #'
 #' @param cross.loadings Numeric (length = 1).
-#' Standard deviation of a normal distribution with a mean of zero.
+#' Standard deviation of a normal distribution with a mean of zero (\code{n, mean = 0, sd = value}).
 #' Defaults to \code{0.01}
 #'
 #' @param correlations Character (length = 1).
@@ -37,24 +36,30 @@
 #'
 #' \item \code{"none"} --- 0.00
 #'
-#' \item \code{"small"} --- 0.15 (adds about 0.015 to the cross-loadings)
+#' \item \code{"small"} --- 0.10
 #'
-#' \item \code{"moderate"} --- 0.30 (adds about 0.03 to the cross-loadings)
+#' \item \code{"moderate"} --- 0.30
 #'
-#' \item \code{"large"} --- 0.50 (adds about 0.06 to the cross-loadings)
+#' \item \code{"large"} --- 0.50
 #'
-#' \item \code{"very large"} --- 0.70 (adds about 0.09 to the cross-loadings)
+#' \item \code{"very large"} --- 0.70
 #'
 #' }
 #'
-#' Uses \code{rnorm(n, mean = value, sd = 0.01)} for some jitter in the correlations
+#' Uses \code{rnorm(n, mean = value, sd = 0.03)} for some jitter in the correlations
 #'
 #' @param sample.size Numeric (length = 1).
 #' Number of observations to generate
 #'
-#' @param p.in placeholder
+#' @param p.in Numeric (length = 1).
+#' Sets the probability of retaining an edge \emph{within} communities.
+#' Single values are applied to all communities.
+#' Defaults to \code{0.95}
 #'
-#' @param p.out placeholder
+#' @param p.out Numeric (length = 1 or \code{communities}).
+#' Sets the probability of retaining an edge \emph{between} communities.
+#' Single values are applied to all communities.
+#' Defaults to \code{0.90}
 #'
 #' @param max.iterations Numeric (length = 1).
 #' Number of iterations to attempt to get convergence before erroring out.
@@ -87,8 +92,11 @@ simEGM <- function(
   loadings <- set_default(loadings, "moderate", simEGM)
   correlations <- set_default(correlations, "moderate", simEGM)
 
-  # Argument errors (return data in case of tibble)
-  simEGM_errors(communities, variables, cross.loadings, sample.size, max.iterations)
+  # Argument errors
+  simEGM_errors(
+    communities, variables, cross.loadings,
+    sample.size, p.in, p.out, max.iterations
+  )
 
   # Set up membership based on communities and variables
   membership <- swiftelse(
@@ -245,11 +253,12 @@ simEGM <- function(
   return(
     list(
       data = data %*% cholesky,
-      population_partial_correlation = cor2pcor(R),
       population_correlation = R,
+      population_partial_correlation = cor2pcor(R),
       parameters = list(
         loadings = loadings_matrix,
         correlations = correlations,
+        p.in = p.in, p.out = p.out,
         membership = membership,
         iterations = count
       )
@@ -260,8 +269,11 @@ simEGM <- function(
 
 #' @noRd
 # Errors ----
-# Updated 25.09.2024
-simEGM_errors <- function(communities, variables, cross.loadings, sample.size, max.iterations)
+# Updated 04.10.2024
+simEGM_errors <- function(
+    communities, variables, cross.loadings,
+    sample.size, p.in, p.out, max.iterations
+)
 {
 
   # 'communities'
@@ -284,6 +296,16 @@ simEGM_errors <- function(communities, variables, cross.loadings, sample.size, m
   typeof_error(sample.size, "numeric", "simEGM")
   range_error(sample.size, c(1, Inf), "simEGM")
 
+  # 'p.in'
+  length_error(p.in, 1, "simEGM")
+  typeof_error(p.in, "numeric", "simEGM")
+  range_error(p.in, c(0, 1), "simEGM")
+
+  # 'p.out'
+  length_error(p.out, 1, "simEGM")
+  typeof_error(p.out, "numeric", "simEGM")
+  range_error(p.out, c(0, 1), "simEGM")
+
   # 'max.iterations'
   length_error(max.iterations, 1, "simEGM")
   typeof_error(max.iterations, "numeric", "simEGM")
@@ -292,44 +314,8 @@ simEGM_errors <- function(communities, variables, cross.loadings, sample.size, m
 }
 
 #' @noRd
-# Network loadings to partial correlations ----
-# Updated 29.09.2024
-nload2pcor <- function(loadings)
-{
-
-  # Obtain uniqueness
-  uniqueness <- 1 - rowSums(loadings^2)
-
-  # Compute partial correlation
-  P <- tcrossprod(loadings) * tcrossprod(sqrt(uniqueness))
-  diag(P) <- sqrt(1 - uniqueness)
-
-  # Return partial correlation
-  return(cor2pcor(cov2cor(P)))
-
-}
-
-#' @noRd
-# Network loadings to correlations ----
-# Updated 29.09.2024
-nload2cor <- function(loadings)
-{
-
-  # Obtain uniqueness
-  uniqueness <- 1 - rowSums(loadings^2)
-
-  # Compute partial correlation
-  P <- tcrossprod(loadings) * tcrossprod(sqrt(uniqueness))
-  diag(P) <- sqrt(1 - uniqueness)
-
-  # Return correlation
-  return(cov2cor(P))
-
-}
-
-#' @noRd
 # Update loadings to align with network ----
-# Updated 03.10.2024
+# Updated 04.10.2024
 update_loadings <- function(
     total_variables, communities, start, end,
     p.in, p.out, loadings_matrix
@@ -388,9 +374,7 @@ update_loadings <- function(
 #' @noRd
 # Obtain correlation matrices ----
 # Updated 04.10.2024
-create_community <- function(
-    total_variables, communities, start, end, p.in, p.out
-)
+create_community <- function(total_variables, communities, start, end, p.in, p.out)
 {
 
   # Initialize community network
@@ -445,7 +429,7 @@ create_community <- function(
 
 #' Partial correlation cost ----
 #' @noRd
-# Updated 02.10.2024
+# Updated 04.10.2024
 P_cost <- function(P_vector, zeros, R)
 {
 
@@ -470,17 +454,17 @@ P_cost <- function(P_vector, zeros, R)
 
 #' Loadings partial correlation cost ----
 #' @noRd
-# Updated 02.10.2024
+# Updated 04.10.2024
 N_cost <- function(loadings_vector, P, ...)
 {
 
   # Get loadings from vector
-  loadings_matrix <- matrix(loadings_vector, nrow = nrow(P))
+  loadings_matrix <- matrix(loadings_vector, nrow = dim(P)[1])
 
   # Estimate partial correlations from loadings
   model_pcor <- nload2pcor(loadings_matrix)
 
   # Return SRMR
-  srmr(P, model_pcor)
+  return(srmr(P, model_pcor))
 
 }
