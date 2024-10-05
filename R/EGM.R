@@ -235,6 +235,7 @@ estimated_N_cost <- function(
   # Return cost
   return(srmr(R, nload2cor(loading_matrix)) + penalty)
 
+}
 
 
 #' Function to compute log-likelihood metrics ----
