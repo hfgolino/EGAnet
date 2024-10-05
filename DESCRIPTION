@@ -28,7 +28,7 @@ LazyData: true
 Imports: dendextend, fungible, future, future.apply, glasso, 
 	     GGally, ggplot2, ggpubr, GPArotation, 
          igraph (>= 1.3.0), lavaan, Matrix, methods, 
-         network, progressr, qgraph, semPlot, sna, stats, wfg
+         network, progressr, qgraph, semPlot, sna, stats
 Suggests: fitdistrplus, gridExtra, knitr, markdown,
           pbapply, progress, psych, pwr, RColorBrewer
 URL: https://r-ega.net

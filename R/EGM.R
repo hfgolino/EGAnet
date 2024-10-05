@@ -42,6 +42,8 @@ EGM <- function(data, structure = NULL, ...)
   # Set memberships based on structure
   if(!is.null(structure)){
     ega$wc[] <- structure
+  }else{
+    structure <- ega$wc
   }
 
   # Obtain standard network loadings
@@ -218,8 +220,8 @@ nload2cor <- function(loadings)
 
 }
 
-#' Estimated loadings cost (based on SRMR) ----
 #' @noRd
+# Estimated loadings cost (based on SRMR) ----
 # Updated 04.10.2024
 estimated_N_cost <- function(
     loadings_vector, zeros, R,
@@ -231,7 +233,7 @@ estimated_N_cost <- function(
   loading_matrix <- matrix(loadings_vector * zeros, nrow = nrow(R))
 
   # Obtain assign loadings
-  assign_loadings <-apply(
+  assign_loadings <- apply(
     loading_matrix * loading_structure, 1, function(x){
     x[x != 0]
   })
@@ -261,8 +263,8 @@ estimated_N_cost <- function(
 
 }
 
-#' Function to compute log-likelihood metrics ----
 #' @noRd
+# Compute log-likelihood metrics ----
 # Updated 04.10.2024
 likelihood <- function(data, R, S, loadings)
 {
