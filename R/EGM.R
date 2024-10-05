@@ -85,7 +85,7 @@ EGM <- function(data, structure = NULL, ...)
     nlm(
       p = loadings_vector, f = estimated_N_cost,
       zeros = zeros, R = ega$correlation,
-      loading_structure = standard_loadings * loading_structure,
+      loading_structure = loading_structure,
       iterlim = 1000
     )
   )
@@ -230,12 +230,12 @@ estimated_N_cost <- function(
   loading_matrix <- matrix(loadings_vector * zeros, nrow = nrow(R))
 
   # Set penalties
-  penalty <- sqrt(mean((loading_matrix - loading_structure)^2))
+  penalty <- sqrt(mean(pmax(0, (loading_matrix - loading_matrix * loading_structure))^2))
 
   # Return cost
   return(srmr(R, nload2cor(loading_matrix)) + penalty)
 
-}
+
 
 #' Function to compute log-likelihood metrics ----
 #' @noRd
