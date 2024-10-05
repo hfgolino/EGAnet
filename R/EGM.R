@@ -222,21 +222,44 @@ nload2cor <- function(loadings)
 #' @noRd
 # Updated 04.10.2024
 estimated_N_cost <- function(
-    loadings_vector, zeros, R, loading_structure, ...
+    loadings_vector, zeros, R,
+    loading_structure, ...
 )
 {
 
   # Assemble loading matrix
   loading_matrix <- matrix(loadings_vector * zeros, nrow = nrow(R))
 
-  # Set penalties
-  penalty <- sqrt(mean(pmax(0, (loading_matrix - loading_matrix * loading_structure))^2))
+  # Obtain assign loadings
+  assign_loadings <-apply(
+    loading_matrix * loading_structure, 1, function(x){
+    x[x != 0]
+  })
 
-  # Return cost
-  return(srmr(R, nload2cor(loading_matrix)) + penalty)
+  # Obtain differences
+  differences <- abs(loading_matrix) - abs(assign_loadings)
+
+  # Obtain difference values
+  difference_values <- differences * sweep(
+    x = differences, MARGIN = 2, STATS = 0, FUN = ">"
+  )
+
+  # Set penalties
+  penalty <- sqrt(mean((difference_values)^2))
+
+  # Try result
+  implied_R <- try(nload2cor(loading_matrix), silent = TRUE)
+
+  # Check for error
+  return(
+    swiftelse( # Return infinite on error
+      is(implied_R, "try-error"), Inf,
+      srmr(R, implied_R) + penalty
+      # Return SRMR otherwise
+    )
+  )
 
 }
-
 
 #' Function to compute log-likelihood metrics ----
 #' @noRd
