@@ -26,12 +26,15 @@
 #' @noRd
 #
 # Estimate EGM ----
-# Updated 04.10.2024
+# Updated 06.10.2024
 EGM <- function(data, structure = NULL, ...)
 {
 
   # Check data and structure
   data <- EGM_errors(data, structure, ...)
+
+  # Obtain data dimensions
+  data_dimensions <- dim(data)
 
   # Estimate EGA
   ega <- EGA(data, plot.EGA = FALSE, ...)
@@ -71,15 +74,16 @@ EGM <- function(data, structure = NULL, ...)
   zeros <- loadings_vector != 0
 
   # Set up loading structure
+  # Uses transpose for 2x speed up in optimization
   loading_structure <- matrix(
-    FALSE, nrow = dimensions[1],
-    ncol = dimensions[2],
-    dimnames = dimension_names
+    FALSE, nrow = dimensions[2],
+    ncol = dimensions[1],
+    dimnames = list(dimension_names[[2]], dimension_names[[1]])
   )
 
   # Fill structure
   for(i in seq_along(structure)){
-    loading_structure[i, structure[i]] <- TRUE
+    loading_structure[structure[i], i] <- TRUE
   }
 
   # Use optimize to minimize the SRMR
@@ -88,6 +92,7 @@ EGM <- function(data, structure = NULL, ...)
       p = loadings_vector, f = estimated_N_cost,
       zeros = zeros, R = ega$correlation,
       loading_structure = loading_structure,
+      rows = dimensions[2],
       iterlim = 1000
     )
   )
@@ -122,7 +127,10 @@ EGM <- function(data, structure = NULL, ...)
         fit = c(
           R.srmr = srmr(ega$correlation, standard_R),
           P.srmr = srmr(cor2pcor(ega$correlation), standard_P),
-          likelihood(data, standard_R, ega$correlation, standard_loadings),
+          likelihood(
+            n = data_dimensions[1], p = data_dimensions[2],
+            R = standard_R, S = ega$correlation, loadings = standard_loadings
+          ),
           TEFI = tefi(standard_R, structure = ega$wc)$VN.Entropy.Fit
         ),
         implied = list(R = standard_R, P = standard_P)
@@ -134,7 +142,10 @@ EGM <- function(data, structure = NULL, ...)
         fit = c(
           R.srmr = srmr(ega$correlation, optimized_R),
           P.srmr = srmr(cor2pcor(ega$correlation), optimized_P),
-          likelihood(data, optimized_R, ega$correlation, optimized_loadings),
+          likelihood(
+            n = data_dimensions[1], p = data_dimensions[2],
+            R = optimized_R, S = ega$correlation, loadings = optimized_loadings
+          ),
           TEFI = tefi(optimized_R, structure = ega$wc)$VN.Entropy.Fit
         ),
         implied = list(R = optimized_R, P = optimized_P)
@@ -222,35 +233,30 @@ nload2cor <- function(loadings)
 
 #' @noRd
 # Estimated loadings cost (based on SRMR) ----
-# Updated 04.10.2024
+# Updated 06.10.2024
 estimated_N_cost <- function(
     loadings_vector, zeros, R,
-    loading_structure, ...
+    loading_structure, rows, ...
 )
 {
 
   # Assemble loading matrix
-  loading_matrix <- matrix(loadings_vector * zeros, nrow = nrow(R))
+  loading_matrix <- matrix(loadings_vector * zeros, nrow = rows, byrow = TRUE)
 
   # Obtain assign loadings
-  assign_loadings <- apply(
-    loading_matrix * loading_structure, 1, function(x){
-    x[x != 0]
-  })
+  assign_loadings <- loading_matrix[loading_structure]
 
   # Obtain differences
-  differences <- abs(loading_matrix) - abs(assign_loadings)
+  differences <- abs(t(loading_matrix)) - assign_loadings
 
   # Obtain difference values
-  difference_values <- differences * sweep(
-    x = differences, MARGIN = 2, STATS = 0, FUN = ">"
-  )
+  difference_values <- differences * (differences > 0)
 
   # Set penalties
   penalty <- sqrt(mean((difference_values)^2))
 
   # Try result
-  implied_R <- try(nload2cor(loading_matrix), silent = TRUE)
+  implied_R <- try(nload2cor(t(loading_matrix)), silent = TRUE)
 
   # Check for error
   return(
@@ -264,23 +270,38 @@ estimated_N_cost <- function(
 }
 
 #' @noRd
-# Compute log-likelihood metrics ----
-# Updated 04.10.2024
-likelihood <- function(data, R, S, loadings)
+# Log-likelihood only ----
+# Updated 06.10.2024
+log_likelihood <- function(n, p, R, S, type = c("partial", "zero"))
 {
 
-  # Obtain dimensions
-  dimensions <- dim(data)
-  n <- dimensions[1] # sample size
-  p <- dimensions[2] # number of variables
-  m <- dim(loadings)[2] # number of dimensions
+  # Set default to zero-order
+  if(missing(type)){
+    type <- "zero"
+  }else{type <- match.arg(type)}
+
+  # Return
+  return(
+    swiftelse(
+      type == "zero",
+      -(n / 2) * (p * log(2 * pi) + log(det(R)) + sum(diag(S %*% solve(R)))),
+      (n / 2) * (log(det(R)) - sum(diag((S %*% R)))) - (n * p / 2) * log(2 * pi)
+    )
+  )
+
+}
+
+#' @noRd
+# Compute log-likelihood metrics ----
+# Updated 06.10.2024
+likelihood <- function(n, p, R, S, loadings)
+{
+
+  # Get number of communities
+  m <- dim(loadings)[2]
 
   # Log-likelihood
-  loglik <- -(n / 2) * (
-    p * log(2 * pi) + log(det(R)) + sum(diag(
-      S %*% solve(R)
-    ))
-  )
+  loglik <- log_likelihood(n, p, R, S)
 
   # Total number of parameters
   parameters <- (p * m) + p + ((m * (m - 1)) / 2)

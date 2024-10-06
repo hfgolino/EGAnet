@@ -26,19 +26,22 @@
 #' @noRd
 #
 # Compare EGM to EFA ----
-# Updated 05.10.2024
+# Updated 06.10.2024
 EGM.compare <- function(data, rotation = "geominQ", ...)
 {
 
   # Check data and structure
   data <- EGM.compare_errors(data, ...)
 
+  # Obtain dimensions of the data
+  dimensions <- dim(data)
+
   # Estimate EGM
   egm <- EGM(data, ...)
 
   # Set up EFA
   efa <- psych::fa(
-    egm$EGA$correlation, n.obs = dim(data)[2],
+    egm$EGA$correlation, n.obs = dimensions[2],
     nfactors = egm$EGA$n.dim, rotate = "none"
   )
 
@@ -80,7 +83,10 @@ EGM.compare <- function(data, rotation = "geominQ", ...)
   efa_fit <- c(
     R.srmr = srmr(egm$EGA$correlation, implied_R),
     P.srmr = srmr(cor2pcor(egm$EGA$correlation), cor2pcor(implied_R)),
-    likelihood(data, implied_R, egm$EGA$correlation, aligned_output$F2),
+    likelihood(
+      n = dimensions[1], p = dimensions[2], R = implied_R,
+      S = egm$EGA$correlation, loadings = aligned_output$F2
+    ),
     TEFI = tefi(implied_R, structure = egm$EGA$wc)$VN.Entropy.Fit
   )
 
