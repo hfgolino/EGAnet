@@ -76,7 +76,7 @@
 #'
 #' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'
-#' @noRd
+#' @export
 #
 # Simulate EGM ----
 # Updated 04.10.2024

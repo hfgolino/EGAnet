@@ -84,7 +84,7 @@
 #'
 #' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'
-#' @noRd
+#' @export
 #
 # Estimate EGM ----
 # Updated 07.10.2024
@@ -348,10 +348,10 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, ...)
 {
 
   # Get dimensions
-  dimensions <- dim(simulated$data)
+  dimensions <- dim(data)
 
   # Estimate zero-order and partial correlations
-  empirical_R <- auto.correlate(simulated$data, ...)
+  empirical_R <- auto.correlate(data, ...)
   empirical_P <- cor2pcor(empirical_R)
 
   # Check for whether structure is provided

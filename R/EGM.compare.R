@@ -23,7 +23,7 @@
 #'
 #' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'
-#' @noRd
+#' @export
 #
 # Compare EGM to EFA ----
 # Updated 06.10.2024
