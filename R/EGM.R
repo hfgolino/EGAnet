@@ -85,7 +85,11 @@
 #' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'
 #' @export
+<<<<<<< Updated upstream
 #
+=======
+#'
+>>>>>>> Stashed changes
 # Estimate EGM ----
 # Updated 07.10.2024
 EGM <- function(
@@ -96,7 +100,7 @@ EGM <- function(
 {
 
   # Set default
-  # set_default(EGM.type, "standard", "EGM")
+  set_default(EGM.type, "standard", EGM)
 
   # Check data and structure
   data <- EGM_errors(
