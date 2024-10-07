@@ -12,11 +12,18 @@
 #'
 #' \itemize{
 #'
+#' \item \code{"search"} --- Searches over \code{p.in} and \code{p.out}
+#' parameters for best fit based on Bayesian information criterion (BIC).
+#' Uses \code{EGM.type = "standard"} under the hood. Only the argument
+#' \code{p.in} is used such that \code{p.in} searches over
+#' \code{seq(p.in, 1, 0.05)} and \code{p.out} searches over
+#' \code{seq(0.00, p.in, 0.05)}
+#'
 #' \item \code{"standard"} --- Applies the standard EGM model which
 #' estimates communities based on the non-regularized empirical partial
 #' correlation matrix and sparsity is set using \code{p.in} and \code{p.out}
 #'
-#' \item \code{"EGA"} ---- Applies \code{\link[EGAnet]{EGA}} to obtain the
+#' \item \code{"EGA"} --- Applies \code{\link[EGAnet]{EGA}} to obtain the
 #' (sparse) regularized network structure, communities, and memberships
 #'
 #' }
@@ -48,6 +55,20 @@
 #' Only used for \code{EGM.type = "standard"}.
 #' Defaults to \code{NULL} but must be set
 #'
+#' @param ncores Numeric (length = 1).
+#' Number of cores to use in computing results.
+#' Defaults to \code{ceiling(parallel::detectCores() / 2)} or half of your
+#' computer's processing power.
+#' Set to \code{1} to not use parallel computing
+#'
+#' If you're unsure how many cores your computer has,
+#' then type: \code{parallel::detectCores()}
+#'
+#' @param verbose Boolean (length = 1).
+#' Should progress be displayed?
+#' Defaults to \code{TRUE}.
+#' Set to \code{FALSE} to not display progress
+#'
 #' @param ... Additional arguments to be passed on to
 #' \code{\link[EGAnet]{auto.correlate}},
 #' \code{\link[EGAnet]{network.estimation}},
@@ -68,8 +89,9 @@
 # Estimate EGM ----
 # Updated 07.10.2024
 EGM <- function(
-    data, EGM.type = c("standard", "EGA"),
-    communities = NULL, structure = NULL, p.in = NULL, p.out = NULL, ...
+    data, EGM.type = c("search", "standard", "EGA"),
+    communities = NULL, structure = NULL,
+    p.in = NULL, p.out = NULL, verbose = TRUE, ...
 )
 {
 
@@ -77,12 +99,16 @@ EGM <- function(
   # set_default(EGM.type, "standard", "EGM")
 
   # Check data and structure
-  data <- EGM_errors(data, EGM.type, communities, structure, p.in, p.out, ...)
+  data <- EGM_errors(
+    data, EGM.type, communities, structure,
+    p.in, p.out, verbose, ...
+  )
 
   # Switch and return results based on type
   return(
     switch(
       EGM.type,
+      "search" = EGM.search(data, communities, structure, p.in, verbose, ...),
       "standard" = EGM.standard(data, communities, structure, p.in, p.out, ...),
       "ega" = EGM.EGA(data, structure, ...)
     )
@@ -93,7 +119,10 @@ EGM <- function(
 #' @noRd
 # EGM Errors ----
 # Updated 07.10.2023
-EGM_errors <- function(data, EGM.type, communities, structure, p.in, p.out, ...)
+EGM_errors <- function(
+    data, EGM.type, communities, structure,
+    p.in, p.out, verbose, ...
+)
 {
 
   # 'data' errors
@@ -124,8 +153,8 @@ EGM_errors <- function(data, EGM.type, communities, structure, p.in, p.out, ...)
 
   }
 
-  # Check for EGM type
-  if(EGM.type == "standard"){
+  # Check first for parameters involved in both search and standard
+  if(EGM.type != "ega"){
 
     # Check for NULL in 'p.in'
     if(is.null(p.in)){
@@ -138,6 +167,22 @@ EGM_errors <- function(data, EGM.type, communities, structure, p.in, p.out, ...)
       )
     }
 
+    # Check 'p.in' errors
+    typeof_error(p.in, "numeric", "EGM")
+    range_error(p.in, c(0, 1), "EGM")
+    length_error(p.in, 1, "EGM")
+
+  }
+
+  # Check for EGM type
+  if(EGM.type == "search"){
+
+    # 'verbose' errors
+    length_error(verbose, 1, "EGM")
+    typeof_error(verbose, "logical", "EGM")
+
+  }else if(EGM.type == "standard"){
+
     # Check for NULL in 'p.out'
     if(is.null(p.out)){
       .handleSimpleError(
@@ -148,11 +193,6 @@ EGM_errors <- function(data, EGM.type, communities, structure, p.in, p.out, ...)
         call = "EGM"
       )
     }
-
-    # Check 'p.in' errors
-    typeof_error(p.in, "numeric", "EGM")
-    range_error(p.in, c(0, 1), "EGM")
-    length_error(p.in, 1, "EGM")
 
     # Check 'p.out' errors
     typeof_error(p.out, "numeric", "EGM")
@@ -481,7 +521,9 @@ create_community_structure <- function(
 
       # Sample to set to zero
       indices[
-        indices < quantile(indices[lower_triangle], probs = 1 - p.in, na.rm = TRUE)
+        abs(indices) < quantile(
+          abs(indices[lower_triangle]), probs = 1 - p.in, na.rm = TRUE
+        )
       ] <- 0
 
       # Set back into block
@@ -496,10 +538,10 @@ create_community_structure <- function(
     if(compute_sparsity(indices) > p.out){
 
       # Get threshold value
-      threshold_value <- quantile(indices, probs = 1 - p.out, na.rm = TRUE)
+      threshold_value <- quantile(abs(indices), probs = 1 - p.out, na.rm = TRUE)
 
       # Set below to zero
-      indices[indices < threshold_value] <- 0
+      indices[abs(indices) < threshold_value] <- 0
 
       # Set back into block
       P[community_variables[[i]], -unlist(community_variables[-i])] <- indices
@@ -508,7 +550,7 @@ create_community_structure <- function(
       indices <- P[-unlist(community_variables[-i]), community_variables[[i]]]
 
       # Set below to zero
-      indices[indices < threshold_value] <- 0
+      indices[abs(indices) < threshold_value] <- 0
 
       # Set back into block
       P[-unlist(community_variables[-i]), community_variables[[i]]] <- indices
@@ -683,6 +725,69 @@ EGM.EGA <- function(data, structure, ...)
 
   # Set class
   class(results) <- c("EGM", "EGA")
+
+  # Return results
+  return(results)
+
+}
+
+#' @noRd
+# EGM | Search ----
+# Updated 07.10.2024
+EGM.search <- function(data, communities, structure, p.in, verbose, ...)
+{
+
+  # Perform search based on 'p.in'
+  p_grid <- expand.grid(
+    p_in = seq(p.in, 1, 0.05), p_out = seq(0.00, p.in, 0.05)
+  )
+
+  # Get number of search
+  p_number <- dim(p_grid)[1]
+
+  # Loop over grid search
+  grid_search <- parallel_process(
+    iterations = p_number, datalist = seq_len(p_number),
+    FUN = function(i, data, p_grid, communities){
+
+      # First, try
+      output <- silent_call(
+        try(
+          EGM(
+            data = data, EGM.type = "standard",
+            communities = communities, p.in = p_grid$p_in[i],
+            p.out = p_grid$p_out[i]
+          ), silent = TRUE
+        )
+      )
+
+      # Return result
+      return(swiftelse(is(output, "try-error"), NULL, output))
+
+    }, data, p_grid, communities, ncores = 1, progress = verbose
+  )
+
+  # Obtain fits
+  optimized_fits <- nvapply(
+    grid_search, function(x){
+      swiftelse(is.null(x), NA, x$model$optimized$fit[["BIC"]])
+    }
+  )
+
+  # Obtain index
+  min_index <- which.min(optimized_fits)
+
+  # Set up final model
+  results <- grid_search[[min_index]]
+
+  # Add 'p.in' and 'p.out' parameters
+  results$search <- c(
+    p.in = p_grid[min_index, "p_in"],
+    p.out = p_grid[min_index, "p_out"]
+  )
+
+  # Overwrite class
+  class(results) <- c("EGM", "search")
 
   # Return results
   return(results)
