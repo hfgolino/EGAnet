@@ -342,38 +342,42 @@ update_loadings <- function(
     community_variables = community_variables,
     p.in = p.in, p.out = p.out
   )
-  # P <- create_community(
-  #   total_variables, communities, start, end, p.in, p.out
-  # ) * nload2pcor(loadings_matrix)
 
-  # Set up vector
-  P_vector <- as.vector(P)
+  # Set lower triangle
+  lower_triangle <- lower.tri(P)
+
+  # Obtain the lower triangle
+  P_lower <- P[lower_triangle]
 
   # Get length
-  P_length <- length(P_vector)
+  P_length <- length(P_lower)
 
   # Get zeros
-  zeros <- P_vector != 0
+  zeros <- P_lower != 0
 
   # Set up non-zeros (makes for faster optimization)
-  P_nonzero <- P[zeros]
+  P_nonzero <- P_lower[zeros]
 
   # Obtain zero-order correlations from loadings
   R <- silent_call(nload2cor(loadings_matrix))
 
   # Use optimize to minimize the SRMR
   result <- silent_call(
-    nlm(
-      p = P_nonzero, f = P_cost,
-      P_vector = P_vector, zeros = zeros, R = R
+    nlminb(
+      start = P_nonzero, objective = P_cost,
+      P_lower = P_lower, zeros = zeros,
+      R = R, lower_triangle = lower_triangle,
+      total_variables = total_variables
     )
   )
 
   # Update P vector
-  P_vector[zeros] <- result$estimate
+  P_lower[zeros] <- result$par
 
   # Fill out matrix
-  P <- matrix(P_vector, nrow = nrow(R))
+  P <- matrix(0, nrow = total_variables, ncol = total_variables)
+  P[lower_triangle] <- P_lower
+  P <- t(P) + P
 
   # Set bounds
   loading_vector <- as.vector(loadings_matrix)
@@ -385,7 +389,7 @@ update_loadings <- function(
 
   # Extract optimized loadings
   loadings_matrix <- matrix(
-    result$estimate, nrow = nrow(loadings_matrix),
+    result$estimate, nrow = total_variables,
     dimnames = dimnames(loadings_matrix)
   )
 
@@ -397,17 +401,20 @@ update_loadings <- function(
 #' Partial correlation cost ----
 #' @noRd
 # Updated 08.10.2024
-P_cost <- function(P_nonzero, P_vector, zeros, R)
+P_cost <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle)
 {
 
   # Set up P vector
-  P_vector[zeros] <- P_nonzero
+  P_lower[zeros] <- P_nonzero
 
   # Get partial correlations
-  P_matrix <- matrix(P_vector, nrow = nrow(R))
+  P_matrix <- matrix(0, nrow = total_variables, ncol = total_variables)
 
-  # Ensure symmetric
-  P_matrix <- (P_matrix + t(P_matrix)) / 2
+  # Set lower triangle
+  P_matrix[lower_triangle] <- P_lower
+
+  # Transpose
+  P_matrix <- t(P_matrix) + P_matrix
 
   # Get correlation matrix
   R_matrix <- silent_call(pcor2cor(P_matrix))
