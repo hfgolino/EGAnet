@@ -96,7 +96,7 @@ EGM <- function(
 {
 
   # Set default
-  set_default(EGM.type, "standard", EGM)
+  EGM.type <- set_default(EGM.type, "standard", EGM)
 
   # Check data and structure
   data <- EGM_errors(
@@ -126,7 +126,7 @@ EGM_errors <- function(
 {
 
   # 'data' errors
-  object_error(data, c("matrix", "data.frame", "tibble"), "EGA")
+  object_error(data, c("matrix", "data.frame", "tibble"), "EGM")
 
   # Check for tibble
   if(get_object_type(data) == "tibble"){
@@ -170,7 +170,7 @@ EGM_errors <- function(
     # Check 'p.in' errors
     typeof_error(p.in, "numeric", "EGM")
     range_error(p.in, c(0, 1), "EGM")
-    length_error(p.in, c(1, communities) "EGM")
+    length_error(p.in, c(1, communities), "EGM")
 
   }
 
@@ -247,7 +247,6 @@ nload2cor <- function(loadings)
 
 }
 
-#' @noRd
 # Estimated loadings cost (based on SRMR) ----
 # Updated 06.10.2024
 estimated_N_cost <- function(
@@ -664,7 +663,7 @@ EGM.EGA <- function(data, structure, ...)
   result <- silent_call(
     nlm(
       p = loadings_vector, f = estimated_N_cost,
-      zeros = zeros, R = ega$correlation,
+      zeros = zeros, P = ega$correlation,
       loading_structure = loading_structure,
       rows = dimensions[2],
       iterlim = 1000
