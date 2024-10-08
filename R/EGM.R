@@ -85,11 +85,7 @@
 #' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'
 #' @export
-<<<<<<< Updated upstream
-#
-=======
 #'
->>>>>>> Stashed changes
 # Estimate EGM ----
 # Updated 07.10.2024
 EGM <- function(
@@ -174,7 +170,7 @@ EGM_errors <- function(
     # Check 'p.in' errors
     typeof_error(p.in, "numeric", "EGM")
     range_error(p.in, c(0, 1), "EGM")
-    length_error(p.in, 1, "EGM")
+    length_error(p.in, c(1, communities) "EGM")
 
   }
 
@@ -201,7 +197,7 @@ EGM_errors <- function(
     # Check 'p.out' errors
     typeof_error(p.out, "numeric", "EGM")
     range_error(p.out, c(0, 1), "EGM")
-    length_error(p.out, 1, "EGM")
+    length_error(p.out, c(1, communities), "EGM")
 
   }
 
@@ -502,11 +498,15 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, ...)
 
 #' @noRd
 # Creates community structure ----
-# Updated 07.10.2024
+# Updated 08.10.2024
 create_community_structure <- function(
     P, total_variables, communities, community_variables, p.in, p.out
 )
 {
+
+  # Set vectors of 'p.in' and 'p.out'
+  p.in <- swiftelse(length(p.in) == 1, rep(p.in, communities), p.in)
+  p.out <- swiftelse(length(p.out) == 1, rep(p.out, communities), p.out)
 
   # Set diagonal to missing
   diag(P) <- NA
@@ -518,7 +518,7 @@ create_community_structure <- function(
     indices <- P[community_variables[[i]], community_variables[[i]]]
 
     # Check for current sparsity
-    if(compute_sparsity(indices) > p.in){
+    if(compute_density(indices) > p.in[i]){
 
       # Get lower triangle
       lower_triangle <- lower.tri(indices)
@@ -526,7 +526,7 @@ create_community_structure <- function(
       # Sample to set to zero
       indices[
         abs(indices) < quantile(
-          abs(indices[lower_triangle]), probs = 1 - p.in, na.rm = TRUE
+          abs(indices[lower_triangle]), probs = 1 - p.in[i], na.rm = TRUE
         )
       ] <- 0
 
@@ -539,10 +539,10 @@ create_community_structure <- function(
     indices <- P[community_variables[[i]], -unlist(community_variables[-i])]
 
     # Check for current sparsity
-    if(compute_sparsity(indices) > p.out){
+    if(compute_density(indices) > p.out[i]){
 
       # Get threshold value
-      threshold_value <- quantile(abs(indices), probs = 1 - p.out, na.rm = TRUE)
+      threshold_value <- quantile(abs(indices), probs = 1 - p.out[i], na.rm = TRUE)
 
       # Set below to zero
       indices[abs(indices) < threshold_value] <- 0
@@ -572,9 +572,9 @@ create_community_structure <- function(
 }
 
 #' @noRd
-# Computes sparsity ----
-# Updated 07.10.2024
-compute_sparsity <- function(network)
+# Computes density ----
+# Updated 08.10.2024
+compute_density <- function(network)
 {
 
   # Get dimensions
