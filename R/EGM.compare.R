@@ -26,7 +26,7 @@
 #' @export
 #
 # Compare EGM to EFA ----
-# Updated 06.10.2024
+# Updated 08.10.2024
 EGM.compare <- function(data, rotation = "geominQ", ...)
 {
 
@@ -79,22 +79,27 @@ EGM.compare <- function(data, rotation = "geominQ", ...)
     aligned_output$Phi, aligned_output$F2
   ); diag(implied_R) <- 1
 
+  # Add parameters to EFA
+  efa$loadings <- aligned_output$F2
+  efa$factor_correlations <- aligned_output$Phi2
+  efa$implied <- list(R = implied_R, P = cor2pcor(implied_R))
+
   # Compute likelihood for EFA
-  efa_fit <- c(
+  efa$fit <- c(
     R.srmr = srmr(egm$EGA$correlation, implied_R),
-    P.srmr = srmr(cor2pcor(egm$EGA$correlation), cor2pcor(implied_R)),
+    P.srmr = srmr(cor2pcor(egm$EGA$correlation), efa$implied$P),
     likelihood(
-      n = dimensions[1], p = dimensions[2], R = implied_R,
-      S = egm$EGA$correlation, loadings = aligned_output$F2
+      n = dimensions[1], p = dimensions[2], R = efa$implied$R,
+      S = egm$EGA$correlation, loadings = efa$factor_correlations
     ),
-    TEFI = tefi(implied_R, structure = egm$EGA$wc)$VN.Entropy.Fit
+    TEFI = tefi(efa$implied$R, structure = egm$EGA$wc)$VN.Entropy.Fit
   )
 
   # Set up results
   results <- list(
     EGM = egm,
     EFA = efa,
-    likelihood = as.data.frame(rbind(EGM = egm$model$optimized$fit, EFA = efa_fit))
+    likelihood = as.data.frame(rbind(EGM = egm$model$optimized$fit, EFA = efa$fit))
   )
 
   # Set class
