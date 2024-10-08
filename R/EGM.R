@@ -663,7 +663,7 @@ EGM.EGA <- function(data, structure, ...)
   result <- silent_call(
     nlm(
       p = loadings_vector, f = estimated_N_cost,
-      zeros = zeros, P = ega$correlation,
+      zeros = zeros, R = ega$correlation,
       loading_structure = loading_structure,
       rows = dimensions[2],
       iterlim = 1000
