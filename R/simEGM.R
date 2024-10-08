@@ -336,21 +336,25 @@ update_loadings <- function(
   # Get zeros
   zeros <- P_vector != 0
 
+  # Set up non-zeros (makes for faster optimization)
+  P_nonzero <- P[zeros]
+
   # Obtain zero-order correlations from loadings
   R <- silent_call(nload2cor(loadings_matrix))
 
   # Use optimize to minimize the SRMR
   result <- silent_call(
-    nlminb(
-      objective = P_cost, start = P_vector,
-      zeros = zeros, R = R,
-      lower = rep(-1 * zeros, P_length),
-      upper = rep(1 * zeros, P_length)
+    nlm(
+      p = P_nonzero, f = P_cost,
+      P_vector = P_vector, zeros = zeros, R = R
     )
   )
 
+  # Update P vector
+  P_vector[zeros] <- result$estimate
+
   # Fill out matrix
-  P <- matrix(result$par, nrow = nrow(R))
+  P <- matrix(P_vector, nrow = nrow(R))
 
   # Set bounds
   loading_vector <- as.vector(loadings_matrix)
@@ -429,12 +433,15 @@ create_community <- function(total_variables, communities, start, end, p.in, p.o
 
 #' Partial correlation cost ----
 #' @noRd
-# Updated 04.10.2024
-P_cost <- function(P_vector, zeros, R)
+# Updated 08.10.2024
+P_cost <- function(P_nonzero, P_vector, zeros, R)
 {
 
+  # Set up P vector
+  P_vector[zeros] <- P_nonzero
+
   # Get partial correlations
-  P_matrix <- matrix(P_vector * zeros, nrow = nrow(R))
+  P_matrix <- matrix(P_vector, nrow = nrow(R))
 
   # Ensure symmetric
   P_matrix <- (P_matrix + t(P_matrix)) / 2
@@ -448,23 +455,23 @@ P_cost <- function(P_vector, zeros, R)
   # Ensure positive definite
   if(!is(PD, "try-error") && PD){
     return(srmr(R, R_matrix))
-  }else{return(1)}
+  }else{return(Inf)}
 
 }
 
 #' Loadings partial correlation cost ----
 #' @noRd
-# Updated 04.10.2024
+# Updated 08.10.2024
 N_cost <- function(loadings_vector, P, ...)
 {
 
-  # Get loadings from vector
-  loadings_matrix <- matrix(loadings_vector, nrow = dim(P)[1])
-
-  # Estimate partial correlations from loadings
-  model_pcor <- nload2pcor(loadings_matrix)
+  # # Get loadings from vector
+  # loadings_matrix <- matrix(loadings_vector, nrow = dim(P)[1])
+  #
+  # # Estimate partial correlations from loadings
+  # model_pcor <- nload2pcor(loadings_matrix)
 
   # Return SRMR
-  return(srmr(P, model_pcor))
+  return(srmr(P, nload2pcor(matrix(loadings_vector, nrow = dim(P)[1]))))
 
 }
