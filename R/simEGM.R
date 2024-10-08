@@ -79,7 +79,7 @@
 #' @export
 #'
 # Simulate EGM ----
-# Updated 04.10.2024
+# Updated 08.10.2024
 simEGM <- function(
     communities, variables,
     loadings = c("small", "moderate", "large"), cross.loadings = 0.01,
@@ -213,8 +213,10 @@ simEGM <- function(
 
     # Obtain correlation matrices
     loadings_matrix <- update_loadings(
-      total_variables, communities, start, end,
+      total_variables, communities, membership,
       p.in, p.out, loadings_matrix
+      # total_variables, communities, start, end,
+      # p.in, p.out, loadings_matrix
     )
 
     # Set correlations
@@ -315,17 +317,34 @@ simEGM_errors <- function(
 
 #' @noRd
 # Update loadings to align with network ----
-# Updated 04.10.2024
+# Updated 08.10.2024
 update_loadings <- function(
-    total_variables, communities, start, end,
+    total_variables, communities, membership,
     p.in, p.out, loadings_matrix
 )
 {
 
+
+  # Set number of communities
+  communities <- unique_length(membership)
+
+  # Set up community variables
+  community_variables <- lapply(
+    seq_len(communities), function(community){membership == community}
+  )
+
   # Obtain partial correlation matrix
-  P <- create_community(
-    total_variables, communities, start, end, p.in, p.out
-  ) * nload2pcor(loadings_matrix)
+  ## Function is in `EGM.R`
+  P <- create_community_structure(
+    P = nload2pcor(loadings_matrix),
+    total_variables = total_variables,
+    communities = communities,
+    community_variables = community_variables,
+    p.in = p.in, p.out = p.out
+  )
+  # P <- create_community(
+  #   total_variables, communities, start, end, p.in, p.out
+  # ) * nload2pcor(loadings_matrix)
 
   # Set up vector
   P_vector <- as.vector(P)
@@ -372,62 +391,6 @@ update_loadings <- function(
 
   # Return results
   return(loadings_matrix)
-
-}
-
-#' @noRd
-# Obtain correlation matrices ----
-# Updated 04.10.2024
-create_community <- function(total_variables, communities, start, end, p.in, p.out)
-{
-
-  # Initialize community network
-  community_network <- matrix(1, nrow = total_variables, ncol = total_variables)
-
-  # Set community blocks
-  for(i in seq_len(communities)){
-
-    # Randomly set zero in block
-    indices <- community_network[start[i]:end[i], start[i]:end[i]]
-
-    # Get lower triangle
-    lower_triangle <- lower.tri(indices)
-
-    # Sample to set to zero
-    indices[lower_triangle] <- sample(
-      c(0, 1), size = sum(lower_triangle),
-      replace = TRUE, prob = c(1 - p.in, p.in)
-    )
-
-    # Set back into block
-    community_network[start[i]:end[i], start[i]:end[i]] <- indices
-
-    # Set between-community indices
-    indices <- community_network[start[i]:end[i], -c(start[i]:end[i])]
-
-    # Set as vector
-    vector_indices <- as.vector(indices)
-
-    # Sample to set to zero
-    vector_indices <- sample(
-      c(0, 1), size = length(vector_indices),
-      replace = TRUE, prob = c(1 - p.out, p.out)
-    )
-
-    # Set back into indices
-    indices[] <- vector_indices
-
-    # Set between-community indices
-    community_network[start[i]:end[i], -c(start[i]:end[i])] <- indices
-
-  }
-
-  # Make symmetric
-  community_network <- community_network + t(community_network)
-
-  # Return community network
-  # Setting all 2s to 1s and 1s to 0s
-  return(community_network - 1)
 
 }
 
