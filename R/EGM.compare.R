@@ -39,67 +39,32 @@ EGM.compare <- function(data, rotation = "geominQ", ...)
   # Estimate EGM
   egm <- EGM(data, ...)
 
-  # Set up EFA
-  efa <- psych::fa(
-    egm$EGA$correlation, n.obs = dimensions[2],
-    nfactors = egm$EGA$n.dim, rotate = "none"
+  # Obtain EFA
+  efa <- get_factor_results(
+    output = psych::fa(
+      egm$EGA$correlation, n.obs = dimensions[2],
+      nfactors = egm$EGA$n.dim, rotate = "none"
+    ), rotation = rotation, egm = egm,
+    dimensions = dimensions, ...
   )
 
-  # Check for errors in rotation
-  # (this code and the following rotation code is in `net.loads`)
-  rotation <- rotation_errors(rotation)
-
-  # If rotation exists, then obtain it
-  rotation_FUN <- get(rotation, envir = asNamespace("GPArotation"))
-
-  # Get ellipse arguments
-  ellipse <- list(...)
-
-  # Get arguments for function
-  rotation_ARGS <- obtain_arguments(rotation_FUN, ellipse)
-
-  # Supply loadings
-  rotation_ARGS$A <- efa$loadings[,seq_len(egm$EGA$n.dim)]
-
-  # Set default arguments for rotations
-  rotation_ARGS <- rotation_defaults(rotation, rotation_ARGS, ellipse)
-
-  # Perform rotations
-  rotation_OUTPUT <- do.call(rotation_FUN, rotation_ARGS)
-
-  # Align rotated loadings
-  aligned_output <- fungible::faAlign(
-    F1 = egm$model$optimized$loadings,
-    F2 = rotation_OUTPUT$loadings,
-    Phi2 = rotation_OUTPUT$Phi
-  )
-
-  # Obtain model-implied correlations
-  implied_R <- aligned_output$F2 %*% tcrossprod(
-    aligned_output$Phi, aligned_output$F2
-  ); diag(implied_R) <- 1
-
-  # Add parameters to EFA
-  efa$loadings <- aligned_output$F2
-  efa$factor_correlations <- aligned_output$Phi2
-  efa$implied <- list(R = implied_R, P = cor2pcor(implied_R))
-
-  # Compute likelihood for EFA
-  efa$fit <- c(
-    R.srmr = srmr(egm$EGA$correlation, implied_R),
-    P.srmr = srmr(cor2pcor(egm$EGA$correlation), efa$implied$P),
-    likelihood(
-      n = dimensions[1], p = dimensions[2], R = efa$implied$R,
-      S = egm$EGA$correlation, loadings = efa$factor_correlations
-    ),
-    TEFI = tefi(efa$implied$R, structure = egm$EGA$wc)$VN.Entropy.Fit
+  # Obtain PCA
+  pca <- get_factor_results(
+    output = psych::principal(
+      egm$EGA$correlation, n.obs = dimensions[2],
+      nfactors = egm$EGA$n.dim, rotate = "none"
+    ), rotation = rotation, egm = egm,
+    dimensions = dimensions, ...
   )
 
   # Set up results
   results <- list(
     EGM = egm,
     EFA = efa,
-    likelihood = as.data.frame(rbind(EGM = egm$model$optimized$fit, EFA = efa$fit))
+    PCA = pca,
+    likelihood = as.data.frame(
+      rbind(EGM = egm$model$optimized$fit, EFA = efa$fit, PCA = pca$fit)
+    )
   )
 
   # Set class
@@ -131,5 +96,66 @@ EGM.compare_errors <- function(data, ...)
 
   # Return data in case of tibble
   return(data)
+
+}
+
+#' @noRd
+# Get factor results ----
+# Updated 09.10.2023
+get_factor_results <- function(output, rotation, egm, dimensions, ...)
+{
+
+  # Check for errors in rotation
+  # (this code and the following rotation code is in `net.loads`)
+  rotation <- rotation_errors(rotation)
+
+  # If rotation exists, then obtain it
+  rotation_FUN <- get(rotation, envir = asNamespace("GPArotation"))
+
+  # Get ellipse arguments
+  ellipse <- list(...)
+
+  # Get arguments for function
+  rotation_ARGS <- obtain_arguments(rotation_FUN, ellipse)
+
+  # Supply loadings
+  rotation_ARGS$A <- output$loadings[,seq_len(egm$EGA$n.dim)]
+
+  # Set default arguments for rotations
+  rotation_ARGS <- rotation_defaults(rotation, rotation_ARGS, ellipse)
+
+  # Perform rotations
+  rotation_OUTPUT <- do.call(rotation_FUN, rotation_ARGS)
+
+  # Align rotated loadings
+  aligned_output <- fungible::faAlign(
+    F1 = egm$model$optimized$loadings,
+    F2 = rotation_OUTPUT$loadings,
+    Phi2 = rotation_OUTPUT$Phi
+  )
+
+  # Obtain model-implied correlations
+  implied_R <- aligned_output$F2 %*% tcrossprod(
+    aligned_output$Phi, aligned_output$F2
+  ); diag(implied_R) <- 1
+
+  # Add parameters to EFA
+  output$loadings <- aligned_output$F2
+  output$factor_correlations <- aligned_output$Phi2
+  output$implied <- list(R = implied_R, P = cor2pcor(implied_R))
+
+  # Compute likelihood for EFA
+  output$fit <- c(
+    R.srmr = srmr(egm$EGA$correlation, implied_R),
+    P.srmr = srmr(cor2pcor(egm$EGA$correlation), output$implied$P),
+    likelihood(
+      n = dimensions[1], p = dimensions[2], R = output$implied$R,
+      S = egm$EGA$correlation, loadings = output$factor_correlations
+    ),
+    TEFI = tefi(output$implied$R, structure = egm$EGA$wc)$VN.Entropy.Fit
+  )
+
+  # Return updated output
+  return(output)
 
 }
