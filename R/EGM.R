@@ -309,14 +309,14 @@ log_likelihood <- function(n, p, R, S, type = c("partial", "zero"))
 #' @noRd
 # Compute log-likelihood metrics ----
 # Updated 06.10.2024
-likelihood <- function(n, p, R, S, loadings)
+likelihood <- function(n, p, R, S, loadings, type)
 {
 
   # Get number of communities
   m <- dim(loadings)[2]
 
   # Log-likelihood
-  loglik <- log_likelihood(n, p, R, S)
+  loglik <- log_likelihood(n, p, R, S, type)
 
   # Total number of parameters
   parameters <- (p * m) + p + ((m * (m - 1)) / 2)
