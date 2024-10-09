@@ -213,16 +213,16 @@ EGM_errors <- function(
 
 #' @noRd
 # Network loadings to partial correlations ----
-# Updated 29.09.2024
+# Updated 09.10.2024
 nload2pcor <- function(loadings)
 {
 
-  # Obtain uniqueness
-  uniqueness <- 1 - rowSums(loadings^2)
+  # Obtain autonomy
+  autonomy <- 1 - rowSums(loadings^2)
 
   # Compute partial correlation
-  P <- tcrossprod(loadings) * tcrossprod(sqrt(uniqueness))
-  diag(P) <- sqrt(1 - uniqueness)
+  P <- tcrossprod(loadings) * tcrossprod(sqrt(autonomy))
+  diag(P) <- sqrt(1 - autonomy)
 
   # Return partial correlation
   return(cor2pcor(cov2cor(P)))
@@ -231,16 +231,16 @@ nload2pcor <- function(loadings)
 
 #' @noRd
 # Network loadings to correlations ----
-# Updated 29.09.2024
+# Updated 09.10.2024
 nload2cor <- function(loadings)
 {
 
-  # Obtain uniqueness
-  uniqueness <- 1 - rowSums(loadings^2)
+  # Obtain autonomy
+  autonomy <- 1 - rowSums(loadings^2)
 
   # Compute partial correlation
-  P <- tcrossprod(loadings) * tcrossprod(sqrt(uniqueness))
-  diag(P) <- sqrt(1 - uniqueness)
+  P <- tcrossprod(loadings) * tcrossprod(sqrt(autonomy))
+  diag(P) <- sqrt(1 - autonomy)
 
   # Return correlation
   return(cov2cor(P))
