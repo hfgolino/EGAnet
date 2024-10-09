@@ -349,24 +349,16 @@ update_loadings <- function(
   # Obtain the lower triangle
   P_lower <- P[lower_triangle]
 
-  # Get length
-  P_length <- length(P_lower)
-
   # Get zeros
   zeros <- P_lower != 0
-
-  # Set up non-zeros (makes for faster optimization)
-  P_nonzero <- P_lower[zeros]
-
-  # Obtain zero-order correlations from loadings
-  R <- silent_call(nload2cor(loadings_matrix))
 
   # Use optimize to minimize the SRMR
   result <- silent_call(
     nlminb(
-      start = P_nonzero, objective = P_cost,
+      start = P_lower[zeros], objective = P_cost,
       P_lower = P_lower, zeros = zeros,
-      R = R, lower_triangle = lower_triangle,
+      R = nload2cor(loadings_matrix),
+      lower_triangle = lower_triangle,
       total_variables = total_variables
     )
   )
