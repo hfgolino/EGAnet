@@ -11,23 +11,33 @@ EGM.compare(data, rotation = "geominQ", ...)
 Should consist only of variables to be used in the analysis.
 Can be raw data or a correlation matrix}
 
+\item{rotation}{Character.
+A rotation to use to obtain a simpler structure for EFA and PCA.
+For a list of rotations, see \code{\link[GPArotation]{rotations}} for options.
+Defaults to \code{"geominQ"}}
+
 \item{...}{Additional arguments to be passed on to
 \code{\link[EGAnet]{auto.correlate}},
 \code{\link[EGAnet]{network.estimation}},
 \code{\link[EGAnet]{community.detection}},
 \code{\link[EGAnet]{community.consensus}},
 \code{\link[EGAnet]{community.unidimensional}},
-\code{\link[EGAnet]{EGA}}, and
-\code{\link[psych]{fa}}}
+\code{\link[EGAnet]{EGA}},
+\code{\link[psych]{fa}}, and
+\code{\link[psych]{principal}}}
 }
 \description{
 Estimates an \code{\link[EGAnet]{EGM}} based on \code{\link[EGAnet]{EGA}} and
 uses the number of communities as the number of dimensions in exploratory factor analysis
-(EFA) using \code{\link[psych]{fa}}
+(EFA) using \code{\link[psych]{fa}} and principal component analysis (PCA) using
+\code{\link[psych]{principal}}
 }
 \examples{
-# Compare EGM with EFA
-EGM.compare(wmt2[,7:24])
+# Get depression data
+data <- na.omit(depression[,24:44])
+
+# Estimate EGM (using EGA)
+EGM.compare(data)
 
 }
 \author{

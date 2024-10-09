@@ -2,11 +2,17 @@
 #'
 #' @description Estimates an \code{\link[EGAnet]{EGM}} based on \code{\link[EGAnet]{EGA}} and
 #' uses the number of communities as the number of dimensions in exploratory factor analysis
-#' (EFA) using \code{\link[psych]{fa}}
+#' (EFA) using \code{\link[psych]{fa}} and principal component analysis (PCA) using
+#' \code{\link[psych]{principal}}
 #'
 #' @param data Matrix or data frame.
 #' Should consist only of variables to be used in the analysis.
 #' Can be raw data or a correlation matrix
+#'
+#' @param rotation Character.
+#' A rotation to use to obtain a simpler structure for EFA and PCA.
+#' For a list of rotations, see \code{\link[GPArotation]{rotations}} for options.
+#' Defaults to \code{"geominQ"}
 #'
 #' @param ... Additional arguments to be passed on to
 #' \code{\link[EGAnet]{auto.correlate}},
@@ -14,12 +20,16 @@
 #' \code{\link[EGAnet]{community.detection}},
 #' \code{\link[EGAnet]{community.consensus}},
 #' \code{\link[EGAnet]{community.unidimensional}},
-#' \code{\link[EGAnet]{EGA}}, and
-#' \code{\link[psych]{fa}}
+#' \code{\link[EGAnet]{EGA}},
+#' \code{\link[psych]{fa}}, and
+#' \code{\link[psych]{principal}}
 #'
 #' @examples
-#' # Compare EGM with EFA
-#' EGM.compare(wmt2[,7:24])
+#' # Get depression data
+#' data <- na.omit(depression[,24:44])
+#'
+#' # Estimate EGM (using EGA)
+#' EGM.compare(data)
 #'
 #' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'
@@ -97,6 +107,59 @@ EGM.compare_errors <- function(data, ...)
   # Return data in case of tibble
   return(data)
 
+}
+
+#' @exportS3Method
+# S3 Print Method ----
+# Updated 09.10.2024
+print.EGM.compare <- function(x, ...)
+{
+
+  # Find smallest difference
+  absolute <- abs(x$likelihood)
+  smallest_difference <- min(pmin(
+    abs(absolute[1,] - absolute[2,]),
+    abs(absolute[1,] - absolute[3,]),
+    abs(absolute[2,] - absolute[3,])
+  ))
+
+  # Get decimal split
+  decimal_split <- strsplit(
+    as.character(smallest_difference), split = "\\."
+  )[[1]][[2]]
+
+  # Get number of leading zeros
+  zeros <- strsplit(decimal_split, split = "")[[1]] == "0"
+
+  # Find smallest digit after decimal
+  smallest_decimal <- swiftelse(
+    smallest_difference > 1, 1,
+    setdiff(seq_along(zeros), which(zeros))[1]
+  )
+
+  # Round likelihood to smallest decimal
+  rounded <- round(x$likelihood, smallest_decimal)
+
+  # Get minimum
+  minimums <- nvapply(rounded, which.min)
+
+  # Replace log-likelihood with maximum
+  minimums["logLik"] <- which.max(x$likelihood$logLik)
+
+  # Add lowest of each column to bottom row
+  rounded["best",] <- c("EGM", "EFA", "PCA")[minimums]
+
+  # Print to smallest decimal
+  print(rounded)
+
+}
+
+#' @exportS3Method
+# S3 Summary Method ----
+# Updated 09.10.2024
+summary.EGM.compare <- function(object, ...)
+{
+  print(object, ...) # same as print
 }
 
 #' @noRd

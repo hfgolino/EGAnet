@@ -12,6 +12,9 @@
 #'
 #' \itemize{
 #'
+#' \item \code{"EGA"} (default) --- Applies \code{\link[EGAnet]{EGA}} to obtain the
+#' (sparse) regularized network structure, communities, and memberships
+#'
 #' \item \code{"search"} --- Searches over \code{p.in} and \code{p.out}
 #' parameters for best fit based on Bayesian information criterion (BIC).
 #' Uses \code{EGM.type = "standard"} under the hood. Only the argument
@@ -22,9 +25,6 @@
 #' \item \code{"standard"} --- Applies the standard EGM model which
 #' estimates communities based on the non-regularized empirical partial
 #' correlation matrix and sparsity is set using \code{p.in} and \code{p.out}
-#'
-#' \item \code{"EGA"} --- Applies \code{\link[EGAnet]{EGA}} to obtain the
-#' (sparse) regularized network structure, communities, and memberships
 #'
 #' }
 #'
@@ -55,15 +55,6 @@
 #' Only used for \code{EGM.type = "standard"}.
 #' Defaults to \code{NULL} but must be set
 #'
-#' @param ncores Numeric (length = 1).
-#' Number of cores to use in computing results.
-#' Defaults to \code{ceiling(parallel::detectCores() / 2)} or half of your
-#' computer's processing power.
-#' Set to \code{1} to not use parallel computing
-#'
-#' If you're unsure how many cores your computer has,
-#' then type: \code{parallel::detectCores()}
-#'
 #' @param verbose Boolean (length = 1).
 #' Should progress be displayed?
 #' Defaults to \code{TRUE}.
@@ -79,15 +70,33 @@
 #' \code{\link[EGAnet]{net.loads}}
 #'
 #' @examples
-#' # Estimate EGM
-#' wmt_egm <- EGM(wmt2[,7:24])
+#' # Get depression data
+#' data <- na.omit(depression[,24:44])
+#'
+#' # Estimate EGM (using EGA)
+#' egm_ega <- EGM(data)
+#'
+#' # Estimate EGM (using standard)
+#' egm_standard <- EGM(
+#'   data, EGM.type = "standard",
+#'   communities = 3, # specify number of communities
+#'   p.in = 0.95, # probability of edges *in* each community
+#'   p.out = 0.80 # probability of edges *between* each community
+#' )
+#'
+#' \dontrun{
+#' # Estimate EGM (using search)
+#' egm_search <- EGM(
+#'   data, EGM.type = "search", communities = 3,
+#'   p.in = 0.95 # only need 'p.in'
+#' )}
 #'
 #' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'
 #' @export
 #'
 # Estimate EGM ----
-# Updated 07.10.2024
+# Updated 09.10.2024
 EGM <- function(
     data, EGM.type = c("search", "standard", "EGA"),
     communities = NULL, structure = NULL,
@@ -96,7 +105,7 @@ EGM <- function(
 {
 
   # Set default
-  EGM.type <- set_default(EGM.type, "standard", EGM)
+  EGM.type <- set_default(EGM.type, "ega", EGM)
 
   # Check data and structure
   data <- EGM_errors(
@@ -241,6 +250,7 @@ nload2cor <- function(loadings)
 
 }
 
+#' @noRd
 # Estimated loadings cost (based on SRMR) ----
 # Updated 06.10.2024
 estimated_N_cost <- function(
@@ -336,12 +346,13 @@ likelihood <- function(n, p, R, S, loadings, type)
 
 #' @noRd
 # EGM | Standard ----
-# Updated 07.10.2024
+# Updated 09.10.2024
 EGM.standard <- function(data, communities, structure, p.in, p.out, ...)
 {
 
   # Get dimensions
   dimensions <- dim(data)
+  dimension_names <- dimnames(data)
 
   # Estimate zero-order and partial correlations
   empirical_R <- auto.correlate(data, ...)
@@ -379,7 +390,7 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, ...)
 
   # Update loadings
   output <- silent_call(net.loads(community_P, structure, ...))
-  output$std <- output$std[colnames(data),]
+  output$std <- output$std[dimension_names[[2]],]
 
   # Compute network scores
   standard_scores <- compute_scores(output, data, "network", "simple")$std.scores
@@ -436,13 +447,28 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, ...)
   # Set up EGA
   ega_list <- list(
     dim.variables = data.frame(
-      items = dimnames(data)[[2]],
+      items = dimension_names[[2]],
       dimension = structure
     ),
     network = community_P, wc = structure,
     n.dim = unique_length(structure), correlation = empirical_R,
-    n = dimensions[2], TEFI = tefi(empirical_R, structure)
+    n = dimensions[2], TEFI = tefi(empirical_R, structure)$VN.Entropy.Fit
   ); class(ega_list) <- "EGA"
+
+  # Attach methods to network
+  attr(ega_list$network, which = "methods") <- list(
+    model = "egm", communities = communities, p.in = p.in, p.out = p.out
+  )
+
+  # Attach class to memberships
+  class(ega_list$wc) <- "EGA.community"
+
+  # Attach methods to memberships
+  names(ega_list$wc) <- dimension_names[[2]]
+  attr(ega_list$wc, which = "methods") <- list(
+    algorithm = swiftelse(is.null(structure), NULL, "walktrap"),
+    objective_function = NULL
+  )
 
   # Set up results
   results <- list(
@@ -454,7 +480,7 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, ...)
         correlations = standard_correlations,
         fit = c(
           R.srmr = srmr(empirical_R, standard_R),
-          P.srmr = srmr(cor2pcor(empirical_R), standard_P),
+          P.srmr = srmr(empirical_P, standard_P),
           likelihood(
             n = dimensions[1], p = dimensions[2],
             R = standard_R, S = empirical_R, loadings = output$std
@@ -469,7 +495,7 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, ...)
         correlations = optimized_correlations,
         fit = c(
           R.srmr = srmr(empirical_R, optimized_R),
-          P.srmr = srmr(cor2pcor(empirical_R), optimized_P),
+          P.srmr = srmr(empirical_P, optimized_P),
           likelihood(
             n = dimensions[1], p = dimensions[2],
             R = optimized_R, S = empirical_R, loadings = optimized_loadings

@@ -26,6 +26,9 @@ Available options:
 
 \itemize{
 
+\item \code{"EGA"} (default) --- Applies \code{\link[EGAnet]{EGA}} to obtain the
+(sparse) regularized network structure, communities, and memberships
+
 \item \code{"search"} --- Searches over \code{p.in} and \code{p.out}
 parameters for best fit based on Bayesian information criterion (BIC).
 Uses \code{EGM.type = "standard"} under the hood. Only the argument
@@ -36,9 +39,6 @@ Uses \code{EGM.type = "standard"} under the hood. Only the argument
 \item \code{"standard"} --- Applies the standard EGM model which
 estimates communities based on the non-regularized empirical partial
 correlation matrix and sparsity is set using \code{p.in} and \code{p.out}
-
-\item \code{"EGA"} --- Applies \code{\link[EGAnet]{EGA}} to obtain the
-(sparse) regularized network structure, communities, and memberships
 
 }}
 
@@ -82,22 +82,31 @@ Set to \code{FALSE} to not display progress}
 \code{\link[EGAnet]{community.unidimensional}},
 \code{\link[EGAnet]{EGA}}, and
 \code{\link[EGAnet]{net.loads}}}
-
-\item{ncores}{Numeric (length = 1).
-Number of cores to use in computing results.
-Defaults to \code{ceiling(parallel::detectCores() / 2)} or half of your
-computer's processing power.
-Set to \code{1} to not use parallel computing
-
-If you're unsure how many cores your computer has,
-then type: \code{parallel::detectCores()}}
 }
 \description{
 Function to fit the Exploratory Graph Model
 }
 \examples{
-# Estimate EGM
-wmt_egm <- EGM(wmt2[,7:24])
+# Get depression data
+data <- na.omit(depression[,24:44])
+
+# Estimate EGM (using EGA)
+egm_ega <- EGM(data)
+
+# Estimate EGM (using standard)
+egm_standard <- EGM(
+  data, EGM.type = "standard",
+  communities = 3, # specify number of communities
+  p.in = 0.95, # probability of edges *in* each community
+  p.out = 0.80 # probability of edges *between* each community
+)
+
+\dontrun{
+# Estimate EGM (using search)
+egm_search <- EGM(
+  data, EGM.type = "search", communities = 3,
+  p.in = 0.95 # only need 'p.in'
+)}
 
 }
 \author{
