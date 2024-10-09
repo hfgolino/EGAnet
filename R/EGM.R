@@ -217,12 +217,9 @@ EGM_errors <- function(
 nload2pcor <- function(loadings)
 {
 
-  # Obtain autonomy
-  autonomy <- 1 - rowSums(loadings^2)
-
   # Compute partial correlation
-  P <- tcrossprod(loadings) * tcrossprod(sqrt(autonomy))
-  diag(P) <- sqrt(1 - autonomy)
+  P <- tcrossprod(loadings)
+  diag(P) <- sqrt(rowSums(loadings^2))
 
   # Return partial correlation
   return(cor2pcor(cov2cor(P)))
@@ -235,12 +232,9 @@ nload2pcor <- function(loadings)
 nload2cor <- function(loadings)
 {
 
-  # Obtain autonomy
-  autonomy <- 1 - rowSums(loadings^2)
-
   # Compute partial correlation
-  P <- tcrossprod(loadings) * tcrossprod(sqrt(autonomy))
-  diag(P) <- sqrt(1 - autonomy)
+  P <- tcrossprod(loadings)
+  diag(P) <- sqrt(rowSums(loadings^2))
 
   # Return correlation
   return(cov2cor(P))
@@ -611,6 +605,7 @@ EGM.EGA <- function(data, structure, ...)
 
   # Estimate EGA
   ega <- EGA(data, plot.EGA = FALSE, ...)
+  empirical_P <- cor2pcor(ega$correlation)
 
   # Obtain variable names from the network
   variable_names <- dimnames(ega$network)[[2]]
@@ -699,7 +694,7 @@ EGM.EGA <- function(data, structure, ...)
         correlations = standard_correlations,
         fit = c(
           R.srmr = srmr(ega$correlation, standard_R),
-          P.srmr = srmr(cor2pcor(ega$correlation), standard_P),
+          P.srmr = srmr(empirical_P, standard_P),
           likelihood(
             n = data_dimensions[1], p = data_dimensions[2],
             R = standard_R, S = ega$correlation, loadings = standard_loadings
@@ -714,7 +709,7 @@ EGM.EGA <- function(data, structure, ...)
         correlations = optimized_correlations,
         fit = c(
           R.srmr = srmr(ega$correlation, optimized_R),
-          P.srmr = srmr(cor2pcor(ega$correlation), optimized_P),
+          P.srmr = srmr(empirical_P, optimized_P),
           likelihood(
             n = data_dimensions[1], p = data_dimensions[2],
             R = optimized_R, S = ega$correlation, loadings = optimized_loadings
