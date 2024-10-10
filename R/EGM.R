@@ -397,12 +397,48 @@ likelihood <- function(n, p, R, S, loadings, type)
 EGM.standard <- function(data, communities, structure, p.in, p.out, opt, ...)
 {
 
+  # Get ellipse
+  ellipse <- list(...)
+
   # Get dimensions
   data_dimensions <- dim(data)
   dimension_names <- dimnames(data)
 
-  # Estimate zero-order and partial correlations
-  empirical_R <- auto.correlate(data, ...)
+  # Determine if sample size was provided
+  if(data_dimensions[1] == data_dimensions[2]){
+
+    # Check if sample size was provided
+    if("n" %in% names(ellipse)){
+
+      # Set sample size
+      data_dimensions[1] <- ellipse$n
+
+      # Set empirical zero-order correlations
+      empirical_R <- data
+
+    }else{
+
+      # Stop and send error
+      .handleSimpleError(
+        h = stop,
+        msg = paste0(
+          "A symmetric (", data_dimensions[1], " x ",
+          data_dimensions[2], ") matrix was input but sample size was not provided.\n\n",
+          "If you'd like to use a correlation matrix, please set the argument 'n' to your sample size"
+        ),
+        call = "EGM"
+      )
+
+    }
+
+  }else{
+
+    # Estimate zero-order correlations
+    empirical_R <- auto.correlate(data, ...)
+
+  }
+
+  # Obtain partial correlations
   empirical_P <- cor2pcor(empirical_R)
 
   # Check for whether structure is provided
@@ -688,6 +724,9 @@ EGM.EGA <- function(data, structure, opt, ...)
   # Estimate EGA
   ega <- EGA(data, plot.EGA = FALSE, ...)
   empirical_P <- cor2pcor(ega$correlation)
+
+  # Update number of rows based on EGA
+  data_dimensions[1] <- ega$n
 
   # Obtain variable names from the network
   variable_names <- dimnames(ega$network)[[2]]
