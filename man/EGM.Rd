@@ -11,6 +11,7 @@ EGM(
   structure = NULL,
   p.in = NULL,
   p.out = NULL,
+  opt = c("AIC", "BIC", "SRMR"),
   verbose = TRUE,
   ...
 )
@@ -68,6 +69,12 @@ ensuring the lowest edge values are set to zero (i.e., most probable to \emph{no
 be randomly connected).
 Only used for \code{EGM.type = "standard"}.
 Defaults to \code{NULL} but must be set}
+
+\item{opt}{Character vector (length = 1).
+Fit index to use for optimization of network loadings to the
+zero-order correlation matrix.
+Available options include: \code{"AIC"}, \code{"BIC"}, and \code{"SRMR"}.
+Defaults to \code{"SRMR"}}
 
 \item{verbose}{Boolean (length = 1).
 Should progress be displayed?

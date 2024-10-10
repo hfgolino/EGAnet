@@ -55,6 +55,12 @@
 #' Only used for \code{EGM.type = "standard"}.
 #' Defaults to \code{NULL} but must be set
 #'
+#' @param opt Character vector (length = 1).
+#' Fit index to use for optimization of network loadings to the
+#' zero-order correlation matrix.
+#' Available options include: \code{"AIC"}, \code{"BIC"}, and \code{"SRMR"}.
+#' Defaults to \code{"SRMR"}
+#'
 #' @param verbose Boolean (length = 1).
 #' Should progress be displayed?
 #' Defaults to \code{TRUE}.
@@ -96,16 +102,19 @@
 #' @export
 #'
 # Estimate EGM ----
-# Updated 09.10.2024
+# Updated 10.10.2024
 EGM <- function(
     data, EGM.type = c("search", "standard", "EGA"),
     communities = NULL, structure = NULL,
-    p.in = NULL, p.out = NULL, verbose = TRUE, ...
+    p.in = NULL, p.out = NULL,
+    opt = c("AIC", "BIC", "SRMR"),
+    verbose = TRUE, ...
 )
 {
 
   # Set default
   EGM.type <- set_default(EGM.type, "ega", EGM)
+  opt <- set_default(opt, "srmr", EGM)
 
   # Check data and structure
   data <- EGM_errors(
@@ -117,9 +126,9 @@ EGM <- function(
   return(
     switch(
       EGM.type,
-      "search" = EGM.search(data, communities, structure, p.in, verbose, ...),
-      "standard" = EGM.standard(data, communities, structure, p.in, p.out, ...),
-      "ega" = EGM.EGA(data, structure, ...)
+      "search" = EGM.search(data, communities, structure, p.in, opt, verbose, ...),
+      "standard" = EGM.standard(data, communities, structure, p.in, p.out, opt, ...),
+      "ega" = EGM.EGA(data, structure, opt, ...)
     )
   )
 
@@ -252,8 +261,8 @@ nload2cor <- function(loadings)
 
 #' @noRd
 # Estimated loadings cost (based on SRMR) ----
-# Updated 06.10.2024
-estimated_N_cost <- function(
+# Updated 10.10.2024
+srmr_N_cost <- function(
     loadings_vector, zeros, R,
     loading_structure, rows, ...
 )
@@ -282,7 +291,45 @@ estimated_N_cost <- function(
     swiftelse( # Return infinite on error
       is(implied_R, "try-error"), Inf,
       srmr(R, implied_R) + penalty
-      # Return SRMR otherwise
+      # Return cost otherwise
+    )
+  )
+
+}
+
+#' @noRd
+# Estimated loadings cost (based on log-likelihood) ----
+# Updated 10.10.2024
+likelihood_N_cost <- function(
+    loadings_vector, zeros, R,
+    loading_structure, rows, n, opt, ...
+)
+{
+
+  # Assemble loading matrix
+  loading_matrix <- matrix(loadings_vector * zeros, nrow = rows, byrow = TRUE)
+
+  # Obtain assign loadings
+  assign_loadings <- loading_matrix[loading_structure]
+
+  # Obtain differences
+  differences <- abs(t(loading_matrix)) - assign_loadings
+
+  # Obtain difference values
+  difference_values <- differences * (differences > 0)
+
+  # Set penalties
+  penalty <- sqrt(mean((difference_values)^2))
+
+  # Try result
+  implied_R <- try(nload2cor(t(loading_matrix)), silent = TRUE)
+
+  # Check for error
+  return(
+    swiftelse( # Return infinite on error
+      is(implied_R, "try-error"), Inf,
+      likelihood(n, rows, implied_R, R, loading_matrix)[[opt]] + penalty
+      # Return cost otherwise
     )
   )
 
@@ -346,12 +393,12 @@ likelihood <- function(n, p, R, S, loadings, type)
 
 #' @noRd
 # EGM | Standard ----
-# Updated 09.10.2024
-EGM.standard <- function(data, communities, structure, p.in, p.out, ...)
+# Updated 10.10.2024
+EGM.standard <- function(data, communities, structure, p.in, p.out, opt, ...)
 {
 
   # Get dimensions
-  dimensions <- dim(data)
+  data_dimensions <- dim(data)
   dimension_names <- dimnames(data)
 
   # Estimate zero-order and partial correlations
@@ -382,7 +429,7 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, ...)
 
   # Obtain community structure
   community_P <- create_community_structure(
-    P = empirical_P, total_variables = dimensions[2],
+    P = empirical_P, total_variables = data_dimensions[2],
     communities = communities,
     community_variables = community_variables,
     p.in = p.in, p.out = p.out
@@ -408,26 +455,35 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, ...)
 
   # Set up loading structure
   # Uses transpose for 2x speed up in optimization
-  loading_structure <- matrix(FALSE, nrow = communities, ncol = dimensions[2])
+  loading_structure <- matrix(FALSE, nrow = communities, ncol = data_dimensions[2])
 
   # Fill structure
   for(i in seq_along(structure)){
     loading_structure[structure[i], i] <- TRUE
   }
 
-  # Use optimize to minimize the SRMR
+  # Switch out optimization criterion
+  cost_FUN <- switch(
+    opt,
+    "aic" = likelihood_N_cost,
+    "bic" = likelihood_N_cost,
+    "srmr" = srmr_N_cost
+  )
+
+  # Optimize network loadings
   result <- silent_call(
     nlm(
-      p = loadings_vector, f = estimated_N_cost,
+      p = loadings_vector, f = cost_FUN,
       zeros = zeros, R = empirical_R,
       loading_structure = loading_structure,
-      rows = communities, iterlim = 1000
+      rows = communities, n = data_dimensions[1],
+      opt = toupper(opt), iterlim = 1000
     )
   )
 
   # Extract optimized loadings
   optimized_loadings <- matrix(
-    result$estimate, nrow = dimensions[2],
+    result$estimate, nrow = data_dimensions[2],
     dimnames = dimnames(output$std)
   )
 
@@ -452,7 +508,7 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, ...)
     ),
     network = community_P, wc = structure,
     n.dim = unique_length(structure), correlation = empirical_R,
-    n = dimensions[2], TEFI = tefi(empirical_R, structure)$VN.Entropy.Fit
+    n = data_dimensions[1], TEFI = tefi(empirical_R, structure)$VN.Entropy.Fit
   ); class(ega_list) <- "EGA"
 
   # Attach methods to network
@@ -482,7 +538,7 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, ...)
           R.srmr = srmr(empirical_R, standard_R),
           P.srmr = srmr(empirical_P, standard_P),
           likelihood(
-            n = dimensions[1], p = dimensions[2],
+            n = data_dimensions[1], p = data_dimensions[2],
             R = standard_R, S = empirical_R, loadings = output$std
           ),
           TEFI = tefi(standard_R, structure = structure)$VN.Entropy.Fit
@@ -497,7 +553,7 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, ...)
           R.srmr = srmr(empirical_R, optimized_R),
           P.srmr = srmr(empirical_P, optimized_P),
           likelihood(
-            n = dimensions[1], p = dimensions[2],
+            n = data_dimensions[1], p = data_dimensions[2],
             R = optimized_R, S = empirical_R, loadings = optimized_loadings
           ),
           TEFI = tefi(optimized_R, structure = structure)$VN.Entropy.Fit
@@ -508,7 +564,7 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, ...)
   )
 
   # Set class
-  class(results) <- c("EGM", "standard")
+  class(results) <- "EGM"
 
   # Return results
   return(results)
@@ -622,8 +678,8 @@ compute_density <- function(network)
 
 #' @noRd
 # EGM | EGA ----
-# Updated 07.10.2024
-EGM.EGA <- function(data, structure, ...)
+# Updated 10.10.2024
+EGM.EGA <- function(data, structure, opt, ...)
 {
 
   # Obtain data dimensions
@@ -641,12 +697,14 @@ EGM.EGA <- function(data, structure, ...)
 
     # Update EGA features
     ega$wc[] <- structure
-    ega$n.dim <- unique_length(structure)
     ega$dim.variables$dimension <- structure
 
   }else{
     structure <- ega$wc
   }
+
+  # Set communities
+  ega$n.dim <- communities <- unique_length(structure)
 
   # Obtain standard network loadings
   output <- silent_call(net.loads(A = ega$network, wc = ega$wc, ...))
@@ -685,14 +743,22 @@ EGM.EGA <- function(data, structure, ...)
     loading_structure[structure[i], i] <- TRUE
   }
 
-  # Use optimize to minimize the SRMR
+  # Switch out optimization criterion
+  cost_FUN <- switch(
+    opt,
+    "aic" = likelihood_N_cost,
+    "bic" = likelihood_N_cost,
+    "srmr" = srmr_N_cost
+  )
+
+  # Optimize network loadings
   result <- silent_call(
     nlm(
-      p = loadings_vector, f = estimated_N_cost,
+      p = loadings_vector, f = cost_FUN,
       zeros = zeros, R = ega$correlation,
       loading_structure = loading_structure,
-      rows = dimensions[2],
-      iterlim = 1000
+      rows = communities, n = data_dimensions[1],
+      opt = toupper(opt), iterlim = 1000
     )
   )
 
@@ -762,8 +828,8 @@ EGM.EGA <- function(data, structure, ...)
 
 #' @noRd
 # EGM | Search ----
-# Updated 07.10.2024
-EGM.search <- function(data, communities, structure, p.in, verbose, ...)
+# Updated 10.10.2024
+EGM.search <- function(data, communities, structure, p.in, opt, verbose, ...)
 {
 
   # Perform search based on 'p.in'
@@ -785,7 +851,7 @@ EGM.search <- function(data, communities, structure, p.in, verbose, ...)
           EGM(
             data = data, EGM.type = "standard",
             communities = communities, p.in = p_grid$p_in[i],
-            p.out = p_grid$p_out[i]
+            p.out = p_grid$p_out[i], opt = opt
           ), silent = TRUE
         )
       )
@@ -799,7 +865,7 @@ EGM.search <- function(data, communities, structure, p.in, verbose, ...)
   # Obtain fits
   optimized_fits <- nvapply(
     grid_search, function(x){
-      swiftelse(is.null(x), NA, x$model$optimized$fit[["BIC"]])
+      swiftelse(is.null(x), NA, x$model$optimized$fit[[toupper(opt)]])
     }
   )
 
@@ -816,7 +882,7 @@ EGM.search <- function(data, communities, structure, p.in, verbose, ...)
   )
 
   # Overwrite class
-  class(results) <- c("EGM", "search")
+  class(results) <- "EGM"
 
   # Return results
   return(results)

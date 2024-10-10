@@ -104,9 +104,15 @@ EGM.compare_errors <- function(data, ...)
 
 #' @exportS3Method
 # S3 Print Method ----
-# Updated 09.10.2024
+# Updated 10.10.2024
 print.EGM.compare <- function(x, ...)
 {
+
+  # Control exponential notation of numbers
+  user_scipen <- options("scipen")$scipen
+
+  # Set option
+  options(scipen = 999)
 
   # Find smallest difference
   absolute <- abs(x$likelihood)
@@ -140,6 +146,9 @@ print.EGM.compare <- function(x, ...)
 
   # Print to smallest decimal
   print(rounded)
+
+  # Set back user's options
+  options(scipen = user_scipen)
 
 }
 
