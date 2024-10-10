@@ -215,8 +215,6 @@ simEGM <- function(
     loadings_matrix <- update_loadings(
       total_variables, communities, membership,
       p.in, p.out, loadings_matrix
-      # total_variables, communities, start, end,
-      # p.in, p.out, loadings_matrix
     )
 
     # Set correlations
@@ -324,7 +322,6 @@ update_loadings <- function(
 )
 {
 
-
   # Set number of communities
   communities <- unique_length(membership)
 
@@ -426,14 +423,5 @@ P_cost <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle
 # Updated 08.10.2024
 N_cost <- function(loadings_vector, P, ...)
 {
-
-  # # Get loadings from vector
-  # loadings_matrix <- matrix(loadings_vector, nrow = dim(P)[1])
-  #
-  # # Estimate partial correlations from loadings
-  # model_pcor <- nload2pcor(loadings_matrix)
-
-  # Return SRMR
   return(srmr(P, nload2pcor(matrix(loadings_vector, nrow = dim(P)[1]))))
-
 }
