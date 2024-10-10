@@ -36,7 +36,7 @@
 #' @export
 #
 # Compare EGM to EFA ----
-# Updated 08.10.2024
+# Updated 10.10.2024
 EGM.compare <- function(data, rotation = "geominQ", ...)
 {
 
@@ -49,11 +49,14 @@ EGM.compare <- function(data, rotation = "geominQ", ...)
   # Estimate EGM
   egm <- EGM(data, ...)
 
+  # Set communities
+  communities <- unique_length(egm$EGA$wc)
+
   # Obtain EFA
   efa <- get_factor_results(
     output = psych::fa(
       egm$EGA$correlation, n.obs = dimensions[2],
-      nfactors = egm$EGA$n.dim, rotate = "none"
+      nfactors = communities, rotate = "none"
     ), rotation = rotation, egm = egm,
     dimensions = dimensions, ...
   )
@@ -62,7 +65,7 @@ EGM.compare <- function(data, rotation = "geominQ", ...)
   pca <- get_factor_results(
     output = psych::principal(
       egm$EGA$correlation, n.obs = dimensions[2],
-      nfactors = egm$EGA$n.dim, rotate = "none"
+      nfactors = communities, rotate = "none"
     ), rotation = rotation, egm = egm,
     dimensions = dimensions, ...
   )
@@ -164,7 +167,7 @@ summary.EGM.compare <- function(object, ...)
 
 #' @noRd
 # Get factor results ----
-# Updated 09.10.2023
+# Updated 10.10.2023
 get_factor_results <- function(output, rotation, egm, dimensions, ...)
 {
 
@@ -182,7 +185,7 @@ get_factor_results <- function(output, rotation, egm, dimensions, ...)
   rotation_ARGS <- obtain_arguments(rotation_FUN, ellipse)
 
   # Supply loadings
-  rotation_ARGS$A <- output$loadings[,seq_len(egm$EGA$n.dim)]
+  rotation_ARGS$A <- output$loadings[]
 
   # Set default arguments for rotations
   rotation_ARGS <- rotation_defaults(rotation, rotation_ARGS, ellipse)
