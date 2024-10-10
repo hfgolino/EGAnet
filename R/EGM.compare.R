@@ -56,16 +56,7 @@ EGM.compare <- function(data, rotation = "geominQ", ...)
   efa <- get_factor_results(
     output = psych::fa(
       egm$EGA$correlation, n.obs = dimensions[2],
-      nfactors = communities, rotate = "none"
-    ), rotation = rotation, egm = egm,
-    dimensions = dimensions, ...
-  )
-
-  # Obtain PCA
-  pca <- get_factor_results(
-    output = psych::principal(
-      egm$EGA$correlation, n.obs = dimensions[2],
-      nfactors = communities, rotate = "none"
+      nfactors = communities, rotate = "none", ...
     ), rotation = rotation, egm = egm,
     dimensions = dimensions, ...
   )
@@ -74,9 +65,8 @@ EGM.compare <- function(data, rotation = "geominQ", ...)
   results <- list(
     EGM = egm,
     EFA = efa,
-    PCA = pca,
     likelihood = as.data.frame(
-      rbind(EGM = egm$model$optimized$fit, EFA = efa$fit, PCA = pca$fit)
+      rbind(EGM = egm$model$optimized$fit, EFA = efa$fit)
     )
   )
 
@@ -120,11 +110,7 @@ print.EGM.compare <- function(x, ...)
 
   # Find smallest difference
   absolute <- abs(x$likelihood)
-  smallest_difference <- min(pmin(
-    abs(absolute[1,] - absolute[2,]),
-    abs(absolute[1,] - absolute[3,]),
-    abs(absolute[2,] - absolute[3,])
-  ))
+  smallest_difference <- min(abs(absolute[1,] - absolute[2,]))
 
   # Get decimal split
   decimal_split <- strsplit(
@@ -147,10 +133,10 @@ print.EGM.compare <- function(x, ...)
   minimums <- nvapply(rounded, which.min)
 
   # Replace log-likelihood with maximum
-  minimums["logLik"] <- which.max(x$likelihood$logLik)
+  minimums["logLik"] <- swiftelse(minimums["logLik"] == 1, 2, 1)
 
   # Add lowest of each column to bottom row
-  rounded["best",] <- c("EGM", "EFA", "PCA")[minimums]
+  rounded["best",] <- c("EGM", "EFA")[minimums]
 
   # Print to smallest decimal
   print(rounded)

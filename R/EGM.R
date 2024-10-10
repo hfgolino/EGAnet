@@ -753,7 +753,7 @@ EGM.EGA <- function(data, structure, ...)
   )
 
   # Set class
-  class(results) <- c("EGM", "EGA")
+  class(results) <- "EGM"
 
   # Return results
   return(results)
