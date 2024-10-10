@@ -638,7 +638,12 @@ EGM.EGA <- function(data, structure, ...)
 
   # Set memberships based on structure
   if(!is.null(structure)){
+
+    # Update EGA features
     ega$wc[] <- structure
+    ega$n.dim <- unique_length(structure)
+    ega$dim.variables$dimension <- structure
+
   }else{
     structure <- ega$wc
   }
