@@ -362,8 +362,7 @@ update_loadings <- function(
       lower_triangle = lower_triangle,
       total_variables = total_variables,
       lower = rep(-1, total_zeros),
-      upper = rep(1, total_zeros),
-      epsilon = 1e-08
+      upper = rep(1, total_zeros)
     )
   )
 
@@ -396,8 +395,8 @@ update_loadings <- function(
 
 #' Partial correlation cost ----
 #' @noRd
-# Updated 08.10.2024
-P_cost <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle, epsilon)
+# Updated 11.10.2024
+P_cost <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle)
 {
 
   # Set up P vector
@@ -420,30 +419,55 @@ P_cost <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle
 #' Partial correlation gradient ----
 #' @noRd
 # Updated 11.10.2024
-P_gradient <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle, epsilon)
+P_gradient <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle)
 {
 
+  # Set up P vector
+  P_lower[zeros] <- P_nonzero
+
+  # Get partial correlations
+  P_matrix <- matrix(0, nrow = total_variables, ncol = total_variables)
+
+  # Set lower triangle
+  P_matrix[lower_triangle] <- P_lower
+
+  # Transpose
+  P_matrix <- t(P_matrix) + P_matrix
+
+  # Obtain implied zero-order correlations
+  implied_R <- pcor2cor(P_matrix)
+
+  # Set up
+  difference <- implied_R[lower_triangle][zeros] - R[lower_triangle][zeros]
+
+  # Return standardized gradient
+  return(difference / sum(zeros) * sqrt(mean(difference^2)))
+  # Not the true analytic gradient but a near approximate
+  # Significantly faster than iterative
+
+  # OLD -- but more accurate -- iterative version
+
   # Compute the current cost
-  current_cost <- P_cost(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle)
-
-  # Return gradient with `nvapply`
-  return(
-    nvapply(
-      seq_along(P_nonzero), function(i, epsilon){
-
-        # Perturb parameter i
-        P_perturbed <- P_nonzero
-        P_perturbed[i] <- P_nonzero[i] + epsilon
-
-        # Compute the perturbed cost
-        perturbed_cost <- P_cost(P_perturbed, P_lower, zeros, R, total_variables, lower_triangle)
-
-        # Compute the gradient
-        return((perturbed_cost - current_cost) / epsilon)
-
-      }, epsilon = epsilon
-    )
-  )
+  # current_cost <- P_cost(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle)
+  #
+  # # Return gradient with `nvapply`
+  # return(
+  #   nvapply(
+  #     seq_along(P_nonzero), function(i, epsilon){
+  #
+  #       # Perturb parameter i
+  #       P_perturbed <- P_nonzero
+  #       P_perturbed[i] <- P_nonzero[i] + epsilon
+  #
+  #       # Compute the perturbed cost
+  #       perturbed_cost <- P_cost(P_perturbed, P_lower, zeros, R, total_variables, lower_triangle)
+  #
+  #       # Compute the gradient
+  #       return((perturbed_cost - current_cost) / epsilon)
+  #
+  #     }, epsilon = epsilon
+  #   )
+  # )
 
 }
 
