@@ -349,14 +349,20 @@ update_loadings <- function(
   # Get zeros
   zeros <- P_lower != 0
 
+  # Get total zeros
+  total_zeros <- sum(zeros)
+
   # Use optimize to minimize the SRMR
   result <- silent_call(
     nlminb(
       start = P_lower[zeros], objective = P_cost,
+      gradient = P_gradient,
       P_lower = P_lower, zeros = zeros,
       R = nload2cor(loadings_matrix),
       lower_triangle = lower_triangle,
-      total_variables = total_variables
+      total_variables = total_variables,
+      lower = rep(-1, total_zeros),
+      upper = rep(1, total_zeros)
     )
   )
 
@@ -405,16 +411,38 @@ P_cost <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle
   # Transpose
   P_matrix <- t(P_matrix) + P_matrix
 
-  # Get correlation matrix
-  R_matrix <- silent_call(pcor2cor(P_matrix))
+  # Return SRMR
+  return(srmr(R, silent_call(pcor2cor(P_matrix))))
 
-  # Try for positive definite
-  PD <- try(is_positive_definite(R_matrix), silent = TRUE)
+}
 
-  # Ensure positive definite
-  if(!is(PD, "try-error") && PD){
-    return(srmr(R, R_matrix))
-  }else{return(Inf)}
+#' Partial correlation gradient ----
+#' @noRd
+# Updated 11.10.2024
+P_gradient <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle, epsilon = 1e-08)
+{
+
+  # Compute the current cost
+  current_cost <- P_cost(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle)
+
+  # Return gradient with `nvapply`
+  return(
+    nvapply(
+      seq_along(P_nonzero), function(i, epsilon){
+
+        # Perturb parameter i
+        P_perturbed <- P_nonzero
+        P_perturbed[i] <- P_nonzero[i] + epsilon
+
+        # Compute the perturbed cost
+        perturbed_cost <- P_cost(P_perturbed, P_lower, zeros, R, total_variables, lower_triangle)
+
+        # Compute the gradient
+        return((perturbed_cost - current_cost) / epsilon)
+
+      }, epsilon = epsilon
+    )
+  )
 
 }
 
