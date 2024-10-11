@@ -205,6 +205,11 @@ get_factor_results <- function(output, rotation, egm, dimensions, ...)
   output$factor_correlations <- aligned_output$Phi2
   output$implied <- list(R = implied_R, P = cor2pcor(implied_R))
 
+  #Computing Model Parameters to Adjust TEFI:
+  
+  mod_par_tefi <- compute_tefi_adjustment(output$loadings, output$factor_correlations)
+  
+  
   # Compute likelihood for EFA
   output$fit <- c(
     R.srmr = srmr(egm$EGA$correlation, implied_R),
@@ -213,7 +218,7 @@ get_factor_results <- function(output, rotation, egm, dimensions, ...)
       n = dimensions[1], p = dimensions[2], R = output$implied$R,
       S = egm$EGA$correlation, loadings = output$factor_correlations
     ),
-    TEFI = tefi(output$implied$R, structure = egm$EGA$wc)$VN.Entropy.Fit
+    TEFI_adj = tefi(output$implied$R, structure = egm$EGA$wc)$VN.Entropy.Fit+mod_par_tefi
   )
 
   # Return updated output
