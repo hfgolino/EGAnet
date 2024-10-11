@@ -362,7 +362,8 @@ update_loadings <- function(
       lower_triangle = lower_triangle,
       total_variables = total_variables,
       lower = rep(-1, total_zeros),
-      upper = rep(1, total_zeros)
+      upper = rep(1, total_zeros),
+      epsilon = 1e-08
     )
   )
 
@@ -396,7 +397,7 @@ update_loadings <- function(
 #' Partial correlation cost ----
 #' @noRd
 # Updated 08.10.2024
-P_cost <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle)
+P_cost <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle, epsilon)
 {
 
   # Set up P vector
@@ -412,14 +413,14 @@ P_cost <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle
   P_matrix <- t(P_matrix) + P_matrix
 
   # Return SRMR
-  return(srmr(R, silent_call(pcor2cor(P_matrix))))
+  return(srmr(R, pcor2cor(P_matrix)))
 
 }
 
 #' Partial correlation gradient ----
 #' @noRd
 # Updated 11.10.2024
-P_gradient <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle, epsilon = 1e-08)
+P_gradient <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle, epsilon)
 {
 
   # Compute the current cost

@@ -393,21 +393,28 @@ likelihood <- function(n, p, R, S, loadings, type)
 
 
 #' @noRd
-# Compute model parameters for TEFI adjustment
+# Compute model parameters for TEFI adjustment ----
 # Updated 11.10.2024
-compute_tefi_adjustment <- function(loadings, correlations) {
-  m_tefi <- dim(loadings)[2]
-  p_tefi <- dim(loadings)[1]
-  parameters_tefi <- (p_tefi * m_tefi) + p_tefi + ((m_tefi * (m_tefi - 1)) / 2)
-  model_parameters_tefi <- parameters_tefi - sum(loadings == 0)
-  adjustment <- (model_parameters_tefi) * log(abs(mean(correlations))) - log(mean(loadings))
-  return(adjustment)
-}
+compute_tefi_adjustment <- function(loadings, correlations)
+{
 
+  # Obtain dimensions
+  dimensions <- dim(loadings)
+
+  # Total number of parameters
+  parameters <- (dimensions[1] * dimensions[2]) + dimensions[1] + ((dimensions[2] * (dimensions[2] - 1)) / 2)
+
+  # Obtain model parameters
+  model_parameters <- parameters - sum(loadings == 0)
+
+  # Return TEFI adjustment
+  return(model_parameters * log(abs(mean(correlations[lower.tri(correlations)]))) - log(mean(loadings)))
+
+}
 
 #' @noRd
 # EGM | Standard ----
-# Updated 10.10.2024
+# Updated 11.10.2024
 EGM.standard <- function(data, communities, structure, p.in, p.out, opt, ...)
 {
 
@@ -550,12 +557,9 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, opt, ...)
   optimized_R <- nload2cor(optimized_loadings)
   optimized_P <- cor2pcor(optimized_R)
 
-  #Computing Model Parameters to Adjust TEFI:
-  
-  mod_par_tefi_standard <- compute_tefi_adjustment(standard_loadings, standard_correlations)
-  mod_par_tefi_optimized <- compute_tefi_adjustment(optimized_loadings, optimized_correlations)
-  
-  
+  # Compute adjusted TEFI (for optimized)
+  optimized_tefi_adjusted <- compute_tefi_adjustment(optimized_loadings, optimized_correlations)
+
   # Set up EGA
   ega_list <- list(
     dim.variables = data.frame(
@@ -564,7 +568,7 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, opt, ...)
     ),
     network = community_P, wc = structure,
     n.dim = unique_length(structure), correlation = empirical_R,
-    n = data_dimensions[1], TEFI_adj = tefi(empirical_R, structure)$VN.Entropy.Fit+mod_par_tefi_optimized
+    n = data_dimensions[1], TEFI_adj = tefi(empirical_R, structure)$VN.Entropy.Fit + optimized_tefi_adjusted
   ); class(ega_list) <- "EGA"
 
   # Attach methods to network
@@ -597,7 +601,9 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, opt, ...)
             n = data_dimensions[1], p = data_dimensions[2],
             R = standard_R, S = empirical_R, loadings = output$std
           ),
-          TEFI_adj = tefi(standard_R, structure = structure)$VN.Entropy.Fit+mod_par_tefi_standard
+          TEFI_adj = tefi(standard_R, structure = structure)$VN.Entropy.Fit + compute_tefi_adjustment(
+            standard_loadings, standard_correlations
+          )
         ),
         implied = list(R = standard_R, P = standard_P)
       ),
@@ -612,7 +618,7 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, opt, ...)
             n = data_dimensions[1], p = data_dimensions[2],
             R = optimized_R, S = empirical_R, loadings = optimized_loadings
           ),
-          TEFI_adj = tefi(optimized_R, structure = structure)$VN.Entropy.Fit+mod_par_tefi_optimized
+          TEFI_adj = tefi(optimized_R, structure = structure)$VN.Entropy.Fit + optimized_tefi_adjusted
         ),
         implied = list(R = optimized_R, P = optimized_P)
       )
@@ -734,7 +740,7 @@ compute_density <- function(network)
 
 #' @noRd
 # EGM | EGA ----
-# Updated 10.10.2024
+# Updated 11.10.2024
 EGM.EGA <- function(data, structure, opt, ...)
 {
 
@@ -840,12 +846,6 @@ EGM.EGA <- function(data, structure, opt, ...)
   optimized_R <- nload2cor(optimized_loadings)
   optimized_P <- cor2pcor(optimized_R)
 
-  #Computing Model Parameters to Adjust TEFI:
-  #Computing Model Parameters to Adjust TEFI:
-  
-  mod_par_tefi_standard <- compute_tefi_adjustment(standard_loadings, standard_correlations)
-  mod_par_tefi_optimized <- compute_tefi_adjustment(optimized_loadings, optimized_correlations)
-  
   # Set up results
   results <- list(
     EGA = ega, structure = structure,
@@ -861,7 +861,9 @@ EGM.EGA <- function(data, structure, opt, ...)
             n = data_dimensions[1], p = data_dimensions[2],
             R = standard_R, S = ega$correlation, loadings = standard_loadings
           ),
-          TEFI_adj = tefi(standard_R, structure = ega$wc)$VN.Entropy.Fit+mod_par_tefi_standard
+          TEFI_adj = tefi(standard_R, structure = ega$wc)$VN.Entropy.Fit + compute_tefi_adjustment(
+            standard_loadings, standard_correlations
+          )
         ),
         implied = list(R = standard_R, P = standard_P)
       ),
@@ -876,7 +878,9 @@ EGM.EGA <- function(data, structure, opt, ...)
             n = data_dimensions[1], p = data_dimensions[2],
             R = optimized_R, S = ega$correlation, loadings = optimized_loadings
           ),
-          TEFI_adj = tefi(optimized_R, structure = ega$wc)$VN.Entropy.Fit+mod_par_tefi_optimized
+          TEFI_adj = tefi(optimized_R, structure = ega$wc)$VN.Entropy.Fit + compute_tefi_adjustment(
+            optimized_loadings, optimized_correlations
+          )
         ),
         implied = list(R = optimized_R, P = optimized_P)
       )
