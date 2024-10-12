@@ -292,7 +292,7 @@ srmr_N_cost <- function(
 }
 
 # @noRd
-# Estimated loadings cost (based on SRMR) ----
+# Estimated loadings cost (based on SRMR)
 # Updated 12.10.2024
 # srmr_N_gradient <- function(
 #     loadings_vector, zeros, R,
@@ -421,7 +421,9 @@ compute_tefi_adjustment <- function(loadings, correlations)
   model_parameters <- parameters - sum(loadings == 0)
 
   # Return TEFI adjustment
-  return(model_parameters * log(abs(mean(correlations[lower.tri(correlations)]))) - log(mean(loadings)))
+  # return(model_parameters * log(abs(mean(correlations[lower.tri(correlations)]))) - log(mean(loadings)))
+  # Maybe...
+  return(model_parameters * log(mean(abs(correlations[lower.tri(correlations)]))) - log(mean(abs(loadings))))
 
 }
 
