@@ -281,44 +281,38 @@ srmr_N_cost <- function(
   differences <- abs(loading_matrix) - assign_loadings
 
   # Obtain difference values
-  difference_values <- differences * (differences > 0)
+  difference_values <- (differences * (differences > 0))^2
 
   # Return SRMR
   return(
     srmr(R, nload2cor(loading_matrix)) + # SRMR term
-    sqrt(mean((difference_values)^2)) # penalty term
+    sqrt(mean(difference_values)) # penalty term
   )
 
 }
 
-# # Estimated loadings gradient (based on SRMR)
-# # Updated 12.10.2024
+# @noRd
+# Estimated loadings cost (based on SRMR) ----
+# Updated 12.10.2024
 # srmr_N_gradient <- function(
 #     loadings_vector, zeros, R,
 #     loading_structure, rows, ...
 # )
 # {
 #
+#   # NOT USED!!
+#   # CLOSEST SO FAR TO ACTUAL GRADIENT BUT NOT CORRECT!!
+#
 #   # Assemble loading matrix
-#   loading_matrix <- matrix(loadings_vector * zeros, nrow = rows, byrow = TRUE)
+#   loading_matrix <- t(matrix(loadings_vector, nrow = rows, byrow = TRUE))
 #
-#   # Obtain assign loadings
-#   assign_loadings <- loading_matrix[loading_structure]
-#
-#   # Transpose loadings matrix
-#   loading_matrix <- t(loading_matrix)
-#
-#   # Obtain differences
-#   differences <- abs(loading_matrix) - assign_loadings
-#
-#   # Obtain difference values
-#   difference_values <- differences * (differences > 0)
-#
-#   # Transpose for loadings vector
-#   loadings_vector <- as.vector(loading_matrix)
+#   # Compute loading differences
+#   differences <- as.vector(
+#     net.loads((nload2cor(loading_matrix) - R)^2, ega$wc)$std[colnames(ega$network),]
+#   )
 #
 #   # Return gradient
-#   return(loadings_vector / length(loadings_vector) * srmr(loading_matrix, R))
+#   return(-differences / length(differences) * sqrt(mean(differences^2)) * zeros)
 #
 # }
 
