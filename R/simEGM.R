@@ -79,7 +79,7 @@
 #' @export
 #'
 # Simulate EGM ----
-# Updated 08.10.2024
+# Updated 11.10.2024
 simEGM <- function(
     communities, variables,
     loadings = c("small", "moderate", "large"), cross.loadings = 0.01,
@@ -212,13 +212,17 @@ simEGM <- function(
     }
 
     # Obtain correlation matrices
-    loadings_matrix <- update_loadings(
-      total_variables, communities, membership,
-      p.in, p.out, loadings_matrix
+    loadings_matrix <- try(
+      update_loadings(
+        total_variables, communities, membership,
+        p.in, p.out, loadings_matrix
+      ), silent = TRUE
     )
 
     # Set correlations
-    R <- nload2cor(loadings_matrix)
+    if(!is(loadings_matrix, "try-error")){
+      R <- nload2cor(loadings_matrix)
+    }
 
     # Check for max iterations
     if(count >= max.iterations){
@@ -315,7 +319,7 @@ simEGM_errors <- function(
 
 #' @noRd
 # Update loadings to align with network ----
-# Updated 08.10.2024
+# Updated 11.10.2024
 update_loadings <- function(
     total_variables, communities, membership,
     p.in, p.out, loadings_matrix
@@ -354,15 +358,17 @@ update_loadings <- function(
 
   # Use optimize to minimize the SRMR
   result <- silent_call(
-    nlminb(
-      start = P_lower[zeros], objective = P_cost,
-      gradient = P_gradient,
+    optim(
+      par = P_lower[zeros], fn = P_cost,
+      gr = P_gradient,
       P_lower = P_lower, zeros = zeros,
       R = nload2cor(loadings_matrix),
       lower_triangle = lower_triangle,
       total_variables = total_variables,
       lower = rep(-1, total_zeros),
-      upper = rep(1, total_zeros)
+      upper = rep(1, total_zeros),
+      method = "L-BFGS-B",
+      control = list(factr = 1e-08)
     )
   )
 
@@ -376,15 +382,23 @@ update_loadings <- function(
 
   # Set bounds
   loading_vector <- as.vector(loadings_matrix)
+  loading_length <- length(loading_vector)
 
   # Use optimize to minimize the SRMR
   result <- silent_call(
-    nlm(f = N_cost, p = loading_vector, P = P, iterlim = 1000)
+    optim(
+      par = loading_vector, fn = N_cost,
+      gr = N_gradient, P = P,
+      lower = rep(-1, loading_length),
+      upper = rep(1, loading_length),
+      method = "L-BFGS-B",
+      control = list(factr = 1e-08)
+    )
   )
 
   # Extract optimized loadings
   loadings_matrix <- matrix(
-    result$estimate, nrow = total_variables,
+    result$par, nrow = total_variables,
     dimnames = dimnames(loadings_matrix)
   )
 
@@ -393,8 +407,8 @@ update_loadings <- function(
 
 }
 
-#' Partial correlation cost ----
 #' @noRd
+# Partial correlation cost ----
 # Updated 11.10.2024
 P_cost <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle)
 {
@@ -416,8 +430,8 @@ P_cost <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle
 
 }
 
-#' Partial correlation gradient ----
 #' @noRd
+# Partial correlation gradient ----
 # Updated 11.10.2024
 P_gradient <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle)
 {
@@ -434,47 +448,32 @@ P_gradient <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_tria
   # Transpose
   P_matrix <- t(P_matrix) + P_matrix
 
-  # Obtain implied zero-order correlations
-  implied_R <- pcor2cor(P_matrix)
+  # Set up implied zero-order correlations with empirical
+  difference <- pcor2cor(P_matrix)[lower_triangle][zeros] - R[lower_triangle][zeros]
 
-  # Set up
-  difference <- implied_R[lower_triangle][zeros] - R[lower_triangle][zeros]
-
-  # Return standardized gradient
+  # Return analytic gradient
   return(difference / sum(zeros) * sqrt(mean(difference^2)))
-  # Not the true analytic gradient but a near approximate
-  # Significantly faster than iterative
-
-  # OLD -- but more accurate -- iterative version
-
-  # Compute the current cost
-  # current_cost <- P_cost(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle)
-  #
-  # # Return gradient with `nvapply`
-  # return(
-  #   nvapply(
-  #     seq_along(P_nonzero), function(i, epsilon){
-  #
-  #       # Perturb parameter i
-  #       P_perturbed <- P_nonzero
-  #       P_perturbed[i] <- P_nonzero[i] + epsilon
-  #
-  #       # Compute the perturbed cost
-  #       perturbed_cost <- P_cost(P_perturbed, P_lower, zeros, R, total_variables, lower_triangle)
-  #
-  #       # Compute the gradient
-  #       return((perturbed_cost - current_cost) / epsilon)
-  #
-  #     }, epsilon = epsilon
-  #   )
-  # )
 
 }
 
-#' Loadings partial correlation cost ----
 #' @noRd
+# Loadings partial correlation cost ----
 # Updated 08.10.2024
 N_cost <- function(loadings_vector, P, ...)
 {
   return(srmr(P, nload2pcor(matrix(loadings_vector, nrow = dim(P)[1]))))
+}
+
+#' @noRd
+# Loadings partial correlation gradient ----
+# Updated 12.10.2024
+N_gradient <- function(loadings_vector, P, ...)
+{
+
+  # Return analytic gradient
+  return(
+    loadings_vector / length(loadings_vector) *
+    srmr(nload2pcor(matrix(loadings_vector, nrow = dim(P)[1])), P)
+  )
+
 }

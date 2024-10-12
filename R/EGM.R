@@ -261,7 +261,7 @@ nload2cor <- function(loadings)
 
 #' @noRd
 # Estimated loadings cost (based on SRMR) ----
-# Updated 10.10.2024
+# Updated 12.10.2024
 srmr_N_cost <- function(
     loadings_vector, zeros, R,
     loading_structure, rows, ...
@@ -274,32 +274,57 @@ srmr_N_cost <- function(
   # Obtain assign loadings
   assign_loadings <- loading_matrix[loading_structure]
 
+  # Transpose loadings matrix
+  loading_matrix <- t(loading_matrix)
+
   # Obtain differences
-  differences <- abs(t(loading_matrix)) - assign_loadings
+  differences <- abs(loading_matrix) - assign_loadings
 
   # Obtain difference values
   difference_values <- differences * (differences > 0)
 
-  # Set penalties
-  penalty <- sqrt(mean((difference_values)^2))
-
-  # Try result
-  implied_R <- try(nload2cor(t(loading_matrix)), silent = TRUE)
-
-  # Check for error
+  # Return SRMR
   return(
-    swiftelse( # Return infinite on error
-      is(implied_R, "try-error"), Inf,
-      srmr(R, implied_R) + penalty
-      # Return cost otherwise
-    )
+    srmr(R, nload2cor(loading_matrix)) + # SRMR term
+    sqrt(mean((difference_values)^2)) # penalty term
   )
 
 }
 
+# # Estimated loadings gradient (based on SRMR)
+# # Updated 12.10.2024
+# srmr_N_gradient <- function(
+#     loadings_vector, zeros, R,
+#     loading_structure, rows, ...
+# )
+# {
+#
+#   # Assemble loading matrix
+#   loading_matrix <- matrix(loadings_vector * zeros, nrow = rows, byrow = TRUE)
+#
+#   # Obtain assign loadings
+#   assign_loadings <- loading_matrix[loading_structure]
+#
+#   # Transpose loadings matrix
+#   loading_matrix <- t(loading_matrix)
+#
+#   # Obtain differences
+#   differences <- abs(loading_matrix) - assign_loadings
+#
+#   # Obtain difference values
+#   difference_values <- differences * (differences > 0)
+#
+#   # Transpose for loadings vector
+#   loadings_vector <- as.vector(loading_matrix)
+#
+#   # Return gradient
+#   return(loadings_vector / length(loadings_vector) * srmr(loading_matrix, R))
+#
+# }
+
 #' @noRd
 # Estimated loadings cost (based on log-likelihood) ----
-# Updated 10.10.2024
+# Updated 12.10.2024
 likelihood_N_cost <- function(
     loadings_vector, zeros, R,
     loading_structure, rows, n, opt, ...
@@ -312,25 +337,19 @@ likelihood_N_cost <- function(
   # Obtain assign loadings
   assign_loadings <- loading_matrix[loading_structure]
 
+  # Transpose loadings matrix
+  loading_matrix <- t(loading_matrix)
+
   # Obtain differences
-  differences <- abs(t(loading_matrix)) - assign_loadings
+  differences <- abs(loading_matrix) - assign_loadings
 
   # Obtain difference values
   difference_values <- differences * (differences > 0)
 
-  # Set penalties
-  penalty <- sqrt(mean((difference_values)^2))
-
-  # Try result
-  implied_R <- try(nload2cor(t(loading_matrix)), silent = TRUE)
-
   # Check for error
   return(
-    swiftelse( # Return infinite on error
-      is(implied_R, "try-error"), Inf,
-      likelihood(n, rows, implied_R, R, loading_matrix)[[opt]] + penalty
-      # Return cost otherwise
-    )
+    likelihood(n, rows, nload2cor(loading_matrix), R, loading_matrix)[[opt]] + # likelihood term
+    sqrt(mean((difference_values)^2)) # penalty term
   )
 
 }
@@ -794,6 +813,7 @@ EGM.EGA <- function(data, structure, opt, ...)
   # Obtain loadings vector and get bounds
   loadings_vector <- as.vector(standard_loadings)
   zeros <- loadings_vector != 0
+  loadings_length <- length(loadings_vector)
 
   # Set up loading structure
   # Uses transpose for 2x speed up in optimization
