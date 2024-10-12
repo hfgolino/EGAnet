@@ -433,7 +433,7 @@ compute_tefi_adjustment <- function(loadings, correlations)
 
 #' @noRd
 # EGM | Standard ----
-# Updated 11.10.2024
+# Updated 12.10.2024
 EGM.standard <- function(data, communities, structure, p.in, p.out, opt, ...)
 {
 
@@ -621,7 +621,7 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, opt, ...)
             R = standard_R, S = empirical_R, loadings = output$std
           ),
           TEFI_adj = tefi(standard_R, structure = structure)$VN.Entropy.Fit + compute_tefi_adjustment(
-            standard_loadings, standard_correlations
+            output$std, standard_correlations
           )
         ),
         implied = list(R = standard_R, P = standard_P)

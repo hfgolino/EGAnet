@@ -66,20 +66,18 @@
 #' Defaults to \code{1000}
 #'
 #' @examples
-#' \dontrun{
-#' # Estimate EGM
-#' EGM_data <- simEGM(
+#' simulated <- simEGM(
 #'   communities = 2, variables = 6,
 #'   loadings = "moderate", correlations = "moderate",
 #'   sample.size = 1000
-#' )}
+#' )
 #'
 #' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'
 #' @export
 #'
 # Simulate EGM ----
-# Updated 11.10.2024
+# Updated 12.10.2024
 simEGM <- function(
     communities, variables,
     loadings = c("small", "moderate", "large"), cross.loadings = 0.01,

@@ -84,13 +84,11 @@ Defaults to \code{1000}}
 Function to simulate data based on \code{\link[EGAnet]{EGM}}
 }
 \examples{
-\dontrun{
-# Estimate EGM
-EGM_data <- simEGM(
+simulated <- simEGM(
   communities = 2, variables = 6,
   loadings = "moderate", correlations = "moderate",
   sample.size = 1000
-)}
+)
 
 }
 \author{
