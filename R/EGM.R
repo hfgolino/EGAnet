@@ -268,7 +268,7 @@ nload2cor <- function(loadings)
 
 #' @noRd
 # Estimated loadings cost (based on SRMR) ----
-# Updated 12.10.2024
+# Updated 13.10.2024
 srmr_N_cost <- function(
     loadings_vector, zeros, R,
     loading_structure, rows, ...
@@ -276,23 +276,23 @@ srmr_N_cost <- function(
 {
 
   # Assemble loading matrix
-  loading_matrix <- matrix(loadings_vector * zeros, nrow = rows, byrow = TRUE)
+  loadings_matrix <- matrix(loadings_vector * zeros, nrow = rows, byrow = TRUE)
 
   # Obtain assign loadings
-  assign_loadings <- loading_matrix[loading_structure]
+  assign_loadings <- loadings_matrix[loading_structure]
 
   # Transpose loadings matrix
-  loading_matrix <- t(loading_matrix)
+  loadings_matrix <- t(loadings_matrix)
 
   # Obtain differences
-  differences <- abs(loading_matrix) - assign_loadings
+  differences <- abs(loadings_matrix) - assign_loadings
 
   # Obtain difference values
   difference_values <- (differences * (differences > 0))^2
 
   # Return SRMR
   return(
-    srmr(R, nload2cor(loading_matrix)) + # SRMR term
+    srmr(R, nload2cor(loadings_matrix)) + # SRMR term
     sqrt(mean(difference_values)) # penalty term
   )
 
@@ -308,18 +308,33 @@ srmr_N_gradient <- function(
 {
 
   # Assemble loading matrix
-  loadings_matrix <- t(matrix(loadings_vector * zeros, nrow = rows, byrow = TRUE))
+  loadings_matrix <- matrix(loadings_vector, nrow = rows, byrow = TRUE)
+
+  # Obtain assign loadings
+  assign_loadings <- loadings_matrix[loading_structure]
+
+  # Transpose loadings matrix
+  loadings_matrix <- t(loadings_matrix)
+
+  # Obtain differences
+  differences <- abs(loadings_matrix) - assign_loadings
+
+  # Set negative differences to zero
+  differences <- as.vector(differences * (differences > 0))
 
   # Obtain zero-order correlations
   implied_R <- nload2cor(loadings_matrix)
 
-  # Return analytic gradient
-  return(
-    as.vector(
-      ((implied_R - R) %*% loadings_matrix) /
-      (srmr(implied_R, R) * length(R))
-    ) * zeros
+  # Compute the gradient
+  gradient <- as.vector(
+    ((implied_R - R) %*% loadings_matrix) / (srmr(implied_R, R) * length(R))
   )
+
+  # Compute the penalty
+  penalty <- differences / (length(differences) * sqrt(mean(differences^2)))
+
+  # Return analytic gradient
+  return((gradient + swiftelse(is.na(penalty), 0, penalty)) * zeros)
 
 }
 
@@ -877,71 +892,22 @@ EGM.EGA <- function(data, structure, opt, ...)
     "srmr" = srmr_N_cost
   )
 
-  # Optimize network loadings
-  if(opt == "srmr"){
-
-    # Optimize over loadings (using gradient)
-    result <- silent_call(
-      optim(
-        par = loadings_vector, fn = cost_FUN,
-        gr = srmr_N_gradient,
-        zeros = zeros, R = ega$correlation,
-        loading_structure = loading_structure,
-        rows = communities, n = data_dimensions[1],
-        opt = toupper(opt),
-        lower = rep(-1, loadings_length),
-        upper = rep(1, loadings_length),
-        method = "L-BFGS-B",
-        control = list(factr = 1e-08)
-      )
+  # Optimize over loadings
+  result <- silent_call(
+    nlm(
+      p = loadings_vector, f = cost_FUN,
+      zeros = zeros, R = ega$correlation,
+      loading_structure = loading_structure,
+      rows = communities, n = data_dimensions[1],
+      opt = toupper(opt), iterlim = 1000
     )
+  )
 
-    # Obtain estimate
-    estimate <- result$par
-
-    # # Optimize over loadings
-    # result <- silent_call(
-    #   nlm(
-    #     p = loadings_vector, f = cost_FUN,
-    #     zeros = zeros, R = ega$correlation,
-    #     loading_structure = loading_structure,
-    #     rows = communities, n = data_dimensions[1],
-    #     opt = toupper(opt), iterlim = 1000
-    #   )
-    # )
-    #
-    # # Obtain estimate
-    # estimate <- result$estimate
-
-  }else{
-
-    # Warning that gradient function is not yet available
-    warning(
-      paste0(
-        "Gradient function for ", toupper(opt),
-        " is not yet available. Convergence will be significantly slower."
-      ), call. = FALSE
-    )
-
-    # Optimize over loadings
-    result <- silent_call(
-      nlm(
-        p = loadings_vector, f = cost_FUN,
-        zeros = zeros, R = ega$correlation,
-        loading_structure = loading_structure,
-        rows = communities, n = data_dimensions[1],
-        opt = toupper(opt), iterlim = 1000
-      )
-    )
-
-    # Obtain estimate
-    estimate <- result$estimate
-
-  }
+  # For now, don't use gradient (still needs work)
 
   # Extract optimized loadings
   optimized_loadings <- matrix(
-    estimate, nrow = dimensions[1],
+    result$estimate, nrow = dimensions[1],
     dimnames = dimension_names
   )
 
