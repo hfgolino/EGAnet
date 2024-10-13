@@ -95,6 +95,13 @@
 #' egm_search <- EGM(
 #'   data, EGM.type = "search", communities = 3,
 #'   p.in = 0.95 # only need 'p.in'
+#' )
+#'
+#' # Estimate EGM (using search with EGA structure)
+#' egm_search <- EGM(
+#'   data, EGM.type = "search",
+#'   structure = EGA(data, plot.EGA = FALSE)$wc,
+#'   p.in = 0.95 # only need 'p.in'
 #' )}
 #'
 #' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
@@ -291,30 +298,30 @@ srmr_N_cost <- function(
 
 }
 
-# @noRd
-# Estimated loadings cost (based on SRMR)
-# Updated 12.10.2024
-# srmr_N_gradient <- function(
-#     loadings_vector, zeros, R,
-#     loading_structure, rows, ...
-# )
-# {
-#
-#   # NOT USED!!
-#   # CLOSEST SO FAR TO ACTUAL GRADIENT BUT NOT CORRECT!!
-#
-#   # Assemble loading matrix
-#   loading_matrix <- t(matrix(loadings_vector, nrow = rows, byrow = TRUE))
-#
-#   # Compute loading differences
-#   differences <- as.vector(
-#     net.loads((nload2cor(loading_matrix) - R)^2, ega$wc)$std[colnames(ega$network),]
-#   )
-#
-#   # Return gradient
-#   return(-differences / length(differences) * sqrt(mean(differences^2)) * zeros)
-#
-# }
+#' @noRd
+# Estimated loadings cost (based on SRMR) ----
+# Updated 13.10.2024
+srmr_N_gradient <- function(
+    loadings_vector, zeros, R,
+    loading_structure, rows, ...
+)
+{
+
+  # Assemble loading matrix
+  loadings_matrix <- t(matrix(loadings_vector * zeros, nrow = rows, byrow = TRUE))
+
+  # Obtain zero-order correlations
+  implied_R <- nload2cor(loadings_matrix)
+
+  # Return analytic gradient
+  return(
+    as.vector(
+      ((implied_R - R) %*% loadings_matrix) /
+      (srmr(implied_R, R) * length(R))
+    ) * zeros
+  )
+
+}
 
 #' @noRd
 # Estimated loadings cost (based on log-likelihood) ----
@@ -429,7 +436,7 @@ compute_tefi_adjustment <- function(loadings, correlations)
 
 #' @noRd
 # EGM | Standard ----
-# Updated 12.10.2024
+# Updated 13.10.2024
 EGM.standard <- function(data, communities, structure, p.in, p.out, opt, ...)
 {
 
@@ -524,6 +531,7 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, opt, ...)
   # Obtain loadings vector and get bounds
   loadings_vector <- as.vector(output$std)
   zeros <- loadings_vector != 0
+  loadings_length <- length(loadings_vector)
 
   # Set up loading structure
   # Uses transpose for 2x speed up in optimization
@@ -543,19 +551,56 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, opt, ...)
   )
 
   # Optimize network loadings
-  result <- silent_call(
-    nlm(
-      p = loadings_vector, f = cost_FUN,
-      zeros = zeros, R = empirical_R,
-      loading_structure = loading_structure,
-      rows = communities, n = data_dimensions[1],
-      opt = toupper(opt), iterlim = 1000
+  if(opt == "srmr"){
+
+    # Optimize over loadings (using gradient)
+    result <- silent_call(
+      optim(
+        par = loadings_vector, fn = cost_FUN,
+        gr = srmr_N_gradient,
+        zeros = zeros, R = empirical_R,
+        loading_structure = loading_structure,
+        rows = communities, n = data_dimensions[1],
+        opt = toupper(opt),
+        lower = rep(-1, loadings_length),
+        upper = rep(1, loadings_length),
+        method = "L-BFGS-B",
+        control = list(factr = 1e-08)
+      )
     )
-  )
+
+    # Obtain estimate
+    estimate <- result$par
+
+  }else{
+
+    # Warning that gradient function is not yet available
+    warning(
+      paste0(
+        "Gradient function for ", toupper(opt),
+        " is not yet available. Convergence will be significantly slower."
+      ), call. = FALSE
+    )
+
+    # Optimize over loadings
+    result <- silent_call(
+      nlm(
+        p = loadings_vector, f = cost_FUN,
+        zeros = zeros, R = empirical_R,
+        loading_structure = loading_structure,
+        rows = communities, n = data_dimensions[1],
+        opt = toupper(opt), iterlim = 1000
+      )
+    )
+
+    # Obtain estimate
+    estimate <- result$estimate
+
+  }
 
   # Extract optimized loadings
   optimized_loadings <- matrix(
-    result$estimate, nrow = data_dimensions[2],
+    estimate, nrow = data_dimensions[2],
     dimnames = dimnames(output$std)
   )
 
@@ -597,7 +642,7 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, opt, ...)
   # Attach methods to memberships
   names(ega_list$wc) <- dimension_names[[2]]
   attr(ega_list$wc, which = "methods") <- list(
-    algorithm = swiftelse(is.null(structure), NULL, "walktrap"),
+    algorithm = swiftelse(is.null(structure), NULL, "Walktrap"),
     objective_function = NULL
   )
 
@@ -755,7 +800,7 @@ compute_density <- function(network)
 
 #' @noRd
 # EGM | EGA ----
-# Updated 11.10.2024
+# Updated 13.10.2024
 EGM.EGA <- function(data, structure, opt, ...)
 {
 
@@ -833,19 +878,70 @@ EGM.EGA <- function(data, structure, opt, ...)
   )
 
   # Optimize network loadings
-  result <- silent_call(
-    nlm(
-      p = loadings_vector, f = cost_FUN,
-      zeros = zeros, R = ega$correlation,
-      loading_structure = loading_structure,
-      rows = communities, n = data_dimensions[1],
-      opt = toupper(opt), iterlim = 1000
+  if(opt == "srmr"){
+
+    # Optimize over loadings (using gradient)
+    result <- silent_call(
+      optim(
+        par = loadings_vector, fn = cost_FUN,
+        gr = srmr_N_gradient,
+        zeros = zeros, R = ega$correlation,
+        loading_structure = loading_structure,
+        rows = communities, n = data_dimensions[1],
+        opt = toupper(opt),
+        lower = rep(-1, loadings_length),
+        upper = rep(1, loadings_length),
+        method = "L-BFGS-B",
+        control = list(factr = 1e-08)
+      )
     )
-  )
+
+    # Obtain estimate
+    estimate <- result$par
+
+    # # Optimize over loadings
+    # result <- silent_call(
+    #   nlm(
+    #     p = loadings_vector, f = cost_FUN,
+    #     zeros = zeros, R = ega$correlation,
+    #     loading_structure = loading_structure,
+    #     rows = communities, n = data_dimensions[1],
+    #     opt = toupper(opt), iterlim = 1000
+    #   )
+    # )
+    #
+    # # Obtain estimate
+    # estimate <- result$estimate
+
+  }else{
+
+    # Warning that gradient function is not yet available
+    warning(
+      paste0(
+        "Gradient function for ", toupper(opt),
+        " is not yet available. Convergence will be significantly slower."
+      ), call. = FALSE
+    )
+
+    # Optimize over loadings
+    result <- silent_call(
+      nlm(
+        p = loadings_vector, f = cost_FUN,
+        zeros = zeros, R = ega$correlation,
+        loading_structure = loading_structure,
+        rows = communities, n = data_dimensions[1],
+        opt = toupper(opt), iterlim = 1000
+      )
+    )
+
+    # Obtain estimate
+    estimate <- result$estimate
+
+  }
 
   # Extract optimized loadings
   optimized_loadings <- matrix(
-    result$estimate, nrow = dimensions[1],
+    estimate, nrow = dimensions[1],
     dimnames = dimension_names
   )
 
@@ -947,10 +1043,13 @@ EGM.search <- function(data, communities, structure, p.in, opt, verbose, ...)
     }, data, p_grid, communities, ncores = 1, progress = verbose
   )
 
+  # Select for R fit
+  fit <- swiftelse(opt == "srmr", "R.srmr", toupper(opt))
+
   # Obtain fits
   optimized_fits <- nvapply(
     grid_search, function(x){
-      swiftelse(is.null(x), NA, x$model$optimized$fit[[toupper(opt)]])
+      swiftelse(is.null(x), NA, x$model$optimized$fit[[fit]])
     }
   )
 

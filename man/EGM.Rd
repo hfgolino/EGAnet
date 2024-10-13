@@ -113,6 +113,13 @@ egm_standard <- EGM(
 egm_search <- EGM(
   data, EGM.type = "search", communities = 3,
   p.in = 0.95 # only need 'p.in'
+)
+
+# Estimate EGM (using search with EGA structure)
+egm_search <- EGM(
+  data, EGM.type = "search",
+  structure = EGA(data, plot.EGA = FALSE)$wc,
+  p.in = 0.95 # only need 'p.in'
 )}
 
 }

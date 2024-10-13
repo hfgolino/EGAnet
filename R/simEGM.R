@@ -152,7 +152,6 @@ simEGM <- function(
     "very large" = 0
   )
 
-
   # Set cross-loading sparsity parameter
   sparsity <- 1 / log10(sample.size) * sparsity_adjustment
 
@@ -379,18 +378,16 @@ update_loadings <- function(
   P <- t(P) + P
 
   # Set bounds
-  loading_vector <- as.vector(loadings_matrix)
-  loading_length <- length(loading_vector)
+  loadings_vector <- as.vector(loadings_matrix)
+  loadings_length <- length(loadings_vector)
 
   # Use optimize to minimize the SRMR
   result <- silent_call(
-    optim(
-      par = loading_vector, fn = N_cost,
-      gr = N_gradient, P = P,
-      lower = rep(-1, loading_length),
-      upper = rep(1, loading_length),
-      method = "L-BFGS-B",
-      control = list(factr = 1e-08)
+    nlminb(
+      start = loadings_vector, objective = N_cost,
+      gradient = N_gradient, P = P,
+      lower = rep(-1, loadings_length),
+      upper = rep(1, loadings_length)
     )
   )
 
@@ -464,14 +461,22 @@ N_cost <- function(loadings_vector, P, ...)
 
 #' @noRd
 # Loadings partial correlation gradient ----
-# Updated 12.10.2024
+# Updated 13.10.2024
 N_gradient <- function(loadings_vector, P, ...)
 {
 
+  # Reshape loadings into matrix form
+  loadings_matrix <- matrix(loadings_vector, nrow = dim(P)[1])
+
+  # Obtain partial correlations
+  implied_P <- nload2pcor(loadings_matrix)
+
   # Return analytic gradient
   return(
-    loadings_vector / length(loadings_vector) *
-    srmr(nload2pcor(matrix(loadings_vector, nrow = dim(P)[1])), P)
+    as.vector(
+      ((implied_P - P) %*% loadings_matrix) /
+      (srmr(implied_P, P) * length(P))
+    )
   )
 
 }
