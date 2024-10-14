@@ -77,7 +77,7 @@
 #' @export
 #'
 # Simulate EGM ----
-# Updated 12.10.2024
+# Updated 14.10.2024
 simEGM <- function(
     communities, variables,
     loadings = c("small", "moderate", "large"), cross.loadings = 0.01,
@@ -248,14 +248,23 @@ simEGM <- function(
   data <- MASS_mvrnorm_quick(
     p = total_variables, np = total_variables * sample.size,
     coV = diag(total_variables)
-  )
+  ) %*% cholesky
+
+  # Get population correlation
+  P <- cor2pcor(R)
+
+  # Set names
+  row.names(P) <- colnames(P) <-
+  row.names(R) <- colnames(R) <-
+  colnames(data) <- names(membership) <-
+  row.names(loadings_matrix)
 
   # Return results
   return(
     list(
-      data = data %*% cholesky,
+      data = data,
       population_correlation = R,
-      population_partial_correlation = cor2pcor(R),
+      population_partial_correlation = P,
       parameters = list(
         loadings = loadings_matrix,
         correlations = correlations,
@@ -350,24 +359,7 @@ update_loadings <- function(
   # Get zeros
   zeros <- P_lower != 0
 
-  # Get total zeros
-  total_zeros <- sum(zeros)
-
   # Use optimize to minimize the SRMR
-  # result <- silent_call(
-  #   optim(
-  #     par = P_lower[zeros], fn = P_cost,
-  #     gr = P_gradient,
-  #     P_lower = P_lower, zeros = zeros,
-  #     R = nload2cor(loadings_matrix),
-  #     lower_triangle = lower_triangle,
-  #     total_variables = total_variables,
-  #     lower = rep(-1, total_zeros),
-  #     upper = rep(1, total_zeros),
-  #     method = "L-BFGS-B",
-  #     control = list(factr = 1e-08)
-  #   )
-  # )
   result <- silent_call(
     nlm(
       p = P_lower[zeros], f = P_cost,
@@ -392,14 +384,6 @@ update_loadings <- function(
   loadings_length <- length(loadings_vector)
 
   # Use optimize to minimize the SRMR
-  # result <- silent_call(
-  #   nlminb(
-  #     start = loadings_vector, objective = N_cost,
-  #     gradient = N_gradient, P = P,
-  #     lower = rep(-1, loadings_length),
-  #     upper = rep(1, loadings_length)
-  #   )
-  # )
   result <- silent_call(
     nlm(
       p = loadings_vector, f = N_cost,
@@ -420,7 +404,7 @@ update_loadings <- function(
 
 #' @noRd
 # Partial correlation cost ----
-# Updated 11.10.2024
+# Updated 14.10.2024
 P_cost <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle)
 {
 
@@ -436,63 +420,123 @@ P_cost <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle
   # Transpose
   P_matrix <- t(P_matrix) + P_matrix
 
+  # Set diagonal to negative 1
+  diag(P_matrix) <- -1
+
+  # Obtain inverse
+  INV <- solve(-P_matrix)
+
+  # Compute matrix D
+  D <- diag(sqrt(1 / diag(INV)))
+
   # Return SRMR
-  return(srmr(R, pcor2cor(P_matrix)))
+  return(srmr(R, D %*% INV %*% D))
 
 }
 
 #' @noRd
 # Partial correlation gradient ----
-# Updated 13.10.2024
+# Updated 14.10.2024
 P_gradient <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle)
 {
 
-  # Set up P vector
-  P_lower[zeros] <- P_nonzero
+  # Obtain current cost
+  current_cost <- P_cost(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle)
 
-  # Get partial correlations
-  P_matrix <- matrix(0, nrow = total_variables, ncol = total_variables)
+  # Set epsilon
+  epsilon <- 1e-08
 
-  # Set lower triangle
-  P_matrix[lower_triangle] <- P_lower
+  # Set perturbed vector
+  perturbed <- P_nonzero
 
-  # Transpose
-  P_matrix <- t(P_matrix) + P_matrix
+  # Return numerical differentiation
+  return(
+    nvapply(
+      seq_along(P_nonzero), function(i){
 
-  # Set up implied zero-order correlations with empirical
-  difference <- pcor2cor(P_matrix)[lower_triangle][zeros] - R[lower_triangle][zeros]
+        # Get perturbed vector
+        perturbed[i] <- P_nonzero[i] + epsilon
 
-  # Return approximate gradient
-  return(difference / length(R) * sqrt(mean(difference^2)))
+        # Return cost
+        return(
+          (P_cost(perturbed, P_lower, zeros, R, total_variables, lower_triangle) - current_cost) / epsilon
+        )
+
+      }
+    )
+  )
 
 }
 
 #' @noRd
 # Loadings partial correlation cost ----
-# Updated 08.10.2024
-N_cost <- function(loadings_vector, P, ...)
+# Updated 14.10.2024
+N_cost <- function(loadings_vector, P)
 {
-  return(srmr(P, nload2pcor(matrix(loadings_vector, nrow = dim(P)[1]))))
+
+  # Set up loadings matrix
+  loadings <- matrix(loadings_vector, nrow = dim(P)[1])
+
+  # Compute partial correlation
+  implied_P <- tcrossprod(loadings)
+
+  # Obtain interdependence
+  interdependence <- sqrt(rowSums(loadings^2))
+
+  # Set diagonal to interdependence
+  diag(implied_P) <- interdependence
+
+  # Compute matrix I
+  I <- diag(sqrt(1 / interdependence))
+
+  # Compute zero-order correlations
+  R <- I %*% implied_P %*% I
+
+  # Obtain inverse covariance matrix
+  INV <- solve(R)
+
+  # Compute matrix D
+  D <- diag(sqrt(1 / diag(INV)))
+
+  # Compute partial correlations
+  implied_P <- -D %*% INV %*% D
+
+  # Set diagonal to zero
+  diag(implied_P) <- 0
+
+  # Return SRMR cost
+  return(srmr(P, implied_P))
+
 }
 
-# # @noRd
-# # Loadings partial correlation gradient
-# # Updated 13.10.2024
-# N_gradient <- function(loadings_vector, P, ...)
-# {
-#
-#   # Reshape loadings into matrix form
-#   loadings_matrix <- matrix(loadings_vector, nrow = dim(P)[1])
-#
-#   # Obtain partial correlations
-#   implied_P <- nload2pcor(loadings_matrix)
-#
-#   # Return approximate gradient
-#   return(
-#     as.vector(
-#       ((implied_P - P) %*% loadings_matrix) /
-#       (srmr(implied_P, P) * length(P))
-#     )
-#   )
-#
-# }
+#' @noRd
+# Loadings partial correlation gradient ----
+# Updated 14.10.2024
+N_gradient <- function(loadings_vector, P)
+{
+
+  # Obtain current cost
+  current_cost <- N_cost(loadings_vector, P)
+
+  # Set epsilon
+  epsilon <- 1e-08
+
+  # Set perturbed vector
+  perturbed <- loadings_vector
+
+  # Return numerical differentiation
+  return(
+    nvapply(
+      seq_along(loadings_vector), function(i){
+
+        # Get perturbed vector
+        perturbed[i] <- loadings_vector[i] + epsilon
+
+        # Return cost
+        return((N_cost(perturbed, P) - current_cost) / epsilon)
+
+      }
+    )
+  )
+
+}
