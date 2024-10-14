@@ -316,7 +316,7 @@ simEGM_errors <- function(
 
 #' @noRd
 # Update loadings to align with network ----
-# Updated 11.10.2024
+# Updated 14.10.2024
 update_loadings <- function(
     total_variables, communities, membership,
     p.in, p.out, loadings_matrix
@@ -354,23 +354,33 @@ update_loadings <- function(
   total_zeros <- sum(zeros)
 
   # Use optimize to minimize the SRMR
+  # result <- silent_call(
+  #   optim(
+  #     par = P_lower[zeros], fn = P_cost,
+  #     gr = P_gradient,
+  #     P_lower = P_lower, zeros = zeros,
+  #     R = nload2cor(loadings_matrix),
+  #     lower_triangle = lower_triangle,
+  #     total_variables = total_variables,
+  #     lower = rep(-1, total_zeros),
+  #     upper = rep(1, total_zeros),
+  #     method = "L-BFGS-B",
+  #     control = list(factr = 1e-08)
+  #   )
+  # )
   result <- silent_call(
-    optim(
-      par = P_lower[zeros], fn = P_cost,
-      gr = P_gradient,
+    nlm(
+      p = P_lower[zeros], f = P_cost,
       P_lower = P_lower, zeros = zeros,
       R = nload2cor(loadings_matrix),
       lower_triangle = lower_triangle,
       total_variables = total_variables,
-      lower = rep(-1, total_zeros),
-      upper = rep(1, total_zeros),
-      method = "L-BFGS-B",
-      control = list(factr = 1e-08)
+      iterlim = 1000
     )
   )
 
   # Update P vector
-  P_lower[zeros] <- result$par
+  P_lower[zeros] <- result$estimate
 
   # Fill out matrix
   P <- matrix(0, nrow = total_variables, ncol = total_variables)
@@ -382,18 +392,24 @@ update_loadings <- function(
   loadings_length <- length(loadings_vector)
 
   # Use optimize to minimize the SRMR
+  # result <- silent_call(
+  #   nlminb(
+  #     start = loadings_vector, objective = N_cost,
+  #     gradient = N_gradient, P = P,
+  #     lower = rep(-1, loadings_length),
+  #     upper = rep(1, loadings_length)
+  #   )
+  # )
   result <- silent_call(
-    nlminb(
-      start = loadings_vector, objective = N_cost,
-      gradient = N_gradient, P = P,
-      lower = rep(-1, loadings_length),
-      upper = rep(1, loadings_length)
+    nlm(
+      p = loadings_vector, f = N_cost,
+      P = P, iterlim = 1000
     )
   )
 
   # Extract optimized loadings
   loadings_matrix <- matrix(
-    result$par, nrow = total_variables,
+    result$estimate, nrow = total_variables,
     dimnames = dimnames(loadings_matrix)
   )
 
@@ -427,7 +443,7 @@ P_cost <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle
 
 #' @noRd
 # Partial correlation gradient ----
-# Updated 11.10.2024
+# Updated 13.10.2024
 P_gradient <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle)
 {
 
@@ -446,8 +462,8 @@ P_gradient <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_tria
   # Set up implied zero-order correlations with empirical
   difference <- pcor2cor(P_matrix)[lower_triangle][zeros] - R[lower_triangle][zeros]
 
-  # Return analytic gradient
-  return(difference / sum(zeros) * sqrt(mean(difference^2)))
+  # Return approximate gradient
+  return(difference / length(R) * sqrt(mean(difference^2)))
 
 }
 
@@ -459,24 +475,24 @@ N_cost <- function(loadings_vector, P, ...)
   return(srmr(P, nload2pcor(matrix(loadings_vector, nrow = dim(P)[1]))))
 }
 
-#' @noRd
-# Loadings partial correlation gradient ----
-# Updated 13.10.2024
-N_gradient <- function(loadings_vector, P, ...)
-{
-
-  # Reshape loadings into matrix form
-  loadings_matrix <- matrix(loadings_vector, nrow = dim(P)[1])
-
-  # Obtain partial correlations
-  implied_P <- nload2pcor(loadings_matrix)
-
-  # Return analytic gradient
-  return(
-    as.vector(
-      ((implied_P - P) %*% loadings_matrix) /
-      (srmr(implied_P, P) * length(P))
-    )
-  )
-
-}
+# # @noRd
+# # Loadings partial correlation gradient
+# # Updated 13.10.2024
+# N_gradient <- function(loadings_vector, P, ...)
+# {
+#
+#   # Reshape loadings into matrix form
+#   loadings_matrix <- matrix(loadings_vector, nrow = dim(P)[1])
+#
+#   # Obtain partial correlations
+#   implied_P <- nload2pcor(loadings_matrix)
+#
+#   # Return approximate gradient
+#   return(
+#     as.vector(
+#       ((implied_P - P) %*% loadings_matrix) /
+#       (srmr(implied_P, P) * length(P))
+#     )
+#   )
+#
+# }
