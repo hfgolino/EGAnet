@@ -454,7 +454,7 @@ compute_tefi_adjustment <- function(loadings, correlations)
   # Return TEFI adjustment
   # return(model_parameters * log(abs(mean(correlations[lower.tri(correlations)]))) - log(mean(loadings)))
   # Maybe...
-  return(model_parameters * log(mean(abs(correlations[lower.tri(correlations)]))) - log(mean(abs(loadings))))
+  return(-2*log(model_parameters) + mean(abs(correlations)))
 
 }
 
@@ -617,7 +617,7 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, opt, ...)
     ),
     network = community_P, wc = structure,
     n.dim = unique_length(structure), correlation = empirical_R,
-    n = data_dimensions[1], TEFI_adj = tefi(empirical_R, structure)$VN.Entropy.Fit + optimized_tefi_adjusted
+    n = data_dimensions[1], TEFI_adj = tefi(empirical_R, structure)$VN.Entropy.Fit - optimized_tefi_adjusted
   ); class(ega_list) <- "EGA"
 
   # Attach methods to network
@@ -650,7 +650,7 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, opt, ...)
             n = data_dimensions[1], p = data_dimensions[2],
             R = standard_R, S = empirical_R, loadings = output$std
           ),
-          TEFI_adj = tefi(standard_R, structure = structure)$VN.Entropy.Fit + compute_tefi_adjustment(
+          TEFI_adj = tefi(standard_R, structure = structure)$VN.Entropy.Fit - compute_tefi_adjustment(
             output$std, standard_correlations
           )
         ),
@@ -915,7 +915,7 @@ EGM.EGA <- function(data, structure, opt, ...)
             n = data_dimensions[1], p = data_dimensions[2],
             R = standard_R, S = ega$correlation, loadings = standard_loadings
           ),
-          TEFI_adj = tefi(standard_R, structure = ega$wc)$VN.Entropy.Fit + compute_tefi_adjustment(
+          TEFI_adj = tefi(standard_R, structure = ega$wc)$VN.Entropy.Fit - compute_tefi_adjustment(
             standard_loadings, standard_correlations
           )
         ),
@@ -932,7 +932,7 @@ EGM.EGA <- function(data, structure, opt, ...)
             n = data_dimensions[1], p = data_dimensions[2],
             R = optimized_R, S = ega$correlation, loadings = optimized_loadings
           ),
-          TEFI_adj = tefi(optimized_R, structure = ega$wc)$VN.Entropy.Fit + compute_tefi_adjustment(
+          TEFI_adj = tefi(optimized_R, structure = ega$wc)$VN.Entropy.Fit - compute_tefi_adjustment(
             optimized_loadings, optimized_correlations
           )
         ),
