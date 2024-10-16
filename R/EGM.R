@@ -435,7 +435,7 @@ likelihood <- function(n, p, R, S, loadings, type)
 
 #' @noRd
 # Compute model parameters for TEFI adjustment ----
-# Updated 11.10.2024
+# Updated 16.10.2024
 compute_tefi_adjustment <- function(loadings, correlations)
 {
 
@@ -447,6 +447,9 @@ compute_tefi_adjustment <- function(loadings, correlations)
 
   # Obtain model parameters
   model_parameters <- parameters - sum(loadings == 0)
+
+  # Return
+  # return(-nrow(loadings) * information(loadings, bins = ncol(loadings))$dual.total.correlation / ncol(loadings))
 
   # Return TEFI adjustment
   # return(model_parameters * log(abs(mean(correlations[lower.tri(correlations)]))) - log(mean(loadings)))
@@ -578,7 +581,9 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, opt, ...)
       zeros = zeros, R = empirical_R,
       loading_structure = loading_structure,
       rows = communities, n = data_dimensions[1],
-      opt = toupper(opt), iterlim = 1000
+      opt = toupper(opt), iterlim = 1000, gradtol = 1e-04
+      # cheat the gradient for maximal speed
+      # with minimal accuracy trade-off
     )
   )
 
@@ -868,7 +873,9 @@ EGM.EGA <- function(data, structure, opt, ...)
       zeros = zeros, R = ega$correlation,
       loading_structure = loading_structure,
       rows = communities, n = data_dimensions[1],
-      opt = toupper(opt), iterlim = 1000
+      opt = toupper(opt), iterlim = 1000, gradtol = 1e-04
+      # cheat the gradient for maximal speed
+      # with minimal accuracy trade-off
     )
   )
 

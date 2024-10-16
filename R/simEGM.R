@@ -355,11 +355,12 @@ update_loadings <- function(
 
   # Obtain the lower triangle
   P_lower <- P[lower_triangle]
+  P_length <- length(P_lower)
 
   # Get zeros
   zeros <- P_lower != 0
 
-  # Use optimize to minimize the SRMR
+  # # Use optimize to minimize the SRMR
   result <- silent_call(
     nlm(
       p = P_lower[zeros], f = P_cost,
@@ -367,12 +368,31 @@ update_loadings <- function(
       R = nload2cor(loadings_matrix),
       lower_triangle = lower_triangle,
       total_variables = total_variables,
-      iterlim = 1000
+      iterlim = 1000, gradtol = 0.01
+      # cheat the gradient for maximal speed
+      # with minimal accuracy trade-off
     )
   )
 
   # Update P vector
   P_lower[zeros] <- result$estimate
+
+  # # Use optimize to minimize the SRMR
+  # result <- silent_call(
+  #   nlminb(
+  #     start = P_lower[zeros], objective = P_cost,
+  #     gradient = P_gradient,
+  #     P_lower = P_lower, zeros = zeros,
+  #     R = nload2cor(loadings_matrix),
+  #     lower_triangle = lower_triangle,
+  #     total_variables = total_variables,
+  #     lower = rep(-1, P_length),
+  #     upper = rep(1, P_length)
+  #   )
+  # )
+  #
+  # # Update P vector
+  # P_lower[zeros] <- result$par
 
   # Fill out matrix
   P <- matrix(0, nrow = total_variables, ncol = total_variables)
@@ -387,7 +407,9 @@ update_loadings <- function(
   result <- silent_call(
     nlm(
       p = loadings_vector, f = N_cost,
-      P = P, iterlim = 1000
+      P = P, iterlim = 1000, gradtol = 1e-04
+      # cheat the gradient for maximal speed
+      # with minimal accuracy trade-off
     )
   )
 
@@ -404,7 +426,7 @@ update_loadings <- function(
 
 #' @noRd
 # Partial correlation cost ----
-# Updated 14.10.2024
+# Updated 15.10.2024
 P_cost <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle)
 {
 
@@ -429,42 +451,46 @@ P_cost <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle
   # Compute matrix D
   D <- diag(sqrt(1 / diag(INV)))
 
+  # Obtain squared error
+  error <- (D %*% INV %*% D - R)[lower_triangle][zeros]^2
+
   # Return SRMR
-  return(srmr(R, D %*% INV %*% D))
+  return(sqrt(mean(error)))
 
 }
 
 #' @noRd
 # Partial correlation gradient ----
-# Updated 14.10.2024
+# Updated 15.10.2024
 P_gradient <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle)
 {
 
-  # Obtain current cost
-  current_cost <- P_cost(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle)
+  # Set up P vector
+  P_lower[zeros] <- P_nonzero
 
-  # Set epsilon
-  epsilon <- 1e-08
+  # Get partial correlations
+  P_matrix <- matrix(0, nrow = total_variables, ncol = total_variables)
 
-  # Set perturbed vector
-  perturbed <- P_nonzero
+  # Set lower triangle
+  P_matrix[lower_triangle] <- P_lower
 
-  # Return numerical differentiation
-  return(
-    nvapply(
-      seq_along(P_nonzero), function(i){
+  # Transpose
+  P_matrix <- t(P_matrix) + P_matrix
 
-        # Get perturbed vector
-        perturbed[i] <- P_nonzero[i] + epsilon
+  # Set diagonal to negative 1
+  diag(P_matrix) <- -1
 
-        # Return cost
-        return(
-          (P_cost(perturbed, P_lower, zeros, R, total_variables, lower_triangle) - current_cost) / epsilon
-        )
+  # Obtain inverse
+  INV <- solve(-P_matrix)
 
-      }
-    )
-  )
+  # Compute matrix D
+  D <- diag(sqrt(1 / diag(INV)))
+
+  # Obtain implied correlation matrix
+  implied_R <- D %*% INV %*% D
+
+  # Return gradient
+  return((implied_R - R)[lower_triangle][zeros])
 
 }
 
