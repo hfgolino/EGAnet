@@ -77,7 +77,7 @@
 #' @export
 #'
 # Simulate EGM ----
-# Updated 14.10.2024
+# Updated 17.10.2024
 simEGM <- function(
     communities, variables,
     loadings = c("small", "moderate", "large"), cross.loadings = 0.01,
@@ -361,38 +361,39 @@ update_loadings <- function(
   zeros <- P_lower != 0
 
   # # Use optimize to minimize the SRMR
-  result <- silent_call(
-    nlm(
-      p = P_lower[zeros], f = P_cost,
-      P_lower = P_lower, zeros = zeros,
-      R = nload2cor(loadings_matrix),
-      lower_triangle = lower_triangle,
-      total_variables = total_variables,
-      iterlim = 1000, gradtol = 0.01
-      # cheat the gradient for maximal speed
-      # with minimal accuracy trade-off
-    )
-  )
-
-  # Update P vector
-  P_lower[zeros] <- result$estimate
-
-  # # Use optimize to minimize the SRMR
   # result <- silent_call(
-  #   nlminb(
-  #     start = P_lower[zeros], objective = P_cost,
-  #     gradient = P_gradient,
+  #   nlm(
+  #     p = P_lower[zeros], f = P_cost,
   #     P_lower = P_lower, zeros = zeros,
   #     R = nload2cor(loadings_matrix),
   #     lower_triangle = lower_triangle,
   #     total_variables = total_variables,
-  #     lower = rep(-1, P_length),
-  #     upper = rep(1, P_length)
+  #     iterlim = 1000, gradtol = 0.01
+  #     # cheat the gradient for maximal speed
+  #     # with minimal accuracy trade-off
   #   )
   # )
   #
   # # Update P vector
-  # P_lower[zeros] <- result$par
+  # P_lower[zeros] <- result$estimate
+
+  # Use optimize to minimize the RMQE
+  result <- silent_call(
+    nlminb(
+      start = P_lower[zeros], objective = P_cost,
+      gradient = P_gradient,
+      P_lower = P_lower, zeros = zeros,
+      R = nload2cor(loadings_matrix),
+      lower_triangle = lower_triangle,
+      total_variables = total_variables,
+      lower = rep(-1, P_length),
+      upper = rep(1, P_length),
+      control = list(eval.max = 10000, iter.max = 10000)
+    )
+  )
+
+  # Update P vector
+  P_lower[zeros] <- result$par
 
   # Fill out matrix
   P <- matrix(0, nrow = total_variables, ncol = total_variables)
@@ -402,20 +403,33 @@ update_loadings <- function(
   # Set bounds
   loadings_vector <- as.vector(loadings_matrix)
   loadings_length <- length(loadings_vector)
+  zeros <- loadings_vector != 0
 
   # Use optimize to minimize the SRMR
-  result <- silent_call(
-    nlm(
-      p = loadings_vector, f = N_cost,
-      P = P, iterlim = 1000, gradtol = 1e-04
-      # cheat the gradient for maximal speed
-      # with minimal accuracy trade-off
+  # result <- silent_call(
+  #   nlm(
+  #     p = loadings_vector, f = N_cost,
+  #     P = P, iterlim = 1000, gradtol = 1e-04
+  #     # cheat the gradient for maximal speed
+  #     # with minimal accuracy trade-off
+  #   )
+  # )
+
+  # Use optimize to minimize the RMSE
+  result <- EGAnet:::silent_call(
+    nlminb(
+      start = loadings_vector,
+      objective = N_cost, gradient = N_gradient,
+      P = P, zeros = zeros,
+      lower = rep(-1, loadings_length),
+      upper = rep(1, loadings_length),
+      control = list(eval.max = 10000, iter.max = 10000)
     )
   )
 
   # Extract optimized loadings
   loadings_matrix <- matrix(
-    result$estimate, nrow = total_variables,
+    result$par, nrow = total_variables,
     dimnames = dimnames(loadings_matrix)
   )
 
@@ -451,10 +465,10 @@ P_cost <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle
   # Compute matrix D
   D <- diag(sqrt(1 / diag(INV)))
 
-  # Obtain squared error
-  error <- (D %*% INV %*% D - R)[lower_triangle][zeros]^2
+  # Error
+  error <- (D %*% INV %*% D - R)[lower_triangle]^2
 
-  # Return SRMR
+  # Return RMQE
   return(sqrt(mean(error)))
 
 }
@@ -486,28 +500,28 @@ P_gradient <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_tria
   # Compute matrix D
   D <- diag(sqrt(1 / diag(INV)))
 
-  # Obtain implied correlation matrix
-  implied_R <- D %*% INV %*% D
+  # Compute error
+  error <- (D %*% INV %*% D - R)^3
 
   # Return gradient
-  return((implied_R - R)[lower_triangle][zeros])
+  return(error[lower_triangle][zeros])
 
 }
 
 #' @noRd
 # Loadings partial correlation cost ----
 # Updated 14.10.2024
-N_cost <- function(loadings_vector, P)
+N_cost <- function(loadings_vector, P, zeros)
 {
 
   # Set up loadings matrix
-  loadings <- matrix(loadings_vector, nrow = dim(P)[1])
+  loadings_matrix <- matrix(loadings_vector * zeros, nrow = dim(P)[1])
 
   # Compute partial correlation
-  implied_P <- tcrossprod(loadings)
+  implied_P <- tcrossprod(loadings_matrix)
 
   # Obtain interdependence
-  interdependence <- sqrt(rowSums(loadings^2))
+  interdependence <- sqrt(rowSums(loadings_matrix^2))
 
   # Set diagonal to interdependence
   diag(implied_P) <- interdependence
@@ -530,39 +544,57 @@ N_cost <- function(loadings_vector, P)
   # Set diagonal to zero
   diag(implied_P) <- 0
 
+  # Obtain lower triangle
+  lower_triangle <- lower.tri(P)
+
+  # Error
+  error <- (implied_P - P)[lower_triangle]^2
+
   # Return SRMR cost
-  return(srmr(P, implied_P))
+  return(sqrt(mean(error)))
 
 }
 
 #' @noRd
 # Loadings partial correlation gradient ----
-# Updated 14.10.2024
-N_gradient <- function(loadings_vector, P)
+# Updated 17.10.2024
+N_gradient <- function(loadings_vector, P, zeros)
 {
 
-  # Obtain current cost
-  current_cost <- N_cost(loadings_vector, P)
+  # Set up loadings matrix
+  loadings_matrix <- matrix(loadings_vector * zeros, nrow = dim(P)[1])
 
-  # Set epsilon
-  epsilon <- 1e-08
+  # Compute partial correlation
+  implied_P <- tcrossprod(loadings_matrix)
 
-  # Set perturbed vector
-  perturbed <- loadings_vector
+  # Obtain interdependence
+  interdependence <- sqrt(rowSums(loadings_matrix^2))
 
-  # Return numerical differentiation
-  return(
-    nvapply(
-      seq_along(loadings_vector), function(i){
+  # Set diagonal to interdependence
+  diag(implied_P) <- interdependence
 
-        # Get perturbed vector
-        perturbed[i] <- loadings_vector[i] + epsilon
+  # Compute matrix I
+  I <- diag(sqrt(1 / interdependence))
 
-        # Return cost
-        return((N_cost(perturbed, P) - current_cost) / epsilon)
+  # Compute zero-order correlations
+  R <- I %*% implied_P %*% I
 
-      }
-    )
-  )
+  # Obtain inverse covariance matrix
+  INV <- solve(R)
+
+  # Compute matrix D
+  D <- diag(sqrt(1 / diag(INV)))
+
+  # Compute partial correlations
+  implied_P <- -D %*% INV %*% D
+
+  # Set diagonal to zero
+  diag(implied_P) <- 0
+
+  # Compute error
+  error <- as.vector((implied_P - P) %*% loadings_matrix)
+
+  # Return SRMR cost
+  return(error * zeros)
 
 }

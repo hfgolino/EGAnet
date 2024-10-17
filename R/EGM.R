@@ -61,6 +61,13 @@
 #' Available options include: \code{"AIC"}, \code{"BIC"}, and \code{"SRMR"}.
 #' Defaults to \code{"SRMR"}
 #'
+#' @param constrained Boolean (length = 1).
+#' Whether memberships of the communities should
+#' be added as a constraint when optimizing the network loadings.
+#' Defaults to \code{TRUE} which ensures assigned loadings are
+#' guaranteed to never be smaller than any cross-loadings.
+#' Set to \code{FALSE} to freely estimate each loading similar to exploratory factor analysis
+#'
 #' @param verbose Boolean (length = 1).
 #' Should progress be displayed?
 #' Defaults to \code{TRUE}.
@@ -115,6 +122,7 @@ EGM <- function(
     communities = NULL, structure = NULL,
     p.in = NULL, p.out = NULL,
     opt = c("AIC", "BIC", "SRMR"),
+    constrained = TRUE,
     verbose = TRUE, ...
 )
 {
@@ -126,16 +134,16 @@ EGM <- function(
   # Check data and structure
   data <- EGM_errors(
     data, EGM.type, communities, structure,
-    p.in, p.out, verbose, ...
+    p.in, p.out, constrained, verbose, ...
   )
 
   # Switch and return results based on type
   return(
     switch(
       EGM.type,
-      "search" = EGM.search(data, communities, structure, p.in, opt, verbose, ...),
-      "standard" = EGM.standard(data, communities, structure, p.in, p.out, opt, ...),
-      "ega" = EGM.EGA(data, structure, opt, ...)
+      "search" = EGM.search(data, communities, structure, p.in, opt, constrained, verbose, ...),
+      "standard" = EGM.standard(data, communities, structure, p.in, p.out, opt, constrained, ...),
+      "ega" = EGM.EGA(data, structure, opt, constrained, ...)
     )
   )
 
@@ -146,7 +154,7 @@ EGM <- function(
 # Updated 07.10.2023
 EGM_errors <- function(
     data, EGM.type, communities, structure,
-    p.in, p.out, verbose, ...
+    p.in, p.out, constrained, verbose, ...
 )
 {
 
@@ -198,6 +206,10 @@ EGM_errors <- function(
     length_error(p.in, c(1, communities), "EGM")
 
   }
+
+  # 'constrained' errors
+  length_error(constrained, 1, "EGM")
+  typeof_error(constrained, "logical", "EGM")
 
   # Check for EGM type
   if(EGM.type == "search"){
@@ -302,7 +314,140 @@ nload2cor <- function(loadings)
 # Updated 14.10.2024
 srmr_N_cost <- function(
     loadings_vector, zeros, R,
-    loading_structure, rows, ...
+    loading_structure, rows,
+    constrained, loadings_length,
+    ...
+)
+{
+
+  # Set zeros
+  # zeros[] <- swiftelse(constrained, zeros, TRUE)
+
+  # Assemble loading matrix
+  loadings_matrix <- matrix(loadings_vector * zeros, nrow = rows, byrow = TRUE)
+
+  # Check for constraint
+  if(constrained){
+
+    # Obtain assign loadings
+    assign_loadings <- loadings_matrix[loading_structure]
+
+    # Transpose loadings matrix
+    loadings_matrix <- t(loadings_matrix)
+
+    # Obtain differences
+    differences <- abs(loadings_matrix) - assign_loadings
+
+    # Obtain difference values
+    difference_values <- (differences * (differences > 0))^2
+
+    # Convert loadings to implied correlations following `nload2cor`
+    # Uses raw code to avoid overhead of additional function calls
+
+  }else{
+
+    # Transpose loadings matrix
+    loadings_matrix <- t(loadings_matrix)
+
+    # Set difference values to zero
+    difference_values <- rep(0, loadings_length)
+
+  }
+
+  # Compute partial correlation
+  P <- tcrossprod(loadings_matrix)
+
+  # Obtain interdependence
+  interdependence <- sqrt(rowSums(loadings_matrix^2))
+
+  # Set diagonal to interdependence
+  diag(P) <- interdependence
+
+  # Compute matrix I
+  I <- diag(sqrt(1 / interdependence))
+
+  # Return SRMR
+  return(
+    srmr(R, I %*% P %*% I) + # SRMR term (second term = implied R)
+    sqrt(mean(difference_values)) # penalty term
+  )
+
+}
+
+#' @noRd
+# Estimated loadings gradient (based on SRMR) ----
+# Updated 14.10.2024
+srmr_N_gradient <- function(
+    loadings_vector, zeros, R,
+    loading_structure, rows,
+    constrained, loadings_length,
+    ...
+)
+{
+
+  # Set zeros
+  # zeros[] <- swiftelse(constrained, zeros, TRUE)
+
+  # Assemble loading matrix
+  loadings_matrix <- matrix(loadings_vector * zeros, nrow = rows, byrow = TRUE)
+
+  # Check for constraint
+  if(constrained){
+
+    # Obtain assign loadings
+    assign_loadings <- loadings_matrix[loading_structure]
+
+    # Transpose loadings matrix
+    loadings_matrix <- t(loadings_matrix)
+
+    # Obtain differences
+    differences <- abs(loadings_matrix) - assign_loadings
+
+    # Obtain difference values
+    difference_values <- (differences * (differences > 0))
+
+    # Convert loadings to implied correlations following `nload2cor`
+    # Uses raw code to avoid overhead of additional function calls
+
+  }else{
+
+    # Transpose loadings matrix
+    loadings_matrix <- t(loadings_matrix)
+
+    # Set difference values to zero
+    difference_values <- rep(0, loadings_length)
+
+  }
+
+  # Compute partial correlation
+  P <- tcrossprod(loadings_matrix)
+
+  # Obtain interdependence
+  interdependence <- sqrt(rowSums(loadings_matrix^2))
+
+  # Set diagonal to interdependence
+  diag(P) <- interdependence
+
+  # Compute matrix I
+  I <- diag(sqrt(1 / interdependence))
+
+  # Obtain implied R
+  implied_R <- I %*% P %*% I
+
+  # Compute error
+  error <- as.vector((implied_R - R) %*% loadings_matrix) + difference_values
+
+  # Return SRMR cost
+  return(error * zeros)
+
+}
+
+#' @noRd
+# Estimated loadings cost (based on log-likelihood) ----
+# Updated 17.10.2024
+likelihood_N_cost <- function(
+    loadings_vector, zeros, R,
+    loading_structure, rows, n, opt, ...
 )
 {
 
@@ -336,41 +481,9 @@ srmr_N_cost <- function(
   # Compute matrix I
   I <- diag(sqrt(1 / interdependence))
 
-  # Return SRMR
-  return(
-    srmr(R, I %*% P %*% I) + # SRMR term (second term = implied R)
-    sqrt(mean(difference_values)) # penalty term
-  )
-
-}
-
-#' @noRd
-# Estimated loadings cost (based on log-likelihood) ----
-# Updated 12.10.2024
-likelihood_N_cost <- function(
-    loadings_vector, zeros, R,
-    loading_structure, rows, n, opt, ...
-)
-{
-
-  # Assemble loading matrix
-  loading_matrix <- matrix(loadings_vector * zeros, nrow = rows, byrow = TRUE)
-
-  # Obtain assign loadings
-  assign_loadings <- loading_matrix[loading_structure]
-
-  # Transpose loadings matrix
-  loading_matrix <- t(loading_matrix)
-
-  # Obtain differences
-  differences <- abs(loading_matrix) - assign_loadings
-
-  # Obtain difference values
-  difference_values <- differences * (differences > 0)
-
   # Check for error
   return(
-    likelihood(n, rows, nload2cor(loading_matrix), R, loading_matrix)[[opt]] + # likelihood term
+    likelihood(n, rows, I %*% P %*% I, R, loadings_matrix)[[opt]] + # likelihood term
     sqrt(mean((difference_values)^2)) # penalty term
   )
 
@@ -461,7 +574,7 @@ compute_tefi_adjustment <- function(loadings, correlations)
 #' @noRd
 # EGM | Standard ----
 # Updated 13.10.2024
-EGM.standard <- function(data, communities, structure, p.in, p.out, opt, ...)
+EGM.standard <- function(data, communities, structure, p.in, p.out, opt, constrained, ...)
 {
 
   # Get ellipse
@@ -789,8 +902,8 @@ compute_density <- function(network)
 
 #' @noRd
 # EGM | EGA ----
-# Updated 13.10.2024
-EGM.EGA <- function(data, structure, opt, ...)
+# Updated 14.10.2024
+EGM.EGA <- function(data, structure, opt, constrained, ...)
 {
 
   # Obtain data dimensions
@@ -824,7 +937,7 @@ EGM.EGA <- function(data, structure, opt, ...)
   output <- silent_call(net.loads(A = ega$network, wc = ega$wc, ...))
 
   # Obtain standard loadings
-  standard_loadings <- output$std[variable_names,]
+  standard_loadings <- output$std[variable_names,, drop = FALSE]
 
   # Compute network scores
   standard_scores <- compute_scores(output, data, "network", "simple")$std.scores
@@ -866,20 +979,57 @@ EGM.EGA <- function(data, structure, opt, ...)
     "srmr" = srmr_N_cost
   )
 
-  # Optimize over loadings
-  result <- silent_call(
-    nlm(
-      p = loadings_vector, f = cost_FUN,
-      zeros = zeros, R = ega$correlation,
-      loading_structure = loading_structure,
-      rows = communities, n = data_dimensions[1],
-      opt = toupper(opt), iterlim = 1000, gradtol = 1e-04
-      # cheat the gradient for maximal speed
-      # with minimal accuracy trade-off
-    )
-  )
+  # Check for gradient
+  if(opt == "srmr"){
 
-  # For now, don't use gradient (still needs work)
+    # Optimize over loadings
+    result <- silent_call(
+      nlminb(
+        start = loadings_vector, objective = cost_FUN,
+        gradient = srmr_N_gradient,
+        zeros = zeros, R = ega$correlation,
+        loading_structure = loading_structure,
+        rows = communities, n = data_dimensions[1],
+        opt = toupper(opt), constrained = constrained,
+        loadings_length = loadings_length,
+        lower = rep(-1, loadings_length),
+        upper = rep(1, loadings_length),
+        control = list(eval.max = 10000, iter.max = 10000)
+      )
+    )
+
+    # Set estimate
+    result$estimate <- result$par
+
+    # # Optimize over loadings
+    # result <- silent_call(
+    #   nlm(
+    #     p = loadings_vector, f = cost_FUN,
+    #     zeros = zeros, R = ega$correlation,
+    #     loading_structure = loading_structure,
+    #     rows = communities, n = data_dimensions[1],
+    #     opt = toupper(opt), iterlim = 1000, gradtol = 1e-08
+    #     # cheat the gradient for maximal speed
+    #     # with minimal accuracy trade-off
+    #   )
+    # )
+
+  }else{
+
+    # Optimize over loadings
+    result <- silent_call(
+      nlm(
+        p = loadings_vector, f = cost_FUN,
+        zeros = zeros, R = ega$correlation,
+        loading_structure = loading_structure,
+        rows = communities, n = data_dimensions[1],
+        opt = toupper(opt), iterlim = 1000, gradtol = 1e-04
+        # cheat the gradient for maximal speed
+        # with minimal accuracy trade-off
+      )
+    )
+
+  }
 
   # Extract optimized loadings
   optimized_loadings <- matrix(
@@ -952,7 +1102,7 @@ EGM.EGA <- function(data, structure, opt, ...)
 #' @noRd
 # EGM | Search ----
 # Updated 10.10.2024
-EGM.search <- function(data, communities, structure, p.in, opt, verbose, ...)
+EGM.search <- function(data, communities, structure, p.in, opt, constrained, verbose, ...)
 {
 
   # Perform search based on 'p.in'
@@ -974,7 +1124,7 @@ EGM.search <- function(data, communities, structure, p.in, opt, verbose, ...)
           EGM(
             data = data, EGM.type = "standard",
             communities = communities, p.in = p_grid$p_in[i],
-            p.out = p_grid$p_out[i], opt = opt
+            p.out = p_grid$p_out[i], opt = opt, constrained, ...
           ), silent = TRUE
         )
       )

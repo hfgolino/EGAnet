@@ -12,6 +12,7 @@ EGM(
   p.in = NULL,
   p.out = NULL,
   opt = c("AIC", "BIC", "SRMR"),
+  constrained = TRUE,
   verbose = TRUE,
   ...
 )
@@ -75,6 +76,13 @@ Fit index to use for optimization of network loadings to the
 zero-order correlation matrix.
 Available options include: \code{"AIC"}, \code{"BIC"}, and \code{"SRMR"}.
 Defaults to \code{"SRMR"}}
+
+\item{constrained}{Boolean (length = 1).
+Whether memberships of the communities should
+be added as a constraint when optimizing the network loadings.
+Defaults to \code{TRUE} which ensures assigned loadings are
+guaranteed to never be smaller than any cross-loadings.
+Set to \code{FALSE} to freely estimate each loading similar to exploratory factor analysis}
 
 \item{verbose}{Boolean (length = 1).
 Should progress be displayed?
