@@ -311,23 +311,19 @@ nload2cor <- function(loadings)
 
 #' @noRd
 # Estimated loadings cost (based on SRMR) ----
-# Updated 14.10.2024
+# Updated 17.10.2024
 srmr_N_cost <- function(
     loadings_vector, zeros, R,
     loading_structure, rows,
-    constrained, loadings_length,
-    ...
+    constrained, ...
 )
 {
 
-  # Set zeros
-  # zeros[] <- swiftelse(constrained, zeros, TRUE)
-
-  # Assemble loading matrix
-  loadings_matrix <- matrix(loadings_vector * zeros, nrow = rows, byrow = TRUE)
-
   # Check for constraint
   if(constrained){
+
+    # Assemble loading matrix
+    loadings_matrix <- matrix(loadings_vector * zeros, nrow = rows, byrow = TRUE)
 
     # Obtain assign loadings
     assign_loadings <- loadings_matrix[loading_structure]
@@ -344,33 +340,45 @@ srmr_N_cost <- function(
     # Convert loadings to implied correlations following `nload2cor`
     # Uses raw code to avoid overhead of additional function calls
 
-  }else{
+    # Compute partial correlation
+    P <- tcrossprod(loadings_matrix)
 
-    # Transpose loadings matrix
-    loadings_matrix <- t(loadings_matrix)
+    # Obtain interdependence
+    interdependence <- sqrt(rowSums(loadings_matrix^2))
 
-    # Set difference values to zero
-    difference_values <- rep(0, loadings_length)
+    # Set diagonal to interdependence
+    diag(P) <- interdependence
+
+    # Compute matrix I
+    I <- diag(sqrt(1 / interdependence))
+
+    # Return SRMR
+    return(
+      srmr(R, I %*% P %*% I) + # SRMR term (second term = implied R)
+      sqrt(mean(difference_values)) # penalty term
+    )
+
+  }else{ # Without constraints, send it
+
+    # Assemble loading matrix
+    loadings_matrix <- matrix(loadings_vector * zeros, ncol = rows)
+
+    # Compute partial correlation
+    P <- tcrossprod(loadings_matrix)
+
+    # Obtain interdependence
+    interdependence <- sqrt(rowSums(loadings_matrix^2))
+
+    # Set diagonal to interdependence
+    diag(P) <- interdependence
+
+    # Compute matrix I
+    I <- diag(sqrt(1 / interdependence))
+
+    # Return SRMR
+    return(srmr(R, I %*% P %*% I))
 
   }
-
-  # Compute partial correlation
-  P <- tcrossprod(loadings_matrix)
-
-  # Obtain interdependence
-  interdependence <- sqrt(rowSums(loadings_matrix^2))
-
-  # Set diagonal to interdependence
-  diag(P) <- interdependence
-
-  # Compute matrix I
-  I <- diag(sqrt(1 / interdependence))
-
-  # Return SRMR
-  return(
-    srmr(R, I %*% P %*% I) + # SRMR term (second term = implied R)
-    sqrt(mean(difference_values)) # penalty term
-  )
 
 }
 
@@ -380,19 +388,15 @@ srmr_N_cost <- function(
 srmr_N_gradient <- function(
     loadings_vector, zeros, R,
     loading_structure, rows,
-    constrained, loadings_length,
-    ...
+    constrained, ...
 )
 {
 
-  # Set zeros
-  # zeros[] <- swiftelse(constrained, zeros, TRUE)
-
-  # Assemble loading matrix
-  loadings_matrix <- matrix(loadings_vector * zeros, nrow = rows, byrow = TRUE)
-
   # Check for constraint
   if(constrained){
+
+    # Assemble loading matrix
+    loadings_matrix <- matrix(loadings_vector * zeros, nrow = rows, byrow = TRUE)
 
     # Obtain assign loadings
     assign_loadings <- loadings_matrix[loading_structure]
@@ -409,36 +413,51 @@ srmr_N_gradient <- function(
     # Convert loadings to implied correlations following `nload2cor`
     # Uses raw code to avoid overhead of additional function calls
 
-  }else{
+    # Compute partial correlation
+    P <- tcrossprod(loadings_matrix)
 
-    # Transpose loadings matrix
-    loadings_matrix <- t(loadings_matrix)
+    # Obtain interdependence
+    interdependence <- sqrt(rowSums(loadings_matrix^2))
 
-    # Set difference values to zero
-    difference_values <- rep(0, loadings_length)
+    # Set diagonal to interdependence
+    diag(P) <- interdependence
+
+    # Compute matrix I
+    I <- diag(sqrt(1 / interdependence))
+
+    # Obtain implied R
+    implied_R <- I %*% P %*% I
+
+    # Compute error
+    error <- as.vector((implied_R - R) %*% loadings_matrix) + difference_values
+
+    # Return SRMR cost
+    return(error * zeros)
+
+  }else{ # Without constraints, send it
+
+    # Assemble loading matrix
+    loadings_matrix <- matrix(loadings_vector * zeros, ncol = rows)
+
+    # Compute partial correlation
+    P <- tcrossprod(loadings_matrix)
+
+    # Obtain interdependence
+    interdependence <- sqrt(rowSums(loadings_matrix^2))
+
+    # Set diagonal to interdependence
+    diag(P) <- interdependence
+
+    # Compute matrix I
+    I <- diag(sqrt(1 / interdependence))
+
+    # Obtain implied R
+    implied_R <- I %*% P %*% I
+
+    # Return SRMR cost
+    return(as.vector((implied_R - R) %*% loadings_matrix) * zeros)
 
   }
-
-  # Compute partial correlation
-  P <- tcrossprod(loadings_matrix)
-
-  # Obtain interdependence
-  interdependence <- sqrt(rowSums(loadings_matrix^2))
-
-  # Set diagonal to interdependence
-  diag(P) <- interdependence
-
-  # Compute matrix I
-  I <- diag(sqrt(1 / interdependence))
-
-  # Obtain implied R
-  implied_R <- I %*% P %*% I
-
-  # Compute error
-  error <- as.vector((implied_R - R) %*% loadings_matrix) + difference_values
-
-  # Return SRMR cost
-  return(error * zeros)
 
 }
 
@@ -653,7 +672,7 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, opt, constra
 
   # Update loadings
   output <- silent_call(net.loads(community_P, structure, ...))
-  output$std <- output$std[dimension_names[[2]],]
+  output$std <- output$std[dimension_names[[2]],, drop = FALSE]
 
   # Compute network scores
   standard_scores <- compute_scores(output, data, "network", "simple")$std.scores
@@ -687,23 +706,61 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, opt, constra
     "srmr" = srmr_N_cost
   )
 
-  # Optimize over loadings
-  result <- silent_call(
-    nlm(
-      p = loadings_vector, f = cost_FUN,
-      zeros = zeros, R = empirical_R,
-      loading_structure = loading_structure,
-      rows = communities, n = data_dimensions[1],
-      opt = toupper(opt), iterlim = 1000, gradtol = 1e-04
-      # cheat the gradient for maximal speed
-      # with minimal accuracy trade-off
+  # Check for gradient
+  if(opt == "srmr"){
+
+    # Optimize over loadings
+    result <- silent_call(
+      nlminb(
+        start = loadings_vector, objective = cost_FUN,
+        gradient = srmr_N_gradient,
+        zeros = zeros, R = empirical_R,
+        loading_structure = loading_structure,
+        rows = communities, n = data_dimensions[1],
+        opt = toupper(opt), constrained = constrained,
+        lower = rep(-1, loadings_length),
+        upper = rep(1, loadings_length),
+        control = list(eval.max = 10000, iter.max = 10000)
+      )
     )
-  )
+
+    # Set estimate
+    result$estimate <- result$par
+
+    # # Optimize over loadings
+    # result <- silent_call(
+    #   nlm(
+    #     p = loadings_vector, f = cost_FUN,
+    #     zeros = zeros, R = ega$correlation,
+    #     loading_structure = loading_structure,
+    #     rows = communities, n = data_dimensions[1],
+    #     opt = toupper(opt), iterlim = 1000, gradtol = 1e-08
+    #     # cheat the gradient for maximal speed
+    #     # with minimal accuracy trade-off
+    #   )
+    # )
+
+  }else{
+
+    # Optimize over loadings
+    result <- silent_call(
+      nlm(
+        p = loadings_vector, f = cost_FUN,
+        zeros = zeros, R = empirical_R,
+        loading_structure = loading_structure,
+        rows = communities, n = data_dimensions[1],
+        opt = toupper(opt), iterlim = 1000, gradtol = 1e-04
+        # cheat the gradient for maximal speed
+        # with minimal accuracy trade-off
+      )
+    )
+
+  }
 
   # Extract optimized loadings
   optimized_loadings <- matrix(
-    result$estimate, nrow = data_dimensions[2],
-    dimnames = dimnames(output$std)
+    result$estimate, nrow = dimensions[1],
+    dimnames = dimension_names
   )
 
   # Replace loadings output with optimized loadings
@@ -991,7 +1048,6 @@ EGM.EGA <- function(data, structure, opt, constrained, ...)
         loading_structure = loading_structure,
         rows = communities, n = data_dimensions[1],
         opt = toupper(opt), constrained = constrained,
-        loadings_length = loadings_length,
         lower = rep(-1, loadings_length),
         upper = rep(1, loadings_length),
         control = list(eval.max = 10000, iter.max = 10000)
