@@ -248,6 +248,36 @@ EGM_errors <- function(
 
 }
 
+#' @exportS3Method
+# S3 Print Method ----
+# Updated 22.10.2024
+print.EGM <- function(x, ...)
+{
+
+  # Return EGA plot
+  print(x$EGA)
+
+}
+
+#' @exportS3Method
+# S3 Summary Method ----
+# Updated 22.10.2024
+summary.EGM <- function(object, ...)
+{
+  print(object$EGA) # same as print
+}
+
+#' @exportS3Method
+# S3 Plot Method ----
+# Updated 22.10.2024
+plot.EGM <- function(x, ...)
+{
+
+  # Return EGA plot
+  plot(x$EGA)
+
+}
+
 #' @noRd
 # Network loadings to partial correlations ----
 # Updated 14.10.2024
@@ -556,18 +586,16 @@ likelihood <- function(n, p, R, S, loadings, type)
       BIC = -2 * loglik + model_parameters * log(n) # -2L + klog(n)
       # EBIC = -2 * loglik + model_parameters * log(n) + 2 * gamma * log(
       #   choose(parameters, model_parameters)
-      # ),
-      # # -2L + klog(n) + 2 gamma log(binom(pk))
+      # ), # -2L + klog(n) + 2 gamma log(binom(pk))
       # GFI = 1 - sum((R - S)^2) / sum(S^2)
     )
   )
 
 }
 
-
 #' @noRd
 # Compute model parameters for TEFI adjustment ----
-# Updated 16.10.2024
+# Updated 22.10.2024
 compute_tefi_adjustment <- function(loadings, correlations)
 {
 
@@ -575,18 +603,14 @@ compute_tefi_adjustment <- function(loadings, correlations)
   dimensions <- dim(loadings)
 
   # Total number of parameters
-  parameters <- (dimensions[1] * dimensions[2]) + dimensions[1] + ((dimensions[2] * (dimensions[2] - 1)) / 2)
+  parameters <- (dimensions[1] * dimensions[2]) + dimensions[1] +
+                ((dimensions[2] * (dimensions[2] - 1)) / 2)
 
   # Obtain model parameters
   model_parameters <- parameters - sum(loadings == 0)
 
-  # Return
-  # return(-nrow(loadings) * information(loadings, bins = ncol(loadings))$dual.total.correlation / ncol(loadings))
-
-  # Return TEFI adjustment
-  # return(model_parameters * log(abs(mean(correlations[lower.tri(correlations)]))) - log(mean(loadings)))
-  # Maybe...
-  return(-2*log(model_parameters) + mean(abs(correlations)))
+  # Return adjustment
+  return(-2 * log(model_parameters) + mean(abs(correlations)))
 
 }
 
