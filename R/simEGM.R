@@ -416,7 +416,7 @@ update_loadings <- function(
   # )
 
   # Use optimize to minimize the RMSE
-  result <- EGAnet:::silent_call(
+  result <- silent_call(
     nlminb(
       start = loadings_vector,
       objective = N_cost, gradient = N_gradient,

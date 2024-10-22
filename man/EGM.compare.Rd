@@ -33,9 +33,8 @@ Defaults to \code{"geominQ"}}
 \code{\link[EGAnet]{community.detection}},
 \code{\link[EGAnet]{community.consensus}},
 \code{\link[EGAnet]{community.unidimensional}},
-\code{\link[EGAnet]{EGA}},
-\code{\link[psych]{fa}}, and
-\code{\link[psych]{principal}}}
+\code{\link[EGAnet]{EGA}}, and
+\code{\link[psych]{fa}}}
 }
 \description{
 Estimates an \code{\link[EGAnet]{EGM}} based on \code{\link[EGAnet]{EGA}} and

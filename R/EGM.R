@@ -116,7 +116,7 @@
 #' @export
 #'
 # Estimate EGM ----
-# Updated 10.10.2024
+# Updated 22.10.2024
 EGM <- function(
     data, EGM.type = c("search", "standard", "EGA"),
     communities = NULL, structure = NULL,
@@ -592,7 +592,7 @@ compute_tefi_adjustment <- function(loadings, correlations)
 
 #' @noRd
 # EGM | Standard ----
-# Updated 13.10.2024
+# Updated 22.10.2024
 EGM.standard <- function(data, communities, structure, p.in, p.out, opt, constrained, ...)
 {
 
@@ -673,6 +673,9 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, opt, constra
   # Update loadings
   output <- silent_call(net.loads(community_P, structure, ...))
   output$std <- output$std[dimension_names[[2]],, drop = FALSE]
+
+  # Obtain dimension names
+  loading_names <- dimnames(output$std)
 
   # Compute network scores
   standard_scores <- compute_scores(output, data, "network", "simple")$std.scores
@@ -759,8 +762,8 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, opt, constra
 
   # Extract optimized loadings
   optimized_loadings <- matrix(
-    result$estimate, nrow = dimensions[1],
-    dimnames = dimension_names
+    result$estimate, nrow = data_dimensions[2],
+    dimnames = loading_names
   )
 
   # Replace loadings output with optimized loadings
@@ -1157,7 +1160,7 @@ EGM.EGA <- function(data, structure, opt, constrained, ...)
 
 #' @noRd
 # EGM | Search ----
-# Updated 10.10.2024
+# Updated 22.10.2024
 EGM.search <- function(data, communities, structure, p.in, opt, constrained, verbose, ...)
 {
 
@@ -1172,15 +1175,16 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrained, ver
   # Loop over grid search
   grid_search <- parallel_process(
     iterations = p_number, datalist = seq_len(p_number),
-    FUN = function(i, data, p_grid, communities){
+    FUN = function(i, data, p_grid, communities, structure, opt, constrained, ...){
 
       # First, try
       output <- silent_call(
         try(
           EGM(
             data = data, EGM.type = "standard",
-            communities = communities, p.in = p_grid$p_in[i],
-            p.out = p_grid$p_out[i], opt = opt, constrained, ...
+            communities = communities, structure = structure,
+            opt = opt, constrained = constrained,
+            p.in = p_grid$p_in[i], p.out = p_grid$p_out[i], ...
           ), silent = TRUE
         )
       )
@@ -1188,7 +1192,13 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrained, ver
       # Return result
       return(swiftelse(is(output, "try-error"), NULL, output))
 
-    }, data, p_grid, communities, ncores = 1, progress = verbose
+    },
+    # `EGM.standard` arguments
+    data = data, p_grid = p_grid,
+    communities = communities, structure = structure,
+    opt = opt, constrained = constrained, ...,
+    # `parallel_process` arguments
+    ncores = 1, progress = verbose
   )
 
   # Select for R fit
@@ -1200,6 +1210,24 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrained, ver
       swiftelse(is.null(x), NA, x$model$optimized$fit[[fit]])
     }
   )
+
+  # Check for all NA
+  if(all(is.na(optimized_fits))){
+
+    # Set error if no solution is found
+    .handleSimpleError(
+      h = stop,
+      msg = paste0(
+        "Search could not converge to any solutions. \n\n",
+        "Try:\n",
+        "  +  increasing 'p.in'\n",
+        "  +  changing 'communities'\n",
+        "  +  changing 'structure'"
+      ),
+      call = "EGM"
+    )
+
+  }
 
   # Obtain index
   min_index <- which.min(optimized_fits)
