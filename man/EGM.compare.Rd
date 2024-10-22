@@ -4,12 +4,23 @@
 \alias{EGM.compare}
 \title{Compare \code{\link[EGAnet]{EGM}} with Exploratory Factor Analysis}
 \usage{
-EGM.compare(data, rotation = "geominQ", ...)
+EGM.compare(data, constrained = FALSE, rotation = "geominQ", ...)
 }
 \arguments{
 \item{data}{Matrix or data frame.
 Should consist only of variables to be used in the analysis.
 Can be raw data or a correlation matrix}
+
+\item{constrained}{Boolean (length = 1).
+Whether memberships of the communities should
+be added as a constraint when optimizing the network loadings.
+Defaults to \code{FALSE} to freely estimate each loading similar to
+exploratory factor analysis.
+
+\emph{Note: This default differs from} \code{\link[EGAnet]{EGM}}\emph{.
+Constraining loadings puts EGM at a deficit relative to EFA and therefore
+biases the comparability between the methods. It's best to leave the
+default of unconstrained when using this function.}}
 
 \item{rotation}{Character.
 A rotation to use to obtain a simpler structure for EFA and PCA.

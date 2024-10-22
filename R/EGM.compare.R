@@ -9,6 +9,17 @@
 #' Should consist only of variables to be used in the analysis.
 #' Can be raw data or a correlation matrix
 #'
+#' @param constrained Boolean (length = 1).
+#' Whether memberships of the communities should
+#' be added as a constraint when optimizing the network loadings.
+#' Defaults to \code{FALSE} to freely estimate each loading similar to
+#' exploratory factor analysis.
+#'
+#' \emph{Note: This default differs from} \code{\link[EGAnet]{EGM}}\emph{.
+#' Constraining loadings puts EGM at a deficit relative to EFA and therefore
+#' biases the comparability between the methods. It's best to leave the
+#' default of unconstrained when using this function.}
+#'
 #' @param rotation Character.
 #' A rotation to use to obtain a simpler structure for EFA and PCA.
 #' For a list of rotations, see \code{\link[GPArotation]{rotations}} for options.
@@ -36,8 +47,8 @@
 #' @export
 #
 # Compare EGM to EFA ----
-# Updated 10.10.2024
-EGM.compare <- function(data, rotation = "geominQ", ...)
+# Updated 22.10.2024
+EGM.compare <- function(data, constrained = FALSE, rotation = "geominQ", ...)
 {
 
   # Check data and structure
@@ -47,7 +58,7 @@ EGM.compare <- function(data, rotation = "geominQ", ...)
   dimensions <- dim(data)
 
   # Estimate EGM
-  egm <- EGM(data, ...)
+  egm <- EGM(data, constrained = constrained, ...)
 
   # Set communities
   communities <- unique_length(egm$EGA$wc)
