@@ -2,7 +2,7 @@
 % Please edit documentation in R/EGM.compare.R
 \name{EGM.compare}
 \alias{EGM.compare}
-\title{Compare \code{\link[EGAnet]{EGM}} with Exploratory Factor Analysis}
+\title{Compare \code{\link[EGAnet]{EGM}} with EFA}
 \usage{
 EGM.compare(data, constrained = FALSE, rotation = "geominQ", ...)
 }
@@ -23,7 +23,7 @@ biases the comparability between the methods. It's best to leave the
 default of unconstrained when using this function.}}
 
 \item{rotation}{Character.
-A rotation to use to obtain a simpler structure for EFA and PCA.
+A rotation to use to obtain a simpler structure for EFA.
 For a list of rotations, see \code{\link[GPArotation]{rotations}} for options.
 Defaults to \code{"geominQ"}}
 
@@ -33,14 +33,15 @@ Defaults to \code{"geominQ"}}
 \code{\link[EGAnet]{community.detection}},
 \code{\link[EGAnet]{community.consensus}},
 \code{\link[EGAnet]{community.unidimensional}},
-\code{\link[EGAnet]{EGA}}, and
+\code{\link[EGAnet]{EGA}},
+\code{\link[EGAnet]{EGM}},
+\code{\link[EGAnet]{net.loads}}, and
 \code{\link[psych]{fa}}}
 }
 \description{
 Estimates an \code{\link[EGAnet]{EGM}} based on \code{\link[EGAnet]{EGA}} and
 uses the number of communities as the number of dimensions in exploratory factor analysis
-(EFA) using \code{\link[psych]{fa}} and principal component analysis (PCA) using
-\code{\link[psych]{principal}}
+(EFA) using \code{\link[psych]{fa}}
 }
 \examples{
 # Get depression data
