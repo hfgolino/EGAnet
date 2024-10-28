@@ -82,7 +82,7 @@ simEGM <- function(
     communities, variables,
     loadings = c("small", "moderate", "large"), cross.loadings = 0.01,
     correlations = c("none", "small", "moderate", "large", "very large"),
-    sample.size,  p.in = 0.95, p.out = 0.90, max.iterations = 1000
+    sample.size, p.in = 0.95, p.out = 0.90, max.iterations = 1000
 )
 {
 
@@ -377,7 +377,7 @@ update_loadings <- function(
   # # Update P vector
   # P_lower[zeros] <- result$estimate
 
-  # Use optimize to minimize the RMQE
+  # Use optimize to minimize the RMSE
   result <- silent_call(
     nlminb(
       start = P_lower[zeros], objective = P_cost,
@@ -598,3 +598,63 @@ N_gradient <- function(loadings_vector, P, zeros)
   return(error * zeros)
 
 }
+
+# Closer to the TRUE gradient
+# grad_N_cost <- function(loadings_vector, P, zeros)
+# {
+#
+#   # Set up loadings matrix
+#   loadings_matrix <- matrix(loadings_vector * zeros, nrow = dim(P)[1])
+#
+#   # Compute partial correlation (implied covariance)
+#   implied_P <- tcrossprod(loadings_matrix)
+#
+#   # Obtain interdependence (diagonal elements)
+#   interdependence <- sqrt(rowSums(loadings_matrix^2))
+#
+#   # Set diagonal to interdependence
+#   diag(implied_P) <- interdependence
+#
+#   # Compute matrix I
+#   I <- diag(sqrt(1 / interdependence))
+#
+#   # Compute zero-order correlations
+#   R <- I %*% implied_P %*% I
+#
+#   # Obtain inverse covariance matrix
+#   INV <- solve(R)
+#
+#   # Compute matrix D
+#   D <- diag(sqrt(1 / diag(INV)))
+#
+#   # Compute partial correlations (implied)
+#   implied_P <- -D %*% INV %*% D
+#
+#   # Set diagonal to zero
+#   diag(implied_P) <- 0
+#
+#   # Compute the error between implied and observed P
+#   lower_triangle <- lower.tri(P)
+#   error <- (implied_P - P)[lower_triangle]
+#
+#   # Differentiating through each step
+#   # 1. Derivative of error w.r.t implied_P
+#   delta_implied_P <- matrix(0, nrow = nrow(P), ncol = ncol(P))
+#   delta_implied_P[lower_triangle] <- 2 * error / length(error)
+#   delta_implied_P <- delta_implied_P + t(delta_implied_P)
+#
+#   # 2. Backpropagate through D and INV to compute gradient w.r.t R
+#   delta_D <- -tcrossprod(delta_implied_P, INV) %*% diag(sqrt(1 / diag(INV)))
+#   delta_INV <- -D %*% delta_implied_P %*% D
+#   delta_R <- -solve(t(R)) %*% delta_INV %*% solve(R)
+#
+#   # 3. Backpropagate through zero-order correlations (R)
+#   delta_implied_P <- I %*% delta_R %*% t(I)
+#
+#   # 4. Backpropagate through implied covariance to obtain gradient w.r.t loadings_matrix
+#   delta_loadings_matrix <- t(crossprod(2 * loadings_matrix, delta_implied_P))
+#
+#   # Flatten the gradient to match the original loadings_vector
+#   return(as.vector(delta_loadings_matrix))
+#
+# }

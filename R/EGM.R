@@ -986,7 +986,7 @@ compute_density <- function(network)
 
 #' @noRd
 # EGM | EGA ----
-# Updated 14.10.2024
+# Updated 28.10.2024
 EGM.EGA <- function(data, structure, opt, constrained, ...)
 {
 
@@ -1055,64 +1055,85 @@ EGM.EGA <- function(data, structure, opt, constrained, ...)
     loading_structure[structure[i], i] <- TRUE
   }
 
-  # Switch out optimization criterion
-  cost_FUN <- switch(
-    opt,
-    "aic" = likelihood_N_cost,
-    "bic" = likelihood_N_cost,
-    "srmr" = srmr_N_cost
+  # For now, just use SRMR
+  cost_FUN <- srmr_N_cost
+
+  # Optimize over loadings
+  result <- silent_call(
+    nlminb(
+      start = loadings_vector, objective = cost_FUN,
+      gradient = srmr_N_gradient,
+      zeros = zeros, R = ega$correlation,
+      loading_structure = loading_structure,
+      rows = communities, n = data_dimensions[1],
+      opt = toupper(opt), constrained = constrained,
+      lower = rep(-1, loadings_length),
+      upper = rep(1, loadings_length),
+      control = list(eval.max = 10000, iter.max = 10000)
+    )
   )
 
-  # Check for gradient
-  if(opt == "srmr"){
+  # Set estimate
+  result$estimate <- result$par
 
-    # Optimize over loadings
-    result <- silent_call(
-      nlminb(
-        start = loadings_vector, objective = cost_FUN,
-        gradient = srmr_N_gradient,
-        zeros = zeros, R = ega$correlation,
-        loading_structure = loading_structure,
-        rows = communities, n = data_dimensions[1],
-        opt = toupper(opt), constrained = constrained,
-        lower = rep(-1, loadings_length),
-        upper = rep(1, loadings_length),
-        control = list(eval.max = 10000, iter.max = 10000)
-      )
-    )
-
-    # Set estimate
-    result$estimate <- result$par
-
-    # # Optimize over loadings
-    # result <- silent_call(
-    #   nlm(
-    #     p = loadings_vector, f = cost_FUN,
-    #     zeros = zeros, R = ega$correlation,
-    #     loading_structure = loading_structure,
-    #     rows = communities, n = data_dimensions[1],
-    #     opt = toupper(opt), iterlim = 1000, gradtol = 1e-08
-    #     # cheat the gradient for maximal speed
-    #     # with minimal accuracy trade-off
-    #   )
-    # )
-
-  }else{
-
-    # Optimize over loadings
-    result <- silent_call(
-      nlm(
-        p = loadings_vector, f = cost_FUN,
-        zeros = zeros, R = ega$correlation,
-        loading_structure = loading_structure,
-        rows = communities, n = data_dimensions[1],
-        opt = toupper(opt), iterlim = 1000, gradtol = 1e-04
-        # cheat the gradient for maximal speed
-        # with minimal accuracy trade-off
-      )
-    )
-
-  }
+  # # Switch out optimization criterion
+  # cost_FUN <- switch(
+  #   opt,
+  #   "aic" = likelihood_N_cost,
+  #   "bic" = likelihood_N_cost,
+  #   "srmr" = srmr_N_cost
+  # )
+  #
+  # # Check for gradient
+  # if(opt == "srmr"){
+  #
+  #   # Optimize over loadings
+  #   result <- silent_call(
+  #     nlminb(
+  #       start = loadings_vector, objective = cost_FUN,
+  #       gradient = srmr_N_gradient,
+  #       zeros = zeros, R = ega$correlation,
+  #       loading_structure = loading_structure,
+  #       rows = communities, n = data_dimensions[1],
+  #       opt = toupper(opt), constrained = constrained,
+  #       lower = rep(-1, loadings_length),
+  #       upper = rep(1, loadings_length),
+  #       control = list(eval.max = 10000, iter.max = 10000)
+  #     )
+  #   )
+  #
+  #   # Set estimate
+  #   result$estimate <- result$par
+  #
+  #   # # Optimize over loadings
+  #   # result <- silent_call(
+  #   #   nlm(
+  #   #     p = loadings_vector, f = cost_FUN,
+  #   #     zeros = zeros, R = ega$correlation,
+  #   #     loading_structure = loading_structure,
+  #   #     rows = communities, n = data_dimensions[1],
+  #   #     opt = toupper(opt), iterlim = 1000, gradtol = 1e-08
+  #   #     # cheat the gradient for maximal speed
+  #   #     # with minimal accuracy trade-off
+  #   #   )
+  #   # )
+  #
+  # }else{
+  #
+  #   # Optimize over loadings
+  #   result <- silent_call(
+  #     nlm(
+  #       p = loadings_vector, f = cost_FUN,
+  #       zeros = zeros, R = ega$correlation,
+  #       loading_structure = loading_structure,
+  #       rows = communities, n = data_dimensions[1],
+  #       opt = toupper(opt), iterlim = 1000, gradtol = 1e-04
+  #       # cheat the gradient for maximal speed
+  #       # with minimal accuracy trade-off
+  #     )
+  #   )
+  #
+  # }
 
   # Extract optimized loadings
   optimized_loadings <- matrix(
