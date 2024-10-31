@@ -173,7 +173,7 @@ summary.EGM.compare <- function(object, ...)
 
 #' @noRd
 # Get factor results ----
-# Updated 10.10.2023
+# Updated 31.10.2024
 get_factor_results <- function(output, rotation, egm, dimensions, ...)
 {
 
@@ -224,7 +224,7 @@ get_factor_results <- function(output, rotation, egm, dimensions, ...)
       n = dimensions[1], p = dimensions[2], R = output$implied$R,
       S = egm$EGA$correlation, loadings = output$factor_correlations
     ),
-    TEFI_adj = tefi(output$implied$R, structure = egm$EGA$wc)$VN.Entropy.Fit - compute_tefi_adjustment(
+    TEFI_adj = tefi(output$implied$R, structure = egm$EGA$wc)$VN.Entropy.Fit + compute_tefi_adjustment(
       output$loadings, output$factor_correlations
     )
   )
