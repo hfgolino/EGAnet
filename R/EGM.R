@@ -616,7 +616,7 @@ compute_tefi_adjustment <- function(loadings, correlations)
 
 #' @noRd
 # EGM | Standard ----
-# Updated 31.10.2024
+# Updated 01.11.2024
 EGM.standard <- function(data, communities, structure, p.in, p.out, opt, constrained, ...)
 {
 
@@ -824,9 +824,6 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, opt, constra
   optimized_R <- nload2cor(optimized_loadings)
   optimized_P <- cor2pcor(optimized_R)
 
-  # Compute adjusted TEFI (for optimized)
-  optimized_tefi_adjusted <- compute_tefi_adjustment(optimized_loadings, optimized_correlations)
-
   # Set up EGA
   ega_list <- list(
     dim.variables = data.frame(
@@ -835,7 +832,8 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, opt, constra
     ),
     network = community_P, wc = structure,
     n.dim = unique_length(structure), correlation = empirical_R,
-    n = data_dimensions[1], TEFI_adj = tefi(empirical_R, structure)$VN.Entropy.Fit - optimized_tefi_adjusted
+    n = data_dimensions[1], TEFI_adj = tefi(empirical_R, structure)$VN.Entropy.Fit -
+      compute_tefi_adjustment(optimized_loadings, optimized_correlations)
   ); class(ega_list) <- "EGA"
 
   # Attach methods to network
@@ -861,16 +859,11 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, opt, constra
         loadings = output$std,
         scores = standard_scores,
         correlations = standard_correlations,
-        fit = c(
-          R.srmr = srmr(empirical_R, standard_R),
-          P.srmr = srmr(empirical_P, standard_P),
-          likelihood(
-            n = data_dimensions[1], p = data_dimensions[2],
-            R = standard_R, S = empirical_R, loadings = output$std
-          ),
-          TEFI_adj = tefi(standard_R, structure = structure)$VN.Entropy.Fit - compute_tefi_adjustment(
-            output$std, standard_correlations
-          )
+        fit = fit(
+          n = data_dimensions[1], p = data_dimensions[2],
+          R = standard_R, S = empirical_R,
+          loadings = output$std, correlations = standard_correlations,
+          structure = structure, ci = 0.95
         ),
         implied = list(R = standard_R, P = standard_P)
       ),
@@ -878,14 +871,11 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, opt, constra
         loadings = optimized_loadings,
         scores = optimized_scores,
         correlations = optimized_correlations,
-        fit = c(
-          R.srmr = srmr(empirical_R, optimized_R),
-          P.srmr = srmr(empirical_P, optimized_P),
-          likelihood(
-            n = data_dimensions[1], p = data_dimensions[2],
-            R = optimized_R, S = empirical_R, loadings = optimized_loadings
-          ),
-          TEFI_adj = tefi(optimized_R, structure = structure)$VN.Entropy.Fit - optimized_tefi_adjusted
+        fit = fit(
+          n = data_dimensions[1], p = data_dimensions[2],
+          R = optimized_R, S = empirical_R,
+          loadings = optimized_loadings, correlations = optimized_correlations,
+          structure = structure, ci = 0.95
         ),
         implied = list(R = optimized_R, P = optimized_P)
       )
@@ -1007,7 +997,7 @@ compute_density <- function(network)
 
 #' @noRd
 # EGM | EGA ----
-# Updated 28.10.2024
+# Updated 01.11.2024
 EGM.EGA <- function(data, structure, opt, constrained, ...)
 {
 
@@ -1183,16 +1173,11 @@ EGM.EGA <- function(data, structure, opt, constrained, ...)
         loadings = standard_loadings,
         scores = standard_scores,
         correlations = standard_correlations,
-        fit = c(
-          R.srmr = srmr(ega$correlation, standard_R),
-          P.srmr = srmr(empirical_P, standard_P),
-          likelihood(
-            n = data_dimensions[1], p = data_dimensions[2],
-            R = standard_R, S = ega$correlation, loadings = standard_loadings
-          ),
-          TEFI_adj = tefi(standard_R, structure = ega$wc)$VN.Entropy.Fit - compute_tefi_adjustment(
-            standard_loadings, standard_correlations
-          )
+        fit = fit(
+          n = data_dimensions[1], p = data_dimensions[2],
+          R = standard_R, S = ega$correlation,
+          loadings = output$std, correlations = standard_correlations,
+          structure = ega$wc, ci = 0.95
         ),
         implied = list(R = standard_R, P = standard_P)
       ),
@@ -1200,16 +1185,12 @@ EGM.EGA <- function(data, structure, opt, constrained, ...)
         loadings = optimized_loadings,
         scores = optimized_scores,
         correlations = optimized_correlations,
-        fit = c(
-          R.srmr = srmr(ega$correlation, optimized_R),
-          P.srmr = srmr(empirical_P, optimized_P),
-          likelihood(
-            n = data_dimensions[1], p = data_dimensions[2],
-            R = optimized_R, S = ega$correlation, loadings = optimized_loadings
-          ),
-          TEFI_adj = tefi(optimized_R, structure = ega$wc)$VN.Entropy.Fit - compute_tefi_adjustment(
-            optimized_loadings, optimized_correlations
-          )
+        fit = fit(
+          n = data_dimensions[1], p = data_dimensions[2],
+          R = optimized_R, S = ega$correlation,
+          loadings = optimized_loadings,
+          correlations = optimized_correlations,
+          structure = ega$wc, ci = 0.95
         ),
         implied = list(R = optimized_R, P = optimized_P)
       )
@@ -1267,13 +1248,10 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrained, ver
     ncores = 1, progress = verbose
   )
 
-  # Select for R fit
-  fit <- swiftelse(opt == "srmr", "R.srmr", toupper(opt))
-
   # Obtain fits
   optimized_fits <- nvapply(
     grid_search, function(x){
-      swiftelse(is.null(x), NA, x$model$optimized$fit[[fit]])
+      swiftelse(is.null(x), NA, x$model$optimized$fit[[toupper(opt)]])
     }
   )
 

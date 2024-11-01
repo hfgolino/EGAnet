@@ -4,7 +4,7 @@
 \alias{EGM.compare}
 \title{Compare \code{\link[EGAnet]{EGM}} with EFA}
 \usage{
-EGM.compare(data, constrained = FALSE, rotation = "geominQ", ...)
+EGM.compare(data, constrained = FALSE, rotation = "geomin", ...)
 }
 \arguments{
 \item{data}{Matrix or data frame.
@@ -36,7 +36,7 @@ Defaults to \code{"geominQ"}}
 \code{\link[EGAnet]{EGA}},
 \code{\link[EGAnet]{EGM}},
 \code{\link[EGAnet]{net.loads}}, and
-\code{\link[psych]{fa}}}
+\code{\link[lavaan]{efa}}}
 }
 \description{
 Estimates an \code{\link[EGAnet]{EGM}} based on \code{\link[EGAnet]{EGA}} and
@@ -47,8 +47,14 @@ uses the number of communities as the number of dimensions in exploratory factor
 # Get depression data
 data <- na.omit(depression[,24:44])
 
-# Estimate EGM (using EGA)
-EGM.compare(data)
+# Compare EGM (using EGA) with EFA
+\dontrun{
+results <- EGM.compare(data)
+
+# Print summary
+summary(results)}
+
+
 
 }
 \author{
