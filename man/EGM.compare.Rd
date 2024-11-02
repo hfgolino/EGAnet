@@ -4,7 +4,7 @@
 \alias{EGM.compare}
 \title{Compare \code{\link[EGAnet]{EGM}} with EFA}
 \usage{
-EGM.compare(data, constrained = FALSE, rotation = "geomin", ...)
+EGM.compare(data, constrained = FALSE, rotation = "geominQ", ...)
 }
 \arguments{
 \item{data}{Matrix or data frame.

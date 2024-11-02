@@ -54,7 +54,7 @@
 #
 # Compare EGM to EFA ----
 # Updated 02.11.2024
-EGM.compare <- function(data, constrained = FALSE, rotation = "geomin", ...)
+EGM.compare <- function(data, constrained = FALSE, rotation = "geominQ", ...)
 {
 
   # Obtain ellipse
@@ -73,6 +73,17 @@ EGM.compare <- function(data, constrained = FALSE, rotation = "geomin", ...)
   # Set communities
   communities <- unique_length(egm$EGA$wc)
 
+  # Obtain EFA
+  efa <- get_factor_results(
+    output = psych::fa(
+      egm$EGA$correlation, n.obs = dimensions[2],
+      nfactors = communities, rotate = "none", ...
+    ), rotation = rotation, egm = egm,
+    dimensions = dimensions, ...
+  )
+
+  # With {lavaan}... slower...
+
   # Obtain the number of categories for each variables
   categories <- data_categories(data)
 
@@ -80,33 +91,33 @@ EGM.compare <- function(data, constrained = FALSE, rotation = "geomin", ...)
   categorical_variables <- categories <= swiftelse(
     "ordinal.categories" %in% names(ellipse), ellipse$ordinal.categories, 7
   )
-
-  # Set up arguments
-  efa_ARGS <- obtain_arguments(
-    FUN = lavaan::efa,
-    FUN.args = c(
-      list(
-        data = data, nfactors = communities,
-        ov.names = dimension_names[[2]],
-        rotation = rotation,
-        rotation.args = list(
-          geomin.epsilon = switch(
-            as.character(communities), `2` = 0.0001, `3` = 0.001, 0.01
-          )
-        ),
-        estimator = swiftelse(any(categorical_variables), "WLSMV", "ML"),
-        ordered = dimension_names[[2]][categorical_variables]
-      ), ellipse
-    )
-  )
-
-  # Obtain EFA
-  efa <- silent_call(
-    get_factor_results(
-      output = do.call(what = lavaan::efa, args = efa_ARGS),
-      egm = egm, dimensions = dimensions, ...
-    )
-  )
+  #
+  # # Set up arguments
+  # efa_ARGS <- obtain_arguments(
+  #   FUN = lavaan::efa,
+  #   FUN.args = c(
+  #     list(
+  #       data = data, nfactors = communities,
+  #       ov.names = dimension_names[[2]],
+  #       rotation = rotation,
+  #       rotation.args = list(
+  #         geomin.epsilon = switch(
+  #           as.character(communities), `2` = 0.0001, `3` = 0.001, 0.01
+  #         )
+  #       ),
+  #       estimator = swiftelse(any(categorical_variables), "WLSMV", "ML"),
+  #       ordered = dimension_names[[2]][categorical_variables]
+  #     ), ellipse
+  #   )
+  # )
+  #
+  # # Obtain EFA
+  # efa <- silent_call(
+  #   get_factor_results(
+  #     output = do.call(what = lavaan::efa, args = efa_ARGS),
+  #     egm = egm, dimensions = dimensions, ...
+  #   )
+  # )
 
   # Set up results
   results <- list(
@@ -235,18 +246,37 @@ summary.EGM.compare <- function(object, ...)
 
 #' @noRd
 # Get factor results ----
-# Updated 01.11.2024
+# Updated 02.11.2024
 get_factor_results <- function(output, rotation, egm, dimensions, ...)
 {
 
-  # Get standardized parameters
-  parameters <- lavaan::inspect(output[[1]], what = "std")
+  # Check for errors in rotation
+  # (this code and the following rotation code is in `net.loads`)
+  rotation <- rotation_errors(rotation)
+
+  # If rotation exists, then obtain it
+  rotation_FUN <- get(rotation, envir = asNamespace("GPArotation"))
+
+  # Get ellipse arguments
+  ellipse <- list(...)
+
+  # Get arguments for function
+  rotation_ARGS <- obtain_arguments(rotation_FUN, ellipse)
+
+  # Supply loadings
+  rotation_ARGS$A <- output$loadings[]
+
+  # Set default arguments for rotations
+  rotation_ARGS <- rotation_defaults(rotation, rotation_ARGS, ellipse)
+
+  # Perform rotations
+  rotation_OUTPUT <- do.call(rotation_FUN, rotation_ARGS)
 
   # Align rotated loadings
   aligned_output <- fungible::faAlign(
     F1 = egm$model$optimized$loadings,
-    F2 = parameters$lambda,
-    Phi2 = parameters$psi
+    F2 = rotation_OUTPUT$loadings,
+    Phi2 = rotation_OUTPUT$Phi
   )
 
   # Obtain model-implied correlations
@@ -259,8 +289,30 @@ get_factor_results <- function(output, rotation, egm, dimensions, ...)
   output$factor_correlations <- aligned_output$Phi2
   output$implied <- list(R = implied_R, P = cor2pcor(implied_R))
 
-  # Get {lavaan} fit measures
-  lavaan_fit <- lavaan::fitmeasures(output[[1]])
+  # With {lavaan}... slower...
+
+  # # Get standardized parameters
+  # parameters <- lavaan::inspect(output[[1]], what = "std")
+  #
+  # # Align rotated loadings
+  # aligned_output <- fungible::faAlign(
+  #   F1 = egm$model$optimized$loadings,
+  #   F2 = parameters$lambda,
+  #   Phi2 = parameters$psi
+  # )
+  #
+  # # Obtain model-implied correlations
+  # implied_R <- aligned_output$F2 %*% tcrossprod(
+  #   aligned_output$Phi, aligned_output$F2
+  # ); diag(implied_R) <- 1
+  #
+  # # Add parameters to EFA
+  # output$loadings <- aligned_output$F2
+  # output$factor_correlations <- aligned_output$Phi2
+  # output$implied <- list(R = implied_R, P = cor2pcor(implied_R))
+  #
+  # # Get {lavaan} fit measures
+  # lavaan_fit <- lavaan::fitmeasures(output[[1]])
 
   # Compute likelihood for EFA
   output$fit <- fit(
@@ -268,10 +320,11 @@ get_factor_results <- function(output, rotation, egm, dimensions, ...)
     S = egm$EGA$correlation, loadings = output$loadings,
     correlations = output$factor_correlations,
     structure = egm$EGA$wc, ci = 0.95,
-    scaling_factor = swiftelse(
-      "chisq.scaling.factor" %in% names(lavaan_fit),
-      lavaan_fit[["chisq.scaling.factor"]], NULL
-    )
+    scaling_factor = NULL
+    # scaling_factor = swiftelse(
+    #   "chisq.scaling.factor" %in% names(lavaan_fit),
+    #   lavaan_fit[["chisq.scaling.factor"]], NULL
+    # )
   )
 
   # Return updated output
