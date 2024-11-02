@@ -36,7 +36,7 @@ Defaults to \code{"geominQ"}}
 \code{\link[EGAnet]{EGA}},
 \code{\link[EGAnet]{EGM}},
 \code{\link[EGAnet]{net.loads}}, and
-\code{\link[lavaan]{efa}}}
+\code{\link[psych]{fa}}}
 }
 \description{
 Estimates an \code{\link[EGAnet]{EGM}} based on \code{\link[EGAnet]{EGA}} and

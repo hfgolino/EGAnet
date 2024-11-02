@@ -33,7 +33,7 @@
 #' \code{\link[EGAnet]{EGA}},
 #' \code{\link[EGAnet]{EGM}},
 #' \code{\link[EGAnet]{net.loads}}, and
-#' \code{\link[lavaan]{efa}}
+#' \code{\link[psych]{fa}}
 #'
 #' @examples
 #' # Get depression data
@@ -141,7 +141,7 @@ EGM.compare <- function(data, constrained = FALSE, rotation = "geominQ", ...)
         "`EGM.compare` does not currently support scaled fit measures ",
         "for non-continuous data. ",
         "Fit statistics are reported based on maximum likelihood and are ",
-        "likely to ", styletext("underestimate", "italics"), " fit.\n\n",
+        "known to ", styletext("underestimate", "italics"), " fit.\n\n",
         "Use caution when interpreting the fit statistics."
       ), call. = FALSE
     )
@@ -179,7 +179,7 @@ EGM.compare_errors <- function(data, ...)
 
 #' @exportS3Method
 # S3 Print Method ----
-# Updated 01.11.2024
+# Updated 02.11.2024
 print.EGM.compare <- function(x, ...)
 {
 
@@ -189,11 +189,16 @@ print.EGM.compare <- function(x, ...)
   # Set option
   options(scipen = 999)
 
+  # Get metric names
+  metric_names <- row.names(x$fit)
+
   # Find smallest difference
   absolute <- abs(x$fit)
   avoid_ps <- which(
-    row.names(x$fit) %in%
-    c("df", "chisq.p.value", "RMSEA.95.lower", "RMSEA.p.value")
+    metric_names %in%
+    c("df", "chisq.p.value", "RMSEA.p.value") |
+    grepl("lower", metric_names) |
+    grepl("upper", metric_names)
   )
   smallest_difference <- min(
     abs(absolute[-avoid_ps, "EGM"] - absolute[-avoid_ps, "EFA"])
@@ -227,6 +232,7 @@ print.EGM.compare <- function(x, ...)
 
   # Add lowest of each column to bottom row
   rounded[-2, "best"] <- c("EGM", "EFA")[minimums]
+  rounded$best[avoid_ps] <- ""
 
   # Print to smallest decimal
   print(rounded)
