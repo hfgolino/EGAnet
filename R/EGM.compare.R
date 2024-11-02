@@ -53,7 +53,7 @@
 #' @export
 #
 # Compare EGM to EFA ----
-# Updated 01.11.2024
+# Updated 02.11.2024
 EGM.compare <- function(data, constrained = FALSE, rotation = "geomin", ...)
 {
 
@@ -81,19 +81,31 @@ EGM.compare <- function(data, constrained = FALSE, rotation = "geomin", ...)
     "ordinal.categories" %in% names(ellipse), ellipse$ordinal.categories, 7
   )
 
+  # Set up arguments
+  efa_ARGS <- obtain_arguments(
+    FUN = lavaan::efa,
+    FUN.args = c(
+      list(
+        data = data, nfactors = communities,
+        ov.names = dimension_names[[2]],
+        rotation = rotation,
+        rotation.args = list(
+          geomin.epsilon = switch(
+            as.character(communities), `2` = 0.0001, `3` = 0.001, 0.01
+          )
+        ),
+        estimator = swiftelse(any(categorical_variables), "WLSMV", "ML"),
+        ordered = dimension_names[[2]][categorical_variables]
+      ), ellipse
+    )
+  )
+
   # Obtain EFA
-  efa <- get_factor_results(
-    output = lavaan::efa(
-      data = data, nfactors = communities, ov.names = dimension_names[[2]],
-      rotation = rotation,
-      rotation.args = list(
-        geomin.epsilon = switch(as.character(communities), `2` = 0.0001, `3` = 0.001, 0.01),
-        ...
-      ),
-      estimator = swiftelse(any(categorical_variables), "WLSMV", "ML"),
-      ordered = dimension_names[[2]][categorical_variables],
-      ...
-    ), egm = egm, dimensions = dimensions, ...
+  efa <- silent_call(
+    get_factor_results(
+      output = do.call(what = lavaan::efa, args = efa_ARGS),
+      egm = egm, dimensions = dimensions, ...
+    )
   )
 
   # Set up results
