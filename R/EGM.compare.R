@@ -53,7 +53,7 @@
 #' @export
 #
 # Compare EGM to EFA ----
-# Updated 02.11.2024
+# Updated 03.11.2024
 EGM.compare <- function(data, constrained = FALSE, rotation = "geominQ", ...)
 {
 
@@ -67,8 +67,33 @@ EGM.compare <- function(data, constrained = FALSE, rotation = "geominQ", ...)
   dimensions <- dim(data)
   dimension_names <- dimnames(data)
 
+  # Obtain the number of categories for each variables
+  categories <- data_categories(data)
+
+  # Determine categorical variables
+  categorical_variables <- categories <= swiftelse(
+    "ordinal.categories" %in% names(ellipse), ellipse$ordinal.categories, 7
+  )
+
+  # Get categorical flag
+  categorical_flag <- any(categorical_variables)
+
+  # Check for categorical correlations
+  if(categorical_flag){
+    corr <- "spearman"
+  }
+
+  # Check for 'corr' in 'ellipse'
+  if("corr" %in% names(ellipse)){
+    corr <- ellipse$corr
+  }
+
   # Estimate EGM
-  egm <- EGM(data, constrained = constrained, ...)
+  egm <- EGM(
+    data, constrained = constrained,
+    corr = swiftelse(exists("corr"), corr, "auto"),
+    ...
+  )
 
   # Set communities
   communities <- unique_length(egm$EGA$wc)
@@ -83,14 +108,6 @@ EGM.compare <- function(data, constrained = FALSE, rotation = "geominQ", ...)
   )
 
   # With {lavaan}... slower...
-
-  # Obtain the number of categories for each variables
-  categories <- data_categories(data)
-
-  # Determine categorical variables
-  categorical_variables <- categories <= swiftelse(
-    "ordinal.categories" %in% names(ellipse), ellipse$ordinal.categories, 7
-  )
   #
   # # Set up arguments
   # efa_ARGS <- obtain_arguments(
@@ -133,7 +150,7 @@ EGM.compare <- function(data, constrained = FALSE, rotation = "geominQ", ...)
   class(results) <- "EGM.compare"
 
   # Send warning about categorical data
-  if(any(categorical_variables)){
+  if(categorical_flag){
 
     warning(
       paste0(
