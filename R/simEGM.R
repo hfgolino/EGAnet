@@ -405,13 +405,11 @@ update_loadings <- function(
   loadings_length <- length(loadings_vector)
   zeros <- loadings_vector != 0
 
-  # Use optimize to minimize the SRMR
+  # # Use optimize to minimize the SRMR
   # result <- silent_call(
   #   nlm(
-  #     p = loadings_vector, f = N_cost,
-  #     P = P, iterlim = 1000, gradtol = 1e-04
-  #     # cheat the gradient for maximal speed
-  #     # with minimal accuracy trade-off
+  #     p = loadings_vector, f = N_cost, zeros = zeros,
+  #     P = P, iterlim = 1000
   #   )
   # )
 
@@ -468,14 +466,14 @@ P_cost <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle
   # Error
   error <- (D %*% INV %*% D - R)[lower_triangle]^2
 
-  # Return RMQE
+  # Return RMSE
   return(sqrt(mean(error)))
 
 }
 
 #' @noRd
 # Partial correlation gradient ----
-# Updated 15.10.2024
+# Updated 03.11.2024
 P_gradient <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle)
 {
 
@@ -501,7 +499,7 @@ P_gradient <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_tria
   D <- diag(sqrt(1 / diag(INV)))
 
   # Compute error
-  error <- (D %*% INV %*% D - R)^3
+  error <- 2 * (D %*% INV %*% D - R)
 
   # Return gradient
   return(error[lower_triangle][zeros])

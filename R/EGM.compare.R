@@ -235,7 +235,8 @@ print.EGM.compare <- function(x, ...)
 
   # Add lowest of each column to bottom row
   rounded[-2, "best"] <- c("EGM", "EFA")[minimums]
-  rounded$best[avoid_ps] <- ""
+  rounded$best[avoid_ps] <- NA
+  rounded$best[rounded$EGM == rounded$EFA] <- NA
 
   # Print to smallest decimal
   print(rounded)
