@@ -179,7 +179,7 @@ EGM.compare_errors <- function(data, ...)
 
 #' @exportS3Method
 # S3 Print Method ----
-# Updated 02.11.2024
+# Updated 03.11.2024
 print.EGM.compare <- function(x, ...)
 {
 
@@ -200,9 +200,12 @@ print.EGM.compare <- function(x, ...)
     grepl("lower", metric_names) |
     grepl("upper", metric_names)
   )
-  smallest_difference <- min(
-    abs(absolute[-avoid_ps, "EGM"] - absolute[-avoid_ps, "EFA"])
-  )
+
+  # Get differences
+  differences <- abs(absolute[-avoid_ps, "EGM"] - absolute[-avoid_ps, "EFA"])
+
+  # Smallest non-zero difference
+  smallest_difference <- min(differences[differences > 0])
 
   # Get decimal split
   decimal_split <- strsplit(
