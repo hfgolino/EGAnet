@@ -11,7 +11,8 @@ EGM(
   structure = NULL,
   p.in = NULL,
   p.out = NULL,
-  opt = c("AIC", "BIC", "SRMR"),
+  opt = c("AIC", "BIC", "CFI", "chisq", "logLik", "RMSEA", "SRMR", "TEFI", "TEFI.adj",
+    "TLI"),
   constrained = TRUE,
   verbose = TRUE,
   ...
@@ -72,9 +73,34 @@ Only used for \code{EGM.type = "standard"}.
 Defaults to \code{NULL} but must be set}
 
 \item{opt}{Character vector (length = 1).
-Fit index to use for optimization of network loadings to the
-zero-order correlation matrix.
-Available options include: \code{"AIC"}, \code{"BIC"}, and \code{"SRMR"}.
+Fit index used to select from when searching over models
+(only applies to \code{EGM.type = "search"}).
+Available options include:
+
+\itemize{
+
+\item \code{"AIC"}
+
+\item \code{"BIC"}
+
+\item \code{"CFI"}
+
+\item \code{"chisq"}
+
+\item \code{"logLik"}
+
+\item \code{"RMSEA"}
+
+\item \code{"SRMR"}
+
+\item \code{"TEFI"}
+
+\item \code{"TEFI.adj"}
+
+\item \code{"TLI"}
+
+}
+
 Defaults to \code{"SRMR"}}
 
 \item{constrained}{Boolean (length = 1).

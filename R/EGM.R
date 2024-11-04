@@ -56,9 +56,34 @@
 #' Defaults to \code{NULL} but must be set
 #'
 #' @param opt Character vector (length = 1).
-#' Fit index to use for optimization of network loadings to the
-#' zero-order correlation matrix.
-#' Available options include: \code{"AIC"}, \code{"BIC"}, and \code{"SRMR"}.
+#' Fit index used to select from when searching over models
+#' (only applies to \code{EGM.type = "search"}).
+#' Available options include:
+#'
+#' \itemize{
+#'
+#' \item \code{"AIC"}
+#'
+#' \item \code{"BIC"}
+#'
+#' \item \code{"CFI"}
+#'
+#' \item \code{"chisq"}
+#'
+#' \item \code{"logLik"}
+#'
+#' \item \code{"RMSEA"}
+#'
+#' \item \code{"SRMR"}
+#'
+#' \item \code{"TEFI"}
+#'
+#' \item \code{"TEFI.adj"}
+#'
+#' \item \code{"TLI"}
+#'
+#' }
+#'
 #' Defaults to \code{"SRMR"}
 #'
 #' @param constrained Boolean (length = 1).
@@ -116,12 +141,16 @@
 #' @export
 #'
 # Estimate EGM ----
-# Updated 22.10.2024
+# Updated 04.11.2024
 EGM <- function(
     data, EGM.type = c("search", "standard", "EGA"),
     communities = NULL, structure = NULL,
     p.in = NULL, p.out = NULL,
-    opt = c("AIC", "BIC", "SRMR"),
+    opt = c(
+      "AIC", "BIC", "CFI",
+      "chisq", "logLik", "RMSEA",
+      "SRMR", "TEFI", "TEFI.adj", "TLI"
+    ),
     constrained = TRUE,
     verbose = TRUE, ...
 )
@@ -130,6 +159,11 @@ EGM <- function(
   # Set default
   EGM.type <- set_default(EGM.type, "ega", EGM)
   opt <- set_default(opt, "srmr", EGM)
+
+  # Detect TEFI adjusted fit
+  if(opt == "tefi.adj"){
+    experimental("EGM")
+  }
 
   # Check data and structure
   data <- EGM_errors(
@@ -1219,6 +1253,16 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrained, ver
   # Get number of search
   p_number <- dim(p_grid)[1]
 
+  # Fit name based on fit
+  fit_name <- switch(
+    opt,
+    "aic" = "AIC", "bic" = "BIC",
+    "cfi" = "CFI", "chisq" = "chisq",
+    "loglik" = "logLik", "rmsea" = "RMSEA",
+    "srmr" = "SRMR", "tefi" = "TEFI",
+    "tefi.adj" = "TEFI.adj", "tli" = "TLI"
+  )
+
   # Loop over grid search
   grid_search <- parallel_process(
     iterations = p_number, datalist = seq_len(p_number),
@@ -1251,7 +1295,7 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrained, ver
   # Obtain fits
   optimized_fits <- nvapply(
     grid_search, function(x){
-      swiftelse(is.null(x), NA, x$model$optimized$fit[[toupper(opt)]])
+      swiftelse(is.null(x), NA, x$model$optimized$fit[[fit_name]])
     }
   )
 
@@ -1273,16 +1317,26 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrained, ver
 
   }
 
+  # Index function based on fit
+  index_FUN <- switch(
+    opt,
+    "aic" = which.min, "bic" = which.min,
+    "cfi" = which.max, "chisq" = which.min,
+    "loglik" = which.max, "rmsea" = which.min,
+    "srmr" = which.min, "tefi" = which.min,
+    "tefi.adj" = which.min, "tli" = which.max
+  )
+
   # Obtain index
-  min_index <- which.min(optimized_fits)
+  opt_index <- index_FUN(optimized_fits)
 
   # Set up final model
-  results <- grid_search[[min_index]]
+  results <- grid_search[[opt_index]]
 
   # Add 'p.in' and 'p.out' parameters
   results$search <- c(
-    p.in = p_grid[min_index, "p_in"],
-    p.out = p_grid[min_index, "p_out"]
+    p.in = p_grid[opt_index, "p_in"],
+    p.out = p_grid[opt_index, "p_out"]
   )
 
   # Overwrite class

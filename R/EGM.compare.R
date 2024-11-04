@@ -53,7 +53,7 @@
 #' @export
 #
 # Compare EGM to EFA ----
-# Updated 03.11.2024
+# Updated 04.11.2024
 EGM.compare <- function(data, constrained = FALSE, rotation = "geominQ", ...)
 {
 
@@ -86,13 +86,19 @@ EGM.compare <- function(data, constrained = FALSE, rotation = "geominQ", ...)
   # Check for 'corr' in 'ellipse'
   if("corr" %in% names(ellipse)){
     corr <- ellipse$corr
+    ellipse <- ellipse[names(ellipse) != "corr"]
   }
 
   # Estimate EGM
-  egm <- EGM(
-    data, constrained = constrained,
-    corr = swiftelse(exists("corr"), corr, "auto"),
-    ...
+  egm <- do.call(
+    what = EGM,
+    args = c(
+      list(
+        data = data,
+        constrained = constrained,
+        corr = swiftelse(exists("corr"), corr, "pearson")
+      ), ellipse
+    )
   )
 
   # Set communities
@@ -154,7 +160,12 @@ EGM.compare <- function(data, constrained = FALSE, rotation = "geominQ", ...)
 
     warning(
       paste0(
-        "Categorical variables were detected in your data.\n\n",
+        "Categorical variables were detected in your data. ",
+        swiftelse(
+          corr == "spearman",
+          "Using Spearman's correlation for approximate scaled measures.\n\n",
+          "\n\n"
+        ),
         "`EGM.compare` does not currently support scaled fit measures ",
         "for non-continuous data. ",
         "Fit statistics are reported based on maximum likelihood and are ",
@@ -254,6 +265,7 @@ print.EGM.compare <- function(x, ...)
   rounded[-2, "best"] <- c("EGM", "EFA")[minimums]
   rounded$best[avoid_ps] <- NA
   rounded$best[rounded$EGM == rounded$EFA] <- NA
+  rounded$best[is.na(rounded$best)] <- ""
 
   # Print to smallest decimal
   print(rounded)
