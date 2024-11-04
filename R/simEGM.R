@@ -325,7 +325,7 @@ simEGM_errors <- function(
 
 #' @noRd
 # Update loadings to align with network ----
-# Updated 14.10.2024
+# Updated 04.11.2024
 update_loadings <- function(
     total_variables, communities, membership,
     p.in, p.out, loadings_matrix
@@ -355,27 +355,10 @@ update_loadings <- function(
 
   # Obtain the lower triangle
   P_lower <- P[lower_triangle]
-  P_length <- length(P_lower)
 
   # Get zeros
   zeros <- P_lower != 0
-
-  # # Use optimize to minimize the SRMR
-  # result <- silent_call(
-  #   nlm(
-  #     p = P_lower[zeros], f = P_cost,
-  #     P_lower = P_lower, zeros = zeros,
-  #     R = nload2cor(loadings_matrix),
-  #     lower_triangle = lower_triangle,
-  #     total_variables = total_variables,
-  #     iterlim = 1000, gradtol = 0.01
-  #     # cheat the gradient for maximal speed
-  #     # with minimal accuracy trade-off
-  #   )
-  # )
-  #
-  # # Update P vector
-  # P_lower[zeros] <- result$estimate
+  P_length <- sum(zeros)
 
   # Use optimize to minimize the RMSE
   result <- silent_call(
@@ -405,20 +388,12 @@ update_loadings <- function(
   loadings_length <- length(loadings_vector)
   zeros <- loadings_vector != 0
 
-  # # Use optimize to minimize the SRMR
-  # result <- silent_call(
-  #   nlm(
-  #     p = loadings_vector, f = N_cost, zeros = zeros,
-  #     P = P, iterlim = 1000
-  #   )
-  # )
-
   # Use optimize to minimize the RMSE
   result <- silent_call(
     nlminb(
       start = loadings_vector,
       objective = N_cost, gradient = N_gradient,
-      P = P, zeros = zeros,
+      P = P, zeros = zeros, total_variables = total_variables,
       lower = rep(-1, loadings_length),
       upper = rep(1, loadings_length),
       control = list(eval.max = 10000, iter.max = 10000)
@@ -508,12 +483,12 @@ P_gradient <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_tria
 
 #' @noRd
 # Loadings partial correlation cost ----
-# Updated 14.10.2024
-N_cost <- function(loadings_vector, P, zeros)
+# Updated 04.11.2024
+N_cost <- function(loadings_vector, P, zeros, lower_triangle, total_variables)
 {
 
   # Set up loadings matrix
-  loadings_matrix <- matrix(loadings_vector * zeros, nrow = dim(P)[1])
+  loadings_matrix <- matrix(loadings_vector * zeros, nrow = total_variables)
 
   # Compute partial correlation
   implied_P <- tcrossprod(loadings_matrix)
@@ -541,9 +516,6 @@ N_cost <- function(loadings_vector, P, zeros)
 
   # Set diagonal to zero
   diag(implied_P) <- 0
-
-  # Obtain lower triangle
-  lower_triangle <- lower.tri(P)
 
   # Error
   error <- (implied_P - P)[lower_triangle]^2
@@ -555,14 +527,14 @@ N_cost <- function(loadings_vector, P, zeros)
 
 #' @noRd
 # Loadings partial correlation gradient ----
-# Updated 17.10.2024
-N_gradient <- function(loadings_vector, P, zeros)
+# Updated 04.11.2024
+N_gradient <- function(loadings_vector, P, zeros, lower_triangle, total_variables)
 {
 
   # Set up loadings matrix
-  loadings_matrix <- matrix(loadings_vector * zeros, nrow = dim(P)[1])
+  loadings_matrix <- matrix(loadings_vector * zeros, nrow = total_variables)
 
-  # Compute partial correlation
+  # Compute partial covariance
   implied_P <- tcrossprod(loadings_matrix)
 
   # Obtain interdependence
@@ -583,76 +555,36 @@ N_gradient <- function(loadings_vector, P, zeros)
   # Compute matrix D
   D <- diag(sqrt(1 / diag(INV)))
 
+  # Pre-compute INV %*% D
+  INV_D <- INV %*% D
+
   # Compute partial correlations
-  implied_P <- -D %*% INV %*% D
+  implied_P <- -D %*% INV_D
 
   # Set diagonal to zero
   diag(implied_P) <- 0
 
   # Compute error
-  error <- as.vector((implied_P - P) %*% loadings_matrix)
+  error <- (implied_P - P)[lower_triangle]
 
-  # Return SRMR cost
-  return(error * zeros)
+  # Derivative of error with respect to P (covariance)
+  dError <- matrix(0, nrow = total_variables, ncol = total_variables)
+  dError[lower_triangle] <- 2 * error / length(error)
+  dError <- dError + t(dError)
+
+  # Derivative of D with respect to P (covariance)
+  dD <- -tcrossprod(dError, INV_D)
+
+  # Derivative of INV with respect to P
+  dINV <- -D %*% dError %*% D
+
+  # Derivative with respect to R
+  dR <- -INV %*% dINV %*% INV
+
+  # Derivative with respect to P
+  dP <- I %*% tcrossprod(dR, I)
+
+  # Return gradient
+  return(as.vector(t(crossprod(2 * loadings_matrix, dP))) * zeros)
 
 }
-
-# Closer to the TRUE gradient
-# grad_N_cost <- function(loadings_vector, P, zeros)
-# {
-#
-#   # Set up loadings matrix
-#   loadings_matrix <- matrix(loadings_vector * zeros, nrow = dim(P)[1])
-#
-#   # Compute partial correlation (implied covariance)
-#   implied_P <- tcrossprod(loadings_matrix)
-#
-#   # Obtain interdependence (diagonal elements)
-#   interdependence <- sqrt(rowSums(loadings_matrix^2))
-#
-#   # Set diagonal to interdependence
-#   diag(implied_P) <- interdependence
-#
-#   # Compute matrix I
-#   I <- diag(sqrt(1 / interdependence))
-#
-#   # Compute zero-order correlations
-#   R <- I %*% implied_P %*% I
-#
-#   # Obtain inverse covariance matrix
-#   INV <- solve(R)
-#
-#   # Compute matrix D
-#   D <- diag(sqrt(1 / diag(INV)))
-#
-#   # Compute partial correlations (implied)
-#   implied_P <- -D %*% INV %*% D
-#
-#   # Set diagonal to zero
-#   diag(implied_P) <- 0
-#
-#   # Compute the error between implied and observed P
-#   lower_triangle <- lower.tri(P)
-#   error <- (implied_P - P)[lower_triangle]
-#
-#   # Differentiating through each step
-#   # 1. Derivative of error w.r.t implied_P
-#   delta_implied_P <- matrix(0, nrow = nrow(P), ncol = ncol(P))
-#   delta_implied_P[lower_triangle] <- 2 * error / length(error)
-#   delta_implied_P <- delta_implied_P + t(delta_implied_P)
-#
-#   # 2. Backpropagate through D and INV to compute gradient w.r.t R
-#   delta_D <- -tcrossprod(delta_implied_P, INV) %*% diag(sqrt(1 / diag(INV)))
-#   delta_INV <- -D %*% delta_implied_P %*% D
-#   delta_R <- -solve(t(R)) %*% delta_INV %*% solve(R)
-#
-#   # 3. Backpropagate through zero-order correlations (R)
-#   delta_implied_P <- I %*% delta_R %*% t(I)
-#
-#   # 4. Backpropagate through implied covariance to obtain gradient w.r.t loadings_matrix
-#   delta_loadings_matrix <- t(crossprod(2 * loadings_matrix, delta_implied_P))
-#
-#   # Flatten the gradient to match the original loadings_vector
-#   return(as.vector(delta_loadings_matrix))
-#
-# }
