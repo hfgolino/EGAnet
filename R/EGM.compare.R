@@ -39,14 +39,18 @@
 #' # Get depression data
 #' data <- na.omit(depression[,24:44])
 #'
+#' # Get EGA results
+#' ega <- EGA(data, plot.EGA = FALSE)
+#'
 #' # Compare EGM (using EGA) with EFA
 #' \dontrun{
-#' results <- EGM.compare(data)
+#' results <- EGM.compare(
+#'  data = data, EGM.type = "search", p.in = 0.80,
+#'  structure = ega$wc # use EGA structure
+#' )
 #'
 #' # Print summary
 #' summary(results)}
-#'
-#'
 #'
 #' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'
