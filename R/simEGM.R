@@ -555,11 +555,8 @@ N_gradient <- function(loadings_vector, P, zeros, lower_triangle, total_variable
   # Compute matrix D
   D <- diag(sqrt(1 / diag(INV)))
 
-  # Pre-compute INV %*% D
-  INV_D <- INV %*% D
-
   # Compute partial correlations
-  implied_P <- -D %*% INV_D
+  implied_P <- -D %*% INV %*% D
 
   # Set diagonal to zero
   diag(implied_P) <- 0
@@ -573,7 +570,7 @@ N_gradient <- function(loadings_vector, P, zeros, lower_triangle, total_variable
   dError <- dError + t(dError)
 
   # Derivative of D with respect to P (covariance)
-  dD <- -tcrossprod(dError, INV_D)
+  # dD <- -tcrossprod(dError, INV_D) # Not needed?
 
   # Derivative of INV with respect to P
   dINV <- -D %*% dError %*% D

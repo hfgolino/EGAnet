@@ -404,7 +404,7 @@ srmr_N_cost <- function(
     # Convert loadings to implied correlations following `nload2cor`
     # Uses raw code to avoid overhead of additional function calls
 
-    # Compute partial correlation
+    # Compute partial correlation (decrease loadings based on constraints)
     P <- tcrossprod(loadings_matrix)
 
     # Obtain interdependence
@@ -448,7 +448,7 @@ srmr_N_cost <- function(
 
 #' @noRd
 # Estimated loadings gradient (based on SRMR) ----
-# Updated 14.10.2024
+# Updated 05.11.2024
 srmr_N_gradient <- function(
     loadings_vector, zeros, R,
     loading_structure, rows,
@@ -478,48 +478,65 @@ srmr_N_gradient <- function(
     # Uses raw code to avoid overhead of additional function calls
 
     # Compute partial correlation
-    P <- tcrossprod(loadings_matrix)
+    implied_P <- tcrossprod(loadings_matrix)
 
     # Obtain interdependence
     interdependence <- sqrt(rowSums(loadings_matrix^2))
 
     # Set diagonal to interdependence
-    diag(P) <- interdependence
+    diag(implied_P) <- interdependence
 
     # Compute matrix I
     I <- diag(sqrt(1 / interdependence))
 
-    # Obtain implied R
-    implied_R <- I %*% P %*% I
-
     # Compute error
-    error <- as.vector((implied_R - R) %*% loadings_matrix) + difference_values
+    lower_triangle <- lower.tri(R)
+    error <- (I %*% implied_P %*% I - R)[lower_triangle]
 
-    # Return SRMR cost
-    return(error * zeros)
+    # Derivative of error with respect to P (covariance)
+    dError <- matrix(0, nrow = ncol(R), ncol = ncol(R))
+    dError[lower_triangle] <- 2 * error / length(error)
+    dError <- dError + t(dError)
+
+    # Gradients
+    srmr_gradient <-
+
+    # Return gradient
+    return(
+      as.vector(
+        t(crossprod(loadings_matrix, I %*% tcrossprod(dError, I))) +
+        difference_values
+      ) * zeros
+    )
 
   }else{ # Without constraints, send it
 
     # Assemble loading matrix
     loadings_matrix <- matrix(loadings_vector * zeros, ncol = rows)
 
-    # Compute partial correlation
-    P <- tcrossprod(loadings_matrix)
+    # Compute partial covariance
+    implied_P <- tcrossprod(loadings_matrix)
 
     # Obtain interdependence
     interdependence <- sqrt(rowSums(loadings_matrix^2))
 
     # Set diagonal to interdependence
-    diag(P) <- interdependence
+    diag(implied_P) <- interdependence
 
     # Compute matrix I
     I <- diag(sqrt(1 / interdependence))
 
-    # Obtain implied R
-    implied_R <- I %*% P %*% I
+    # Compute error
+    lower_triangle <- lower.tri(R)
+    error <- (I %*% implied_P %*% I - R)[lower_triangle]
 
-    # Return SRMR cost
-    return(as.vector((implied_R - R) %*% loadings_matrix) * zeros)
+    # Derivative of error with respect to P (covariance)
+    dError <- matrix(0, nrow = ncol(R), ncol = ncol(R))
+    dError[lower_triangle] <- 2 * error / length(error)
+    dError <- dError + t(dError)
+
+    # Return gradient
+    return(as.vector(t(crossprod(loadings_matrix, I %*% tcrossprod(dError, I)))) * zeros)
 
   }
 
