@@ -6,9 +6,10 @@
 \usage{
 EGM(
   data,
-  EGM.type = c("search", "standard", "EGA"),
+  EGM.model = c("standard", "EGA"),
   communities = NULL,
   structure = NULL,
+  search = FALSE,
   p.in = NULL,
   p.out = NULL,
   opt = c("AIC", "BIC", "CFI", "chisq", "logLik", "RMSEA", "SRMR", "TEFI", "TEFI.adj",
@@ -23,7 +24,7 @@ EGM(
 Should consist only of variables to be used in the analysis.
 Can be raw data or a correlation matrix}
 
-\item{EGM.type}{Character vector (length = 1).
+\item{EGM.model}{Character vector (length = 1).
 Sets the procedure to conduct \code{EGM}.
 Available options:
 
@@ -31,13 +32,6 @@ Available options:
 
 \item \code{"EGA"} (default) --- Applies \code{\link[EGAnet]{EGA}} to obtain the
 (sparse) regularized network structure, communities, and memberships
-
-\item \code{"search"} --- Searches over \code{p.in} and \code{p.out}
-parameters for best fit based on Bayesian information criterion (BIC).
-Uses \code{EGM.type = "standard"} under the hood. Only the argument
-\code{p.in} is used such that \code{p.in} searches over
-\code{seq(p.in, 1, 0.05)} and \code{p.out} searches over
-\code{seq(0.00, p.in, 0.05)}
 
 \item \code{"standard"} --- Applies the standard EGM model which
 estimates communities based on the non-regularized empirical partial
@@ -55,6 +49,12 @@ on the empirical non-regularized partial correlation matrix}
 \item{structure}{Numeric or character vector (length = \code{ncol(data)}).
 Can be theoretical factors or the structure detected by \code{\link[EGAnet]{EGA}}.
 Defaults to \code{NULL}}
+
+\item{search}{Boolean (length = 1).
+Whether a search over parameters should be conducted.
+Defaults to \code{FALSE}.
+Set to \code{TRUE} to select a model over a variety of parameters that
+optimizes the \code{opt} objective}
 
 \item{p.in}{Numeric vector (length = 1).
 Probability that a node is randomly linked to other nodes in the same community.

@@ -129,7 +129,7 @@
 #' @export
 #'
 # Compute networks for EGA ----
-# Updated 21.09.2024
+# Updated 05.11.2024
 network.estimation <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
@@ -259,7 +259,11 @@ network.estimation <- function(
     if(isFALSE(network.only)){
 
       # Switch with method
-      estimated_network <- estimation_OUTPUT$network
+      estimated_network <- switch(
+        model,
+        "glasso" = estimation_OUTPUT$optnet,
+        "tmfg" = estimation_OUTPUT$network
+      )
 
     }else{
 

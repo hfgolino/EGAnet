@@ -205,7 +205,7 @@ EGM.compare_errors <- function(data, ...)
 
 #' @exportS3Method
 # S3 Print Method ----
-# Updated 03.11.2024
+# Updated 05.11.2024
 print.EGM.compare <- function(x, ...)
 {
 
@@ -267,6 +267,21 @@ print.EGM.compare <- function(x, ...)
 
   # Print to smallest decimal
   print(rounded)
+
+  # Obtain values for likelihood ratio test
+  q <- x$fit$EGM[1] - x$fit$EFA[1]
+  df <- x$fit$EGM[2] - x$fit$EFA[2]
+  p <- pchisq(q, df, lower.tail = FALSE)
+
+  # Print likelihood ratio test
+  cat(
+    paste0(
+      "\nLikelihood ratio test: X^2 (", df, ") = ",
+      round(q, 3), ", p ", swiftelse(
+        p < 0.001, "< 0.001", paste0("= ", round(p, 3))
+      ), "\n"
+    )
+  )
 
   # Set back user's options
   options(scipen = user_scipen)
