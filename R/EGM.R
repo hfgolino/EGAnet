@@ -375,7 +375,7 @@ nload2cor <- function(loadings)
 
 #' @noRd
 # Estimated loadings cost (based on SRMR) ----
-# Updated 17.10.2024
+# Updated 05.11.2024
 srmr_N_cost <- function(
     loadings_vector, zeros, R,
     loading_structure, rows,
@@ -416,6 +416,17 @@ srmr_N_cost <- function(
     # Compute matrix I
     I <- diag(sqrt(1 / interdependence))
 
+    # Get implied R
+    implied_R <- I %*% P %*% I
+
+    # Check for positive definite
+    return(
+      swiftelse(
+        is_positive_definite(implied_R), # return SRMR
+        srmr(R, implied_R) + sqrt(mean(difference_values)), Inf
+      )
+    )
+
     # Return SRMR
     return(
       srmr(R, I %*% P %*% I) + # SRMR term (second term = implied R)
@@ -439,8 +450,16 @@ srmr_N_cost <- function(
     # Compute matrix I
     I <- diag(sqrt(1 / interdependence))
 
-    # Return SRMR
-    return(srmr(R, I %*% P %*% I))
+    # Get implied R
+    implied_R <- I %*% P %*% I
+
+    # Check for positive definite
+    return(
+      swiftelse(
+        is_positive_definite(implied_R), # return SRMR
+        srmr(R, implied_R), Inf
+      )
+    )
 
   }
 
@@ -497,9 +516,6 @@ srmr_N_gradient <- function(
     dError <- matrix(0, nrow = ncol(R), ncol = ncol(R))
     dError[lower_triangle] <- 2 * error / length(error)
     dError <- dError + t(dError)
-
-    # Gradients
-    srmr_gradient <-
 
     # Return gradient
     return(
