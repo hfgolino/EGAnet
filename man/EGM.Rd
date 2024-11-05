@@ -129,7 +129,7 @@ Function to fit the Exploratory Graph Model
 }
 \examples{
 # Get depression data
-data <- na.omit(depression[,24:44])
+data <- depression[,24:44]
 
 # Estimate EGM (using EGA)
 egm_ega <- EGM(data)

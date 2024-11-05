@@ -45,7 +45,7 @@ uses the number of communities as the number of dimensions in exploratory factor
 }
 \examples{
 # Get depression data
-data <- na.omit(depression[,24:44])
+data <- depression[,24:44]
 
 # Compare EGM (using EGA) with EFA
 \dontrun{

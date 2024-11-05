@@ -37,7 +37,7 @@
 #'
 #' @examples
 #' # Get depression data
-#' data <- na.omit(depression[,24:44])
+#' data <- depression[,24:44]
 #'
 #' # Compare EGM (using EGA) with EFA
 #' \dontrun{
