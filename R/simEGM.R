@@ -527,7 +527,7 @@ N_cost <- function(loadings_vector, P, zeros, lower_triangle, total_variables)
 
 #' @noRd
 # Loadings partial correlation gradient ----
-# Updated 04.11.2024
+# Updated 06.11.2024
 N_gradient <- function(loadings_vector, P, zeros, lower_triangle, total_variables)
 {
 
@@ -569,19 +569,16 @@ N_gradient <- function(loadings_vector, P, zeros, lower_triangle, total_variable
   dError[lower_triangle] <- 2 * error / length(error)
   dError <- dError + t(dError)
 
-  # Derivative of D with respect to P (covariance)
-  # dD <- -tcrossprod(dError, INV_D) # Not needed?
-
   # Derivative of INV with respect to P
-  dINV <- -D %*% dError %*% D
+  # dINV <- -D %*% dError %*% D
 
   # Derivative with respect to R
-  dR <- -INV %*% dINV %*% INV
+  dR <- -INV %*% (-D %*% dError %*% D) %*% INV
 
   # Derivative with respect to P
-  dP <- I %*% tcrossprod(dR, I)
+  # dP <- I %*% tcrossprod(dR, I)
 
-  # Return gradient
-  return(as.vector(t(crossprod(2 * loadings_matrix, dP))) * zeros)
+  # Return gradient (2x leads to fewer iterations)
+  return(as.vector(t(crossprod(2 * loadings_matrix, I %*% tcrossprod(dR, I)))) * zeros)
 
 }

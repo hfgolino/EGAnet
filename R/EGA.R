@@ -550,7 +550,7 @@ plot.EGA <- function(x, ...)
 }
 
 #' @noRd
-# Cleaning adjusts model arguments
+# Cleaning adjusts model arguments ----
 # Updated 23.06.2023
 adjust_model_arguments <- function(model_ARGS)
 {

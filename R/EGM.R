@@ -115,23 +115,27 @@
 #'
 #' # Estimate EGM (using standard)
 #' egm_standard <- EGM(
-#'   data, EGM.type = "standard",
+#'   data, EGM.model = "standard",
 #'   communities = 3, # specify number of communities
 #'   p.in = 0.95, # probability of edges *in* each community
 #'   p.out = 0.80 # probability of edges *between* each community
 #' )
 #'
 #' \dontrun{
-#' # Estimate EGM (using search)
-#' egm_search <- EGM(
-#'   data, EGM.type = "search", communities = 3,
-#'   p.in = 0.95 # only need 'p.in'
+#' # Estimate EGM (using EGA search)
+#' egm_ega_search <- EGM(
+#'   data, EGM.model = "EGA", search = TRUE
 #' )
 #'
-#' # Estimate EGM (using search with EGA structure)
+#' # Estimate EGM (using EGA search and AIC criterion)
+#' egm_ega_search_AIC <- EGM(
+#'   data, EGM.model = "EGA", search = TRUE, opt = "AIC"
+#' )
+#'
+#' # Estimate EGM (using search)
 #' egm_search <- EGM(
-#'   data, EGM.type = "search",
-#'   structure = EGA(data, plot.EGA = FALSE)$wc,
+#'   data, EGM.model = "standard", search = TRUE,
+#'   communities = 3, # need communities or structure
 #'   p.in = 0.95 # only need 'p.in'
 #' )}
 #'
@@ -140,7 +144,7 @@
 #' @export
 #'
 # Estimate EGM ----
-# Updated 05.11.2024
+# Updated 06.11.2024
 EGM <- function(
     data, EGM.model = c("standard", "EGA"),
     communities = NULL, structure = NULL, search = FALSE,
@@ -179,8 +183,8 @@ EGM <- function(
   return(
     switch(
       EGM.type,
-      "search" = EGM.search(data, communities, structure, p.in, opt, constrained, verbose, ...),
       "standard" = EGM.standard(data, communities, structure, p.in, p.out, opt, constrained, ...),
+      "search" = EGM.search(data, communities, structure, p.in, opt, constrained, verbose, ...),
       "ega" = EGM.EGA(data, structure, opt, constrained, ...),
       "ega.search" = EGM.EGA.search(data, communities, structure, opt, constrained, verbose, ...)
     )
@@ -317,6 +321,8 @@ plot.EGM <- function(x, ...)
 
 }
 
+# LOADINGS ----
+
 #' @noRd
 # Network loadings to partial correlations ----
 # Updated 14.10.2024
@@ -378,13 +384,15 @@ nload2cor <- function(loadings)
 
 }
 
+# OPTIMIZATION ----
+
 #' @noRd
 # Estimated loadings cost (based on SRMR) ----
-# Updated 05.11.2024
+# Updated 06.11.2024
 srmr_N_cost <- function(
     loadings_vector, zeros, R,
     loading_structure, rows,
-    constrained, ...
+    constrained, lower_triangle, ...
 )
 {
 
@@ -466,11 +474,11 @@ srmr_N_cost <- function(
 
 #' @noRd
 # Estimated loadings gradient (based on SRMR) ----
-# Updated 05.11.2024
+# Updated 06.11.2024
 srmr_N_gradient <- function(
     loadings_vector, zeros, R,
     loading_structure, rows,
-    constrained, ...
+    constrained, lower_triangle, ...
 )
 {
 
@@ -508,7 +516,6 @@ srmr_N_gradient <- function(
     I <- diag(sqrt(1 / interdependence))
 
     # Compute error
-    lower_triangle <- lower.tri(R)
     error <- (I %*% implied_P %*% I - R)[lower_triangle]
 
     # Derivative of error with respect to P (covariance)
@@ -518,8 +525,8 @@ srmr_N_gradient <- function(
 
     # Return gradient
     return(
-      as.vector(
-        t(crossprod(loadings_matrix, I %*% tcrossprod(dError, I))) +
+      as.vector( # (2x leads to fewer iterations)
+        t(crossprod(2 * loadings_matrix, I %*% tcrossprod(dError, I))) +
         difference_values
       ) * zeros
     )
@@ -542,7 +549,6 @@ srmr_N_gradient <- function(
     I <- diag(sqrt(1 / interdependence))
 
     # Compute error
-    lower_triangle <- lower.tri(R)
     error <- (I %*% implied_P %*% I - R)[lower_triangle]
 
     # Derivative of error with respect to P (covariance)
@@ -550,59 +556,14 @@ srmr_N_gradient <- function(
     dError[lower_triangle] <- 2 * error / length(error)
     dError <- dError + t(dError)
 
-    # Return gradient
-    return(as.vector(t(crossprod(loadings_matrix, I %*% tcrossprod(dError, I)))) * zeros)
+    # Return gradient (2x leads to fewer iterations)
+    return(as.vector(t(crossprod(2 * loadings_matrix, I %*% tcrossprod(dError, I)))) * zeros)
 
   }
 
 }
 
-#' @noRd
-# Estimated loadings cost (based on log-likelihood) ----
-# Updated 17.10.2024
-likelihood_N_cost <- function(
-    loadings_vector, zeros, R,
-    loading_structure, rows, n, opt, ...
-)
-{
-
-  # Assemble loading matrix
-  loadings_matrix <- matrix(loadings_vector * zeros, nrow = rows, byrow = TRUE)
-
-  # Obtain assign loadings
-  assign_loadings <- loadings_matrix[loading_structure]
-
-  # Transpose loadings matrix
-  loadings_matrix <- t(loadings_matrix)
-
-  # Obtain differences
-  differences <- abs(loadings_matrix) - assign_loadings
-
-  # Obtain difference values
-  difference_values <- (differences * (differences > 0))^2
-
-  # Convert loadings to implied correlations following `nload2cor`
-  # Uses raw code to avoid overhead of additional function calls
-
-  # Compute partial correlation
-  P <- tcrossprod(loadings_matrix)
-
-  # Obtain interdependence
-  interdependence <- sqrt(rowSums(loadings_matrix^2))
-
-  # Set diagonal to interdependence
-  diag(P) <- interdependence
-
-  # Compute matrix I
-  I <- diag(sqrt(1 / interdependence))
-
-  # Check for error
-  return(
-    likelihood(n, rows, I %*% P %*% I, R, loadings_matrix)[[opt]] + # likelihood term
-    sqrt(mean((difference_values)^2)) # penalty term
-  )
-
-}
+# LIKELIHOOD ----
 
 #' @noRd
 # Log-likelihood only ----
@@ -680,9 +641,11 @@ compute_tefi_adjustment <- function(loadings, correlations)
 
 }
 
+# EGM MODELS ----
+
 #' @noRd
 # EGM | Standard ----
-# Updated 01.11.2024
+# Updated 06.11.2024
 EGM.standard <- function(data, communities, structure, p.in, p.out, opt, constrained, ...)
 {
 
@@ -791,18 +754,16 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, opt, constra
     loading_structure[structure[i], i] <- TRUE
   }
 
-  # For now, just use SRMR
-  cost_FUN <- srmr_N_cost
-
   # Optimize over loadings
   result <- silent_call(
     nlminb(
-      start = loadings_vector, objective = cost_FUN,
+      start = loadings_vector, objective = srmr_N_cost,
       gradient = srmr_N_gradient,
       zeros = zeros, R = empirical_R,
       loading_structure = loading_structure,
       rows = communities, n = data_dimensions[1],
-      opt = toupper(opt), constrained = constrained,
+      constrained = constrained,
+      lower_triangle = lower.tri(empirical_R),
       lower = rep(-1, loadings_length),
       upper = rep(1, loadings_length),
       control = list(eval.max = 10000, iter.max = 10000)
@@ -811,65 +772,6 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, opt, constra
 
   # Set estimate
   result$estimate <- result$par
-
-  # # Switch out optimization criterion
-  # cost_FUN <- switch(
-  #   opt,
-  #   "aic" = likelihood_N_cost,
-  #   "bic" = likelihood_N_cost,
-  #   "srmr" = srmr_N_cost
-  # )
-  #
-  # # Check for gradient
-  # if(opt == "srmr"){
-  #
-  #   # Optimize over loadings
-  #   result <- silent_call(
-  #     nlminb(
-  #       start = loadings_vector, objective = cost_FUN,
-  #       gradient = srmr_N_gradient,
-  #       zeros = zeros, R = ega$correlation,
-  #       loading_structure = loading_structure,
-  #       rows = communities, n = data_dimensions[1],
-  #       opt = toupper(opt), constrained = constrained,
-  #       lower = rep(-1, loadings_length),
-  #       upper = rep(1, loadings_length),
-  #       control = list(eval.max = 10000, iter.max = 10000)
-  #     )
-  #   )
-  #
-  #   # Set estimate
-  #   result$estimate <- result$par
-  #
-  #   # # Optimize over loadings
-  #   # result <- silent_call(
-  #   #   nlm(
-  #   #     p = loadings_vector, f = cost_FUN,
-  #   #     zeros = zeros, R = ega$correlation,
-  #   #     loading_structure = loading_structure,
-  #   #     rows = communities, n = data_dimensions[1],
-  #   #     opt = toupper(opt), iterlim = 1000, gradtol = 1e-08
-  #   #     # cheat the gradient for maximal speed
-  #   #     # with minimal accuracy trade-off
-  #   #   )
-  #   # )
-  #
-  # }else{
-  #
-  #   # Optimize over loadings
-  #   result <- silent_call(
-  #     nlm(
-  #       p = loadings_vector, f = cost_FUN,
-  #       zeros = zeros, R = ega$correlation,
-  #       loading_structure = loading_structure,
-  #       rows = communities, n = data_dimensions[1],
-  #       opt = toupper(opt), iterlim = 1000, gradtol = 1e-04
-  #       # cheat the gradient for maximal speed
-  #       # with minimal accuracy trade-off
-  #     )
-  #   )
-  #
-  # }
 
   # Extract optimized loadings
   optimized_loadings <- matrix(
@@ -898,8 +800,7 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, opt, constra
     ),
     network = community_P, wc = structure,
     n.dim = unique_length(structure), correlation = empirical_R,
-    n = data_dimensions[1], TEFI_adj = tefi(empirical_R, structure)$VN.Entropy.Fit -
-      compute_tefi_adjustment(optimized_loadings, optimized_correlations)
+    n = data_dimensions[1], TEFI = tefi(empirical_R, structure)$VN.Entropy.Fit
   ); class(ega_list) <- "EGA"
 
   # Attach methods to network
@@ -955,6 +856,375 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, opt, constra
   return(results)
 
 }
+
+#' @noRd
+# EGM | Search ----
+# Updated 06.11.2024
+EGM.search <- function(data, communities, structure, p.in, opt, constrained, verbose, ...)
+{
+
+  # Perform search based on 'p.in'
+  p_grid <- expand.grid(
+    p_in = seq(p.in, 1, 0.05), p_out = seq(0.00, p.in, 0.05)
+  )
+
+  # Get number of search
+  p_number <- dim(p_grid)[1]
+
+  # Fit name based on fit
+  fit_name <- switch(
+    opt,
+    "aic" = "AIC", "bic" = "BIC",
+    "cfi" = "CFI", "chisq" = "chisq",
+    "loglik" = "logLik", "rmsea" = "RMSEA",
+    "srmr" = "SRMR", "tefi" = "TEFI",
+    "tefi.adj" = "TEFI.adj", "tli" = "TLI"
+  )
+
+  # Loop over grid search
+  grid_search <- parallel_process(
+    iterations = p_number, datalist = seq_len(p_number),
+    FUN = function(i, data, p_grid, communities, structure, opt, constrained, ...){
+
+      # First, try
+      output <- silent_call(
+        try(
+          EGM.standard(
+            data = data, communities = communities,
+            structure = structure, p.in = p_grid$p_in[i],
+            p.out = p_grid$p_out[i], opt = opt,
+            constrained = constrained, ...
+          ), silent = TRUE
+        )
+      )
+
+      # Return result
+      return(swiftelse(is(output, "try-error"), NULL, output))
+
+    },
+    # `EGM.standard` arguments
+    data = data, p_grid = p_grid,
+    communities = communities, structure = structure,
+    opt = opt, constrained = constrained, ...,
+    # `parallel_process` arguments
+    ncores = 1, progress = verbose
+  )
+
+  # Obtain fits
+  optimized_fits <- nvapply(
+    grid_search, function(x){
+      swiftelse(is.null(x), NA, x$model$optimized$fit[[fit_name]])
+    }
+  )
+
+  # Check for all NA
+  if(all(is.na(optimized_fits))){
+
+    # Set error if no solution is found
+    .handleSimpleError(
+      h = stop,
+      msg = paste0(
+        "Search could not converge to any solutions. \n\n",
+        "Try:\n",
+        "  +  increasing 'p.in'\n",
+        "  +  changing 'communities'\n",
+        "  +  changing 'structure'"
+      ),
+      call = "EGM"
+    )
+
+  }
+
+  # Index function based on fit
+  index_FUN <- switch(
+    opt,
+    "aic" = which.min, "bic" = which.min,
+    "cfi" = which.max, "chisq" = which.min,
+    "loglik" = which.max, "rmsea" = which.min,
+    "srmr" = which.min, "tefi" = which.min,
+    "tefi.adj" = which.min, "tli" = which.max
+  )
+
+  # Obtain index
+  opt_index <- index_FUN(optimized_fits)
+
+  # Set up final model
+  results <- grid_search[[opt_index]]
+
+  # Add 'p.in' and 'p.out' parameters
+  results$search <- c(
+    p.in = p_grid[opt_index, "p_in"],
+    p.out = p_grid[opt_index, "p_out"]
+  )
+
+  # Overwrite class
+  class(results) <- "EGM"
+
+  # Return results
+  return(results)
+
+}
+
+#' @noRd
+# EGM | EGA ----
+# Updated 06.11.2024
+EGM.EGA <- function(data, structure, opt, constrained, ...)
+{
+
+  # Obtain data dimensions
+  data_dimensions <- dim(data)
+
+  # Estimate EGA
+  ega <- EGA(data, plot.EGA = FALSE, ...)
+  empirical_P <- cor2pcor(ega$correlation)
+
+  # Update number of rows based on EGA
+  data_dimensions[1] <- ega$n
+
+  # Obtain variable names from the network
+  variable_names <- dimnames(ega$network)[[2]]
+
+  # Set memberships based on structure
+  if(!is.null(structure)){
+
+    # Update EGA features
+    ega$wc[] <- structure
+    ega$dim.variables$dimension <- structure
+
+  }else{
+    structure <- ega$wc
+  }
+
+  # Set communities
+  ega$n.dim <- communities <- unique_length(structure)
+
+  # Obtain standard network loadings
+  output <- silent_call(net.loads(A = ega$network, wc = ega$wc, ...))
+
+  # Obtain standard loadings
+  standard_loadings <- output$std[variable_names,, drop = FALSE]
+
+  # Compute network scores
+  standard_scores <- compute_scores(output, data, "network", "simple")$std.scores
+
+  # Compute community correlations
+  standard_correlations <- cor(standard_scores, use = "pairwise")
+
+  # Obtain model-implied correlations
+  standard_R <- nload2cor(standard_loadings)
+  standard_P <- cor2pcor(standard_R)
+
+  # Get loading dimensions
+  dimensions <- dim(standard_loadings)
+  dimension_names <- dimnames(standard_loadings)
+
+  # Obtain loadings vector and get bounds
+  loadings_vector <- as.vector(standard_loadings)
+  zeros <- loadings_vector != 0
+  loadings_length <- length(loadings_vector)
+
+  # Set up loading structure
+  # Uses transpose for 2x speed up in optimization
+  loading_structure <- matrix(
+    FALSE, nrow = dimensions[2],
+    ncol = dimensions[1],
+    dimnames = list(dimension_names[[2]], dimension_names[[1]])
+  )
+
+  # Fill structure
+  for(i in seq_along(structure)){
+    loading_structure[structure[i], i] <- TRUE
+  }
+
+  # Optimize over loadings
+  result <- silent_call(
+    nlminb(
+      start = loadings_vector, objective = srmr_N_cost,
+      gradient = srmr_N_gradient,
+      zeros = zeros, R = ega$correlation,
+      loading_structure = loading_structure,
+      rows = communities, n = data_dimensions[1],
+      constrained = constrained,
+      lower_triangle = lower.tri(ega$correlation),
+      lower = rep(-1, loadings_length),
+      upper = rep(1, loadings_length),
+      control = list(eval.max = 10000, iter.max = 10000)
+    )
+  )
+
+  # Set estimate
+  result$estimate <- result$par
+
+  # Extract optimized loadings
+  optimized_loadings <- matrix(
+    result$estimate, nrow = dimensions[1],
+    dimnames = dimension_names
+  )
+
+  # Replace loadings output with optimized loadings
+  output$loadings$std <- optimized_loadings
+
+  # Compute network scores
+  optimized_scores <- compute_scores(output, data, "network", "simple")$std.scores
+
+  # Compute community correlations
+  optimized_correlations <- cor(optimized_scores, use = "pairwise")
+
+  # Obtain model-implied correlations
+  optimized_R <- nload2cor(optimized_loadings)
+  optimized_P <- cor2pcor(optimized_R)
+
+  # Set up results
+  results <- list(
+    EGA = ega, structure = structure,
+    model = list( # general list
+      standard = list( # using standard parameters
+        loadings = standard_loadings,
+        scores = standard_scores,
+        correlations = standard_correlations,
+        fit = fit(
+          n = data_dimensions[1], p = data_dimensions[2],
+          R = standard_R, S = ega$correlation,
+          loadings = output$std, correlations = standard_correlations,
+          structure = ega$wc, ci = 0.95
+        ),
+        implied = list(R = standard_R, P = standard_P)
+      ),
+      optimized = list( # using optimized parameters
+        loadings = optimized_loadings,
+        scores = optimized_scores,
+        correlations = optimized_correlations,
+        fit = fit(
+          n = data_dimensions[1], p = data_dimensions[2],
+          R = optimized_R, S = ega$correlation,
+          loadings = optimized_loadings,
+          correlations = optimized_correlations,
+          structure = ega$wc, ci = 0.95
+        ),
+        implied = list(R = optimized_R, P = optimized_P)
+      )
+    )
+  )
+
+  # Set class
+  class(results) <- "EGM"
+
+  # Return results
+  return(results)
+
+}
+
+# EGM | EGA search ----
+# Updated 06.11.2024
+EGM.EGA.search <- function(data, communities, structure, opt, constrained, verbose, ...)
+{
+
+  # Fit name based on fit
+  fit_name <- switch(
+    opt,
+    "aic" = "AIC", "bic" = "BIC",
+    "cfi" = "CFI", "chisq" = "chisq",
+    "loglik" = "logLik", "rmsea" = "RMSEA",
+    "srmr" = "SRMR", "tefi" = "TEFI",
+    "tefi.adj" = "TEFI.adj", "tli" = "TLI"
+  )
+
+  # Get number of dimensions
+  data_dimensions <- dim(data)
+
+  # Put data through `EBICglasso.qgraph`
+  glasso_output <- network.estimation(data, network.only = FALSE, ...)
+
+  # Obtain attributes
+  glasso_attr <- attributes(glasso_output$estimated_network)
+
+  # Obtain fits
+  fits <- lapply(
+    seq_len(glasso_attr$methods$nlambda), function(i){
+
+      # Convert to partial correlations
+      P <- wi2net(glasso_output$output$results$wi[,,i])
+      dimnames(P) <- glasso_attr$dimnames
+
+      # Obtain organized output
+      output <- try(
+        silent_call(
+          glasso_fit(
+            data = data, S = glasso_output$output$S,
+            glasso_attr = glasso_attr, P = P,
+            data_dimensions = data_dimensions,
+            constrained = constrained, opt = opt,
+            ...
+          )
+        ), silent = TRUE
+      )
+
+      # Return output
+      return(swiftelse(is(output, "try-error"), NULL, output))
+
+    }
+  )
+
+  # Add names to fits
+  names(fits) <- glasso_output$output$lambda
+
+  # Obtain fit index
+  fit_index <- nvapply(fits[!lvapply(fits, is.null)], function(x){
+    return(x$model$optimized$fit[[fit_name]])
+  })
+
+  # Index function based on fit
+  index_FUN <- switch(
+    opt,
+    "aic" = min, "bic" = min,
+    "cfi" = max, "chisq" = min,
+    "loglik" = max, "rmsea" = min,
+    "srmr" = min, "tefi" = min,
+    "tefi.adj" = min, "tli" = max
+  )
+
+  # Obtain optimum value
+  opt_value <- index_FUN(fit_index)
+
+  # Obtain index
+  opt_index <- max(which(fit_index == opt_value))
+
+  # Obtain lambda (as character)
+  lambda <- names(fit_index)[[opt_index]]
+
+  # Obtain results
+  results <- fits[[lambda]]
+
+  # Set up 'dim.variables' for EGA
+  dim.variables <- fast.data.frame(
+    c(dimnames(results$EGA$network)[[2]], structure),
+    nrow = data_dimensions[2], ncol = 2,
+    colnames = c("items", "dimension")
+  )
+
+  # Add to EGA results
+  results$EGA$dim.variables <- dim.variables[order(dim.variables$dimension),]
+
+  # Compute TEFI for EGA
+  results$EGA$TEFI <- tefi(glasso_output$output$S, results$EGA$wc)$VN.Entropy.Fit
+
+  # Set up network methods
+  attributes(results$EGA$network) <- glasso_attr
+  attributes(results$EGA$network)$methods[
+    c("model.selection", "lambda", "criterion")
+  ] <- list(
+    model.selection = fit_name, lambda = as.numeric(lambda), criterion = opt_value
+  )
+
+  # Overwrite class
+  class(results) <- "EGM"
+
+  # Return results
+  return(results)
+
+}
+
+# EGM UTILITIES ----
 
 #' @noRd
 # Creates community structure ----
@@ -1062,361 +1332,8 @@ compute_density <- function(network)
 }
 
 #' @noRd
-# EGM | EGA ----
-# Updated 01.11.2024
-EGM.EGA <- function(data, structure, opt, constrained, ...)
-{
-
-  # Obtain data dimensions
-  data_dimensions <- dim(data)
-
-  # Estimate EGA
-  ega <- EGA(data, plot.EGA = FALSE, ...)
-  empirical_P <- cor2pcor(ega$correlation)
-
-  # Update number of rows based on EGA
-  data_dimensions[1] <- ega$n
-
-  # Obtain variable names from the network
-  variable_names <- dimnames(ega$network)[[2]]
-
-  # Set memberships based on structure
-  if(!is.null(structure)){
-
-    # Update EGA features
-    ega$wc[] <- structure
-    ega$dim.variables$dimension <- structure
-
-  }else{
-    structure <- ega$wc
-  }
-
-  # Set communities
-  ega$n.dim <- communities <- unique_length(structure)
-
-  # Obtain standard network loadings
-  output <- silent_call(net.loads(A = ega$network, wc = ega$wc, ...))
-
-  # Obtain standard loadings
-  standard_loadings <- output$std[variable_names,, drop = FALSE]
-
-  # Compute network scores
-  standard_scores <- compute_scores(output, data, "network", "simple")$std.scores
-
-  # Compute community correlations
-  standard_correlations <- cor(standard_scores, use = "pairwise")
-
-  # Obtain model-implied correlations
-  standard_R <- nload2cor(standard_loadings)
-  standard_P <- cor2pcor(standard_R)
-
-  # Get loading dimensions
-  dimensions <- dim(standard_loadings)
-  dimension_names <- dimnames(standard_loadings)
-
-  # Obtain loadings vector and get bounds
-  loadings_vector <- as.vector(standard_loadings)
-  zeros <- loadings_vector != 0
-  loadings_length <- length(loadings_vector)
-
-  # Set up loading structure
-  # Uses transpose for 2x speed up in optimization
-  loading_structure <- matrix(
-    FALSE, nrow = dimensions[2],
-    ncol = dimensions[1],
-    dimnames = list(dimension_names[[2]], dimension_names[[1]])
-  )
-
-  # Fill structure
-  for(i in seq_along(structure)){
-    loading_structure[structure[i], i] <- TRUE
-  }
-
-  # Optimize over loadings
-  result <- silent_call(
-    nlminb(
-      start = loadings_vector, objective = srmr_N_cost,
-      gradient = srmr_N_gradient,
-      zeros = zeros, R = ega$correlation,
-      loading_structure = loading_structure,
-      rows = communities, n = data_dimensions[1],
-      opt = toupper(opt), constrained = constrained,
-      lower = rep(-1, loadings_length),
-      upper = rep(1, loadings_length),
-      control = list(eval.max = 10000, iter.max = 10000)
-    )
-  )
-
-  # Set estimate
-  result$estimate <- result$par
-
-  # Extract optimized loadings
-  optimized_loadings <- matrix(
-    result$estimate, nrow = dimensions[1],
-    dimnames = dimension_names
-  )
-
-  # Replace loadings output with optimized loadings
-  output$loadings$std <- optimized_loadings
-
-  # Compute network scores
-  optimized_scores <- compute_scores(output, data, "network", "simple")$std.scores
-
-  # Compute community correlations
-  optimized_correlations <- cor(optimized_scores, use = "pairwise")
-
-  # Obtain model-implied correlations
-  optimized_R <- nload2cor(optimized_loadings)
-  optimized_P <- cor2pcor(optimized_R)
-
-  # Set up results
-  results <- list(
-    EGA = ega, structure = structure,
-    model = list( # general list
-      standard = list( # using standard parameters
-        loadings = standard_loadings,
-        scores = standard_scores,
-        correlations = standard_correlations,
-        fit = fit(
-          n = data_dimensions[1], p = data_dimensions[2],
-          R = standard_R, S = ega$correlation,
-          loadings = output$std, correlations = standard_correlations,
-          structure = ega$wc, ci = 0.95
-        ),
-        implied = list(R = standard_R, P = standard_P)
-      ),
-      optimized = list( # using optimized parameters
-        loadings = optimized_loadings,
-        scores = optimized_scores,
-        correlations = optimized_correlations,
-        fit = fit(
-          n = data_dimensions[1], p = data_dimensions[2],
-          R = optimized_R, S = ega$correlation,
-          loadings = optimized_loadings,
-          correlations = optimized_correlations,
-          structure = ega$wc, ci = 0.95
-        ),
-        implied = list(R = optimized_R, P = optimized_P)
-      )
-    )
-  )
-
-  # Set class
-  class(results) <- "EGM"
-
-  # Return results
-  return(results)
-
-}
-
-#' @noRd
-# EGM | Search ----
-# Updated 22.10.2024
-EGM.search <- function(data, communities, structure, p.in, opt, constrained, verbose, ...)
-{
-
-  # Perform search based on 'p.in'
-  p_grid <- expand.grid(
-    p_in = seq(p.in, 1, 0.05), p_out = seq(0.00, p.in, 0.05)
-  )
-
-  # Get number of search
-  p_number <- dim(p_grid)[1]
-
-  # Fit name based on fit
-  fit_name <- switch(
-    opt,
-    "aic" = "AIC", "bic" = "BIC",
-    "cfi" = "CFI", "chisq" = "chisq",
-    "loglik" = "logLik", "rmsea" = "RMSEA",
-    "srmr" = "SRMR", "tefi" = "TEFI",
-    "tefi.adj" = "TEFI.adj", "tli" = "TLI"
-  )
-
-  # Loop over grid search
-  grid_search <- parallel_process(
-    iterations = p_number, datalist = seq_len(p_number),
-    FUN = function(i, data, p_grid, communities, structure, opt, constrained, ...){
-
-      # First, try
-      output <- silent_call(
-        try(
-          EGM(
-            data = data, EGM.type = "standard",
-            communities = communities, structure = structure,
-            opt = opt, constrained = constrained,
-            p.in = p_grid$p_in[i], p.out = p_grid$p_out[i], ...
-          ), silent = TRUE
-        )
-      )
-
-      # Return result
-      return(swiftelse(is(output, "try-error"), NULL, output))
-
-    },
-    # `EGM.standard` arguments
-    data = data, p_grid = p_grid,
-    communities = communities, structure = structure,
-    opt = opt, constrained = constrained, ...,
-    # `parallel_process` arguments
-    ncores = 1, progress = verbose
-  )
-
-  # Obtain fits
-  optimized_fits <- nvapply(
-    grid_search, function(x){
-      swiftelse(is.null(x), NA, x$model$optimized$fit[[fit_name]])
-    }
-  )
-
-  # Check for all NA
-  if(all(is.na(optimized_fits))){
-
-    # Set error if no solution is found
-    .handleSimpleError(
-      h = stop,
-      msg = paste0(
-        "Search could not converge to any solutions. \n\n",
-        "Try:\n",
-        "  +  increasing 'p.in'\n",
-        "  +  changing 'communities'\n",
-        "  +  changing 'structure'"
-      ),
-      call = "EGM"
-    )
-
-  }
-
-  # Index function based on fit
-  index_FUN <- switch(
-    opt,
-    "aic" = which.min, "bic" = which.min,
-    "cfi" = which.max, "chisq" = which.min,
-    "loglik" = which.max, "rmsea" = which.min,
-    "srmr" = which.min, "tefi" = which.min,
-    "tefi.adj" = which.min, "tli" = which.max
-  )
-
-  # Obtain index
-  opt_index <- index_FUN(optimized_fits)
-
-  # Set up final model
-  results <- grid_search[[opt_index]]
-
-  # Add 'p.in' and 'p.out' parameters
-  results$search <- c(
-    p.in = p_grid[opt_index, "p_in"],
-    p.out = p_grid[opt_index, "p_out"]
-  )
-
-  # Overwrite class
-  class(results) <- "EGM"
-
-  # Return results
-  return(results)
-
-}
-
-# EGM | EGA search ----
-# Updated 05.11.2024
-EGM.EGA.search <- function(data, communities, structure, opt, constrained, verbose, ...)
-{
-
-  # Fit name based on fit
-  fit_name <- switch(
-    opt,
-    "aic" = "AIC", "bic" = "BIC",
-    "cfi" = "CFI", "chisq" = "chisq",
-    "loglik" = "logLik", "rmsea" = "RMSEA",
-    "srmr" = "SRMR", "tefi" = "TEFI",
-    "tefi.adj" = "TEFI.adj", "tli" = "TLI"
-  )
-
-  # Get number of dimensions
-  data_dimensions <- dim(data)
-
-  # Put data through `EBICglasso.qgraph`
-  glasso_output <- network.estimation(data, network.only = FALSE, ...)
-
-  # Obtain attributes
-  glasso_attr <- attributes(glasso_output$estimated_network)
-
-  # Obtain fits
-  fits <- lapply(
-    seq_len(glasso_attr$methods$nlambda), function(i){
-
-      # Convert to partial correlations
-      P <- wi2net(glasso_output$output$results$wi[,,i])
-      dimnames(P) <- glasso_attr$dimnames
-
-      # Obtain organized output
-      output <- try(
-        silent_call(
-          glasso_fit(
-            data = data, S = glasso_output$output$S,
-            glasso_attr = glasso_attr, P = P,
-            data_dimensions = data_dimensions,
-            constrained = constrained, opt = opt,
-            ...
-          )
-        ), silent = TRUE
-      )
-
-      # Return output
-      return(swiftelse(is(output, "try-error"), NULL, output))
-
-    }
-  )
-
-  # Add names to fits
-  names(fits) <- glasso_output$output$lambda
-
-  # Obtain fit index
-  fit_index <- nvapply(fits[!lvapply(fits, is.null)], function(x){
-    return(x$model$optimized$fit[[fit_name]])
-  })
-
-  # Index function based on fit
-  index_FUN <- switch(
-    opt,
-    "aic" = min, "bic" = min,
-    "cfi" = max, "chisq" = min,
-    "loglik" = max, "rmsea" = min,
-    "srmr" = min, "tefi" = min,
-    "tefi.adj" = min, "tli" = max
-  )
-
-  # Obtain optimum value
-  opt_value <- index_FUN(fit_index)
-
-  # Obtain index
-  opt_index <- max(which(fit_index == opt_value))
-
-  # Obtain lambda (as character)
-  lambda <- names(fit_index)[[opt_index]]
-
-  # Obtain results
-  results <- fits[[lambda]]
-
-  # Set up network methods
-  attributes(results$EGA$network) <- glasso_attr
-  attributes(results$EGA$network)$methods[
-    c("model.selection", "lambda", "criterion")
-  ] <- list(
-    model.selection = fit_name, lambda = as.numeric(lambda), criterion = opt_value
-  )
-
-  # Overwrite class
-  class(results) <- "EGM"
-
-  # Return results
-  return(results)
-
-}
-
-#' @noRd
 # GLASSO fit ----
-# Updated 05.11.2024
+# Updated 06.11.2024
 glasso_fit <- function(data, S, glasso_attr, P, data_dimensions, constrained, opt, ...)
 {
 
@@ -1472,7 +1389,7 @@ glasso_fit <- function(data, S, glasso_attr, P, data_dimensions, constrained, op
       zeros = zeros, R = S,
       loading_structure = loading_structure,
       rows = communities, n = data_dimensions[1],
-      opt = toupper(opt), constrained = constrained,
+      constrained = constrained, lower_triangle = lower.tri(S),
       lower = rep(-1, loadings_length),
       upper = rep(1, loadings_length),
       control = list(eval.max = 10000, iter.max = 10000)
@@ -1506,17 +1423,10 @@ glasso_fit <- function(data, S, glasso_attr, P, data_dimensions, constrained, op
   optimized_R <- nload2cor(optimized_loadings)
   optimized_P <- cor2pcor(optimized_R)
 
-  # Set up 'dim.variables' for EGA
-  dim.variables <- fast.data.frame(
-    c(dimension_names[[1]], structure), nrow = data_dimensions[2],
-    ncol = 2, colnames = c("items", "dimensions")
-  )
-
   # Set up EGA object
   ega <- list(
     network = P, wc = structure, n.dim = communities,
-    correlation = S, n = data_dimensions[1],
-    dim.variables = dim.variables[order(dim.variables$dimension),]
+    correlation = S, n = data_dimensions[1]
   ); class(ega) <- "EGA"
 
   # Set up results

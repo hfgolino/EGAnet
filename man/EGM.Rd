@@ -136,23 +136,27 @@ egm_ega <- EGM(data)
 
 # Estimate EGM (using standard)
 egm_standard <- EGM(
-  data, EGM.type = "standard",
+  data, EGM.model = "standard",
   communities = 3, # specify number of communities
   p.in = 0.95, # probability of edges *in* each community
   p.out = 0.80 # probability of edges *between* each community
 )
 
 \dontrun{
-# Estimate EGM (using search)
-egm_search <- EGM(
-  data, EGM.type = "search", communities = 3,
-  p.in = 0.95 # only need 'p.in'
+# Estimate EGM (using EGA search)
+egm_ega_search <- EGM(
+  data, EGM.model = "EGA", search = TRUE
 )
 
-# Estimate EGM (using search with EGA structure)
+# Estimate EGM (using EGA search and AIC criterion)
+egm_ega_search_AIC <- EGM(
+  data, EGM.model = "EGA", search = TRUE, opt = "AIC"
+)
+
+# Estimate EGM (using search)
 egm_search <- EGM(
-  data, EGM.type = "search",
-  structure = EGA(data, plot.EGA = FALSE)$wc,
+  data, EGM.model = "standard", search = TRUE,
+  communities = 3, # need communities or structure
   p.in = 0.95 # only need 'p.in'
 )}
 

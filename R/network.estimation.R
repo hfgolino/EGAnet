@@ -373,7 +373,7 @@ network.estimation_errors <- function(data, n, network.only, verbose, ...)
 
 #' @noRd
 # Send Network Methods for S3 ----
-# Updated 09.10.2024
+# Updated 06.11.2024
 send_network_methods <- function(estimated_network, boot = FALSE)
 {
 
@@ -439,16 +439,16 @@ send_network_methods <- function(estimated_network, boot = FALSE)
     if(isFALSE(boot)){
 
       # Add gamma
-      if(model.selection == "ebic"){
-        model.selection_text <- paste0(
+      model.selection_text <- switch(
+        model.selection,
+        "ebic" = paste0(
           " (", toupper(model.selection),
           " with gamma = ", methods$gamma, ")"
-        )
-      }else if(model.selection == "jsd"){
-        model.selection_text <- paste0(
+        ),
+        paste0(
           " (", toupper(model.selection), ")"
         )
-      }
+      )
 
     }else{
 
