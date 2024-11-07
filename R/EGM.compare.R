@@ -205,7 +205,7 @@ EGM.compare_errors <- function(data, ...)
 
 #' @exportS3Method
 # S3 Print Method ----
-# Updated 05.11.2024
+# Updated 07.11.2024
 print.EGM.compare <- function(x, ...)
 {
 
@@ -279,7 +279,7 @@ print.EGM.compare <- function(x, ...)
       "\nLikelihood ratio test: X^2 (", df, ") = ",
       round(q, 3), ", p ", swiftelse(
         p < 0.001, "< 0.001", paste0("= ", round(p, 3))
-      ), "\n"
+      ), swiftelse(p < 0.05, " (EFA preferred)", " (EGM preferred)"), "\n"
     )
   )
 

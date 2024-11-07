@@ -8,19 +8,9 @@
 #' @param variables Numeric vector (length = 1 or \code{communities}).
 #' Number of variables per community
 #'
-#' @param loadings Character (length = 1).
+#' @param loadings Numeric (length = 1).
 #' Magnitude of the assigned network loadings.
-#' Available options (based on revised network loadings with \code{scaling = 2}):
-#'
-#' \itemize{
-#'
-#' \item \code{"small"} --- 0.225 (approximates 0.20)
-#'
-#' \item \code{"moderate"} --- 0.35 (approximates 0.35)
-#'
-#' \item \code{"large"} --- 0.50 (approximates 0.50)
-#'
-#' }
+#' Uses the same magnitude as factors loadings
 #'
 #' Uses \code{runif(n, min = value - 0.025, max = value + 0.025)} for some jitter in the loadings
 #'
@@ -28,25 +18,8 @@
 #' Standard deviation of a normal distribution with a mean of zero (\code{n, mean = 0, sd = value}).
 #' Defaults to \code{0.01}
 #'
-#' @param correlations Character (length = 1).
-#' Magnitude of the community correlations.
-#' Available options:
-#'
-#' \itemize{
-#'
-#' \item \code{"none"} --- 0.00
-#'
-#' \item \code{"small"} --- 0.10
-#'
-#' \item \code{"moderate"} --- 0.30
-#'
-#' \item \code{"large"} --- 0.50
-#'
-#' \item \code{"very large"} --- 0.70
-#'
-#' }
-#'
-#' Uses \code{rnorm(n, mean = value, sd = 0.03)} for some jitter in the correlations
+#' @param correlations Numeric (length = 1).
+#' Magnitude of the community correlations
 #'
 #' @param sample.size Numeric (length = 1).
 #' Number of observations to generate
@@ -68,7 +41,8 @@
 #' @examples
 #' simulated <- simEGM(
 #'   communities = 2, variables = 6,
-#'   loadings = "moderate", correlations = "moderate",
+#'   loadings = 0.55, # use standard factor loading sizes
+#'   correlations = 0.30,
 #'   sample.size = 1000
 #' )
 #'
@@ -77,23 +51,22 @@
 #' @export
 #'
 # Simulate EGM ----
-# Updated 17.10.2024
+# Updated 07.11.2024
 simEGM <- function(
     communities, variables,
-    loadings = c("small", "moderate", "large"), cross.loadings = 0.01,
-    correlations = c("none", "small", "moderate", "large", "very large"),
+    loadings, cross.loadings = 0.01, correlations,
     sample.size, p.in = 0.95, p.out = 0.90, max.iterations = 1000
 )
 {
 
   # Check for missing arguments (argument, default, function)
-  loadings <- set_default(loadings, "moderate", simEGM)
-  correlations <- set_default(correlations, "moderate", simEGM)
+  # loadings <- set_default(loadings, "moderate", simEGM)
+  # correlations <- set_default(correlations, "moderate", simEGM)
 
   # Argument errors
   simEGM_errors(
-    communities, variables, cross.loadings,
-    sample.size, p.in, p.out, max.iterations
+    communities, variables, loadings, cross.loadings,
+    correlations, sample.size, p.in, p.out, max.iterations
   )
 
   # Set up membership based on communities and variables
@@ -116,41 +89,75 @@ simEGM <- function(
   end <- cumsum(variables)
   start <- (end + 1) - variables
 
+  # Derived using:
+  # x <- c(0.00, 0.40, 0.55, 0.70, 1.00)
+  # y <- c(0.00, 0.20, 0.35, 0.55, 1.00)
+  # fit <- nls(
+  #   y ~ a * x^2 + b * x + c, start = list(a = 0.1, b = 0.1, c = 0),
+  #   algorithm = "port",
+  #   control = nls.control(maxiter = 100000, tol = 1e-20, minFactor = 1e-20)
+  # ); coef(fit)
+
+  # Obtain loadings signs
+  loadings_signs <- sign(loadings)
+  loadings <- abs(loadings)
+
   # Determine loading ranges
-  loading_range <- switch(
-    loadings,
-    "small" = 0.225,
-    "moderate" = 0.35,
-    "large" = 0.500
-  )
+  loading_range <- (
+    0.797267042 * loadings^2 + 0.210094592 * loadings - 0.002682913
+  ) * loadings_signs
+
+  # Categorize loadings into small, moderate, and large
+  loadings <- c("small", "moderate", "large")[
+    as.numeric(cut(
+      loadings,
+      breaks = c(0.00, 0.475, 0.625, 1.00)
+    ))
+  ]
+
+  # switch(
+  #   loadings,
+  #   "small" = 0.225,
+  #   "moderate" = 0.35,
+  #   "large" = 0.500
+  # )
+
+  # Derived using:
+  # x <- c(0.00, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70)
+  # y <- c(0.00, 0.1125, 0.15, 0.18, 0.24, 0.29, 0.36)
+  # fit <- nls(
+  #   y ~ a * x^2 + b * x + c, start = list(a = 0.1, b = 0.1, c = 0),
+  #   algorithm = "port",
+  #   control = nls.control(maxiter = 10000, tol = 1e-20, minFactor = 1e-20)
+  # ); coef(fit)
 
   # Determine correlation ranges
-  correlation_range <- (switch(
-    correlations,
-    "none" = 0.00,
-    "small" = 0.06,
-    "moderate" = 0.15,
-    "large" = 0.275,
-    "very large" = 0.40
-  ) + switch(
-    loadings,
-    "small" = -0.050,
-    "moderate" = 0.000,
-    "large" = 0.050
-  )) / sqrt(log(variables^2))
+  correlation_range <- (
+    (0.091376419 * correlations^2 + 0.427398177 * correlations + 0.007358814) +
+      switch(
+        loadings,
+        "small" = -0.05,
+        "moderate" = 0.000,
+        "large" = 0.05
+      )
+  ) / sqrt(log(variables^2))
 
   # Ensure zero is minimum
   correlation_range <- swiftelse(correlation_range < 0, 0, correlation_range)
 
-  # Sparsity adjustment based on correlations
-  sparsity_adjustment <- switch(
-    correlations,
-    "none" = log10(sample.size),
-    "small" = 1,
-    "moderate" = 1/3,
-    "large" = 0.25,
-    "very large" = 0
-  )
+  # Set up for sparsity adjustment
+  sparsity_adjustment <- c(
+    log10(sample.size), # none
+    1, # small
+    1/3, # moderate
+    0.25, # large
+    0 # very large
+  )[
+    as.numeric(cut(
+      correlations,
+      breaks = c(0.00, 0.10, 0.30, 0.50, 0.70, 1.00)
+    ))
+  ]
 
   # Set cross-loading sparsity parameter
   sparsity <- 1 / log10(sample.size) * sparsity_adjustment
@@ -180,9 +187,10 @@ simEGM <- function(
     for(i in community_sequence){
 
       # Populate assigned loadings
-      loadings_matrix[start[i]:end[i], i] <- runif_xoshiro(
-        variables[i], min = loading_range - 0.05, max = loading_range + 0.05
-      )
+      loadings_matrix[start[i]:end[i], i] <- loading_range
+      # runif_xoshiro(
+      #   variables[i], min = loading_range - 0.05, max = loading_range + 0.05
+      # )
 
       # Get indices
       indices <- loadings_matrix[start[i]:end[i], -i]
@@ -191,9 +199,10 @@ simEGM <- function(
       index_length <- length(indices)
 
       # Add correlations on cross-loadings
-      loadings_matrix[start[i]:end[i], -i] <- runif_xoshiro(
-        variables[i], min = correlation_range[i] - 0.03, max = correlation_range[i] + 0.03
-      )
+      loadings_matrix[start[i]:end[i], -i] <- correlation_range[i]
+      # runif_xoshiro(
+      #   variables[i], min = correlation_range[i] - 0.015, max = correlation_range[i] + 0.015
+      # )
 
       # Populate cross-loading
       loadings_matrix[start[i]:end[i], -i] <- loadings_matrix[start[i]:end[i], -i] +
@@ -279,10 +288,10 @@ simEGM <- function(
 
 #' @noRd
 # Errors ----
-# Updated 04.10.2024
+# Updated 07.11.2024
 simEGM_errors <- function(
-    communities, variables, cross.loadings,
-    sample.size, p.in, p.out, max.iterations
+    communities, variables, loadings, cross.loadings,
+    correlations, sample.size, p.in, p.out, max.iterations
 )
 {
 
@@ -296,10 +305,20 @@ simEGM_errors <- function(
   typeof_error(variables, "numeric", "simEGM")
   range_error(variables, c(1, Inf), "simEGM")
 
+  # 'loadings'
+  length_error(loadings, c(1, communities), "simEGM")
+  typeof_error(loadings, "numeric", "simEGM")
+  range_error(loadings, c(-1, 1), "simEGM")
+
   # 'cross.loadings'
   length_error(cross.loadings, 1, "simEGM")
   typeof_error(cross.loadings, "numeric", "simEGM")
   range_error(cross.loadings, c(0, 1), "simEGM")
+
+  # 'correlations'
+  length_error(correlations, c(1, communities), "simEGM")
+  typeof_error(correlations, "numeric", "simEGM")
+  range_error(correlations, c(0, 1), "simEGM")
 
   # 'sample.size'
   length_error(sample.size, 1, "simEGM")

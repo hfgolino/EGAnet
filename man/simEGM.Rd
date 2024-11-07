@@ -7,9 +7,9 @@
 simEGM(
   communities,
   variables,
-  loadings = c("small", "moderate", "large"),
+  loadings,
   cross.loadings = 0.01,
-  correlations = c("none", "small", "moderate", "large", "very large"),
+  correlations,
   sample.size,
   p.in = 0.95,
   p.out = 0.9,
@@ -23,19 +23,9 @@ Number of communities to generate}
 \item{variables}{Numeric vector (length = 1 or \code{communities}).
 Number of variables per community}
 
-\item{loadings}{Character (length = 1).
+\item{loadings}{Numeric (length = 1).
 Magnitude of the assigned network loadings.
-Available options (based on revised network loadings with \code{scaling = 2}):
-
-\itemize{
-
-\item \code{"small"} --- 0.225 (approximates 0.20)
-
-\item \code{"moderate"} --- 0.35 (approximates 0.35)
-
-\item \code{"large"} --- 0.50 (approximates 0.50)
-
-}
+Uses the same magnitude as factors loadings
 
 Uses \code{runif(n, min = value - 0.025, max = value + 0.025)} for some jitter in the loadings}
 
@@ -43,25 +33,8 @@ Uses \code{runif(n, min = value - 0.025, max = value + 0.025)} for some jitter i
 Standard deviation of a normal distribution with a mean of zero (\code{n, mean = 0, sd = value}).
 Defaults to \code{0.01}}
 
-\item{correlations}{Character (length = 1).
-Magnitude of the community correlations.
-Available options:
-
-\itemize{
-
-\item \code{"none"} --- 0.00
-
-\item \code{"small"} --- 0.10
-
-\item \code{"moderate"} --- 0.30
-
-\item \code{"large"} --- 0.50
-
-\item \code{"very large"} --- 0.70
-
-}
-
-Uses \code{rnorm(n, mean = value, sd = 0.03)} for some jitter in the correlations}
+\item{correlations}{Numeric (length = 1).
+Magnitude of the community correlations}
 
 \item{sample.size}{Numeric (length = 1).
 Number of observations to generate}
@@ -86,7 +59,8 @@ Function to simulate data based on \code{\link[EGAnet]{EGM}}
 \examples{
 simulated <- simEGM(
   communities = 2, variables = 6,
-  loadings = "moderate", correlations = "moderate",
+  loadings = 0.55, # use standard factor loading sizes
+  correlations = 0.30,
   sample.size = 1000
 )
 
