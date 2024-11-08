@@ -187,10 +187,9 @@ simEGM <- function(
     for(i in community_sequence){
 
       # Populate assigned loadings
-      loadings_matrix[start[i]:end[i], i] <- loading_range
-      # runif_xoshiro(
-      #   variables[i], min = loading_range - 0.05, max = loading_range + 0.05
-      # )
+      loadings_matrix[start[i]:end[i], i] <- runif_xoshiro(
+        variables[i], min = loading_range - 0.025, max = loading_range + 0.025
+      )
 
       # Get indices
       indices <- loadings_matrix[start[i]:end[i], -i]
@@ -199,10 +198,9 @@ simEGM <- function(
       index_length <- length(indices)
 
       # Add correlations on cross-loadings
-      loadings_matrix[start[i]:end[i], -i] <- correlation_range[i]
-      # runif_xoshiro(
-      #   variables[i], min = correlation_range[i] - 0.015, max = correlation_range[i] + 0.015
-      # )
+      loadings_matrix[start[i]:end[i], -i] <- runif_xoshiro(
+        variables[i], min = correlation_range[i] - 0.015, max = correlation_range[i] + 0.015
+      )
 
       # Populate cross-loading
       loadings_matrix[start[i]:end[i], -i] <- loadings_matrix[start[i]:end[i], -i] +
