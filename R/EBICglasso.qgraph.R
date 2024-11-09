@@ -150,7 +150,7 @@
 #' @export
 #'
 # Computes optimal glasso network based on EBIC ----
-# Updated 21.09.2024
+# Updated 31.10.2024
 EBICglasso.qgraph <- function(
     data, # Sample covariance matrix
     n = NULL,
@@ -363,7 +363,7 @@ EBICglasso.qgraph <- function(
     # General result structure
     result <- list(
       results = glas_path, optnet = net,
-      lambda = lambda, optwi = optwi
+      lambda = lambda, optwi = optwi, S = S
     )
 
     # Check for model selection

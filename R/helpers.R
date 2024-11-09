@@ -3236,10 +3236,10 @@ matrix_entropy <- function(density_matrix, base = 2.718282)
 #' @noRd
 # Positive definite matrix ----
 # Logical for whether a matrix is positive definite
-# Updated 29.06.2023
+# Updated 05.11.2024
 is_positive_definite <- function(data)
 {
-  return(all(eigen(data, symmetric = TRUE, only.values = TRUE)$values > 0))
+  return(all(eigen(data, symmetric = TRUE, only.values = TRUE)$values > .Machine$double.eps))
 }
 
 #' @noRd

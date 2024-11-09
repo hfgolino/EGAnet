@@ -129,7 +129,7 @@
 #' @export
 #'
 # Compute networks for EGA ----
-# Updated 21.09.2024
+# Updated 05.11.2024
 network.estimation <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
@@ -259,7 +259,11 @@ network.estimation <- function(
     if(isFALSE(network.only)){
 
       # Switch with method
-      estimated_network <- estimation_OUTPUT$network
+      estimated_network <- switch(
+        model,
+        "glasso" = estimation_OUTPUT$optnet,
+        "tmfg" = estimation_OUTPUT$network
+      )
 
     }else{
 
@@ -369,7 +373,7 @@ network.estimation_errors <- function(data, n, network.only, verbose, ...)
 
 #' @noRd
 # Send Network Methods for S3 ----
-# Updated 07.07.2023
+# Updated 06.11.2024
 send_network_methods <- function(estimated_network, boot = FALSE)
 {
 
@@ -380,7 +384,19 @@ send_network_methods <- function(estimated_network, boot = FALSE)
   model <- methods$model
 
   # Send output text based on model
-  if(model == "bggm"){ # BGGM
+  if(model == "egm"){
+
+    # Send model
+    cat(
+      paste0(
+        "Model: ", toupper(methods$model),
+        "\nCommunities: ", methods$communities,
+        "\nEdge probabilities: ", format_decimal(methods$p.in, 2),
+        " (in) & ", format_decimal(methods$p.out, 2), " (out)"
+      )
+    )
+
+  }else if(model == "bggm"){ # BGGM
 
     # Send model
     cat(
@@ -423,16 +439,16 @@ send_network_methods <- function(estimated_network, boot = FALSE)
     if(isFALSE(boot)){
 
       # Add gamma
-      if(model.selection == "ebic"){
-        model.selection_text <- paste0(
+      model.selection_text <- switch(
+        model.selection,
+        "ebic" = paste0(
           " (", toupper(model.selection),
           " with gamma = ", methods$gamma, ")"
-        )
-      }else if(model.selection == "jsd"){
-        model.selection_text <- paste0(
+        ),
+        paste0(
           " (", toupper(model.selection), ")"
         )
-      }
+      )
 
     }else{
 
