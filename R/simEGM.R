@@ -21,6 +21,9 @@
 #' @param correlations Numeric (length = 1).
 #' Magnitude of the community correlations
 #'
+#' Uses \code{runif(n, min = value - 0.015, max = value + 0.015)}
+#' for some jitter in the correlations
+#'
 #' @param sample.size Numeric (length = 1).
 #' Number of observations to generate
 #'
@@ -32,7 +35,7 @@
 #' @param p.out Numeric (length = 1 or \code{communities}).
 #' Sets the probability of retaining an edge \emph{between} communities.
 #' Single values are applied to all communities.
-#' Defaults to \code{0.90}
+#' Defaults to \code{0.80}
 #'
 #' @param max.iterations Numeric (length = 1).
 #' Number of iterations to attempt to get convergence before erroring out.
@@ -55,7 +58,7 @@
 simEGM <- function(
     communities, variables,
     loadings, cross.loadings = 0.01, correlations,
-    sample.size, p.in = 0.95, p.out = 0.90, max.iterations = 1000
+    sample.size, p.in = 0.95, p.out = 0.80, max.iterations = 1000
 )
 {
 

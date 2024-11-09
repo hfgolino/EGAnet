@@ -1,6 +1,6 @@
 WEBSITE: https://r-ega.net
 
-## Changes in version 2.0.9
+## Changes in version 2.1.0
 
 +	ADD: `EGM` and `simEGM` for model estimation and simulation of the Exploratory Graph Model, respectively
 

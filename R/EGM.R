@@ -113,6 +113,18 @@
 #' # Estimate EGM (using EGA)
 #' egm_ega <- EGM(data)
 #'
+#' # Estimate EGM (using EGA) specifying communities
+#' egm_ega_communities <- EGM(data, communities = 3)
+#'
+#' # Estimate EGM (using EGA) specifying structure
+#' egm_ega_structure <- EGM(
+#'   data, structure = c(
+#'     1, 1, 1, 2, 1, 1, 1,
+#'     1, 1, 1, 3, 2, 2, 2,
+#'     2, 3, 3, 3, 3, 3, 2
+#'   )
+#' )
+#'
 #' # Estimate EGM (using standard)
 #' egm_standard <- EGM(
 #'   data, EGM.model = "standard",
@@ -293,21 +305,30 @@ EGM_errors <- function(
 
 #' @exportS3Method
 # S3 Print Method ----
-# Updated 22.10.2024
-print.EGM <- function(x, ...)
+# Updated 09.11.2024
+print.EGM <- function(x, digits = 3, ...)
 {
 
-  # Return EGA plot
+  # Return EGA results
   print(x$EGA)
+
+  # Add break
+  cat("\n\n----\n\n")
+
+  # Send title
+  cat("Fit based on Optimized Loadings\n\n")
+
+  # Add fit metrics
+  print(format_decimal(x$model$optimized$fit, digits), quote = FALSE)
 
 }
 
 #' @exportS3Method
 # S3 Summary Method ----
-# Updated 22.10.2024
-summary.EGM <- function(object, ...)
+# Updated 09.11.2024
+summary.EGM <- function(object, digits = 3, ...)
 {
-  print(object$EGA) # same as print
+  print(object) # same as print
 }
 
 #' @exportS3Method

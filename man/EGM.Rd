@@ -134,6 +134,18 @@ data <- depression[,24:44]
 # Estimate EGM (using EGA)
 egm_ega <- EGM(data)
 
+# Estimate EGM (using EGA) specifying communities
+egm_ega_communities <- EGM(data, communities = 3)
+
+# Estimate EGM (using EGA) specifying structure
+egm_ega_structure <- EGM(
+  data, structure = c(
+    1, 1, 1, 2, 1, 1, 1,
+    1, 1, 1, 3, 2, 2, 2,
+    2, 3, 3, 3, 3, 3, 2
+  )
+)
+
 # Estimate EGM (using standard)
 egm_standard <- EGM(
   data, EGM.model = "standard",
