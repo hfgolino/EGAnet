@@ -461,7 +461,7 @@ P_cost <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle
 
 #' @noRd
 # Partial correlation gradient ----
-# Updated 03.11.2024
+# Updated 10.11.2024
 P_gradient <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_triangle)
 {
 
@@ -487,10 +487,10 @@ P_gradient <- function(P_nonzero, P_lower, zeros, R, total_variables, lower_tria
   D <- diag(sqrt(1 / diag(INV)))
 
   # Compute error
-  error <- 2 * (D %*% INV %*% D - R)
+  error <- (D %*% INV %*% D - R)
 
   # Return gradient
-  return(error[lower_triangle][zeros])
+  return(2 * error[lower_triangle][zeros])
 
 }
 

@@ -69,12 +69,12 @@ Probability that a node is randomly linked to other nodes \emph{not} in the same
 Between community edges are set to zero based on \code{quantile(x, prob = 1 - p.out)}
 ensuring the lowest edge values are set to zero (i.e., most probable to \emph{not}
 be randomly connected).
-Only used for \code{EGM.type = "standard"}.
+Only used for \code{EGM.type = "standard"} and \code{search = FALSE}.
 Defaults to \code{NULL} but must be set}
 
 \item{opt}{Character vector (length = 1).
 Fit index used to select from when searching over models
-(only applies to \code{EGM.type = "search"}).
+(only applies to \code{search = TRUE}).
 Available options include:
 
 \itemize{

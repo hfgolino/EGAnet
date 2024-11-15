@@ -51,12 +51,12 @@
 #' Between community edges are set to zero based on \code{quantile(x, prob = 1 - p.out)}
 #' ensuring the lowest edge values are set to zero (i.e., most probable to \emph{not}
 #' be randomly connected).
-#' Only used for \code{EGM.type = "standard"}.
+#' Only used for \code{EGM.type = "standard"} and \code{search = FALSE}.
 #' Defaults to \code{NULL} but must be set
 #'
 #' @param opt Character vector (length = 1).
 #' Fit index used to select from when searching over models
-#' (only applies to \code{EGM.type = "search"}).
+#' (only applies to \code{search = TRUE}).
 #' Available options include:
 #'
 #' \itemize{
@@ -156,7 +156,7 @@
 #' @export
 #'
 # Estimate EGM ----
-# Updated 06.11.2024
+# Updated 10.11.2024
 EGM <- function(
     data, EGM.model = c("standard", "EGA"),
     communities = NULL, structure = NULL, search = FALSE,
@@ -333,12 +333,12 @@ summary.EGM <- function(object, digits = 3, ...)
 
 #' @exportS3Method
 # S3 Plot Method ----
-# Updated 22.10.2024
+# Updated 12.11.2024
 plot.EGM <- function(x, ...)
 {
 
   # Return EGA plot
-  plot(x$EGA)
+  plot(x$EGA, ...)
 
 }
 
