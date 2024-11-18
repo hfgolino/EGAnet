@@ -329,7 +329,7 @@
 #' @export
 #'
 # Bootstrap EGA ----
-# Updated 21.09.2024
+# Updated 18.11.2024
 bootEGA <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
@@ -553,7 +553,7 @@ bootEGA <- function(
     args = obtain_arguments(  # ensures only proper arguments are passed
       dimensionStability,
       FUN.args = c(
-        list(bootega.obj = results, IS.plot = plot.itemStability),
+        list(bootega.obj = results, IS.plot = FALSE),
         ellipse
       )
     )
@@ -616,6 +616,14 @@ bootEGA <- function(
       silent_plot(results$plot.typical.ega)
 
     }
+
+  }
+
+  # Check for plot (use `plot.itemStability`)
+  if(plot.itemStability){
+
+    # Plot results
+    plot(results, ...)
 
   }
 
@@ -967,7 +975,7 @@ summary.bootEGA <- function(object, ...)
 
 #' @exportS3Method
 # S3 Plot Method ----
-# Updated 09.02.2024
+# Updated 18.11.2024
 plot.bootEGA <- function(x, ...)
 {
 
@@ -1023,8 +1031,31 @@ plot.bootEGA <- function(x, ...)
 
   }
 
-  # Always plot itemStability
-  plot(x$stability$item.stability)
+  # Switch out EGA type
+  ega_type <- switch(
+    x$EGA.type,
+    "ega" = "EGA",
+    "ega.fit" = "EGA + TEFI",
+    "hierega" = "Hierarchical EGA",
+    "riega" = "Random-intercept EGA"
+  )
+
+  # Plot empirical EGA
+  ega_plot <- plot(x$EGA, ...) +
+    ggplot2::ggtitle(paste("Original Sample |", ega_type)) +
+    ggplot2::theme(
+      plot.title = ggplot2::element_text(face = "bold", hjust = 0.5),
+      legend.position = "bottom"
+    )
+
+  # Plot with item stability
+  arranged <- ggpubr::ggarrange(
+    ega_plot, x$stability$item.stability$plot,
+    nrow = 1, ncol = 2
+  )
+
+  # Make sure it plots
+  silent_plot(arranged)
 
 }
 

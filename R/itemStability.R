@@ -118,7 +118,7 @@
 #' @export
 #'
 # Item Stability function ----
-# Updated 06.04.2024
+# Updated 18.11.2024
 itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
 
   # Set up ellipse arguments
@@ -190,75 +190,69 @@ itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
     plot(bootega.obj$EGA, produce = FALSE, arguments = TRUE)$ARGS$node.color
   )
 
-  # Determine whether to plot
-  if(IS.plot){
+  # Check for hierarchical
+  if(hierarchical){
 
-    # Check for hierarchical
-    if(hierarchical){
+    # Get number of legend columns
+    legend_rows <- digits(
+      max(results$lower_order$membership$structure, na.rm = TRUE)
+    ) + 1
 
-      # Get number of legend columns
-      legend_rows <- digits(
-        max(results$lower_order$membership$structure, na.rm = TRUE)
-      ) + 1
+    # Set up colors
+    colors <- attributes(results)$color
 
-      # Set up colors
-      colors <- attributes(results)$color
+    # Get number of higher order
+    higher_ndim <- seq_len(unique_length(structure$higher_order))
 
-      # Get number of higher order
-      higher_ndim <- seq_len(unique_length(structure$higher_order))
+    # Get colors
+    ## Lower order
+    lower_colors <- colors[-higher_ndim]
+    lower_colors <- lower_colors[
+      structure$lower_order[order(structure$lower_order)]
+    ]
+    ## Higher order
+    higher_colors <- colors[higher_ndim]
+    higher_colors <- higher_colors[
+      structure$higher_order[order(structure$higher_order)]
+    ]
 
-      # Get colors
-      ## Lower order
-      lower_colors <- colors[-higher_ndim]
-      lower_colors <- lower_colors[
-        structure$lower_order[order(structure$lower_order)]
-      ]
-      ## Higher order
-      higher_colors <- colors[higher_ndim]
-      higher_colors <- higher_colors[
-        structure$higher_order[order(structure$higher_order)]
-      ]
+    # Get lower plot
+    results$lower_order$plot <- plot(results$lower_order, color = lower_colors, ...) +
+      ggplot2::guides(color = ggplot2::guide_legend(nrow = legend_rows))
 
-      # Get lower plot
-      results$lower_order$plot <- plot(results$lower_order, color = lower_colors, ...) +
-        ggplot2::guides(color = ggplot2::guide_legend(nrow = legend_rows))
+    # Get higher plot
+    results$higher_order$plot <- silent_call(
+      plot(results$higher_order, color = higher_colors, ...) +
+        ggplot2::guides(color = ggplot2::guide_legend(nrow = legend_rows)) +
+        ggplot2::scale_x_discrete(limits = rev(results$lower_order$plot$data$Node))
+    )
 
-      # Get higher plot
-      results$higher_order$plot <- silent_call(
-        plot(results$higher_order, color = higher_colors, ...) +
-          ggplot2::guides(color = ggplot2::guide_legend(nrow = legend_rows)) +
-          ggplot2::scale_x_discrete(limits = rev(results$lower_order$plot$data$Node))
-      )
+    # Set up clean side-by-side
+    if(!"nrow" %in% names(ellipse) || ellipse$nrow == 1){
 
-      # Set up clean side-by-side
-      if(!"nrow" %in% names(ellipse) || ellipse$nrow == 1){
-
-        # Remove y-axis title from higher order
-        higher_order_plot <- results$higher_order$plot +
-          ggplot2::theme(axis.title.y = ggplot2::element_blank())
-
-      }
-
-      # Get final plot
-      results$plot <- ggpubr::ggarrange(
-        results$lower_order$plot, higher_order_plot,
-        labels = c("Lower Order", "Higher Order"),
-        ...
-      )
-
-      # Actually send plot
-      silent_plot(results$plot)
-
-    }else{
-
-      # Get plot
-      results$plot <- plot(results, ...)
-
-      # Actually send plot
-      silent_plot(results$plot)
+      # Remove y-axis title from higher order
+      higher_order_plot <- results$higher_order$plot +
+        ggplot2::theme(axis.title.y = ggplot2::element_blank())
 
     }
 
+    # Get final plot
+    results$plot <- ggpubr::ggarrange(
+      results$lower_order$plot, higher_order_plot,
+      labels = c("Lower Order", "Higher Order"),
+      ...
+    )
+
+  }else{
+
+    # Get plot
+    results$plot <- plot(results, ...)
+
+  }
+
+  # Actually send plot
+  if(IS.plot){
+    silent_plot(results$plot)
   }
 
   # Return results
