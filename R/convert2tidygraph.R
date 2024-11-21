@@ -34,7 +34,7 @@ convert2tidygraph <- function(EGA.object)
       higher_nodes <- .convert2tidygraph_nodes(EGA.object$typicalGraph$higher_order$wc)
       higher_nodes$name <- paste0("L", as.numeric(higher_nodes$name))
       higher_nodes$dimension <- paste0("H", higher_nodes$dimension)  # Discriminate from lower
-      higher_nodes$level <- "higher"
+      higher_nodes$level <- "Higher"
       nodes <- rbind(lower_nodes, higher_nodes)
 
       lower_edges <- .convert2tidygraph_edges(EGA.object$typicalGraph$lower_order$graph)
