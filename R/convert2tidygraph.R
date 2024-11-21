@@ -21,11 +21,13 @@ convert2tidygraph <- function(EGA.object)
 {
 
   if("bootEGA" %in% class(EGA.object)) {
+    # Bootstrapped EGA ---
     if(!"typicalGraph" %in% names(EGA.object)) {
       stop("The bootEGA object must contain a typicalGraph object. Set `typicalStructure=TRUE`.")
     }
 
     if("lower_order" %in% names(EGA.object$typicalGraph)) {
+      # Hierarchical EGA ---
       lower_nodes <- .convert2tidygraph_nodes(EGA.object$typicalGraph$lower_order$wc)
       higher_nodes <- .convert2tidygraph_nodes(EGA.object$typicalGraph$higher_order$wc)
       higher_nodes$dimension <- paste0("H", higher_nodes$dimension)  # Discriminate from lower
@@ -44,10 +46,13 @@ convert2tidygraph <- function(EGA.object)
           )
       }
     } else {
+      # Non-hierarchical EGA ---
       nodes <- .convert2tidygraph_nodes(EGA.object$typicalGraph$wc)
       edges <- .convert2tidygraph_edges(EGA.object$typicalGraph$graph)
     }
+
   } else {
+    # Normal EGA ---
     nodes <- .convert2tidygraph_nodes(EGA.object$wc)
     edges <- .convert2tidygraph_edges(EGA.object$network)
   }
