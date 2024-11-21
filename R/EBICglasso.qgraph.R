@@ -1,35 +1,107 @@
-#' \code{\link[qgraph]{EBICglasso}} from \code{\link{qgraph}} 1.4.4
+#' @title \code{\link[qgraph]{EBICglasso}} from \code{qgraph} 1.4.4
 #'
-#' This function uses the \code{\link[glasso]{glasso}} package
+#' @description This function uses the \code{\link[glasso]{glasso}} package
 #' (Friedman, Hastie and Tibshirani, 2011) to compute a
 #' sparse gaussian graphical model with the graphical lasso
 #' (Friedman, Hastie & Tibshirani, 2008).
-#' The tuning parameter is chosen using the Extended Bayesian Information criterium
+#' The tuning parameter is chosen using the Extended Bayesian Information criterion
 #' (EBIC) described by Foygel & Drton (2010).
 #'
-#' @param data Data matrix
+#' @param data Matrix or data frame.
+#' Should consist only of variables to be used in the analysis
 #'
-#' @param n Number of participants
+#' @param n Numeric (length = 1).
+#' Sample size if \code{data} provided is a correlation matrix
 #'
-#' @param gamma EBIC tuning parameter. 0.5 is generally a good choice.
-#' Setting to zero will cause regular BIC to be used.
+#' @param corr Character (length = 1).
+#' Method to compute correlations.
+#' Defaults to \code{"auto"}.
+#' Available options:
 #'
-#' @param penalize.diagonal Should the diagonal be penalized?
+#' \itemize{
 #'
-#' @param nlambda Number of lambda values to test.
+#' \item \code{"auto"} --- Automatically computes appropriate correlations for
+#' the data using Pearson's for continuous, polychoric for ordinal,
+#' tetrachoric for binary, and polyserial/biserial for ordinal/binary with
+#' continuous. To change the number of categories that are considered
+#' ordinal, use \code{ordinal.categories}
+#' (see \code{\link[EGAnet]{polychoric.matrix}} for more details)
 #'
-#' @param lambda.min.ratio Ratio of lowest lambda value compared to maximal lambda
+#' \item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations.
+#' Arguments can be passed along to the function
 #'
-#' @param returnAllResults   If \code{TRUE} this function does not
-#' return a network but the results of the entire glasso path.
+#' \item \code{"cosine"} --- Uses \code{\link[EGAnet]{cosine}} to compute cosine similarity
 #'
-#' @param penalizeMatrix Optional logical matrix to indicate which elements are penalized
+#' \item \code{"pearson"} --- Pearson's correlation is computed for all
+#' variables regardless of categories
 #'
-#' @param countDiagonal     Should diagonal be counted in EBIC computation?
-#' Defaults to \code{FALSE}. Set to \code{TRUE} to mimic qgraph < 1.3 behavior (not recommended!).
+#' \item \code{"spearman"} --- Spearman's rank-order correlation is computed
+#' for all variables regardless of categories
 #'
-#' @param refit Logical, should the optimal graph be refitted without LASSO regularization?
+#' }
+#'
+#' For other similarity measures, compute them first and input them
+#' into \code{data} with the sample size (\code{n})
+#'
+#' @param na.data Character (length = 1).
+#' How should missing data be handled?
+#' Defaults to \code{"pairwise"}.
+#' Available options:
+#'
+#' \itemize{
+#'
+#' \item \code{"pairwise"} --- Computes correlation for all available
+#' cases between two variables
+#'
+#' \item \code{"listwise"} --- Computes correlation for all complete
+#' cases in the dataset
+#'
+#' }
+#'
+#' @param gamma Numeric (length = 1)
+#' EBIC tuning parameter.
+#' Defaults to \code{0.50} and is generally a good choice.
+#' Setting to \code{0} will cause regular BIC to be used
+#'
+#' @param penalize.diagonal Boolean (length = 1).
+#' Should the diagonal be penalized?
+#' Defaults to \code{FALSE}
+#'
+#' @param nlambda Numeric (length = 1).
+#' Number of lambda values to test.
+#' Defaults to \code{100}
+#'
+#' @param lambda.min.ratio Numeric (length = 1).
+#' Ratio of lowest lambda value compared to maximal lambda.
+#' Defaults to \code{0.1}.
+#' \strong{NOTE} \code{qgraph} sets the default to \code{0.01}
+#'
+#' @param returnAllResults Boolean (length = 1).
+#' Whether all results should be returned.
+#' Defaults to \code{FALSE} (network only).
+#' Set to \code{TRUE} to access \code{\link[glasso]{glassopath}} output
+#'
+#' @param penalizeMatrix Boolean matrix.
+#' Optional logical matrix to indicate which elements are penalized
+#'
+#' @param countDiagonal Boolean (length = 1).
+#' Should diagonal be counted in EBIC computation?
 #' Defaults to \code{FALSE}.
+#' Set to \code{TRUE} to mimic \code{qgraph} < 1.3 behavior (not recommended!)
+#'
+#' @param refit Boolean (length = 1).
+#' Should the optimal graph be refitted without LASSO regularization?
+#' Defaults to \code{FALSE}
+#'
+#' @param model.selection Character (length = 1).
+#' How lambda should be selected within GLASSO.
+#' Defaults to \code{"EBIC"}.
+#' \code{"JSD"} is experimental and should not be used otherwise
+#'
+#' @param verbose Boolean (length = 1).
+#' Whether messages and (insignificant) warnings should be output.
+#' Defaults to \code{FALSE} (silent calls).
+#' Set to \code{TRUE} to see all messages and warnings for every function call
 #'
 #' @param ... Arguments sent to \code{\link[glasso]{glasso}}
 #'
@@ -42,204 +114,414 @@
 #' @return A partial correlation matrix
 #'
 #' @references
-#'
+#' \strong{Instantiation of GLASSO} \cr
 #' Friedman, J., Hastie, T., & Tibshirani, R. (2008).
 #' Sparse inverse covariance estimation with the graphical lasso.
 #' \emph{Biostatistics}, \emph{9}, 432-441.
-#' \doi{10.1093/biostatistics/kxm045}
 #'
-#' #glasso package
-#' Jerome Friedman, Trevor Hastie and Rob Tibshirani (2011).
-#' glasso: Graphical lasso-estimation of Gaussian graphical models.
-#' R package version 1.7.
-#' \url{https://CRAN.R-project.org/package=glasso}
-#'
+#' \strong{glasso + EBIC} \cr
 #' Foygel, R., & Drton, M. (2010).
 #' Extended Bayesian information criteria for Gaussian graphical models.
-#' In Advances in neural information processing systems (pp. 604-612).
-#' \url{https://papers.nips.cc/paper/4087-extended-bayesian-information-criteria-for-gaussian-graphical-models}
+#' \emph{In Advances in neural information processing systems} (pp. 604-612).
 #'
-#' #psych package
-#' Revelle, W. (2014) psych: Procedures for Personality and Psychological Research,
-#' Northwestern University, Evanston, Illinois, USA.
-#' R package version 1.4.4.
-#' \url{https://CRAN.R-project.org/package=psych}
+#' \strong{glasso package} \cr
+#' Friedman, J., Hastie, T., & Tibshirani, R. (2011).
+#' glasso: Graphical lasso-estimation of Gaussian graphical models.
+#' R package version 1.7.
 #'
-#' #Matrix package
-#' Douglas Bates and Martin Maechler (2014).
-#' Matrix: Sparse and Dense Matrix Classes and Methods.
-#' R package version 1.1-3.
-#' \url{https://CRAN.R-project.org/package=Matrix}
+#' \strong{Tutorial on EBICglasso} \cr
+#' Epskamp, S., & Fried, E. I. (2018).
+#' A tutorial on regularized partial correlation networks.
+#' \emph{Psychological Methods}, \emph{23}(4), 617–634.
 #'
-#' @author Sacha Epskamp <mail@sachaepskamp.com>
+#' @author Sacha Epskamp; for maintanence,
+#' Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen at gmail.com>
 #'
 #' @examples
-#' ### Using wmt2 dataset from EGAnet ###
-#' data(wmt2)
+#' # Obtain data
+#' wmt <- wmt2[,7:24]
 #'
-#' \donttest{# Compute correlations:
-#' CorMat <- qgraph::cor_auto(wmt2[,7:24])
-#'
-#' # Compute graph with tuning = 0 (BIC):
-#' BICgraph <- EBICglasso.qgraph(CorMat, n = nrow(wmt2), gamma = 0)
+#' # Compute graph with tuning = 0 (BIC)
+#' BICgraph <- EBICglasso.qgraph(data = wmt, gamma = 0)
 #'
 #' # Compute graph with tuning = 0.5 (EBIC)
-#' EBICgraph <- EBICglasso.qgraph(CorMat, n = nrow(wmt2), gamma = 0.5)
-#'
-#' }
+#' EBICgraph <- EBICglasso.qgraph(data = wmt, gamma = 0.5)
 #'
 #' @export
 #'
-# Computes optimal glasso network based on EBIC:
-# Updated 10.02.2021
+# Computes optimal glasso network based on EBIC ----
+# Updated 31.10.2024
 EBICglasso.qgraph <- function(
     data, # Sample covariance matrix
     n = NULL,
+    corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
+    na.data = c("pairwise", "listwise"),
     gamma = 0.5,
     penalize.diagonal = FALSE, # Penalize diagonal?
     nlambda = 100,
-    lambda.min.ratio = 0.01,
+    lambda.min.ratio = 0.1,
     returnAllResults = FALSE, # If true, returns a list
     penalizeMatrix, # Optional logical matrix to indicate which elements are penalized
     countDiagonal = FALSE, # Set to TRUE to get old qgraph behavior: conting diagonal elements as parameters in EBIC computation. This is not correct, but is included to replicate older analyses
     refit = FALSE, # If TRUE, network structure is taken and non-penalized version is computed.
+    model.selection = c("EBIC", "JSD"),
+    verbose = FALSE,
     ... # glasso arguments
-) {
+)
+{
 
-    # Codes originally implemented by Sacha Epskamp in his qgraph package version 1.4.4.
-    # Selects optimal lamba based on EBIC for given covariance matrix.
-    # EBIC is computed as in Foygel, R., & Drton, M. (2010, November). Extended Bayesian Information Criteria for Gaussian Graphical Models. In NIPS (pp. 604-612). Chicago
+  # Check for missing arguments (argument, default, function)
+  corr <- set_default(corr, "auto", EBICglasso.qgraph)
+  na.data <- set_default(na.data, "pairwise", auto.correlate)
+  model.selection <- set_default(model.selection, "ebic", EBICglasso.qgraph)
 
-    # Simply computes the Gaussian log likelihood given sample covariance and estimate of precision:
+  # Argument errors (return data in case of tibble)
+  data <- EBICglasso.qgraph_errors(
+    data, n, gamma, penalize.diagonal, nlambda,
+    returnAllResults, countDiagonal, refit,
+    verbose, ...
+  )
 
-    # Original:
-    # logGaus <- function(S,K,n)
-    # {
-    #   SK = S %*% K
-    #   tr = function(A) sum(diag(A))
-    #   n/2 * (log(det(K)) - tr(SK))
-    # }
+  # Obtain dimensions
+  dimensions <- dim(data)
 
-    ## According to huge???
-    logGaus <- function(S,K,n)
-    {
-        KS = K %*% S
-        tr = function(A) sum(diag(A))
-        return(n/2 * (log(det(K)) - tr(KS))  )
-    }
+  # Codes originally implemented by Sacha Epskamp in his qgraph package version 1.4.4.
+  # Selects optimal lambda based on EBIC for given covariance matrix.
+  # EBIC is computed as in Foygel, R., & Drton, M. (2010, November). Extended Bayesian Information Criteria for Gaussian Graphical Models. In NIPS (pp. 604-612). Chicago
 
-    # Computes the EBIC:
-    EBIC <- function(S,K,n,gamma = 0.5,E,countDiagonal=FALSE)
-    {
-        #   browser()
-        L <- logGaus(S, K, n)
-        if (missing(E)){
-            E <- sum(K[lower.tri(K,diag=countDiagonal)] != 0)
-        }
-        p <- nrow(K)
+  # Generic function to get necessary inputs
+  output <- obtain_sample_correlations(
+    data = data, n = n, corr = corr,
+    na.data = na.data, verbose = verbose,
+    needs_usable = FALSE, # skips usable data check
+    ...
+  )
 
-        # return EBIC:
-        -2 * L + E * log(n) + 4 * E * gamma * log(p)
-    }
+  # Get correlations and sample size
+  S <- output$correlation_matrix; n <- output$n
 
-    # Computes partial correlation matrix given precision matrix:
-    wi2net <- function(x)
-    {
-        x <- -stats::cov2cor(x)
-        diag(x) <- 0
-        x <- Matrix::forceSymmetric(x)
-        return(x)
-    }
+  # # Compute lambda sequence (code taken from huge package):
+  # lambda.max <- max(max(S - diag(nrow(S))), -min(S - diag(nrow(S))))
+  # lambda.min <- lambda.min.ratio * lambda.max
+  # lambda <- exp(seq(log(lambda.min), log(lambda.max), length = nlambda))
 
-    if(is.null(n))
-    {
-        if(nrow(data)!=ncol(data))
-        {n <- nrow(data)
-        }else{stop("Number of participants 'n' need to be specified")}
-    }
+  # Simplify source for fewer computations (minimal improvement)
+  S_zero_diagonal <- S - diag(dimensions[2]) # makes diagonal zero
+  lambda.max <- max(abs(S_zero_diagonal)) # uses absolute rather than inverse
+  lambda.min <- lambda.min.ratio * lambda.max
+  lambda <- exp(seq.int(log(lambda.min), log(lambda.max), length.out = nlambda))
 
-    # Compute correlations matrix
-    if(nrow(data)!=ncol(data))
-    {S <- qgraph::cor_auto(data)
-    }else{
-      S <- data
-    }
+  # Obtain lambda sequence
+  lambda_sequence <- seq_len(nlambda)
 
-    # Compute lambda sequence (code taken from huge package):
-    lambda.max = max(max(S - diag(nrow(S))), -min(S - diag(nrow(S))))
-    lambda.min = lambda.min.ratio*lambda.max
-    lambda = exp(seq(log(lambda.min), log(lambda.max), length = nlambda))
+  # Perform GLASSO path
+  if(missing(penalizeMatrix)){
 
-    # Run glasso path:
-    if (missing(penalizeMatrix)){
-        glas_path <- glasso::glassopath(S, lambda, trace = 0, penalize.diagonal=penalize.diagonal, ...)
-    }else{
-        glas_path <- list(
-            w = array(0, c(ncol(S), ncol(S), length(lambda))),
-            wi = array(0, c(ncol(S), ncol(S), length(lambda))),
-            rholist = lambda
+    # Get arguments
+    glasso_ARGS <- obtain_arguments(
+      FUN = glasso::glassopath,
+      FUN.args = c(
+        list(
+          s = S, rholist = lambda, trace = 0,
+          penalize.diagonal = penalize.diagonal
+        ),
+        list(...)
+      )
+    )
+
+    # Call `glassopath`
+    glas_path <- do.call(
+      what = glasso::glassopath,
+      args = glasso_ARGS
+    )
+
+  }else{
+
+    # Set up array dimensions
+    new_array <- array(0, c(dimensions[2], dimensions[2], nlambda))
+
+    # Initialize path to be similar to `glassopath` output
+    glas_path <- list(
+      w = new_array,
+      wi = new_array,
+      rholist = lambda
+    )
+
+    # Loop over lambdas
+    for (i in lambda_sequence){
+
+      # Get arguments
+      glasso_ARGS <- obtain_arguments(
+        FUN = glasso::glasso,
+        FUN.args = c(
+          list(
+            s = S, rho = penalizeMatrix * lambda[i], trace = 0,
+            penalize.diagonal = penalize.diagonal
+          ),
+          list(...)
         )
+      )
 
-        for (i in 1:nlambda){
-            res <- glasso::glasso(S, penalizeMatrix * lambda[i], trace = 0, penalize.diagonal=penalize.diagonal, ...)
-            glas_path$w[,,i] <- res$w
-            glas_path$wi[,,i] <- res$wi
-        }
+      # Get result
+      res <- do.call(
+        what = glasso::glasso,
+        args = glasso_ARGS
+      )
+
+      # Populate covariance arrays
+      glas_path$w[,,i] <- res$w
+      glas_path$wi[,,i] <- res$wi
+
     }
 
+  }
 
-    # Compute EBICs:
-    #     EBICs <- apply(glas_path$wi,3,function(C){
-    #       EBIC(S, C, n, gamma)
-    #     })
+  # Determine model selection criterion
+  if(model.selection == "ebic"){
 
-    lik <- sapply(seq_along(lambda),function(i){
-        logGaus(S, glas_path$wi[,,i], n)
+    # Pre-compute half of n
+    half_n <- n / 2
+
+    # Log-likelihood
+    lik <- nvapply(lambda_sequence, function(i){
+      logGaus(S, glas_path$wi[,,i], half_n)
     })
 
-    EBICs <- sapply(seq_along(lambda),function(i){
-        EBIC(S, glas_path$wi[,,i], n, gamma, countDiagonal=countDiagonal)
+    # Compute edges
+    E <- nvapply(lambda_sequence, function(i){
+      edge_count(glas_path$wi[,,i], dimensions[2], countDiagonal)
     })
 
-    # Smallest EBIC:
+    # EBIC (vectorized solution; ~9x faster)
+    EBICs <- -2 * lik + E * log(n) + 4 * E * gamma * log(dimensions[2])
+
+    # Maintained for legacy (replaced by vectorization above)
+    # EBICs <- sapply(seq_along(lambda),function(i){
+    #   EBIC(S, glas_path$wi[,,i], n, gamma, countDiagonal = countDiagonal)
+    # })
+
+    # Optimal
     opt <- which.min(EBICs)
 
-    # Check if rho is smallest:
-    #if (opt == 1){
-    #  warning("Network with lowest lambda selected as best network. Try setting 'lambda.min.ratio' lower.")
-    #}
+  }else if(model.selection == "jsd"){
 
-    # Return network:
-    net <- as.matrix(Matrix::forceSymmetric(wi2net(glas_path$wi[,,opt])))
-    colnames(net) <- rownames(net) <- colnames(S)
+    # JSD
+    JSDs <- nvapply(lambda_sequence,function(i){
 
-    # Check empty network:
-    if (all(net == 0)){
-        message("An empty network was selected to be the best fitting network. Possibly set 'lambda.min.ratio' higher to search more sparse networks. You can also change the 'gamma' parameter to improve sensitivity (at the cost of specificity).")
+      # Try (might be error)
+      res <- try(
+        jsd(S, glas_path$wi[,,i]),
+        silent = TRUE
+      )
+
+      # Check for error
+      return(swiftelse(is(res, "try-error"), NA, res))
+
+    })
+
+    # Optimal
+    opt <- which.min(JSDs)
+
+  }
+
+  # Return network:
+  net <- wi2net(glas_path$wi[,,opt])
+  net <- transfer_names(S, net)
+
+  # Check empty network:
+  if(verbose && all(net == 0)){
+    message("An empty network was selected to be the best fitting network. Possibly set 'lambda.min.ratio' higher to search more sparse networks. You can also change the 'gamma' parameter to improve sensitivity (at the cost of specificity).")
+  }
+
+  # Check for whether to refit:
+  if(refit){
+    if(verbose){message("Refitting network without LASSO regularization")}
+    glassoRes <- silent_call(glasso::glasso(S, 0, zero = which(net == 0 & upper.tri(net), arr.ind=TRUE), trace = 0, penalize.diagonal=penalize.diagonal, ...))
+    net <- wi2net(glassoRes$wi)
+    net <- transfer_names(S, net)
+    optwi <- glassoRes$wi
+  } else {
+    optwi <- glas_path$wi[,,opt]
+  }
+
+  # Set methods in attributes
+  attr(net, "methods") <- list(
+    corr = "auto",
+    model.selection = model.selection,
+    lambda = lambda[opt], gamma = gamma,
+    lambda.min.ratio = lambda.min.ratio,
+    nlambda = nlambda, criterion = swiftelse(
+      model.selection == "ebic", EBICs[opt], JSDs[opt]
+    )
+  )
+
+  # Return
+  if(!returnAllResults){
+    return(net) # only return network
+  }else{
+
+    # General result structure
+    result <- list(
+      results = glas_path, optnet = net,
+      lambda = lambda, optwi = optwi, S = S
+    )
+
+    # Check for model selection
+    if(model.selection == "ebic"){
+
+      # Add EBICs and Log-likelihoods
+      result$ebic <- EBICs; result$loglik <- lik;
+
+    }else if(model.selection == "jsd"){
+
+      # Add JSDs
+      result$jsd <- JSDs
+
     }
 
-    # Refit network:
-    # Refit:
-    if (refit){
-        message("Refitting network without LASSO regularization")
-        glassoRes <- suppressWarnings(glasso::glasso(S, 0, zero = which(net == 0 & upper.tri(net), arr.ind=TRUE), trace = 0, penalize.diagonal=penalize.diagonal, ...))
-        net <- as.matrix(Matrix::forceSymmetric(wi2net(glassoRes$wi)))
-        colnames(net) <- rownames(net) <- colnames(S)
-        optwi <- glassoRes$wi
-    } else {
-        optwi <- glas_path$wi[,,opt]
-    }
+    # Return results
+    return(result)
 
-    # Return
-    if (returnAllResults){
-        return(list(
-            results = glas_path,
-            ebic = EBICs,
-            loglik = lik,
-            optnet = net,
-            lambda = lambda,
-            optwi = optwi
-        ))
-    } else return(net)
+  }
+
 }
-#----
+
+# Bug Checking ----
+# ## Basic input
+# data = wmt2[,7:24]; n = NULL;
+# gamma = 0.5; penalize.diagonal = FALSE;
+# nlambda = 100; lambda.min.ratio = 0.1;
+# returnAllResults = FALSE;
+# countDiagonal = FALSE; refit = FALSE;
+# model.selection = "ebic"
+
+#' @noRd
+# Errors ----
+# Updated 07.09.2023
+EBICglasso.qgraph_errors <- function(
+    data, n, gamma, penalize.diagonal, nlambda,
+    returnAllResults, countDiagonal, refit,
+    verbose, ...
+)
+{
+
+  # 'data' errors
+  object_error(data, c("matrix", "data.frame", "tibble"), "EBICglasso.qgraph")
+
+  # Check for tibble
+  if(get_object_type(data) == "tibble"){
+    data <- as.data.frame(data)
+  }
+
+  # 'n' errors
+  if(!is.null(n)){
+    length_error(n, 1, "EBICglasso.qgraph")
+    typeof_error(n, "numeric", "EBICglasso.qgraph")
+  }
+
+  # 'gamma' errors
+  length_error(gamma, 1, "EBICglasso.qgraph")
+  typeof_error(gamma, "numeric", "EBICglasso.qgraph")
+  range_error(gamma, c(0, Inf), "EBICglasso.qgraph")
+
+  # 'penalize.diagonal' errors
+  length_error(penalize.diagonal, 1, "EBICglasso.qgraph")
+  typeof_error(penalize.diagonal, "logical", "EBICglasso.qgraph")
+
+  # 'nlambda' errors
+  length_error(nlambda, 1, "EBICglasso.qgraph")
+  typeof_error(nlambda, "numeric", "EBICglasso.qgraph")
+  range_error(nlambda, c(1, Inf), "EBICglasso.qgraph")
+
+  # 'returnAllResults' errors
+  length_error(returnAllResults, 1, "EBICglasso.qgraph")
+  typeof_error(returnAllResults, "logical", "EBICglasso.qgraph")
+
+  # 'countDiagonal' errors
+  length_error(countDiagonal, 1, "EBICglasso.qgraph")
+  typeof_error(countDiagonal, "logical", "EBICglasso.qgraph")
+
+  # 'refit' errors
+  length_error(refit, 1, "EBICglasso.qgraph")
+  typeof_error(refit, "logical", "EBICglasso.qgraph")
+
+  # 'verbose' errors
+  length_error(verbose, 1, "EBICglasso.qgraph")
+  typeof_error(verbose, "logical", "EBICglasso.qgraph")
+
+  # Check for usable data
+  if(needs_usable(list(...))){
+    data <- usable_data(data, verbose)
+  }
+
+  # Return usable data in case of tibble
+  return(data)
+
+}
+
+#' @noRd
+# Log-likelihood ----
+# According to huge??? : source comment
+# Updated 07.08.2023
+logGaus <- function(S, K, half_n)
+{
+
+  # Simply computes the Gaussian log likelihood given sample covariance and estimate of precision:
+
+  # Original:
+  # logGaus <- function(S,K,n)
+  # {
+  #   SK = S %*% K
+  #   tr = function(A) sum(diag(A))
+  #   n/2 * (log(det(K)) - tr(SK))
+  # }
+
+  # From source
+
+  return(half_n * (log(det(K)) - trace(S %*% K)))
+
+}
+
+#' @noRd
+# Extended Bayesian Information Criterion ----
+# Here for legacy (vectorization applied in function)
+# Updated 18.06.2023
+EBIC <- function(S, K, n, p, gamma = 0.5, E, countDiagonal = FALSE)
+{
+
+  # Obtain likelihood
+  L <- logGaus(S, K, n)
+
+  # Determine if number of edges is missing
+  ## Computes edges and avoids check
+  E <- sum(K[lower.tri(K, diag = countDiagonal)] != 0)
+
+  # Number of nodes
+  p <- ncol(K)
+
+  # Return EBIC
+  return(
+    -2 * L + E * log(n) + 4 * E * gamma * log(p)
+  )
+
+}
+
+#' @noRd
+# Converts covariance to correlation matrix ----
+# Updated 10.06.2023
+wi2net <- function(x)
+{
+  # Get correlation matrix
+  x <- -stats::cov2cor(x)
+
+  # Set diagonal to zero
+  diag(x) <- 0
+
+  # Ensure matrix is symmetric
+  x <- as.matrix(Matrix::forceSymmetric(x))
+
+  # Return correlation matrix
+  return(x)
+
+}
+

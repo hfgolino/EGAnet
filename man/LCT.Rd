@@ -6,49 +6,158 @@
 \usage{
 LCT(
   data,
-  n,
+  n = NULL,
+  corr = c("auto", "cor_auto", "pearson", "spearman"),
+  na.data = c("pairwise", "listwise"),
+  model = c("BGGM", "glasso", "TMFG"),
+  algorithm = c("leiden", "louvain", "walktrap"),
+  uni.method = c("expand", "LE", "louvain"),
   iter = 100,
-  dynamic = FALSE,
-  dynamic.args = list(n.embed = 4, tau = 1, delta = 1, use.derivatives = 1)
+  seed = NULL,
+  verbose = TRUE,
+  ...
 )
 }
 \arguments{
 \item{data}{Matrix or data frame.
-A data frame with the variables to be used in the test or a correlation matrix.
-If the data used is a correlation matrix, the argument \code{n} will need to be specified}
+Should consist only of variables to be used in the analysis.
+Can be raw data or a correlation matrix}
 
-\item{n}{Integer.
-Sample size (if the data provided is a correlation matrix)}
+\item{n}{Numeric (length = 1).
+Sample size if \code{data} provided is a correlation matrix}
 
-\item{iter}{Integer.
-Number of replicate samples to be drawn from a multivariate
-normal distribution (uses \code{mvtnorm::mvrnorm}).
-Defaults to \code{100}}
-
-\item{dynamic}{Boolean.
-Is the dataset a time series where rows are time points and
-columns are variables?
-Defaults to \code{FASLE}.}
-
-\item{dynamic.args}{List.
-Arguments to be used in \code{\link[EGAnet]{dynEGA}}.
-Defaults:
+\item{corr}{Character (length = 1).
+Method to compute correlations.
+Defaults to \code{"auto"}.
+Available options:
 
 \itemize{
 
-\item{\code{n.embed}}
-{Number of embeddings: 4}
+\item \code{"auto"} --- Automatically computes appropriate correlations for
+the data using Pearson's for continuous, polychoric for ordinal,
+tetrachoric for binary, and polyserial/biserial for ordinal/binary with
+continuous. To change the number of categories that are considered
+ordinal, use \code{ordinal.categories}
+(see \code{\link[EGAnet]{polychoric.matrix}} for more details)
 
-\item{\code{tau}}
-{Lag: 1}
+\item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations.
+Arguments can be passed along to the function
 
-\item{\code{delta}}
-{Delta: 1}
+\item \code{"pearson"} --- Pearson's correlation is computed for all
+variables regardless of categories
 
-\item{\code{use.derivatives}}
-{Derivatives: 1}
+\item \code{"spearman"} --- Spearman's rank-order correlation is computed
+for all variables regardless of categories
+
+}
+
+For other similarity measures, compute them first and input them
+into \code{data} with the sample size (\code{n})}
+
+\item{na.data}{Character (length = 1).
+How should missing data be handled?
+Defaults to \code{"pairwise"}.
+Available options:
+
+\itemize{
+
+\item \code{"pairwise"} --- Computes correlation for all available cases between
+two variables
+
+\item \code{"listwise"} --- Computes correlation for all complete cases in the dataset
 
 }}
+
+\item{model}{Character (length = 1).
+Defaults to \code{"glasso"}.
+Available options:
+
+\itemize{
+
+\item \code{"BGGM"} --- Computes the Bayesian Gaussian Graphical Model.
+Set argument \code{ordinal.categories} to determine
+levels allowed for a variable to be considered ordinal.
+See \code{?BGGM::estimate} for more details
+
+\item \code{"glasso"} --- Computes the GLASSO with EBIC model selection.
+See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details
+
+\item \code{"TMFG"} --- Computes the TMFG method.
+See \code{\link[EGAnet]{TMFG}} for more details
+
+}}
+
+\item{algorithm}{Character or
+\code{igraph} \code{cluster_*} function (length = 1).
+Defaults to \code{"walktrap"}.
+Three options are listed below but all are available
+(see \code{\link[EGAnet]{community.detection}} for other options):
+
+\itemize{
+
+\item \code{"leiden"} --- See \code{\link[igraph]{cluster_leiden}} for more details
+
+\item \code{"louvain"} --- By default, \code{"louvain"} will implement the Louvain algorithm using
+the consensus clustering method (see \code{\link[EGAnet]{community.consensus}}
+for more information). This function will implement
+\code{consensus.method = "most_common"} and \code{consensus.iter = 1000}
+unless specified otherwise
+
+\item \code{"walktrap"} --- See \code{\link[igraph]{cluster_walktrap}} for more details
+
+}}
+
+\item{uni.method}{Character (length = 1).
+What unidimensionality method should be used?
+Defaults to \code{"louvain"}.
+Available options:
+
+\itemize{
+
+\item \code{"expand"} --- Expands the correlation matrix with four variables correlated 0.50.
+If number of dimension returns 2 or less in check, then the data
+are unidimensional; otherwise, regular EGA with no matrix
+expansion is used. This method was used in the Golino et al.'s (2020)
+\emph{Psychological Methods} simulation
+
+\item \code{"LE"} --- Applies the Leading Eigenvector algorithm
+(\code{\link[igraph]{cluster_leading_eigen}})
+on the empirical correlation matrix. If the number of dimensions is 1,
+then the Leading Eigenvector solution is used; otherwise, regular EGA
+is used. This method was used in the Christensen et al.'s (2023)
+\emph{Behavior Research Methods} simulation
+
+\item \code{"louvain"} --- Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
+on the empirical correlation matrix. If the number of dimensions is 1,
+then the Louvain solution is used; otherwise, regular EGA is used.
+This method was validated Christensen's (2022) \emph{PsyArXiv} simulation.
+Consensus clustering can be used by specifying either
+\code{"consensus.method"} or \code{"consensus.iter"}
+
+}}
+
+\item{iter}{Numeric (length = 1).
+Number of replicate samples to be drawn from a multivariate
+normal distribution (uses \code{MASS::mvrnorm}).
+Defaults to \code{100} (recommended)}
+
+\item{seed}{Numeric (length = 1).
+Defaults to \code{NULL} or random results.
+Set for reproducible results.
+See \href{https://github.com/hfgolino/EGAnet/wiki/Reproducibility-and-PRNG}{Reproducibility and PRNG}
+for more details on random number generation in \code{EGAnet}}
+
+\item{verbose}{Boolean (length = 1).
+Should progress be displayed?
+Defaults to \code{TRUE}.
+Set to \code{FALSE} to not display progress}
+
+\item{...}{Additional arguments that can be passed on to
+\code{\link[EGAnet]{auto.correlate}},
+\code{\link[EGAnet]{network.estimation}},
+\code{\link[EGAnet]{community.detection}},
+\code{\link[EGAnet]{community.consensus}}, and
+\code{\link[EGAnet]{EGA}}}
 }
 \value{
 Returns a list containing:
@@ -68,30 +177,19 @@ heuristics were then submitted to several deep learning neural networks
 with 240,000 samples per model with varying parameters.
 }
 \examples{
-\donttest{# Compute LCT
-## Network model
-LCT(data = wmt2[,7:24])
+# Get data
+data <- psych::bfi[,1:25]
 
+\dontrun{# Compute LCT
 ## Factor model
-LCT(data = psychTools::bfi[,1:25])
-
-# Dynamic LCT
-LCT(sim.dynEGA[sim.dynEGA$ID == 1,1:20], dynamic = TRUE)}
-
+LCT(data)}
 
 }
 \references{
-# Original implementation of LCT \cr
-Christensen, A. P., & Golino, H. (in press).
-On the equivalency of factor and network loadings.
-\emph{Behavior Research Methods}.
-\doi{10.31234/osf.io/xakez}
-
-# Current implementation of LCT \cr
+\strong{Model training and validation} \cr
 Christensen, A. P., & Golino, H. (2021).
-Factor model or small-world network? Predictions from neural networks.
+Factor or network model? Predictions from neural networks.
 \emph{Journal of Behavioral Data Science}, \emph{1}(1), 85-126.
-\doi{10.35566/jbds/v1n1/p5}
 }
 \author{
 Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen at gmail.com>

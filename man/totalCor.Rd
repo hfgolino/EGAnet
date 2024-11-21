@@ -4,11 +4,15 @@
 \alias{totalCor}
 \title{Total Correlation}
 \usage{
-totalCor(data)
+totalCor(data, base = 2.718282)
 }
 \arguments{
 \item{data}{Matrix or data frame.
-Variables to be used in the analysis}
+Should consist only of variables to be used in the analysis}
+
+\item{base}{Numeric (length = 1).
+Base to use for entropy.
+Defaults to \code{exp(1)} or \code{2.718282}}
 }
 \value{
 Returns a list containing:
@@ -18,6 +22,8 @@ Returns a list containing:
 \item{Joint.Entropy}{The joint entropy of the dataset}
 
 \item{Total.Cor}{The total correlation of the dataset}
+
+\item{Normalized}{Total correlation divided by the sum of the individual entropies minus the maximum of the individual entropies}
 }
 \description{
 Computes the total correlation of a dataset
@@ -28,9 +34,15 @@ totalCor(wmt2[,7:24])
 
 }
 \references{
+\strong{Formalization of total correlation} \cr
 Watanabe, S. (1960).
 Information theoretical analysis of multivariate correlation.
 \emph{IBM Journal of Research and Development} \emph{4}, 66-82.
+
+\strong{Applied implementation} \cr
+Felix, L. M., Mansur-Alves, M., Teles, M., Jamison, L., & Golino, H. (2021).
+Longitudinal impact and effects of booster sessions in a cognitive training program for healthy older adults.
+\emph{Archives of Gerontology and Geriatrics}, \emph{94}, 104337.
 }
 \author{
 Hudson F. Golino <hfg9s at virginia.edu>

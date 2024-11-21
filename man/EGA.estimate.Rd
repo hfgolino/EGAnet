@@ -2,98 +2,125 @@
 % Please edit documentation in R/EGA.estimate.R
 \name{EGA.estimate}
 \alias{EGA.estimate}
-\title{A Sub-routine Function for \code{EGA}}
+\title{Estimates \code{\link[EGAnet]{EGA}} for Multidimensional Structures}
 \usage{
 EGA.estimate(
   data,
   n = NULL,
-  model = c("glasso", "TMFG"),
-  model.args = list(),
-  algorithm = c("walktrap", "louvain"),
-  algorithm.args = list(),
-  corr = c("cor_auto", "pearson", "spearman"),
-  verbose = TRUE,
+  corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
+  na.data = c("pairwise", "listwise"),
+  model = c("BGGM", "glasso", "TMFG"),
+  algorithm = c("leiden", "louvain", "walktrap"),
+  verbose = FALSE,
   ...
 )
 }
 \arguments{
 \item{data}{Matrix or data frame.
-Variables (down columns) or correlation matrix.
-If the input is a correlation matrix,
-then argument \code{n} (number of cases) is \strong{required}}
+Should consist only of variables to be used in the analysis}
 
-\item{n}{Integer.
+\item{n}{Numeric (length = 1).
 Sample size if \code{data} provided is a correlation matrix}
 
-\item{model}{Character.
-A string indicating the method to use.
-
-Current options are:
-
-\itemize{
-
-\item{\strong{\code{glasso}}}
-{Estimates the Gaussian graphical model using graphical LASSO with
-extended Bayesian information criterion to select optimal regularization parameter.
-This is the default method}
-
-\item{\strong{\code{TMFG}}}
-{Estimates a Triangulated Maximally Filtered Graph}
-
-}}
-
-\item{model.args}{List.
-A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
-or \code{\link[NetworkToolbox]{TMFG}}}
-
-\item{algorithm}{A string indicating the algorithm to use or a function from \code{\link{igraph}}
-Current options are:
+\item{corr}{Character (length = 1).
+Method to compute correlations.
+Defaults to \code{"auto"}.
+Available options:
 
 \itemize{
 
-\item{\strong{\code{walktrap}}}
-{Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
+\item \code{"auto"} --- Automatically computes appropriate correlations for
+the data using Pearson's for continuous, polychoric for ordinal,
+tetrachoric for binary, and polyserial/biserial for ordinal/binary with
+continuous. To change the number of categories that are considered
+ordinal, use \code{ordinal.categories}
+(see \code{\link[EGAnet]{polychoric.matrix}} for more details)
 
-\item{\strong{\code{louvain}}}
-{Computes the Walktrap algorithm using \code{\link[igraph]{cluster_louvain}}}
+\item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations.
+Arguments can be passed along to the function
 
-}}
+\item \code{"cosine"} --- Uses \code{\link[EGAnet]{cosine}} to compute cosine similarity
 
-\item{algorithm.args}{List.
-A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
-or some other community detection algorithm function (see examples)}
+\item \code{"pearson"} --- Pearson's correlation is computed for all
+variables regardless of categories
 
-\item{corr}{Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
-Current options are:
+\item \code{"spearman"} --- Spearman's rank-order correlation is computed
+for all variables regardless of categories
+
+}
+
+For other similarity measures, compute them first and input them
+into \code{data} with the sample size (\code{n})}
+
+\item{na.data}{Character (length = 1).
+How should missing data be handled?
+Defaults to \code{"pairwise"}.
+Available options:
 
 \itemize{
 
-\item{\strong{\code{cor_auto}}}
-{Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
-\code{\link[qgraph]{qgraph}}}.
+\item \code{"pairwise"} --- Computes correlation for all available cases between
+two variables
 
-\item{\strong{\code{pearson}}}
-{Computes Pearson's correlation coefficient using the pairwise complete observations via
-the \code{\link[stats]{cor}}} function.
+\item \code{"listwise"} --- Computes correlation for all complete cases in the dataset
 
-\item{\strong{\code{spearman}}}
-{Computes Spearman's correlation coefficient using the pairwise complete observations via
-the \code{\link[stats]{cor}}} function.
 }}
 
-\item{verbose}{Boolean.
-Should network estimation parameters be printed?
-Defaults to \code{TRUE}.
-Set to \code{FALSE} for no print out}
+\item{model}{Character (length = 1).
+Defaults to \code{"glasso"}.
+Available options:
 
-\item{...}{Additional arguments.
-Used for deprecated arguments from previous versions of \code{\link{EGA}}}
+\itemize{
+
+\item \code{"BGGM"} --- Computes the Bayesian Gaussian Graphical Model.
+Set argument \code{ordinal.categories} to determine
+levels allowed for a variable to be considered ordinal.
+See \code{?BGGM::estimate} for more details
+
+\item \code{"glasso"} --- Computes the GLASSO with EBIC model selection.
+See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details
+
+\item \code{"TMFG"} --- Computes the TMFG method.
+See \code{\link[EGAnet]{TMFG}} for more details
+
+}}
+
+\item{algorithm}{Character or
+\code{igraph} \code{cluster_*} function (length = 1).
+Defaults to \code{"walktrap"}.
+Three options are listed below but all are available
+(see \code{\link[EGAnet]{community.detection}} for other options):
+
+\itemize{
+
+\item \code{"leiden"} --- See \code{\link[igraph]{cluster_leiden}} for more details
+
+\item \code{"louvain"} --- By default, \code{"louvain"} will implement the Louvain algorithm using
+the consensus clustering method (see \code{\link[EGAnet]{community.consensus}}
+for more information). This function will implement
+\code{consensus.method = "most_common"} and \code{consensus.iter = 1000}
+unless specified otherwise
+
+\item \code{"walktrap"} --- See \code{\link[igraph]{cluster_walktrap}} for more details
+
+}}
+
+\item{verbose}{Boolean (length = 1).
+Whether messages and (insignificant) warnings should be output.
+Defaults to \code{FALSE} (silent calls).
+Set to \code{TRUE} to see all messages and warnings for every function call}
+
+\item{...}{Additional arguments to be passed on to
+\code{\link[EGAnet]{auto.correlate}},
+\code{\link[EGAnet]{network.estimation}},
+\code{\link[EGAnet]{community.detection}}, and
+\code{\link[EGAnet]{community.consensus}}}
 }
 \value{
 Returns a list containing:
 
-\item{estimated.network}{A symmetric network estimated using either the
-\code{\link{EBICglasso.qgraph}} or \code{\link[NetworkToolbox]{TMFG}}}
+\item{network}{A matrix containing a network estimated using
+\code{link[EGAnet]{network.estimation}}}
 
 \item{wc}{A vector representing the community (dimension) membership
 of each node in the network. \code{NA} values mean that the node
@@ -102,82 +129,52 @@ was disconnected from the network}
 \item{n.dim}{A scalar of how many total dimensions were identified in the network}
 
 \item{cor.data}{The zero-order correlation matrix}
+
+\item{n}{Number of cases in \code{data}}
 }
 \description{
-Estimates the number of dimensions of a given dataset or correlation matrix
-using the graphical lasso (\code{\link{EBICglasso.qgraph}}) or the
-Triangulated Maximally Filtered Graph (\code{\link[NetworkToolbox]{TMFG}})
-network estimation methods.
-}
-\details{
-Two community detection algorithms, Walktrap (Pons & Latapy, 2006) and
-Louvain (Blondel et al., 2008), are pre-programmed because of their
-superior performance in simulation studies on psychological
-data generated from factor models (Christensen & Golino; 2020; Golino et al., 2020).
-Notably, any community detection algorithm from the \code{\link{igraph}}
-can be used to estimate the number of communities (see examples).
+A basic function to estimate \code{\link[EGAnet]{EGA}} for multidimensional structures.
+This function does \emph{not} include the unidimensional check and it does not
+plot the results. This function can be used as a streamlined approach
+for quick \code{\link[EGAnet]{EGA}} estimation when unidimensionality or visualization
+is not a priority
 }
 \examples{
-\dontshow{# Fast for CRAN checks
-# Pearson's correlation matrix
-wmt <- cor(wmt2[,7:24])
+# Obtain data
+wmt <- wmt2[,7:24]
 
 # Estimate EGA
-ega.wmt <- EGA.estimate(data = wmt, n = nrow(wmt2), model = "glasso")
+ega.wmt <- EGA.estimate(data = wmt)
 
-}
+# Estimate EGA with TMFG
+ega.wmt.tmfg <- EGA.estimate(data = wmt, model = "TMFG")
 
-\donttest{
-# Estimate EGA
-ega.wmt <- EGA.estimate(data = wmt2[,7:24], model = "glasso")
-
-# Estimate EGAtmfg
-ega.wmt <- EGA.estimate(data = wmt2[,7:24], model = "TMFG")
-
-# Estimate EGA with Spinglass
-ega.wmt <- EGA.estimate(data = wmt2[,7:24], model = "glasso",
-algorithm = igraph::cluster_spinglass)
-}
+# Estimate EGA with an {igraph} function (Fast-greedy)
+ega.wmt.greedy <- EGA.estimate(
+  data = wmt,
+  algorithm = igraph::cluster_fast_greedy
+)
 
 }
 \references{
-# Louvain algorithm \cr
-Blondel, V. D., Guillaume, J.-L., Lambiotte, R., & Lefebvre, E. (2008).
-Fast unfolding of communities in large networks.
-\emph{Journal of Statistical Mechanics: Theory and Experiment}, \emph{2008}, P10008.
-
-# Compared all \emph{igraph} community detections algorithms, introduced Louvain algorithm, simulation with continuous and polytomous data \cr
-Christensen, A. P., & Golino, H. (under review).
-Estimating factors with psychometric networks: A Monte Carlo simulation comparing community detection algorithms.
-\emph{PsyArXiv}.
-\doi{10.31234/osf.io/hz89e}
-
-# Original simulation and implementation of EGA \cr
+\strong{Original simulation and implementation of EGA} \cr
 Golino, H. F., & Epskamp, S. (2017).
 Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research.
-\emph{PLoS ONE}, \emph{12}, e0174035..
-\doi{10.1371/journal.pone.0174035}
+\emph{PLoS ONE}, \emph{12}, e0174035.
 
-Golino, H. F., & Demetriou, A. (2017).
-Estimating the dimensionality of intelligence like data using Exploratory Graph Analysis.
-\emph{Intelligence}, \emph{62}, 54-70.
-\doi{10.1016/j.intell.2017.02.007}
-
-# Current implementation of EGA, introduced unidimensional checks, continuous and dichotomous data \cr
+\strong{Introduced unidimensional checks, simulation with continuous and dichotomous data} \cr
 Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., & Thiyagarajan, J. A. (2020).
 Investigating the performance of Exploratory Graph Analysis and traditional techniques to identify the number of latent factors: A simulation and tutorial.
 \emph{Psychological Methods}, \emph{25}, 292-320.
-\doi{10.1037/met0000255}
 
-# Walktrap algorithm \cr
-Pons, P., & Latapy, M. (2006).
-Computing communities in large networks using random walks.
-\emph{Journal of Graph Algorithms and Applications}, \emph{10}, 191-218.
-\doi{10.7155/jgaa.00185}
+
+\strong{Compared all} \code{igraph} \strong{community detection algorithms, simulation with continuous and polytomous data} \cr
+Christensen, A. P., Garrido, L. E., Guerra-Pena, K., & Golino, H. (2023).
+Comparing community detection algorithms in psychometric networks: A Monte Carlo simulation.
+\emph{Behavior Research Methods}.
 }
 \seealso{
-\code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap
-and \code{\link{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
+\code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{EGAnet}
 }
 \author{
 Alexander P. Christensen <alexpaulchristensen at gmail.com> and Hudson Golino <hfg9s at virginia.edu>

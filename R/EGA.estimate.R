@@ -1,95 +1,117 @@
-#' A Sub-routine Function for \code{EGA}
+#' @title Estimates \code{\link[EGAnet]{EGA}} for Multidimensional Structures
 #'
-#' Estimates the number of dimensions of a given dataset or correlation matrix
-#' using the graphical lasso (\code{\link{EBICglasso.qgraph}}) or the
-#' Triangulated Maximally Filtered Graph (\code{\link[NetworkToolbox]{TMFG}})
-#' network estimation methods.
-#'
-#' Two community detection algorithms, Walktrap (Pons & Latapy, 2006) and
-#' Louvain (Blondel et al., 2008), are pre-programmed because of their
-#' superior performance in simulation studies on psychological
-#' data generated from factor models (Christensen & Golino; 2020; Golino et al., 2020).
-#' Notably, any community detection algorithm from the \code{\link{igraph}}
-#' can be used to estimate the number of communities (see examples).
+#' @description A basic function to estimate \code{\link[EGAnet]{EGA}} for multidimensional structures.
+#' This function does \emph{not} include the unidimensional check and it does not
+#' plot the results. This function can be used as a streamlined approach
+#' for quick \code{\link[EGAnet]{EGA}} estimation when unidimensionality or visualization
+#' is not a priority
 #'
 #' @param data Matrix or data frame.
-#' Variables (down columns) or correlation matrix.
-#' If the input is a correlation matrix,
-#' then argument \code{n} (number of cases) is \strong{required}
+#' Should consist only of variables to be used in the analysis
 #'
-#' @param n Integer.
+#' @param n Numeric (length = 1).
 #' Sample size if \code{data} provided is a correlation matrix
 #'
-#' @param model Character.
-#' A string indicating the method to use.
-#'
-#' Current options are:
-#'
-#' \itemize{
-#'
-#' \item{\strong{\code{glasso}}}
-#' {Estimates the Gaussian graphical model using graphical LASSO with
-#' extended Bayesian information criterion to select optimal regularization parameter.
-#' This is the default method}
-#'
-#' \item{\strong{\code{TMFG}}}
-#' {Estimates a Triangulated Maximally Filtered Graph}
-#'
-#' }
-#'
-#' @param model.args List.
-#' A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
-#' or \code{\link[NetworkToolbox]{TMFG}}
-#'
-#' @param algorithm A string indicating the algorithm to use or a function from \code{\link{igraph}}
-#' Current options are:
+#' @param corr Character (length = 1).
+#' Method to compute correlations.
+#' Defaults to \code{"auto"}.
+#' Available options:
 #'
 #' \itemize{
 #'
-#' \item{\strong{\code{walktrap}}}
-#' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
+#' \item \code{"auto"} --- Automatically computes appropriate correlations for
+#' the data using Pearson's for continuous, polychoric for ordinal,
+#' tetrachoric for binary, and polyserial/biserial for ordinal/binary with
+#' continuous. To change the number of categories that are considered
+#' ordinal, use \code{ordinal.categories}
+#' (see \code{\link[EGAnet]{polychoric.matrix}} for more details)
 #'
-#' \item{\strong{\code{louvain}}}
-#' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_louvain}}}
+#' \item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations.
+#' Arguments can be passed along to the function
+#'
+#' \item \code{"cosine"} --- Uses \code{\link[EGAnet]{cosine}} to compute cosine similarity
+#'
+#' \item \code{"pearson"} --- Pearson's correlation is computed for all
+#' variables regardless of categories
+#'
+#' \item \code{"spearman"} --- Spearman's rank-order correlation is computed
+#' for all variables regardless of categories
 #'
 #' }
 #'
-#' @param algorithm.args List.
-#' A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
-#' or some other community detection algorithm function (see examples)
+#' For other similarity measures, compute them first and input them
+#' into \code{data} with the sample size (\code{n})
 #'
-#' @param corr Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
-#' Current options are:
+#' @param na.data Character (length = 1).
+#' How should missing data be handled?
+#' Defaults to \code{"pairwise"}.
+#' Available options:
 #'
 #' \itemize{
 #'
-#' \item{\strong{\code{cor_auto}}}
-#' {Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
-#' \code{\link[qgraph]{qgraph}}}.
+#' \item \code{"pairwise"} --- Computes correlation for all available cases between
+#' two variables
 #'
-#' \item{\strong{\code{pearson}}}
-#' {Computes Pearson's correlation coefficient using the pairwise complete observations via
-#' the \code{\link[stats]{cor}}} function.
+#' \item \code{"listwise"} --- Computes correlation for all complete cases in the dataset
 #'
-#' \item{\strong{\code{spearman}}}
-#' {Computes Spearman's correlation coefficient using the pairwise complete observations via
-#' the \code{\link[stats]{cor}}} function.
 #' }
 #'
-#' @param verbose Boolean.
-#' Should network estimation parameters be printed?
-#' Defaults to \code{TRUE}.
-#' Set to \code{FALSE} for no print out
+#' @param model Character (length = 1).
+#' Defaults to \code{"glasso"}.
+#' Available options:
 #'
-#' @param ... Additional arguments.
-#' Used for deprecated arguments from previous versions of \code{\link{EGA}}
+#' \itemize{
+#'
+#' \item \code{"BGGM"} --- Computes the Bayesian Gaussian Graphical Model.
+#' Set argument \code{ordinal.categories} to determine
+#' levels allowed for a variable to be considered ordinal.
+#' See \code{?BGGM::estimate} for more details
+#'
+#' \item \code{"glasso"} --- Computes the GLASSO with EBIC model selection.
+#' See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details
+#'
+#' \item \code{"TMFG"} --- Computes the TMFG method.
+#' See \code{\link[EGAnet]{TMFG}} for more details
+#'
+#' }
+#'
+#' @param algorithm Character or
+#' \code{igraph} \code{cluster_*} function (length = 1).
+#' Defaults to \code{"walktrap"}.
+#' Three options are listed below but all are available
+#' (see \code{\link[EGAnet]{community.detection}} for other options):
+#'
+#' \itemize{
+#'
+#' \item \code{"leiden"} --- See \code{\link[igraph]{cluster_leiden}} for more details
+#'
+#' \item \code{"louvain"} --- By default, \code{"louvain"} will implement the Louvain algorithm using
+#' the consensus clustering method (see \code{\link[EGAnet]{community.consensus}}
+#' for more information). This function will implement
+#' \code{consensus.method = "most_common"} and \code{consensus.iter = 1000}
+#' unless specified otherwise
+#'
+#' \item \code{"walktrap"} --- See \code{\link[igraph]{cluster_walktrap}} for more details
+#'
+#' }
+#'
+#' @param verbose Boolean (length = 1).
+#' Whether messages and (insignificant) warnings should be output.
+#' Defaults to \code{FALSE} (silent calls).
+#' Set to \code{TRUE} to see all messages and warnings for every function call
+#'
+#' @param ... Additional arguments to be passed on to
+#' \code{\link[EGAnet]{auto.correlate}},
+#' \code{\link[EGAnet]{network.estimation}},
+#' \code{\link[EGAnet]{community.detection}}, and
+#' \code{\link[EGAnet]{community.consensus}}
 #'
 #' @author Alexander P. Christensen <alexpaulchristensen at gmail.com> and Hudson Golino <hfg9s at virginia.edu>
 #'
 #' @return Returns a list containing:
 #'
-#' \item{estimated.network}{A symmetric network estimated using either the
-#' \code{\link{EBICglasso.qgraph}} or \code{\link[NetworkToolbox]{TMFG}}}
+#' \item{network}{A matrix containing a network estimated using
+#' \code{link[EGAnet]{network.estimation}}}
 #'
 #' \item{wc}{A vector representing the community (dimension) membership
 #' of each node in the network. \code{NA} values mean that the node
@@ -99,381 +121,343 @@
 #'
 #' \item{cor.data}{The zero-order correlation matrix}
 #'
+#' \item{n}{Number of cases in \code{data}}
+#'
 #' @examples
-#' \dontshow{# Fast for CRAN checks
-#' # Pearson's correlation matrix
-#' wmt <- cor(wmt2[,7:24])
+#' # Obtain data
+#' wmt <- wmt2[,7:24]
 #'
 #' # Estimate EGA
-#' ega.wmt <- EGA.estimate(data = wmt, n = nrow(wmt2), model = "glasso")
+#' ega.wmt <- EGA.estimate(data = wmt)
 #'
-#' }
+#' # Estimate EGA with TMFG
+#' ega.wmt.tmfg <- EGA.estimate(data = wmt, model = "TMFG")
 #'
-#' \donttest{
-#' # Estimate EGA
-#' ega.wmt <- EGA.estimate(data = wmt2[,7:24], model = "glasso")
-#'
-#' # Estimate EGAtmfg
-#' ega.wmt <- EGA.estimate(data = wmt2[,7:24], model = "TMFG")
-#'
-#' # Estimate EGA with Spinglass
-#' ega.wmt <- EGA.estimate(data = wmt2[,7:24], model = "glasso",
-#' algorithm = igraph::cluster_spinglass)
-#' }
-#'
-#' @seealso \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap
-#' and \code{\link{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
+#' # Estimate EGA with an {igraph} function (Fast-greedy)
+#' ega.wmt.greedy <- EGA.estimate(
+#'   data = wmt,
+#'   algorithm = igraph::cluster_fast_greedy
+#' )
 #'
 #' @references
-#' # Louvain algorithm \cr
-#' Blondel, V. D., Guillaume, J.-L., Lambiotte, R., & Lefebvre, E. (2008).
-#' Fast unfolding of communities in large networks.
-#' \emph{Journal of Statistical Mechanics: Theory and Experiment}, \emph{2008}, P10008.
-#'
-#' # Compared all \emph{igraph} community detections algorithms, introduced Louvain algorithm, simulation with continuous and polytomous data \cr
-#' Christensen, A. P., & Golino, H. (under review).
-#' Estimating factors with psychometric networks: A Monte Carlo simulation comparing community detection algorithms.
-#' \emph{PsyArXiv}.
-#' \doi{10.31234/osf.io/hz89e}
-#'
-#' # Original simulation and implementation of EGA \cr
+#' \strong{Original simulation and implementation of EGA} \cr
 #' Golino, H. F., & Epskamp, S. (2017).
 #' Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research.
-#' \emph{PLoS ONE}, \emph{12}, e0174035..
-#' \doi{10.1371/journal.pone.0174035}
+#' \emph{PLoS ONE}, \emph{12}, e0174035.
 #'
-#' Golino, H. F., & Demetriou, A. (2017).
-#' Estimating the dimensionality of intelligence like data using Exploratory Graph Analysis.
-#' \emph{Intelligence}, \emph{62}, 54-70.
-#' \doi{10.1016/j.intell.2017.02.007}
-#'
-#' # Current implementation of EGA, introduced unidimensional checks, continuous and dichotomous data \cr
+#' \strong{Introduced unidimensional checks, simulation with continuous and dichotomous data} \cr
 #' Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., & Thiyagarajan, J. A. (2020).
 #' Investigating the performance of Exploratory Graph Analysis and traditional techniques to identify the number of latent factors: A simulation and tutorial.
 #' \emph{Psychological Methods}, \emph{25}, 292-320.
-#' \doi{10.1037/met0000255}
 #'
-#' # Walktrap algorithm \cr
-#' Pons, P., & Latapy, M. (2006).
-#' Computing communities in large networks using random walks.
-#' \emph{Journal of Graph Algorithms and Applications}, \emph{10}, 191-218.
-#' \doi{10.7155/jgaa.00185}
+#'
+#' \strong{Compared all} \code{igraph} \strong{community detection algorithms, simulation with continuous and polytomous data} \cr
+#' Christensen, A. P., Garrido, L. E., Guerra-Pena, K., & Golino, H. (2023).
+#' Comparing community detection algorithms in psychometric networks: A Monte Carlo simulation.
+#' \emph{Behavior Research Methods}.
+#'
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{EGAnet}
 #'
 #' @export
 #'
-# Estimates EGA
-# Updated 16.06.2021
-EGA.estimate <- function(data, n = NULL,
-                         model = c("glasso", "TMFG"), model.args = list(),
-                         algorithm = c("walktrap", "louvain"), algorithm.args = list(),
-                         corr = c("cor_auto", "pearson", "spearman"),
-                         verbose = TRUE,
-                         ...)
+# Estimates multidimensional EGA only (no automatic plots)
+# Updated 21.09.2024
+EGA.estimate <- function(
+    data, n = NULL,
+    corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
+    na.data = c("pairwise", "listwise"),
+    model = c("BGGM", "glasso", "TMFG"),
+    algorithm = c("leiden", "louvain", "walktrap"),
+    verbose = FALSE, ...
+)
 {
-  # Make the data a matrix
-  data <- as.matrix(data)
-  
-  # Get additional arguments
-  add.args <- list(...)
 
-  # Check if steps has been input as an argument
-  if("steps" %in% names(add.args)){
+  # Check for missing arguments (argument, default, function)
+  corr <- set_default(corr, "auto", EGA.estimate)
+  na.data <- set_default(na.data, "pairwise", auto.correlate)
+  model <- set_default(model, "glasso", network.estimation)
+  algorithm <- set_default(algorithm, "walktrap", community.detection)
 
-    # Give deprecation warning
-    warning(
-      paste(
-        "The 'steps' argument has been deprecated in all EGA functions.\n\nInstead use: algorithm.args = list(steps = ", add.args$steps, ")",
-        sep = ""
-      )
-    )
+  # Argument errors (return data in case of tibble)
+  data <- EGA.estimate_errors(data, n, verbose, ...)
 
-    # Handle the number of steps appropriately
-    algorithm.args$steps <- add.args$steps
-  }
+  # Obtain ellipse arguments
+  ellipse <- list(needs_usable = FALSE, ...)
 
-  #### ARGUMENTS HANDLING ####
+  # Handle legacy arguments (`model.args` and `algorithm.args`)
+  ellipse <- legacy_EGA_args(ellipse)
 
-  # Missing arguments
+  # Ensure data has names
+  data <- ensure_dimension_names(data)
 
-  if(missing(model)){
-    model <- "glasso"
-  }else{model <- match.arg(model)}
+  # First, get necessary inputs
+  output <- obtain_sample_correlations(
+    data = data, n = n,
+    corr = corr, na.data = na.data,
+    verbose = verbose, needs_usable = FALSE, # skips usable data check
+    ...
+  )
 
-  if(missing(algorithm)){
-    algorithm <- "walktrap"
-  }else if(!is.function(algorithm)){
-    algorithm <- tolower(match.arg(algorithm))
-  }
+  # Get outputs
+  data <- output$data; n <- output$n
+  correlation_matrix <- output$correlation_matrix
 
-  if(missing(corr)){
-    corr <- "cor_auto"
-  }else{corr <- match.arg(corr)}
-
-  # Model Arguments
-  ## Check for model
+  # Model branching checks (in order of most likely to be used)
+  # GLASSO = can handle correlation matrix but needs iterative gamma procedure
+  # BGGM = needs original data and not correlation matrix
+  # TMFG = can handle correlation matrix
   if(model == "glasso"){
-    model.formals <- formals(EBICglasso.qgraph)
-  }else{model.formals <- formals(NetworkToolbox::TMFG)}
 
-  ## Check for input model arguments
-  if(length(model.args) != 0){
-
-    ### Check for matching arguments
-    if(any(names(model.args) %in% names(model.formals))){
-
-      model.replace.args <- model.args[na.omit(match(names(model.formals), names(model.args)))]
-
-      model.formals[names(model.replace.args)] <- model.replace.args
-    }
-
-  }
-
-  ## Remove ellipses
-  if("..." %in% names(model.formals)){
-    model.formals[which(names(model.formals) == "...")] <- NULL
-  }
-
-  # Algorithm Arguments
-  ## Check for algorithm
-  if(!is.function(algorithm)){
-
-    if(algorithm == "walktrap"){
-      algorithm.formals <- formals(igraph::cluster_walktrap)
-    }else if(algorithm == "louvain"){
-      algorithm.formals <- formals(igraph::cluster_louvain)
-    }
-
-  }else{algorithm.formals <- formals(algorithm)}
-
-  ## Check for input algorithm arguments
-  if(length(algorithm.args) != 0){
-
-    ### Check for matching arguments
-    if(any(names(algorithm.args) %in% names(algorithm.formals))){
-
-      algorithm.replace.args <- algorithm.args[na.omit(match(names(algorithm.formals), names(algorithm.args)))]
-
-      algorithm.formals[names(algorithm.replace.args)] <- algorithm.replace.args
-    }
-
-  }
-
-  ## Remove ellipses
-  if("..." %in% names(algorithm.formals)){
-    algorithm.formals[which(names(algorithm.formals) == "...")] <- NULL
-  }
-
-  ## Remove weights from igraph functions' arguments
-  if("weights" %in% names(algorithm.formals)){
-    algorithm.formals[which(names(algorithm.formals) == "weights")] <- NULL
-  }
-
-  #### ARGUMENTS HANDLING ####
-
-  # Check if data is correlation matrix and positive definite
-  if(nrow(data) != ncol(data)){
-
-    # Obtain n
-    n <- nrow(data)
-
-    # Compute correlation matrix
-    cor.data <- switch(corr,
-                       cor_auto = qgraph::cor_auto(data, forcePD = TRUE),
-                       pearson = cor(data, use = "pairwise.complete.obs", method = "pearson"),
-                       spearman = cor(data, use = "pairwise.complete.obs", method = "spearman")
+    # Use wrapper to clean up iterative gamma procedure
+    network <- glasso_wrapper(
+      data = correlation_matrix, n = n, corr = corr,
+      na.data = na.data, model = model, network.only = TRUE,
+      verbose = verbose, ellipse = ellipse
     )
 
-    # Check if positive definite
-    if(any(eigen(cor.data)$values < 0)){
-
-      # Let user know
-      warning("Correlation matrix is not positive definite.\nForcing positive definite matrix using Matrix::nearPD()\nResults may be unreliable")
-
-      # Force positive definite matrix
-      cor.data <- as.matrix(Matrix::nearPD(cor.data, corr = TRUE, keepDiag = TRUE, ensureSymmetry = TRUE)$mat)
-    }
-
   }else{
 
-    # Check if symmetric (time series data)
-    if(!isSymmetric(data)){
-      
-      # Obtain n
-      n <- nrow(data)
-      
-      # Compute correlation matrix
-      cor.data <- switch(corr,
-                         cor_auto = qgraph::cor_auto(data, forcePD = TRUE),
-                         pearson = cor(data, use = "pairwise.complete.obs", method = "pearson"),
-                         spearman = cor(data, use = "pairwise.complete.obs", method = "spearman")
+    # Set up network estimation arguments
+    estimation_ARGS <- list(
+      n = n, corr = corr, na.data = na.data,
+      model = model, network.only = TRUE,
+      verbose = verbose
+    )
+
+    # Check for BGGM
+    if(model == "bggm"){
+
+      # Check for correlation input
+      if(is_symmetric(data)){
+        stop(
+          "A symmetric matrix was provided in the 'data' argument. For 'model = \"BGGM\"', the original data is required.",
+          call. = FALSE
+        )
+      }
+
+      # Set "data" as data
+      estimation_ARGS$data <- data
+
+    }else if(model == "tmfg"){ # Set "data" as correlation matrix
+      estimation_ARGS$data <- correlation_matrix
+    }
+
+    # Estimate network
+    network <- do.call(
+      what = network.estimation,
+      args = c(
+        estimation_ARGS,
+        ellipse # pass on ellipse
       )
-      
-      # Check if positive definite
-      if(any(eigen(cor.data)$values < 0)){
-        
-        # Let user know
-        warning("Correlation matrix is not positive definite.\nForcing positive definite matrix using Matrix::nearPD()\nResults may be unreliable")
-        
-        # Force positive definite matrix
-        cor.data <- as.matrix(Matrix::nearPD(cor.data, corr = TRUE, keepDiag = TRUE, ensureSymmetry = TRUE)$mat)
-        
-      }
-    }else{
-      
-      # Check if positive definite
-      if(any(eigen(data)$values < 0)){
-        
-        # Let user know
-        warning("Correlation matrix is not positive definite.\nForcing positive definite matrix using Matrix::nearPD()\nResults may be unreliable")
-        
-        # Force positive definite matrix
-        cor.data <- as.matrix(Matrix::nearPD(data, corr = TRUE, keepDiag = TRUE, ensureSymmetry = TRUE)$mat)
-        
-      }else{cor.data <- data}
-      
-    }
-    
+    )
+
   }
 
-  #### ADDITIONAL ARGUMENTS HANDLING ####
+  # Check for function or non-Louvain method
+  if(is.function(algorithm) || algorithm != "louvain"){
 
-  model.formals$data <- cor.data
-  model.formals$n <- n
-
-  #### ADDITIONAL ARGUMENTS HANDLING ####
-
-  # Estimate network
-  if(model == "glasso")
-  {
-    # GLASSO additional arguments
-    ## Lambda
-    if(!"lambda.min.ratio" %in% names(model.args)){
-      model.formals$lambda.min.ratio <- 0.1
-    }
-
-    if(!"gamma" %in% names(model.args)){
-      gamma.values <- seq(from = 0.50, to = 0, length.out = 3)
-    }else{gamma.values <- model.formals$gamma}
-
-    for(j in 1:length(gamma.values)){
-
-      # Re-instate gamma values
-      model.formals$gamma <- gamma.values[j]
-
-      # Estimate network
-      estimated.network <- do.call(EBICglasso.qgraph, model.formals)
-
-      if(all(abs(NetworkToolbox::strength(estimated.network))>0)){
-
-        if(verbose){
-
-          message(paste("Network estimated with:\n",
-                        " \u2022 gamma = ", gamma.values[j], "\n",
-                        " \u2022 lambda.min.ratio = ", model.formals$lambda.min.ratio,
-                        sep=""))
-
-        }
-
-        break
-
-      }
-    }
-
-  }else if(model == "TMFG"){
-    estimated.network <- NetworkToolbox::TMFG(cor.data)$A
-  }
-
-  # Check for unconnected nodes
-  if(all(NetworkToolbox::degree(estimated.network)==0)){
-
-    # Initialize community membership list
-    wc <- list()
-    wc$membership <- rep(NA, ncol(estimated.network))
-    warning("Estimated network contains unconnected nodes:\n",
-            paste(names(which(NetworkToolbox::strength(estimated.network)==0)), collapse = ", "))
-
-    unconnected <- which(NetworkToolbox::degree(estimated.network)==0)
-
-  }else{
-
-    if(any(NetworkToolbox::degree(estimated.network)==0)){
-
-      warning("Estimated network contains unconnected nodes:\n",
-              paste(names(which(NetworkToolbox::strength(estimated.network)==0)), collapse = ", "))
-
-      unconnected <- which(NetworkToolbox::degree(estimated.network)==0)
-
-    }
-
-    # Convert to igraph
-    graph <- suppressWarnings(NetworkToolbox::convert2igraph(abs(estimated.network)))
-
-    # Run community detection algorithm
-    algorithm.formals$graph <- graph
-
-    if(!is.function(algorithm)){
-
-      wc <- switch(algorithm,
-                   walktrap = do.call(igraph::cluster_walktrap, as.list(algorithm.formals)),
-                   louvain = do.call(igraph::cluster_louvain, as.list(algorithm.formals))
+    # Apply non-Louvain method
+    wc <- do.call(
+      what = community.detection,
+      args = c(
+        list(
+          network = network, algorithm = algorithm,
+          membership.only = TRUE
+        ),
+        ellipse # pass on ellipse
       )
+    )
 
-    }else{wc <- do.call(what = algorithm, args = as.list(algorithm.formals))}
+  }else{ # for Louvain, use consensus clustering
 
-  }
-
-  # Obtain community memberships
-  wc <- wc$membership
-  init.wc <- as.vector(matrix(NA, nrow = 1, ncol = ncol(data)))
-  init.wc[1:length(wc)] <- wc
-  wc <- init.wc
-
-  # Replace unconnected nodes with NA communities
-  if(exists("unconnected")){
-    wc[unconnected] <- NA
-  }
-  
-  # Convert numbers to be consecutive
-  uniq.wc <- unique(na.omit(wc))
-  wc.ord <- sort(uniq.wc)
-  proper.ord <- 1:length(uniq.wc)
-
-  # Check changes needed for consecutive ordering
-  if(any(wc.ord != proper.ord)){
-
-    # Initialize new wc
-    new.wc <- numeric(length = length(wc))
-
-    # Target wcs to change
-    targets <- which(wc.ord != proper.ord)
-
-    if(length(targets) != 0){
-
-      for(i in targets){
-        new.wc[which(wc == wc.ord[i])] <- proper.ord[i]
-      }
-
-      wc <- ifelse(new.wc == 0, wc, new.wc)
-
+    # Check for consensus method
+    if(!"consensus.method" %in% names(ellipse)){
+      ellipse$consensus.method <- "most_common" # default
     }
 
+    # Check for consensus iterations
+    if(!"consensus.iter" %in% names(ellipse)){
+      ellipse$consensus.iter <- 1000 # default
+    }
+
+    # Apply consensus clustering
+    wc <- do.call(
+      what = community.consensus,
+      args = c(
+        list(
+          network = network,
+          correlation.matrix = correlation_matrix,
+          membership.only = TRUE
+        ),
+        ellipse # pass on ellipse
+      )
+    )
+
   }
 
-  names(wc) <- colnames(data)
-  n.dim <- suppressWarnings(length(unique(na.omit(wc))))
+  # Set up results
+  results <- list(
+    network = network, wc = wc,
+    n.dim = unique_length(wc),
+    cor.data = correlation_matrix,
+    n = n
+  )
+
+  # Set class (attributes are stored in `network` and `wc`)
+  class(results) <- "EGA.estimate"
 
   # Return results
-  res <- list()
-  res$network <- estimated.network
-  res$wc <- wc
-  res$n.dim <- n.dim
-  res$cor.data <- cor.data
+  return(results)
 
-  if(model == "glasso"){
-    res$gamma <- model.formals$gamma
-    res$lambda <- model.formals$lambda.min.ratio
+}
+
+# Bug checking ----
+## Basic input
+# data = wmt2[,7:24]; n = NULL
+# corr = "auto"; na.data = "pairwise"
+# model = "glasso"; algorithm = igraph::cluster_spinglass
+# verbose = FALSE; ellipse = list()
+
+#' @noRd
+# Errors ----
+# Updated 07.09.2023
+EGA.estimate_errors <- function(data, n, verbose, ...)
+{
+
+  # 'data' errors
+  object_error(data, c("matrix", "data.frame", "tibble"), "EGA.estimate")
+
+  # Check for tibble
+  if(get_object_type(data) == "tibble"){
+    data <- as.data.frame(data)
   }
 
-  return(res)
+  # 'n' errors
+  if(!is.null(n)){
+    length_error(n, 1, "EGA.estimate")
+    typeof_error(n, "numeric", "EGA.estimate")
+  }
+
+  # 'verbose' errors
+  length_error(verbose, 1, "EGA.estimate")
+  typeof_error(verbose, "logical", "EGA.estimate")
+
+  # Check for usable data
+  if(needs_usable(list(...))){
+    data <- usable_data(data, verbose)
+  }
+
+  # Return data (in case of tibble)
+  return(data)
+
+}
+
+#' @exportS3Method
+# S3 Print Method ----
+# Updated 22.06.2023
+print.EGA.estimate <- function(x, ...)
+{
+
+  # Print network estimation
+  print(x$network)
+
+  # Add break space
+  cat("\n----\n\n")
+
+  # Print community detection
+  print(x$wc)
+
+}
+
+#' @exportS3Method
+# S3 Summary Method ----
+# Updated 22.06.2023
+summary.EGA.estimate <- function(object, ...)
+{
+  print(object, ...) # same as print
+}
+
+#' @exportS3Method
+# S3 Plot Method ----
+# Updated 22.06.2023
+plot.EGA.estimate <- function(x, ...)
+{
+
+  # Return plot
+  single_plot(
+    network = x$network,
+    wc = x$wc,
+    ...
+  )
+
+}
+
+#' @noRd
+# Wrapper for GLASSO ----
+# Updated 23.07.2023
+glasso_wrapper <- function(
+    network, data, n, corr, na.data,
+    model, network.only, verbose,
+    ellipse
+)
+{
+
+  # Go with `gamma` provided
+  if("gamma" %in% names(ellipse)){
+
+    # Obtain `gamma`
+    gamma <- ellipse$gamma
+
+    # Remove `gamma` from ellipse
+    ellipse <- ellipse[names(ellipse) != "gamma"]
+
+    # Return result
+    return(
+      do.call(
+        what = network.estimation,
+        args = c(
+          list( # functions passed into this function
+            data = data, n = n, corr = corr, na.data = na.data,
+            model = model, network.only = TRUE, verbose = verbose,
+            gamma = gamma
+          ),
+          ellipse # pass on ellipse
+        )
+      )
+    )
+
+  }
+
+  # Set gamma
+  gamma <- 0.50
+
+  # Check for any disconnected nodes
+  while(TRUE){
+
+    # Re-estimate network
+    network <- do.call(
+      what = network.estimation,
+      args = c(
+        list( # functions passed into this function
+          data = data, n = n, corr = corr, na.data = na.data,
+          model = model, network.only = TRUE, verbose = verbose,
+          gamma = gamma
+        ),
+        ellipse # pass on ellipse
+      )
+    )
+
+    # Check for disconnected nodes
+    if(any(colSums(abs(network), na.rm = TRUE) == 0) && gamma > 0){
+      gamma <- gamma - 0.25 # decrease gamma
+    }else{
+      break # all nodes are connected or gamma equals zero
+    }
+
+  }
+
+  # Return network
+  return(network)
+
 }
 

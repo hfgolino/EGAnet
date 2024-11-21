@@ -1,165 +1,154 @@
-#' Applies the Exploratory Graph Analysis technique
+#' @title Exploratory Graph Analysis
 #'
-#' Estimates the number of dimensions of a given dataset or correlation matrix
-#' using the graphical lasso (\code{\link{EBICglasso.qgraph}}) or the
-#' Triangulated Maximally Filtered Graph (\code{\link[NetworkToolbox]{TMFG}})
-#' network estimation methods.
-#'
-#' Two community detection algorithms, Walktrap (Pons & Latapy, 2006) and
-#' Louvain (Blondel et al., 2008), are pre-programmed because of their
-#' superior performance in simulation studies on psychological
-#' data generated from factor models (Christensen & Golino; 2020; Golino et al., 2020).
-#' Notably, any community detection algorithm from the \code{\link{igraph}}
-#' can be used to estimate the number of communities (see examples).
+#' @description Estimates the number of communities (dimensions) of
+#' a dataset or correlation matrix using a network estimation method
+#' (Golino & Epskamp, 2017; Golino et al., 2020). After, a community
+#' detection algorithm is applied (Christensen et al., 2023) for
+#' multidimensional data. A unidimensional check is also applied
+#' based on findings from Golino et al. (2020) and Christensen (2023)
 #'
 #' @param data Matrix or data frame.
-#' Variables (down columns) or correlation matrix.
-#' If the input is a correlation matrix,
-#' then argument \code{n} (number of cases) is \strong{required}
+#' Should consist only of variables to be used in the analysis.
+#' Can be raw data or a correlation matrix
 #'
-#' @param n Integer.
+#' @param n Numeric (length = 1).
 #' Sample size if \code{data} provided is a correlation matrix
-#' 
-#' @param uni.method Character.
-#' What unidimensionality method should be used? 
-#' Defaults to \code{"LE"}.
-#' Current options are:
-#' 
-#' \itemize{
 #'
-#' \item{\strong{\code{expand}}}
-#' {Expands the correlation matrix with four variables correlated .50.
-#' If number of dimension returns 2 or less in check, then the data 
-#' are unidimensional; otherwise, regular EGA with no matrix
-#' expansion is used. This is the method used in the Golino et al. (2020)
-#' \emph{Psychological Methods} simulation.}
-#'
-#' \item{\strong{\code{LE}}}
-#' {Applies the leading eigenvalue algorithm (\code{\link[igraph]{cluster_leading_eigen}})
-#' on the empirical correlation matrix. If the number of dimensions is 1,
-#' then the leading eigenvalue solution is used; otherwise, regular EGA
-#' is used. This is the final method used in the Christensen, Garrido,
-#' and Golino (2021) simulation.}
-#' 
-#' }
-#' 
-#' @param corr Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
-#' Current options are:
+#' @param corr Character (length = 1).
+#' Method to compute correlations.
+#' Defaults to \code{"auto"}.
+#' Available options:
 #'
 #' \itemize{
 #'
-#' \item{\strong{\code{cor_auto}}}
-#' {Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
-#' \code{\link[qgraph]{qgraph}}}.
+#' \item \code{"auto"} --- Automatically computes appropriate correlations for
+#' the data using Pearson's for continuous, polychoric for ordinal,
+#' tetrachoric for binary, and polyserial/biserial for ordinal/binary with
+#' continuous. To change the number of categories that are considered
+#' ordinal, use \code{ordinal.categories}
+#' (see \code{\link[EGAnet]{polychoric.matrix}} for more details)
 #'
-#' \item{\strong{\code{pearson}}}
-#' {Computes Pearson's correlation coefficient using the pairwise complete observations via
-#' the \code{\link[stats]{cor}}} function.
+#' \item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations.
+#' Arguments can be passed along to the function
 #'
-#' \item{\strong{\code{spearman}}}
-#' {Computes Spearman's correlation coefficient using the pairwise complete observations via
-#' the \code{\link[stats]{cor}}} function.
+#' \item \code{"cosine"} --- Uses \code{\link[EGAnet]{cosine}} to compute cosine similarity
+#'
+#' \item \code{"pearson"} --- Pearson's correlation is computed for all
+#' variables regardless of categories
+#'
+#' \item \code{"spearman"} --- Spearman's rank-order correlation is computed
+#' for all variables regardless of categories
+#'
 #' }
 #'
-#' @param model Character.
-#' A string indicating the method to use.
+#' For other similarity measures, compute them first and input them
+#' into \code{data} with the sample size (\code{n})
+#'
+#' @param na.data Character (length = 1).
+#' How should missing data be handled?
+#' Defaults to \code{"pairwise"}.
+#' Available options:
+#'
+#' \itemize{
+#'
+#' \item \code{"pairwise"} --- Computes correlation for all available cases between
+#' two variables
+#'
+#' \item \code{"listwise"} --- Computes correlation for all complete cases in the dataset
+#'
+#' }
+#'
+#' @param model Character (length = 1).
 #' Defaults to \code{"glasso"}.
-#' Current options are:
+#' Available options:
 #'
 #' \itemize{
 #'
-#' \item{\strong{\code{glasso}}}
-#' {Estimates the Gaussian graphical model using graphical LASSO with
-#' extended Bayesian information criterion to select optimal regularization parameter}
+#' \item \code{"BGGM"} --- Computes the Bayesian Gaussian Graphical Model.
+#' Set argument \code{ordinal.categories} to determine
+#' levels allowed for a variable to be considered ordinal.
+#' See \code{?BGGM::estimate} for more details
 #'
-#' \item{\strong{\code{TMFG}}}
-#' {Estimates a Triangulated Maximally Filtered Graph}
+#' \item \code{"glasso"} --- Computes the GLASSO with EBIC model selection.
+#' See \code{\link[EGAnet]{EBICglasso.qgraph}} for more details
+#'
+#' \item \code{"TMFG"} --- Computes the TMFG method.
+#' See \code{\link[EGAnet]{TMFG}} for more details
 #'
 #' }
 #'
-#' @param model.args List.
-#' A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
-#' or \code{\link[NetworkToolbox]{TMFG}}
-#'
-#' @param algorithm A string indicating the algorithm to use or a function from \code{\link{igraph}}
+#' @param algorithm Character or
+#' \code{igraph} \code{cluster_*} function (length = 1).
 #' Defaults to \code{"walktrap"}.
-#' Current options are:
+#' Three options are listed below but all are available
+#' (see \code{\link[EGAnet]{community.detection}} for other options):
 #'
 #' \itemize{
 #'
-#' \item{\strong{\code{walktrap}}}
-#' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
+#' \item \code{"leiden"} --- See \code{\link[igraph]{cluster_leiden}} for more details
 #'
-#' \item{\strong{\code{louvain}}}
-#' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_louvain}}}
+#' \item \code{"louvain"} --- By default, \code{"louvain"} will implement the Louvain algorithm using
+#' the consensus clustering method (see \code{\link[EGAnet]{community.consensus}}
+#' for more information). This function will implement
+#' \code{consensus.method = "most_common"} and \code{consensus.iter = 1000}
+#' unless specified otherwise
+#'
+#' \item \code{"walktrap"} --- See \code{\link[igraph]{cluster_walktrap}} for more details
 #'
 #' }
 #'
-#' @param algorithm.args List.
-#' A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
-#' or some other community detection algorithm function (see examples)
-#'
-#' @param plot.EGA Boolean.
-#' If \code{TRUE}, returns a plot of the network and its estimated dimensions.
-#' Defaults to \code{TRUE}
-#'
-#' @param plot.type Character.
-#' Plot system to use.
-#' Current options are \code{\link[qgraph]{qgraph}} and \code{\link{GGally}}.
-#' Defaults to \code{"GGally"}
-#'
-#' @param plot.args List.
-#' A list of additional arguments for the network plot.
-#' For \code{plot.type = "qgraph"}:
+#' @param uni.method Character (length = 1).
+#' What unidimensionality method should be used?
+#' Defaults to \code{"louvain"}.
+#' Available options:
 #'
 #' \itemize{
 #'
-#' \item{\strong{\code{vsize}}}
-#' {Size of the nodes. Defaults to 6.}
+#' \item \code{"expand"} --- Expands the correlation matrix with four variables correlated 0.50.
+#' If number of dimension returns 2 or less in check, then the data
+#' are unidimensional; otherwise, regular EGA with no matrix
+#' expansion is used. This method was used in the Golino et al.'s (2020)
+#' \emph{Psychological Methods} simulation
 #'
-#'}
-#' For \code{plot.type = "GGally"} (see \code{\link[GGally]{ggnet2}} for
-#' full list of arguments):
+#' \item \code{"LE"} --- Applies the Leading Eigenvector algorithm
+#' (\code{\link[igraph]{cluster_leading_eigen}})
+#' on the empirical correlation matrix. If the number of dimensions is 1,
+#' then the Leading Eigenvector solution is used; otherwise, regular EGA
+#' is used. This method was used in the Christensen et al.'s (2023)
+#' \emph{Behavior Research Methods} simulation
 #'
-#' \itemize{
-#'
-#' \item{\strong{\code{vsize}}}
-#' {Size of the nodes. Defaults to 6.}
-#'
-#' \item{\strong{\code{label.size}}}
-#' {Size of the labels. Defaults to 5.}
-#'
-#' \item{\strong{\code{alpha}}}
-#' {The level of transparency of the nodes, which might be a single value or a vector of values. Defaults to 0.7.}
-#'
-#' \item{\strong{\code{edge.alpha}}}
-#' {The level of transparency of the edges, which might be a single value or a vector of values. Defaults to 0.4.}
-#'
-#'  \item{\strong{\code{legend.names}}}
-#' {A vector with names for each dimension}
-#'
-#' \item{\strong{\code{color.palette}}}
-#' {The color palette for the nodes. For custom colors,
-#' enter HEX codes for each dimension in a vector.
-#' See \code{\link[EGAnet]{color_palette_EGA}} for
-#' more details and examples}
+#' \item \code{"louvain"} --- Applies the Louvain algorithm (\code{\link[igraph]{cluster_louvain}})
+#' on the empirical correlation matrix. If the number of dimensions is 1,
+#' then the Louvain solution is used; otherwise, regular EGA is used.
+#' This method was validated Christensen's (2022) \emph{PsyArXiv} simulation.
+#' Consensus clustering can be used by specifying either
+#' \code{"consensus.method"} or \code{"consensus.iter"}
 #'
 #' }
 #'
-#' @param verbose Boolean.
-#' Should network estimation parameters be printed?
+#' @param plot.EGA Boolean (length = 1).
 #' Defaults to \code{TRUE}.
-#' Set to \code{FALSE} for no print out
+#' Whether the plot should be returned with the results.
+#' Set to \code{FALSE} for no plot
 #'
-#' @param ... Additional arguments.
-#' Used for deprecated arguments from previous versions of \code{\link{EGA}}
+#' @param verbose Boolean (length = 1).
+#' Whether messages and (insignificant) warnings should be output.
+#' Defaults to \code{FALSE} (silent calls).
+#' Set to \code{TRUE} to see all messages and warnings for every function call
+#'
+#' @param ... Additional arguments to be passed on to
+#' \code{\link[EGAnet]{auto.correlate}},
+#' \code{\link[EGAnet]{network.estimation}},
+#' \code{\link[EGAnet]{community.detection}},
+#' \code{\link[EGAnet]{community.consensus}}, and
+#' \code{\link[EGAnet]{community.unidimensional}}
 #'
 #' @author Hudson Golino <hfg9s at virginia.edu>, Alexander P. Christensen <alexpaulchristensen at gmail.com>, Maria Dolores Nieto <acinodam at gmail.com> and Luis E. Garrido <garrido.luiseduardo at gmail.com>
 #'
 #' @return Returns a list containing:
 #'
-#' \item{network}{A symmetric network estimated using either the
-#' \code{\link{EBICglasso.qgraph}} or \code{\link[NetworkToolbox]{TMFG}}}
+#' \item{network}{A matrix containing a network estimated using
+#' \code{link[EGAnet]{network.estimation}}}
 #'
 #' \item{wc}{A vector representing the community (dimension) membership
 #' of each node in the network. \code{NA} values mean that the node
@@ -167,554 +156,421 @@
 #'
 #' \item{n.dim}{A scalar of how many total dimensions were identified in the network}
 #'
-#' \item{cor.data}{The zero-order correlation matrix}
+#' \item{correlation}{The zero-order correlation matrix}
+#'
+#' \item{n}{Number of cases in \code{data}}
+#'
+#' \item{dim.variables}{An ordered matrix of item allocation}
+#'
+#' \item{TEFI}{\code{link[EGAnet]{tefi}} for the estimated structure}
+#'
+#' \item{plot.EGA}{Plot output if \code{plot.EGA = TRUE}}
 #'
 #' @examples
-#' \donttest{# Estimate EGA
-#' ## plot.type = "qqraph" used for CRAN checks
-#' ## plot.type = "GGally" is the default
-#' ega.wmt <- EGA(data = wmt2[,7:24], plot.type = "qgraph")
+#' # Obtain data
+#' wmt <- wmt2[,7:24]
 #'
-#' # Summary statistics
-#' summary(ega.wmt)
+#' # Estimate EGA
+#' ega.wmt <- EGA(
+#'   data = wmt,
+#'   plot.EGA = FALSE # No plot for CRAN checks
+#' )
+#'
+#' # Print results
+#' print(ega.wmt)
 #'
 #' # Estimate EGAtmfg
-#' ega.wmt <- EGA(data = wmt2[,7:24], model = "TMFG", plot.type = "qgraph")
+#' ega.wmt.tmfg <- EGA(
+#'   data = wmt, model = "TMFG",
+#'   plot.EGA = FALSE # No plot for CRAN checks
+#' )
 #'
 #' # Estimate EGA with Louvain algorithm
-#' ega.wmt <- EGA(data = wmt2[,7:24], algorithm = "louvain", plot.type = "qgraph")
+#' ega.wmt.louvain <- EGA(
+#'   data = wmt, algorithm = "louvain",
+#'   plot.EGA = FALSE # No plot for CRAN checks
+#' )
 #'
-#' # Estimate EGA with Spinglass algorithm
-#' ega.wmt <- EGA(data = wmt2[,7:24],
-#' algorithm = igraph::cluster_spinglass, plot.type = "qgraph")
-#'
-#' # Estimate EGA
-#' ega.intel <- EGA(data = intelligenceBattery[,8:66], model = "glasso", plot.EGA = FALSE)
-#'
-#' # Summary statistics
-#' summary(ega.intel)
-#' }
-#'
-#'  \dontshow{# Fast for CRAN checks
-#' # Pearson's correlation matrix
-#' wmt <- cor(wmt2[,7:24])
-#'
-#' # Estimate EGA
-#' ega.wmt <- EGA(data = wmt, n = nrow(wmt2), model = "glasso", plot.EGA = FALSE)
-#'
-#' }
-#'
-#' @seealso \code{\link{bootEGA}} to investigate the stability of EGA's estimation via bootstrap
-#' and \code{\link{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
+#' # Estimate EGA with an {igraph} function (Fast-greedy)
+#' ega.wmt.greedy <- EGA(
+#'   data = wmt,
+#'   algorithm = igraph::cluster_fast_greedy,
+#'   plot.EGA = FALSE # No plot for CRAN checks
+#' )
 #'
 #' @references
-#' # Louvain algorithm \cr
-#' Blondel, V. D., Guillaume, J.-L., Lambiotte, R., & Lefebvre, E. (2008).
-#' Fast unfolding of communities in large networks.
-#' \emph{Journal of Statistical Mechanics: Theory and Experiment}, \emph{2008}, P10008.
-#'
-#' # Compared all \emph{igraph} community detections algorithms, introduced Louvain algorithm, simulation with continuous and polytomous data \cr
-#' # Also implements the Leading Eigenvalue unidimensional method \cr
-#' Christensen, A. P., Garrido, L. E., & Golino, H. (2021).
-#' Comparing community detection algorithms in psychological data: A Monte Carlo simulation.
-#' \emph{PsyArXiv}.
-#' \doi{10.31234/osf.io/hz89e}
-#'
-#' # Original simulation and implementation of EGA \cr
+#' \strong{Original simulation and implementation of EGA} \cr
 #' Golino, H. F., & Epskamp, S. (2017).
 #' Exploratory graph analysis: A new approach for estimating the number of dimensions in psychological research.
-#' \emph{PLoS ONE}, \emph{12}, e0174035..
-#' \doi{10.1371/journal.pone.0174035}
+#' \emph{PLoS ONE}, \emph{12}, e0174035.
 #'
-#' Golino, H. F., & Demetriou, A. (2017).
-#' Estimating the dimensionality of intelligence like data using Exploratory Graph Analysis.
-#' \emph{Intelligence}, \emph{62}, 54-70.
-#' \doi{10.1016/j.intell.2017.02.007}
-#'
-#' # Current implementation of EGA, introduced unidimensional checks, continuous and dichotomous data \cr
+#' \strong{Current implementation of EGA, introduced unidimensional checks, continuous and dichotomous data} \cr
 #' Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Sadana, R., & Thiyagarajan, J. A. (2020).
 #' Investigating the performance of Exploratory Graph Analysis and traditional techniques to identify the number of latent factors: A simulation and tutorial.
 #' \emph{Psychological Methods}, \emph{25}, 292-320.
-#' \doi{10.1037/met0000255}
 #'
-#' # Walktrap algorithm \cr
-#' Pons, P., & Latapy, M. (2006).
-#' Computing communities in large networks using random walks.
-#' \emph{Journal of Graph Algorithms and Applications}, \emph{10}, 191-218.
-#' \doi{10.7155/jgaa.00185}
+#' \strong{Compared all \emph{igraph} community detection algorithms, introduced Louvain algorithm, simulation with continuous and polytomous data} \cr
+#' \strong{Also implements the Leading Eigenvalue unidimensional method} \cr
+#' Christensen, A. P., Garrido, L. E., Pena, K. G., & Golino, H. (2023).
+#' Comparing community detection algorithms in psychological data: A Monte Carlo simulation.
+#' \emph{Behavior Research Methods}.
 #'
-#' @importFrom stats cor rnorm runif na.omit
+#' \strong{Comprehensive unidimensionality simulation} \cr
+#' Christensen, A. P. (2023).
+#' Unidimensional community detection: A Monte Carlo simulation, grid search, and comparison.
+#' \emph{PsyArXiv}.
+#'
+#' \strong{Compared all} \code{igraph} \strong{community detection algorithms, simulation with continuous and polytomous data} \cr
+#' Christensen, A. P., Garrido, L. E., Guerra-Pena, K., & Golino, H. (2023).
+#' Comparing community detection algorithms in psychometric networks: A Monte Carlo simulation.
+#' \emph{Behavior Research Methods}.
+#'
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{EGAnet}
 #'
 #' @export
-#'
-# Updated 12.05.2021
-# LE adjustment 08.03.2021
-## EGA Function to detect unidimensionality:
-EGA <- function (data, n = NULL, uni.method = c("expand", "LE"),
-                 corr = c("cor_auto", "pearson", "spearman"),
-                 model = c("glasso", "TMFG"), model.args = list(),
-                 algorithm = c("walktrap", "louvain"), algorithm.args = list(),
-                 plot.EGA = TRUE, plot.type = c("GGally", "qgraph"),
-                 plot.args = list(), verbose = TRUE,
-                 ...) {
+# EGA ----
+# Updated 21.09.2024
+EGA <- function (
+    data, n = NULL,
+    corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
+    na.data = c("pairwise", "listwise"),
+    model = c("BGGM", "glasso", "TMFG"),
+    algorithm = c("leiden", "louvain", "walktrap"),
+    uni.method = c("expand", "LE", "louvain"),
+    plot.EGA = TRUE, verbose = FALSE,
+    ...
+)
+{
 
-  # Get additional arguments
-  add.args <- list(...)
+  # Check for missing arguments (argument, default, function)
+  # Uses actual function they will be used in
+  # (keeping non-function choices for `cor_auto`)
+  corr <- set_default(corr, "auto", EGA)
+  na.data <- set_default(na.data, "pairwise", auto.correlate)
+  model <- set_default(model, "glasso", network.estimation)
+  algorithm <- set_default(algorithm, "walktrap", community.detection)
+  uni.method <- set_default(uni.method, "louvain", EGA)
 
-  # Check if steps has been input as an argument
-  if("steps" %in% names(add.args)){
+  # Argument errors (return data in case of tibble)
+  data <- EGA_errors(data, n, plot.EGA, verbose, ...)
 
-    # Give deprecation warning
-    warning(
-      paste(
-        "The 'steps' argument has been deprecated in all EGA functions.\n\nInstead use: algorithm.args = list(steps = ", add.args$steps, ")",
-        sep = ""
-      )
+  # Ensure data has names
+  data <- ensure_dimension_names(data)
+
+  # First, obtain the multidimensional result
+  ## Proper correlations are automatically computed in `EGA.estimate`
+  ## Network estimation settings can be passed to unidimensional result
+  multidimensional_result <- EGA.estimate(
+    data = data, n = n, corr = corr, na.data = na.data,
+    model = model, algorithm = algorithm,
+    verbose = verbose, needs_usable = FALSE, # skips usable data check
+    ...
+  )
+
+  # Store model attributes
+  model_attributes <- attr(multidimensional_result$network, "methods")
+
+  # Check for zero dimensions
+  # Determine `select` arguments
+  ## Uses `overwrite_arguments` instead of
+  ## `obtain_arguments` because `BGGM::select`
+  ## is an S3method. It's possible to use
+  ## `BGGM:::select.estimate` but CRAN gets
+  ## mad about triple colons
+  # bggm_select_ARGS <- list( # defaults for `BGGM:::select.estimate`
+  #   cred = 0.95, alternative = "two.sided"
+  # )
+
+  # Check for {BGGM}
+  if(model == "bggm"){
+    stop("Due to CRAN check issues, `model = \"BGGM\"` is not available at the moment.")
+  }
+
+  # Obtain arguments for model
+  model_ARGS <- switch(
+    model_attributes$model,
+    # "bggm" = c(
+    #   obtain_arguments(BGGM::estimate, model_attributes),
+    #   overwrite_arguments(bggm_select_ARGS, model_attributes)
+    # ),
+    "glasso" = obtain_arguments(EBICglasso.qgraph, model_attributes),
+    "tmfg" = obtain_arguments(TMFG, model_attributes)
+  )
+
+  # Make adjustments for each model (removes extraneous arguments)
+  model_ARGS <- adjust_model_arguments(model_ARGS)
+
+  # Set up arguments for unidimensional
+  unidimensional_ARGS <- list( # standard arguments
+    data = data, n = n, corr = corr, na.data = na.data,
+    model = model, uni.method = uni.method,
+    verbose = verbose, needs_usable = FALSE # skips usable data check
+  )
+
+  # `data` at this point will be data or correlation matrix
+  # For non-BGGM network estimation, OK to use correlation matrix
+  if(model_attributes$model != "bggm"){
+    unidimensional_ARGS$data <- multidimensional_result$cor.data
+    unidimensional_ARGS$n <- multidimensional_result$n
+  }
+
+  # Additional arguments for model
+  unidimensional_ARGS <- c(unidimensional_ARGS, model_ARGS)
+
+  # Third, obtain the unidimensional result
+  unidimensional_result <- do.call(
+    what = community.unidimensional,
+    args = unidimensional_ARGS
+  )
+
+  # Unidimensional?
+  unidimensional <- unique_length(unidimensional_result) == 1
+
+  # Determine result
+  if(unidimensional){
+
+    # Replace memberships with unidimensional result
+    multidimensional_result$wc <- unidimensional_result
+
+    # Update number of dimensions
+    multidimensional_result$n.dim <- 1
+
+  }
+
+  # Set up dimension variables data frame
+  ## Mainly for legacy, redundant with named `wc`
+  dim.variables <- fast.data.frame(
+    c( # should have names at this point
+      names(multidimensional_result$wc),
+      as.vector(multidimensional_result$wc)
+    ),
+    nrow = length(multidimensional_result$wc), ncol = 2,
+    colnames = c("items", "dimension")
+  )
+
+  # Dimension variables data frame by dimension
+  multidimensional_result$dim.variables <- dim.variables[
+    order(dim.variables$dimension),
+  ]
+
+  # For legacy, change names of output
+  ## Change correlation matrix of `cor.data` to `correlation`
+  names(multidimensional_result)[
+    names(multidimensional_result) == "cor.data"
+  ] <- "correlation"
+
+  # Add unidimensional attributes
+  attr(multidimensional_result, "unidimensional") <- list(
+    uni.method = uni.method, unidimensional = unidimensional
+  )
+
+  # Check for Louvain method (for consensus information)
+  if(uni.method == "louvain"){
+    attr(multidimensional_result, "unidimensional")$consensus <-
+      attr(unidimensional_result, "methods")
+  }
+
+  # Set class
+  class(multidimensional_result) <- "EGA"
+
+  # Add TEFI to the result
+  multidimensional_result$TEFI <- tefi(multidimensional_result)$VN.Entropy.Fit
+
+  # Check for plot
+  if(plot.EGA && sum(multidimensional_result$network != 0)){
+
+    # Set up plot
+    multidimensional_result$plot.EGA <- plot(
+      multidimensional_result, ...
     )
 
-    # Handle the number of steps appropriately
-    algorithm.args$steps <- add.args$steps
-  }
-  
-  # Check if uni has been input as an argument
-  if("uni" %in% names(add.args)){
-    
-    # Give deprecation warning
-    warning(
-      "The 'uni' argument has been deprecated in all EGA functions."
-    )
-  }
-
-  #### ARGUMENTS HANDLING ####
-  
-  if(missing(uni.method)){
-    uni.method <- "LE"
-  }else{uni.method <- match.arg(uni.method)}
-  
-  # Check if uni.method = "LE" has been used
-  if(uni.method == "LE"){
-    # Give change warning
-    warning(
-      paste(
-        "Previous versions of EGAnet (<= 0.9.8) checked unidimensionality using",
-        styletext('uni.method = "expand"', defaults = "underline"),
-        "as the default"
-      )
-    )
-  }else if(uni.method == "expand"){
-    # Give change warning
-    warning(
-      paste(
-        "Newer evidence suggests that",
-        styletext('uni.method = "LE"', defaults = "underline"),
-        'is more accurate than uni.method = "expand" (see Christensen, Garrido, & Golino, 2021 in references).',
-        '\n\nIt\'s recommended to use uni.method = "LE"'
-      )
-    )
-  }
-  
-  if(missing(corr)){
-    corr <- "cor_auto"
-  }else{corr <- match.arg(corr)}
-
-  if(missing(model)){
-    model <- "glasso"
-  }else{model <- match.arg(model)}
-
-  if(missing(algorithm)){
-    algorithm <- "walktrap"
-  }else if(!is.function(algorithm)){
-    algorithm <- tolower(match.arg(algorithm))
-  }
-
-  if(missing(plot.type)){
-    plot.type <- "GGally"
-  }else{plot.type <- match.arg(plot.type)}
-
-  #### ARGUMENTS HANDLING ####
-  
-  # Message function
-  message(styletext(styletext("\nExploratory Graph Analysis\n", defaults = "underline"), defaults = "bold"))
-
-  # Let user know setting
-  message(paste(" \u2022 model = ", model, "\n",
-                " \u2022 algorithm = ",
-                gsub(
-                  "igraph", "",
-                  gsub(
-                    "::", "",
-                    gsub(
-                      "cluster_", "",
-                      paste(substitute(algorithm), collapse = "")
-                    )
-                  )
-                ),
-                "\n",
-                " \u2022 correlation = ", corr, "\n",
-                " \u2022 unidimensional check = ", ifelse(
-                  uni.method == "LE",
-                  "leading eigenvalue",
-                  "correlation matrix expansion"
-                ), "\n",
-                sep=""))
-  
-  # Check for correlation matrix or data
-  if(nrow(data) == ncol(data)){ ## Correlation matrix
-
-    # Check for column names
-    if(is.null(colnames(data))){
-      colnames(data) <- paste("V", 1:ncol(data), sep = "")
-    }
-
-    # Check for number of cases
-    if(missing(n)){
-      stop("There is no input for argument 'n'. Number of cases must be input when the matrix is square.")
-    }
-
-    # Multidimensional result
-    ## Ensures proper partial correlations
-    multi.res <- EGA.estimate(data = data, n = n,
-                              model = model, model.args = model.args,
-                              algorithm = algorithm, algorithm.args = algorithm.args,
-                              verbose = verbose)
-
-    # Unidimensional result
-    if(uni.method == "expand"){
-      
-      # Check for Spinglass algorithm
-      if(is.function(algorithm)){
-        
-        # spins argument is used to identify Spinglass algorithm
-        if("spins" %in% methods::formalArgs(algorithm)){
-          
-          # Generate data
-          uni.data <- MASS::mvrnorm(n = n, mu = rep(0, ncol(data)), Sigma = data)
-          
-          # Simulate data from unidimensional factor model
-          sim.data <- sim.func(data = uni.data, nvar = 4, nfact = 1, load = .70)
-          
-        }else{
-          
-          # Expand correlation matrix
-          sim.data <- expand.corr(data)
-          
-        }
-        
-      }else{# Do regular adjustment
-        
-        # Expand correlation matrix
-        sim.data <- expand.corr(data)
-        
-      }
-      
-      # Estimate unidimensional EGA
-      uni.res <- EGA.estimate(data = sim.data, n = n,
-                              model = model, model.args = model.args,
-                              algorithm = algorithm, algorithm.args = algorithm.args,
-                              verbose = FALSE)
-      
-      # Set up results
-      if(uni.res$n.dim <= 2){ ## If unidimensional
-        
-        n.dim <- uni.res$n.dim
-        cor.data <- data
-        estimated.network <- multi.res$network
-        wc <- uni.res$wc[-c(1:4)]
-        if(model == "glasso"){
-          gamma <- uni.res$gamma
-          lambda <- uni.res$lambda
-        }
-        
-      }else{ ## If not
-        
-        n.dim <- multi.res$n.dim
-        cor.data <- multi.res$cor.data
-        estimated.network <- multi.res$network
-        wc <- multi.res$wc
-        if(model == "glasso"){
-          gamma <- multi.res$gamma
-          lambda <- multi.res$lambda
-        }
-        
-      }
-      
-    }else if(uni.method == "LE"){
-      
-      # Leading eigenvalue approach for one and two dimensions
-      wc <- igraph::cluster_leading_eigen(NetworkToolbox::convert2igraph(abs(data)))$membership
-      names(wc) <- colnames(data)
-      n.dim <- length(na.omit(unique(wc)))
-      
-      # Set up results
-      if(n.dim == 1){ ## Leading eigenvalue
-        
-        cor.data <- data
-        estimated.network <- multi.res$network
-        if(model == "glasso"){
-          gamma <- multi.res$gamma
-          lambda <- multi.res$lambda
-        }
-        
-      }else{ ## If not
-        
-        n.dim <- multi.res$n.dim
-        cor.data <- multi.res$cor.data
-        estimated.network <- multi.res$network
-        wc <- multi.res$wc
-        if(model == "glasso"){
-          gamma <- multi.res$gamma
-          lambda <- multi.res$lambda
-        }
-        
-      }
-      
-    }
-    
-  }else{ ## Data
-
-    # Check for column names
-    if(is.null(colnames(data))){
-      colnames(data) <- paste("V", 1:ncol(data), sep = "")
-    }
-
-    # Get number of cases
-    n <- nrow(data)
-
-    # Check for unidimensional structure
-    if(uni.method == "expand"){
-      
-      # Check for Spinglass algorithm
-      if(is.function(algorithm)){
-        
-        # spins argument is used to identify Spinglass algorithm
-        if("spins" %in% methods::formalArgs(algorithm)){
-          
-          # Simulate data from unidimensional factor model
-          sim.data <- sim.func(data = data, nvar = 4, nfact = 1, load = .70)
-          
-          ## Compute correlation matrix
-          cor.data <- switch(corr,
-                             "cor_auto" = qgraph::cor_auto(sim.data),
-                             "pearson" = cor(sim.data, use = "pairwise.complete.obs"),
-                             "spearman" = cor(sim.data, method = "spearman", use = "pairwise.complete.obs")
-          )
-          
-        }else{
-          
-          ## Compute correlation matrix
-          cor.data <- switch(corr,
-                             "cor_auto" = qgraph::cor_auto(data),
-                             "pearson" = cor(data, use = "pairwise.complete.obs"),
-                             "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
-          )
-          
-          ## Expand correlation matrix
-          cor.data <- expand.corr(cor.data)
-          
-        }
-        
-      }else{# Do regular adjustment
-        
-        ## Compute correlation matrix
-        cor.data <- switch(corr,
-                           "cor_auto" = qgraph::cor_auto(data),
-                           "pearson" = cor(data, use = "pairwise.complete.obs"),
-                           "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
-        )
-        
-        ## Expand correlation matrix
-        cor.data <- expand.corr(cor.data)
-        
-      }
-      
-      # Unidimensional result
-      uni.res <- EGA.estimate(data = cor.data, n = n,
-                              model = model, model.args = model.args,
-                              algorithm = algorithm, algorithm.args = algorithm.args,
-                              verbose = verbose)
-      
-      ## Remove simulated data for multidimensional result
-      cor.data <- cor.data[-c(1:4),-c(1:4)]
-      
-      # Multidimensional result
-      multi.res <- EGA.estimate(cor.data, n = n,
-                                model = model, model.args = model.args,
-                                algorithm = algorithm, algorithm.args = algorithm.args,
-                                verbose = FALSE)
-      
-      if(uni.res$n.dim <= 2 & !is.infinite(multi.res$n.dim)){
-        
-        n.dim <- uni.res$n.dim
-        estimated.network <- multi.res$network
-        wc <- uni.res$wc[-c(1:4)]
-        if(model == "glasso"){
-          gamma <- uni.res$gamma
-          lambda <- uni.res$lambda
-        }
-        
-      }else{
-        
-        n.dim <- multi.res$n.dim
-        estimated.network <- multi.res$network
-        wc <- multi.res$wc
-        
-        if(model == "glasso"){
-          gamma <- multi.res$gamma
-          lambda <- multi.res$lambda
-        }
-        
-      }
-      
-    }else if(uni.method == "LE"){
-      
-      ## Compute correlation matrix
-      cor.data <- switch(corr,
-                         "cor_auto" = qgraph::cor_auto(data),
-                         "pearson" = cor(data, use = "pairwise.complete.obs"),
-                         "spearman" = cor(data, method = "spearman", use = "pairwise.complete.obs")
-      )
-      
-      # Leading eigenvalue approach for one and two dimensions
-      wc <- igraph::cluster_leading_eigen(NetworkToolbox::convert2igraph(abs(cor.data)))$membership
-      names(wc) <- colnames(cor.data)
-      n.dim <- length(na.omit(unique(wc)))
-      
-      # Multidimensional result
-      multi.res <- EGA.estimate(cor.data, n = n,
-                                model = model, model.args = model.args,
-                                algorithm = algorithm, algorithm.args = algorithm.args,
-                                verbose = FALSE)
-      
-      
-      
-      # Set up results
-      if(n.dim == 1){ ## Leading eigenvalue
-
-        estimated.network <- multi.res$network
-        if(model == "glasso"){
-          gamma <- multi.res$gamma
-          lambda <- multi.res$lambda
-        }
-        
-      }else{ ## If not
-        
-        n.dim <- multi.res$n.dim
-        estimated.network <- multi.res$network
-        wc <- multi.res$wc
-        
-        if(model == "glasso"){
-          gamma <- multi.res$gamma
-          lambda <- multi.res$lambda
-        }
-        
-      }
-      
-    }
+    # Actually send the plot
+    silent_plot(multidimensional_result$plot.EGA)
 
   }
 
-  a <- list()
-  # Returning only communities that have at least two items:
-  if(length(unique(na.omit(wc)))>1){
-    indices <- seq_along(wc)
-    indices2 <- indices[wc %in% wc[duplicated(wc)]]
-    wc[indices[-indices2]] <- NA
-    a$n.dim <- length(unique(na.omit(wc)))
-  }else{
-    a$n.dim <- length(unique(na.omit(wc)))
-  }
+  # Return EGA
+  return(multidimensional_result)
 
-  a$correlation <- cor.data
-  a$network <- estimated.network
-  if(a$n.dim == 1){wc[1:length(wc)] <- 1}
-  
-  # Check for reordering
-  if(any(is.na(wc))){
-    
-    if(all(!is.na(wc))){
-      
-      # Get names
-      reord <- sort(na.omit(unique(wc)))
-      names(reord) <- 1:a$n.dim
-      
-      # Reorder
-      for(i in 1:length(reord)){
-        wc[wc == reord[i]] <- as.numeric(names(reord)[i])
-      }
-      
-    }
-    
-  }
-
-  a$wc <- wc
-  
-  # check if data has column names
-  if(is.null(colnames(data)))
-  {
-    dim.variables <- data.frame(items = paste("V", 1:ncol(data), sep = ""), dimension = a$wc)
-  }else{dim.variables <- data.frame(items = colnames(data), dimension = a$wc)}
-  dim.variables <- dim.variables[order(dim.variables[, 2]),]
-  a$dim.variables <- dim.variables
-
-  a$EGA.type <- ifelse(a$n.dim <= 2, "Unidimensional EGA", "Traditional EGA")
-
-  # Get arguments
-  args <- list()
-
-  ## Get model and algorithm arguments
-  args$model <- model
-  args$algorithm <- algorithm
-  args$uni.method <- uni.method
-  args$corr <- corr
-
-  ## Check if glasso was used
-  if(model == "glasso")
-  {
-    args$gamma <- gamma
-    args$lambda <- lambda
-  }
-
-  ## Check if walktrap was used
-  if(!is.function(algorithm)){
-
-    if(algorithm == "walktrap"){
-
-      if("steps" %in% names(algorithm.args)){
-        args$steps <- algorithm.args$steps
-      }else{args$steps <- 4}
-
-    }
-
-  }
-
-  a$Methods <- args
-
-  class(a) <- "EGA"
-
-  # Change zero dimensions
-  if(a$n.dim == 0){
-    a$n.dim <- NA
-  }
-
-  if(isTRUE(plot.EGA)){
-    a$Plot.EGA <- plot(a, plot.type = plot.type, plot.args = plot.args)
-    
-    # check for variable labels in qgraph
-    if(plot.type == "qgraph"){
-      
-      if(is.null(names(a$Plot.EGA$graphAttributes$Nodes$labels))){
-        names(a$Plot.EGA$graphAttributes$Nodes$labels) <- paste(1:ncol(data))
-      }
-      
-      row.names(a$dim.variables) <- a$Plot.EGA$graphAttributes$Nodes$labels[match(a$dim.variables$items, names(a$Plot.EGA$graphAttributes$Nodes$labels))]
-      
-    }
-    
-  }else{
-    a$Plot.EGA <- qgraph::qgraph(a$network, DoNotPlot = TRUE)
-  }
-
-  # Return estimates:
-  return(a)
 }
-#----
+
+# Bug checking ----
+## Basic input
+# data = wmt2[,7:24]; n = NULL; corr = "auto"
+# na.data = "pairwise"; model = "glasso"; algorithm = "walktrap"
+# uni.method = "louvain"; plot.EGA = TRUE; verbose = FALSE
+
+#' @noRd
+# Errors ----
+# Updated 07.09.2023
+EGA_errors <- function(data, n, plot.EGA, verbose, ...)
+{
+
+  # 'data' errors
+  object_error(data, c("matrix", "data.frame", "tibble"), "EGA")
+
+  # Check for tibble
+  if(get_object_type(data) == "tibble"){
+    data <- as.data.frame(data)
+  }
+
+  # 'n' errors
+  if(!is.null(n)){
+    length_error(n, 1, "EGA")
+    typeof_error(n, "numeric", "EGA")
+  }
+
+  # 'plot.EGA' errors
+  length_error(plot.EGA, 1, "EGA")
+  typeof_error(plot.EGA, "logical", "EGA")
+
+  # 'verbose' errors
+  length_error(verbose, 1, "EGA")
+  typeof_error(verbose, "logical", "EGA")
+
+  # Check for usable data
+  if(needs_usable(list(...))){
+    data <- usable_data(data, verbose)
+  }
+
+  # Return data in case of tibble
+  return(data)
+
+}
+
+#' @exportS3Method
+# S3 Print Method ----
+# Updated 09.10.2024
+print.EGA <- function(x, ...)
+{
+
+  # Make network have S3 class
+  class(x$network) <- "EGA.network"
+
+  # Print network estimation
+  print(x$network)
+
+  # Add break space
+  cat("\n----\n\n")
+
+  # Print community detection
+  print(x$wc)
+
+  # Check for unidimensional attributes
+  if("unidimensional" %in% names(attributes(x))){
+
+    # Add break space
+    cat("\n----\n\n")
+
+    # Get unidimensional attributes
+    unidimensional_attributes <- attr(x, "unidimensional")
+
+    # Obtain unidimensional method
+    unidimensional_method <- switch(
+      unidimensional_attributes$uni.method,
+      "expand" = "Expand",
+      "le" = "Leading Eigenvector",
+      "louvain" = "Louvain"
+    )
+
+    # Set up unidimensional print
+    if(
+      unidimensional_method == "Louvain" &
+      "consensus.iter" %in% names(unidimensional_attributes$consensus)
+    ){
+
+      # Set up consensus attributes
+      consensus_attributes <- unidimensional_attributes$consensus
+
+      # Obtain consensus name
+      consensus_name <- switch(
+        consensus_attributes$consensus.method,
+        "highest_modularity" = "Highest Modularity",
+        "iterative" = "Iterative",
+        "most_common" = "Most Common",
+        "lowest_tefi" = "Lowest TEFI"
+      )
+
+      # Update unidimensional method text
+      unidimensional_method <- paste0(
+        unidimensional_method, " (", consensus_name,
+        " for ", consensus_attributes$consensus.iter,
+        " iterations)"
+      )
+
+    }
+
+    # Print unidimensional
+    cat(
+      paste0(
+        "Unidimensional Method: ", unidimensional_method, "\n",
+        "Unidimensional: ", swiftelse(
+          unidimensional_attributes$unidimensional,
+          "Yes", "No"
+        )
+      )
+    )
+
+  }
+
+  # Check for "TEFI" in output
+  if("TEFI" %in% names(x)){
+
+    # Add break space
+    cat("\n\n----\n\n")
+
+    # Print TEFI
+    cat(paste0("TEFI: ", round(x$TEFI, 3)))
+
+  }
+
+}
+
+#' @exportS3Method
+# S3 Summary Method ----
+# Updated 05.07.2023
+summary.EGA <- function(object, ...)
+{
+  print(object, ...) # same as print
+}
+
+#' @exportS3Method
+# S3 Plot Method ----
+# Updated 22.06.2023
+plot.EGA <- function(x, ...)
+{
+
+  # Return plot
+  single_plot(
+    network = x$network,
+    wc = x$wc,
+    ...
+  )
+
+}
+
+#' @noRd
+# Cleaning adjusts model arguments ----
+# Updated 23.06.2023
+adjust_model_arguments <- function(model_ARGS)
+{
+
+  # Arguments to set to NULL
+  null_arguments <- c(
+    # All already exist in `unidimensional_ARGS`
+    "data", "n", "corr", "na.data", "model", "verbose",
+    # EBICglasso-specific arguments
+    "penalizeMatrix",
+    # BGGM-specific arguments
+    "Y", "object"
+  )
+
+  # Set intersecting arguments to NULL
+  model_ARGS[
+    intersect(names(model_ARGS), null_arguments)
+  ] <- NULL
+
+  # Return model arguments
+  return(model_ARGS)
+
+}

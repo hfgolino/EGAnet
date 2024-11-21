@@ -34,12 +34,11 @@ Current options are:
 
 \itemize{
 
-\item{\strong{\code{DAFS}}}
-{Simulates data using the direct autoregressive factor score model.
-This is the default method}
+\item \strong{\code{DAFS}} --- Simulates data using the direct autoregressive factor score model.
+This is the default method
 
-\item{\strong{\code{RandomWalk}}}
-{Simulates data using a dynamic factor model with random walk factor scores.}
+\item \strong{\code{RandomWalk}} --- Simulates data using a dynamic factor model with random walk factor scores
+
 }}
 
 \item{loadings}{Magnitude of the loadings.}
@@ -60,28 +59,22 @@ the direct autoregressive factor score model (Engle & Watson, 1981; Nesselroade,
 dynamic factor model with random walk factor scores.
 }
 \examples{
-
-
 \dontrun{
-\donttest{
 # Estimate EGA network
 data1 <- simDFM(variab = 5, timep = 50, nfact = 3, error = 0.05,
 dfm = "DAFS", loadings = 0.7, autoreg = 0.8,
-crossreg = 0.1, var.shock = 0.18,
-cov.shock = 0.36, burnin = 1000)
- }
-}
+crossreg = 0.1, var.shock = 0.36,
+cov.shock = 0.18, burnin = 1000)}
 
 }
 \references{
+Engle, R., & Watson, M. (1981).
 A one-factor multivariate time series model of metropolitan wage rates.
-\emph{Journal of the American Statistical Association}, \emph{76(376)}, 774-781.
-ref:\href{https://amstat.tandfonline.com/doi/abs/10.1080/01621459.1981.10477720#.XmkWWy2ZMuA}{01621459.1981.10477720#.XmkWWy2ZMuA}
+\emph{Journal of the American Statistical Association}, \emph{76}(376), 774-781.
 
 Nesselroade, J. R., McArdle, J. J., Aggen, S. H., & Meyers, J. M. (2002).
 Dynamic factor analysis models for representing process in multivariate time-series. In D. S. Moskowitz & S. L. Hershberger (Eds.),
-\emph{Multivariate applications book series. Modeling intraindividual variability with repeated measures data: Methods and applications}, 235–265.
-\href{https://psycnet.apa.org/record/2001-05300-009}{https://psycnet.apa.org/record/2001-05300-009}
+\emph{Multivariate applications book series. Modeling intraindividual variability with repeated measures data: Methods and applications}, 235-265.
 }
 \author{
 Hudson F. Golino <hfg9s at virginia.edu>

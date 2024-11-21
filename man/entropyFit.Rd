@@ -10,7 +10,8 @@ entropyFit(data, structure)
 \item{data}{Matrix or data frame.
 Contains variables to be used in the analysis}
 
-\item{structure}{A vector representing the structure (numbers or labels for each item).
+\item{structure}{Numeric or character vector (length = \code{ncol(data)}).
+A vector representing the structure (numbers or labels for each item).
 Can be theoretical factors or the structure detected by \code{\link[EGAnet]{EGA}}}
 }
 \value{
@@ -31,29 +32,22 @@ Computes the fit of a dimensionality structure using empirical entropy.
 Lower values suggest better fit of a structure to the data.
 }
 \examples{
-
 # Load data
 wmt <- wmt2[,7:24]
 
-\donttest{
+\dontrun{
 # Estimate EGA model
-ega.wmt <- EGA(data = wmt, model = "glasso", plot.EGA = FALSE)
-
-}
+ega.wmt <- EGA(data = wmt)}
 
 # Compute entropy indices
 entropyFit(data = wmt, structure = ega.wmt$wc)
 
 }
 \references{
-Golino, H., Moulder, R. G., Shi, D., Christensen, A. P., Garrido, L. E., Neito, M. D., Nesselroade, J., Sadana, R., Thiyagarajan, J. A., & Boker, S. M. (2020).
+\strong{Initial formalization and simulation} \cr
+Golino, H., Moulder, R. G., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M. D., Nesselroade, J., Sadana, R., Thiyagarajan, J. A., & Boker, S. M. (2020).
 Entropy fit indices: New fit measures for assessing the structure and dimensionality of multiple latent variables.
 \emph{Multivariate Behavioral Research}.
-\doi{10.31234/osf.io/mtka2}
-}
-\seealso{
-\code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and \code{\link[EGAnet]{CFA}} to
-verify the fit of the structure suggested by EGA using confirmatory factor analysis.
 }
 \author{
 Hudson F. Golino <hfg9s at virginia.edu>, Alexander P. Christensen <alexpaulchristensen@gmail.com> and Robert Moulder <rgm4fd@virginia.edu>

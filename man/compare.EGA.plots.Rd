@@ -2,33 +2,99 @@
 % Please edit documentation in R/compare.EGA.plots.R
 \name{compare.EGA.plots}
 \alias{compare.EGA.plots}
-\title{Visual Compares \code{\link{EGAnet}} plots}
+\title{Visually Compare Two or More \code{EGAnet} plots}
 \usage{
-compare.EGA.plots(..., labels, rows, columns)
+compare.EGA.plots(
+  ...,
+  input.list = NULL,
+  base = 1,
+  labels = NULL,
+  rows = NULL,
+  columns = NULL,
+  plot.all = TRUE
+)
 }
 \arguments{
-\item{...}{\code{\link{EGAnet}} objects}
+\item{...}{Handles multiple arguments:
 
-\item{rows}{Numeric.
+\itemize{
+
+\item \code{*EGA} objects --- can be dropped in without any argument
+designation. The function will search across input to find
+necessary \code{EGAnet} objects
+
+\item \code{\link[GGally]{ggnet2}} arguments --- can be passed along to \code{\link[GGally]{ggnet2}}
+
+\item \code{\link[sna]{gplot.layout}} --- can be specified using \code{mode = } or
+\code{layout = } using the name of the layout
+(e.g., \code{mode = "circle"} will produce the
+circle layout from \link[sna]{gplot.layout}).
+By default, the layout is the same as \code{qgraph}
+
+}}
+
+\item{input.list}{List.
+Bypasses \code{...} argument in favor of using a list
+as an input}
+
+\item{base}{Numeric (length = 1).
+Plot to be used as the base for the configuration of the networks.
+Uses the number of the order in which the plots are input.
+Defaults to \code{1} or the first plot}
+
+\item{labels}{Character (same length as input).
+Labels for each \code{EGAnet} object}
+
+\item{rows}{Numeric (length = 1).
 Number of rows to spread plots across}
 
-\item{columns}{Numeric.
+\item{columns}{Numeric (length = 1).
 Number of columns to spread plots down}
+
+\item{plot.all}{Boolean (length = 1).
+Whether plot should be produced or just output.
+Defaults to \code{TRUE}.
+Set to \code{FALSE} to avoid plotting (but still obtain
+plot objects)}
 }
 \value{
-Visual comparison of \code{\link{EGAnet}} objects
+Visual comparison of \code{EGAnet} objects
 }
 \description{
-Identifies redundant nodes in the network based on several
-measures. Computes the weighted topological overlap between
-each node and every other node in the network. The weighted topological
-overlap is implemented using the method from Nowick et al. (2009; see references)
-and the function \link[wTO]{wTO} from the wTO package.
+Organizes EGA plots for comparison. Ensures that
+nodes are placed in the same layout to maximize comparison
 }
 \examples{
-# obtain SAPA items
-items <- psychTools::spi[,c(11:20)]
+# Obtain WMT-2 data
+wmt <- wmt2[,7:24]
 
+# Draw random samples of 300 cases
+sample1 <- wmt[sample(1:nrow(wmt), 300),]
+sample2 <- wmt[sample(1:nrow(wmt), 300),]
+
+# Estimate EGAs
+ega1 <- EGA(sample1)
+ega2 <- EGA(sample2)
+
+\donttest{
+# Compare EGAs via plot
+compare.EGA.plots(
+  ega1, ega2,
+  base = 1, # use "ega1" as base for comparison
+  labels = c("Sample 1", "Sample 2"),
+  rows = 1, columns = 2
+)
+
+# Change layout to circle plots
+compare.EGA.plots(
+  ega1, ega2,
+  labels = c("Sample 1", "Sample 2"),
+  mode = "circle"
+)}
+
+}
+\seealso{
+\code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{EGAnet}
 }
 \author{
 Alexander Christensen <alexpaulchristensen@gmail.com>

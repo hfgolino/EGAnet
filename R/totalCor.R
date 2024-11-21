@@ -1,70 +1,115 @@
-#' Total Correlation
+#' @title Total Correlation
 #'
-#' Computes the total correlation of a dataset
+#' @description Computes the total correlation of a dataset
 #'
 #' @param data Matrix or data frame.
-#' Variables to be used in the analysis
-#' 
+#' Should consist only of variables to be used in the analysis
+#'
+#' @param base Numeric (length = 1).
+#' Base to use for entropy.
+#' Defaults to \code{exp(1)} or \code{2.718282}
+#'
 #' @return Returns a list containing:
-#' 
+#'
 #' \item{Ind.Entropies}{Individual entropies for each variable}
-#' 
+#'
 #' \item{Joint.Entropy}{The joint entropy of the dataset}
-#' 
+#'
 #' \item{Total.Cor}{The total correlation of the dataset}
+#'
+#' \item{Normalized}{Total correlation divided by the sum of the individual entropies minus the maximum of the individual entropies}
 #'
 #' @author Hudson F. Golino <hfg9s at virginia.edu>
 #'
 #' @examples
 #' # Compute total correlation
 #' totalCor(wmt2[,7:24])
-#' 
-#' @references 
+#'
+#' @references
+#' \strong{Formalization of total correlation} \cr
 #' Watanabe, S. (1960).
 #' Information theoretical analysis of multivariate correlation.
 #' \emph{IBM Journal of Research and Development} \emph{4}, 66-82.
-#' 
-#' 
+#'
+#' \strong{Applied implementation} \cr
+#' Felix, L. M., Mansur-Alves, M., Teles, M., Jamison, L., & Golino, H. (2021).
+#' Longitudinal impact and effects of booster sessions in a cognitive training program for healthy older adults.
+#' \emph{Archives of Gerontology and Geriatrics}, \emph{94}, 104337.
+#'
 #' @export
 #'
-# Total Correlation
-# Updated 22.05.2021
-totalCor <- function(data){
-  #number of dimensions
-  n <- ncol(data)
+# Total Correlation ----
+# Updated 03.08.2024
+totalCor <- function(data, base = 2.718282)
+{
 
-  #initialize entropy vector
-  H <- vector("numeric", length = n)
-  bins <- floor(sqrt(nrow(data) / 5))
-  seque <- matrix(NA, nrow = bins + 1, ncol = n)
-  sums <- matrix(NA, nrow = nrow(data), ncol = n)
-  bin.sums <- vector("list", n)
-  bin.sums2 <- matrix(NA, nrow = bins, ncol = n)
-  Freq <- matrix(NA, nrow = bins, ncol = n)
+  # 'data' errors
+  object_error(data, c("matrix", "data.frame", "tibble"), "totalCor")
 
-  #compute empirical entropy for each community or item
-  for(i in 1:n)
-  {
-    seque[,i] <- seq(from = range(data[,i], na.rm = TRUE)[1], to = range(data[,i], na.rm = TRUE)[2], length.out = bins + 1)
-    bin.sums[[i]] <- table(cut(data[,i], breaks = seque[,i], include.lowest = TRUE))
-    bin.sums2[,i] <- as.vector(unlist(bin.sums[[i]]))
-    Freq[,i] <- bin.sums2[,i]/sum(bin.sums2[,i])
-    H[i] <- -sum(ifelse(Freq[,i]>0,Freq[,i] * log(Freq[,i]),0))
-  }
+  # 'base' errors
+  typeof_error(base, "numeric", "totalCor")
+  length_error(base, 1, "totalCor")
 
-  # Joint Entropy:
-  bin.sums3 <- data.frame(matrix(NA, nrow = nrow(data), ncol = n))
-  for(i in 1:n){
-    bin.sums3[,i] <- cut(data[,i], breaks = seque[,i], include.lowest = TRUE)
-  }
-  joint.table <- plyr::count(bin.sums3)$freq
+  # Ensure data is a matrix
+  data <- as.matrix(usable_data(data, verbose = TRUE))
 
-  freq.joint <- joint.table / sum(joint.table)
-  joint.entropy <- -sum(ifelse(freq.joint >0,freq.joint * log(freq.joint),0))
+  # Get data dimensions
+  dimensions <- dim(data)
 
-  results <- vector("list")
-  results$Ind.Entropies <- H
-  results$Joint.Entropy <- joint.entropy
-  results$Total.Cor <- sum(H)-joint.entropy
-  return(results)
+  # Get number of bins
+  bins <- floor(sqrt(dimensions[1L] / 5))
+
+  # Set bin length
+  bin_length <- bins + 1L
+
+  # Get bin cuts
+  bin_cuts <- lapply(seq_len(dimensions[2L]), function(variable){
+
+    # Get range
+    data_range <- range(data[,variable], na.rm = TRUE)
+
+    # Return cuts
+    return(
+      cut(
+        data[,variable],
+        breaks = seq.int(data_range[1L], data_range[2L], length.out = bin_length),
+        include.lowest = TRUE
+      )
+    )
+
+  })
+
+  # Get bin frequencies
+  bin_frequencies <- nvapply(bin_cuts, fast_table, LENGTH = bins) / dimensions[1]
+
+  # Get entropies
+  H <- nvapply(seq_len(dimensions[2L]), function(variable){
+
+    # Get non-zero frequencies
+    bin_non_zero <- bin_frequencies[bin_frequencies[,variable] > 0, variable]
+
+    # Return entropy
+    return(entropy(bin_non_zero, base = base))
+
+  })
+
+  # Get joint entropy of positive non-zero values
+  H_joint <- joint_entropy(bin_cuts, base = base) # function in `dualTotatCor.R`
+  H_sum <- sum(H, na.rm = TRUE)
+  Total.Cor <- H_sum - H_joint
+
+  # Return list
+  return(
+    list(
+      Ind.Entropies = H,
+      Joint.Entropy = H_joint,
+      Total.Cor = Total.Cor,
+      Normalized = Total.Cor / (H_sum - max(H, na.rm = TRUE))
+    )
+  )
+
 }
+
+# Bug Checking ----
+# ## Basic input
+# data <- wmt2[,7:24]

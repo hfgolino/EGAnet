@@ -5,14 +5,43 @@
 \alias{sim.dynEGA}
 \title{sim.dynEGA Data}
 \format{
-A 10000x22 multivariate time series
+A 5000 x 26 multivariate time series
 }
 \usage{
 data(sim.dynEGA)
 }
 \description{
-A simulated (multivariate time series) data with 20 variables, 200 individual observations,
-50 time points per individual and 2 groups of individuals.
+A simulated (multivariate time series) data with 24 variables,
+100 individual observations, 50 time points per individual and 
+2 groups of individuals
+}
+\details{
+Data were generated using the \code{\link[EGAnet]{simDFM}} function
+with the following arguments:
+
+\strong{Group 1}
+
+\code{simDFM(
+ variab = 12, timep = 50,
+ nfact = 2, error = 0.125,
+ dfm = "DAFS", 
+ loadings = EGAnet:::runif_xoshiro(
+   1, min = 0.50, max = 0.70
+ ), autoreg = 0.80, crossreg = 0.00,
+ var.shock = 0.36, cov.shock = 0.18
+)}
+
+\strong{Group 2}
+
+\code{simDFM(
+ variab = 8, timep = 50,
+ nfact = 3, error = 0.125,
+ dfm = "DAFS", 
+ loadings = EGAnet:::runif_xoshiro(
+   1, min = 0.50, max = 0.70
+ ), autoreg = 0.80, crossreg = 0.00,
+ var.shock = 0.36, cov.shock = 0.18
+)}
 }
 \examples{
 data("sim.dynEGA")

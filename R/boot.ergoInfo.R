@@ -1,329 +1,416 @@
-#' Bootstrap Test for the Ergodicity Information Index
+#' @title Bootstrap Test for the Ergodicity Information Index
 #'
-#' @description Computes a parametric Bootstrap Test for the Ergodicity Information Index, comparing the
-#' empirical Ergodicity Information index to values obtained in data generated using \code{N} parametric bootstraps of the correlation matrix estimated using the
-#' \code{\link[EGAnet]{dynEGA}} function, for the population structure. The p-values in the bootstrap test can be calculated as \code{(sum(EII>=boot.EII)+1)/(iter+1)} and as
-#' \code{(sum(EII<=boot.EII)+1)/(iter+1)}, where EII is the empirical Ergodicity Information Index, boot.EII is the values of the Ergodicity Information Index obtained
-#' in the bootstraped samples, and \code{iter} is the number of random samples generated in the simulation. The two-sided p-value is computed as two times the lowest p-value. In the bootstrap Test for the Ergodicity Information Index,
-#' the null hypothesis is that the empirical value of EII is equal to the values of EII obtained in multiple individuals with the same structure as the population structure estimated
-#' via \code{\link[EGAnet]{dynEGA}}.
-#' Small values of p indicate that is very unlikely to obtain an EII as large as the one obtained in the empirical sample if the null hypothesis is true (i.e. all individuals have the same structure as the population structure), thus there is convincing evidence that the empirical Ergodicity Information Index is
-#' different than it could be expected if all individuals had a similar latent structure.
+#' @description Tests the Ergodicity Information Index obtained in the
+#' empirical sample with a distribution of EII obtained by a variant of
+#' bootstrap sampling (see \strong{Details} for the procedure)
 #'
-#' @param dynEGA.pop A dynEGA or a dynEGA.pop.ind object.
+#' @param dynEGA.object A \code{\link[EGAnet]{dynEGA}} or a
+#' \code{\link[EGAnet]{dynEGA.ind.pop}} object. If a \code{\link[EGAnet]{dynEGA}}
+#' object, then \code{level = c("individual", "population")} is required
 #'
-#' @param iter Numeric integer.
-#' Number of random samples to generate in the Monte-Carlo simulation.
-#' At least \code{500} is recommended
+#' @param EII A \code{\link[EGAnet]{ergoInfo}} object
+#' used to estimate the Empirical Ergodicity Information Index
+#' or the estimated value of EII estimated using the \code{\link[EGAnet]{ergoInfo}}
+#' function. Inherits \code{use} from \code{\link[EGAnet]{ergoInfo}}.
+#' If no \code{\link[EGAnet]{ergoInfo}} object is provided, then it is estimated
 #'
-#' @param EII Numeric.
-#' Empirical Ergodicity Information Index obtained via the \code{\link[EGAnet]{ergoInfo}} function.
-#'
-#' @param use Character.
-#' A string indicating what network element will be used to compute the algorithm complexity in the \code{\link[EGAnet]{ergoInfo}} function,
-#' the list of edges or the weights of the network.
-#' Defaults to \code{use = "edge.list"}.
+#' @param use Character (length = 1).
+#' A string indicating what network element will be used
+#' to compute the algorithm complexity, the list of edges or the weights of the network.
+#' Defaults to \code{use = "unweighted"}.
 #' Current options are:
 #'
 #' \itemize{
 #'
-#' \item{\strong{\code{edge.list}}}
-#' {Calculates the algorithm complexity using the list of edges.}
+#' \item \code{"edge.list"} --- Calculates the algorithm complexity using the list of edges
 #'
-#' \item{\strong{\code{weights}}}
-#' {Calculates the algorithm complexity using the weights of the network.}
-#' }
+#' \item \code{"unweighted"} --- Calculates the algorithm complexity using the binary weights of the encoded prime
+#' transformed network. 0 = edge absent and 1 = edge present
 #'
-#' @param embed Integer.
-#' Number of embedded dimensions (the number of observations to be used in the \code{\link[EGAnet]{Embed}} function). For example,
-#' an \code{"embed = 5"} will use five consecutive observations to estimate a single derivative.
-#' Default is \code{"embed = 5"}.
-#'
-#' @param tau Integer.
-#' Number of observations to offset successive embeddings in the \code{\link[EGAnet]{Embed}} function. A tau of one uses adjacent observations.
-#' Default is \code{"tau = 1"}.
-#'
-#' @param delta Integer.
-#' The time between successive observations in the time series.
-#' Default is \code{"delta = 1"}.
-#'
-#' @param derivatives Integer.
-#' The order of the derivative to be used in the EGA procedure. Default to 1.
-
-#' @param corr Type of correlation matrix to compute. The default uses \code{\link[qgraph]{cor_auto}}.
-#' Current options are:
-#'
-#' \itemize{
-#'
-#' \item{\strong{\code{cor_auto}}}
-#' {Computes the correlation matrix using the \code{\link[qgraph]{cor_auto}} function from
-#' \code{\link[qgraph]{qgraph}}}.
-#'
-#' \item{\strong{\code{pearson}}}
-#' {Computes Pearson's correlation coefficient using the pairwise complete observations via
-#' the \code{\link[stats]{cor}}} function.
-#'
-#' \item{\strong{\code{spearman}}}
-#' {Computes Spearman's correlation coefficient using the pairwise complete observations via
-#' the \code{\link[stats]{cor}}} function.
-#' }
-#'
-#' @param model Character.
-#' A string indicating the method to use. Defaults to \code{glasso}.
-#' Current options are:
-#'
-#' \itemize{
-#'
-#' \item{\strong{\code{glasso}}}
-#' {Estimates the Gaussian graphical model using graphical LASSO with
-#' extended Bayesian information criterion to select optimal regularization parameter.
-#' This is the default method}
-#'
-#' \item{\strong{\code{TMFG}}}
-#' {Estimates a Triangulated Maximally Filtered Graph}
+#' \item \code{"weighted"} --- Calculates the algorithm complexity using the weights of encoded prime-weight transformed network
 #'
 #' }
 #'
-#' @param model.args List.
-#' A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
-#' or \code{\link[NetworkToolbox]{TMFG}}
+#' @param shuffles Numeric.
+#' Number of shuffles used to compute the Kolmogorov complexity.
+#' Defaults to \code{5000}
 #'
-#' @param algorithm A string indicating the algorithm to use or a function from \code{\link{igraph}}
+#' @param iter Numeric (length = 1).
+#' Number of replica samples to generate from the bootstrap analysis.
+#' Defaults to \code{100} (\code{1000} for robustness)
 #'
-#' Current options are:
-#'
-#' \itemize{
-#'
-#' \item{\strong{\code{walktrap}}}
-#' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_walktrap}}}
-#'
-#' \item{\strong{\code{louvain}}}
-#' {Computes the Walktrap algorithm using \code{\link[igraph]{cluster_louvain}}}
-#'
-#' }
-#'
-#' @param algorithm.args List.
-#' A list of additional arguments for \code{\link[igraph]{cluster_walktrap}}, \code{\link[igraph]{cluster_louvain}},
-#' or some other community detection algorithm function (see examples)
-#'
-#' @param ncores Numeric.
+#' @param ncores Numeric (length = 1).
 #' Number of cores to use in computing results.
-#' Defaults to \code{parallel::detectCores() / 2} or half of your
+#' Defaults to \code{ceiling(parallel::detectCores() / 2)} or half of your
 #' computer's processing power.
-#' Set to \code{1} to not use parallel computing.
-#' Recommended to use maximum number of cores minus one
+#' Set to \code{1} to not use parallel computing
 #'
 #' If you're unsure how many cores your computer has,
-#' then use the following code: \code{parallel::detectCores()}
+#' then type: \code{parallel::detectCores()}
 #'
+#' @param verbose Boolean (length = 1).
+#' Should progress be displayed?
+#' Defaults to \code{TRUE}.
+#' Set to \code{FALSE} to not display progress
 #'
-#' @param ... Additional arguments.
-#' Used for deprecated arguments from previous versions of \code{\link{EGA}}
+#' @details In traditional bootstrap sampling, individual participants are resampled
+#' with replacement from the empirical sample. This process is time consuming
+#' when carried out across \emph{v} number of variables, \emph{n} number of
+#' participants, \emph{t} number of time points, and \emph{i} number of iterations.
+#' Instead, \code{boot.ergoInfo} uses the premise of an ergodic process to
+#' establish more efficient test that works directly on the sample's networks.
+#'
+#' With an ergodic process, the expectation is that all individuals will have
+#' a systematic relationship with the population. Destroying this relationship
+#' should result in a significant loss of information. Following this conjecture,
+#' \code{boot.ergoInfo} shuffles a random subset of edges that exist in the
+#' \strong{population} that is \emph{equal} to the number of shared edges
+#' it has with an individual. An individual's unique edges remain the same,
+#' controlling for their unique information. The result is a replicate individual
+#' that contains the same total number of edges as the actual individual but
+#' its shared information with the population has been scrambled.
+#'
+#' This process is repeated over each individual to create a replicate sample
+#' and is repeated for \emph{X} iterations (e.g., 100). This approach creates
+#' a sampling distribution that represents the expected information between
+#' the population and individuals when a random process generates the shared
+#' information between them. If the shared information between the population
+#' and individuals in the empirical sample is sufficiently meaningful, then
+#' this process should result in significant information loss.
+#'
+#' How to interpret the results: the result of \code{boot.ergoInfo} is a sampling
+#' distribution of EII values that would be expected if the process was random
+#' (null distribution). If the empirical EII value is \emph{greater than} or
+#' not significantly different from the null distribution, then the empirical
+#' data can be expected to be generated from an nonergodic process and the
+#' population structure is not sufficient to describe all individuals. If the
+#' empirical EII value is significantly \emph{lower than} the null distribution,
+#' then the empirical data can be described by the population structure -- the
+#' population structure is sufficient to describe all individuals.
 #'
 #' @examples
+#' # Obtain simulated data
+#' sim.data <- sim.dynEGA
 #'
 #' \dontrun{
-#' \donttest{
-#' dyn1 <- dynEGA.ind.pop(data = sim.dynEGA[,-c(22)], n.embed = 5, tau = 1,
-#'                       delta = 1, id = 21, use.derivatives = 1,
-#'                     model = "glasso", ncores = 2, corr = "pearson")
+#' # Dynamic EGA individual and population structures
+#' dyn1 <- dynEGA.ind.pop(
+#'   data = sim.dynEGA[,-26], n.embed = 5, tau = 1,
+#'   delta = 1, id = 25, use.derivatives = 1,
+#'   model = "glasso", ncores = 2, corr = "pearson"
+#' )
 #'
-#' eii1 <- ergoInfo(data = dyn1)$EII
+#' # Empirical Ergodicity Information Index
+#' eii1 <- ergoInfo(dynEGA.object = dyn1, use = "unweighted")
 #'
-#' testing.ergoinfo <- boot.ergoInfo(dynEGA.pop = dyn1, iter = 10,EII = eii1,
-#' embed = 5, tau = 1, delta = 1, derivatives = 1,
-#' model = "glasso", ncores = 2, corr = "pearson")
-#' }}
+#' # Bootstrap Test for Ergodicity Information Index
+#' testing.ergoinfo <- boot.ergoInfo(
+#'   dynEGA.object = dyn1, EII = eii1,
+#'   ncores = 2, use = "unweighted"
+#' )
+#'
+#' # Plot result
+#' plot(testing.ergoinfo)
+#'
+#' # Example using `dynEGA`
+#' dyn2 <- dynEGA(
+#'   data = sim.dynEGA, n.embed = 5, tau = 1,
+#'   delta = 1, use.derivatives = 1, ncores = 2,
+#'   level = c("individual", "population")
+#' )
+#'
+#' # Empirical Ergodicity Information Index
+#' eii2 <- ergoInfo(dynEGA.object = dyn2, use = "unweighted")
+#'
+#' # Bootstrap Test for Ergodicity Information Index
+#' testing.ergoinfo2 <- boot.ergoInfo(
+#'   dynEGA.object = dyn2, EII = eii2,
+#'   ncores = 2
+#' )
+#'
+#' # Plot result
+#' plot(testing.ergoinfo2)}
 #'
 #' @return Returns a list containing:
 #'
-#' \item{boot.ergoInfo}{The values of the Ergodicity Information Index obtained in the Monte-Carlo Simulation}
+#' \item{empirical.ergoInfo}{Empirical Ergodicity Information Index}
 #'
-#' \item{p.value.twosided}{The p-value of the Monte-Carlo test for the Ergodicity Information Index.
-#' The null hypothesis is that the empirical Ergodicity Information index is equal to the expected value of the EII if the all individuals
-#' had similar latent structures.}
+#' \item{boot.ergoInfo}{The values of the Ergodicity Information Index obtained in the bootstrap}
 #'
-#' \item{effect}{Indicates wheter the empirical EII is greater or less then the Monte-Carlo obtained EII.}
+#' \item{p.value}{The two-sided \emph{p}-value of the bootstrap test for the Ergodicity Information Index.
+#' The null hypothesis is that the empirical Ergodicity Information index is equal to or greater than the expected value of the EII
+#' with small variation in the population structure}
 #'
-#' \item{plot.dist}{Histogram of the bootstrapped ergodicity information index}
+#' \item{effect}{Indicates wheter the empirical EII is greater or less then the bootstrap distribution of EII.}
 #'
+#' \item{interpretation}{How you can interpret the result of the test in plain English}
 #'
-#' @author Hudson Golino <hfg9s at virginia.edu>
+#' @author Hudson Golino <hfg9s at virginia.edu> & Alexander P. Christensen <alexander.christensen at Vanderbilt.Edu>
 #'
+#' @references
+#' \strong{Original Implementation} \cr
+#' Golino, H., Nesselroade, J. R., & Christensen, A. P. (2022).
+#' Toward a psychology of individuals: The ergodicity information index and a bottom-up approach for finding generalizations.
+#' \emph{PsyArXiv}.
+#'
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{\link{EGAnet}}
 #'
 #' @export
 # Bootstrap Test for the Ergodicity Information Index
-# Updated 31.10.2020
-
-
-boot.ergoInfo <- function(dynEGA.pop,
-                          iter,
-                          EII,
-                          use,
-                          embed,
-                          tau,
-                          delta,
-                          derivatives,
-                          model, model.args = list(),
-                          algorithm = c("walktrap", "louvain"),
-                          algorithm.args = list(),
-                          corr, ncores, ...
+# Updated 27.07.2024
+boot.ergoInfo <- function(
+    dynEGA.object, EII,
+    use = c("edge.list", "unweighted", "weighted"),
+    shuffles = 5000, iter = 100, ncores, verbose = TRUE
 ){
 
+  # Check for missing arguments (argument, default, function)
+  use <- set_default(use, "unweighted", ergoInfo)
+  if(missing(ncores)){ncores <- ceiling(parallel::detectCores() / 2)}
 
-  #### MISSING ARGUMENTS HANDLING ####
+  # Argument errors
+  boot.ergoInfo_errors(dynEGA.object, shuffles, iter, ncores, verbose)
 
-  if(missing(dynEGA.pop))
-  {  # Warning
-    warning(
-      "The 'dynEGA.pop' argument is missing. Please, provide the name of the object
-        created using the 'dynEGA' or the 'dynEGA.pop.ind' functions."
+  # Check for EII
+  if(missing(EII)){ # If missing, then compute it
+    EII <- ergoInfo(dynEGA.object, use = use, shuffles = shuffles)$EII
+  }else if(is(EII, "EII")){
+
+    # Get attributes
+    use <- attr(EII, "methods")$use
+    shuffles <- attr(EII, "methods")$shuffles
+    EII <- EII$EII # Save empirical EII for last
+
+  }
+
+  # Get proper objects (if not, send an error)
+  # Function found in `ergoInfo`
+  dynEGA.object <- get_dynEGA_object(dynEGA.object)
+
+  # Only use necessary data (saves memory!)
+  population_network <- dynEGA.object$population$network
+  n_dimensions <- dynEGA.object$population$n.dim
+  individual_networks <- lapply(dynEGA.object$individual, function(x){x$network})
+
+  # Remove `dynEGA.object` from memory
+  rm(dynEGA.object); clear_memory()
+
+  # Set up scramble dynamic EGA object (more efficient)
+  scramble_dynEGA <- list(
+    dynEGA = list(
+      population = list(network = population_network, n.dim = n_dimensions),
+      individual = vector("list", length = length(individual_networks))
     )
-  }
+  )
 
+  # Set class
+  class(scramble_dynEGA) <- "dynEGA"
 
-  if(missing(use))
-  {use <- "edge.list"
-  }else{use}
+  # Get scrambled EII
+  EII_values <- unlist(
+    parallel_process(
+      iterations = iter,
+      FUN = function(iteration){
 
-  if(missing(embed))
-  {embed <- 5
-  }else{embed}
+        # Population individuals
+        scramble_dynEGA$dynEGA$individual <- lapply(
+          individual_networks, function(individual_network){
+            list(
+              network = network_scramble(
+                population_network, individual_network
+              )
+            )
+          }
+        )
 
-  if(missing(tau))
-  {tau <- 1
-  }else{tau}
+        # Return EII
+        return(ergoInfo(scramble_dynEGA, use = use, shuffles = shuffles)$EII)
 
-  if(missing(delta))
-  {delta <- 1
-  }else{delta}
+      },
+      # Parallelization settings
+      ncores = ncores, progress = verbose
+    )
+  )
 
-  if(missing(derivatives))
-  {derivatives <- 1
-  }else{derivatives}
+  # Get empirical EII greater than or equal to bootstrap values
+  p_value <- mean(EII >= c(EII, EII_values))
 
-  if(missing(model))
-  {model <- "glasso"
-  }else{model}
+  # Set up results to return
+  results <- list(
+    empirical.ergoInfo = EII,
+    boot.ergoInfo = EII_values,
+    p.value = p_value,
+    interpretation = swiftelse(
+      p_value > 0.05,
+      paste(
+        "The empirical EII was not different from values that would be expected",
+        "if the process was random, meaning the empirical data cannot be described",
+        "by the population structure -- significant information is lost when",
+        "collapsing across to the population structure."
+      ),
+      paste(
+        "The empirical EII was significantly less than values that would be",
+        "expected if the process was random, meaning the empirical data can be",
+        "expected to be generated by an ergodic process and the population",
+        "structure is sufficient to describe all individuals."
+      )
+    )
 
-  if(missing(corr))
-  {corr <- "cor_auto"
-  }else{corr}
+  )
 
-  if(missing(algorithm))
-  {algorithm <- "walktrap"
-  }else{algorithm}
+  # Add "methods" attribute
+  attr(results, "methods") <- list(use = use, shuffles = shuffles, iter = iter)
 
-  if(missing(ncores))
-  {ncores <- ceiling(parallel::detectCores() / 2)
-  }else{ncores}
+  # Set class
+  class(results) <- "boot.ergoInfo"
 
-
-
-  # Initialize Data list
-  data.sim <- vector("list", length = iter)
-
-  #let user know data generation has started
-  message("\nGenerating the Data...\n", appendLF = FALSE)
-
-  N <- nrow(dynEGA.pop$Derivatives$EstimatesDF)
-  unique.ids <- unique(dplyr::last(dynEGA.pop$Derivatives$EstimatesDF))
-  time.points <- table(dplyr::last(dynEGA.pop$Derivatives$EstimatesDF))
-  time.points <- time.points+(embed-1)
-  # Initialize Data list
-  data.sim <- vector("list", length = iter)
-  for(i in 1:iter){
-    data.sim[[i]] <- vector("list", length = length(unique.ids))
-  }
-
-  if(class(dynEGA.pop)=="dynEGA"){
-    for(i in 1:iter){
-      for(j in 1:length(unique.ids)){
-        data.sim[[i]][[j]] <- MASS::mvrnorm(n = time.points[[j]], mu = rep(0, ncol(dynEGA.pop$dynEGA$cor.dat)), Sigma = as.matrix(Matrix::nearPD(corpcor::pseudoinverse(dynEGA.pop$network))$mat))
-      }
-    }
-  } else if(class(dynEGA.pop)=="dynEGA.ind.pop"){
-    for(i in 1:iter){
-      for(j in 1:length(unique.ids)){
-        data.sim[[i]][[j]] <- as.data.frame(MASS::mvrnorm(n = time.points[[j]], mu = rep(0, ncol(dynEGA.pop$dynEGA.pop$cor.data)), Sigma = as.matrix(Matrix::nearPD(corpcor::pseudoinverse(dynEGA.pop$dynEGA.pop$network))$mat)))
-        data.sim[[i]][[j]]$ID <- rep(i, each = time.points[[j]])
-      }
-    }
-  }
-
-  data.sim.df <- vector("list", length = iter)
-  for(i in 1:iter){
-    data.sim.df[[i]] <- purrr::map_df(data.sim[[i]], ~as.data.frame(.))
-    #data.sim.df[[i]]$ID <- rep(1:length(unique.ids), each = time.points)
-  }
-
-  variab <- ncol(data.sim.df[[1]])-1
-
-  #initialize correlation matrix list
-  boot.data <- vector("list", length = iter)
-  boot.data.ids <- vector("list", length = iter)
-  list.results.sim <- vector("list", length = iter)
-  complexity.estimates <- vector("list", length = iter)
-
-  #let user know data generation has started
-  message("\nEstimating the Population and Individual Structures...\n", appendLF = FALSE)
-
-  #Parallel processing
-  cl <- parallel::makeCluster(ncores)
-
-  #Export variables
-  parallel::clusterExport(cl = cl,
-                          varlist = c("boot.data", "list.results.sim",
-                                      "complexity.estimates"),
-                          envir=environment())
-
-  #Compute DynEGA in the population and in the individuals
-  boot.data <- pbapply::pblapply(X = data.sim.df, cl = cl,
-                                 FUN = EGAnet::dynEGA.ind.pop,
-                                 n.embed = embed, tau = tau,
-                                 delta = delta, id = variab+1, use.derivatives = derivatives,
-                                 algorithm = algorithm, algorithm.args = algorithm.args,
-                                 model = model, model.args = model.args, corr = corr)
-
-
-  #let user know data generation has started
-  message("Estimating the Ergodicity Information Index\n", appendLF = FALSE)
-
-  complexity.estimates <- pbapply::pblapply(X = boot.data, cl = cl,
-                                            FUN = EGAnet::ergoInfo, use = use)
-  parallel::stopCluster(cl)
-
-  #let user know results are being computed
-  message("Computing results...\n")
-
-
-  complexity.estimates2 <- vector("list")
-  for(i in 1:length(complexity.estimates)){
-    complexity.estimates2[[i]] <- complexity.estimates[[i]]$EII
-  }
-
-  complexity.estimates2 <- unlist(complexity.estimates2)
-
-  ## Compute the P-value of the bootstrap test:
-  p.greater <- (sum(EII>=complexity.estimates2)+1)/(iter+1)
-  p.lower <- (sum(EII<=complexity.estimates2)+1)/(iter+1)
-  p.values <- c(p.greater, p.lower)
-  two.sided <- 2*min(p.values)
-
-  # Plot:
-  complexity.df <- data.frame(EII = complexity.estimates2, ID = 1:length(complexity.estimates2))
-  plot.bootErgoInfo <- suppressWarnings(suppressMessages(ggpubr::gghistogram(complexity.df, x = "EII",
-                                                                             add = "mean",
-                                                                             fill = "#00AFBB",
-                                                                             color = "black",
-                                                                             rug = TRUE)))
-
-  ## Return Results:
-  results <- vector("list")
-  results$boot.ergoInfo <- complexity.estimates2
-  results$p.value.twosided <- two.sided
-  results$effect <- ifelse(p.greater<p.greater, "Greater", "Less")
-  results$plot.dist <- plot.bootErgoInfo
+  # Return results
   return(results)
+
 }
-#----
+
+# Error checking ----
+# # Estimate dynamic EGA
+# dyn1 <- dynEGA.ind.pop(
+#   data = sim.dynEGA[sim.dynEGA$Group == 2,-26], n.embed = 5, tau = 1,
+#   delta = 1, id = 25, use.derivatives = 1,
+#   model = "glasso", ncores = 8, corr = "pearson"
+# )
+#
+# # Estimate Ergodicity Information Index
+# eii1 <- ergoInfo(dynEGA.object = dyn1, use = "unweighted", shuffles = 100)
+#
+# # Set parameters
+# dynEGA.object = dyn1; EII = eii1; use = "unweighted"
+# ordering = "row"; shuffles = 100; iter = 100
+# ncores = 8; verbose = TRUE
+
+#' @noRd
+# Errors ----
+# Updated 12.11.2023
+boot.ergoInfo_errors <- function(dynEGA.object, shuffle, iter, ncores, verbose)
+{
+
+  # 'dynEGA.object' errors ("dynEGA.ind.pop" defunct to legacy)
+  if(!is(dynEGA.object, "dynEGA") & !is(dynEGA.object, "dynEGA.ind.pop")){
+    class_error(dynEGA.object, "dynEGA", "boot.ergoInfo")
+  }
+
+  # 'shuffle' errors
+  length_error(shuffle, 1, "boot.ergoInfo")
+  typeof_error(shuffle, "numeric", "boot.ergoInfo")
+  range_error(shuffle, c(1, Inf), "boot.ergoInfo")
+
+  # 'iter' errors
+  length_error(iter, 1, "boot.ergoInfo")
+  typeof_error(iter, "numeric", "boot.ergoInfo")
+  range_error(iter, c(1, Inf), "boot.ergoInfo")
+
+  # 'ncores' errors
+  length_error(ncores, 1, "boot.ergoInfo")
+  typeof_error(ncores, "numeric", "boot.ergoInfo")
+  range_error(ncores, c(1, parallel::detectCores()), "boot.ergoInfo")
+
+  # 'verbose' errors
+  length_error(verbose, 1, "boot.ergoInfo")
+  typeof_error(verbose, "logical", "boot.ergoInfo")
+
+}
+
+#' @exportS3Method
+# S3 Print Method ----
+# Updated 27.07.2024
+print.boot.ergoInfo <- function(x, ...)
+{
+
+  # Print lower order
+  cat(
+    styletext(
+      text = styletext(
+        text =  "Empirical EII\n\n",
+        defaults = "underline"
+      ),
+      defaults = "bold"
+    )
+  )
+
+  # Print EII method
+  cat(
+    paste0(
+      "EII Method: ",
+      switch(
+        attr(x, "methods")$use,
+        "edge.list" = "Edge List",
+        "unweighted" = "Unweighted",
+        "weighted" = "Weighted"
+      ), "\n",
+      "Shuffles: ", attr(x, "methods")$shuffles, "\n"
+    )
+  )
+
+  # Print EII value
+  cat("EII: ", round(x$empirical.ergoInfo, 4))
+
+  # Add breakspace
+  cat("\n\n")
+
+  # Print higher order
+  cat(
+    styletext(
+      text = styletext(
+        text =  "Bootstrap EII\n\n",
+        defaults = "underline"
+      ),
+      defaults = "bold"
+    )
+  )
+
+  # Print descriptives
+  cat(
+    paste0(
+      "Iterations: ", attr(x, "methods")$iter,
+      "\nMean = ", round(mean(x$boot.ergoInfo, na.rm = TRUE), 4),
+      " (SD = ", round(sd(x$boot.ergoInfo, na.rm = TRUE), 4), ")",
+      "\np-value = ", round(x$p.value, 4),
+      "\nErgodic: ", swiftelse(x$p.value < 0.05, "Yes", "No")
+    )
+  )
+
+  cat("\n\n")
+
+  # Print interpretation
+  cat("Interpretation:\n", x$interpretation)
+
+}
+
+#' @exportS3Method
+# S3 Summary Method ----
+# Updated 26.07.2023
+summary.boot.ergoInfo <- function(object, ...)
+{
+  print(object, ...) # same as print
+}
+
+#' @exportS3Method
+# S3 Plot Method ----
+# Updated 09.07.2023
+plot.boot.ergoInfo <- function(x, ...)
+{
+
+  # Send plot
+  silent_plot(
+    ggpubr::gghistogram(
+      data = data.frame(EII = x$boot.ergoInfo),
+      x = "EII", add = "mean", fill = "#00AFBB",
+      color = "black", rug = TRUE, ylab = "Frequency",
+      xlab = "Ergodicity Information Index",
+      ...
+    ) +
+      ggplot2::geom_vline(
+        xintercept = x$empirical.ergoInfo, color = "#00AFBB", linetype = "dotted"
+      )
+  )
+
+}
+
+

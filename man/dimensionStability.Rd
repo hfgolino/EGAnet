@@ -4,13 +4,22 @@
 \alias{dimensionStability}
 \title{Dimension Stability Statistics from \code{\link[EGAnet]{bootEGA}}}
 \usage{
-dimensionStability(bootega.obj, ...)
+dimensionStability(bootega.obj, IS.plot = TRUE, structure = NULL, ...)
 }
 \arguments{
 \item{bootega.obj}{A \code{\link[EGAnet]{bootEGA}} object}
 
+\item{IS.plot}{Boolean (length = 1).
+Should the plot be produced for \code{item.replication}?
+Defaults to \code{TRUE}}
+
+\item{structure}{Numeric (length = number of variables).
+A theoretical or pre-defined structure.
+Defaults to \code{NULL} or the empirical \code{\link[EGAnet]{EGA}}
+result in the \code{bootega.obj}}
+
 \item{...}{Additional arguments.
-Used for deprecated arguments from previous versions of \code{\link[EGAnet]{dimStability}}}
+Used for deprecated arguments from previous versions of \code{\link[EGAnet]{itemStability}}}
 }
 \value{
 Returns a list containing:
@@ -19,71 +28,50 @@ Returns a list containing:
 
 \itemize{
 
-\item{\strong{\code{structural.consistency}}}
-{The proportion of times that each empirical \code{\link[EGAnet]{EGA}} dimension
-\emph{exactly} replicates across the \code{\link[EGAnet]{bootEGA}} samples}
+\item \code{structural.consistency} --- The proportion of times that 
+each empirical \code{\link[EGAnet]{EGA}} dimension \emph{exactly} 
+replicates across the \code{\link[EGAnet]{bootEGA}} samples
 
-\item{\strong{\code{average.item.stability}}}
-{The average item stability in each empirical \code{\link[EGAnet]{EGA}} dimension}
-  }
+\item \code{average.item.stability} --- The average item stability in 
+each empirical \code{\link[EGAnet]{EGA}} dimension
+
+}
+
 }
 
 \item{item.stability}{Results from \code{\link[EGAnet]{itemStability}}}
 }
 \description{
-Based on the \code{\link[EGAnet]{bootEGA}} results, this function
-computes the stability of dimensions. This is computed by assessing the proportion of
-times the original dimension is exactly replicated in across bootstrap samples
+Based on the \code{\link[EGAnet]{bootEGA}} results, 
+this function computes the stability of dimensions. Stability is 
+computed by assessing the proportion of times the 
+original dimension is exactly replicated in across bootstrap samples
 }
 \examples{
 # Load data
 wmt <- wmt2[,7:24]
 
-\donttest{# Estimate EGA network
-## plot.type = "qqraph" used for CRAN checks
-## plot.type = "GGally" is the default
-ega.wmt <- EGA(data = wmt, model = "glasso", plot.type = "qgraph")
-
+\dontrun{
 # Estimate bootstrap EGA
-boot.wmt <- bootEGA(data = wmt, iter = 500, typicalStructure = TRUE,
-plot.typicalStructure = TRUE, model = "glasso", plot.type = "qgraph",
-type = "parametric", ncores = 2)
-}
+boot.wmt <- bootEGA(
+  data = wmt, iter = 500,
+  type = "parametric", ncores = 2
+)}
 
 # Estimate stability statistics
-res <- dimensionStability(boot.wmt)
-res$dimension.stability
-
-# Changing plot features (ggplot2)
-## Changing colors (ignore warnings)
-### qgraph Defaults
-res$item.stability$plot + 
-    ggplot2::scale_color_manual(values = rainbow(length(
-    res$dimension.stability$structural.consistency)))
-
-### Pastel
-res$item.stability$plot + 
-    ggplot2::scale_color_brewer(palette = "Pastel1")
-    
-## Changing Legend (ignore warnings)
-res$item.stability$plot + 
-    ggplot2::scale_color_discrete(labels = "Intelligence")
+dimensionStability(boot.wmt)
 
 }
 \references{
-Christensen, A. P., & Golino, H. (2019).
+\strong{Original implementation of bootEGA} \cr
+Christensen, A. P., & Golino, H. (2021).
 Estimating the stability of the number of factors via Bootstrap Exploratory Graph Analysis: A tutorial.
-\emph{PsyArXiv}.
-\doi{10.31234/osf.io/9deay}
+\emph{Psych}, \emph{3}(3), 479-500.
 
-Christensen, A. P., Golino, H., & Silvia, P. J. (in press).
+\strong{Conceptual introduction} \cr
+Christensen, A. P., Golino, H., & Silvia, P. J. (2020).
 A psychometric network perspective on the validity and validation of personality trait questionnaires.
-\emph{European Journal of Personality}.
-\doi{10.1002/per.2265}
-}
-\seealso{
-\code{\link[EGAnet]{EGA}} to estimate the number of dimensions of an instrument using EGA and
-\code{\link[EGAnet]{CFA}} to verify the fit of the structure suggested by EGA using confirmatory factor analysis.
+\emph{European Journal of Personality}, \emph{34}(6), 1095-1108.
 }
 \author{
 Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>

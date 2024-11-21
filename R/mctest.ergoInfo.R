@@ -126,7 +126,7 @@
 #'
 #' @param model.args List.
 #' A list of additional arguments for \code{\link[EGAnet]{EBICglasso.qgraph}}
-#' or \code{\link[NetworkToolbox]{TMFG}}
+#' or \code{\link[EGAnet]{TMFG}}
 #'
 #' @param algorithm A string indicating the algorithm to use or a function from \code{\link{igraph}}
 #'
@@ -191,12 +191,10 @@
 #'
 #' @author Hudson Golino <hfg9s at virginia.edu>
 #'
-#'
-#' @export
+#' @noRd
+#' 
 # Monte-Carlo Test for the Ergodicity Information Index
-# Updated 21.10.2020
-
-
+# Updated 30.12.2021
 mctest.ergoInfo <- function(iter, N,
                           EII,
                           use,
@@ -218,6 +216,12 @@ mctest.ergoInfo <- function(iter, N,
 ){
 
 
+  # Send experimental message (for now)
+  experimental("mctest.ergoInfo")
+  
+  # Send not refactored message (for now)
+  not_refactored("mctest.ergoInfo")
+  
   #### MISSING ARGUMENTS HANDLING ####
 
   if(missing(dfm))
@@ -278,35 +282,26 @@ mctest.ergoInfo <- function(iter, N,
   }else{ncores}
 
   # Initialize Data list
-  data.sim <- vector("list", length = iter)
-  for(i in 1:iter){
-    data.sim[[i]] <- vector("list", length = N)
-  }
+  data.sim <- lapply(1:iter, function(x){
+    lapply(1:N, function(x){
+      simDFM(
+        variab = variab, timep = timep, nfact = nfact, error = error,
+        dfm = dfm, loadings = loadings, autoreg = autoreg,
+        crossreg = crossreg, var.shock = var.shock,
+        cov.shock = cov.shock, burnin = 1000
+      )$data
+    })
+  })
 
+  # Long results
+  data.sim.df <- lapply(seq_along(data.sim), function(i){
+    res_df <- as.data.frame(data.sim[[i]])
+    res_df$ID <- rep(1:N, each = timep)
+    return(res_df)
+  })
 
-
-  for(i in 1:iter){
-    for(j in 1:N){
-      #generate data
-      data.sim[[i]][[j]] <- EGAnet::simDFM(variab = variab, timep = timep, nfact = nfact, error = error,
-                                   dfm = dfm, loadings = loadings, autoreg = autoreg,
-                                   crossreg = crossreg, var.shock = var.shock,
-                                   cov.shock = cov.shock, burnin = 1000)$data
-    }
-  }
-
-  data.sim.df <- vector("list", length = iter)
-  for(i in 1:iter){
-    data.sim.df[[i]] <- purrr::map_df(data.sim[[i]], ~as.data.frame(.))
-    data.sim.df[[i]]$ID <- rep(1:N, each = timep)
-  }
-
-
-  #initialize correlation matrix list
-  sim.dynEGA <- vector("list", length = iter)
-  sim.dynEGA.ids <- vector("list", length = iter)
-  list.results.sim <- vector("list", length = iter)
-  complexity.estimates <- vector("list", length = iter)
+  # Get prime numbers
+  prime.num <- get(data("prime.num", envir = environment()))
 
   #let user know data generation has started
   message("\nEstimating the Population and Individual Structures...\n", appendLF = FALSE)
@@ -316,36 +311,38 @@ mctest.ergoInfo <- function(iter, N,
 
   #Export variables
   parallel::clusterExport(cl = cl,
-                          varlist = c("sim.dynEGA", "list.results.sim",
-                                      "complexity.estimates"),
+                          varlist = c("prime.num"),
                           envir=environment())
 
   #Compute DynEGA in the population and in the individuals
-  sim.dynEGA <- pbapply::pblapply(X = data.sim.df, cl = cl,
-                                  FUN = EGAnet::dynEGA.ind.pop,
-                                  n.embed = embed, tau = tau,
-                                  delta = delta, id = (variab*nfact)+1, use.derivatives = derivatives,
-                                  algorithm = algorithm, algorithm.args = algorithm.args,
-                                  model = model, model.args = model.args, corr = corr)
-
+  sim.dynEGA <- pbapply::pblapply(
+    X = data.sim.df, cl = cl,
+    FUN = dynEGA.ind.pop,
+    n.embed = embed, tau = tau,
+    delta = delta, id = (variab*nfact)+1, use.derivatives = derivatives,
+    algorithm = algorithm, algorithm.args = algorithm.args,
+    model = model, model.args = model.args, corr = corr
+  )
 
   #let user know data generation has started
   message("Estimating the Ergodicity Information Index\n", appendLF = FALSE)
 
+  complexity.estimates <- pbapply::pblapply(
+    X = sim.dynEGA, cl = cl,
+    FUN = ergoInfo, use = use
+  )
 
-  complexity.estimates <- pbapply::pblapply(X = sim.dynEGA, cl = cl,
-                                            FUN = EGAnet::ergoInfo, use = use)
   parallel::stopCluster(cl)
 
   #let user know results are being computed
   message("Computing results...\n")
 
-  complexity.estimates2 <- vector("list")
-  for(i in 1:length(complexity.estimates)){
-    complexity.estimates2[[i]] <- complexity.estimates[[i]]$EII
-  }
+  complexity.estimates2 <- unlist(
+    lapply(complexity.estimates, function(x){
+      x$EII
+    })
+  )
 
-  complexity.estimates2 <- unlist(complexity.estimates2)
 
   ## Compute the P-value of the bootstrap test:
   p.greater <- (sum(EII>=complexity.estimates2)+1)/(iter+1)
@@ -354,12 +351,16 @@ mctest.ergoInfo <- function(iter, N,
   two.sided <- 2*min(p.values)
 
   # Plot:
-  complexity.df <- data.frame(EII = complexity.estimates2, ID = 1:length(complexity.estimates2))
-  plot.bootErgoInfo <- suppressWarnings(suppressMessages(ggpubr::gghistogram(complexity.df, x = "EII",
-                                           add = "mean",
-                                           fill = "#00AFBB",
-                                           color = "black",
-                                            rug = TRUE)))
+  complexity.df <- data.frame(EII = complexity.estimates2, ID = seq_along(complexity.estimates2))
+  plot.bootErgoInfo <- suppressWarnings(
+    suppressMessages(
+      ggpubr::gghistogram(
+        complexity.df, x = "EII", add = "mean",
+        fill = "#00AFBB", color = "black",
+        rug = TRUE
+      )
+    )
+  )
 
   ## Return Results:
   results <- vector("list")

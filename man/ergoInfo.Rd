@@ -4,24 +4,35 @@
 \alias{ergoInfo}
 \title{Ergodicity Information Index}
 \usage{
-ergoInfo(data, use = c("edge.list", "weights"))
+ergoInfo(
+  dynEGA.object,
+  use = c("edge.list", "unweighted", "weighted"),
+  shuffles = 5000
+)
 }
 \arguments{
-\item{data}{A dynEGA.ind.pop object}
+\item{dynEGA.object}{A \code{\link[EGAnet]{dynEGA.ind.pop}} object}
 
-\item{use}{Character.
-A string indicating what network element will be used to compute the algorithm complexity, the list of edges or the weights of the network.
-Defaults to \code{use = "edge.list"}.
+\item{use}{Character (length = 1).
+A string indicating what network element will be used
+to compute the algorithm complexity, the list of edges or the weights of the network.
+Defaults to \code{use = "unweighted"}.
 Current options are:
 
 \itemize{
 
-\item{\strong{\code{edge.list}}}
-{Calculates the algorithm complexity using the list of edges.}
+\item \code{"edge.list"} --- Calculates the algorithm complexity using the list of edges
 
-\item{\strong{\code{weights}}}
-{Calculates the algorithm complexity using the weights of the network.}
+\item \code{"unweighted"} --- Calculates the algorithm complexity using the binary weights of the encoded prime 
+transformed network. 0 = edge absent and 1 = edge present
+
+\item \code{"weighted"} --- Calculates the algorithm complexity using the weights of encoded prime-weight transformed network
+
 }}
+
+\item{shuffles}{Numeric.
+Number of shuffles used to compute the Kolmogorov complexity.
+Defaults to \code{5000}}
 }
 \value{
 Returns a list containing:
@@ -34,11 +45,35 @@ Returns a list containing:
 
 \item{Kcomp.pop}{The Kolmogorov complexity of the prime-weight encoded population network}
 
+\item{complexity}{The complexity metric proposed by Santora and Nicosia (2020)}
+
 \item{EII}{The Ergodicity Information Index}
 }
 \description{
 Computes the Ergodicity Information Index
 }
+\examples{
+# Obtain data
+sim.dynEGA <- sim.dynEGA # bypasses CRAN checks
+
+\dontrun{
+# Dynamic EGA individual and population structure
+dyn.ega1 <- dynEGA.ind.pop(
+  data = sim.dynEGA[,-26], n.embed = 5, tau = 1,
+  delta = 1, id = 25, use.derivatives = 1,
+  ncores = 2, corr = "pearson"
+)
+
+# Compute empirical ergodicity information index
+eii <- ergoInfo(dyn.ega1)}
+
+}
+\references{
+\strong{Original Implementation} \cr
+Golino, H., Nesselroade, J. R., & Christensen, A. P. (2022).
+Toward a psychology of individuals: The ergodicity information index and a bottom-up approach for finding generalizations.
+\emph{PsyArXiv}.
+}
 \author{
-Hudson Golino <hfg9s at virginia.edu>
+Hudson Golino <hfg9s at virginia.edu> and Alexander Christensen <alexpaulchristensen@gmail.com>
 }

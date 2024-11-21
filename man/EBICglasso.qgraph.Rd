@@ -2,46 +2,122 @@
 % Please edit documentation in R/EBICglasso.qgraph.R
 \name{EBICglasso.qgraph}
 \alias{EBICglasso.qgraph}
-\title{\code{\link[qgraph]{EBICglasso}} from \code{\link{qgraph}} 1.4.4}
+\title{\code{\link[qgraph]{EBICglasso}} from \code{qgraph} 1.4.4}
 \usage{
 EBICglasso.qgraph(
   data,
   n = NULL,
+  corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
+  na.data = c("pairwise", "listwise"),
   gamma = 0.5,
   penalize.diagonal = FALSE,
   nlambda = 100,
-  lambda.min.ratio = 0.01,
+  lambda.min.ratio = 0.1,
   returnAllResults = FALSE,
   penalizeMatrix,
   countDiagonal = FALSE,
   refit = FALSE,
+  model.selection = c("EBIC", "JSD"),
+  verbose = FALSE,
   ...
 )
 }
 \arguments{
-\item{data}{Data matrix}
+\item{data}{Matrix or data frame.
+Should consist only of variables to be used in the analysis}
 
-\item{n}{Number of participants}
+\item{n}{Numeric (length = 1).
+Sample size if \code{data} provided is a correlation matrix}
 
-\item{gamma}{EBIC tuning parameter. 0.5 is generally a good choice.
-Setting to zero will cause regular BIC to be used.}
+\item{corr}{Character (length = 1).
+Method to compute correlations.
+Defaults to \code{"auto"}.
+Available options:
 
-\item{penalize.diagonal}{Should the diagonal be penalized?}
+\itemize{
 
-\item{nlambda}{Number of lambda values to test.}
+\item \code{"auto"} --- Automatically computes appropriate correlations for
+the data using Pearson's for continuous, polychoric for ordinal,
+tetrachoric for binary, and polyserial/biserial for ordinal/binary with
+continuous. To change the number of categories that are considered
+ordinal, use \code{ordinal.categories}
+(see \code{\link[EGAnet]{polychoric.matrix}} for more details)
 
-\item{lambda.min.ratio}{Ratio of lowest lambda value compared to maximal lambda}
+\item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations.
+Arguments can be passed along to the function
 
-\item{returnAllResults}{If \code{TRUE} this function does not
-return a network but the results of the entire glasso path.}
+\item \code{"cosine"} --- Uses \code{\link[EGAnet]{cosine}} to compute cosine similarity
 
-\item{penalizeMatrix}{Optional logical matrix to indicate which elements are penalized}
+\item \code{"pearson"} --- Pearson's correlation is computed for all
+variables regardless of categories
 
-\item{countDiagonal}{Should diagonal be counted in EBIC computation?
-Defaults to \code{FALSE}. Set to \code{TRUE} to mimic qgraph < 1.3 behavior (not recommended!).}
+\item \code{"spearman"} --- Spearman's rank-order correlation is computed
+for all variables regardless of categories
 
-\item{refit}{Logical, should the optimal graph be refitted without LASSO regularization?
-Defaults to \code{FALSE}.}
+}
+
+For other similarity measures, compute them first and input them
+into \code{data} with the sample size (\code{n})}
+
+\item{na.data}{Character (length = 1).
+How should missing data be handled?
+Defaults to \code{"pairwise"}.
+Available options:
+
+\itemize{
+
+\item \code{"pairwise"} --- Computes correlation for all available
+cases between two variables
+
+\item \code{"listwise"} --- Computes correlation for all complete
+cases in the dataset
+
+}}
+
+\item{gamma}{Numeric (length = 1)
+EBIC tuning parameter.
+Defaults to \code{0.50} and is generally a good choice.
+Setting to \code{0} will cause regular BIC to be used}
+
+\item{penalize.diagonal}{Boolean (length = 1).
+Should the diagonal be penalized?
+Defaults to \code{FALSE}}
+
+\item{nlambda}{Numeric (length = 1).
+Number of lambda values to test.
+Defaults to \code{100}}
+
+\item{lambda.min.ratio}{Numeric (length = 1).
+Ratio of lowest lambda value compared to maximal lambda.
+Defaults to \code{0.1}.
+\strong{NOTE} \code{qgraph} sets the default to \code{0.01}}
+
+\item{returnAllResults}{Boolean (length = 1).
+Whether all results should be returned.
+Defaults to \code{FALSE} (network only).
+Set to \code{TRUE} to access \code{\link[glasso]{glassopath}} output}
+
+\item{penalizeMatrix}{Boolean matrix.
+Optional logical matrix to indicate which elements are penalized}
+
+\item{countDiagonal}{Boolean (length = 1).
+Should diagonal be counted in EBIC computation?
+Defaults to \code{FALSE}.
+Set to \code{TRUE} to mimic \code{qgraph} < 1.3 behavior (not recommended!)}
+
+\item{refit}{Boolean (length = 1).
+Should the optimal graph be refitted without LASSO regularization?
+Defaults to \code{FALSE}}
+
+\item{model.selection}{Character (length = 1).
+How lambda should be selected within GLASSO.
+Defaults to \code{"EBIC"}.
+\code{"JSD"} is experimental and should not be used otherwise}
+
+\item{verbose}{Boolean (length = 1).
+Whether messages and (insignificant) warnings should be output.
+Defaults to \code{FALSE} (silent calls).
+Set to \code{TRUE} to see all messages and warnings for every function call}
 
 \item{...}{Arguments sent to \code{\link[glasso]{glasso}}}
 }
@@ -53,7 +129,7 @@ This function uses the \code{\link[glasso]{glasso}} package
 (Friedman, Hastie and Tibshirani, 2011) to compute a
 sparse gaussian graphical model with the graphical lasso
 (Friedman, Hastie & Tibshirani, 2008).
-The tuning parameter is chosen using the Extended Bayesian Information criterium
+The tuning parameter is chosen using the Extended Bayesian Information criterion
 (EBIC) described by Foygel & Drton (2010).
 }
 \details{
@@ -64,50 +140,38 @@ the graph with the best EBIC is selected. The partial correlation matrix
 is computed using \code{\link[qgraph]{wi2net}} and returned.
 }
 \examples{
-### Using wmt2 dataset from EGAnet ###
-data(wmt2)
+# Obtain data
+wmt <- wmt2[,7:24]
 
-\donttest{# Compute correlations:
-CorMat <- qgraph::cor_auto(wmt2[,7:24])
-
-# Compute graph with tuning = 0 (BIC):
-BICgraph <- EBICglasso.qgraph(CorMat, n = nrow(wmt2), gamma = 0)
+# Compute graph with tuning = 0 (BIC)
+BICgraph <- EBICglasso.qgraph(data = wmt, gamma = 0)
 
 # Compute graph with tuning = 0.5 (EBIC)
-EBICgraph <- EBICglasso.qgraph(CorMat, n = nrow(wmt2), gamma = 0.5)
-
-}
+EBICgraph <- EBICglasso.qgraph(data = wmt, gamma = 0.5)
 
 }
 \references{
+\strong{Instantiation of GLASSO} \cr
 Friedman, J., Hastie, T., & Tibshirani, R. (2008).
 Sparse inverse covariance estimation with the graphical lasso.
 \emph{Biostatistics}, \emph{9}, 432-441.
-\doi{10.1093/biostatistics/kxm045}
 
-#glasso package
-Jerome Friedman, Trevor Hastie and Rob Tibshirani (2011).
-glasso: Graphical lasso-estimation of Gaussian graphical models.
-R package version 1.7.
-\url{https://CRAN.R-project.org/package=glasso}
-
+\strong{glasso + EBIC} \cr
 Foygel, R., & Drton, M. (2010).
 Extended Bayesian information criteria for Gaussian graphical models.
-In Advances in neural information processing systems (pp. 604-612).
-\url{https://papers.nips.cc/paper/4087-extended-bayesian-information-criteria-for-gaussian-graphical-models}
+\emph{In Advances in neural information processing systems} (pp. 604-612).
 
-#psych package
-Revelle, W. (2014) psych: Procedures for Personality and Psychological Research,
-Northwestern University, Evanston, Illinois, USA.
-R package version 1.4.4.
-\url{https://CRAN.R-project.org/package=psych}
+\strong{glasso package} \cr
+Friedman, J., Hastie, T., & Tibshirani, R. (2011).
+glasso: Graphical lasso-estimation of Gaussian graphical models.
+R package version 1.7.
 
-#Matrix package
-Douglas Bates and Martin Maechler (2014).
-Matrix: Sparse and Dense Matrix Classes and Methods.
-R package version 1.1-3.
-\url{https://CRAN.R-project.org/package=Matrix}
+\strong{Tutorial on EBICglasso} \cr
+Epskamp, S., & Fried, E. I. (2018).
+A tutorial on regularized partial correlation networks.
+\emph{Psychological Methods}, \emph{23}(4), 617–634.
 }
 \author{
-Sacha Epskamp <mail@sachaepskamp.com>
+Sacha Epskamp; for maintanence,
+Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen at gmail.com>
 }
