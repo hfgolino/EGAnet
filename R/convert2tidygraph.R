@@ -29,12 +29,16 @@ convert2tidygraph <- function(EGA.object)
     if("lower_order" %in% names(EGA.object$typicalGraph)) {
       # Hierarchical EGA ---
       lower_nodes <- .convert2tidygraph_nodes(EGA.object$typicalGraph$lower_order$wc)
+      lower_nodes$dimension <- paste0("L", lower_nodes$dimension)  # Discriminate from higher
       higher_nodes <- .convert2tidygraph_nodes(EGA.object$typicalGraph$higher_order$wc)
+      higher_nodes$name <- paste0("L", as.numeric(higher_nodes$name))
       higher_nodes$dimension <- paste0("H", higher_nodes$dimension)  # Discriminate from lower
       nodes <- rbind(lower_nodes, higher_nodes)
 
       lower_edges <- .convert2tidygraph_edges(EGA.object$typicalGraph$lower_order$graph)
       higher_edges <- .convert2tidygraph_edges(EGA.object$typicalGraph$higher_order$graph)
+      higher_edges$from <- paste0("L", as.numeric(higher_edges$from))
+      higher_edges$to <- paste0("L", as.numeric(higher_edges$to))
       edges <- rbind(lower_edges, higher_edges)
       edges$type <- "real"
 
