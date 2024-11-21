@@ -1,16 +1,17 @@
 #' Convert networks to \code{tidygraph}
-#' 
+#'
 #' @description Converts networks to \code{tidygraph} format
 #'
 #' @param EGA.object
 #' A single \code{\link{EGAnet}} object containing the outputs
 #' \code{$network} and \code{$wc}
-#' 
+#'
 #' @examples
 #' convert2tidygraph(ega.wmt)
+#' convert2tidygraph(boot.wmt)
 #'
 #' @return Returns a network in the \code{tidygraph} format
-#' 
+#'
 #' @author Dominique Makowski, Hudson Golino <hfg9s at virginia.edu>, & Alexander P. Christensen <alexander.christensen at Vanderbilt.Edu>
 #'
 #' @export
@@ -18,26 +19,39 @@
 # Updated 14.07.2023
 convert2tidygraph <- function(EGA.object)
 {
-  
-  # Set up nodes
-  nodes <- data.frame(
-    name = names(EGA.object$wc),
-    dimension = as.character(EGA.object$wc)
-  )
-  
-  # Get number of nodes
-  node_count <- length(EGA.object$wc)
-  
-  # Get node sequence
-  node_sequence <- seq_len(node_count)
-  
-  # Set up edges
-  edges <- data.frame(
-    from = rep(node_sequence, each = node_count),
-    to = rep(node_sequence, times = node_count),
-    link = abs(force_vector(EGA.object$network))
-  )
-  
+
+  if("bootEGA" %in% class(EGA.object)) {
+    if(!"typicalGraph" %in% names(EGA.object)) {
+      stop("The bootEGA object must contain a typicalGraph object. Set `typicalStructure=TRUE`.")
+    }
+
+    if("lower_order" %in% names(EGA.object$typicalGraph)) {
+      lower_nodes <- .convert2tidygraph_nodes(EGA.object$typicalGraph$lower_order$wc)
+      higher_nodes <- .convert2tidygraph_nodes(EGA.object$typicalGraph$higher_order$wc)
+      higher_nodes$dimension <- paste0("H", higher_nodes$dimension)  # Discriminate from lower
+      nodes <- rbind(lower_nodes, higher_nodes)
+
+      lower_edges <- .convert2tidygraph_edges(EGA.object$typicalGraph$lower_order$graph)
+      higher_edges <- .convert2tidygraph_edges(EGA.object$typicalGraph$higher_order$graph)
+      edges <- rbind(lower_edges, higher_edges)
+      edges$type <- "real"
+
+      # Make edges from lower to higher order
+      for(i in 1:nrow(lower_nodes)) {
+        edges <- rbind(
+          edges,
+          data.frame(from = lower_nodes$name[i], to = lower_nodes$dimension[i], link = 1, type = "virtual")
+          )
+      }
+    } else {
+      nodes <- .convert2tidygraph_nodes(EGA.object$typicalGraph$wc)
+      edges <- .convert2tidygraph_edges(EGA.object$typicalGraph$graph)
+    }
+  } else {
+    nodes <- .convert2tidygraph_nodes(EGA.object$wc)
+    edges <- .convert2tidygraph_edges(EGA.object$network)
+  }
+
   # Return result
   return(
     list(
@@ -45,5 +59,24 @@ convert2tidygraph <- function(EGA.object)
       edges = edges[edges$link != 0,]
     )
   )
-  
+}
+
+
+#' @keywords internal
+#' @noRd
+.convert2tidygraph_nodes <- function(wc){
+  data.frame(
+    name = names(wc),
+    dimension = as.character(wc)
+  )
+}
+
+#' @keywords internal
+#' @noRd
+.convert2tidygraph_edges <- function(network){
+  data.frame(
+    from = rep(rownames(network), times = ncol(network)),
+    to = rep(colnames(network), each = nrow(network)),
+    link = as.vector(network)
+  )
 }
