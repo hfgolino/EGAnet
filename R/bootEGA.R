@@ -707,7 +707,7 @@ bootEGA_errors <- function(
 
 #' @exportS3Method
 # S3 Print Method ----
-# Updated 31.03.2024
+# Updated 26.11.2024
 print.bootEGA <- function(x, ...)
 {
 
@@ -882,7 +882,7 @@ print.bootEGA <- function(x, ...)
     cat("\n")
 
     # Do not print unidimensional for `EGA.fit`
-    if(ega_type != "ega.fit"){
+    if(ega_type != "EGA.fit"){
 
       # Get unidimensional attributes
       unidimensional_attributes <- attr(ega_object, "unidimensional")
