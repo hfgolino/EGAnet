@@ -1323,6 +1323,93 @@ create_community_structure <- function(
 }
 
 #' @noRd
+# Known Graph ----
+# Follows pages 631--634:
+# Hastie, T., Tibshirani, R., & Friedman, J. (2008).
+# The elements of statistical learning: Data mining, inference, and prediction (2nd ed.).
+# New York, NY: Springer.
+# Updated 23.12.2024
+known_graph <- function(S, A, tol = 1e-06, max_iter = 1000)
+{
+
+  # Obtain number of nodes
+  nodes <- dim(S)[2]
+
+  # Get node sequence
+  node_sequence <- seq_len(nodes)
+
+  # Initialize matrix
+  W <- S
+
+  # Identify non-zero edges
+  non_zero <- A != 0
+
+  # Initialize convergence criteria
+  iteration <- 0; difference <- Inf
+
+  # Loop until criterion is met or max iterations is reached
+  while(iteration < max_iter && difference > tol){
+
+    # Increase iterations
+    iteration <- iteration + 1
+
+    # Set old W
+    W_old <- W
+
+    # Iterate over each node
+    for(j in node_sequence){
+
+      # Identify edges in the adjacency matrix for node j
+      edges <- non_zero[-j, j]
+
+      # Extract the corresponding rows/columns in W11 and elements of S12
+      if(sum(edges) > 0){
+
+        # Initialize beta
+        beta <- matrix(0, nrow = nodes - 1, ncol = 1)
+
+        # Partition W
+        W11 <- W[-j, -j, drop = FALSE]
+
+        # Solve for beta* = (W11*)^{-1} * S12*
+        beta[edges,] <- solve(
+          W11[edges, edges, drop = FALSE], S[-j, j, drop = FALSE][edges, , drop = FALSE]
+        )
+
+        # Update W12 = W11 * beta
+        W12_new <- W11 %*% beta
+
+        # Update the corresponding parts of W
+        W[j, -j] <- W[-j, j] <- W12_new
+        W[j, j] <- S[j, j] - crossprod(beta, W12_new)
+
+      }
+
+    }
+
+    # Compute maximum absolute difference in W for convergence check
+    difference <- max(abs(W - W_old))
+
+  }
+
+  # Obtain Theta
+  Theta <- solve(W)
+
+  # Obtain P
+  P <- -cov2cor(Theta); diag(P) <- 0
+
+  # Return all output
+  return(
+    list(
+      W = W, Theta = Theta, P = P,
+      iterations = iteration,
+      converged = difference <= tol
+    )
+  )
+
+}
+
+#' @noRd
 # Computes density ----
 # Updated 08.10.2024
 compute_density <- function(network)
