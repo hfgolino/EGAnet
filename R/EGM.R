@@ -1328,8 +1328,8 @@ create_community_structure <- function(
 # Hastie, T., Tibshirani, R., & Friedman, J. (2008).
 # The elements of statistical learning: Data mining, inference, and prediction (2nd ed.).
 # New York, NY: Springer.
-# Updated 23.12.2024
-known_graph <- function(S, A, tol = 1e-06, max_iter = 1000)
+# Updated 24.12.2024
+known_graph <- function(S, A, tol = 1e-06, max_iter = 100)
 {
 
   # Obtain number of nodes
@@ -1341,14 +1341,19 @@ known_graph <- function(S, A, tol = 1e-06, max_iter = 1000)
   # Initialize matrix
   W <- S
 
-  # Identify non-zero edges
-  non_zero <- A != 0
+  # Initialize zero betas
+  zero_beta <- matrix(0, nrow = nodes - 1, ncol = 1)
+
+  # Obtain non-zero edge list
+  non_zero_list <- lapply(node_sequence, function(i){
+    A[-i, i] != 0
+  })
 
   # Initialize convergence criteria
   iteration <- 0; difference <- Inf
 
   # Loop until criterion is met or max iterations is reached
-  while(iteration < max_iter && difference > tol){
+  while(difference > tol && iteration < max_iter){
 
     # Increase iterations
     iteration <- iteration + 1
@@ -1360,20 +1365,23 @@ known_graph <- function(S, A, tol = 1e-06, max_iter = 1000)
     for(j in node_sequence){
 
       # Identify edges in the adjacency matrix for node j
-      edges <- non_zero[-j, j]
+      edges <- non_zero_list[[j]]
+
+      # Initialize beta
+      beta <- zero_beta
+
+      # Partition for W11
+      W11 <- W[-j, -j, drop = FALSE]
 
       # Extract the corresponding rows/columns in W11 and elements of S12
-      if(sum(edges) > 0){
+      if(any(edges)){
 
-        # Initialize beta
-        beta <- matrix(0, nrow = nodes - 1, ncol = 1)
-
-        # Partition W
-        W11 <- W[-j, -j, drop = FALSE]
+        # Compute S12
+        S12 <- S[-j, j, drop = FALSE]
 
         # Solve for beta* = (W11*)^{-1} * S12*
         beta[edges,] <- solve(
-          W11[edges, edges, drop = FALSE], S[-j, j, drop = FALSE][edges, , drop = FALSE]
+          W11[edges, edges, drop = FALSE], S12[edges, , drop = FALSE]
         )
 
         # Update W12 = W11 * beta
@@ -1381,7 +1389,7 @@ known_graph <- function(S, A, tol = 1e-06, max_iter = 1000)
 
         # Update the corresponding parts of W
         W[j, -j] <- W[-j, j] <- W12_new
-        W[j, j] <- S[j, j] - crossprod(beta, W12_new)
+        W[j, j] <- S[j, j] - sum(beta * W12_new)
 
       }
 
