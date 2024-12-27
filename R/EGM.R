@@ -736,6 +736,31 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, opt, constra
     seq_len(communities), function(community){structure == community}
   )
 
+  # Currently, sets up for `p.in` and `p.out` to correspond to each
+  # individual community
+  #
+  # This might make sense for particularly simple structures but other
+  # options might exist
+  #
+  # For example:
+  #
+  # # Set up community variables
+  # community_variables <- do.call(
+  #   cbind, lapply(
+  #     seq_len(communities), function(community){structure == community}
+  #   )
+  # )
+  #
+  # # Create "on" and "off" block structure
+  # on_block <- tcrossprod(community_variables)
+  # off_block <- !on_block
+  #
+  # This approach allows the block structure to use `p.in` as a general
+  # thresholding scheme across communities rather than for *each* community
+  #
+  # Similarly, the off-block sets `p.out` to threshold across all non-community
+  # edges rather than on *each* non-community block
+
   # Obtain community structure
   community_P <- create_community_structure(
     P = empirical_P, total_variables = data_dimensions[2],
