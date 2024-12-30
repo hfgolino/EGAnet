@@ -54,10 +54,16 @@
 #'
 #' }
 #'
-#' @param gamma Numeric (length = 1)
+#' @param gamma Numeric (length = 1).
 #' EBIC tuning parameter.
 #' Defaults to \code{0} and is generally a good choice.
 #' Setting to \code{0} will cause regular BIC to be used
+#'
+#' @param steps Numeric (length = 1).
+#' Number of steps in the random walk process.
+#' Defaults to \code{1}.
+#' Setting steps higher will tend toward denser networks
+#' (\strong{not} recommended to change)
 #'
 #' @param nlambda Numeric (length = 1).
 #' Number of lambda values to test.
@@ -93,7 +99,7 @@ network.entropyWalk <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
-    gamma = 0.00, nlambda = 100,
+    gamma = 0.00, steps = 1, nlambda = 100,
     lambda.min.ratio = 0.1, verbose = FALSE, ...
 )
 {
@@ -101,11 +107,11 @@ network.entropyWalk <- function(
   # Check for missing arguments (argument, default, function)
   # Uses actual function they will be used in
   # (keeping non-function choices for `cor_auto`)
-  corr <- set_default(corr, "auto", network.RWglasso)
-  na.data <- set_default(na.data, "pairwise", network.RWglasso)
+  corr <- set_default(corr, "auto", network.entropyWalk)
+  na.data <- set_default(na.data, "pairwise", network.entropyWalk)
 
   # Argument errors (return data in case of tibble)
-  data <- network.entropyWalk_errors(data, n, gamma, verbose, ...)
+  data <- network.entropyWalk_errors(data, n, gamma, steps, nlambda, verbose, ...)
 
   # Get dimensions of the data
   dimensions <- dim(data)
@@ -136,6 +142,11 @@ network.entropyWalk <- function(
 
   # Solve for transition matrix and compute cross-product
   transition <- solve(diag(rowSums(absolute)), absolute)
+
+  # Check for more than one step
+  if(steps > 1){
+    transition <- Reduce(`%*%`, replicate(n = steps, transition, simplify = FALSE))
+  }
 
   # Set up transition entropy matrix (store copy)
   transition <- (transition + t(transition)) / 2
@@ -191,11 +202,11 @@ network.entropyWalk <- function(
 #' @noRd
 # Errors ----
 # Updated 28.12.2024
-network.entropyWalk_errors <- function(data, n, gamma, verbose, ...)
+network.entropyWalk_errors <- function(data, n, gamma, steps, nlambda, verbose, ...)
 {
 
   # 'data' errors
-  object_error(data, c("matrix", "data.frame", "tibble"), "network.RWglasso")
+  object_error(data, c("matrix", "data.frame", "tibble"), "network.entropyWalk")
 
   # Check for tibble
   if(get_object_type(data) == "tibble"){
@@ -204,13 +215,28 @@ network.entropyWalk_errors <- function(data, n, gamma, verbose, ...)
 
   # 'n' errors
   if(!is.null(n)){
-    length_error(n, 1, "network.RWglasso")
-    typeof_error(n, "numeric", "network.RWglasso")
+    length_error(n, 1, "network.entropyWalk")
+    typeof_error(n, "numeric", "network.entropyWalk")
   }
 
+  # 'gamma' errors
+  length_error(gamma, 1, "network.entropyWalk")
+  typeof_error(gamma, "numeric", "network.entropyWalk")
+  range_error(gamma, c(0, Inf), "network.entropyWalk")
+
+  # 'steps' errors
+  length_error(steps, 1, "network.entropyWalk")
+  typeof_error(steps, "numeric", "network.entropyWalk")
+  range_error(steps, c(0, Inf), "network.entropyWalk")
+
+  # 'nlambda' errors
+  length_error(nlambda, 1, "network.entropyWalk")
+  typeof_error(nlambda, "numeric", "network.entropyWalk")
+  range_error(nlambda, c(1, Inf), "network.entropyWalk")
+
   # 'verbose' errors
-  length_error(verbose, 1, "network.RWglasso")
-  typeof_error(verbose, "logical", "network.RWglasso")
+  length_error(verbose, 1, "network.entropyWalk")
+  typeof_error(verbose, "logical", "network.entropyWalk")
 
   # Check for usable data
   if(needs_usable(list(...))){

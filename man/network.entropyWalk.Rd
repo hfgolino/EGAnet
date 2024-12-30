@@ -10,6 +10,7 @@ network.entropyWalk(
   corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
   gamma = 0,
+  steps = 1,
   nlambda = 100,
   lambda.min.ratio = 0.1,
   verbose = FALSE,
@@ -67,10 +68,16 @@ two variables
 
 }}
 
-\item{gamma}{Numeric (length = 1)
+\item{gamma}{Numeric (length = 1).
 EBIC tuning parameter.
 Defaults to \code{0} and is generally a good choice.
 Setting to \code{0} will cause regular BIC to be used}
+
+\item{steps}{Numeric (length = 1).
+Number of steps in the random walk process.
+Defaults to \code{1}.
+Setting steps higher will tend toward denser networks
+(\strong{not} recommended to change)}
 
 \item{nlambda}{Numeric (length = 1).
 Number of lambda values to test.
