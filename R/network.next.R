@@ -1,8 +1,7 @@
-#' @title Entropy Walk Penalized GLASSO
+#' @title Non-convex Exponential Regularization Penalty GLASSO (NEXT)
 #'
 #' @description The graphical least absolute shrinkage and selection operator with
-#' adaptive penalization based on the random walk transition matrix of the empirical
-#' partial correlation matrix
+#' a non-convex exponential regularization penalty
 #'
 #' @param data Matrix or data frame.
 #' Should consist only of variables to be used in the analysis
@@ -55,15 +54,11 @@
 #' }
 #'
 #' @param gamma Numeric (length = 1).
-#' EBIC tuning parameter.
-#' Defaults to \code{0} and is generally a good choice.
-#' Setting to \code{0} will cause regular BIC to be used
-#'
-#' @param steps Numeric (length = 1).
-#' Number of steps in the random walk process.
-#' Defaults to \code{1}.
-#' Setting steps higher will tend toward denser networks
-#' (\strong{not} recommended to change)
+#' Adjusts the shape of the penalty.
+#' Defaults to \code{0.25}.
+#' For greater sensitivity (at the cost of specificity),
+#' \code{0.10} is recommended. For greater specificity
+#' (at the cost of sensitivity), \code{1} is recommended
 #'
 #' @param nlambda Numeric (length = 1).
 #' Number of lambda values to test.
@@ -71,8 +66,15 @@
 #'
 #' @param lambda.min.ratio Numeric (length = 1).
 #' Ratio of lowest lambda value compared to maximal lambda.
-#' Defaults to \code{0.1}.
-#' \strong{NOTE} \code{qgraph} sets the default to \code{0.01}
+#' Defaults to \code{0.001}
+#'
+#' @param fast Boolean (length = 1).
+#' Whether the \code{\link[glassoFast]{glassoFast}} version should be used
+#' to estimate the GLASSO.
+#' Defaults to \code{TRUE}.
+#'
+#' The fast results \emph{may} differ by less than floating point of the original
+#' GLASSO implemented by \code{\link[glasso]{glasso}} and should not impact reproducibility much (set to \code{FALSE} if concerned)
 #'
 #' @param verbose Boolean (length = 1).
 #' Whether messages and (insignificant) warnings should be output.
@@ -89,29 +91,29 @@
 #' wmt <- wmt2[,7:24]
 #'
 #' # Obtain network
-#' RW_network <- network.entropyWalk(data = wmt)
+#' RW_network <- network.next(data = wmt)
 #'
 #' @export
 #'
-# Estimate based on entropy walk ----
-# Updated 30.12.2024
-network.entropyWalk <- function(
+# Apply NEXT regularization ----
+# Updated 01.01.2025
+network.next <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
-    gamma = 0.00, steps = 1, nlambda = 100,
-    lambda.min.ratio = 0.1, verbose = FALSE, ...
+    gamma = 0.25, nlambda = 100, lambda.min.ratio = 0.001,
+    fast = TRUE, verbose = FALSE, ...
 )
 {
 
   # Check for missing arguments (argument, default, function)
   # Uses actual function they will be used in
   # (keeping non-function choices for `cor_auto`)
-  corr <- set_default(corr, "auto", network.entropyWalk)
-  na.data <- set_default(na.data, "pairwise", network.entropyWalk)
+  corr <- set_default(corr, "auto", network.next)
+  na.data <- set_default(na.data, "pairwise", network.next)
 
   # Argument errors (return data in case of tibble)
-  data <- network.entropyWalk_errors(data, n, gamma, steps, nlambda, verbose, ...)
+  data <- network.next_errors(data, n, gamma, nlambda, lambda.min.ratio, fast, verbose, ...)
 
   # Get dimensions of the data
   dimensions <- dim(data)
@@ -137,29 +139,33 @@ network.entropyWalk <- function(
   # Obtain lambda sequence
   lambda_sequence <- seq_len(nlambda)
 
-  # Obtain absolute values on the inverse covariance matrix
-  absolute <- abs(solve(S))
+  # Obtain precision matrix
+  K <- solve(S)
 
-  # Solve for transition matrix and compute cross-product
-  transition <- solve(diag(rowSums(absolute)), absolute)
+  # Obtain lambda matrices
+  lambda_list <- lapply(lambda, function(value){
+    next_derivative(K = K, lambda = value, gamma = gamma)
+  })
 
-  # Check for more than one step
-  if(steps > 1){
-    transition <- Reduce(`%*%`, replicate(n = steps, transition, simplify = FALSE))
-  }
+  # Obtain GLASSO function
+  glasso_FUN <- swiftelse(fast, glassoFast::glassoFast, glasso::glasso)
 
-  # Set up transition entropy matrix (store copy)
-  transition <- (transition + t(transition)) / 2
-  Tentropy <- -transition * log(transition)
+  # Get function arguments
+  glasso_ARGS <- obtain_arguments(
+    glasso_FUN, FUN.args = list(...)
+  )
 
-  # Get glasso outputs
-  glasso_list <- lapply(lambda, function(value){
+  # Supply correlation matrix
+  glasso_ARGS[[1]] <- S
 
-    # Set entropies greater than lambda to one
-    Tentropy[Tentropy > value] <- 1
+  # Get GLASSO output
+  glasso_list <- lapply(lambda_list, function(lambda_matrix){
 
-    # Estimate GLASSO
-    glasso::glasso(s = S, rho = value * (1 - Tentropy), penalize.diagonal = FALSE, trace = 0)
+    # Set lambda matrix
+    glasso_ARGS$rho <- lambda_matrix
+
+    # Estimate
+    return(do.call(what = glasso_FUN, args = glasso_ARGS))
 
   })
 
@@ -176,11 +182,11 @@ network.entropyWalk <- function(
     edge_count(element$wi, dimensions[2], FALSE)
   })
 
-  # EBIC (vectorized solution; ~9x faster)
-  EBICs <- -2 * lik + E * log(n) + 4 * E * gamma * log(dimensions[2])
+  # BIC (vectorized solution; ~9x faster)
+  BIC <- -2 * lik + E * log(n)
 
   # Optimal
-  opt <- which.min(EBICs)
+  opt <- which.min(BIC)
 
   # Get R
   R <- glasso_list[[opt]]$w
@@ -193,7 +199,7 @@ network.entropyWalk <- function(
   return(
     list(
       network = W, K = glasso_list[[opt]]$wi, R = R,
-      correlation = S, EBIC = EBICs[[opt]], gamma = gamma
+      correlation = S, BIC = BIC[[opt]], gamma = gamma
     )
   )
 
@@ -201,12 +207,12 @@ network.entropyWalk <- function(
 
 #' @noRd
 # Errors ----
-# Updated 28.12.2024
-network.entropyWalk_errors <- function(data, n, gamma, steps, nlambda, verbose, ...)
+# Updated 01.01.2025
+network.next_errors <- function(data, n, gamma, nlambda, lambda.min.ratio, fast, verbose, ...)
 {
 
   # 'data' errors
-  object_error(data, c("matrix", "data.frame", "tibble"), "network.entropyWalk")
+  object_error(data, c("matrix", "data.frame", "tibble"), "network.next")
 
   # Check for tibble
   if(get_object_type(data) == "tibble"){
@@ -215,28 +221,32 @@ network.entropyWalk_errors <- function(data, n, gamma, steps, nlambda, verbose, 
 
   # 'n' errors
   if(!is.null(n)){
-    length_error(n, 1, "network.entropyWalk")
-    typeof_error(n, "numeric", "network.entropyWalk")
+    length_error(n, 1, "network.next")
+    typeof_error(n, "numeric", "network.next")
   }
 
   # 'gamma' errors
-  length_error(gamma, 1, "network.entropyWalk")
-  typeof_error(gamma, "numeric", "network.entropyWalk")
-  range_error(gamma, c(0, Inf), "network.entropyWalk")
-
-  # 'steps' errors
-  length_error(steps, 1, "network.entropyWalk")
-  typeof_error(steps, "numeric", "network.entropyWalk")
-  range_error(steps, c(0, Inf), "network.entropyWalk")
+  length_error(gamma, 1, "network.next")
+  typeof_error(gamma, "numeric", "network.next")
+  range_error(gamma, c(0, Inf), "network.next")
 
   # 'nlambda' errors
-  length_error(nlambda, 1, "network.entropyWalk")
-  typeof_error(nlambda, "numeric", "network.entropyWalk")
-  range_error(nlambda, c(1, Inf), "network.entropyWalk")
+  length_error(nlambda, 1, "network.next")
+  typeof_error(nlambda, "numeric", "network.next")
+  range_error(nlambda, c(1, Inf), "network.next")
+
+  # 'lambda.min.ratio' errors
+  length_error(lambda.min.ratio, 1, "network.next")
+  typeof_error(lambda.min.ratio, "numeric", "network.next")
+  # range_error(lambda.min.ratio, c(1e-06, 1), "network.next")
+
+  # 'fast' errors
+  length_error(fast, 1, "network.next")
+  typeof_error(fast, "logical", "network.next")
 
   # 'verbose' errors
-  length_error(verbose, 1, "network.entropyWalk")
-  typeof_error(verbose, "logical", "network.entropyWalk")
+  length_error(verbose, 1, "network.next")
+  typeof_error(verbose, "logical", "network.next")
 
   # Check for usable data
   if(needs_usable(list(...))){
@@ -246,4 +256,18 @@ network.entropyWalk_errors <- function(data, n, gamma, steps, nlambda, verbose, 
   # Return data in case of tibble
   return(data)
 
+}
+
+#' @noRd
+# NEXT derivative ----
+# Updated 01.01.2025
+next_derivative <- function(K, lambda, gamma = 0.25){
+  return(exp((-gamma * abs(K)^gamma) / lambda))
+}
+
+#' @noRd
+# NEXT penalty ----
+# Updated 01.01.2025
+next_penalty <- function(Theta, lambda, gamma = 0.25){
+  return((1 - exp((-gamma * abs(Theta)^gamma) / lambda)) * (lambda / gamma))
 }

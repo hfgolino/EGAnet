@@ -76,6 +76,14 @@
 #' Defaults to \code{0.1}.
 #' \strong{NOTE} \code{qgraph} sets the default to \code{0.01}
 #'
+#' @param fast Boolean (length = 1).
+#' Whether the \code{\link[glassoFast]{glassoFast}} version should be used
+#' to estimate the GLASSO.
+#' Defaults to \code{FALSE}.
+#'
+#' The fast results \emph{may} differ by less than floating point of the original
+#' GLASSO implemented by \code{\link[glasso]{glasso}} and should not impact reproducibility much
+#'
 #' @param returnAllResults Boolean (length = 1).
 #' Whether all results should be returned.
 #' Defaults to \code{FALSE} (network only).
@@ -141,6 +149,15 @@
 #' # Obtain data
 #' wmt <- wmt2[,7:24]
 #'
+#' # Fast
+#' fast <- EBICglasso.qgraph(wmt)
+#'
+#' # Regular
+#' regular <- EBICglasso.qgraph(wmt, fast = FALSE)
+#'
+#' # Difference between fast and regular
+#' sum(abs(fast - regular))
+#'
 #' # Compute graph with tuning = 0 (BIC)
 #' BICgraph <- EBICglasso.qgraph(data = wmt, gamma = 0)
 #'
@@ -150,7 +167,7 @@
 #' @export
 #'
 # Computes optimal glasso network based on EBIC ----
-# Updated 31.10.2024
+# Updated 01.01.2025
 EBICglasso.qgraph <- function(
     data, # Sample covariance matrix
     n = NULL,
@@ -160,8 +177,9 @@ EBICglasso.qgraph <- function(
     penalize.diagonal = FALSE, # Penalize diagonal?
     nlambda = 100,
     lambda.min.ratio = 0.1,
+    fast = FALSE,
     returnAllResults = FALSE, # If true, returns a list
-    penalizeMatrix, # Optional logical matrix to indicate which elements are penalized
+    penalizeMatrix = NULL, # Optional logical matrix to indicate which elements are penalized
     countDiagonal = FALSE, # Set to TRUE to get old qgraph behavior: conting diagonal elements as parameters in EBIC computation. This is not correct, but is included to replicate older analyses
     refit = FALSE, # If TRUE, network structure is taken and non-penalized version is computed.
     model.selection = c("EBIC", "JSD"),
@@ -178,9 +196,196 @@ EBICglasso.qgraph <- function(
   # Argument errors (return data in case of tibble)
   data <- EBICglasso.qgraph_errors(
     data, n, gamma, penalize.diagonal, nlambda,
-    returnAllResults, countDiagonal, refit,
+    fast, returnAllResults, countDiagonal, refit,
     verbose, ...
   )
+
+  # Switch based on fast or legacy
+  if(fast){
+
+    # Return results (fast!)
+    return(
+      glasso_fast(
+        data = data, n = n, corr = corr, na.data = na.data, gamma = gamma,
+        penalize.diagonal = penalize.diagonal, nlambda = nlambda,
+        lambda.min.ratio = lambda.min.ratio, returnAllResults = returnAllResults,
+        penalizeMatrix = penalizeMatrix, countDiagonal = countDiagonal, refit = refit,
+        model.selection = model.selection, verbose = verbose, ...
+      )
+    )
+
+  }else{
+
+    # Return regular results
+    return(
+      glasso_legacy(
+        data = data, n = n, corr = corr, na.data = na.data, gamma = gamma,
+        penalize.diagonal = penalize.diagonal, nlambda = nlambda,
+        lambda.min.ratio = lambda.min.ratio, returnAllResults = returnAllResults,
+        penalizeMatrix = penalizeMatrix, countDiagonal = countDiagonal, refit = refit,
+        model.selection = model.selection, verbose = verbose, ...
+      )
+    )
+
+  }
+
+
+}
+
+# Bug Checking ----
+# ## Basic input
+# data = wmt2[,7:24]; n = NULL;
+# gamma = 0.5; penalize.diagonal = FALSE;
+# nlambda = 100; lambda.min.ratio = 0.1;
+# returnAllResults = FALSE;
+# countDiagonal = FALSE; refit = FALSE;
+# model.selection = "ebic"
+
+#' @noRd
+# Errors ----
+# Updated 01.01.2025
+EBICglasso.qgraph_errors <- function(
+    data, n, gamma, penalize.diagonal, nlambda,
+    fast, returnAllResults, countDiagonal, refit,
+    verbose, ...
+)
+{
+
+  # 'data' errors
+  object_error(data, c("matrix", "data.frame", "tibble"), "EBICglasso.qgraph")
+
+  # Check for tibble
+  if(get_object_type(data) == "tibble"){
+    data <- as.data.frame(data)
+  }
+
+  # 'n' errors
+  if(!is.null(n)){
+    length_error(n, 1, "EBICglasso.qgraph")
+    typeof_error(n, "numeric", "EBICglasso.qgraph")
+  }
+
+  # 'gamma' errors
+  length_error(gamma, 1, "EBICglasso.qgraph")
+  typeof_error(gamma, "numeric", "EBICglasso.qgraph")
+  range_error(gamma, c(0, Inf), "EBICglasso.qgraph")
+
+  # 'penalize.diagonal' errors
+  length_error(penalize.diagonal, 1, "EBICglasso.qgraph")
+  typeof_error(penalize.diagonal, "logical", "EBICglasso.qgraph")
+
+  # 'nlambda' errors
+  length_error(nlambda, 1, "EBICglasso.qgraph")
+  typeof_error(nlambda, "numeric", "EBICglasso.qgraph")
+  range_error(nlambda, c(1, Inf), "EBICglasso.qgraph")
+
+  # 'fast' errors
+  length_error(fast, 1, "EBICglasso.qgraph")
+  typeof_error(fast, "logical", "EBICglasso.qgraph")
+
+  # 'returnAllResults' errors
+  length_error(returnAllResults, 1, "EBICglasso.qgraph")
+  typeof_error(returnAllResults, "logical", "EBICglasso.qgraph")
+
+  # 'countDiagonal' errors
+  length_error(countDiagonal, 1, "EBICglasso.qgraph")
+  typeof_error(countDiagonal, "logical", "EBICglasso.qgraph")
+
+  # 'refit' errors
+  length_error(refit, 1, "EBICglasso.qgraph")
+  typeof_error(refit, "logical", "EBICglasso.qgraph")
+
+  # 'verbose' errors
+  length_error(verbose, 1, "EBICglasso.qgraph")
+  typeof_error(verbose, "logical", "EBICglasso.qgraph")
+
+  # Check for usable data
+  if(needs_usable(list(...))){
+    data <- usable_data(data, verbose)
+  }
+
+  # Return usable data in case of tibble
+  return(data)
+
+}
+
+#' @noRd
+# Log-likelihood ----
+# According to huge??? : source comment
+# Updated 07.08.2023
+logGaus <- function(S, K, half_n)
+{
+
+  # Simply computes the Gaussian log likelihood given sample covariance and estimate of precision:
+
+  # Original:
+  # logGaus <- function(S,K,n)
+  # {
+  #   SK = S %*% K
+  #   tr = function(A) sum(diag(A))
+  #   n/2 * (log(det(K)) - tr(SK))
+  # }
+
+  # From source
+
+  return(half_n * (log(det(K)) - trace(S %*% K)))
+
+}
+
+#' @noRd
+# Extended Bayesian Information Criterion ----
+# Here for legacy (vectorization applied in function)
+# Updated 18.06.2023
+EBIC <- function(S, K, n, p, gamma = 0.5, E, countDiagonal = FALSE)
+{
+
+  # Obtain likelihood
+  L <- logGaus(S, K, n)
+
+  # Determine if number of edges is missing
+  ## Computes edges and avoids check
+  E <- sum(K[lower.tri(K, diag = countDiagonal)] != 0)
+
+  # Number of nodes
+  p <- ncol(K)
+
+  # Return EBIC
+  return(
+    -2 * L + E * log(n) + 4 * E * gamma * log(p)
+  )
+
+}
+
+#' @noRd
+# Converts covariance to correlation matrix ----
+# Updated 10.06.2023
+wi2net <- function(x)
+{
+  # Get correlation matrix
+  x <- -stats::cov2cor(x)
+
+  # Set diagonal to zero
+  diag(x) <- 0
+
+  # Ensure matrix is symmetric
+  x <- as.matrix(Matrix::forceSymmetric(x))
+
+  # Return correlation matrix
+  return(x)
+
+}
+
+#' @noRd
+# Legacy GLASSO ----
+# Updated 01.01.2025
+glasso_legacy <- function(
+  data = data, n = n, corr = corr, na.data = na.data, gamma = gamma,
+  penalize.diagonal = penalize.diagonal, nlambda = nlambda,
+  lambda.min.ratio = lambda.min.ratio, returnAllResults = returnAllResults,
+  penalizeMatrix = penalizeMatrix, countDiagonal = countDiagonal, refit = refit,
+  model.selection = model.selection, verbose = verbose, ...
+)
+{
 
   # Obtain dimensions
   dimensions <- dim(data)
@@ -215,7 +420,7 @@ EBICglasso.qgraph <- function(
   lambda_sequence <- seq_len(nlambda)
 
   # Perform GLASSO path
-  if(missing(penalizeMatrix)){
+  if(is.null(penalizeMatrix)){
 
     # Get arguments
     glasso_ARGS <- obtain_arguments(
@@ -386,142 +591,192 @@ EBICglasso.qgraph <- function(
 
 }
 
-# Bug Checking ----
-# ## Basic input
-# data = wmt2[,7:24]; n = NULL;
-# gamma = 0.5; penalize.diagonal = FALSE;
-# nlambda = 100; lambda.min.ratio = 0.1;
-# returnAllResults = FALSE;
-# countDiagonal = FALSE; refit = FALSE;
-# model.selection = "ebic"
-
 #' @noRd
-# Errors ----
-# Updated 07.09.2023
-EBICglasso.qgraph_errors <- function(
-    data, n, gamma, penalize.diagonal, nlambda,
-    returnAllResults, countDiagonal, refit,
-    verbose, ...
+# Fast GLASSO ----
+# Updated 01.01.2025
+glasso_fast <- function(
+  data = data, n = n, corr = corr, na.data = na.data, gamma = gamma,
+  penalize.diagonal = penalize.diagonal, nlambda = nlambda,
+  lambda.min.ratio = lambda.min.ratio, returnAllResults = returnAllResults,
+  penalizeMatrix = penalizeMatrix, countDiagonal = countDiagonal, refit = refit,
+  model.selection = model.selection, verbose = verbose, ...
 )
 {
 
-  # 'data' errors
-  object_error(data, c("matrix", "data.frame", "tibble"), "EBICglasso.qgraph")
+  # Obtain dimensions
+  dimensions <- dim(data)
 
-  # Check for tibble
-  if(get_object_type(data) == "tibble"){
-    data <- as.data.frame(data)
-  }
-
-  # 'n' errors
-  if(!is.null(n)){
-    length_error(n, 1, "EBICglasso.qgraph")
-    typeof_error(n, "numeric", "EBICglasso.qgraph")
-  }
-
-  # 'gamma' errors
-  length_error(gamma, 1, "EBICglasso.qgraph")
-  typeof_error(gamma, "numeric", "EBICglasso.qgraph")
-  range_error(gamma, c(0, Inf), "EBICglasso.qgraph")
-
-  # 'penalize.diagonal' errors
-  length_error(penalize.diagonal, 1, "EBICglasso.qgraph")
-  typeof_error(penalize.diagonal, "logical", "EBICglasso.qgraph")
-
-  # 'nlambda' errors
-  length_error(nlambda, 1, "EBICglasso.qgraph")
-  typeof_error(nlambda, "numeric", "EBICglasso.qgraph")
-  range_error(nlambda, c(1, Inf), "EBICglasso.qgraph")
-
-  # 'returnAllResults' errors
-  length_error(returnAllResults, 1, "EBICglasso.qgraph")
-  typeof_error(returnAllResults, "logical", "EBICglasso.qgraph")
-
-  # 'countDiagonal' errors
-  length_error(countDiagonal, 1, "EBICglasso.qgraph")
-  typeof_error(countDiagonal, "logical", "EBICglasso.qgraph")
-
-  # 'refit' errors
-  length_error(refit, 1, "EBICglasso.qgraph")
-  typeof_error(refit, "logical", "EBICglasso.qgraph")
-
-  # 'verbose' errors
-  length_error(verbose, 1, "EBICglasso.qgraph")
-  typeof_error(verbose, "logical", "EBICglasso.qgraph")
-
-  # Check for usable data
-  if(needs_usable(list(...))){
-    data <- usable_data(data, verbose)
-  }
-
-  # Return usable data in case of tibble
-  return(data)
-
-}
-
-#' @noRd
-# Log-likelihood ----
-# According to huge??? : source comment
-# Updated 07.08.2023
-logGaus <- function(S, K, half_n)
-{
-
-  # Simply computes the Gaussian log likelihood given sample covariance and estimate of precision:
-
-  # Original:
-  # logGaus <- function(S,K,n)
-  # {
-  #   SK = S %*% K
-  #   tr = function(A) sum(diag(A))
-  #   n/2 * (log(det(K)) - tr(SK))
-  # }
-
-  # From source
-
-  return(half_n * (log(det(K)) - trace(S %*% K)))
-
-}
-
-#' @noRd
-# Extended Bayesian Information Criterion ----
-# Here for legacy (vectorization applied in function)
-# Updated 18.06.2023
-EBIC <- function(S, K, n, p, gamma = 0.5, E, countDiagonal = FALSE)
-{
-
-  # Obtain likelihood
-  L <- logGaus(S, K, n)
-
-  # Determine if number of edges is missing
-  ## Computes edges and avoids check
-  E <- sum(K[lower.tri(K, diag = countDiagonal)] != 0)
-
-  # Number of nodes
-  p <- ncol(K)
-
-  # Return EBIC
-  return(
-    -2 * L + E * log(n) + 4 * E * gamma * log(p)
+  # Generic function to get necessary inputs
+  output <- obtain_sample_correlations(
+    data = data, n = n, corr = corr,
+    na.data = na.data, verbose = verbose,
+    needs_usable = FALSE, # skips usable data check
+    ...
   )
 
+  # Get correlations and sample size
+  S <- output$correlation_matrix; n <- output$n
+
+  # Simplify source for fewer computations (minimal improvement)
+  diagonal_matrix <- diag(dimensions[2])
+  S_zero_diagonal <- S - diagonal_matrix # makes diagonal zero
+  lambda.max <- max(abs(S_zero_diagonal)) # uses absolute rather than inverse
+  lambda.min <- lambda.min.ratio * lambda.max
+  lambda <- exp(seq.int(log(lambda.min), log(lambda.max), length.out = nlambda))
+
+  # Obtain lambda sequence
+  lambda_sequence <- seq_len(nlambda)
+
+  # Check for penalize diagonal
+  if(penalize.diagonal){
+    diagonal_matrix[] <- 1
+  }else{
+    diagonal_matrix <- 1 - diagonal_matrix
+  }
+
+  # Check for penalize matrix
+  if(!is.null(penalizeMatrix)){
+    diagonal_matrix <- penalizeMatrix * diagonal_matrix
+  }
+
+  # Get arguments
+  glasso_ARGS <- obtain_arguments(
+    FUN = glassoFast::glassoFast,
+    FUN.args = c(list(S = S, trace = 0), list(...))
+  )
+
+  # Make lambda list
+  lambda_matrix <- matrix(0, nrow = dimensions[2], ncol = dimensions[2])
+
+  # Create lambda matrix list
+  lambda_list <- lapply(lambda, function(value){
+
+    # Set value
+    lambda_matrix[] <- value
+
+    # Return matrix
+    return(lambda_matrix * diagonal_matrix)
+
+  })
+
+  # Obtain GLASSO networks
+  glas_path <- lapply(lambda_list, function(lambda_mat){
+
+    # Set penalty argument
+    glasso_ARGS$rho <- lambda_mat
+
+    # Estimate network
+    return(
+      do.call(
+        what = glassoFast::glassoFast,
+        args = glasso_ARGS
+      )
+    )
+
+  })
+
+  # Determine model selection criterion
+  if(model.selection == "ebic"){
+
+    # Pre-compute half of n
+    half_n <- n / 2
+
+    # Log-likelihood
+    lik <- nvapply(glas_path, function(x){
+      logGaus(S, x$wi, half_n)
+    })
+
+    # Compute edges
+    E <- nvapply(glas_path, function(x){
+      edge_count(x$wi, dimensions[2], countDiagonal)
+    })
+
+    # EBIC (vectorized solution; ~9x faster)
+    EBICs <- -2 * lik + E * log(n) + 4 * E * gamma * log(dimensions[2])
+
+    # Optimal
+    opt <- which.min(EBICs)
+
+  }else if(model.selection == "jsd"){
+
+    # JSD
+    JSDs <- nvapply(lambda_sequence,function(i){
+
+      # Try (might be error)
+      res <- try(
+        jsd(S, glas_path$wi[[i]]),
+        silent = TRUE
+      )
+
+      # Check for error
+      return(swiftelse(is(res, "try-error"), NA, res))
+
+    })
+
+    # Optimal
+    opt <- which.min(JSDs)
+
+  }
+
+  # Return network:
+  net <- wi2net(glas_path[[opt]]$wi)
+  net <- transfer_names(S, net)
+
+  # Check empty network:
+  if(verbose && all(net == 0)){
+    message("An empty network was selected to be the best fitting network. Possibly set 'lambda.min.ratio' higher to search more sparse networks. You can also change the 'gamma' parameter to improve sensitivity (at the cost of specificity).")
+  }
+
+  # Check for whether to refit:
+  if(refit){
+    if(verbose){message("Refitting network without LASSO regularization")}
+    glassoRes <- silent_call(
+      glasso::glasso(S, 0, zero = which(net == 0 & upper.tri(net), arr.ind=TRUE), trace = 0, penalize.diagonal=penalize.diagonal, ...))
+    net <- wi2net(glassoRes$wi)
+    net <- transfer_names(S, net)
+    optwi <- glassoRes$wi
+  } else {
+    optwi <- glas_path$wi[[opt]]
+  }
+
+  # Set methods in attributes
+  attr(net, "methods") <- list(
+    corr = "auto",
+    model.selection = model.selection,
+    lambda = lambda[opt], gamma = gamma,
+    lambda.min.ratio = lambda.min.ratio,
+    nlambda = nlambda, criterion = swiftelse(
+      model.selection == "ebic", EBICs[opt], JSDs[opt]
+    )
+  )
+
+  # Return
+  if(!returnAllResults){
+    return(net) # only return network
+  }else{
+
+    # General result structure
+    result <- list(
+      results = glas_path, optnet = net,
+      lambda = lambda, optwi = optwi, S = S
+    )
+
+    # Check for model selection
+    if(model.selection == "ebic"){
+
+      # Add EBICs and Log-likelihoods
+      result$ebic <- EBICs; result$loglik <- lik;
+
+    }else if(model.selection == "jsd"){
+
+      # Add JSDs
+      result$jsd <- JSDs
+
+    }
+
+    # Return results
+    return(result)
+
+  }
+
 }
-
-#' @noRd
-# Converts covariance to correlation matrix ----
-# Updated 10.06.2023
-wi2net <- function(x)
-{
-  # Get correlation matrix
-  x <- -stats::cov2cor(x)
-
-  # Set diagonal to zero
-  diag(x) <- 0
-
-  # Ensure matrix is symmetric
-  x <- as.matrix(Matrix::forceSymmetric(x))
-
-  # Return correlation matrix
-  return(x)
-
-}
-
