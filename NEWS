@@ -2,7 +2,9 @@ WEBSITE: https://r-ega.net
 
 ## Changes in version 2.1.1
 
-+	Error in printing `length_error` for `color_palette_EGA`
++	ADD: `network.nonconvex` to estimate networks using non-convex regularization penalties
+
++	FIX: Error in printing `length_error` for `color_palette_EGA`
 
 
 ## Changes in version 2.1.0
