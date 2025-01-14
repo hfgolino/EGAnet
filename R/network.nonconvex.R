@@ -236,9 +236,9 @@ network.nonconvex <- function(
       # Set defaults
       gamma <- switch(
         penalty,
-        "ipot" = 1,
-        "lgp" = 1,
-        "pop" = 10,
+        "ipot" = 5,
+        "lgp" = 5,
+        "pop" = 4,
         "spot" = 3
       )
 
@@ -307,9 +307,9 @@ network.nonconvex <- function(
       # Set defaults
       gamma <- switch(
         penalty,
-        "ipot" = 1,
-        "lgp" = 1,
-        "pop" = 10,
+        "ipot" = 5,
+        "lgp" = 5,
+        "pop" = 4,
         "spot" = 3
       )
 
@@ -364,10 +364,10 @@ network.nonconvex <- function(
     # Set bounds for gamma
     bounds <- switch(
       penalty,
-      "ipot" = c(0, 17),
-      "lgp" = c(0.01, 2),
-      "pop" = c(0, 10),
-      "spot" = c(0, 10)
+      "ipot" = c(3, 7),
+      "lgp" = c(1, 10),
+      "pop" = c(1, 10),
+      "spot" = c(1, 5)
     )
 
     # Optimize for gamma
@@ -418,10 +418,10 @@ network.nonconvex <- function(
     # Set bounds for gamma
     bounds <- switch(
       penalty,
-      "ipot" = c(0, 17),
-      "lgp" = c(0.01, 2),
-      "pop" = c(0, 10),
-      "spot" = c(0, 10)
+      "ipot" = c(3, 7),
+      "lgp" = c(1, 10),
+      "pop" = c(1, 10),
+      "spot" = c(1, 5)
     )
 
     # Perform optimization
@@ -555,7 +555,7 @@ network.nonconvex_errors <- function(
 
 # iPOT derivative ----
 # Updated 12.01.2025
-ipot_derivative <- function(K, lambda, gamma = 3)
+ipot_derivative <- function(K, lambda, gamma = 5)
 {
 
   # iPOT value
@@ -569,14 +569,14 @@ ipot_derivative <- function(K, lambda, gamma = 3)
 #' @noRd
 # iPOT penalty ----
 # Updated 12.01.2025
-ipot_penalty <- function(K, lambda, gamma = 3)
+ipot_penalty <- function(K, lambda, gamma = 5)
 {
   return(lambda * abs(K)^(2^(-gamma)))
 }
 
 # LGP-norm derivative ----
 # Updated 12.01.2025
-lgp_derivative <- function(K, lambda, gamma = 1)
+lgp_derivative <- function(K, lambda, gamma = 5)
 {
   return(lambda^2 * abs(K)^((lambda - gamma) / gamma) / gamma)
 }
@@ -584,14 +584,14 @@ lgp_derivative <- function(K, lambda, gamma = 1)
 #' @noRd
 # LGP-norm penalty ----
 # Updated 12.01.2025
-lgp_penalty <- function(K, lambda, gamma = 1)
+lgp_penalty <- function(K, lambda, gamma = 5)
 {
   return(lambda * abs(K)^(lambda / gamma))
 }
 
 # POP derivative ----
 # Updated 12.01.2025
-pop_derivative <- function(K, lambda, gamma = 0.50)
+pop_derivative <- function(K, lambda, gamma = 4)
 {
 
   # Obtain absolute of K
@@ -605,7 +605,7 @@ pop_derivative <- function(K, lambda, gamma = 0.50)
 #' @noRd
 # POP penalty ----
 # Updated 12.01.2025
-pop_penalty <- function(K, lambda, gamma = 0.50)
+pop_penalty <- function(K, lambda, gamma = 4)
 {
 
   # Obtain absolute of K
@@ -618,7 +618,7 @@ pop_penalty <- function(K, lambda, gamma = 0.50)
 
 # SPOT derivative ----
 # Updated 12.01.2025
-spot_derivative <- function(K, lambda, gamma = 2)
+spot_derivative <- function(K, lambda, gamma = 3)
 {
 
   # Obtain exponent
@@ -632,7 +632,7 @@ spot_derivative <- function(K, lambda, gamma = 2)
 #' @noRd
 # SPOT penalty ----
 # Updated 12.01.2025
-spot_penalty <- function(K, lambda, gamma = 2)
+spot_penalty <- function(K, lambda, gamma = 3)
 {
   return(2 * lambda / (1 + exp(-abs(Theta) * 2^gamma)) - lambda)
 }
