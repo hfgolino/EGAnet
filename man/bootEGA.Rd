@@ -235,6 +235,8 @@ Returns a list containing:
 
 \item{bootGraphs}{A list containing the networks of each replica sample}
 
+\item{bootCorrs}{A list containing the zero-order correlations of each replica sample}
+
 \item{boot.wc}{A matrix of membership assignments for each replica network
 with variables down the columns and replicas across the rows}
 

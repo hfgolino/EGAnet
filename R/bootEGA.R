@@ -230,6 +230,8 @@
 #'
 #' \item{bootGraphs}{A list containing the networks of each replica sample}
 #'
+#' \item{bootCorrs}{A list containing the zero-order correlations of each replica sample}
+#'
 #' \item{boot.wc}{A matrix of membership assignments for each replica network
 #' with variables down the columns and replicas across the rows}
 #'
@@ -329,7 +331,7 @@
 #' @export
 #'
 # Bootstrap EGA ----
-# Updated 18.11.2024
+# Updated 23.01.2025
 bootEGA <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
@@ -570,7 +572,7 @@ bootEGA <- function(
 
     # Order for rest of results
     results_order <- c(
-      "summary.table", "frequency", "bootGraphs",
+      "summary.table", "frequency", "bootGraphs", "bootCorrs",
       "boot.wc", "boot.ndim", "TEFI", "iter"
     )
 
@@ -585,7 +587,7 @@ bootEGA <- function(
     # Non-hierarchical results
     results <- results[c(
         "summary.table", "frequency", "stability",
-        "bootGraphs", "boot.wc", "boot.ndim", "TEFI",
+        "bootGraphs", "bootCorrs", "boot.wc", "boot.ndim", "TEFI",
         "EGA", "EGA.type", "type", "iter"
     )]
 
@@ -1158,17 +1160,9 @@ revalue_memberships <- function(bootstrap_EGA_output)
 #' @noRd
 # Prepare `bootEGA` results ----
 # Self-contained to work on `EGA` bootstraps
-# Updated 31.07.2023
+# Updated 23.01.2025
 prepare_bootEGA_results <- function(boot_object, iter)
 {
-
-  # Get networks
-  boot_networks <- lapply(boot_object, function(x){x$network})
-
-  # Get memberships
-  boot_memberships <- t(
-    nvapply(boot_object, function(x){x$wc}, LENGTH = length(boot_object[[1]]$wc))
-  )
 
   # Get bootstrap dimensions
   boot_n.dim <- nvapply(boot_object, function(x){x$n.dim})
@@ -1206,8 +1200,9 @@ prepare_bootEGA_results <- function(boot_object, iter)
   return(
     list(
       iter = iter,
-      bootGraphs = boot_networks,
-      boot.wc = boot_memberships,
+      bootGraphs = lapply(boot_object, function(x){x$network}),
+      bootCorrs = lapply(boot_object, function(x){x$correlation}),
+      boot.wc = t(nvapply(boot_object, function(x){x$wc}, LENGTH = length(boot_object[[1]]$wc))),
       boot.ndim = boot_n.dim,
       summary.table = summary_table,
       frequency = frequencies[
