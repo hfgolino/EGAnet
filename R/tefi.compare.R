@@ -49,7 +49,7 @@
 #' \dontrun{
 #' # Perform bootstrap EGA
 #' boot.wmt <- bootEGA(
-#'   data = simulated$data, iter = 500,
+#'   data = wmt, iter = 500,
 #'   type = "parametric", ncores = 2
 #' )}
 #'
