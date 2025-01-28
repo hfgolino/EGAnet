@@ -631,10 +631,10 @@ spot_derivative <- function(K, lambda, gamma = 3)
 
 #' @noRd
 # SPOT penalty ----
-# Updated 12.01.2025
+# Updated 28.01.2025
 spot_penalty <- function(K, lambda, gamma = 3)
 {
-  return(2 * lambda / (1 + exp(-abs(Theta) * 2^gamma)) - lambda)
+  return(2 * lambda / (1 + exp(-abs(K) * 2^gamma)) - lambda)
 }
 
 # The TANH penalty is equivalent to SPOT such that

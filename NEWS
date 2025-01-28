@@ -4,6 +4,8 @@ WEBSITE: https://r-ega.net
 
 +	ADD: `network.nonconvex` to estimate networks using non-convex regularization penalties
 
++	ADD: `TEFI.compare` to perform a significance test between two structures using `bootEGA` output
+
 +	FIX: Error in printing `length_error` for `color_palette_EGA`
 
 

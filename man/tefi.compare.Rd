@@ -2,83 +2,82 @@
 % Please edit documentation in R/tefi.compare.R
 \name{tefi.compare}
 \alias{tefi.compare}
-\title{Compare Total Entropy Fit Index (TEFI) Between Two Structures}
+\title{Compare Total Entropy Fit Index (\code{\link[EGAnet]{tefi}}) Between Two Structures}
 \usage{
-tefi.compare(
-  bootega.obj,
-  base,
-  comparison,
-  plot.TEFI = TRUE,
-  base.color = "blue",
-  comparison.color = "red"
-)
+tefi.compare(bootega.obj, base, comparison, plot.TEFI = TRUE, ...)
 }
 \arguments{
-\item{bootega.obj}{A `bootEGA` object containing the bootstrapped correlation matrices.}
+\item{bootega.obj}{A \code{\link[EGAnet]{bootEGA}} object}
 
-\item{base}{A numeric vector representing the first structure to be tested.}
+\item{base}{Numeric (length = columns in original dataset).
+A vector representing the base structure to be tested}
 
-\item{comparison}{A numeric vector representing the second structure to be tested.}
+\item{comparison}{Numeric (length = columns in original dataset).
+A vector representing the structure to be compared against the \code{base} structure}
 
-\item{plot.TEFI}{Logical. Indicates if the plot of the TEFI comparison and the p-value should be plotted. Default is `TRUE`.}
+\item{plot.TEFI}{Boolean (length = 1).
+Whether the TEFI comparison and the p-value should be plotted.
+Defaults to \code{TRUE}}
 
-\item{base.color}{A character string specifying the color for the first structure in the plot. Default is `"blue"`.}
-
-\item{comparison.color}{A character string specifying the color for the second structure in the plot. Default is `"red"`.}
-
-\item{base.name}{A character string representing the label for the first structure in the plot. Default is `"Base"`.}
-
-\item{comparison.name}{A character string representing the label for the second structure in the plot. Default is `"Comparison"`.}
+\item{...}{Additional arguments that can be passed on to \code{\link[EGAnet]{plot.EGAnet}}.
+See \code{Examples} for plotting arguments}
 }
 \value{
 A list containing:
-\describe{
-  \item{TEFI.base}{A numeric vector of TEFI values for the first structure.}
-  \item{TEFI.comparison}{A numeric vector of TEFI values for the second structure.}
-  \item{p_value}{The p-value from the non-parametric bootstrap hypothesis test.}
-  \item{df}{A data frame containing the TEFI values for both structures.}
-}
+
+\item{\code{TEFI.df}}{A data frame containing the TEFI values for both structures}
+
+\item{\code{p.value}}{The \emph{p}-value from the non-parametric bootstrap hypothesis test}
 }
 \description{
-This function computes the TEFI values for two different structures using 
-bootstrapped correlation matrices from `bootEGA` and compares them using a non-parametric bootstrap test.
-It also visualizes the distributions of TEFI values for both structures.
+This function computes the \code{\link[EGAnet]{tefi}} values for two different structures using
+bootstrapped correlation matrices from \code{\link[EGAnet]{bootEGA}} and compares them using a
+non-parametric bootstrap test. It also visualizes the distributions of \code{\link[EGAnet]{tefi}} values
+for both structures.
 }
 \details{
-The null hypothesis being tested is that the TEFI values obtained in the bootstrapped correlation matrices for the `base` structure
-are `higher` than the TEFI values obtained in the bootstrapped correlation matrices for the `comparison` structure.
+The null hypothesis is that the TEFI values obtained in the bootstrapped correlation matrices for the \code{base}
+structure are than the TEFI values obtained in the bootstrapped correlation matrices for the \code{comparison} structure.
+Therefore, the \emph{p}-value in this bootstrap test can be interpreted as follows:
 
-Therefore, the `p-value` in this bootstrap test can be interpreted as follows:
+\itemize{
 
-\describe{
-  \item{If the p-value is small (e.g., < 0.01):}{There is evidence to suggest that the TEFI values for the `base` structure tend to be lower 
-  than those for `comparison`, indicating that the former might provide a better fit (lower entropy) compared to the latter. 
-  In other words, if the null hypothesis is true, it is very unlikely to obtain a test statistic as extreme as the one we observe in the data using a bootstrap strategy.}
-  
-  \item{If the p-value is large (e.g., > 0.01):}{There is insufficient evidence to conclude that the `base` structure has lower TEFI than `comparison`, 
-  suggesting that both structures may provide similar fits or that `comparison` might fit better. 
-  In other words, if the null hypothesis is true, it is not unlikely to obtain a test statistic as extreme as the one we observe in the data using a bootstrap strategy.}
+\item If the \emph{p}-value less than 0.05: TEFI values for the \code{base} structure tend to be lower
+than the \code{comparison} structure, indicating that the former provides a better fit (lower entropy) than the latter
+
+\item If the \emph{p}-value is greater than 0.05: TEFI values for the \code{base} structure are not significantly lower than
+the \code{comparison} structure, suggesting that both structures may provide similar fits or that \code{comparison} might fit better
+
 }
 }
 \examples{
-simulated <- simEGM(
-  communities = 2, variables = 6,
-  loadings = 0.7, correlations = 0.3,
-  sample.size = 1000
-)
+# Obtain data
+wmt <- wmt2[,7:24]
 
-boot.sim <- bootEGA(
+\dontrun{
+# Perform bootstrap EGA
+boot.wmt <- bootEGA(
   data = simulated$data, iter = 500,
-  type = "parametric", ncores = 20
+  type = "parametric", ncores = 2
+)}
+
+# Perform comparison
+comparing_tefi <- tefi.compare(
+  boot.wmt,
+  base = boot.wmt$EGA$wc, # Compare Walktrap
+  comparison = community.detection(
+   boot.wmt$EGA$network, algorithm = "louvain"
+  ) # With Louvain
 )
 
-comparingTEFI <- tefi.compare(
-  boot.sim,
-  base = boot.sim$EGA$wc,
-  comparison = c(1,1,1,2,2,2,3,3,3,4,4,4)
+# Plot options
+plot(
+  comparing_tefi,
+  base.name = "Walktrap", base.color = "royalblue",
+  comparison.name = "Louvain", comparison.color = "orange"
 )
 
-plot(comparingTEFI, base.name = "EGA Structure", comparison.name = "Alternative Structure", 
-     base.color = "blue", comparison.color = "red")
-
+}
+\author{
+Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 }
