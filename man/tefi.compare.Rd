@@ -70,11 +70,11 @@ comparing_tefi <- tefi.compare(
   ) # With Louvain
 )
 
-# Plot options
+# Plot options (UVa colors)
 plot(
   comparing_tefi,
-  base.name = "Walktrap", base.color = "royalblue",
-  comparison.name = "Louvain", comparison.color = "orange"
+  base.name = "Walktrap", base.color = "#232D4B",
+  comparison.name = "Louvain", comparison.color = "#E57200"
 )
 
 }

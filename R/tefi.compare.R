@@ -62,11 +62,11 @@
 #'   ) # With Louvain
 #' )
 #'
-#' # Plot options
+#' # Plot options (UVa colors)
 #' plot(
 #'   comparing_tefi,
-#'   base.name = "Walktrap", base.color = "royalblue",
-#'   comparison.name = "Louvain", comparison.color = "orange"
+#'   base.name = "Walktrap", base.color = "#232D4B",
+#'   comparison.name = "Louvain", comparison.color = "#E57200"
 #' )
 #'
 #' @export
@@ -167,11 +167,13 @@ print.tefi.compare <- function(x, ...)
   cat(
     paste0(
       "Base TEFI: ", round(mean(base_values), 4),
-      " (SD = ", round(sd(base_values), 4), ")",
+      " (", styletext("SD", defaults = "italics"),
+      " = ", round(sd(base_values), 4), ")",
       "\nComparison TEFI: ", round(mean(comparison_values), 4),
-      " (SD = ", round(sd(comparison_values), 4), ")",
-      "\n", styletext("p", defaults = "italics"),
-      " (one-tailed, Base >= Comparison): ", round(x$p.value, 4)
+      " (", styletext("SD", defaults = "italics"),
+      " = ", round(sd(comparison_values), 4), ")\n",
+      styletext("p", defaults = "italics"),
+      "-value (one-tailed, Base >= Comparison): ", round(x$p.value, 4)
     )
   )
 
