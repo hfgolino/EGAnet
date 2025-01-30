@@ -331,7 +331,7 @@
 #' @export
 #'
 # Bootstrap EGA ----
-# Updated 23.01.2025
+# Updated 30.01.2025
 bootEGA <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
@@ -977,7 +977,7 @@ summary.bootEGA <- function(object, ...)
 
 #' @exportS3Method
 # S3 Plot Method ----
-# Updated 18.11.2024
+# Updated 30.01.2025
 plot.bootEGA <- function(x, ...)
 {
 
@@ -1052,7 +1052,7 @@ plot.bootEGA <- function(x, ...)
 
   # Plot with item stability
   arranged <- ggpubr::ggarrange(
-    ega_plot, x$stability$item.stability$plot,
+    ega_plot, plot(x$stability$item.stability, plot.type = "empirical"),
     nrow = 1, ncol = 2
   )
 
