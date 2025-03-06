@@ -86,7 +86,7 @@
 #' @export
 #'
 # Network Loadings ----
-# Updated 26.09.2024
+# Updated 06.03.2025
 net.loads <- function(
     A, wc, loading.method = c("original", "revised"),
     scaling = 2, rotation = NULL, ...
@@ -160,7 +160,7 @@ net.loads <- function(
 
     # Revised unstandardized loadings
     unstandardized <- revised_loadings(
-      A, wc, nodes, node_names, communities, unique_communities
+      A, wc, nodes, node_names, communities, unique_communities, flip
     )
 
     # Store attributes
@@ -517,34 +517,38 @@ revised_loadings <- function(
     # Obtain target network
     target_network <- A[community_index, community_index, drop = FALSE]
 
-    # Compute absolute sum for dominant loadings
-    loading_matrix[community_index, community] <- colSums(
-      abs(target_network), na.rm = TRUE
-    ) / (community_table[community] - 1)
-
-    # Obtain signs
-    target_signs <- sign(eigen(target_network, symmetric = TRUE)$vector[,1])
-    # Thank you to Sacha Epskamp for pointing out this simpler approach to us!
-
     # Determine positive direction for dominant loadings
-    signs[community_index] <- swiftelse(
-      sum(target_signs) < 0, -target_signs, target_signs
+    target_network <- obtain_signs(
+      A[community_index, community_index, drop = FALSE]
     )
 
-    # Below code is to be used with `obtain_signs`
+    # Compute absolute sum for dominant loadings
+    loading_matrix[community_index, community] <- colSums(
+      target_network, na.rm = TRUE
+    ) / (community_table[community] - 1)
 
-    # # Determine positive direction for dominant loadings
-    # target_network <- obtain_signs(
-    #   A[community_index, community_index, drop = FALSE]
-    # )
-    #
+    # Determine positive direction for dominant loadings
+    signs[community_index] <- attr(target_network, "signs")
+
+
+    # Revert back to original sign algorithm
+    # Eigenvectors depend on the matrix manipulation to
+    # orient variables in the proper direction to get the
+    # appropriate signs
+
     # # Compute absolute sum for dominant loadings
     # loading_matrix[community_index, community] <- colSums(
-    #   target_network, na.rm = TRUE
+    #   obtain_signs(target_network), na.rm = TRUE
     # ) / (community_table[community] - 1)
     #
+    # # Obtain signs
+    # target_signs <- sign(eigen(target_network, symmetric = TRUE)$vector[,1])
+    # # Thank you to Sacha Epskamp for pointing out this simpler approach to us!
+    #
     # # Determine positive direction for dominant loadings
-    # signs[community_index] <- attr(target_network, "signs")
+    # signs[community_index] <- swiftelse(
+    #   sum(target_signs) < 0, -target_signs, target_signs
+    # )
 
   }
 
