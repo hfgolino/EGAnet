@@ -75,13 +75,35 @@ two variables
 }}
 
 \item{penalty}{Character (length = 1).
-iPOT (inverse power of two) = 1
-LGP (lambda-gamma power) = 1
-POP (plus one pareto) = 10
-SPOT (sigmoid power of two) = 3}
+Available options:
+
+\itemize{
+
+\item \code{"iPOT"} --- Inverse power of two
+
+\item \code{"LGP"} --- Lambda-gamma power
+
+\item \code{"POP"} --- Plus one Pareto
+
+\item \code{"SPOT"} --- Sigmoid power of two (default)
+
+}}
 
 \item{gamma}{Numeric (length = 1).
-Adjusts the shape of the penalty}
+Adjusts the shape of the penalty.
+Defaults:
+
+\itemize{
+
+\item \code{"iPOT"} = 5
+
+\item \code{"LGP"} = 5
+
+\item \code{"POP"} = 4
+
+\item \code{"SPOT"} = 3
+
+}}
 
 \item{lambda}{Numeric (length = 1).
 Adjusts the initial penalty provided to the non-convex penalty function}
@@ -158,6 +180,9 @@ Defaults to \code{FALSE} (silent calls).
 Set to \code{TRUE} to see all messages and warnings for every function call}
 
 \item{...}{Additional arguments to be passed on to \code{\link[EGAnet]{auto.correlate}}}
+}
+\value{
+A network matrix
 }
 \description{
 The graphical least absolute shrinkage and selection operator with
