@@ -118,7 +118,7 @@
 #' @export
 #'
 # Item Stability function ----
-# Updated 06.04.2024
+# Updated 18.11.2024
 itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
 
   # Set up ellipse arguments
@@ -190,75 +190,69 @@ itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
     plot(bootega.obj$EGA, produce = FALSE, arguments = TRUE)$ARGS$node.color
   )
 
-  # Determine whether to plot
-  if(IS.plot){
+  # Check for hierarchical
+  if(hierarchical){
 
-    # Check for hierarchical
-    if(hierarchical){
+    # Get number of legend columns
+    legend_rows <- digits(
+      max(results$lower_order$membership$structure, na.rm = TRUE)
+    ) + 1
 
-      # Get number of legend columns
-      legend_rows <- digits(
-        max(results$lower_order$membership$structure, na.rm = TRUE)
-      ) + 1
+    # Set up colors
+    colors <- attributes(results)$color
 
-      # Set up colors
-      colors <- attributes(results)$color
+    # Get number of higher order
+    higher_ndim <- seq_len(unique_length(structure$higher_order))
 
-      # Get number of higher order
-      higher_ndim <- seq_len(unique_length(structure$higher_order))
+    # Get colors
+    ## Lower order
+    lower_colors <- colors[-higher_ndim]
+    lower_colors <- lower_colors[
+      structure$lower_order[order(structure$lower_order)]
+    ]
+    ## Higher order
+    higher_colors <- colors[higher_ndim]
+    higher_colors <- higher_colors[
+      structure$higher_order[order(structure$higher_order)]
+    ]
 
-      # Get colors
-      ## Lower order
-      lower_colors <- colors[-higher_ndim]
-      lower_colors <- lower_colors[
-        structure$lower_order[order(structure$lower_order)]
-      ]
-      ## Higher order
-      higher_colors <- colors[higher_ndim]
-      higher_colors <- higher_colors[
-        structure$higher_order[order(structure$higher_order)]
-      ]
+    # Get lower plot
+    results$lower_order$plot <- plot(results$lower_order, color = lower_colors, ...) +
+      ggplot2::guides(color = ggplot2::guide_legend(nrow = legend_rows))
 
-      # Get lower plot
-      results$lower_order$plot <- plot(results$lower_order, color = lower_colors, ...) +
-        ggplot2::guides(color = ggplot2::guide_legend(nrow = legend_rows))
+    # Get higher plot
+    results$higher_order$plot <- silent_call(
+      plot(results$higher_order, color = higher_colors, ...) +
+        ggplot2::guides(color = ggplot2::guide_legend(nrow = legend_rows)) +
+        ggplot2::scale_x_discrete(limits = rev(results$lower_order$plot$data$Node))
+    )
 
-      # Get higher plot
-      results$higher_order$plot <- silent_call(
-        plot(results$higher_order, color = higher_colors, ...) +
-          ggplot2::guides(color = ggplot2::guide_legend(nrow = legend_rows)) +
-          ggplot2::scale_x_discrete(limits = rev(results$lower_order$plot$data$Node))
-      )
+    # Set up clean side-by-side
+    if(!"nrow" %in% names(ellipse) || ellipse$nrow == 1){
 
-      # Set up clean side-by-side
-      if(!"nrow" %in% names(ellipse) || ellipse$nrow == 1){
-
-        # Remove y-axis title from higher order
-        higher_order_plot <- results$higher_order$plot +
-          ggplot2::theme(axis.title.y = ggplot2::element_blank())
-
-      }
-
-      # Get final plot
-      results$plot <- ggpubr::ggarrange(
-        results$lower_order$plot, higher_order_plot,
-        labels = c("Lower Order", "Higher Order"),
-        ...
-      )
-
-      # Actually send plot
-      silent_plot(results$plot)
-
-    }else{
-
-      # Get plot
-      results$plot <- plot(results, ...)
-
-      # Actually send plot
-      silent_plot(results$plot)
+      # Remove y-axis title from higher order
+      higher_order_plot <- results$higher_order$plot +
+        ggplot2::theme(axis.title.y = ggplot2::element_blank())
 
     }
 
+    # Get final plot
+    results$plot <- ggpubr::ggarrange(
+      results$lower_order$plot, higher_order_plot,
+      labels = c("Lower Order", "Higher Order"),
+      ...
+    )
+
+  }else{
+
+    # Get plot
+    results$plot <- plot(results, ...)
+
+  }
+
+  # Actually send plot
+  if(IS.plot){
+    silent_plot(results$plot)
   }
 
   # Return results
@@ -418,9 +412,12 @@ ggplot2_theme_defaults <- function(organize_df, ellipse)
 
 #' @exportS3Method
 # S3 Plot Method ----
-# Updated 06.04.2024
-plot.itemStability <- function(x, ...)
+# Updated 30.01.2025
+plot.itemStability <- function(x, plot.type = c("all", "both", "empirical"), ...)
 {
+
+  # Check for missing
+  plot.type <- swiftelse(missing(plot.type), "all", tolower(plot.type))
 
   # Obtain ellipse arguments
   ellipse <- list(...)
@@ -481,85 +478,200 @@ plot.itemStability <- function(x, ...)
 
   }else{
 
-    # Set up for plot
-    organize_df <- fast.data.frame(
-      c(
-        names(x$membership$empirical),
-        x$item.stability$empirical.dimensions,
-        x$membership$structure
-      ), nrow = length(x$membership$structure), ncol = 3,
-      colnames = c("Node", "Replication", "Community")
-    )
+    # Check for print
+    if(plot.type == "all" || plot.type == "both"){
 
-    # Set up data frame structure
-    organize_df$Replication <- as.numeric(organize_df$Replication)
-    organize_df$Community <- factor(
-      x$membership$structure,
-      levels = seq_len(unique_length(x$membership$structure))
-    )
+      # Obtain node names
+      node_names <- names(x$membership$empirical)
 
-    # Remove "color" from `ellipse`
-    if("color" %in% names(ellipse)){
-      color <- ellipse$color
-      ellipse <- ellipse[names(ellipse) != "color"]
-    }
+      # Obtain dimensions
+      dimensions <- dim(x$item.stability$all.dimensions)
+      dim_sequence <- seq_len(dimensions[2])
 
-    # Get base plot
-    base_canvas <- do.call(
-      ggpubr::ggdotchart,
-      item_stability_defaults(organize_df, ellipse)
-    )
-
-    # Add additional layer to plot with {ggplot2}'s `theme` updated
-    updated_canvas <- base_canvas +
-      ggplot2::ylim(c(0, 1)) + # non-negotiable
-      do.call( # flexibly allow user to adjust the `theme`
-        ggplot2::theme,
-        ggplot2_theme_defaults(organize_df, ellipse)
+      # Set up for heatmap
+      heat_df <- data.frame(
+        Node = factor(
+          rep(node_names, each = dimensions[2]),
+          levels = rev(
+            node_names[
+              order(
+                x$membership$empirical,
+                1 - x$item.stability$empirical.dimensions,
+                node_names
+              )
+            ]
+          )
+        ),
+        Replication = as.vector(t(x$item.stability$all.dimensions)),
+        Community = factor(rep(dim_sequence, dimensions[1]), levels = dim_sequence)
       )
 
-    # Manually update alpha
-    updated_canvas$layers[[2]]$aes_params$alpha <- swiftelse(
-      "alpha" %in% names(ellipse), ellipse$alpha, 0.70
-    )
+      # Set alpha
+      alpha <- swiftelse("alpha" %in% names(ellipse), ellipse$alpha, 0.70)
 
-    # Update colors
-    if("scale_color_manual" %in% names(ellipse)){
-      updated_canvas <- updated_canvas +
-        do.call(ggplot2::scale_color_manual, ellipse$scale_color_manual)
-    }else if(exists("color", envir = environment())){
+      # Remove "color" from `ellipse`
+      if("color" %in% names(ellipse)){
+        color <- ellipse$color
+        ellipse <- ellipse[names(ellipse) != "color"]
+      }
 
-      # Use defined colors
-      updated_canvas <- updated_canvas +
-        ggplot2::scale_color_manual(
-          values = color,
-          breaks = sort(x$membership$structure)
+      # Set size defaults
+      size_default <- seq.int(6, 12, 0.25) # length = 25
+
+      # Adjust label sizes based on number of nodes
+      number_size <- min(
+        which(dimensions[1] > seq.int(200, 0, length.out = 25))
+      )
+
+      # Adjust label sizes based on characters in item name
+      max_characters <- max(nvapply(as.character(heat_df$Node), nchar))
+      character_size <- min(
+        which(max_characters > seq.int(100, 0, length.out = 25))
+      )
+
+      # Get text size
+      text_size <- size_default[min(number_size, character_size)]
+
+      # Plot heatmap
+      base_canvas <- ggplot2::ggplot(data = heat_df, ggplot2::aes(x = Community, y = Node)) +
+        ggplot2::geom_tile(ggplot2::aes(fill = Community, alpha = Replication * alpha)) +
+        ggplot2::geom_text(
+          label = swiftelse(heat_df$Replication == 0, "", heat_df$Replication),
+          size = sqrt(number_size) - 1
+        ) +
+        ggplot2::scale_fill_manual(
+          name = "Communities",
+          values = c(
+            ggplot2::alpha(attributes(x)$color, alpha = alpha),
+            rep("grey", dimensions[2] - length(attributes(x)$color))
+          )
+        ) +
+        ggplot2::scale_alpha_continuous(limits = c(0, 1), range = c(0, 1)) +
+        ggplot2::guides(alpha = "none") +
+        ggplot2::theme(
+          panel.background = ggplot2::element_blank(),
+          axis.ticks = ggplot2::element_blank(),
+          axis.text = ggplot2::element_text(size = text_size),
+          axis.title = ggplot2::element_text(size = text_size + 2, face = "bold"),
+          axis.text.x = ggplot2::element_blank(),
+          axis.title.x = ggplot2::element_blank(),
+          legend.title = ggplot2::element_text(size = text_size, face = "bold", hjust = 0.5),
+          legend.text = ggplot2::element_text(size = text_size - 2),
+          legend.position = "top"
         )
 
-    }else{
+      # Update colors
+      if("scale_color_manual" %in% names(ellipse)){
+        updated_canvas <- base_canvas +
+          do.call(ggplot2::scale_color_manual, ellipse$scale_color_manual)
+      }else if(exists("color", envir = environment())){
 
-      # Use default of "polychrome"
-      updated_canvas <- updated_canvas +
-        ggplot2::scale_color_manual(
-          values = color_palette_EGA(
-            "polychrome", x$membership$structure, sorted = TRUE
-          ),
-          breaks = sort(x$membership$structure)
+        # Use defined colors
+        updated_canvas <- base_canvas +
+          ggplot2::scale_color_manual(
+            values = color,
+            breaks = sort(x$membership$structure)
+          )
+
+      }else{
+
+        # Use default of "polychrome"
+        updated_canvas <- base_canvas +
+          ggplot2::scale_color_manual(
+            values = color_palette_EGA(
+              "polychrome", x$membership$structure, sorted = TRUE
+            ),
+            breaks = sort(x$membership$structure)
+          )
+
+      }
+
+      # Return plot
+      return(updated_canvas)
+
+    }else if(plot.type == "empirical" || plot.type == "both"){
+
+      # Set up for plot
+      organize_df <- fast.data.frame(
+        c(
+          names(x$membership$empirical),
+          x$item.stability$empirical.dimensions,
+          x$membership$structure
+        ), nrow = length(x$membership$structure), ncol = 3,
+        colnames = c("Node", "Replication", "Community")
+      )
+
+      # Set up data frame structure
+      organize_df$Replication <- as.numeric(organize_df$Replication)
+      organize_df$Community <- factor(
+        x$membership$structure,
+        levels = seq_len(unique_length(x$membership$structure))
+      )
+
+      # Remove "color" from `ellipse`
+      if("color" %in% names(ellipse)){
+        color <- ellipse$color
+        ellipse <- ellipse[names(ellipse) != "color"]
+      }
+
+      # Get base plot
+      base_canvas <- do.call(
+        ggpubr::ggdotchart,
+        item_stability_defaults(organize_df, ellipse)
+      )
+
+      # Add additional layer to plot with {ggplot2}'s `theme` updated
+      updated_canvas <- base_canvas +
+        ggplot2::ylim(c(0, 1)) + # non-negotiable
+        do.call( # flexibly allow user to adjust the `theme`
+          ggplot2::theme,
+          ggplot2_theme_defaults(organize_df, ellipse)
         )
 
-    }
+      # Manually update alpha
+      updated_canvas$layers[[2]]$aes_params$alpha <- swiftelse(
+        "alpha" %in% names(ellipse), ellipse$alpha, 0.70
+      )
 
-    # Lastly, get x-axis organization
-    if("scale_x_discrete" %in% names(ellipse)){
-      updated_canvas <- updated_canvas +
-        do.call(ggplot2::scale_x_discrete, ellipse$scale_x_discrete)
-    }else{ # Otherwise, apply default
-      updated_canvas <- updated_canvas +
-        ggplot2::scale_x_discrete(limits = rev(updated_canvas$data$Node))
-    }
+      # Update colors
+      if("scale_color_manual" %in% names(ellipse)){
+        updated_canvas <- updated_canvas +
+          do.call(ggplot2::scale_color_manual, ellipse$scale_color_manual)
+      }else if(exists("color", envir = environment())){
 
-    # Return plot
-    return(updated_canvas)
+        # Use defined colors
+        updated_canvas <- updated_canvas +
+          ggplot2::scale_color_manual(
+            values = color,
+            breaks = sort(x$membership$structure)
+          )
+
+      }else{
+
+        # Use default of "polychrome"
+        updated_canvas <- updated_canvas +
+          ggplot2::scale_color_manual(
+            values = color_palette_EGA(
+              "polychrome", x$membership$structure, sorted = TRUE
+            ),
+            breaks = sort(x$membership$structure)
+          )
+
+      }
+
+      # Lastly, get x-axis organization
+      if("scale_x_discrete" %in% names(ellipse)){
+        updated_canvas <- updated_canvas +
+          do.call(ggplot2::scale_x_discrete, ellipse$scale_x_discrete)
+      }else{ # Otherwise, apply default
+        updated_canvas <- updated_canvas +
+          ggplot2::scale_x_discrete(limits = rev(updated_canvas$data$Node))
+      }
+
+      # Return plot
+      return(updated_canvas)
+
+    }
 
   }
 
@@ -860,4 +972,7 @@ itemStability_core <- function(ega_object, structure, bootstrap_structure, iter)
 
 }
 
-
+#' @noRd
+# Global variables needed for CRAN checks ----
+# Updated 30.01.2025
+utils::globalVariables(c("Community", "Node", "Replication"))

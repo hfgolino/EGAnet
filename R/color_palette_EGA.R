@@ -57,7 +57,7 @@
 #' @export
 #'
 # Color palettes for EGA ----
-# Updated 01.07.2024
+# Updated 09.11.2024
 color_palette_EGA <- function(
     name = c(
       "polychrome", "blue.ridge1", "blue.ridge2",
@@ -96,7 +96,7 @@ color_palette_EGA <- function(
   communities <- length(unique_wc) - anyNA(unique_wc)
 
   # Send length error
-  length_error(name, c(1, communities, length_wc))
+  length_error(name, c(1, communities, length_wc), "color_palette_EGA")
 
   # Sort memberships
   if(isTRUE(sorted)){

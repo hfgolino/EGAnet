@@ -504,3 +504,40 @@ obtain_algorithm_name <- function(algorithm)
   return(unname(algorithm_names[algorithm_name]))
 
 }
+
+#' @noRd
+# Walktrap distance function ----
+# Updated 26.12.2024
+walktrap_distance <- function(network, steps = 4)
+{
+
+  # Obtain number of nodes
+  nodes <- dim(network)[2]
+
+  # Obtain absolute of the network
+  absolute <- abs(network)
+
+  # Set diagonal to maximum value
+  diag(absolute) <- apply(absolute, 1, max)
+
+  # Obtain strengths
+  strength <- rowSums(absolute)
+
+  # Transition matrix
+  P <- solve(diag(strength), absolute)
+
+  # Set steps
+  P_steps <- Reduce(`%*%`, replicate(n = steps, P, simplify = FALSE))
+
+  # Return (squared) Euclidean distance
+  return(
+    dist(
+
+      P_steps * matrix( # normalize transition matrix
+        1 / sqrt(strength), nrow = nodes, ncol = nodes
+      ),
+      method = "euclidean"
+    )^2
+  )
+
+}

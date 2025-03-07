@@ -51,12 +51,12 @@
 #' Between community edges are set to zero based on \code{quantile(x, prob = 1 - p.out)}
 #' ensuring the lowest edge values are set to zero (i.e., most probable to \emph{not}
 #' be randomly connected).
-#' Only used for \code{EGM.type = "standard"}.
+#' Only used for \code{EGM.type = "standard"} and \code{search = FALSE}.
 #' Defaults to \code{NULL} but must be set
 #'
 #' @param opt Character vector (length = 1).
 #' Fit index used to select from when searching over models
-#' (only applies to \code{EGM.type = "search"}).
+#' (only applies to \code{search = TRUE}).
 #' Available options include:
 #'
 #' \itemize{
@@ -156,7 +156,7 @@
 #' @export
 #'
 # Estimate EGM ----
-# Updated 06.11.2024
+# Updated 10.11.2024
 EGM <- function(
     data, EGM.model = c("standard", "EGA"),
     communities = NULL, structure = NULL, search = FALSE,
@@ -333,12 +333,12 @@ summary.EGM <- function(object, digits = 3, ...)
 
 #' @exportS3Method
 # S3 Plot Method ----
-# Updated 22.10.2024
+# Updated 12.11.2024
 plot.EGM <- function(x, ...)
 {
 
   # Return EGA plot
-  plot(x$EGA)
+  plot(x$EGA, ...)
 
 }
 
@@ -735,6 +735,31 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, opt, constra
   community_variables <- lapply(
     seq_len(communities), function(community){structure == community}
   )
+
+  # Currently, sets up for `p.in` and `p.out` to correspond to each
+  # individual community
+  #
+  # This might make sense for particularly simple structures but other
+  # options might exist
+  #
+  # For example:
+  #
+  # # Set up community variables
+  # community_variables <- do.call(
+  #   cbind, lapply(
+  #     seq_len(communities), function(community){structure == community}
+  #   )
+  # )
+  #
+  # # Create "on" and "off" block structure
+  # on_block <- tcrossprod(community_variables)
+  # off_block <- !on_block
+  #
+  # This approach allows the block structure to use `p.in` as a general
+  # thresholding scheme across communities rather than for *each* community
+  #
+  # Similarly, the off-block sets `p.out` to threshold across all non-community
+  # edges rather than on *each* non-community block
 
   # Obtain community structure
   community_P <- create_community_structure(
@@ -1319,6 +1344,101 @@ create_community_structure <- function(
 
   # Return community network
   return(P)
+
+}
+
+#' @noRd
+# Known Graph ----
+# Follows pages 631--634:
+# Hastie, T., Tibshirani, R., & Friedman, J. (2008).
+# The elements of statistical learning: Data mining, inference, and prediction (2nd ed.).
+# New York, NY: Springer.
+# Updated 24.12.2024
+known_graph <- function(S, A, tol = 1e-06, max_iter = 100)
+{
+
+  # Obtain number of nodes
+  nodes <- dim(S)[2]
+
+  # Get node sequence
+  node_sequence <- seq_len(nodes)
+
+  # Initialize matrix
+  W <- S
+
+  # Initialize zero betas
+  zero_beta <- matrix(0, nrow = nodes - 1, ncol = 1)
+
+  # Obtain non-zero edge list
+  non_zero_list <- lapply(node_sequence, function(i){
+    A[-i, i] != 0
+  })
+
+  # Initialize convergence criteria
+  iteration <- 0; difference <- Inf
+
+  # Loop until criterion is met or max iterations is reached
+  while(difference > tol && iteration < max_iter){
+
+    # Increase iterations
+    iteration <- iteration + 1
+
+    # Set old W
+    W_old <- W
+
+    # Iterate over each node
+    for(j in node_sequence){
+
+      # Identify edges in the adjacency matrix for node j
+      edges <- non_zero_list[[j]]
+
+      # Initialize beta
+      beta <- zero_beta
+
+      # Partition for W11
+      W11 <- W[-j, -j, drop = FALSE]
+
+      # Extract the corresponding rows/columns in W11 and elements of S12
+      if(any(edges)){
+
+        # Compute S12
+        S12 <- S[-j, j, drop = FALSE]
+
+        # Solve for beta* = (W11*)^{-1} * S12*
+        beta[edges,] <- solve(
+          W11[edges, edges, drop = FALSE], S12[edges, , drop = FALSE]
+        )
+
+        # Update W12 = W11 * beta
+        W12_new <- W11 %*% beta
+
+        # Update the corresponding parts of W
+        W[j, -j] <- W[-j, j] <- W12_new
+        W[j, j] <- S[j, j] - sum(beta * W12_new)
+
+      }
+
+    }
+
+    # Compute maximum absolute difference in W for convergence check
+    difference <- max(abs(W - W_old))
+
+  }
+
+  # Obtain Theta
+  Theta <- solve(W)
+
+  # Obtain P
+  P <- -cov2cor(Theta); diag(P) <- 0
+
+  # Return all output
+  return(
+    list(
+      W = W, Theta = Theta, P = P,
+      iterations = iteration,
+      converged = difference <= tol
+    )
+  )
 
 }
 

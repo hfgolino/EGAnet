@@ -40,6 +40,9 @@ plot.hierEGA(
 )
 
 plot.invariance(x, p_type = c("p", "p_BH"), p_value = 0.05, ...)
+
+plot.TEFI.compare(x, base.name, comparison.name, base.color, comparison.color, ...)
+
 }
 }
 
@@ -84,6 +87,18 @@ Benjamini-Hochberg corrected \emph{p}-value
 
 \item \code{p_value} --- Numeric (length = 1). The \emph{p}-value to use alongside \code{p_type} when
 plotting \code{\link[EGAnet]{invariance}}. Defaults to \code{0.05}
+
+\item \code{base.name} --- Character (length = 1). A string to label the \code{base} structure in the plot.
+Defaults to \code{"Base"}
+
+\item \code{comparison.name} --- Character (length = 1). A string to label the \code{comparison}
+structure in the plot. Defaults to \code{"Comparison"}
+
+\item \code{base.color} --- Character (length = 1). A string to specifying the color of the \code{base} structure in the plot.
+Hex codes can be used. Defaults to \code{"blue"}
+
+\item \code{comparison.color} --- Character (length = 1). A string to specifying the color of the \code{comparison}
+structure in the plot. Hex codes can be used. Defaults to \code{"red"}
 
 \item \code{...} --- Additional arguments to pass on to
 \code{\link[GGally]{ggnet2}} and \code{\link[sna]{gplot.layout}}

@@ -13,8 +13,9 @@ EBICglasso.qgraph(
   penalize.diagonal = FALSE,
   nlambda = 100,
   lambda.min.ratio = 0.1,
+  fast = FALSE,
   returnAllResults = FALSE,
-  penalizeMatrix,
+  penalizeMatrix = NULL,
   countDiagonal = FALSE,
   refit = FALSE,
   model.selection = c("EBIC", "JSD"),
@@ -92,6 +93,14 @@ Ratio of lowest lambda value compared to maximal lambda.
 Defaults to \code{0.1}.
 \strong{NOTE} \code{qgraph} sets the default to \code{0.01}}
 
+\item{fast}{Boolean (length = 1).
+Whether the \code{\link[glassoFast]{glassoFast}} version should be used
+to estimate the GLASSO.
+Defaults to \code{FALSE}.
+
+The fast results \emph{may} differ by less than floating point of the original
+GLASSO implemented by \code{\link[glasso]{glasso}} and should not impact reproducibility much}
+
 \item{returnAllResults}{Boolean (length = 1).
 Whether all results should be returned.
 Defaults to \code{FALSE} (network only).
@@ -142,6 +151,15 @@ is computed using \code{\link[qgraph]{wi2net}} and returned.
 \examples{
 # Obtain data
 wmt <- wmt2[,7:24]
+
+# Fast
+fast <- EBICglasso.qgraph(wmt)
+
+# Regular
+regular <- EBICglasso.qgraph(wmt, fast = FALSE)
+
+# Difference between fast and regular
+sum(abs(fast - regular))
 
 # Compute graph with tuning = 0 (BIC)
 BICgraph <- EBICglasso.qgraph(data = wmt, gamma = 0)
