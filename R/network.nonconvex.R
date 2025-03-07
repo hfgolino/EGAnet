@@ -54,13 +54,35 @@
 #' }
 #'
 #' @param penalty Character (length = 1).
-#' iPOT (inverse power of two) = 1
-#' LGP (lambda-gamma power) = 1
-#' POP (plus one pareto) = 10
-#' SPOT (sigmoid power of two) = 3
+#' Available options:
+#'
+#' \itemize{
+#'
+#' \item \code{"iPOT"} --- Inverse power of two
+#'
+#' \item \code{"LGP"} --- Lambda-gamma power
+#'
+#' \item \code{"POP"} --- Plus one Pareto
+#'
+#' \item \code{"SPOT"} --- Sigmoid power of two (default)
+#'
+#' }
 #'
 #' @param gamma Numeric (length = 1).
-#' Adjusts the shape of the penalty
+#' Adjusts the shape of the penalty.
+#' Defaults:
+#'
+#' \itemize{
+#'
+#' \item \code{"iPOT"} = 5
+#'
+#' \item \code{"LGP"} = 5
+#'
+#' \item \code{"POP"} = 4
+#'
+#' \item \code{"SPOT"} = 3
+#'
+#' }
 #'
 #' @param lambda Numeric (length = 1).
 #' Adjusts the initial penalty provided to the non-convex penalty function
@@ -138,6 +160,8 @@
 #'
 #' @param ... Additional arguments to be passed on to \code{\link[EGAnet]{auto.correlate}}
 #'
+#' @return A network matrix
+#'
 #' @author Alexander P. Christensen <alexpaulchristensen at gmail.com> and
 #' Hudson Golino <hfg9s at virginia.edu>
 #'
@@ -151,7 +175,7 @@
 #' @export
 #'
 # Apply non-convex regularization ----
-# Updated 12.01.2025
+# Updated 07.03.2025
 network.nonconvex <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
