@@ -123,17 +123,17 @@
 #'
 #' \itemize{
 #'
-#' \eqn{n} --- sample size
+#' \item \eqn{n} --- sample size
 #'
-#' \eqn{p} --- number of variables
+#' \item \eqn{p} --- number of variables
 #'
-#' \eqn{E} --- edges
+#' \item \eqn{E} --- edges
 #'
-#' \eqn{S} --- empirical correlation matrix
+#' \item \eqn{S} --- empirical correlation matrix
 #'
-#' \eqn{K} --- estimated inverse covariance matrix (network)
+#' \item \eqn{K} --- estimated inverse covariance matrix (network)
 #'
-#' \eqn{L = \frac{n}{2} \cdot \log \text{det} K - \sum_{i=1}^p (SK)_{ii}}
+#' \item \eqn{L = \frac{n}{2} \cdot \log \text{det} K - \sum_{i=1}^p (SK)_{ii}}
 #'
 #' }
 #'
