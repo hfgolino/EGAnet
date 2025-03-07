@@ -1,12 +1,16 @@
 WEBSITE: https://r-ega.net
 
-## Changes in version 2.1.1
+## Changes in version 2.2.0
 
 +	ADD: `network.nonconvex` to estimate networks using non-convex regularization penalties
 
 +	ADD: `TEFI.compare` to perform a significance test between two structures using `bootEGA` output
 
 +	FIX: Error in printing `length_error` for `color_palette_EGA`
+
++	FIX: signs for revised network loadings have reverted back to original method due to issues with eigenvectors when there are unusual patterns of (partial) correlations
+
++	UPDATE: `itemStability` plot now includes the full item stability matrix rather than empirical dimensions
 
 
 ## Changes in version 2.1.0

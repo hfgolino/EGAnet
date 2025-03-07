@@ -160,7 +160,7 @@ net.loads <- function(
 
     # Revised unstandardized loadings
     unstandardized <- revised_loadings(
-      A, wc, nodes, node_names, communities, unique_communities, flip
+      A, wc, nodes, node_names, communities, unique_communities
     )
 
     # Store attributes
@@ -529,7 +529,6 @@ revised_loadings <- function(
 
     # Determine positive direction for dominant loadings
     signs[community_index] <- attr(target_network, "signs")
-
 
     # Revert back to original sign algorithm
     # Eigenvectors depend on the matrix manipulation to
