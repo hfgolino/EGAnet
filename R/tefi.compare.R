@@ -32,11 +32,11 @@
 #'
 #' \itemize{
 #'
-#' \item If the \emph{p}-value less than 0.05: TEFI values for the \code{base} structure tend to be lower
-#' than the \code{comparison} structure, indicating that the former provides a better fit (lower entropy) than the latter
+#' \item{If the \emph{p}-value less than 0.05: TEFI values for the \code{base} structure tend to be lower
+#' than the \code{comparison} structure, indicating that the former provides a better fit (lower entropy) than the latter}
 #'
-#' \item If the \emph{p}-value is greater than 0.05: TEFI values for the \code{base} structure are not significantly lower than
-#' the \code{comparison} structure, suggesting that both structures may provide similar fits or that \code{comparison} might fit better
+#' \item{If the \emph{p}-value is greater than 0.05: TEFI values for the \code{base} structure are not significantly lower than
+#' the \code{comparison} structure, suggesting that both structures may provide similar fits or that \code{comparison} might fit better}
 #'
 #' }
 #'
