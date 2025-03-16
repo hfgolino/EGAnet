@@ -413,11 +413,11 @@ ggplot2_theme_defaults <- function(organize_df, ellipse)
 #' @exportS3Method
 # S3 Plot Method ----
 # Updated 16.03.2025
-plot.itemStability <- function(x, plot.type = c("all", "empirical"), ...)
+plot.itemStability <- function(x, ...)# plot.type = c("all", "empirical"), ...)
 {
 
   # Check for missing
-  plot.type <- swiftelse(missing(plot.type), "empirical", tolower(plot.type))
+  # plot.type <- swiftelse(missing(plot.type), "empirical", tolower(plot.type))
 
   # Obtain ellipse arguments
   ellipse <- list(...)
@@ -478,118 +478,118 @@ plot.itemStability <- function(x, plot.type = c("all", "empirical"), ...)
 
   }else{
 
-    # Check for print
-    if(plot.type == "all"){
-
-      # Obtain node names
-      node_names <- names(x$membership$empirical)
-
-      # Obtain dimensions
-      dimensions <- dim(x$item.stability$all.dimensions)
-      dim_sequence <- seq_len(dimensions[2])
-
-      # Set up for heatmap
-      heat_df <- data.frame(
-        Node = factor(
-          rep(node_names, each = dimensions[2]),
-          levels = rev(
-            node_names[
-              order(
-                x$membership$empirical,
-                1 - x$item.stability$empirical.dimensions,
-                node_names
-              )
-            ]
-          )
-        ),
-        Replication = as.vector(t(x$item.stability$all.dimensions)),
-        Community = factor(rep(dim_sequence, dimensions[1]), levels = dim_sequence)
-      )
-
-      # Set alpha
-      alpha <- swiftelse("alpha" %in% names(ellipse), ellipse$alpha, 0.70)
-
-      # Remove "color" from `ellipse`
-      if("color" %in% names(ellipse)){
-        color <- ellipse$color
-        ellipse <- ellipse[names(ellipse) != "color"]
-      }
-
-      # Set size defaults
-      size_default <- seq.int(6, 12, 0.25) # length = 25
-
-      # Adjust label sizes based on number of nodes
-      number_size <- min(
-        which(dimensions[1] > seq.int(200, 0, length.out = 25))
-      )
-
-      # Adjust label sizes based on characters in item name
-      max_characters <- max(nvapply(as.character(heat_df$Node), nchar))
-      character_size <- min(
-        which(max_characters > seq.int(100, 0, length.out = 25))
-      )
-
-      # Get text size
-      text_size <- size_default[min(number_size, character_size)]
-
-      # Plot heatmap
-      base_canvas <- ggplot2::ggplot(data = heat_df, ggplot2::aes(x = Community, y = Node)) +
-        ggplot2::geom_tile(ggplot2::aes(fill = Community, alpha = Replication * alpha)) +
-        ggplot2::geom_text(
-          label = swiftelse(heat_df$Replication == 0, "", heat_df$Replication),
-          size = sqrt(number_size) - 1
-        ) +
-        ggplot2::scale_fill_manual(
-          name = "Communities",
-          values = c(
-            ggplot2::alpha(attributes(x)$color, alpha = alpha),
-            rep("grey", dimensions[2] - length(attributes(x)$color))
-          )
-        ) +
-        ggplot2::scale_alpha_continuous(limits = c(0, 1), range = c(0, 1)) +
-        ggplot2::guides(alpha = "none") +
-        ggplot2::theme(
-          panel.background = ggplot2::element_blank(),
-          axis.ticks = ggplot2::element_blank(),
-          axis.text = ggplot2::element_text(size = text_size),
-          axis.title = ggplot2::element_text(size = text_size + 2, face = "bold"),
-          axis.text.x = ggplot2::element_blank(),
-          axis.title.x = ggplot2::element_blank(),
-          legend.title = ggplot2::element_text(size = text_size, face = "bold", hjust = 0.5),
-          legend.text = ggplot2::element_text(size = text_size - 2),
-          legend.position = "top"
-        )
-
-      # Update colors
-      if("scale_color_manual" %in% names(ellipse)){
-        updated_canvas <- base_canvas +
-          do.call(ggplot2::scale_color_manual, ellipse$scale_color_manual)
-      }else if(exists("color", envir = environment())){
-
-        # Use defined colors
-        updated_canvas <- base_canvas +
-          ggplot2::scale_color_manual(
-            values = color,
-            breaks = sort(x$membership$structure)
-          )
-
-      }else{
-
-        # Use default of "polychrome"
-        updated_canvas <- base_canvas +
-          ggplot2::scale_color_manual(
-            values = color_palette_EGA(
-              "polychrome", x$membership$structure, sorted = TRUE
-            ),
-            breaks = sort(x$membership$structure)
-          )
-
-      }
-
-      # Return plot
-      return(updated_canvas)
-
-    }else if(plot.type == "empirical"){
+    # # Check for print
+    # if(plot.type == "all"){
+    #
+    #   # Obtain node names
+    #   node_names <- names(x$membership$empirical)
+    #
+    #   # Obtain dimensions
+    #   dimensions <- dim(x$item.stability$all.dimensions)
+    #   dim_sequence <- seq_len(dimensions[2])
+    #
+    #   # Set up for heatmap
+    #   heat_df <- data.frame(
+    #     Node = factor(
+    #       rep(node_names, each = dimensions[2]),
+    #       levels = rev(
+    #         node_names[
+    #           order(
+    #             x$membership$empirical,
+    #             1 - x$item.stability$empirical.dimensions,
+    #             node_names
+    #           )
+    #         ]
+    #       )
+    #     ),
+    #     Replication = as.vector(t(x$item.stability$all.dimensions)),
+    #     Community = factor(rep(dim_sequence, dimensions[1]), levels = dim_sequence)
+    #   )
+    #
+    #   # Set alpha
+    #   alpha <- swiftelse("alpha" %in% names(ellipse), ellipse$alpha, 0.70)
+    #
+    #   # Remove "color" from `ellipse`
+    #   if("color" %in% names(ellipse)){
+    #     color <- ellipse$color
+    #     ellipse <- ellipse[names(ellipse) != "color"]
+    #   }
+    #
+    #   # Set size defaults
+    #   size_default <- seq.int(6, 12, 0.25) # length = 25
+    #
+    #   # Adjust label sizes based on number of nodes
+    #   number_size <- min(
+    #     which(dimensions[1] > seq.int(200, 0, length.out = 25))
+    #   )
+    #
+    #   # Adjust label sizes based on characters in item name
+    #   max_characters <- max(nvapply(as.character(heat_df$Node), nchar))
+    #   character_size <- min(
+    #     which(max_characters > seq.int(100, 0, length.out = 25))
+    #   )
+    #
+    #   # Get text size
+    #   text_size <- size_default[min(number_size, character_size)]
+    #
+    #   # Plot heatmap
+    #   base_canvas <- ggplot2::ggplot(data = heat_df, ggplot2::aes(x = Community, y = Node)) +
+    #     ggplot2::geom_tile(ggplot2::aes(fill = Community, alpha = Replication * alpha)) +
+    #     ggplot2::geom_text(
+    #       label = swiftelse(heat_df$Replication == 0, "", heat_df$Replication),
+    #       size = sqrt(number_size) - 1
+    #     ) +
+    #     ggplot2::scale_fill_manual(
+    #       name = "Communities",
+    #       values = c(
+    #         ggplot2::alpha(attributes(x)$color, alpha = alpha),
+    #         rep("grey", dimensions[2] - length(attributes(x)$color))
+    #       )
+    #     ) +
+    #     ggplot2::scale_alpha_continuous(limits = c(0, 1), range = c(0, 1)) +
+    #     ggplot2::guides(alpha = "none") +
+    #     ggplot2::theme(
+    #       panel.background = ggplot2::element_blank(),
+    #       axis.ticks = ggplot2::element_blank(),
+    #       axis.text = ggplot2::element_text(size = text_size),
+    #       axis.title = ggplot2::element_text(size = text_size + 2, face = "bold"),
+    #       axis.text.x = ggplot2::element_blank(),
+    #       axis.title.x = ggplot2::element_blank(),
+    #       legend.title = ggplot2::element_text(size = text_size, face = "bold", hjust = 0.5),
+    #       legend.text = ggplot2::element_text(size = text_size - 2),
+    #       legend.position = "top"
+    #     )
+    #
+    #   # Update colors
+    #   if("scale_color_manual" %in% names(ellipse)){
+    #     updated_canvas <- base_canvas +
+    #       do.call(ggplot2::scale_color_manual, ellipse$scale_color_manual)
+    #   }else if(exists("color", envir = environment())){
+    #
+    #     # Use defined colors
+    #     updated_canvas <- base_canvas +
+    #       ggplot2::scale_color_manual(
+    #         values = color,
+    #         breaks = sort(x$membership$structure)
+    #       )
+    #
+    #   }else{
+    #
+    #     # Use default of "polychrome"
+    #     updated_canvas <- base_canvas +
+    #       ggplot2::scale_color_manual(
+    #         values = color_palette_EGA(
+    #           "polychrome", x$membership$structure, sorted = TRUE
+    #         ),
+    #         breaks = sort(x$membership$structure)
+    #       )
+    #
+    #   }
+    #
+    #   # Return plot
+    #   return(updated_canvas)
+    #
+    # }else if(plot.type == "empirical"){
 
       # Set up for plot
       organize_df <- fast.data.frame(
@@ -671,7 +671,7 @@ plot.itemStability <- function(x, plot.type = c("all", "empirical"), ...)
       # Return plot
       return(updated_canvas)
 
-    }
+    # }
 
   }
 

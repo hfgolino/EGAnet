@@ -1,5 +1,10 @@
 WEBSITE: https://r-ega.net
 
+## Changes in version 2.2.1
+
++	FIX: default `itemStability` plot switched back to empirical dimensions only
+
+
 ## Changes in version 2.2.0
 
 +	ADD: `network.nonconvex` to estimate networks using non-convex regularization penalties
