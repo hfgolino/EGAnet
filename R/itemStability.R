@@ -343,7 +343,7 @@ summary.itemStability <- function(object, ...)
 }
 
 #' @noRd
-# Default plotting for `itemStability`
+# Default plotting for `itemStability` ----
 # Updated 23.07.2023
 item_stability_defaults <- function(organize_df, ellipse)
 {
@@ -368,7 +368,7 @@ item_stability_defaults <- function(organize_df, ellipse)
 }
 
 #' @noRd
-# Default for {ggplot2} `theme`
+# Default for {ggplot2} `theme` ----
 # Updated 31.03.2024
 ggplot2_theme_defaults <- function(organize_df, ellipse)
 {
@@ -412,12 +412,12 @@ ggplot2_theme_defaults <- function(organize_df, ellipse)
 
 #' @exportS3Method
 # S3 Plot Method ----
-# Updated 30.01.2025
-plot.itemStability <- function(x, plot.type = c("all", "both", "empirical"), ...)
+# Updated 16.03.2025
+plot.itemStability <- function(x, plot.type = c("all", "empirical"), ...)
 {
 
   # Check for missing
-  plot.type <- swiftelse(missing(plot.type), "all", tolower(plot.type))
+  plot.type <- swiftelse(missing(plot.type), "empirical", tolower(plot.type))
 
   # Obtain ellipse arguments
   ellipse <- list(...)
@@ -479,7 +479,7 @@ plot.itemStability <- function(x, plot.type = c("all", "both", "empirical"), ...
   }else{
 
     # Check for print
-    if(plot.type == "all" || plot.type == "both"){
+    if(plot.type == "all"){
 
       # Obtain node names
       node_names <- names(x$membership$empirical)
@@ -589,7 +589,7 @@ plot.itemStability <- function(x, plot.type = c("all", "both", "empirical"), ...
       # Return plot
       return(updated_canvas)
 
-    }else if(plot.type == "empirical" || plot.type == "both"){
+    }else if(plot.type == "empirical"){
 
       # Set up for plot
       organize_df <- fast.data.frame(
