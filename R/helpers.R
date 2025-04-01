@@ -3260,6 +3260,35 @@ trace <- function(object)
 }
 
 #' @noRd
+# r to Fisher's z ----
+# Updated 27.03.2025
+r2z <- function(r)
+{
+  return(0.5 * log((1 + r) / (1 - r)))
+}
+
+#' @noRd
+# Fisher's z to r ----
+# Updated 27.03.2025
+z2r <- function(z)
+{
+  return((exp(2 * z) - 1) / (1 + exp(2 * z)))
+}
+
+#' @noRd
+# Partial correlation p-values ----
+# Updated 27.03.2025
+p_partial <- function(z, variables, sample_size)
+{
+
+  # Get test statistic
+  test <- z / sqrt(1 / (sample_size - variables - 5))
+
+  return(pnorm(test, lower.tail = FALSE) * 2)
+
+}
+
+#' @noRd
 # Cohen's d ----
 # Updated 13.07.2023
 d <- function(sample1, sample2, paired = FALSE)

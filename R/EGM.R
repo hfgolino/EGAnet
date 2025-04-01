@@ -806,7 +806,7 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
 
 #' @noRd
 # EGM | EGA ----
-# Updated 20.03.2025
+# Updated 01.04.2024
 EGM.EGA <- function(data, structure, opt, constrain.structure, constrain.zeros, ...)
 {
 
@@ -863,61 +863,46 @@ EGM.EGA <- function(data, structure, opt, constrain.structure, constrain.zeros, 
   zeros <- swiftelse(constrain.zeros, loadings_vector != 0, rep(1, loadings_length))
 
   # Set up loading structure
-  # Uses transpose for 2x speed up in optimization
   loading_structure <- matrix(
-    FALSE, nrow = dimensions[2],
-    ncol = dimensions[1],
-    dimnames = list(dimension_names[[2]], dimension_names[[1]])
+    FALSE, nrow = dimensions[1],
+    ncol = dimensions[2],
+    dimnames = list(dimension_names[[1]], dimension_names[[2]])
   )
 
   # Fill structure
   for(i in seq_along(structure)){
-    loading_structure[structure[i], i] <- TRUE
+    loading_structure[i, structure[i]] <- TRUE
   }
 
-  # Set up for cost functions
-  if(opt == "loglik"){
-
-    # Optimize over loadings
-    result <- silent_call(
-      nlm(
-        p = loadings_vector, f = logLik_cost,
-        zeros = zeros, R = ega$correlation,
-        loading_structure = loading_structure,
-        rows = communities, n = data_dimensions[1],
-        v = data_dimensions[2], constrained = constrain.structure,
-        lower_triangle = lower.tri(ega$correlation),
-        iterlim = 1000
-      )
+  # Optimize over loadings
+  result <- silent_call(
+    nlminb(
+      start = loadings_vector,
+      objective = switch(
+        opt,
+        "loglik" = logLik_cost,
+        "srmr" = srmr_cost
+      ),
+      gradient = switch(
+        opt,
+        "loglik" = logLik_gradient,
+        "srmr" = srmr_gradient
+      ),
+      zeros = zeros, R = ega$correlation,
+      loading_structure = loading_structure,
+      rows = communities, n = data_dimensions[1],
+      v = data_dimensions[2],
+      constrained = constrain.structure,
+      lower_triangle = lower.tri(ega$correlation),
+      lower = rep(-1, loadings_length),
+      upper = rep(1, loadings_length),
+      control = list(eval.max = 10000, iter.max = 10000)
     )
-
-  }else if(opt == "srmr"){
-
-    # Optimize over loadings
-    result <- silent_call(
-      nlminb(
-        start = loadings_vector, objective = srmr_cost,
-        gradient = srmr_gradient,
-        zeros = zeros, R = ega$correlation,
-        loading_structure = loading_structure,
-        rows = communities, n = data_dimensions[1],
-        v = data_dimensions[2],
-        constrained = constrain.structure,
-        lower_triangle = lower.tri(ega$correlation),
-        lower = rep(-1, loadings_length),
-        upper = rep(1, loadings_length),
-        control = list(eval.max = 10000, iter.max = 10000)
-      )
-    )
-
-    # Set estimate
-    result$estimate <- result$par
-
-  }
+  )
 
   # Extract optimized loadings
   optimized_loadings <- matrix(
-    result$estimate, nrow = dimensions[1],
+    result$par, nrow = dimensions[1],
     dimnames = dimension_names
   )
 

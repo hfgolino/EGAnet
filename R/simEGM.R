@@ -22,9 +22,6 @@
 #' @param correlations Numeric (length = 1).
 #' Magnitude of the community correlations
 #'
-#' Uses \code{runif(n, min = value - 0.025, max = value + 0.025)}
-#' for some jitter in the correlations
-#'
 #' @param sample.size Numeric (length = 1).
 #' Number of observations to generate
 #'
@@ -55,7 +52,7 @@
 #' @export
 #'
 # Simulate EGM ----
-# Updated 26.03.2025
+# Updated 27.03.2025
 simEGM <- function(
     communities, variables,
     loadings, cross.loadings = 0.01,
@@ -226,22 +223,14 @@ simEGM <- function(
       # Order by degree
       off_order <- order(off_degree, decreasing = TRUE)
 
-      # Off length
-      off_length <- sum(off_index)
-
-      # Set range
-      correlation_range <- 0.25 * correlations /
-        ((1 - range(loading_structure[block_index, i])) * sqrt(log(total_variables)))
-
       # Set correlations
-      loading_structure[off_index, i] <- runif_xoshiro(
-        off_length, min = min(correlation_range), max = max(correlation_range)
-      )
+      loading_structure[off_index, i] <- 0.25 * correlations /
+        ((1 - loading_structure[block_index, i]) * sqrt(log(total_variables)))
 
       # Add cross-loadings
       loading_structure[off_index, i][off_order] <- (
         loading_structure[off_index, i][off_order] +
-          sort(rnorm_ziggurat(off_length) * cross.loadings, decreasing = TRUE)
+          sort(rnorm_ziggurat(sum(off_index)) * cross.loadings, decreasing = TRUE)
       ) * swiftelse(off_degree[off_order] == 0, 0, 1)
 
     }
@@ -266,14 +255,19 @@ simEGM <- function(
   # Set variable names
   colnames(data) <- node_names
 
+  # Obtain partial correlations
+  P <- cor2pcor(R)
+
   # Return results
   return(
     list(
       data = data,
       population_correlation = R,
-      population_partial_correlation = cor2pcor(R),
+      population_precision = solve(R),
+      population_partial_correlation = P,
       parameters = list(
-        network = network_structure,
+        adjacency = network_structure,
+        network = network_structure * P,
         loadings = loading_structure,
         correlations = correlations,
         p.in = p.in, p.out = p.out,

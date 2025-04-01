@@ -35,10 +35,7 @@ Defaults to \code{0.01}.
 Not recommended to change too drastically (small increments such as \code{0.01} work best)}
 
 \item{correlations}{Numeric (length = 1).
-Magnitude of the community correlations
-
-Uses \code{runif(n, min = value - 0.025, max = value + 0.025)}
-for some jitter in the correlations}
+Magnitude of the community correlations}
 
 \item{sample.size}{Numeric (length = 1).
 Number of observations to generate}

@@ -2,6 +2,41 @@
 #### Optimization functions for EGM ####
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%#
 
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+## Obtain implied correlations ----
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+#' @noRd
+# Obtain implied correlations
+# Updated 01.04.2025
+obtain_implied <- function(loadings_vector, zeros, rows)
+{
+
+  # Assemble loading matrix
+  loadings_matrix <- matrix(loadings_vector * zeros, ncol = rows)
+
+  # Compute partial correlation
+  implied_P <- tcrossprod(loadings_matrix)
+
+  # Compute interdependence
+  diag(implied_P) <- sqrt(diag(implied_P))
+
+  # Compute matrix I
+  I <- diag(sqrt(1 / diag(implied_P)))
+
+  # Compute implied correlations
+  implied_R <- I %*% implied_P %*% I
+
+  # Attach loadings matrix
+  attr(implied_R, which = "scaling") <- I
+  attr(implied_R, which = "loadings") <- loadings_matrix
+
+  # Get implied R
+  return(implied_R)
+
+}
+
 #%%%%%%%%%%%
 ## SRMR ----
 #%%%%%%%%%%%
@@ -16,15 +51,13 @@ srmr <- function(base, comparison)
   lower_triangle <- lower.tri(base)
 
   # Return SRMR
-  return(
-    sqrt(mean((base[lower_triangle] - comparison[lower_triangle])^2))
-  )
+  return(sqrt(mean((base[lower_triangle] - comparison[lower_triangle])^2)))
 
 }
 
 #' @noRd
 # SRMR cost
-# Updated 20.03.2025
+# Updated 01.04.2025
 srmr_cost <- function(
     loadings_vector, zeros, R,
     loading_structure, rows, n, v,
@@ -35,35 +68,17 @@ srmr_cost <- function(
   # Check for constraint
   if(constrained){
 
+    # Get implied R
+    implied_R <- obtain_implied(loadings_vector, zeros, rows)
+
     # Assemble loading matrix
-    loadings_matrix <- matrix(loadings_vector * zeros, nrow = rows, byrow = TRUE)
-
-    # Obtain assign loadings
-    assign_loadings <- loadings_matrix[loading_structure]
-
-    # Transpose loadings matrix
-    loadings_matrix <- t(loadings_matrix)
+    loadings_matrix <- attributes(implied_R)$loadings
 
     # Obtain differences
-    differences <- abs(loadings_matrix) - assign_loadings
+    differences <- abs(loadings_matrix) - loadings_matrix[loading_structure]
 
     # Obtain difference values
     difference_values <- (differences * (differences > 0))^2
-
-    # Convert loadings to implied correlations following `nload2cor`
-    # Uses raw code to avoid overhead of additional function calls
-
-    # Compute partial correlation (decrease loadings based on constraints)
-    implied_P <- tcrossprod(loadings_matrix)
-
-    # Compute interdependence
-    diag(implied_P) <- interdependence <- sqrt(diag(implied_P))
-
-    # Compute matrix I
-    I <- diag(sqrt(1 / interdependence))
-
-    # Get implied R
-    implied_R <- I %*% implied_P %*% I
 
     # Check for positive definite
     return(
@@ -75,20 +90,8 @@ srmr_cost <- function(
 
   }else{ # Without constraints, send it
 
-    # Assemble loading matrix
-    loadings_matrix <- matrix(loadings_vector * zeros, ncol = rows)
-
-    # Compute partial correlation
-    implied_P <- tcrossprod(loadings_matrix)
-
-    # Compute interdependence
-    diag(implied_P) <- sqrt(diag(implied_P))
-
-    # Compute matrix I
-    I <- diag(sqrt(1 / diag(implied_P)))
-
     # Get implied R
-    implied_R <- I %*% implied_P %*% I
+    implied_R <- obtain_implied(loadings_vector, zeros, rows)
 
     # Check for positive definite
     return(
@@ -104,7 +107,7 @@ srmr_cost <- function(
 
 #' @noRd
 # SRMR gradient
-# Updated 20.03.2025
+# Updated 01.04.2025
 srmr_gradient <- function(
     loadings_vector, zeros, R,
     loading_structure, rows, n, v,
@@ -115,73 +118,52 @@ srmr_gradient <- function(
   # Check for constraint
   if(constrained){
 
+    # Get implied R
+    implied_R <- obtain_implied(loadings_vector, zeros, rows)
+
     # Assemble loading matrix
-    loadings_matrix <- matrix(loadings_vector * zeros, nrow = rows, byrow = TRUE)
-
-    # Obtain assign loadings
-    assign_loadings <- loadings_matrix[loading_structure]
-
-    # Transpose loadings matrix
-    loadings_matrix <- t(loadings_matrix)
+    loadings_matrix <- attributes(implied_R)$loadings
 
     # Obtain differences
-    differences <- abs(loadings_matrix) - assign_loadings
+    differences <- abs(loadings_matrix) - loadings_matrix[loading_structure]
 
     # Obtain difference values
-    difference_values <- (differences * (differences > 0))
-
-    # Convert loadings to implied correlations following `nload2cor`
-    # Uses raw code to avoid overhead of additional function calls
-
-    # Compute partial correlation
-    implied_P <- tcrossprod(loadings_matrix)
-
-    # Compute interdependence
-    diag(implied_P) <- interdependence <- sqrt(diag(implied_P))
-
-    # Compute matrix I
-    I <- diag(sqrt(1 / interdependence))
+    difference_values <- (differences * (differences > 0))^2
 
     # Compute error
-    error <- (I %*% implied_P %*% I - R)[lower_triangle]
+    error <- (implied_R - R)[lower_triangle]
 
     # Derivative of error with respect to P (covariance)
     dError <- matrix(0, nrow = v, ncol = v)
     dError[lower_triangle] <- 2 * error / length(error)
     dError <- dError + t(dError)
+    I <- attributes(implied_R)$scaling
 
     # Return gradient
     return(
       as.vector( # (2x leads to fewer iterations)
-        t(crossprod(2 * loadings_matrix, I %*% tcrossprod(dError, I))) +
-          difference_values
+        t(crossprod(2 * attributes(implied_R)$loadings, I %*% tcrossprod(dError, I))) + difference_values
       ) * zeros
     )
 
   }else{ # Without constraints, send it
 
-    # Assemble loading matrix
-    loadings_matrix <- matrix(loadings_vector * zeros, ncol = rows)
-
-    # Compute partial correlation
-    implied_P <- tcrossprod(loadings_matrix)
-
-    # Compute interdependence
-    diag(implied_P) <- interdependence <- sqrt(diag(implied_P))
-
-    # Compute matrix I
-    I <- diag(sqrt(1 / interdependence))
+    # Get implied R
+    implied_R <- obtain_implied(loadings_vector, zeros, rows)
 
     # Compute error
-    error <- (I %*% implied_P %*% I - R)[lower_triangle]
+    error <- (implied_R - R)[lower_triangle]
 
     # Derivative of error with respect to P (covariance)
     dError <- matrix(0, nrow = v, ncol = v)
     dError[lower_triangle] <- 2 * error / length(error)
     dError <- dError + t(dError)
+    I <- attributes(implied_R)$scaling
 
     # Return gradient (2x leads to fewer iterations)
-    return(as.vector(t(crossprod(2 * loadings_matrix, I %*% tcrossprod(dError, I)))) * zeros)
+    return(
+      as.vector(t(crossprod(2 * attributes(implied_R)$loadings, I %*% tcrossprod(dError, I)))) * zeros
+    )
 
   }
 
@@ -215,7 +197,7 @@ log_likelihood <- function(n, p, R, S, type = c("partial", "zero"))
 
 #' @noRd
 # Log-likelihood cost
-# Updated 20.03.2025
+# Updated 01.04.2025
 logLik_cost <- function(
     loadings_vector, zeros, R,
     loading_structure, rows, n, v,
@@ -226,35 +208,17 @@ logLik_cost <- function(
   # Check for constraint
   if(constrained){
 
+    # Get implied R
+    implied_R <- obtain_implied(loadings_vector, zeros, rows)
+
     # Assemble loading matrix
-    loadings_matrix <- matrix(loadings_vector * zeros, nrow = rows, byrow = TRUE)
-
-    # Obtain assign loadings
-    assign_loadings <- loadings_matrix[loading_structure]
-
-    # Transpose loadings matrix
-    loadings_matrix <- t(loadings_matrix)
+    loadings_matrix <- attributes(implied_R)$loadings
 
     # Obtain differences
-    differences <- abs(loadings_matrix) - assign_loadings
+    differences <- abs(loadings_matrix) - loadings_matrix[loading_structure]
 
     # Obtain difference values
     difference_values <- (differences * (differences > 0))^2
-
-    # Convert loadings to implied correlations following `nload2cor`
-    # Uses raw code to avoid overhead of additional function calls
-
-    # Compute partial correlation (decrease loadings based on constraints)
-    implied_P <- tcrossprod(loadings_matrix)
-
-    # Compute interdependence
-    diag(implied_P) <- interdependence <- sqrt(diag(implied_P))
-
-    # Compute matrix I
-    I <- diag(sqrt(1 / interdependence))
-
-    # Get implied R
-    implied_R <- I %*% implied_P %*% I
 
     # Check for positive definite
     return(
@@ -267,8 +231,47 @@ logLik_cost <- function(
 
   }else{ # Without constraints, send it
 
+    # Get implied R
+    implied_R <- obtain_implied(loadings_vector, zeros, rows)
+
+    # Check for positive definite
+    return(
+      swiftelse(
+        !anyNA(implied_R) && is_positive_definite(implied_R), # return log-likelihood
+        -log_likelihood(n, v, implied_R, R, type = "zero"),
+        Inf
+      )
+    )
+
+  }
+
+}
+
+#' @noRd
+# Log-likelihood gradient
+# Updated 01.04.2025
+logLik_gradient <- function(
+    loadings_vector, zeros, R,
+    loading_structure, rows, n, v,
+    constrained, lower_triangle, ...
+)
+{
+
+  # Check for constraint
+  if(constrained){
+
+    # Get implied and inverse R
+    implied_R <- obtain_implied(loadings_vector, zeros, rows)
+    inverse_R <- solve(implied_R)
+
     # Assemble loading matrix
-    loadings_matrix <- matrix(loadings_vector * zeros, ncol = rows)
+    loadings_matrix <- attributes(implied_R)$loadings
+
+    # Obtain differences
+    differences <- abs(loadings_matrix) - loadings_matrix[loading_structure]
+
+    # Obtain difference values
+    difference_values <- (differences * (differences > 0))^2
 
     # Compute partial correlation
     implied_P <- tcrossprod(loadings_matrix)
@@ -279,22 +282,49 @@ logLik_cost <- function(
     # Compute matrix I
     I <- diag(sqrt(1 / interdependence))
 
-    # Get implied R
-    implied_R <- I %*% implied_P %*% I
+    # Compute error
+    error <- ((n/2) * (inverse_R - inverse_R %*% R %*% inverse_R))[lower_triangle]
 
-    # Check for positive definite
+    # Derivative of error with respect to P (covariance)
+    dError <- matrix(0, nrow = v, ncol = v)
+    dError[lower_triangle] <- 2 * error / length(error)
+    dError <- dError + t(dError)
+
+    # Return gradient
     return(
-      swiftelse(
-        !anyNA(implied_P) && is_positive_definite(implied_P), # return log-likelihood
-        -log_likelihood(n, v, implied_R, R, type = "zero"),
-        Inf
-      )
+      as.vector( # (2x leads to fewer iterations)
+        t(crossprod(2 * loadings_matrix, I %*% tcrossprod(dError, I))) +
+          difference_values
+      ) * zeros
+    )
+
+  }else{ # Without constraints, send it
+
+    # Get implied and inverse R
+    implied_R <- obtain_implied(loadings_vector, zeros, rows)
+    inverse_R <- solve(implied_R)
+
+    # Compute error
+    error <- ((n/2) * (inverse_R - inverse_R %*% R %*% inverse_R))[lower_triangle]
+
+    # Derivative of error with respect to P (covariance)
+    dError <- matrix(0, nrow = v, ncol = v)
+    dError[lower_triangle] <- 2 * error / length(error)
+    dError <- dError + t(dError)
+    I <- attributes(implied_R)$scaling
+
+    # Return gradient (2x leads to fewer iterations)
+    return(
+      as.vector(t(crossprod(2 * attributes(implied_R)$loadings, I %*% tcrossprod(dError, I)))) * zeros
     )
 
   }
 
 }
 
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+## Information Criterion ----
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #' @noRd
 # Compute log-likelihood metrics ----
@@ -326,5 +356,87 @@ likelihood <- function(n, p, R, S, loadings, type)
       # GFI = 1 - sum((R - S)^2) / sum(S^2)
     )
   )
+
+}
+
+#' @noRd
+# Information criterion cost
+# Updated 31.03.2025
+ic_cost <- function(
+    loadings_vector, zeros, R,
+    loading_structure, rows, n, v,
+    constrained, lower_triangle, opt, ...
+)
+{
+
+  # Check for constraint
+  if(constrained){
+
+    # Assemble loading matrix
+    loadings_matrix <- matrix(loadings_vector * zeros, nrow = rows, byrow = TRUE)
+
+    # Obtain assign loadings
+    assign_loadings <- loadings_matrix[loading_structure]
+
+    # Transpose loadings matrix
+    loadings_matrix <- t(loadings_matrix)
+
+    # Obtain differences
+    differences <- abs(loadings_matrix) - assign_loadings
+
+    # Obtain difference values
+    difference_values <- differences * (differences > 0)
+
+    # Convert loadings to implied correlations following `nload2cor`
+    # Uses raw code to avoid overhead of additional function calls
+
+    # Compute partial correlation (decrease loadings based on constraints)
+    implied_P <- tcrossprod(loadings_matrix)
+
+    # Compute interdependence
+    diag(implied_P) <- interdependence <- sqrt(diag(implied_P))
+
+    # Compute matrix I
+    I <- diag(sqrt(1 / interdependence))
+
+    # Get implied R
+    implied_R <- I %*% implied_P %*% I
+
+    # Check for positive definite
+    return(
+      swiftelse(
+        !anyNA(implied_R) && is_positive_definite(implied_R), # return log-likelihood
+        -likelihood(n, v, implied_R, R, type = "zero")[[opt]] + sum(difference_values),
+        Inf
+      )
+    )
+
+  }else{ # Without constraints, send it
+
+    # Assemble loading matrix
+    loadings_matrix <- matrix(loadings_vector * zeros, ncol = rows)
+
+    # Compute partial correlation
+    implied_P <- tcrossprod(loadings_matrix)
+
+    # Compute interdependence
+    diag(implied_P) <- interdependence <- sqrt(diag(implied_P))
+
+    # Compute matrix I
+    I <- diag(sqrt(1 / interdependence))
+
+    # Get implied R
+    implied_R <- I %*% implied_P %*% I
+
+    # Check for positive definite
+    return(
+      swiftelse(
+        !anyNA(implied_R) && is_positive_definite(implied_R), # return log-likelihood
+        -likelihood(n, v, implied_R, R, type = "zero")[[opt]],
+        Inf
+      )
+    )
+
+  }
 
 }
