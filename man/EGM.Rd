@@ -12,8 +12,7 @@ EGM(
   search = FALSE,
   p.in = NULL,
   p.out = NULL,
-  opt = c("AIC", "BIC", "CFI", "chisq", "logLik", "RMSEA", "SRMR", "TEFI", "TEFI.adj",
-    "TLI"),
+  opt = c("AIC", "BIC", "logLik", "SRMR"),
   constrain.structure = TRUE,
   constrain.zeros = TRUE,
   verbose = TRUE,
@@ -84,21 +83,9 @@ Available options include:
 
 \item \code{"BIC"}
 
-\item \code{"CFI"}
-
-\item \code{"chisq"}
-
 \item \code{"logLik"}
 
-\item \code{"RMSEA"}
-
 \item \code{"SRMR"}
-
-\item \code{"TEFI"}
-
-\item \code{"TEFI.adj"}
-
-\item \code{"TLI"}
 
 }
 

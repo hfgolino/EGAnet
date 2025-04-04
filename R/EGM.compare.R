@@ -396,6 +396,40 @@ get_factor_results <- function(output, rotation, egm, dimensions, ...)
 
 }
 
+
+#' @noRd
+# Compute log-likelihood metrics ----
+# Updated 06.10.2024
+likelihood <- function(n, p, R, S, loadings, type)
+{
+
+  # Get number of communities
+  m <- dim(loadings)[2]
+
+  # Log-likelihood
+  loglik <- log_likelihood(n, p, R, S, type)
+
+  # Total number of parameters
+  parameters <- (p * m) + p + ((m * (m - 1)) / 2)
+
+  # Model parameters
+  model_parameters <- parameters - sum(loadings == 0)
+
+  # Return log-likelihood
+  return(
+    c(
+      logLik = loglik,
+      AIC = -2 * loglik + 2 * model_parameters, # -2L + 2k
+      BIC = -2 * loglik + model_parameters * log(n) # -2L + klog(n)
+      # EBIC = -2 * loglik + model_parameters * log(n) + 2 * gamma * log(
+      #   choose(parameters, model_parameters)
+      # ), # -2L + klog(n) + 2 gamma log(binom(pk))
+      # GFI = 1 - sum((R - S)^2) / sum(S^2)
+    )
+  )
+
+}
+
 #' @noRd
 # Compute fit metrics ----
 # Updated 20.03.2025

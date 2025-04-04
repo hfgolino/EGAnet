@@ -65,21 +65,9 @@
 #'
 #' \item \code{"BIC"}
 #'
-#' \item \code{"CFI"}
-#'
-#' \item \code{"chisq"}
-#'
 #' \item \code{"logLik"}
 #'
-#' \item \code{"RMSEA"}
-#'
 #' \item \code{"SRMR"}
-#'
-#' \item \code{"TEFI"}
-#'
-#' \item \code{"TEFI.adj"}
-#'
-#' \item \code{"TLI"}
 #'
 #' }
 #'
@@ -167,11 +155,8 @@ EGM <- function(
     data, EGM.model = c("standard", "EGA"),
     communities = NULL, structure = NULL, search = FALSE,
     p.in = NULL, p.out = NULL,
-    opt = c(
-      "AIC", "BIC", "CFI",
-      "chisq", "logLik", "RMSEA",
-      "SRMR", "TEFI", "TEFI.adj", "TLI"
-    ), constrain.structure = TRUE, constrain.zeros = TRUE,
+    opt = c("AIC", "BIC", "logLik", "SRMR"),
+    constrain.structure = TRUE, constrain.zeros = TRUE,
     verbose = TRUE, ...
 )
 {
@@ -436,7 +421,7 @@ compute_tefi_adjustment <- function(loadings, correlations)
 
 #' @noRd
 # EGM | Standard ----
-# Updated 20.03.2025
+# Updated 04.04.2025
 EGM.standard <- function(data, communities, structure, p.in, p.out, opt, constrain.structure, constrain.zeros, ...)
 {
 
@@ -570,50 +555,22 @@ EGM.standard <- function(data, communities, structure, p.in, p.out, opt, constra
     loading_structure[structure[i], i] <- TRUE
   }
 
-  # Set up for cost functions
-  if(opt == "loglik"){
-
-    # Optimize over loadings
-    result <- silent_call(
-      nlm(
-        p = loadings_vector, f = logLik_cost,
-        zeros = zeros, R = empirical_R,
-        loading_structure = loading_structure,
-        rows = communities, n = data_dimensions[1],
-        v = data_dimensions[2],
-        constrained = constrain.structure,
-        lower_triangle = lower.tri(empirical_R),
-        iterlim = 1000
-      )
-    )
-
-  }else if(opt == "srmr"){
-
-    # Optimize over loadings
-    result <- silent_call(
-      nlminb(
-        start = loadings_vector, objective = srmr_cost,
-        gradient = srmr_gradient,
-        zeros = zeros, R = empirical_R,
-        loading_structure = loading_structure,
-        rows = communities, n = data_dimensions[1],
-        v = data_dimensions[2],
-        constrained = constrain.structure,
-        lower_triangle = lower.tri(empirical_R),
-        lower = rep(-1, loadings_length),
-        upper = rep(1, loadings_length),
-        control = list(eval.max = 10000, iter.max = 10000)
-      )
-    )
-
-    # Set estimate
-    result$estimate <- result$par
-
-  }
+  # Optimize over loadings
+  result <- egm_optimize(
+    loadings_vector = loadings_vector,
+    loadings_length = loadings_length,
+    zeros = zeros, R = empirical_R,
+    loading_structure = loading_structure,
+    rows = communities, n = data_dimensions[1],
+    v = data_dimensions[2],
+    constrained = constrain.structure,
+    lower_triangle = lower.tri(empirical_R),
+    opt = opt
+  )
 
   # Extract optimized loadings
   optimized_loadings <- matrix(
-    result$estimate, nrow = data_dimensions[2],
+    result$par, nrow = data_dimensions[2],
     dimnames = loading_names
   )
 
@@ -806,7 +763,7 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
 
 #' @noRd
 # EGM | EGA ----
-# Updated 01.04.2024
+# Updated 02.04.2024
 EGM.EGA <- function(data, structure, opt, constrain.structure, constrain.zeros, ...)
 {
 
@@ -875,29 +832,16 @@ EGM.EGA <- function(data, structure, opt, constrain.structure, constrain.zeros, 
   }
 
   # Optimize over loadings
-  result <- silent_call(
-    nlminb(
-      start = loadings_vector,
-      objective = switch(
-        opt,
-        "loglik" = logLik_cost,
-        "srmr" = srmr_cost
-      ),
-      gradient = switch(
-        opt,
-        "loglik" = logLik_gradient,
-        "srmr" = srmr_gradient
-      ),
-      zeros = zeros, R = ega$correlation,
-      loading_structure = loading_structure,
-      rows = communities, n = data_dimensions[1],
-      v = data_dimensions[2],
-      constrained = constrain.structure,
-      lower_triangle = lower.tri(ega$correlation),
-      lower = rep(-1, loadings_length),
-      upper = rep(1, loadings_length),
-      control = list(eval.max = 10000, iter.max = 10000)
-    )
+  result <- egm_optimize(
+    loadings_vector = loadings_vector,
+    loadings_length = loadings_length,
+    zeros = zeros, R = ega$correlation,
+    loading_structure = loading_structure,
+    rows = communities, n = data_dimensions[1],
+    v = data_dimensions[2],
+    constrained = constrain.structure,
+    lower_triangle = lower.tri(ega$correlation),
+    opt = opt
   )
 
   # Extract optimized loadings

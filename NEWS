@@ -4,6 +4,10 @@ WEBSITE: https://r-ega.net
 
 +	FIX: default `itemStability` plot switched back to empirical dimensions only
 
++	UPDATE: `simEGM` has a new (faster) data generating mechanism
+
++	UPDATE: `EGM` optimizations for log-likelihood, AIC, and BIC were added (including proper gradients)
+
 
 ## Changes in version 2.2.0
 
