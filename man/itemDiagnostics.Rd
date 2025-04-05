@@ -21,6 +21,8 @@ Returns a list containing:
 \item{diagnostics}{A data frame containing the diagnostics of low item stabilities
 (see \code{\link[EGAnet]{itemStability}})}
 
+\item{boot}{Output from \code{\link[EGAnet]{bootEGA}}}
+
 \item{uva}{Output from \code{\link[EGAnet]{UVA}}}
 
 \item{minor}{A list containing suggested items to \code{keep}, \code{remove}, and

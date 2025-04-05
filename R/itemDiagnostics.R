@@ -16,6 +16,8 @@
 #' \item{diagnostics}{A data frame containing the diagnostics of low item stabilities
 #' (see \code{\link[EGAnet]{itemStability}})}
 #'
+#' \item{boot}{Output from \code{\link[EGAnet]{bootEGA}}}
+#'
 #' \item{uva}{Output from \code{\link[EGAnet]{UVA}}}
 #'
 #' \item{minor}{A list containing suggested items to \code{keep}, \code{remove}, and
@@ -97,9 +99,7 @@ itemDiagnostics <- function(data, ...)
   diagnostic_df <- data.frame(node = low_names)
   diagnostic_df$diagnostic <- swiftelse(low_names %in% local_dependence, "LD ", "")
   diagnostic_df$diagnostic <- paste0(
-    diagnostic_df$diagnostic, swiftelse(
-      low_names %in% as.matrix(minor$minor.matrix), "MiD ", ""
-    )
+    diagnostic_df$diagnostic, swiftelse(low_names %in% as.matrix(minor), "MiD ", "")
   )
   diagnostic_df$diagnostic <- paste0(
     diagnostic_df$diagnostic, swiftelse(low_names %in% multidimensional, "MuD ", "")
@@ -115,8 +115,8 @@ itemDiagnostics <- function(data, ...)
   # Set results
   results <- list(
     diagnostics = diagnostic_df,
-    uva = uva, minor = minor,
-    loadings = loadings$std
+    boot = boot, uva = uva,
+    minor = minor, loadings = loadings
   )
 
   # Set class
@@ -230,14 +230,19 @@ minor_dimensions <- function(wto_output, stabilities, cut_off = 0.95)
   # Get lengths
   lengths <- nvapply(redundant_variables, length)
 
+  # Length of lengths
+  n_lengths <- length(lengths)
+
+  # Check for lengths
+  if(length(lengths) == 0){
+    return(matrix(0, nrow = n_lengths, ncol = 0))
+  }
+
   # Get max length
   max_length <- max(lengths)
 
   # Order from least to most
   redundant_variables <- redundant_variables[order(lengths)]
-
-  # Length of lengths
-  n_lengths <- length(lengths)
 
   # Create matrix
   minor_matrix <- matrix(0, nrow = n_lengths, ncol = max_length + 1)
@@ -275,58 +280,54 @@ minor_dimensions <- function(wto_output, stabilities, cut_off = 0.95)
 
     # Remove sets
     keep_index <- rowSums(minor_matrix != 0) > 1
-    redundant_variables <- redundant_variables[keep_index]
+    # redundant_variables <- redundant_variables[keep_index]
     minor_matrix <- minor_matrix[keep_index,, drop = FALSE]
 
   }
 
-  # Loop over redundant variables and return keep and remove
-  selection_list <- lapply(seq_along(redundant_variables), function(index){
-
-    # Obtain all nodes
-    all_nodes <- obtain_redundant_variables(redundant_variables, index)
-
-    # Determine whether to use wTO or standard deviation
-    if(length(all_nodes) > 2){
-
-      # Selection index based on maximum average
-      # wTO value to other redundant variables
-      selection_index <- which.min(
-        colMeans(wto_output[all_nodes, all_nodes], na.rm = TRUE)
-      )
-
-    }else{ # Only two nodes
-
-      # Selection index based on lowest maximum
-      # wTO value to all other variables
-      selection_index <- which.min(
-        apply(wto_output[all_nodes, -all_nodes], 1, max, na.rm = TRUE)
-      )
-
-    }
-
-    # Return list
-    return(
-      list(
-        keep = all_nodes[selection_index],
-        remove = all_nodes[-selection_index]
-      )
-    )
-
-  })
+  # # Loop over redundant variables and return keep and remove
+  # selection_list <- lapply(seq_along(redundant_variables), function(index){
+  #
+  #   # Obtain all nodes
+  #   all_nodes <- obtain_redundant_variables(redundant_variables, index)
+  #
+  #   # Determine whether to use wTO or standard deviation
+  #   if(length(all_nodes) > 2){
+  #
+  #     # Selection index based on maximum average
+  #     # wTO value to other redundant variables
+  #     selection_index <- which.min(
+  #       colMeans(wto_output[all_nodes, all_nodes], na.rm = TRUE)
+  #     )
+  #
+  #   }else{ # Only two nodes
+  #
+  #     # Selection index based on lowest maximum
+  #     # wTO value to all other variables
+  #     selection_index <- which.min(
+  #       apply(wto_output[all_nodes, -all_nodes], 1, max, na.rm = TRUE)
+  #     )
+  #
+  #   }
+  #
+  #   # Return list
+  #   return(
+  #     list(
+  #       keep = all_nodes[selection_index],
+  #       remove = all_nodes[-selection_index]
+  #     )
+  #   )
+  #
+  # })
 
   # Set up keys
-  minor_matrix[] <- apply(minor_matrix, 2, function(x){key[x]})
+  minor_matrix[] <- apply(minor_matrix, 2, function(x){
+    swiftelse(x == 0, "", key[x])
+  })
   minor_matrix <- as.data.frame(minor_matrix)
   colnames(minor_matrix) <- NULL
 
   # Return results
-  return(
-    list(
-      keep = key[ulapply(selection_list, function(x){x$keep})],
-      remove = key[ulapply(selection_list, function(x){x$remove})],
-      minor.matrix = minor_matrix
-    )
-  )
+  return(minor_matrix)
 
 }
