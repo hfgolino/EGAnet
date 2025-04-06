@@ -169,8 +169,8 @@ simEGM <- function(
   K <- solve(R)
   P <- -cov2cor(K); diag(P) <- 0
 
-  # Obtain structure based on significance
-  adjacency <- significance(P, total_variables, sample.size, 0.05)
+  # Obtain structure based on random walk
+  # adjacency <- random_walk(P, total_variables, sample.size, 0.001)
 
   # Return results
   return(
@@ -180,8 +180,8 @@ simEGM <- function(
       population_precision = K,
       population_partial_correlation = P,
       parameters = list(
-        adjacency = adjacency,
-        network = P * adjacency,
+        # adjacency = adjacency,
+        # network = P * adjacency,
         loadings = loading_structure,
         correlations = correlations,
         membership = membership,
@@ -251,7 +251,7 @@ random_walk <- function(P, total_variables, sample_size, p_value = 0.05)
   diag(absolute) <- apply(absolute, 1, max)
 
   # Transition matrix
-  T_matrix <- absolute / tcrossprod(rowSums(absolute))
+  T_matrix <- make_symmetric(absolute)
 
   # Calculate total edges
   total_edges <- total_variables * (total_variables - 1) / 2
@@ -261,10 +261,35 @@ random_walk <- function(P, total_variables, sample_size, p_value = 0.05)
 
   # Critical value
   T_cv <- prob_null + qnorm(p_value, lower.tail = FALSE) *
-    sqrt(prob_null * (1 - prob_null) / sample_size) # SE
+    sqrt(prob_null * (1 - prob_null) / total_edges) # SE
 
   # Return adjacency
   return(T_matrix > T_cv)
+
+}
+
+#' @noRd
+# Make matrix symmetric ----
+# Updated 06.04.2025
+make_symmetric <- function(A, tol = 1e-06)
+{
+
+  # Loop until within tolerance
+  while(abs(sum(c(1 - rowSums(A), 1 - colSums(A)))) > tol){
+
+    # Normalize by rows
+    A <- A / rowSums(A)
+
+    # Normalize by columns
+    A <- A / colSums(A)
+
+    # Make symmetric
+    A <- (A + t(A)) / 2
+
+  }
+
+  # Return matrix
+  return(A)
 
 }
 
@@ -275,3 +300,4 @@ significance <- function(P, total_variables, sample_size, p_value = 0.05)
 {
   return(p_partial(r2z(abs(P)), total_variables, sample_size) < p_value)
 }
+
