@@ -8,11 +8,9 @@ simEGM(
   communities,
   variables,
   loadings,
-  cross.loadings = 0.01,
+  cross.loadings = 0.02,
   correlations,
   sample.size,
-  p.in = 0.95,
-  p.out = 0.8,
   max.iterations = 1000
 )
 }
@@ -31,7 +29,7 @@ Uses \code{runif(n, min = value - 0.075, max = value + 0.075)} for some jitter i
 
 \item{cross.loadings}{Numeric (length = 1).
 Standard deviation of a normal distribution with a mean of zero (\code{n, mean = 0, sd = value}).
-Defaults to \code{0.01}.
+Defaults to \code{0.02}.
 Not recommended to change too drastically (small increments such as \code{0.01} work best)}
 
 \item{correlations}{Numeric (length = 1).
@@ -39,16 +37,6 @@ Magnitude of the community correlations}
 
 \item{sample.size}{Numeric (length = 1).
 Number of observations to generate}
-
-\item{p.in}{Numeric (length = 1).
-Sets the probability of retaining an edge \emph{within} communities.
-Single values are applied to all communities.
-Defaults to \code{0.95}}
-
-\item{p.out}{Numeric (length = 1 or \code{communities}).
-Sets the probability of retaining an edge \emph{between} communities.
-Single values are applied to all communities.
-Defaults to \code{0.80}}
 
 \item{max.iterations}{Numeric (length = 1).
 Number of iterations to attempt to get convergence before erroring out.

@@ -16,7 +16,7 @@
 #'
 #' @param cross.loadings Numeric (length = 1).
 #' Standard deviation of a normal distribution with a mean of zero (\code{n, mean = 0, sd = value}).
-#' Defaults to \code{0.01}.
+#' Defaults to \code{0.02}.
 #' Not recommended to change too drastically (small increments such as \code{0.01} work best)
 #'
 #' @param correlations Numeric (length = 1).
@@ -24,16 +24,6 @@
 #'
 #' @param sample.size Numeric (length = 1).
 #' Number of observations to generate
-#'
-#' @param p.in Numeric (length = 1).
-#' Sets the probability of retaining an edge \emph{within} communities.
-#' Single values are applied to all communities.
-#' Defaults to \code{0.95}
-#'
-#' @param p.out Numeric (length = 1 or \code{communities}).
-#' Sets the probability of retaining an edge \emph{between} communities.
-#' Single values are applied to all communities.
-#' Defaults to \code{0.80}
 #'
 #' @param max.iterations Numeric (length = 1).
 #' Number of iterations to attempt to get convergence before erroring out.
@@ -52,19 +42,18 @@
 #' @export
 #'
 # Simulate EGM ----
-# Updated 27.03.2025
+# Updated 06.04.2025
 simEGM <- function(
     communities, variables,
-    loadings, cross.loadings = 0.01,
+    loadings, cross.loadings = 0.02,
     correlations, sample.size,
-    p.in = 0.95, p.out = 0.80,
     max.iterations = 1000
 ){
 
   # Argument errors
   simEGM_errors(
     communities, variables, loadings, cross.loadings,
-    correlations, sample.size, p.in, p.out, max.iterations
+    correlations, sample.size, max.iterations
   )
 
   # Set up membership based on communities and variables
@@ -87,84 +76,20 @@ simEGM <- function(
   names(membership) <- node_names <- paste0(
     "V", format_integer(seq_len(total_variables), digits(total_variables) - 1)
   )
-  community_names <- format_integer(community_sequence, digits(communities) - 1)
-
-  # Set up network structure
-  network_structure <- matrix(
-    0, nrow = total_variables, ncol = total_variables,
-    dimnames = list(node_names, node_names)
-  )
 
   # Initialize structure matrix
-  structure_matrix <- matrix(
+  loading_structure <- matrix(
     0, nrow = total_variables, ncol = communities,
-    dimnames = list(node_names, community_names)
+    dimnames = list(
+      node_names,
+      format_integer(community_sequence, digits(communities) - 1) # community names
+    )
   )
 
-  # Loop over to create communities (block-diagonal)
-  for(i in community_sequence){
-
-    # Structure index
-    structure_index <- membership == i
-
-    # Set structure matrix
-    structure_matrix[structure_index, i] <- 1
-
-    # Identity community
-    within_network <- network_structure[structure_index, structure_index]
-
-    # Obtain lower triangle
-    lower_triangle <- lower.tri(within_network)
-
-    # Get number of indices
-    n_lower <- sum(lower_triangle)
-
-    # Initialize indices
-    index <- numeric(n_lower)
-
-    # Set density
-    index[seq_len(round(n_lower * p.in))] <- 1
-
-    # Shuffle indices back into network
-    network_structure[structure_index, structure_index][lower_triangle] <- sample(index)
-
+  # Fill structure
+  for(i in seq_len(total_variables)){
+    loading_structure[i, membership[i]] <- 1
   }
-
-  # Loop over to create non-communities (off-diagonal)
-  for(i in community_sequence){
-    for(j in community_sequence){
-
-      # Only do greater current community (lower triangle)
-      if(j > i){
-
-        # Structure index
-        block_index <- membership == i
-        off_index <- membership == j
-
-        # Non-community
-        between_network <- network_structure[off_index, block_index]
-
-        # Get number of indices
-        n_between <- length(between_network)
-
-        # Initialize indices
-        index <- numeric(n_between)
-
-        # Set density
-        index[seq_len(round(n_between * p.out))] <- 1
-
-        # Shuffle indices back into network
-        network_structure[off_index, block_index] <- sample(index)
-
-      }
-    }
-  }
-
-  # Make adjacency matrix symmetric
-  network_structure <- network_structure + t(network_structure)
-
-  # Get loading structure
-  loading_structure <- network_structure %*% structure_matrix
 
   # Count iterations
   count <- 0
@@ -200,38 +125,23 @@ simEGM <- function(
     for(i in community_sequence){
 
       # Get block index
-      block_index <- structure_matrix[,i] == 1
-
-      # Obtain degree
-      block_degree <- loading_structure[block_index, i]
-
-      # Order by degree
-      block_order <- order(block_degree, decreasing = TRUE)
+      block_index <- loading_structure[,i] == 1
 
       # Set assigned loadings
-      loading_structure[block_index, i][block_order] <- sort(
-        runif_xoshiro(sum(block_index), min = loadings - 0.075, max = loadings + 0.075),
-        decreasing = TRUE
-      ) * swiftelse(block_degree[block_order] == 0, 0, 1)
+      loading_structure[block_index, i] <- runif_xoshiro(
+        sum(block_index), min = loadings - 0.075, max = loadings + 0.075
+      )
 
       # Get off-diagonal indices
-      off_index <- structure_matrix[,i] == 0
-
-      # Obtain degree
-      off_degree <- loading_structure[off_index, i]
-
-      # Order by degree
-      off_order <- order(off_degree, decreasing = TRUE)
+      off_index <- loading_structure[,i] == 0
 
       # Set correlations
       loading_structure[off_index, i] <- 0.25 * correlations /
         ((1 - loading_structure[block_index, i]) * sqrt(log(total_variables)))
 
       # Add cross-loadings
-      loading_structure[off_index, i][off_order] <- (
-        loading_structure[off_index, i][off_order] +
-          sort(rnorm_ziggurat(sum(off_index)) * cross.loadings, decreasing = TRUE)
-      ) * swiftelse(off_degree[off_order] == 0, 0, 1)
+      loading_structure[off_index, i] <- loading_structure[off_index, i] +
+        rnorm_ziggurat(sum(off_index)) * cross.loadings
 
     }
 
@@ -255,22 +165,25 @@ simEGM <- function(
   # Set variable names
   colnames(data) <- node_names
 
-  # Obtain partial correlations
-  P <- cor2pcor(R)
+  # Obtain precision and partial correlations
+  K <- solve(R)
+  P <- -cov2cor(K); diag(P) <- 0
+
+  # Obtain random walk structure
+  adjacency <- random_walk(P, total_variables, sample.size)
 
   # Return results
   return(
     list(
       data = data,
       population_correlation = R,
-      population_precision = solve(R),
+      population_precision = K,
       population_partial_correlation = P,
       parameters = list(
-        adjacency = network_structure,
-        network = network_structure * P,
+        adjacency = adjacency,
+        network = P * adjacency,
         loadings = loading_structure,
         correlations = correlations,
-        p.in = p.in, p.out = p.out,
         membership = membership,
         iterations = count
       )
@@ -281,10 +194,10 @@ simEGM <- function(
 
 #' @noRd
 # Errors ----
-# Updated 07.11.2024
+# Updated 06.04.2025
 simEGM_errors <- function(
     communities, variables, loadings, cross.loadings,
-    correlations, sample.size, p.in, p.out, max.iterations
+    correlations, sample.size, max.iterations
 )
 {
 
@@ -318,19 +231,52 @@ simEGM_errors <- function(
   typeof_error(sample.size, "numeric", "simEGM")
   range_error(sample.size, c(1, Inf), "simEGM")
 
-  # 'p.in'
-  length_error(p.in, 1, "simEGM")
-  typeof_error(p.in, "numeric", "simEGM")
-  range_error(p.in, c(0, 1), "simEGM")
-
-  # 'p.out'
-  length_error(p.out, 1, "simEGM")
-  typeof_error(p.out, "numeric", "simEGM")
-  range_error(p.out, c(0, 1), "simEGM")
-
   # 'max.iterations'
   length_error(max.iterations, 1, "simEGM")
   typeof_error(max.iterations, "numeric", "simEGM")
   range_error(max.iterations, c(1, Inf), "simEGM")
+
+}
+
+#' @noRd
+# Random walk structure ----
+# Updated 06.04.2025
+random_walk <- function(P, total_variables, sample_size)
+{
+
+  # Obtain absolute values
+  absolute <- abs(P)
+
+  # Set diagonal to maximum value
+  diag(absolute) <- apply(absolute, 1, max)
+
+  # Transition matrix
+  T_matrix <- absolute / rowSums(absolute)
+
+  # Make symmetric
+  T_matrix <- (T_matrix + t(T_matrix)) / 2
+
+  # Calculate total edges
+  total_edges <- total_variables * (total_variables - 1) / 2
+
+  # Calculate probability of null edge connection
+  prob_null <- 1 / total_edges
+
+  # Calculate standard error
+  T_se <- sqrt(prob_null * (1 - prob_null) / sample_size)
+
+  # Calculate test statistics
+  # z <- (abs(T_matrix - prob_null) - 0.5 / total_edges) / T_se
+  z <- (T_matrix - prob_null) / T_se
+
+  # Calculate p-value
+  adjacency <- 2 * pnorm(abs(z), lower.tail = FALSE)
+
+  # Obtain adjacency
+  adjacency <- adjacency < 0.001
+  diag(adjacency) <- 0
+
+  # Return adjacency
+  return(adjacency)
 
 }

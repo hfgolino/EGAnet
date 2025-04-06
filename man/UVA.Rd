@@ -30,7 +30,7 @@ Defaults to \code{NULL}
 
 If both \code{data} and \code{network} are provided,
 then \code{UVA} will use the \code{network}
-with the \code{data} (rather than estimating a 
+with the \code{data} (rather than estimating a
 network from the \code{data})}
 
 \item{n}{Numeric (length = 1).
@@ -48,8 +48,8 @@ in \emph{European Journal of Personality} (\code{"EJP"}) should be used.
 Defaults to \code{"MBR"}
 
 Based on simulation and accumulating empirical evidence, the methods
-described in Christensen, Golino, and Silvia (2020) such as 
-adaptive alpha are \strong{outdated}. Evidence supports using a 
+described in Christensen, Golino, and Silvia (2020) such as
+adaptive alpha are \strong{outdated}. Evidence supports using a
 single cut-off value (regardless of continuous, polytomous, or
 dichotomous data; Christensen, Garrido, & Golino, 2023)}
 
@@ -75,8 +75,8 @@ Available options:
 
 \itemize{
 
-\item \code{"latent"} --- Computes latent variables using \code{\link[lavaan]{cfa}} when 
-there are three or more redundant variables. If variables are not 
+\item \code{"latent"} --- Computes latent variables using \code{\link[lavaan]{cfa}} when
+there are three or more redundant variables. If variables are not
 all coded in the same direction, then they will be recoded as necessary.
 A warning will be produced for all variables that are flipped
 
@@ -99,7 +99,7 @@ process is as follows:
 
 \itemize{
 
-\item \code{Two variables} --- The variable with the lowest maximum \code{\link[EGAnet]{wto}} 
+\item \code{Two variables} --- The variable with the lowest maximum \code{\link[EGAnet]{wto}}
 to all other variables (other than the one it is redundant with)
 is retained and the other is removed
 
@@ -114,14 +114,14 @@ Whether messages and (insignificant) warnings should be output.
 Defaults to \code{FALSE} (silent calls).
 Set to \code{TRUE} to see all messages and warnings for every function call}
 
-\item{...}{Additional arguments that should be passed on to 
+\item{...}{Additional arguments that should be passed on to
 old versions of \code{UVA} or to
 \code{\link[EGAnet]{EGA}} and
 \code{\link[lavaan]{cfa}}}
 }
 \description{
-Identifies locally dependent (redundant) variables in a 
-multivariate dataset using the \code{\link[EGAnet]{EBICglasso.qgraph}} 
+Identifies locally dependent (redundant) variables in a
+multivariate dataset using the \code{\link[EGAnet]{EBICglasso.qgraph}}
 network estimation method and weighted topological overlap
 (see Christensen, Garrido, & Golino, 2023 for more details)
 }

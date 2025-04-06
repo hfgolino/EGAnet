@@ -407,7 +407,7 @@ compute_tefi_adjustment <- function(loadings, correlations)
 
   # Total number of parameters
   parameters <- (dimensions[1] * dimensions[2]) + dimensions[1] +
-                ((dimensions[2] * (dimensions[2] - 1)) / 2)
+    ((dimensions[2] * (dimensions[2] - 1)) / 2)
 
   # Obtain model parameters
   model_parameters <- parameters - sum(loadings == 0)
