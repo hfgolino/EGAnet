@@ -169,8 +169,8 @@ simEGM <- function(
   K <- solve(R)
   P <- -cov2cor(K); diag(P) <- 0
 
-  # Obtain random walk structure
-  adjacency <- random_walk(P, total_variables, sample.size)
+  # Obtain structure based on significance
+  adjacency <- significance(P, total_variables, sample.size, 0.05)
 
   # Return results
   return(
@@ -241,7 +241,7 @@ simEGM_errors <- function(
 #' @noRd
 # Random walk structure ----
 # Updated 06.04.2025
-random_walk <- function(P, total_variables, sample_size)
+random_walk <- function(P, total_variables, sample_size, p_value = 0.05)
 {
 
   # Obtain absolute values
@@ -251,10 +251,7 @@ random_walk <- function(P, total_variables, sample_size)
   diag(absolute) <- apply(absolute, 1, max)
 
   # Transition matrix
-  T_matrix <- absolute / rowSums(absolute)
-
-  # Make symmetric
-  T_matrix <- (T_matrix + t(T_matrix)) / 2
+  T_matrix <- absolute / tcrossprod(rowSums(absolute))
 
   # Calculate total edges
   total_edges <- total_variables * (total_variables - 1) / 2
@@ -262,21 +259,19 @@ random_walk <- function(P, total_variables, sample_size)
   # Calculate probability of null edge connection
   prob_null <- 1 / total_edges
 
-  # Calculate standard error
-  T_se <- sqrt(prob_null * (1 - prob_null) / sample_size)
-
-  # Calculate test statistics
-  # z <- (abs(T_matrix - prob_null) - 0.5 / total_edges) / T_se
-  z <- (T_matrix - prob_null) / T_se
-
-  # Calculate p-value
-  adjacency <- 2 * pnorm(abs(z), lower.tail = FALSE)
-
-  # Obtain adjacency
-  adjacency <- adjacency < 0.001
-  diag(adjacency) <- 0
+  # Critical value
+  T_cv <- prob_null + qnorm(p_value, lower.tail = FALSE) *
+    sqrt(prob_null * (1 - prob_null) / sample_size) # SE
 
   # Return adjacency
-  return(adjacency)
+  return(T_matrix > T_cv)
 
+}
+
+#' @noRd
+# Significance structure ----
+# Updated 06.04.2025
+significance <- function(P, total_variables, sample_size, p_value = 0.05)
+{
+  return(p_partial(r2z(abs(P)), total_variables, sample_size) < p_value)
 }

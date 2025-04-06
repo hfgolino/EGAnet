@@ -666,20 +666,10 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
   # Get number of search
   p_number <- dim(p_grid)[1]
 
-  # Fit name based on fit
-  fit_name <- switch(
-    opt,
-    "aic" = "AIC", "bic" = "BIC",
-    "cfi" = "CFI", "chisq" = "chisq",
-    "loglik" = "logLik", "rmsea" = "RMSEA",
-    "srmr" = "SRMR", "tefi" = "TEFI",
-    "tefi.adj" = "TEFI.adj", "tli" = "TLI"
-  )
-
   # Loop over grid search
   grid_search <- parallel_process(
     iterations = p_number, datalist = seq_len(p_number),
-    FUN = function(i, data, p_grid, communities, structure, opt, constrained, ...){
+    FUN = function(i, data, p_grid, communities, structure, opt, constrain.structure, constrain.zeros, ...){
 
       # First, try
       output <- silent_call(
@@ -688,7 +678,8 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
             data = data, communities = communities,
             structure = structure, p.in = p_grid$p_in[i],
             p.out = p_grid$p_out[i], opt = opt,
-            constrained = constrained, ...
+            constrain.structure = constrain.structure,
+            constrain.zeros = constrain.zeros, ...
           ), silent = TRUE
         )
       )
@@ -704,6 +695,13 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
     constrain.zeros = constrain.zeros, ...,
     # `parallel_process` arguments
     ncores = 1, progress = verbose
+  )
+
+  # Fit name based on fit
+  fit_name <- switch(
+    opt,
+    "aic" = "AIC", "bic" = "BIC",
+    "loglik" = "logLik", "srmr" = "SRMR"
   )
 
   # Obtain fits
@@ -735,10 +733,7 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
   index_FUN <- switch(
     opt,
     "aic" = which.min, "bic" = which.min,
-    "cfi" = which.max, "chisq" = which.min,
-    "loglik" = which.max, "rmsea" = which.min,
-    "srmr" = which.min, "tefi" = which.min,
-    "tefi.adj" = which.min, "tli" = which.max
+    "loglik" = which.max, "srmr" = which.min
   )
 
   # Obtain index
@@ -908,16 +903,6 @@ EGM.EGA <- function(data, structure, opt, constrain.structure, constrain.zeros, 
 EGM.EGA.search <- function(data, communities, structure, opt, constrain.structure, constrain.zeros, verbose, ...)
 {
 
-  # Fit name based on fit
-  fit_name <- switch(
-    opt,
-    "aic" = "AIC", "bic" = "BIC",
-    "cfi" = "CFI", "chisq" = "chisq",
-    "loglik" = "logLik", "rmsea" = "RMSEA",
-    "srmr" = "SRMR", "tefi" = "TEFI",
-    "tefi.adj" = "TEFI.adj", "tli" = "TLI"
-  )
-
   # Get number of dimensions
   data_dimensions <- dim(data)
 
@@ -958,6 +943,13 @@ EGM.EGA.search <- function(data, communities, structure, opt, constrain.structur
   # Add names to fits
   names(fits) <- glasso_output$output$lambda
 
+  # Fit name based on fit
+  fit_name <- switch(
+    opt,
+    "aic" = "AIC", "bic" = "BIC",
+    "loglik" = "logLik", "srmr" = "SRMR"
+  )
+
   # Obtain fit index
   fit_index <- nvapply(fits[!lvapply(fits, is.null)], function(x){
     return(x$model$optimized$fit[[fit_name]])
@@ -967,10 +959,7 @@ EGM.EGA.search <- function(data, communities, structure, opt, constrain.structur
   index_FUN <- switch(
     opt,
     "aic" = min, "bic" = min,
-    "cfi" = max, "chisq" = min,
-    "loglik" = max, "rmsea" = min,
-    "srmr" = min, "tefi" = min,
-    "tefi.adj" = min, "tli" = max
+    "loglik" = max, "srmr" = min
   )
 
   # Obtain optimum value
@@ -1268,16 +1257,16 @@ glasso_fit <- function(data, S, glasso_attr, P, data_dimensions, constrain.struc
 
   # Optimize over loadings
   result <- try(
-    nlminb(
-      start = loadings_vector, objective = srmr_N_cost,
-      gradient = srmr_N_gradient,
+    egm_optimize(
+      loadings_vector = loadings_vector,
+      loadings_length = loadings_length,
       zeros = zeros, R = S,
       loading_structure = loading_structure,
       rows = communities, n = data_dimensions[1],
-      constrained = constrain.structure, lower_triangle = lower.tri(S),
-      lower = rep(-1, loadings_length),
-      upper = rep(1, loadings_length),
-      control = list(eval.max = 10000, iter.max = 10000)
+      v = data_dimensions[2],
+      constrained = constrain.structure,
+      lower_triangle = lower.tri(S),
+      opt = opt
     ), silent = TRUE
   )
 
@@ -1286,12 +1275,9 @@ glasso_fit <- function(data, S, glasso_attr, P, data_dimensions, constrain.struc
     stop("bad result")
   }
 
-  # Set estimate
-  result$estimate <- result$par
-
   # Extract optimized loadings
   optimized_loadings <- matrix(
-    result$estimate, nrow = dimensions[1],
+    result$par, nrow = dimensions[1],
     dimnames = dimension_names
   )
 
