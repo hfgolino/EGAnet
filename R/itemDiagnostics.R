@@ -314,7 +314,9 @@ minor_dimensions <- function(wto_output, stabilities, cut_off = 0.95)
   }
 
   # Set up keys
-  minor_matrix <- as.data.frame(ifelse(minor_matrix == 0, "", key[minor_matrix]))
+  zeros <- minor_matrix == 0
+  minor_matrix[!zeros] <- key[minor_matrix]
+  minor_matrix[zeros] <- ""
   colnames(minor_matrix) <- NULL
 
   # Return results
