@@ -524,7 +524,7 @@ walktrap_distance <- function(network, steps = 4)
   strength <- rowSums(absolute)
 
   # Transition matrix
-  P <- solve(diag(strength), absolute)
+  P <- absolute / strength
 
   # Set steps
   P_steps <- Reduce(`%*%`, replicate(n = steps, P, simplify = FALSE))
@@ -532,7 +532,6 @@ walktrap_distance <- function(network, steps = 4)
   # Return (squared) Euclidean distance
   return(
     dist(
-
       P_steps * matrix( # normalize transition matrix
         1 / sqrt(strength), nrow = nodes, ncol = nodes
       ),

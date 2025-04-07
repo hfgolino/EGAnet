@@ -12,9 +12,9 @@ EGM(
   search = FALSE,
   p.in = NULL,
   p.out = NULL,
-  opt = c("AIC", "BIC", "CFI", "chisq", "logLik", "RMSEA", "SRMR", "TEFI", "TEFI.adj",
-    "TLI"),
-  constrained = TRUE,
+  opt = c("AIC", "BIC", "logLik", "SRMR"),
+  constrain.structure = TRUE,
+  constrain.zeros = TRUE,
   verbose = TRUE,
   ...
 )
@@ -83,31 +83,25 @@ Available options include:
 
 \item \code{"BIC"}
 
-\item \code{"CFI"}
-
-\item \code{"chisq"}
-
 \item \code{"logLik"}
 
-\item \code{"RMSEA"}
-
 \item \code{"SRMR"}
-
-\item \code{"TEFI"}
-
-\item \code{"TEFI.adj"}
-
-\item \code{"TLI"}
 
 }
 
 Defaults to \code{"SRMR"}}
 
-\item{constrained}{Boolean (length = 1).
+\item{constrain.structure}{Boolean (length = 1).
 Whether memberships of the communities should
 be added as a constraint when optimizing the network loadings.
 Defaults to \code{TRUE} which ensures assigned loadings are
 guaranteed to never be smaller than any cross-loadings.
+Set to \code{FALSE} to freely estimate each loading similar to exploratory factor analysis}
+
+\item{constrain.zeros}{Boolean (length = 1).
+Whether zeros in the estimated network loading matrix should
+be retained when optimizing the network loadings.
+Defaults to \code{TRUE} which ensures that zero networks loadings are retained.
 Set to \code{FALSE} to freely estimate each loading similar to exploratory factor analysis}
 
 \item{verbose}{Boolean (length = 1).

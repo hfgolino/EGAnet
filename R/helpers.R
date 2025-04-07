@@ -3260,18 +3260,31 @@ trace <- function(object)
 }
 
 #' @noRd
-# Standardized root mean square ----
-# Updated 24.09.2024
-srmr <- function(base, comparison)
+# r to Fisher's z ----
+# Updated 27.03.2025
+r2z <- function(r)
+{
+  return(0.5 * log((1 + r) / (1 - r)))
+}
+
+#' @noRd
+# Fisher's z to r ----
+# Updated 27.03.2025
+z2r <- function(z)
+{
+  return((exp(2 * z) - 1) / (1 + exp(2 * z)))
+}
+
+#' @noRd
+# Partial correlation p-values ----
+# Updated 27.03.2025
+p_partial <- function(z, variables, sample_size)
 {
 
-  # Obtain lower triangle
-  lower_triangle <- lower.tri(base)
+  # Get test statistic
+  test <- z / sqrt(1 / (sample_size - variables - 5))
 
-  # Return SRMR
-  return(
-    sqrt(mean((base[lower_triangle] - comparison[lower_triangle])^2))
-  )
+  return(pnorm(test, lower.tail = FALSE) * 2)
 
 }
 

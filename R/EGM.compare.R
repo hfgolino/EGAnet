@@ -8,14 +8,26 @@
 #' Should consist only of variables to be used in the analysis.
 #' Can be raw data or a correlation matrix
 #'
-#' @param constrained Boolean (length = 1).
+#' @param constrain.structure Boolean (length = 1).
 #' Whether memberships of the communities should
 #' be added as a constraint when optimizing the network loadings.
-#' Defaults to \code{FALSE} to freely estimate each loading similar to
-#' exploratory factor analysis.
+#' Defaults to \code{TRUE} which ensures assigned loadings are
+#' guaranteed to never be smaller than any cross-loadings.
+#' Set to \code{FALSE} to freely estimate each loading similar to exploratory factor analysis
+#'
+#' #' \emph{Note: This default differs from} \code{\link[EGAnet]{EGM}}\emph{.
+#' Constraining loadings puts EGM at a deficit relative to EFA and therefore
+#' biases the comparability between the methods. It's best to leave the
+#' default of unconstrained when using this function.}
+#'
+#' @param constrain.zeros Boolean (length = 1).
+#' Whether zeros in the estimated network loading matrix should
+#' be retained when optimizing the network loadings.
+#' Defaults to \code{TRUE} which ensures that zero networks loadings are retained.
+#' Set to \code{FALSE} to freely estimate each loading similar to exploratory factor analysis
 #'
 #' \emph{Note: This default differs from} \code{\link[EGAnet]{EGM}}\emph{.
-#' Constraining loadings puts EGM at a deficit relative to EFA and therefore
+#' Constraining zeros puts EGM at a deficit relative to EFA and therefore
 #' biases the comparability between the methods. It's best to leave the
 #' default of unconstrained when using this function.}
 #'
@@ -52,7 +64,7 @@
 #
 # Compare EGM to EFA ----
 # Updated 04.11.2024
-EGM.compare <- function(data, constrained = FALSE, rotation = "geominQ", ...)
+EGM.compare <- function(data, constrain.structure = FALSE, constrain.zeros = FALSE, rotation = "geominQ", ...)
 {
 
   # Obtain ellipse
@@ -93,7 +105,8 @@ EGM.compare <- function(data, constrained = FALSE, rotation = "geominQ", ...)
     args = c(
       list(
         data = data,
-        constrained = constrained,
+        constrain.structure = constrain.structure,
+        constrain.zeros = constrain.zeros,
         corr = swiftelse(exists("corr"), corr, "pearson")
       ), ellipse
     )
@@ -298,7 +311,7 @@ summary.EGM.compare <- function(object, ...)
 
 #' @noRd
 # Get factor results ----
-# Updated 02.11.2024
+# Updated 20.03.2025
 get_factor_results <- function(output, rotation, egm, dimensions, ...)
 {
 
@@ -371,8 +384,7 @@ get_factor_results <- function(output, rotation, egm, dimensions, ...)
     n = dimensions[1], p = dimensions[2], R = output$implied$R,
     S = egm$EGA$correlation, loadings = output$loadings,
     correlations = output$factor_correlations,
-    structure = egm$EGA$wc, ci = 0.95,
-    scaling_factor = NULL
+    structure = egm$EGA$wc, ci = 0.95
     # scaling_factor = swiftelse(
     #   "chisq.scaling.factor" %in% names(lavaan_fit),
     #   lavaan_fit[["chisq.scaling.factor"]], NULL
@@ -384,10 +396,44 @@ get_factor_results <- function(output, rotation, egm, dimensions, ...)
 
 }
 
+
+#' @noRd
+# Compute log-likelihood metrics ----
+# Updated 06.10.2024
+likelihood <- function(n, p, R, S, loadings, type)
+{
+
+  # Get number of communities
+  m <- dim(loadings)[2]
+
+  # Log-likelihood
+  loglik <- log_likelihood(n, p, R, S, type)
+
+  # Total number of parameters
+  parameters <- (p * m) + p + ((m * (m - 1)) / 2)
+
+  # Model parameters
+  model_parameters <- parameters - sum(loadings == 0)
+
+  # Return log-likelihood
+  return(
+    c(
+      logLik = loglik,
+      AIC = -2 * loglik + 2 * model_parameters, # -2L + 2k
+      BIC = -2 * loglik + model_parameters * log(n) # -2L + klog(n)
+      # EBIC = -2 * loglik + model_parameters * log(n) + 2 * gamma * log(
+      #   choose(parameters, model_parameters)
+      # ), # -2L + klog(n) + 2 gamma log(binom(pk))
+      # GFI = 1 - sum((R - S)^2) / sum(S^2)
+    )
+  )
+
+}
+
 #' @noRd
 # Compute fit metrics ----
-# Updated 01.11.2024
-fit <- function(n, p, R, S, loadings, correlations, structure, ci, scaling_factor = NULL)
+# Updated 20.03.2025
+fit <- function(n, p, R, S, loadings, correlations, structure, ci, remove_correlations = FALSE)
 {
 
   # Get number of communities
@@ -397,7 +443,9 @@ fit <- function(n, p, R, S, loadings, correlations, structure, ci, scaling_facto
   zero_parameters <- p * (p - 1) / 2
   loading_parameters <- p * m - sum(loadings == 0)
   correlation_parameters <- ((m * (m - 1)) / 2)
-  model_parameters <- loading_parameters + correlation_parameters
+  model_parameters <- loading_parameters + swiftelse(
+    remove_correlations, 0, correlation_parameters
+  )
 
   # Baseline
   baseline <- diag(1, nrow = p, ncol = p)
@@ -408,7 +456,7 @@ fit <- function(n, p, R, S, loadings, correlations, structure, ci, scaling_facto
   # Compute traditional SEM measures
   loglik_ML <- log(det(R)) + sum(diag(S %*% solve(R))) - log(det(S)) - p
   chi_square <- n * loglik_ML
-  df <- zero_parameters - loading_parameters + correlation_parameters
+  df <- zero_parameters - model_parameters
   chi_max <- max(chi_square - df, 0)
   nDF <- n * df
   rmsea_null <- nDF * 0.0025 # 0.05^2
