@@ -6,6 +6,25 @@
 #' @param data Matrix or data frame.
 #' Should consist only of variables to be used in the analysis
 #'
+#' @param minor.method Character (length = 1).
+#' Method to detect the likelihood of minor dimensions.
+#' Available options include:
+#'
+#' \itemize{
+#'
+#' \item \code{"cosine"} (default) --- uses \code{\link[EGAnet]{cosine}} similarity to determine
+#' the similarity of the item stability patterns from \code{\link[EGAnet]{bootEGA}}.
+#' More consistent patterns across multiple dimensions reflect an increased likelihood
+#' of a minor dimension (particularly with respect to extra dimensions forming).
+#' By default, values greater than or equal to \code{0.95} are selected
+#'
+#' \item \code{"residuals"} --- subtracts the network-implied zero-order correlation matrix
+#' from the empirical zero-order correlation matrix to determine residuals. These residuals
+#' are submitted to an \code{\link[EGAnet]{EGA}} and network loadings (\code{\link[EGAnet]{net.loads}})
+#' are re-computed. By default, loadings greater than or equal to \code{0.35} are selected
+#'
+#' }
+#'
 #' @param ... Additional arguments to pass on to
 #' \code{\link[EGAnet]{bootEGA}},
 #' \code{\link[EGAnet]{net.loads}}, and
@@ -33,14 +52,17 @@
 #' # Obtain diagnostics
 #' diagnostics <- itemDiagnostics(wmt, ncores = 2)}
 #'
-#' @author Alexander P. Christensen <alexpaulchristensen@gmail.com> and Hudson Golino <hfg9s at virginia.edu>
+#' @author Alexander P. Christensen <alexpaulchristensen@gmail.com>, Hudson Golino <hfg9s at virginia.edu>, and Luis Eduardo Garrido <garrido.luiseduardo@gmail.com>
 #'
 #' @export
 #'
 # Item diagnostics ----
-# Updated 05.04.2025
-itemDiagnostics <- function(data, ...)
+# Updated 07.04.2025
+itemDiagnostics <- function(data, minor.method = c("cosine", "residuals"), ...)
 {
+
+  # Check for missing arguments (argument, default, function)
+  minor.method <- set_default(minor.method, "cosine", itemDiagnostics)
 
   # Check for errors
   data <- itemDiagnostics_errors(data, ...)
@@ -71,16 +93,24 @@ itemDiagnostics <- function(data, ...)
   # Perform UVA (for wTO)
   uva <- UVA(data, reduce = FALSE, ...)
 
-  # Check for low dependence
+  # Check for local dependence
   local_dependence <- low_names[
-    colSums(uva$wto$matrix[low_names, low_names] >= 0.25) > 0
+    colSums(uva$wto$matrix[low_names, low_names, drop = FALSE] >= 0.25) > 0
   ]
 
   # Check for minor dimensions
-  minor <- minor_dimensions(
-    wto_output = uva$wto$matrix,
-    stabilities = boot$stability$item.stability$item.stability$all.dimensions[low_names,],
-    cut_off = 0.95
+  minor <- switch(
+    minor.method,
+    "cosine" = minor_dimensions(
+      wto_output = uva$wto$matrix,
+      stabilities = boot$stability$item.stability$item.stability$all.dimensions[low_names,],
+      cut_off = 0.95
+    ),
+    "residuals" = loadings_remove(
+      boot = boot,
+      stabilities = boot$stability$item.stability$item.stability$all.dimensions[low_names,],
+      cut_off = 0.35, ...
+    )
   )
 
   # Obtain loadings
@@ -329,5 +359,44 @@ minor_dimensions <- function(wto_output, stabilities, cut_off = 0.95)
 
   # Return results
   return(minor_matrix)
+
+}
+
+#' @noRd
+# Loadings for minor dimensions stabilities ----
+# Updated 07.04.2025
+loadings_remove <- function(boot, stabilities, cut_off = 0.35, ...)
+{
+
+  # Compute loadings
+  loadings <- silent_call(
+    net.loads(boot$EGA, ...)$std[dimnames(boot$EGA$network)[[2]],, drop = FALSE]
+  )
+
+  # Get residuals from implied - empirical correlations
+  residuals <- abs(nload2cor(loadings) - boot$EGA$correlation)
+  diag(residuals) <- 1
+
+  # Get node names
+  node_names <- dimnames(stabilities)[[1]]
+
+  # Get low stability residuals
+  low_residuals <- residuals[node_names, node_names]
+
+  # Estimate EGA
+  ega <- EGA(
+    low_residuals, n = boot$EGA$n,
+    algorithm = "louvain", order = "lower",
+    plot.EGA = FALSE, verbose = FALSE, ...
+  )
+
+  # Get loadings
+  loadings <- silent_call(net.loads(ega, ...)$std[node_names,, drop = FALSE])
+
+  # Get maximum loadings
+  max_loadings <- nvapply(as.data.frame(abs(t(loadings))), function(x){max(x)})
+
+  # Send labels
+  return(names(max_loadings[max_loadings < cut_off]))
 
 }

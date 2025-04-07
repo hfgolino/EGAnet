@@ -4,11 +4,30 @@
 \alias{itemDiagnostics}
 \title{Diagnostics Analysis for Low Stability Items}
 \usage{
-itemDiagnostics(data, ...)
+itemDiagnostics(data, minor.method = c("cosine", "residuals"), ...)
 }
 \arguments{
 \item{data}{Matrix or data frame.
 Should consist only of variables to be used in the analysis}
+
+\item{minor.method}{Character (length = 1).
+Method to detect the likelihood of minor dimensions.
+Available options include:
+
+\itemize{
+
+\item \code{"cosine"} (default) --- uses \code{\link[EGAnet]{cosine}} similarity to determine
+the similarity of the item stability patterns from \code{\link[EGAnet]{bootEGA}}.
+More consistent patterns across multiple dimensions reflect an increased likelihood
+of a minor dimension (particularly with respect to extra dimensions forming).
+By default, values greater than or equal to \code{0.95} are selected
+
+\item \code{"residuals"} --- subtracts the network-implied zero-order correlation matrix
+from the empirical zero-order correlation matrix to determine residuals. These residuals
+are submitted to an \code{\link[EGAnet]{EGA}} and network loadings (\code{\link[EGAnet]{net.loads}})
+are re-computed. By default, loadings greater than or equal to \code{0.35} are selected
+
+}}
 
 \item{...}{Additional arguments to pass on to
 \code{\link[EGAnet]{bootEGA}},
@@ -44,5 +63,5 @@ diagnostics <- itemDiagnostics(wmt, ncores = 2)}
 
 }
 \author{
-Alexander P. Christensen <alexpaulchristensen@gmail.com> and Hudson Golino <hfg9s at virginia.edu>
+Alexander P. Christensen <alexpaulchristensen@gmail.com>, Hudson Golino <hfg9s at virginia.edu>, and Luis Eduardo Garrido <garrido.luiseduardo@gmail.com>
 }
