@@ -230,7 +230,7 @@ UVA <- function(
   }else{ # Branch for redundancies
 
     # Combine indices into a list
-    redundant_variables <- get_redundancy_list(wto_output, wto_indices)
+    redundant_variables <- get_redundancy_list(wto_output, as.matrix(wto_indices))
 
     # Check for reduction
     if(!reduce){
