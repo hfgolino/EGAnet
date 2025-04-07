@@ -135,7 +135,7 @@
 #'
 #' @export
 # Unique Variable Analysis ----
-# Updated 20.08.2023
+# Updated 07.04.2025
 UVA <- function(
     data = NULL, network = NULL, n = NULL, key = NULL,
     uva.method = c("MBR", "EJP"),
@@ -525,7 +525,7 @@ wto_descriptives <- function(wto_output){
 
 #' @noRd
 # Get the redundancy list ----
-# Updated 05.04.2025
+# Updated 07.04.2025
 get_redundancy_list <- function(wto_output, wto_indices)
 {
 

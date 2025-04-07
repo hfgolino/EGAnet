@@ -2,6 +2,8 @@ WEBSITE: https://r-ega.net
 
 ## Changes in version 2.2.1
 
++	ADD: `itemDiagnostics` for automated detection of potential instability issues such as local dependnece, minor dimensions, multidimensionality, and low loadings
+
 +	FIX: default `itemStability` plot switched back to empirical dimensions only
 
 +	UPDATE: `simEGM` has a new (faster) data generating mechanism
