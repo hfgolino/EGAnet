@@ -238,7 +238,7 @@ summary.itemDiagnostics <- function(object, ...)
 
 #' @noRd
 # Cosine for minor dimensions stabilities ----
-# Updated 05.04.2025
+# Updated 07.04.2025
 minor_dimensions <- function(wto_output, stabilities, cut_off = 0.95)
 {
 
@@ -309,52 +309,12 @@ minor_dimensions <- function(wto_output, stabilities, cut_off = 0.95)
     }
 
     # Remove sets
-    keep_index <- rowSums(minor_matrix != 0) > 1
-    # redundant_variables <- redundant_variables[keep_index]
-    minor_matrix <- minor_matrix[keep_index,, drop = FALSE]
+    minor_matrix <- minor_matrix[rowSums(minor_matrix != 0) > 1,, drop = FALSE]
 
   }
 
-  # # Loop over redundant variables and return keep and remove
-  # selection_list <- lapply(seq_along(redundant_variables), function(index){
-  #
-  #   # Obtain all nodes
-  #   all_nodes <- obtain_redundant_variables(redundant_variables, index)
-  #
-  #   # Determine whether to use wTO or standard deviation
-  #   if(length(all_nodes) > 2){
-  #
-  #     # Selection index based on maximum average
-  #     # wTO value to other redundant variables
-  #     selection_index <- which.min(
-  #       colMeans(wto_output[all_nodes, all_nodes], na.rm = TRUE)
-  #     )
-  #
-  #   }else{ # Only two nodes
-  #
-  #     # Selection index based on lowest maximum
-  #     # wTO value to all other variables
-  #     selection_index <- which.min(
-  #       apply(wto_output[all_nodes, -all_nodes], 1, max, na.rm = TRUE)
-  #     )
-  #
-  #   }
-  #
-  #   # Return list
-  #   return(
-  #     list(
-  #       keep = all_nodes[selection_index],
-  #       remove = all_nodes[-selection_index]
-  #     )
-  #   )
-  #
-  # })
-
   # Set up keys
-  minor_matrix[] <- apply(minor_matrix, 2, function(x){
-    swiftelse(x == 0, "", key[x])
-  })
-  minor_matrix <- as.data.frame(minor_matrix)
+  minor_matrix <- as.data.frame(ifelse(minor_matrix == 0, "", key[minor_matrix]))
   colnames(minor_matrix) <- NULL
 
   # Return results
