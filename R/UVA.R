@@ -230,7 +230,7 @@ UVA <- function(
   }else{ # Branch for redundancies
 
     # Combine indices into a list
-    redundant_variables <- get_redundancy_list(wto_output, as.matrix(wto_indices))
+    redundant_variables <- get_redundancy_list(wto_output, wto_indices)
 
     # Check for reduction
     if(!reduce){
@@ -543,7 +543,8 @@ get_redundancy_list <- function(wto_output, wto_indices)
       overlapping_indices <- unlist(
         node_columns[
           node_columns[,"node_i"] == target_index |
-          node_columns[,"node_j"] == target_index,
+          node_columns[,"node_j"] == target_index,,
+          drop = FALSE
         ]
       )
 
