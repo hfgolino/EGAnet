@@ -57,7 +57,7 @@
 #' @export
 #'
 # Item diagnostics ----
-# Updated 07.04.2025
+# Updated 08.04.2025
 itemDiagnostics <- function(data, minor.method = c("cosine", "residuals"), ...)
 {
 
@@ -75,6 +75,25 @@ itemDiagnostics <- function(data, minor.method = c("cosine", "residuals"), ...)
 
   # Perform bootEGA
   boot <- bootEGA(data, ...)
+
+  # Identify two node communities
+  ## Get node counts
+  node_counts <- EGAnet:::fast_table(boot$EGA$wc)
+
+  ## Check for two node communities
+  communities <- names(node_counts[node_counts == 2])
+
+  ## Set up data frame
+  two_node <- as.data.frame(
+    do.call(rbind, lapply(
+      communities, function(community){
+        names(boot$EGA$wc)[boot$EGA$wc == community]
+      }
+    ))
+  )
+
+  ## Set row names to communities and remove column names
+  row.names(two_node) <- communities; colnames(two_node) <- NULL
 
   # Obtain item stabilities
   stabilities <- boot$stability$item.stability$item.stability$empirical.dimensions
@@ -115,10 +134,12 @@ itemDiagnostics <- function(data, minor.method = c("cosine", "residuals"), ...)
 
   # Obtain loadings
   loadings <- silent_call(net.loads(boot$EGA, ...))
-  loadings_unstable <- loadings$std[low_names,, drop = FALSE]
+
+  # Obtain unstable loadings and make them absolute for the following checks
+  loadings_unstable <- abs(loadings$std[low_names,, drop = FALSE])
 
   # Check for multidimensional
-  multidimensional <- low_names[rowSums(abs(loadings_unstable) >= 0.20) > 1]
+  multidimensional <- low_names[rowSums(loadings_unstable >= 0.20) > 1]
 
   # Check for low loadings
   low_loadings <- low_names[
@@ -137,6 +158,9 @@ itemDiagnostics <- function(data, minor.method = c("cosine", "residuals"), ...)
   diagnostic_df$diagnostic <- paste0(
     diagnostic_df$diagnostic, swiftelse(low_names %in% low_loadings, "Low ", "")
   )
+  diagnostic_df$diagnostic <- paste0(
+    diagnostic_df$diagnostic, swiftelse(low_names %in% two_node, "Two ", "")
+  )
 
   # Set names for diagnostics
   row.names(diagnostic_df) <- low_names
@@ -145,8 +169,8 @@ itemDiagnostics <- function(data, minor.method = c("cosine", "residuals"), ...)
   # Set results
   results <- list(
     diagnostics = diagnostic_df,
-    boot = boot, uva = uva,
-    minor = minor, loadings = loadings
+    boot = boot, uva = uva, minor = minor,
+    loadings = loadings, two_node = two_node
   )
 
   # Set class
@@ -183,7 +207,7 @@ itemDiagnostics_errors <- function(data, ...)
 
 #' @exportS3Method
 # S3 Print Method ----
-# Updated 05.04.2025
+# Updated 08.04.2025
 print.itemDiagnostics <- function(x, ...)
 {
 
@@ -220,6 +244,10 @@ print.itemDiagnostics <- function(x, ...)
     swiftelse(
       any(lvapply(diagnostics, function(x){"Low" %in% x})),
       "'Low' = low loading (see `$loadings`)", ""
+    ),
+    swiftelse(
+      any(lvapply(diagnostics, function(x){"Two" %in% x})),
+      "'Two' = two-node community (see `$two_node`)", ""
     )
   )
 
@@ -264,7 +292,7 @@ minor_dimensions <- function(wto_output, stabilities, cut_off = 0.95)
   n_lengths <- length(lengths)
 
   # Check for lengths
-  if(length(lengths) == 0){
+  if(n_lengths == 0){
     return(matrix(0, nrow = n_lengths, ncol = 0))
   }
 
@@ -274,8 +302,11 @@ minor_dimensions <- function(wto_output, stabilities, cut_off = 0.95)
   # Order from least to most
   redundant_variables <- redundant_variables[order(lengths)]
 
+  # Initial columns
+  minor_columns <- max_length + 1
+
   # Create matrix
-  minor_matrix <- matrix(0, nrow = n_lengths, ncol = max_length + 1)
+  minor_matrix <- matrix(0, nrow = n_lengths, ncol = minor_columns)
 
   # Populate matrix
   for(i in seq_len(n_lengths)){
@@ -287,6 +318,13 @@ minor_dimensions <- function(wto_output, stabilities, cut_off = 0.95)
     minor_matrix[i, seq_along(variables)] <- variables
 
   }
+
+  # Only select rows that have 3 or less nodes
+  less_than <- rowSums(minor_matrix != 0) < 4
+  minor_matrix <- minor_matrix[
+    less_than, seq_len(swiftelse(minor_columns < 3, minor_columns, 3)), drop = FALSE
+  ]
+  n_lengths <- sum(less_than)
 
   # Check for more than one
   if(n_lengths > 1){
@@ -362,5 +400,134 @@ loadings_remove <- function(boot, stabilities, cut_off = 0.35, ...)
 
   # Send labels
   return(names(max_loadings[max_loadings < cut_off]))
+
+}
+
+#' @noRd
+# Automated node selection ----
+# Updated 08.04.2025
+automated_selection <- function(result)
+{
+
+  # Collect diagnostics
+  diagnostics <- strsplit(result$diagnostics$diagnostic, split = " ")
+
+  # Set tracker and diagnostics names
+  tracker <- names(diagnostics) <- row.names(result$diagnostics)
+
+  # Identify unique tags
+  unique_tags <- unique(unlist(diagnostics))
+
+  # Track diagnostics
+  tracker <- names(diagnostics)
+
+  # Set column indices
+  index <- seq_along(result$boot$EGA$wc)
+  names(index) <- names(result$boot$EGA$wc)
+
+  # Set good nodes
+  good_nodes <- setdiff(names(index), tracker)
+
+  # Initialize keep list
+  keep_list <- vector("list", length = length(unique_tags))
+  names(keep_list) <- unique_tags
+
+  # 1. Check for two node communities
+  if("Two" %in% unique_tags){
+
+    # Get number of two node communities
+    n_two <- dim(result$two_node)[1]
+
+    # Set keep vector
+    keep <- character(length = n_two)
+
+    # Loop over to select node to keep
+    for(i in seq_len(n_two)){
+
+      # Get index
+      current_index <- index[unlist(result$two_node[i,])]
+
+      # Selection index based on lowest maximum wTO value to all other variables
+      keep[i] <- names(
+        which.min(
+          apply(result$uva$wto$matrix[current_index, -current_index], 1, max, na.rm = TRUE)
+        )
+      )
+
+      # Remove from tracker
+      tracker <- tracker[!tracker %in% names(current_index)]
+
+    }
+
+    # Update keep list
+    keep_list$Two <- keep
+
+  }
+
+  # 2. Check for minor dimensions
+  if("MiD" %in% unique_tags){
+
+    # Get number of minor dimensions
+    n_minor <- dim(result$minor)[1]
+
+    # Set up keep list
+    keep <- vector("list", length = n_minor)
+
+    # Loop over to select node to keep
+    for(i in seq_len(n_minor)){
+
+      # Get index
+      current_index <- as.character(result$minor[i,])
+
+      # Check for tracker
+      check_tracker <- current_index %in% tracker
+      check_tracker <- current_index[check_tracker]
+
+      # Continue with remaining variables
+      if(length(check_tracker) != 0){
+
+        # Keep highest loading
+        keep[[i]] <- check_tracker[
+          which.max(
+            apply(abs(result$loadings$std[check_tracker,, drop = FALSE]), 1, max)
+          )
+        ]
+
+        # Remove from tracker
+        tracker <- tracker[!tracker %in% check_tracker]
+
+      }
+
+    }
+
+    # Update keep list
+    keep_list$MiD <- keep
+
+  }
+
+  # 3. Check for multidimensional
+  if("MuD" %in% unique_tags){
+
+    # Get multidimensional
+    multidimesnional <- diagnostics[lvapply(diagnostics, function(x){"MuD" %in% x})]
+
+    # Remove indices from tracker
+    tracker <- tracker[!tracker %in% names(multidimesnional)]
+
+  }
+
+  # 4. Check for low loadings
+  if("Low" %in% unique_tags){
+
+    # Get low loadings
+    low_loadings <- diagnostics[lvapply(diagnostics, function(x){"Low" %in% x})]
+
+    # Remove indices from tracker
+    tracker <- tracker[!tracker %in% names(low_loadings)]
+
+  }
+
+  # Return remaining good, tracker, and keep nodes
+  return(c(good_nodes, tracker, unlist(keep_list, use.names = FALSE)))
 
 }
