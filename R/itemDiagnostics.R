@@ -69,14 +69,14 @@ itemDiagnostics <- function(data, minor.method = c("cosine", "residuals"), ...)
   # Check for errors
   data <- itemDiagnostics_errors(data, ...)
 
-  # Get node names
-  node_names <- dimnames(data)[[2]]
-
   # Send message
   message("Performing bootstrap...")
 
   # Perform bootEGA
   boot <- bootEGA(data, ...)
+
+  # Get node names
+  node_names <- dimnames(boot$EGA$network)[[2]]
 
   # Identify two node communities
   ## Get node counts
@@ -103,9 +103,10 @@ itemDiagnostics <- function(data, minor.method = c("cosine", "residuals"), ...)
   # Select for low stabilities
   low_stabilities <- stabilities[stabilities < 0.75]
   low_names <- names(low_stabilities)
+  n_low_stabilities <- length(low_stabilities)
 
   # Check for good stability
-  if(length(low_stabilities) == 0){
+  if(n_low_stabilities < 2){
 
     # Catch ellipse
     ellipse <- list(...)
@@ -113,11 +114,18 @@ itemDiagnostics <- function(data, minor.method = c("cosine", "residuals"), ...)
     # Set up message
     message <- "All items have good stability (>= 0.75)"
 
+    # Add except message
+    if(n_low_stabilities == 1){
+      message <- paste0(
+        message, " except for ",
+        low_names, ".\nRemoval is suggested\n")
+    }
+
     # Check for verbose
     if("verbose" %in% names(ellipse) && ellipse$verbose){
-      cat(message)
+      message(message)
     }else{
-      cat(message)
+      message(message)
     }
 
     # Return shell of results
@@ -125,7 +133,11 @@ itemDiagnostics <- function(data, minor.method = c("cosine", "residuals"), ...)
       list(
         boot = boot, uva = UVA(data, reduce = FALSE, ...),
         loadings = silent_call(net.loads(boot$EGA, ...)),
-        suggested = node_names
+        suggested = swiftelse(
+          n_low_stabilities == 1,
+          node_names[node_names != low_names],
+          node_names
+        )
       )
     )
 
@@ -143,13 +155,14 @@ itemDiagnostics <- function(data, minor.method = c("cosine", "residuals"), ...)
   minor <- switch(
     minor.method,
     "cosine" = minor_dimensions(
+      ega = boot$EGA,
       wto_output = uva$wto$matrix,
-      stabilities = boot$stability$item.stability$item.stability$all.dimensions[low_names,],
+      stabilities = boot$stability$item.stability$item.stability$all.dimensions[low_names,, drop = FALSE],
       cut_off = 0.95
     ),
     "residuals" = loadings_remove(
       boot = boot,
-      stabilities = boot$stability$item.stability$item.stability$all.dimensions[low_names,],
+      stabilities = boot$stability$item.stability$item.stability$all.dimensions[low_names,, drop = FALSE],
       cut_off = 0.35, ...
     )
   )
@@ -292,14 +305,14 @@ summary.itemDiagnostics <- function(object, ...)
 #' @noRd
 # Cosine for minor dimensions stabilities ----
 # Updated 07.04.2025
-minor_dimensions <- function(wto_output, stabilities, cut_off = 0.95)
+minor_dimensions <- function(ega, wto_output, stabilities, cut_off = 0.95)
 {
 
   # Transpose stabilities
   stabilities <- t(stabilities)
 
   # Obtain cosines
-  cosines <- EGAnet::cosine(stabilities)
+  cosines <- cosine(stabilities)
   key <- colnames(cosines)
 
   # Identify cosines greater than cut-off
@@ -380,6 +393,55 @@ minor_dimensions <- function(wto_output, stabilities, cut_off = 0.95)
   zeros <- minor_matrix == 0
   minor_matrix[!zeros] <- key[minor_matrix]
   minor_matrix[zeros] <- ""
+
+  # Double-check true minor dimensions
+  total <- dim(minor_matrix)[1]
+  total_sequence <- seq_len(total)
+  extra_dimensions <- seq.int(ega$n.dim + 1, ega$n.dim + total)
+
+  # Create new structure with minor dimensions
+  for(i in total_sequence){
+
+    # Identify variables
+    variables <- minor_matrix[i,]
+
+    # Update EGA dimensions
+    ega$wc[variables[variables != ""]] <- extra_dimensions[i]
+
+  }
+
+  # Compute loadings
+  loadings <- EGAnet:::silent_call(net.loads(ega)$std)
+
+  # Numeric communities
+  numeric_communities <- as.numeric(dimnames(loadings)[[2]])
+
+  # Check over minor dimensions
+  for(i in total_sequence){
+
+    # Identify variables
+    variables <- minor_matrix[i,]
+    variables <- variables[variables != ""]
+
+    # Check loadings
+    greater_than <- loadings[
+      variables, numeric_communities == extra_dimensions[i]
+    ] > 0.20
+
+    # Check whether to keep
+    keep <- !(is.na(greater_than) | !greater_than)
+
+    # Update minor matrix
+    minor_matrix[i, seq_along(keep)] <- swiftelse(keep, variables, "")
+
+  }
+
+  # Ensure at least two variables
+  minor_matrix <- minor_matrix[
+    apply(minor_matrix, 1, function(x){sum(x != "")}) > 1,, drop = FALSE
+  ]
+
+  # Re-organize
   minor_matrix <- t(apply(minor_matrix, 1, sort, decreasing = TRUE))
   minor_matrix <- as.data.frame(minor_matrix)
   colnames(minor_matrix) <- NULL
@@ -457,6 +519,9 @@ automated_selection <- function(result)
   keep_list <- vector("list", length = length(unique_tags))
   names(keep_list) <- unique_tags
 
+  # Community sequence
+  community_sequence <- seq_len(result$boot$EGA$n.dim)
+
   # 1. Check for two node communities
   if("Two" %in% unique_tags){
 
@@ -511,10 +576,14 @@ automated_selection <- function(result)
       # Continue with remaining variables
       if(length(check_tracker) != 0){
 
-        # Keep highest loading
+        # Keep the highest stability
         keep[[i]] <- check_tracker[
           which.max(
-            apply(abs(result$loadings$std[check_tracker,, drop = FALSE]), 1, max)
+            apply(
+              result$boot$stability$item.stability$item.stability$all.dimensions[
+                check_tracker, community_sequence
+              ], 1, max
+            )
           )
         ]
 
