@@ -44,6 +44,8 @@
 #'
 #' \item{loadings}{Output from \code{\link[EGAnet]{net.loads}}}
 #'
+#' \item{suggested}{Variables that are suggested to be retained to increase item stability}
+#'
 #' @examples
 #' # Load data
 #' wmt <- wmt2[,7:24]
@@ -104,9 +106,29 @@ itemDiagnostics <- function(data, minor.method = c("cosine", "residuals"), ...)
 
   # Check for good stability
   if(length(low_stabilities) == 0){
+
+    # Catch ellipse
+    ellipse <- list(...)
+
+    # Set up message
     message <- "All items have good stability (>= 0.75)"
-    cat(message)
-    return(message)
+
+    # Check for verbose
+    if("verbose" %in% names(ellipse) && ellipse$verbose){
+      cat(message)
+    }else{
+      cat(message)
+    }
+
+    # Return shell of results
+    return(
+      list(
+        boot = boot, uva = UVA(data, reduce = FALSE, ...),
+        loadings = silent_call(net.loads(boot$EGA, ...)),
+        suggested = node_names
+      )
+    )
+
   }
 
   # Perform UVA (for wTO)
@@ -172,6 +194,9 @@ itemDiagnostics <- function(data, minor.method = c("cosine", "residuals"), ...)
     boot = boot, uva = uva, minor = minor,
     loadings = loadings, two_node = two_node
   )
+
+  # Add suggested results
+  results$suggested <- automated_selection(results)
 
   # Set class
   class(results) <- "itemDiagnostics"

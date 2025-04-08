@@ -48,6 +48,8 @@ Returns a list containing:
 a matrix for probable minor dimensions (\code{minor.matrix})}
 
 \item{loadings}{Output from \code{\link[EGAnet]{net.loads}}}
+
+\item{suggested}{Variables that are suggested to be retained to increase item stability}
 }
 \description{
 Computes the between- and within-community
