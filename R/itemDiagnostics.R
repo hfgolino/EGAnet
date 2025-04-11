@@ -6,25 +6,6 @@
 #' @param data Matrix or data frame.
 #' Should consist only of variables to be used in the analysis
 #'
-#' @param minor.method Character (length = 1).
-#' Method to detect the likelihood of minor dimensions.
-#' Available options include:
-#'
-#' \itemize{
-#'
-#' \item \code{"cosine"} (default) --- uses \code{\link[EGAnet]{cosine}} similarity to determine
-#' the similarity of the item stability patterns from \code{\link[EGAnet]{bootEGA}}.
-#' More consistent patterns across multiple dimensions reflect an increased likelihood
-#' of a minor dimension (particularly with respect to extra dimensions forming).
-#' By default, values greater than or equal to \code{0.95} are selected
-#'
-#' \item \code{"residuals"} --- subtracts the network-implied zero-order correlation matrix
-#' from the empirical zero-order correlation matrix to determine residuals. These residuals
-#' are submitted to an \code{\link[EGAnet]{EGA}} and network loadings (\code{\link[EGAnet]{net.loads}})
-#' are re-computed. By default, loadings greater than or equal to \code{0.35} are selected
-#'
-#' }
-#'
 #' @param ... Additional arguments to pass on to
 #' \code{\link[EGAnet]{bootEGA}},
 #' \code{\link[EGAnet]{net.loads}}, and
@@ -59,12 +40,9 @@
 #' @export
 #'
 # Item diagnostics ----
-# Updated 08.04.2025
-itemDiagnostics <- function(data, minor.method = c("cosine", "residuals"), ...)
+# Updated 09.04.2025
+itemDiagnostics <- function(data, ...)
 {
-
-  # Check for missing arguments (argument, default, function)
-  minor.method <- set_default(minor.method, "cosine", itemDiagnostics)
 
   # Check for errors
   data <- itemDiagnostics_errors(data, ...)
@@ -80,7 +58,7 @@ itemDiagnostics <- function(data, minor.method = c("cosine", "residuals"), ...)
 
   # Identify two node communities
   ## Get node counts
-  node_counts <- EGAnet:::fast_table(boot$EGA$wc)
+  node_counts <- fast_table(boot$EGA$wc)
 
   ## Check for two node communities
   communities <- names(node_counts[node_counts == 2])
@@ -112,7 +90,7 @@ itemDiagnostics <- function(data, minor.method = c("cosine", "residuals"), ...)
     ellipse <- list(...)
 
     # Set up message
-    message <- "All items have good stability (>= 0.75)"
+    message <- "All items have good stability (>= 0.75)\n"
 
     # Add except message
     if(n_low_stabilities == 1){
@@ -123,9 +101,9 @@ itemDiagnostics <- function(data, minor.method = c("cosine", "residuals"), ...)
 
     # Check for verbose
     if("verbose" %in% names(ellipse) && ellipse$verbose){
-      message(message)
+      cat(message)
     }else{
-      message(message)
+      cat(message)
     }
 
     # Return shell of results
@@ -152,19 +130,10 @@ itemDiagnostics <- function(data, minor.method = c("cosine", "residuals"), ...)
   ]
 
   # Check for minor dimensions
-  minor <- switch(
-    minor.method,
-    "cosine" = minor_dimensions(
-      ega = boot$EGA,
-      wto_output = uva$wto$matrix,
-      stabilities = boot$stability$item.stability$item.stability$all.dimensions[low_names,, drop = FALSE],
-      cut_off = 0.95
-    ),
-    "residuals" = loadings_remove(
-      boot = boot,
-      stabilities = boot$stability$item.stability$item.stability$all.dimensions[low_names,, drop = FALSE],
-      cut_off = 0.35, ...
-    )
+  minor <- minor_dimensions(
+    ega = boot$EGA, wto_output = uva$wto$matrix,
+    stabilities = boot$stability$item.stability$item.stability$all.dimensions[low_names,, drop = FALSE],
+    cut_off = 0.95
   )
 
   # Obtain loadings
@@ -411,7 +380,7 @@ minor_dimensions <- function(ega, wto_output, stabilities, cut_off = 0.95)
   }
 
   # Compute loadings
-  loadings <- EGAnet:::silent_call(net.loads(ega)$std)
+  loadings <- silent_call(net.loads(ega)$std)
 
   # Numeric communities
   numeric_communities <- as.numeric(dimnames(loadings)[[2]])

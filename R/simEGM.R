@@ -169,9 +169,6 @@ simEGM <- function(
   K <- solve(R)
   P <- -cov2cor(K); diag(P) <- 0
 
-  # Obtain structure based on random walk
-  # adjacency <- random_walk(P, total_variables, sample.size, 0.001)
-
   # Return results
   return(
     list(
@@ -257,11 +254,11 @@ random_walk <- function(P, total_variables, sample_size, p_value = 0.05)
   total_edges <- total_variables * (total_variables - 1) / 2
 
   # Calculate probability of null edge connection
-  prob_null <- 1 / total_edges
+  prob_null <- 1 / total_variables
 
   # Critical value
   T_cv <- prob_null + qnorm(p_value, lower.tail = FALSE) *
-    sqrt(prob_null * (1 - prob_null) / total_edges) # SE
+    sqrt(prob_null * (1 - prob_null) / sample_size) # SE
 
   # Return adjacency
   return(T_matrix > T_cv)
