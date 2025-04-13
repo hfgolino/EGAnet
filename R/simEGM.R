@@ -16,7 +16,7 @@
 #'
 #' @param cross.loadings Numeric (length = 1).
 #' Standard deviation of a normal distribution with a mean of zero (\code{n, mean = 0, sd = value}).
-#' Defaults to \code{0.02}.
+#' Defaults to \code{0.01}.
 #' Not recommended to change too drastically (small increments such as \code{0.01} work best)
 #'
 #' @param correlations Numeric (length = 1).
@@ -42,10 +42,10 @@
 #' @export
 #'
 # Simulate EGM ----
-# Updated 06.04.2025
+# Updated 13.04.2025
 simEGM <- function(
     communities, variables,
-    loadings, cross.loadings = 0.02,
+    loadings, cross.loadings = 0.01,
     correlations, sample.size,
     max.iterations = 1000
 ){
@@ -165,9 +165,10 @@ simEGM <- function(
   # Set variable names
   colnames(data) <- node_names
 
-  # Obtain precision and partial correlations
+  # Obtain precision, partial correlations, and adjacency matrices
   K <- solve(R)
   P <- -cov2cor(K); diag(P) <- 0
+  adjacency <- beta_min(P, membership, K, total_variables, sample.size)
 
   # Return results
   return(
@@ -177,8 +178,8 @@ simEGM <- function(
       population_precision = K,
       population_partial_correlation = P,
       parameters = list(
-        # adjacency = adjacency,
-        # network = P * adjacency,
+        adjacency = adjacency,
+        network = P * adjacency,
         loadings = loading_structure,
         correlations = correlations,
         membership = membership,
@@ -236,65 +237,30 @@ simEGM_errors <- function(
 }
 
 #' @noRd
-# Random walk structure ----
-# Updated 06.04.2025
-random_walk <- function(P, total_variables, sample_size, p_value = 0.05)
+# beta-min criterion ----
+# Updated 13.04.2025
+beta_min <- function(P, membership = NULL, K, total_variables, sample_size)
 {
 
-  # Obtain absolute values
-  absolute <- abs(P)
+  # Obtain modularity-adjusted beta-min criterion
+  minimum <- swiftelse(
+    is.null(membership), 1, modularity(P, membership)
+  ) * sqrt(log(total_variables) / sample_size)
 
-  # Set diagonal to maximum value
-  diag(absolute) <- apply(absolute, 1, max)
+  # Obtain inverse variances
+  inverse_variances <- diag(K)
 
-  # Transition matrix
-  T_matrix <- make_symmetric(absolute)
+  # Obtain betas
+  beta <- P * sqrt(outer(inverse_variances, inverse_variances, FUN = "/"))
 
-  # Calculate total edges
-  total_edges <- total_variables * (total_variables - 1) / 2
+  # Set adjacency matrix
+  adjacency <- abs(beta) > minimum
 
-  # Calculate probability of null edge connection
-  prob_null <- 1 / total_variables
+  # Attach minimum
+  attr(adjacency, "beta.min") <- minimum
 
-  # Critical value
-  T_cv <- prob_null + qnorm(p_value, lower.tail = FALSE) *
-    sqrt(prob_null * (1 - prob_null) / sample_size) # SE
+  # Return adjacency matrix
+  return(adjacency)
 
-  # Return adjacency
-  return(T_matrix > T_cv)
-
-}
-
-#' @noRd
-# Make matrix symmetric ----
-# Updated 06.04.2025
-make_symmetric <- function(A, tol = 1e-06)
-{
-
-  # Loop until within tolerance
-  while(abs(sum(c(1 - rowSums(A), 1 - colSums(A)))) > tol){
-
-    # Normalize by rows
-    A <- A / rowSums(A)
-
-    # Normalize by columns
-    A <- A / colSums(A)
-
-    # Make symmetric
-    A <- (A + t(A)) / 2
-
-  }
-
-  # Return matrix
-  return(A)
-
-}
-
-#' @noRd
-# Significance structure ----
-# Updated 06.04.2025
-significance <- function(P, total_variables, sample_size, p_value = 0.05)
-{
-  return(p_partial(r2z(abs(P)), total_variables, sample_size) < p_value)
 }
 

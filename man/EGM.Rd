@@ -6,13 +6,13 @@
 \usage{
 EGM(
   data,
-  EGM.model = c("standard", "EGA"),
+  EGM.model = c("beta.min", "EGA", "probability"),
   communities = NULL,
   structure = NULL,
   search = FALSE,
   p.in = NULL,
   p.out = NULL,
-  opt = c("AIC", "BIC", "logLik", "SRMR"),
+  opt = c("logLik", "SRMR"),
   constrain.structure = TRUE,
   constrain.zeros = TRUE,
   verbose = TRUE,
@@ -30,12 +30,16 @@ Available options:
 
 \itemize{
 
+\item \code{"beta.min"} --- Applies the \code{\link[EGAnet]{modularity}}-adjusted
+beta-min criterion (\code{sqrt(log(ncol(data)) / n)}) to threshold the implied
+partial correlation matrix
+
 \item \code{"EGA"} (default) --- Applies \code{\link[EGAnet]{EGA}} to obtain the
 (sparse) regularized network structure, communities, and memberships
 
-\item \code{"standard"} --- Applies the standard EGM model which
-estimates communities based on the non-regularized empirical partial
-correlation matrix and sparsity is set using \code{p.in} and \code{p.out}
+\item \code{"probability"} --- Estimates communities based on the non-regularized
+empirical partial correlation matrix and sparsity is set using probabilities for the
+within- \code{p.in} and between-community \code{p.out} connectivity
 
 }}
 
@@ -75,21 +79,8 @@ Defaults to \code{NULL} but must be set}
 \item{opt}{Character vector (length = 1).
 Fit index used to select from when searching over models
 (only applies to \code{search = TRUE}).
-Available options include:
-
-\itemize{
-
-\item \code{"AIC"}
-
-\item \code{"BIC"}
-
-\item \code{"logLik"}
-
-\item \code{"SRMR"}
-
-}
-
-Defaults to \code{"SRMR"}}
+Available options include maximum likelihood (default; \code{"logLik"}) and
+standardized root mean residual (\code{"SRMR"})}
 
 \item{constrain.structure}{Boolean (length = 1).
 Whether memberships of the communities should

@@ -8,7 +8,7 @@ simEGM(
   communities,
   variables,
   loadings,
-  cross.loadings = 0.02,
+  cross.loadings = 0.01,
   correlations,
   sample.size,
   max.iterations = 1000
@@ -29,7 +29,7 @@ Uses \code{runif(n, min = value - 0.075, max = value + 0.075)} for some jitter i
 
 \item{cross.loadings}{Numeric (length = 1).
 Standard deviation of a normal distribution with a mean of zero (\code{n, mean = 0, sd = value}).
-Defaults to \code{0.02}.
+Defaults to \code{0.01}.
 Not recommended to change too drastically (small increments such as \code{0.01} work best)}
 
 \item{correlations}{Numeric (length = 1).

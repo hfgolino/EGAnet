@@ -267,184 +267,13 @@ logLik_gradient <- function(
 
 }
 
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-## Akaike Information Criterion ----
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-#' @noRd
-# Compute AIC ----
-# Updated 02.04.2025
-aic <- function(n, p, R, S, loadings, type)
-{
-
-  # Total number of parameters
-  parameters <- p * dim(loadings)[2] - sum(loadings == 0)
-
-  # Return AIC
-  return(-2 * log_likelihood(n, p, R, S, type) + 2 * parameters)
-
-}
-
-#' @noRd
-# AIC cost
-# Updated 04.04.2025
-aic_cost <- function(
-    loadings_vector, R,
-    loading_structure, rows, n, v,
-    constrained, lower_triangle, ...
-)
-{
-
-  # Check for constraint
-  if(constrained){
-
-    # Get implied R
-    implied_R <- obtain_implied(loadings_vector, rows)
-
-    # Assemble loading matrix
-    loadings_matrix <- attributes(implied_R)$calculations$loadings
-
-    # Obtain differences
-    differences <- abs(loadings_matrix) - loadings_matrix[loading_structure]
-
-    # Check for positive definite
-    return(aic(n, v, implied_R, R, loadings_matrix, type = "zero") + sum(differences > 0))
-
-  }else{ # Without constraints, send it
-
-    # Get implied R
-    implied_R <- obtain_implied(loadings_vector, rows)
-
-    # Check for positive definite
-    return(aic(n, v, implied_R, R, attributes(implied_R)$calculations$loadings, type = "zero"))
-
-  }
-
-}
-
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-## Bayesian Information Criterion ----
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-#' @noRd
-# Compute BIC ----
-# Updated 02.04.2025
-bic <- function(n, p, R, S, loadings, type)
-{
-
-  # Total number of parameters
-  parameters <- p * dim(loadings)[2] - sum(loadings == 0)
-
-  # Return BIC
-  return(-2 * log_likelihood(n, p, R, S, type) + parameters * log(n))
-
-}
-
-#' @noRd
-# BIC cost
-# Updated 04.04.2025
-bic_cost <- function(
-    loadings_vector, R,
-    loading_structure, rows, n, v,
-    constrained, lower_triangle, ...
-)
-{
-
-  # Check for constraint
-  if(constrained){
-
-    # Get implied R
-    implied_R <- obtain_implied(loadings_vector, rows)
-
-    # Assemble loading matrix
-    loadings_matrix <- attributes(implied_R)$calculations$loadings
-
-    # Obtain differences
-    differences <- abs(loadings_matrix) - loadings_matrix[loading_structure]
-
-    # Check for positive definite
-    return(bic(n, v, implied_R, R, loadings_matrix, type = "zero") + sum(differences > 0))
-
-  }else{ # Without constraints, send it
-
-    # Get implied R
-    implied_R <- obtain_implied(loadings_vector, rows)
-
-    # Check for positive definite
-    return(bic(n, v, implied_R, R, attributes(implied_R)$calculations$loadings, type = "zero"))
-
-  }
-
-}
-
-#' @noRd
-# IC gradient
-# Updated 04.04.2025
-ic_gradient <- function(
-    loadings_vector, R,
-    loading_structure, rows, n, v,
-    constrained, lower_triangle, ...
-)
-{
-
-  # Check for constraint
-  if(constrained){
-
-    # Get implied and inverse R
-    implied_R <- obtain_implied(loadings_vector, rows)
-    inverse_R <- solve(implied_R)
-
-    # Assemble loading matrix
-    loadings_matrix <- attributes(implied_R)$calculations$loadings
-
-    # Obtain differences
-    differences <- abs(loadings_matrix) - loadings_matrix[loading_structure]
-
-    # Compute error
-    error <- (n * (inverse_R - inverse_R %*% R %*% inverse_R))[lower_triangle]
-
-    # Derivative of error with respect to P (covariance)
-    dError <- matrix(0, nrow = v, ncol = v)
-    dError[lower_triangle] <- error
-    dError <- dError + t(dError)
-    I <- attributes(implied_R)$calculations$I
-
-    # Return gradient
-    return(
-      as.vector(t(crossprod(loadings_matrix, I %*% tcrossprod(dError, I))) + (differences > 0))
-    )
-
-  }else{ # Without constraints, send it
-
-    # Get implied and inverse R
-    implied_R <- obtain_implied(loadings_vector, rows)
-    inverse_R <- solve(implied_R)
-
-    # Compute error
-    error <- (n * (inverse_R - inverse_R %*% R %*% inverse_R))[lower_triangle]
-
-    # Derivative of error with respect to P (covariance)
-    dError <- matrix(0, nrow = v, ncol = v)
-    dError[lower_triangle] <- error
-    dError <- dError + t(dError)
-    I <- attributes(implied_R)$calculations$I
-
-    # Return gradient
-    return(
-      as.vector(t(crossprod(attributes(implied_R)$calculations$loadings, I %*% tcrossprod(dError, I))))
-    )
-
-  }
-
-}
-
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ## Optimization Function ----
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #' @noRd
 # EGM optimization
-# Updated 04.04.2025
+# Updated 11.04.2025
 egm_optimize <- function(
     loadings_vector, loadings_length,
     zeros, R, loading_structure, rows, n, v,
@@ -458,15 +287,11 @@ egm_optimize <- function(
         start = loadings_vector,
         objective = switch(
           opt,
-          "aic" = aic_cost,
-          "bic" = bic_cost,
           "loglik" = logLik_cost,
           "srmr" = srmr_cost
         ),
         gradient = switch(
           opt,
-          "aic" = ic_gradient,
-          "bic" = ic_gradient,
           "loglik" = logLik_gradient,
           "srmr" = srmr_gradient
         ),

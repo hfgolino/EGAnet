@@ -373,7 +373,7 @@ network.estimation_errors <- function(data, n, network.only, verbose, ...)
 
 #' @noRd
 # Send Network Methods for S3 ----
-# Updated 06.11.2024
+# Updated 13.04.2025
 send_network_methods <- function(estimated_network, boot = FALSE)
 {
 
@@ -386,15 +386,31 @@ send_network_methods <- function(estimated_network, boot = FALSE)
   # Send output text based on model
   if(model == "egm"){
 
-    # Send model
-    cat(
-      paste0(
-        "Model: ", toupper(methods$model),
-        "\nCommunities: ", methods$communities,
+    # Basic starting output
+    start <- paste0(
+      "Model: ", toupper(methods$model),
+      "\nCommunities: ", methods$communities
+    )
+
+    # Check for "beta.min" in attributes
+    if("beta.min" %in% names(methods)){
+
+      # Add to start
+      start <- paste0(start, "\nBeta-min: ", methods$beta.min)
+
+    }else{
+
+      # Add to start
+      start <- paste0(
+        start,
         "\nEdge probabilities: ", format_decimal(methods$p.in, 2),
         " (in) & ", format_decimal(methods$p.out, 2), " (out)"
       )
-    )
+
+    }
+
+    # Send model
+    cat(start)
 
   }else if(model == "bggm"){ # BGGM
 
