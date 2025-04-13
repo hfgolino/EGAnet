@@ -235,32 +235,3 @@ simEGM_errors <- function(
   range_error(max.iterations, c(1, Inf), "simEGM")
 
 }
-
-#' @noRd
-# beta-min criterion ----
-# Updated 13.04.2025
-beta_min <- function(P, membership = NULL, K, total_variables, sample_size)
-{
-
-  # Obtain modularity-adjusted beta-min criterion
-  minimum <- swiftelse(
-    is.null(membership), 1, modularity(P, membership)
-  ) * sqrt(log(total_variables) / sample_size)
-
-  # Obtain inverse variances
-  inverse_variances <- diag(K)
-
-  # Obtain betas
-  beta <- P * sqrt(outer(inverse_variances, inverse_variances, FUN = "/"))
-
-  # Set adjacency matrix
-  adjacency <- abs(beta) > minimum
-
-  # Attach minimum
-  attr(adjacency, "beta.min") <- minimum
-
-  # Return adjacency matrix
-  return(adjacency)
-
-}
-

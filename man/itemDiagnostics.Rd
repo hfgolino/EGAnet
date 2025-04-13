@@ -33,8 +33,12 @@ a matrix for probable minor dimensions (\code{minor.matrix})}
 \item{suggested}{Variables that are suggested to be retained to increase item stability}
 }
 \description{
-Computes the between- and within-community
-\code{strength} of each variable for each community
+Computes item diagnostics to determine whether there exist several
+potential psychometric issues that affect \code{\link[EGAnet]{itemStability}}.
+These issues include local dependence (using \code{\link[EGAnet]{UVA}}),
+minor dimensions (using \code{\link[EGAnet]{cosine}} on the stability patterns),
+multidimensional items (using \code{\link[EGAnet]{net.loads}}), and
+items with low loadings (using \code{\link[EGAnet]{net.loads}})
 }
 \examples{
 # Load data

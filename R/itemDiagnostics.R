@@ -1,7 +1,11 @@
 #' @title Diagnostics Analysis for Low Stability Items
 #'
-#' @description Computes the between- and within-community
-#' \code{strength} of each variable for each community
+#' @description Computes item diagnostics to determine whether there exist several
+#' potential psychometric issues that affect \code{\link[EGAnet]{itemStability}}.
+#' These issues include local dependence (using \code{\link[EGAnet]{UVA}}),
+#' minor dimensions (using \code{\link[EGAnet]{cosine}} on the stability patterns),
+#' multidimensional items (using \code{\link[EGAnet]{net.loads}}), and
+#' items with low loadings (using \code{\link[EGAnet]{net.loads}})
 #'
 #' @param data Matrix or data frame.
 #' Should consist only of variables to be used in the analysis
@@ -40,7 +44,7 @@
 #' @export
 #'
 # Item diagnostics ----
-# Updated 09.04.2025
+# Updated 13.04.2025
 itemDiagnostics <- function(data, ...)
 {
 

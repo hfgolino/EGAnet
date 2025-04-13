@@ -15,7 +15,7 @@
 #' guaranteed to never be smaller than any cross-loadings.
 #' Set to \code{FALSE} to freely estimate each loading similar to exploratory factor analysis
 #'
-#' #' \emph{Note: This default differs from} \code{\link[EGAnet]{EGM}}\emph{.
+#' \emph{Note: This default differs from} \code{\link[EGAnet]{EGM}}\emph{.
 #' Constraining loadings puts EGM at a deficit relative to EFA and therefore
 #' biases the comparability between the methods. It's best to leave the
 #' default of unconstrained when using this function.}
@@ -31,7 +31,12 @@
 #' biases the comparability between the methods. It's best to leave the
 #' default of unconstrained when using this function.}
 #'
-#' @param rotation Character.
+#' @param fm Character (length = 1).
+#' Estimation method for the EFA.
+#' See argument in \code{\link[psych]{fa}} for more details.
+#' Defaults to \code{"ml"} or maximum likelihood
+#'
+#' @param rotation Character (length = 1).
 #' A rotation to use to obtain a simpler structure for EFA.
 #' For a list of rotations, see \code{\link[GPArotation]{rotations}} for options.
 #' Defaults to \code{"geominQ"}
@@ -63,8 +68,11 @@
 #' @export
 #
 # Compare EGM to EFA ----
-# Updated 04.11.2024
-EGM.compare <- function(data, constrain.structure = FALSE, constrain.zeros = FALSE, rotation = "geominQ", ...)
+# Updated 13.04.2025
+EGM.compare <- function(
+    data, constrain.structure = FALSE, constrain.zeros = FALSE,
+    fm = "ml", rotation = "geominQ", ...
+)
 {
 
   # Obtain ellipse
@@ -119,7 +127,7 @@ EGM.compare <- function(data, constrain.structure = FALSE, constrain.zeros = FAL
   efa <- get_factor_results(
     output = psych::fa(
       egm$EGA$correlation, n.obs = dimensions[2],
-      nfactors = communities, rotate = "none", ...
+      nfactors = communities, fm = fm, rotate = "none", ...
     ), rotation = rotation, egm = egm,
     dimensions = dimensions, ...
   )

@@ -30,16 +30,16 @@ Available options:
 
 \itemize{
 
-\item \code{"beta.min"} --- Applies the \code{\link[EGAnet]{modularity}}-adjusted
-beta-min criterion (\code{sqrt(log(ncol(data)) / n)}) to threshold the implied
-partial correlation matrix
+\item \code{"beta.min"} --- Applies the \code{\link[EGAnet]{modularity}}-adjusted (\code{Q})
+beta-min criterion to threshold the implied partial correlation matrix
+\deqn{Q \times \sqrt{\frac{\log{(p)}}{n}}}
 
 \item \code{"EGA"} (default) --- Applies \code{\link[EGAnet]{EGA}} to obtain the
 (sparse) regularized network structure, communities, and memberships
 
 \item \code{"probability"} --- Estimates communities based on the non-regularized
 empirical partial correlation matrix and sparsity is set using probabilities for the
-within- \code{p.in} and between-community \code{p.out} connectivity
+within- (\code{p.in}) and between-community (\code{p.out}) connectivity
 
 }}
 
@@ -131,13 +131,8 @@ egm_ega_structure <- EGM(
   )
 )
 
-# Estimate EGM (using standard)
-egm_standard <- EGM(
-  data, EGM.model = "standard",
-  communities = 3, # specify number of communities
-  p.in = 0.95, # probability of edges *in* each community
-  p.out = 0.80 # probability of edges *between* each community
-)
+# Estimate EGM (using beta-min condition)
+egm_ega_search <- EGM(data, EGM.model = "beta.min")
 
 \dontrun{
 # Estimate EGM (using EGA search)
@@ -145,14 +140,9 @@ egm_ega_search <- EGM(
   data, EGM.model = "EGA", search = TRUE
 )
 
-# Estimate EGM (using EGA search and AIC criterion)
-egm_ega_search_AIC <- EGM(
-  data, EGM.model = "EGA", search = TRUE, opt = "AIC"
-)
-
 # Estimate EGM (using search)
 egm_search <- EGM(
-  data, EGM.model = "standard", search = TRUE,
+  data, EGM.model = "probability", search = TRUE,
   communities = 3, # need communities or structure
   p.in = 0.95 # only need 'p.in'
 )}

@@ -1,6 +1,13 @@
 WEBSITE: https://r-ega.net
 
-## Changes in version 2.2.1
+## Changes in version 2.3.1
+
++	FIX: documentation for `itemDiagnostics`
+
++	UPDATE: beta-min condition is used to supply a model-implied network for `simEGM`
+
+
+## Changes in version 2.3.0
 
 +	ADD: `itemDiagnostics` for automated detection of potential instability issues such as local dependnece, minor dimensions, multidimensionality, and low loadings
 
