@@ -226,7 +226,7 @@ EGM.compare_errors <- function(data, ...)
 
 #' @exportS3Method
 # S3 Print Method ----
-# Updated 07.11.2024
+# Updated 13.04.2025
 print.EGM.compare <- function(x, ...)
 {
 
@@ -282,15 +282,18 @@ print.EGM.compare <- function(x, ...)
 
   # Add lowest of each column to bottom row
   rounded[-2, "best"] <- c("EGM", "EFA")[minimums]
-  rounded$best[avoid_ps] <- NA
-  rounded$best[rounded$EGM == rounded$EFA] <- NA
-  rounded$best[is.na(rounded$best)] <- ""
+
+  # Ensure difference is meaningful
+  rounded$best[abs(rounded$EGM - rounded$EFA) < 0.001] <- "~"
+
+  # Fill in exchangeable with missing
+  rounded$best[avoid_ps] <- ""
 
   # Print to smallest decimal
   print(rounded)
 
   # Obtain values for likelihood ratio test
-  q <- x$fit$EGM[1] - x$fit$EFA[1]
+  q <- round(x$fit$EGM[1] - x$fit$EFA[1], 3)
   df <- x$fit$EGM[2] - x$fit$EFA[2]
   p <- pchisq(q, df, lower.tail = FALSE)
 
@@ -298,9 +301,12 @@ print.EGM.compare <- function(x, ...)
   cat(
     paste0(
       "\nLikelihood ratio test: X^2 (", df, ") = ",
-      round(q, 3), ", p ", swiftelse(
-        p < 0.001, "< 0.001", paste0("= ", round(p, 3))
-      ), swiftelse(p < 0.05, " (EFA preferred)", " (EGM preferred)"), "\n"
+      q, ", p ", swiftelse(
+        (q > 0) & (p < 0.001), "< 0.001", paste0("= ", round(p, 3))
+      ), swiftelse(
+        q == 0, " (about equal)",
+        swiftelse(p < 0.05, " (EFA preferred)", " (EGM preferred)")
+      ), "\n"
     )
   )
 
