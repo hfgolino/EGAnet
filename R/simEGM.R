@@ -8,9 +8,12 @@
 #' @param variables Numeric vector (length = 1 or \code{communities}).
 #' Number of variables per community
 #'
-#' @param loadings Numeric (length = 1).
+#' @param loadings Numeric (length = 1, \code{communities}, or
+#' total variables \eqn{\times} \code{communities}).
 #' Magnitude of the assigned network loadings.
-#' For reference, small (0.20), moderate (0.35), and large (0.50)
+#' For reference, small (0.20), moderate (0.35), and large (0.50).
+#' Input can be a loading matrix but must have the dimensions:
+#' total variables \eqn{\times} \code{communities}
 #'
 #' Uses \code{runif(n, min = value - 0.075, max = value + 0.075)} for some jitter in the loadings
 #'
@@ -19,8 +22,11 @@
 #' Defaults to \code{0.01}.
 #' Not recommended to change too drastically (small increments such as \code{0.01} work best)
 #'
-#' @param correlations Numeric (length = 1).
-#' Magnitude of the community correlations
+#' @param correlations Numeric (length = 1 or
+#' \code{communities} \eqn{\times} \code{communities} matrix).
+#' Magnitude of the community correlations.
+#' Input can be a correlations matrix but must have the dimensions:
+#' \code{communities} \eqn{\times} \code{communities}
 #'
 #' @param sample.size Numeric (length = 1).
 #' Number of observations to generate
@@ -42,7 +48,7 @@
 #' @export
 #'
 # Simulate EGM ----
-# Updated 13.04.2025
+# Updated 14.04.2025
 simEGM <- function(
     communities, variables,
     loadings, cross.loadings = 0.01,
@@ -77,79 +83,168 @@ simEGM <- function(
     "V", format_integer(seq_len(total_variables), digits(total_variables) - 1)
   )
 
-  # Initialize structure matrix
-  loading_structure <- matrix(
-    0, nrow = total_variables, ncol = communities,
-    dimnames = list(
-      node_names,
-      format_integer(community_sequence, digits(communities) - 1) # community names
-    )
-  )
-
-  # Fill structure
-  for(i in seq_len(total_variables)){
-    loading_structure[i, membership[i]] <- 1
-  }
-
-  # Count iterations
-  count <- 0
-
   # Initialize checks
-  PD_check <- CC_check <- FALSE
+  PD_check <- FALSE
 
-  # Ensure proper matrix
-  while(!PD_check){
+  # Check that loadings matrix is not already supplied
+  if(length(as.matrix(loadings)) == (total_variables * communities)){
 
-    # Increase count
-    count <- count + 1
+    # Obtain population correlation matrix
+    R <- nload2cor(loadings)
 
-    # Check for max iterations
-    if(count >= max.iterations){
+    # Check for positive definite
+    PD_check <- is_positive_definite(R)
+
+    # Set error if not positive definite
+    if(!PD_check){
 
       # Stop and send error
       .handleSimpleError(
         h = stop,
         msg = paste0(
-          "Maximum iterations reached with no convergence. \n\n",
-          "Try:\n",
-          "  +  increasing 'loadings'\n",
-          "  +  increasing 'sample.size'\n",
-          "  +  decreasing 'correlations'"
+          "Matrix input into 'loadings' does not produce a positive definite ",
+          "correlation matrix.\n\n",
+          "Check your matrix using: `eigen(EGAnet:::nload2cor(loadings))$values`"
         ),
         call = "simEGM"
       )
 
     }
 
-    # Generate within-community loadings
+    # Initialize correlation matrix
+    correlations <- matrix(0, nrow = communities, ncol = communities)
+
+    # Loop over loadings to derive correlations
     for(i in community_sequence){
 
       # Get block index
-      block_index <- loading_structure[,i] == 1
+      block_index <- membership == i
 
-      # Set assigned loadings
-      loading_structure[block_index, i] <- runif_xoshiro(
-        sum(block_index), min = loadings - 0.075, max = loadings + 0.075
-      )
+      # Get mean loadings for block
+      mean_assigned <- 1 - mean(loadings[block_index, i])
 
-      # Get off-diagonal indices
-      off_index <- loading_structure[,i] == 0
+      # Loop over other blocks
+      for(j in community_sequence){
 
-      # Set correlations
-      loading_structure[off_index, i] <- 0.25 * correlations /
-        ((1 - loading_structure[block_index, i]) * sqrt(log(total_variables)))
+        # Except for itself
+        if(i != j){
 
-      # Add cross-loadings
-      loading_structure[off_index, i] <- loading_structure[off_index, i] +
-        rnorm_ziggurat(sum(off_index)) * cross.loadings
+          # Estimate correlations
+          correlations[j,i] <- correlations[i,j] <- 4 * mean(loadings[block_index,j]) *
+            (mean_assigned * sqrt(log(total_variables)))
+
+        }
+
+      }
 
     }
 
-    # Obtain population correlation matrix
-    R <- nload2cor(loading_structure)
+    # Set diagonal to 1 (add count for return)
+    diag(correlations) <- count <- 1
 
-    # Check for positive definite
-    PD_check <- is_positive_definite(R)
+    # Set loading structure for return
+    loading_structure <- loadings
+
+  }else{ # Generate the matrix
+
+    # Initialize structure matrix
+    loading_structure <- matrix(
+      0, nrow = total_variables, ncol = communities,
+      dimnames = list(
+        node_names,
+        format_integer(community_sequence, digits(communities) - 1) # community names
+      )
+    )
+
+    # Set up loadings
+    if(!is.matrix(loadings)){
+
+      # Ensure length of communities
+      if(length(loadings) == 1){
+        loadings <- rep(loadings, communities)
+      }
+
+    }
+
+    # Set up correlations
+    if(!is.matrix(correlations)){
+
+      # Initialize correlation matrix
+      correlations <- matrix(correlations, nrow = communities, ncol = communities)
+
+      # Set diagonal to 1
+      diag(correlations) <- 1
+
+    }
+
+    # Count iterations
+    count <- 0
+
+    # Ensure proper matrix
+    while(!PD_check){
+
+      # Increase count
+      count <- count + 1
+
+      # Check for max iterations
+      if(count >= max.iterations){
+
+        # Stop and send error
+        .handleSimpleError(
+          h = stop,
+          msg = paste0(
+            "Maximum iterations reached with no convergence. \n\n",
+            "Try:\n",
+            "  +  increasing 'loadings'\n",
+            "  +  increasing 'sample.size'\n",
+            "  +  decreasing 'correlations'"
+          ),
+          call = "simEGM"
+        )
+
+      }
+
+      # Generate within-community loadings
+      for(i in community_sequence){
+
+        # Get block index
+        block_index <- membership == i
+
+        # Get number of variables
+        block_variables <- sum(block_index)
+
+        # Set assigned loadings
+        loading_structure[block_index, i] <- runif_xoshiro(
+          block_variables, min = loadings[i] - 0.075, max = loadings[i] + 0.075
+        )
+
+        # Loop over cross-loadings
+        for(j in community_sequence){
+
+          # Except for itself
+          if(i != j){
+
+            # Set correlations
+            loading_structure[block_index, j] <- 0.25 * correlations[i,j] /
+              ((1 - loading_structure[block_index, i]) * sqrt(log(total_variables)))
+
+            # Add cross-loadings
+            loading_structure[block_index, j] <- loading_structure[block_index, j] +
+              rnorm_ziggurat(block_variables) * cross.loadings
+
+          }
+
+        }
+
+      }
+
+      # Obtain population correlation matrix
+      R <- nload2cor(loading_structure)
+
+      # Check for positive definite
+      PD_check <- is_positive_definite(R)
+
+    }
 
   }
 
@@ -192,7 +287,7 @@ simEGM <- function(
 
 #' @noRd
 # Errors ----
-# Updated 06.04.2025
+# Updated 14.04.2025
 simEGM_errors <- function(
     communities, variables, loadings, cross.loadings,
     correlations, sample.size, max.iterations
@@ -209,8 +304,19 @@ simEGM_errors <- function(
   typeof_error(variables, "numeric", "simEGM")
   range_error(variables, c(1, Inf), "simEGM")
 
+  # Check for variables
+  total_variables <- swiftelse(
+    length(variables) == 1,
+    communities * communities * variables,
+    communities * sum(variables)
+  )
+
   # 'loadings'
-  length_error(loadings, c(1, communities), "simEGM")
+  length_error(
+    as.matrix(loadings), # set matrix for length detection
+    c(1, communities, total_variables), # ensure one, communities, or matrix
+    "simEGM"
+  )
   typeof_error(loadings, "numeric", "simEGM")
   range_error(loadings, c(-1, 1), "simEGM")
 
@@ -220,7 +326,11 @@ simEGM_errors <- function(
   range_error(cross.loadings, c(0, 1), "simEGM")
 
   # 'correlations'
-  length_error(correlations, c(1, communities), "simEGM")
+  length_error(
+    as.matrix(correlations), # set matrix for length detection
+    c(1, communities * communities), # ensure one value or matrix
+    "simEGM"
+  )
   typeof_error(correlations, "numeric", "simEGM")
   range_error(correlations, c(0, 1), "simEGM")
 

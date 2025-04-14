@@ -21,9 +21,12 @@ Number of communities to generate}
 \item{variables}{Numeric vector (length = 1 or \code{communities}).
 Number of variables per community}
 
-\item{loadings}{Numeric (length = 1).
+\item{loadings}{Numeric (length = 1, \code{communities}, or
+total variables \eqn{\times} \code{communities}).
 Magnitude of the assigned network loadings.
-For reference, small (0.20), moderate (0.35), and large (0.50)
+For reference, small (0.20), moderate (0.35), and large (0.50).
+Input can be a loading matrix but must have the dimensions:
+total variables \eqn{\times} \code{communities}
 
 Uses \code{runif(n, min = value - 0.075, max = value + 0.075)} for some jitter in the loadings}
 
@@ -32,8 +35,11 @@ Standard deviation of a normal distribution with a mean of zero (\code{n, mean =
 Defaults to \code{0.01}.
 Not recommended to change too drastically (small increments such as \code{0.01} work best)}
 
-\item{correlations}{Numeric (length = 1).
-Magnitude of the community correlations}
+\item{correlations}{Numeric (length = 1 or
+\code{communities} \eqn{\times} \code{communities} matrix).
+Magnitude of the community correlations.
+Input can be a correlations matrix but must have the dimensions:
+\code{communities} \eqn{\times} \code{communities}}
 
 \item{sample.size}{Numeric (length = 1).
 Number of observations to generate}
