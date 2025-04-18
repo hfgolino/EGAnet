@@ -277,7 +277,7 @@ summary.itemDiagnostics <- function(object, ...)
 
 #' @noRd
 # Cosine for minor dimensions stabilities ----
-# Updated 07.04.2025
+# Updated 18.04.2025
 minor_dimensions <- function(ega, wto_output, stabilities, cut_off = 0.95)
 {
 
@@ -330,12 +330,12 @@ minor_dimensions <- function(ega, wto_output, stabilities, cut_off = 0.95)
 
   }
 
-  # Only select rows that have 3 or less nodes
-  less_than <- rowSums(minor_matrix != 0) < 4
-  minor_matrix <- minor_matrix[
-    less_than, seq_len(swiftelse(minor_columns < 3, minor_columns, 3)), drop = FALSE
-  ]
-  n_lengths <- sum(less_than)
+  # # Only select rows that have 3 or less nodes
+  # less_than <- rowSums(minor_matrix != 0) < 4
+  # minor_matrix <- minor_matrix[
+  #   less_than, seq_len(swiftelse(minor_columns < 3, minor_columns, 3)), drop = FALSE
+  # ]
+  # n_lengths <- sum(less_than)
 
   # Check for more than one
   if(n_lengths > 1){
@@ -383,8 +383,8 @@ minor_dimensions <- function(ega, wto_output, stabilities, cut_off = 0.95)
 
   }
 
-  # Compute loadings
-  loadings <- silent_call(net.loads(ega)$std)
+  # Compute loadings (make absolute for check below)
+  loadings <- abs(silent_call(net.loads(ega)$std))
 
   # Numeric communities
   numeric_communities <- as.numeric(dimnames(loadings)[[2]])
