@@ -22,12 +22,26 @@
 #' \code{10} makes loadings roughly the size of factor loadings when correlations
 #' between factors are orthogonal
 #'
-#' @param rotation Character.
+#' @param rotation Character (length = 1).
 #' A rotation to use to obtain a simpler structure.
 #' For a list of rotations, see \code{\link[GPArotation]{rotations}} for options.
 #' Defaults to \code{NULL} or no rotation.
 #' By setting a rotation, \code{scores} estimation will be
 #' based on the rotated loadings rather than unrotated loadings
+#'
+#' @param ordered Character (length = 1).
+#' How the loadings should be ordered in the output.
+#' Available options:
+#'
+#' \itemize{
+#'
+#' \item \code{"descending"} (default) --- Sorts loadings in descending
+#' order on their assigned community. This option is best for interpretation
+#'
+#' \item \code{"variable"} --- Keeps variables in the same order as the
+#' original network. This option is best for analyses
+#'
+#' }
 #'
 #' @param ... Additional arguments to pass on to \code{\link[GPArotation]{rotations}}
 #'
@@ -77,19 +91,20 @@
 #' \emph{Multivariate Behavioral Research}, 1-25.
 #'
 #' \strong{Revised network loadings} \cr
-#' Christensen, A. P., Golino, H., Abad, F. J., & Garrido, L. E. (2024).
+#' Christensen, A. P., Golino, H., Abad, F. J., & Garrido, L. E. (2025).
 #' Revised network loadings.
-#' \emph{PsyArXiv}.
+#' \emph{Behavior Research Methods}, 57, 114.
 #'
 #' @author Alexander P. Christensen <alexpaulchristensen@gmail.com> and Hudson Golino <hfg9s at virginia.edu>
 #'
 #' @export
 #'
 # Network Loadings ----
-# Updated 06.03.2025
+# Updated 23.04.2025
 net.loads <- function(
     A, wc, loading.method = c("original", "revised"),
-    scaling = 2, rotation = NULL, ...
+    scaling = 2, rotation = NULL,
+    ordered = c("descending", "variable"), ...
 )
 {
 
@@ -110,6 +125,9 @@ net.loads <- function(
     loading.method <- set_default(loading.method, "revised", net.loads)
 
   }
+
+  # Check for missing arguments (argument, default, function)
+  ordered <- set_default(ordered, "descending", net.loads)
 
   # Organize and extract input (handles argument errors)
   # `wc` is made to be a character vector to allow `NA`
@@ -181,7 +199,9 @@ net.loads <- function(
   standardized <- standardize(unstandardized, loading.method, A, wc, scaling)
 
   # Get descending order
-  standardized <- descending_order(standardized, wc, unique_communities, node_names)
+  if(ordered == "descending"){
+    standardized <- descending_order(standardized, wc, unique_communities, node_names)
+  }
 
   # Check for rotation
   if(!is.null(rotation)){
@@ -284,7 +304,6 @@ net.loads <- function(
 
   # Return results
   return(results)
-
 
 }
 

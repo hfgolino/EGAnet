@@ -10,6 +10,7 @@ net.loads(
   loading.method = c("original", "revised"),
   scaling = 2,
   rotation = NULL,
+  ordered = c("descending", "variable"),
   ...
 )
 }
@@ -33,12 +34,26 @@ Defaults to \code{2}.
 \code{10} makes loadings roughly the size of factor loadings when correlations
 between factors are orthogonal}
 
-\item{rotation}{Character.
+\item{rotation}{Character (length = 1).
 A rotation to use to obtain a simpler structure.
 For a list of rotations, see \code{\link[GPArotation]{rotations}} for options.
 Defaults to \code{NULL} or no rotation.
 By setting a rotation, \code{scores} estimation will be
 based on the rotated loadings rather than unrotated loadings}
+
+\item{ordered}{Character (length = 1).
+How the loadings should be ordered in the output.
+Available options:
+
+\itemize{
+
+\item \code{"descending"} (default) --- Sorts loadings in descending
+order on their assigned community. This option is best for interpretation
+
+\item \code{"variable"} --- Keeps variables in the same order as the
+original network. This option is best for analyses
+
+}}
 
 \item{...}{Additional arguments to pass on to \code{\link[GPArotation]{rotations}}}
 }
@@ -95,9 +110,9 @@ Problems with centrality measures in psychopathology symptom networks: Why netwo
 \emph{Multivariate Behavioral Research}, 1-25.
 
 \strong{Revised network loadings} \cr
-Christensen, A. P., Golino, H., Abad, F. J., & Garrido, L. E. (2024).
+Christensen, A. P., Golino, H., Abad, F. J., & Garrido, L. E. (2025).
 Revised network loadings.
-\emph{PsyArXiv}.
+\emph{Behavior Research Methods}, 57, 114.
 }
 \author{
 Alexander P. Christensen <alexpaulchristensen@gmail.com> and Hudson Golino <hfg9s at virginia.edu>

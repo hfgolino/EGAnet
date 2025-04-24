@@ -44,7 +44,7 @@
 #' @export
 #'
 # Item diagnostics ----
-# Updated 13.04.2025
+# Updated 24.04.2025
 itemDiagnostics <- function(data, ...)
 {
 
@@ -94,13 +94,13 @@ itemDiagnostics <- function(data, ...)
     ellipse <- list(...)
 
     # Set up message
-    message <- "All items have good stability (>= 0.75)\n"
+    message <- "All items have good stability (>= 0.75) "
 
     # Add except message
     if(n_low_stabilities == 1){
       message <- paste0(
-        message, " except for ",
-        low_names, ".\nRemoval is suggested\n")
+        message, "except for '",
+        low_names, "'.\nRemoval is suggested\n")
     }
 
     # Check for verbose
@@ -115,7 +115,7 @@ itemDiagnostics <- function(data, ...)
       list(
         boot = boot, uva = UVA(data, reduce = FALSE, ...),
         loadings = silent_call(net.loads(boot$EGA, ...)),
-        suggested = swiftelse(
+        keep = swiftelse(
           n_low_stabilities == 1,
           node_names[node_names != low_names],
           node_names

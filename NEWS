@@ -4,6 +4,10 @@ WEBSITE: https://r-ega.net
 
 +	FIX: documentation for `itemDiagnostics`
 
++	FIX: `$keep` output from `itemDiagnostics` rather than `$suggested`
+
++	UPDATE: added argument, `ordered`, to either output `net.loads` in the initial variable order or descending order for each community
+
 +	UPDATE: beta-min condition is used to supply a model-implied network for `simEGM`
 
 
