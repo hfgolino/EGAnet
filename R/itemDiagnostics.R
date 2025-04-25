@@ -114,7 +114,7 @@ itemDiagnostics <- function(data, ...)
     return(
       list(
         boot = boot, uva = UVA(data, reduce = FALSE, ...),
-        loadings = silent_call(net.loads(boot$EGA, ...)),
+        loadings = silent_call(net.loads(boot$EGA, ordered = "variable", ...)),
         suggested = swiftelse(
           n_low_stabilities == 1,
           node_names[node_names != low_names],
@@ -137,11 +137,11 @@ itemDiagnostics <- function(data, ...)
   minor <- minor_dimensions(
     ega = boot$EGA, wto_output = uva$wto$matrix,
     stabilities = boot$stability$item.stability$item.stability$all.dimensions[low_names,, drop = FALSE],
-    cut_off = 0.95
+    cut_off = 0.95, ...
   )
 
   # Obtain loadings
-  loadings <- silent_call(net.loads(boot$EGA, ...))
+  loadings <- silent_call(net.loads(boot$EGA, ordered = "variable", ...))
 
   # Obtain unstable loadings and make them absolute for the following checks
   loadings_unstable <- abs(loadings$std[low_names,, drop = FALSE])
@@ -278,7 +278,7 @@ summary.itemDiagnostics <- function(object, ...)
 #' @noRd
 # Cosine for minor dimensions stabilities ----
 # Updated 18.04.2025
-minor_dimensions <- function(ega, wto_output, stabilities, cut_off = 0.95)
+minor_dimensions <- function(ega, wto_output, stabilities, cut_off = 0.95, ...)
 {
 
   # Transpose stabilities
@@ -384,7 +384,7 @@ minor_dimensions <- function(ega, wto_output, stabilities, cut_off = 0.95)
   }
 
   # Compute loadings (make absolute for check below)
-  loadings <- abs(silent_call(net.loads(ega)$std))
+  loadings <- abs(silent_call(net.loads(ega, ordered = "variable", ...)$std))
 
   # Numeric communities
   numeric_communities <- as.numeric(dimnames(loadings)[[2]])
@@ -432,7 +432,7 @@ loadings_remove <- function(boot, stabilities, cut_off = 0.35, ...)
 
   # Compute loadings
   loadings <- silent_call(
-    net.loads(boot$EGA, ...)$std[dimnames(boot$EGA$network)[[2]],, drop = FALSE]
+    net.loads(boot$EGA, ordered = "variable", ...)$std
   )
 
   # Get residuals from implied - empirical correlations
@@ -453,7 +453,7 @@ loadings_remove <- function(boot, stabilities, cut_off = 0.35, ...)
   )
 
   # Get loadings
-  loadings <- silent_call(net.loads(ega, ...)$std[node_names,, drop = FALSE])
+  loadings <- silent_call(net.loads(ega, ordered = "variable", ...)$std)
 
   # Get maximum loadings
   max_loadings <- nvapply(as.data.frame(abs(t(loadings))), function(x){max(x)})
