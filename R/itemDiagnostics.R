@@ -115,7 +115,7 @@ itemDiagnostics <- function(data, ...)
       list(
         boot = boot, uva = UVA(data, reduce = FALSE, ...),
         loadings = silent_call(net.loads(boot$EGA, ...)),
-        keep = swiftelse(
+        suggested = swiftelse(
           n_low_stabilities == 1,
           node_names[node_names != low_names],
           node_names
@@ -465,7 +465,7 @@ loadings_remove <- function(boot, stabilities, cut_off = 0.35, ...)
 
 #' @noRd
 # Automated node selection ----
-# Updated 08.04.2025
+# Updated 25.04.2025
 automated_selection <- function(result)
 {
 
@@ -549,16 +549,32 @@ automated_selection <- function(result)
       # Continue with remaining variables
       if(length(check_tracker) != 0){
 
-        # Keep the highest stability
-        keep[[i]] <- check_tracker[
-          which.max(
-            apply(
-              result$boot$stability$item.stability$item.stability$all.dimensions[
-                check_tracker, community_sequence
-              ], 1, max
+        # Obtain maximum stability
+        stabilities <- apply(
+          result$boot$stability$item.stability$item.stability$all.dimensions[
+            check_tracker, community_sequence
+          ], 1, max
+        )
+
+        # Get indices for maximum stabilities
+        max_index <- stabilities == max(stabilities)
+
+        # Check for single highest value
+        if(sum(max_index) == 1){
+          keep[[i]] <- check_tracker[which.max(stabilities)]
+        }else{ # Determine based on wTO values
+
+          # Get current index
+          current_index <- index[names(stabilities)[max_index]]
+
+          # Selection index based on lowest maximum wTO value to all other variables
+          keep[[i]] <- names(
+            which.min(
+              apply(result$uva$wto$matrix[current_index, -current_index], 1, max, na.rm = TRUE)
             )
           )
-        ]
+
+        }
 
         # Remove from tracker
         tracker <- tracker[!tracker %in% check_tracker]
@@ -572,7 +588,7 @@ automated_selection <- function(result)
 
   }
 
-  # 3. Check for multidimensional
+  # 4. Check for multidimensional
   if("MuD" %in% unique_tags){
 
     # Get multidimensional
@@ -583,7 +599,7 @@ automated_selection <- function(result)
 
   }
 
-  # 4. Check for low loadings
+  # 5. Check for low loadings
   if("Low" %in% unique_tags){
 
     # Get low loadings
