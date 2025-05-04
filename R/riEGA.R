@@ -7,7 +7,12 @@
 #'
 #' @param data Matrix or data frame.
 #' Should consist only of variables to be used in the analysis.
-#' \strong{Must} be raw data and not a correlation matrix
+#' Can be raw data or a correlation matrix.
+#'
+#' \emph{If a correlation matrix is input, then the correlations are assumed
+#' to be computed using the original keyed data (where reverse-keyed items remain
+#' reverse-keyed). Using correlations matrices where reverse-keyed items have been
+#' recoded will result in invalid results.}
 #'
 #' @param n Numeric (length = 1).
 #' Sample size if \code{data} provided is a correlation matrix
@@ -232,9 +237,13 @@ riEGA <- function(
 
   # Check that data is not symmetric or square matrix
   if(is_symmetric(data)){
-    stop(
-      "A symmetric matrix was input into 'data'. The original data needs to be used to properly estimate the random-intercept model.",
-      call. = FALSE
+    warning(
+      paste0(
+        "A syemmtric matrix was input into 'data'.\nThe random-intercept model requires that ",
+        "reverse-keyed items remain in their original direction (i.e., reverse-keyed) are not recoded.\n\n",
+        "This function assumes that the correlations were computed using the original keyed data. ",
+        "Results are invalid otherwise."
+      ), call. = FALSE
     )
   }
 

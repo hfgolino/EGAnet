@@ -20,7 +20,12 @@ riEGA(
 \arguments{
 \item{data}{Matrix or data frame.
 Should consist only of variables to be used in the analysis.
-\strong{Must} be raw data and not a correlation matrix}
+Can be raw data or a correlation matrix.
+
+\emph{If a correlation matrix is input, then the correlations are assumed
+to be computed using the original keyed data (where reverse-keyed items remain
+reverse-keyed). Using correlations matrices where reverse-keyed items have been
+recoded will result in invalid results.}}
 
 \item{n}{Numeric (length = 1).
 Sample size if \code{data} provided is a correlation matrix}
