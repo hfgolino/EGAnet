@@ -183,7 +183,7 @@ get_tefi_structure <- function(data, structure, ega_object = NULL)
 
     }else if(get_object_type(structure) == "list"){
 
-      # --- Generalized hierarchical structure handling ---
+      # Generalized hierarchical structure handling
 
       # Check all levels
       level_lengths <- vapply(structure, length, FUN.VALUE = numeric(1))
