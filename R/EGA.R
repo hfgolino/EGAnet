@@ -229,7 +229,7 @@
 #'
 #' @export
 # EGA ----
-# Updated 21.09.2024
+# Updated 05.05.2025
 EGA <- function (
     data, n = NULL,
     corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
@@ -304,7 +304,8 @@ EGA <- function (
   unidimensional_ARGS <- list( # standard arguments
     data = data, n = n, corr = corr, na.data = na.data,
     model = model, uni.method = uni.method,
-    verbose = verbose, needs_usable = FALSE # skips usable data check
+    verbose = verbose, needs_usable = FALSE, # skips usable data check
+    ...
   )
 
   # `data` at this point will be data or correlation matrix
