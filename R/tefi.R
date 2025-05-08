@@ -31,9 +31,7 @@
 #'
 #' \item{VN.Entropy.Fit}{The Generalized Total Entropy Fit Index using Von Neumman's entropy}
 #'
-#' \item{Lower.Order.VN}{Lower order (only) Total Entropy Fit Index}
-#'
-#' \item{Higher.Order.VN}{Higher order (only) Total Entropy Fit Index}
+#' \item{Level_#_VN}{An individual level's Von Neumann's entropy}
 #'
 #'
 #' @examples
@@ -183,10 +181,10 @@ get_tefi_structure <- function(data, structure, ega_object = NULL)
 
     }else if(get_object_type(structure) == "list"){
 
-      # Generalized hierarchical structure handling
+      # Determine if list (for hierarchical structures)
 
       # Check all levels
-      level_lengths <- vapply(structure, length, FUN.VALUE = numeric(1))
+      level_lengths <- nvapply(structure, length)
 
       # Check if first level length matches number of variables
       length_error(structure[[1]], variables, "tefi")
@@ -194,26 +192,34 @@ get_tefi_structure <- function(data, structure, ega_object = NULL)
       # Iterate through levels to check consistency
       for(level in seq_len(length(structure) - 1)){
 
-        lower_memberships <- structure[[level]]
-        higher_memberships <- structure[[level + 1]]
+        # Set higher index
+        higher_index <- level + 1
 
+        # Get length of higher meberships
+        n_higher <- length(higher_memberships)
+
+        # Collect memberships
+        lower_memberships <- structure[[level]]
+        higher_memberships <- structure[[higher_index]]
+
+        # Get unique lower memberships
         lower_communities <- unique_length(lower_memberships)
 
         # Length should be equal to lower_communities or number of variables
-        if(!(length(higher_memberships) %in% c(lower_communities, variables))){
+        if(!(n_higher %in% c(lower_communities, variables))){
           stop(
             paste0(
               "Mismatch in hierarchical structure levels: level ", level,
-              " has ", lower_communities, " communities but level ", level + 1,
-              " does not have matching length (", length(higher_memberships), ")."
+              " has ", lower_communities, " communities but level ", higher_index,
+              " does not have matching length (", n_higher, ")."
             ),
             call. = FALSE
           )
         }
 
         # If higher level only has communities (not expanded to all variables), expand
-        if(length(higher_memberships) == lower_communities){
-          structure[[level + 1]] <- single_revalue_memberships(lower_memberships, higher_memberships)
+        if(n_higher == lower_communities){
+          structure[[higher_index]] <- single_revalue_memberships(lower_memberships, higher_memberships)
         }
 
       }
@@ -227,19 +233,13 @@ get_tefi_structure <- function(data, structure, ega_object = NULL)
 
   }else{
 
-    # Use EGA/hierEGA object if provided
-    if(is(data, "hierEGA")){
-
+    # Get flag for hierarchical
+    if(is(data, "hierEGA")){  # Use internal `hierEGA_structure` from `itemStability`
       structure <- hierEGA_structure(ega_object, structure)
-
-    }else if(is.null(structure)){
-
+    }else if(is.null(structure)){ # Use EGA memberships
       structure <- ega_object$wc
-
-    }else{
-
+    }else{ # Ensure proper length
       length_error(structure, length(ega_object$wc), "tefi")
-
     }
 
   }
@@ -247,18 +247,21 @@ get_tefi_structure <- function(data, structure, ega_object = NULL)
   # Convert if string
   if(is.list(structure)){
 
+    # Check for characters
     structure <- lapply(
       structure, function(x){
+
+        # If characters, then convert to numeric
         swiftelse(is.character(x), as.numeric(reindex_memberships(x)), x)
+
       }
     )
 
   }else if(is.character(structure)){
-
     structure <- as.numeric(reindex_memberships(structure))
-
   }
 
+  # Return structure
   return(structure)
 
 }
@@ -345,7 +348,7 @@ tefi_standard <- function(correlation_matrix, structure, verbose)
 
 #' @noRd
 # `tefi` generalized function ----
-# Updated 03.05.2025
+# Updated 08.05.2025
 generalized_tefi <- function(correlation_matrix, structure, verbose = FALSE)
 {
 
@@ -376,35 +379,43 @@ generalized_tefi <- function(correlation_matrix, structure, verbose = FALSE)
     correlation_matrix <- correlation_matrix[keep_vars, keep_vars]
 
     # Remove NAs from structure
-    structure <- lapply(structure, function(x){ x[keep_vars] })
+    structure <- lapply(structure, function(x){x[keep_vars]})
 
   }
 
   # Von Neumann entropy of total structure
   H_vn <- matrix_entropy(correlation_matrix / dim(correlation_matrix)[2L])
 
+  # Get number of levels
+  n_levels <- length(structure)
+  level_sequence <- seq_len(n_levels)
+
   # Prepare storage for each level's summed entropy
-  summed_entropies <- numeric(length(structure))
-  num_communities <- numeric(length(structure))
+  summed_entropies <- num_communities <- numeric(n_levels)
 
   # Loop over each level of structure
-  for(level in seq_along(structure)){
+  for(level in level_sequence){
+
+    # Set index
+    index <- structure[[level]]
 
     # Unique communities at this level
-    communities <- unique_length(structure[[level]])
-    num_communities[level] <- communities
+    communities <- unique_length(index)
+    num_communities[[level]] <- communities
 
     # Von Neumann entropy for each community
     H_vn_communities <- nvapply(seq_len(communities), function(community){
 
-      indices <- structure[[level]] == community
+      indices <- index == community
       community_matrix <- correlation_matrix[indices, indices]
 
       return(matrix_entropy(community_matrix / dim(community_matrix)[2L]))
 
     })
 
-    summed_entropies[level] <- sum(H_vn_communities, na.rm = TRUE)
+    # Compute sum of the entropies
+    summed_entropies[[level]] <- sum(H_vn_communities, na.rm = TRUE)
+
   }
 
   # Compute generalized TEFI
@@ -415,27 +426,23 @@ generalized_tefi <- function(correlation_matrix, structure, verbose = FALSE)
   # Scaling factor (sqrt of first-order number of communities)
   sqrt_first_order <- sqrt(num_communities[1L])
 
-  # General TEFI (VN Entropy Fit)
-  gen_tefi <- (total_entropy_sum / num_communities[1L]) - (length(structure) * H_vn) +
-    ((length(structure) * H_vn) - total_entropy_sum) * sqrt_first_order
+  # Pre-multiply levels by entropy
+  total_entropy <- n_levels * H_vn
 
-  # TEFI for each level individually
-  individual_tefi <- (summed_entropies / num_communities[1L]) - H_vn +
-    (H_vn - summed_entropies) * sqrt_first_order
-
-  # Prepare result names
-  if(length(structure) > 2){
-
-    result_names <- paste0("Level_", seq_along(structure), "_VN")
-  } else {
-    result_names <- c("Lower.Order.VN", "Higher.Order.VN")
-  }
-
+  # Return results
   return(
     fast.data.frame(
-      c(gen_tefi, individual_tefi),
-      ncol = length(structure) + 1,
-      colnames = c("VN.Entropy.Fit", result_names)
+      c(
+        # Generalized TEFI
+        (total_entropy_sum / num_communities[1L]) - total_entropy +
+        (total_entropy - total_entropy_sum) * sqrt_first_order,
+        # Individual TEFIs
+        (summed_entropies / num_communities[1L]) - H_vn +
+        (H_vn - summed_entropies) * sqrt_first_order
+      ),
+      ncol = n_levels + 1,
+      colnames = c("VN.Entropy.Fit", paste0("Level_", level_sequence, "_VN"))
     )
   )
+
 }

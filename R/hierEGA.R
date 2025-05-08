@@ -281,7 +281,7 @@
 #' @export
 #'
 # Hierarchical EGA ----
-# Updated 12.08.2024
+# Updated 08.05.2025
 hierEGA <- function(
     data,
     # `net.scores` arguments
@@ -546,15 +546,15 @@ hierEGA <- function(
   # Obtain generalized TEFI
   gTEFI <- tefi(results)
 
-  # Set up TEFI results
-  results$lower_order$TEFI <- gTEFI$Lower.Order.VN
+  # Set up TEFI results (2 = first-level)
+  results$lower_order$TEFI <- gTEFI[[2]]
   results$TEFI <- gTEFI$VN.Entropy.Fit
 
   # Set up check for higher order results
   if(higher_order){
 
-    # Set higher order TEFI
-    results$higher_order$TEFI <- gTEFI$Higher.Order.VN
+    # Set higher order TEFI (3 = second-level)
+    results$higher_order$TEFI <- gTEFI[[3]]
 
     # Message for correlated factor vs. bifactor
 

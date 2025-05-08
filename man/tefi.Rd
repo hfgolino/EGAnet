@@ -36,9 +36,7 @@ Returns a data frame with columns:
 
 \item{VN.Entropy.Fit}{The Generalized Total Entropy Fit Index using Von Neumman's entropy}
 
-\item{Lower.Order.VN}{Lower order (only) Total Entropy Fit Index}
-
-\item{Higher.Order.VN}{Higher order (only) Total Entropy Fit Index}
+\item{Level_#_VN}{An individual level's Von Neumann's entropy}
 }
 \description{
 Computes the fit (TEFI) of a dimensionality structure using Von Neumman's entropy
