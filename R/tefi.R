@@ -195,12 +195,12 @@ get_tefi_structure <- function(data, structure, ega_object = NULL)
         # Set higher index
         higher_index <- level + 1
 
-        # Get length of higher meberships
-        n_higher <- length(higher_memberships)
-
         # Collect memberships
         lower_memberships <- structure[[level]]
         higher_memberships <- structure[[higher_index]]
+
+        # Get length of higher memberships
+        n_higher <- length(higher_memberships)
 
         # Get unique lower memberships
         lower_communities <- unique_length(lower_memberships)
