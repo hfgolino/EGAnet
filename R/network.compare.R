@@ -151,7 +151,7 @@
 #' @export
 #'
 # Perform permutations for network structures ----
-# Updated 02.09.2024
+# Updated 13.05.2025
 network.compare <- function(
     base, comparison,
     # EGA arguments
@@ -289,7 +289,7 @@ network.compare <- function(
       "p.value" = c(
         mean(permutated_values[,1] <= empirical_values[1]),
         mean(permutated_values[,2] <= empirical_values[2]),
-        mean(abs(permutated_values[,3]) >= empirical_values[3])
+        mean(abs(permutated_values[,3]) >= abs(empirical_values[3]))
       ),
       "M_permutated" = colMeans(permutated_values),
       "SD_permutated" = apply(permutated_values, 2, sd)
