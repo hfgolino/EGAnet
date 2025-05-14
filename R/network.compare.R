@@ -151,7 +151,7 @@
 #' @export
 #'
 # Perform permutations for network structures ----
-# Updated 13.05.2025
+# Updated 14.05.2025
 network.compare <- function(
     base, comparison,
     # EGA arguments
@@ -177,6 +177,8 @@ network.compare <- function(
 
   # Check for input errors
   error_return <- network.compare_errors(base, comparison, iter, verbose, seed, ...)
+  base <- error_return$base
+  comparison <- error_return$comparison
 
   # Get ellipse
   ellipse <- list(...)

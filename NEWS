@@ -2,6 +2,8 @@ WEBSITE: https://r-ega.net
 
 ## Changes in version 2.3.1
 
++	ADD: `dynamic.network.compare` to compare networks from time series data using the generalized local linear approximation (`glla`)
+
 +	FIX: documentation for `itemDiagnostics`
 
 +	FIX: `$keep` output from `itemDiagnostics` rather than `$suggested`
