@@ -266,7 +266,7 @@
 #' @export
 #'
 # Perform permutations for network structures ----
-# Updated 14.05.2025
+# Updated 15.05.2025
 dynamic.network.compare <- function(
     data, groups,
     # EGA arguments
@@ -350,9 +350,6 @@ dynamic.network.compare <- function(
 
   }
 
-  # Get number of individuals
-  individuals <- unique_length(data[,id])
-  individuals_sequence <- seq_len(individuals)
 
   # Get unique groups (factored)
   unique_factors <- na.omit(unique(groups))
@@ -431,8 +428,10 @@ dynamic.network.compare <- function(
         )
       ]
 
-      # Create new id
-      df$id <- paste0(as.numeric(factor(df$id)), "_group", group)
+      # Create new 'id', 'group', and 'id_group'
+      df$id <- as.numeric(factor(df$id))
+      df$group <- group
+      df$id_group <- paste0(df$id, "_", df$group)
 
       # Return derivatives
       return(df)
@@ -440,59 +439,58 @@ dynamic.network.compare <- function(
     }
   )
 
+  # Create individual sequences
+  individual_sequence <- lapply(derivatives, function(x){seq_along(unique(x$id))})
+  group_sequence <- rep(unique_groups, times = nvapply(individual_sequence, length))
+
   # Set up derivatives data frame
   derivatives <- do.call(rbind.data.frame, derivatives)
 
   # Remove row names (creates issues in `EGA`)
   row.names(derivatives) <- NULL
 
-  # Set up group matrix
-  group_matrix <- matrix(
-    unique_groups, nrow = individuals,
-    ncol = length(unique_groups), byrow = TRUE
-  )
+  # Get indices for variables
+  variable_indices <- !colnames(derivatives) %in% c("id", "group", "id_group")
 
   # Loop some number of iterations
   permutation_list <- parallel_process(
     iterations = (iter - 1), datalist = seeds, FUN = function(seed, ...){
 
-      # Get seeds for individuals
-      individual_seeds <- reproducible_seeds(individuals, seed = seed)
-
-      # Shuffle rows
-      new_groups <- do.call(
-        rbind, lapply(individuals_sequence, function(i){
-          shuffle(group_matrix[i,], seed = individual_seeds[i])
-        })
-      )
-
       # Create new group derivatives
-      new_derivatives <- lapply(unique_groups, function(group){
+      new_derivatives <- lapply(group_pairs, function(pair){
 
         # Obtain new group membership
-        new_membership <- max.col(new_groups == group)
+        new_membership <- shuffle(
+          group_sequence[group_sequence %in% pair], seed = seed
+        )
 
         # Create new ID memberships
-        index <- paste0(individuals_sequence, "_group", new_membership)
+        index <- paste0(unlist(individual_sequence[pair]), "_", new_membership)
+
+        # Target sequence
+        target_sequence <- individual_sequence[[pair[1]]]
 
         # Find IDs in derivatives
-        return(derivatives[derivatives$id %in% index,])
+        return(list(
+          derivatives[
+            derivatives$id_group %in% index[target_sequence],
+            variable_indices
+          ],
+          derivatives[
+            derivatives$id_group %in% index[-target_sequence],
+            variable_indices
+          ]
+        ))
 
       })
 
-      # Compute EGA for the groups
-      ega_groups <- lapply(new_derivatives, function(x){
-        return(
-          EGA(x[,!grepl("id", colnames(x))], plot.EGA = FALSE, ...)
-        )
-      })
 
       # Get statistics
-      permutated <- lapply(group_pairs, function(pair){
+      permutated <- lapply(new_derivatives, function(pair){
 
         # Simplify grabbing networks
-        network1 <- ega_groups[[pair[1]]]$network
-        network2 <- ega_groups[[pair[2]]]$network
+        network1 <- EGA(pair[[1]], plot.EGA = FALSE, ...)$network
+        network2 <- EGA(pair[[2]], plot.EGA = FALSE, ...)$network
 
         # Return statistics
         return(
@@ -515,9 +513,6 @@ dynamic.network.compare <- function(
     }, ncores = ncores, progress = verbose, ...
   )
 
-  # Send message about compiling results
-  message("Compiling results...")
-
   # Separate into pairwise comparisons
   ## Network
   permutated_values <- lapply(pairs_sequence, function(i){
@@ -532,9 +527,7 @@ dynamic.network.compare <- function(
   permutated_matrices <- lapply(pairs_sequence, function(i){
 
     # Nest loop over iterations
-    return(
-      do.call(rbind, lapply(permutation_list, function(x){x[[i]]$empirical_matrix}))
-    )
+    return(lapply(permutation_list, function(x){x[[i]]$empirical_matrix}))
 
   })
 
@@ -601,7 +594,6 @@ dynamic.network.compare <- function(
           SD_permutated = apply(simplify2array(permutated_matrices[[i]]), 1:2, sd, na.rm = TRUE)
         )
       )
-
 
     }
   )
