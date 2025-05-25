@@ -15,6 +15,7 @@ EGM(
   opt = c("logLik", "SRMR"),
   constrain.structure = TRUE,
   constrain.zeros = TRUE,
+  random.starts = 10,
   optimize.network = TRUE,
   verbose = TRUE,
   ...

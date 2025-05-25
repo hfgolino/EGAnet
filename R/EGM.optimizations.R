@@ -251,12 +251,12 @@ logLik_gradient <- function(
 
 }
 
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-## Optimization Function ----
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+## Optimization Functions ----
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #' @noRd
-# EGM optimization
+# EGM optimization ----
 # Updated 11.04.2025
 egm_optimize <- function(
     loadings_vector, loadings_length,
@@ -282,11 +282,70 @@ egm_optimize <- function(
         R = R, loading_structure = loading_structure,
         rows = rows, n = n, v = v,
         constrained = constrained, lower_triangle = lower_triangle,
-        lower = rep(-1, loadings_length) * zeros, upper = zeros,
+        lower = rep(-1, loadings_length) * zeros, upper = zeros ,
         control = list(eval.max = 10000, iter.max = 10000)
       )
     )
   )
+
+}
+
+#' @noRd
+# Random starts ----
+# Updated 25.05.2025
+random_start <- function(
+    standard_loadings, null_P, structure, communities,
+    current_sequence, data_dimensions, empirical_R, opt
+)
+{
+
+  # Set structure
+  for(i in current_sequence){
+    standard_loadings[structure == i, i] <- runif_xoshiro(1, min = 1e-02, max = 1e-05)
+  }
+
+  # Initialize starting values
+  standard_loadings <- crossprod(null_P, standard_loadings)
+
+  # Get loading dimensions
+  dimensions <- dim(standard_loadings)
+  dimension_names <- dimnames(standard_loadings)
+
+  # Obtain loadings vector and get bounds
+  loadings_vector <- as.vector(standard_loadings)
+
+  # Multiply by random value to jitter
+  loadings_length <- length(loadings_vector)
+  zeros <- rep(1, loadings_length)
+
+  # Set up loading structure
+  loading_structure <- matrix(
+    TRUE, nrow = dimensions[1],
+    ncol = dimensions[2],
+    dimnames = list(dimension_names[[1]], dimension_names[[2]])
+  )
+
+  # Optimize over loadings
+  result <- try(
+    egm_optimize(
+      loadings_vector = loadings_vector,
+      loadings_length = loadings_length,
+      zeros = zeros, R = empirical_R,
+      loading_structure = loading_structure,
+      rows = communities, n = data_dimensions[1],
+      v = data_dimensions[2],
+      constrained = FALSE,
+      lower_triangle = lower.tri(empirical_R),
+      opt = opt
+    ), silent = TRUE
+  )
+
+  # Return values
+  if(is(result, "try-error")){
+    return(list(loadings = NULL, fit = NA))
+  }else{
+    return(list(loadings = result$par, fit = result$objective))
+  }
 
 }
 

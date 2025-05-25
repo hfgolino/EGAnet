@@ -150,7 +150,7 @@ EGM <- function(
     p.in = NULL, p.out = NULL,
     opt = c("logLik", "SRMR"),
     constrain.structure = TRUE, constrain.zeros = TRUE,
-    optimize.network = TRUE,
+    random.starts = 10, optimize.network = TRUE,
     verbose = TRUE, ...
 )
 {
@@ -176,14 +176,14 @@ EGM <- function(
   data <- EGM_errors(
     data, EGM.type, communities, p.in, p.out,
     constrain.structure, constrain.zeros,
-    optimize.network, verbose, ...
+    random.starts, optimize.network, verbose, ...
   )
 
   # Switch and return results based on type
   return(
     switch(
       EGM.type,
-      "explore" = EGM.explore(data, communities, optimize.network, opt, ...),
+      "explore" = EGM.explore(data, communities, random.starts, optimize.network, opt, ...),
       "ega" = EGM.EGA(data, structure, opt, constrain.structure, constrain.zeros, ...),
       "ega.search" = EGM.EGA.search(data, communities, structure, opt, constrain.structure, constrain.zeros, verbose, ...),
       "probability" = EGM.probability(data, communities, structure, p.in, p.out, opt, constrain.structure, constrain.zeros, ...),
@@ -199,7 +199,7 @@ EGM <- function(
 EGM_errors <- function(
     data, EGM.type, communities, p.in, p.out,
     constrain.structure, constrain.zeros,
-    optimize.network, verbose, ...
+    random.starts, optimize.network, verbose, ...
 )
 {
 
@@ -252,6 +252,11 @@ EGM_errors <- function(
 
   # Check for EGM type
   if(EGM.type == "explore"){
+
+    # Check 'random.starts' errors
+    length_error(random.starts, 1, "EGM")
+    typeof_error(random.starts, "numeric", "EGM")
+    range_error(random.starts, c(1, Inf), "EGM")
 
     # 'optimize.network' errors
     length_error(optimize.network, 1, "EGM")
@@ -415,14 +420,14 @@ compute_tefi_adjustment <- function(loadings, correlations)
 #' @noRd
 # EGM | Exploratory ----
 # Updated 25.05.2025
-EGM.explore <- function(data, max.communities, optimize.network, opt, ...)
+EGM.explore <- function(data, max.communities, random.starts, optimize.network, opt, ...)
 {
 
   # Obtain data dimensions
   data_dimensions <- dim(data)
 
   # Estimate correlations
-  empirical_R <- auto.correlate(data, ...)
+  empirical_R <- auto.correlate(data)
   empirical_K <- solve(empirical_R)
   empirical_P <- -cov2cor(empirical_K)
   diag(empirical_P) <- 0
@@ -452,85 +457,80 @@ EGM.explore <- function(data, max.communities, optimize.network, opt, ...)
   # Create initial loading structures
 
   # Loading structures
-  loading_structures <- silent_call(
-    lapply(community_sequence, function(communities){
+  loading_structures <- lapply(community_sequence, function(communities){
 
-      # Current sequence
-      current_sequence <- seq_len(communities)
+    # Current sequence
+    current_sequence <- seq_len(communities)
 
-      # Initialize loading matrix
-      standard_loadings <- matrix(
-        0, nrow = data_dimensions[2], ncol = communities,
-        dimnames = list(
-          variable_names, format_integer(
-            current_sequence, digits(communities) - 1
-          )
+    # Initialize loading matrix
+    standard_loadings <- matrix(
+      0, nrow = data_dimensions[2], ncol = communities,
+      dimnames = list(
+        variable_names, format_integer(
+          current_sequence, digits(communities) - 1
         )
       )
+    )
 
-      # Set structure
-      structure <- cutree(walktrap, k = communities)
+    # Set structure
+    structure <- cutree(walktrap, k = communities)
+
+    # Perform 10 random starts
+    starts <- lapply(seq_len(random.starts), function(i){
+      random_start(
+        standard_loadings, null_P, structure, communities,
+        current_sequence, data_dimensions, empirical_R, opt
+      )
+    })
+
+    # Get fits
+    fits <- nvapply(starts, function(x){x$fit})
+
+    # Bad fits
+    bad_fits <- is.na(fits) | (sign(fits) == -1)
+
+    # Check for all bad starts
+    if(all(bad_fits)){
 
       # Set structure
       for(i in current_sequence){
         standard_loadings[structure == i, i] <- 1e-03
       }
 
-      # Initialize starting values
-      standard_loadings <- crossprod(null_P, standard_loadings)
+      # Initialize to starting values
+      loadings <- crossprod(null_P, standard_loadings)
 
-      # Get loading dimensions
-      dimensions <- dim(standard_loadings)
-      dimension_names <- dimnames(standard_loadings)
+    }else{
 
-      # Obtain loadings vector and get bounds
-      loadings_vector <- as.vector(standard_loadings)
-      loadings_length <- length(loadings_vector)
-      zeros <- rep(1, loadings_length)
+      # Update from bad fits
+      good_fits <- starts[!bad_fits]
 
-      # Set up loading structure
-      loading_structure <- matrix(
-        TRUE, nrow = dimensions[1],
-        ncol = dimensions[2],
-        dimnames = list(dimension_names[[1]], dimension_names[[2]])
-      )
-
-      # Optimize over loadings
-      result <- try(
-        egm_optimize(
-          loadings_vector = loadings_vector,
-          loadings_length = loadings_length,
-          zeros = zeros, R = empirical_R,
-          loading_structure = loading_structure,
-          rows = communities, n = data_dimensions[1],
-          v = data_dimensions[2],
-          constrained = FALSE,
-          lower_triangle = lower.tri(empirical_R),
-          opt = opt
-        ), silent = TRUE
-      )
-
-      # Extract optimized loadings
-      if(is(result, "try-error")){
-        return(
-          matrix(
-            1e-06, nrow = dimensions[1],
-            ncol = communities,
-            dimnames = dimension_names
-          )
+      # Convert fits to loadings
+      good_loadings <- lapply(good_fits, function(x){
+        matrix(
+          x$loadings,
+          nrow = data_dimensions[2], ncol = communities,
+          dimnames = dimnames(standard_loadings)
         )
-      }else{
-        return(
-          matrix(
-            result$par, nrow = dimensions[1],
-            ncol = communities,
-            dimnames = dimension_names
-          )
-        )
-      }
+      })
 
-    })
-  )
+      # Check whether loadings are invertible
+      PD <- lvapply(good_loadings, function(x){
+        is_positive_definite(nload2cor(x))
+      })
+
+      # Update fits
+      fits <- nvapply(good_fits[PD], function(x){x$fit})
+
+      # Return optimized loadings
+      loadings <- good_loadings[PD][[which.min(fits)]]
+
+    }
+
+    # Return loadings
+    return(loadings)
+
+  })
 
   # Set lower triangle
   lower_triangle <- lower.tri(empirical_P)
@@ -547,11 +547,11 @@ EGM.explore <- function(data, max.communities, optimize.network, opt, ...)
         # Obtain solution
         membership <- max.col(abs(loadings))
 
-        # Ensure solution is uniquely identified
-        identified <- unique_length(membership) == dim(loadings)[2] & max(abs(loadings)) != 1
-
         # Check that solution is meaningful
-        if(identified){
+        if(
+          unique_length(membership) == dim(loadings)[2] &
+          max(abs(loadings)) != 1
+        ){
 
           # Update beta-min with modularity information
           P <- P * beta_min(
@@ -581,7 +581,7 @@ EGM.explore <- function(data, max.communities, optimize.network, opt, ...)
               logLik = logLik,
               AIC = logLik2 + 2 * parameters,
               BIC = BIC,
-              EBIC = BIC + log(choose(total_parameters, parameters))
+              EBIC = BIC + lchoose(total_parameters, parameters)
             )
           )
 
@@ -605,8 +605,18 @@ EGM.explore <- function(data, max.communities, optimize.network, opt, ...)
     names = variable_names
   )
 
+  # Set communities
+  communities <- unique_length(structure)
+  community_sequence <- seq_len(communities)
+
+  # Set simple loading structure
+  simple_loadings <- optimized_loadings
+  for(i in community_sequence){
+    simple_loadings[structure != i, i] <- 0
+  }
+
   # Compute network scores
-  optimized_scores <- scale(data) %*% optimized_loadings
+  optimized_scores <- scale(data) %*% simple_loadings
 
   # Compute community correlations
   optimized_correlations <- cor(optimized_scores, use = "pairwise")
@@ -615,15 +625,12 @@ EGM.explore <- function(data, max.communities, optimize.network, opt, ...)
   optimized_R <- nload2cor(optimized_loadings)
   optimized_P <- cor2pcor(optimized_R)
 
-  # Use standard beta-min
+  # Community informed beta-min
   network <- optimized_P * beta_min(
     P = optimized_P, membership = structure,
     K = empirical_K, total_variables = data_dimensions[2],
     sample_size = data_dimensions[1]
   )
-
-  # Extract beta-min
-  beta.min <- attributes(network)$beta.min
 
   # Obtain network
   if(optimize.network){
@@ -640,7 +647,7 @@ EGM.explore <- function(data, max.communities, optimize.network, opt, ...)
       network_vector = network_vector,
       network_length = network_length,
       R = optimized_R, n = data_dimensions[1],
-      v = data_dimensions[2], lower_triangle = lower.tri(empirical_R),
+      v = data_dimensions[2], lower_triangle = lower_triangle,
       zeros = zeros,  opt = "srmr" # likely best to keep as SRMR?
     )
 
@@ -661,7 +668,7 @@ EGM.explore <- function(data, max.communities, optimize.network, opt, ...)
       dimension = structure
     ),
     network = network, wc = structure,
-    n.dim = unique_length(structure), correlation = empirical_R,
+    n.dim = communities, correlation = empirical_R,
     n = data_dimensions[1], TEFI = tefi(empirical_R, structure)$VN.Entropy.Fit
   ); class(ega_list) <- "EGA"
 
@@ -1442,7 +1449,7 @@ beta_min <- function(P, membership = NULL, K, total_variables, sample_size)
 
   # Obtain modularity-adjusted beta-min criterion
   minimum <- swiftelse(
-    is.null(membership), 1, modularity(P, membership)
+    is.null(membership), 1, modularity(P, membership) / unique_length(membership)
   ) * sqrt(log(total_variables) / sample_size)
 
   # Obtain inverse variances
