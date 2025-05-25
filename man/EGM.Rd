@@ -6,7 +6,7 @@
 \usage{
 EGM(
   data,
-  EGM.model = c("beta.min", "EGA", "probability"),
+  EGM.model = c("explore", "EGA", "probability"),
   communities = NULL,
   structure = NULL,
   search = FALSE,
@@ -15,6 +15,7 @@ EGM(
   opt = c("logLik", "SRMR"),
   constrain.structure = TRUE,
   constrain.zeros = TRUE,
+  optimize.network = TRUE,
   verbose = TRUE,
   ...
 )
@@ -30,9 +31,18 @@ Available options:
 
 \itemize{
 
-\item \code{"beta.min"} --- Applies the \code{\link[EGAnet]{modularity}}-adjusted (\code{Q})
-beta-min criterion to threshold the implied partial correlation matrix
-\deqn{Q \times \sqrt{\frac{\log{(p)}}{n}}}
+\item \code{"explore"} --- A two-step procedure where the first step estimates
+network loadings for Walktrap community structures up to \code{communities} using a
+non-informative beta-min condition (i.e., no \code{\link[EGAnet]{modularity}}
+adjustment) network. The second step computes networks using a
+\code{\link[EGAnet]{modularity}}-adjusted beta-min criterion based on the
+loading-implied partial correlation matrices from the previous step. The
+network (corresponding to communities and a set of loadings) with the lowest
+BIC is selected as the model. An optional (but recommend) procedure is to
+optimize the network toward the model-implied zero-order correlation matrix
+(`network.optimize = TRUE`); otherwise, the
+\code{\link[EGAnet]{modularity}}-adjusted beta-min criterion is used on
+the model-implied partial correlation matrix.
 
 \item \code{"EGA"} (default) --- Applies \code{\link[EGAnet]{EGA}} to obtain the
 (sparse) regularized network structure, communities, and memberships
@@ -95,6 +105,13 @@ be retained when optimizing the network loadings.
 Defaults to \code{TRUE} which ensures that zero networks loadings are retained.
 Set to \code{FALSE} to freely estimate each loading similar to exploratory factor analysis}
 
+\item{optimize.network}{Boolean (length = 1).
+Whether the model-implied network should be optimized toward the
+model-implied zero-order correlation matrix.
+Defaults to \code{TRUE}.
+
+Only applies to `EGM.model = "explore"`}
+
 \item{verbose}{Boolean (length = 1).
 Should progress be displayed?
 Defaults to \code{TRUE}.
@@ -116,11 +133,12 @@ Function to fit the Exploratory Graph Model
 # Get depression data
 data <- depression[,24:44]
 
-# Estimate EGM (using EGA)
-egm_ega <- EGM(data)
+\dontrun{
+# Estimate EGM (using "explore")
+egm <- EGM(data)
 
-# Estimate EGM (using EGA) specifying communities
-egm_ega_communities <- EGM(data, communities = 3)
+# Constrain EGM to only search up to 3 communities
+egm_communities <- EGM(data, communities = 3)
 
 # Estimate EGM (using EGA) specifying structure
 egm_ega_structure <- EGM(
@@ -128,20 +146,15 @@ egm_ega_structure <- EGM(
     1, 1, 1, 2, 1, 1, 1,
     1, 1, 1, 3, 2, 2, 2,
     2, 3, 3, 3, 3, 3, 2
-  )
+  ), EGM.model = "EGA"
 )
 
-# Estimate EGM (using beta-min condition)
-egm_ega_search <- EGM(data, EGM.model = "beta.min")
 
-\dontrun{
 # Estimate EGM (using EGA search)
-egm_ega_search <- EGM(
-  data, EGM.model = "EGA", search = TRUE
-)
+egm_ega_search <- EGM(data, EGM.model = "EGA", search = TRUE)
 
 # Estimate EGM (using search)
-egm_search <- EGM(
+egm_prob_search <- EGM(
   data, EGM.model = "probability", search = TRUE,
   communities = 3, # need communities or structure
   p.in = 0.95 # only need 'p.in'

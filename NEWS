@@ -10,6 +10,10 @@ WEBSITE: https://r-ega.net
 
 +	UPDATE: beta-min condition is used to supply a model-implied network for `simEGM`
 
++	UPDATE: default model for `EGM` has changed to `EGM.model = "explore"` to identify communities and network structure in an exploratory manner 
+
++	UPDATE: optimizations for `EGM` have been made more efficient
+
 
 ## Changes in version 2.3.0
 

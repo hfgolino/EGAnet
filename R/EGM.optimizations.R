@@ -37,6 +37,10 @@ obtain_implied <- function(loadings_vector, rows)
 
 }
 
+#%%%%%%%%%%%%%%%%#
+#### LOADINGS ####
+#%%%%%%%%%%%%%%%%#
+
 #%%%%%%%%%%%
 ## SRMR ----
 #%%%%%%%%%%%
@@ -88,7 +92,7 @@ srmr_cost <- function(
 
 #' @noRd
 # SRMR gradient
-# Updated 04.04.2025
+# Updated 24.05.2025
 srmr_gradient <- function(
     loadings_vector, R,
     loading_structure, rows, n, v,
@@ -109,18 +113,13 @@ srmr_gradient <- function(
     differences <- abs(loadings_matrix) - loadings_matrix[loading_structure]
 
     # Compute error
-    error <- (implied_R - R)[lower_triangle]
-
-    # Derivative of error with respect to P (covariance)
-    dError <- matrix(0, nrow = v, ncol = v)
-    dError[lower_triangle] <- 2 * error / length(error)
-    dError <- dError + t(dError)
+    dError <- 2 * (implied_R - R) / sum(lower_triangle)
     I <- attributes(implied_R)$calculations$I
 
     # Return gradient
     return(
       as.vector( # (2x leads to fewer iterations)
-        t(crossprod(2 * loadings_matrix, I %*% tcrossprod(dError, I))) + (differences > 0)
+        t(crossprod(2 * loadings_matrix, I %*% dError %*% I)) + (differences > 0)
       )
     )
 
@@ -130,18 +129,13 @@ srmr_gradient <- function(
     implied_R <- obtain_implied(loadings_vector, rows)
 
     # Compute error
-    error <- (implied_R - R)[lower_triangle]
-
-    # Derivative of error with respect to P (covariance)
-    dError <- matrix(0, nrow = v, ncol = v)
-    dError[lower_triangle] <- 2 * error / length(error)
-    dError <- dError + t(dError)
+    dError <- 2 * (implied_R - R) / sum(lower_triangle)
     I <- attributes(implied_R)$calculations$I
 
     # Return gradient (2x leads to fewer iterations)
     return(
       as.vector(
-        t(crossprod(2 * attributes(implied_R)$calculations$loadings, I %*% tcrossprod(dError, I)))
+        t(crossprod(2 * attributes(implied_R)$calculations$loadings, I %*% dError %*% I))
       )
     )
 
@@ -208,7 +202,7 @@ logLik_cost <- function(
 
 #' @noRd
 # Log-likelihood gradient
-# Updated 04.04.2025
+# Updated 24.05.2025
 logLik_gradient <- function(
     loadings_vector, R,
     loading_structure, rows, n, v,
@@ -230,17 +224,12 @@ logLik_gradient <- function(
     differences <- abs(loadings_matrix) - loadings_matrix[loading_structure]
 
     # Compute error (remove negative to not have to add back later)
-    error <- ((n/2) * (inverse_R - inverse_R %*% R %*% inverse_R))[lower_triangle]
-
-    # Derivative of error with respect to P (covariance)
-    dError <- matrix(0, nrow = v, ncol = v)
-    dError[lower_triangle] <- error
-    dError <- dError + t(dError)
+    dError <- ((n/2) * (inverse_R - inverse_R %*% R %*% inverse_R))
     I <- attributes(implied_R)$calculations$I
 
     # Return gradient
     return(
-      as.vector(t(crossprod(loadings_matrix, I %*% tcrossprod(dError, I))) + (differences > 0))
+      as.vector(t(crossprod(loadings_matrix, I %*% dError %*% I)) + (differences > 0))
     )
 
   }else{ # Without constraints, send it
@@ -250,17 +239,12 @@ logLik_gradient <- function(
     inverse_R <- solve(implied_R)
 
     # Compute error
-    error <- ((n/2) * (inverse_R - inverse_R %*% R %*% inverse_R))[lower_triangle]
-
-    # Derivative of error with respect to P (covariance)
-    dError <- matrix(0, nrow = v, ncol = v)
-    dError[lower_triangle] <- error
-    dError <- dError + t(dError)
+    dError <- ((n/2) * (inverse_R - inverse_R %*% R %*% inverse_R))
     I <- attributes(implied_R)$calculations$I
 
     # Return gradient
     return(
-      as.vector(t(crossprod(attributes(implied_R)$calculations$loadings, I %*% tcrossprod(dError, I))))
+      as.vector(t(crossprod(attributes(implied_R)$calculations$loadings, I %*% dError %*% I)))
     )
 
   }
@@ -299,6 +283,146 @@ egm_optimize <- function(
         rows = rows, n = n, v = v,
         constrained = constrained, lower_triangle = lower_triangle,
         lower = rep(-1, loadings_length) * zeros, upper = zeros,
+        control = list(eval.max = 10000, iter.max = 10000)
+      )
+    )
+  )
+
+}
+
+#%%%%%%%%%%%%%%%#
+#### NETWORK ####
+#%%%%%%%%%%%%%%%#
+
+#%%%%%%%%%%%
+## SRMR ----
+#%%%%%%%%%%%
+
+#' @noRd
+# SRMR network cost
+# Updated 04.04.2025
+srmr_network_cost <- function(network_vector, R, n, v, lower_triangle, zeros, ...)
+{
+
+  # Initialize network
+  network <- matrix(0, nrow = v, ncol = v)
+  network[lower_triangle][zeros] <- network_vector
+  network <- network + t(network)
+
+  # Convert to correlation matrix
+  diag(network) <- -1
+  K <- solve(-network)
+  I <- diag(sqrt(1 / diag(K)))
+
+  # Return SRMR
+  return(srmr(I %*% K %*% I, R))
+
+}
+
+#' @noRd
+# SRMR network gradient
+# Updated 24.04.2025
+srmr_network_gradient <- function(network_vector, R, n, v, lower_triangle, zeros, ...)
+{
+
+  # Initialize network
+  network <- matrix(0, nrow = v, ncol = v)
+  network[lower_triangle][zeros] <- network_vector
+  network <- network + t(network)
+
+  # Convert to correlation matrix
+  diag(network) <- -1
+  K <- solve(-network)
+  I <- diag(sqrt(1 / diag(K)))
+
+  # Compute error
+  dError <- 2 * (I %*% K %*% I - R) / sum(lower_triangle)
+
+  # Return gradient
+  return((K %*% I %*% dError %*% I %*% K)[lower_triangle][zeros])
+
+}
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+## Gaussian log-likelihood ----
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+#' @noRd
+# Log-likelihood network cost
+# Updated 25.04.2025
+logLik_network_cost <- function(network_vector, R, n, v, lower_triangle, zeros, ...)
+{
+
+  # Initialize network
+  network <- matrix(0, nrow = v, ncol = v)
+  network[lower_triangle][zeros] <- network_vector
+  network <- network + t(network)
+
+  # Convert to correlation matrix
+  diag(network) <- -1
+  K <- solve(-network)
+  I <- diag(sqrt(1 / diag(K)))
+
+  # Return log-likelihood
+  return(-log_likelihood(n, v, I %*% K %*% I, R, type = "zero"))
+
+}
+
+#' @noRd
+# Log-likelihood network gradient
+# Updated 24.04.2025
+logLik_network_gradient <- function(network_vector, R, n, v, lower_triangle, zeros, ...)
+{
+
+  # Initialize network
+  network <- matrix(0, nrow = v, ncol = v)
+  network[lower_triangle][zeros] <- network_vector
+  network <- network + t(network)
+
+  # Convert to correlation matrix
+  diag(network) <- -1
+  K <- solve(-network)
+  I <- diag(sqrt(1 / diag(K)))
+  inverse_R <- solve(I %*% K %*% I)
+
+  # Compute error
+  dError <- ((n/2) * (inverse_R - inverse_R %*% R %*% inverse_R))
+
+  # Return gradient
+  return((K %*% I %*% dError %*% I %*% K)[lower_triangle][zeros])
+
+}
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+## Optimization Function ----
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+#' @noRd
+# EGM network optimization
+# Updated 24.05.2025
+egm_network_optimize <- function(
+    network_vector, network_length,
+    R, n, v, lower_triangle,
+    zeros, opt, ...
+)
+{
+
+  return(
+    silent_call(
+      nlminb(
+        start = network_vector,
+        objective = switch(
+          opt,
+          "loglik" = logLik_network_cost,
+          "srmr" = srmr_network_cost
+        ),
+        gradient = switch(
+          opt,
+          "loglik" = logLik_network_gradient,
+          "srmr" = srmr_network_gradient
+        ),
+        R = R, n = n, v = v, lower_triangle = lower_triangle, zeros = zeros,
+        lower = rep(-1, network_length), upper = rep(1, network_length),
         control = list(eval.max = 10000, iter.max = 10000)
       )
     )
