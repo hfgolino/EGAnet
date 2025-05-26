@@ -13,17 +13,15 @@
 #' \itemize{
 #'
 #' \item \code{"explore"} --- A two-step procedure where the first step estimates
-#' network loadings for Walktrap community structures up to \code{communities} using a
-#' non-informative beta-min condition (i.e., no \code{\link[EGAnet]{modularity}}
-#' adjustment) network. The second step computes networks using a
-#' \code{\link[EGAnet]{modularity}}-adjusted beta-min criterion based on the
+#' network loadings for Walktrap community structures up to \code{communities} using the
+#' standard beta-min condition to threshold the network. The second step computes networks
+#' using the community-aware beta-min criterion based on the
 #' loading-implied partial correlation matrices from the previous step. The
 #' network (corresponding to communities and a set of loadings) with the lowest
-#' BIC is selected as the model. An optional (but recommend) procedure is to
+#' BIC is selected as the model. An optional (but recommended and default) procedure is to
 #' optimize the network toward the model-implied zero-order correlation matrix
-#' (`network.optimize = TRUE`); otherwise, the
-#' \code{\link[EGAnet]{modularity}}-adjusted beta-min criterion is used on
-#' the model-implied partial correlation matrix.
+#' (`network.optimize = TRUE`); otherwise, the community-aware beta-min criterion is used
+#' on the model-implied partial correlation matrix.
 #'
 #' \item \code{"EGA"} (default) --- Applies \code{\link[EGAnet]{EGA}} to obtain the
 #' (sparse) regularized network structure, communities, and memberships
@@ -419,12 +417,18 @@ compute_tefi_adjustment <- function(loadings, correlations)
 
 #' @noRd
 # EGM | Exploratory ----
-# Updated 25.05.2025
+# Updated 26.05.2025
 EGM.explore <- function(data, max.communities, random.starts, optimize.network, opt, ...)
 {
 
   # Obtain data dimensions
   data_dimensions <- dim(data)
+
+  # Set maximum communities (check for variables less than max)
+  max.communities <- swiftelse(
+    max.communities > data_dimensions[2],
+    data_dimensions[2], max.communities
+  )
 
   # Estimate correlations
   empirical_R <- auto.correlate(data)
@@ -451,34 +455,26 @@ EGM.explore <- function(data, max.communities, random.starts, optimize.network, 
   # Get initial community assignments
   walktrap <- as.hclust(igraph::cluster_walktrap(convert2igraph(abs(null_P))))
 
-  # Set diagonal of partial correlations to 1
-  diag(null_P) <- 1
+  # # Set diagonal to 1
+  # diag(null_P) <- 1
 
   # Create initial loading structures
 
   # Loading structures
   loading_structures <- lapply(community_sequence, function(communities){
 
-    # Current sequence
-    current_sequence <- seq_len(communities)
-
-    # Initialize loading matrix
-    standard_loadings <- matrix(
-      0, nrow = data_dimensions[2], ncol = communities,
-      dimnames = list(
-        variable_names, format_integer(
-          current_sequence, digits(communities) - 1
-        )
-      )
+    # Get initial loadings
+    standard_loadings <- silent_call(
+      net.loads(
+        A = null_P, wc = cutree(walktrap, k = communities),
+        ordered = "variable", scaling = 1
+      )$std
     )
-
-    # Set structure
-    structure <- cutree(walktrap, k = communities)
 
     # Perform 10 random starts
     starts <- lapply(seq_len(random.starts), function(i){
       random_start(
-        standard_loadings, null_P, structure, communities,
+        standard_loadings, communities,
         current_sequence, data_dimensions, empirical_R, opt
       )
     })
@@ -491,15 +487,7 @@ EGM.explore <- function(data, max.communities, random.starts, optimize.network, 
 
     # Check for all bad starts
     if(all(bad_fits)){
-
-      # Set structure
-      for(i in current_sequence){
-        standard_loadings[structure == i, i] <- 1e-03
-      }
-
-      # Initialize to starting values
-      loadings <- crossprod(null_P, standard_loadings)
-
+      return(standard_loadings)
     }else{
 
       # Update from bad fits
@@ -523,12 +511,9 @@ EGM.explore <- function(data, max.communities, random.starts, optimize.network, 
       fits <- nvapply(good_fits[PD], function(x){x$fit})
 
       # Return optimized loadings
-      loadings <- good_loadings[PD][[which.min(fits)]]
+      return(good_loadings[PD][[which.min(fits)]])
 
     }
-
-    # Return loadings
-    return(loadings)
 
   })
 
@@ -1443,14 +1428,29 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
 
 #' @noRd
 # beta-min criterion ----
-# Updated 13.04.2025
+# Updated 26.05.2025
 beta_min <- function(P, membership = NULL, K, total_variables, sample_size)
 {
 
-  # Obtain modularity-adjusted beta-min criterion
-  minimum <- swiftelse(
-    is.null(membership), 1, modularity(P, membership) / unique_length(membership)
-  ) * sqrt(log(total_variables) / sample_size)
+  # Calculate standard beta-min if no structure
+  if(is.null(membership)){
+    minimum <- sqrt(log(total_variables) / sample_size)
+  }else{
+
+    # Obtain number of communities
+    communities <- unique_length(membership)
+
+    # Calculate modularity
+    Q <- swiftelse(
+      communities == 1,
+      max(abs(P))^2, # default modularity to the squared maximum correlation
+      modularity(P, membership) # modularity
+    )
+
+    # Calculate community-aware beta-min
+    minimum <- sqrt((Q * log(total_variables)) / (communities * sample_size))
+
+  }
 
   # Obtain inverse variances
   inverse_variances <- diag(K)

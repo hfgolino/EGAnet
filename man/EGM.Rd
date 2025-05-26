@@ -33,17 +33,15 @@ Available options:
 \itemize{
 
 \item \code{"explore"} --- A two-step procedure where the first step estimates
-network loadings for Walktrap community structures up to \code{communities} using a
-non-informative beta-min condition (i.e., no \code{\link[EGAnet]{modularity}}
-adjustment) network. The second step computes networks using a
-\code{\link[EGAnet]{modularity}}-adjusted beta-min criterion based on the
+network loadings for Walktrap community structures up to \code{communities} using the
+standard beta-min condition to threshold the network. The second step computes networks
+using the community-aware beta-min criterion based on the
 loading-implied partial correlation matrices from the previous step. The
 network (corresponding to communities and a set of loadings) with the lowest
-BIC is selected as the model. An optional (but recommend) procedure is to
+BIC is selected as the model. An optional (but recommended and default) procedure is to
 optimize the network toward the model-implied zero-order correlation matrix
-(`network.optimize = TRUE`); otherwise, the
-\code{\link[EGAnet]{modularity}}-adjusted beta-min criterion is used on
-the model-implied partial correlation matrix.
+(`network.optimize = TRUE`); otherwise, the community-aware beta-min criterion is used
+on the model-implied partial correlation matrix.
 
 \item \code{"EGA"} (default) --- Applies \code{\link[EGAnet]{EGA}} to obtain the
 (sparse) regularized network structure, communities, and memberships

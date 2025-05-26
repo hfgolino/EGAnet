@@ -194,7 +194,7 @@ logLik_cost <- function(
     # Check for positive definite
     return(-log_likelihood(n, v, implied_R, R, type = "zero") + sum(differences > 0))
 
-  }else{ # Without constraints, send it
+  }else{# Without constraints, send it
     return(-log_likelihood(n, v, obtain_implied(loadings_vector, rows), R, type = "zero"))
   }
 
@@ -257,7 +257,7 @@ logLik_gradient <- function(
 
 #' @noRd
 # EGM optimization ----
-# Updated 11.04.2025
+# Updated 26.05.2025
 egm_optimize <- function(
     loadings_vector, loadings_length,
     zeros, R, loading_structure, rows, n, v,
@@ -283,7 +283,10 @@ egm_optimize <- function(
         rows = rows, n = n, v = v,
         constrained = constrained, lower_triangle = lower_triangle,
         lower = rep(-1, loadings_length) * zeros, upper = zeros ,
-        control = list(eval.max = 10000, iter.max = 10000)
+        control = list(
+          eval.max = 10000, iter.max = 10000,
+          step.min = 1e-08, step.max = 0.10
+        )
       )
     )
   )
@@ -292,20 +295,15 @@ egm_optimize <- function(
 
 #' @noRd
 # Random starts ----
-# Updated 25.05.2025
+# Updated 26.05.2025
 random_start <- function(
-    standard_loadings, null_P, structure, communities,
+    standard_loadings, communities,
     current_sequence, data_dimensions, empirical_R, opt
 )
 {
 
-  # Set structure
-  for(i in current_sequence){
-    standard_loadings[structure == i, i] <- runif_xoshiro(1, min = 1e-02, max = 1e-05)
-  }
-
-  # Initialize starting values
-  standard_loadings <- crossprod(null_P, standard_loadings)
+  # Jitter values
+  standard_loadings <- standard_loadings * runif_xoshiro(1, min = 1e-05, max = 1e-02)
 
   # Get loading dimensions
   dimensions <- dim(standard_loadings)
@@ -320,8 +318,7 @@ random_start <- function(
 
   # Set up loading structure
   loading_structure <- matrix(
-    TRUE, nrow = dimensions[1],
-    ncol = dimensions[2],
+    TRUE, nrow = dimensions[1], ncol = dimensions[2],
     dimnames = list(dimension_names[[1]], dimension_names[[2]])
   )
 
@@ -458,7 +455,7 @@ logLik_network_gradient <- function(network_vector, R, n, v, lower_triangle, zer
 
 #' @noRd
 # EGM network optimization
-# Updated 24.05.2025
+# Updated 26.05.2025
 egm_network_optimize <- function(
     network_vector, network_length,
     R, n, v, lower_triangle,
@@ -482,7 +479,10 @@ egm_network_optimize <- function(
         ),
         R = R, n = n, v = v, lower_triangle = lower_triangle, zeros = zeros,
         lower = rep(-1, network_length), upper = rep(1, network_length),
-        control = list(eval.max = 10000, iter.max = 10000)
+        control = list(
+          eval.max = 10000, iter.max = 10000,
+          step.min = 1e-08, step.max = 0.10
+        )
       )
     )
   )
