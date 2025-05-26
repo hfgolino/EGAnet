@@ -71,6 +71,12 @@
 #' Available options include maximum likelihood (default; \code{"logLik"}) and
 #' standardized root mean residual (\code{"SRMR"})
 #'
+#' @param model.select Character vector (length = 1).
+#' Criterion to select the best fitting model.
+#' Defaults to \code{"AIC"}.
+#'
+#' \emph{Note: BIC tends to overly penalize models with more communities, use with caution}
+#'
 #' @param constrain.structure Boolean (length = 1).
 #' Whether memberships of the communities should
 #' be added as a constraint when optimizing the network loadings.
@@ -146,7 +152,7 @@ EGM <- function(
     data, EGM.model = c("explore", "EGA", "probability"),
     communities = NULL, structure = NULL, search = FALSE,
     p.in = NULL, p.out = NULL,
-    opt = c("logLik", "SRMR"),
+    opt = c("logLik", "SRMR"), model.select = c("logLik", "AIC", "BIC"),
     constrain.structure = TRUE, constrain.zeros = TRUE,
     random.starts = 10, optimize.network = TRUE,
     verbose = TRUE, ...
@@ -156,6 +162,7 @@ EGM <- function(
   # Set default
   EGM.model <- set_default(EGM.model, "explore", EGM)
   opt <- set_default(opt, "loglik", EGM)
+  model.select <- set_default(model.select, "aic", EGM)
 
   # Set up EGM type internally
   EGM.type <- switch(
@@ -181,7 +188,7 @@ EGM <- function(
   return(
     switch(
       EGM.type,
-      "explore" = EGM.explore(data, communities, random.starts, optimize.network, opt, ...),
+      "explore" = EGM.explore(data, communities, random.starts, optimize.network, opt, model.select, ...),
       "ega" = EGM.EGA(data, structure, opt, constrain.structure, constrain.zeros, ...),
       "ega.search" = EGM.EGA.search(data, communities, structure, opt, constrain.structure, constrain.zeros, verbose, ...),
       "probability" = EGM.probability(data, communities, structure, p.in, p.out, opt, constrain.structure, constrain.zeros, ...),
@@ -418,7 +425,7 @@ compute_tefi_adjustment <- function(loadings, correlations)
 #' @noRd
 # EGM | Exploratory ----
 # Updated 26.05.2025
-EGM.explore <- function(data, max.communities, random.starts, optimize.network, opt, ...)
+EGM.explore <- function(data, max.communities, random.starts, optimize.network, opt, model.select, ...)
 {
 
   # Obtain data dimensions
@@ -455,9 +462,6 @@ EGM.explore <- function(data, max.communities, random.starts, optimize.network, 
   # Get initial community assignments
   walktrap <- as.hclust(igraph::cluster_walktrap(convert2igraph(abs(null_P))))
 
-  # # Set diagonal to 1
-  # diag(null_P) <- 1
-
   # Create initial loading structures
 
   # Loading structures
@@ -466,9 +470,8 @@ EGM.explore <- function(data, max.communities, random.starts, optimize.network, 
     # Get initial loadings
     standard_loadings <- silent_call(
       net.loads(
-        A = null_P, wc = cutree(walktrap, k = communities),
-        ordered = "variable", scaling = 1
-      )$std
+        A = null_P, wc = cutree(walktrap, k = communities), scaling = 1
+      )$std[variable_names,, drop = FALSE]
     )
 
     # Perform 10 random starts
@@ -534,8 +537,9 @@ EGM.explore <- function(data, max.communities, random.starts, optimize.network, 
 
         # Check that solution is meaningful
         if(
-          unique_length(membership) == dim(loadings)[2] &
-          max(abs(loadings)) != 1
+          unique_length(membership) == dim(loadings)[2] & # ensure meaningful
+          max(abs(loadings)) != 1 & # throw out any solutions with loadings of 1
+          all(fast_table(membership) > 1) # throw out singletons
         ){
 
           # Update beta-min with modularity information
@@ -551,29 +555,28 @@ EGM.explore <- function(data, max.communities, random.starts, optimize.network, 
             R = pcor2cor(P), S = empirical_R, type = "zero"
           )
 
-          # Obtain parameters
-          parameters <- sum(P[lower_triangle] != 0)
+          # Obtain parameters (add loadings)
+          total_parameters <- total_parameters + length(loadings)
+          parameters <- sum(P[lower_triangle] != 0) + sum(loadings != 0)
 
-          # Compute logLik minus 2
+          # Compute negative 2 times log-likelihood
           logLik2 <- -2 * logLik
-
-          # Compute BIC
-          BIC <- logLik2 + parameters * log(data_dimensions[1])
 
           # Return fit indices
           return(
             c(
-              logLik = logLik,
-              AIC = logLik2 + 2 * parameters,
-              BIC = BIC,
-              EBIC = BIC + lchoose(total_parameters, parameters)
+              loglik = logLik,
+              aic = logLik2 + 2 * parameters,
+              bic = logLik2 + parameters * log(data_dimensions[1])
+              # , EBIC = BIC + lchoose(total_parameters, parameters)
+              # removed since BIC is already too strict
             )
           )
 
         }else{
 
           # Return missing values
-          return(c(logLik = NA, AIC = NA, BIC = NA, EBIC = NA))
+          return(c(logLik = NA, AIC = NA, BIC = NA))
 
         }
 
@@ -582,7 +585,7 @@ EGM.explore <- function(data, max.communities, random.starts, optimize.network, 
   )
 
   # Extract optimal loadings
-  optimized_loadings <- loading_structures[[which.min(fits[,"BIC"])]]
+  optimized_loadings <- loading_structures[[which.min(fits[,model.select])]]
 
   # Obtain structure
   structure <- structure(
@@ -1434,7 +1437,7 @@ beta_min <- function(P, membership = NULL, K, total_variables, sample_size)
 
   # Calculate standard beta-min if no structure
   if(is.null(membership)){
-    minimum <- sqrt(log(total_variables) / sample_size)
+    minimum <- sqrt(max(abs(P)) * log(total_variables) / sample_size)
   }else{
 
     # Obtain number of communities
@@ -1443,8 +1446,17 @@ beta_min <- function(P, membership = NULL, K, total_variables, sample_size)
     # Calculate modularity
     Q <- swiftelse(
       communities == 1,
-      max(abs(P))^2, # default modularity to the squared maximum correlation
-      modularity(P, membership) # modularity
+      {
+
+        # Compute mean of the modularity matrix (excluding self)
+        k <- colSums(P)
+        kk <- tcrossprod(k)
+        mod_matrix <- P - kk / sum(k)
+        diag(mod_matrix) <- 0
+        mean(mod_matrix)
+
+      },
+      modularity(P, membership)
     )
 
     # Calculate community-aware beta-min

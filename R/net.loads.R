@@ -100,7 +100,7 @@
 #' @export
 #'
 # Network Loadings ----
-# Updated 23.04.2025
+# Updated 26.05.2025
 net.loads <- function(
     A, wc, loading.method = c("original", "revised"),
     scaling = 2, rotation = NULL,
@@ -268,7 +268,7 @@ net.loads <- function(
 
   # Set up results
   results <- list(
-    unstd = unstandardized[dimnames(standardized)[[1]],],
+    unstd = unstandardized[dimnames(standardized)[[1]],, drop = FALSE],
     std = standardized,
     rotated = rotated
   )
@@ -481,7 +481,7 @@ obtain_signs <- function(target_network)
     # Flip variable
     target_network[minimum_index,] <-
       target_network[,minimum_index] <-
-        -target_network[minimum_index,]
+      -target_network[minimum_index,]
 
     # Set sign as flipped
     signs[minimum_index] <- -signs[minimum_index]

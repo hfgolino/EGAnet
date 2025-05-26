@@ -13,6 +13,7 @@ EGM(
   p.in = NULL,
   p.out = NULL,
   opt = c("logLik", "SRMR"),
+  model.select = c("logLik", "AIC", "BIC"),
   constrain.structure = TRUE,
   constrain.zeros = TRUE,
   random.starts = 10,
@@ -90,6 +91,12 @@ Fit index used to select from when searching over models
 (only applies to \code{search = TRUE}).
 Available options include maximum likelihood (default; \code{"logLik"}) and
 standardized root mean residual (\code{"SRMR"})}
+
+\item{model.select}{Character vector (length = 1).
+Criterion to select the best fitting model.
+Defaults to \code{"AIC"}.
+
+\emph{Note: BIC tends to overly penalize models with more communities, use with caution}}
 
 \item{constrain.structure}{Boolean (length = 1).
 Whether memberships of the communities should
