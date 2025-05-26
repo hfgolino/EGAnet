@@ -552,7 +552,7 @@ automated_selection <- function(result)
         # Obtain maximum stability
         stabilities <- apply(
           result$boot$stability$item.stability$item.stability$all.dimensions[
-            check_tracker, community_sequence
+            check_tracker, community_sequence, drop = FALSE
           ], 1, max
         )
 
