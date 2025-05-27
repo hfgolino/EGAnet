@@ -445,7 +445,7 @@ EGM.explore <- function(data, communities, search, random.starts, optimize.netwo
   variable_names <- dimnames(empirical_R)[[2]]
 
   # Set up null partial correlation using non-informative beta-min
-  null_P <- empirical_P * beta_min(
+  null_P2 <- empirical_P * beta_min(
     P = empirical_P, membership = NULL,
     K = empirical_K, total_variables = data_dimensions[2],
     sample_size = data_dimensions[1]
@@ -1478,7 +1478,7 @@ beta_min <- function(P, membership = NULL, K, total_variables, sample_size)
 
   # Calculate standard beta-min if no structure
   if(is.null(membership)){
-    minimum <- sqrt(max(abs(P)) * log(total_variables) / sample_size)
+    minimum <- sqrt(max(P^2) * log(total_variables) / sample_size)
   }else{
 
     # Obtain number of communities
