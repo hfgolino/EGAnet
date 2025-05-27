@@ -285,7 +285,7 @@ egm_optimize <- function(
         lower = rep(-1, loadings_length) * zeros, upper = zeros ,
         control = list(
           eval.max = 10000, iter.max = 10000,
-          step.min = 1e-08, step.max = 0.10
+          step.min = 1e-04, step.max = 0.10
         )
       )
     )
@@ -295,26 +295,27 @@ egm_optimize <- function(
 
 #' @noRd
 # Random starts ----
-# Updated 26.05.2025
+# Updated 27.05.2025
 random_start <- function(
-    standard_loadings, communities,
-    current_sequence, data_dimensions, empirical_R, opt
+    loadings, communities, data_dimensions, empirical_R, opt
 )
 {
 
-  # Jitter values
-  standard_loadings <- standard_loadings * runif_xoshiro(1, min = 1e-05, max = 1e-02)
-
   # Get loading dimensions
-  dimensions <- dim(standard_loadings)
-  dimension_names <- dimnames(standard_loadings)
+  dimensions <- dim(loadings)
+  dimension_names <- dimnames(loadings)
 
-  # Obtain loadings vector and get bounds
-  loadings_vector <- as.vector(standard_loadings)
+  # Obtain loadings vector
+  loadings_vector <- as.vector(loadings)
 
-  # Multiply by random value to jitter
+  # Get length and set zeros
   loadings_length <- length(loadings_vector)
   zeros <- rep(1, loadings_length)
+
+  # Add some jitter
+  loadings_vector <- loadings_vector * runif_xoshiro(
+    loadings_length, min = 1e-05, max = 1e-02
+  )
 
   # Set up loading structure
   loading_structure <- matrix(
@@ -339,9 +340,53 @@ random_start <- function(
 
   # Return values
   if(is(result, "try-error")){
-    return(list(loadings = NULL, fit = NA))
+    return(list(loadings = NULL, fit = NA, convergence = 1))
   }else{
-    return(list(loadings = result$par, fit = result$objective))
+
+    # Check Hessian
+    hessian <- try(
+      optimHess(
+        par = result$par,
+        fn = switch(
+          opt,
+          "loglik" = logLik_cost,
+          "srmr" = srmr_cost
+        ),
+        gr = switch(
+          opt,
+          "loglik" = logLik_gradient,
+          "srmr" = srmr_gradient
+        ),
+        loadings_length = loadings_length,
+        zeros = zeros, R = empirical_R,
+        loading_structure = loading_structure,
+        rows = communities, n = data_dimensions[1],
+        v = data_dimensions[2], constrained = FALSE,
+        lower_triangle = lower.tri(empirical_R),
+      ), silent = TRUE
+    )
+
+    # Get minimum eigenvalue
+    min_eigenvalue <- min(matrix_eigenvalues(hessian))
+
+    # Format loadings
+    loadings <- matrix(
+      result$par,
+      nrow = data_dimensions[2], ncol = communities,
+      dimnames = dimnames(loadings)
+    )
+
+    # Return value
+    return(
+      list(
+        loadings = loadings, fit = result$objective,
+        convergence = result$convergence,
+        min_eigenvalue_sign = sign(min_eigenvalue),
+        min_eigenvalue = min_eigenvalue,
+        condition_number = kappa(hessian)
+      )
+    )
+
   }
 
 }
@@ -481,7 +526,7 @@ egm_network_optimize <- function(
         lower = rep(-1, network_length), upper = rep(1, network_length),
         control = list(
           eval.max = 10000, iter.max = 10000,
-          step.min = 1e-08, step.max = 0.10
+          step.min = 1e-04, step.max = 0.10
         )
       )
     )

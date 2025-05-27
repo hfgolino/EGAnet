@@ -179,7 +179,7 @@ EGM <- function(
 
   # Check data and structure
   data <- EGM_errors(
-    data, EGM.type, communities, p.in, p.out,
+    data, EGM.type, communities, search, p.in, p.out,
     constrain.structure, constrain.zeros,
     random.starts, optimize.network, verbose, ...
   )
@@ -188,7 +188,7 @@ EGM <- function(
   return(
     switch(
       EGM.type,
-      "explore" = EGM.explore(data, communities, random.starts, optimize.network, opt, model.select, ...),
+      "explore" = EGM.explore(data, communities, search, random.starts, optimize.network, opt, model.select, ...),
       "ega" = EGM.EGA(data, structure, opt, constrain.structure, constrain.zeros, ...),
       "ega.search" = EGM.EGA.search(data, communities, structure, opt, constrain.structure, constrain.zeros, verbose, ...),
       "probability" = EGM.probability(data, communities, structure, p.in, p.out, opt, constrain.structure, constrain.zeros, ...),
@@ -200,9 +200,9 @@ EGM <- function(
 
 #' @noRd
 # EGM Errors ----
-# Updated 24.05.2025
+# Updated 27.05.2025
 EGM_errors <- function(
-    data, EGM.type, communities, p.in, p.out,
+    data, EGM.type, communities, search, p.in, p.out,
     constrain.structure, constrain.zeros,
     random.starts, optimize.network, verbose, ...
 )
@@ -217,7 +217,7 @@ EGM_errors <- function(
   }
 
   # Check for NULL communities
-  if(!is.null(communities)){
+  if(!is.null(communities) & EGM.type != "explore"){
 
     # If not NULL, check 'communities' errors
     typeof_error(communities, "numeric", "EGM")
@@ -225,6 +225,10 @@ EGM_errors <- function(
     length_error(communities, 1, "EGM")
 
   }
+
+  # 'search' errors
+  length_error(search, 1, "EGM")
+  typeof_error(search, "logical", "EGM")
 
   # Check first for parameters involved in both search and standard
   if(grepl("probability", EGM.type)){
@@ -424,18 +428,12 @@ compute_tefi_adjustment <- function(loadings, correlations)
 
 #' @noRd
 # EGM | Exploratory ----
-# Updated 26.05.2025
-EGM.explore <- function(data, max.communities, random.starts, optimize.network, opt, model.select, ...)
+# Updated 27.05.2025
+EGM.explore <- function(data, communities, search, random.starts, optimize.network, opt, model.select, ...)
 {
 
   # Obtain data dimensions
   data_dimensions <- dim(data)
-
-  # Set maximum communities (check for variables less than max)
-  max.communities <- swiftelse(
-    max.communities > data_dimensions[2],
-    data_dimensions[2], max.communities
-  )
 
   # Estimate correlations
   empirical_R <- auto.correlate(data)
@@ -446,146 +444,44 @@ EGM.explore <- function(data, max.communities, random.starts, optimize.network, 
   # Obtain variable names from the correlations
   variable_names <- dimnames(empirical_R)[[2]]
 
-  # Set community sequence
-  community_sequence <- seq_len(max.communities)
-
-  # Obtain non-informative beta-min
-  beta.min <- beta_min(
+  # Set up null partial correlation using non-informative beta-min
+  null_P <- empirical_P * beta_min(
     P = empirical_P, membership = NULL,
-    K = solve(empirical_R), total_variables = data_dimensions[2],
+    K = empirical_K, total_variables = data_dimensions[2],
     sample_size = data_dimensions[1]
   )
 
-  # Set up null partial correlation
-  null_P <- empirical_P * beta.min
-
-  # Get initial community assignments
+  # Get Walktrap
   walktrap <- as.hclust(igraph::cluster_walktrap(convert2igraph(abs(null_P))))
 
-  # Create initial loading structures
+  # Need at least two variables per community
+  at_least_two <- round(data_dimensions[2] / 2) - 1
+  max_communities <- max(communities)
 
-  # Loading structures
-  loading_structures <- lapply(community_sequence, function(communities){
-
-    # Get initial loadings
-    standard_loadings <- silent_call(
-      net.loads(
-        A = null_P, wc = cutree(walktrap, k = communities), scaling = 1
-      )$std[variable_names,, drop = FALSE]
-    )
-
-    # Perform 10 random starts
-    starts <- lapply(seq_len(random.starts), function(i){
-      random_start(
-        standard_loadings, communities,
-        current_sequence, data_dimensions, empirical_R, opt
+  # Determine communities
+  community_sequence <- swiftelse(
+    search, seq_len(
+      swiftelse(
+        max_communities > at_least_two,
+        at_least_two, max_communities
       )
-    })
-
-    # Get fits
-    fits <- nvapply(starts, function(x){x$fit})
-
-    # Bad fits
-    bad_fits <- is.na(fits) | (sign(fits) == -1)
-
-    # Check for all bad starts
-    if(all(bad_fits)){
-      return(standard_loadings)
-    }else{
-
-      # Update from bad fits
-      good_fits <- starts[!bad_fits]
-
-      # Convert fits to loadings
-      good_loadings <- lapply(good_fits, function(x){
-        matrix(
-          x$loadings,
-          nrow = data_dimensions[2], ncol = communities,
-          dimnames = dimnames(standard_loadings)
-        )
-      })
-
-      # Check whether loadings are invertible
-      PD <- lvapply(good_loadings, function(x){
-        is_positive_definite(nload2cor(x))
-      })
-
-      # Update fits
-      fits <- nvapply(good_fits[PD], function(x){x$fit})
-
-      # Return optimized loadings
-      return(good_loadings[PD][[which.min(fits)]])
-
-    }
-
-  })
-
-  # Set lower triangle
-  lower_triangle <- lower.tri(empirical_P)
-  total_parameters <- sum(lower_triangle)
-
-  # Extract fits
-  fits <- silent_call(
-    do.call(
-      rbind, lapply(loading_structures, function(loadings){
-
-        # Obtain model-implied partial correlations
-        P <- nload2pcor(loadings)
-
-        # Obtain solution
-        membership <- max.col(abs(loadings))
-
-        # Check that solution is meaningful
-        if(
-          unique_length(membership) == dim(loadings)[2] & # ensure meaningful
-          max(abs(loadings)) != 1 & # throw out any solutions with loadings of 1
-          all(fast_table(membership) > 1) # throw out singletons
-        ){
-
-          # Update beta-min with modularity information
-          P <- P * beta_min(
-            P = P, membership = membership,
-            K = empirical_K, total_variables = data_dimensions[2],
-            sample_size = data_dimensions[1]
-          )
-
-          # Compute log-likelihood
-          logLik <- log_likelihood(
-            n = data_dimensions[1], p = data_dimensions[2],
-            R = pcor2cor(P), S = empirical_R, type = "zero"
-          )
-
-          # Obtain parameters (add loadings)
-          total_parameters <- total_parameters + length(loadings)
-          parameters <- sum(P[lower_triangle] != 0) + sum(loadings != 0)
-
-          # Compute negative 2 times log-likelihood
-          logLik2 <- -2 * logLik
-
-          # Return fit indices
-          return(
-            c(
-              loglik = logLik,
-              aic = logLik2 + 2 * parameters,
-              bic = logLik2 + parameters * log(data_dimensions[1])
-              # , EBIC = BIC + lchoose(total_parameters, parameters)
-              # removed since BIC is already too strict
-            )
-          )
-
-        }else{
-
-          # Return missing values
-          return(c(logLik = NA, AIC = NA, BIC = NA))
-
-        }
-
-      })
-    )
+    ), max_communities
   )
 
+  # Collect results
+  results <- lapply(
+    community_sequence, EGM.explore.core,
+    null_P = null_P,
+    walktrap = walktrap, variable_names = variable_names,
+    random.starts = random.starts, data_dimensions = data_dimensions,
+    empirical_R = empirical_R, empirical_K = empirical_K, opt = opt
+  )
+
+  # Obtain fits
+  fits <- do.call(rbind, lapply(results, function(x){x$fit}))
+
   # Extract optimal loadings
-  optimized_loadings <- loading_structures[[which.min(fits[,model.select])]]
+  optimized_loadings <- results[[which.min(fits[,model.select])]]$loadings
 
   # Obtain structure
   structure <- structure(
@@ -1428,6 +1324,151 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
 # }
 
 # EGM UTILITIES ----
+
+#' @noRd
+# EGM | Core Exploration ----
+# Updated 27.05.2025
+EGM.explore.core <- function(
+    communities, null_P, walktrap, variable_names,
+    random.starts, data_dimensions, empirical_R,
+    empirical_K, opt, ...
+)
+{
+
+  # Obtain memberships
+  membership <- cutree(walktrap, communities)
+
+  # Initialize loadings with membership
+  loadings <- silent_call(
+    net.loads(
+      A = null_P, wc = cutree(walktrap, communities),
+    )$std[variable_names,, drop = FALSE]
+  )
+
+  # Check if memberships have at least two
+  if(any(fast_table(membership) < 2)){
+
+    # Save time and avoid a bad solution
+    return(
+      list(
+        fit = c(loglik = NA, aic = NA, bic = NA),
+        loadings = loadings
+      )
+    )
+
+  }
+
+  # Perform 10 random starts
+  starts <- lapply(seq_len(random.starts), function(i){
+    random_start(
+      loadings, communities, data_dimensions, empirical_R, opt
+    )
+  })
+
+  # Identify good solutions
+  good_solutions <- lvapply(starts, function(x){x$convergence == 0})
+
+  # Check for no good solutions
+  if(!all(good_solutions)){
+
+    # Save time and avoid a bad solution
+    return(
+      list(
+        fit = c(loglik = NA, aic = NA, bic = NA),
+        loadings = loadings
+      )
+    )
+
+  }else{
+
+    # Round up good solutions
+    solutions <- starts[good_solutions]
+
+    # Check for positive definite solutions
+    solutions <- solutions[
+      lvapply(solutions, function(x){is_positive_definite(nload2cor(x$loadings))})
+    ]
+
+    # Inspect solution criteria
+    convergence_criteria <- do.call(
+      rbind.data.frame, lapply(solutions, function(x){
+        x[c("fit", "min_eigenvalue_sign", "min_eigenvalue", "condition_number")]
+      })
+    )
+
+    # Get order
+    convergence_criteria <- convergence_criteria[
+      order(
+        round(convergence_criteria$fit, 4),
+        convergence_criteria$min_eigenvalue_sign,
+        convergence_criteria$min_eigenvalue,
+        convergence_criteria$condition_number,
+        decreasing = TRUE
+      ),
+    ]
+
+    # Get best convergence
+    solution <- solutions[[as.numeric(row.names(convergence_criteria)[1])]]
+
+  }
+
+  # Set lower triangle
+  lower_triangle <- lower.tri(empirical_R)
+  total_parameters <- sum(lower_triangle)
+
+  # Obtain model-implied partial correlations
+  P <- nload2pcor(solution$loadings)
+
+  # Obtain solution
+  membership <- max.col(abs(solution$loadings))
+
+  # Check that solution is meaningful
+  if(
+    unique_length(membership) == dim(solution$loadings)[2] & # ensure meaningful
+    max(abs(solution$loadings)) != 1 & # throw out any solutions with loadings of 1
+    all(fast_table(membership) > 1) # throw out singletons
+  ){
+
+    # Update beta-min with modularity information
+    P <- silent_call(
+      P * beta_min(
+        P = P, membership = membership,
+        K = empirical_K, total_variables = data_dimensions[2],
+        sample_size = data_dimensions[1]
+      )
+    )
+
+    # Compute log-likelihood
+    logLik <- silent_call(
+      -log_likelihood(
+        n = data_dimensions[1], p = data_dimensions[2],
+        R = pcor2cor(P), S = empirical_R, type = "zero"
+      )
+    )
+
+    # Obtain parameters (add loadings)
+    parameters <- sum(P[lower_triangle] != 0) + sum(solution$loadings != 0)
+
+    # Compute negative 2 times log-likelihood
+    logLik2 <- 2 * logLik
+
+    # Collect fit indices
+    fit <- c(
+      loglik = logLik,
+      aic = logLik2 + 2 * parameters,
+      bic = logLik2 + parameters * log(data_dimensions[1])
+      # , EBIC = BIC + lchoose(total_parameters, parameters)
+      # removed since BIC is already too strict
+    )
+
+  }else{ # Set missing values
+    fit <- c(loglik = NA, aic = NA, bic = NA)
+  }
+
+  # Return result
+  return(list(fit = fit, loadings = solution$loadings))
+
+}
 
 #' @noRd
 # beta-min criterion ----
