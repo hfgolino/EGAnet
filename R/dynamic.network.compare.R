@@ -10,6 +10,11 @@
 #' @param groups Numeric or character vector (length = \code{nrow(data)}).
 #' Group membership corresponding to each case in data
 #'
+#' @param paired Boolean (length = 1).
+#' Whether groups are repeated measures representing
+#' paired samples.
+#' Defaults to \code{FALSE}
+#'
 #' @param corr Character (length = 1).
 #' Method to compute correlations.
 #' Defaults to \code{"auto"}.
@@ -190,7 +195,7 @@
 #' \dontrun{
 #' # Perform comparison
 #' dynamic.network.compare(
-#'   data = df[,-2], groups = df[,2],
+#'   data = df[,-2], groups = df[,2], paired = TRUE,
 #'   # EGA arguments
 #'   corr = "auto", na.data = "pairwise", model = "glasso",
 #'   # dynEGA arguments
@@ -236,7 +241,7 @@
 #' \dontrun{
 #' # Perform comparison
 #' dynamic.network.compare(
-#'   data = df[,-2], groups = df[,2],
+#'   data = df[,-2], groups = df[,2], paired = TRUE,
 #'   # EGA arguments
 #'   corr = "auto", na.data = "pairwise", model = "glasso",
 #'   # dynEGA arguments
@@ -266,9 +271,9 @@
 #' @export
 #'
 # Perform permutations for network structures ----
-# Updated 15.05.2025
+# Updated 27.05.2025
 dynamic.network.compare <- function(
-    data, groups,
+    data, groups, paired = FALSE,
     # EGA arguments
     corr = c("auto", "cor_auto", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
@@ -464,11 +469,22 @@ dynamic.network.compare <- function(
           group_sequence[group_sequence %in% pair], seed = seed
         )
 
-        # Create new ID memberships
-        index <- paste0(unlist(individual_sequence[pair]), "_", new_membership)
-
         # Target sequence
         target_sequence <- individual_sequence[[pair[1]]]
+
+        # If paired groups
+        if(paired){
+
+          # Get new groups for first group
+          new_group <- new_membership[target_sequence]
+
+          # Set up for the second group
+          new_membership <- c(new_group, 3 - new_group)
+
+        }
+
+        # Create new ID memberships
+        index <- paste0(unlist(individual_sequence[pair]), "_", new_membership)
 
         # Find IDs in derivatives
         return(list(
@@ -483,7 +499,6 @@ dynamic.network.compare <- function(
         ))
 
       })
-
 
       # Get statistics
       permutated <- lapply(new_derivatives, function(pair){

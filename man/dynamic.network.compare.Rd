@@ -7,6 +7,7 @@
 dynamic.network.compare(
   data,
   groups,
+  paired = FALSE,
   corr = c("auto", "cor_auto", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
   model = c("BGGM", "glasso", "TMFG"),
@@ -29,6 +30,11 @@ an ID column}
 
 \item{groups}{Numeric or character vector (length = \code{nrow(data)}).
 Group membership corresponding to each case in data}
+
+\item{paired}{Boolean (length = 1).
+Whether groups are repeated measures representing
+paired samples.
+Defaults to \code{FALSE}}
 
 \item{corr}{Character (length = 1).
 Method to compute correlations.
@@ -213,7 +219,7 @@ df <- do.call(rbind.data.frame, participants)
 \dontrun{
 # Perform comparison
 dynamic.network.compare(
-  data = df[,-2], groups = df[,2],
+  data = df[,-2], groups = df[,2], paired = TRUE,
   # EGA arguments
   corr = "auto", na.data = "pairwise", model = "glasso",
   # dynEGA arguments
@@ -259,7 +265,7 @@ df[df$Group == 3,] <- new_group
 \dontrun{
 # Perform comparison
 dynamic.network.compare(
-  data = df[,-2], groups = df[,2],
+  data = df[,-2], groups = df[,2], paired = TRUE,
   # EGA arguments
   corr = "auto", na.data = "pairwise", model = "glasso",
   # dynEGA arguments
