@@ -48,7 +48,7 @@
 #' @export
 #'
 # Simulate EGM ----
-# Updated 14.04.2025
+# Updated 28.05.2025
 simEGM <- function(
     communities, variables,
     loadings, cross.loadings = 0.01,
@@ -215,7 +215,7 @@ simEGM <- function(
 
         # Set assigned loadings
         loading_structure[block_index, i] <- runif_xoshiro(
-          block_variables, min = loadings[i] - 0.075, max = loadings[i] + 0.075
+          block_variables, min = loadings[i] - 0.05, max = loadings[i] + 0.05
         )
 
         # Loop over cross-loadings

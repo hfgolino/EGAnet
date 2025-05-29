@@ -151,18 +151,18 @@
 EGM <- function(
     data, EGM.model = c("explore", "EGA", "probability"),
     communities = NULL, structure = NULL, search = FALSE,
-    p.in = NULL, p.out = NULL,
-    opt = c("logLik", "SRMR"), model.select = c("logLik", "AIC", "BIC"),
-    constrain.structure = TRUE, constrain.zeros = TRUE,
-    random.starts = 10, optimize.network = TRUE,
-    verbose = TRUE, ...
+    p.in = NULL, p.out = NULL, opt = c("logLik", "SRMR"),
+    model.select = c("logLik", "AIC", "AICc", "BIC", "EBIC"),
+    gamma.select = 0.50, constrain.structure = TRUE,
+    constrain.zeros = TRUE, random.starts = 10,
+    optimize.network = TRUE, verbose = TRUE, ...
 )
 {
 
   # Set default
   EGM.model <- set_default(EGM.model, "explore", EGM)
   opt <- set_default(opt, "loglik", EGM)
-  model.select <- set_default(model.select, "aic", EGM)
+  model.select <- set_default(model.select, "aicc", EGM)
 
   # Set up EGM type internally
   EGM.type <- switch(
@@ -180,7 +180,7 @@ EGM <- function(
   # Check data and structure
   data <- EGM_errors(
     data, EGM.type, communities, search, p.in, p.out,
-    constrain.structure, constrain.zeros,
+    gamma.select, constrain.structure, constrain.zeros,
     random.starts, optimize.network, verbose, ...
   )
 
@@ -188,7 +188,7 @@ EGM <- function(
   return(
     switch(
       EGM.type,
-      "explore" = EGM.explore(data, communities, search, random.starts, optimize.network, opt, model.select, ...),
+      "explore" = EGM.explore(data, communities, search, random.starts, optimize.network, opt, model.select, gamma.select, ...),
       "ega" = EGM.EGA(data, structure, opt, constrain.structure, constrain.zeros, ...),
       "ega.search" = EGM.EGA.search(data, communities, structure, opt, constrain.structure, constrain.zeros, verbose, ...),
       "probability" = EGM.probability(data, communities, structure, p.in, p.out, opt, constrain.structure, constrain.zeros, ...),
@@ -203,7 +203,7 @@ EGM <- function(
 # Updated 27.05.2025
 EGM_errors <- function(
     data, EGM.type, communities, search, p.in, p.out,
-    constrain.structure, constrain.zeros,
+    gamma.select, constrain.structure, constrain.zeros,
     random.starts, optimize.network, verbose, ...
 )
 {
@@ -261,6 +261,11 @@ EGM_errors <- function(
 
   # Check for EGM type
   if(EGM.type == "explore"){
+
+    # Check 'gamma.select' errors
+    length_error(gamma.select, 1, "EGM")
+    typeof_error(gamma.select, "numeric", "EGM")
+    range_error(gamma.select, c(0, Inf), "EGM")
 
     # Check 'random.starts' errors
     length_error(random.starts, 1, "EGM")
@@ -429,7 +434,7 @@ compute_tefi_adjustment <- function(loadings, correlations)
 #' @noRd
 # EGM | Exploratory ----
 # Updated 27.05.2025
-EGM.explore <- function(data, communities, search, random.starts, optimize.network, opt, model.select, ...)
+EGM.explore <- function(data, communities, search, random.starts, optimize.network, opt, model.select, gamma.select, ...)
 {
 
   # Obtain data dimensions
@@ -444,12 +449,8 @@ EGM.explore <- function(data, communities, search, random.starts, optimize.netwo
   # Obtain variable names from the correlations
   variable_names <- dimnames(empirical_R)[[2]]
 
-  # Set up null partial correlation using non-informative beta-min
-  null_P2 <- empirical_P * beta_min(
-    P = empirical_P, membership = NULL,
-    K = empirical_K, total_variables = data_dimensions[2],
-    sample_size = data_dimensions[1]
-  )
+  # Set up edge selection based on expected chance (as in modularity)
+  null_P <- empirical_P * (abs(empirical_P) >= expected_edges(empirical_P))
 
   # Get Walktrap
   walktrap <- as.hclust(igraph::cluster_walktrap(convert2igraph(abs(null_P))))
@@ -471,14 +472,16 @@ EGM.explore <- function(data, communities, search, random.starts, optimize.netwo
   # Collect results
   results <- lapply(
     community_sequence, EGM.explore.core,
-    null_P = null_P,
-    walktrap = walktrap, variable_names = variable_names,
+    null_P = null_P, walktrap = walktrap, variable_names = variable_names,
     random.starts = random.starts, data_dimensions = data_dimensions,
-    empirical_R = empirical_R, empirical_K = empirical_K, opt = opt
+    empirical_R = empirical_R, empirical_K = empirical_K, opt = opt,
+    gamma.select = gamma.select
   )
 
   # Obtain fits
   fits <- do.call(rbind, lapply(results, function(x){x$fit}))
+
+  fits
 
   # Extract optimal loadings
   optimized_loadings <- results[[which.min(fits[,model.select])]]$loadings
@@ -594,7 +597,8 @@ EGM.explore <- function(data, communities, search, random.starts, optimize.netwo
           structure = structure,
           ci = 0.95, remove_correlations = FALSE
         ),
-        implied = list(R = optimized_R, P = optimized_P)
+        implied = list(R = optimized_R, P = optimized_P),
+        fits = fits
       )
     )
   )
@@ -1327,67 +1331,73 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
 
 #' @noRd
 # EGM | Core Exploration ----
-# Updated 27.05.2025
+# Updated 29.05.2025
 EGM.explore.core <- function(
     communities, null_P, walktrap, variable_names,
     random.starts, data_dimensions, empirical_R,
-    empirical_K, opt, ...
+    empirical_K, opt, gamma.select, ...
 )
 {
 
-  # Obtain memberships
+  # Set bad fit from the git
+  bad_fit <- c(loglik = NA, aic = NA, aicc = NA, bic = NA, ebic = NA, q = NA)
+
+  # Set memberships
   membership <- cutree(walktrap, communities)
 
   # Initialize loadings with membership
   loadings <- silent_call(
-    net.loads(
-      A = null_P, wc = cutree(walktrap, communities),
-    )$std[variable_names,, drop = FALSE]
+    net.loads(A = null_P, wc = membership)$std[variable_names,, drop = FALSE]
   )
 
   # Check if memberships have at least two
-  if(any(fast_table(membership) < 2)){
-
-    # Save time and avoid a bad solution
-    return(
-      list(
-        fit = c(loglik = NA, aic = NA, bic = NA),
-        loadings = loadings
-      )
-    )
-
+  if(any(fast_table(membership) < 2) | anyNA(membership)){
+    return(list(fit = bad_fit, loadings = loadings))
   }
 
-  # Perform 10 random starts
+  # Perform random starts
   starts <- lapply(seq_len(random.starts), function(i){
-    random_start(
-      loadings, communities, data_dimensions, empirical_R, opt
-    )
+    random_start(loadings, communities, data_dimensions, empirical_R, opt)
   })
 
   # Identify good solutions
   good_solutions <- lvapply(starts, function(x){x$convergence == 0})
 
   # Check for no good solutions
-  if(!all(good_solutions)){
-
-    # Save time and avoid a bad solution
-    return(
-      list(
-        fit = c(loglik = NA, aic = NA, bic = NA),
-        loadings = loadings
-      )
-    )
-
+  if(all(!good_solutions)){
+    return(list(fit = bad_fit, loadings = loadings))
   }else{
 
     # Round up good solutions
     solutions <- starts[good_solutions]
 
     # Check for positive definite solutions
-    solutions <- solutions[
-      lvapply(solutions, function(x){is_positive_definite(nload2cor(x$loadings))})
-    ]
+    PD <- lvapply(solutions, function(x){is_positive_definite(nload2cor(x$loadings))})
+
+    # Check for quality memberships
+    quality <- lvapply(
+      solutions, function(x){
+
+        # Obtain solution
+        membership <- max.col(abs(x$loadings))
+
+        # Quality measures
+        return(
+          unique_length(membership) == dim(x$loadings)[2] & # ensure meaningful
+            max(abs(x$loadings)) != 1 & # throw out any solutions with loadings of 1
+            all(fast_table(membership) > 1) # throw out singletons
+        )
+
+      }
+    )
+
+    # Check if any solutions remain
+    keep_solutions <- PD & quality
+    if(all(!(keep_solutions))){
+      return(list(fit = bad_fit, loadings = loadings))
+    }else{ # Update solutions
+      solutions <- solutions[keep_solutions]
+    }
 
     # Inspect solution criteria
     convergence_criteria <- do.call(
@@ -1422,48 +1432,49 @@ EGM.explore.core <- function(
   # Obtain solution
   membership <- max.col(abs(solution$loadings))
 
-  # Check that solution is meaningful
-  if(
-    unique_length(membership) == dim(solution$loadings)[2] & # ensure meaningful
-    max(abs(solution$loadings)) != 1 & # throw out any solutions with loadings of 1
-    all(fast_table(membership) > 1) # throw out singletons
-  ){
-
-    # Update beta-min with modularity information
-    P <- silent_call(
-      P * beta_min(
-        P = P, membership = membership,
-        K = empirical_K, total_variables = data_dimensions[2],
-        sample_size = data_dimensions[1]
-      )
+  # Update beta-min with modularity information
+  P <- silent_call(
+    P * beta_min(
+      P = P, membership = membership,
+      K = empirical_K, total_variables = data_dimensions[2],
+      sample_size = data_dimensions[1]
     )
+  )
 
-    # Compute log-likelihood
-    logLik <- silent_call(
-      -log_likelihood(
-        n = data_dimensions[1], p = data_dimensions[2],
-        R = pcor2cor(P), S = empirical_R, type = "zero"
-      )
+  # Compute log-likelihood
+  logLik <- silent_call(
+    -log_likelihood(
+      n = data_dimensions[1], p = data_dimensions[2],
+      R = pcor2cor(P), S = empirical_R, type = "zero"
     )
+  )
 
-    # Obtain parameters (add loadings)
-    parameters <- sum(P[lower_triangle] != 0) + sum(solution$loadings != 0)
+  # Obtain parameters (add loadings)
+  parameters <- sum(P[lower_triangle] != 0) + sum(solution$loadings != 0)
 
-    # Compute negative 2 times log-likelihood
-    logLik2 <- 2 * logLik
+  # Compute negative 2 times log-likelihood
+  logLik2 <- 2 * logLik
 
-    # Collect fit indices
-    fit <- c(
-      loglik = logLik,
-      aic = logLik2 + 2 * parameters,
-      bic = logLik2 + parameters * log(data_dimensions[1])
-      # , EBIC = BIC + lchoose(total_parameters, parameters)
-      # removed since BIC is already too strict
+  # Compute 2 times parameters
+  parameters2 <- 2 * parameters
+
+  # Compute AIC and BIC
+  aic <- logLik2 + parameters2
+  bic <- logLik2 + parameters * log(data_dimensions[1])
+
+  # Collect fit indices
+  fit <- c(
+    loglik = logLik,
+    aic = aic,
+    aicc = aic + (parameters2 * (parameters + 1)) /
+      (data_dimensions[2] - parameters2 - 1),
+    bic = bic,
+    ebic = bic + 2 * parameters2 * gamma.select * log(data_dimensions[2]),
+    q = -swiftelse(
+      unique_length(membership), sum(diag(expected_edges(P))^2),
+      modularity(P, membership)
     )
-
-  }else{ # Set missing values
-    fit <- c(loglik = NA, aic = NA, bic = NA)
-  }
+  )
 
   # Return result
   return(list(fit = fit, loadings = solution$loadings))
@@ -1471,14 +1482,28 @@ EGM.explore.core <- function(
 }
 
 #' @noRd
+# Expected edge values ----
+# Updated 29.05.2025
+expected_edges <- function(network)
+{
+
+  # Compute node strength
+  strength <- colSums(abs(network))
+
+  # Obtain the normalized cross-product
+  return(tcrossprod(strength) / sum(strength))
+
+}
+
+#' @noRd
 # beta-min criterion ----
-# Updated 26.05.2025
+# Updated 28.05.2025
 beta_min <- function(P, membership = NULL, K, total_variables, sample_size)
 {
 
   # Calculate standard beta-min if no structure
   if(is.null(membership)){
-    minimum <- sqrt(max(P^2) * log(total_variables) / sample_size)
+    minimum <- sqrt(log(total_variables) / sample_size)
   }else{
 
     # Obtain number of communities
@@ -1487,16 +1512,7 @@ beta_min <- function(P, membership = NULL, K, total_variables, sample_size)
     # Calculate modularity
     Q <- swiftelse(
       communities == 1,
-      {
-
-        # Compute mean of the modularity matrix (excluding self)
-        k <- colSums(P)
-        kk <- tcrossprod(k)
-        mod_matrix <- P - kk / sum(k)
-        diag(mod_matrix) <- 0
-        mean(mod_matrix)
-
-      },
+      sum(diag(P - expected_edges(P))^2),
       modularity(P, membership)
     )
 
@@ -1516,6 +1532,7 @@ beta_min <- function(P, membership = NULL, K, total_variables, sample_size)
 
   # Attach minimum
   attr(adjacency, "beta.min") <- minimum
+  if(exists("Q")){attr(adjacency, "Q") <- Q}
 
   # Return adjacency matrix
   return(adjacency)

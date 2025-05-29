@@ -61,13 +61,17 @@ srmr <- function(base, comparison)
 
 #' @noRd
 # SRMR cost
-# Updated 04.04.2025
+# Updated 29.05.2025
 srmr_cost <- function(
     loadings_vector, R,
     loading_structure, rows, n, v,
-    constrained, lower_triangle, ...
+    constrained, lower_triangle,
+    ...
 )
 {
+
+  # Set l2 cost (lambda = 0.01)
+  l2_cost <- 0.01 * sum(loadings_vector^2)
 
   # Check for constraint
   if(constrained){
@@ -82,23 +86,27 @@ srmr_cost <- function(
     differences <- abs(loadings_matrix) - loadings_matrix[loading_structure]
 
     # Check for positive definite
-    return(srmr(R, implied_R) + sum(differences > 0))
+    return(srmr(R, implied_R) + sum(differences > 0) + l2_cost)
 
   }else{ # Without constraints, send it
-    return(srmr(R, obtain_implied(loadings_vector, rows)))
+    return(srmr(R, obtain_implied(loadings_vector, rows)) + l2_cost)
   }
 
 }
 
 #' @noRd
 # SRMR gradient
-# Updated 24.05.2025
+# Updated 29.05.2025
 srmr_gradient <- function(
     loadings_vector, R,
     loading_structure, rows, n, v,
-    constrained, lower_triangle, ...
+    constrained, lower_triangle,
+    ...
 )
 {
+
+  # Set l2 gradient (lambda = 0.01)
+  l2_gradient <- 0.02 * loadings_vector
 
   # Check for constraint
   if(constrained){
@@ -119,7 +127,8 @@ srmr_gradient <- function(
     # Return gradient
     return(
       as.vector( # (2x leads to fewer iterations)
-        t(crossprod(2 * loadings_matrix, I %*% dError %*% I)) + (differences > 0)
+        t(crossprod(2 * loadings_matrix, I %*% dError %*% I)) + (differences > 0) +
+          l2_gradient
       )
     )
 
@@ -135,7 +144,8 @@ srmr_gradient <- function(
     # Return gradient (2x leads to fewer iterations)
     return(
       as.vector(
-        t(crossprod(2 * attributes(implied_R)$calculations$loadings, I %*% dError %*% I))
+        t(crossprod(2 * attributes(implied_R)$calculations$loadings, I %*% dError %*% I)) +
+          l2_gradient
       )
     )
 
@@ -171,13 +181,17 @@ log_likelihood <- function(n, p, R, S, type = c("partial", "zero"))
 
 #' @noRd
 # Log-likelihood cost
-# Updated 04.04.2025
+# Updated 29.05.2025
 logLik_cost <- function(
     loadings_vector, R,
     loading_structure, rows, n, v,
-    constrained, lower_triangle, ...
+    constrained, lower_triangle,
+    ...
 )
 {
+
+  # Set l2 cost
+  l2_cost <- 0.10 * sum(loadings_vector^2)
 
   # Check for constraint
   if(constrained){
@@ -192,23 +206,34 @@ logLik_cost <- function(
     differences <- abs(loadings_matrix) - loadings_matrix[loading_structure]
 
     # Check for positive definite
-    return(-log_likelihood(n, v, implied_R, R, type = "zero") + sum(differences > 0))
+    return(
+      -log_likelihood(n, v, implied_R, R, type = "zero") + sum(differences > 0) + l2_cost
+    )
 
-  }else{# Without constraints, send it
-    return(-log_likelihood(n, v, obtain_implied(loadings_vector, rows), R, type = "zero"))
+  }else{
+
+    # Without constraints, send it
+    return(
+      -log_likelihood(n, v, obtain_implied(loadings_vector, rows), R, type = "zero") +
+        l2_cost
+    )
+
   }
 
 }
 
 #' @noRd
 # Log-likelihood gradient
-# Updated 24.05.2025
+# Updated 29.05.2025
 logLik_gradient <- function(
     loadings_vector, R,
     loading_structure, rows, n, v,
     constrained, lower_triangle, ...
 )
 {
+
+  # Set l2 gradient
+  l2_gradient <- 0.20 * loadings_vector
 
   # Check for constraint
   if(constrained){
@@ -229,7 +254,8 @@ logLik_gradient <- function(
 
     # Return gradient
     return(
-      as.vector(t(crossprod(loadings_matrix, I %*% dError %*% I)) + (differences > 0))
+      as.vector(t(crossprod(loadings_matrix, I %*% dError %*% I)) + (differences > 0)) +
+        l2_gradient
     )
 
   }else{ # Without constraints, send it
@@ -244,7 +270,8 @@ logLik_gradient <- function(
 
     # Return gradient
     return(
-      as.vector(t(crossprod(attributes(implied_R)$calculations$loadings, I %*% dError %*% I)))
+      as.vector(t(crossprod(attributes(implied_R)$calculations$loadings, I %*% dError %*% I))) +
+        l2_gradient
     )
 
   }
@@ -257,11 +284,11 @@ logLik_gradient <- function(
 
 #' @noRd
 # EGM optimization ----
-# Updated 26.05.2025
+# Updated 29.05.2025
 egm_optimize <- function(
     loadings_vector, loadings_length,
     zeros, R, loading_structure, rows, n, v,
-    constrained, lower_triangle, opt, ...
+    constrained, lower_triangle, lambda, opt, ...
 )
 {
 
@@ -282,10 +309,10 @@ egm_optimize <- function(
         R = R, loading_structure = loading_structure,
         rows = rows, n = n, v = v,
         constrained = constrained, lower_triangle = lower_triangle,
-        lower = rep(-1, loadings_length) * zeros, upper = zeros ,
+        lower = rep(-1, loadings_length) * zeros, upper = zeros,
         control = list(
           eval.max = 10000, iter.max = 10000,
-          step.min = 1e-04, step.max = 0.10
+          step.min = 1e-06, step.max = 0.01
         )
       )
     )
@@ -295,7 +322,7 @@ egm_optimize <- function(
 
 #' @noRd
 # Random starts ----
-# Updated 27.05.2025
+# Updated 29.05.2025
 random_start <- function(
     loadings, communities, data_dimensions, empirical_R, opt
 )
@@ -305,17 +332,40 @@ random_start <- function(
   dimensions <- dim(loadings)
   dimension_names <- dimnames(loadings)
 
+  # Create confidence ratio
+  max_loading <- max.col(abs(loadings))
+
+  # Create separation ratio
+  separation_ratio <- pmin(
+    log(
+      nvapply(seq_len(dimensions[1]), function(i){
+
+        # Check for single dimension
+        swiftelse(
+          dimensions[2] == 1, 1,
+          abs(loadings[i, max_loading[i]]) /
+            max(abs(loadings[i, -max_loading[i]]))
+        )
+
+      }) / dimensions[2] + 1
+    ), 1
+  )
+
+  # Jitter the confidence
+  loadings <- t(
+    t(loadings) * separation_ratio * runif_xoshiro(dimensions[1], min = 1e-02, max = 1e-01)
+  )
+
   # Obtain loadings vector
   loadings_vector <- as.vector(loadings)
 
   # Get length and set zeros
   loadings_length <- length(loadings_vector)
-  zeros <- rep(1, loadings_length)
 
-  # Add some jitter
-  loadings_vector <- loadings_vector * runif_xoshiro(
-    loadings_length, min = 1e-05, max = 1e-02
-  )
+  # Fill zeros
+  zeros <- loadings_vector == 0
+  loadings_vector[zeros] <- runif_xoshiro(sum(zeros), min = 1e-06, max = 1e-04)
+  zeros <- rep(1, loadings_length)
 
   # Set up loading structure
   loading_structure <- matrix(
@@ -331,10 +381,8 @@ random_start <- function(
       zeros = zeros, R = empirical_R,
       loading_structure = loading_structure,
       rows = communities, n = data_dimensions[1],
-      v = data_dimensions[2],
-      constrained = FALSE,
-      lower_triangle = lower.tri(empirical_R),
-      opt = opt
+      v = data_dimensions[2], constrained = FALSE,
+      lower_triangle = lower.tri(empirical_R), opt = opt
     ), silent = TRUE
   )
 
@@ -362,7 +410,7 @@ random_start <- function(
         loading_structure = loading_structure,
         rows = communities, n = data_dimensions[1],
         v = data_dimensions[2], constrained = FALSE,
-        lower_triangle = lower.tri(empirical_R),
+        lower_triangle = lower.tri(empirical_R)
       ), silent = TRUE
     )
 
@@ -380,7 +428,7 @@ random_start <- function(
     return(
       list(
         loadings = loadings, fit = result$objective,
-        convergence = result$convergence,
+        convergence = 0, # accept false convergences (due to ridge penalty)
         min_eigenvalue_sign = sign(min_eigenvalue),
         min_eigenvalue = min_eigenvalue,
         condition_number = kappa(hessian)
@@ -500,7 +548,7 @@ logLik_network_gradient <- function(network_vector, R, n, v, lower_triangle, zer
 
 #' @noRd
 # EGM network optimization
-# Updated 26.05.2025
+# Updated 29.05.2025
 egm_network_optimize <- function(
     network_vector, network_length,
     R, n, v, lower_triangle,
@@ -526,7 +574,7 @@ egm_network_optimize <- function(
         lower = rep(-1, network_length), upper = rep(1, network_length),
         control = list(
           eval.max = 10000, iter.max = 10000,
-          step.min = 1e-04, step.max = 0.10
+          step.min = 1e-06, step.max = 0.01
         )
       )
     )
