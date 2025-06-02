@@ -152,7 +152,7 @@ EGM <- function(
     data, EGM.model = c("explore", "EGA", "probability"),
     communities = NULL, structure = NULL, search = FALSE,
     p.in = NULL, p.out = NULL, opt = c("logLik", "SRMR"),
-    model.select = c("logLik", "AIC", "AICc", "BIC", "EBIC"),
+    model.select = c("logLik", "AIC", "AICc", "BIC", "EBIC", "Q"),
     gamma.select = 0.50, constrain.structure = TRUE,
     constrain.zeros = TRUE, random.starts = 10,
     optimize.network = TRUE, verbose = TRUE, ...
@@ -566,7 +566,7 @@ EGM.explore <- function(data, communities, search, random.starts, optimize.netwo
 
   # Attach methods to memberships
   attr(ega_list$wc, which = "methods") <- list(
-    algorithm = swiftelse(is.null(structure), NULL, "Walktrap"),
+    algorithm = swiftelse(is.null(structure), NULL, "Ward's"),
     objective_function = NULL
   )
 
@@ -1368,20 +1368,105 @@ EGM.explore.core <- function(
 
   }
 
-  # Perform random starts
-  starts <- lapply(seq_len(random.starts), function(i){
-    random_start(
-      loadings, communities,
-      swiftelse( # community-aware lambda for ridge
-        unique_length(membership), sum(diag(expected_edges(null_P))^2),
-        modularity(null_P, membership)
-      ),
-      data_dimensions, empirical_R, opt
+  # Get loading dimensions
+  dimensions <- dim(loadings)
+  dimension_names <- dimnames(loadings)
+
+  # Obtain loadings vector (shrink to avoid over dependence on initial structure)
+  loadings_vector <- as.vector(loadings)
+
+  # Get length and set zeros
+  loadings_length <- length(loadings_vector)
+
+  # Allow zeros to be estimated
+  zeros <- rep(1, loadings_length)
+
+  # Set up loading structure
+  loading_structure <- matrix(
+    TRUE, nrow = dimensions[1], ncol = dimensions[2],
+    dimnames = list(dimension_names[[1]], dimension_names[[2]])
+  )
+
+  # Perform lambda search
+  starts <- lapply(seq(1e-04, 1, length.out = 20), function(lambda){
+
+    # Optimize over loadings
+    result <- try(
+      egm_optimize(
+        loadings_vector = loadings_vector,
+        loadings_length = loadings_length,
+        zeros = zeros, R = empirical_R,
+        loading_structure = loading_structure,
+        rows = communities, n = data_dimensions[1],
+        v = data_dimensions[2], constrained = FALSE,
+        lower_triangle = lower.tri(empirical_R),
+        lambda = lambda, opt = opt
+      ), silent = TRUE
     )
+
+    # Return values
+    if(is(result, "try-error")){
+      return(list(loadings = NULL, fit = NA, convergence = 1))
+    }else{
+
+      # Check Hessian
+      hessian <- try(
+        optimHess(
+          par = result$par,
+          fn = switch(
+            opt,
+            "loglik" = logLik_cost,
+            "srmr" = srmr_cost
+          ),
+          gr = switch(
+            opt,
+            "loglik" = logLik_gradient,
+            "srmr" = srmr_gradient
+          ),
+          loadings_length = loadings_length,
+          zeros = zeros, R = empirical_R,
+          loading_structure = loading_structure,
+          rows = communities, n = data_dimensions[1],
+          v = data_dimensions[2], constrained = FALSE,
+          lower_triangle = lower.tri(empirical_R),
+          lambda = lambda
+        ), silent = TRUE
+      )
+
+      # Get minimum eigenvalue
+      min_eigenvalue <- try(min(matrix_eigenvalues(hessian)), silent = TRUE)
+      min_eigenvalue <- swiftelse(is(min_eigenvalue, "try-error"), Inf, min_eigenvalue)
+
+      # Get condition number
+      condition_number <- try(kappa(hessian), silent = TRUE)
+      condition_number <- swiftelse(
+        is(condition_number, "try-error"), Inf, condition_number
+      )
+
+      # Format loadings
+      loadings <- matrix(
+        result$par,
+        nrow = data_dimensions[2], ncol = communities,
+        dimnames = dimnames(loadings)
+      )
+
+      # Return value
+      return(
+        list(
+          loadings = loadings, fit = result$objective,
+          convergence = as.numeric(gsub(".*\\((\\d+)\\).*", "\\1", result$message)),
+          min_eigenvalue_sign = sign(min_eigenvalue),
+          min_eigenvalue = min_eigenvalue,
+          condition_number = condition_number
+        )
+      )
+
+    }
+
   })
 
   # Identify good solutions
-  good_solutions <- lvapply(starts, function(x){x$convergence == 0})
+  good_solutions <- lvapply(starts, function(x){x$convergence > 1})
 
   # Check for no good solutions
   if(all(!good_solutions)){
@@ -1422,15 +1507,23 @@ EGM.explore.core <- function(
     # Inspect solution criteria
     convergence_criteria <- do.call(
       rbind.data.frame, lapply(solutions, function(x){
-        x[c("fit", "min_eigenvalue_sign", "min_eigenvalue", "condition_number")]
+        x[c("fit", "min_eigenvalue_sign", "min_eigenvalue", "condition_number", "convergence")]
       })
     )
+
+    # Get convergence flags
+    convergence_flag <- convergence_criteria$min_eigenvalue_sign == 1 |
+                        convergence_criteria$convergence %in% c(3:6, 8)
+
+    # Check for non-saddle points
+    if(any(convergence_flag)){
+      convergence_criteria <- convergence_criteria[convergence_flag,, drop = FALSE]
+    }
 
     # Get order
     convergence_criteria <- convergence_criteria[
       order(
-        round(convergence_criteria$fit, 4),
-        convergence_criteria$min_eigenvalue_sign,
+        -round(convergence_criteria$fit, 4),
         convergence_criteria$min_eigenvalue,
         convergence_criteria$condition_number,
         decreasing = TRUE
@@ -1491,7 +1584,8 @@ EGM.explore.core <- function(
     bic = bic,
     ebic = bic + 2 * parameters2 * gamma.select * log(data_dimensions[2]),
     q = -swiftelse(
-      unique_length(membership), sum(diag(expected_edges(P))^2),
+      unique_length(membership) == 1,
+      sum(diag(expected_edges(P))^2),
       modularity(P, membership)
     )
   )
@@ -1534,10 +1628,10 @@ beta_min <- function(P, membership = NULL, K, total_variables, sample_size)
       communities == 1,
       sum(diag(P - expected_edges(P))^2),
       modularity(P, membership)
-    )^2
+    )
 
     # Calculate community-aware beta-min
-    minimum <- sqrt((Q * log(total_variables)) / (communities * sample_size))
+    minimum <- sqrt(Q * log(total_variables) /  sample_size)
 
   }
 

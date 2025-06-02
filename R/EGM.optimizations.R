@@ -185,8 +185,7 @@ log_likelihood <- function(n, p, R, S, type = c("partial", "zero"))
 logLik_cost <- function(
     loadings_vector, R,
     loading_structure, rows, n, v,
-    constrained, lower_triangle,
-    lambda, ...
+    constrained, lower_triangle, lambda, ...
 )
 {
 
@@ -228,8 +227,7 @@ logLik_cost <- function(
 logLik_gradient <- function(
     loadings_vector, R,
     loading_structure, rows, n, v,
-    constrained, lower_triangle,
-    lambda, ...
+    constrained, lower_triangle, lambda, ...
 )
 {
 
@@ -289,7 +287,7 @@ logLik_gradient <- function(
 egm_optimize <- function(
     loadings_vector, loadings_length,
     zeros, R, loading_structure, rows, n, v,
-    constrained, lower_triangle, lambda = 0.10, opt, ...
+    constrained, lower_triangle, lambda, opt, ...
 )
 {
 
@@ -313,7 +311,7 @@ egm_optimize <- function(
         lower = rep(-1, loadings_length) * zeros, upper = zeros,
         control = list(
           eval.max = 10000, iter.max = 10000,
-          step.min = 1e-10, step.max = 1e-06
+          step.min = 1e-10, step.max = 0.10
         )
       )
     )
@@ -321,112 +319,111 @@ egm_optimize <- function(
 
 }
 
-#' @noRd
-# Random starts ----
-# Updated 02.06.2025
-random_start <- function(
-    loadings, communities, Q, data_dimensions, empirical_R, opt
-)
-{
-
-  # Get loading dimensions
-  dimensions <- dim(loadings)
-  dimension_names <- dimnames(loadings)
-
-  # Obtain loadings vector
-  loadings_vector <- as.vector(loadings)
-
-  # Get length and set zeros
-  loadings_length <- length(loadings_vector)
-
-  # Update loadings vector
-  loadings_vector <- loadings_vector * runif_xoshiro(
-    loadings_length, min = 1e-04, max = 1e-02
-  )
-
-  # Allow zeros to be estimated
-  zeros <- rep(1, loadings_length)
-
-  # Set up loading structure
-  loading_structure <- matrix(
-    TRUE, nrow = dimensions[1], ncol = dimensions[2],
-    dimnames = list(dimension_names[[1]], dimension_names[[2]])
-  )
-
-  # Optimize over loadings
-  result <- try(
-    egm_optimize(
-      loadings_vector = loadings_vector,
-      loadings_length = loadings_length,
-      zeros = zeros, R = empirical_R,
-      loading_structure = loading_structure,
-      rows = communities, n = data_dimensions[1],
-      v = data_dimensions[2], constrained = FALSE,
-      lower_triangle = lower.tri(empirical_R),
-      lambda = Q, opt = opt
-    ), silent = TRUE
-  )
-
-  # Return values
-  if(is(result, "try-error")){
-    return(list(loadings = NULL, fit = NA, convergence = 1))
-  }else{
-
-    # Check Hessian
-    hessian <- try(
-      optimHess(
-        par = result$par,
-        fn = switch(
-          opt,
-          "loglik" = logLik_cost,
-          "srmr" = srmr_cost
-        ),
-        gr = switch(
-          opt,
-          "loglik" = logLik_gradient,
-          "srmr" = srmr_gradient
-        ),
-        loadings_length = loadings_length,
-        zeros = zeros, R = empirical_R,
-        loading_structure = loading_structure,
-        rows = communities, n = data_dimensions[1],
-        v = data_dimensions[2], constrained = FALSE,
-        lower_triangle = lower.tri(empirical_R),
-        lambda = Q
-      ), silent = TRUE
-    )
-
-    # Get minimum eigenvalue
-    min_eigenvalue <- try(min(matrix_eigenvalues(hessian)), silent = TRUE)
-    min_eigenvalue <- swiftelse(is(min_eigenvalue, "try-error"), Inf, min_eigenvalue)
-
-    # Get condition number
-    condition_number <- try(kappa(hessian), silent = TRUE)
-    condition_number <- swiftelse(
-      is(condition_number, "try-error"), Inf, condition_number
-    )
-
-    # Format loadings
-    loadings <- matrix(
-      result$par,
-      nrow = data_dimensions[2], ncol = communities,
-      dimnames = dimnames(loadings)
-    )
-
-    # Return value
-    return(
-      list(
-        loadings = loadings, fit = result$objective,
-        convergence = 0, # accept false convergences (due to ridge penalty)
-        min_eigenvalue_sign = sign(min_eigenvalue),
-        min_eigenvalue = min_eigenvalue,
-        condition_number = condition_number
-      )
-    )
-
-  }
-
-}
+# # @noRd
+# # lambda search ----
+# # Updated 02.06.2025
+# random_start <- function(
+#     loadings, communities, data_dimensions, empirical_R, opt
+# )
+# {
+#
+#   # Get loading dimensions
+#   dimensions <- dim(loadings)
+#   dimension_names <- dimnames(loadings)
+#
+#   # Obtain loadings vector
+#   loadings_vector <- as.vector(loadings)
+#
+#   # Get length and set zeros
+#   loadings_length <- length(loadings_vector)
+#
+#   # Update loadings vector
+#   loadings_vector <- loadings_vector * runif_xoshiro(
+#     loadings_length, min = 1e-04, max = 1e-02
+#   )
+#
+#   # Allow zeros to be estimated
+#   zeros <- rep(1, loadings_length)
+#
+#   # Set up loading structure
+#   loading_structure <- matrix(
+#     TRUE, nrow = dimensions[1], ncol = dimensions[2],
+#     dimnames = list(dimension_names[[1]], dimension_names[[2]])
+#   )
+#
+#   # Optimize over loadings
+#   result <- try(
+#     egm_optimize(
+#       loadings_vector = loadings_vector,
+#       loadings_length = loadings_length,
+#       zeros = zeros, R = empirical_R,
+#       loading_structure = loading_structure,
+#       rows = communities, n = data_dimensions[1],
+#       v = data_dimensions[2], constrained = FALSE,
+#       lower_triangle = lower.tri(empirical_R),
+#       lambda = lambda, opt = opt
+#     ), silent = TRUE
+#   )
+#
+#   # Return values
+#   if(is(result, "try-error")){
+#     return(list(loadings = NULL, fit = NA, convergence = 1))
+#   }else{
+#
+#     # Check Hessian
+#     hessian <- try(
+#       optimHess(
+#         par = result$par,
+#         fn = switch(
+#           opt,
+#           "loglik" = logLik_cost,
+#           "srmr" = srmr_cost
+#         ),
+#         gr = switch(
+#           opt,
+#           "loglik" = logLik_gradient,
+#           "srmr" = srmr_gradient
+#         ),
+#         loadings_length = loadings_length,
+#         zeros = zeros, R = empirical_R,
+#         loading_structure = loading_structure,
+#         rows = communities, n = data_dimensions[1],
+#         v = data_dimensions[2], constrained = FALSE,
+#         lower_triangle = lower.tri(empirical_R)
+#       ), silent = TRUE
+#     )
+#
+#     # Get minimum eigenvalue
+#     min_eigenvalue <- try(min(matrix_eigenvalues(hessian)), silent = TRUE)
+#     min_eigenvalue <- swiftelse(is(min_eigenvalue, "try-error"), Inf, min_eigenvalue)
+#
+#     # Get condition number
+#     condition_number <- try(kappa(hessian), silent = TRUE)
+#     condition_number <- swiftelse(
+#       is(condition_number, "try-error"), Inf, condition_number
+#     )
+#
+#     # Format loadings
+#     loadings <- matrix(
+#       result$par,
+#       nrow = data_dimensions[2], ncol = communities,
+#       dimnames = dimnames(loadings)
+#     )
+#
+#     # Return value
+#     return(
+#       list(
+#         loadings = loadings, fit = result$objective,
+#         convergence = 0, # accept false convergences (due to ridge penalty)
+#         min_eigenvalue_sign = sign(min_eigenvalue),
+#         min_eigenvalue = min_eigenvalue,
+#         condition_number = condition_number
+#       )
+#     )
+#
+#   }
+#
+# }
 
 #%%%%%%%%%%%%%%%#
 #### NETWORK ####
