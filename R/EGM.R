@@ -147,7 +147,7 @@
 #' @export
 #'
 # Estimate EGM ----
-# Updated 25.05.2025
+# Updated 02.06.2025
 EGM <- function(
     data, EGM.model = c("explore", "EGA", "probability"),
     communities = NULL, structure = NULL, search = FALSE,
@@ -162,7 +162,7 @@ EGM <- function(
   # Set default
   EGM.model <- set_default(EGM.model, "explore", EGM)
   opt <- set_default(opt, "loglik", EGM)
-  model.select <- set_default(model.select, "aicc", EGM)
+  model.select <- set_default(model.select, "aic", EGM)
 
   # Set up EGM type internally
   EGM.type <- switch(
@@ -433,7 +433,7 @@ compute_tefi_adjustment <- function(loadings, correlations)
 
 #' @noRd
 # EGM | Exploratory ----
-# Updated 27.05.2025
+# Updated 02.06.2025
 EGM.explore <- function(data, communities, search, random.starts, optimize.network, opt, model.select, gamma.select, ...)
 {
 
@@ -449,12 +449,6 @@ EGM.explore <- function(data, communities, search, random.starts, optimize.netwo
   # Obtain variable names from the correlations
   variable_names <- dimnames(empirical_R)[[2]]
 
-  # Set up edge selection based on expected chance (as in modularity)
-  null_P <- empirical_P * (abs(empirical_P) >= expected_edges(empirical_P))
-
-  # Get Walktrap
-  walktrap <- as.hclust(igraph::cluster_walktrap(convert2igraph(abs(null_P))))
-
   # Need at least two variables per community
   at_least_two <- round(data_dimensions[2] / 2) - 1
   max_communities <- max(communities)
@@ -469,10 +463,14 @@ EGM.explore <- function(data, communities, search, random.starts, optimize.netwo
     ), max_communities
   )
 
+  # Obtain null P
+  null_P <- empirical_P * (abs(empirical_P) >= expected_edges(empirical_P))
+
   # Collect results
   results <- lapply(
-    community_sequence, EGM.explore.core,
-    null_P = null_P, walktrap = walktrap, variable_names = variable_names,
+    community_sequence, EGM.explore.core, null_P = null_P,
+    walktrap = hclust(d = as.dist(1 - abs(null_P)), method = "ward.D2"),
+    variable_names = variable_names,
     random.starts = random.starts, data_dimensions = data_dimensions,
     empirical_R = empirical_R, empirical_K = empirical_K, opt = opt,
     gamma.select = gamma.select
@@ -480,8 +478,6 @@ EGM.explore <- function(data, communities, search, random.starts, optimize.netwo
 
   # Obtain fits
   fits <- do.call(rbind, lapply(results, function(x){x$fit}))
-
-  fits
 
   # Extract optimal loadings
   optimized_loadings <- results[[which.min(fits[,model.select])]]$loadings
@@ -1331,7 +1327,7 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
 
 #' @noRd
 # EGM | Core Exploration ----
-# Updated 29.05.2025
+# Updated 02.06.2025
 EGM.explore.core <- function(
     communities, null_P, walktrap, variable_names,
     random.starts, data_dimensions, empirical_R,
@@ -1350,14 +1346,38 @@ EGM.explore.core <- function(
     net.loads(A = null_P, wc = membership)$std[variable_names,, drop = FALSE]
   )
 
-  # Check if memberships have at least two
-  if(any(fast_table(membership) < 2) | anyNA(membership)){
-    return(list(fit = bad_fit, loadings = loadings))
+  # Check for single memberships
+  singletons <- fast_table(membership) == 1
+
+  # If singletons, replace loadings
+  if(any(singletons)){
+
+    # Loop over
+    for(i in which(singletons)){
+
+      # Update loadings to zero in the community
+      loadings[,i] <- 0
+
+      # Get index
+      index <- membership == i
+
+      # Set singleton to mean of overall connections (allow drop to vector)
+      loadings[index, i] <- mean(null_P[index,])
+
+    }
+
   }
 
   # Perform random starts
   starts <- lapply(seq_len(random.starts), function(i){
-    random_start(loadings, communities, data_dimensions, empirical_R, opt)
+    random_start(
+      loadings, communities,
+      swiftelse( # community-aware lambda for ridge
+        unique_length(membership), sum(diag(expected_edges(null_P))^2),
+        modularity(null_P, membership)
+      ),
+      data_dimensions, empirical_R, opt
+    )
   })
 
   # Identify good solutions
@@ -1497,7 +1517,7 @@ expected_edges <- function(network)
 
 #' @noRd
 # beta-min criterion ----
-# Updated 28.05.2025
+# Updated 02.06.2025
 beta_min <- function(P, membership = NULL, K, total_variables, sample_size)
 {
 
@@ -1514,7 +1534,7 @@ beta_min <- function(P, membership = NULL, K, total_variables, sample_size)
       communities == 1,
       sum(diag(P - expected_edges(P))^2),
       modularity(P, membership)
-    )
+    )^2
 
     # Calculate community-aware beta-min
     minimum <- sqrt((Q * log(total_variables)) / (communities * sample_size))
