@@ -152,7 +152,7 @@ EGM <- function(
     data, EGM.model = c("explore", "EGA", "probability"),
     communities = NULL, structure = NULL, search = FALSE,
     p.in = NULL, p.out = NULL, opt = c("logLik", "SRMR"),
-    model.select = c("logLik", "AIC", "AICc", "BIC", "EBIC", "Q"),
+    model.select = c("logLik", "AIC", "AICc", "BIC", "EBIC"),
     gamma.select = 0.50, constrain.structure = TRUE,
     constrain.zeros = TRUE, random.starts = 10,
     optimize.network = TRUE, verbose = TRUE, ...
@@ -469,7 +469,7 @@ EGM.explore <- function(data, communities, search, random.starts, optimize.netwo
   # Collect results
   results <- lapply(
     community_sequence, EGM.explore.core, null_P = null_P,
-    walktrap = hclust(d = as.dist(1 - abs(null_P)), method = "ward.D2"),
+    wards = hclust(d = as.dist(1 - abs(null_P)), method = "ward.D2"),
     variable_names = variable_names,
     random.starts = random.starts, data_dimensions = data_dimensions,
     empirical_R = empirical_R, empirical_K = empirical_K, opt = opt,
@@ -1329,17 +1329,17 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
 # EGM | Core Exploration ----
 # Updated 02.06.2025
 EGM.explore.core <- function(
-    communities, null_P, walktrap, variable_names,
+    communities, null_P, wards, variable_names,
     random.starts, data_dimensions, empirical_R,
     empirical_K, opt, gamma.select, ...
 )
 {
 
   # Set bad fit from the git
-  bad_fit <- c(loglik = NA, aic = NA, aicc = NA, bic = NA, ebic = NA, q = NA)
+  bad_fit <- c(loglik = NA, aic = NA, aicc = NA, bic = NA, ebic = NA)
 
   # Set memberships
-  membership <- cutree(walktrap, communities)
+  membership <- cutree(wards, communities)
 
   # Initialize loadings with membership
   loadings <- silent_call(
@@ -1372,7 +1372,7 @@ EGM.explore.core <- function(
   dimensions <- dim(loadings)
   dimension_names <- dimnames(loadings)
 
-  # Obtain loadings vector (shrink to avoid over dependence on initial structure)
+  # Obtain loadings vector
   loadings_vector <- as.vector(loadings)
 
   # Get length and set zeros
@@ -1387,8 +1387,13 @@ EGM.explore.core <- function(
     dimnames = list(dimension_names[[1]], dimension_names[[2]])
   )
 
+  # Set up lambda ratio
+  max_loading <- max(abs(loadings_vector))
+
   # Perform lambda search
-  starts <- lapply(seq(1e-04, 1, length.out = 20), function(lambda){
+  starts <- lapply(
+    exp(seq(log(max_loading * 0.001), log(max_loading), length.out = 10)),
+    function(lambda){
 
     # Optimize over loadings
     result <- try(
@@ -1582,12 +1587,7 @@ EGM.explore.core <- function(
     aicc = aic + (parameters2 * (parameters + 1)) /
       (data_dimensions[2] - parameters2 - 1),
     bic = bic,
-    ebic = bic + 2 * parameters2 * gamma.select * log(data_dimensions[2]),
-    q = -swiftelse(
-      unique_length(membership) == 1,
-      sum(diag(expected_edges(P))^2),
-      modularity(P, membership)
-    )
+    ebic = bic + 2 * parameters2 * gamma.select * log(data_dimensions[2])
   )
 
   # Return result
@@ -1631,7 +1631,7 @@ beta_min <- function(P, membership = NULL, K, total_variables, sample_size)
     )
 
     # Calculate community-aware beta-min
-    minimum <- sqrt(Q * log(total_variables) /  sample_size)
+    minimum <- sqrt(Q * log(total_variables) / sample_size)
 
   }
 
