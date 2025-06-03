@@ -271,7 +271,7 @@
 #' @export
 #'
 # Perform permutations for network structures ----
-# Updated 27.05.2025
+# Updated 03.06.2025
 dynamic.network.compare <- function(
     data, groups, paired = FALSE,
     # EGA arguments
@@ -303,7 +303,7 @@ dynamic.network.compare <- function(
   )
 
   # Check for input errors
-  groups <- dynamic.network.compare_errors(data, groups, iter, seed, ...)
+  groups <- dynamic.network.compare_errors(data, groups, paired, iter, seed, ...)
 
   # Set ellipse
   ellipse <- list(...)
@@ -475,11 +475,17 @@ dynamic.network.compare <- function(
         # If paired groups
         if(paired){
 
+          # Re-factor the memberships for easier assignments
+          numeric_membership <- as.numeric(factor(new_membership, levels = pair))
+
           # Get new groups for first group
-          new_group <- new_membership[target_sequence]
+          new_group <- numeric_membership[target_sequence]
 
           # Set up for the second group
           new_membership <- c(new_group, 3 - new_group)
+
+          # Replace new membership with levels
+          new_membership <- pair[new_membership]
 
         }
 
@@ -645,14 +651,18 @@ dynamic.network.compare <- function(
 
 #' @noRd
 # Errors ----
-# Updated 14.03.2025
-dynamic.network.compare_errors <- function(data, groups, iter, seed, ...)
+# Updated 03.06.2025
+dynamic.network.compare_errors <- function(data, groups, paired, iter, seed, ...)
 {
 
   # 'groups' errors
   object_error(groups, c("vector", "matrix", "data.frame"), "dynamic.network.compare")
   groups <- force_vector(groups)
   length_error(groups, dim(data)[1], "dynamic.network.compare")
+
+  # 'paired' errors
+  length_error(paired, 1, "dynamic.network.compare")
+  typeof_error(paired, "logical", "dynamic.network.compare")
 
   # 'iter' errors
   length_error(iter, 1, "dynamic.network.compare")
