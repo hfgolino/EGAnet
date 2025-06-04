@@ -469,7 +469,8 @@ EGM.explore <- function(data, communities, search, random.starts, optimize.netwo
   # Collect results
   results <- lapply(
     community_sequence, EGM.explore.core, wto_P = wto_P,
-    cluster = hclust(d = as.dist(1 - sqrt(abs(wto_P))), method = "average"),
+    # cluster = hclust(d = as.dist(1 - sqrt(abs(wto_P))), method = "average"),
+    cluster = hclust(d = as.dist(1 - abs(wto_P)), method = "average"),
     variable_names = variable_names,
     random.starts = random.starts, data_dimensions = data_dimensions,
     empirical_R = empirical_R, empirical_K = empirical_K, opt = opt,
