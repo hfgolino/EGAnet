@@ -566,7 +566,7 @@ EGM.explore <- function(data, communities, search, random.starts, optimize.netwo
 
   # Attach methods to memberships
   attr(ega_list$wc, which = "methods") <- list(
-    algorithm = swiftelse(is.null(structure), NULL, "Ward's"),
+    algorithm = swiftelse(is.null(structure), NULL, "EGM Explore"),
     objective_function = NULL
   )
 
@@ -1343,7 +1343,7 @@ EGM.explore.core <- function(
 
   # Initialize loadings with membership
   loadings <- silent_call(
-    net.loads(A = wto_P, wc = membership)$std[variable_names,, drop = FALSE]
+    net.loads(A = wto_P, wc = membership, scaling = 1)$std[variable_names,, drop = FALSE]
   )
 
   # Check for single memberships
