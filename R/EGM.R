@@ -152,7 +152,7 @@ EGM <- function(
     data, EGM.model = c("explore", "EGA", "probability"),
     communities = NULL, structure = NULL, search = FALSE,
     p.in = NULL, p.out = NULL, opt = c("logLik", "SRMR"),
-    model.select = c("logLik", "AIC", "AICc", "BIC", "EBIC"),
+    model.select = c("logLik", "AIC", "AICc", "BIC", "EBIC", "Q"),
     gamma.select = 0.50, constrain.structure = TRUE,
     constrain.zeros = TRUE, random.starts = 10,
     optimize.network = TRUE, verbose = TRUE, ...
@@ -433,7 +433,7 @@ compute_tefi_adjustment <- function(loadings, correlations)
 
 #' @noRd
 # EGM | Exploratory ----
-# Updated 02.06.2025
+# Updated 04.06.2025
 EGM.explore <- function(data, communities, search, random.starts, optimize.network, opt, model.select, gamma.select, ...)
 {
 
@@ -463,13 +463,13 @@ EGM.explore <- function(data, communities, search, random.starts, optimize.netwo
     ), max_communities
   )
 
-  # Obtain null P
-  null_P <- empirical_P * (abs(empirical_P) >= expected_edges(empirical_P))
+  # Obtain weighted topological overlap of partial correlations
+  wto_P <- wto(empirical_P)
 
   # Collect results
   results <- lapply(
-    community_sequence, EGM.explore.core, null_P = null_P,
-    wards = hclust(d = as.dist(1 - abs(null_P)), method = "ward.D2"),
+    community_sequence, EGM.explore.core, wto_P = wto_P,
+    cluster = hclust(d = as.dist(1 - sqrt(abs(wto_P))), method = "average"),
     variable_names = variable_names,
     random.starts = random.starts, data_dimensions = data_dimensions,
     empirical_R = empirical_R, empirical_K = empirical_K, opt = opt,
@@ -1327,23 +1327,23 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
 
 #' @noRd
 # EGM | Core Exploration ----
-# Updated 02.06.2025
+# Updated 04.06.2025
 EGM.explore.core <- function(
-    communities, null_P, wards, variable_names,
+    communities, wto_P, cluster, variable_names,
     random.starts, data_dimensions, empirical_R,
     empirical_K, opt, gamma.select, ...
 )
 {
 
   # Set bad fit from the git
-  bad_fit <- c(loglik = NA, aic = NA, aicc = NA, bic = NA, ebic = NA)
+  bad_fit <- c(loglik = NA, aic = NA, aicc = NA, bic = NA, ebic = NA, q = NA)
 
   # Set memberships
-  membership <- cutree(wards, communities)
+  membership <- cutree(cluster, communities)
 
   # Initialize loadings with membership
   loadings <- silent_call(
-    net.loads(A = null_P, wc = membership)$std[variable_names,, drop = FALSE]
+    net.loads(A = wto_P, wc = membership)$std[variable_names,, drop = FALSE]
   )
 
   # Check for single memberships
@@ -1362,7 +1362,7 @@ EGM.explore.core <- function(
       index <- membership == i
 
       # Set singleton to mean of overall connections (allow drop to vector)
-      loadings[index, i] <- mean(null_P[index,])
+      loadings[index, i] <- mean(wto_P[index,])
 
     }
 
@@ -1392,7 +1392,8 @@ EGM.explore.core <- function(
 
   # Perform lambda search
   starts <- lapply(
-    exp(seq(log(max_loading * 0.001), log(max_loading), length.out = 10)),
+    # exp(seq(log(0.01), log(1), length.out = 10)),
+    exp(seq(log(max_loading * 0.01), log(max_loading), length.out = 10)),
     function(lambda){
 
     # Optimize over loadings
@@ -1587,7 +1588,12 @@ EGM.explore.core <- function(
     aicc = aic + (parameters2 * (parameters + 1)) /
       (data_dimensions[2] - parameters2 - 1),
     bic = bic,
-    ebic = bic + 2 * parameters2 * gamma.select * log(data_dimensions[2])
+    ebic = bic + 2 * parameters2 * gamma.select * log(data_dimensions[2]),
+    q = -swiftelse(
+      unique_length(membership) == 1,
+      sum(diag(P - expected_edges(P))^2),
+      modularity(P, membership)
+    )
   )
 
   # Return result
@@ -1611,7 +1617,7 @@ expected_edges <- function(network)
 
 #' @noRd
 # beta-min criterion ----
-# Updated 02.06.2025
+# Updated 03.06.2025
 beta_min <- function(P, membership = NULL, K, total_variables, sample_size)
 {
 
@@ -1624,14 +1630,14 @@ beta_min <- function(P, membership = NULL, K, total_variables, sample_size)
     communities <- unique_length(membership)
 
     # Calculate modularity
-    Q <- swiftelse(
+    Q2 <- swiftelse(
       communities == 1,
       sum(diag(P - expected_edges(P))^2),
       modularity(P, membership)
-    )
+    )^2
 
     # Calculate community-aware beta-min
-    minimum <- sqrt(Q * log(total_variables) / sample_size)
+    minimum <- sqrt(Q2 * log(total_variables) / sample_size)
 
   }
 
@@ -1646,7 +1652,7 @@ beta_min <- function(P, membership = NULL, K, total_variables, sample_size)
 
   # Attach minimum
   attr(adjacency, "beta.min") <- minimum
-  if(exists("Q")){attr(adjacency, "Q") <- Q}
+  if(exists("Q2")){attr(adjacency, "Q") <- sqrt(Q2)}
 
   # Return adjacency matrix
   return(adjacency)
