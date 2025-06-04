@@ -1362,7 +1362,7 @@ EGM.explore.core <- function(
       index <- membership == i
 
       # Set singleton to mean of overall connections (allow drop to vector)
-      loadings[index, i] <- mean(wto_P[index,])
+      loadings[index, i] <- max(loadings[index,])
 
     }
 
@@ -1388,12 +1388,13 @@ EGM.explore.core <- function(
   )
 
   # Set up lambda ratio
-  max_loading <- max(abs(loadings_vector))
+  max_loading <- max(abs(loadings_vector[!is.infinite(loadings_vector)]))
 
   # Perform lambda search
   starts <- lapply(
     # exp(seq(log(0.01), log(1), length.out = 10)),
-    exp(seq(log(max_loading * 0.01), log(max_loading), length.out = 10)),
+    # exp(seq(log(max_loading * 0.10), log(max_loading), length.out = 10))
+    exp(seq(log(max_loading), log(max_loading * 10), length.out = 10)),
     function(lambda){
 
     # Optimize over loadings
@@ -1495,8 +1496,8 @@ EGM.explore.core <- function(
         # Quality measures
         return(
           unique_length(membership) == dim(x$loadings)[2] & # ensure meaningful
-            max(abs(x$loadings)) != 1 & # throw out any solutions with loadings of 1
-            all(fast_table(membership) > 1) # throw out singletons
+          max(abs(x$loadings)) != 1 & # throw out any solutions with loadings of 1
+          all(fast_table(membership) > 1) # throw out singletons
         )
 
       }
@@ -1529,9 +1530,11 @@ EGM.explore.core <- function(
     # Get order
     convergence_criteria <- convergence_criteria[
       order(
-        -round(convergence_criteria$fit, 4),
+
         convergence_criteria$min_eigenvalue,
         convergence_criteria$condition_number,
+        -round(convergence_criteria$fit, 4),
+
         decreasing = TRUE
       ),
     ]
