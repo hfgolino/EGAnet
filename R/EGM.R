@@ -464,7 +464,8 @@ EGM.explore <- function(data, communities, search, random.starts, optimize.netwo
   )
 
   # Obtain weighted topological overlap of partial correlations
-  wto_P <- wto(empirical_P * (abs(empirical_P) >= expected_edges(empirical_P)))
+  # wto_P <- wto(empirical_P * (abs(empirical_P) >= expected_edges(empirical_P)))
+  wto_P <- wto(empirical_P)
 
   # Collect results
   results <- lapply(
@@ -1344,7 +1345,7 @@ EGM.explore.core <- function(
 
   # Initialize loadings with membership
   loadings <- silent_call(
-    net.loads(A = wto_P, wc = membership, scaling = 1)$std[variable_names,, drop = FALSE]
+    net.loads(A = wto_P, wc = membership)$std[variable_names,, drop = FALSE]
   )
 
   # Check for single memberships
@@ -1634,14 +1635,14 @@ beta_min <- function(P, membership = NULL, K, total_variables, sample_size)
     communities <- unique_length(membership)
 
     # Calculate modularity
-    Q2 <- swiftelse(
+    Q <- swiftelse(
       communities == 1,
       sum(diag(P - expected_edges(P))^2),
       modularity(P, membership)
-    )^2
+    )
 
     # Calculate community-aware beta-min
-    minimum <- sqrt(Q2 * log(total_variables) / sample_size)
+    minimum <- 0.50 * Q * sqrt(log(total_variables) / sample_size)
 
   }
 
@@ -1656,7 +1657,7 @@ beta_min <- function(P, membership = NULL, K, total_variables, sample_size)
 
   # Attach minimum
   attr(adjacency, "beta.min") <- minimum
-  if(exists("Q2")){attr(adjacency, "Q") <- sqrt(Q2)}
+  if(exists("Q")){attr(adjacency, "Q") <- Q}
 
   # Return adjacency matrix
   return(adjacency)
