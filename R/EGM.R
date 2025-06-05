@@ -1561,7 +1561,7 @@ EGM.explore.core <- function(
   # Update beta-min with modularity information
   P <- silent_call(
     P * beta_min(
-      P = P, membership = membership,
+      P = wto_P, membership = membership,
       K = empirical_K, total_variables = data_dimensions[2],
       sample_size = data_dimensions[1]
     )
@@ -1644,7 +1644,7 @@ beta_min <- function(P, membership = NULL, K, total_variables, sample_size)
     )
 
     # Calculate community-aware beta-min
-    minimum <- 0.50 * Q * sqrt(log(total_variables) / sample_size)
+    minimum <- Q * sqrt(log(total_variables) / sample_size)
 
   }
 
