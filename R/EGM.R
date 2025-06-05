@@ -474,7 +474,7 @@ EGM.explore <- function(data, communities, search, nlambda, optimize.network, op
   )
 
   # Obtain weighted topological overlap of partial correlations
-  wto_P <- wto(empirical_P * (abs(empirical_P) >= expected_edges(empirical_P)))
+  wto_P <- wto(empirical_P * (abs(empirical_P) >= abs(expected_edges(empirical_P))))
 
   # Collect results
   results <- lapply(
