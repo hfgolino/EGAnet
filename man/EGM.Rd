@@ -17,7 +17,7 @@ EGM(
   gamma.select = 0.5,
   constrain.structure = TRUE,
   constrain.zeros = TRUE,
-  random.starts = 10,
+  nlambda = 10,
   optimize.network = TRUE,
   verbose = TRUE,
   ...
@@ -112,6 +112,13 @@ be retained when optimizing the network loadings.
 Defaults to \code{TRUE} which ensures that zero networks loadings are retained.
 Set to \code{FALSE} to freely estimate each loading similar to exploratory factor analysis}
 
+\item{nlambda}{Numeric (length = 1).
+Number of lambdas to search over in the ridge penalty
+for the loading estimation.
+Defaults to \code{10}
+
+The range of lambdas follows \code{exp(seq(something, something, length.out = nlambda))}}
+
 \item{optimize.network}{Boolean (length = 1).
 Whether the model-implied network should be optimized toward the
 model-implied zero-order correlation matrix.
@@ -144,7 +151,7 @@ data <- depression[,24:44]
 # Estimate EGM (using "explore")
 egm <- EGM(data)
 
-# Constrain EGM to only search up to 3 communities
+# Constrain EGM to only estimate 3 communities
 egm_communities <- EGM(data, communities = 3)
 
 # Estimate EGM (using EGA) specifying structure

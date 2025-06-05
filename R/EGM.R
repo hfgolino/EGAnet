@@ -90,6 +90,13 @@
 #' Defaults to \code{TRUE} which ensures that zero networks loadings are retained.
 #' Set to \code{FALSE} to freely estimate each loading similar to exploratory factor analysis
 #'
+#' @param nlambda Numeric (length = 1).
+#' Number of lambdas to search over in the ridge penalty
+#' for the loading estimation.
+#' Defaults to \code{10}
+#'
+#' The range of lambdas follows \code{exp(seq(something, something, length.out = nlambda))}
+#'
 #' @param optimize.network Boolean (length = 1).
 #' Whether the model-implied network should be optimized toward the
 #' model-implied zero-order correlation matrix.
@@ -119,7 +126,7 @@
 #' # Estimate EGM (using "explore")
 #' egm <- EGM(data)
 #'
-#' # Constrain EGM to only search up to 3 communities
+#' # Constrain EGM to only estimate 3 communities
 #' egm_communities <- EGM(data, communities = 3)
 #'
 #' # Estimate EGM (using EGA) specifying structure
@@ -147,14 +154,14 @@
 #' @export
 #'
 # Estimate EGM ----
-# Updated 02.06.2025
+# Updated 05.06.2025
 EGM <- function(
     data, EGM.model = c("explore", "EGA", "probability"),
     communities = NULL, structure = NULL, search = FALSE,
     p.in = NULL, p.out = NULL, opt = c("logLik", "SRMR"),
     model.select = c("logLik", "AIC", "AICc", "BIC", "EBIC", "Q"),
     gamma.select = 0.50, constrain.structure = TRUE,
-    constrain.zeros = TRUE, random.starts = 10,
+    constrain.zeros = TRUE, nlambda = 10,
     optimize.network = TRUE, verbose = TRUE, ...
 )
 {
@@ -174,21 +181,24 @@ EGM <- function(
 
   # Check for communities if model is 'explore'
   if(EGM.type == "explore" & is.null(communities)){
-    communities <- 8
+
+    # Ensure 'search' and 'communities' are set
+    search <- TRUE; communities <- 8
+
   }
 
   # Check data and structure
   data <- EGM_errors(
     data, EGM.type, communities, search, p.in, p.out,
     gamma.select, constrain.structure, constrain.zeros,
-    random.starts, optimize.network, verbose, ...
+    nlambda, optimize.network, verbose, ...
   )
 
   # Switch and return results based on type
   return(
     switch(
       EGM.type,
-      "explore" = EGM.explore(data, communities, search, random.starts, optimize.network, opt, model.select, gamma.select, ...),
+      "explore" = EGM.explore(data, communities, search, nlambda, optimize.network, opt, model.select, gamma.select, ...),
       "ega" = EGM.EGA(data, structure, opt, constrain.structure, constrain.zeros, ...),
       "ega.search" = EGM.EGA.search(data, communities, structure, opt, constrain.structure, constrain.zeros, verbose, ...),
       "probability" = EGM.probability(data, communities, structure, p.in, p.out, opt, constrain.structure, constrain.zeros, ...),
@@ -204,7 +214,7 @@ EGM <- function(
 EGM_errors <- function(
     data, EGM.type, communities, search, p.in, p.out,
     gamma.select, constrain.structure, constrain.zeros,
-    random.starts, optimize.network, verbose, ...
+    nlambda, optimize.network, verbose, ...
 )
 {
 
@@ -267,10 +277,10 @@ EGM_errors <- function(
     typeof_error(gamma.select, "numeric", "EGM")
     range_error(gamma.select, c(0, Inf), "EGM")
 
-    # Check 'random.starts' errors
-    length_error(random.starts, 1, "EGM")
-    typeof_error(random.starts, "numeric", "EGM")
-    range_error(random.starts, c(1, Inf), "EGM")
+    # Check 'nlambda' errors
+    length_error(nlambda, 1, "EGM")
+    typeof_error(nlambda, "numeric", "EGM")
+    range_error(nlambda, c(1, Inf), "EGM")
 
     # 'optimize.network' errors
     length_error(optimize.network, 1, "EGM")
@@ -433,8 +443,8 @@ compute_tefi_adjustment <- function(loadings, correlations)
 
 #' @noRd
 # EGM | Exploratory ----
-# Updated 04.06.2025
-EGM.explore <- function(data, communities, search, random.starts, optimize.network, opt, model.select, gamma.select, ...)
+# Updated 05.06.2025
+EGM.explore <- function(data, communities, search, nlambda, optimize.network, opt, model.select, gamma.select, ...)
 {
 
   # Obtain data dimensions
@@ -464,18 +474,15 @@ EGM.explore <- function(data, communities, search, random.starts, optimize.netwo
   )
 
   # Obtain weighted topological overlap of partial correlations
-  # wto_P <- wto(empirical_P * (abs(empirical_P) >= expected_edges(empirical_P)))
-  wto_P <- wto(empirical_P)
+  wto_P <- wto(empirical_P * (abs(empirical_P) >= expected_edges(empirical_P)))
 
   # Collect results
   results <- lapply(
     community_sequence, EGM.explore.core, wto_P = wto_P,
-    # cluster = hclust(d = as.dist(1 - sqrt(abs(wto_P))), method = "average"),
     cluster = hclust(d = as.dist(1 - abs(wto_P)), method = "average"),
-    variable_names = variable_names,
-    random.starts = random.starts, data_dimensions = data_dimensions,
+    variable_names = variable_names, data_dimensions = data_dimensions,
     empirical_R = empirical_R, empirical_K = empirical_K, opt = opt,
-    gamma.select = gamma.select
+    nlambda = nlambda, gamma.select = gamma.select
   )
 
   # Obtain fits
@@ -1329,11 +1336,11 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
 
 #' @noRd
 # EGM | Core Exploration ----
-# Updated 04.06.2025
+# Updated 05.06.2025
 EGM.explore.core <- function(
     communities, wto_P, cluster, variable_names,
-    random.starts, data_dimensions, empirical_R,
-    empirical_K, opt, gamma.select, ...
+    data_dimensions, empirical_R, empirical_K, opt,
+    nlambda, gamma.select, ...
 )
 {
 
@@ -1394,9 +1401,7 @@ EGM.explore.core <- function(
 
   # Perform lambda search
   starts <- lapply(
-    # exp(seq(log(0.01), log(1), length.out = 10)),
-    # exp(seq(log(max_loading * 0.10), log(max_loading), length.out = 10))
-    exp(seq(log(max_loading), log(max_loading * 10), length.out = 10)),
+    exp(seq(log(max_loading * 0.10), log(max_loading * 2), length.out = nlambda)),
     function(lambda){
 
     # Optimize over loadings
@@ -1485,9 +1490,6 @@ EGM.explore.core <- function(
     # Round up good solutions
     solutions <- starts[good_solutions]
 
-    # Check for positive definite solutions
-    PD <- lvapply(solutions, function(x){is_positive_definite(nload2cor(x$loadings))})
-
     # Check for quality memberships
     quality <- lvapply(
       solutions, function(x){
@@ -1497,6 +1499,7 @@ EGM.explore.core <- function(
 
         # Quality measures
         return(
+          is_positive_definite(nload2cor(x$loadings)) & # positive definite
           unique_length(membership) == dim(x$loadings)[2] & # ensure meaningful
           max(abs(x$loadings)) != 1 & # throw out any solutions with loadings of 1
           all(fast_table(membership) > 1) # throw out singletons
@@ -1506,11 +1509,10 @@ EGM.explore.core <- function(
     )
 
     # Check if any solutions remain
-    keep_solutions <- PD & quality
-    if(all(!(keep_solutions))){
+    if(all(!(quality))){
       return(list(fit = bad_fit, loadings = loadings))
     }else{ # Update solutions
-      solutions <- solutions[keep_solutions]
+      solutions <- solutions[quality]
     }
 
     # Inspect solution criteria
@@ -1613,10 +1615,10 @@ expected_edges <- function(network)
 {
 
   # Compute node strength
-  strength <- colSums(abs(network))
+  strength <- colSums(network)
 
   # Obtain the normalized cross-product
-  return(tcrossprod(strength) / sum(strength))
+  return(abs(tcrossprod(strength) / sum(strength)))
 
 }
 
