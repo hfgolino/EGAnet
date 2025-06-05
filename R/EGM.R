@@ -1618,7 +1618,7 @@ expected_edges <- function(network)
   strength <- colSums(network)
 
   # Obtain the normalized cross-product
-  return(abs(tcrossprod(strength) / sum(strength)))
+  return(tcrossprod(strength) / sum(strength))
 
 }
 
