@@ -161,7 +161,7 @@ EGM <- function(
     p.in = NULL, p.out = NULL, opt = c("logLik", "SRMR"),
     model.select = c("logLik", "AIC", "AICc", "BIC", "EBIC", "Q"),
     gamma.select = 0.50, constrain.structure = TRUE,
-    constrain.zeros = TRUE, nlambda = 10,
+    constrain.zeros = TRUE, iter = 10,
     optimize.network = TRUE, verbose = TRUE, ...
 )
 {
@@ -191,14 +191,14 @@ EGM <- function(
   data <- EGM_errors(
     data, EGM.type, communities, search, p.in, p.out,
     gamma.select, constrain.structure, constrain.zeros,
-    nlambda, optimize.network, verbose, ...
+    iter, optimize.network, verbose, ...
   )
 
   # Switch and return results based on type
   return(
     switch(
       EGM.type,
-      "explore" = EGM.explore(data, communities, search, nlambda, optimize.network, opt, model.select, gamma.select, ...),
+      "explore" = EGM.explore(data, communities, search, iter, optimize.network, opt, model.select, gamma.select, ...),
       "ega" = EGM.EGA(data, structure, opt, constrain.structure, constrain.zeros, ...),
       "ega.search" = EGM.EGA.search(data, communities, structure, opt, constrain.structure, constrain.zeros, verbose, ...),
       "probability" = EGM.probability(data, communities, structure, p.in, p.out, opt, constrain.structure, constrain.zeros, ...),
@@ -214,7 +214,7 @@ EGM <- function(
 EGM_errors <- function(
     data, EGM.type, communities, search, p.in, p.out,
     gamma.select, constrain.structure, constrain.zeros,
-    nlambda, optimize.network, verbose, ...
+    iter, optimize.network, verbose, ...
 )
 {
 
@@ -272,15 +272,15 @@ EGM_errors <- function(
   # Check for EGM type
   if(EGM.type == "explore"){
 
+    # Check 'iter' errors
+    length_error(iter, 1, "EGM")
+    typeof_error(iter, "numeric", "EGM")
+    range_error(iter, c(1, Inf), "EGM")
+
     # Check 'gamma.select' errors
     length_error(gamma.select, 1, "EGM")
     typeof_error(gamma.select, "numeric", "EGM")
     range_error(gamma.select, c(0, Inf), "EGM")
-
-    # Check 'nlambda' errors
-    length_error(nlambda, 1, "EGM")
-    typeof_error(nlambda, "numeric", "EGM")
-    range_error(nlambda, c(1, Inf), "EGM")
 
     # 'optimize.network' errors
     length_error(optimize.network, 1, "EGM")
@@ -444,7 +444,7 @@ compute_tefi_adjustment <- function(loadings, correlations)
 #' @noRd
 # EGM | Exploratory ----
 # Updated 05.06.2025
-EGM.explore <- function(data, communities, search, nlambda, optimize.network, opt, model.select, gamma.select, ...)
+EGM.explore <- function(data, communities, search, iter, optimize.network, opt, model.select, gamma.select, ...)
 {
 
   # Obtain data dimensions
@@ -474,7 +474,8 @@ EGM.explore <- function(data, communities, search, nlambda, optimize.network, op
   )
 
   # Obtain weighted topological overlap of partial correlations
-  wto_P <- wto(empirical_P * (abs(empirical_P) >= abs(expected_edges(empirical_P))))
+  # wto_P <- wto(empirical_P * (abs(empirical_P) >= abs(expected_edges(empirical_P))))
+  wto_P <- empirical_P * (abs(empirical_P) >= abs(expected_edges(empirical_P)))
 
   # Collect results
   results <- lapply(
@@ -482,7 +483,7 @@ EGM.explore <- function(data, communities, search, nlambda, optimize.network, op
     cluster = hclust(d = as.dist(1 - abs(wto_P)), method = "average"),
     variable_names = variable_names, data_dimensions = data_dimensions,
     empirical_R = empirical_R, empirical_K = empirical_K, opt = opt,
-    nlambda = nlambda, gamma.select = gamma.select
+    iter = iter, gamma.select = gamma.select
   )
 
   # Obtain fits
@@ -519,7 +520,7 @@ EGM.explore <- function(data, communities, search, nlambda, optimize.network, op
 
   # Community informed beta-min
   network <- optimized_P * beta_min(
-    P = optimized_P, membership = structure,
+    P = optimized_P, wto_P = wto_P, membership = structure,
     K = empirical_K, total_variables = data_dimensions[2],
     sample_size = data_dimensions[1]
   )
@@ -1340,12 +1341,14 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
 EGM.explore.core <- function(
     communities, wto_P, cluster, variable_names,
     data_dimensions, empirical_R, empirical_K, opt,
-    nlambda, gamma.select, ...
+    iter, gamma.select, ...
 )
 {
 
   # Set bad fit from the git
-  bad_fit <- c(loglik = NA, aic = NA, aicc = NA, bic = NA, ebic = NA, q = NA)
+  bad_fit <- c(
+    parameters = NA, loglik = NA, aic = NA, aicc = NA, bic = NA, ebic = NA, q = NA
+  )
 
   # Set memberships
   membership <- cutree(cluster, communities)
@@ -1370,8 +1373,8 @@ EGM.explore.core <- function(
       # Get index
       index <- membership == i
 
-      # Set singleton to mean of overall connections (allow drop to vector)
-      loadings[index, i] <- max(loadings[index,])
+      # Set singleton to max of overall connections (allow drop to vector)
+      loadings[index, i] <- max(wto_P[index,])
 
     }
 
@@ -1396,176 +1399,109 @@ EGM.explore.core <- function(
     dimnames = list(dimension_names[[1]], dimension_names[[2]])
   )
 
-  # Set up lambda ratio
-  max_loading <- max(abs(loadings_vector[!is.infinite(loadings_vector)]))
+  # Block coordinate descent for lambda and loadings
 
-  # Perform lambda search
-  starts <- lapply(
-    exp(seq(log(max_loading * 0.10), log(max_loading * 2), length.out = nlambda)),
-    function(lambda){
+  # Set cost function
+  cost <- switch(opt, "loglik" = logLik_cost, "srmr" = srmr_cost)
+
+  # Set up initial parameters
+  lambda <- list(par = exp(1))
+  result <- list(par = loadings_vector)
+
+  # Loop over for up to 'iter'
+  for(i in seq_len(iter)){
+
+    # Set initial lambda
+    lambda <- optim(
+      par = exp(lambda$par),
+      fn = function(
+      lambda, cost,
+      loadings_vector, R, loading_structure, rows, n, v,
+      constrained, lower_triangle, ...
+        ){
+          cost(
+            loadings_vector, R, loading_structure, rows, n, v,
+            constrained, lower_triangle, exp(lambda),
+            ...
+          )
+        },
+      cost = cost,
+      loadings_vector = result$par,
+      R = empirical_R, loading_structure = loading_structure,
+      rows = communities, n = data_dimensions[1],
+      v = data_dimensions[2], constrained = FALSE,
+      lower_triangle = lower.tri(empirical_R),
+      lower = -9, upper = 2, control = list(parscale = 0.01),
+      method = "L-BFGS-B"
+    )
 
     # Optimize over loadings
     result <- try(
       egm_optimize(
-        loadings_vector = loadings_vector,
+        loadings_vector = result$par,
         loadings_length = loadings_length,
         zeros = zeros, R = empirical_R,
         loading_structure = loading_structure,
         rows = communities, n = data_dimensions[1],
         v = data_dimensions[2], constrained = FALSE,
         lower_triangle = lower.tri(empirical_R),
-        lambda = lambda, opt = opt
+        lambda = exp(lambda$par), opt = opt
       ), silent = TRUE
     )
 
-    # Return values
+    # Check for error (return bad result)
     if(is(result, "try-error")){
-      return(list(loadings = NULL, fit = NA, convergence = 1))
-    }else{
-
-      # Check Hessian
-      hessian <- try(
-        optimHess(
-          par = result$par,
-          fn = switch(
-            opt,
-            "loglik" = logLik_cost,
-            "srmr" = srmr_cost
-          ),
-          gr = switch(
-            opt,
-            "loglik" = logLik_gradient,
-            "srmr" = srmr_gradient
-          ),
-          loadings_length = loadings_length,
-          zeros = zeros, R = empirical_R,
-          loading_structure = loading_structure,
-          rows = communities, n = data_dimensions[1],
-          v = data_dimensions[2], constrained = FALSE,
-          lower_triangle = lower.tri(empirical_R),
-          lambda = lambda
-        ), silent = TRUE
-      )
-
-      # Get minimum eigenvalue
-      min_eigenvalue <- try(min(matrix_eigenvalues(hessian)), silent = TRUE)
-      min_eigenvalue <- swiftelse(is(min_eigenvalue, "try-error"), Inf, min_eigenvalue)
-
-      # Get condition number
-      condition_number <- try(kappa(hessian), silent = TRUE)
-      condition_number <- swiftelse(
-        is(condition_number, "try-error"), Inf, condition_number
-      )
-
-      # Format loadings
-      loadings <- matrix(
-        result$par,
-        nrow = data_dimensions[2], ncol = communities,
-        dimnames = dimnames(loadings)
-      )
-
-      # Return value
-      return(
-        list(
-          loadings = loadings, fit = result$objective,
-          convergence = as.numeric(gsub(".*\\((\\d+)\\).*", "\\1", result$message)),
-          min_eigenvalue_sign = sign(min_eigenvalue),
-          min_eigenvalue = min_eigenvalue,
-          condition_number = condition_number
-        )
-      )
-
-    }
-
-  })
-
-  # Identify good solutions
-  good_solutions <- lvapply(starts, function(x){x$convergence > 1})
-
-  # Check for no good solutions
-  if(all(!good_solutions)){
-    return(list(fit = bad_fit, loadings = loadings))
-  }else{
-
-    # Round up good solutions
-    solutions <- starts[good_solutions]
-
-    # Check for quality memberships
-    quality <- lvapply(
-      solutions, function(x){
-
-        # Obtain solution
-        membership <- max.col(abs(x$loadings))
-
-        # Quality measures
-        return(
-          is_positive_definite(nload2cor(x$loadings)) & # positive definite
-          unique_length(membership) == dim(x$loadings)[2] & # ensure meaningful
-          max(abs(x$loadings)) != 1 & # throw out any solutions with loadings of 1
-          all(fast_table(membership) > 1) # throw out singletons
-        )
-
-      }
-    )
-
-    # Check if any solutions remain
-    if(all(!(quality))){
       return(list(fit = bad_fit, loadings = loadings))
-    }else{ # Update solutions
-      solutions <- solutions[quality]
     }
 
-    # Inspect solution criteria
-    convergence_criteria <- do.call(
-      rbind.data.frame, lapply(solutions, function(x){
-        x[c("fit", "min_eigenvalue_sign", "min_eigenvalue", "condition_number", "convergence")]
-      })
-    )
-
-    # Get convergence flags
-    convergence_flag <- convergence_criteria$min_eigenvalue_sign == 1 |
-                        convergence_criteria$convergence %in% c(3:6, 8)
-
-    # Check for non-saddle points
-    if(any(convergence_flag)){
-      convergence_criteria <- convergence_criteria[convergence_flag,, drop = FALSE]
+    # Check for convergence
+    if(result$convergence == 0){
+      break
     }
-
-    # Get order
-    convergence_criteria <- convergence_criteria[
-      order(
-
-        convergence_criteria$min_eigenvalue,
-        convergence_criteria$condition_number,
-        -round(convergence_criteria$fit, 4),
-
-        decreasing = TRUE
-      ),
-    ]
-
-    # Get best convergence
-    solution <- solutions[[as.numeric(row.names(convergence_criteria)[1])]]
 
   }
+
+  # Format loadings
+  loadings <- matrix(
+    result$par,
+    nrow = data_dimensions[2], ncol = communities,
+    dimnames = dimnames(loadings)
+  )
 
   # Set lower triangle
   lower_triangle <- lower.tri(empirical_R)
   total_parameters <- sum(lower_triangle)
 
   # Obtain model-implied partial correlations
-  P <- nload2pcor(solution$loadings)
+  P <- nload2pcor(loadings)
 
   # Obtain solution
-  membership <- max.col(abs(solution$loadings))
+  membership <- max.col(abs(loadings))
+
+  # Check for quality (return bad result)
+  if(
+    !(
+      unique_length(membership) == dim(loadings)[2] & # ensure meaningful
+      max(abs(loadings)) != 1 & # throw out any solutions with loadings of 1
+      all(fast_table(membership) > 1) # throw out singletons
+    )
+  ){
+    return(list(fit = bad_fit, loadings = loadings))
+  }
 
   # Update beta-min with modularity information
   P <- silent_call(
     P * beta_min(
-      P = wto_P, membership = membership,
+      P = P, wto_P = wto_P, membership = membership,
       K = empirical_K, total_variables = data_dimensions[2],
       sample_size = data_dimensions[1]
     )
   )
+
+  # Check for negative modularity (return bad result)
+  if(sign(attributes(P)$Q) == -1){
+    return(list(fit = bad_fit, loadings = loadings))
+  }
 
   # Compute log-likelihood
   logLik <- silent_call(
@@ -1576,7 +1512,7 @@ EGM.explore.core <- function(
   )
 
   # Obtain parameters (add loadings)
-  parameters <- sum(P[lower_triangle] != 0) + sum(solution$loadings != 0)
+  parameters <- sum(P[lower_triangle] != 0) + sum(loadings != 0)
 
   # Compute negative 2 times log-likelihood
   logLik2 <- 2 * logLik
@@ -1590,6 +1526,7 @@ EGM.explore.core <- function(
 
   # Collect fit indices
   fit <- c(
+    parameters = parameters,
     loglik = logLik,
     aic = aic,
     aicc = aic + (parameters2 * (parameters + 1)) /
@@ -1604,7 +1541,7 @@ EGM.explore.core <- function(
   )
 
   # Return result
-  return(list(fit = fit, loadings = solution$loadings))
+  return(list(fit = fit, loadings = loadings))
 
 }
 
@@ -1624,29 +1561,24 @@ expected_edges <- function(network)
 
 #' @noRd
 # beta-min criterion ----
-# Updated 03.06.2025
-beta_min <- function(P, membership = NULL, K, total_variables, sample_size)
+# Updated 05.06.2025
+beta_min <- function(P, wto_P, membership = NULL, K, total_variables, sample_size)
 {
 
-  # Calculate standard beta-min if no structure
-  if(is.null(membership)){
-    minimum <- sqrt(log(total_variables) / sample_size)
-  }else{
+  # Compute baseline value
+  baseline <- sum(diag(wto_P - expected_edges(wto_P))^2)
 
-    # Obtain number of communities
-    communities <- unique_length(membership)
-
-    # Calculate modularity
-    Q <- swiftelse(
-      communities == 1,
-      sum(diag(P - expected_edges(P))^2),
-      modularity(P, membership)
+  # Set modularity value
+  Q <- swiftelse(
+    is.null(membership), 1,
+    swiftelse(
+      unique_length(membership) == 1,
+      baseline, modularity(wto_P, membership)
     )
+  )
 
-    # Calculate community-aware beta-min
-    minimum <- Q * sqrt(log(total_variables) / sample_size)
-
-  }
+  # Calculate community-aware beta-min
+  minimum <- Q * sqrt(log(total_variables) / sample_size)
 
   # Obtain inverse variances
   inverse_variances <- diag(K)

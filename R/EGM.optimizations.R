@@ -311,7 +311,8 @@ egm_optimize <- function(
         lower = rep(-1, loadings_length) * zeros, upper = zeros,
         control = list(
           eval.max = 10000, iter.max = 10000,
-          step.min = 1e-10, step.max = 0.01
+          step.min = 1e-12, step.max = 0.01,
+          rel.tol = 1e-12, abs.tol = 1e-12
         )
       )
     )
