@@ -17,7 +17,7 @@ EGM(
   gamma.select = 0.5,
   constrain.structure = TRUE,
   constrain.zeros = TRUE,
-  nlambda = 10,
+  iter = 10,
   optimize.network = TRUE,
   verbose = TRUE,
   ...
@@ -112,12 +112,13 @@ be retained when optimizing the network loadings.
 Defaults to \code{TRUE} which ensures that zero networks loadings are retained.
 Set to \code{FALSE} to freely estimate each loading similar to exploratory factor analysis}
 
-\item{nlambda}{Numeric (length = 1).
-Number of lambdas to search over in the ridge penalty
+\item{iter}{Numeric (length = 1).
+Number of iterations to optimize lambda in the ridge penalty
 for the loading estimation.
 Defaults to \code{10}
 
-The range of lambdas follows \code{exp(seq(something, something, length.out = nlambda))}}
+More than 10 is usually not necessary as the algorithm usually
+converges after a few iterations}
 
 \item{optimize.network}{Boolean (length = 1).
 Whether the model-implied network should be optimized toward the
