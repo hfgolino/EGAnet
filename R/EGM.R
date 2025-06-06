@@ -475,7 +475,9 @@ EGM.explore <- function(data, communities, search, iter, optimize.network, opt, 
   )
 
   # Obtain partial correlations that are greater than random chance
-  null_P <- empirical_P * (abs(empirical_P) >= abs(expected_edges(empirical_P)))
+  null_P <- wto(
+    empirical_P * (abs(empirical_P) >= expected_edges(empirical_P))
+  )
 
   # Collect results
   results <- lapply(
