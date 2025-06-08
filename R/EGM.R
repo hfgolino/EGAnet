@@ -452,12 +452,11 @@ EGM.explore <- function(data, communities, search, iter, optimize.network, opt, 
   data_dimensions <- dim(data)
 
   # Estimate correlations
-  empirical_R <- auto.correlate(
-    data, corr = swiftelse(any(data_categories(data) < 7), "spearman", "pearson")
-  )
+  empirical_R <- auto.correlate(data, ...)
   empirical_K <- solve(empirical_R)
   empirical_P <- -cov2cor(empirical_K)
   diag(empirical_P) <- 0
+  absolute_P <- abs(empirical_P)
 
   # Obtain variable names from the correlations
   variable_names <- dimnames(empirical_R)[[2]]
@@ -476,11 +475,13 @@ EGM.explore <- function(data, communities, search, iter, optimize.network, opt, 
     ), max_communities
   )
 
+  # Obtain modularity matrix
+  mod_matrix <- absolute_P - expected_edges(absolute_P)
+
   # Obtain partial correlations that are greater than random chance
-  null_P <- empirical_P * (abs(empirical_P) >= abs(expected_edges(empirical_P)))
+  null_P <- empirical_P * (sign(mod_matrix) == 1)
 
   # Create distance based upon modularity matrix
-  mod_matrix <- empirical_P - expected_edges(empirical_P)
   mod_minimum <- min(mod_matrix)
   null_P_distance <- as.dist(
     1 - (mod_matrix - mod_minimum) / (max(mod_matrix) - mod_minimum)
