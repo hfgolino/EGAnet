@@ -444,7 +444,7 @@ compute_tefi_adjustment <- function(loadings, correlations)
 
 #' @noRd
 # EGM | Exploratory ----
-# Updated 06.06.2025
+# Updated 08.06.2025
 EGM.explore <- function(data, communities, search, iter, optimize.network, opt, model.select, gamma.select, ...)
 {
 
@@ -479,10 +479,17 @@ EGM.explore <- function(data, communities, search, iter, optimize.network, opt, 
   # Obtain partial correlations that are greater than random chance
   null_P <- empirical_P * (abs(empirical_P) >= abs(expected_edges(empirical_P)))
 
+  # Create distance based upon modularity matrix
+  mod_matrix <- empirical_P - expected_edges(empirical_P)
+  mod_minimum <- min(mod_matrix)
+  null_P_distance <- as.dist(
+    sqrt(1 - (mod_matrix - mod_minimum) / (max(mod_matrix) - mod_minimum))
+  )
+
   # Collect results
   results <- lapply(
     community_sequence, EGM.explore.core, null_P = null_P,
-    cluster = hclust(d = as.dist(1 - abs(null_P)), method = "average"),
+    cluster = hclust(d = null_P_distance, method = "average"),
     variable_names = variable_names, data_dimensions = data_dimensions,
     empirical_R = empirical_R, empirical_K = empirical_K, opt = opt,
     iter = iter, gamma.select = gamma.select
@@ -1329,7 +1336,7 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
 
 #' @noRd
 # EGM | Core Exploration ----
-# Updated 06.06.2025
+# Updated 08.06.2025
 EGM.explore.core <- function(
     communities, null_P, cluster, variable_names,
     data_dimensions, empirical_R, empirical_K, opt,
@@ -1398,7 +1405,11 @@ EGM.explore.core <- function(
 
   # Set up initial parameters
   lambda <- list(par = 1)
-  result <- list(par = loadings_vector)
+  result <- list(par = loadings_vector * 1e-03)
+  # Shrinking loadings helps:
+  # 1. prevent overdependence on initial structure
+  # 2. convergent solutions to emerge
+  # 3. prevent exploding loadings
 
   # Loop over for up to 'iter'
   for(i in seq_len(iter)){
@@ -1411,8 +1422,8 @@ EGM.explore.core <- function(
       loadings_vector, R, loading_structure, rows, n, v,
       constrained, lower_triangle, ...
         ){
-          cost( # shrinking loadings helps prevent them from exploding
-            loadings_vector * 1e-03, R, loading_structure, rows, n, v,
+          cost(
+            loadings_vector, R, loading_structure, rows, n, v,
             constrained, lower_triangle, exp(lambda),
             ...
           )
@@ -1578,7 +1589,7 @@ beta_min <- function(P, Q, K, total_variables, sample_size)
 {
 
   # Calculate community-aware beta-min
-  minimum <- Q * sqrt(log(total_variables) / sample_size)
+  minimum <- sqrt(Q * log(total_variables) / sample_size)
 
   # Obtain inverse variances
   inverse_variances <- diag(K)
