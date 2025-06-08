@@ -483,7 +483,7 @@ EGM.explore <- function(data, communities, search, iter, optimize.network, opt, 
   mod_matrix <- empirical_P - expected_edges(empirical_P)
   mod_minimum <- min(mod_matrix)
   null_P_distance <- as.dist(
-    sqrt(1 - (mod_matrix - mod_minimum) / (max(mod_matrix) - mod_minimum))
+    1 - (mod_matrix - mod_minimum) / (max(mod_matrix) - mod_minimum)
   )
 
   # Collect results
@@ -1589,7 +1589,7 @@ beta_min <- function(P, Q, K, total_variables, sample_size)
 {
 
   # Calculate community-aware beta-min
-  minimum <- sqrt(Q * log(total_variables) / sample_size)
+  minimum <- Q * sqrt(log(total_variables) / sample_size)
 
   # Obtain inverse variances
   inverse_variances <- diag(K)
