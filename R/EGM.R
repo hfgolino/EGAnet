@@ -476,21 +476,15 @@ EGM.explore <- function(data, communities, search, iter, optimize.network, opt, 
   )
 
   # Compute modularity matrix
-  mod_matrix <- absolute_P - expected_edges(absolute_P)
+  mod_matrix <- empirical_P - expected_edges(empirical_P)
 
   # Obtain partial correlations that are greater than random chance
-  null_P <- empirical_P * (sign(mod_matrix) > -1)
-
-  # Create distance based upon modularity matrix
-  mod_minimum <- min(mod_matrix)
-  null_P_distance <- as.dist(
-    1 - (mod_matrix - mod_minimum) / (max(mod_matrix) - mod_minimum)
-  )
+  # null_P <- empirical_P # * (sign(mod_matrix) > -1)
 
   # Collect results
   results <- lapply(
-    community_sequence, EGM.explore.core, null_P = null_P,
-    cluster = hclust(d = null_P_distance, method = "average"),
+    community_sequence, EGM.explore.core, null_P = empirical_P,
+    cluster = hclust(d = as.dist(1 / (1 + mod_matrix)), method = "average"),
     variable_names = variable_names, data_dimensions = data_dimensions,
     empirical_R = empirical_R, empirical_K = empirical_K, opt = opt,
     iter = iter, gamma.select = gamma.select
@@ -1406,7 +1400,7 @@ EGM.explore.core <- function(
 
   # Set up initial parameters
   lambda <- list(par = 1)
-  result <- list(par = loadings_vector * 1e-03)
+  result <- list(par = loadings_vector * 1e-05)
   # Shrinking loadings helps:
   # 1. prevent overdependence on initial structure
   # 2. convergent solutions to emerge
