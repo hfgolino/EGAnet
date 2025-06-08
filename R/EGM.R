@@ -1502,7 +1502,7 @@ EGM.explore.core <- function(
   # Update beta-min with modularity information
   P <- silent_call(
     P * beta_min(
-      P = P, Q = Q,
+      P = P, Q = Q, communities = communities,
       K = empirical_K, total_variables = data_dimensions[2],
       sample_size = data_dimensions[1]
     )
@@ -1584,12 +1584,12 @@ obtain_modularity <- function(network, membership = NULL)
 
 #' @noRd
 # beta-min criterion ----
-# Updated 06.06.2025
-beta_min <- function(P, Q, K, total_variables, sample_size)
+# Updated 08.06.2025
+beta_min <- function(P, Q, communities, K, total_variables, sample_size)
 {
 
   # Calculate community-aware beta-min
-  minimum <- Q * sqrt(log(total_variables) / sample_size)
+  minimum <- Q * sqrt(log(communities * total_variables) / sample_size)
 
   # Obtain inverse variances
   inverse_variances <- diag(K)
