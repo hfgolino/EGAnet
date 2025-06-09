@@ -283,7 +283,7 @@ logLik_gradient <- function(
 
 #' @noRd
 # EGM optimization ----
-# Updated 02.06.2025
+# Updated 09.06.2025
 egm_optimize <- function(
     loadings_vector, loadings_length,
     zeros, R, loading_structure, rows, n, v,
@@ -291,32 +291,45 @@ egm_optimize <- function(
 )
 {
 
-  return(
+  # Get optimization functions
+  cost <- switch(opt, "loglik" = logLik_cost, "srmr" = srmr_cost)
+  gradient <- switch(opt, "loglik" = logLik_gradient, "srmr" = srmr_gradient)
+
+  # Obtain result
+  result <- try(
     silent_call(
       nlminb(
         start = loadings_vector,
-        objective = switch(
-          opt,
-          "loglik" = logLik_cost,
-          "srmr" = srmr_cost
-        ),
-        gradient = switch(
-          opt,
-          "loglik" = logLik_gradient,
-          "srmr" = srmr_gradient
-        ),
+        objective = cost, gradient = gradient,
         R = R, loading_structure = loading_structure,
         rows = rows, n = n, v = v, constrained = constrained,
         lower_triangle = lower_triangle, lambda = lambda,
-        lower = rep(-1, loadings_length) * zeros, upper = zeros,
+        lower = -zeros, upper = zeros,
         control = list(
           eval.max = 10000, iter.max = 10000,
           step.min = 1e-12, step.max = 0.01,
           rel.tol = 1e-12, abs.tol = 1e-12
         )
       )
-    )
+    ), silent = TRUE
   )
+
+  # Check for issues, if none, then obtain hessian
+  if(!is(result, "try-error")){
+
+    # Attach hessian
+    result$hessian <- optimHess(
+      par = result$par, fn = cost, gr = gradient,
+      R = R, loading_structure = loading_structure,
+      rows = rows, n = n, v = v, constrained = constrained,
+      lower_triangle = lower_triangle, lambda = lambda,
+      lower = -zeros, upper = zeros
+    )
+
+  }
+
+  # Return result
+  return(result)
 
 }
 
