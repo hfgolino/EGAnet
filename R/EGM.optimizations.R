@@ -61,17 +61,17 @@ srmr <- function(base, comparison)
 
 #' @noRd
 # SRMR cost
-# Updated 29.05.2025
+# Updated 09.06.2025
 srmr_cost <- function(
     loadings_vector, R,
     loading_structure, rows, n, v,
     constrained, lower_triangle,
-    ...
+    lambda, ...
 )
 {
 
-  # Set l2 cost (lambda = 0.01)
-  l2_cost <- 0.01 * sum(loadings_vector^2)
+  # Set l2 cost
+  l2_cost <- lambda * sum(loadings_vector^2)
 
   # Check for constraint
   if(constrained){
@@ -96,17 +96,17 @@ srmr_cost <- function(
 
 #' @noRd
 # SRMR gradient
-# Updated 29.05.2025
+# Updated 09.06.2025
 srmr_gradient <- function(
     loadings_vector, R,
     loading_structure, rows, n, v,
     constrained, lower_triangle,
-    ...
+    lambda, ...
 )
 {
 
-  # Set l2 gradient (lambda = 0.01)
-  l2_gradient <- 0.02 * loadings_vector
+  # Set l2 gradient
+  l2_gradient <- 2 * lambda * loadings_vector
 
   # Check for constraint
   if(constrained){

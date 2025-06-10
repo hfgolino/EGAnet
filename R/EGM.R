@@ -1399,7 +1399,7 @@ EGM.explore.core <- function(
   cost <- switch(opt, "loglik" = logLik_cost, "srmr" = srmr_cost)
 
   # Set up initial parameters
-  lambda <- list(par = 1)
+  lambda <- list(par = 2)
   result <- list(par = loadings_vector * 1e-05)
   # Shrinking loadings helps:
   # 1. prevent overdependence on initial structure
