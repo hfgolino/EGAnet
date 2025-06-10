@@ -444,7 +444,7 @@ compute_tefi_adjustment <- function(loadings, correlations)
 
 #' @noRd
 # EGM | Exploratory ----
-# Updated 08.06.2025
+# Updated 10.06.2025
 EGM.explore <- function(data, communities, search, iter, optimize.network, opt, model.select, gamma.select, ...)
 {
 
@@ -452,7 +452,7 @@ EGM.explore <- function(data, communities, search, iter, optimize.network, opt, 
   data_dimensions <- dim(data)
 
   # Estimate correlations
-  empirical_R <- auto.correlate(data, ...)
+  empirical_R <- auto.correlate(data)
   empirical_K <- solve(empirical_R)
   empirical_P <- -cov2cor(empirical_K)
   diag(empirical_P) <- 0
@@ -475,16 +475,20 @@ EGM.explore <- function(data, communities, search, iter, optimize.network, opt, 
     ), max_communities
   )
 
-  # Compute modularity matrix
-  mod_matrix <- empirical_P - expected_edges(empirical_P)
+  # Obtain expected edges
+  EE <- expected_edges(absolute_P, sample_size = data_dimensions[1])
+
+  # Compute modularity matrix distance
+  mod_matrix <- absolute_P - EE
+  mod_distance <- as.dist(1 - mod_matrix * (sign(mod_matrix) == 1))
 
   # Obtain partial correlations that are greater than random chance
-  # null_P <- empirical_P # * (sign(mod_matrix) > -1)
+  null_P <- empirical_P * (absolute_P > (EE - attr(EE, "SE")))
 
   # Collect results
   results <- lapply(
-    community_sequence, EGM.explore.core, null_P = empirical_P,
-    cluster = hclust(d = as.dist(1 / (1 + mod_matrix)), method = "average"),
+    community_sequence, EGM.explore.core, null_P = null_P,
+    cluster = hclust(d = mod_distance, method = "average"),
     variable_names = variable_names, data_dimensions = data_dimensions,
     empirical_R = empirical_R, empirical_K = empirical_K, opt = opt,
     iter = iter, gamma.select = gamma.select
@@ -1331,7 +1335,7 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
 
 #' @noRd
 # EGM | Core Exploration ----
-# Updated 08.06.2025
+# Updated 10.06.2025
 EGM.explore.core <- function(
     communities, null_P, cluster, variable_names,
     data_dimensions, empirical_R, empirical_K, opt,
@@ -1399,7 +1403,7 @@ EGM.explore.core <- function(
   cost <- switch(opt, "loglik" = logLik_cost, "srmr" = srmr_cost)
 
   # Set up initial parameters
-  lambda <- list(par = 2)
+  lambda <- list(par = -3)
   result <- list(par = loadings_vector * 1e-05)
   # Shrinking loadings helps:
   # 1. prevent overdependence on initial structure
@@ -1543,15 +1547,23 @@ EGM.explore.core <- function(
 
 #' @noRd
 # Expected edge values ----
-# Updated 06.06.2025
-expected_edges <- function(network)
+# Updated 10.06.2025
+expected_edges <- function(network, sample_size = NULL)
 {
 
   # Compute node strength
   strength <- colSums(network)
 
   # Obtain the normalized cross-product
-  return(tcrossprod(strength) / sum(strength))
+  EE <- tcrossprod(strength) / sum(strength)
+
+  # Obtain differences as SE
+  if(!is.null(sample_size)){
+    attr(EE, "SE") <- abs(outer(strength, strength, FUN = "-")) / sqrt(sample_size)
+  }
+
+  # Return result
+  return(EE)
 
 }
 
