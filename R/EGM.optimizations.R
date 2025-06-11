@@ -310,7 +310,7 @@ egm_optimize <- function(
         lower = -bounds, upper = bounds,
         control = list(
           eval.max = 10000, iter.max = 10000,
-          step.min = 1e-12, step.max = 0.01,
+          step.min = 1e-12, step.max = 1e-04,
           rel.tol = 1e-12, abs.tol = 1e-12
         )
       )
