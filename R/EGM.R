@@ -1477,25 +1477,43 @@ EGM.explore.core <- function(
       ), silent = TRUE
     )
 
-    # Check for convergence or error
-    if(result$convergence == 0 || is(result, "try-error")){
+    # Get error flag
+    error_flag <- is(result, "try-error")
+
+    # Check for error
+    if(error_flag){
+      result <- list(par = loadings_vector * 1e-05, convergence = 1)
+    }else{
+
+      # Get best minimum eigenvalue
+      best_min_eigenvalue <- which.max(condition_matrix$min_eigenvalue)
+
+      # Store result
+      condition_matrix[i,] <- c(
+        lambda = lambda$par,
+        likelihood = result$objective,
+        min_eigenvalue = round(min(matrix_eigenvalues(result$hessian)), 2),
+        condition_number = kappa(result$hessian),
+        convergence_number = as.numeric(gsub(".*\\((\\d+)\\).*", "\\1", result$message))
+      )
+
+    }
+
+    # Check for convergence
+    if(result$convergence == 0){
       break
     }
 
-    # Get best minimum eigenvalue
-    best_min_eigenvalue <- which.max(condition_matrix$min_eigenvalue)
-
-    # Store result
-    condition_matrix[i,] <- c(
-      lambda = lambda$par,
-      likelihood = result$objective,
-      min_eigenvalue = round(min(matrix_eigenvalues(result$hessian)), 2),
-      condition_number = kappa(result$hessian),
-      convergence_number = as.numeric(gsub(".*\\((\\d+)\\).*", "\\1", result$message))
-    )
-
     # Assume results get better, check if they get worse
-    if(condition_matrix$min_eigenvalue[i] < condition_matrix$min_eigenvalue[best_min_eigenvalue]){
+    if(error_flag){
+
+      # Usually needs to increase lambda
+      lambda$par <- lambda$par + 2
+
+      # Increase max
+      lambda_max <- swiftelse(lambda$par > lambda_max, lambda$par, lambda_max)
+
+    }else if(condition_matrix$min_eigenvalue[i] < condition_matrix$min_eigenvalue[best_min_eigenvalue]){
 
       # Revert results back to better location
       result$par <- results_list[[best_min_eigenvalue]]$result$par
