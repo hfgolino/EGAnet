@@ -77,6 +77,10 @@
 #'
 #' \emph{Note: BIC tends to overly penalize models with more communities, use with caution}
 #'
+#' @param gamma.select Numeric vector (length = 1).
+#' Value to be used in the extended Baysian information criterion (EBIC).
+#' Defaults to \code{0.50}
+#'
 #' @param constrain.structure Boolean (length = 1).
 #' Whether memberships of the communities should
 #' be added as a constraint when optimizing the network loadings.
@@ -477,10 +481,6 @@ EGM.explore <- function(data, communities, search, iter, optimize.network, opt, 
 
   # Obtain expected edges
   EE <- expected_edges(absolute_P, sample_size = data_dimensions[1])
-
-  # Compute modularity matrix distance
-  mod_matrix <- absolute_P - EE
-  mod_distance <- as.dist(1 - mod_matrix * (sign(mod_matrix) == 1))
 
   # Compute modularity matrix distance
   mod_matrix <- absolute_P - EE
@@ -1340,7 +1340,7 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
 
 #' @noRd
 # EGM | Core Exploration ----
-# Updated 10.06.2025
+# Updated 13.06.2025
 EGM.explore.core <- function(
     communities, null_P, cluster, variable_names,
     data_dimensions, empirical_R, empirical_K, opt,
@@ -1404,20 +1404,12 @@ EGM.explore.core <- function(
 
   # Block coordinate descent for lambda and loadings
 
-  # Set cost function
-  cost <- switch(opt, "loglik" = logLik_cost, "srmr" = srmr_cost)
-
   # Set up initial parameters
-  lambda <- list(par = 2)
   result <- list(par = loadings_vector * 1e-05)
   # Shrinking loadings helps:
   # 1. prevent overdependence on initial structure
   # 2. convergent solutions to emerge
   # 3. prevent exploding loadings
-
-  # Set up lambda min and max
-  lambda_min <- -16
-  lambda_max <- 4
 
   # Update iterations
   iter <- iter + 1
@@ -1435,142 +1427,53 @@ EGM.explore.core <- function(
   results_list <- vector("list", length = iter)
 
   # Add initial results
-  results_list[[1]] <- list(lambda = lambda, result = result)
+  results_list[[1]] <- list(lambda = 2, result = result)
 
   # Loop over for up to 'iter'
   for(i in 2:iter){
 
-    # Set initial lambda
-    results_list[[i]]$lambda <- lambda <- optim(
-      par = lambda$par,
-      fn = function(
-      lambda, cost,
-      loadings_vector, R, loading_structure, rows, n, v,
-      constrained, lower_triangle, ...
-        ){
-          cost(
-            loadings_vector, R, loading_structure, rows, n, v,
-            constrained, lower_triangle, exp(lambda),
-            ...
-          )
-        },
-      cost = cost,
-      loadings_vector = result$par,
+    # Optimize for best quality solution
+    lambda <- optimize(
+      f = hessian_optimize, interval = c(-8, 2), # lambda search
+      loadings_vector = result$par, zeros = zeros,
       R = empirical_R, loading_structure = loading_structure,
       rows = communities, n = data_dimensions[1],
       v = data_dimensions[2], constrained = FALSE,
-      lower_triangle = lower.tri(empirical_R),
-      lower = lambda_min, upper = lambda_max, method = "L-BFGS-B"
+      lower_triangle = lower.tri(empirical_R), opt = opt,
+      maximum = TRUE
     )
 
     # Optimize over loadings
-    results_list[[i]]$result <- result <- try(
+    results_list[[i]] <- result <- try(
       egm_optimize(
-        loadings_vector = result$par,
-        loadings_length = loadings_length,
-        zeros = zeros, R = empirical_R,
-        loading_structure = loading_structure,
+        loadings_vector = result$par, zeros = zeros,
+        R = empirical_R, loading_structure = loading_structure,
         rows = communities, n = data_dimensions[1],
         v = data_dimensions[2], constrained = FALSE,
-        lower_triangle = lower.tri(empirical_R),
-        lambda = exp(lambda$par), opt = opt
+        lower_triangle = lower.tri(empirical_R), opt = opt,
+        lambda = exp(lambda$maximum)
       ), silent = TRUE
     )
 
-    # Get error flag
-    error_flag <- is(result, "try-error")
+    # Update condition matrix
+    condition_matrix[i,] <- c(
+      lambda = lambda$maximum,
+      likelihood = result$objective,
+      min_eigenvalue = round(min(matrix_eigenvalues(result$hessian)), 3),
+      condition_number = kappa(result$hessian),
+      message_number = as.numeric(gsub(".*\\((\\d+)\\).*", "\\1", result$message))
+    )
 
-    # Check for error
-    if(error_flag){
-      result <- list(par = loadings_vector * 1e-05, convergence = 1)
-    }else{
-
-      # Get best minimum eigenvalue
-      best_min_eigenvalue <- which.max(condition_matrix$min_eigenvalue)
-
-      # Store result
-      condition_matrix[i,] <- c(
-        lambda = lambda$par,
-        likelihood = result$objective,
-        min_eigenvalue = round(min(matrix_eigenvalues(result$hessian)), 2),
-        condition_number = kappa(result$hessian),
-        convergence_number = as.numeric(gsub(".*\\((\\d+)\\).*", "\\1", result$message))
-      )
-
-    }
-
-    # Check for convergence
-    if(result$convergence == 0){
+    # Check for improvement
+    if(abs(condition_matrix[i, "min_eigenvalue"] - condition_matrix[i - 1, "min_eigenvalue"]) < 1e-03){
       break
-    }
-
-    # Assume results get better, check if they get worse
-    if(error_flag){
-
-      # Usually needs to increase lambda
-      lambda$par <- lambda$par + 2
-
-      # Increase max
-      lambda_max <- swiftelse(lambda$par > lambda_max, lambda$par, lambda_max)
-
-    }else if(condition_matrix$min_eigenvalue[i] < condition_matrix$min_eigenvalue[best_min_eigenvalue]){
-
-      # Revert results back to better location
-      result$par <- results_list[[best_min_eigenvalue]]$result$par
-
-      # Reset lambda
-      lambda$par <- results_list[[best_min_eigenvalue]]$lambda$par
-
-      # Golden ratio search
-      golden_range <- min(3.0, (lambda_max - lambda_min) / 1.618)
-      lambda_min <- max(lambda_min, condition_matrix$lambda[best_min_eigenvalue] - golden_range / 2)
-      lambda_max <- min(lambda_max, condition_matrix$lambda[best_min_eigenvalue] + golden_range / 2)
-
-    }else if(condition_matrix$min_eigenvalue[i] == condition_matrix$min_eigenvalue[best_min_eigenvalue]){
-
-      # Restrict range of condition matrix to best minimum eigenvalues
-      restricted_matrix <- condition_matrix[
-        which(condition_matrix$min_eigenvalue == condition_matrix$min_eigenvalue[best_min_eigenvalue]),,
-        drop = FALSE
-      ]
-
-      # Get best condition number
-      best_condition_number <- which.min(restricted_matrix$condition_number)
-      best_index <- as.numeric(row.names(restricted_matrix))[best_condition_number]
-
-      # Revert results back to better location
-      result$par <- results_list[[best_index]]$result$par
-
-      # Reset lambda
-      lambda$par <- results_list[[best_index]]$lambda$par
-
-      # Calculate adaptive search radius
-      search_radius <- min(2.0, max(0.5, restricted_matrix$lambda / 3))
-
-      # Center around best solution with adaptive bounds
-      lambda_min <- max(-16, restricted_matrix$lambda[best_condition_number] - search_radius)
-      lambda_max <- min(4, restricted_matrix$lambda[best_condition_number] + search_radius)
-
     }
 
   }
 
-  # Restrict range of condition matrix to best minimum eigenvalues
-  restricted_matrix <- condition_matrix[
-    which(condition_matrix$min_eigenvalue == max(condition_matrix$min_eigenvalue[best_min_eigenvalue])),,
-    drop = FALSE
-  ]
-
-  # Get best condition number
-  best_condition_number <- which.min(restricted_matrix$condition_number)
-  best_index <- as.numeric(row.names(restricted_matrix))[best_condition_number]
-
-  # Get result
-  result <- results_list[[best_index]]$result
-
   # Format loadings
   loadings <- matrix(
-    result$par,
+    results_list[[which.max(condition_matrix$min_eigenvalue)]]$par,
     nrow = data_dimensions[2], ncol = communities,
     dimnames = dimnames(loadings)
   )

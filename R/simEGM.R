@@ -48,7 +48,7 @@
 #' @export
 #'
 # Simulate EGM ----
-# Updated 28.05.2025
+# Updated 13.06.2025
 simEGM <- function(
     communities, variables,
     loadings, cross.loadings = 0.01,
@@ -263,7 +263,12 @@ simEGM <- function(
   # Obtain precision, partial correlations, and adjacency matrices
   K <- solve(R)
   P <- -cov2cor(K); diag(P) <- 0
-  adjacency <- beta_min(P, membership, K, total_variables, sample.size)
+  adjacency <- beta_min(
+    P = P, Q = modularity(P, membership),
+    communities = communities, K = K,
+    total_variables = total_variables,
+    sample_size = sample.size
+  )
 
   # Return results
   return(
@@ -345,3 +350,4 @@ simEGM_errors <- function(
   range_error(max.iterations, c(1, Inf), "simEGM")
 
 }
+

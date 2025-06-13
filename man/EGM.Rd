@@ -99,6 +99,10 @@ Defaults to \code{"AIC"}.
 
 \emph{Note: BIC tends to overly penalize models with more communities, use with caution}}
 
+\item{gamma.select}{Numeric vector (length = 1).
+Value to be used in the extended Baysian information criterion (EBIC).
+Defaults to \code{0.50}}
+
 \item{constrain.structure}{Boolean (length = 1).
 Whether memberships of the communities should
 be added as a constraint when optimizing the network loadings.

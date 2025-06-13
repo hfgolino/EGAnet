@@ -285,8 +285,8 @@ logLik_gradient <- function(
 # EGM optimization ----
 # Updated 10.06.2025
 egm_optimize <- function(
-    loadings_vector, loadings_length,
-    zeros, R, loading_structure, rows, n, v,
+    loadings_vector, zeros,
+    R, loading_structure, rows, n, v,
     constrained, lower_triangle, lambda, opt, ...
 )
 {
@@ -309,9 +309,8 @@ egm_optimize <- function(
         lower_triangle = lower_triangle, lambda = lambda,
         lower = -bounds, upper = bounds,
         control = list(
-          eval.max = 10000, iter.max = 10000,
-          step.min = 1e-12, step.max = 1e-04,
-          rel.tol = 1e-12, abs.tol = 1e-12
+          eval.max = 1000, iter.max = 1000,
+          step.min = 1e-12, step.max = 0.01
         )
       )
     ), silent = TRUE
@@ -333,6 +332,40 @@ egm_optimize <- function(
 
   # Return result
   return(result)
+
+}
+
+#' @noRd
+# Hessian optimization ----
+# Updated 13.06.2025
+hessian_optimize <- function(
+    lambda, loadings_vector, zeros,
+    R, loading_structure, rows, n, v,
+    constrained, lower_triangle, opt, ...
+)
+{
+
+  # Optimize over loadings
+  result <- try(
+    egm_optimize(
+      loadings_vector = loadings_vector, zeros = zeros,
+      R = R, loading_structure = loading_structure,
+      rows = rows, n = n, v = v, constrained = constrained,
+      lower_triangle = lower_triangle,
+      lambda = exp(lambda), opt = opt
+    ), silent = TRUE
+  )
+
+  # Get error flag
+  error_flag <- is(result, "try-error")
+
+  # Check for error
+  return(
+    swiftelse(
+      is(result, "try-error"), -1e10,
+      round(min(matrix_eigenvalues(result$hessian)), 3)
+    )
+  )
 
 }
 
@@ -445,7 +478,7 @@ logLik_network_gradient <- function(network_vector, R, n, v, lower_triangle, zer
 
 #' @noRd
 # EGM network optimization
-# Updated 02.06.2025
+# Updated 13.06.2025
 egm_network_optimize <- function(
     network_vector, network_length,
     R, n, v, lower_triangle,
@@ -470,7 +503,7 @@ egm_network_optimize <- function(
         R = R, n = n, v = v, lower_triangle = lower_triangle, zeros = zeros,
         lower = rep(-1, network_length), upper = rep(1, network_length),
         control = list(
-          eval.max = 10000, iter.max = 10000,
+          eval.max = 1000, iter.max = 1000,
           step.min = 1e-10, step.max = 1e-06
         )
       )
