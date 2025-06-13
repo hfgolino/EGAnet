@@ -1642,7 +1642,7 @@ beta_min <- function(P, Q, communities, K, total_variables, sample_size)
 {
 
   # Calculate community-aware beta-min
-  minimum <- sqrt((Q / communities) * log(total_variables) / sample_size)
+  minimum <- Q * sqrt(log(total_variables) / sample_size)
 
   # Obtain inverse variances
   inverse_variances <- diag(K)
