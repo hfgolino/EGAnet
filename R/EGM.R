@@ -1588,7 +1588,7 @@ expected_edges <- function(network, data_dimensions = NULL)
 
     # Because of Chung-Lu configuration model, all nodes are
     # assumed to have similar variability
-    variance <- p_minus_one * (1 / (sample_size - data_dimensions[2] - 1))
+    variance <- p_minus_one * (1 / (data_dimensions[1] - data_dimensions[2] - 1))
 
     # Compute gradient
     gradient_j <- (matrix(standard_strength, nrow = data_dimensions[2], ncol = data_dimensions[2]) - dEE)^2
