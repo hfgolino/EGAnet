@@ -488,7 +488,7 @@ EGM.explore <- function(data, communities, search, iter, optimize.network, opt, 
   mod_distance <- as.dist(1 - mod_distance)
 
   # Obtain partial correlations that are greater than chance
-  null_P <- empirical_P * (absolute_P > (EE - attr(EE, "SE")))
+  null_P <- empirical_P * (absolute_P > (EE - 1.96 * attr(EE, "SE")))
 
   # Collect results
   results <- lapply(
@@ -1642,7 +1642,7 @@ beta_min <- function(P, Q, communities, K, total_variables, sample_size)
 {
 
   # Calculate community-aware beta-min
-  minimum <- Q * sqrt(log(total_variables) / sample_size)
+  minimum <- sqrt(Q * log(total_variables) / sample_size)
 
   # Obtain inverse variances
   inverse_variances <- diag(K)
