@@ -487,7 +487,7 @@ EGM.explore <- function(data, communities, search, iter, optimize.network, opt, 
   mod_distance <- (mod_matrix + 1) / 2 # converts to be between -1 and 1
   mod_distance <- as.dist(1 - mod_distance)
 
-  # Obtain partial correlations that are greater than random chance
+  # Obtain partial correlations that are greater than chance
   null_P <- empirical_P * (absolute_P > (EE - attr(EE, "SE")))
 
   # Collect results
