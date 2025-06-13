@@ -480,7 +480,7 @@ EGM.explore <- function(data, communities, search, iter, optimize.network, opt, 
   )
 
   # Obtain expected edges
-  EE <- expected_edges(absolute_P, data_dimensions = data_dimensions)
+  EE <- expected_edges(absolute_P, data_dimensions)
 
   # Compute modularity matrix distance
   mod_matrix <- absolute_P - EE
@@ -1613,36 +1613,13 @@ expected_edges <- function(network, data_dimensions = NULL)
 }
 
 #' @noRd
-# Clustering coefficient ----
-# Updated 13.06.2025
-clustering_coefficient <- function(network)
-{
-
-  # Convert network to absolute values
-  network <- abs(network)
-
-  # Obtain degree
-  degree <- colSums(network != 0)
-
-  # Obtain cubed root of edges
-  cubed <- network^(1/3)
-
-  # Set cycles
-  cycles <- diag(cubed %*% cubed %*% cubed)
-
-  # Set zero cycles to infinity
-  degree[cycles == 0] <- Inf
-
-  # Calculate the clustering coefficient
-  return(mean(cycles / (degree * (degree - 1))))
-
-}
-
-#' @noRd
 # Obtain modularity edge values ----
-# Updated 06.06.2025
+# Updated 13.06.2025
 obtain_modularity <- function(network, membership = NULL)
 {
+
+  # Ensure network is absolute
+  network <- abs(network)
 
   # Set modularity value
   return(
@@ -1650,7 +1627,7 @@ obtain_modularity <- function(network, membership = NULL)
       is.null(membership), 1,
       swiftelse(
         unique_length(membership) == 1,
-        clustering_coefficient(network),
+        mean(network[network != 0]),
         modularity(network, membership)
       )
     )
@@ -1660,12 +1637,12 @@ obtain_modularity <- function(network, membership = NULL)
 
 #' @noRd
 # beta-min criterion ----
-# Updated 08.06.2025
+# Updated 13.06.2025
 beta_min <- function(P, Q, communities, K, total_variables, sample_size)
 {
 
   # Calculate community-aware beta-min
-  minimum <- Q * sqrt(log(communities * total_variables) / sample_size)
+  minimum <- sqrt((Q / communities) * log(total_variables) / sample_size)
 
   # Obtain inverse variances
   inverse_variances <- diag(K)
