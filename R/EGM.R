@@ -480,7 +480,7 @@ EGM.explore <- function(data, communities, search, iter, optimize.network, opt, 
   )
 
   # Obtain expected edges
-  EE <- expected_edges(absolute_P, sample_size = data_dimensions[1])
+  EE <- expected_edges(absolute_P, data_dimensions = data_dimensions)
 
   # Compute modularity matrix distance
   mod_matrix <- absolute_P - EE
@@ -1556,8 +1556,8 @@ EGM.explore.core <- function(
 
 #' @noRd
 # Expected edge values ----
-# Updated 10.06.2025
-expected_edges <- function(network, sample_size = NULL)
+# Updated 13.06.2025
+expected_edges <- function(network, data_dimensions = NULL)
 {
 
   # Compute node strength
@@ -1567,8 +1567,44 @@ expected_edges <- function(network, sample_size = NULL)
   EE <- tcrossprod(strength) / sum(strength)
 
   # Obtain differences as SE
-  if(!is.null(sample_size)){
-    attr(EE, "SE") <- abs(outer(strength, strength, FUN = "-")) / sqrt(sample_size)
+  if(!is.null(data_dimensions)){
+
+    # Delta method for the standard error
+    # Expects that input into 'network' is absolute values
+
+    # Convert network to Fisher's z
+    z_network <- r2z(network)
+
+    # Compute node strength
+    strength <- colSums(z_network)
+    total_strength <- sum(strength)
+    standard_strength <- strength / total_strength
+    total_squared <- total_strength^2
+    cross_strength <- tcrossprod(strength)
+    dEE <- cross_strength / total_squared
+
+    # Get variables minus one
+    p_minus_one <- data_dimensions[2] - 1
+
+    # Because of Chung-Lu configuration model, all nodes are
+    # assumed to have similar variability
+    variance <- p_minus_one * (1 / (sample_size - data_dimensions[2] - 1))
+
+    # Compute gradient
+    gradient_j <- (matrix(standard_strength, nrow = data_dimensions[2], ncol = data_dimensions[2]) - dEE)^2
+    gradient_i <- t(gradient_j)
+
+    # Get SE (still in Fisher's z)
+    # dEE^2 = shorthand for gradient k
+    SE <- sqrt(variance * (gradient_i + gradient_j + (p_minus_one - 1) * dEE^2))
+
+    # Absolute partial correlations (assumes similar transformation deviations)
+    lower_triangle <- lower.tri(EE)
+    average <- sum(EE[lower_triangle] * network[lower_triangle]) / sum(EE[lower_triangle])
+
+    # Calculate the Jacobian
+    attr(EE, "SE") <- SE * sqrt((1 - average^2)^2)
+
   }
 
   # Return result
