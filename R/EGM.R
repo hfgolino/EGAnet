@@ -1499,27 +1499,29 @@ EGM.explore.core <- function(
     return(list(fit = bad_fit, loadings = loadings))
   }
 
-
   # Compute betas (use absolute)
   inverse_variances <- diag(empirical_K)
   betas <- abs(P * sqrt(outer(inverse_variances, inverse_variances, FUN = "/")))
+  betas <- (betas + t(betas)) / 2 # make symmetric
   beta_min <- sqrt(log(data_dimensions[2]) / data_dimensions[1])
 
   # Set up maximum to be at least minimally connected to assigned community
-  community_betas <- betas * outer(membership, membership, "==")
-  community_min <- apply(community_betas, 2, function(x){min(x[x!=0])})
-  # minimum = maximally connected
-  # maximum = minimally connected
+  membership_matrix <- outer(membership, membership, "==")
+  community_range <- swiftelse(
+    communities == 1,
+    range(apply(betas * membership_matrix, 2, function(x){min(x[x!=0])})),
+    c(0, min(apply(betas * membership_matrix, 2, function(x){min(x[x != 0])})))
+  )
 
   # Optimize modularity
   constant_value <- optimize(
-    select_constant, interval = range(community_min) / beta_min,
+    select_constant, interval = community_range / beta_min,
     beta_min = beta_min, membership = membership,
     P = P, betas = betas, maximum = TRUE
   )
 
   # Update P based on maximized modularity
-  P <- P * (abs(betas) > (constant_value$maximum * beta_min))
+  P <- P * (betas > (constant_value$maximum * beta_min))
 
   # Compute log-likelihood
   logLik <- silent_call(
@@ -1623,7 +1625,7 @@ expected_edges <- function(network, data_dimensions = NULL)
 obtain_modularity <- function(network, membership = NULL)
 {
 
-  # Ensure network is absolute
+  # Ensure absolute
   network <- abs(network)
 
   # Set modularity value
