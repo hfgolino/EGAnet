@@ -1499,22 +1499,22 @@ EGM.explore.core <- function(
     return(list(fit = bad_fit, loadings = loadings))
   }
 
-  # Obtain modularity
-  Q <- obtain_modularity(null_P, membership)
 
-  # Check for negative modularity (return bad result)
-  if(sign(Q) == -1){
-    return(list(fit = bad_fit, loadings = loadings))
-  }
+  # Compute betas
+  inverse_variances <- diag(empirical_K)
+  betas <- P * sqrt(outer(inverse_variances, inverse_variances, FUN = "/"))
+  beta_min <- sqrt(log(data_dimensions[2]) / data_dimensions[1])
 
-  # Update beta-min with modularity information
-  P <- silent_call(
-    P * beta_min(
-      P = P, Q = Q, communities = communities,
-      K = empirical_K, total_variables = data_dimensions[2],
-      sample_size = data_dimensions[1]
-    )
+  # Optimize modularity
+  constant_value <- optimize(
+    select_constant, interval = c(0, 1),
+    beta_min = beta_min, membership = membership,
+    P = P, betas = betas,
+    maximum = TRUE
   )
+
+  # Update P based on maximized modularity
+  P <- P * (abs(betas) > (constant_value$maximum * beta_min))
 
   # Compute log-likelihood
   logLik <- silent_call(
@@ -1546,7 +1546,7 @@ EGM.explore.core <- function(
       (data_dimensions[2] - parameters2 - 1),
     bic = bic,
     ebic = bic + 2 * parameters2 * gamma.select * log(data_dimensions[2]),
-    q = -Q
+    q = -constant_value$objective
   )
 
   # Return result
@@ -1627,11 +1627,25 @@ obtain_modularity <- function(network, membership = NULL)
       is.null(membership), 1,
       swiftelse(
         unique_length(membership) == 1,
-        mean(network[network != 0]),
+        igraph::transitivity(convert2igraph(network)),
         modularity(network, membership)
       )
     )
   )
+
+}
+
+#' @noRd
+# Select constant for beta-min criterion ----
+# Updated 14.06.2025
+select_constant <- function(constant, beta_min, membership, P, betas)
+{
+
+  # Set network matrix
+  network <- P * (abs(betas) > (constant * beta_min))
+
+  # Send modularity
+  return(obtain_modularity(network, membership))
 
 }
 
