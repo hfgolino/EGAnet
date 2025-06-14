@@ -1509,7 +1509,7 @@ EGM.explore.core <- function(
   membership_matrix <- outer(membership, membership, "==")
   community_range <- swiftelse(
     communities == 1,
-    range(apply(betas * membership_matrix, 2, function(x){min(x[x!=0])})),
+    range(apply(betas, 2, function(x){min(x[x!=0])})),
     c(0, min(apply(betas * membership_matrix, 2, function(x){min(x[x != 0])})))
   )
 
