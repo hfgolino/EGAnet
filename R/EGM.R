@@ -1504,10 +1504,11 @@ EGM.explore.core <- function(
   inverse_variances <- diag(empirical_K)
   betas <- P * sqrt(outer(inverse_variances, inverse_variances, FUN = "/"))
   beta_min <- sqrt(log(data_dimensions[2]) / data_dimensions[1])
+  maximum <- min(apply(abs(P), 2, max)) / beta_min
 
   # Optimize modularity
   constant_value <- optimize(
-    select_constant, interval = c(0, 1),
+    select_constant, interval = c(0, maximum),
     beta_min = beta_min, membership = membership,
     P = P, betas = betas,
     maximum = TRUE
