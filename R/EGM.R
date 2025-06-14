@@ -1500,11 +1500,15 @@ EGM.explore.core <- function(
   }
 
 
-  # Compute betas
+  # Compute betas (use absolute)
   inverse_variances <- diag(empirical_K)
-  betas <- P * sqrt(outer(inverse_variances, inverse_variances, FUN = "/"))
+  betas <- abs(P * sqrt(outer(inverse_variances, inverse_variances, FUN = "/")))
   beta_min <- sqrt(log(data_dimensions[2]) / data_dimensions[1])
-  maximum <- min(apply(abs(P), 2, max)) / beta_min
+
+  # Set up maximum to be at least maximally connected to assigned community
+  community_betas <- betas * outer(membership, membership, "==")
+  community_min <- apply(community_betas, 2, function(x){min(x[x!=0])})
+  maximum <- min(community_min) / beta_min
 
   # Optimize modularity
   constant_value <- optimize(
@@ -1643,7 +1647,7 @@ select_constant <- function(constant, beta_min, membership, P, betas)
 {
 
   # Set network matrix
-  network <- P * (abs(betas) > (constant * beta_min))
+  network <- P * (betas > (constant * beta_min))
 
   # Send modularity
   return(obtain_modularity(network, membership))
