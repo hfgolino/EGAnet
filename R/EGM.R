@@ -1505,17 +1505,17 @@ EGM.explore.core <- function(
   betas <- abs(P * sqrt(outer(inverse_variances, inverse_variances, FUN = "/")))
   beta_min <- sqrt(log(data_dimensions[2]) / data_dimensions[1])
 
-  # Set up maximum to be at least maximally connected to assigned community
+  # Set up maximum to be at least minimally connected to assigned community
   community_betas <- betas * outer(membership, membership, "==")
   community_min <- apply(community_betas, 2, function(x){min(x[x!=0])})
-  maximum <- min(community_min) / beta_min
+  # minimum = maximally connected
+  # maximum = minimally connected
 
   # Optimize modularity
   constant_value <- optimize(
-    select_constant, interval = c(0, maximum),
+    select_constant, interval = range(community_min) / beta_min,
     beta_min = beta_min, membership = membership,
-    P = P, betas = betas,
-    maximum = TRUE
+    P = P, betas = betas, maximum = TRUE
   )
 
   # Update P based on maximized modularity
@@ -1632,7 +1632,7 @@ obtain_modularity <- function(network, membership = NULL)
       is.null(membership), 1,
       swiftelse(
         unique_length(membership) == 1,
-        igraph::transitivity(convert2igraph(network)),
+        mean(network[lower.tri(network)]),
         modularity(network, membership)
       )
     )
