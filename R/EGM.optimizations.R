@@ -296,7 +296,7 @@ egm_optimize <- function(
   gradient <- switch(opt, "loglik" = logLik_gradient, "srmr" = srmr_gradient)
 
   # Set bounds (based on revised network loadings paper)
-  bounds <- zeros * 0.75
+  bounds <- zeros * 0.70
 
   # Obtain result
   result <- try(

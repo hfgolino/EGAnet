@@ -1406,7 +1406,7 @@ EGM.explore.core <- function(
   # Block coordinate descent for lambda and loadings
 
   # Set up initial parameters
-  result <- list(par = loadings_vector * 1e-05)
+  best_result <- result <- list(par = loadings_vector * 1e-04)
   # Shrinking loadings helps:
   # 1. prevent overdependence on initial structure
   # 2. convergent solutions to emerge
@@ -1430,28 +1430,57 @@ EGM.explore.core <- function(
   # Loop over for up to 'iter'
   for(i in 2:iter){
 
-    # Optimize for best quality solution
-    lambda <- optimize(
-      f = hessian_optimize, interval = c(-8, 2), # lambda search
-      loadings_vector = result$par, zeros = zeros,
-      R = empirical_R, loading_structure = loading_structure,
-      rows = communities, n = data_dimensions[1],
-      v = data_dimensions[2], constrained = FALSE,
-      lower_triangle = lower.tri(empirical_R), opt = opt,
-      maximum = TRUE
-    )
+    # Set stuck count
+    stuck_count <- 0
 
-    # Optimize over loadings
-    result <- try(
-      egm_optimize(
+    # Set class as error
+    class(result) <- "try-error"
+
+    # Check for stuck
+    while(is(result, "try-error")){
+
+      # Check stuck count
+      if(stuck_count > 3){ # Break out on stuck
+        break
+      }else if(is(result, "try-error")){ # Check for error
+
+        # Increase stuck count
+        stuck_count <- stuck_count + 1
+
+        # Shrink loadings down a magnitude
+        result <- list(par = best_result$par * 0.10)
+
+      }
+
+      # Optimize for best quality solution
+      lambda <- optimize(
+        f = hessian_optimize, interval = c(-8, 2), # lambda search
         loadings_vector = result$par, zeros = zeros,
         R = empirical_R, loading_structure = loading_structure,
         rows = communities, n = data_dimensions[1],
         v = data_dimensions[2], constrained = FALSE,
         lower_triangle = lower.tri(empirical_R), opt = opt,
-        lambda = exp(lambda$maximum)
-      ), silent = TRUE
-    )
+        maximum = TRUE
+      )
+
+      # Optimize over loadings
+      result <- try(
+        egm_optimize(
+          loadings_vector = result$par, zeros = zeros,
+          R = empirical_R, loading_structure = loading_structure,
+          rows = communities, n = data_dimensions[1],
+          v = data_dimensions[2], constrained = FALSE,
+          lower_triangle = lower.tri(empirical_R), opt = opt,
+          lambda = exp(lambda$maximum)
+        ), silent = TRUE
+      )
+
+    }
+
+    # Check stuck count
+    if(stuck_count > 3){
+      break
+    }
 
     # Collect condition
     current_condition <- c(
@@ -1650,7 +1679,7 @@ obtain_modularity <- function(network, membership = NULL)
       is.null(membership), 1,
       swiftelse(
         unique_length(membership) == 1,
-        mean(network[lower.tri(network)]),
+        igraph::transitivity(convert2igraph(network)),
         modularity(network, membership)
       )
     )
