@@ -159,12 +159,12 @@
 #' @export
 #'
 # Estimate EGM ----
-# Updated 06.06.2025
+# Updated 15.06.2025
 EGM <- function(
     data, EGM.model = c("explore", "EGA", "probability"),
     communities = NULL, structure = NULL, search = FALSE,
     p.in = NULL, p.out = NULL, opt = c("logLik", "SRMR"),
-    model.select = c("logLik", "AIC", "AICc", "BIC", "EBIC", "Q"),
+    model.select = c("logLik", "AIC", "AICc", "AICq", "BIC", "EBIC", "Q"),
     gamma.select = 0.50, constrain.structure = TRUE,
     constrain.zeros = TRUE, iter = 10,
     optimize.network = TRUE, verbose = TRUE, ...
@@ -174,7 +174,7 @@ EGM <- function(
   # Set default
   EGM.model <- set_default(EGM.model, "explore", EGM)
   opt <- set_default(opt, "loglik", EGM)
-  model.select <- set_default(model.select, "aic", EGM)
+  model.select <- set_default(model.select, "aicq", EGM)
 
   # Set up EGM type internally
   EGM.type <- switch(
@@ -1340,7 +1340,7 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
 
 #' @noRd
 # EGM | Core Exploration ----
-# Updated 13.06.2025
+# Updated 15.06.2025
 EGM.explore.core <- function(
     communities, null_P, cluster, variable_names,
     data_dimensions, empirical_R, empirical_K, opt,
@@ -1350,7 +1350,8 @@ EGM.explore.core <- function(
 
   # Set bad fit from the git
   bad_fit <- c(
-    parameters = NA, loglik = NA, aic = NA, aicc = NA, bic = NA, ebic = NA, q = NA
+    parameters = NA, loglik = NA, aic = NA, aicc = NA,
+    bic = NA, ebic = NA, q = NA, aicq = NA
   )
 
   # Set memberships
@@ -1416,18 +1417,15 @@ EGM.explore.core <- function(
 
   # Set up condition matrix
   condition_matrix <- data.frame(
-    lambda = rep(2, iter),
+    lambda = rep(-4, iter),
     likelihood = rep(Inf, iter),
     min_eigenvalue = rep(-Inf, iter),
     condition_number = rep(Inf, iter),
     message_number = rep(7, iter)
   )
 
-  # Set up results list
-  results_list <- vector("list", length = iter)
-
-  # Add initial results
-  results_list[[1]] <- list(lambda = 2, result = result)
+  # Initialize best index
+  best_index <- 1
 
   # Loop over for up to 'iter'
   for(i in 2:iter){
@@ -1444,7 +1442,7 @@ EGM.explore.core <- function(
     )
 
     # Optimize over loadings
-    results_list[[i]] <- result <- try(
+    result <- try(
       egm_optimize(
         loadings_vector = result$par, zeros = zeros,
         R = empirical_R, loading_structure = loading_structure,
@@ -1455,14 +1453,28 @@ EGM.explore.core <- function(
       ), silent = TRUE
     )
 
-    # Update condition matrix
-    condition_matrix[i,] <- c(
+    # Collect condition
+    current_condition <- c(
       lambda = lambda$maximum,
       likelihood = result$objective,
       min_eigenvalue = round(min(matrix_eigenvalues(result$hessian)), 3),
       condition_number = kappa(result$hessian),
       message_number = as.numeric(gsub(".*\\((\\d+)\\).*", "\\1", result$message))
     )
+
+    # Store best result
+    if(current_condition[["min_eigenvalue"]] > condition_matrix[best_index, "min_eigenvalue"]){
+
+      # Store best result index
+      best_index <- i
+
+      # Store result
+      best_result <- result
+
+    }
+
+    # Update condition matrix
+    condition_matrix[i,] <- current_condition
 
     # Check for improvement
     if(abs(condition_matrix[i, "min_eigenvalue"] - condition_matrix[i - 1, "min_eigenvalue"]) < 1e-03){
@@ -1473,7 +1485,7 @@ EGM.explore.core <- function(
 
   # Format loadings
   loadings <- matrix(
-    results_list[[which.max(condition_matrix$min_eigenvalue)]]$par,
+    best_result$par,
     nrow = data_dimensions[2], ncol = communities,
     dimnames = dimnames(loadings)
   )
@@ -1500,15 +1512,15 @@ EGM.explore.core <- function(
   }
 
   # Compute betas (use absolute)
-  inverse_variances <- diag(empirical_K)
-  betas <- abs(P * sqrt(outer(inverse_variances, inverse_variances, FUN = "/")))
+  inverse_variances <- sqrt(diag(empirical_K))
+  betas <- abs(P * outer(inverse_variances, inverse_variances, FUN = "/"))
   betas <- (betas + t(betas)) / 2 # make symmetric
   beta_min <- sqrt(log(data_dimensions[2]) / data_dimensions[1])
 
   # Set up maximum to be at least minimally connected to assigned community
   community_range <- swiftelse(
     communities == 1,
-    range(apply(betas, 2, function(x){min(x[x!=0])})),
+    range(apply(betas, 2, function(x){min(x[x != 0])})),
     c(0, min(apply(betas * outer(membership, membership, "=="), 2, function(x){min(x[x != 0])})))
   )
 
@@ -1516,11 +1528,15 @@ EGM.explore.core <- function(
   constant_value <- optimize(
     select_constant, interval = community_range / beta_min,
     beta_min = beta_min, membership = membership,
-    P = P, betas = betas, maximum = TRUE
+    P = P, betas = betas, maximum = FALSE,
+    loading_parameters = sum(loadings != 0),
+    lower_triangle = lower_triangle,
+    data_dimensions = data_dimensions,
+    empirical_R = empirical_R
   )
 
   # Update P based on maximized modularity
-  P <- P * (betas > (constant_value$maximum * beta_min))
+  P <- P * (betas > (constant_value$minimum * beta_min))
 
   # Compute log-likelihood
   logLik <- silent_call(
@@ -1552,7 +1568,8 @@ EGM.explore.core <- function(
       (data_dimensions[2] - parameters2 - 1),
     bic = bic,
     ebic = bic + 2 * parameters2 * gamma.select * log(data_dimensions[2]),
-    q = -constant_value$objective
+    q = -obtain_modularity(P, membership),
+    aicq = constant_value$objective
   )
 
   # Return result
@@ -1644,14 +1661,23 @@ obtain_modularity <- function(network, membership = NULL)
 #' @noRd
 # Select constant for beta-min criterion ----
 # Updated 14.06.2025
-select_constant <- function(constant, beta_min, membership, P, betas)
+select_constant <- function(constant, beta_min, membership, P, betas, loading_parameters, lower_triangle, data_dimensions, empirical_R)
 {
 
   # Set network matrix
   network <- P * (betas > (constant * beta_min))
 
-  # Send modularity
-  return(obtain_modularity(network, membership))
+  # Set parameters
+  parameters <- sum(network[lower_triangle] != 0) + loading_parameters
+
+  # Compute log-likelihood
+  loglik <- log_likelihood(
+    n = data_dimensions[1], p = data_dimensions[2],
+    R = pcor2cor(network), S = empirical_R, type = "zero"
+  )
+
+  # Send result
+  return(-2 * loglik + 2 * parameters - obtain_modularity(network, membership) * 10 * log(data_dimensions[1]))
 
 }
 
