@@ -1677,7 +1677,7 @@ select_constant <- function(constant, beta_min, membership, P, betas, loading_pa
   )
 
   # Send result
-  return(-2 * loglik + 2 * parameters - obtain_modularity(network, membership) * 10 * log(data_dimensions[1]))
+  return(-2 * loglik + 2 * parameters - obtain_modularity(network, membership) * 15 * log(data_dimensions[1]))
 
 }
 
