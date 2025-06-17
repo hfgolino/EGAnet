@@ -498,6 +498,14 @@ EGM.explore <- function(data, communities, search, iter, optimize.network, opt, 
     iter = iter, gamma.select = gamma.select
   )
 
+  # EGM.explore.core(
+  #   6, null_P = null_P,
+  #   cluster = hclust(d = as.dist(1 - mod_distance), method = "average"),
+  #   variable_names = variable_names, data_dimensions = data_dimensions,
+  #   empirical_R = empirical_R, empirical_K = empirical_K, opt = opt,
+  #   iter = iter, gamma.select = gamma.select
+  # )
+
   # Obtain fits
   fits <- do.call(rbind, lapply(results, function(x){x$fit}))
 
@@ -1339,7 +1347,7 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
 
 #' @noRd
 # EGM | Core Exploration ----
-# Updated 15.06.2025
+# Updated 17.06.2025
 EGM.explore.core <- function(
     communities, null_P, cluster, variable_names,
     data_dimensions, empirical_R, empirical_K, opt,
@@ -1416,10 +1424,11 @@ EGM.explore.core <- function(
 
   # Initialize lambda minimum, maximum, and best index
   absolute_min <- lambda_min <- 0; absolute_max <- lambda_max <- 10
-  best_index <- 1
+  best_index <- 10
 
   # Initialize target eigenvalue
-  target_eigenvalue <- 1e-03
+  target_eigenvalue <- 0.001
+  target_two <- 0.002 # target_eigenvalue * 2
 
   # Initialize condition matrix
   inf_iter <- rep(Inf, iter)
@@ -1442,7 +1451,7 @@ EGM.explore.core <- function(
       rows = communities, n = data_dimensions[1],
       v = data_dimensions[2], constrained = FALSE,
       lower_triangle = lower.tri(empirical_R), opt = opt,
-      maximum = TRUE
+      tol = 0.02, maximum = TRUE
     )
 
     # Optimize over loadings
@@ -1467,28 +1476,49 @@ EGM.explore.core <- function(
       message_number = as.numeric(gsub(".*\\((\\d+)\\).*", "\\1", result$message))
     )
 
+    # Check for position away from target
+    current_position <- current_condition[["min_eigenvalue"]] - target_eigenvalue
+    current_posiitive <- current_position > 0
+
     # Check for minimal change
-    if(
-      i != 1 && # check for first go
-      (abs(current_condition[["lambda"]] - condition_matrix[i-1, "lambda"]) < 1e-03)
-    ){
+    if(i > 1){ # check for previous lambdas
 
-      # Increase repeat count
-      repeat_count <- repeat_count + 1
+      # Get lambdas
+      lambda_diff <- abs(current_condition[["lambda"]] - condition_matrix[i-1, "lambda"])
 
-      # Break after 3 repeats
-      if(repeat_count > 2){
-        break
+      # Get relative difference
+      if((lambda_diff / abs(condition_matrix[i-1, "lambda"] + 1e-10)) <= 0.001){
+
+        # Increase repeat count
+        repeat_count <- repeat_count + 1
+
+        # Break after 3 repeats (and ensure at least positive minimum eigenvalue)
+        if((repeat_count > 2) & (condition_matrix[best_index, "min_eigenvalue"] > 0)){
+          break
+        }
+
+      }else{
+
+        # Reset repeat count
+        repeat_count <- 0
+
       }
 
-    }else{ # Reset repeat count
-      repeat_count <- 0
-    }
+    }else{repeat_count <- 0}
 
     # Store most numerically stable result
-    if(
-      current_condition[["min_eigenvalue"]] > 1e-06 && # ensure good stability
-      current_condition[["condition_number"]] < 1e06 # ensure well-conditioned
+    if(current_positive){
+
+      # Store best result index
+      best_index <- i
+
+      # Store result
+      best_result <- result
+
+    }else if(
+      (i > 1) &&
+      !current_positive &&
+      (current_condition[["min_eigenvalue"]] > condition_matrix[i - 1, "min_eigenvalue"])
     ){
 
       # Store best result index
@@ -1506,33 +1536,58 @@ EGM.explore.core <- function(
     best_lambda <- condition_matrix[best_index, "lambda"]
     best_eigenvalue <- condition_matrix[best_index, "min_eigenvalue"]
 
-    # Set up range
-    current_range <- (lambda_max - lambda_min) / 2
+    # Check when eigenvalues went negative and try to reinforce back up
+    if((i == 1) || ((!current_positive) && (best_eigenvalue > 0))){
 
-    # Determine search direction based on target
-    if(best_eigenvalue > target_eigenvalue * 2) {
+      # Adjust around the best lambda
+      lambda_min <- swiftelse(
+        current_condition[["lambda"]] > lambda_min, current_condition[["lambda"]], best_lambda
+      )
+      lambda_max <- swiftelse(
+        current_condition[["lambda"]] < lambda_max, best_lambda, current_condition[["lambda"]]
+      )
 
-      # Push lambda down
+    }else if(best_eigenvalue > target_two){ # Closer but still need to push down
+
+      # Get second closest
+      without_best <- condition_matrix[-best_index,]
+
+      # Check for existing without best
+      consider_min <- without_best[
+        which.min(abs(without_best[,"min_eigenvalue"] - target_eigenvalue)), "lambda"
+      ]
+
+      # Start squeezing
       lambda_max <- best_lambda
-      lambda_min <- max(absolute_min, best_lambda - current_range * 1.5)
-
-    }else if(best_eigenvalue < target_eigenvalue * 0.5) {
-
-      # Too far, push back up
-      lambda_min <- best_lambda
-      lambda_max <- min(absolute_max, best_lambda + current_range * 1.5)
+      lambda_min <- consider_min * 1.10
 
     }else{
 
-      # Close to target
-      lambda_min <- best_lambda - current_range * 0.10
-      lambda_max <- best_lambda + current_range * 0.10
+      # Find best
+      best_index <- which.max(condition_matrix[,"min_eigenvalue"])
+      current_best <- condition_matrix[best_index,"lambda"]
+
+      # Expand around current best
+      add_current <- sqrt(abs(current_best)) * 1.20 * (repeat_count + 1)
+
+      # Set minimum and maximum based on directory
+      lambda_max <- current_best[["lambda"]] + add_current
+      lambda_min <- current_best[["lambda"]] - add_current
 
     }
 
     # Ensure reasonable bounds
     lambda_min <- max(absolute_min, lambda_min)
     lambda_max <- min(absolute_max, lambda_max)
+
+    # Prevent range collapse
+    if((lambda_max - lambda_min) < 0.01){
+      center <- (lambda_max + lambda_min) / 2
+      lambda_min <- center - 0.005
+      lambda_max <- center + 0.005
+      lambda_min <- max(absolute_min, lambda_min)
+      lambda_max <- min(absolute_max, lambda_max)
+    }
 
   }
 
@@ -1702,7 +1757,7 @@ expected_edges <- function(network, data_dimensions = NULL)
 
 #' @noRd
 # Obtain modularity edge values ----
-# Updated 13.06.2025
+# Updated 17.06.2025
 obtain_modularity <- function(network, membership = NULL)
 {
 
@@ -1725,7 +1780,7 @@ obtain_modularity <- function(network, membership = NULL)
 
 #' @noRd
 # Select result ----
-# Updated 16.06.2025
+# Updated 17.06.2025
 select_result <- function(condition_matrix)
 {
 
@@ -1744,7 +1799,7 @@ select_result <- function(condition_matrix)
     # Get lowest likelihood and lambda value
     lowest <- condition_matrix[
       order(
-        -round(condition_matrix[,"likelihood"], 1), # minuscule of a difference
+        -round(condition_matrix[,"likelihood"], 2), # minuscule of a difference
         condition_matrix[,"lambda"], decreasing = TRUE
       ),, drop = FALSE
     ]
