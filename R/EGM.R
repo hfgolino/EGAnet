@@ -1559,7 +1559,7 @@ EGM.explore.core <- function(
 
       # Start squeezing
       lambda_max <- best_lambda
-      lambda_min <- consider_min * 1.10
+      lambda_min <- consider_min * 1.10 * (repeat_count + 1)
 
     }else{
 
