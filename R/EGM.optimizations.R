@@ -211,10 +211,16 @@ logLik_cost <- function(
 
   }else{
 
+    # Obtain implied correlation matrix
+    implied_R <- obtain_implied(loadings_vector, rows)
+
     # Without constraints, send it
     return(
-      -log_likelihood(n, v, obtain_implied(loadings_vector, rows), R, type = "zero") +
-        l2_cost
+      swiftelse(
+        is_positive_definite(implied_R),
+        -log_likelihood(n, v, implied_R, R, type = "zero") + l2_cost,
+        1e10
+      )
     )
 
   }
@@ -269,8 +275,8 @@ logLik_gradient <- function(
 
     # Return gradient
     return(
-      as.vector(t(crossprod(attributes(implied_R)$calculations$loadings, I %*% dError %*% I))) +
-        l2_gradient
+      as.vector(t(crossprod(attributes(implied_R)$calculations$loadings, I %*% dError %*% I)))
+      + l2_gradient
     )
 
   }
@@ -283,11 +289,12 @@ logLik_gradient <- function(
 
 #' @noRd
 # EGM optimization ----
-# Updated 10.06.2025
+# Updated 16.06.2025
 egm_optimize <- function(
     loadings_vector, zeros,
     R, loading_structure, rows, n, v,
-    constrained, lower_triangle, lambda, opt, ...
+    constrained, lower_triangle, lambda, opt,
+    iterations = 1000, ...
 )
 {
 
@@ -295,8 +302,8 @@ egm_optimize <- function(
   cost <- switch(opt, "loglik" = logLik_cost, "srmr" = srmr_cost)
   gradient <- switch(opt, "loglik" = logLik_gradient, "srmr" = srmr_gradient)
 
-  # Set bounds (based on revised network loadings paper)
-  bounds <- zeros * 0.70
+  # Set bounds for Hessian
+  bounds <- 0.70 * zeros
 
   # Obtain result
   result <- try(
@@ -309,8 +316,8 @@ egm_optimize <- function(
         lower_triangle = lower_triangle, lambda = lambda,
         lower = -bounds, upper = bounds,
         control = list(
-          eval.max = 1000, iter.max = 1000,
-          step.min = 1e-12, step.max = 0.01
+          eval.max = iterations, iter.max = iterations,
+          step.min = 1e-12, step.max = 0.10
         )
       )
     ), silent = TRUE
@@ -337,11 +344,12 @@ egm_optimize <- function(
 
 #' @noRd
 # Hessian optimization ----
-# Updated 13.06.2025
+# Updated 16.06.2025
 hessian_optimize <- function(
     lambda, loadings_vector, zeros,
     R, loading_structure, rows, n, v,
-    constrained, lower_triangle, opt, ...
+    constrained, lower_triangle, opt,
+    iterations = 100, ...
 )
 {
 
@@ -352,7 +360,8 @@ hessian_optimize <- function(
       R = R, loading_structure = loading_structure,
       rows = rows, n = n, v = v, constrained = constrained,
       lower_triangle = lower_triangle,
-      lambda = exp(lambda), opt = opt
+      lambda = lambda, opt = opt,
+      iterations = iterations, ...
     ), silent = TRUE
   )
 
@@ -504,7 +513,7 @@ egm_network_optimize <- function(
         lower = rep(-1, network_length), upper = rep(1, network_length),
         control = list(
           eval.max = 1000, iter.max = 1000,
-          step.min = 1e-10, step.max = 1e-06
+          step.min = 1e-08, step.max = 0.01
         )
       )
     )

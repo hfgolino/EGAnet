@@ -485,7 +485,6 @@ EGM.explore <- function(data, communities, search, iter, optimize.network, opt, 
   # Compute modularity matrix distance
   mod_matrix <- absolute_P - EE
   mod_distance <- (mod_matrix + 1) / 2 # converts to be between -1 and 1
-  mod_distance <- as.dist(1 - mod_distance)
 
   # Obtain partial correlations that are greater than chance
   null_P <- empirical_P * (absolute_P > (EE - 1.96 * attr(EE, "SE")))
@@ -493,7 +492,7 @@ EGM.explore <- function(data, communities, search, iter, optimize.network, opt, 
   # Collect results
   results <- lapply(
     community_sequence, EGM.explore.core, null_P = null_P,
-    cluster = hclust(d = mod_distance, method = "average"),
+    cluster = hclust(d = as.dist(1 - mod_distance), method = "average"),
     variable_names = variable_names, data_dimensions = data_dimensions,
     empirical_R = empirical_R, empirical_K = empirical_K, opt = opt,
     iter = iter, gamma.select = gamma.select
@@ -1371,9 +1370,6 @@ EGM.explore.core <- function(
     # Loop over
     for(i in which(singletons)){
 
-      # Update loadings to zero in the community
-      loadings[,i] <- 0
-
       # Get index
       index <- membership == i
 
@@ -1384,12 +1380,27 @@ EGM.explore.core <- function(
 
   }
 
+  # Simplify loadings
+  for(i in seq_len(communities)){
+    loadings[membership != i, i] <- 0
+  } # simplifying loadings helps numerical stability
+
+  # Set up loadings vector
+  loadings_vector <- as.vector(loadings) * 1e-05
+  # Shrinking loadings helps:
+  # 1. prevent overdependence on initial structure
+  # 2. convergent solutions to emerge
+  # 3. prevent exploding loadings
+
+  # Set up loading structure
+  loading_structure <- matrix(
+    TRUE, nrow = data_dimensions[2], ncol = communities,
+    dimnames = list(variable_names, format_integer(seq_len(communities), 0))
+  )
+
   # Get loading dimensions
   dimensions <- dim(loadings)
   dimension_names <- dimnames(loadings)
-
-  # Obtain loadings vector
-  loadings_vector <- as.vector(loadings)
 
   # Get length and set zeros
   loadings_length <- length(loadings_vector)
@@ -1397,93 +1408,58 @@ EGM.explore.core <- function(
   # Allow zeros to be estimated
   zeros <- rep(1, loadings_length)
 
-  # Set up loading structure
-  loading_structure <- matrix(
-    TRUE, nrow = dimensions[1], ncol = dimensions[2],
-    dimnames = list(dimension_names[[1]], dimension_names[[2]])
-  )
+  # Initialize result list
+  result_list <- vector("list", length = iter)
 
-  # Block coordinate descent for lambda and loadings
+  # Initialize best result
+  best_result <- list(par = loadings_vector)
 
-  # Set up initial parameters
-  best_result <- result <- list(par = loadings_vector * 1e-04)
-  # Shrinking loadings helps:
-  # 1. prevent overdependence on initial structure
-  # 2. convergent solutions to emerge
-  # 3. prevent exploding loadings
-
-  # Update iterations
-  iter <- iter + 1
-
-  # Set up condition matrix
-  condition_matrix <- data.frame(
-    lambda = rep(-4, iter),
-    likelihood = rep(Inf, iter),
-    min_eigenvalue = rep(-Inf, iter),
-    condition_number = rep(Inf, iter),
-    message_number = rep(7, iter)
-  )
-
-  # Initialize best index
+  # Initialize lambda minimum, maximum, and best index
+  absolute_min <- lambda_min <- 0; absolute_max <- lambda_max <- 10
   best_index <- 1
 
+  # Initialize target eigenvalue
+  target_eigenvalue <- 1e-03
+
+  # Initialize condition matrix
+  inf_iter <- rep(Inf, iter)
+  condition_matrix <- cbind(
+    index = inf_iter, lambda = inf_iter,
+    likelihood = inf_iter,
+    min_eigenvalue = -inf_iter,
+    condition_number = inf_iter,
+    message_number = inf_iter
+  )
+
   # Loop over for up to 'iter'
-  for(i in 2:iter){
+  for(i in seq_len(iter)){
 
-    # Set stuck count
-    stuck_count <- 0
+    # Optimize for best quality solution
+    lambda <- optimize(
+      f = hessian_optimize, interval = c(lambda_min, lambda_max),
+      loadings_vector = best_result$par, zeros = zeros,
+      R = empirical_R, loading_structure = loading_structure,
+      rows = communities, n = data_dimensions[1],
+      v = data_dimensions[2], constrained = FALSE,
+      lower_triangle = lower.tri(empirical_R), opt = opt,
+      maximum = TRUE
+    )
 
-    # Set class as error
-    class(result) <- "try-error"
-
-    # Check for stuck
-    while(is(result, "try-error")){
-
-      # Check stuck count
-      if(stuck_count > 3){ # Break out on stuck
-        break
-      }else if(is(result, "try-error")){ # Check for error
-
-        # Increase stuck count
-        stuck_count <- stuck_count + 1
-
-        # Shrink loadings down a magnitude
-        result <- list(par = best_result$par * 0.10)
-
-      }
-
-      # Optimize for best quality solution
-      lambda <- optimize(
-        f = hessian_optimize, interval = c(-8, 2), # lambda search
-        loadings_vector = result$par, zeros = zeros,
+    # Optimize over loadings
+    result_list[[i]] <- result <- try(
+      egm_optimize(
+        loadings_vector = best_result$par, zeros = zeros,
         R = empirical_R, loading_structure = loading_structure,
         rows = communities, n = data_dimensions[1],
         v = data_dimensions[2], constrained = FALSE,
         lower_triangle = lower.tri(empirical_R), opt = opt,
-        maximum = TRUE
-      )
-
-      # Optimize over loadings
-      result <- try(
-        egm_optimize(
-          loadings_vector = result$par, zeros = zeros,
-          R = empirical_R, loading_structure = loading_structure,
-          rows = communities, n = data_dimensions[1],
-          v = data_dimensions[2], constrained = FALSE,
-          lower_triangle = lower.tri(empirical_R), opt = opt,
-          lambda = exp(lambda$maximum)
-        ), silent = TRUE
-      )
-
-    }
-
-    # Check stuck count
-    if(stuck_count > 3){
-      break
-    }
+        lambda = lambda$maximum
+      ), silent = TRUE
+    )
 
     # Collect condition
     current_condition <- c(
+      index = i,
       lambda = lambda$maximum,
       likelihood = result$objective,
       min_eigenvalue = round(min(matrix_eigenvalues(result$hessian)), 3),
@@ -1491,8 +1467,29 @@ EGM.explore.core <- function(
       message_number = as.numeric(gsub(".*\\((\\d+)\\).*", "\\1", result$message))
     )
 
-    # Store best result
-    if(current_condition[["min_eigenvalue"]] > condition_matrix[best_index, "min_eigenvalue"]){
+    # Check for minimal change
+    if(
+      i != 1 && # check for first go
+      (abs(current_condition[["lambda"]] - condition_matrix[i-1, "lambda"]) < 1e-03)
+    ){
+
+      # Increase repeat count
+      repeat_count <- repeat_count + 1
+
+      # Break after 3 repeats
+      if(repeat_count > 2){
+        break
+      }
+
+    }else{ # Reset repeat count
+      repeat_count <- 0
+    }
+
+    # Store most numerically stable result
+    if(
+      current_condition[["min_eigenvalue"]] > 1e-06 && # ensure good stability
+      current_condition[["condition_number"]] < 1e06 # ensure well-conditioned
+    ){
 
       # Store best result index
       best_index <- i
@@ -1505,18 +1502,56 @@ EGM.explore.core <- function(
     # Update condition matrix
     condition_matrix[i,] <- current_condition
 
-    # Check for improvement
-    if(abs(condition_matrix[i, "min_eigenvalue"] - condition_matrix[i - 1, "min_eigenvalue"]) < 1e-03){
-      break
+    # Get best lambda and minimum eigenvalue
+    best_lambda <- condition_matrix[best_index, "lambda"]
+    best_eigenvalue <- condition_matrix[best_index, "min_eigenvalue"]
+
+    # Set up range
+    current_range <- (lambda_max - lambda_min) / 2
+
+    # Determine search direction based on target
+    if(best_eigenvalue > target_eigenvalue * 2) {
+
+      # Push lambda down
+      lambda_max <- best_lambda
+      lambda_min <- max(absolute_min, best_lambda - current_range * 1.5)
+
+    }else if(best_eigenvalue < target_eigenvalue * 0.5) {
+
+      # Too far, push back up
+      lambda_min <- best_lambda
+      lambda_max <- min(absolute_max, best_lambda + current_range * 1.5)
+
+    }else{
+
+      # Close to target
+      lambda_min <- best_lambda - current_range * 0.10
+      lambda_max <- best_lambda + current_range * 0.10
+
     }
 
+    # Ensure reasonable bounds
+    lambda_min <- max(absolute_min, lambda_min)
+    lambda_max <- min(absolute_max, lambda_max)
+
   }
+
+  # Get lambda
+  lambda <- select_result(condition_matrix)
+
+  # Unstable, return bad fit
+  if(is.null(lambda)){
+    return(list(fit = bad_fit, loadings = loadings))
+  }
+
+  # Get result
+  result <- result_list[[which(condition_matrix[,"lambda"] == lambda)[1]]]
 
   # Format loadings
   loadings <- matrix(
     best_result$par,
     nrow = data_dimensions[2], ncol = communities,
-    dimnames = dimnames(loadings)
+    dimnames = dimnames(loading_structure)
   )
 
   # Set lower triangle
@@ -1534,7 +1569,8 @@ EGM.explore.core <- function(
     !(
       unique_length(membership) == dim(loadings)[2] & # ensure meaningful
       max(abs(loadings)) != 1 & # throw out any solutions with loadings of 1
-      all(fast_table(membership) > 1) # throw out singletons
+      all(fast_table(membership) > 1) & # throw out singletons
+      all(!is.na(P))
     )
   ){
     return(list(fit = bad_fit, loadings = loadings))
@@ -1679,11 +1715,50 @@ obtain_modularity <- function(network, membership = NULL)
       is.null(membership), 1,
       swiftelse(
         unique_length(membership) == 1,
-        igraph::transitivity(convert2igraph(network)),
+        # igraph::transitivity(convert2igraph(network)),
+        mean(network[lower.tri(network)]),
         modularity(network, membership)
       )
     )
   )
+
+}
+
+#' @noRd
+# Select result ----
+# Updated 16.06.2025
+select_result <- function(condition_matrix)
+{
+
+  # Get eigenvalues
+  eigenvalues <- condition_matrix[,"min_eigenvalue"]
+
+  # Check for any positive
+  if(any(eigenvalues > 0)){
+
+    # Select result based on "good" enough stability and best likelihood
+    stable_flag <- eigenvalues >= 0.01
+    if(any(stable_flag)){
+      condition_matrix <- condition_matrix[stable_flag,, drop = FALSE]
+    }
+
+    # Get lowest likelihood and lambda value
+    lowest <- condition_matrix[
+      order(
+        -round(condition_matrix[,"likelihood"], 1), # minuscule of a difference
+        condition_matrix[,"lambda"], decreasing = TRUE
+      ),, drop = FALSE
+    ]
+
+    # At minimum, select for lowest likelihood among positive eigenvalues
+    return(lowest[1,"lambda"])
+
+  }else{
+
+    # Unstable, return bad fit
+    return(NULL)
+
+  }
 
 }
 
