@@ -1715,8 +1715,7 @@ obtain_modularity <- function(network, membership = NULL)
       is.null(membership), 1,
       swiftelse(
         unique_length(membership) == 1,
-        # igraph::transitivity(convert2igraph(network)),
-        mean(network[lower.tri(network)]),
+        igraph::transitivity(convert2igraph(network)) / 3,
         modularity(network, membership)
       )
     )
