@@ -1478,7 +1478,7 @@ EGM.explore.core <- function(
 
     # Check for position away from target
     current_position <- current_condition[["min_eigenvalue"]] - target_eigenvalue
-    current_posiitive <- current_position > 0
+    current_positive <- current_position > 0
 
     # Check for minimal change
     if(i > 1){ # check for previous lambdas
