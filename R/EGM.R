@@ -77,10 +77,6 @@
 #'
 #' \emph{Note: BIC tends to overly penalize models with more communities, use with caution}
 #'
-#' @param gamma.select Numeric vector (length = 1).
-#' Value to be used in the extended Baysian information criterion (EBIC).
-#' Defaults to \code{0.50}
-#'
 #' @param constrain.structure Boolean (length = 1).
 #' Whether memberships of the communities should
 #' be added as a constraint when optimizing the network loadings.
@@ -94,20 +90,26 @@
 #' Defaults to \code{TRUE} which ensures that zero networks loadings are retained.
 #' Set to \code{FALSE} to freely estimate each loading similar to exploratory factor analysis
 #'
-#' @param iter Numeric (length = 1).
-#' Number of iterations to optimize lambda in the ridge penalty
-#' for the loading estimation.
-#' Defaults to \code{10}
-#'
-#' More than 10 is usually not necessary as the algorithm usually
-#' converges after a few iterations
-#'
 #' @param optimize.network Boolean (length = 1).
 #' Whether the model-implied network should be optimized toward the
 #' model-implied zero-order correlation matrix.
 #' Defaults to \code{TRUE}.
 #'
 #' Only applies to `EGM.model = "explore"`
+#'
+#' @param norm Character vector (length = 1).
+#' Regularization norm to apply to loadings during estimation.
+#' Some regularization is recommended as it tends to beneficial
+#' for the numerical stability of solution.
+#' Available options:
+#'
+#' \itemize{
+#'
+#' \item \code{"l1"} --- \eqn{\ell_1} norm or \code{sum(abs(loadings))}
+#'
+#' \item \code{"l2"} (default) --- \eqn{\ell_2} norm or \code{sum(loadings^2)}
+#'
+#' }
 #'
 #' @param verbose Boolean (length = 1).
 #' Should progress be displayed?
@@ -159,15 +161,15 @@
 #' @export
 #'
 # Estimate EGM ----
-# Updated 15.06.2025
+# Updated 18.06.2025
 EGM <- function(
     data, EGM.model = c("explore", "EGA", "probability"),
     communities = NULL, structure = NULL, search = FALSE,
     p.in = NULL, p.out = NULL, opt = c("logLik", "SRMR"),
     model.select = c("logLik", "AIC", "AICc", "AICq", "BIC", "EBIC", "Q"),
-    gamma.select = 0.50, constrain.structure = TRUE,
-    constrain.zeros = TRUE, iter = 10,
-    optimize.network = TRUE, verbose = TRUE, ...
+    constrain.structure = TRUE, constrain.zeros = TRUE,
+    optimize.network = TRUE, norm = c("l1", "l2"),
+    verbose = TRUE, ...
 )
 {
 
@@ -175,6 +177,7 @@ EGM <- function(
   EGM.model <- set_default(EGM.model, "explore", EGM)
   opt <- set_default(opt, "loglik", EGM)
   model.select <- set_default(model.select, "aicq", EGM)
+  norm <- set_default(norm, "l2", EGM)
 
   # Set up EGM type internally
   EGM.type <- switch(
@@ -195,15 +198,15 @@ EGM <- function(
   # Check data and structure
   data <- EGM_errors(
     data, EGM.type, communities, search, p.in, p.out,
-    gamma.select, constrain.structure, constrain.zeros,
-    iter, optimize.network, verbose, ...
+    constrain.structure, constrain.zeros,
+    optimize.network, verbose, ...
   )
 
   # Switch and return results based on type
   return(
     switch(
       EGM.type,
-      "explore" = EGM.explore(data, communities, search, iter, optimize.network, opt, model.select, gamma.select, ...),
+      "explore" = EGM.explore(data, communities, search, optimize.network, norm, opt, model.select, ...),
       "ega" = EGM.EGA(data, structure, opt, constrain.structure, constrain.zeros, ...),
       "ega.search" = EGM.EGA.search(data, communities, structure, opt, constrain.structure, constrain.zeros, verbose, ...),
       "probability" = EGM.probability(data, communities, structure, p.in, p.out, opt, constrain.structure, constrain.zeros, ...),
@@ -215,11 +218,11 @@ EGM <- function(
 
 #' @noRd
 # EGM Errors ----
-# Updated 27.05.2025
+# Updated 18.06.2025
 EGM_errors <- function(
     data, EGM.type, communities, search, p.in, p.out,
-    gamma.select, constrain.structure, constrain.zeros,
-    iter, optimize.network, verbose, ...
+    constrain.structure, constrain.zeros,
+    optimize.network, verbose, ...
 )
 {
 
@@ -276,16 +279,6 @@ EGM_errors <- function(
 
   # Check for EGM type
   if(EGM.type == "explore"){
-
-    # Check 'iter' errors
-    length_error(iter, 1, "EGM")
-    typeof_error(iter, "numeric", "EGM")
-    range_error(iter, c(1, Inf), "EGM")
-
-    # Check 'gamma.select' errors
-    length_error(gamma.select, 1, "EGM")
-    typeof_error(gamma.select, "numeric", "EGM")
-    range_error(gamma.select, c(0, Inf), "EGM")
 
     # 'optimize.network' errors
     length_error(optimize.network, 1, "EGM")
@@ -448,8 +441,8 @@ compute_tefi_adjustment <- function(loadings, correlations)
 
 #' @noRd
 # EGM | Exploratory ----
-# Updated 10.06.2025
-EGM.explore <- function(data, communities, search, iter, optimize.network, opt, model.select, gamma.select, ...)
+# Updated 18.06.2025
+EGM.explore <- function(data, communities, search, optimize.network, norm, opt, model.select, ...)
 {
 
   # Obtain data dimensions
@@ -494,17 +487,8 @@ EGM.explore <- function(data, communities, search, iter, optimize.network, opt, 
     community_sequence, EGM.explore.core, null_P = null_P,
     cluster = hclust(d = as.dist(1 - mod_distance), method = "average"),
     variable_names = variable_names, data_dimensions = data_dimensions,
-    empirical_R = empirical_R, empirical_K = empirical_K, opt = opt,
-    iter = iter, gamma.select = gamma.select
+    empirical_R = empirical_R, empirical_K = empirical_K, norm = norm, opt = opt
   )
-
-  # EGM.explore.core(
-  #   1, null_P = null_P,
-  #   cluster = hclust(d = as.dist(1 - mod_distance), method = "average"),
-  #   variable_names = variable_names, data_dimensions = data_dimensions,
-  #   empirical_R = empirical_R, empirical_K = empirical_K, opt = opt,
-  #   iter = iter, gamma.select = gamma.select
-  # )
 
   # Obtain fits
   fits <- do.call(rbind, lapply(results, function(x){x$fit}))
@@ -1350,8 +1334,8 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
 # Updated 18.06.2025
 EGM.explore.core <- function(
     communities, null_P, cluster, variable_names,
-    data_dimensions, empirical_R, empirical_K, opt,
-    iter, gamma.select, ...
+    data_dimensions, empirical_R, empirical_K,
+    norm, opt, ...
 )
 {
 
@@ -1388,13 +1372,8 @@ EGM.explore.core <- function(
 
   }
 
-  # # Simplify loadings
-  # for(i in seq_len(communities)){
-  #   loadings[membership != i, i] <- 0
-  # } # simplifying loadings helps numerical stability
-
   # Set up loadings vector
-  loadings_vector <- as.vector(loadings) * 1e-03
+  loadings_vector <- as.vector(loadings) * 1e-05
   # Shrinking loadings helps:
   # 1. prevent overdependence on initial structure
   # 2. convergent solutions to emerge
@@ -1416,14 +1395,18 @@ EGM.explore.core <- function(
   # Allow zeros to be estimated
   zeros <- rep(1, loadings_length)
 
-  # Optimize for best quality solution
+  # Set interval
+  interval <- switch(norm, "l1" = c(0, 2.718282), "l2" = c(0, 10))
+
+  # Optimize for best quality solution (quick first pass)
   lambda <- optimize(
-    f = hessian_optimize, interval = c(0, 10),
+    f = hessian_optimize, interval = interval,
     loadings_vector = loadings_vector, zeros = zeros,
     R = empirical_R, loading_structure = loading_structure,
     rows = communities, n = data_dimensions[1],
     v = data_dimensions[2], constrained = FALSE,
-    lower_triangle = lower.tri(empirical_R), opt = opt
+    lower_triangle = lower.tri(empirical_R),
+    norm = norm, opt = opt
   )
 
   # Optimize over loadings
@@ -1433,14 +1416,47 @@ EGM.explore.core <- function(
       R = empirical_R, loading_structure = loading_structure,
       rows = communities, n = data_dimensions[1],
       v = data_dimensions[2], constrained = FALSE,
-      lower_triangle = lower.tri(empirical_R), opt = opt,
-      lambda = lambda$minimum
+      lower_triangle = lower.tri(empirical_R),
+      norm = norm, opt = opt, lambda = lambda$minimum
     ), silent = TRUE
   )
 
-  # Check for bad fit
+  # Re-check if negative eigenvalues
+  if(is(result, "try-error")){
+
+    # Return bad result
+    return(list(loadings = loadings, fit = bad_fit))
+
+  }else if(min(matrix_eigenvalues(result$hessian)) < 0){
+
+    # Optimize for best quality solution
+    lambda <- optimize(
+      f = hessian_optimize, interval = interval,
+      loadings_vector = result$par, zeros = zeros,
+      R = empirical_R, loading_structure = loading_structure,
+      rows = communities, n = data_dimensions[1],
+      v = data_dimensions[2], constrained = FALSE,
+      lower_triangle = lower.tri(empirical_R),
+      norm = norm, opt = opt
+    )
+
+    # Optimize over loadings
+    result <- try(
+      egm_optimize(
+        loadings_vector = result$par, zeros = zeros,
+        R = empirical_R, loading_structure = loading_structure,
+        rows = communities, n = data_dimensions[1],
+        v = data_dimensions[2], constrained = FALSE,
+        lower_triangle = lower.tri(empirical_R),
+        norm = norm, opt = opt, lambda = lambda$minimum
+      ), silent = TRUE
+    )
+
+  }
+
+  # Check for bad result
   if(is(result, "try-error") || (min(matrix_eigenvalues(result$hessian)) < 0)){
-    return(list(fit = bad_fit, loadings = loadings))
+    return(list(loadings = loadings, fit = bad_fit))
   }
 
   # Format loadings
@@ -1449,6 +1465,11 @@ EGM.explore.core <- function(
     nrow = data_dimensions[2], ncol = communities,
     dimnames = dimnames(loading_structure)
   )
+
+  # Set small loadings to zero
+  if(norm == "l1"){
+    loadings[abs(loadings) < 1e-03] <- 0
+  }
 
   # Set lower triangle
   lower_triangle <- lower.tri(empirical_R)
@@ -1528,7 +1549,7 @@ EGM.explore.core <- function(
     aicc = aic + (parameters2 * (parameters + 1)) /
       (data_dimensions[2] - parameters2 - 1),
     bic = bic,
-    ebic = bic + 2 * parameters2 * gamma.select * log(data_dimensions[2]),
+    ebic = bic + 2 * parameters2 * 0.50 * log(data_dimensions[2]),
     q = -obtain_modularity(P, membership),
     aicq = constant_value$objective
   )
@@ -1616,134 +1637,6 @@ obtain_modularity <- function(network, membership = NULL)
       )
     )
   )
-
-}
-
-#' @noRd
-# Select result ----
-# Updated 18.06.2025
-select_result <- function(condition_matrix, accept_negative = FALSE)
-{
-
-  # Get eigenvalues
-  eigenvalues <- condition_matrix[,"min_eigenvalue"]
-
-  # Check for any positive
-  if(any(eigenvalues > 0)){
-
-    # Select result based on "good" enough stability and best likelihood
-    stable_flag <- eigenvalues >= 0.01
-    if(any(stable_flag)){
-      condition_matrix <- condition_matrix[stable_flag,, drop = FALSE]
-    }
-
-    # Get lowest likelihood and lambda value
-    lowest <- condition_matrix[
-      order(
-        -round(condition_matrix[,"likelihood"], 2), # minuscule of a difference
-        condition_matrix[,"lambda"], decreasing = TRUE
-      ),, drop = FALSE
-    ]
-
-    # At minimum, select for lowest likelihood among positive eigenvalues
-    return(lowest[1,"lambda"])
-
-  }else if(accept_negative){ # OK for grid search
-
-    # Just find the maximum
-    return(condition_matrix[which.max(condition_matrix[,"min_eigenvalue"]), "lambda"])
-
-  }else{ # Unstable, return bad fit
-    return(NULL)
-  }
-
-}
-
-#' @noRd
-# Grid search ----
-# Updated 18.06.2025
-grid_search <- function(
-    loadings_vector, zeros, R, loading_structure,
-    rows, n, v, constrained, lower_triangle, opt,
-    lambda_min, lambda_max, length_out, iterations = 100
-)
-{
-
-  # Initialize lambda range
-  lambda_range <- vector("list", length = length_out + 1)
-
-  # Search over lambda range
-  lambda_range[seq_len(length_out)] <- lapply(seq(lambda_min, lambda_max, length.out = length_out), function(lambda){
-
-    # Optimize over loadings
-    result <- try(
-      egm_optimize(
-        loadings_vector = loadings_vector, zeros = zeros,
-        R = R, loading_structure = loading_structure,
-        rows = rows, n = n, v = v, constrained = constrained,
-        lower_triangle = lower_triangle, opt = opt,
-        lambda = lambda, iterations = iterations
-      ), silent = TRUE
-    )
-
-    # Collect condition
-    condition <- c(
-      index = 1,
-      lambda = lambda,
-      likelihood = result$objective,
-      min_eigenvalue = round(min(matrix_eigenvalues(result$hessian)), 3),
-      condition_number = kappa(result$hessian),
-      message_number = as.numeric(gsub(".*\\((\\d+)\\).*", "\\1", result$message))
-    )
-
-    # Return results
-    return(list(result = result, condition = condition))
-
-  })
-
-  # Try standard hessian optimization
-  lambda <- optimize(
-    f = hessian_optimize, interval = c(lambda_min, lambda_max),
-    loadings_vector = loadings_vector, zeros = zeros,
-    R = R, loading_structure = loading_structure,
-    rows = rows, n = n, v = v, constrained = constrained,
-    lower_triangle = lower_triangle, opt = opt,
-    tol = 0.02, maximum = TRUE
-  )
-
-  # Optimize over loadings
-  result <- try(
-    egm_optimize(
-      loadings_vector = loadings_vector, zeros = zeros,
-      R = R, loading_structure = loading_structure,
-      rows = rows, n = n, v = v, constrained = constrained,
-      lower_triangle = lower_triangle, opt = opt,
-      lambda = lambda$maximum
-    ), silent = TRUE
-  )
-
-  # Get condition
-  condition <- c(
-    index = 1,
-    lambda = lambda$maximum,
-    likelihood = result$objective,
-    min_eigenvalue = round(min(matrix_eigenvalues(result$hessian)), 3),
-    condition_number = kappa(result$hessian),
-    message_number = as.numeric(gsub(".*\\((\\d+)\\).*", "\\1", result$message))
-  )
-
-  # Add to grid search
-  lambda_range[[length_out + 1]] <- list(result = result, condition = condition)
-
-  # Collect conditions
-  condition_matrix <- do.call(rbind, lapply(lambda_range, function(x){x$condition}))
-
-  # Find best result
-  best_lambda <- select_result(condition_matrix, accept_negative = TRUE)
-  best_index <- which(condition_matrix[,"lambda"] == best_lambda)
-
-  # Return result and lambda
-  return(lambda_range[[best_index]])
 
 }
 

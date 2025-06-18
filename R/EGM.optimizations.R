@@ -181,16 +181,21 @@ log_likelihood <- function(n, p, R, S, type = c("partial", "zero"))
 
 #' @noRd
 # Log-likelihood cost
-# Updated 02.06.2025
+# Updated 18.06.2025
 logLik_cost <- function(
     loadings_vector, R,
     loading_structure, rows, n, v,
-    constrained, lower_triangle, lambda, ...
+    constrained, lower_triangle,
+    norm, lambda, ...
 )
 {
 
-  # Set l2 cost
-  l2_cost <- lambda * sum(loadings_vector^2)
+  # Set regularization penalty
+  penalty <- lambda * switch(
+    norm,
+    "l1" = sum(abs(loadings_vector)),
+    "l2" = sum(loadings_vector^2)
+  )
 
   # Check for constraint
   if(constrained){
@@ -206,7 +211,7 @@ logLik_cost <- function(
 
     # Check for positive definite
     return(
-      -log_likelihood(n, v, implied_R, R, type = "zero") + sum(differences > 0) + l2_cost
+      -log_likelihood(n, v, implied_R, R, type = "zero") + sum(differences > 0) + penalty
     )
 
   }else{
@@ -218,7 +223,7 @@ logLik_cost <- function(
     return(
       swiftelse(
         is_positive_definite(implied_R),
-        -log_likelihood(n, v, implied_R, R, type = "zero") + l2_cost,
+        -log_likelihood(n, v, implied_R, R, type = "zero") + penalty,
         1e10
       )
     )
@@ -229,16 +234,21 @@ logLik_cost <- function(
 
 #' @noRd
 # Log-likelihood gradient
-# Updated 02.06.2025
+# Updated 18.06.2025
 logLik_gradient <- function(
     loadings_vector, R,
     loading_structure, rows, n, v,
-    constrained, lower_triangle, lambda, ...
+    constrained, lower_triangle,
+    norm, lambda, ...
 )
 {
 
-  # Set l2 gradient
-  l2_gradient <- 2 * lambda * loadings_vector
+  # Set regularization penalty
+  penalty <- lambda * switch(
+    norm,
+    "l1" = sign(loadings_vector),
+    "l2" = 2 * loadings_vector
+  )
 
   # Check for constraint
   if(constrained){
@@ -260,7 +270,7 @@ logLik_gradient <- function(
     # Return gradient
     return(
       as.vector(t(crossprod(loadings_matrix, I %*% dError %*% I)) + (differences > 0)) +
-        l2_gradient
+        penalty
     )
 
   }else{ # Without constraints, send it
@@ -276,7 +286,7 @@ logLik_gradient <- function(
     # Return gradient
     return(
       as.vector(t(crossprod(attributes(implied_R)$calculations$loadings, I %*% dError %*% I)))
-      + l2_gradient
+      + penalty
     )
 
   }
@@ -289,12 +299,12 @@ logLik_gradient <- function(
 
 #' @noRd
 # EGM optimization ----
-# Updated 16.06.2025
+# Updated 18.06.2025
 egm_optimize <- function(
     loadings_vector, zeros,
     R, loading_structure, rows, n, v,
-    constrained, lower_triangle, lambda, opt,
-    iterations = 10000, ...
+    constrained, lower_triangle, lambda,
+    norm, opt, iterations = 10000, ...
 )
 {
 
@@ -313,7 +323,8 @@ egm_optimize <- function(
         objective = cost, gradient = gradient,
         R = R, loading_structure = loading_structure,
         rows = rows, n = n, v = v, constrained = constrained,
-        lower_triangle = lower_triangle, lambda = lambda,
+        lower_triangle = lower_triangle,
+        norm = norm, lambda = lambda,
         lower = -bounds, upper = bounds,
         control = list(
           eval.max = iterations, iter.max = iterations,
@@ -331,8 +342,8 @@ egm_optimize <- function(
       par = result$par, fn = cost, gr = gradient,
       R = R, loading_structure = loading_structure,
       rows = rows, n = n, v = v, constrained = constrained,
-      lower_triangle = lower_triangle, lambda = lambda,
-      lower = -bounds, upper = bounds
+      lower_triangle = lower_triangle, norm = norm,
+      lambda = lambda, lower = -bounds, upper = bounds
     )
 
   }
@@ -344,11 +355,11 @@ egm_optimize <- function(
 
 #' @noRd
 # Hessian optimization ----
-# Updated 16.06.2025
+# Updated 18.06.2025
 hessian_optimize <- function(
     lambda, loadings_vector, zeros,
     R, loading_structure, rows, n, v,
-    constrained, lower_triangle, opt,
+    constrained, lower_triangle, norm, opt,
     iterations = 10000, ...
 )
 {
@@ -360,7 +371,7 @@ hessian_optimize <- function(
       R = R, loading_structure = loading_structure,
       rows = rows, n = n, v = v, constrained = constrained,
       lower_triangle = lower_triangle,
-      lambda = lambda, opt = opt,
+      norm = norm, lambda = lambda, opt = opt,
       iterations = iterations, ...
     ), silent = TRUE
   )
@@ -375,15 +386,17 @@ hessian_optimize <- function(
 
     # Obtain hessian eigenvalues
     hessian_eigenvalue <- min(matrix_eigenvalues(result$hessian))
+    scaled_eigenvalue <- sqrt(abs(hessian_eigenvalue))
 
-    # Set hessian penalty
-    hessian_penalty <- abs(hessian_eigenvalue) * swiftelse(
-      hessian_eigenvalue > 0, 1, -10000
-      # make the penalty for a negative eigenvalue severe
-    )
+    # Set penalty
+    if(hessian_eigenvalue < 0){
+      hessian_penalty <- scaled_eigenvalue * 1000
+    }else{
+      hessian_penalty <- -sqrt(abs(hessian_eigenvalue))
+    }
 
     # Add hessian to objective
-    return(result$objective - hessian_penalty)
+    return(result$objective + hessian_penalty)
   }
 
 }
