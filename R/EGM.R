@@ -1388,13 +1388,13 @@ EGM.explore.core <- function(
 
   }
 
-  # Simplify loadings
-  for(i in seq_len(communities)){
-    loadings[membership != i, i] <- 0
-  } # simplifying loadings helps numerical stability
+  # # Simplify loadings
+  # for(i in seq_len(communities)){
+  #   loadings[membership != i, i] <- 0
+  # } # simplifying loadings helps numerical stability
 
   # Set up loadings vector
-  loadings_vector <- as.vector(loadings) * 1e-02
+  loadings_vector <- as.vector(loadings) * 1e-03
   # Shrinking loadings helps:
   # 1. prevent overdependence on initial structure
   # 2. convergent solutions to emerge
@@ -1418,7 +1418,7 @@ EGM.explore.core <- function(
 
   # Optimize for best quality solution
   lambda <- optimize(
-    f = hessian_optimize, interval = c(lambda_min, lambda_max),
+    f = hessian_optimize, interval = c(0, 10),
     loadings_vector = loadings_vector, zeros = zeros,
     R = empirical_R, loading_structure = loading_structure,
     rows = communities, n = data_dimensions[1],
