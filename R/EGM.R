@@ -1347,7 +1347,7 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
 
 #' @noRd
 # EGM | Core Exploration ----
-# Updated 17.06.2025
+# Updated 18.06.2025
 EGM.explore.core <- function(
     communities, null_P, cluster, variable_names,
     data_dimensions, empirical_R, empirical_K, opt,
@@ -1394,7 +1394,7 @@ EGM.explore.core <- function(
   } # simplifying loadings helps numerical stability
 
   # Set up loadings vector
-  loadings_vector <- as.vector(loadings) * 1e-05
+  loadings_vector <- as.vector(loadings) * 1e-02
   # Shrinking loadings helps:
   # 1. prevent overdependence on initial structure
   # 2. convergent solutions to emerge
@@ -1416,258 +1416,36 @@ EGM.explore.core <- function(
   # Allow zeros to be estimated
   zeros <- rep(1, loadings_length)
 
-  # Initialize result list
-  result_list <- vector("list", length = iter)
-
-  # Initialize lambda minimum, maximum, and best index
-  absolute_min <- lambda_min <- 0; absolute_max <- lambda_max <- 10
-  best_index <- 1
-
-  # Initialize target eigenvalue
-  target_eigenvalue <- 0.001
-
-  # Initialize condition matrix
-  inf_iter <- rep(Inf, iter)
-  condition_matrix <- cbind(
-    index = inf_iter, lambda = inf_iter,
-    likelihood = inf_iter,
-    min_eigenvalue = -inf_iter,
-    condition_number = inf_iter,
-    message_number = inf_iter
-  )
-
-  # Perform initial grid search
-  output <- grid_search(
+  # Optimize for best quality solution
+  lambda <- optimize(
+    f = hessian_optimize, interval = c(lambda_min, lambda_max),
     loadings_vector = loadings_vector, zeros = zeros,
     R = empirical_R, loading_structure = loading_structure,
     rows = communities, n = data_dimensions[1],
     v = data_dimensions[2], constrained = FALSE,
-    lower_triangle = lower.tri(empirical_R), opt = opt,
-    lambda_min = 0.50, lambda_max = 9.50,
-    length_out = 20
+    lower_triangle = lower.tri(empirical_R), opt = opt
   )
 
-  # Update best result
-  result_list[[i]] <- best_result <- output$result
-
-  # Update condition matrix
-  condition_matrix[1,] <- output$condition
-
-  # Initialize best lambda, distance, and eigenvalue
-  best_lambda <- output$condition[["lambda"]]
-  best_eigenvalue <- output$condition[["min_eigenvalue"]]
-  positive_flag <- best_eigenvalue > 0
-  best_eigenvalue_negative <- swiftelse(positive_flag, -Inf, best_eigenvalue)
-  best_eigenvalue <- swiftelse(positive_flag, best_eigenvalue, Inf)
-  distance <- abs(best_eigenvalue) - target_eigenvalue
-  best_distance <- swiftelse(positive_flag, distance, Inf)
-  best_distance_negative <- swiftelse(positive_flag, -Inf, distance)
-
-  # Set up lambda maximum and minimum
-  lambda_max <- swiftelse(best_eigenvalue > 0, best_lambda, lambda_max)
-  lambda_min <- swiftelse(best_eigenvalue > 0, lambda_min, best_lambda)
-
-  # Initialize best, repeat, and squeeze count
-  best_count <- repeat_count <- squeeze_count <- 0
-
-  # load("~/Desktop/fresh_start.RData")
-
-  # Loop over for up to 'iter'
-  for(i in 2:iter){
-
-    # Optimize for best quality solution
-    lambda <- optimize(
-      f = hessian_optimize, interval = c(lambda_min, lambda_max),
-      loadings_vector = best_result$par, zeros = zeros,
+  # Optimize over loadings
+  result <- try(
+    egm_optimize(
+      loadings_vector = loadings_vector, zeros = zeros,
       R = empirical_R, loading_structure = loading_structure,
       rows = communities, n = data_dimensions[1],
       v = data_dimensions[2], constrained = FALSE,
       lower_triangle = lower.tri(empirical_R), opt = opt,
-      tol = 0.02, maximum = TRUE
-    )
+      lambda = lambda$minimum
+    ), silent = TRUE
+  )
 
-    # Optimize over loadings
-    result_list[[i]] <- result <- try(
-      egm_optimize(
-        loadings_vector = best_result$par, zeros = zeros,
-        R = empirical_R, loading_structure = loading_structure,
-        rows = communities, n = data_dimensions[1],
-        v = data_dimensions[2], constrained = FALSE,
-        lower_triangle = lower.tri(empirical_R), opt = opt,
-        lambda = lambda$maximum
-      ), silent = TRUE
-    )
-
-    # Collect condition
-    current_condition <- c(
-      index = i,
-      lambda = lambda$maximum,
-      likelihood = result$objective,
-      min_eigenvalue = round(min(matrix_eigenvalues(result$hessian)), 3),
-      condition_number = kappa(result$hessian),
-      message_number = as.numeric(gsub(".*\\((\\d+)\\).*", "\\1", result$message))
-    )
-
-    # Set current distance
-    current_distance <- current_condition[["min_eigenvalue"]] - target_eigenvalue
-    current_positive <- current_distance > 0
-
-    # Check for eigenvalue at tolerance
-    if(current_positive && (current_distance < 1e-03)){
-      break
-    }else{ # Make current distance absolute
-      current_distance <- abs(current_distance)
-    }
-
-    # Get lambdas
-    lambda_diff <- abs(current_condition[["lambda"]] - condition_matrix[i-1, "lambda"])
-
-    # Get relative difference
-    if((lambda_diff / abs(condition_matrix[i-1, "lambda"] + 1e-10)) <= 0.001){
-
-      # Increase repeat count
-      repeat_count <- repeat_count + 1
-
-      # Break after 3 repeats (and ensure at least positive minimum eigenvalue)
-      if((repeat_count > 2) & (condition_matrix[best_index, "min_eigenvalue"] > 0)){
-        break
-      }
-
-    }else{ # Reset repeat count
-      repeat_count <- 0
-    }
-
-    # Check if support moved closer
-    if(current_distance < best_distance){
-
-      # Reset best count
-      best_count <- 1
-
-      # Check for whether first iteration OR current eigenvalue is positive
-      if(current_positive){
-
-        # Set best
-        best_lambda <- current_condition[["lambda"]]
-        best_eigenvalue <- current_condition[["min_eigenvalue"]]
-        best_index <- i
-        best_result <- result
-        best_distance <- current_distance
-
-      }else{ # eigenvalue is negative
-
-        # Set best negative
-        best_lambda_negative <- current_condition[["lambda"]]
-        best_eigenvalue_negative <- current_condition[["min_eigenvalue"]]
-        best_distance_negative <- current_distance
-        # Do not update best index or result!
-        # It's closer but on the wrong side
-
-      }
-
-    }else if((current_condition[["min_eigenvalue"]] > 0) && (best_eigenvalue < 0)){
-
-      # Set best
-      best_lambda <- current_condition[["lambda"]]
-      best_eigenvalue <- current_condition[["min_eigenvalue"]]
-      best_index <- i
-      best_result <- result
-      # Do not update best distance (negative distance is still better!)
-
-    }else{ # Increase best count
-      best_count <- best_count + 1
-    }
-
-    # Update condition matrix
-    condition_matrix[i,] <- current_condition
-
-    # Check when eigenvalues went negative and try to reinforce back up
-    if((!current_positive) && (best_eigenvalue > 0)){
-
-      # Switch based on initial position
-      if(best_lambda == current_condition[["lambda"]]){
-
-        # Adjust max down (best lambda is above minimum of zero and positive)
-        lambda_max <- best_lambda
-
-      }else{
-
-        # Adjust around the best lambda
-        lambda_min <- swiftelse(
-          current_condition[["lambda"]] > lambda_min, current_condition[["lambda"]], best_lambda
-        )
-        lambda_max <- swiftelse(
-          current_condition[["lambda"]] < lambda_max, best_lambda, current_condition[["lambda"]]
-        )
-
-      }
-
-    }else if((best_eigenvalue != Inf) && (best_eigenvalue > target_eigenvalue)){ # Above target
-
-      # Increase squeeze count
-      squeeze_count <- squeeze_count + 1
-
-      # Get distance
-      distance <- current_distance - target_eigenvalue
-
-      # Check need to adjust upwards or downwards
-      adjust_up <- (current_condition[["lambda"]] < best_lambda) && (distance > 0)
-
-      # Shrink range
-      lambda_range <- swiftelse(
-        distance > (2 / squeeze_count), distance * squeeze_count, distance / squeeze_count
-      )
-
-      # Adjust around the best lambda (shrink)
-      if(adjust_up){
-        lambda_max <- best_lambda + lambda_range
-        lambda_min <- best_lambda
-      }else{
-        lambda_max <- best_lambda
-        lambda_min <- best_lambda - lambda_range
-      }
-
-    }else{ # Below target
-
-      # Check for best negative lambda
-      lambda_max <- max(best_lambda, best_lambda_negative)
-      lambda_min <- min(best_lambda, best_lambda_negative)
-
-      # Shrink range
-      lambda_range <- abs(best_distance - best_distance_negative)
-
-      # Adjust around center
-      lambda_max <- lambda_max - lambda_range
-      lambda_min <- lambda_min + lambda_range
-
-    }
-
-    # Ensure reasonable bounds
-    lambda_max <- min(absolute_max, lambda_max)
-    lambda_min <- max(absolute_min, lambda_min)
-
-    # Prevent range collapse
-    if((lambda_max - lambda_min) < 0.01){
-      center <- (lambda_max + lambda_min) / 2
-      lambda_max <- min(absolute_max, center + 0.005)
-      lambda_min <- max(absolute_min, center - 0.005)
-    }
-
-  }
-
-  # Get lambda
-  lambda <- select_result(condition_matrix)
-
-  # Unstable, return bad fit
-  if(is.null(lambda)){
+  # Check for bad fit
+  if(is(result, "try-error") || (min(matrix_eigenvalues(result$hessian)) < 0)){
     return(list(fit = bad_fit, loadings = loadings))
   }
 
-  # Get result
-  result <- result_list[[which(condition_matrix[,"lambda"] == lambda)[1]]]
-
   # Format loadings
   loadings <- matrix(
-    best_result$par,
+    result$par,
     nrow = data_dimensions[2], ncol = communities,
     dimnames = dimnames(loading_structure)
   )

@@ -294,7 +294,7 @@ egm_optimize <- function(
     loadings_vector, zeros,
     R, loading_structure, rows, n, v,
     constrained, lower_triangle, lambda, opt,
-    iterations = 1000, ...
+    iterations = 10000, ...
 )
 {
 
@@ -349,7 +349,7 @@ hessian_optimize <- function(
     lambda, loadings_vector, zeros,
     R, loading_structure, rows, n, v,
     constrained, lower_triangle, opt,
-    iterations = 100, ...
+    iterations = 10000, ...
 )
 {
 
@@ -369,12 +369,22 @@ hessian_optimize <- function(
   error_flag <- is(result, "try-error")
 
   # Check for error
-  return(
-    swiftelse(
-      is(result, "try-error"), -1e10,
-      round(min(matrix_eigenvalues(result$hessian)), 3)
+  if(is(result, "try-error")){
+    return(1e12)
+  }else{
+
+    # Obtain hessian eigenvalues
+    hessian_eigenvalue <- min(matrix_eigenvalues(result$hessian))
+
+    # Set hessian penalty
+    hessian_penalty <- abs(hessian_eigenvalue) * swiftelse(
+      hessian_eigenvalue > 0, 1, -10000
+      # make the penalty for a negative eigenvalue severe
     )
-  )
+
+    # Add hessian to objective
+    return(result$objective - hessian_penalty)
+  }
 
 }
 
