@@ -1432,7 +1432,7 @@ EGM.explore.core <- function(
     # Check bad results
     if(is(result, "try-error")){
       return(list(loadings = loadings, fit = bad_fit))
-    }else if(min(matrix_eigenvalues(result$hessian)) > 0){
+    }else if(min(matrix_eigenvalues(result$hessian)) < 1e-03){
       break
     }else{
 
@@ -1446,7 +1446,6 @@ EGM.explore.core <- function(
     }
 
   }
-
 
   # Check for bad result
   if(min(matrix_eigenvalues(result$hessian)) < 0){

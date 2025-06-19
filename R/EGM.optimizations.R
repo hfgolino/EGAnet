@@ -391,15 +391,18 @@ hessian_optimize <- function(
     # Set hessian penalty
     hessian_penalty <- 0
 
+    # Set scaling of penalty based on the objective function
+    scaling <- 10^(digits(result$objective) - 1)
+
     # Update penalty
     if(hessian_eigenvalue < 0){
-      hessian_penalty <- scaled_eigenvalue * 1000
+      hessian_penalty <- scaled_eigenvalue * scaling
     }else if(hessian_eigenvalue > 1){
-      hessian_penalty <- scaled_eigenvalue * 100
+      hessian_penalty <- scaled_eigenvalue * scaling * 0.10
     }else if(hessian_eigenvalue > 0.10){
-      hessian_penalty <- scaled_eigenvalue * 10
+      hessian_penalty <- scaled_eigenvalue * scaling * 0.01
     }else if(hessian_eigenvalue > 0.01){
-      hessian_penalty <- scaled_eigenvalue
+      hessian_penalty <- scaled_eigenvalue * scaling * 0.001
     }
 
     # Add hessian to objective
