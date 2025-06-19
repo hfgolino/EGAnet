@@ -367,7 +367,7 @@ plot.EGM <- function(x, ...)
 nload2pcor <- function(loadings)
 {
 
-  # Compute partial correlation
+  # Compute covariance matrix
   P <- tcrossprod(loadings)
 
   # Compute interdependence
@@ -1371,7 +1371,9 @@ EGM.explore.core <- function(
   # Set simple structure
   for(i in seq_len(communities)){
     loadings[membership != i, i] <- 0
-  } # helps encourage proper convergence to best memberships (even if initial memberships are wrong!)
+  }
+  # helps encourage proper convergence to best memberships
+  # (even if initial memberships are wrong!)
 
   # Set up loadings vector
   loadings_vector <- as.vector(loadings)

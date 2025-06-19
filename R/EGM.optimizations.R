@@ -546,7 +546,10 @@ egm_network_optimize <- function(
         lower = rep(-1, network_length), upper = rep(1, network_length),
         control = list(
           eval.max = 1000, iter.max = 1000,
-          step.min = 1e-08, step.max = 0.01
+          step.min = .Machine$double.eps, step.max = 1,
+          abs.tol = .Machine$double.eps, rel.tol = .Machine$double.eps,
+          x.tol = .Machine$double.eps, xf.tol = .Machine$double.eps,
+          sing.tol = .Machine$double.eps
         )
       )
     )
