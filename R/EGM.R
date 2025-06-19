@@ -1401,7 +1401,8 @@ EGM.explore.core <- function(
   lambda_max <- swiftelse(norm == "l2", 10, 2.718282)
 
   # Set result parameters
-  result <- list(par = loadings_vector)
+  best_result <- list(par = loadings_vector)
+  best_eigenvalue <- Inf; negative_eigenvalue <- -Inf
 
   # Seek out positive eigenvalue
   for(i in seq_len(10)){
@@ -1409,7 +1410,7 @@ EGM.explore.core <- function(
     # Optimize for best quality solution (quick passes)
     lambda <- optimize(
       f = hessian_optimize, interval = c(lambda_min, lambda_max),
-      loadings_vector = result$par, zeros = zeros,
+      loadings_vector = best_result$par, zeros = zeros,
       R = empirical_R, loading_structure = loading_structure,
       rows = communities, n = data_dimensions[1],
       v = data_dimensions[2], constrained = FALSE,
@@ -1420,7 +1421,7 @@ EGM.explore.core <- function(
     # Optimize over loadings
     result <- try(
       egm_optimize(
-        loadings_vector = result$par, zeros = zeros,
+        loadings_vector = best_result$par, zeros = zeros,
         R = empirical_R, loading_structure = loading_structure,
         rows = communities, n = data_dimensions[1],
         v = data_dimensions[2], constrained = FALSE,
@@ -1432,9 +1433,29 @@ EGM.explore.core <- function(
     # Check bad results
     if(is(result, "try-error")){
       return(list(loadings = loadings, fit = bad_fit))
-    }else if(min(matrix_eigenvalues(result$hessian)) < 1e-03){
-      break
-    }else{
+    }
+
+    # Store eigenvalue
+    current_eigenvalue <- min(matrix_eigenvalues(result$hessian))
+
+    # Check for positive eigenvalue
+    if(current_eigenvalue > 0){
+
+      # Check if eigenvalues are better than previous
+      if(current_eigenvalue < best_eigenvalue){
+
+        # Update best eigenvalue
+        best_eigenvalue <- current_eigenvalue
+
+        # Update best results
+        best_result <- result
+
+      }
+
+      # Check if best result is at target
+      if(best_eigenvalue < 0.01){
+        break
+      }
 
       # Shrink lambda range
       interval_range <- (lambda_max - lambda_min) * 0.25
@@ -1443,18 +1464,35 @@ EGM.explore.core <- function(
       lambda_min <- max(lambda_min, lambda$minimum - interval_range)
       lambda_max <- min(lambda_max, lambda$minimum + interval_range)
 
+    }else{ # Negative eigenvalue
+
+      # Check if eigenvalues are better than previous
+      if(current_eigenvalue > negative_eigenvalue){
+
+        # Keep results moving toward positive eigenvalues
+
+        # Update best eigenvalue
+        negative_eigenvalue <- current_eigenvalue
+
+        # Update best results
+        best_result <- result
+
+        # No need to update lambda minimum or maximum
+
+      }
+
     }
 
   }
 
   # Check for bad result
-  if(min(matrix_eigenvalues(result$hessian)) < 0){
+  if(min(matrix_eigenvalues(best_result$hessian)) < 0){
     return(list(loadings = loadings, fit = bad_fit))
   }
 
   # Format loadings
   loadings <- matrix(
-    result$par,
+    best_result$par,
     nrow = data_dimensions[2], ncol = communities,
     dimnames = dimnames(loading_structure)
   )
