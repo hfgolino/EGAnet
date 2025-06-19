@@ -449,7 +449,7 @@ EGM.explore <- function(data, communities, search, optimize.network, norm, opt, 
   data_dimensions <- dim(data)
 
   # Estimate correlations
-  empirical_R <- auto.correlate(data)
+  empirical_R <- auto.correlate(data, ...)
   empirical_K <- solve(empirical_R)
   empirical_P <- -cov2cor(empirical_K)
   diag(empirical_P) <- 0
