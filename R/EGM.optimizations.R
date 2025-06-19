@@ -355,7 +355,7 @@ egm_optimize <- function(
 
 #' @noRd
 # Hessian optimization ----
-# Updated 18.06.2025
+# Updated 19.06.2025
 hessian_optimize <- function(
     lambda, loadings_vector, zeros,
     R, loading_structure, rows, n, v,
@@ -388,11 +388,18 @@ hessian_optimize <- function(
     hessian_eigenvalue <- min(matrix_eigenvalues(result$hessian))
     scaled_eigenvalue <- sqrt(abs(hessian_eigenvalue))
 
-    # Set penalty
+    # Set hessian penalty
+    hessian_penalty <- 0
+
+    # Update penalty
     if(hessian_eigenvalue < 0){
       hessian_penalty <- scaled_eigenvalue * 1000
-    }else{
-      hessian_penalty <- -sqrt(abs(hessian_eigenvalue))
+    }else if(hessian_eigenvalue > 1){
+      hessian_penalty <- scaled_eigenvalue * 100
+    }else if(hessian_eigenvalue > 0.10){
+      hessian_penalty <- scaled_eigenvalue * 10
+    }else if(hessian_eigenvalue > 0.01){
+      hessian_penalty <- scaled_eigenvalue
     }
 
     # Add hessian to objective

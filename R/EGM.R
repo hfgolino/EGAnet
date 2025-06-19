@@ -441,7 +441,7 @@ compute_tefi_adjustment <- function(loadings, correlations)
 
 #' @noRd
 # EGM | Exploratory ----
-# Updated 18.06.2025
+# Updated 19.06.2025
 EGM.explore <- function(data, communities, search, optimize.network, norm, opt, model.select, ...)
 {
 
@@ -480,7 +480,7 @@ EGM.explore <- function(data, communities, search, optimize.network, norm, opt, 
   mod_distance <- (mod_matrix + 1) / 2 # converts to be between -1 and 1
 
   # Obtain partial correlations that are greater than chance
-  null_P <- empirical_P * (absolute_P > (EE - 1.96 * attr(EE, "SE")))
+  null_P <- empirical_P * (absolute_P > (EE - 1.645 * attr(EE, "SE")))
 
   # Collect results
   results <- lapply(
@@ -1331,7 +1331,7 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
 
 #' @noRd
 # EGM | Core Exploration ----
-# Updated 18.06.2025
+# Updated 19.06.2025
 EGM.explore.core <- function(
     communities, null_P, cluster, variable_names,
     data_dimensions, empirical_R, empirical_K,
@@ -1372,12 +1372,13 @@ EGM.explore.core <- function(
 
   }
 
+  # Set simple structure
+  for(i in seq_len(communities)){
+    loadings[membership != i, i] <- 0
+  } # helps encourage proper convergence to best memberships (even if initial memberships are wrong!)
+
   # Set up loadings vector
-  loadings_vector <- as.vector(loadings) * 1e-05
-  # Shrinking loadings helps:
-  # 1. prevent overdependence on initial structure
-  # 2. convergent solutions to emerge
-  # 3. prevent exploding loadings
+  loadings_vector <- as.vector(loadings)
 
   # Set up loading structure
   loading_structure <- matrix(
@@ -1395,49 +1396,25 @@ EGM.explore.core <- function(
   # Allow zeros to be estimated
   zeros <- rep(1, loadings_length)
 
-  # Set interval
-  interval <- switch(norm, "l1" = c(0, 2.718282), "l2" = c(0, 10))
+  # Set lambda minimum and maximum
+  lambda_min <- 0
+  lambda_max <- swiftelse(norm == "l2", 10, 2.718282)
 
-  # Optimize for best quality solution (quick first pass)
-  lambda <- optimize(
-    f = hessian_optimize, interval = interval,
-    loadings_vector = loadings_vector, zeros = zeros,
-    R = empirical_R, loading_structure = loading_structure,
-    rows = communities, n = data_dimensions[1],
-    v = data_dimensions[2], constrained = FALSE,
-    lower_triangle = lower.tri(empirical_R),
-    norm = norm, opt = opt
-  )
+  # Set result parameters
+  result <- list(par = loadings_vector)
 
-  # Optimize over loadings
-  result <- try(
-    egm_optimize(
-      loadings_vector = loadings_vector, zeros = zeros,
-      R = empirical_R, loading_structure = loading_structure,
-      rows = communities, n = data_dimensions[1],
-      v = data_dimensions[2], constrained = FALSE,
-      lower_triangle = lower.tri(empirical_R),
-      norm = norm, opt = opt, lambda = lambda$minimum
-    ), silent = TRUE
-  )
+  # Seek out positive eigenvalue
+  for(i in seq_len(10)){
 
-  # Re-check if negative eigenvalues
-  if(is(result, "try-error")){
-
-    # Return bad result
-    return(list(loadings = loadings, fit = bad_fit))
-
-  }else if(min(matrix_eigenvalues(result$hessian)) < 0){
-
-    # Optimize for best quality solution
+    # Optimize for best quality solution (quick passes)
     lambda <- optimize(
-      f = hessian_optimize, interval = interval,
+      f = hessian_optimize, interval = c(lambda_min, lambda_max),
       loadings_vector = result$par, zeros = zeros,
       R = empirical_R, loading_structure = loading_structure,
       rows = communities, n = data_dimensions[1],
       v = data_dimensions[2], constrained = FALSE,
       lower_triangle = lower.tri(empirical_R),
-      norm = norm, opt = opt
+      norm = norm, opt = opt, tol = 1e-03, iterations = 100
     )
 
     # Optimize over loadings
@@ -1452,10 +1429,27 @@ EGM.explore.core <- function(
       ), silent = TRUE
     )
 
+    # Check bad results
+    if(is(result, "try-error")){
+      return(list(loadings = loadings, fit = bad_fit))
+    }else if(min(matrix_eigenvalues(result$hessian)) > 0){
+      break
+    }else{
+
+      # Shrink lambda range
+      interval_range <- (lambda_max - lambda_min) * 0.25
+
+      # Set minimum and maximum
+      lambda_min <- max(lambda_min, lambda$minimum - interval_range)
+      lambda_max <- min(lambda_max, lambda$minimum + interval_range)
+
+    }
+
   }
 
+
   # Check for bad result
-  if(is(result, "try-error") || (min(matrix_eigenvalues(result$hessian)) < 0)){
+  if(min(matrix_eigenvalues(result$hessian)) < 0){
     return(list(loadings = loadings, fit = bad_fit))
   }
 
