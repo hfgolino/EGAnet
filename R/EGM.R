@@ -161,12 +161,12 @@
 #' @export
 #'
 # Estimate EGM ----
-# Updated 19.06.2025
+# Updated 18.06.2025
 EGM <- function(
     data, EGM.model = c("explore", "EGA", "probability"),
     communities = NULL, structure = NULL, search = FALSE,
     p.in = NULL, p.out = NULL, opt = c("logLik", "SRMR"),
-    model.select = c("logLik", "AIC", "AICc", "BIC", "EBIC", "Q"),
+    model.select = c("logLik", "AIC", "AICc", "AICq", "BIC", "EBIC", "Q"),
     constrain.structure = TRUE, constrain.zeros = TRUE,
     optimize.network = TRUE, norm = c("l1", "l2"),
     verbose = TRUE, ...
@@ -176,7 +176,7 @@ EGM <- function(
   # Set default
   EGM.model <- set_default(EGM.model, "explore", EGM)
   opt <- set_default(opt, "loglik", EGM)
-  model.select <- set_default(model.select, "aic", EGM)
+  model.select <- set_default(model.select, "aicq", EGM)
   norm <- set_default(norm, "l2", EGM)
 
   # Set up EGM type internally
@@ -1338,7 +1338,7 @@ EGM.explore.core <- function(
   # Set bad fit from the git
   bad_fit <- c(
     parameters = NA, loglik = NA, aic = NA, aicc = NA,
-    bic = NA, ebic = NA, q = NA
+    bic = NA, ebic = NA, q = NA, aicq = NA
   )
 
   # Set memberships
@@ -1565,7 +1565,7 @@ EGM.explore.core <- function(
   parameters2 <- 2 * parameters
 
   # Compute AIC and BIC
-  aic <- constant_value$objective
+  aic <- logLik2 + parameters2
   bic <- logLik2 + parameters * log(data_dimensions[1])
 
   # Collect fit indices
@@ -1577,7 +1577,8 @@ EGM.explore.core <- function(
       (data_dimensions[2] - parameters2 - 1),
     bic = bic,
     ebic = bic + 2 * parameters2 * 0.50 * log(data_dimensions[2]),
-    q = -obtain_modularity(P, membership)
+    q = -obtain_modularity(P, membership),
+    aicq = constant_value$objective
   )
 
   # Return result
@@ -1685,7 +1686,7 @@ select_constant <- function(constant, beta_min, membership, P, betas, loading_pa
   )
 
   # Send result
-  return(-2 * loglik + 2 * parameters)
+  return(-2 * loglik + 2 * parameters - obtain_modularity(network, membership) * 6 * log(data_dimensions[2]))
 
 }
 
