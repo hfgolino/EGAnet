@@ -475,17 +475,13 @@ EGM.explore <- function(data, communities, search, optimize.network, norm, opt, 
   # Obtain expected edges
   EE <- expected_edges(absolute_P, data_dimensions)
 
-  # Compute modularity matrix distance
-  mod_matrix <- absolute_P - EE
-  mod_distance <- (mod_matrix + 1) / 2 # converts to be between -1 and 1
-
   # Obtain partial correlations that are greater than chance
-  null_P <- empirical_P * (absolute_P > (EE - 1.645 * attr(EE, "SE")))
+  null_P <- empirical_P * (absolute_P > (EE - 1.96 * attr(EE, "SE")))
 
   # Collect results
   results <- lapply(
     community_sequence, EGM.explore.core, null_P = null_P,
-    cluster = hclust(d = as.dist(1 - mod_distance), method = "average"),
+    cluster = hclust(d = as.dist(1 - ((null_P + 1) / 2)), method = "average"),
     variable_names = variable_names, data_dimensions = data_dimensions,
     empirical_R = empirical_R, empirical_K = empirical_K, norm = norm, opt = opt
   )
