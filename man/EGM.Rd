@@ -13,7 +13,7 @@ EGM(
   p.in = NULL,
   p.out = NULL,
   opt = c("logLik", "SRMR"),
-  model.select = c("logLik", "AIC", "AICc", "AICq", "BIC", "EBIC", "Q"),
+  model.select = c("logLik", "AIC", "AICc", "BIC", "EBIC", "Q"),
   constrain.structure = TRUE,
   constrain.zeros = TRUE,
   optimize.network = TRUE,
