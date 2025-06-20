@@ -61,7 +61,7 @@ srmr <- function(base, comparison)
 
 #' @noRd
 # SRMR cost
-# Updated 09.06.2025
+# Updated 20.06.2025
 srmr_cost <- function(
     loadings_vector, R,
     loading_structure, rows, n, v,
@@ -71,7 +71,7 @@ srmr_cost <- function(
 {
 
   # Set l2 cost
-  l2_cost <- lambda * sum(loadings_vector^2)
+  l2_cost <- 0 # lambda * sum(loadings_vector^2)
 
   # Check for constraint
   if(constrained){
@@ -96,7 +96,7 @@ srmr_cost <- function(
 
 #' @noRd
 # SRMR gradient
-# Updated 09.06.2025
+# Updated 20.06.2025
 srmr_gradient <- function(
     loadings_vector, R,
     loading_structure, rows, n, v,
@@ -106,7 +106,7 @@ srmr_gradient <- function(
 {
 
   # Set l2 gradient
-  l2_gradient <- 2 * lambda * loadings_vector
+  l2_gradient <- 0 # 2 * lambda * loadings_vector
 
   # Check for constraint
   if(constrained){
@@ -181,21 +181,17 @@ log_likelihood <- function(n, p, R, S, type = c("partial", "zero"))
 
 #' @noRd
 # Log-likelihood cost
-# Updated 18.06.2025
+# Updated 20.06.2025
 logLik_cost <- function(
     loadings_vector, R,
     loading_structure, rows, n, v,
     constrained, lower_triangle,
-    norm, lambda, ...
+    lambda, ...
 )
 {
 
   # Set regularization penalty
-  penalty <- lambda * switch(
-    norm,
-    "l1" = sum(abs(loadings_vector)),
-    "l2" = sum(loadings_vector^2)
-  )
+  penalty <- lambda * sum(loadings_vector^2)
 
   # Check for constraint
   if(constrained){
@@ -234,21 +230,17 @@ logLik_cost <- function(
 
 #' @noRd
 # Log-likelihood gradient
-# Updated 18.06.2025
+# Updated 20.06.2025
 logLik_gradient <- function(
     loadings_vector, R,
     loading_structure, rows, n, v,
     constrained, lower_triangle,
-    norm, lambda, ...
+    lambda, ...
 )
 {
 
   # Set regularization penalty
-  penalty <- lambda * switch(
-    norm,
-    "l1" = sign(loadings_vector),
-    "l2" = 2 * loadings_vector
-  )
+  penalty <- lambda * 2 * loadings_vector
 
   # Check for constraint
   if(constrained){
@@ -299,12 +291,12 @@ logLik_gradient <- function(
 
 #' @noRd
 # EGM optimization ----
-# Updated 18.06.2025
+# Updated 20.06.2025
 egm_optimize <- function(
     loadings_vector, zeros,
     R, loading_structure, rows, n, v,
     constrained, lower_triangle, lambda,
-    norm, opt, iterations = 10000, ...
+    opt, iterations = 10000, ...
 )
 {
 
@@ -323,8 +315,7 @@ egm_optimize <- function(
         objective = cost, gradient = gradient,
         R = R, loading_structure = loading_structure,
         rows = rows, n = n, v = v, constrained = constrained,
-        lower_triangle = lower_triangle,
-        norm = norm, lambda = lambda,
+        lower_triangle = lower_triangle, lambda = lambda,
         lower = -bounds, upper = bounds,
         control = list(
           eval.max = iterations, iter.max = iterations,
@@ -342,8 +333,8 @@ egm_optimize <- function(
       par = result$par, fn = cost, gr = gradient,
       R = R, loading_structure = loading_structure,
       rows = rows, n = n, v = v, constrained = constrained,
-      lower_triangle = lower_triangle, norm = norm,
-      lambda = lambda, lower = -bounds, upper = bounds
+      lower_triangle = lower_triangle, lambda = lambda,
+      lower = -bounds, upper = bounds
     )
 
   }
@@ -355,7 +346,7 @@ egm_optimize <- function(
 
 #' @noRd
 # Hessian optimization ----
-# Updated 19.06.2025
+# Updated 20.06.2025
 hessian_optimize <- function(
     lambda, loadings_vector, zeros,
     R, loading_structure, rows, n, v,
@@ -371,7 +362,7 @@ hessian_optimize <- function(
       R = R, loading_structure = loading_structure,
       rows = rows, n = n, v = v, constrained = constrained,
       lower_triangle = lower_triangle,
-      norm = norm, lambda = lambda, opt = opt,
+      lambda = lambda, opt = opt,
       iterations = iterations, ...
     ), silent = TRUE
   )
@@ -407,6 +398,112 @@ hessian_optimize <- function(
 
     # Add hessian to objective
     return(result$objective + hessian_penalty)
+  }
+
+}
+
+#' @noRd
+# Loading optimization ----
+# Updated 20.06.2025
+loadings_optimization <- function(
+    iter = 10, loadings_vector, zeros, R, loading_structure,
+    communities, data_dimensions, lower_triangle, opt
+){
+
+  # Initial best parameters
+  best_result <- list(par = loadings_vector)
+  best_eigenvalue <- Inf; negative_eigenvalue <- -Inf
+
+  # Set lambda minimum and maximum
+  loadings_lambda_min <- 0
+  loadings_lambda_max <- 10
+
+  # Seek out positive eigenvalue
+  for(i in seq_len(10)){
+
+    # Optimize for best quality solution (quick passes)
+    lambda <- optimize(
+      f = hessian_optimize, interval = c(loadings_lambda_min, loadings_lambda_max),
+      loadings_vector = best_result$par, zeros = zeros,
+      R = R, loading_structure = loading_structure,
+      rows = communities, n = data_dimensions[1],
+      v = data_dimensions[2], constrained = FALSE,
+      lower_triangle = lower_triangle,
+      opt = opt, tol = 1e-03, iterations = 100
+    )
+
+    # Optimize over loadings
+    result <- try(
+      egm_optimize(
+        loadings_vector = best_result$par, zeros = zeros,
+        R = R, loading_structure = loading_structure,
+        rows = communities, n = data_dimensions[1],
+        v = data_dimensions[2], constrained = FALSE,
+        lower_triangle = lower_triangle,
+        opt = opt, lambda = lambda$minimum
+      ), silent = TRUE
+    )
+
+    # Check bad results
+    if(is(result, "try-error")){
+      return(NULL)
+    }
+
+    # Store eigenvalue
+    current_eigenvalue <- min(matrix_eigenvalues(result$hessian))
+
+    # Check for positive eigenvalue
+    if(current_eigenvalue > 0){
+
+      # Check if eigenvalues are better than previous
+      if(current_eigenvalue < best_eigenvalue){
+
+        # Update best eigenvalue
+        best_eigenvalue <- current_eigenvalue
+
+        # Update best results
+        best_result <- result
+
+      }
+
+      # Check if best result is at target
+      if(best_eigenvalue < 0.001){
+        break
+      }
+
+      # Shrink lambda range
+      interval_range <- (loadings_lambda_max - loadings_lambda_min) * 0.25
+
+      # Set minimum and maximum
+      loadings_lambda_min <- max(loadings_lambda_min, lambda$minimum - interval_range)
+      loadings_lambda_max <- min(loadings_lambda_max, lambda$minimum + interval_range)
+
+    }else{ # Negative eigenvalue
+
+      # Check if eigenvalues are better than previous
+      if(current_eigenvalue > negative_eigenvalue){
+
+        # Keep results moving toward positive eigenvalues
+
+        # Update best eigenvalue
+        negative_eigenvalue <- current_eigenvalue
+
+        # Update best results
+        best_result <- result
+
+        # No need to update lambda minimum or maximum
+
+      }
+
+    }
+
+  }
+
+  # Check for bad result
+  if(min(matrix_eigenvalues(best_result$hessian)) < 0){
+    return(NULL)
+  }else{
+    return(best_result$par)
   }
 
 }

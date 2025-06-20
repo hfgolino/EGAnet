@@ -90,27 +90,6 @@
 #' Defaults to \code{TRUE} which ensures that zero networks loadings are retained.
 #' Set to \code{FALSE} to freely estimate each loading similar to exploratory factor analysis
 #'
-#' @param optimize.network Boolean (length = 1).
-#' Whether the model-implied network should be optimized toward the
-#' model-implied zero-order correlation matrix.
-#' Defaults to \code{TRUE}.
-#'
-#' Only applies to `EGM.model = "explore"`
-#'
-#' @param norm Character vector (length = 1).
-#' Regularization norm to apply to loadings during estimation.
-#' Some regularization is recommended as it tends to beneficial
-#' for the numerical stability of solution.
-#' Available options:
-#'
-#' \itemize{
-#'
-#' \item \code{"l1"} --- \eqn{\ell_1} norm or \code{sum(abs(loadings))}
-#'
-#' \item \code{"l2"} (default) --- \eqn{\ell_2} norm or \code{sum(loadings^2)}
-#'
-#' }
-#'
 #' @param verbose Boolean (length = 1).
 #' Should progress be displayed?
 #' Defaults to \code{TRUE}.
@@ -161,14 +140,13 @@
 #' @export
 #'
 # Estimate EGM ----
-# Updated 18.06.2025
+# Updated 20.06.2025
 EGM <- function(
     data, EGM.model = c("explore", "EGA", "probability"),
     communities = NULL, structure = NULL, search = FALSE,
     p.in = NULL, p.out = NULL, opt = c("logLik", "SRMR"),
     model.select = c("logLik", "AIC", "AICc", "AICq", "BIC", "EBIC", "Q"),
     constrain.structure = TRUE, constrain.zeros = TRUE,
-    optimize.network = TRUE, norm = c("l1", "l2"),
     verbose = TRUE, ...
 )
 {
@@ -177,7 +155,6 @@ EGM <- function(
   EGM.model <- set_default(EGM.model, "explore", EGM)
   opt <- set_default(opt, "loglik", EGM)
   model.select <- set_default(model.select, "aicq", EGM)
-  norm <- set_default(norm, "l2", EGM)
 
   # Set up EGM type internally
   EGM.type <- switch(
@@ -206,7 +183,7 @@ EGM <- function(
   return(
     switch(
       EGM.type,
-      "explore" = EGM.explore(data, communities, search, optimize.network, norm, opt, model.select, ...),
+      "explore" = EGM.explore(data, communities, search, opt, model.select, ...),
       "ega" = EGM.EGA(data, structure, opt, constrain.structure, constrain.zeros, ...),
       "ega.search" = EGM.EGA.search(data, communities, structure, opt, constrain.structure, constrain.zeros, verbose, ...),
       "probability" = EGM.probability(data, communities, structure, p.in, p.out, opt, constrain.structure, constrain.zeros, ...),
@@ -441,8 +418,8 @@ compute_tefi_adjustment <- function(loadings, correlations)
 
 #' @noRd
 # EGM | Exploratory ----
-# Updated 19.06.2025
-EGM.explore <- function(data, communities, search, optimize.network, norm, opt, model.select, ...)
+# Updated 20.06.2025
+EGM.explore <- function(data, communities, search, opt, model.select, ...)
 {
 
   # Obtain data dimensions
@@ -453,7 +430,6 @@ EGM.explore <- function(data, communities, search, optimize.network, norm, opt, 
   empirical_K <- solve(empirical_R)
   empirical_P <- -cov2cor(empirical_K)
   diag(empirical_P) <- 0
-  absolute_P <- abs(empirical_P)
 
   # Obtain variable names from the correlations
   variable_names <- dimnames(empirical_R)[[2]]
@@ -473,17 +449,17 @@ EGM.explore <- function(data, communities, search, optimize.network, norm, opt, 
   )
 
   # Obtain expected edges
-  EE <- expected_edges(absolute_P, data_dimensions)
+  EE <- expected_edges(empirical_P, data_dimensions)
 
   # Obtain partial correlations that are greater than chance
-  null_P <- empirical_P * (absolute_P > (EE - 1.96 * attr(EE, "SE")))
+  null_P <- empirical_P * (abs(empirical_P) > (EE - 1.96 * attr(EE, "SE")))
 
   # Collect results
   results <- lapply(
     community_sequence, EGM.explore.core, null_P = null_P,
-    cluster = hclust(d = as.dist(1 - ((null_P + 1) / 2)), method = "average"),
+    cluster = hclust(d = as.dist(1 - abs(null_P)), method = "average"),
     variable_names = variable_names, data_dimensions = data_dimensions,
-    empirical_R = empirical_R, empirical_K = empirical_K, norm = norm, opt = opt
+    empirical_R = empirical_R, empirical_K = empirical_K, opt = opt
   )
 
   # Obtain fits
@@ -512,37 +488,8 @@ EGM.explore <- function(data, communities, search, optimize.network, norm, opt, 
   optimized_correlations <- cor(optimized_scores, use = "pairwise")
 
   # Obtain model-implied correlations
-  optimized_R <- nload2cor(optimal_results$loadings)
+  optimized_R <- pcor2cor(optimal_results$network)
   optimized_P <- cor2pcor(optimized_R)
-
-  # Obtain network
-  if(optimize.network){
-
-    # Format for optimization
-    lower_triangle <- lower.tri(optimal_results$network)
-    network_vector <- optimal_results$network[lower_triangle]
-    zeros <- network_vector != 0
-    network_vector <- network_vector[zeros]
-    network_length <- length(network_vector)
-
-    # Optimize over non-zero parameters
-    result <- egm_network_optimize(
-      network_vector = network_vector,
-      network_length = network_length,
-      R = optimized_R, n = data_dimensions[1],
-      v = data_dimensions[2], lower_triangle = lower_triangle,
-      zeros = zeros,  opt = "srmr" # likely best to keep as SRMR?
-    )
-
-    # Initialize network
-    optimized_network <- matrix(0, nrow = data_dimensions[2], ncol = data_dimensions[2])
-    optimized_network[lower_triangle][zeros] <- result$par
-    optimal_results$network[] <- optimized_network + t(optimized_network)
-
-    # Set beta-min to "optimized"
-    beta.min <- "optimized"
-
-  }
 
   # Set up EGA
   ega_list <- list(
@@ -558,7 +505,7 @@ EGM.explore <- function(data, communities, search, optimize.network, norm, opt, 
   # Attach methods to network
   attr(ega_list$network, which = "methods") <- list(
     model = "egm", communities = dim(optimal_results$loadings)[2],
-    beta.min = beta.min
+    beta.min = "optimized"
   )
 
   # Attach class to memberships
@@ -1330,8 +1277,7 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
 # Updated 19.06.2025
 EGM.explore.core <- function(
     communities, null_P, cluster, variable_names,
-    data_dimensions, empirical_R, empirical_K,
-    norm, opt, ...
+    data_dimensions, empirical_R, empirical_K, opt, ...
 )
 {
 
@@ -1368,13 +1314,6 @@ EGM.explore.core <- function(
 
   }
 
-  # Set simple structure
-  for(i in seq_len(communities)){
-    loadings[membership != i, i] <- 0
-  }
-  # helps encourage proper convergence to best memberships
-  # (even if initial memberships are wrong!)
-
   # Set up loadings vector
   loadings_vector <- as.vector(loadings)
 
@@ -1388,121 +1327,30 @@ EGM.explore.core <- function(
   dimensions <- dim(loadings)
   dimension_names <- dimnames(loadings)
 
-  # Get length and set zeros
-  loadings_length <- length(loadings_vector)
-
   # Allow zeros to be estimated
-  zeros <- rep(1, loadings_length)
+  zeros <- rep(1, length(loadings_vector))
 
-  # Set lambda minimum and maximum
-  lambda_min <- 0
-  lambda_max <- swiftelse(norm == "l2", 10, 2.718282)
+  # Set lower triangle
+  lower_triangle <- lower.tri(empirical_R)
 
-  # Set result parameters
-  best_result <- list(par = loadings_vector)
-  best_eigenvalue <- Inf; negative_eigenvalue <- -Inf
-
-  # Seek out positive eigenvalue
-  for(i in seq_len(10)){
-
-    # Optimize for best quality solution (quick passes)
-    lambda <- optimize(
-      f = hessian_optimize, interval = c(lambda_min, lambda_max),
-      loadings_vector = best_result$par, zeros = zeros,
-      R = empirical_R, loading_structure = loading_structure,
-      rows = communities, n = data_dimensions[1],
-      v = data_dimensions[2], constrained = FALSE,
-      lower_triangle = lower.tri(empirical_R),
-      norm = norm, opt = opt, tol = 1e-03, iterations = 100
-    )
-
-    # Optimize over loadings
-    result <- try(
-      egm_optimize(
-        loadings_vector = best_result$par, zeros = zeros,
-        R = empirical_R, loading_structure = loading_structure,
-        rows = communities, n = data_dimensions[1],
-        v = data_dimensions[2], constrained = FALSE,
-        lower_triangle = lower.tri(empirical_R),
-        norm = norm, opt = opt, lambda = lambda$minimum
-      ), silent = TRUE
-    )
-
-    # Check bad results
-    if(is(result, "try-error")){
-      return(list(loadings = loadings, fit = bad_fit))
-    }
-
-    # Store eigenvalue
-    current_eigenvalue <- min(matrix_eigenvalues(result$hessian))
-
-    # Check for positive eigenvalue
-    if(current_eigenvalue > 0){
-
-      # Check if eigenvalues are better than previous
-      if(current_eigenvalue < best_eigenvalue){
-
-        # Update best eigenvalue
-        best_eigenvalue <- current_eigenvalue
-
-        # Update best results
-        best_result <- result
-
-      }
-
-      # Check if best result is at target
-      if(best_eigenvalue < 0.01){
-        break
-      }
-
-      # Shrink lambda range
-      interval_range <- (lambda_max - lambda_min) * 0.25
-
-      # Set minimum and maximum
-      lambda_min <- max(lambda_min, lambda$minimum - interval_range)
-      lambda_max <- min(lambda_max, lambda$minimum + interval_range)
-
-    }else{ # Negative eigenvalue
-
-      # Check if eigenvalues are better than previous
-      if(current_eigenvalue > negative_eigenvalue){
-
-        # Keep results moving toward positive eigenvalues
-
-        # Update best eigenvalue
-        negative_eigenvalue <- current_eigenvalue
-
-        # Update best results
-        best_result <- result
-
-        # No need to update lambda minimum or maximum
-
-      }
-
-    }
-
-  }
+  # Optimize for initial loadings
+  initial_loadings <- loadings_optimization(
+    iter = 10, loadings_vector = loadings_vector, zeros = zeros,
+    R = empirical_R, loading_structure = loading_structure,
+    communities = communities, data_dimensions = data_dimensions,
+    lower_triangle = lower_triangle, opt = opt
+  )
 
   # Check for bad result
-  if(min(matrix_eigenvalues(best_result$hessian)) < 0){
+  if(is.null(initial_loadings)){
     return(list(loadings = loadings, fit = bad_fit))
   }
 
   # Format loadings
   loadings <- matrix(
-    best_result$par,
-    nrow = data_dimensions[2], ncol = communities,
-    dimnames = dimnames(loading_structure)
+    initial_loadings, nrow = data_dimensions[2],
+    ncol = communities, dimnames = dimension_names
   )
-
-  # Set small loadings to zero
-  if(norm == "l1"){
-    loadings[abs(loadings) < 1e-03] <- 0
-  }
-
-  # Set lower triangle
-  lower_triangle <- lower.tri(empirical_R)
-  total_parameters <- sum(lower_triangle)
 
   # Obtain model-implied partial correlations
   P <- nload2pcor(loadings)
@@ -1522,39 +1370,72 @@ EGM.explore.core <- function(
     return(list(fit = bad_fit, loadings = loadings))
   }
 
-  # Compute betas (use absolute)
-  inverse_variances <- sqrt(diag(empirical_K))
-  betas <- abs(P * outer(inverse_variances, inverse_variances, FUN = "/"))
-  betas <- (betas + t(betas)) / 2 # make symmetric
-  beta_min <- sqrt(log(data_dimensions[2]) / data_dimensions[1])
-  membership_matrix <- outer(membership, membership, "==")
+  # Set absolute P
+  absolute_P <- abs(P)
 
-  # Set up maximum to be at least minimally connected to assigned community
-  community_range <- swiftelse(
-    communities == 1,
-    range(apply(betas, 2, function(x){min(x[x != 0])})),
-    c(
-      0,
-      min(
-        min(apply(betas * !membership_matrix, 2, function(x){max(x[x != 0])})),
-        min(apply(betas * membership_matrix, 2, function(x){min(x[x != 0])}))
-      )
+  # Obtain number of loading parameters
+  loading_parameters <- sum(loadings != 0)
+
+  # Set thresholds
+  thresholds <- sort(unique((absolute_P[lower_triangle]))) - 1e-08
+
+  # Set maximum bound thresholds
+  ## Divert based on dimensionality
+  if(communities == 1){
+
+    # Set bound based on range of minimum assigned edges
+    bound <- range(apply(absolute_P, 2, function(x){min(x[x != 0])}))
+
+    # Use range for bounds
+    thresholds <- thresholds[thresholds >= bound[1] & thresholds <= bound[2]]
+
+  }else{
+
+    # Obtain membership matrix
+    membership_matrix <- outer(membership, membership, FUN = "==")
+
+    # Set bound
+    bound <- max(
+      ## Minimal maximum of non-assigned edges
+      min(apply(absolute_P * !membership_matrix, 2, function(x){max(x[x != 0])})),
+      ## Minimal minimum of assigned edges
+      min(apply(absolute_P * membership_matrix, 2, function(x){min(x[x != 0])}))
     )
-  )
 
-  # Optimize modularity
-  constant_value <- optimize(
-    select_constant, interval = community_range / beta_min,
-    beta_min = beta_min, membership = membership,
-    P = P, betas = betas, maximum = FALSE,
-    loading_parameters = sum(loadings != 0),
-    lower_triangle = lower_triangle,
-    data_dimensions = data_dimensions,
+    # Use max for bounds
+    thresholds <- thresholds[thresholds <= bound]
+
+  }
+
+  # Get fits for thresholds
+  threshold_fit <- nvapply(
+    thresholds, select_threshold, P = P, absolute_P = absolute_P,
+    membership = membership, loading_parameters = loading_parameters,
+    lower_triangle = lower_triangle, data_dimensions = data_dimensions,
     empirical_R = empirical_R
   )
 
-  # Update P based on maximized modularity
-  P <- P * (betas > (constant_value$minimum * beta_min))
+  # Update P based on threshold fits
+  minimum_index <- which.min(threshold_fit)
+  P <- P * (absolute_P > thresholds[[minimum_index]])
+
+  # Get implied correlations
+  implied_R <- pcor2cor(P)
+
+  # Update loadings
+  loadings <- egm_optimize(
+    loadings_vector = initial_loadings, zeros = zeros,
+    R = implied_R, loading_structure = loading_structure,
+    rows = communities, n = data_dimensions[1], v = data_dimensions[2],
+    constrained = FALSE, lower_triangle = lower_triangle, lambda = 1, # not used
+    opt = "srmr", iterations = 10000
+  )
+
+  # Format loadings
+  loadings <- matrix(
+    loadings$par, nrow = data_dimensions[2],
+    ncol = communities, dimnames = dimension_names
+  )
 
   # Compute log-likelihood
   logLik <- silent_call(
@@ -1587,7 +1468,7 @@ EGM.explore.core <- function(
     bic = bic,
     ebic = bic + 2 * parameters2 * 0.50 * log(data_dimensions[2]),
     q = -obtain_modularity(P, membership),
-    aicq = constant_value$objective
+    aicq = threshold_fit[[minimum_index]]
   )
 
   # Return result
@@ -1597,7 +1478,7 @@ EGM.explore.core <- function(
 
 #' @noRd
 # Expected edge values ----
-# Updated 13.06.2025
+# Updated 20.06.2025
 expected_edges <- function(network, data_dimensions = NULL)
 {
 
@@ -1611,7 +1492,9 @@ expected_edges <- function(network, data_dimensions = NULL)
   if(!is.null(data_dimensions)){
 
     # Delta method for the standard error
-    # Expects that input into 'network' is absolute values
+
+    # Ensure absolute
+    network <- abs(network)
 
     # Convert network to Fisher's z
     z_network <- r2z(network)
@@ -1662,6 +1545,8 @@ obtain_modularity <- function(network, membership = NULL)
   # Ensure absolute
   network <- abs(network)
 
+
+
   # Set modularity value
   return(
     swiftelse(
@@ -1677,13 +1562,16 @@ obtain_modularity <- function(network, membership = NULL)
 }
 
 #' @noRd
-# Select constant for beta-min criterion ----
-# Updated 19.06.2025
-select_constant <- function(constant, beta_min, membership, P, betas, loading_parameters, lower_triangle, data_dimensions, empirical_R)
+# Select threshold for network ----
+# Updated 20.06.2025
+select_threshold <- function(
+    threshold, P, absolute_P, membership, loading_parameters,
+    lower_triangle, data_dimensions, empirical_R
+)
 {
 
   # Set network matrix
-  network <- P * (betas > (constant * beta_min))
+  network <- P * (absolute_P > threshold)
 
   # Set parameters
   parameters <- sum(network[lower_triangle] != 0) + loading_parameters
