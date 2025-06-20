@@ -176,7 +176,7 @@ EGM <- function(
   data <- EGM_errors(
     data, EGM.type, communities, search, p.in, p.out,
     constrain.structure, constrain.zeros,
-    optimize.network, verbose, ...
+    verbose, ...
   )
 
   # Switch and return results based on type
@@ -195,11 +195,11 @@ EGM <- function(
 
 #' @noRd
 # EGM Errors ----
-# Updated 18.06.2025
+# Updated 20.06.2025
 EGM_errors <- function(
     data, EGM.type, communities, search, p.in, p.out,
     constrain.structure, constrain.zeros,
-    optimize.network, verbose, ...
+    verbose, ...
 )
 {
 
@@ -255,13 +255,7 @@ EGM_errors <- function(
   typeof_error(constrain.zeros, "logical", "EGM")
 
   # Check for EGM type
-  if(EGM.type == "explore"){
-
-    # 'optimize.network' errors
-    length_error(optimize.network, 1, "EGM")
-    typeof_error(optimize.network, "logical", "EGM")
-
-  }else if(EGM.type == "search"){
+  if(EGM.type == "search"){
 
     # 'verbose' errors
     length_error(verbose, 1, "EGM")

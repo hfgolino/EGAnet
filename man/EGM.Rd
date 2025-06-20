@@ -16,8 +16,6 @@ EGM(
   model.select = c("logLik", "AIC", "AICc", "AICq", "BIC", "EBIC", "Q"),
   constrain.structure = TRUE,
   constrain.zeros = TRUE,
-  optimize.network = TRUE,
-  norm = c("l1", "l2"),
   verbose = TRUE,
   ...
 )
@@ -110,27 +108,6 @@ Whether zeros in the estimated network loading matrix should
 be retained when optimizing the network loadings.
 Defaults to \code{TRUE} which ensures that zero networks loadings are retained.
 Set to \code{FALSE} to freely estimate each loading similar to exploratory factor analysis}
-
-\item{optimize.network}{Boolean (length = 1).
-Whether the model-implied network should be optimized toward the
-model-implied zero-order correlation matrix.
-Defaults to \code{TRUE}.
-
-Only applies to `EGM.model = "explore"`}
-
-\item{norm}{Character vector (length = 1).
-Regularization norm to apply to loadings during estimation.
-Some regularization is recommended as it tends to beneficial
-for the numerical stability of solution.
-Available options:
-
-\itemize{
-
-\item \code{"l1"} --- \eqn{\ell_1} norm or \code{sum(abs(loadings))}
-
-\item \code{"l2"} (default) --- \eqn{\ell_2} norm or \code{sum(loadings^2)}
-
-}}
 
 \item{verbose}{Boolean (length = 1).
 Should progress be displayed?
