@@ -1527,12 +1527,19 @@ EGM.explore.core <- function(
   betas <- abs(P * outer(inverse_variances, inverse_variances, FUN = "/"))
   betas <- (betas + t(betas)) / 2 # make symmetric
   beta_min <- sqrt(log(data_dimensions[2]) / data_dimensions[1])
+  membership_matrix <- outer(membership, membership, "==")
 
   # Set up maximum to be at least minimally connected to assigned community
   community_range <- swiftelse(
     communities == 1,
     range(apply(betas, 2, function(x){min(x[x != 0])})),
-    c(0, min(apply(betas * outer(membership, membership, "=="), 2, function(x){min(x[x != 0])})))
+    c(
+      0,
+      min(
+        min(apply(betas * !membership_matrix, 2, function(x){max(x[x != 0])})),
+        min(apply(betas * membership_matrix, 2, function(x){min(x[x != 0])}))
+      )
+    )
   )
 
   # Optimize modularity
@@ -1688,7 +1695,7 @@ select_constant <- function(constant, beta_min, membership, P, betas, loading_pa
   )
 
   # Send result
-  return(-2 * loglik + 2 * parameters - obtain_modularity(network, membership) * 6 * log(data_dimensions[2]))
+  return(-2 * loglik + 2 * parameters - obtain_modularity(network, membership) * 6 * log(data_dimensions[1]))
 
 }
 
