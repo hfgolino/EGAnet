@@ -483,15 +483,15 @@ EGM.explore <- function(data, communities, search, opt, model.select, ...)
   )
 
   # Obtain fits
-  fits <- do.call(rbind, lapply(results, function(x){x$fit}))
+  fits <- do.call(rbind.data.frame, lapply(results, function(x){x$fit}))
 
   # Get converged fits
-  converged <- fits[,"converged"] == 0
-  fits <- fits[converged,, drop = FALSE] # ensure matrix
+  converged <- grepl("0", fits$converged)
+  good_fits <- fits[converged,, drop = FALSE] # ensure matrix
   results <- results[converged]
 
   # Extract optimal results
-  optimal_results <- results[[which.min(fits[,model.select])]]
+  optimal_results <- results[[which.min(good_fits[[model.select]])]]
 
   # Obtain structure
   structure <- structure(optimal_results$structure, names = variable_names)
@@ -1307,10 +1307,10 @@ EGM.explore.core <- function(
 {
 
   # Set bad fit from the git
-  bad_fit <- c(
+  bad_fit <- data.frame(
     parameters = NA, loglik = NA, aic = NA, aicc = NA,
     bic = NA, q = NA, aicq = NA, min_eigenvalue = -Inf,
-    converged = 1
+    converged = "1: error in loading estimation"
   )
 
   # Set memberships
@@ -1340,6 +1340,11 @@ EGM.explore.core <- function(
 
     }
 
+  }
+
+  # Simplify loadings
+  for(i in seq_len(communities)){
+    loadings[membership != i, i] <- 0
   }
 
   # Set up loadings vector
@@ -1386,17 +1391,28 @@ EGM.explore.core <- function(
   # Obtain solution
   membership <- max.col(abs(loadings))
 
-  # Check for quality (return bad result)
-  if(
-    !(
-      unique_length(membership) == dimensions[2] & # ensure meaningful
-      all(fast_table(membership) > 1) & # throw out singletons
-      all(!is.na(P)) # not positive definite
-    )
-  ){
+  # Get quality flags
+  negative_flag <- min_eigenvalue < 0
+  meaningful_flag <- unique_length(membership) != dimensions[2]
+  singleton_flag <- any(fast_table(membership) < 2)
+  PD_flag <- anyNA(P)
+
+  # Check overall quality
+  if(negative_flag || meaningful_flag || singleton_flag || PD_flag){
+
+    # Check down reasons
+    if(negative_flag){
+      converged <- "1: negative hessian eigenvalue"
+    }else if(meaningful_flag){
+      converged <- "1: unique membership < communities"
+    }else if(singleton_flag){
+      converged <- "1: singleton communities"
+    }else if(PD_flag){
+      converged <- "1: not positive definite"
+    }
 
     # Updated bad fit
-    bad_fit[c("min_eigenvalue", "converged")] <- c(min_eigenvalue, min_eigenvalue < 0)
+    bad_fit[,c("min_eigenvalue", "converged")] <- c(min_eigenvalue, converged)
 
     # Return bad result
     return(list(loadings = loadings, fit = bad_fit))
@@ -1488,7 +1504,7 @@ EGM.explore.core <- function(
   aic <- logLik2 + parameters2
 
   # Collect fit indices
-  fit <- c(
+  fit <- data.frame(
     parameters = parameters,
     loglik = logLik,
     aic = aic,
@@ -1498,7 +1514,7 @@ EGM.explore.core <- function(
     q = -obtain_modularity(P, membership),
     aicq = threshold_fit[[minimum_index]],
     min_eigenvalue = min_eigenvalue,
-    converged = min_eigenvalue < 0
+    converged = "0: successful"
   )
 
   # Return result
