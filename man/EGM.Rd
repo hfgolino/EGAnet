@@ -13,7 +13,7 @@ EGM(
   p.in = NULL,
   p.out = NULL,
   opt = c("logLik", "SRMR"),
-  model.select = c("logLik", "AIC", "AICc", "AICq", "BIC", "EBIC", "Q"),
+  model.select = c("logLik", "AIC", "AICc", "AICq", "BIC", "Q"),
   constrain.structure = TRUE,
   constrain.zeros = TRUE,
   verbose = TRUE,
@@ -92,9 +92,36 @@ standardized root mean residual (\code{"SRMR"})}
 
 \item{model.select}{Character vector (length = 1).
 Criterion to select the best fitting model.
-Defaults to \code{"AIC"}.
+Defaults to \code{"AICq"}.
+Available options:
 
-\emph{Note: BIC tends to overly penalize models with more communities, use with caution}}
+\itemize{
+
+\item \code{"logLik"} --- log-likelihood; not recommended as more communities
+will \emph{almost} always have better likelihood; \eqn{\log{(\hat{L})}}
+
+\item \code{"AIC"} --- Akaike's information criterion;
+\eqn{-2\log{(\hat{L})} \cdot 2k} where
+\emph{k} is the number of parameters (non-zero edges plus non-loadings)
+
+\item \code{"AICc"} --- Corrected AIC (adjusts for sample size);
+\eqn{AIC + \frac{2k^2 + 2k}{n - k - 1}} where \emph{n} is sample size
+
+\item \code{"AICq"} (default)--- Modularity adjusted AIC;
+\eqn{AIC + 6Q\log{n}} where
+\emph{Q} is modularity (see below). The constant of 6 adjust modularity
+such that it contributes roughly 4-6 AIC for each increase in 0.10 modularity
+across most usual sample sizes (between 500-10000)
+
+\item \code{"BIC"} --- Bayesian information criterion;
+\eqn{k\log{n} - 2\log{(\hat{L})}}
+
+\item \code{"Q"} --- Modularity;
+\eqn{\frac{1}{2m} \sum_{ij} (A_{ij} - \frac{k_i k_j}{2m}) \delta(c_i, c_j)} where
+\emph{m} is the sum total edges of the network, \emph{A}, \emph{k} is the
+node strength, and \emph{c} is the membership of nodes \emph{i} and \emph{j}
+
+}}
 
 \item{constrain.structure}{Boolean (length = 1).
 Whether memberships of the communities should

@@ -73,9 +73,36 @@
 #'
 #' @param model.select Character vector (length = 1).
 #' Criterion to select the best fitting model.
-#' Defaults to \code{"AIC"}.
+#' Defaults to \code{"AICq"}.
+#' Available options:
 #'
-#' \emph{Note: BIC tends to overly penalize models with more communities, use with caution}
+#' \itemize{
+#'
+#' \item \code{"logLik"} --- log-likelihood; not recommended as more communities
+#' will \emph{almost} always have better likelihood; \eqn{\log{(\hat{L})}}
+#'
+#' \item \code{"AIC"} --- Akaike's information criterion;
+#' \eqn{-2\log{(\hat{L})} \cdot 2k} where
+#' \emph{k} is the number of parameters (non-zero edges plus non-loadings)
+#'
+#' \item \code{"AICc"} --- Corrected AIC (adjusts for sample size);
+#' \eqn{AIC + \frac{2k^2 + 2k}{n - k - 1}} where \emph{n} is sample size
+#'
+#' \item \code{"AICq"} (default)--- Modularity adjusted AIC;
+#' \eqn{AIC + 6Q\log{n}} where
+#' \emph{Q} is modularity (see below). The constant of 6 adjust modularity
+#' such that it contributes roughly 4-6 AIC for each increase in 0.10 modularity
+#' across most usual sample sizes (between 500-10000)
+#'
+#' \item \code{"BIC"} --- Bayesian information criterion;
+#' \eqn{k\log{n} - 2\log{(\hat{L})}}
+#'
+#' \item \code{"Q"} --- Modularity;
+#' \eqn{\frac{1}{2m} \sum_{ij} (A_{ij} - \frac{k_i k_j}{2m}) \delta(c_i, c_j)} where
+#' \emph{m} is the sum total edges of the network, \emph{A}, \emph{k} is the
+#' node strength, and \emph{c} is the membership of nodes \emph{i} and \emph{j}
+#'
+#' }
 #'
 #' @param constrain.structure Boolean (length = 1).
 #' Whether memberships of the communities should
@@ -140,12 +167,12 @@
 #' @export
 #'
 # Estimate EGM ----
-# Updated 20.06.2025
+# Updated 21.06.2025
 EGM <- function(
     data, EGM.model = c("explore", "EGA", "probability"),
     communities = NULL, structure = NULL, search = FALSE,
     p.in = NULL, p.out = NULL, opt = c("logLik", "SRMR"),
-    model.select = c("logLik", "AIC", "AICc", "AICq", "BIC", "EBIC", "Q"),
+    model.select = c("logLik", "AIC", "AICc", "AICq", "BIC", "Q"),
     constrain.structure = TRUE, constrain.zeros = TRUE,
     verbose = TRUE, ...
 )
@@ -421,8 +448,7 @@ EGM.explore <- function(data, communities, search, opt, model.select, ...)
 
   # Estimate correlations
   empirical_R <- auto.correlate(data, ...)
-  empirical_K <- solve(empirical_R)
-  empirical_P <- -cov2cor(empirical_K)
+  empirical_P <- cor2pcor(empirical_R)
   diag(empirical_P) <- 0
 
   # Obtain variable names from the correlations
@@ -453,11 +479,16 @@ EGM.explore <- function(data, communities, search, opt, model.select, ...)
     community_sequence, EGM.explore.core, null_P = null_P,
     cluster = hclust(d = as.dist(1 - abs(null_P)), method = "average"),
     variable_names = variable_names, data_dimensions = data_dimensions,
-    empirical_R = empirical_R, empirical_K = empirical_K, opt = opt
+    empirical_R = empirical_R, opt = opt
   )
 
   # Obtain fits
   fits <- do.call(rbind, lapply(results, function(x){x$fit}))
+
+  # Get converged fits
+  converged <- fits[,"converged"] == 0
+  fits <- fits[converged,, drop = FALSE] # ensure matrix
+  results <- results[converged]
 
   # Extract optimal results
   optimal_results <- results[[which.min(fits[,model.select])]]
@@ -1268,17 +1299,18 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
 
 #' @noRd
 # EGM | Core Exploration ----
-# Updated 19.06.2025
+# Updated 21.06.2025
 EGM.explore.core <- function(
     communities, null_P, cluster, variable_names,
-    data_dimensions, empirical_R, empirical_K, opt, ...
+    data_dimensions, empirical_R, opt, ...
 )
 {
 
   # Set bad fit from the git
   bad_fit <- c(
     parameters = NA, loglik = NA, aic = NA, aicc = NA,
-    bic = NA, ebic = NA, q = NA, aicq = NA
+    bic = NA, q = NA, aicq = NA, min_eigenvalue = -Inf,
+    converged = 1
   )
 
   # Set memberships
@@ -1298,11 +1330,13 @@ EGM.explore.core <- function(
     # Loop over
     for(i in which(singletons)){
 
-      # Get index
+      # Set index
       index <- membership == i
 
       # Set singleton to max of overall connections (allow drop to vector)
-      loadings[index, i] <- max(null_P[index,])
+      for(i in which(singletons)){
+        loadings[index, i] <- max(null_P[index,])
+      }
 
     }
 
@@ -1311,15 +1345,15 @@ EGM.explore.core <- function(
   # Set up loadings vector
   loadings_vector <- as.vector(loadings)
 
-  # Set up loading structure
-  loading_structure <- matrix(
-    TRUE, nrow = data_dimensions[2], ncol = communities,
-    dimnames = list(variable_names, format_integer(seq_len(communities), 0))
-  )
-
   # Get loading dimensions
   dimensions <- dim(loadings)
   dimension_names <- dimnames(loadings)
+
+  # Set up loading structure
+  loading_structure <- matrix(
+    TRUE, nrow = dimensions[1], ncol = dimensions[2],
+    dimnames = dimension_names
+  )
 
   # Allow zeros to be estimated
   zeros <- rep(1, length(loadings_vector))
@@ -1340,11 +1374,11 @@ EGM.explore.core <- function(
     return(list(loadings = loadings, fit = bad_fit))
   }
 
+  # Compute minimum eigenvalue of hessian
+  min_eigenvalue <- min(matrix_eigenvalues(initial_loadings$hessian))
+
   # Format loadings
-  loadings <- matrix(
-    initial_loadings, nrow = data_dimensions[2],
-    ncol = communities, dimnames = dimension_names
-  )
+  loadings[] <- initial_loadings$par
 
   # Obtain model-implied partial correlations
   P <- nload2pcor(loadings)
@@ -1355,13 +1389,18 @@ EGM.explore.core <- function(
   # Check for quality (return bad result)
   if(
     !(
-      unique_length(membership) == dim(loadings)[2] & # ensure meaningful
-      max(abs(loadings)) != 1 & # throw out any solutions with loadings of 1
+      unique_length(membership) == dimensions[2] & # ensure meaningful
       all(fast_table(membership) > 1) & # throw out singletons
-      all(!is.na(P))
+      all(!is.na(P)) # not positive definite
     )
   ){
-    return(list(fit = bad_fit, loadings = loadings))
+
+    # Updated bad fit
+    bad_fit[c("min_eigenvalue", "converged")] <- c(min_eigenvalue, min_eigenvalue < 0)
+
+    # Return bad result
+    return(list(loadings = loadings, fit = bad_fit))
+
   }
 
   # Set absolute P
@@ -1389,12 +1428,12 @@ EGM.explore.core <- function(
     membership_matrix <- outer(membership, membership, FUN = "==")
 
     # Set bound
-    bound <- max(
+    bound <- # max(
       ## Minimal maximum of non-assigned edges
-      min(apply(absolute_P * !membership_matrix, 2, function(x){max(x[x != 0])})),
+      # min(apply(absolute_P * !membership_matrix, 2, function(x){max(x[x != 0])})),
       ## Minimal minimum of assigned edges
       min(apply(absolute_P * membership_matrix, 2, function(x){min(x[x != 0])}))
-    )
+    # )
 
     # Use max for bounds
     thresholds <- thresholds[thresholds <= bound]
@@ -1417,30 +1456,27 @@ EGM.explore.core <- function(
   implied_R <- pcor2cor(P)
 
   # Update loadings
-  loadings <- egm_optimize(
-    loadings_vector = initial_loadings, zeros = zeros,
+  updated_loadings <- egm_optimize(
+    loadings_vector = initial_loadings$par, zeros = zeros,
     R = implied_R, loading_structure = loading_structure,
     rows = communities, n = data_dimensions[1], v = data_dimensions[2],
-    constrained = FALSE, lower_triangle = lower_triangle, lambda = 1, # not used
+    constrained = FALSE, lower_triangle = lower_triangle, lambda = 0,
     opt = "srmr", iterations = 10000
   )
 
   # Format loadings
-  loadings <- matrix(
-    loadings$par, nrow = data_dimensions[2],
-    ncol = communities, dimnames = dimension_names
-  )
+  loadings[] <- updated_loadings$par
 
   # Compute log-likelihood
   logLik <- silent_call(
     -log_likelihood(
       n = data_dimensions[1], p = data_dimensions[2],
-      R = pcor2cor(P), S = empirical_R, type = "zero"
+      R = implied_R, S = empirical_R, type = "zero"
     )
   )
 
   # Obtain parameters (add loadings)
-  parameters <- sum(P[lower_triangle] != 0) + sum(loadings != 0)
+  parameters <- sum(P[lower_triangle] != 0) + loading_parameters
 
   # Compute negative 2 times log-likelihood
   logLik2 <- 2 * logLik
@@ -1448,9 +1484,8 @@ EGM.explore.core <- function(
   # Compute 2 times parameters
   parameters2 <- 2 * parameters
 
-  # Compute AIC and BIC
+  # Compute AIC
   aic <- logLik2 + parameters2
-  bic <- logLik2 + parameters * log(data_dimensions[1])
 
   # Collect fit indices
   fit <- c(
@@ -1459,10 +1494,11 @@ EGM.explore.core <- function(
     aic = aic,
     aicc = aic + (parameters2 * (parameters + 1)) /
       (data_dimensions[2] - parameters2 - 1),
-    bic = bic,
-    ebic = bic + 2 * parameters2 * 0.50 * log(data_dimensions[2]),
+    bic = logLik2 + parameters * log(data_dimensions[1]),
     q = -obtain_modularity(P, membership),
-    aicq = threshold_fit[[minimum_index]]
+    aicq = threshold_fit[[minimum_index]],
+    min_eigenvalue = min_eigenvalue,
+    converged = min_eigenvalue < 0
   )
 
   # Return result
@@ -1538,8 +1574,6 @@ obtain_modularity <- function(network, membership = NULL)
 
   # Ensure absolute
   network <- abs(network)
-
-
 
   # Set modularity value
   return(

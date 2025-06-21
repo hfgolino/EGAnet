@@ -61,7 +61,7 @@ srmr <- function(base, comparison)
 
 #' @noRd
 # SRMR cost
-# Updated 20.06.2025
+# Updated 21.06.2025
 srmr_cost <- function(
     loadings_vector, R,
     loading_structure, rows, n, v,
@@ -71,7 +71,7 @@ srmr_cost <- function(
 {
 
   # Set l2 cost
-  l2_cost <- 0 # lambda * sum(loadings_vector^2)
+  l2_cost <- lambda * sum(loadings_vector^2)
 
   # Check for constraint
   if(constrained){
@@ -96,7 +96,7 @@ srmr_cost <- function(
 
 #' @noRd
 # SRMR gradient
-# Updated 20.06.2025
+# Updated 21.06.2025
 srmr_gradient <- function(
     loadings_vector, R,
     loading_structure, rows, n, v,
@@ -106,7 +106,7 @@ srmr_gradient <- function(
 {
 
   # Set l2 gradient
-  l2_gradient <- 0 # 2 * lambda * loadings_vector
+  l2_gradient <- 2 * lambda * loadings_vector
 
   # Check for constraint
   if(constrained){
@@ -404,7 +404,7 @@ hessian_optimize <- function(
 
 #' @noRd
 # Loading optimization ----
-# Updated 20.06.2025
+# Updated 21.06.2025
 loadings_optimization <- function(
     iter = 10, loadings_vector, zeros, R, loading_structure,
     communities, data_dimensions, lower_triangle, opt
@@ -467,7 +467,7 @@ loadings_optimization <- function(
       }
 
       # Check if best result is at target
-      if(best_eigenvalue < 0.001){
+      if(best_eigenvalue < 0.01){
         break
       }
 
@@ -499,12 +499,8 @@ loadings_optimization <- function(
 
   }
 
-  # Check for bad result
-  if(min(matrix_eigenvalues(best_result$hessian)) < 0){
-    return(NULL)
-  }else{
-    return(best_result$par)
-  }
+  # Return best result
+  return(best_result)
 
 }
 
