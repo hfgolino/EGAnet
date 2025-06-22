@@ -1435,26 +1435,23 @@ EGM.explore.core <- function(
     # Set bound based on range of minimum assigned edges
     bound <- range(apply(absolute_P, 2, function(x){min(x[x != 0])}))
 
-    # Use range for bounds
-    thresholds <- thresholds[thresholds >= bound[1] & thresholds <= bound[2]]
-
   }else{
 
     # Obtain membership matrix
     membership_matrix <- outer(membership, membership, FUN = "==")
 
     # Set bound
-    bound <- # max(
+    bound <- range(
       ## Minimal maximum of non-assigned edges
-      # min(apply(absolute_P * !membership_matrix, 2, function(x){max(x[x != 0])})),
+      min(apply(absolute_P * !membership_matrix, 2, function(x){max(x[x != 0])})),
       ## Minimal minimum of assigned edges
       min(apply(absolute_P * membership_matrix, 2, function(x){min(x[x != 0])}))
-    # )
-
-    # Use max for bounds
-    thresholds <- thresholds[thresholds <= bound]
+    )
 
   }
+
+  # Use max for bounds
+  thresholds <- thresholds[thresholds >= bound[1] & thresholds <= bound[2]]
 
   # Get fits for thresholds
   threshold_fit <- nvapply(
