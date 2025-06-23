@@ -1441,12 +1441,12 @@ EGM.explore.core <- function(
     membership_matrix <- outer(membership, membership, FUN = "==")
 
     # Set bound
-    bound <- range(
+    bound <- c(0, max(
       ## Minimal maximum of non-assigned edges
-      min(apply(absolute_P * !membership_matrix, 2, function(x){max(x[x != 0])})),
+      max(apply(absolute_P * !membership_matrix, 2, function(x){max(x[x != 0])})),
       ## Minimal minimum of assigned edges
       min(apply(absolute_P * membership_matrix, 2, function(x){min(x[x != 0])}))
-    )
+    ))
 
   }
 
