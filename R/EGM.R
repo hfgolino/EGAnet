@@ -1299,7 +1299,7 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
 
 #' @noRd
 # EGM | Core Exploration ----
-# Updated 21.06.2025
+# Updated 24.06.2025
 EGM.explore.core <- function(
     communities, null_P, cluster, variable_names,
     data_dimensions, empirical_R, opt, ...
@@ -1440,13 +1440,11 @@ EGM.explore.core <- function(
     # Obtain membership matrix
     membership_matrix <- outer(membership, membership, FUN = "==")
 
-    # Set bound
-    bound <- c(0, max(
-      ## Minimal maximum of non-assigned edges
-      max(apply(absolute_P * !membership_matrix, 2, function(x){max(x[x != 0])})),
-      ## Minimal minimum of assigned edges
-      min(apply(absolute_P * membership_matrix, 2, function(x){min(x[x != 0])}))
-    ))
+    # Set bound using the minimum of the maximum
+    bound <- range( # likely unnecessary but prevents error on bad ordering
+      min(apply(absolute_P * !membership_matrix, 2, function(x){max(x[x != 0])})),
+      min(apply(absolute_P * membership_matrix, 2, function(x){max(x[x != 0])}))
+    )
 
   }
 
