@@ -1342,6 +1342,9 @@ EGM.explore.core <- function(
 
   }
 
+  # Update memberships
+  membership <- max.col(abs(loadings))
+
   # Simplify loadings
   for(i in seq_len(communities)){
     loadings[membership != i, i] <- 0
