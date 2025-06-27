@@ -1342,9 +1342,6 @@ EGM.explore.core <- function(
 
   }
 
-  # Update memberships
-  membership <- max.col(abs(loadings))
-
   # Simplify loadings
   for(i in seq_len(communities)){
     loadings[membership != i, i] <- 0
@@ -1443,11 +1440,15 @@ EGM.explore.core <- function(
     # Obtain membership matrix
     membership_matrix <- outer(membership, membership, FUN = "==")
 
-    # Set bound using the minimum of the maximum
-    bound <- range( # likely unnecessary but prevents error on bad ordering
-      min(apply(absolute_P * !membership_matrix, 2, function(x){max(x[x != 0])})),
-      min(apply(absolute_P * membership_matrix, 2, function(x){max(x[x != 0])}))
+    # Set bound at the boundary of the mean within- and between-community edges
+    bound <- range(
+      min(apply(absolute_P * !membership_matrix, 2, function(x){mean(x[x != 0])})),
+      min(apply(absolute_P * membership_matrix, 2, function(x){mean(x[x != 0])}))
     )
+
+    # Update bound to actual values
+    bound[1] <- thresholds[which.max(thresholds >= bound[1]) - 1]
+    bound[2] <- thresholds[which.min(thresholds <= bound[2])]
 
   }
 
@@ -1465,6 +1466,9 @@ EGM.explore.core <- function(
   # Update P based on threshold fits
   minimum_index <- which.min(threshold_fit)
   P <- P * (absolute_P > thresholds[[minimum_index]])
+
+  # Add dimension names
+  dimnames(P) <- dimnames(empirical_R)
 
   # Get implied correlations
   implied_R <- pcor2cor(P)
@@ -1522,7 +1526,7 @@ EGM.explore.core <- function(
 
 #' @noRd
 # Expected edge values ----
-# Updated 20.06.2025
+# Updated 26.06.2025
 expected_edges <- function(network, data_dimensions = NULL)
 {
 
@@ -1560,11 +1564,11 @@ expected_edges <- function(network, data_dimensions = NULL)
 
     # Compute gradient
     gradient_j <- (matrix(standard_strength, nrow = data_dimensions[2], ncol = data_dimensions[2]) - dEE)^2
-    gradient_i <- t(gradient_j)
 
     # Get SE (still in Fisher's z)
+    # t(gradient_j) = shorthand for gradient i
     # dEE^2 = shorthand for gradient k
-    SE <- sqrt(variance * (gradient_i + gradient_j + (p_minus_one - 1) * dEE^2))
+    SE <- sqrt(variance * (t(gradient_j) + gradient_j + (p_minus_one - 1) * dEE^2))
 
     # Absolute partial correlations (assumes similar transformation deviations)
     lower_triangle <- lower.tri(EE)
@@ -1605,7 +1609,7 @@ obtain_modularity <- function(network, membership = NULL)
 
 #' @noRd
 # Select threshold for network ----
-# Updated 20.06.2025
+# Updated 26.06.2025
 select_threshold <- function(
     threshold, P, absolute_P, membership, loading_parameters,
     lower_triangle, data_dimensions, empirical_R
@@ -1625,7 +1629,7 @@ select_threshold <- function(
   )
 
   # Send result
-  return(-2 * loglik + 2 * parameters - obtain_modularity(network, membership) * 6 * log(data_dimensions[1]))
+  return(-2 * loglik + 2 * parameters - obtain_modularity(network, membership) * 40)
 
 }
 
