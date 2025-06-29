@@ -1442,13 +1442,9 @@ EGM.explore.core <- function(
 
     # Set bound at the boundary of the mean within- and between-community edges
     bound <- range(
-      min(apply(absolute_P * !membership_matrix, 2, function(x){mean(x[x != 0])})),
-      min(apply(absolute_P * membership_matrix, 2, function(x){mean(x[x != 0])}))
+      min(apply(absolute_P * !membership_matrix, 2, function(x){max(x[x != 0])})),
+      min(apply(absolute_P * membership_matrix, 2, function(x){max(x[x != 0])}))
     )
-
-    # Update bound to actual values
-    bound[1] <- thresholds[which.max(thresholds >= bound[1]) - 1]
-    bound[2] <- thresholds[which.min(thresholds <= bound[2])]
 
   }
 
