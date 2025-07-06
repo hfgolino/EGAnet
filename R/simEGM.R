@@ -264,8 +264,7 @@ simEGM <- function(
   K <- solve(R)
   P <- -cov2cor(K); diag(P) <- 0
   adjacency <- beta_min(
-    P = P, Q = modularity(P, membership),
-    communities = communities, K = K,
+    P = P, Q = obtain_modularity(P, membership), K = K,
     total_variables = total_variables,
     sample_size = sample.size
   )
@@ -351,3 +350,28 @@ simEGM_errors <- function(
 
 }
 
+#' @noRd
+# beta-min criterion ----
+# Updated 06.07.2025
+beta_min <- function(P, Q, K, total_variables, sample_size)
+{
+
+  # Calculate beta-min
+  minimum <- sqrt(Q * log(total_variables) / sample_size)
+
+  # Obtain inverse variances
+  inverse_variances <- diag(K)
+
+  # Obtain betas
+  beta <- P * sqrt(outer(inverse_variances, inverse_variances, FUN = "/"))
+
+  # Set adjacency matrix
+  adjacency <- abs(beta) > minimum
+
+  # Attach minimum
+  attr(adjacency, "beta.min") <- minimum
+
+  # Return adjacency matrix
+  return(adjacency)
+
+}

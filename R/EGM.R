@@ -1630,32 +1630,6 @@ select_threshold <- function(
 }
 
 #' @noRd
-# beta-min criterion ----
-# Updated 13.06.2025
-beta_min <- function(P, Q, communities, K, total_variables, sample_size)
-{
-
-  # Calculate community-aware beta-min
-  minimum <- sqrt(Q * log(total_variables) / sample_size)
-
-  # Obtain inverse variances
-  inverse_variances <- diag(K)
-
-  # Obtain betas
-  beta <- P * sqrt(outer(inverse_variances, inverse_variances, FUN = "/"))
-
-  # Set adjacency matrix
-  adjacency <- abs(beta) > minimum
-
-  # Attach minimum
-  attr(adjacency, "beta.min") <- minimum
-
-  # Return adjacency matrix
-  return(adjacency)
-
-}
-
-#' @noRd
 # Creates community structure ----
 # Updated 08.10.2024
 create_community_structure <- function(
@@ -1985,3 +1959,4 @@ glasso_fit <- function(data, S, glasso_attr, P, data_dimensions, constrain.struc
   )
 
 }
+
