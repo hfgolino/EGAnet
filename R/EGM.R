@@ -1600,7 +1600,7 @@ scad_threshold <- function(loadings, lambda)
 #' @noRd
 # Threshold for network ----
 # Updated 13.07.2025
-set_network <- function(loadings, membership, data_dimensions, lambda)
+set_network <- function(loadings, membership, data_dimensions)
 {
 
   # Obtain partial correlations
@@ -1651,7 +1651,7 @@ scad_threshold_cost <- function(lambda, loadings, empirical_R, lower_triangle, d
   P <- try(
     set_network(
       loadings = loadings, membership = membership,
-      data_dimensions = data_dimensions, lambda = lambda
+      data_dimensions = data_dimensions
     ), silent = TRUE
   )
 
