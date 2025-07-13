@@ -530,7 +530,7 @@ EGM.explore <- function(data, communities, search, opt, model.select, ...)
   # Attach methods to network
   attr(ega_list$network, which = "methods") <- list(
     model = "egm", communities = dim(optimal_results$loadings)[2],
-    beta.min = "optimized"
+    lambda = optimal_results$lambda
   )
 
   # Attach class to memberships
@@ -1299,7 +1299,7 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
 
 #' @noRd
 # EGM | Core Exploration ----
-# Updated 24.06.2025
+# Updated 13.07.2025
 EGM.explore.core <- function(
     communities, null_P, cluster, variable_names,
     data_dimensions, empirical_R, opt, ...
@@ -1316,7 +1316,7 @@ EGM.explore.core <- function(
   # Set memberships
   membership <- cutree(cluster, communities)
 
-  # Initialize loadings with membership
+  # Compute loadings
   loadings <- silent_call(
     net.loads(A = null_P, wc = membership)$std[variable_names,, drop = FALSE]
   )
@@ -1335,16 +1335,12 @@ EGM.explore.core <- function(
 
       # Set singleton to max of overall connections (allow drop to vector)
       for(i in which(singletons)){
+        loadings[,i] <- 0
         loadings[index, i] <- max(null_P[index,])
       }
 
     }
 
-  }
-
-  # Simplify loadings
-  for(i in seq_len(communities)){
-    loadings[membership != i, i] <- 0
   }
 
   # Set up loadings vector
@@ -1385,17 +1381,31 @@ EGM.explore.core <- function(
   # Format loadings
   loadings[] <- initial_loadings$par
 
-  # Obtain model-implied partial correlations
-  P <- nload2pcor(loadings)
+  # Set lambda sequence
+  lambdas <- seq(0.001, 0.05, 0.001)
+
+  # Optimize SCAD soft threshold
+  soft_threshold <- nvapply(
+    lambdas, scad_threshold_cost,
+    loadings = loadings, empirical_R = empirical_R,
+    lower_triangle = lower_triangle,
+    data_dimensions = data_dimensions
+  )
+
+  # Get updated loadings
+  loadings <- scad_threshold(loadings, lambdas[[which.min(soft_threshold)]])
 
   # Obtain solution
   membership <- max.col(abs(loadings))
+
+  # Threshold network
+  P <- set_network(loadings, membership, data_dimensions)
 
   # Get quality flags
   negative_flag <- min_eigenvalue < 0
   meaningful_flag <- unique_length(membership) != dimensions[2]
   singleton_flag <- any(fast_table(membership) < 2)
-  PD_flag <- anyNA(P)
+  PD_flag <- anyNA(P) || !is_positive_definite(pcor2cor(P))
 
   # Check overall quality
   if(negative_flag || meaningful_flag || singleton_flag || PD_flag){
@@ -1419,67 +1429,11 @@ EGM.explore.core <- function(
 
   }
 
-  # Set absolute P
-  absolute_P <- abs(P)
-
-  # Obtain number of loading parameters
-  loading_parameters <- sum(loadings != 0)
-
-  # Set thresholds
-  thresholds <- sort(unique((absolute_P[lower_triangle]))) - 1e-08
-
-  # Set maximum bound thresholds
-  ## Divert based on dimensionality
-  if(communities == 1){
-
-    # Set bound based on range of minimum assigned edges
-    bound <- range(apply(absolute_P, 2, function(x){min(x[x != 0])}))
-
-  }else{
-
-    # Obtain membership matrix
-    membership_matrix <- outer(membership, membership, FUN = "==")
-
-    # Set bound at the boundary of the mean within- and between-community edges
-    bound <- range(
-      min(apply(absolute_P * !membership_matrix, 2, function(x){max(x[x != 0])})),
-      min(apply(absolute_P * membership_matrix, 2, function(x){max(x[x != 0])}))
-    )
-
-  }
-
-  # Use max for bounds
-  thresholds <- thresholds[thresholds >= bound[1] & thresholds <= bound[2]]
-
-  # Get fits for thresholds
-  threshold_fit <- nvapply(
-    thresholds, select_threshold, P = P, absolute_P = absolute_P,
-    membership = membership, loading_parameters = loading_parameters,
-    lower_triangle = lower_triangle, data_dimensions = data_dimensions,
-    empirical_R = empirical_R
-  )
-
-  # Update P based on threshold fits
-  minimum_index <- which.min(threshold_fit)
-  P <- P * (absolute_P > thresholds[[minimum_index]])
-
   # Add dimension names
   dimnames(P) <- dimnames(empirical_R)
 
   # Get implied correlations
   implied_R <- pcor2cor(P)
-
-  # Update loadings
-  updated_loadings <- egm_optimize(
-    loadings_vector = initial_loadings$par, zeros = zeros,
-    R = implied_R, loading_structure = loading_structure,
-    rows = communities, n = data_dimensions[1], v = data_dimensions[2],
-    constrained = FALSE, lower_triangle = lower_triangle, lambda = 0,
-    opt = "srmr", iterations = 10000
-  )
-
-  # Format loadings
-  loadings[] <- updated_loadings$par
 
   # Compute log-likelihood
   logLik <- silent_call(
@@ -1489,8 +1443,8 @@ EGM.explore.core <- function(
     )
   )
 
-  # Obtain parameters (add loadings)
-  parameters <- sum(P[lower_triangle] != 0) + loading_parameters
+  # Obtain loading parameters
+  parameters <- sum(loadings != 0)
 
   # Compute negative 2 times log-likelihood
   logLik2 <- 2 * logLik
@@ -1501,6 +1455,9 @@ EGM.explore.core <- function(
   # Compute AIC
   aic <- logLik2 + parameters2
 
+  # Compute modularity
+  q <- obtain_modularity(P, membership)
+
   # Collect fit indices
   fit <- data.frame(
     parameters = parameters,
@@ -1509,8 +1466,8 @@ EGM.explore.core <- function(
     aicc = aic + (parameters2 * (parameters + 1)) /
       (data_dimensions[2] - parameters2 - 1),
     bic = logLik2 + parameters * log(data_dimensions[1]),
-    q = -obtain_modularity(P, membership),
-    aicq = threshold_fit[[minimum_index]],
+    q = -q,
+    aicq = aic - q * 40,
     min_eigenvalue = min_eigenvalue,
     converged = "0: successful"
   )
@@ -1582,7 +1539,7 @@ expected_edges <- function(network, data_dimensions = NULL)
 
 #' @noRd
 # Obtain modularity edge values ----
-# Updated 17.06.2025
+# Updated 13.07.2025
 obtain_modularity <- function(network, membership = NULL)
 {
 
@@ -1595,7 +1552,7 @@ obtain_modularity <- function(network, membership = NULL)
       is.null(membership), 1,
       swiftelse(
         unique_length(membership) == 1,
-        igraph::transitivity(convert2igraph(network)) / 3,
+        mean(network[lower.tri(network)]),
         modularity(network, membership)
       )
     )
@@ -1604,28 +1561,126 @@ obtain_modularity <- function(network, membership = NULL)
 }
 
 #' @noRd
-# Select threshold for network ----
-# Updated 26.06.2025
-select_threshold <- function(
-    threshold, P, absolute_P, membership, loading_parameters,
-    lower_triangle, data_dimensions, empirical_R
-)
+# l1 soft threshold ----
+# Updated 11.07.2025
+l1_threshold <- function(loadings, lambda)
+{
+  return(sign(loadings) * pmax(abs(loadings) - lambda, 0))
+}
+
+#' @noRd
+# SCAD soft threshold ----
+# Updated 11.07.2025
+scad_threshold <- function(loadings, lambda)
 {
 
-  # Set network matrix
-  network <- P * (absolute_P > threshold)
+  # gamma = 3.7
 
-  # Set parameters
-  parameters <- sum(network[lower_triangle] != 0) + loading_parameters
+  # Set absolute
+  L <- abs(loadings)
 
-  # Compute log-likelihood
-  loglik <- log_likelihood(
-    n = data_dimensions[1], p = data_dimensions[2],
-    R = pcor2cor(network), S = empirical_R, type = "zero"
+  # Pre-compute components
+  gamma_lambda <- 3.7 * lambda
+
+  # Return values
+  return(
+    ifelse(
+      L <= 2 * lambda,
+      l1_threshold(loadings, lambda),
+      ifelse(
+        L <= gamma_lambda,
+        1.588235 * l1_threshold(loadings, gamma_lambda / 2.7),
+        loadings
+      )
+    )
   )
 
-  # Send result
-  return(-2 * loglik + 2 * parameters - obtain_modularity(network, membership) * 40)
+}
+
+#' @noRd
+# Threshold for network ----
+# Updated 13.07.2025
+set_network <- function(loadings, membership, data_dimensions, lambda)
+{
+
+  # Obtain partial correlations
+  P <- nload2pcor(loadings)
+
+  # Set edges to zero for zero loadings
+  for(i in seq_len(data_dimensions[2])){
+
+    # Check for zero loadings
+    zero_index <- which(loadings[i,] == 0)
+
+    # Identify whether zero loadings exist
+    if(length(zero_index) != 0){
+
+      # Loop over zero loading memberships
+      for(community in zero_index){
+
+        # Get index
+        index <- membership == community
+
+        # Set values to zero
+        P[index, i] <- P[i, index] <- 0
+
+      }
+
+    }
+
+  }
+
+  # Return network
+  return(P)
+
+}
+
+#' @noRd
+# SCAD soft threshold ----
+# Updated 13.07.2025
+scad_threshold_cost <- function(lambda, loadings, empirical_R, lower_triangle, data_dimensions)
+{
+
+  # Apply SCAD threshold
+  loadings <- scad_threshold(loadings, lambda)
+
+  # Set membership
+  membership <- max.col(abs(loadings))
+
+  # Obtain model-implied partial correlations with SCAD
+  P <- try(
+    set_network(
+      loadings = loadings, membership = membership,
+      data_dimensions = data_dimensions, lambda = lambda
+    ), silent = TRUE
+  )
+
+  # Check first for missing issues (all zero loadings)
+  if(is(P, "try-error") || anyNA(P)){
+    return(Inf)
+  }
+
+  # Convert partial correlations to zero-order correlations
+  R <- try(pcor2cor(P), silent = TRUE)
+
+  # Check for positive definite
+  if(is(R, "try-error") || anyNA(R) || !is_positive_definite(R)){
+    return(Inf)
+  }else{
+
+    # Set parameters
+    parameters <- sum(loadings != 0)
+
+    # Compute log-likelihood
+    loglik <- log_likelihood(
+      n = data_dimensions[1], p = data_dimensions[2],
+      R = pcor2cor(P), S = empirical_R, type = "zero"
+    )
+
+    # Send result
+    return(-2 * loglik + 2 * parameters - obtain_modularity(P, membership) * 40)
+
+  }
 
 }
 
