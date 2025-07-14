@@ -416,7 +416,7 @@ loadings_optimization <- function(
 
   # Set lambda minimum and maximum
   loadings_lambda_min <- 0
-  loadings_lambda_max <- 10
+  loadings_lambda_max <- 1
 
   # Seek out positive eigenvalue
   for(i in seq_len(10)){
