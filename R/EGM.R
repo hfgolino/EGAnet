@@ -1393,9 +1393,7 @@ EGM.explore.core <- function(
   )
 
   # Get updated loadings
-  loadings <- scad_threshold(loadings, lambdas[[
-    sum(soft_threshold == min(soft_threshold, na.rm = TRUE), na.rm = TRUE)
-  ]])
+  loadings <- scad_threshold(loadings, lambdas[[which.min(soft_threshold)]])
 
   # Obtain solution
   membership <- max.col(abs(loadings))
