@@ -121,7 +121,7 @@
 #' @export
 #'
 # Predict new data based on network ----
-# Updated 10.07.2024
+# Updated 15.07.2025
 network.predictability <- function(network, original.data, newdata, ordinal.categories = 7)
 {
 
@@ -192,7 +192,8 @@ network.predictability <- function(network, original.data, newdata, ordinal.cate
   # negative inverse variances
 
   # Get betas
-  betas <- network * sqrt(outer(inverse_variances, inverse_variances, FUN = "/"))
+  inv_K <- outer(inverse_variances, inverse_variances, FUN = "/")
+  betas <- network * ((inv_K + t(inv_K)) / 2)
 
   # Obtain means and standard deviations
   original_means <- colMeans(original.data, na.rm = TRUE)

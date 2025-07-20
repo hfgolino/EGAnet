@@ -48,7 +48,7 @@
 #' @export
 #'
 # Simulate EGM ----
-# Updated 13.06.2025
+# Updated 18.07.2025
 simEGM <- function(
     communities, variables,
     loadings, cross.loadings = 0.01,
@@ -84,7 +84,7 @@ simEGM <- function(
   )
 
   # Initialize checks
-  PD_check <- FALSE
+  PD_check <- FALSE; cross_check <- TRUE
 
   # Check that loadings matrix is not already supplied
   if(length(as.matrix(loadings)) == (total_variables * communities)){
@@ -181,7 +181,7 @@ simEGM <- function(
     count <- 0
 
     # Ensure proper matrix
-    while(!PD_check){
+    while(!PD_check || cross_check){
 
       # Increase count
       count <- count + 1
@@ -209,6 +209,7 @@ simEGM <- function(
 
         # Get block index
         block_index <- membership == i
+        # index_numeric <- which(block_index)
 
         # Get number of variables
         block_variables <- sum(block_index)
@@ -224,13 +225,35 @@ simEGM <- function(
           # Except for itself
           if(i != j){
 
-            # Set correlations
-            loading_structure[block_index, j] <- 0.25 * correlations[i,j] /
-              ((1 - loading_structure[block_index, i]) * sqrt(log(total_variables)))
+            # Set cross-loading probability
+            cross_probability <- min(1, sqrt(correlations[i,j]) / (1 - loadings[i]))
 
-            # Add cross-loadings
-            loading_structure[block_index, j] <- loading_structure[block_index, j] +
-              rnorm_ziggurat(block_variables) * cross.loadings
+            # Set zero cross-loading indices
+            zero_cross <- c(
+              correlations[i,j] != 0,
+              sample(
+                c(FALSE, TRUE), block_variables - 1,
+                replace = TRUE, prob = c(1 - cross_probability, cross_probability)
+              )
+            )
+
+            # Get non-zero cross-loading total
+            non_zero <- sum(zero_cross)
+
+            # Check for non-zero cross-loadings
+            if(non_zero > 0){
+
+              # Create sum total for correlation cross-loadings
+              correlation_cross <- block_variables * 0.25 * correlations[i,j] /
+                ((1 - mean(loading_structure[block_index,])) * sqrt(log(total_variables))) /
+                non_zero # divide by non-zero cross-loadings
+
+              # Add cross-loadings
+              loading_structure[block_index, j] <- ( # Add cross-loadings
+                correlation_cross + rnorm_ziggurat(block_variables) * cross.loadings
+              ) * zero_cross # Set some to zero
+
+            }
 
           }
 
@@ -239,14 +262,21 @@ simEGM <- function(
       }
 
       # Obtain population correlation matrix
-      R <- nload2cor(loading_structure)
+      network <- set_network(loading_structure, membership, c(sample.size, total_variables))
+      R <- pcor2cor(network)
 
       # Check for positive definite
       PD_check <- is_positive_definite(R)
 
+      # Check for cross-loadings that are larger than their assigned loadings
+      cross_check <- any(max.col(abs(loading_structure)) != membership)
+
     }
 
   }
+
+  # Obtain precision, partial correlations, and adjacency matrices
+  K <- solve(R)
 
   # Perform Cholesky decomposition
   cholesky <- chol(R)
@@ -260,25 +290,15 @@ simEGM <- function(
   # Set variable names
   colnames(data) <- node_names
 
-  # Obtain precision, partial correlations, and adjacency matrices
-  K <- solve(R)
-  P <- -cov2cor(K); diag(P) <- 0
-  adjacency <- beta_min(
-    P = P, Q = obtain_modularity(P, membership), K = K,
-    total_variables = total_variables,
-    sample_size = sample.size
-  )
-
   # Return results
   return(
     list(
       data = data,
       population_correlation = R,
       population_precision = K,
-      population_partial_correlation = P,
+      population_network = network,
       parameters = list(
-        adjacency = adjacency,
-        network = P * adjacency,
+        adjacency = network != 0,
         loadings = loading_structure,
         correlations = correlations,
         membership = membership,
@@ -363,7 +383,8 @@ beta_min <- function(P, Q, K, total_variables, sample_size)
   inverse_variances <- diag(K)
 
   # Obtain betas
-  beta <- P * sqrt(outer(inverse_variances, inverse_variances, FUN = "/"))
+  inv_K <- outer(inverse_variances, inverse_variances, FUN = "/")
+  beta <- P * ((inv_K + t(inv_K)) / 2)
 
   # Set adjacency matrix
   adjacency <- abs(beta) > minimum
