@@ -1383,7 +1383,7 @@ EGM.explore.core <- function(
 
   # Set lambda sequence
   # (reverse order ensures higher lambda is used when there is a tie)
-  lambdas <- seq(0.05, 0.001, -0.001)
+  lambdas <- seq(0.20, 0.01, -0.01)
 
   # Optimize SCAD soft threshold
   soft_threshold <- nvapply(
