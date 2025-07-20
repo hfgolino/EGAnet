@@ -1382,7 +1382,7 @@ EGM.explore.core <- function(
   loadings[] <- initial_loadings$par
 
   # Set lambda sequence
-  lambdas <- seq(0.001, 0.05, 0.001)
+  lambdas <- seq(0.05, 0.001, 0.001)
 
   # Optimize SCAD soft threshold
   soft_threshold <- nvapply(
