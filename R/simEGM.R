@@ -226,7 +226,7 @@ simEGM <- function(
           if(i != j){
 
             # Set cross-loading probability
-            cross_probability <- min(1, sqrt(correlations[i,j]) / (1 - loadings[i]))
+            cross_probability <- sqrt(correlations[i,j]) # min(1, sqrt(correlations[i,j]) / (1 - loadings[i]))
 
             # Set zero cross-loading indices
             zero_cross <- c(

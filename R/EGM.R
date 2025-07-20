@@ -1404,7 +1404,7 @@ EGM.explore.core <- function(
   P <- set_network(loadings, membership, data_dimensions)
 
   # Get quality flags
-  negative_flag <- min_eigenvalue < 0
+  negative_flag <- min_eigenvalue < 0 & initial_loadings$convergence == 1
   meaningful_flag <- unique_length(membership) != dimensions[2]
   singleton_flag <- any(fast_table(membership) < 2)
   PD_flag <- anyNA(P) || !is_positive_definite(pcor2cor(P))
