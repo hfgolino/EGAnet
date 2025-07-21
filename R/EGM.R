@@ -357,7 +357,15 @@ plot.EGM <- function(x, ...)
 
 }
 
-# LOADINGS ----
+# LOADINGS AND CORRELATIONS ----
+
+#' @noRd
+# Community correlations from loadings
+# Updated 21.07.2025
+community_correlations <- function(simple_structure, loading_structure)
+{
+  return(cov2cor(crossprod(simple_structure, nload2cor(loading_structure)) %*% simple_structure))
+}
 
 #' @noRd
 # Network loadings to partial correlations ----

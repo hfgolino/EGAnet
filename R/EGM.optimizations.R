@@ -47,15 +47,15 @@ obtain_implied <- function(loadings_vector, rows)
 
 #' @noRd
 # SRMR
-# Updated 24.09.2024
-srmr <- function(base, comparison)
+# Updated 21.07.2025
+srmr <- function(base, comparison, power = 2)
 {
 
   # Obtain lower triangle
   lower_triangle <- lower.tri(base)
 
   # Return SRMR
-  return(sqrt(mean((base[lower_triangle] - comparison[lower_triangle])^2)))
+  return(sqrt(mean((base[lower_triangle] - comparison[lower_triangle])^power)))
 
 }
 
@@ -532,7 +532,7 @@ srmr_network_cost <- function(network_vector, R, n, v, lower_triangle, zeros, ..
   I <- diag(sqrt(1 / diag(K)))
 
   # Return SRMR
-  return(srmr(I %*% K %*% I, R))
+  return(srmr(I %*% K %*% I, R, power = 4))
 
 }
 
@@ -553,7 +553,7 @@ srmr_network_gradient <- function(network_vector, R, n, v, lower_triangle, zeros
   I <- diag(sqrt(1 / diag(K)))
 
   # Compute error
-  dError <- 2 * (I %*% K %*% I - R) / sum(lower_triangle)
+  dError <- 4 * ((I %*% K %*% I - R) / sum(lower_triangle))^3
 
   # Return gradient
   return((K %*% I %*% dError %*% I %*% K)[lower_triangle][zeros])
@@ -648,6 +648,76 @@ egm_network_optimize <- function(
           sing.tol = .Machine$double.eps
         )
       )
+    )
+  )
+
+}
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%#
+#### COMMUNITY CORRELATIONS ####
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%#
+
+#' @noRd
+# Mean absolute error cost
+# Updated 21.07.2025
+mae_community_cost <- function(
+    between_loadings, between_indices, simple_structure,
+    loading_structure, target_correlations, ...
+)
+{
+
+  # Set between-community loadings
+  loading_structure[between_indices] <- between_loadings
+
+  # Compute current correlations
+  current_correlations <- community_correlations(simple_structure, loading_structure)
+
+  # Return MAE
+  return(mean(abs(current_correlations - target_correlations)))
+
+}
+
+#' @noRd
+# EGM community correlation optimization
+# Updated 21.07.2025
+egm_correlation_optimize <- function(loading_structure, correlations, between_indices, ...)
+{
+
+  # Initialize simple structure
+  simple_structure <- loading_structure
+
+  # Bounds (can't be larger than assigned loadings)
+  max_assigned <- apply(simple_structure, 1, function(x){max(abs(x))}) - 0.01
+  bounds <- as.vector(max_assigned * between_indices)
+  bounds <- bounds[between_indices]
+
+  # Optimize for loadings
+  cross_loadings <- silent_call(
+    nlminb(
+      start = rep(0, sum(between_indices)),
+      objective = mae_community_cost,
+      between_indices = between_indices,
+      simple_structure = loading_structure,
+      loading_structure = loading_structure,
+      target_correlations = correlations,
+      lower = -bounds, upper = bounds,
+      control = list(
+        eval.max = 10000, iter.max = 10000,
+        abs.tol = .Machine$double.eps,
+        rel.tol = .Machine$double.eps,
+        x.tol = .Machine$double.eps
+      )
+    )
+  )
+
+  # Add back cross-loadings
+  loading_structure[between_indices] <- cross_loadings$par
+
+  # Return loadings and exact community correlations
+  return(
+    list(
+      loadings = loading_structure,
+      correlations = community_correlations(simple_structure, loading_structure)
     )
   )
 

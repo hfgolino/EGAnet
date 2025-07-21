@@ -48,7 +48,7 @@
 #' @export
 #'
 # Simulate EGM ----
-# Updated 18.07.2025
+# Updated 21.07.2025
 simEGM <- function(
     communities, variables,
     loadings, cross.loadings = 0.01,
@@ -111,36 +111,14 @@ simEGM <- function(
 
     }
 
-    # Initialize correlation matrix
-    correlations <- matrix(0, nrow = communities, ncol = communities)
-
-    # Loop over loadings to derive correlations
+    # Obtain simple structure
+    simple_structure <- loadings
     for(i in community_sequence){
-
-      # Get block index
-      block_index <- membership == i
-
-      # Get mean loadings for block
-      mean_assigned <- 1 - mean(loadings[block_index, i])
-
-      # Loop over other blocks
-      for(j in community_sequence){
-
-        # Except for itself
-        if(i != j){
-
-          # Estimate correlations
-          correlations[j,i] <- correlations[i,j] <- 4 * mean(loadings[block_index,j]) *
-            (mean_assigned * sqrt(log(total_variables)))
-
-        }
-
-      }
-
+      simple_structure[membership == i, -i] <- 0
     }
 
-    # Set diagonal to 1 (add count for return)
-    diag(correlations) <- count <- 1
+    # Compute correlations
+    correlations <- community_correlations(simple_structure, loadings)
 
     # Set loading structure for return
     loading_structure <- loadings
@@ -148,7 +126,7 @@ simEGM <- function(
   }else{ # Generate the matrix
 
     # Initialize structure matrix
-    loading_structure <- matrix(
+    between_indices <- loading_structure <- matrix(
       0, nrow = total_variables, ncol = communities,
       dimnames = list(
         node_names,
@@ -209,7 +187,6 @@ simEGM <- function(
 
         # Get block index
         block_index <- membership == i
-        # index_numeric <- which(block_index)
 
         # Get number of variables
         block_variables <- sum(block_index)
@@ -226,10 +203,10 @@ simEGM <- function(
           if(i != j){
 
             # Set cross-loading probability
-            cross_probability <- sqrt(correlations[i,j]) # min(1, sqrt(correlations[i,j]) / (1 - loadings[i]))
+            cross_probability <- abs(correlations[i,j])^(1/3)
 
             # Set zero cross-loading indices
-            zero_cross <- c(
+            between_indices[block_index, j] <- c(
               correlations[i,j] != 0,
               sample(
                 c(FALSE, TRUE), block_variables - 1,
@@ -237,23 +214,43 @@ simEGM <- function(
               )
             )
 
-            # Get non-zero cross-loading total
-            non_zero <- sum(zero_cross)
+          }
 
-            # Check for non-zero cross-loadings
-            if(non_zero > 0){
+        }
 
-              # Create sum total for correlation cross-loadings
-              correlation_cross <- block_variables * 0.25 * correlations[i,j] /
-                ((1 - mean(loading_structure[block_index,])) * sqrt(log(total_variables))) /
-                non_zero # divide by non-zero cross-loadings
+      }
 
-              # Add cross-loadings
-              loading_structure[block_index, j] <- ( # Add cross-loadings
-                correlation_cross + rnorm_ziggurat(block_variables) * cross.loadings
-              ) * zero_cross # Set some to zero
+      # Obtain full loadings and correlations
+      loadings_output <- egm_correlation_optimize(
+        loading_structure = loading_structure, correlations = correlations,
+        between_indices = as.logical(between_indices)
+      )
 
-            }
+      # Update parameters
+      loading_structure <- loadings_output$loadings # updated with cross-loadings
+
+      # Add cross-loadings that do not contribute to correlations
+      for(i in community_sequence){
+
+        # Get block index
+        block_index <- membership == i
+
+        # Get number of variables
+        block_variables <- sum(block_index)
+
+        # Loop over cross-loadings
+        for(j in community_sequence){
+
+          # Except for itself
+          if(i != j){
+
+            # Target cross-loadings
+            target_cross <- loading_structure[block_index, j]
+
+            # Add cross-loadings
+            loading_structure[block_index, j] <-  target_cross +
+              rnorm_ziggurat(block_variables) * cross.loadings *
+              (target_cross != 0) # ensure sparsity (if sparse)
 
           }
 
@@ -263,6 +260,8 @@ simEGM <- function(
 
       # Obtain population correlation matrix
       network <- set_network(loading_structure, membership, c(sample.size, total_variables))
+
+      # Convert network to zero-order correlations
       R <- pcor2cor(network)
 
       # Check for positive definite
@@ -300,7 +299,7 @@ simEGM <- function(
       parameters = list(
         adjacency = network != 0,
         loadings = loading_structure,
-        correlations = correlations,
+        correlations = loadings_output$correlations, # precise correlations
         membership = membership,
         iterations = count
       )
