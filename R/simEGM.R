@@ -31,6 +31,41 @@
 #' @param sample.size Numeric (length = 1).
 #' Number of observations to generate
 #'
+#' @param density.power Numeric (length = 1).
+#' Controls the sparsity of the network loading matrix.
+#' The probability any given cross-loading will be set to zero
+#' is based on the community correlation between two communities
+#' raised to \eqn{\frac{1}{density.power}}. Accepts values between
+#'  \code{1} and \code{Inf} but sparser loadings (i.e., values less than
+#'  \code{3}) can lead to convergence issues.
+#'  Defaults to \code{3}
+#'
+#' @param quality Character (length = 1).
+#' Quality metrics related to the alignment of the correlations
+#' implied by the loadings and network are computed with certain
+#' standards in place to accept a solution.
+#' These metrics include:
+#'
+#' \itemize{
+#'
+#' \item SRMR (or RMSE) --- standardized root mean residual where
+#' acceptable equals 0.02 and robust equals 0.01
+#'
+#' \item MAE --- mean absolute error where
+#' acceptable equals 0.02 and robust equals 0.01
+#'
+#' \item \code{\link[EGAnet]{frobenius}} --- Frobenius norm where
+#' acceptable equals 0.90 and robust equals 0.95
+#'
+#' \item \code{\link[EGAnet]{jsd}} --- Jensen-Shannon Distance where
+#' acceptable equals 0.05 and robust equals 0.025
+#'
+#' }
+#'
+#' Defaults to \code{"acceptable"}.
+#' \code{"robust"} is available but most often needs \code{density.power}
+#' to be increased to allow for more cross-loadings to converge
+#'
 #' @param max.iterations Numeric (length = 1).
 #' Number of iterations to attempt to get convergence before erroring out.
 #' Defaults to \code{1000}
@@ -38,9 +73,8 @@
 #' @examples
 #' simulated <- simEGM(
 #'   communities = 2, variables = 6,
-#'   loadings = 0.55, # use standard factor loading sizes
-#'   correlations = 0.30,
-#'   sample.size = 1000
+#'   loadings = 0.35, # use network loading sizes
+#'   correlations = 0.30, sample.size = 1000
 #' )
 #'
 #' @author Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
@@ -48,18 +82,29 @@
 #' @export
 #'
 # Simulate EGM ----
-# Updated 21.07.2025
+# Updated 22.07.2025
 simEGM <- function(
     communities, variables,
     loadings, cross.loadings = 0.01,
     correlations, sample.size,
+    density.power = 3,
+    quality = c("acceptable", "robust"),
     max.iterations = 1000
 ){
+
+  # Set quality argument
+  quality <- set_default(quality, "acceptable", simEGM)
+
+  # Set quality comparisons
+  quality_comp <- data.frame(
+    acceptable = c(0.02, 0.02, 0.90, 0.05),
+    robust = c(0.01, 0.01, 0.95, 0.025)
+  )
 
   # Argument errors
   simEGM_errors(
     communities, variables, loadings, cross.loadings,
-    correlations, sample.size, max.iterations
+    correlations, sample.size, density.power, max.iterations
   )
 
   # Set up membership based on communities and variables
@@ -68,6 +113,9 @@ simEGM <- function(
     rep(seq_len(communities), each = variables),
     rep(seq_len(communities), times = variables)
   )
+
+  # Multidimensional flag
+  dimensional_flag <- communities > 1
 
   # Set community sequence
   community_sequence <- seq_len(communities)
@@ -84,7 +132,7 @@ simEGM <- function(
   )
 
   # Initialize checks
-  PD_check <- FALSE; cross_check <- TRUE
+  PD_check <- FALSE; cross_check <- TRUE; quality_check <- FALSE
 
   # Check that loadings matrix is not already supplied
   if(length(as.matrix(loadings)) == (total_variables * communities)){
@@ -159,7 +207,7 @@ simEGM <- function(
     count <- 0
 
     # Ensure proper matrix
-    while(!PD_check || cross_check){
+    while(!PD_check || cross_check || !quality_check){
 
       # Increase count
       count <- count + 1
@@ -175,7 +223,8 @@ simEGM <- function(
             "Try:\n",
             "  +  increasing 'loadings'\n",
             "  +  increasing 'sample.size'\n",
-            "  +  decreasing 'correlations'"
+            "  +  decreasing 'correlations'\n",
+            "  +  setting quality to 'acceptable'"
           ),
           call = "simEGM"
         )
@@ -196,23 +245,28 @@ simEGM <- function(
           block_variables, min = loadings[i] - 0.05, max = loadings[i] + 0.05
         )
 
-        # Loop over cross-loadings
-        for(j in community_sequence){
+        # Check for multidimensional
+        if(dimensional_flag){
 
-          # Except for itself
-          if(i != j){
+          # Loop over cross-loadings
+          for(j in community_sequence){
 
-            # Set cross-loading probability
-            cross_probability <- abs(correlations[i,j])^(1/3)
+            # Except for itself
+            if(i != j){
 
-            # Set zero cross-loading indices
-            between_indices[block_index, j] <- c(
-              correlations[i,j] != 0,
-              sample(
-                c(FALSE, TRUE), block_variables - 1,
-                replace = TRUE, prob = c(1 - cross_probability, cross_probability)
+              # Set cross-loading probability
+              cross_probability <- abs(correlations[i,j])^(1 / density.power)
+
+              # Set zero cross-loading indices
+              between_indices[block_index, j] <- c(
+                correlations[i,j] != 0,
+                sample(
+                  c(FALSE, TRUE), block_variables - 1,
+                  replace = TRUE, prob = c(1 - cross_probability, cross_probability)
+                )
               )
-            )
+
+            }
 
           }
 
@@ -220,46 +274,78 @@ simEGM <- function(
 
       }
 
-      # Obtain full loadings and correlations
-      loadings_output <- egm_correlation_optimize(
-        loading_structure = loading_structure, correlations = correlations,
-        between_indices = as.logical(between_indices)
-      )
+      # Check for multidimensional
+      if(dimensional_flag){
 
-      # Update parameters
-      loading_structure <- loadings_output$loadings # updated with cross-loadings
+        # Obtain full loadings and correlations
+        loadings_output <- egm_correlation_optimize(
+          loading_structure = loading_structure, correlations = correlations,
+          between_indices = as.logical(between_indices)
+        )
 
-      # Add cross-loadings that do not contribute to correlations
-      for(i in community_sequence){
+        # Update parameters
+        loading_structure <- loadings_output$loadings # updated with cross-loadings
 
-        # Get block index
-        block_index <- membership == i
+        # Add cross-loadings that do not contribute to correlations
+        for(i in community_sequence){
 
-        # Get number of variables
-        block_variables <- sum(block_index)
+          # Get block index
+          block_index <- membership == i
 
-        # Loop over cross-loadings
-        for(j in community_sequence){
+          # Get number of variables
+          block_variables <- sum(block_index)
 
-          # Except for itself
-          if(i != j){
+          # Loop over cross-loadings
+          for(j in community_sequence){
 
-            # Target cross-loadings
-            target_cross <- loading_structure[block_index, j]
+            # Except for itself
+            if(i != j){
 
-            # Add cross-loadings
-            loading_structure[block_index, j] <-  target_cross +
-              rnorm_ziggurat(block_variables) * cross.loadings *
-              (target_cross != 0) # ensure sparsity (if sparse)
+              # Target cross-loadings
+              target_cross <- loading_structure[block_index, j]
+
+              # Add cross-loadings
+              loading_structure[block_index, j] <-  target_cross +
+                rnorm_ziggurat(block_variables) * cross.loadings *
+                (target_cross != 0) # ensure sparsity (if sparse)
+
+            }
 
           }
 
         }
 
       }
+
+      # Set correlations for loadings
+      loadings_R <- nload2cor(loading_structure)
+
+      # Set lower triangle
+      lower_triangle <- lower.tri(loadings_R)
 
       # Obtain population correlation matrix
-      network <- set_network(loading_structure, membership, c(sample.size, total_variables))
+      network <- probabilistic_network(
+        loading_structure, membership, sample.size,
+        total_variables, lower_triangle
+      )
+
+      # Optimize network toward loadings
+      network_vector <- as.vector(network[lower_triangle])
+      zeros <- network_vector != 0
+
+      # Update network edge parameters
+      network_vector[zeros] <- egm_network_optimize(
+        network_vector = network_vector[zeros],
+        R = loadings_R,
+        n = sample.size, v = total_variables,
+        lower_triangle = lower_triangle,
+        zeros = zeros, opt = "srmr"
+      )$par
+
+      # Update network
+      network[lower_triangle] <- network_vector
+      network <- t(network)
+      network[lower_triangle] <- network_vector
 
       # Convert network to zero-order correlations
       R <- pcor2cor(network)
@@ -269,6 +355,29 @@ simEGM <- function(
 
       # Check for cross-loadings that are larger than their assigned loadings
       cross_check <- any(max.col(abs(loading_structure)) != membership)
+
+      # Set quality metrics
+      quality_metrics <- c(
+        srmr(R, loadings_R), mean(abs(R - loadings_R)),
+        frobenius(R, loadings_R), jsd(R, loadings_R)
+      )
+
+      # Quality metric check
+      quality_df <- data.frame(
+        Metric = c("SRMR", "MAE", "Frobenius", "JSD"),
+        Value = quality_metrics,
+        Acceptable = quality_comp$acceptable,
+        Robust = quality_comp$robust,
+        Quality = c( # Use robust
+          quality_metrics[1] < quality_comp[[quality]][1],
+          quality_metrics[2] < quality_comp[[quality]][2],
+          quality_metrics[3] > quality_comp[[quality]][3],
+          quality_metrics[4] < quality_comp[[quality]][4]
+        )
+      )
+
+      # Check that at least one quality check is satisfied
+      quality_check <- any(quality_df$Quality)
 
     }
 
@@ -289,6 +398,11 @@ simEGM <- function(
   # Set variable names
   colnames(data) <- node_names
 
+  # Set correlations
+  if(dimensional_flag){
+    correlations <- loadings_output$correlations # precise correlations
+  }
+
   # Return results
   return(
     list(
@@ -299,7 +413,7 @@ simEGM <- function(
       parameters = list(
         adjacency = network != 0,
         loadings = loading_structure,
-        correlations = loadings_output$correlations, # precise correlations
+        correlations = correlations,
         membership = membership,
         iterations = count
       )
@@ -310,10 +424,10 @@ simEGM <- function(
 
 #' @noRd
 # Errors ----
-# Updated 14.04.2025
+# Updated 22.07.2025
 simEGM_errors <- function(
     communities, variables, loadings, cross.loadings,
-    correlations, sample.size, max.iterations
+    correlations, sample.size, density.power, max.iterations
 )
 {
 
@@ -362,10 +476,66 @@ simEGM_errors <- function(
   typeof_error(sample.size, "numeric", "simEGM")
   range_error(sample.size, c(1, Inf), "simEGM")
 
+  # 'density.power'
+  length_error(density.power, 1, "simEGM")
+  typeof_error(density.power, "numeric", "simEGM")
+  range_error(density.power, c(1, Inf), "simEGM")
+
   # 'max.iterations'
   length_error(max.iterations, 1, "simEGM")
   typeof_error(max.iterations, "numeric", "simEGM")
   range_error(max.iterations, c(1, Inf), "simEGM")
+
+}
+
+#' @noRd
+# Probabilistic network ----
+# Updated 22.07.2025
+probabilistic_network <- function(
+    loading_structure, membership, sample_size,
+    total_variables, lower_triangle
+)
+{
+
+  # Obtain partial correlations
+  P <- nload2pcor(loading_structure)
+
+  # Set edges to zero for zero loadings
+  for(i in seq_len(total_variables)){
+
+    # Check for zero loadings
+    zero_index <- which(loading_structure[i,] == 0)
+
+    # Identify whether zero loadings exist
+    if(length(zero_index) != 0){
+
+      # Loop over zero loading memberships
+      for(community in zero_index){
+
+        # Get index
+        index <- membership == community
+
+        # Set values to zero
+        P[index, i] <- P[i, index] <- 0
+
+      }
+
+    }
+
+  }
+
+  # Test statistic
+  test <- abs(r2z(P)) / sqrt(1 / (sample_size - total_variables - 5))
+
+  # Sample based on probabilities
+  retain_edges <- runif_xoshiro(sum(lower_triangle)) < pnorm(abs(test))[lower_triangle]
+
+  # Set adjacency
+  adjacency <- matrix(FALSE, total_variables, total_variables)
+  adjacency[lower_triangle] <- retain_edges
+
+  # Return adjacency
+  return(P * (adjacency + t(adjacency)))
 
 }
 

@@ -532,7 +532,7 @@ srmr_network_cost <- function(network_vector, R, n, v, lower_triangle, zeros, ..
   I <- diag(sqrt(1 / diag(K)))
 
   # Return SRMR
-  return(srmr(I %*% K %*% I, R, power = 4))
+  return(srmr(I %*% K %*% I, R))
 
 }
 
@@ -553,7 +553,7 @@ srmr_network_gradient <- function(network_vector, R, n, v, lower_triangle, zeros
   I <- diag(sqrt(1 / diag(K)))
 
   # Compute error
-  dError <- 4 * ((I %*% K %*% I - R) / sum(lower_triangle))^3
+  dError <- 2 * ((I %*% K %*% I - R) / sum(lower_triangle))
 
   # Return gradient
   return((K %*% I %*% dError %*% I %*% K)[lower_triangle][zeros])
@@ -616,13 +616,16 @@ logLik_network_gradient <- function(network_vector, R, n, v, lower_triangle, zer
 
 #' @noRd
 # EGM network optimization
-# Updated 13.06.2025
+# Updated 22.07.2025
 egm_network_optimize <- function(
-    network_vector, network_length,
-    R, n, v, lower_triangle,
-    zeros, opt, ...
+    network_vector, R, n, v,
+    lower_triangle, zeros, opt,
+    ...
 )
 {
+
+  # Set bounds
+  bounds <- sum(zeros)
 
   return(
     silent_call(
@@ -639,7 +642,7 @@ egm_network_optimize <- function(
           "srmr" = srmr_network_gradient
         ),
         R = R, n = n, v = v, lower_triangle = lower_triangle, zeros = zeros,
-        lower = rep(-1, network_length), upper = rep(1, network_length),
+        lower = -bounds, upper = bounds,
         control = list(
           eval.max = 1000, iter.max = 1000,
           step.min = .Machine$double.eps, step.max = 1,
@@ -687,7 +690,7 @@ egm_correlation_optimize <- function(loading_structure, correlations, between_in
   simple_structure <- loading_structure
 
   # Bounds (can't be larger than assigned loadings)
-  max_assigned <- apply(simple_structure, 1, function(x){max(abs(x))}) - 0.01
+  max_assigned <- apply(simple_structure, 1, function(x){max(abs(x))}) - 0.001
   bounds <- as.vector(max_assigned * between_indices)
   bounds <- bounds[between_indices]
 
