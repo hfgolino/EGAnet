@@ -404,7 +404,7 @@ hessian_optimize <- function(
 
 #' @noRd
 # Loading optimization ----
-# Updated 13.07.2025
+# Updated 22.07.2025
 loadings_optimization <- function(
     iter = 10, loadings_vector, zeros, R, loading_structure,
     communities, data_dimensions, lower_triangle, opt
@@ -419,7 +419,7 @@ loadings_optimization <- function(
   loadings_lambda_max <- 10
 
   # Seek out positive eigenvalue
-  for(i in seq_len(10)){
+  for(i in seq_len(iter)){
 
     # Optimize for best quality solution (quick passes)
     lambda <- optimize(

@@ -1426,11 +1426,30 @@ EGM.explore.core <- function(
   # Set absolute P
   absolute_P <- abs(P)
 
-  # Obtain number of loading parameters
-  loading_parameters <- sum(loadings != 0)
-
   # Set thresholds
   thresholds <- sort(unique((absolute_P[lower_triangle]))) - 1e-08
+
+  # Set bounds on thresholds
+  if(communities == 1){# Divert based on dimensionality
+
+    # Set bound based on range of minimum assigned edges
+    bound <- range(apply(absolute_P, 2, function(x){min(x[x != 0])}))
+
+  }else{
+
+    # Obtain membership matrix
+    membership_matrix <- outer(membership, membership, FUN = "==")
+
+    # Set bound at the boundary of the within- and between-community edges
+    bound <- range(
+      min(apply(absolute_P * !membership_matrix, 2, function(x){max(x[x != 0])})),
+      min(apply(absolute_P * membership_matrix, 2, function(x){max(x[x != 0])}))
+    )
+
+  }
+
+  # Use max for bounds
+  thresholds <- thresholds[thresholds >= bound[1] & thresholds <= bound[2]]
 
   # Get fits for thresholds
   threshold_fit <- nvapply(
@@ -1455,20 +1474,6 @@ EGM.explore.core <- function(
       }
 
     }
-  }
-
-  # Check positive definite after loading threshold
-  if(anyNA(nload2cor(loadings))){
-
-    # Check down reasons
-    converged <- "1: not positive definite"
-
-    # Updated bad fit
-    bad_fit[,c("min_eigenvalue", "converged")] <- c(min_eigenvalue, converged)
-
-    # Return bad result
-    return(list(loadings = loadings, fit = bad_fit))
-
   }
 
   # Get implied correlations
@@ -1502,7 +1507,7 @@ EGM.explore.core <- function(
   )
 
   # Obtain loading parameters
-  parameters <- sum(P[lower_triangle] != 0)
+  parameters <- sum(P[lower_triangle] != 0) + sum(loadings != 0)
 
   # Compute negative 2 times log-likelihood
   logLik2 <- 2 * logLik
