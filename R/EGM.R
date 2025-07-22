@@ -1351,6 +1351,11 @@ EGM.explore.core <- function(
 
   }
 
+  # Obtain simple structure
+  for(i in seq_len(communities)){
+    loadings[membership == i, -i] <- 0
+  }
+
   # Set up loadings vector
   loadings_vector <- as.vector(loadings)
 
@@ -1364,15 +1369,13 @@ EGM.explore.core <- function(
     dimnames = dimension_names
   )
 
-  # Allow zeros to be estimated
-  zeros <- rep(1, length(loadings_vector))
-
   # Set lower triangle
   lower_triangle <- lower.tri(empirical_R)
 
   # Optimize for initial loadings
   initial_loadings <- loadings_optimization(
-    iter = 10, loadings_vector = loadings_vector, zeros = zeros,
+    iter = 10, loadings_vector = loadings_vector,
+    zeros = rep(1, length(loadings_vector)),
     R = empirical_R, loading_structure = loading_structure,
     communities = communities, data_dimensions = data_dimensions,
     lower_triangle = lower_triangle, opt = opt
@@ -1495,6 +1498,31 @@ EGM.explore.core <- function(
     opt = "srmr", iterations = 10000
   )$par
 
+  # Update memberships
+  membership <- max.col(abs(loadings))
+
+  # Run back membership checks
+  meaningful_flag <- unique_length(membership) != dimensions[2]
+  singleton_flag <- any(fast_table(membership) < 2)
+
+  # Check overall quality
+  if(meaningful_flag || singleton_flag){
+
+    # Check down reasons
+    if(meaningful_flag){
+      converged <- "1: unique membership < communities"
+    }else if(singleton_flag){
+      converged <- "1: singleton communities"
+    }
+
+    # Updated bad fit
+    bad_fit[,c("min_eigenvalue", "converged")] <- c(min_eigenvalue, converged)
+
+    # Return bad result
+    return(list(loadings = loadings, fit = bad_fit))
+
+  }
+
   # Add dimension names
   dimnames(P) <- dimnames(empirical_R)
 
@@ -1506,8 +1534,9 @@ EGM.explore.core <- function(
     )
   )
 
-  # Obtain loading parameters
-  parameters <- sum(P[lower_triangle] != 0) + sum(loadings != 0)
+  # Set parameters to network + *all* loadings
+  # (since all loadings were estimated and zeros are network-implied)
+  parameters <- sum(P[lower_triangle] != 0) + length(loadings)
 
   # Compute negative 2 times log-likelihood
   logLik2 <- 2 * logLik
@@ -1635,20 +1664,8 @@ select_threshold <- function(
   # Set network matrix
   network <- P * (absolute_P > threshold)
 
-  # Set loadings to zero
-  for(i in seq_len(data_dimensions[2])){
-    for(j in unique(membership)){
-
-      # Check for all zeros in network
-      if(all(network[membership == j, i] == 0)){
-        loadings[i,j] <- 0
-      }
-
-    }
-  }
-
   # Set parameters
-  parameters <- sum(network[lower_triangle] != 0) + sum(loadings != 0)
+  parameters <- sum(network[lower_triangle] != 0)
 
   # Compute log-likelihood
   loglik <- log_likelihood(

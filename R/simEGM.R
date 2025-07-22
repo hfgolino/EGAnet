@@ -173,15 +173,6 @@ simEGM <- function(
 
   }else{ # Generate the matrix
 
-    # Initialize structure matrix
-    between_indices <- loading_structure <- matrix(
-      0, nrow = total_variables, ncol = communities,
-      dimnames = list(
-        node_names,
-        format_integer(community_sequence, digits(communities) - 1) # community names
-      )
-    )
-
     # Set up loadings
     if(!is.matrix(loadings)){
 
@@ -230,6 +221,15 @@ simEGM <- function(
         )
 
       }
+
+      # Initialize structure matrix
+      between_indices <- loading_structure <- matrix(
+        0, nrow = total_variables, ncol = communities,
+        dimnames = list(
+          node_names,
+          format_integer(community_sequence, digits(communities) - 1) # community names
+        )
+      )
 
       # Generate within-community loadings
       for(i in community_sequence){
@@ -376,8 +376,8 @@ simEGM <- function(
         )
       )
 
-      # Check that at least one quality check is satisfied
-      quality_check <- any(quality_df$Quality)
+      # Check that quality metrics are all satisfied
+      quality_check <- sum(quality_df$Quality) == 4
 
     }
 
