@@ -1466,6 +1466,9 @@ EGM.explore.core <- function(
   minimum_index <- which.min(threshold_fit)
   P <- P * (absolute_P > thresholds[[minimum_index]])
 
+  # Get implied correlations
+  implied_R <- pcor2cor(P)
+
   # Set loadings to zero
   for(i in seq_len(data_dimensions[2])){
     for(j in seq_len(communities)){
@@ -1477,9 +1480,6 @@ EGM.explore.core <- function(
 
     }
   }
-
-  # Get implied correlations
-  implied_R <- pcor2cor(P)
 
   # Set up loadings vector
   loadings_vector <- as.vector(loadings)
@@ -1645,6 +1645,44 @@ obtain_modularity <- function(network, membership = NULL)
         unique_length(membership) == 1,
         igraph::transitivity(convert2igraph(network)) / 3,
         modularity(network, membership)
+      )
+    )
+  )
+
+}
+
+#' @noRd
+# l1 soft threshold ----
+# Updated 23.07.2025
+l1_threshold <- function(x, lambda)
+{
+  return(sign(x) * pmax(abs(x) - lambda, 0))
+}
+
+#' @noRd
+# SCAD soft threshold ----
+# Updated 23.07.2025
+scad_threshold <- function(x, lambda)
+{
+
+  # gamma = 3.7
+  # tau = 1
+
+  # Set absolute
+  L <- abs(x)
+
+  # Pre-compute components
+  gamma_lambda <- 3.7 * lambda
+
+  # Return values
+  return(
+    ifelse(
+      L <= 2 * lambda,
+      l1_threshold(x, lambda),
+      ifelse(
+        L <= gamma_lambda,
+        1.588235 * l1_threshold(x, gamma_lambda / 2.7),
+        x
       )
     )
   )
