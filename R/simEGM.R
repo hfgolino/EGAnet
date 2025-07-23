@@ -277,6 +277,9 @@ simEGM <- function(
       # Check for multidimensional
       if(dimensional_flag){
 
+        # Set within indices for simple structure
+        within_indices <- loading_structure != 0
+
         # Obtain full loadings and correlations
         loadings_output <- egm_correlation_optimize(
           loading_structure = loading_structure, correlations = correlations,
@@ -399,7 +402,7 @@ simEGM <- function(
 
   # Set correlations
   if(dimensional_flag){
-    correlations <- loadings_output$correlations # precise correlations
+    correlations <- community_correlations(loading_structure * within_indices, loading_structure)
   }
 
   # Return results
