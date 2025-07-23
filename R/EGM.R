@@ -1307,7 +1307,7 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
 
 #' @noRd
 # EGM | Core Exploration ----
-# Updated 13.07.2025
+# Updated 23.07.2025
 EGM.explore.core <- function(
     communities, null_P, cluster, variable_names,
     data_dimensions, empirical_R, opt, ...
@@ -1342,10 +1342,7 @@ EGM.explore.core <- function(
       index <- membership == i
 
       # Set singleton to max of overall connections (allow drop to vector)
-      for(i in which(singletons)){
-        loadings[,i] <- 0
-        loadings[index, i] <- max(null_P[index,])
-      }
+      loadings[index, i] <- max(null_P[index,])
 
     }
 
@@ -1356,17 +1353,13 @@ EGM.explore.core <- function(
     loadings[membership == i, -i] <- 0
   }
 
-  # Set up loadings vector
-  loadings_vector <- as.vector(loadings)
-
   # Get loading dimensions
   dimensions <- dim(loadings)
-  dimension_names <- dimnames(loadings)
 
   # Set up loading structure
   loading_structure <- matrix(
     TRUE, nrow = dimensions[1], ncol = dimensions[2],
-    dimnames = dimension_names
+    dimnames = dimnames(loadings)
   )
 
   # Set lower triangle
@@ -1374,8 +1367,8 @@ EGM.explore.core <- function(
 
   # Optimize for initial loadings
   initial_loadings <- loadings_optimization(
-    iter = 10, loadings_vector = loadings_vector,
-    zeros = rep(1, length(loadings_vector)),
+    iter = 10, loadings_vector = as.vector(loadings),
+    zeros = rep(1, length(loadings)),
     R = empirical_R, loading_structure = loading_structure,
     communities = communities, data_dimensions = data_dimensions,
     lower_triangle = lower_triangle, opt = opt
@@ -1400,7 +1393,7 @@ EGM.explore.core <- function(
 
   # Get quality flags
   negative_flag <- min_eigenvalue < 0 & initial_loadings$convergence == 1
-  meaningful_flag <- unique_length(membership) != dimensions[2]
+  meaningful_flag <- unique_length(membership) != communities
   singleton_flag <- any(fast_table(membership) < 2)
   PD_flag <- anyNA(P) || !is_positive_definite(pcor2cor(P))
 
@@ -1469,7 +1462,7 @@ EGM.explore.core <- function(
   # Get implied correlations
   implied_R <- pcor2cor(P)
 
-  # Set loadings to zero
+  # Set loadings to zero where there are no connections to the community
   for(i in seq_len(data_dimensions[2])){
     for(j in seq_len(communities)){
 
@@ -1481,15 +1474,9 @@ EGM.explore.core <- function(
     }
   }
 
-  # Set up loadings vector
-  loadings_vector <- as.vector(loadings)
-
-  # Don't allow zeros to be estimated
-  zeros <- loadings_vector != 0
-
   # Update loading parameters
   loadings[] <- egm_optimize(
-    loadings_vector = loadings_vector, zeros = zeros,
+    loadings_vector = as.vector(loadings), zeros = loadings != 0,
     R = implied_R, loading_structure = loading_structure,
     rows = communities, n = data_dimensions[1],
     v = data_dimensions[2], constrained = FALSE,
@@ -1501,7 +1488,7 @@ EGM.explore.core <- function(
   membership <- max.col(abs(loadings))
 
   # Run back membership checks
-  meaningful_flag <- unique_length(membership) != dimensions[2]
+  meaningful_flag <- unique_length(membership) != communities
   singleton_flag <- any(fast_table(membership) < 2)
 
   # Check overall quality
