@@ -242,7 +242,7 @@ simEGM <- function(
 
         # Set assigned loadings
         loading_structure[block_index, i] <- runif_xoshiro(
-          block_variables, min = loadings[i] - 0.05, max = loadings[i] + 0.05
+          block_variables, min = loadings[i] - 0.025, max = loadings[i] + 0.025
         )
 
         # Check for multidimensional
@@ -318,10 +318,10 @@ simEGM <- function(
       }
 
       # Set correlations for loadings
-      loadings_R <- nload2cor(loading_structure)
+      R <- nload2cor(loading_structure)
 
       # Set lower triangle
-      lower_triangle <- lower.tri(loadings_R)
+      lower_triangle <- lower.tri(R)
 
       # Obtain population correlation matrix
       network <- probabilistic_network(
@@ -336,8 +336,7 @@ simEGM <- function(
       # Update network edge parameters
       network_vector[zeros] <- egm_network_optimize(
         network_vector = network_vector[zeros],
-        R = loadings_R,
-        n = sample.size, v = total_variables,
+        R = R, n = sample.size, v = total_variables,
         lower_triangle = lower_triangle,
         zeros = zeros, opt = "srmr"
       )$par
@@ -347,8 +346,8 @@ simEGM <- function(
       network <- t(network)
       network[lower_triangle] <- network_vector
 
-      # Convert network to zero-order correlations
-      R <- pcor2cor(network)
+      # Network correlations
+      network_R <- pcor2cor(network)
 
       # Check for positive definite
       PD_check <- is_positive_definite(R)
@@ -358,8 +357,8 @@ simEGM <- function(
 
       # Set quality metrics
       quality_metrics <- c(
-        srmr(R, loadings_R), mean(abs(R - loadings_R)),
-        frobenius(R, loadings_R), jsd(R, loadings_R)
+        srmr(R, network_R), mean(abs(R - network_R)),
+        frobenius(R, network_R), jsd(R, network_R)
       )
 
       # Quality metric check
