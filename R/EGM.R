@@ -1457,8 +1457,7 @@ EGM.explore.core <- function(
   # Get fits for thresholds
   threshold_fit <- nvapply(
     thresholds, select_threshold, P = P, absolute_P = absolute_P,
-    membership = membership, loadings = loadings,
-    lower_triangle = lower_triangle,
+    membership = membership, lower_triangle = lower_triangle,
     data_dimensions = data_dimensions,
     empirical_R = empirical_R
   )
@@ -1656,7 +1655,7 @@ obtain_modularity <- function(network, membership = NULL)
 # Select threshold for network ----
 # Updated 22.07.2025
 select_threshold <- function(
-    threshold, P, absolute_P, membership, loadings,
+    threshold, P, absolute_P, membership,
     lower_triangle, data_dimensions, empirical_R
 )
 {
