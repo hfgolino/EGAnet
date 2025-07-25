@@ -13,6 +13,7 @@ EGM(
   p.in = NULL,
   p.out = NULL,
   opt = c("logLik", "SRMR"),
+  proximal = c("l1", "l2", "MCP", "SCAD"),
   model.select = c("logLik", "AIC", "AICc", "AICq", "BIC", "Q"),
   constrain.structure = TRUE,
   constrain.zeros = TRUE,

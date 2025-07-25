@@ -172,6 +172,7 @@ EGM <- function(
     data, EGM.model = c("explore", "EGA", "probability"),
     communities = NULL, structure = NULL, search = FALSE,
     p.in = NULL, p.out = NULL, opt = c("logLik", "SRMR"),
+    proximal = c("l1", "l2", "MCP", "SCAD"),
     model.select = c("logLik", "AIC", "AICc", "AICq", "BIC", "Q"),
     constrain.structure = TRUE, constrain.zeros = TRUE,
     verbose = TRUE, ...
@@ -181,6 +182,7 @@ EGM <- function(
   # Set default
   EGM.model <- set_default(EGM.model, "explore", EGM)
   opt <- set_default(opt, "loglik", EGM)
+  proximal <- set_default(proximal, "mcp", EGM)
   model.select <- set_default(model.select, "aicq", EGM)
 
   # Set up EGM type internally
@@ -210,7 +212,7 @@ EGM <- function(
   return(
     switch(
       EGM.type,
-      "explore" = EGM.explore(data, communities, search, opt, model.select, ...),
+      "explore" = EGM.explore(data, communities, search, opt, proximal, model.select, ...),
       "ega" = EGM.EGA(data, structure, opt, constrain.structure, constrain.zeros, ...),
       "ega.search" = EGM.EGA.search(data, communities, structure, opt, constrain.structure, constrain.zeros, verbose, ...),
       "probability" = EGM.probability(data, communities, structure, p.in, p.out, opt, constrain.structure, constrain.zeros, ...),
@@ -448,7 +450,7 @@ compute_tefi_adjustment <- function(loadings, correlations)
 #' @noRd
 # EGM | Exploratory ----
 # Updated 20.06.2025
-EGM.explore <- function(data, communities, search, opt, model.select, ...)
+EGM.explore <- function(data, communities, search, opt, proximal, model.select, ...)
 {
 
   # Obtain data dimensions
@@ -487,7 +489,7 @@ EGM.explore <- function(data, communities, search, opt, model.select, ...)
     community_sequence, EGM.explore.core, null_P = null_P,
     cluster = hclust(d = as.dist(1 - sqrt(abs(null_P))), method = "average"),
     variable_names = variable_names, data_dimensions = data_dimensions,
-    empirical_R = empirical_R, opt = opt
+    empirical_R = empirical_R, opt = opt, proximal = proximal
   )
 
   # Obtain fits
@@ -1307,10 +1309,10 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
 
 #' @noRd
 # EGM | Core Exploration ----
-# Updated 23.07.2025
+# Updated 25.07.2025
 EGM.explore.core <- function(
     communities, null_P, cluster, variable_names,
-    data_dimensions, empirical_R, opt, ...
+    data_dimensions, empirical_R, opt, proximal, ...
 )
 {
 
@@ -1385,20 +1387,43 @@ EGM.explore.core <- function(
   # Format loadings
   loadings[] <- initial_loadings$par
 
-  # Obtain model-implied partial correlations
-  P <- nload2pcor(loadings)
+  # Set lambda sequence
+  lambdas <- seq(0.01, 0.15, 0.001)
 
-  # Obtain solution
+  # Set proximal operator function
+  proximal_FUN <- switch(
+    proximal,
+    "l1" = l1_proximal, "l2" = l2_proximal,
+    "mcp" = mcp_proximal, "scad" = scad_proximal
+  )
+
+  # Optimize SCAD soft threshold
+  soft_fits <- nvapply(
+    lambdas, soft_threshold, loadings = loadings,
+    proximal_FUN = proximal_FUN,
+    empirical_R = empirical_R,
+    lower_triangle = lower_triangle,
+    data_dimensions = data_dimensions
+  )
+
+  # Get updated loadings
+  loadings[] <- proximal_FUN(loadings, lambdas[[which.min(soft_fits)]])
+
+  # Set membership
   membership <- max.col(abs(loadings))
+
+  # Obtain model-implied partial correlations
+  P <- set_network(loadings, membership, data_dimensions)
 
   # Get quality flags
   negative_flag <- min_eigenvalue < 0 & initial_loadings$convergence == 1
   meaningful_flag <- unique_length(membership) != communities
   singleton_flag <- any(fast_table(membership) < 2)
   PD_flag <- anyNA(P) || !is_positive_definite(pcor2cor(P))
+  empty_flag <- all(P == 0)
 
   # Check overall quality
-  if(negative_flag || meaningful_flag || singleton_flag || PD_flag){
+  if(negative_flag || meaningful_flag || singleton_flag || PD_flag || empty_flag){
 
     # Check down reasons
     if(negative_flag){
@@ -1409,6 +1434,8 @@ EGM.explore.core <- function(
       converged <- "1: singleton communities"
     }else if(PD_flag){
       converged <- "1: not positive definite"
+    }else if(empty_flag){
+      converged <- "1: empty network"
     }
 
     # Updated bad fit
@@ -1419,60 +1446,63 @@ EGM.explore.core <- function(
 
   }
 
-  # Set absolute P
-  absolute_P <- abs(P)
-
-  # Set thresholds
-  thresholds <- sort(unique((absolute_P[lower_triangle]))) - 1e-08
-
-  # Set bounds on thresholds
-  if(communities == 1){# Divert based on dimensionality
-
-    # Set bound based on range of minimum assigned edges
-    bound <- range(apply(absolute_P, 2, function(x){min(x[x != 0])}))
-
-  }else{
-
-    # Obtain membership matrix
-    membership_matrix <- outer(membership, membership, FUN = "==")
-
-    # Set bound at the boundary of the within- and between-community edges
-    bound <- range(
-      min(apply(absolute_P * !membership_matrix, 2, function(x){max(x[x != 0])})),
-      min(apply(absolute_P * membership_matrix, 2, function(x){max(x[x != 0])}))
-    )
-
-  }
-
-  # Use max for bounds
-  thresholds <- thresholds[thresholds >= bound[1] & thresholds <= bound[2]]
-
-  # Get fits for thresholds
-  threshold_fit <- nvapply(
-    thresholds, select_threshold, P = P, absolute_P = absolute_P,
-    membership = membership, lower_triangle = lower_triangle,
-    data_dimensions = data_dimensions,
-    empirical_R = empirical_R
-  )
-
-  # Update P based on threshold fits
-  minimum_index <- which.min(threshold_fit)
-  P <- P * (absolute_P > thresholds[[minimum_index]])
+  # # Set absolute P
+  # absolute_P <- abs(P)
+  #
+  # # Set thresholds
+  # thresholds <- sort(unique((absolute_P[lower_triangle]))) - 1e-08
+  #
+  # # Set bounds on thresholds
+  # if(communities == 1){# Divert based on dimensionality
+  #
+  #   # Set bound based on range of minimum assigned edges
+  #   bound <- range(apply(absolute_P, 2, function(x){min(x[x != 0])}))
+  #
+  # }else{
+  #
+  #   # Obtain membership matrix
+  #   membership_matrix <- outer(membership, membership, FUN = "==")
+  #
+  #   # Set bound at the boundary of the within- and between-community edges
+  #   bound <- range(
+  #     min(apply(absolute_P * !membership_matrix, 2, function(x){max(x[x != 0])})),
+  #     min(apply(absolute_P * membership_matrix, 2, function(x){max(x[x != 0])}))
+  #   )
+  #
+  # }
+  #
+  # # Use max for bounds
+  # thresholds <- thresholds[thresholds >= bound[1] & thresholds <= bound[2]]
+  #
+  # # Get fits for thresholds
+  # threshold_fit <- nvapply(
+  #   thresholds, select_threshold, P = P, absolute_P = absolute_P,
+  #   membership = membership, lower_triangle = lower_triangle,
+  #   data_dimensions = data_dimensions,
+  #   empirical_R = empirical_R
+  # )
+  #
+  # # Update P based on threshold fits
+  # minimum_index <- which.min(threshold_fit)
+  # P <- P * (absolute_P > thresholds[[minimum_index]])
+  #
+  # # Get implied correlations
+  # implied_R <- pcor2cor(P)
+  #
+  # # Set loadings to zero where there are no connections to the community
+  # for(i in seq_len(data_dimensions[2])){
+  #   for(j in seq_len(communities)){
+  #
+  #     # Check for all zeros in network
+  #     if(all(P[membership == j, i] == 0)){
+  #       loadings[i,j] <- 0
+  #     }
+  #
+  #   }
+  # }
 
   # Get implied correlations
   implied_R <- pcor2cor(P)
-
-  # Set loadings to zero where there are no connections to the community
-  for(i in seq_len(data_dimensions[2])){
-    for(j in seq_len(communities)){
-
-      # Check for all zeros in network
-      if(all(P[membership == j, i] == 0)){
-        loadings[i,j] <- 0
-      }
-
-    }
-  }
 
   # Update loading parameters
   loadings[] <- egm_optimize(
@@ -1522,7 +1552,7 @@ EGM.explore.core <- function(
 
   # Set parameters to network + *all* loadings
   # (since all loadings were estimated and zeros are network-implied)
-  parameters <- sum(P[lower_triangle] != 0) + length(loadings)
+  parameters <- sum(loadings != 0) # sum(P[lower_triangle] != 0) + length(loadings)
 
   # Compute negative 2 times log-likelihood
   logLik2 <- 2 * logLik
@@ -1630,7 +1660,8 @@ obtain_modularity <- function(network, membership = NULL)
       is.null(membership), 1,
       swiftelse(
         unique_length(membership) == 1,
-        igraph::transitivity(convert2igraph(network)) / 3,
+        mean(network[lower.tri(network)]),
+        # igraph::transitivity(convert2igraph(network)) / 3,
         modularity(network, membership)
       )
     )
@@ -1639,68 +1670,121 @@ obtain_modularity <- function(network, membership = NULL)
 }
 
 #' @noRd
-# l1 soft threshold ----
-# Updated 23.07.2025
-l1_threshold <- function(x, lambda)
-{
-  return(sign(x) * pmax(abs(x) - lambda, 0))
-}
-
-#' @noRd
-# SCAD soft threshold ----
-# Updated 23.07.2025
-scad_threshold <- function(x, lambda)
-{
-
-  # gamma = 3.7
-  # tau = 1
-
-  # Set absolute
-  L <- abs(x)
-
-  # Pre-compute components
-  gamma_lambda <- 3.7 * lambda
-
-  # Return values
-  return(
-    ifelse(
-      L <= 2 * lambda,
-      l1_threshold(x, lambda),
-      ifelse(
-        L <= gamma_lambda,
-        1.588235 * l1_threshold(x, gamma_lambda / 2.7),
-        x
-      )
-    )
-  )
-
-}
-
-#' @noRd
-# Select threshold for network ----
-# Updated 22.07.2025
-select_threshold <- function(
-    threshold, P, absolute_P, membership,
-    lower_triangle, data_dimensions, empirical_R
+# Soft threshold ----
+# Updated 25.07.2025
+soft_threshold <- function(
+    lambda, proximal_FUN, loadings,
+    empirical_R, lower_triangle, data_dimensions,
+    ...
 )
 {
 
-  # Set network matrix
-  network <- P * (absolute_P > threshold)
+  # Apply proximal operator
+  loadings[] <- proximal_FUN(loadings, lambda, ...)
 
-  # Set parameters
-  parameters <- sum(network[lower_triangle] != 0)
+  # Set membership
+  membership <- max.col(abs(loadings))
 
-  # Compute log-likelihood
-  loglik <- log_likelihood(
-    n = data_dimensions[1], p = data_dimensions[2],
-    R = pcor2cor(network), S = empirical_R, type = "zero"
+  # Obtain model-implied partial correlations with L1
+  P <- try(
+    set_network(
+      loadings = loadings, membership = membership,
+      data_dimensions = data_dimensions
+    ), silent = TRUE
   )
 
-  # Send result
-  return(-2 * loglik + 2 * parameters - obtain_modularity(network, membership) * 40)
+  # Check first for missing issues (all zero loadings)
+  if(is(P, "try-error") || anyNA(P)){
+    return(Inf)
+  }
+
+  # Convert partial correlations to zero-order correlations
+  R <- try(pcor2cor(P), silent = TRUE)
+
+  # Check for positive definite
+  if(is(R, "try-error") || anyNA(R) || !is_positive_definite(R)){
+    return(Inf)
+  }else{
+
+    # Set parameters
+    parameters <- sum(loadings != 0)
+
+    # Compute log-likelihood
+    loglik <- log_likelihood(
+      n = data_dimensions[1], p = data_dimensions[2],
+      R = R, S = empirical_R, type = "zero"
+    )
+
+    # Send result
+    return(-2 * loglik + 2 * parameters - obtain_modularity(P, membership) * 40)
+
+  }
 
 }
+
+#' @noRd
+# Threshold for network ----
+# Updated 13.07.2025
+set_network <- function(loadings, membership, data_dimensions)
+{
+
+  # Obtain partial correlations
+  P <- nload2pcor(loadings)
+
+  # Set edges to zero for zero loadings
+  for(i in seq_len(data_dimensions[2])){
+
+    # Check for zero loadings
+    zero_index <- which(loadings[i,] == 0)
+
+    # Identify whether zero loadings exist
+    if(length(zero_index) != 0){
+
+      # Loop over zero loading memberships
+      for(community in zero_index){
+
+        # Get index
+        index <- membership == community
+
+        # Set values to zero
+        P[index, i] <- P[i, index] <- 0
+
+      }
+
+    }
+
+  }
+
+  # Return network
+  return(P)
+
+}
+
+# # @noRd
+# # Select threshold for network ----
+# # Updated 22.07.2025
+# select_threshold <- function(
+#     threshold, P, absolute_P, membership,
+#     lower_triangle, data_dimensions, empirical_R
+# )
+# {
+#
+#   # Set network matrix
+#   network <- P * (absolute_P > threshold)
+#
+#   # Set parameters
+#   parameters <- sum(network[lower_triangle] != 0)
+#
+#   # Compute log-likelihood
+#   loglik <- log_likelihood(
+#     n = data_dimensions[1], p = data_dimensions[2],
+#     R = pcor2cor(network), S = empirical_R, type = "zero"
+#   )
+#
+#   # Send result
+#   return(-2 * loglik + 2 * parameters - obtain_modularity(network, membership) * 40)
+#
+# }
 
 #' @noRd
 # Creates community structure ----
