@@ -1319,8 +1319,7 @@ EGM.explore.core <- function(
   # Set bad fit from the git
   bad_fit <- data.frame(
     parameters = NA, loglik = NA, aic = NA, aicc = NA,
-    bic = NA, q = NA, aicq = NA, min_eigenvalue = -Inf,
-    converged = "1: error in loading estimation"
+    bic = NA, q = NA, aicq = NA, converged = "1: error in loading estimation"
   )
 
   # Set memberships
@@ -1350,10 +1349,10 @@ EGM.explore.core <- function(
 
   }
 
-  # Obtain simple structure
-  for(i in seq_len(communities)){
-    loadings[membership == i, -i] <- 0
-  }
+  # # Obtain simple structure
+  # for(i in seq_len(communities)){
+  #   loadings[membership == i, -i] <- 0
+  # }
 
   # Get loading dimensions
   dimensions <- dim(loadings)
@@ -1416,19 +1415,16 @@ EGM.explore.core <- function(
   P <- set_network(loadings, membership, data_dimensions)
 
   # Get quality flags
-  negative_flag <- min_eigenvalue < 0 & initial_loadings$convergence == 1
   meaningful_flag <- unique_length(membership) != communities
   singleton_flag <- any(fast_table(membership) < 2)
   PD_flag <- anyNA(P) || !is_positive_definite(pcor2cor(P))
   empty_flag <- all(P == 0)
 
   # Check overall quality
-  if(negative_flag || meaningful_flag || singleton_flag || PD_flag || empty_flag){
+  if(meaningful_flag || singleton_flag || PD_flag || empty_flag){
 
     # Check down reasons
-    if(negative_flag){
-      converged <- "1: negative hessian eigenvalue"
-    }else if(meaningful_flag){
+    if(meaningful_flag){
       converged <- "1: unique membership < communities"
     }else if(singleton_flag){
       converged <- "1: singleton communities"
@@ -1439,7 +1435,7 @@ EGM.explore.core <- function(
     }
 
     # Updated bad fit
-    bad_fit[,c("min_eigenvalue", "converged")] <- c(min_eigenvalue, converged)
+    bad_fit$converged <- converged
 
     # Return bad result
     return(list(loadings = loadings, fit = bad_fit))
@@ -1532,7 +1528,7 @@ EGM.explore.core <- function(
     }
 
     # Updated bad fit
-    bad_fit[,c("min_eigenvalue", "converged")] <- c(min_eigenvalue, converged)
+    bad_fit$converged <- converged
 
     # Return bad result
     return(list(loadings = loadings, fit = bad_fit))
@@ -1576,7 +1572,6 @@ EGM.explore.core <- function(
     bic = logLik2 + parameters * log(data_dimensions[1]),
     q = -q,
     aicq = aic - q * 40,
-    min_eigenvalue = min_eigenvalue,
     converged = "0: successful"
   )
 
