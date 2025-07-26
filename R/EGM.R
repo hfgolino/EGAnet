@@ -1436,62 +1436,7 @@ EGM.explore.core <- function(
     # Return bad result
     return(list(loadings = loadings, fit = bad_fit))
 
-  }
-
-  # # Set absolute P
-  # absolute_P <- abs(P)
-  #
-  # # Set thresholds
-  # thresholds <- sort(unique((absolute_P[lower_triangle]))) - 1e-08
-  #
-  # # Set bounds on thresholds
-  # if(communities == 1){# Divert based on dimensionality
-  #
-  #   # Set bound based on range of minimum assigned edges
-  #   bound <- range(apply(absolute_P, 2, function(x){min(x[x != 0])}))
-  #
-  # }else{
-  #
-  #   # Obtain membership matrix
-  #   membership_matrix <- outer(membership, membership, FUN = "==")
-  #
-  #   # Set bound at the boundary of the within- and between-community edges
-  #   bound <- range(
-  #     min(apply(absolute_P * !membership_matrix, 2, function(x){max(x[x != 0])})),
-  #     min(apply(absolute_P * membership_matrix, 2, function(x){max(x[x != 0])}))
-  #   )
-  #
-  # }
-  #
-  # # Use max for bounds
-  # thresholds <- thresholds[thresholds >= bound[1] & thresholds <= bound[2]]
-  #
-  # # Get fits for thresholds
-  # threshold_fit <- nvapply(
-  #   thresholds, select_threshold, P = P, absolute_P = absolute_P,
-  #   membership = membership, lower_triangle = lower_triangle,
-  #   data_dimensions = data_dimensions,
-  #   empirical_R = empirical_R
-  # )
-  #
-  # # Update P based on threshold fits
-  # minimum_index <- which.min(threshold_fit)
-  # P <- P * (absolute_P > thresholds[[minimum_index]])
-  #
-  # # Get implied correlations
-  # implied_R <- pcor2cor(P)
-  #
-  # # Set loadings to zero where there are no connections to the community
-  # for(i in seq_len(data_dimensions[2])){
-  #   for(j in seq_len(communities)){
-  #
-  #     # Check for all zeros in network
-  #     if(all(P[membership == j, i] == 0)){
-  #       loadings[i,j] <- 0
-  #     }
-  #
-  #   }
-  # }
+  
 
   # Get implied correlations
   implied_R <- pcor2cor(P)
@@ -1530,9 +1475,6 @@ EGM.explore.core <- function(
     return(list(loadings = loadings, fit = bad_fit))
 
   }
-
-  # Get implied correlations from the loadings (the focus of the optimization procedure)
-  implied_R <- nload2cor(loadings)
 
   # Add dimension names
   dimnames(P) <- dimnames(empirical_R)
@@ -1752,32 +1694,6 @@ set_network <- function(loadings, membership, data_dimensions)
   return(P)
 
 }
-
-# # @noRd
-# # Select threshold for network ----
-# # Updated 22.07.2025
-# select_threshold <- function(
-#     threshold, P, absolute_P, membership,
-#     lower_triangle, data_dimensions, empirical_R
-# )
-# {
-#
-#   # Set network matrix
-#   network <- P * (absolute_P > threshold)
-#
-#   # Set parameters
-#   parameters <- sum(network[lower_triangle] != 0)
-#
-#   # Compute log-likelihood
-#   loglik <- log_likelihood(
-#     n = data_dimensions[1], p = data_dimensions[2],
-#     R = pcor2cor(network), S = empirical_R, type = "zero"
-#   )
-#
-#   # Send result
-#   return(-2 * loglik + 2 * parameters - obtain_modularity(network, membership) * 40)
-#
-# }
 
 #' @noRd
 # Creates community structure ----
