@@ -1343,16 +1343,12 @@ EGM.explore.core <- function(
       index <- membership == i
 
       # Set singleton to max of overall connections (allow drop to vector)
+      loadings[,i] <- 0
       loadings[index, i] <- max(null_P[index,])
 
     }
 
   }
-
-  # # Obtain simple structure
-  # for(i in seq_len(communities)){
-  #   loadings[membership == i, -i] <- 0
-  # }
 
   # Get loading dimensions
   dimensions <- dim(loadings)
@@ -1535,6 +1531,9 @@ EGM.explore.core <- function(
 
   }
 
+  # Get implied correlations from the loadings (the focus of the optimization procedure)
+  implied_R <- nload2cor(loadings)
+
   # Add dimension names
   dimnames(P) <- dimnames(empirical_R)
 
@@ -1546,9 +1545,8 @@ EGM.explore.core <- function(
     )
   )
 
-  # Set parameters to network + *all* loadings
-  # (since all loadings were estimated and zeros are network-implied)
-  parameters <- sum(loadings != 0) # sum(P[lower_triangle] != 0) + length(loadings)
+  # Set parameters to loadings only
+  parameters <- sum(loadings != 0)
 
   # Compute negative 2 times log-likelihood
   logLik2 <- 2 * logLik
