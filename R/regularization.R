@@ -14,6 +14,13 @@ atan_penalty <- function(x, lambda, gamma = 0.01, ...)
 }
 
 #' @noRd
+# Updated 27.07.2025
+dbridge_penalty <- function(x, lambda, gamma = 5, ...)
+{
+  return(lambda * abs(x)^(2^(-gamma)))
+}
+
+#' @noRd
 # Updated 25.07.2025
 l1_penalty <- function(x, lambda, ...)
 {
@@ -84,13 +91,6 @@ scad_penalty <- function(x, lambda, gamma = 3.7, ...)
 }
 
 #' @noRd
-# Updated 12.01.2025
-slam_penalty <- function(x, lambda, gamma = 5, ...)
-{
-  return(lambda * abs(x)^(2^(-gamma)))
-}
-
-#' @noRd
 # Updated 28.01.2025
 spot_penalty <- function(x, lambda, gamma = 3, ...)
 {
@@ -106,6 +106,19 @@ spot_penalty <- function(x, lambda, gamma = 3, ...)
 atan_derivative <- function(x, lambda, gamma = 0.01, ...)
 {
   return(lambda * sign(x) * (gamma * (gamma + 2 / pi)) / (gamma^2 + abs(x)^2))
+}
+
+#' @noRd
+# Updated 27.07.2025
+dbridge_derivative <- function(x, lambda, gamma = 5, ...)
+{
+
+  # Bridge value
+  bridge_value <- 2^(-gamma)
+
+  # Return derivative
+  return(swiftelse(gamma == 0, lambda, lambda * bridge_value * abs(x)^(bridge_value - 1)))
+
 }
 
 #' @noRd
@@ -180,19 +193,6 @@ scad_derivative <- function(x, lambda, gamma = 3.7, ...)
 
 #' @noRd
 # Updated 12.01.2025
-slam_derivative <- function(x, lambda, gamma = 5, ...)
-{
-
-  # iPOT value
-  ipot_value <- 2^(-gamma)
-
-  # Return derivative
-  return(swiftelse(gamma == 0, lambda, lambda * ipot_value * abs(x)^(ipot_value - 1)))
-
-}
-
-#' @noRd
-# Updated 12.01.2025
 spot_derivative <- function(x, lambda, gamma = 3, ...)
 {
 
@@ -207,6 +207,13 @@ spot_derivative <- function(x, lambda, gamma = 3, ...)
 #%%%%%%%%%%%%%%%%%%%%%%%%%
 ## Proximal Operators ----
 #%%%%%%%%%%%%%%%%%%%%%%%%%
+
+#' @noRd
+# Updated 27.07.2025
+dbridge_proximal <- function(x, lambda, gamma = 5, ...)
+{
+  return(l1_proximal(x, dbridge_derivative(x, lambda, gamma)))
+}
 
 #' @noRd
 # Updated 25.07.2025
@@ -274,13 +281,6 @@ scad_proximal <- function(x, lambda, gamma = 3.7, ...)
     )
   )
 
-}
-
-#' @noRd
-# Updated 27.07.2025
-slam_proximal <- function(x, lambda, gamma = 5, ...)
-{
-  return(l1_proximal(x, slam_derivative(x, lambda, gamma)))
 }
 
 #' @noRd

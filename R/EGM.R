@@ -71,6 +71,38 @@
 #' Available options include maximum likelihood (default; \code{"logLik"}) and
 #' standardized root mean residual (\code{"SRMR"})
 #'
+#' @param proximal Character vector (length = 1).
+#' Proximal operator to threshold post-loading estimation.
+#' This operator is used to induce sparsity in the network
+#' loadings and subsequently in the network structure.
+#' Available options include:
+#'
+#' \itemize{
+#'
+#' \item \code{dBridge}--- a variant on the bridge penalty (Frank & Friedman, 1993), so-called draw bridge,
+#' which is defined as \eqn{\lambda |x|^{2^{-\gamma}}} where the default is
+#' \eqn{\gamma = 5}
+#'
+#' When \eqn{\gamma = 0}, then the penalty reduces to \eqn{\ell_1}; when \eqn{\gamma = -1},
+#' then the penalty reduces to \eqn{\ell_2}
+#'
+#' \item \code{"l1"} --- \eqn{\ell_1} norm (Tibshirani, 1996) or \eqn{\lambda |x|}
+#'
+#' \item \code{"l2"} --- \eqn{\ell_2} norm or \eqn{\lambda x^2}
+#'
+#' \item \code{"MCP"} (default) --- minimax concave penalty (Zhang, 2010), which is defined as
+#' \deqn{\lambda x - \frac{x^2}{2 \gamma} \qquad \text{if } x \leq \gamma \lambda}
+#' \deqn{\frac{1}{2} \gamma \lambda^2 \qquad \text{if } x > \gamma \lambda}
+#' where the default is \eqn{\gamma = 3}
+#'
+#' \item \code{"SCAD"} --- smoothly clipped absolute deviation (Fan & Li, 2001), which is defined as
+#' \deqn{\lambda |x| \qquad \text{if } |x| \leq \lambda}
+#' \deqn{\frac{2\gamma \lambda|x| - x^2 - \lambda^2}{2(\gamma - 1)} \qquad \text{if } \lambda < |x| \leq \gamma \lambda}
+#' \deqn{\frac{\lambda^2(\gamma + 1)}{2} \qquad \text{if } |x| > \gamma \lambda}
+#' where the default is \eqn{\gamma = 3.7}
+#'
+#' }
+#'
 #' @param model.select Character vector (length = 1).
 #' Criterion to select the best fitting model.
 #' Defaults to \code{"AICq"}.
@@ -131,6 +163,31 @@
 #' \code{\link[EGAnet]{EGA}}, and
 #' \code{\link[EGAnet]{net.loads}}
 #'
+#' @references
+#' \strong{Bridge penalty} \cr
+#' Frank, Ll. E., & Friedman, J. H. (1993).
+#' A statistical view of some chemometrics regression tools.
+#' \emph{Technometrics}, \emph{35}(2), 109–135.
+#'
+#' \strong{l1 penalty} \cr
+#' Tibshirani, R. (1996).
+#' Regression shrinkage and selection via the lasso.
+#' \emph{Journal of the Royal Statistical Society: Series B (Methodological)}, \emph{58}(1), 267–288.
+#'
+#' \strong{l2 penalty} \cr
+#' Hoerl, A. E., & Kennard, R. W. (1970).
+#' Ridge regression: Biased estimation for nonorthogonal problems.
+#' \emph{Technometrics}, \emph{12}(1), 55–67.
+#'
+#' \strong{Minimax penalty} \cr
+#' Zhang, C.-H. (2010). Nearly unbiased variable selection under minimax concave penalty.
+#' \emph{Annals of Statistics}, \emph{38}(2), 894–942.
+#'
+#' \strong{SCAD penalty} \cr
+#' Fan, J., & Li, R. (2001).
+#' Variable selection via nonconcave penalized likelihood and its oracle properties.
+#' \emph{Journal of the American Statistical Association}, \emph{96}(456), 1348–1360.
+#'
 #' @examples
 #' # Get depression data
 #' data <- depression[,24:44]
@@ -167,12 +224,12 @@
 #' @export
 #'
 # Estimate EGM ----
-# Updated 21.06.2025
+# Updated 27.07.2025
 EGM <- function(
     data, EGM.model = c("explore", "EGA", "probability"),
     communities = NULL, structure = NULL, search = FALSE,
     p.in = NULL, p.out = NULL, opt = c("logLik", "SRMR"),
-    proximal = c("l1", "l2", "MCP", "SCAD", "SLAM"),
+    proximal = c("dBridge", "l1", "l2", "MCP", "SCAD"),
     model.select = c("logLik", "AIC", "AICc", "AICq", "BIC", "Q"),
     constrain.structure = TRUE, constrain.zeros = TRUE,
     verbose = TRUE, ...
@@ -1383,14 +1440,14 @@ EGM.explore.core <- function(
   loadings[] <- initial_loadings$par
 
   # Set lambda sequence
-  lambdas <- seq(min(min(abs(loadings)) / 2, 0.01), 0.15, 0.001)
+  lambdas <- seq(0.01, 0.15, 0.001)
 
   # Set proximal operator function
   proximal_FUN <- switch(
     proximal,
+    "dbridge" = dbridge_proximal,
     "l1" = l1_proximal, "l2" = l2_proximal,
-    "mcp" = mcp_proximal, "scad" = scad_proximal,
-    "slam" = slam_proximal
+    "mcp" = mcp_proximal, "scad" = scad_proximal
   )
 
   # Optimize SCAD soft threshold
