@@ -172,7 +172,7 @@ EGM <- function(
     data, EGM.model = c("explore", "EGA", "probability"),
     communities = NULL, structure = NULL, search = FALSE,
     p.in = NULL, p.out = NULL, opt = c("logLik", "SRMR"),
-    proximal = c("l1", "l2", "MCP", "SCAD"),
+    proximal = c("l1", "l2", "MCP", "SCAD", "SLAM"),
     model.select = c("logLik", "AIC", "AICc", "AICq", "BIC", "Q"),
     constrain.structure = TRUE, constrain.zeros = TRUE,
     verbose = TRUE, ...
@@ -1383,13 +1383,14 @@ EGM.explore.core <- function(
   loadings[] <- initial_loadings$par
 
   # Set lambda sequence
-  lambdas <- seq(0.01, 0.15, 0.001)
+  lambdas <- seq(min(min(abs(loadings)) / 2, 0.01), 0.15, 0.001)
 
   # Set proximal operator function
   proximal_FUN <- switch(
     proximal,
     "l1" = l1_proximal, "l2" = l2_proximal,
-    "mcp" = mcp_proximal, "scad" = scad_proximal
+    "mcp" = mcp_proximal, "scad" = scad_proximal,
+    "slam" = slam_proximal
   )
 
   # Optimize SCAD soft threshold
@@ -1436,7 +1437,7 @@ EGM.explore.core <- function(
     # Return bad result
     return(list(loadings = loadings, fit = bad_fit))
 
-  
+  }
 
   # Get implied correlations
   implied_R <- pcor2cor(P)
