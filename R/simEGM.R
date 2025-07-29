@@ -82,12 +82,11 @@
 #' @export
 #'
 # Simulate EGM ----
-# Updated 22.07.2025
+# Updated 29.07.2025
 simEGM <- function(
     communities, variables,
     loadings, cross.loadings = 0.01,
     correlations, sample.size,
-    density.power = 3,
     quality = c("acceptable", "robust"),
     max.iterations = 1000
 ){
@@ -104,7 +103,7 @@ simEGM <- function(
   # Argument errors
   simEGM_errors(
     communities, variables, loadings, cross.loadings,
-    correlations, sample.size, density.power, max.iterations
+    correlations, sample.size, max.iterations
   )
 
   # Set up membership based on communities and variables
@@ -254,17 +253,9 @@ simEGM <- function(
             # Except for itself
             if(i != j){
 
-              # Set cross-loading probability
-              cross_probability <- abs(correlations[i,j])^(1 / density.power)
-
-              # Set zero cross-loading indices
-              between_indices[block_index, j] <- c(
-                correlations[i,j] != 0,
-                sample(
-                  c(FALSE, TRUE), block_variables - 1,
-                  replace = TRUE, prob = c(1 - cross_probability, cross_probability)
-                )
-              )
+              # Set zero cross-loading indices based on cross-loading probability
+              between_indices[block_index, j] <- runif_xoshiro(block_variables) <
+                                                 abs(correlations[i,j])^loading_structure[block_index, i]
 
             }
 
@@ -326,11 +317,8 @@ simEGM <- function(
       # Set lower triangle
       lower_triangle <- lower.tri(R)
 
-      # Obtain population correlation matrix
-      network <- probabilistic_network(
-        loading_structure, membership, sample.size,
-        total_variables, lower_triangle
-      )
+      # Obtain network matrix based on Chung-Lu expectation of simple structure
+      network <- expected_network(loading_structure, membership, total_variables)
 
       # Optimize network toward loadings
       network_vector <- as.vector(network[lower_triangle])
@@ -426,10 +414,10 @@ simEGM <- function(
 
 #' @noRd
 # Errors ----
-# Updated 22.07.2025
+# Updated 29.07.2025
 simEGM_errors <- function(
     communities, variables, loadings, cross.loadings,
-    correlations, sample.size, density.power, max.iterations
+    correlations, sample.size, max.iterations
 )
 {
 
@@ -478,11 +466,6 @@ simEGM_errors <- function(
   typeof_error(sample.size, "numeric", "simEGM")
   range_error(sample.size, c(1, Inf), "simEGM")
 
-  # 'density.power'
-  length_error(density.power, 1, "simEGM")
-  typeof_error(density.power, "numeric", "simEGM")
-  range_error(density.power, c(1, Inf), "simEGM")
-
   # 'max.iterations'
   length_error(max.iterations, 1, "simEGM")
   typeof_error(max.iterations, "numeric", "simEGM")
@@ -491,12 +474,9 @@ simEGM_errors <- function(
 }
 
 #' @noRd
-# Probabilistic network ----
-# Updated 22.07.2025
-probabilistic_network <- function(
-    loading_structure, membership, sample_size,
-    total_variables, lower_triangle
-)
+# Expected network ----
+# Updated 29.07.2025
+expected_network <- function(loading_structure, membership, total_variables)
 {
 
   # Obtain partial correlations
@@ -526,18 +506,11 @@ probabilistic_network <- function(
 
   }
 
-  # Test statistic
-  test <- abs(r2z(P)) / sqrt(1 / (sample_size - total_variables - 5))
-
-  # Sample based on probabilities
-  retain_edges <- runif_xoshiro(sum(lower_triangle)) < pnorm(abs(test))[lower_triangle]
-
-  # Set adjacency
-  adjacency <- matrix(FALSE, total_variables, total_variables)
-  adjacency[lower_triangle] <- retain_edges
+  # Chung-Lu based on maximum loading of each variable (simple structure)
+  max_loading <- apply(abs(loading_structure), 1, max)
 
   # Return adjacency
-  return(P * (adjacency + t(adjacency)))
+  return(P * (abs(P) > tcrossprod(max_loading) / sum(max_loading)))
 
 }
 
