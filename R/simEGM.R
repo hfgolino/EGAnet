@@ -314,6 +314,7 @@ simEGM <- function(
 
       # Set correlations for loadings
       R <- nload2cor(loading_structure)
+      P <- cor2pcor(R)
 
       # Set lower triangle
       lower_triangle <- lower.tri(R)
@@ -344,13 +345,13 @@ simEGM <- function(
       # Check for cross-loadings that are larger than their assigned loadings
       cross_check <- any(max.col(abs(loading_structure)) != membership)
 
-      # Compute network implied zero-order correlations
-      network_R <- pcor2cor(network)
+      # # Compute network implied zero-order correlations
+      # network_R <- pcor2cor(network)
 
       # Set quality metrics
       quality_metrics <- c(
-        srmr(R, network_R), mean(abs(R - network_R)),
-        frobenius(R, network_R), jsd(R, network_R)
+        srmr(P, network), mean(abs(P - network)),
+        frobenius(P, network), jsd(P, network)
       )
 
       # Quality metric check
@@ -502,11 +503,12 @@ expected_network <- function(loading_structure, membership, total_variables)
 
   }
 
-  # Chung-Lu based on maximum loading of each variable (simple structure)
-  max_loading <- apply(abs(loading_structure), 1, max)
+  # Chung-Lu based on average connection in communities
+  average_connection <- colSums(abs(P) * outer(membership, membership, "==")) /
+                        (fast_table(membership)[as.character(membership)] - 1)
 
   # Return adjacency
-  return(P * (abs(P) > (tcrossprod(max_loading) / sum(max_loading))))
+  return(P * (abs(P) > (tcrossprod(average_connection) / sum(average_connection))))
 
 }
 
