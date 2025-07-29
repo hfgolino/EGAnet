@@ -11,7 +11,6 @@ simEGM(
   cross.loadings = 0.01,
   correlations,
   sample.size,
-  density.power = 3,
   quality = c("acceptable", "robust"),
   max.iterations = 1000
 )
@@ -46,15 +45,6 @@ Input can be a correlations matrix but must have the dimensions:
 \item{sample.size}{Numeric (length = 1).
 Number of observations to generate}
 
-\item{density.power}{Numeric (length = 1).
-Controls the sparsity of the network loading matrix.
-The probability any given cross-loading will be set to zero
-is based on the community correlation between two communities
-raised to \eqn{\frac{1}{density.power}}. Accepts values between
- \code{1} and \code{Inf} but sparser loadings (i.e., values less than
- \code{3}) can lead to convergence issues.
- Defaults to \code{3}}
-
 \item{quality}{Character (length = 1).
 Quality metrics related to the alignment of the correlations
 implied by the loadings and network are computed with certain
@@ -84,6 +74,15 @@ to be increased to allow for more cross-loadings to converge}
 \item{max.iterations}{Numeric (length = 1).
 Number of iterations to attempt to get convergence before erroring out.
 Defaults to \code{1000}}
+
+\item{density.power}{Numeric (length = 1).
+Controls the sparsity of the network loading matrix.
+The probability any given cross-loading will be set to zero
+is based on the community correlation between two communities
+raised to \eqn{\frac{1}{density.power}}. Accepts values between
+ \code{1} and \code{Inf} but sparser loadings (i.e., values less than
+ \code{3}) can lead to convergence issues.
+ Defaults to \code{3}}
 }
 \description{
 Function to simulate data based on \code{\link[EGAnet]{EGM}}
