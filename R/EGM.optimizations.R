@@ -517,7 +517,7 @@ loadings_optimization <- function(
 
 #' @noRd
 # SRMR network cost
-# Updated 04.04.2025
+# Updated 29.07.2025
 srmr_network_cost <- function(network_vector, R, n, v, lower_triangle, zeros, ...)
 {
 
@@ -538,7 +538,7 @@ srmr_network_cost <- function(network_vector, R, n, v, lower_triangle, zeros, ..
 
 #' @noRd
 # SRMR network gradient
-# Updated 24.04.2025
+# Updated 29.07.2025
 srmr_network_gradient <- function(network_vector, R, n, v, lower_triangle, zeros, ...)
 {
 
@@ -550,63 +550,21 @@ srmr_network_gradient <- function(network_vector, R, n, v, lower_triangle, zeros
   # Convert to correlation matrix
   diag(network) <- -1
   K <- solve(-network)
-  I <- diag(sqrt(1 / diag(K)))
+  diag_K <- 1 / diag(K)
+  I <- diag(sqrt(diag_K))
+  implied_R <- I %*% K %*% I
 
   # Compute error
-  dError <- 2 * ((I %*% K %*% I - R) / sum(lower_triangle))
+  dError <- 2 * ((implied_R - R) / sum(lower_triangle))
+
+  # Gradient for K
+  dK <- I %*% dError %*% I
+
+  # Diagonal corrections
+  diag(dK) <- diag(dK) - diag_K * rowSums(dError * implied_R)
 
   # Return gradient
-  return((K %*% I %*% dError %*% I %*% K)[lower_triangle][zeros])
-
-}
-
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-## Gaussian log-likelihood ----
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-#' @noRd
-# Log-likelihood network cost
-# Updated 25.04.2025
-logLik_network_cost <- function(network_vector, R, n, v, lower_triangle, zeros, ...)
-{
-
-  # Initialize network
-  network <- matrix(0, nrow = v, ncol = v)
-  network[lower_triangle][zeros] <- network_vector
-  network <- network + t(network)
-
-  # Convert to correlation matrix
-  diag(network) <- -1
-  K <- solve(-network)
-  I <- diag(sqrt(1 / diag(K)))
-
-  # Return log-likelihood
-  return(-log_likelihood(n, v, I %*% K %*% I, R, type = "zero"))
-
-}
-
-#' @noRd
-# Log-likelihood network gradient
-# Updated 24.04.2025
-logLik_network_gradient <- function(network_vector, R, n, v, lower_triangle, zeros, ...)
-{
-
-  # Initialize network
-  network <- matrix(0, nrow = v, ncol = v)
-  network[lower_triangle][zeros] <- network_vector
-  network <- network + t(network)
-
-  # Convert to correlation matrix
-  diag(network) <- -1
-  K <- solve(-network)
-  I <- diag(sqrt(1 / diag(K)))
-  inverse_R <- solve(I %*% K %*% I)
-
-  # Compute error
-  dError <- ((n/2) * (inverse_R - inverse_R %*% R %*% inverse_R))
-
-  # Return gradient
-  return((K %*% I %*% dError %*% I %*% K)[lower_triangle][zeros])
+  return(2 * (K %*% dK %*% K)[lower_triangle][zeros])
 
 }
 
