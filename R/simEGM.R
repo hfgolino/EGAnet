@@ -510,7 +510,7 @@ expected_network <- function(loading_structure, membership, total_variables)
   max_loading <- apply(abs(loading_structure), 1, max)
 
   # Return adjacency
-  return(P * (abs(P) > tcrossprod(max_loading) / sum(max_loading)))
+  return(P * (abs(P) > (tcrossprod(max_loading) / sum(max_loading))))
 
 }
 
