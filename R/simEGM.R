@@ -256,7 +256,7 @@ simEGM <- function(
               # Set zero cross-loading indices based on cross-loading probability
               between_indices[block_index, j] <- shuffle( # ensure at least one cross-loading with correlations
                 c(correlations[i,j] == 0, runif_xoshiro(block_variables - 1))
-              ) < abs(correlations[i,j])^(loading_structure[block_index, i])
+              ) < pmin(1.0, abs(correlations[i,j]) + loading_structure[block_index, i])
 
             }
 
@@ -321,6 +321,12 @@ simEGM <- function(
 
       # Obtain network matrix based on Chung-Lu expectation of simple structure
       network <- expected_network(loading_structure, membership, total_variables)
+      network_R <- silent_call(try(pcor2cor(network), silent = TRUE))
+
+      # Check for issues
+      if(is(network_R, "try-error") || anyNA(network_R) || !is_positive_definite(network_R)){
+        next
+      }
 
       # Optimize network toward loadings
       network_vector <- as.vector(network[lower_triangle])
@@ -469,7 +475,7 @@ simEGM_errors <- function(
 
 #' @noRd
 # Expected network ----
-# Updated 29.07.2025
+# Updated 30.07.2025
 expected_network <- function(loading_structure, membership, total_variables)
 {
 
@@ -500,12 +506,13 @@ expected_network <- function(loading_structure, membership, total_variables)
 
   }
 
-  # Chung-Lu based on average connection in communities
-  average_connection <- colSums(abs(P) * outer(membership, membership, "==")) /
-                        (fast_table(membership)[as.character(membership)] - 1)
+  # Set Chung-Lu configuration based on assigned loading
+  max_loading <- nvapply(seq_len(total_variables), function(i){
+    abs(loading_structure[i, membership[i]])
+  })
 
   # Return adjacency
-  return(P * (abs(P) > (tcrossprod(average_connection) / sum(average_connection))))
+  return(P * (abs(P) > (tcrossprod(max_loading) / sum(max_loading))))
 
 }
 

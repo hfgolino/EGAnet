@@ -398,9 +398,16 @@ srmr_network_cost <- function(network_vector, R, n, v, lower_triangle, zeros, ..
   diag(network) <- -1
   S <- solve(-network) # covariance matrix
   D <- diag(sqrt(1 / diag(S))) # standardization
+  implied_R <- D %*% S %*% D # implied correlations
 
-  # Return SRMR
-  return(srmr(D %*% S %*% D, R))
+  # Return cost
+  return(
+    swiftelse(
+      is_positive_definite(implied_R), # check for positive definite
+      sqrt(mean((implied_R - R)^2)),
+      1e10 # return horrible value if not positive definite
+    )
+  )
 
 }
 
@@ -442,7 +449,7 @@ srmr_network_gradient <- function(network_vector, R, n, v, lower_triangle, zeros
 
 #' @noRd
 # EGM network optimization
-# Updated 22.07.2025
+# Updated 30.07.2025
 egm_network_optimize <- function(
     network_vector, R, n, v,
     lower_triangle, zeros, opt,
@@ -451,7 +458,7 @@ egm_network_optimize <- function(
 {
 
   # Set bounds
-  bounds <- 1 * zeros
+  bounds <- rep(1, length(network_vector))
 
   return(
     silent_call(
