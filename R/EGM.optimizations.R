@@ -488,7 +488,7 @@ egm_network_optimize <- function(
 
 #' @noRd
 # Mean absolute error cost
-# Updated 21.07.2025
+# Updated 30.07.2025
 mae_community_cost <- function(
     between_loadings, between_indices, simple_structure,
     loading_structure, target_correlations, ...
@@ -498,17 +498,72 @@ mae_community_cost <- function(
   # Set between-community loadings
   loading_structure[between_indices] <- between_loadings
 
-  # Compute current correlations
-  current_correlations <- community_correlations(simple_structure, loading_structure)
+  # Convert to correlation matrix
+  S <- tcrossprod(loading_structure) # compute covariances
+  diag(S) <- sqrt(diag(S)) # interdependence
+  diag_S <- 1 / diag(S) # save diagonal
+  D <- diag(sqrt(diag_S)) # standardization
+  implied_R <- D %*% S %*% D # implied correlations
+
+  # Get covariance and convert to correlations
+  S_corr <- crossprod(simple_structure, D %*% S %*% D) %*% simple_structure
+  D_corr <- diag(sqrt(1 / diag(S_corr)))
 
   # Return MAE
-  return(mean(abs(current_correlations - target_correlations)))
+  return(mean(abs(D_corr %*% S_corr %*% D_corr - target_correlations)))
+
+}
+
+#' @noRd
+# Mean absolute error gradient
+# Updated 30.07.2025
+mae_community_gradient <- function(
+    between_loadings, between_indices, simple_structure,
+    loading_structure, target_correlations, ...
+)
+{
+
+  # Set between-community loadings
+  loading_structure[between_indices] <- between_loadings
+
+  # Convert to correlation matrix
+  S <- tcrossprod(loading_structure) # compute covariances
+  diag(S) <- sqrt(diag(S)) # interdependence
+  diag_S <- 1 / diag(S) # save diagonal
+  D <- diag(sqrt(diag_S)) # standardization
+  implied_R <- D %*% S %*% D # implied correlations
+
+  # Get covariance and convert to correlations
+  S_corr <- crossprod(simple_structure, D %*% S %*% D) %*% simple_structure
+  diag_D_corr <- 1 / diag(S_corr)
+  D_corr <- diag(sqrt(diag_D_corr))
+  R_corr <- D_corr %*% S_corr %*% D_corr
+
+  # Error of gradient
+  differences <- R_corr - target_correlations
+  dError <- sign(differences) / length(differences)
+  dError[differences == 0] <- 0
+
+  # Standardization gradient
+  dS_corr <- D_corr %*% dError %*% D_corr
+
+  # Add correction
+  diag(dS_corr) <- diag(dS_corr) * diag_D_corr / 2
+
+  # Implied correlations gradient
+  dImplied_R <- simple_structure %*% tcrossprod(dS_corr, simple_structure)
+
+  # Initial standardization
+  dS <- D %*% dImplied_R %*% D
+
+  # Return gradient
+  return(as.vector(t(crossprod(loading_structure, dS)))[between_indices])
 
 }
 
 #' @noRd
 # EGM community correlation optimization
-# Updated 21.07.2025
+# Updated 30.07.2025
 egm_correlation_optimize <- function(loading_structure, correlations, between_indices, ...)
 {
 
@@ -525,6 +580,7 @@ egm_correlation_optimize <- function(loading_structure, correlations, between_in
     nlminb(
       start = rep(0, sum(between_indices)),
       objective = mae_community_cost,
+      gradient = mae_community_gradient,
       between_indices = between_indices,
       simple_structure = loading_structure,
       loading_structure = loading_structure,
