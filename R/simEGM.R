@@ -253,8 +253,6 @@ simEGM <- function(
             # Except for itself
             if(i != j){
 
-              print(c(i, j))
-
               # Set zero cross-loading indices based on cross-loading probability
               between_indices[block_index, j] <- shuffle( # ensure at least one cross-loading with correlations
                 c(correlations[i,j] == 0, runif_xoshiro(block_variables - 1))
@@ -318,9 +316,6 @@ simEGM <- function(
       R <- nload2cor(loading_structure)
       P <- cor2pcor(R)
 
-      # Set lower triangle
-      lower_triangle <- lower.tri(R)
-
       # Obtain network matrix based on Chung-Lu expectation of simple structure
       network <- expected_network(loading_structure, membership, total_variables)
       network_R <- silent_call(try(pcor2cor(network), silent = TRUE))
@@ -329,6 +324,9 @@ simEGM <- function(
       if(is(network_R, "try-error") || anyNA(network_R) || !is_positive_definite(network_R)){
         next
       }
+
+      # Set lower triangle
+      lower_triangle <- lower.tri(R)
 
       # Optimize network toward loadings
       network_vector <- as.vector(network[lower_triangle])
