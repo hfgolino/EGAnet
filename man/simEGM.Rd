@@ -12,7 +12,7 @@ simEGM(
   correlations,
   sample.size,
   quality = c("acceptable", "robust"),
-  max.iterations = 1000
+  max.iterations = 100
 )
 }
 \arguments{
@@ -73,7 +73,7 @@ to be increased to allow for more cross-loadings to converge}
 
 \item{max.iterations}{Numeric (length = 1).
 Number of iterations to attempt to get convergence before erroring out.
-Defaults to \code{1000}}
+Defaults to \code{100}}
 
 \item{density.power}{Numeric (length = 1).
 Controls the sparsity of the network loading matrix.
