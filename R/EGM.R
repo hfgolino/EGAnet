@@ -1410,22 +1410,14 @@ EGM.explore.core <- function(
   # Get loading dimensions
   dimensions <- dim(loadings)
 
-  # Set up loading structure
-  loading_structure <- matrix(
-    TRUE, nrow = dimensions[1], ncol = dimensions[2],
-    dimnames = dimnames(loadings)
-  )
-
   # Set lower triangle
   lower_triangle <- lower.tri(empirical_R)
 
   # Optimize for initial loadings
   initial_loadings <- loadings_optimization(
     iter = 10, loadings_vector = as.vector(loadings),
-    zeros = rep(1, length(loadings)),
-    R = empirical_R, loading_structure = loading_structure,
-    communities = communities, data_dimensions = data_dimensions,
-    lower_triangle = lower_triangle, opt = opt
+    zeros = rep(1, length(loadings)), R = empirical_R,
+    communities = communities, data_dimensions = data_dimensions
   )
 
   # Check for bad result
@@ -1502,11 +1494,9 @@ EGM.explore.core <- function(
   # Update loading parameters
   loadings[] <- egm_optimize(
     loadings_vector = as.vector(loadings), zeros = loadings != 0,
-    R = implied_R, loading_structure = loading_structure,
-    rows = communities, n = data_dimensions[1],
-    v = data_dimensions[2], constrained = FALSE,
-    lower_triangle = lower_triangle, lambda = 0, # no regularization
-    opt = "srmr", iterations = 10000
+    R = implied_R, rows = communities, n = data_dimensions[1],
+    v = data_dimensions[2], opt = "srmr", lambda = 0, # no regularization
+    iterations = 10000
   )$par
 
   # Update memberships

@@ -2,45 +2,6 @@
 #### Optimization functions for EGM ####
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%#
 
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-## Obtain implied correlations ----
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-#' @noRd
-# Obtain implied correlations
-# Updated 04.04.2025
-obtain_implied <- function(loadings_vector, rows)
-{
-
-  # Assemble loading matrix
-  loadings_matrix <- matrix(loadings_vector, ncol = rows)
-
-  # Compute partial correlation
-  implied_P <- tcrossprod(loadings_matrix)
-
-  # Compute interdependence
-  diag(implied_P) <- sqrt(diag(implied_P))
-
-  # Compute matrix I
-  I <- diag(sqrt(1 / diag(implied_P)))
-
-  # Compute implied correlations
-  implied_R <- I %*% implied_P %*% I
-
-  # Attach loadings matrix
-  attr(implied_R, which = "calculations") <- list(
-    loadings_matrix = loadings_matrix, implied_P = implied_P, I = I
-  )
-
-  # Get implied R
-  return(implied_R)
-
-}
-
-#%%%%%%%%%%%%%%%%#
-#### LOADINGS ####
-#%%%%%%%%%%%%%%%%#
-
 #%%%%%%%%%%%
 ## SRMR ----
 #%%%%%%%%%%%
@@ -61,97 +22,65 @@ srmr <- function(base, comparison, power = 2)
 
 #' @noRd
 # SRMR cost
-# Updated 21.06.2025
-srmr_cost <- function(
-    loadings_vector, R,
-    loading_structure, rows, n, v,
-    constrained, lower_triangle,
-    lambda, ...
-)
+# Updated 30.07.2025
+srmr_cost <- function(loadings_vector, R, rows, n, v, lambda, ...)
 {
 
-  # Set l2 cost
-  l2_cost <- lambda * sum(loadings_vector^2)
+  # Set regularization penalty
+  penalty <- lambda * sum(loadings_vector^2)
 
-  # Check for constraint
-  if(constrained){
+  # Assemble loading matrix
+  loadings_matrix <- matrix(loadings_vector, ncol = rows)
 
-    # Get implied R
-    implied_R <- obtain_implied(loadings_vector, rows)
+  # Convert to correlation matrix
+  S <- tcrossprod(loadings_matrix) # compute covariances
+  diag(S) <- sqrt(diag(S)) # interdependence
+  diag_S <- 1 / diag(S) # save diagonal
+  D <- diag(sqrt(diag_S)) # standardization
+  implied_R <- D %*% S %*% D # implied correlations
 
-    # Assemble loading matrix
-    loadings_matrix <- attributes(implied_R)$calculations$loadings
-
-    # Obtain differences
-    differences <- abs(loadings_matrix) - loadings_matrix[loading_structure]
-
-    # Check for positive definite
-    return(srmr(R, implied_R) + sum(differences > 0) + l2_cost)
-
-  }else{ # Without constraints, send it
-    return(srmr(R, obtain_implied(loadings_vector, rows)) + l2_cost)
-  }
+  # Return cost
+  return(
+    swiftelse(
+      is_positive_definite(implied_R), # check for positive definite
+      sqrt(mean((implied_R - R)^2)) + penalty,
+      1e10 # return horrible value if not positive definite
+    )
+  )
 
 }
 
 #' @noRd
 # SRMR gradient
-# Updated 21.06.2025
-srmr_gradient <- function(
-    loadings_vector, R,
-    loading_structure, rows, n, v,
-    constrained, lower_triangle,
-    lambda, ...
-)
+# Updated 30.07.2025
+srmr_gradient <- function(loadings_vector, R, rows, n, v, lambda, ...)
 {
 
-  # Set l2 gradient
-  l2_gradient <- 2 * lambda * loadings_vector
+  # Set regularization penalty
+  penalty <- lambda * 2 * loadings_vector
 
-  # Check for constraint
-  if(constrained){
+  # Assemble loading matrix
+  loadings_matrix <- matrix(loadings_vector, ncol = rows)
 
-    # Get implied R
-    implied_R <- obtain_implied(loadings_vector, rows)
+  # Convert to correlation matrix
+  S <- tcrossprod(loadings_matrix) # compute covariances
+  diag(S) <- sqrt(diag(S)) # interdependence
+  diag_S <- 1 / diag(S) # save diagonal
+  D <- diag(sqrt(diag_S)) # standardization
+  implied_R <- D %*% S %*% D # implied correlations
+  error <- implied_R - R
 
-    # Assemble loading matrix
-    loadings_matrix <- attributes(implied_R)$calculations$loadings
+  # Compute error
+  dError <- error / (v^2 * sqrt(mean(error^2)))
 
-    # Obtain differences
-    differences <- abs(loadings_matrix) - loadings_matrix[loading_structure]
+  # Gradient for S
+  dS <- D %*% dError %*% D
 
-    # Compute error
-    dError <- 2 * (implied_R - R) / sum(lower_triangle)
-    I <- attributes(implied_R)$calculations$I
-
-    # Return gradient
-    return(
-      as.vector( # (2x leads to fewer iterations)
-        t(crossprod(2 * loadings_matrix, I %*% dError %*% I)) + (differences > 0) +
-          l2_gradient
-      )
-    )
-
-  }else{ # Without constraints, send it
-
-    # Get implied R
-    implied_R <- obtain_implied(loadings_vector, rows)
-
-    # Compute error
-    dError <- 2 * (implied_R - R) / sum(lower_triangle)
-    I <- attributes(implied_R)$calculations$I
-
-    # Return gradient (2x leads to fewer iterations)
-    return(
-      as.vector(
-        t(crossprod(2 * attributes(implied_R)$calculations$loadings, I %*% dError %*% I)) +
-          l2_gradient
-      )
-    )
-
-  }
+  # Return gradient
+  return(as.vector(t(2 * crossprod(loadings_matrix, dS))) + penalty)
 
 }
+
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ## Gaussian log-likelihood ----
@@ -181,107 +110,62 @@ log_likelihood <- function(n, p, R, S, type = c("partial", "zero"))
 
 #' @noRd
 # Log-likelihood cost
-# Updated 20.06.2025
-logLik_cost <- function(
-    loadings_vector, R,
-    loading_structure, rows, n, v,
-    constrained, lower_triangle,
-    lambda, ...
-)
+# Updated 30.07.2025
+logLik_cost <- function(loadings_vector, R, rows, n, v, lambda, ...)
 {
 
   # Set regularization penalty
   penalty <- lambda * sum(loadings_vector^2)
 
-  # Check for constraint
-  if(constrained){
+  # Assemble loading matrix
+  loadings_matrix <- matrix(loadings_vector, ncol = rows)
 
-    # Get implied R
-    implied_R <- obtain_implied(loadings_vector, rows)
+  # Convert to correlation matrix
+  S <- tcrossprod(loadings_matrix) # compute covariances
+  diag(S) <- sqrt(diag(S)) # interdependence
+  diag_S <- 1 / diag(S) # save diagonal
+  D <- diag(sqrt(diag_S)) # standardization
+  implied_R <- D %*% S %*% D # implied correlations
 
-    # Assemble loading matrix
-    loadings_matrix <- attributes(implied_R)$calculations$loadings
-
-    # Obtain differences
-    differences <- abs(loadings_matrix) - loadings_matrix[loading_structure]
-
-    # Check for positive definite
-    return(
-      -log_likelihood(n, v, implied_R, R, type = "zero") + sum(differences > 0) + penalty
+  # Return cost
+  return(
+    swiftelse(
+      is_positive_definite(implied_R), # check for positive definite
+      ((n / 2) * (v * log(2 * pi) + log(det(implied_R)) + sum(diag(R %*% solve(implied_R))))) + penalty,
+      1e10 # return horrible value if not positive definite
     )
-
-  }else{
-
-    # Obtain implied correlation matrix
-    implied_R <- obtain_implied(loadings_vector, rows)
-
-    # Without constraints, send it
-    return(
-      swiftelse(
-        is_positive_definite(implied_R),
-        -log_likelihood(n, v, implied_R, R, type = "zero") + penalty,
-        1e10
-      )
-    )
-
-  }
+  )
 
 }
 
 #' @noRd
 # Log-likelihood gradient
-# Updated 20.06.2025
-logLik_gradient <- function(
-    loadings_vector, R,
-    loading_structure, rows, n, v,
-    constrained, lower_triangle,
-    lambda, ...
-)
+# Updated 30.07.2025
+logLik_gradient <- function(loadings_vector, R, rows, n, v, lambda, ...)
 {
 
   # Set regularization penalty
   penalty <- lambda * 2 * loadings_vector
 
-  # Check for constraint
-  if(constrained){
+  # Assemble loading matrix
+  loadings_matrix <- matrix(loadings_vector, ncol = rows)
 
-    # Get implied and inverse R
-    implied_R <- obtain_implied(loadings_vector, rows)
-    inverse_R <- solve(implied_R)
+  # Convert to correlation matrix
+  S <- tcrossprod(loadings_matrix) # compute covariances
+  diag(S) <- sqrt(diag(S)) # interdependence
+  diag_S <- 1 / diag(S) # save diagonal
+  D <- diag(sqrt(diag_S)) # standardization
+  implied_R <- D %*% S %*% D # implied correlations
+  K <- solve(implied_R) # precision matrix
 
-    # Assemble loading matrix
-    loadings_matrix <- attributes(implied_R)$calculations$loadings
+  # Compute error
+  dError <- (n / 2) * (K - K %*% R %*% K)
 
-    # Obtain differences
-    differences <- abs(loadings_matrix) - loadings_matrix[loading_structure]
+  # Gradient for S
+  dS <- D %*% dError %*% D
 
-    # Compute error (remove negative to not have to add back later)
-    dError <- ((n/2) * (inverse_R - inverse_R %*% R %*% inverse_R))
-    I <- attributes(implied_R)$calculations$I
-
-    # Return gradient
-    return(
-      as.vector(t(crossprod(loadings_matrix, I %*% dError %*% I)) + (differences > 0)) +
-        penalty
-    )
-
-  }else{ # Without constraints, send it
-
-    # Get implied and inverse R
-    implied_R <- obtain_implied(loadings_vector, rows)
-    inverse_R <- solve(implied_R)
-
-    # Compute error
-    dError <- ((n/2) * (inverse_R - inverse_R %*% R %*% inverse_R))
-    I <- attributes(implied_R)$calculations$I
-
-    # Return gradient
-    return(
-      as.vector(t(crossprod(attributes(implied_R)$calculations$loadings, I %*% dError %*% I)))
-      + penalty
-    )
-
-  }
+  # Return gradient
+  return(as.vector(t(2 * crossprod(loadings_matrix, dS))) + penalty)
 
 }
 
@@ -291,12 +175,11 @@ logLik_gradient <- function(
 
 #' @noRd
 # EGM optimization ----
-# Updated 20.06.2025
+# Updated 30.07.2025
 egm_optimize <- function(
     loadings_vector, zeros,
-    R, loading_structure, rows, n, v,
-    constrained, lower_triangle, lambda,
-    opt, iterations = 10000, ...
+    R, rows, n, v, lambda, opt,
+    iterations = 10000, ...
 )
 {
 
@@ -313,9 +196,7 @@ egm_optimize <- function(
       nlminb(
         start = loadings_vector,
         objective = cost, gradient = gradient,
-        R = R, loading_structure = loading_structure,
-        rows = rows, n = n, v = v, constrained = constrained,
-        lower_triangle = lower_triangle, lambda = lambda,
+        R = R, rows = rows, n = n, v = v, lambda = lambda,
         lower = -bounds, upper = bounds,
         control = list(
           eval.max = iterations, iter.max = iterations,
@@ -331,9 +212,7 @@ egm_optimize <- function(
     # Attach hessian
     result$hessian <- optimHess(
       par = result$par, fn = cost, gr = gradient,
-      R = R, loading_structure = loading_structure,
-      rows = rows, n = n, v = v, constrained = constrained,
-      lower_triangle = lower_triangle, lambda = lambda,
+      R = R, rows = rows, n = n, v = v, lambda = lambda,
       lower = -bounds, upper = bounds
     )
 
@@ -349,9 +228,7 @@ egm_optimize <- function(
 # Updated 20.06.2025
 hessian_optimize <- function(
     lambda, loadings_vector, zeros,
-    R, loading_structure, rows, n, v,
-    constrained, lower_triangle, norm, opt,
-    iterations = 10000, ...
+    R, rows, n, v, opt, iterations = 10000, ...
 )
 {
 
@@ -359,11 +236,8 @@ hessian_optimize <- function(
   result <- try(
     egm_optimize(
       loadings_vector = loadings_vector, zeros = zeros,
-      R = R, loading_structure = loading_structure,
-      rows = rows, n = n, v = v, constrained = constrained,
-      lower_triangle = lower_triangle,
-      lambda = lambda, opt = opt,
-      iterations = iterations, ...
+      R = R, rows = rows, n = n, v = v, opt = opt,
+      lambda = lambda, iterations = iterations, ...
     ), silent = TRUE
   )
 
@@ -406,7 +280,7 @@ hessian_optimize <- function(
 # Loading optimization ----
 # Updated 22.07.2025
 loadings_optimization <- function(
-    iter = 10, loadings_vector, zeros, R, loading_structure,
+    iter = 10, loadings_vector, zeros, R,
     communities, data_dimensions, lower_triangle, opt
 ){
 
@@ -425,22 +299,16 @@ loadings_optimization <- function(
     lambda <- optimize(
       f = hessian_optimize, interval = c(loadings_lambda_min, loadings_lambda_max),
       loadings_vector = best_result$par, zeros = zeros,
-      R = R, loading_structure = loading_structure,
-      rows = communities, n = data_dimensions[1],
-      v = data_dimensions[2], constrained = FALSE,
-      lower_triangle = lower_triangle,
-      opt = opt, tol = 1e-03, iterations = 100
+      R = R, rows = communities, n = data_dimensions[1],
+      v = data_dimensions[2], opt = opt, tol = 1e-03, iterations = 100
     )
 
     # Optimize over loadings
     result <- try(
       egm_optimize(
         loadings_vector = best_result$par, zeros = zeros,
-        R = R, loading_structure = loading_structure,
-        rows = communities, n = data_dimensions[1],
-        v = data_dimensions[2], constrained = FALSE,
-        lower_triangle = lower_triangle,
-        opt = opt, lambda = lambda$minimum
+        R = R, rows = communities, n = data_dimensions[1],
+        v = data_dimensions[2], opt = opt, lambda = lambda$minimum
       ), silent = TRUE
     )
 
@@ -517,7 +385,7 @@ loadings_optimization <- function(
 
 #' @noRd
 # SRMR network cost
-# Updated 29.07.2025
+# Updated 30.07.2025
 srmr_network_cost <- function(network_vector, R, n, v, lower_triangle, zeros, ...)
 {
 
@@ -528,17 +396,17 @@ srmr_network_cost <- function(network_vector, R, n, v, lower_triangle, zeros, ..
 
   # Convert to correlation matrix
   diag(network) <- -1
-  K <- solve(-network)
-  I <- diag(sqrt(1 / diag(K)))
+  S <- solve(-network) # covariance matrix
+  D <- diag(sqrt(1 / diag(S))) # standardization
 
   # Return SRMR
-  return(srmr(I %*% K %*% I, R))
+  return(srmr(D %*% S %*% D, R))
 
 }
 
 #' @noRd
 # SRMR network gradient
-# Updated 29.07.2025
+# Updated 30.07.2025
 srmr_network_gradient <- function(network_vector, R, n, v, lower_triangle, zeros, ...)
 {
 
@@ -549,22 +417,22 @@ srmr_network_gradient <- function(network_vector, R, n, v, lower_triangle, zeros
 
   # Convert to correlation matrix
   diag(network) <- -1
-  K <- solve(-network)
-  diag_K <- 1 / diag(K)
-  I <- diag(sqrt(diag_K))
-  implied_R <- I %*% K %*% I
+  S <- solve(-network) # covariance matrix
+  diag_S <- 1 / diag(S) # store diagonal
+  D <- diag(sqrt(diag_S)) # standardization
+  implied_R <- D %*% S %*% D # implied correlations
 
   # Compute error
   dError <- 2 * ((implied_R - R) / sum(lower_triangle))
 
-  # Gradient for K
-  dK <- I %*% dError %*% I
+  # Gradient for S
+  dS <- D %*% dError %*% D
 
   # Diagonal corrections
-  diag(dK) <- diag(dK) - diag_K * rowSums(dError * implied_R)
+  diag(dS) <- diag(dS) - diag_S * rowSums(dError * implied_R)
 
   # Return gradient
-  return(2 * (K %*% dK %*% K)[lower_triangle][zeros])
+  return(2 * (S %*% dS %*% S)[lower_triangle][zeros])
 
 }
 
@@ -583,7 +451,7 @@ egm_network_optimize <- function(
 {
 
   # Set bounds
-  bounds <- sum(zeros)
+  bounds <- 1 * zeros
 
   return(
     silent_call(

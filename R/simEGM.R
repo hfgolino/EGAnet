@@ -256,7 +256,7 @@ simEGM <- function(
               # Set zero cross-loading indices based on cross-loading probability
               between_indices[block_index, j] <- shuffle( # ensure at least one cross-loading with correlations
                 c(correlations[i,j] == 0, runif_xoshiro(block_variables - 1))
-              ) < abs(correlations[i,j])^loading_structure[block_index, i]
+              ) < abs(correlations[i,j])^(loading_structure[block_index, i])
 
             }
 
@@ -344,9 +344,6 @@ simEGM <- function(
 
       # Check for cross-loadings that are larger than their assigned loadings
       cross_check <- any(max.col(abs(loading_structure)) != membership)
-
-      # # Compute network implied zero-order correlations
-      # network_R <- pcor2cor(network)
 
       # Set quality metrics
       quality_metrics <- c(
