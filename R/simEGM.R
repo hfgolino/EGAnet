@@ -258,7 +258,7 @@ simEGM <- function(
               # Set zero cross-loading indices based on cross-loading probability
               between_indices[block_index, j] <- shuffle( # ensure at least one cross-loading with correlations
                 c(correlations[i,j] == 0, runif_xoshiro(block_variables - 1))
-              ) < pmin(1.0, abs(correlations[i,j]) + loading_structure[block_index, i])
+              ) < abs(correlations[i,j])^(1 / variables[i])
 
             }
 

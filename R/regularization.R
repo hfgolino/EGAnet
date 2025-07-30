@@ -77,7 +77,7 @@ scad_penalty <- function(x, lambda, gamma = 3.7, ...)
 
   # Pre-compute components
   x <- abs(x)
-  gamma_lambda <- a * lambda
+  gamma_lambda <- gamma * lambda
   lambda_sq <- lambda^2
 
   # Return penalty
