@@ -68,7 +68,7 @@
 #'
 #' @param max.iterations Numeric (length = 1).
 #' Number of iterations to attempt to get convergence before erroring out.
-#' Defaults to \code{1000}
+#' Defaults to \code{100}
 #'
 #' @examples
 #' simulated <- simEGM(
@@ -88,7 +88,7 @@ simEGM <- function(
     loadings, cross.loadings = 0.01,
     correlations, sample.size,
     quality = c("acceptable", "robust"),
-    max.iterations = 1000
+    max.iterations = 100
 ){
 
   # Set quality argument
@@ -252,6 +252,8 @@ simEGM <- function(
 
             # Except for itself
             if(i != j){
+
+              print(c(i, j))
 
               # Set zero cross-loading indices based on cross-loading probability
               between_indices[block_index, j] <- shuffle( # ensure at least one cross-loading with correlations
@@ -506,13 +508,21 @@ expected_network <- function(loading_structure, membership, total_variables)
 
   }
 
-  # Set Chung-Lu configuration based on assigned loading
-  max_loading <- nvapply(seq_len(total_variables), function(i){
-    abs(loading_structure[i, membership[i]])
+  # Set Chung-Lu configuration based on maximum cross-loading
+  max_cross <- nvapply(seq_len(total_variables), function(i){
+    max(abs(loading_structure[i, -membership[i]]))
   })
 
-  # Return adjacency
-  return(P * (abs(P) > (tcrossprod(max_loading) / sum(max_loading))))
+  # Update P and get implied
+  updated_P <- P * (abs(P) > (tcrossprod(max_cross) / sum(max_cross)))
+  implied_R <- silent_call(pcor2cor(updated_P))
+
+  # Check for positive definite
+  if(anyNA(implied_R) || !is_positive_definite(implied_R)){
+    return(P) # cannot make more sparse
+  }else{
+    return(updated_P) # sparsity addition succeeded
+  }
 
 }
 
