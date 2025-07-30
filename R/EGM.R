@@ -1417,7 +1417,8 @@ EGM.explore.core <- function(
   initial_loadings <- loadings_optimization(
     iter = 10, loadings_vector = as.vector(loadings),
     zeros = rep(1, length(loadings)), R = empirical_R,
-    communities = communities, data_dimensions = data_dimensions
+    communities = communities, data_dimensions = data_dimensions,
+    opt = opt
   )
 
   # Check for bad result

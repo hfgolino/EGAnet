@@ -281,7 +281,7 @@ hessian_optimize <- function(
 # Updated 22.07.2025
 loadings_optimization <- function(
     iter = 10, loadings_vector, zeros, R,
-    communities, data_dimensions, lower_triangle, opt
+    communities, data_dimensions, opt
 ){
 
   # Initial best parameters
