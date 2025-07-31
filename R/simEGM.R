@@ -15,7 +15,7 @@
 #' Input can be a loading matrix but must have the dimensions:
 #' total variables \eqn{\times} \code{communities}
 #'
-#' Uses \code{runif(n, min = value - 0.075, max = value + 0.075)} for some jitter in the loadings
+#' Uses \code{runif(n, min = value - 0.025, max = value + 0.025)} for some jitter in the loadings
 #'
 #' @param cross.loadings Numeric (length = 1).
 #' Standard deviation of a normal distribution with a mean of zero (\code{n, mean = 0, sd = value}).
@@ -30,15 +30,6 @@
 #'
 #' @param sample.size Numeric (length = 1).
 #' Number of observations to generate
-#'
-#' @param density.power Numeric (length = 1).
-#' Controls the sparsity of the network loading matrix.
-#' The probability any given cross-loading will be set to zero
-#' is based on the community correlation between two communities
-#' raised to \eqn{\frac{1}{density.power}}. Accepts values between
-#'  \code{1} and \code{Inf} but sparser loadings (i.e., values less than
-#'  \code{3}) can lead to convergence issues.
-#'  Defaults to \code{3}
 #'
 #' @param quality Character (length = 1).
 #' Quality metrics related to the alignment of the correlations
@@ -82,7 +73,7 @@
 #' @export
 #'
 # Simulate EGM ----
-# Updated 29.07.2025
+# Updated 31.07.2025
 simEGM <- function(
     communities, variables,
     loadings, cross.loadings = 0.01,
@@ -256,7 +247,7 @@ simEGM <- function(
               # Set zero cross-loading indices based on cross-loading probability
               between_indices[block_index, j] <- shuffle( # ensure at least one cross-loading with correlations
                 c(correlations[i,j] == 0, runif_xoshiro(block_variables - 1))
-              ) < abs(correlations[i,j])^(1 / variables[i])
+              ) < abs(correlations[i,j])^loading_structure[block_index, i]
 
             }
 
@@ -269,13 +260,11 @@ simEGM <- function(
       # Check for multidimensional
       if(dimensional_flag){
 
-        # Set within indices for simple structure
-        within_indices <- loading_structure != 0
-
         # Obtain full loadings and correlations
         loadings_output <- egm_correlation_optimize(
           loading_structure = loading_structure, correlations = correlations,
-          between_indices = as.logical(between_indices)
+          between_indices = as.logical(between_indices),
+          membership = membership, total_variables = total_variables
         )
 
         # Update parameters
@@ -337,7 +326,7 @@ simEGM <- function(
         network_vector = network_vector[zeros],
         R = R, n = sample.size, v = total_variables,
         lower_triangle = lower_triangle,
-        zeros = zeros, opt = "srmr"
+        zeros = zeros
       )$par
 
       # Update network
@@ -406,7 +395,8 @@ simEGM <- function(
         correlations = correlations,
         membership = membership,
         iterations = count
-      )
+      ),
+      quality = quality_df
     )
   )
 
@@ -475,78 +465,19 @@ simEGM_errors <- function(
 
 #' @noRd
 # Expected network ----
-# Updated 30.07.2025
+# Updated 31.07.2025
 expected_network <- function(loading_structure, membership, total_variables)
 {
 
   # Obtain partial correlations
   P <- nload2pcor(loading_structure)
 
-  # Set edges to zero for zero loadings
-  for(i in seq_len(total_variables)){
-
-    # Check for zero loadings
-    zero_index <- which(loading_structure[i,] == 0)
-
-    # Identify whether zero loadings exist
-    if(length(zero_index) != 0){
-
-      # Loop over zero loading memberships
-      for(community in zero_index){
-
-        # Get index
-        index <- membership == community
-
-        # Set values to zero
-        P[index, i] <- P[i, index] <- 0
-
-      }
-
-    }
-
-  }
-
-  # Set Chung-Lu configuration based on maximum cross-loading
-  max_cross <- nvapply(seq_len(total_variables), function(i){
-    max(abs(loading_structure[i, -membership[i]]))
+  # Set Chung-Lu configuration based on maximum loading
+  max_loading <- nvapply(seq_len(total_variables), function(i){
+    max(abs(loading_structure[i, membership[i]]))
   })
 
-  # Update P and get implied
-  updated_P <- P * (abs(P) > (tcrossprod(max_cross) / sum(max_cross)))
-  implied_R <- silent_call(pcor2cor(updated_P))
-
-  # Check for positive definite
-  if(anyNA(implied_R) || !is_positive_definite(implied_R)){
-    return(P) # cannot make more sparse
-  }else{
-    return(updated_P) # sparsity addition succeeded
-  }
-
-}
-
-#' @noRd
-# beta-min criterion ----
-# Updated 06.07.2025
-beta_min <- function(P, Q, K, total_variables, sample_size)
-{
-
-  # Calculate beta-min
-  minimum <- sqrt(Q * log(total_variables) / sample_size)
-
-  # Obtain inverse variances
-  inverse_variances <- diag(K)
-
-  # Obtain betas
-  inv_K <- outer(inverse_variances, inverse_variances, FUN = "/")
-  beta <- P * ((inv_K + t(inv_K)) / 2)
-
-  # Set adjacency matrix
-  adjacency <- abs(beta) > minimum
-
-  # Attach minimum
-  attr(adjacency, "beta.min") <- minimum
-
-  # Return adjacency matrix
-  return(adjacency)
+  # Return partial correlations
+  return(P * (abs(P) > (tcrossprod(max_loading) / sum(max_loading))))
 
 }

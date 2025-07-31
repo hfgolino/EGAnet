@@ -39,6 +39,7 @@ srmr_cost <- function(loadings_vector, R, rows, n, v, lambda, ...)
   D <- diag(sqrt(diag_S)) # standardization
   implied_R <- D %*% S %*% D # implied correlations
 
+
   # Return cost
   return(
     swiftelse(
@@ -80,7 +81,6 @@ srmr_gradient <- function(loadings_vector, R, rows, n, v, lambda, ...)
   return(as.vector(t(2 * crossprod(loadings_matrix, dS))) + penalty)
 
 }
-
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ## Gaussian log-likelihood ----
@@ -385,7 +385,7 @@ loadings_optimization <- function(
 
 #' @noRd
 # SRMR network cost
-# Updated 30.07.2025
+# Updated 31.07.2025
 srmr_network_cost <- function(network_vector, R, n, v, lower_triangle, zeros, ...)
 {
 
@@ -403,9 +403,9 @@ srmr_network_cost <- function(network_vector, R, n, v, lower_triangle, zeros, ..
   # Return cost
   return(
     swiftelse(
-      is_positive_definite(implied_R), # check for positive definite
-      sqrt(mean((implied_R - R)^2)),
-      1e10 # return horrible value if not positive definite
+      is(implied_R, "try-error") || anyNA(implied_R) || !is_positive_definite(implied_R),
+      1e10, # return horrible value if not positive definite
+      sqrt(mean((implied_R - R)^2))
     )
   )
 
@@ -449,11 +449,10 @@ srmr_network_gradient <- function(network_vector, R, n, v, lower_triangle, zeros
 
 #' @noRd
 # EGM network optimization
-# Updated 30.07.2025
+# Updated 31.07.2025
 egm_network_optimize <- function(
     network_vector, R, n, v,
-    lower_triangle, zeros, opt,
-    ...
+    lower_triangle, zeros, ...
 )
 {
 
@@ -464,16 +463,8 @@ egm_network_optimize <- function(
     silent_call(
       nlminb(
         start = network_vector,
-        objective = switch(
-          opt,
-          "loglik" = logLik_network_cost,
-          "srmr" = srmr_network_cost
-        ),
-        gradient = switch(
-          opt,
-          "loglik" = logLik_network_gradient,
-          "srmr" = srmr_network_gradient
-        ),
+        objective = srmr_network_cost,
+        gradient = srmr_network_gradient,
         R = R, n = n, v = v, lower_triangle = lower_triangle, zeros = zeros,
         lower = -bounds, upper = bounds,
         control = list(
@@ -495,10 +486,11 @@ egm_network_optimize <- function(
 
 #' @noRd
 # Mean absolute error cost
-# Updated 30.07.2025
+# Updated 31.07.2025
 mae_community_cost <- function(
     between_loadings, between_indices, simple_structure,
-    loading_structure, target_correlations, ...
+    loading_structure, target_correlations,
+    membership, total_variables, ...
 )
 {
 
@@ -516,17 +508,28 @@ mae_community_cost <- function(
   S_corr <- crossprod(simple_structure, D %*% S %*% D) %*% simple_structure
   D_corr <- diag(sqrt(1 / diag(S_corr)))
 
+  # Check expected network
+  network <- expected_network(loading_structure, membership, total_variables)
+  network_R <- try(pcor2cor(network), silent = TRUE)
+
   # Return MAE
-  return(mean(abs(D_corr %*% S_corr %*% D_corr - target_correlations)))
+  return(
+    swiftelse(
+      is(network_R, "try-error") || anyNA(network_R) || !is_positive_definite(network_R),
+      1e10, # send horrible cost
+      mean(abs(D_corr %*% S_corr %*% D_corr - target_correlations))
+    )
+  )
 
 }
 
 #' @noRd
 # Mean absolute error gradient
-# Updated 30.07.2025
+# Updated 31.07.2025
 mae_community_gradient <- function(
     between_loadings, between_indices, simple_structure,
-    loading_structure, target_correlations, ...
+    loading_structure, target_correlations,
+    membership, total_variables, ...
 )
 {
 
@@ -570,8 +573,11 @@ mae_community_gradient <- function(
 
 #' @noRd
 # EGM community correlation optimization
-# Updated 30.07.2025
-egm_correlation_optimize <- function(loading_structure, correlations, between_indices, ...)
+# Updated 31.07.2025
+egm_correlation_optimize <- function(
+    loading_structure, correlations, between_indices,
+    membership, total_variables, ...
+)
 {
 
   # Initialize simple structure
@@ -585,13 +591,15 @@ egm_correlation_optimize <- function(loading_structure, correlations, between_in
   # Optimize for loadings
   cross_loadings <- silent_call(
     nlminb(
-      start = rep(0, sum(between_indices)),
+      start = runif_xoshiro(sum(between_indices), min = -0.10, max = 0.10),
       objective = mae_community_cost,
       gradient = mae_community_gradient,
       between_indices = between_indices,
-      simple_structure = loading_structure,
+      simple_structure = simple_structure,
       loading_structure = loading_structure,
       target_correlations = correlations,
+      membership = membership,
+      total_variables = total_variables,
       lower = -bounds, upper = bounds,
       control = list(
         eval.max = 10000, iter.max = 10000,

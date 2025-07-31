@@ -29,7 +29,7 @@ For reference, small (0.20), moderate (0.35), and large (0.50).
 Input can be a loading matrix but must have the dimensions:
 total variables \eqn{\times} \code{communities}
 
-Uses \code{runif(n, min = value - 0.075, max = value + 0.075)} for some jitter in the loadings}
+Uses \code{runif(n, min = value - 0.025, max = value + 0.025)} for some jitter in the loadings}
 
 \item{cross.loadings}{Numeric (length = 1).
 Standard deviation of a normal distribution with a mean of zero (\code{n, mean = 0, sd = value}).
@@ -74,15 +74,6 @@ to be increased to allow for more cross-loadings to converge}
 \item{max.iterations}{Numeric (length = 1).
 Number of iterations to attempt to get convergence before erroring out.
 Defaults to \code{100}}
-
-\item{density.power}{Numeric (length = 1).
-Controls the sparsity of the network loading matrix.
-The probability any given cross-loading will be set to zero
-is based on the community correlation between two communities
-raised to \eqn{\frac{1}{density.power}}. Accepts values between
- \code{1} and \code{Inf} but sparser loadings (i.e., values less than
- \code{3}) can lead to convergence issues.
- Defaults to \code{3}}
 }
 \description{
 Function to simulate data based on \code{\link[EGAnet]{EGM}}
