@@ -1407,9 +1407,6 @@ EGM.explore.core <- function(
 
   }
 
-  # Get loading dimensions
-  dimensions <- dim(loadings)
-
   # Set lower triangle
   lower_triangle <- lower.tri(empirical_R)
 
@@ -1443,7 +1440,7 @@ EGM.explore.core <- function(
     "mcp" = mcp_proximal, "scad" = scad_proximal
   )
 
-  # Optimize SCAD soft threshold
+  # Optimize soft threshold
   soft_fits <- nvapply(
     lambdas, soft_threshold, loadings = loadings,
     proximal_FUN = proximal_FUN,
@@ -1458,7 +1455,7 @@ EGM.explore.core <- function(
   # Set membership
   membership <- max.col(abs(loadings))
 
-  # Obtain model-implied partial correlations
+  # Obtain model-implied network
   P <- set_network(loadings, membership, data_dimensions)
 
   # Get quality flags
@@ -1718,7 +1715,7 @@ soft_threshold <- function(
   }
 
   # Convert partial correlations to zero-order correlations
-  R <- try(pcor2cor(P), silent = TRUE)
+  R <- silent_call(try(pcor2cor(P), silent = TRUE))
 
   # Check for positive definite
   if(is(R, "try-error") || anyNA(R) || !is_positive_definite(R)){
