@@ -1459,7 +1459,7 @@ EGM.explore.core <- function(
   membership <- max.col(abs(loadings))
 
   # Obtain model-implied partial correlations
-  P <- expected_network(loadings, membership, data_dimensions[2])
+  P <- set_network(loadings, membership, data_dimensions)
 
   # Get quality flags
   meaningful_flag <- unique_length(membership) != communities
@@ -1490,23 +1490,40 @@ EGM.explore.core <- function(
   }
 
   # Get implied correlations
-  implied_R <- nload2cor(loadings)
+  implied_R <- pcor2cor(P)
 
-  # Optimize network toward loadings
-  network_vector <- as.vector(P[lower_triangle])
-  zeros <- network_vector != 0
-
-  # Update network edge parameters
-  network_vector[zeros] <- egm_network_optimize(
-    network_vector = network_vector[zeros],
-    R = implied_R, n = data_dimensions[1], v = data_dimensions[2],
-    lower_triangle = lower_triangle, zeros = zeros
+  # Update loading parameters
+  loadings[] <- egm_optimize(
+    loadings_vector = as.vector(loadings), zeros = loadings != 0,
+    R = implied_R, rows = communities, n = data_dimensions[1],
+    v = data_dimensions[2], opt = "srmr", lambda = 0, # no regularization
+    iterations = 10000
   )$par
 
-  # Update network
-  P[lower_triangle] <- network_vector
-  P <- t(P)
-  P[lower_triangle] <- network_vector
+  # Update memberships
+  membership <- max.col(abs(loadings))
+
+  # Run back membership checks
+  meaningful_flag <- unique_length(membership) != communities
+  singleton_flag <- any(fast_table(membership) < 2)
+
+  # Check overall quality
+  if(meaningful_flag || singleton_flag){
+
+    # Check down reasons
+    if(meaningful_flag){
+      converged <- "1: unique membership < communities"
+    }else if(singleton_flag){
+      converged <- "1: singleton communities"
+    }
+
+    # Updated bad fit
+    bad_fit$converged <- converged
+
+    # Return bad result
+    return(list(loadings = loadings, fit = bad_fit))
+
+  }
 
   # Add dimension names
   dimnames(P) <- dimnames(empirical_R)
@@ -1628,11 +1645,48 @@ obtain_modularity <- function(network, membership = NULL)
       swiftelse(
         unique_length(membership) == 1,
         mean(network[lower.tri(network)]),
-        # igraph::transitivity(convert2igraph(network)) / 3,
         modularity(network, membership)
       )
     )
   )
+
+}
+
+#' @noRd
+# Threshold for network ----
+# Updated 13.07.2025
+set_network <- function(loadings, membership, data_dimensions)
+{
+
+  # Obtain partial correlations
+  P <- nload2pcor(loadings)
+
+  # Set edges to zero for zero loadings
+  for(i in seq_len(data_dimensions[2])){
+
+    # Check for zero loadings
+    zero_index <- which(loadings[i,] == 0)
+
+    # Identify whether zero loadings exist
+    if(length(zero_index) != 0){
+
+      # Loop over zero loading memberships
+      for(community in zero_index){
+
+        # Get index
+        index <- membership == community
+
+        # Set values to zero
+        P[index, i] <- P[i, index] <- 0
+
+      }
+
+    }
+
+  }
+
+  # Return network
+  return(P)
 
 }
 
@@ -1652,12 +1706,10 @@ soft_threshold <- function(
   # Set membership
   membership <- max.col(abs(loadings))
 
-  # Obtain model-implied partial correlations with L1
+  # Obtain model-implied network
   P <- try(
-    expected_network(
-      loadings = loadings, membership = membership,
-      data_dimensions = data_dimensions
-    ), silent = TRUE
+    set_network(loadings, membership, data_dimensions),
+    silent = TRUE
   )
 
   # Check first for missing issues (all zero loadings)
