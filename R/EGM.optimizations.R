@@ -449,10 +449,11 @@ srmr_network_gradient <- function(network_vector, R, n, v, lower_triangle, zeros
 
 #' @noRd
 # EGM network optimization
-# Updated 31.07.2025
+# Updated 01.08.2025
 egm_network_optimize <- function(
     network_vector, R, n, v,
-    lower_triangle, zeros, ...
+    lower_triangle, zeros,
+    max_iterations = 10000, ...
 )
 {
 
@@ -468,7 +469,7 @@ egm_network_optimize <- function(
         R = R, n = n, v = v, lower_triangle = lower_triangle, zeros = zeros,
         lower = -bounds, upper = bounds,
         control = list(
-          eval.max = 1000, iter.max = 1000,
+          eval.max = max_iterations, iter.max = max_iterations,
           step.min = .Machine$double.eps, step.max = 1,
           abs.tol = .Machine$double.eps, rel.tol = .Machine$double.eps,
           x.tol = .Machine$double.eps, xf.tol = .Machine$double.eps,
