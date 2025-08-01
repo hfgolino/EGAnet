@@ -540,8 +540,7 @@ mae_community_gradient <- function(
   # Convert to correlation matrix
   S <- tcrossprod(loading_structure) # compute covariances
   diag(S) <- sqrt(diag(S)) # interdependence
-  diag_S <- 1 / diag(S) # save diagonal
-  D <- diag(sqrt(diag_S)) # standardization
+  D <- diag(sqrt(1 / diag(S))) # standardization
   implied_R <- D %*% S %*% D # implied correlations
 
   # Get covariance and convert to correlations
