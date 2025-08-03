@@ -151,13 +151,7 @@ mcp_derivative <- function(x, lambda, gamma = 3, ...)
   abs_x <- abs(x)
 
   # Return derivative
-  return(
-    swiftelse(
-      abs_x <= (gamma * lambda),
-      sign(x) * (lambda - abs_x / gamma),
-      0
-    )
-  )
+  return((abs_x <= (gamma * lambda)) * (lambda - abs_x / gamma))
 
 }
 
@@ -183,9 +177,9 @@ scad_derivative <- function(x, lambda, gamma = 3.7, ...)
 
   # Return derivative
   return(
-    (abs_x <= lambda) * lambda * sign_x +  # region 1
+    (abs_x <= lambda) * lambda +  # region 1
     ((abs_x > lambda) & (abs_x <= gamma_lambda)) * # region 2
-    (gamma_lambda - abs_x) * sign_x / (gamma - 1) +
+    (gamma_lambda - abs_x) / (gamma - 1) +
     (abs_x > gamma_lambda) * 0  # region 3
   )
 

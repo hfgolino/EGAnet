@@ -39,13 +39,12 @@ srmr_cost <- function(loadings_vector, R, rows, n, v, lambda, ...)
   D <- diag(sqrt(diag_S)) # standardization
   implied_R <- D %*% S %*% D # implied correlations
 
-
   # Return cost
   return(
     swiftelse(
-      is_positive_definite(implied_R), # check for positive definite
-      sqrt(mean((implied_R - R)^2)) + penalty,
-      1e10 # return horrible value if not positive definite
+      anyNA(implied_R) || !is_positive_definite(implied_R),
+      1e10, # return horrible value if not positive definite
+      sqrt(mean((implied_R - R)^2)) + penalty
     )
   )
 
