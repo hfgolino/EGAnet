@@ -428,24 +428,18 @@ community_correlations <- function(simple_structure, loading_structure)
 
 #' @noRd
 # Network loadings to partial correlations ----
-# Updated 20.03.2025
+# Updated 03.08.2025
 nload2pcor <- function(loadings)
 {
 
   # Compute covariance matrix
   P <- tcrossprod(loadings)
 
-  # Compute interdependence
-  diag(P) <- interdependence <- sqrt(diag(P))
-
-  # Compute matrix I
-  I <- diag(sqrt(1 / interdependence))
-
-  # Compute zero-order correlations
-  R <- I %*% P %*% I
+  # Set diagonal to interdependence
+  diag(P) <- sqrt(diag(P))
 
   # Obtain inverse covariance matrix
-  INV <- solve(R)
+  INV <- solve(P)
 
   # Compute matrix D
   D <- diag(sqrt(1 / diag(INV)))
@@ -463,11 +457,11 @@ nload2pcor <- function(loadings)
 
 #' @noRd
 # Network loadings to correlations ----
-# Updated 20.03.2025
+# Updated 03.08.2025
 nload2cor <- function(loadings)
 {
 
-  # Compute partial correlation
+  # Compute covariance matrix
   P <- tcrossprod(loadings)
 
   # Compute interdependence
