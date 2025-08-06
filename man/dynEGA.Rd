@@ -12,6 +12,7 @@ dynEGA(
   tau = 1,
   delta = 1,
   use.derivatives = 1,
+  na.derivative = c("none", "rowwise"),
   level = c("individual", "group", "population"),
   corr = c("auto", "cor_auto", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
@@ -88,6 +89,21 @@ rate of the rate of change over time
 }
 
 Generally recommended to leave "as is"}
+
+\item{na.derivative}{Character (length = 1).
+How should missing data in the embeddings be handled?
+Available options (see Boker et al. (2018) in \code{\link[EGAnet]{glla}} references for more details):
+
+\itemize{
+
+\item \code{"none"} --- "skips over" missing data and treats the non-missing points
+as continuous points in time (note that the time scale shifts to the "per mean time interval,"
+which is different and \emph{larger} than the original scale)
+
+\item \code{"rowwise"} (default) --- adjusts time interval with respect to each embedding ensuring
+time intervals are adaptive to the missing data (tends to be more accurate than \code{"none"})
+
+}}
 
 \item{level}{Character vector (up to length of 3).
 A character vector indicating which level(s) to estimate:

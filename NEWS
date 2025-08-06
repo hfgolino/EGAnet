@@ -10,6 +10,8 @@ WEBSITE: https://r-ega.net
 
 +	UPDATE: beta-min condition is used to supply a model-implied network for `simEGM`
 
++	UPDATE: missing data handling in `glla` and subsequently `dynEGA` functions
+
 
 ## Changes in version 2.3.0
 

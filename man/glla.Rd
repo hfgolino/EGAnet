@@ -4,19 +4,19 @@
 \alias{glla}
 \title{Generalized Local Linear Approximation}
 \usage{
-glla(x, n.embed, tau, delta, order)
+glla(x, n.embed, tau, delta, order, na.derivative = c("none", "rowwise"))
 }
 \arguments{
 \item{x}{Numeric vector.
 An observed time series}
 
 \item{n.embed}{Numeric (length = 1).
-Number of embedded dimensions (the number of observations 
+Number of embedded dimensions (the number of observations
 to be used in the \code{\link[EGAnet]{Embed}} function)}
 
 \item{tau}{Numeric (length = 1).
-Number of observations to offset successive embeddings in 
-the \code{\link[EGAnet]{Embed}} function. A \code{tau} of one 
+Number of observations to offset successive embeddings in
+the \code{\link[EGAnet]{Embed}} function. A \code{tau} of one
 uses adjacent observations.
 Default is \code{1}}
 
@@ -30,16 +30,31 @@ The maximum order of the derivative to be estimated. For example,
 of the observed scores and the first and second derivative for each row of the embedded
 matrix (i.e. the reorganization of the time series implemented via
 the \code{\link[EGAnet]{Embed}} function)}
+
+\item{na.derivative}{Character (length = 1).
+How should missing data in the embeddings be handled?
+Available options (see Boker et al. (2018) for more details):
+
+\itemize{
+
+\item \code{"none"} --- "skips over" missing data and treats the non-missing points
+as continuous points in time (note that the time scale shifts to the "per mean time interval,"
+which is different and \emph{larger} than the original scale)
+
+\item \code{"rowwise"} (default) --- adjusts time interval with respect to each embedding ensuring
+time intervals are adaptive to the missing data (tends to be more accurate than \code{"none"})
+
+}}
 }
 \value{
 Returns a matrix containing \emph{n} columns in which \emph{n}
-is one plus the maximum order of the derivatives to be estimated via 
+is one plus the maximum order of the derivatives to be estimated via
 generalized local linear approximation
 }
 \description{
-Estimates the derivatives of a time series using generalized 
-local linear approximation (GLLA). GLLA is a filtering method for 
-estimating derivatives from data that uses time delay embedding and a 
+Estimates the derivatives of a time series using generalized
+local linear approximation (GLLA). GLLA is a filtering method for
+estimating derivatives from data that uses time delay embedding and a
 variant of Savitzky-Golay filtering to accomplish the task.
 }
 \examples{
@@ -63,6 +78,13 @@ Using derivative estimates to describe intraindividual variability at multiple t
 Savitzky, A., & Golay, M. J. (1964).
 Smoothing and differentiation of data by simplified least squares procedures.
 \emph{Analytical Chemistry}, \emph{36(8)}, 1627-1639.
+
+\strong{Missing Data} \cr
+Boker, S. M., Tiberio, S. S., & Moulder, R. G. (2018).
+Robustness of time delay embedding to sampling interval misspecification.
+In K. van Montfort, J. H. L. Oud, & M. C. Voelkle (Eds.),
+\emph{Continuous Time Modeling in the Behavioral and Related Sciences} (pp. 239–258).
+Springer International Publishing.
 }
 \author{
 Hudson Golino <hfg9s at virginia.edu>

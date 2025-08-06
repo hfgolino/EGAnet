@@ -70,6 +70,21 @@
 #'
 #' Generally recommended to leave "as is"
 #'
+#' @param na.derivative Character (length = 1).
+#' How should missing data in the embeddings be handled?
+#' Available options (see Boker et al. (2018) in \code{\link[EGAnet]{glla}} references for more details):
+#'
+#' \itemize{
+#'
+#' \item \code{"none"} --- "skips over" missing data and treats the non-missing points
+#' as continuous points in time (note that the time scale shifts to the "per mean time interval,"
+#' which is different and \emph{larger} than the original scale)
+#'
+#' \item \code{"rowwise"} (default) --- adjusts time interval with respect to each embedding ensuring
+#' time intervals are adaptive to the missing data (tends to be more accurate than \code{"none"})
+#'
+#' }
+#'
 #' @param level Character vector (up to length of 3).
 #' A character vector indicating which level(s) to estimate:
 #'
@@ -331,11 +346,12 @@
 #' @export
 #'
 # dynEGA ----
-# Updated 24.10.2023
+# Updated 06.08.2025
 dynEGA <- function(
     # `dynEGA` arguments
     data,  id = NULL, group = NULL,
     n.embed = 5, tau = 1, delta = 1, use.derivatives = 1,
+    na.derivative = c("none", "rowwise"),
     level = c("individual", "group", "population"),
     # `EGA` arguments
     corr = c("auto", "cor_auto", "pearson", "spearman"),
@@ -347,6 +363,7 @@ dynEGA <- function(
 ){
 
   # Check for missing arguments (argument, default, function)
+  na.derivative <- set_default(na.derivative, "rowwise", glla)
   corr <- set_default(corr, "auto", dynEGA)
   na.data <- set_default(na.data, "pairwise", auto.correlate)
   model <- set_default(model, "glasso", network.estimation)
@@ -380,14 +397,10 @@ dynEGA <- function(
   # Split data into lists based on ID
   individual_data <- split(data, attributes(data)$ID)
 
-  # Set up to compute GLLA
-  # Avoids computation of weights participant x variable times
-  # Leads to about 6x faster computation
-  L <- glla_setup(n.embed, tau, delta, order = 2)
-
   # Get derivatives for each participant
   derivative_list <- individual_derivatives(
-    individual_data, variable_names, n.embed, tau, L,
+    individual_data, variable_names, n.embed,
+    tau, delta, na.derivative,
     individual_attributes = attributes(data)
   )
 
@@ -1387,28 +1400,11 @@ get_attributes <- function(data, dimensions, id, group, level)
 }
 
 #' @noRd
-# Variable derivatives ----
-# Updated 07.07.2023
-variable_derivatives <- function(variable, n.embed, tau, L)
-{
-
-  # Get derivatives
-  derivatives <- Embed(variable, n.embed, tau) %*% L
-
-  # Add column names
-  dimnames(derivatives)[[2]] <- paste0("Ord", 0:2)
-
-  # Return derivatives
-  return(derivatives)
-
-}
-
-#' @noRd
 # Individual derivatives ----
-# Updated 09.07.2023
+# Updated 06.08.2025
 individual_derivatives <- function(
     individual_data, variable_names,
-    n.embed, tau, L,
+    n.embed, tau, delta, na.derivative,
     individual_attributes
 )
 {
@@ -1421,7 +1417,9 @@ individual_derivatives <- function(
       derivatives <- do.call(
         cbind, lapply(
           as.data.frame(individual_data[[index]]),
-          variable_derivatives, n.embed, tau, L
+          glla, n.embed = n.embed, tau = tau,
+          delta = delta, order = 2,
+          na.derivative = na.derivative
         )
       )
 
