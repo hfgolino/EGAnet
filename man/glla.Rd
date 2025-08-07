@@ -4,7 +4,14 @@
 \alias{glla}
 \title{Generalized Local Linear Approximation}
 \usage{
-glla(x, n.embed, tau, delta, order, na.derivative = c("none", "rowwise"))
+glla(
+  x,
+  n.embed,
+  tau,
+  delta,
+  order,
+  na.derivative = c("none", "kalman", "rowwise", "skipover")
+)
 }
 \arguments{
 \item{x}{Numeric vector.
@@ -37,12 +44,21 @@ Available options (see Boker et al. (2018) for more details):
 
 \itemize{
 
-\item \code{"none"} --- "skips over" missing data and treats the non-missing points
+\item \code{"none"} (default) --- does nothing and leaves \code{NA}s in data
+
+\item \code{"kalman"} --- uses Kalman smoothing (\code{\link[stats]{KalmanSmooth}}) with
+structural time series models (\code{\link[stats]{StructTS}}) to impute missing values.
+This approach models the underlying temporal dependencies (trend, seasonality, autocorrelation)
+to generate estimates for missing observations while preserving the original time scale.
+More computationally intensive than the other methods but typically provides the
+most accurate imputation by respecting the stochastic properties of the time series
+
+\item \code{"rowwise"} --- adjusts time interval with respect to each embedding ensuring
+time intervals are adaptive to the missing data (tends to be more accurate than \code{"none"})
+
+\item \code{"skipover"} --- "skips over" missing data and treats the non-missing points
 as continuous points in time (note that the time scale shifts to the "per mean time interval,"
 which is different and \emph{larger} than the original scale)
-
-\item \code{"rowwise"} (default) --- adjusts time interval with respect to each embedding ensuring
-time intervals are adaptive to the missing data (tends to be more accurate than \code{"none"})
 
 }}
 }

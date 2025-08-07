@@ -35,12 +35,21 @@
 #'
 #' \itemize{
 #'
-#' \item \code{"none"} --- "skips over" missing data and treats the non-missing points
+#' \item \code{"none"} (default) --- does nothing and leaves \code{NA}s in data
+#'
+#' \item \code{"kalman"} --- uses Kalman smoothing (\code{\link[stats]{KalmanSmooth}}) with
+#' structural time series models (\code{\link[stats]{StructTS}}) to impute missing values.
+#' This approach models the underlying temporal dependencies (trend, seasonality, autocorrelation)
+#' to generate estimates for missing observations while preserving the original time scale.
+#' More computationally intensive than the other methods but typically provides the
+#' most accurate imputation by respecting the stochastic properties of the time series
+#'
+#' \item \code{"rowwise"} --- adjusts time interval with respect to each embedding ensuring
+#' time intervals are adaptive to the missing data (tends to be more accurate than \code{"none"})
+#'
+#' \item \code{"skipover"} --- "skips over" missing data and treats the non-missing points
 #' as continuous points in time (note that the time scale shifts to the "per mean time interval,"
 #' which is different and \emph{larger} than the original scale)
-#'
-#' \item \code{"rowwise"} (default) --- adjusts time interval with respect to each embedding ensuring
-#' time intervals are adaptive to the missing data (tends to be more accurate than \code{"none"})
 #'
 #' }
 #'
@@ -81,12 +90,12 @@
 #' @export
 #'
 # Generalized local linear approximation ----
-# Updated 06.08.2025
-glla <- function(x, n.embed, tau, delta, order, na.derivative = c("none", "rowwise"))
+# Updated 07.08.2025
+glla <- function(x, n.embed, tau, delta, order, na.derivative = c("none", "kalman", "rowwise", "skipover"))
 {
 
   # Set default
-  set_default(na.derivative, "rowwise", glla)
+  na.derivative <- set_default(na.derivative, "none", glla)
 
   # Arguments errors
   glla_errors(x, n.embed, tau, delta, order)
@@ -94,12 +103,13 @@ glla <- function(x, n.embed, tau, delta, order, na.derivative = c("none", "rowwi
   # Estimate derivatives
   ## Formally, `embedding %*% L %*% (solve(t(L) %*% L))`
   ## See helper function `glla_setup` below
-  if(anyNA(x)){
+  if(na.derivative != "none"){
 
     # Handle missing derivatives
     derivative_estimates <- switch(
       na.derivative,
-      "none" = no_correction(x = x, n.embed = n.embed, tau = tau, delta = delta, order = order),
+      "kalman" = Embed(x = impute_kalman(x), E = n.embed, tau = tau) %*% glla_setup(n.embed, tau, delta, order),
+      "skipover" = no_correction(x = x, n.embed = n.embed, tau = tau, delta = delta, order = order),
       "rowwise" = rowwise_correction(x = x, n.embed = n.embed, tau = tau, delta = delta, order = order)
     )
 
@@ -205,6 +215,44 @@ glla_setup <- function(n.embed, tau, delta, order)
   # Return L matrix
   # L %*% (solve(t(L) %*% L))
   return(L %*% solve(crossprod(L)))
+
+}
+
+#' @noRd
+# Kalman Smoothing ----
+# Updated 07.08.2025
+impute_kalman <- function(x)
+{
+
+  # Make copy
+  x_copy <- x
+
+  # Missing indices
+  index <- is.na(x)
+
+  # If no missing values, return original
+  if(!anyNA(x)){
+    return(x)
+  }
+
+  # Check for first NA
+  if(index[1]){
+    x[1] <- x[which.min(is.na(x))]
+  }
+
+  # Fit StructTS model
+  mod <- silent_call(try(StructTS(x)$model0, silent = TRUE))
+
+  # If error, then just return the time series
+  if(is(mod, "try-error")){
+    return(x_copy)
+  }
+
+  # Extract smoothed values ONLY for missing observations
+  x[index] <- KalmanSmooth(x, mod)$smooth[index,, drop = FALSE] %*% as.matrix(mod$Z)
+
+  # Return imputed values
+  return(x)
 
 }
 

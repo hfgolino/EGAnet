@@ -76,12 +76,21 @@
 #'
 #' \itemize{
 #'
-#' \item \code{"none"} --- "skips over" missing data and treats the non-missing points
+#' \item \code{"none"} (default) --- does nothing and leaves \code{NA}s in data
+#'
+#' \item \code{"kalman"} --- uses Kalman smoothing (\code{\link[stats]{KalmanSmooth}}) with
+#' structural time series models (\code{\link[stats]{StructTS}}) to impute missing values.
+#' This approach models the underlying temporal dependencies (trend, seasonality, autocorrelation)
+#' to generate estimates for missing observations while preserving the original time scale.
+#' More computationally intensive than the other methods but typically provides the
+#' most accurate imputation by respecting the stochastic properties of the time series
+#'
+#' \item \code{"rowwise"} --- adjusts time interval with respect to each embedding ensuring
+#' time intervals are adaptive to the missing data (tends to be more accurate than \code{"none"})
+#'
+#' \item \code{"skipover"} --- "skips over" missing data and treats the non-missing points
 #' as continuous points in time (note that the time scale shifts to the "per mean time interval,"
 #' which is different and \emph{larger} than the original scale)
-#'
-#' \item \code{"rowwise"} (default) --- adjusts time interval with respect to each embedding ensuring
-#' time intervals are adaptive to the missing data (tends to be more accurate than \code{"none"})
 #'
 #' }
 #'
@@ -351,7 +360,7 @@ dynEGA <- function(
     # `dynEGA` arguments
     data,  id = NULL, group = NULL,
     n.embed = 5, tau = 1, delta = 1, use.derivatives = 1,
-    na.derivative = c("none", "rowwise"),
+    na.derivative = c("none", "kalman", "rowwise", "skipover"),
     level = c("individual", "group", "population"),
     # `EGA` arguments
     corr = c("auto", "cor_auto", "pearson", "spearman"),
@@ -363,7 +372,7 @@ dynEGA <- function(
 ){
 
   # Check for missing arguments (argument, default, function)
-  na.derivative <- set_default(na.derivative, "rowwise", glla)
+  na.derivative <- set_default(na.derivative, "none", glla)
   corr <- set_default(corr, "auto", dynEGA)
   na.data <- set_default(na.data, "pairwise", auto.correlate)
   model <- set_default(model, "glasso", network.estimation)
@@ -476,6 +485,9 @@ dynEGA <- function(
   ## Individual
   if("individual" %in% level){
 
+    # Sent user message about check
+    message("Checking for positive definite correlation matrices...", appendLF = FALSE)
+
     # Get proper derivatives and usable data
     # Add zero variance variables as attributes
     usable_derivatives <- lapply(
@@ -484,10 +496,10 @@ dynEGA <- function(
         # First, get proper derivatives
         proper_derivatives <- x[,derivative_index]
 
-        # Next, check for zero variance variables
+        # Next, check for NA and zero variance variables
         zero_variance <- lvapply(
           as.data.frame(proper_derivatives),
-          function(x){sd(x, na.rm = TRUE) == 0}
+          function(x){return(unique_length(x) < 2)}
         )
 
         # Return data with all non-zero variance variables
@@ -502,6 +514,53 @@ dynEGA <- function(
 
       }
     )
+
+    # Check for correlation issues before processing
+    issues <- lvapply(usable_derivatives, function(x){
+
+      # Try to get correlations
+      attempt <- silent_call(try(
+        obtain_sample_correlations(
+          data = x, n = dim(x)[1], corr = corr,
+          na.data = na.data, verbose = verbose
+        )$correlation_matrix, silent = TRUE
+      ))
+
+      # Check for issues
+      return(
+        swiftelse(
+          is(attempt, "try-error") || !is_positive_definite(attempt), TRUE, FALSE
+        )
+      )
+
+    })
+
+    # Sent user message about check
+    message("done.")
+
+    # Return message about issues
+    if(any(issues)){
+
+      .handleSimpleError(
+        h = warning,
+        msg = paste0(
+          "The following IDs were found to have zero variance and/or missing data ",
+          "preventing their correlation matrices from being estimated:\n\n",
+          paste0(names(issues)[issues], collapse = ", "), "\n\n",
+          "These IDs will not have individual networks.",
+          swiftelse(
+            na.derivative == "none",
+            "\n\nTry setting 'na.derivative' to \"kalman\" (recommended), \"skipover\", or \"rowwise\"",
+            ""
+          )
+        ),
+        call = "EGA"
+      )
+
+    }
+
+    # Update usable_derivatives
+    usable_derivatives <- usable_derivatives[!issues]
 
     # Estimate individual EGA
     individual_results <- parallel_process(
