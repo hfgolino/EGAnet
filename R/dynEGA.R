@@ -407,7 +407,9 @@ dynEGA <- function(
   individual_data <- split(data, attributes(data)$ID)
 
   # Send message about computing the derivatives
-  message("Computing derivatives...", appendLF = FALSE)
+  if(verbose){
+    message("Computing derivatives...", appendLF = FALSE)
+  }
 
   # Get derivatives for each participant
   derivative_list <- individual_derivatives(
@@ -429,7 +431,9 @@ dynEGA <- function(
   )
 
   # Send message about computing the derivatives
-  message("done.")
+  if(verbose){
+    message("done.")
+  }
 
   # Get derivatives to use
   derivative_index <- grep(
@@ -492,7 +496,9 @@ dynEGA <- function(
   if("individual" %in% level){
 
     # Sent user message about check
-    message("Checking for positive definite correlation matrices...", appendLF = FALSE)
+    if(verbose){
+      message("Checking for positive definite correlation matrices...", appendLF = FALSE)
+    }
 
     # Get proper derivatives and usable data
     # Add zero variance variables as attributes
@@ -542,7 +548,9 @@ dynEGA <- function(
     })
 
     # Sent user message about check
-    message("done.")
+    if(verbose){
+      message("done.")
+    }
 
     # Return message about issues
     if(any(issues)){
