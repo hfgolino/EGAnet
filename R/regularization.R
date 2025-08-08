@@ -151,7 +151,7 @@ mcp_derivative <- function(x, lambda, gamma = 3, ...)
   abs_x <- abs(x)
 
   # Return derivative
-  return((abs_x <= (gamma * lambda)) * (lambda - abs_x / gamma))
+  return((abs_x <= (gamma * lambda)) * (lambda - abs_x / gamma) * sign(x))
 
 }
 
@@ -166,7 +166,7 @@ pop_derivative <- function(x, lambda, gamma = 4, ...)
 }
 
 #' @noRd
-# Updated 25.07.2025
+# Updated 08.08.2025
 scad_derivative <- function(x, lambda, gamma = 3.7, ...)
 {
 
@@ -177,10 +177,10 @@ scad_derivative <- function(x, lambda, gamma = 3.7, ...)
 
   # Return derivative
   return(
-    (abs_x <= lambda) * lambda +  # region 1
-    ((abs_x > lambda) & (abs_x <= gamma_lambda)) * # region 2
-    (gamma_lambda - abs_x) / (gamma - 1) +
-    (abs_x > gamma_lambda) * 0  # region 3
+    (abs_x <= lambda) * lambda * sign_x +  # region 1
+      ((abs_x > lambda) & (abs_x <= gamma_lambda)) * # region 2
+      (gamma_lambda - abs_x) * sign_x / (gamma - 1) +
+      (abs_x > gamma_lambda) * 0  # region 3
   )
 
 }
