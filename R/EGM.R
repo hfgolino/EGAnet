@@ -1450,12 +1450,12 @@ EGM.explore.core <- function(
   membership <- max.col(abs(loadings))
 
   # Obtain model-implied network
-  P <- set_network(loadings, membership, data_dimensions)
+  P <- try(set_network(loadings, membership, data_dimensions), silent = TRUE)
 
   # Get quality flags
   meaningful_flag <- unique_length(membership) != communities
   singleton_flag <- any(fast_table(membership) < 2)
-  PD_flag <- anyNA(P) || !is_positive_definite(pcor2cor(P))
+  PD_flag <- is(P, "try-error") || anyNA(P) || !is_positive_definite(pcor2cor(P))
   empty_flag <- all(P == 0)
 
   # Check overall quality
