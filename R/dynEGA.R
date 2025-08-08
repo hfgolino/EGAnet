@@ -1543,7 +1543,7 @@ process_individual_dynEGA <- function(usable_derivatives, individual_results)
     # Send warning about which IDs
     warning(
       paste(
-        paste0("IDs:\n\n", paste0(names(individual_results)[zero_variance_ID], collapse = ", ")),
+        paste0("IDs: ", paste0(names(individual_results)[zero_variance_ID], collapse = ", ")),
         "\n\nhad derivatives with zero variance (no change in values across time). These IDs will have disconnected nodes in their network and missing community memberships"
       ), call. = FALSE
     )
