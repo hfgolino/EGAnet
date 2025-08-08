@@ -355,7 +355,7 @@
 #' @export
 #'
 # dynEGA ----
-# Updated 06.08.2025
+# Updated 08.08.2025
 dynEGA <- function(
     # `dynEGA` arguments
     data,  id = NULL, group = NULL,
@@ -406,6 +406,9 @@ dynEGA <- function(
   # Split data into lists based on ID
   individual_data <- split(data, attributes(data)$ID)
 
+  # Send message about computing the derivatives
+  message("Computing derivatives...", appendLF = FALSE)
+
   # Get derivatives for each participant
   derivative_list <- individual_derivatives(
     individual_data, variable_names, n.embed,
@@ -424,6 +427,9 @@ dynEGA <- function(
       )
     )
   )
+
+  # Send message about computing the derivatives
+  message("done.")
 
   # Get derivatives to use
   derivative_index <- grep(
@@ -552,7 +558,7 @@ dynEGA <- function(
             na.derivative == "none",
             "\n\nTry setting 'na.derivative' to \"kalman\" (recommended), \"skipover\", or \"rowwise\"",
             ""
-          )
+          ), "\n"
         ),
         call = "EGA"
       )
@@ -1521,7 +1527,7 @@ individual_derivatives <- function(
 
 #' @noRd
 # Organize individual `dynEGA` results ----
-# Updated 09.07.2023
+# Updated 08.08.2025
 process_individual_dynEGA <- function(usable_derivatives, individual_results)
 {
 
@@ -1537,8 +1543,8 @@ process_individual_dynEGA <- function(usable_derivatives, individual_results)
     # Send warning about which IDs
     warning(
       paste(
-        paste0("IDs: ", paste0(names(individual_results)[zero_variance_ID], collapse = ", ")),
-        "\nhad derivatives with zero variance (no change in values across time). These IDs will have disconnected nodes in their network and missing community memberships"
+        paste0("IDs:\n\n", paste0(names(individual_results)[zero_variance_ID], collapse = ", ")),
+        "\n\nhad derivatives with zero variance (no change in values across time). These IDs will have disconnected nodes in their network and missing community memberships"
       ), call. = FALSE
     )
 
