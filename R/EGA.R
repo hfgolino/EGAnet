@@ -179,6 +179,9 @@
 #' # Print results
 #' print(ega.wmt)
 #'
+#' # Plot with colorblind friendly edges
+#' print(ega.wmt, edge.color = c("#0B64AD", "red"))
+#'
 #' # Estimate EGAtmfg
 #' ega.wmt.tmfg <- EGA(
 #'   data = wmt, model = "TMFG",
@@ -229,7 +232,7 @@
 #'
 #' @export
 # EGA ----
-# Updated 05.05.2025
+# Updated 13.08.2025
 EGA <- function (
     data, n = NULL,
     corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),

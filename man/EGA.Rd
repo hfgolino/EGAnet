@@ -197,6 +197,9 @@ ega.wmt <- EGA(
 # Print results
 print(ega.wmt)
 
+# Plot with colorblind friendly edges
+print(ega.wmt, edge.color = c("#0B64AD", "red"))
+
 # Estimate EGAtmfg
 ega.wmt.tmfg <- EGA(
   data = wmt, model = "TMFG",
