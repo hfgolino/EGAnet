@@ -20,6 +20,9 @@ dynEGA(
   uni.method = c("expand", "LE", "louvain"),
   ncores,
   verbose = TRUE,
+  optimization = FALSE,
+  n.embed.all.ind = 3:25,
+  jitter.eps = 0.001,
   ...
 )
 }
@@ -229,6 +232,27 @@ Should progress be displayed?
 Defaults to \code{TRUE}.
 Set to \code{FALSE} to not display progress}
 
+\item{optimization}{Logical. If TRUE, performs joint optimization
+of `n.embed` and walktrap `steps` for each individual, then constructs
+the population based on optimized derivatives.}
+
+\item{n.embed.all.ind}{Vector of candidate embedding dimensions (`n.embed`) to be
+considered during optimization. Defaults to `3:25`. For an individual with
+\eqn{T} time points, only candidates satisfying `n.embed <= T-3` are valid.
+Internally, `dynEGA` computes `T_i <- nrow(individual_data)` and restricts
+the search to `embeds_i <- n.embed.all.ind[n.embed.all.ind <= (T_i - 3)]`.
+If no valid embedding dimensions remain (i.e., `T_i-3 < min(n.embed.all.ind)`),
+the individual is skipped (`NULL` is returned) to avoid optimization errors.
+These valid `embeds_i` are used consistently in both Step 1 (derivative
+computation) and Step 2 (`TEFI` optimization), ensuring that only legal
+embeddings are evaluated.
+
+#' @param jitter.eps Numeric scalar. Small amount of Gaussian noise added to
+zero-variance columns to prevent estimation failures. Default is `1e-3`.
+This ensures individuals with flat signals (no within-variable variability)
+are not dropped. The jitter preserves the overall structure but avoids
+singular covariance matrices during network estimation.}
+
 \item{...}{Additional arguments to be passed on to
 \code{\link[EGAnet]{auto.correlate}},
 \code{\link[EGAnet]{network.estimation}},
@@ -277,6 +301,11 @@ Estimates dynamic communities in multivariate time series
 (e.g., panel data, longitudinal data, intensive longitudinal data) at multiple
 time scales and at different levels of analysis:
 individuals (intraindividual structure), groups, and population (interindividual structure)
+
+Includes an option for the optimization of embedded dimensions (`n.embed`)
+and across individuals. If `optimization = TRUE`,
+the function will grid search for each individual, selecting the `n.embed` that minimizes TEFI, and then build the population
+network using the optimized derivatives.
 }
 \details{
 Derivatives for each variable's time series for each participant are
