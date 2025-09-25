@@ -74,7 +74,6 @@
 #' @seealso \code{\link[EGAnet]{dynEGA}}, \code{\link[EGAnet]{infoCluster}}, \code{\link[EGAnet]{EGA}}
 #'
 #' @export
-
 plot.clusters <- function(dynEGA.object, clustering,
                           type = c("cluster_population", "average", "heatmap"),
                           palette = "Set3",
