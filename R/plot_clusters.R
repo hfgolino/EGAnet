@@ -5,7 +5,7 @@
 #'
 #' Provides three visualization modes:
 #' \itemize{
-#'   \item \code{"cluster_population"}: Cluster-level "population" networks, obtained by stacking optimized derivatives across individuals and estimating a new EGA
+#'   \item \code{"population"}: Cluster-level "population" networks, obtained by stacking optimized derivatives across individuals and estimating a new EGA
 #'   \item \code{"average"}: Cluster-average networks, obtained by averaging adjacency matrices across individuals in the cluster
 #' }
 #'
@@ -13,10 +13,14 @@
 #'
 #' @param clustering An \code{infoCluster} object containing cluster assignments for individuals
 #' (see \code{\link[EGAnet]{infoCluster}}).
-#'
+#' @param include Numeric vector. Specifies which cluster memberships should be
+#' explicitly included in the plot. By default, all clusters are shown. Use this
+#' argument to restrict the visualization to a subset of clusters (e.g.,
+#' `include = c(1, 3, 5)` will only display clusters 1, 3, and 5). This option
+#' applies to all plot types (`"population"` and ``"average"`).
 #' @param type Character. Type of visualization to produce:
 #' \itemize{
-#'   \item \code{"cluster_population"} (default) -  Cluster-level population networks by stacking derivatives across individuals and re-estimating with \code{\link[EGAnet]{EGA}}
+#'   \item \code{"population"} (default) -  Cluster-level population networks by stacking derivatives across individuals and re-estimating with \code{\link[EGAnet]{EGA}}
 #'   \item \code{"average"} - Average adjacency networks with prototype community assignment (majority vote) per cluster
 #' }
 #'
@@ -30,9 +34,8 @@
 #' @return
 #' Depending on the chosen \code{type}:
 #' \itemize{
-#'   \item \code{"cluster_population"} - A \code{patchwork} object combining cluster-level population network plots
+#'   \item \code{"population"} - A \code{patchwork} object combining cluster-level population network plots
 #'   \item \code{"average"} - A \code{patchwork} object combining cluster-average network plots
-#'   \item \code{"heatmap"} - A \code{ggplot2} object showing variables × individuals, colored by community and faceted by cluster
 #' }
 #'
 #' @details
@@ -59,7 +62,7 @@
 #' plot_clusters(optimized_all, clust, type = "average")
 #'
 #' # Cluster-level population networks
-#' plot_clusters(optimized_all, clust, type = "cluster_population")
+#' plot_clusters(optimized_all, clust, type = "population")
 #' }
 #'
 #' @author Hudson Golino <hfg9s at virginia.edu>
@@ -67,17 +70,26 @@
 #' @seealso \code{\link[EGAnet]{dynEGA}}, \code{\link[EGAnet]{infoCluster}}, \code{\link[EGAnet]{EGA}}
 #'
 #' @export
-plot_clusters <- function(dynEGA.object, clustering,
-                          type = c("cluster_population", "average"),
+plot_clusters <- function(dynEGA.object, clustering, include,
+                          type = c("population", "average"),
                           node.size = 3,
                           label.size = 1.2,
                           ...) {
   type <- match.arg(type)
 
+  if(missing(include) == TRUE){
+    include <- unique(clustering$clusters)
+  }
+
+
+  # Select a subset of clusters to include:
+  clustering_subset <- clustering
+  clustering_subset$clusters <- clustering$clusters[which(clustering$clusters==include)]
+
   # ID --> cluster
   cluster_df <- data.frame(
-    ID = names(clustering$clusters),
-    cluster = clustering$clusters,
+    ID = names(clustering_subset$clusters),
+    cluster = clustering_subset$clusters,
     stringsAsFactors = FALSE
   )
 
@@ -93,10 +105,35 @@ plot_clusters <- function(dynEGA.object, clustering,
       ids_in_cluster <- cluster_df$ID[cluster_df$cluster == cl]
       net_mean <- average_network(ids_in_cluster)
 
+      # Get community memberships for all individuals in cluster
       wc_list <- lapply(ids_in_cluster, function(id) {
         dynEGA.object$dynEGA$individual[[id]]$wc
       })
+
+      # Create membership matrix (individuals across columns, nodes down rows)
       wc_mat <- do.call(cbind, lapply(wc_list, as.integer))
+
+      # Initialize consensus matrix
+      n_nodes <- nrow(wc_mat)
+      consensus_matrix <- matrix(
+        nrow = n_nodes, ncol = n_nodes
+      )
+
+      # Loop over to get proportions
+      for(i in seq_len(n_nodes)){
+        for(j in i:n_nodes){
+          # Fill consensus matrix
+          consensus_matrix[i,j] <- consensus_matrix[j,i] <- sum(
+            wc_mat[i,] == wc_mat[j,],
+            na.rm = TRUE
+          )
+        }
+      }
+
+      # Divide by number of individuals
+      consensus_matrix <- consensus_matrix / length(ids_in_cluster)
+
+      # Derive consensus communities from consensus matrix
       wc_proto <- apply(wc_mat, 1, function(x) {
         as.integer(names(sort(table(x), decreasing = TRUE))[1])
       })
@@ -109,9 +146,9 @@ plot_clusters <- function(dynEGA.object, clustering,
       )
     })
 
-    return(patchwork::wrap_plots(plots))
+    return(do.call(ggpubr::ggarrange, plots))
 
-  } else if (type == "cluster_population") {
+  } else if (type == "population") {
     plots <- lapply(sort(unique(cluster_df$cluster)), function(cl) {
       ids_in_cluster <- cluster_df$ID[cluster_df$cluster == cl]
 
@@ -135,6 +172,6 @@ plot_clusters <- function(dynEGA.object, clustering,
       )
     })
 
-    return(patchwork::wrap_plots(plots))
+    return(do.call(ggpubr::ggarrange, plots))
   }
 }

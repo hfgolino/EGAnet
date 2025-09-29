@@ -7,7 +7,8 @@
 plot_clusters(
   dynEGA.object,
   clustering,
-  type = c("cluster_population", "average"),
+  include,
+  type = c("population", "average"),
   node.size = 3,
   label.size = 1.2,
   ...
@@ -19,9 +20,15 @@ plot_clusters(
 \item{clustering}{An \code{infoCluster} object containing cluster assignments for individuals
 (see \code{\link[EGAnet]{infoCluster}}).}
 
+\item{include}{Numeric vector. Specifies which cluster memberships should be
+explicitly included in the plot. By default, all clusters are shown. Use this
+argument to restrict the visualization to a subset of clusters (e.g.,
+`include = c(1, 3, 5)` will only display clusters 1, 3, and 5). This option
+applies to all plot types (`"population"` and ``"average"`).}
+
 \item{type}{Character. Type of visualization to produce:
 \itemize{
-  \item \code{"cluster_population"} (default) -  Cluster-level population networks by stacking derivatives across individuals and re-estimating with \code{\link[EGAnet]{EGA}}
+  \item \code{"population"} (default) -  Cluster-level population networks by stacking derivatives across individuals and re-estimating with \code{\link[EGAnet]{EGA}}
   \item \code{"average"} - Average adjacency networks with prototype community assignment (majority vote) per cluster
 }}
 
@@ -35,9 +42,8 @@ plot_clusters(
 \value{
 Depending on the chosen \code{type}:
 \itemize{
-  \item \code{"cluster_population"} - A \code{patchwork} object combining cluster-level population network plots
+  \item \code{"population"} - A \code{patchwork} object combining cluster-level population network plots
   \item \code{"average"} - A \code{patchwork} object combining cluster-average network plots
-  \item \code{"heatmap"} - A \code{ggplot2} object showing variables × individuals, colored by community and faceted by cluster
 }
 }
 \description{
@@ -46,7 +52,7 @@ Visualize clusters of individual networks identified by
 
 Provides three visualization modes:
 \itemize{
-  \item \code{"cluster_population"}: Cluster-level "population" networks, obtained by stacking optimized derivatives across individuals and estimating a new EGA
+  \item \code{"population"}: Cluster-level "population" networks, obtained by stacking optimized derivatives across individuals and estimating a new EGA
   \item \code{"average"}: Cluster-average networks, obtained by averaging adjacency matrices across individuals in the cluster
 }
 }
@@ -74,7 +80,7 @@ clust <- infoCluster(dynEGA.object = optimized_all)
 plot_clusters(optimized_all, clust, type = "average")
 
 # Cluster-level population networks
-plot_clusters(optimized_all, clust, type = "cluster_population")
+plot_clusters(optimized_all, clust, type = "population")
 }
 
 }
