@@ -15,7 +15,8 @@ plot_clusters(
 )
 }
 \arguments{
-\item{dynEGA.object}{A \code{dynEGA} object containing optimized individual results (see \code{\link[EGAnet]{dynEGA}}).}
+\item{dynEGA.object}{A \code{dynEGA} object containing individual results (see \code{\link[EGAnet]{dynEGA}}).
+Can be from either optimized or non-optimized runs.}
 
 \item{clustering}{An \code{infoCluster} object containing cluster assignments for individuals
 (see \code{\link[EGAnet]{infoCluster}}).}
@@ -24,20 +25,20 @@ plot_clusters(
 explicitly included in the plot. By default, all clusters are shown. Use this
 argument to restrict the visualization to a subset of clusters (e.g.,
 `include = c(1, 3, 5)` will only display clusters 1, 3, and 5). This option
-applies to all plot types (`"population"` and ``"average"`).}
+applies to all plot types (`"population"` and `"average"`).}
 
 \item{type}{Character. Type of visualization to produce:
 \itemize{
-  \item \code{"population"} (default) -  Cluster-level population networks by stacking derivatives across individuals and re-estimating with \code{\link[EGAnet]{EGA}}
+  \item \code{"population"} (default) - Cluster-level population networks by stacking derivatives across individuals and re-estimating with \code{\link[EGAnet]{EGA}}
   \item \code{"average"} - Average adjacency networks with prototype community assignment (majority vote) per cluster
 }}
 
-\item{node.size}{Numeric. Node size in network visualizations (\code{type = "average"} or \code{"cluster_population"}). Default = \code{3}.}
+\item{node.size}{Numeric. Node size in network visualizations. Default = \code{3}.}
 
-\item{label.size}{Numeric. Label size in network visualizations (\code{type = "average"} or \code{"cluster_population"}). Default = \code{1.2}.}
+\item{label.size}{Numeric. Label size in network visualizations. Default = \code{1.2}.}
 
 \item{...}{Additional arguments passed to \code{\link[EGAnet]{EGA}}
-(used only when \code{type = "cluster_population"}).}
+(used only when \code{type = "population"}).}
 }
 \value{
 Depending on the chosen \code{type}:
@@ -50,9 +51,9 @@ Depending on the chosen \code{type}:
 Visualize clusters of individual networks identified by
 \code{\link[EGAnet]{infoCluster}} applied to a \code{\link[EGAnet]{dynEGA}} object.
 
-Provides three visualization modes:
+Provides visualization modes:
 \itemize{
-  \item \code{"population"}: Cluster-level "population" networks, obtained by stacking optimized derivatives across individuals and estimating a new EGA
+  \item \code{"population"}: Cluster-level "population" networks, obtained by stacking derivatives across individuals and estimating a new EGA
   \item \code{"average"}: Cluster-average networks, obtained by averaging adjacency matrices across individuals in the cluster
 }
 }
@@ -60,27 +61,40 @@ Provides three visualization modes:
 This function provides flexible visualization of individual clusters obtained from
 \code{\link[EGAnet]{infoCluster}}:
 \itemize{
-  \item Heatmaps are useful for inspecting how community memberships differ across clusters
   \item Average networks show the mean connectivity structure for each cluster, with prototype memberships by majority vote
   \item Cluster-level population networks treat each cluster as a "mini-population," stacking derivatives across individuals to re-estimate an EGA
 }
+
+When working with non-optimized dynEGA results, the function will extract the appropriate
+derivative data from the \code{Derivatives$Estimates} component. When working with optimized
+results, it will use the \code{data_used} component from each individual's results.
 }
 \examples{
 \dontrun{
 # Run dynEGA with optimization
 optimized_all <- dynEGA(data = sim.dynEGA,
                         level = c("individual", "population"),
-                        optimization = TRUE)
+                        optimization = TRUE,
+                        n.embed.all.ind = 3:15)
 
 # Cluster individuals
 clust <- infoCluster(dynEGA.object = optimized_all)
-
 
 # Average networks per cluster
 plot_clusters(optimized_all, clust, type = "average")
 
 # Cluster-level population networks
 plot_clusters(optimized_all, clust, type = "population")
+
+# Cluster-level population networks, including only Cluster 2:
+plot_clusters(optimized_all, clust, include = c(2), type = "population")
+
+# Also works with non-optimized dynEGA
+standard_all <- dynEGA(data = sim.dynEGA,
+                       level = c("individual", "population"))
+
+clust_standard <- infoCluster(dynEGA.object = standard_all)
+plot_clusters(standard_all, clust_standard, type = "population")
 }
 
 }
