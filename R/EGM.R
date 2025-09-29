@@ -12,9 +12,16 @@
 #'
 #' \itemize{
 #'
-#' \item \code{"beta.min"} --- Applies the \code{\link[EGAnet]{modularity}}-adjusted (\code{Q})
-#' beta-min criterion to threshold the implied partial correlation matrix
-#' \deqn{Q \times \sqrt{\frac{\log{(p)}}{n}}}
+#' \item \code{"explore"} --- A two-step procedure where the first step estimates
+#' network loadings for Walktrap community structures up to \code{communities} using the
+#' standard beta-min condition to threshold the network. The second step computes networks
+#' using the community-aware beta-min criterion based on the
+#' loading-implied partial correlation matrices from the previous step. The
+#' network (corresponding to communities and a set of loadings) with the lowest
+#' BIC is selected as the model. An optional (but recommended and default) procedure is to
+#' optimize the network toward the model-implied zero-order correlation matrix
+#' (`network.optimize = TRUE`); otherwise, the community-aware beta-min criterion is used
+#' on the model-implied partial correlation matrix.
 #'
 #' \item \code{"EGA"} (default) --- Applies \code{\link[EGAnet]{EGA}} to obtain the
 #' (sparse) regularized network structure, communities, and memberships
@@ -64,6 +71,71 @@
 #' Available options include maximum likelihood (default; \code{"logLik"}) and
 #' standardized root mean residual (\code{"SRMR"})
 #'
+#' @param proximal Character vector (length = 1).
+#' Proximal operator to threshold post-loading estimation.
+#' This operator is used to induce sparsity in the network
+#' loadings and subsequently in the network structure.
+#' Available options include:
+#'
+#' \itemize{
+#'
+#' \item \code{dBridge}--- a variant on the bridge penalty (Frank & Friedman, 1993), so-called draw bridge,
+#' which is defined as \eqn{\lambda |x|^{2^{-\gamma}}} where the default is
+#' \eqn{\gamma = 5}
+#'
+#' When \eqn{\gamma = 0}, then the penalty reduces to \eqn{\ell_1}; when \eqn{\gamma = -1},
+#' then the penalty reduces to \eqn{\ell_2}
+#'
+#' \item \code{"l1"} --- \eqn{\ell_1} norm (Tibshirani, 1996) or \eqn{\lambda |x|}
+#'
+#' \item \code{"l2"} --- \eqn{\ell_2} norm or \eqn{\lambda x^2}
+#'
+#' \item \code{"MCP"} (default) --- minimax concave penalty (Zhang, 2010), which is defined as
+#' \deqn{\lambda x - \frac{x^2}{2 \gamma} \qquad \text{if } x \leq \gamma \lambda}
+#' \deqn{\frac{1}{2} \gamma \lambda^2 \qquad \text{if } x > \gamma \lambda}
+#' where the default is \eqn{\gamma = 3}
+#'
+#' \item \code{"SCAD"} --- smoothly clipped absolute deviation (Fan & Li, 2001), which is defined as
+#' \deqn{\lambda |x| \qquad \text{if } |x| \leq \lambda}
+#' \deqn{\frac{2\gamma \lambda|x| - x^2 - \lambda^2}{2(\gamma - 1)} \qquad \text{if } \lambda < |x| \leq \gamma \lambda}
+#' \deqn{\frac{\lambda^2(\gamma + 1)}{2} \qquad \text{if } |x| > \gamma \lambda}
+#' where the default is \eqn{\gamma = 3.7}
+#'
+#' }
+#'
+#' @param model.select Character vector (length = 1).
+#' Criterion to select the best fitting model.
+#' Defaults to \code{"AICq"}.
+#' Available options:
+#'
+#' \itemize{
+#'
+#' \item \code{"logLik"} --- log-likelihood; not recommended as more communities
+#' will \emph{almost} always have better likelihood; \eqn{\log{(\hat{L})}}
+#'
+#' \item \code{"AIC"} --- Akaike's information criterion;
+#' \eqn{-2\log{(\hat{L})} \cdot 2k} where
+#' \emph{k} is the number of parameters (non-zero edges plus non-loadings)
+#'
+#' \item \code{"AICc"} --- Corrected AIC (adjusts for sample size);
+#' \eqn{AIC + \frac{2k^2 + 2k}{n - k - 1}} where \emph{n} is sample size
+#'
+#' \item \code{"AICq"} (default)--- Modularity adjusted AIC;
+#' \eqn{AIC + 6Q\log{n}} where
+#' \emph{Q} is modularity (see below). The constant of 6 adjust modularity
+#' such that it contributes roughly 4-6 AIC for each increase in 0.10 modularity
+#' across most usual sample sizes (between 500-10000)
+#'
+#' \item \code{"BIC"} --- Bayesian information criterion;
+#' \eqn{k\log{n} - 2\log{(\hat{L})}}
+#'
+#' \item \code{"Q"} --- Modularity;
+#' \eqn{\frac{1}{2m} \sum_{ij} (A_{ij} - \frac{k_i k_j}{2m}) \delta(c_i, c_j)} where
+#' \emph{m} is the sum total edges of the network, \emph{A}, \emph{k} is the
+#' node strength, and \emph{c} is the membership of nodes \emph{i} and \emph{j}
+#'
+#' }
+#'
 #' @param constrain.structure Boolean (length = 1).
 #' Whether memberships of the communities should
 #' be added as a constraint when optimizing the network loadings.
@@ -91,15 +163,41 @@
 #' \code{\link[EGAnet]{EGA}}, and
 #' \code{\link[EGAnet]{net.loads}}
 #'
+#' @references
+#' \strong{Bridge penalty} \cr
+#' Frank, Ll. E., & Friedman, J. H. (1993).
+#' A statistical view of some chemometrics regression tools.
+#' \emph{Technometrics}, \emph{35}(2), 109–135.
+#'
+#' \strong{l1 penalty} \cr
+#' Tibshirani, R. (1996).
+#' Regression shrinkage and selection via the lasso.
+#' \emph{Journal of the Royal Statistical Society: Series B (Methodological)}, \emph{58}(1), 267–288.
+#'
+#' \strong{l2 penalty} \cr
+#' Hoerl, A. E., & Kennard, R. W. (1970).
+#' Ridge regression: Biased estimation for nonorthogonal problems.
+#' \emph{Technometrics}, \emph{12}(1), 55–67.
+#'
+#' \strong{Minimax penalty} \cr
+#' Zhang, C.-H. (2010). Nearly unbiased variable selection under minimax concave penalty.
+#' \emph{Annals of Statistics}, \emph{38}(2), 894–942.
+#'
+#' \strong{SCAD penalty} \cr
+#' Fan, J., & Li, R. (2001).
+#' Variable selection via nonconcave penalized likelihood and its oracle properties.
+#' \emph{Journal of the American Statistical Association}, \emph{96}(456), 1348–1360.
+#'
 #' @examples
 #' # Get depression data
 #' data <- depression[,24:44]
 #'
-#' # Estimate EGM (using EGA)
-#' egm_ega <- EGM(data)
+#' \dontrun{
+#' # Estimate EGM (using "explore")
+#' egm <- EGM(data)
 #'
-#' # Estimate EGM (using EGA) specifying communities
-#' egm_ega_communities <- EGM(data, communities = 3)
+#' # Constrain EGM to only estimate 3 communities
+#' egm_communities <- EGM(data, communities = 3)
 #'
 #' # Estimate EGM (using EGA) specifying structure
 #' egm_ega_structure <- EGM(
@@ -107,20 +205,15 @@
 #'     1, 1, 1, 2, 1, 1, 1,
 #'     1, 1, 1, 3, 2, 2, 2,
 #'     2, 3, 3, 3, 3, 3, 2
-#'   )
+#'   ), EGM.model = "EGA"
 #' )
 #'
-#' # Estimate EGM (using beta-min condition)
-#' egm_ega_search <- EGM(data, EGM.model = "beta.min")
 #'
-#' \dontrun{
 #' # Estimate EGM (using EGA search)
-#' egm_ega_search <- EGM(
-#'   data, EGM.model = "EGA", search = TRUE
-#' )
+#' egm_ega_search <- EGM(data, EGM.model = "EGA", search = TRUE)
 #'
 #' # Estimate EGM (using search)
-#' egm_search <- EGM(
+#' egm_prob_search <- EGM(
 #'   data, EGM.model = "probability", search = TRUE,
 #'   communities = 3, # need communities or structure
 #'   p.in = 0.95 # only need 'p.in'
@@ -131,40 +224,52 @@
 #' @export
 #'
 # Estimate EGM ----
-# Updated 11.04.2025
+# Updated 27.07.2025
 EGM <- function(
-    data, EGM.model = c("beta.min", "EGA", "probability"),
+    data, EGM.model = c("explore", "EGA", "probability"),
     communities = NULL, structure = NULL, search = FALSE,
-    p.in = NULL, p.out = NULL,
-    opt = c("logLik", "SRMR"),
+    p.in = NULL, p.out = NULL, opt = c("logLik", "SRMR"),
+    proximal = c("dBridge", "l1", "l2", "MCP", "SCAD"),
+    model.select = c("logLik", "AIC", "AICc", "AICq", "BIC", "Q"),
     constrain.structure = TRUE, constrain.zeros = TRUE,
     verbose = TRUE, ...
 )
 {
 
   # Set default
-  EGM.model <- set_default(EGM.model, "ega", EGM)
+  EGM.model <- set_default(EGM.model, "explore", EGM)
   opt <- set_default(opt, "loglik", EGM)
+  proximal <- set_default(proximal, "mcp", EGM)
+  model.select <- set_default(model.select, "aicq", EGM)
 
   # Set up EGM type internally
   EGM.type <- switch(
     EGM.model,
-    "beta.min" = "beta.min",
+    "explore" = "explore",
     "ega" = swiftelse(search, "ega.search", "ega"),
     "probability" = swiftelse(search, "search", "probability")
   )
 
+  # Check for communities if model is 'explore'
+  if(EGM.type == "explore" & is.null(communities)){
+
+    # Ensure 'search' and 'communities' are set
+    search <- TRUE; communities <- 8
+
+  }
+
   # Check data and structure
   data <- EGM_errors(
-    data, EGM.type, communities, p.in, p.out,
-    constrain.structure, constrain.zeros, verbose, ...
+    data, EGM.type, communities, search, p.in, p.out,
+    constrain.structure, constrain.zeros,
+    verbose, ...
   )
 
   # Switch and return results based on type
   return(
     switch(
       EGM.type,
-      "beta.min" = EGM.beta(data, communities, structure, opt, constrain.structure, constrain.zeros, ...),
+      "explore" = EGM.explore(data, communities, search, opt, proximal, model.select, ...),
       "ega" = EGM.EGA(data, structure, opt, constrain.structure, constrain.zeros, ...),
       "ega.search" = EGM.EGA.search(data, communities, structure, opt, constrain.structure, constrain.zeros, verbose, ...),
       "probability" = EGM.probability(data, communities, structure, p.in, p.out, opt, constrain.structure, constrain.zeros, ...),
@@ -176,10 +281,11 @@ EGM <- function(
 
 #' @noRd
 # EGM Errors ----
-# Updated 13.04.2025
+# Updated 20.06.2025
 EGM_errors <- function(
-    data, EGM.type, communities, p.in, p.out,
-    constrain.structure, constrain.zeros, verbose, ...
+    data, EGM.type, communities, search, p.in, p.out,
+    constrain.structure, constrain.zeros,
+    verbose, ...
 )
 {
 
@@ -192,7 +298,7 @@ EGM_errors <- function(
   }
 
   # Check for NULL communities
-  if(!is.null(communities)){
+  if(!is.null(communities) & EGM.type != "explore"){
 
     # If not NULL, check 'communities' errors
     typeof_error(communities, "numeric", "EGM")
@@ -200,6 +306,10 @@ EGM_errors <- function(
     length_error(communities, 1, "EGM")
 
   }
+
+  # 'search' errors
+  length_error(search, 1, "EGM")
+  typeof_error(search, "logical", "EGM")
 
   # Check first for parameters involved in both search and standard
   if(grepl("probability", EGM.type)){
@@ -306,28 +416,30 @@ plot.EGM <- function(x, ...)
 
 }
 
-# LOADINGS ----
+# LOADINGS AND CORRELATIONS ----
+
+#' @noRd
+# Community correlations from loadings
+# Updated 21.07.2025
+community_correlations <- function(simple_structure, loading_structure)
+{
+  return(cov2cor(crossprod(simple_structure, nload2cor(loading_structure)) %*% simple_structure))
+}
 
 #' @noRd
 # Network loadings to partial correlations ----
-# Updated 20.03.2025
+# Updated 03.08.2025
 nload2pcor <- function(loadings)
 {
 
-  # Compute partial correlation
+  # Compute covariance matrix
   P <- tcrossprod(loadings)
 
-  # Compute interdependence
-  diag(P) <- interdependence <- sqrt(diag(P))
-
-  # Compute matrix I
-  I <- diag(sqrt(1 / interdependence))
-
-  # Compute zero-order correlations
-  R <- I %*% P %*% I
+  # Set diagonal to interdependence
+  diag(P) <- sqrt(diag(P))
 
   # Obtain inverse covariance matrix
-  INV <- solve(R)
+  INV <- solve(P)
 
   # Compute matrix D
   D <- diag(sqrt(1 / diag(INV)))
@@ -345,11 +457,11 @@ nload2pcor <- function(loadings)
 
 #' @noRd
 # Network loadings to correlations ----
-# Updated 20.03.2025
+# Updated 03.08.2025
 nload2cor <- function(loadings)
 {
 
-  # Compute partial correlation
+  # Compute covariance matrix
   P <- tcrossprod(loadings)
 
   # Compute interdependence
@@ -387,173 +499,107 @@ compute_tefi_adjustment <- function(loadings, correlations)
 # EGM TYPES ----
 
 #' @noRd
-# EGM | beta-min ----
-# Updated 13.04.2025
-EGM.beta <- function(data, communities, structure, opt, constrain.structure, constrain.zeros, ...)
+# EGM | Exploratory ----
+# Updated 20.06.2025
+EGM.explore <- function(data, communities, search, opt, proximal, model.select, ...)
 {
 
-  # Get ellipse
-  ellipse <- list(...)
-
-  # Get dimensions
+  # Obtain data dimensions
   data_dimensions <- dim(data)
-  dimension_names <- dimnames(data)
 
-  # Determine if sample size was provided
-  if(data_dimensions[1] == data_dimensions[2]){
-
-    # Check if sample size was provided
-    if("n" %in% names(ellipse)){
-
-      # Set sample size
-      data_dimensions[1] <- ellipse$n
-
-      # Set empirical zero-order correlations
-      empirical_R <- data
-
-    }else{
-
-      # Stop and send error
-      .handleSimpleError(
-        h = stop,
-        msg = paste0(
-          "A symmetric (", data_dimensions[1], " x ",
-          data_dimensions[2], ") matrix was input but sample size was not provided.\n\n",
-          "If you'd like to use a correlation matrix, please set the argument 'n' to your sample size"
-        ),
-        call = "EGM"
-      )
-
-    }
-
-  }else{
-
-    # Estimate zero-order correlations
-    empirical_R <- auto.correlate(data, ...)
-
-  }
-
-  # Obtain inverse covariance and partial correlations
-  K <- solve(empirical_R)
+  # Estimate correlations
+  empirical_R <- auto.correlate(data, ...)
   empirical_P <- cor2pcor(empirical_R)
+  diag(empirical_P) <- 0
 
-  # Check for whether structure is provided
-  if(is.null(structure)){
+  # Obtain variable names from the correlations
+  variable_names <- dimnames(empirical_R)[[2]]
 
-    # Obtain network using baseline beta-min
-    network <- empirical_P * beta_min(
-      P = empirical_P, K = K, total_variables = data_dimensions[2], sample_size = data_dimensions[1]
-    )
+  # Need at least two variables per community
+  at_least_two <- round(data_dimensions[2] / 2) - 1
+  max_communities <- max(communities)
 
-    # Obtain structure if not provided
-    walktrap <- igraph::cluster_walktrap(convert2igraph(abs(network)))
-
-    # Obtain memberships based on number of communities
-    structure <- swiftelse(
-      is.null(communities) || unique_length(walktrap$membership) == communities,
-      walktrap$membership, cutree(as.hclust(walktrap), k = communities)
-    )
-
-  }
-
-  # Obtain adjacency
-  adjacency <- beta_min(
-    P = empirical_P, membership = structure,
-    K = K, total_variables = data_dimensions[2], sample_size = data_dimensions[1]
+  # Determine communities
+  community_sequence <- swiftelse(
+    search, seq_len(
+      swiftelse(
+        max_communities > at_least_two,
+        at_least_two, max_communities
+      )
+    ), max_communities
   )
 
-  # Update network based on structure
-  community_P <- empirical_P * adjacency
+  # Obtain expected edges
+  EE <- expected_edges(empirical_P, data_dimensions)
 
-  # Set number of communities
+  # Obtain partial correlations that are greater than chance
+  null_P <- empirical_P * (abs(empirical_P) > (EE - 1.96 * attr(EE, "SE")))
+
+  # Collect results
+  results <- lapply(
+    community_sequence, EGM.explore.core, null_P = null_P,
+    cluster = hclust(d = as.dist(1 - sqrt(abs(null_P))), method = "average"),
+    variable_names = variable_names, data_dimensions = data_dimensions,
+    empirical_R = empirical_R, opt = opt, proximal = proximal
+  )
+
+  # Obtain fits
+  fits <- do.call(rbind.data.frame, lapply(results, function(x){x$fit}))
+
+  # Get converged fits
+  converged <- grepl("0", fits$converged)
+  good_fits <- fits[converged,, drop = FALSE] # ensure matrix
+  results <- results[converged]
+
+  # Extract optimal results
+  optimal_results <- results[[which.min(good_fits[[model.select]])]]
+
+  # Obtain structure
+  structure <- structure(optimal_results$structure, names = variable_names)
+
+  # Set communities
   communities <- unique_length(structure)
+  community_sequence <- seq_len(communities)
 
-  # Update loadings
-  output <- silent_call(net.loads(community_P, structure, ...))
-  output$std <- output$std[dimension_names[[2]],, drop = FALSE]
-
-  # Obtain dimension names
-  loading_names <- dimnames(output$std)
-
-  # Compute network scores
-  standard_scores <- compute_scores(output, data, "network", "simple")$std.scores
-
-  # Compute community correlations
-  standard_correlations <- cor(standard_scores, use = "pairwise")
-
-  # Compute model-implied correlations
-  standard_R <- nload2cor(output$std)
-  standard_P <- cor2pcor(standard_R)
-
-  # Obtain loadings vector and get bounds
-  loadings_vector <- as.vector(output$std)
-  loadings_length <- length(loadings_vector)
-  zeros <- swiftelse(constrain.zeros, loadings_vector != 0, rep(1, loadings_length))
-
-  # Set up loading structure
-  # Uses transpose for 2x speed up in optimization
-  loading_structure <- matrix(FALSE, nrow = communities, ncol = data_dimensions[2])
-
-  # Fill structure
-  for(i in seq_along(structure)){
-    loading_structure[structure[i], i] <- TRUE
+  # Set simple loading structure
+  simple_structure <- optimal_results$loadings
+  for(i in community_sequence){
+    simple_structure[structure != i, i] <- 0
   }
 
-  # Optimize over loadings
-  result <- egm_optimize(
-    loadings_vector = loadings_vector,
-    loadings_length = loadings_length,
-    zeros = zeros, R = empirical_R,
-    loading_structure = loading_structure,
-    rows = communities, n = data_dimensions[1],
-    v = data_dimensions[2],
-    constrained = constrain.structure,
-    lower_triangle = lower.tri(empirical_R),
-    opt = opt
-  )
-
-  # Extract optimized loadings
-  optimized_loadings <- matrix(
-    result$par, nrow = data_dimensions[2],
-    dimnames = loading_names
-  )
-
-  # Replace loadings output with optimized loadings
-  output$std <- optimized_loadings
-
   # Compute network scores
-  optimized_scores <- compute_scores(output, data, "network", "simple")$std.scores
+  optimized_scores <- scale(data) %*% simple_structure
 
   # Compute community correlations
   optimized_correlations <- cor(optimized_scores, use = "pairwise")
 
-  # Compute model-implied correlations
-  optimized_R <- nload2cor(optimized_loadings)
+  # Obtain model-implied correlations
+  optimized_R <- pcor2cor(optimal_results$network)
   optimized_P <- cor2pcor(optimized_R)
 
   # Set up EGA
   ega_list <- list(
     dim.variables = data.frame(
-      items = dimension_names[[2]],
+      items = variable_names,
       dimension = structure
     ),
-    network = community_P, wc = structure,
-    n.dim = unique_length(structure), correlation = empirical_R,
+    network = optimal_results$network, wc = structure,
+    n.dim = communities, correlation = empirical_R,
     n = data_dimensions[1], TEFI = tefi(empirical_R, structure)$VN.Entropy.Fit
   ); class(ega_list) <- "EGA"
 
   # Attach methods to network
   attr(ega_list$network, which = "methods") <- list(
-    model = "egm", communities = communities, beta.min = attr(adjacency, "beta.min")
+    model = "egm", communities = dim(optimal_results$loadings)[2],
+    lambda = optimal_results$lambda
   )
 
   # Attach class to memberships
   class(ega_list$wc) <- "EGA.community"
 
   # Attach methods to memberships
-  names(ega_list$wc) <- dimension_names[[2]]
   attr(ega_list$wc, which = "methods") <- list(
-    algorithm = swiftelse(is.null(structure), NULL, "Walktrap"),
+    algorithm = swiftelse(is.null(structure), NULL, "EGM Explore"),
     objective_function = NULL
   )
 
@@ -562,28 +608,26 @@ EGM.beta <- function(data, communities, structure, opt, constrain.structure, con
     EGA = ega_list, structure = structure,
     model = list( # general list
       standard = list( # using standard parameters
-        loadings = output$std,
-        scores = standard_scores,
-        correlations = standard_correlations,
-        fit = fit(
-          n = data_dimensions[1], p = data_dimensions[2],
-          R = standard_R, S = empirical_R,
-          loadings = output$std, correlations = standard_correlations,
-          structure = structure, ci = 0.95, remove_correlations = FALSE
-        ),
-        implied = list(R = standard_R, P = standard_P)
+        loadings = NULL,
+        scores = NULL,
+        correlations = NULL,
+        fit = NULL,
+        implied = list(R = NULL, P = NULL)
       ),
       optimized = list( # using optimized parameters
-        loadings = optimized_loadings,
+        loadings = optimal_results$loadings,
         scores = optimized_scores,
         correlations = optimized_correlations,
         fit = fit(
           n = data_dimensions[1], p = data_dimensions[2],
           R = optimized_R, S = empirical_R,
-          loadings = optimized_loadings, correlations = optimized_correlations,
-          structure = structure, ci = 0.95, remove_correlations = FALSE
+          loadings = optimal_results$loadings,
+          correlations = optimized_correlations,
+          structure = structure,
+          ci = 0.95, remove_correlations = FALSE
         ),
-        implied = list(R = optimized_R, P = optimized_P)
+        implied = list(R = optimized_R, P = optimized_P),
+        fits = fits
       )
     )
   )
@@ -1315,30 +1359,376 @@ EGM.search <- function(data, communities, structure, p.in, opt, constrain.struct
 # EGM UTILITIES ----
 
 #' @noRd
-# beta-min criterion ----
-# Updated 13.04.2025
-beta_min <- function(P, membership = NULL, K, total_variables, sample_size)
+# EGM | Core Exploration ----
+# Updated 31.07.2025
+EGM.explore.core <- function(
+    communities, null_P, cluster, variable_names,
+    data_dimensions, empirical_R, opt, proximal, ...
+)
 {
 
-  # Obtain modularity-adjusted beta-min criterion
-  minimum <- swiftelse(
-    is.null(membership), 1, modularity(P, membership)
-  ) * sqrt(log(total_variables) / sample_size)
+  # Set bad fit from the git
+  bad_fit <- data.frame(
+    parameters = NA, loglik = NA, aic = NA, aicc = NA,
+    bic = NA, q = NA, aicq = NA, converged = "1: error in loading estimation"
+  )
 
-  # Obtain inverse variances
-  inverse_variances <- diag(K)
+  # Set memberships
+  membership <- cutree(cluster, communities)
 
-  # Obtain betas
-  beta <- P * sqrt(outer(inverse_variances, inverse_variances, FUN = "/"))
+  # Compute loadings
+  loadings <- silent_call(
+    net.loads(A = null_P, wc = membership)$std[variable_names,, drop = FALSE]
+  )
 
-  # Set adjacency matrix
-  adjacency <- abs(beta) > minimum
+  # Check for single memberships
+  singletons <- fast_table(membership) == 1
 
-  # Attach minimum
-  attr(adjacency, "beta.min") <- minimum
+  # If singletons, replace loadings
+  if(any(singletons)){
 
-  # Return adjacency matrix
-  return(adjacency)
+    # Loop over
+    for(i in which(singletons)){
+
+      # Set index
+      index <- membership == i
+
+      # Set singleton to max of overall connections (allow drop to vector)
+      loadings[,i] <- 0
+      loadings[index, i] <- max(null_P[index,])
+
+    }
+
+  }
+
+  # Set lower triangle
+  lower_triangle <- lower.tri(empirical_R)
+
+  # Optimize for initial loadings
+  initial_loadings <- loadings_optimization(
+    iter = 10, loadings_vector = as.vector(loadings),
+    zeros = rep(1, length(loadings)), R = empirical_R,
+    communities = communities, data_dimensions = data_dimensions,
+    opt = opt
+  )
+
+  # Check for bad result
+  if(is.null(initial_loadings)){
+    return(list(loadings = loadings, fit = bad_fit))
+  }
+
+  # Compute minimum eigenvalue of hessian
+  min_eigenvalue <- min(matrix_eigenvalues(initial_loadings$hessian))
+
+  # Format loadings
+  loadings[] <- initial_loadings$par
+
+  # Set lambda sequence
+  lambdas <- seq(0.01, 0.15, 0.001)
+
+  # Set proximal operator function
+  proximal_FUN <- switch(
+    proximal,
+    "dbridge" = dbridge_proximal,
+    "l1" = l1_proximal, "l2" = l2_proximal,
+    "mcp" = mcp_proximal, "scad" = scad_proximal
+  )
+
+  # Optimize soft threshold
+  soft_fits <- nvapply(
+    lambdas, soft_threshold, loadings = loadings,
+    proximal_FUN = proximal_FUN,
+    empirical_R = empirical_R,
+    lower_triangle = lower_triangle,
+    data_dimensions = data_dimensions
+  )
+
+  # Get updated loadings
+  loadings[] <- proximal_FUN(loadings, lambdas[[which.min(soft_fits)]])
+
+  # Set membership
+  membership <- max.col(abs(loadings))
+
+  # Obtain model-implied network
+  P <- try(set_network(loadings, membership, data_dimensions), silent = TRUE)
+
+  # Get quality flags
+  meaningful_flag <- unique_length(membership) != communities
+  singleton_flag <- any(fast_table(membership) < 2)
+  PD_flag <- is(P, "try-error") || anyNA(P) || !is_positive_definite(pcor2cor(P))
+  empty_flag <- all(P == 0)
+
+  # Check overall quality
+  if(meaningful_flag || singleton_flag || PD_flag || empty_flag){
+
+    # Check down reasons
+    if(meaningful_flag){
+      converged <- "1: unique membership < communities"
+    }else if(singleton_flag){
+      converged <- "1: singleton communities"
+    }else if(PD_flag){
+      converged <- "1: not positive definite"
+    }else if(empty_flag){
+      converged <- "1: empty network"
+    }
+
+    # Updated bad fit
+    bad_fit$converged <- converged
+
+    # Return bad result
+    return(list(loadings = loadings, fit = bad_fit))
+
+  }
+
+  # Get implied correlations
+  implied_R <- pcor2cor(P)
+
+  # Update loading parameters
+  loadings[] <- egm_optimize(
+    loadings_vector = as.vector(loadings), zeros = loadings != 0,
+    R = implied_R, rows = communities, n = data_dimensions[1],
+    v = data_dimensions[2], opt = "srmr", lambda = 0, # no regularization
+    iterations = 10000
+  )$par
+
+  # Update memberships
+  membership <- max.col(abs(loadings))
+
+  # Run back membership checks
+  meaningful_flag <- unique_length(membership) != communities
+  singleton_flag <- any(fast_table(membership) < 2)
+
+  # Check overall quality
+  if(meaningful_flag || singleton_flag){
+
+    # Check down reasons
+    if(meaningful_flag){
+      converged <- "1: unique membership < communities"
+    }else if(singleton_flag){
+      converged <- "1: singleton communities"
+    }
+
+    # Updated bad fit
+    bad_fit$converged <- converged
+
+    # Return bad result
+    return(list(loadings = loadings, fit = bad_fit))
+
+  }
+
+  # Add dimension names
+  dimnames(P) <- dimnames(empirical_R)
+
+  # Compute log-likelihood
+  logLik <- silent_call(
+    -log_likelihood(
+      n = data_dimensions[1], p = data_dimensions[2],
+      R = implied_R, S = empirical_R, type = "zero"
+    )
+  )
+
+  # Set parameters to loadings only
+  parameters <- sum(loadings != 0)
+
+  # Compute negative 2 times log-likelihood
+  logLik2 <- 2 * logLik
+
+  # Compute 2 times parameters
+  parameters2 <- 2 * parameters
+
+  # Compute AIC
+  aic <- logLik2 + parameters2
+
+  # Compute modularity
+  q <- obtain_modularity(P, membership)
+
+  # Collect fit indices
+  fit <- data.frame(
+    parameters = parameters,
+    loglik = logLik,
+    aic = aic,
+    aicc = aic + (parameters2 * (parameters + 1)) /
+      (data_dimensions[2] - parameters2 - 1),
+    bic = logLik2 + parameters * log(data_dimensions[1]),
+    q = -q,
+    aicq = aic - q * 40,
+    converged = "0: successful"
+  )
+
+  # Return result
+  return(list(network = P, structure = membership, fit = fit, loadings = loadings))
+
+}
+
+#' @noRd
+# Expected edge values ----
+# Updated 26.06.2025
+expected_edges <- function(network, data_dimensions = NULL)
+{
+
+  # Compute node strength
+  strength <- colSums(network)
+
+  # Obtain the normalized cross-product
+  EE <- tcrossprod(strength) / sum(strength)
+
+  # Obtain differences as SE
+  if(!is.null(data_dimensions)){
+
+    # Delta method for the standard error
+
+    # Ensure absolute
+    network <- abs(network)
+
+    # Convert network to Fisher's z
+    z_network <- r2z(network)
+
+    # Compute node strength
+    strength <- colSums(z_network)
+    total_strength <- sum(strength)
+    standard_strength <- strength / total_strength
+    total_squared <- total_strength^2
+    cross_strength <- tcrossprod(strength)
+    dEE <- cross_strength / total_squared
+
+    # Get variables minus one
+    p_minus_one <- data_dimensions[2] - 1
+
+    # Because of Chung-Lu configuration model, all nodes are
+    # assumed to have similar variability
+    variance <- p_minus_one * (1 / (data_dimensions[1] - data_dimensions[2] - 1))
+
+    # Compute gradient
+    gradient_j <- (matrix(standard_strength, nrow = data_dimensions[2], ncol = data_dimensions[2]) - dEE)^2
+
+    # Get SE (still in Fisher's z)
+    # t(gradient_j) = shorthand for gradient i
+    # dEE^2 = shorthand for gradient k
+    SE <- sqrt(variance * (t(gradient_j) + gradient_j + (p_minus_one - 1) * dEE^2))
+
+    # Absolute partial correlations (assumes similar transformation deviations)
+    lower_triangle <- lower.tri(EE)
+    average <- sum(EE[lower_triangle] * network[lower_triangle]) / sum(EE[lower_triangle])
+
+    # Calculate the Jacobian
+    attr(EE, "SE") <- SE * sqrt((1 - average^2)^2)
+
+  }
+
+  # Return result
+  return(EE)
+
+}
+
+#' @noRd
+# Obtain modularity edge values ----
+# Updated 22.07.2025
+obtain_modularity <- function(network, membership = NULL)
+{
+
+  # Ensure absolute
+  network <- abs(network)
+
+  # Set modularity value
+  return(
+    swiftelse(
+      is.null(membership), 1,
+      swiftelse(
+        unique_length(membership) == 1,
+        mean(network[lower.tri(network)]),
+        modularity(network, membership)
+      )
+    )
+  )
+
+}
+
+#' @noRd
+# Threshold for network ----
+# Updated 13.07.2025
+set_network <- function(loadings, membership, data_dimensions)
+{
+
+  # Obtain partial correlations
+  P <- nload2pcor(loadings)
+
+  # Set edges to zero for zero loadings
+  for(i in seq_len(data_dimensions[2])){
+
+    # Check for zero loadings
+    zero_index <- which(loadings[i,] == 0)
+
+    # Identify whether zero loadings exist
+    if(length(zero_index) != 0){
+
+      # Loop over zero loading memberships
+      for(community in zero_index){
+
+        # Get index
+        index <- membership == community
+
+        # Set values to zero
+        P[index, i] <- P[i, index] <- 0
+
+      }
+
+    }
+
+  }
+
+  # Return network
+  return(P)
+
+}
+
+#' @noRd
+# Soft threshold ----
+# Updated 31.07.2025
+soft_threshold <- function(
+    lambda, proximal_FUN, loadings,
+    empirical_R, lower_triangle, data_dimensions,
+    ...
+)
+{
+
+  # Apply proximal operator
+  loadings[] <- proximal_FUN(loadings, lambda, ...)
+
+  # Set membership
+  membership <- max.col(abs(loadings))
+
+  # Obtain model-implied network
+  P <- try(
+    set_network(loadings, membership, data_dimensions),
+    silent = TRUE
+  )
+
+  # Check first for missing issues (all zero loadings)
+  if(is(P, "try-error") || anyNA(P)){
+    return(Inf)
+  }
+
+  # Convert partial correlations to zero-order correlations
+  R <- silent_call(try(pcor2cor(P), silent = TRUE))
+
+  # Check for positive definite
+  if(is(R, "try-error") || anyNA(R) || !is_positive_definite(R)){
+    return(Inf)
+  }else{
+
+    # Set parameters
+    parameters <- sum(loadings != 0)
+
+    # Compute log-likelihood
+    loglik <- log_likelihood(
+      n = data_dimensions[1], p = data_dimensions[2],
+      R = R, S = empirical_R, type = "zero"
+    )
+
+    # Send result
+    return(-2 * loglik + 2 * parameters - obtain_modularity(P, membership) * 40)
+
+  }
 
 }
 
@@ -1672,3 +2062,4 @@ glasso_fit <- function(data, S, glasso_attr, P, data_dimensions, constrain.struc
   )
 
 }
+

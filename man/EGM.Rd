@@ -6,13 +6,15 @@
 \usage{
 EGM(
   data,
-  EGM.model = c("beta.min", "EGA", "probability"),
+  EGM.model = c("explore", "EGA", "probability"),
   communities = NULL,
   structure = NULL,
   search = FALSE,
   p.in = NULL,
   p.out = NULL,
   opt = c("logLik", "SRMR"),
+  proximal = c("dBridge", "l1", "l2", "MCP", "SCAD"),
+  model.select = c("logLik", "AIC", "AICc", "AICq", "BIC", "Q"),
   constrain.structure = TRUE,
   constrain.zeros = TRUE,
   verbose = TRUE,
@@ -30,9 +32,16 @@ Available options:
 
 \itemize{
 
-\item \code{"beta.min"} --- Applies the \code{\link[EGAnet]{modularity}}-adjusted (\code{Q})
-beta-min criterion to threshold the implied partial correlation matrix
-\deqn{Q \times \sqrt{\frac{\log{(p)}}{n}}}
+\item \code{"explore"} --- A two-step procedure where the first step estimates
+network loadings for Walktrap community structures up to \code{communities} using the
+standard beta-min condition to threshold the network. The second step computes networks
+using the community-aware beta-min criterion based on the
+loading-implied partial correlation matrices from the previous step. The
+network (corresponding to communities and a set of loadings) with the lowest
+BIC is selected as the model. An optional (but recommended and default) procedure is to
+optimize the network toward the model-implied zero-order correlation matrix
+(`network.optimize = TRUE`); otherwise, the community-aware beta-min criterion is used
+on the model-implied partial correlation matrix.
 
 \item \code{"EGA"} (default) --- Applies \code{\link[EGAnet]{EGA}} to obtain the
 (sparse) regularized network structure, communities, and memberships
@@ -82,6 +91,71 @@ Fit index used to select from when searching over models
 Available options include maximum likelihood (default; \code{"logLik"}) and
 standardized root mean residual (\code{"SRMR"})}
 
+\item{proximal}{Character vector (length = 1).
+Proximal operator to threshold post-loading estimation.
+This operator is used to induce sparsity in the network
+loadings and subsequently in the network structure.
+Available options include:
+
+\itemize{
+
+\item \code{dBridge}--- a variant on the bridge penalty (Frank & Friedman, 1993), so-called draw bridge,
+which is defined as \eqn{\lambda |x|^{2^{-\gamma}}} where the default is
+\eqn{\gamma = 5}
+
+When \eqn{\gamma = 0}, then the penalty reduces to \eqn{\ell_1}; when \eqn{\gamma = -1},
+then the penalty reduces to \eqn{\ell_2}
+
+\item \code{"l1"} --- \eqn{\ell_1} norm (Tibshirani, 1996) or \eqn{\lambda |x|}
+
+\item \code{"l2"} --- \eqn{\ell_2} norm or \eqn{\lambda x^2}
+
+\item \code{"MCP"} (default) --- minimax concave penalty (Zhang, 2010), which is defined as
+\deqn{\lambda x - \frac{x^2}{2 \gamma} \qquad \text{if } x \leq \gamma \lambda}
+\deqn{\frac{1}{2} \gamma \lambda^2 \qquad \text{if } x > \gamma \lambda}
+where the default is \eqn{\gamma = 3}
+
+\item \code{"SCAD"} --- smoothly clipped absolute deviation (Fan & Li, 2001), which is defined as
+\deqn{\lambda |x| \qquad \text{if } |x| \leq \lambda}
+\deqn{\frac{2\gamma \lambda|x| - x^2 - \lambda^2}{2(\gamma - 1)} \qquad \text{if } \lambda < |x| \leq \gamma \lambda}
+\deqn{\frac{\lambda^2(\gamma + 1)}{2} \qquad \text{if } |x| > \gamma \lambda}
+where the default is \eqn{\gamma = 3.7}
+
+}}
+
+\item{model.select}{Character vector (length = 1).
+Criterion to select the best fitting model.
+Defaults to \code{"AICq"}.
+Available options:
+
+\itemize{
+
+\item \code{"logLik"} --- log-likelihood; not recommended as more communities
+will \emph{almost} always have better likelihood; \eqn{\log{(\hat{L})}}
+
+\item \code{"AIC"} --- Akaike's information criterion;
+\eqn{-2\log{(\hat{L})} \cdot 2k} where
+\emph{k} is the number of parameters (non-zero edges plus non-loadings)
+
+\item \code{"AICc"} --- Corrected AIC (adjusts for sample size);
+\eqn{AIC + \frac{2k^2 + 2k}{n - k - 1}} where \emph{n} is sample size
+
+\item \code{"AICq"} (default)--- Modularity adjusted AIC;
+\eqn{AIC + 6Q\log{n}} where
+\emph{Q} is modularity (see below). The constant of 6 adjust modularity
+such that it contributes roughly 4-6 AIC for each increase in 0.10 modularity
+across most usual sample sizes (between 500-10000)
+
+\item \code{"BIC"} --- Bayesian information criterion;
+\eqn{k\log{n} - 2\log{(\hat{L})}}
+
+\item \code{"Q"} --- Modularity;
+\eqn{\frac{1}{2m} \sum_{ij} (A_{ij} - \frac{k_i k_j}{2m}) \delta(c_i, c_j)} where
+\emph{m} is the sum total edges of the network, \emph{A}, \emph{k} is the
+node strength, and \emph{c} is the membership of nodes \emph{i} and \emph{j}
+
+}}
+
 \item{constrain.structure}{Boolean (length = 1).
 Whether memberships of the communities should
 be added as a constraint when optimizing the network loadings.
@@ -116,11 +190,12 @@ Function to fit the Exploratory Graph Model
 # Get depression data
 data <- depression[,24:44]
 
-# Estimate EGM (using EGA)
-egm_ega <- EGM(data)
+\dontrun{
+# Estimate EGM (using "explore")
+egm <- EGM(data)
 
-# Estimate EGM (using EGA) specifying communities
-egm_ega_communities <- EGM(data, communities = 3)
+# Constrain EGM to only estimate 3 communities
+egm_communities <- EGM(data, communities = 3)
 
 # Estimate EGM (using EGA) specifying structure
 egm_ega_structure <- EGM(
@@ -128,25 +203,45 @@ egm_ega_structure <- EGM(
     1, 1, 1, 2, 1, 1, 1,
     1, 1, 1, 3, 2, 2, 2,
     2, 3, 3, 3, 3, 3, 2
-  )
+  ), EGM.model = "EGA"
 )
 
-# Estimate EGM (using beta-min condition)
-egm_ega_search <- EGM(data, EGM.model = "beta.min")
 
-\dontrun{
 # Estimate EGM (using EGA search)
-egm_ega_search <- EGM(
-  data, EGM.model = "EGA", search = TRUE
-)
+egm_ega_search <- EGM(data, EGM.model = "EGA", search = TRUE)
 
 # Estimate EGM (using search)
-egm_search <- EGM(
+egm_prob_search <- EGM(
   data, EGM.model = "probability", search = TRUE,
   communities = 3, # need communities or structure
   p.in = 0.95 # only need 'p.in'
 )}
 
+}
+\references{
+\strong{Bridge penalty} \cr
+Frank, Ll. E., & Friedman, J. H. (1993).
+A statistical view of some chemometrics regression tools.
+\emph{Technometrics}, \emph{35}(2), 109–135.
+
+\strong{l1 penalty} \cr
+Tibshirani, R. (1996).
+Regression shrinkage and selection via the lasso.
+\emph{Journal of the Royal Statistical Society: Series B (Methodological)}, \emph{58}(1), 267–288.
+
+\strong{l2 penalty} \cr
+Hoerl, A. E., & Kennard, R. W. (1970).
+Ridge regression: Biased estimation for nonorthogonal problems.
+\emph{Technometrics}, \emph{12}(1), 55–67.
+
+\strong{Minimax penalty} \cr
+Zhang, C.-H. (2010). Nearly unbiased variable selection under minimax concave penalty.
+\emph{Annals of Statistics}, \emph{38}(2), 894–942.
+
+\strong{SCAD penalty} \cr
+Fan, J., & Li, R. (2001).
+Variable selection via nonconcave penalized likelihood and its oracle properties.
+\emph{Journal of the American Statistical Association}, \emph{96}(456), 1348–1360.
 }
 \author{
 Hudson F. Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>

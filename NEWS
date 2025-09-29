@@ -10,7 +10,17 @@ WEBSITE: https://r-ega.net
 
 +	UPDATE: beta-min condition is used to supply a model-implied network for `simEGM`
 
++ ADD: new function to plot clusters of individual `dynEGA` results
+
++ ADD: new optimization approch for `dynEGA` functions
+
++ UPDATE: zero-variance data handling in `dynEGA` functions
+
 +	UPDATE: missing data handling in `glla` and subsequently `dynEGA` functions
+
++	UPDATE: default model for `EGM` has changed to `EGM.model = "explore"` to identify communities and network structure in an exploratory manner
+
++	UPDATE: optimizations for `EGM` have been made more efficient (small l2 regularization to smooth larger loadings)
 
 
 ## Changes in version 2.3.0
@@ -105,7 +115,7 @@ WEBSITE: https://r-ega.net
 
 + ADD: `network.generalizability` to estimate network generalizability to new data (leverages `network.predictability`)
 
-+ UPDATE: new loadings (`net.loads(..., loading.method = "experimental")`) have been added to resolve issues in original loadings (e.g., signs, cross-loadings, standardization) 
++ UPDATE: new loadings (`net.loads(..., loading.method = "experimental")`) have been added to resolve issues in original loadings (e.g., signs, cross-loadings, standardization)
 
 + UPDATE: `plot.bootEGA` will output `itemStability` plot by default
 
@@ -278,7 +288,7 @@ WEBSITE: https://r-ega.net
 
 + UPDATE: `UVA` supports legacy of inital conception in Christensen, Golino, and Silvia (EJP, 2020) but will no longer fix bugs related to: manual variable selection, "adapt" or "alpha" methods (warnings will be thrown)
 
-+ UPDATE: streamlined `UVA` (about 4x faster); fixed bugs related to reverse coding issues 
++ UPDATE: streamlined `UVA` (about 4x faster); fixed bugs related to reverse coding issues
 
 + UPDATE: `tefi` now handles all `EGA*` function objects including `hierEGA` which computes generalized TEFI
 

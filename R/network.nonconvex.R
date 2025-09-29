@@ -272,7 +272,7 @@ network.nonconvex <- function(
     lambda_list <- lapply(lambda, function(value){
 
       # Obtain lambda matrix
-      lambda_matrix[] <- derivative_FUN(K = K, lambda = value, gamma = gamma)
+      lambda_matrix[] <- derivative_FUN(x = K, lambda = value, gamma = gamma)
 
       # Check for diagonal penalization
       if(!penalize.diagonal){
@@ -351,7 +351,7 @@ network.nonconvex <- function(
 
     # Obtain lambda matrix
     lambda_matrix[] <- derivative_FUN(
-      K = K, lambda = optimized_lambda$minimum, gamma = gamma
+      x = K, lambda = optimized_lambda$minimum, gamma = gamma
     )
 
     # Check for diagonal penalization
@@ -406,7 +406,7 @@ network.nonconvex <- function(
 
     # Obtain lambda matrix
     lambda_matrix[] <- derivative_FUN(
-      K = K, lambda = lambda, gamma = optimized_gamma$minimum
+      x = K, lambda = lambda, gamma = optimized_gamma$minimum
     )
 
     # Check for diagonal penalization
@@ -470,7 +470,7 @@ network.nonconvex <- function(
 
     # Obtain lambda matrix
     lambda_matrix[] <- derivative_FUN(
-      K = K, lambda = optimized$optim$bestmem[[1]],
+      x = K, lambda = optimized$optim$bestmem[[1]],
       gamma = optimized$optim$bestmem[[2]]
     )
 
@@ -575,125 +575,6 @@ network.nonconvex_errors <- function(
 
 }
 
-# DERIVATIVES AND PENALTIES ----
-
-# iPOT derivative ----
-# Updated 12.01.2025
-ipot_derivative <- function(K, lambda, gamma = 5)
-{
-
-  # iPOT value
-  ipot_value <- 2^(-gamma)
-
-  # Return derivative
-  return(swiftelse(gamma == 0, lambda, lambda * ipot_value * abs(K)^(ipot_value - 1)))
-
-}
-
-#' @noRd
-# iPOT penalty ----
-# Updated 12.01.2025
-ipot_penalty <- function(K, lambda, gamma = 5)
-{
-  return(lambda * abs(K)^(2^(-gamma)))
-}
-
-# LGP-norm derivative ----
-# Updated 12.01.2025
-lgp_derivative <- function(K, lambda, gamma = 5)
-{
-  return(lambda^2 * abs(K)^((lambda - gamma) / gamma) / gamma)
-}
-
-#' @noRd
-# LGP-norm penalty ----
-# Updated 12.01.2025
-lgp_penalty <- function(K, lambda, gamma = 5)
-{
-  return(lambda * abs(K)^(lambda / gamma))
-}
-
-# POP derivative ----
-# Updated 12.01.2025
-pop_derivative <- function(K, lambda, gamma = 4)
-{
-
-  # Obtain absolute of K
-  K <- abs(K) + 1
-
-  # Return lambdas
-  return((lambda * gamma) / K^(gamma + 1))
-
-}
-
-#' @noRd
-# POP penalty ----
-# Updated 12.01.2025
-pop_penalty <- function(K, lambda, gamma = 4)
-{
-
-  # Obtain absolute of K
-  K <- abs(K) + 1
-
-  # Return lambdas
-  return(lambda * (1 - (1 / K)^gamma))
-
-}
-
-# SPOT derivative ----
-# Updated 12.01.2025
-spot_derivative <- function(K, lambda, gamma = 3)
-{
-
-  # Obtain exponent
-  exponent <- exp(-abs(K) * 2^gamma)
-
-  # Return lambdas
-  return(lambda * 2^(gamma + 1) * exponent / (exponent + 1)^2)
-
-}
-
-#' @noRd
-# SPOT penalty ----
-# Updated 28.01.2025
-spot_penalty <- function(K, lambda, gamma = 3)
-{
-  return(2 * lambda / (1 + exp(-abs(K) * 2^gamma)) - lambda)
-}
-
-# The TANH penalty is equivalent to SPOT such that
-# 2^(gamma - 1) == SPOT
-# where
-# tanh(x / 2) == 2 * sigmoid(x) - 1
-
-# # TANH derivative
-# # Updated 02.01.2025
-# tanh_derivative <- function(K, lambda, gamma)
-# {
-#
-#   # Set inner component
-#   K <- abs(K * gamma)
-#
-#   # Return lambdas
-#   return((4 * lambda * gamma) / (exp(K) + exp(-K))^2)
-#
-# }
-#
-# # TANH penalty
-# # Updated 02.01.2025
-# tanh_penalty <- function(K, lambda, gamma)
-# {
-#
-#   # Set inner, positive, and negative components
-#   K <- abs(K)
-#   pexp <- exp(K * gamma)
-#   nexp <- exp(-K * gamma)
-#
-#   # Return lambdas
-#   return(lambda * (pexp - nexp) / (pexp + nexp))
-#
-# }
-
 # OPTIMIZATION FUNCTIONS ----
 
 #' @noRd
@@ -708,7 +589,7 @@ lambda_optimize <- function(
 {
 
   # Obtain lambda matrix
-  lambda_matrix[] <- derivative_FUN(K = K, lambda = lambda, gamma = gamma)
+  lambda_matrix[] <- derivative_FUN(x = K, lambda = lambda, gamma = gamma)
 
   # Check for diagonal penalization
   if(!penalize.diagonal){
@@ -741,7 +622,7 @@ gamma_optimize <- function(
 {
 
   # Obtain lambda matrix
-  lambda_matrix[] <- derivative_FUN(K = K, lambda = lambda, gamma = gamma)
+  lambda_matrix[] <- derivative_FUN(x = K, lambda = lambda, gamma = gamma)
 
   # Check for diagonal penalization
   if(!penalize.diagonal){
@@ -774,7 +655,7 @@ penalty_optimize <- function(
 {
 
   # Obtain lambda matrix
-  lambda_matrix[] <- derivative_FUN(K = K, lambda = params[1], gamma = params[2])
+  lambda_matrix[] <- derivative_FUN(x = K, lambda = params[1], gamma = params[2])
 
   # Check for diagonal penalization
   if(!penalize.diagonal){
