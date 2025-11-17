@@ -98,6 +98,7 @@
 #' which is different and \emph{larger} than the original scale)
 #'
 #' }
+#'
 #' @param zero.jitter Numeric (length = 1).
 #' Small amount of Gaussian noise added to zero variance derivatives to prevent
 #' estimation failures. For more than one variable, noise is generated

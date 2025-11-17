@@ -28,12 +28,17 @@
 #' Number or name of the column identifying each individual.
 #' Defaults to \code{NULL}
 #'
-#' @param n.embed Numeric (length = 1).
+#' @param n.embed Numeric (length = 1 or more).
 #' Defaults to \code{5}.
 #' Number of embedded dimensions (the number of observations to
 #' be used in the \code{\link[EGAnet]{Embed}} function). For example,
 #' an \code{"n.embed = 5"} will use five consecutive observations
-#' to estimate a single derivative
+#' to estimate a single derivative.
+#'
+#' If more than one value is provided, then the number of embeddings
+#' will be optimized over using \code{\link[EGAnet]{tefi}} to determine
+#' the optimal length of the embedding dimensions for \emph{each}
+#' individual in the sample
 #'
 #' @param tau Numeric (length = 1).
 #' Defaults to \code{1}.
@@ -64,6 +69,44 @@
 #' }
 #'
 #' Generally recommended to leave "as is"
+#'
+#' @param na.derivative Character (length = 1).
+#' How should missing data in the embeddings be handled?
+#' Available options (see Boker et al. (2018) in \code{\link[EGAnet]{glla}} references for more details):
+#'
+#' \itemize{
+#'
+#' \item \code{"none"} (default) --- does nothing and leaves \code{NA}s in data
+#'
+#' \item \code{"kalman"} --- uses Kalman smoothing (\code{\link[stats]{KalmanSmooth}}) with
+#' structural time series models (\code{\link[stats]{StructTS}}) to impute missing values.
+#' This approach models the underlying temporal dependencies (trend, seasonality, autocorrelation)
+#' to generate estimates for missing observations while preserving the original time scale.
+#' More computationally intensive than the other methods but typically provides the
+#' most accurate imputation by respecting the stochastic properties of the time series
+#'
+#' \item \code{"rowwise"} --- adjusts time interval with respect to each embedding ensuring
+#' time intervals are adaptive to the missing data (tends to be more accurate than \code{"none"})
+#'
+#' \item \code{"skipover"} --- "skips over" missing data and treats the non-missing points
+#' as continuous points in time (note that the time scale shifts to the "per mean time interval,"
+#' which is different and \emph{larger} than the original scale)
+#'
+#' }
+#'
+#' @param zero.jitter Numeric (length = 1).
+#' Small amount of Gaussian noise added to zero variance derivatives to prevent
+#' estimation failures. For more than one variable, noise is generated
+#' multivariate normal distribution to ensure orthogonal noise is added.
+#' The jitter preserves the overall structure but avoids singular
+#' covariance matrices during network estimation.
+#' Defaults to \code{0.001}
+#'
+#' @param tefi.optimize Boolean (length = 1).
+#' If \code{TRUE}, performs optimization of \code{n.embed} for each individual,
+#' then constructs the population based on optimized derivatives. When \code{TRUE},
+#' individual networks are considered of interest and will always be output.
+#' Defaults to \code{FALSE}
 #'
 #' @param corr Character (length = 1).
 #' Method to compute correlations.
@@ -184,6 +227,12 @@
 #' If you're unsure how many cores your computer has,
 #' then type: \code{parallel::detectCores()}
 #'
+#' @param seed Numeric (length = 1).
+#' Defaults to \code{NULL} or random results.
+#' Set for reproducible results.
+#' See \href{https://r-ega.net/articles/reproducibility-prng.html}{Reproducibility and PRNG}
+#' for more details on random number generation in \code{EGAnet}
+#'
 #' @param verbose Boolean (length = 1).
 #' Should progress be displayed?
 #' Defaults to \code{TRUE}.
@@ -218,18 +267,20 @@
 #' @export
 #'
 # Intra- and Interindividual dynEGA
-# Updated 24.10.2023
+# Updated 17.11.2025
 dynEGA.ind.pop <- function(
   # `dynEGA` arguments
   data,  id = NULL,
   n.embed = 5, tau = 1, delta = 1, use.derivatives = 1,
+  na.derivative = c("none", "kalman", "rowwise", "skipover"),
+  zero.jitter = 0.001, tefi.optimize = FALSE,
   # `EGA` arguments
   corr = c("auto", "cor_auto", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
   model = c("BGGM", "glasso", "TMFG"),
   algorithm = c("leiden", "louvain", "walktrap"),
   uni.method = c("expand", "LE", "louvain"),
-  ncores, verbose = TRUE, ...
+  ncores, seed = NULL, verbose = TRUE, ...
 ){
 
   # Use `dynEGA` (input handling occurs inside `dynEGA`)
@@ -237,10 +288,12 @@ dynEGA.ind.pop <- function(
     dynEGA(
       data = data, id = id, n.embed = n.embed, tau = tau,
       delta = delta, use.derivatives = use.derivatives,
+      na.derivative = na.derivative, zero.jitter = zero.jitter,
+      tefi.optimize = tefi.optimize,
       level = c("population", "individual"),
       corr = corr, na.data = na.data,
       model = model, algorithm = algorithm, uni.method = uni.method,
-      ncores = ncores, verbose = verbose, ...
+      ncores = ncores, seed = seed, verbose = verbose, ...
     )
   )
 
