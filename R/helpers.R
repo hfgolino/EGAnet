@@ -3068,33 +3068,6 @@ binary_accuracy <- function(prediction, observed)
 #%%%%%%%%%%%%%%%%%%%%%%%%
 
 #' @noRd
-# beta-min criterion ----
-# Updated 06.07.2025
-beta_min <- function(P, K, total_variables, sample_size)
-{
-
-  # Calculate beta-min
-  minimum <- sqrt(log(total_variables) / sample_size)
-
-  # Obtain inverse variances
-  inverse_variances <- diag(K)
-
-  # Obtain betas
-  inv_K <- outer(inverse_variances, inverse_variances, FUN = "/")
-  beta <- P * ((inv_K + t(inv_K)) / 2)
-
-  # Set adjacency matrix
-  adjacency <- abs(beta) > minimum
-
-  # Attach minimum
-  attr(adjacency, "beta.min") <- minimum
-
-  # Return adjacency matrix
-  return(adjacency)
-
-}
-
-#' @noRd
 # Re-index memberships ----
 # Updated 19.11.2023
 reindex_memberships <- function(memberships)

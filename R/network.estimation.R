@@ -396,7 +396,7 @@ send_network_methods <- function(estimated_network, boot = FALSE)
     if("beta.min" %in% names(methods)){
 
       # Add to start
-      start <- paste0(start, "\nbeta-min: ", methods$beta.min)
+      start <- paste0(start, "\nBeta-min: ", methods$beta.min)
 
     }else{
 

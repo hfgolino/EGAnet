@@ -3,12 +3,7 @@
 #' @description Estimates dynamic communities in multivariate time series
 #' (e.g., panel data, longitudinal data, intensive longitudinal data) at multiple
 #' time scales and at different levels of analysis:
-#' individuals (intraindividual structure), groups, and population (interindividual structure).
-#'
-#' Includes an option for the optimization of embedded dimensions (`n.embed`)
-#' across individuals. If `optimization = TRUE`, the function will grid search
-#' for each individual, selecting the `n.embed` that minimizes TEFI, and then
-#' build the population network using the optimized derivatives.
+#' individuals (intraindividual structure), groups, and population (interindividual structure)
 #'
 #' @param data Matrix or data frame.
 #' Participants and variable should be in long format such that
@@ -38,13 +33,17 @@
 #' Number of the column identifying group membership.
 #' Defaults to \code{NULL}
 #'
-#' @param n.embed Numeric (length = 1).
+#' @param n.embed Numeric (length = 1 or more).
 #' Defaults to \code{5}.
 #' Number of embedded dimensions (the number of observations to
 #' be used in the \code{\link[EGAnet]{Embed}} function). For example,
 #' an \code{"n.embed = 5"} will use five consecutive observations
-#' to estimate a single derivative. This parameter is ignored if
-#' \code{optimization = TRUE}
+#' to estimate a single derivative.
+#'
+#' If more than one value is provided, then the number of embeddings
+#' will be optimized over using \code{\link[EGAnet]{tefi}} to determine
+#' the optimal length of the embedding dimensions for \emph{each}
+#' individual in the sample
 #'
 #' @param tau Numeric (length = 1).
 #' Defaults to \code{1}.
@@ -99,6 +98,19 @@
 #' which is different and \emph{larger} than the original scale)
 #'
 #' }
+#' @param zero.jitter Numeric (length = 1).
+#' Small amount of Gaussian noise added to zero variance derivatives to prevent
+#' estimation failures. For more than one variable, noise is generated
+#' multivariate normal distribution to ensure orthogonal noise is added.
+#' The jitter preserves the overall structure but avoids singular
+#' covariance matrices during network estimation.
+#' Defaults to \code{0.001}
+#'
+#' @param tefi.optimize Boolean (length = 1).
+#' If \code{TRUE}, performs optimization of \code{n.embed} for each individual,
+#' then constructs the population based on optimized derivatives. When \code{TRUE},
+#' individual networks are considered of interest and will always be output.
+#' Defaults to \code{FALSE}
 #'
 #' @param level Character vector (up to length of 3).
 #' A character vector indicating which level(s) to estimate:
@@ -226,29 +238,6 @@
 #'
 #' }
 #'
-#' @param optimization Logical.
-#' If \code{TRUE}, performs joint optimization of \code{n.embed} for each individual,
-#' then constructs the population based on optimized derivatives.
-#' Defaults to \code{FALSE}
-#'
-#' @param n.embed.all.ind Vector of candidate embedding dimensions (\code{n.embed}) to be
-#' considered during optimization. Defaults to \code{3:25}. For an individual with
-#' \eqn{T} time points, only candidates satisfying \code{n.embed <= T-3} are valid.
-#' Internally, \code{dynEGA} computes \code{T_i <- nrow(individual_data)} and restricts
-#' the search to \code{embeds_i <- n.embed.all.ind[n.embed.all.ind <= (T_i - 3)]}.
-#' If no valid embedding dimensions remain (i.e., \code{T_i-3 < min(n.embed.all.ind)}),
-#' the individual is skipped (\code{NULL} is returned) to avoid optimization errors.
-#' These valid \code{embeds_i} are used consistently in both Step 1 (derivative
-#' computation) and Step 2 (\code{TEFI} optimization), ensuring that only legal
-#' embeddings are evaluated.
-#'
-#' @param jitter.eps Numeric scalar.
-#' Small amount of Gaussian noise added to zero-variance columns to prevent
-#' estimation failures. Default is \code{1e-3}.
-#' This ensures individuals with flat signals (no within-variable variability)
-#' are not dropped. The jitter preserves the overall structure but avoids
-#' singular covariance matrices during network estimation.
-#'
 #' @param ncores Numeric (length = 1).
 #' Number of cores to use in computing results.
 #' Defaults to \code{ceiling(parallel::detectCores() / 2)} or half of your
@@ -257,6 +246,12 @@
 #'
 #' If you're unsure how many cores your computer has,
 #' then type: \code{parallel::detectCores()}
+#'
+#' @param seed Numeric (length = 1).
+#' Defaults to \code{NULL} or random results.
+#' Set for reproducible results.
+#' See \href{https://r-ega.net/articles/reproducibility-prng.html}{Reproducibility and PRNG}
+#' for more details on random number generation in \code{EGAnet}
 #'
 #' @param verbose Boolean (length = 1).
 #' Should progress be displayed?
@@ -292,20 +287,14 @@
 #'
 #' \itemize{
 #'
-#' \item \code{population} --- If \code{level} includes \code{"population"}, then
+#' \item \code{population} --- If \code{level} includes \code{"populaton"}, then
 #' the \code{\link[EGAnet]{EGA}} results for the entire sample
 #'
 #' \item \code{group} --- If \code{level} includes \code{"group"}, then
 #' a list containing the \code{\link[EGAnet]{EGA}} results for each \code{group}
 #'
 #' \item \code{individual} --- If \code{level} includes \code{"individual"}, then
-#' a list containing the \code{\link[EGAnet]{EGA}} results for each \code{id}.
-#' When \code{optimization = TRUE}, each individual result also contains:
-#' \itemize{
-#'   \item \code{n.embed} --- The optimal embedding dimension selected
-#'   \item \code{TEFI_surface} --- TEFI values across all tested embedding dimensions
-#'   \item \code{data_used} --- The optimized derivative data used for network estimation
-#' }
+#' a list containing the \code{\link[EGAnet]{EGA}} results for each \code{id}
 #'
 #' }
 #'
@@ -315,12 +304,7 @@
 #' estimated using generalized local linear approximation (see \code{\link[EGAnet]{glla}}).
 #' \code{\link[EGAnet]{EGA}} is then applied to these derivatives to model how variables
 #' are changing together over time. Variables that change together over time are detected
-#' as communities.
-#'
-#' When \code{optimization = TRUE}, the function performs a two-step process:
-#' (1) computes derivatives for all valid embedding dimensions for each individual, and
-#' (2) selects the optimal embedding dimension by minimizing the Total Entropy Fit Index (TEFI).
-#' The population network is then constructed from the pooled optimized individual derivatives.
+#' as communities
 #'
 #' @author Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 #'
@@ -332,6 +316,7 @@
 #'   # useful to understand how data should be structured
 #' )
 #'
+#' \dontrun{
 #' # Group structure
 #' simulated_group <- dynEGA(
 #'   data = sim.dynEGA, level = "group"
@@ -339,7 +324,6 @@
 #'   # useful to understand how data should be structured
 #' )
 #'
-#' \dontrun{
 #' # Individual structure
 #' simulated_individual <- dynEGA(
 #'   data = sim.dynEGA, level = "individual",
@@ -355,16 +339,6 @@
 #'   verbose = TRUE # progress bar
 #' )
 #'
-#' # With optimization
-#' simulated_optimized <- dynEGA(
-#'   data = sim.dynEGA,
-#'   level = c("individual", "population"),
-#'   optimization = TRUE,
-#'   n.embed.all.ind = 3:15,
-#'   ncores = 2,
-#'   verbose = TRUE
-#' )
-#'
 #' # Plot population
 #' plot(simulated_all$dynEGA$population)
 #'
@@ -377,7 +351,17 @@
 #' # Step through all plots
 #' # Unless `id` is specified, 4 random IDs
 #' # will be drawn from individuals
-#' plot(simulated_all)}
+#' plot(simulated_all)
+#'
+#' # Optimize over multiple embeddings
+#' optimized_all <- dynEGA(
+#'   data = sim.dynEGA,
+#'   level = c("individual", "group", "population"),
+#'   n.embed = 3:10, # set number of dimensions to search over
+#'   tefi.optimize = TRUE, # set to TRUE to optimize
+#'   ncores = 2, # use more for quicker results
+#'   verbose = TRUE # progress bar
+#' )}
 #'
 #' @references
 #' \strong{Generalized local linear approximation} \cr
@@ -405,28 +389,21 @@
 #' @export
 #'
 # dynEGA ----
-# Updated 24.09.2025 with joint optimization of n.embed
-# Enhanced with two-step parallelization: derivatives then optimization
-# Grid search for the number of embedded dimensions takes into consideration the
-# length of the time-series for each individual.
+# Updated 17.11.2025
 dynEGA <- function(
     # `dynEGA` arguments
-  data, id = NULL, group = NULL,
-  n.embed = 5, tau = 1, delta = 1, use.derivatives = 1,
-  na.derivative = c("none", "kalman", "rowwise", "skipover"),
-  level = c("individual", "group", "population"),
-  # `EGA` arguments
-  corr = c("auto", "cor_auto", "pearson", "spearman"),
-  na.data = c("pairwise", "listwise"),
-  model = c("BGGM", "glasso", "TMFG"),
-  algorithm = c("leiden", "louvain", "walktrap"),
-  uni.method = c("expand", "LE", "louvain"),
-  # Optimization arguments
-  optimization = FALSE,
-  n.embed.all.ind = 3:25,
-  jitter.eps = 1e-3,
-  # General arguments
-  ncores, verbose = TRUE, ...
+    data,  id = NULL, group = NULL,
+    n.embed = 5, tau = 1, delta = 1, use.derivatives = 1,
+    na.derivative = c("none", "kalman", "rowwise", "skipover"),
+    zero.jitter = 0.001, tefi.optimize = FALSE,
+    level = c("individual", "group", "population"),
+    # `EGA` arguments
+    corr = c("auto", "cor_auto", "pearson", "spearman"),
+    na.data = c("pairwise", "listwise"),
+    model = c("BGGM", "glasso", "TMFG"),
+    algorithm = c("leiden", "louvain", "walktrap"),
+    uni.method = c("expand", "LE", "louvain"),
+    ncores, seed = NULL, verbose = TRUE, ...
 ){
 
   # Check for missing arguments (argument, default, function)
@@ -446,8 +423,12 @@ dynEGA <- function(
   # Argument errors (return data in case of tibble)
   data <- dynEGA_errors(
     data, id, group, n.embed, tau, delta,
-    use.derivatives, ncores, verbose
+    use.derivatives, zero.jitter, tefi.optimize,
+    ncores, verbose
   )
+
+  # Update 'tefi.optimize'
+  tefi.optimize <- attributes(data)$tefi.optimize
 
   # Get dimensions of the data
   dimensions <- dim(data)
@@ -464,272 +445,63 @@ dynEGA <- function(
   # Split data into lists based on ID
   individual_data <- split(data, attributes(data)$ID)
 
-  # Get derivatives to use index
-  derivative_index <- grep(
-    switch(
-      as.character(use.derivatives),
-      "0" = "Ord0", "1" = "Ord1", "2" = "Ord2"
-    ),
-    paste0(".Ord", use.derivatives)
-  )
+  # Check for TEFI optimization
+  if(tefi.optimize){
 
-  # Initialize results list
-  results <- list()
-
-  # OPTIMIZATION PATH
-  if(optimization){
-
+    # Send message about computing the derivatives
     if(verbose){
-      message("Optimization: Step 1 - Computing derivatives across individuals...")
+      message("Optimizing TEFI over embeddings...")
     }
 
-    # Function to compute all derivatives for an individual
-    compute_all_derivatives_for_individual <- function(ind_data, ind_id){
-      T_i <- nrow(ind_data)
-      embeds_i <- n.embed.all.ind[n.embed.all.ind <= (T_i - 3)]
-
-      if(length(embeds_i) == 0){
-        return(NULL)
-      }
-
-      group_val <- attr(ind_data, "Group")
-      if(is.null(group_val)){
-        group_val <- unique(attributes(data)$Group)[1] # Default group
-      }
-
-      derivatives_cache <- list()
-
-      for(embed in embeds_i){
-        # Compute derivatives for this embedding
-        deriv_list <- individual_derivatives(
-          list(ind_data),
-          variable_names,
-          n.embed = embed,
-          tau = tau,
-          delta = delta,
-          na.derivative = na.derivative,
-          individual_attributes = list(ID = ind_id, Group = group_val)
-        )
-
-        # Extract proper derivatives
-        proper_derivatives <- deriv_list[[1]]
-
-        # Get the correct derivative columns
-        deriv_cols <- grep(
-          paste0(".Ord", use.derivatives, "$"),
-          colnames(proper_derivatives)
-        )
-
-        if(length(deriv_cols) > 0){
-          proper_derivatives <- proper_derivatives[, deriv_cols, drop = FALSE]
-
-          # Apply jitter to zero variance columns
-          if(!is.null(jitter.eps) && jitter.eps > 0){
-            proper_derivatives <- jitter_zero_var(
-              as.data.frame(proper_derivatives),
-              eps = jitter.eps
-            )
-          }
-
-          derivatives_cache[[as.character(embed)]] <- as.matrix(proper_derivatives)
-        }
-      }
-
-      return(list(
-        ID = ind_id,
-        Group = group_val,
-        derivatives_cache = derivatives_cache
-      ))
-    }
-
-    # Compute all derivatives for all individuals
-    derivatives_results <- mapply(
-      compute_all_derivatives_for_individual,
-      individual_data,
-      names(individual_data),
-      SIMPLIFY = FALSE
+    # Optimize over embeddings
+    individual_results <- embed_optimize(
+      individual_data, variable_names, corr, na.data, model, algorithm,
+      uni.method, tau, delta, n.embed, na.derivative, zero.jitter,
+      use.derivatives, seed, ncores, verbose, ...
     )
 
-    # Remove NULL results
-    derivatives_results <- derivatives_results[!vapply(derivatives_results, is.null, logical(1))]
+    # Obtain derivative list
+    derivative_list <- lapply(individual_results, function(x){x$embedding})
 
-    if(verbose){
-      message("Optimization: Step 2 - Estimating networks across individuals...")
-    }
+    # Update individual results
+    individual_results <- lapply(individual_results, function(x){x$EGA})
 
-    # Function to optimize individual networks
-    optimize_individual_networks <- function(deriv_result){
-      id <- deriv_result$ID
-      derivatives_cache <- deriv_result$derivatives_cache
-
-      best_tefi <- Inf
-      best_res <- NULL
-      all_tefi <- list()
-
-      for(embed_str in names(derivatives_cache)){
-        usable_derivatives <- derivatives_cache[[embed_str]]
-
-        # Try to estimate EGA
-        tmp <- tryCatch(
-          EGA(
-            usable_derivatives,
-            model = model,
-            algorithm = algorithm,
-            corr = corr,
-            na.data = na.data,
-            uni.method = uni.method,
-            plot.EGA = FALSE,
-            verbose = FALSE,
-            ...
-          ),
-          error = function(e) NULL
+    # Set up return list
+    results <- list(
+      Derivatives = list(
+        Estimates = derivative_list,
+        EstimatesDF = data.frame(
+          do.call(rbind, derivative_list),
+          id = ulapply(derivative_list, attr, "ID"),
+          group = ulapply(derivative_list, attr, "Group")
         )
-
-        if(!is.null(tmp)){
-          tefi_val <- tmp$TEFI
-          all_tefi[[embed_str]] <- tefi_val
-
-          if(length(tefi_val) == 0 || is.na(tefi_val)){
-            tefi_val <- Inf
-          }
-
-          if(tefi_val < best_tefi){
-            best_tefi <- tefi_val
-            best_res <- tmp
-            best_res$ID <- id
-            best_res$n.embed <- as.numeric(embed_str)
-            best_res$data_used <- usable_derivatives
-          }
-        }
-      }
-
-      if(is.null(best_res)){
-        return(NULL)
-      }
-
-      best_res$TEFI_surface <- all_tefi
-      return(best_res)
-    }
-
-    # Optimize individual networks in parallel
-    individual_results <- parallel_process(
-      iterations = length(derivatives_results),
-      datalist = derivatives_results,
-      FUN = optimize_individual_networks,
-      ncores = ncores,
-      progress = verbose
-    )
-
-    # Remove NULL results and name them
-    individual_results <- individual_results[!vapply(individual_results, is.null, logical(1))]
-    names(individual_results) <- vapply(
-      individual_results,
-      function(x) as.character(x$ID),
-      character(1)
-    )
-
-    # Store individual results if requested
-    if("individual" %in% level){
-      results$dynEGA$individual <- individual_results
-      class(results$dynEGA$individual) <- "dynEGA.Individual"
-    }
-
-    # Build population network from optimized individuals
-    if("population" %in% level){
-      if(verbose){
-        message("Building population network from optimized individuals...")
-      }
-
-      pooled_data <- do.call(
-        rbind,
-        lapply(individual_results, function(res){
-          if(!is.null(res) && !is.null(res$data_used)){
-            res$data_used
-          } else {
-            NULL
-          }
-        })
-      )
-
-      if(!is.null(pooled_data) && nrow(pooled_data) > 0){
-        results$dynEGA$population <- tryCatch(
-          EGA(
-            pooled_data,
-            model = model,
-            algorithm = algorithm,
-            corr = corr,
-            na.data = na.data,
-            uni.method = uni.method,
-            plot.EGA = FALSE,
-            verbose = FALSE,
-            ...
-          ),
-          error = function(e) NULL
-        )
-
-        if(!is.null(results$dynEGA$population)){
-          class(results$dynEGA$population) <- "dynEGA.Population"
-        }
-      }
-    }
-
-    # Build derivatives output for compatibility
-    # Use the optimized derivatives
-    all_derivatives <- lapply(individual_results, function(res){
-      if(!is.null(res) && !is.null(res$data_used)){
-        # Get the group value for this individual
-        ind_group <- derivatives_results[[as.character(res$ID)]]$Group
-
-        structure(
-          res$data_used,
-          ID = res$ID,
-          Group = if(length(ind_group) > 1) ind_group[1] else ind_group
-        )
-      } else {
-        NULL
-      }
-    })
-
-    all_derivatives <- all_derivatives[!vapply(all_derivatives, is.null, logical(1))]
-
-    # Create EstimatesDF properly
-    # First, combine all derivatives
-    combined_derivatives <- do.call(rbind, all_derivatives)
-
-    # Then create ID and Group vectors that match the number of rows
-    id_vector <- rep(
-      vapply(all_derivatives, function(x){
-        id_val <- attr(x, "ID")
-        if(is.null(id_val)) NA_character_ else as.character(id_val)
-      }, character(1)),
-      times = vapply(all_derivatives, nrow, integer(1))
-    )
-
-    group_vector <- rep(
-      vapply(all_derivatives, function(x){
-        grp_val <- attr(x, "Group")
-        if(is.null(grp_val)){
-          NA_character_
-        } else if(length(grp_val) > 1){
-          as.character(grp_val[1])
-        } else {
-          as.character(grp_val)
-        }
-      }, character(1)),
-      times = vapply(all_derivatives, nrow, integer(1))
-    )
-
-    results$Derivatives <- list(
-      Estimates = all_derivatives,
-      EstimatesDF = data.frame(
-        combined_derivatives,
-        id = id_vector,
-        group = group_vector
       )
     )
 
-  } else {
-    # DEFAULT PATH (non-optimization)
+    # Not sure why this process is needed in optimize
+    # but not in the non-optimized version
+    results$Derivatives$Estimates <- lapply(
+      results$Derivatives$Estimates, function(x){
+
+        # Update attributes
+        attr(x, "ID") <- attr(x, "ID")[1]
+        attr(x, "Group") <- attr(x, "Group")[1]
+
+        # Return updates
+        return(x)
+
+      }
+    )
+
+    # Process individual results
+    results$dynEGA$individual <- process_individual_dynEGA(
+      results$Derivatives$Estimates, individual_results
+    )
+
+    # Add class
+    class(results$dynEGA$individual) <- "dynEGA.Individual"
+
+  }else{
 
     # Send message about computing the derivatives
     if(verbose){
@@ -743,16 +515,6 @@ dynEGA <- function(
       individual_attributes = attributes(data)
     )
 
-    # Set up return list
-    results$Derivatives <- list(
-      Estimates = derivative_list,
-      EstimatesDF = data.frame(
-        do.call(rbind, derivative_list),
-        id = ulapply(derivative_list, attr, "ID"),
-        group = ulapply(derivative_list, attr, "Group")
-      )
-    )
-
     # Send message about computing the derivatives
     if(verbose){
       message("done.")
@@ -763,154 +525,34 @@ dynEGA <- function(
       switch(
         as.character(use.derivatives),
         "0" = "Ord0", "1" = "Ord1", "2" = "Ord2"
-      ),
-      dimnames(results$Derivatives$EstimatesDF)[[2]]
+      ), dimnames(derivative_list[[1]])[[2]]
     )
 
-    # Compute Dynamic EGA at each level
-    ## Population
-    if("population" %in% level){
+    # Obtain updated derivatives
+    derivative_list <- handle_derivatives(
+      derivative_list, derivative_index, na.derivative,
+      zero.jitter, corr, na.data, seed, verbose
+    )
 
-      # Estimate population EGA
-      results$dynEGA$population <- EGA(
-        results$Derivatives$EstimatesDF[,derivative_index],
-        corr = corr, na.data = na.data, model = model,
-        algorithm = algorithm, uni.method = uni.method,
-        plot.EGA = FALSE, verbose = FALSE, ...
+    # Set up return list
+    results <- list(
+      Derivatives = list(
+        Estimates = derivative_list,
+        EstimatesDF = data.frame(
+          do.call(rbind, derivative_list),
+          id = ulapply(derivative_list, attr, "ID"),
+          group = ulapply(derivative_list, attr, "Group")
+        )
       )
-
-      # Add class
-      class(results$dynEGA$population) <- "dynEGA.Population"
-
-    }
-
-    ## Group
-    if("group" %in% level){
-
-      # Split derivatives by Group
-      group_data <- lapply(
-        split(
-          derivative_list, ulapply(
-            derivative_list, function(x){
-              unique(attributes(x)$Group)
-            }
-          )
-        ), do.call, what = rbind
-      )
-
-      # Estimate group EGA
-      results$dynEGA$group <- lapply(
-        group_data, function(x){
-          EGA(
-            x[,derivative_index],
-            corr = corr, na.data = na.data, model = model,
-            algorithm = algorithm, uni.method = uni.method,
-            plot.EGA = FALSE, verbose = FALSE, ...
-          )
-        }
-      )
-
-      # Add class
-      class(results$dynEGA$group) <- "dynEGA.Group"
-
-    }
+    )
 
     ## Individual
     if("individual" %in% level){
 
-      # Sent user message about check
-      if(verbose){
-        message("Checking for positive definite correlation matrices...", appendLF = FALSE)
-      }
-
-      # Get proper derivatives and usable data
-      # Add zero variance variables as attributes
-      usable_derivatives <- lapply(
-        derivative_list, function(x){
-
-          # First, get proper derivatives
-          proper_derivatives <- x[,derivative_index]
-
-          # Apply jitter if specified
-          if(!is.null(jitter.eps) && jitter.eps > 0){
-            proper_derivatives <- jitter_zero_var(
-              as.data.frame(proper_derivatives),
-              eps = jitter.eps
-            )
-          }
-
-          # Next, check for NA and zero variance variables
-          zero_variance <- lvapply(
-            as.data.frame(proper_derivatives),
-            function(x){return(unique_length(x) < 2)}
-          )
-
-          # Return data with all non-zero variance variables
-          # and with zero variance variables as an attribute
-          return(
-            structure(
-              proper_derivatives[,!zero_variance],
-              ID = unique(attr(x, "ID")),
-              zero_variance = zero_variance
-            )
-          )
-
-        }
-      )
-
-      # Check for correlation issues before processing
-      issues <- lvapply(usable_derivatives, function(x){
-
-        # Try to get correlations
-        attempt <- silent_call(try(
-          obtain_sample_correlations(
-            data = x, n = dim(x)[1], corr = corr,
-            na.data = na.data, verbose = verbose
-          )$correlation_matrix, silent = TRUE
-        ))
-
-        # Check for issues
-        return(
-          swiftelse(
-            is(attempt, "try-error") || !is_positive_definite(attempt), TRUE, FALSE
-          )
-        )
-
-      })
-
-      # Sent user message about check
-      if(verbose){
-        message("done.")
-      }
-
-      # Return message about issues
-      if(any(issues)){
-
-        .handleSimpleError(
-          h = warning,
-          msg = paste0(
-            "The following IDs were found to have zero variance and/or missing data ",
-            "preventing their correlation matrices from being estimated:\n\n",
-            paste0(names(issues)[issues], collapse = ", "), "\n\n",
-            "These IDs will not have individual networks.",
-            swiftelse(
-              na.derivative == "none",
-              "\n\nTry setting 'na.derivative' to \"kalman\" (recommended), \"skipover\", or \"rowwise\"",
-              ""
-            ), "\n"
-          ),
-          call = "dynEGA"
-        )
-
-      }
-
-      # Update usable_derivatives
-      usable_derivatives <- usable_derivatives[!issues]
-
       # Estimate individual EGA
       individual_results <- parallel_process(
-        iterations = length(usable_derivatives),
-        datalist = usable_derivatives,
+        iterations = length(results$Derivatives$Estimates),
+        datalist = results$Derivatives$Estimates,
         EGA, # Use `EGA`
         corr = corr, na.data = na.data, model = model,
         algorithm = algorithm, uni.method = uni.method,
@@ -919,15 +561,60 @@ dynEGA <- function(
       )
 
       # Process individual results
-      # Handle zero variance variables within each individual
       results$dynEGA$individual <- process_individual_dynEGA(
-        usable_derivatives, individual_results
+        results$Derivatives$Estimates, individual_results
       )
 
       # Add class
       class(results$dynEGA$individual) <- "dynEGA.Individual"
 
     }
+
+  }
+
+  ## Group
+  if("group" %in% level){
+
+    # Split derivatives by Group
+    group_data <- lapply(
+      split(
+        results$Derivatives$Estimates, ulapply(
+          results$Derivatives$Estimates, function(x){
+            unique(attributes(x)$Group)
+          }
+        )
+      ), do.call, what = rbind
+    )
+
+    # Estimate group EGA
+    results$dynEGA$group <- lapply(
+      group_data, EGA, corr = corr, na.data = na.data,
+      model = model, algorithm = algorithm, uni.method = uni.method,
+      plot.EGA = FALSE, verbose = FALSE, ...
+    )
+
+    # Add class
+    class(results$dynEGA$group) <- "dynEGA.Group"
+
+  }
+
+  # Compute Dynamic EGA at each level
+  ## Population
+  if("population" %in% level){
+
+    # Estimate population EGA
+    results$dynEGA$population <- EGA(
+      results$Derivatives$EstimatesDF[
+        , !(colnames(results$Derivatives$EstimatesDF) %in% c("id", "group"))
+      ],
+      corr = corr, na.data = na.data, model = model,
+      algorithm = algorithm, uni.method = uni.method,
+      plot.EGA = FALSE, verbose = FALSE, ...
+    )
+
+    # Add class
+    class(results$dynEGA$population) <- "dynEGA.Population"
+
   }
 
   # Add attributes to overall results
@@ -937,20 +624,12 @@ dynEGA <- function(
     use.derivatives = use.derivatives
   )
 
-  # Add optimization attributes if used
-  if(optimization){
-    attr(results, "optimization") <- list(
-      method = "TEFI",
-      n.embed.all.ind = n.embed.all.ind,
-      jitter.eps = jitter.eps
-    )
-  }
-
   # Add overall class
   class(results) <- "dynEGA"
 
   # Return results
   return(results)
+
 }
 
 # Bug Checking ----
@@ -962,24 +641,13 @@ dynEGA <- function(
 # uni.method = "louvain"; ncores = 8
 # verbose = FALSE; ellipse = list()
 
-
-# Small helper function to jitter zero-variance columns
-#' @noRd
-jitter_zero_var <- function(df, eps = 1e-3) {
-  for (col in seq_along(df)) {
-    if (sd(df[[col]], na.rm = TRUE) == 0) {
-      df[[col]] <- df[[col]] + rnorm(length(df[[col]]), 0, eps)
-    }
-  }
-  return(df)
-}
-
 #' @noRd
 # Errors ----
-# Updated 19.08.2023
+# Updated 17.11.2025
 dynEGA_errors <- function(
     data, id, group, n.embed, tau, delta,
-    use.derivatives, ncores, verbose
+    use.derivatives, zero.jitter, tefi.optimize,
+    ncores, verbose
 )
 {
 
@@ -1002,10 +670,63 @@ dynEGA_errors <- function(
     typeof_error(group, c("numeric", "character"), "dynEGA")
   }
 
+  # 'tefi.optimize' errors
+  length_error(tefi.optimize, 1, "dynEGA")
+  typeof_error(tefi.optimize, "logical", "dynEGA")
+
   # 'n.embed' errors
-  length_error(n.embed, 1, "dynEGA")
   typeof_error(n.embed, "numeric", "dynEGA")
-  range_error(n.embed, c(3, Inf), "dynEGA")
+
+  # Check for number of embeddings
+  embed_length <- length(n.embed)
+
+  # Check `n.embed` based on TEFI optimization
+  if(tefi.optimize){
+
+    # Check for single embeddings input
+    if(embed_length == 1){
+
+      # Send error
+      .handleSimpleError(
+        h = warning,
+        msg = paste0(
+          "Only one embedding length (`n.embed = ", n.embed, "`) ",
+          "was provided for 'n.embed' while `tefi.optimize = TRUE`.\n\n",
+          "'tefi.optimize' was set to `FALSE` to obtain embeddings"
+        ),
+        call = "dynEGA"
+      )
+
+    }
+
+    # Actually set to FALSE
+    tefi.optimize <- FALSE
+
+    }else{
+
+      # Check for multiple embeddings input
+      if(embed_length > 1){
+
+        # Send error
+        .handleSimpleError(
+          h = warning,
+          msg = paste0(
+            "More than one embedding length (length = ", embed_length, ") ",
+            "was provided for 'n.embed' while `tefi.optimize = FALSE`.\n\n",
+            "'tefi.optimize' was set to `TRUE` to optimize over different embedding lengths"
+          ),
+          call = "dynEGA"
+        )
+
+        # Actually set to TRUE
+        tefi.optimize <- TRUE
+
+      }
+
+      # No optimization
+      range_error(n.embed, c(3, Inf), "dynEGA")
+
+  }
 
   # 'tau' errors
   length_error(tau, 1, "dynEGA")
@@ -1022,6 +743,11 @@ dynEGA_errors <- function(
   typeof_error(use.derivatives, "numeric", "dynEGA")
   range_error(use.derivatives, c(0, 2), "dynEGA") # only 0, 1, or 2
 
+  # 'zero.jitter' errors
+  length_error(zero.jitter, 1, "dynEGA")
+  typeof_error(zero.jitter, "numeric", "dynEGA")
+  range_error(zero.jitter, c(0, 0.001), "dynEGA") # shouldn't go above 0.001
+
   # 'ncores' errors
   length_error(ncores, 1)
   typeof_error(ncores, "numeric", "dynEGA")
@@ -1030,6 +756,9 @@ dynEGA_errors <- function(
   # 'verbose' errors
   length_error(verbose, 1, "dynEGA")
   typeof_error(verbose, "logical", "dynEGA")
+
+  # Add attribute for 'tefi.optimize' to data
+  attr(data, "tefi.optimize") <- tefi.optimize
 
   # Return data in case of tibble
   return(data)
@@ -1862,7 +1591,7 @@ individual_derivatives <- function(
         individual_attributes$Group[individual_attributes$ID == ID]
       )
 
-      # Get length of time series derivatives\
+      # Get length of time series derivatives
       ts_length <- dim(derivatives)[1]
 
       # Return derivatives with updated attributes
@@ -1882,6 +1611,131 @@ individual_derivatives <- function(
 
   # Return derivatives
   return(participant_derivatives)
+
+}
+
+#' @noRd
+# Handle zero and non-positive definite (co)variances ----
+# Updated 17.11.2025
+handle_derivatives <- function(
+    derivative_list, derivative_index, na.derivative,
+    zero.jitter, corr, na.data, seed, verbose
+)
+{
+
+  # Get length of derivative list
+  n_individuals <- length(derivative_list)
+
+  # Check for seed
+  if(!is.null(seed)){
+    seeds <- reproducible_seeds(n_individuals, seed)
+  }else{
+
+    # Set all seeds to zero (or random)
+    seeds <- rep(0, n_individuals)
+
+    # Send message about reproducibility
+    message("Argument 'seed' is set to `NULL`. Results will not be reproducible. Set 'seed' for reproducible results")
+
+  }
+
+  # Get proper derivatives and usable data
+  # Add zero variance variables as attributes
+  usable_derivatives <- lapply(
+    seq_along(derivative_list), function(i){
+
+      # First, get proper derivatives
+      proper_derivatives <- derivative_list[[i]][,derivative_index]
+
+      # Next, check for NA and zero variance variables
+      zero_variance <- lvapply(
+        as.data.frame(proper_derivatives),
+        function(x){return(unique_length(x) < 2)}
+      )
+
+      # Number of zero variance
+      n_zero <- sum(zero_variance)
+
+      # Compute uncorrelated multivariate normal jitter
+      if(n_zero > 0){
+
+        # Add jitter to derivatives
+        proper_derivatives[,zero_variance] <- proper_derivatives[,zero_variance, drop = FALSE] +
+          MASS_mvrnorm_quick(
+            seed = seeds[i], p = n_zero,
+            np = n_zero * dim(proper_derivatives)[1],
+            coV = diag(n_zero) * zero.jitter
+          )
+
+      }
+
+      # Return data with all non-zero variance variables
+      # and with zero variance variables as an attribute
+      return(
+        structure(
+          proper_derivatives,
+          ID = unique(attr(derivative_list[[i]], "ID")),
+          Group = unique(attr(derivative_list[[i]], "Group")),
+          zero_variance = zero_variance
+        )
+      )
+
+    }
+  )
+
+  # Sent user message about check
+  if(verbose){
+    message("Checking for positive definite correlation matrices...", appendLF = FALSE)
+  }
+
+  # Check for correlation issues before processing
+  issues <- lvapply(usable_derivatives, function(x){
+
+    # Try to get correlations
+    attempt <- silent_call(try(
+      obtain_sample_correlations(
+        data = x, n = dim(x)[1], corr = corr,
+        na.data = na.data, verbose = verbose
+      )$correlation_matrix, silent = TRUE
+    ))
+
+    # Check for issues
+    return(
+      swiftelse(
+        is(attempt, "try-error") || !is_positive_definite(attempt), TRUE, FALSE
+      )
+    )
+
+  })
+
+  # Sent user message about check
+  if(verbose){
+    message("done.")
+  }
+
+  # Return message about issues
+  if(any(issues)){
+
+    .handleSimpleError(
+      h = warning,
+      msg = paste0(
+        "The following IDs were found to have missing data ",
+        "preventing their correlation matrices from being estimated:\n\n",
+        paste0(names(issues)[issues], collapse = ", "), "\n\n",
+        "These IDs will not have individual networks.",
+        swiftelse(
+          na.derivative == "none",
+          "\n\nTry setting 'na.derivative' to \"kalman\" (recommended), \"skipover\", or \"rowwise\"",
+          ""
+        ), "\n"
+      ),
+      call = "auto.correlate"
+    )
+
+  }
+
+  # Return derivatives
+  return(usable_derivatives[!issues])
 
 }
 
@@ -1990,5 +1844,147 @@ process_individual_dynEGA <- function(usable_derivatives, individual_results)
 
   # Return individual results
   return(individual_results)
+
+}
+
+#' @noRd
+# Embedding optimization ----
+# Updated 17.11.2025
+embed_optimize <- function(
+    individual_data, variable_names, corr, na.data, model, algorithm,
+    uni.method, tau, delta, n.embed, na.derivative, zero.jitter,
+    use.derivatives, seed, ncores, verbose, ...
+)
+{
+
+  # Determine plausible embedding range
+  individual_data <- lapply(
+    individual_data, function(x){
+
+      # Set attribute
+      attr(x, "embeddings") <- n.embed[n.embed %in% 3:nrow(x)]
+
+      # Return individual
+      return(x)
+
+    }
+  )
+
+  # Get derivatives to use
+  use_derivative <- switch(
+    as.character(use.derivatives),
+    "0" = "Ord0", "1" = "Ord1", "2" = "Ord2"
+  )
+
+  # Estimate individual EGA
+ return(
+   parallel_process(
+     iterations = length(individual_data),
+     datalist = seq_along(individual_data),
+     optimium_embed, # Use optimization function
+     individual_data = individual_data,
+     variable_names = variable_names, corr = corr,
+     na.data = na.data, model = model,
+     algorithm = algorithm, uni.method = uni.method,
+     tau = tau, delta = delta, na.derivative = na.derivative,
+     zero.jitter = zero.jitter, use_derivative = use_derivative,
+     seed = seed, ..., ncores = ncores, progress = verbose
+   )
+ )
+
+
+}
+
+#' @noRd
+# Parallelization for optimization ----
+# Updated 17.11.2025
+optimium_embed <- function(
+    i, individual_data, variable_names, corr, na.data,
+    model, algorithm, uni.method, tau, delta, na.derivative,
+    zero.jitter, use_derivative, seed, ...
+)
+{
+
+  # Get data
+  data <- individual_data[[i]]
+
+  # Loop over embeddings
+  derivative_list <- lapply(
+    attributes(data)$embedding, function(embed){
+
+      # Apply over variables
+      derivatives <- do.call(
+        cbind, lapply(
+          as.data.frame(data),
+          glla, n.embed = embed, tau = tau,
+          delta = delta, order = 2,
+          na.derivative = na.derivative
+        )
+      )
+
+      # Add names
+      dimnames(derivatives)[[2]] <- paste(
+        rep(variable_names, each = 3),
+        dimnames(derivatives)[[2]], sep = "."
+      )
+
+      # Return objects
+      return(derivatives)
+
+    }
+  )
+
+  # Get derivatives to use
+  derivative_index <- grep(
+    use_derivative, dimnames(derivative_list[[1]])[[2]]
+  )
+
+  # Obtain updated derivatives
+  derivative_list <- handle_derivatives(
+    derivative_list, derivative_index,
+    na.derivative, zero.jitter,
+    corr, na.data, seed, verbose = FALSE
+  )
+
+  # Apply EGA over list
+  ega_list <- lapply(
+    derivative_list, EGA, corr = corr, na.data = na.data,
+    model = model, algorithm = algorithm, plot.EGA = FALSE,
+    verbose = FALSE, ...
+  )
+
+  # Obtain optimal embedding
+  TEFI_index <- which.min(nvapply(ega_list, function(x){x$TEFI}))
+  optimal_embedding <- derivative_list[[TEFI_index]]
+
+  # Get ID
+  ID <- names(individual_data)[[i]]
+
+  # Individual attributes
+  individual_attributes <- attributes(individual_data[[i]])
+
+  # Get Group
+  Group <- unique(
+    individual_attributes$Group[individual_attributes$ID == ID]
+  )
+
+  # Get length of time series derivatives
+  ts_length <- dim(optimal_embedding)[1]
+
+  # Update optimal embedding
+  optimal_embedding <- structure(
+    optimal_embedding,
+    ID = rep(names(individual_data)[[i]], ts_length),
+    Group = rep(Group, ts_length),
+    n.embed = attributes(data)$embedding[[TEFI_index]]
+  )
+
+  # Return optimal embedding
+  return(
+    list(
+      embedding = optimal_embedding,
+      ega = ega_list[[TEFI_index]]
+    )
+  )
 
 }
