@@ -45,6 +45,12 @@
 #' the optimal length of the embedding dimensions for \emph{each}
 #' individual in the sample
 #'
+#' @param n.embed.optimize Boolean (length = 1).
+#' If \code{TRUE}, performs optimization of \code{n.embed} for each individual,
+#' then constructs the population based on optimized derivatives. When \code{TRUE},
+#' individual networks are considered of interest and will always be output.
+#' Defaults to \code{FALSE}
+#'
 #' @param tau Numeric (length = 1).
 #' Defaults to \code{1}.
 #' Number of observations to offset successive embeddings in
@@ -106,12 +112,6 @@
 #' The jitter preserves the overall structure but avoids singular
 #' covariance matrices during network estimation.
 #' Defaults to \code{0.001}
-#'
-#' @param tefi.optimize Boolean (length = 1).
-#' If \code{TRUE}, performs optimization of \code{n.embed} for each individual,
-#' then constructs the population based on optimized derivatives. When \code{TRUE},
-#' individual networks are considered of interest and will always be output.
-#' Defaults to \code{FALSE}
 #'
 #' @param level Character vector (up to length of 3).
 #' A character vector indicating which level(s) to estimate:
@@ -359,7 +359,7 @@
 #'   data = sim.dynEGA,
 #'   level = c("individual", "group", "population"),
 #'   n.embed = 3:10, # set number of dimensions to search over
-#'   tefi.optimize = TRUE, # set to TRUE to optimize
+#'   n.embed.optimize = TRUE, # set to TRUE to optimize
 #'   ncores = 2, # use more for quicker results
 #'   verbose = TRUE # progress bar
 #' )}
@@ -394,9 +394,10 @@
 dynEGA <- function(
     # `dynEGA` arguments
     data,  id = NULL, group = NULL,
-    n.embed = 5, tau = 1, delta = 1, use.derivatives = 1,
+    n.embed = 5, n.embed.optimize = FALSE,
+    tau = 1, delta = 1, use.derivatives = 1,
     na.derivative = c("none", "kalman", "rowwise", "skipover"),
-    zero.jitter = 0.001, tefi.optimize = FALSE,
+    zero.jitter = 0.001,
     level = c("individual", "group", "population"),
     # `EGA` arguments
     corr = c("auto", "cor_auto", "pearson", "spearman"),
@@ -424,12 +425,12 @@ dynEGA <- function(
   # Argument errors (return data in case of tibble)
   data <- dynEGA_errors(
     data, id, group, n.embed, tau, delta,
-    use.derivatives, zero.jitter, tefi.optimize,
+    use.derivatives, zero.jitter, n.embed.optimize,
     ncores, verbose
   )
 
-  # Update 'tefi.optimize'
-  tefi.optimize <- attributes(data)$tefi.optimize
+  # Update 'n.embed.optimize'
+  n.embed.optimize <- attributes(data)$n.embed.optimize
 
   # Get dimensions of the data
   dimensions <- dim(data)
@@ -447,7 +448,7 @@ dynEGA <- function(
   individual_data <- split(data, attributes(data)$ID)
 
   # Check for TEFI optimization
-  if(tefi.optimize){
+  if(n.embed.optimize){
 
     # Send message about computing the derivatives
     if(verbose){
@@ -465,7 +466,7 @@ dynEGA <- function(
     derivative_list <- lapply(individual_results, function(x){x$embedding})
 
     # Update individual results
-    individual_results <- lapply(individual_results, function(x){x$EGA})
+    individual_results <- lapply(individual_results, function(x){x$ega})
 
     # Set up return list
     results <- list(
@@ -622,7 +623,7 @@ dynEGA <- function(
   ## EGA attributes will already be attached to `results$dynEGA`
   attr(results, "glla") <- list(
     n.embed = n.embed, tau = tau, delta = delta,
-    use.derivatives = use.derivatives
+    use.derivatives = use.derivatives, n.embed.optimize = n.embed.optimize
   )
 
   # Add overall class
@@ -647,7 +648,7 @@ dynEGA <- function(
 # Updated 17.11.2025
 dynEGA_errors <- function(
     data, id, group, n.embed, tau, delta,
-    use.derivatives, zero.jitter, tefi.optimize,
+    use.derivatives, zero.jitter, n.embed.optimize,
     ncores, verbose
 )
 {
@@ -665,15 +666,16 @@ dynEGA_errors <- function(
     length_error(id, 1, "dynEGA")
     typeof_error(id, c("numeric", "character"), "dynEGA")
   }
+
   # 'group' errors
   if(!is.null(group)){
     length_error(group, 1, "dynEGA")
     typeof_error(group, c("numeric", "character"), "dynEGA")
   }
 
-  # 'tefi.optimize' errors
-  length_error(tefi.optimize, 1, "dynEGA")
-  typeof_error(tefi.optimize, "logical", "dynEGA")
+  # 'n.embed.optimize' errors
+  length_error(n.embed.optimize, 1, "dynEGA")
+  typeof_error(n.embed.optimize, "logical", "dynEGA")
 
   # 'n.embed' errors
   typeof_error(n.embed, "numeric", "dynEGA")
@@ -682,7 +684,7 @@ dynEGA_errors <- function(
   embed_length <- length(n.embed)
 
   # Check `n.embed` based on TEFI optimization
-  if(tefi.optimize){
+  if(n.embed.optimize){
 
     # Check for single embeddings input
     if(embed_length == 1){
@@ -692,16 +694,16 @@ dynEGA_errors <- function(
         h = warning,
         msg = paste0(
           "Only one embedding length (`n.embed = ", n.embed, "`) ",
-          "was provided for 'n.embed' while `tefi.optimize = TRUE`.\n\n",
-          "'tefi.optimize' was set to `FALSE` to obtain embeddings"
+          "was provided for 'n.embed' while `n.embed.optimize = TRUE`.\n\n",
+          "'n.embed.optimize' was set to `FALSE` to obtain embeddings"
         ),
         call = "dynEGA"
       )
 
-    }
+      # Actually set to FALSE
+      n.embed.optimize <- FALSE
 
-    # Actually set to FALSE
-    tefi.optimize <- FALSE
+    }
 
     }else{
 
@@ -713,14 +715,14 @@ dynEGA_errors <- function(
           h = warning,
           msg = paste0(
             "More than one embedding length (length = ", embed_length, ") ",
-            "was provided for 'n.embed' while `tefi.optimize = FALSE`.\n\n",
-            "'tefi.optimize' was set to `TRUE` to optimize over different embedding lengths"
+            "was provided for 'n.embed' while `n.embed.optimize = FALSE`.\n\n",
+            "'n.embed.optimize' was set to `TRUE` to optimize over different embedding lengths"
           ),
           call = "dynEGA"
         )
 
         # Actually set to TRUE
-        tefi.optimize <- TRUE
+        n.embed.optimize <- TRUE
 
       }
 
@@ -758,8 +760,8 @@ dynEGA_errors <- function(
   length_error(verbose, 1, "dynEGA")
   typeof_error(verbose, "logical", "dynEGA")
 
-  # Add attribute for 'tefi.optimize' to data
-  attr(data, "tefi.optimize") <- tefi.optimize
+  # Add attribute for 'n.embed.optimize' to data
+  attr(data, "n.embed.optimize") <- n.embed.optimize
 
   # Return data in case of tibble
   return(data)

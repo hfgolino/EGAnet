@@ -40,6 +40,12 @@
 #' the optimal length of the embedding dimensions for \emph{each}
 #' individual in the sample
 #'
+#' @param n.embed.optimize Boolean (length = 1).
+#' If \code{TRUE}, performs optimization of \code{n.embed} for each individual,
+#' then constructs the population based on optimized derivatives. When \code{TRUE},
+#' individual networks are considered of interest and will always be output.
+#' Defaults to \code{FALSE}
+#'
 #' @param tau Numeric (length = 1).
 #' Defaults to \code{1}.
 #' Number of observations to offset successive embeddings in
@@ -101,12 +107,6 @@
 #' The jitter preserves the overall structure but avoids singular
 #' covariance matrices during network estimation.
 #' Defaults to \code{0.001}
-#'
-#' @param tefi.optimize Boolean (length = 1).
-#' If \code{TRUE}, performs optimization of \code{n.embed} for each individual,
-#' then constructs the population based on optimized derivatives. When \code{TRUE},
-#' individual networks are considered of interest and will always be output.
-#' Defaults to \code{FALSE}
 #'
 #' @param corr Character (length = 1).
 #' Method to compute correlations.
@@ -267,13 +267,14 @@
 #' @export
 #'
 # Intra- and Interindividual dynEGA
-# Updated 17.11.2025
+# Updated 18.11.2025
 dynEGA.ind.pop <- function(
   # `dynEGA` arguments
   data,  id = NULL,
-  n.embed = 5, tau = 1, delta = 1, use.derivatives = 1,
+  n.embed = 5, n.embed.optimize = FALSE,
+  tau = 1, delta = 1, use.derivatives = 1,
   na.derivative = c("none", "kalman", "rowwise", "skipover"),
-  zero.jitter = 0.001, tefi.optimize = FALSE,
+  zero.jitter = 0.001,
   # `EGA` arguments
   corr = c("auto", "cor_auto", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
@@ -286,10 +287,10 @@ dynEGA.ind.pop <- function(
   # Use `dynEGA` (input handling occurs inside `dynEGA`)
   return(
     dynEGA(
-      data = data, id = id, n.embed = n.embed, tau = tau,
+      data = data, id = id, n.embed = n.embed,
+      n.embed.optimize = n.embed.optimize, tau = tau,
       delta = delta, use.derivatives = use.derivatives,
       na.derivative = na.derivative, zero.jitter = zero.jitter,
-      tefi.optimize = tefi.optimize,
       level = c("population", "individual"),
       corr = corr, na.data = na.data,
       model = model, algorithm = algorithm, uni.method = uni.method,

@@ -9,12 +9,12 @@ dynEGA(
   id = NULL,
   group = NULL,
   n.embed = 5,
+  n.embed.optimize = FALSE,
   tau = 1,
   delta = 1,
   use.derivatives = 1,
   na.derivative = c("none", "kalman", "rowwise", "skipover"),
   zero.jitter = 0.001,
-  tefi.optimize = FALSE,
   level = c("individual", "group", "population"),
   corr = c("auto", "cor_auto", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
@@ -67,6 +67,12 @@ If more than one value is provided, then the number of embeddings
 will be optimized over using \code{\link[EGAnet]{tefi}} to determine
 the optimal length of the embedding dimensions for \emph{each}
 individual in the sample}
+
+\item{n.embed.optimize}{Boolean (length = 1).
+If \code{TRUE}, performs optimization of \code{n.embed} for each individual,
+then constructs the population based on optimized derivatives. When \code{TRUE},
+individual networks are considered of interest and will always be output.
+Defaults to \code{FALSE}}
 
 \item{tau}{Numeric (length = 1).
 Defaults to \code{1}.
@@ -129,12 +135,6 @@ multivariate normal distribution to ensure orthogonal noise is added.
 The jitter preserves the overall structure but avoids singular
 covariance matrices during network estimation.
 Defaults to \code{0.001}}
-
-\item{tefi.optimize}{Boolean (length = 1).
-If \code{TRUE}, performs optimization of \code{n.embed} for each individual,
-then constructs the population based on optimized derivatives. When \code{TRUE},
-individual networks are considered of interest and will always be output.
-Defaults to \code{FALSE}}
 
 \item{level}{Character vector (up to length of 3).
 A character vector indicating which level(s) to estimate:
@@ -388,7 +388,7 @@ optimized_all <- dynEGA(
   data = sim.dynEGA,
   level = c("individual", "group", "population"),
   n.embed = 3:10, # set number of dimensions to search over
-  tefi.optimize = TRUE, # set to TRUE to optimize
+  n.embed.optimize = TRUE, # set to TRUE to optimize
   ncores = 2, # use more for quicker results
   verbose = TRUE # progress bar
 )}

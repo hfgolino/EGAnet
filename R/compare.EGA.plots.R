@@ -30,6 +30,11 @@
 #' Uses the number of the order in which the plots are input.
 #' Defaults to \code{1} or the first plot
 #'
+#' @param same.layout Boolean (length = 1).
+#' Whether the nodes should be in the same position for all networks.
+#' Defaults to \code{TRUE}.
+#' Set to \code{FALSE} for their individual layouts
+#'
 #' @param labels Character (same length as input).
 #' Labels for each \code{EGAnet} object
 #'
@@ -82,13 +87,17 @@
 #' @export
 #
 # Compare EGA plots ----
-# Updated 26.10.2023
+# Updated 18.11.2025
 compare.EGA.plots <- function(
-  ..., input.list = NULL, base = 1,
+  ..., input.list = NULL, base = 1, same.layout = TRUE,
   labels = NULL, rows = NULL, columns = NULL,
   plot.all = TRUE
 )
 {
+
+  # Error check 'same.layout'
+  length_error(same.layout, 1, "compare.EGA.plots")
+  typeof_error(same.layout, "logical", "compare.EGA.plots")
 
   # Start with ellipse objects/arguments
   ellipse <- list(...)
@@ -246,40 +255,65 @@ compare.EGA.plots <- function(
     )
   )
 
-  # Check if any arguments in `ellipse`
-  # match with `base_plot`
-  base_plot$ARGS <- overwrite_arguments(base_plot$ARGS, ellipse)
+  # Check for same layout
+  if(same.layout){
 
-  # Set removal arguments
-  removal_ARGS <- c(
-    "node.color", "edge.alpha",
-    "edge.color", "edge.lty", "edge.size"
-  )
+    # Check if any arguments in `ellipse`
+    # match with `base_plot`
+    base_plot$ARGS <- overwrite_arguments(base_plot$ARGS, ellipse)
 
-  # Check for if any arguments in still need
-  # to be removed from `base_plot`
-  removal_ARGS <- removal_ARGS[!removal_ARGS %in% names(ellipse)]
+    # Set removal arguments
+    removal_ARGS <- c(
+      "node.color", "edge.alpha",
+      "edge.color", "edge.lty", "edge.size"
+    )
 
-  # Check for any remaining arguments to remove
-  if(length(removal_ARGS) != 0){
+    # Check for if any arguments in still need
+    # to be removed from `base_plot`
+    removal_ARGS <- removal_ARGS[!removal_ARGS %in% names(ellipse)]
 
-    # Remove some arguments from `base_plot`
-    base_plot$ARGS <- base_plot$ARGS[
-      !names(base_plot$ARGS) %in% removal_ARGS
-    ]
+    # Check for any remaining arguments to remove
+    if(length(removal_ARGS) != 0){
+
+      # Remove some arguments from `base_plot`
+      base_plot$ARGS <- base_plot$ARGS[
+        !names(base_plot$ARGS) %in% removal_ARGS
+      ]
+
+    }
+
+    # Set up comparison plots
+    comparison_plots <- lapply(
+      sequence_length, function(i){
+        compare_plots(
+          comparison_network = other_objects[[i]]$network,
+          comparison_wc = other_objects[[i]]$wc,
+          plot_ARGS = base_plot$ARGS
+        )
+      }
+    )
+
+  }else{
+
+    # Create comparison plots without same layout
+    comparison_plots <- lapply(
+      sequence_length, function(i){
+        silent_load(
+          do.call(
+            what = basic_plot_setup,
+            args = c(
+              list(
+                network = other_objects[[i]]$network,
+                wc = other_objects[[i]]$wc
+              ), ellipse
+            )
+          )
+        )
+      }
+    )
+
 
   }
-
-  # Set up comparison plots
-  comparison_plots <- lapply(
-    sequence_length, function(i){
-      compare_plots(
-        comparison_network = other_objects[[i]]$network,
-        comparison_wc = other_objects[[i]]$wc,
-        plot_ARGS = base_plot$ARGS
-      )
-    }
-  )
 
   # Set up plot list
   plotlist <- c(list(base_plot$network_plot), comparison_plots)
