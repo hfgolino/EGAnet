@@ -428,7 +428,7 @@ dynEGA <- function(
   # General arguments
   ncores, verbose = TRUE, ...
 ){
-
+  
   # Check for missing arguments (argument, default, function)
   na.derivative <- set_default(na.derivative, "none", glla)
   corr <- set_default(corr, "auto", dynEGA)
@@ -437,68 +437,68 @@ dynEGA <- function(
   algorithm <- set_default(algorithm, "walktrap", community.detection)
   uni.method <- set_default(uni.method, "louvain", community.unidimensional)
   if(missing(ncores)){ncores <- ceiling(parallel::detectCores() / 2)}
-
+  
   # Handle level (allow multiple to be estimated at once)
   if(missing(level)){
     level <- "population" # default to full sample
   }else{level <- match.arg(level, several.ok = TRUE)}
-
+  
   # Argument errors (return data in case of tibble)
   data <- dynEGA_errors(
     data, id, group, n.embed, tau, delta,
     use.derivatives, ncores, verbose
   )
-
+  
   # Get dimensions of the data
   dimensions <- dim(data)
-
+  
   # Get "ID" and "Group" attributes of data if they exist
   # "id" and "group" columns will be added as "ID" and "Group"
   # attributes to the data
   # These columns will be removed from the data!
   data <- get_attributes(data, dimensions, id, group, level)
-
+  
   # Get variable names
   variable_names <- dimnames(data)[[2]]
-
+  
   # Split data into lists based on ID
   individual_data <- split(data, attributes(data)$ID)
-
+  
   # Get derivatives to use index
   derivative_index <- grep(
     switch(
       as.character(use.derivatives),
-      "0" = "Obs", "1" = "Ord1", "2" = "Ord2"
+      "0" = "Ord0", "1" = "Ord1", "2" = "Ord2"
     ),
     paste0(".Ord", use.derivatives)
   )
-
+  
   # Initialize results list
   results <- list()
-
+  
   # OPTIMIZATION PATH
   if(optimization){
-
+    
     if(verbose){
       message("Optimization: Step 1 - Computing derivatives across individuals...")
     }
-
+    
     # Function to compute all derivatives for an individual
     compute_all_derivatives_for_individual <- function(ind_data, ind_id){
       T_i <- nrow(ind_data)
       embeds_i <- n.embed.all.ind[n.embed.all.ind <= (T_i - 3)]
-
+      
       if(length(embeds_i) == 0){
         return(NULL)
       }
-
+      
       group_val <- attr(ind_data, "Group")
       if(is.null(group_val)){
         group_val <- unique(attributes(data)$Group)[1] # Default group
       }
-
+      
       derivatives_cache <- list()
-
+      
       for(embed in embeds_i){
         # Compute derivatives for this embedding
         deriv_list <- individual_derivatives(
@@ -510,19 +510,19 @@ dynEGA <- function(
           na.derivative = na.derivative,
           individual_attributes = list(ID = ind_id, Group = group_val)
         )
-
+        
         # Extract proper derivatives
         proper_derivatives <- deriv_list[[1]]
-
+        
         # Get the correct derivative columns
         deriv_cols <- grep(
           paste0(".Ord", use.derivatives, "$"),
           colnames(proper_derivatives)
         )
-
+        
         if(length(deriv_cols) > 0){
           proper_derivatives <- proper_derivatives[, deriv_cols, drop = FALSE]
-
+          
           # Apply jitter to zero variance columns
           if(!is.null(jitter.eps) && jitter.eps > 0){
             proper_derivatives <- jitter_zero_var(
@@ -530,18 +530,18 @@ dynEGA <- function(
               eps = jitter.eps
             )
           }
-
+          
           derivatives_cache[[as.character(embed)]] <- as.matrix(proper_derivatives)
         }
       }
-
+      
       return(list(
         ID = ind_id,
         Group = group_val,
         derivatives_cache = derivatives_cache
       ))
     }
-
+    
     # Compute all derivatives for all individuals
     derivatives_results <- mapply(
       compute_all_derivatives_for_individual,
@@ -549,26 +549,26 @@ dynEGA <- function(
       names(individual_data),
       SIMPLIFY = FALSE
     )
-
+    
     # Remove NULL results
     derivatives_results <- derivatives_results[!vapply(derivatives_results, is.null, logical(1))]
-
+    
     if(verbose){
       message("Optimization: Step 2 - Estimating networks across individuals...")
     }
-
+    
     # Function to optimize individual networks
     optimize_individual_networks <- function(deriv_result){
       id <- deriv_result$ID
       derivatives_cache <- deriv_result$derivatives_cache
-
+      
       best_tefi <- Inf
       best_res <- NULL
       all_tefi <- list()
-
+      
       for(embed_str in names(derivatives_cache)){
         usable_derivatives <- derivatives_cache[[embed_str]]
-
+        
         # Try to estimate EGA
         tmp <- tryCatch(
           EGA(
@@ -584,15 +584,15 @@ dynEGA <- function(
           ),
           error = function(e) NULL
         )
-
+        
         if(!is.null(tmp)){
           tefi_val <- tmp$TEFI
           all_tefi[[embed_str]] <- tefi_val
-
+          
           if(length(tefi_val) == 0 || is.na(tefi_val)){
             tefi_val <- Inf
           }
-
+          
           if(tefi_val < best_tefi){
             best_tefi <- tefi_val
             best_res <- tmp
@@ -602,15 +602,15 @@ dynEGA <- function(
           }
         }
       }
-
+      
       if(is.null(best_res)){
         return(NULL)
       }
-
+      
       best_res$TEFI_surface <- all_tefi
       return(best_res)
     }
-
+    
     # Optimize individual networks in parallel
     individual_results <- parallel_process(
       iterations = length(derivatives_results),
@@ -619,7 +619,7 @@ dynEGA <- function(
       ncores = ncores,
       progress = verbose
     )
-
+    
     # Remove NULL results and name them
     individual_results <- individual_results[!vapply(individual_results, is.null, logical(1))]
     names(individual_results) <- vapply(
@@ -627,19 +627,19 @@ dynEGA <- function(
       function(x) as.character(x$ID),
       character(1)
     )
-
+    
     # Store individual results if requested
     if("individual" %in% level){
       results$dynEGA$individual <- individual_results
       class(results$dynEGA$individual) <- "dynEGA.Individual"
     }
-
+    
     # Build population network from optimized individuals
     if("population" %in% level){
       if(verbose){
         message("Building population network from optimized individuals...")
       }
-
+      
       pooled_data <- do.call(
         rbind,
         lapply(individual_results, function(res){
@@ -650,7 +650,7 @@ dynEGA <- function(
           }
         })
       )
-
+      
       if(!is.null(pooled_data) && nrow(pooled_data) > 0){
         results$dynEGA$population <- tryCatch(
           EGA(
@@ -666,20 +666,20 @@ dynEGA <- function(
           ),
           error = function(e) NULL
         )
-
+        
         if(!is.null(results$dynEGA$population)){
           class(results$dynEGA$population) <- "dynEGA.Population"
         }
       }
     }
-
+    
     # Build derivatives output for compatibility
     # Use the optimized derivatives
     all_derivatives <- lapply(individual_results, function(res){
       if(!is.null(res) && !is.null(res$data_used)){
         # Get the group value for this individual
         ind_group <- derivatives_results[[as.character(res$ID)]]$Group
-
+        
         structure(
           res$data_used,
           ID = res$ID,
@@ -689,13 +689,13 @@ dynEGA <- function(
         NULL
       }
     })
-
+    
     all_derivatives <- all_derivatives[!vapply(all_derivatives, is.null, logical(1))]
-
+    
     # Create EstimatesDF properly
     # First, combine all derivatives
     combined_derivatives <- do.call(rbind, all_derivatives)
-
+    
     # Then create ID and Group vectors that match the number of rows
     id_vector <- rep(
       vapply(all_derivatives, function(x){
@@ -704,7 +704,7 @@ dynEGA <- function(
       }, character(1)),
       times = vapply(all_derivatives, nrow, integer(1))
     )
-
+    
     group_vector <- rep(
       vapply(all_derivatives, function(x){
         grp_val <- attr(x, "Group")
@@ -718,7 +718,7 @@ dynEGA <- function(
       }, character(1)),
       times = vapply(all_derivatives, nrow, integer(1))
     )
-
+    
     results$Derivatives <- list(
       Estimates = all_derivatives,
       EstimatesDF = data.frame(
@@ -727,22 +727,22 @@ dynEGA <- function(
         group = group_vector
       )
     )
-
+    
   } else {
     # DEFAULT PATH (non-optimization)
-
+    
     # Send message about computing the derivatives
     if(verbose){
       message("Computing derivatives...", appendLF = FALSE)
     }
-
+    
     # Get derivatives for each participant
     derivative_list <- individual_derivatives(
       individual_data, variable_names, n.embed,
       tau, delta, na.derivative,
       individual_attributes = attributes(data)
     )
-
+    
     # Set up return list
     results$Derivatives <- list(
       Estimates = derivative_list,
@@ -752,12 +752,12 @@ dynEGA <- function(
         group = ulapply(derivative_list, attr, "Group")
       )
     )
-
+    
     # Send message about computing the derivatives
     if(verbose){
       message("done.")
     }
-
+    
     # Get derivatives to use
     derivative_index <- grep(
       switch(
@@ -766,11 +766,11 @@ dynEGA <- function(
       ),
       dimnames(results$Derivatives$EstimatesDF)[[2]]
     )
-
+    
     # Compute Dynamic EGA at each level
     ## Population
     if("population" %in% level){
-
+      
       # Estimate population EGA
       results$dynEGA$population <- EGA(
         results$Derivatives$EstimatesDF[,derivative_index],
@@ -778,15 +778,15 @@ dynEGA <- function(
         algorithm = algorithm, uni.method = uni.method,
         plot.EGA = FALSE, verbose = FALSE, ...
       )
-
+      
       # Add class
       class(results$dynEGA$population) <- "dynEGA.Population"
-
+      
     }
-
+    
     ## Group
     if("group" %in% level){
-
+      
       # Split derivatives by Group
       group_data <- lapply(
         split(
@@ -797,7 +797,7 @@ dynEGA <- function(
           )
         ), do.call, what = rbind
       )
-
+      
       # Estimate group EGA
       results$dynEGA$group <- lapply(
         group_data, function(x){
@@ -809,28 +809,28 @@ dynEGA <- function(
           )
         }
       )
-
+      
       # Add class
       class(results$dynEGA$group) <- "dynEGA.Group"
-
+      
     }
-
+    
     ## Individual
     if("individual" %in% level){
-
+      
       # Sent user message about check
       if(verbose){
         message("Checking for positive definite correlation matrices...", appendLF = FALSE)
       }
-
+      
       # Get proper derivatives and usable data
       # Add zero variance variables as attributes
       usable_derivatives <- lapply(
         derivative_list, function(x){
-
+          
           # First, get proper derivatives
           proper_derivatives <- x[,derivative_index]
-
+          
           # Apply jitter if specified
           if(!is.null(jitter.eps) && jitter.eps > 0){
             proper_derivatives <- jitter_zero_var(
@@ -838,13 +838,13 @@ dynEGA <- function(
               eps = jitter.eps
             )
           }
-
+          
           # Next, check for NA and zero variance variables
           zero_variance <- lvapply(
             as.data.frame(proper_derivatives),
             function(x){return(unique_length(x) < 2)}
           )
-
+          
           # Return data with all non-zero variance variables
           # and with zero variance variables as an attribute
           return(
@@ -854,13 +854,13 @@ dynEGA <- function(
               zero_variance = zero_variance
             )
           )
-
+          
         }
       )
-
+      
       # Check for correlation issues before processing
       issues <- lvapply(usable_derivatives, function(x){
-
+        
         # Try to get correlations
         attempt <- silent_call(try(
           obtain_sample_correlations(
@@ -868,24 +868,24 @@ dynEGA <- function(
             na.data = na.data, verbose = verbose
           )$correlation_matrix, silent = TRUE
         ))
-
+        
         # Check for issues
         return(
           swiftelse(
             is(attempt, "try-error") || !is_positive_definite(attempt), TRUE, FALSE
           )
         )
-
+        
       })
-
+      
       # Sent user message about check
       if(verbose){
         message("done.")
       }
-
+      
       # Return message about issues
       if(any(issues)){
-
+        
         .handleSimpleError(
           h = warning,
           msg = paste0(
@@ -901,12 +901,12 @@ dynEGA <- function(
           ),
           call = "dynEGA"
         )
-
+        
       }
-
+      
       # Update usable_derivatives
       usable_derivatives <- usable_derivatives[!issues]
-
+      
       # Estimate individual EGA
       individual_results <- parallel_process(
         iterations = length(usable_derivatives),
@@ -917,26 +917,26 @@ dynEGA <- function(
         plot.EGA = FALSE, verbose = FALSE, ...,
         ncores = ncores, progress = verbose
       )
-
+      
       # Process individual results
       # Handle zero variance variables within each individual
       results$dynEGA$individual <- process_individual_dynEGA(
         usable_derivatives, individual_results
       )
-
+      
       # Add class
       class(results$dynEGA$individual) <- "dynEGA.Individual"
-
+      
     }
   }
-
+  
   # Add attributes to overall results
   ## EGA attributes will already be attached to `results$dynEGA`
   attr(results, "glla") <- list(
     n.embed = n.embed, tau = tau, delta = delta,
     use.derivatives = use.derivatives
   )
-
+  
   # Add optimization attributes if used
   if(optimization){
     attr(results, "optimization") <- list(
@@ -945,10 +945,10 @@ dynEGA <- function(
       jitter.eps = jitter.eps
     )
   }
-
+  
   # Add overall class
   class(results) <- "dynEGA"
-
+  
   # Return results
   return(results)
 }
@@ -982,15 +982,15 @@ dynEGA_errors <- function(
     use.derivatives, ncores, verbose
 )
 {
-
+  
   # 'data' errors
   object_error(data, c("matrix", "data.frame", "tibble"), "dynEGA")
-
+  
   # Check for tibble
   if(get_object_type(data) == "tibble"){
     data <- as.data.frame(data)
   }
-
+  
   # 'id' errors
   if(!is.null(id)){
     length_error(id, 1, "dynEGA")
@@ -1001,39 +1001,39 @@ dynEGA_errors <- function(
     length_error(group, 1, "dynEGA")
     typeof_error(group, c("numeric", "character"), "dynEGA")
   }
-
+  
   # 'n.embed' errors
   length_error(n.embed, 1, "dynEGA")
   typeof_error(n.embed, "numeric", "dynEGA")
   range_error(n.embed, c(3, Inf), "dynEGA")
-
+  
   # 'tau' errors
   length_error(tau, 1, "dynEGA")
   typeof_error(tau, "numeric", "dynEGA")
   range_error(tau, c(1, 3), "dynEGA") # don't allow more than 3
-
+  
   # 'delta' errors
   length_error(delta, 1, "dynEGA")
   typeof_error(delta, "numeric", "dynEGA")
   range_error(delta, c(1, 3), "dynEGA") # don't allow more than 3
-
+  
   # 'use.derivatives' errors
   length_error(use.derivatives, 1, "dynEGA")
   typeof_error(use.derivatives, "numeric", "dynEGA")
   range_error(use.derivatives, c(0, 2), "dynEGA") # only 0, 1, or 2
-
+  
   # 'ncores' errors
   length_error(ncores, 1)
   typeof_error(ncores, "numeric", "dynEGA")
   range_error(ncores, c(1, parallel::detectCores()), "dynEGA")
-
+  
   # 'verbose' errors
   length_error(verbose, 1, "dynEGA")
   typeof_error(verbose, "logical", "dynEGA")
-
+  
   # Return data in case of tibble
   return(data)
-
+  
 }
 
 #' @exportS3Method
@@ -1041,7 +1041,7 @@ dynEGA_errors <- function(
 # Updated 15.08.2023
 print.dynEGA <- function(x, ...)
 {
-
+  
   # Print general dynEGA
   cat(
     styletext(
@@ -1052,10 +1052,10 @@ print.dynEGA <- function(x, ...)
       defaults = "bold"
     )
   )
-
+  
   # Get methods attributes
   glla_attributes <- attr(x, "glla")
-
+  
   # Print GLLA information at the top _only_
   cat("Number of Embeddings: ", glla_attributes$n.embed)
   cat("\nEmbedding Offset (tau): ", glla_attributes$tau)
@@ -1068,7 +1068,7 @@ print.dynEGA <- function(x, ...)
       "2" = "Second-order (2)"
     )
   )
-
+  
   # Add full breakspace for each level
   cat(
     paste0(
@@ -1077,21 +1077,21 @@ print.dynEGA <- function(x, ...)
       "\n\n"
     )
   )
-
+  
   # Get `EGA` objects
   ega_objects <- get_EGA_object(x)
-
+  
   # Determine NULLs
   null_objects <- !lvapply(ega_objects, is.null)
-
+  
   # Print population first
   if(null_objects["population"]){
     print(ega_objects$population)
   }
-
+  
   # Print group second
   if(null_objects["group"]){
-
+    
     # Check for breakspace
     if(null_objects["population"]){
       cat(
@@ -1102,15 +1102,15 @@ print.dynEGA <- function(x, ...)
         )
       )
     }
-
+    
     # Print group
     print(ega_objects$group)
-
+    
   }
-
+  
   # Print individuals third
   if(null_objects["individual"]){
-
+    
     # Check for breakspace
     if(null_objects["population"] | null_objects["group"]){
       cat(
@@ -1121,12 +1121,12 @@ print.dynEGA <- function(x, ...)
         )
       )
     }
-
+    
     # Print individual
     print(ega_objects$individual)
-
+    
   }
-
+  
 }
 
 #' @exportS3Method
@@ -1134,7 +1134,7 @@ print.dynEGA <- function(x, ...)
 # Updated 07.07.2023
 print.dynEGA.Population <- function(x, ...)
 {
-
+  
   # Print population
   cat(
     styletext(
@@ -1145,13 +1145,13 @@ print.dynEGA.Population <- function(x, ...)
       defaults = "bold"
     )
   )
-
+  
   # Switch class to "EGA"
   class(x) <- "EGA"
-
+  
   # Borrow print from `EGA`
   print(x)
-
+  
 }
 
 #' @exportS3Method
@@ -1159,7 +1159,7 @@ print.dynEGA.Population <- function(x, ...)
 # Updated 07.07.2023
 print.dynEGA.Group <- function(x, ...)
 {
-
+  
   # Print group
   cat(
     styletext(
@@ -1170,29 +1170,29 @@ print.dynEGA.Group <- function(x, ...)
       defaults = "bold"
     )
   )
-
+  
   # Get number of groups
   group_length <- length(x)
-
+  
   # Loop over and print
   for(group in seq_len(group_length)){
-
+    
     # Print group name
     cat("Group: ", names(x)[group], "\n\n")
-
+    
     # Switch class to "EGA"
     class(x[[group]]) <- "EGA"
-
+    
     # Borrow print from `EGA`
     print(x[[group]])
-
+    
     # Add breakspace if not last group
     if(group != group_length){
       cat("\n\n------------\n\n")
     }
-
+    
   }
-
+  
 }
 
 #' @exportS3Method
@@ -1200,7 +1200,7 @@ print.dynEGA.Group <- function(x, ...)
 # Updated 11.10.2023
 print.dynEGA.Individual <- function(x, ...)
 {
-
+  
   # Print individual
   cat(
     styletext(
@@ -1211,18 +1211,18 @@ print.dynEGA.Individual <- function(x, ...)
       defaults = "bold"
     )
   )
-
+  
   # Follow `bootEGA` print strategy
-
+  
   # Print network information
   send_network_methods(x[[1]]$network, boot = TRUE)
-
+  
   # Add line break
   cat("\n")
-
+  
   # Get unidimensional attributes
   unidimensional_attributes <- attr(x[[1]], "unidimensional")
-
+  
   # Obtain unidimensional method
   unidimensional_method <- switch(
     unidimensional_attributes$uni.method,
@@ -1230,16 +1230,16 @@ print.dynEGA.Individual <- function(x, ...)
     "le" = "Leading Eigenvector",
     "louvain" = "Louvain"
   )
-
+  
   # Set up unidimensional print
   if(
     unidimensional_method == "Louvain" &
     "consensus.iter" %in% names(unidimensional_attributes$consensus)
   ){
-
+    
     # Set up consensus attributes
     consensus_attributes <- unidimensional_attributes$consensus
-
+    
     # Obtain consensus name
     consensus_name <- switch(
       consensus_attributes$consensus.method,
@@ -1248,43 +1248,43 @@ print.dynEGA.Individual <- function(x, ...)
       "most_common" = "Most Common",
       "lowest_tefi" = "Lowest TEFI"
     )
-
+    
     # Update unidimensional method text
     unidimensional_method <- paste0(
       unidimensional_method, " (", consensus_name,
       " for ", consensus_attributes$consensus.iter,
       " iterations)"
     )
-
+    
   }
-
+  
   # Print unidimensional
   cat("Unidimensional Method: ", unidimensional_method)
-
+  
   # Add breakspace
   cat("\n\n----\n\n")
-
+  
   # Get communities
   communities <- nvapply(x, function(x){unique_length(x$wc)})
-
+  
   # Set up like `bootEGA`
-
+  
   # Print number of cases
   cat("Number of cases: ", length(x), "\n")
-
+  
   # Print median
   cat(
     paste0(
       "\nMedian dimensions: ", median(communities, na.rm = TRUE)
     )
   )
-
+  
   # Add space
   cat("\n")
-
+  
   # Get frequencies
   frequencies <- fast_table(communities)
-
+  
   # Get frequency table
   frequency_df <- as.data.frame(
     t(data.frame(
@@ -1292,13 +1292,13 @@ print.dynEGA.Individual <- function(x, ...)
       frequencies
     ))
   )
-
+  
   # Adjust dimension names (`dimnames` doesn't work)
   colnames(frequency_df) <- NULL
   row.names(frequency_df) <- c("", "Frequency: ")
   # Finally, print
   print(frequency_df)
-
+  
 }
 
 #' @exportS3Method
@@ -1338,66 +1338,66 @@ summary.dynEGA.Individual <- function(object, ...)
 # Updated 31.07.2023
 plot.dynEGA <- function(x, base = 1, id = NULL, ...)
 {
-
+  
   # Determine non-NULLs
   non_null_objects <- !lvapply(get_EGA_object(x), is.null)
-
+  
   # Get number of NULLs
   null_total <- sum(!non_null_objects)
-
+  
   # Plot population first
   if(non_null_objects["population"]){
-
+    
     # Send plot
     plot(x$dynEGA$population, ...)
-
+    
     # Print message only if other `dynEGA` objects
     if(null_total != 2){
       message("dynEGA Population")
     }
-
+    
   }
-
+  
   # Print group second
   if(non_null_objects["group"]){
-
+    
     # Check for breakspace
     if(non_null_objects["population"]){
-
+      
       # Allow user to proceed at their own pace
       sink <- readline("Press <ENTER> for 'Group' plot")
-
+      
     }
-
+    
     # Plot group
     plot(x$dynEGA$group, base = base, ...)
-
+    
     # Print message only if other `dynEGA` objects
     if(null_total != 2){
       message("dynEGA Group")
     }
-
+    
   }
-
+  
   # Print individuals third
   if(non_null_objects["individual"]){
-
+    
     # Check for breakspace
     if(non_null_objects["population"] | non_null_objects["group"]){
       # Allow use to proceed at their own pace
       sink <- readline("Press <ENTER> for 'Individual' plot")
     }
-
+    
     # Print individual
     plot(x$dynEGA$individual, id = id, ...)
-
+    
     # Print message only if other `dynEGA` objects
     if(null_total != 2){
       message("dynEGA Individual")
     }
-
+    
   }
-
+  
 }
 
 #' @exportS3Method
@@ -1419,27 +1419,27 @@ plot.dynEGA.Population <- function(x, ...)
 # Updated 07.07.2023
 plot.dynEGA.Group <- function(x, base = 1, ...)
 {
-
+  
   # Get names
   group_names <- names(x)
-
+  
   # Convert base group name to number (if necessary)
   if(is.character(base)){
     base <- which(group_names == base)
   }
-
+  
   # Order group names
   group_names <- c(group_names[base], group_names[-base])
-
+  
   # Remove base from groups
   base_object <- x[[base]]
-
+  
   # Extract other groups
   other_objects <- x[-base]
-
+  
   # Get sequence length of other objects
   sequence_length <- seq_len(length(other_objects))
-
+  
   # Get base plot
   base_plot <- silent_load(
     single_plot(
@@ -1449,7 +1449,7 @@ plot.dynEGA.Group <- function(x, base = 1, ...)
       ...
     )
   )
-
+  
   # Set up comparison plots
   comparison_plots <- lapply(
     sequence_length, function(i){
@@ -1460,13 +1460,13 @@ plot.dynEGA.Group <- function(x, base = 1, ...)
       )
     }
   )
-
+  
   # Converge into single list
   plotlist <- c(
     base = list(base_plot$network_plot),
     comparison_plots[sequence_length]
   )
-
+  
   # Set up for comparison
   silent_plot(
     ggpubr::ggarrange(
@@ -1476,7 +1476,7 @@ plot.dynEGA.Group <- function(x, base = 1, ...)
       ...
     )
   )
-
+  
 }
 
 #' @exportS3Method
@@ -1484,36 +1484,36 @@ plot.dynEGA.Group <- function(x, base = 1, ...)
 # Updated 30.07.2023
 plot.dynEGA.Individual <- function(x, base = 1, id = NULL, ...)
 {
-
+  
   # Get ellipse
   ellipse <- list(...)
-
+  
   # Check for ID
   if(!is.null(id)){
-
+    
     # Convert IDs to numeric (if necessary)
     if(is.character(id)){
       id <- which(names(x) == id)
     }
-
+    
     # Check for multiple IDs
     if(length(id) != 1){ # Perform similar operation to groups
-
+      
       # Get names
       ID_names <- names(x)
-
+      
       # Order group names
       ID_names <- c(ID_names[id[base]], ID_names[id[-base]])
-
+      
       # Use first ID as base
       base_object <- x[[id[base]]]
-
+      
       # Extract other IDs
       other_objects <- x[id[-base]]
-
+      
       # Get sequence length of other objects
       sequence_length <- seq_len(length(other_objects))
-
+      
       # Get base plot
       base_plot <- silent_load(
         do.call(
@@ -1527,7 +1527,7 @@ plot.dynEGA.Individual <- function(x, base = 1, id = NULL, ...)
           )
         )
       )
-
+      
       # Set up comparison plots
       comparison_plots <- lapply(
         sequence_length, function(i){
@@ -1538,18 +1538,18 @@ plot.dynEGA.Individual <- function(x, base = 1, id = NULL, ...)
           )
         }
       )
-
+      
       # Converge into single list
       plotlist <- c(
         base = list(base_plot$network_plot),
         comparison_plots[sequence_length]
       )
-
+      
       # `ggarrange` does not like non-plot arguments for its ellipse
       ellipse <- ellipse[
         names(ellipse) %in% names(formals(ggpubr::ggarrange))
       ]
-
+      
       # Set up for comparison
       silent_plot(
         do.call(
@@ -1563,9 +1563,9 @@ plot.dynEGA.Individual <- function(x, base = 1, id = NULL, ...)
           )
         )
       )
-
+      
     }else{
-
+      
       # If only one ID, then plot it
       silent_plot(
         single_plot(
@@ -1574,32 +1574,32 @@ plot.dynEGA.Individual <- function(x, base = 1, id = NULL, ...)
           ...
         )
       )
-
+      
     }
-
+    
   }else{ # No ID provided, then randomly some plots
-
+    
     # Get number of individuals
     ID_length <- length(x)
-
+    
     # Ensure there are at least four; otherwise, all of them
     ID_numbers <- min(ID_length, 4)
-
+    
     # Randomly sample from IDs
     random_IDs <- shuffle(seq_len(ID_length), size = ID_numbers)
-
+    
     # Get ID names
     ID_names <- names(x)[random_IDs]
-
+    
     # Remove base from individuals
     base_object <- x[[random_IDs[1]]]
-
+    
     # Extract other groups
     other_objects <- x[random_IDs[-1]]
-
+    
     # Get sequence length of other objects
     sequence_length <- seq_len(length(other_objects))
-
+    
     # Get base plot
     base_plot <- silent_load(
       do.call(
@@ -1613,7 +1613,7 @@ plot.dynEGA.Individual <- function(x, base = 1, id = NULL, ...)
         )
       )
     )
-
+    
     # Set up comparison plots
     comparison_plots <- lapply(
       sequence_length, function(i){
@@ -1624,18 +1624,18 @@ plot.dynEGA.Individual <- function(x, base = 1, id = NULL, ...)
         )
       }
     )
-
+    
     # Converge into single list
     plotlist <- c(
       base = list(base_plot$network_plot),
       comparison_plots[sequence_length]
     )
-
+    
     # `ggarrange` does not like non-plot arguments for its ellipse
     ellipse <- ellipse[
       names(ellipse) %in% names(formals(ggpubr::ggarrange))
     ]
-
+    
     # Set up for comparison
     silent_plot(
       do.call(
@@ -1649,9 +1649,9 @@ plot.dynEGA.Individual <- function(x, base = 1, id = NULL, ...)
         )
       )
     )
-
+    
   }
-
+  
 }
 
 #' @noRd
@@ -1659,24 +1659,24 @@ plot.dynEGA.Individual <- function(x, base = 1, id = NULL, ...)
 # Updated 28.09.2023
 get_ID <- function(data, id, level, variable_names, dimensions)
 {
-
+  
   # First, check for 'id' in variable names (revert)
   if("id" %in% variable_names){
-
+    
     # Get 'id' from data if already listed as a column
     id <- which(variable_names == "id")
-
+    
     # Get 'id'
     ID <- data[,id]
-
+    
     # Remove 'id' from data
     data <- data[,-id]
-
+    
   }else if(is.null(id)){
-
+    
     # Set id to be `1` (same as "population")
     ID <- rep(1, dim(data)[1])
-
+    
     # Send warning
     if("individual" %in% level){
       warning(
@@ -1684,43 +1684,43 @@ get_ID <- function(data, id, level, variable_names, dimensions)
         call. = FALSE
       )
     }
-
+    
   }else{ # Otherwise, check for proper IDs
-
+    
     # Check first for length
     id_length <- length(id)
-
+    
     # If not a column name or number, then vector
     if(id_length != 1){
-
+      
       # Check for errors
       object_error(id, "vector", "dynEGA")
       length_error(id, dimensions[1], "dynEGA")
-
+      
       # Make the vector into ID
       ID <- id
-
+      
     }else{
-
+      
       # Regardless of column name or number,
       # it can be extracted directly from the data
       ID <- data[,id]
-
+      
       # If 'id' is column name, then turn it to number
       if(is.character(id)){
         id <- which(variable_names == tolower(id))
       }
-
+      
       # Remove 'id' from data
       data <- data[,-id]
-
+      
     }
-
+    
   }
-
+  
   # Return list
   return(list(data = data, ID = ID))
-
+  
 }
 
 #' @noRd
@@ -1728,24 +1728,24 @@ get_ID <- function(data, id, level, variable_names, dimensions)
 # Updated 28.09.2023
 get_Group <- function(data, group, level, variable_names, dimensions)
 {
-
+  
   # First, check for 'group' in variable names (revert)
   if("group" %in% variable_names){
-
+    
     # Get 'group' from data if already listed as a column
     group <- which(variable_names == "group")
-
+    
     # Get 'group'
     Group <- data[,group]
-
+    
     # Remove 'group' from data
     data <- data[,-group]
-
+    
   }else if(is.null(group)){
-
+    
     # Set group to be `1` (same as "population")
     Group <- rep(1, dim(data)[1])
-
+    
     # Send warning
     if("group" %in% level){
       warning(
@@ -1753,43 +1753,43 @@ get_Group <- function(data, group, level, variable_names, dimensions)
         call. = FALSE
       )
     }
-
+    
   }else{ # Otherwise, check for proper Groups
-
+    
     # Check first for length
     group_length <- length(group)
-
+    
     # If not a column name or number, then vector
     if(group_length != 1){
-
+      
       # Check for errors
       object_error(group, "vector", "dynEGA")
       length_error(group, dimensions[1], "dynEGA")
-
+      
       # Make the vector into ID
       Group <- group
-
+      
     }else{
-
+      
       # Regardless of column name or number,
       # it can be extracted directly from the data
       Group <- data[,group]
-
+      
       # If 'group' is column name, then turn it to number
       if(is.character(group)){
         group <- which(variable_names == tolower(group))
       }
-
+      
       # Remove 'group' from data
       data <- data[,-group]
-
+      
     }
-
+    
   }
-
+  
   # Return list
   return(list(data = data, Group = Group))
-
+  
 }
 
 #' @noRd
@@ -1797,12 +1797,12 @@ get_Group <- function(data, group, level, variable_names, dimensions)
 # Updated 07.07.2023
 get_attributes <- function(data, dimensions, id, group, level)
 {
-
+  
   # Check for proper ID
   # If "individual" in 'level', then assigns "ID" as attribute
   # If 'id' is in the data, then it is removed!
   ID_result <- get_ID(data, id, level, tolower(dimnames(data)[[2]]), dimensions)
-
+  
   # Check for proper Group
   # If "group" in 'level', then assigns "Group" as attribute
   # If 'group' is in the data, then it is removed!
@@ -1811,17 +1811,17 @@ get_attributes <- function(data, dimensions, id, group, level)
     tolower(dimnames(ID_result$data)[[2]]),
     dimensions
   )
-
+  
   # Get data from Group result
   data <- Group_result$data
-
+  
   # Return data with attributes assigned
   return(
     structure(
       data, ID = ID_result$ID, Group = Group_result$Group
     )
   )
-
+  
 }
 
 #' @noRd
@@ -1833,11 +1833,11 @@ individual_derivatives <- function(
     individual_attributes
 )
 {
-
+  
   # Get derivatives for each participant
   participant_derivatives <- lapply(
     seq_along(individual_data), function(index){
-
+      
       # Apply over variables
       derivatives <- do.call(
         cbind, lapply(
@@ -1847,24 +1847,24 @@ individual_derivatives <- function(
           na.derivative = na.derivative
         )
       )
-
+      
       # Add names
       dimnames(derivatives)[[2]] <- paste(
         rep(variable_names, each = 3),
         dimnames(derivatives)[[2]], sep = "."
       )
-
+      
       # Get ID
       ID <- names(individual_data)[index]
-
+      
       # Get Group
       Group <- unique(
         individual_attributes$Group[individual_attributes$ID == ID]
       )
-
+      
       # Get length of time series derivatives\
       ts_length <- dim(derivatives)[1]
-
+      
       # Return derivatives with updated attributes
       return(
         structure(
@@ -1873,16 +1873,16 @@ individual_derivatives <- function(
           Group = rep(Group, ts_length)
         )
       )
-
+      
     }
   )
-
+  
   # Add IDs to derivatives
   names(participant_derivatives) <- unique(individual_attributes$ID)
-
+  
   # Return derivatives
   return(participant_derivatives)
-
+  
 }
 
 #' @noRd
@@ -1890,16 +1890,16 @@ individual_derivatives <- function(
 # Updated 08.08.2025
 process_individual_dynEGA <- function(usable_derivatives, individual_results)
 {
-
+  
   # Regardless, add IDs to individual results
   names(individual_results) <- cvapply(usable_derivatives, attr, "ID")
-
+  
   # Determine whether there are any IDs with zero variance derivatives
   zero_variance_ID <- lvapply(usable_derivatives, function(x){any(attr(x, "zero_variance"))})
-
+  
   # Check for any zero variance IDs
   if(any(zero_variance_ID)){
-
+    
     # Send warning about which IDs
     warning(
       paste(
@@ -1907,88 +1907,88 @@ process_individual_dynEGA <- function(usable_derivatives, individual_results)
         "\n\nhad derivatives with zero variance (no change in values across time). These IDs will have disconnected nodes in their network and missing community memberships"
       ), call. = FALSE
     )
-
+    
     # Pre-compute node names
     node_names <- names(attr(usable_derivatives[[1]], "zero_variance"))
-
+    
     # As well as number of nodes
     nodes <- length(node_names)
-
+    
     # Adjust networks, memberships, and dimension outputs
     individual_results[zero_variance_ID] <- lapply(
       which(zero_variance_ID), function(ID){
-
+        
         # Get zero variance attribute
         zero_variance <- attr(usable_derivatives[[ID]], "zero_variance")
-
+        
         # Initialize new network
         new_network <- matrix(
           NA, nrow = nodes, ncol = nodes,
           dimnames = list(node_names, node_names)
         )
-
+        
         # Initialize new correlations with same attributes
         new_correlations <- new_network
-
+        
         # Add network into new network
         new_network[!zero_variance, !zero_variance] <-
           individual_results[[ID]]$network
-
+        
         # Restore attributes
         attributes(new_network) <- c(
           attributes(new_network),
           attributes(individual_results[[ID]]$network)[c("methods", "class")]
         )
-
+        
         # Return new network
         individual_results[[ID]]$network <- new_network
-
+        
         # Initialize new memberships
         new_memberships <- rep(NA, nodes)
-
+        
         # Add names
         names(new_memberships) <- node_names
-
+        
         # Add memberships into new memberships
         new_memberships[!zero_variance] <- individual_results[[ID]]$wc
-
+        
         # Restore attributes
         attributes(new_memberships) <- c(
           attributes(new_memberships),
           attributes(individual_results[[ID]]$wc)[c("methods", "class")]
         )
-
+        
         # Return new memberships
         individual_results[[ID]]$wc <- new_memberships
-
+        
         # Add correlation into new correlations
         new_correlations[!zero_variance, !zero_variance] <-
           individual_results[[ID]]$correlation
-
+        
         # Return new correlations (no attributes to pass)
         individual_results[[ID]]$correlation <- new_correlations
-
+        
         # Initialize new dimension output
         dim.variables <- fast.data.frame(
           c(node_names, as.vector(new_memberships)),
           nrow = nodes, ncol = 2,
           colnames = c("items", "dimension")
         )
-
+        
         # Dimension variables data frame by dimension
         individual_results[[ID]]$dim.variables <- dim.variables[
           order(dim.variables$dimension),
         ]
-
+        
         # At long last... return
         return(individual_results[[ID]])
-
+        
       }
     )
-
+    
   }
-
+  
   # Return individual results
   return(individual_results)
-
+  
 }
