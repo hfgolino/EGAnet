@@ -7,6 +7,8 @@ WEBSITE: https://r-ega.net
 
 +	ADD: TEFI optimization for `dynEGA` functions
 
++	ADD: `dynamic.network.compare` to compare dynamic networks (allows for paired and non-paired tests)
+
 +	UPDATE: zero variance time series handling in `dynEGA` functions
 
 +	UPDATE: better mechanism for `simEGM`

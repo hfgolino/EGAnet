@@ -393,7 +393,7 @@
 # Updated 17.11.2025
 dynEGA <- function(
     # `dynEGA` arguments
-    data,  id = NULL, group = NULL,
+    data, id = NULL, group = NULL,
     n.embed = 5, n.embed.optimize = FALSE,
     tau = 1, delta = 1, use.derivatives = 1,
     na.derivative = c("none", "kalman", "rowwise", "skipover"),
@@ -1957,7 +1957,9 @@ optimium_embed <- function(
   )
 
   # Obtain optimal embedding
-  TEFI_index <- which.min(nvapply(ega_list, function(x){x$TEFI}))
+  TEFI <- nvapply(ega_list, function(x){x$TEFI})
+  names(TEFI) <- attributes(data)$embedding
+  TEFI_index <- which.min(TEFI)
   optimal_embedding <- derivative_list[[TEFI_index]]
 
   # Get ID
@@ -1979,7 +1981,8 @@ optimium_embed <- function(
     optimal_embedding,
     ID = rep(names(individual_data)[[i]], ts_length),
     Group = rep(Group, ts_length),
-    n.embed = attributes(data)$embedding[[TEFI_index]]
+    n.embed = attributes(data)$embedding[[TEFI_index]],
+    TEFI = TEFI
   )
 
   # Return optimal embedding
