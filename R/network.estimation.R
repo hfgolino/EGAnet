@@ -383,36 +383,39 @@ send_network_methods <- function(estimated_network, boot = FALSE)
   # Set model
   model <- methods$model
 
-  # Send output text based on model
-  if(model == "egm"){
+  # # Send output text based on model
+  # if(model == "egm"){
+  #
+  #   # Basic starting output
+  #   start <- paste0(
+  #     "Model: ", toupper(methods$model),
+  #     "\nCommunities: ", methods$communities
+  #   )
+  #
+  #   # Check for "beta.min" in attributes
+  #   if("beta.min" %in% names(methods)){
+  #
+  #     # Add to start
+  #     start <- paste0(start, "\nBeta-min: ", methods$beta.min)
+  #
+  #   }else{
+  #
+  #     # Add to start
+  #     start <- paste0(
+  #       start,
+  #       "\nEdge probabilities: ", format_decimal(methods$p.in, 2),
+  #       " (in) & ", format_decimal(methods$p.out, 2), " (out)"
+  #     )
+  #
+  #   }
+  #
+  #   # Send model
+  #   cat(start)
+  #
+  # }else
 
-    # Basic starting output
-    start <- paste0(
-      "Model: ", toupper(methods$model),
-      "\nCommunities: ", methods$communities
-    )
-
-    # Check for "beta.min" in attributes
-    if("beta.min" %in% names(methods)){
-
-      # Add to start
-      start <- paste0(start, "\nBeta-min: ", methods$beta.min)
-
-    }else{
-
-      # Add to start
-      start <- paste0(
-        start,
-        "\nEdge probabilities: ", format_decimal(methods$p.in, 2),
-        " (in) & ", format_decimal(methods$p.out, 2), " (out)"
-      )
-
-    }
-
-    # Send model
-    cat(start)
-
-  }else if(model == "bggm"){ # BGGM
+  # For now...
+  if(model == "bggm"){ # BGGM
 
     # Send model
     cat(

@@ -9,6 +9,8 @@ WEBSITE: https://r-ega.net
 
 +	ADD: `dynamic.network.compare` to compare dynamic networks (allows for paired and non-paired tests)
 
++	ADD: `network.fit` for traditional fit statistics (only accurate for continuous data)
+
 +	UPDATE: zero variance time series handling in `dynEGA` functions
 
 +	UPDATE: better mechanism for `simEGM`
@@ -18,6 +20,8 @@ WEBSITE: https://r-ega.net
 +	REMOVE: `EGM` has been removed (for now) as its under revision
 
 +	REMOVE: `network.nonconvex` has been removed (for now) as its under revision
+
++	INTERNAL: regularization penalties and derivatives are added but not used (yet)
 
 
 ## Changes in version 2.3.1
