@@ -468,7 +468,7 @@ dynEGA <- function(
   derivative_index <- grep(
     switch(
       as.character(use.derivatives),
-      "0" = "Ord0", "1" = "Ord1", "2" = "Ord2"
+      "0" = "Obs", "1" = "Ord1", "2" = "Ord2"
     ),
     paste0(".Ord", use.derivatives)
   )
