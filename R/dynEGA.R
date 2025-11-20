@@ -444,8 +444,14 @@ dynEGA <- function(
   # Get variable names
   variable_names <- dimnames(data)[[2]]
 
-  # Split data into lists based on ID
-  individual_data <- split(data, attributes(data)$ID)
+  # Split data into lists based on ID and Group
+  split_data <- split(
+    data, f = list(
+      ID = attributes(data)$ID,
+      Group = attributes(data)$Group
+    ), drop = TRUE,
+    sep = "--"
+  )
 
   # Check for TEFI optimization
   if(n.embed.optimize){
@@ -457,8 +463,8 @@ dynEGA <- function(
 
     # Optimize over embeddings
     individual_results <- embed_optimize(
-      individual_data, variable_names, corr, na.data, model, algorithm,
-      uni.method, tau, delta, n.embed, na.derivative, zero.jitter,
+      split_data, variable_names, corr, na.data, model, algorithm,
+      uni.method, tau, delta, n.embed, na.derivative, zero.jitter, level,
       use.derivatives, seed, ncores, verbose, ...
     )
 
@@ -480,27 +486,8 @@ dynEGA <- function(
       )
     )
 
-    # Not sure why this process is needed in optimize
-    # but not in the non-optimized version
-    results$Derivatives$Estimates <- lapply(
-      results$Derivatives$Estimates, function(x){
-
-        # Update attributes
-        attr(x, "ID") <- attr(x, "ID")[1]
-        attr(x, "Group") <- attr(x, "Group")[1]
-
-        # Return updates
-        return(x)
-
-      }
-    )
-
-    # Process individual results
-    results$dynEGA$individual <- process_individual_dynEGA(
-      results$Derivatives$Estimates, individual_results
-    )
-
     # Add class
+    results$dynEGA$individual <- individual_results
     class(results$dynEGA$individual) <- "dynEGA.Individual"
 
   }else{
@@ -512,7 +499,7 @@ dynEGA <- function(
 
     # Get derivatives for each participant
     derivative_list <- individual_derivatives(
-      individual_data, variable_names, n.embed,
+      split_data, variable_names, n.embed,
       tau, delta, na.derivative,
       individual_attributes = attributes(data)
     )
@@ -533,7 +520,7 @@ dynEGA <- function(
     # Obtain updated derivatives
     derivative_list <- handle_derivatives(
       derivative_list, derivative_index, na.derivative,
-      zero.jitter, corr, na.data, seed, verbose
+      zero.jitter, level, corr, na.data, seed, verbose
     )
 
     # Set up return list
@@ -562,12 +549,8 @@ dynEGA <- function(
         ncores = ncores, progress = verbose
       )
 
-      # Process individual results
-      results$dynEGA$individual <- process_individual_dynEGA(
-        results$Derivatives$Estimates, individual_results
-      )
-
       # Add class
+      results$dynEGA$individual <- individual_results
       class(results$dynEGA$individual) <- "dynEGA.Individual"
 
     }
@@ -1558,13 +1541,16 @@ get_attributes <- function(data, dimensions, id, group, level)
 
 #' @noRd
 # Individual derivatives ----
-# Updated 06.08.2025
+# Updated 20.11.2025
 individual_derivatives <- function(
     individual_data, variable_names,
     n.embed, tau, delta, na.derivative,
     individual_attributes
 )
 {
+
+  # Obtain names
+  data_names <- iconv(names(individual_data), from = "latin1", "UTF-8")
 
   # Get derivatives for each participant
   participant_derivatives <- lapply(
@@ -1586,13 +1572,8 @@ individual_derivatives <- function(
         dimnames(derivatives)[[2]], sep = "."
       )
 
-      # Get ID
-      ID <- names(individual_data)[index]
-
-      # Get Group
-      Group <- unique(
-        individual_attributes$Group[individual_attributes$ID == ID]
-      )
+      # Split name
+      split_name <- strsplit(data_names[[index]], split = "--", fixed = TRUE)[[1]]
 
       # Get length of time series derivatives
       ts_length <- dim(derivatives)[1]
@@ -1601,8 +1582,8 @@ individual_derivatives <- function(
       return(
         structure(
           derivatives,
-          ID = rep(ID, ts_length),
-          Group = rep(Group, ts_length)
+          ID = rep(split_name[[1]], ts_length),
+          Group = rep(split_name[[2]], ts_length)
         )
       )
 
@@ -1619,10 +1600,10 @@ individual_derivatives <- function(
 
 #' @noRd
 # Handle zero and non-positive definite (co)variances ----
-# Updated 17.11.2025
+# Updated 20.11.2025
 handle_derivatives <- function(
     derivative_list, derivative_index, na.derivative,
-    zero.jitter, corr, na.data, seed, verbose
+    zero.jitter, level, corr, na.data, seed, verbose
 )
 {
 
@@ -1648,7 +1629,7 @@ handle_derivatives <- function(
     seq_along(derivative_list), function(i){
 
       # First, get proper derivatives
-      proper_derivatives <- derivative_list[[i]][,derivative_index]
+      proper_derivatives <- derivative_list[[i]][,derivative_index, drop = FALSE]
 
       # Next, check for NA and zero variance variables
       zero_variance <- lvapply(
@@ -1677,8 +1658,8 @@ handle_derivatives <- function(
       return(
         structure(
           proper_derivatives,
-          ID = unique(attr(derivative_list[[i]], "ID")),
-          Group = unique(attr(derivative_list[[i]], "Group")),
+          ID = attr(derivative_list[[i]], "ID"),
+          Group = attr(derivative_list[[i]], "Group"),
           zero_variance = zero_variance
         )
       )
@@ -1717,14 +1698,19 @@ handle_derivatives <- function(
   }
 
   # Return message about issues
-  if(any(issues)){
+  if(("individual" %in% level) && any(issues)){
+
+    # Obtain IDs
+    ID_issues <- ulapply(usable_derivatives, function(x){
+      attributes(x)$ID
+    })
 
     .handleSimpleError(
       h = warning,
       msg = paste0(
         "The following IDs were found to have missing data ",
         "preventing their correlation matrices from being estimated:\n\n",
-        paste0(names(issues)[issues], collapse = ", "), "\n\n",
+        paste0(ID_issues[issues], collapse = ", "), "\n\n",
         "These IDs will not have individual networks.",
         swiftelse(
           na.derivative == "none",
@@ -1743,119 +1729,11 @@ handle_derivatives <- function(
 }
 
 #' @noRd
-# Organize individual `dynEGA` results ----
-# Updated 08.08.2025
-process_individual_dynEGA <- function(usable_derivatives, individual_results)
-{
-
-  # Regardless, add IDs to individual results
-  names(individual_results) <- cvapply(usable_derivatives, attr, "ID")
-
-  # Determine whether there are any IDs with zero variance derivatives
-  zero_variance_ID <- lvapply(usable_derivatives, function(x){any(attr(x, "zero_variance"))})
-
-  # Check for any zero variance IDs
-  if(any(zero_variance_ID)){
-
-    # Send warning about which IDs
-    warning(
-      paste(
-        paste0("IDs: ", paste0(names(individual_results)[zero_variance_ID], collapse = ", ")),
-        "\n\nhad derivatives with zero variance (no change in values across time). These IDs will have disconnected nodes in their network and missing community memberships"
-      ), call. = FALSE
-    )
-
-    # Pre-compute node names
-    node_names <- names(attr(usable_derivatives[[1]], "zero_variance"))
-
-    # As well as number of nodes
-    nodes <- length(node_names)
-
-    # Adjust networks, memberships, and dimension outputs
-    individual_results[zero_variance_ID] <- lapply(
-      which(zero_variance_ID), function(ID){
-
-        # Get zero variance attribute
-        zero_variance <- attr(usable_derivatives[[ID]], "zero_variance")
-
-        # Initialize new network
-        new_network <- matrix(
-          NA, nrow = nodes, ncol = nodes,
-          dimnames = list(node_names, node_names)
-        )
-
-        # Initialize new correlations with same attributes
-        new_correlations <- new_network
-
-        # Add network into new network
-        new_network[!zero_variance, !zero_variance] <-
-          individual_results[[ID]]$network
-
-        # Restore attributes
-        attributes(new_network) <- c(
-          attributes(new_network),
-          attributes(individual_results[[ID]]$network)[c("methods", "class")]
-        )
-
-        # Return new network
-        individual_results[[ID]]$network <- new_network
-
-        # Initialize new memberships
-        new_memberships <- rep(NA, nodes)
-
-        # Add names
-        names(new_memberships) <- node_names
-
-        # Add memberships into new memberships
-        new_memberships[!zero_variance] <- individual_results[[ID]]$wc
-
-        # Restore attributes
-        attributes(new_memberships) <- c(
-          attributes(new_memberships),
-          attributes(individual_results[[ID]]$wc)[c("methods", "class")]
-        )
-
-        # Return new memberships
-        individual_results[[ID]]$wc <- new_memberships
-
-        # Add correlation into new correlations
-        new_correlations[!zero_variance, !zero_variance] <-
-          individual_results[[ID]]$correlation
-
-        # Return new correlations (no attributes to pass)
-        individual_results[[ID]]$correlation <- new_correlations
-
-        # Initialize new dimension output
-        dim.variables <- fast.data.frame(
-          c(node_names, as.vector(new_memberships)),
-          nrow = nodes, ncol = 2,
-          colnames = c("items", "dimension")
-        )
-
-        # Dimension variables data frame by dimension
-        individual_results[[ID]]$dim.variables <- dim.variables[
-          order(dim.variables$dimension),
-        ]
-
-        # At long last... return
-        return(individual_results[[ID]])
-
-      }
-    )
-
-  }
-
-  # Return individual results
-  return(individual_results)
-
-}
-
-#' @noRd
 # Embedding optimization ----
-# Updated 17.11.2025
+# Updated 20.11.2025
 embed_optimize <- function(
     individual_data, variable_names, corr, na.data, model, algorithm,
-    uni.method, tau, delta, n.embed, na.derivative, zero.jitter,
+    uni.method, tau, delta, n.embed, na.derivative, zero.jitter, level,
     use.derivatives, seed, ncores, verbose, ...
 )
 {
@@ -1879,18 +1757,21 @@ embed_optimize <- function(
     "0" = "Ord0", "1" = "Ord1", "2" = "Ord2"
   )
 
+  # Set data names
+  data_names <- names(individual_data)
+
   # Estimate individual EGA
  return(
    parallel_process(
      iterations = length(individual_data),
      datalist = seq_along(individual_data),
      optimium_embed, # Use optimization function
-     individual_data = individual_data,
+     individual_data = individual_data, data_names = data_names,
      variable_names = variable_names, corr = corr,
      na.data = na.data, model = model,
      algorithm = algorithm, uni.method = uni.method,
      tau = tau, delta = delta, na.derivative = na.derivative,
-     zero.jitter = zero.jitter, use_derivative = use_derivative,
+     zero.jitter = zero.jitter, level = level, use_derivative = use_derivative,
      seed = seed, ..., ncores = ncores, progress = verbose
    )
  )
@@ -1900,11 +1781,11 @@ embed_optimize <- function(
 
 #' @noRd
 # Parallelization for optimization ----
-# Updated 17.11.2025
+# Updated 20.11.2025
 optimium_embed <- function(
-    i, individual_data, variable_names, corr, na.data,
+    i, individual_data, data_names, variable_names, corr, na.data,
     model, algorithm, uni.method, tau, delta, na.derivative,
-    zero.jitter, use_derivative, seed, ...
+    zero.jitter, level, use_derivative, seed, ...
 )
 {
 
@@ -1931,6 +1812,21 @@ optimium_embed <- function(
         dimnames(derivatives)[[2]], sep = "."
       )
 
+      # Split name
+      split_name <- strsplit(data_names[[i]], split = "--", fixed = TRUE)[[1]]
+
+      # Get length of time series derivatives
+      ts_length <- dim(derivatives)[1]
+
+      # Return derivatives with updated attributes
+      return(
+        structure(
+          derivatives,
+          ID = rep(split_name[[1]], ts_length),
+          Group = rep(split_name[[2]], ts_length)
+        )
+      )
+
       # Return objects
       return(derivatives)
 
@@ -1945,7 +1841,7 @@ optimium_embed <- function(
   # Obtain updated derivatives
   derivative_list <- handle_derivatives(
     derivative_list, derivative_index,
-    na.derivative, zero.jitter,
+    na.derivative, zero.jitter, level,
     corr, na.data, seed, verbose = FALSE
   )
 
@@ -1962,25 +1858,9 @@ optimium_embed <- function(
   TEFI_index <- which.min(TEFI)
   optimal_embedding <- derivative_list[[TEFI_index]]
 
-  # Get ID
-  ID <- names(individual_data)[[i]]
-
-  # Individual attributes
-  individual_attributes <- attributes(individual_data[[i]])
-
-  # Get Group
-  Group <- unique(
-    individual_attributes$Group[individual_attributes$ID == ID]
-  )
-
-  # Get length of time series derivatives
-  ts_length <- dim(optimal_embedding)[1]
-
   # Update optimal embedding
   optimal_embedding <- structure(
     optimal_embedding,
-    ID = rep(names(individual_data)[[i]], ts_length),
-    Group = rep(Group, ts_length),
     n.embed = attributes(data)$embedding[[TEFI_index]],
     TEFI = TEFI
   )
