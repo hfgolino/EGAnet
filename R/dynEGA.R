@@ -1131,7 +1131,7 @@ plot.dynEGA.Population <- function(x, ...)
 
 #' @exportS3Method
 # S3 Plot Method (Group) ----
-# Updated 07.07.2023
+# Updated 21.11.2025
 plot.dynEGA.Group <- function(x, base = 1, ...)
 {
 
@@ -1165,13 +1165,22 @@ plot.dynEGA.Group <- function(x, base = 1, ...)
     )
   )
 
+  # Set ellipse
+  ellipse <- list(...)
+
+  # Add palette to arguments if it exists
+  if("color.palette" %in% names(ellipse)){
+    base_plot$ARGS$color.palette <- ellipse$color.palette
+  }
+
   # Set up comparison plots
   comparison_plots <- lapply(
     sequence_length, function(i){
       compare_plots(
         comparison_network = other_objects[[i]]$network,
         comparison_wc = other_objects[[i]]$wc,
-        plot_ARGS = base_plot$ARGS
+        plot_ARGS = base_plot$ARGS,
+        ...
       )
     }
   )
@@ -1182,15 +1191,21 @@ plot.dynEGA.Group <- function(x, base = 1, ...)
     comparison_plots[sequence_length]
   )
 
+  # Remove arguments not in `ggpubr::ggarrage`
+  ggarrange_FUN <- ggpubr::ggarrange
+  ggarrange_ARGS <- obtain_arguments(ggarrange_FUN, ellipse)
+
+  # Set other arguments
+  ggarrange_ARGS$plotlist <- plotlist
+  ggarrange_ARGS$labels <- group_names
+
+  # Check for legend position
+  if(is.null(ggarrange_ARGS$legend)){
+    ggarrange_ARGS$legend <- "bottom"
+  }
+
   # Set up for comparison
-  silent_plot(
-    ggpubr::ggarrange(
-      plotlist = plotlist,
-      labels = group_names,
-      legend = "bottom",
-      ...
-    )
-  )
+  silent_plot(do.call(ggarrange_FUN, ggarrange_ARGS))
 
 }
 

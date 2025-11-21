@@ -87,7 +87,7 @@
 #' @export
 #
 # Compare EGA plots ----
-# Updated 18.11.2025
+# Updated 21.11.2025
 compare.EGA.plots <- function(
   ..., input.list = NULL, base = 1, same.layout = TRUE,
   labels = NULL, rows = NULL, columns = NULL,
@@ -262,23 +262,33 @@ compare.EGA.plots <- function(
     # match with `base_plot`
     base_plot$ARGS <- overwrite_arguments(base_plot$ARGS, ellipse)
 
-    # Set removal arguments
-    removal_ARGS <- c(
-      "node.color", "edge.alpha",
-      "edge.color", "edge.lty", "edge.size"
-    )
+    # Set ellipse
+    ellipse <- list(...)
 
-    # Check for if any arguments in still need
-    # to be removed from `base_plot`
-    removal_ARGS <- removal_ARGS[!removal_ARGS %in% names(ellipse)]
+    # Add palette to arguments if it exists
+    if("color.palette" %in% names(ellipse)){
+      base_plot$ARGS$color.palette <- ellipse$color.palette
+    }else{
 
-    # Check for any remaining arguments to remove
-    if(length(removal_ARGS) != 0){
+      # Set removal arguments
+      removal_ARGS <- c(
+        "node.color", "edge.alpha",
+        "edge.color", "edge.lty", "edge.size"
+      )
 
-      # Remove some arguments from `base_plot`
-      base_plot$ARGS <- base_plot$ARGS[
-        !names(base_plot$ARGS) %in% removal_ARGS
-      ]
+      # Check for if any arguments in still need
+      # to be removed from `base_plot`
+      removal_ARGS <- removal_ARGS[!removal_ARGS %in% names(ellipse)]
+
+      # Check for any remaining arguments to remove
+      if(length(removal_ARGS) != 0){
+
+        # Remove some arguments from `base_plot`
+        base_plot$ARGS <- base_plot$ARGS[
+          !names(base_plot$ARGS) %in% removal_ARGS
+        ]
+
+      }
 
     }
 

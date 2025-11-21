@@ -705,7 +705,7 @@ dynamic.network.compare_errors <- function(data, groups, paired, iter, seed, ...
 {
 
   # 'groups' errors
-  object_error(groups, c("vector", "matrix", "data.frame"), "dynamic.network.compare")
+  object_error(groups, c("vector", "matrix", "data.frame", "factor"), "dynamic.network.compare")
   groups <- force_vector(groups)
   length_error(groups, dim(data)[1], "dynamic.network.compare")
 

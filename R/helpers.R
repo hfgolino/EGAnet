@@ -1059,7 +1059,7 @@ force_vector <- function(object)
   # Branch across types
   if(object_type == "vector"){
     return(object) # already a vector
-  }else if(object_type %in% c("matrix", "data.frame", "tibble")){
+  }else if(object_type %in% c("matrix", "data.frame", "tibble", "factor")){
 
     # Ensure matrix
     new_matrix <- as.matrix(object)
@@ -1933,8 +1933,8 @@ GGally_args <- function(ellipse)
 
     # Check for gray scale
     if(any(tolower(ellipse$color.palette) %in% gray_options)){
-      default_args$edge.color <- c("#293132", "grey25")
-      default_args$edge.lty <- c("solid", "dashed")
+      default_args$edge.color <- c("grey75", "grey25")
+      default_args$edge.lty <- c("solid", "longdash")
     }
 
   }
@@ -2149,7 +2149,7 @@ get_layout <- function(network, dimensions, non_zero_index, plot_ARGS)
 
 #' @noRd
 # Basic set up for plots ----
-# Updated 20.08.2023
+# Updated 21.11.2025
 basic_plot_setup <- function(network, wc = NULL, ...)
 {
 
@@ -2312,12 +2312,12 @@ basic_plot_setup <- function(network, wc = NULL, ...)
 
   ## Set border color
   if(all(is.na(wc))){ # Plain network (without communities)
-    border_color <- rep("black", dimensions[2])
+    border_color <- rep("grey", dimensions[2])
   }else if(
     length(color.palette) == 1 &&
     color.palette %in% gray_options
   ){ # Gray scale network
-    border_color <- swiftelse(palette == "white", "white", "black")
+    border_color <- swiftelse(palette == "white", "white", "grey")
   }else{ # Same color as nodes
     border_color <- plot_ARGS$node.color
   }
@@ -2501,8 +2501,8 @@ dimension_comparison <- function(original, comparison){
 
 #' @noRd
 # Basic set up for comparing plots ----
-# Updated 26.10.2023
-compare_plots <- function(comparison_network, comparison_wc, plot_ARGS)
+# Updated 21.11.2025
+compare_plots <- function(comparison_network, comparison_wc, plot_ARGS, ...)
 {
 
   # original network = plot_ARGS$net
@@ -2531,6 +2531,9 @@ compare_plots <- function(comparison_network, comparison_wc, plot_ARGS)
   # Also, set comparison memberships in proper order
   ## Add to plot arguments
   plot_ARGS$wc <- comparison_wc[matching_order]
+
+  # Check if any arguments in `ellipse` match with `plot_ARGS`
+  plot_ARGS <- overwrite_arguments(plot_ARGS, list(...))
 
   # Remove some arguments from `plot_ARGS`
   ## Essentially, the same call but allows some freedom
