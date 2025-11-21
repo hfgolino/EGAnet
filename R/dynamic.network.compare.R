@@ -7,9 +7,6 @@
 #' Should consist only of variables to be used in the analysis as well as
 #' an ID column
 #'
-#' @param groups Numeric or character vector (length = \code{nrow(data)}).
-#' Group membership corresponding to each case in data
-#'
 #' @param paired Boolean (length = 1).
 #' Whether groups are repeated measures representing
 #' paired samples.
@@ -80,6 +77,10 @@
 #'
 #' @param id Numeric or character (length = 1).
 #' Number or name of the column identifying each individual.
+#' Defaults to \code{NULL}
+#'
+#' @param group Numeric or character (length = 1).
+#' Number of the column identifying group membership.
 #' Defaults to \code{NULL}
 #'
 #' @param n.embed Numeric (length = 1).
@@ -233,11 +234,11 @@
 #' \dontrun{
 #' # Perform comparison
 #' dynamic.network.compare(
-#'   data = df[,-2], groups = df[,2], paired = TRUE,
+#'   data = df, paired = TRUE,
 #'   # EGA arguments
 #'   corr = "auto", na.data = "pairwise", model = "glasso",
 #'   # dynEGA arguments
-#'   id = NULL, n.embed = 3,
+#'   id = "ID", group = "Group", n.embed = 3,
 #'   tau = 1, delta = 1, use.derivatives = 1,
 #'   # Permutation arguments
 #'   iter = 1000, ncores = 2, verbose = TRUE, seed = 42
@@ -279,11 +280,11 @@
 #' \dontrun{
 #' # Perform comparison
 #' dynamic.network.compare(
-#'   data = df[,-2], groups = df[,2], paired = TRUE,
+#'   data = df, paired = TRUE,
 #'   # EGA arguments
 #'   corr = "auto", na.data = "pairwise", model = "glasso",
 #'   # dynEGA arguments
-#'   id = NULL, n.embed = 3,
+#'   id = "ID", group = "Group", n.embed = 3,
 #'   tau = 1, delta = 1, use.derivatives = 1,
 #'   # Permutation arguments
 #'   iter = 1000, ncores = 2, verbose = TRUE, seed = 42
@@ -309,15 +310,16 @@
 #' @export
 #'
 # Perform permutations for network structures ----
-# Updated 19.11.2025
+# Updated 21.11.2025
 dynamic.network.compare <- function(
-    data, groups, paired = FALSE,
+    data, paired = FALSE,
     # EGA arguments
     corr = c("auto", "cor_auto", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
     model = c("BGGM", "glasso", "TMFG"),
     # dynEGA arguments
-    id = NULL, n.embed = 5, n.embed.optimize = FALSE,
+    id = NULL, group = NULL,
+    n.embed = 5, n.embed.optimize = FALSE,
     tau = 1, delta = 1, use.derivatives = 1,
     na.derivative = c("none", "kalman", "rowwise", "skipover"),
     zero.jitter = 0.001,
@@ -338,7 +340,7 @@ dynamic.network.compare <- function(
 
   # Argument errors (return data in case of tibble)
   data <- dynEGA_errors(
-    data, id, NULL, n.embed, tau, delta,
+    data, id, group, n.embed, tau, delta,
     use.derivatives, zero.jitter, n.embed.optimize,
     ncores, verbose
   )
@@ -347,7 +349,7 @@ dynamic.network.compare <- function(
   n.embed.optimize <- attributes(data)$n.embed.optimize
 
   # Check for input errors
-  groups <- dynamic.network.compare_errors(data, groups, paired, iter, seed, ...)
+  dynamic.network.compare_errors(data, paired, iter, seed, ...)
 
   # Set ellipse
   ellipse <- list(...)
@@ -372,35 +374,27 @@ dynamic.network.compare <- function(
   dimensions <- dim(data)
   dimension_names <- dimnames(data)
 
-  # Check for ID
-  if(is.null(id)){
+  # Obtain dynamic EGA networks
+  dynamic_ega <- dynEGA(
+    data = data, corr = corr,
+    na.data = na.data, model = model,
+    id = id, group = group, n.embed = n.embed,
+    n.embed.optimize = n.embed.optimize,
+    tau = tau, delta = delta,
+    use.derivatives = use.derivatives,
+    na.derivative = na.derivative,
+    zero.jitter = zero.jitter,
+    level = "group", seed = seed,
+    verbose = FALSE, ...
+  )
 
-    # Check for column with name ID
-    index <- "id" %in% tolower(dimension_names[[2]])
+  # Set groups
+  groups <- dynamic_ega$Derivatives$EstimatesDF$group
 
-    # Check for existing column
-    if(any(index)){
-      id <- which(index)
-    }else{
+  # Set IDs
+  unique_ids <- unique(dynamic_ega$Derivatives$EstimatesDF$id)
 
-      # Send error
-      .handleSimpleError(
-        h = stop,
-        msg = paste0(
-          "Argument 'id' is `NULL` and no column in 'data' could be ",
-          "identified with the label 'id'.\n\n",
-          "Please input a variable name or index into 'id' or include a column in 'data' ",
-          "named 'ID'"
-        ),
-        call = "dynamic.network.compare"
-      )
-
-    }
-
-  }
-
-
-  # Get unique groups (factored)
+  # Get unique groups
   unique_factors <- na.omit(unique(groups))
 
   # Set groups as factors
@@ -414,40 +408,15 @@ dynamic.network.compare <- function(
   pairs_length <- length(group_pairs)
   pairs_sequence <- seq_len(pairs_length)
 
-  # Get dynamic EGA lists
-  dynamic_ega <- lapply(
-    unique_groups, function(group){
-
-      # Return output
-      return(
-        dynEGA(
-          data = data[groups == group,], corr = corr,
-          na.data = na.data, model = model,
-          id = id, n.embed = n.embed,
-          n.embed.optimize = n.embed.optimize,
-          tau = tau, delta = delta,
-          use.derivatives = use.derivatives,
-          na.derivative = na.derivative,
-          zero.jitter = zero.jitter,
-          level = "population",
-          seed = seed,
-          verbose = FALSE,
-          ...
-        )
-      )
-
-    }
-  )
-
-  # Add names
-  names(dynamic_ega) <- unique_groups
+  # Obtain group EGA
+  group_ega <- dynamic_ega$dynEGA$group
 
   # Get statistics
   empirical <- lapply(group_pairs, function(pair){
 
     # Simplify grabbing networks
-    network1 <- dynamic_ega[[pair[1]]]$dynEGA$population$network
-    network2 <- dynamic_ega[[pair[2]]]$dynEGA$population$network
+    network1 <- group_ega[[pair[1]]]$network
+    network2 <- group_ega[[pair[2]]]$network
 
     # Return statistics
     return(
@@ -469,22 +438,11 @@ dynamic.network.compare <- function(
     unique_groups, function(group){
 
       # Extract index
-      index <- dynamic_ega[[group]]$Derivatives$EstimatesDF
-
-      # Column names
-      column_names <- colnames(index)
-
-      # Target data frame
-      df <- index[
-        , c(
-          grep(paste0("Ord", use.derivatives), column_names),
-          which(column_names == "id")
-        )
+      df <- dynamic_ega$Derivatives$EstimatesDF[
+        dynamic_ega$Derivatives$EstimatesDF$group == unique_factors[group],
       ]
 
       # Create new 'id', 'group', and 'id_group'
-      df$id <- as.numeric(factor(df$id))
-      df$group <- group
       df$id_group <- paste0(df$id, "_", df$group)
 
       # Return derivatives
@@ -539,7 +497,10 @@ dynamic.network.compare <- function(
         }
 
         # Create new ID memberships
-        index <- paste0(unlist(individual_sequence[pair]), "_", new_membership)
+        index <- paste0(
+          unique_ids[unlist(individual_sequence[pair])], "_",
+          unique_factors[new_membership]
+        )
 
         # Find IDs in derivatives
         return(list(
@@ -556,7 +517,7 @@ dynamic.network.compare <- function(
       })
 
       # Get statistics
-      permutated <- lapply(new_derivatives, function(pair){
+      permuted <- lapply(new_derivatives, function(pair){
 
         # Simplify grabbing networks
         network1 <- EGA(pair[[1]], plot.EGA = FALSE, ...)$network
@@ -577,15 +538,15 @@ dynamic.network.compare <- function(
 
       })
 
-      # Return permutated results
-      return(permutated)
+      # Return permuted results
+      return(permuted)
 
     }, ncores = ncores, progress = verbose, ...
   )
 
   # Separate into pairwise comparisons
   ## Network
-  permutated_values <- lapply(pairs_sequence, function(i){
+  permuted_values <- lapply(pairs_sequence, function(i){
 
     # Nest loop over iterations
     return(
@@ -593,8 +554,9 @@ dynamic.network.compare <- function(
     )
 
   })
+
   ## Edges
-  permutated_matrices <- lapply(pairs_sequence, function(i){
+  permuted_matrices <- lapply(pairs_sequence, function(i){
 
     # Nest loop over iterations
     return(lapply(permutation_list, function(x){x[[i]]$empirical_matrix}))
@@ -612,20 +574,20 @@ dynamic.network.compare <- function(
           "statistic" = empirical[[i]]$empirical_values,
           "p.value" = c(
             mean( # Frobenius
-              c(TRUE, permutated_values[[i]][,1] <= empirical[[i]]$empirical_values[1]),
+              c(TRUE, permuted_values[[i]][,1] <= empirical[[i]]$empirical_values[1]),
               na.rm = TRUE
             ),
             mean( # JSS
-              c(TRUE, permutated_values[[i]][,2] <= empirical[[i]]$empirical_values[2]),
+              c(TRUE, permuted_values[[i]][,2] <= empirical[[i]]$empirical_values[2]),
               na.rm = TRUE
             ),
             mean( # Total strength
-              c(TRUE, abs(permutated_values[[i]][,3]) >= abs(empirical[[i]]$empirical_values[3])),
+              c(TRUE, abs(permuted_values[[i]][,3]) >= abs(empirical[[i]]$empirical_values[3])),
               na.rm = TRUE
             )
           ),
-          "M_permutated" = colMeans(permutated_values[[i]], na.rm = TRUE),
-          "SD_permutated" = apply(permutated_values[[i]], 2, sd, na.rm = TRUE)
+          "M_permutated" = colMeans(permuted_values[[i]], na.rm = TRUE),
+          "SD_permutated" = apply(permuted_values[[i]], 2, sd, na.rm = TRUE)
         )
       )
     )
@@ -633,7 +595,7 @@ dynamic.network.compare <- function(
   })
   ## Edges
   ## Get lower triangle
-  lower_triangle <- lower.tri(dynamic_ega[[1]]$dynEGA$population$network)
+  lower_triangle <- lower.tri(dynamic_ega$dynEGA$group[[1]]$network)
 
   ## Get the p-values for edges
   result_edges <- lapply(
@@ -642,7 +604,7 @@ dynamic.network.compare <- function(
       # Get p-values
       edge_p_adjusted <- edge_p <- apply(
         simplify2array(
-          lapply(permutated_matrices[[i]], function(x){
+          lapply(permuted_matrices[[i]], function(x){
             abs(x) >= abs(empirical[[i]]$empirical_matrix)
           })
         ), 1:2, mean, na.rm = TRUE
@@ -660,8 +622,8 @@ dynamic.network.compare <- function(
           statistic = empirical[[i]]$empirical_matrix,
           p.value = edge_p,
           p.adjusted = edge_p_adjusted,
-          M_permutated = apply(simplify2array(permutated_matrices[[i]]), 1:2, mean, na.rm = TRUE),
-          SD_permutated = apply(simplify2array(permutated_matrices[[i]]), 1:2, sd, na.rm = TRUE)
+          M_permutated = apply(simplify2array(permuted_matrices[[i]]), 1:2, mean, na.rm = TRUE),
+          SD_permutated = apply(simplify2array(permuted_matrices[[i]]), 1:2, sd, na.rm = TRUE)
         )
       )
 
@@ -698,16 +660,25 @@ dynamic.network.compare <- function(
 
 }
 
+# Bug checks ----
+# library(EGAnet)
+# source("/home/alextops/R/R-packages/EGAnet/R/utils-EGAnet.R")
+# source("/home/alextops/R/R-packages/EGAnet/R/helpers.R")
+# source("/home/alextops/R/R-packages/EGAnet/R/dynEGA.R")
+# source("/home/alextops/R/R-packages/EGAnet/R/dynamic.network.compare.R")
+# ?dynamic.network.compare
+# data = df; paired = TRUE
+# corr = "auto"; na.data = "pairwise"; model = "glasso"
+# id = "ID"; group = "Group"; n.embed = 3; n.embed.optimize = FALSE
+# tau = 1; delta = 1; use.derivatives = 1
+# na.derivative = "none"; zero.jitter = 0.001
+# iter = 1000; ncores = 8; seed = NULL; verbose = TRUE
+
 #' @noRd
 # Errors ----
-# Updated 03.06.2025
-dynamic.network.compare_errors <- function(data, groups, paired, iter, seed, ...)
+# Updated 21.11.2025
+dynamic.network.compare_errors <- function(data, paired, iter, seed, ...)
 {
-
-  # 'groups' errors
-  object_error(groups, c("vector", "matrix", "data.frame", "factor"), "dynamic.network.compare")
-  groups <- force_vector(groups)
-  length_error(groups, dim(data)[1], "dynamic.network.compare")
 
   # 'paired' errors
   length_error(paired, 1, "dynamic.network.compare")
@@ -723,9 +694,6 @@ dynamic.network.compare_errors <- function(data, groups, paired, iter, seed, ...
     typeof_error(seed, "numeric", "dynamic.network.compare")
     range_error(seed,  c(0, Inf), "dynamic.network.compare")
   }
-
-  # Return groups
-  return(groups)
 
 }
 

@@ -1615,7 +1615,7 @@ individual_derivatives <- function(
 
 #' @noRd
 # Handle zero and non-positive definite (co)variances ----
-# Updated 20.11.2025
+# Updated 21.11.2025
 handle_derivatives <- function(
     derivative_list, derivative_index, na.derivative,
     zero.jitter, level, corr, na.data, seed, verbose
@@ -1655,14 +1655,17 @@ handle_derivatives <- function(
       # Number of zero variance
       n_zero <- sum(zero_variance)
 
+      # Length of time series
+      ts_length <- dim(proper_derivatives)[1]
+
       # Compute uncorrelated multivariate normal jitter
-      if(n_zero > 0){
+      if((n_zero > 0) && (ts_length > 2)){
 
         # Add jitter to derivatives
         proper_derivatives[,zero_variance] <- proper_derivatives[,zero_variance, drop = FALSE] +
           MASS_mvrnorm_quick(
             seed = seeds[i], p = n_zero,
-            np = n_zero * dim(proper_derivatives)[1],
+            np = n_zero * ts_length,
             coV = diag(n_zero) * zero.jitter
           )
 
@@ -1682,59 +1685,69 @@ handle_derivatives <- function(
     }
   )
 
-  # Sent user message about check
-  if(verbose){
-    message("Checking for positive definite correlation matrices...", appendLF = FALSE)
-  }
-
-  # Check for correlation issues before processing
-  issues <- lvapply(usable_derivatives, function(x){
-
-    # Try to get correlations
-    attempt <- silent_call(try(
-      obtain_sample_correlations(
-        data = x, n = dim(x)[1], corr = corr,
-        na.data = na.data, verbose = verbose
-      )$correlation_matrix, silent = TRUE
-    ))
-
-    # Check for issues
-    return(
-      swiftelse(
-        is(attempt, "try-error") || !is_positive_definite(attempt), TRUE, FALSE
-      )
-    )
-
-  })
-
-  # Sent user message about check
-  if(verbose){
-    message("done.")
-  }
-
   # Return message about issues
-  if(("individual" %in% level) && any(issues)){
+  if("individual" %in% level){
 
-    # Obtain IDs
-    ID_issues <- ulapply(usable_derivatives, function(x){
-      attributes(x)$ID
+    # Sent user message about check
+    if(verbose){
+      message("Checking for positive definite correlation matrices...", appendLF = FALSE)
+    }
+
+    # Check for correlation issues before processing
+    issues <- lvapply(usable_derivatives, function(x){
+
+      # Try to get correlations
+      attempt <- silent_call(try(
+        obtain_sample_correlations(
+          data = x, n = dim(x)[1], corr = corr,
+          na.data = na.data, verbose = verbose
+        )$correlation_matrix, silent = TRUE
+      ))
+
+      # Check for issues
+      return(
+        swiftelse(
+          is(attempt, "try-error") || !is_positive_definite(attempt), TRUE, FALSE
+        )
+      )
+
     })
 
-    .handleSimpleError(
-      h = warning,
-      msg = paste0(
-        "The following IDs were found to have missing data ",
-        "preventing their correlation matrices from being estimated:\n\n",
-        paste0(ID_issues[issues], collapse = ", "), "\n\n",
-        "These IDs will not have individual networks.",
-        swiftelse(
-          na.derivative == "none",
-          "\n\nTry setting 'na.derivative' to \"kalman\" (recommended), \"skipover\", or \"rowwise\"",
-          ""
-        ), "\n"
-      ),
-      call = "auto.correlate"
-    )
+    # Sent user message about check
+    if(verbose){
+      message("done.")
+    }
+
+    # Check for issues
+    if(any(issues)){
+
+      # Obtain IDs
+      ID_issues <- ulapply(usable_derivatives, function(x){
+        attributes(x)$ID
+      })
+
+      .handleSimpleError(
+        h = warning,
+        msg = paste0(
+          "The following IDs were found to have missing data ",
+          "preventing their correlation matrices from being estimated:\n\n",
+          paste0(ID_issues[issues], collapse = ", "), "\n\n",
+          "These IDs will not have individual networks.",
+          swiftelse(
+            na.derivative == "none",
+            "\n\nTry setting 'na.derivative' to \"kalman\" (recommended), \"skipover\", or \"rowwise\"",
+            ""
+          ), "\n"
+        ),
+        call = "auto.correlate"
+      )
+
+    }
+
+  }else{
+
+    # Individuals are not used, so no problems when stacking
+    issues <- rep(FALSE, n_individuals)
 
   }
 

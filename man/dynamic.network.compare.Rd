@@ -6,12 +6,12 @@
 \usage{
 dynamic.network.compare(
   data,
-  groups,
   paired = FALSE,
   corr = c("auto", "cor_auto", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
   model = c("BGGM", "glasso", "TMFG"),
   id = NULL,
+  group = NULL,
   n.embed = 5,
   n.embed.optimize = FALSE,
   tau = 1,
@@ -30,9 +30,6 @@ dynamic.network.compare(
 \item{data}{Matrix or data frame.
 Should consist only of variables to be used in the analysis as well as
 an ID column}
-
-\item{groups}{Numeric or character vector (length = \code{nrow(data)}).
-Group membership corresponding to each case in data}
 
 \item{paired}{Boolean (length = 1).
 Whether groups are repeated measures representing
@@ -104,6 +101,10 @@ See \code{\link[EGAnet]{TMFG}} for more details
 
 \item{id}{Numeric or character (length = 1).
 Number or name of the column identifying each individual.
+Defaults to \code{NULL}}
+
+\item{group}{Numeric or character (length = 1).
+Number of the column identifying group membership.
 Defaults to \code{NULL}}
 
 \item{n.embed}{Numeric (length = 1).
@@ -260,11 +261,11 @@ df <- do.call(rbind.data.frame, participants)
 \dontrun{
 # Perform comparison
 dynamic.network.compare(
-  data = df[,-2], groups = df[,2], paired = TRUE,
+  data = df, paired = TRUE,
   # EGA arguments
   corr = "auto", na.data = "pairwise", model = "glasso",
   # dynEGA arguments
-  id = NULL, n.embed = 3,
+  id = "ID", group = "Group", n.embed = 3,
   tau = 1, delta = 1, use.derivatives = 1,
   # Permutation arguments
   iter = 1000, ncores = 2, verbose = TRUE, seed = 42
@@ -306,11 +307,11 @@ df[df$Group == 3,] <- new_group
 \dontrun{
 # Perform comparison
 dynamic.network.compare(
-  data = df[,-2], groups = df[,2], paired = TRUE,
+  data = df, paired = TRUE,
   # EGA arguments
   corr = "auto", na.data = "pairwise", model = "glasso",
   # dynEGA arguments
-  id = NULL, n.embed = 3,
+  id = "ID", group = "Group", n.embed = 3,
   tau = 1, delta = 1, use.derivatives = 1,
   # Permutation arguments
   iter = 1000, ncores = 2, verbose = TRUE, seed = 42
