@@ -14,10 +14,10 @@ atan_penalty <- function(x, lambda, gamma = 0.01, ...)
 }
 
 #' @noRd
-# Updated 27.07.2025
-dbridge_penalty <- function(x, lambda, gamma = 5, ...)
+# Updated 22.11.2025
+bridge_penalty <- function(x, lambda, gamma = 1, ...)
 {
-  return(lambda * abs(x)^(2^(-gamma)))
+  return(lambda * abs(x)^gamma)
 }
 
 #' @noRd
@@ -36,9 +36,12 @@ l2_penalty <- function(x, lambda, ...)
 
 #' @noRd
 # Updated 12.01.2025
-lgp_penalty <- function(x, lambda, gamma = 5, ...)
+lomax_penalty <- function(x, lambda, gamma = 4, ...)
 {
-  return(lambda * abs(x)^(lambda / gamma))
+
+  # Return lambdas
+  return(lambda * (1 - (1 / (abs(x) + 1))^gamma))
+
 }
 
 #' @noRd
@@ -57,16 +60,6 @@ mcp_penalty <- function(x, lambda, gamma = 3, ...)
       gamma * lambda^2 / 2
     )
   )
-
-}
-
-#' @noRd
-# Updated 12.01.2025
-pop_penalty <- function(x, lambda, gamma = 4, ...)
-{
-
-  # Return lambdas
-  return(lambda * (1 - (1 / (abs(x) + 1))^gamma))
 
 }
 
@@ -90,13 +83,6 @@ scad_penalty <- function(x, lambda, gamma = 3.7, ...)
 
 }
 
-#' @noRd
-# Updated 28.01.2025
-spot_penalty <- function(x, lambda, gamma = 3, ...)
-{
-  return(2 * lambda / (1 + exp(-abs(x) * 2^gamma)) - lambda)
-}
-
 #%%%%%%%%%%%%%%%%%%
 ## Derivatives ----
 #%%%%%%%%%%%%%%%%%%
@@ -109,15 +95,20 @@ atan_derivative <- function(x, lambda, gamma = 0.01, ...)
 }
 
 #' @noRd
-# Updated 27.07.2025
-dbridge_derivative <- function(x, lambda, gamma = 5, ...)
+# Updated 22.11.2025
+bridge_derivative <- function(x, lambda, gamma = 1, eps = 1e-08, ...)
 {
 
-  # Bridge value
-  bridge_value <- 2^(-gamma)
+  # Check for gamma equal to zero
+  if(gamma == 0){
+    return(rep(lambda, length(x)))
+  }
+
+  # Otherwise, obtain absolute x
+  abs_x <- pmax(abs(x), eps)
 
   # Return derivative
-  return(swiftelse(gamma == 0, lambda, lambda * bridge_value * abs(x)^(bridge_value - 1)))
+  return(lambda * gamma * x * abs_x^(gamma - 2))
 
 }
 
@@ -136,10 +127,13 @@ l2_derivative <- function(x, lambda, ...)
 }
 
 #' @noRd
-# Updated 12.01.2025
-lgp_derivative <- function(x, lambda, gamma = 5, ...)
+# Updated 22.11.2025
+lomax_derivative <- function(x, lambda, gamma = 4, ...)
 {
-  return(lambda^2 * abs(x)^((lambda - gamma) / gamma) / gamma)
+
+  # Return lambdas
+  return((lambda * gamma) / (abs(x) + 1)^(gamma + 1))
+
 }
 
 #' @noRd
@@ -156,16 +150,6 @@ mcp_derivative <- function(x, lambda, gamma = 3, ...)
 }
 
 #' @noRd
-# Updated 12.01.2025
-pop_derivative <- function(x, lambda, gamma = 4, ...)
-{
-
-  # Return lambdas
-  return((lambda * gamma) / (abs(x) + 1)^(gamma + 1))
-
-}
-
-#' @noRd
 # Updated 08.08.2025
 scad_derivative <- function(x, lambda, gamma = 3.7, ...)
 {
@@ -173,6 +157,7 @@ scad_derivative <- function(x, lambda, gamma = 3.7, ...)
   # Pre-compute components
   abs_x <- abs(x)
   sign_x <- x / abs_x
+  sign_x <- swiftelse(is.na(sign_x), 0, sign_x)
   gamma_lambda <- gamma * lambda
 
   # Return derivative
@@ -185,28 +170,29 @@ scad_derivative <- function(x, lambda, gamma = 3.7, ...)
 
 }
 
-#' @noRd
-# Updated 12.01.2025
-spot_derivative <- function(x, lambda, gamma = 3, ...)
-{
-
-  # Obtain exponent
-  exponent <- exp(-abs(x) * 2^gamma)
-
-  # Return lambdas
-  return(lambda * 2^(gamma + 1) * exponent / (exponent + 1)^2)
-
-}
-
 #%%%%%%%%%%%%%%%%%%%%%%%%%
 ## Proximal Operators ----
 #%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #' @noRd
-# Updated 27.07.2025
-dbridge_proximal <- function(x, lambda, gamma = 5, ...)
+# Updated 22.11.2025
+bridge_proximal <- function(x, lambda, gamma = 1, eps = 1e-08, ...)
 {
-  return(l1_proximal(x, dbridge_derivative(x, lambda, gamma)))
+
+  # Check for gamma equal to zero
+  if(gamma == 0){
+    values <- rep(lambda, length(x))
+  }else{
+
+    # Compute absolute values and obtain values
+    abs_x <- pmax(abs(x), eps)
+    values <- lambda * gamma * abs_x^(gamma - 1)
+
+  }
+
+  # Return with l1 proximal
+  return(l1_proximal(x, values))
+
 }
 
 #' @noRd
@@ -224,10 +210,10 @@ l2_proximal <- function(x, lambda, ...)
 }
 
 #' @noRd
-# Updated 27.07.2025
-lgp_proximal <- function(x, lambda, gamma = 5, ...)
+# Updated 22.11.2025
+lomax_proximal <- function(x, lambda, gamma = 4, ...)
 {
-  return(l1_proximal(x, lgp_derivative(x, lambda, gamma)))
+  return(l1_proximal(x, lomax_derivative(x, lambda, gamma)))
 }
 
 #' @noRd
@@ -243,13 +229,6 @@ mcp_proximal <- function(x, lambda, gamma = 3, ...)
     )
   )
 
-}
-
-#' @noRd
-# Updated 27.07.2025
-pop_proximal <- function(x, lambda, gamma = 4, ...)
-{
-  return(l1_proximal(x, pop_derivative(x, lambda, gamma)))
 }
 
 #' @noRd
@@ -275,11 +254,4 @@ scad_proximal <- function(x, lambda, gamma = 3.7, ...)
     )
   )
 
-}
-
-#' @noRd
-# Updated 27.07.2025
-spot_proximal <- function(x, lambda, gamma = 3, ...)
-{
-  return(l1_proximal(x, spot_derivative(x, lambda, gamma)))
 }
