@@ -247,12 +247,12 @@
 #' @export
 #'
 # Apply non-convex regularization ----
-# Updated 22.11.2025
+# Updated 24.11.2025
 network.regularization <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
-    penalty = c("atan", "bridge", "l1", "l2", "lomax", "mcp", "scad"),
+    penalty = c("atan", "bridge", "l1", "l2", "lomax", "mcp", "scad", "weibull"),
     gamma = NULL, lambda = NULL, nlambda = 50, lambda.min.ratio = 0.01,
     penalize.diagonal = TRUE, optimize.lambda = FALSE,
     ic = c("AIC", "AICc", "BIC", "EBIC"), ebic.gamma = 0.50,
@@ -311,7 +311,8 @@ network.regularization <- function(
     "l2" = l2_derivative,
     "lomax" = lomax_derivative,
     "mcp" = mcp_derivative,
-    "scad" = scad_derivative
+    "scad" = scad_derivative,
+    "weibull" = weibull_derivative
   )
 
   # Check for gamma
@@ -330,6 +331,24 @@ network.regularization <- function(
 
   }
 
+  # Set scale
+  scale <- 0
+
+  # Check for Weibull function
+  if(penalty == "weibull"){
+
+    # Set partial correlations
+    P <- cor2pcor(S)
+
+    # Obtain values
+    values <- abs(P[lower.tri(P)])
+
+    # Compute scale and shape
+    scale <- mean(values)
+    gamma <- scale / sd(values)
+
+  }
+
   # Initialize lambda matrix
   lambda_matrix <- matrix(0, nrow = nodes, ncol = nodes)
 
@@ -343,13 +362,13 @@ network.regularization <- function(
       derivative_FUN = derivative_FUN,
       glasso_FUN = glasso_FUN, glasso_ARGS = glasso_ARGS,
       lambda_matrix = lambda_matrix, penalize.diagonal = penalize.diagonal,
-      ic = ic, n = n, nodes = nodes, ebic.gamma = ebic.gamma
+      ic = ic, n = n, nodes = nodes, ebic.gamma = ebic.gamma, scale = scale
     )
 
     # Obtain lambda matrix
-    lambda_matrix[] <- derivative_FUN(
-      x = K, lambda = optimized_lambda$minimum, gamma = gamma
-    )
+    lambda_matrix[] <- abs(derivative_FUN(
+      x = K, lambda = optimized_lambda$minimum, gamma = gamma, scale = scale
+    ))
 
     # Check for diagonal penalization
     if(!penalize.diagonal){
@@ -395,7 +414,7 @@ network.regularization <- function(
     lambda_list <- lapply(lambda, function(value){
 
       # Obtain lambda matrix
-      lambda_matrix[] <- derivative_FUN(x = K, lambda = value, gamma = gamma)
+      lambda_matrix[] <- abs(derivative_FUN(x = K, lambda = value, gamma = gamma, scale = scale))
 
       # Check for diagonal penalization
       if(!penalize.diagonal){
@@ -403,7 +422,7 @@ network.regularization <- function(
       }
 
       # Return lambda matrix
-      return(abs(lambda_matrix))
+      return(lambda_matrix)
 
     })
 
@@ -532,17 +551,19 @@ network.regularization_errors <- function(
 
 #' @noRd
 # lambda optimization function ----
-# Updated 06.01.2025
+# Updated 24.11.2025
 lambda_optimize <- function(
     lambda, gamma, K, S, derivative_FUN,
     glasso_FUN, glasso_ARGS,
     lambda_matrix, penalize.diagonal,
-    ic, n, nodes, ebic.gamma
+    ic, n, nodes, ebic.gamma, scale
 )
 {
 
   # Obtain lambda matrix
-  lambda_matrix[] <- derivative_FUN(x = K, lambda = lambda, gamma = gamma)
+  lambda_matrix[] <- abs(
+    derivative_FUN(x = K, lambda = lambda, gamma = gamma, scale = scale)
+  )
 
   # Check for diagonal penalization
   if(!penalize.diagonal){

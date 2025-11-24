@@ -9,7 +9,7 @@ network.regularization(
   n = NULL,
   corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
-  penalty = c("atan", "bridge", "l1", "l2", "lomax", "mcp", "scad"),
+  penalty = c("atan", "bridge", "l1", "l2", "lomax", "mcp", "scad", "weibull"),
   gamma = NULL,
   lambda = NULL,
   nlambda = 50,

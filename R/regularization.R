@@ -83,6 +83,19 @@ scad_penalty <- function(x, lambda, gamma = 3.7, ...)
 
 }
 
+#' @noRd
+# Updated 22.11.2025
+weibull_penalty <- function(x, lambda, gamma, scale, ...)
+{
+
+  # Pre-compute components
+  x <- abs(x)
+
+  # Return penalty
+  return(lambda * (1 - exp(-(x / scale)^gamma)))
+
+}
+
 #%%%%%%%%%%%%%%%%%%
 ## Derivatives ----
 #%%%%%%%%%%%%%%%%%%
@@ -170,6 +183,20 @@ scad_derivative <- function(x, lambda, gamma = 3.7, ...)
 
 }
 
+#' @noRd
+# Updated 22.11.2025
+weibull_derivative <- function(x, lambda, gamma, scale, ...)
+{
+
+  # Pre-compute components
+  abs_x <- abs(x)
+  x_scale <- abs_x / scale
+
+  # Return penalty
+  return(lambda * sign(x) * (gamma / scale) * x_scale^(gamma - 1) * exp(-x_scale^gamma))
+
+}
+
 #%%%%%%%%%%%%%%%%%%%%%%%%%
 ## Proximal Operators ----
 #%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -254,4 +281,11 @@ scad_proximal <- function(x, lambda, gamma = 3.7, ...)
     )
   )
 
+}
+
+#' @noRd
+# Updated 22.11.2025
+weibull_proximal <- function(x, lambda, gamma, scale, ...)
+{
+  return(l1_proximal(x, weibull_derivative(x, lambda, gamma, scale)))
 }
