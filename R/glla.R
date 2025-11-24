@@ -90,7 +90,7 @@
 #' @export
 #'
 # Generalized local linear approximation ----
-# Updated 07.08.2025
+# Updated 24.11.2025
 glla <- function(x, n.embed, tau, delta, order, na.derivative = c("none", "kalman", "rowwise", "skipover"))
 {
 
@@ -124,10 +124,10 @@ glla <- function(x, n.embed, tau, delta, order, na.derivative = c("none", "kalma
   # Add names
   if(order != 0){
     dimnames(derivative_estimates)[[2]] <- c(
-      "Obs", paste0("DerivOrd", seq_len(order))
+      "DerivOrd0", paste0("DerivOrd", seq_len(order))
     )
   }else{
-    dimnames(derivative_estimates)[[2]] <- "Obs"
+    dimnames(derivative_estimates)[[2]] <- "DerivOrd0"
   }
 
   # Return derivative estimates
@@ -184,7 +184,7 @@ glla_errors <- function(x, n.embed, tau, delta, order)
 #
 #   # Estimate the derivatives
 #   Y <- X%*%L%*%solve(t(L)%*%L)
-#   colnames(Y) <- c("Obs", paste0("DerivOrd", 1:order))
+#   colnames(Y) <- c("DerivOrd0", paste0("DerivOrd", 1:order))
 #   return(Y)
 # }
 
@@ -220,9 +220,12 @@ glla_setup <- function(n.embed, tau, delta, order)
 
 #' @noRd
 # Kalman Smoothing ----
-# Updated 07.08.2025
+# Updated 24.11.2025
 impute_kalman <- function(x)
 {
+
+  # Ensure numeric
+  x <- as.numeric(x)
 
   # Make copy
   x_copy <- x

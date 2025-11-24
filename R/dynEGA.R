@@ -390,7 +390,7 @@
 #' @export
 #'
 # dynEGA ----
-# Updated 17.11.2025
+# Updated 24.11.2025
 dynEGA <- function(
     # `dynEGA` arguments
     data, id = NULL, group = NULL,
@@ -487,6 +487,7 @@ dynEGA <- function(
     )
 
     # Add class
+    names(individual_results) <- names(results$Derivatives$Estimates)
     results$dynEGA$individual <- individual_results
     class(results$dynEGA$individual) <- "dynEGA.Individual"
 
@@ -550,6 +551,7 @@ dynEGA <- function(
       )
 
       # Add class
+      names(individual_results) <- names(results$Derivatives$Estimates)
       results$dynEGA$individual <- individual_results
       class(results$dynEGA$individual) <- "dynEGA.Individual"
 
@@ -1615,7 +1617,7 @@ individual_derivatives <- function(
 
 #' @noRd
 # Handle zero and non-positive definite (co)variances ----
-# Updated 21.11.2025
+# Updated 25.11.2025
 handle_derivatives <- function(
     derivative_list, derivative_index, na.derivative,
     zero.jitter, level, corr, na.data, seed, verbose
@@ -1722,9 +1724,9 @@ handle_derivatives <- function(
     if(any(issues)){
 
       # Obtain IDs
-      ID_issues <- ulapply(usable_derivatives, function(x){
-        attributes(x)$ID
-      })
+      ID_issues <- unique(
+        ulapply(usable_derivatives, function(x){attributes(x)$ID})
+      )
 
       .handleSimpleError(
         h = warning,
@@ -1750,6 +1752,9 @@ handle_derivatives <- function(
     issues <- rep(FALSE, n_individuals)
 
   }
+
+  # Ensure names remain
+  names(usable_derivatives) <- names(derivative_list)
 
   # Return derivatives
   return(usable_derivatives[!issues])
