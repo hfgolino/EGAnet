@@ -179,3 +179,72 @@ rmsea_ci <- function(chi_square, df, n, nDF, ci)
   return(c(lower = rmsea_lower, upper = rmsea_upper))
 
 }
+
+#' @noRd
+# Compute fit metrics ----
+# Updated 25.11.2025
+fit <- function(n, p, R, S, loadings, correlations, structure, ci, remove_correlations = FALSE)
+{
+
+  # Get number of communities
+  m <- dim(loadings)[2]
+
+  # Total number of parameters
+  zero_parameters <- p * (p - 1) / 2
+  loading_parameters <- p * m - sum(loadings == 0)
+  correlation_parameters <- ((m * (m - 1)) / 2)
+  model_parameters <- loading_parameters + swiftelse(
+    remove_correlations, 0, correlation_parameters
+  )
+
+  # Baseline
+  baseline <- diag(1, nrow = p, ncol = p)
+  baseline_ML <- log(det(baseline)) + sum(diag(S %*% solve(baseline))) - log(det(S)) - p
+  baseline_chi_square <- n * baseline_ML
+  baseline_tli <- baseline_chi_square / zero_parameters
+
+  # Compute traditional SEM measures
+  loglik_ML <- log(det(R)) + sum(diag(S %*% solve(R))) - log(det(S)) - p
+  chi_square <- n * loglik_ML
+  df <- zero_parameters - model_parameters
+  chi_max <- max(chi_square - df, 0)
+  nDF <- n * df
+  rmsea_null <- nDF * 0.0025 # 0.05^2
+
+  # log-likelihood
+  loglik <- -(n / 2) * (p * log(2 * pi) + log(det(R)) + sum(diag(S %*% solve(R))))
+  # Assumes no mean structure (or that all means are equal to zero)
+
+  # Compute TEFI
+  TEFI <- tefi(R, structure = structure)$VN.Entropy.Fit
+
+  # Obtain RMSEA confidence intervals
+  rmsea_cis <- rmsea_ci(chi_square, df, n, nDF, ci)
+
+  # Get fit indices
+  fit_indices <- c(
+    # Traditional fit measures
+    chisq = chi_square, df = df, chisq.p.value = 1 - pchisq(chi_square, df = df),
+    RMSEA = sqrt(chi_max / nDF),
+    rmsea_cis,
+    RMSEA.p.value = 1 - pchisq(chi_max, df = df, ncp = rmsea_null),
+    CFI = 1 - (chi_max / max(baseline_chi_square - zero_parameters, 0)),
+    TLI = (baseline_tli - (chi_square / df)) / (baseline_tli - 1),
+    SRMR = srmr(S, R),
+    # Gaussian log-likelihood measures
+    logLik = loglik,
+    AIC = -2 * loglik + 2 * model_parameters,
+    BIC = -2 * loglik + model_parameters * log(n),
+    # TEFI measures
+    TEFI = TEFI,
+    TEFI.adj = TEFI - (-2 * log(model_parameters) + mean(abs(correlations)))
+  )
+
+  # Rename confidence intervals
+  names(fit_indices)[names(fit_indices) %in% c("lower", "upper")] <-
+  paste("RMSEA", format_integer(ci * 100, 1), c("lower", "upper"), sep = ".")
+
+  # Return log-likelihood
+  return(fit_indices)
+
+}
