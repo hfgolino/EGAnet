@@ -77,6 +77,11 @@
 #'
 #' }
 #'
+#' @param forceReturn Boolean (length = 1).
+#' Whether correlation matrix should be forced to return.
+#' Defaults to \code{FALSE}.
+#' Set to \code{TRUE} to receive the correlation matrix "as is"
+#'
 #' @param verbose Boolean (length = 1).
 #' Whether messages should be printed.
 #' Defaults to \code{FALSE}
@@ -97,7 +102,7 @@
 #' @export
 #'
 # Automatic correlations ----
-# Updated 16.03.2024
+# Updated 29.11.2025
 auto.correlate <- function(
     data, # Matrix or data frame
     corr = c("cosine", "kendall", "pearson", "spearman"), # allow changes to standard correlations
@@ -106,13 +111,14 @@ auto.correlate <- function(
     na.data = c("pairwise", "listwise"), # use available or complete values
     empty.method = c("none", "zero", "all"), # zero frequencies in categorical correlations
     empty.value = c("none", "point_five", "one_over"), # value to use in zero cells
+    forceReturn = FALSE, # return even if bad correlation matrix
     verbose = FALSE, # don't print messages
     ... # not actually used
 )
 {
 
   # Argument errors (return data in case of tibble)
-  data <- auto.correlate_errors(data, ordinal.categories, forcePD, verbose, ...)
+  data <- auto.correlate_errors(data, ordinal.categories, forcePD, forceReturn, verbose, ...)
 
   # Check for missing arguments (argument, default, function)
   corr <- set_default(corr, "pearson", auto.correlate)
@@ -248,8 +254,17 @@ auto.correlate <- function(
   # Set diagonal as one
   diag(correlation_matrix) <- 1
 
+  # Try to test for positive definite
+  PD <- try(is_positive_definite(correlation_matrix), silent = TRUE)
+  PD_error <- is(PD, "try-error")
+
+  # Check for error
+  if(PD_error && forceReturn){
+    return(correlation_matrix)
+  }
+
   # Determine whether matrix is positive definite
-  if(!is_positive_definite(correlation_matrix) && forcePD){
+  if((PD_error || !PD) && forcePD){
 
     # Send warning to user (if `verbose`)
     if(verbose){
@@ -330,8 +345,8 @@ auto.correlate <- function(
 
 #' @noRd
 # Errors ----
-# Updated 07.09.2023
-auto.correlate_errors <- function(data, ordinal.categories, forcePD, verbose, ...)
+# Updated 29.11.2025
+auto.correlate_errors <- function(data, ordinal.categories, forcePD, forceReturn, verbose, ...)
 {
 
   # 'data' errors
@@ -354,6 +369,10 @@ auto.correlate_errors <- function(data, ordinal.categories, forcePD, verbose, ..
   # 'verbose' errors
   length_error(verbose, 1, "auto.correlate")
   typeof_error(verbose, "logical", "auto.correlate")
+
+  # 'forceReturn' errors
+  length_error(forceReturn, 1, "auto.correlate")
+  typeof_error(forceReturn, "logical", "auto.correlate")
 
   # Check for usable data
   if(needs_usable(list(...))){

@@ -1448,7 +1448,7 @@ needs_usable <- function(ellipse)
 #' @noRd
 # Obtain data, sample size, correlation matrix ----
 # Generic function to get the usual needed inputs
-# Updated 21.09.2024
+# Updated 29.11.2025
 obtain_sample_correlations <- function(data, n, corr, na.data, verbose, ...)
 {
 
