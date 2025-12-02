@@ -100,7 +100,7 @@
 #' @export
 #'
 # Network Loadings ----
-# Updated 26.05.2025
+# Updated 02.12.2025
 net.loads <- function(
     A, wc, loading.method = c("original", "revised"),
     scaling = 2, rotation = NULL,
@@ -242,7 +242,7 @@ net.loads <- function(
     rotation_OUTPUT <- do.call(rotation_FUN, rotation_ARGS)
 
     # Align rotated loadings
-    aligned_output <- fungible::faAlign(
+    aligned_output <- faAlign_fungible(
       F1 = standardized,
       F2 = rotation_OUTPUT$loadings,
       Phi2 = rotation_OUTPUT$Phi
@@ -780,6 +780,69 @@ rotation_defaults <- function(rotation, rotation_ARGS, ellipse)
 
   # Return arguments
   return(rotation_ARGS)
+
+}
+
+#' @noRd
+# Align loadings ----
+# Uses least squares method from {fungible}'s `faAlign` function
+# {fungible} version 2.3
+# Updated 02.12.2025
+faAlign_fungible <- function(F1, F2, Phi2)
+{
+
+  # Start with unique match to TRUE
+  UniqueMatch <- TRUE
+
+  # Get number of dimensions
+  Nfac <- dim(F1)[2]
+
+  # Compute modified least squares (i.e., squared distance) matrix
+  A <-  matrix(colSums(F1^2), Nfac, Nfac, byrow=FALSE)
+  B <- t(matrix(colSums(F2^2),Nfac, Nfac, byrow=FALSE))
+
+  # When factors are optimally reflected the cross product will be positive
+  LSmat <- A + B  - 2 * abs(crossprod(F1, F2))
+
+  # Test for unique matches
+  Qmatch <- apply(LSmat, 1, which.min)
+  if(length(unique(Qmatch)) != Nfac){
+    UniqueMatch <- FALSE
+  }
+
+  # If unique match not found minimize sum of squares
+  if(UniqueMatch == FALSE){
+    Qmatch <- clue::solve_LSAP(LSmat, maximum = FALSE)
+  }
+
+  # Map factors
+  FactorMap <- rbind(seq_len(Nfac), Qmatch)
+
+  # This allows a column of F1 to have all zeros
+  F1noZeros[,colSums(F1) == 0] <- 1
+
+  # Obtain factor loading matrix
+  Dsgn <- diag(sign(colSums(F1noZeros * F2[,Qmatch])))
+  F2 <- F2[, Qmatch] %*% Dsgn
+
+  # Set names
+  rownames(FactorMap) <- c("Original Order", "Sorted Order")
+
+  # Obtain factor correlation matrix
+  if(!is.null(Phi2)){
+    Phi2 <- Dsgn %*% Phi2[Qmatch, Qmatch] %*% Dsgn
+  }
+
+  # Return results
+  return(
+    list(
+      F2 = F2,
+      Phi2 = Phi2,
+      FactorMap = FactorMap,
+      UniqueMatch = UniqueMatch,
+      Dsgn = Dsgn
+    )
+  )
 
 }
 

@@ -11,6 +11,8 @@ WEBSITE: https://r-ega.net
 
 +	ADD: `network.fit` for traditional fit statistics (only accurate for continuous data)
 
++	ADD: `known.graph` to refit without regularization or allow a graph to be estimated with weights when it is known
+
 +	CHANGE: `network.nonconvex` changed to `network.regularization` for more generic implementations
 
 +	UPDATE: zero variance time series handling in `dynEGA` functions
