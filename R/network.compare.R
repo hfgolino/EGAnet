@@ -151,7 +151,7 @@
 #' @export
 #'
 # Perform permutations for network structures ----
-# Updated 13.05.2025
+# Updated 14.05.2025
 network.compare <- function(
     base, comparison,
     # EGA arguments
@@ -177,6 +177,8 @@ network.compare <- function(
 
   # Check for input errors
   error_return <- network.compare_errors(base, comparison, iter, verbose, seed, ...)
+  base <- error_return$base
+  comparison <- error_return$comparison
 
   # Get ellipse
   ellipse <- list(...)
@@ -207,13 +209,11 @@ network.compare <- function(
   )$network
 
   # Get empirical estimates
-  empirical_values <- abs(
-    c(
-      "Frobenius" = frobenius(base_empirical_network, comparison_empirical_network),
-      "JSS" = 1 - jsd(base_empirical_network, comparison_empirical_network, ...),
-      "Total Strength" = sum(colSums(abs(base_empirical_network), na.rm = TRUE), na.rm = TRUE) -
-        sum(colSums(abs(comparison_empirical_network), na.rm = TRUE), na.rm = TRUE)
-    )
+  empirical_values <- c(
+    "Frobenius" = frobenius(base_empirical_network, comparison_empirical_network),
+    "JSS" = 1 - jsd(base_empirical_network, comparison_empirical_network, ...),
+    "Total Strength" = sum(colSums(abs(base_empirical_network), na.rm = TRUE), na.rm = TRUE) -
+      sum(colSums(abs(comparison_empirical_network), na.rm = TRUE), na.rm = TRUE)
   )
 
   # Empirical differences
@@ -388,7 +388,7 @@ network.compare_errors <- function(base, comparison, iter, verbose, seed, ...)
 
 #' @exportS3Method
 # S3 Print Method ----
-# Updated 02.09.2024
+# Updated 16.05.2025
 print.network.compare <- function(x, ...)
 {
 
@@ -400,8 +400,8 @@ print.network.compare <- function(x, ...)
     paste0(
       "\nNumber of significant edges (p <= 0.05): ",
       length(which(x$edges$p.value <= 0.05)) / 2,
-      "\nNumber of significant edges (p_BH <= 0.10): ",
-      length(which(x$edges$p.adjusted <= 0.10)) / 2
+      "\nNumber of significant edges (p_BH <= 0.05): ",
+      length(which(x$edges$p.adjusted <= 0.05)) / 2
     )
   )
 

@@ -8,6 +8,7 @@ compare.EGA.plots(
   ...,
   input.list = NULL,
   base = 1,
+  same.layout = TRUE,
   labels = NULL,
   rows = NULL,
   columns = NULL,
@@ -41,6 +42,11 @@ as an input}
 Plot to be used as the base for the configuration of the networks.
 Uses the number of the order in which the plots are input.
 Defaults to \code{1} or the first plot}
+
+\item{same.layout}{Boolean (length = 1).
+Whether the nodes should be in the same position for all networks.
+Defaults to \code{TRUE}.
+Set to \code{FALSE} for their individual layouts}
 
 \item{labels}{Character (same length as input).
 Labels for each \code{EGAnet} object}

@@ -12,6 +12,7 @@ auto.correlate(
   na.data = c("pairwise", "listwise"),
   empty.method = c("none", "zero", "all"),
   empty.value = c("none", "point_five", "one_over"),
+  forceReturn = FALSE,
   verbose = FALSE,
   ...
 )
@@ -88,6 +89,11 @@ number of cells based on \code{empty.method}. For
 \code{empty.method = "zero"}, \code{n} equals the number of zero cells
 
 }}
+
+\item{forceReturn}{Boolean (length = 1).
+Whether correlation matrix should be forced to return.
+Defaults to \code{FALSE}.
+Set to \code{TRUE} to receive the correlation matrix "as is"}
 
 \item{verbose}{Boolean (length = 1).
 Whether messages should be printed.

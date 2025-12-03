@@ -90,7 +90,7 @@
 #' @export
 #'
 # Generalized local linear approximation ----
-# Updated 07.08.2025
+# Updated 24.11.2025
 glla <- function(x, n.embed, tau, delta, order, na.derivative = c("none", "kalman", "rowwise", "skipover"))
 {
 
@@ -220,9 +220,12 @@ glla_setup <- function(n.embed, tau, delta, order)
 
 #' @noRd
 # Kalman Smoothing ----
-# Updated 07.08.2025
+# Updated 24.11.2025
 impute_kalman <- function(x)
 {
+
+  # Ensure numeric
+  x <- as.numeric(x)
 
   # Make copy
   x_copy <- x

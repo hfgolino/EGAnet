@@ -1,7 +1,8 @@
-#' @title GLASSO with Non-convex Penalties
+#' @title Regularized Networks with Convex and Non-convex Penalties
 #'
-#' @description The graphical least absolute shrinkage and selection operator with
-#' a non-convex regularization penalties
+#' @description A general function to estimate Gaussian graphical models using
+#' regularization penalties. All non-convex penalties are implemented using
+#' the Local Linear Approximation (LLA: Fan & Li, 2001)
 #'
 #' @param data Matrix or data frame.
 #' Should consist only of variables to be used in the analysis
@@ -58,13 +59,39 @@
 #'
 #' \itemize{
 #'
-#' \item \code{"iPOT"} --- Inverse power of two
+#' \item \code{"atan"} --- Arctangent (Wang & Zhu, 2016)
+#' \deqn{\lambda \cdot (\gamma + 2 \pi) \cdot \arctan(\frac{|x|}{\gamma})}
 #'
-#' \item \code{"LGP"} --- Lambda-gamma power
+#' \item \code{"bridge"} --- Bridge (Fu, 1998)
+#' \deqn{\lambda \cdot |x|^\gamma}
 #'
-#' \item \code{"POP"} --- Plus one Pareto
+#' \item \code{"l1"} --- LASSO (Tibshirani, 1996)
+#' \deqn{\lambda \cdot |x|}
 #'
-#' \item \code{"SPOT"} --- Sigmoid power of two (default)
+#' \item \code{"l2"} --- Ridge (Hoerl & Kennard, 1970)
+#' \deqn{\lambda \cdot x^2}
+#'
+#' \item \code{"lomax"} --- Lomax (Lomax, 1951)
+#' \deqn{\lambda \cdot (1 - (\frac{1}{(|x| + 1)^\gamma}))}
+#'
+#' \item \code{"mcp"} --- Minimax Concave Penalty (Zhang, 2010)
+#' \deqn{
+#' P(x; \lambda, \gamma) =
+#' \begin{cases}
+#' \lambda |x| - \frac{x^2}{2\gamma} & \text{if } |x| \leq \gamma\lambda \\
+#' \frac{\gamma \lambda^2}{2} & \text{if } |x| > \gamma\lambda
+#' \end{cases}
+#' }
+#'
+#' \item \code{"scad"} --- Smoothly Clipped Absolute Deviation (Fan & Li, 2001)
+#' \deqn{
+#' P(x; \lambda, \gamma) =
+#' \begin{cases}
+#' \lambda |x| & \text{if } |x| \leq \lambda \\
+#' -\frac{|x|^2 - 2\gamma\lambda|x| + \lambda^2}{2(\gamma - 1)} & \text{if } \lambda < |x| \leq \gamma\lambda \\
+#' \frac{(\gamma + 1)\lambda^2}{2} & \text{if } |x| > \gamma\lambda
+#' \end{cases}
+#' }
 #'
 #' }
 #'
@@ -74,13 +101,15 @@
 #'
 #' \itemize{
 #'
-#' \item \code{"iPOT"} = 5
+#' \item \code{"atan"} = 0.01
 #'
-#' \item \code{"LGP"} = 5
+#' \item \code{"bridge"} = 1
 #'
-#' \item \code{"POP"} = 4
+#' \item \code{"lomax"} = 4
 #'
-#' \item \code{"SPOT"} = 3
+#' \item \code{"mcp"} = 3
+#'
+#' \item \code{"scad"} = 3.7
 #'
 #' }
 #'
@@ -99,9 +128,11 @@
 #' Should the diagonal be penalized?
 #' Defaults to \code{FALSE}
 #'
-#' @param optimize.over Character (length = 1).
-#' Whether optimization of lambda, gamma, both, or no hyperparamters should be performed.
-#' Defaults to \code{"none"} or no optimization
+#' @param optimize.lambda Boolean (length = 1).
+#' Whether optimization of lambda should be performed.
+#' Defaults to \code{FALSE} or grid search over lambda.
+#' If \code{TRUE}, then \code{\link[stats]{optimize}} is used
+#' to find the optimal lambda
 #'
 #' @param ic Character (length = 1).
 #' What information criterion should be used for model selection?
@@ -165,24 +196,65 @@
 #' @author Alexander P. Christensen <alexpaulchristensen at gmail.com> and
 #' Hudson Golino <hfg9s at virginia.edu>
 #'
+#' @references
+#'
+#' \strong{SCAD penalty and Local Linear Approximation} \cr
+#' Fan, J., & Li, R. (2001).
+#' Variable selection via nonconcave penalized likelihood and its oracle properties.
+#' \emph{Journal of the American Statistical Association}, \emph{96}(456), 1348--1360.
+#'
+#' \strong{Bridge penalty} \cr
+#' Fu, W. J. (1998). Penalized regressions: The bridge versus the lasso.
+#' \emph{Journal of Computational and Graphical Statistics}, \emph{7}(3), 397--416.
+#'
+#' \strong{L2 penalty} \cr
+#' Hoerl, A. E., & Kennard, R. W. (1970).
+#' Ridge regression: Biased estimation for nonorthogonal problems.
+#' \emph{Technometrics}, \emph{12}(1), 55--67.
+#'
+#' \strong{Lomax penalty} \cr
+#' Lomax, K. S. (1954).
+#' Business failures: Another example of the analysis of failure data.
+#' \emph{Journal of the American Statistical Association}, \emph{49}(268), 847--852.
+#'
+#' \strong{L1 penalty} \cr
+#' Tibshirani, R. (1996).
+#' Regression shrinkage and selection via the lasso.
+#' \emph{Journal of the Royal Statistical Society: Series B (Methodological)}, \emph{58}(1), 267--288.
+#'
+#' \strong{Atan penalty} \cr
+#' Wang, Y., & Zhu, L. (2016).
+#' Variable selection and parameter estimation with the Atan regularization method.
+#' \emph{Journal of Probability and Statistics}, \emph{2016}, 1--12.
+#'
+#' \strong{Original simulation in psychometric networks} \cr
+#' Williams, D. R. (2020).
+#' Beyond lasso: A survey of nonconvex regularization in Gaussian graphical models.
+#' \emph{PsyArXiv}.
+#'
+#' \strong{MCP penalty} \cr
+#' Zhang, C.-H. (2010).
+#' Nearly unbiased variable selection under minimax concave penalty.
+#' \emph{Annals of Statistics}, \emph{38}(2), 894--942.
+#'
 #' @examples
 #' # Obtain data
 #' wmt <- wmt2[,7:24]
 #'
 #' # Obtain network
-#' awe_network <- network.nonconvex(data = wmt)
+#' l1_network <- network.regularization(data = wmt)
 #'
 #' @export
 #'
 # Apply non-convex regularization ----
-# Updated 07.03.2025
-network.nonconvex <- function(
+# Updated 24.11.2025
+network.regularization <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
-    penalty = c("iPOT", "LGP", "POP", "SPOT"),
+    penalty = c("atan", "bridge", "l1", "l2", "lomax", "mcp", "scad", "weibull"),
     gamma = NULL, lambda = NULL, nlambda = 50, lambda.min.ratio = 0.01,
-    penalize.diagonal = TRUE, optimize.over = c("none", "lambda", "both"),
+    penalize.diagonal = TRUE, optimize.lambda = FALSE,
     ic = c("AIC", "AICc", "BIC", "EBIC"), ebic.gamma = 0.50,
     fast = TRUE, verbose = FALSE, ...
 )
@@ -191,16 +263,16 @@ network.nonconvex <- function(
   # Check for missing arguments (argument, default, function)
   # Uses actual function they will be used in
   # (keeping non-function choices for `cor_auto`)
-  corr <- set_default(corr, "auto", network.nonconvex)
-  na.data <- set_default(na.data, "pairwise", network.nonconvex)
-  penalty <- set_default(penalty, "spot", network.nonconvex)
-  optimize.over <- set_default(optimize.over, "none", network.nonconvex)
-  ic <- set_default(ic, "bic", network.nonconvex)
+  corr <- set_default(corr, "auto", network.regularization)
+  na.data <- set_default(na.data, "pairwise", network.regularization)
+  penalty <- set_default(penalty, "l1", network.regularization)
+  ic <- set_default(ic, "bic", network.regularization)
 
   # Argument errors (return data in case of tibble)
-  data <- network.nonconvex_errors(
+  data <- network.regularization_errors(
     data, n, gamma, nlambda, lambda.min.ratio,
-    penalize.diagonal, ebic.gamma, fast, verbose, ...
+    penalize.diagonal, optimize.lambda,
+    ebic.gamma, fast, verbose, ...
   )
 
   # Get necessary inputs
@@ -233,17 +305,101 @@ network.nonconvex <- function(
   # Get derivative function
   derivative_FUN <- switch(
     penalty,
-    "ipot" = ipot_derivative,
-    "lgp" = lgp_derivative,
-    "pop" = pop_derivative,
-    "spot" = spot_derivative
+    "atan" = atan_derivative,
+    "bridge" = bridge_derivative,
+    "l1" = l1_derivative,
+    "l2" = l2_derivative,
+    "lomax" = lomax_derivative,
+    "mcp" = mcp_derivative,
+    "scad" = scad_derivative,
+    "weibull" = weibull_derivative
   )
+
+  # Check for gamma
+  if(is.null(gamma)){
+
+    # Set defaults
+    gamma <- switch(
+      penalty,
+      "atan" = 0.01,
+      "bridge" = 1,
+      "lomax" = 4,
+      "mcp" = 3,
+      "scad" = 3.7,
+      0
+    )
+
+  }
+
+  # Set scale
+  scale <- 0
+
+  # Check for Weibull function
+  if(penalty == "weibull"){
+
+    # Set partial correlations
+    P <- cor2pcor(S)
+
+    # Obtain values
+    values <- abs(P[lower.tri(P)])
+
+    # Compute scale and shape
+    scale <- mean(values)
+    gamma <- scale / sd(values)
+
+  }
 
   # Initialize lambda matrix
   lambda_matrix <- matrix(0, nrow = nodes, ncol = nodes)
 
   # Check for optimization
-  if(optimize.over == "none"){
+  if(optimize.lambda){
+
+    # Optimize for lambda
+    optimized_lambda <- optimize(
+      f = lambda_optimize, interval = c(0, swiftelse(penalty == "l2", 10, 1)),
+      gamma = gamma, K = K, S = S,
+      derivative_FUN = derivative_FUN,
+      glasso_FUN = glasso_FUN, glasso_ARGS = glasso_ARGS,
+      lambda_matrix = lambda_matrix, penalize.diagonal = penalize.diagonal,
+      ic = ic, n = n, nodes = nodes, ebic.gamma = ebic.gamma, scale = scale
+    )
+
+    # Obtain lambda matrix
+    lambda_matrix[] <- abs(derivative_FUN(
+      x = K, lambda = optimized_lambda$minimum, gamma = gamma, scale = scale
+    ))
+
+    # Check for diagonal penalization
+    if(!penalize.diagonal){
+      diag(lambda_matrix) <- 0
+    }
+
+    # Set lambda matrix
+    glasso_ARGS$rho <- lambda_matrix
+
+    # Estimate output
+    output <- do.call(what = glasso_FUN, args = glasso_ARGS)
+
+    # Get R
+    R <- output$w
+
+    # Get W
+    W <- wi2net(output$wi)
+    dimnames(R) <- dimnames(W) <- dimnames(S)
+
+    # Return results
+    return(
+      list(
+        network = W, K = output$wi, R = R,
+        penalty = penalty, lambda = optimized_lambda$minimum,
+        gamma = gamma, criterion = ic,
+        IC = optimized_lambda$objective, correlation = S
+      )
+    )
+
+
+  }else{
 
     # Simplify source for fewer computations (minimal improvement)
     S_zero_diagonal <- S - diag(nodes) # makes diagonal zero
@@ -254,25 +410,11 @@ network.nonconvex <- function(
     # Obtain lambda sequence
     lambda_sequence <- seq_len(nlambda)
 
-    # Check for gamma
-    if(is.null(gamma)){
-
-      # Set defaults
-      gamma <- switch(
-        penalty,
-        "ipot" = 5,
-        "lgp" = 5,
-        "pop" = 4,
-        "spot" = 3
-      )
-
-    }
-
     # Obtain lambda matrices
     lambda_list <- lapply(lambda, function(value){
 
       # Obtain lambda matrix
-      lambda_matrix[] <- derivative_FUN(x = K, lambda = value, gamma = gamma)
+      lambda_matrix[] <- abs(derivative_FUN(x = K, lambda = value, gamma = gamma, scale = scale))
 
       # Check for diagonal penalization
       if(!penalize.diagonal){
@@ -322,203 +464,29 @@ network.nonconvex <- function(
       )
     )
 
-
-  }else if(optimize.over == "lambda"){ # Same range between 0 and 1
-
-    # Check for gamma
-    if(is.null(gamma)){
-
-      # Set defaults
-      gamma <- switch(
-        penalty,
-        "ipot" = 5,
-        "lgp" = 5,
-        "pop" = 4,
-        "spot" = 3
-      )
-
-    }
-
-    # Optimize for lambda
-    optimized_lambda <- optimize(
-      f = lambda_optimize, interval = c(0, 1),
-      gamma = gamma, K = K, S = S,
-      derivative_FUN = derivative_FUN,
-      glasso_FUN = glasso_FUN, glasso_ARGS = glasso_ARGS,
-      lambda_matrix = lambda_matrix, penalize.diagonal = penalize.diagonal,
-      ic = ic, n = n, nodes = nodes, ebic.gamma = ebic.gamma
-    )
-
-    # Obtain lambda matrix
-    lambda_matrix[] <- derivative_FUN(
-      x = K, lambda = optimized_lambda$minimum, gamma = gamma
-    )
-
-    # Check for diagonal penalization
-    if(!penalize.diagonal){
-      diag(lambda_matrix) <- 0
-    }
-
-    # Set lambda matrix
-    glasso_ARGS$rho <- lambda_matrix
-
-    # Estimate output
-    output <- do.call(what = glasso_FUN, args = glasso_ARGS)
-
-    # Get R
-    R <- output$w
-
-    # Get W
-    W <- wi2net(output$wi)
-    dimnames(R) <- dimnames(W) <- dimnames(S)
-
-    # Return results
-    return(
-      list(
-        network = W, K = output$wi, R = R,
-        penalty = penalty, lambda = optimized_lambda$minimum,
-        gamma = gamma, criterion = ic,
-        IC = optimized_lambda$objective, correlation = S
-      )
-    )
-
-
-  }else if(optimize.over == "gamma"){
-
-    # Set bounds for gamma
-    bounds <- switch(
-      penalty,
-      "ipot" = c(3, 7),
-      "lgp" = c(1, 10),
-      "pop" = c(1, 10),
-      "spot" = c(1, 5)
-    )
-
-    # Optimize for gamma
-    optimized_gamma <- optimize(
-      f = gamma_optimize, interval = bounds,
-      lambda = swiftelse(is.null(lambda), 0.10, lambda),
-      K = K, S = S, derivative_FUN = derivative_FUN,
-      glasso_FUN = glasso_FUN, glasso_ARGS = glasso_ARGS,
-      lambda_matrix = lambda_matrix, penalize.diagonal = penalize.diagonal,
-      ic = ic, n = n, nodes = nodes, ebic.gamma = ebic.gamma
-    )
-
-    # Obtain lambda matrix
-    lambda_matrix[] <- derivative_FUN(
-      x = K, lambda = lambda, gamma = optimized_gamma$minimum
-    )
-
-    # Check for diagonal penalization
-    if(!penalize.diagonal){
-      diag(lambda_matrix) <- 0
-    }
-
-    # Set lambda matrix
-    glasso_ARGS$rho <- lambda_matrix
-
-    # Estimate output
-    output <- do.call(what = glasso_FUN, args = glasso_ARGS)
-
-    # Get R
-    R <- output$w
-
-    # Get W
-    W <- wi2net(output$wi)
-    dimnames(R) <- dimnames(W) <- dimnames(S)
-
-    # Return results
-    return(
-      list(
-        network = W, K = output$wi, R = R,
-        penalty = penalty, lambda = lambda,
-        gamma = optimized_gamma$minimum, criterion = ic,
-        IC = optimized_gamma$objective, correlation = S
-      )
-    )
-
-  }else{ # Both at this point
-
-    # Set bounds for gamma
-    bounds <- switch(
-      penalty,
-      "ipot" = c(3, 7),
-      "lgp" = c(1, 10),
-      "pop" = c(1, 10),
-      "spot" = c(1, 5)
-    )
-
-    # Perform optimization
-    optimized <- DEoptim::DEoptim(
-      # Parameters and function
-      fn = penalty_optimize,
-      # Optimization arguments
-      K = K, S = S,
-      derivative_FUN = derivative_FUN,
-      glasso_FUN = glasso_FUN,
-      glasso_ARGS = glasso_ARGS,
-      lambda_matrix = lambda_matrix,
-      penalize.diagonal = penalize.diagonal,
-      ic = ic, n = n, nodes = nodes, ebic.gamma = ebic.gamma,
-      # Optimization parameters
-      lower = c(0, bounds[1]), upper = c(1, bounds[2]),
-      control = DEoptim::DEoptim.control(
-        NP = 50, itermax = 200, parallelType = "none",
-        trace = FALSE
-      )
-    )
-
-    # Obtain lambda matrix
-    lambda_matrix[] <- derivative_FUN(
-      x = K, lambda = optimized$optim$bestmem[[1]],
-      gamma = optimized$optim$bestmem[[2]]
-    )
-
-    # Check for diagonal penalization
-    if(!penalize.diagonal){
-      diag(lambda_matrix) <- 0
-    }
-
-    # Set lambda matrix
-    glasso_ARGS$rho <- lambda_matrix
-
-    # Estimate output
-    output <- do.call(what = glasso_FUN, args = glasso_ARGS)
-
-    # Get R
-    R <- output$w
-
-    # Get W
-    W <- wi2net(output$wi)
-    dimnames(R) <- dimnames(W) <- dimnames(S)
-
-    # Return results
-    return(
-      list(
-        network = W, K = output$wi, R = R,
-        penalty = penalty,
-        lambda = optimized$optim$bestmem[[1]],
-        gamma = optimized$optim$bestmem[[2]],
-        correlation = S, criterion = ic,
-        IC = optimized$optim$bestval
-      )
-    )
-
   }
 
 }
 
+# Bug checking ----
+# data = wmt2[,7:24]; n = NULL; corr = "auto"
+# na.data = "pairwise"; penalty = "l1"
+# gamma = NULL; lambda = NULL; nlambda = 50
+# lambda.min.ratio = 0.01; penalize.diagonal = TRUE
+# optimize.lambda = FALSE; ic = "BIC"
+# ebic.gamma = 0.5; fast = TRUE; verbose = FALSE
+
 #' @noRd
 # Errors ----
-# Updated 06.01.2025
-network.nonconvex_errors <- function(
+# Updated 22.11.2025
+network.regularization_errors <- function(
     data, n, gamma, nlambda, lambda.min.ratio,
-    penalize.diagonal, ebic.gamma, fast, verbose, ...
+    penalize.diagonal, optimize.lambda, ebic.gamma, fast, verbose, ...
 )
 {
 
   # 'data' errors
-  object_error(data, c("matrix", "data.frame", "tibble"), "network.nonconvex")
+  object_error(data, c("matrix", "data.frame", "tibble"), "network.regularization")
 
   # Check for tibble
   if(get_object_type(data) == "tibble"){
@@ -527,43 +495,47 @@ network.nonconvex_errors <- function(
 
   # 'n' errors
   if(!is.null(n)){
-    length_error(n, 1, "network.nonconvex")
-    typeof_error(n, "numeric", "network.nonconvex")
+    length_error(n, 1, "network.regularization")
+    typeof_error(n, "numeric", "network.regularization")
   }
 
   # 'gamma' errors
   if(!is.null(gamma)){
-    length_error(gamma, 1, "network.nonconvex")
-    typeof_error(gamma, "numeric", "network.nonconvex")
-    range_error(gamma, c(0, Inf), "network.nonconvex")
+    length_error(gamma, 1, "network.regularization")
+    typeof_error(gamma, "numeric", "network.regularization")
+    range_error(gamma, c(0, Inf), "network.regularization")
   }
 
   # 'nlambda' errors
-  length_error(nlambda, 1, "network.nonconvex")
-  typeof_error(nlambda, "numeric", "network.nonconvex")
-  range_error(nlambda, c(1, Inf), "network.nonconvex")
+  length_error(nlambda, 1, "network.regularization")
+  typeof_error(nlambda, "numeric", "network.regularization")
+  range_error(nlambda, c(1, Inf), "network.regularization")
 
   # 'lambda.min.ratio' errors
-  length_error(lambda.min.ratio, 1, "network.nonconvex")
-  typeof_error(lambda.min.ratio, "numeric", "network.nonconvex")
-  range_error(lambda.min.ratio, c(0, 1), "network.nonconvex")
+  length_error(lambda.min.ratio, 1, "network.regularization")
+  typeof_error(lambda.min.ratio, "numeric", "network.regularization")
+  range_error(lambda.min.ratio, c(0, 1), "network.regularization")
 
   # 'penalize.diagonal' errors
-  length_error(penalize.diagonal, 1, "network.nonconvex")
-  typeof_error(penalize.diagonal, "logical", "network.nonconvex")
+  length_error(penalize.diagonal, 1, "network.regularization")
+  typeof_error(penalize.diagonal, "logical", "network.regularization")
+
+  # 'optimize.lambda' errors
+  length_error(optimize.lambda, 1, "network.regularization")
+  typeof_error(optimize.lambda, "logical", "network.regularization")
 
   # 'ebic.gamma' errors
-  length_error(ebic.gamma, 1, "network.nonconvex")
-  typeof_error(ebic.gamma, "numeric", "network.nonconvex")
-  range_error(ebic.gamma, c(0, Inf), "network.nonconvex")
+  length_error(ebic.gamma, 1, "network.regularization")
+  typeof_error(ebic.gamma, "numeric", "network.regularization")
+  range_error(ebic.gamma, c(0, Inf), "network.regularization")
 
   # 'fast' errors
-  length_error(fast, 1, "network.nonconvex")
-  typeof_error(fast, "logical", "network.nonconvex")
+  length_error(fast, 1, "network.regularization")
+  typeof_error(fast, "logical", "network.regularization")
 
   # 'verbose' errors
-  length_error(verbose, 1, "network.nonconvex")
-  typeof_error(verbose, "logical", "network.nonconvex")
+  length_error(verbose, 1, "network.regularization")
+  typeof_error(verbose, "logical", "network.regularization")
 
   # Check for usable data
   if(needs_usable(list(...))){
@@ -579,17 +551,19 @@ network.nonconvex_errors <- function(
 
 #' @noRd
 # lambda optimization function ----
-# Updated 06.01.2025
+# Updated 24.11.2025
 lambda_optimize <- function(
     lambda, gamma, K, S, derivative_FUN,
     glasso_FUN, glasso_ARGS,
     lambda_matrix, penalize.diagonal,
-    ic, n, nodes, ebic.gamma
+    ic, n, nodes, ebic.gamma, scale
 )
 {
 
   # Obtain lambda matrix
-  lambda_matrix[] <- derivative_FUN(x = K, lambda = lambda, gamma = gamma)
+  lambda_matrix[] <- abs(
+    derivative_FUN(x = K, lambda = lambda, gamma = gamma, scale = scale)
+  )
 
   # Check for diagonal penalization
   if(!penalize.diagonal){

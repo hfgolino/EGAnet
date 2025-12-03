@@ -2,7 +2,7 @@
 % Please edit documentation in R/simEGM.R
 \name{simEGM}
 \alias{simEGM}
-\title{Simulate data following a Exploratory Graph Model (\code{\link[EGAnet]{EGM}})}
+\title{Simulate data following a Exploratory Graph Model (\code{EGM})}
 \usage{
 simEGM(
   communities,
@@ -63,7 +63,7 @@ acceptable equals 0.02 and robust equals 0.01
 acceptable equals 0.90 and robust equals 0.95
 
 \item \code{\link[EGAnet]{jsd}} --- Jensen-Shannon Distance where
-acceptable equals 0.05 and robust equals 0.025
+acceptable equals 0.10 and robust equals 0.05
 
 }
 
@@ -76,7 +76,7 @@ Number of iterations to attempt to get convergence before erroring out.
 Defaults to \code{100}}
 }
 \description{
-Function to simulate data based on \code{\link[EGAnet]{EGM}}
+Function to simulate data based on \code{EGM}
 }
 \examples{
 simulated <- simEGM(

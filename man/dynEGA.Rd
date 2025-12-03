@@ -9,20 +9,20 @@ dynEGA(
   id = NULL,
   group = NULL,
   n.embed = 5,
+  n.embed.optimize = FALSE,
   tau = 1,
   delta = 1,
   use.derivatives = 1,
   na.derivative = c("none", "kalman", "rowwise", "skipover"),
+  zero.jitter = 0.001,
   level = c("individual", "group", "population"),
   corr = c("auto", "cor_auto", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
   model = c("BGGM", "glasso", "TMFG"),
   algorithm = c("leiden", "louvain", "walktrap"),
   uni.method = c("expand", "LE", "louvain"),
-  optimization = FALSE,
-  n.embed.all.ind = 3:25,
-  jitter.eps = 0.001,
   ncores,
+  seed = NULL,
   verbose = TRUE,
   ...
 )
@@ -56,13 +56,23 @@ Defaults to \code{NULL}}
 Number of the column identifying group membership.
 Defaults to \code{NULL}}
 
-\item{n.embed}{Numeric (length = 1).
+\item{n.embed}{Numeric (length = 1 or more).
 Defaults to \code{5}.
 Number of embedded dimensions (the number of observations to
 be used in the \code{\link[EGAnet]{Embed}} function). For example,
 an \code{"n.embed = 5"} will use five consecutive observations
-to estimate a single derivative. This parameter is ignored if
-\code{optimization = TRUE}}
+to estimate a single derivative.
+
+If more than one value is provided, then the number of embeddings
+will be optimized over using \code{\link[EGAnet]{tefi}} to determine
+the optimal length of the embedding dimensions for \emph{each}
+individual in the sample}
+
+\item{n.embed.optimize}{Boolean (length = 1).
+If \code{TRUE}, performs optimization of \code{n.embed} for each individual,
+then constructs the population based on optimized derivatives. When \code{TRUE},
+individual networks are considered of interest and will always be output.
+Defaults to \code{FALSE}}
 
 \item{tau}{Numeric (length = 1).
 Defaults to \code{1}.
@@ -117,6 +127,14 @@ as continuous points in time (note that the time scale shifts to the "per mean t
 which is different and \emph{larger} than the original scale)
 
 }}
+
+\item{zero.jitter}{Numeric (length = 1).
+Small amount of Gaussian noise added to zero variance derivatives to prevent
+estimation failures. For more than one variable, noise is generated
+multivariate normal distribution to ensure orthogonal noise is added.
+The jitter preserves the overall structure but avoids singular
+covariance matrices during network estimation.
+Defaults to \code{0.001}}
 
 \item{level}{Character vector (up to length of 3).
 A character vector indicating which level(s) to estimate:
@@ -244,29 +262,6 @@ Consensus clustering can be used by specifying either
 
 }}
 
-\item{optimization}{Logical.
-If \code{TRUE}, performs joint optimization of \code{n.embed} for each individual,
-then constructs the population based on optimized derivatives.
-Defaults to \code{FALSE}}
-
-\item{n.embed.all.ind}{Vector of candidate embedding dimensions (\code{n.embed}) to be
-considered during optimization. Defaults to \code{3:25}. For an individual with
-\eqn{T} time points, only candidates satisfying \code{n.embed <= T-3} are valid.
-Internally, \code{dynEGA} computes \code{T_i <- nrow(individual_data)} and restricts
-the search to \code{embeds_i <- n.embed.all.ind[n.embed.all.ind <= (T_i - 3)]}.
-If no valid embedding dimensions remain (i.e., \code{T_i-3 < min(n.embed.all.ind)}),
-the individual is skipped (\code{NULL} is returned) to avoid optimization errors.
-These valid \code{embeds_i} are used consistently in both Step 1 (derivative
-computation) and Step 2 (\code{TEFI} optimization), ensuring that only legal
-embeddings are evaluated.}
-
-\item{jitter.eps}{Numeric scalar.
-Small amount of Gaussian noise added to zero-variance columns to prevent
-estimation failures. Default is \code{1e-3}.
-This ensures individuals with flat signals (no within-variable variability)
-are not dropped. The jitter preserves the overall structure but avoids
-singular covariance matrices during network estimation.}
-
 \item{ncores}{Numeric (length = 1).
 Number of cores to use in computing results.
 Defaults to \code{ceiling(parallel::detectCores() / 2)} or half of your
@@ -275,6 +270,12 @@ Set to \code{1} to not use parallel computing
 
 If you're unsure how many cores your computer has,
 then type: \code{parallel::detectCores()}}
+
+\item{seed}{Numeric (length = 1).
+Defaults to \code{NULL} or random results.
+Set for reproducible results.
+See \href{https://r-ega.net/articles/reproducibility-prng.html}{Reproducibility and PRNG}
+for more details on random number generation in \code{EGAnet}}
 
 \item{verbose}{Boolean (length = 1).
 Should progress be displayed?
@@ -311,20 +312,14 @@ for all if no \code{group} is provided)
 
 \itemize{
 
-\item \code{population} --- If \code{level} includes \code{"population"}, then
+\item \code{population} --- If \code{level} includes \code{"populaton"}, then
 the \code{\link[EGAnet]{EGA}} results for the entire sample
 
 \item \code{group} --- If \code{level} includes \code{"group"}, then
 a list containing the \code{\link[EGAnet]{EGA}} results for each \code{group}
 
 \item \code{individual} --- If \code{level} includes \code{"individual"}, then
-a list containing the \code{\link[EGAnet]{EGA}} results for each \code{id}.
-When \code{optimization = TRUE}, each individual result also contains:
-\itemize{
-  \item \code{n.embed} --- The optimal embedding dimension selected
-  \item \code{TEFI_surface} --- TEFI values across all tested embedding dimensions
-  \item \code{data_used} --- The optimized derivative data used for network estimation
-}
+a list containing the \code{\link[EGAnet]{EGA}} results for each \code{id}
 
 }
 
@@ -334,24 +329,14 @@ When \code{optimization = TRUE}, each individual result also contains:
 Estimates dynamic communities in multivariate time series
 (e.g., panel data, longitudinal data, intensive longitudinal data) at multiple
 time scales and at different levels of analysis:
-individuals (intraindividual structure), groups, and population (interindividual structure).
-
-Includes an option for the optimization of embedded dimensions (`n.embed`)
-across individuals. If `optimization = TRUE`, the function will grid search
-for each individual, selecting the `n.embed` that minimizes TEFI, and then
-build the population network using the optimized derivatives.
+individuals (intraindividual structure), groups, and population (interindividual structure)
 }
 \details{
 Derivatives for each variable's time series for each participant are
 estimated using generalized local linear approximation (see \code{\link[EGAnet]{glla}}).
 \code{\link[EGAnet]{EGA}} is then applied to these derivatives to model how variables
 are changing together over time. Variables that change together over time are detected
-as communities.
-
-When \code{optimization = TRUE}, the function performs a two-step process:
-(1) computes derivatives for all valid embedding dimensions for each individual, and
-(2) selects the optimal embedding dimension by minimizing the Total Entropy Fit Index (TEFI).
-The population network is then constructed from the pooled optimized individual derivatives.
+as communities
 }
 \examples{
 # Population structure
@@ -361,6 +346,7 @@ simulated_population <- dynEGA(
   # useful to understand how data should be structured
 )
 
+\dontrun{
 # Group structure
 simulated_group <- dynEGA(
   data = sim.dynEGA, level = "group"
@@ -368,7 +354,6 @@ simulated_group <- dynEGA(
   # useful to understand how data should be structured
 )
 
-\dontrun{
 # Individual structure
 simulated_individual <- dynEGA(
   data = sim.dynEGA, level = "individual",
@@ -384,16 +369,6 @@ simulated_all <- dynEGA(
   verbose = TRUE # progress bar
 )
 
-# With optimization
-simulated_optimized <- dynEGA(
-  data = sim.dynEGA,
-  level = c("individual", "population"),
-  optimization = TRUE,
-  n.embed.all.ind = 3:15,
-  ncores = 2,
-  verbose = TRUE
-)
-
 # Plot population
 plot(simulated_all$dynEGA$population)
 
@@ -406,7 +381,17 @@ plot(simulated_all$dynEGA$individual, id = 1)
 # Step through all plots
 # Unless `id` is specified, 4 random IDs
 # will be drawn from individuals
-plot(simulated_all)}
+plot(simulated_all)
+
+# Optimize over multiple embeddings
+optimized_all <- dynEGA(
+  data = sim.dynEGA,
+  level = c("individual", "group", "population"),
+  n.embed = 3:10, # set number of dimensions to search over
+  n.embed.optimize = TRUE, # set to TRUE to optimize
+  ncores = 2, # use more for quicker results
+  verbose = TRUE # progress bar
+)}
 
 }
 \references{

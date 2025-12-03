@@ -1,6 +1,6 @@
-#' Simulate data following a Exploratory Graph Model (\code{\link[EGAnet]{EGM}})
+#' Simulate data following a Exploratory Graph Model (\code{EGM})
 #'
-#' @description Function to simulate data based on \code{\link[EGAnet]{EGM}}
+#' @description Function to simulate data based on \code{EGM}
 #'
 #' @param communities Numeric (length = 1).
 #' Number of communities to generate
@@ -49,7 +49,7 @@
 #' acceptable equals 0.90 and robust equals 0.95
 #'
 #' \item \code{\link[EGAnet]{jsd}} --- Jensen-Shannon Distance where
-#' acceptable equals 0.05 and robust equals 0.025
+#' acceptable equals 0.10 and robust equals 0.05
 #'
 #' }
 #'
@@ -73,7 +73,7 @@
 #' @export
 #'
 # Simulate EGM ----
-# Updated 31.07.2025
+# Updated 17.11.2025
 simEGM <- function(
     communities, variables,
     loadings, cross.loadings = 0.01,
@@ -87,8 +87,8 @@ simEGM <- function(
 
   # Set quality comparisons
   quality_comp <- data.frame(
-    acceptable = c(0.02, 0.02, 0.90, 0.05),
-    robust = c(0.01, 0.01, 0.95, 0.025)
+    acceptable = c(0.02, 0.02, 0.90, 0.10),
+    robust = c(0.01, 0.01, 0.95, 0.05)
   )
 
   # Argument errors
@@ -479,5 +479,227 @@ expected_network <- function(loading_structure, membership, total_variables)
 
   # Return partial correlations
   return(P * (abs(P) > (tcrossprod(max_loading) / sum(max_loading))))
+
+}
+
+#' @noRd
+# Community correlations from loadings
+# Updated 21.07.2025
+community_correlations <- function(simple_structure, loading_structure)
+{
+  return(cov2cor(crossprod(simple_structure, nload2cor(loading_structure)) %*% simple_structure))
+}
+
+#' @noRd
+# Network loadings to partial correlations ----
+# Updated 03.08.2025
+nload2pcor <- function(loadings)
+{
+
+  # Compute covariance matrix
+  P <- tcrossprod(loadings)
+
+  # Set diagonal to interdependence
+  diag(P) <- sqrt(diag(P))
+
+  # Obtain inverse covariance matrix
+  INV <- solve(P)
+
+  # Compute matrix D
+  D <- diag(sqrt(1 / diag(INV)))
+
+  # Compute partial correlations
+  P <- -D %*% INV %*% D
+
+  # Set diagonal to zero
+  diag(P) <- 0
+
+  # Return partial correlation
+  return(P)
+
+}
+
+#' @noRd
+# Network loadings to correlations ----
+# Updated 03.08.2025
+nload2cor <- function(loadings)
+{
+
+  # Compute covariance matrix
+  P <- tcrossprod(loadings)
+
+  # Compute interdependence
+  diag(P) <- interdependence <- sqrt(diag(P))
+
+  # Compute matrix I
+  I <- diag(sqrt(1 / interdependence))
+
+  # Return correlation
+  return(I %*% P %*% I)
+
+}
+
+#' @noRd
+# Expected edge values ----
+# Updated 26.06.2025
+expected_edges <- function(network, data_dimensions = NULL)
+{
+
+  # Compute node strength
+  strength <- colSums(network)
+
+  # Obtain the normalized cross-product
+  EE <- tcrossprod(strength) / sum(strength)
+
+  # Obtain differences as SE
+  if(!is.null(data_dimensions)){
+
+    # Delta method for the standard error
+
+    # Ensure absolute
+    network <- abs(network)
+
+    # Convert network to Fisher's z
+    z_network <- r2z(network)
+
+    # Compute node strength
+    strength <- colSums(z_network)
+    total_strength <- sum(strength)
+    standard_strength <- strength / total_strength
+    total_squared <- total_strength^2
+    cross_strength <- tcrossprod(strength)
+    dEE <- cross_strength / total_squared
+
+    # Get variables minus one
+    p_minus_one <- data_dimensions[2] - 1
+
+    # Because of Chung-Lu configuration model, all nodes are
+    # assumed to have similar variability
+    variance <- p_minus_one * (1 / (data_dimensions[1] - data_dimensions[2] - 1))
+
+    # Compute gradient
+    gradient_j <- (matrix(standard_strength, nrow = data_dimensions[2], ncol = data_dimensions[2]) - dEE)^2
+
+    # Get SE (still in Fisher's z)
+    # t(gradient_j) = shorthand for gradient i
+    # dEE^2 = shorthand for gradient k
+    SE <- sqrt(variance * (t(gradient_j) + gradient_j + (p_minus_one - 1) * dEE^2))
+
+    # Absolute partial correlations (assumes similar transformation deviations)
+    lower_triangle <- lower.tri(EE)
+    average <- sum(EE[lower_triangle] * network[lower_triangle]) / sum(EE[lower_triangle])
+
+    # Calculate the Jacobian
+    attr(EE, "SE") <- SE * sqrt((1 - average^2)^2)
+
+  }
+
+  # Return result
+  return(EE)
+
+}
+
+#' @noRd
+# Creates community structure ----
+# Updated 08.10.2024
+create_community_structure <- function(
+    P, total_variables, communities, community_variables, p.in, p.out
+)
+{
+
+  # Set vectors of 'p.in' and 'p.out'
+  p.in <- swiftelse(length(p.in) == 1, rep(p.in, communities), p.in)
+  p.out <- swiftelse(length(p.out) == 1, rep(p.out, communities), p.out)
+
+  # Set diagonal to missing
+  diag(P) <- NA
+
+  # Set community blocks
+  for(i in seq_len(communities)){
+
+    # Randomly set zero in block
+    indices <- P[community_variables[[i]], community_variables[[i]]]
+
+    # Check for current sparsity
+    if(compute_density(indices) > p.in[i]){
+
+      # Get lower triangle
+      lower_triangle <- lower.tri(indices)
+
+      # Sample to set to zero
+      indices[
+        abs(indices) < quantile(
+          abs(indices[lower_triangle]), probs = 1 - p.in[i], na.rm = TRUE
+        )
+      ] <- 0
+
+      # Set back into block
+      P[community_variables[[i]], community_variables[[i]]] <- indices
+
+    }
+
+    # Set between-community indices
+    indices <- P[community_variables[[i]], -unlist(community_variables[-i])]
+
+    # Check for current sparsity
+    if(compute_density(indices) > p.out[i]){
+
+      # Get threshold value
+      threshold_value <- quantile(abs(indices), probs = 1 - p.out[i], na.rm = TRUE)
+
+      # Set below to zero
+      indices[abs(indices) < threshold_value] <- 0
+
+      # Set back into block
+      P[community_variables[[i]], -unlist(community_variables[-i])] <- indices
+
+      # Do other side
+      indices <- P[-unlist(community_variables[-i]), community_variables[[i]]]
+
+      # Set below to zero
+      indices[abs(indices) < threshold_value] <- 0
+
+      # Set back into block
+      P[-unlist(community_variables[-i]), community_variables[[i]]] <- indices
+
+    }
+
+  }
+
+  # Set diagonal to zero
+  diag(P) <- 0
+
+  # Return community network
+  return(P)
+
+}
+
+#' @noRd
+# Computes density ----
+# Updated 08.10.2024
+compute_density <- function(network)
+{
+
+  # Get dimensions
+  dimensions <- dim(network)
+
+  # Obtain total number of edges
+  edges <- prod(dimensions)
+
+  # Check for on-diagonal
+  if(dimensions[1] == dimensions[2]){
+
+    # Total possible edges
+    total_possible <- (edges - dimensions[2]) / 2
+
+    # Compute sparsity
+    return((total_possible - (sum(network == 0, na.rm = TRUE) / 2)) / total_possible)
+
+  }else{ # Otherwise, treat as off-diagonal
+
+    # Compute sparsity
+    return((edges - sum(network == 0, na.rm = TRUE)) / edges)
+
+  }
 
 }
