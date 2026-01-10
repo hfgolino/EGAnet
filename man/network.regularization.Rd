@@ -9,7 +9,7 @@ network.regularization(
   n = NULL,
   corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
-  penalty = c("atan", "bridge", "l1", "l2", "lomax", "mcp", "scad", "weibull"),
+  penalty = c("atan", "bridge", "exp", "l1", "l2", "lomax", "mcp", "scad", "weibull"),
   gamma = NULL,
   lambda = NULL,
   nlambda = 50,
@@ -19,6 +19,9 @@ network.regularization(
   ic = c("AIC", "AICc", "BIC", "EBIC"),
   ebic.gamma = 0.5,
   fast = TRUE,
+  LLA = FALSE,
+  LLA.threshold = 0.0001,
+  LLA.iter = 100,
   verbose = FALSE,
   ...
 )
@@ -85,6 +88,9 @@ Available options:
 \item \code{"bridge"} --- Bridge (Fu, 1998)
 \deqn{\lambda \cdot |x|^\gamma}
 
+\item \code{"exp"} --- EXP (Wang, Fan, & Zhu, 2018)
+\deqn{\lambda \cdot (1 - e^{-\frac{|x|}{\gamma}})}
+
 \item \code{"l1"} --- LASSO (Tibshirani, 1996)
 \deqn{\lambda \cdot |x|}
 
@@ -113,6 +119,9 @@ P(x; \lambda, \gamma) =
 \end{cases}
 }
 
+\item \code{"weibull"} --- Data-adaptive Weibull
+\deqn{\lambda \cdot (1 - e^{\large(-\frac{|x|}{\gamma}\large)^k})}
+
 }}
 
 \item{gamma}{Numeric (length = 1).
@@ -124,6 +133,8 @@ Defaults:
 \item \code{"atan"} = 0.01
 
 \item \code{"bridge"} = 1
+
+\item \code{"exp"} = 0.01
 
 \item \code{"lomax"} = 4
 
@@ -204,6 +215,21 @@ Defaults to \code{TRUE}.
 The fast results \emph{may} differ by less than floating point of the original
 GLASSO implemented by \code{\link[glasso]{glasso}} and should not impact reproducibility much (set to \code{FALSE} if concerned)}
 
+\item{LLA}{Boolean (length = 1).
+Should Local Linear Approximation be used to find optimal minimum?
+Defaults to \code{FALSE} or a single-pass approximation, which can be
+significantly faster (Zou & Li, 2008).
+Set to \code{TRUE} to find global minimum based on convergence (\code{LLA.threshold})}
+
+\item{LLA.threshold}{Numeric (length = 1).
+When performing the Local Linear Approximation, the maximum threshold
+until convergence is met.
+Defaults to \code{1e-04}}
+
+\item{LLA.iter}{Numeric (length = 1).
+Maximum number of iterations to perform to reach convergence.
+Defaults to \code{100}}
+
 \item{verbose}{Boolean (length = 1).
 Whether messages and (insignificant) warnings should be output.
 Defaults to \code{FALSE} (silent calls).
@@ -217,7 +243,7 @@ A network matrix
 \description{
 A general function to estimate Gaussian graphical models using
 regularization penalties. All non-convex penalties are implemented using
-the Local Linear Approximation (LLA: Fan & Li, 2001)
+the Local Linear Approximation (LLA: Fan & Li, 2001; Zou & Li, 2008)
 }
 \examples{
 # Obtain data
@@ -234,7 +260,8 @@ Variable selection via nonconcave penalized likelihood and its oracle properties
 \emph{Journal of the American Statistical Association}, \emph{96}(456), 1348--1360.
 
 \strong{Bridge penalty} \cr
-Fu, W. J. (1998). Penalized regressions: The bridge versus the lasso.
+Fu, W. J. (1998).
+Penalized regressions: The bridge versus the lasso.
 \emph{Journal of Computational and Graphical Statistics}, \emph{7}(3), 397--416.
 
 \strong{L2 penalty} \cr
@@ -252,6 +279,11 @@ Tibshirani, R. (1996).
 Regression shrinkage and selection via the lasso.
 \emph{Journal of the Royal Statistical Society: Series B (Methodological)}, \emph{58}(1), 267--288.
 
+\strong{EXP penalty} \cr
+Wang, Y., Fan, Q., & Zhu, L. (2018).
+Variable selection and estimation using a continuous approximation to the L0 penalty.
+\emph{Annals of the Institute of Statistical Mathematics}, \emph{70}(1), 191--214.
+
 \strong{Atan penalty} \cr
 Wang, Y., & Zhu, L. (2016).
 Variable selection and parameter estimation with the Atan regularization method.
@@ -266,6 +298,11 @@ Beyond lasso: A survey of nonconvex regularization in Gaussian graphical models.
 Zhang, C.-H. (2010).
 Nearly unbiased variable selection under minimax concave penalty.
 \emph{Annals of Statistics}, \emph{38}(2), 894--942.
+
+\strong{One-step Local Linear Approximation} \cr
+Zou, H., & Li, R. (2008).
+One-step sparse estimates in nonconcave penalized likelihood models.
+\emph{Annals of Statistics}, \emph{36}(4), 1509--1533.
 }
 \author{
 Alexander P. Christensen <alexpaulchristensen at gmail.com> and

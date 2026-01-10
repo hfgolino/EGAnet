@@ -21,6 +21,19 @@ bridge_penalty <- function(x, lambda, gamma = 1, ...)
 }
 
 #' @noRd
+# Updated 10.01.2026
+exp_penalty <- function(x, lambda, gamma = 0.01, ...)
+{
+
+  # Pre-compute components
+  x <- abs(x)
+
+  # Return penalty
+  return(lambda * (1 - exp(-(x / gamma))))
+
+}
+
+#' @noRd
 # Updated 25.07.2025
 l1_penalty <- function(x, lambda, ...)
 {
@@ -84,15 +97,15 @@ scad_penalty <- function(x, lambda, gamma = 3.7, ...)
 }
 
 #' @noRd
-# Updated 22.11.2025
-weibull_penalty <- function(x, lambda, gamma, scale, ...)
+# Updated 10.01.2026
+weibull_penalty <- function(x, lambda, gamma, shape, ...)
 {
 
   # Pre-compute components
   x <- abs(x)
 
   # Return penalty
-  return(lambda * (1 - exp(-(x / scale)^gamma)))
+  return(lambda * (1 - exp(-(x / gamma)^shape)))
 
 }
 
@@ -122,6 +135,19 @@ bridge_derivative <- function(x, lambda, gamma = 1, eps = 1e-08, ...)
 
   # Return derivative
   return(lambda * gamma * x * abs_x^(gamma - 2))
+
+}
+
+#' @noRd
+# Updated 10.01.2026
+exp_derivative <- function(x, lambda, gamma = 0.01, ...)
+{
+
+  # Pre-compute components
+  x <- abs(x)
+
+  # Return penalty
+  return(lambda * (1 / gamma) * exp(-(x / gamma)))
 
 }
 
@@ -184,16 +210,16 @@ scad_derivative <- function(x, lambda, gamma = 3.7, ...)
 }
 
 #' @noRd
-# Updated 22.11.2025
-weibull_derivative <- function(x, lambda, gamma, scale, ...)
+# Updated 10.01.2026
+weibull_derivative <- function(x, lambda, gamma, shape, ...)
 {
 
   # Pre-compute components
   abs_x <- abs(x)
-  x_scale <- abs_x / scale
+  x_gamma <- abs_x / gamma
 
   # Return penalty
-  return(lambda * sign(x) * (gamma / scale) * x_scale^(gamma - 1) * exp(-x_scale^gamma))
+  return(lambda * sign(x) * (shape / gamma) * x_gamma^(shape - 1) * exp(-x_gamma^shape))
 
 }
 

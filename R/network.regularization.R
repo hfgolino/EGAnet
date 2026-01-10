@@ -2,7 +2,7 @@
 #'
 #' @description A general function to estimate Gaussian graphical models using
 #' regularization penalties. All non-convex penalties are implemented using
-#' the Local Linear Approximation (LLA: Fan & Li, 2001)
+#' the Local Linear Approximation (LLA: Fan & Li, 2001; Zou & Li, 2008)
 #'
 #' @param data Matrix or data frame.
 #' Should consist only of variables to be used in the analysis
@@ -65,6 +65,9 @@
 #' \item \code{"bridge"} --- Bridge (Fu, 1998)
 #' \deqn{\lambda \cdot |x|^\gamma}
 #'
+#' \item \code{"exp"} --- EXP (Wang, Fan, & Zhu, 2018)
+#' \deqn{\lambda \cdot (1 - e^{-\frac{|x|}{\gamma}})}
+#'
 #' \item \code{"l1"} --- LASSO (Tibshirani, 1996)
 #' \deqn{\lambda \cdot |x|}
 #'
@@ -93,6 +96,9 @@
 #' \end{cases}
 #' }
 #'
+#' \item \code{"weibull"} --- Data-adaptive Weibull
+#' \deqn{\lambda \cdot (1 - e^{\large(-\frac{|x|}{\gamma}\large)^k})}
+#'
 #' }
 #'
 #' @param gamma Numeric (length = 1).
@@ -104,6 +110,8 @@
 #' \item \code{"atan"} = 0.01
 #'
 #' \item \code{"bridge"} = 1
+#'
+#' \item \code{"exp"} = 0.01
 #'
 #' \item \code{"lomax"} = 4
 #'
@@ -184,6 +192,21 @@
 #' The fast results \emph{may} differ by less than floating point of the original
 #' GLASSO implemented by \code{\link[glasso]{glasso}} and should not impact reproducibility much (set to \code{FALSE} if concerned)
 #'
+#' @param LLA Boolean (length = 1).
+#' Should Local Linear Approximation be used to find optimal minimum?
+#' Defaults to \code{FALSE} or a single-pass approximation, which can be
+#' significantly faster (Zou & Li, 2008).
+#' Set to \code{TRUE} to find global minimum based on convergence (\code{LLA.threshold})
+#'
+#' @param LLA.threshold Numeric (length = 1).
+#' When performing the Local Linear Approximation, the maximum threshold
+#' until convergence is met.
+#' Defaults to \code{1e-04}
+#'
+#' @param LLA.iter Numeric (length = 1).
+#' Maximum number of iterations to perform to reach convergence.
+#' Defaults to \code{100}
+#'
 #' @param verbose Boolean (length = 1).
 #' Whether messages and (insignificant) warnings should be output.
 #' Defaults to \code{FALSE} (silent calls).
@@ -204,7 +227,8 @@
 #' \emph{Journal of the American Statistical Association}, \emph{96}(456), 1348--1360.
 #'
 #' \strong{Bridge penalty} \cr
-#' Fu, W. J. (1998). Penalized regressions: The bridge versus the lasso.
+#' Fu, W. J. (1998).
+#' Penalized regressions: The bridge versus the lasso.
 #' \emph{Journal of Computational and Graphical Statistics}, \emph{7}(3), 397--416.
 #'
 #' \strong{L2 penalty} \cr
@@ -222,6 +246,11 @@
 #' Regression shrinkage and selection via the lasso.
 #' \emph{Journal of the Royal Statistical Society: Series B (Methodological)}, \emph{58}(1), 267--288.
 #'
+#' \strong{EXP penalty} \cr
+#' Wang, Y., Fan, Q., & Zhu, L. (2018).
+#' Variable selection and estimation using a continuous approximation to the L0 penalty.
+#' \emph{Annals of the Institute of Statistical Mathematics}, \emph{70}(1), 191--214.
+#'
 #' \strong{Atan penalty} \cr
 #' Wang, Y., & Zhu, L. (2016).
 #' Variable selection and parameter estimation with the Atan regularization method.
@@ -237,6 +266,11 @@
 #' Nearly unbiased variable selection under minimax concave penalty.
 #' \emph{Annals of Statistics}, \emph{38}(2), 894--942.
 #'
+#' \strong{One-step Local Linear Approximation} \cr
+#' Zou, H., & Li, R. (2008).
+#' One-step sparse estimates in nonconcave penalized likelihood models.
+#' \emph{Annals of Statistics}, \emph{36}(4), 1509--1533.
+#'
 #' @examples
 #' # Obtain data
 #' wmt <- wmt2[,7:24]
@@ -247,16 +281,17 @@
 #' @export
 #'
 # Apply non-convex regularization ----
-# Updated 24.11.2025
+# Updated 09.0.1.2026
 network.regularization <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
-    penalty = c("atan", "bridge", "l1", "l2", "lomax", "mcp", "scad", "weibull"),
+    penalty = c("atan", "bridge", "exp", "l1", "l2", "lomax", "mcp", "scad", "weibull"),
     gamma = NULL, lambda = NULL, nlambda = 50, lambda.min.ratio = 0.01,
     penalize.diagonal = TRUE, optimize.lambda = FALSE,
     ic = c("AIC", "AICc", "BIC", "EBIC"), ebic.gamma = 0.50,
-    fast = TRUE, verbose = FALSE, ...
+    fast = TRUE, LLA = FALSE, LLA.threshold = 1e-04, LLA.iter = 100,
+    verbose = FALSE, ...
 )
 {
 
@@ -272,7 +307,7 @@ network.regularization <- function(
   data <- network.regularization_errors(
     data, n, gamma, nlambda, lambda.min.ratio,
     penalize.diagonal, optimize.lambda,
-    ebic.gamma, fast, verbose, ...
+    ebic.gamma, fast, LLA, LLA.threshold, verbose, ...
   )
 
   # Get necessary inputs
@@ -307,6 +342,7 @@ network.regularization <- function(
     penalty,
     "atan" = atan_derivative,
     "bridge" = bridge_derivative,
+    "exp" = exp_derivative,
     "l1" = l1_derivative,
     "l2" = l2_derivative,
     "lomax" = lomax_derivative,
@@ -323,6 +359,7 @@ network.regularization <- function(
       penalty,
       "atan" = 0.01,
       "bridge" = 1,
+      "exp" = 0.01,
       "lomax" = 4,
       "mcp" = 3,
       "scad" = 3.7,
@@ -331,8 +368,8 @@ network.regularization <- function(
 
   }
 
-  # Set scale
-  scale <- 0
+  # Set shape
+  shape <- 0
 
   # Check for Weibull function
   if(penalty == "weibull"){
@@ -340,12 +377,17 @@ network.regularization <- function(
     # Set partial correlations
     P <- cor2pcor(S)
 
-    # Obtain values
-    values <- abs(P[lower.tri(P)])
+    # Obtain Weibull estimates
+    estimates <- weibull_mle(abs(P[lower.tri(P)]))
 
-    # Compute scale and shape
-    scale <- mean(values)
-    gamma <- scale / sd(values)
+    # Set parameters
+    shape <- estimates[["shape"]]
+    gamma <- estimates[["scale"]] * 0.6931472^(1 / shape)
+    # Pre-computes log(2) = 0.6931472
+
+    # Set LLA to FALSE
+    LLA <- FALSE
+    # oscillates rather than converges
 
   }
 
@@ -362,12 +404,12 @@ network.regularization <- function(
       derivative_FUN = derivative_FUN,
       glasso_FUN = glasso_FUN, glasso_ARGS = glasso_ARGS,
       lambda_matrix = lambda_matrix, penalize.diagonal = penalize.diagonal,
-      ic = ic, n = n, nodes = nodes, ebic.gamma = ebic.gamma, scale = scale
+      ic = ic, n = n, nodes = nodes, ebic.gamma = ebic.gamma, shape = shape
     )
 
     # Obtain lambda matrix
     lambda_matrix[] <- abs(derivative_FUN(
-      x = K, lambda = optimized_lambda$minimum, gamma = gamma, scale = scale
+      x = K, lambda = optimized_lambda$minimum, gamma = gamma, shape = shape
     ))
 
     # Check for diagonal penalization
@@ -414,28 +456,92 @@ network.regularization <- function(
     lambda_list <- lapply(lambda, function(value){
 
       # Obtain lambda matrix
-      lambda_matrix[] <- abs(derivative_FUN(x = K, lambda = value, gamma = gamma, scale = scale))
+      lambda_matrix[] <- abs(derivative_FUN(x = K, lambda = value, gamma = gamma, shape = shape))
 
       # Check for diagonal penalization
       if(!penalize.diagonal){
         diag(lambda_matrix) <- 0
       }
 
+      # Attach value
+      attr(lambda_matrix, "value") <- value
+
       # Return lambda matrix
       return(lambda_matrix)
 
     })
 
-    # Get GLASSO output
-    glasso_list <- lapply(lambda_list, function(lambda_matrix){
+    # Check for LLA
+    if(LLA){
 
-      # Set lambda matrix
-      glasso_ARGS$rho <- lambda_matrix
+      # Get GLASSO output
+      glasso_list <- lapply(lambda_list, function(lambda_matrix){
 
-      # Estimate
-      return(do.call(what = glasso_FUN, args = glasso_ARGS))
+        # Obtain lambda value
+        value <- attributes(lambda_matrix)$value
 
-    })
+        # Set lambda matrix
+        glasso_ARGS$rho <- lambda_matrix
+
+        # Obtain estimate
+        estimate <- do.call(what = glasso_FUN, args = glasso_ARGS)
+
+        # Obtain new K
+        new_K <- estimate$wi
+
+        # Set convergence and iterations
+        convergence <- Inf; iterations <- 0
+
+        # Loop over to convergence
+        while((convergence > LLA.threshold) & (iterations < LLA.iter)){
+
+          # Set old K
+          old_K <- new_K
+
+          # Obtain lambda matrix
+          lambda_matrix[] <- abs(derivative_FUN(x = old_K, lambda = value, gamma = gamma, shape = shape))
+
+          # Check for diagonal penalization
+          if(!penalize.diagonal){
+            diag(lambda_matrix) <- 0
+          }
+
+          # Set lambda matrix
+          glasso_ARGS$rho <- lambda_matrix
+
+          # Obtain estimate
+          estimate <- do.call(what = glasso_FUN, args = glasso_ARGS)
+
+          # Obtain new K
+          new_K <- estimate$wi
+
+          # Increase iterations
+          iterations <- iterations + 1
+
+          # Compute convergence
+          convergence <- mean(abs(new_K - old_K))
+
+        }
+
+        # Estimate
+        return(estimate)
+
+      })
+
+    }else{
+
+      # Get GLASSO output
+      glasso_list <- lapply(lambda_list, function(lambda_matrix){
+
+        # Set lambda matrix
+        glasso_ARGS$rho <- lambda_matrix
+
+        # Estimate
+        return(do.call(what = glasso_FUN, args = glasso_ARGS))
+
+      })
+
+    }
 
     # Compute ICs
     ICs <- nvapply(glasso_list, function(element){
@@ -475,13 +581,15 @@ network.regularization <- function(
 # lambda.min.ratio = 0.01; penalize.diagonal = TRUE
 # optimize.lambda = FALSE; ic = "BIC"
 # ebic.gamma = 0.5; fast = TRUE; verbose = FALSE
+# LLA = FALSE; LLA.threshold = 1e-04; LLA.iter = 100
 
 #' @noRd
 # Errors ----
-# Updated 22.11.2025
+# Updated 09.01.2026
 network.regularization_errors <- function(
     data, n, gamma, nlambda, lambda.min.ratio,
-    penalize.diagonal, optimize.lambda, ebic.gamma, fast, verbose, ...
+    penalize.diagonal, optimize.lambda, ebic.gamma,
+    fast, LLA, LLA.threshold, verbose, ...
 )
 {
 
@@ -533,6 +641,17 @@ network.regularization_errors <- function(
   length_error(fast, 1, "network.regularization")
   typeof_error(fast, "logical", "network.regularization")
 
+  # 'LLA' errors
+  length_error(LLA, 1, "network.regularization")
+  typeof_error(LLA, "logical", "network.regularization")
+
+  # 'LLA.threshold' errors
+  if(LLA){
+    length_error(LLA.threshold, 1, "network.regularization")
+    typeof_error(LLA.threshold, "numeric", "network.regularization")
+    range_error(LLA.threshold, c(-Inf, 0.10), "network.regularization")
+  }
+
   # 'verbose' errors
   length_error(verbose, 1, "network.regularization")
   typeof_error(verbose, "logical", "network.regularization")
@@ -550,19 +669,49 @@ network.regularization_errors <- function(
 # OPTIMIZATION FUNCTIONS ----
 
 #' @noRd
+# MLE Weibull Parameters ----
+# Updated 10.01.2026
+weibull_mle <- function(x)
+{
+
+  # Set up MLE for shape
+  shape_mle <- function(k, x, n)
+  {
+
+    # Pre-compute reused values
+    x_k <- x^k
+    log_x <- log(x)
+
+    # Return MLE estimate
+    return(sum(x_k * log_x) / sum(x_k) - 1 / k - sum(log_x) / n)
+
+  }
+
+  # Obtain MLE estimate
+  shape <- uniroot(
+    f = shape_mle, interval = c(0.01, 20),
+    x = x, n = length(x)
+  )$root
+
+  # Return parameters
+  return(c(shape = shape, scale = mean(x^shape)^(1 / shape)))
+
+}
+
+#' @noRd
 # lambda optimization function ----
 # Updated 24.11.2025
 lambda_optimize <- function(
     lambda, gamma, K, S, derivative_FUN,
     glasso_FUN, glasso_ARGS,
     lambda_matrix, penalize.diagonal,
-    ic, n, nodes, ebic.gamma, scale
+    ic, n, nodes, ebic.gamma, shape
 )
 {
 
   # Obtain lambda matrix
   lambda_matrix[] <- abs(
-    derivative_FUN(x = K, lambda = lambda, gamma = gamma, scale = scale)
+    derivative_FUN(x = K, lambda = lambda, gamma = gamma, shape = shape)
   )
 
   # Check for diagonal penalization
