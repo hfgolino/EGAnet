@@ -16,7 +16,7 @@ network.regularization(
   lambda.min.ratio = 0.01,
   penalize.diagonal = TRUE,
   optimize.lambda = FALSE,
-  ic = c("AIC", "AICc", "BIC", "EBIC"),
+  ic = c("AIC", "AICc", "BIC", "BIC0", "EBIC", "MBIC"),
   ebic.gamma = 0.5,
   fast = TRUE,
   LLA = FALSE,
@@ -177,7 +177,11 @@ Available options include:
 
 \item \code{"BIC"} --- Bayesian information criterion: \eqn{-2L + E \cdot \log{(n)}}
 
+\item \code{"BIC0"} --- Bayesian information criterion not (Dicker et al., 2013): \eqn{\log{\large(\frac{D}{n - E}\large)} + \large(\frac{\log{(n)}}{n}\large) \cdot E}
+
 \item \code{"EBIC"} --- Extended BIC: \eqn{BIC + 4E \cdot \gamma \cdot \log{(E)}}
+
+\item \code{"MBIC"} --- Modified Bayesian information criterion (Wang et al., 2018):  \eqn{\log{\large(\frac{D}{n - E}\large)} + \large(\frac{\log{(n)} \cdot E}{n}\large) \cdot \log{(\log{(p)}})}
 
 }
 
@@ -196,6 +200,8 @@ Term definitions:
 \item \eqn{K} --- estimated inverse covariance matrix (network)
 
 \item \eqn{L = \frac{n}{2} \cdot \log \text{det} K - \sum_{i=1}^p (SK)_{ii}}
+
+\item \eqn{D = n \cdot \sum_{i=1}^p (SK)_{ii} - \log \text{det} K}
 
 }
 
@@ -254,6 +260,11 @@ l1_network <- network.regularization(data = wmt)
 
 }
 \references{
+\strong{BIC0} \cr
+Dicker, L., Huang, B., & Lin, X. (2013).
+Variable selection and estimation with the seamless-L0 penalty.
+\emph{Statistica Sinica}, \emph{23}(2), 929--962.
+
 \strong{SCAD penalty and Local Linear Approximation} \cr
 Fan, J., & Li, R. (2001).
 Variable selection via nonconcave penalized likelihood and its oracle properties.

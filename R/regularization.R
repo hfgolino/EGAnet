@@ -97,15 +97,28 @@ scad_penalty <- function(x, lambda, gamma = 3.7, ...)
 }
 
 #' @noRd
-# Updated 10.01.2026
+# Updated 11.01.2026
 weibull_penalty <- function(x, lambda, gamma, shape, ...)
 {
 
   # Pre-compute components
   x <- abs(x)
 
-  # Return penalty
-  return(lambda * (1 - exp(-(x / gamma)^shape)))
+  # Check for shape greater than 1
+  if(shape > 1){
+
+    # Return penalty
+    return( # pre-computes exp(-1) = 0.3678794
+      lambda * (x <= gamma) * (shape / gamma) * 0.3678794 * x + # region 1: below median
+      lambda * (x > gamma) * (1 - exp(-(x / gamma)^shape)) # region 2: above median
+    )
+
+  }else{
+
+    # Return penalty
+    return(lambda * (1 - exp(-(x / gamma)^shape)))
+
+  }
 
 }
 
@@ -210,15 +223,24 @@ scad_derivative <- function(x, lambda, gamma = 3.7, ...)
 }
 
 #' @noRd
-# Updated 10.01.2026
+# Updated 11.01.2026
 weibull_derivative <- function(x, lambda, gamma, shape, ...)
 {
-
   # Pre-compute components
   abs_x <- abs(x)
+
+  # Check for shape greater than 1
+  if(shape > 1){
+
+    # Set region 1: below median
+    abs_x <- swiftelse(abs_x <= gamma, gamma, abs_x)
+
+  }
+
+  # Pre-compute components
   x_gamma <- abs_x / gamma
 
-  # Return penalty
+  # Return derivative
   return(lambda * sign(x) * (shape / gamma) * x_gamma^(shape - 1) * exp(-x_gamma^shape))
 
 }

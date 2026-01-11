@@ -154,7 +154,11 @@
 #'
 #' \item \code{"BIC"} --- Bayesian information criterion: \eqn{-2L + E \cdot \log{(n)}}
 #'
+#' \item \code{"BIC0"} --- Bayesian information criterion not (Dicker et al., 2013): \eqn{\log{\large(\frac{D}{n - E}\large)} + \large(\frac{\log{(n)}}{n}\large) \cdot E}
+#'
 #' \item \code{"EBIC"} --- Extended BIC: \eqn{BIC + 4E \cdot \gamma \cdot \log{(E)}}
+#'
+#' \item \code{"MBIC"} --- Modified Bayesian information criterion (Wang et al., 2018):  \eqn{\log{\large(\frac{D}{n - E}\large)} + \large(\frac{\log{(n)} \cdot E}{n}\large) \cdot \log{(\log{(p)}})}
 #'
 #' }
 #'
@@ -173,6 +177,8 @@
 #' \item \eqn{K} --- estimated inverse covariance matrix (network)
 #'
 #' \item \eqn{L = \frac{n}{2} \cdot \log \text{det} K - \sum_{i=1}^p (SK)_{ii}}
+#'
+#' \item \eqn{D = n \cdot \sum_{i=1}^p (SK)_{ii} - \log \text{det} K}
 #'
 #' }
 #'
@@ -220,6 +226,11 @@
 #' Hudson Golino <hfg9s at virginia.edu>
 #'
 #' @references
+#'
+#' \strong{BIC0} \cr
+#' Dicker, L., Huang, B., & Lin, X. (2013).
+#' Variable selection and estimation with the seamless-L0 penalty.
+#' \emph{Statistica Sinica}, \emph{23}(2), 929--962.
 #'
 #' \strong{SCAD penalty and Local Linear Approximation} \cr
 #' Fan, J., & Li, R. (2001).
@@ -289,7 +300,7 @@ network.regularization <- function(
     penalty = c("atan", "bridge", "exp", "l1", "l2", "lomax", "mcp", "scad", "weibull"),
     gamma = NULL, lambda = NULL, nlambda = 50, lambda.min.ratio = 0.01,
     penalize.diagonal = TRUE, optimize.lambda = FALSE,
-    ic = c("AIC", "AICc", "BIC", "EBIC"), ebic.gamma = 0.50,
+    ic = c("AIC", "AICc", "BIC", "BIC0", "EBIC", "MBIC"), ebic.gamma = 0.50,
     fast = TRUE, LLA = FALSE, LLA.threshold = 1e-04, LLA.iter = 100,
     verbose = FALSE, ...
 )
@@ -382,8 +393,8 @@ network.regularization <- function(
 
     # Set parameters
     shape <- estimates[["shape"]]
-    gamma <- estimates[["scale"]] * 0.6931472^(1 / shape)
-    # Pre-computes log(2) = 0.6931472
+    gamma <- estimates[["scale"]] * 0.6931472^(1 / shape) # median
+    # pre-computes log(2) = 0.6931472
 
     # Set LLA to FALSE
     LLA <- FALSE
@@ -803,15 +814,25 @@ penalty_optimize <- function(
 
 #' @noRd
 # Information criterion ----
-# Updated 06.01.2024
+# Updated 10.01.2026
 information_crtierion <- function(S, K, n, nodes, ic, ebic.gamma)
 {
 
   # Compute Gaussian likelihood (minus two for convenience)
-  L <- -2 * (n / 2) * (log(det(K)) - sum(diag(S %*% K)))
+  L <- swiftelse(
+    ic %in% c("bic0", "mbic"),
+    n * sum(diag(S %*% K)) - log(det(K)), # use deviance
+    -2 * (n / 2) * (log(det(K)) - sum(diag(S %*% K))) # use log-likelihood
+  )
+
+  # Set diagonal of K to zero
+  diag(K) <- 0
 
   # Get parameters (edges)
   E <- edge_count(K, nodes)
+
+  # Ensure that there is enough degrees of freedom
+  df <- n - E
 
   # Return information criterion
   return(
@@ -820,7 +841,13 @@ information_crtierion <- function(S, K, n, nodes, ic, ebic.gamma)
       "aic" = L + 2 * E,
       "aicc" = L + 2 * E + (2 * E^2 + 2 * E) / (n - E - 1),
       "bic" = L + E * log(n),
-      "ebic" = L + E * log(n) + 4 * E * ebic.gamma * log(nodes)
+      "ebic" = L + E * log(n) + 4 * E * ebic.gamma * log(nodes),
+      "bic0" = swiftelse( # see https://www.jstor.org/stable/24310368
+        df > 0, log(L / df) + (log(n) * E / n), -Inf
+      ),
+      "mbic" = swiftelse( # see https://doi.org/10.1007%2Fs10463-016-0588-3
+        df > 0, log(L / df) + (log(n) * E / n) * log(log(nodes)), -Inf
+      )
     )
   )
 
