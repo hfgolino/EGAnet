@@ -443,7 +443,7 @@ network.regularization <- function(
         estimates <- weibull_mle(lower_P)
 
         # Set parameters
-        shape <- estimates[["shape"]]
+        shape <- min(estimates[["shape"]], 1) # bound
         gamma <- estimates[["scale"]] * 0.6931472^(1 / shape) # median
         # pre-computes log(2) = 0.6931472
 
