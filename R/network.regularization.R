@@ -74,7 +74,7 @@
 #' \item \code{"l2"} --- Ridge (Hoerl & Kennard, 1970)
 #' \deqn{\lambda \cdot x^2}
 #'
-#' \item \code{"lomax"} --- Lomax (Lomax, 1951)
+#' \item \code{"lomax"} --- Lomax (Lomax, 1954)
 #' \deqn{\lambda \cdot (1 - (\frac{1}{(|x| + 1)^\gamma}))}
 #'
 #' \item \code{"mcp"} --- Minimax Concave Penalty (Zhang, 2010)
@@ -98,6 +98,23 @@
 #'
 #' \item \code{"weibull"} --- Data-adaptive Weibull
 #' \deqn{\lambda \cdot (1 - e^{\large(-\frac{|x|}{\gamma}\large)^k})}
+#'
+#' }
+#'
+#' @param adaptive Boolean (length = 1).
+#' Whether data-adaptive parameters should be used.
+#' Defaults to \code{FALSE}.
+#' Set to \code{TRUE} to apply data-adaptive paramters
+#' based on the empirical partial correlation matrix.
+#' Available options:
+#'
+#' \itemize{
+#'
+#' \item \code{"exp"} =  uses median of distribution for the scale parameter (\eqn{\frac{\log{(2)}}{\lambda}})
+#'
+#' \item \code{"lomax"} = uses MLE estimate of \eqn{\alpha} parameter (\eqn{\frac{n}{\sum_i \log{(1 + x_i)}}})
+#'
+#' \item \code{"weibull"} = uses MLE estimate of shape parameter and median of distribution for the scale parameter (\eqn{\lambda \cdot (\log{(2)})^{1/k} })
 #'
 #' }
 #'
@@ -213,6 +230,12 @@
 #' Maximum number of iterations to perform to reach convergence.
 #' Defaults to \code{100}
 #'
+#' @param network.only Boolean (length = 1).
+#' Whether the network only should be output.
+#' Defaults to \code{TRUE}.
+#' Set to \code{FALSE} to obtain all output for the
+#' network estimation method
+#'
 #' @param verbose Boolean (length = 1).
 #' Whether messages and (insignificant) warnings should be output.
 #' Defaults to \code{FALSE} (silent calls).
@@ -289,20 +312,26 @@
 #' # Obtain network
 #' l1_network <- network.regularization(data = wmt)
 #'
+#' # Obtain Atan network
+#' atan_network <- network.regularization(data = wmt, penalty = "atan")
+#'
+#' # Obtain data-adaptive EXP network
+#' exp_network <- network.regularization(data = wmt, penalty = "exp")
+#'
 #' @export
 #'
 # Apply non-convex regularization ----
-# Updated 09.0.1.2026
+# Updated 12.01.2026
 network.regularization <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
     penalty = c("atan", "bridge", "exp", "l1", "l2", "lomax", "mcp", "scad", "weibull"),
-    gamma = NULL, lambda = NULL, nlambda = 50, lambda.min.ratio = 0.01,
+    adaptive = FALSE, gamma = NULL, lambda = NULL, nlambda = 50, lambda.min.ratio = 0.01,
     penalize.diagonal = TRUE, optimize.lambda = FALSE,
     ic = c("AIC", "AICc", "BIC", "BIC0", "EBIC", "MBIC"), ebic.gamma = 0.50,
     fast = TRUE, LLA = FALSE, LLA.threshold = 1e-04, LLA.iter = 100,
-    verbose = FALSE, ...
+    network.only = TRUE, verbose = FALSE, ...
 )
 {
 
@@ -316,9 +345,9 @@ network.regularization <- function(
 
   # Argument errors (return data in case of tibble)
   data <- network.regularization_errors(
-    data, n, gamma, nlambda, lambda.min.ratio,
-    penalize.diagonal, optimize.lambda,
-    ebic.gamma, fast, LLA, LLA.threshold, verbose, ...
+    data, n, adaptive, gamma, nlambda, lambda.min.ratio,
+    penalize.diagonal, optimize.lambda, ebic.gamma,
+    fast, LLA, LLA.threshold, network.only, verbose, ...
   )
 
   # Get necessary inputs
@@ -362,7 +391,10 @@ network.regularization <- function(
     "weibull" = weibull_derivative
   )
 
-  # Check for gamma
+  # Set shape (only used for Weibull)
+  shape <- 1
+
+  # Set gamma (set ahead of time for messaging on adaptive)
   if(is.null(gamma)){
 
     # Set defaults
@@ -374,31 +406,64 @@ network.regularization <- function(
       "lomax" = 4,
       "mcp" = 3,
       "scad" = 3.7,
-      0
+      "weibull" = 0.01
     )
 
   }
 
-  # Set shape
-  shape <- 0
+  # Check whether penalty is adaptive option
+  adaptive_option <- c("exp", "lomax", "weibull")
 
-  # Check for Weibull function
-  if(penalty == "weibull"){
+  # Check for adaptive and penalty is adaptive option
+  if(adaptive){
 
-    # Set partial correlations
-    P <- cor2pcor(S)
+    # Check whether penalty is adaptive
+    if(penalty %in% adaptive_option){
 
-    # Obtain Weibull estimates
-    estimates <- weibull_mle(abs(P[lower.tri(P)]))
+      # Set lower triangle
+      lower_triangle <- lower.tri(S)
 
-    # Set parameters
-    shape <- estimates[["shape"]]
-    gamma <- estimates[["scale"]] * 0.6931472^(1 / shape) # median
-    # pre-computes log(2) = 0.6931472
+      # Set partial correlations
+      P <- cor2pcor(S); lower_P <- abs(P[lower_triangle])
 
-    # Set LLA to FALSE
-    LLA <- FALSE
-    # oscillates rather than converges
+      if(penalty == "exp"){
+
+        # Obtain median of distribution
+        gamma <- 0.6931472 * sum(lower_P) / sum(lower_triangle)
+        # pre-computes log(2) = 0.6931472
+
+      }else if(penalty == "lomax"){
+
+        # Compute MLE of alpha
+        gamma <- sum(lower_triangle) / sum(log(1 + lower_P))
+
+      }else if(penalty == "weibull"){
+
+        # Obtain Weibull estimates
+        estimates <- weibull_mle(lower_P)
+
+        # Set parameters
+        shape <- estimates[["shape"]]
+        gamma <- estimates[["scale"]] * 0.6931472^(1 / shape) # median
+        # pre-computes log(2) = 0.6931472
+
+        # Set LLA to FALSE
+        LLA <- FALSE
+        # oscillates rather than converges
+
+      }
+
+    }else{
+
+      # Set message that penalty is not adaptive
+      message(
+        paste0(
+          "The \"", penalty,
+          "\" penalty is not adaptive.\n\nUsing its default, `gamma = ", gamma, "`"
+        )
+      )
+
+    }
 
   }
 
@@ -442,15 +507,18 @@ network.regularization <- function(
     dimnames(R) <- dimnames(W) <- dimnames(S)
 
     # Return results
-    return(
-      list(
-        network = W, K = output$wi, R = R,
-        penalty = penalty, lambda = optimized_lambda$minimum,
-        gamma = gamma, criterion = ic,
-        IC = optimized_lambda$objective, correlation = S
+    if(network.only){
+      return(W)
+    }else{
+      return(
+        list(
+          network = W, K = output$wi, R = R,
+          penalty = penalty, lambda = optimized_lambda$minimum,
+          gamma = gamma, criterion = ic,
+          IC = optimized_lambda$objective, correlation = S
+        )
       )
-    )
-
+    }
 
   }else{
 
@@ -573,13 +641,17 @@ network.regularization <- function(
     dimnames(R) <- dimnames(W) <- dimnames(S)
 
     # Return results
-    return(
-      list(
-        network = W, K = glasso_list[[optimal]]$wi, R = R,
-        penalty = penalty, lambda = lambda[[optimal]], gamma = gamma,
-        correlation = S, criterion = ic, IC = ICs[[optimal]]
+    if(network.only){
+      return(W)
+    }else{
+      return(
+        list(
+          network = W, K = glasso_list[[optimal]]$wi, R = R,
+          penalty = penalty, lambda = lambda[[optimal]], gamma = gamma,
+          correlation = S, criterion = ic, IC = ICs[[optimal]]
+        )
       )
-    )
+    }
 
   }
 
@@ -587,7 +659,7 @@ network.regularization <- function(
 
 # Bug checking ----
 # data = wmt2[,7:24]; n = NULL; corr = "auto"
-# na.data = "pairwise"; penalty = "l1"
+# na.data = "pairwise"; penalty = "l1"; adaptive = FALSE
 # gamma = NULL; lambda = NULL; nlambda = 50
 # lambda.min.ratio = 0.01; penalize.diagonal = TRUE
 # optimize.lambda = FALSE; ic = "BIC"
@@ -596,11 +668,11 @@ network.regularization <- function(
 
 #' @noRd
 # Errors ----
-# Updated 09.01.2026
+# Updated 12.01.2026
 network.regularization_errors <- function(
-    data, n, gamma, nlambda, lambda.min.ratio,
+    data, n, adaptive, gamma, nlambda, lambda.min.ratio,
     penalize.diagonal, optimize.lambda, ebic.gamma,
-    fast, LLA, LLA.threshold, verbose, ...
+    fast, LLA, LLA.threshold, network.only, verbose, ...
 )
 {
 
@@ -617,6 +689,10 @@ network.regularization_errors <- function(
     length_error(n, 1, "network.regularization")
     typeof_error(n, "numeric", "network.regularization")
   }
+
+  # 'adaptive' errors
+  length_error(adaptive, 1, "network.regularization")
+  typeof_error(adaptive, "logical", "network.regularization")
 
   # 'gamma' errors
   if(!is.null(gamma)){
@@ -662,6 +738,10 @@ network.regularization_errors <- function(
     typeof_error(LLA.threshold, "numeric", "network.regularization")
     range_error(LLA.threshold, c(-Inf, 0.10), "network.regularization")
   }
+
+  # 'network.only' errors
+  length_error(network.only, 1, "network.regularization")
+  typeof_error(network.only, "logical", "network.regularization")
 
   # 'verbose' errors
   length_error(verbose, 1, "network.regularization")

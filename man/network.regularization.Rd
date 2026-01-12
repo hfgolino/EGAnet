@@ -10,6 +10,7 @@ network.regularization(
   corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
   penalty = c("atan", "bridge", "exp", "l1", "l2", "lomax", "mcp", "scad", "weibull"),
+  adaptive = FALSE,
   gamma = NULL,
   lambda = NULL,
   nlambda = 50,
@@ -22,6 +23,7 @@ network.regularization(
   LLA = FALSE,
   LLA.threshold = 0.0001,
   LLA.iter = 100,
+  network.only = TRUE,
   verbose = FALSE,
   ...
 )
@@ -97,7 +99,7 @@ Available options:
 \item \code{"l2"} --- Ridge (Hoerl & Kennard, 1970)
 \deqn{\lambda \cdot x^2}
 
-\item \code{"lomax"} --- Lomax (Lomax, 1951)
+\item \code{"lomax"} --- Lomax (Lomax, 1954)
 \deqn{\lambda \cdot (1 - (\frac{1}{(|x| + 1)^\gamma}))}
 
 \item \code{"mcp"} --- Minimax Concave Penalty (Zhang, 2010)
@@ -121,6 +123,23 @@ P(x; \lambda, \gamma) =
 
 \item \code{"weibull"} --- Data-adaptive Weibull
 \deqn{\lambda \cdot (1 - e^{\large(-\frac{|x|}{\gamma}\large)^k})}
+
+}}
+
+\item{adaptive}{Boolean (length = 1).
+Whether data-adaptive parameters should be used.
+Defaults to \code{FALSE}.
+Set to \code{TRUE} to apply data-adaptive paramters
+based on the empirical partial correlation matrix.
+Available options:
+
+\itemize{
+
+\item \code{"exp"} =  uses median of distribution for the scale parameter (\eqn{\frac{\log{(2)}}{\lambda}})
+
+\item \code{"lomax"} = uses MLE estimate of \eqn{\alpha} parameter (\eqn{\frac{n}{\sum_i \log{(1 + x_i)}}})
+
+\item \code{"weibull"} = uses MLE estimate of shape parameter and median of distribution for the scale parameter (\eqn{\lambda \cdot (\log{(2)})^{1/k} })
 
 }}
 
@@ -236,6 +255,12 @@ Defaults to \code{1e-04}}
 Maximum number of iterations to perform to reach convergence.
 Defaults to \code{100}}
 
+\item{network.only}{Boolean (length = 1).
+Whether the network only should be output.
+Defaults to \code{TRUE}.
+Set to \code{FALSE} to obtain all output for the
+network estimation method}
+
 \item{verbose}{Boolean (length = 1).
 Whether messages and (insignificant) warnings should be output.
 Defaults to \code{FALSE} (silent calls).
@@ -257,6 +282,12 @@ wmt <- wmt2[,7:24]
 
 # Obtain network
 l1_network <- network.regularization(data = wmt)
+
+# Obtain Atan network
+atan_network <- network.regularization(data = wmt, penalty = "atan")
+
+# Obtain data-adaptive EXP network
+exp_network <- network.regularization(data = wmt, penalty = "exp")
 
 }
 \references{

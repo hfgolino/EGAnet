@@ -2,6 +2,8 @@ WEBSITE: https://r-ega.net
 
 ## Changes in version 2.4.1
 
++	ADD: data-adaptive regularization for EXP and Lomax penalties in `network.regularization`
+
 +	UPDATE: `network.regularization` now has LLA optimization for non-convex penalties
 
 +	UPDATE: weibull penalty uses internal MLE estimation of shape and median for gamma parameter
