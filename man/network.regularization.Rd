@@ -9,16 +9,21 @@ network.regularization(
   n = NULL,
   corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
-  penalty = c("atan", "bridge", "l1", "l2", "lomax", "mcp", "scad", "weibull"),
+  penalty = c("atan", "bridge", "cauchy", "exp", "l1", "l2", "mcp", "scad", "weibull"),
+  adaptive = FALSE,
   gamma = NULL,
   lambda = NULL,
   nlambda = 50,
   lambda.min.ratio = 0.01,
   penalize.diagonal = TRUE,
   optimize.lambda = FALSE,
-  ic = c("AIC", "AICc", "BIC", "EBIC"),
+  ic = c("AIC", "AICc", "BIC", "BIC0", "EBIC", "MBIC"),
   ebic.gamma = 0.5,
   fast = TRUE,
+  LLA = FALSE,
+  LLA.threshold = 0.0001,
+  LLA.iter = 100,
+  network.only = TRUE,
   verbose = FALSE,
   ...
 )
@@ -85,14 +90,17 @@ Available options:
 \item \code{"bridge"} --- Bridge (Fu, 1998)
 \deqn{\lambda \cdot |x|^\gamma}
 
+\item \code{"cauchy"} ---- Cauchy
+\deqn{\lambda \cdot \frac{1}{\pi} \cdot \arctan{\frac{|x|}{\gamma}} + 0.5}
+
+\item \code{"exp"} --- EXP (Wang, Fan, & Zhu, 2018)
+\deqn{\lambda \cdot (1 - e^{-\frac{|x|}{\gamma}})}
+
 \item \code{"l1"} --- LASSO (Tibshirani, 1996)
 \deqn{\lambda \cdot |x|}
 
 \item \code{"l2"} --- Ridge (Hoerl & Kennard, 1970)
 \deqn{\lambda \cdot x^2}
-
-\item \code{"lomax"} --- Lomax (Lomax, 1951)
-\deqn{\lambda \cdot (1 - (\frac{1}{(|x| + 1)^\gamma}))}
 
 \item \code{"mcp"} --- Minimax Concave Penalty (Zhang, 2010)
 \deqn{
@@ -113,6 +121,26 @@ P(x; \lambda, \gamma) =
 \end{cases}
 }
 
+\item \code{"weibull"} --- Data-adaptive Weibull
+\deqn{\lambda \cdot (1 - e^{\large(-\frac{|x|}{\gamma}\large)^k})}
+
+}}
+
+\item{adaptive}{Boolean (length = 1).
+Whether data-adaptive parameters should be used.
+Defaults to \code{FALSE}.
+Set to \code{TRUE} to apply data-adaptive parameters
+based on the empirical partial correlation matrix.
+Available options:
+
+\itemize{
+
+\item \code{"cauchy"} = uses half of the interquartile range of the absolute empirical partial correlations (Bloch, 1966)
+
+\item \code{"exp"} =  uses median of distribution for the scale parameter (\eqn{\frac{\log{(2)}}{\lambda}})
+
+\item \code{"weibull"} = uses MLE estimate of shape parameter and median of distribution for the scale parameter (\eqn{\lambda \cdot (\log{(2)})^{1/k} })
+
 }}
 
 \item{gamma}{Numeric (length = 1).
@@ -125,11 +153,15 @@ Defaults:
 
 \item \code{"bridge"} = 1
 
-\item \code{"lomax"} = 4
+\item \code{"cauchy"} = 0.01
+
+\item \code{"exp"} = 0.01
 
 \item \code{"mcp"} = 3
 
 \item \code{"scad"} = 3.7
+
+\item \code{"weibull"} = 0.01
 
 }}
 
@@ -166,7 +198,11 @@ Available options include:
 
 \item \code{"BIC"} --- Bayesian information criterion: \eqn{-2L + E \cdot \log{(n)}}
 
+\item \code{"BIC0"} --- Bayesian information criterion not (Dicker et al., 2013): \eqn{\log{\large(\frac{D}{n - E}\large)} + \large(\frac{\log{(n)}}{n}\large) \cdot E}
+
 \item \code{"EBIC"} --- Extended BIC: \eqn{BIC + 4E \cdot \gamma \cdot \log{(E)}}
+
+\item \code{"MBIC"} --- Modified Bayesian information criterion (Wang et al., 2018):  \eqn{\log{\large(\frac{D}{n - E}\large)} + \large(\frac{\log{(n)} \cdot E}{n}\large) \cdot \log{(\log{(p)}})}
 
 }
 
@@ -186,6 +222,8 @@ Term definitions:
 
 \item \eqn{L = \frac{n}{2} \cdot \log \text{det} K - \sum_{i=1}^p (SK)_{ii}}
 
+\item \eqn{D = n \cdot \sum_{i=1}^p (SK)_{ii} - \log \text{det} K}
+
 }
 
 Defaults to \code{"BIC"}}
@@ -204,6 +242,27 @@ Defaults to \code{TRUE}.
 The fast results \emph{may} differ by less than floating point of the original
 GLASSO implemented by \code{\link[glasso]{glasso}} and should not impact reproducibility much (set to \code{FALSE} if concerned)}
 
+\item{LLA}{Boolean (length = 1).
+Should Local Linear Approximation be used to find optimal minimum?
+Defaults to \code{FALSE} or a single-pass approximation, which can be
+significantly faster (Zou & Li, 2008).
+Set to \code{TRUE} to find global minimum based on convergence (\code{LLA.threshold})}
+
+\item{LLA.threshold}{Numeric (length = 1).
+When performing the Local Linear Approximation, the maximum threshold
+until convergence is met.
+Defaults to \code{1e-04}}
+
+\item{LLA.iter}{Numeric (length = 1).
+Maximum number of iterations to perform to reach convergence.
+Defaults to \code{100}}
+
+\item{network.only}{Boolean (length = 1).
+Whether the network only should be output.
+Defaults to \code{TRUE}.
+Set to \code{FALSE} to obtain all output for the
+network estimation method}
+
 \item{verbose}{Boolean (length = 1).
 Whether messages and (insignificant) warnings should be output.
 Defaults to \code{FALSE} (silent calls).
@@ -217,7 +276,7 @@ A network matrix
 \description{
 A general function to estimate Gaussian graphical models using
 regularization penalties. All non-convex penalties are implemented using
-the Local Linear Approximation (LLA: Fan & Li, 2001)
+the Local Linear Approximation (LLA: Fan & Li, 2001; Zou & Li, 2008)
 }
 \examples{
 # Obtain data
@@ -226,15 +285,32 @@ wmt <- wmt2[,7:24]
 # Obtain network
 l1_network <- network.regularization(data = wmt)
 
+# Obtain Atan network
+atan_network <- network.regularization(data = wmt, penalty = "atan")
+
+# Obtain data-adaptive EXP network
+exp_network <- network.regularization(data = wmt, penalty = "exp")
+
 }
 \references{
+\strong{Half IQR for \eqn{\gamma} in Cauchy} \cr
+Johnson, N. L., Kotz, S., & Balakrishnan, N. (1970).
+Continuous univariate distributions (Vol. 1).
+New York, NY: John Wiley & Sons.
+
+\strong{BIC0} \cr
+Dicker, L., Huang, B., & Lin, X. (2013).
+Variable selection and estimation with the seamless-L0 penalty.
+\emph{Statistica Sinica}, \emph{23}(2), 929--962.
+
 \strong{SCAD penalty and Local Linear Approximation} \cr
 Fan, J., & Li, R. (2001).
 Variable selection via nonconcave penalized likelihood and its oracle properties.
 \emph{Journal of the American Statistical Association}, \emph{96}(456), 1348--1360.
 
 \strong{Bridge penalty} \cr
-Fu, W. J. (1998). Penalized regressions: The bridge versus the lasso.
+Fu, W. J. (1998).
+Penalized regressions: The bridge versus the lasso.
 \emph{Journal of Computational and Graphical Statistics}, \emph{7}(3), 397--416.
 
 \strong{L2 penalty} \cr
@@ -242,15 +318,15 @@ Hoerl, A. E., & Kennard, R. W. (1970).
 Ridge regression: Biased estimation for nonorthogonal problems.
 \emph{Technometrics}, \emph{12}(1), 55--67.
 
-\strong{Lomax penalty} \cr
-Lomax, K. S. (1954).
-Business failures: Another example of the analysis of failure data.
-\emph{Journal of the American Statistical Association}, \emph{49}(268), 847--852.
-
 \strong{L1 penalty} \cr
 Tibshirani, R. (1996).
 Regression shrinkage and selection via the lasso.
 \emph{Journal of the Royal Statistical Society: Series B (Methodological)}, \emph{58}(1), 267--288.
+
+\strong{EXP penalty} \cr
+Wang, Y., Fan, Q., & Zhu, L. (2018).
+Variable selection and estimation using a continuous approximation to the L0 penalty.
+\emph{Annals of the Institute of Statistical Mathematics}, \emph{70}(1), 191--214.
 
 \strong{Atan penalty} \cr
 Wang, Y., & Zhu, L. (2016).
@@ -266,6 +342,11 @@ Beyond lasso: A survey of nonconvex regularization in Gaussian graphical models.
 Zhang, C.-H. (2010).
 Nearly unbiased variable selection under minimax concave penalty.
 \emph{Annals of Statistics}, \emph{38}(2), 894--942.
+
+\strong{One-step Local Linear Approximation} \cr
+Zou, H., & Li, R. (2008).
+One-step sparse estimates in nonconcave penalized likelihood models.
+\emph{Annals of Statistics}, \emph{36}(4), 1509--1533.
 }
 \author{
 Alexander P. Christensen <alexpaulchristensen at gmail.com> and
