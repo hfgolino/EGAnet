@@ -97,7 +97,7 @@ scad_penalty <- function(x, lambda, gamma = 3.7, ...)
 }
 
 #' @noRd
-# Updated 12.01.2026
+# Updated 13.01.2026
 weibull_penalty <- function(x, lambda, gamma, shape, ...)
 {
 
@@ -210,7 +210,7 @@ scad_derivative <- function(x, lambda, gamma = 3.7, ...)
 }
 
 #' @noRd
-# Updated 12.01.2026
+# Updated 13.01.2026
 weibull_derivative <- function(x, lambda, gamma, shape, ...)
 {
   # Pre-compute components

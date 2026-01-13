@@ -443,7 +443,7 @@ network.regularization <- function(
         estimates <- weibull_mle(lower_P)
 
         # Set parameters
-        shape <- min(estimates[["shape"]], 1) # bound
+        shape <- min(estimates[["shape"]], 1) # cap at EXP
         gamma <- estimates[["scale"]] * 0.6931472^(1 / shape) # median
         # pre-computes log(2) = 0.6931472
 
@@ -662,9 +662,10 @@ network.regularization <- function(
 # na.data = "pairwise"; penalty = "l1"; adaptive = FALSE
 # gamma = NULL; lambda = NULL; nlambda = 50
 # lambda.min.ratio = 0.01; penalize.diagonal = TRUE
-# optimize.lambda = FALSE; ic = "BIC"
+# optimize.lambda = FALSE; ic = "BIC"; network.only = TRUE
 # ebic.gamma = 0.5; fast = TRUE; verbose = FALSE
 # LLA = FALSE; LLA.threshold = 1e-04; LLA.iter = 100
+
 
 #' @noRd
 # Errors ----
