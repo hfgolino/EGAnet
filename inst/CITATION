@@ -8,13 +8,13 @@ bibentry(
 	   person("Golino,", "Hudson"),
 	   person("Christensen,", "Alexander")
 	),
-	year = "2025",
+	year = "2026",
 	url	= "https://r-ega.net",
 	doi = "10.32614/CRAN.package.EGAnet",
-	note = "R package version 2.1.1",
+	note = "R package version 2.4.1",
 
   textVersion  =
-  paste0("Golino, H., & Christensen, A. P. (2025). ",
+  paste0("Golino, H., & Christensen, A. P. (2026). ",
         "EGAnet: Exploratory Graph Analysis – A framework for estimating the number of dimensions in multivariate data using network psychometrics. ",
 	"https://doi.org/10.32614/CRAN.package.EGAnet")
 )

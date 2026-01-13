@@ -9,7 +9,7 @@ network.regularization(
   n = NULL,
   corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
-  penalty = c("atan", "bridge", "exp", "l1", "l2", "lomax", "mcp", "scad", "weibull"),
+  penalty = c("atan", "bridge", "cauchy", "exp", "l1", "l2", "mcp", "scad", "weibull"),
   adaptive = FALSE,
   gamma = NULL,
   lambda = NULL,
@@ -90,6 +90,9 @@ Available options:
 \item \code{"bridge"} --- Bridge (Fu, 1998)
 \deqn{\lambda \cdot |x|^\gamma}
 
+\item \code{"cauchy"} ---- Cauchy
+\deqn{\lambda \cdot \frac{1}{\pi} \cdot \arctan{\frac{|x|}{\gamma}} + 0.5}
+
 \item \code{"exp"} --- EXP (Wang, Fan, & Zhu, 2018)
 \deqn{\lambda \cdot (1 - e^{-\frac{|x|}{\gamma}})}
 
@@ -98,9 +101,6 @@ Available options:
 
 \item \code{"l2"} --- Ridge (Hoerl & Kennard, 1970)
 \deqn{\lambda \cdot x^2}
-
-\item \code{"lomax"} --- Lomax (Lomax, 1954)
-\deqn{\lambda \cdot (1 - (\frac{1}{(|x| + 1)^\gamma}))}
 
 \item \code{"mcp"} --- Minimax Concave Penalty (Zhang, 2010)
 \deqn{
@@ -129,15 +129,15 @@ P(x; \lambda, \gamma) =
 \item{adaptive}{Boolean (length = 1).
 Whether data-adaptive parameters should be used.
 Defaults to \code{FALSE}.
-Set to \code{TRUE} to apply data-adaptive paramters
+Set to \code{TRUE} to apply data-adaptive parameters
 based on the empirical partial correlation matrix.
 Available options:
 
 \itemize{
 
-\item \code{"exp"} =  uses median of distribution for the scale parameter (\eqn{\frac{\log{(2)}}{\lambda}})
+\item \code{"cauchy"} = uses half of the interquartile range of the absolute empirical partial correlations (Bloch, 1966)
 
-\item \code{"lomax"} = uses MLE estimate of \eqn{\alpha} parameter (\eqn{\frac{n}{\sum_i \log{(1 + x_i)}}})
+\item \code{"exp"} =  uses median of distribution for the scale parameter (\eqn{\frac{\log{(2)}}{\lambda}})
 
 \item \code{"weibull"} = uses MLE estimate of shape parameter and median of distribution for the scale parameter (\eqn{\lambda \cdot (\log{(2)})^{1/k} })
 
@@ -153,13 +153,15 @@ Defaults:
 
 \item \code{"bridge"} = 1
 
-\item \code{"exp"} = 0.01
+\item \code{"cauchy"} = 0.01
 
-\item \code{"lomax"} = 4
+\item \code{"exp"} = 0.01
 
 \item \code{"mcp"} = 3
 
 \item \code{"scad"} = 3.7
+
+\item \code{"weibull"} = 0.01
 
 }}
 
@@ -291,6 +293,11 @@ exp_network <- network.regularization(data = wmt, penalty = "exp")
 
 }
 \references{
+\strong{Half IQR for \eqn{\gamma} in Cauchy} \cr
+Johnson, N. L., Kotz, S., & Balakrishnan, N. (1970).
+Continuous univariate distributions (Vol. 1).
+New York, NY: John Wiley & Sons.
+
 \strong{BIC0} \cr
 Dicker, L., Huang, B., & Lin, X. (2013).
 Variable selection and estimation with the seamless-L0 penalty.
@@ -310,11 +317,6 @@ Penalized regressions: The bridge versus the lasso.
 Hoerl, A. E., & Kennard, R. W. (1970).
 Ridge regression: Biased estimation for nonorthogonal problems.
 \emph{Technometrics}, \emph{12}(1), 55--67.
-
-\strong{Lomax penalty} \cr
-Lomax, K. S. (1954).
-Business failures: Another example of the analysis of failure data.
-\emph{Journal of the American Statistical Association}, \emph{49}(268), 847--852.
 
 \strong{L1 penalty} \cr
 Tibshirani, R. (1996).
