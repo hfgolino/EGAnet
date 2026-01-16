@@ -227,6 +227,13 @@ weibull_derivative <- function(x, lambda, gamma, shape, ...)
 #%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #' @noRd
+# Updated 13.01.2026
+atan_proximal <- function(x, lambda, gamma = 0.01, ...)
+{
+  return(l1_proximal(x, atan_derivative(x, lambda, gamma)))
+}
+
+#' @noRd
 # Updated 22.11.2025
 bridge_proximal <- function(x, lambda, gamma = 1, eps = 1e-08, ...)
 {
