@@ -413,6 +413,9 @@ network.regularization <- function(
 
   }
 
+  # Initialize adaptive lambda
+  adaptive_lambda <- FALSE
+
   # Check whether penalty is adaptive option
   adaptive_option <- c("cauchy", "exp", "weibull")
 
@@ -421,6 +424,9 @@ network.regularization <- function(
 
     # Check whether penalty is adaptive
     if(penalty %in% adaptive_option){
+
+      # Send adaptive lambda
+      adaptive_lambda <- TRUE
 
       # Set lower triangle
       lower_triangle <- lower.tri(S)
@@ -528,6 +534,7 @@ network.regularization <- function(
     # Simplify source for fewer computations (minimal improvement)
     S_zero_diagonal <- S - diag(nodes) # makes diagonal zero
     lambda.max <- max(abs(S_zero_diagonal)) # uses absolute rather than inverse
+    lambda.max <- lambda.max / ifelse(adaptive_lambda, log10(n), 1) # adapt with sample size
     lambda.min <- lambda.min.ratio * lambda.max
     lambda <- exp(seq.int(log(lambda.min), log(lambda.max), length.out = nlambda))
 
