@@ -10,13 +10,13 @@ network.regularization(
   corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
   penalty = c("atan", "bridge", "cauchy", "exp", "l1", "l2", "mcp", "scad", "weibull"),
-  adaptive = FALSE,
   gamma = NULL,
   lambda = NULL,
+  adaptive.gamma = FALSE,
+  adaptive.lambda = FALSE,
   nlambda = 50,
   lambda.min.ratio = 0.01,
   penalize.diagonal = TRUE,
-  optimize.lambda = FALSE,
   ic = c("AIC", "AICc", "BIC", "BIC0", "EBIC", "MBIC"),
   ebic.gamma = 0.5,
   fast = TRUE,
@@ -126,23 +126,6 @@ P(x; \lambda, \gamma) =
 
 }}
 
-\item{adaptive}{Boolean (length = 1).
-Whether data-adaptive parameters should be used.
-Defaults to \code{FALSE}.
-Set to \code{TRUE} to apply data-adaptive parameters
-based on the empirical partial correlation matrix.
-Available options:
-
-\itemize{
-
-\item \code{"cauchy"} = uses half of the interquartile range of the absolute empirical partial correlations (Bloch, 1966)
-
-\item \code{"exp"} =  uses median of distribution for the scale parameter (\eqn{\frac{\log{(2)}}{\lambda}})
-
-\item \code{"weibull"} = uses MLE estimate of shape parameter and median of distribution for the scale parameter (\eqn{\lambda \cdot (\log{(2)})^{1/k} })
-
-}}
-
 \item{gamma}{Numeric (length = 1).
 Adjusts the shape of the penalty.
 Defaults:
@@ -166,7 +149,30 @@ Defaults:
 }}
 
 \item{lambda}{Numeric (length = 1).
-Adjusts the initial penalty provided to the non-convex penalty function}
+Adjusts the initial penalty provided to the penalty function}
+
+\item{adaptive.gamma}{Boolean (length = 1).
+Whether data-adaptive (gamma) parameters should be used.
+Defaults to \code{FALSE}.
+Set to \code{TRUE} to apply data-adaptive parameters
+based on the empirical partial correlation matrix.
+Available options:
+
+\itemize{
+
+\item \code{"cauchy"} = uses half of the interquartile range of the absolute empirical partial correlations (Bloch, 1966)
+
+\item \code{"exp"} =  uses median of distribution for the scale parameter (\eqn{\frac{\log{(2)}}{\lambda}})
+
+\item \code{"weibull"} = uses MLE estimate of shape parameter and median of distribution for the scale parameter (\eqn{\lambda \cdot (\log{(2)})^{1/k} })
+
+}}
+
+\item{adaptive.lambda}{Boolean (length = 1).
+Whether data-adaptive lambda should be used.
+Defaults to \code{FALSE}.
+Set to \code{TRUE} to adjust the lambda grid search using:
+\eqn{\lambda_{\text{max}} \cdot \log_{10}{(n)}}}
 
 \item{nlambda}{Numeric (length = 1).
 Number of lambda values to test.
@@ -179,12 +185,6 @@ Defaults to \code{0.01}}
 \item{penalize.diagonal}{Boolean (length = 1).
 Should the diagonal be penalized?
 Defaults to \code{FALSE}}
-
-\item{optimize.lambda}{Boolean (length = 1).
-Whether optimization of lambda should be performed.
-Defaults to \code{FALSE} or grid search over lambda.
-If \code{TRUE}, then \code{\link[stats]{optimize}} is used
-to find the optimal lambda}
 
 \item{ic}{Character (length = 1).
 What information criterion should be used for model selection?
@@ -269,6 +269,12 @@ Defaults to \code{FALSE} (silent calls).
 Set to \code{TRUE} to see all messages and warnings for every function call}
 
 \item{...}{Additional arguments to be passed on to \code{\link[EGAnet]{auto.correlate}}}
+
+\item{optimize.lambda}{Boolean (length = 1).
+Whether optimization of lambda should be performed.
+Defaults to \code{FALSE} or grid search over lambda.
+If \code{TRUE}, then \code{\link[stats]{optimize}} is used
+to find the optimal lambda}
 }
 \value{
 A network matrix

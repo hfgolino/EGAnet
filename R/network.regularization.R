@@ -101,23 +101,6 @@
 #'
 #' }
 #'
-#' @param adaptive Boolean (length = 1).
-#' Whether data-adaptive parameters should be used.
-#' Defaults to \code{FALSE}.
-#' Set to \code{TRUE} to apply data-adaptive parameters
-#' based on the empirical partial correlation matrix.
-#' Available options:
-#'
-#' \itemize{
-#'
-#' \item \code{"cauchy"} = uses half of the interquartile range of the absolute empirical partial correlations (Bloch, 1966)
-#'
-#' \item \code{"exp"} =  uses median of distribution for the scale parameter (\eqn{\frac{\log{(2)}}{\lambda}})
-#'
-#' \item \code{"weibull"} = uses MLE estimate of shape parameter and median of distribution for the scale parameter (\eqn{\lambda \cdot (\log{(2)})^{1/k} })
-#'
-#' }
-#'
 #' @param gamma Numeric (length = 1).
 #' Adjusts the shape of the penalty.
 #' Defaults:
@@ -141,7 +124,30 @@
 #' }
 #'
 #' @param lambda Numeric (length = 1).
-#' Adjusts the initial penalty provided to the non-convex penalty function
+#' Adjusts the initial penalty provided to the penalty function
+#'
+#' @param adaptive.gamma Boolean (length = 1).
+#' Whether data-adaptive (gamma) parameters should be used.
+#' Defaults to \code{FALSE}.
+#' Set to \code{TRUE} to apply data-adaptive parameters
+#' based on the empirical partial correlation matrix.
+#' Available options:
+#'
+#' \itemize{
+#'
+#' \item \code{"cauchy"} = uses half of the interquartile range of the absolute empirical partial correlations (Bloch, 1966)
+#'
+#' \item \code{"exp"} =  uses median of distribution for the scale parameter (\eqn{\frac{\log{(2)}}{\lambda}})
+#'
+#' \item \code{"weibull"} = uses MLE estimate of shape parameter and median of distribution for the scale parameter (\eqn{\lambda \cdot (\log{(2)})^{1/k} })
+#'
+#' }
+#'
+#' @param adaptive.lambda Boolean (length = 1).
+#' Whether data-adaptive lambda should be used.
+#' Defaults to \code{FALSE}.
+#' Set to \code{TRUE} to adjust the lambda grid search using:
+#' \eqn{\lambda_{\text{max}} \cdot \log_{10}{(n)}}
 #'
 #' @param nlambda Numeric (length = 1).
 #' Number of lambda values to test.
@@ -323,14 +329,15 @@
 #' @export
 #'
 # Apply non-convex regularization ----
-# Updated 12.01.2026
+# Updated 17.01.2026
 network.regularization <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
     penalty = c("atan", "bridge", "cauchy", "exp", "l1", "l2", "mcp", "scad", "weibull"),
-    adaptive = FALSE, gamma = NULL, lambda = NULL, nlambda = 50, lambda.min.ratio = 0.01,
-    penalize.diagonal = TRUE, optimize.lambda = FALSE,
+    gamma = NULL, lambda = NULL,
+    adaptive.gamma = FALSE, adaptive.lambda = FALSE,
+    nlambda = 50, lambda.min.ratio = 0.01, penalize.diagonal = TRUE,
     ic = c("AIC", "AICc", "BIC", "BIC0", "EBIC", "MBIC"), ebic.gamma = 0.50,
     fast = TRUE, LLA = FALSE, LLA.threshold = 1e-04, LLA.iter = 100,
     network.only = TRUE, verbose = FALSE, ...
@@ -347,8 +354,8 @@ network.regularization <- function(
 
   # Argument errors (return data in case of tibble)
   data <- network.regularization_errors(
-    data, n, adaptive, gamma, nlambda, lambda.min.ratio,
-    penalize.diagonal, optimize.lambda, ebic.gamma,
+    data, n, gamma, adaptive.gamma, adaptive.lambda,
+    nlambda, lambda.min.ratio, penalize.diagonal, ebic.gamma,
     fast, LLA, LLA.threshold, network.only, verbose, ...
   )
 
@@ -413,20 +420,14 @@ network.regularization <- function(
 
   }
 
-  # Initialize adaptive lambda
-  adaptive_lambda <- FALSE
-
   # Check whether penalty is adaptive option
   adaptive_option <- c("cauchy", "exp", "weibull")
 
   # Check for adaptive and penalty is adaptive option
-  if(adaptive){
+  if(adaptive.gamma){
 
     # Check whether penalty is adaptive
     if(penalty %in% adaptive_option){
-
-      # Send adaptive lambda
-      adaptive_lambda <- TRUE
 
       # Set lower triangle
       lower_triangle <- lower.tri(S)
@@ -479,95 +480,69 @@ network.regularization <- function(
   # Initialize lambda matrix
   lambda_matrix <- matrix(0, nrow = nodes, ncol = nodes)
 
-  # Check for optimization
-  if(optimize.lambda){
+  # Simplify source for fewer computations (minimal improvement)
+  S_zero_diagonal <- S - diag(nodes) # makes diagonal zero
+  lambda.max <- max(abs(S_zero_diagonal)) # uses absolute rather than inverse
+  lambda.max <- lambda.max / ifelse(adaptive.lambda, max(log10(n), 1), 1) # adapt with sample size
+  lambda.min <- lambda.min.ratio * lambda.max
+  lambda <- exp(seq.int(log(lambda.min), log(lambda.max), length.out = nlambda))
 
-    # Optimize for lambda
-    optimized_lambda <- optimize(
-      f = lambda_optimize, interval = c(0, swiftelse(penalty == "l2", 10, 1)),
-      gamma = gamma, K = K, S = S,
-      derivative_FUN = derivative_FUN,
-      glasso_FUN = glasso_FUN, glasso_ARGS = glasso_ARGS,
-      lambda_matrix = lambda_matrix, penalize.diagonal = penalize.diagonal,
-      ic = ic, n = n, nodes = nodes, ebic.gamma = ebic.gamma, shape = shape
-    )
+  # Obtain lambda sequence
+  lambda_sequence <- seq_len(nlambda)
+
+  # Obtain lambda matrices
+  lambda_list <- lapply(lambda, function(value){
 
     # Obtain lambda matrix
-    lambda_matrix[] <- abs(derivative_FUN(
-      x = K, lambda = optimized_lambda$minimum, gamma = gamma, shape = shape
-    ))
+    lambda_matrix[] <- abs(derivative_FUN(x = K, lambda = value, gamma = gamma, shape = shape))
 
     # Check for diagonal penalization
     if(!penalize.diagonal){
       diag(lambda_matrix) <- 0
     }
 
-    # Set lambda matrix
-    glasso_ARGS$rho <- lambda_matrix
+    # Attach value
+    attr(lambda_matrix, "value") <- value
 
-    # Estimate output
-    output <- do.call(what = glasso_FUN, args = glasso_ARGS)
+    # Return lambda matrix
+    return(lambda_matrix)
 
-    # Get R
-    R <- output$w
+  })
 
-    # Get W
-    W <- wi2net(output$wi)
-    dimnames(R) <- dimnames(W) <- dimnames(S)
+  # Check for LLA
+  if(LLA){
 
-    # Return results
-    if(network.only){
-      return(W)
-    }else{
-      return(
-        list(
-          network = W, K = output$wi, R = R,
-          penalty = penalty, lambda = optimized_lambda$minimum,
-          gamma = gamma, criterion = ic,
-          IC = optimized_lambda$objective, correlation = S
-        )
-      )
-    }
+    # Get GLASSO output
+    glasso_list <- lapply(lambda_list, function(lambda_matrix){
 
-  }else{
+      # Obtain lambda value
+      value <- attributes(lambda_matrix)$value
 
-    # Simplify source for fewer computations (minimal improvement)
-    S_zero_diagonal <- S - diag(nodes) # makes diagonal zero
-    lambda.max <- max(abs(S_zero_diagonal)) # uses absolute rather than inverse
-    lambda.max <- lambda.max / ifelse(adaptive_lambda, log10(n), 1) # adapt with sample size
-    lambda.min <- lambda.min.ratio * lambda.max
-    lambda <- exp(seq.int(log(lambda.min), log(lambda.max), length.out = nlambda))
+      # Set lambda matrix
+      glasso_ARGS$rho <- lambda_matrix
 
-    # Obtain lambda sequence
-    lambda_sequence <- seq_len(nlambda)
+      # Obtain estimate
+      estimate <- do.call(what = glasso_FUN, args = glasso_ARGS)
 
-    # Obtain lambda matrices
-    lambda_list <- lapply(lambda, function(value){
+      # Obtain new K
+      new_K <- estimate$wi
 
-      # Obtain lambda matrix
-      lambda_matrix[] <- abs(derivative_FUN(x = K, lambda = value, gamma = gamma, shape = shape))
+      # Set convergence and iterations
+      convergence <- Inf; iterations <- 0
 
-      # Check for diagonal penalization
-      if(!penalize.diagonal){
-        diag(lambda_matrix) <- 0
-      }
+      # Loop over to convergence
+      while((convergence > LLA.threshold) & (iterations < LLA.iter)){
 
-      # Attach value
-      attr(lambda_matrix, "value") <- value
+        # Set old K
+        old_K <- new_K
 
-      # Return lambda matrix
-      return(lambda_matrix)
+        # Obtain lambda matrix
+        lambda_matrix[] <- abs(derivative_FUN(x = old_K, lambda = value, gamma = gamma, shape = shape))
 
-    })
-
-    # Check for LLA
-    if(LLA){
-
-      # Get GLASSO output
-      glasso_list <- lapply(lambda_list, function(lambda_matrix){
-
-        # Obtain lambda value
-        value <- attributes(lambda_matrix)$value
+        # Check for diagonal penalization
+        if(!penalize.diagonal){
+          diag(lambda_matrix) <- 0
+        }
 
         # Set lambda matrix
         glasso_ARGS$rho <- lambda_matrix
@@ -578,91 +553,63 @@ network.regularization <- function(
         # Obtain new K
         new_K <- estimate$wi
 
-        # Set convergence and iterations
-        convergence <- Inf; iterations <- 0
+        # Increase iterations
+        iterations <- iterations + 1
 
-        # Loop over to convergence
-        while((convergence > LLA.threshold) & (iterations < LLA.iter)){
+        # Compute convergence
+        convergence <- mean(abs(new_K - old_K))
 
-          # Set old K
-          old_K <- new_K
+      }
 
-          # Obtain lambda matrix
-          lambda_matrix[] <- abs(derivative_FUN(x = old_K, lambda = value, gamma = gamma, shape = shape))
+      # Estimate
+      return(estimate)
 
-          # Check for diagonal penalization
-          if(!penalize.diagonal){
-            diag(lambda_matrix) <- 0
-          }
-
-          # Set lambda matrix
-          glasso_ARGS$rho <- lambda_matrix
-
-          # Obtain estimate
-          estimate <- do.call(what = glasso_FUN, args = glasso_ARGS)
-
-          # Obtain new K
-          new_K <- estimate$wi
-
-          # Increase iterations
-          iterations <- iterations + 1
-
-          # Compute convergence
-          convergence <- mean(abs(new_K - old_K))
-
-        }
-
-        # Estimate
-        return(estimate)
-
-      })
-
-    }else{
-
-      # Get GLASSO output
-      glasso_list <- lapply(lambda_list, function(lambda_matrix){
-
-        # Set lambda matrix
-        glasso_ARGS$rho <- lambda_matrix
-
-        # Estimate
-        return(do.call(what = glasso_FUN, args = glasso_ARGS))
-
-      })
-
-    }
-
-    # Compute ICs
-    ICs <- nvapply(glasso_list, function(element){
-      information_crtierion(
-        S = S, K = element$wi, n = n, nodes = nodes,
-        ic = ic, ebic.gamma = ebic.gamma
-      )
     })
 
-    # Optimal value
-    optimal <- which.min(ICs)
+  }else{
 
-    # Get R
-    R <- glasso_list[[optimal]]$w
+    # Get GLASSO output
+    glasso_list <- lapply(lambda_list, function(lambda_matrix){
 
-    # Get W
-    W <- wi2net(glasso_list[[optimal]]$wi)
-    dimnames(R) <- dimnames(W) <- dimnames(S)
+      # Set lambda matrix
+      glasso_ARGS$rho <- lambda_matrix
 
-    # Return results
-    if(network.only){
-      return(W)
-    }else{
-      return(
-        list(
-          network = W, K = glasso_list[[optimal]]$wi, R = R,
-          penalty = penalty, lambda = lambda[[optimal]], gamma = gamma,
-          correlation = S, criterion = ic, IC = ICs[[optimal]]
-        )
+      # Estimate
+      return(do.call(what = glasso_FUN, args = glasso_ARGS))
+
+    })
+
+  }
+
+  # Compute ICs
+  ICs <- nvapply(glasso_list, function(element){
+    information_crtierion(
+      S = S, K = element$wi, n = n, nodes = nodes,
+      ic = ic, ebic.gamma = ebic.gamma
+    )
+  })
+
+  # Optimal value
+  optimal <- which.min(ICs)
+
+  # Get R
+  R <- glasso_list[[optimal]]$w
+
+  # Get W
+  W <- wi2net(glasso_list[[optimal]]$wi)
+  dimnames(R) <- dimnames(W) <- dimnames(S)
+
+  # Return results
+  if(network.only){
+    return(W)
+  }else{
+    return(
+      list(
+        network = W, K = glasso_list[[optimal]]$wi, R = R,
+        penalty = penalty, lambda = lambda[[optimal]], gamma = gamma,
+        correlation = S, criterion = ic, IC = ICs[[optimal]]
       )
-    }
-
+    )
   }
 
 }
@@ -679,10 +626,10 @@ network.regularization <- function(
 
 #' @noRd
 # Errors ----
-# Updated 12.01.2026
+# Updated 17.01.2026
 network.regularization_errors <- function(
-    data, n, adaptive, gamma, nlambda, lambda.min.ratio,
-    penalize.diagonal, optimize.lambda, ebic.gamma,
+    data, n, gamma, adaptive.gamma, adaptive.lambda,
+    nlambda, lambda.min.ratio, penalize.diagonal, ebic.gamma,
     fast, LLA, LLA.threshold, network.only, verbose, ...
 )
 {
@@ -701,16 +648,16 @@ network.regularization_errors <- function(
     typeof_error(n, "numeric", "network.regularization")
   }
 
-  # 'adaptive' errors
-  length_error(adaptive, 1, "network.regularization")
-  typeof_error(adaptive, "logical", "network.regularization")
-
   # 'gamma' errors
   if(!is.null(gamma)){
     length_error(gamma, 1, "network.regularization")
     typeof_error(gamma, "numeric", "network.regularization")
     range_error(gamma, c(0, Inf), "network.regularization")
   }
+
+  # 'adaptive.lambda' errors
+  length_error(adaptive.lambda, 1, "network.regularization")
+  typeof_error(adaptive.lambda, "logical", "network.regularization")
 
   # 'nlambda' errors
   length_error(nlambda, 1, "network.regularization")
@@ -725,10 +672,6 @@ network.regularization_errors <- function(
   # 'penalize.diagonal' errors
   length_error(penalize.diagonal, 1, "network.regularization")
   typeof_error(penalize.diagonal, "logical", "network.regularization")
-
-  # 'optimize.lambda' errors
-  length_error(optimize.lambda, 1, "network.regularization")
-  typeof_error(optimize.lambda, "logical", "network.regularization")
 
   # 'ebic.gamma' errors
   length_error(ebic.gamma, 1, "network.regularization")
