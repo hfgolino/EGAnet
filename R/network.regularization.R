@@ -96,7 +96,7 @@
 #' \end{cases}
 #' }
 #'
-#' \item \code{"weibull"} --- Data-adaptive Weibull
+#' \item \code{"weibull"} --- Weibull
 #' \deqn{\lambda \cdot (1 - e^{\large(-\frac{|x|}{\gamma}\large)^k})}
 #'
 #' }
