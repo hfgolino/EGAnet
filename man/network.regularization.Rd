@@ -13,9 +13,8 @@ network.regularization(
   gamma = NULL,
   lambda = NULL,
   adaptive.gamma = FALSE,
-  adaptive.lambda = FALSE,
   nlambda = 50,
-  lambda.min.ratio = 0.01,
+  lambda.min.ratio,
   penalize.diagonal = TRUE,
   ic = c("AIC", "AICc", "BIC", "BIC0", "EBIC", "MBIC"),
   ebic.gamma = 0.5,
@@ -168,23 +167,18 @@ Available options:
 
 }}
 
-\item{adaptive.lambda}{Boolean (length = 1).
-Whether data-adaptive lambda should be used.
-Defaults to \code{FALSE}.
-Set to \code{TRUE} to adjust the lambda grid search using:
-\eqn{\lambda_{\text{max}} \cdot \log_{10}{(n)}}}
-
 \item{nlambda}{Numeric (length = 1).
 Number of lambda values to test.
 Defaults to \code{100}}
 
 \item{lambda.min.ratio}{Numeric (length = 1).
 Ratio of lowest lambda value compared to maximal lambda.
-Defaults to \code{0.01}}
+Defaults to \code{0.01} for all methods except for \code{"exp"} and
+\code{"weibull"} where it defaults to \code{0.001}}
 
 \item{penalize.diagonal}{Boolean (length = 1).
 Should the diagonal be penalized?
-Defaults to \code{FALSE}}
+Defaults to \code{TRUE}}
 
 \item{ic}{Character (length = 1).
 What information criterion should be used for model selection?
@@ -269,12 +263,6 @@ Defaults to \code{FALSE} (silent calls).
 Set to \code{TRUE} to see all messages and warnings for every function call}
 
 \item{...}{Additional arguments to be passed on to \code{\link[EGAnet]{auto.correlate}}}
-
-\item{optimize.lambda}{Boolean (length = 1).
-Whether optimization of lambda should be performed.
-Defaults to \code{FALSE} or grid search over lambda.
-If \code{TRUE}, then \code{\link[stats]{optimize}} is used
-to find the optimal lambda}
 }
 \value{
 A network matrix
@@ -295,7 +283,7 @@ l1_network <- network.regularization(data = wmt)
 atan_network <- network.regularization(data = wmt, penalty = "atan")
 
 # Obtain data-adaptive EXP network
-exp_network <- network.regularization(data = wmt, penalty = "exp")
+exp_network <- network.regularization(data = wmt, penalty = "exp", adaptive.gamma = TRUE)
 
 }
 \references{

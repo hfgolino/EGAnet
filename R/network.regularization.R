@@ -143,29 +143,18 @@
 #'
 #' }
 #'
-#' @param adaptive.lambda Boolean (length = 1).
-#' Whether data-adaptive lambda should be used.
-#' Defaults to \code{FALSE}.
-#' Set to \code{TRUE} to adjust the lambda grid search using:
-#' \eqn{\lambda_{\text{max}} \cdot \log_{10}{(n)}}
-#'
 #' @param nlambda Numeric (length = 1).
 #' Number of lambda values to test.
 #' Defaults to \code{100}
 #'
 #' @param lambda.min.ratio Numeric (length = 1).
 #' Ratio of lowest lambda value compared to maximal lambda.
-#' Defaults to \code{0.01}
+#' Defaults to \code{0.01} for all methods except for \code{"exp"} and
+#' \code{"weibull"} where it defaults to \code{0.001}
 #'
 #' @param penalize.diagonal Boolean (length = 1).
 #' Should the diagonal be penalized?
-#' Defaults to \code{FALSE}
-#'
-#' @param optimize.lambda Boolean (length = 1).
-#' Whether optimization of lambda should be performed.
-#' Defaults to \code{FALSE} or grid search over lambda.
-#' If \code{TRUE}, then \code{\link[stats]{optimize}} is used
-#' to find the optimal lambda
+#' Defaults to \code{TRUE}
 #'
 #' @param ic Character (length = 1).
 #' What information criterion should be used for model selection?
@@ -324,20 +313,19 @@
 #' atan_network <- network.regularization(data = wmt, penalty = "atan")
 #'
 #' # Obtain data-adaptive EXP network
-#' exp_network <- network.regularization(data = wmt, penalty = "exp")
+#' exp_network <- network.regularization(data = wmt, penalty = "exp", adaptive.gamma = TRUE)
 #'
 #' @export
 #'
 # Apply non-convex regularization ----
-# Updated 17.01.2026
+# Updated 19.01.2026
 network.regularization <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
     penalty = c("atan", "bridge", "cauchy", "exp", "l1", "l2", "mcp", "scad", "weibull"),
-    gamma = NULL, lambda = NULL,
-    adaptive.gamma = FALSE, adaptive.lambda = FALSE,
-    nlambda = 50, lambda.min.ratio = 0.01, penalize.diagonal = TRUE,
+    gamma = NULL, lambda = NULL, adaptive.gamma = FALSE,
+    nlambda = 50, lambda.min.ratio, penalize.diagonal = TRUE,
     ic = c("AIC", "AICc", "BIC", "BIC0", "EBIC", "MBIC"), ebic.gamma = 0.50,
     fast = TRUE, LLA = FALSE, LLA.threshold = 1e-04, LLA.iter = 100,
     network.only = TRUE, verbose = FALSE, ...
@@ -352,10 +340,15 @@ network.regularization <- function(
   penalty <- set_default(penalty, "l1", network.regularization)
   ic <- set_default(ic, "bic", network.regularization)
 
+  # Set different 'lambda.min.ratio'
+  if(missing(lambda.min.ratio)){
+    lambda.min.ratio <- swiftelse(penalty %in% c("exp", "weibull"), 0.001, 0.01)
+  }
+
   # Argument errors (return data in case of tibble)
   data <- network.regularization_errors(
-    data, n, gamma, adaptive.gamma, adaptive.lambda,
-    nlambda, lambda.min.ratio, penalize.diagonal, ebic.gamma,
+    data, n, gamma, adaptive.gamma, nlambda,
+    lambda.min.ratio, penalize.diagonal, ebic.gamma,
     fast, LLA, LLA.threshold, network.only, verbose, ...
   )
 
@@ -483,8 +476,7 @@ network.regularization <- function(
   # Simplify source for fewer computations (minimal improvement)
   S_zero_diagonal <- S - diag(nodes) # makes diagonal zero
   lambda.max <- max(abs(S_zero_diagonal)) # uses absolute rather than inverse
-  lambda.max <- lambda.max / ifelse(adaptive.lambda, max(log10(n), 1), 1) # adapt with sample size
-  lambda.min <- lambda.min.ratio * lambda.max
+  lambda.min <- lambda.max * lambda.min.ratio
   lambda <- exp(seq.int(log(lambda.min), log(lambda.max), length.out = nlambda))
 
   # Obtain lambda sequence
@@ -626,10 +618,10 @@ network.regularization <- function(
 
 #' @noRd
 # Errors ----
-# Updated 17.01.2026
+# Updated 19.01.2026
 network.regularization_errors <- function(
-    data, n, gamma, adaptive.gamma, adaptive.lambda,
-    nlambda, lambda.min.ratio, penalize.diagonal, ebic.gamma,
+    data, n, gamma, adaptive.gamma, nlambda,
+    lambda.min.ratio, penalize.diagonal, ebic.gamma,
     fast, LLA, LLA.threshold, network.only, verbose, ...
 )
 {
@@ -655,9 +647,9 @@ network.regularization_errors <- function(
     range_error(gamma, c(0, Inf), "network.regularization")
   }
 
-  # 'adaptive.lambda' errors
-  length_error(adaptive.lambda, 1, "network.regularization")
-  typeof_error(adaptive.lambda, "logical", "network.regularization")
+  # 'adaptive.gamma' errors
+  length_error(adaptive.gamma, 1, "network.regularization")
+  typeof_error(adaptive.gamma, "logical", "network.regularization")
 
   # 'nlambda' errors
   length_error(nlambda, 1, "network.regularization")
