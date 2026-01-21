@@ -574,12 +574,12 @@ dynamic.network.compare <- function(
           "statistic" = empirical[[i]]$empirical_values,
           "p.value" = c(
             mean( # Frobenius
-              c(TRUE, permuted_values[[i]][,1] >= empirical[[i]]$empirical_values[1]),
+              c(TRUE, permuted_values[[i]][,1] <= empirical[[i]]$empirical_values[1]),
               na.rm = TRUE
 
             ),
             mean( # JSS
-              c(TRUE, permuted_values[[i]][,2] >= empirical[[i]]$empirical_values[2]),
+              c(TRUE, permuted_values[[i]][,2] <= empirical[[i]]$empirical_values[2]),
               na.rm = TRUE
             ),
             mean( # Total strength
