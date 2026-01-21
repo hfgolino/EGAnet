@@ -310,7 +310,7 @@
 #' @export
 #'
 # Perform permutations for network structures ----
-# Updated 21.11.2025
+# Updated 21.01.2026
 dynamic.network.compare <- function(
     data, paired = FALSE,
     # EGA arguments
@@ -574,11 +574,12 @@ dynamic.network.compare <- function(
           "statistic" = empirical[[i]]$empirical_values,
           "p.value" = c(
             mean( # Frobenius
-              c(TRUE, permuted_values[[i]][,1] <= empirical[[i]]$empirical_values[1]),
+              c(TRUE, permuted_values[[i]][,1] >= empirical[[i]]$empirical_values[1]),
               na.rm = TRUE
+
             ),
             mean( # JSS
-              c(TRUE, permuted_values[[i]][,2] <= empirical[[i]]$empirical_values[2]),
+              c(TRUE, permuted_values[[i]][,2] >= empirical[[i]]$empirical_values[2]),
               na.rm = TRUE
             ),
             mean( # Total strength
@@ -586,8 +587,8 @@ dynamic.network.compare <- function(
               na.rm = TRUE
             )
           ),
-          "M_permutated" = colMeans(permuted_values[[i]], na.rm = TRUE),
-          "SD_permutated" = apply(permuted_values[[i]], 2, sd, na.rm = TRUE)
+          "M_permuted" = colMeans(permuted_values[[i]], na.rm = TRUE),
+          "SD_permuted" = apply(permuted_values[[i]], 2, sd, na.rm = TRUE)
         )
       )
     )
