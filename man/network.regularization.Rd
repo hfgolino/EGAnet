@@ -9,7 +9,8 @@ network.regularization(
   n = NULL,
   corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
-  penalty = c("atan", "bridge", "cauchy", "exp", "l1", "l2", "mcp", "scad", "weibull"),
+  penalty = c("atan", "bridge", "cauchy", "exp", "gumbel", "l1", "l2", "mcp", "scad",
+    "weibull"),
   gamma = NULL,
   lambda = NULL,
   adaptive.gamma = FALSE,
@@ -95,6 +96,9 @@ Available options:
 \item \code{"exp"} --- EXP (Wang, Fan, & Zhu, 2018)
 \deqn{\lambda \cdot (1 - e^{-\frac{|x|}{\gamma}})}
 
+\item \code{"gumbel"} --- Gumbel
+\deqn{\lambda \cdot e^{-e^{\frac{|x|}{\beta}}}}
+
 \item \code{"l1"} --- LASSO (Tibshirani, 1996)
 \deqn{\lambda \cdot |x|}
 
@@ -162,6 +166,8 @@ Available options:
 \item \code{"cauchy"} = uses half of the interquartile range of the absolute empirical partial correlations (Bloch, 1966)
 
 \item \code{"exp"} =  uses median of distribution for the scale parameter (\eqn{\frac{\log{(2)}}{\lambda}})
+
+\item \code{"gumbel"} = uses the mean of the distribution for the scale parameter
 
 \item \code{"weibull"} = uses MLE estimate of shape parameter and median of distribution for the scale parameter (\eqn{\lambda \cdot (\log{(2)})^{1/k} })
 

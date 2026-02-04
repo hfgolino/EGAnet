@@ -44,6 +44,13 @@ exp_penalty <- function(x, lambda, gamma = 0.01, ...)
 }
 
 #' @noRd
+# Updated 04.02.2026
+gumbel_penalty <- function(x, lambda, gamma = 0.01, ...)
+{
+  return(lambda * exp(-exp(-abs(x) / gamma)))
+}
+
+#' @noRd
 # Updated 25.07.2025
 l1_penalty <- function(x, lambda, ...)
 {
@@ -158,6 +165,19 @@ exp_derivative <- function(x, lambda, gamma = 0.01, ...)
 
   # Return penalty
   return(lambda * (1 / gamma) * exp(-(x / gamma)))
+
+}
+
+#' @noRd
+# Updated 04.02.2026
+gumbel_derivative <- function(x, lambda, gamma = 0.01, ...)
+{
+
+  # Pre-compute values
+  gamma_x <- abs(x) / gamma
+
+  # Return derivative
+  return(lambda * sign(x) * (1 / gamma) * exp(-gamma_x - exp(-gamma_x)))
 
 }
 

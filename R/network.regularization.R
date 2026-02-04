@@ -71,6 +71,9 @@
 #' \item \code{"exp"} --- EXP (Wang, Fan, & Zhu, 2018)
 #' \deqn{\lambda \cdot (1 - e^{-\frac{|x|}{\gamma}})}
 #'
+#' \item \code{"gumbel"} --- Gumbel
+#' \deqn{\lambda \cdot e^{-e^{\frac{|x|}{\beta}}}}
+#'
 #' \item \code{"l1"} --- LASSO (Tibshirani, 1996)
 #' \deqn{\lambda \cdot |x|}
 #'
@@ -115,6 +118,8 @@
 #'
 #' \item \code{"exp"} = 0.01
 #'
+#' \item \code{"gumbel"} = 0.01
+#'
 #' \item \code{"mcp"} = 3
 #'
 #' \item \code{"scad"} = 3.7
@@ -138,6 +143,8 @@
 #' \item \code{"cauchy"} = uses half of the interquartile range of the absolute empirical partial correlations (Bloch, 1966)
 #'
 #' \item \code{"exp"} =  uses median of distribution for the scale parameter (\eqn{\frac{\log{(2)}}{\lambda}})
+#'
+#' \item \code{"gumbel"} = uses the mean of the distribution for the scale parameter
 #'
 #' \item \code{"weibull"} = uses MLE estimate of shape parameter and median of distribution for the scale parameter (\eqn{\lambda \cdot (\log{(2)})^{1/k} })
 #'
@@ -323,7 +330,7 @@ network.regularization <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
-    penalty = c("atan", "bridge", "cauchy", "exp", "l1", "l2", "mcp", "scad", "weibull"),
+    penalty = c("atan", "bridge", "cauchy", "exp", "gumbel", "l1", "l2", "mcp", "scad", "weibull"),
     gamma = NULL, lambda = NULL, adaptive.gamma = FALSE,
     nlambda = 50, lambda.min.ratio, penalize.diagonal = TRUE,
     ic = c("AIC", "AICc", "BIC", "BIC0", "EBIC", "MBIC"), ebic.gamma = 0.50,
@@ -342,7 +349,7 @@ network.regularization <- function(
 
   # Set different 'lambda.min.ratio'
   if(missing(lambda.min.ratio)){
-    lambda.min.ratio <- swiftelse(penalty %in% c("exp", "weibull"), 0.001, 0.01)
+    lambda.min.ratio <- swiftelse(penalty %in% c("exp", "gumbel", "weibull"), 0.001, 0.01)
   }
 
   # Argument errors (return data in case of tibble)
@@ -386,6 +393,7 @@ network.regularization <- function(
     "bridge" = bridge_derivative,
     "cauchy" = cauchy_derivative,
     "exp" = exp_derivative,
+    "gumbel" = gumbel_derivative,
     "l1" = l1_derivative,
     "l2" = l2_derivative,
     "mcp" = mcp_derivative,
@@ -406,6 +414,7 @@ network.regularization <- function(
       "bridge" = 1,
       "cauchy" = 0.01,
       "exp" = 0.01,
+      "gumbel" = 0.01,
       "mcp" = 3,
       "scad" = 3.7,
       "weibull" = 0.01
@@ -414,7 +423,7 @@ network.regularization <- function(
   }
 
   # Check whether penalty is adaptive option
-  adaptive_option <- c("cauchy", "exp", "weibull")
+  adaptive_option <- c("cauchy", "exp", "gumbel", "weibull")
 
   # Check for adaptive and penalty is adaptive option
   if(adaptive.gamma){
@@ -438,6 +447,12 @@ network.regularization <- function(
         # Obtain median of distribution
         gamma <- 0.6931472 * sum(lower_P) / sum(lower_triangle)
         # pre-computes log(2) = 0.6931472
+
+      }else if(penalty == "gumbel"){
+
+        # Estimate scale parameter for mean
+        gamma <- gumbel_mle(lower_P) * 0.5772156649
+        # uses first ten digits of Euler-Mascheroni constant
 
       }else if(penalty == "weibull"){
 
@@ -704,6 +719,34 @@ network.regularization_errors <- function(
 }
 
 # OPTIMIZATION FUNCTIONS ----
+
+#' @noRd
+# MLE Gumbel Scale Parameter ----
+# Updated 04.02.2026
+gumbel_mle <- function(x)
+{
+
+  # Set up MLE for scale
+  scale_mle <- function(scale, x, n)
+  {
+
+    # Pre-compute reused values
+    x_scale <- x / scale
+
+    # Return MLE estimate
+    return(-n * log(scale) - sum(x_scale) - sum(exp(-x_scale)))
+
+  }
+
+  # Return parameters
+  return(
+    optimize(
+      f = scale_mle, interval = c(0.0001, 1),
+      x = x, n = length(x), maximum = TRUE
+    )$maximum
+  )
+
+}
 
 #' @noRd
 # MLE Weibull Parameters ----
