@@ -722,7 +722,7 @@ network.regularization_errors <- function(
 
 #' @noRd
 # MLE Gumbel Scale Parameter ----
-# Updated 04.02.2026
+# Updated 05.02.2026
 gumbel_mle <- function(x)
 {
 
@@ -733,7 +733,7 @@ gumbel_mle <- function(x)
     # Pre-compute reused values
     x_scale <- x / scale
 
-    # Return MLE estimate
+    # Return log-likelihood
     return(-n * log(scale) - sum(x_scale) - sum(exp(-x_scale)))
 
   }
@@ -741,7 +741,7 @@ gumbel_mle <- function(x)
   # Return parameters
   return(
     optimize(
-      f = scale_mle, interval = c(0.0001, 1),
+      f = scale_mle, interval = c(1e-04, 1),
       x = x, n = length(x), maximum = TRUE
     )$maximum
   )
@@ -762,7 +762,7 @@ weibull_mle <- function(x)
     x_k <- x^k
     log_x <- log(x)
 
-    # Return MLE estimate
+    # Return log-likelihood
     return(sum(x_k * log_x) / sum(x_k) - 1 / k - sum(log_x) / n)
 
   }
