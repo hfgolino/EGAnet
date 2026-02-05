@@ -143,6 +143,8 @@ Defaults:
 
 \item \code{"exp"} = 0.01
 
+\item \code{"gumbel"} = 0.01
+
 \item \code{"mcp"} = 3
 
 \item \code{"scad"} = 3.7

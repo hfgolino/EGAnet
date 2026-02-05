@@ -63,7 +63,7 @@
 #'
 #' @export
 # Known graph ----
-# Updated 02.12.2025
+# Updated 05.02.2026
 known.graph <- function(S, A, method = c("glasso", "HTF"), tol = 1e-06, max.iter = 100)
 {
 
@@ -80,8 +80,8 @@ known.graph <- function(S, A, method = c("glasso", "HTF"), tol = 1e-06, max.iter
     # Obtain GLASSO output
     output <- silent_call(
       glasso::glasso(
-        s = S, rho = 0, zero = zeros,
-        trace = 0, penalize.diagonal = FALSE
+        s = S, rho = 0, zero = zeros, thr = tol,
+        maxit = max.iter, trace = 0, penalize.diagonal = FALSE
       )
     )
 
