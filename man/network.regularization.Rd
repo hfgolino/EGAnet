@@ -97,7 +97,7 @@ Available options:
 \deqn{\lambda \cdot (1 - e^{-\frac{|x|}{\gamma}})}
 
 \item \code{"gumbel"} --- Gumbel
-\deqn{\lambda \cdot e^{-e^{\frac{|x|}{\beta}}}}
+\deqn{\lambda \cdot e^{-e^{\frac{|x|}{\gamma}}}}
 
 \item \code{"l1"} --- LASSO (Tibshirani, 1996)
 \deqn{\lambda \cdot |x|}
@@ -169,7 +169,7 @@ Available options:
 
 \item \code{"exp"} =  uses median of distribution for the scale parameter (\eqn{\frac{\log{(2)}}{\lambda}})
 
-\item \code{"gumbel"} = uses the mean of the distribution for the scale parameter
+\item \code{"gumbel"} = uses the mean of the distribution for the scale parameter (\eqn{\gamma \cdot \beta} where \eqn{beta} is the Euler-Mascheroni constant)
 
 \item \code{"weibull"} = uses MLE estimate of shape parameter and median of distribution for the scale parameter (\eqn{\lambda \cdot (\log{(2)})^{1/k} })
 
