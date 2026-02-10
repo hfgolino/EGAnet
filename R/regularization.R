@@ -24,10 +24,7 @@ bridge_penalty <- function(x, lambda, gamma = 1, ...)
 # Updated 13.01.2026
 cauchy_penalty <- function(x, lambda, gamma = 0.01, ...)
 {
-
-  # (pre-computed 1 / pi)
-  return(lambda * 0.3183099 * atan(abs(x) / gamma) + 0.5)
-
+  return(lambda * (1 / pi) * atan(abs(x) / gamma) + 0.5)
 }
 
 #' @noRd
@@ -44,16 +41,19 @@ exp_penalty <- function(x, lambda, gamma = 0.01, ...)
 }
 
 #' @noRd
-# Updated 05.02.2026
+# Updated 09.02.2026
 gumbel_penalty <- function(x, lambda, gamma = 0.01, ...)
 {
-  return((lambda / 0.6321206) * (exp(-exp(-abs(x) / gamma)) - 0.3678794))
-  # pre-computes `exp(-1)` = 0.3678794
+
+  # Pre-compute
+  exp_1 <- exp(-1)
+
+  return((lambda / (1 - exp_1)) * (exp(-exp(-abs(x) / gamma)) - exp_1))
   # theoretically, the `- exp(-1)` is necessary for the
   # penalty to converge at zero for the sparsity condition
   # in practice, this addition does not change the derivative,
   # which is used in the LLA
-  # pre-computes `1 - exp(-1)` = 0.6321206 to scale lambda
+  # `1 - exp(-1)` is to scale lambda
 }
 
 #' @noRd
@@ -156,8 +156,8 @@ bridge_derivative <- function(x, lambda, gamma = 1, eps = 1e-08, ...)
 cauchy_derivative <- function(x, lambda, gamma = 0.01, ...)
 {
 
-  # Return derivative (pre-computed 1 / pi)
-  return(lambda * sign(x) * 0.3183099 * (gamma / (x^2 + gamma^2)))
+  # Return derivative
+  return(lambda * sign(x) * (1 / pi) * (gamma / (x^2 + gamma^2)))
 
 }
 
@@ -183,8 +183,7 @@ gumbel_derivative <- function(x, lambda, gamma = 0.01, ...)
   gamma_x <- abs(x) / gamma
 
   # Return derivative
-  return((lambda / 0.6321206) * sign(x) * (1 / gamma) * exp(-gamma_x - exp(-gamma_x)))
-  # pre-computes `1 - exp(-1)` = 0.6321206 to scale lambda
+  return((lambda / (1 - exp(-1))) * sign(x) * (1 / gamma) * exp(-gamma_x - exp(-gamma_x)))
 
 }
 

@@ -445,14 +445,13 @@ network.regularization <- function(
       }else if(penalty == "exp"){
 
         # Obtain median of distribution
-        gamma <- 0.6931472 * sum(lower_P) / sum(lower_triangle)
-        # pre-computes log(2) = 0.6931472
+        gamma <- log(2) * sum(lower_P) / sum(lower_triangle)
 
       }else if(penalty == "gumbel"){
 
         # Estimate scale parameter for mean
-        gamma <- gumbel_mle(lower_P) * 0.5772156649
-        # uses first ten digits of Euler-Mascheroni constant
+        gamma <- gumbel_mle(lower_P) * -digamma(1) # 0.5772156649
+        # uses Euler-Mascheroni constant
 
       }else if(penalty == "weibull"){
 
@@ -461,8 +460,7 @@ network.regularization <- function(
 
         # Set parameters
         shape <- min(estimates[["shape"]], 1) # cap at EXP
-        gamma <- estimates[["scale"]] * 0.6931472^(1 / shape) # median
-        # pre-computes log(2) = 0.6931472
+        gamma <- estimates[["scale"]] * log(2)^(1 / shape) # median
 
       }
 
