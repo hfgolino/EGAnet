@@ -166,11 +166,8 @@ cauchy_derivative <- function(x, lambda, gamma = 0.01, ...)
 exp_derivative <- function(x, lambda, gamma = 0.01, ...)
 {
 
-  # Pre-compute components
-  x <- abs(x)
-
   # Return penalty
-  return(lambda * (1 / gamma) * exp(-(x / gamma)))
+  return(lambda * sign(x) * (1 / gamma) * exp(-(abs(x) / gamma)))
 
 }
 
