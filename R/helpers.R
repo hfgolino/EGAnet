@@ -2149,7 +2149,7 @@ get_layout <- function(network, dimensions, non_zero_index, plot_ARGS)
 
 #' @noRd
 # Basic set up for plots ----
-# Updated 21.11.2025
+# Updated 13.02.2026
 basic_plot_setup <- function(network, wc = NULL, ...)
 {
 
@@ -2174,11 +2174,9 @@ basic_plot_setup <- function(network, wc = NULL, ...)
   # Check for empty network
   if(sum(network) == 0){
 
-    # Send message
-    message("Network is empty. No plot produced.")
-
-    # Return NULL
-    return(NULL)
+    # Cheat the network
+    network[] <- 0.0001
+    diag(network) <- 0
 
   }
 
