@@ -2037,9 +2037,14 @@ rescale_edges <- function(network, edge_size)
 
 #' @noRd
 # Readable names ----
-# Updated 01.07.2023
+# Updated 13.02.2026
 readable_names <- function(node_names)
 {
+
+  # Check for nodes without names
+  if(all(node_names == "")){
+    return(node_names)
+  }
 
   # Add return to names
   return(
