@@ -73,7 +73,7 @@
 #' @export
 #'
 # Simulate EGM ----
-# Updated 17.11.2025
+# Updated 25.02.2026
 simEGM <- function(
     communities, variables,
     loadings, cross.loadings = 0.01,
@@ -122,7 +122,7 @@ simEGM <- function(
   )
 
   # Initialize checks
-  PD_check <- FALSE; cross_check <- TRUE; quality_check <- FALSE
+  PD_check <- FALSE; cross_check <- TRUE; quality_check <- FALSE; stable <- FALSE
 
   # Check that loadings matrix is not already supplied
   if(length(as.matrix(loadings)) == (total_variables * communities)){
@@ -188,7 +188,7 @@ simEGM <- function(
     count <- 0
 
     # Ensure proper matrix
-    while(!PD_check || cross_check || !quality_check){
+    while(!PD_check || cross_check || !quality_check || !stable){
 
       # Increase count
       count <- count + 1
@@ -212,65 +212,22 @@ simEGM <- function(
 
       }
 
-      # Initialize structure matrix
-      between_indices <- loading_structure <- matrix(
-        0, nrow = total_variables, ncol = communities,
-        dimnames = list(
-          node_names,
-          format_integer(community_sequence, digits(communities) - 1) # community names
-        )
-      )
+      # Initialization flag
+      initalize_flag <- count == 1
 
-      # Generate within-community loadings
-      for(i in community_sequence){
+      # Initialization
+      if(initalize_flag){
 
-        # Get block index
-        block_index <- membership == i
-
-        # Get number of variables
-        block_variables <- sum(block_index)
-
-        # Set assigned loadings
-        loading_structure[block_index, i] <- runif_xoshiro(
-          block_variables, min = loadings[i] - 0.025, max = loadings[i] + 0.025
+        # Initialize structure matrix
+        loading_structure <- matrix(
+          0, nrow = total_variables, ncol = communities,
+          dimnames = list(
+            node_names,
+            format_integer(community_sequence, digits(communities) - 1) # community names
+          )
         )
 
-        # Check for multidimensional
-        if(dimensional_flag){
-
-          # Loop over cross-loadings
-          for(j in community_sequence){
-
-            # Except for itself
-            if(i != j){
-
-              # Set zero cross-loading indices based on cross-loading probability
-              between_indices[block_index, j] <- shuffle( # ensure at least one cross-loading with correlations
-                c(correlations[i,j] == 0, runif_xoshiro(block_variables - 1))
-              ) < abs(correlations[i,j])^loading_structure[block_index, i]
-
-            }
-
-          }
-
-        }
-
-      }
-
-      # Check for multidimensional
-      if(dimensional_flag){
-
-        # Obtain full loadings and correlations
-        loadings_output <- egm_correlation_optimize(
-          loading_structure = loading_structure, correlations = correlations,
-          between_indices = as.logical(between_indices),
-          membership = membership, total_variables = total_variables
-        )
-
-        # Update parameters
-        loading_structure <- loadings_output$loadings # updated with cross-loadings
-
-        # Add cross-loadings that do not contribute to correlations
+        # Generate within-community loadings
         for(i in community_sequence){
 
           # Get block index
@@ -279,19 +236,90 @@ simEGM <- function(
           # Get number of variables
           block_variables <- sum(block_index)
 
-          # Loop over cross-loadings
-          for(j in community_sequence){
+          # Set assigned loadings
+          loading_structure[block_index, i] <- runif_xoshiro(
+            block_variables, min = loadings[i] - 0.025, max = loadings[i] + 0.025
+          )
 
-            # Except for itself
-            if(i != j){
+        }
 
-              # Target cross-loadings
-              target_cross <- loading_structure[block_index, j]
+      }
 
-              # Add cross-loadings
-              loading_structure[block_index, j] <-  target_cross +
-                rnorm_ziggurat(block_variables) * cross.loadings *
-                (target_cross != 0) # ensure sparsity (if sparse)
+      # Check for between-community loadings
+      if(dimensional_flag){
+
+        # Check if they need to be initialized or re-generated
+        if(initalize_flag || stable){
+
+          # Initialize between indices matrix
+          between_indices <- matrix(
+            0, nrow = total_variables, ncol = communities,
+            dimnames = list(
+              node_names,
+              format_integer(community_sequence, digits(communities) - 1) # community names
+            )
+          )
+
+          # Re-generate cross-loadings
+          for(i in community_sequence){
+
+            # Get block index
+            block_index <- membership == i
+
+            # Get number of variables
+            block_variables <- sum(block_index)
+
+            # Loop over cross-loadings
+            for(j in community_sequence){
+
+              # Except for itself
+              if(i != j){
+
+                # Set zero cross-loading indices based on cross-loading probability
+                between_indices[block_index, j] <- shuffle( # ensure at least one cross-loading with correlations
+                  c(correlations[i,j] == 0, runif_xoshiro(block_variables - 1))
+                ) < abs(correlations[i,j])^loading_structure[block_index, i]
+
+              }
+
+            }
+
+          }
+
+          # Obtain full loadings and correlations
+          loadings_output <- egm_correlation_optimize(
+            loading_structure = loading_structure, correlations = correlations,
+            between_indices = as.logical(between_indices),
+            membership = membership, total_variables = total_variables
+          )
+
+          # Update parameters
+          loading_structure <- loadings_output$loadings # updated with cross-loadings
+
+          # Add cross-loadings that do not contribute to correlations
+          for(i in community_sequence){
+
+            # Get block index
+            block_index <- membership == i
+
+            # Get number of variables
+            block_variables <- sum(block_index)
+
+            # Loop over cross-loadings
+            for(j in community_sequence){
+
+              # Except for itself
+              if(i != j){
+
+                # Target cross-loadings
+                target_cross <- loading_structure[block_index, j]
+
+                # Add cross-loadings
+                loading_structure[block_index, j] <-  target_cross +
+                  rnorm_ziggurat(block_variables) * cross.loadings *
+                  (target_cross != 0) # ensure sparsity (if sparse)
+
+              }
 
             }
 
@@ -301,11 +329,7 @@ simEGM <- function(
 
       }
 
-      # Set correlations for loadings
-      R <- nload2cor(loading_structure)
-      P <- cor2pcor(R)
-
-      # Obtain network matrix based on Chung-Lu expectation of simple structure
+      # E-STEP: given loadings, derive network structure
       network <- expected_network(loading_structure, membership, total_variables)
       network_R <- silent_call(try(pcor2cor(network), silent = TRUE))
 
@@ -314,25 +338,22 @@ simEGM <- function(
         next
       }
 
-      # Set lower triangle
-      lower_triangle <- lower.tri(R)
-
-      # Optimize network toward loadings
-      network_vector <- as.vector(network[lower_triangle])
-      zeros <- network_vector != 0
-
-      # Update network edge parameters
-      network_vector[zeros] <- egm_network_optimize(
-        network_vector = network_vector[zeros],
-        R = R, n = sample.size, v = total_variables,
-        lower_triangle = lower_triangle,
-        zeros = zeros
+      # M-STEP: given fixed sparsity and network structure, optimize toward network
+      loading_structure[] <- loadings_optimization(
+        iter = 10, loadings_vector = as.vector(loading_structure),
+        zeros = loading_structure != 0, R = network_R,
+        communities = communities,
+        data_dimensions = c(sample.size, total_variables),
+        opt = "loglik"
       )$par
 
-      # Update network
-      network[lower_triangle] <- network_vector
-      network <- t(network)
-      network[lower_triangle] <- network_vector
+      # Compute correlations from loadings
+      R <- nload2cor(loading_structure)
+
+      # Stable structure
+      stable <- all(
+        (expected_network(loading_structure, membership, total_variables) != 0) == (network != 0)
+      )
 
       # Check for positive definite
       PD_check <- is_positive_definite(R)
@@ -342,8 +363,8 @@ simEGM <- function(
 
       # Set quality metrics
       quality_metrics <- c(
-        srmr(P, network), mean(abs(P - network)),
-        frobenius(P, network), jsd(P, network)
+        srmr(R, network_R), mean(abs(R - network_R)),
+        frobenius(R, network_R), jsd(R, network_R)
       )
 
       # Quality metric check
@@ -401,6 +422,15 @@ simEGM <- function(
   )
 
 }
+
+# Bug checking ----
+# communities = 3; variables = 6
+# loadings = 0.35; cross.loadings = 0.01
+# correlations = 0.30; sample.size = 1000
+# quality = "acceptable"; max.iterations = 100
+# source("/home/alextops/R/R-packages/EGAnet/R/utils-EGAnet.R")
+# source("/home/alextops/R/R-packages/EGAnet/R/helpers.R")
+# source("/home/alextops/R/R-packages/EGAnet/R/EGM.optimizations.R")
 
 #' @noRd
 # Errors ----
@@ -465,25 +495,28 @@ simEGM_errors <- function(
 
 #' @noRd
 # Expected network ----
-# Updated 31.07.2025
+# Updated 25.02.2026
 expected_network <- function(loading_structure, membership, total_variables)
 {
 
   # Obtain partial correlations
   P <- nload2pcor(loading_structure)
 
-  # Set Chung-Lu configuration based on maximum loading
-  max_loading <- nvapply(seq_len(total_variables), function(i){
-    max(abs(loading_structure[i, membership[i]]))
-  })
+  # Set Chung-Lu configuration based on interdependence
+  assigned_loading <- sqrt(rowSums(loading_structure^2))
+
+  # # Set Chung-Lu configuration based on maximum loading
+  # assigned_loading <- nvapply(seq_len(total_variables), function(i){
+  #   abs(loading_structure[i, membership[i]])
+  # })
 
   # Return partial correlations
-  return(P * (abs(P) > (tcrossprod(max_loading) / sum(max_loading))))
+  return(P * (abs(P) > (tcrossprod(assigned_loading) / sum(assigned_loading))))
 
 }
 
 #' @noRd
-# Community correlations from loadings
+# Community correlations from loadings ----
 # Updated 21.07.2025
 community_correlations <- function(simple_structure, loading_structure)
 {
