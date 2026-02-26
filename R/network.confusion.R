@@ -130,7 +130,6 @@ network.confusion <- function(base, comparison, metric = c(
   FPFN <- FP + FN
   TP2FPFN <- TP2 + FPFN
   TPFPFN <- TP + FPFN
-  MCCD <- sqrt(TPFP * P * N * TNFN)
 
   # Compute metrics
   sen <- swiftelse(P == 0, NA, TP / P)
@@ -144,7 +143,7 @@ network.confusion <- function(base, comparison, metric = c(
     "fdr" = 1 - ppv, "fom" = 1 - npv, "ba" = (sen + spec) / 2,
     "f1" = swiftelse(TP2FPFN == 0, NA, TP2 / TP2FPFN),
     "csi" = swiftelse(TPFPFN == 0, NA, TP / TPFPFN),
-    "mcc" = swiftelse(MCCD == 0, NA, (TP * TN - FP * FN) / MCCD)
+    "mcc" = silent_call(cor(base_present, comp_present)) # equivalent
   )
 
   # Return metrics
