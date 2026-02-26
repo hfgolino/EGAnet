@@ -732,10 +732,9 @@ ncol_sequence <- function(data)
 # 1.5x faster with 1 value
 # 2.5x faster with 10 values
 # >= 18x faster with >= 100 values
-# Updated 24.07.2023
+# Updated 26.02.2026
 swiftelse <- function(condition, true, false)
 {
-
   # Get condition length
   condition_length <- length(condition)
 
@@ -752,7 +751,7 @@ swiftelse <- function(condition, true, false)
   }
 
   # Initialize result
-  result <- vector(mode(true), condition_length)
+  result <- vector(typeof(false), condition_length)
 
   # Set TRUE condition
   if(length(true) == 1){
