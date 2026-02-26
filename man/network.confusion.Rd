@@ -7,7 +7,8 @@
 network.confusion(
   base,
   comparison,
-  metric = c("all", "sen", "spec", "ppv", "npv", "fdr", "fom", "ba", "f1", "csi", "mcc")
+  metric = c("all", "sen", "spec", "ppv", "npv", "fdr", "fom", "ba", "f1", "csi", "mcc"),
+  full.names = FALSE
 )
 }
 \arguments{
@@ -60,6 +61,11 @@ Available options:
 \deqn{\frac{TP \times TN - FP \times FN}{\sqrt{(TP+FP)(TP+FN)(TN+FP)(TN+FN)}}}
 
 }}
+
+\item{full.names}{Boolean (length = 1).
+Whether full or abbreviated names should be used.
+Defaults to \code{FALSE}.
+Set to \code{TRUE} for full names}
 }
 \value{
 Returns a named vector of confusion matrix metrics
