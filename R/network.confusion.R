@@ -52,6 +52,11 @@
 #'
 #' }
 #'
+#' @param full.names Boolean (length = 1).
+#' Whether full or abbreviated names should be used.
+#' Defaults to \code{FALSE}.
+#' Set to \code{TRUE} for full names
+#'
 #' @return Returns a named vector of confusion matrix metrics
 #'
 #' @author Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
@@ -78,7 +83,7 @@ network.confusion <- function(base, comparison, metric = c(
   "all", "sen", "spec",
   "ppv", "npv", "fdr", "fom",
   "ba", "f1", "csi", "mcc"
-))
+), full.names = FALSE)
 {
 
   # Set names
@@ -143,6 +148,11 @@ network.confusion <- function(base, comparison, metric = c(
   )
 
   # Return metrics
-  return(structure(metric_vector[metric], names = nice_names[metric]))
+  return(
+    structure(
+      metric_vector[metric],
+      names = swiftelse(full.names, nice_names[metric], metric)
+    )
+  )
 
 }
