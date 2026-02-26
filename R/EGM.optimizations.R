@@ -486,7 +486,7 @@ egm_network_optimize <- function(
 
 #' @noRd
 # Mean absolute error cost
-# Updated 31.07.2025
+# Updated 25.02.2026
 mae_community_cost <- function(
     between_loadings, between_indices, simple_structure,
     loading_structure, target_correlations,
@@ -508,18 +508,8 @@ mae_community_cost <- function(
   S_corr <- crossprod(simple_structure, D %*% S %*% D) %*% simple_structure
   D_corr <- diag(sqrt(1 / diag(S_corr)))
 
-  # Check expected network
-  network <- expected_network(loading_structure, membership, total_variables)
-  network_R <- try(pcor2cor(network), silent = TRUE)
-
   # Return MAE
-  return(
-    swiftelse(
-      is(network_R, "try-error") || anyNA(network_R) || !is_positive_definite(network_R),
-      1e10, # send horrible cost
-      mean(abs(D_corr %*% S_corr %*% D_corr - target_correlations))
-    )
-  )
+  return(mean(abs(D_corr %*% S_corr %*% D_corr - target_correlations)))
 
 }
 
