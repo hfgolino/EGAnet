@@ -232,7 +232,7 @@
 #'
 #' @param LLA.iter Numeric (length = 1).
 #' Maximum number of iterations to perform to reach convergence.
-#' Defaults to \code{100}
+#' Defaults to \code{10000}
 #'
 #' @param network.only Boolean (length = 1).
 #' Whether the network only should be output.
@@ -325,7 +325,7 @@
 #' @export
 #'
 # Apply non-convex regularization ----
-# Updated 19.01.2026
+# Updated 27.02.2026
 network.regularization <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
@@ -334,7 +334,7 @@ network.regularization <- function(
     gamma = NULL, lambda = NULL, adaptive.gamma = FALSE,
     nlambda = 50, lambda.min.ratio, penalize.diagonal = TRUE,
     ic = c("AIC", "AICc", "BIC", "BIC0", "EBIC", "MBIC"), ebic.gamma = 0.50,
-    fast = TRUE, LLA = FALSE, LLA.threshold = 1e-04, LLA.iter = 100,
+    fast = TRUE, LLA = FALSE, LLA.threshold = 1e-04, LLA.iter = 10000,
     network.only = TRUE, verbose = FALSE, ...
 )
 {
@@ -347,9 +347,9 @@ network.regularization <- function(
   penalty <- set_default(penalty, "l1", network.regularization)
   ic <- set_default(ic, "bic", network.regularization)
 
-  # Set different 'lambda.min.ratio'
+  # Set default lambda.min.ratio
   if(missing(lambda.min.ratio)){
-    lambda.min.ratio <- swiftelse(penalty %in% c("exp", "gumbel", "weibull"), 0.001, 0.01)
+    lambda.min.ratio <- 0.01
   }
 
   # Argument errors (return data in case of tibble)
@@ -445,7 +445,8 @@ network.regularization <- function(
       }else if(penalty == "exp"){
 
         # Obtain median of distribution
-        gamma <- log(2) * sum(lower_P) / sum(lower_triangle)
+        # gamma <- log(2) * sum(lower_P) / sum(lower_triangle)
+        gamma <- sum(lower_P) / sum(lower_triangle)
 
       }else if(penalty == "gumbel"){
 
@@ -460,7 +461,8 @@ network.regularization <- function(
 
         # Set parameters
         shape <- min(estimates[["shape"]], 1) # cap at EXP
-        gamma <- estimates[["scale"]] * log(2)^(1 / shape) # median
+        # gamma <- estimates[["scale"]] * log(2)^(1 / shape) # median
+        gamma <- estimates[["scale"]] * gamma(1 + 1 / shape)
 
       }
 
@@ -499,7 +501,7 @@ network.regularization <- function(
   lambda_list <- lapply(lambda, function(value){
 
     # Obtain lambda matrix
-    lambda_matrix[] <- abs(derivative_FUN(x = K, lambda = value, gamma = gamma, shape = shape))
+    lambda_matrix[] <- derivative_FUN(x = K, lambda = value, gamma = gamma, shape = shape)
 
     # Check for diagonal penalization
     if(!penalize.diagonal){
@@ -524,7 +526,7 @@ network.regularization <- function(
       value <- attributes(lambda_matrix)$value
 
       # Set lambda matrix
-      glasso_ARGS$rho <- lambda_matrix
+      glasso_ARGS$rho <- value
 
       # Obtain estimate
       estimate <- do.call(what = glasso_FUN, args = glasso_ARGS)
@@ -542,7 +544,7 @@ network.regularization <- function(
         old_K <- new_K
 
         # Obtain lambda matrix
-        lambda_matrix[] <- abs(derivative_FUN(x = old_K, lambda = value, gamma = gamma, shape = shape))
+        lambda_matrix[] <- derivative_FUN(x = old_K, lambda = value, gamma = gamma, shape = shape)
 
         # Check for diagonal penalization
         if(!penalize.diagonal){
@@ -621,12 +623,12 @@ network.regularization <- function(
 
 # Bug checking ----
 # data = wmt2[,7:24]; n = NULL; corr = "auto"
-# na.data = "pairwise"; penalty = "l1"; adaptive = FALSE
+# na.data = "pairwise"; penalty = "l1"; adaptive.gamma = FALSE
 # gamma = NULL; lambda = NULL; nlambda = 50
 # lambda.min.ratio = 0.01; penalize.diagonal = TRUE
 # optimize.lambda = FALSE; ic = "BIC"; network.only = TRUE
 # ebic.gamma = 0.5; fast = TRUE; verbose = FALSE
-# LLA = FALSE; LLA.threshold = 1e-04; LLA.iter = 100
+# LLA = TRUE; LLA.threshold = 1e-04; LLA.iter = 10000
 
 
 #' @noRd

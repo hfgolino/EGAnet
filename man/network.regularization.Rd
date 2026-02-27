@@ -22,7 +22,7 @@ network.regularization(
   fast = TRUE,
   LLA = FALSE,
   LLA.threshold = 0.0001,
-  LLA.iter = 100,
+  LLA.iter = 10000,
   network.only = TRUE,
   verbose = FALSE,
   ...
@@ -257,7 +257,7 @@ Defaults to \code{1e-04}}
 
 \item{LLA.iter}{Numeric (length = 1).
 Maximum number of iterations to perform to reach convergence.
-Defaults to \code{100}}
+Defaults to \code{10000}}
 
 \item{network.only}{Boolean (length = 1).
 Whether the network only should be output.
