@@ -447,12 +447,12 @@ network.regularization <- function(
       }else if(penalty == "exp"){
 
         # Obtain MLE of scale
-        gamma <- mean(lower_P)
+        gamma <-  log(2) * sum(lower_P) / sum(lower_triangle)
 
       }else if(penalty == "gumbel"){
 
         # Estimate MLE scale parameter
-        gamma <- gumbel_mle(lower_P)
+        gamma <- -gumbel_mle(lower_P) * log(log(2))
 
       }else if(penalty == "weibull"){
 
@@ -461,7 +461,7 @@ network.regularization <- function(
 
         # Set parameters
         shape <- min(estimates[["shape"]], 1) # cap at EXP
-        gamma <- estimates[["scale"]]
+        gamma <- estimates[["scale"]] * log(2)^(1 / shape)
 
       }
 
@@ -521,6 +521,22 @@ network.regularization <- function(
 
       # Set lambda matrix
       glasso_ARGS$rho <- value
+
+      # Check for adaptive penalties
+      if(penalty %in% adaptive_option){
+
+        # Obtain lambda matrix
+        lambda_matrix[] <- derivative_FUN(x = K, lambda = value, gamma = gamma, shape = shape)
+
+        # Check for diagonal penalization
+        if(!penalize.diagonal){
+          diag(lambda_matrix) <- 0
+        }
+
+        # Set lambda matrix
+        glasso_ARGS$rho <- lambda_matrix
+
+      }
 
       # Obtain estimate
       estimate <- do.call(what = glasso_FUN, args = glasso_ARGS)
