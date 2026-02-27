@@ -350,7 +350,7 @@ network.regularization <- function(
   # Set default lambda.min.ratio
   if(missing(lambda.min.ratio)){
     lambda.min.ratio <- swiftelse(
-      penalty == c("exp", "gumbel", "weibull"), 0.001, 0.01
+      penalty %in% c("exp", "gumbel", "weibull"), 0.001, 0.01
     )
   }
 
