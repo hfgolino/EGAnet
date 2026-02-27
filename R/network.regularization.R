@@ -349,7 +349,9 @@ network.regularization <- function(
 
   # Set default lambda.min.ratio
   if(missing(lambda.min.ratio)){
-    lambda.min.ratio <- 0.01
+    lambda.min.ratio <- swiftelse(
+      penalty == c("exp", "gumbel", "weibull"), 0.001, 0.01
+    )
   }
 
   # Argument errors (return data in case of tibble)
@@ -475,11 +477,6 @@ network.regularization <- function(
 
     }
 
-  }
-
-  # Set LLA to FALSE for exponential penalties
-  if(penalty %in% adaptive_option){
-    LLA <- FALSE
   }
 
   # Initialize lambda matrix

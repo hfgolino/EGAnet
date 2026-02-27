@@ -238,8 +238,11 @@ weibull_derivative <- function(x, lambda, gamma = 0.01, shape, ...)
   abs_x <- abs(x)
   x_gamma <- abs_x / gamma
 
+  # Compute derivative
+  derivative <- (shape / gamma) * x_gamma^(shape - 1) * exp(-x_gamma^shape)
+
   # Return derivative
-  return(lambda * (shape / gamma) * x_gamma^(shape - 1) * exp(-x_gamma^shape))
+  return(lambda * swiftelse(is.infinite(derivative), 100, derivative))
 
 }
 
