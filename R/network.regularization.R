@@ -483,7 +483,6 @@ network.regularization <- function(
   # Simplify source for fewer computations (minimal improvement)
   S_zero_diagonal <- S - diag(nodes) # makes diagonal zero
   # lambda.max <- max(abs(S_zero_diagonal)) # uses absolute rather than inverse
-  # lambda.max <- max(abs(S_zero_diagonal)) * sqrt(log(nodes) / n)
   lambda.max <- max(abs(S_zero_diagonal)) * swiftelse(
     adaptive.gamma & (penalty %in% adaptive_option), sqrt(log(nodes) / n), 1
   )
