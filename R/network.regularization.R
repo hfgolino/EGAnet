@@ -450,7 +450,7 @@ network.regularization <- function(
       }else if(penalty == "gumbel"){
 
         # Estimate MLE scale parameter
-        gamma <- -gumbel_mle(lower_P) * log(log(2))
+        gamma <- gumbel_mle(lower_P) * -digamma(1)
 
       }else if(penalty == "weibull"){
 
