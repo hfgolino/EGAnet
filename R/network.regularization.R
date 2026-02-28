@@ -447,7 +447,7 @@ network.regularization <- function(
       }else if(penalty == "exp"){
 
         # Obtain MLE of scale
-        gamma <-  log(2) * sum(lower_P) / sum(lower_triangle)
+        gamma <- log(2) * sum(lower_P) / sum(lower_triangle)
 
       }else if(penalty == "gumbel"){
 
