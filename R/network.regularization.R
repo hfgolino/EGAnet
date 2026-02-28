@@ -347,11 +347,12 @@ network.regularization <- function(
   penalty <- set_default(penalty, "l1", network.regularization)
   ic <- set_default(ic, "bic", network.regularization)
 
+  # Check whether penalty is adaptive option
+  adaptive_option <- c("cauchy", "exp", "gumbel", "weibull")
+
   # Set default lambda.min.ratio
   if(missing(lambda.min.ratio)){
-    lambda.min.ratio <- swiftelse(
-      penalty %in% c("exp", "gumbel", "weibull"), 0.001, 0.01
-    )
+    lambda.min.ratio <- 0.01
   }
 
   # Argument errors (return data in case of tibble)
@@ -424,9 +425,6 @@ network.regularization <- function(
 
   }
 
-  # Check whether penalty is adaptive option
-  adaptive_option <- c("cauchy", "exp", "gumbel", "weibull")
-
   # Check for adaptive and penalty is adaptive option
   if(adaptive.gamma){
 
@@ -484,7 +482,11 @@ network.regularization <- function(
 
   # Simplify source for fewer computations (minimal improvement)
   S_zero_diagonal <- S - diag(nodes) # makes diagonal zero
-  lambda.max <- max(abs(S_zero_diagonal)) # uses absolute rather than inverse
+  # lambda.max <- max(abs(S_zero_diagonal)) # uses absolute rather than inverse
+  # lambda.max <- max(abs(S_zero_diagonal)) * sqrt(log(nodes) / n)
+  lambda.max <- max(abs(S_zero_diagonal)) * swiftelse(
+    adaptive.gamma & (penalty %in% adaptive_option), sqrt(log(nodes) / n), 1
+  )
   lambda.min <- lambda.max * lambda.min.ratio
   lambda <- exp(seq.int(log(lambda.min), log(lambda.max), length.out = nlambda))
 
