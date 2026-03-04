@@ -71,12 +71,6 @@
 #' \item \code{"gumbel"} --- Gumbel
 #' \deqn{\lambda \cdot e^{-e^{\frac{|x|}{\gamma}}}}
 #'
-#' \item \code{"l1"} --- LASSO (Tibshirani, 1996)
-#' \deqn{\lambda \cdot |x|}
-#'
-#' \item \code{"l2"} --- Ridge (Hoerl & Kennard, 1970)
-#' \deqn{\lambda \cdot x^2}
-#'
 #' \item \code{"mcp"} --- Minimax Concave Penalty (Zhang, 2010)
 #' \deqn{
 #' P(x; \lambda, \gamma) =
@@ -128,14 +122,12 @@
 #'
 #' @param adaptive.gamma Boolean (length = 1).
 #' Whether data-adaptive (gamma) parameters should be used.
-#' Defaults to \code{FALSE}.
+#' Defaults to \code{TRUE}.
 #' Set to \code{TRUE} to apply data-adaptive parameters
 #' based on the empirical partial correlation matrix.
 #' Available options:
 #'
 #' \itemize{
-#'
-#' \item \code{"cauchy"} = uses half of the interquartile range of the absolute empirical partial correlations (Bloch, 1966)
 #'
 #' \item \code{"exp"} =  uses median of distribution for the scale parameter (\eqn{\frac{\log{(2)}}{\lambda}})
 #'
@@ -147,12 +139,11 @@
 #'
 #' @param nlambda Numeric (length = 1).
 #' Number of lambda values to test.
-#' Defaults to \code{100}
+#' Defaults to \code{50}
 #'
 #' @param lambda.min.ratio Numeric (length = 1).
 #' Ratio of lowest lambda value compared to maximal lambda.
-#' Defaults to \code{0.01} for all methods except for \code{"exp"} and
-#' \code{"weibull"} where it defaults to \code{0.001}
+#' Defaults to \code{0.01}
 #'
 #' @param penalize.diagonal Boolean (length = 1).
 #' Should the diagonal be penalized?
@@ -249,11 +240,6 @@
 #'
 #' @references
 #'
-#' \strong{Half IQR for \eqn{\gamma} in Cauchy} \cr
-#' Johnson, N. L., Kotz, S., & Balakrishnan, N. (1970).
-#' Continuous univariate distributions (Vol. 1).
-#' New York, NY: John Wiley & Sons.
-#'
 #' \strong{BIC0} \cr
 #' Dicker, L., Huang, B., & Lin, X. (2013).
 #' Variable selection and estimation with the seamless-L0 penalty.
@@ -268,16 +254,6 @@
 #' Fu, W. J. (1998).
 #' Penalized regressions: The bridge versus the lasso.
 #' \emph{Journal of Computational and Graphical Statistics}, \emph{7}(3), 397--416.
-#'
-#' \strong{L2 penalty} \cr
-#' Hoerl, A. E., & Kennard, R. W. (1970).
-#' Ridge regression: Biased estimation for nonorthogonal problems.
-#' \emph{Technometrics}, \emph{12}(1), 55--67.
-#'
-#' \strong{L1 penalty} \cr
-#' Tibshirani, R. (1996).
-#' Regression shrinkage and selection via the lasso.
-#' \emph{Journal of the Royal Statistical Society: Series B (Methodological)}, \emph{58}(1), 267--288.
 #'
 #' \strong{EXP penalty} \cr
 #' Wang, Y., Fan, Q., & Zhu, L. (2018).
@@ -309,7 +285,7 @@
 #' wmt <- wmt2[,7:24]
 #'
 #' # Obtain network
-#' l1_network <- network.regularization(data = wmt)
+#' weibull_network <- network.regularization(data = wmt)
 #'
 #' # Obtain Atan network
 #' atan_network <- network.regularization(data = wmt, penalty = "atan")
@@ -320,13 +296,13 @@
 #' @export
 #'
 # Apply non-convex regularization ----
-# Updated 03.03.2026
+# Updated 04.03.2026
 network.regularization <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
-    penalty = c("atan", "bridge", "exp", "gumbel", "l1", "l2", "mcp", "scad", "weibull"),
-    gamma = NULL, lambda = NULL, adaptive.gamma = FALSE,
+    penalty = c("atan", "bridge", "exp", "gumbel", "mcp", "scad", "weibull"),
+    gamma = NULL, lambda = NULL, adaptive.gamma = TRUE,
     nlambda = 50, lambda.min.ratio = 0.01, penalize.diagonal = TRUE,
     ic = c("AIC", "AICc", "BIC", "BIC0", "EBIC", "MBIC"), ebic.gamma = 0.50,
     fast = TRUE, LLA = FALSE, LLA.threshold = 1e-04, LLA.iter = 10000,
@@ -339,7 +315,7 @@ network.regularization <- function(
   # (keeping non-function choices for `cor_auto`)
   corr <- set_default(corr, "auto", network.regularization)
   na.data <- set_default(na.data, "pairwise", network.regularization)
-  penalty <- set_default(penalty, "l1", network.regularization)
+  penalty <- set_default(penalty, "weibull", network.regularization)
   ic <- set_default(ic, "bic", network.regularization)
 
   # Argument errors (return data in case of tibble)
@@ -350,7 +326,7 @@ network.regularization <- function(
   )
 
   # Check whether penalty is adaptive option
-  adaptive_option <- c("cauchy", "exp", "gumbel", "weibull")
+  adaptive_option <- c("exp", "gumbel", "weibull")
   adaptive_flag <- adaptive.gamma & (penalty %in% adaptive_option)
 
   # Get necessary inputs
@@ -387,8 +363,6 @@ network.regularization <- function(
     "bridge" = bridge_derivative,
     "exp" = exp_derivative,
     "gumbel" = gumbel_derivative,
-    "l1" = l1_derivative,
-    "l2" = l2_derivative,
     "mcp" = mcp_derivative,
     "scad" = scad_derivative,
     "weibull" = weibull_derivative
@@ -470,54 +444,13 @@ network.regularization <- function(
 
   # Get minimum and lambda sequence
   lambda.min <- lambda.max * lambda.min.ratio
-  lambda <- exp(seq.int(log(lambda.min), log(lambda.max), length.out = nlambda))
-
-  # Obtain lambda sequence
-  lambda_sequence <- seq_len(nlambda)
-
-  # Obtain lambda matrices
-  lambda_list <- lapply(lambda, function(value){
-
-    # Obtain lambda matrix
-    lambda_matrix[] <- derivative_FUN(x = K, lambda = value, gamma = gamma, shape = shape)
-
-    # Check for diagonal penalization
-    if(!penalize.diagonal){
-      diag(lambda_matrix) <- 0
-    }
-
-    # Attach value
-    attr(lambda_matrix, "value") <- value
-
-    # Return lambda matrix
-    return(lambda_matrix)
-
-  })
+  lambda_sequence <- exp(seq.int(log(lambda.min), log(lambda.max), length.out = nlambda))
 
   # Get GLASSO output
-  glasso_list <- lapply(lambda_list, function(lambda_matrix){
-
-    # Obtain lambda value
-    value <- attributes(lambda_matrix)$value
+  glasso_list <- lapply(lambda_sequence, function(lambda){
 
     # Set lambda matrix
-    glasso_ARGS$rho <- value
-
-    # # Check for adaptive penalties
-    # if(penalty %in% adaptive_option){
-    #
-    #   # Obtain lambda matrix
-    #   lambda_matrix[] <- derivative_FUN(x = K, lambda = value, gamma = gamma, shape = shape)
-    #
-    #   # Check for diagonal penalization
-    #   if(!penalize.diagonal){
-    #     diag(lambda_matrix) <- 0
-    #   }
-    #
-    #   # Set lambda matrix
-    #   glasso_ARGS$rho <- lambda_matrix
-    #
-    # }
+    glasso_ARGS$rho <- lambda
 
     # Obtain estimate
     estimate <- do.call(what = glasso_FUN, args = glasso_ARGS)
@@ -538,7 +471,7 @@ network.regularization <- function(
         old_K <- new_K
 
         # Obtain lambda matrix
-        lambda_matrix[] <- derivative_FUN(x = old_K, lambda = value, gamma = gamma, shape = shape)
+        lambda_matrix[] <- derivative_FUN(x = old_K, lambda = lambda, gamma = gamma, shape = shape)
 
         # Check for diagonal penalization
         if(!penalize.diagonal){

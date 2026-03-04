@@ -21,13 +21,6 @@ bridge_penalty <- function(x, lambda, gamma = 1, ...)
 }
 
 #' @noRd
-# Updated 13.01.2026
-cauchy_penalty <- function(x, lambda, gamma = 0.01, ...)
-{
-  return(lambda * (1 / pi) * atan(abs(x) / gamma) + 0.5)
-}
-
-#' @noRd
 # Updated 10.01.2026
 exp_penalty <- function(x, lambda, gamma = 0.01, ...)
 {
@@ -134,7 +127,7 @@ atan_derivative <- function(x, lambda, gamma = 0.01, ...)
 }
 
 #' @noRd
-# Updated 27.02.2026
+# Updated 04.03.2026
 bridge_derivative <- function(x, lambda, gamma = 1, eps = 1e-08, ...)
 {
 
@@ -147,17 +140,7 @@ bridge_derivative <- function(x, lambda, gamma = 1, eps = 1e-08, ...)
   abs_x <- pmax(abs(x), eps)
 
   # Return derivative
-  return(lambda * gamma * x * abs_x^(gamma - 2))
-
-}
-
-#' @noRd
-# Updated 27.02.2026
-cauchy_derivative <- function(x, lambda, gamma = 0.01, ...)
-{
-
-  # Return derivative
-  return(lambda * (1 / pi) * (gamma / (x^2 + gamma^2)))
+  return(lambda * gamma * abs_x * abs_x^(gamma - 2))
 
 }
 
@@ -276,13 +259,6 @@ bridge_proximal <- function(x, lambda, gamma = 1, eps = 1e-08, ...)
 }
 
 #' @noRd
-# Updated 13.01.2026
-cauchy_proximal <- function(x, lambda, gamma = 0.01, ...)
-{
-  return(l1_proximal(x, cauchy_derivative(x, lambda, gamma)))
-}
-
-#' @noRd
 # Updated 05.02.2026
 exp_proximal <- function(x, lambda, gamma = 0.01, ...)
 {
@@ -351,8 +327,8 @@ scad_proximal <- function(x, lambda, gamma = 3.7, ...)
 }
 
 #' @noRd
-# Updated 22.11.2025
-weibull_proximal <- function(x, lambda, gamma = 0.01, scale, ...)
+# Updated 04.03.2026
+weibull_proximal <- function(x, lambda, gamma = 0.01, shape, ...)
 {
-  return(l1_proximal(x, weibull_derivative(x, lambda, gamma, scale)))
+  return(l1_proximal(x, weibull_derivative(x, lambda, gamma, shape)))
 }

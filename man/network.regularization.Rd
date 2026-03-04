@@ -9,10 +9,10 @@ network.regularization(
   n = NULL,
   corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
-  penalty = c("atan", "bridge", "exp", "gumbel", "l1", "l2", "mcp", "scad", "weibull"),
+  penalty = c("atan", "bridge", "exp", "gumbel", "mcp", "scad", "weibull"),
   gamma = NULL,
   lambda = NULL,
-  adaptive.gamma = FALSE,
+  adaptive.gamma = TRUE,
   nlambda = 50,
   lambda.min.ratio = 0.01,
   penalize.diagonal = TRUE,
@@ -95,12 +95,6 @@ Available options:
 \item \code{"gumbel"} --- Gumbel
 \deqn{\lambda \cdot e^{-e^{\frac{|x|}{\gamma}}}}
 
-\item \code{"l1"} --- LASSO (Tibshirani, 1996)
-\deqn{\lambda \cdot |x|}
-
-\item \code{"l2"} --- Ridge (Hoerl & Kennard, 1970)
-\deqn{\lambda \cdot x^2}
-
 \item \code{"mcp"} --- Minimax Concave Penalty (Zhang, 2010)
 \deqn{
 P(x; \lambda, \gamma) =
@@ -152,14 +146,12 @@ Adjusts the initial penalty provided to the penalty function}
 
 \item{adaptive.gamma}{Boolean (length = 1).
 Whether data-adaptive (gamma) parameters should be used.
-Defaults to \code{FALSE}.
+Defaults to \code{TRUE}.
 Set to \code{TRUE} to apply data-adaptive parameters
 based on the empirical partial correlation matrix.
 Available options:
 
 \itemize{
-
-\item \code{"cauchy"} = uses half of the interquartile range of the absolute empirical partial correlations (Bloch, 1966)
 
 \item \code{"exp"} =  uses median of distribution for the scale parameter (\eqn{\frac{\log{(2)}}{\lambda}})
 
@@ -171,12 +163,11 @@ Available options:
 
 \item{nlambda}{Numeric (length = 1).
 Number of lambda values to test.
-Defaults to \code{100}}
+Defaults to \code{50}}
 
 \item{lambda.min.ratio}{Numeric (length = 1).
 Ratio of lowest lambda value compared to maximal lambda.
-Defaults to \code{0.01} for all methods except for \code{"exp"} and
-\code{"weibull"} where it defaults to \code{0.001}}
+Defaults to \code{0.01}}
 
 \item{penalize.diagonal}{Boolean (length = 1).
 Should the diagonal be penalized?
@@ -279,7 +270,7 @@ the Local Linear Approximation (LLA: Fan & Li, 2001; Zou & Li, 2008)
 wmt <- wmt2[,7:24]
 
 # Obtain network
-l1_network <- network.regularization(data = wmt)
+weibull_network <- network.regularization(data = wmt)
 
 # Obtain Atan network
 atan_network <- network.regularization(data = wmt, penalty = "atan")
@@ -289,11 +280,6 @@ exp_network <- network.regularization(data = wmt, penalty = "exp", adaptive.gamm
 
 }
 \references{
-\strong{Half IQR for \eqn{\gamma} in Cauchy} \cr
-Johnson, N. L., Kotz, S., & Balakrishnan, N. (1970).
-Continuous univariate distributions (Vol. 1).
-New York, NY: John Wiley & Sons.
-
 \strong{BIC0} \cr
 Dicker, L., Huang, B., & Lin, X. (2013).
 Variable selection and estimation with the seamless-L0 penalty.
@@ -308,16 +294,6 @@ Variable selection via nonconcave penalized likelihood and its oracle properties
 Fu, W. J. (1998).
 Penalized regressions: The bridge versus the lasso.
 \emph{Journal of Computational and Graphical Statistics}, \emph{7}(3), 397--416.
-
-\strong{L2 penalty} \cr
-Hoerl, A. E., & Kennard, R. W. (1970).
-Ridge regression: Biased estimation for nonorthogonal problems.
-\emph{Technometrics}, \emph{12}(1), 55--67.
-
-\strong{L1 penalty} \cr
-Tibshirani, R. (1996).
-Regression shrinkage and selection via the lasso.
-\emph{Journal of the Royal Statistical Society: Series B (Methodological)}, \emph{58}(1), 267--288.
 
 \strong{EXP penalty} \cr
 Wang, Y., Fan, Q., & Zhu, L. (2018).
