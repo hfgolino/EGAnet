@@ -11,7 +11,6 @@ network.regularization(
   na.data = c("pairwise", "listwise"),
   penalty = c("atan", "bridge", "exp", "gumbel", "mcp", "scad", "weibull"),
   gamma = NULL,
-  lambda = NULL,
   adaptive.gamma = TRUE,
   nlambda = 50,
   lambda.min.ratio = 0.01,
@@ -140,9 +139,6 @@ Defaults:
 \item \code{"weibull"} = 0.01
 
 }}
-
-\item{lambda}{Numeric (length = 1).
-Adjusts the initial penalty provided to the penalty function}
 
 \item{adaptive.gamma}{Boolean (length = 1).
 Whether data-adaptive (gamma) parameters should be used.
