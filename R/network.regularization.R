@@ -123,8 +123,8 @@
 #' @param adaptive.gamma Boolean (length = 1).
 #' Whether data-adaptive (gamma) parameters should be used.
 #' Defaults to \code{TRUE}.
-#' Set to \code{TRUE} to apply data-adaptive parameters
-#' based on the empirical partial correlation matrix.
+#' Set to \code{FALSE} to apply default gamma parameters for
+#' adaptive penalties.
 #' Available options:
 #'
 #' \itemize{
@@ -436,9 +436,13 @@ network.regularization <- function(
   # Switch based on adaptive functions
   if(adaptive_flag){
 
-    lambda.max <- swiftelse(
-      penalty == "gumbel", lambda.max * gamma * (exp(1) - 1), lambda.max * gamma
-    )
+    # Update lambda max
+    lambda.max <- lambda.max * gamma
+
+    # Check for Gumbel
+    if(penalty == "gumbel"){
+      lambda.max <- lambda.max * (exp(1) - 1)
+    }
 
   }
 
@@ -498,7 +502,7 @@ network.regularization <- function(
     }else{
 
       # Obtain lambda matrix
-      lambda_matrix[] <- derivative_FUN(x = estimate$wi, lambda = value, gamma = gamma, shape = shape)
+      lambda_matrix[] <- derivative_FUN(x = estimate$wi, lambda = lambda, gamma = gamma, shape = shape)
 
       # Check for diagonal penalization
       if(!penalize.diagonal){
@@ -543,7 +547,7 @@ network.regularization <- function(
     return(
       list(
         network = W, K = glasso_list[[optimal]]$wi, R = R,
-        penalty = penalty, lambda = lambda[[optimal]], gamma = gamma,
+        penalty = penalty, lambda = lambda_sequence[[optimal]], gamma = gamma,
         correlation = S, criterion = ic, IC = ICs[[optimal]]
       )
     )

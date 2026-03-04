@@ -147,8 +147,8 @@ Adjusts the initial penalty provided to the penalty function}
 \item{adaptive.gamma}{Boolean (length = 1).
 Whether data-adaptive (gamma) parameters should be used.
 Defaults to \code{TRUE}.
-Set to \code{TRUE} to apply data-adaptive parameters
-based on the empirical partial correlation matrix.
+Set to \code{FALSE} to apply default gamma parameters for
+adaptive penalties.
 Available options:
 
 \itemize{
