@@ -231,18 +231,15 @@ scad_derivative <- function(x, lambda, gamma = 3.7, ...)
 }
 
 #' @noRd
-# Updated 27.02.2026
+# Updated 03.03.2026
 weibull_derivative <- function(x, lambda, gamma = 0.01, shape, ...)
 {
   # Pre-compute components
-  abs_x <- abs(x)
+  abs_x <- abs(swiftelse(x == 0, .Machine$double.eps, x))
   x_gamma <- abs_x / gamma
 
-  # Compute derivative
-  derivative <- (shape / gamma) * x_gamma^(shape - 1) * exp(-x_gamma^shape)
-
   # Return derivative
-  return(lambda * swiftelse(is.infinite(derivative), 100, derivative))
+  return(lambda * (shape / gamma) * x_gamma^(shape - 1) * exp(-x_gamma^shape))
 
 }
 

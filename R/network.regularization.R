@@ -65,9 +65,6 @@
 #' \item \code{"bridge"} --- Bridge (Fu, 1998)
 #' \deqn{\lambda \cdot |x|^\gamma}
 #'
-#' \item \code{"cauchy"} ---- Cauchy
-#' \deqn{\lambda \cdot \frac{1}{\pi} \cdot \arctan{\frac{|x|}{\gamma}} + 0.5}
-#'
 #' \item \code{"exp"} --- EXP (Wang, Fan, & Zhu, 2018)
 #' \deqn{\lambda \cdot (1 - e^{-\frac{|x|}{\gamma}})}
 #'
@@ -113,8 +110,6 @@
 #' \item \code{"atan"} = 0.01
 #'
 #' \item \code{"bridge"} = 1
-#'
-#' \item \code{"cauchy"} = 0.01
 #'
 #' \item \code{"exp"} = 0.01
 #'
@@ -325,14 +320,14 @@
 #' @export
 #'
 # Apply non-convex regularization ----
-# Updated 27.02.2026
+# Updated 03.03.2026
 network.regularization <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
-    penalty = c("atan", "bridge", "cauchy", "exp", "gumbel", "l1", "l2", "mcp", "scad", "weibull"),
+    penalty = c("atan", "bridge", "exp", "gumbel", "l1", "l2", "mcp", "scad", "weibull"),
     gamma = NULL, lambda = NULL, adaptive.gamma = FALSE,
-    nlambda = 50, lambda.min.ratio, penalize.diagonal = TRUE,
+    nlambda = 50, lambda.min.ratio = 0.01, penalize.diagonal = TRUE,
     ic = c("AIC", "AICc", "BIC", "BIC0", "EBIC", "MBIC"), ebic.gamma = 0.50,
     fast = TRUE, LLA = FALSE, LLA.threshold = 1e-04, LLA.iter = 10000,
     network.only = TRUE, verbose = FALSE, ...
@@ -347,20 +342,16 @@ network.regularization <- function(
   penalty <- set_default(penalty, "l1", network.regularization)
   ic <- set_default(ic, "bic", network.regularization)
 
-  # Check whether penalty is adaptive option
-  adaptive_option <- c("cauchy", "exp", "gumbel", "weibull")
-
-  # Set default lambda.min.ratio
-  if(missing(lambda.min.ratio)){
-    lambda.min.ratio <- 0.01
-  }
-
   # Argument errors (return data in case of tibble)
   data <- network.regularization_errors(
     data, n, gamma, adaptive.gamma, nlambda,
     lambda.min.ratio, penalize.diagonal, ebic.gamma,
     fast, LLA, LLA.threshold, network.only, verbose, ...
   )
+
+  # Check whether penalty is adaptive option
+  adaptive_option <- c("cauchy", "exp", "gumbel", "weibull")
+  adaptive_flag <- adaptive.gamma & (penalty %in% adaptive_option)
 
   # Get necessary inputs
   output <- obtain_sample_correlations(
@@ -394,7 +385,6 @@ network.regularization <- function(
     penalty,
     "atan" = atan_derivative,
     "bridge" = bridge_derivative,
-    "cauchy" = cauchy_derivative,
     "exp" = exp_derivative,
     "gumbel" = gumbel_derivative,
     "l1" = l1_derivative,
@@ -415,7 +405,6 @@ network.regularization <- function(
       penalty,
       "atan" = 0.01,
       "bridge" = 1,
-      "cauchy" = 0.01,
       "exp" = 0.01,
       "gumbel" = 0.01,
       "mcp" = 3,
@@ -426,52 +415,38 @@ network.regularization <- function(
   }
 
   # Check for adaptive and penalty is adaptive option
-  if(adaptive.gamma){
+  if(adaptive_flag){
 
-    # Check whether penalty is adaptive
-    if(penalty %in% adaptive_option){
+    # Set lower triangle
+    lower_triangle <- lower.tri(S)
 
-      # Set lower triangle
-      lower_triangle <- lower.tri(S)
+    # Set partial correlations
+    P <- cor2pcor(S); lower_P <- abs(P[lower_triangle])
 
-      # Set partial correlations
-      P <- cor2pcor(S); lower_P <- abs(P[lower_triangle])
+    if(penalty == "exp"){
 
-      if(penalty == "cauchy"){
+      # Obtain MLE of scale
+      scale <- mean(lower_P)
 
-        # Set gamma parameter
-        gamma <- diff(quantile(lower_P, probs = c(0.25, 0.75))) / 2
+      # Set gamma as median
+      gamma <- scale * log(2)
 
-      }else if(penalty == "exp"){
+    }else if(penalty == "gumbel"){
 
-        # Obtain MLE of scale
-        gamma <- log(2) * sum(lower_P) / sum(lower_triangle)
+      # Estimate MLE scale parameter
+      scale <- gumbel_mle(lower_P)
 
-      }else if(penalty == "gumbel"){
+      # Set gamma as mean
+      gamma <- scale * -digamma(1)
 
-        # Estimate MLE scale parameter
-        gamma <- gumbel_mle(lower_P) * -digamma(1)
+    }else if(penalty == "weibull"){
 
-      }else if(penalty == "weibull"){
+      # Obtain Weibull estimates
+      estimates <- weibull_mle(lower_P)
 
-        # Obtain Weibull estimates
-        estimates <- weibull_mle(lower_P)
-
-        # Set parameters
-        shape <- min(estimates[["shape"]], 1) # cap at EXP
-        gamma <- estimates[["scale"]] * log(2)^(1 / shape)
-
-      }
-
-    }else{
-
-      # Set message that penalty is not adaptive
-      message(
-        paste0(
-          "The \"", penalty,
-          "\" penalty is not adaptive.\n\nUsing its default, `gamma = ", gamma, "`"
-        )
-      )
+      # Set parameters
+      shape <- min(estimates[["shape"]], 1) # cap at EXP
+      gamma <- estimates[["scale"]] * log(2)^(1 / shape)
 
     }
 
@@ -482,10 +457,18 @@ network.regularization <- function(
 
   # Simplify source for fewer computations (minimal improvement)
   S_zero_diagonal <- S - diag(nodes) # makes diagonal zero
-  # lambda.max <- max(abs(S_zero_diagonal)) # uses absolute rather than inverse
-  lambda.max <- max(abs(S_zero_diagonal)) * swiftelse(
-    adaptive.gamma & (penalty %in% adaptive_option), sqrt(log(nodes) / n), 1
-  )
+  lambda.max <- max(abs(S_zero_diagonal)) # uses absolute rather than inverse
+
+  # Switch based on adaptive functions
+  if(adaptive_flag){
+
+    lambda.max <- swiftelse(
+      penalty == "gumbel", lambda.max * gamma * (exp(1) - 1), lambda.max * gamma
+    )
+
+  }
+
+  # Get minimum and lambda sequence
   lambda.min <- lambda.max * lambda.min.ratio
   lambda <- exp(seq.int(log(lambda.min), log(lambda.max), length.out = nlambda))
 
@@ -511,36 +494,36 @@ network.regularization <- function(
 
   })
 
-  # Check for LLA
-  if(LLA){
+  # Get GLASSO output
+  glasso_list <- lapply(lambda_list, function(lambda_matrix){
 
-    # Get GLASSO output
-    glasso_list <- lapply(lambda_list, function(lambda_matrix){
+    # Obtain lambda value
+    value <- attributes(lambda_matrix)$value
 
-      # Obtain lambda value
-      value <- attributes(lambda_matrix)$value
+    # Set lambda matrix
+    glasso_ARGS$rho <- value
 
-      # Set lambda matrix
-      glasso_ARGS$rho <- value
+    # # Check for adaptive penalties
+    # if(penalty %in% adaptive_option){
+    #
+    #   # Obtain lambda matrix
+    #   lambda_matrix[] <- derivative_FUN(x = K, lambda = value, gamma = gamma, shape = shape)
+    #
+    #   # Check for diagonal penalization
+    #   if(!penalize.diagonal){
+    #     diag(lambda_matrix) <- 0
+    #   }
+    #
+    #   # Set lambda matrix
+    #   glasso_ARGS$rho <- lambda_matrix
+    #
+    # }
 
-      # Check for adaptive penalties
-      if(penalty %in% adaptive_option){
+    # Obtain estimate
+    estimate <- do.call(what = glasso_FUN, args = glasso_ARGS)
 
-        # Obtain lambda matrix
-        lambda_matrix[] <- derivative_FUN(x = K, lambda = value, gamma = gamma, shape = shape)
-
-        # Check for diagonal penalization
-        if(!penalize.diagonal){
-          diag(lambda_matrix) <- 0
-        }
-
-        # Set lambda matrix
-        glasso_ARGS$rho <- lambda_matrix
-
-      }
-
-      # Obtain estimate
-      estimate <- do.call(what = glasso_FUN, args = glasso_ARGS)
+    # Check for LLA
+    if(LLA){
 
       # Obtain new K
       new_K <- estimate$wi
@@ -579,25 +562,28 @@ network.regularization <- function(
 
       }
 
-      # Estimate
-      return(estimate)
+    }else{
 
-    })
+      # Obtain lambda matrix
+      lambda_matrix[] <- derivative_FUN(x = estimate$wi, lambda = value, gamma = gamma, shape = shape)
 
-  }else{
-
-    # Get GLASSO output
-    glasso_list <- lapply(lambda_list, function(lambda_matrix){
+      # Check for diagonal penalization
+      if(!penalize.diagonal){
+        diag(lambda_matrix) <- 0
+      }
 
       # Set lambda matrix
       glasso_ARGS$rho <- lambda_matrix
 
-      # Estimate
-      return(do.call(what = glasso_FUN, args = glasso_ARGS))
+      # Obtain estimate
+      estimate <- do.call(what = glasso_FUN, args = glasso_ARGS)
 
-    })
+    }
 
-  }
+    # Estimate
+    return(estimate)
+
+  })
 
   # Compute ICs
   ICs <- nvapply(glasso_list, function(element){

@@ -9,13 +9,12 @@ network.regularization(
   n = NULL,
   corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
   na.data = c("pairwise", "listwise"),
-  penalty = c("atan", "bridge", "cauchy", "exp", "gumbel", "l1", "l2", "mcp", "scad",
-    "weibull"),
+  penalty = c("atan", "bridge", "exp", "gumbel", "l1", "l2", "mcp", "scad", "weibull"),
   gamma = NULL,
   lambda = NULL,
   adaptive.gamma = FALSE,
   nlambda = 50,
-  lambda.min.ratio,
+  lambda.min.ratio = 0.01,
   penalize.diagonal = TRUE,
   ic = c("AIC", "AICc", "BIC", "BIC0", "EBIC", "MBIC"),
   ebic.gamma = 0.5,
@@ -90,9 +89,6 @@ Available options:
 \item \code{"bridge"} --- Bridge (Fu, 1998)
 \deqn{\lambda \cdot |x|^\gamma}
 
-\item \code{"cauchy"} ---- Cauchy
-\deqn{\lambda \cdot \frac{1}{\pi} \cdot \arctan{\frac{|x|}{\gamma}} + 0.5}
-
 \item \code{"exp"} --- EXP (Wang, Fan, & Zhu, 2018)
 \deqn{\lambda \cdot (1 - e^{-\frac{|x|}{\gamma}})}
 
@@ -138,8 +134,6 @@ Defaults:
 \item \code{"atan"} = 0.01
 
 \item \code{"bridge"} = 1
-
-\item \code{"cauchy"} = 0.01
 
 \item \code{"exp"} = 0.01
 
