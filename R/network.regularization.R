@@ -117,9 +117,6 @@
 #'
 #' }
 #'
-#' @param lambda Numeric (length = 1).
-#' Adjusts the initial penalty provided to the penalty function
-#'
 #' @param adaptive.gamma Boolean (length = 1).
 #' Whether data-adaptive (gamma) parameters should be used.
 #' Defaults to \code{TRUE}.
@@ -302,7 +299,7 @@ network.regularization <- function(
     corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
     penalty = c("atan", "bridge", "exp", "gumbel", "mcp", "scad", "weibull"),
-    gamma = NULL, lambda = NULL, adaptive.gamma = TRUE,
+    gamma = NULL, adaptive.gamma = TRUE,
     nlambda = 50, lambda.min.ratio = 0.01, penalize.diagonal = TRUE,
     ic = c("AIC", "AICc", "BIC", "BIC0", "EBIC", "MBIC"), ebic.gamma = 0.50,
     fast = TRUE, LLA = FALSE, LLA.threshold = 1e-04, LLA.iter = 10000,
@@ -557,7 +554,7 @@ network.regularization <- function(
 
 # Bug checking ----
 # data = wmt2[,7:24]; n = NULL; corr = "auto"
-# na.data = "pairwise"; penalty = "l1"; adaptive.gamma = FALSE
+# na.data = "pairwise"; penalty = "weibull"; adaptive.gamma = TRUE
 # gamma = NULL; lambda = NULL; nlambda = 50
 # lambda.min.ratio = 0.01; penalize.diagonal = TRUE
 # optimize.lambda = FALSE; ic = "BIC"; network.only = TRUE
