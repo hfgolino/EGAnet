@@ -2,7 +2,9 @@ WEBSITE: https://r-ega.net
 
 ## Changes in version 2.4.1
 
-+	ADD: data-adaptive regularization for Cauchy and EXP penalties in `network.regularization`
++	FIX: bug when singleton communities in `invariance` (resolves to dropping variable)
+
++	ADD: data-adaptive regularization penalties available in `network.regularization`
 
 +	UPDATE: `network.regularization` now has LLA optimization for non-convex penalties
 

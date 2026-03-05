@@ -490,7 +490,7 @@ invariance <- function(
       return( # By groups
         lapply(unique_groups, function(group){
 
-
+#
           # Get network
           network <- EGA(
             data = data[permutation == group,],
@@ -1264,7 +1264,7 @@ plot.invariance <- function(x, pairs = list(), p_type = c("p", "p_BH"), p_value 
 
 #' @noRd
 # Configural invariance ----
-# Updated 13.04.2024
+# Updated 05.03.2025
 configural <- function(
     data, iter, structure, configural.threshold,
     configural.type, corr, na.data, model,
@@ -1296,14 +1296,19 @@ configural <- function(
     # Get stable items
     stable_items <- boot$stability$item.stability$item.stability$empirical.dimensions >= configural.threshold
 
+    # Set NAs to FALSE
+    if(anyNA(stable_items)){
+      stable_items[is.na(stable_items)] <- FALSE
+    }
+
     # Perform checks
     stability <- all(stable_items)
 
     # Number of stable items
-    items <- sum(stable_items)
+    items <- sum(stable_items, na.rm = TRUE)
 
     # Update data
-    data <- data[,stable_items]
+    data <- data[,stable_items, drop = FALSE]
 
   }
 
