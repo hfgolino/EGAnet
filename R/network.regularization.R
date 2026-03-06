@@ -293,7 +293,7 @@
 #' @export
 #'
 # Apply non-convex regularization ----
-# Updated 04.03.2026
+# Updated 06.03.2026
 network.regularization <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
@@ -394,8 +394,8 @@ network.regularization <- function(
     # Set partial correlations
     P <- cor2pcor(S); lower_P <- abs(P[lower_triangle])
 
-    # Sample size multiplied by base
-    base <- n * 0.10
+    # Obtain base for adjustment
+    base <- sqrt(n)
 
     if(penalty == "exp"){
 
