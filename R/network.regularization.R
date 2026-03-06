@@ -302,7 +302,7 @@ network.regularization <- function(
     gamma = NULL, adaptive.gamma = TRUE,
     nlambda = 50, lambda.min.ratio = 0.01, penalize.diagonal = TRUE,
     ic = c("AIC", "AICc", "BIC", "BIC0", "EBIC", "MBIC"), ebic.gamma = 0.50,
-    fast = TRUE, LLA = FALSE, LLA.threshold = 1e-04, LLA.iter = 10000,
+    fast = TRUE, LLA = FALSE, LLA.threshold = 1e-03, LLA.iter = 10000,
     network.only = TRUE, verbose = FALSE, ...
 )
 {
@@ -394,21 +394,18 @@ network.regularization <- function(
     # Set partial correlations
     P <- cor2pcor(S); lower_P <- abs(P[lower_triangle])
 
+    # Sample size multiplied by base
+    base <- n * 0.10
+
     if(penalty == "exp"){
 
-      # Obtain MLE of scale
-      scale <- mean(lower_P)
-
-      # Set gamma as median
-      gamma <- scale * log(2)
+      # Set gamma
+      gamma <- mean(lower_P) / base
 
     }else if(penalty == "gumbel"){
 
-      # Estimate MLE scale parameter
-      scale <- gumbel_mle(lower_P)
-
-      # Set gamma as mean
-      gamma <- scale * -digamma(1)
+      # Set gamma
+      gamma <- gumbel_mle(lower_P) / base
 
     }else if(penalty == "weibull"){
 
@@ -417,7 +414,9 @@ network.regularization <- function(
 
       # Set parameters
       shape <- min(estimates[["shape"]], 1) # cap at EXP
-      gamma <- estimates[["scale"]] * log(2)^(1 / shape)
+
+      # Set gamma
+      gamma <- estimates[["scale"]] / base
 
     }
 
@@ -429,21 +428,6 @@ network.regularization <- function(
   # Simplify source for fewer computations (minimal improvement)
   S_zero_diagonal <- S - diag(nodes) # makes diagonal zero
   lambda.max <- max(abs(S_zero_diagonal)) # uses absolute rather than inverse
-
-  # Switch based on adaptive functions
-  if(adaptive_flag){
-
-    # Update lambda max
-    lambda.max <- lambda.max * gamma
-
-    # Check for Gumbel
-    if(penalty == "gumbel"){
-      lambda.max <- lambda.max * (exp(1) - 1)
-    }
-
-  }
-
-  # Get minimum and lambda sequence
   lambda.min <- lambda.max * lambda.min.ratio
   lambda_sequence <- exp(seq.int(log(lambda.min), log(lambda.max), length.out = nlambda))
 
@@ -492,7 +476,7 @@ network.regularization <- function(
         iterations <- iterations + 1
 
         # Compute convergence
-        convergence <- mean(abs(new_K - old_K))
+        convergence <- max(abs(new_K - old_K))
 
       }
 

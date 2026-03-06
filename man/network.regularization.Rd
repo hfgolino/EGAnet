@@ -19,7 +19,7 @@ network.regularization(
   ebic.gamma = 0.5,
   fast = TRUE,
   LLA = FALSE,
-  LLA.threshold = 0.0001,
+  LLA.threshold = 0.001,
   LLA.iter = 10000,
   network.only = TRUE,
   verbose = FALSE,
