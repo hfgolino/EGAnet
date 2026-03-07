@@ -394,18 +394,18 @@ network.regularization <- function(
     # Set partial correlations
     P <- cor2pcor(S); lower_P <- abs(P[lower_triangle])
 
-    # Obtain base for adjustment
+    # Compute for standard error
     base <- sqrt(n)
 
     if(penalty == "exp"){
 
-      # Set gamma
+      # Set gamma to standard error
       gamma <- mean(lower_P) / base
 
     }else if(penalty == "gumbel"){
 
-      # Set gamma
-      gamma <- gumbel_mle(lower_P) / base
+      # Set gamma to standard error
+      gamma <- gumbel_mle(lower_P) * (pi / sqrt(6)) / base
 
     }else if(penalty == "weibull"){
 
@@ -415,8 +415,10 @@ network.regularization <- function(
       # Set parameters
       shape <- min(estimates[["shape"]], 1) # cap at EXP
 
-      # Set gamma
-      gamma <- estimates[["scale"]] / base
+      # Set gamma to standard error
+      gamma <- estimates[["scale"]] * sqrt(
+        gamma(1 + 2 / shape) - gamma(1 + 1 / shape)^2
+      ) / base
 
     }
 
