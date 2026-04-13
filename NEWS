@@ -4,11 +4,7 @@ WEBSITE: https://r-ega.net
 
 +	FIX: bug when singleton communities in `invariance` (resolves to dropping variable)
 
-+	ADD: data-adaptive regularization penalties available in `network.regularization`
-
-+	UPDATE: `network.regularization` now has LLA optimization for non-convex penalties
-
-+	UPDATE: weibull penalty uses internal MLE estimation of shape (capped at 1 or EXP) and median for gamma parameter
++	REMOVE: `network.regularization` has moved to {L0ggm}
 
 
 ## Changes in version 2.4.0
