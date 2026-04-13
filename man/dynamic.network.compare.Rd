@@ -319,7 +319,7 @@ dynamic.network.compare(
 
 }
 \references{
-\strong{Frobenius Norm} \cr
+\strong{sF} \cr
 Ulitzsch, E., Khanna, S., Rhemtulla, M., & Domingue, B. W. (2023).
 A graph theory based similarity metric enables comparison of subpopulation psychometric networks.
 \emph{Psychological Methods}.

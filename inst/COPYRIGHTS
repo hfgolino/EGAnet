@@ -1,0 +1,56 @@
+Files: R/auto_correlate.R
+Copyright: 2024 Hudson Golino and Alexander P. Christensen
+           John Fox (two-step polyserial approximation in polyserial_vector,
+           derived from polycor::polyserial)
+License: GPL (>= 2)
+Comment: The polyserial_vector function uses a two-step approximation
+ derived from the polyserial function in the polycor R package
+ by John Fox. Modified by Alexander P. Christensen, 16 March 2024.
+ 
+Files: R/glla.R
+Copyright: 2024 Hudson Golino and Alexander P. Christensen
+           Pascal Deboeck and Steve Boker (original GLLA implementation)
+License: GPL (>= 2)
+Comment: The glla function was obtained from Pascal Deboeck on 30 September 2019
+ via email. This code has since been modified to fulfill the EGAnet package's
+ objectives. Original code is provided by Pascal Deboeck and Steve Boker
+ <https://intraindividual.com/2009/03/derivative-variability-analysis/>.
+ No official copyright license was provided in the exchange.
+ Modified by Alexander P. Christensen, 24 November 2025.
+ 
+Files: R/helpers.R
+Copyright: 2024 Hudson Golino and Alexander P. Christensen
+           Brian Ripley and Bill Venables (original mvrnorm implementation)
+License: GPL (>= 2)
+Comment: The mvrnorm_precompute and MASS_mvrnorm_quick functions are 
+ derived from the mvrnorm function in the MASS R package
+ by Brian Ripley and Bill Venables. Modified by Alexander P. Christensen, 27 July 2023.
+
+Files: R/network.fit.R
+Copyright: 2024 Hudson Golino and Alexander P. Christensen
+           Yves Rosseel (rmsea_ci function, derived from lavaan version 0.6.19)
+License: GPL (>= 2)
+Comment: The rmsea_ci function is derived from RMSEA confidence interval
+ code in the lavaan R package (version 0.6.19) by Yves Rosseel. Modified 
+ by Alexander P. Christensen, 01 November 2024.
+
+Files: src/polychoric_matrix.c
+Copyright: 2023 Hudson Golino and Alexander P. Christensen
+           Alexander Robitzsch (Drezner-Wesolowsky bivariate normal CDF,
+           translated from pbv/src/pbv_rcpp_bvnorm.cpp)
+License: GPL (>= 2)
+Comment: Implements polychoric correlations using the Beasley-Springer-Moro
+ inverse normal CDF and Brent's optimization method. The Drezner-Wesolowsky
+ bivariate normal CDF is translated from C++ code in the pbv R package
+ (https://github.com/cran/pbv/blob/master/src/pbv_rcpp_bvnorm.cpp).
+ Template developed with GPT-4 assistance.
+
+Files: src/xoshiro.c
+Copyright: 2019 David Blackman and Sebastiano Vigna (vigna@acm.org)
+License: CC0
+Comment: Dedicated to the public domain via CC0. No rights reserved. Modified by Alexander P. Christensen, 15 August 2023.
+
+Files: src/ziggurat.c
+Copyright: John Burkardt
+License: LGPL (>= 2)
+Comment: Original ziggurat implementation. Modified by Alexander P. Christensen, 30 July 2023.

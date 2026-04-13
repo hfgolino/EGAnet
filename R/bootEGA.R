@@ -977,7 +977,7 @@ summary.bootEGA <- function(object, ...)
 
 #' @exportS3Method
 # S3 Plot Method ----
-# Updated 24.04.2025
+# Updated 13.04.2026
 plot.bootEGA <- function(x, ...)
 {
 
@@ -1044,17 +1044,24 @@ plot.bootEGA <- function(x, ...)
 
   # Plot empirical EGA
   ega_plot <- plot(x$EGA, ...) +
-    ggplot2::ggtitle(paste("Original Sample |", ega_type)) +
+    ggplot2::labs(caption = paste("Original Sample |", ega_type)) +
     ggplot2::theme(
-      plot.title = ggplot2::element_text(face = "bold", hjust = 0.5),
-      legend.position = "bottom"
+      # plot.title = ggplot2::element_text(face = "bold", hjust = 0.5),
+      plot.caption = ggplot2::element_text(size = 14, face = "bold", hjust = 0.5),
+      plot.caption.position = "plot",
+      ...
     )
+
+  # Obtain item stability plot
+  is_plot <- plot(x$stability$item.stability, ...)
 
   # Plot with item stability
   silent_call(
     ggpubr::ggarrange(
-      ega_plot, plot(x$stability$item.stability, ...),
-      nrow = 1, ncol = 2
+      ega_plot, is_plot,
+      nrow = 1, ncol = 2,
+      legend.grob = ggpubr::get_legend(is_plot),
+      ...
     )
   )
 

@@ -1,6 +1,6 @@
-#' @title Frobenius Norm (Similarity)
+#' @title sF Similarity Metric
 #'
-#' @description Computes the Frobenius Norm (Ulitzsch et al., 2023)
+#' @description Computes the sF norm based metric, \eqn{s_F} (Ulitzsch et al., 2023)
 #'
 #' @param network1 Matrix or data frame.
 #' Network to be compared
@@ -29,11 +29,11 @@
 #' glas1 <- EBICglasso.qgraph(data1)
 #' glas2 <- EBICglasso.qgraph(data2)
 #'
-#' # Frobenius norm
-#' frobenius(glas1, glas2)
+#' # sF
+#' sF(glas1, glas2)
 #' # 0.7070395
 #'
-#' @return Returns Frobenius Norm
+#' @return Returns sF
 #'
 #' @references
 #' \strong{Simulation Study} \cr
@@ -45,13 +45,13 @@
 #'
 #' @export
 #'
-# Frobenius Norm
-# Updated 10.07.2024
-frobenius <- function(network1, network2)
+# sF
+# Updated 13.04.2026
+sF <- function(network1, network2)
 {
 
   # Argument errors (send back networks in case of tibble)
-  error_return <- frobenius_errors(network1, network2)
+  error_return <- sF_errors(network1, network2)
 
   # Return similarity
   return(
@@ -67,7 +67,7 @@ frobenius <- function(network1, network2)
 #' @noRd
 # Argument errors ----
 # Updated 13.08.2023
-frobenius_errors <- function(network1, network2)
+sF_errors <- function(network1, network2)
 {
 
   # 'network1' errors

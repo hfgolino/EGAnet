@@ -7,7 +7,17 @@ Authors@R: c(person("Hudson", "Golino", email = "hfg9s@virginia.edu", role = c("
 	     person("Robert", "Moulder", email = "rgm4fd@virginia.edu", role = "ctb", comment = c(ORCID = "0000-0001-7504-9560")),
 	     person("Luis", "E. Garrido", email = "garrido.luiseduardo@gmail.com", role = "ctb", comment = c(ORCID = "0000-0001-8932-6063")),
 	     person("Laura", "Jamison", email = "lj5yn@virginia.edu", role = "ctb", comment = c(ORCID = "0000-0002-4656-8684")),
-	     person("Dingjing", "Shi", email = "dshi@ou.edu", role = "ctb", comment = c(ORCID = "0000-0002-5652-3818")))
+	     person("Dingjing", "Shi", email = "dshi@ou.edu", role = "ctb", comment = c(ORCID = "0000-0002-5652-3818")),
+	     person("John", "Fox", role = c("cph", "ctb"), comment = "Original implementation of polyserial correlations in auto_correlate.R"),
+    person("Yves", "Rosseel", role = c("cph", "ctb"), comment = "Original implementation of rmsea_ci in network_fit.R"),
+    person("Alexander", "Robitzsch", role = c("cph", "ctb"), comment = "C++ implementation of Drezner-Wesolowsky bivariate normal CDF in polychoric_matrix.c"),
+    person("David", "Blackman", role = "ctb", comment = "Original xoshiro.c implementation"),
+    person("Sebastiano", "Vigna", role = "ctb", comment = "Original xoshiro.c implementation"),
+    person("John", "Burkardt", role = c("cph", "ctb"), comment = "Original ziggurat.c implementation"),
+    person("Bill", "Venables", role = c("cph", "ctb"), comment = "Original mvrnorm implementation"),
+    person("Brian", "Ripley", role = c("cph", "ctb"), comment = "Original mvrnorm implementation"),
+    person("Pascal", "Deboeck", role = c("cph", "ctb"), comment = "Original glla implementation"),
+    person("Steve", "Boker", role = c("cph", "ctb"), comment = "Original glla implementation"))
 Maintainer: Hudson Golino <hfg9s@virginia.edu>
 Description: Implements the Exploratory Graph Analysis (EGA) framework for dimensionality
              and psychometric assessment. EGA estimates the number of dimensions in

@@ -4,7 +4,9 @@ WEBSITE: https://r-ega.net
 
 +	FIX: bug when singleton communities in `invariance` (resolves to dropping variable)
 
-+	FIX: bug in `itemStability` plot naming
++	FIX: bug in `itemStability` plot legend naming
+
++	UPDATE: `bootEGA` plot updated to have single legend (uses `itemStability`)
 
 +	REMOVE: `network.regularization` has moved to {L0ggm}
 
@@ -30,8 +32,6 @@ WEBSITE: https://r-ega.net
 +	UPDATE: better optimizations for `EGM.optimizations`
 
 +	REMOVE: `EGM` has been removed (for now) as its under revision
-
-+	REMOVE: `network.nonconvex` has been removed (for now) as its under revision
 
 +	INTERNAL: regularization penalties and derivatives are added but not used (yet)
 

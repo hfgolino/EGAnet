@@ -59,7 +59,7 @@ acceptable equals 0.02 and robust equals 0.01
 \item MAE --- mean absolute error where
 acceptable equals 0.02 and robust equals 0.01
 
-\item \code{\link[EGAnet]{frobenius}} --- Frobenius norm where
+\item \code{\link[EGAnet]{sF}} --- sF where
 acceptable equals 0.90 and robust equals 0.95
 
 \item \code{\link[EGAnet]{jsd}} --- Jensen-Shannon Distance where

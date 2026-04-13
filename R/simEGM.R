@@ -45,7 +45,7 @@
 #' \item MAE --- mean absolute error where
 #' acceptable equals 0.02 and robust equals 0.01
 #'
-#' \item \code{\link[EGAnet]{frobenius}} --- Frobenius norm where
+#' \item \code{\link[EGAnet]{sF}} --- sF where
 #' acceptable equals 0.90 and robust equals 0.95
 #'
 #' \item \code{\link[EGAnet]{jsd}} --- Jensen-Shannon Distance where
@@ -324,7 +324,7 @@ simEGM <- function(
           return(
             c(
               srmr(R, network_R), mean(abs(R - network_R)),
-              frobenius(R, network_R), jsd(R, network_R)
+              sF(R, network_R), jsd(R, network_R)
             )
           )
 
@@ -385,12 +385,12 @@ simEGM <- function(
       # Set quality metrics
       quality_metrics <- c(
         srmr(R, network_R), mean(abs(R - network_R)),
-        frobenius(R, network_R), jsd(R, network_R)
+        sF(R, network_R), jsd(R, network_R)
       )
 
       # Quality metric check
       quality_df <- data.frame(
-        Metric = c("SRMR", "MAE", "Frobenius", "JSD"),
+        Metric = c("SRMR", "MAE", "sF", "JSD"),
         Value = quality_metrics,
         Acceptable = quality_comp$acceptable,
         Robust = quality_comp$robust,

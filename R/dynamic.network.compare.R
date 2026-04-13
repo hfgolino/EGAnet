@@ -291,7 +291,7 @@
 #' )}
 #'
 #' @references
-#' \strong{Frobenius Norm} \cr
+#' \strong{sF} \cr
 #' Ulitzsch, E., Khanna, S., Rhemtulla, M., & Domingue, B. W. (2023).
 #' A graph theory based similarity metric enables comparison of subpopulation psychometric networks.
 #' \emph{Psychological Methods}.
@@ -422,7 +422,7 @@ dynamic.network.compare <- function(
     return(
       list(
         empirical_values = c(
-          "Frobenius" = frobenius(network1, network2),
+          "sF" = sF(network1, network2),
           "JSS" = 1 - jsd(network1, network2, ...),
           "Total Strength" = sum(colSums(abs(network1), na.rm = TRUE), na.rm = TRUE) -
             sum(colSums(abs(network2), na.rm = TRUE), na.rm = TRUE)
@@ -527,7 +527,7 @@ dynamic.network.compare <- function(
         return(
           list(
             empirical_values = c(
-              "Frobenius" = frobenius(network1, network2),
+              "sF" = sF(network1, network2),
               "JSS" = 1 - jsd(network1, network2, ...),
               "Total Strength" = sum(colSums(abs(network1), na.rm = TRUE), na.rm = TRUE) -
                 sum(colSums(abs(network2), na.rm = TRUE), na.rm = TRUE)
@@ -573,7 +573,7 @@ dynamic.network.compare <- function(
         data.frame(
           "statistic" = empirical[[i]]$empirical_values,
           "p.value" = c(
-            mean( # Frobenius
+            mean( # sF
               c(TRUE, permuted_values[[i]][,1] <= empirical[[i]]$empirical_values[1]),
               na.rm = TRUE
 
