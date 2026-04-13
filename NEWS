@@ -4,6 +4,8 @@ WEBSITE: https://r-ega.net
 
 +	FIX: bug when singleton communities in `invariance` (resolves to dropping variable)
 
++	FIX: bug in `itemStability` plot naming
+
 +	REMOVE: `network.regularization` has moved to {L0ggm}
 
 

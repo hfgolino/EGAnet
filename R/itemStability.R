@@ -412,7 +412,7 @@ ggplot2_theme_defaults <- function(organize_df, ellipse)
 
 #' @exportS3Method
 # S3 Plot Method ----
-# Updated 16.03.2025
+# Updated 13.04.2026
 plot.itemStability <- function(x, ...)# plot.type = c("all", "empirical"), ...)
 {
 
@@ -643,7 +643,7 @@ plot.itemStability <- function(x, ...)# plot.type = c("all", "empirical"), ...)
         updated_canvas <- updated_canvas +
           ggplot2::scale_color_manual(
             values = color,
-            breaks = sort(x$membership$structure)
+            breaks = unname(sort(x$membership$structure))
           )
 
       }else{
@@ -654,7 +654,7 @@ plot.itemStability <- function(x, ...)# plot.type = c("all", "empirical"), ...)
             values = color_palette_EGA(
               "polychrome", x$membership$structure, sorted = TRUE
             ),
-            breaks = sort(x$membership$structure)
+            breaks = unname(sort(x$membership$structure))
           )
 
       }
