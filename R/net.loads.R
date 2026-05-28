@@ -68,7 +68,7 @@
 #'
 #' @examples
 #' # Load data
-#' wmt <- wmt2[,7:24]
+#' wmt <- wmt2[, 7:24]
 #'
 #' # Estimate EGA
 #' ega.wmt <- EGA(
@@ -102,20 +102,16 @@
 # Network Loadings ----
 # Updated 02.12.2025
 net.loads <- function(
-    A, wc, loading.method = c("original", "revised"),
-    scaling = 2, rotation = NULL,
-    ordered = c("descending", "variable"), ...
-)
-{
-
+  A, wc, loading.method = c("original", "revised"),
+  scaling = 2, rotation = NULL,
+  ordered = c("descending", "variable"), ...
+) {
   # Check for no input in 'loading.method'
-  if(length(loading.method) > 1){
+  if (length(loading.method) > 1) {
     loading.method <- "revised"
-  }else{
-
+  } else {
     # Switch out old calls
-    loading.method <- switch(
-      tolower(loading.method),
+    loading.method <- switch(tolower(loading.method),
       "brm" = "original",
       "experimental" = "revised",
       loading.method
@@ -123,7 +119,6 @@ net.loads <- function(
 
     # Check for missing arguments (argument, default, function)
     loading.method <- set_default(loading.method, "revised", net.loads)
-
   }
 
   # Check for missing arguments (argument, default, function)
@@ -132,10 +127,12 @@ net.loads <- function(
   # Organize and extract input (handles argument errors)
   # `wc` is made to be a character vector to allow `NA`
   input <- organize_input(A, wc)
-  A <- input$A; wc <- input$wc
+  A <- input$A
+  wc <- input$wc
 
   # Get number of nodes and their names
-  nodes <- length(wc); node_names <- names(wc)
+  nodes <- length(wc)
+  node_names <- names(wc)
 
   # Get unique communities (`NA` is OK)
   unique_communities <- sort(unique(wc)) # put in order
@@ -144,11 +141,11 @@ net.loads <- function(
   communities <- length(unique_communities)
 
   # If all singleton communities, then send NA for all
-  if(nodes == communities){
-
+  if (nodes == communities) {
     # Initialize loading matrix
     loading_matrix <- matrix(
-      NA, nrow = nodes, ncol = communities,
+      NA,
+      nrow = nodes, ncol = communities,
       dimnames = list(node_names, unique_communities)
     )
 
@@ -168,14 +165,12 @@ net.loads <- function(
 
     # Return results
     return(results)
-
   }
 
   # Not all singleton dimensions, so carry on
 
   # Check for method
-  if(loading.method == "revised"){
-
+  if (loading.method == "revised") {
     # Revised unstandardized loadings
     unstandardized <- revised_loadings(
       A, wc, nodes, node_names, communities, unique_communities
@@ -183,29 +178,24 @@ net.loads <- function(
 
     # Store attributes
     unstd_attributes <- attr(unstandardized, "community")
-
-  }else{
-
+  } else {
     # Compute unstandardized loadings (absolute sums)
     unstandardized <- absolute_weights(A, wc, nodes, unique_communities)
 
     # Add signs to the loadings
     unstandardized <- old_add_signs(unstandardized, A, wc, unique_communities)
-
-
   }
 
   # Obtain standardized loadings
   standardized <- standardize(unstandardized, loading.method, A, wc, scaling)
 
   # Get descending order
-  if(ordered == "descending"){
+  if (ordered == "descending") {
     standardized <- descending_order(standardized, wc, unique_communities, node_names)
   }
 
   # Check for rotation
-  if(!is.null(rotation)){
-
+  if (!is.null(rotation)) {
     # Errors for...
     # Missing packages: {GPArotation} and {fungible}
     # Invalid rotations
@@ -226,9 +216,9 @@ net.loads <- function(
     NA_community <- unique_communities == "NA"
 
     # Check for "NA" community
-    if(any(NA_community)){
+    if (any(NA_community)) {
       unique_communities <- unique_communities[!NA_community]
-      standardized <- standardized[,unique_communities]
+      standardized <- standardized[, unique_communities]
       communities <- communities - 1
     }
 
@@ -253,22 +243,25 @@ net.loads <- function(
     rotated_loadings <- aligned_output$F2
     dimnames(rotated_loadings) <- dimnames(standardized)
     ## Phi
+
     rotated_Phi <- aligned_output$Phi2
-    dimnames(rotated_Phi) <- list(unique_communities, unique_communities)
+    if (!is.null(rotated_Phi)) {
+      dimnames(rotated_Phi) <- list(unique_communities, unique_communities)
+    }
+
 
     # Make rotated results list
     rotated <- list(
       loadings = rotated_loadings,
       Phi = rotated_Phi
     )
-
-  }else{ # If rotation is NULL, then rotated is NULL
+  } else { # If rotation is NULL, then rotated is NULL
     rotated <- NULL
   }
 
   # Set up results
   results <- list(
-    unstd = unstandardized[dimnames(standardized)[[1]],, drop = FALSE],
+    unstd = unstandardized[dimnames(standardized)[[1]], , drop = FALSE],
     std = standardized,
     rotated = rotated
   )
@@ -279,7 +272,7 @@ net.loads <- function(
   )
 
   # Add "community" attributes
-  if(loading.method == "revised"){
+  if (loading.method == "revised") {
     attr(results, "methods")$scaling <- scaling
     attr(results, "community") <- unstd_attributes
   }
@@ -293,7 +286,7 @@ net.loads <- function(
   class(results) <- "net.loads"
 
   # Send message about changed defaults
-  if(loading.method == "revised"){
+  if (loading.method == "revised") {
     message(
       paste(
         "The default 'loading.method' has changed to \"revised\" in {EGAnet} version >= 2.0.7.\n\n",
@@ -304,7 +297,6 @@ net.loads <- function(
 
   # Return results
   return(results)
-
 }
 
 
@@ -338,9 +330,7 @@ net.loads <- function(
 #' @exportS3Method
 # S3 Print Method ----
 # Updated 12.08.2024
-print.net.loads <- function(x, ...)
-{
-
+print.net.loads <- function(x, ...) {
   # Get ellipse arguments
   ellipse <- list(...)
 
@@ -358,15 +348,13 @@ print.net.loads <- function(x, ...)
   )
 
   # Check for rotation
-  if(!is.null(method_attributes$rotation)){
-
+  if (!is.null(method_attributes$rotation)) {
     # Print rotation
     cat(
       paste0(
         "\nRotation: ", method_attributes$rotation
       )
     )
-
   }
 
   # Add breakspace
@@ -388,8 +376,10 @@ print.net.loads <- function(x, ...)
   print(
     column_apply(
       as.data.frame(rounded_loadings),
-      format_decimal, places = 3
-    ), quote = FALSE
+      format_decimal,
+      places = 3
+    ),
+    quote = FALSE
   )
 
   # Add message about minimum loadings
@@ -400,49 +390,43 @@ print.net.loads <- function(x, ...)
       "`print(net.loads_object, minimum = 0.10)`"
     )
   )
-
 }
 
 #' @exportS3Method
 # S3 Summary Method ----
 # Updated 12.07.2023
-summary.net.loads <- function(object, ...)
-{
+summary.net.loads <- function(object, ...) {
   print(object, ...) # same as print
 }
 
 #' @noRd
 # Organize input ----
 # Updated 13.08.2023
-organize_input <- function(A, wc)
-{
-
+organize_input <- function(A, wc) {
   # Check for `EGA` object
-  if(any(class(A) %in% c("EGA", "EGA.fit", "riEGA"))){
-
+  if (any(class(A) %in% c("EGA", "EGA.fit", "riEGA"))) {
     # Get `EGA` object
     ega_object <- get_EGA_object(A)
 
     # Set network and memberships
     A <- ega_object$network
     wc <- ega_object$wc
-
-  }else{
-
+  } else {
     # Produce errors for miss aligned data
     length_error(wc, dim(A)[2], "net.loads") # length between network and memberships
     object_error(A, c("matrix", "data.frame"), "net.loads") # must be matrix or data frame
     object_error(wc, c("vector", "matrix", "data.frame"), "net.loads") # must be one of these
-
   }
 
   # Generally, good to proceed
-  A <- as.matrix(A); wc <- force_vector(wc)
+  A <- as.matrix(A)
+  wc <- force_vector(wc)
 
   # Set memberships as string
-  if(is.numeric(wc)){
+  if (is.numeric(wc)) {
     wc <- format_integer(
-      wc, places = digits(max(wc, na.rm = TRUE)) - 1
+      wc,
+      places = digits(max(wc, na.rm = TRUE)) - 1
     )
   }
 
@@ -457,16 +441,13 @@ organize_input <- function(A, wc)
   return(
     list(A = A[ordering, ordering], wc = wc[ordering])
   )
-
 }
 
 # Faster sign method (faster than eigenvectors but only marginally)
 # Obtain signs ----
 # Function to obtain signs on dominant community
 # Updated 22.03.2024
-obtain_signs <- function(target_network)
-{
-
+obtain_signs <- function(target_network) {
   # Initialize signs to all positive orientation
   signs <- rep(1, dim(target_network)[2])
   names(signs) <- dimnames(target_network)[[2]]
@@ -476,12 +457,11 @@ obtain_signs <- function(target_network)
   minimum_index <- which.min(row_sums)
 
   # Set while loop
-  while(sign(row_sums[minimum_index]) == -1){
-
+  while (sign(row_sums[minimum_index]) == -1) {
     # Flip variable
-    target_network[minimum_index,] <-
-      target_network[,minimum_index] <-
-      -target_network[minimum_index,]
+    target_network[minimum_index, ] <-
+      target_network[, minimum_index] <-
+      -target_network[minimum_index, ]
 
     # Set sign as flipped
     signs[minimum_index] <- -signs[minimum_index]
@@ -489,11 +469,10 @@ obtain_signs <- function(target_network)
     # Update row sums and minimum value
     row_sums <- rowSums(target_network, na.rm = TRUE)
     minimum_index <- which.min(row_sums)
-
   }
 
   # Determine whether signs should be flipped
-  if(sum(signs) < 0){
+  if (sum(signs) < 0) {
     signs <- -signs
   }
 
@@ -502,21 +481,19 @@ obtain_signs <- function(target_network)
 
   # Return results
   return(target_network)
-
 }
 
 #' @noRd
 # Revised loadings ----
 # Updated 22.08.2024
 revised_loadings <- function(
-    A, wc, nodes, node_names,
-    communities, unique_communities
-)
-{
-
+  A, wc, nodes, node_names,
+  communities, unique_communities
+) {
   # Initialize loading matrix
   loading_matrix <- matrix(
-    0, nrow = nodes, ncol = communities,
+    0,
+    nrow = nodes, ncol = communities,
     dimnames = list(node_names, unique_communities)
   )
 
@@ -528,8 +505,7 @@ revised_loadings <- function(
   community_table <- fast_table(wc)
 
   # Populate loading matrix
-  for(community in unique_communities){
-
+  for (community in unique_communities) {
     # Get community index
     community_index <- wc == community
 
@@ -543,7 +519,8 @@ revised_loadings <- function(
 
     # Compute absolute sum for dominant loadings
     loading_matrix[community_index, community] <- colSums(
-      target_network, na.rm = TRUE
+      target_network,
+      na.rm = TRUE
     ) / (community_table[community] - 1)
 
     # Determine positive direction for dominant loadings
@@ -567,7 +544,6 @@ revised_loadings <- function(
     # signs[community_index] <- swiftelse(
     #   sum(target_signs) < 0, -target_signs, target_signs
     # )
-
   }
 
   # Take the average of the within-community values
@@ -582,43 +558,35 @@ revised_loadings <- function(
   community_sums <- colSums(abs(loading_matrix), na.rm = TRUE)
 
   # Check for unidimensional structure
-  if(communities > 1){
-
+  if (communities > 1) {
     # Get negative sign indices
     negative_signs <- which(signs == -1)
 
     # Loop over negative signs
-    if(length(negative_signs) != 0){
-
+    if (length(negative_signs) != 0) {
       # Flip signs
-      for(negative in negative_signs){
-        A[negative,] <- A[,negative] <- -A[,negative]
+      for (negative in negative_signs) {
+        A[negative, ] <- A[, negative] <- -A[, negative]
       }
-
     }
 
     # Populate loading matrix with cross-loadings
-    for(community in unique_communities){
-
+    for (community in unique_communities) {
       # Get community index
       community_index <- wc == community
 
       # Loop across other communities
-      for(cross in unique_communities){
-
+      for (cross in unique_communities) {
         # No need for same community loadings
-        if(community != cross){
-
+        if (community != cross) {
           # Compute algebraic sum for cross-loadings
           loading_matrix[community_index, cross] <- colSums(
-            A[wc == cross, community_index, drop = FALSE], na.rm = TRUE
+            A[wc == cross, community_index, drop = FALSE],
+            na.rm = TRUE
           )
-
         }
-
       }
     }
-
   }
 
   # Set signs
@@ -632,18 +600,14 @@ revised_loadings <- function(
 
   # Return loading matrix
   return(loading_matrix)
-
 }
 
 #' @noRd
 # Standardize loadings ----
 # Updated 12.08.2024
-standardize <- function(unstandardized, loading.method, A, wc, scaling)
-{
-
+standardize <- function(unstandardized, loading.method, A, wc, scaling) {
   # Check for loading method
-  if(loading.method == "revised"){
-
+  if (loading.method == "revised") {
     # Get attributes
     community <- attr(unstandardized, "community")
 
@@ -651,19 +615,15 @@ standardize <- function(unstandardized, loading.method, A, wc, scaling)
     return(
       t(t(unstandardized) / (community$community_sums^(1 / log(scaling * community$community_table))))
     )
-
-  }else if(loading.method == "original"){
+  } else if (loading.method == "original") {
     return(t(t(unstandardized) / sqrt(colSums(abs(unstandardized), na.rm = TRUE))))
   }
-
 }
 
 #' @noRd
 # Convert scale of revised loadings ----
 # Updated 26.09.2024
-scaling_conversion <- function(standardized, community, original_scaling, new_scaling)
-{
-
+scaling_conversion <- function(standardized, community, original_scaling, new_scaling) {
   # Needs 'community' attribute from the unstandardized loadings
   # This attribute is attached to the overall loading return when 'loading.method = "revised"'
 
@@ -673,22 +633,18 @@ scaling_conversion <- function(standardized, community, original_scaling, new_sc
 
   # Return adjustment
   return(t(t(standardized) * delta))
-
 }
 
 #' @noRd
 # Descending order ----
 # Updated 24.07.2023
-descending_order <- function(standardized, wc, unique_communities, node_names)
-{
-
+descending_order <- function(standardized, wc, unique_communities, node_names) {
   # Initialize order names
   order_names <- character(length(node_names))
 
   # Get order names
   order_names <- ulapply(
-    unique_communities, function(community){
-
+    unique_communities, function(community) {
       # Get community index
       community_index <- wc == community
 
@@ -697,21 +653,17 @@ descending_order <- function(standardized, wc, unique_communities, node_names)
 
       # Return order
       return(node_names[community_index][ordering])
-
     }
   )
 
   # Return reordered results
-  return(standardized[order_names,, drop = FALSE])
-
+  return(standardized[order_names, , drop = FALSE])
 }
 
 #' @noRd
 # Rotation errors ----
 # Updated 13.08.2023
-rotation_errors <- function(rotation)
-{
-
+rotation_errors <- function(rotation) {
   # Check for packages
   ## Needs {GPArotation} and {fungible}
   check_package(c("GPArotation", "fungible"))
@@ -724,8 +676,7 @@ rotation_errors <- function(rotation)
   rotation_names_lower <- tolower(rotation_names)
 
   # Check if rotation exists
-  if(!rotation_lower %in% rotation_names_lower){
-
+  if (!rotation_lower %in% rotation_names_lower) {
     # Send error that rotation is not found
     .handleSimpleError(
       h = stop,
@@ -736,51 +687,43 @@ rotation_errors <- function(rotation)
       ),
       call = "net.loads"
     )
-
   }
 
   # If rotation exists, then return proper name
   return(rotation_names[rotation_lower == rotation_names_lower])
-
 }
 
 #' @noRd
 # Rotation default arguments ----
 # Updated 12.07.2023
-rotation_defaults <- function(rotation, rotation_ARGS, ellipse)
-{
-
+rotation_defaults <- function(rotation, rotation_ARGS, ellipse) {
   # Check for "n.rotations" (used in {psych})
-  if("n.rotations" %in% ellipse){
+  if ("n.rotations" %in% ellipse) {
     rotation_ARGS$randomStarts <- ellipse$n.rotations
   }
 
   # Check for random starts
-  if(!"randomStarts" %in% names(ellipse) & !"n.rotations" %in% names(ellipse)){
+  if (!"randomStarts" %in% names(ellipse) & !"n.rotations" %in% names(ellipse)) {
     rotation_ARGS$randomStarts <- 10
   }
 
   # Check for maximum iterations argument
-  if(!"maxit" %in% names(ellipse)){
+  if (!"maxit" %in% names(ellipse)) {
     rotation_ARGS$maxit <- 1000
   }
 
   # Check for epsilon argument
-  if(!"eps" %in% names(ellipse) & grepl("geomin", rotation)){
-
+  if (!"eps" %in% names(ellipse) & grepl("geomin", rotation)) {
     # Based on number of dimensions, switch epsilon
-    rotation_ARGS$eps <- switch(
-      as.character(dim(rotation_ARGS$A)[2]),
+    rotation_ARGS$eps <- switch(as.character(dim(rotation_ARGS$A)[2]),
       "2" = 0.0001, # two dimensions
       "3" = 0.001, # three dimensions
       0.01 # four or more dimensions
     )
-
   }
 
   # Return arguments
   return(rotation_ARGS)
-
 }
 
 #' @noRd
@@ -788,9 +731,7 @@ rotation_defaults <- function(rotation, rotation_ARGS, ellipse)
 # Uses least squares method from {fungible}'s `faAlign` function
 # {fungible} version 2.3
 # Updated 02.12.2025
-faAlign_fungible <- function(F1, F2, Phi2)
-{
-
+faAlign_fungible <- function(F1, F2, Phi2) {
   # Start with unique match to TRUE
   UniqueMatch <- TRUE
 
@@ -798,20 +739,20 @@ faAlign_fungible <- function(F1, F2, Phi2)
   Nfac <- dim(F1)[2]
 
   # Compute modified least squares (i.e., squared distance) matrix
-  A <-  matrix(colSums(F1^2), Nfac, Nfac, byrow=FALSE)
-  B <- t(matrix(colSums(F2^2),Nfac, Nfac, byrow=FALSE))
+  A <- matrix(colSums(F1^2), Nfac, Nfac, byrow = FALSE)
+  B <- t(matrix(colSums(F2^2), Nfac, Nfac, byrow = FALSE))
 
   # When factors are optimally reflected the cross product will be positive
-  LSmat <- A + B  - 2 * abs(crossprod(F1, F2))
+  LSmat <- A + B - 2 * abs(crossprod(F1, F2))
 
   # Test for unique matches
   Qmatch <- apply(LSmat, 1, which.min)
-  if(length(unique(Qmatch)) != Nfac){
+  if (length(unique(Qmatch)) != Nfac) {
     UniqueMatch <- FALSE
   }
 
   # If unique match not found minimize sum of squares
-  if(UniqueMatch == FALSE){
+  if (UniqueMatch == FALSE) {
     Qmatch <- clue::solve_LSAP(LSmat, maximum = FALSE)
   }
 
@@ -819,17 +760,18 @@ faAlign_fungible <- function(F1, F2, Phi2)
   FactorMap <- rbind(seq_len(Nfac), Qmatch)
 
   # This allows a column of F1 to have all zeros
-  F1noZeros[,colSums(F1) == 0] <- 1
+  F1noZeros <- F1
+  F1noZeros[, colSums(F1) == 0] <- 1
 
   # Obtain factor loading matrix
-  Dsgn <- diag(sign(colSums(F1noZeros * F2[,Qmatch])))
+  Dsgn <- diag(sign(colSums(F1noZeros * F2[, Qmatch])))
   F2 <- F2[, Qmatch] %*% Dsgn
 
   # Set names
   rownames(FactorMap) <- c("Original Order", "Sorted Order")
 
   # Obtain factor correlation matrix
-  if(!is.null(Phi2)){
+  if (!is.null(Phi2)) {
     Phi2 <- Dsgn %*% Phi2[Qmatch, Qmatch] %*% Dsgn
   }
 
@@ -843,43 +785,37 @@ faAlign_fungible <- function(F1, F2, Phi2)
       Dsgn = Dsgn
     )
   )
-
 }
 
-#%%%%%%%%%%%%%%%%%%%%%
+# %%%%%%%%%%%%%%%%%%%%%
 # Original Legacy ----
-#%%%%%%%%%%%%%%%%%%%%%
+# %%%%%%%%%%%%%%%%%%%%%
 
 #' @noRd
 ## Absolute weights ("BRM") ----
 # Updated 10.07.2023
-absolute_weights <- function(A, wc, nodes, unique_communities)
-{
-
+absolute_weights <- function(A, wc, nodes, unique_communities) {
   # Ensure network is absolute
   A <- abs(A)
 
   # Loop over communities
   return(
     nvapply(
-      unique_communities, function(community){
-        colSums(A[wc == community,, drop = FALSE], na.rm = TRUE)
-      }, LENGTH = nodes
+      unique_communities, function(community) {
+        colSums(A[wc == community, , drop = FALSE], na.rm = TRUE)
+      },
+      LENGTH = nodes
     )
   )
-
 }
 
 #' @noRd
 ## Add signs ("BRM") ----
 # From CRAN version 1.2.3
 # Updated 13.07.2023
-old_add_signs <- function(unstandardized, A, wc, unique_communities)
-{
-
+old_add_signs <- function(unstandardized, A, wc, unique_communities) {
   # Loop over main loadings
-  for(community in unique_communities){
-
+  for (community in unique_communities) {
     # Get community index
     community_index <- wc == community
 
@@ -893,8 +829,7 @@ old_add_signs <- function(unstandardized, A, wc, unique_communities)
     signs <- rep(1, node_count)
 
     # Loop over nodes
-    for(node in seq_len(node_count)){
-
+    for (node in seq_len(node_count)) {
       # Make copy of signs
       signs_copy <- community_signs
 
@@ -902,18 +837,17 @@ old_add_signs <- function(unstandardized, A, wc, unique_communities)
       current_max <- sum(community_signs, na.rm = TRUE)
 
       # Flip sign of each node
-      community_signs[node,] <- -community_signs[node,]
+      community_signs[node, ] <- -community_signs[node, ]
 
       # Get new maximum sum
       new_max <- sum(community_signs, na.rm = TRUE)
 
       # Check for increase
-      if(new_max > current_max){
+      if (new_max > current_max) {
         signs[node] <- -1 # with increase, flip sign
-      }else{ # otherwise, return sign matrix to original state
+      } else { # otherwise, return sign matrix to original state
         community_signs <- signs_copy
       }
-
     }
 
     # Update signs in loadings
@@ -922,14 +856,13 @@ old_add_signs <- function(unstandardized, A, wc, unique_communities)
 
     # Sweep across community
     A[, community_index] <- sweep(
-      A[, community_index, drop = FALSE], MARGIN = 2, signs, `*`
+      A[, community_index, drop = FALSE],
+      MARGIN = 2, signs, `*`
     )
-
   }
 
   # Loop over communities
-  for(community1 in unique_communities){
-
+  for (community1 in unique_communities) {
     # Get first community index
     community_index1 <- wc == community1
 
@@ -937,11 +870,9 @@ old_add_signs <- function(unstandardized, A, wc, unique_communities)
     node_count <- sum(community_index1)
 
     # Loop over other communities
-    for(community2 in unique_communities){
-
+    for (community2 in unique_communities) {
       # Check for the same community
-      if(community1 != community2){
-
+      if (community1 != community2) {
         # Get second community index
         community_index2 <- wc == community2
 
@@ -952,8 +883,7 @@ old_add_signs <- function(unstandardized, A, wc, unique_communities)
         signs <- rep(1, node_count)
 
         # Loop over nodes
-        for(node in seq_len(node_count)){
-
+        for (node in seq_len(node_count)) {
           # Make copy of signs
           signs_copy <- community_signs
 
@@ -961,46 +891,38 @@ old_add_signs <- function(unstandardized, A, wc, unique_communities)
           current_max <- sum(community_signs, na.rm = TRUE)
 
           # Flip sign of each node
-          community_signs[node,] <- -community_signs[node,]
+          community_signs[node, ] <- -community_signs[node, ]
 
           # Get new maximum sum
           new_max <- sum(community_signs, na.rm = TRUE)
 
           # Check for increase
-          if(new_max > current_max){
+          if (new_max > current_max) {
             signs[node] <- -1 # with increase, flip sign
-          }else{ # otherwise, return sign matrix to original state
+          } else { # otherwise, return sign matrix to original state
             community_signs <- signs_copy
           }
-
         }
 
         # Update signs in loadings
         unstandardized[community_index1, community2] <-
           unstandardized[community_index1, community2] * signs
-
       }
-
     }
-
   }
 
   # Flip direction of community with main loadings
-  for(community in unique_communities){
-
+  for (community in unique_communities) {
     # Get community indices
     community_index <- wc == community
 
     # Determine direction with sign
-    if(sign(sum(unstandardized[community_index, community])) != 1){
-      unstandardized[community_index,] <-
-        -unstandardized[community_index,]
+    if (sign(sum(unstandardized[community_index, community])) != 1) {
+      unstandardized[community_index, ] <-
+        -unstandardized[community_index, ]
     }
-
   }
 
   # Return unstandardized loadings
   return(unstandardized)
-
 }
-
