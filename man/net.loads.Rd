@@ -86,7 +86,7 @@ equivalent to factor loadings (including cross-loadings; Christensen & Golino, 2
 }
 \examples{
 # Load data
-wmt <- wmt2[,7:24]
+wmt <- wmt2[, 7:24]
 
 # Estimate EGA
 ega.wmt <- EGA(
