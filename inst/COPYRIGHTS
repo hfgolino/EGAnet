@@ -36,13 +36,16 @@ Comment: The rmsea_ci function is derived from RMSEA confidence interval
 
 Files: src/polychoric_matrix.c
 Copyright: 2023 Hudson Golino and Alexander P. Christensen
-           Alexander Robitzsch (Drezner-Wesolowsky bivariate normal CDF,
-           translated from pbv/src/pbv_rcpp_bvnorm.cpp)
+           Alan Genz (bivariate normal CDF, translated from the Fortran
+           TVPACK MVBVU routine via the pbivnorm R package)
 License: GPL (>= 2)
 Comment: Implements polychoric correlations using the Beasley-Springer-Moro
- inverse normal CDF and Brent's optimization method. The Drezner-Wesolowsky
- bivariate normal CDF is translated from C++ code in the pbv R package
- (https://github.com/cran/pbv/blob/master/src/pbv_rcpp_bvnorm.cpp).
+ inverse normal CDF and Newton-Raphson (Fisher scoring) optimization. The
+ bivariate normal CDF is Genz's (2004) double-precision extension of
+ Drezner and Wesolowsky (1990), translated from the Fortran TVPACK MVBVU
+ routine (https://github.com/cran/pbivnorm/blob/master/src/pbivnorm.f),
+ replacing the earlier Drezner-Wesolowsky approximation translated from
+ Alexander Robitzsch's pbv package, which is no longer present.
  Template developed with GPT-4 assistance.
 
 Files: src/xoshiro.c

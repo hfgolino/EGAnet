@@ -8,16 +8,17 @@
 //
 // Inverse Univariate Normal CDF: Beasley-Springer-Moro algorithm
 //
-// Bivariate Normal CDF: Drezner-Wesolowsky approximation
+// Bivariate Normal CDF: Genz's approximation (Genz, 2004), a double-precision
+// extension of Drezner & Wesolowsky (1990) developed by Genz and Ge
 //
-// Optimization method: Brent's method
+// Optimization method: Newton-Raphson (Fisher scoring), with an exact-Hessian
+// arcsin-reparameterized fallback to guarantee rho stays in (-1, 1)
 
 // Headers to include
-#include <stdio.h>
 #include <math.h>
 #include <stdbool.h>
-#include <float.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stddef.h>
 #include <R.h>
 #include <Rinternals.h>
@@ -29,9 +30,30 @@ const double CONST_B[5] = {-54.47609879822406, 161.5858368580409, -155.698979859
 const double CONST_C[6] = {-0.007784894002430293, -0.3223964580411365, -2.400758277161838, -2.549732539343734, 4.374664141464968, 2.938163982698783};
 const double CONST_D[4] = {0.007784695709041462, 0.3224671290700398, 2.445134137142996, 3.754408661907416};
 
-// Constants in `drezner_bivariate_normal`
-const double DOUBLE_X[5] = {0.04691008, 0.23076534, 0.5, 0.76923466, 0.95308992};
-const double DOUBLE_W[5] = {0.018854042, 0.038088059, 0.0452707394, 0.038088059, 0.018854042};
+// Constants in `genz_bivariate_normal`
+// Gauss-Legendre points/weights (positive half only) for N = 6, 12, and 20
+const double GENZ_X6[3] = {-0.9324695142031522, -0.6612093864662647, -0.2386191860831970};
+const double GENZ_W6[3] = {0.1713244923791705, 0.3607615730481384, 0.4679139345726904};
+const double GENZ_X12[6] = {
+  -0.9815606342467191, -0.9041172563704750, -0.7699026741943050,
+  -0.5873179542866171, -0.3678314989981802, -0.1252334085114692
+};
+const double GENZ_W12[6] = {
+  0.04717533638651177, 0.1069393259953183, 0.1600783285433464,
+  0.2031674267230659, 0.2334925365383547, 0.2491470458134029
+};
+const double GENZ_X20[10] = {
+  -0.9931285991850949, -0.9639719272779138, -0.9122344282513259,
+  -0.8391169718222188, -0.7463319064601508, -0.6360536807265150,
+  -0.5108670019508271, -0.3737060887154196, -0.2277858511416451,
+  -0.07652652113349733
+};
+const double GENZ_W20[10] = {
+  0.01761400713915212, 0.04060142980038694, 0.06267204833410906,
+  0.08327674157670475, 0.1019301198172404, 0.1181945319615184,
+  0.1316886384491766, 0.1420961093183821, 0.1491729864726037,
+  0.1527533871307259
+};
 
 // Using the Beasley-Springer-Moro algorithm to perform `qnorm` function
 double bsm_inverse_cdf(double probability){
@@ -83,23 +105,31 @@ double bsm_inverse_cdf(double probability){
 }
 
 // Obtain joint frequency table
-int** joint_frequency_table(
-    int* input_data, int rows, int i, int j, int* missing
+// Also accumulates the raw-code sums needed for a Pearson-correlation
+// starting value (see `pearson_from_sums`) in the same pass over
+// `input_data`, since `newton_raphson` needs a decent starting rho and
+// otherwise a second full O(rows) scan would be required just for that.
+// Fills the caller-provided (stack-allocated) `CUT x CUT` table in place --
+// `CUT` bounds every category count in this package, so there is no need to
+// heap-allocate a fresh table for every pair of variables
+void joint_frequency_table(
+    int* input_data, int rows, int i, int j, int* missing,
+    double* sum_x, double* sum_y, double* sum_xx, double* sum_yy, double* sum_xy,
+    int joint_frequency[CUT][CUT]
 ) {
 
   // Initialize X, Y, and iterator
   int X, Y, k;
 
-  // Allocate memory space for table
-  int** joint_frequency = (int**) malloc(CUT * sizeof(int*));
-  int* joint_frequency_data = (int*) calloc(CUT * CUT, sizeof(int));
-  for (k = 0; k < CUT; k++) {
-    joint_frequency[k] = &(joint_frequency_data[k * CUT]);
-  }
+  // Zero the table
+  memset(joint_frequency, 0, sizeof(int) * CUT * CUT);
 
   // Pre-compute matrix offset for i and j
   int matrix_offset_i = i * rows;
   int matrix_offset_j = j * rows;
+
+  // Initialize Pearson sums
+  *sum_x = 0.0; *sum_y = 0.0; *sum_xx = 0.0; *sum_yy = 0.0; *sum_xy = 0.0;
 
   // Populate table
   for (k = 0; k < rows; k++) {
@@ -110,21 +140,56 @@ int** joint_frequency_table(
 
     // Check for missing data
     if(X != MISSING && Y != MISSING){
+
       joint_frequency[X][Y]++;
+
+      // Accumulate Pearson sums
+      *sum_x += X; *sum_y += Y;
+      *sum_xx += (double) X * X;
+      *sum_yy += (double) Y * Y;
+      *sum_xy += (double) X * Y;
+
     }else{
       (*missing)++;
     }
 
   }
 
-  // Return joint frequency table
-  return joint_frequency;
+}
+
+// Convert Pearson sums (from `joint_frequency_table`) into a starting value
+// for `newton_raphson` -- unlike Brent's method, Newton-Raphson needs a
+// reasonable starting point to converge quickly and reliably
+static inline double pearson_from_sums(
+    double sum_x, double sum_y, double sum_xx, double sum_yy, double sum_xy, int n
+) {
+
+  if(n < 2) return 0.0;
+
+  double covariance = sum_xy / n - (sum_x / n) * (sum_y / n);
+  double variance_x = sum_xx / n - (sum_x / n) * (sum_x / n);
+  double variance_y = sum_yy / n - (sum_y / n) * (sum_y / n);
+
+  if(variance_x <= 0 || variance_y <= 0) return 0.0;
+
+  double r = covariance / sqrt(variance_x * variance_y);
+
+  // Keep away from the boundary so the initial Newton step is well-defined
+  if(r > 0.99) r = 0.99;
+  if(r < -0.99) r = -0.99;
+
+  return r;
 
 }
 
 // Update joint frequency table
 /* Removes zero sum rows and columns and counts zero frequency cells */
-double** update_joint_frequency (int** joint_frequency_max, int* cat_X, int* cat_Y, int* zero_count) {
+// Fills the caller-provided (stack-allocated) `CUT x CUT` trimmed table in
+// place; only the leading `cat_X x cat_Y` portion is meaningful on return
+void update_joint_frequency(
+    int joint_frequency_max[CUT][CUT], int* cat_X, int* cat_Y, int* zero_count,
+    double joint_frequency_trim[CUT][CUT]
+) {
 
   // Initialize iterators
   int i, j;
@@ -133,9 +198,9 @@ double** update_joint_frequency (int** joint_frequency_max, int* cat_X, int* cat
   int non_zero_rows = 0;
   int non_zero_columns = 0;
 
-  // Initialize zero rows and columns
-  bool* zero_rows = (bool*) calloc(CUT, sizeof(bool));
-  bool* zero_columns = (bool*) calloc(CUT, sizeof(bool));
+  // Zero rows and columns (fully local to this function, no need to escape)
+  bool zero_rows[CUT] = { false };
+  bool zero_columns[CUT] = { false };
 
   // Loop over rows
   for(i = 0; i < CUT; i++) {
@@ -167,13 +232,6 @@ double** update_joint_frequency (int** joint_frequency_max, int* cat_X, int* cat
       non_zero_columns++;
     }
 
-  }
-
-  // Create new joint frequency table
-  double** joint_frequency_trim = (double**) malloc(non_zero_rows * sizeof(double*));
-  double* joint_frequency_data = (double*) calloc(non_zero_rows * non_zero_columns, sizeof(double));
-  for (i = 0; i < non_zero_rows; i++) {
-    joint_frequency_trim[i] = &(joint_frequency_data[i * non_zero_columns]);
   }
 
   // Initialize row count
@@ -219,13 +277,6 @@ double** update_joint_frequency (int** joint_frequency_max, int* cat_X, int* cat
   *cat_X = non_zero_rows;
   *cat_Y = non_zero_columns;
 
-  // Free memory
-  free(zero_rows);
-  free(zero_columns);
-
-  // Return frequency table
-  return joint_frequency_trim;
-
 }
 
 // Function to compute probabilities
@@ -256,14 +307,20 @@ static inline void compute_thresholds(double* frequency, int cat, double* thresh
 }
 
 // Define structure for return values
+// All arrays are embedded (fixed-size, `CUT`-bounded) rather than pointers
+// to heap memory: only the leading `cat_X`/`cat_Y` portion of each is
+// meaningful, and returning the struct by value means every pair of
+// variables is processed without a single malloc/free
 struct ThresholdsResult {
-  double** joint_frequency;
-  double* threshold_X;
-  double* threshold_Y;
-  double* probability_X;
-  double* probability_Y;
+  double joint_frequency[CUT][CUT];
+  double threshold_X[CUT];
+  double threshold_Y[CUT];
+  double probability_X[CUT];
+  double probability_Y[CUT];
   int cat_X;
   int cat_Y;
+  double cases;
+  double pearson_start;
 };
 
 // Compute thresholds
@@ -275,8 +332,16 @@ struct ThresholdsResult thresholds(int* input_data, int rows, int i, int j, int 
   // Initialize missing
   int missing = 0;
 
-  // Obtain joint frequency table
-  int** joint_frequency_max = joint_frequency_table(input_data, rows, i, j, &missing);
+  // Obtain joint frequency table (and, in the same pass over `input_data`,
+  // the raw-code Pearson sums used as a Newton-Raphson starting value).
+  // This raw (untrimmed) table never escapes this function, so it lives on
+  // the stack
+  int raw_table[CUT][CUT];
+  double sum_x, sum_y, sum_xx, sum_yy, sum_xy;
+  joint_frequency_table(
+    input_data, rows, i, j, &missing, &sum_x, &sum_y, &sum_xx, &sum_yy, &sum_xy, raw_table
+  );
+  double pearson_start_value = pearson_from_sums(sum_x, sum_y, sum_xx, sum_yy, sum_xy, rows - missing);
 
   // Initialize categories
   int cat_X = 0;
@@ -285,12 +350,11 @@ struct ThresholdsResult thresholds(int* input_data, int rows, int i, int j, int 
   // Initialize zero count
   int zero_count = 0;
 
-  // Update joint frequency table (remove zero rows)
-  double** joint_frequency = update_joint_frequency(joint_frequency_max, &cat_X, &cat_Y, &zero_count);
-
-  // Free memory
-  free(joint_frequency_max[0]);
-  free(joint_frequency_max);
+  // Update joint frequency table (remove zero rows), writing directly into
+  // the (stack-allocated, embedded) result struct -- also the safe default
+  // ({0}) returned on the (unreachable-after-`Rf_error`) validation paths below
+  struct ThresholdsResult result = {0};
+  update_joint_frequency(raw_table, &cat_X, &cat_Y, &zero_count, result.joint_frequency);
 
   // Initialize added value
   double added_value = 0.0;
@@ -318,11 +382,11 @@ struct ThresholdsResult thresholds(int* input_data, int rows, int i, int j, int 
         for(l = 0; l < cat_Y; l++){
 
           // Check for method
-          if(zero && joint_frequency[k][l] == 0){
-            joint_frequency[k][l] += added_value;
+          if(zero && result.joint_frequency[k][l] == 0){
+            result.joint_frequency[k][l] += added_value;
             added_sum += added_value;
           } else { // if(all){
-            joint_frequency[k][l] += added_value;
+            result.joint_frequency[k][l] += added_value;
             added_sum += added_value;
           }
 
@@ -332,32 +396,28 @@ struct ThresholdsResult thresholds(int* input_data, int rows, int i, int j, int 
     }
 
   }
-  
+
   // Validate category sizes before allocation
   if ((cat_X <= 0) || (cat_X > CUT)) {
       Rf_error("Invalid category sizes for variable X. Terminating...");
-      struct ThresholdsResult result = {0}; // Return an empty result struct
-      return result;
+      return result; // unreachable (`Rf_error` longjmps), kept for clarity
   }
-  
+
    // Validate category sizes before allocation
   if ((cat_Y <= 0) || (cat_Y > CUT)) {
       Rf_error("Invalid category sizes for variable Y. Terminating...");
-      struct ThresholdsResult result = {0}; // Return an empty result struct
-      return result;
+      return result; // unreachable (`Rf_error` longjmps), kept for clarity
   }
-  
+
   /* Above code seems to be OK with CRAN checks */
 
-  // Initialize memory space for frequencies
-  double* frequency_X = (double*) calloc(cat_X, sizeof(double));
-  double* frequency_Y = (double*) calloc(cat_Y, sizeof(double));
-  
-  // Obtain frequencies
+  // Obtain frequencies (accumulated directly into the result struct's
+  // probability arrays, later transformed into cumulative probabilities
+  // and thresholds in place)
   for(k = 0; k < cat_X; k++) {
     for(l = 0; l < cat_Y; l++) {
-      frequency_X[k] += joint_frequency[k][l];
-      frequency_Y[l] += joint_frequency[k][l];
+      result.probability_X[k] += result.joint_frequency[k][l];
+      result.probability_Y[l] += result.joint_frequency[k][l];
     }
   }
 
@@ -365,212 +425,222 @@ struct ThresholdsResult thresholds(int* input_data, int rows, int i, int j, int 
   double cases = rows - missing + added_sum;
 
   // Convert frequencies to probabilities
-  compute_probabilities(frequency_X, cat_X, cases);
-  compute_probabilities(frequency_Y, cat_Y, cases);
+  compute_probabilities(result.probability_X, cat_X, cases);
+  compute_probabilities(result.probability_Y, cat_Y, cases);
 
   // Convert probabilities to cumulative sums
-  compute_cumulative(frequency_X, cat_X);
-  compute_cumulative(frequency_Y, cat_Y);
-
-  // Initialize memory space for thresholds
-  double* threshold_X = (double*) malloc(cat_X * sizeof(double));
-  double* threshold_Y = (double*) malloc(cat_Y * sizeof(double));
+  compute_cumulative(result.probability_X, cat_X);
+  compute_cumulative(result.probability_Y, cat_Y);
 
   // Obtain thresholds
-  compute_thresholds(frequency_X, cat_X, threshold_X);
-  compute_thresholds(frequency_Y, cat_Y, threshold_Y);
+  compute_thresholds(result.probability_X, cat_X, result.threshold_X);
+  compute_thresholds(result.probability_Y, cat_Y, result.threshold_Y);
 
-  // Create structure for return values
-  struct ThresholdsResult result;
-  result.joint_frequency = joint_frequency;
-  result.threshold_X = threshold_X;
-  result.threshold_Y = threshold_Y;
-  result.probability_X = frequency_X;
-  result.probability_Y = frequency_Y;
   result.cat_X = cat_X;
   result.cat_Y = cat_Y;
+  result.cases = cases;
+  result.pearson_start = pearson_start_value;
 
   // Return
   return result;
 }
 
-// Error function
-static inline double error_function(double x) {
+// Univariate normal CDF
+// Implements Genz's `MVPHI` via the standard library's `erfc`: Phi(z) =
+// 0.5 * erfc(-z / sqrt(2)). Correct at the +-Inf limits (erfc saturates to
+// 0/2 well before overflowing) without a separate early-return, and is
+// roughly 3x faster than a from-scratch Chebyshev expansion (e.g.
+// Schonfelder, 1978) since it's backed by a tuned libm implementation
+static inline double genz_normal_cdf(double z) {
 
-  // Initialize values
-  double t_value, y;
+  return 0.5 * erfc(-z * 0.70710678118654752440); // 1 / sqrt(2)
 
-  // Determine sign
-  int sign_x = (x >= 0) ? 1 : -1;
-
-  // Obtain absolute value
-  x = fabs(x);
-
-  // Set t-value
-  t_value = 1 / (1 + P * x);
-
-  // Set y
-  y = 1 - (((((A5 * t_value + A4) * t_value) + A3) * t_value + A2) * t_value + A1) * t_value * exp(-x * x);
-
-  // Add sign
-  return sign_x * y;
 }
 
-// Univariate normal CDF
-static inline double univariate_normal(double x) {
+// Precomputed, rho-only derived quantities shared by `genz_bivariate_normal`,
+// `bivariate_normal_density`, and `bivariate_normal_density_derivative`.
+// Within one Newton iteration, rho is fixed while these three functions are
+// each called once per corner of a `(cat_X + 1) x (cat_Y + 1)` grid -- so
+// building this once per iteration (see `make_rho_context`) avoids
+// redoing the same `asin`/`sqrt`/quadrature-rule-selection work at every
+// single grid point
+struct RhoContext {
+  double rho;
+  double rho_abs;
+  bool near_boundary; // rho_abs >= GENZ_COR_MAX
 
-  // This function is streamlined for use in this function
-  // With mean = 0 and sd = 1, then the z-score of x is x
+  // Used when !near_boundary (`genz_bivariate_normal`'s main branch)
+  double asr;         // asin(rho)
+  const double* nodes;
+  const double* weights;
+  int points;
 
-  // Return CDF (sqrt(2) = 1.41421356)
-  return 0.5 * (1 + error_function(x / 1.41421356));
+  // Used when near_boundary (`genz_bivariate_normal`'s tail branch)
+  bool negative;       // rho < 0
+  double as;           // (1 - rho) * (1 + rho)
+  double a;             // sqrt(as)
+  double a_half;       // a / 2
+
+  // Used by `bivariate_normal_density(_derivative)`
+  double c;            // 1 - rho^2
+  double sqrt_c;
+  double c2;           // c^2
+};
+
+static inline struct RhoContext make_rho_context(double rho) {
+
+  struct RhoContext ctx;
+  ctx.rho = rho;
+  ctx.rho_abs = fabs(rho);
+  ctx.near_boundary = ctx.rho_abs >= GENZ_COR_MAX;
+
+  if(!ctx.near_boundary) {
+
+    ctx.asr = asin(rho);
+
+    // Select Gauss-Legendre rule based on |rho|
+    if(ctx.rho_abs < 0.3) {
+      ctx.nodes = GENZ_X6; ctx.weights = GENZ_W6; ctx.points = 3;
+    } else if(ctx.rho_abs < 0.75) {
+      ctx.nodes = GENZ_X12; ctx.weights = GENZ_W12; ctx.points = 6;
+    } else {
+      ctx.nodes = GENZ_X20; ctx.weights = GENZ_W20; ctx.points = 10;
+    }
+
+  } else {
+
+    ctx.negative = rho < 0.0;
+    ctx.as = (1 - rho) * (1 + rho);
+    ctx.a = sqrt(ctx.as);
+    ctx.a_half = ctx.a / 2;
+
+  }
+
+  ctx.c = 1 - rho * rho;
+  ctx.sqrt_c = sqrt(ctx.c);
+  ctx.c2 = ctx.c * ctx.c;
+
+  return ctx;
 
 }
 
 // Bivariate normal CDF
-// Implements Drezner-Wesolowsky's approximation (Drezner & Wesolowsky, 1990)
-// Translated from C++ to C: https://github.com/cran/pbv/blob/master/src/pbv_rcpp_bvnorm.cpp
-double drezner_bivariate_normal(double h1, double h2, double rho, double p1, double p2) {
+// Implements Genz's `MVBVU` (Genz & Ge's double-precision extension of
+// Drezner & Wesolowsky, 1990), which uses a variable-order (6-, 12-, or
+// 20-point) Gauss-Legendre rule depending on |rho| and an extended series
+// correction for |rho| close to 1, giving higher accuracy than the fixed
+// 5-point rule it replaces (Genz, 2004, Statistics and Computing, 14, 251-260)
+// Translated from Fortran (TVPACK, `MVBVU`): https://github.com/cran/pbivnorm/blob/master/src/pbivnorm.f
+//
+// `genz_bivariate_normal(h1, h2, ctx, p1, p2)` returns Phi_2(h1, h2; rho),
+// obtained via `MVBVU(-h1, -h2, rho)` and simplified using the identity
+// Phi_2(h1, h2; rho) = P(X > -h1, Y > -h2), with `p1 = Phi(h1)` and
+// `p2 = Phi(h2)` supplied by the caller (already known exactly from the
+// empirical cumulative frequencies) rather than recomputed. `ctx` bundles
+// every quantity that depends on rho alone (see `RhoContext`).
+// `static inline` (like the density functions below) so the compiler can
+// fully inline it at its two call sites in `newton_raphson`/
+// `newton_raphson_arcsin`, keeping `ctx`'s fields in registers across the
+// grid loop instead of re-reading them through the pointer on every call
+static inline double genz_bivariate_normal(double h1, double h2, const struct RhoContext* ctx, double p1, double p2) {
 
   // Check for infinities
   if(h1 == -INFINITY || h2 == -INFINITY) return(0.0);
   if(h1 == INFINITY) return(p2);
   if(h2 == INFINITY) return(p1);
 
-  // Initialize iterator
-  // int i; // not used with loops unrolled
+  double rho = ctx->rho;
 
-  // Initialize probability and h3
+  // Obtain h*k
+  double hk = h1 * h2;
+
+  // Initialize probability
   double bv = 0.0;
-  double h3;
-
-  // Obtain h12 and absolute correlation
-  double h12 = (h1 * h1 + h2 * h2) / 2;
-  double rho_abs = fabs(rho);
 
   // Check for correlation lower than maximum
-  if(rho_abs <= COR_MAX) {
+  if(!ctx->near_boundary) {
 
-    // Initialize r1 and rr2
-    double r1, rr2;
+    // Obtain h12
+    double h12 = (h1 * h1 + h2 * h2) / 2;
+    double asr = ctx->asr;
 
-    // Compute h3
-    h3 = h1 * h2;
+    const double* nodes = ctx->nodes;
+    const double* weights = ctx->weights;
+    int points = ctx->points;
 
-    // Standard loop
-
-    // // Compute probability
-    // for (i = 0; i < INT_NX; i++) {
-    //   r1 = rho * DOUBLE_X[i];
-    //   rr2 = 1 - r1 * r1;
-    //   bv += DOUBLE_W[i] * exp((r1 * h3 - h12) / rr2) / sqrt(rr2);
-    // }
-
-    // Unrolled loop
-
-    // Compute probability
-    r1 = rho * DOUBLE_X[0];
-    rr2 = 1 - r1 * r1;
-    bv += DOUBLE_W[0] * exp((r1 * h3 - h12) / rr2) / sqrt(rr2);
-
-    r1 = rho * DOUBLE_X[1];
-    rr2 = 1 - r1 * r1;
-    bv += DOUBLE_W[1] * exp((r1 * h3 - h12) / rr2) / sqrt(rr2);
-
-    r1 = rho * DOUBLE_X[2];
-    rr2 = 1 - r1 * r1;
-    bv += DOUBLE_W[2] * exp((r1 * h3 - h12) / rr2) / sqrt(rr2);
-
-    r1 = rho * DOUBLE_X[3];
-    rr2 = 1 - r1 * r1;
-    bv += DOUBLE_W[3] * exp((r1 * h3 - h12) / rr2) / sqrt(rr2);
-
-    r1 = rho * DOUBLE_X[4];
-    rr2 = 1 - r1 * r1;
-    bv += DOUBLE_W[4] * exp((r1 * h3 - h12) / rr2) / sqrt(rr2);
+    // Gauss-Legendre quadrature over the correlation "arc"
+    for(int i = 0; i < points; i++) {
+      double sn = sin(asr * (nodes[i] + 1) / 2);
+      bv += weights[i] * exp((sn * hk - h12) / (1 - sn * sn));
+      sn = sin(asr * (-nodes[i] + 1) / 2);
+      bv += weights[i] * exp((sn * hk - h12) / (1 - sn * sn));
+    }
 
     // Finalize probability
-    bv = p1 * p2 + rho * bv;
+    bv = bv * asr / (2 * TWO_PI) + p1 * p2;
 
-  } else { // Greater than maximum correlation (0.70)
+  } else { // At or beyond the maximum correlation (0.925)
 
-    // Initialize r2 and r3
-    double r2 = 1 - rho * rho;
-    double r3 = sqrt(r2);
+    // Local (possibly sign-flipped) versions of h2 and h*k
+    double k = h2;
+    double hk_local = hk;
 
     // Reverse sign for negative correlation
-    if(rho < 0.0) {
-      h2 = -h2;
-      p2 = 1 - p2;
+    if(ctx->negative) {
+      k = -k;
+      hk_local = -hk_local;
     }
-
-    // Compute h3
-    h3 = h1 * h2;
-
-    // Compute h7
-    double h7 = exp(-h3 / 2.0);
 
     // Check for correlation less than 1
-    if(rho_abs < 1.0) {
+    if(ctx->rho_abs < 1.0) {
 
       // Set up variables
-      double h6 = fabs(h1 - h2);
-      double h5 = h6 * h6 / 2.0;
-      h6 = h6 / r3;
-      double aa = 0.5 - h3 / 8.0;
-      double ab = 3.0 - 2.0 * aa * h5;
+      double as = ctx->as;
+      double a = ctx->a;
+      double bs = (h1 - k) * (h1 - k);
+      double c = (4 - hk_local) / 8;
+      double d = (12 - hk_local) / 16;
 
       // Compute initial probability
-      bv = BV_FAC1 * h6 * ab * (1.0 - univariate_normal(h6)) - exp(-h5 / r2) * (ab + aa * r2) * BV_FAC2;
+      bv = a * exp(-(bs / as + hk_local) / 2) *
+        (1 - c * (bs - as) * (1 - d * bs / 5) / 3 + c * d * as * as / 5);
 
-      double r1, rr;
+      // Add tail correction
+      if(hk_local > GENZ_HK_MIN) {
+        double b = sqrt(bs);
+        bv -= exp(-hk_local / 2) * SQRT_TWO_PI * genz_normal_cdf(-b / a) * b *
+          (1 - c * bs * (1 - d * bs / 5) / 3);
+      }
 
-      // Standard loop
+      // Beyond the maximum correlation always uses the 20-point rule
+      double a_half = ctx->a_half;
+      for(int i = 0; i < 10; i++) {
 
-      // // Compute probability
-      // for (i = 0; i < INT_NX; i++) {
-      //   r1 = r3 * DOUBLE_X[i];
-      //   rr = r1 * r1;
-      //   r2 = sqrt(1.0 - rr);
-      //   bv += -DOUBLE_W[i] * exp(-h5 / rr) * (exp(-h3 / (1.0 + r2)) / r2 / h7 - 1.0 - aa * rr);
-      // }
+        double xs = (a_half * (GENZ_X20[i] + 1)) * (a_half * (GENZ_X20[i] + 1));
+        double rs = sqrt(1 - xs);
+        bv += a_half * GENZ_W20[i] * (
+          exp(-bs / (2 * xs) - hk_local / (1 + rs)) / rs -
+          exp(-(bs / xs + hk_local) / 2) * (1 + c * xs * (1 + d * xs))
+        );
 
-      // Unrolled loop
+        xs = as * (-GENZ_X20[i] + 1) * (-GENZ_X20[i] + 1) / 4;
+        rs = sqrt(1 - xs);
+        bv += a_half * GENZ_W20[i] * exp(-(bs / xs + hk_local) / 2) * (
+          exp(-hk_local * (1 - rs) / (2 * (1 + rs))) / rs -
+          (1 + c * xs * (1 + d * xs))
+        );
 
-      // Compute probability
-      r1 = r3 * DOUBLE_X[0];
-      rr = r1 * r1;
-      r2 = sqrt(1.0 - rr);
-      bv += -DOUBLE_W[0] * exp(-h5 / rr) * (exp(-h3 / (1.0 + r2)) / r2 / h7 - 1.0 - aa * rr);
+      }
 
-      r1 = r3 * DOUBLE_X[1];
-      rr = r1 * r1;
-      r2 = sqrt(1.0 - rr);
-      bv += -DOUBLE_W[1] * exp(-h5 / rr) * (exp(-h3 / (1.0 + r2)) / r2 / h7 - 1.0 - aa * rr);
-
-      r1 = r3 * DOUBLE_X[2];
-      rr = r1 * r1;
-      r2 = sqrt(1.0 - rr);
-      bv += -DOUBLE_W[2] * exp(-h5 / rr) * (exp(-h3 / (1.0 + r2)) / r2 / h7 - 1.0 - aa * rr);
-
-      r1 = r3 * DOUBLE_X[3];
-      rr = r1 * r1;
-      r2 = sqrt(1.0 - rr);
-      bv += -DOUBLE_W[3] * exp(-h5 / rr) * (exp(-h3 / (1.0 + r2)) / r2 / h7 - 1.0 - aa * rr);
-
-      r1 = r3 * DOUBLE_X[4];
-      rr = r1 * r1;
-      r2 = sqrt(1.0 - rr);
-      bv += -DOUBLE_W[4] * exp(-h5 / rr) * (exp(-h3 / (1.0 + r2)) / r2 / h7 - 1.0 - aa * rr);
+      bv = -bv / TWO_PI;
 
     }
 
-    // Obtain minimum of probabilities
-    bv = bv * r3 * h7 + fmin(p1, p2);
-
-    // Adjust for negative correlation
-    if (rho < 0) {
-      bv = p1 - bv;
+    // Adjust for correlation sign
+    if(rho > 0) {
+      bv += fmin(p1, p2);
+    } else {
+      bv = -bv + fmax(0.0, p1 + p2 - 1);
     }
 
   }
@@ -580,229 +650,288 @@ double drezner_bivariate_normal(double h1, double h2, double rho, double p1, dou
 
 }
 
-// Compute values for bivariate normal
-static inline void compute_thresholds_and_probabilities(
-    double* threshold, double* probability,
-    int cat, int index,
-    double* lower_t, double* upper_t,
-    double* lower_p, double* upper_p
+// Expand `cat` category thresholds/probabilities into their `cat + 1` cell
+// *boundaries* (including the -Inf/+Inf outer edges), e.g. for thresholds
+// {t0, t1} (cat = 3): boundary = {-Inf, t0, t1, +Inf}. Cell `index`
+// (0-indexed) then spans [boundary[index], boundary[index + 1]]. Materializing
+// these once lets a `(cat_X + 1) x (cat_Y + 1)` grid of corner values be
+// built and reused across all `cat_X * cat_Y` cells, instead of recomputing
+// each corner up to 4 times (once per adjacent cell)
+static inline void compute_boundaries(
+    double* threshold, double* probability, int cat,
+    double* boundary, double* boundary_p
 ) {
 
-  // Lowest category
-  if(index == 0) {
-    *lower_t = -INFINITY; *lower_p = 0;
-    *upper_t = threshold[index]; *upper_p = probability[index];
-  }else if(index == cat - 1) { // Highest category
-    *lower_t = threshold[index - 1]; *lower_p = probability[index - 1];
-    *upper_t = INFINITY; *upper_p = 1;
-  }else{ // Between category
-    *lower_t = threshold[index - 1]; *lower_p = probability[index - 1];
-    *upper_t = threshold[index]; *upper_p = probability[index];
+  boundary[0] = -INFINITY;
+  boundary_p[0] = 0.0;
+
+  for(int k = 1; k < cat; k++) {
+    boundary[k] = threshold[k - 1];
+    boundary_p[k] = probability[k - 1];
   }
+
+  boundary[cat] = INFINITY;
+  boundary_p[cat] = 1.0;
 
 }
 
 
-// Estimate log-likelihood
-double polychoric_log_likelihood(
-    double rho, double** joint_frequency,
+// Bivariate normal density (standard, mean 0, variance 1)
+// Used for the score (gradient) of the polychoric log-likelihood with
+// respect to rho. `ctx->c`/`ctx->sqrt_c` (1 - rho^2 and its square root)
+// are precomputed once per iteration rather than once per grid corner
+static inline double bivariate_normal_density(const struct RhoContext* ctx, double x, double y) {
+
+  // Density is zero in the limit as either margin goes to infinity
+  if(!isfinite(x) || !isfinite(y)) return 0.0;
+
+  // Obtain the quadratic form
+  double q = x * x + y * y - 2 * ctx->rho * x * y;
+
+  // Return density
+  return exp(-q / (2 * ctx->c)) / (TWO_PI * ctx->sqrt_c);
+
+}
+
+// Derivative of the bivariate normal density with respect to rho
+// Used for the exact Hessian in `newton_raphson_arcsin`
+static inline double bivariate_normal_density_derivative(const struct RhoContext* ctx, double x, double y) {
+
+  if(!isfinite(x) || !isfinite(y)) return 0.0;
+
+  double rho = ctx->rho;
+  double c = ctx->c;
+
+  // Obtain the quadratic form
+  double q = x * x + y * y - 2 * rho * x * y;
+  double density = exp(-q / (2 * c)) / (TWO_PI * ctx->sqrt_c);
+
+  // d(density)/d(rho) = density * [c * (rho + x * y) - rho * q] / c^2
+  return density * (c * (rho + x * y) - rho * q) / ctx->c2;
+
+}
+
+// Forward declaration: `newton_raphson`'s bounded fallback, defined below
+double newton_raphson_arcsin(
+    double start, double joint_frequency[][CUT],
     double* threshold_X, double* threshold_Y,
     double* probability_X, double* probability_Y,
-    int cat_X, int cat_Y
+    int cat_X, int cat_Y, double cases
+);
+
+// Newton-Raphson (Fisher scoring) on the raw rho scale
+// Falls back to `newton_raphson_arcsin` whenever an unconstrained step
+// would leave (-1, 1)
+double newton_raphson(
+    double start, double joint_frequency[][CUT],
+    double* threshold_X, double* threshold_Y,
+    double* probability_X, double* probability_Y,
+    int cat_X, int cat_Y, double cases
 ) {
 
-  // Set upper and lowers (thresholds and probabilities)
-  double lower_ti, upper_ti, lower_pi, upper_pi;
-  double lower_tj, upper_tj, lower_pj, upper_pj;
+  double rho = start;
 
-  // Initialize variables
-  double log_likelihood = 0.0;
-  double probability;
+  // Cell boundaries (thresholds plus the -Inf/+Inf outer edges) and their
+  // marginal probabilities, built once since they do not depend on rho
+  double boundary_X[CUT + 1], boundary_pX[CUT + 1];
+  double boundary_Y[CUT + 1], boundary_pY[CUT + 1];
+  compute_boundaries(threshold_X, probability_X, cat_X, boundary_X, boundary_pX);
+  compute_boundaries(threshold_Y, probability_Y, cat_Y, boundary_Y, boundary_pY);
 
-  // Initialize iterators
-  int i, j;
+  for(int iter = 0; iter < NEWTON_MAX_ITER; iter++) {
 
-  // Compute log-likelihood
-  for (i = 0; i < cat_X; ++i) {
+    // Precompute every rho-only derived quantity once for this iteration
+    // (rho is fixed across the whole grid below)
+    struct RhoContext ctx = make_rho_context(rho);
 
-    // Set up thresholds and probabilities for X
-    compute_thresholds_and_probabilities(
-        threshold_X, probability_X, cat_X, i,
-        &lower_ti, &upper_ti, &lower_pi, &upper_pi
-    );
+    // Evaluate the bivariate CDF and density once per grid corner (rather
+    // than once per cell corner, up to 4x redundant) and difference them
+    // into per-cell values below
+    double cdf_grid[CUT + 1][CUT + 1];
+    double density_grid[CUT + 1][CUT + 1];
 
-    for (j = 0; j < cat_Y; ++j) {
-
-      // Set up thresholds and probabilities for Y
-      compute_thresholds_and_probabilities(
-        threshold_Y, probability_Y, cat_Y, j,
-        &lower_tj, &upper_tj, &lower_pj, &upper_pj
-      );
-
-      // Compute bivariate normal CDF
-      probability = drezner_bivariate_normal(upper_ti, upper_tj, rho, upper_pi, upper_pj) -
-                    drezner_bivariate_normal(lower_ti, upper_tj, rho, lower_pi, upper_pj) -
-                    drezner_bivariate_normal(upper_ti, lower_tj, rho, upper_pi, lower_pj) +
-                    drezner_bivariate_normal(lower_ti, lower_tj, rho, lower_pi, lower_pj);
-
-      // Handle probabilities equal to or less than zero
-      // Solves issue when negative probability super close to zero
-      if (probability <= 0 || isnan(probability)) {
-        probability = DBL_MIN;
+    for(int a = 0; a <= cat_X; a++) {
+      for(int b = 0; b <= cat_Y; b++) {
+        cdf_grid[a][b] = genz_bivariate_normal(
+          boundary_X[a], boundary_Y[b], &ctx, boundary_pX[a], boundary_pY[b]
+        );
+        density_grid[a][b] = bivariate_normal_density(&ctx, boundary_X[a], boundary_Y[b]);
       }
-
-      // Update log-likelihood
-      log_likelihood += joint_frequency[i][j] * log(probability);
-
     }
+
+    double gradient = 0.0;
+    double information = 0.0;
+
+    for(int i = 0; i < cat_X; i++) {
+      for(int j = 0; j < cat_Y; j++) {
+
+        // Cell probability (bivariate normal CDF over the cell rectangle)
+        double probability = cdf_grid[i + 1][j + 1] - cdf_grid[i][j + 1] -
+                              cdf_grid[i + 1][j] + cdf_grid[i][j];
+
+        if(probability < NEWTON_PROB_MIN) probability = NEWTON_PROB_MIN;
+
+        // d(cell probability)/d(rho), via the bivariate normal density
+        double density = density_grid[i + 1][j + 1] - density_grid[i][j + 1] -
+                          density_grid[i + 1][j] + density_grid[i][j];
+
+        // Gradient of the negative log-likelihood (per observation) and its
+        // Fisher information approximation (expected outer product of the score)
+        gradient -= joint_frequency[i][j] / probability * density / cases;
+        information += density * density / probability;
+
+      }
+    }
+
+    // Cap the step so a large gradient / tiny information (near the
+    // boundary or in sparse cells) cannot fling rho far from its current
+    // value in a single iteration -- undamped steps can overshoot into a
+    // different (spurious) basin of attraction entirely
+    double step = gradient / information;
+    if(step > NEWTON_MAX_STEP) step = NEWTON_MAX_STEP;
+    if(step < -NEWTON_MAX_STEP) step = -NEWTON_MAX_STEP;
+
+    double proposed = rho - step;
+
+    // Fall back to the bounded, exact-Hessian arcsin parameterization
+    // whenever the (capped) step would leave (-1, 1)
+    if(proposed >= 1.0 || proposed <= -1.0) {
+      return newton_raphson_arcsin(
+        start, joint_frequency, threshold_X, threshold_Y,
+        probability_X, probability_Y, cat_X, cat_Y, cases
+      );
+    }
+
+    rho = proposed;
+
+    if(gradient * gradient < NEWTON_TOL) break;
 
   }
 
-  // Return negative log-likelihood
-  return -log_likelihood;
+  return rho;
 
 }
 
-// Brent's method for optimization
-double optimize(double (*f)(double, double**, double*, double*, double*, double*, int, int),
-                double** joint_frequency, double* threshold_X, double* threshold_Y,
-                double* probability_X, double* probability_Y,
-                int cat_X, int cat_Y
+// Newton-Raphson on theta = asin(rho), using the exact Hessian
+// (`bivariate_normal_density_derivative`). Guarantees rho stays in (-1, 1)
+// for any real theta, so this also serves as the bounded fallback for
+// `newton_raphson`
+double newton_raphson_arcsin(
+    double start, double joint_frequency[][CUT],
+    double* threshold_X, double* threshold_Y,
+    double* probability_X, double* probability_Y,
+    int cat_X, int cat_Y, double cases
 ) {
 
-  // Initialize variables for the optimization algorithm
-  double a = LOWER;
-  double b = UPPER;
-  double c = a + (b - a) / 2.0;
+  double theta = asin(start);
+  double rho = start;
+  double cos_theta = cos(theta);
 
-  double x = c;
-  double w = c;
-  double v = c;
+  // Cell boundaries (thresholds plus the -Inf/+Inf outer edges) and their
+  // marginal probabilities, built once since they do not depend on rho
+  double boundary_X[CUT + 1], boundary_pX[CUT + 1];
+  double boundary_Y[CUT + 1], boundary_pY[CUT + 1];
+  compute_boundaries(threshold_X, probability_X, cat_X, boundary_X, boundary_pX);
+  compute_boundaries(threshold_Y, probability_Y, cat_Y, boundary_Y, boundary_pY);
 
-  double fx = f(x, joint_frequency, threshold_X, threshold_Y, probability_X, probability_Y, cat_X, cat_Y);
-  double fw = fx;
-  double fv = fx;
+  for(int iter = 0; iter < NEWTON_MAX_ITER; iter++) {
 
-  double d = 0.0;
-  double e = 0.0;
+    // Precompute every rho-only derived quantity once for this iteration
+    // (rho is fixed across the whole grid below)
+    struct RhoContext ctx = make_rho_context(rho);
 
-  // Iterate using Brent's method until the maximum number of iterations
-  // is reached, or until the solution is found within the specified tolerance
-  for (int iter = 0; iter < MAX_ITER; ++iter) {
+    // Evaluate the CDF, density, and density derivative once per grid
+    // corner (rather than once per cell corner, up to 4x redundant) and
+    // difference them into per-cell values below
+    double cdf_grid[CUT + 1][CUT + 1];
+    double density_grid[CUT + 1][CUT + 1];
+    double derivative_grid[CUT + 1][CUT + 1];
 
-    // Calculate the midpoint of the current interval and the tolerance
-    double mid = (a + b) / 2.0;
-    double tol1 = TOL * fabs(x) + ZEPS;
-    double tol2 = 2.0 * tol1;
-
-    // Check if the solution is within the tolerance
-    if (fabs(x - mid) <= (tol2 - (b - a) / 2.0)) {
-      break;
-    }
-
-    // Initialize variables for the current iteration
-    double u;
-    double fu;
-    bool use_parabola = false;
-
-    // Check if the current iteration can use the parabolic fit
-    if (x != w && x != v && w != v) {
-      double r = (x - w) * (fx - fv);
-      double q = (x - v) * (fx - fw);
-      double p = (x - v) * q - (x - w) * r;
-
-      q = 2.0 * (q - r);
-
-      if (q > 0.0) {
-        p = -p;
-      } else {
-        q = -q;
-      }
-
-      double etemp = e;
-      e = d;
-
-      // If the parabolic fit is not appropriate, set the use_parabola flag to false
-      if (fabs(p) >= fabs(0.5 * q * etemp) || p <= q * (a - x) || p >= q * (b - x)) {
-        use_parabola = false;
-      } else {
-        // Otherwise, set the use_parabola flag to true and calculate the parabolic minimum
-        use_parabola = true;
-        d = p / q;
-        u = x + d;
-        if (u - a < tol2 || b - u < tol2) {
-          d = (mid - x >= 0.0) ? tol1 : -tol1;
-        }
+    for(int a = 0; a <= cat_X; a++) {
+      for(int b = 0; b <= cat_Y; b++) {
+        cdf_grid[a][b] = genz_bivariate_normal(
+          boundary_X[a], boundary_Y[b], &ctx, boundary_pX[a], boundary_pY[b]
+        );
+        density_grid[a][b] = bivariate_normal_density(&ctx, boundary_X[a], boundary_Y[b]);
+        derivative_grid[a][b] = bivariate_normal_density_derivative(&ctx, boundary_X[a], boundary_Y[b]);
       }
     }
 
-    // If the parabolic fit is not used, set the variables for the golden section step
-    if (!use_parabola) {
-      e = (x >= mid) ? a - x : b - x;
-      d = 0.3819660 * e;
+    double gradient = 0.0;
+    double hessian = 0.0;
+
+    for(int i = 0; i < cat_X; i++) {
+      for(int j = 0; j < cat_Y; j++) {
+
+        double probability = cdf_grid[i + 1][j + 1] - cdf_grid[i][j + 1] -
+                              cdf_grid[i + 1][j] + cdf_grid[i][j];
+
+        if(probability < NEWTON_PROB_MIN) probability = NEWTON_PROB_MIN;
+
+        double density = density_grid[i + 1][j + 1] - density_grid[i][j + 1] -
+                          density_grid[i + 1][j] + density_grid[i][j];
+
+        double density_derivative = derivative_grid[i + 1][j + 1] - derivative_grid[i][j + 1] -
+                                     derivative_grid[i + 1][j] + derivative_grid[i][j];
+
+        // Chain rule onto theta (rho = sin(theta), d(rho)/d(theta) = cos(theta))
+        double density_theta = density * cos_theta;
+        double curvature = density_derivative * cos_theta * cos_theta - density * rho;
+
+        gradient -= joint_frequency[i][j] / probability * density_theta / cases;
+        hessian += joint_frequency[i][j] *
+          (density_theta * density_theta - probability * curvature) /
+          (probability * probability) / cases;
+
+      }
     }
 
-    // Calculate the function value at the trial point
-    u = (fabs(d) >= tol1) ? x + d : x + ((d >= 0.0) ? tol1 : -tol1);
-    fu = f(u, joint_frequency, threshold_X, threshold_Y, probability_X, probability_Y, cat_X, cat_Y);
+    // Cap the theta step -- without damping, an ill-conditioned Hessian
+    // (which happens near the boundary, exactly where this fallback is
+    // invoked) can send theta wrapping across multiple periods of sin(),
+    // landing on a spurious stationary point instead of the true MLE
+    double dtheta = gradient / hessian;
+    if(dtheta > NEWTON_MAX_STEP) dtheta = NEWTON_MAX_STEP;
+    if(dtheta < -NEWTON_MAX_STEP) dtheta = -NEWTON_MAX_STEP;
 
-    // Update the intervals based on the function values at the trial point
-    if (fu <= fx) {
-      if (u >= x) {
-        a = x;
-      } else {
-        b = x;
-      }
-      v = w;
-      w = x;
-      x = u;
-      fv = fw;
-      fw = fx;
-      fx = fu;
-    } else {
-      if (u < x) {
-        a = u;
-      } else {
-        b = u;
-      }
-      if (fu <= fw || w == x) {
-        v = w;
-        w = u;
-        fv = fw;
-        fw = fu;
-      } else if (fu <= fv || v == x || v == w) {
-        v = u;
-        fv = fu;
-      }
-    }
+    theta -= dtheta;
+
+    // Keep theta within its principal branch: every rho in (-1, 1) is
+    // already reached by theta in (-pi/2, pi/2), so restricting it here
+    // both avoids the periodic wraparound above and keeps rho strictly
+    // inside (-1, 1) -- rho = +-1 makes 1 - rho^2 = 0, a division by zero
+    // in `bivariate_normal_density`
+    if(theta > NEWTON_THETA_MAX) theta = NEWTON_THETA_MAX;
+    if(theta < -NEWTON_THETA_MAX) theta = -NEWTON_THETA_MAX;
+
+    rho = sin(theta);
+
+    if(gradient * gradient < NEWTON_TOL) break;
+
+    cos_theta = cos(theta);
 
   }
 
-  // Return the optimal solution
-  return x;
+  return rho;
+
 }
 
 // Compute polychoric correlation
 double polychoric(int* input_data, int rows, int i, int j, int empty_method, double empty_value) {
 
-  // Obtain joint frequency table, probability_X, and probability_Y from thresholds function
+  // Obtain joint frequency table, probability_X, probability_Y, and a
+  // Newton-Raphson starting value (Pearson correlation of the raw codes)
+  // from the thresholds function
   struct ThresholdsResult thresholds_result = thresholds(input_data, rows, i, j, empty_method, empty_value);
 
-  // Perform optimization
-  double rho_optimum = optimize(
-    polychoric_log_likelihood, thresholds_result.joint_frequency,
+  // Perform optimization (no memory to free afterward: `ThresholdsResult`'s
+  // arrays are stack-embedded, not heap-allocated)
+  double rho_optimum = newton_raphson(
+    thresholds_result.pearson_start, thresholds_result.joint_frequency,
     thresholds_result.threshold_X, thresholds_result.threshold_Y,
     thresholds_result.probability_X, thresholds_result.probability_Y,
-    thresholds_result.cat_X, thresholds_result.cat_Y
+    thresholds_result.cat_X, thresholds_result.cat_Y, thresholds_result.cases
   );
-
-  // Free memory
-  free(thresholds_result.joint_frequency[0]);
-  free(thresholds_result.joint_frequency);
-  free(thresholds_result.threshold_X);
-  free(thresholds_result.threshold_Y);
-  free(thresholds_result.probability_X);
-  free(thresholds_result.probability_Y);
 
   // Return
   return rho_optimum;

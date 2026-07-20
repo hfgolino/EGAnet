@@ -1,7 +1,7 @@
 Package: EGAnet
 Title: Exploratory Graph Analysis – a Framework for Estimating the Number of Dimensions in Multivariate Data using Network Psychometrics
-Version: 2.4.1
-Date: 2026-04-13
+Version: 2.4.2
+Date: 2026-07-20
 Authors@R: c(person("Hudson", "Golino", email = "hfg9s@virginia.edu", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-1601-1447")),
 	     person("Alexander", "Christensen", email = "alexpaulchristensen@gmail.com", role = "aut", comment = c(ORCID = "0000-0002-9798-7037")),
 	     person("Robert", "Moulder", email = "rgm4fd@virginia.edu", role = "ctb", comment = c(ORCID = "0000-0001-7504-9560")),
@@ -10,7 +10,7 @@ Authors@R: c(person("Hudson", "Golino", email = "hfg9s@virginia.edu", role = c("
 	     person("Dingjing", "Shi", email = "dshi@ou.edu", role = "ctb", comment = c(ORCID = "0000-0002-5652-3818")),
 	     person("John", "Fox", role = c("cph", "ctb"), comment = "Original implementation of polyserial correlations in auto_correlate.R"),
     person("Yves", "Rosseel", role = c("cph", "ctb"), comment = "Original implementation of rmsea_ci in network_fit.R"),
-    person("Alexander", "Robitzsch", role = c("cph", "ctb"), comment = "C++ implementation of Drezner-Wesolowsky bivariate normal CDF in polychoric_matrix.c"),
+    person("Alan", "Genz", role = c("cph", "ctb"), comment = "Fortran implementation of the bivariate normal CDF (TVPACK MVBVU) in polychoric_matrix.c, translated via the pbivnorm R package"),
     person("David", "Blackman", role = "ctb", comment = "Original xoshiro.c implementation"),
     person("Sebastiano", "Vigna", role = "ctb", comment = "Original xoshiro.c implementation"),
     person("John", "Burkardt", role = c("cph", "ctb"), comment = "Original ziggurat.c implementation"),

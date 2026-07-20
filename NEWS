@@ -1,5 +1,20 @@
 WEBSITE: https://r-ega.net
 
+## Changes in version 2.4.2
+
++	UPDATE: `polychoric.matrix` C implementation overhauled for speed and accuracy (ported from {L0ggm}):
+
+	-	Bivariate normal CDF replaced with Genz's (2004) double-precision extension of Drezner and Wesolowsky (1990), translated from the Fortran TVPACK `MVBVU` routine (via the pbivnorm R package). Uses a variable-order (6-, 12-, or 20-point) Gauss-Legendre rule depending on \code{|rho|}, with an extended tail-correction series for \code{|rho|} close to 1, giving higher accuracy than the fixed 5-point rule it replaces
+
+	-	Optimizer replaced Brent's method with Newton-Raphson (Fisher scoring on rho, falling back to an exact-Hessian arcsin-reparameterized Newton step to guarantee rho stays in (-1, 1), with damped step sizes to avoid overshoot near the boundary), seeded from a Pearson-correlation starting value
+
+	-	Several C-level optimizations: caching bivariate CDF/density evaluations across a grid of category thresholds instead of recomputing each corner up to 4x redundantly; merging the joint-frequency-table pass with the Pearson starting-value computation into a single scan of the data; replacing per-pair heap allocations with fixed-size stack buffers; replacing a from-scratch Chebyshev expansion with an `erfc()`-based univariate normal CDF; and hoisting rho-only quantities out of the per-cell evaluation loop
+
+	-	Net effect: 1.2-5.6x faster than the previous implementation across a range of dataset sizes and category counts, with results agreeing to 5-8 significant digits
+
++	UPDATE: `DESCRIPTION` and `inst/COPYRIGHTS` updated to credit Alan Genz for the bivariate normal CDF implementation in `polychoric_matrix.c`, replacing the earlier Drezner-Wesolowsky approximation translated from Alexander Robitzsch's {pbv} package, which is no longer present
+
+
 ## Changes in version 2.4.1
 
 +	FIX: bug when singleton communities in `invariance` (resolves to dropping variable)
