@@ -423,6 +423,14 @@ bootEGA <- function(
 
   }
 
+  # Thread `seed` through to the community detection algorithm (e.g., the
+  # Louvain algorithm used by `algorithm = "louvain"`) -- otherwise only the
+  # bootstrap resampling is reproducible while the algorithm itself is not,
+  # even when `seed` is set (respects a `seed` the user already passed via `...`)
+  if(!is.null(seed) && !"seed" %in% names(ellipse)){
+    EGA_ARGS$seed <- seed
+  }
+
   # Estimate empirical EGA
   empirical_EGA <- do.call(
     what = ega_function,
@@ -497,6 +505,14 @@ bootEGA <- function(
         mvrnorm_parameters = mvrnorm_parameters,
         type = type
       )
+
+      # Give the community detection algorithm this iteration's own
+      # reproducible seed (only set up above when `seed` threading is
+      # active) -- otherwise every bootstrap sample's Louvain application
+      # would use the *same* seed as the empirical fit
+      if("seed" %in% names(EGA_ARGS)){
+        EGA_ARGS$seed <- seed_value
+      }
 
       # Estimate EGA
       return(

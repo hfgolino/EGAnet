@@ -10,6 +10,7 @@ community.consensus(
   resolution = 1,
   consensus.method = c("highest_modularity", "iterative", "most_common", "lowest_tefi"),
   consensus.iter = 1000,
+  seed = NULL,
   correlation.matrix = NULL,
   allow.singleton = FALSE,
   membership.only = TRUE,
@@ -23,10 +24,12 @@ community.consensus(
 Defaults to \code{"higher"}.
 Whether \code{"lower"} or \code{"higher"} order memberships from
 the Louvain algorithm should be obtained for the consensus.
-The \code{"lower"} order Louvain memberships are from the first
-initial pass of the Louvain algorithm whereas the \code{"higher"}
-order Louvain memberships are from the last pass of the Louvain
-algorithm}
+\code{"lower"} stops the Louvain algorithm after its first
+local-moving pass (no aggregation/merging of communities);
+\code{"higher"} runs the full multilevel aggregation to convergence.
+Each application of the Louvain algorithm computes \emph{only} the
+requested order directly, rather than always computing \code{"higher"}
+and extracting a level from it}
 
 \item{resolution}{Numeric (length = 1).
 A parameter that adjusts modularity to allow the algorithm to
@@ -64,6 +67,13 @@ to identify the number of communities in a network based on Golino, Moulder et a
 \item{consensus.iter}{Numeric (length = 1).
 Number of algorithm applications to the network.
 Defaults to \code{1000}}
+
+\item{seed}{Numeric (length = 1).
+Sets seed for reproducible results.
+Defaults to \code{NULL} or random results.
+Each of the \code{consensus.iter} applications of the Louvain algorithm
+uses its own reproducible sub-seed derived from \code{seed}, so setting
+\code{seed} makes the entire consensus clustering procedure reproducible}
 
 \item{correlation.matrix}{Symmetric matrix.
 Used for computation of \code{\link[EGAnet]{tefi}}.
@@ -114,8 +124,6 @@ co-occur with all other nodes in their community (or a proportion of 1.00).
 Variations of this procedure are also available in this package but are
 \strong{experimental}. Use these experimental procedures with caution.
 More work is necessary before these experimental procedures are validated
-
-\emph{At this time, seed setting for consensus clustering is not supported}
 }
 \examples{
 # Load data

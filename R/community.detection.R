@@ -30,7 +30,15 @@
 #' Set \code{objective_function = "CPM"} to use the
 #' Constant Potts Model instead (see examples)
 #'
-#' \item \code{"louvain"} --- See \code{\link[igraph]{cluster_louvain}} for more details
+#' \item \code{"louvain"} --- Applies \code{EGAnet}'s own C implementation of the
+#' Louvain algorithm (Blondel et al., 2008), which replaces
+#' \code{\link[igraph]{cluster_louvain}}. Accepts \code{resolution} (defaults
+#' to \code{1}), \code{seed} (defaults to \code{NULL}, i.e., not reproducible),
+#' and \code{order} (\code{"higher"} or \code{"lower"}; defaults to
+#' \code{"higher"}). Unlike \code{igraph::cluster_louvain}, which draws on R's
+#' global random number generator, this implementation's randomness depends
+#' only on \code{seed} -- making it reproducible regardless of R's RNG state,
+#' call order, or parallelization
 #'
 #' \item \code{"optimal"} --- See \code{\link[igraph]{cluster_optimal}} for more details
 #'
@@ -205,7 +213,7 @@ community.detection <- function(
         "label_prop" = igraph::cluster_label_prop,
         "leading_eigen" = igraph::cluster_leading_eigen,
         "leiden" = igraph::cluster_leiden,
-        "louvain" = igraph::cluster_louvain,
+        "louvain" = louvain, # {EGAnet}'s own C implementation (see `src/louvain.c`)
         "optimal" = igraph::cluster_optimal,
         "spinglass" = igraph::cluster_spinglass,
         "walktrap" = igraph::cluster_walktrap

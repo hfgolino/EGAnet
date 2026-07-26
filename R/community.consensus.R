@@ -11,10 +11,12 @@
 #' Defaults to \code{"higher"}.
 #' Whether \code{"lower"} or \code{"higher"} order memberships from
 #' the Louvain algorithm should be obtained for the consensus.
-#' The \code{"lower"} order Louvain memberships are from the first
-#' initial pass of the Louvain algorithm whereas the \code{"higher"}
-#' order Louvain memberships are from the last pass of the Louvain
-#' algorithm
+#' \code{"lower"} stops the Louvain algorithm after its first
+#' local-moving pass (no aggregation/merging of communities);
+#' \code{"higher"} runs the full multilevel aggregation to convergence.
+#' Each application of the Louvain algorithm computes \emph{only} the
+#' requested order directly, rather than always computing \code{"higher"}
+#' and extracting a level from it
 #'
 #' @param resolution Numeric (length = 1).
 #' A parameter that adjusts modularity to allow the algorithm to
@@ -53,6 +55,13 @@
 #' Number of algorithm applications to the network.
 #' Defaults to \code{1000}
 #'
+#' @param seed Numeric (length = 1).
+#' Sets seed for reproducible results.
+#' Defaults to \code{NULL} or random results.
+#' Each of the \code{consensus.iter} applications of the Louvain algorithm
+#' uses its own reproducible sub-seed derived from \code{seed}, so setting
+#' \code{seed} makes the entire consensus clustering procedure reproducible
+#'
 #' @param correlation.matrix Symmetric matrix.
 #' Used for computation of \code{\link[EGAnet]{tefi}}.
 #' Only needed when \code{consensus.method = "tefi"}
@@ -85,8 +94,6 @@
 #' Variations of this procedure are also available in this package but are
 #' \strong{experimental}. Use these experimental procedures with caution.
 #' More work is necessary before these experimental procedures are validated
-#'
-#' \emph{At this time, seed setting for consensus clustering is not supported}
 #'
 #' @return Returns either a vector with the selected solution
 #' or a list when \code{membership.only = FALSE}:
@@ -162,6 +169,7 @@ community.consensus <- function(
       "highest_modularity", "iterative",
       "most_common", "lowest_tefi"
     ), consensus.iter = 1000,
+    seed = NULL,
     correlation.matrix = NULL,
     allow.singleton = FALSE,
     membership.only = TRUE,
@@ -175,7 +183,7 @@ community.consensus <- function(
 
   # Arguments errors
   community.consensus_errors(
-    network, resolution, consensus.iter,
+    network, resolution, consensus.iter, seed,
     correlation.matrix, allow.singleton, membership.only
   )
 
@@ -239,22 +247,22 @@ community.consensus <- function(
       )
     }
 
-    # Algorithm function
-    algorithm.FUN <- igraph::cluster_louvain
+    # Algorithm function -- {EGAnet}'s own C implementation (see `src/louvain.c`)
+    algorithm.FUN <- louvain
 
-    # Algorithm arguments
+    # Algorithm arguments -- `order` is passed straight through to `louvain`,
+    # which computes *only* the requested order at the C level ("lower"
+    # stops after the first local-moving pass; "higher" runs full multilevel
+    # aggregation), rather than always computing "higher" and slicing out
+    # a level after the fact
     algorithm.ARGS <- obtain_arguments(
       FUN = algorithm.FUN,
-      FUN.args = list(resolution = resolution)
+      FUN.args = list(resolution = resolution, order = order)
     )
 
-    # Remove weights from igraph functions' arguments
-    if("weights" %in% names(algorithm.ARGS)){
-      algorithm.ARGS[which(names(algorithm.ARGS) == "weights")] <- NULL
-    }
-
-    # Check for proper network
-    algorithm.ARGS[[1]] <- convert2igraph(network)
+    # Set network directly (no need to convert to {igraph} and back --
+    # `algorithm.FUN` is always our own `louvain`, which accepts a matrix)
+    algorithm.ARGS[[1]] <- network
 
     # Get consensus method function
     consensus.FUN <- switch(
@@ -269,8 +277,8 @@ community.consensus <- function(
     consensus.ARGS <- list(
       FUN = algorithm.FUN,
       FUN.ARGS = as.list(algorithm.ARGS),
-      order = order,
       consensus.iter = consensus.iter,
+      seed = seed,
       correlation.matrix = correlation.matrix,
       dimensions = dimensions
     )
@@ -368,7 +376,7 @@ community.consensus <- function(
 # Errors ----
 # Updated 13.08.2023
 community.consensus_errors <- function(
-    network, resolution, consensus.iter,
+    network, resolution, consensus.iter, seed,
     correlation.matrix, allow.singleton, membership.only
 )
 {
@@ -387,6 +395,13 @@ community.consensus_errors <- function(
   length_error(consensus.iter, 1, "community.consensus")
   typeof_error(consensus.iter, "numeric", "community.consensus")
   range_error(consensus.iter, c(1, Inf), "community.consensus")
+
+  # 'seed' errors
+  if(!is.null(seed)){
+    length_error(seed, 1, "community.consensus")
+    typeof_error(seed, "numeric", "community.consensus")
+    range_error(seed, c(0, Inf), "community.consensus")
+  }
 
   # 'correlation.matrix' errors
   if(!is.null(correlation.matrix)){
@@ -462,17 +477,24 @@ summary.EGA.consensus <- function(object, ...)
 
 #' @noRd
 # Standard application method ----
-# Updated 02.08.2023
+# Updated 26.07.2026
 consensus_application <- function(
-    FUN, FUN.ARGS, consensus.iter
+    FUN, FUN.ARGS, consensus.iter, seed = NULL
 )
 {
+
+  # Generate a reproducible sub-seed for each application -- without this,
+  # every application would receive the same `seed` and therefore return
+  # an identical (non-consensus) result
+  seeds <- reproducible_seeds(consensus.iter, seed)
 
   # Apply algorithm
   return(
     lapply(
-      seq_len(consensus.iter), do.call,
-      what = FUN, args = FUN.ARGS
+      seq_len(consensus.iter), function(i){
+        FUN.ARGS$seed <- seeds[i]
+        do.call(what = FUN, args = FUN.ARGS)
+      }
     )
   )
 
@@ -483,7 +505,7 @@ consensus_application <- function(
 # Updated 01.07.2023
 highest_modularity <- function(
     FUN, FUN.ARGS,
-    order, consensus.iter,
+    consensus.iter, seed = NULL,
     correlation.matrix, # not used
     dimensions
 )
@@ -492,38 +514,21 @@ highest_modularity <- function(
   # Apply algorithm
   communities <- consensus_application(
     FUN = FUN, FUN.ARGS = FUN.ARGS,
-    consensus.iter = consensus.iter
+    consensus.iter = consensus.iter, seed = seed
   )
 
-  # Obtain modularities
-  if(order == "lower"){
-    modularities <- nvapply(
-      communities, function(x){
-        x$modularity[1]
-      }
-    )
-  }else if(order == "higher"){
-    modularities <- nvapply(
-      communities, function(x){
-        x$modularity[length(x$modularity)]
-      }
-    )
-  }
+  # Obtain modularities -- `x$modularity` already corresponds to whichever
+  # `order` was requested at the algorithm level (see `community.consensus`)
+  modularities <- nvapply(
+    communities, function(x){
+      x$modularity[length(x$modularity)]
+    }
+  )
 
   # Obtain memberships
-  if(order == "lower"){
-    memberships <- t(nvapply(
-      communities, function(x){
-        x$memberships[1,]
-      }, LENGTH = dimensions[2]
-    ))
-  }else if(order == "higher"){
-    memberships <- t(nvapply(
-      communities, function(x){
-        x$memberships[dim(x$memberships)[1],]
-      }, LENGTH = dimensions[2]
-    ))
-  }
+  memberships <- t(nvapply(
+    communities, function(x){x$membership}, LENGTH = dimensions[2]
+  ))
 
   # Set up return list
   return(
@@ -549,7 +554,7 @@ binary_check <- function(b_matrix)
 # Updated 06.07.2023
 iterative <- function(
     FUN, FUN.ARGS,
-    order, consensus.iter,
+    consensus.iter, seed = NULL,
     correlation.matrix, # not used
     dimensions
 )
@@ -561,26 +566,20 @@ iterative <- function(
   # Loop over for consensus
   while(TRUE){
 
+    # Each pass needs its own reproducible seed -- otherwise every pass
+    # after the first would repeat the first pass's sub-seeds
+    pass_seed <- swiftelse(is.null(seed), NULL, seed + iterations - 1)
+
     # Apply algorithm
     communities <- consensus_application(
       FUN = FUN, FUN.ARGS = FUN.ARGS,
-      consensus.iter = consensus.iter
+      consensus.iter = consensus.iter, seed = pass_seed
     )
 
     # Obtain memberships
-    if(order == "lower"){
-      memberships <- t(nvapply(
-        communities, function(x){
-          x$memberships[1,]
-        }, LENGTH = dimensions[2]
-      ))
-    }else if(order == "higher"){
-      memberships <- t(nvapply(
-        communities, function(x){
-          x$memberships[dim(x$memberships)[1],]
-        }, LENGTH = dimensions[2]
-      ))
-    }
+    memberships <- t(nvapply(
+      communities, function(x){x$membership}, LENGTH = dimensions[2]
+    ))
 
     # Initialize consensus matrix
     consensus_matrix <- matrix(
@@ -614,10 +613,9 @@ iterative <- function(
     # Increase iterations
     iterations <- iterations + 1
 
-    # Update network (if continuing)
-    if(is(FUN.ARGS[[1]], "igraph")){
-      FUN.ARGS[[1]] <- convert2igraph(consensus_matrix)
-    }
+    # Update network (if continuing) -- `FUN.ARGS[[1]]` is always a plain
+    # matrix now, since `FUN` is always our own `louvain`
+    FUN.ARGS[[1]] <- consensus_matrix
 
   }
 
@@ -636,7 +634,7 @@ iterative <- function(
 # Updated 06.07.2023
 lowest_tefi <- function(
     FUN, FUN.ARGS,
-    order, consensus.iter,
+    consensus.iter, seed = NULL,
     correlation.matrix, # used in function
     dimensions
 )
@@ -645,23 +643,13 @@ lowest_tefi <- function(
   # Apply algorithm
   communities <- consensus_application(
     FUN = FUN, FUN.ARGS = FUN.ARGS,
-    consensus.iter = consensus.iter
+    consensus.iter = consensus.iter, seed = seed
   )
 
   # Obtain memberships
-  if(order == "lower"){
-    memberships <- t(nvapply(
-      communities, function(x){
-        x$memberships[1,]
-      }, LENGTH = dimensions[2]
-    ))
-  }else if(order == "higher"){
-    memberships <- t(nvapply(
-      communities, function(x){
-        x$memberships[dim(x$memberships)[1],]
-      }, LENGTH = dimensions[2]
-    ))
-  }
+  memberships <- t(nvapply(
+    communities, function(x){x$membership}, LENGTH = dimensions[2]
+  ))
 
   # Prepare a data frame
   unique_table <- unique(memberships, MARGIN = 1)
@@ -696,7 +684,7 @@ lowest_tefi <- function(
 # Updated 06.07.2023
 most_common <- function(
     FUN, FUN.ARGS,
-    order, consensus.iter,
+    consensus.iter, seed = NULL,
     correlation.matrix, # not used
     dimensions
 )
@@ -705,23 +693,13 @@ most_common <- function(
   # Apply algorithm
   communities <- consensus_application(
     FUN = FUN, FUN.ARGS = FUN.ARGS,
-    consensus.iter = consensus.iter
+    consensus.iter = consensus.iter, seed = seed
   )
 
   # Obtain memberships
-  if(order == "lower"){
-    memberships <- t(nvapply(
-      communities, function(x){
-        x$memberships[1,]
-      }, LENGTH = dimensions[2]
-    ))
-  }else if(order == "higher"){
-    memberships <- t(nvapply(
-      communities, function(x){
-        x$memberships[dim(x$memberships)[1],]
-      }, LENGTH = dimensions[2]
-    ))
-  }
+  memberships <- t(nvapply(
+    communities, function(x){x$membership}, LENGTH = dimensions[2]
+  ))
 
   # Prepare a data frame
   proportion_table <- count_table(memberships, proportion = TRUE)

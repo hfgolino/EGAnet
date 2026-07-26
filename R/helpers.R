@@ -323,6 +323,56 @@ rnorm_ziggurat <- function(n, seed = NULL)
 }
 
 #' @noRd
+# Louvain community detection ----
+# {EGAnet}'s own C implementation of (unsigned) modularity Louvain
+# (see `src/louvain.c`), replacing `igraph::cluster_louvain` in
+# `community.detection` and `community.consensus`. Node shuffling
+# uses xoshiro256++ (like the rest of {EGAnet}'s reproducible random
+# generation), so -- unlike `igraph::cluster_louvain`, which draws on
+# R's global RNG -- results are a pure function of `network`,
+# `resolution`, and `seed`, independent of R's RNG state, call order,
+# or parallel worker
+#
+# `order` determines what is actually computed at the C level
+# ("lower" stops after the first local-moving pass; "higher" runs
+# full multilevel aggregation to convergence) -- only that single,
+# requested level is returned, as `membership` (vector) and
+# `modularity` (scalar)
+# Updated 26.07.2026
+louvain <- function(graph, resolution = 1, seed = NULL, order = c("higher", "lower"), ...)
+{
+
+  # Check for missing arguments (argument, default, function)
+  order <- set_default(order, "higher", louvain)
+
+  # Accept either an {igraph} network or a (already `abs`-valued) matrix
+  network <- swiftelse(is(graph, "igraph"), igraph2matrix(graph), as.matrix(graph))
+
+  # Call from C
+  result <- .Call(
+    "r_louvain",
+    network, as.double(resolution),
+    as.double(swiftelse(is.null(seed), 0, seed)),
+    as.integer(order == "lower"),
+    PACKAGE = "EGAnet"
+  )
+
+  # Only one level is ever returned by `r_louvain` for the requested
+  # `order` -- the last row/element is that level regardless of order
+  # ("lower" only ever has one)
+  final_level <- dim(result$memberships)[1]
+
+  # Return just the requested level's membership and modularity
+  return(
+    list(
+      membership = result$memberships[final_level,],
+      modularity = result$modularity[final_level]
+    )
+  )
+
+}
+
+#' @noRd
 # Generate multivariate normal data ----
 # Removes MASS package dependency (from version 7.3.60)
 # Original code here for legacy and bug checking

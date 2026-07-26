@@ -1,6 +1,18 @@
 WEBSITE: https://r-ega.net
 
-## Changes in version 2.4.2
+## Changes in version 2.5.0
+
++	UPDATE: `community.detection` and `community.consensus` now use {EGAnet}'s own C implementation of the Louvain algorithm (`louvain.c`) instead of `igraph::cluster_louvain`:
+
+	-	Uses the standard incremental Louvain bookkeeping (Blondel et al., 2008) with a sparse adjacency list built once per aggregation level, rather than a dense O(cols^2) modularity matrix -- substantially faster, especially for larger and/or denser networks and for the repeated applications used by consensus clustering
+
+	-	Node shuffling uses xoshiro256++ (like the rest of {EGAnet}'s reproducible random generation) rather than R's global RNG, so `seed` now makes results reproducible regardless of R's RNG state, call order, or parallelization
+
+	-	`community.consensus` gains a `seed` argument (previously unsupported for consensus clustering); each of the `consensus.iter` applications gets its own reproducible sub-seed derived from it. `bootEGA` now threads its per-iteration seed through to the algorithm as well -- previously, only the bootstrap resampling was reproducible when `seed` was set, not the Louvain community detection step itself
+
+	-	`order = "lower"`/`"higher"` now determines what is directly computed (stopping after the first local-moving pass, or running full multilevel aggregation to convergence) rather than always computing the higher-order solution and extracting a level from it afterward
+
++	INTERNAL: added `resolve_resolution` (not yet used/exported)
 
 +	UPDATE: `polychoric.matrix` C implementation overhauled for speed and accuracy (ported from {L0ggm}):
 
