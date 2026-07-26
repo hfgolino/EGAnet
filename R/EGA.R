@@ -148,7 +148,7 @@
 #' @return Returns a list containing:
 #'
 #' \item{network}{A matrix containing a network estimated using
-#' \code{link[EGAnet]{network.estimation}}}
+#' \code{\link[EGAnet]{network.estimation}}}
 #'
 #' \item{wc}{A vector representing the community (dimension) membership
 #' of each node in the network. \code{NA} values mean that the node
@@ -162,7 +162,7 @@
 #'
 #' \item{dim.variables}{An ordered matrix of item allocation}
 #'
-#' \item{TEFI}{\code{link[EGAnet]{tefi}} for the estimated structure}
+#' \item{TEFI}{\code{\link[EGAnet]{tefi}} for the estimated structure}
 #'
 #' \item{plot.EGA}{Plot output if \code{plot.EGA = TRUE}}
 #'
