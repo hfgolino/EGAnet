@@ -21,7 +21,7 @@ resolve_resolution <- function(network, algorithm, ...)
   )
 
   # Estimate initial memberships
-  wc <- algorithm_FUN(network, algorithm, ...)
+  wc <- algorithm_FUN(network, ...)
 
   # Set while loop
   while(TRUE){
@@ -71,15 +71,15 @@ resolve_resolution <- function(network, algorithm, ...)
 
         # Set subgraph and membership
         subgraph <- network[index, index]
-        subgraph_wc <- algorithm_FUN(subgraph, algorithm, allow.singleton = TRUE, ...)
+        subgraph_wc <- algorithm_FUN(subgraph, allow.singleton = TRUE, ...)
 
         # Compute modularity gain
         gain <- modularity(subgraph, subgraph_wc) - modularity(subgraph, wc[index])
 
-        # Check for any gain
-        if(gain < 1e-08){
-          break
-        }
+        # # Check for any gain
+        # if(gain < 1e-08){
+        #   break
+        # }
 
         # Update gain matrix
         gain_matrix[i,j] <- gain
@@ -104,7 +104,23 @@ resolve_resolution <- function(network, algorithm, ...)
 
       # Obtain clusters
       expansion <- count_table(do.call(rbind, store[[index]]))
-      new_wc <- expansion[order(expansion$Value, decreasing = TRUE),][1, -dim(expansion)[2]]
+      ordered <- expansion[order(expansion$Value, decreasing = TRUE),]
+
+      # Maximum counts
+      max_counts <- expansion$Value == max(ordered$Value)
+
+      # Check for ties
+      if(sum(max_counts) > 1){
+
+        # Use highest modularity gain
+        new_wc <- expansion[max_counts,][which.max(gain_matrix[index,]), -dim(expansion)[2]]
+
+      }else{
+
+        # Use most common
+        new_wc <- ordered[1, -dim(expansion)[2]]
+
+      }
 
       # Update memberships
       wc[names(new_wc)] <- as.numeric(n_clusters + new_wc)
