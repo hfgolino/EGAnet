@@ -3,6 +3,16 @@
 resolve_resolution <- function(network, algorithm, ...)
 {
 
+  # Based on single subgraph:
+  # Granell, C., Gomez, S., & Arenas, A. (2012).
+  # Hierarchical multiresolution method to overcome the resolution limit in complex networks.
+  # International Journal of Bifurcation and Chaos, 22(07), 1250171.
+
+  # Mentioned single subgraph:
+  # Fortunato, S., & Barthelemy, M. (2007).
+  # Resolution limit in community detection.
+  # Proceedings of the National Academy of Sciences, 104(1), 36–41.
+
   # Set algorithm
   algorithm_FUN <- switch(
     algorithm,
@@ -11,7 +21,7 @@ resolve_resolution <- function(network, algorithm, ...)
   )
 
   # Estimate initial memberships
-  wc <- algorithm_FUN(network, ...)
+  wc <- algorithm_FUN(network, algorithm, ...)
 
   # Set while loop
   while(TRUE){
@@ -61,7 +71,7 @@ resolve_resolution <- function(network, algorithm, ...)
 
         # Set subgraph and membership
         subgraph <- network[index, index]
-        subgraph_wc <- algorithm_FUN(subgraph, allow.singleton = TRUE, ...)
+        subgraph_wc <- algorithm_FUN(subgraph, algorithm, allow.singleton = TRUE, ...)
 
         # Compute modularity gain
         gain <- modularity(subgraph, subgraph_wc) - modularity(subgraph, wc[index])
