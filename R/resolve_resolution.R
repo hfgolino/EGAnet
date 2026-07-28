@@ -67,7 +67,7 @@ resolve_resolution <- function(network, algorithm, ...)
       for(j in seq_clusters){
 
         # Set index of pairwise clusters
-        index <- c(indices[[i]], indices[[j]])
+        index <- swiftelse(i != j, c(indices[[i]], indices[[j]]), indices[[i]])
 
         # Set subgraph and membership
         subgraph <- network[index, index]
@@ -76,10 +76,10 @@ resolve_resolution <- function(network, algorithm, ...)
         # Compute modularity gain
         gain <- modularity(subgraph, subgraph_wc) - modularity(subgraph, wc[index])
 
-        # # Check for any gain
-        # if(gain < 1e-08){
-        #   break
-        # }
+        # Check for any gain
+        if(gain < 1e-08){
+          break
+        }
 
         # Update gain matrix
         gain_matrix[i,j] <- gain
@@ -99,21 +99,31 @@ resolve_resolution <- function(network, algorithm, ...)
       break
     }
 
+    # Initialize updated memberships
+    updated_wc <- wc
+
     # Loop over to expand
     for(index in expand_index){
 
       # Obtain clusters
-      expansion <- count_table(do.call(rbind, store[[index]]))
+      expansion <- count_table(do.call(rbind.data.frame, store[[index]]))
       ordered <- expansion[order(expansion$Value, decreasing = TRUE),]
 
       # Maximum counts
-      max_counts <- expansion$Value == max(ordered$Value)
+      max_counts <- ordered$Value == max(ordered$Value)
 
       # Check for ties
       if(sum(max_counts) > 1){
 
+        # Obtain solutions
+        solutions <- ordered[max_counts, -dim(ordered)[2]]
+
+        # Obtain modularity from solutions
+        wc_index <- wc == index
+        Qs <- apply(solutions, 1, modularity, network = network[wc_index, wc_index])
+
         # Use highest modularity gain
-        new_wc <- expansion[max_counts,][which.max(gain_matrix[index,]), -dim(expansion)[2]]
+        new_wc <- solutions[which.max(Qs),]
 
       }else{
 
@@ -123,16 +133,19 @@ resolve_resolution <- function(network, algorithm, ...)
       }
 
       # Update memberships
-      wc[names(new_wc)] <- as.numeric(n_clusters + new_wc)
-      wc <- reindex_memberships(wc)
-      n_clusters <- unique_length(wc)
+      updated_wc[names(new_wc)] <- as.numeric(n_clusters + new_wc)
+      updated_wc <- reindex_memberships(updated_wc)
+      n_clusters <- unique_length(updated_wc)
 
     }
 
     # Check that there was an update
-    if(all(wc == previous_wc)){
+    if(all(updated_wc == previous_wc)){
       break
     }
+
+    # Update memberships
+    wc <- updated_wc
 
   }
 
