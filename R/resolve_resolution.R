@@ -106,7 +106,7 @@ resolve_resolution <- function(network, algorithm, ...)
     for(index in expand_index){
 
       # Obtain clusters
-      expansion <- count_table(do.call(rbind.data.frame, store[[index]]))
+      expansion <- count_table(do.call(rbind, store[[index]]))
       ordered <- expansion[order(expansion$Value, decreasing = TRUE),]
 
       # Maximum counts
