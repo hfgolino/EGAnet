@@ -1,6 +1,6 @@
 #' @noRd
 # Updated 26.07.2026
-resolve_resolution <- function(network, algorithm, ...)
+resolve_resolution <- function(network, algorithm, allow.singleton, ...)
 {
 
   # Based on single subgraph:
@@ -21,7 +21,7 @@ resolve_resolution <- function(network, algorithm, ...)
   )
 
   # Estimate initial memberships
-  wc <- algorithm_FUN(network, ...)
+  wc <- algorithm_FUN(network, allow.singleton = allow.singleton, ...)
 
   # Set while loop
   while(TRUE){
@@ -71,7 +71,7 @@ resolve_resolution <- function(network, algorithm, ...)
 
         # Set subgraph and membership
         subgraph <- network[index, index]
-        subgraph_wc <- algorithm_FUN(subgraph, allow.singleton = TRUE, ...)
+        subgraph_wc <- algorithm_FUN(subgraph, allow.singleton = allow.singleton, ...)
 
         # Compute modularity gain
         gain <- modularity(subgraph, subgraph_wc) - modularity(subgraph, wc[index])
