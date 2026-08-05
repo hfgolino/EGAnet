@@ -87,6 +87,7 @@ export(community.compare)
 export(community.consensus)
 export(community.detection)
 export(community.homogenize)
+export(community.prism)
 export(community.unidimensional)
 export(compare.EGA.plots)
 export(convert2igraph)
@@ -129,57 +130,65 @@ export(totalCor)
 export(totalCorMat)
 export(vn.entropy)
 export(wto)
-importFrom(graphics,par)
-importFrom(graphics,text)
-importFrom(methods,formalArgs)
-importFrom(methods,is)
-importFrom(stats,KalmanSmooth)
-importFrom(stats,StructTS)
-importFrom(stats,as.dendrogram)
-importFrom(stats,as.dist)
-importFrom(stats,as.hclust)
-importFrom(stats,complete.cases)
-importFrom(stats,cor)
-importFrom(stats,cov)
-importFrom(stats,cov2cor)
-importFrom(stats,cutree)
-importFrom(stats,dist)
-importFrom(stats,dnorm)
-importFrom(stats,hclust)
-importFrom(stats,ks.test)
-importFrom(stats,mad)
-importFrom(stats,median)
-importFrom(stats,na.omit)
-importFrom(stats,nlm)
-importFrom(stats,nlminb)
-importFrom(stats,optimHess)
-importFrom(stats,optimize)
-importFrom(stats,p.adjust)
-importFrom(stats,pchisq)
-importFrom(stats,pgamma)
-importFrom(stats,pnorm)
-importFrom(stats,qchisq)
-importFrom(stats,qf)
-importFrom(stats,qgamma)
-importFrom(stats,qnorm)
-importFrom(stats,qt)
-importFrom(stats,quantile)
-importFrom(stats,rnorm)
-importFrom(stats,runif)
-importFrom(stats,sd)
-importFrom(stats,setNames)
-importFrom(stats,t.test)
-importFrom(stats,uniroot)
-importFrom(stats,var)
-importFrom(stats,wilcox.test)
-importFrom(utils,browseURL)
-importFrom(utils,capture.output)
-importFrom(utils,combn)
-importFrom(utils,data)
-importFrom(utils,globalVariables)
-importFrom(utils,object.size)
-importFrom(utils,packageDescription)
-importFrom(utils,packageVersion)
-importFrom(utils,setTxtProgressBar)
-importFrom(utils,txtProgressBar)
+importFrom(graphics,
+  par,
+  text
+)
+importFrom(methods,
+  formalArgs,
+  is
+)
+importFrom(stats,
+  KalmanSmooth,
+  StructTS,
+  as.dendrogram,
+  as.dist,
+  as.hclust,
+  complete.cases,
+  cor,
+  cov,
+  cov2cor,
+  cutree,
+  dist,
+  dnorm,
+  hclust,
+  ks.test,
+  mad,
+  median,
+  na.omit,
+  nlm,
+  nlminb,
+  optimHess,
+  optimize,
+  p.adjust,
+  pchisq,
+  pgamma,
+  pnorm,
+  qchisq,
+  qf,
+  qgamma,
+  qnorm,
+  qt,
+  quantile,
+  rnorm,
+  runif,
+  sd,
+  setNames,
+  t.test,
+  uniroot,
+  var,
+  wilcox.test
+)
+importFrom(utils,
+  browseURL,
+  capture.output,
+  combn,
+  data,
+  globalVariables,
+  object.size,
+  packageDescription,
+  packageVersion,
+  setTxtProgressBar,
+  txtProgressBar
+)
 useDynLib(EGAnet, .registration = TRUE)
