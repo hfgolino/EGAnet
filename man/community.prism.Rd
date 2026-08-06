@@ -2,7 +2,7 @@
 % Please edit documentation in R/community.prism.R
 \name{community.prism}
 \alias{community.prism}
-\title{Pairwise Resolution Iteration over Subgraph Modularity (PRISM)}
+\title{Pairwise Resolution Iteration via Subgraph Modularity (PRISM)}
 \usage{
 community.prism(
   network,

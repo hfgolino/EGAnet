@@ -1,4 +1,4 @@
-#' @title Pairwise Resolution Iteration over Subgraph Modularity (PRISM)
+#' @title Pairwise Resolution Iteration via Subgraph Modularity (PRISM)
 #'
 #' @description Iteratively tests pairwise unions of communities for a
 #' modularity gain at the subgraph level and merges communities whenever
@@ -95,7 +95,7 @@
 #'
 #' @export
 #'
-# Pairwise Resolution Iteration over Subgraph Modularity ----
+# Pairwise Resolution Iteration via Subgraph Modularity ----
 # Updated 05.08.2026
 community.prism <- function(
     network, algorithm = c(
