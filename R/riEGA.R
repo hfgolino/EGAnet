@@ -138,6 +138,13 @@
 #' Defaults to \code{FALSE} (silent calls).
 #' Set to \code{TRUE} to see all messages and warnings for every function call
 #'
+#' @param seed Numeric (length = 1).
+#' Sets seed for reproducible results.
+#' Defaults to \code{NULL} or random results.
+#' Relevant when \code{algorithm = "louvain"}: passed on to the internal
+#' \code{\link[EGAnet]{EGA}} call, making the community detection
+#' reproducible
+#'
 #' @param ... Additional arguments to be passed on to
 #' \code{\link[EGAnet]{auto.correlate}},
 #' \code{\link[EGAnet]{network.estimation}},
@@ -198,7 +205,7 @@
 #'
 # Random-Intercept EGA
 # Superceded 'residualEGA.R' on 17.04.2022
-# Updated 21.09.2024
+# Updated 12.08.2026
 riEGA <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
@@ -206,13 +213,13 @@ riEGA <- function(
     model = c("glasso", "TMFG"),
     algorithm = c("leiden", "louvain", "walktrap"),
     uni.method = c("expand", "LE", "louvain"),
-    plot.EGA = TRUE, verbose = FALSE,
+    plot.EGA = TRUE, verbose = FALSE, seed = NULL,
     ...
 )
 {
 
   # Argument errors (return data in case of tibble)
-  data <- riEGA_errors(data, n, plot.EGA, verbose, ...)
+  data <- riEGA_errors(data, n, plot.EGA, verbose, seed, ...)
 
   # Check for missing arguments (argument, default, function)
   corr <- set_default(corr, "auto", riEGA)
@@ -351,7 +358,7 @@ riEGA <- function(
     data = correlation_matrix, n = dimensions[1],
     corr = corr, na.data = na.data, model = model,
     algorithm = algorithm, uni.method = uni.method,
-    plot.EGA = FALSE, verbose = verbose,
+    plot.EGA = FALSE, verbose = verbose, seed = seed,
     needs_usable = FALSE, # skips usable data check
     ...
   )
@@ -420,8 +427,8 @@ riEGA <- function(
 
 #' @noRd
 # Errors ----
-# Updated 07.09.2023
-riEGA_errors <- function(data, n, plot.EGA, verbose, ...)
+# Updated 12.08.2026
+riEGA_errors <- function(data, n, plot.EGA, verbose, seed, ...)
 {
 
   # 'data' errors
@@ -445,6 +452,13 @@ riEGA_errors <- function(data, n, plot.EGA, verbose, ...)
   # 'verbose' errors
   length_error(verbose, 1, "riEGA")
   typeof_error(verbose, "logical", "riEGA")
+
+  # 'seed' errors
+  if(!is.null(seed)){
+    length_error(seed, 1, "riEGA")
+    typeof_error(seed, "numeric", "riEGA")
+    range_error(seed, c(0, Inf), "riEGA")
+  }
 
   # Check for usable data
   if(needs_usable(list(...))){

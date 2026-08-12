@@ -14,6 +14,7 @@ EGA(
   uni.method = c("expand", "LE", "louvain"),
   plot.EGA = TRUE,
   verbose = FALSE,
+  seed = NULL,
   ...
 )
 }
@@ -147,6 +148,15 @@ Whether messages and (insignificant) warnings should be output.
 Defaults to \code{FALSE} (silent calls).
 Set to \code{TRUE} to see all messages and warnings for every function call}
 
+\item{seed}{Numeric (length = 1).
+Sets seed for reproducible results.
+Defaults to \code{NULL} or random results.
+Relevant when \code{algorithm = "louvain"} or \code{uni.method = "louvain"}:
+passed on to \code{\link[EGAnet]{community.detection}},
+\code{\link[EGAnet]{community.consensus}}, and
+\code{\link[EGAnet]{community.unidimensional}} to make the Louvain
+community detection reproducible}
+
 \item{...}{Additional arguments to be passed on to
 \code{\link[EGAnet]{auto.correlate}},
 \code{\link[EGAnet]{network.estimation}},
@@ -209,6 +219,12 @@ ega.wmt.tmfg <- EGA(
 # Estimate EGA with Louvain algorithm
 ega.wmt.louvain <- EGA(
   data = wmt, algorithm = "louvain",
+  plot.EGA = FALSE # No plot for CRAN checks
+)
+
+# Estimate EGA with Louvain algorithm (reproducible)
+ega.wmt.louvain.seed <- EGA(
+  data = wmt, algorithm = "louvain", seed = 42,
   plot.EGA = FALSE # No plot for CRAN checks
 )
 

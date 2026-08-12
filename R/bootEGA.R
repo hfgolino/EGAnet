@@ -619,7 +619,7 @@ bootEGA <- function(
     results$typicalGraph <- do.call(
       what = estimate_typicalStructure,
       args = c(
-        list(data = data, results = results, verbose = verbose),
+        list(data = data, results = results, verbose = verbose, seed = seed),
         ellipse
       )
     )
@@ -1659,7 +1659,7 @@ estimate_typicalStructure <- function(
     corr = model_attributes$corr,
     na.data = model_attributes$na.data,
     model = model, uni.method = uni.method,
-    verbose = FALSE
+    verbose = FALSE, seed = ellipse$seed # thread `seed` for reproducible Louvain
   )
 
   # `data` at this point will be data or correlation matrix

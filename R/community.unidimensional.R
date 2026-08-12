@@ -462,7 +462,13 @@ consensus_wrapper <- function(correlation_matrix, verbose, ellipse)
     )
 
   }else{ # Use single-shot Louvain
-    membership <- community.detection(correlation_matrix, algorithm = "louvain")
+    membership <- do.call(
+      what = community.detection,
+      args = c(
+        list(network = correlation_matrix, algorithm = "louvain"),
+        ellipse # pass on ellipse (e.g., `seed`)
+      )
+    )
   }
 
   # Add back names

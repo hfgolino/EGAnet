@@ -225,7 +225,7 @@ plot_clusters <- function(
       ega_object <- list(
         network = average_networks[[i]],
         wc = community.detection(
-          consensus[[i]], algorithm = community_methods
+          consensus[[i]], algorithm = community_methods, ...
         )
 
       )

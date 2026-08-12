@@ -60,6 +60,14 @@
 #' missing (\code{NA}); otherwise, when \code{TRUE}, singleton
 #' communities will be allowed
 #'
+#' @param seed Numeric (length = 1).
+#' Sets seed for reproducible results.
+#' Defaults to \code{NULL} or random results.
+#' Passed on to the function selected via \code{algorithm} (relevant for
+#' \code{algorithm = "louvain"}) for \emph{every} pairwise subgraph
+#' comparison performed during the iterative procedure, making the
+#' entire PRISM procedure reproducible
+#'
 #' @param ... Additional arguments to be passed on to the community
 #' detection function selected via \code{algorithm}
 #' (see \code{\link{community.consensus}} or \code{\link{community.detection}}
@@ -96,7 +104,7 @@
 #' @export
 #'
 # Pairwise Resolution Iteration via Subgraph Modularity ----
-# Updated 05.08.2026
+# Updated 12.08.2026
 community.prism <- function(
     network, algorithm = c(
       "edge_betweenness", "fast_greedy",
@@ -104,12 +112,19 @@ community.prism <- function(
       "leading_eigen", "leiden", "louvain", "optimal",
       "spinglass", "walktrap"
     ),
-    allow.singleton = FALSE, ...
+    allow.singleton = FALSE, seed = NULL, ...
 )
 {
 
   # Check for missing arguments (argument, default, function)
   algorithm <- set_default(algorithm, "louvain", community.detection)
+
+  # 'seed' errors
+  if(!is.null(seed)){
+    length_error(seed, 1, "community.prism")
+    typeof_error(seed, "numeric", "community.prism")
+    range_error(seed, c(0, Inf), "community.prism")
+  }
 
   # Check for {igraph} network
   if(is(network, "igraph")){
@@ -130,7 +145,7 @@ community.prism <- function(
   )
 
   # Estimate initial memberships
-  wc <- algorithm_FUN(network, allow.singleton = allow.singleton, ...)
+  wc <- algorithm_FUN(network, allow.singleton = allow.singleton, seed = seed, ...)
 
   # Set node names
   node_names <- names(wc)
@@ -172,7 +187,7 @@ community.prism <- function(
 
         # Set subgraph and membership
         subgraph <- network[index, index]
-        subgraph_wc <- algorithm_FUN(subgraph, allow.singleton = allow.singleton, ...)
+        subgraph_wc <- algorithm_FUN(subgraph, allow.singleton = allow.singleton, seed = seed, ...)
 
         # Compute modularity gain
         gain <- modularity(subgraph, subgraph_wc) - modularity(subgraph, wc[index])

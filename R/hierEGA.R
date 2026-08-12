@@ -202,6 +202,14 @@
 #' Defaults to \code{FALSE} (silent calls).
 #' Set to \code{TRUE} to see all messages and warnings for every function call
 #'
+#' @param seed Numeric (length = 1).
+#' Sets seed for reproducible results.
+#' Defaults to \code{NULL} or random results.
+#' Relevant when \code{lower.algorithm} or \code{higher.algorithm} is
+#' \code{"louvain"}: passed on to both the lower and higher order
+#' \code{\link[EGAnet]{EGA}} calls, making the entire hierarchical
+#' procedure reproducible
+#'
 #' @param ... Additional arguments to be passed on to
 #' \code{\link[EGAnet]{auto.correlate}},
 #' \code{\link[EGAnet]{network.estimation}},
@@ -281,7 +289,7 @@
 #' @export
 #'
 # Hierarchical EGA ----
-# Updated 08.05.2025
+# Updated 12.08.2026
 hierEGA <- function(
     data,
     # `net.scores` arguments
@@ -296,7 +304,7 @@ hierEGA <- function(
     lower.algorithm = "louvain",
     higher.algorithm = c("leiden", "louvain", "walktrap"),
     uni.method = c("expand", "LE", "louvain"),
-    plot.EGA = TRUE, verbose = FALSE,
+    plot.EGA = TRUE, verbose = FALSE, seed = NULL,
     ...
 )
 {
@@ -305,10 +313,10 @@ hierEGA <- function(
   experimental("hierEGA")
 
   # Argument errors (return data in case of tibble)
-  data <- hierEGA_errors(data, plot.EGA, verbose, ...)
+  data <- hierEGA_errors(data, plot.EGA, verbose, seed, ...)
 
   # Get ellipse arguments
-  ellipse <- list(needs_usable = FALSE, ...)
+  ellipse <- list(needs_usable = FALSE, seed = seed, ...)
 
   # Check for missing arguments (argument, default, function)
   ## `net.scores`
@@ -605,8 +613,8 @@ hierEGA <- function(
 
 #' @noRd
 # Argument errors ----
-# Updated 07.09.2023
-hierEGA_errors <- function(data, plot.EGA, verbose, ...)
+# Updated 12.08.2026
+hierEGA_errors <- function(data, plot.EGA, verbose, seed, ...)
 {
 
   # 'data' errors
@@ -624,6 +632,13 @@ hierEGA_errors <- function(data, plot.EGA, verbose, ...)
   # 'verbose' errors
   length_error(verbose, 1, "hierEGA")
   typeof_error(verbose, "logical", "hierEGA")
+
+  # 'seed' errors
+  if(!is.null(seed)){
+    length_error(seed, 1, "hierEGA")
+    typeof_error(seed, "numeric", "hierEGA")
+    range_error(seed, c(0, Inf), "hierEGA")
+  }
 
   # Check for usable data
   if(needs_usable(list(...))){

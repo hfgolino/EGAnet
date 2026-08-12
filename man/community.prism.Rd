@@ -9,6 +9,7 @@ community.prism(
   algorithm = c("edge_betweenness", "fast_greedy", "fluid", "infomap", "label_prop",
     "leading_eigen", "leiden", "louvain", "optimal", "spinglass", "walktrap"),
   allow.singleton = FALSE,
+  seed = NULL,
   ...
 )
 }
@@ -63,6 +64,14 @@ Passed on to the function selected via \code{algorithm}.
 When \code{FALSE}, singleton communities will be set to
 missing (\code{NA}); otherwise, when \code{TRUE}, singleton
 communities will be allowed}
+
+\item{seed}{Numeric (length = 1).
+Sets seed for reproducible results.
+Defaults to \code{NULL} or random results.
+Passed on to the function selected via \code{algorithm} (relevant for
+\code{algorithm = "louvain"}) for \emph{every} pairwise subgraph
+comparison performed during the iterative procedure, making the
+entire PRISM procedure reproducible}
 
 \item{...}{Additional arguments to be passed on to the community
 detection function selected via \code{algorithm}

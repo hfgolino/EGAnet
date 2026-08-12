@@ -14,6 +14,7 @@ riEGA(
   uni.method = c("expand", "LE", "louvain"),
   plot.EGA = TRUE,
   verbose = FALSE,
+  seed = NULL,
   ...
 )
 }
@@ -150,6 +151,13 @@ Defaults to \code{TRUE}}
 Whether messages and (insignificant) warnings should be output.
 Defaults to \code{FALSE} (silent calls).
 Set to \code{TRUE} to see all messages and warnings for every function call}
+
+\item{seed}{Numeric (length = 1).
+Sets seed for reproducible results.
+Defaults to \code{NULL} or random results.
+Relevant when \code{algorithm = "louvain"}: passed on to the internal
+\code{\link[EGAnet]{EGA}} call, making the community detection
+reproducible}
 
 \item{...}{Additional arguments to be passed on to
 \code{\link[EGAnet]{auto.correlate}},

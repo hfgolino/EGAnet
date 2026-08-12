@@ -13,6 +13,7 @@ EGA.fit(
   algorithm = c("leiden", "louvain", "walktrap"),
   plot.EGA = TRUE,
   verbose = FALSE,
+  seed = NULL,
   ...
 )
 }
@@ -125,6 +126,14 @@ Defaults to \code{TRUE}}
 Whether messages and (insignificant) warnings should be output.
 Defaults to \code{FALSE} (silent calls).
 Set to \code{TRUE} to see all messages and warnings for every function call}
+
+\item{seed}{Numeric (length = 1).
+Sets seed for reproducible results.
+Defaults to \code{NULL} or random results.
+Relevant when \code{algorithm = "louvain"}: passed on to
+\code{\link[EGAnet]{community.detection}} or
+\code{\link[EGAnet]{community.consensus}} for \emph{every} parameter
+in the search space, making the entire fit procedure reproducible}
 
 \item{...}{Additional arguments to be passed on to
 \code{\link[EGAnet]{auto.correlate}}, \code{\link[EGAnet]{network.estimation}},

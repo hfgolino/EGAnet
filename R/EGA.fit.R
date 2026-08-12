@@ -114,6 +114,14 @@
 #' Defaults to \code{FALSE} (silent calls).
 #' Set to \code{TRUE} to see all messages and warnings for every function call
 #'
+#' @param seed Numeric (length = 1).
+#' Sets seed for reproducible results.
+#' Defaults to \code{NULL} or random results.
+#' Relevant when \code{algorithm = "louvain"}: passed on to
+#' \code{\link[EGAnet]{community.detection}} or
+#' \code{\link[EGAnet]{community.consensus}} for \emph{every} parameter
+#' in the search space, making the entire fit procedure reproducible
+#'
 #' @param ... Additional arguments to be passed on to
 #' \code{\link[EGAnet]{auto.correlate}}, \code{\link[EGAnet]{network.estimation}},
 #' \code{\link[EGAnet]{community.detection}}, \code{\link[EGAnet]{community.consensus}},
@@ -200,14 +208,14 @@
 #' @export
 #'
 # EGA fit ----
-# Updated 24.10.2023
+# Updated 12.08.2026
 EGA.fit <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
     model = c("BGGM", "glasso", "TMFG"),
     algorithm = c("leiden", "louvain", "walktrap"),
-    plot.EGA = TRUE, verbose = FALSE,
+    plot.EGA = TRUE, verbose = FALSE, seed = NULL,
     ...
 )
 {
@@ -219,10 +227,10 @@ EGA.fit <- function(
   algorithm <- set_default(algorithm, "walktrap", EGA.fit)
 
   # Argument errors (return data in case of tibble)
-  data <- EGA.fit_errors(data, n, plot.EGA, verbose)
+  data <- EGA.fit_errors(data, n, plot.EGA, verbose, seed)
 
   # Obtain ellipse arguments
-  ellipse <- list(...)
+  ellipse <- list(seed = seed, ...)
 
   # Get fit function
   fit_FUN <- switch(
@@ -331,8 +339,8 @@ EGA.fit <- function(
 
 #' @noRd
 # Errors ----
-# Updated 19.08.2023
-EGA.fit_errors <- function(data, n, plot.EGA, verbose)
+# Updated 12.08.2026
+EGA.fit_errors <- function(data, n, plot.EGA, verbose, seed)
 {
 
   # 'data' errors
@@ -356,6 +364,13 @@ EGA.fit_errors <- function(data, n, plot.EGA, verbose)
   # 'verbose' errors
   length_error(verbose, 1, "EGA.fit")
   typeof_error(verbose, "logical", "EGA.fit")
+
+  # 'seed' errors
+  if(!is.null(seed)){
+    length_error(seed, 1, "EGA.fit")
+    typeof_error(seed, "numeric", "EGA.fit")
+    range_error(seed, c(0, Inf), "EGA.fit")
+  }
 
   # Return usable data (in case of tibble)
   return(usable_data(data, verbose))

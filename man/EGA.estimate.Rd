@@ -12,6 +12,7 @@ EGA.estimate(
   model = c("BGGM", "glasso", "TMFG"),
   algorithm = c("leiden", "louvain", "walktrap"),
   verbose = FALSE,
+  seed = NULL,
   ...
 )
 }
@@ -109,6 +110,14 @@ unless specified otherwise
 Whether messages and (insignificant) warnings should be output.
 Defaults to \code{FALSE} (silent calls).
 Set to \code{TRUE} to see all messages and warnings for every function call}
+
+\item{seed}{Numeric (length = 1).
+Sets seed for reproducible results.
+Defaults to \code{NULL} or random results.
+Relevant when \code{algorithm = "louvain"}: passed on to
+\code{\link[EGAnet]{community.detection}} or
+\code{\link[EGAnet]{community.consensus}} to make the Louvain
+community detection reproducible}
 
 \item{...}{Additional arguments to be passed on to
 \code{\link[EGAnet]{auto.correlate}},

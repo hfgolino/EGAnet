@@ -136,6 +136,15 @@
 #' Defaults to \code{FALSE} (silent calls).
 #' Set to \code{TRUE} to see all messages and warnings for every function call
 #'
+#' @param seed Numeric (length = 1).
+#' Sets seed for reproducible results.
+#' Defaults to \code{NULL} or random results.
+#' Relevant when \code{algorithm = "louvain"} or \code{uni.method = "louvain"}:
+#' passed on to \code{\link[EGAnet]{community.detection}},
+#' \code{\link[EGAnet]{community.consensus}}, and
+#' \code{\link[EGAnet]{community.unidimensional}} to make the Louvain
+#' community detection reproducible
+#'
 #' @param ... Additional arguments to be passed on to
 #' \code{\link[EGAnet]{auto.correlate}},
 #' \code{\link[EGAnet]{network.estimation}},
@@ -194,6 +203,12 @@
 #'   plot.EGA = FALSE # No plot for CRAN checks
 #' )
 #'
+#' # Estimate EGA with Louvain algorithm (reproducible)
+#' ega.wmt.louvain.seed <- EGA(
+#'   data = wmt, algorithm = "louvain", seed = 42,
+#'   plot.EGA = FALSE # No plot for CRAN checks
+#' )
+#'
 #' # Estimate EGA with an {igraph} function (Fast-greedy)
 #' ega.wmt.greedy <- EGA(
 #'   data = wmt,
@@ -232,7 +247,7 @@
 #'
 #' @export
 # EGA ----
-# Updated 13.08.2025
+# Updated 12.08.2026
 EGA <- function (
     data, n = NULL,
     corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
@@ -240,7 +255,7 @@ EGA <- function (
     model = c("BGGM", "glasso", "TMFG"),
     algorithm = c("leiden", "louvain", "walktrap"),
     uni.method = c("expand", "LE", "louvain"),
-    plot.EGA = TRUE, verbose = FALSE,
+    plot.EGA = TRUE, verbose = FALSE, seed = NULL,
     ...
 )
 {
@@ -255,7 +270,7 @@ EGA <- function (
   uni.method <- set_default(uni.method, "louvain", EGA)
 
   # Argument errors (return data in case of tibble)
-  data <- EGA_errors(data, n, plot.EGA, verbose, ...)
+  data <- EGA_errors(data, n, plot.EGA, verbose, seed, ...)
 
   # Ensure data has names
   data <- ensure_dimension_names(data)
@@ -266,7 +281,7 @@ EGA <- function (
   multidimensional_result <- EGA.estimate(
     data = data, n = n, corr = corr, na.data = na.data,
     model = model, algorithm = algorithm,
-    verbose = verbose, needs_usable = FALSE, # skips usable data check
+    verbose = verbose, seed = seed, needs_usable = FALSE, # skips usable data check
     ...
   )
 
@@ -307,7 +322,7 @@ EGA <- function (
   unidimensional_ARGS <- list( # standard arguments
     data = data, n = n, corr = corr, na.data = na.data,
     model = model, uni.method = uni.method,
-    verbose = verbose, needs_usable = FALSE, # skips usable data check
+    verbose = verbose, seed = seed, needs_usable = FALSE, # skips usable data check
     ...
   )
 
@@ -406,8 +421,8 @@ EGA <- function (
 
 #' @noRd
 # Errors ----
-# Updated 07.09.2023
-EGA_errors <- function(data, n, plot.EGA, verbose, ...)
+# Updated 12.08.2026
+EGA_errors <- function(data, n, plot.EGA, verbose, seed, ...)
 {
 
   # 'data' errors
@@ -431,6 +446,13 @@ EGA_errors <- function(data, n, plot.EGA, verbose, ...)
   # 'verbose' errors
   length_error(verbose, 1, "EGA")
   typeof_error(verbose, "logical", "EGA")
+
+  # 'seed' errors
+  if(!is.null(seed)){
+    length_error(seed, 1, "EGA")
+    typeof_error(seed, "numeric", "EGA")
+    range_error(seed, c(0, Inf), "EGA")
+  }
 
   # Check for usable data
   if(needs_usable(list(...))){

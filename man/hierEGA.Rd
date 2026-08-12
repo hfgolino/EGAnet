@@ -19,6 +19,7 @@ hierEGA(
   uni.method = c("expand", "LE", "louvain"),
   plot.EGA = TRUE,
   verbose = FALSE,
+  seed = NULL,
   ...
 )
 }
@@ -218,6 +219,14 @@ Defaults to \code{TRUE}}
 Whether messages and (insignificant) warnings should be output.
 Defaults to \code{FALSE} (silent calls).
 Set to \code{TRUE} to see all messages and warnings for every function call}
+
+\item{seed}{Numeric (length = 1).
+Sets seed for reproducible results.
+Defaults to \code{NULL} or random results.
+Relevant when \code{lower.algorithm} or \code{higher.algorithm} is
+\code{"louvain"}: passed on to both the lower and higher order
+\code{\link[EGAnet]{EGA}} calls, making the entire hierarchical
+procedure reproducible}
 
 \item{...}{Additional arguments to be passed on to
 \code{\link[EGAnet]{auto.correlate}},

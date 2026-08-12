@@ -548,7 +548,7 @@ dynEGA <- function(
         EGA, # Use `EGA`
         corr = corr, na.data = na.data, model = model,
         algorithm = algorithm, uni.method = uni.method,
-        plot.EGA = FALSE, verbose = FALSE, ...,
+        plot.EGA = FALSE, verbose = FALSE, seed = seed, ...,
         ncores = ncores, progress = verbose
       )
 
@@ -592,7 +592,7 @@ dynEGA <- function(
     results$dynEGA$group <- lapply(
       group_data, EGA, corr = corr, na.data = na.data,
       model = model, algorithm = algorithm, uni.method = uni.method,
-      plot.EGA = FALSE, verbose = FALSE, ...
+      plot.EGA = FALSE, verbose = FALSE, seed = seed, ...
     )
 
     # Add class
@@ -611,7 +611,7 @@ dynEGA <- function(
       ],
       corr = corr, na.data = na.data, model = model,
       algorithm = algorithm, uni.method = uni.method,
-      plot.EGA = FALSE, verbose = FALSE, ...
+      plot.EGA = FALSE, verbose = FALSE, seed = seed, ...
     )
 
     # Add class
@@ -1943,7 +1943,7 @@ optimium_embed <- function(
       EGA(
         data = derivative_list[[i]][,attributes(derivative_list[[i]])$keep_derivatives],
         corr = corr, na.data = na.data, model = model, algorithm = algorithm,
-        plot.EGA = FALSE, verbose = FALSE, ...
+        plot.EGA = FALSE, verbose = FALSE, seed = seed, ...
       )
 
     }

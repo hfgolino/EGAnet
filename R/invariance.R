@@ -431,7 +431,7 @@ invariance <- function(
       data = data[groups == group,],
       corr = corr, model = model,
       algorithm = algorithm, uni.method = uni.method,
-      plot.EGA = FALSE, ...
+      plot.EGA = FALSE, seed = seed, ...
     )
   }); names(group_ega) <- unique_factors # add names
 
@@ -482,7 +482,7 @@ invariance <- function(
     datalist = perm_groups,
     function(
       permutation, unique_groups, structure,
-      data, corr, model, algorithm, uni.method,
+      data, corr, model, algorithm, uni.method, seed,
       ...
     ){
 
@@ -496,7 +496,7 @@ invariance <- function(
             data = data[permutation == group,],
             corr = corr, model = model,
             algorithm = algorithm, uni.method = uni.method,
-            plot.EGA = FALSE, ...
+            plot.EGA = FALSE, seed = seed, ...
           )$network
 
           # Obtain loadings
@@ -514,7 +514,7 @@ invariance <- function(
     # Make sure the additional objects get in
     unique_groups = unique_groups, structure = structure,
     data = data, corr = corr, model = model,
-    algorithm = algorithm, uni.method = uni.method, ...,
+    algorithm = algorithm, uni.method = uni.method, seed = seed, ...,
     ncores = ncores, progress = verbose
   )
 

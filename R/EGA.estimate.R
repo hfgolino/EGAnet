@@ -100,6 +100,14 @@
 #' Defaults to \code{FALSE} (silent calls).
 #' Set to \code{TRUE} to see all messages and warnings for every function call
 #'
+#' @param seed Numeric (length = 1).
+#' Sets seed for reproducible results.
+#' Defaults to \code{NULL} or random results.
+#' Relevant when \code{algorithm = "louvain"}: passed on to
+#' \code{\link[EGAnet]{community.detection}} or
+#' \code{\link[EGAnet]{community.consensus}} to make the Louvain
+#' community detection reproducible
+#'
 #' @param ... Additional arguments to be passed on to
 #' \code{\link[EGAnet]{auto.correlate}},
 #' \code{\link[EGAnet]{network.estimation}},
@@ -161,14 +169,14 @@
 #' @export
 #'
 # Estimates multidimensional EGA only (no automatic plots)
-# Updated 21.09.2024
+# Updated 12.08.2026
 EGA.estimate <- function(
     data, n = NULL,
     corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
     model = c("BGGM", "glasso", "TMFG"),
     algorithm = c("leiden", "louvain", "walktrap"),
-    verbose = FALSE, ...
+    verbose = FALSE, seed = NULL, ...
 )
 {
 
@@ -179,10 +187,10 @@ EGA.estimate <- function(
   algorithm <- set_default(algorithm, "walktrap", community.detection)
 
   # Argument errors (return data in case of tibble)
-  data <- EGA.estimate_errors(data, n, verbose, ...)
+  data <- EGA.estimate_errors(data, n, verbose, seed, ...)
 
   # Obtain ellipse arguments
-  ellipse <- list(needs_usable = FALSE, ...)
+  ellipse <- list(needs_usable = FALSE, seed = seed, ...)
 
   # Handle legacy arguments (`model.args` and `algorithm.args`)
   ellipse <- legacy_EGA_args(ellipse)
@@ -320,8 +328,8 @@ EGA.estimate <- function(
 
 #' @noRd
 # Errors ----
-# Updated 07.09.2023
-EGA.estimate_errors <- function(data, n, verbose, ...)
+# Updated 12.08.2026
+EGA.estimate_errors <- function(data, n, verbose, seed, ...)
 {
 
   # 'data' errors
@@ -341,6 +349,13 @@ EGA.estimate_errors <- function(data, n, verbose, ...)
   # 'verbose' errors
   length_error(verbose, 1, "EGA.estimate")
   typeof_error(verbose, "logical", "EGA.estimate")
+
+  # 'seed' errors
+  if(!is.null(seed)){
+    length_error(seed, 1, "EGA.estimate")
+    typeof_error(seed, "numeric", "EGA.estimate")
+    range_error(seed, c(0, Inf), "EGA.estimate")
+  }
 
   # Check for usable data
   if(needs_usable(list(...))){
