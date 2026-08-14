@@ -187,7 +187,13 @@ community.prism <- function(
 
         # Set subgraph and membership
         subgraph <- network[index, index]
-        subgraph_wc <- algorithm_FUN(subgraph, allow.singleton = allow.singleton, seed = seed, ...)
+
+        # Check for whether the network is a matrix
+        if(!is.matrix(subgraph)){
+          break
+        }
+
+        subgraph_wc <- algorithm_FUN(subgraph, allow.singleton = allow.singleton, ...)
 
         # Compute modularity gain
         gain <- modularity(subgraph, subgraph_wc) - modularity(subgraph, wc[index])
