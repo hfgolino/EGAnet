@@ -104,7 +104,7 @@
 #' @export
 #'
 # Pairwise Resolution Iteration via Subgraph Modularity ----
-# Updated 12.08.2026
+# Updated 14.08.2026
 community.prism <- function(
     network, algorithm = c(
       "edge_betweenness", "fast_greedy",
@@ -115,6 +115,9 @@ community.prism <- function(
     allow.singleton = FALSE, seed = NULL, ...
 )
 {
+
+  # Obtain ellipse
+  ellipse <- list(...)
 
   # Check for missing arguments (argument, default, function)
   algorithm <- set_default(algorithm, "louvain", community.detection)
@@ -267,6 +270,40 @@ community.prism <- function(
     wc <- updated_wc
 
   }
+
+  # Check singleton behavior
+  if(!allow.singleton){
+
+    # Determine whether there are any singleton communities
+    membership_frequency <- fast_table(wc)
+
+    # Singletons
+    singletons <- membership_frequency == 1
+
+    # Check for frequencies equal to one
+    if(any(singletons)){
+
+      # Identify communities
+      singleton_communities <- as.numeric(
+        names(membership_frequency)[singletons]
+      )
+
+      # Set values to NA
+      wc[wc %in% singleton_communities] <- NA
+
+    }
+
+  }
+
+  # Add methods to membership attributes
+  attr(wc, "methods") <- list(
+    algorithm = obtain_algorithm_name(algorithm),
+    objective_function = ellipse$objective_function
+    # `objective_function` will be NULL unless it's there!
+  )
+
+  # Make memberships have S3 class
+  class(wc) <- "EGA.community"
 
   # Return memberships
   return(wc)
