@@ -76,12 +76,14 @@ Authors & Contact
 =============
 
 ### Hudson F. Golino ###
-### Associate Professor of Quantitative Methods, Department of Psychology, University of Virginia. ###
-### Contact: <hfg9s@virginia.edu> ###
+Associate Professor of Quantitative Methods, Department of Psychology, University of Virginia
+
+Contact: <hfg9s@virginia.edu>
 
 ### Alexander P. Christensen ###
-### Assistant Professor of Quantitative Methods, Department of Psychology and Human Development, Vanderbilt University ###
-### Contact: <alexander.christensen@vanderbilt.edu> ###
+Assistant Professor of Quantitative Methods, Department of Psychology and Human Development, Vanderbilt University
+
+Contact: <alexander.christensen@vanderbilt.edu>
 
 Funding
 =============
