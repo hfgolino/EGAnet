@@ -45,7 +45,6 @@ library(EGAnet)
 # Wiener Matrizen Test 2 (WMT-2): 18 fluid-intelligence items
 colnames(wmt2)
 ega_wmt <- EGA(wmt2[, 7:24])
-plot(ega_wmt)
 ```
 
 `EGA()` estimates the network, detects communities (dimensions), and returns a plot showing which items group together. For a full walkthrough and next steps (bootstrapping, plotting options, invariance testing, dynamic data, and more), see the [Quick Start guide](https://r-ega.net/articles/quick-start.html) and [Workflows](https://r-ega.net) on the website.
@@ -76,12 +75,14 @@ Authors & Contact
 =============
 
 ### Hudson F. Golino ###
-### Associate Professor of Quantitative Methods, Department of Psychology, University of Virginia. ###
-### Contact: <hfg9s@virginia.edu> ###
+Associate Professor of Quantitative Methods, Department of Psychology, University of Virginia
+
+Contact: <hfg9s@virginia.edu>
 
 ### Alexander P. Christensen ###
-### Assistant Professor of Quantitative Methods, Department of Psychology and Human Development, Vanderbilt University ###
-### Contact: <alexander.christensen@vanderbilt.edu> ###
+Assistant Professor of Quantitative Methods, Department of Psychology and Human Development, Vanderbilt University
+
+Contact: <alexander.christensen@vanderbilt.edu>
 
 Funding
 =============
