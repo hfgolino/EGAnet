@@ -196,7 +196,10 @@ community.prism <- function(
           break
         }
 
-        subgraph_wc <- algorithm_FUN(subgraph, allow.singleton = allow.singleton, ...)
+        # Estimate subgraph membership
+        subgraph_wc <- algorithm_FUN(
+          subgraph, allow.singleton = allow.singleton, seed = seed, ...
+        )
 
         # Compute modularity gain
         gain <- modularity(subgraph, subgraph_wc) - modularity(subgraph, wc[index])
@@ -241,7 +244,7 @@ community.prism <- function(
         solutions <- ordered[max_counts, -dim(ordered)[2]]
 
         # Obtain modularity from solutions
-        wc_index <- wc == index
+        wc_index <- na.omit(wc == index)
         Qs <- apply(solutions, 1, modularity, network = network[wc_index, wc_index])
 
         # Use highest modularity gain
