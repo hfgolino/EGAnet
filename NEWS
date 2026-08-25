@@ -12,7 +12,7 @@ WEBSITE: https://r-ega.net
 
 	-	`order = "lower"`/`"higher"` now determines what is directly computed (stopping after the first local-moving pass, or running full multilevel aggregation to convergence) rather than always computing the higher-order solution and extracting a level from it afterward
 
-+	INTERNAL: added `resolve_resolution` (not yet used/exported)
++	ADD: `community.prism` implements Pairwise Resolution Iteration via Subgraph Modularity (PRISM), iteratively testing pairwise unions of communities for a modularity gain at the subgraph level and merging communities whenever the union increases modularity relative to their separate memberships; intended to overcome the modularity resolution limit described by Fortunato and Barthelemy (2007)
 
 +	UPDATE: `polychoric.matrix` C implementation overhauled for speed and accuracy (ported from {L0ggm}):
 
