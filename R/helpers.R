@@ -2335,6 +2335,15 @@ basic_plot_setup <- function(network, wc = NULL, ...)
     plot_ARGS$edge.label.size
   )
 
+  ## Node label size: coerce a bare `NA` (logical) to `NA_real_`
+  ## so it passes as "numeric" in `GGally_errors` below
+  if(length(plot_ARGS$label.size) == 1 && is.na(plot_ARGS$label.size)){
+    plot_ARGS$label.size <- NA_real_
+  }
+
+  ## `label.size` of `0` or `NA` means "no node labels"
+  show_labels <- !all(is.na(plot_ARGS$label.size) | plot_ARGS$label.size == 0)
+
   # Before call, check all arguments
   # for any errors
   GGally_errors(
@@ -2385,12 +2394,19 @@ basic_plot_setup <- function(network, wc = NULL, ...)
     ggplot2::geom_point( # dark borders
       size = node.size, color = border_color,
       shape = 1, stroke = 1.5, alpha = 0.80
-    ) +
-    ggplot2::geom_text( # put text back on top
-      ggplot2::aes(label = node_names),
-      color = plot_ARGS$label.color,
-      size = plot_ARGS$label.size
-    ) +
+    )
+
+  # Only add node labels back on top if `label.size` isn't `0` or `NA`
+  if(show_labels){
+    second_layer <- second_layer +
+      ggplot2::geom_text(
+        ggplot2::aes(label = node_names),
+        color = plot_ARGS$label.color,
+        size = plot_ARGS$label.size
+      )
+  }
+
+  second_layer <- second_layer +
     ggplot2::guides( # create legend with these settings
       color = ggplot2::guide_legend(
         override.aes = list(
