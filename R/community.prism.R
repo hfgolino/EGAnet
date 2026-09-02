@@ -140,11 +140,35 @@ community.prism <- function(
   # Check for names
   network <- ensure_dimension_names(network)
 
-  # Set node names
-  node_names <- dimnames(network)[[2]]
+  # Set original node names
+  original_node_names <- dimnames(network)[[2]]
 
   # Check for disconnected nodes
   include <- colSums(network) != 0
+
+  # Create final memberships
+  final_wc <- structure(
+    rep(NA, length(include)),
+    names = original_node_names
+  )
+
+  # Check for empty network
+  if(all(!include)){
+
+    # Add methods to membership attributes
+    attr(final_wc, "methods") <- list(
+      algorithm = obtain_algorithm_name(algorithm),
+      objective_function = ellipse$objective_function
+      # `objective_function` will be NULL unless it's there!
+    )
+
+    # Make memberships have S3 class
+    class(final_wc) <- "EGA.community"
+
+    # Return memberships
+    return(final_wc)
+
+  }
 
   # Update network
   network <- network[include, include]
@@ -158,6 +182,9 @@ community.prism <- function(
 
   # Estimate initial memberships
   wc <- algorithm_FUN(network, allow.singleton = TRUE, seed = seed, ...)
+
+  # Set node names
+  node_names <- names(wc)
 
   # Set while loop
   while(TRUE){
@@ -211,7 +238,7 @@ community.prism <- function(
         gain <- modularity(subgraph, subgraph_wc) - modularity(subgraph, wc[index])
 
         # Check for any gain
-        if(gain < 1e-08){
+        if(is.na(gain) || (gain < 1e-08)){
           break
         }
 
@@ -306,12 +333,6 @@ community.prism <- function(
     wc <- reindex_memberships(wc)
 
   }
-
-  # Create final memberships
-  final_wc <- structure(
-    rep(NA, length(include)),
-    names = node_names
-  )
 
   # Set memberships
   final_wc[include] <- wc
