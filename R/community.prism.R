@@ -104,7 +104,7 @@
 #' @export
 #'
 # Pairwise Resolution Iteration via Subgraph Modularity ----
-# Updated 14.08.2026
+# Updated 02.09.2026
 community.prism <- function(
     network, algorithm = c(
       "edge_betweenness", "fast_greedy",
@@ -148,7 +148,10 @@ community.prism <- function(
   )
 
   # Estimate initial memberships
-  wc <- algorithm_FUN(network, allow.singleton = allow.singleton, seed = seed, ...)
+  wc <- algorithm_FUN(network, allow.singleton = TRUE, seed = seed, ...)
+
+  # Remove missing nodes
+  wc <- initial_wc[!is.na(initial_wc)]
 
   # Set node names
   node_names <- names(wc)
@@ -198,7 +201,7 @@ community.prism <- function(
 
         # Estimate subgraph membership
         subgraph_wc <- algorithm_FUN(
-          subgraph, allow.singleton = allow.singleton, seed = seed, ...
+          subgraph, allow.singleton = TRUE, seed = seed, ...
         )
 
         # Compute modularity gain
@@ -295,6 +298,9 @@ community.prism <- function(
       wc[wc %in% singleton_communities] <- NA
 
     }
+
+    # Reindex memberships
+    wc <- reindex_memberships(wc)
 
   }
 
