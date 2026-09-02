@@ -150,9 +150,6 @@ community.prism <- function(
   # Estimate initial memberships
   wc <- algorithm_FUN(network, allow.singleton = TRUE, seed = seed, ...)
 
-  # Remove missing nodes
-  wc <- initial_wc[!is.na(initial_wc)]
-
   # Set node names
   node_names <- names(wc)
 
