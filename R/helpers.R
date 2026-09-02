@@ -233,7 +233,7 @@ reproducible_seeds <- function(n, seed = NULL)
   return(
     .Call(
       "r_xoshiro_seeds",
-      as.integer(n), swiftelse(is.null(seed), 0, seed),
+      as.integer(n), swiftelse(is.null(seed), 0, as.double(seed)),
       PACKAGE = "EGAnet"
     )
   )
