@@ -55,7 +55,6 @@ cases in the dataset
 
 \item{empty.method}{Character (length = 1).
 Method for empty cell correction in \code{\link[EGAnet]{polychoric.matrix}}.
-Defaults to \code{"none"}
 Available options:
 
 \itemize{
@@ -63,7 +62,7 @@ Available options:
 \item \code{"none"} --- Adds no value (\code{empty.value = "none"})
 to the empirical joint frequency table between two variables
 
-\item \code{"zero"} --- Adds \code{empty.value} to the cells with
+\item \code{"zero"} (default) --- Adds \code{empty.value} to the cells with
 zero in the joint frequency table between two variables
 
 \item \code{"all"} --- Adds \code{empty.value} to all
@@ -73,7 +72,6 @@ in the joint frequency table between two variables
 
 \item{empty.value}{Character (length = 1).
 Value to add to the joint frequency table cells in \code{\link[EGAnet]{polychoric.matrix}}.
-Defaults to \code{"none"}.
 Accepts numeric values between 0 and 1 or specific methods:
 
 \itemize{
@@ -81,7 +79,7 @@ Accepts numeric values between 0 and 1 or specific methods:
 \item \code{"none"} --- Adds no value (\code{0}) to the empirical
 joint  frequency table between two variables
 
-\item \code{"point_five"} --- Adds \code{0.5} to the cells
+\item \code{"point_five"} (default) --- Adds \code{0.5} to the cells
 defined by \code{empty.method}
 
 \item \code{"one_over"} --- Adds \code{1 / n} where \code{n} equals the

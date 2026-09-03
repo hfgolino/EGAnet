@@ -42,7 +42,6 @@
 #'
 #' @param empty.method Character (length = 1).
 #' Method for empty cell correction in \code{\link[EGAnet]{polychoric.matrix}}.
-#' Defaults to \code{"none"}
 #' Available options:
 #'
 #' \itemize{
@@ -50,7 +49,7 @@
 #' \item \code{"none"} --- Adds no value (\code{empty.value = "none"})
 #' to the empirical joint frequency table between two variables
 #'
-#' \item \code{"zero"} --- Adds \code{empty.value} to the cells with
+#' \item \code{"zero"} (default) --- Adds \code{empty.value} to the cells with
 #' zero in the joint frequency table between two variables
 #'
 #' \item \code{"all"} --- Adds \code{empty.value} to all
@@ -60,7 +59,6 @@
 #'
 #' @param empty.value Character (length = 1).
 #' Value to add to the joint frequency table cells in \code{\link[EGAnet]{polychoric.matrix}}.
-#' Defaults to \code{"none"}.
 #' Accepts numeric values between 0 and 1 or specific methods:
 #'
 #' \itemize{
@@ -68,7 +66,7 @@
 #' \item \code{"none"} --- Adds no value (\code{0}) to the empirical
 #' joint  frequency table between two variables
 #'
-#' \item \code{"point_five"} --- Adds \code{0.5} to the cells
+#' \item \code{"point_five"} (default) --- Adds \code{0.5} to the cells
 #' defined by \code{empty.method}
 #'
 #' \item \code{"one_over"} --- Adds \code{1 / n} where \code{n} equals the
@@ -102,7 +100,7 @@
 #' @export
 #'
 # Automatic correlations ----
-# Updated 29.11.2025
+# Updated 03.09.2026
 auto.correlate <- function(
     data, # Matrix or data frame
     corr = c("cosine", "kendall", "pearson", "spearman"), # allow changes to standard correlations
@@ -123,8 +121,8 @@ auto.correlate <- function(
   # Check for missing arguments (argument, default, function)
   corr <- set_default(corr, "pearson", auto.correlate)
   na.data <- set_default(na.data, "pairwise", auto.correlate)
-  empty.method <- set_default(empty.method, "none", auto.correlate)
-  empty.value <- set_default(empty.value, "none", auto.correlate)
+  empty.method <- set_default(empty.method, "zero", auto.correlate)
+  empty.value <- set_default(empty.value, "point_five", auto.correlate)
 
   # Ensure matrix
   data <- as.matrix(data)

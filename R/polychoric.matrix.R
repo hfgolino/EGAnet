@@ -39,7 +39,7 @@
 #' \item \code{"none"} --- Adds no value (\code{empty.value = "none"})
 #' to the empirical joint frequency table between two variables
 #'
-#' \item \code{"zero"} --- Adds \code{empty.value} to the cells with zero
+#' \item \code{"zero"} (default) --- Adds \code{empty.value} to the cells with zero
 #' in the joint frequency table between two variables
 #'
 #' \item \code{"all"} --- Adds \code{empty.value} to all
@@ -57,7 +57,7 @@
 #' \item \code{"none"} --- Adds no value (\code{0}) to the empirical joint
 #' frequency table between two variables
 #'
-#' \item \code{"point_five"} --- Adds \code{0.5} to the cells defined by \code{empty.method}
+#' \item \code{"point_five"} (default) --- Adds \code{0.5} to the cells defined by \code{empty.method}
 #'
 #' \item \code{"one_over"} --- Adds \code{1 / n} where \emph{n} equals the number of cells
 #' based on \code{empty.method}. For \code{empty.method = "zero"},
@@ -130,7 +130,7 @@
 #' @export
 #'
 # Compute polychoric correlation matrix
-# Updated 20.07.2026
+# Updated 03.09.2026
 polychoric.matrix <- function(
     data, na.data = c("pairwise", "listwise"),
     empty.method = c("none", "zero", "all"),
@@ -141,8 +141,8 @@ polychoric.matrix <- function(
 
   # Set default arguments if missing
   na.data <- set_default(na.data, "pairwise", polychoric.matrix)
-  empty.method <- set_default(empty.method, "none", polychoric.matrix)
-  if(missing(empty.value)){empty.value <- "none"}
+  empty.method <- set_default(empty.method, "zero", polychoric.matrix)
+  if(missing(empty.value)){empty.value <- "point_five"}
 
   # Check for need to check for usable data
   if(needs_usable(list(...))){
