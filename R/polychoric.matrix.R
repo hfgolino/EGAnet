@@ -182,10 +182,14 @@ polychoric.matrix <- function(
   }
 
   # Call from C
+  # 'data' is passed as raw (byte) rather than integer: every value is
+  # guaranteed to be in [0, 11] or the missing sentinel (99), so a byte
+  # fully represents it while quartering the memory traffic of C's
+  # pairwise O(rows * cols^2) scan relative to an integer vector
   correlations <- matrix(
     .Call(
       "r_polychoric_correlation_matrix",
-      as.integer(data),
+      as.raw(data),
       empty.method, empty.value,
       dimensions[1], dimensions[2],
       PACKAGE = "EGAnet"

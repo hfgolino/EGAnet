@@ -112,10 +112,21 @@ double bsm_inverse_cdf(double probability){
 // Fills the caller-provided (stack-allocated) `CUT x CUT` table in place --
 // `CUT` bounds every category count in this package, so there is no need to
 // heap-allocate a fresh table for every pair of variables
+//
+// `col_sum`/`col_sum_sq`/`col_has_missing` are the once-per-column marginal
+// sums/flags precomputed in `polychoric_correlation_matrix` (see
+// `compute_column_marginals`). When neither column i nor column j has any
+// missing values, sum_x/sum_y/sum_xx/sum_yy are *identical*, row for row and
+// in the same accumulation order, to what this function would otherwise
+// recompute from scratch for every pair that touches that column -- so this
+// (very common: complete data) case skips both the per-row missingness
+// branch and 4 of the 5 running sums, leaving only the truly pairwise
+// histogram increment and `sum_xy` accumulation
 void joint_frequency_table(
-    int* input_data, int rows, int i, int j, int* missing,
+    const Rbyte* input_data, int rows, int i, int j, int* missing,
     double* sum_x, double* sum_y, double* sum_xx, double* sum_yy, double* sum_xy,
-    int joint_frequency[CUT][CUT]
+    int joint_frequency[CUT][CUT],
+    const double* col_sum, const double* col_sum_sq, const bool* col_has_missing
 ) {
 
   // Initialize X, Y, and iterator
@@ -129,7 +140,33 @@ void joint_frequency_table(
   int matrix_offset_j = j * rows;
 
   // Initialize Pearson sums
-  *sum_x = 0.0; *sum_y = 0.0; *sum_xx = 0.0; *sum_yy = 0.0; *sum_xy = 0.0;
+  *sum_xy = 0.0;
+
+  if(!col_has_missing[i] && !col_has_missing[j]) {
+
+    // Fast path: no missing data in either column, so every row
+    // contributes and the univariate marginal sums are exactly the
+    // precomputed per-column values -- no per-row branch, no redundant
+    // marginal accumulation
+    for (k = 0; k < rows; k++) {
+
+      X = input_data[k + matrix_offset_i];
+      Y = input_data[k + matrix_offset_j];
+
+      joint_frequency[X][Y]++;
+      *sum_xy += (double) X * Y;
+
+    }
+
+    *sum_x = col_sum[i]; *sum_y = col_sum[j];
+    *sum_xx = col_sum_sq[i]; *sum_yy = col_sum_sq[j];
+
+    return;
+
+  }
+
+  // General path (missing data possibly present in i and/or j)
+  *sum_x = 0.0; *sum_y = 0.0; *sum_xx = 0.0; *sum_yy = 0.0;
 
   // Populate table
   for (k = 0; k < rows; k++) {
@@ -324,7 +361,10 @@ struct ThresholdsResult {
 };
 
 // Compute thresholds
-struct ThresholdsResult thresholds(int* input_data, int rows, int i, int j, int empty_method, double empty_value) {
+struct ThresholdsResult thresholds(
+    const Rbyte* input_data, int rows, int i, int j, int empty_method, double empty_value,
+    const double* col_sum, const double* col_sum_sq, const bool* col_has_missing
+) {
 
   // Initialize iterators
   int k, l;
@@ -339,7 +379,8 @@ struct ThresholdsResult thresholds(int* input_data, int rows, int i, int j, int 
   int raw_table[CUT][CUT];
   double sum_x, sum_y, sum_xx, sum_yy, sum_xy;
   joint_frequency_table(
-    input_data, rows, i, j, &missing, &sum_x, &sum_y, &sum_xx, &sum_yy, &sum_xy, raw_table
+    input_data, rows, i, j, &missing, &sum_x, &sum_y, &sum_xx, &sum_yy, &sum_xy, raw_table,
+    col_sum, col_sum_sq, col_has_missing
   );
   double pearson_start_value = pearson_from_sums(sum_x, sum_y, sum_xx, sum_yy, sum_xy, rows - missing);
 
@@ -474,12 +515,24 @@ struct RhoContext {
   const double* nodes;
   const double* weights;
   int points;
+  // sin(asr * (+-nodes[i] + 1) / 2) for i in [0, points) -- depend only on
+  // rho (via asr) and the fixed node constants, *not* on the grid corner
+  // (h1, h2), so precomputing them once per Newton iteration here (instead
+  // of recomputing via `sin()` on every `genz_bivariate_normal` call, up to
+  // (cat_X + 1) * (cat_Y + 1) times per iteration) removes a large amount
+  // of redundant transcendental-function work with no change to the result
+  double sn_pos[10];
+  double sn_neg[10];
 
   // Used when near_boundary (`genz_bivariate_normal`'s tail branch)
   bool negative;       // rho < 0
   double as;           // (1 - rho) * (1 + rho)
   double a;             // sqrt(as)
   double a_half;       // a / 2
+  // xs/rs terms from the 20-point tail-correction quadrature -- likewise
+  // depend only on rho, not on the grid corner, so precomputed once here
+  double xs1[10], rs1[10];
+  double xs2[10], rs2[10];
 
   // Used by `bivariate_normal_density(_derivative)`
   double c;            // 1 - rho^2
@@ -507,12 +560,37 @@ static inline struct RhoContext make_rho_context(double rho) {
       ctx.nodes = GENZ_X20; ctx.weights = GENZ_W20; ctx.points = 10;
     }
 
+    // Precompute the (corner-independent) quadrature-node sines once per
+    // rho -- see the `sn_pos`/`sn_neg` comment above
+    for(int i = 0; i < ctx.points; i++) {
+      ctx.sn_pos[i] = sin(ctx.asr * (ctx.nodes[i] + 1) / 2);
+      ctx.sn_neg[i] = sin(ctx.asr * (-ctx.nodes[i] + 1) / 2);
+    }
+
   } else {
 
     ctx.negative = rho < 0.0;
     ctx.as = (1 - rho) * (1 + rho);
     ctx.a = sqrt(ctx.as);
     ctx.a_half = ctx.a / 2;
+
+    // Precompute the (corner-independent) 20-point tail-correction
+    // quadrature terms once per rho -- see the `xs1`/`rs1`/`xs2`/`rs2`
+    // comment above. Guarded the same way the tail-correction loop in
+    // `genz_bivariate_normal` is (`rho_abs < 1.0`)
+    if(ctx.rho_abs < 1.0) {
+      for(int i = 0; i < 10; i++) {
+
+        double xs = (ctx.a_half * (GENZ_X20[i] + 1)) * (ctx.a_half * (GENZ_X20[i] + 1));
+        ctx.xs1[i] = xs;
+        ctx.rs1[i] = sqrt(1 - xs);
+
+        xs = ctx.as * (-GENZ_X20[i] + 1) * (-GENZ_X20[i] + 1) / 4;
+        ctx.xs2[i] = xs;
+        ctx.rs2[i] = sqrt(1 - xs);
+
+      }
+    }
 
   }
 
@@ -564,15 +642,16 @@ static inline double genz_bivariate_normal(double h1, double h2, const struct Rh
     double h12 = (h1 * h1 + h2 * h2) / 2;
     double asr = ctx->asr;
 
-    const double* nodes = ctx->nodes;
     const double* weights = ctx->weights;
     int points = ctx->points;
 
-    // Gauss-Legendre quadrature over the correlation "arc"
+    // Gauss-Legendre quadrature over the correlation "arc" -- `sn` values
+    // are precomputed per-rho in `ctx` (see `make_rho_context`), since they
+    // don't depend on this corner's (h1, h2)
     for(int i = 0; i < points; i++) {
-      double sn = sin(asr * (nodes[i] + 1) / 2);
+      double sn = ctx->sn_pos[i];
       bv += weights[i] * exp((sn * hk - h12) / (1 - sn * sn));
-      sn = sin(asr * (-nodes[i] + 1) / 2);
+      sn = ctx->sn_neg[i];
       bv += weights[i] * exp((sn * hk - h12) / (1 - sn * sn));
     }
 
@@ -612,19 +691,21 @@ static inline double genz_bivariate_normal(double h1, double h2, const struct Rh
           (1 - c * bs * (1 - d * bs / 5) / 3);
       }
 
-      // Beyond the maximum correlation always uses the 20-point rule
+      // Beyond the maximum correlation always uses the 20-point rule.
+      // `xs`/`rs` are precomputed per-rho in `ctx` (see `make_rho_context`),
+      // since they don't depend on this corner's (h1, h2)
       double a_half = ctx->a_half;
       for(int i = 0; i < 10; i++) {
 
-        double xs = (a_half * (GENZ_X20[i] + 1)) * (a_half * (GENZ_X20[i] + 1));
-        double rs = sqrt(1 - xs);
+        double xs = ctx->xs1[i];
+        double rs = ctx->rs1[i];
         bv += a_half * GENZ_W20[i] * (
           exp(-bs / (2 * xs) - hk_local / (1 + rs)) / rs -
           exp(-(bs / xs + hk_local) / 2) * (1 + c * xs * (1 + d * xs))
         );
 
-        xs = as * (-GENZ_X20[i] + 1) * (-GENZ_X20[i] + 1) / 4;
-        rs = sqrt(1 - xs);
+        xs = ctx->xs2[i];
+        rs = ctx->rs2[i];
         bv += a_half * GENZ_W20[i] * exp(-(bs / xs + hk_local) / 2) * (
           exp(-hk_local * (1 - rs) / (2 * (1 + rs))) / rs -
           (1 + c * xs * (1 + d * xs))
@@ -917,12 +998,17 @@ double newton_raphson_arcsin(
 }
 
 // Compute polychoric correlation
-double polychoric(int* input_data, int rows, int i, int j, int empty_method, double empty_value) {
+double polychoric(
+    const Rbyte* input_data, int rows, int i, int j, int empty_method, double empty_value,
+    const double* col_sum, const double* col_sum_sq, const bool* col_has_missing
+) {
 
   // Obtain joint frequency table, probability_X, probability_Y, and a
   // Newton-Raphson starting value (Pearson correlation of the raw codes)
   // from the thresholds function
-  struct ThresholdsResult thresholds_result = thresholds(input_data, rows, i, j, empty_method, empty_value);
+  struct ThresholdsResult thresholds_result = thresholds(
+    input_data, rows, i, j, empty_method, empty_value, col_sum, col_sum_sq, col_has_missing
+  );
 
   // Perform optimization (no memory to free afterward: `ThresholdsResult`'s
   // arrays are stack-embedded, not heap-allocated)
@@ -938,9 +1024,47 @@ double polychoric(int* input_data, int rows, int i, int j, int empty_method, dou
 
 }
 
+// Precompute, once per column, the marginal sum/sum-of-squares of the raw
+// codes and whether the column contains any `MISSING` sentinel. A column's
+// marginal sums are identical for every pair it appears in *when neither
+// column in the pair has missing data* (pairwise deletion only changes which
+// rows are summed when missingness is actually present) -- so computing
+// them here, once, in the same row order (`k = 0 .. rows - 1`) that
+// `joint_frequency_table`'s per-pair loop would otherwise use, lets its
+// fast path reuse them exactly (bit-for-bit) instead of re-accumulating
+// them on every one of the up to `cols - 1` pairs that touch that column
+static inline void compute_column_marginals(
+    const Rbyte* input_data, int rows, int cols,
+    double* col_sum, double* col_sum_sq, bool* col_has_missing
+) {
+
+  for(int c = 0; c < cols; c++) {
+
+    int offset = c * rows;
+    double sum = 0.0, sum_sq = 0.0;
+    bool has_missing = false;
+
+    for(int k = 0; k < rows; k++) {
+      int X = input_data[k + offset];
+      if(X == MISSING) {
+        has_missing = true;
+      } else {
+        sum += X;
+        sum_sq += (double) X * X;
+      }
+    }
+
+    col_sum[c] = sum;
+    col_sum_sq[c] = sum_sq;
+    col_has_missing[c] = has_missing;
+
+  }
+
+}
+
 // The updated polychoric_correlation_matrix function
 void polychoric_correlation_matrix(
-    int* input_data, int rows, int cols,
+    const Rbyte* input_data, int rows, int cols,
     int empty_method, double empty_value, double* polychoric_matrix
 ) {
 
@@ -955,6 +1079,13 @@ void polychoric_correlation_matrix(
     matrix_offset[i] = matrix_offset[i - 1] + cols;
   }
 
+  // Precompute per-column marginal sums/missingness once (O(rows * cols)),
+  // consumed by `joint_frequency_table`'s fast path below
+  double col_sum[cols];
+  double col_sum_sq[cols];
+  bool col_has_missing[cols];
+  compute_column_marginals(input_data, rows, cols, col_sum, col_sum_sq, col_has_missing);
+
   // Perform polychoric correlations over the input_matrix
   for (i = 0; i < cols; i++) {
 
@@ -966,7 +1097,8 @@ void polychoric_correlation_matrix(
 
       // Compute correlation
       correlation = polychoric(
-        input_data, rows, i, j, empty_method, empty_value
+        input_data, rows, i, j, empty_method, empty_value,
+        col_sum, col_sum_sq, col_has_missing
       );
 
       // Add to matrix
@@ -993,9 +1125,13 @@ SEXP r_polychoric_correlation_matrix(
   SEXP r_result = PROTECT(allocVector(REALSXP, cols * cols));
   double* c_result = REAL(r_result);
 
-  // Call the C function
+  // Call the C function -- `r_input_matrix` arrives as a raw (byte) vector
+  // from R (see `polychoric.matrix.R`): every value is guaranteed to be in
+  // [0, 11] or the `MISSING` (99) sentinel, so a byte fully represents it
+  // while quartering the memory traffic of the O(rows * cols^2) pairwise
+  // scan in `joint_frequency_table` relative to an int vector
   polychoric_correlation_matrix(
-    INTEGER(r_input_matrix), INTEGER(r_rows)[0], cols,
+    RAW(r_input_matrix), INTEGER(r_rows)[0], cols,
     INTEGER(r_empty_method)[0], REAL(r_empty_value)[0],
     c_result // Pass the pointer directly to the C function
   );
