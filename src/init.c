@@ -11,6 +11,7 @@ extern SEXP r_xoshiro_seeds(SEXP n, SEXP r_seed);
 extern SEXP r_xoshiro_uniform(SEXP n, SEXP r_seed);
 extern SEXP r_xoshiro_shuffle(SEXP r_vector, SEXP r_seed);
 extern SEXP r_xoshiro_shuffle_replace(SEXP r_vector, SEXP r_seed);
+extern SEXP r_exact_signs(SEXP r_ordered_network, SEXP r_max_visited);
 
 // Register native routine
 static const R_CallMethodDef CallEntries[] = {
@@ -53,6 +54,11 @@ static const R_CallMethodDef CallEntries[] = {
     {
         "r_xoshiro_shuffle_replace", // Name of function call in R
         (DL_FUNC)&r_xoshiro_shuffle_replace, // Name of C function
+         2 // Number of arguments
+    },
+    {
+        "r_exact_signs", // Name of function call in R
+        (DL_FUNC)&r_exact_signs, // Name of C function
          2 // Number of arguments
     },
     {NULL, NULL, 0}

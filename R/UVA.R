@@ -141,7 +141,8 @@ UVA <- function(
     uva.method = c("MBR", "EJP"),
     cut.off = 0.25, reduce = TRUE,
     reduce.method = c("latent", "mean", "remove", "sum"),
-    auto = TRUE, verbose = FALSE, ... # `EGA` and {lavaan} arguments
+    auto = TRUE, verbose = FALSE,
+    ... # `EGA` and {lavaan} arguments
 )
 {
 
@@ -688,7 +689,9 @@ recode <- function(data, all_names, correlation_matrix, ellipse)
   diag(variable_correlations) <- 0
 
   # Get signs (`obtain_signs` is in `net.loads` internals)
-  variable_signs <- attr(obtain_signs(variable_correlations), "signs")
+  variable_signs <- attr(
+    obtain_signs(variable_correlations), "signs"
+  )
 
   # Get negative signs
   negative_signs <- variable_signs == -1
