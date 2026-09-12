@@ -64,10 +64,22 @@ typedef struct {
     double best_score;
     double max_visited;
     double visited;
+    unsigned int interrupt_counter; // see R_CheckUserInterrupt() call below
 } bnb_state;
+
+// How often to poll for a user interrupt (Ctrl+C / Escape), in visited
+// nodes. Checking every call would add branch overhead to the hot path;
+// checking this rarely still keeps worst-case unresponsiveness well
+// under a second even at this search's fastest observed throughput.
+#define INTERRUPT_CHECK_INTERVAL 100000u
 
 static void search(bnb_state *state, int index, double current_score, double remaining_bound) {
     state->visited += 1.0;
+
+    if (++state->interrupt_counter >= INTERRUPT_CHECK_INTERVAL) {
+        state->interrupt_counter = 0;
+        R_CheckUserInterrupt();
+    }
 
     // Prune: even the best case from here can't beat the current best
     // (by more than a negligible tolerance; see `PRUNE_EPSILON` above)
@@ -129,6 +141,14 @@ static void search(bnb_state *state, int index, double current_score, double rem
 
 SEXP r_exact_signs(SEXP r_ordered_network, SEXP r_max_visited) {
     int n = ncols(r_ordered_network);
+
+    // `exact_signs()` in R always passes a square, symmetric,
+    // correlation-scaled (entries in [-1, 1]) matrix, built at both call
+    // sites (`revised_loadings()` in net.loads.R, `recode()` in UVA.R)
+    // by indexing an existing matrix with the same set for both rows and
+    // columns -- structurally always square, not just square by
+    // convention. PRUNE_EPSILON above is calibrated against that
+    // correlation scale, not validated here.
     const double *network = REAL(r_ordered_network);
     double max_visited = REAL(r_max_visited)[0];
 
@@ -138,6 +158,11 @@ SEXP r_exact_signs(SEXP r_ordered_network, SEXP r_max_visited) {
     // both depend only on node index, not on any particular branch
     double *row_major = (double *) malloc((size_t) n * (size_t) n * sizeof(double));
     double *bound_decrement = (double *) malloc((size_t) n * sizeof(double));
+    if (row_major == NULL || bound_decrement == NULL) {
+        free(row_major);
+        free(bound_decrement);
+        error("exact_signs: could not allocate memory for network of size %d", n);
+    }
 
     for (int i = 0; i < n; i++) {
         double abs_sum = 0.0;
@@ -159,6 +184,14 @@ SEXP r_exact_signs(SEXP r_ordered_network, SEXP r_max_visited) {
     signed char *signs = (signed char *) malloc((size_t) n * sizeof(signed char));
     double *signs_d = (double *) malloc((size_t) n * sizeof(double));
     signed char *best_signs = (signed char *) malloc((size_t) n * sizeof(signed char));
+    if (signs == NULL || signs_d == NULL || best_signs == NULL) {
+        free(row_major);
+        free(bound_decrement);
+        free(signs);
+        free(signs_d);
+        free(best_signs);
+        error("exact_signs: could not allocate memory for network of size %d", n);
+    }
     for (int i = 0; i < n; i++) {
         signs[i] = 1;
         signs_d[i] = 1.0;
@@ -175,6 +208,7 @@ SEXP r_exact_signs(SEXP r_ordered_network, SEXP r_max_visited) {
     state.best_score = R_NegInf;
     state.max_visited = max_visited;
     state.visited = 0.0;
+    state.interrupt_counter = 0;
 
     // Node 0 fixed at +1; search assigns nodes 1..n-1
     if (n > 1) {
@@ -182,6 +216,16 @@ SEXP r_exact_signs(SEXP r_ordered_network, SEXP r_max_visited) {
     } else {
         state.best_score = 0.0;
     }
+
+    // Free everything except `best_signs` before the allocation below --
+    // `allocVector()` can in principle longjmp out (R itself out of
+    // memory), which would skip any free() calls placed after it, so
+    // only `best_signs` (n bytes) is left exposed to that unlikely path
+    // rather than all five buffers
+    free(row_major);
+    free(bound_decrement);
+    free(signs);
+    free(signs_d);
 
     // Build return value: the best complete sign assignment found, whether
     // the search exhausted itself (a certified global optimum) or was cut
@@ -195,11 +239,6 @@ SEXP r_exact_signs(SEXP r_ordered_network, SEXP r_max_visited) {
     }
 
     UNPROTECT(1);
-
-    free(row_major);
-    free(bound_decrement);
-    free(signs);
-    free(signs_d);
     free(best_signs);
 
     return r_signs;
