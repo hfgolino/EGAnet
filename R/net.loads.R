@@ -528,112 +528,70 @@ obtain_signs <- function(target_network) {
 
 #' @noRd
 # Revised loadings ----
-# Updated 11.09.2026
+# Updated 13.09.2026
 revised_loadings <- function(
   A, wc, nodes, node_names,
   communities, unique_communities
 ) {
-  # Initialize loading matrix
-  loading_matrix <- matrix(
-    0,
-    nrow = nodes, ncol = communities,
-    dimnames = list(node_names, unique_communities)
-  )
+  # Get community numbers
+  community_table <- fast_table(wc)
 
   # Initialize sign vector
   signs <- rep(1, nodes)
   names(signs) <- node_names
 
-  # Get community numbers
-  community_table <- fast_table(wc)
-
-  # Populate loading matrix
+  # Obtain signs for each community via `exact_signs` (branch and bound);
+  # this is inherently a per-community combinatorial search and can't be
+  # replaced by a single matrix operation
   for (community in unique_communities) {
     # Get community index
     community_index <- wc == community
-
-    # Obtain target network
-    target_network <- A[community_index, community_index, drop = FALSE]
 
     # Determine positive direction for dominant loadings
     target_network <- obtain_signs(
       A[community_index, community_index, drop = FALSE]
     )
 
-    # Compute absolute sum for dominant loadings
-    loading_matrix[community_index, community] <- colSums(
-      target_network,
-      na.rm = TRUE
-    ) / (community_table[community] - 1)
-
-    # Determine positive direction for dominant loadings
+    # Store community's signs
     signs[community_index] <- attr(target_network, "signs")
-
-    # Revert back to original sign algorithm
-    # Eigenvectors depend on the matrix manipulation to
-    # orient variables in the proper direction to get the
-    # appropriate signs
-
-    # # Compute absolute sum for dominant loadings
-    # loading_matrix[community_index, community] <- colSums(
-    #   obtain_signs(target_network), na.rm = TRUE
-    # ) / (community_table[community] - 1)
-    #
-    # # Obtain signs
-    # target_signs <- sign(eigen(target_network, symmetric = TRUE)$vector[,1])
-    # # Thank you to Sacha Epskamp for pointing out this simpler approach to us!
-    #
-    # # Determine positive direction for dominant loadings
-    # signs[community_index] <- swiftelse(
-    #   sum(target_signs) < 0, -target_signs, target_signs
-    # )
   }
 
-  # Take the average of the within-community values
-  # and multiply them by the number of values
-  loading_matrix <- sweep(
-    loading_matrix, 2,
-    STATS = community_table,
-    FUN = "*"
+  # Community indicator matrix: `community_matrix[i, c] == TRUE`
+  # whenever node `i` belongs to community `c`
+  community_matrix <- outer(wc, unique_communities, "==")
+  dimnames(community_matrix) <- list(node_names, unique_communities)
+
+  # Fully sign-corrected network
+  signed_network <- A * outer(signs, signs)
+
+  # One matrix multiplication obtains both the within-community and
+  # cross-community sums at once:
+  # loading_matrix[i, c] = sum of signed_network[i, j] over j in community c
+  loading_matrix <- signed_network %*% community_matrix
+
+  # Within-community entries are scaled by n_c / (n_c - 1) (the average of
+  # the within-community values, multiplied by the number of values);
+  # cross-community entries keep their algebraic sum as is (scale of 1).
+  # Each node has exactly one own-community cell -- found directly via
+  # `match()` and set with a single indexed assignment. (A broadcast like
+  # `1 + community_matrix * (scale - 1)` looks tempting but turns into
+  # `0 * Inf = NaN` for every *other* column whenever a singleton
+  # community makes `scale` infinite, silently corrupting cross-loadings)
+  scaling_matrix <- matrix(
+    1,
+    nrow = nodes, ncol = communities,
+    dimnames = list(node_names, unique_communities)
   )
 
-  # Compute sums
-  community_sums <- colSums(abs(loading_matrix), na.rm = TRUE)
+  own_column <- match(wc, unique_communities)
+  scaling_matrix[cbind(seq_len(nodes), own_column)] <-
+    community_table[wc] / (community_table[wc] - 1)
 
-  # Check for unidimensional structure
-  if (communities > 1) {
-    # Get negative sign indices
-    negative_signs <- which(signs == -1)
+  # Set scaling and signs
+  loading_matrix <- (loading_matrix * scaling_matrix) * signs
 
-    # Loop over negative signs
-    if (length(negative_signs) != 0) {
-      # Flip signs
-      for (negative in negative_signs) {
-        A[negative, ] <- A[, negative] <- -A[, negative]
-      }
-    }
-
-    # Populate loading matrix with cross-loadings
-    for (community in unique_communities) {
-      # Get community index
-      community_index <- wc == community
-
-      # Loop across other communities
-      for (cross in unique_communities) {
-        # No need for same community loadings
-        if (community != cross) {
-          # Compute algebraic sum for cross-loadings
-          loading_matrix[community_index, cross] <- colSums(
-            A[wc == cross, community_index, drop = FALSE],
-            na.rm = TRUE
-          )
-        }
-      }
-    }
-  }
-
-  # Set signs
-  loading_matrix <- loading_matrix * signs
+  # Compute sums (within-community only)
+  community_sums <- colSums(abs(loading_matrix) * community_matrix, na.rm = TRUE)
 
   # Add attributes
   attr(loading_matrix, "community") <- list(
