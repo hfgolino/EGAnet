@@ -147,6 +147,7 @@
 #' Comparing network structures on three aspects: A permutation test.
 #' \emph{Psychological Methods}, \emph{28}(6), 1273–1285.
 #'
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{EGAnet}
 #'
 #' @export
 #'

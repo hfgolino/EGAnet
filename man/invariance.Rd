@@ -328,7 +328,7 @@ Metric invariance in exploratory graph analysis via permutation testing.
 \emph{Methodology}, \emph{20}(2), 144-186.
 }
 \seealso{
-\code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{}
+\code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{EGAnet}
 }
 \author{
 Laura Jamison <lj5yn@virginia.edu>,

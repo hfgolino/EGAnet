@@ -127,6 +127,12 @@ compare.EGA.plots <- function(
 
   }
 
+  # Check for unrecognized arguments
+  argument_name_error(
+    ellipse, c(ggnet2_allowed_names(), ggarrange_allowed_names()),
+    "compare.EGA.plots"
+  )
+
   # With the input list, there could be different types of
   # `EGA` objects... let's figure that out
   ega_classes <- cvapply(input.list, class)
@@ -298,7 +304,7 @@ compare.EGA.plots <- function(
         compare_plots(
           comparison_network = other_objects[[i]]$network,
           comparison_wc = other_objects[[i]]$wc,
-          plot_ARGS = base_plot$ARGS
+          plot_ARGS = base_plot$ARGS, ...
         )
       }
     )
@@ -328,22 +334,14 @@ compare.EGA.plots <- function(
   # Set up plot list
   plotlist <- c(list(base_plot$network_plot), comparison_plots)
 
-  # `ggarrange` does not like non-plot arguments for its ellipse
-  ellipse <- ellipse[
-    names(ellipse) %in% names(formals(ggpubr::ggarrange))
-  ]
+  # Set up `ggarrange` arguments (user's `ellipse` can override any of these)
+  ggarrange_ARGS <- ggarrange_args(
+    ellipse, site_defaults = list(labels = labels, legend = "bottom"),
+    plotlist = plotlist
+  )
 
   # Store plots all-in-one
-  all_in_one <- do.call(
-    what = ggpubr::ggarrange,
-    args = c(
-      list(
-        plotlist = plotlist,
-        labels = labels,
-        legend = "bottom"
-      ), ellipse
-    )
-  )
+  all_in_one <- do.call(ggpubr::ggarrange, ggarrange_ARGS)
 
   # Should the plot be produced?
   if(isTRUE(plot.all)){

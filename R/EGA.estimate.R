@@ -398,6 +398,9 @@ summary.EGA.estimate <- function(object, ...)
 plot.EGA.estimate <- function(x, ...)
 {
 
+  # Check for unrecognized arguments
+  argument_name_error(list(...), ggnet2_allowed_names(), "plot.EGA.estimate")
+
   # Return plot
   single_plot(
     network = x$network,

@@ -284,7 +284,7 @@
 #' # Plot levels separately
 #' plot(opt.hier, plot.type = "separate")}
 #'
-#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{}
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{EGAnet}
 #'
 #' @export
 #'
@@ -740,8 +740,11 @@ plot.hierEGA <- function(
   # Multilevel plot
   if(plot.type == "multilevel"){
 
+    # Check for unrecognized arguments
+    argument_name_error(ellipse, ggnet2_allowed_names(), "plot.hierEGA")
+
     # Set edge size
-    if(!"edge.size" %in% ellipse){
+    if(!"edge.size" %in% names(ellipse)){
       ellipse$edge.size <- 8 # default in `basic_plot_setup`
     }
 
@@ -827,7 +830,7 @@ plot.hierEGA <- function(
     plot_list$network <- hierarchical_copy
 
     # Create the second plot
-    second_plot <- plot(plot_list, arguments = TRUE)
+    second_plot <- plot(plot_list, ..., arguments = TRUE)
 
     # Update multilevel edge appearances
 
@@ -983,18 +986,29 @@ plot.hierEGA <- function(
 
   }else if(plot.type == "separate"){ # Separate plot
 
-    # Set labels
-    if(!"labels" %in% ellipse){
-      ellipse$labels <- c("Lower", "Higher")
-    }
+    # Check for unrecognized arguments
+    argument_name_error(
+      ellipse, c(ggnet2_allowed_names(), ggarrange_allowed_names()),
+      "plot.hierEGA"
+    )
+
+    # Only forward `ggnet2`-relevant arguments to the individual plots --
+    # `ggarrange`-only names (e.g., `ncol`, `legend`) are reserved for the
+    # `ggarrange` call below and would otherwise fail `plot.EGA`'s own
+    # (stricter) `ggnet2`-only validation
+    ggnet2_ellipse <- filter_ggnet2_ellipse(ellipse)
 
     # Plot lower and higher order side-by-side
     return(
-      ggpubr::ggarrange(
-        silent_plot(x$lower_order, ...),
-        silent_plot(x$higher_order, ...),
-        labels = ellipse$labels,
-        ...
+      do.call(
+        ggpubr::ggarrange,
+        c(
+          list(
+            do.call(silent_plot, c(list(x$lower_order), ggnet2_ellipse)),
+            do.call(silent_plot, c(list(x$higher_order), ggnet2_ellipse))
+          ),
+          ggarrange_args(ellipse, site_defaults = list(labels = c("Lower", "Higher")))
+        )
       )
     )
 

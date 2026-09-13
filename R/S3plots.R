@@ -41,6 +41,59 @@
 #'
 #' }
 #'
+#' @section Argument Passing:
+#'
+#' All \code{plot.*} methods forward unrecognized arguments to
+#' \code{\link[GGally]{ggnet2}} in full -- every one of \code{ggnet2}'s own
+#' arguments (see \code{?GGally::ggnet2}) can be set directly. \code{EGAnet}
+#' also provides a few shorter, friendlier names for some of the most
+#' commonly used \code{ggnet2} arguments (see \strong{Examples} below):
+#'
+#' \tabular{lll}{
+#'   \strong{Shortcut} \tab \strong{Real \code{ggnet2} Argument} \tab \strong{Example} \cr
+#'   \code{layout} \tab \code{mode} \tab \code{plot(x, layout = "circle")} \cr
+#'   \code{alpha} \tab \code{node.alpha} \tab \code{plot(x, alpha = 0.8)} \cr
+#'   \code{color} \tab \code{node.color} \tab \code{plot(x, color = "blue")} \cr
+#'   \code{shape} \tab \code{node.shape} \tab \code{plot(x, shape = 15)} \cr
+#'   \code{vsize} \tab \code{node.size} \tab \code{plot(x, vsize = 10)}
+#' }
+#'
+#' A few extra cosmetic arguments are also available: \code{title} (plot
+#' title), \code{legend.title}, and \code{legend.names} (custom legend text).
+#'
+#' Setting \code{arguments = TRUE} changes what \code{plot()} returns:
+#' instead of the rendered plot, you get back
+#' \code{list(network_plot = <plot>, ARGS = <resolved arguments>)} -- the
+#' plot itself, plus the fully-resolved \code{ggnet2} argument list actually
+#' used to build it (including, e.g., the node layout/positions). This is
+#' mainly useful for advanced, programmatic use -- for example, reusing the
+#' exact same node positions and colors across multiple networks when
+#' building your own composite figure (this is how
+#' \code{\link[EGAnet]{compare.EGA.plots}} keeps multiple networks aligned
+#' internally).
+#'
+#' Methods that compose more than one network into a single figure --
+#' \code{\link[EGAnet]{bootEGA}}, \code{\link[EGAnet]{hierEGA}} (with
+#' \code{plot.type = "separate"}), \code{\link[EGAnet]{invariance}},
+#' \code{dynEGA.Group}, \code{dynEGA.Individual} (with multiple \code{id}s),
+#' and \code{\link[EGAnet]{compare.EGA.plots}} -- also forward the same
+#' arguments to \code{\link[ggpubr]{ggarrange}} in full (e.g., \code{ncol},
+#' \code{nrow}, \code{legend}, \code{common.legend}; see
+#' \code{?ggpubr::ggarrange}), so the panel layout for these plots can be
+#' adjusted directly from \code{plot()}.
+#'
+#' If an argument name is not recognized by \code{ggnet2}, \code{ggarrange},
+#' or one of the shortcuts/extras above, \code{EGAnet} throws an error naming
+#' the unrecognized argument(s) -- most often the result of a typo -- rather
+#' than silently ignoring it.
+#'
+#' \code{model.args}, \code{algorithm.args}, and \code{plot.args} (each a
+#' named \code{list()}) are also still accepted, for backwards compatibility
+#' with older \code{EGAnet} versions that required arguments to be grouped
+#' this way. These are \strong{legacy} -- passing the same arguments directly
+#' (e.g., \code{plot(x, node.size = 6)} instead of
+#' \code{plot(x, plot.args = list(node.size = 6))}) is preferred going forward.
+#'
 #' @section General Arguments:
 #'
 #' \itemize{
@@ -96,7 +149,9 @@
 #'
 #' \item \code{...} --- Additional arguments to pass on to
 #' \code{\link[GGally]{ggnet2}} and \code{\link[sna]{gplot.layout}}
-#' (see \strong{Examples})
+#' (and, for methods that compose multiple networks,
+#' \code{\link[ggpubr]{ggarrange}}); see \strong{Argument Passing} above
+#' and \strong{Examples} below
 #'
 #' }
 #'

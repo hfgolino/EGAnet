@@ -566,6 +566,9 @@ summary.EGA <- function(object, ...)
 plot.EGA <- function(x, ...)
 {
 
+  # Check for unrecognized arguments
+  argument_name_error(list(...), ggnet2_allowed_names(), "plot.EGA")
+
   # Return plot
   single_plot(
     network = x$network,

@@ -1138,6 +1138,10 @@ plot.dynEGA <- function(x, base = 1, id = NULL, ...)
 # Updated 03.06.2024
 plot.dynEGA.Population <- function(x, ...)
 {
+
+  # Check for unrecognized arguments
+  argument_name_error(list(...), ggnet2_allowed_names(), "plot.dynEGA.Population")
+
   silent_load(
     single_plot(
       network = x$network,
@@ -1152,7 +1156,13 @@ plot.dynEGA.Population <- function(x, ...)
 # Updated 21.11.2025
 plot.dynEGA.Group <- function(x, base = 1, ...)
 {
-  
+
+  # Check for unrecognized arguments
+  argument_name_error(
+    list(...), c(ggnet2_allowed_names(), ggarrange_allowed_names()),
+    "plot.dynEGA.Group"
+  )
+
   # Get names
   group_names <- names(x)
   
@@ -1209,21 +1219,14 @@ plot.dynEGA.Group <- function(x, base = 1, ...)
     comparison_plots[sequence_length]
   )
 
-  # Remove arguments not in `ggpubr::ggarrage`
-  ggarrange_FUN <- ggpubr::ggarrange
-  ggarrange_ARGS <- obtain_arguments(ggarrange_FUN, ellipse)
-
-  # Set other arguments
-  ggarrange_ARGS$plotlist <- plotlist
-  ggarrange_ARGS$labels <- group_names
-
-  # Check for legend position
-  if(is.null(ggarrange_ARGS$legend)){
-    ggarrange_ARGS$legend <- "bottom"
-  }
+  # Set up `ggarrange` arguments (user's `ellipse` can override any of these)
+  ggarrange_ARGS <- ggarrange_args(
+    ellipse, site_defaults = list(labels = group_names, legend = "bottom"),
+    plotlist = plotlist
+  )
 
   # Set up for comparison
-  silent_plot(do.call(ggarrange_FUN, ggarrange_ARGS))
+  silent_plot(do.call(ggpubr::ggarrange, ggarrange_ARGS))
 
 }
 
@@ -1246,7 +1249,13 @@ plot.dynEGA.Individual <- function(x, base = 1, id = NULL, ...)
     
     # Check for multiple IDs
     if(length(id) != 1){ # Perform similar operation to groups
-      
+
+      # Check for unrecognized arguments
+      argument_name_error(
+        ellipse, c(ggnet2_allowed_names(), ggarrange_allowed_names()),
+        "plot.dynEGA.Individual"
+      )
+
       # Get names
       ID_names <- names(x)
       
@@ -1282,7 +1291,7 @@ plot.dynEGA.Individual <- function(x, base = 1, id = NULL, ...)
           compare_plots(
             comparison_network = other_objects[[i]]$network,
             comparison_wc = other_objects[[i]]$wc,
-            plot_ARGS = base_plot$ARGS
+            plot_ARGS = base_plot$ARGS, ...
           )
         }
       )
@@ -1293,27 +1302,20 @@ plot.dynEGA.Individual <- function(x, base = 1, id = NULL, ...)
         comparison_plots[sequence_length]
       )
       
-      # `ggarrange` does not like non-plot arguments for its ellipse
-      ellipse <- ellipse[
-        names(ellipse) %in% names(formals(ggpubr::ggarrange))
-      ]
-      
-      # Set up for comparison
-      silent_plot(
-        do.call(
-          what = ggpubr::ggarrange,
-          args = c(
-            list(
-              plotlist = plotlist,
-              labels = ID_names,
-              legend = "bottom"
-            ), ellipse
-          )
-        )
+      # Set up `ggarrange` arguments (user's `ellipse` can override any of these)
+      ggarrange_ARGS <- ggarrange_args(
+        ellipse, site_defaults = list(labels = ID_names, legend = "bottom"),
+        plotlist = plotlist
       )
-      
+
+      # Set up for comparison
+      silent_plot(do.call(ggpubr::ggarrange, ggarrange_ARGS))
+
     }else{
-      
+
+      # Check for unrecognized arguments
+      argument_name_error(ellipse, ggnet2_allowed_names(), "plot.dynEGA.Individual")
+
       # If only one ID, then plot it
       silent_plot(
         single_plot(
@@ -1322,11 +1324,17 @@ plot.dynEGA.Individual <- function(x, base = 1, id = NULL, ...)
           ...
         )
       )
-      
+
     }
     
   }else{ # No ID provided, then randomly some plots
-    
+
+    # Check for unrecognized arguments
+    argument_name_error(
+      ellipse, c(ggnet2_allowed_names(), ggarrange_allowed_names()),
+      "plot.dynEGA.Individual"
+    )
+
     # Get number of individuals
     ID_length <- length(x)
     
@@ -1368,7 +1376,7 @@ plot.dynEGA.Individual <- function(x, base = 1, id = NULL, ...)
         compare_plots(
           comparison_network = other_objects[[i]]$network,
           comparison_wc = other_objects[[i]]$wc,
-          plot_ARGS = base_plot$ARGS
+          plot_ARGS = base_plot$ARGS, ...
         )
       }
     )
@@ -1379,27 +1387,17 @@ plot.dynEGA.Individual <- function(x, base = 1, id = NULL, ...)
       comparison_plots[sequence_length]
     )
     
-    # `ggarrange` does not like non-plot arguments for its ellipse
-    ellipse <- ellipse[
-      names(ellipse) %in% names(formals(ggpubr::ggarrange))
-    ]
-    
-    # Set up for comparison
-    silent_plot(
-      do.call(
-        what = ggpubr::ggarrange,
-        args = c(
-          list(
-            plotlist = plotlist,
-            labels = ID_names,
-            legend = "bottom"
-          ), ellipse
-        )
-      )
+    # Set up `ggarrange` arguments (user's `ellipse` can override any of these)
+    ggarrange_ARGS <- ggarrange_args(
+      ellipse, site_defaults = list(labels = ID_names, legend = "bottom"),
+      plotlist = plotlist
     )
-    
+
+    # Set up for comparison
+    silent_plot(do.call(ggpubr::ggarrange, ggarrange_ARGS))
+
   }
-  
+
 }
 
 #' @noRd

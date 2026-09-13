@@ -355,6 +355,8 @@ Estimating the stability of the number of factors via Bootstrap Exploratory Grap
 the variables in the empirical dimensions and
 \code{\link[EGAnet]{dimensionStability}} to estimate the stability of
 the dimensions (structural consistency)
+
+\code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{EGAnet}
 }
 \author{
 Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>

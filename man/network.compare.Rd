@@ -166,6 +166,9 @@ van Borkulo, C. D., van Bork, R., Boschloo, L., Kossakowski, J. J., Tio, P., Sch
 Comparing network structures on three aspects: A permutation test.
 \emph{Psychological Methods}, \emph{28}(6), 1273–1285.
 }
+\seealso{
+\code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{EGAnet}
+}
 \author{
 Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 }

@@ -69,6 +69,8 @@
 #'   comparison.name = "Louvain", comparison.color = "#E57200"
 #' )
 #'
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{EGAnet}
+#'
 #' @export
 #'
 # TEFI comparison ----

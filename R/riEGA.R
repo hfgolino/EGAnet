@@ -505,6 +505,9 @@ summary.riEGA <- function(object, ...)
 plot.riEGA <- function(x, ...)
 {
 
+  # Check for unrecognized arguments
+  argument_name_error(list(...), ggnet2_allowed_names(), "plot.riEGA")
+
   # Return plot
   single_plot(
     network = x$EGA$network,

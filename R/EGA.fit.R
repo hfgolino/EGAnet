@@ -485,6 +485,9 @@ summary.EGA.fit <- function(object, ...)
 plot.EGA.fit <- function(x, ...)
 {
 
+  # Check for unrecognized arguments
+  argument_name_error(list(...), ggnet2_allowed_names(), "plot.EGA.fit")
+
   # Return plot
   single_plot(
     network = x$EGA$network,

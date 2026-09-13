@@ -328,6 +328,8 @@
 #' \code{\link[EGAnet]{dimensionStability}} to estimate the stability of
 #' the dimensions (structural consistency)
 #'
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{EGAnet}
+#'
 #' @export
 #'
 # Bootstrap EGA ----
@@ -1036,6 +1038,9 @@ plot.bootEGA <- function(x, ...)
 
     }else{
 
+      # Check for unrecognized arguments
+      argument_name_error(list(...), ggnet2_allowed_names(), "plot.bootEGA")
+
       # Return plot
       return(
         single_plot(
@@ -1058,8 +1063,24 @@ plot.bootEGA <- function(x, ...)
     "riega" = "Random-intercept EGA"
   )
 
+  # Obtain ellipse arguments (shared across the `ggnet2`, `ggarrange`,
+  # and `theme` destinations below)
+  ellipse <- list(...)
+
+  # Check for unrecognized arguments
+  argument_name_error(
+    ellipse,
+    c(ggnet2_allowed_names(), ggarrange_allowed_names(), theme_allowed_names()),
+    "plot.bootEGA"
+  )
+
+  # Only forward `ggnet2`-relevant arguments to the empirical `EGA` plot --
+  # `ggarrange`/`theme`-only names would otherwise fail `plot.EGA`'s own
+  # (stricter) `ggnet2`-only validation
+  ggnet2_ellipse <- filter_ggnet2_ellipse(ellipse)
+
   # Plot empirical EGA
-  ega_plot <- plot(x$EGA, ...) +
+  ega_plot <- do.call(plot, c(list(x$EGA), ggnet2_ellipse)) +
     ggplot2::labs(caption = paste("Original Sample |", ega_type)) +
     ggplot2::theme(
       # plot.title = ggplot2::element_text(face = "bold", hjust = 0.5),
@@ -1071,14 +1092,16 @@ plot.bootEGA <- function(x, ...)
   # Obtain item stability plot
   is_plot <- plot(x$stability$item.stability, ...)
 
+  # Set up `ggarrange` arguments (user's `ellipse` can override any of these)
+  ggarrange_ARGS <- ggarrange_args(
+    ellipse, site_defaults = list(
+      nrow = 1, ncol = 2, legend.grob = ggpubr::get_legend(is_plot)
+    )
+  )
+
   # Plot with item stability
   silent_call(
-    ggpubr::ggarrange(
-      ega_plot, is_plot,
-      nrow = 1, ncol = 2,
-      legend.grob = ggpubr::get_legend(is_plot),
-      ...
-    )
+    do.call(ggpubr::ggarrange, c(list(ega_plot, is_plot), ggarrange_ARGS))
   )
 
 }

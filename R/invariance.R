@@ -304,7 +304,7 @@
 #' # Plot with BH-corrected alpha = 0.10
 #' plot(results, p_type = "p_BH", p_value = 0.10)}
 #'
-#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{}
+#' @seealso \code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{EGAnet}
 #'
 #' @export
 #'
@@ -807,7 +807,7 @@ group_setup <- function(
   ellipse <- list(...)
 
   # Set edge size
-  if(!"edge.size" %in% ellipse){
+  if(!"edge.size" %in% names(ellipse)){
     ellipse$edge.size <- 8 # default in `basic_plot_setup`
   }
 
@@ -865,6 +865,15 @@ group_setup <- function(
 # Updated 13.08.2024
 plot.invariance <- function(x, pairs = list(), p_type = c("p", "p_BH"), p_value = 0.05, ...)
 {
+
+  # Obtain ellipse arguments
+  ellipse <- list(...)
+
+  # Check for unrecognized arguments
+  argument_name_error(
+    ellipse, c(ggnet2_allowed_names(), ggarrange_allowed_names()),
+    "plot.invariance"
+  )
 
   # Obtain unique groups
   unique_factors <- x$groups$unique_groups
@@ -1078,12 +1087,16 @@ plot.invariance <- function(x, pairs = list(), p_type = c("p", "p_BH"), p_value 
 
       # Return plot
       return(
-        ggpubr::ggarrange(
-          first_group, second_group,
-          ncol = 2, nrow = 1,
-          labels = possible_pairs[[pair_index[[index]]]],
-          legend = "bottom",
-          common.legend = FALSE
+        do.call(
+          ggpubr::ggarrange,
+          c(
+            list(first_group, second_group),
+            ggarrange_args(ellipse, site_defaults = list(
+              ncol = 2, nrow = 1,
+              labels = possible_pairs[[pair_index[[index]]]],
+              legend = "bottom", common.legend = FALSE
+            ))
+          )
         )
       )
 
@@ -1099,11 +1112,16 @@ plot.invariance <- function(x, pairs = list(), p_type = c("p", "p_BH"), p_value 
 
       # Return plot
       return(
-        ggpubr::ggarrange(
-          first_group, second_group,
-          ncol = 2, nrow = 1,
-          labels = possible_pairs[[pair_index[[index]]]],
-          legend = "none"
+        do.call(
+          ggpubr::ggarrange,
+          c(
+            list(first_group, second_group),
+            ggarrange_args(ellipse, site_defaults = list(
+              ncol = 2, nrow = 1,
+              labels = possible_pairs[[pair_index[[index]]]],
+              legend = "none"
+            ))
+          )
         )
       )
 
@@ -1112,10 +1130,10 @@ plot.invariance <- function(x, pairs = list(), p_type = c("p", "p_BH"), p_value 
   })
 
   # Arrange final plots
-  final_plots <- ggpubr::ggarrange(
-    plotlist = pairwise_plots,
-    ncol = 1, nrow = rows
+  first_batch_ARGS <- ggarrange_args(
+    ellipse, site_defaults = list(ncol = 1, nrow = rows), plotlist = pairwise_plots
   )
+  final_plots <- do.call(ggpubr::ggarrange, first_batch_ARGS)
 
   # Check for more
   if(total_pairs > 3){
@@ -1209,12 +1227,16 @@ plot.invariance <- function(x, pairs = list(), p_type = c("p", "p_BH"), p_value 
 
         # Return plot
         return(
-          ggpubr::ggarrange(
-            first_group, second_group,
-            ncol = 2, nrow = 1,
-            labels = possible_pairs[[pair_index[[index]]]],
-            legend = "bottom",
-            common.legend = FALSE
+          do.call(
+            ggpubr::ggarrange,
+            c(
+              list(first_group, second_group),
+              ggarrange_args(ellipse, site_defaults = list(
+                ncol = 2, nrow = 1,
+                labels = possible_pairs[[pair_index[[index]]]],
+                legend = "bottom", common.legend = FALSE
+              ))
+            )
           )
         )
 
@@ -1230,11 +1252,16 @@ plot.invariance <- function(x, pairs = list(), p_type = c("p", "p_BH"), p_value 
 
         # Return plot
         return(
-          ggpubr::ggarrange(
-            first_group, second_group,
-            ncol = 2, nrow = 1,
-            labels = possible_pairs[[pair_index[[index]]]],
-            legend = "none"
+          do.call(
+            ggpubr::ggarrange,
+            c(
+              list(first_group, second_group),
+              ggarrange_args(ellipse, site_defaults = list(
+                ncol = 2, nrow = 1,
+                labels = possible_pairs[[pair_index[[index]]]],
+                legend = "none"
+              ))
+            )
           )
         )
 
@@ -1242,12 +1269,19 @@ plot.invariance <- function(x, pairs = list(), p_type = c("p", "p_BH"), p_value 
 
     })
 
-    # Arrange final plots
-    final_plots <- ggpubr::ggarrange(
-      final_plots, ggpubr::ggarrange(
-        plotlist = pairwise_plots,
-        ncol = 1, nrow = rows
-      ), ncol = columns, nrow = 1
+    # Arrange second batch
+    second_batch_ARGS <- ggarrange_args(
+      ellipse, site_defaults = list(ncol = 1, nrow = rows), plotlist = pairwise_plots
+    )
+    second_batch_plots <- do.call(ggpubr::ggarrange, second_batch_ARGS)
+
+    # Arrange final plots (combine first and second batches side by side)
+    final_plots <- do.call(
+      ggpubr::ggarrange,
+      c(
+        list(final_plots, second_batch_plots),
+        ggarrange_args(ellipse, site_defaults = list(ncol = columns, nrow = 1))
+      )
     )
 
   }

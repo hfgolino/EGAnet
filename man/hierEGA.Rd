@@ -304,7 +304,7 @@ Revised network loadings.
 \emph{PsyArXiv}.
 }
 \seealso{
-\code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{}
+\code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{EGAnet}
 }
 \author{
 Marcos Jiménez <marcosjnezhquez@gmailcom>,

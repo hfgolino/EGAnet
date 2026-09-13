@@ -78,6 +78,9 @@ plot(
 )
 
 }
+\seealso{
+\code{\link[EGAnet]{plot.EGAnet}} for plot usage in \code{EGAnet}
+}
 \author{
 Hudson Golino <hfg9s at virginia.edu> and Alexander P. Christensen <alexpaulchristensen@gmail.com>
 }

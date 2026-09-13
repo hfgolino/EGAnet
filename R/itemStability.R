@@ -187,7 +187,7 @@ itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
   # Add methods attributes from `bootEGA` object
   attr(results, "methods") <- bootega.obj[c("EGA.type", "iter", "type")]
   attr(results, "color") <- unique(
-    plot(bootega.obj$EGA, produce = FALSE, arguments = TRUE)$ARGS$node.color
+    plot(bootega.obj$EGA, arguments = TRUE)$ARGS$node.color
   )
 
   # Check for hierarchical
@@ -237,10 +237,12 @@ itemStability <- function (bootega.obj, IS.plot = TRUE, structure = NULL, ...){
     }
 
     # Get final plot
-    results$plot <- ggpubr::ggarrange(
-      results$lower_order$plot, higher_order_plot,
-      labels = c("Lower Order", "Higher Order"),
-      ...
+    results$plot <- do.call(
+      ggpubr::ggarrange,
+      c(
+        list(results$lower_order$plot, higher_order_plot),
+        ggarrange_args(ellipse, site_defaults = list(labels = c("Lower Order", "Higher Order")))
+      )
     )
 
   }else{
@@ -468,10 +470,12 @@ plot.itemStability <- function(x, ...)# plot.type = c("all", "empirical"), ...)
     # Return final plot
     return(
       silent_plot(
-        ggpubr::ggarrange(
-          lower_order_plot, higher_order_plot,
-          labels = c("Lower Order", "Higher Order"),
-          ...
+        do.call(
+          ggpubr::ggarrange,
+          c(
+            list(lower_order_plot, higher_order_plot),
+            ggarrange_args(ellipse, site_defaults = list(labels = c("Lower Order", "Higher Order")))
+          )
         )
       )
     )
