@@ -579,8 +579,9 @@ basic_plot_setup <- function(network, wc = NULL, ...)
   ## built-in fill (`fill`) + border (`color`), so they get one layer
   ## instead of two.
   node.shape <- plot_ARGS$node.shape
+  fillable_shape <- all(node.shape %in% 21:25)
 
-  if(all(node.shape %in% 21:25)){
+  if(fillable_shape){
 
     second_layer <- first_layer +
       ggplot2::geom_point( # fillable shapes: built-in fill + border
@@ -620,15 +621,32 @@ basic_plot_setup <- function(network, wc = NULL, ...)
       )
   }
 
+  # Legend keys mirror the actual node glyphs -- same shape, and (for
+  # fillable shapes) `fill`/`color` split the same way the plotted
+  # points do rather than everything riding on `color`
+  legend_aes <- if(fillable_shape){
+    list(
+      shape = unique(node.shape),
+      fill = unique(plot_ARGS$node.color),
+      color = unique(border_color),
+      size = median(node.size, na.rm = TRUE),
+      alpha = median(plot_ARGS$node.alpha, na.rm = TRUE),
+      stroke = 1.5
+    )
+  }else{
+    list(
+      shape = unique(node.shape),
+      color = unique(plot_ARGS$node.color),
+      size = median(node.size, na.rm = TRUE),
+      alpha = median(plot_ARGS$node.alpha, na.rm = TRUE),
+      stroke = 1.5
+    )
+  }
+
   second_layer <- second_layer +
     ggplot2::guides( # create legend with these settings
       color = ggplot2::guide_legend(
-        override.aes = list(
-          color = unique(plot_ARGS$node.color),
-          size = median(node.size, na.rm = TRUE),
-          alpha = median(plot_ARGS$node.alpha, na.rm = TRUE),
-          stroke = 1.5
-        ),
+        override.aes = legend_aes,
         title = swiftelse(
           "legend.title" %in% names(ellipse),
           ellipse$legend.title, ""
