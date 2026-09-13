@@ -696,10 +696,10 @@ rotation_errors <- function(rotation) {
 
 #' @noRd
 # Rotation default arguments ----
-# Updated 12.07.2023
+# Updated 13.09.2026
 rotation_defaults <- function(rotation, rotation_ARGS, ellipse) {
   # Check for "n.rotations" (used in {psych})
-  if ("n.rotations" %in% ellipse) {
+  if ("n.rotations" %in% names(ellipse)) {
     rotation_ARGS$randomStarts <- ellipse$n.rotations
   }
 
