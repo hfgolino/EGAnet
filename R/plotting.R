@@ -384,7 +384,7 @@ get_layout <- function(network, dimensions, non_zero_index, plot_ARGS)
 
 #' @noRd
 # Basic set up for plots ----
-# Updated 13.02.2026
+# Updated 13.09.2026
 basic_plot_setup <- function(network, wc = NULL, ...)
 {
 
@@ -568,17 +568,47 @@ basic_plot_setup <- function(network, wc = NULL, ...)
   }
 
   # Custom nodes: transparent insides and dark borders
-  second_layer <- first_layer +
-    ggplot2::geom_point( # transparent insides
-      size = node.size + 0.50, shape = 19,
-      color = plot_ARGS$node.color,
-      alpha = plot_ARGS$node.alpha,
-      show.legend = FALSE
-    ) +
-    ggplot2::geom_point( # dark borders
-      size = node.size, color = border_color,
-      shape = 1, stroke = 1.5, alpha = 0.80
-    )
+  ## Node shape drives this rather than a hardcoded `19`/`1` pair, but the
+  ## look stays the same: a solid, `node.alpha`-translucent inside with a
+  ## more opaque border in a matching shape. Known base R `pch` "solid"
+  ## shapes get their matching hollow outline for the border (the
+  ## default, `node.shape = 19`, maps to `1` -- exactly the old hardcoded
+  ## pair); anything without a known hollow counterpart (already-hollow
+  ## shapes, character `pch` codes) reuses the same shape for the border.
+  ## The five "fillable" `pch` codes (21:25) already have their own
+  ## built-in fill (`fill`) + border (`color`), so they get one layer
+  ## instead of two.
+  node.shape <- plot_ARGS$node.shape
+
+  if(all(node.shape %in% 21:25)){
+
+    second_layer <- first_layer +
+      ggplot2::geom_point( # fillable shapes: built-in fill + border
+        shape = node.shape, size = node.size,
+        fill = plot_ARGS$node.color, color = border_color,
+        alpha = plot_ARGS$node.alpha, stroke = 1.5,
+        show.legend = FALSE
+      )
+
+  }else{
+
+    hollow_shape <- c(`15` = 0, `16` = 1, `17` = 2, `18` = 5, `19` = 1, `20` = 1)
+    border_shape <- unname(hollow_shape[as.character(node.shape)])
+    border_shape <- swiftelse(is.na(border_shape), node.shape, border_shape)
+
+    second_layer <- first_layer +
+      ggplot2::geom_point( # transparent insides
+        size = node.size + 0.50, shape = node.shape,
+        color = plot_ARGS$node.color,
+        alpha = plot_ARGS$node.alpha,
+        show.legend = FALSE
+      ) +
+      ggplot2::geom_point( # dark borders
+        size = node.size, color = border_color,
+        shape = border_shape, stroke = 1.5, alpha = 0.80
+      )
+
+  }
 
   # Only add node labels back on top if `label.size` isn't `0` or `NA`
   if(show_labels){
