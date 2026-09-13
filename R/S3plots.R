@@ -58,6 +58,17 @@
 #'   \code{vsize} \tab \code{node.size} \tab \code{plot(x, vsize = 10)}
 #' }
 #'
+#' \code{label} is deliberately \strong{not} one of these shortcuts, even
+#' though it looks like a natural fit for setting custom node text. Methods
+#' that compose multiple networks into one figure (see below) also forward
+#' arguments to \code{\link[ggpubr]{ggarrange}}, which has its own, unrelated
+#' \code{labels} (plural) argument for panel captions -- \code{label} vs.
+#' \code{labels} is exactly the kind of mistake that's easy to make and easy
+#' to miss. To avoid that ambiguity, set node text with \code{node.label}
+#' instead (e.g., \code{node.label = c("A", "B")}), and remove node labels
+#' with \code{label.size = 0}. Passing \code{label} directly issues a
+#' warning and is otherwise ignored -- it does not change node text.
+#'
 #' A few extra cosmetic arguments are also available: \code{title} (plot
 #' title), \code{legend.title}, and \code{legend.names} (custom legend text).
 #'
@@ -216,5 +227,5 @@
 #'
 #' @rdname EGAnet-plot
 #'
-# Updated 04.08.2023
+# Updated 13.09.2026
 NULL

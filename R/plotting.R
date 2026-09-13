@@ -50,7 +50,7 @@ memoize_once <- function(compute)
 #' @noRd
 # Defaults for GGally plotting ----
 # For plots and methods
-# Updated 04.08.2023
+# Updated 13.09.2026
 GGally_args <- function(ellipse)
 {
 
@@ -103,6 +103,37 @@ GGally_args <- function(ellipse)
   if("vsize" %in% names(ellipse)){
     default_args$node.size <- ellipse$vsize
   }
+
+  ## Node label
+  ## `label` is deliberately *not* treated as a shortcut for `node.label`:
+  ## composite plots (`bootEGA`, `hierEGA` w/ `plot.type = "separate"`,
+  ## `invariance`, `dynEGA.Group`/`.Individual`, `compare.EGA.plots`) also
+  ## forward arguments to `ggpubr::ggarrange`, which has its own, unrelated
+  ## `labels` (plural) argument for panel captions -- `label` vs. `labels`
+  ## is exactly the kind of typo that's easy to make and hard to notice, so
+  ## rather than quietly repurposing `label` as well, warn and point users
+  ## at the unambiguous `node.label` (a genuine `ggnet2` argument that
+  ## {EGAnet} always uses for its own, separately-drawn label layer).
+  ## NOTE: `default_args$label` is *always* forced to `FALSE` below, and
+  ## composite plots recycle one panel's fully-resolved arguments as the
+  ## next panel's `ellipse` -- so `label` is present (as `FALSE`) on every
+  ## internal call regardless of user input. Only warn when it's something
+  ## other than that resting `FALSE` state, or every composite plot would
+  ## trigger a false warning
+  if("label" %in% names(ellipse) && !isFALSE(ellipse$label)){
+    warning(
+      "'label' is not used to set node text in {EGAnet} plots -- use ",
+      "'node.label' instead (e.g., `node.label = c(\"A\", \"B\")`, or ",
+      "`label.size = 0` to remove labels). This avoids confusion with ",
+      "'labels', `ggarrange`'s own argument for panel captions on ",
+      "multi-network plots. Node labels were not changed.",
+      call. = FALSE
+    )
+  }
+
+  ## Never let `ggnet2`'s own `label` mechanism draw -- {EGAnet}'s
+  ## own label layer (via `node.label`) is the only one that should render
+  default_args$label <- FALSE
 
   ## Edge color
   if(!"edge.color" %in% names(ellipse)){
