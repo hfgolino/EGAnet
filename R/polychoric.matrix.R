@@ -36,10 +36,10 @@
 #'
 #' \itemize{
 #'
-#' \item \code{"none"} --- Adds no value (\code{empty.value = "none"})
+#' \item \code{"none"} (default) --- Adds no value (\code{empty.value = "none"})
 #' to the empirical joint frequency table between two variables
 #'
-#' \item \code{"zero"} (default) --- Adds \code{empty.value} to the cells with zero
+#' \item \code{"zero"} --- Adds \code{empty.value} to the cells with zero
 #' in the joint frequency table between two variables
 #'
 #' \item \code{"all"} --- Adds \code{empty.value} to all
@@ -54,14 +54,13 @@
 #'
 #' \itemize{
 #'
-#' \item \code{"none"} --- Adds no value (\code{0}) to the empirical joint
+#' \item \code{"none"} (default) --- Adds no value (\code{0}) to the empirical joint
 #' frequency table between two variables
 #'
-#' \item \code{"point_five"} (default) --- Adds \code{0.5} to the cells defined by \code{empty.method}
+#' \item \code{"point_five"} --- Adds \code{0.5} to the cells defined by \code{empty.method}
 #'
-#' \item \code{"one_over"} --- Adds \code{1 / n} where \emph{n} equals the number of cells
-#' based on \code{empty.method}. For \code{empty.method = "zero"},
-#' \emph{n} equals the number of \emph{zero} cells
+#' \item \code{"one_over"} --- Adds \code{1 / n} where \emph{n} equals the total number of cells
+#' in the (trimmed) joint frequency table between two variables
 #'
 #' }
 #'
@@ -130,7 +129,7 @@
 #' @export
 #'
 # Compute polychoric correlation matrix
-# Updated 03.09.2026
+# Updated 04.10.2026
 polychoric.matrix <- function(
     data, na.data = c("pairwise", "listwise"),
     empty.method = c("none", "zero", "all"),
@@ -141,8 +140,8 @@ polychoric.matrix <- function(
 
   # Set default arguments if missing
   na.data <- set_default(na.data, "pairwise", polychoric.matrix)
-  empty.method <- set_default(empty.method, "zero", polychoric.matrix)
-  if(missing(empty.value)){empty.value <- "point_five"}
+  empty.method <- set_default(empty.method, "none", polychoric.matrix)
+  if(missing(empty.value)){empty.value <- "none"}
 
   # Check for need to check for usable data
   if(needs_usable(list(...))){
@@ -155,11 +154,16 @@ polychoric.matrix <- function(
   # Argument errors (try to return ordinal data)
   data <- polychoric.matrix_errors(data)
 
+  # Determine standard deviations (before the missing sentinel is
+  # inserted so that it does not contribute to the variance)
+  sds <- apply(data, 2, sd, na.rm = TRUE)
+
   # Check for missing data
   if(na.data == "pairwise"){
     data[is.na(data)] <- 99 # "pairwise" is performed in C
   }else if(na.data == "listwise"){
     data <- na.omit(data) # no performance difference with C
+    sds <- apply(data, 2, sd) # complete cases only
   }
 
   # Get dimensions of data
@@ -176,7 +180,24 @@ polychoric.matrix <- function(
 
     # Set 'empty.value'
     if(is.character(empty.value)){
-      empty.value <- swiftelse(empty.value == "point_five", 0.50, 2)
+      empty.value <- switch(
+        empty.value,
+        "none" = 0,
+        "point_five" = 0.50,
+        "one_over" = 2,
+        stop(
+          "'empty.value' must be \"none\", \"point_five\", \"one_over\", or a number between 0 and 1",
+          call. = FALSE
+        )
+      )
+    }else{
+      empty.value <- as.double(empty.value)
+      if(length(empty.value) != 1 || is.na(empty.value) || empty.value < 0 || empty.value > 1){
+        stop(
+          "'empty.value' must be \"none\", \"point_five\", \"one_over\", or a number between 0 and 1",
+          call. = FALSE
+        )
+      }
     }
 
   }
@@ -196,11 +217,8 @@ polychoric.matrix <- function(
     ), nrow = dimensions[2], ncol = dimensions[2]
   )
 
-  # Determine standard deviations
-  sds <- apply(data, 2, sd, na.rm = TRUE)
-
-  # Get zeros
-  zero_sd <- sds == 0
+  # Get zeros (all-missing columns have NA standard deviation)
+  zero_sd <- !is.na(sds) & sds == 0
 
   # Check for any zeros
   if(any(zero_sd)){

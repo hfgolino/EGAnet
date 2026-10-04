@@ -423,9 +423,11 @@ struct ThresholdsResult thresholds(
         for(l = 0; l < cat_Y; l++){
 
           // Check for method
-          if(zero && result.joint_frequency[k][l] == 0){
-            result.joint_frequency[k][l] += added_value;
-            added_sum += added_value;
+          if(zero){
+            if(result.joint_frequency[k][l] == 0){
+              result.joint_frequency[k][l] += added_value;
+              added_sum += added_value;
+            }
           } else { // if(all){
             result.joint_frequency[k][l] += added_value;
             added_sum += added_value;

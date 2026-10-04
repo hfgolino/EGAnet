@@ -41,10 +41,10 @@ Available options:
 
 \itemize{
 
-\item \code{"none"} --- Adds no value (\code{empty.value = "none"})
+\item \code{"none"} (default) --- Adds no value (\code{empty.value = "none"})
 to the empirical joint frequency table between two variables
 
-\item \code{"zero"} (default) --- Adds \code{empty.value} to the cells with zero
+\item \code{"zero"} --- Adds \code{empty.value} to the cells with zero
 in the joint frequency table between two variables
 
 \item \code{"all"} --- Adds \code{empty.value} to all
@@ -59,14 +59,13 @@ specific methods:
 
 \itemize{
 
-\item \code{"none"} --- Adds no value (\code{0}) to the empirical joint
+\item \code{"none"} (default) --- Adds no value (\code{0}) to the empirical joint
 frequency table between two variables
 
-\item \code{"point_five"} (default) --- Adds \code{0.5} to the cells defined by \code{empty.method}
+\item \code{"point_five"} --- Adds \code{0.5} to the cells defined by \code{empty.method}
 
-\item \code{"one_over"} --- Adds \code{1 / n} where \emph{n} equals the number of cells
-based on \code{empty.method}. For \code{empty.method = "zero"},
-\emph{n} equals the number of \emph{zero} cells
+\item \code{"one_over"} --- Adds \code{1 / n} where \emph{n} equals the total number of cells
+in the (trimmed) joint frequency table between two variables
 
 }}
 
