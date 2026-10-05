@@ -32,6 +32,10 @@
 #'
 #' @param empty.method Character (length = 1).
 #' Method for empty cell correction.
+#' The correction is only applied when the (trimmed) joint
+#' frequency table between two variables is \eqn{2 \times 2}
+#' (after removing rows and columns with zero totals);
+#' larger tables are never corrected.
 #' Available options:
 #'
 #' \itemize{

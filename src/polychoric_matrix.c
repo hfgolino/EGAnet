@@ -401,8 +401,8 @@ struct ThresholdsResult thresholds(
   double added_value = 0.0;
   double added_sum = 0.0;
 
-  // Check for zero cells
-  if(zero_count > 0){
+  // Check for zero cells (only corrected for 2 x 2 tables)
+  if(zero_count > 0 && cat_X == 2 && cat_Y == 2){
 
     // If there are zero cells, check method
     if(empty_method != 0){
