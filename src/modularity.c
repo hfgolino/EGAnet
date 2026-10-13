@@ -59,8 +59,10 @@ struct modularity_result modularity_values(double* network, int cols, double res
         negative_sum += negative_column_sums[i];
     }
 
-    // Compute total sum
-    double total_sum = positive_sum + negative_sum;
+    // Compute total sum: P + N of Gomez et al. (2009). `negative_sum` is stored
+    // negative (it sums the negative edges themselves), so its magnitude is
+    // added by subtracting it
+    double total_sum = positive_sum - negative_sum;
 
     // Get indices for modularity values
     int value_indices = (((cols * (cols - 1)) / 2) + cols);
@@ -120,8 +122,10 @@ struct modularity_result modularity_values(double* network, int cols, double res
     negative_column_sums = NULL;
 
     // Pre-compute division of sums
+    // P / (P + N) and N / (P + N), both non-negative -- `signed_modularity()`
+    // subtracts the negative term itself
     double positive_total_sum = positive_sum / total_sum;
-    double negative_total_sum = negative_sum / total_sum;
+    double negative_total_sum = -negative_sum / total_sum;
 
     // Set up result
     struct modularity_result result = {

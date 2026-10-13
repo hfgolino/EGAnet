@@ -60,7 +60,7 @@ modularity(
   memberships = ega.wmt$wc,
   signed = TRUE
 )
-# 0.1701946
+# 0.1712476
 
 }
 \references{
