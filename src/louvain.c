@@ -1,3 +1,8 @@
+/* Vendored verbatim from {EGAnet}'s src/louvain.c (same author). Used by
+   `q()` in place of `igraph::cluster_louvain()`: this version's randomness depends
+   only on an explicit `seed`, not R's global RNG state, so results are
+   reproducible regardless of call order or parallelization. */
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
@@ -267,7 +272,12 @@ static struct higher_order_result make_higher_order(double* network, int* member
 
             // Add edge to current position of memberships
             higher_order[first_position] += edge;
-            higher_order[second_position] += edge;
+
+            // A diagonal entry (a self-loop of an aggregated community) appears once in the
+            // full matrix, whereas an off-diagonal entry stands for both directions
+            if(i != j) {
+                higher_order[second_position] += edge;
+            }
 
         }
     }

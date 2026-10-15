@@ -1,3 +1,5 @@
+/* Vendored verbatim from {EGAnet}'s src/modularity.c (same author). */
+
 #include <stdlib.h>
 #include <R.h>
 #include <Rinternals.h>

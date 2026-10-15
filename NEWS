@@ -2,47 +2,25 @@ WEBSITE: https://r-ega.net
 
 ## Changes in version 2.5.0
 
-+	FIX: `modularity(signed = TRUE)` (and every use of the signed modularity routine in `src/modularity.c`) weighted the negative term of Gomez et al.'s (2009) signed modularity incorrectly for networks with *both* positive and negative edges. The positive and negative parts are weighted by P / (P + N) and N / (P + N), where P and N are the total positive and absolute negative edge weights, but the code computed the total as P - N (the negative sum is stored as a negative number), weighting them by P / (P - N) and N / (P - N) instead (and dividing by zero when P = N). For example, a four-node network with positive edges 1-2 (2) and 3-4 (1) and a negative edge 1-3 (-1), partitioned into {1, 2} and {3, 4}, gave 0.417 instead of 11/24 = 0.458. Networks with only positive (or only negative) edges, and `signed = FALSE`, were not affected
++	FIX: `modularity(signed = TRUE)` weighted the positive and negative parts incorrectly (used P - N rather than P + N) for networks with both positive and negative edges; networks with only one sign and `signed = FALSE` were not affected
 
-+	UPDATE: `node.shape` (and its `shape` shortcut) now actually changes the node shape, instead of being validated but silently ignored in favor of a hardcoded solid-circle-with-hollow-border look. The same solid-inside/hollow-border style is preserved for any shape with a matching base R "hollow" `pch` counterpart (e.g., `node.shape = 15` draws solid squares with hollow-square borders), and the default (`node.shape = 19`) renders identically to before. The five "fillable" `pch` codes (21:25) use their own built-in fill + border instead. The legend keys also now match each community's actual node shape (previously always a circle, regardless of `node.shape`)
++	FIX: Louvain aggregation (`q`) counted the self-loops of an aggregated community twice
 
-+	FIX: `label` was colliding with `ggnet2`'s own, differently-behaved native `label` argument, since {EGAnet}'s network `plot.*` methods now forward the full `ggnet2` argument set. This caused custom node text passed via `label` to be drawn as a second, overlapping text layer on top of the original node names (rather than replacing them). `ggnet2`'s own `label` mechanism is now always disabled in favor of {EGAnet}'s own label layer, and passing `label` directly now raises an informative warning pointing to `node.label` (the correct argument for custom node text) and `label.size = 0` (to remove labels) instead of silently doing the wrong thing. `label` is intentionally *not* turned into an automatic shortcut for `node.label`, since composite plots (`bootEGA`, `hierEGA`, `invariance`, `dynEGA.Group`/`.Individual`, `compare.EGA.plots`) also forward arguments to `ggpubr::ggarrange`, which has its own unrelated `labels` (plural) argument for panel captions -- `label` vs. `labels` would be an easy typo to make and miss
++	FIX: `label` collided with `ggnet2`'s native `label` argument and drew a second text layer over node names; it is now disabled and raises a warning pointing to `node.label` (custom text) and `label.size = 0` (remove labels)
 
-+	UPDATE: Reworked argument passing for {EGAnet}'s network plotting system (`ggnet2`/`ggarrange`):
++	FIX: `edge.size` and `labels` reset to defaults in `hierEGA` and `invariance`; `hierEGA` second plot dropped user arguments; `dynEGA.Individual` and `compare.EGA.plots` did not forward user arguments to comparison plots
 
-	-	Every network `plot.*` method (`EGA`, `EGA.estimate`, `EGA.fit`, `riEGA`, `bootEGA`, `hierEGA`, `invariance`, `dynEGA`/`.Group`/`.Individual`, `compare.EGA.plots`) now accepts the full `ggnet2` argument set directly, and methods that compose more than one network into a single figure (`bootEGA`, `hierEGA` with `plot.type = "separate"`, `invariance`, `dynEGA.Group`/`.Individual`, `compare.EGA.plots`) now also accept the full `ggarrange` argument set (e.g., `ncol`, `nrow`, `legend`, `common.legend`) -- previously `ggarrange` arguments were forwarded inconsistently, with some methods hardcoding the panel layout with no user override at all and others using two different ad hoc filtering patterns
++	UPDATE: `node.shape` (and `shape`) now changes the node shape rather than being silently ignored; legend keys match the node shapes
 
-	-	An unrecognized argument name (most often a typo) now throws an informative error instead of being silently dropped
++	UPDATE: network `plot.*` methods accept the full `ggnet2` argument set (and `ggarrange` for composite plots); unrecognized arguments now error rather than being dropped (see `?EGAnet-plot`)
 
-	-	Fixed several bugs uncovered while auditing argument passing: `edge.size` and `labels` being silently reset to their defaults even when explicitly set by the user in `hierEGA` and `invariance` (a membership check tested `%in% ellipse` instead of `%in% names(ellipse)`); `hierEGA`'s internal "second plot" (used for multilevel edge highlighting) silently dropping user arguments; and `dynEGA.Individual`/`compare.EGA.plots` not forwarding user arguments to their internal comparison plots the way `dynEGA.Group` already did
++	UPDATE: `community.detection` and `community.consensus` use a C implementation of Louvain (`louvain.c`) instead of `igraph::cluster_louvain` (substantially faster); `seed` is now reproducible via xoshiro256++ shuffling, `community.consensus` gains `seed`, and `bootEGA` passes its seed to the algorithm
 
-	-	Internal plotting helpers (`GGally_args`, `basic_plot_setup`, `single_plot`, `compare_plots`, and related functions) moved out of `helpers.R` into a new `R/plotting.R`
++	UPDATE: `polychoric.matrix` C code overhauled (Genz's 2004 bivariate normal CDF, Newton-Raphson optimizer; 1.2-5.6x faster); credit to Alan Genz added to `DESCRIPTION` and `inst/COPYRIGHTS`
 
-	-	`?EGAnet-plot` documents the new argument-passing rules, including a quick-reference table for the shortcut argument names (`layout`, `alpha`, `color`, `shape`, `vsize`), a note on the legacy `model.args`/`algorithm.args`/`plot.args` list arguments, and the `arguments = TRUE` return-value option
++	ADD: `community.prism` to overcome the modularity resolution limit by merging communities whenever their union increases subgraph modularity (Pairwise Resolution Iteration via Subgraph Modularity)
 
-+	UPDATE: `community.detection` and `community.consensus` now use {EGAnet}'s own C implementation of the Louvain algorithm (`louvain.c`) instead of `igraph::cluster_louvain`:
-
-	-	Uses the standard incremental Louvain bookkeeping (Blondel et al., 2008) with a sparse adjacency list built once per aggregation level, rather than a dense O(cols^2) modularity matrix -- substantially faster, especially for larger and/or denser networks and for the repeated applications used by consensus clustering
-
-	-	Node shuffling uses xoshiro256++ (like the rest of {EGAnet}'s reproducible random generation) rather than R's global RNG, so `seed` now makes results reproducible regardless of R's RNG state, call order, or parallelization
-
-	-	`community.consensus` gains a `seed` argument (previously unsupported for consensus clustering); each of the `consensus.iter` applications gets its own reproducible sub-seed derived from it. `bootEGA` now threads its per-iteration seed through to the algorithm as well -- previously, only the bootstrap resampling was reproducible when `seed` was set, not the Louvain community detection step itself
-
-	-	`order = "lower"`/`"higher"` now determines what is directly computed (stopping after the first local-moving pass, or running full multilevel aggregation to convergence) rather than always computing the higher-order solution and extracting a level from it afterward
-
-+	ADD: `community.prism` implements Pairwise Resolution Iteration via Subgraph Modularity (PRISM), iteratively testing pairwise unions of communities for a modularity gain at the subgraph level and merging communities whenever the union increases modularity relative to their separate memberships; intended to overcome the modularity resolution limit described by Fortunato and Barthelemy (2007)
-
-+	UPDATE: `polychoric.matrix` C implementation overhauled for speed and accuracy (ported from {L0ggm}):
-
-	-	Bivariate normal CDF replaced with Genz's (2004) double-precision extension of Drezner and Wesolowsky (1990), translated from the Fortran TVPACK `MVBVU` routine (via the pbivnorm R package). Uses a variable-order (6-, 12-, or 20-point) Gauss-Legendre rule depending on \code{|rho|}, with an extended tail-correction series for \code{|rho|} close to 1, giving higher accuracy than the fixed 5-point rule it replaces
-
-	-	Optimizer replaced Brent's method with Newton-Raphson (Fisher scoring on rho, falling back to an exact-Hessian arcsin-reparameterized Newton step to guarantee rho stays in (-1, 1), with damped step sizes to avoid overshoot near the boundary), seeded from a Pearson-correlation starting value
-
-	-	Several C-level optimizations: caching bivariate CDF/density evaluations across a grid of category thresholds instead of recomputing each corner up to 4x redundantly; merging the joint-frequency-table pass with the Pearson starting-value computation into a single scan of the data; replacing per-pair heap allocations with fixed-size stack buffers; replacing a from-scratch Chebyshev expansion with an `erfc()`-based univariate normal CDF; and hoisting rho-only quantities out of the per-cell evaluation loop
-
-	-	Net effect: 1.2-5.6x faster than the previous implementation across a range of dataset sizes and category counts, with results agreeing to 5-8 significant digits
-
-+	UPDATE: `DESCRIPTION` and `inst/COPYRIGHTS` updated to credit Alan Genz for the bivariate normal CDF implementation in `polychoric_matrix.c`, replacing the earlier Drezner-Wesolowsky approximation translated from Alexander Robitzsch's {pbv} package, which is no longer present
++	INTERNAL: plotting helpers moved from `helpers.R` to new `R/plotting.R`
 
 
 ## Changes in version 2.4.1
@@ -58,6 +36,12 @@ WEBSITE: https://r-ega.net
 
 ## Changes in version 2.4.0
 
++	UPDATE: zero variance time series handling in `dynEGA` functions
+
++	UPDATE: better mechanism for `simEGM`
+
++	UPDATE: better optimizations for `EGM.optimizations`
+
 +	ADD: new function (`plot_clusters`) to plot clusters of individual `dynEGA` results
 
 +	ADD: TEFI optimization for `dynEGA` functions
@@ -69,12 +53,6 @@ WEBSITE: https://r-ega.net
 +	ADD: `known.graph` to refit without regularization or allow a graph to be estimated with weights when it is known
 
 +	CHANGE: `network.nonconvex` changed to `network.regularization` for more generic implementations
-
-+	UPDATE: zero variance time series handling in `dynEGA` functions
-
-+	UPDATE: better mechanism for `simEGM`
-
-+	UPDATE: better optimizations for `EGM.optimizations`
 
 +	REMOVE: `EGM` has been removed (for now) as its under revision
 
@@ -96,26 +74,26 @@ WEBSITE: https://r-ega.net
 
 ## Changes in version 2.3.0
 
-+	ADD: `itemDiagnostics` for automated detection of potential instability issues such as local dependnece, minor dimensions, multidimensionality, and low loadings
-
 +	FIX: default `itemStability` plot switched back to empirical dimensions only
 
 +	UPDATE: `simEGM` has a new (faster) data generating mechanism
 
 +	UPDATE: `EGM` optimizations for log-likelihood, AIC, and BIC were added (including proper gradients)
 
++	ADD: `itemDiagnostics` for automated detection of potential instability issues such as local dependnece, minor dimensions, multidimensionality, and low loadings
+
 
 ## Changes in version 2.2.0
-
-+	ADD: `network.nonconvex` to estimate networks using non-convex regularization penalties
-
-+	ADD: `TEFI.compare` to perform a significance test between two structures using `bootEGA` output
 
 +	FIX: Error in printing `length_error` for `color_palette_EGA`
 
 +	FIX: signs for revised network loadings have reverted back to original method due to issues with eigenvectors when there are unusual patterns of (partial) correlations
 
 +	UPDATE: `itemStability` plot now includes the full item stability matrix rather than empirical dimensions
+
++	ADD: `network.nonconvex` to estimate networks using non-convex regularization penalties
+
++	ADD: `TEFI.compare` to perform a significance test between two structures using `bootEGA` output
 
 
 ## Changes in version 2.1.0
@@ -138,12 +116,6 @@ WEBSITE: https://r-ega.net
 
 + FIX: mixed data with missing data in `network.predictability`
 
-+ ADD: `frobenius` norm to compare networks
-
-+ ADD: `network.compare` function to test for differences in network structures using three different metrics (Frobenius Norm, Jensen-Shannon Similarity, total network strength)
-
-+ ADD: a general function called `information` to compute several information theory measures
-
 + UPDATE: default 'loading.method' for `net.loads` has been changed to "revised" moving forward -- the previous default in versions <= 2.0.6 can be obtained using "original"
 
 + UPDATE: `invariance` handles more than 2 groups (plots up to 4 groups pairwise)
@@ -153,6 +125,12 @@ WEBSITE: https://r-ega.net
 + UPDATE: NEWS is now formatted in markdown
 
 + UPDATE: `network.predictability` uses R-squared and mean absolute error (MAE) for all node predictions
+
++ ADD: `frobenius` norm to compare networks
+
++ ADD: `network.compare` function to test for differences in network structures using three different metrics (Frobenius Norm, Jensen-Shannon Similarity, total network strength)
+
++ ADD: a general function called `information` to compute several information theory measures
 
 + INTERNAL: `network.generalizabilty` was moved to be internal (needs some work yet)
 
@@ -182,10 +160,6 @@ WEBSITE: https://r-ega.net
 
 + FIX: 'stroke' parameter in `hierEGA` that broke with {ggplot2} update
 
-+ ADD: `network.predictability` to predict new data based on a network
-
-+ ADD: `network.generalizability` to estimate network generalizability to new data (leverages `network.predictability`)
-
 + UPDATE: new loadings (`net.loads(..., loading.method = "experimental")`) have been added to resolve issues in original loadings (e.g., signs, cross-loadings, standardization) 
 
 + UPDATE: `plot.bootEGA` will output `itemStability` plot by default
@@ -193,6 +167,10 @@ WEBSITE: https://r-ega.net
 + UPDATE: `dimensionStability` output now included in `bootEGA` as output `$stability`
 
 + UPDATE: 'rotate' argument added to `infoCluster` plot to allow for different angle of dendrogram
+
++ ADD: `network.predictability` to predict new data based on a network
+
++ ADD: `network.generalizability` to estimate network generalizability to new data (leverages `network.predictability`)
 
 + DEPENDENCY: {fungible} is now 'IMPORTS' over 'SUGGESTS' for dependency in new loadings
 
@@ -205,11 +183,11 @@ WEBSITE: https://r-ega.net
 
 + FIX: pass of multiple passes of `resolution_parameter` causing an error in {igraph} 2.0.0 for `EGA.fit` (see issue #148)
 
-+ ADD: `community.compare` to perform permutation test to determine statistical significance of cluster similarity
-
 + UPDATE: moved `reindex_memberships` to helpers
 
 + UPDATE: `reindex_memberships` used in `community.homogenize`
+
++ ADD: `community.compare` to perform permutation test to determine statistical significance of cluster similarity
 
 
 ## Changes in version 2.0.3
@@ -229,8 +207,6 @@ WEBSITE: https://r-ega.net
 
 + FIX: character input for `structure` is now accepted
 
-+ ADD: website pointing to different data check errors added to error output (hopefully, makes errors more understandable)
-
 + UPDATE: `corr = "cor_auto"` now performs `qgraph::cor_auto` in favor of legacy; previous behavior starting at 2.0.0 was t+ deprecate `"cor_auto"` in favor of `"auto"`; default remains `corr = "auto"`
 
 + UPDATE: `compare.EGA.plots` outputs `$all` and `$individual` for the plots
@@ -238,6 +214,8 @@ WEBSITE: https://r-ega.net
 + UPDATE: when `structure` is supplied for `invariance`, then configural check is skipped (structure is assumed to be invariant)
 
 + UPDATE: added data generation for `model = "BGGM"` and `uni.method = "expand"` in `community.unidimensional`
+
++ ADD: website pointing to different data check errors added to error output (hopefully, makes errors more understandable)
 
 + DEPENDENCY: {BGGM} has been removed until dependency chain on CRAN can be resolved
 
@@ -248,62 +226,6 @@ WEBSITE: https://r-ega.net
 
 
 ## Changes in version 2.0.0
-
-+ MAJOR REFACTOR: the update to version 2.0.0 includes many major changes that are designed to improve the speed, reliability, and reproducibility of {EGAnet}. The goal of these changes are to eliminate common errors and streamline the code in the package to prevent future error cases. There are several function additions that are provided to facilitate modular use of the {EGAnet} package
-
-+ INTERNALS: function-specific internal functions and S3methods are now located in their respective .R files rather than elsewhere (e.g., "utils-EGAnet.R")
-
-+ SWAP: internal script usage of "utils-EGAnet.R" depracated for "helper.R" functions that are used across the package (no visible changes for the user)
-
-+ NOTE: default objective function for Leiden algorithm is set to "modularity"
-
-+ NOTE: default for Louvain unidimensional method is set to single-shot *unless* argument "consensus.method" or "consensus.iter" is specified
-
-+ ADD: stricter `*apply` functions that are roughly equivalent to `*apply` but have stricter inputs/outputs (uses `vapply` as foundation; often, slightly faster)
-
-+ ADD: `community.consensus` to apply the Consensus Clustering approach introduced by Lancichnetti & Fortunato (2012). Currently only available for the Louvain algorithm
-
-+ ADD: `community.detection` to apply community detection algorithms as a standalone function
-
-+ ADD: convenience function to convert an {igraph} object to a standard matrix (`igraph2matrix`)
-
-+ ADD: `modularity` to compute standard (absolute values) and signed modularity (implemented in C)
-
-+ ADD: `polychoric.matrix` to compute categorical correlations (implemented in C); handles missing data ("pairwise" or "listwise") as well as empty cells in the joint frequency table (see documentation: `?polychoric.matrix`)
-
-+ ADD: `auto.correlate` now computes all correlations internally and no longer depends on external functions; categorical correlations are C based and bi/polyserial correlations are a simplified and vectorized version of {polycor}'s `polyserial`; substantial computational gains (between 10-25x faster than previous use of {qgraph}'s `cor_auto`)
-
-+ ADD: `network.estimation` to handle all network estimation in {EGAnet}; *includes* Bayesian GGM from {BGGM} for more seamless incorporation of BEGA
-
-+ ADD: `community.unidimensional` to apply different unidimensional community detection approaches; makes unidimensional community detection more modular and flexible
-
-+ ADD: basic (internal) function to handle all network plots to keep changes centralized to a single function; extends flexbility to handle all {GGally}'s `ggnet2` arguments
-
-+ ADD: implemented reproducible parametric bootstrapping and random sampling (see <https://github.com/hfgolino/EGAnet/wiki/Reproducibility-and-PRNG> for more details)
-
-+ ADD: implemented reproducible resampling bootstrapping and random sampling (see <https://github.com/hfgolino/EGAnet/wiki/Reproducibility-and-PRNG> for more details)
-
-+ ADD: reproducible bootstrapping with seed setting that does *not* affect R's seed and RNG (user's seed will not be affected and will not affected bootstrapping seeds)
-
-+ ADD: `community.homogenize` as a core function rather than internal (previously `homogenize.membership`); about 2.5x faster than the original version
-
-+ ADD: `convert2tidygraph` for `ggraph` and `tidygraph` support -- thanks to Dominique Makowski!
-
-+ ADD: "multilevel" plotting support for `hierEGA` (only used when `scores = "network"` since factor scores don't directly align with EGA detected dimensions)
-
-+ ADD: internal functions `shuffle` and `shuffle_replace` to replace `sample` with and without replacement; performed in C and allows seed setting independent of R (about 2-3x faster)
-
-+ ADD: xoshiro256++ PRNG for higher quailty random number generation, permutation, and resampling (~2x faster than `runif` and `sample`); based in C
-
-+ ADD: Ziggurat method for random normal generation over top xoshiro256++ (2-5x faster than `rnorm`); based in C
-
-+ ADD: configural invariance was added to `invariance` (see Details section)
-
-+ ADD: `genTEFI` to compute the Generalized Total Entropy Fit Index solely; `tefi` serves as a general function to compute TEFI for all `*EGA` classes
-
-+ REMOVE: `signed.louvain` until reproducibility can be sorted
-
-+ REMOVE: `methods.section` and `utils-EGAnet.methods.section` to avoid space issues in ./R directory (1MB)
 
 + UPDATE: `EBICglasso.qgraph` and `TMFG` were optimized; `TMFG` is now 2x faster
 
@@ -365,6 +287,62 @@ WEBSITE: https://r-ega.net
 
 + UPDATE: documentation for all functions have been thoroughly revised to provide better instruction on how to use functions and their expected inputs
 
++ ADD: stricter `*apply` functions that are roughly equivalent to `*apply` but have stricter inputs/outputs (uses `vapply` as foundation; often, slightly faster)
+
++ ADD: `community.consensus` to apply the Consensus Clustering approach introduced by Lancichnetti & Fortunato (2012). Currently only available for the Louvain algorithm
+
++ ADD: `community.detection` to apply community detection algorithms as a standalone function
+
++ ADD: convenience function to convert an {igraph} object to a standard matrix (`igraph2matrix`)
+
++ ADD: `modularity` to compute standard (absolute values) and signed modularity (implemented in C)
+
++ ADD: `polychoric.matrix` to compute categorical correlations (implemented in C); handles missing data ("pairwise" or "listwise") as well as empty cells in the joint frequency table (see documentation: `?polychoric.matrix`)
+
++ ADD: `auto.correlate` now computes all correlations internally and no longer depends on external functions; categorical correlations are C based and bi/polyserial correlations are a simplified and vectorized version of {polycor}'s `polyserial`; substantial computational gains (between 10-25x faster than previous use of {qgraph}'s `cor_auto`)
+
++ ADD: `network.estimation` to handle all network estimation in {EGAnet}; *includes* Bayesian GGM from {BGGM} for more seamless incorporation of BEGA
+
++ ADD: `community.unidimensional` to apply different unidimensional community detection approaches; makes unidimensional community detection more modular and flexible
+
++ ADD: basic (internal) function to handle all network plots to keep changes centralized to a single function; extends flexbility to handle all {GGally}'s `ggnet2` arguments
+
++ ADD: implemented reproducible parametric bootstrapping and random sampling (see <https://github.com/hfgolino/EGAnet/wiki/Reproducibility-and-PRNG> for more details)
+
++ ADD: implemented reproducible resampling bootstrapping and random sampling (see <https://github.com/hfgolino/EGAnet/wiki/Reproducibility-and-PRNG> for more details)
+
++ ADD: reproducible bootstrapping with seed setting that does *not* affect R's seed and RNG (user's seed will not be affected and will not affected bootstrapping seeds)
+
++ ADD: `community.homogenize` as a core function rather than internal (previously `homogenize.membership`); about 2.5x faster than the original version
+
++ ADD: `convert2tidygraph` for `ggraph` and `tidygraph` support -- thanks to Dominique Makowski!
+
++ ADD: "multilevel" plotting support for `hierEGA` (only used when `scores = "network"` since factor scores don't directly align with EGA detected dimensions)
+
++ ADD: internal functions `shuffle` and `shuffle_replace` to replace `sample` with and without replacement; performed in C and allows seed setting independent of R (about 2-3x faster)
+
++ ADD: xoshiro256++ PRNG for higher quailty random number generation, permutation, and resampling (~2x faster than `runif` and `sample`); based in C
+
++ ADD: Ziggurat method for random normal generation over top xoshiro256++ (2-5x faster than `rnorm`); based in C
+
++ ADD: configural invariance was added to `invariance` (see Details section)
+
++ ADD: `genTEFI` to compute the Generalized Total Entropy Fit Index solely; `tefi` serves as a general function to compute TEFI for all `*EGA` classes
+
++ MAJOR REFACTOR: the update to version 2.0.0 includes many major changes that are designed to improve the speed, reliability, and reproducibility of {EGAnet}. The goal of these changes are to eliminate common errors and streamline the code in the package to prevent future error cases. There are several function additions that are provided to facilitate modular use of the {EGAnet} package
+
++ INTERNALS: function-specific internal functions and S3methods are now located in their respective .R files rather than elsewhere (e.g., "utils-EGAnet.R")
+
++ SWAP: internal script usage of "utils-EGAnet.R" depracated for "helper.R" functions that are used across the package (no visible changes for the user)
+
++ NOTE: default objective function for Leiden algorithm is set to "modularity"
+
++ NOTE: default for Louvain unidimensional method is set to single-shot *unless* argument "consensus.method" or "consensus.iter" is specified
+
++ REMOVE: `signed.louvain` until reproducibility can be sorted
+
++ REMOVE: `methods.section` and `utils-EGAnet.methods.section` to avoid space issues in ./R directory (1MB)
+
 + DEPENDENCY: removed {network} because it is no longer used for plotting; switched {sna} to IMPORTS rather than SUGGESTS
 
 + DEPENDENCY: removed {rstudioapi} from 'Suggests' because it was used in `colortext` and used in the package
@@ -396,11 +374,11 @@ WEBSITE: https://r-ega.net
 
 ## Changes in version 1.2.4
 
-+ REMOVE: `residualEGA` has been removed in favor of `riEGA` (removes {OpenMx} dependency)
++ UPDATE: `hierEGA` only outputs specified output (no longer outputs all possible consensus methods and scores combinations -- should be much faster)
 
 + ADD: rotations to `net.loads` and `net.scores`
 
-+ UPDATE: `hierEGA` only outputs specified output (no longer outputs all possible consensus methods and scores combinations -- should be much faster)
++ REMOVE: `residualEGA` has been removed in favor of `riEGA` (removes {OpenMx} dependency)
 
 
 ## Changes in version 1.2.3
@@ -429,13 +407,9 @@ WEBSITE: https://r-ega.net
 
 + UPDATE: print/summary S3methods have been standardized
 
-+ ADD/UPDATE: `boot.ergoInfo` has achieved functional working order. Results can be trusted to suggest whether dynamic data possess the ergodic property
++ UPDATE: "louvain" algorithm used as default for unidimensionality check in `EGA`
 
 + ADD: information theoretic clustering algorithm for dynamic data is available in `infoCluster`
-
-+ REMOVE: "alpha" and "adapt" options in `UVA` (removes {fitdistrplus} dependency)
-
-+ REMOVE: {qgraph} plots are no longer available
 
 + ADD: `convert2igraph` is now a core function
 
@@ -445,7 +419,11 @@ WEBSITE: https://r-ega.net
 
 + ADD: `hierEGA` functionality to `itemStability` and `dimensionStability`
 
-+ UPDATE: "louvain" algorithm used as default for unidimensionality check in `EGA`
++ ADD/UPDATE: `boot.ergoInfo` has achieved functional working order. Results can be trusted to suggest whether dynamic data possess the ergodic property
+
++ REMOVE: "alpha" and "adapt" options in `UVA` (removes {fitdistrplus} dependency)
+
++ REMOVE: {qgraph} plots are no longer available
 
 + INTERNAL: cleaned up `EGA` and `EGA.estimate`; streamlined code; no user facing differences
 
@@ -458,15 +436,15 @@ WEBSITE: https://r-ega.net
 
 + FIX: bug in `UVA` when trying to use sum score (`reduce.method = "sum"`) in automated procedure
 
-+ ADD: measurement `invariance` function for testing differences in network loadings between groups
++ FIX: consensus clustering for the Louvain algorithm
 
 + UPDATE: `itemStability` now has a parameter `structure` in which the user can specify a given structure to test its stability.
+
++ ADD: measurement `invariance` function for testing differences in network loadings between groups
 
 + ADD: `riEGA` implementing random-intercept EGA for wording effects
 
 + ADD: `hierEGA` implementing hierarchical EGA
-
-+ FIX: consensus clustering for the Louvain algorithm
 
 + ADD: `louvain` algorithm with added optimization option using `tefi`
 
@@ -475,27 +453,25 @@ WEBSITE: https://r-ega.net
 
 + FIX: bug within the bootEGA function for `type = "resampling"`.
 
-+ UPDATE: default undimensionality adjustment has changed to leading eigenvalue (see Christensen, Garrido, & Golino, 2021 <https://doi.org/10.31234/osf.io/hz89e>). Previous unidimensionality adjustment in versions <= 0.9.8 can be applied using `uni.method = "expand"`
-
-+ UPDATE: default `UVA` was changed `type = "threshold"`
-
-+ UPDATE: `UVA` is now automated using `auto = TRUE`
-
-+ DEFUNCT: `dimStability` will no longer be supported. Instead, use `dimensionStability`
-
-+ REVAMP: `itemStability` has been recoded. Now includes error checking and more readable code
-
 + FIX: bug for plotting NA communities
 
 + FIX: bug for changing edge size in 'GGally' plotting
-
-+ UPDATE: S3Methods for `EGA.fit` plotting
 
 + FIX: plotting parameters for `bootEGA`
 
 + FIX: redundancy output for adhoc check in `UVA`
 
 + FIX: latent variable with non-space separated entries in `UVA` (`reduce.method = "latent"`)
+
++ FIX: bug for Rand index in `itemStability`
+
++ UPDATE: default undimensionality adjustment has changed to leading eigenvalue (see Christensen, Garrido, & Golino, 2021 <https://doi.org/10.31234/osf.io/hz89e>). Previous unidimensionality adjustment in versions <= 0.9.8 can be applied using `uni.method = "expand"`
+
++ UPDATE: default `UVA` was changed `type = "threshold"`
+
++ UPDATE: `UVA` is now automated using `auto = TRUE`
+
++ UPDATE: S3Methods for `EGA.fit` plotting
 
 + UPDATE: `UVA` was added to `methods.section`
 
@@ -505,18 +481,28 @@ WEBSITE: https://r-ega.net
 
 + UPDATE: added `seed` argument for `bootEGA` to reproduce results
 
-+ FIX: bug for Rand index in `itemStability`
++ DEFUNCT: `dimStability` will no longer be supported. Instead, use `dimensionStability`
+
++ REVAMP: `itemStability` has been recoded. Now includes error checking and more readable code
 
 
 ## Changes in version 0.9.8
 
++ FIX: *GGally* color palette when more than 9 dimensions
+
 + UPDATE: Unidimensional check in `EGA` expands a correlation matrix (rather than generating variables; much more efficient)
+
++ UPDATE: new plotting scheme using *network* and *GGally* packages
+
++ UPDATE: `bootEGA` now implements the updated `EGA` algorithm
+
++ UPDATE: ega.wmt data (unidimensional)
+
++ UPDATE: `itemStability` plot defaults ("GGally" color scheme) and examples (manipulating plot)
 
 + ADD: `color_palette_EGA` New EGA palettes for plotting `ggnet2` EGA network plots (see `?color_palette_EGA`)
 
 + ADD: `UVA` or Unique Variable Analysis operates as a comprehensive handling of variable redundancy in multivariate data (see `?UVA`)
-
-+ DEFUNCT: `node.redundant`, `node.redundant.names`, and `node.redundant.combine` will be defunct in next version. Please use `UVA`
 
 + ADD: a new function to compute a parametric Bootstrap Test for the Ergodicity Information Index (see `?boot.ergoInfo`)
 
@@ -526,30 +512,22 @@ WEBSITE: https://r-ega.net
 
 + ADD: a new function to compute the Ergodicity Information Index (see `?ergoInfo`)
 
-+ UPDATE: new plotting scheme using *network* and *GGally* packages
-
 + ADD: a function to produce an automated Methods section for several functions (see `?methods.section`)
-
-+ UPDATE: `bootEGA` now implements the updated `EGA` algorithm
-
-+ UPDATE: ega.wmt data (unidimensional)
-
-+ UPDATE: `itemStability` plot defaults ("GGally" color scheme) and examples (manipulating plot)
 
 + ADD: total correlation (see `?totalCor` and `totalCorMat`)
 
 + ADD: correlation argument (corr) for `EGA`, `bootEGA`, and `UVA`
 
-+ FIX: *GGally* color palette when more than 9 dimensions
++ DEFUNCT: `node.redundant`, `node.redundant.names`, and `node.redundant.combine` will be defunct in next version. Please use `UVA`
 
 
 ## Changes in version 0.9.7
 
-+ UPDATE: `LCT` neural network weights were updated (parametric relu activation function)
-
 + FIX: naming in `EGA`
 
 + FIX: output network matrix in `EGA` when data are input
+
++ UPDATE: `LCT` neural network weights were updated (parametric relu activation function)
 
 + UPDATE: citation version
 
@@ -563,26 +541,24 @@ WEBSITE: https://r-ega.net
 
 ## Changes in version 0.9.5
 
-+ ADD: loadings comparison test function added (see `LCT`)
-
 + FIX: named community memberships in `itemStability` and `dimStability`
 
-+ UPDATE: `plot`, `print`, and `summary` methods all moved into single .R files (no effect on user's end)
-
-+ UPDATE: `net.scores` global score is improved and computes scores very close to CFA scores
-
 + FIX: additional argument calls for `EGA.estimate` (and `EGA` by extension)
-
-+ UPDATE: message from `EGA.estimate` (and `EGA` by extension) reports both 'gamma' and 'lambda.min.ratio' arguments
 
 + FIX: upper quantile output from `bootEGA`
 
 + FIX: minor bugs in `node.redundant`, `itemStability`, and `net.loads`
 
++ UPDATE: `plot`, `print`, and `summary` methods all moved into single .R files (no effect on user's end)
+
++ UPDATE: `net.scores` global score is improved and computes scores very close to CFA scores
+
++ UPDATE: message from `EGA.estimate` (and `EGA` by extension) reports both 'gamma' and 'lambda.min.ratio' arguments
+
++ ADD: loadings comparison test function added (see `LCT`)
+
 
 ## Changes in version 0.9.4
-
-+ MAJOR UPDATE: `dimStability` now computes proportion of exact dimension replications rather than items that replicate within dimension (this latter information can still be found in the output of `itemStability` under $mean.dim.rep)
 
 + FIX: `net.loads` for when dimensions equal one or the number of nodes in the network
 
@@ -592,13 +568,15 @@ WEBSITE: https://r-ega.net
 
 + FIX: weights of network in unidimensional structure of `EGA` are the same as multidimensional structure
 
-+ UPDATE: Added a new function to simulate dynamic factor models `simDFM`
-
-+ UPDATE: added internal functions for `net.loads` (see `utils-net.loads`)
-
 + FIX: ordering of names in `itemStability`
 
 + FIX: handling of NA communities in `net.loads`
+
++ FIX: `net.scores` negative loadings corrected
+
++ UPDATE: Added a new function to simulate dynamic factor models `simDFM`
+
++ UPDATE: added internal functions for `net.loads` (see `utils-net.loads`)
 
 + UPDATE: Added output of the average replication of items in each dimension for `itemStability`
 
@@ -608,7 +586,7 @@ WEBSITE: https://r-ega.net
 
 + UPDATE: S3Methods for `net.loads`
 
-+ FIX: `net.scores` negative loadings corrected
++ MAJOR UPDATE: `dimStability` now computes proportion of exact dimension replications rather than items that replicate within dimension (this latter information can still be found in the output of `itemStability` under $mean.dim.rep)
 
 
 ## Changes in version 0.9.3
@@ -620,11 +598,11 @@ WEBSITE: https://r-ega.net
 
 ## Changes in version 0.9.2
 
++ FIX: `node.redundant` alpha types bug
+
 + UPDATE: add latent variable scores comparison to `net.scores` vignette
 
 + UPDATE: `node.redundant.combine` sets loadings equal to 1 when there are only two variables when the argument type = "latent"; warning also added from type = "sum"
-
-+ FIX: `node.redundant` alpha types bug
 
 + updated `itemStability` (bug fixes)
 
