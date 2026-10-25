@@ -1,16 +1,36 @@
 /*  Written in 2019 by David Blackman and Sebastiano Vigna (vigna@acm.org)
 
- To the extent possible under law, the author has dedicated all copyright
- and related and neighboring rights to this software to the public domain
- worldwide. This software is distributed without any warranty.
+To the extent possible under law, the author has dedicated all copyright
+and related and neighboring rights to this software to the public domain
+worldwide.
 
- See <http://creativecommons.org/publicdomain/zero/1.0/>. */
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
+ 
+ // Modified by Alexander P. Christensen, 15 August 2023.
 
 #include <stdint.h>
 #include <R.h>
 #include <Rinternals.h>
 #include "nanotime.h"
 #include "xoshiro.h"
+
+// Process ID (used to make clock-based seeds unique across forked workers)
+#ifdef _WIN32
+#include <process.h>
+#define get_process_id _getpid
+#else
+#include <unistd.h>
+#define get_process_id getpid
+#endif
 
 /* This is xoshiro256++ 1.0, one of our all-purpose, rock-solid generators.
  It has excellent (sub-ns) speed, a state (256 bits) that is large
@@ -47,10 +67,10 @@ uint64_t next(xoshiro256_state* state) {
 /*
 
  `jump` and `long_jump` have been removed from the original
-  source file because they are not used in {EGAnet}
+  source file because they are not used in {L0ggm}
 
  `jump` ensures non-overlapping subsequences within xoshiro256++;
- however, {EGAnet} does not take advantage of it
+ however, {L0ggm} does not take advantage of it
 
  instead, seeds are pre-generated and allow splitmix64 to
  do some of the work
@@ -63,7 +83,7 @@ uint64_t next(xoshiro256_state* state) {
  state space have an overlap probability less than 2^-64"
 
  leaving the sequence length aside, there is never a case that people
- should ever get close to 2^64 random starting points (seeds) in {EGAnet}
+ should ever get close to 2^64 random starting points (seeds) in {L0ggm}
  (e.g., 500 is the default for `bootEGA`) -- even with Monte Carlo
  simulation work most values wouldn't cross 2^20 or 1 million
  random starting points
@@ -72,7 +92,7 @@ uint64_t next(xoshiro256_state* state) {
  is formally defined as n^2 * L / P where n = processors (or starting points),
  L is sequence length, and P is the period of the PRNG
 
- using a sequence length of 2^64 (far beyond anything used in {EGAnet}
+ using a sequence length of 2^64 (far beyond anything used in {L0ggm}
  and Monte Carlo simulations in quantitative psychology) and xoshiro256++'s
  period of 2^256 - 1, then some upper bound probabilities of n
  random starting points are defined below:
@@ -98,15 +118,50 @@ uint64_t splitmix64(uint64_t *x) {
     return z ^ (z >> 31);
 }
 
+// Number of clock-based seeds drawn by this process
+static uint64_t seed_counter = 0;
+
+/*
+
+ Seed for calls that do not supply one (seed = 0)
+
+ the clock alone is not unique: parallel workers (e.g., `mclapply`)
+ that call at the same moment read the same time in nanoseconds
+ and would then share an identical random stream
+
+ the clock, process ID, and a per-process counter are therefore
+ chained through splitmix64 (a bijection at each step) so that
+ different workers (process ID) and different calls within a worker
+ (counter) cannot share a seed, even when the clock values are equal
+
+ R is single-threaded, so the counter does not need to be atomic
+
+*/
+static uint64_t random_seed(void) {
+
+    // Clock time in nanoseconds
+    uint64_t x = get_time_ns();
+    uint64_t seed = splitmix64(&x);
+
+    // Mix in process ID
+    x = seed ^ (uint64_t) get_process_id();
+    seed = splitmix64(&x);
+
+    // Mix in call counter
+    x = seed ^ ++seed_counter;
+    return splitmix64(&x);
+
+}
+
 // Function to set single seed to get the 4 random seeds
 void seed_xoshiro256(xoshiro256_state* state, uint64_t seed) {
-    
+
     // Loop unrolled
     seed = splitmix64(&seed); state->s[0] = seed;
     seed = splitmix64(&seed); state->s[1] = seed;
     seed = splitmix64(&seed); state->s[2] = seed;
     seed = splitmix64(&seed); state->s[3] = seed;
-    
+
 }
 
 // Stored so it doesn't need to be repeatedly called
@@ -125,8 +180,8 @@ SEXP r_xoshiro_uniform(SEXP n, SEXP r_seed) {
   uint64_t seed_value = (uint64_t) REAL(r_seed)[0];
 
   // For random seed, use zero
-  if(seed_value == 0) { // Use clocktime in nanoseconds
-    seed_value = get_time_ns();
+  if(seed_value == 0) { // Use clock time, process ID, and call counter
+    seed_value = random_seed();
   }
 
   // Seed the random number generator
@@ -160,8 +215,8 @@ SEXP r_xoshiro_seeds(SEXP n, SEXP r_seed) {
     uint64_t seed_value = (uint64_t) REAL(r_seed)[0];
 
     // For random seed, use zero
-    if(seed_value == 0) { // Use clocktime in nanoseconds
-      seed_value = get_time_ns();
+    if(seed_value == 0) { // Use clock time, process ID, and call counter
+      seed_value = random_seed();
     }
 
     // Seed the random number generator
@@ -197,8 +252,8 @@ SEXP r_xoshiro_shuffle(SEXP r_vector, SEXP r_seed) {
     uint64_t seed_value = (uint64_t) REAL(r_seed)[0];
 
     // For random seed, use zero
-    if(seed_value == 0) { // Use clocktime in nanoseconds
-      seed_value = get_time_ns();
+    if(seed_value == 0) { // Use clock time, process ID, and call counter
+      seed_value = random_seed();
     }
 
     // Seed the random number generator
@@ -227,40 +282,120 @@ SEXP r_xoshiro_shuffle(SEXP r_vector, SEXP r_seed) {
 
 }
 
-// Function to shuffle indices with replacement
-SEXP r_xoshiro_shuffle_replace(SEXP r_vector, SEXP r_seed) {
+// Function to weighted shuffle indices without replacement
+SEXP r_xoshiro_weighted_shuffle(SEXP r_vector, SEXP r_prob, SEXP r_seed) {
 
     // Get length of R vector
     int vector_length = length(r_vector);
 
-    // Initialize R values
+    // Initialize seed
     uint64_t seed_value = (uint64_t) REAL(r_seed)[0];
 
     // For random seed, use zero
-    if(seed_value == 0) { // Use clocktime in nanoseconds
-      seed_value = get_time_ns();
+    if(seed_value == 0) { // Use clock time, process ID, and call counter
+        seed_value = random_seed();
     }
 
     // Seed the random number generator
     xoshiro256_state state;
     seed_xoshiro256(&state, seed_value);
 
-    // Create R vector
-    SEXP r_output = PROTECT(allocVector(REALSXP, vector_length));
+    // Protect inputs
+    PROTECT(r_vector);
+    PROTECT(r_prob);
 
-    // Get a pointer to the double data of the R vector
-    double* vec_data = REAL(r_output);
+    // Get pointers to vector and probability data
+    int    *vec_data = INTEGER(r_vector);
+    double *prob     = REAL(r_prob);
 
-    // Shuffle
+    // Copy probs into working array and compute total weight
+    double *w = (double*) R_alloc(vector_length, sizeof(double));
+    double  total = 0.0;
     for(int i = 0; i < vector_length; i++) {
-        vec_data[i] = (double) (next(&state) % vector_length) + 1;
+        w[i]  = prob[i];
+        total += prob[i];
     }
 
-    // Release protected SEXP objects
-    UNPROTECT(1);
+    // Weighted Fisher-Yates shuffle over full vector
+    for(int i = 0; i < vector_length - 1; i++) {
 
-    // Return the result
-    return r_output;
+        // Draw uniform on remaining total weight
+        double u      = ((next(&state) >> 11) * (1.0 / (UINT64_C(1) << 53))) * total;
+        double cumsum = 0.0;
+        int    j      = i; // fallback to current position
+
+        // Find the index whose cumulative weight first exceeds u
+        for(int k = i; k < vector_length; k++) {
+            cumsum += w[k];
+            if(u <= cumsum) {
+                j = k;
+                break;
+            }
+        }
+
+        // Swap vector elements
+        int tmp_v   = vec_data[j];
+        vec_data[j] = vec_data[i];
+        vec_data[i] = tmp_v;
+
+        // Swap weight elements to keep indices and weights aligned
+        double tmp_w = w[j];
+        w[j]   = w[i];
+        w[i]   = tmp_w;
+
+        // Remove selected weight from total
+        total -= tmp_w;
+
+    }
+
+    // Unprotect inputs
+    UNPROTECT(2);
+
+    // Return vector
+    return r_vector;
+
+}
+
+// Function to shuffle indices with replacement
+SEXP r_xoshiro_shuffle_replace(SEXP r_vector, SEXP r_size, SEXP r_seed) {
+
+  // Get length of R vector
+  int vector_length = length(r_vector);
+
+  // Get output size (default to vector_length if size <= 0)
+  int size = asInteger(r_size);
+  if (size <= 0) {
+    size = vector_length;
+  }
+
+  // Initialize R values
+  uint64_t seed_value = (uint64_t) REAL(r_seed)[0];
+
+  // For random seed, use zero
+  if(seed_value == 0) { // Use clock time, process ID, and call counter
+    seed_value = random_seed();
+  }
+
+  // Seed the random number generator
+  xoshiro256_state state;
+  seed_xoshiro256(&state, seed_value);
+
+  // Create R vector of length `size`
+  SEXP r_output = PROTECT(allocVector(REALSXP, size));
+
+  // Get a pointer to the double data of the R vector
+  double* vec_data = REAL(r_output);
+
+  // Sample with replacement
+  for(int i = 0; i < size; i++) {
+    vec_data[i] = (double) (next(&state) % vector_length) + 1;
+  }
+
+  // Release protected SEXP objects
+  UNPROTECT(1);
+
+  // Return the result
+  return r_output;
 
 }
 
