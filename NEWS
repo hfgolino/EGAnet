@@ -20,6 +20,8 @@ WEBSITE: https://r-ega.net
 
 +	ADD: `community.prism` to overcome the modularity resolution limit by merging communities whenever their union increases subgraph modularity (Pairwise Resolution Iteration via Subgraph Modularity)
 
++	ADD: `community.aces` to iteratively re-estimate communities within any community whose cohesion (rescaled algebraic connectivity of the normalized Laplacian) is below `cohesion.cut` (Algorithmic Complexity for Emergent Subgraphs)
+
 +	INTERNAL: plotting helpers moved from `helpers.R` to new `R/plotting.R`
 
 
