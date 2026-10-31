@@ -1,15 +1,24 @@
-#' @title Algorithmic Complexity for Emergent Subgraphs (ACES)
+#' @title Cohesion and Resistance In Subgraph Partitioning (CRISP)
 #'
-#' @description Iteratively tests whether each community is internally
-#' cohesive and, whenever a community's cohesion falls below
-#' \code{cohesion.cut}, re-estimates communities within that community's
-#' subgraph. Iteration continues until every community is cohesive (or can
-#' no longer be split), at which point the partition is returned. A
-#' network that is already cohesive as a whole is returned as a single
-#' community. Cohesion is the algebraic connectivity of a (sub)graph --
-#' the second-smallest eigenvalue of its normalized Laplacian
+#' @description Iteratively tests whether re-estimating communities within
+#' each community's subgraph yields a stronger structure. Each community is
+#' scored by the geometric mean of its \emph{cohesion} and its
+#' \emph{separation} (the \code{strong_structure} score). A split is accepted
+#' when the size-weighted mean score of the new communities exceeds the score
+#' of the community being split. Iteration continues until no community can be
+#' improved by splitting, at which point the partition is returned. A network
+#' that cannot be improved by splitting is returned as a single community.
+#'
+#' \strong{Cohesion} is the algebraic connectivity of a (sub)graph -- the
+#' second-smallest eigenvalue of its normalized Laplacian
 #' (Fiedler, 1973; Chung, 1997) -- rescaled to range from 0 (disconnected)
-#' to 1 (a complete graph with equal weights)
+#' to 1 (a complete graph with equal weights).
+#' \strong{Separation} is one minus the largest \emph{merge propensity} with
+#' any other community: the observed weight between two communities relative
+#' to the weight expected under a configuration-model null within their union
+#' (capped at 1). Singletons attached only to a sibling therefore have
+#' separation 0 and are not rewarded for being split off. Edge weights are
+#' treated as absolute values
 #'
 #' @param network Matrix or \code{igraph} network object
 #'
@@ -56,13 +65,6 @@
 #'
 #' }
 #'
-#' @param cohesion.cut Numeric (length = 1).
-#' Cohesion threshold between \code{0} and \code{1}.
-#' Communities with cohesion below this value are re-estimated
-#' within their own subgraph; communities at or above this value
-#' are retained as is. Higher values split communities more
-#' aggressively (and yield more communities). Defaults to \code{0.50}
-#'
 #' @param allow.singleton Boolean (length = 1).
 #' Whether singleton or single node communities should be allowed.
 #' When \code{FALSE}, singleton communities will be set to
@@ -77,7 +79,7 @@
 #' Passed on to the function selected via \code{algorithm} (relevant for
 #' \code{algorithm = "louvain"}) for \emph{every} community estimation
 #' performed during the iterative procedure, making the
-#' entire ACES procedure reproducible
+#' entire CRISP procedure reproducible
 #'
 #' @param ... Additional arguments to be passed on to the community
 #' detection function selected via \code{algorithm}
@@ -85,9 +87,9 @@
 #' for their respective arguments)
 #'
 #' @return Returns a named vector of final community memberships obtained
-#' by iteratively re-estimating communities within subgraphs whose cohesion
-#' is below \code{cohesion.cut} until convergence (i.e., until all communities
-#' are cohesive or can no longer be split). Nodes without any connections
+#' by iteratively re-estimating communities within subgraphs until no split
+#' increases the size-weighted mean structure score (geometric mean of
+#' cohesion and separation). Nodes without any connections
 #' are set to missing (\code{NA})
 #'
 #' @author Alexander P. Christensen <alexpaulchristensen@gmail.com>
@@ -99,11 +101,11 @@
 #' # Estimate network
 #' network <- EBICglasso.qgraph(data = wmt)
 #'
-#' # Compute ACES memberships (Louvain-based consensus)
-#' community.aces(network)
+#' # Compute CRISP memberships (Louvain-based consensus)
+#' community.crisp(network)
 #'
-#' # Compute ACES memberships (single-algorithm community detection)
-#' community.aces(network, algorithm = "walktrap")
+#' # Compute CRISP memberships (single-algorithm community detection)
+#' community.crisp(network, algorithm = "walktrap")
 #'
 #' @references
 #' \strong{Algebraic connectivity} \cr
@@ -123,15 +125,15 @@
 #'
 #' @export
 #'
-# Algorithmic Complexity for Emergent Subgraphs ----
-# Updated 30.10.2026
-community.aces <- function(
+# Cohesion and Resistance In Subgraph Partitioning ----
+# Updated 31.10.2026
+community.crisp <- function(
     network, algorithm = c(
       "edge_betweenness", "fast_greedy",
       "fluid", "infomap", "label_prop",
       "leading_eigen", "leiden", "louvain", "optimal",
       "spinglass", "walktrap"
-    ), cohesion.cut = 0.50, allow.singleton = FALSE, seed = NULL, ...
+    ), allow.singleton = FALSE, seed = NULL, ...
 )
 {
 
@@ -142,7 +144,7 @@ community.aces <- function(
   algorithm <- set_default(algorithm, "louvain", community.detection)
 
   # Argument errors (return network in case of {igraph} or tibble)
-  network <- community.aces_errors(network, cohesion.cut, allow.singleton, seed)
+  network <- community.crisp_errors(network, allow.singleton, seed)
 
   # Check for names
   network <- ensure_dimension_names(network)
@@ -175,84 +177,84 @@ community.aces <- function(
       community.detection
     )
 
-    # Check for whole-network cohesion
-    if(cohesion(network) >= cohesion.cut){
+    # Initialize memberships
+    wc <- structure(
+      rep(1, dim(network)[2]),
+      names = dimnames(network)[[2]]
+    )
 
-      # Return single community
-      wc <- structure(
-        rep(1, dim(network)[2]),
-        names = dimnames(network)[[2]]
-      )
+    # Set while loop
+    while(TRUE){
 
-    }else{ # Estimate communities
+      # Set previous memberships (snapshot for this pass)
+      previous_wc <- wc
 
-      # Initial communities
-      wc <- reindex_memberships(
-        algorithm_FUN(network, allow.singleton = TRUE, seed = seed, ...)
-      )
+      # Set number of clusters
+      n_clusters <- unique_length(previous_wc)
 
-      # Set while loop
-      while(TRUE){
+      # Compute structure score (cohesion and separation) of each community
+      scores <- strong_structure(network, wc)$overall
 
-        # Set previous memberships (for this pass)
-        previous_wc <- wc
+      # Loop over communities
+      for(i in seq_len(n_clusters)){
 
-        # Set max membership
-        max_wc <- unique_length(wc)
+        # Obtain index
+        index <- previous_wc == i
 
-        # Loop over communities
-        for(i in seq_len(max_wc)){
+        # Single nodes cannot be split any further
+        if(sum(index) < 2){
+          next
+        }
 
-          # Set index
-          index <- which(previous_wc == i)
+        # Set target network
+        target_network <- network[index, index, drop = FALSE]
 
-          # Single nodes cannot be split
-          if(length(index) < 2){
-            next
-          }
+        # Determine connected nodes within subgraph
+        connected <- colSums(target_network) != 0
 
-          # Set target network
-          target_network <- network[index, index, drop = FALSE]
+        # Initialize new memberships
+        new_wc <- rep(NA_real_, length(connected))
 
-          # Check cohesion
-          if(cohesion(target_network) < cohesion.cut){
+        # Estimate communities among connected nodes
+        # (isolated nodes are not passed to the algorithm)
+        if(any(connected)){
+          new_wc[connected] <- reindex_memberships(
+            algorithm_FUN(
+              target_network[connected, connected, drop = FALSE],
+              allow.singleton = TRUE, seed = seed, ...
+            )
+          )
+        }
 
-            # Initialize target memberships
-            target_wc <- rep(NA_real_, length(index))
+        # Nodes isolated within the subgraph become singletons
+        isolated <- is.na(new_wc)
+        new_wc[isolated] <- max(new_wc, 0, na.rm = TRUE) + seq_len(sum(isolated))
 
-            # Determine connected nodes within subgraph
-            connected <- colSums(target_network) != 0
+        # Reindex new memberships
+        new_wc <- reindex_memberships(new_wc)
 
-            # Estimate communities among connected nodes
-            if(sum(connected) > 1){
-              target_wc[connected] <- algorithm_FUN(
-                target_network[connected, connected, drop = FALSE],
-                allow.singleton = TRUE, seed = seed, ...
-              )
-            }
+        # Set number of new communities
+        n_new <- unique_length(new_wc)
 
-            # Nodes not connected within the subgraph become singletons
-            missing <- is.na(target_wc)
-            target_wc[missing] <- max(target_wc, 0, na.rm = TRUE) + seq_len(sum(missing))
+        # Compute structure score of each new community
+        new_scores <- strong_structure(target_network, new_wc)$overall
 
-            # Update communities
-            wc[index] <- target_wc + max_wc
+        # Determine whether to update (size-weighted mean structure score)
+        if(weighted.mean(new_scores, tabulate(new_wc, n_new)) > scores[i]){
 
-            # Reindex communities
-            wc <- reindex_memberships(wc)
-
-            # Update max membership
-            max_wc <- unique_length(wc)
-
-          }
+          # Update memberships (offset avoids collisions with existing labels)
+          wc[index] <- new_wc + max(wc)
 
         }
 
-        # Check that there was an update
-        if(all(wc == previous_wc)){
-          break
-        }
+      }
 
+      # Reindex memberships
+      wc <- reindex_memberships(wc)
+
+      # Check that there was an update
+      if(all(previous_wc == wc)){
+        break
       }
 
     }
@@ -307,21 +309,21 @@ community.aces <- function(
 # Bug checking ----
 ## Basic input
 # network = EBICglasso.qgraph(wmt2[,7:24])
-# algorithm = "louvain"; cohesion.cut = 0.85
+# algorithm = "louvain"
 # allow.singleton = FALSE; seed = NULL
 # ellipse = list()
 
 #' @noRd
 # Errors ----
-# Updated 30.10.2026
-community.aces_errors <- function(network, cohesion.cut, allow.singleton, seed)
+# Updated 31.10.2026
+community.crisp_errors <- function(network, allow.singleton, seed)
 {
 
   # 'network' errors
   if(is(network, "igraph")){ # Check for {igraph} network
     network <- igraph2matrix(network)
   }else{
-    object_error(network, c("matrix", "data.frame", "tibble"), "community.aces")
+    object_error(network, c("matrix", "data.frame", "tibble"), "community.crisp")
   }
 
   # Check for tibble
@@ -350,20 +352,15 @@ community.aces_errors <- function(network, cohesion.cut, allow.singleton, seed)
     stop("'network' must be symmetric.", call. = FALSE)
   }
 
-  # 'cohesion.cut' errors
-  length_error(cohesion.cut, 1, "community.aces")
-  typeof_error(cohesion.cut, "numeric", "community.aces")
-  range_error(cohesion.cut, c(0, 1), "community.aces")
-
   # 'allow.singleton' errors
-  length_error(allow.singleton, 1, "community.aces")
-  typeof_error(allow.singleton, "logical", "community.aces")
+  length_error(allow.singleton, 1, "community.crisp")
+  typeof_error(allow.singleton, "logical", "community.crisp")
 
   # 'seed' errors
   if(!is.null(seed)){
-    length_error(seed, 1, "community.aces")
-    typeof_error(seed, "numeric", "community.aces")
-    range_error(seed, c(0, Inf), "community.aces")
+    length_error(seed, 1, "community.crisp")
+    typeof_error(seed, "numeric", "community.crisp")
+    range_error(seed, c(0, Inf), "community.crisp")
   }
 
   # Return network in case of {igraph} or tibble
@@ -404,5 +401,65 @@ cohesion <- function(network)
   # cohesion on [0, 1] with a perfect community equal to 1 regardless of the number of nodes
   # `min` and `max` only guard against floating-point error; the bound is exact
   return(min(1, max(values[nodes - 1] * (nodes - 1) / nodes, 0)))
+
+}
+
+#' @noRd
+# Strong structure function ----
+# Updated 31.10.2026
+strong_structure <- function(network, membership)
+{
+
+  # Absolute weights, no self-loops
+  network <- abs(network)
+  diag(network) <- 0
+
+  # Communities
+  communities <- sort(unique(membership))
+  K <- length(communities)
+
+  # Initialize
+  community_cohesion <- rep(NA_real_, K)
+  merge <- matrix(0, nrow = K, ncol = K)
+
+  # Loop over communities
+  for(i in seq_len(K)){
+
+    # Target community
+    target <- membership == communities[i]
+
+    # Cohesion (needs enough nodes for the spectral cut to be meaningful)
+    community_cohesion[i] <- cohesion(network[target, target, drop = FALSE])
+
+    # Merge propensity with every other community (local null in the union)
+    for(j in seq_len(K)[-i]){
+
+      other <- membership == communities[j]
+      union <- target | other
+
+      # Strengths within the union
+      k_A <- colSums(network[union, target, drop = FALSE])
+      k_B <- colSums(network[union, other, drop = FALSE])
+
+      # Observed and expected cross-weight
+      W_AB <- sum(network[target, other, drop = FALSE])
+      E_AB <- sum(k_A) * sum(k_B) / (sum(k_A) + sum(k_B))
+
+      # Observed / expected (capped at 1)
+      # E_AB is NaN (0 / 0) when both communities have no weight inside their union
+      merge[i, j] <- if(!is.finite(E_AB) || E_AB <= 0) 1 else min(W_AB / E_AB, 1)
+
+    }
+
+  }
+
+  # Separation: resistance to the most mergeable partner
+  separation <- if(K > 1) 1 - apply(merge, 1, max) else 1
+
+  # Overall: geometric mean of cohesion and separation (per community)
+  overall <- sqrt(community_cohesion * separation)
+
+  # Return results
+  return(list(cohesion = community_cohesion, separation = separation, overall = overall))
 
 }
