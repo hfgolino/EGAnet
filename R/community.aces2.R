@@ -18,6 +18,8 @@
 #'
 #' @param network Matrix or \code{igraph} network object
 #'
+#' @param R Correlation matrix
+#'
 #' @param algorithm Character or \code{igraph} \code{cluster_*} function
 #' (length = 1).
 #' Available options:
@@ -130,7 +132,7 @@
 # Algorithmic Complexity for Emergent Subgraphs ----
 # Updated 31.10.2026
 community.aces2 <- function(
-    network, algorithm = c(
+    network, R, algorithm = c(
       "edge_betweenness", "fast_greedy",
       "fluid", "infomap", "label_prop",
       "leading_eigen", "leiden", "louvain", "optimal",
@@ -150,6 +152,10 @@ community.aces2 <- function(
 
   # Check for names
   network <- ensure_dimension_names(network)
+
+  # Set R
+  R <- abs(R)
+  diag(R) <- 0
 
   # Set original node names
   original_node_names <- dimnames(network)[[2]]
@@ -201,7 +207,7 @@ community.aces2 <- function(
         index <- wc == j
 
         # Return cohesion
-        return(cohesion2(network[index, index]))
+        return(cohesion2(R[index, index]))
 
       })
 

@@ -6,6 +6,7 @@
 \usage{
 community.aces2(
   network,
+  R,
   algorithm = c("edge_betweenness", "fast_greedy", "fluid", "infomap", "label_prop",
     "leading_eigen", "leiden", "louvain", "optimal", "spinglass", "walktrap"),
   allow.singleton = FALSE,
@@ -15,6 +16,8 @@ community.aces2(
 }
 \arguments{
 \item{network}{Matrix or \code{igraph} network object}
+
+\item{R}{Correlation matrix}
 
 \item{algorithm}{Character or \code{igraph} \code{cluster_*} function
 (length = 1).
