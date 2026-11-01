@@ -369,42 +369,6 @@ community.crisp_errors <- function(network, allow.singleton, seed)
 }
 
 #' @noRd
-# Cohesion function ----
-# Updated 30.10.2026
-cohesion <- function(network)
-{
-
-  # Number of nodes
-  nodes <- dim(network)[2]
-
-  # A single node cannot be split any further
-  if(nodes < 2){
-    return(1)
-  }
-
-  # Node strength
-  strength <- colSums(network)
-
-  # A zero-strength node is disconnected from the community (Laplacian is undefined, 0 / 0)
-  if(any(strength == 0)){
-    return(0)
-  }
-
-  # Normalized Laplacian
-  laplacian <- diag(nodes) - network / sqrt(outer(strength, strength))
-
-  # Eigenvalues are returned in decreasing order
-  values <- eigen(laplacian, symmetric = TRUE, only.values = TRUE)$values
-
-  # Second smallest eigenvalue never exceeds nodes / (nodes - 1) for any weighted graph
-  # (equality only for an equal-weight complete graph), so rescaling by that bound puts
-  # cohesion on [0, 1] with a perfect community equal to 1 regardless of the number of nodes
-  # `min` and `max` only guard against floating-point error; the bound is exact
-  return(min(1, max(values[nodes - 1] * (nodes - 1) / nodes, 0)))
-
-}
-
-#' @noRd
 # Strong structure function ----
 # Updated 31.10.2026
 strong_structure <- function(network, membership)

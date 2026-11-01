@@ -22,6 +22,8 @@ WEBSITE: https://r-ega.net
 
 +	ADD: `community.crisp` to iteratively re-estimate communities within any community whenever a split increases the size-weighted mean of cohesion (rescaled algebraic connectivity of the normalized Laplacian) and separation (one minus the largest merge propensity) (Cohesion and Resistance In Subgraph Partitioning)
 
++	ADD: `community.aces` to iteratively re-estimate communities within any community whenever a split increases the size-weighted mean of cohesion (rescaled algebraic connectivity of the normalized Laplacian) (Algorithmic Complexity for Emergent Subgraphs)
+
 +	INTERNAL: plotting helpers moved from `helpers.R` to new `R/plotting.R`
 
 
