@@ -296,9 +296,9 @@ shuffle_replace <- function(x, size = length(x), seed = NULL)
   return(
     x[.Call(
       "r_xoshiro_shuffle_replace",
-      x, swiftelse(is.null(seed), 0, seed),
+      x, size, swiftelse(is.null(seed), 0, seed),
       PACKAGE = "EGAnet"
-    )][seq_len(size)]
+    )]
   )
 
 }
