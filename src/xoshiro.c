@@ -18,6 +18,7 @@ IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
  // Modified by Alexander P. Christensen, 15 August 2023.
 
 #include <stdint.h>
+#include <math.h>
 #include <R.h>
 #include <Rinternals.h>
 #include "nanotime.h"
@@ -137,7 +138,7 @@ static uint64_t seed_counter = 0;
  R is single-threaded, so the counter does not need to be atomic
 
 */
-static uint64_t random_seed(void) {
+uint64_t random_seed(void) {
 
     // Clock time in nanoseconds
     uint64_t x = get_time_ns();
@@ -164,12 +165,26 @@ void seed_xoshiro256(xoshiro256_state* state, uint64_t seed) {
 
 }
 
-// Stored so it doesn't need to be repeatedly called
-static const double UINT64_MAX_PLUS_ONE = (double) UINT64_MAX + 1;
+// Seed from R: a double or integer (0 = clock time, process ID, and counter)
+uint64_t seed_from_r(SEXP r_seed) {
 
-// Function to generate random uniform data between 0 and 1
+    // Obtain seed
+    double seed = asReal(r_seed);
+
+    // Random seed
+    if(ISNAN(seed) || seed == 0) {
+        return random_seed();
+    }
+
+    // Return seed (non-negative)
+    return (uint64_t) fabs(seed);
+
+}
+
+// Function to generate random uniform data in the open interval (0, 1)
+// (53-bit precision: (k + 0.5) / 2^53 is never exactly 0 or 1)
 double xoshiro_uniform(xoshiro256_state* state) {
-  return (double) (next(state) / UINT64_MAX_PLUS_ONE);
+  return ((double) (next(state) >> 11) + 0.5) * (1.0 / 9007199254740992.0);
 }
 
 // Function to uniform values into R
@@ -177,12 +192,7 @@ SEXP r_xoshiro_uniform(SEXP n, SEXP r_seed) {
 
   // Initialize R values
   int n_values = INTEGER(n)[0];
-  uint64_t seed_value = (uint64_t) REAL(r_seed)[0];
-
-  // For random seed, use zero
-  if(seed_value == 0) { // Use clock time, process ID, and call counter
-    seed_value = random_seed();
-  }
+  uint64_t seed_value = seed_from_r(r_seed); // 0 = clock time, process ID, and call counter
 
   // Seed the random number generator
   xoshiro256_state state;
@@ -212,12 +222,7 @@ SEXP r_xoshiro_seeds(SEXP n, SEXP r_seed) {
 
     // Initialize R values
     int n_values = INTEGER(n)[0];
-    uint64_t seed_value = (uint64_t) REAL(r_seed)[0];
-
-    // For random seed, use zero
-    if(seed_value == 0) { // Use clock time, process ID, and call counter
-      seed_value = random_seed();
-    }
+    uint64_t seed_value = seed_from_r(r_seed); // 0 = clock time, process ID, and call counter
 
     // Seed the random number generator
     xoshiro256_state state;
@@ -249,12 +254,7 @@ SEXP r_xoshiro_shuffle(SEXP r_vector, SEXP r_seed) {
     int vector_length = length(r_vector);
 
     // Initialize R values
-    uint64_t seed_value = (uint64_t) REAL(r_seed)[0];
-
-    // For random seed, use zero
-    if(seed_value == 0) { // Use clock time, process ID, and call counter
-      seed_value = random_seed();
-    }
+    uint64_t seed_value = seed_from_r(r_seed); // 0 = clock time, process ID, and call counter
 
     // Seed the random number generator
     xoshiro256_state state;
@@ -289,12 +289,7 @@ SEXP r_xoshiro_weighted_shuffle(SEXP r_vector, SEXP r_prob, SEXP r_seed) {
     int vector_length = length(r_vector);
 
     // Initialize seed
-    uint64_t seed_value = (uint64_t) REAL(r_seed)[0];
-
-    // For random seed, use zero
-    if(seed_value == 0) { // Use clock time, process ID, and call counter
-        seed_value = random_seed();
-    }
+    uint64_t seed_value = seed_from_r(r_seed); // 0 = clock time, process ID, and call counter
 
     // Seed the random number generator
     xoshiro256_state state;
@@ -362,19 +357,17 @@ SEXP r_xoshiro_shuffle_replace(SEXP r_vector, SEXP r_size, SEXP r_seed) {
   // Get length of R vector
   int vector_length = length(r_vector);
 
-  // Get output size (default to vector_length if size <= 0)
+  // Get output size (must be non-negative; values must be available)
   int size = asInteger(r_size);
-  if (size <= 0) {
-    size = vector_length;
+  if (size == NA_INTEGER || size < 0) {
+    error("`size` must be a non-negative number");
+  }
+  if (size > 0 && vector_length == 0) {
+    error("Cannot sample from an empty vector");
   }
 
   // Initialize R values
-  uint64_t seed_value = (uint64_t) REAL(r_seed)[0];
-
-  // For random seed, use zero
-  if(seed_value == 0) { // Use clock time, process ID, and call counter
-    seed_value = random_seed();
-  }
+  uint64_t seed_value = seed_from_r(r_seed); // 0 = clock time, process ID, and call counter
 
   // Seed the random number generator
   xoshiro256_state state;

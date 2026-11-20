@@ -1,7 +1,7 @@
 #include "xoshiro.h"
 
 // Constants
-#define R 3.442620 // r
+#define ZIGGURAT_R 3.442620 // r
 #define DN 3.442619855899 // dn
 #define M1 2147483648.0 // m1
 #define VN 9.91256303526217E-03 // vn

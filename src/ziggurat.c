@@ -1,6 +1,8 @@
+// Original code by John Burkardt, distributed under the GNU LGPL license.
+// Modified by Alexander P. Christensen, 30 July 2023.
+
 #include <math.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <R.h>
 #include <Rinternals.h>
@@ -8,6 +10,9 @@
 #include "ziggurat.h"
 #include "xoshiro.h"
 #include "nanotime.h"
+
+// Seed from R (xoshiro.c)
+uint64_t seed_from_r(SEXP r_seed);
 
 // Set up static values for normal table
 static uint32_t kn[128];
@@ -106,62 +111,72 @@ double r4_nor ( xoshiro256_state* state, uint32_t kn[128], double fn[128], doubl
    Output, float R4_NOR, a normally distributed random value.
    */
 {
-  int hz;
+  /*
+   Modified 20.11.2026: each step draws 64 bits; the signed 32-bit value
+   `hz` is taken from the upper 32 bits and the strip index `iz` from the
+   lowest 7 bits, so that the index and the value are independent (the
+   original used the same low bits for both; see Doornik, 2005). Absolute
+   values are computed in 64 bits (no overflow for the most negative value)
+  */
+  int32_t hz;
   uint32_t iz;
+  uint64_t bits;
   double x, y, value;
 
-  hz = ( int ) next ( state ); // cast may cause negative (and that's OK)
-  iz = ( hz & 127 );
+  bits = next ( state );
+  hz = ( int32_t ) ( uint32_t ) ( bits >> 32 );
+  iz = ( uint32_t ) ( bits & 127 );
 
-  if ( abs ( hz ) < kn[iz] ) {
+  if ( llabs ( ( int64_t ) hz ) < ( int64_t ) kn[iz] ) {
     value = ( double ) ( hz ) * wn[iz];
   } else {
-    
+
     for ( ; ; ) {
-      
+
       if ( iz == 0 ) {
-        
+
         for ( ; ; ) {
-          
+
           x = - 0.2904764 * log ( xoshiro_uniform( state ) );
           y = - log ( xoshiro_uniform( state ) );
           if ( x * x <= y + y ) {
             break;
           }
-          
+
         }
-        
-        value = ( hz <= 0 ) ? ( -R - x ) : ( R + x );
+
+        value = ( hz <= 0 ) ? ( -ZIGGURAT_R - x ) : ( ZIGGURAT_R + x );
 
         break;
-        
+
       }
 
       x = ( double ) ( hz ) * wn[iz];
 
-      if ( 
-          fn[iz] + xoshiro_uniform( state ) * 
-          ( fn[iz-1] - fn[iz] ) < 
+      if (
+          fn[iz] + xoshiro_uniform( state ) *
+          ( fn[iz-1] - fn[iz] ) <
           exp ( - 0.5 * x * x )
       ) {
         value = x;
         break;
       }
 
-      hz = ( int ) next ( state ); // cast may cause negative (and that's OK)
-      iz = ( hz & 127 );
+      bits = next ( state );
+      hz = ( int32_t ) ( uint32_t ) ( bits >> 32 );
+      iz = ( uint32_t ) ( bits & 127 );
 
-      if ( abs ( hz ) < kn[iz] ) {
+      if ( llabs ( ( int64_t ) hz ) < ( int64_t ) kn[iz] ) {
         value = ( double ) ( hz ) * wn[iz];
         break;
       }
-      
+
     }
-    
+
   }
 
   return value;
-  
+
 }
 /******************************************************************************/
 
@@ -266,15 +281,9 @@ SEXP r_ziggurat(SEXP n, SEXP r_seed) {
 
   // Initialize values
   int n_values = INTEGER(n)[0];
-  uint64_t seed_value = (uint64_t) REAL(r_seed)[0];
 
-  // For random seed, use zero
-  if(seed_value == 0) {
-
-    // Use clocktime in nanoseconds
-    seed_value = get_time_ns();
-
-  }
+  // Seed (0 = clock time, process ID, and call counter, as in xoshiro.c)
+  uint64_t seed_value = seed_from_r(r_seed);
 
   // Seed the (uniform) random number generator
   xoshiro256_state state;
