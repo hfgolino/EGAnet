@@ -510,7 +510,7 @@ clear_memory <- function()
 
 #' @noRd
 # Get available memory ----
-# Updated 18.10.2023
+# Updated 20.11.2026
 available_memory <- function()
 {
 
@@ -527,21 +527,11 @@ available_memory <- function()
 
   }else if(OS == "linux"){ # Linux
 
-    # Split system information
-    info_split <- strsplit(system("free", intern = TRUE), split = " ")
-
-    # Remove "Mem:" and "Swap:"
-    info_split <- lapply(info_split, function(x){gsub("Mem:", "", x)})
-    info_split <- lapply(info_split, function(x){gsub("Swap:", "", x)})
-
-    # Get actual values
-    info_split <- lapply(info_split, function(x){x[x != ""]})
-
-    # Bind values
-    info_split <- do.call(rbind, info_split[1:2])
-
-    # Get free values (Linux reports in *kilo*bytes -- thanks, Aleksandar Tomasevic)
-    bytes <- as.numeric(info_split[2, info_split[1,] == "available"]) * 1e+03
+    # Read "MemAvailable" from /proc/meminfo (locale-independent, unlike
+    # the localized header of `free`; see #188). Values are in kibibytes
+    meminfo <- readLines("/proc/meminfo", warn = FALSE)
+    available <- grep("^MemAvailable:", meminfo, value = TRUE)
+    bytes <- as.numeric(gsub("[^0-9]", "", available)) * 1024
 
   }else{ # Mac
 
@@ -598,7 +588,7 @@ restore_state <- function()
 
 #' @noRd
 # Wrapper for parallelization ----
-# Updated 01.03.2024
+# Updated 20.11.2026
 parallel_process <- function(
     iterations, # number of iterations
     datalist = NULL, # list of data
@@ -617,8 +607,11 @@ parallel_process <- function(
     silent = TRUE
   )
 
-  # In case the memory check fails
-  if(!is(memory_available, "try-error")){
+  # In case the memory check fails (error or no usable value)
+  if(
+    !is(memory_available, "try-error") &&
+    length(memory_available) == 1 && is.finite(memory_available)
+  ){
 
     # Check for global environment size
     if(export){ # needs `isTRUE` in case of character vector
