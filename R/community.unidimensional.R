@@ -32,6 +32,8 @@
 #' \item \code{"cor_auto"} --- Uses \code{\link[qgraph]{cor_auto}} to compute correlations.
 #' Arguments can be passed along to the function
 #'
+#' \item \code{"cosine"} --- Uses \code{\link[EGAnet]{cosine}} to compute cosine similarity
+#'
 #' \item \code{"pearson"} --- Pearson's correlation is computed for all
 #' variables regardless of categories
 #'
@@ -155,10 +157,10 @@
 #' @export
 #'
 # Compute unidimensional approaches for EGA
-# Updated 24.10.2023
+# Updated 20.11.2026
 community.unidimensional <- function(
     data, n = NULL,
-    corr = c("auto", "cor_auto", "pearson", "spearman"),
+    corr = c("auto", "cor_auto", "cosine", "pearson", "spearman"),
     na.data = c("pairwise", "listwise"),
     model = c("BGGM", "glasso", "TMFG"),
     uni.method = c("expand", "LE", "louvain"),
